@@ -58,13 +58,17 @@ import {
   getNextResetUTC,
   DAILY_SUBMISSION_LIMIT,
   // FINDING-008: append-only per-user quotas
-  checkDailyEventLimit,
   recordSubmissionEvent,
+  // BUG-015 (2026-09-16 deep-dive): atomic reserve-then-act for the three
+  // caps below — see rate-limit-service.ts for why `submission` (just above)
+  // doesn't need this shape.
+  reserveDailyEvent,
   DAILY_FLAGGED_EDIT_LIMIT,
   DAILY_PREVIEW_UPLOAD_LIMIT,
   // FINDING-005: pre-moderation cap on name/description edits
   DAILY_TEXT_EDIT_LIMIT,
 } from '../services/rate-limit-service.js';
+import type { DailyEventReservation } from '../services/rate-limit-service.js';
 import {
   notifyDiscordBot,
   storeFailedNotification,
@@ -628,28 +632,31 @@ presetsRouter.patch('/:id', async (c) => {
     // applies to every status, and the slot is charged here, at the point of
     // spend, rather than after a successful UPDATE — otherwise a user sitting
     // on the flagged-edit 429 could loop text edits and never be counted.
-    const textEditCap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'text_edit');
-    if (!textEditCap.allowed) {
+    //
+    // BUG-015 (2026-09-16 deep-dive): reserve-then-act closes the race a
+    // separate check + later insert left open (concurrent requests could all
+    // pass a stale pre-insert count). This reservation is deliberately never
+    // released below — not even when the flagged-edit cap refuses the same
+    // request further down — for the exact reason above: releasing it would
+    // reopen the free-retry loophole this cap exists to close.
+    const textEditReservation = await reserveDailyEvent(
+      c.env.DB,
+      auth.userDiscordId,
+      'text_edit',
+      id,
+      c.get('logger')
+    );
+    if (!textEditReservation.allowed) {
       return c.json(
         {
           success: false,
           error: ErrorCode.RATE_LIMITED,
           message: `You've reached your daily limit of name and description edits (${DAILY_TEXT_EDIT_LIMIT} per day). Try again tomorrow.`,
           remaining: 0,
-          reset_at: textEditCap.resetAt.toISOString(),
+          reset_at: textEditReservation.resetAt.toISOString(),
         },
         429
       );
-    }
-    try {
-      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'text_edit', id, c.get('logger'));
-    } catch (err) {
-      // Best-effort, exactly like the other event kinds: a failed quota row
-      // must not fail the edit. Needs migration 0012 before rows of this kind
-      // are accepted — until it is applied the cap simply never engages.
-      c.get('logger')?.error('[FINDING-005] submission_events text_edit insert failed', err, {
-        preset_id: id,
-      });
     }
 
     // Run content moderation on new values
@@ -703,16 +710,29 @@ presetsRouter.patch('/:id', async (c) => {
   // per day before persisting anything. Only edits that tripped moderation
   // used to be capped, so `PATCH {"tags":["a"]}` on the caller's own pending
   // preset sent one uncapped embed per request.
+  // BUG-015 (2026-09-16 deep-dive): reserve-then-act, same shape as the
+  // text-edit reservation above. Unlike that one, this reservation IS tied to
+  // the UPDATE below succeeding — see the catch/conflict branches, which give
+  // the slot back on failure — because (unlike text-edit's Perspective spend)
+  // nothing has happened yet at the point this reserves: a refused UPDATE
+  // means this request notified nobody, so it must not cost a slot.
+  let flaggedEditReservation: DailyEventReservation | undefined;
   if (notifiesModerators) {
-    const cap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'flagged_edit');
-    if (!cap.allowed) {
+    flaggedEditReservation = await reserveDailyEvent(
+      c.env.DB,
+      auth.userDiscordId,
+      'flagged_edit',
+      id,
+      c.get('logger')
+    );
+    if (!flaggedEditReservation.allowed) {
       return c.json(
         {
           success: false,
           error: ErrorCode.RATE_LIMITED,
           message: `You've reached your daily limit of edits that need moderator review (${DAILY_FLAGGED_EDIT_LIMIT} per day). Try again tomorrow.`,
           remaining: 0,
-          reset_at: cap.resetAt.toISOString(),
+          reset_at: flaggedEditReservation.resetAt.toISOString(),
         },
         429
       );
@@ -731,6 +751,9 @@ presetsRouter.patch('/:id', async (c) => {
       nextStatus
     );
   } catch (error) {
+    // BUG-015: the act failed outright — give the reservation back (best
+    // effort, never throws) before deciding how to respond.
+    await flaggedEditReservation?.release?.();
     // BUG-003 (2026-07-18 audit): the duplicate pre-check races with concurrent
     // writers — recover from the UNIQUE dye_signature violation as a 409
     // instead of an unhandled 500
@@ -763,6 +786,9 @@ presetsRouter.patch('/:id', async (c) => {
   }
 
   if (!updatedPreset) {
+    // BUG-015: a stale-revision conflict means the UPDATE never happened —
+    // the act failed just as surely as a thrown error, so give the slot back.
+    await flaggedEditReservation?.release?.();
     return c.json({
       success: false,
       error: ErrorCode.CONFLICT,
@@ -770,17 +796,8 @@ presetsRouter.patch('/:id', async (c) => {
     }, 409);
   }
 
-  // FINDING-008 + FINDING-004: count this notification against the daily cap
-  // (append-only). Same event kind as before, so no migration is needed — the
-  // kind now means "an edit that reached a moderator", which is what the cap
-  // was always protecting.
-  if (notifiesModerators) {
-    try {
-      await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'flagged_edit', id, c.get('logger'));
-    } catch (err) {
-      c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId: id });
-    }
-  }
+  // FINDING-008 + FINDING-004: the reservation above already inserted the
+  // append-only row; a successful UPDATE just keeps it (BUG-015).
 
   // Notify Discord for moderation when this edit brought something new to judge
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
@@ -1095,16 +1112,30 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   }
 
   // FINDING-008: each upload costs an image-worker decode, an R2 write and a
-  // moderation embed — cap per user per day before reading the body
-  const uploadCap = await checkDailyEventLimit(c.env.DB, auth.userDiscordId, 'preview_upload');
-  if (!uploadCap.allowed) {
+  // moderation embed — cap per user per day before reading the body.
+  //
+  // BUG-015 (2026-09-16 deep-dive): reserve-then-act. Unlike text-edit's
+  // reservation above, this one is released on EVERY failure exit below —
+  // a body that turns out empty, oversized, the wrong type, or that
+  // storePreviewImage/the DB UPDATE itself rejects — so a request that never
+  // actually stores an image never costs the author a slot, matching what
+  // the old check-then-record-at-the-end shape did (it simply never reached
+  // the record call on those paths).
+  const uploadReservation = await reserveDailyEvent(
+    c.env.DB,
+    auth.userDiscordId,
+    'preview_upload',
+    presetId,
+    c.get('logger')
+  );
+  if (!uploadReservation.allowed) {
     return c.json(
       {
         success: false,
         error: ErrorCode.RATE_LIMITED,
         message: `You've reached your daily preview-image upload limit (${DAILY_PREVIEW_UPLOAD_LIMIT} per day). Try again tomorrow.`,
         remaining: 0,
-        reset_at: uploadCap.resetAt.toISOString(),
+        reset_at: uploadReservation.resetAt.toISOString(),
       },
       429
     );
@@ -1113,6 +1144,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   const bytes = new Uint8Array(await c.req.arrayBuffer());
 
   if (bytes.byteLength === 0) {
+    await uploadReservation.release?.();
     return c.json(
       { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'No image data provided' },
       400
@@ -1120,6 +1152,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   }
 
   if (bytes.byteLength > MAX_PREVIEW_IMAGE_BYTES) {
+    await uploadReservation.release?.();
     return c.json(
       {
         success: false,
@@ -1131,6 +1164,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   }
 
   if (!sniffImageType(bytes)) {
+    await uploadReservation.release?.();
     return c.json(
       {
         success: false,
@@ -1145,6 +1179,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   try {
     key = await storePreviewImage(c.env, presetId, bytes);
   } catch {
+    await uploadReservation.release?.();
     return c.json(
       { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
       400
@@ -1162,11 +1197,18 @@ presetsRouter.post('/:id/preview-image', async (c) => {
   // pointing at a key that no longer exists, so an approved preset's card
   // starts 404ing on every view. Never trade a broken live image for a tidy
   // bucket.
-  await c.env.DB.prepare(
-    `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ? WHERE id = ?`
-  )
-    .bind(key, new Date().toISOString(), presetId)
-    .run();
+  try {
+    await c.env.DB.prepare(
+      `UPDATE presets SET preview_image_key = ?, preview_image_status = 'pending', updated_at = ? WHERE id = ?`
+    )
+      .bind(key, new Date().toISOString(), presetId)
+      .run();
+  } catch (error) {
+    // BUG-015: the act failed — the image was decoded but never attached to
+    // the preset, so give the slot back before the error reaches the caller.
+    await uploadReservation.release?.();
+    throw error;
+  }
 
   // Replace any previous image so an abandoned object is not orphaned.
   // The DB already points at the new key, so the author's upload has fully
@@ -1200,12 +1242,9 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     })
   );
 
-  // FINDING-008: count this upload against the daily cap (append-only)
-  try {
-    await recordSubmissionEvent(c.env.DB, auth.userDiscordId, 'preview_upload', presetId, c.get('logger'));
-  } catch (err) {
-    c.get('logger')?.error('[FINDING-008] submission_events insert failed', err, { presetId });
-  }
+  // FINDING-008 + BUG-015: the reservation above already inserted the
+  // append-only row; the upload made it all the way to a successful DB
+  // UPDATE, so it just keeps it.
 
   return c.json({ success: true, status: 'pending' });
 });

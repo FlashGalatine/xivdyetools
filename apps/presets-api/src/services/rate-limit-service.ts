@@ -183,19 +183,88 @@ export async function recordSubmissionEvent(
 }
 
 /**
- * Check a per-user daily cap for one event kind (append-only count).
+ * A daily-cap reservation obtained via `reserveDailyEvent` (BUG-015).
+ *
+ * `release` is present only when `allowed` is true — a refused reservation
+ * has already deleted its own row (step 3 below) and has nothing left to
+ * give back.
  */
-export async function checkDailyEventLimit(
+export interface DailyEventReservation extends RateLimitResult {
+  /**
+   * Deletes this reservation's row, freeing the slot. Best-effort: logs and
+   * swallows a failed delete rather than throwing, since a caller invokes
+   * this only after its own action has already failed and a second failure
+   * here must not mask the first.
+   */
+  release?: () => Promise<void>;
+}
+
+/**
+ * BUG-015 (2026-09-16 deep-dive): the removed `checkDailyEventLimit` paired
+ * with a later `recordSubmissionEvent` call was check-then-insert — N
+ * concurrent requests sitting at cap-1 could all pass the check before any
+ * of them recorded, overshooting the daily cap for `text_edit` /
+ * `flagged_edit` / `preview_upload`. Unlike the `submission`
+ * cap (whose own overshoot guard in `handlers/presets.ts` can roll back the
+ * INSERT it guards — see BUG-049 there), these three gate an UPDATE or an R2
+ * write that cannot be rolled back the same way, so the reservation itself
+ * has to close the race:
+ *
+ *   1. Insert the event row first — this is the statement every concurrent
+ *      request serializes on.
+ *   2. Count today's rows for this user + kind, including the one just
+ *      inserted.
+ *   3. If that count exceeds the cap, delete the row this call just
+ *      inserted and report `allowed: false` (the same 429 shape the old
+ *      pre-check returned). Otherwise report `allowed: true` with a
+ *      `release()` the caller uses to give the slot back if whatever it
+ *      reserved the slot for goes on to fail.
+ *
+ * A reservation nobody releases counts permanently, exactly like the old
+ * `recordSubmissionEvent` call it replaces at the three call sites.
+ */
+export async function reserveDailyEvent(
   db: D1Database,
   userDiscordId: string,
   kind: SubmissionEventKind,
-  limit: number = DAILY_LIMITS[kind]
-): Promise<RateLimitResult> {
+  presetId: string | null = null,
+  logger?: RetentionLogger
+): Promise<DailyEventReservation> {
+  await pruneSubmissionEvents(db, logger);
+
+  const inserted = await db
+    .prepare(
+      `INSERT INTO submission_events (user_discord_id, kind, preset_id) VALUES (?, ?, ?)`
+    )
+    .bind(userDiscordId, kind, presetId)
+    .run();
+
+  const rowId = inserted.meta.last_row_id;
+  const limit = DAILY_LIMITS[kind];
   const used = await getEventCountToday(db, userDiscordId, kind);
+
+  const release = async (): Promise<void> => {
+    try {
+      await db.prepare('DELETE FROM submission_events WHERE id = ?').bind(rowId).run();
+    } catch (err) {
+      logger?.warn('[BUG-015] failed to release a daily-event reservation', {
+        kind,
+        rowId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  if (used > limit) {
+    await release();
+    return { allowed: false, remaining: 0, resetAt: getNextResetUTC() };
+  }
+
   return {
-    allowed: used < limit,
+    allowed: true,
     remaining: Math.max(0, limit - used),
     resetAt: getNextResetUTC(),
+    release,
   };
 }
 
