@@ -184,6 +184,27 @@ describe('handleAutocomplete — FINDING-034 follow-ups', () => {
     expect(json.data.choices[0].name).toContain('discord-person');
   });
 
+  // A4 (2026-09-16 fix wave): a row whose `discord_id` column actually holds
+  // a BUG-001 path (a) XIVAuth `sub` (a lowercase UUID, not a snowflake) IS
+  // offered here — MOD-14 only excludes a NULL discord_id — and must be
+  // labeled `xivauth:`, not `discord:`.
+  it('labels a BUG-001 path (a) XIVAuth UUID ban target as xivauth:, not discord:', async () => {
+    vi.mocked(banService.searchBannedUsers).mockResolvedValueOnce([
+      {
+        discordId: 'c2d9d2c4-0000-4000-8000-000000000000',
+        xivAuthId: null,
+        username: 'xivauth-banned',
+      },
+    ] as never);
+
+    const res = await handleAutocomplete(autocompleteInteraction('111111111111111111', 'unban_user'), env, ctx, logger);
+    const json = (await res.json()) as { data: { choices: Array<{ name: string; value: string }> } };
+
+    expect(json.data.choices).toHaveLength(1);
+    expect(json.data.choices[0].name).toContain('xivauth:c2d9d2c4-0000-4000-8000-000000000000');
+    expect(json.data.choices[0].name).not.toContain('discord:c2d9d2c4');
+  });
+
   it('caps autocomplete choice names at 100 characters (Discord rejects longer ones)', async () => {
     vi.mocked(banService.searchPresetAuthors).mockResolvedValueOnce([
       { discordId: '555555555555555555', username: 'x'.repeat(200), presetCount: 3 },
