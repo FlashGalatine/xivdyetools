@@ -21,16 +21,27 @@ type Variables = {
 };
 
 /**
- * Check if a Discord user is currently banned
+ * Check if a user is currently banned.
+ *
+ * BUG-001 path (a) (2026-09-16 deep-dive, coordinator ruling): despite the
+ * column name, `discord_id` does not always hold a Discord snowflake.
+ * XIVAuth-only accounts have no Discord ID, and `resolveJWTUserId()`
+ * (`middleware/auth.ts`) falls back to the JWT `sub` — the oauth worker's
+ * internal user UUID — for them, which is what ends up bound here and in
+ * `presets.author_discord_id`. moderation-worker (Sprint 6, not this file)
+ * is the one writing bans, and stores that same resolved id — snowflake or
+ * UUID — in `banned_users.discord_id`, so this query needs no change: both
+ * sides already agree on which value the column holds for a given user.
  *
  * @param db - D1 database binding
- * @param discordId - Discord user ID to check
+ * @param userId - the resolved acting-user id to check: a Discord snowflake,
+ *   or the XIVAuth `sub` UUID when the account has no Discord ID
  * @returns True if user is banned, false otherwise
  */
-async function isUserBanned(db: D1Database, discordId: string): Promise<boolean> {
+async function isUserBanned(db: D1Database, userId: string): Promise<boolean> {
   const result = await db
     .prepare('SELECT 1 FROM banned_users WHERE discord_id = ? AND unbanned_at IS NULL LIMIT 1')
-    .bind(discordId)
+    .bind(userId)
     .first();
   return result !== null && result !== undefined;
 }
