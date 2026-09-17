@@ -106,18 +106,27 @@ describe('ColorAccessibility', () => {
     });
 
     it('should have different thresholds for small vs large text', () => {
-      // A color pair with moderate contrast (between 3:1 and 4.5:1)
-      const color1 = '#767676';
+      // BUG-032 (2026-09-16 audit): the previous fixture (#767676 on
+      // #FFFFFF) is ~4.55:1, ABOVE the 4.5:1 small-text threshold, so
+      // `smallText` was always true and the `if (!smallText)` branch below
+      // never ran — nothing was ever asserted. #949494 on #FFFFFF sits
+      // between the two WCAG AA thresholds (~3.5:1: below 4.5:1 small-text,
+      // above 3:1 large-text), computed here with the service's own
+      // contrast function so the fixture can't silently drift back above
+      // 4.5:1 (or below 3:1) without failing this test.
+      const color1 = '#949494';
       const color2 = '#FFFFFF';
 
-      const smallText = ColorAccessibility.meetsWCAGAA(color1, color2, false);
-      const largeText = ColorAccessibility.meetsWCAGAA(color1, color2, true);
+      const ratio = ColorAccessibility.getContrastRatio(color1, color2);
+      expect(ratio).toBeGreaterThan(3);
+      expect(ratio).toBeLessThan(4.5);
 
-      // This specific combination should pass large text (3:1) but may fail small text (4.5:1)
-      // We're testing that the threshold is different
-      if (!smallText) {
-        expect(largeText).toBe(true);
-      }
+      // If meetsWCAGAA's small/large threshold split were ever collapsed to
+      // a single value, one of these two unconditional assertions would
+      // fail — unlike the old `if (!smallText)` guard, neither can be
+      // skipped.
+      expect(ColorAccessibility.meetsWCAGAA(color1, color2, false)).toBe(false);
+      expect(ColorAccessibility.meetsWCAGAA(color1, color2, true)).toBe(true);
     });
 
     it('should use 4.5:1 ratio for small text by default', () => {
