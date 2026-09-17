@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.5] - 2026-09-17
+
+### Fixed
+
+- `PATCH /presets/refresh-author` no longer binds an unset display name straight to D1. `userName` is optional on `AuthContext` (no `X-User-Discord-Name` header on the bot path, or a JWT with neither a `username` nor a `global_name` claim), and an `undefined` bind threw an opaque 500. A refresh with no name now returns 400 instead (BUG-014, `docs/audits/2026-09-16-deep-dive/`).
+- The `text_edit` / `flagged_edit` / `preview_upload` daily caps were check-then-insert: a separate count followed later by an append-only insert let concurrent requests at cap-1 all pass the check before any of them recorded, overshooting the cap. A new `reserveDailyEvent` (`services/rate-limit-service.ts`) inserts the event row first, counts today's rows for that user + kind including the new one, and self-deletes on overshoot — closing the race the same way the `submission` cap's own overshoot guard already did for its shape. The three call sites in `handlers/presets.ts` now reserve before acting and release the reservation if the UPDATE / R2 write it gated goes on to fail (BUG-015, `docs/audits/2026-09-16-deep-dive/`).
+
+### Changed
+
+- `tests/middleware/ban-check.test.ts` no longer drives its "banned" cases through the shared D1 mock's identity-blind `_setBanStatus`, which answered "banned" for any bound value and so could never have caught a wrong-column or wrong-identity bind. The banned cases now use a scripted row keyed on the exact bound value, with a new case for a JWT `sub` UUID (an XIVAuth-only account) and its inverse (BUG-043, `docs/audits/2026-09-16-deep-dive/`).
+- `middleware/ban-check.ts`'s `isUserBanned` JSDoc now documents what `banned_users.discord_id` actually holds: the resolved acting-user id (the `discord_id` claim, or the XIVAuth JWT `sub` UUID when an account has none), not always a Discord snowflake. No query change — moderation-worker's ban writer (Sprint 6) stores that same resolved value, so both sides already agree (BUG-001 path (a), coordinator ruling, `docs/audits/2026-09-16-deep-dive/`).
+
 ## [2.3.4] - 2026-09-16
 
 ### Removed (2026-09-15 dead-code audit)
