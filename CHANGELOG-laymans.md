@@ -31,7 +31,10 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
-## [5.7.1] - 2026-09-16
+## [5.8.0] - 2026-09-17
+### 🔗 Share a palette from the Palette Extractor
+- Web app: the Palette Extractor's Share button is back, beside Export. The link carries the colours on the bar (up to five, in order) and your matching method — not your picture and not hand-picked colours — and whoever opens it sees the same colours as equal bands with the same dye cards. Links pasted into Discord show a preview card again.
+
 ### 🔙 Back behaves in Presets, and prices show on a preset
 - Web app: pressing Back from a preset returns you to the list you were on — same tab, same search, no reload — instead of rebuilding the Presets tool, and Back now responds after a page refresh or after using the preset's own Back button, where it used to do nothing.
 - Web app: with "Show prices" on, a preset's dyes show the current market price (lowest listing and where) rather than only the vendor cost; the prices were being fetched but never displayed.
