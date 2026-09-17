@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.7] - 2026-09-16
+
+2026-09-16 deep-dive Sprint 4 (`docs/audits/2026-09-16-deep-dive/`). Picks up `@xivdyetools/bot-logic` 4.2.1 (`/swatch` eye rows labelled `EYES·L` / `EYES·R` / `EYES·LR` so off-grid heterochromia rows are told apart, BUG-006). The `/preset` schema change means `register-commands` must run with the deploy.
+
+### Fixed
+
+- `/manual topic:spectrum_prices` answers with a deferred (ephemeral) response and edits it once the Lodestone region is resolved, instead of awaiting two service-binding lookups inside Discord's 3-second ack — a cold isolate with a slow api-worker produced "The application did not respond" (BUG-008). Users with no stored world keep the instant reply; a failed edit is logged and marked as an outcome.
+- `/stats health` reports `env.ENVIRONMENT` (`unknown` when unset) instead of a hard-coded `production` (BUG-012).
+- `/webhooks/preset-submission` reads its body through the shared `readTextCapped` (lifted from `/swatch` into `src/utils/read-text-capped.ts`) so the 10 KB cap is enforced on streamed bytes, not only on a client-declared `Content-Length` (BUG-013).
+- `notifySubmissionChannel` logs a non-2xx from Discord instead of only a thrown error (REFACTOR-002 follow-up from review).
+
+### Changed
+
+- The three `/preset` notification helpers receive the request logger, so a failed send is logged with the request id (REFACTOR-002).
+- `/preset submit` and `/preset edit` options carry `min_length` / `max_length` matching the documented bounds (name 2–50, description 10–200) so Discord rejects them client-side; autocomplete choice names are capped at Discord's 100-character limit at all three builders (REFACTOR-003).
+
+### Added
+
+- `src/handlers/commands/mixer-v4.test.ts` and `gradient.test.ts` — the two adapters had no suites (BUG-034, BUG-033); both are now inside the coverage gate (`vitest.config.ts` exclusions removed). The plan's described ratio option, duplicate-dye rejection and stage cap do not exist in the adapters; the suites document real behaviour, including `steps: 0` falling back to 6 via `|| 6`.
+
 ## [5.5.6] - 2026-09-16
 
 ### Removed (2026-09-15 dead-code audit)
