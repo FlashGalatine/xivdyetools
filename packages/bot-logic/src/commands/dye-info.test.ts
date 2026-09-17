@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { executeDyeInfo, executeRandom } from './dye-info.js';
 import { dyeService } from '../input-resolution.js';
 import { ColorService } from '@xivdyetools/core';
+import type { ConsolidationType } from '@xivdyetools/core';
 
 // Get a real dye to use in tests
 const snowWhite = dyeService.searchByName('Snow White')[0];
@@ -247,5 +248,51 @@ describe('executeDyeInfo — the nearest strip headline', () => {
         withinBand,
       );
     }
+  });
+});
+
+// ============================================================================
+// The MKT row's item ID (REFACTOR-005 — derived through core's getMarketItemID)
+// ============================================================================
+
+describe('executeDyeInfo — MKT row', () => {
+  // Expected values hardcoded independently of `CONSOLIDATED_DYES` (the table
+  // `marketValue` itself reads) — the published Patch 7.5 itemIDs and English
+  // names, per `packages/core/src/config/consolidated-ids.ts` and the root
+  // CLAUDE.md ("Type-A=52254 / Type-B=52255 / Type-C=52256"). Asserting
+  // against the same table `getMarketItemID` reads from would pass even if
+  // that table itself were wrong.
+  const CONSOLIDATED_CASES: Array<{ type: ConsolidationType; name: string; itemID: number }> = [
+    { type: 'A', name: 'Standard Spectrum Dye', itemID: 52254 },
+    { type: 'B', name: 'Wide Spectrum #1 Dye', itemID: 52255 },
+    { type: 'C', name: 'Wide Spectrum #2 Dye', itemID: 52256 },
+  ];
+
+  it.each(CONSOLIDATED_CASES)(
+    'type $type prints the localized consolidated name + itemID ($itemID)',
+    async ({ type, name, itemID }) => {
+      const dye = dyeService.getAllDyes().find((d) => d.consolidationType === type);
+      expect(dye, `no dye with consolidationType ${type} in the database`).toBeDefined();
+
+      const result = await executeDyeInfo({ dye: dye!, locale: 'en' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.svgString).toContain(`${name} · ${itemID}`);
+    },
+  );
+
+  it('an unconsolidated tradeable dye prints its own itemID (Pure White, 13114)', async () => {
+    // Pure White is a Venture Coffers "Special" dye — consolidationType null
+    // in dyes.json, legacyItemID 13114 (not derived from CONSOLIDATED_DYES).
+    const pureWhite = dyeService.searchByName('Pure White')[0];
+    expect(pureWhite.consolidationType).toBeNull();
+    expect(pureWhite.itemID).toBe(13114);
+
+    const result = await executeDyeInfo({ dye: pureWhite, locale: 'en' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.svgString).toContain('13114');
   });
 });
