@@ -42,6 +42,37 @@ function withFailingBanLookup(base: ReturnType<typeof createMockD1Database>): D1
     } as unknown as D1Database;
 }
 
+/**
+ * BUG-043 (2026-09-16 deep-dive): the shared mock's `first()` special-cases
+ * ANY `SELECT 1 FROM banned_users` query and answers from `_setBanStatus()`
+ * regardless of the bound value (see d1.ts's own comment on the
+ * special-case) — so a suite built only on `_setBanStatus` cannot see which
+ * id or column was bound, which is exactly how BUG-001 (the ban check
+ * binding a Discord ID even for a JWT `sub` UUID) went uncaught. This double
+ * models a real `banned_users` row keyed on exactly one id: "banned" only
+ * when the bound value equals `expectedId`, `null` (not banned) otherwise —
+ * so a test using the wrong identity, or the wrong column, fails instead of
+ * silently passing.
+ */
+function withBanStatusKeyedOn(
+    base: ReturnType<typeof createMockD1Database>,
+    expectedId: string
+): D1Database {
+    return {
+        ...base,
+        prepare: (query: string) => {
+            if (query.includes('banned_users') && /SELECT\s+1\s+FROM/i.test(query)) {
+                return {
+                    bind: (...values: unknown[]) => ({
+                        first: async () => (values[0] === expectedId ? { 1: 1 } : null),
+                    }),
+                };
+            }
+            return base.prepare(query);
+        },
+    } as unknown as D1Database;
+}
+
 describe('BanCheckMiddleware', () => {
     let app: Hono<{ Bindings: Env; Variables: Variables }>;
     let env: Env;
@@ -120,8 +151,9 @@ describe('BanCheckMiddleware', () => {
         });
 
         it('should return 403 if user is banned', async () => {
-            // Use _setBanStatus to simulate banned user
-            mockDb._setBanStatus(true);
+            // BUG-043: a row scripted for the exact Discord ID the request
+            // binds, not the identity-blind `_setBanStatus`.
+            const keyedEnv = createMockEnv({ DB: withBanStatusKeyedOn(mockDb, '123456789') });
 
             const res = await app.request(
                 '/test/action',
@@ -131,7 +163,7 @@ describe('BanCheckMiddleware', () => {
                         'X-User-Discord-ID': '123456789',
                     },
                 },
-                env
+                keyedEnv
             );
 
             expect(res.status).toBe(403);
@@ -368,7 +400,10 @@ describe('BanCheckMiddleware', () => {
         });
 
         it('should block banned user with JWT authentication', async () => {
-            mockDb._setBanStatus(true);
+            // BUG-043: keyed on the `sub` this token carries (it sends no
+            // `discord_id` claim, so `resolveJWTUserId` falls back to `sub`)
+            // instead of the identity-blind `_setBanStatus`.
+            const keyedEnv = createMockEnv({ DB: withBanStatusKeyedOn(mockDb, '123456789') });
 
             const jwtSecret = 'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!';
             const header = { alg: 'HS256', typ: 'JWT' };
@@ -419,10 +454,55 @@ describe('BanCheckMiddleware', () => {
                         Authorization: `Bearer ${jwt}`,
                     },
                 },
-                env
+                keyedEnv
             );
 
             expect(res.status).toBe(403);
+        });
+
+        // BUG-001 path (a) / BUG-043 (2026-09-16 deep-dive, coordinator
+        // ruling): an XIVAuth-only account has no Discord snowflake, so
+        // `resolveJWTUserId` falls back to the JWT `sub` — the oauth
+        // worker's internal user UUID — and that UUID is what gets bound
+        // here. The suite above could never see this because
+        // `_setBanStatus` answers "banned" for ANY bound value.
+        it('blocks a banned user identified only by their XIVAuth sub UUID (BUG-001 path (a))', async () => {
+            const subUuid = '3f9c2a1e-7b4d-4e8a-9c1f-5d6e7a8b9c0d';
+            const keyedEnv = createMockEnv({ DB: withBanStatusKeyedOn(mockDb, subUuid) });
+            // No `discord_id` claim: an XIVAuth-only account.
+            const jwt = await createTestJWT(JWT_SECRET, { sub: subUuid, username: 'xivauth-user' });
+
+            const res = await app.request(
+                '/test/action',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                keyedEnv
+            );
+
+            expect(res.status).toBe(403);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('USER_BANNED');
+        });
+
+        // Inverse of the case above: the scripted row is keyed on a
+        // DIFFERENT id than the one this token resolves to, so a ban check
+        // that bound the wrong value (or queried the wrong column) would
+        // wrongly report banned. Passing through instead is what proves the
+        // sub UUID case above wasn't just a mock that always returns banned.
+        it('passes through when the banned row is keyed on a different id than the resolved sub', async () => {
+            const subUuid = '3f9c2a1e-7b4d-4e8a-9c1f-5d6e7a8b9c0d';
+            const someoneElsesId = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+            const keyedEnv = createMockEnv({ DB: withBanStatusKeyedOn(mockDb, someoneElsesId) });
+            const jwt = await createTestJWT(JWT_SECRET, { sub: subUuid, username: 'xivauth-user' });
+
+            const res = await app.request(
+                '/test/action',
+                { headers: { Authorization: `Bearer ${jwt}` } },
+                keyedEnv
+            );
+
+            expect(res.status).toBe(200);
+            const body = await res.json() as { success: boolean };
+            expect(body.success).toBe(true);
         });
     });
 });
