@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.1] - 2026-09-17
+
+### Fixed
+
+- **BUG-009**: `ColorConverter.hexToHsv` consulted its LRU cache (keyed on the
+  normalized, unprefixed hex) before `hexToRgb`'s `isValidHexColor` guard ran, so
+  `hexToHsv('FF0000')` cold threw `INVALID_HEX_COLOR` while the same bare string
+  succeeded once `hexToHsv('#FF0000')` had warmed the cache — a consistency defect
+  only (the warm value was always correct). Fixed by validating first, matching
+  `hexToRgb`'s guard exactly; the cache key format is unchanged. Every sibling
+  `hexTo*` method (`hexToLab`, `hexToOklab`, `hexToOklch`, `hexToLch`, `hexToHsl`,
+  `hexToCmyk`) already delegates to `hexToRgb` with no cache of its own and needed
+  no change.
+- **BUG-011**: `CharacterMatchOptions.matchingMethod`'s JSDoc said the default was
+  `'oklab'`; `findClosestDyes` has actually defaulted to `'ciede2000'` (the 5.0
+  default everywhere else) since the harmony-convergence work. Doc-only fix — no
+  behaviour change, but the comment ships in the published `.d.ts`.
+
+### Changed
+
+- **BUG-010**: `DyeDatabase.initialize()` now `Object.freeze`s every dye record
+  (and its nested `rgb`/`hsv`/`lab` objects) once all derived fields are written
+  and the k-d tree / hue-bucket indexes are built. `getAllDyes()`'s `[...this.dyes]`
+  only ever copied the *array* — the elements were the same objects shared with
+  `dyesByIdMap`, `dyesByStainIdMap`, `dyesByHueBucket` and the k-d tree, so a
+  caller mutating a field on what looked like a defensive copy silently corrupted
+  every index built over it. A mutation attempt now throws `TypeError` (ESM strict
+  mode) instead. `LocaleLoader.loadLocale()` and `LocaleRegistry.getLocale()` are
+  documented (JSDoc only, no code change) as returning the shared bundled locale
+  module rather than a clone — six locale trees per call made cloning-per-lookup
+  not worth it for data that is never legitimately mutated at runtime.
+
+### Tests
+
+- **BUG-032**: `ColorAccessibility.test.ts`'s WCAG-AA small-vs-large-text
+  threshold test used a fixture (`#767676` on `#FFFFFF`, ~4.55:1) that sat above
+  the 4.5:1 small-text threshold, so its `if (!smallText) { … }` branch never ran
+  and the test could not fail. Replaced with `#949494` on `#FFFFFF` (~3.5:1,
+  verified in-band with the service's own `getContrastRatio`) and two
+  unconditional assertions.
+
+See `docs/audits/2026-09-16-deep-dive/` for the full findings.
+
 ## [5.2.0] - 2026-09-05
 
 ### Added
