@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.1] - 2026-09-16
+
+Remediation from the 2026-09-16 deep-dive (`docs/audits/2026-09-16-deep-dive/`).
+
+### Fixed
+
+- **`/swatch` dropped the L/R eye marker on off-grid heterochromia rows**
+  (BUG-006). A heterochromia `.chara` file whose eyes are both OFF GRID
+  rendered two rows both labelled EYES with no way to tell which swatch was
+  which eye — the `·L`/`·R`/`·LR` suffix was only appended when the row was
+  on-grid. It now appends regardless.
+
+### Changed
+
+- `dye-info.ts`'s `marketValue()` now derives the MKT row's item ID through
+  core's `getMarketItemID(dye)` instead of re-implementing the Patch 7.5
+  consolidation gate in this package (REFACTOR-005). Internal only — the
+  rendered value is unchanged for all 125 dyes.
+
 ## [4.2.0] - 2026-09-05
 
 ### Added
