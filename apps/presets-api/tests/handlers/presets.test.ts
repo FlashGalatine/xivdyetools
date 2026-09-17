@@ -367,6 +367,61 @@ describe('PresetsHandler', () => {
 
             expect(body.success).toBe(true);
         });
+
+        // BUG-014 (2026-09-16 deep-dive): `userName` is optional on
+        // `AuthContext` — before the fix, binding it raw threw an opaque 500
+        // (the mock D1's own `assertBindable` rejects `undefined` exactly the
+        // way real D1 does). A bot-auth request with no `X-User-Discord-Name`
+        // header leaves `auth.userName` undefined.
+        it('rejects with 400 instead of binding undefined when the bot sends no display name (BUG-014)', async () => {
+            mockDb._setupMock(() => ({ success: true, meta: { changes: 5 } }));
+
+            const res = await app.request(
+                '/api/v1/presets/refresh-author',
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Authorization: 'Bearer test-bot-secret',
+                        'X-User-Discord-ID': '123',
+                        // No X-User-Discord-Name header.
+                    },
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('VALIDATION_ERROR');
+            expect(mockDb._queries.some((q) => q.includes('SET author_name'))).toBe(false);
+        });
+
+        // Same gap on the web/JWT path: a token with neither a `username` nor
+        // a `global_name` claim (an XIVAuth-only account, or any token the
+        // oauth worker minted without a display name) resolves
+        // `auth.userName` to genuinely `undefined`, exactly like the bot path
+        // above — `displayName = jwtPayload.global_name || jwtPayload.username`
+        // with both absent.
+        it('rejects with 400 for a JWT session with no username or global_name claim (BUG-014)', async () => {
+            mockDb._setupMock(() => ({ success: true, meta: { changes: 5 } }));
+            const jwt = await createTestJWT(
+                'test-jwt-secret-that-is-at-least-32-bytes!!-that-is-at-least-32-bytes!!',
+                { sub: '123' } as unknown as Parameters<typeof createTestJWT>[1]
+            );
+
+            const res = await app.request(
+                '/api/v1/presets/refresh-author',
+                {
+                    method: 'PATCH',
+                    headers: { Authorization: `Bearer ${jwt}` },
+                },
+                env
+            );
+
+            expect(res.status).toBe(400);
+            const body = await res.json() as { error: string };
+            expect(body.error).toBe('VALIDATION_ERROR');
+            expect(mockDb._queries.some((q) => q.includes('SET author_name'))).toBe(false);
+        });
     });
 
     // ============================================

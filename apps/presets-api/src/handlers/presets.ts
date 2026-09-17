@@ -340,6 +340,17 @@ presetsRouter.patch('/refresh-author', async (c) => {
     return validationErrorResponse(c, 'User ID required for author refresh');
   }
 
+  // BUG-014 (2026-09-16 deep-dive): `userName` is optional on `AuthContext`
+  // (unset headers on the bot path, or no username/global_name claim on the
+  // JWT path) — binding `undefined` to D1 throws `D1_TYPE_ERROR`, an opaque
+  // 500. A refresh with no name has nothing to write, so reject it the same
+  // way this file's other two `auth.userName` call sites default it
+  // (`|| 'Unknown User'` in POST /presets, `?? ''` in preview-image
+  // notifications) instead of binding it raw.
+  if (!auth.userName || auth.userName.trim().length === 0) {
+    return validationErrorResponse(c, 'Display name required for author refresh');
+  }
+
   // Update all presets by this user to use their current display name
   const result = await c.env.DB.prepare(`
     UPDATE presets
