@@ -13,10 +13,10 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | Package | Version | Description |
 |---------|---------|-------------|
 | [`@xivdyetools/types`](packages/types/) | 3.2.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
-| [`@xivdyetools/logger`](packages/logger/) | 2.2.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
+| [`@xivdyetools/logger`](packages/logger/) | 2.2.1 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
 | [`@xivdyetools/auth`](packages/auth/) | 2.0.2 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
 | [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.3.0 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
-| [`@xivdyetools/core`](packages/core/) | 5.2.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
+| [`@xivdyetools/core`](packages/core/) | 5.2.1 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
 | [`@xivdyetools/svg`](packages/svg/) | 4.1.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
 | [`@xivdyetools/bot-logic`](packages/bot-logic/) | 4.2.1 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 2.0.1 | Cloudflare Workers mocks (D1, KV, R2) and test factories — **not published** |

@@ -35,10 +35,10 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.2.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.2.1 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.2.0 | `@xivdyetools/logger` | npm | Active |
+| **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.3.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.2.1 | `@xivdyetools/bot-logic` | npm | Active |
@@ -65,6 +65,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 8 — `hexToHsv` (and siblings) validate before the LRU lookup, so a bare `RRGGBB` throws cold and warm alike (BUG-009); dye records and their `rgb`/`hsv`/`lab` are frozen at the end of `initialize()` — a consumer mutation now throws `TypeError` instead of corrupting the shared indices (BUG-010); locale objects documented as shared; `CharacterMatchOptions.matchingMethod` JSDoc default corrected to `ciede2000` (BUG-011); the WCAG small-vs-large threshold test can fail (BUG-032) |
 | **v5.2.0** | **Sep 2026** | **Five selectable harmony colour wheels (PR #167) — `COLOR_WHEEL_IDS` (`rgb` / `ryb` / `munsell` / `oklch-hue` / `oklch-lightness`), `getColorWheel`, `parseColorWheelId`, `normalizeColorWheelId`, `HarmonySelectionConfig.wheel`, `HarmonySlot.wheelHue`; with `wheel` unset the output is byte-identical to 5.1.0** |
 | **v5.1.0** | **Sep 2026** | **`getDeltaE_Oklab` is now ΔEOK2 (CSS Color 4 §20.4, `a`/`b` scaled ×2) — changes both the ranking and the numeric scale (~1.4–2×) of the `oklab` matching method; `BAND_VOCABULARY` oklab cuts recalibrated, `HARMONY_MAX_DISTANCE.oklab` 0.13 → 0.21** |
 | **v5.0.0** | **Sep 2026** | **BREAKING — `RybColorMixer` (the Gossett-Chen paint cube) removed; one RYB mixing implementation shared by the web app and the bot (ALGO-002 — the cube failed the identity law on 53% of dye pairs)** |
@@ -290,6 +291,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 9 — the browser preset's error-tracker wrapper serialises a non-`Error` value with `safeStringify`, so a circular or BigInt-bearing value no longer throws inside `logger.error()` (BUG-020; latent — no app configures a tracker) |
 | **v2.2.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 13) — a secret reachable only through a cycle is redacted (the cycle guards returned the raw original node, BUG-004); `sanitizeErrorMessage` output changes shape for non-`Bearer` auth schemes** |
 | v2.1.2 | Sep 2026 | knip dead-code gate — 30 barrel exports tagged `@public` (adjudicated KEEP from DEAD-021) |
 | **v2.1.1** | **Aug 2026** | **2026-08-29 security audit (FINDING-025) — value-shape scan now reaches string array items (incl. arrays nested in arrays) and bare JWT/Discord-token substrings inside `message` / `error.message` / non-Error throws; a ≥64-hex run is deliberately NOT scanned in free text (false-positive risk: content hashes, cache keys); fixed a shape bug where an array item that was itself an array logged as `{'0':…,'1':…}` instead of staying an array; S10-R8 — the cycle guard was a *global* seen-set, so a value aliased from two keys was redacted only at its first reference, now an ancestor (recursion-path) set so every reference is redacted; S10-R12 — that fix's own node-visit budget (added to bound the ancestor set's exponential cost on a heavily-aliased structure) turned out to fail OPEN, emitting anything past a ~5000-node cutoff completely unscanned — replaced with memoization (every node processed exactly once, aliases resolve to the same redacted object, no cutoff to fail open past); S10-R14 — memoization surfaced a matching bug one layer down in `safeStringify` (global "seen" set on every `JsonAdapter.write` line started reading aliased-not-circular references as cycles, dropping repeated data) — fixed with the same path-scoped technique; S10-R18 — path-scoping then serialises a shared subtree once per PATH to it, exponential on a maximally-aliased structure (the fix round's own 40-level test case: unbounded, never finished) — `safeStringify` now carries its own fail-CLOSED bound (50,000 values/call, `"[Truncated]"` past it — loses diagnostics, not secrets, since everything reaching it is already redacted, unlike the fail-open redaction budget S10-R12 removed)** |
