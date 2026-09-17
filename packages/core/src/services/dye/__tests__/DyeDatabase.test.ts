@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DyeDatabase } from '../DyeDatabase.js';
+import type { DyeInternal } from '../DyeDatabase.js';
 import type { Dye } from '@xivdyetools/types';
 import { AppError, ErrorCode } from '@xivdyetools/types';
 import type { Logger } from '@xivdyetools/logger/library';
@@ -259,7 +260,7 @@ describe('DyeDatabase', () => {
       it('throws TypeError when mutating the nested lab object on a returned dye', () => {
         const dyes = database.getAllDyes();
         expect(() => {
-          (dyes[0].lab as { L: number }).L = 0;
+          ((dyes[0] as DyeInternal).lab as { L: number }).L = 0;
         }).toThrow(TypeError);
       });
 
@@ -293,7 +294,7 @@ describe('DyeDatabase', () => {
       expect(Object.isFrozen(dye)).toBe(true);
       expect(Object.isFrozen(dye?.rgb)).toBe(true);
       expect(Object.isFrozen(dye?.hsv)).toBe(true);
-      expect(Object.isFrozen(dye?.lab)).toBe(true);
+      expect(Object.isFrozen((dye as DyeInternal | null)?.lab)).toBe(true);
     });
 
     it('should find dye by itemID', () => {
