@@ -421,6 +421,39 @@ describe('PresetTool', () => {
 
       expect(el.selectedPreset).toBeNull();
     });
+
+    it('final review: drops a stale handleDeepLink() restore superseded by a newer popstate', async () => {
+      let resolveDeepLink!: (value: UnifiedPreset | null) => void;
+      hybridPresetServiceMock.getPreset.mockImplementationOnce(
+        () =>
+          new Promise<UnifiedPreset | null>((resolve) => {
+            resolveDeepLink = resolve;
+          })
+      );
+
+      // A cold load at /presets/:id — handleDeepLink()'s API-fallback lookup
+      // (the same race class restoreSelectedPresetFromHistory guards against)
+      // is held open across the mount's connectedCallback chain.
+      routerServiceMock.getSubPath.mockReturnValue('community-deep-link');
+
+      const el = await mountTool();
+      await flush(el);
+
+      // Before that lookup resolves, a popstate (e.g. handleBack's `{}`
+      // shape) takes the URL back to the bare list.
+      routerServiceMock.getSubPath.mockReturnValue(null);
+      window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
+      await el.updateComplete;
+      expect(el.selectedPreset).toBeNull();
+
+      // The deep-link lookup finally resolves — it must not clobber the
+      // newer, already-settled state.
+      resolveDeepLink(makePreset({ id: 'community-deep-link', name: 'Deep Link' }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      await el.updateComplete;
+
+      expect(el.selectedPreset).toBeNull();
+    });
   });
 
   // --------------------------------------------------------------------

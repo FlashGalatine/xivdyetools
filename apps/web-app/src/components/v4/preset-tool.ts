@@ -562,14 +562,17 @@ export class PresetTool extends BaseLitComponent {
       return;
     }
 
+    const seq = ++this._restoreSeq;
     try {
       const preset = await hybridPresetService.getPreset(presetId);
+      if (seq !== this._restoreSeq) return; // superseded by a newer popstate
       if (preset) {
         this.selectedPreset = preset;
       } else {
         logger.warn('[v4-preset-tool] Preset not found for deep link:', presetId);
       }
     } catch (error) {
+      if (seq !== this._restoreSeq) return; // superseded by a newer popstate
       logger.error('[v4-preset-tool] Failed to load deep-linked preset:', error);
     }
   }
