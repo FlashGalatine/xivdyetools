@@ -31,6 +31,38 @@ const WITH_NICKNAME = JSON.stringify({
   Nickname: 'Real Name',
 });
 
+/**
+ * Minimal heterochromia file, both eyes pushed OFF GRID: `REyeColor: 42`
+ * (left eye, index hex `#DCBA6C` — a golden tan) and `LEyeColor: 169` (right
+ * eye, index hex `#87C0A3` — a sage green), each paired with an extended
+ * float (`LeftEyeColor`/`RightEyeColor`, crossed per the parser's own rule)
+ * set to a saturated primary nowhere near its index colour — pure blue and
+ * pure red respectively — to push ΔE2000 far past `OFF_GRID_DELTA_E2000` (6).
+ * Every other colour key is omitted, so hair/skin/lip/etc. all resolve inert
+ * and the only two live rows are the eyes (BUG-006).
+ */
+const HETEROCHROMIA_OFF_GRID = JSON.stringify({
+  IsExtendedAppearanceValid: true,
+  REyeColor: 42,
+  LEyeColor: 169,
+  LeftEyeColor: '0, 0, 1',
+  RightEyeColor: '1, 0, 0',
+});
+
+/**
+ * Same shape, but both eyes share index 42 (`eyesShareIndex: true`) — only
+ * the left eye carries a divergent float, which is enough: the right eye row
+ * never renders when the indices match (`executeSwatch` merges it away), so
+ * this line covers the "shared-index off grid" arm of BUG-006 (`·LR` badge)
+ * independent of what the right eye's own verdict would have been.
+ */
+const HETEROCHROMIA_SHARED_OFF_GRID = JSON.stringify({
+  IsExtendedAppearanceValid: true,
+  REyeColor: 42,
+  LEyeColor: 42,
+  LeftEyeColor: '0, 0, 1',
+});
+
 describe('executeSwatch', () => {
   it('renders the character sheet with live slots only', async () => {
     const result = await executeSwatch({
@@ -185,6 +217,66 @@ describe('executeSwatch', () => {
       expect(named.embed.description).not.toContain('Firstname');
       expect(known.svgString).toContain('DUSKWIGHT ♀ · ANAMNESIS');
       expect(known.svgString).not.toContain('CHARACTER FILE');
+    });
+  });
+
+  describe('BUG-006: off-grid eyes keep their L/R marker', () => {
+    it('gives heterochromia off-grid eyes distinct ·L / ·R markers', async () => {
+      const result = await executeSwatch({
+        fileText: HETEROCHROMIA_OFF_GRID,
+        // zh, not en: the lead column is a measured 56px budget and English's
+        // "OFF GRID" already clears it by only ~1.4px (I18N-011), so a ·L/·R
+        // suffix ellipsises away before it ever reaches the SVG text — a
+        // pre-existing card-width squeeze, unrelated to this fix. zh's
+        // "网格外" leaves enough of the same budget for a one-letter suffix
+        // to render intact, which is what proves the addr string itself
+        // (computed in swatch.ts, upstream of any card-width truncation)
+        // carries the marker.
+        locale: 'zh',
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      // Sanity: both eyes really did resolve off grid with distinct indices
+      // (the bug can't be observed otherwise).
+      const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
+      const rightEye = result.character.slots.find((s) => s.slot === 'rightEye');
+      expect(leftEye?.verdict).toBe('offGrid');
+      expect(rightEye?.verdict).toBe('offGrid');
+      expect(result.character.eyesShareIndex).toBe(false);
+
+      // The addr starts with the off-grid token and ends in ·L / ·R — the
+      // `<` confirms it is the full, un-ellipsised text-node content.
+      expect(result.svgString).toContain('网格外·L<');
+      expect(result.svgString).toContain('网格外·R<');
+    });
+
+    it('still merges shared-index off-grid eyes into one ·LR row', async () => {
+      // Bonus case from the brief ("if cheap to add"). It is not cheap to
+      // observe through the rendered SVG: the off-grid token + `·LR` (3
+      // extra chars) overflows the 56px lead budget in every locale tried
+      // (en/de/fr/zh all ellipsise it away — zh's own token already uses
+      // 40.92 of the 56px budget, leaving only room for a single extra
+      // letter, not two). So this asserts the pre-render state instead:
+      // eyesShareIndex is true, the left eye resolved off grid, and only one
+      // eye row exists (the right eye is merged away) — the same code path
+      // that appends `·LR` to `addr` in swatch.ts.
+      const result = await executeSwatch({
+        fileText: HETEROCHROMIA_SHARED_OFF_GRID,
+        locale: 'en',
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.character.eyesShareIndex).toBe(true);
+      const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
+      expect(leftEye?.verdict).toBe('offGrid');
+      // Only one live row total (the merged eye row) — the footer's "N of N
+      // slot" count is the suite's existing, width-independent way to prove
+      // row count (see the "renders the character sheet" test above).
+      expect(result.svgString).toContain('nearest by ΔE2000 · 1 of 1 slot');
     });
   });
 });

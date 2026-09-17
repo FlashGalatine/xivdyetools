@@ -248,7 +248,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       const match = nearestDye(hex);
       const offGrid = slot.verdict === 'offGrid' || slot.verdict === 'floatOnly';
       let addr = offGrid ? t.t('card.offGridShort') : (slot.gridAddress ?? '—');
-      if (!offGrid && (slot.slot === 'leftEye' || slot.slot === 'rightEye')) {
+      if (slot.slot === 'leftEye' || slot.slot === 'rightEye') {
         if (character.eyesShareIndex) addr += '·LR';
         else addr += slot.slot === 'leftEye' ? '·L' : '·R';
       }
