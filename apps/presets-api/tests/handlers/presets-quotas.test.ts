@@ -857,5 +857,73 @@ describe('daily quotas (FINDING-008)', () => {
             expect(res.status).toBe(400);
             expect(table.events()).toHaveLength(0);
         });
+
+        it('releases the reservation when the body exceeds the 5 MB limit', async () => {
+            const table = mockSubmissionEventsTable(mockDb, () =>
+                createMockPresetRow({ id: 'preset-123', author_discord_id: '123' })
+            );
+            // Real PNG magic bytes so ONLY the size check can reject this.
+            const big = new Uint8Array(5 * 1024 * 1024 + 1);
+            big.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                { method: 'POST', headers: BOT_HEADERS, body: big },
+                env,
+                ctx
+            );
+
+            expect(res.status).toBe(400);
+            expect(table.events()).toHaveLength(0);
+        });
+
+        // Important 2 (fix round 1): the release sites at the storePreviewImage
+        // catch and the DB UPDATE catch had no dedicated coverage.
+        it('releases the reservation when storePreviewImage rejects (image-worker returns non-ok)', async () => {
+            const table = mockSubmissionEventsTable(mockDb, () =>
+                createMockPresetRow({ id: 'preset-123', author_discord_id: '123' })
+            );
+            const failingImageWorkerEnv = createMockEnv({
+                DB: mockDb as unknown as D1Database,
+                IMAGE_WORKER: {
+                    fetch: async () => new Response('bad image', { status: 500 }),
+                } as unknown as Fetcher,
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                { method: 'POST', headers: BOT_HEADERS, body: png },
+                failingImageWorkerEnv,
+                ctx
+            );
+
+            expect(res.status).toBe(400);
+            const body = (await res.json()) as { message: string };
+            expect(body.message).toBe('Image could not be processed');
+            expect(table.events()).toHaveLength(0);
+        });
+
+        it('releases the reservation when the DB UPDATE itself throws', async () => {
+            const table = mockSubmissionEventsTable(mockDb, (query: string) => {
+                if (/^\s*UPDATE\s+presets\s+SET\s+preview_image_key/i.test(query)) {
+                    throw new Error('D1_ERROR: database is locked');
+                }
+                return createMockPresetRow({ id: 'preset-123', author_discord_id: '123' });
+            });
+
+            const res = await app.request(
+                '/api/v1/presets/preset-123/preview-image',
+                { method: 'POST', headers: BOT_HEADERS, body: png },
+                env,
+                ctx
+            );
+
+            // Hono's default error handling turns the rethrown error into a
+            // 500 (no app.onError() is registered in this test harness); what
+            // this test actually verifies is that the reservation was released
+            // before that error left the handler.
+            expect(res.status).toBe(500);
+            expect(table.events()).toHaveLength(0);
+        });
     });
 });

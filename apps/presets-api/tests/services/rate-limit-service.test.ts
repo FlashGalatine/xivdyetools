@@ -9,7 +9,6 @@ import {
     getSubmissionCountToday,
     reserveDailyEvent,
     DAILY_FLAGGED_EDIT_LIMIT,
-    DAILY_PREVIEW_UPLOAD_LIMIT,
 } from '../../src/services/rate-limit-service';
 import { createMockD1Database } from '../test-utils';
 
@@ -350,7 +349,11 @@ describe('RateLimitService', () => {
             const result = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-1');
 
             expect(result.allowed).toBe(true);
-            expect(result.remaining).toBe(DAILY_PREVIEW_UPLOAD_LIMIT - 1);
+            // Hard-coded, not `DAILY_PREVIEW_UPLOAD_LIMIT - 1`: `remaining` is
+            // slots left AFTER this reservation (20 - 1 = 19), so an assertion
+            // built from the same expression the code evaluates couldn't catch
+            // an off-by-one in that expression.
+            expect(result.remaining).toBe(19);
             expect(typeof result.release).toBe('function');
             // The row is really there — not just reported as allowed.
             expect(rows.size).toBe(1);
@@ -446,16 +449,107 @@ describe('RateLimitService', () => {
             );
         });
 
-        it('reserves independently per kind: a full flagged_edit cap does not block text_edit', async () => {
+        // Critical 1 (fix round 1, coordinator ruling): a rate-limiter D1
+        // failure must never fail the mutation it is gating — `pruneSubmissionEvents`
+        // and `recordSubmissionEvent` already promised this; `reserveDailyEvent`
+        // has to keep the promise too, including for a migration
+        // (0012_submission_events_text_edit.sql) that is hand-run and may not
+        // be applied to a given environment.
+        it('fails open when the INSERT itself rejects: allowed, no release DELETE issued, warn logged', async () => {
             const db = createMockD1Database();
-            mockSubmissionEventsTable(db);
+            const warn = vi.fn();
+            let releaseDeleteCalled = false;
+            db._setupMock((query: string) => {
+                if (/^\s*INSERT INTO submission_events/i.test(query)) {
+                    throw new Error('D1_ERROR: no such table: submission_events');
+                }
+                if (/^\s*DELETE FROM submission_events\s+WHERE id\s*=/i.test(query)) {
+                    releaseDeleteCalled = true;
+                    return { success: true, meta: { changes: 1 } };
+                }
+                // The FINDING-017 prune's DELETE, which runs before the INSERT.
+                return { meta: { changes: 0 } };
+            });
 
-            for (let i = 1; i <= DAILY_FLAGGED_EDIT_LIMIT; i++) {
-                await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-1', { warn });
+
+            expect(result.allowed).toBe(true);
+            // Hard-coded: fail-open reports the raw cap, not a count it never
+            // got to take (there is no row to count).
+            expect(result.remaining).toBe(20);
+            expect(releaseDeleteCalled).toBe(false);
+            expect(warn).toHaveBeenCalledWith(
+                '[BUG-015] daily-event reservation insert failed — failing open',
+                expect.objectContaining({ kind: 'preview_upload' })
+            );
+
+            // The fail-open reservation's own release() is a genuine no-op —
+            // there is no row to delete, so it must not issue a DELETE either.
+            await expect(result.release!()).resolves.toBeUndefined();
+            expect(releaseDeleteCalled).toBe(false);
+        });
+
+        it('fails open when the COUNT rejects after a successful INSERT: releases the inserted row, warn logged', async () => {
+            const db = createMockD1Database();
+            const warn = vi.fn();
+            const insertedId = 1;
+            let releaseDeleteCalledWith: unknown = undefined;
+            db._setupMock((query: string, bindings: unknown[]) => {
+                if (/^\s*INSERT INTO submission_events/i.test(query)) {
+                    return { success: true, meta: { changes: 1, last_row_id: insertedId } };
+                }
+                if (/^\s*SELECT COUNT/i.test(query) && query.includes('FROM submission_events')) {
+                    throw new Error('D1_ERROR: database is locked');
+                }
+                if (/^\s*DELETE FROM submission_events\s+WHERE id\s*=/i.test(query)) {
+                    releaseDeleteCalledWith = bindings[0];
+                    return { success: true, meta: { changes: 1 } };
+                }
+                // The FINDING-017 prune's DELETE, which runs before the INSERT.
+                return { meta: { changes: 0 } };
+            });
+
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-1', { warn });
+
+            expect(result.allowed).toBe(true);
+            expect(result.remaining).toBe(20);
+            // The row the INSERT actually created was released, by its real id
+            // — not a fabricated one.
+            expect(releaseDeleteCalledWith).toBe(insertedId);
+            expect(warn).toHaveBeenCalledWith(
+                '[BUG-015] daily-event reservation count failed — failing open',
+                expect.objectContaining({ kind: 'preview_upload', rowId: insertedId })
+            );
+
+            // The row is already gone, so the reservation's own release() is
+            // now a no-op and must not attempt a second DELETE.
+            releaseDeleteCalledWith = undefined;
+            await expect(result.release!()).resolves.toBeUndefined();
+            expect(releaseDeleteCalledWith).toBeUndefined();
+        });
+
+        it('reserves independently per kind: 30 seeded text_edit rows do not block a preview_upload reservation', async () => {
+            const db = createMockD1Database();
+            const rows = mockSubmissionEventsTable(db);
+
+            // DAILY_PREVIEW_UPLOAD_LIMIT is 20 and DAILY_FLAGGED_EDIT_LIMIT is
+            // 10 — with only 10 rows of another kind seeded, a kind-BLIND count
+            // (10) would still read as "under cap" for preview_upload (20)
+            // whether or not the kind filter is really there, so that pairing
+            // could never fail. 30 seeded `text_edit` rows exceeds
+            // DAILY_PREVIEW_UPLOAD_LIMIT (20): a kind-blind count would refuse
+            // the preview_upload reservation outright. Seeded directly (ids
+            // deliberately far outside the autoincrement range the real
+            // reservations below use) rather than via 30 real reserveDailyEvent
+            // calls, since text_edit's own cap (30) would otherwise be the
+            // thing under test.
+            for (let i = 0; i < 30; i++) {
+                rows.set(100000 + i, { user: 'user-1', kind: 'text_edit' });
             }
-            const textEditResult = await reserveDailyEvent(db, 'user-1', 'text_edit');
 
-            expect(textEditResult.allowed).toBe(true);
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload');
+
+            expect(result.allowed).toBe(true);
         });
     });
 });

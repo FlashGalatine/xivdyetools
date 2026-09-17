@@ -47,12 +47,15 @@ function withFailingBanLookup(base: ReturnType<typeof createMockD1Database>): D1
  * ANY `SELECT 1 FROM banned_users` query and answers from `_setBanStatus()`
  * regardless of the bound value (see d1.ts's own comment on the
  * special-case) — so a suite built only on `_setBanStatus` cannot see which
- * id or column was bound, which is exactly how BUG-001 (the ban check
- * binding a Discord ID even for a JWT `sub` UUID) went uncaught. This double
- * models a real `banned_users` row keyed on exactly one id: "banned" only
- * when the bound value equals `expectedId`, `null` (not banned) otherwise —
- * so a test using the wrong identity, or the wrong column, fails instead of
- * silently passing.
+ * identity was bound, which is exactly how BUG-001 (the ban check binding a
+ * Discord ID even for a JWT `sub` UUID) went uncaught. This double models a
+ * real `banned_users` row keyed on exactly one id: "banned" only when the
+ * bound value equals `expectedId`, `null` (not banned) otherwise — so a test
+ * using the wrong identity fails instead of silently passing. It is
+ * identity-aware but column-blind: it matches the FIRST bound value on any
+ * `SELECT 1 FROM banned_users …` regardless of which column the real query
+ * names, so it cannot by itself distinguish a query that checked the wrong
+ * column from one that checked the right one with the wrong value.
  */
 function withBanStatusKeyedOn(
     base: ReturnType<typeof createMockD1Database>,
@@ -485,9 +488,9 @@ describe('BanCheckMiddleware', () => {
 
         // Inverse of the case above: the scripted row is keyed on a
         // DIFFERENT id than the one this token resolves to, so a ban check
-        // that bound the wrong value (or queried the wrong column) would
-        // wrongly report banned. Passing through instead is what proves the
-        // sub UUID case above wasn't just a mock that always returns banned.
+        // that bound the wrong value would wrongly report banned. Passing
+        // through instead is what proves the sub UUID case above wasn't just
+        // a mock that always returns banned.
         it('passes through when the banned row is keyed on a different id than the resolved sub', async () => {
             const subUuid = '3f9c2a1e-7b4d-4e8a-9c1f-5d6e7a8b9c0d';
             const someoneElsesId = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
