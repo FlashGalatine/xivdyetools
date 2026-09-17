@@ -568,12 +568,12 @@ async function processSubmitCommand(
 
     // Log to submission channel if approved
     if (isApproved && env.SUBMISSION_LOG_CHANNEL_ID) {
-      await notifySubmissionChannel(env, preset, 'approved');
+      await notifySubmissionChannel(env, preset, 'approved', logger);
     }
 
     // Notify moderation channel if pending
     if (!isApproved && env.MODERATION_CHANNEL_ID) {
-      await notifyModerationChannel(env, preset);
+      await notifyModerationChannel(env, preset, logger);
     }
   } catch (error) {
     markCommandOutcome(interaction, classifyError(error));
@@ -921,7 +921,7 @@ async function processEditCommand(
 
     // Notify moderation channel if pending
     if (isPending && env.MODERATION_CHANNEL_ID) {
-      await notifyEditModerationChannel(env, updatedPreset, existingPreset);
+      await notifyEditModerationChannel(env, updatedPreset, existingPreset, logger);
     }
   } catch (error) {
     markCommandOutcome(interaction, classifyError(error));
