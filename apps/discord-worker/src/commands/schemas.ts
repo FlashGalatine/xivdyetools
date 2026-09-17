@@ -1010,12 +1010,18 @@ export const commands = [
             description: 'Name for your preset (2-50 characters)',
             type: OptionType.STRING,
             required: true,
+            // REFACTOR-003: enforce the documented bounds at the schema level
+            // instead of only in the description text.
+            min_length: 2,
+            max_length: 50,
           },
           {
             name: 'description',
             description: 'Describe your preset (10-200 characters)',
             type: OptionType.STRING,
             required: true,
+            min_length: 10,
+            max_length: 200,
           },
           {
             name: 'category',
@@ -1105,12 +1111,18 @@ export const commands = [
             description: 'New preset name (2-50 characters)',
             type: OptionType.STRING,
             required: false,
+            // REFACTOR-003: enforce the documented bounds at the schema level
+            // instead of only in the description text.
+            min_length: 2,
+            max_length: 50,
           },
           {
             name: 'description',
             description: 'New description (10-200 characters)',
             type: OptionType.STRING,
             required: false,
+            min_length: 10,
+            max_length: 200,
           },
           {
             name: 'tags',

@@ -504,10 +504,13 @@ export async function searchPresetsForAutocomplete(
     const response = await getPresets(env, filters);
 
     return response.presets.map((preset) => ({
-      // Format: "Name (X★)" or "Name (X★) by Author"
-      name: preset.author_name
+      // Format: "Name (X★)" or "Name (X★) by Author". REFACTOR-003: Discord
+      // caps a choice name at 100 characters and rejects the whole
+      // interaction response when one is longer.
+      name: (preset.author_name
         ? `${preset.name} (${preset.vote_count}★) by ${preset.author_name}`
-        : `${preset.name} (${preset.vote_count}★)`,
+        : `${preset.name} (${preset.vote_count}★)`
+      ).slice(0, 100),
       value: preset.id,
     }));
   } catch (error) {

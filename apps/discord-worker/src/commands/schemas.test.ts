@@ -11,7 +11,13 @@ import { QUICK_PICKS } from '../services/budget/quick-picks.js';
 import { WORLD_NAME_MAX_LENGTH } from '../services/preferences.js';
 
 type Choice = { name: string; value: string | number };
-type Option = { name: string; options?: Option[]; choices?: Choice[]; max_length?: number };
+type Option = {
+  name: string;
+  options?: Option[];
+  choices?: Choice[];
+  min_length?: number;
+  max_length?: number;
+};
 
 function findOption(path: string[], options: Option[] | undefined): Option | undefined {
   const [head, ...rest] = path;
@@ -132,4 +138,32 @@ describe('/harmony type choices', () => {
     expect(names).toContain('prevent_duplicates');
     expect(names).toContain('companions');
   });
+});
+
+/**
+ * REFACTOR-003: submit/edit documented "2-50" / "10-200" character bounds
+ * only in the option description text — Discord never enforced them, so an
+ * out-of-range name or description reached presets-api and failed there
+ * instead of at the client.
+ */
+describe('/preset submit|edit length bounds', () => {
+  const preset = COMMAND_SCHEMAS.find((c) => c.name === 'preset') as unknown as Option;
+
+  const PRESET_LENGTH_OPTIONS: Array<{ path: string[]; min: number; max: number }> = [
+    { path: ['submit', 'preset_name'], min: 2, max: 50 },
+    { path: ['submit', 'description'], min: 10, max: 200 },
+    { path: ['edit', 'name'], min: 2, max: 50 },
+    { path: ['edit', 'description'], min: 10, max: 200 },
+  ];
+
+  it.each(PRESET_LENGTH_OPTIONS)(
+    '/preset $path.0 $path.1 carries its documented bounds',
+    ({ path, min, max }) => {
+      const option = findOption(path, preset.options);
+
+      expect(option, `/preset ${path.join(' ')} option missing`).toBeDefined();
+      expect(option!.min_length).toBe(min);
+      expect(option!.max_length).toBe(max);
+    },
+  );
 });

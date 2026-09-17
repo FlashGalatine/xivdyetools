@@ -1222,8 +1222,12 @@ async function getMyPresetsAutocompleteChoices(
 
     // Return up to 25 choices (Discord's maximum)
     return filtered.slice(0, 25).map((preset) => ({
-      // Format: "Name (status)" to help user identify pending edits
-      name: preset.status === 'approved' ? preset.name : `${preset.name} (${preset.status})`,
+      // Format: "Name (status)" to help user identify pending edits.
+      // REFACTOR-003: Discord caps a choice name at 100 characters.
+      name: (preset.status === 'approved'
+        ? preset.name
+        : `${preset.name} (${preset.status})`
+      ).slice(0, 100),
       value: preset.id,
     }));
   } catch (error) {
@@ -1282,7 +1286,8 @@ async function getFavoritedPresetsAutocompleteChoices(
     const filtered =
       query.length > 0 ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery)) : entries;
 
-    return filtered.slice(0, 25).map((e) => ({ name: e.name, value: e.id }));
+    // REFACTOR-003: Discord caps a choice name at 100 characters.
+    return filtered.slice(0, 25).map((e) => ({ name: e.name.slice(0, 100), value: e.id }));
   } catch (error) {
     logger.error(
       'Failed to get favorited presets autocomplete',

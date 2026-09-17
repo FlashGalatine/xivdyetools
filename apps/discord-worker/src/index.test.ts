@@ -1971,6 +1971,48 @@ describe('index.ts', () => {
         expect(getMyPresets).toHaveBeenCalledWith(mockEnv, 'user-123');
       });
 
+      // REFACTOR-003: Discord caps a choice name at 100 characters; a long
+      // preset name plus the " (pending)" status suffix must be truncated.
+      it('truncates a long preset name in the edit autocomplete choices', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { getMyPresets } = await import('./services/preset-api.js');
+
+        const interactionBody = JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+          data: {
+            name: 'preset',
+            options: [
+              {
+                name: 'edit',
+                type: 1,
+                options: [{ name: 'preset', value: '', focused: true }],
+              },
+            ],
+          },
+          user: { id: 'user-123' },
+        });
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: interactionBody,
+          error: '',
+        });
+        vi.mocked(getMyPresets).mockResolvedValue([
+          { id: 'preset-1', name: 'P'.repeat(120), status: 'pending' } as CommunityPreset,
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: interactionBody,
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        const data = (await res.json()) as InteractionResponseBody;
+        const choices = data.data!.choices as Array<{ name: string; value: string }>;
+
+        expect(choices[0].name.length).toBeLessThanOrEqual(100);
+      });
+
       it('should handle preset show autocomplete (approved presets)', async () => {
         const { verifyDiscordRequest } = await import('@xivdyetools/auth');
         const { searchPresetsForAutocomplete } = await import('./services/preset-api.js');
