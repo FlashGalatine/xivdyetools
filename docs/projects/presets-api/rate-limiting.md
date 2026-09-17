@@ -82,7 +82,15 @@ being read or written. Counting happens in two places:
 
 The submission cap is enforced on `getEffectiveSubmissionCountToday()`, which is
 `max(presets rows today, submission_events 'submission' rows today)` — the higher of the two. The
-other three kinds count `submission_events` rows alone (`checkDailyEventLimit`).
+other three kinds count `submission_events` rows alone, through `reserveDailyEvent()` (presets-api
+2.3.5, BUG-015 of the 2026-09-16 deep-dive): the event row is inserted **first**, the day's rows
+are counted including it, and a count over the cap deletes that row and refuses — so two
+concurrent edits can no longer both pass a check-then-insert. A handler whose mutation fails after
+the reservation releases the row again (best effort). Two trades come with the shape: a refused
+request now costs a prune DELETE + INSERT + COUNT + DELETE where it used to cost one COUNT (bounded
+by the per-IP limiter), and a request abandoned between the reservation and its completion keeps
+its slot until UTC midnight. The reservation itself stays best-effort — a D1 write error leaves the
+cap inert for that request rather than failing the edit, as before.
 
 ### 429 body
 

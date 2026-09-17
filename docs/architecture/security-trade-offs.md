@@ -314,7 +314,8 @@ Perspective's default quota is about **1 QPS**. Before this, a failed call retur
 //   moderationUnavailable() — { passed: false, method: 'perspective_unavailable' }
 //   checkWithPerspective()  — null ONLY when no key is configured
 // apps/presets-api/src/handlers/presets.ts
-//   PATCH /:id — checkDailyEventLimit(db, user, 'text_edit') before moderateContent
+//   PATCH /:id — reserveDailyEvent(db, user, 'text_edit') before moderateContent
+//                (reserve-then-act since 2.3.5, BUG-015 of the 2026-09-16 deep-dive)
 // apps/presets-api/src/services/rate-limit-service.ts — DAILY_TEXT_EDIT_LIMIT
 // apps/presets-api/migrations/0012_submission_events_text_edit.sql
 ```
