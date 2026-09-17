@@ -109,12 +109,12 @@ describe('ColorAccessibility', () => {
       // BUG-032 (2026-09-16 audit): the previous fixture (#767676 on
       // #FFFFFF) is ~4.55:1, ABOVE the 4.5:1 small-text threshold, so
       // `smallText` was always true and the `if (!smallText)` branch below
-      // never ran — nothing was ever asserted. #949494 on #FFFFFF sits
-      // between the two WCAG AA thresholds (~3.5:1: below 4.5:1 small-text,
+      // never ran — nothing was ever asserted. #858585 on #FFFFFF sits
+      // between the two WCAG AA thresholds (3.69:1: below 4.5:1 small-text,
       // above 3:1 large-text), computed here with the service's own
       // contrast function so the fixture can't silently drift back above
       // 4.5:1 (or below 3:1) without failing this test.
-      const color1 = '#949494';
+      const color1 = '#858585';
       const color2 = '#FFFFFF';
 
       const ratio = ColorAccessibility.getContrastRatio(color1, color2);

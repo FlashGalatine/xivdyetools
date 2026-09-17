@@ -256,6 +256,13 @@ describe('DyeDatabase', () => {
         }).toThrow(TypeError);
       });
 
+      it('throws TypeError when mutating the nested lab object on a returned dye', () => {
+        const dyes = database.getAllDyes();
+        expect(() => {
+          (dyes[0].lab as { L: number }).L = 0;
+        }).toThrow(TypeError);
+      });
+
       it('leaves the record unchanged after a failed mutation attempt', () => {
         const dyes = database.getAllDyes();
         const before = dyes[0].name;
@@ -286,6 +293,7 @@ describe('DyeDatabase', () => {
       expect(Object.isFrozen(dye)).toBe(true);
       expect(Object.isFrozen(dye?.rgb)).toBe(true);
       expect(Object.isFrozen(dye?.hsv)).toBe(true);
+      expect(Object.isFrozen(dye?.lab)).toBe(true);
     });
 
     it('should find dye by itemID', () => {
