@@ -255,6 +255,12 @@ describe('executeSwatch', () => {
       // suffix anywhere.
       expect(result.svgString).not.toContain('OFF GRID·');
       expect(result.svgString.match(/OFF GRID</g)?.length).toBe(2);
+
+      // The marker also rides `label` into the embed's off-grid lines
+      // (`card.swatchOffGrid`), not just the card row — pin the literal slot
+      // names rather than something derived from the same lookup table.
+      expect(result.embed.description).toContain('EYES·L off grid');
+      expect(result.embed.description).toContain('EYES·R off grid');
     });
 
     it('gives heterochromia off-grid eyes their LABEL marker in a CJK locale too (zh)', async () => {

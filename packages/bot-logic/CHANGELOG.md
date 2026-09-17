@@ -17,7 +17,10 @@ Remediation from the 2026-09-16 deep-dive (`docs/audits/2026-09-16-deep-dive/`).
   which eye. The `·L`/`·R`/`·LR` marker now sits on the row's slot LABEL
   (e.g. `EYES·L`) instead of the address line, so it survives on off-grid
   rows too — the address line's OFF-GRID token was already at its card-width
-  limit and would have ellipsised a suffix away in most locales.
+  limit and would have ellipsised a suffix away in most locales. The same
+  `label` also flows into the `/swatch slot:` nearest sheet's title and into
+  the off-grid / dropped-slot embed lines, so the marker now shows up
+  consistently everywhere the slot name is printed, not just on the card row.
 
 ### Changed
 
