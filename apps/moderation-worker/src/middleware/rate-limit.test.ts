@@ -226,14 +226,37 @@ describe('rate-limit', () => {
       );
     });
 
-    it('should handle KV errors gracefully', async () => {
+    it('fails open with backendError: true and logs a warning on a KV error (BUG-035 / FINDING-012)', async () => {
+      // `incrementRateLimit` returns void, so there is nothing on its own
+      // return value to assert the fail-open shape against — the KVRateLimiter
+      // backend logs the warning during `checkOnly`, and `checkRateLimit` is
+      // what surfaces `backendError` to a caller (`incrementRateLimit`'s own
+      // `checkOnly` call, inside `KVRateLimiter.increment`, discards it). Both
+      // `get` (checkOnly/increment's read) and `put` (increment's write) are
+      // wired to reject so neither code path can accidentally succeed and mask
+      // the other.
+      const kvError = new Error('KV error');
       const errorKV = {
-        getWithMetadata: vi.fn().mockRejectedValue(new Error('KV error')),
-        put: vi.fn().mockRejectedValue(new Error('KV error')),
+        get: vi.fn().mockRejectedValue(kvError),
+        put: vi.fn().mockRejectedValue(kvError),
       } as unknown as KVNamespace;
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 
-      // Should not throw
-      await expect(incrementRateLimit(errorKV, 'user123', 'command', 1)).resolves.not.toThrow();
+      const result = await checkRateLimit(errorKV, 'user123', 'command', RATE_LIMIT_CONFIGS.command);
+
+      // The fail-open CONTRACT (FINDING-012): allow the request through, but
+      // say so, both in the return value the caller inspects and in the log a
+      // human would see. A fail-closed regression (allowed: false) or a
+      // silently-dropped flag would both fail this — `resolves.not.toThrow()`
+      // could not have caught either.
+      expect(result.allowed).toBe(true);
+      expect(result.backendError).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'Rate limiter fail-open: KV read error, allowing request',
+        expect.objectContaining({ error: 'KV error' }),
+      );
+
+      warnSpy.mockRestore();
     });
 
     it('should use autocomplete type in key', async () => {
