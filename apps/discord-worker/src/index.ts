@@ -287,7 +287,7 @@ app.post('/webhooks/preset-submission', async (c) => {
   // Parse payload
   let payload: PresetNotificationPayload;
   try {
-    payload = JSON.parse(bodyText);
+    payload = JSON.parse(bodyText) as PresetNotificationPayload;
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }

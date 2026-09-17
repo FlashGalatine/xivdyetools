@@ -40,8 +40,7 @@ export async function readTextCapped(
     return new TextEncoder().encode(text).byteLength > maxBytes ? null : text;
   }
 
-  // workers-types declares `body` as ReadableStream<any>; pin the chunk type
-  const reader = (source.body as ReadableStream<Uint8Array>).getReader();
+  const reader = source.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
   for (;;) {
