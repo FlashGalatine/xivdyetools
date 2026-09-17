@@ -520,6 +520,9 @@ app.post('/webhooks/github', async (c) => {
 
   // Bound actual bytes before HMAC verification. A declared length alone does
   // not protect this endpoint from oversized chunked or misleading requests.
+  // Kept separate from `utils/read-text-capped.ts`'s capped reader: HMAC has
+  // to run over the exact undecoded bytes, and that helper hands back decoded
+  // text — don't unify the two.
   const chunks: Uint8Array[] = [];
   let size = 0;
   const reader = (c.req.raw.body as ReadableStream<Uint8Array> | null)?.getReader();

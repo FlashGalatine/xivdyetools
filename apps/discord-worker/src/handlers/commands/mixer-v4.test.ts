@@ -212,9 +212,9 @@ describe('handleMixerV4Command', () => {
       expect(vi.mocked(executeMixer).mock.calls[0][0]).toMatchObject({ blendingMode: mode });
     });
 
-    // BUG-006 (2026-09-02 audit): a prior refactor broke exactly this default,
-    // and only bot-logic's own tests caught it — nothing at the adapter layer
-    // pinned "no mode option" to RYB.
+    // docs/audits/2026-09-02-deep-dive/findings/BUG-006.md: a prior refactor
+    // broke exactly this default, and only bot-logic's own tests caught it —
+    // nothing at the adapter layer pinned "no mode option" to RYB.
     it('defaults blendingMode to RYB when no mode option is given', async () => {
       await handleMixerV4Command(interaction(dyeOptions()), env, ctx);
       await settle();
@@ -310,7 +310,11 @@ describe('handleMixerV4Command', () => {
       vi.mocked(renderSvgToPng).mockRejectedValue(new Error('resvg exploded'));
 
       await handleMixerV4Command(interaction(dyeOptions()), env, ctx);
-      await expect(settle()).resolves.toBeDefined();
+      // `settle()` is `Promise.all(deferred)`, which resolves to `[]` (and
+      // passes `resolves.toBeDefined()`) even when nothing deferred — assert
+      // the handler actually queued background work before awaiting it.
+      expect(deferred).toHaveLength(1);
+      await settle();
 
       expect(safeEditOriginalResponse).toHaveBeenCalled();
     });

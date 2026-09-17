@@ -382,7 +382,11 @@ describe('handleGradientCommand', () => {
       vi.mocked(renderSvgToPng).mockRejectedValue(new Error('resvg exploded'));
 
       await handleGradientCommand(interaction(colorOptions()), env, ctx);
-      await expect(settle()).resolves.toBeDefined();
+      // `settle()` is `Promise.all(deferred)`, which resolves to `[]` (and
+      // passes `resolves.toBeDefined()`) even when nothing deferred — assert
+      // the handler actually queued background work before awaiting it.
+      expect(deferred).toHaveLength(1);
+      await settle();
 
       expect(safeEditOriginalResponse).toHaveBeenCalled();
     });

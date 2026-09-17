@@ -60,5 +60,8 @@ export async function readTextCapped(
     merged.set(chunk, offset);
     offset += chunk.byteLength;
   }
+  // Decoded text, unlike `/webhooks/github`'s own capped reader in
+  // `index.ts`: that route keeps the raw bytes because its HMAC must verify
+  // the undecoded payload — don't unify the two.
   return new TextDecoder().decode(merged);
 }
