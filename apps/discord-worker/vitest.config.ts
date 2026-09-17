@@ -44,8 +44,6 @@ export default defineConfig({
         'src/handlers/commands/budget.ts',
         'src/handlers/commands/extractor.ts',
         'src/handlers/commands/swatch.ts',
-        'src/handlers/commands/mixer-v4.ts',
-        'src/handlers/commands/gradient.ts',
         'src/handlers/commands/preferences.ts',
         'src/utils/github-verify.ts',
         'src/handlers/commands/index.ts',
@@ -75,6 +73,13 @@ export default defineConfig({
       // uncovered function of slack — the next unrelated PR that adds a helper
       // would red CI on a threshold it never touched. A whole-point cushion
       // ratchets just as well.
+      //
+      // 2026-09-16 (deep-dive fix wave B1): un-excluded mixer-v4.ts and
+      // gradient.ts now that both carry real adapter suites (BUG-033/034).
+      // Re-measured at 88.76/80.61/89.22/89.7 — every figure still clears
+      // floor(measured) - 1 at the CURRENT thresholds (87/80/88/88), so
+      // nothing moves this time; recorded here so the next sweep has a
+      // baseline instead of assuming these four numbers are stale.
       thresholds: {
         statements: 87,
         branches: 80,
