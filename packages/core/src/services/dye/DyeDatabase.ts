@@ -364,6 +364,25 @@ export class DyeDatabase {
       // Per P-7: Build k-d tree
       this.kdTree = new KDTree(kdTreePoints);
 
+      // BUG-010 (2026-09-16 audit): freeze every dye record now that every
+      // derived field above has been written and dyesByIdMap,
+      // dyesByStainIdMap, dyesByHueBucket and the k-d tree all hold these
+      // same object references. getAllDyes()'s `[...this.dyes]` only ever
+      // copied the ARRAY — the elements were the live shared records, so a
+      // caller mutating one field on a "defensive copy" element silently
+      // corrupted every index built above. Freeze the nested rgb/hsv/lab
+      // objects too (shallow freeze on the record alone would leave those
+      // three mutable). ESM runs in strict mode, so a mutation attempt now
+      // throws TypeError instead of silently corrupting shared state. A
+      // second `initialize()` call rebuilds `this.dyes` from scratch via
+      // `.map()` above, so it never writes into an already-frozen record.
+      for (const dye of this.dyes) {
+        Object.freeze(dye.rgb);
+        Object.freeze(dye.hsv);
+        Object.freeze(dye.lab);
+        Object.freeze(dye);
+      }
+
       this.isLoaded = true;
 
       this.logger.info(`Dye database loaded: ${this.dyes.length} dyes`);
@@ -388,6 +407,15 @@ export class DyeDatabase {
 
   /**
    * Get all dyes (defensive copy)
+   *
+   * The returned ARRAY is a fresh copy — mutating it (push/splice/sort) does
+   * not affect the database. The dye RECORDS inside it are the same objects
+   * shared with the internal ID/stainID/hue-bucket indexes and the k-d tree,
+   * and (BUG-010, 2026-09-16 audit) `Object.freeze`d — including their
+   * nested `rgb`/`hsv`/`lab` objects — at the end of {@link initialize}.
+   * Attempting to assign a field on a returned dye (or on its `rgb`/`hsv`/
+   * `lab`) throws `TypeError` (ESM strict mode) rather than silently
+   * corrupting the shared indexes.
    */
   getAllDyes(): Dye[] {
     this.ensureLoaded();
@@ -522,6 +550,11 @@ export class DyeDatabase {
    * For public API access, use {@link getAllDyes} which returns a defensive copy.
    *
    * Per MEM-001: Returns DyeInternal with pre-computed lowercase fields for search optimization.
+   *
+   * As of BUG-010 (2026-09-16 audit) each record (and its nested `rgb`/
+   * `hsv`/`lab`) is frozen, so "DO NOT MODIFY" below is now enforced —
+   * assigning a field throws `TypeError` instead of silently corrupting
+   * every index built over these same objects.
    *
    * @internal
    * @returns Direct reference to internal dyes array with pre-computed nameLower/categoryLower - DO NOT MODIFY

@@ -53,6 +53,15 @@ export class LocaleRegistry {
    * @param locale - Locale code to retrieve
    * @returns Locale data if cached, null otherwise
    *
+   * Documentation-only note (2026-09-16 audit, coordinator ruling on
+   * BUG-010's sibling finding): this returns the **shared bundled locale
+   * module** registered via {@link registerLocale} (itself the same object
+   * `LocaleLoader.loadLocale` returned) — every caller retrieving a given
+   * locale gets back the same reference. Treat it as read-only; it is not
+   * cloned per lookup for the same reason `LocaleLoader` doesn't clone per
+   * load — six locale trees is real work to redo on every read for data
+   * that is never legitimately mutated at runtime.
+   *
    * @example
    * ```typescript
    * const jaData = registry.getLocale('ja');
