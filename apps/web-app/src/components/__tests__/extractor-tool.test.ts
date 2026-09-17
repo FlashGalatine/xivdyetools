@@ -348,8 +348,11 @@ describe('ExtractorTool', () => {
 
   const resultCards = () => rightPanel.querySelectorAll('v4-result-card');
   const cardData = (i: number) =>
-    (resultCards()[i] as unknown as { data: { originalColor: string; dye: (typeof mockDyes)[0] } })
-      .data;
+    (
+      resultCards()[i] as unknown as {
+        data: { originalColor: string; dye: (typeof mockDyes)[0]; deltaE: number };
+      }
+    ).data;
   const cardSelected = (i: number) =>
     (resultCards()[i] as unknown as { selected: boolean }).selected;
 
@@ -614,10 +617,6 @@ describe('ExtractorTool', () => {
   });
 
   // ==========================================================================
-  // With a decoded image
-  // ==========================================================================
-
-  // ==========================================================================
   // Share links (BUG-002) — the consume side, which never has an image
   // ==========================================================================
 
@@ -638,9 +637,17 @@ describe('ExtractorTool', () => {
       const shares = extractedSegments().map((s) => s.style.flexGrow);
       expect(shares).toEqual(['33', '33', '33']);
 
-      // …and no picture behind them
+      // …and no picture behind them: the empty flow stays visible but
+      // shrinks to its own content instead of filling the column, since it
+      // is the affordance that turns a shared palette into an extraction
       expect(imageCard().style.display).toBe('none');
       expect(dropZone().parentElement!.style.display).toBe('flex');
+      expect(dropZone().parentElement!.style.flex).toBe('0 0 auto');
+      expect(dropZone().style.flex).toBe('0 0 auto');
+
+      // A 3-colour link reads "3 of 3" — never measured against Max Colors
+      expect(countLabel().textContent).toBe('matcher.rollCountOf: 3/3');
+
       const { ToastService } = await import('@services/index');
       expect(ToastService.success).not.toHaveBeenCalled();
     });
@@ -703,6 +710,29 @@ describe('ExtractorTool', () => {
         matchingMethod: 'oklab',
       });
       expect(shareButton().shareParams.algo).toBe('oklab');
+    });
+
+    it('re-resolves the shared palette’s dyes when the matching method changes', async () => {
+      // The suite's default ColorService.getDistanceForMethod is a CONSTANT
+      // (15 regardless of method), so a card's distance could never move even
+      // if `setConfig` did nothing — give it a real per-method answer so a
+      // change is actually observable, not merely plausible.
+      const { ColorService } = await import('@services/index');
+      const forMethod = vi.mocked(ColorService.getDistanceForMethod);
+      forMethod.mockImplementation((_hex1: string, _hex2: string, method: string) =>
+        method === 'oklab' ? 3 : 15
+      );
+      setShareUrl('?colors=8E5A3C,C9A96A&v=1');
+
+      tool = mount();
+      expect(cardData(0).deltaE).toBe(15);
+
+      tool.setConfig({ matchingMethod: 'oklab' });
+
+      // `setConfig`'s re-resolve arm only fires for `hasPalette()` — a shared
+      // palette with no image. Reverting `hasPalette()` to `this.currentImage`
+      // (a one-line mutation) leaves this red, proving the arm is exercised.
+      expect(cardData(0).deltaE).toBe(3);
     });
 
     it('normalises a retired 4.x algorithm rather than passing it to the matcher', () => {
@@ -794,6 +824,10 @@ describe('ExtractorTool', () => {
       expect(imageCard().style.display).toBe('none');
     });
   });
+
+  // ==========================================================================
+  // With a decoded image
+  // ==========================================================================
 
   describe('with a decoded image', () => {
     /** 2×2 image: red, green, blue, white. */
@@ -1170,6 +1204,13 @@ describe('ExtractorTool', () => {
       expect(extractedSegments().map(segHex)).not.toContain('8E5A3C');
       expect(legend().textContent).toBe('matcher.imageShare');
       expect(imageCard().style.display).toBe('');
+
+      // The empty flow's shared-palette shrink (`flex: 0 0 auto`) was a
+      // no-image affordance — a real extraction restores its ordinary flex.
+      // jsdom's CSSOM expands the `flex: 1` shorthand it reads back to its
+      // longhand equivalent.
+      expect(dropZone().parentElement!.style.flex).toBe('1 1 0%');
+      expect(dropZone().style.flex).toBe('1 1 0%');
     });
 
     // ------------------------------------------------------------------------
