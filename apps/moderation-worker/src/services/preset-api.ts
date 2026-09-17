@@ -33,6 +33,18 @@ import { PresetAPIError } from '../types/preset.js';
 // ============================================================================
 
 /**
+ * BUG-016 (2026-09-16 deep-dive): every Discord-facing call in
+ * `utils/discord-api.ts` carries an `AbortSignal.timeout`; this client's two
+ * `fetch`/service-binding branches did not, so a hung presets-api left a
+ * `waitUntil`-wrapped moderation action with no terminal state — the
+ * moderator's "thinking…" or "Processing…" message never resolved. 10 s
+ * (vs. Discord's 5 s) because presets-api is our own worker on the far end
+ * of a Service Binding or an internal fetch, not a third-party API — worth
+ * a slightly longer budget before giving up.
+ */
+const PRESETS_API_TIMEOUT_MS = 10_000;
+
+/**
  * Make an authenticated request to the preset API
  */
 async function request<T>(
@@ -115,6 +127,7 @@ async function request<T>(
           method,
           headers,
           body: bodyText,
+          signal: AbortSignal.timeout(PRESETS_API_TIMEOUT_MS),
         }),
       );
     } else {
@@ -123,6 +136,7 @@ async function request<T>(
         method,
         headers,
         body: bodyText,
+        signal: AbortSignal.timeout(PRESETS_API_TIMEOUT_MS),
       });
     }
 

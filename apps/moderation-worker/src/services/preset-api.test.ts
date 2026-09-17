@@ -622,6 +622,86 @@ describe('preset-api', () => {
       }
     });
   });
+
+  // BUG-016 (2026-09-16 deep-dive): every Discord-facing fetch in
+  // utils/discord-api.ts carries an AbortSignal.timeout; this client's two
+  // request branches did not, so a hung presets-api left a `waitUntil`-wrapped
+  // moderation action with no terminal state.
+  describe('BUG-016 — presets-api requests carry an AbortSignal', () => {
+    // A bare Request/init object always has SOME non-null `.signal` (the Fetch
+    // spec gives every Request an implicit, never-aborting one), so asserting
+    // `signal instanceof AbortSignal` on the captured call cannot fail even
+    // without this fix. Spy on `AbortSignal.timeout` itself instead — that is
+    // the actual call BUG-016 adds, with the actual budget.
+    it('builds the service-binding Request via AbortSignal.timeout(10_000)', async () => {
+      mockFetcher._setupHandler(() => Response.json({ presets: [], total: 0, page: 1 }));
+      const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+      const fetchSpy = vi.spyOn(mockFetcher, 'fetch');
+
+      await getPresets(mockEnv);
+
+      // `new Request(url, { signal })` wraps the passed signal in a linked one
+      // rather than exposing the same object, and `AbortSignal.timeout`'s
+      // internal timer is not one vitest's fake timers can drive (it is not
+      // implemented over the public `setTimeout`) — so identity and a real
+      // 10 s wait are both out. Assert the call this fix actually adds: the
+      // exact budget, made exactly once for this request.
+      expect(timeoutSpy).toHaveBeenCalledTimes(1);
+      expect(timeoutSpy).toHaveBeenCalledWith(10_000);
+      const request = fetchSpy.mock.calls[0][0] as Request;
+      expect(request.signal).toBeInstanceOf(AbortSignal);
+    });
+
+    it('passes AbortSignal.timeout(10_000) on the HTTP fallback branch', async () => {
+      const env = {
+        PRESETS_API_URL: 'https://api.example.com',
+        BOT_API_SECRET: 'secret',
+      } as Env;
+      const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+      const fetchSpy = vi
+        .fn()
+        .mockResolvedValue(Response.json({ presets: [], total: 0, page: 1 }));
+      global.fetch = fetchSpy as unknown as typeof fetch;
+
+      await getPresets(env);
+
+      expect(timeoutSpy).toHaveBeenCalledWith(10_000);
+      expect(fetchSpy).toHaveBeenCalledWith(
+        'https://api.example.com/api/v1/presets',
+        expect.objectContaining({ signal: timeoutSpy.mock.results[0]?.value }),
+      );
+    });
+
+    it('an AbortError-shaped rejection on the service-binding branch surfaces as the client error shape, not a raw throw', async () => {
+      mockFetcher._setupHandler(() => {
+        throw new DOMException('The operation was aborted due to timeout', 'TimeoutError');
+      });
+
+      await expect(getPresets(mockEnv)).rejects.toMatchObject({
+        statusCode: 500,
+        message: 'Failed to communicate with preset API',
+      });
+      await expect(getPresets(mockEnv)).rejects.toBeInstanceOf(PresetAPIError);
+    });
+
+    it('an AbortError-shaped rejection on the HTTP fallback branch surfaces as the client error shape, not a raw throw', async () => {
+      const env = {
+        PRESETS_API_URL: 'https://api.example.com',
+        BOT_API_SECRET: 'secret',
+      } as Env;
+      global.fetch = vi
+        .fn()
+        .mockRejectedValue(
+          new DOMException('The operation was aborted due to timeout', 'TimeoutError'),
+        ) as unknown as typeof fetch;
+
+      await expect(getPresets(env)).rejects.toMatchObject({
+        statusCode: 500,
+        message: 'Failed to communicate with preset API',
+      });
+      await expect(getPresets(env)).rejects.toBeInstanceOf(PresetAPIError);
+    });
+  });
 });
 
 describe('preset-api (FINDING-020 / MOD-13)', () => {
