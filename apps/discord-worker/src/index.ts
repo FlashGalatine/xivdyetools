@@ -280,7 +280,10 @@ app.post('/webhooks/preset-submission', async (c) => {
   // lies about its size, or has no length at all, once it streams past 10KB.
   const bodyText = await readTextCapped(c.req.raw, 10240);
   if (bodyText === null) {
-    logger.warn('Webhook payload too large');
+    logger.warn('Webhook payload too large', {
+      declared: c.req.header('content-length') ?? 'absent',
+      cap: 10240,
+    });
     return c.json({ error: 'Payload too large' }, 413);
   }
 

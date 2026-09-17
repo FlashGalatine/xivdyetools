@@ -821,6 +821,9 @@ describe('index.ts', () => {
         headers: { Authorization: 'Bearer test-webhook-secret' },
         body,
       });
+      // Pins that this really exercises the streaming branch (readTextCapped
+      // counting actual bytes), not the declared-Content-Length early exit.
+      expect(req.headers.get('content-length')).toBeNull();
 
       const res = await app.fetch(req, mockEnv, mockCtx);
       expect(res.status).toBe(413);
@@ -859,6 +862,10 @@ describe('index.ts', () => {
         headers: { Authorization: 'Bearer test-webhook-secret' },
         body,
       });
+      // Same precondition as the oversize case above: no declared length, so
+      // this is the streaming branch reading exactly to the cap, not the
+      // Content-Length short-circuit.
+      expect(req.headers.get('content-length')).toBeNull();
 
       const res = await app.fetch(req, mockEnv, mockCtx);
       expect(res.status).toBe(200);
