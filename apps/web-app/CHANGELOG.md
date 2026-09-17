@@ -7,10 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.10.1] - 2026-09-16
+## [5.11.0] - 2026-09-17
 
-Deep-dive remediation, Sprints 1–2 (docs/audits/2026-09-16-deep-dive). No new features; every
-row is a defect the audit verified at `file:line`, each landed with a test that was red first.
+Deep-dive remediation, Sprints 1–2 and 7 (docs/audits/2026-09-16-deep-dive). One restored
+feature (the Palette Extractor's share link, dropped by the 4A rebuild); every other row is a
+defect the audit verified at `file:line`, each landed with a test that was red first.
+
+### Added
+
+- **Palette Extractor share link restored** (BUG-002). `extractor-tool.ts` wires `v4-share-button`
+  (compact, beside Export in the section header): the link carries `colors` — the extracted
+  colours in bar order, `#`-less uppercase, capped at the five og-worker's card accepts, picks
+  excluded — and `algo`. Opening a link renders those colours as equal-share bands with their
+  matched dyes and no image (`sharedPalette`); the loupe and the `+` tile stay inert until an
+  image is loaded, which replaces the shared palette. `ShareService.validateShareParams` gained an
+  `extractor` arm (non-hex entries and more than five rejected); og-worker's crawler route already
+  mapped `/extractor?colors=` to `/og/extractor/:colors.png`, so the OG card is reachable again
+  with no og-worker change. New `matcher.sharedPalette` key in all six locales; user guide
+  updated. Not carried by the link: the picture, the picks, Max Colors (a no-op on a shared
+  palette).
 
 ### Fixed
 

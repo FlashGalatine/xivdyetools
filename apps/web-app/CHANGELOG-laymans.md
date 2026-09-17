@@ -2,7 +2,10 @@
 
 ---
 
-## Web-App Version 5.10.1 — September 16, 2026
+## Web-App Version 5.11.0 — September 17, 2026
+
+### Share a palette from the Palette Extractor
+- **The Extractor has its Share button back** — beside Export in the results header. The link carries the colours on the bar (up to five, in order) and your matching method, so a friend opening it sees the same colours as equal bands with the same dye cards. It does not carry your picture, which never leaves your device, and it does not carry hand-picked colours. Links pasted into Discord get a preview card again.
 
 ### Back works the way you expect in Presets
 - **Pressing Back from a preset returns you to the list you were on** — same tab, same search, no reload and no refetch. Before, Back rebuilt the whole Presets tool from scratch, and after a page refresh or after using the preset's own Back button it did nothing at all; it responds in both cases now.
