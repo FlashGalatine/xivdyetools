@@ -80,6 +80,18 @@ const {
 // and every assertion downstream sees an empty DOM instead of a failure.
 
 vi.mock('@services/dye-service-wrapper', () => ({
+  // The REAL share-service (reached through the tool's share wiring) imports
+  // this singleton by name, so the wrapper mock has to expose it too — a
+  // missing named export on a mocked module is an import-time throw.
+  dyeService: {
+    getAllDyes: mockGetAllDyes,
+    getDyeById: mockGetDyeById,
+    findClosestDyes: mockFindClosestDyes,
+    findClosestDye: mockFindClosestDye,
+    findDyesWithinDistance: mockFindDyesWithinDistance,
+    getByStainId: vi.fn(),
+    getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
+  },
   DyeService: {
     getInstance: vi.fn().mockReturnValue({
       getAllDyes: mockGetAllDyes,
@@ -201,6 +213,9 @@ vi.mock('@services/index', () => ({
     getInstance: vi.fn().mockReturnValue({
       getConfig: vi.fn().mockReturnValue({}),
       subscribe: vi.fn().mockReturnValue(() => {}),
+      // A share link's `algo` is pushed back through the sidebar's store,
+      // exactly as harmony does, so the gear agrees with the sheet.
+      setConfig: vi.fn(),
     }),
   },
   CollectionService: {
@@ -284,6 +299,9 @@ describe('ExtractorTool', () => {
       }
     }
     cleanupTestContainer(container);
+    // The share-link tests drive window.location; leave the next test a clean
+    // address bar or it inherits someone else's palette.
+    window.history.replaceState({}, '', '/');
     vi.restoreAllMocks();
   });
 
@@ -351,6 +369,26 @@ describe('ExtractorTool', () => {
     Array.from(rightPanel.querySelectorAll('button')).find((b) =>
       b.textContent?.includes('common.export')
     ) as HTMLButtonElement;
+
+  /** The `v4-share-button` in the section header, as the tool drives it. */
+  const shareButton = () =>
+    rightPanel.querySelector('v4-share-button') as unknown as {
+      disabled: boolean;
+      shareParams: Record<string, unknown>;
+    };
+
+  const shareColors = (): unknown => shareButton().shareParams.colors;
+
+  /** `#RRGGBB` off a bar segment's own title — read back, not recomputed. */
+  const segHex = (seg: HTMLButtonElement): string =>
+    seg.title.split(' · ')[0].replace('#', '').toUpperCase();
+
+  const imageCard = (): HTMLElement => rightPanel.querySelector('.x4a-image-card') as HTMLElement;
+
+  /** Put a share link in the address bar before the tool mounts. */
+  const setShareUrl = (query: string): void => {
+    window.history.replaceState({}, '', `/extractor/${query}`);
+  };
 
   // ==========================================================================
   // Basic Rendering
@@ -578,6 +616,184 @@ describe('ExtractorTool', () => {
   // ==========================================================================
   // With a decoded image
   // ==========================================================================
+
+  // ==========================================================================
+  // Share links (BUG-002) — the consume side, which never has an image
+  // ==========================================================================
+
+  describe('opening a share link', () => {
+    it('restores the palette with equal shares and no image', async () => {
+      setShareUrl('?colors=8E5A3C,C9A96A,112233&v=1');
+
+      tool = mount();
+
+      // Three segments, three cards, each card matched to a dye
+      expect(extractedSegments()).toHaveLength(3);
+      expect(resultCards()).toHaveLength(3);
+      expect(extractedSegments().map(segHex)).toEqual(['8E5A3C', 'C9A96A', '112233']);
+      expect(cardData(0).originalColor).toBe('#8E5A3C');
+      expect(cardData(0).dye).toBeTruthy();
+
+      // Equal bands: the link carries no proportions, so neither does the bar
+      const shares = extractedSegments().map((s) => s.style.flexGrow);
+      expect(shares).toEqual(['33', '33', '33']);
+
+      // …and no picture behind them
+      expect(imageCard().style.display).toBe('none');
+      expect(dropZone().parentElement!.style.display).toBe('flex');
+      const { ToastService } = await import('@services/index');
+      expect(ToastService.success).not.toHaveBeenCalled();
+    });
+
+    it('keeps the `+` tile inert until an image is loaded', () => {
+      setShareUrl('?colors=8E5A3C,C9A96A&v=1');
+
+      tool = mount();
+
+      // There are no pixels to read a colour out of, so the tile says so
+      // rather than looking live (commitPick already refuses)
+      expect(addTile().getAttribute('aria-disabled')).toBe('true');
+      expect(addTile().style.opacity).toBe('0.45');
+    });
+
+    it('round-trips: the share button offers back exactly what the link carried', () => {
+      setShareUrl('?colors=8E5A3C,C9A96A,112233&v=1');
+
+      tool = mount();
+
+      expect(shareButton().disabled).toBe(false);
+      expect(shareColors()).toEqual(['8E5A3C', 'C9A96A', '112233']);
+    });
+
+    it('does not let Vibrancy Boost reorder someone else’s palette', async () => {
+      const { ColorService } = await import('@services/index');
+      // The boost scores `0.55 × saturation + dominance`. A shared palette's
+      // dominance is equal by construction, so saturation decides — and the
+      // suite's default rgbToHsv is a CONSTANT, which would make this test
+      // pass no matter what the tool did. Give each colour its own saturation
+      // so a boost applied here really would reorder the link: descending
+      // saturation is C9A96A, 8E5A3C, 112233 — not the sender's order.
+      vi.mocked(ColorService.rgbToHsv).mockImplementation((r: number) => ({
+        h: 0,
+        s: r,
+        v: 100,
+      }));
+      setShareUrl('?colors=8E5A3C,C9A96A,112233&v=1');
+
+      // Vibrancy Boost is ON by default, so the mount itself is the test
+      tool = mount();
+      expect(extractedSegments().map(segHex)).toEqual(['8E5A3C', 'C9A96A', '112233']);
+
+      tool.setConfig({ vibrancyBoost: false });
+      await flush();
+      expect(extractedSegments().map(segHex)).toEqual(['8E5A3C', 'C9A96A', '112233']);
+
+      tool.setConfig({ vibrancyBoost: true });
+      await flush();
+      expect(extractedSegments().map(segHex)).toEqual(['8E5A3C', 'C9A96A', '112233']);
+    });
+
+    it('applies the link’s matching method through the sidebar store', async () => {
+      const { ConfigController } = await import('@services/index');
+      setShareUrl('?colors=8E5A3C,C9A96A&algo=oklab&v=1');
+
+      tool = mount();
+
+      expect(ConfigController.getInstance().setConfig).toHaveBeenCalledWith('extractor', {
+        matchingMethod: 'oklab',
+      });
+      expect(shareButton().shareParams.algo).toBe('oklab');
+    });
+
+    it('normalises a retired 4.x algorithm rather than passing it to the matcher', () => {
+      setShareUrl('?colors=8E5A3C&algo=hyab&v=1');
+
+      tool = mount();
+
+      expect(shareButton().shareParams.algo).not.toBe('hyab');
+      expect(shareButton().shareParams.algo).toBe('ciede2000');
+    });
+
+    it('drops an invalid entry with a warning and keeps the rest', async () => {
+      const { logger } = await import('@shared/logger');
+      setShareUrl('?colors=8E5A3C,ZZZZZZ,C9A96A&v=1');
+
+      tool = mount();
+
+      expect(extractedSegments().map(segHex)).toEqual(['8E5A3C', 'C9A96A']);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('ZZZZZZ'));
+    });
+
+    it('caps the palette at the five colours the OG card can draw', async () => {
+      const { logger } = await import('@shared/logger');
+      setShareUrl('?colors=111111,222222,333333,444444,555555,666666,777777&v=1');
+
+      tool = mount();
+
+      expect(extractedSegments().map(segHex)).toEqual([
+        '111111',
+        '222222',
+        '333333',
+        '444444',
+        '555555',
+      ]);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('more than 5'));
+    });
+
+    it('falls back to the empty state when every entry is junk', async () => {
+      const { logger } = await import('@shared/logger');
+      setShareUrl('?colors=ZZZZZZ,nope&v=1');
+
+      tool = mount();
+
+      expect(resultCards()).toHaveLength(0);
+      expect(dropZone().parentElement!.style.display).toBe('flex');
+      expect(bar().closest<HTMLElement>('[style*="display: none"]')).not.toBeNull();
+      expect(shareButton().disabled).toBe(true);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('ZZZZZZ'));
+    });
+
+    it('leaves a bare /extractor visit exactly as it was', async () => {
+      const { ConfigController } = await import('@services/index');
+      setShareUrl('');
+
+      tool = mount();
+
+      expect(resultCards()).toHaveLength(0);
+      expect(dropZone().parentElement!.style.display).toBe('flex');
+      expect(bar().closest<HTMLElement>('[style*="display: none"]')).not.toBeNull();
+      expect(shareButton().disabled).toBe(true);
+      // No link means no opinion about the user's own matching method
+      expect(ConfigController.getInstance().setConfig).not.toHaveBeenCalled();
+    });
+
+    it('ignores an `algo` that arrives without a palette', async () => {
+      const { ConfigController } = await import('@services/index');
+      setShareUrl('?algo=oklab&v=1');
+
+      tool = mount();
+
+      expect(resultCards()).toHaveLength(0);
+      expect(ConfigController.getInstance().setConfig).not.toHaveBeenCalled();
+    });
+
+    it('survives a language switch with the shared palette still on the bar', async () => {
+      const { LanguageService } = await import('@services/index');
+      setShareUrl('?colors=8E5A3C,C9A96A&v=1');
+      tool = mount();
+      // Every LanguageService subscriber, not `calls[0]`: the share button and
+      // each result card subscribe too, and the tool's own callback is not
+      // first in the list — picking by index tested a Lit requestUpdate and
+      // could never have caught the rebuild losing the palette.
+      const subscribers = [...vi.mocked(LanguageService.subscribe).mock.calls];
+
+      for (const [cb] of subscribers) (cb as () => void)();
+      await flush();
+
+      expect(extractedSegments().map(segHex)).toEqual(['8E5A3C', 'C9A96A']);
+      expect(imageCard().style.display).toBe('none');
+    });
+  });
 
   describe('with a decoded image', () => {
     /** 2×2 image: red, green, blue, white. */
@@ -871,6 +1087,89 @@ describe('ExtractorTool', () => {
         const seg = extractedSegments()[0];
         expect(seg.title).toMatch(/^#[0-9A-F]{6} · \d+% · Dye-\d+$/);
       });
+    });
+
+    // ------------------------------------------------------------------------
+    // Share (BUG-002) — the produce side
+    // ------------------------------------------------------------------------
+
+    describe('the share link', () => {
+      it('is inert until something has been extracted', () => {
+        tool = mount();
+
+        expect(shareButton()).not.toBeNull();
+        expect(shareButton().disabled).toBe(true);
+        expect(shareButton().shareParams).toEqual({});
+      });
+
+      it('carries the bar hexes in bar order once a palette lands', async () => {
+        tool = mount();
+        await loadImage();
+
+        const expected = extractedSegments().map(segHex);
+        expect(expected.length).toBeGreaterThan(1);
+        expect(shareButton().disabled).toBe(false);
+        // Bare RRGGBB in bar ORDER — og-worker's `?colors=` parser filters on
+        // /^[0-9A-F]{6}$/ and the card draws the bands left to right
+        expect(shareColors()).toEqual(expected);
+        expect(shareButton().shareParams.algo).toBe('ciede2000');
+      });
+
+      it('follows the matching method the sidebar hands it', async () => {
+        tool = mount();
+        await loadImage();
+
+        tool.setConfig({ matchingMethod: 'oklab' });
+        await flush();
+
+        expect(shareButton().shareParams.algo).toBe('oklab');
+      });
+
+      it('leaves picks out — a hand-read colour has no share to draw', async () => {
+        tool = mount();
+        await loadImage();
+        const beforePick = shareColors() as string[];
+
+        commit('#123456');
+
+        // The pick is on the bar and on the sheet …
+        expect(pickSegments()).toHaveLength(1);
+        expect(resultCards().length).toBe(extractedSegments().length + 1);
+        // … and nowhere in the link
+        expect(shareColors()).toEqual(beforePick);
+        expect(shareColors()).not.toContain('123456');
+      });
+
+      it('drops out of the link when the image is cleared', async () => {
+        tool = mount();
+        await loadImage();
+        expect(shareButton().disabled).toBe(false);
+
+        (
+          rightPanel.querySelector('[aria-label="matcher.clearImage"]') as HTMLButtonElement | null
+        )?.click();
+
+        expect(shareButton().disabled).toBe(true);
+        expect(shareButton().shareParams).toEqual({});
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Share — an image lands on top of a shared palette
+    // ------------------------------------------------------------------------
+
+    it('replaces a shared palette with the recipient’s own extraction', async () => {
+      setShareUrl('?colors=8E5A3C,C9A96A&v=1');
+      tool = mount();
+      expect(extractedSegments()).toHaveLength(2);
+      expect(legend().textContent).toBe('matcher.sharedPalette');
+
+      await loadImage();
+
+      // The link's colours are gone: the bar is this image's clusters now
+      expect(extractedSegments().map(segHex)).not.toContain('8E5A3C');
+      expect(legend().textContent).toBe('matcher.imageShare');
+      expect(imageCard().style.display).toBe('');
     });
 
     // ------------------------------------------------------------------------

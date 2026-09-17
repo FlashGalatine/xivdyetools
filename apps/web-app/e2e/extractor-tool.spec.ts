@@ -93,6 +93,18 @@ test.describe('Extractor Tool - User Journeys', () => {
       await expect(page.locator('#extractor-clear-picks')).toBeHidden();
     });
 
+    test('enables the share button once the palette lands (BUG-002)', async ({ page }) => {
+      // The section header is built with the loaded flow, so the button is in
+      // the DOM from the start — but inert until there is a palette to link to
+      const share = page.locator('v4-share-button');
+      await expect(share).toHaveJSProperty('disabled', true);
+
+      await uploadTestImage(page);
+
+      await expect(share).toBeVisible();
+      await expect(share).toHaveJSProperty('disabled', false);
+    });
+
     test('shows a toast notification on successful image load', async ({ page }) => {
       await uploadTestImage(page);
 

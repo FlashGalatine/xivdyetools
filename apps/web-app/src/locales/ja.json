@@ -321,6 +321,7 @@
     "tapToSample": "タップで採取",
     "addPick": "採取を追加",
     "imageShare": "画像の占有率",
+    "sharedPalette": "共有パレット",
     "picksCount": "採取{count}件",
     "picksCountOne": "採取1件",
     "clearPicks": "採取をクリア",

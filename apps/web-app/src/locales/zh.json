@@ -321,6 +321,7 @@
     "tapToSample": "点按取色",
     "addPick": "添加取色",
     "imageShare": "图像占比",
+    "sharedPalette": "共享调色板",
     "picksCount": "取色 {count} 个",
     "picksCountOne": "取色 1 个",
     "clearPicks": "清除取色",

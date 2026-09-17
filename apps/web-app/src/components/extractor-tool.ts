@@ -41,6 +41,7 @@ import {
   ToastService,
 } from '@services/index';
 import { WorldService } from '@services/world-service';
+import { MAX_EXTRACTOR_SHARE_COLORS, ShareService } from '@services/share-service';
 import {
   ICON_IMAGE,
   ICON_CLIPBOARD,
@@ -73,6 +74,8 @@ import {
 } from '@xivdyetools/core';
 import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import '@components/v4/result-card';
+import type { ShareButton } from '@components/v4/share-button';
+import '@components/v4/share-button';
 
 // ============================================================================
 // Types and Constants
@@ -231,6 +234,12 @@ export class ExtractorTool extends BaseComponent {
 
   // ---- Workspace state ----
   private currentImage: HTMLImageElement | null = null;
+  /**
+   * True while the bar is showing a palette restored from a share link rather
+   * than one read out of an image. It is cleared the moment an image arrives —
+   * a real extraction always replaces a shared palette.
+   */
+  private sharedPalette: boolean = false;
   /** K-means output for the current image — clusters that hold pixels only. */
   private extracted: ExtractedColor[] = [];
   /** Committed loupe picks, in commit order. Session-only, cleared with the image. */
@@ -276,6 +285,7 @@ export class ExtractorTool extends BaseComponent {
   private clearPicksBtn: HTMLButtonElement | null = null;
   private resultsCountElement: HTMLElement | null = null;
   private exportBtn: HTMLButtonElement | null = null;
+  private shareButton: ShareButton | null = null;
   private resultsContainer: HTMLElement | null = null;
 
   /** V4 result card elements for updating prices after fetch */
@@ -422,6 +432,8 @@ export class ExtractorTool extends BaseComponent {
       StorageService.removeItem(key);
     }
 
+    this.restoreFromShareLink();
+
     logger.info('[ExtractorTool] Mounted');
   }
 
@@ -511,9 +523,12 @@ export class ExtractorTool extends BaseComponent {
       }
     }
 
+    // Only an image can be re-extracted: a shared palette is the colours
+    // themselves, so a Max Colors change has nothing to re-cluster and falls
+    // through to the re-resolve/re-render arms below like any other setting.
     if (needsReextract && this.currentImage) {
       void this.extractPalette(false);
-    } else if (needsReresolve && this.currentImage) {
+    } else if (needsReresolve && this.hasPalette()) {
       if (this.currentLoupeHex) {
         this.setLoupeHex(this.currentLoupeHex);
       }
@@ -590,7 +605,7 @@ export class ExtractorTool extends BaseComponent {
 
     // Rebuild presentation from existing state (language switch / re-render):
     // the roll, and the loupe where it last settled
-    if (this.currentImage) {
+    if (this.hasPalette()) {
       this.renderRoll();
       if (this.currentLoupeHex) {
         this.showLoupe(this.currentLoupeHex, this.loupePoint ?? { left: 0, top: 0 }, false);
@@ -1143,6 +1158,17 @@ export class ExtractorTool extends BaseComponent {
       this.openPaletteExport();
     });
     actions.appendChild(this.exportBtn);
+
+    // Share sits with the other sheet actions, exactly where the sibling tools
+    // put theirs (harmony's results header). Disabled from the first paint:
+    // without this it sits enabled with empty params until the first roll, and
+    // a click there fails ShareService validation instead of being inert.
+    this.shareButton = document.createElement('v4-share-button') as ShareButton;
+    this.shareButton.tool = 'extractor';
+    this.shareButton.compact = true;
+    actions.appendChild(this.shareButton);
+    this.updateShareButton();
+
     header.appendChild(actions);
 
     return header;
@@ -1232,6 +1258,9 @@ export class ExtractorTool extends BaseComponent {
    */
   private onImageLoaded(image: HTMLImageElement): void {
     this.currentImage = image;
+    // A real extraction replaces a shared palette outright — the link's
+    // colours were read from someone else's picture, not from this one.
+    this.sharedPalette = false;
     this.extracted = [];
     this.picks = [];
     this.roll = [];
@@ -1323,6 +1352,7 @@ export class ExtractorTool extends BaseComponent {
    */
   private clearImage(): void {
     this.currentImage = null;
+    this.sharedPalette = false;
     this.extracted = [];
     this.picks = [];
     this.roll = [];
@@ -1344,15 +1374,38 @@ export class ExtractorTool extends BaseComponent {
   }
 
   /**
+   * Is there anything on the bar at all — an image's extraction, or a palette
+   * restored from a share link? The two differ in what the loupe and the `+`
+   * tile can do, never in whether the bar and the sheet are drawn.
+   */
+  private hasPalette(): boolean {
+    return this.currentImage !== null || this.sharedPalette;
+  }
+
+  /**
    * Flip the workspace between the drawn empty state and the loaded flow.
+   *
+   * A shared palette is a third state: the bar and the sheet are real, but
+   * there is no picture behind them. The image card is hidden (it would be
+   * 276px of empty #000 frame) and the drop zone stays in view — shrunk to its
+   * own content instead of filling the column — because it is the affordance
+   * that turns a shared palette into the recipient's own extraction.
    */
   private updateFlowVisibility(): void {
     const hasImage = this.currentImage !== null;
+    const paletteWithoutImage = this.sharedPalette && !hasImage;
     if (this.emptyFlowElement) {
       this.emptyFlowElement.style.display = hasImage ? 'none' : 'flex';
+      this.emptyFlowElement.style.flex = paletteWithoutImage ? '0 0 auto' : '1';
+    }
+    if (this.dropZone) {
+      this.dropZone.style.flex = paletteWithoutImage ? '0 0 auto' : '1';
+    }
+    if (this.imageCardElement) {
+      this.imageCardElement.style.display = hasImage ? '' : 'none';
     }
     if (this.loadedFlowElement) {
-      this.loadedFlowElement.style.display = hasImage ? 'flex' : 'none';
+      this.loadedFlowElement.style.display = this.hasPalette() ? 'flex' : 'none';
     }
   }
 
@@ -1615,6 +1668,11 @@ export class ExtractorTool extends BaseComponent {
    * can lead a large muted field. The widths stay share-based either way.
    */
   private orderedExtracted(): ExtractedColor[] {
+    // A shared palette arrives in the SENDER's bar order and carries equal,
+    // synthetic shares — there is no dominance left to re-weight, and letting
+    // the boost sort by saturation would silently reorder someone else's link
+    // (and break the round trip through the share button).
+    if (this.sharedPalette) return this.extracted;
     if (!this.vibrancyBoost) return this.extracted;
     const score = (cluster: ExtractedColor): number => {
       const { r, g, b } = cluster.color;
@@ -1655,7 +1713,7 @@ export class ExtractorTool extends BaseComponent {
     if (!this.barElement) return;
     clearContainer(this.barElement);
     this.addPickChipElement = null;
-    if (!this.currentImage) return;
+    if (!this.hasPalette()) return;
 
     const firstPick = this.roll.findIndex((entry) => entry.share === null);
 
@@ -1702,8 +1760,11 @@ export class ExtractorTool extends BaseComponent {
     });
 
     // The `+` tile: dark glass, dashed accent left edge, the loupe's colour
-    // as a 16px chip. Commits the loupe colour into the picks run.
+    // as a 16px chip. Commits the loupe colour into the picks run. Under a
+    // shared palette there is no image to read a colour out of, so it is
+    // inert (commitPick already refuses) and says so rather than looking live.
     const atCap = this.picks.length >= MAX_PICKS;
+    const inert = this.currentImage === null;
     const addTile = this.createElement('button', {
       className: 'x4a-add-tile',
       attributes: {
@@ -1711,12 +1772,12 @@ export class ExtractorTool extends BaseComponent {
         id: 'extractor-add-pick',
         title: LanguageService.t('matcher.addPick'),
         'aria-label': LanguageService.t('matcher.addPick'),
-        'aria-disabled': atCap ? 'true' : 'false',
+        'aria-disabled': atCap || inert ? 'true' : 'false',
         style: [
           'display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0;',
           `cursor: pointer; background: ${ADD_TILE_BG}; border: none; box-sizing: border-box;`,
           `border-left: 1px dashed ${ACCENT_BORDER}; color: var(--theme-primary);`,
-          atCap ? 'opacity: 0.45;' : '',
+          atCap || inert ? 'opacity: 0.45;' : '',
         ].join(' '),
       },
     }) as HTMLButtonElement;
@@ -1809,7 +1870,11 @@ export class ExtractorTool extends BaseComponent {
   private renderLegend(): void {
     const picks = this.pickCount();
     if (this.legendElement) {
-      const share = LanguageService.t('matcher.imageShare');
+      // A shared palette's segments are equal by construction, not measured
+      // off a picture — calling them the image's share would be a lie.
+      const share = this.sharedPalette
+        ? LanguageService.t('matcher.sharedPalette')
+        : LanguageService.t('matcher.imageShare');
       const picksText =
         picks === 1
           ? LanguageService.t('matcher.picksCountOne')
@@ -1836,7 +1901,9 @@ export class ExtractorTool extends BaseComponent {
       } else {
         this.resultsCountElement.textContent = LanguageService.tInterpolate('matcher.rollCountOf', {
           count: String(extracted),
-          max: String(this.paletteColorCount),
+          // A shared palette was never an extraction "out of" Max Colors —
+          // the link carries exactly the colours it carries.
+          max: String(this.sharedPalette ? extracted : this.paletteColorCount),
         });
       }
     }
@@ -1846,6 +1913,7 @@ export class ExtractorTool extends BaseComponent {
       this.exportBtn.style.opacity = hasResults ? '1' : '0.5';
       this.exportBtn.style.cursor = hasResults ? 'pointer' : 'not-allowed';
     }
+    this.updateShareButton();
   }
 
   // ============================================================================
@@ -2129,6 +2197,139 @@ export class ExtractorTool extends BaseComponent {
       }
     }
     return pixels;
+  }
+
+  // ============================================================================
+  // Share
+  // ============================================================================
+
+  /**
+   * The palette an extractor share link carries: the extracted colours in bar
+   * order, bare upper-case `RRGGBB`, capped at what the OG card can draw.
+   *
+   * **Picks are deliberately excluded.** A pick is a colour the sender read out
+   * of their own picture by hand; it has no dominance share, which is exactly
+   * why the bar draws it as a fixed-width numbered block rather than a
+   * proportion. og-worker's card draws every entry it is given as a band, so a
+   * shared pick would be drawn as a share it never had — and the recipient,
+   * who gets no image, could not have picked it either.
+   *
+   * The image never travels (FINDING-009: it is session-only memory), so the
+   * link is the palette, not the picture.
+   *
+   * Bare hexes, never og-worker's `RRGGBB-<share>` pairs: that spelling is
+   * accepted on the IMAGE path (`/og/extractor/:colors.png`) but the crawler
+   * route that reads `?colors=` filters on `/^[0-9A-F]{6}$/` after stripping
+   * `#` and upper-casing (`apps/og-worker/src/og-data-generator.ts`), so a
+   * pair would be dropped there and the card would come back empty.
+   */
+  private getShareParams(): Record<string, unknown> {
+    const colors = this.roll
+      .filter((entry) => entry.share !== null)
+      .slice(0, MAX_EXTRACTOR_SHARE_COLORS)
+      .map((entry) => entry.hex.replace('#', '').toUpperCase());
+
+    if (colors.length === 0) {
+      return {};
+    }
+    return { colors, algo: this.matchingMethod };
+  }
+
+  /**
+   * Push the current palette onto the share button. Reached from
+   * `renderHeader()`, so every path that repaints the roll — a re-extract, a
+   * Vibrancy re-order, a Max Colors change, an algorithm or filter change, a
+   * pick, a clear — updates the link too.
+   */
+  private updateShareButton(): void {
+    if (!this.shareButton) return;
+    const params = this.getShareParams();
+    this.shareButton.shareParams = params;
+    this.shareButton.disabled = !('colors' in params);
+  }
+
+  /**
+   * Restore a palette from a share link: `?colors=RRGGBB,RRGGBB…` (+ `algo`).
+   *
+   * A shared link carries no image, so the bar is drawn from the colours with
+   * EQUAL shares — the same thing og-worker's card does with the bare entries
+   * this tool emits — and the sheet shows each colour's matched dye. The loupe
+   * and the `+` tile stay inert until the recipient loads a picture of their
+   * own, at which point a real extraction replaces the shared palette outright.
+   *
+   * Harmony's "any share marker makes it a link" rule exists because its
+   * `?dye=` is also an ordinary in-app navigation (a hand-off, or
+   * `RouterService`'s `PRESERVED_PARAMS`), so `v=`/`algo=`/`wheel=` are needed
+   * to tell the two apart. The extractor has no such ambiguity: nothing in the
+   * app ever navigates to `/extractor?colors=…`, and `colors` is not a
+   * preserved param — so its presence IS the marker, and its absence means an
+   * ordinary visit that must behave exactly as before.
+   */
+  private restoreFromShareLink(): void {
+    const parsed = ShareService.getShareParamsFromCurrentUrl();
+    if (!parsed || parsed.tool !== 'extractor') return;
+
+    const raw = parsed.params.colors;
+    if (raw === undefined) return;
+
+    // `colors` is in LIST_PARAMS, so it is always an array — one colour is
+    // still a palette (BUG-015's arity trap).
+    const entries: unknown[] = Array.isArray(raw) ? raw : [raw];
+    const colors: string[] = [];
+    for (const entry of entries) {
+      const hex = ShareService.parseSharedPaletteColor(entry);
+      if (hex === null) {
+        logger.warn(`[ExtractorTool] Ignoring invalid colour in share URL: ${String(entry)}`);
+        continue;
+      }
+      if (colors.length >= MAX_EXTRACTOR_SHARE_COLORS) {
+        logger.warn(
+          `[ExtractorTool] Share URL carries more than ${MAX_EXTRACTOR_SHARE_COLORS} colours — ignoring the rest`
+        );
+        break;
+      }
+      // Two identical entries would share one segment key and fight over the
+      // focus ring; a repeat carries no extra information either way.
+      if (!colors.includes(hex)) {
+        colors.push(hex);
+      }
+    }
+
+    if (colors.length === 0) {
+      // Every entry was junk — the warnings above said so, and the tool is
+      // already showing its ordinary empty state.
+      return;
+    }
+
+    // The matching method rides the link so the recipient sees the dyes the
+    // sender saw. Applied through ConfigController exactly as harmony does, so
+    // the sidebar agrees with the sheet; unknown/legacy spellings normalise
+    // rather than reaching the matcher.
+    const algoRaw = parsed.params.algo;
+    if (typeof algoRaw === 'string' && algoRaw.length > 0) {
+      const normalized = normalizeMatchingMethod(algoRaw.toLowerCase());
+      this.matchingMethod = normalized;
+      this.hintCache = null;
+      ConfigController.getInstance().setConfig('extractor', { matchingMethod: normalized });
+      logger.info(`[ExtractorTool] Share URL loaded matching algorithm: ${normalized}`);
+    }
+
+    // Equal, synthetic dominance: the link carries no proportions, and the OG
+    // card draws bare entries as equal bands. `pixelCount` is nominal — it only
+    // has to be non-zero, which is how an extraction marks a real cluster.
+    const dominance = 100 / colors.length;
+    this.sharedPalette = true;
+    this.extracted = colors.map((hex) => ({
+      color: ColorService.hexToRgb(`#${hex}`),
+      dominance,
+      pixelCount: 1,
+    }));
+    this.picks = [];
+    this.focusKey = null;
+
+    this.renderRoll();
+    this.updateFlowVisibility();
+    logger.info(`[ExtractorTool] Share URL restored a ${colors.length}-colour palette`);
   }
 
   // ============================================================================
