@@ -228,11 +228,14 @@ describe('executeSwatch', () => {
     // (I18N-011 in @xivdyetools/svg — "OFF GRID" alone clears it by ~1.4px),
     // so a suffix there used to ellipsise away on an off-grid row in 5 of 6
     // locales. The label line has real headroom for every locale's slot
-    // short + "·LR" (worst case "AUGEN·LR" at 54.56 of 56px, verified by hand
-    // against `textWidth` — see the fix report), which is what makes the
-    // marker survive regardless of grid state or locale. en is the primary
-    // case now that width is no longer a factor; zh below is the kept CJK
-    // case.
+    // short + "·LR" (worst case "AUGEN·LR" at ~60.96 of 56px once the lead
+    // line's letterSpacing: 0.8 is counted — a bare `textWidth` call
+    // understates it at 54.56px, since textWidth/fitText don't model
+    // letter-spacing; the ~5px overhang past the 56px budget is absorbed by
+    // the 10px gutter before the swatch pair, no collision, no ellipsis),
+    // which is what makes the marker survive regardless of grid state or
+    // locale. en is the primary case now that width is no longer a factor;
+    // zh below is the kept CJK case.
     it('gives heterochromia off-grid eyes distinct ·L / ·R LABEL markers, addr unmarked', async () => {
       const result = await executeSwatch({ fileText: HETEROCHROMIA_OFF_GRID, locale: 'en' });
 

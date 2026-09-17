@@ -253,8 +253,13 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       // in @xivdyetools/svg — "OFF GRID" alone clears it by ~1.4px), so a
       // suffix there ellipsises away on an off-grid row in 5 of 6 locales
       // (BUG-006 review). The label line has real headroom for every locale's
-      // slot short + "·LR" (worst case AUGEN·LR at 54.56 of 56px) regardless
-      // of on/off-grid state, which is what makes the marker survive.
+      // slot short + "·LR" (worst case AUGEN·LR at ~60.96 of 56px once the
+      // lead line's letterSpacing: 0.8 — packages/svg/src/frame.ts:582-588 —
+      // is counted; textWidth/fitText don't model letter-spacing, so a bare
+      // textWidth call understates it at 54.56px) regardless of on/off-grid
+      // state — the ~5px overhang past the 56px budget is absorbed by the
+      // 10px gutter before the swatch pair, with no collision and no
+      // ellipsis, which is what makes the marker survive.
       let label = t.t(SLOT_KEYS[slot.kind] ?? 'card.slotSkin');
       if (slot.slot === 'leftEye' || slot.slot === 'rightEye') {
         if (character.eyesShareIndex) label += '·LR';

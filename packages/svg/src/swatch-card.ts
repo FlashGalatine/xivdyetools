@@ -41,7 +41,10 @@ import { toolGlyph } from './icons/tool-icons.js';
 export interface SwatchCardRow {
   /** Localized slot short (SKIN / HAUT / 肌 …) */
   slotLabel: string;
-  /** Grid address ("R6·C3", "R4·C7·LR") or the OFF-GRID short */
+  /**
+   * Grid address ("R6·C3") or the OFF-GRID short. The L/R/LR heterochromia
+   * marker lives on `slotLabel` instead (e.g. "EYES·L"), never appended here.
+   */
   addr: string;
   /** OFF GRID — the address line goes amber */
   addrWarn?: boolean;
