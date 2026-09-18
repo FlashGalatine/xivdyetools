@@ -11,4 +11,4 @@
 - Route the 404 through `ApiError`; include `locale` in error `meta` for parity with success responses (documented in the VitePress contract)
 
 ## Status
-OPEN
+FIXED (Sprint 11, `1cf37231`) — the match 404 is thrown as `ApiError`; error `meta` carries `locale` wherever the `/v1/*` locale middleware ran; `docs/guide/errors.md` updated.

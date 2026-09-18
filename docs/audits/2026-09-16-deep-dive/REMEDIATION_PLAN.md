@@ -151,7 +151,9 @@ No consumer deploy sprint: nothing here changes a result an app must pick up (se
 
 **Ends with:** bump 2.2.0 → 2.2.1 → merge to `main` → Actions → **"Publish Packages to npm"** → `@xivdyetools/logger`. No consumer deploy sprint (no app configures a tracker).
 
-## Sprint 10 — `og-worker`: cache-key hygiene, then the one optimization
+## Sprint 10 — `og-worker`: cache-key hygiene, then the one optimization — ✅ COMPLETED 2026-09-17 `9963891f`…`61dbb512`
+
+**Deploy needs:** og-worker 2.10.1 → 2.10.2; merge to `main` → `deploy-og-worker.yml` (`--env production` — a bare deploy is the routed beta). The BUG-002 retire half is not needed (Sprint 7 restored sharing). Gate green (456 tests). Deviation: both pass-through sites fall back to the existing 302 to the app on timeout — neither has a static card. The CLAUDE.md cache-key clause was tightened to name the dye card, not `/og/harmony/*`.
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|
@@ -161,7 +163,9 @@ No consumer deploy sprint: nothing here changes a result an app must pick up (se
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-og-worker` → merge to `main` → `deploy:production` via workflow. **Never a bare `deploy` here** — that is the routed beta at `beta.xivdyetools.app`.
 
-## Sprint 11 — `api-worker`: SWR cleanup, error envelope, contract tests
+## Sprint 11 — `api-worker`: SWR cleanup, error envelope, contract tests — ✅ COMPLETED 2026-09-17 `3e6d9a46`…`4b564e75`
+
+**Deploy needs:** api-worker 0.14.1 → 0.14.2; merge to `main` → `deploy-api-worker.yml` (`--env production`); the VitePress docs (`guide/errors.md`) deploy with it. Gate green (435 tests incl. the docs build). Deviations: `storeAsync` never logged, so BUG-019's `.catch` carries an optional structural logger no caller threads yet; the BUG-037 tests live in a new file because `dyes.test.ts`'s module-scope rate-limit bucket 429s near 65 requests.
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|
@@ -172,7 +176,9 @@ No consumer deploy sprint: nothing here changes a result an app must pick up (se
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-api-worker` → merge to `main` → `deploy:production` via workflow.
 
-## Sprint 12 — `stoat-worker` (parked): file-and-fix only
+## Sprint 12 — `stoat-worker` (parked): file-and-fix only — ✅ COMPLETED 2026-09-17 `19e36205`…`1d03a1bb`
+
+**Deploy needs:** none (parked); stoat-worker 0.3.0 → 0.3.1 for the record. Gate green (198 tests). `!xd ping` sends, measures, then edits the message (revolt.js `Message.edit` verified against its types).
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|

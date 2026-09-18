@@ -137,6 +137,9 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-002 | FIXED — restored (Sprint 7, web-app 5.11.0): `colors` + `algo` in the link, equal-share bands on open, og card reachable again | `161d0326`, `3eaca5a7`, `cb3f44f0`, `24ba3888` |
 | BUG-011, BUG-009, BUG-010, BUG-032 | FIXED (Sprint 8, core 5.3.0) — dye records frozen at the end of `initialize()` | `5e88e2f8`, `6b9c4ec0`, `86d9e0db`, `197226e3` |
 | BUG-020 | FIXED (Sprint 9, logger 2.2.1) | `0d3d90b1` |
+| BUG-018, OPT-001 | FIXED (Sprint 10, og-worker 2.10.2) | `9963891f`, `914c401f` |
+| BUG-019, BUG-037, BUG-036, REFACTOR-004 | FIXED (Sprint 11, api-worker 0.14.2) | `3e6d9a46`, `55f212a3`, `f39cf88b`, `1cf37231` |
+| BUG-031, BUG-042 | FIXED (Sprint 12, stoat-worker 0.3.1, parked) | `19e36205`, `a50ba98d` |
 | everything else | OPEN | — |
 
 ## Next steps
