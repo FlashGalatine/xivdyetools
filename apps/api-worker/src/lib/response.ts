@@ -23,7 +23,13 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-function buildMeta(c: AppContext, locale?: string): ResponseMeta {
+/**
+ * Build the `meta` envelope shared by every success AND error response:
+ * `requestId` + `apiVersion` always, `locale` only when set and non-`en`
+ * (REFACTOR-004 — the error envelope in `index.ts`'s `app.onError` reuses
+ * this rather than hand-rolling the same rule a second time).
+ */
+export function buildMeta(c: AppContext, locale?: string): ResponseMeta {
   const meta: ResponseMeta = {
     requestId: c.get('requestId') || 'unknown',
     apiVersion: c.env.API_VERSION || 'v1',

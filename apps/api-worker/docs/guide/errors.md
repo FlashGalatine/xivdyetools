@@ -7,9 +7,11 @@ All `/v1` errors use the same envelope. The `error` field is a stable machine-re
   "success": false,
   "error": "NOT_FOUND",
   "message": "No dye found with ID 999999.",
-  "meta": { "requestId": "...", "apiVersion": "v1" }
+  "meta": { "requestId": "...", "apiVersion": "v1", "locale": "ja" }
 }
 ```
+
+`meta.locale` follows the same rule as a success response's: present only when a non-English `?locale=` was in effect for the request (omitted for `en`). Since locale resolution runs only on `/v1/*` routes, an error outside that tree — `/health`, the developer docs site — never carries a `locale`, whatever `?locale=` the request itself included.
 
 ## Error Codes
 

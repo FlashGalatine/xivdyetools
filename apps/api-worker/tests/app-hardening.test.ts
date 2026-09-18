@@ -50,6 +50,39 @@ describe('unexpected errors (API-5)', () => {
   });
 });
 
+/**
+ * REFACTOR-004: app.onError's meta only carries `locale` when
+ * localeMiddleware actually set it on this request (index.ts mounts it on
+ * `/v1/*` only). The docs-host bypass tested above (API-10) is a real
+ * production path that returns before every other middleware in index.ts
+ * runs, including localeMiddleware and requestIdMiddleware, so an error
+ * there must never carry meta.locale. `?locale=ja` is on the URL on purpose
+ * and deliberately never read by that branch — it proves this is
+ * c.get('locale') (never set) governing the key, not the query string.
+ */
+describe('error meta.locale (REFACTOR-004)', () => {
+  it('omits meta.locale for an error on a non-/v1 path (docs host)', async () => {
+    const fetchSpy = vi.fn(async () => {
+      throw new Error('ASSETS unavailable');
+    });
+    const env = createMockEnv({
+      ENVIRONMENT: 'production',
+      ASSETS: { fetch: fetchSpy } as unknown as Fetcher,
+    });
+    const res = await app.request(
+      'https://developers.xivdyetools.app/guide/?locale=ja',
+      { method: 'GET' },
+      env,
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(500);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('INTERNAL_ERROR');
+    expect(body.meta.locale).toBeUndefined();
+  });
+});
+
 describe('error responses are not cacheable (API-13)', () => {
   it.each([
     ['/v1/nonexistent', 404],
