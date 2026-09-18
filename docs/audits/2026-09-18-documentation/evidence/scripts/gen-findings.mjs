@@ -212,7 +212,17 @@ const F = [
     ['`docs/specifications/multi-color-extraction.md:198` — `color-matcher-tool.ts`'],
     ['The component is `apps/web-app/src/components/extractor-tool.ts`; the name never appears on the page.'],
     ['Rename in the table, or mark the table as the original proposal.']],
+  ['`public-api.md` shows `X-RateLimit-Remaining: 59`; in production the header is only ever 64 or 0',
+    'MEDIUM', 'api-worker', 'WRONG', 'PUB-1 (late cluster; verdict in the report)',
+    ['`docs/user-guides/public-api.md:296-303` — example response headers (the value is at `:301`)'],
+    ['`packages/worker-kit/src/rate-limiter/backends/cloudflare.ts:185-199` returns `remaining: max(0, tier.limit - 1)` while allowed and `0` when denied — the Workers Rate Limiting API exposes no live count. Production limit is 65 (`apps/api-worker/wrangler.toml:99-102`).',
+      'Nothing in the guide says the value is synthetic, so a client that paces itself on the header gets no warning before a 429. `apps/api-worker/CLAUDE.md` documents the trap; the public guide does not.'],
+    ['Show `64` in the example and add one sentence: the header is `limit - 1` while allowed and `0` when denied — back off on `429` + `Retry-After`, not on a countdown. Check `apps/api-worker/docs/` for the same example.']],
 ];
+
+/** Findings the `/manual` update addresses — PR #189, draft, not merged when the audit closed. */
+const PROPOSED = new Set([3, 4, 5, 6, 7, 8, 9, 10, 11]);
+const STATUS_PROPOSED = 'FIX PROPOSED 2026-09-18 — draft PR #189 (`29e055e9`), not merged. Becomes FIXED on merge + discord-worker deploy.';
 
 mkdirSync(join(root, 'findings'), { recursive: true });
 const rows = [];
@@ -224,7 +234,7 @@ F.forEach(([title, sev, unit, kind, cands, loc, ev, fix], i) => {
     '', '## Location', ...loc.map((l) => `- ${l}`),
     '', '## Evidence', ...ev.map((l) => `- ${l}`), `- Reviewer candidates: ${cands} (verdicts in \`../evidence/verify-*.md\`).`,
     '', '## Fix', ...fix.map((l) => `- ${l}`),
-    '', '## Status', 'OPEN', '',
+    '', '## Status', PROPOSED.has(i + 1) ? STATUS_PROPOSED : 'OPEN', '',
   ].join('\n');
   writeFileSync(join(root, 'findings', `${id}.md`), body);
   // a literal pipe inside a title would split the table cell

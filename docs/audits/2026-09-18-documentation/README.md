@@ -2,9 +2,10 @@
 
 Every document under `docs/` and the Discord bot's in-app `/manual`, checked against what
 production serves: all eight app deploy workflows last succeeded on `0fec18f4` (= `origin/main`),
-so the checkout was the served baseline. **36 findings — 1 HIGH, 24 MEDIUM, 11 LOW** — from 51
-reviewer candidates, 48 of which survived verification. No source file or living document was
-modified by the audit; the `/manual` fixes were made separately (see the report).
+so the checkout was the served baseline. **37 findings — 1 HIGH, 25 MEDIUM, 11 LOW** — from 52
+reviewer candidates, 49 of which survived verification. No source file or living document was
+modified by the audit; the `/manual` fixes (DOC-003 … DOC-011) are in draft PR
+[#189](https://github.com/FlashGalatine/xivdyetools/pull/189).
 
 | File | Purpose |
 |------|---------|

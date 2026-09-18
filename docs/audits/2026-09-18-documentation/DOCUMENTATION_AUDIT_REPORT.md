@@ -5,9 +5,9 @@
   `CLAUDE.md`, source, config, workflows and `apps/api-worker/docs/` were supporting evidence only.
 - **Method:** a collector ran the inventory, both docs gates, `manual-check.mjs` and the
   served-version lookups; twelve reviewers each fact-checked one cluster against source; three
-  verifiers re-opened every candidate at `file:line` and graded it. 51 candidates → 48 confirmed →
+  verifiers (plus the `/manual` pre-commit reviewer, for the late candidate) re-opened every candidate at `file:line` and graded it. 52 candidates → 49 confirmed →
   merged into the findings below. No source or living document was modified by the audit.
-- **Totals:** 36 findings — 1 HIGH, 24 MEDIUM, 11 LOW · **Act now:** DOC-001
+- **Totals:** 37 findings — 1 HIGH, 25 MEDIUM, 11 LOW · **Act now:** DOC-001
 
 The previous audit (`2026-09-05-documentation`, merged as `39e08c32`) fixed about 600 findings, so
 this one is mostly a measure of 13 days of drift: nine feature and fix PRs (#171–#173, #183–#188)
@@ -50,7 +50,7 @@ not whether the prose is true.
 | `projects/discord-worker`, `user-guides/discord-bot` | living | 8 | reviewed | 1 → 1 | `review-discord-worker.md` |
 | `projects/web-app` | living | 4 | reviewed | 3 → 3 | `review-web-app-projects.md` |
 | `user-guides/web-app`, `user-guides/index.md` | living | 13 | reviewed | 6 → 6 | `review-web-app-user-guides.md` |
-| `user-guides/public-api.md` | living | 1 | see *Late cluster* | — | `review-public-api-guide.md` |
+| `user-guides/public-api.md` | living | 1 | reviewed (late — see *Late cluster*) | 1 → 1 | `review-public-api-guide.md` |
 | `projects/{presets-api,moderation-worker,oauth}` | living | 10 | reviewed | 6 → 5 | `review-presets-moderation-oauth.md` |
 | `projects/{api-worker,og-worker,universalis-proxy}`, `projects/index.md` | living | 5 | reviewed | 3 → 3 | `review-api-og-workers.md` |
 | `projects/{core,types,logger,test-utils}` | living | 8 | reviewed | 1 → 1 | `review-packages.md` |
@@ -101,10 +101,16 @@ not whether the prose is true.
 | [DOC-034](findings/DOC-034.md) | `data-flow.md`'s JWT example lacks `jti` | LOW | MISSING | oauth |
 | [DOC-035](findings/DOC-035.md) | `dependency-graph.md` counts 28 `@internal` symbols in core; there are 17 | LOW | WRONG | core |
 | [DOC-036](findings/DOC-036.md) | `multi-color-extraction.md` names a component file that does not exist | LOW | WRONG | web-app |
+| [DOC-037](findings/DOC-037.md) | `public-api.md` shows `X-RateLimit-Remaining: 59`; in production the header is only ever 64 or 0 | MEDIUM | WRONG | api-worker |
 
 ## Late cluster — `docs/user-guides/public-api.md`
 
-<!-- LATE -->
+The first fan-out split `user-guides/` by its two sub-folders and missed the one page that sits
+beside them. It was reviewed afterwards (`evidence/review-public-api-guide.md`): every endpoint,
+parameter, limit, example and link checked out, all four public route families are covered, and
+one candidate came back — confirmed by the verifier as **DOC-037** (MEDIUM): the example header
+`X-RateLimit-Remaining: 59` can never occur in production, where the value is synthetic (64 while
+allowed, 0 when denied) and the guide does not say so.
 
 ## Positive controls
 
@@ -156,15 +162,39 @@ Checked and right — do not re-file:
 
 | ID | Status | Commit |
 |---|---|---|
-| DOC-003 … DOC-011 (`/manual`) | see *`/manual` update* | — |
+| DOC-003 … DOC-011 (`/manual`) | FIX PROPOSED — draft PR #189, not merged | `29e055e9` |
 | all others | OPEN — corrections were not part of this request | — |
 
 ## `/manual` update
 
-<!-- MANUAL-PR -->
+The request included updating `/manual`, so DOC-003 … DOC-011 were fixed on a separate branch
+(the audit branch stays documentation-only): **draft PR
+[#189](https://github.com/FlashGalatine/xivdyetools/pull/189)**, `fix/manual-5-0-refresh`,
+discord-worker 5.5.8, text folded into the unpublished bot-logic 4.3.0. Not merged — merging is the
+production deploy and fires the release announcement, so that decision stays with the maintainer.
+
+- All 17 commands are named (two new embeds, seven in total); `/swatch`, the 📸 topic, `/harmony`,
+  `/gradient`, `/mixer`, `/preferences`, the Character File topic and the tips say what the code does.
+- Translated into ja, de, fr, ko, zh; syntax lines are byte-identical to English in every locale.
+- **The first draft broke Discord.** With seven embeds the French overview came to 6,310 characters
+  against a 6,000-per-message cap; `manual-check.mjs` caught it. The English overview was tightened
+  and every locale followed — largest reply now 4,994 (fr).
+- `font-coverage.test.ts` then went red twice over: topic emoji had been written into a locale
+  string (now interpolated from core's `MANUAL_TOPICS`), and ja/ko had new glyphs (subsets regenerated).
+- A pre-commit review re-checked every English claim against `schemas.ts` and the handlers and found
+  one more false claim carried over from the old text (`/dye search` "shows categories") plus the
+  deleted `/match` in the `/preferences filters set` footer — both fixed in the PR.
+- Four new guards in `manual.test.ts` read the real locale source: roster coverage, nothing
+  unregistered, Discord limits per locale, syntax lines identical to English. Mutation-checked.
+- Gates: `turbo run build type-check lint test --filter=...@xivdyetools/bot-logic` exit 0, 21/21
+  tasks; `docs:check-versions`, `docs:check-links`, `test:scripts`, `manual-check.mjs` exit 0.
+  gitleaks is not installed locally; CI runs it.
+
+After merge: publish `@xivdyetools/bot-logic` 4.3.0 from Actions. `register-commands` has nothing
+new — the `match_image` topic id and its choice label were deliberately left alone.
 
 ## Next steps
 
 1. DOC-001 first — it is the only finding that can take a service down.
 2. Review and merge the `/manual` PR, then publish bot-logic.
-3. The remaining 26 findings are documentation-only edits and fit one PR; ask for a remediation plan if they should be scheduled instead.
+3. The remaining 27 findings are documentation-only edits and fit one PR; ask for a remediation plan if they should be scheduled instead.
