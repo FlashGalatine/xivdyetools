@@ -318,6 +318,17 @@ export async function initializeV4Layout(container: HTMLElement): Promise<void> 
     if (layoutElement) {
       layoutElement.setAttribute('active-tool', state.toolId);
     }
+    // BUG-005: a same-tool popstate (Back from a preset detail to the
+    // preset list, or Back across a same-tool `navigateTo` like Harmony's
+    // "Inspect Dye in → Harmony") must not remount the active tool — that
+    // would lose its tab/search/scroll state for a transition the tool
+    // itself already handles. But we still want every OTHER subscriber
+    // (e.g. harmony-tool's own popstate handler re-reading `?dye=`) to see
+    // the notification, so the skip lives here rather than in
+    // RouterService — see RouteState.sameTool.
+    if (state.sameTool) {
+      return;
+    }
     void loadToolContent(state.toolId);
   });
 

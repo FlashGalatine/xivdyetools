@@ -1213,6 +1213,30 @@ describe('ExtractorTool', () => {
       expect(dropZone().style.flex).toBe('1 1 0%');
     });
 
+    it('clears the `?colors=` query so a reload or Back cannot resurrect the sender’s palette', async () => {
+      setShareUrl('?colors=8E5A3C,C9A96A&v=1');
+      tool = mount();
+      expect(window.location.search).toContain('colors=');
+
+      await loadImage();
+
+      // No new history entry either — replaceState, not pushState/navigateTo
+      // (a real navigation would notify RouterService and remount the tool).
+      expect(window.location.pathname).toBe('/extractor');
+      expect(window.location.search).toBe('');
+    });
+
+    it('leaves the URL alone when there was no shared palette to begin with', async () => {
+      window.history.replaceState({}, '', '/extractor?dc=Aether');
+      tool = mount();
+
+      await loadImage();
+
+      // `dc` is an ordinary preserved param, not a share marker — an
+      // unconditional replaceState on every image load would have dropped it.
+      expect(window.location.search).toBe('?dc=Aether');
+    });
+
     // ------------------------------------------------------------------------
     // Stage 1 — the loupe
     // ------------------------------------------------------------------------

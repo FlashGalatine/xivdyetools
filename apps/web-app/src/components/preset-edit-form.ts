@@ -706,6 +706,11 @@ function createSubmitButton(
     const dyesChanged = dyes.join(',') !== resolvedDyeIds.join(',');
 
     const updates: PresetEditRequest = {};
+    // Tracks whether the dyes-invalid refusal below already told the user
+    // why nothing was saved, so the generic "no changes" toast further down
+    // doesn't ALSO fire for the same submit (a dye-only edit with an
+    // unresolvable id previously showed both).
+    let dyesRefused = false;
     if (name !== preset.name) updates.name = name;
     if (description !== preset.description) updates.description = description;
     if (dyesChanged) {
@@ -714,6 +719,7 @@ function createSubmitButton(
         // (name, description, tags, ...) still go through, rather than
         // saving a `dyes` array that can never get those ids back.
         ToastService.error(LanguageService.t('preset.validation.dyesInvalid'));
+        dyesRefused = true;
       } else {
         updates.dyes = dyes;
       }
@@ -782,7 +788,11 @@ function createSubmitButton(
     // surface as a spurious error on an image-only edit that is about to
     // succeed. Nothing at all to do is its own, quieter message.
     if (!hasFieldChanges && !hasImageChange) {
-      ToastService.info(LanguageService.t('preset.noChanges'));
+      // A dye-only edit that got refused above already explained why
+      // nothing is being saved — don't also claim there was nothing to save.
+      if (!dyesRefused) {
+        ToastService.info(LanguageService.t('preset.noChanges'));
+      }
       return;
     }
 

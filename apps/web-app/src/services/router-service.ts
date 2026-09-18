@@ -48,6 +48,14 @@ export interface RouteDefinition {
 export interface RouteState {
   toolId: ToolId;
   params: URLSearchParams;
+  /**
+   * Set only by a popstate whose resolved tool equals the already-mounted
+   * tool; the layout uses it to skip a remount, other subscribers should
+   * still re-read the URL (e.g. a same-tool `?dye=` change on Back/Forward).
+   * `undefined`/`false` on every other notification (navigateTo, replaceRoute,
+   * or a cross-tool popstate).
+   */
+  sameTool?: boolean;
 }
 
 type RouteChangeListener = (state: RouteState) => void;
@@ -365,9 +373,13 @@ export class RouterService {
     // trigger v4-layout's loadToolContent — that would remount
     // <v4-preset-tool> and lose its tab/search/scroll for a transition the
     // tool itself already handles (see preset-tool.ts's own popstate
-    // listener). Only notify when the resolved tool actually differs from
-    // what's mounted, so cross-tool Back/Forward keeps remounting exactly as
-    // before.
+    // listener). But a same-tool popstate can still carry a query-only
+    // change a subscriber needs to observe (e.g. Harmony's "Inspect Dye in →
+    // Harmony" does a same-tool `navigateTo('harmony', { dye })`, and Back
+    // must land harmony-tool back on the prior `?dye=`). So we always
+    // notify, and pass `sameTool` so the layout — the one listener that
+    // must NOT remount — can skip `loadToolContent` on its own while every
+    // other subscriber still re-reads the URL.
     const toolChanged = resolvedToolId !== this.currentToolId;
     this.currentToolId = resolvedToolId;
 
@@ -377,17 +389,7 @@ export class RouterService {
       document.title = this.composeDocumentTitle(route);
     }
 
-    if (!toolChanged) {
-      // Note: this also skips the notify for a same-tool popstate that only
-      // changes query params (e.g. Back across a `?dye=` navigation) — a
-      // subscriber relying on popstate to observe a query-only change
-      // wouldn't see it fire. No current subscriber does (v4-layout only
-      // reads `state.toolId`), but flag it if one ever needs to.
-      logger.info(`[RouterService] Popstate: same tool (${this.currentToolId}), skipping notify`);
-      return;
-    }
-
-    this.notifyListeners();
+    this.notifyListeners(!toolChanged);
     logger.info(`[RouterService] Popstate: ${this.currentToolId}`);
   };
 
@@ -424,8 +426,17 @@ export class RouterService {
     return toolId ?? DEFAULT_TOOL;
   }
 
-  private static notifyListeners(): void {
+  /**
+   * @param sameTool - Forwarded onto the notified `RouteState.sameTool`.
+   * Only `handlePopState` passes an explicit value; `navigateTo` and
+   * `replaceRoute` omit it, so subscribers see it as `undefined` (falsy)
+   * on every non-popstate navigation.
+   */
+  private static notifyListeners(sameTool?: boolean): void {
     const state = this.getCurrentRoute();
+    if (sameTool !== undefined) {
+      state.sameTool = sameTool;
+    }
     this.listeners.forEach((listener) => {
       try {
         listener(state);

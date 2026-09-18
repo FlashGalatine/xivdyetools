@@ -31,11 +31,20 @@ defect the audit verified at `file:line`, each landed with a test that was red f
 
 - **Back from `/presets/:id` keeps `<v4-preset-tool>` mounted** (BUG-005). `handlePresetSelect`
   pushed `{ preset }` with no `toolId`, `RouterService.handlePopState` notified unconditionally and
-  `loadToolContent` re-created the element, dropping tab, search, scroll and the loaded pool. The
-  router now skips the notify for a same-tool popstate (the `navigationSeq`/`superseded()` guards
-  are untouched) and the tool restores or clears `selectedPreset` from the URL — `getSubPath()`,
-  not `history.state`, so `null` (cold load) and `{}` (the detail's own Back, edit/delete success,
-  OAuth return) states resolve too — with a `_restoreSeq` guard against a stale API fallback.
+  `loadToolContent` re-created the element, dropping tab, search, scroll and the loaded pool.
+  `RouterService` now always notifies on popstate — including a same-tool one — and marks the
+  notification `sameTool: true` when the resolved tool is the one already mounted; `v4-layout.ts`'s
+  own subscriber uses that flag to skip its `loadToolContent` remount (the `navigationSeq`/
+  `superseded()` guards are untouched), while every other subscriber still gets the notification.
+  That matters beyond presets: Harmony's "Inspect Dye in → Harmony" does a same-tool `navigateTo`,
+  and Back on that history entry needs harmony-tool's own popstate subscriber to re-read `?dye=` —
+  which an unconditional skip at the router would have silently broken. The preset tool restores or
+  clears `selectedPreset` from the URL — `getSubPath()`, not `history.state`, so `null` (cold load)
+  and `{}` (the detail's own Back, edit/delete success, OAuth return) states resolve too — with a
+  `_restoreSeq` guard against a stale API fallback.
+- **`preset-tool.ts` clears its search debounce timer on disconnect** (BUG-027).
+  `disconnectedCallback` unsubscribed five services but left the debounce `setTimeout` running, so a
+  detached element's pending search could still fire a fetch after teardown.
 - **Preset detail renders the prices it fetches** (BUG-004). `priceData` was written on every
   preset and on `prices-updated` but never read; with Show prices on the row now shows
   `formatGil(minPrice)` + world/DC, keyed by `dye.itemID` (the fan-out key

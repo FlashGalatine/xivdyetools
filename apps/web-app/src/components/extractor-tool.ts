@@ -1257,9 +1257,18 @@ export class ExtractorTool extends BaseComponent {
    * memory only.
    */
   private onImageLoaded(image: HTMLImageElement): void {
-    this.currentImage = image;
     // A real extraction replaces a shared palette outright — the link's
-    // colours were read from someone else's picture, not from this one.
+    // colours were read from someone else's picture, not from this one. But
+    // the `?colors=&algo=` query is still sitting in the address bar at this
+    // point; if we leave it there, a reload or Back after this load would
+    // re-run `restoreFromShareLink()` and resurrect the sender's palette
+    // over the image the user just loaded. Strip it once, without touching
+    // history (no new entry, no RouterService notify — that would remount
+    // this very tool mid-load).
+    if (this.sharedPalette) {
+      history.replaceState(history.state, '', '/extractor');
+    }
+    this.currentImage = image;
     this.sharedPalette = false;
     this.extracted = [];
     this.picks = [];

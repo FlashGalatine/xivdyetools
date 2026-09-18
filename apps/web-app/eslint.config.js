@@ -91,7 +91,12 @@ export default [
     files: ['src/components/**/*.ts'],
     ignores: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/components/welcome-modal.ts'],
     rules: {
-      '@typescript-eslint/no-restricted-imports': [
+      // `@typescript-eslint/no-restricted-imports` is deprecated since
+      // typescript-eslint 8.64 (this repo is on 8.70) in favour of the core
+      // ESLint rule with `allowTypeImports` — ESLint 10.10.0 (installed)
+      // supports that option on `no-restricted-imports` directly, so no
+      // typescript-eslint-specific behaviour is lost by switching.
+      'no-restricted-imports': [
         'error',
         {
           paths: [

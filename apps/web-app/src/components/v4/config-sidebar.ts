@@ -148,16 +148,22 @@ export class ConfigSidebar extends BaseLitComponent {
   // Tool Configuration State
   // =========================================================================
 
-  @state() private harmonyConfig: HarmonyConfig = getDefaultConfig('harmony');
+  // getDefaultConfig() returns the shared singleton from DEFAULT_CONFIGS —
+  // clone it (including its nested displayOptions/dyeFilters) like every
+  // other tool config below builds its own literal, so mutating this state
+  // can never leak into the module-level default other tools/instances read.
+  @state() private harmonyConfig: HarmonyConfig = {
+    ...getDefaultConfig('harmony'),
+    displayOptions: { ...getDefaultConfig('harmony').displayOptions },
+    dyeFilters: { ...getDefaultConfig('harmony').dyeFilters },
+  };
+  // maxColors initialised from the shared default (REFACTOR-007's class of
+  // bug: this literal previously hardcoded 8 while DEFAULT_CONFIGS.extractor
+  // said 4, so the sidebar and the tool could disagree on first load).
   @state() private extractorConfig: ExtractorConfig = {
-    vibrancyBoost: true,
-    maxColors: 8,
-    dragThreshold: 5,
-    sampleAreaSize: 1,
-    matchingMethod: 'ciede2000',
-    preventDuplicates: true,
-    displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
-    dyeFilters: { ...DEFAULT_DYE_FILTERS },
+    ...getDefaultConfig('extractor'),
+    displayOptions: { ...getDefaultConfig('extractor').displayOptions },
+    dyeFilters: { ...getDefaultConfig('extractor').dyeFilters },
   };
   @state() private accessibilityConfig: AccessibilityConfig = {
     normalVision: true,

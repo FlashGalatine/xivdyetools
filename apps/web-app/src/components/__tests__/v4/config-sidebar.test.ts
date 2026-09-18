@@ -84,6 +84,7 @@ vi.mock('@shared/tool-config-types', () => {
       strictMatching: true,
       matchingMethod: 'oklab',
       displayOptions: DEFAULT_DISPLAY_OPTIONS,
+      dyeFilters: DEFAULT_DYE_FILTERS,
     },
     extractor: {
       vibrancyBoost: true,

@@ -403,5 +403,23 @@ describe('showPresetEditForm — localization', () => {
       expect(updates).not.toHaveProperty('dyes');
       expect(updates.name).toBe('Also Renamed');
     });
+
+    it('does not also show "no changes" when the only edit is a refused dye-list change', () => {
+      showPresetEditForm(makePreset({ dyes: [1, 2, 3, 999] }));
+      const content = getFormContent();
+
+      // Touch ONLY the dye list — add the one remaining available dye, so
+      // the edited list (4 dyes) no longer matches the resolved baseline (3
+      // dyes) and gets refused for the unresolvable stored id. No other
+      // field changes, so `updates` stays empty: before the fix this fell
+      // through to "preset.noChanges" on top of the refusal toast.
+      content.querySelectorAll<HTMLButtonElement>('#edit-dye-grid button')[0].click();
+
+      content.querySelector<HTMLButtonElement>('#save-preset-btn')!.click();
+
+      expect(mockToastError).toHaveBeenCalledWith('preset.validation.dyesInvalid');
+      expect(mockToastInfo).not.toHaveBeenCalledWith('preset.noChanges');
+      expect(mockEditPreset).not.toHaveBeenCalled();
+    });
   });
 });

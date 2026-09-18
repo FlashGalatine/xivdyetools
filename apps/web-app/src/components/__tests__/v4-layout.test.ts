@@ -477,6 +477,31 @@ describe('V4Layout', () => {
       expect(mockTelemetry.endTool).toHaveBeenCalledTimes(1);
     });
 
+    it('BUG-005: a same-tool popstate (state.sameTool) skips the remount entirely', async () => {
+      // Distinguishes this from the test above: that one simulates a real
+      // navigateTo() to the already-showing tool (Welcome's "Get started"),
+      // which has no sameTool flag and DOES remount. A popstate that
+      // RouterService resolved to the already-mounted tool sets
+      // `state.sameTool = true`, and the layout must skip loadToolContent
+      // altogether — not just dedupe its telemetry — so the active tool
+      // instance (and its in-memory state) survives untouched.
+      await initializeV4Layout(container);
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledTimes(1));
+
+      const initSpy = vi.spyOn(MockTool.prototype, 'init');
+      initSpy.mockClear();
+      mockTelemetry.startTool.mockClear();
+      mockTelemetry.endTool.mockClear();
+
+      const popstateState = { toolId: 'harmony' as const, sameTool: true };
+      routeListener()(popstateState);
+      await settle();
+
+      expect(initSpy).not.toHaveBeenCalled();
+      expect(mockTelemetry.startTool).not.toHaveBeenCalled();
+      expect(mockTelemetry.endTool).not.toHaveBeenCalled();
+    });
+
     it('tracks a palette-drawer pick only when a tool takes it, and never a random pick', async () => {
       await initializeV4Layout(container);
       await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledTimes(1));

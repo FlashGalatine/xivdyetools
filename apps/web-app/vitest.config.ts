@@ -70,11 +70,16 @@ export default defineConfig({
       // action handlers; between them they hold most of the remaining
       // uncovered statements and almost all of the branch gap. Raise these
       // numbers as those tests deepen; do not lower them.
+      //
+      // 2026-09-17: raised from 78/63/74/79 after the PR #188 review fix
+      // wave. Measured (full suite, 126 files / 2929 tests): 79.94 / 66.01 /
+      // 76.69 / 81.35 — each threshold below stays a hair under its measured
+      // figure, same ratchet policy as above.
       thresholds: {
-        statements: 78,
-        branches: 63,
-        functions: 74,
-        lines: 79,
+        statements: 79,
+        branches: 65,
+        functions: 76,
+        lines: 81,
       },
     },
     // scripts/ holds the CI gates (check-bundle-size, check-beta-build,

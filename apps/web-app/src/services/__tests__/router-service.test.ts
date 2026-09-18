@@ -638,9 +638,11 @@ describe('RouterService', () => {
       RouterService.subscribe(listener);
 
       // No state to resolve from, so this falls back to parsing the URL.
-      // BUG-005: a same-tool resolution no longer notifies, so the URL is
-      // moved to a DIFFERENT tool here to keep this test proving the
-      // fallback-parse path actually fires a real navigation.
+      // The URL is moved to a DIFFERENT tool so this proves the
+      // fallback-parse path fires a real cross-tool navigation (a same-tool
+      // popstate now also notifies — see the BUG-005 tests below — but this
+      // test is specifically about the fallback-parse path landing
+      // somewhere new).
       Object.defineProperty(window, 'location', {
         value: {
           pathname: '/budget',
@@ -672,9 +674,9 @@ describe('RouterService', () => {
       const listener = vi.fn();
       RouterService.subscribe(listener);
 
-      // BUG-005: an invalid state ALSO falls back to parsing the URL, and a
-      // same-tool resolution no longer notifies — move the URL to a
-      // different tool so this still proves the fallback-parse path fires.
+      // An invalid state ALSO falls back to parsing the URL; move the URL to
+      // a different tool so this proves the fallback-parse path lands on a
+      // real cross-tool navigation.
       Object.defineProperty(window, 'location', {
         value: {
           pathname: '/budget',
@@ -695,11 +697,15 @@ describe('RouterService', () => {
       expect(RouterService.getCurrentToolId()).toBe('budget');
     });
 
-    it('BUG-005: does not notify when popstate resolves to the tool already mounted', () => {
+    it('BUG-005: notifies with sameTool:true when popstate resolves to the tool already mounted', () => {
       // Models Back from a preset detail: preset-tool.ts pushes
       // { toolId: 'presets', preset: id }; Back pops to the list's own
-      // { toolId: 'presets' } entry — same tool both times, so v4-layout
-      // must not remount <v4-preset-tool> (loadToolContent must not run).
+      // { toolId: 'presets' } entry — same tool both times. v4-layout skips
+      // its own remount on `state.sameTool` (loadToolContent must not run
+      // there), but the notification itself must still reach every other
+      // subscriber — e.g. harmony-tool's popstate handler needs to re-read
+      // `?dye=` on a same-tool Back (see the query-reading-subscriber test
+      // below).
       Object.defineProperty(window, 'location', {
         value: { pathname: '/presets', search: '', href: 'http://localhost/presets' },
         writable: true,
@@ -714,11 +720,12 @@ describe('RouterService', () => {
       const event = new PopStateEvent('popstate', { state: { toolId: 'presets' } });
       window.dispatchEvent(event);
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ sameTool: true }));
       expect(RouterService.getCurrentToolId()).toBe('presets');
     });
 
-    it('BUG-005: still notifies (and remounts) when popstate resolves to a different tool', () => {
+    it('BUG-005: notifies with sameTool falsy when popstate resolves to a different tool', () => {
       Object.defineProperty(window, 'location', {
         value: { pathname: '/presets', search: '', href: 'http://localhost/presets' },
         writable: true,
@@ -733,7 +740,38 @@ describe('RouterService', () => {
       window.dispatchEvent(event);
 
       expect(listener).toHaveBeenCalled();
+      const state = listener.mock.calls[0][0];
+      expect(state.sameTool).toBeFalsy();
       expect(RouterService.getCurrentToolId()).toBe('harmony');
+    });
+
+    it('BUG-005: a same-tool popstate still reaches a query-reading subscriber', () => {
+      // Regression for the Harmony "Inspect Dye in → Harmony" scenario: a
+      // same-tool navigateTo (?dye=B) followed by Back must still let a
+      // subscriber that only reads window.location (not state.toolId
+      // changes) observe the popstate and re-resolve the query string.
+      Object.defineProperty(window, 'location', {
+        value: {
+          pathname: '/harmony',
+          search: '?dye=A',
+          href: 'http://localhost/harmony?dye=A',
+        },
+        writable: true,
+      });
+
+      RouterService.initialize();
+      expect(RouterService.getCurrentToolId()).toBe('harmony');
+
+      const listener = vi.fn();
+      RouterService.subscribe(listener);
+
+      const event = new PopStateEvent('popstate', { state: { toolId: 'harmony' } });
+      window.dispatchEvent(event);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      const state = listener.mock.calls[0][0];
+      expect(state.toolId).toBe('harmony');
+      expect(state.sameTool).toBe(true);
     });
 
     it('should update document title on popstate', () => {
