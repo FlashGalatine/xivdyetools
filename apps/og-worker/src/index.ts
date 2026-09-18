@@ -317,6 +317,20 @@ app.use('/og/*', async (c, next) => {
  * guard above this still measures the raw pathname on purpose — capping
  * the undecoded string is the conservative side of that check.)
  */
+/**
+ * True only for the parameterised harmony card,
+ * `/og/harmony/:dyeId/:harmonyType[.png]` — the one route whose handler
+ * reads `wheel` when it renders (BUG-018). `/og/harmony/default.png` (the
+ * per-tool 2a fallback, matched by `/og/:tool/default.png`) shares the
+ * `/og/harmony/` prefix but takes no dye and no wheel, so a plain
+ * `startsWith('/og/harmony/')` check wrongly keyed it too. The parameterised
+ * route always has exactly two more segments after the prefix (dyeId,
+ * harmonyType[.png]); the default card has exactly one (`default.png`).
+ */
+function readsWheel(path: string): boolean {
+  return /^\/og\/harmony\/[^/]+\/[^/]+/.test(path);
+}
+
 function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const url = new URL(c.req.url);
   const params = new URLSearchParams();
@@ -349,12 +363,15 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   // two entries for one picture.
   //
   // And only on the route that READS it. `wheel` is an allowed key everywhere
-  // because the allowlist is global, but only `/og/harmony/*` renders with it;
-  // keying on it elsewhere let `?wheel=` mint five distinct, unauthenticated
-  // rasters of one identical gradient or mixer card — the FINDING-024 key-space
-  // problem, reintroduced through a validated parameter.
+  // because the allowlist is global, but only the parameterised harmony card
+  // (`readsWheel`, below) renders with it — `/og/harmony/default.png` shares
+  // the `/og/harmony/` prefix but is the per-tool 2a fallback card, which
+  // never reads `wheel` at render time. A bare prefix check (BUG-018)
+  // therefore let up to five validated wheel ids each mint their own
+  // byte-identical resvg render of that default card — the FINDING-024
+  // key-space problem, reintroduced through a validated parameter.
   const wheel = parseColorWheelId(url.searchParams.get('wheel'));
-  if (wheel && wheel !== DEFAULT_COLOR_WHEEL && c.req.path.startsWith('/og/harmony/')) {
+  if (wheel && wheel !== DEFAULT_COLOR_WHEEL && readsWheel(c.req.path)) {
     params.set('wheel', wheel);
   }
   // Ruling S7-R13 (og-7 refined): strip a trailing `.png` from the path too — it stays
