@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-09-17
+
+Sprint 14 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive/`).
+
+### Fixed
+
+- **The misconfiguration 500 now carries security headers** (BUG-017). The security-headers
+  middleware (nosniff, `X-Frame-Options`, `Cache-Control: no-store`, `Pragma`, HSTS) was registered
+  *below* env validation, so the "Service misconfigured" 500 — the response most likely to be probed
+  — shipped without any of them. It reads only `c.env.ENVIRONMENT`, nothing env validation produces,
+  so it now runs directly after CORS and before env validation.
+
+### Changed
+
+- **`src/middleware/body-validation.ts` now wraps `@xivdyetools/worker-kit/body-guards`'
+  `bodyGuards()` factory** (REFACTOR-009 leg). This app previously carried its own copy of the same
+  body-size cap and JSON depth / prototype-pollution check that `apps/presets-api` also had; both now
+  live in the shared package (1.4.0), with this file supplying only the 10 KB cap and this app's two
+  error bodies. `bodySizeLimit` / `jsonDepthLimit` keep their names and behaviour — the existing test
+  suite passes unchanged.
+
 ## [3.1.0] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 10
