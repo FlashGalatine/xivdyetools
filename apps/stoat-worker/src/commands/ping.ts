@@ -7,8 +7,10 @@ import type { CommandContext } from '../router.js';
 
 export async function handlePingCommand(ctx: CommandContext): Promise<void> {
   const startTime = Date.now();
-  await ctx.message.channel?.sendMessage({
-    content: `🏓 Pong! (${Date.now() - startTime}ms)`,
+  const sent = await ctx.message.channel?.sendMessage({
+    content: '🏓 Pong!',
     replies: [{ id: ctx.message.id, mention: false }],
   });
+  const latency = Date.now() - startTime;
+  await sent?.edit({ content: `🏓 Pong! (${latency}ms)` });
 }
