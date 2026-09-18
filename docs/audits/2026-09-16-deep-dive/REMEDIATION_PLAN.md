@@ -253,3 +253,18 @@ oauth ships exactly once in this plan, which matters here: it has no `[env.produ
 - Every user-visible change updates the unit's `CHANGELOG-laymans.md`; the **root** one fires the Discord announcement on push to `main`, so write it for Sprint 4 (bot) and Sprints 1/2/7 (web) only when the change is worth announcing.
 - Re-run the audit's gates after each sprint (`turbo run build type-check lint test --force`, coverage, `dead-code:check`); Sprint 1's deletion may surface newly-unreferenced symbols.
 - Annotate executed sprints in the heading: **✅ COMPLETED <date> <commits>** + **Deploy needs:** — the plan doubles as the tracker.
+
+## PR #188 review — ✅ 2026-09-18 (`77520aac`, `ed885447`, `8395eb59`)
+
+Seven independent per-unit reviewers (3 Opus / 3 Sonnet / 1 Haiku), each running its slice's suites, on head `41be98f1`: 0 Critical, 6 Important, 25 Minor. Every Important was fixed in one wave:
+
+| # | Unit | Finding | Fix |
+|---|---|---|---|
+| 1 | web-app | BUG-005's router-level same-tool popstate skip silenced `harmony-tool`'s route subscriber — Back across an in-Harmony "Inspect Dye in → Harmony" hand-off left the UI on the new dye while the URL named the old one | router always notifies and marks the state `sameTool`; only `v4-layout` skips its remount (the finding's original shape); four tests |
+| 2 | presets-api | `rate-limiting.md`'s failure table said daily quotas fail closed; BUG-015 made the three reserve-then-act kinds fail open | table split by kind, paragraph corrected |
+| 3 | presets-api | `reserveDailyEvent` counted every concurrent row, so N requests racing the last slot all refused it | count only rows with `id <= own rowId` (one winner in insertion order); an interleaving test fails without the clause |
+| 4 | worker-kit | the npm README advertised `bodyGuards` on the root export the same release made subpath-only | README / CLAUDE.md / CHANGELOG corrected; `sniffImageType` split into overloads to close an unsound `as T` |
+| 5 | bot-logic | 4.2.1 (patch) for an observable card change contradicted the house rule this PR applied to core 5.3.0 | **4.3.0** |
+| 6 | stoat-worker | `sent?.edit` is silent when the channel is missing | downgraded to Minor by the coordinator (pre-existing `channel?.`, unit parked); not fixed |
+
+Minors fixed alongside: test-utils `{ stainID: undefined }` takes the sequence default; config-sidebar no longer aliases the harmony default singleton and initialises the extractor config from the default (was `maxColors` 8 vs 4); no double toast on a dye-only invalid edit; `?colors=` cleared once the recipient loads their own image; web-app coverage ratchet 79/65/76/81; core `no-restricted-imports`; `database.md`'s `discord_id` cell; the ban-confirmation embed labels a UUID "XIVAuth ID"; BUG-027 changelog bullet; share-link copy in the guide and laymans. **Follow-ups not fixed:** api-worker's 429 `formatError` still hand-rolls `meta` (a no-op — it runs before the locale middleware); discord-worker's autocomplete `.slice(0, 100)` can split a surrogate pair via `author_name`; oauth's two weak `body-validation.test.ts` assertions (worker-kit's own suite is the load-bearing parity proof); locale trees stay shared-mutable while dye records are frozen; the BUG-049 rollback leaves its `submission` event row; the share link truncates a >5-colour palette with no UI hint.
