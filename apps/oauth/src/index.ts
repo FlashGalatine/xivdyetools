@@ -101,6 +101,38 @@ app.use(
   })
 );
 
+// Security headers middleware
+// Applies to all responses (after handler execution)
+//
+// BUG-017 (2026-09-16 deep-dive audit): this used to sit BELOW env
+// validation, so the "Service misconfigured" 500 went back with none of
+// these headers — nosniff, X-Frame-Options, Cache-Control, Pragma, HSTS all
+// missing on the one response most likely to be probed. It depends on
+// nothing env validation produces (only `c.env.ENVIRONMENT`, which is read
+// either way), so it belongs directly after CORS and before the gate that
+// can short-circuit the request.
+app.use('*', async (c, next) => {
+  await next();
+  // Prevent MIME-type sniffing attacks
+  c.header('X-Content-Type-Options', 'nosniff');
+  // Prevent clickjacking by denying iframe embedding
+  c.header('X-Frame-Options', 'DENY');
+  // FINDING-022 (2026-08-29 security audit): nothing this worker returns is
+  // cacheable. The token responses are bearer JWTs (RFC 6749 §5.1 mandates
+  // no-store on them), the callback bounces carry an authorization code, and
+  // /auth/me is per-user. Nothing caches in the path today — this stops a
+  // future CDN rule or a browser heuristic on a 200 JSON body from storing a
+  // JWT. Applied to every route, not just /auth/*: /health has nothing worth
+  // caching either. Pragma is for HTTP/1.0 intermediaries.
+  c.header('Cache-Control', 'no-store');
+  c.header('Pragma', 'no-cache');
+  // Enforce HTTPS for 1 year everywhere except local development (FINDING-029:
+  // was production-only, so any other non-development env went without HSTS)
+  if (c.env.ENVIRONMENT !== 'development') {
+    c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+});
+
 // Environment validation middleware
 // Validates required env vars once per isolate and caches result
 //
@@ -115,7 +147,9 @@ app.use(
 // without `Access-Control-Allow-Origin` and the SPA saw an opaque network
 // error instead of the config incident the JSON body names precisely. CORS
 // does not depend on validated env — the origin callback reads only
-// FRONTEND_URL and ENVIRONMENT — so it belongs first.
+// FRONTEND_URL and ENVIRONMENT — so it belongs first. The security-headers
+// middleware above shares that property (BUG-017), so the order is now
+// CORS → security headers → env validation.
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
   if (!result.valid) {
@@ -138,30 +172,6 @@ app.use('*', async (c, next) => {
     }
   }
   return next();
-});
-
-// Security headers middleware
-// Applies to all responses (after handler execution)
-app.use('*', async (c, next) => {
-  await next();
-  // Prevent MIME-type sniffing attacks
-  c.header('X-Content-Type-Options', 'nosniff');
-  // Prevent clickjacking by denying iframe embedding
-  c.header('X-Frame-Options', 'DENY');
-  // FINDING-022 (2026-08-29 security audit): nothing this worker returns is
-  // cacheable. The token responses are bearer JWTs (RFC 6749 §5.1 mandates
-  // no-store on them), the callback bounces carry an authorization code, and
-  // /auth/me is per-user. Nothing caches in the path today — this stops a
-  // future CDN rule or a browser heuristic on a 200 JSON body from storing a
-  // JWT. Applied to every route, not just /auth/*: /health has nothing worth
-  // caching either. Pragma is for HTTP/1.0 intermediaries.
-  c.header('Cache-Control', 'no-store');
-  c.header('Pragma', 'no-cache');
-  // Enforce HTTPS for 1 year everywhere except local development (FINDING-029:
-  // was production-only, so any other non-development env went without HSTS)
-  if (c.env.ENVIRONMENT !== 'development') {
-    c.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  }
 });
 
 // Rate limiting middleware for auth endpoints

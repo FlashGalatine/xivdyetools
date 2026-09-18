@@ -207,7 +207,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### Cache-Control
 
-Every response the app dispatches carries `Cache-Control: no-store` and `Pragma: no-cache` (FINDING-022; RFC 6749 §5.1) — token bodies, callback bounces carrying an authorization code, `/auth/me`, and the health routes alike. The one exception is a CORS preflight: Hono's `cors()` middleware answers an OPTIONS request with its own 204 before the security-headers middleware, registered after it, ever runs — a preflight response carries no `Cache-Control` (or `X-Content-Type-Options` / `X-Frame-Options` / HSTS) at all.
+Every response the app dispatches carries `Cache-Control: no-store` and `Pragma: no-cache` (FINDING-022; RFC 6749 §5.1) — token bodies, callback bounces carrying an authorization code, `/auth/me`, and the health routes alike. Middleware order in `index.ts` is request-ID → logger → CORS → security headers → env validation → rate limiting → body guards; the security-headers middleware sits directly after CORS and before env validation (BUG-017, 2026-09-16 deep-dive audit) precisely so the "Service misconfigured" 500 a bad deploy produces still carries nosniff / `X-Frame-Options` / `Cache-Control` / `Pragma` / HSTS — it reads only `c.env.ENVIRONMENT`, nothing env validation produces. The one exception is a CORS preflight: Hono's `cors()` middleware answers an OPTIONS request with its own 204 before the security-headers middleware, registered after it, ever runs — a preflight response carries no `Cache-Control` (or `X-Content-Type-Options` / `X-Frame-Options` / HSTS) at all.
 
 ### Redirect URI Validation
 
