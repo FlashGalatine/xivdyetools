@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.8.1] - 2026-09-18
+### 📖 Discord bot: /manual catches up with 5.0
+- Discord bot: `/manual` now lists every command. `/comparison`, `/contrast`, `/accessibility` (and its short name `/a11y`), `/budget`, `/preset`, `/changelog` and `/stats` were missing from it.
+- Discord bot: the 📸 Image Matching Tips topic now describes `/extractor image` instead of `/match_image`, a command removed in 5.0, with the right numbers: 3 to 10 colours, images up to 10 MB, BMP accepted.
+- Discord bot: the help for `/swatch` explains attaching a `.chara` file instead of the old pick-by-number grid, and the help for `/harmony`, `/gradient`, `/mixer` and `/preferences` matches what those commands do today.
+- Discord bot: all of this is corrected in every one of the bot's six languages.
+
 ## [5.8.0] - 2026-09-17
 ### 🔗 Share a palette from the Palette Extractor
 - Web app: the Palette Extractor's Share button is back, beside Export. The link carries the colours on the bar (up to five, in order) and your matching method — not your picture and not hand-picked colours — and whoever opens it sees the same colours as equal bands, matched to dyes with the same method (their own dye filters still apply). Links pasted into Discord show a preview card again.
