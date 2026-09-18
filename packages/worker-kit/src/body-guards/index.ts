@@ -37,28 +37,22 @@
 // gain a consumer or be tagged on purpose — see root CLAUDE.md's Tooling →
 // knip bullet and this repo's root `knip.jsonc`.
 //
-// Everything here is tagged because this subpath shipped ahead of its
-// consumers: `apps/oauth` adopts it in Sprint 14 and `apps/presets-api` in
-// Sprint 16 of the 2026-09-16 deep-dive remediation. Drop the tag from each
-// specifier as its in-repo consumer lands.
-//
-// Only `BodyGuardsOptions`, `BodyGuardResponder`, `InvalidJsonResponder` and
-// `BodyGuardExemption` make knip fail today — the others are already "used" by
-// this module's own test file, which knip counts as an entry. That is an
-// artifact of how knip sees tests, not evidence that those four are more
-// public than the rest, so every specifier carries the tag.
+// `apps/oauth` (Sprint 14) and `apps/presets-api` (Sprint 16) consume
+// `bodyGuards`. The four option types below keep the tag because consumers
+// pass option literals and never import the type names, so knip would report
+// them unused; `BodyGuardMiddleware` is reached through the factory's return
+// type and needs none.
 
-export { /** @public — consumed by Sprint 14 and Sprint 16 */ bodyGuards } from './body-guards.js';
+export { bodyGuards } from './body-guards.js';
 
 export type {
-  /** @public — consumed by Sprint 14 and Sprint 16 */
+  /** @public — option types of the published factory; consumers pass literals and import nothing */
   BodyGuardsOptions,
-  /** @public — consumed by Sprint 14 and Sprint 16 */
   BodyGuardMiddleware,
-  /** @public — consumed by Sprint 14 and Sprint 16 */
+  /** @public */
   BodyGuardResponder,
-  /** @public — consumed by Sprint 14 and Sprint 16 */
+  /** @public */
   InvalidJsonResponder,
-  /** @public — consumed by Sprint 16 (the preview-image upload route) */
+  /** @public */
   BodyGuardExemption,
 } from './types.js';
