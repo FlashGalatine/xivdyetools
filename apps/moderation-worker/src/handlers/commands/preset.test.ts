@@ -1926,6 +1926,13 @@ describe('handlePresetCommand — security audit remediations', () => {
       );
       const confirmButton = json.data.components[0].components[0];
       expect(confirmButton.custom_id).toBe(`ban_confirm_${XIVAUTH_UUID}`);
+      // A4 (2026-09-16 PR review): the id field must be labeled "XIVAuth ID",
+      // not "Discord ID", when the target has no real Discord snowflake.
+      expect(json.data.embeds[0].fields).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'XIVAuth ID', value: XIVAUTH_UUID }),
+        ]),
+      );
     });
 
     it('unban_user accepts a UUID target and reaches unbanUser', async () => {

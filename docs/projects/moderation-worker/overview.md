@@ -154,7 +154,7 @@ Ban a user from the preset system. This:
 ```
 
 A confirmation dialog appears with:
-- User's username and Discord ID
+- User's username and Discord ID (or XIVAuth ID)
 - Total preset count
 - Links to their recent presets
 - Confirm/Cancel buttons

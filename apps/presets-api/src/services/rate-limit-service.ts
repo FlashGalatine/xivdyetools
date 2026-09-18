@@ -92,11 +92,20 @@ export async function getSubmissionCountToday(
 /**
  * Count a user's append-only events of one kind for the current UTC day.
  * Unlike the row count above, nothing the user can do lowers this number.
+ *
+ * `upToId` (BUG-015 fix round 2 — deterministic tie-break) restricts the
+ * count to rows with `id <= upToId`. Autoincrement ids are monotonic, so
+ * passing a reservation's own row id turns the count into "how many rows for
+ * this user + kind were inserted at or before mine" — i.e. this request's
+ * position in insertion order — rather than every row that exists by the
+ * time the COUNT runs. Omitting it keeps the original 4-arg behaviour
+ * byte-identical for other callers.
  */
 export async function getEventCountToday(
   db: D1Database,
   userDiscordId: string,
-  kind: SubmissionEventKind
+  kind: SubmissionEventKind,
+  upToId?: number
 ): Promise<number> {
   const today = getStartOfDayUTC();
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
@@ -108,12 +117,16 @@ export async function getEventCountToday(
       AND kind = ?
       AND created_at >= ?
       AND created_at < ?
+      ${upToId !== undefined ? 'AND id <= ?' : ''}
   `;
 
-  const result = await db
-    .prepare(query)
-    .bind(userDiscordId, kind, today.toISOString(), tomorrow.toISOString())
-    .first<{ count: number }>();
+  const stmt = db.prepare(query);
+  const bound =
+    upToId !== undefined
+      ? stmt.bind(userDiscordId, kind, today.toISOString(), tomorrow.toISOString(), upToId)
+      : stmt.bind(userDiscordId, kind, today.toISOString(), tomorrow.toISOString());
+
+  const result = await bound.first<{ count: number }>();
 
   return result?.count || 0;
 }
@@ -221,13 +234,24 @@ export interface DailyEventReservation extends RateLimitResult {
  *
  *   1. Insert the event row first — this is the statement every concurrent
  *      request serializes on.
- *   2. Count today's rows for this user + kind, including the one just
- *      inserted.
+ *   2. Count today's rows for this user + kind with `id <= ` this
+ *      reservation's own row id (`getEventCountToday`'s `upToId`), including
+ *      the one just inserted but excluding anything inserted after it.
  *   3. If that count exceeds the cap, delete the row this call just
  *      inserted and report `allowed: false` (the same 429 shape the old
  *      pre-check returned). Otherwise report `allowed: true` with a
  *      `release()` the caller uses to give the slot back if whatever it
  *      reserved the slot for goes on to fail.
+ *
+ * Fix round 2 (2026-09-16 PR review): step 2 originally counted ALL of
+ * today's rows regardless of id, not just the ones at-or-before this
+ * reservation. With one slot free and N >= 2 concurrent requests, every one
+ * of them observed `limit - 1 + N > limit` and every one refused — nobody
+ * got the slot. Bounding the count by `id <= rowId` makes it "this
+ * reservation's position in insertion order": since autoincrement ids are
+ * monotonic, exactly one concurrent caller lands at position `limit` (or
+ * below) and wins; the rest land above it and lose, same as if they had
+ * arrived one at a time.
  *
  * A reservation nobody releases counts permanently, exactly like the old
  * `recordSubmissionEvent` call it replaces at the three call sites.
@@ -254,7 +278,9 @@ export interface DailyEventReservation extends RateLimitResult {
  * in place — nothing releases a reservation nobody ever resolves. That row
  * counts against the cap until it ages past UTC midnight like any other; it
  * is not a leak, just the cost of charging at reservation time rather than
- * at completion time.
+ * at completion time. Two concurrent requests racing for the last slot are
+ * ordered deterministically by row id (the tie-break above) — exactly one
+ * wins, not zero and not both.
  */
 export async function reserveDailyEvent(
   db: D1Database,
@@ -299,7 +325,7 @@ export async function reserveDailyEvent(
 
   let used: number;
   try {
-    used = await getEventCountToday(db, userDiscordId, kind);
+    used = await getEventCountToday(db, userDiscordId, kind, rowId);
   } catch (err) {
     logger?.warn('[BUG-015] daily-event reservation count failed — failing open', {
       kind,

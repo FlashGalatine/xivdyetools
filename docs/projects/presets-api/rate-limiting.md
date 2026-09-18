@@ -90,7 +90,12 @@ the reservation releases the row again (best effort). Two trades come with the s
 request now costs a prune DELETE + INSERT + COUNT + DELETE where it used to cost one COUNT (bounded
 by the per-IP limiter), and a request abandoned between the reservation and its completion keeps
 its slot until UTC midnight. The reservation itself stays best-effort — a D1 write error leaves the
-cap inert for that request rather than failing the edit, as before.
+cap inert for that request rather than failing the edit, as before. Concurrent requests racing for
+the same last free slot are settled deterministically: the count is bounded to rows with
+`id <= ` the reservation's own row id (presets-api 2.3.6, PR review fix round 2), so exactly one
+of them lands at or below the cap and wins — the earlier round counted every row regardless of id,
+so with one slot free and two or more concurrent requests, every single one of them observed the
+cap already exceeded and refused, and nobody got the slot.
 
 ### 429 body
 
@@ -121,11 +126,16 @@ On a successful preset submission, the response instead carries the remaining co
 | Layer | Failure Mode | Rationale |
 |-------|--------------|-----------|
 | Per-IP / per-user middleware | **Fail-open** (`onError: 'fail-open'`, the worker-kit default) | If the limiter backend errors, the request is allowed. Availability over accuracy. |
-| Daily quotas | **Fail-closed** | The count is a D1 query awaited on the request path; a D1 error surfaces as a 500 and the mutation does not happen. |
+| Daily quotas — `submission` (`checkSubmissionRateLimit`) | **Fail-closed** | The count is a D1 query awaited on the request path; a D1 error surfaces as a 500 and the mutation does not happen. |
+| Daily quotas — `text_edit` / `flagged_edit` / `preview_upload` (`reserveDailyEvent`) | **Fail-open** | An INSERT or COUNT error logs a `[BUG-015]` warning and lets the request through unmetered, rather than 500ing a mutation because a hand-run migration (`0012_submission_events_text_edit.sql`) is missing in a given environment. |
 
-The `submission_events` **write** is deliberately best-effort in the other direction: a failed
-insert is logged and swallowed so a quota bookkeeping error can never fail a mutation that already
-landed.
+The `submission_events` **write** is best-effort, but the shape differs by kind. For `submission`,
+`recordSubmissionEvent` writes only *after* the preset row has already been created
+(`handlers/presets.ts`), so a failed insert there truly can never fail a mutation that already
+landed — there is nothing left it could roll back. For the three `reserveDailyEvent` kinds the
+order is reversed: the insert precedes the mutation it gates, so a failed INSERT or COUNT instead
+fails the *reservation* open (see the table above) rather than failing closed — the mutation that
+follows was never at risk of being undone, because it has not happened yet.
 
 ## Service-binding callers
 

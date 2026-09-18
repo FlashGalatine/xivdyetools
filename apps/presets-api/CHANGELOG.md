@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.3.6] - 2026-09-17
 
+### Fixed
+
+- **`reserveDailyEvent`'s overshoot check had no deterministic tie-break** (BUG-015 fix round 2, 2026-09-16 PR review). It counted ALL of today's rows for the user + kind, not just the ones at or before its own reservation — with one slot free and two or more concurrent requests, every single one observed `limit - 1 + N > limit` and every one refused; nobody got the slot. `getEventCountToday` gained an optional trailing `upToId` parameter (`AND id <= ?`, bound after the date range) that `reserveDailyEvent` now passes its own row id through, so the count becomes "this reservation's position in insertion order": exactly one concurrent caller lands at or below the cap and wins, the rest lose, the same as if they had arrived one at a time. The pre-existing 4-arg call site is unaffected — `upToId` is opt-in.
+
 ### Changed
 
 - `src/middleware/body-validation.ts`'s two guards (SEC-003 JSON depth, SEC-004 body size) are now `@xivdyetools/worker-kit`'s `bodyGuards()` factory (REFACTOR-009) — this module supplies only the 100 KB cap, the `PAYLOAD_TOO_LARGE` 413 / `BAD_REQUEST` 400 envelopes, and the preview-image upload's exemption (its own 5 MB cap, `VALIDATION_ERROR` 400, and skipping the JSON depth check). `isPreviewImageUpload` and `PREVIEW_IMAGE_CONTENT_TYPES` stay local. No response byte changed; both existing middleware test files pass unchanged (`docs/audits/2026-09-16-deep-dive/`).
 - `sniffImageType` (`src/services/preview-image-service.ts`) now calls `@xivdyetools/worker-kit/image-sniff`'s shared sniffer instead of carrying its own magic-byte table (REFACTOR-008), keeping this route's pre-filter to exactly `png`/`jpeg`/`webp` — a GIF or BMP still returns `null`, as it always has. No response byte changed (`docs/audits/2026-09-16-deep-dive/`).
+
+### Documentation
+
+- `docs/projects/presets-api/rate-limiting.md`: split the "Daily quotas" row of the Failure Behavior table — `submission` (`checkSubmissionRateLimit`) still fails closed, but `text_edit` / `flagged_edit` / `preview_upload` (`reserveDailyEvent`) fail *open* on a D1 error, logging a `[BUG-015]` warning rather than 500ing a mutation over a hand-run migration missing in a given environment; softened the paragraph beneath it (the "never fail a mutation that already landed" claim only holds for `submission`'s post-mutation `recordSubmissionEvent` write — the three reserve kinds insert *before* the mutation they gate); and documented the new row-id tie-break in the reserve-then-act trade-offs paragraph. `docs/projects/presets-api/database.md`: `banned_users.discord_id` is the resolved acting-user id — a Discord snowflake, or the oauth `sub` UUID (lowercase) for an XIVAuth-only account — not always a snowflake (BUG-001 path (a)).
 
 ## [2.3.5] - 2026-09-17
 

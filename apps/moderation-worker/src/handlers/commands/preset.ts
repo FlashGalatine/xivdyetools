@@ -11,6 +11,7 @@
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
+import { isValidSnowflake } from '@xivdyetools/types';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import type { Translator } from '../../services/bot-i18n.js';
 import {
@@ -555,7 +556,15 @@ async function handleBanUserSubcommand(
         color: 0xed4245,
         fields: [
           { name: t.t('ban.username'), value: sanitizeUserName(user.username), inline: true },
-          { name: t.t('ban.discordId'), value: user.discordId || 'N/A', inline: true },
+          {
+            // A4-style shape label (2026-09-16 fix wave, index.ts autocomplete
+            // choices): `user.discordId` can carry a BUG-001 path (a) XIVAuth
+            // `sub` UUID instead of a real Discord snowflake — label the
+            // field accordingly rather than always calling it "Discord ID".
+            name: isValidSnowflake(user.discordId) ? t.t('ban.discordId') : t.t('ban.xivauthId'),
+            value: user.discordId || 'N/A',
+            inline: true,
+          },
           { name: t.t('ban.totalPresets'), value: String(user.presetCount), inline: true },
           { name: t.t('ban.recentPresets'), value: presetLinks, inline: false },
         ],
