@@ -23,6 +23,40 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
   `label` also flows into the `/swatch slot:` nearest sheet's title and into
   the off-grid / dropped-slot embed lines, so the marker now shows up
   consistently everywhere the slot name is printed, not just on the card row.
+- **The `/manual` text was still the 4.x manual, in all six locales**
+  (2026-09-18 documentation audit, `docs/audits/2026-09-18-documentation/`
+  DOC-003 … DOC-011; folded into 4.3.0 because 4.3.0 had not been published).
+  `manual.swatch` documented the deleted `/swatch color|grid` subcommands
+  instead of the `.chara` attachment; every `matchImageHelp.*` string described
+  `/match` and `/match_image`, deleted in 5.0, and said "136 FFXIV dyes",
+  "Euclidean distance in RGB", "`colors` option (1-5)" and "8MB" (125, ΔE2000,
+  3-10, 10 MB); `manual.harmony` listed 7 of the 10 types and no colour wheels;
+  `manual.gradient` had the option names and step range wrong (`start_color` /
+  `end_color`, 2-12); `manual.mixer` described one blend rather than the
+  five-ratio sweep; `manual.preferences` showed a `set <key> <value>` shape
+  that never existed; `manual5.topics.characterFile.body` named 5 of 7 slots;
+  and "All commands support autocomplete" was false. `manual.dyeSearch` said
+  the results show categories (they show name and hex), and
+  `preferences.filters.affectsHint` — the footer of `/preferences filters set`
+  — still listed the deleted `/match`. The placeholders inside syntax lines
+  are identifiers and are no longer translated; the German and Chinese
+  harmony names now match the ones core prints on the card.
+
+### Added
+
+- `manual.*` entries for the seven commands `/manual` never named —
+  `comparison`, `contrast`, `accessibility` (which also names `/a11y`),
+  `budget`, `presetBrowse` / `presetShare` / `presetFavorite`, `changelog`,
+  `stats` — plus the `manual.analysis` and `manual.community` section titles.
+
+### Removed
+
+- The `manual.autocompleteNote` locale string ("All commands support
+  autocomplete for dye names" — false for 6 of the 17 commands, and a
+  duplicate of `manual.tips.autocomplete`). Its only reader was
+  discord-worker's `/manual`; locale strings are data, not typed exports.
+  The overview descriptions were also tightened: with seven embeds the French
+  reply passed Discord's 6,000-character message cap.
 
 ### Changed
 

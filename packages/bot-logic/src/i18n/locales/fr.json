@@ -44,65 +44,102 @@
   "manual": {
     "title": "Manuel XIV Dye Tools",
     "welcome": "Bienvenue sur **XIV Dye Tools** ! Ce bot vous aide à explorer et associer les couleurs de teinture FFXIV.",
-    "commandsIntro": "Vous trouverez ci-dessous toutes les commandes disponibles organisées par catégorie.",
-    "autocompleteNote": "Toutes les commandes prennent en charge l'**autocomplétion** pour les noms de teinture !",
+    "commandsIntro": "Commandes disponibles ci-dessous, organisées par catégorie.",
     "colorMatching": "Correspondance des couleurs",
     "dyeInformation": "Informations sur les teintures",
+    "analysis": "Analyse",
+    "community": "Préréglages communautaires",
     "botInformation": "Informations du bot",
     "tipsResources": "Conseils et ressources",
     "extractor": {
-      "name": "`/extractor color <couleur> [nombre]` | `/extractor image <image>`",
-      "description": "Extraire et faire correspondre les couleurs aux teintures FFXIV.\n• `color` : Faire correspondre un code hex ou un nom de teinture aux teintures les plus proches\n• `image` : Extraire les couleurs dominantes d'une image téléchargée"
+      "name": "`/extractor color <color> [count]` | `/extractor image <image> [colors]`",
+      "description": "Associez les couleurs aux teintures FFXIV.\n• `color` : les teintures les plus proches d'un hex ou d'un nom (`count` 1-10)\n• `image` : les couleurs dominantes d'une image téléchargée (`colors` 3-10)"
     },
     "harmony": {
-      "name": "`/harmony <couleur> [type]`",
-      "description": "Générez des combinaisons de teintures harmonieuses.\n• Types : Complémentaire, Analogue, Triadique, Complémentaire divisé, Tétradique, Carré, Monochromatique\n• Crée une roue chromatique visuelle"
+      "name": "`/harmony <color> [type] [wheel] [companions]`",
+      "description": "Combinaisons de teintures harmonieuses.\n• 10 types : Complémentaire, Analogue, Triadique, Complémentaire divisé, Tétradique, Tétradique inversé, Carré, Monochromatique, Composé, Nuances\n• 5 roues chromatiques : RGB, RYB, Munsell, teinte OKLCH, clarté OKLCH"
     },
     "mixer": {
-      "name": "`/mixer <teinture1> <teinture2> [mode]`",
-      "description": "Mélangez deux teintures en utilisant la science des couleurs.\n• 6 modes de mélange : RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Trouve la teinture FFXIV la plus proche du résultat mélangé"
+      "name": "`/mixer <dye1> <dye2> [mode]`",
+      "description": "Mélangez deux teintures via la science des couleurs.\n• 6 modes de mélange : RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Mélange à 5 ratios et trouve la teinture la plus proche de chacun"
     },
     "gradient": {
-      "name": "`/gradient <début> <fin> [étapes]`",
-      "description": "Créez un dégradé de couleurs entre deux couleurs.\n• Affiche les teintures correspondantes pour chaque étape\n• Nombre d'étapes configurable (2-10)"
+      "name": "`/gradient <start_color> <end_color> [steps] [color_space]`",
+      "description": "Créez un dégradé entre deux couleurs, avec une teinture correspondante par étape.\n• 2-12 étapes (par défaut 6)\n• 9 espaces colorimétriques (par défaut HSV)"
     },
     "swatch": {
-      "name": "`/swatch color <type> <index>` | `/swatch grid <type> <ligne> <colonne>`",
-      "description": "Faire correspondre les couleurs de personnage FFXIV aux teintures.\n• Prend en charge peau, cheveux, yeux, reflets, lèvres, tatouages, peinture faciale\n• Palettes spécifiques à la race/clan pour la peau et les cheveux"
+      "name": "`/swatch <file> [order] [slot]`",
+      "description": "Associe les couleurs d'un personnage aux teintures d'un fichier `.chara` (Anamnesis ou Ktisis).\n• Lit peau, cheveux, mèches, yeux, lèvre, peinture faciale et tatouage/anneau limbal\n• `slot` : les cinq teintures les plus proches pour une couleur"
     },
     "preferences": {
-      "name": "`/preferences show` | `/preferences set <clé> <valeur>` | `/preferences reset`",
-      "description": "Gérez vos préférences du bot.\n• Définissez les valeurs par défaut pour le mode de mélange, la méthode de correspondance, le nombre de résultats\n• Configurez le clan/genre du personnage et le monde du marché"
+      "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
+      "description": "Gérez vos préférences du bot.\n• `set` : langue, mélange, correspondance, nombre de résultats, clan/genre, monde, valeurs des cartes, thème\n• `filters` : exclure des groupes de teintures des résultats\n• `reset` : un réglage, ou tout"
     },
     "dyeSearch": {
-      "name": "`/dye search <recherche>`",
-      "description": "Recherchez des teintures par nom.\n• La recherche floue trouve des correspondances partielles\n• Affiche les codes hexadécimaux et les catégories"
+      "name": "`/dye search <query>`",
+      "description": "Recherchez des teintures par nom.\n• Les noms partiels correspondent, en anglais ou dans votre langue\n• Affiche les codes hexadécimaux"
     },
     "dyeInfo": {
-      "name": "`/dye info <nom>`",
-      "description": "Obtenez des informations détaillées sur une teinture spécifique.\n• Affiche les valeurs Hex, RGB, HSV\n• Affiche la catégorie et l'ID d'objet"
+      "name": "`/dye info <name>`",
+      "description": "Informations détaillées sur une teinture spécifique.\n• Valeurs HEX, RGB, HSV et LAB\n• Source, objet du marché et teintures les plus proches"
     },
     "dyeList": {
-      "name": "`/dye list [catégorie]`",
+      "name": "`/dye list [category]`",
       "description": "Listez toutes les teintures ou filtrez par catégorie.\n• Catégories : Rouges, Bruns, Jaunes, Verts, Bleus, Violets, Neutres, Spéciales"
     },
     "dyeRandom": {
       "name": "`/dye random [unique_categories]`",
-      "description": "Affichez 5 teintures sélectionnées au hasard.\n• Option pour limiter à 1 teinture par catégorie"
+      "description": "5 teintures sélectionnées au hasard.\n• Option pour limiter à 1 teinture par catégorie"
+    },
+    "comparison": {
+      "name": "`/comparison <dye1> <dye2> [dye3] [dye4]`",
+      "description": "Comparez 2-4 teintures côte à côte avec analyse des couleurs.\n• Accepte noms de teinture ou codes hex"
+    },
+    "contrast": {
+      "name": "`/contrast <dye1> <dye2> [dye3] [dye4]`",
+      "description": "Mesurez les rapports de contraste WCAG entre 2-4 teintures.\n• Indique les lignes 3:1, 4.5:1 et 7:1"
+    },
+    "accessibility": {
+      "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
+      "description": "Voyez comment les teintures résistent aux déficiences de vision des couleurs.\n• Une teinture : son décalage selon chaque vision\n• Deux teintures : leur écart (`vision` en choisit une)\n• `/a11y` est la même commande"
+    },
+    "budget": {
+      "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
+      "description": "Trouvez des alternatives à une teinture chère via le tableau des ventes.\n• `find` : teintures moins chères proches de votre cible (`max_distance` 2-20)\n• `quick` : idem pour les teintures chères populaires\n• `set_world` : enregistrez votre monde ou centre de données"
+    },
+    "presetBrowse": {
+      "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
+      "description": "Préréglages communautaires de teintures.\n• 8 catégories\n• Triez par popularité, date ou nom"
+    },
+    "presetShare": {
+      "name": "`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`",
+      "description": "Partagez vos préréglages et votez pour ceux des autres.\n• 3-6 teintures plus des tags facultatifs ; les soumissions sont modérées\n• `edit` : sur vos propres préréglages"
+    },
+    "presetFavorite": {
+      "name": "`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`",
+      "description": "Liste personnelle de préréglages favoris (jusqu'à 50)."
+    },
+    "changelog": {
+      "name": "`/changelog [version]`",
+      "description": "Nouveautés du bot.\n• La dernière version en détail, ou choisissez-en une avec `version`"
+    },
+    "stats": {
+      "name": "`/stats summary`",
+      "description": "Statistiques d'utilisation du bot. Panneaux autres que `summary` réservés aux utilisateurs autorisés."
     },
     "about": {
       "name": "`/about`",
       "description": "Afficher les informations du bot, la version et les liens."
     },
     "manualCmd": {
-      "name": "`/manual`",
-      "description": "Afficher ce guide d'aide."
+      "name": "`/manual [topic]`",
+      "description": "Afficher ce guide d'aide, ou un sujet approfondi : {topics}"
     },
     "tips": {
       "autocomplete": "**Autocomplétion :** Commencez à taper un nom de teinture et des suggestions apparaîtront !",
       "hexColors": "**Couleurs Hex :** Utilisez le format web standard comme `#FF0000` (rouge) ou `#5865F2` (blurple)",
       "dyeNames": "**Noms de teinture :** Tapez des noms partiels - \"dala\" trouvera \"Rouge Dalamud\"",
-      "facewearExcluded": "**Accessoires de visage exclus :** Les teintures génériques d'accessoires de visage (comme \"Rouge\", \"Bleu\") sont exclues des résultats",
+      "facewearExcluded": "**Accessoires de visage :** Leurs couleurs (comme \"Rouge\", \"Bleu\") ne sont pas des teintures et n'apparaissent jamais dans les résultats",
       "links": "**Liens :**"
     }
   },
@@ -354,7 +391,7 @@
       "excluded": "Exclu",
       "included": "Inclus",
       "updated": "Filtres mis à jour",
-      "affectsHint": "Affecte : /match, /harmony, /gradient, /mixer",
+      "affectsHint": "Affecte : /harmony, /gradient, /mixer",
       "title": "Filtres de teinture",
       "setHint": "Utilisez /preferences filters set pour personnaliser",
       "resetSuccess": "Filtres réinitialisés",
@@ -435,31 +472,31 @@
     "timeout": "Le téléchargement de l'image a expiré. Veuillez réessayer."
   },
   "matchImageHelp": {
-    "title": "Comment utiliser /match_image",
-    "description": "La commande `/match_image` analyse votre image téléchargée pour trouver la couleur dominante et la faire correspondre à la teinture FFXIV la plus proche. Voici quelques conseils pour obtenir les meilleurs résultats !",
+    "title": "Faire correspondre les couleurs d'une image",
+    "description": "La commande `/extractor image` analyse une image téléchargée, en extrait les couleurs dominantes et fait correspondre chacune à la teinture FFXIV la plus proche. Voici quelques conseils pour obtenir les meilleurs résultats !",
     "howItWorks": "Comment ça marche",
-    "howItWorksContent": "**1. Analyse d'image**\n- Votre image est traitée avec le clustering K-means\n- La/les couleur(s) dominante(s) sont extraites\n- Les couleurs sont comparées à 136 teintures FFXIV\n\n**2. Correspondance de teinture**\n- Utilise la distance euclidienne dans l'espace colorimétrique RGB\n- Retourne la/les teinture(s) correspondante(s) la/les plus proche(s)",
+    "howItWorksContent": "**1. Analyse d'image**\n- Votre image est traitée avec le clustering K-means\n- Les couleurs les plus dominantes sont extraites (`colors` 3-10, par défaut 4)\n\n**2. Correspondance de teinture**\n- Chaque couleur est comparée aux 125 teintures FFXIV\n- Utilise ΔE2000 par défaut - changez-le avec l'option `matching`",
     "tipsForBestResults": "Conseils pour de meilleurs résultats",
     "tipsContent": "**Recadrez vos images**\n- Concentrez-vous sur la zone spécifique que vous souhaitez faire correspondre\n- Supprimez les éléments d'interface et les arrière-plans\n\n**Choisissez un bon éclairage**\n- Prenez des captures d'écran dans des zones bien éclairées\n- Évitez les ombres sombres ou les reflets extrêmes\n\n**Évitez les arrière-plans sombres**\n- Les arrière-plans noirs peuvent fausser les résultats\n- Utilisez des arrière-plans neutres et clairs si possible",
     "commonIssues": "Problèmes courants",
-    "commonIssuesContent": "**« J'ai obtenu une couleur sombre mais mon équipement est clair ! »**\n→ Votre arrière-plan est probablement sombre. Recadrez l'image sur votre équipement uniquement.\n\n**« La correspondance semble incorrecte »**\n→ Plusieurs couleurs ? L'algorithme choisit la couleur la PLUS courante.\n\n**« Puis-je faire correspondre une partie spécifique ? »**\n→ Oui ! Recadrez sur cette zone exacte avant de télécharger.",
+    "commonIssuesContent": "**« J'ai obtenu une couleur sombre mais mon équipement est clair ! »**\n→ Votre arrière-plan est probablement sombre. Recadrez l'image sur votre équipement uniquement.\n\n**« La correspondance semble incorrecte »**\n→ L'algorithme choisit les couleurs les PLUS courantes. Recadrez pour exclure le reste.\n\n**« Puis-je faire correspondre une partie spécifique ? »**\n→ Oui ! Recadrez sur cette zone exacte avant de télécharger.",
     "proTips": "Conseils pro",
-    "proTipsContent": "• Utilisez un logiciel de retouche d'image pour recadrer avant de télécharger\n• Pour les équipements métalliques/brillants, les résultats peuvent varier\n• Si vous connaissez le code hexadécimal, utilisez `/match` à la place\n• Extrayez plusieurs couleurs avec l'option `colors` (1-5)\n• Captures d'écran en 1920x1080 ou plus pour une meilleure qualité",
+    "proTipsContent": "• Utilisez un logiciel de retouche d'image pour recadrer avant de télécharger\n• Pour les équipements métalliques/brillants, les résultats peuvent varier\n• Si vous connaissez le code hexadécimal, utilisez `/extractor color` à la place\n• Demandez plus ou moins de couleurs avec l'option `colors` (3-10)\n• Captures d'écran en 1920x1080 ou plus pour une meilleure qualité",
     "footer": "XIV Dye Tools - Fait avec amour pour les passionnés de glamour FFXIV",
     "exampleUseCases": "Exemples d'utilisation",
     "goodExamples": "Bons exemples",
     "goodExamplesContent": "• Capture d'écran recadrée d'une seule pièce de poitrine\n• Gros plan d'une armure teinte avec un arrière-plan neutre\n• Capture d'écran prise en plein jour\n• Image centrée sur la couleur que vous voulez faire correspondre",
     "poorExamples": "Mauvais exemples",
     "poorExamplesContent": "• Capture d'écran plein écran avec beaucoup d'interface\n• Personnage dans un donjon ou une grotte sombre\n• Plusieurs pièces d'armure avec différentes teintures\n• Image dominée par les couleurs d'arrière-plan",
-    "whenToUse": "Quand utiliser /match_image vs /match",
-    "whenToUseContent": "**Utilisez `/match_image` quand :**\n• Vous avez une capture d'écran et voulez trouver la teinture\n• Vous ne connaissez pas le code couleur exact\n• Vous voulez faire correspondre une couleur à partir de photos d'inspiration\n\n**Utilisez `/match` quand :**\n• Vous connaissez déjà le code hexadécimal\n• Vous avez besoin de résultats plus précis/exacts\n• Vous travaillez avec des nuanciers",
+    "whenToUse": "Quand utiliser /extractor image vs /extractor color",
+    "whenToUseContent": "**Utilisez `/extractor image` quand :**\n• Vous avez une capture d'écran et voulez trouver la teinture\n• Vous ne connaissez pas le code couleur exact\n• Vous voulez faire correspondre une couleur à partir de photos d'inspiration\n\n**Utilisez `/extractor color` quand :**\n• Vous connaissez déjà le code hexadécimal\n• Vous avez besoin de résultats plus précis/exacts\n• Vous travaillez avec des nuanciers",
     "technicalDetails": "Détails techniques",
     "supportedFormats": "Formats pris en charge",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "Limites de fichier",
-    "fileLimitsContent": "• Taille maximale : 8 Mo\n• Temps de traitement : ~1-3 secondes",
-    "matchQualityRatings": "Évaluations de qualité",
-    "matchQualityRatingsContent": "**Parfait** (distance 0)\n**Excellent** (distance <10)\n**Bon** (distance <25)\n**Correct** (distance <50)\n**Approximatif** (distance ≥50)\n\n*Distance plus faible = meilleure correspondance*",
+    "fileLimitsContent": "• Taille maximale : 10 Mo",
+    "matchQualityRatings": "Distance de correspondance",
+    "matchQualityRatingsContent": "Chaque correspondance indique sa distance par rapport à votre couleur - plus c'est bas, plus c'est proche.\n\nLes six méthodes de correspondance et le fonctionnement de leurs bandes : sujet {topic} de `/manual`",
     "poweredBy": "Propulsé par le traitement d'image Photon WASM"
   },
   "card": {
@@ -591,7 +628,7 @@
       },
       "characterFile": {
         "name": "Fichier de personnage",
-        "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, yeux, lèvres, peinture) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS GRILLE."
+        "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, mèches, yeux, lèvres, peinture faciale, tatouage/anneau limbal) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS GRILLE."
       }
     }
   },

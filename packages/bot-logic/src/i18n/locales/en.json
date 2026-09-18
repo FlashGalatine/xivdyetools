@@ -45,42 +45,43 @@
     "title": "XIV Dye Tools Manual",
     "welcome": "Welcome to **XIV Dye Tools**! This bot helps you explore and match FFXIV dye colors.",
     "commandsIntro": "Below you'll find all available commands organized by category.",
-    "autocompleteNote": "All commands support **autocomplete** for dye names!",
     "colorMatching": "Color Matching",
     "dyeInformation": "Dye Information",
+    "analysis": "Analysis",
+    "community": "Community Presets",
     "botInformation": "Bot Information",
     "tipsResources": "Tips & Resources",
     "extractor": {
-      "name": "`/extractor color <color> [count]` | `/extractor image <image>`",
-      "description": "Extract and match colors to FFXIV dyes.\n• `color`: Match a hex code or dye name to closest dyes\n• `image`: Extract dominant colors from an uploaded image"
+      "name": "`/extractor color <color> [count]` | `/extractor image <image> [colors]`",
+      "description": "Match colors to FFXIV dyes.\n• `color`: the closest dyes to a hex code or dye name (`count` 1-10)\n• `image`: the dominant colors of an uploaded image (`colors` 3-10)"
     },
     "harmony": {
-      "name": "`/harmony <color> [type]`",
-      "description": "Generate harmonious dye combinations.\n• Types: Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Square, Monochromatic\n• Creates a visual color wheel"
+      "name": "`/harmony <color> [type] [wheel] [companions]`",
+      "description": "Generate harmonious dye combinations.\n• 10 types: Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Inverted Tetradic, Square, Monochromatic, Compound, Shades\n• 5 color wheels: RGB, RYB, Munsell, OKLCH hue, OKLCH lightness"
     },
     "mixer": {
       "name": "`/mixer <dye1> <dye2> [mode]`",
-      "description": "Blend two dyes together using color science.\n• 6 blending modes: RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Finds the closest FFXIV dye to the blended result"
+      "description": "Blend two dyes together using color science.\n• 6 blending modes: RGB, LAB, OKLAB, RYB, HSL, Spectral\n• Blends at five ratios and finds the closest dye to each"
     },
     "gradient": {
-      "name": "`/gradient <start> <end> [steps]`",
-      "description": "Create a color gradient between two colors.\n• Shows matched dyes for each gradient step\n• Configurable step count (2-10)"
+      "name": "`/gradient <start_color> <end_color> [steps] [color_space]`",
+      "description": "Create a color gradient between two colors, with a matched dye for each step.\n• 2-12 steps (default 6)\n• 9 color spaces (default HSV)"
     },
     "swatch": {
-      "name": "`/swatch color <type> <index>` | `/swatch grid <type> <row> <col>`",
-      "description": "Match FFXIV character colors to dyes.\n• Supports skin, hair, eyes, highlights, lips, tattoos, face paint\n• Race/clan specific palettes for skin and hair"
+      "name": "`/swatch <file> [order] [slot]`",
+      "description": "Match a character's colors to dyes from a `.chara` file (Anamnesis or Ktisis).\n• Reads skin, hair, highlights, eyes, lip, face paint and tattoo/limbal ring\n• `slot`: the five nearest dyes for one color"
     },
     "preferences": {
-      "name": "`/preferences show` | `/preferences set <key> <value>` | `/preferences reset`",
-      "description": "Manage your bot preferences.\n• Set defaults for blending mode, matching method, result count\n• Configure character clan/gender and market world"
+      "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
+      "description": "Manage your bot preferences.\n• `set`: language, blending, matching, result count, clan/gender, world, card values, theme\n• `filters`: leave dye groups out of results\n• `reset`: one setting, or everything"
     },
     "dyeSearch": {
       "name": "`/dye search <query>`",
-      "description": "Search for dyes by name.\n• Fuzzy matching finds partial matches\n• Shows hex codes and categories"
+      "description": "Search for dyes by name.\n• Partial names match, in English or your language\n• Shows each match's hex code"
     },
     "dyeInfo": {
       "name": "`/dye info <name>`",
-      "description": "Get detailed information about a specific dye.\n• Shows hex, RGB, HSV values\n• Displays category and item ID"
+      "description": "Get detailed information about a specific dye.\n• HEX, RGB, HSV and LAB values\n• Source, market item and nearest dyes"
     },
     "dyeList": {
       "name": "`/dye list [category]`",
@@ -90,19 +91,55 @@
       "name": "`/dye random [unique_categories]`",
       "description": "Show 5 randomly selected dyes.\n• Option to limit to 1 dye per category"
     },
+    "comparison": {
+      "name": "`/comparison <dye1> <dye2> [dye3] [dye4]`",
+      "description": "Compare 2-4 dyes side by side with color analysis.\n• Accepts dye names or hex codes"
+    },
+    "contrast": {
+      "name": "`/contrast <dye1> <dye2> [dye3] [dye4]`",
+      "description": "Measure WCAG contrast ratios between 2-4 dyes.\n• Marks the 3:1, 4.5:1 and 7:1 lines"
+    },
+    "accessibility": {
+      "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
+      "description": "See how dyes hold up under color vision deficiency.\n• One dye: how it shifts under every lens\n• Two dyes: how far apart they stay (`vision` picks one lens)\n• `/a11y` is the same command"
+    },
+    "budget": {
+      "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
+      "description": "Find affordable alternatives to an expensive dye using market board prices.\n• `find`: cheaper dyes near your target (`max_distance` 2-20)\n• `quick`: the same for popular expensive dyes\n• `set_world`: save your world or data center"
+    },
+    "presetBrowse": {
+      "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
+      "description": "Browse community dye presets.\n• 8 categories\n• Sort by most popular, most recent or name"
+    },
+    "presetShare": {
+      "name": "`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`",
+      "description": "Share your own presets and vote on others.\n• 3-6 dyes plus optional tags; submissions are moderated\n• `edit` works on your own presets"
+    },
+    "presetFavorite": {
+      "name": "`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`",
+      "description": "Keep a personal list of favorite presets (up to 50)."
+    },
+    "changelog": {
+      "name": "`/changelog [version]`",
+      "description": "Show what's new in the bot.\n• The latest release in full, or pick one with `version`"
+    },
+    "stats": {
+      "name": "`/stats summary`",
+      "description": "Show bot usage statistics. Panels other than `summary` are limited to authorized users."
+    },
     "about": {
       "name": "`/about`",
       "description": "Show bot information, version, and links."
     },
     "manualCmd": {
-      "name": "`/manual`",
-      "description": "Show this help guide."
+      "name": "`/manual [topic]`",
+      "description": "Show this help guide, or an in-depth topic: {topics}"
     },
     "tips": {
       "autocomplete": "**Autocomplete:** Start typing a dye name and suggestions will appear!",
       "hexColors": "**Hex Colors:** Use standard web format like `#FF0000` (red) or `#5865F2` (blurple)",
       "dyeNames": "**Dye Names:** Type partial names - \"dala\" will find \"Dalamud Red\"",
-      "facewearExcluded": "**Facewear Excluded:** Generic Facewear dyes (like \"Red\", \"Blue\") are excluded from results",
+      "facewearExcluded": "**Facewear:** Facewear colors (like \"Red\", \"Blue\") are not dyes and never appear in results",
       "links": "**Links:**"
     }
   },
@@ -354,7 +391,7 @@
       "excluded": "Excluded",
       "included": "Included",
       "updated": "Filters Updated",
-      "affectsHint": "Affects: /match, /harmony, /gradient, /mixer",
+      "affectsHint": "Affects: /harmony, /gradient, /mixer",
       "title": "Dye Filters",
       "setHint": "Use /preferences filters set to customize",
       "resetSuccess": "Filters Reset",
@@ -435,31 +472,31 @@
     "timeout": "Image download timed out. Please try again."
   },
   "matchImageHelp": {
-    "title": "How to Use /match_image",
-    "description": "The `/match_image` command analyzes your uploaded image to find the dominant color and matches it to the closest FFXIV dye. Here are some tips to get the best results!",
+    "title": "Matching Colors from an Image",
+    "description": "`/extractor image` analyzes an uploaded image, pulls out its dominant colors and matches each one to the closest FFXIV dye. Here are some tips to get the best results!",
     "howItWorks": "How It Works",
-    "howItWorksContent": "**1. Image Analysis**\n- Your image is processed using K-means clustering\n- The most dominant color(s) are extracted\n- Colors are matched against 136 FFXIV dyes\n\n**2. Dye Matching**\n- Uses Euclidean distance in RGB color space\n- Returns the closest matching dye(s)",
+    "howItWorksContent": "**1. Image Analysis**\n- Your image is processed using K-means clustering\n- The most dominant colors are extracted (`colors` 3-10, default 4)\n\n**2. Dye Matching**\n- Each color is matched against all 125 FFXIV dyes\n- Uses ΔE2000 by default - change it with the `matching` option",
     "tipsForBestResults": "Tips for Best Results",
     "tipsContent": "**Crop Your Images**\n- Focus on the specific area you want to match\n- Remove UI elements and backgrounds\n\n**Choose Good Lighting**\n- Take screenshots in well-lit areas\n- Avoid dark shadows or extreme highlights\n\n**Avoid Dark Backgrounds**\n- Black backgrounds can skew results\n- Use neutral, lighter backgrounds when possible",
     "commonIssues": "Common Issues",
-    "commonIssuesContent": "**\"I got a dark color but my gear is bright!\"**\n→ Your background is likely dark. Crop the image to just your gear.\n\n**\"The match seems off\"**\n→ Multiple colors? The algorithm picks the MOST common color.\n\n**\"Can I match a specific part?\"**\n→ Yes! Crop to that exact area before uploading.",
+    "commonIssuesContent": "**\"I got a dark color but my gear is bright!\"**\n→ Your background is likely dark. Crop the image to just your gear.\n\n**\"The match seems off\"**\n→ The algorithm picks the MOST common colors. Crop out everything else.\n\n**\"Can I match a specific part?\"**\n→ Yes! Crop to that exact area before uploading.",
     "proTips": "Pro Tips",
-    "proTipsContent": "• Use image editing software to crop before uploading\n• For metallic/shiny gear, results may vary\n• If you know the hex code, use `/match` instead\n• Extract multiple colors with the `colors` option (1-5)\n• Screenshot at 1920x1080 or higher for best quality",
+    "proTipsContent": "• Use image editing software to crop before uploading\n• For metallic/shiny gear, results may vary\n• If you know the hex code, use `/extractor color` instead\n• Ask for more or fewer colors with the `colors` option (3-10)\n• Screenshot at 1920x1080 or higher for best quality",
     "footer": "XIV Dye Tools - Made with love for FFXIV glamour enthusiasts",
     "exampleUseCases": "Example Use Cases",
     "goodExamples": "Good Examples",
     "goodExamplesContent": "• Cropped screenshot of a single chest piece\n• Close-up of dyed armor with neutral background\n• Screenshot taken in bright daylight area\n• Image focused on the color you want to match",
     "poorExamples": "Poor Examples",
     "poorExamplesContent": "• Full-screen screenshot with lots of UI\n• Character in a dark dungeon or cave\n• Multiple armor pieces with different dyes\n• Image dominated by background colors",
-    "whenToUse": "When to Use /match_image vs /match",
-    "whenToUseContent": "**Use `/match_image` when:**\n• You have a screenshot and want to find the dye\n• You're unsure of the exact color code\n• You want to match a color from inspiration photos\n\n**Use `/match` when:**\n• You already know the hex color code\n• You need more precise/exact results\n• You're working with color swatches",
+    "whenToUse": "When to Use /extractor image vs /extractor color",
+    "whenToUseContent": "**Use `/extractor image` when:**\n• You have a screenshot and want to find the dye\n• You're unsure of the exact color code\n• You want to match a color from inspiration photos\n\n**Use `/extractor color` when:**\n• You already know the hex color code\n• You need more precise/exact results\n• You're working with color swatches",
     "technicalDetails": "Technical Details",
     "supportedFormats": "Supported Formats",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "File Limits",
-    "fileLimitsContent": "• Maximum size: 8MB\n• Processing time: ~1-3 seconds",
-    "matchQualityRatings": "Match Quality Ratings",
-    "matchQualityRatingsContent": "**Perfect** (0 distance)\n**Excellent** (<10 distance)\n**Good** (<25 distance)\n**Fair** (<50 distance)\n**Approximate** (≥50 distance)\n\n*Lower distance = better match*",
+    "fileLimitsContent": "• Maximum size: 10MB",
+    "matchQualityRatings": "Match Distance",
+    "matchQualityRatingsContent": "Every match prints its distance from your color - lower is closer.\n\nThe six matching methods and how their bands work: `/manual` topic {topic}",
     "poweredBy": "Powered by Photon WASM image processing"
   },
   "card": {
@@ -591,7 +628,7 @@
       },
       "characterFile": {
         "name": "Character File",
-        "body": "/swatch reads a .chara export from Anamnesis or Ktisis: colour slots (skin, hair, eyes, lip, paint) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colours (edited past the game's palette) are matched by their live value and flagged OFF GRID."
+        "body": "/swatch reads a .chara export from Anamnesis or Ktisis: colour slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colours (edited past the game's palette) are matched by their live value and flagged OFF GRID."
       }
     }
   },
