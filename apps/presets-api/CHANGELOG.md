@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.6] - 2026-09-17
+
+### Fixed
+
+- **`reserveDailyEvent`'s overshoot check had no deterministic tie-break** (BUG-015 fix round 2, 2026-09-16 PR review). It counted ALL of today's rows for the user + kind, not just the ones at or before its own reservation — with one slot free and two or more concurrent requests, every single one observed `limit - 1 + N > limit` and every one refused; nobody got the slot. `getEventCountToday` gained an optional trailing `upToId` parameter (`AND id <= ?`, bound after the date range) that `reserveDailyEvent` now passes its own row id through, so the count becomes "this reservation's position in insertion order": exactly one concurrent caller lands at or below the cap and wins, the rest lose, the same as if they had arrived one at a time. The pre-existing 4-arg call site is unaffected — `upToId` is opt-in.
+
+### Changed
+
+- `src/middleware/body-validation.ts`'s two guards (SEC-003 JSON depth, SEC-004 body size) are now `@xivdyetools/worker-kit`'s `bodyGuards()` factory (REFACTOR-009) — this module supplies only the 100 KB cap, the `PAYLOAD_TOO_LARGE` 413 / `BAD_REQUEST` 400 envelopes, and the preview-image upload's exemption (its own 5 MB cap, `VALIDATION_ERROR` 400, and skipping the JSON depth check). `isPreviewImageUpload` and `PREVIEW_IMAGE_CONTENT_TYPES` stay local. No response byte changed; both existing middleware test files pass unchanged (`docs/audits/2026-09-16-deep-dive/`).
+- `sniffImageType` (`src/services/preview-image-service.ts`) now calls `@xivdyetools/worker-kit/image-sniff`'s shared sniffer instead of carrying its own magic-byte table (REFACTOR-008), keeping this route's pre-filter to exactly `png`/`jpeg`/`webp` — a GIF or BMP still returns `null`, as it always has. No response byte changed (`docs/audits/2026-09-16-deep-dive/`).
+
+### Documentation
+
+- `docs/projects/presets-api/rate-limiting.md`: split the "Daily quotas" row of the Failure Behavior table — `submission` (`checkSubmissionRateLimit`) still fails closed, but `text_edit` / `flagged_edit` / `preview_upload` (`reserveDailyEvent`) fail *open* on a D1 error, logging a `[BUG-015]` warning rather than 500ing a mutation over a hand-run migration missing in a given environment; softened the paragraph beneath it (the "never fail a mutation that already landed" claim only holds for `submission`'s post-mutation `recordSubmissionEvent` write — the three reserve kinds insert *before* the mutation they gate); and documented the new row-id tie-break in the reserve-then-act trade-offs paragraph. `docs/projects/presets-api/database.md`: `banned_users.discord_id` is the resolved acting-user id — a Discord snowflake, or the oauth `sub` UUID (lowercase) for an XIVAuth-only account — not always a snowflake (BUG-001 path (a)).
+
+## [2.3.5] - 2026-09-17
+
+### Fixed
+
+- `PATCH /presets/refresh-author` no longer binds an unset display name straight to D1. `userName` is optional on `AuthContext` (no `X-User-Discord-Name` header on the bot path, or a JWT with neither a `username` nor a `global_name` claim), and an `undefined` bind threw an opaque 500. A refresh with no name now returns 400 instead (BUG-014, `docs/audits/2026-09-16-deep-dive/`).
+- The `text_edit` / `flagged_edit` / `preview_upload` daily caps were check-then-insert: a separate count followed later by an append-only insert let concurrent requests at cap-1 all pass the check before any of them recorded, overshooting the cap. A new `reserveDailyEvent` (`services/rate-limit-service.ts`) inserts the event row first, counts today's rows for that user + kind including the new one, and self-deletes on overshoot — closing the race the same way the `submission` cap's own overshoot guard already did for its shape. The three call sites in `handlers/presets.ts` now reserve before acting and release the reservation if the UPDATE / R2 write it gated goes on to fail. Either D1 step failing (the INSERT, or the COUNT after a successful INSERT) now fails OPEN — logs a warning and lets the request proceed unmetered — matching the pre-existing best-effort contract on the append-only quota log, rather than 500ing the user's edit if a hand-run migration is missing in a given environment (BUG-015, `docs/audits/2026-09-16-deep-dive/`).
+
+### Changed
+
+- `tests/middleware/ban-check.test.ts` no longer drives its "banned" cases through the shared D1 mock's identity-blind `_setBanStatus`, which answered "banned" for any bound value and so could never have caught a wrong-identity bind. The banned cases now use a scripted row keyed on the exact bound value, with a new case for a JWT `sub` UUID (an XIVAuth-only account) and its inverse (BUG-043, `docs/audits/2026-09-16-deep-dive/`).
+- `middleware/ban-check.ts`'s `isUserBanned` JSDoc now documents what `banned_users.discord_id` actually holds: the resolved acting-user id (the `discord_id` claim, or the XIVAuth JWT `sub` UUID when an account has none), not always a Discord snowflake. No query change — moderation-worker's ban writer (Sprint 6) stores that same resolved value, so both sides already agree (BUG-001 path (a), coordinator ruling, `docs/audits/2026-09-16-deep-dive/`). The same JSDoc now also names a residual this shape leaves open: linking a Discord account to a previously XIVAuth-only one re-keys `resolveJWTUserId`'s return value, so a UUID-keyed `banned_users` row stops matching and the ban is shed — comment-only, not fixed here.
+
 ## [2.3.4] - 2026-09-16
 
 ### Removed (2026-09-15 dead-code audit)

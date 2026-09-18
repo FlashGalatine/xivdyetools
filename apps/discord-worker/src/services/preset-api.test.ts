@@ -712,6 +712,30 @@ describe('preset-api.ts', () => {
         expect.any(Error),
       );
     });
+
+    // REFACTOR-003: Discord rejects a whole autocomplete response when any
+    // choice name exceeds 100 characters — "Name (X★) by Author" can exceed
+    // that with a long name/author, so it must be truncated.
+    it('truncates a choice name over 100 characters', async () => {
+      const env = createMockEnv({ withUrlConfig: true });
+      const mockPresets = [
+        {
+          id: '1',
+          name: 'A'.repeat(120),
+          vote_count: 5,
+          author_name: 'Someone With A Very Long Display Name Indeed',
+        },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ presets: mockPresets, total: 1 }),
+      });
+
+      const result = await searchPresetsForAutocomplete(env, 'test');
+
+      expect(result[0].name.length).toBeLessThanOrEqual(100);
+    });
   });
 
   // ==========================================================================

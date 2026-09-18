@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.2] - 2026-09-17
+
+Sprint 11 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive/`).
+
+### Fixed
+
+- **BUG-019** — `CacheService.get()` (`src/universalis/services/cache-service.ts`) `waitUntil()`'d
+  the SWR-expiry `cache.delete()` with no `.catch`, unlike its `storeAsync` sibling; a Cache API
+  storage error there became an unhandled rejection inside `waitUntil()`. Swallowed and
+  optionally debug-logged via a minimal injectable logger.
+
+### Changed
+
+- **REFACTOR-004** — `routes/match.ts`'s `/closest` 404 hand-rolled its own JSON instead of
+  throwing through `ApiError` / `app.onError`, the envelope of record (`error` / `message` text
+  unchanged). `app.onError`'s `meta` now carries `locale` under the same rule success responses
+  already use (`lib/response.ts`'s `buildMeta`, now shared instead of duplicated) — present only
+  when `localeMiddleware` set a non-`en` value, so only on `/v1/*`. `docs/guide/errors.md` and
+  `docs/guide/responses.md` updated to show it.
+
+### Tests
+
+- **BUG-037** — new `tests/routes/dyes-facewear-404.test.ts` covers the legacy-Facewear
+  negative-id 404 (`routes/dyes.ts`) at the HTTP level, which previously had only core's own
+  unit-level coverage of the underlying helper.
+- **BUG-036** — `tests/lib/dye-serializer.test.ts`'s boolean/enum fields (`isMetallic`,
+  `isPastel`, `isDark`, `isCosmic`, `isIshgardian`, `consolidationType`) were only ever asserted
+  via `.toBeDefined()`, which cannot fail on a wrong value. Replaced with three `toStrictEqual`
+  literal-object snapshots against real dyes from `packages/core`.
+
 ## [0.14.1] - 2026-09-16
 
 ### Removed (2026-09-15 dead-code audit)

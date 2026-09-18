@@ -513,6 +513,26 @@ describe('OAuth Worker App', () => {
             consoleSpy.mockRestore();
         });
 
+        // BUG-017 (2026-09-16 deep-dive audit): the security-headers middleware
+        // used to be registered BELOW env validation, so this exact 500 carried
+        // none of nosniff / X-Frame-Options / Cache-Control / Pragma / HSTS —
+        // the one response most likely to be probed shipped with the weakest
+        // headers. It now runs before env validation.
+        it('should carry security headers on the misconfiguration 500', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const brokenProd = { ...createProductionEnv(), FRONTEND_URL: 'http://insecure.example.com' };
+
+            const response = await fetchWithEnv(brokenProd, 'http://localhost/health');
+
+            expect(response.status).toBe(500);
+            expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+            expect(response.headers.get('X-Frame-Options')).toBe('DENY');
+            expect(response.headers.get('Cache-Control')).toBe('no-store');
+            expect(response.headers.get('Pragma')).toBe('no-cache');
+            expect(response.headers.get('Strict-Transport-Security')).toContain('max-age=31536000');
+            consoleSpy.mockRestore();
+        });
+
         it('should fail closed for a non-development environment that is not production either', async () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             // Exactly what the deleted preview env looked like: an unknown ENVIRONMENT

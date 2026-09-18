@@ -191,7 +191,7 @@ spelling buy its own entry for the same card), with a trailing `.png` stripped f
 path the same way the routes strip it (ruling S7-R13 — `.png` is optional everywhere, so
 the suffixed and suffix-less spellings of one card must share one entry, not two) + the
 *resolved* `lang` + the *resolved* `frame` + the *raw* `algo` + the *raw* `mode` (mixer
-routes) + the *normalised* `wheel`, and that last one **only on `/og/harmony/*`** — the
+routes) + the *normalised* `wheel`, and that last one **only on the parameterised harmony dye card (`/og/harmony/:dye/:type`), never the shared `/og/harmony/default` card, which does not read it (BUG-018)** — the
 route that reads it (2026-08-29 FINDING-024, OG-4) — not the full URL. `wheel` is the one
 key that IS normalised before it keys, because the five ids are the whole vocabulary and
 `parseColorWheelId` folds case exactly as the card's own reader does, so `?wheel=RYB` and

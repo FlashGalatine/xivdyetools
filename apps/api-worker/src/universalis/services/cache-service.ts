@@ -17,6 +17,21 @@ interface CacheApiResult {
 }
 
 /**
+ * Minimal logging surface `CacheService` accepts (BUG-019).
+ *
+ * Deliberately not `@xivdyetools/logger`'s `ExtendedLogger` — this app
+ * consumes that package only transitively through `@xivdyetools/worker-kit`
+ * (see this app's CLAUDE.md), and `CacheService` is constructed outside any
+ * Hono context (`cachedFetch`, `CharaRowCache`), so there is no
+ * `getLogger(c)` available to pass in. A structural `debug`-only shape keeps
+ * this class dependency-free; any logger satisfying it — including a real
+ * `ExtendedLogger` — can be passed.
+ */
+interface CacheServiceLogger {
+  debug(message: string, context?: Record<string, unknown>): void;
+}
+
+/**
  * CacheService handles all caching operations via the Cache API
  */
 /**
@@ -33,6 +48,7 @@ export class CacheService {
   private ctx: ExecutionContext;
   private cacheName: string;
   private cacheInitPromise: Promise<Cache> | null = null;
+  private logger?: CacheServiceLogger;
 
   /**
    * @param cacheName Named Cache API store. The Universalis proxy keeps its
@@ -42,10 +58,15 @@ export class CacheService {
    * OPT-004 dropped the `baseUrl` parameter: keys are built from a fixed
    * synthetic origin now, so the request's hostname no longer partitions the
    * cache. `cacheName` was always the real namespace.
+   *
+   * @param logger Optional (BUG-019) — debug-logs the SWR-expiry cache
+   * delete in `get()` when it fails. No current caller passes one; every
+   * construction site is outside a Hono request context.
    */
-  constructor(ctx: ExecutionContext, cacheName = 'universalis-proxy') {
+  constructor(ctx: ExecutionContext, cacheName = 'universalis-proxy', logger?: CacheServiceLogger) {
     this.ctx = ctx;
     this.cacheName = cacheName;
+    this.logger = logger;
   }
 
   /**
@@ -115,7 +136,19 @@ export class CacheService {
 
       // If beyond SWR window, delete from cache and return null
       if (isExpired && !isWithinSwr) {
-        this.ctx.waitUntil(cache.delete(cacheRequest));
+        // BUG-019: cache.delete() can reject (Cache API storage error); with
+        // no .catch() that became an unhandled rejection inside waitUntil(),
+        // which the runtime can surface as an uncaught exception in the
+        // isolate. Swallow it — a stale entry that fails to evict just gets
+        // re-evaluated and re-deleted on the next `get()` for this key.
+        this.ctx.waitUntil(
+          cache.delete(cacheRequest).catch((error: unknown) => {
+            this.logger?.debug('Failed to delete cache entry beyond SWR window', {
+              key,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          })
+        );
         return null;
       }
 

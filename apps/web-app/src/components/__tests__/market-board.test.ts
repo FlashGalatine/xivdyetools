@@ -304,7 +304,7 @@ describe('MarketBoard', () => {
     });
 
     it('should disable button while refreshing', async () => {
-      mockMarketBoardService.refreshPrices.mockImplementation(() => {
+      mockMarketBoardService.refreshPrices.mockImplementationOnce(() => {
         return new Promise((resolve) => setTimeout(resolve, 100));
       });
 
@@ -315,6 +315,42 @@ describe('MarketBoard', () => {
       click(refreshBtn);
 
       expect(refreshBtn?.disabled).toBe(true);
+    });
+
+    it('cancels the pending status-clear timer on destroy() (BUG-023)', async () => {
+      mockMarketBoardService.refreshPrices.mockResolvedValue(undefined);
+
+      marketBoard = new MarketBoard(container);
+      marketBoard.init();
+
+      // Fake timers must be installed BEFORE the click, so the 3s
+      // status-clear timer is scheduled under the fake clock rather than
+      // a real one that vi.advanceTimersByTime() can never see.
+      vi.useFakeTimers();
+      try {
+        const refreshBtn = query<HTMLButtonElement>(container, '#mb-refresh-btn');
+        click(refreshBtn);
+
+        // Flush the resolved refreshPrices() promise (and the microtasks
+        // chained off it) so the "refreshed" status text renders, without
+        // advancing real wall-clock time.
+        await vi.advanceTimersByTimeAsync(0);
+
+        const statusMsg = query(container, '#mb-price-status');
+        expect(statusMsg?.textContent).toBe('marketBoard.pricesRefreshed');
+
+        // Destroy before the 3s status-clear fires, then advance past it.
+        marketBoard.destroy();
+        marketBoard = null; // already destroyed; afterEach must not destroy again
+        vi.advanceTimersByTime(3000);
+
+        // A raw setTimeout would still clear this node's text 3s later even
+        // though the component (and its DOM) were torn down; safeTimeout's
+        // isDestroyed guard must suppress that write.
+        expect(statusMsg?.textContent).toBe('marketBoard.pricesRefreshed');
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

@@ -1,0 +1,236 @@
+79a69d1f 2026-09-16 Merge pull request #187 from FlashGalatine/worktree-feat-glamour-export-markdown
+699906a4 2026-09-16 Merge pull request #186 from FlashGalatine/cleanup/dead-code-2026-09-15
+20d63756 2026-09-16 Merge pull request #184 from FlashGalatine/fix/sprint-0-webhook-bytes
+68c6ee75 2026-09-16 Merge pull request #185 from FlashGalatine/worktree-privacy-docs-audit
+638caf2d 2026-09-16 fix(web-app): a failed copy payload rejects once, not as two unhandled flavours
+f9455216 2026-09-16 fix(web-app): green CI for the Policies row — prettier, and re-budget the layout shell
+e7d47c23 2026-09-16 Merge cleanup/dead-code-2026-09-15 (PR #186, carrying #184) into the glamour export branch
+258cfe4c 2026-09-16 Merge PR #184 (fix/sprint-0-webhook-bytes) into cleanup/dead-code-2026-09-15
+58d17f4b 2026-09-16 docs: keep api-worker's CLAUDE.md version current; url-sanitizer header no longer claims header masking
+b3c751b6 2026-09-16 docs(web-app): record the Privacy · Terms row in the 5.10.0 notes; describe where copy runs
+d1e8e1d9 2026-09-16 fix(web-app): start the Copy list clipboard write inside the click
+05f15f6c 2026-09-16 feat(web-app): rich-text copy, worn slots only, dyed channels only
+d71d4512 2026-09-16 docs: correct five inaccuracies in the privacy policies
+516c6944 2026-09-16 fix(web-app): review fixes for the glamour list export
+a4c057da 2026-09-16 fix(web-app): What's New entry for 5.9.1, plus final-review polish
+c9317154 2026-09-16 docs(audits): record the 2026-09-15 dead-code cleanup as executed
+926d8f03 2026-09-16 feat(web-app): Copy list / Export .md for the glamour equipment list (5.10.0)
+2d1695af 2026-09-16 refactor(web-app): remove eight unused service and component methods (DEAD-001–007, 5.9.1)
+225df738 2026-09-16 refactor(moderation-worker): remove the orphaned sanitizeHeaders helper (DEAD-011)
+f9b469af 2026-09-16 refactor(image-worker): make Env an explicit empty binding contract (DEAD-017, 1.3.1)
+6fce09cf 2026-09-16 refactor(api-worker): move the test-local CacheConfigKey alias into its test (DEAD-016, 0.14.1)
+8f7b292b 2026-09-16 refactor(presets-api): remove three unused helpers and an orphan row type (DEAD-013/014/015, 2.3.4)
+c6aa8c73 2026-09-16 refactor(moderation-worker): remove three test-only helpers (DEAD-009/010/012, 1.7.2)
+4f4e5c13 2026-09-16 refactor(discord-worker): remove the test-only getPreference reader (DEAD-008, 5.5.6)
+5675870c 2026-09-16 docs: record the 2026-09-15 dead-code audit, cleanup plan and Sprint 0 status
+acdcbaaf 2026-09-16 docs(web-app): add a Terms of Service, and make both policies reachable
+863decb3 2026-09-15 fix(discord-worker): verify original webhook bytes
+c40e7e63 2026-09-15 Merge pull request #183 from FlashGalatine/fix/security-audit-sprints-0-2
+c63c685e 2026-09-15 docs: clarify maintenance workflow hold scope
+506e453c 2026-09-15 docs: make security PR rollout safe as one merge
+b7794253 2026-09-15 docs: record security remediation verification
+3095b8ce 2026-09-15 fix(og-worker): minimize crawler metadata logs
+6b7d1b3c 2026-09-15 fix(presets-api): reject stale moderation writes
+0b5d814c 2026-09-15 fix(discord-worker): refresh legacy image reviews
+74114ebf 2026-09-15 fix(presets-api): guard owner edit revisions
+247d368d 2026-09-15 fix(discord-worker): bind preview reviews
+3c07b6b9 2026-09-15 fix(presets-api): bind preview approvals
+205f0be6 2026-09-15 fix(discord-worker): cap webhook streams
+0a357852 2026-09-15 fix(moderation-worker): bundle bounded auth
+ef555e57 2026-09-15 fix(auth): bound Discord request streams
+fa3517d2 2026-09-15 docs: record security audit and sprint plan
+71fc2233 2026-09-14 Merge pull request #182 from FlashGalatine/dependabot/npm_and_yarn/dev-deps-5165fd05ff
+47d606aa 2026-09-14 chore(deps-dev): bump the dev-deps group across 1 directory with 7 updates
+1f682474 2026-09-14 Merge pull request #181 from FlashGalatine/dependabot/npm_and_yarn/production-deps-96255a2faf
+5faf2164 2026-09-14 chore(deps): bump the production-deps group with 2 updates
+fb8c10ea 2026-09-07 Merge pull request #180 from FlashGalatine/claude/review-prs-174-179-9lzsed
+61015eb0 2026-09-07 chore(deps-dev): migrate the workspace to vitest 5
+49e6a89b 2026-09-07 Merge pull request #177 from FlashGalatine/dependabot/npm_and_yarn/types/culori-4.0.1
+3f20ce12 2026-09-07 chore(deps-dev): bump @types/culori from 2.1.1 to 4.0.1
+e04fa06a 2026-09-07 Merge pull request #175 from FlashGalatine/dependabot/npm_and_yarn/dev-deps-bab870f92d
+acd64eec 2026-09-07 chore(deps-dev): bump the dev-deps group across 1 directory with 8 updates
+becf5446 2026-09-07 Merge pull request #174 from FlashGalatine/dependabot/npm_and_yarn/production-deps-deed80e8f4
+21793551 2026-09-07 chore(deps): bump the production-deps group with 2 updates
+0332fcc5 2026-09-06 Merge pull request #173 from FlashGalatine/worktree-swatch-item-links
+e65c84bc 2026-09-06 docs: update release notes for item link menu fixes
+1e2f11cb 2026-09-06 fix(web-app): correct facewear links and menu keyboard behavior
+e03cba7a 2026-09-06 fix(web-app): drop the Eorzea Collection links — its ids are not item ids
+127d9d23 2026-09-06 feat(web-app): open a glamour piece in seven community databases (5.9.0)
+9210947d 2026-09-06 Merge pull request #171 from FlashGalatine/worktree-extractor-4a
+23410bd4 2026-09-05 Merge pull request #172 from FlashGalatine/worktree-camera-cleanup
+a121ae91 2026-09-05 refactor(web-app): delete CameraService and close the camera directive
+5aa2efe1 2026-09-05 fix(web-app): extractor 4A review round — one resolution path, no silent drops, stable focus, honest failures
+a2d89ecc 2026-09-05 feat(web-app): Palette Extractor on the 4A frame — loupe over a weighted bar over the card sheet (5.8.0)
+39e08c32 2026-09-05 Merge pull request #170 from FlashGalatine/worktree-docs-audit-2026-09-05
+bc739956 2026-09-05 ci: gate the root CHANGELOG-laymans.md with a build-free suite in the always-run step
+9fcf4b44 2026-09-05 docs: apply the PR #170 review round — nine wrong facts corrected, both docs gates hardened
+063ed168 2026-09-05 docs: resolve the audit's three follow-ups (docs site verified, root laymans gated, checklist split)
+7e0a30f9 2026-09-05 docs: whole-repository documentation audit, reorganisation, and two CI gates (root 2.2.0)
+1eb57cda 2026-09-05 Merge pull request #169 from FlashGalatine/worktree-api-wheels
+5a2642ff 2026-09-05 Merge remote-tracking branch 'origin/main' into worktree-api-wheels
+20b1571c 2026-09-05 Merge pull request #168 from FlashGalatine/worktree-api-docs-restyle
+95337727 2026-09-05 Merge pull request #167 from FlashGalatine/research/harmony-color-wheels
+a903abf1 2026-09-05 feat(api-worker): expose the colour wheels and harmony selector (0.14.0)
+bbb9076b 2026-09-05 Merge remote-tracking branch 'origin/research/harmony-color-wheels' into worktree-api-wheels
+2128e0d3 2026-09-05 fix(web-app): only a share link resets the wheel; in-app dye hand-offs keep it
+27c36e01 2026-09-05 docs: layman's changelog — the wheel travels with every share link
+4f0f20d8 2026-09-05 fix(og-worker): wheel tag in the footer; key the cache only where the wheel is read
+fd206823 2026-09-05 fix(web-app): share links always carry the wheel; pins are per wheel
+63dce221 2026-09-05 fix(svg,bot-logic,discord): fit the wheel label, validate the wheel, show the share link
+7b74dbeb 2026-09-05 fix(core): review follow-ups for the colour wheels — ΔE on the lightness wheel, generated tables, one normaliser
+7594cb07 2026-09-05 fix: final-review follow-ups for selectable colour wheels
+0d82c5cb 2026-09-05 chore(release): selectable harmony colour wheels — core 5.2.0, web-app 5.7.0, discord-worker 5.5.0, og-worker 2.10.0
+ca9ae8f5 2026-09-05 fix(og-worker): regenerate CJK subset fonts for the colour-wheel names
+5928d7c3 2026-09-05 feat(og-worker): harmony card honours ?wheel= (allowlisted, cache-keyed, default elided)
+63f4998a 2026-09-05 feat(discord-worker): /harmony wheel option derived from core; drop dead color_space plumbing
+6af3099a 2026-09-05 feat(bot-logic): /harmony takes a colour wheel; card token and share URL carry it
+8f09a64c 2026-09-05 feat(svg): optional wheel token on the harmony card
+6a9d8f35 2026-09-05 fix(web-app): guard v4-color-wheel defaultAngles against prototype-named harmonyType
+a75b4711 2026-09-05 feat(web-app): harmony ring and nodes drawn from the selected core wheel; wheel in share URLs
+f46df1be 2026-09-05 fix(web-app): mark the selected wheel option explicitly on first render
+fded71e2 2026-09-05 feat(web-app): Color wheel selector in Harmony settings, six locales
+7cff6fab 2026-09-05 feat(api-worker): derive the board-free small docs icon from docs-icon.svg
+7a751369 2026-09-05 feat(api-worker): board-free small variant of the docs icon
+53589a0e 2026-09-05 feat(core): localised colour-wheel names in the shared vocabulary
+05a99d51 2026-09-05 feat(api-worker): give the docs site its own app icon — "6B · Socketed"
+50cf3081 2026-09-05 feat(core): generateHarmonySlots takes a colour wheel; per-wheel goldens; deprecate rotateHueInSpace
+2a080326 2026-09-05 feat(core): Munsell (JIS) colour wheel from 40 renotation anchors
+7c4d923a 2026-09-05 fix(api-worker): address the PR #168 review — search, CI gate, chrome edge cases
+427fe66b 2026-09-05 fix(core): make the ring-stop test seam-safe and document ACHROMATIC_CHROMA
+17c1a4fc 2026-09-05 feat(core): constant-lightness OKLCH wheel with gamut-mapped targets and ring
+6b1cb182 2026-09-05 feat(core): CSS Color 4 OKLCH gamut mapping and max-chroma, culori as dev oracle
+bfc6031e 2026-09-05 feat(core): OKLCH-hue wheel derived from the sRGB hue circle
+edd53998 2026-09-05 feat(core): RGB and RYB colour wheels and the wheel registry
+05b7f931 2026-09-05 fix(core): make mod360 an exact no-op for in-range hues
+d809cb2e 2026-09-05 feat(core): ColorWheelId and hue-warp table maths for selectable wheels
+f83ce10b 2026-09-05 docs(plans): OKLCH-hue table is 73 pairs (pre-flight ruling)
+2085aae4 2026-09-05 feat(api-worker): restyle the developer docs on API Docs Directions 1d
+b4773767 2026-09-05 docs(plans): implementation plan for selectable harmony colour wheels
+f74f1697 2026-09-04 docs(specs): core is the single source of truth for colour wheels
+a7bdf60d 2026-09-04 docs(specs): Munsell joins release 1 as the fifth wheel
+26c7170d 2026-09-04 docs: Munsell licence check clears; record the 2026-09-04 wheel decisions
+71380624 2026-09-04 docs(specs): design spec for selectable harmony colour wheels
+dee2716b 2026-09-04 docs(research): selectable colour wheels for the Harmony Explorer
+1c017aea 2026-09-04 Merge pull request #166 from FlashGalatine/worktree-changelog-backfill-2026-09-04
+a5fd5ec2 2026-09-04 docs(changelog): record the What's New fix in the product-level notes
+ff60d610 2026-09-04 docs(changelog): say which tree the 5.6.1 counts describe, and refresh the bundle note
+22f3d71e 2026-09-04 fix(web-app): fold the region above a release's first heading, and make the changelog gate non-circular
+60a3d9d1 2026-09-04 fix(web-app): stop "What's New" showing the 5.0.0 notes to everyone
+5a323493 2026-09-04 docs(changelog): release the monorepo Unreleased block, backfill five gaps
+83842bc6 2026-09-04 Merge pull request #165 from FlashGalatine/worktree-mobile-options-fab
+ea33ea6c 2026-09-04 docs(web-app): release notes for the modal stacking fix
+3bbe98ba 2026-09-04 fix(web-app): put the modal layer above the app chrome
+3a5b457a 2026-09-04 docs(web-app): release notes for the Options/Advanced Settings split
+5b772f88 2026-09-04 fix(web-app): separate the Options panel from Advanced Settings
+282808db 2026-09-04 Merge pull request #164 from FlashGalatine/worktree-color-algorithm-factcheck
+93208d31 2026-09-04 docs: product-level release notes for 5.2.0
+1904ccb2 2026-09-04 docs: plain-language release notes for the bot and web app
+d8fed13b 2026-09-04 fix(og-worker): rank the mixer's headline dye by the algorithm it tags (BUG-023)
+122c2e69 2026-09-04 fix: review follow-ups — ΔEOK2 everywhere, api-worker docs, repo hygiene
+3306d36f 2026-09-04 feat(web-app): say true things about matching and harmony (Sprint 4)
+a01c5864 2026-09-04 feat(core)!: correctness hardening — exact CIE constants, dEOK2, law gates (Sprint 3)
+1f4ba727 2026-09-03 feat(core)!: one implementation per named mixing mode (Sprint 2)
+49e41088 2026-09-03 test(core): remove every mode exemption from the blending suite
+4cf678bb 2026-09-03 fix(core): spectral blend mode is real Kubelka-Munk, not per-channel K/S
+98dd76b6 2026-09-03 docs(research): harmony geometry, and prove the k-d tree bound is unsafe
+e4e0f7fb 2026-09-03 docs(research): CIEDE2000 passes Sharma's 34-pair conformance vector
+65f61990 2026-09-03 docs(research): fold in RYB, Oklab/redmean and Kubelka-Munk literature
+f75fe2db 2026-09-03 docs(research): fact-check core's mixing and matching algorithms
+876cfc2f 2026-09-03 Merge pull request #163 from FlashGalatine/worktree-coverage-2026-09-03
+5b4a7a1b 2026-09-03 chore(web-app): 5.3.1 — showDeltaE fix
+a3ca4c72 2026-09-03 ci: correct the E2E job's cost note with the measured figure
+2185db0e 2026-09-03 ci: run the Playwright suite on every PR
+baae4b90 2026-09-03 fix(web-app): honour showDeltaE, and repair the tests review proved vacuous
+e7b93316 2026-09-03 test(web-app): E2E for the modules unit tests cannot reach
+9f820d31 2026-09-03 test: ratchet the two coverage gates that had drifted below their suites
+f192c64e 2026-09-03 test(web-app): deepen three suites that tested shape, not behaviour
+155ea7cd 2026-09-03 test(web-app): cover the five components that had no unit tests
+c95672e6 2026-09-03 Merge pull request #162 from FlashGalatine/i18n-audit-2026-09-03
+37a29851 2026-09-03 docs(audit): record the pre-merge review and correct three finding statuses
+50a70490 2026-09-03 fix(audit): premerge script silently checked nothing in two sections
+1307d783 2026-09-03 fix: address pre-merge review — undo a double ?lang=, finish FONT-003, fix the glyph scanner's lexer
+a7b8d967 2026-09-03 fix(types): bump to 3.1.0 — the package was modified but never versioned
+74098448 2026-09-03 chore: merge origin/main into the i18n audit branch
+3cadc3cc 2026-09-03 docs(audit): close out the 2026-09-03 i18n audit; version bumps and changelogs
+0e5e5ea9 2026-09-03 fix(workers): localized budget choices, locale-carrying share links, and one honest English moderation bot (I18N-006, I18N-002, I18N-004, I18N-009)
+0e61574d 2026-09-03 fix(web-app): font tokens everywhere, and tell a banned user what actually happened (FONT-003, I18N-005, TERM-003)
+8d5c1701 2026-09-03 fix(bot-logic): one vocabulary for harmonies and vision types (TERM-001, I18N-012)
+1f3dd97c 2026-09-03 fix(svg): stop drawing a star no font can render, and make card labels required (FONT-002, I18N-011)
+0957df83 2026-09-03 fix(core): localize Facewear names, fix German Pearl White and two Japanese game nouns (I18N-007/008, TERM-002, I18N-003/010)
+43149567 2026-09-03 fix(fonts): pin the CJK subsets to a static instance so bold CJK stops rendering Thin (FONT-001)
+0f4154bd 2026-09-03 Merge branch 'main' of https://github.com/FlashGalatine/xivdyetools
+aa45b67c 2026-09-03 docs(audit): remediation plan for the 2026-09-03 i18n audit
+d485e6aa 2026-09-03 docs(audit): whole-monorepo i18n audit, 2026-09-03
+7bf5444e 2026-09-03 chore(audit): rebase i18n audit onto origin/main (PRs #158-#161)
+cf79ac9f 2026-09-03 Merge pull request #161 from FlashGalatine/review-followups-2026-09-03
+4eea5815 2026-09-03 fix: one tool hand-off grammar, algo-aware OG ranking, facewear-only block
+ec4b3b61 2026-09-03 Merge pull request #160 from FlashGalatine/swatch-show-all-pieces
+dafe3f75 2026-09-03 Merge main into swatch-show-all-pieces; web-app 5.2.0
+9ef904cf 2026-09-03 Merge pull request #159 from FlashGalatine/harmony-convergence-2026-09-03
+1602239f 2026-09-03 Merge pull request #158 from FlashGalatine/worktree-deep-dive-2026-09-02
+2d2e5cef 2026-09-03 fix(bot): register compound + shades, and stop advertising inert options
+7832d9e3 2026-09-03 fix(core): honour excludeItemIDs regardless of preventDuplicates
+8637469c 2026-09-03 fix(image-worker): raise the pixel ceiling to admit 4K and ultrawide
+ca2d759f 2026-09-03 fix(presets-api): never bucket a rate limit on an unverified header
+a18a2e9e 2026-09-03 feat(web-app): show all worn pieces in the Swatch Matcher glamour block
+dcf3987e 2026-09-03 docs(deep-dive): mark the bot-harmony product call resolved
+f9f79eda 2026-09-03 test(discord-worker): run the real selector in the harmony handler test
+5e6d8ab7 2026-09-03 refactor(web-app): harmony selection comes from core now
+d95efd97 2026-09-03 fix(og-worker): the card picks the dyes the page picks
+d376440e 2026-09-03 feat(bot-logic): /harmony answers what the web app answers
+c7f0a686 2026-09-03 feat(core): one harmony selector for every surface
+8bc2e46b 2026-09-02 chore(discord-worker): tag getPreference @testonly, the reference a comment was holding up
+28e2f232 2026-09-02 docs(audit): record Sprints 15-19 in the plan and the report
+1b67aadd 2026-09-02 refactor(bot-logic): one locale layer for both bots, instead of two that drifted
+c13ce36f 2026-09-02 test(web-app): assert the re-blend, the re-match and the unsubscribe
+7971c9a2 2026-09-02 fix(web-app): a modal that blanked the page's scroll setting, and five tests that could not fail
+460365a8 2026-09-02 test(discord-worker): make the embed, announcement and dispatch guards able to fail
+94681d5c 2026-09-02 test(presets-api): cover the failure paths no test could reach
+b2df6802 2026-09-02 test(core): make the colour and dye suites able to fail
+5ac57593 2026-09-02 fix(stoat-worker): a crash that pre-empted its own reconnect, and help for a bot that does not exist
+6b9e165a 2026-09-02 perf(web-app): stop setConfig persisting and broadcasting writes that change nothing
+369f4965 2026-09-02 fix(web-app): a swatch that turned black, a toggle that wrote a value nobody saw, and a spotlight that drifted
+d5f2c9e3 2026-09-02 fix(web-app): stop the tools mixing metrics, merging worlds, and racing their own loads
+6bf21bdd 2026-09-02 fix(web-app): a session that never expired, mojibake display names, and a theme that followed the OS
+ac4087b3 2026-09-02 fix(worker-kit,test-utils): tier-scope the rate-limit key and stop the mocks being more forgiving than the services
+f7a040e4 2026-09-02 docs(audit): record Sprints 11-14 in the plan and the report
+e1ca03a1 2026-09-02 fix(logger): stop a cycle re-inserting an unredacted subtree, and wire the web app's shim to the package
+1af1cac0 2026-09-02 fix(image-worker): stop the dimension gate admitting the image it exists to reject
+35914823 2026-09-02 fix(og-worker): unfurl the cell a Swatch link actually shares, and draw the harmony the page draws
+29b45cb4 2026-09-02 fix(oauth): return a cancelled login to the site it started on, and stop calling a failed logout a success
+0bc669e4 2026-09-02 fix(api-worker): give the bot fleet its own market budget, and stop parseInt inventing dye ids
+ea8dc352 2026-09-02 fix(presets-api): recover the moderation batches, un-share the bot rate-limit bucket
+e0688349 2026-09-02 chore(release): bump the four workspaces Sprints 4-7 changed, and close them out in the audit
+678514b3 2026-09-02 fix(moderation-worker): stop the stats panel printing "undefined" four times
+c981542b 2026-09-02 fix(discord-worker): stop a refused announcement from being memoised, and gate the bundle
+c4c4ef42 2026-09-02 fix(discord-worker): name preset dyes, render the missing emoji, and stop calling an outage a typo
+3e4b360a 2026-09-02 fix(bot-logic): make the "+n more" count mean something, and drop a fallback that could not run
+ab81d435 2026-09-02 fix(svg): measure text before wrapping it, and keep every card inside its own margins
+7f3f1c6f 2026-09-02 chore(ci): stop the ignore file from tripping the rule it documents
+7fc6679e 2026-09-02 chore(ci): ignore two synthetic api_key findings from the audit repro
+0ea3d717 2026-09-02 fix(audits): use an obviously-fake api_key in the redaction repro
+ffc162d0 2026-09-02 refactor(core): derive the distinguish scale instead of hardcoding it again
+a2a5c69b 2026-09-02 chore(release): bump the four projects Sprints 1-3 changed, and record the audit status
+c83d7874 2026-09-02 fix(core): report the metric that chose the match, and four smaller defects
+ef357d26 2026-09-02 fix(core,bot-logic,api-worker): stop allowlist lookups resolving through Object.prototype
+c1c7a173 2026-09-02 fix(core): stop RYB blending losing green
+8abd89d3 2026-09-02 fix(web-app): make two swallowed failures visible
+8825bf55 2026-09-02 fix(web-app): release three leaked listeners and a live camera stream
+61cadaae 2026-09-02 fix(web-app): stop false preset tombstones, a late chunk failure, and a stale Share button
+7f5c662e 2026-09-02 fix(web-app): make the 1-9 tool shortcuts actually navigate
+184f1897 2026-09-02 fix(web-app): keep a stacked modal's listeners when a newer modal renders
+ebdcb4b1 2026-09-02 fix(web-app): measure extractor distances with the method the card labels
+2b0953d9 2026-09-02 fix(web-app): make share list params arity-independent, and send hand-offs the grammar each receiver reads
+f62e1246 2026-09-02 fix(web-app): send Harmony the stainID, not the item ID
+a5bd0eb3 2026-09-02 fix(web-app): correct the dye id contract in the shared test mock, and the shortcuts it hid
+992d855b 2026-09-02 docs(audits): sprint plan for the 2026-09-02 deep-dive
+5c216641 2026-09-02 docs(audits): whole-monorepo deep-dive, 2026-09-02
+e7ac4042 2026-09-02 Merge pull request #157: dead-code audit remediation + guardrails
+ade9de29 2026-09-02 fix(web-app): remove a clock race in the namespaced TTL test
+8d6cfc42 2026-09-02 style: undo an unintended whole-file reformat of the presets-api handler tests
+2e1fea14 2026-09-02 test: restore coverage the cleanup removed for code that still exists
+6e2c2374 2026-09-02 chore(release): bump every project this PR ships a change to
+9caf418e 2026-09-02 docs: reconcile living docs with the symbols and scripts this PR removed
+a1b8f92d 2026-09-02 fix(scripts): make two self-tests real, and let excluded referrers vouch by code
+a0fd9b3f 2026-09-02 fix(knip): delete dead workspace config, reject @beta/@alias, gate both
+4f1a1e4d 2026-09-02 fix(turbo): hash by default and make shared configs global dependencies

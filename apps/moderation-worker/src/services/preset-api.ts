@@ -33,6 +33,18 @@ import { PresetAPIError } from '../types/preset.js';
 // ============================================================================
 
 /**
+ * BUG-016 (2026-09-16 deep-dive): every Discord-facing call in
+ * `utils/discord-api.ts` carries an `AbortSignal.timeout`; this client's two
+ * `fetch`/service-binding branches did not, so a hung presets-api left a
+ * `waitUntil`-wrapped moderation action with no terminal state — the
+ * moderator's "thinking…" or "Processing…" message never resolved. 10 s
+ * (vs. Discord's 5 s) because presets-api is our own worker on the far end
+ * of a Service Binding or an internal fetch, not a third-party API — worth
+ * a slightly longer budget before giving up.
+ */
+const PRESETS_API_TIMEOUT_MS = 10_000;
+
+/**
  * Make an authenticated request to the preset API
  */
 async function request<T>(
@@ -110,19 +122,31 @@ async function request<T>(
     let response: Response;
 
     if (env.PRESETS_API) {
-      response = await env.PRESETS_API.fetch(
-        new Request(`https://internal${path}`, {
-          method,
-          headers,
-          body: bodyText,
-        }),
-      );
+      // A2 (Important 2, 2026-09-16 fix wave): `env.PRESETS_API.fetch(request)`
+      // with a pre-built `new Request(url, { signal })` is unproven — whether
+      // workerd carries `Request.signal` across a Fetcher subrequest is not
+      // documented, and this is the production path (env.PRESETS_API is
+      // always bound in prod). Use the same `(url, init)` shape this worker
+      // already runs for its HTTP-fallback branch below and in
+      // `utils/discord-api.ts`.
+      // `new Headers(headers)` (rather than the plain record) so header
+      // names are normalized the same way a `new Request()` used to
+      // normalize them for us — real Fetcher/fetch implementations do this
+      // internally either way, but making it explicit here keeps this call
+      // consistent with the actual outgoing wire request.
+      response = await env.PRESETS_API.fetch(`https://internal${path}`, {
+        method,
+        headers: new Headers(headers),
+        body: bodyText,
+        signal: AbortSignal.timeout(PRESETS_API_TIMEOUT_MS),
+      });
     } else {
       const url = `${env.PRESETS_API_URL}${path}`;
       response = await fetch(url, {
         method,
         headers,
         body: bodyText,
+        signal: AbortSignal.timeout(PRESETS_API_TIMEOUT_MS),
       });
     }
 

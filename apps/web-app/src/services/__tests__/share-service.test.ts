@@ -241,6 +241,98 @@ describe('ShareService', () => {
         expect(errors).toEqual(['Missing required parameter: harmony']);
       });
     });
+
+    // og-worker's crawler route reads `?colors=` with
+    // `.replace(/^#/, '').toUpperCase()` then `/^[0-9A-F]{6}$/`, and slices the
+    // survivors to 5 — so anything this accepts but that filter drops would
+    // unfurl as a card the page disagrees with.
+    describe('extractor', () => {
+      it('accepts a palette of bare RRGGBB entries plus the matching method', () => {
+        expect(
+          ShareService.validateShareParams({
+            tool: 'extractor',
+            params: { colors: ['8E5A3C', 'C9A96A', '112233'], algo: 'ciede2000' },
+          })
+        ).toEqual([]);
+      });
+
+      it('accepts the full five the OG card can draw and rejects a sixth', () => {
+        const five = ['8E5A3C', 'C9A96A', '112233', 'AABBCC', 'FFFFFF'];
+        expect(
+          ShareService.validateShareParams({ tool: 'extractor', params: { colors: five } })
+        ).toEqual([]);
+
+        const errors = ShareService.validateShareParams({
+          tool: 'extractor',
+          params: { colors: [...five, '000000'] },
+        });
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).toMatch(/at most 5/);
+      });
+
+      it('rejects a non-hex entry, naming it', () => {
+        const errors = ShareService.validateShareParams({
+          tool: 'extractor',
+          params: { colors: ['8E5A3C', 'ZZZZZZ'] },
+        });
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).toMatch(/ZZZZZZ/);
+      });
+
+      it('rejects the 3-digit shorthand — og-worker drops it from the unfurl', () => {
+        const errors = ShareService.validateShareParams({
+          tool: 'extractor',
+          params: { colors: ['abc'] },
+        });
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).toMatch(/abc/);
+      });
+
+      it('rejects an RRGGBB-share pair — that spelling is the image path only', () => {
+        const errors = ShareService.validateShareParams({
+          tool: 'extractor',
+          params: { colors: ['8E5A3C-31'] },
+        });
+        expect(errors).toHaveLength(1);
+        expect(errors[0]).toMatch(/8E5A3C-31/);
+      });
+
+      it('rejects a link with no palette at all — the colours ARE the link', () => {
+        expect(
+          ShareService.validateShareParams({ tool: 'extractor', params: { algo: 'ciede2000' } })
+        ).toEqual(['Missing required parameter: colors']);
+        expect(
+          ShareService.validateShareParams({ tool: 'extractor', params: { colors: [] } })
+        ).toEqual(['Missing required parameter: colors']);
+      });
+    });
+  });
+
+  // ==========================================================================
+  // parseSharedPaletteColor — the extractor palette grammar, read side
+  // ==========================================================================
+
+  describe('parseSharedPaletteColor', () => {
+    it('upper-cases and strips a leading # from a well-formed entry', () => {
+      expect(ShareService.parseSharedPaletteColor('8e5a3c')).toBe('8E5A3C');
+      expect(ShareService.parseSharedPaletteColor('#c9a96a')).toBe('C9A96A');
+      expect(ShareService.parseSharedPaletteColor(' AABBCC ')).toBe('AABBCC');
+    });
+
+    it('accepts the NUMBER parseUrl() hands back for an all-digit entry', () => {
+      // `?colors=112233` round-trips as a number through parseListParam
+      expect(ShareService.parseSharedPaletteColor(112233)).toBe('112233');
+    });
+
+    it('rejects anything og-worker would filter out of the unfurl', () => {
+      expect(ShareService.parseSharedPaletteColor('abc')).toBeNull();
+      expect(ShareService.parseSharedPaletteColor('8E5A3C-31')).toBeNull();
+      expect(ShareService.parseSharedPaletteColor('8E5A3CD')).toBeNull();
+      expect(ShareService.parseSharedPaletteColor('ZZZZZZ')).toBeNull();
+      expect(ShareService.parseSharedPaletteColor('')).toBeNull();
+      expect(ShareService.parseSharedPaletteColor(null)).toBeNull();
+      expect(ShareService.parseSharedPaletteColor(-1)).toBeNull();
+    });
   });
 
   // ==========================================================================
@@ -402,6 +494,17 @@ describe('ShareService', () => {
       ['one id', 'dyes=45', [45]],
     ])('parses %s as an array', (_label, query, expected) => {
       expect(parse(query)?.dyes).toEqual(expected);
+    });
+
+    /**
+     * `colors` (extractor) is in LIST_PARAMS for the same reason: a
+     * one-colour palette is still a palette, and the consumer loops it.
+     */
+    it.each([
+      ['a three-colour palette', 'colors=8E5A3C,C9A96A,112233', ['8E5A3C', 'C9A96A', '112233']],
+      ['a one-colour palette', 'colors=8E5A3C', ['8E5A3C']],
+    ])('parses %s as an array', (_label, query, expected) => {
+      expect(parse(query)?.colors).toEqual(expected);
     });
 
     it('gives a one-id list the same shape as a multi-id list', () => {

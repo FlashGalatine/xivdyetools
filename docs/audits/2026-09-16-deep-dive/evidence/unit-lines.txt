@@ -1,0 +1,17 @@
+60722 apps/web-app
+16971 apps/discord-worker
+13108 packages/core
+6701 apps/presets-api
+6090 apps/moderation-worker
+5921 apps/og-worker
+5529 packages/svg
+4921 apps/api-worker
+3555 packages/bot-logic
+3060 apps/oauth
+2651 packages/types
+2417 packages/worker-kit
+2061 packages/test-utils
+1977 packages/logger
+1566 apps/stoat-worker
+1319 apps/image-worker
+1313 packages/auth

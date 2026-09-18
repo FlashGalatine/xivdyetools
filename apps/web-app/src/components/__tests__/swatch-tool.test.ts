@@ -387,6 +387,14 @@ vi.mock('../market-board', () => ({
 
 vi.mock('@components/v4/result-card', () => ({}));
 
+// BUG-003: the preset-submission-form chunk is loaded on demand from
+// onSubmitPalette. Rejecting the factory makes `import(...)` reject too, so
+// every test in this file sees a chunk-load failure — nothing else in this
+// suite reaches the real module.
+vi.mock('@components/preset-submission-form', () => {
+  throw new Error('preset-submission-form chunk failed to load');
+});
+
 describe('SwatchTool', () => {
   let container: HTMLElement;
   let leftPanel: HTMLElement;
@@ -687,6 +695,31 @@ describe('SwatchTool', () => {
       expect(() => tool!.selectDye(dye as never)).not.toThrow();
     });
 
+    it('selects the dye by its own hex/name, not a swapped pair, and populates the match list (BUG-038)', async () => {
+      tool = mount();
+      await flush(); // let the default eyeColors sheet load into this.colors
+
+      tool!.selectDye(dye as never);
+      await flush();
+
+      // The source card must read the SELECTED dye's own hex and localized
+      // name -- a swapped hex/name bug would show the hex where the name
+      // belongs (or vice versa) instead of both correct values together.
+      expect(rightPanel.textContent).toContain('Dye-5729'); // LanguageService.getDyeName(itemID)
+      expect(rightPanel.textContent).toContain('#AABBCC');
+
+      // The reverse match ranked the top `maxResults` (3) swatches from the
+      // loaded palette. The mocked distance function returns a constant, so
+      // ties preserve original palette order -- a wrong-palette or
+      // mis-scored match would not land on indices [0, 1, 2] in rank order.
+      const internal = tool as unknown as {
+        reverseMatchedSwatches: Array<{ color: { index: number; hex: string }; rank: number }>;
+      };
+      expect(internal.reverseMatchedSwatches).toHaveLength(3);
+      expect(internal.reverseMatchedSwatches.map((m) => m.color.index)).toEqual([0, 1, 2]);
+      expect(internal.reverseMatchedSwatches.map((m) => m.rank)).toEqual([1, 2, 3]);
+    });
+
     it('ignores a missing dye rather than crashing the drawer', () => {
       tool = mount();
 
@@ -714,6 +747,39 @@ describe('SwatchTool', () => {
       // Changing the palette must re-match, not leave a stale highlight
       expect(() => tool!.setConfig({ colorSheet: 'hairColors' })).not.toThrow();
       await flush();
+    });
+  });
+
+  describe('submitting a palette to the community (BUG-003)', () => {
+    /**
+     * `@components/preset-submission-form` is mocked (module scope, above)
+     * to throw on import, so every `import()` of it in this file rejects --
+     * exactly the stale-deploy chunk-404 scenario BUG-003 describes.
+     */
+    it('catches the rejected chunk load instead of leaving the click silently dead', async () => {
+      const { ToastService } = await import('@services/index');
+      const { logger } = await import('@shared/logger');
+      tool = mount();
+
+      const dye = { ...mockDyes[0], hex: '#AABBCC', name: 'Test Dye', itemID: 5729 };
+      const internal = tool as unknown as {
+        charaImport: {
+          callbacks: { onSubmitPalette?: (dyes: (typeof dye)[], name?: string) => void };
+        } | null;
+      };
+
+      expect(internal.charaImport).not.toBeNull();
+      expect(() =>
+        internal.charaImport?.callbacks.onSubmitPalette?.([dye], 'My Palette')
+      ).not.toThrow();
+
+      await flush();
+
+      expect(logger.error).toHaveBeenCalledWith(
+        '[SwatchTool] Failed to load the preset submission form',
+        expect.anything()
+      );
+      expect(ToastService.error).toHaveBeenCalledWith('errors.toolLoadFailed');
     });
   });
 

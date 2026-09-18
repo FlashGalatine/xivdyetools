@@ -390,6 +390,56 @@ describe('CollectionService', () => {
       );
       expect(imported).not.toBeUndefined();
     });
+
+    // BUG-024: a truthy non-string `name` (e.g. a hand-edited `42`) used to
+    // slip past the `!collection.name` guard, then `createCollection`'s
+    // `name.trim()` threw a TypeError that unwound to the outer try/catch —
+    // aborting the loop after earlier collections in the same import had
+    // already been persisted, and reporting `success: false` for data that
+    // was in fact written.
+    it('skips a record with a truthy non-string name and keeps importing the rest (BUG-024)', () => {
+      const importData = JSON.stringify({
+        version: '1.0.0',
+        exportedAt: new Date().toISOString(),
+        type: 'xivdyetools-collection',
+        data: {
+          collections: [
+            {
+              id: 'valid-1',
+              name: 'Valid One',
+              dyes: [10],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: 'bad-1',
+              name: 42,
+              dyes: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+            {
+              id: 'valid-2',
+              name: 'Valid Two',
+              dyes: [20],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+        },
+      });
+
+      const result = CollectionService.importData(importData);
+
+      expect(result.collectionsImported).toBe(2);
+      expect(result.success).toBe(true);
+      expect(result.errors.filter((e) => e.code === 'skippedInvalid').length).toBe(1);
+      // Concrete value checks, not existence checks: a broken import that
+      // resurrected the wrong record, or dropped its dyes, would still pass
+      // a bare `.not.toBeUndefined()`.
+      expect(CollectionService.getCollectionByName('Valid One')?.dyes).toEqual([10]);
+      expect(CollectionService.getCollectionByName('Valid Two')?.dyes).toEqual([20]);
+    });
   });
 
   // ==========================================================================

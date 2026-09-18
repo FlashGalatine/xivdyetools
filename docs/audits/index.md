@@ -46,6 +46,9 @@ report named below.
 | 2026-09-02 | Deep-dive analysis, whole monorepo (250 findings, 19 sprints — PR #158) | [README.md](2026-09-02-deep-dive/README.md) |
 | 2026-09-03 | i18n audit, whole monorepo (17 findings — PR #162) | [README.md](2026-09-03-i18n/README.md) |
 | 2026-09-05 | Documentation audit, whole repository (~600 findings across six sweeps; produced this index, the `docs/` reorganisation and the two docs CI gates) | [README.md](2026-09-05-documentation/README.md) |
+| 2026-09-15 | Security audit, whole monorepo (6 findings — sprints 0–2 in PRs #183/#184) | [README.md](2026-09-15-security/README.md) |
+| 2026-09-15 | Dead-code audit, whole monorepo (17 cleanup entries + 4 KEEP — PR #186) | [README.md](2026-09-15-dead-code/README.md) |
+| 2026-09-16 | Deep-dive analysis, whole monorepo (53 findings: 8 MEDIUM, no HIGH; two reviewer HIGHs overturned by the verification pass) | [README.md](2026-09-16-deep-dive/README.md) |
 
 ## Conventions
 

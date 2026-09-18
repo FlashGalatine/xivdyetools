@@ -197,7 +197,7 @@ app.use('/og/*', async (c, next) => {
  * The allowlist is GLOBAL, but what reads each key is not: `resolveLocale`
  * (below) reads `lang` and `frameFromQuery` reads `frame` on every route;
  * `algo` is read by the five algo-aware image routes; `mode` only by the two
- * mixer routes; `wheel` only by `/og/harmony/*`. A present-but-invalid value
+ * mixer routes; `wheel` only by the parameterised harmony dye card (`/og/harmony/:dye/:type`), never the default card (BUG-018). A present-but-invalid value
  * is rejected here on every route regardless (rulings S7-R7 / S7-R10), while
  * `ogCacheKey` below keys a route-specific parameter only on the routes that
  * render with it — an allowed key must not multiply the cache entries of a
@@ -317,6 +317,20 @@ app.use('/og/*', async (c, next) => {
  * guard above this still measures the raw pathname on purpose — capping
  * the undecoded string is the conservative side of that check.)
  */
+/**
+ * True only for the parameterised harmony card,
+ * `/og/harmony/:dyeId/:harmonyType[.png]` — the one route whose handler
+ * reads `wheel` when it renders (BUG-018). `/og/harmony/default.png` (the
+ * per-tool 2a fallback, matched by `/og/:tool/default.png`) shares the
+ * `/og/harmony/` prefix but takes no dye and no wheel, so a plain
+ * `startsWith('/og/harmony/')` check wrongly keyed it too. The parameterised
+ * route always has exactly two more segments after the prefix (dyeId,
+ * harmonyType[.png]); the default card has exactly one (`default.png`).
+ */
+function readsWheel(path: string): boolean {
+  return /^\/og\/harmony\/[^/]+\/[^/]+/.test(path);
+}
+
 function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const url = new URL(c.req.url);
   const params = new URLSearchParams();
@@ -349,12 +363,15 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   // two entries for one picture.
   //
   // And only on the route that READS it. `wheel` is an allowed key everywhere
-  // because the allowlist is global, but only `/og/harmony/*` renders with it;
-  // keying on it elsewhere let `?wheel=` mint five distinct, unauthenticated
-  // rasters of one identical gradient or mixer card — the FINDING-024 key-space
-  // problem, reintroduced through a validated parameter.
+  // because the allowlist is global, but only the parameterised harmony card
+  // (`readsWheel`, below) renders with it — `/og/harmony/default.png` shares
+  // the `/og/harmony/` prefix but is the per-tool 2a fallback card, which
+  // never reads `wheel` at render time. A bare prefix check (BUG-018)
+  // therefore let up to five validated wheel ids each mint their own
+  // byte-identical resvg render of that default card — the FINDING-024
+  // key-space problem, reintroduced through a validated parameter.
   const wheel = parseColorWheelId(url.searchParams.get('wheel'));
-  if (wheel && wheel !== DEFAULT_COLOR_WHEEL && c.req.path.startsWith('/og/harmony/')) {
+  if (wheel && wheel !== DEFAULT_COLOR_WHEEL && readsWheel(c.req.path)) {
     params.set('wheel', wheel);
   }
   // Ruling S7-R13 (og-7 refined): strip a trailing `.png` from the path too — it stays
@@ -480,6 +497,49 @@ function isAppHost(url: URL, env: Env): boolean {
 }
 
 /**
+ * OPT-001: a stalled SPA origin used to hold a pass-through request open for
+ * the platform's own (much longer) default before either of the two
+ * `fetch(request)` / `fetch(c.req.raw)` sites below would give up. Both
+ * sites share this 5s budget and the same fallback — neither has a static
+ * default card to degrade to (those only exist on the `/og/*` image routes
+ * and the crawler-HTML branches these sites never take), so a stalled
+ * origin gets the same 302 to `APP_BASE_URL` the surrounding code already
+ * returns when there is no origin to pass through to at all.
+ */
+const SPA_PASSTHROUGH_TIMEOUT_MS = 5_000;
+
+/** True for the two rejection shapes `AbortSignal.timeout` and an explicit abort produce. */
+function isPassThroughTimeout(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'name' in err &&
+    (err.name === 'TimeoutError' || err.name === 'AbortError')
+  );
+}
+
+/**
+ * Pass a human request through to the SPA origin with a bounded wait.
+ * `AbortSignal.timeout` rejects `fetch` with a `TimeoutError` DOMException
+ * once the budget elapses (DOMException does not extend `Error`, so the
+ * classification below reads `.name`, never `instanceof Error`) — that
+ * shape, and an explicit `AbortError`, degrade to the 302 fallback. Any
+ * OTHER rejection (DNS failure, TLS error, …) is rethrown unchanged so the
+ * global error handler still sees real failures instead of being silently
+ * papered over as a timeout.
+ */
+async function passThroughToOrigin(request: Request, env: Env): Promise<Response> {
+  try {
+    return await fetch(request, { signal: AbortSignal.timeout(SPA_PASSTHROUGH_TIMEOUT_MS) });
+  } catch (err) {
+    if (isPassThroughTimeout(err)) {
+      return Response.redirect(env.APP_BASE_URL, 302);
+    }
+    throw err;
+  }
+}
+
+/**
  * Resolve the locale for an OG request.
  *
  * Priority: ?lang= query param → 'en' fallback. The query value is validated
@@ -512,8 +572,9 @@ function createToolHandler(tool: ToolId) {
       if (!isAppHost(url, env)) {
         return Response.redirect(env.APP_BASE_URL, 302);
       }
-      // Pass through to origin - the SPA will handle it
-      return fetch(request);
+      // Pass through to origin - the SPA will handle it. OPT-001: bounded
+      // wait, falling back to the same 302 above on a stalled origin.
+      return passThroughToOrigin(request, env);
     }
 
     // Track analytics — FINDING-024 / OG-7: one datapoint per crawler hit.
@@ -1214,8 +1275,9 @@ app.all('*', (c) => {
     return Response.redirect(c.env.APP_BASE_URL, 302);
   }
 
-  // Pass through to origin for regular users
-  return fetch(c.req.raw);
+  // Pass through to origin for regular users. OPT-001: bounded wait, falling
+  // back to the same 302 above on a stalled origin.
+  return passThroughToOrigin(c.req.raw, c.env);
 });
 
 // ============================================================================

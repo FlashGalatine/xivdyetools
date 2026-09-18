@@ -7,6 +7,8 @@
  * @module types
  */
 
+import type { ImageFormat } from '@xivdyetools/worker-kit/image-sniff';
+
 /**
  * This Worker declares no bindings: no `vars`, no KV, no D1, no R2, no secrets.
  * `wrangler.toml` has no `[vars]` block in either environment, so there is
@@ -43,6 +45,10 @@ export interface FormatValidationResult {
 }
 
 /**
- * Supported image formats
+ * Supported image formats.
+ *
+ * Re-exported from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008) so the
+ * app and the shared sniffer share one vocabulary instead of two structurally
+ * identical but nominally separate unions.
  */
-export type ImageFormat = 'png' | 'jpeg' | 'gif' | 'webp' | 'bmp';
+export type { ImageFormat };

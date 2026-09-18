@@ -568,12 +568,12 @@ async function processSubmitCommand(
 
     // Log to submission channel if approved
     if (isApproved && env.SUBMISSION_LOG_CHANNEL_ID) {
-      await notifySubmissionChannel(env, preset, 'approved');
+      await notifySubmissionChannel(env, preset, 'approved', logger);
     }
 
     // Notify moderation channel if pending
     if (!isApproved && env.MODERATION_CHANNEL_ID) {
-      await notifyModerationChannel(env, preset);
+      await notifyModerationChannel(env, preset, logger);
     }
   } catch (error) {
     markCommandOutcome(interaction, classifyError(error));
@@ -921,7 +921,7 @@ async function processEditCommand(
 
     // Notify moderation channel if pending
     if (isPending && env.MODERATION_CHANNEL_ID) {
-      await notifyEditModerationChannel(env, updatedPreset, existingPreset);
+      await notifyEditModerationChannel(env, updatedPreset, existingPreset, logger);
     }
   } catch (error) {
     markCommandOutcome(interaction, classifyError(error));
@@ -1083,7 +1083,7 @@ async function notifySubmissionChannel(
   const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
 
   try {
-    await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
+    const res = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
       embeds: [
         {
           title: `${statusDisplay.icon} New Preset: ${safeName}`,
@@ -1111,6 +1111,15 @@ async function notifySubmissionChannel(
         },
       ],
     });
+    // REFACTOR-002: a non-2xx from Discord was previously swallowed — only a
+    // thrown fetch was logged. Mirror sendModerationNotification's ok check.
+    if (!res.ok) {
+      logger?.error('Submission channel notification rejected by Discord', undefined, {
+        status: res.status,
+        body: await res.text().catch(() => ''),
+        presetId: preset.id,
+      });
+    }
   } catch (error) {
     if (logger) {
       logger.error(

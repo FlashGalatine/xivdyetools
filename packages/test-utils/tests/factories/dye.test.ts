@@ -1,8 +1,8 @@
 /**
  * Tests for dye factory functions
  */
-import { describe, it, expect } from 'vitest';
-import { mockDyes, createMockDye } from '../../src/factories/dye.js';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { mockDyes, createMockDye, resetMockDyeSequence, randomStainId } from '../../src/factories/dye.js';
 
 describe('mockDyes', () => {
   it('is an array of dyes', () => {
@@ -57,9 +57,137 @@ describe('mockDyes', () => {
       expect(dye.hex).toMatch(/^#[0-9A-Fa-f]{6}$/);
     }
   });
+
+  it('is byte-identical fixed content, not sequence-based (BUG-007)', () => {
+    // mockDyes is a static array; it must not be perturbed by
+    // createMockDye()'s default stainID sequence in either direction.
+    resetMockDyeSequence();
+    createMockDye();
+    createMockDye();
+    expect(mockDyes).toEqual([
+      {
+        itemID: 5729,
+        stainID: 1,
+        id: 5729,
+        name: 'Snow White',
+        hex: '#FFFFFF',
+        rgb: { r: 255, g: 255, b: 255 },
+        hsv: { h: 0, s: 0, v: 100 },
+        category: 'White',
+        acquisition: 'Vendor',
+        cost: 216,
+        currency: 'Gil',
+        isMetallic: false,
+        isPastel: false,
+        isDark: false,
+        isCosmic: false,
+        isIshgardian: false,
+        consolidationType: 'A',
+      },
+      {
+        itemID: 5730,
+        stainID: 2,
+        id: 5730,
+        name: 'Soot Black',
+        hex: '#000000',
+        rgb: { r: 0, g: 0, b: 0 },
+        hsv: { h: 0, s: 0, v: 0 },
+        category: 'Black',
+        acquisition: 'Vendor',
+        cost: 216,
+        currency: 'Gil',
+        isMetallic: false,
+        isPastel: false,
+        isDark: true,
+        isCosmic: false,
+        isIshgardian: false,
+        consolidationType: 'A',
+      },
+      {
+        itemID: 5731,
+        stainID: 3,
+        id: 5731,
+        name: 'Dalamud Red',
+        hex: '#FF0000',
+        rgb: { r: 255, g: 0, b: 0 },
+        hsv: { h: 0, s: 100, v: 100 },
+        category: 'Red',
+        acquisition: 'Crafted',
+        cost: 500,
+        currency: 'Gil',
+        isMetallic: false,
+        isPastel: false,
+        isDark: false,
+        isCosmic: false,
+        isIshgardian: false,
+        consolidationType: 'A',
+      },
+      {
+        itemID: 5732,
+        stainID: 4,
+        id: 5732,
+        name: 'Royal Blue',
+        hex: '#0000FF',
+        rgb: { r: 0, g: 0, b: 255 },
+        hsv: { h: 240, s: 100, v: 100 },
+        category: 'Blue',
+        acquisition: 'Crafted',
+        cost: 500,
+        currency: 'Gil',
+        isMetallic: false,
+        isPastel: false,
+        isDark: false,
+        isCosmic: false,
+        isIshgardian: false,
+        consolidationType: 'A',
+      },
+      {
+        itemID: 5733,
+        stainID: 5,
+        id: 5733,
+        name: 'Metallic Gold',
+        hex: '#FFD700',
+        rgb: { r: 255, g: 215, b: 0 },
+        hsv: { h: 51, s: 100, v: 100 },
+        category: 'Yellow',
+        acquisition: 'Special',
+        cost: 1000,
+        currency: 'Gil',
+        isMetallic: true,
+        isPastel: false,
+        isDark: false,
+        isCosmic: false,
+        isIshgardian: false,
+        consolidationType: 'A',
+      },
+      {
+        itemID: 5734,
+        stainID: 6,
+        id: 5734,
+        name: 'Pastel Pink',
+        hex: '#FFB6C1',
+        rgb: { r: 255, g: 182, b: 193 },
+        hsv: { h: 351, s: 29, v: 100 },
+        category: 'Red',
+        acquisition: 'Vendor',
+        cost: 216,
+        currency: 'Gil',
+        isMetallic: false,
+        isPastel: true,
+        isDark: false,
+        isCosmic: false,
+        isIshgardian: false,
+        consolidationType: 'A',
+      },
+    ]);
+  });
 });
 
 describe('createMockDye', () => {
+  beforeEach(() => {
+    resetMockDyeSequence();
+  });
+
   it('creates a dye with defaults', () => {
     const dye = createMockDye();
 
@@ -87,20 +215,67 @@ describe('createMockDye', () => {
     expect(dye.isMetallic).toBe(true);
   });
 
-  it('generates unique IDs', () => {
-    const dye1 = createMockDye();
-    const dye2 = createMockDye();
+  // BUG-007: the default stainID is a deterministic module-level counter
+  // over the real 1-254 Stain range, not a Math.random() draw — the old
+  // random default collided ~1/254 per pair (this audit's own coverage run
+  // failed on exactly that). Building every value in the range, in order,
+  // and rejecting the 255th call replaces the flaky "generates unique IDs"
+  // test that only ever sampled two dyes.
+  it('assigns default stainIDs 1..254 across successive calls, then throws', () => {
+    const dyes = Array.from({ length: MAX_STAIN_ID_FOR_TEST() }, () => createMockDye());
 
-    expect(dye1.id).not.toBe(dye2.id);
+    const stainIDs = dyes.map((d) => d.stainID);
+    const itemIDs = dyes.map((d) => d.itemID);
+    const ids = dyes.map((d) => d.id);
+
+    expect(stainIDs).toEqual(Array.from({ length: 254 }, (_, i) => i + 1));
+    expect(new Set(stainIDs).size).toBe(254);
+    expect(new Set(itemIDs).size).toBe(254);
+    expect(new Set(ids).size).toBe(254);
+
+    expect(() => createMockDye()).toThrowError(/254/);
   });
 
-  // pkg-worker-kit-test-utils-15: these three tests pinned a fixture that
-  // could not represent a real dye -- `stainID` copied a 9-digit randomId()
-  // and `id` was 5700 less than `itemID`, inverting the contract in
-  // types/src/dye/dye.ts ("`id` is always equal to `itemID`"). That is the same
-  // inversion that manufactured green for a class of dye-id defects elsewhere
-  // in this audit, so the shared factory must not reproduce it.
-  it('puts stainID inside the real 1-254 Stain range', () => {
+  it('resetMockDyeSequence() restarts the default stainID sequence at 1', () => {
+    createMockDye();
+    createMockDye();
+    resetMockDyeSequence();
+
+    const dye = createMockDye();
+    expect(dye.stainID).toBe(1);
+  });
+
+  it('honours an explicit stainID: null override (BUG-021)', () => {
+    const dye = createMockDye({ stainID: null });
+
+    expect(dye.stainID).toBeNull();
+    // legacyItemIdForStain(null) falls back to Snow White's slot (5728 + 1).
+    expect(dye.itemID).toBe(5729);
+    expect(dye.id).toBe(5729);
+  });
+
+  it('treats explicit stainID: undefined as absent and gets the sequence default', () => {
+    const dye = createMockDye({ stainID: undefined });
+
+    expect(dye.stainID).toBeGreaterThanOrEqual(1);
+    expect(dye.stainID).toBeLessThanOrEqual(254);
+  });
+
+  it('does not advance the default sequence when stainID is explicitly overridden', () => {
+    createMockDye({ stainID: null });
+    const dye = createMockDye();
+    expect(dye.stainID).toBe(1);
+  });
+
+  it('exposes an opt-in random draw, unused by the default path', () => {
+    for (let i = 0; i < 50; i++) {
+      const value = randomStainId();
+      expect(value).toBeGreaterThanOrEqual(1);
+      expect(value).toBeLessThanOrEqual(254);
+    }
+  });
+
+  it('puts default stainIDs inside the real 1-254 Stain range', () => {
     for (let i = 0; i < 50; i++) {
       const dye = createMockDye();
       expect(dye.stainID).toBeGreaterThanOrEqual(1);
@@ -136,3 +311,8 @@ describe('createMockDye', () => {
     expect(dye.id).toBe(100);
   });
 });
+
+/** Dedupes the 254 literal within this test file only; keep in sync with MAX_STAIN_ID in src/factories/dye.ts. */
+function MAX_STAIN_ID_FOR_TEST(): number {
+  return 254;
+}

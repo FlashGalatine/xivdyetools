@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.3] - 2026-09-17
+
+### Fixed
+
+- **XIVAuth-only preset authors can now be banned and unbanned.** `/preset ban_user`, `/preset unban_user`, the ban-confirm button and the ban-reason modal all required the target to be a Discord snowflake, but an XIVAuth-only author has none — presets-api stores their JWT `sub` (a UUID) in `presets.author_discord_id` instead. A moderator could not act on that author at all. A new `isBanTargetId` predicate accepts either shape; the value is still stored in `banned_users.discord_id` unchanged, exactly as a snowflake always was (2026-09-16 deep-dive, BUG-001 path (a); see `docs/audits/2026-09-16-deep-dive/`). The UUID half of that predicate accepts lowercase only — the spelling the oauth worker mints — so it can never store a ban that presets-api's binary-`=` check would fail to match. A banned XIVAuth-only user who later links a Discord account sheds the ban: oauth stamps `discord_id` onto their account, so the ban row's own `discord_id` (still the old XIVAuth UUID) no longer matches — this is BUG-001 path (b), and closing it is tracked separately.
+- The ban-confirmation embed's id field now reads "XIVAuth ID" instead of "Discord ID" when the target has no real Discord snowflake (`isValidSnowflake(user.discordId)`), matching the `discord:` / `xivauth:` label the ban/unban autocomplete choices already used (2026-09-16 PR review of BUG-001).
+- Both presets-api requests in `services/preset-api.ts` (the service-binding call and the HTTP fallback) now carry a 10 s timeout. Previously a hung presets-api left a moderator's "thinking…"/"Processing…" message on Discord with no way to resolve (2026-09-16 deep-dive, BUG-016).
+
+### Changed
+
+- Rewrote the rate-limit KV-error test to assert the actual fail-open contract (`{ allowed: true, backendError: true }` plus the warning log) instead of `resolves.not.toThrow()`, which could not fail no matter what the fail-open code did (2026-09-16 deep-dive, BUG-035).
+
 ## [1.7.2] - 2026-09-16
 
 ### Removed (2026-09-15 dead-code audit)

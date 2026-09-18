@@ -111,6 +111,47 @@ describe('CacheService', () => {
       expect(mockCtx.waitUntil).toHaveBeenCalled();
     });
 
+    it('logs via the optional logger and produces no unhandled rejection when cache.delete rejects beyond the SWR window (BUG-019)', async () => {
+      const testData = { items: [1, 2, 3] };
+      const now = Date.now();
+      const cachedAt = now - 500 * 1000; // 500 seconds ago (beyond 420s total window)
+
+      const cache = await caches.open('universalis-proxy');
+      const cacheUrl = `${cacheOrigin}/__cache/delete-fails-key`;
+      const response = new Response(JSON.stringify(testData), {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Cached-At': String(cachedAt),
+          'X-Cache-TTL': '300',
+          'X-SWR-Window': '120',
+        },
+      });
+      await cache.put(new Request(cacheUrl), response);
+
+      const deleteError = new Error('delete boom');
+      vi.spyOn(cache, 'delete').mockRejectedValueOnce(deleteError);
+
+      const debug = vi.fn();
+      const serviceWithLogger = new CacheService(mockCtx, 'universalis-proxy', { debug });
+
+      const result = await serviceWithLogger.get('delete-fails-key');
+      expect(result).toBeNull();
+      expect(mockCtx.waitUntil).toHaveBeenCalled();
+
+      // If cache.delete()'s rejection weren't caught, this would reject too —
+      // that's the unhandled rejection BUG-019 is about. `_waitForAll()`
+      // resolves to one settled value per waitUntil()'d promise.
+      await expect(
+        (mockCtx as unknown as { _waitForAll: () => Promise<unknown[]> })._waitForAll()
+      ).resolves.toEqual([undefined]);
+
+      expect(debug).toHaveBeenCalledTimes(1);
+      expect(debug).toHaveBeenCalledWith('Failed to delete cache entry beyond SWR window', {
+        key: 'delete-fails-key',
+        error: 'delete boom',
+      });
+    });
+
     it('should handle cache errors gracefully', async () => {
       const originalCaches = (globalThis as unknown as { caches: CacheStorage }).caches;
       // @ts-expect-error - Intentionally setting undefined for testing

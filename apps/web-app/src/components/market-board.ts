@@ -373,7 +373,7 @@ export class MarketBoard extends BaseComponent {
 
       if (statusMsg) {
         statusMsg.textContent = LanguageService.t('marketBoard.pricesRefreshed');
-        setTimeout(() => {
+        this.safeTimeout(() => {
           statusMsg.textContent = '';
         }, 3000);
       }

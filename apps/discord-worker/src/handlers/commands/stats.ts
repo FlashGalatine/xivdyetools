@@ -552,8 +552,9 @@ async function handleHealthSubcommand(
   const universalisStatus = isUniversalisEnabled(env) ? '🟢 Configured' : '⚪ Not configured';
   const presetApiStatus = env.PRESETS_API_URL ? '🟢 Configured' : '⚪ Not configured';
 
-  // Environment info (Workers don't have a built-in environment indicator)
-  const workerEnv = 'production';
+  // BUG-012: this hard-coded 'production' even on the -dev worker, where
+  // wrangler.toml sets ENVIRONMENT to 'development'.
+  const workerEnv = env.ENVIRONMENT ?? 'unknown';
 
   return messageResponse({
     embeds: [

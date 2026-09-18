@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0] - 2026-09-16
+
+Remediation from the 2026-09-16 deep-dive (`docs/audits/2026-09-16-deep-dive/`).
+
+Minor rather than patch: the swatch card's eye marker is an observable change to rendered output (house rule, as with core 5.3.0).
+
+### Fixed
+
+- **`/swatch` dropped the L/R eye marker on off-grid heterochromia rows**
+  (BUG-006). A heterochromia `.chara` file whose eyes are both OFF GRID
+  rendered two rows both labelled EYES with no way to tell which swatch was
+  which eye. The `·L`/`·R`/`·LR` marker now sits on the row's slot LABEL
+  (e.g. `EYES·L`) instead of the address line, so it survives on off-grid
+  rows too — the address line's OFF-GRID token was already at its card-width
+  limit and would have ellipsised a suffix away in most locales. The same
+  `label` also flows into the `/swatch slot:` nearest sheet's title and into
+  the off-grid / dropped-slot embed lines, so the marker now shows up
+  consistently everywhere the slot name is printed, not just on the card row.
+
+### Changed
+
+- `dye-info.ts`'s `marketValue()` now derives the MKT row's item ID through
+  core's `getMarketItemID(dye)` instead of re-implementing the Patch 7.5
+  consolidation gate in this package (REFACTOR-005). Internal only — the
+  rendered value is unchanged for all 125 dyes.
+
 ## [4.2.0] - 2026-09-05
 
 ### Added

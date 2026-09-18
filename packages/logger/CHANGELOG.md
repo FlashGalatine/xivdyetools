@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-09-17
+
+Sprint 9 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive`).
+
+### Fixed
+
+- **Browser error tracker no longer crashes on circular or BigInt objects
+  (BUG-020).** The wrapped `logger.error` method, which must never throw, used
+  raw `JSON.stringify` to serialize non-`Error` objects. A circular reference or
+  BigInt value made it throw. Now uses the package's own `safeStringify`, which
+  handles both cases.
+
 ## [2.2.0] - 2026-09-02
 
 Sprint 13 of the 2026-09-02 deep-dive remediation (`docs/audits/2026-09-02-deep-dive`).

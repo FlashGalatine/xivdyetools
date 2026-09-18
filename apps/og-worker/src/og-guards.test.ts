@@ -617,4 +617,39 @@ describe('/og/* cache key: card generation and the reserved default routes', () 
     expect(renderOGImage).toHaveBeenCalledTimes(1);
     expect(caches.store.size).toBe(1);
   });
+
+  /**
+   * BUG-018: `/og/harmony/default.png` (matched by the shared
+   * `/og/:tool/default.png` per-tool fallback route) shares the
+   * `/og/harmony/` prefix with the parameterised card but never reads
+   * `wheel` at render time — the old `startsWith('/og/harmony/')` check keyed
+   * it in anyway, so each of the five validated wheel ids minted its own
+   * byte-identical resvg render of the same default card. The fix must not
+   * over-strip: the parameterised dye card (asserted above, and again here)
+   * still has to key `wheel`, or a wheel change would silently reuse a
+   * stale render for a real harmony card.
+   */
+  it('BUG-018: the harmony default card ignores wheel in the cache key; the dye card still keys it', async () => {
+    const bare = await app.request('/og/harmony/default.png', {}, TEST_ENV, execCtx);
+    expect(bare.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(caches.store.size).toBe(1);
+
+    const withWheel = await app.request('/og/harmony/default.png?wheel=ryb', {}, TEST_ENV, execCtx);
+    expect(withWheel.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+    expect(caches.store.size).toBe(1);
+
+    const dyeBare = await app.request('/og/harmony/1/complementary', {}, TEST_ENV, execCtx);
+    expect(dyeBare.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(caches.store.size).toBe(2);
+
+    const dyeWithWheel = await app.request('/og/harmony/1/complementary?wheel=ryb', {}, TEST_ENV, execCtx);
+    expect(dyeWithWheel.status).toBe(200);
+    await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    expect(renderOGImage).toHaveBeenCalledTimes(3);
+    expect(caches.store.size).toBe(3);
+  });
 });

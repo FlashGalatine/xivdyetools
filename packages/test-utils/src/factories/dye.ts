@@ -31,8 +31,45 @@ const MAX_STAIN_ID = 254;
 /** Snow White is stainID 1 / itemID 5729, so legacy item IDs start here. */
 const LEGACY_ITEM_ID_BASE = 5728;
 
-/** TEST-DESIGN-001: random, so parallel test files do not collide. */
-function randomStainId(): number {
+/**
+ * BUG-007: createMockDye()'s default stainID used to be a Math.random() draw
+ * over 1-254, which collided ~1/254 per pair of default-created dyes (the
+ * 2026-09-16 deep-dive audit's own coverage run failed on exactly this). The
+ * default is now this module-level counter: deterministic, unique within a
+ * test run, and it throws instead of silently colliding once a suite builds
+ * more default dyes than there are real stainIDs.
+ */
+let mockDyeSequence = 0;
+
+/** Advances and returns createMockDye()'s default stainID sequence. */
+function nextStainId(): number {
+  mockDyeSequence += 1;
+  if (mockDyeSequence > MAX_STAIN_ID) {
+    throw new Error(
+      `createMockDye(): default stainID sequence exhausted the real Stain range (1-${MAX_STAIN_ID}). ` +
+        'Call resetMockDyeSequence() between tests, or pass an explicit stainID/itemID/id override.'
+    );
+  }
+  return mockDyeSequence;
+}
+
+/**
+ * Restarts createMockDye()'s default stainID sequence at 1. The package
+ * does not register this in a global vitest hook itself (BUG-007) — call it
+ * from a consuming suite's own `beforeEach` if that suite needs a fresh
+ * sequence per test.
+ */
+export function resetMockDyeSequence(): void {
+  mockDyeSequence = 0;
+}
+
+/**
+ * Opt-in random stainID draw over the real 1-254 Stain range. No longer used
+ * by createMockDye()'s default path (BUG-007) — call it explicitly when a
+ * test specifically wants non-deterministic stainIDs, e.g.
+ * `createMockDye({ stainID: randomStainId() })`.
+ */
+export function randomStainId(): number {
   return Math.floor(Math.random() * MAX_STAIN_ID) + 1;
 }
 
@@ -178,9 +215,23 @@ export function createMockDye(overrides: Partial<Dye> = {}): Dye {
   // DyeDatabase.initialize()". That inversion is exactly the shape that
   // manufactured green for a whole class of dye-id defects elsewhere in this
   // audit, so the shared factory must not reproduce it.
-  const stainID = overrides.stainID ?? randomStainId();
+  //
+  // BUG-021: `overrides.stainID ?? nextStainId()` would treat an explicit
+  // `stainID: null` override as absent (`??` replaces both `null` and
+  // `undefined`) and silently swap in a sequence value, so the documented
+  // null-arm fixture (types/src/dye/dye.ts: "The `null` arm survives only
+  // for legacy fixture shapes that carry `id`/`itemID` without a `stainID`")
+  // could never be built through this factory. Checking for the key's
+  // presence instead lets `null` pass through untouched. Treat an explicit
+  // `undefined` as absent so `createMockDye({ stainID: undefined })` gets
+  // the sequence default, not an invalid `undefined` value.
+  const stainID: number | null = 'stainID' in overrides && overrides.stainID !== undefined ? (overrides.stainID as number | null) : nextStainId();
   const itemID = overrides.itemID ?? legacyItemIdForStain(stainID);
   const id = overrides.id ?? itemID;
+
+  // Remove stainID from overrides if it was undefined, so the spread doesn't
+  // override the computed value with undefined.
+  const { stainID: _, ...restOverrides } = overrides;
 
   return {
     itemID,
@@ -200,6 +251,6 @@ export function createMockDye(overrides: Partial<Dye> = {}): Dye {
     isCosmic: false,
     isIshgardian: false,
     consolidationType: null,
-    ...overrides,
+    ...restOverrides,
   };
 }

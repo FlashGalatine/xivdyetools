@@ -21,6 +21,7 @@ import {
 } from '@xivdyetools/auth';
 import { pongResponse, ephemeralResponse } from './utils/response.js';
 import { BRAND_ACCENT } from './utils/brand.js';
+import { readTextCapped } from './utils/read-text-capped.js';
 import {
   handleAboutCommand,
   handleHarmonyCommand,
@@ -273,18 +274,23 @@ app.post('/webhooks/preset-submission', async (c) => {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
-  // DISCORD-HIGH-001: Validate request body size to prevent OOM attacks
-  const contentLength = parseInt(c.req.header('content-length') || '0', 10);
-  if (contentLength > 10240) {
-    // 10KB limit
-    logger.warn('Webhook payload too large', { contentLength });
+  // DISCORD-HIGH-001 / BUG-013: bound actual received bytes, not just a
+  // client-declared Content-Length — readTextCapped rejects a declared
+  // oversize length up front (no read at all) and also cuts off a body that
+  // lies about its size, or has no length at all, once it streams past 10KB.
+  const bodyText = await readTextCapped(c.req.raw, 10240);
+  if (bodyText === null) {
+    logger.warn('Webhook payload too large', {
+      declared: c.req.header('content-length') ?? 'absent',
+      cap: 10240,
+    });
     return c.json({ error: 'Payload too large' }, 413);
   }
 
   // Parse payload
   let payload: PresetNotificationPayload;
   try {
-    payload = await c.req.json();
+    payload = JSON.parse(bodyText) as PresetNotificationPayload;
   } catch {
     return c.json({ error: 'Invalid JSON body' }, 400);
   }
@@ -514,6 +520,9 @@ app.post('/webhooks/github', async (c) => {
 
   // Bound actual bytes before HMAC verification. A declared length alone does
   // not protect this endpoint from oversized chunked or misleading requests.
+  // Kept separate from `utils/read-text-capped.ts`'s capped reader: HMAC has
+  // to run over the exact undecoded bytes, and that helper hands back decoded
+  // text — don't unify the two.
   const chunks: Uint8Array[] = [];
   let size = 0;
   const reader = (c.req.raw.body as ReadableStream<Uint8Array> | null)?.getReader();
@@ -937,7 +946,7 @@ async function handleCommand(
         break;
 
       case 'manual':
-        response = await handleManualCommand(interaction, env, handlerCtx);
+        response = await handleManualCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'changelog':
@@ -1219,8 +1228,12 @@ async function getMyPresetsAutocompleteChoices(
 
     // Return up to 25 choices (Discord's maximum)
     return filtered.slice(0, 25).map((preset) => ({
-      // Format: "Name (status)" to help user identify pending edits
-      name: preset.status === 'approved' ? preset.name : `${preset.name} (${preset.status})`,
+      // Format: "Name (status)" to help user identify pending edits.
+      // REFACTOR-003: Discord caps a choice name at 100 characters.
+      name: (preset.status === 'approved'
+        ? preset.name
+        : `${preset.name} (${preset.status})`
+      ).slice(0, 100),
       value: preset.id,
     }));
   } catch (error) {
@@ -1279,7 +1292,8 @@ async function getFavoritedPresetsAutocompleteChoices(
     const filtered =
       query.length > 0 ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery)) : entries;
 
-    return filtered.slice(0, 25).map((e) => ({ name: e.name, value: e.id }));
+    // REFACTOR-003: Discord caps a choice name at 100 characters.
+    return filtered.slice(0, 25).map((e) => ({ name: e.name.slice(0, 100), value: e.id }));
   } catch (error) {
     logger.error(
       'Failed to get favorited presets autocomplete',

@@ -879,8 +879,9 @@ describe('stats.ts', () => {
 
     it('should show configuration field with version and platform', async () => {
       const interaction = makeInteraction('admin-123', 'health');
+      const envWithEnvironment = { ...mockEnv, ENVIRONMENT: 'production' } as unknown as Env;
 
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
+      const response = await handleStatsCommand(interaction, envWithEnvironment, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
       const configField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
@@ -890,6 +891,34 @@ describe('stats.ts', () => {
       expect(configField!.value).toContain(packageJson.version);
       expect(configField!.value).toContain('Cloudflare Workers');
       expect(configField!.value).toContain('production');
+    });
+
+    // BUG-012: this used to hard-code 'production' regardless of which
+    // worker answered — the -dev worker's wrangler.toml sets 'development'.
+    it('reports the -dev worker environment as development, not production', async () => {
+      const interaction = makeInteraction('admin-123', 'health');
+      const envWithEnvironment = { ...mockEnv, ENVIRONMENT: 'development' } as unknown as Env;
+
+      const response = await handleStatsCommand(interaction, envWithEnvironment, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
+
+      const configField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Configuration'),
+      );
+      expect(configField!.value).toContain('development');
+      expect(configField!.value).not.toContain('production');
+    });
+
+    it("falls back to 'unknown' when ENVIRONMENT is unset", async () => {
+      const interaction = makeInteraction('admin-123', 'health');
+
+      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
+
+      const configField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Configuration'),
+      );
+      expect(configField!.value).toContain('unknown');
     });
 
     it('should show security status', async () => {

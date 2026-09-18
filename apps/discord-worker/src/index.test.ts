@@ -792,6 +792,84 @@ describe('index.ts', () => {
       const res = await app.fetch(req, mockEnv, mockCtx);
       expect(res.status).toBe(502);
     });
+
+    // BUG-013: the old check trusted a client-declared Content-Length and
+    // then buffered `c.req.json()` unbounded — a body with no declared
+    // length (or one that lies) sailed straight through. readTextCapped
+    // counts actual streamed bytes instead.
+    it('returns 413 when a body with no Content-Length header streams past 10 KB', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+
+      const preset = {
+        id: 'preset-123',
+        name: 'Test Preset',
+        description: 'x'.repeat(11_000),
+        category_id: 'test-category',
+        author_name: 'Test Author',
+        source: 'web' as const,
+        dyes: [1, 2, 3],
+        tags: ['test'],
+        status: 'pending' as const,
+        created_at: new Date().toISOString(),
+      };
+      const body = JSON.stringify({ type: 'submission', preset });
+      expect(body.length).toBeGreaterThan(10_240);
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body,
+      });
+      // Pins that this really exercises the streaming branch (readTextCapped
+      // counting actual bytes), not the declared-Content-Length early exit.
+      expect(req.headers.get('content-length')).toBeNull();
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      expect(res.status).toBe(413);
+    });
+
+    it('accepts a body of exactly 10 KB with no Content-Length header', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const basePreset = {
+        id: 'preset-123',
+        name: 'Test Preset',
+        description: 'A test preset',
+        category_id: 'test-category',
+        author_name: 'Test Author',
+        source: 'web' as const,
+        dyes: [1, 2, 3],
+        tags: ['test', 'example'],
+        status: 'pending' as const,
+        created_at: new Date().toISOString(),
+      };
+      // Pad `description` so the JSON body lands exactly at the 10 KB cap
+      // (ASCII throughout, so JS string length === byte length here).
+      const unpaddedLength = JSON.stringify({ type: 'submission', preset: basePreset }).length;
+      const preset = {
+        ...basePreset,
+        description: basePreset.description + 'x'.repeat(10_240 - unpaddedLength),
+      };
+      const body = JSON.stringify({ type: 'submission', preset });
+      expect(body.length).toBe(10_240);
+
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body,
+      });
+      // Same precondition as the oversize case above: no declared length, so
+      // this is the streaming branch reading exactly to the cap, not the
+      // Content-Length short-circuit.
+      expect(req.headers.get('content-length')).toBeNull();
+
+      const res = await app.fetch(req, mockEnv, mockCtx);
+      expect(res.status).toBe(200);
+    });
   });
 
   describe('POST /webhooks/github', () => {
@@ -1898,6 +1976,48 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         await res.json();
         expect(getMyPresets).toHaveBeenCalledWith(mockEnv, 'user-123');
+      });
+
+      // REFACTOR-003: Discord caps a choice name at 100 characters; a long
+      // preset name plus the " (pending)" status suffix must be truncated.
+      it('truncates a long preset name in the edit autocomplete choices', async () => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { getMyPresets } = await import('./services/preset-api.js');
+
+        const interactionBody = JSON.stringify({
+          type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+          data: {
+            name: 'preset',
+            options: [
+              {
+                name: 'edit',
+                type: 1,
+                options: [{ name: 'preset', value: '', focused: true }],
+              },
+            ],
+          },
+          user: { id: 'user-123' },
+        });
+
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: interactionBody,
+          error: '',
+        });
+        vi.mocked(getMyPresets).mockResolvedValue([
+          { id: 'preset-1', name: 'P'.repeat(120), status: 'pending' } as CommunityPreset,
+        ]);
+
+        const req = new Request('http://localhost/', {
+          method: 'POST',
+          body: interactionBody,
+        });
+
+        const res = await app.fetch(req, mockEnv, mockCtx);
+        const data = (await res.json()) as InteractionResponseBody;
+        const choices = data.data!.choices as Array<{ name: string; value: string }>;
+
+        expect(choices[0].name.length).toBeLessThanOrEqual(100);
       });
 
       it('should handle preset show autocomplete (approved presets)', async () => {

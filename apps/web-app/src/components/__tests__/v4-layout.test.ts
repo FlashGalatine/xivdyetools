@@ -47,18 +47,6 @@ const { mockTelemetry, mockIsShareUrl, mockGetSubPath } = vi.hoisted(() => ({
 vi.mock('@services/telemetry-service', () => ({ TelemetryService: mockTelemetry }));
 vi.mock('@services/share-service', () => ({ ShareService: { isShareUrl: mockIsShareUrl } }));
 
-vi.mock('@services/router-service', () => ({
-  RouterService: {
-    initialize: mockInitialize,
-    getCurrentToolId: mockGetCurrentToolId,
-    subscribe: mockSubscribe,
-    navigateTo: mockNavigateTo,
-    getRouteForTool: mockGetRouteForTool,
-    refreshDocumentTitle: mockRefreshDocumentTitle,
-    getSubPath: mockGetSubPath,
-  },
-}));
-
 vi.mock('@services/config-controller', () => ({
   ConfigController: {
     getInstance: vi.fn().mockReturnValue({
@@ -81,6 +69,17 @@ vi.mock('@services/index', () => ({
         key
       ),
     subscribe: mockLanguageSubscribe,
+  },
+  // BUG-040: v4-layout.ts imports RouterService through this barrel (not
+  // @services/router-service directly), so the mock has to live here too.
+  RouterService: {
+    initialize: mockInitialize,
+    getCurrentToolId: mockGetCurrentToolId,
+    subscribe: mockSubscribe,
+    navigateTo: mockNavigateTo,
+    getRouteForTool: mockGetRouteForTool,
+    refreshDocumentTitle: mockRefreshDocumentTitle,
+    getSubPath: mockGetSubPath,
   },
 }));
 
@@ -476,6 +475,31 @@ describe('V4Layout', () => {
       routeListener()({ toolId: 'mixer' });
       await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledWith('mixer', 'nav'));
       expect(mockTelemetry.endTool).toHaveBeenCalledTimes(1);
+    });
+
+    it('BUG-005: a same-tool popstate (state.sameTool) skips the remount entirely', async () => {
+      // Distinguishes this from the test above: that one simulates a real
+      // navigateTo() to the already-showing tool (Welcome's "Get started"),
+      // which has no sameTool flag and DOES remount. A popstate that
+      // RouterService resolved to the already-mounted tool sets
+      // `state.sameTool = true`, and the layout must skip loadToolContent
+      // altogether — not just dedupe its telemetry — so the active tool
+      // instance (and its in-memory state) survives untouched.
+      await initializeV4Layout(container);
+      await vi.waitFor(() => expect(mockTelemetry.startTool).toHaveBeenCalledTimes(1));
+
+      const initSpy = vi.spyOn(MockTool.prototype, 'init');
+      initSpy.mockClear();
+      mockTelemetry.startTool.mockClear();
+      mockTelemetry.endTool.mockClear();
+
+      const popstateState = { toolId: 'harmony' as const, sameTool: true };
+      routeListener()(popstateState);
+      await settle();
+
+      expect(initSpy).not.toHaveBeenCalled();
+      expect(mockTelemetry.startTool).not.toHaveBeenCalled();
+      expect(mockTelemetry.endTool).not.toHaveBeenCalled();
     });
 
     it('tracks a palette-drawer pick only when a tool takes it, and never a random pick', async () => {

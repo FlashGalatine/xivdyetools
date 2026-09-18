@@ -14,7 +14,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { ColorService, CONSOLIDATED_DYES } from '@xivdyetools/core';
+import { ColorService, CONSOLIDATED_DYES, getMarketItemID } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import {
   generateDyeInfoCard,
@@ -86,14 +86,20 @@ const NEAREST_MORE_MAX_DELTA_E = 10;
  * localized item name (F-10, 2026-08-20 audit: this was pinned to `names.en`;
  * `CONSOLIDATED_DYES[].names` has carried all six languages since 7.5) —
  * plus its item ID. Unconsolidated tradeable dyes print their own item ID.
+ *
+ * The item ID itself comes from core's `getMarketItemID` (legacy → 7.5
+ * consolidated itemID, or the dye's own itemID when unconsolidated) rather
+ * than re-deriving it here — this module only owns the localized label for
+ * the consolidated case, which core doesn't have (REFACTOR-005).
  */
 function marketValue(dye: Dye, locale: LocaleCode): string {
+  const marketItemID = getMarketItemID(dye);
   const type = dye.consolidationType;
   if (type) {
     const consolidated = CONSOLIDATED_DYES[type];
-    return `${consolidated.names[locale] ?? consolidated.names.en} · ${consolidated.itemID}`;
+    return `${consolidated.names[locale] ?? consolidated.names.en} · ${marketItemID}`;
   }
-  return dye.itemID > 0 ? String(dye.itemID) : '—';
+  return marketItemID > 0 ? String(marketItemID) : '—';
 }
 
 /**

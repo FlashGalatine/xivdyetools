@@ -39,6 +39,14 @@ export class LocaleLoader {
    * @returns Locale data
    * @throws {AppError} If locale file fails to load or is invalid
    *
+   * Documentation-only note (2026-09-16 audit, coordinator ruling on
+   * BUG-010's sibling finding): the returned object is the **shared bundled
+   * locale module itself**, not a clone — every caller for a given locale
+   * gets back the same reference. Treat it as read-only. It is not cloned
+   * because there are six locale trees (`en`/`ja`/`de`/`fr`/`ko`/`zh`),
+   * loaded per call, and a deep clone on every lookup would be wasted work
+   * for data that is never legitimately mutated at runtime.
+   *
    * @example
    * ```typescript
    * const loader = new LocaleLoader();

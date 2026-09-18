@@ -30,6 +30,7 @@ import { telemetryRouter } from './telemetry/router.js';
 
 // Lib
 import { ApiError, ErrorCode } from './lib/api-error.js';
+import { buildMeta } from './lib/response.js';
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -194,10 +195,9 @@ app.notFound((c) => {
       success: false,
       error: ErrorCode.NOT_FOUND,
       message: `Route ${c.req.method} ${new URL(c.req.url).pathname} not found`,
-      meta: {
-        requestId: getRequestId(c),
-        apiVersion: c.env.API_VERSION || 'v1',
-      },
+      // REFACTOR-004: same builder as success responses and app.onError, so a
+      // route 404 under /v1/* carries `locale` like every other /v1/* error.
+      meta: buildMeta(c, c.get('locale')),
     },
     404,
   );
@@ -207,6 +207,13 @@ app.onError((err, c) => {
   const requestId = getRequestId(c);
   const logger = getLogger(c);
   const isDev = c.env.ENVIRONMENT === 'development';
+  // REFACTOR-004: same builder success responses use, so `locale` is added
+  // to error `meta` under the identical rule — set and non-`en` — instead of
+  // a second hand-rolled copy of that rule here. `c.get('locale')` is only
+  // ever set by localeMiddleware on `/v1/*`; every other path (`/health`,
+  // the docs host, a route 404) reads back `undefined` here, so the key is
+  // correctly omitted for those.
+  const meta = buildMeta(c, c.get('locale'));
 
   // Structured ApiError — return its code and status
   if (err instanceof ApiError) {
@@ -216,7 +223,7 @@ app.onError((err, c) => {
         error: err.code,
         message: err.message,
         ...(err.details !== undefined && { details: err.details }),
-        meta: { requestId, apiVersion: c.env.API_VERSION || 'v1' },
+        meta,
       },
       err.statusCode as 400,
     );
@@ -239,7 +246,7 @@ app.onError((err, c) => {
       success: false,
       error: ErrorCode.INTERNAL_ERROR,
       message: isDev ? err.message : 'An unexpected error occurred',
-      meta: { requestId, apiVersion: c.env.API_VERSION || 'v1' },
+      meta,
     },
     500,
   );

@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.5.7] - 2026-09-16
+### 👁️ Left and right eyes are told apart on the swatch card
+- `/swatch`: when your character's eyes are two different colours, the two eye rows are labelled EYES·L and EYES·R (EYES·LR when they share one colour) — including when the colour is off the dye grid, where both rows used to read the same "EYES · OFF GRID".
+- `/manual` Spectrum & Prices: the bot now shows a brief "thinking…" and then the answer, instead of occasionally failing with "The application did not respond" when it had to look up your world's region from scratch.
+- `/preset submit` and `/preset edit`: Discord checks the name (2–50 characters) and description (10–200 characters) before sending, so a too-short or too-long value is flagged in the command box instead of coming back as an error.
+
 ## [5.5.0] - 2026-09-05
 ### 🎨 /harmony can use a different colour wheel
 - `/harmony` has a new `wheel` option: RGB (default), RYB (the painter's wheel — red's complement is green), Munsell (JIS), OKLCH hue, or OKLCH lightness. The dyes it suggests change with the wheel.

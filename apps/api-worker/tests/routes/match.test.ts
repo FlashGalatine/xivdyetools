@@ -1,7 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import app from '../../src/index.js';
 import { createMockEnv } from '../test-utils.js';
 import { VENDOR_ACQUISITIONS, EXPENSIVE_DYE_IDS } from '@xivdyetools/core';
+import { dyeService } from '../../src/lib/services.js';
 
 const env = createMockEnv();
 
@@ -260,5 +261,53 @@ describe('Match route dye filters', () => {
 
     expect(body.success).toBe(true);
     expect(body.data.dye).toBeDefined();
+  });
+});
+
+/**
+ * REFACTOR-004: /closest's "no match" branch used to hand-roll its own JSON
+ * 404 instead of throwing through ApiError / app.onError, the envelope of
+ * record — so it never got app.onError's meta.locale. `error` and `message`
+ * are unchanged (`NOT_FOUND` / 'No matching dye found.') so this proves the
+ * refactor didn't change the response shape, only how it's built.
+ *
+ * `dyeService.findClosestDye` is mocked to return null rather than
+ * constructing a real "nothing matches" query — the 125-dye database and
+ * excludeIds' 50-id cap make a genuine miss awkward to produce, and this
+ * route's job here is just "what happens when core reports no match", not
+ * re-testing core's own matching logic.
+ */
+describe('GET /v1/match/closest — no-match 404 (REFACTOR-004)', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('answers 404 through ApiError, with meta.locale for a non-en locale', async () => {
+    vi.spyOn(dyeService, 'findClosestDye').mockReturnValue(null);
+
+    const res = await app.request(
+      '/v1/match/closest?hex=FF0000&locale=ja',
+      { method: 'GET' },
+      createMockEnv(),
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(404);
+    expect(body.success).toBe(false);
+    expect(body.error).toBe('NOT_FOUND');
+    expect(body.message).toBe('No matching dye found.');
+    expect(body.meta.locale).toBe('ja');
+  });
+
+  it('omits meta.locale for the default (en) locale', async () => {
+    vi.spyOn(dyeService, 'findClosestDye').mockReturnValue(null);
+
+    const res = await app.request(
+      '/v1/match/closest?hex=FF0000',
+      { method: 'GET' },
+      createMockEnv(),
+    );
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(404);
+    expect(body.meta.locale).toBeUndefined();
   });
 });

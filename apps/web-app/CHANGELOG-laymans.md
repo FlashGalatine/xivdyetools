@@ -2,6 +2,26 @@
 
 ---
 
+## Web-App Version 5.11.0 — September 17, 2026
+
+### Share a palette from the Palette Extractor
+- **The Extractor has its Share button back** — beside Export in the results header. The link carries the colours on the bar (up to five, in order) and your matching method, so a friend opening it sees the same colours as equal bands, matched to dyes with the same method (your own dye filters still apply). It does not carry your picture, which never leaves your device, and it does not carry hand-picked colours. Links pasted into Discord get a preview card again.
+
+### Back works the way you expect in Presets
+- **Pressing Back from a preset returns you to the list you were on** — same tab, same search, no reload and no refetch. Before, Back rebuilt the whole Presets tool from scratch.
+
+### Show prices now works on the preset page
+- **With "Show prices" on, a preset's dyes show the current market price** (lowest listing, with the world or data centre) instead of only the vendor cost. The app had been fetching the prices and then not displaying them.
+
+### Smaller fixes
+- **Make a palette → Submit to Community tells you when it cannot open.** If the form fails to load (for example a tab left open across an update), you now get an error message instead of a click that does nothing.
+- **Right-clicking the Palette Extractor's zoom view no longer picks a colour.** Only the main button samples; the right button just opens the browser menu.
+- **Importing collections skips a broken entry instead of stopping.** A malformed record in an imported file is reported and the rest of the file still loads.
+- **Editing a preset can no longer silently shorten its dye list.** If a stored dye cannot be looked up, the form keeps the original list and tells you rather than saving a shorter one.
+- **Add-to-collection menus stay on screen** near the right edge of the window.
+- **Your vote on a preset no longer flips back** when a slow "have I voted?" check from the server lands after you clicked.
+- **Behind the scenes:** Swatch and Mixer dropped some leftover code that could never run, the signed-in check no longer fires several sign-out requests at once when a session expires, and a handful of tests that could not fail now can.
+
 ## Web-App Version 5.10.0 — September 16, 2026
 
 ### Copy your glamour list, or save it as a file

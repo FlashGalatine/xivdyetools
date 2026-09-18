@@ -10,7 +10,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
     checkSubmissionRateLimit,
-    checkDailyEventLimit,
     recordSubmissionEvent,
     DAILY_SUBMISSION_LIMIT,
     DAILY_FLAGGED_EDIT_LIMIT,
@@ -65,23 +64,10 @@ describe('append-only daily quotas', () => {
         ]);
     });
 
-    it('checkDailyEventLimit counts only the requested kind for the UTC day', async () => {
-        const db = createMockD1Database();
-        db._setupMock((query, bindings) => {
-            expect(query).toMatch(/FROM submission_events/);
-            expect(bindings[0]).toBe('123456789012345678');
-            expect(bindings[1]).toBe('flagged_edit');
-            expect(bindings[2]).toBe('2026-08-21T00:00:00.000Z');
-            expect(bindings[3]).toBe('2026-08-22T00:00:00.000Z');
-            return { count: DAILY_FLAGGED_EDIT_LIMIT };
-        });
-
-        const result = await checkDailyEventLimit(db, '123456789012345678', 'flagged_edit');
-
-        expect(result.allowed).toBe(false);
-        expect(result.remaining).toBe(0);
-        expect(result.resetAt.toISOString()).toBe('2026-08-22T00:00:00.000Z');
-    });
+    // BUG-015 (2026-09-16 deep-dive): `checkDailyEventLimit` (a bare count,
+    // with no insert of its own) was removed along with the check-then-insert
+    // race it enabled — `reserveDailyEvent` (rate-limit-service.test.ts)
+    // replaces it for `text_edit` / `flagged_edit` / `preview_upload`.
 
     it('exposes sane default caps', () => {
         expect(DAILY_FLAGGED_EDIT_LIMIT).toBeGreaterThan(0);

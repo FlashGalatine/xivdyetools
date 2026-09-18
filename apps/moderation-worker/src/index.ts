@@ -19,6 +19,7 @@ import { verifyDiscordRequest, unauthorizedResponse, badRequestResponse } from '
 import { pongResponse, ephemeralResponse, rateLimitedResponse } from './utils/response.js';
 import { safeParseJSON } from './utils/safe-json.js';
 import { clampChoiceName } from './utils/embed-text.js';
+import { isValidSnowflake } from '@xivdyetools/types';
 import {
   checkRateLimit,
   incrementRateLimit,
@@ -469,13 +470,19 @@ async function getBanUserAutocompleteChoices(
   try {
     const users = await banService.searchPresetAuthors(env.DB, query);
 
-    return users.map((user) => ({
-      // Format: "Username (discord:123456789) - 5 presets"
-      name: clampChoiceName(
-        `${user.username} (discord:${user.discordId}) - ${user.presetCount} presets`
-      ),
-      value: user.discordId,
-    }));
+    return users.map((user) => {
+      // A4 (2026-09-16 fix wave): label by shape — `discord:` for a
+      // snowflake, `xivauth:` for a BUG-001 path (a) UUID — rather than
+      // always saying "discord:" for an id that might be an XIVAuth `sub`.
+      const idKind = isValidSnowflake(user.discordId) ? 'discord' : 'xivauth';
+      return {
+        // Format: "Username (discord:123456789) - 5 presets"
+        name: clampChoiceName(
+          `${user.username} (${idKind}:${user.discordId}) - ${user.presetCount} presets`
+        ),
+        value: user.discordId,
+      };
+    });
   } catch (error) {
     logger.error('Failed to get ban user autocomplete', error instanceof Error ? error : undefined);
     return [];
@@ -493,15 +500,21 @@ async function getUnbanUserAutocompleteChoices(
   try {
     const users = await banService.searchBannedUsers(env.DB, query);
 
-    // MOD-14 (FINDING-034, 2026-08-21 audit): unbanUser / getActiveBan key on
-    // discord_id, so an xivauth-only ban cannot be lifted from this bot — do
-    // not offer a value the command would then reject.
+    // MOD-14 (FINDING-034, 2026-08-21 audit; reworded 2026-09-16 fix wave):
+    // unbanUser / getActiveBan key on discord_id, and BUG-001 path (a) now
+    // stores a BAN_TARGET_UUID_RE-shaped XIVAuth `sub` in that same column —
+    // that kind of row IS offered here below. Only a row with a NULL
+    // discord_id (a true xivauth_id-only ban, which nothing writes today)
+    // is excluded, since this bot has no way to lift one.
     return users
       .filter((user): user is typeof user & { discordId: string } => Boolean(user.discordId))
-      .map((user) => ({
-        name: clampChoiceName(`${user.username} (discord:${user.discordId})`),
-        value: user.discordId,
-      }));
+      .map((user) => {
+        const idKind = isValidSnowflake(user.discordId) ? 'discord' : 'xivauth';
+        return {
+          name: clampChoiceName(`${user.username} (${idKind}:${user.discordId})`),
+          value: user.discordId,
+        };
+      });
   } catch (error) {
     logger.error('Failed to get unban user autocomplete', error instanceof Error ? error : undefined);
     return [];

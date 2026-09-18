@@ -928,49 +928,71 @@ export class CollectionService {
       // Import collections
       if (Array.isArray(data.data.collections)) {
         for (const collection of data.data.collections) {
-          if (!collection.name || !Array.isArray(collection.dyes)) {
-            result.errors.push({ code: 'skippedInvalid', name: collection.name });
+          // BUG-024: a truthy non-string `name` (e.g. a hand-edited `42`) used
+          // to pass this guard, then `createCollection`'s `name.trim()` threw
+          // and the exception unwound to the outer try/catch, abandoning the
+          // rest of the loop — after earlier collections in the same import
+          // had already been persisted. Reject non-strings here, and (in case
+          // something else in the per-record work below throws) wrap each
+          // iteration so one bad record is skipped, not fatal to the import.
+          if (
+            typeof collection.name !== 'string' ||
+            !collection.name ||
+            !Array.isArray(collection.dyes)
+          ) {
+            result.errors.push({
+              code: 'skippedInvalid',
+              name: typeof collection.name === 'string' ? collection.name : undefined,
+            });
             continue;
           }
 
-          // Tombstone check: never resurrect a record the user deleted here
-          if (collection.id && this.isTombstoned(collection.id)) {
-            logger.info(`[CollectionService] Skipped tombstoned record "${collection.name}"`);
-            continue;
-          }
-
-          // Handle name conflicts
-          let name = collection.name;
-          let suffix = 1;
-          while (this.getCollectionByName(name)) {
-            name = this.importedCopyName(collection.name, suffix);
-            suffix++;
-          }
-
-          const target =
-            typeof collection.target === 'number'
-              ? (toStainId(collection.target) ?? undefined)
-              : undefined;
-          // WEB-6: an unknown `kind` used to persist as-is and then vanish
-          // from every kind-filtered view. Treat it as a plain dye list.
-          const kind: CollectionKind = isCollectionKind(collection.kind)
-            ? collection.kind
-            : 'palette';
-          const newCollection = this.createCollection(name, collection.description, {
-            kind,
-            ...(target !== undefined ? { target } : {}),
-          });
-          if (newCollection) {
-            for (const dyeId of collection.dyes) {
-              if (typeof dyeId !== 'number') continue;
-              const stainId = toStainId(dyeId);
-              if (stainId !== null) {
-                this.addDyeToCollection(newCollection.id, stainId);
-              }
+          try {
+            // Tombstone check: never resurrect a record the user deleted here
+            if (collection.id && this.isTombstoned(collection.id)) {
+              logger.info(`[CollectionService] Skipped tombstoned record "${collection.name}"`);
+              continue;
             }
-            result.collectionsImported++;
-          } else {
-            result.errors.push({ code: 'createFailed', name });
+
+            // Handle name conflicts
+            let name = collection.name;
+            let suffix = 1;
+            while (this.getCollectionByName(name)) {
+              name = this.importedCopyName(collection.name, suffix);
+              suffix++;
+            }
+
+            const target =
+              typeof collection.target === 'number'
+                ? (toStainId(collection.target) ?? undefined)
+                : undefined;
+            // WEB-6: an unknown `kind` used to persist as-is and then vanish
+            // from every kind-filtered view. Treat it as a plain dye list.
+            const kind: CollectionKind = isCollectionKind(collection.kind)
+              ? collection.kind
+              : 'palette';
+            const newCollection = this.createCollection(name, collection.description, {
+              kind,
+              ...(target !== undefined ? { target } : {}),
+            });
+            if (newCollection) {
+              for (const dyeId of collection.dyes) {
+                if (typeof dyeId !== 'number') continue;
+                const stainId = toStainId(dyeId);
+                if (stainId !== null) {
+                  this.addDyeToCollection(newCollection.id, stainId);
+                }
+              }
+              result.collectionsImported++;
+            } else {
+              result.errors.push({ code: 'createFailed', name });
+            }
+          } catch (err) {
+            result.errors.push({ code: 'skippedInvalid', name: collection.name });
+            logger.error(
+              `[CollectionService] Skipped collection "${collection.name}" during import:`,
+              err
+            );
           }
         }
       }

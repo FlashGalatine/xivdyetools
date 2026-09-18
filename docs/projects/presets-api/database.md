@@ -121,7 +121,7 @@ Users banned from the presets system (migration 0003). Written by `xivdyetools-m
 | Column | Type | Notes |
 |--------|------|-------|
 | id | TEXT | PRIMARY KEY — UUID v4 |
-| discord_id | TEXT | Discord snowflake, nullable |
+| discord_id | TEXT | The resolved acting-user id, nullable — a Discord snowflake, or the oauth `sub` UUID (lowercase) for an account with no Discord ID (BUG-001 path (a), 2026-09-16 deep-dive) |
 | xivauth_id | TEXT | XIVAuth UUID, nullable |
 | username | TEXT | NOT NULL — display name at the time of the ban |
 | moderator_discord_id | TEXT | NOT NULL — moderator who issued the ban |

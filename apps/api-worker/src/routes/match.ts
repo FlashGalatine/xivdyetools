@@ -11,7 +11,7 @@ import type { Env, Variables } from '../types.js';
 import type { FindClosestOptions, FindWithinDistanceOptions } from '@xivdyetools/core';
 import { dyeService, calculateDistance } from '../lib/services.js';
 import { serializeDyeWithDistance, localizedNameFor } from '../lib/dye-serializer.js';
-import { ErrorCode } from '../lib/api-error.js';
+import { ApiError, ErrorCode } from '../lib/api-error.js';
 import {
   parseHex,
   parseFloatParam,
@@ -50,18 +50,10 @@ matchRouter.get('/closest', (c) => {
   const dye = dyeService.findClosestDye(hex, options);
 
   if (!dye) {
-    return c.json(
-      {
-        success: false,
-        error: ErrorCode.NOT_FOUND,
-        message: 'No matching dye found.',
-        meta: {
-          requestId: c.get('requestId') || 'unknown',
-          apiVersion: c.env.API_VERSION || 'v1',
-        },
-      },
-      404,
-    );
+    // REFACTOR-004: was a hand-rolled envelope here — the ApiError / app.onError
+    // path (index.ts) is the envelope of record and is what gives this response
+    // meta.locale. error/message are unchanged so existing match tests still pass.
+    throw new ApiError(ErrorCode.NOT_FOUND, 'No matching dye found.', 404);
   }
 
   // Recalculate distance for the response (core doesn't return it)

@@ -75,67 +75,70 @@ vi.mock('@shared/tool-config-types', () => {
     excludeVendorDyes: false,
     excludeCraftDyes: false,
   };
+  const DEFAULT_CONFIGS = {
+    global: { theme: '', displayOptions: DEFAULT_DISPLAY_OPTIONS },
+    market: { selectedServer: 'Crystal', showPrices: false },
+    advanced: { analyticsEnabled: false, performanceMode: false },
+    harmony: {
+      harmonyType: 'complementary',
+      strictMatching: true,
+      matchingMethod: 'oklab',
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+      dyeFilters: DEFAULT_DYE_FILTERS,
+    },
+    extractor: {
+      vibrancyBoost: true,
+      maxColors: 4,
+      dragThreshold: 5,
+      matchingMethod: 'oklab',
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    },
+    accessibility: {
+      normalVision: true,
+      deuteranopia: true,
+      protanopia: true,
+      tritanopia: true,
+      achromatopsia: true,
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    },
+    comparison: { matchThreshold: 5, displayOptions: DEFAULT_DISPLAY_OPTIONS },
+    gradient: {
+      stepCount: 4,
+      interpolation: 'hsv',
+      matchingMethod: 'oklab',
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    },
+    mixer: {
+      maxResults: 4,
+      mixingMode: 'ryb',
+      matchingMethod: 'oklab',
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    },
+    presets: {
+      showMyPresetsOnly: false,
+      showFavorites: false,
+      sortBy: 'popular',
+      category: 'all',
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    },
+    budget: {
+      maxPrice: 100000,
+      maxResults: 8,
+      maxDeltaE: 50,
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    },
+    swatch: {
+      colorSheet: 'hairColors',
+      race: 'SeekerOfTheSun',
+      gender: 'Female',
+      displayOptions: DEFAULT_DISPLAY_OPTIONS,
+    },
+  };
   return {
     DEFAULT_DISPLAY_OPTIONS,
     DEFAULT_DYE_FILTERS,
-    DEFAULT_CONFIGS: {
-      global: { theme: '', displayOptions: DEFAULT_DISPLAY_OPTIONS },
-      market: { selectedServer: 'Crystal', showPrices: false },
-      advanced: { analyticsEnabled: false, performanceMode: false },
-      harmony: {
-        harmonyType: 'complementary',
-        strictMatching: true,
-        matchingMethod: 'oklab',
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-      extractor: {
-        vibrancyBoost: true,
-        maxColors: 4,
-        dragThreshold: 5,
-        matchingMethod: 'oklab',
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-      accessibility: {
-        normalVision: true,
-        deuteranopia: true,
-        protanopia: true,
-        tritanopia: true,
-        achromatopsia: true,
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-      comparison: { matchThreshold: 5, displayOptions: DEFAULT_DISPLAY_OPTIONS },
-      gradient: {
-        stepCount: 4,
-        interpolation: 'hsv',
-        matchingMethod: 'oklab',
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-      mixer: {
-        maxResults: 4,
-        mixingMode: 'ryb',
-        matchingMethod: 'oklab',
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-      presets: {
-        showMyPresetsOnly: false,
-        showFavorites: false,
-        sortBy: 'popular',
-        category: 'all',
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-      budget: {
-        maxPrice: 100000,
-        maxResults: 8,
-        maxDeltaE: 50,
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-      swatch: {
-        colorSheet: 'hairColors',
-        race: 'SeekerOfTheSun',
-        gender: 'Female',
-        displayOptions: DEFAULT_DISPLAY_OPTIONS,
-      },
-    },
+    DEFAULT_CONFIGS,
+    getDefaultConfig: (key: keyof typeof DEFAULT_CONFIGS) => DEFAULT_CONFIGS[key],
   };
 });
 
@@ -188,6 +191,15 @@ describe('ConfigSidebar', () => {
       const { ConfigSidebar } = await import('../../v4/config-sidebar');
       const sidebar = new ConfigSidebar();
       expect(sidebar.activeTool).toBe('harmony');
+    });
+
+    it('initializes harmonyConfig from getDefaultConfig, not a hand-written literal (REFACTOR-007)', async () => {
+      const { ConfigSidebar } = await import('../../v4/config-sidebar');
+      const { getDefaultConfig } = await import('@shared/tool-config-types');
+      const sidebar = new ConfigSidebar();
+      expect((sidebar as unknown as { harmonyConfig: unknown }).harmonyConfig).toEqual(
+        getDefaultConfig('harmony')
+      );
     });
   });
 

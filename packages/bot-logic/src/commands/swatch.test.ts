@@ -31,6 +31,39 @@ const WITH_NICKNAME = JSON.stringify({
   Nickname: 'Real Name',
 });
 
+/**
+ * Minimal heterochromia file, both eyes pushed OFF GRID: `REyeColor: 42`
+ * (left eye, index hex `#DCBA6C` — a golden tan) and `LEyeColor: 169` (right
+ * eye, index hex `#87C0A3` — a sage green), each paired with an extended
+ * float (`LeftEyeColor`/`RightEyeColor`, crossed per the parser's own rule)
+ * set to a saturated primary nowhere near its index colour — pure blue and
+ * pure red respectively — to push ΔE2000 far past `OFF_GRID_DELTA_E2000` (6).
+ * Every other colour key is omitted, so hair/skin/lip/etc. all resolve inert
+ * and the only two live rows are the eyes (BUG-006).
+ */
+const HETEROCHROMIA_OFF_GRID = JSON.stringify({
+  IsExtendedAppearanceValid: true,
+  REyeColor: 42,
+  LEyeColor: 169,
+  LeftEyeColor: '0, 0, 1',
+  RightEyeColor: '1, 0, 0',
+});
+
+/**
+ * Same shape, but both eyes share index 42 (`eyesShareIndex: true`) — only
+ * the left eye carries a divergent float, which is enough: the right eye row
+ * never renders when the indices match (`executeSwatch` merges it away), so
+ * this fixture covers the "shared-index off grid" arm of BUG-006 (the `·LR`
+ * label badge) independent of what the right eye's own verdict would have
+ * been.
+ */
+const HETEROCHROMIA_SHARED_OFF_GRID = JSON.stringify({
+  IsExtendedAppearanceValid: true,
+  REyeColor: 42,
+  LEyeColor: 42,
+  LeftEyeColor: '0, 0, 1',
+});
+
 describe('executeSwatch', () => {
   it('renders the character sheet with live slots only', async () => {
     const result = await executeSwatch({
@@ -44,8 +77,9 @@ describe('executeSwatch', () => {
     expect(result.svgString).toContain('/SWATCH');
     expect(result.svgString).toContain('SLOT');
     expect(result.svgString).toContain('NEAREST DYE');
-    // Heterochromia: split eyes carry an ·L/·R suffix (this fixture has 7
-    // live slots, so the cap drops the two safest — the left eye among them)
+    // Heterochromia: split eyes carry an ·L/·R suffix on the slot LABEL (this
+    // fixture has 7 live slots, so the cap drops the two safest — the left
+    // eye among them)
     expect(result.svgString).toMatch(/·(L|R)</);
     const height = Number(/height="(\d+)"/.exec(result.svgString)?.[1]);
     expect(height).toBeLessThanOrEqual(350);
@@ -185,6 +219,86 @@ describe('executeSwatch', () => {
       expect(named.embed.description).not.toContain('Firstname');
       expect(known.svgString).toContain('DUSKWIGHT ♀ · ANAMNESIS');
       expect(known.svgString).not.toContain('CHARACTER FILE');
+    });
+  });
+
+  describe('BUG-006: off-grid eyes keep their L/R marker', () => {
+    // The marker rides the slot LABEL line ("EYES·L"), not the address line.
+    // The address line's off-grid token already fills its 56px lead budget
+    // (I18N-011 in @xivdyetools/svg — "OFF GRID" alone clears it by ~1.4px),
+    // so a suffix there used to ellipsise away on an off-grid row in 5 of 6
+    // locales. The label line has real headroom for every locale's slot
+    // short + "·LR" (worst case "AUGEN·LR" at ~60.96 of 56px once the lead
+    // line's letterSpacing: 0.8 is counted — a bare `textWidth` call
+    // understates it at 54.56px, since textWidth/fitText don't model
+    // letter-spacing; the ~5px overhang past the 56px budget is absorbed by
+    // the 10px gutter before the swatch pair, no collision, no ellipsis),
+    // which is what makes the marker survive regardless of grid state or
+    // locale. en is the primary case now that width is no longer a factor;
+    // zh below is the kept CJK case.
+    it('gives heterochromia off-grid eyes distinct ·L / ·R LABEL markers, addr unmarked', async () => {
+      const result = await executeSwatch({ fileText: HETEROCHROMIA_OFF_GRID, locale: 'en' });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      // Sanity: both eyes really did resolve off grid with distinct indices
+      // (the bug can't be observed otherwise).
+      const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
+      const rightEye = result.character.slots.find((s) => s.slot === 'rightEye');
+      expect(leftEye?.verdict).toBe('offGrid');
+      expect(rightEye?.verdict).toBe('offGrid');
+      expect(result.character.eyesShareIndex).toBe(false);
+
+      // The label carries the marker — the `<` confirms it is the full,
+      // un-ellipsised text-node content.
+      expect(result.svgString).toContain('EYES·L<');
+      expect(result.svgString).toContain('EYES·R<');
+      // The address line is the bare OFF-GRID token, on both rows, with no
+      // suffix anywhere.
+      expect(result.svgString).not.toContain('OFF GRID·');
+      expect(result.svgString.match(/OFF GRID</g)?.length).toBe(2);
+
+      // The marker also rides `label` into the embed's off-grid lines
+      // (`card.swatchOffGrid`), not just the card row — pin the literal slot
+      // names rather than something derived from the same lookup table.
+      expect(result.embed.description).toContain('EYES·L off grid');
+      expect(result.embed.description).toContain('EYES·R off grid');
+    });
+
+    it('gives heterochromia off-grid eyes their LABEL marker in a CJK locale too (zh)', async () => {
+      const result = await executeSwatch({ fileText: HETEROCHROMIA_OFF_GRID, locale: 'zh' });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      // "眼睛" (EYES) + "·L"/"·R" — well inside the 56px budget (see the fix
+      // report), unlike the address line's "网格外" (OFF GRID), which is
+      // deliberately left unmarked.
+      expect(result.svgString).toContain('眼睛·L<');
+      expect(result.svgString).toContain('眼睛·R<');
+      expect(result.svgString).not.toContain('网格外·');
+      expect(result.svgString.match(/网格外</g)?.length).toBe(2);
+    });
+
+    it('merges shared-index off-grid eyes into one row with an ·LR LABEL marker', async () => {
+      const result = await executeSwatch({
+        fileText: HETEROCHROMIA_SHARED_OFF_GRID,
+        locale: 'en',
+      });
+
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.character.eyesShareIndex).toBe(true);
+      const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
+      expect(leftEye?.verdict).toBe('offGrid');
+
+      // Now visible directly (no locale/width workaround needed for ·LR).
+      expect(result.svgString).toContain('EYES·LR<');
+      expect(result.svgString).not.toContain('OFF GRID·');
+      // Only one live row total (the merged eye row).
+      expect(result.svgString.match(/OFF GRID</g)?.length).toBe(1);
     });
   });
 });

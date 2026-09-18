@@ -7,6 +7,8 @@ import {
     checkSubmissionRateLimit,
     getRemainingSubmissions,
     getSubmissionCountToday,
+    reserveDailyEvent,
+    DAILY_FLAGGED_EDIT_LIMIT,
 } from '../../src/services/rate-limit-service';
 import { createMockD1Database } from '../test-utils';
 
@@ -276,6 +278,391 @@ describe('RateLimitService', () => {
             const count = await getSubmissionCountToday(db, 'user-123');
 
             expect(count).toBe(0);
+        });
+    });
+
+    // ============================================
+    // reserveDailyEvent (BUG-015 — 2026-09-16 deep-dive)
+    //
+    // The old shape was check-then-insert: `checkDailyEventLimit` counted,
+    // the caller acted, and a LATER `recordSubmissionEvent` inserted —
+    // concurrent requests sitting at cap-1 could all pass the check before
+    // any of them recorded, overshooting the cap. `reserveDailyEvent`
+    // inserts FIRST, then counts (including its own row), so the insert
+    // itself is what concurrent requests serialize on.
+    // ============================================
+
+    describe('reserveDailyEvent', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2025-06-15T12:00:00Z'));
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        /**
+         * A minimal in-memory `submission_events` table. Real enough that
+         * `reserveDailyEvent`'s insert -> count -> maybe-delete sequence runs
+         * against actual row state rather than a count the test hard-coded —
+         * the id `release()` binds has to come from a real (fake)
+         * autoincrement, or a test could not tell a genuine release from a
+         * coincidence. Returns the live row map so tests can assert on table
+         * state directly, independent of what `reserveDailyEvent` reports.
+         *
+         * `options.seed` pre-populates N rows for one user+kind through the
+         * same autoincrement counter real inserts use, so a test can start
+         * "one slot free" without racing real reservations to get there.
+         *
+         * `options.barrierInsertCount` (BUG-015 fix round 2 — deterministic
+         * tie-break) makes every `SELECT COUNT` response wait on a shared
+         * promise that only resolves once that many REAL inserts (seeded
+         * rows don't count) have landed — the mechanism an interleaving test
+         * needs to force two concurrent `reserveDailyEvent` calls' INSERTs to
+         * both land before either one's COUNT runs.
+         *
+         * The COUNT branch also honors an `id <= ?` binding (the
+         * `getEventCountToday` `upToId` parameter) the same way the real
+         * query does — inert for every pre-existing sequential test, since a
+         * sequential caller's own row is always the newest one that exists
+         * when its COUNT runs.
+         */
+        function mockSubmissionEventsTable(
+            db: ReturnType<typeof createMockD1Database>,
+            options: {
+                seed?: { user: string; kind: string; count: number };
+                barrierInsertCount?: number;
+            } = {}
+        ): Map<number, { user: string; kind: string }> {
+            let nextId = 1;
+            const rows = new Map<number, { user: string; kind: string }>();
+            if (options.seed) {
+                for (let i = 0; i < options.seed.count; i++) {
+                    rows.set(nextId++, { user: options.seed.user, kind: options.seed.kind });
+                }
+            }
+
+            let realInsertsSinceCreation = 0;
+            let releaseBarrier: (() => void) | undefined;
+            const barrier =
+                options.barrierInsertCount !== undefined
+                    ? new Promise<void>((resolve) => {
+                          releaseBarrier = resolve;
+                      })
+                    : undefined;
+
+            db._setupMock((query: string, bindings: unknown[]) => {
+                if (/^\s*INSERT INTO submission_events/i.test(query)) {
+                    const id = nextId++;
+                    rows.set(id, { user: String(bindings[0]), kind: String(bindings[1]) });
+                    realInsertsSinceCreation++;
+                    if (
+                        releaseBarrier &&
+                        options.barrierInsertCount !== undefined &&
+                        realInsertsSinceCreation === options.barrierInsertCount
+                    ) {
+                        releaseBarrier();
+                    }
+                    return { success: true, meta: { changes: 1, last_row_id: id } };
+                }
+                if (/^\s*DELETE FROM submission_events\s+WHERE id\s*=/i.test(query)) {
+                    rows.delete(Number(bindings[0]));
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (/^\s*DELETE FROM submission_events\s+WHERE created_at/i.test(query)) {
+                    // The FINDING-017 prune — nothing ages out inside these tests.
+                    return { meta: { changes: 0 } };
+                }
+                if (/^\s*SELECT COUNT/i.test(query) && query.includes('FROM submission_events')) {
+                    // Bindings are [userId, kind, todayISO, tomorrowISO, upToId?].
+                    const [userId, kind, , , upToId] = bindings;
+                    const compute = (): { count: number } => {
+                        const count = [...rows.entries()].filter(
+                            ([id, r]) =>
+                                r.user === userId &&
+                                r.kind === kind &&
+                                (upToId === undefined || id <= (upToId as number))
+                        ).length;
+                        return { count };
+                    };
+                    return barrier ? barrier.then(compute) : compute();
+                }
+                return null;
+            });
+            return rows;
+        }
+
+        it('admits a reservation under the cap and keeps its row', async () => {
+            const db = createMockD1Database();
+            const rows = mockSubmissionEventsTable(db);
+
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-1');
+
+            expect(result.allowed).toBe(true);
+            // Hard-coded, not `DAILY_PREVIEW_UPLOAD_LIMIT - 1`: `remaining` is
+            // slots left AFTER this reservation (20 - 1 = 19), so an assertion
+            // built from the same expression the code evaluates couldn't catch
+            // an off-by-one in that expression.
+            expect(result.remaining).toBe(19);
+            expect(typeof result.release).toBe('function');
+            // The row is really there — not just reported as allowed.
+            expect(rows.size).toBe(1);
+        });
+
+        it('pins the boundary at the cap: the cap-th reservation is allowed, the (cap+1)-th is refused', async () => {
+            const db = createMockD1Database();
+            const rows = mockSubmissionEventsTable(db);
+
+            for (let i = 1; i <= DAILY_FLAGGED_EDIT_LIMIT; i++) {
+                const result = await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+                expect(result.allowed).toBe(true);
+            }
+            expect(rows.size).toBe(DAILY_FLAGGED_EDIT_LIMIT);
+
+            const overCap = await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+
+            expect(overCap.allowed).toBe(false);
+            expect(overCap.remaining).toBe(0);
+            expect(overCap.release).toBeUndefined();
+            // The refused reservation's own row is gone again — the table is
+            // back to exactly the cap, not cap + 1.
+            expect(rows.size).toBe(DAILY_FLAGGED_EDIT_LIMIT);
+        });
+
+        it("a refused reservation deletes its OWN row, not an admitted one", async () => {
+            const db = createMockD1Database();
+            const rows = mockSubmissionEventsTable(db);
+
+            for (let i = 1; i <= DAILY_FLAGGED_EDIT_LIMIT; i++) {
+                await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+            }
+            const idsBefore = new Set(rows.keys());
+
+            await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+
+            // Same id set as before the refused attempt — its row was
+            // inserted then deleted, none of the earlier admitted rows moved.
+            expect(new Set(rows.keys())).toEqual(idsBefore);
+        });
+
+        it('release() deletes exactly the reserved row and no other', async () => {
+            const db = createMockD1Database();
+            const rows = mockSubmissionEventsTable(db);
+
+            // The mock's autoincrement is deterministic (first insert -> id 1,
+            // second -> id 2), so we can name which physical row survives —
+            // not just how many rows are left.
+            await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-keep');
+            const toRelease = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-release');
+            expect(rows.size).toBe(2);
+
+            await toRelease.release!();
+
+            expect(rows.size).toBe(1);
+            expect(rows.has(1)).toBe(true); // the kept reservation's row
+            expect(rows.has(2)).toBe(false); // the released one's row
+        });
+
+        it('a released reservation frees the slot for a later one under the same cap', async () => {
+            const db = createMockD1Database();
+            mockSubmissionEventsTable(db);
+
+            for (let i = 1; i <= DAILY_FLAGGED_EDIT_LIMIT; i++) {
+                const result = await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+                if (i === 1) await result.release!();
+            }
+            // One of the cap admissions above was released, so one more slot
+            // is free even though DAILY_FLAGGED_EDIT_LIMIT reservations were
+            // attempted and admitted.
+            const result = await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+
+            expect(result.allowed).toBe(true);
+        });
+
+        it('a failed release is swallowed and logged, never thrown', async () => {
+            const db = createMockD1Database();
+            mockSubmissionEventsTable(db);
+            const warn = vi.fn();
+
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-1', { warn });
+            db._setupMock((query: string) => {
+                if (/^\s*DELETE FROM submission_events\s+WHERE id\s*=/i.test(query)) {
+                    throw new Error('D1_ERROR: database is locked');
+                }
+                return { count: 0 };
+            });
+
+            await expect(result.release!()).resolves.toBeUndefined();
+            expect(warn).toHaveBeenCalledWith(
+                '[BUG-015] failed to release a daily-event reservation',
+                expect.objectContaining({ kind: 'preview_upload' })
+            );
+        });
+
+        // Critical 1 (fix round 1, coordinator ruling): a rate-limiter D1
+        // failure must never fail the mutation it is gating — `pruneSubmissionEvents`
+        // and `recordSubmissionEvent` already promised this; `reserveDailyEvent`
+        // has to keep the promise too, including for a migration
+        // (0012_submission_events_text_edit.sql) that is hand-run and may not
+        // be applied to a given environment.
+        it('fails open when the INSERT itself rejects: allowed, no release DELETE issued, warn logged', async () => {
+            const db = createMockD1Database();
+            const warn = vi.fn();
+            let releaseDeleteCalled = false;
+            db._setupMock((query: string) => {
+                if (/^\s*INSERT INTO submission_events/i.test(query)) {
+                    throw new Error('D1_ERROR: no such table: submission_events');
+                }
+                if (/^\s*DELETE FROM submission_events\s+WHERE id\s*=/i.test(query)) {
+                    releaseDeleteCalled = true;
+                    return { success: true, meta: { changes: 1 } };
+                }
+                // The FINDING-017 prune's DELETE, which runs before the INSERT.
+                return { meta: { changes: 0 } };
+            });
+
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-1', { warn });
+
+            expect(result.allowed).toBe(true);
+            // Hard-coded: fail-open reports the raw cap, not a count it never
+            // got to take (there is no row to count).
+            expect(result.remaining).toBe(20);
+            expect(releaseDeleteCalled).toBe(false);
+            expect(warn).toHaveBeenCalledWith(
+                '[BUG-015] daily-event reservation insert failed — failing open',
+                expect.objectContaining({ kind: 'preview_upload' })
+            );
+
+            // The fail-open reservation's own release() is a genuine no-op —
+            // there is no row to delete, so it must not issue a DELETE either.
+            await expect(result.release!()).resolves.toBeUndefined();
+            expect(releaseDeleteCalled).toBe(false);
+        });
+
+        it('fails open when the COUNT rejects after a successful INSERT: releases the inserted row, warn logged', async () => {
+            const db = createMockD1Database();
+            const warn = vi.fn();
+            const insertedId = 1;
+            let releaseDeleteCalledWith: unknown = undefined;
+            db._setupMock((query: string, bindings: unknown[]) => {
+                if (/^\s*INSERT INTO submission_events/i.test(query)) {
+                    return { success: true, meta: { changes: 1, last_row_id: insertedId } };
+                }
+                if (/^\s*SELECT COUNT/i.test(query) && query.includes('FROM submission_events')) {
+                    throw new Error('D1_ERROR: database is locked');
+                }
+                if (/^\s*DELETE FROM submission_events\s+WHERE id\s*=/i.test(query)) {
+                    releaseDeleteCalledWith = bindings[0];
+                    return { success: true, meta: { changes: 1 } };
+                }
+                // The FINDING-017 prune's DELETE, which runs before the INSERT.
+                return { meta: { changes: 0 } };
+            });
+
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload', 'preset-1', { warn });
+
+            expect(result.allowed).toBe(true);
+            expect(result.remaining).toBe(20);
+            // The row the INSERT actually created was released, by its real id
+            // — not a fabricated one.
+            expect(releaseDeleteCalledWith).toBe(insertedId);
+            expect(warn).toHaveBeenCalledWith(
+                '[BUG-015] daily-event reservation count failed — failing open',
+                expect.objectContaining({ kind: 'preview_upload', rowId: insertedId })
+            );
+
+            // The row is already gone, so the reservation's own release() is
+            // now a no-op and must not attempt a second DELETE.
+            releaseDeleteCalledWith = undefined;
+            await expect(result.release!()).resolves.toBeUndefined();
+            expect(releaseDeleteCalledWith).toBeUndefined();
+        });
+
+        it('reserves independently per kind: 30 seeded text_edit rows do not block a preview_upload reservation', async () => {
+            const db = createMockD1Database();
+            const rows = mockSubmissionEventsTable(db);
+
+            // DAILY_PREVIEW_UPLOAD_LIMIT is 20 and DAILY_FLAGGED_EDIT_LIMIT is
+            // 10 — with only 10 rows of another kind seeded, a kind-BLIND count
+            // (10) would still read as "under cap" for preview_upload (20)
+            // whether or not the kind filter is really there, so that pairing
+            // could never fail. 30 seeded `text_edit` rows exceeds
+            // DAILY_PREVIEW_UPLOAD_LIMIT (20): a kind-blind count would refuse
+            // the preview_upload reservation outright. Seeded directly (ids
+            // deliberately far outside the autoincrement range the real
+            // reservations below use) rather than via 30 real reserveDailyEvent
+            // calls, since text_edit's own cap (30) would otherwise be the
+            // thing under test.
+            for (let i = 0; i < 30; i++) {
+                rows.set(100000 + i, { user: 'user-1', kind: 'text_edit' });
+            }
+
+            const result = await reserveDailyEvent(db, 'user-1', 'preview_upload');
+
+            expect(result.allowed).toBe(true);
+        });
+
+        // BUG-015 fix round 2 (2026-09-16 PR review, deterministic tie-break)
+        describe('concurrent reservations for the last slot', () => {
+            it('overshoot stays closed: a single reservation is refused when the cap is already fully used', async () => {
+                const db = createMockD1Database();
+                const rows = mockSubmissionEventsTable(db, {
+                    seed: { user: 'user-1', kind: 'flagged_edit', count: DAILY_FLAGGED_EDIT_LIMIT },
+                });
+
+                const result = await reserveDailyEvent(db, 'user-1', 'flagged_edit');
+
+                expect(result.allowed).toBe(false);
+                expect(result.remaining).toBe(0);
+                expect(result.release).toBeUndefined();
+                // The refused reservation's own row was inserted then deleted —
+                // the table is back to exactly the seeded, already-full count.
+                expect(rows.size).toBe(DAILY_FLAGGED_EDIT_LIMIT);
+            });
+
+            it('two requests racing for the one free slot: exactly one wins, ordered by row id', async () => {
+                const db = createMockD1Database();
+                // One slot free: limit-1 rows already exist for this user+kind.
+                const rows = mockSubmissionEventsTable(db, {
+                    seed: { user: 'user-1', kind: 'flagged_edit', count: DAILY_FLAGGED_EDIT_LIMIT - 1 },
+                    // Force both concurrent INSERTs to land before either
+                    // COUNT runs — the interleaving the old (pre-fix) code
+                    // handled wrong: every concurrent request observed
+                    // `limit - 1 + N > limit` and every one refused.
+                    barrierInsertCount: 2,
+                });
+
+                const [a, b] = await Promise.all([
+                    reserveDailyEvent(db, 'user-1', 'flagged_edit'),
+                    reserveDailyEvent(db, 'user-1', 'flagged_edit'),
+                ]);
+                const results = [a, b];
+
+                // Seeded rows occupy ids 1..(limit-1); the two real, concurrent
+                // inserts land at id `limit` (wins: id <= limit rows total)
+                // and id `limit + 1` (loses: id <= limit+1 rows total, over
+                // cap). This is exactly what an `AND id <= ?` bound on the
+                // COUNT buys: remove that clause mentally and both counts
+                // read ALL rows (limit + 1 total) regardless of which row's
+                // reservation is asking, so both would refuse instead.
+                const winningRowId = DAILY_FLAGGED_EDIT_LIMIT;
+                const losingRowId = DAILY_FLAGGED_EDIT_LIMIT + 1;
+                expect(rows.has(winningRowId)).toBe(true);
+                expect(rows.has(losingRowId)).toBe(false);
+                expect(rows.size).toBe(DAILY_FLAGGED_EDIT_LIMIT);
+
+                const allowed = results.filter((r) => r.allowed);
+                const refused = results.filter((r) => !r.allowed);
+                expect(allowed).toHaveLength(1);
+                expect(refused).toHaveLength(1);
+
+                expect(allowed[0]!.remaining).toBe(0);
+                expect(typeof allowed[0]!.release).toBe('function');
+
+                expect(refused[0]!.remaining).toBe(0);
+                expect(refused[0]!.release).toBeUndefined();
+            });
         });
     });
 });

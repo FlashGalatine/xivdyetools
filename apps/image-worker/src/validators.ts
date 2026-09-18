@@ -9,12 +9,9 @@
  * @module services/image/validators
  */
 
-import type {
-  UrlValidationResult,
-  FormatValidationResult,
-  ImageFormat,
-} from './types.js';
+import type { UrlValidationResult, FormatValidationResult, ImageFormat } from './types.js';
 import { readImageDimensions, type ImageDimensions } from './dimensions.js';
+import { detectImageFormat } from '@xivdyetools/worker-kit/image-sniff';
 
 // ============================================================================
 // Constants
@@ -134,17 +131,6 @@ export function assertValidMaxDimension(value: number): void {
  * Request timeout for image fetching (10 seconds)
  */
 export const FETCH_TIMEOUT_MS = 10000;
-
-/**
- * Magic bytes for image format detection
- */
-const MAGIC_BYTES: Record<ImageFormat, number[]> = {
-  png: [0x89, 0x50, 0x4e, 0x47], // \x89PNG
-  jpeg: [0xff, 0xd8, 0xff], // \xFF\xD8\xFF
-  gif: [0x47, 0x49, 0x46], // GIF
-  webp: [0x52, 0x49, 0x46, 0x46], // RIFF (check for WEBP at offset 8)
-  bmp: [0x42, 0x4d], // BM
-};
 
 // ============================================================================
 // URL Validation
@@ -378,61 +364,14 @@ export async function readBodyWithCap(
 // ============================================================================
 
 /**
- * Detect image format from magic bytes
+ * Detect image format from magic bytes.
  *
- * @param buffer - First 12+ bytes of the image file
- * @returns Detected format or undefined
+ * Re-exported from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008): this
+ * app's own table and decision order were the source of truth for that shared
+ * sniffer, so the byte-table test below is the consumer-side parity proof —
+ * see `src/validators.test.ts`'s `describe('detectImageFormat', ...)`.
  */
-export function detectImageFormat(buffer: Uint8Array): ImageFormat | undefined {
-  if (buffer.length < 12) {
-    return undefined;
-  }
-
-  // Check PNG
-  if (matchesMagicBytes(buffer, MAGIC_BYTES.png)) {
-    return 'png';
-  }
-
-  // Check JPEG
-  if (matchesMagicBytes(buffer, MAGIC_BYTES.jpeg)) {
-    return 'jpeg';
-  }
-
-  // Check GIF
-  if (matchesMagicBytes(buffer, MAGIC_BYTES.gif)) {
-    return 'gif';
-  }
-
-  // Check WebP (RIFF....WEBP)
-  if (
-    matchesMagicBytes(buffer, MAGIC_BYTES.webp) &&
-    buffer[8] === 0x57 && // W
-    buffer[9] === 0x45 && // E
-    buffer[10] === 0x42 && // B
-    buffer[11] === 0x50 // P
-  ) {
-    return 'webp';
-  }
-
-  // Check BMP
-  if (matchesMagicBytes(buffer, MAGIC_BYTES.bmp)) {
-    return 'bmp';
-  }
-
-  return undefined;
-}
-
-/**
- * Check if buffer starts with magic bytes
- */
-function matchesMagicBytes(buffer: Uint8Array, magic: number[]): boolean {
-  for (let i = 0; i < magic.length; i++) {
-    if (buffer[i] !== magic[i]) {
-      return false;
-    }
-  }
-  return true;
-}
+export { detectImageFormat };
 
 /**
  * Validate image format from buffer

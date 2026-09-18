@@ -2,6 +2,42 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.4.0] - 2026-09-17
+
+Deep-dive remediation, Sprint 13 (`docs/audits/2026-09-16-deep-dive/`). Minor bump: two new
+subpaths, nothing removed and no existing behaviour changed. `apps/oauth` (Sprint 14),
+`apps/image-worker` (Sprint 15) and `apps/presets-api` (Sprint 16) adopted them in the same
+release; only five exports keep a `@public` tag — the four `bodyGuards` option types (consumers
+pass option literals and never import the type names) plus `IMAGE_MAGIC_BYTES` (in-repo consumers
+reach it only through `detectImageFormat`). `./body-guards` is subpath-only — it imports
+`hono/body-limit` at runtime and `hono` is an optional peer, so it is not re-exported from the
+root barrel; `./image-sniff` is (it has no runtime dependency).
+
+### Added
+
+- **REFACTOR-008 — `@xivdyetools/worker-kit/image-sniff`: magic-byte image detection.**
+  `detectImageFormat(bytes)`, `sniffImageType(bytes, accept?)`, the `IMAGE_MAGIC_BYTES` table and
+  the `ImageFormat` type. The table and the decision order are `apps/image-worker`'s, which was the
+  source of truth; the second copy in `apps/presets-api` recognised only PNG/JPEG/WebP, so a GIF or
+  BMP upload there was indistinguishable from a corrupt one. Same 12-byte precondition and the same
+  `RIFF` + `WEBP` two-part WebP check as image-worker's, byte for byte. `sniffImageType` narrows its
+  return type to the `accept` list, so a caller that supports three of the five formats keeps a
+  three-member union rather than widening to all five. No Hono and no Workers types — the module is
+  a plain `Uint8Array` in, a format out.
+
+- **REFACTOR-009 — `@xivdyetools/worker-kit/body-guards`: the `bodyGuards()` factory.** Returns
+  `{ bodySizeLimit, jsonDepthLimit }` — a streaming body-size cap (SEC-004, Hono's `bodyLimit` is
+  still the engine, so `Content-Length` is checked first and then the actual stream) and a JSON
+  depth / prototype-pollution check (SEC-003). `apps/oauth` and `apps/presets-api` each carried a
+  near-copy of the same two middleware; the only real differences were the cap, the response
+  envelope, and presets-api's one exempt upload route, so those are the options and nothing else
+  is. The factory writes no response body of its own: `onTooLarge` and `onInvalidJson` are supplied
+  by the consumer, which is what lets both Workers adopt it without changing a response byte.
+  `exempt: { match, maxSize, onTooLarge }` reproduces the preview-image route — its own 5 MB cap,
+  its own `400`, and the JSON check skipped entirely (FINDING-004 / PAPI-3 behaviour preserved).
+  The shared `validateStructure` is the two apps' copy unchanged: the two were byte-for-byte
+  identical, so there was no stricter variant to pick.
+
 ## [1.3.0] - 2026-09-02
 
 Deep-dive remediation, Sprint 15 (docs/audits/2026-09-02-deep-dive). Minor bump: three behaviour

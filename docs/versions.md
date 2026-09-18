@@ -19,15 +19,15 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.10.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.5.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.1 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.7.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.3.4 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.10.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.3.0 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **Web Application** | v5.11.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.5.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Public REST API** | v0.14.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **OpenGraph Worker** | v2.10.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -35,14 +35,14 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.2.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.3.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.2.0 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.3.0 | `@xivdyetools/worker-kit` | npm | Active |
+| **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.4.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.2.0 | `@xivdyetools/bot-logic` | npm | Active |
-| **Test Utils** | v2.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
+| **Bot Logic** (incl. `/i18n`) | v4.3.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
 
@@ -65,6 +65,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 8 — minor, not patch, because frozen records are an observable change (the house rule logger 2.2.0 set): `hexToHsv` validates before its LRU lookup (the only hex-keyed cache besides `hexToRgb`, which already did), so a bare `RRGGBB` throws cold and warm alike (BUG-009); dye records and their `rgb`/`hsv`/`lab` are frozen at the end of `initialize()` — a consumer mutation now throws `TypeError` instead of corrupting the shared indices (BUG-010); locale objects documented as shared; `CharacterMatchOptions.matchingMethod` JSDoc default corrected to `ciede2000` (BUG-011); the WCAG small-vs-large threshold test can fail (BUG-032) |
 | **v5.2.0** | **Sep 2026** | **Five selectable harmony colour wheels (PR #167) — `COLOR_WHEEL_IDS` (`rgb` / `ryb` / `munsell` / `oklch-hue` / `oklch-lightness`), `getColorWheel`, `parseColorWheelId`, `normalizeColorWheelId`, `HarmonySelectionConfig.wheel`, `HarmonySlot.wheelHue`; with `wheel` unset the output is byte-identical to 5.1.0** |
 | **v5.1.0** | **Sep 2026** | **`getDeltaE_Oklab` is now ΔEOK2 (CSS Color 4 §20.4, `a`/`b` scaled ×2) — changes both the ranking and the numeric scale (~1.4–2×) of the `oklab` matching method; `BAND_VOCABULARY` oklab cuts recalibrated, `HARMONY_MAX_DISTANCE.oklab` 0.13 → 0.21** |
 | **v5.0.0** | **Sep 2026** | **BREAKING — `RybColorMixer` (the Gossett-Chen paint cube) removed; one RYB mixing implementation shared by the web app and the bot (ALGO-002 — the cube failed the identity law on 53% of dye pairs)** |
@@ -103,6 +104,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.11.0 | Sep 2026 | 2026-09-16 deep-dive Sprints 1–2 + 7 (20 findings) — Palette Extractor **Share** restored (BUG-002: `colors` + `algo` in the link, up to five bar colours, no image; a shared link renders equal-share bands and the matched dyes; og-worker's `/og/extractor` card is reachable again); Back from a preset keeps `<v4-preset-tool>` mounted and resolves from the URL (BUG-005); preset detail renders the prices it fetches (BUG-004); "Submit to Community" chunk-load failure toasts (BUG-003); dead `navigate-to-tool` context actions deleted with a vocabulary guard (REFACTOR-001); new suites for preset-detail, preset-tool, collection-manager-modal, add-to-collection-menu |
 | **v5.10.0** | **Sep 2026** | **Swatch Manager's equipment list gains Copy list and Export .md — the GPOSERS submission template (bold slot labels, worn slots in the template's order, a `Dye` line per dyed channel, `Acquisition:` left blank); Copy puts HTML + plain text on the clipboard so Word / Google Docs keep the bold, Export saves Markdown; the clipboard and file-download mechanics move to `shared/clipboard` and `shared/download-file`** |
 | v5.9.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-001–007) — eight unused service/component methods removed (`getWithContext`, `isSaved`, `getBaseUrl`, `getRequiredColor`, `setStyle`, `setOptions`, `onStatusChange`, `updateMessage`); no user-visible change, coverage ratchet held |
 | **v5.9.0** | **Sep 2026** | **Swatch Manager equipment rows open a piece in five community databases — Mirapri, GarlandTools, Teamcraft, GamerEscape and the Lodestone in five regions; facewear links by name only, resolving its untinted base row first. Eorzea Collection is deliberately excluded: it keys items by its own auto-increment id, so the game's item id silently opens a different item there** |
@@ -153,6 +155,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.5.7 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 4 — `/manual` Spectrum & Prices topic defers so a cold world lookup cannot miss Discord's 3 s ack (BUG-008); `/webhooks/preset-submission` body bounded by streamed bytes (BUG-013); `/stats health` reports `env.ENVIRONMENT` (BUG-012); `/preset` schema carries the 2–50 / 10–200 length bounds and autocomplete names are capped at 100 chars (REFACTOR-003, needs `register-commands`); notify helpers log through the request logger (REFACTOR-002); `/mixer` and `/gradient` adapters gain suites and enter the coverage gate (BUG-033/034); picks up bot-logic 4.3.0 (`/swatch` eye markers) |
 | v5.5.6 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-008) — the test-only `getPreference` single-key reader removed; `getUserPreferences` is the one production path |
 | v5.5.5 | Sep 2026 (prepared) | GitHub webhook HMAC checks the received bytes before text decoding; completes the Sprint 0 raw-byte requirement |
 | v5.5.4 | Sep 2026 | Legacy preview controls refresh the current image and require a second click |
@@ -195,6 +198,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
 | v3.1.0 | Sep 2026 | 2026-09-02 deep-dive — a cancelled login returns to the allowlisted origin it started on instead of production (BUG-049); a non-array character roster no longer turns sign-in into a 500 (BUG-051) |
 | v3.0.1 | Sep 2026 | First dead-code sweep (DEAD-019/025/026) — unused constants, `isStateSigned`, three `findUserBy*` wrappers removed; no route, token or D1 change |
 | **v3.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit Sprint 2 (FINDING-001/002/003/010/012/013/022/023) — `/auth/refresh` removed; `orig_iat`/`xivauth_id`/`primary_character` no longer minted; `users.avatar_url` and the `xivauth_characters` roster table dropped by a hand-run migration (no known client used any of them); `Cache-Control: no-store` + `Pragma: no-cache` worker-wide; request logger drops the User-Agent; rate-limit binding fail-open events now logged; production `validateEnv` requires `RL_AUTH_10`/`RL_AUTH_20`/`RL_AUTH_30`/`TOKEN_BLACKLIST`; new wrangler-config invariant test; fixed `GET /auth/me`'s `avatar_url` (was built from the internal UUID, not the Discord snowflake)** |
@@ -219,6 +223,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.3.6 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 16 (terminal) — body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards` with the preview-image exemption (5 MB / 400, JSON check skipped) and every error body byte-identical (REFACTOR-009); `sniffImageType` calls the shared sniffer accepting png/jpeg/webp only (REFACTOR-008) |
+| v2.3.5 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 5 — `text_edit` / `flagged_edit` / `preview_upload` daily caps are reserve-then-act (insert the event, count including it, refuse and release when over; BUG-015), still best-effort on a D1 write error; `PATCH /presets/refresh-author` answers 400 instead of binding an unset display name (BUG-014); ban-check tests bind the identity, incl. an XIVAuth UUID `sub` (BUG-043); `banned_users.discord_id` documented as the resolved user id, snowflake or UUID (BUG-001 path (a)) |
 | v2.3.4 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-013/014/015) — the unused `truncateUnicodeSafe`, `duplicateResponse` and the orphan `VoteRow` type removed; the moderation doc no longer describes a helper nothing calls |
 | v2.3.3 | Sep 2026 (prepared) | Revision-bound moderator status and revert writes with atomic audit logs |
 | v2.3.2 | Sep 2026 (prepared) | Revision-bound owner edits; migration 0014 adds the database revision trigger |
@@ -287,6 +293,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 9 — the browser preset's error-tracker wrapper serialises a non-`Error` value with `safeStringify`, so a circular or BigInt-bearing value no longer throws inside `logger.error()` (BUG-020; latent — no app configures a tracker) |
 | **v2.2.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 13) — a secret reachable only through a cycle is redacted (the cycle guards returned the raw original node, BUG-004); `sanitizeErrorMessage` output changes shape for non-`Bearer` auth schemes** |
 | v2.1.2 | Sep 2026 | knip dead-code gate — 30 barrel exports tagged `@public` (adjudicated KEEP from DEAD-021) |
 | **v2.1.1** | **Aug 2026** | **2026-08-29 security audit (FINDING-025) — value-shape scan now reaches string array items (incl. arrays nested in arrays) and bare JWT/Discord-token substrings inside `message` / `error.message` / non-Error throws; a ≥64-hex run is deliberately NOT scanned in free text (false-positive risk: content hashes, cache keys); fixed a shape bug where an array item that was itself an array logged as `{'0':…,'1':…}` instead of staying an array; S10-R8 — the cycle guard was a *global* seen-set, so a value aliased from two keys was redacted only at its first reference, now an ancestor (recursion-path) set so every reference is redacted; S10-R12 — that fix's own node-visit budget (added to bound the ancestor set's exponential cost on a heavily-aliased structure) turned out to fail OPEN, emitting anything past a ~5000-node cutoff completely unscanned — replaced with memoization (every node processed exactly once, aliases resolve to the same redacted object, no cutoff to fail open past); S10-R14 — memoization surfaced a matching bug one layer down in `safeStringify` (global "seen" set on every `JsonAdapter.write` line started reading aliased-not-circular references as cycles, dropping repeated data) — fixed with the same path-scoped technique; S10-R18 — path-scoping then serialises a shared subtree once per PATH to it, exponential on a maximally-aliased structure (the fix round's own 40-level test case: unbounded, never finished) — `safeStringify` now carries its own fail-CLOSED bound (50,000 values/call, `"[Truncated]"` past it — loses diagnostics, not secrets, since everything reaching it is already redacted, unlike the fail-open redaction budget S10-R12 removed)** |
@@ -306,6 +313,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.7.3 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 6 — `/preset ban_user` / `unban_user`, the confirm button and the reason modal accept an XIVAuth UUID as well as a Discord snowflake, so XIVAuth-only authors can be banned (BUG-001 path (a): the UUID is stored in `banned_users.discord_id`); presets-api requests carry a 10 s `AbortSignal` (BUG-016); the rate-limit KV-error test pins fail-open (BUG-035) |
 | v1.7.2 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-009/010/011/012) — unbatched `hideUserPresets`/`restoreUserPresets` wrappers, the unused fetch-logging wrappers, their now-orphaned `sanitizeHeaders` helper and `Translator.getMeta` removed; ban/unban still batch the statement builders with their audit rows |
 | v1.7.1 | Sep 2026 (prepared) | Bundle auth 2.0.2 to bound interaction streams while reading |
 | v1.7.0 | Sep 2026 | English-only by design, and now says so once — the six-locale `Record` that always resolved to English collapsed to one table (I18N-009) |
@@ -328,6 +336,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.10.2 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 10 — `wheel` is keyed into the cache only for the harmony dye card, not `/og/harmony/default` (BUG-018); the two SPA pass-through fetches carry a 5 s `AbortSignal` and fall back to the app redirect on timeout (OPT-001) |
 | v2.10.1 | Sep 2026 (prepared) | Crawler metadata logs retain only tool, locale and crawler category |
 | **v2.10.0** | **Sep 2026** | **`/og/harmony/*` reads `?wheel=` (PR #167) — allowlisted against core's `COLOR_WHEEL_IDS`, cache-keyed beside `lang`/`frame`/`algo`, elided when `rgb`; the footer carries a short wheel tag so the X frame says which wheel chose the dyes** |
 | v2.9.0 | Sep 2026 | The mixer card ranked its headline dye by a hardcoded `ciede2000` while tagging it with the requested `?algo=` (BUG-023, third and last instance) |
@@ -356,6 +365,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.2 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 15 — the magic-byte table and `detectImageFormat` come from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008); the local byte-table test exercises the import unchanged |
 | v1.3.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-017) — `Env` is now an explicit empty binding contract (`Record<string, never>`) instead of carrying an `ENVIRONMENT` member nothing sets or reads |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 12) — the dimension cap admitted the 4096² input it existed to reject (BUG-052: `>` not `>=`), and two 64 MiB RGBA buffers exceed the 128 MiB isolate; pixel cap 16 MP → 9.4 MP, everything up to 4K still passes** |
 | v1.2.1 | Sep 2026 | `getImageDimensions` removed (DEAD-027); knip dead-code gate — clean on first run |
@@ -367,6 +377,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.0.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 0 (BUG-007, BUG-021) — `createMockDye()` default stainIDs are a deterministic 1..254 counter (`resetMockDyeSequence()` exported) instead of a random draw that collided ~1/254 per pair; `{ stainID: null }` honoured |
 | **v2.0.0** | **Sep 2026** | **Major (bookkeeping — private, never published) — mocks tightened to match the services they stand in for: the KV mock's `list()` paginates like real KV (BUG-098, which had hidden BUG-035), R2 `httpMetadata` readable (BUG-100), D1 `bind()` validates and returns a new statement, KV `put()` rejects `expirationTtl` < 60 s, `createMockDye()` can represent a real dye; `_setBatchFailure` / `_query` / `_boundValues` added on the D1 mock** |
 | v1.3.1 | Sep 2026 | knip dead-code gate — unused `integration/setup.ts` helpers deleted (the one package that deletes rather than tags, having no npm consumers) |
 | **v1.3.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-015, Sprint 11 fix round) — `auth/signature.ts`'s v1 bot-signature helpers (`createBotSignature`/`createTimestampedSignature`/`verifyBotSignature`) removed once their only remaining consumer, `bot-authentication.test.ts`'s v1-signature test blocks, was deleted (presets-api accepts only v2); that integration suite narrows from 15 tests to 5, keeping the still-live dev/test bypass and Authorization-rejection coverage** |
@@ -412,6 +423,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.4.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 13 — two new subpaths: `/body-guards` (`bodyGuards({ maxSize, maxDepth, onTooLarge, onInvalidJson, exempt })` → `bodySizeLimit` + `jsonDepthLimit`, the oauth and presets-api copies folded in, REFACTOR-009) and `/image-sniff` (`detectImageFormat`, `sniffImageType(bytes, accept)`, `IMAGE_MAGIC_BYTES` — image-worker's table is the source of truth, REFACTOR-008); `body-guards` is subpath-only (it imports `hono/body-limit` at runtime and `hono` is an optional peer) |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 15) — `MemoryRateLimiter.check()` truncated history a wider window still needed (BUG-097; retention now bounded by the key's largest window); `X-RateLimit-*` headers no longer dropped for handlers returning a raw `Response`; the native binding key format changed, so every counter resets once on deploy** |
 | v1.2.1 | Sep 2026 | knip dead-code gate — 20 barrel exports tagged `@public` (incl. the published `/rate-limiter/presets` subpath) |
 | **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-010 + FINDING-012) — rate-limit fail-open / backend-error log lines carry a `keyScope`, never the raw client IP or Discord id, at all six sites across the middleware and the three fallible backends; `console.warn` fallback when no logger is configured (previously silent); `CloudflareRateLimiter`'s constructor validates every tier's `binding.limit` is callable and throws rather than fail-opening per-request** |
@@ -455,6 +467,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 3 (minor, not patch — the marker is an observable change to rendered output) — `/swatch` eye rows carry the `·L`/`·R`/`·LR` marker on the row label so off-grid heterochromia rows are told apart (BUG-006); dye-info MKT row derives its item ID through core's `getMarketItemID` (REFACTOR-005) |
 | **v4.2.0** | **Sep 2026** | **`HarmonyInput.wheel` (`ColorWheelId`) passed through to core's `generateHarmonySlots`, `getLocalizedColorWheelName`, `/harmony` share URL carries `&wheel=` (PR #167); `HarmonyInput.harmonyOptions` deprecated — its `colorSpace` has been ignored since PR #159** |
 | v4.1.0 | Sep 2026 | `/comparison`'s duel readout prints `ΔEOK2`; the `/manual` matching-methods topic names it that way in all six locales |
 | **v4.0.0** | **Sep 2026** | **⚠️ BREAKING — requires `@xivdyetools/svg` 4.x (`generatePresetSwatch` signature); 15 locale keys removed (`harmony.*` and `accessibility.*` names now come from core, TERM-001 — the bot had named harmonies and colour-vision types differently from the rest of the product)** |
@@ -495,6 +508,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.3.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 12 (parked, no deploy) — `!xd ping` measures the round-trip after the send and edits it in (BUG-031); the dye-info test asserts embed title/colour/description (BUG-042) |
 | v0.3.0 | Sep 2026 | 2026-09-02 deep-dive (Sprint 17, P3 by policy) — an unhandled `'error'` event no longer crashes the process ahead of its own reconnect (BUG-101); the help text describes the command set the router actually serves (BUG-103); still parked |
 | **v0.2.3** | **Aug 2026** | **2026-08-29 security audit (FINDING-031, Sprint 13 — closes the audit) — `message-handler.ts` no longer logs the author id, channel id, or raw command text (the per-command debug line drops all three; the throttle-drop line logs `{ command, subcommand }` instead of the user id, matching Sprint 9's non-identifying rate-limiter scope); `index.ts`'s logger now defaults to `info` instead of the library preset's `debug`; the boot-time admin-roster log prints the authorized-admin count instead of every id (ruling S13-R2, not in the original finding); still parked** |
 | v0.2.2 | Aug 2026 | 2026-08-21 security audit — bot authors ignored + per-user throttle (`message-handler.ts`), `Object.hasOwn` command tables, sanitised echoes, `.app` links; still parked |
@@ -510,6 +524,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.14.2 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
 | v0.14.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
 | **v0.14.0** | **Sep 2026** | **Colour wheels on the public API (PR #169) — `GET /v1/wheels`, `GET /v1/wheels/:id` (`ringStops` + every dye's `wheelHue`), `GET /v1/harmony/types`, `GET /v1/harmony` (core's `generateHarmonySlots` over the whole database), plus a Harmony docs group** |
 | v0.13.0 | Sep 2026 | Developer docs restyle on the web-app's design register (API Docs Directions 1d, PR #168) — self-hosted Space Grotesk / Onest / Fragment Mono, the 5.0 dark palette, console chrome; no route change |

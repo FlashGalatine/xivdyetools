@@ -272,6 +272,17 @@ describe('GET /v1/dyes/:id', () => {
   });
 });
 
+// BUG-037's HTTP-level test for the legacy-Facewear negative-id 404 lives in
+// its own file (`tests/routes/dyes-facewear-404.test.ts`) rather than here —
+// this file's module-scope `app` shares ONE rate-limit bucket across every
+// request in the file (the limiter backend is memoized per module load, and
+// `getClientIp` reads a constant 'unknown' with no `CF-Connecting-IP` header
+// in tests), so `getFresh`'s "new env per call" does not open a new budget;
+// see the note above `getFresh`'s own definition. This file is already close
+// to that 65-request ceiling, so BUG-037's two extra calls get their own
+// vitest module (a separate file gets a fresh import of `src/index.js` and
+// therefore a fresh limiter closure) instead of tipping this one over.
+
 describe('GET /v1/dyes/stain/:stainId', () => {
   it('looks up by explicit stainID', async () => {
     const { res, body } = await getJson('/v1/dyes/stain/1');

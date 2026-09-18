@@ -330,6 +330,10 @@ export abstract class BaseComponent implements ComponentLifecycle {
     // Don't render if destroyed
     if (this.isDestroyed) return;
 
+    // CRITICAL: Unbind stale listeners before replacing the DOM, matching
+    // update()/handleReset() (BUG-028) — otherwise a bindEvents() bound to
+    // the pre-error content stays tracked (and un-removable) forever.
+    this.unbindAllEvents();
     clearContainer(this.container);
 
     const errorWrapper = this.createElement('div', {
@@ -421,6 +425,11 @@ export abstract class BaseComponent implements ComponentLifecycle {
 
     this.errorState.retryCount++;
     this.errorState.hasError = false;
+
+    // CRITICAL: Unbind before re-rendering, matching update()/handleReset()
+    // (BUG-028) — otherwise a successful retry's bindEvents() stacks a new
+    // set of listeners on top of the ones bound before the failure.
+    this.unbindAllEvents();
 
     // Re-attempt render
     this.render();

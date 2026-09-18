@@ -1051,3 +1051,72 @@ describe('ban-service moderation_log rows (FINDING-018)', () => {
     });
   });
 });
+
+// BUG-001 path (a) (2026-09-16 deep-dive): a ban/unban target may be a
+// Discord snowflake OR an XIVAuth `sub` UUID — `banUser` / `unbanUser` /
+// `isUserBannedByDiscordId` key on the raw value, unchanged. The literal
+// below is a fixed UUID string, not built from `isBanTargetId` (that
+// predicate lives in utils/response.ts and is exercised on its own in
+// response.test.ts) — this suite proves the value that actually reaches D1
+// is the UUID the moderator picked.
+describe('BUG-001 path (a) — UUID ban targets reach D1 unchanged', () => {
+  const XIVAUTH_UUID = 'a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890';
+  const USERNAME = 'XivauthOnlyAuthor';
+  const NOW = '2026-09-17T00:00:00.000Z';
+
+  let db: ReturnType<typeof createMockD1Database>;
+
+  beforeEach(() => {
+    db = createMockD1Database();
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(NOW));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('banUser writes the UUID into banned_users.discord_id, and hideUserPresetsStatement binds the same value', async () => {
+    db._setupMock(() => ({ meta: { changes: 1 } }));
+
+    const result = await banUser(
+      db as unknown as D1Database,
+      XIVAUTH_UUID,
+      USERNAME,
+      'mod-1',
+      'Spamming the gallery',
+    );
+
+    expect(result.success).toBe(true);
+
+    // [0] = the pre-check (isUserBannedByDiscordId), then the batch:
+    // [1] ban log, [2] hide log, [3] banned_users insert, [4] hide UPDATE.
+    expect(db._bindings[0]).toEqual([XIVAUTH_UUID]); // pre-check keyed on the UUID too
+
+    const insertQuery = db._queries[3];
+    expect(insertQuery).toContain('INSERT INTO banned_users');
+    expect(insertQuery).toContain('discord_id');
+    expect(db._bindings[3][1]).toBe(XIVAUTH_UUID); // discord_id column — not coerced, not split
+
+    const hideUpdateQuery = db._queries[4];
+    expect(hideUpdateQuery).toContain('UPDATE presets');
+    expect(hideUpdateQuery).toContain('WHERE author_discord_id = ?');
+    expect(db._bindings[4]).toEqual([NOW, XIVAUTH_UUID]);
+  });
+
+  it('isUserBannedByDiscordId(db, uuid) answers true from a scripted row keyed on that value', async () => {
+    // The shared D1 mock's ban-check branch (packages/test-utils/src/cloudflare/d1.ts)
+    // answers any `SELECT 1 FROM banned_users` with a single global flag rather
+    // than a per-row table, so "scripted" here means `_setBanStatus(true)`; the
+    // assertion below on `_bindings[0]` is what proves the query that produced
+    // the `true` was actually keyed on the UUID, not some other identity.
+    db._setBanStatus(true);
+
+    const result = await isUserBannedByDiscordId(db as unknown as D1Database, XIVAUTH_UUID);
+
+    expect(result).toBe(true);
+    expect(db._queries[0]).toContain('SELECT 1 FROM banned_users');
+    expect(db._queries[0]).toContain('unbanned_at IS NULL');
+    expect(db._bindings[0]).toEqual([XIVAUTH_UUID]);
+  });
+});

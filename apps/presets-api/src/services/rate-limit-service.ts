@@ -92,11 +92,20 @@ export async function getSubmissionCountToday(
 /**
  * Count a user's append-only events of one kind for the current UTC day.
  * Unlike the row count above, nothing the user can do lowers this number.
+ *
+ * `upToId` (BUG-015 fix round 2 — deterministic tie-break) restricts the
+ * count to rows with `id <= upToId`. Autoincrement ids are monotonic, so
+ * passing a reservation's own row id turns the count into "how many rows for
+ * this user + kind were inserted at or before mine" — i.e. this request's
+ * position in insertion order — rather than every row that exists by the
+ * time the COUNT runs. Omitting it keeps the original 4-arg behaviour
+ * byte-identical for other callers.
  */
 export async function getEventCountToday(
   db: D1Database,
   userDiscordId: string,
-  kind: SubmissionEventKind
+  kind: SubmissionEventKind,
+  upToId?: number
 ): Promise<number> {
   const today = getStartOfDayUTC();
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
@@ -108,12 +117,16 @@ export async function getEventCountToday(
       AND kind = ?
       AND created_at >= ?
       AND created_at < ?
+      ${upToId !== undefined ? 'AND id <= ?' : ''}
   `;
 
-  const result = await db
-    .prepare(query)
-    .bind(userDiscordId, kind, today.toISOString(), tomorrow.toISOString())
-    .first<{ count: number }>();
+  const stmt = db.prepare(query);
+  const bound =
+    upToId !== undefined
+      ? stmt.bind(userDiscordId, kind, today.toISOString(), tomorrow.toISOString(), upToId)
+      : stmt.bind(userDiscordId, kind, today.toISOString(), tomorrow.toISOString());
+
+  const result = await bound.first<{ count: number }>();
 
   return result?.count || 0;
 }
@@ -183,19 +196,156 @@ export async function recordSubmissionEvent(
 }
 
 /**
- * Check a per-user daily cap for one event kind (append-only count).
+ * A daily-cap reservation obtained via `reserveDailyEvent` (BUG-015).
+ *
+ * `release` is present only when `allowed` is true — a refused reservation
+ * has already deleted its own row (step 3 below) and has nothing left to
+ * give back.
  */
-export async function checkDailyEventLimit(
+export interface DailyEventReservation extends RateLimitResult {
+  /**
+   * Slots left AFTER this reservation, not counting it — unlike the removed
+   * `checkDailyEventLimit`, which reported `limit - used` from a PRE-insert
+   * count (so its `remaining` still included the slot the caller was about
+   * to spend). Nothing reads this field today; documented so a future
+   * caller doesn't assume the old, inclusive meaning.
+   */
+  remaining: number;
+
+  /**
+   * Deletes this reservation's row, freeing the slot. Best-effort: logs and
+   * swallows a failed delete rather than throwing, since a caller invokes
+   * this only after its own action has already failed and a second failure
+   * here must not mask the first.
+   */
+  release?: () => Promise<void>;
+}
+
+/**
+ * BUG-015 (2026-09-16 deep-dive): the removed `checkDailyEventLimit` paired
+ * with a later `recordSubmissionEvent` call was check-then-insert — N
+ * concurrent requests sitting at cap-1 could all pass the check before any
+ * of them recorded, overshooting the daily cap for `text_edit` /
+ * `flagged_edit` / `preview_upload`. Unlike the `submission`
+ * cap (whose own overshoot guard in `handlers/presets.ts` can roll back the
+ * INSERT it guards — see BUG-049 there), these three gate an UPDATE or an R2
+ * write that cannot be rolled back the same way, so the reservation itself
+ * has to close the race:
+ *
+ *   1. Insert the event row first — this is the statement every concurrent
+ *      request serializes on.
+ *   2. Count today's rows for this user + kind with `id <= ` this
+ *      reservation's own row id (`getEventCountToday`'s `upToId`), including
+ *      the one just inserted but excluding anything inserted after it.
+ *   3. If that count exceeds the cap, delete the row this call just
+ *      inserted and report `allowed: false` (the same 429 shape the old
+ *      pre-check returned). Otherwise report `allowed: true` with a
+ *      `release()` the caller uses to give the slot back if whatever it
+ *      reserved the slot for goes on to fail.
+ *
+ * Fix round 2 (2026-09-16 PR review): step 2 originally counted ALL of
+ * today's rows regardless of id, not just the ones at-or-before this
+ * reservation. With one slot free and N >= 2 concurrent requests, every one
+ * of them observed `limit - 1 + N > limit` and every one refused — nobody
+ * got the slot. Bounding the count by `id <= rowId` makes it "this
+ * reservation's position in insertion order": since autoincrement ids are
+ * monotonic, exactly one concurrent caller lands at position `limit` (or
+ * below) and wins; the rest land above it and lose, same as if they had
+ * arrived one at a time.
+ *
+ * A reservation nobody releases counts permanently, exactly like the old
+ * `recordSubmissionEvent` call it replaces at the three call sites.
+ *
+ * Fail OPEN on any D1 error from either the INSERT or the COUNT (coordinator
+ * ruling, fix round 1): `recordSubmissionEvent`'s own docblock still promises
+ * "a failed insert must not fail the mutation the user just completed", and
+ * `migrations/0012_submission_events_text_edit.sql` (needed before a
+ * `'text_edit'` row is accepted) is hand-run and may not be applied to a
+ * given environment — its `CHECK (kind IN …)` would then reject every
+ * `'text_edit'` insert, and a bug in a rate limiter must never be the reason
+ * a user's edit 500s. An INSERT that fails logs a warning and returns
+ * `{ allowed: true, remaining: limit, resetAt, release: async () => {} }` —
+ * no row, the cap is inert for this one request, the caller's action
+ * proceeds unmetered. A COUNT that fails AFTER a successful INSERT logs, best
+ * effort-releases the row it just inserted (so a live D1 that recovers a
+ * moment later doesn't count a phantom reservation against tomorrow's
+ * numbers either — the row would otherwise sit there uncounted-by-this-call
+ * but still real), and returns the same fail-open shape.
+ *
+ * Reserve-then-act has one more inherent cost, unrelated to D1 errors: a
+ * request that reserves and is then abandoned before it completes (a client
+ * that never finishes uploading the preview-image body, say) leaves its row
+ * in place — nothing releases a reservation nobody ever resolves. That row
+ * counts against the cap until it ages past UTC midnight like any other; it
+ * is not a leak, just the cost of charging at reservation time rather than
+ * at completion time. Two concurrent requests racing for the last slot are
+ * ordered deterministically by row id (the tie-break above) — exactly one
+ * wins, not zero and not both.
+ */
+export async function reserveDailyEvent(
   db: D1Database,
   userDiscordId: string,
   kind: SubmissionEventKind,
-  limit: number = DAILY_LIMITS[kind]
-): Promise<RateLimitResult> {
-  const used = await getEventCountToday(db, userDiscordId, kind);
+  presetId: string | null = null,
+  logger?: RetentionLogger
+): Promise<DailyEventReservation> {
+  await pruneSubmissionEvents(db, logger);
+
+  const limit = DAILY_LIMITS[kind];
+  const noopRelease = async (): Promise<void> => {};
+
+  let rowId: number;
+  try {
+    const inserted = await db
+      .prepare(
+        `INSERT INTO submission_events (user_discord_id, kind, preset_id) VALUES (?, ?, ?)`
+      )
+      .bind(userDiscordId, kind, presetId)
+      .run();
+    rowId = inserted.meta.last_row_id;
+  } catch (err) {
+    logger?.warn('[BUG-015] daily-event reservation insert failed — failing open', {
+      kind,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return { allowed: true, remaining: limit, resetAt: getNextResetUTC(), release: noopRelease };
+  }
+
+  const release = async (): Promise<void> => {
+    try {
+      await db.prepare('DELETE FROM submission_events WHERE id = ?').bind(rowId).run();
+    } catch (err) {
+      logger?.warn('[BUG-015] failed to release a daily-event reservation', {
+        kind,
+        rowId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  };
+
+  let used: number;
+  try {
+    used = await getEventCountToday(db, userDiscordId, kind, rowId);
+  } catch (err) {
+    logger?.warn('[BUG-015] daily-event reservation count failed — failing open', {
+      kind,
+      rowId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    await release();
+    return { allowed: true, remaining: limit, resetAt: getNextResetUTC(), release: noopRelease };
+  }
+
+  if (used > limit) {
+    await release();
+    return { allowed: false, remaining: 0, resetAt: getNextResetUTC() };
+  }
+
   return {
-    allowed: used < limit,
+    allowed: true,
     remaining: Math.max(0, limit - used),
     resetAt: getNextResetUTC(),
+    release,
   };
 }
 

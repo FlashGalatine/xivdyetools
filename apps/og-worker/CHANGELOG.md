@@ -5,6 +5,16 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.2] - 2026-09-17
+
+### Fixed
+
+- **BUG-018: `?wheel=` no longer keys the cache for `/og/harmony/default.png`.** `ogCacheKey` keyed `wheel` for any path starting with `/og/harmony/`, which also matched the per-tool default card — a route that never reads `wheel` at render time. Up to five validated wheel ids were each minting their own byte-identical resvg render of that one card. The key now checks the parameterised `/og/harmony/:dyeId/:harmonyType[.png]` shape specifically (`docs/audits/2026-09-16-deep-dive/`).
+
+### Changed
+
+- **OPT-001: the two SPA pass-through `fetch()` calls now carry a 5s timeout.** A stalled SPA origin could hold a crawler-adjacent human request open for the platform default. Both pass-through sites (the per-tool routes and the catch-all) now fetch with `AbortSignal.timeout(5_000)` and fall back to the existing 302-to-`APP_BASE_URL` redirect on a timeout or abort; any other fetch failure still surfaces to the global error handler unchanged (`docs/audits/2026-09-16-deep-dive/`).
+
 ## [2.10.1] - 2026-09-15
 
 ### Security

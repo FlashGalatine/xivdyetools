@@ -78,8 +78,14 @@ describe('handleInfoCommand', () => {
     // Should have an embed reply
     const lastCall = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock
       .calls[0][0];
-    // Either embed-based or content-based response
-    expect(lastCall.embeds?.[0] ?? lastCall.content).toBeDefined();
+    // BUG-042: assert actual embed content, not just presence
+    const embed = lastCall.embeds?.[0];
+    expect(embed).toBeDefined();
+    expect(embed?.title).toBe('Snow White');
+    // colour is the hex string; Snow White is #e4dfd0
+    expect(embed?.colour).toBe('#e4dfd0');
+    // description is the share URL with the stainID (1 for Snow White)
+    expect(embed?.description).toContain('xivdyetools.app/comparison?dyes=1');
   });
 
   it('stores message context keyed by the BOT REPLY id, not the user message', async () => {

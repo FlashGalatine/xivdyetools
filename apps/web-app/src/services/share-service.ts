@@ -112,7 +112,7 @@ export interface AccessibilityShareParams {
 }
 
 export interface ExtractorShareParams {
-  colors?: string[]; // Extracted hex colors
+  colors?: string[]; // Extracted hex colors, bare RRGGBB (no `#`), upper-case
   algo?: MatchingMethod;
 }
 
@@ -169,8 +169,31 @@ export interface ParsedShareUrl {
  * as "the link works but shows the wrong dyes" rather than as an error.
  *
  * Add a key here whenever a producer can emit a comma-separated list for it.
+ * `colors` (extractor) is here for the same reason: a one-colour palette is
+ * still a palette, and the consumer gates on `Array.isArray`.
  */
-const LIST_PARAMS = new Set(['dyes']);
+const LIST_PARAMS = new Set(['dyes', 'colors']);
+
+/**
+ * How many palette colours an extractor share link may carry.
+ *
+ * This is og-worker's number, not a taste call: `/og/extractor/:colors.png`
+ * slices its entry list to 5 bands, and the crawler route that turns
+ * `/extractor?colors=…` into that card slices to 5 as well
+ * (`apps/og-worker/src/og-data-generator.ts`, `generateExtractorOGData`). A
+ * link carrying more would unfurl as a card that silently drops the tail, so
+ * the producer caps instead and the validator rejects an over-long list.
+ */
+export const MAX_EXTRACTOR_SHARE_COLORS = 5;
+
+/**
+ * The exact spelling og-worker accepts for one extractor palette entry in the
+ * QUERY: six hex digits, no `#`, upper-cased. Its crawler parser is
+ * `.replace(/^#/, '').toUpperCase()` then `/^[0-9A-F]{6}$/` — so a 3-digit
+ * shorthand, a stray space or an `RRGGBB-share` pair (which the IMAGE path
+ * does accept) is dropped there, and must never be emitted here.
+ */
+const EXTRACTOR_SHARE_COLOR = /^[0-9A-F]{6}$/;
 
 // ============================================================================
 // Share Service Class
@@ -363,6 +386,31 @@ export class ShareService {
       return null;
     }
     return normalized;
+  }
+
+  /**
+   * One entry of the extractor's `colors` list, in the exact spelling
+   * og-worker's crawler route accepts: bare upper-case `RRGGBB`, or null.
+   *
+   * Deliberately stricter than {@link parseSharedHex}, which also takes the
+   * 3-digit shorthand: og-worker's query parser tests `/^[0-9A-F]{6}$/` after
+   * upper-casing, so a shorthand entry would be dropped from the unfurl while
+   * still rendering in the app — a link whose card disagrees with the page.
+   *
+   * `parseUrl()` hands back a NUMBER for an all-digit entry (`112233`), which
+   * is why this takes `unknown`: its own round-trip guard proves `String(n)`
+   * is the original spelling, so stringifying is lossless.
+   */
+  static parseSharedPaletteColor(raw: unknown): string | null {
+    const text =
+      typeof raw === 'string'
+        ? raw
+        : typeof raw === 'number' && Number.isInteger(raw) && raw >= 0
+          ? String(raw)
+          : null;
+    if (text === null) return null;
+    const cleaned = text.trim().replace(/^#/, '').toUpperCase();
+    return EXTRACTOR_SHARE_COLOR.test(cleaned) ? cleaned : null;
   }
 
   /**
@@ -622,6 +670,27 @@ export class ShareService {
           errors.push('Missing required parameter: dyes');
         }
         break;
+
+      case 'extractor': {
+        // The palette IS the link — an extractor URL with no colours would
+        // unfurl as the tool's default card and restore nothing.
+        const colors = record.colors;
+        if (!Array.isArray(colors) || colors.length === 0) {
+          errors.push('Missing required parameter: colors');
+          break;
+        }
+        if (colors.length > MAX_EXTRACTOR_SHARE_COLORS) {
+          errors.push(
+            `Invalid parameter: colors carries at most ${MAX_EXTRACTOR_SHARE_COLORS} colours`
+          );
+        }
+        for (const entry of colors) {
+          if (this.parseSharedPaletteColor(entry) === null) {
+            errors.push(`Invalid parameter: colors must be RRGGBB (got ${String(entry)})`);
+          }
+        }
+        break;
+      }
 
       // Other tools may have optional params
     }

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-09-16
+
+Deep-dive remediation, Sprint 0 (docs/audits/2026-09-16-deep-dive). Private package, never published —
+the bump is bookkeeping so the fix is dated.
+
+### Fixed
+
+- **`createMockDye()` default stainIDs are deterministic** (BUG-007). The default used to be a
+  `Math.random()` draw over 1–254 with no uniqueness check, so two default-created dyes collided about
+  once in 254 pairs — a ~0.4 % chance per test run of a red that no change caused, which is exactly how
+  this audit's own coverage baseline failed. The default is now a module-level counter (1, 2, … 254,
+  then a thrown error naming the cap); `resetMockDyeSequence()` is exported so a suite can restart it
+  in its own `beforeEach`. The random draw survives only as the explicitly opt-in `randomStainId()`.
+- **`createMockDye({ stainID: null })` honours the null** (BUG-021). The override used `??`, so the
+  documented legacy "null arm" fixture could not be built — null was replaced by a random decoy before
+  `itemID`/`id` were derived. It now derives `itemID` 5729 through `legacyItemIdForStain(null)` as the
+  type's comment describes.
+- **`createMockDye({ stainID: undefined })` treats undefined as absent**. An explicit `undefined` was
+  treated as a present key and assigned verbatim, producing an invalid `Dye` (stainID must be `number | null`).
+  It now falls through to the sequence default like an absent key would.
+
 ## [2.0.0] - 2026-09-02
 
 Deep-dive remediation, Sprint 15 (docs/audits/2026-09-02-deep-dive). **Major bump**: the mocks were

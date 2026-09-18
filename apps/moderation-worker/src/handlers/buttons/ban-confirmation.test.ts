@@ -260,6 +260,42 @@ describe('handleBanConfirmButton — FINDING-007 (custom_id carries only the id)
     expect((json.data.custom_id as string).length).toBeLessThanOrEqual(100);
   });
 
+  // BUG-001 path (a) (2026-09-16 deep-dive): an XIVAuth-only preset author's
+  // ban target is a UUID, not a snowflake — the confirm button must still
+  // open the reason modal for one.
+  it('opens the reason modal for a UUID-shaped ban target (BUG-001 path (a))', async () => {
+    const uuid = 'a1b2c3d4-e5f6-4789-a1b2-c3d4e5f67890';
+    const interaction = {
+      id: 'int-1',
+      token: 'token-1',
+      application_id: 'app-123',
+      data: { custom_id: `ban_confirm_${uuid}` },
+      member: { user: { id: 'mod-1', username: 'Moderator' } },
+    };
+
+    const response = await handleBanConfirmButton(interaction, env, ctx);
+    const json = (await response.json()) as any;
+
+    expect(json.type).toBe(InteractionResponseType.MODAL);
+    expect(json.data.custom_id).toBe(`ban_reason_modal_${uuid}`);
+    expect((json.data.custom_id as string).length).toBeLessThanOrEqual(100);
+  });
+
+  it('still rejects a malformed target id that is neither a snowflake nor a UUID', async () => {
+    const interaction = {
+      id: 'int-1',
+      token: 'token-1',
+      application_id: 'app-123',
+      data: { custom_id: 'ban_confirm_not-a-real-id' },
+      member: { user: { id: 'mod-1', username: 'Moderator' } },
+    };
+
+    const response = await handleBanConfirmButton(interaction, env, ctx);
+    const json = (await response.json()) as any;
+
+    expect(json.data.content).toContain('Invalid button data');
+  });
+
   it('still accepts a legacy custom_id that carries a username but never echoes it into the modal id', async () => {
     const encodedUsername = base64UrlEncode('彩'.repeat(32));
     const interaction = {

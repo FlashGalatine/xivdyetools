@@ -38,7 +38,8 @@ All `/v1` JSON responses use a consistent envelope regardless of endpoint. The o
   },
   "meta": {
     "requestId": "550e8400-e29b-41d4-a716-446655440000",
-    "apiVersion": "v1"
+    "apiVersion": "v1",
+    "locale": "ja"
   }
 }
 ```
@@ -49,6 +50,7 @@ All `/v1` JSON responses use a consistent envelope regardless of endpoint. The o
 | `error` | string | Machine-readable error code — safe to `switch` on |
 | `message` | string | Human-readable description |
 | `details` | object? | Additional context (which param, what was received) |
+| `meta.locale` | string? | Same rule as a success response's `meta.locale` — present only for a non-English `?locale=` on a `/v1/*` route, omitted otherwise (including `en`, and every route outside `/v1/*`) |
 
 See the [Error Reference](./errors) for the full code catalog.
 

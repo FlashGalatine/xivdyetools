@@ -21,6 +21,7 @@
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
+import { readTextCapped } from '../../utils/read-text-capped.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
 import { discordLocaleToLocaleCode, type LocaleCode } from '../../services/i18n.js';
@@ -73,50 +74,6 @@ function isAllowedAttachmentUrl(url: string): boolean {
   } catch {
     return false;
   }
-}
-
-/**
- * Read a response body as text, refusing anything over `maxBytes`.
- *
- * Checks the declared Content-Length first (no read at all when it is over
- * the cap), then counts bytes as they stream so a body that lies about its
- * size — or has no length at all — is cut off at the cap instead of being
- * buffered whole.
- *
- * @returns the text, or null when the body exceeds the cap
- */
-async function readTextCapped(response: Response, maxBytes: number): Promise<string | null> {
-  const declared = Number(response.headers.get('content-length'));
-  if (Number.isFinite(declared) && declared > maxBytes) return null;
-
-  if (!response.body) {
-    // Bodiless responses (test doubles, HEAD-like answers): text() then measure
-    const text = await response.text();
-    return new TextEncoder().encode(text).byteLength > maxBytes ? null : text;
-  }
-
-  // workers-types declares `body` as ReadableStream<any>; pin the chunk type
-  const reader = (response.body as ReadableStream<Uint8Array>).getReader();
-  const chunks: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > maxBytes) {
-      await reader.cancel().catch(() => undefined);
-      return null;
-    }
-    chunks.push(value);
-  }
-
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return new TextDecoder().decode(merged);
 }
 
 export async function handleSwatchCommand(

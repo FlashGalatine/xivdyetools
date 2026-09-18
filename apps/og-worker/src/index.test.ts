@@ -795,3 +795,75 @@ describe('FINDING-024 / OG-7: analytics datapoints only for crawler hits', () =>
     fetchSpy.mockRestore();
   });
 });
+
+// ---------------------------------------------------------------------------
+// OPT-001 (deep dive 2026-09-16): the two SPA pass-through fetch() calls —
+// createToolHandler's `fetch(request)` and the catch-all's `fetch(c.req.raw)`
+// — carried no timeout, so a stalled origin held a crawler-adjacent human
+// request open for the platform default. Neither site has a static default
+// card to fall back to on timeout (that only exists on the /og/* image
+// routes and the crawler-HTML branches, which these sites never reach), so
+// both degrade to the same 302-to-APP_BASE_URL the surrounding code already
+// returns when there is no origin to pass through to at all.
+// ---------------------------------------------------------------------------
+describe('OPT-001: the SPA pass-through fetch() calls carry a 5s timeout', () => {
+  it('both pass-through sites forward with an AbortSignal.timeout(5000) signal', async () => {
+    const timeoutSpy = vi.spyOn(AbortSignal, 'timeout');
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('spa'));
+
+    // Site 1: createToolHandler's non-crawler branch (index.ts ~576).
+    await app.request('https://xivdyetools.app/harmony/?dye=1', {}, TEST_ENV);
+    // Site 2: the catch-all's non-crawler branch (index.ts ~1279) — a path
+    // that matches no tool, /og/*, or /presets/:id route.
+    await app.request('https://xivdyetools.app/some/unregistered/path', {}, TEST_ENV);
+
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    for (const call of fetchSpy.mock.calls) {
+      const init = call[1] as RequestInit | undefined;
+      expect(init?.signal).toBeInstanceOf(AbortSignal);
+    }
+    // The instanceof check alone can't fail (a plain, unrelated AbortSignal
+    // would also pass it) — assert the 5s budget was actually requested.
+    expect(timeoutSpy).toHaveBeenCalledWith(5000);
+
+    fetchSpy.mockRestore();
+    timeoutSpy.mockRestore();
+  });
+
+  it('a TimeoutError rejection falls back to the 302, not a 500, on both sites', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError'));
+
+    const toolRes = await app.request('https://xivdyetools.app/harmony/?dye=1', {}, TEST_ENV);
+    expect(toolRes.status).toBe(302);
+    expect(toolRes.headers.get('Location')).toBe('https://xivdyetools.app/');
+
+    const catchAllRes = await app.request('https://xivdyetools.app/some/unregistered/path', {}, TEST_ENV);
+    expect(catchAllRes.status).toBe(302);
+    expect(catchAllRes.headers.get('Location')).toBe('https://xivdyetools.app/');
+
+    fetchSpy.mockRestore();
+  });
+
+  it('an explicit AbortError rejection also falls back to the 302', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockRejectedValueOnce(new DOMException('The operation was aborted.', 'AbortError'));
+    const res = await app.request('https://xivdyetools.app/harmony/?dye=1', {}, TEST_ENV);
+    expect(res.status).toBe(302);
+    expect(res.headers.get('Location')).toBe('https://xivdyetools.app/');
+    fetchSpy.mockRestore();
+  });
+
+  it('a plain Error rejection still surfaces as an unhandled failure (500), not the fallback', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('network down'));
+    const res = await app.request('https://xivdyetools.app/harmony/?dye=1', {}, TEST_ENV);
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({
+      error: 'Internal Server Error',
+      message: 'An unexpected error occurred',
+    });
+    fetchSpy.mockRestore();
+  });
+});

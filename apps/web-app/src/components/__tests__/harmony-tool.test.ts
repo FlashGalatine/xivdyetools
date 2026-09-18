@@ -1144,4 +1144,51 @@ describe('HarmonyTool', () => {
       expect((n2 - b + 360) % 360).toBeCloseTo(240, 6);
     });
   });
+
+  describe('BUG-005: same-tool popstate re-reads the URL', () => {
+    afterEach(() => {
+      window.history.replaceState({}, '', '/');
+    });
+
+    /**
+     * router-service.ts now always notifies on popstate, passing
+     * `state.sameTool = true` when the resolved tool is the one already
+     * mounted (v4-layout uses that flag to skip its own remount). Before
+     * this fix, a same-tool popstate was never notified at all, so Back
+     * across a same-tool hand-off — e.g. a result card's "Inspect Dye in ->
+     * Harmony" doing `RouterService.navigateTo('harmony', { dye: B })` from
+     * inside Harmony itself — left the UI showing dye B while the URL (and
+     * history) had moved back to dye A. This proves the RouterService.subscribe
+     * callback this component registers still calls handleDeepLink() when
+     * `sameTool` is true, so it re-reads whatever `?dye=` Back landed on.
+     */
+    it('calls handleDeepLink again on a same-tool RouterService notification', async () => {
+      const { RouterService } = await import('@services/index');
+      const handleDeepLinkSpy = vi.spyOn(
+        HarmonyTool.prototype as unknown as { handleDeepLink(): void },
+        'handleDeepLink'
+      );
+
+      window.history.replaceState({}, '', '/harmony?dye=5771&harmony=complementary');
+      tool = mount();
+      await flush();
+      handleDeepLinkSpy.mockClear();
+
+      const subscribeMock = vi.mocked(RouterService.subscribe);
+      const routeListener = subscribeMock.mock.calls.at(-1)?.[0] as
+        ((state: { toolId: string; sameTool?: boolean }) => void) | undefined;
+      expect(routeListener).toBeDefined();
+
+      // Simulate Back landing on a different `?dye=` while staying on
+      // harmony. Use a legacy-range id (>= 5729, same convention as the
+      // colour-wheel tests above) so ShareService.resolveSharedDye's own
+      // "legacy itemID" guard rejects it cleanly via a toast instead of
+      // reaching dyeService.getByStainId — this test is only about
+      // handleDeepLink firing again, not dye resolution.
+      window.history.replaceState({}, '', '/harmony?dye=5772&harmony=complementary');
+      routeListener?.({ toolId: 'harmony', sameTool: true });
+
+      expect(handleDeepLinkSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 });

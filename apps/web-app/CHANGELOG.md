@@ -7,6 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.11.0] - 2026-09-17
+
+Deep-dive remediation, Sprints 1–2 and 7 (docs/audits/2026-09-16-deep-dive). One restored
+feature (the Palette Extractor's share link, dropped by the 4A rebuild); every other row is a
+defect the audit verified at `file:line`, each landed with a test that was red first.
+
+### Added
+
+- **Palette Extractor share link restored** (BUG-002). `extractor-tool.ts` wires `v4-share-button`
+  (compact, beside Export in the section header): the link carries `colors` — the extracted
+  colours in bar order, `#`-less uppercase, capped at the five og-worker's card accepts, picks
+  excluded — and `algo`. Opening a link renders those colours as equal-share bands with their
+  matched dyes and no image (`sharedPalette`); the loupe and the `+` tile stay inert until an
+  image is loaded, which replaces the shared palette. `ShareService.validateShareParams` gained an
+  `extractor` arm (non-hex entries and more than five rejected); og-worker's crawler route already
+  mapped `/extractor?colors=` to `/og/extractor/:colors.png`, so the OG card is reachable again
+  with no og-worker change. New `matcher.sharedPalette` key in all six locales; user guide
+  updated. Not carried by the link: the picture, the picks, Max Colors (a no-op on a shared
+  palette).
+
+### Fixed
+
+- **Back from `/presets/:id` keeps `<v4-preset-tool>` mounted** (BUG-005). `handlePresetSelect`
+  pushed `{ preset }` with no `toolId`, `RouterService.handlePopState` notified unconditionally and
+  `loadToolContent` re-created the element, dropping tab, search, scroll and the loaded pool.
+  `RouterService` now always notifies on popstate — including a same-tool one — and marks the
+  notification `sameTool: true` when the resolved tool is the one already mounted; `v4-layout.ts`'s
+  own subscriber uses that flag to skip its `loadToolContent` remount (the `navigationSeq`/
+  `superseded()` guards are untouched), while every other subscriber still gets the notification.
+  That matters beyond presets: Harmony's "Inspect Dye in → Harmony" does a same-tool `navigateTo`,
+  and Back on that history entry needs harmony-tool's own popstate subscriber to re-read `?dye=` —
+  which an unconditional skip at the router would have silently broken. The preset tool restores or
+  clears `selectedPreset` from the URL — `getSubPath()`, not `history.state`, so `null` (cold load)
+  and `{}` (the detail's own Back, edit/delete success, OAuth return) states resolve too — with a
+  `_restoreSeq` guard against a stale API fallback.
+- **`preset-tool.ts` clears its search debounce timer on disconnect** (BUG-027).
+  `disconnectedCallback` unsubscribed five services but left the debounce `setTimeout` running, so a
+  detached element's pending search could still fire a fetch after teardown.
+- **Preset detail renders the prices it fetches** (BUG-004). `priceData` was written on every
+  preset and on `prices-updated` but never read; with Show prices on the row now shows
+  `formatGil(minPrice)` + world/DC, keyed by `dye.itemID` (the fan-out key
+  `fetchPricesForDyes` re-keys onto), vendor cost otherwise.
+- **"Submit to Community" chunk-load failure is no longer silent** (BUG-003). The one bare
+  `void import().then()` gained the `.catch` + `errors.toolLoadFailed` toast its siblings had.
+- **`isAuthenticated()` memoises the in-flight `logout()`** (BUG-025) — N synchronous callers on an
+  expired token issued N revoke requests and notify storms.
+- **`CollectionService.importData` skips a bad record instead of aborting** (BUG-024) — a truthy
+  non-string `name` passed the guard and `name.trim()` threw mid-loop after earlier collections were
+  persisted; now `typeof` guarded and per-record `try/catch` with a `skippedInvalid` error.
+- **`add-to-collection-menu` measures itself before clamping** (BUG-029) — the off-screen check
+  assumed 200 px against a CSS max of 256 px.
+- **Preset edit form diffs dyes against the resolved baseline** (BUG-030) — an unresolvable stored
+  id no longer produces a shortened `dyes` patch on a no-edit Save.
+- **`BaseComponent.handleRetry()`/`renderError()` unbind listeners before re-rendering** (BUG-028).
+- **Extractor zoom canvas ignores non-primary mouse buttons** (BUG-022); **market-board's
+  status-clear timer goes through `safeTimeout`** (BUG-023).
+- **`checkVoteStatus()` carries a generation guard** (BUG-026) so an in-flight check cannot clobber
+  an optimistic vote.
+
+### Changed
+
+- **Dead context-action branches deleted** (REFACTOR-001). `result-card.ts`'s `ContextAction` is
+  now derived from a runtime `CONTEXT_ACTIONS` list; the `add-comparison`/`see-harmonies` family in
+  `swatch-tool.ts` and `mixer-tool.ts` — which dispatched a `navigate-to-tool` event nobody listened
+  for and could never be reached — is gone with its four orphaned i18n keys, and a static
+  vocabulary test guards against a reintroduced label.
+- **`RouterService` is imported from the `@services/index` barrel** in `gradient-tool`,
+  `v4/preset-tool` and `v4-layout` (BUG-040), enforced by a `no-restricted-imports` rule for
+  `src/components/**`; `welcome-modal.ts` is exempted because the barrel import grows the modals
+  chunk from 274.7 KB to 367.8 KB against a 280 KB budget.
+- `gradient-tool.ts` logs under `[GradientTool]`, not the pre-rename `[MixerTool]` (REFACTOR-006);
+  `config-sidebar`'s harmony initializer comes from `getDefaultConfig` (REFACTOR-007).
+
+### Tests
+
+- New suites for `v4/preset-detail` (prices, vote guard), `v4/preset-tool` (popstate state
+  machine), `collection-manager-modal` and `add-to-collection-menu` (their `istanbul ignore file`
+  pragmas and `vitest.config.ts` exclusions removed — BUG-041); `selectDye` and the two
+  "merges displayOptions" tests now assert state instead of `not.toThrow()` (BUG-038, BUG-039).
+  Coverage 79.9 / 65.9 / 76.5 / 81.3 against the 78 / 63 / 74 / 79 ratchet.
+
 ## [5.10.0] - 2026-09-16
 
 ### Added

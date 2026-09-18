@@ -46,7 +46,7 @@ import { COLOR_DISTANCE_MAX } from '../constants/index.js';
 export interface CharacterMatchOptions {
   /** Number of matches to return (default: 3) */
   count?: number;
-  /** Color matching algorithm (default: 'oklab') */
+  /** Color matching algorithm (default: 'ciede2000') */
   matchingMethod?: MatchingMethod;
 }
 

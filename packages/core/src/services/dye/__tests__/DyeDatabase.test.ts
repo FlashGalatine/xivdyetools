@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DyeDatabase } from '../DyeDatabase.js';
+import type { DyeInternal } from '../DyeDatabase.js';
 import type { Dye } from '@xivdyetools/types';
 import { AppError, ErrorCode } from '@xivdyetools/types';
 import type { Logger } from '@xivdyetools/logger/library';
@@ -168,6 +169,30 @@ describe('DyeDatabase', () => {
     it('should not be loaded before initialization', () => {
       expect(database.isLoadedStatus()).toBe(false);
     });
+
+    // BUG-010 (2026-09-16 audit): initialize() freezes every record at the
+    // end of the run. A re-initialize must build a FRESH `this.dyes` array
+    // of fresh records (it does, via `.map()` over the input) rather than
+    // writing into the already-frozen records from the first call — if a
+    // future change tried to reuse/mutate the old array in place, this
+    // would fail with TypeError instead of quietly succeeding.
+    it('re-initializes successfully after an earlier initialize() call froze its records', () => {
+      database.initialize(mockDyes);
+      expect(database.getDyeCount()).toBe(5);
+      const firstRun = database.getAllDyes();
+      expect(Object.isFrozen(firstRun[0])).toBe(true);
+
+      expect(() => database.initialize(mockDyes)).not.toThrow();
+      expect(database.isLoadedStatus()).toBe(true);
+      expect(database.getDyeCount()).toBe(5);
+
+      const secondRun = database.getAllDyes();
+      expect(Object.isFrozen(secondRun[0])).toBe(true);
+      // Second run built brand-new records, not the frozen ones from the
+      // first run.
+      expect(secondRun[0]).not.toBe(firstRun[0]);
+      expect(secondRun[0]).toEqual(firstRun[0]);
+    });
   });
 
   describe('ensureLoaded', () => {
@@ -204,6 +229,52 @@ describe('DyeDatabase', () => {
       const emptyDB = new DyeDatabase();
       expect(() => emptyDB.getAllDyes()).toThrow(AppError);
     });
+
+    // BUG-010 (2026-09-16 audit): getAllDyes()'s `[...this.dyes]` copies the
+    // ARRAY only — the elements are the same DyeInternal records shared with
+    // dyesByIdMap, dyesByHueBucket and the k-d tree. If initialize() stopped
+    // freezing records (or the freeze loop were removed), these two
+    // assertions would go from throwing to silently succeeding.
+    describe('frozen records (BUG-010)', () => {
+      it('throws TypeError when mutating a top-level field on a returned dye', () => {
+        const dyes = database.getAllDyes();
+        expect(() => {
+          (dyes[0] as { name: string }).name = 'x';
+        }).toThrow(TypeError);
+      });
+
+      it('throws TypeError when mutating the nested rgb object on a returned dye', () => {
+        const dyes = database.getAllDyes();
+        expect(() => {
+          (dyes[0].rgb as { r: number }).r = 0;
+        }).toThrow(TypeError);
+      });
+
+      it('throws TypeError when mutating the nested hsv object on a returned dye', () => {
+        const dyes = database.getAllDyes();
+        expect(() => {
+          (dyes[0].hsv as { h: number }).h = 0;
+        }).toThrow(TypeError);
+      });
+
+      it('throws TypeError when mutating the nested lab object on a returned dye', () => {
+        const dyes = database.getAllDyes();
+        expect(() => {
+          ((dyes[0] as DyeInternal).lab as { L: number }).L = 0;
+        }).toThrow(TypeError);
+      });
+
+      it('leaves the record unchanged after a failed mutation attempt', () => {
+        const dyes = database.getAllDyes();
+        const before = dyes[0].name;
+        try {
+          (dyes[0] as { name: string }).name = 'x';
+        } catch {
+          // expected — TypeError under ESM strict mode
+        }
+        expect(dyes[0].name).toBe(before);
+      });
+    });
   });
 
   describe('getDyeById', () => {
@@ -215,6 +286,16 @@ describe('DyeDatabase', () => {
       const dye = database.getDyeById(5729);
       expect(dye).toBeDefined();
       expect(dye?.name).toBe('Snow White');
+    });
+
+    it('returns a frozen record (BUG-010, 2026-09-16 audit)', () => {
+      const dye = database.getDyeById(5729);
+      expect(dye).not.toBeNull();
+      expect(Object.isFrozen(dye)).toBe(true);
+      expect(Object.isFrozen(dye?.rgb)).toBe(true);
+      expect(Object.isFrozen(dye?.hsv)).toBe(true);
+      expect((dye as DyeInternal | null)?.lab).toBeDefined();
+      expect(Object.isFrozen((dye as DyeInternal | null)?.lab)).toBe(true);
     });
 
     it('should find dye by itemID', () => {

@@ -4,10 +4,14 @@
  * SEC-003: JSON depth limiting — prevents deeply nested payloads from
  *          causing excessive CPU consumption during parsing.
  * SEC-004: Request body size limits — rejects oversized payloads before parsing.
+ *
+ * REFACTOR-009 (docs/audits/2026-09-16-deep-dive): the two guards themselves
+ * are `@xivdyetools/worker-kit`'s `bodyGuards()` factory — this module now
+ * only supplies this Worker's parameters (size cap, error envelopes, the
+ * preview-image exemption) and keeps the local names everything else imports.
  */
 
-import { bodyLimit } from 'hono/body-limit';
-import type { MiddlewareHandler } from 'hono';
+import { bodyGuards } from '@xivdyetools/worker-kit/body-guards';
 import type { Env } from '../types.js';
 import { MAX_PREVIEW_IMAGE_BYTES } from '../services/preview-image-service.js';
 
@@ -20,9 +24,9 @@ const MAX_JSON_DEPTH = 10;
 /**
  * The preview-image upload is the only route on this Worker that carries a
  * binary body, and the only one that may exceed MAX_BODY_SIZE — an author's
- * screenshot runs to megabytes. Both guards in this module exist to protect
- * JSON endpoints, and both would reject a legitimate upload before the route
- * ever ran, which is precisely what happened: the feature was unreachable in
+ * screenshot runs to megabytes. Both guards below exist to protect JSON
+ * endpoints, and both would reject a legitimate upload before the route ever
+ * ran, which is precisely what happened: the feature was unreachable in
  * production while its own tests passed, because they mounted the router
  * without this middleware.
  *
@@ -41,137 +45,43 @@ export function isPreviewImageUpload(method: string, path: string): boolean {
   return method === 'POST' && PREVIEW_IMAGE_PATH.test(path);
 }
 
-const enforceBodySizeLimit = bodyLimit({
+/**
+ * SEC-003 / SEC-004: this Worker's two body guards.
+ *
+ * `bodySizeLimit` rejects requests with bodies larger than MAX_BODY_SIZE
+ * (Content-Length first, then the actual stream — FINDING-004 / PAPI-3,
+ * 2026-08-21 security audit: the upload route used to buffer the whole body
+ * with `arrayBuffer()` before comparing against MAX_PREVIEW_IMAGE_BYTES, so
+ * the 5 MB rule only applied after up to ~100 MB had already been held in
+ * memory). `jsonDepthLimit` validates JSON structure on mutation requests.
+ * The preview-image upload gets its own (5 MB) cap and skips the JSON check
+ * entirely — see isPreviewImageUpload.
+ */
+export const { bodySizeLimit, jsonDepthLimit } = bodyGuards<{ Bindings: Env }>({
   maxSize: MAX_BODY_SIZE,
-  onError: (c) => {
-    return c.json(
+  maxDepth: MAX_JSON_DEPTH,
+  onTooLarge: (c) =>
+    c.json(
       {
         success: false,
         error: 'PAYLOAD_TOO_LARGE',
         message: `Request body exceeds maximum size of ${MAX_BODY_SIZE} bytes`,
       },
       413
-    );
+    ),
+  onInvalidJson: (c, message) =>
+    c.json({ success: false, error: 'BAD_REQUEST', message }, 400),
+  exempt: {
+    match: (c) => isPreviewImageUpload(c.req.method, c.req.path),
+    maxSize: MAX_PREVIEW_IMAGE_BYTES,
+    onTooLarge: (c) =>
+      c.json(
+        {
+          success: false,
+          error: 'VALIDATION_ERROR',
+          message: 'Image must be at most 5 MB',
+        },
+        400
+      ),
   },
 });
-
-/**
- * FINDING-004 / PAPI-3 (2026-08-21 security audit): the upload route used to
- * be exempt and then buffer the whole body with `arrayBuffer()` before
- * comparing against MAX_PREVIEW_IMAGE_BYTES — the 5 MB rule only applied
- * after up to ~100 MB had been held in memory. Hono's bodyLimit checks
- * Content-Length first and then the actual stream, so the cap binds while
- * bytes arrive. Same status + message as the route's own check, which stays
- * as a backstop, so the client contract is unchanged.
- */
-const enforcePreviewImageLimit = bodyLimit({
-  maxSize: MAX_PREVIEW_IMAGE_BYTES,
-  onError: (c) => {
-    return c.json(
-      {
-        success: false,
-        error: 'VALIDATION_ERROR',
-        message: 'Image must be at most 5 MB',
-      },
-      400
-    );
-  },
-});
-
-/**
- * SEC-004: Body size limit middleware.
- * Rejects requests with bodies larger than MAX_BODY_SIZE.
- * Uses Hono's built-in bodyLimit which checks the actual stream, not just Content-Length.
- * The preview-image upload gets its own (5 MB) limit — see isPreviewImageUpload.
- */
-export const bodySizeLimit: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
-  if (isPreviewImageUpload(c.req.method, c.req.path)) {
-    return enforcePreviewImageLimit(c, next);
-  }
-  return enforceBodySizeLimit(c, next);
-};
-
-/**
- * SEC-003: JSON depth validation middleware.
- * For mutation requests (POST/PATCH/PUT) with JSON content, validates that
- * the parsed JSON does not exceed the maximum nesting depth and does not
- * contain prototype pollution keys.
- */
-export const jsonDepthLimit: MiddlewareHandler<{ Bindings: Env }> = async (c, next) => {
-  const method = c.req.method;
-  if (!['POST', 'PATCH', 'PUT'].includes(method)) {
-    return next();
-  }
-
-  // Binary upload route: nothing here can apply to raw image bytes.
-  if (isPreviewImageUpload(method, c.req.path)) {
-    return next();
-  }
-
-  const contentType = c.req.header('content-type');
-  if (!contentType?.includes('application/json')) {
-    return next();
-  }
-
-  // Read the body text — Hono caches this, so downstream c.req.json() still works
-  let text: string;
-  try {
-    text = await c.req.text();
-  } catch {
-    return next();
-  }
-
-  if (!text) {
-    return next();
-  }
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    return c.json(
-      { success: false, error: 'BAD_REQUEST', message: 'Invalid JSON syntax' },
-      400
-    );
-  }
-
-  const error = validateStructure(parsed, MAX_JSON_DEPTH, 0);
-  if (error) {
-    return c.json(
-      { success: false, error: 'BAD_REQUEST', message: error },
-      400
-    );
-  }
-
-  await next();
-};
-
-/**
- * Recursively validate object structure for depth limits and prototype pollution.
- * Returns an error message if invalid, or null if valid.
- */
-function validateStructure(obj: unknown, maxDepth: number, depth: number): string | null {
-  if (depth > maxDepth) {
-    return `JSON nesting exceeds maximum depth of ${maxDepth}`;
-  }
-
-  if (typeof obj !== 'object' || obj === null) {
-    return null;
-  }
-
-  // Check for prototype pollution keys
-  const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
-  for (const key of dangerousKeys) {
-    if (Object.hasOwn(obj, key)) {
-      return 'Invalid JSON structure';
-    }
-  }
-
-  const values = Array.isArray(obj) ? obj : Object.values(obj);
-  for (const value of values) {
-    const error = validateStructure(value, maxDepth, depth + 1);
-    if (error) return error;
-  }
-
-  return null;
-}

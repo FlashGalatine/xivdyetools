@@ -10,10 +10,7 @@
 
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
-import { ephemeralResponse, updateMessageResponse } from '../../utils/response.js';
-
-/** Discord snowflake — the only shape a ban target id may take (FINDING-007 / MOD-5). */
-const SNOWFLAKE_RE = /^\d{17,20}$/;
+import { ephemeralResponse, updateMessageResponse, isBanTargetId } from '../../utils/response.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import * as presetApi from '../../services/preset-api.js';
 
@@ -83,7 +80,9 @@ export async function handleBanConfirmButton(
   if (!targetUserId) {
     return ephemeralResponse('Invalid target user.');
   }
-  if (!SNOWFLAKE_RE.test(targetUserId)) {
+  // BUG-001 path (a): a Discord snowflake or an XIVAuth UUID (FINDING-007 / MOD-5's
+  // original intent, extended to the new shape — see `isBanTargetId`).
+  if (!isBanTargetId(targetUserId)) {
     logger?.warn('Ban confirm button with a malformed target id', { customId });
     return ephemeralResponse('Invalid button data.');
   }

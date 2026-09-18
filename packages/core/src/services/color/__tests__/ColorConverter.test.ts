@@ -470,6 +470,43 @@ describe('ColorConverter', () => {
       it('should throw AppError for invalid hex', () => {
         expect(() => converter.hexToHsv('invalid')).toThrow(AppError);
       });
+
+      // BUG-009 (2026-09-16 audit): hexToHsv used to consult the LRU cache
+      // (keyed on the normalized, unprefixed hex) before validating, so a
+      // bare hex that happened to already be warm from a prior `#`-prefixed
+      // call would succeed while the same string cold threw. Fixed by
+      // validating first. If the validate-before-cache guard were removed
+      // (or moved back below the cache lookup), the "still throws" assertion
+      // below would go from throwing to returning a value, failing the test.
+      describe('BUG-009: cold-vs-warm validation consistency', () => {
+        it('throws on a cold bare (unprefixed) hex', () => {
+          const bareHex = 'FF0000';
+          expect(() => converter.hexToHsv(bareHex)).toThrow(AppError);
+        });
+
+        it('still throws on the same bare hex after it has been warmed via the prefixed form', () => {
+          const prefixedHex = '#FF0000';
+          const bareHex = 'FF0000';
+
+          // Warm the cache under the prefixed form's normalized key.
+          converter.hexToHsv(prefixedHex);
+
+          // The bare form must still be rejected — validation must run
+          // before the cache lookup, not be bypassed once the key is warm.
+          expect(() => converter.hexToHsv(bareHex)).toThrow(AppError);
+        });
+
+        it('returns the same HSV for the prefixed hex whether cold or warm', () => {
+          const prefixedHex = '#FF0000';
+          const cold = new ColorConverter().hexToHsv(prefixedHex);
+
+          const warmConverter = new ColorConverter();
+          warmConverter.hexToHsv(prefixedHex); // warm the cache
+          const warm = warmConverter.hexToHsv(prefixedHex);
+
+          expect(warm).toEqual(cold);
+        });
+      });
     });
 
     // ==========================================================================

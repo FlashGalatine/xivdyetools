@@ -48,6 +48,14 @@ export interface RouteDefinition {
 export interface RouteState {
   toolId: ToolId;
   params: URLSearchParams;
+  /**
+   * Set only by a popstate whose resolved tool equals the already-mounted
+   * tool; the layout uses it to skip a remount, other subscribers should
+   * still re-read the URL (e.g. a same-tool `?dye=` change on Back/Forward).
+   * `undefined`/`false` on every other notification (navigateTo, replaceRoute,
+   * or a cross-tool popstate).
+   */
+  sameTool?: boolean;
 }
 
 type RouteChangeListener = (state: RouteState) => void;
@@ -356,13 +364,24 @@ export class RouterService {
   private static handlePopState = (event: PopStateEvent): void => {
     const state = event.state as { toolId?: ToolId } | null;
 
-    if (state?.toolId && this.isValidToolId(state.toolId)) {
-      this.currentToolId = state.toolId;
-    } else {
-      // Parse from URL if no state
-      const toolId = this.parseCurrentPath();
-      this.currentToolId = toolId;
-    }
+    const resolvedToolId =
+      state?.toolId && this.isValidToolId(state.toolId) ? state.toolId : this.parseCurrentPath();
+
+    // BUG-005: a popstate that resolves to the tool already mounted (Back
+    // from a preset detail pushes `{ toolId: 'presets', preset }`; popping
+    // again lands on the list's own `{ toolId: 'presets' }` entry) must not
+    // trigger v4-layout's loadToolContent — that would remount
+    // <v4-preset-tool> and lose its tab/search/scroll for a transition the
+    // tool itself already handles (see preset-tool.ts's own popstate
+    // listener). But a same-tool popstate can still carry a query-only
+    // change a subscriber needs to observe (e.g. Harmony's "Inspect Dye in →
+    // Harmony" does a same-tool `navigateTo('harmony', { dye })`, and Back
+    // must land harmony-tool back on the prior `?dye=`). So we always
+    // notify, and pass `sameTool` so the layout — the one listener that
+    // must NOT remount — can skip `loadToolContent` on its own while every
+    // other subscriber still re-reads the URL.
+    const toolChanged = resolvedToolId !== this.currentToolId;
+    this.currentToolId = resolvedToolId;
 
     // Update title
     const route = this.getRouteForTool(this.currentToolId);
@@ -370,7 +389,7 @@ export class RouterService {
       document.title = this.composeDocumentTitle(route);
     }
 
-    this.notifyListeners();
+    this.notifyListeners(!toolChanged);
     logger.info(`[RouterService] Popstate: ${this.currentToolId}`);
   };
 
@@ -407,8 +426,17 @@ export class RouterService {
     return toolId ?? DEFAULT_TOOL;
   }
 
-  private static notifyListeners(): void {
+  /**
+   * @param sameTool - Forwarded onto the notified `RouteState.sameTool`.
+   * Only `handlePopState` passes an explicit value; `navigateTo` and
+   * `replaceRoute` omit it, so subscribers see it as `undefined` (falsy)
+   * on every non-popstate navigation.
+   */
+  private static notifyListeners(sameTool?: boolean): void {
     const state = this.getCurrentRoute();
+    if (sameTool !== undefined) {
+      state.sameTool = sameTool;
+    }
     this.listeners.forEach((listener) => {
       try {
         listener(state);

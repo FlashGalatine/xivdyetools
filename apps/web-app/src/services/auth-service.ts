@@ -168,6 +168,14 @@ class AuthServiceImpl {
 
   private listeners: Set<AuthStateListener> = new Set();
   private initialized = false;
+  // BUG-025: `isAuthenticated()` fires `void this.logout()` from a
+  // synchronous getter with real multi-listener call sites (preset-detail,
+  // community-preset-service, preset-submission-service, config-sidebar).
+  // Without memoising the in-flight call, N synchronous callers on an
+  // expired token each started their own `/auth/revoke` request and their
+  // own listener-notify pass. `logout()` now returns the same in-flight
+  // promise to every caller until it settles.
+  private logoutPromise: Promise<void> | null = null;
 
   /**
    * Initialize auth service - restore session from storage
@@ -721,8 +729,25 @@ class AuthServiceImpl {
 
   /**
    * Logout - clear tokens and notify listeners
+   *
+   * BUG-025: memoises the in-flight logout so concurrent/re-entrant callers
+   * (e.g. several synchronous `isAuthenticated()` checks on an expired
+   * token) share one revoke request and one notify pass instead of each
+   * starting their own.
    */
   async logout(): Promise<void> {
+    if (this.logoutPromise) {
+      return this.logoutPromise;
+    }
+
+    const promise = this.performLogout().finally(() => {
+      this.logoutPromise = null;
+    });
+    this.logoutPromise = promise;
+    return promise;
+  }
+
+  private async performLogout(): Promise<void> {
     logger.info('Logging out...');
 
     // Try to revoke token on server (non-blocking)

@@ -19,7 +19,7 @@ export function createMockChannel(overrides?: Partial<MockChannel>): MockChannel
   return {
     id: 'channel-01',
     serverId: 'server-01',
-    sendMessage: vi.fn().mockResolvedValue({ id: 'sent-msg-01' }),
+    sendMessage: vi.fn().mockResolvedValue({ id: 'sent-msg-01', edit: vi.fn().mockResolvedValue(undefined) }),
     ...overrides,
   };
 }

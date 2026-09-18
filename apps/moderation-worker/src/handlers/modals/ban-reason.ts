@@ -12,6 +12,7 @@ import {
   ephemeralResponse,
   updateMessageResponse,
   sanitizeErrorMessage,
+  isBanTargetId,
   type DiscordEmbed,
 } from '../../utils/response.js';
 import { base64UrlDecode } from '@xivdyetools/auth/encoding';
@@ -62,8 +63,13 @@ export async function handleBanReasonModal(
   if (!targetUserId) {
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid target user.')] });
   }
-  // MOD-5: the id must be a Discord snowflake before it reaches D1 or the API
-  if (!/^\d{17,20}$/.test(targetUserId)) {
+  // MOD-5: the id must be a Discord snowflake OR an XIVAuth UUID before it
+  // reaches D1 or the API (BUG-001 path (a), 2026-09-16 deep-dive — this is
+  // the last gate in the ban_user flow, after the confirm button re-parses
+  // the same id out of a new custom_id, so it has to accept the same shapes
+  // preset.ts and ban-confirmation.ts do or a UUID target would be refused
+  // here even though it passed every earlier step).
+  if (!isBanTargetId(targetUserId)) {
     logger?.warn('Ban reason modal with a malformed target id', { customId });
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal data.')] });
   }
