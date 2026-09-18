@@ -5,6 +5,14 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-09-17
+
+Sprint 15 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive/`).
+
+### Changed
+
+- **`detectImageFormat` and its magic-byte table now come from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008)**, instead of a local copy. This app's own table and decision order in `src/validators.ts` were the source of truth worker-kit's sniffer was ported from in Sprint 13, so behaviour is unchanged — same table, same 12-byte precondition, same png → jpeg → gif → webp → bmp decision order, same two-part WebP check. The unused `matchesMagicBytes` helper was removed with it, and `types.ts`'s `ImageFormat` now re-exports worker-kit's identical union instead of declaring a second one. The existing byte-table test in `src/validators.test.ts` is unchanged and now runs against the imported function as the consumer-side parity proof.
+
 ## [1.3.1] - 2026-09-16
 
 ### Removed (2026-09-15 dead-code audit)
