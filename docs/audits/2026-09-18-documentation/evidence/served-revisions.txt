@@ -1,0 +1,38 @@
+﻿=== Served Revisions (Latest Success per Workflow) ===
+
+deploy-api-worker:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-discord-worker:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-discord-worker-beta:
+[]
+
+deploy-image-worker:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-moderation-worker:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-oauth:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-og-worker:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-og-worker-beta:
+[]
+
+deploy-presets-api:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-web-app:
+[{"createdAt":"2026-09-18T12:47:33Z","displayTitle":"Merge pull request #188 from FlashGalatine/worktree-deep-dive-2026-09-16","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845"}]
+
+deploy-web-app-beta:
+[]
+Exit code: 0
+=== Recent Runs (Last 12, All Workflows) ===
+
+[{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy OAuth Worker"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy Image Worker"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy OG Worker"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy API Worker"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy Presets API"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy Moderation Worker"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy Discord Worker"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"Deploy Web App"},{"conclusion":"success","createdAt":"2026-09-18T12:47:33Z","headSha":"0fec18f4fd96ab6b03b50fff606a0ced6817a845","status":"completed","workflowName":"CI"},{"conclusion":"success","createdAt":"2026-09-17T15:33:51Z","headSha":"79a69d1f3fb49d1ae98f61c7fa02d36a37a10c55","status":"completed","workflowName":"CI"},{"conclusion":"success","createdAt":"2026-09-16T15:26:14Z","headSha":"79a69d1f3fb49d1ae98f61c7fa02d36a37a10c55","status":"completed","workflowName":"CI"},{"conclusion":"success","createdAt":"2026-09-16T13:01:26Z","headSha":"79a69d1f3fb49d1ae98f61c7fa02d36a37a10c55","status":"completed","workflowName":"Deploy Web App"}]
