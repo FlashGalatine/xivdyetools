@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.6] - 2026-09-17
+
+### Changed
+
+- `src/middleware/body-validation.ts`'s two guards (SEC-003 JSON depth, SEC-004 body size) are now `@xivdyetools/worker-kit`'s `bodyGuards()` factory (REFACTOR-009) — this module supplies only the 100 KB cap, the `PAYLOAD_TOO_LARGE` 413 / `BAD_REQUEST` 400 envelopes, and the preview-image upload's exemption (its own 5 MB cap, `VALIDATION_ERROR` 400, and skipping the JSON depth check). `isPreviewImageUpload` and `PREVIEW_IMAGE_CONTENT_TYPES` stay local. No response byte changed; both existing middleware test files pass unchanged (`docs/audits/2026-09-16-deep-dive/`).
+- `sniffImageType` (`src/services/preview-image-service.ts`) now calls `@xivdyetools/worker-kit/image-sniff`'s shared sniffer instead of carrying its own magic-byte table (REFACTOR-008), keeping this route's pre-filter to exactly `png`/`jpeg`/`webp` — a GIF or BMP still returns `null`, as it always has. No response byte changed (`docs/audits/2026-09-16-deep-dive/`).
+
 ## [2.3.5] - 2026-09-17
 
 ### Fixed
