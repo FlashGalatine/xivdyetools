@@ -41,7 +41,7 @@
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.2.1 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.3.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -155,7 +155,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.5.7 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 4 — `/manual` Spectrum & Prices topic defers so a cold world lookup cannot miss Discord's 3 s ack (BUG-008); `/webhooks/preset-submission` body bounded by streamed bytes (BUG-013); `/stats health` reports `env.ENVIRONMENT` (BUG-012); `/preset` schema carries the 2–50 / 10–200 length bounds and autocomplete names are capped at 100 chars (REFACTOR-003, needs `register-commands`); notify helpers log through the request logger (REFACTOR-002); `/mixer` and `/gradient` adapters gain suites and enter the coverage gate (BUG-033/034); picks up bot-logic 4.2.1 (`/swatch` eye markers) |
+| v5.5.7 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 4 — `/manual` Spectrum & Prices topic defers so a cold world lookup cannot miss Discord's 3 s ack (BUG-008); `/webhooks/preset-submission` body bounded by streamed bytes (BUG-013); `/stats health` reports `env.ENVIRONMENT` (BUG-012); `/preset` schema carries the 2–50 / 10–200 length bounds and autocomplete names are capped at 100 chars (REFACTOR-003, needs `register-commands`); notify helpers log through the request logger (REFACTOR-002); `/mixer` and `/gradient` adapters gain suites and enter the coverage gate (BUG-033/034); picks up bot-logic 4.3.0 (`/swatch` eye markers) |
 | v5.5.6 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-008) — the test-only `getPreference` single-key reader removed; `getUserPreferences` is the one production path |
 | v5.5.5 | Sep 2026 (prepared) | GitHub webhook HMAC checks the received bytes before text decoding; completes the Sprint 0 raw-byte requirement |
 | v5.5.4 | Sep 2026 | Legacy preview controls refresh the current image and require a second click |
@@ -467,7 +467,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v4.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 3 — `/swatch` eye rows carry the `·L`/`·R`/`·LR` marker on the row label so off-grid heterochromia rows are told apart (BUG-006); dye-info MKT row derives its item ID through core's `getMarketItemID` (REFACTOR-005) |
+| v4.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 3 (minor, not patch — the marker is an observable change to rendered output) — `/swatch` eye rows carry the `·L`/`·R`/`·LR` marker on the row label so off-grid heterochromia rows are told apart (BUG-006); dye-info MKT row derives its item ID through core's `getMarketItemID` (REFACTOR-005) |
 | **v4.2.0** | **Sep 2026** | **`HarmonyInput.wheel` (`ColorWheelId`) passed through to core's `generateHarmonySlots`, `getLocalizedColorWheelName`, `/harmony` share URL carries `&wheel=` (PR #167); `HarmonyInput.harmonyOptions` deprecated — its `colorSpace` has been ignored since PR #159** |
 | v4.1.0 | Sep 2026 | `/comparison`'s duel readout prints `ΔEOK2`; the `/manual` matching-methods topic names it that way in all six locales |
 | **v4.0.0** | **Sep 2026** | **⚠️ BREAKING — requires `@xivdyetools/svg` 4.x (`generatePresetSwatch` signature); 15 locale keys removed (`harmony.*` and `accessibility.*` names now come from core, TERM-001 — the bot had named harmonies and colour-vision types differently from the rest of the product)** |

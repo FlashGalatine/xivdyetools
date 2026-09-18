@@ -25,7 +25,7 @@ import { MemoryRateLimiter, KVRateLimiter, getClientIp,
 import { UpstashRateLimiter } from '@xivdyetools/worker-kit/rate-limiter/upstash'; // single backend
 ```
 
-The root export re-exports both modules; subpaths keep bundles lean for a consumer that needs only the rate-limiter engine and not the Hono middleware — `hono` and `@cloudflare/workers-types` are both optional peers for exactly that reason. No in-repo consumer is currently rate-limiter-only (see Consumers below).
+The root export re-exports three of the four modules (`./middleware`, `./image-sniff`, `./rate-limiter`) — `./body-guards` is subpath-only, since it imports `hono/body-limit` at runtime and `hono` is an optional peer; re-exporting it from the root would break a rate-limiter-only consumer importing the root under plain Node ESM. Subpaths otherwise keep bundles lean for a consumer that needs only the rate-limiter engine and not the Hono middleware — `hono` and `@cloudflare/workers-types` are both optional peers for exactly that reason. No in-repo consumer is currently rate-limiter-only (see Consumers below).
 
 ## Commands
 

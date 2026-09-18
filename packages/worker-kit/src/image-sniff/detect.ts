@@ -97,21 +97,33 @@ export function detectImageFormat(bytes: Uint8Array): ImageFormat | undefined {
  * or re-encodes only some of the five: pass the accepted list and an
  * unsupported-but-valid image is reported the same way as an unrecognised one.
  *
+ * Two overloads, not one defaulted generic: with no `accept` list there is
+ * nothing to narrow to, so the result is typed `ImageFormat | null`. A single
+ * `<T extends ImageFormat = ImageFormat>` signature let a caller write
+ * `sniffImageType<'png'>(bytes)` with no `accept` argument and get back a
+ * value typed `'png' | null` for a buffer that was actually a JPEG — the cast
+ * from `ImageFormat` to `T` had nothing to check it against. Only the
+ * `accept`-bearing overload can narrow, because only it supplies a `T`.
+ *
  * @param bytes - The first 12 or more bytes of the file
  * @param accept - Formats the caller supports; every format when omitted
  * @returns The detected format when accepted, otherwise `null`
  */
-export function sniffImageType<T extends ImageFormat = ImageFormat>(
+export function sniffImageType(bytes: Uint8Array): ImageFormat | null;
+export function sniffImageType<T extends ImageFormat>(
   bytes: Uint8Array,
-  accept?: readonly T[]
-): T | null {
+  accept: readonly T[]
+): T | null;
+export function sniffImageType(
+  bytes: Uint8Array,
+  accept?: readonly ImageFormat[]
+): ImageFormat | null {
   const format = detectImageFormat(bytes);
   if (format === undefined) {
     return null;
   }
-  const narrowed = format as T;
-  if (accept && !accept.includes(narrowed)) {
+  if (accept && !accept.includes(format)) {
     return null;
   }
-  return narrowed;
+  return format;
 }

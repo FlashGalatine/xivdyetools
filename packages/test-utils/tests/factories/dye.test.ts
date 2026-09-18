@@ -254,6 +254,13 @@ describe('createMockDye', () => {
     expect(dye.id).toBe(5729);
   });
 
+  it('treats explicit stainID: undefined as absent and gets the sequence default', () => {
+    const dye = createMockDye({ stainID: undefined });
+
+    expect(dye.stainID).toBeGreaterThanOrEqual(1);
+    expect(dye.stainID).toBeLessThanOrEqual(254);
+  });
+
   it('does not advance the default sequence when stainID is explicitly overridden', () => {
     createMockDye({ stainID: null });
     const dye = createMockDye();
@@ -305,7 +312,7 @@ describe('createMockDye', () => {
   });
 });
 
-/** Kept as a function so the 254 literal only needs to change in one place if MAX_STAIN_ID ever does. */
+/** Dedupes the 254 literal within this test file only; keep in sync with MAX_STAIN_ID in src/factories/dye.ts. */
 function MAX_STAIN_ID_FOR_TEST(): number {
   return 254;
 }

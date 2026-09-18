@@ -25,7 +25,7 @@ import {
   type MiddlewareVariables,
 } from '@xivdyetools/worker-kit';
 
-// Request body guards (root export, or ./body-guards)
+// Request body guards (./body-guards only — it imports hono/body-limit at runtime)
 import { bodyGuards } from '@xivdyetools/worker-kit/body-guards';
 
 // Magic-byte image sniffing (root export, or ./image-sniff) — no Hono needed
@@ -41,7 +41,7 @@ import {
 import { UpstashRateLimiter } from '@xivdyetools/worker-kit/rate-limiter/upstash';
 ```
 
-The root export re-exports every module; the subpaths (`./middleware`, `./body-guards`, `./image-sniff`, `./rate-limiter`, `./rate-limiter/{memory,kv,upstash,cloudflare,presets}`) keep bundles lean.
+The root export re-exports every module except `./body-guards` (subpath-only, see below); the subpaths (`./middleware`, `./body-guards`, `./image-sniff`, `./rate-limiter`, `./rate-limiter/{memory,kv,upstash,cloudflare,presets}`) keep bundles lean.
 
 ## Middleware
 

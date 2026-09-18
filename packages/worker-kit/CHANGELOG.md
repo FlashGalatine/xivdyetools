@@ -7,8 +7,9 @@ All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-
 Deep-dive remediation, Sprint 13 (`docs/audits/2026-09-16-deep-dive/`). Minor bump: two new
 subpaths, nothing removed and no existing behaviour changed. `apps/oauth` (Sprint 14),
 `apps/image-worker` (Sprint 15) and `apps/presets-api` (Sprint 16) adopted them in the same
-release; only the four `bodyGuards` option types keep a `@public` tag (consumers pass option
-literals and never import the type names). `./body-guards` is subpath-only — it imports
+release; only five exports keep a `@public` tag — the four `bodyGuards` option types (consumers
+pass option literals and never import the type names) plus `IMAGE_MAGIC_BYTES` (in-repo consumers
+reach it only through `detectImageFormat`). `./body-guards` is subpath-only — it imports
 `hono/body-limit` at runtime and `hono` is an optional peer, so it is not re-exported from the
 root barrel; `./image-sniff` is (it has no runtime dependency).
 

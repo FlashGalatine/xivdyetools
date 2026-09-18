@@ -222,10 +222,16 @@ export function createMockDye(overrides: Partial<Dye> = {}): Dye {
   // null-arm fixture (types/src/dye/dye.ts: "The `null` arm survives only
   // for legacy fixture shapes that carry `id`/`itemID` without a `stainID`")
   // could never be built through this factory. Checking for the key's
-  // presence instead lets `null` pass through untouched.
-  const stainID: number | null = 'stainID' in overrides ? (overrides.stainID as number | null) : nextStainId();
+  // presence instead lets `null` pass through untouched. Treat an explicit
+  // `undefined` as absent so `createMockDye({ stainID: undefined })` gets
+  // the sequence default, not an invalid `undefined` value.
+  const stainID: number | null = 'stainID' in overrides && overrides.stainID !== undefined ? (overrides.stainID as number | null) : nextStainId();
   const itemID = overrides.itemID ?? legacyItemIdForStain(stainID);
   const id = overrides.id ?? itemID;
+
+  // Remove stainID from overrides if it was undefined, so the spread doesn't
+  // override the computed value with undefined.
+  const { stainID: _, ...restOverrides } = overrides;
 
   return {
     itemID,
@@ -245,6 +251,6 @@ export function createMockDye(overrides: Partial<Dye> = {}): Dye {
     isCosmic: false,
     isIshgardian: false,
     consolidationType: null,
-    ...overrides,
+    ...restOverrides,
   };
 }

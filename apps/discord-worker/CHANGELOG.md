@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.5.7] - 2026-09-16
 
-2026-09-16 deep-dive Sprint 4 (`docs/audits/2026-09-16-deep-dive/`). Picks up `@xivdyetools/bot-logic` 4.2.1 (`/swatch` eye rows labelled `EYES·L` / `EYES·R` / `EYES·LR` so off-grid heterochromia rows are told apart, BUG-006). The `/preset` schema change means `register-commands` must run with the deploy.
+2026-09-16 deep-dive Sprint 4 (`docs/audits/2026-09-16-deep-dive/`). Picks up `@xivdyetools/bot-logic` 4.3.0 (`/swatch` eye rows labelled `EYES·L` / `EYES·R` / `EYES·LR` so off-grid heterochromia rows are told apart, BUG-006). The `/preset` schema change means `register-commands` must run with the deploy.
 
 ### Fixed
 

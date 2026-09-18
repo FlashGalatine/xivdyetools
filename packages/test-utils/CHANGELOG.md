@@ -22,6 +22,9 @@ the bump is bookkeeping so the fix is dated.
   documented legacy "null arm" fixture could not be built — null was replaced by a random decoy before
   `itemID`/`id` were derived. It now derives `itemID` 5729 through `legacyItemIdForStain(null)` as the
   type's comment describes.
+- **`createMockDye({ stainID: undefined })` treats undefined as absent**. An explicit `undefined` was
+  treated as a present key and assigned verbatim, producing an invalid `Dye` (stainID must be `number | null`).
+  It now falls through to the sequence default like an absent key would.
 
 ## [2.0.0] - 2026-09-02
 

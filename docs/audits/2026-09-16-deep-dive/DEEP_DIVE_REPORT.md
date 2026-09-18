@@ -128,7 +128,7 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-005, BUG-027 | FIXED (Sprint 2) | `554fd745`, `8050c90f`, `1ad6d3dd` |
 | BUG-040 | FIXED, partial (Sprint 2) — `welcome-modal.ts` exempted for the modals-chunk budget | `8050c90f` |
 | REFACTOR-006, REFACTOR-007, BUG-022, BUG-023, BUG-028, BUG-030, BUG-039 | FIXED (Sprint 2) | `ae399bbc`, `4ff63654`, `c3cccbd1`, `b6801990`, `12d442b3`, `74f19f75`, `68297fe5` |
-| BUG-006, REFACTOR-005 | FIXED (Sprint 3, bot-logic 4.2.1) — the eye marker sits on the row label, not the address line | `98a62c5d`, `0e706f0f`, `085e498b` |
+| BUG-006, REFACTOR-005 | FIXED (Sprint 3, bot-logic 4.3.0) — the eye marker sits on the row label, not the address line | `98a62c5d`, `0e706f0f`, `085e498b` |
 | BUG-008, BUG-012, BUG-013, REFACTOR-002, REFACTOR-003 | FIXED (Sprint 4, discord-worker 5.5.7) | `21ae7d5b`, `7b2eaa66`, `3f72fc9e`, `048081cc`, `9d3d6774`, fix wave `469a2578`…`551c2e33` |
 | BUG-033, BUG-034 | FIXED (Sprint 4) — suites added, files un-excluded from coverage; the plan's described ratio/duplicate/cap rules do not exist in the adapters | `3180cba4`, `18e86d3c`, `feae1b39` |
 | BUG-001 | FIXED — path (a): moderation-worker accepts snowflake-or-UUID (lowercase) targets, stored in `banned_users.discord_id` (Sprints 5+6). Residual: linking Discord after a ban sheds it — path (b) closes it | `a6311d71`, `3c5e5648`, `17c6516f`, `511261b2` |

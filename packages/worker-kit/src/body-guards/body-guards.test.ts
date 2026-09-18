@@ -297,7 +297,10 @@ describe('bodyGuards — the apps/presets-api configuration', () => {
 
     it('lets a GET through regardless of a content-length header', async () => {
       const h = app();
-      const res = await h.app.request('/api/test', { method: 'GET' });
+      const res = await h.app.request('/api/test', {
+        method: 'GET',
+        headers: { 'Content-Length': String(200 * 1024) },
+      });
 
       expect(res.status).toBe(200);
       expect(h.reached()).toBe(true);

@@ -8,7 +8,7 @@
  * replaces.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, expectTypeOf } from 'vitest';
 import { detectImageFormat, sniffImageType, IMAGE_MAGIC_BYTES } from './index.js';
 import type { ImageFormat } from './index.js';
 
@@ -137,5 +137,20 @@ describe('sniffImageType', () => {
       'webp',
     ] as const);
     expect(accepted).toBe('png');
+  });
+
+  it('types the no-accept call as ImageFormat | null, not a narrowed literal', () => {
+    // Type-only assertion (no runtime effect): before the two-overload fix, a
+    // caller could write `sniffImageType<'png'>(bytes)` with no `accept` list
+    // and the return type would be inferred/asserted as `'png' | null` for a
+    // buffer that was actually a JPEG — the `format as T` cast had nothing to
+    // check it against. With two overloads, the no-`accept` call only ever
+    // resolves to the first (unparameterized) signature.
+    expectTypeOf(sniffImageType(PNG)).toEqualTypeOf<ImageFormat | null>();
+
+    // The `accept`-bearing overload still narrows to the supplied list.
+    expectTypeOf(sniffImageType(PNG, ['png', 'jpeg'] as const)).toEqualTypeOf<
+      'png' | 'jpeg' | null
+    >();
   });
 });
