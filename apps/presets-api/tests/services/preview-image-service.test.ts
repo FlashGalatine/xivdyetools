@@ -40,6 +40,11 @@ describe('sniffImageType', () => {
   it('rejects a buffer too short to carry a signature', () => {
     expect(sniffImageType(new Uint8Array([0x89, 0x50]))).toBeNull();
   });
+
+  it('rejects a genuine GIF — not on this route\'s accepted format list', () => {
+    const gif = new Uint8Array([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0, 0, 0, 0, 0, 0]);
+    expect(sniffImageType(gif)).toBeNull();
+  });
 });
 
 // FINDING-018 / PAPI-4 (2026-08-21 security audit): objects were stored with

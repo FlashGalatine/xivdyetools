@@ -9,6 +9,7 @@
 
 import type { Env } from '../types.js';
 import { PREVIEW_IMAGE_PUBLIC_BASE } from './preset-service.js';
+import { sniffImageType as sniffAcceptedImageType } from '@xivdyetools/worker-kit/image-sniff';
 
 /**
  * FINDING-011 (2026-08-29 security audit): minimal logger interface for this
@@ -109,38 +110,16 @@ export async function purgePreviewImageCache(
  * The declared Content-Type is a hint, never the decision — a PNG header on a
  * 300 MB archive is the oldest trick there is, and the browser will happily
  * label anything image/png.
+ *
+ * REFACTOR-008 (docs/audits/2026-09-16-deep-dive): the actual detection now
+ * lives in @xivdyetools/worker-kit's shared sniffer (image-worker's table,
+ * which also recognises gif/bmp). This route only ever accepted three
+ * formats, so the accept list keeps that pre-filter — a GIF or BMP still
+ * reads as `null` here, same as before this module had a gif/bmp branch to
+ * fall through.
  */
 export function sniffImageType(bytes: Uint8Array): 'png' | 'jpeg' | 'webp' | null {
-  if (bytes.length < 12) return null;
-
-  if (
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47
-  ) {
-    return 'png';
-  }
-
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
-    return 'jpeg';
-  }
-
-  // RIFF....WEBP — the container alone is not enough, WAV shares the prefix.
-  if (
-    bytes[0] === 0x52 &&
-    bytes[1] === 0x49 &&
-    bytes[2] === 0x46 &&
-    bytes[3] === 0x46 &&
-    bytes[8] === 0x57 &&
-    bytes[9] === 0x45 &&
-    bytes[10] === 0x42 &&
-    bytes[11] === 0x50
-  ) {
-    return 'webp';
-  }
-
-  return null;
+  return sniffAcceptedImageType(bytes, ['png', 'jpeg', 'webp']);
 }
 
 /**
