@@ -497,6 +497,49 @@ function isAppHost(url: URL, env: Env): boolean {
 }
 
 /**
+ * OPT-001: a stalled SPA origin used to hold a pass-through request open for
+ * the platform's own (much longer) default before either of the two
+ * `fetch(request)` / `fetch(c.req.raw)` sites below would give up. Both
+ * sites share this 5s budget and the same fallback — neither has a static
+ * default card to degrade to (those only exist on the `/og/*` image routes
+ * and the crawler-HTML branches these sites never take), so a stalled
+ * origin gets the same 302 to `APP_BASE_URL` the surrounding code already
+ * returns when there is no origin to pass through to at all.
+ */
+const SPA_PASSTHROUGH_TIMEOUT_MS = 5_000;
+
+/** True for the two rejection shapes `AbortSignal.timeout` and an explicit abort produce. */
+function isPassThroughTimeout(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'name' in err &&
+    (err.name === 'TimeoutError' || err.name === 'AbortError')
+  );
+}
+
+/**
+ * Pass a human request through to the SPA origin with a bounded wait.
+ * `AbortSignal.timeout` rejects `fetch` with a `TimeoutError` DOMException
+ * once the budget elapses (DOMException does not extend `Error`, so the
+ * classification below reads `.name`, never `instanceof Error`) — that
+ * shape, and an explicit `AbortError`, degrade to the 302 fallback. Any
+ * OTHER rejection (DNS failure, TLS error, …) is rethrown unchanged so the
+ * global error handler still sees real failures instead of being silently
+ * papered over as a timeout.
+ */
+async function passThroughToOrigin(request: Request, env: Env): Promise<Response> {
+  try {
+    return await fetch(request, { signal: AbortSignal.timeout(SPA_PASSTHROUGH_TIMEOUT_MS) });
+  } catch (err) {
+    if (isPassThroughTimeout(err)) {
+      return Response.redirect(env.APP_BASE_URL, 302);
+    }
+    throw err;
+  }
+}
+
+/**
  * Resolve the locale for an OG request.
  *
  * Priority: ?lang= query param → 'en' fallback. The query value is validated
@@ -529,8 +572,9 @@ function createToolHandler(tool: ToolId) {
       if (!isAppHost(url, env)) {
         return Response.redirect(env.APP_BASE_URL, 302);
       }
-      // Pass through to origin - the SPA will handle it
-      return fetch(request);
+      // Pass through to origin - the SPA will handle it. OPT-001: bounded
+      // wait, falling back to the same 302 above on a stalled origin.
+      return passThroughToOrigin(request, env);
     }
 
     // Track analytics — FINDING-024 / OG-7: one datapoint per crawler hit.
@@ -1231,8 +1275,9 @@ app.all('*', (c) => {
     return Response.redirect(c.env.APP_BASE_URL, 302);
   }
 
-  // Pass through to origin for regular users
-  return fetch(c.req.raw);
+  // Pass through to origin for regular users. OPT-001: bounded wait, falling
+  // back to the same 302 above on a stalled origin.
+  return passThroughToOrigin(c.req.raw, c.env);
 });
 
 // ============================================================================
