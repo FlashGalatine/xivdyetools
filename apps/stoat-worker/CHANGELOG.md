@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-09-17
+
+Deep-dive remediation, Sprint 12 (docs/audits/2026-09-16-deep-dive).
+
+### Fixed
+
+- **BUG-031 — `!xd ping` reported ~0 ms latency.** The command was measuring elapsed time before `sendMessage()` resolved, always reporting ~0 ms. Fixed by sending the initial message first, awaiting the send, measuring after resolution, then editing the sent message with the actual latency.
+
+### Tests
+
+- **BUG-042 — dye-info test asserted only embed presence.** `src/commands/info.test.ts` now asserts actual embed content for a known dye: title matches dye name, colour matches hex, and description contains the comparison URL. Previously it could not catch incorrect field values.
+
 ## [0.3.0] - 2026-09-02
 
 Deep-dive remediation, Sprint 17 (docs/audits/2026-09-02-deep-dive). The bot
