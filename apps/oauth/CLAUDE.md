@@ -107,7 +107,7 @@ src/
 │   ├── oauth-flow.ts                 # The shared authorize + GET-callback pipeline both providers are built from
 │   └── token.ts                      # POST /auth/revoke, GET /auth/me
 ├── middleware/
-│   └── body-validation.ts            # bodySizeLimit (10KB), jsonDepthLimit
+│   └── body-validation.ts            # This app's cap + error bodies for @xivdyetools/worker-kit/body-guards (10KB)
 ├── services/
 │   ├── jwt-service.ts                # HS256 sign/verify via Web Crypto, jti, revocation check
 │   ├── user-service.ts               # findOrCreateUser + find-by-id lookups (D1 upserts)
@@ -242,6 +242,7 @@ CORS and redirect URIs share **one** allowlist (2.6.0 fix): the origin callback 
 
 - `bodySizeLimit` (10KB — OAuth payloads are small).
 - `jsonDepthLimit` on mutations.
+- Both come from `@xivdyetools/worker-kit/body-guards`' `bodyGuards()` factory (REFACTOR-009, 2026-09-16 deep-dive audit) — `src/middleware/body-validation.ts` now only supplies the 10 KB cap and this app's two error bodies (`{ error: 'Payload too large', message }` 413, `{ success: false, error: 'Invalid request body', message }` 400); the size cap, the depth-10 / prototype-pollution check, and the streaming mechanism live in the shared package. `apps/presets-api` shares the same factory with its own cap and error bodies.
 
 ## Security Patterns
 
@@ -283,6 +284,7 @@ JWT revocation is enforced on `/auth/me` by checking `TOKEN_BLACKLIST` for the `
 | `@xivdyetools/types` | Shared interfaces (JWTPayload, AuthProvider, XIVAuthUser, etc.) |
 | `@xivdyetools/auth` | JWT verification/revocation primitives + Base64URL helpers (`/encoding`) |
 | `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `KVRateLimiter`, `MemoryRateLimiter`, `getOAuthLimit`, `getClientIp` |
+| `@xivdyetools/worker-kit/body-guards` | `bodyGuards()` — body size cap + JSON depth/prototype-pollution check (SEC-003/SEC-004) |
 | `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger) |
 | `@xivdyetools/logger` | Structured logging — **transitive** via `worker-kit`, not a direct dependency |
 
@@ -303,7 +305,7 @@ npx vitest run -t "PKCE"                              # Pattern match
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit` (incl. `/rate-limiter`); `@xivdyetools/logger` arrives transitively through `worker-kit`
+**Dependencies:** `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit` (incl. `/rate-limiter` and `/body-guards`); `@xivdyetools/logger` arrives transitively through `worker-kit`
 
 **Shares `JWT_SECRET` with:** `xivdyetools-presets-api` (which verifies these JWTs on web auth)
 
