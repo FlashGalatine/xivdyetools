@@ -81,6 +81,18 @@ describe('error meta.locale (REFACTOR-004)', () => {
     expect(body.error).toBe('INTERNAL_ERROR');
     expect(body.meta.locale).toBeUndefined();
   });
+
+  it('carries meta.locale on a /v1/* route 404 (app.notFound uses buildMeta too)', async () => {
+    // The locale middleware is mounted on /v1/* and runs before notFound, so
+    // an unrouted /v1 path with ?locale=ja must answer like every other /v1
+    // error — the final review found notFound still hand-rolled its meta.
+    const res = await app.request('/v1/nonexistent?locale=ja', { method: 'GET' }, createMockEnv());
+    const body = (await res.json()) as any;
+
+    expect(res.status).toBe(404);
+    expect(body.error).toBe('NOT_FOUND');
+    expect(body.meta.locale).toBe('ja');
+  });
 });
 
 describe('error responses are not cacheable (API-13)', () => {

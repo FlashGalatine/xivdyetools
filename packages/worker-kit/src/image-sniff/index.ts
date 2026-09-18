@@ -20,12 +20,14 @@
  * @packageDocumentation
  */
 
-// `apps/image-worker` (Sprint 15) and `apps/presets-api` (Sprint 16) consume
-// every specifier below, so none needs a `@public` tag for the knip gate.
+// `apps/image-worker` (Sprint 15) and `apps/presets-api` (Sprint 16) consume the
+// two functions; the raw table is `@public` because nothing in-repo imports it by
+// name (its own test does, which knip counts as an entry — not a justification).
 
 export {
   detectImageFormat,
   sniffImageType,
+  /** @public — the published table; in-repo consumers reach it only through detectImageFormat */
   IMAGE_MAGIC_BYTES,
   type ImageFormat,
 } from './detect.js';

@@ -365,6 +365,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.2 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 15 — the magic-byte table and `detectImageFormat` come from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008); the local byte-table test exercises the import unchanged |
 | v1.3.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-017) — `Env` is now an explicit empty binding contract (`Record<string, never>`) instead of carrying an `ENVIRONMENT` member nothing sets or reads |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 12) — the dimension cap admitted the 4096² input it existed to reject (BUG-052: `>` not `>=`), and two 64 MiB RGBA buffers exceed the 128 MiB isolate; pixel cap 16 MP → 9.4 MP, everything up to 4K still passes** |
 | v1.2.1 | Sep 2026 | `getImageDimensions` removed (DEAD-027); knip dead-code gate — clean on first run |
@@ -422,6 +423,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.4.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 13 — two new subpaths: `/body-guards` (`bodyGuards({ maxSize, maxDepth, onTooLarge, onInvalidJson, exempt })` → `bodySizeLimit` + `jsonDepthLimit`, the oauth and presets-api copies folded in, REFACTOR-009) and `/image-sniff` (`detectImageFormat`, `sniffImageType(bytes, accept)`, `IMAGE_MAGIC_BYTES` — image-worker's table is the source of truth, REFACTOR-008); `body-guards` is subpath-only (it imports `hono/body-limit` at runtime and `hono` is an optional peer) |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 15) — `MemoryRateLimiter.check()` truncated history a wider window still needed (BUG-097; retention now bounded by the key's largest window); `X-RateLimit-*` headers no longer dropped for handlers returning a raw `Response`; the native binding key format changed, so every counter resets once on deploy** |
 | v1.2.1 | Sep 2026 | knip dead-code gate — 20 barrel exports tagged `@public` (incl. the published `/rate-limiter/presets` subpath) |
 | **v1.2.0** | **Aug 2026** | **2026-08-29 security audit (FINDING-010 + FINDING-012) — rate-limit fail-open / backend-error log lines carry a `keyScope`, never the raw client IP or Discord id, at all six sites across the middleware and the three fallible backends; `console.warn` fallback when no logger is configured (previously silent); `CloudflareRateLimiter`'s constructor validates every tier's `binding.limit` is callable and throws rather than fail-opening per-request** |
@@ -522,6 +524,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.14.2 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
 | v0.14.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
 | **v0.14.0** | **Sep 2026** | **Colour wheels on the public API (PR #169) — `GET /v1/wheels`, `GET /v1/wheels/:id` (`ringStops` + every dye's `wheelHue`), `GET /v1/harmony/types`, `GET /v1/harmony` (core's `generateHarmonySlots` over the whole database), plus a Harmony docs group** |
 | v0.13.0 | Sep 2026 | Developer docs restyle on the web-app's design register (API Docs Directions 1d, PR #168) — self-hosted Space Grotesk / Onest / Fragment Mono, the 5.0 dark palette, console chrome; no route change |

@@ -19,6 +19,8 @@
  */
 
 export * from './middleware/index.js';
-export * from './body-guards/index.js';
+// `./body-guards` is deliberately subpath-only: it imports `hono/body-limit` at
+// runtime and `hono` is an optional peer, so re-exporting it here would break a
+// rate-limiter-only consumer that imports the root under plain Node ESM.
 export * from './image-sniff/index.js';
 export * from './rate-limiter/index.js';

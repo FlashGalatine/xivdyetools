@@ -33,10 +33,13 @@ const MUTATION_METHODS = ['POST', 'PATCH', 'PUT'];
 /**
  * Build the size-limit middleware for one cap.
  *
- * Hono's `bodyLimit` is the engine on purpose: it checks `Content-Length`
- * first and then the actual stream, so an oversized body is refused while
- * bytes arrive rather than after the whole thing has been buffered
- * (FINDING-004 / PAPI-3, 2026-08-21 security audit).
+ * Hono's `bodyLimit` is the engine on purpose: with a `Content-Length` header
+ * (and no `Transfer-Encoding`) it decides on the header alone; without one it
+ * counts the stream and cuts it at the cap, so an oversized chunked body is
+ * refused while bytes arrive rather than after the whole thing has been
+ * buffered (FINDING-004 / PAPI-3, 2026-08-21 security audit). A header that
+ * understates the body is therefore trusted — a route that must not be lied
+ * to keeps its own post-read backstop, as presets-api's upload does.
  */
 function sizeGuard<E extends Env>(
   maxSize: number,

@@ -149,7 +149,7 @@ app.use('/auth/*', jsonDepthLimit);
 | `onInvalidJson` | `(c, message) => Response` | *required* | Response for unparseable JSON (`'Invalid JSON syntax'`), a depth violation (`` `JSON nesting exceeds maximum depth of ${maxDepth}` ``) or a pollution key (`'Invalid JSON structure'`). |
 | `exempt` | `{ match, maxSize, onTooLarge }` | — | One request shape that gets a different cap **and** skips the JSON check entirely — e.g. a binary upload route. |
 
-- **`bodySizeLimit`** wraps Hono's `bodyLimit`, which checks `Content-Length` first and then the actual stream, so an oversized body is refused while bytes arrive rather than after it has been buffered.
+- **`bodySizeLimit`** wraps Hono's `bodyLimit`, which decides on `Content-Length` alone when the header is present and otherwise counts the stream and cuts it at the cap — a header that understates the body is trusted, so a route that must not be lied to keeps its own post-read backstop.
 - **`jsonDepthLimit`** inspects `POST` / `PATCH` / `PUT` requests whose `Content-Type` includes `application/json`. A non-JSON content type, an empty body, and a body that cannot be read all pass through untouched. It rejects an own `__proto__`, `constructor` or `prototype` key at any level.
 - **`exempt.match`** is asked once per request by each middleware, so a route that is allowed a large binary body never pays for a JSON parse it cannot use.
 

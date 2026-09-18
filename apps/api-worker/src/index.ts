@@ -195,10 +195,9 @@ app.notFound((c) => {
       success: false,
       error: ErrorCode.NOT_FOUND,
       message: `Route ${c.req.method} ${new URL(c.req.url).pathname} not found`,
-      meta: {
-        requestId: getRequestId(c),
-        apiVersion: c.env.API_VERSION || 'v1',
-      },
+      // REFACTOR-004: same builder as success responses and app.onError, so a
+      // route 404 under /v1/* carries `locale` like every other /v1/* error.
+      meta: buildMeta(c, c.get('locale')),
     },
     404,
   );

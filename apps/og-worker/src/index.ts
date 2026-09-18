@@ -197,7 +197,7 @@ app.use('/og/*', async (c, next) => {
  * The allowlist is GLOBAL, but what reads each key is not: `resolveLocale`
  * (below) reads `lang` and `frameFromQuery` reads `frame` on every route;
  * `algo` is read by the five algo-aware image routes; `mode` only by the two
- * mixer routes; `wheel` only by `/og/harmony/*`. A present-but-invalid value
+ * mixer routes; `wheel` only by the parameterised harmony dye card (`/og/harmony/:dye/:type`), never the default card (BUG-018). A present-but-invalid value
  * is rejected here on every route regardless (rulings S7-R7 / S7-R10), while
  * `ogCacheKey` below keys a route-specific parameter only on the routes that
  * render with it — an allowed key must not multiply the cache entries of a
