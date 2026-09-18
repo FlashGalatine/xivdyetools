@@ -1,6 +1,6 @@
 # @xivdyetools/worker-kit
 
-> Shared Cloudflare Worker toolkit for XIV Dye Tools: [Hono](https://hono.dev/) middleware (request ID, structured logger, rate limiting) plus the sliding-window rate limiting engine and backends (Cloudflare, Memory, KV, Upstash) it wraps.
+> Shared Cloudflare Worker toolkit for XIV Dye Tools: [Hono](https://hono.dev/) middleware (request ID, structured logger, rate limiting), request-body guards, magic-byte image sniffing, plus the sliding-window rate limiting engine and backends (Cloudflare, Memory, KV, Upstash) it wraps.
 
 [![npm version](https://img.shields.io/npm/v/@xivdyetools/worker-kit)](https://www.npmjs.com/package/@xivdyetools/worker-kit)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -25,6 +25,12 @@ import {
   type MiddlewareVariables,
 } from '@xivdyetools/worker-kit';
 
+// Request body guards (root export, or ./body-guards)
+import { bodyGuards } from '@xivdyetools/worker-kit/body-guards';
+
+// Magic-byte image sniffing (root export, or ./image-sniff) — no Hono needed
+import { detectImageFormat, sniffImageType } from '@xivdyetools/worker-kit/image-sniff';
+
 // Rate limiter
 import {
   MemoryRateLimiter, KVRateLimiter,
@@ -35,7 +41,7 @@ import {
 import { UpstashRateLimiter } from '@xivdyetools/worker-kit/rate-limiter/upstash';
 ```
 
-The root export re-exports both modules; the subpaths (`./middleware`, `./rate-limiter`, `./rate-limiter/{memory,kv,upstash,cloudflare,presets}`) keep bundles lean.
+The root export re-exports every module; the subpaths (`./middleware`, `./body-guards`, `./image-sniff`, `./rate-limiter`, `./rate-limiter/{memory,kv,upstash,cloudflare,presets}`) keep bundles lean.
 
 ## Middleware
 
@@ -115,6 +121,69 @@ Wires a `RateLimiter` backend into the request path, sets standard headers, and 
 | `getRequestId(c)` | Extract the request ID from Hono context. Returns `'unknown'` if the middleware hasn't run. |
 | `getLogger(c)` | Extract the logger from Hono context. Returns `undefined` if the middleware hasn't run. |
 | `MiddlewareVariables` | `{ requestId: string; logger: ExtendedLogger }` — extend with your app-specific variables. |
+
+## Body Guards (`/body-guards`)
+
+Two middleware from one factory: a streaming request-body size cap (SEC-004) and a JSON depth / prototype-pollution check (SEC-003). The factory never writes a response body — every rejection is rendered by a caller-supplied responder, so two Workers with different error envelopes share one implementation without either changing a byte of what it returns.
+
+```typescript
+import { bodyGuards } from '@xivdyetools/worker-kit/body-guards';
+
+const { bodySizeLimit, jsonDepthLimit } = bodyGuards<{ Bindings: Env }>({
+  maxSize: 10 * 1024,
+  onTooLarge: (c) =>
+    c.json({ error: 'Payload too large', message: 'Request body too large' }, 413),
+  onInvalidJson: (c, message) =>
+    c.json({ success: false, error: 'Invalid request body', message }, 400),
+});
+
+app.use('/auth/*', bodySizeLimit);
+app.use('/auth/*', jsonDepthLimit);
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `maxSize` | `number` | *required* | Default body cap in bytes. |
+| `maxDepth` | `number` | `10` | Maximum JSON nesting depth. The budget is inclusive — a leaf at `maxDepth` is accepted, one at `maxDepth + 1` is not. |
+| `onTooLarge` | `(c) => Response` | *required* | Response for an oversized body. |
+| `onInvalidJson` | `(c, message) => Response` | *required* | Response for unparseable JSON (`'Invalid JSON syntax'`), a depth violation (`` `JSON nesting exceeds maximum depth of ${maxDepth}` ``) or a pollution key (`'Invalid JSON structure'`). |
+| `exempt` | `{ match, maxSize, onTooLarge }` | — | One request shape that gets a different cap **and** skips the JSON check entirely — e.g. a binary upload route. |
+
+- **`bodySizeLimit`** wraps Hono's `bodyLimit`, which checks `Content-Length` first and then the actual stream, so an oversized body is refused while bytes arrive rather than after it has been buffered.
+- **`jsonDepthLimit`** inspects `POST` / `PATCH` / `PUT` requests whose `Content-Type` includes `application/json`. A non-JSON content type, an empty body, and a body that cannot be read all pass through untouched. It rejects an own `__proto__`, `constructor` or `prototype` key at any level.
+- **`exempt.match`** is asked once per request by each middleware, so a route that is allowed a large binary body never pays for a JSON parse it cannot use.
+
+```typescript
+// The one route allowed a large, non-JSON body — its own cap, its own error.
+exempt: {
+  match: (c) => c.req.method === 'POST' && UPLOAD_PATH.test(c.req.path),
+  maxSize: 5 * 1024 * 1024,
+  onTooLarge: (c) =>
+    c.json({ success: false, error: 'VALIDATION_ERROR', message: 'Image must be at most 5 MB' }, 400),
+}
+```
+
+Types: `BodyGuardsOptions`, `BodyGuardMiddleware`, `BodyGuardExemption`, `BodyGuardResponder`, `InvalidJsonResponder`.
+
+## Image Sniffing (`/image-sniff`)
+
+Magic-byte format detection for PNG, JPEG, GIF, WebP and BMP. No Hono, no Workers types — a plain `Uint8Array` in, a format out, so an upload route can decide on content rather than on a `Content-Type` header a client controls.
+
+```typescript
+import { detectImageFormat, sniffImageType } from '@xivdyetools/worker-kit/image-sniff';
+
+detectImageFormat(bytes);                          // 'png' | … | undefined
+sniffImageType(bytes, ['png', 'jpeg', 'webp']);    // 'png' | 'jpeg' | 'webp' | null
+```
+
+| Export | Description |
+|--------|-------------|
+| `ImageFormat` | `'png' \| 'jpeg' \| 'gif' \| 'webp' \| 'bmp'` |
+| `IMAGE_MAGIC_BYTES` | The leading-byte table, keyed by format. `webp`'s entry is the RIFF prefix only. |
+| `detectImageFormat(bytes)` | The format, or `undefined`. |
+| `sniffImageType(bytes, accept?)` | The format when it is on `accept`, otherwise `null`. The return type narrows to the accepted list. |
+
+Both require **at least 12 bytes** and return nothing for a shorter buffer: the WebP check reads offsets 8–11, so a short buffer starting with `RIFF` would otherwise be decided on bytes that are not there. `RIFF` alone is never WebP — WAV and AVI share the container.
 
 ## Rate Limiter (`/rate-limiter`)
 

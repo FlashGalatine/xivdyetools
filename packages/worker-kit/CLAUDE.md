@@ -6,9 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `@xivdyetools/worker-kit` is the shared Cloudflare Worker toolkit, formed in the Monorepo 2.0 Tier 1 consolidation by merging `@xivdyetools/worker-middleware` (v1.2.0) and `@xivdyetools/rate-limiter` (v1.5.0). Both APIs are unchanged — only the import specifiers moved.
 
-Two modules:
+Four modules:
 
 - **`src/middleware/`** — the Hono middleware stack used by every CF Worker: `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factories, plus `MiddlewareVariables` and Hono `ContextVariableMap` augmentation (`c.get('requestId')` / `c.get('logger')` typed globally).
+- **`src/body-guards/`** — `bodyGuards()` returning `{ bodySizeLimit, jsonDepthLimit }`: a streaming body-size cap (SEC-004, wrapping Hono's `bodyLimit`) and a JSON depth / prototype-pollution check (SEC-003), with an optional single `exempt` request shape that gets its own cap and skips the JSON check. Added 1.4.0 (REFACTOR-009) from the near-identical copies in `apps/oauth` and `apps/presets-api`. **The factory renders no response body** — `onTooLarge` / `onInvalidJson` belong to the consumer, which is the whole reason two workers with different error envelopes can share it.
+- **`src/image-sniff/`** — `detectImageFormat` / `sniffImageType` / `IMAGE_MAGIC_BYTES` over PNG, JPEG, GIF, WebP, BMP. Added 1.4.0 (REFACTOR-008); `apps/image-worker`'s table is the source of truth. Needs 12 bytes (the WebP check reads offsets 8–11) and never takes a bare `RIFF` for WebP. No Hono, no Workers types.
 - **`src/rate-limiter/`** — the rate limiting engine: `RateLimiter` / `ExtendedRateLimiter` interfaces, `CloudflareRateLimiter` (native `[[ratelimits]]` binding, tiered — the **preferred per-client limiter** since FINDING-003, 2026-08-21), `MemoryRateLimiter` / `KVRateLimiter` / `UpstashRateLimiter` backends, `getClientIp` (SEC-002: prefers `CF-Connecting-IP`, never trust `X-Forwarded-For`), `getRateLimitHeaders`, and shared limit presets (`PUBLIC_API_LIMITS`, …). **KV cannot throttle a fast client** (1 write/s/key, swallowed put failures, eventually-consistent reads, fail-open) — use it only as a fallback.
 
 ## Import Paths
@@ -16,6 +18,8 @@ Two modules:
 ```typescript
 import { requestIdMiddleware, loggerMiddleware, rateLimitMiddleware,
          type MiddlewareVariables } from '@xivdyetools/worker-kit';           // or /middleware
+import { bodyGuards } from '@xivdyetools/worker-kit/body-guards';
+import { detectImageFormat, sniffImageType } from '@xivdyetools/worker-kit/image-sniff';
 import { MemoryRateLimiter, KVRateLimiter, getClientIp,
          PUBLIC_API_LIMITS } from '@xivdyetools/worker-kit/rate-limiter';
 import { UpstashRateLimiter } from '@xivdyetools/worker-kit/rate-limiter/upstash'; // single backend

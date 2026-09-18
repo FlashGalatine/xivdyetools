@@ -10,6 +10,8 @@
  *
  * Subpath imports keep bundles lean:
  * - `@xivdyetools/worker-kit/middleware` — Hono middleware only (peer: hono)
+ * - `@xivdyetools/worker-kit/body-guards` — request body size / JSON guards (peer: hono)
+ * - `@xivdyetools/worker-kit/image-sniff` — magic-byte image detection (no hono)
  * - `@xivdyetools/worker-kit/rate-limiter` — rate limiting only (no hono)
  * - `@xivdyetools/worker-kit/rate-limiter/{memory,kv,upstash,presets}` — single backend
  *
@@ -17,4 +19,6 @@
  */
 
 export * from './middleware/index.js';
+export * from './body-guards/index.js';
+export * from './image-sniff/index.js';
 export * from './rate-limiter/index.js';
