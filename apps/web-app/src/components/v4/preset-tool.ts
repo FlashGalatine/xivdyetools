@@ -375,9 +375,10 @@ export class PresetTool extends BaseLitComponent {
     super.connectedCallback();
 
     // BUG-005: list <-> detail is an in-component state change, not a route
-    // change the shell remounts for — router-service.ts skips its notify for
-    // a same-tool popstate, so this listener is the only thing that responds
-    // to Back/Forward while this element stays mounted.
+    // change the shell remounts for — the router notifies a same-tool popstate
+    // with `sameTool: true` and v4-layout skips its remount on that flag, so
+    // this listener is the only thing that responds to Back/Forward while
+    // this element stays mounted.
     window.addEventListener('popstate', this.handleWindowPopState);
 
     this.configController = ConfigController.getInstance();

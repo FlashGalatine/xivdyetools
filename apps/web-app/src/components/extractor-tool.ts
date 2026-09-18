@@ -1266,7 +1266,9 @@ export class ExtractorTool extends BaseComponent {
     // history (no new entry, no RouterService notify — that would remount
     // this very tool mid-load).
     if (this.sharedPalette) {
-      history.replaceState(history.state, '', '/extractor');
+      const url = new URL(window.location.href);
+      for (const key of ['colors', 'algo', 'v']) url.searchParams.delete(key);
+      history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
     }
     this.currentImage = image;
     this.sharedPalette = false;

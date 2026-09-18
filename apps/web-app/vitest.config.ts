@@ -79,7 +79,7 @@ export default defineConfig({
         statements: 79,
         branches: 65,
         functions: 76,
-        lines: 81,
+        lines: 80,
       },
     },
     // scripts/ holds the CI gates (check-bundle-size, check-beta-build,

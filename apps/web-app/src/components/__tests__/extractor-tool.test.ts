@@ -1222,8 +1222,25 @@ describe('ExtractorTool', () => {
 
       // No new history entry either — replaceState, not pushState/navigateTo
       // (a real navigation would notify RouterService and remount the tool).
-      expect(window.location.pathname).toBe('/extractor');
+      // The path is left exactly as it was; only the query changes.
+      expect(window.location.pathname).toBe('/extractor/');
       expect(window.location.search).toBe('');
+    });
+
+    it('removes only the share params, keeping any other query the link carried', async () => {
+      setShareUrl('?colors=8E5A3C,C9A96A&algo=ciede2000&v=1&lang=ja&dc=Aether');
+      tool = mount();
+
+      await loadImage();
+
+      // `lang`/`dc` are not share markers — dropping the whole query would
+      // have lost them along with `colors`/`algo`/`v`.
+      const params = new URLSearchParams(window.location.search);
+      expect(params.has('colors')).toBe(false);
+      expect(params.has('algo')).toBe(false);
+      expect(params.has('v')).toBe(false);
+      expect(params.get('lang')).toBe('ja');
+      expect(params.get('dc')).toBe('Aether');
     });
 
     it('leaves the URL alone when there was no shared palette to begin with', async () => {
