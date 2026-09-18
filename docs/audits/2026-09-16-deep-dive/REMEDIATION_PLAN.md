@@ -1,6 +1,6 @@
 # Remediation Plan — 2026-09-16
 
-**Sources:** `DEEP_DIVE_REPORT.md` (43 BUG · 9 REFACTOR · 1 OPT = 53) · **Status basis:** 53 total — 0 fixed, 53 outstanding, 0 superseded, 0 KEEP, 0 need rotation
+**Sources:** `DEEP_DIVE_REPORT.md` (43 BUG · 9 REFACTOR · 1 OPT = 53) · **Status basis (2026-09-17):** 53 total — **53 fixed** (BUG-040 partial), 0 outstanding, 0 superseded, 0 KEEP, 0 need rotation — every sprint below is annotated ✅ with its commits and deploy needs
 **Ordering:** 1. one deploy unit per sprint 2. P0 first (one row: the shared-fixture flake) 3. user-facing integrity before performance; refactors ride with the bugs they prevent; a package change is one publish sprint then one sprint per consumer deploy 4. terminal work last (the two cross-unit duplications land in `@xivdyetools/worker-kit`, then its three consumers)
 
 There is no P1 tier in this plan — the catalog has 0 CRITICAL / 0 HIGH — so the eight MEDIUMs are P2 and lead the cadence. Two of them need a **product decision before code** (BUG-001, BUG-002); their sprints are gated and the questions are asked at Sprint 0 so they are answered before those sprints open. Sprints 13–16 are the nice-to-have structural tail; stopping after Sprint 12 leaves no MEDIUM open.
@@ -187,7 +187,7 @@ No consumer deploy sprint: nothing here changes a result an app must pick up (se
 
 **Ends with:** whole-graph `pnpm turbo run build type-check lint test` → merge to `main`. No deploy — the unit is parked.
 
-## Sprint 13 — `@xivdyetools/worker-kit` (publish): terminal structural — the two cross-unit duplications
+## Sprint 13 — `@xivdyetools/worker-kit` (publish): terminal structural — the two cross-unit duplications — ✅ COMPLETED 2026-09-17 `951e7177`…`b639e9d2`
 
 Nice-to-have tail. If the "presets-api simply trusts image-worker's 415" variant of REFACTOR-008 is chosen, the sniffer never enters worker-kit and Sprint 15 drops out.
 
@@ -196,9 +196,11 @@ Nice-to-have tail. If the "presets-api simply trusts image-worker's 415" variant
 | REFACTOR-009 | deep-dive | P3 | `bodyGuards({ maxSize, depth, exempt })` factory replacing the oauth (10 KB) and presets-api (100 KB + preview-image exemption) copies; tests for both configurations |
 | REFACTOR-008 | deep-dive | P3 | shared magic-byte sniffer (PNG/JPEG/WebP/GIF/BMP) with image-worker's table as the source of truth |
 
+**Deploy needs:** worker-kit 1.3.0 → 1.4.0 (MINOR, additive); after merge, Actions → **Publish Packages to npm** → `@xivdyetools/worker-kit`. Gate 5/5 (260 tests), dead-code 0, dependents type-check 16/16. Deviation: `exempt` shipped as `{ match, maxSize, onTooLarge }` (a predicate + a fixed cap) rather than a per-request factory; the `@public` tags were pruned once the consumers landed — only the four option types keep one (consumers pass literals and never import the type names).
+
 **Ends with:** `pnpm turbo run build test --filter=@xivdyetools/worker-kit` → bump 1.3.0 → 1.4.0 (additive, MINOR) → merge to `main` → Actions → **"Publish Packages to npm"** → `@xivdyetools/worker-kit`.
 
-## Sprint 14 — `oauth` (consumer of Sprint 13): adopt `bodyGuards` + the headers-ordering fix
+## Sprint 14 — `oauth` (consumer of Sprint 13): adopt `bodyGuards` + the headers-ordering fix — ✅ COMPLETED 2026-09-17 `36a60081`…`5aba87c8`
 
 oauth ships exactly once in this plan, which matters here: it has no `[env.production]`, so **every** `wrangler deploy` on it is production.
 
@@ -207,22 +209,28 @@ oauth ships exactly once in this plan, which matters here: it has no `[env.produ
 | BUG-017 | deep-dive | LOW | `index.ts:119-165` — register the security-headers middleware before env validation (or set the headers on that one 500); note the exception in CLAUDE.md if kept |
 | REFACTOR-009 (oauth leg) | deep-dive | P3 | replace `src/middleware/body-validation.ts` with the worker-kit factory |
 
+**Deploy needs:** oauth 3.1.0 → 3.1.1; merge to `main` → `deploy-oauth.yml` (**a bare `wrangler deploy` is production here**). Gate 8/8 (347 tests); `body-validation.test.ts` unchanged (parity). Middleware order now: requestId → logger → CORS → security headers → env validation → rate limit → body guards; `apps/oauth/CLAUDE.md` says so.
+
 **Ends with:** bump the worker-kit dep → `pnpm turbo run build type-check lint test --filter=xivdyetools-oauth-worker` → merge to `main` → `deploy-oauth.yml` (bare `wrangler deploy` **is** production).
 
-## Sprint 15 — `image-worker` (consumer of Sprint 13): adopt the shared sniffer
+## Sprint 15 — `image-worker` (consumer of Sprint 13): adopt the shared sniffer — ✅ COMPLETED 2026-09-17 `1237d7d5`…`f3805db0`
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|
 | REFACTOR-008 (image-worker leg) | deep-dive | P3 | `validators.ts:141-147,386-423` → import from worker-kit; keep the byte-table test |
 
+**Deploy needs:** image-worker 1.3.1 → 1.3.2; merge to `main` → `deploy-image-worker.yml` (`--env production`, service-binding only). Gate 5/5 (136 tests); the byte-table test runs unchanged against the worker-kit import.
+
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-image-worker` → merge to `main` → `deploy:production` via workflow (service-binding only).
 
-## Sprint 16 — `presets-api` (consumer of Sprint 13) — terminal
+## Sprint 16 — `presets-api` (consumer of Sprint 13) — terminal — ✅ COMPLETED 2026-09-17 `e75328c5`…`a26fb857`
 
 | ID | Source | Sev/Pri | Item |
 |---|---|---|---|
 | REFACTOR-009 (presets-api leg) | deep-dive | P3 | replace `src/middleware/body-validation.ts` with the factory, keeping the preview-image exemption and FINDING-004's stream-bound behaviour (its tests must stay green unchanged) |
 | REFACTOR-008 (presets-api leg) | deep-dive | P3 | `services/preview-image-service.ts:113-144` → shared sniffer (or delete the pre-filter and trust image-worker's 415) |
+
+**Deploy needs:** presets-api 2.3.5 → 2.3.6; merge to `main` → `deploy-presets-api.yml` (`--env production`); no migration. Gate 8/8 (820 tests); both middleware test files and the preview-image tests unchanged (parity); one new GIF-rejected case. Deviation: the pre-filter stays (coordinator ruling) — `sniffImageType(bytes, [png, jpeg, webp])` refuses GIF/BMP before the image-worker round trip.
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-presets-api` → whole-graph `pnpm turbo run build type-check lint test` → merge to `main` → `deploy:production` via workflow.
 

@@ -140,7 +140,10 @@ Checked and dropped, so the next audit does not re-chase them.
 | BUG-018, OPT-001 | FIXED (Sprint 10, og-worker 2.10.2) | `9963891f`, `914c401f` |
 | BUG-019, BUG-037, BUG-036, REFACTOR-004 | FIXED (Sprint 11, api-worker 0.14.2) | `3e6d9a46`, `55f212a3`, `f39cf88b`, `1cf37231` |
 | BUG-031, BUG-042 | FIXED (Sprint 12, stoat-worker 0.3.1, parked) | `19e36205`, `a50ba98d` |
-| everything else | OPEN | — |
+| REFACTOR-008, REFACTOR-009 | FIXED (Sprint 13 worker-kit 1.4.0 `./body-guards` + `./image-sniff`; consumers Sprints 14 oauth 3.1.1, 15 image-worker 1.3.2, 16 presets-api 2.3.6 — every error body byte-identical, parity tests unchanged) | `951e7177`, `7d3f137f`, `3fcb5dd4`, `1237d7d5`, `e75328c5`, `ba38251e` |
+| BUG-017 | FIXED (Sprint 14, oauth 3.1.1) | `36a60081` |
+
+All 53 findings are closed: 52 FIXED, BUG-040 FIXED (partial, `welcome-modal.ts` exempted). Two rulings the maintainer may want to revisit are recorded in the plan: BUG-001 path (a) (the link-Discord residual that path (b) would close) and BUG-002 restore.
 
 ## Next steps
 

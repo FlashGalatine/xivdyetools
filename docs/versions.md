@@ -21,10 +21,10 @@
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.11.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.5.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.1 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.0 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.3.5 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.14.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -39,7 +39,7 @@
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.3.0 | `@xivdyetools/worker-kit` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.4.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.2.1 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
@@ -198,6 +198,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
 | v3.1.0 | Sep 2026 | 2026-09-02 deep-dive — a cancelled login returns to the allowlisted origin it started on instead of production (BUG-049); a non-array character roster no longer turns sign-in into a 500 (BUG-051) |
 | v3.0.1 | Sep 2026 | First dead-code sweep (DEAD-019/025/026) — unused constants, `isStateSigned`, three `findUserBy*` wrappers removed; no route, token or D1 change |
 | **v3.0.0** | **Aug 2026** | **BREAKING — 2026-08-29 security audit Sprint 2 (FINDING-001/002/003/010/012/013/022/023) — `/auth/refresh` removed; `orig_iat`/`xivauth_id`/`primary_character` no longer minted; `users.avatar_url` and the `xivauth_characters` roster table dropped by a hand-run migration (no known client used any of them); `Cache-Control: no-store` + `Pragma: no-cache` worker-wide; request logger drops the User-Agent; rate-limit binding fail-open events now logged; production `validateEnv` requires `RL_AUTH_10`/`RL_AUTH_20`/`RL_AUTH_30`/`TOKEN_BLACKLIST`; new wrangler-config invariant test; fixed `GET /auth/me`'s `avatar_url` (was built from the internal UUID, not the Discord snowflake)** |
@@ -222,6 +223,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.3.6 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 16 (terminal) — body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards` with the preview-image exemption (5 MB / 400, JSON check skipped) and every error body byte-identical (REFACTOR-009); `sniffImageType` calls the shared sniffer accepting png/jpeg/webp only (REFACTOR-008) |
 | v2.3.5 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 5 — `text_edit` / `flagged_edit` / `preview_upload` daily caps are reserve-then-act (insert the event, count including it, refuse and release when over; BUG-015), still best-effort on a D1 write error; `PATCH /presets/refresh-author` answers 400 instead of binding an unset display name (BUG-014); ban-check tests bind the identity, incl. an XIVAuth UUID `sub` (BUG-043); `banned_users.discord_id` documented as the resolved user id, snowflake or UUID (BUG-001 path (a)) |
 | v2.3.4 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-013/014/015) — the unused `truncateUnicodeSafe`, `duplicateResponse` and the orphan `VoteRow` type removed; the moderation doc no longer describes a helper nothing calls |
 | v2.3.3 | Sep 2026 (prepared) | Revision-bound moderator status and revert writes with atomic audit logs |

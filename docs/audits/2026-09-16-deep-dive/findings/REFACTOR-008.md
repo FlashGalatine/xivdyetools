@@ -12,4 +12,4 @@
 - Move the sniffer to `@xivdyetools/worker-kit` (or have presets-api trust image-worker's 415), then delete the copy
 
 ## Status
-OPEN
+FIXED (Sprints 13 + 15 + 16, `951e7177`, `1237d7d5`, `ba38251e`) — `@xivdyetools/worker-kit/image-sniff` holds image-worker's table as the single source; image-worker imports it (byte-table test unchanged); presets-api keeps a pre-filter through `sniffImageType(bytes, [png, jpeg, webp])` (coordinator ruling: a GIF/BMP is still refused before the image-worker round trip).
