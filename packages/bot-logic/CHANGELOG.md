@@ -39,8 +39,12 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
   the results show categories (they show name and hex), and
   `preferences.filters.affectsHint` — the footer of `/preferences filters set`
   — still listed the deleted `/match`. The placeholders inside syntax lines
-  are identifiers and are no longer translated; the German and Chinese
-  harmony names now match the ones core prints on the card.
+  are identifiers and are no longer translated. Harmony-type, colour-wheel
+  and dye-category names in the manual are now core's own in every locale
+  (TERM-001: core owns that vocabulary, and Discord's picker and the cards
+  print it) — Korean harmony names, Japanese / Korean / French wheel names and
+  Japanese / French / Korean / Chinese category names had all differed from
+  what the picker shows.
 
 ### Added
 

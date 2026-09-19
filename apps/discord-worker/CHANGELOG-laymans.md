@@ -43,7 +43,7 @@ Rules:
 - The help for `/harmony` lists all 10 harmony types and the 5 colour wheels, `/gradient` shows the right option names and 2 to 12 steps, `/mixer` explains that it blends at five ratios, and `/preferences` shows the real options, including dye filters.
 - `/preferences filters set` no longer says your filters affect `/match`, a command that was removed in 5.0; they affect `/harmony`, `/gradient` and `/mixer`.
 - The 👤 Character File topic names all seven colour slots `/swatch` reads, adding highlights and tattoo or limbal ring.
-- Every one of these is corrected in all six languages the bot speaks, not only in English.
+- Every one of these is corrected in all six languages the bot speaks, not only in English — and the harmony, colour-wheel and dye-category names in the help now match the names the bot's command menu and cards show you in your language.
 
 ## [5.5.7] - 2026-09-16
 ### 👁️ Left and right eyes are told apart on the swatch card

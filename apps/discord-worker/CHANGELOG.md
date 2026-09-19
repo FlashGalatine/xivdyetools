@@ -18,7 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The six topic emoji in the `/manual` field and in the Image Matching topic's pointer are interpolated from core's `MANUAL_TOPICS` (`{topics}` / `{topic}`) rather than written into locale strings — `font-coverage.test.ts` scans every bot-logic string for glyphs the card fonts can draw, and the roster of record already owns them.
-- The three Noto Sans subsets were regenerated with `scripts/subset-cjk-fonts.py` for the glyphs the new help text uses — by cmap, JP 622 → 631 codepoints (+13 −4), KR 582 → 588 (+7 −1), SC 1,202 → 1,208 (+12 −6). `font-coverage.test.ts` went red on 12 JP and 7 KR codepoints before the rerun.
+- The three Noto Sans subsets were regenerated with `scripts/subset-cjk-fonts.py` for the glyphs the new help text uses — by cmap against `0fec18f4`, JP 622 → 629 codepoints (+11 −4), KR 582 → 588 (+7 −1), SC 1,202 → 1,206 (+10 −6). `font-coverage.test.ts` went red on 12 JP and 7 KR codepoints before the rerun.
+
+- `CLAUDE.md`: both webhook routes stream-count received bytes (it still said only the GitHub one did, DOC-016); `ENVIRONMENT` gates only `validateEnv` but is also printed by `/stats health`; `utils/read-text-capped.ts` is listed.
 
 ### Added
 

@@ -85,7 +85,7 @@
     },
     "dyeList": {
       "name": "`/dye list [category]`",
-      "description": "列出所有染剂或按分类筛选。\n• 分类：红色、棕色、黄色、绿色、蓝色、紫色、中性色、特殊"
+      "description": "列出所有染剂或按分类筛选。\n• 分类：红色系、棕色系、黄色系、绿色系、蓝色系、紫色系、中性、特殊"
     },
     "dyeRandom": {
       "name": "`/dye random [unique_categories]`",
@@ -101,7 +101,7 @@
     },
     "accessibility": {
       "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
-      "description": "查看染剂在各种色觉下的表现。\n• 一种染剂：在每种视觉类型下的偏移\n• 两种染剂：差距有多大（`vision` 选择一种视觉类型）\n• `/a11y` 是同一命令"
+      "description": "查看染剂在各种色觉下的表现。\n• 一种染剂：在每种色觉下的偏移\n• 两种染剂：差距有多大（`vision` 选择一种色觉）\n• `/a11y` 是同一命令"
     },
     "budget": {
       "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",

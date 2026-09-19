@@ -57,7 +57,7 @@
     },
     "harmony": {
       "name": "`/harmony <color> [type] [wheel] [companions]`",
-      "description": "調和のとれたカララントの組み合わせを生成します。\n• 10種類：補色、類似色、三色配色、分裂補色、四色配色、逆四色配色、正方形配色、単色、複合、シェード\n• 5種類のカラーホイール：RGB、RYB、Munsell、OKLCH色相、OKLCH明度"
+      "description": "調和のとれたカララントの組み合わせを生成します。\n• 10種類：補色、類似色、三色配色、分裂補色、四色配色、逆四色配色、正方形配色、単色、複合、シェード\n• 5種類のカラーホイール：RGB、RYB、マンセル、OKLCH 色相、OKLCH 明度"
     },
     "mixer": {
       "name": "`/mixer <dye1> <dye2> [mode]`",
@@ -85,7 +85,7 @@
     },
     "dyeList": {
       "name": "`/dye list [category]`",
-      "description": "すべてのカララントを一覧表示、またはカテゴリでフィルタリングします。\n• カテゴリ：レッド系、ブラウン系、イエロー系、グリーン系、ブルー系、パープル系、ニュートラル、スペシャル"
+      "description": "すべてのカララントを一覧表示、またはカテゴリでフィルタリングします。\n• カテゴリ：赤系、茶系、黄系、緑系、青系、紫系、無彩色系、特殊"
     },
     "dyeRandom": {
       "name": "`/dye random [unique_categories]`",

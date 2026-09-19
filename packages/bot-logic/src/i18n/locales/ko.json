@@ -57,7 +57,7 @@
     },
     "harmony": {
       "name": "`/harmony <color> [type] [wheel] [companions]`",
-      "description": "조화로운 염료 조합을 생성합니다.\n• 10가지 유형: 보색, 유사색, 삼원색, 분할보색, 사각배색, 반전 사각배색, 정방형, 단색, 복합, 명암\n• 5가지 색상환: RGB, RYB, Munsell, OKLCH 색상, OKLCH 명도"
+      "description": "조화로운 염료 조합을 생성합니다.\n• 10가지 유형: 보색, 유사색, 삼원색, 분리보색, 사색, 반전 사색, 정사각형, 단색, 복합, 명암\n• 5가지 색상환: RGB, RYB, 먼셀, OKLCH 색상, OKLCH 명도"
     },
     "mixer": {
       "name": "`/mixer <dye1> <dye2> [mode]`",
@@ -85,7 +85,7 @@
     },
     "dyeList": {
       "name": "`/dye list [category]`",
-      "description": "모든 염료 목록을 보거나 카테고리별로 필터링합니다.\n• 카테고리: 빨강, 갈색, 노랑, 초록, 파랑, 보라, 무채색, 특수"
+      "description": "모든 염료 목록을 보거나 카테고리별로 필터링합니다.\n• 카테고리: 빨강, 갈색, 노랑, 녹색, 파랑, 보라, 중성, 특수"
     },
     "dyeRandom": {
       "name": "`/dye random [unique_categories]`",

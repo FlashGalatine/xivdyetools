@@ -57,7 +57,7 @@
     },
     "harmony": {
       "name": "`/harmony <color> [type] [wheel] [companions]`",
-      "description": "Combinaisons de teintures harmonieuses.\n• 10 types : Complémentaire, Analogue, Triadique, Complémentaire divisé, Tétradique, Tétradique inversé, Carré, Monochromatique, Composé, Nuances\n• 5 roues chromatiques : RGB, RYB, Munsell, teinte OKLCH, clarté OKLCH"
+      "description": "Combinaisons de teintures harmonieuses.\n• 10 types : Complémentaire, Analogue, Triadique, Complémentaire divisé, Tétradique, Tétradique inversé, Carré, Monochromatique, Composé, Nuances\n• 5 roues chromatiques : RVB, RJB, Munsell, Teinte OKLCH, Luminosité OKLCH"
     },
     "mixer": {
       "name": "`/mixer <dye1> <dye2> [mode]`",
@@ -85,7 +85,7 @@
     },
     "dyeList": {
       "name": "`/dye list [category]`",
-      "description": "Listez toutes les teintures ou filtrez par catégorie.\n• Catégories : Rouges, Bruns, Jaunes, Verts, Bleus, Violets, Neutres, Spéciales"
+      "description": "Listez toutes les teintures ou filtrez par catégorie.\n• Catégories : Rouges, Marrons, Jaunes, Verts, Bleus, Violets, Neutre, Spécial"
     },
     "dyeRandom": {
       "name": "`/dye random [unique_categories]`",
