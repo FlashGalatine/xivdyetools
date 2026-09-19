@@ -218,11 +218,34 @@ const F = [
     ['`packages/worker-kit/src/rate-limiter/backends/cloudflare.ts:185-199` returns `remaining: max(0, tier.limit - 1)` while allowed and `0` when denied — the Workers Rate Limiting API exposes no live count. Production limit is 65 (`apps/api-worker/wrangler.toml:99-102`).',
       'Nothing in the guide says the value is synthetic, so a client that paces itself on the header gets no warning before a 429. `apps/api-worker/CLAUDE.md` documents the trap; the public guide does not.'],
     ['Show `64` in the example and add one sentence: the header is `limit - 1` while allowed and `0` when denied — back off on `429` + `Retry-After`, not on a countdown. Check `apps/api-worker/docs/` for the same example.']],
+  ['`glossary.md` prints a pre-5.0 ΔE scale as "the bands for CIEDE2000" — and five guides link to it for more',
+    'MEDIUM', 'web-app', 'WRONG', 'found by the verifier of the DOC-021 fix (remediation pass)',
+    ['`docs/reference/glossary.md:26-34` — 0-1 / 1-2 / 2-10 / 10-50 / 50+, then "The bands above are for CIEDE2000"'],
+    ['`packages/core/src/config/band-vocabulary.ts:94` — the `match` bands for `ciede2000` are cut at 5 / 10 / 20 (SAME / CLOSE / NEAR / FAR). `budget-suggestions.md`, `faq.md`, `palette-extractor.md`, `dye-comparison.md` and now `swatch-matcher.md` all print that table and point here "for more".'],
+    ['Replace the table with the four-band one and name `BAND_VOCABULARY` as the source.']],
 ];
 
-/** Findings the `/manual` update addresses — PR #189, draft, not merged when the audit closed. */
-const PROPOSED = new Set([3, 4, 5, 6, 7, 8, 9, 10, 11]);
-const STATUS_PROPOSED = 'FIX PROPOSED 2026-09-18 — draft PR #189 (`29e055e9`), not merged. Becomes FIXED on merge + discord-worker deploy.';
+/** How each finding was resolved. Commits are on the audit branch (PR #190) unless a PR is named. */
+const PR190 = 'PR #190, draft — not merged';
+const fixed = (sha, extra = '') => `FIXED 2026-09-18 \`${sha}\` (${PR190}).${extra ? ' ' + extra : ''}`;
+const MANUAL = 'FIX PROPOSED 2026-09-18 — draft PR #189 (`29e055e9`, `45051233`), not merged. Becomes FIXED on merge + the discord-worker deploy it triggers.';
+const STATUS = {
+  1: fixed('146cee72', 'A full sweep of every worker\'s table found and fixed five more rows of the same class; an independent verifier re-swept the page afterwards.'),
+  2: fixed('146cee72'), 17: fixed('146cee72', 'Settled on live evidence: `gh api …/branches/main/protection/required_status_checks` returned the three checks on 2026-09-18.'),
+  29: fixed('146cee72', 'Also the root `README.md` and root `CLAUDE.md`. `apps/web-app/CLAUDE.md:9` says the same and is deferred — see the report.'),
+  30: fixed('146cee72'), 33: fixed('146cee72'),
+  12: fixed('b7754ee9'), 13: fixed('b7754ee9'), 14: fixed('b7754ee9'), 15: fixed('b7754ee9'), 24: fixed('b7754ee9', 'Plus two same-class rows: a second "10/hour" and a "50 votes per hour" limit that does not exist in source.'),
+  31: fixed('b7754ee9', 'Doc only; the source comment at `validation-service.ts:213` still says 5729 — deferred, see the report.'),
+  34: fixed('b7754ee9'), 35: fixed('b7754ee9', 'The verifier found the sentence itself was false, not just the count: those `@internal` symbols ARE re-exported from the barrel.'),
+  18: fixed('589846b0'), 19: fixed('589846b0'), 20: fixed('589846b0', 'Refined in verification: `POST /v1/telemetry` keeps its own exact-Origin allowlist.'),
+  21: fixed('589846b0'), 22: fixed('589846b0'), 23: fixed('589846b0'), 25: fixed('589846b0'), 36: fixed('589846b0'), 38: fixed('589846b0'),
+  16: fixed('4b912720', 'The same stale sentence in `apps/discord-worker/CLAUDE.md` is fixed in PR #189 (`45051233`) — editing that path deploys the bot, so it rides with the PR that already does.'),
+  32: fixed('4b912720', 'The public developer site had the `page` / `q` gaps too: fixed in draft PR #191 (`2a87d3e0`, api-worker 0.14.3).'),
+  37: fixed('4b912720', 'The public developer site showed `42`: fixed in draft PR #191 (`2a87d3e0`, api-worker 0.14.3).'),
+  26: fixed('b9428956', 'The callout was the visible part: 22 "(prepared)" markers on released rows were stale too. 15 are removed here; the 7 in the discord-worker and api-worker tables are removed by PR #189 and PR #191, which insert rows into those tables (`da661eb0` explains the split).'),
+  27: fixed('b9428956'), 28: fixed('b9428956'),
+};
+for (const n of [3, 4, 5, 6, 7, 8, 9, 10, 11]) STATUS[n] = MANUAL;
 
 mkdirSync(join(root, 'findings'), { recursive: true });
 const rows = [];
@@ -234,7 +257,7 @@ F.forEach(([title, sev, unit, kind, cands, loc, ev, fix], i) => {
     '', '## Location', ...loc.map((l) => `- ${l}`),
     '', '## Evidence', ...ev.map((l) => `- ${l}`), `- Reviewer candidates: ${cands} (verdicts in \`../evidence/verify-*.md\`).`,
     '', '## Fix', ...fix.map((l) => `- ${l}`),
-    '', '## Status', PROPOSED.has(i + 1) ? STATUS_PROPOSED : 'OPEN', '',
+    '', '## Status', STATUS[i + 1] ?? 'OPEN', '',
   ].join('\n');
   writeFileSync(join(root, 'findings', `${id}.md`), body);
   // a literal pipe inside a title would split the table cell

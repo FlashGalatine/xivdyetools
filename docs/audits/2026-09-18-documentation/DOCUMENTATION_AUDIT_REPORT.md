@@ -6,8 +6,11 @@
 - **Method:** a collector ran the inventory, both docs gates, `manual-check.mjs` and the
   served-version lookups; twelve reviewers each fact-checked one cluster against source; three
   verifiers (plus the `/manual` pre-commit reviewer, for the late candidate) re-opened every candidate at `file:line` and graded it. 52 candidates → 49 confirmed →
-  merged into the findings below. No source or living document was modified by the audit.
-- **Totals:** 37 findings — 1 HIGH, 25 MEDIUM, 11 LOW · **Act now:** DOC-001
+  merged into the findings below. The audit pass modified no source or living document; the
+  remediation pass that followed the same day did, in separate commits (see *Remediation status*).
+- **Totals:** 38 findings — 1 HIGH, 26 MEDIUM, 11 LOW (DOC-038 surfaced while verifying a fix) ·
+  **Status:** every finding fixed on a branch the same day — 29 in #190, 9 in #189, public-site
+  twins in #191; nothing merged yet (see *Remediation status*)
 
 The previous audit (`2026-09-05-documentation`, merged as `39e08c32`) fixed about 600 findings, so
 this one is mostly a measure of 13 days of drift: nine feature and fix PRs (#171–#173, #183–#188)
@@ -102,6 +105,7 @@ not whether the prose is true.
 | [DOC-035](findings/DOC-035.md) | `dependency-graph.md` counts 28 `@internal` symbols in core; there are 17 | LOW | WRONG | core |
 | [DOC-036](findings/DOC-036.md) | `multi-color-extraction.md` names a component file that does not exist | LOW | WRONG | web-app |
 | [DOC-037](findings/DOC-037.md) | `public-api.md` shows `X-RateLimit-Remaining: 59`; in production the header is only ever 64 or 0 | MEDIUM | WRONG | api-worker |
+| [DOC-038](findings/DOC-038.md) | `glossary.md` prints a pre-5.0 ΔE scale as "the bands for CIEDE2000" — and five guides link to it for more | MEDIUM | WRONG | web-app |
 
 ## Late cluster — `docs/user-guides/public-api.md`
 
@@ -143,11 +147,11 @@ Checked and right — do not re-file:
 
 ## Verification gaps
 
-- `docs/projects/discord-worker/rendering.md`'s CJK codepoint counts (SC 1,129 / JP 556 / KR 489) — no source constant; would need the font cmaps read.
-- `contributing.md`'s required-checks list (DOC-017) and its claim about `monorepo-2.0-prep` rest on a dated `gh api` note, not on a tracked file.
+- ~~`docs/projects/discord-worker/rendering.md`'s CJK codepoint counts (SC 1,129 / JP 556 / KR 489)~~ — **closed in remediation**: the cmaps at `0fec18f4` hold JP 622 / KR 582 / SC 1,202 codepoints, so the numbers were wrong, and they move with every locale edit. The page now says what decides and what enforces the subsets instead (`4b912720`).
+- ~~`contributing.md`'s required-checks list (DOC-017)~~ — **closed in remediation**: branch protection was read live (`gh api …/branches/main/protection/required_status_checks`, 2026-09-18) — three checks; `monorepo-2.0-prep` no longer exists.
+- ~~`apps/api-worker/docs/` was out of scope~~ — **closed in remediation**: surveyed, same `page` / `q` / rate-limit-example gaps found, fixed in PR #191.
 - Beta environments and the live responses of the public API were not probed; "served" means "last successful production deploy".
 - Non-English `/manual` text was compared with English claim by claim at the syntax lines and numbers; the prose around them was not back-translated word for word.
-- `apps/api-worker/docs/` (the public developer site) was out of scope; DOC-032 suggests it has the same two gaps.
 
 ## Recommendations
 
@@ -160,10 +164,50 @@ Checked and right — do not re-file:
 
 ## Remediation status
 
-| ID | Status | Commit |
+The first request covered the audit and `/manual`; a second, the same day, asked for everything
+to be resolved. Six fix agents worked disjoint file sets, three verifiers then re-checked every
+changed hunk against source (their corrections are in the commits), and nothing is left OPEN.
+All commits below are on this branch (PR #190) unless a PR is named; **none of the three PRs is
+merged**.
+
+| ID | Status | Commit / PR |
 |---|---|---|
-| DOC-003 … DOC-011 (`/manual`) | FIX PROPOSED — draft PR #189, not merged | `29e055e9` |
-| all others | OPEN — corrections were not part of this request | — |
+| DOC-001, 002, 017, 029, 030, 033 | FIXED | `146cee72` |
+| DOC-012, 013, 014, 015, 024, 031, 034, 035 | FIXED | `b7754ee9` |
+| DOC-018, 019, 020, 021, 022, 023, 025, 036, 038 | FIXED | `589846b0` |
+| DOC-016, 032, 037 | FIXED in `docs/`; app-local twins in #189 / #191 | `4b912720` · #189 `45051233` · #191 `2a87d3e0` |
+| DOC-026, 027, 028 | FIXED (7 of 22 marker removals live in #189 / #191) | `b9428956`, `da661eb0` |
+| DOC-003 … DOC-011 (`/manual`) | FIX PROPOSED — draft PR #189 | `29e055e9`, `45051233`, `ba97c9d4` |
+
+**What verification changed.** Every finding was confirmed resolved, but the verifiers found more
+than they were sent: a false sentence next to a fixed one (`dependency-graph.md` — `@internal`
+symbols *are* in the barrel), a pre-existing false claim on the HIGH page (`ENVIRONMENT` is also
+read by `/stats`), an undocumented dev var (`UNIVERSALIS_PROXY_URL`), three new-prose errors in
+the Swatch guide (which lens has which click target, the shorter Facewear menu, and a claim
+about pasting into Discord that no source supports — the guide now says what the source says:
+bold in Word and Google Docs, plain text elsewhere), the telemetry route's own Origin allowlist,
+the root `README.md` still saying "Vitest 4", and DOC-038.
+
+**The three PRs merge cleanly in any order.** A first trial merge conflicted in
+`docs/versions.md`: #189 inserts a row at the top of the discord-worker history table, beside
+rows this branch had edited, and git flags an insertion next to modified lines even when the
+overlapping edits are byte-identical. Each unit's history table is therefore edited only by the
+PR that owns it. Re-tested in three merge orders: all clean, identical tree, both docs gates green
+on the merged tree, zero "(prepared)" markers left.
+
+**Deliberately not done** — each would trigger a production deploy for a comment-level change,
+so they wait for the next real change to that unit:
+
+- `apps/web-app/CLAUDE.md:9` still says "Vitest 4 (jsdom) + Playwright 1.62" (DOC-029's class).
+- `apps/presets-api/src/services/validation-service.ts:213` — the comment says `>= 5729`, the
+  check below it is `>= 5000` (DOC-031's other half).
+- The shipped 5.10.0 release notes (`apps/web-app/CHANGELOG-laymans.md`, root 5.7.0) say Copy list
+  pastes as real bold "into Word, Google Docs or Discord"; the source only promises Word and
+  Google Docs. Published notes were left alone — worth one real paste into Discord to settle.
+
+**Needs the maintainer:** merging the three PRs (each merge is a deploy; #189's second commit
+fires the release announcement) and Actions → *Publish Packages to npm* for logger 2.2.1,
+worker-kit 1.4.0, core 5.3.0 and bot-logic 4.3.0. The recommendations above are not implemented.
 
 ## `/manual` update
 
@@ -186,15 +230,24 @@ production deploy and fires the release announcement, so that decision stays wit
   deleted `/match` in the `/preferences filters set` footer — both fixed in the PR.
 - Four new guards in `manual.test.ts` read the real locale source: roster coverage, nothing
   unregistered, Discord limits per locale, syntax lines identical to English. Mutation-checked.
+- Follow-up (`45051233`): `localize.ts` records that core owns the harmony vocabulary (TERM-001) —
+  Discord's picker shows core's localized names — so the manual's harmony, colour-wheel and
+  dye-category lists are now derived from core's locale data in every locale. Korean harmony
+  names, Japanese / Korean / French wheel names and Japanese / French / Korean / Chinese category
+  names had differed from what the bot itself shows. `apps/discord-worker/CLAUDE.md` carries the
+  DOC-016 correction here, because editing that path deploys the bot.
 - Gates: `turbo run build type-check lint test --filter=...@xivdyetools/bot-logic` exit 0, 21/21
-  tasks; `docs:check-versions`, `docs:check-links`, `test:scripts`, `manual-check.mjs` exit 0.
-  gitleaks is not installed locally; CI runs it.
+  tasks; `docs:check-versions`, `docs:check-links`, `test:scripts`, `manual-check.mjs` exit 0
+  (largest reply fr 4,997 / 6,000). CI on the PR: all checks green, gitleaks included.
 
 After merge: publish `@xivdyetools/bot-logic` 4.3.0 from Actions. `register-commands` has nothing
 new — the `match_image` topic id and its choice label were deliberately left alone.
 
 ## Next steps
 
-1. DOC-001 first — it is the only finding that can take a service down.
-2. Review and merge the `/manual` PR, then publish bot-logic.
-3. The remaining 27 findings are documentation-only edits and fit one PR; ask for a remediation plan if they should be scheduled instead.
+1. Review and merge **#190** (this branch — documentation only, no deploy). It carries DOC-001.
+2. Review and merge **#189** (`/manual`; deploys discord-worker, and its root layman's changelog
+   commit fires the 5.8.1 announcement) and **#191** (public API docs; deploys api-worker 0.14.3).
+   Any order — see *Remediation status*.
+3. Actions → *Publish Packages to npm* → `all-modified` (logger, worker-kit, core, bot-logic).
+4. When web-app or presets-api next change, pick up the two deferred one-line corrections.
