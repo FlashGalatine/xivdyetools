@@ -78,8 +78,9 @@ Validation stops at the first failing parameter — a response never reports mor
 
 | Parameter | Range | Default |
 |---|---|---|
-| `page` | ≥ 1 | `1` |
+| `page` | 1 – 1000 | `1` |
 | `perPage` | 1 – 200 | `50` |
+| `q` (search) | ≤ 100 characters | — |
 | `stainId` (path) | ≥ 1 | — |
 | `minPrice`, `maxPrice` | ≥ 0 | — |
 | `ids` (batch), `excludeIds` | ≤ 50 comma-separated integers | — |

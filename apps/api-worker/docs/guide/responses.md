@@ -85,7 +85,7 @@ Every `/v1` response includes these headers:
 | `X-Request-ID` | `550e8400-…` | Unique ID — matches `meta.requestId` in body |
 | `X-API-Version` | `v1` | API version |
 | `X-RateLimit-Limit` | `65` | Requests allowed per window (60 + 5 burst) |
-| `X-RateLimit-Remaining` | `42` | Headroom flag — see [Rate Limits](./rate-limits) |
+| `X-RateLimit-Remaining` | `64` | Headroom flag (`64` while allowed, `0` when refused) — see [Rate Limits](./rate-limits) |
 | `X-RateLimit-Reset` | `1702684860` | Unix timestamp when the window resets |
 | `Cache-Control` | `public, max-age=3600, s-maxage=86400` | Caching directives |
 | `Access-Control-Allow-Origin` | `*` | Open CORS — callable from any origin |

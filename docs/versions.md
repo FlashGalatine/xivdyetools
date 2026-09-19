@@ -25,7 +25,7 @@
 | **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.14.3 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -524,8 +524,9 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v0.14.2 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
-| v0.14.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
+| v0.14.3 | Sep 2026 | 2026-09-18 documentation audit — developer docs site only, no route or response change: `page` (1–1000) and `q` (≤ 100 characters) caps documented on the `/v1/dyes` cards and in the Numeric Ranges table; the `X-RateLimit-Remaining` examples show `64`, a value production can emit, instead of `42` (the header is `limit − 1` while allowed and `0` when refused) |
+| v0.14.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
+| v0.14.1 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
 | **v0.14.0** | **Sep 2026** | **Colour wheels on the public API (PR #169) — `GET /v1/wheels`, `GET /v1/wheels/:id` (`ringStops` + every dye's `wheelHue`), `GET /v1/harmony/types`, `GET /v1/harmony` (core's `generateHarmonySlots` over the whole database), plus a Harmony docs group** |
 | v0.13.0 | Sep 2026 | Developer docs restyle on the web-app's design register (API Docs Directions 1d, PR #168) — self-hosted Space Grotesk / Onest / Fragment Mono, the 5.0 dark palette, console chrome; no route change |
 | **v0.12.0** | **Sep 2026** | **`?method=oklab` is ΔEOK2 (core 5.1.0) — different ranking and a ~1.4–2× scale; `/v1/match/within-distance` returns fewer results for an unchanged `maxDistance`; `ciede2000` byte-identical** |
