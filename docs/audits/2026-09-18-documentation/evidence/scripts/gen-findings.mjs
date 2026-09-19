@@ -226,9 +226,9 @@ const F = [
 ];
 
 /** How each finding was resolved. Commits are on the audit branch (PR #190) unless a PR is named. */
-const PR190 = 'PR #190, draft — not merged';
+const PR190 = 'PR #190';
 const fixed = (sha, extra = '') => `FIXED 2026-09-18 \`${sha}\` (${PR190}).${extra ? ' ' + extra : ''}`;
-const MANUAL = 'FIX PROPOSED 2026-09-18 — draft PR #189 (`29e055e9`, `45051233`, review fixes `e94f8fd4`), not merged. Becomes FIXED on merge + the discord-worker deploy it triggers.';
+const MANUAL = 'FIXED — PR #189 (`29e055e9`, `45051233`, review fixes `e94f8fd4`), merged 2026-09-19 as `53090f68`; the discord-worker production deploy that merge triggered succeeded.';
 const STATUS = {
   1: fixed('146cee72', 'A full sweep of every worker\'s table found and fixed five more rows of the same class; an independent verifier re-swept the page afterwards. Pre-merge review 2026-09-19 (`8dbf57f2`): the page\'s "Setting Secrets" blocks ran a bare `wrangler secret put`, which writes to the dev worker — they now carry `--env production`, as does `projects/presets-api/overview.md`.'),
   2: fixed('146cee72'), 17: fixed('146cee72', 'Settled on live evidence: `gh api …/branches/main/protection/required_status_checks` returned the three checks on 2026-09-18.'),
@@ -240,8 +240,8 @@ const STATUS = {
   18: fixed('589846b0'), 19: fixed('589846b0', 'Pre-merge review 2026-09-19 (`8dbf57f2`): the Facewear row only renders with Show all on in the Pieces view; the guide said it always appears.'), 20: fixed('589846b0', 'Refined in verification: `POST /v1/telemetry` keeps its own exact-Origin allowlist.'),
   21: fixed('589846b0'), 22: fixed('589846b0'), 23: fixed('589846b0'), 25: fixed('589846b0'), 36: fixed('589846b0'), 38: fixed('589846b0', 'Pre-merge review 2026-09-19 (`8dbf57f2`): the band words are printed only by the Dye Comparison tool and the bot\'s comparison card; elsewhere the band is the colour of the number.'),
   16: fixed('4b912720', 'The same stale sentence in `apps/discord-worker/CLAUDE.md` is fixed in PR #189 (`45051233`) — editing that path deploys the bot, so it rides with the PR that already does.'),
-  32: fixed('4b912720', 'The public developer site had the `page` / `q` gaps too: fixed in draft PR #191 (`2a87d3e0`, api-worker 0.14.3).'),
-  37: fixed('4b912720', 'The public developer site showed `42`: fixed in draft PR #191 (`2a87d3e0`, api-worker 0.14.3). Pre-merge review 2026-09-19 (`8dbf57f2`): "every allowed request" became "an allowed request" — the limiter\'s fail-open branch answers 65 — here and in #191 (`c6de8507`).'),
+  32: fixed('4b912720', 'The public developer site had the `page` / `q` gaps too: fixed in PR #191 (`2a87d3e0`, api-worker 0.14.3), merged 2026-09-19 as `c948f77a` and live on developers.xivdyetools.app.'),
+  37: fixed('4b912720', 'The public developer site showed `42`: fixed in PR #191 (`2a87d3e0`, api-worker 0.14.3), merged 2026-09-19 as `c948f77a` and live on developers.xivdyetools.app. Pre-merge review 2026-09-19 (`8dbf57f2`): "every allowed request" became "an allowed request" — the limiter\'s fail-open branch answers 65 — here and in #191 (`c6de8507`).'),
   26: fixed('b9428956', 'The callout was the visible part: 22 "(prepared)" markers on released rows were stale too. 15 are removed here; the 7 in the discord-worker and api-worker tables are removed by PR #189 and PR #191, which insert rows into those tables (`da661eb0` explains the split).'),
   27: fixed('b9428956'), 28: fixed('b9428956'),
 };

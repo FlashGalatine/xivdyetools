@@ -11,7 +11,7 @@
   remediation pass that followed the same day did, in separate commits (see *Remediation status*).
 - **Totals:** 38 findings — 1 HIGH, 26 MEDIUM, 11 LOW (DOC-038 surfaced while verifying a fix) ·
   **Status:** every finding fixed on a branch the same day — 29 in #190, 9 in #189, public-site
-  twins in #191; nothing merged yet (see *Remediation status*)
+  twins in #191; #189 and #191 merged 2026-09-19, this PR after them (see *Remediation status*)
 
 The previous audit (`2026-09-05-documentation`, merged as `39e08c32`) fixed about 600 findings, so
 this one is mostly a measure of 13 days of drift: nine feature and fix PRs (#171–#173, #183–#188)
@@ -168,8 +168,9 @@ Checked and right — do not re-file:
 The first request covered the audit and `/manual`; a second, the same day, asked for everything
 to be resolved. Six fix agents worked disjoint file sets, three verifiers then re-checked every
 changed hunk against source (their corrections are in the commits), and nothing is left OPEN.
-All commits below are on this branch (PR #190) unless a PR is named; **none of the three PRs is
-merged**.
+All commits below are on this branch (PR #190) unless a PR is named. #189 and
+#191 were merged on 2026-09-19 (`53090f68`, `c948f77a`), after the pre-merge review below; this PR
+follows them.
 
 | ID | Status | Commit / PR |
 |---|---|---|
@@ -178,7 +179,7 @@ merged**.
 | DOC-018, 019, 020, 021, 022, 023, 025, 036, 038 | FIXED | `589846b0` |
 | DOC-016, 032, 037 | FIXED in `docs/`; app-local twins in #189 / #191 | `4b912720` · #189 `45051233` · #191 `2a87d3e0` |
 | DOC-026, 027, 028 | FIXED (7 of 22 marker removals live in #189 / #191) | `b9428956`, `da661eb0` |
-| DOC-003 … DOC-011 (`/manual`) | FIX PROPOSED — draft PR #189 | `29e055e9`, `45051233`, `ba97c9d4` |
+| DOC-003 … DOC-011 (`/manual`) | FIXED — PR #189, merged 2026-09-19 (`53090f68`) | `29e055e9`, `45051233`, `ba97c9d4`, `e94f8fd4` |
 | Pre-merge review fixes (2026-09-19) | one corrective commit per PR | `8dbf57f2` · #189 `e94f8fd4` · #191 `c6de8507` |
 
 **What verification changed.** Every finding was confirmed resolved, but the verifiers found more
@@ -235,17 +236,23 @@ so they wait for the next real change to that unit:
   pastes as real bold "into Word, Google Docs or Discord"; the source only promises Word and
   Google Docs. Published notes were left alone — worth one real paste into Discord to settle.
 
-**Needs the maintainer:** merging the three PRs (each merge is a deploy; #189's second commit
-fires the release announcement) and Actions → *Publish Packages to npm* for logger 2.2.1,
+**Merged 2026-09-19, at the maintainer's request.** #189 (`53090f68`): the discord-worker and
+moderation-worker production deploys succeeded, and the bot answered the push with
+`{"success":true,"version":"5.8.1"}` — the announcement posted once. #191 (`c948f77a`): the
+api-worker deploy succeeded and developers.xivdyetools.app shows `64`. This PR goes in after
+them, so that this record of them is true.
+
+**Still needs the maintainer:** Actions → *Publish Packages to npm* for logger 2.2.1,
 worker-kit 1.4.0, core 5.3.0 and bot-logic 4.3.0. The recommendations above are not implemented.
 
 ## `/manual` update
 
 The request included updating `/manual`, so DOC-003 … DOC-011 were fixed on a separate branch
-(the audit branch stays documentation-only): **draft PR
+(the audit branch stays documentation-only): **PR
 [#189](https://github.com/FlashGalatine/xivdyetools/pull/189)**, `fix/manual-5-0-refresh`,
-discord-worker 5.5.8, text folded into the unpublished bot-logic 4.3.0. Not merged — merging is the
-production deploy and fires the release announcement, so that decision stays with the maintainer.
+discord-worker 5.5.8, text folded into the unpublished bot-logic 4.3.0. Merged 2026-09-19 at the
+maintainer's request (`53090f68`) — merging was the production deploy and carried the release
+announcement.
 
 - All 17 commands are named (two new embeds, seven in total); `/swatch`, the 📸 topic, `/harmony`,
   `/gradient`, `/mixer`, `/preferences`, the Character File topic and the tips say what the code does.
@@ -270,14 +277,15 @@ production deploy and fires the release announcement, so that decision stays wit
   tasks; `docs:check-versions`, `docs:check-links`, `test:scripts`, `manual-check.mjs` exit 0
   (largest reply fr 4,997 / 6,000). CI on the PR: all checks green, gitleaks included.
 
-After merge: publish `@xivdyetools/bot-logic` 4.3.0 from Actions. `register-commands` has nothing
+Still owed: publish `@xivdyetools/bot-logic` 4.3.0 from Actions. `register-commands` has nothing
 new — the `match_image` topic id and its choice label were deliberately left alone.
 
 ## Next steps
 
-1. Review and merge **#190** (this branch — documentation only, no deploy). It carries DOC-001.
-2. Review and merge **#189** (`/manual`; deploys discord-worker, redeploys moderation-worker
-   unchanged, and its root layman's changelog commit fires the 5.8.1 announcement) and **#191** (public API docs; deploys api-worker 0.14.3).
-   Any order — see *Remediation status*.
-3. Actions → *Publish Packages to npm* → `all-modified` (logger, worker-kit, core, bot-logic).
-4. When web-app or presets-api next change, pick up the two deferred one-line corrections.
+The three PRs are merged (see *Remediation status*). What remains:
+
+1. Actions → *Publish Packages to npm* → `all-modified` (logger, worker-kit, core, bot-logic).
+2. When web-app or presets-api next change, pick up the two deferred one-line corrections.
+3. One real paste of **Copy list** into Discord settles the shipped release-note claim.
+4. `@xivdyetools/core`'s published `.d.ts` re-exports five `@internal` symbols whose declarations
+   `stripInternal` removed — invisible in-repo (`skipLibCheck`), found by the pre-merge review.

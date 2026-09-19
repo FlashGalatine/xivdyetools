@@ -7,10 +7,12 @@ reviewer candidates, 49 of which survived verification (several merge into one f
 three a verifier found outside the candidate list: two while checking `/manual` (DOC-011) and one
 while a fix was being verified (DOC-038).
 
-**All 38 were fixed the same day, on three draft PRs — none merged yet.** The audit pass itself
+**All 38 were fixed the same day, on three PRs.** The audit pass itself
 modified nothing; the remediation commits sit on top of it on this branch. A pre-merge review on
 2026-09-19 (nine independent reviewers, no blockers) added one corrective commit to each PR — see
-*Pre-merge review* in the report:
+*Pre-merge review* in the report. At the maintainer's request #189 (`53090f68`) and #191
+(`c948f77a`) were then merged the same day — all three production deploys succeeded and the
+5.8.1 announcement posted once — and this PR follows them:
 
 | PR | Carries | Deploys on merge |
 |----|---------|------------------|
