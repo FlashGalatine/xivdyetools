@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.3] - 2026-09-18
+
+Developer docs site only (`docs/`, served on developers.xivdyetools.app) — no route, response or
+worker-code change. From the 2026-09-18 documentation audit
+(`docs/audits/2026-09-18-documentation/`, DOC-032 and DOC-037), which found the same gaps on the
+public site that it had found in the monorepo hub copies.
+
+### Fixed
+
+- `guide/rate-limits.md` and `guide/responses.md` showed `X-RateLimit-Remaining: 42` — a value
+  production can never emit, and one that contradicted the warning box directly beneath it. With
+  the native Workers Rate Limiting binding the header is `limit − 1` (`64`) on an allowed request
+  and `0` on a refused one (`packages/worker-kit/src/rate-limiter/backends/cloudflare.ts`; the
+  same file's fail-open branch answers `limit`, `65`, while the binding itself is unavailable).
+  Both examples now show `64`.
+- `GET /v1/dyes` `page` is capped at 1000 and `GET /v1/dyes/search` `q` at 100 characters
+  (`src/routes/dyes.ts` — a 400 past either). Neither cap was documented: both endpoint cards and
+  the Numeric Ranges table in `guide/errors.md` now state them.
+- `CLAUDE.md`'s deployment checklist no longer carries a "currently `0.14.1`" version note — it
+  was a current-version claim outside the two documents that may hold one, and already stale.
+
 ## [0.14.2] - 2026-09-17
 
 Sprint 11 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive/`).

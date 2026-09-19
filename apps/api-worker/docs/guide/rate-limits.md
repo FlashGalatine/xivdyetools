@@ -17,7 +17,7 @@ Every `/v1/*` response includes rate limit headers regardless of status:
 
 ```http
 X-RateLimit-Limit: 65
-X-RateLimit-Remaining: 42
+X-RateLimit-Remaining: 64
 X-RateLimit-Reset: 1702684860
 ```
 

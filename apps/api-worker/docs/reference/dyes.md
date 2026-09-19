@@ -22,7 +22,7 @@ List all dyes with filtering, sorting, and pagination. Returns 125 entries acros
     { name: 'category', in: 'query', description: 'Exact category name, case-sensitive', options: ['Blues', 'Browns', 'Greens', 'Neutral', 'Purples', 'Reds', 'Special', 'Yellows'] },
     { name: 'sort', in: 'query', description: 'name · brightness · saturation · hue · cost', options: ['name', 'brightness', 'saturation', 'hue', 'cost'] },
     { name: 'order', in: 'query', default: 'asc', description: 'asc or desc', options: ['asc', 'desc'] },
-    { name: 'page', in: 'query', default: '1', description: 'Page number' },
+    { name: 'page', in: 'query', default: '1', description: 'Page number (1–1000)' },
     { name: 'perPage', in: 'query', default: '10', description: 'Items per page (1–200; the API default is 50)' },
     { name: 'locale', in: 'query', default: 'en', description: 'en · ja · de · fr · ko · zh', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] },
     { name: 'metallic', in: 'query', description: 'Only (true) or never (false) metallic dyes', options: ['true', 'false'] },
@@ -80,7 +80,7 @@ Search dyes by name. Case-insensitive substring match; with a non-English `local
   fields="dye"
   preview="/v1/dyes/search?q=rose"
   :params="[
-    { name: 'q', in: 'query', required: true, default: 'snow', description: 'Substring to match against dye names' },
+    { name: 'q', in: 'query', required: true, default: 'snow', description: 'Substring to match against dye names (max 100 characters)' },
     { name: 'locale', in: 'query', default: 'en', description: 'Search against localized names and return localizedName', options: ['en', 'ja', 'de', 'fr', 'ko', 'zh'] },
   ]"
 />
