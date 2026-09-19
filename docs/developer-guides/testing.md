@@ -1,7 +1,7 @@
 # Testing Guide
 
 ## Framework
-- **Vitest 4** across every workspace — no package is pinned to an older major, and
+- **Vitest 5** across every workspace — no package is pinned to an older major, and
   `@cloudflare/vitest-pool-workers` is not a dependency anywhere
 - **V8 coverage** provider with per-package thresholds (typically 80%+)
 - ~480 test files across the monorepo
@@ -45,7 +45,9 @@ setup files.
 - `authHeaders(token)` — Pre-built Authorization header objects
 
 ### Factories
-- `createMockDye(overrides)` — Dye objects with sensible defaults; `mockDyes` is a ready-made array
+- `createMockDye(overrides)` — Dye objects with sensible defaults; `mockDyes` is a ready-made array. The default `stainID` advances a deterministic 1-254 sequence and throws once a suite builds more than 254 default-stainID dyes — call `resetMockDyeSequence()` (e.g. in `beforeEach`) between tests
+- `resetMockDyeSequence()` — restarts `createMockDye()`'s default stainID sequence at 1
+- `randomStainId()` — opt-in non-deterministic stainID draw over the real 1-254 range, e.g. `createMockDye({ stainID: randomStainId() })`
 - `createMockPresetRow(overrides)` — a raw D1 `presets` row
 - `createMockSubmission(overrides)` — a `PresetSubmission` request body
 - `createMockCategoryRow(overrides)` — a raw D1 `categories` row
@@ -110,7 +112,7 @@ expect(res.status).toBe(201);
 ```
 
 ## E2E Testing (Web App)
-- **Playwright 1.62** with chromium, mobile-chrome projects
+- **Playwright** with chromium, mobile-chrome projects
 - Tests in `apps/web-app/e2e/`
 - V8 coverage collection via CDP
 ```bash

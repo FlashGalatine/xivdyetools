@@ -62,7 +62,7 @@ PRESETS_API_URL = "https://api.xivdyetools.app"
 ANNOUNCEMENT_CHANNEL_ID = "..."      # release-announcement channel (differs per environment)
 ```
 
-`ENVIRONMENT` is read by exactly one thing: `validateEnv` (`src/utils/env-validation.ts`). When it reads `production` the six `RL_*` rate-limit bindings become **required**, and `src/index.ts` refuses every request with `500 {"error":"Service misconfigured"}` — `/health` included — while any of them is unbound, the same as for a missing `DISCORD_TOKEN` (FINDING-013, `docs/audits/2026-08-29-security`). Losing a tier is otherwise silent: worker-kit routes the orphaned commands to the next larger tier, and Workers Logs are off on this script. On the beta worker (`development`) they stay optional and the limiter falls back to KV.
+`ENVIRONMENT` gates exactly one behaviour: `validateEnv` (`src/utils/env-validation.ts`) — `/stats`'s System Health embed also prints it (`handlers/commands/stats.ts`), but only as a label. When it reads `production` the six `RL_*` rate-limit bindings become **required**, and `src/index.ts` refuses every request with `500 {"error":"Service misconfigured"}` — `/health` included — while any of them is unbound, the same as for a missing `DISCORD_TOKEN` (FINDING-013, `docs/audits/2026-08-29-security`). Losing a tier is otherwise silent: worker-kit routes the orphaned commands to the next larger tier, and Workers Logs are off on this script. On the beta worker (`development`) they stay optional and the limiter falls back to KV.
 
 ### Secrets (set via `wrangler secret put`)
 
@@ -71,7 +71,9 @@ ANNOUNCEMENT_CHANNEL_ID = "..."      # release-announcement channel (differs per
 | `DISCORD_TOKEN` | ✅ Yes | Bot token for API calls |
 | `DISCORD_PUBLIC_KEY` | ✅ Yes | Ed25519 public key for verification |
 | `BOT_API_SECRET` | No | Shared secret for presets API |
+| `BOT_SIGNING_SECRET` | No | HMAC-SHA256 key for signing bot→presets-api requests — min. 32 characters |
 | `INTERNAL_WEBHOOK_SECRET` | No | Webhook authentication |
+| `GITHUB_WEBHOOK_SECRET` | No | HMAC-SHA256 key verifying the `/webhooks/github` release-announcement webhook |
 | `STATS_AUTHORIZED_USERS` | No | Comma-separated user IDs |
 | `MODERATOR_IDS` | No | Comma-separated moderator user IDs |
 | `MODERATION_CHANNEL_ID` | No | Channel for pending presets / preview images |
@@ -103,6 +105,7 @@ wrangler secret put MODERATOR_IDS
 DISCORD_TOKEN=your-bot-token
 DISCORD_PUBLIC_KEY=your-public-key
 BOT_API_SECRET=local-secret
+UNIVERSALIS_PROXY_URL=http://localhost:8790   # only for local dev — the UNIVERSALIS_PROXY service binding supersedes it
 ```
 
 ---
@@ -136,6 +139,7 @@ with presets-api), and the `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` rate-limit
 |--------|----------|-------------|
 | `DISCORD_CLIENT_SECRET` | ✅ Yes | Discord OAuth client secret |
 | `JWT_SECRET` | ✅ Yes | HMAC key for JWT signing (min 32 bytes) |
+| `XIVAUTH_CLIENT_SECRET` | No | XIVAuth confidential-client secret (PKCE-only flows can omit it) |
 
 ### Setting Secrets
 
@@ -144,6 +148,7 @@ cd xivdyetools-oauth
 
 wrangler secret put DISCORD_CLIENT_SECRET
 wrangler secret put JWT_SECRET
+wrangler secret put XIVAUTH_CLIENT_SECRET    # Optional: only for confidential client mode
 ```
 
 ### Generating JWT Secret
@@ -178,12 +183,14 @@ Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`,
 | Secret | Required | Description |
 |--------|----------|-------------|
 | `BOT_API_SECRET` | ✅ Yes | Shared with Discord worker |
-| `JWT_SECRET` | ✅ Yes | Shared with OAuth worker |
-| `MODERATOR_IDS` | No | Comma-separated user IDs |
-| `BOT_SIGNING_SECRET` | No | HMAC signing key for bot request verification |
+| `JWT_SECRET` | ✅ Yes (production) | Shared with OAuth worker (min 32 characters). Without it the web/JWT auth path is skipped entirely — every JWT-authenticated request is 401 |
+| `MODERATOR_IDS` | ✅ Yes | Comma-separated user IDs |
+| `BOT_SIGNING_SECRET` | ✅ Yes (production) | HMAC signing key for bot request verification |
 | `PERSPECTIVE_API_KEY` | No | Google Perspective API for ML moderation. **⚠️ Service shuts down 2026-12-31** — delete the secret before then; with it set and the API gone, every preset submission fails closed into the moderator queue (FINDING-005). See `DEPRECATIONS.md` |
 | `CACHE_PURGE_API_TOKEN` | No | API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone — enables single-file edge purge of deleted/replaced preview images (FINDING-018); pairs with the `CACHE_PURGE_ZONE_ID` **var** (see above). Without it the 1-day `s-maxage` is the bound. Set on production 2026-08-21 |
-| `INTERNAL_WEBHOOK_SECRET` | No | Shared secret for the `DISCORD_WORKER` service-binding notification call |
+| `INTERNAL_WEBHOOK_SECRET` | ✅ Yes (production) | Shared secret for the `DISCORD_WORKER` service-binding notification call |
+
+While `ENVIRONMENT` reads `production`, `validateEnv` refuses every request — `/health` included — with `500 "Service misconfigured"` for as long as any "✅ Yes (production)" secret above is missing (`src/utils/env-validation.ts`, `src/index.ts`).
 
 ### Setting Secrets
 
@@ -191,9 +198,11 @@ Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`,
 cd xivdyetools-presets-api
 
 wrangler secret put BOT_API_SECRET
+wrangler secret put BOT_SIGNING_SECRET       # Required in production
 wrangler secret put JWT_SECRET
 wrangler secret put MODERATOR_IDS
 wrangler secret put PERSPECTIVE_API_KEY  # Optional
+wrangler secret put INTERNAL_WEBHOOK_SECRET  # Required in production
 wrangler secret put CACHE_PURGE_API_TOKEN --env production  # Optional — preview-image edge purge (FINDING-018); CACHE_PURGE_ZONE_ID is a wrangler.toml var, not a secret
 ```
 
@@ -218,12 +227,13 @@ MODERATOR_IDS=123456789,987654321
 ### wrangler.toml Variables
 
 ```toml
-[vars]
-ENVIRONMENT = "production"                              # "development" | "production"
+# PRODUCTION values — in wrangler.toml they are the inline `vars = { … }` table under [env.production].
+# The top-level [vars] block is the routeless dev worker and differs where noted.
+ENVIRONMENT = "production"                              # "development" in the top-level block
 API_VERSION = "v1"
 UNIVERSALIS_API_BASE = "https://universalis.app/api/v2" # upstream for the proxy routes
-RATE_LIMIT_REQUESTS = "30"                              # per-IP memory limit, /universalis aggregated
-RATE_LIMIT_WINDOW_SECONDS = "60"                        # (the dev block uses 60 requests)
+RATE_LIMIT_REQUESTS = "30"                              # per-IP memory limit, /universalis aggregated ("60" in the dev block)
+RATE_LIMIT_WINDOW_SECONDS = "60"
 XIVAPI_BASE = "https://v2.xivapi.com"
 XIVAPI_VERSION = "latest"
 ```
@@ -309,7 +319,7 @@ All three are declared in **both** blocks — `vars` are not inheritable. As on 
 | `MODERATOR_IDS` | ✅ Yes | Comma-separated moderator Discord user IDs (validated as snowflakes) |
 | `MODERATION_CHANNEL_ID` | ✅ Yes | Channel the `/preset` moderation commands are restricted to |
 | `BOT_API_SECRET` | No | Shared secret for presets-api |
-| `BOT_SIGNING_SECRET` | No | HMAC signing key for v2 bot request verification |
+| `BOT_SIGNING_SECRET` | No | HMAC signing key for v2 bot request verification — min. 32 characters |
 | `SUBMISSION_LOG_CHANNEL_ID` | No | Channel for all submissions |
 
 `validateEnv` (`src/utils/env-validation.ts`) treats the four ✅ rows plus `DISCORD_CLIENT_ID`
@@ -324,8 +334,9 @@ rate-limit bindings.
 
 ## xivdyetools-image-worker
 
-**No variables, no secrets** — `ENVIRONMENT` is declared on the `Env` type, but no `wrangler.toml` block sets it in any environment (only tests assign it), so never branch on it here
-— and no bindings at all. The worker is reachable only through its callers' `IMAGE_WORKER`
+**No variables, no secrets** — `Env` is `Record<string, never>` (an explicit empty binding
+contract: no `wrangler.toml` block sets a `[vars]` in either environment, so there is nothing for
+the type to carry) — and no bindings at all. The worker is reachable only through its callers' `IMAGE_WORKER`
 service bindings, so there is nothing to configure. See
 [IMAGE_WORKER_SPLIT](../operations/IMAGE_WORKER_SPLIT.md).
 
