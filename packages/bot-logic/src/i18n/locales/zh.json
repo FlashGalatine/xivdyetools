@@ -45,64 +45,101 @@
     "title": "XIV Dye Tools 使用手册",
     "welcome": "欢迎使用 **XIV Dye Tools**！这个机器人可以帮助您探索和匹配FFXIV染剂颜色。",
     "commandsIntro": "下面是按类别整理的所有可用命令。",
-    "autocompleteNote": "所有命令都支持染剂名称**自动补全**！",
     "colorMatching": "颜色匹配",
     "dyeInformation": "染剂信息",
+    "analysis": "分析",
+    "community": "社区预设",
     "botInformation": "机器人信息",
     "tipsResources": "技巧与资源",
     "extractor": {
-      "name": "`/extractor color <颜色> [数量]` | `/extractor image <图像>`",
-      "description": "提取颜色并匹配FFXIV染剂。\n• `color`：将十六进制代码或染剂名称匹配到最接近的染剂\n• `image`：从上传的图像中提取主要颜色"
+      "name": "`/extractor color <color> [count]` | `/extractor image <image> [colors]`",
+      "description": "将颜色匹配到FFXIV染剂。\n• `color`：十六进制代码或染剂名称最接近的染剂（`count` 1-10）\n• `image`：上传图像的主要颜色（`colors` 3-10）"
     },
     "harmony": {
-      "name": "`/harmony <颜色> [类型]`",
-      "description": "生成和谐的染剂组合。\n• 类型：互补色、类似色、三色、分裂互补、四色、正方形、单色\n• 创建可视化色轮"
+      "name": "`/harmony <color> [type] [wheel] [companions]`",
+      "description": "生成和谐的染剂组合。\n• 10种类型：互补色、类似色、三角配色、分裂互补、四色配色、逆四色配色、正方形配色、单色、复合、明暗\n• 5种色轮：RGB、RYB、孟塞尔、OKLCH 色相、OKLCH 明度"
     },
     "mixer": {
-      "name": "`/mixer <染剂1> <染剂2> [模式]`",
-      "description": "使用色彩科学混合两种染剂。\n• 6种混合模式：RGB、LAB、OKLAB、RYB、HSL、光谱\n• 查找与混合结果最接近的FFXIV染剂"
+      "name": "`/mixer <dye1> <dye2> [mode]`",
+      "description": "使用色彩科学混合两种染剂。\n• 6种混合模式：RGB、LAB、OKLAB、RYB、HSL、光谱\n• 以 5 个比例混合，并为每个比例查找最接近的染剂"
     },
     "gradient": {
-      "name": "`/gradient <起始> <结束> [步骤]`",
-      "description": "在两种颜色之间创建渐变。\n• 显示每个渐变步骤的匹配染剂\n• 可配置步骤数（2-10）"
+      "name": "`/gradient <start_color> <end_color> [steps] [color_space]`",
+      "description": "在两种颜色之间创建渐变，并为每一步显示匹配的染剂。\n• 步骤数 2-12（默认 6）\n• 9种色彩空间（默认 HSV）"
     },
     "swatch": {
-      "name": "`/swatch color <类型> <索引>` | `/swatch grid <类型> <行> <列>`",
-      "description": "将FFXIV角色颜色与染剂匹配。\n• 支持肤色、发色、眼色、高光、唇色、纹身、面部彩绘\n• 肤色和发色有种族/部族特定面板"
+      "name": "`/swatch <file> [order] [slot]`",
+      "description": "将角色的颜色与 `.chara` 文件（Anamnesis 或 Ktisis）中的染剂进行匹配。\n• 读取皮肤、头发、挑染、眼睛、嘴唇、彩绘和纹身/角膜环\n• `slot`：显示其中一种颜色的 5 个最接近的染剂"
     },
     "preferences": {
-      "name": "`/preferences show` | `/preferences set <键> <值>` | `/preferences reset`",
-      "description": "管理机器人偏好设置。\n• 设置混合模式、匹配方法、结果数量的默认值\n• 配置角色部族/性别和市场服务器"
+      "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
+      "description": "管理机器人偏好设置。\n• `set`：语言、混合模式、匹配方法、结果数量、部族/性别、服务器、卡片数值、主题\n• `filters`：从结果中排除染剂组\n• `reset`：单个设置，或全部重置"
     },
     "dyeSearch": {
-      "name": "`/dye search <搜索词>`",
-      "description": "按名称搜索染剂。\n• 模糊匹配可找到部分匹配\n• 显示十六进制代码和分类"
+      "name": "`/dye search <query>`",
+      "description": "按名称搜索染剂。\n• 支持部分名称匹配，可使用英文或您的语言\n• 显示十六进制代码"
     },
     "dyeInfo": {
-      "name": "`/dye info <名称>`",
-      "description": "获取特定染剂的详细信息。\n• 显示Hex、RGB、HSV值\n• 显示分类和物品ID"
+      "name": "`/dye info <name>`",
+      "description": "获取特定染剂的详细信息。\n• HEX、RGB、HSV 和 LAB 值\n• 来源、市场物品和最接近的染剂"
     },
     "dyeList": {
-      "name": "`/dye list [分类]`",
-      "description": "列出所有染剂或按分类筛选。\n• 分类：红色、棕色、黄色、绿色、蓝色、紫色、中性色、特殊"
+      "name": "`/dye list [category]`",
+      "description": "列出所有染剂或按分类筛选。\n• 分类：红色系、棕色系、黄色系、绿色系、蓝色系、紫色系、中性、特殊"
     },
     "dyeRandom": {
       "name": "`/dye random [unique_categories]`",
       "description": "显示5个随机选择的染剂。\n• 可选择每个分类限制1个染剂"
+    },
+    "comparison": {
+      "name": "`/comparison <dye1> <dye2> [dye3] [dye4]`",
+      "description": "并排比较 2-4 种染剂并进行颜色分析。\n• 支持染剂名称或十六进制代码"
+    },
+    "contrast": {
+      "name": "`/contrast <dye1> <dye2> [dye3] [dye4]`",
+      "description": "测量 2-4 种染剂之间的 WCAG 对比度。\n• 标出 3:1、4.5:1 和 7:1 基准线"
+    },
+    "accessibility": {
+      "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
+      "description": "查看染剂在各种色觉下的表现。\n• 一种染剂：在每种色觉下的偏移\n• 两种染剂：差距有多大（`vision` 选择一种色觉）\n• `/a11y` 是同一命令"
+    },
+    "budget": {
+      "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
+      "description": "利用市场板价格，寻找高价染剂的经济实惠替代品。\n• `find`：接近目标染剂、价格更低的染剂（`max_distance` 2-20）\n• `quick`：对受欢迎的高价染剂进行相同检查\n• `set_world`：保存您的服务器或数据中心"
+    },
+    "presetBrowse": {
+      "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
+      "description": "浏览社区染剂预设。\n• 8个类别\n• 按最受欢迎、最新或名称排序"
+    },
+    "presetShare": {
+      "name": "`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`",
+      "description": "分享您自己的预设并为他人的预设投票。\n• 3-6 种染剂，可选附加标签；提交内容需经过审核\n• `edit` 仅可用于您自己的预设"
+    },
+    "presetFavorite": {
+      "name": "`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`",
+      "description": "保留您的个人收藏预设列表（最多 50 个）。"
+    },
+    "changelog": {
+      "name": "`/changelog [version]`",
+      "description": "显示机器人的更新内容。\n• 完整显示最新版本，或用 `version` 选择其他版本"
+    },
+    "stats": {
+      "name": "`/stats summary`",
+      "description": "显示机器人使用统计信息。除 `summary` 外的面板仅限有权限的用户查看。"
     },
     "about": {
       "name": "`/about`",
       "description": "显示机器人信息、版本和链接。"
     },
     "manualCmd": {
-      "name": "`/manual`",
-      "description": "显示此帮助指南。"
+      "name": "`/manual [topic]`",
+      "description": "显示此帮助指南，或深入主题之一：{topics}"
     },
     "tips": {
       "autocomplete": "**自动补全：** 开始输入染剂名称，建议将自动显示！",
       "hexColors": "**十六进制颜色：** 使用标准网页格式如 `#FF0000`（红色）或 `#5865F2`（蓝紫色）",
       "dyeNames": "**染剂名称：** 输入部分名称 - 「达拉」可以找到「达拉加布红」",
-      "facewearExcluded": "**排除面部装备：** 通用面部装备染剂（如「红色」、「蓝色」）将从结果中排除",
+      "facewearExcluded": "**面部装备：** 面部装备颜色（如「红色」、「蓝色」）不是染剂，不会出现在结果中",
       "links": "**链接：**"
     }
   },
@@ -354,7 +391,7 @@
       "excluded": "已排除",
       "included": "已包含",
       "updated": "过滤器已更新",
-      "affectsHint": "影响命令：/match, /harmony, /gradient, /mixer",
+      "affectsHint": "影响命令：/harmony, /gradient, /mixer",
       "title": "染剂过滤",
       "setHint": "使用 /preferences filters set 进行自定义",
       "resetSuccess": "过滤器已重置",
@@ -435,31 +472,31 @@
     "timeout": "图片下载超时。请重试。"
   },
   "matchImageHelp": {
-    "title": "如何使用 /match_image",
-    "description": "`/match_image` 命令会分析您上传的图片，找出主导颜色并匹配最接近的FFXIV染剂。以下是一些获得最佳结果的技巧！",
+    "title": "从图像匹配颜色",
+    "description": "`/extractor image` 会分析您上传的图片，提取其中的主要颜色，并将每种颜色匹配到最接近的FFXIV染剂。以下是一些获得最佳结果的技巧！",
     "howItWorks": "工作原理",
-    "howItWorksContent": "**1. 图像分析**\n- 您的图片会通过K-means聚类处理\n- 提取最主要的颜色\n- 与136种FFXIV染剂进行匹配\n\n**2. 染剂匹配**\n- 使用RGB色彩空间中的欧几里得距离\n- 返回最接近的匹配染剂",
+    "howItWorksContent": "**1. 图像分析**\n- 您的图片会通过K-means聚类处理\n- 提取最主要的颜色（`colors` 3-10，默认 4）\n\n**2. 染剂匹配**\n- 每种颜色都会与全部125种FFXIV染剂进行匹配\n- 默认使用 ΔE2000 - 可通过 `matching` 选项更改\n- 卡片列表只列出占比最大的5种颜色，色带显示全部颜色",
     "tipsForBestResults": "获得最佳结果的技巧",
     "tipsContent": "**裁剪您的图片**\n- 专注于您想要匹配的特定区域\n- 移除UI元素和背景\n\n**选择良好的光线**\n- 在光线充足的区域截图\n- 避免暗影或过度高光\n\n**避免暗色背景**\n- 黑色背景可能会影响结果\n- 尽可能使用中性的浅色背景",
     "commonIssues": "常见问题",
-    "commonIssuesContent": "**「我得到了暗色，但我的装备是亮色的！」**\n→ 您的背景可能是暗色的。请将图片裁剪到只包含装备。\n\n**「匹配结果似乎不对」**\n→ 有多种颜色？算法会选择最常见的颜色。\n\n**「我能匹配特定部分吗？」**\n→ 可以！在上传前裁剪到该精确区域。",
+    "commonIssuesContent": "**「我得到了暗色，但我的装备是亮色的！」**\n→ 您的背景可能是暗色的。请将图片裁剪到只包含装备。\n\n**「匹配结果似乎不对」**\n→ 算法会选择最常见的颜色。请裁剪排除其余部分。\n\n**「我能匹配特定部分吗？」**\n→ 可以！在上传前裁剪到该精确区域。",
     "proTips": "专业技巧",
-    "proTipsContent": "• 使用图像编辑软件在上传前裁剪\n• 金属/闪亮装备的结果可能会有所不同\n• 如果您知道十六进制代码，请使用 `/match`\n• 使用 `colors` 选项提取多种颜色（1-5）\n• 使用1920x1080或更高分辨率截图以获得最佳质量",
+    "proTipsContent": "• 使用图像编辑软件在上传前裁剪\n• 金属/闪亮装备的结果可能会有所不同\n• 如果您知道十六进制代码，请改用 `/extractor color`\n• 使用 `colors` 选项要求更多或更少的颜色（3-10）\n• 使用1920x1080或更高分辨率截图以获得最佳质量",
     "footer": "XIV Dye Tools - 为FFXIV时装爱好者倾心打造",
     "exampleUseCases": "使用案例示例",
     "goodExamples": "好的示例",
     "goodExamplesContent": "• 裁剪后只包含单件胸甲的截图\n• 中性背景下染色盔甲的特写\n• 在明亮日光区域拍摄的截图\n• 聚焦于您想要匹配的颜色的图片",
     "poorExamples": "不好的示例",
     "poorExamplesContent": "• 包含大量UI的全屏截图\n• 在黑暗副本或洞穴中的角色\n• 多件不同染色的装备\n• 被背景颜色主导的图片",
-    "whenToUse": "何时使用 /match_image vs /match",
-    "whenToUseContent": "**使用 `/match_image` 当：**\n• 您有一张截图并想找到对应的染剂\n• 您不确定确切的颜色代码\n• 您想从灵感照片中匹配颜色\n\n**使用 `/match` 当：**\n• 您已经知道十六进制颜色代码\n• 您需要更精确的结果\n• 您正在使用色卡工作",
+    "whenToUse": "何时使用 /extractor image vs /extractor color",
+    "whenToUseContent": "**使用 `/extractor image` 当：**\n• 您有一张截图并想找到对应的染剂\n• 您不确定确切的颜色代码\n• 您想从灵感照片中匹配颜色\n\n**使用 `/extractor color` 当：**\n• 您已经知道十六进制颜色代码\n• 您需要更精确的结果\n• 您正在使用色卡工作",
     "technicalDetails": "技术细节",
     "supportedFormats": "支持的格式",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "文件限制",
-    "fileLimitsContent": "• 最大大小：8MB\n• 处理时间：约1-3秒",
-    "matchQualityRatings": "匹配质量等级",
-    "matchQualityRatingsContent": "**完美** (距离 0)\n**优秀** (距离 <10)\n**良好** (距离 <25)\n**一般** (距离 <50)\n**近似** (距离 ≥50)\n\n*距离越低 = 匹配越好*",
+    "fileLimitsContent": "• 最大大小：10MB",
+    "matchQualityRatings": "匹配距离",
+    "matchQualityRatingsContent": "列出的每个匹配结果都会显示与您颜色的距离 - 数值越低越接近。\n\n六种匹配方式及其分档的运作方式：`/manual` 主题 {topic}",
     "poweredBy": "由 Photon WASM 图像处理驱动"
   },
   "card": {
@@ -591,7 +628,7 @@
       },
       "characterFile": {
         "name": "角色文件",
-        "body": "/swatch 读取来自 Anamnesis 或 Ktisis 的 .chara 导出文件：颜色部位（皮肤、头发、眼睛、嘴唇、彩绘）和穿戴装备的染色。文件仅为生成回复读取一次，不会保存。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。"
+        "body": "/swatch 读取来自 Anamnesis 或 Ktisis 的 .chara 导出文件：颜色部位（皮肤、头发、挑染、眼睛、嘴唇、彩绘、纹身/角膜环）和穿戴装备的染色。文件仅为生成回复读取一次，不会保存。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。"
       }
     }
   },

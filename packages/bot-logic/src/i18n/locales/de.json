@@ -45,64 +45,101 @@
     "title": "XIV Dye Tools Handbuch",
     "welcome": "Willkommen bei **XIV Dye Tools**! Dieser Bot hilft dir beim Erkunden und Abgleichen von FFXIV-Farbstoffen.",
     "commandsIntro": "Unten findest du alle verfügbaren Befehle nach Kategorien geordnet.",
-    "autocompleteNote": "Alle Befehle unterstützen **Autovervollständigung** für Farbstoffnamen!",
     "colorMatching": "Farbabgleich",
     "dyeInformation": "Farbstoff-Informationen",
+    "analysis": "Analyse",
+    "community": "Community-Vorlagen",
     "botInformation": "Bot-Informationen",
     "tipsResources": "Tipps & Ressourcen",
     "extractor": {
-      "name": "`/extractor color <Farbe> [Anzahl]` | `/extractor image <Bild>`",
-      "description": "Extrahiere Farben und finde passende FFXIV-Farbstoffe.\n• `color`: Hex-Code oder Farbstoffname zu nächsten Farbstoffen zuordnen\n• `image`: Dominante Farben aus hochgeladenem Bild extrahieren"
+      "name": "`/extractor color <color> [count]` | `/extractor image <image> [colors]`",
+      "description": "Ordne Farben FFXIV-Farbstoffen zu.\n• `color`: die nächsten Farbstoffe zu Hex-Code oder Farbstoffname (`count` 1-10)\n• `image`: die dominanten Farben eines hochgeladenen Bildes (`colors` 3-10)"
     },
     "harmony": {
-      "name": "`/harmony <Farbe> [Typ]`",
-      "description": "Generiere harmonische Farbstoffkombinationen.\n• Typen: Komplementär, Analog, Triadisch, Geteilt-Komplementär, Tetradisch, Quadratisch, Monochromatisch\n• Erstellt ein visuelles Farbrad"
+      "name": "`/harmony <color> [type] [wheel] [companions]`",
+      "description": "Generiere harmonische Farbstoffkombinationen.\n• 10 Typen: Komplementär, Analog, Triadisch, Geteiltes Komplement, Tetradisch, Invertiert-Tetradisch, Quadrat, Monochromatisch, Zusammengesetzt, Schattierungen\n• 5 Farbräder: RGB, RYB, Munsell, OKLCH-Farbton, OKLCH-Helligkeit"
     },
     "mixer": {
-      "name": "`/mixer <Farbstoff1> <Farbstoff2> [Modus]`",
-      "description": "Mische zwei Farbstoffe mit Farbwissenschaft.\n• 6 Mischmodi: RGB, LAB, OKLAB, RYB, HSL, Spektral\n• Findet den nächsten FFXIV-Farbstoff zum Mischergebnis"
+      "name": "`/mixer <dye1> <dye2> [mode]`",
+      "description": "Mische zwei Farbstoffe mit Farbwissenschaft.\n• 6 Mischmodi: RGB, LAB, OKLAB, RYB, HSL, Spektral\n• Mischt bei fünf Verhältnissen und findet den nächsten Farbstoff zu jedem"
     },
     "gradient": {
-      "name": "`/gradient <Start> <Ende> [Schritte]`",
-      "description": "Erstelle einen Farbverlauf zwischen zwei Farben.\n• Zeigt passende Farbstoffe für jeden Verlaufsschritt\n• Konfigurierbare Schrittanzahl (2-10)"
+      "name": "`/gradient <start_color> <end_color> [steps] [color_space]`",
+      "description": "Erstelle einen Farbverlauf zwischen zwei Farben, mit passendem Farbstoff für jeden Schritt.\n• 2-12 Schritte (Standard 6)\n• 9 Farbräume (Standard HSV)"
     },
     "swatch": {
-      "name": "`/swatch color <Typ> <Index>` | `/swatch grid <Typ> <Zeile> <Spalte>`",
-      "description": "FFXIV-Charakterfarben zu Farbstoffen zuordnen.\n• Unterstützt Haut, Haare, Augen, Highlights, Lippen, Tattoos, Gesichtsbemalung\n• Rassen-/Stammspezifische Paletten für Haut und Haare"
+      "name": "`/swatch <file> [order] [slot]`",
+      "description": "Ordne die Farben eines Charakters Farbstoffen aus einer `.chara`-Datei zu (Anamnesis oder Ktisis).\n• Liest Haut, Haar, Highlights, Augen, Lippe, Gesichtsbemalung und Tattoo/Limbalring\n• `slot`: die fünf nächsten Farbstoffe für eine Farbe"
     },
     "preferences": {
-      "name": "`/preferences show` | `/preferences set <Key> <Wert>` | `/preferences reset`",
-      "description": "Verwalte deine Bot-Einstellungen.\n• Setze Standards für Mischmodus, Matching-Methode, Ergebnisanzahl\n• Konfiguriere Charakter-Stamm/Geschlecht und Markt-Welt"
+      "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
+      "description": "Verwalte deine Bot-Einstellungen.\n• `set`: Sprache, Mischmodus, Matching, Ergebnisanzahl, Stamm/Geschlecht, Welt, Kartenwerte, Design\n• `filters`: Farbstoffgruppen aus den Ergebnissen ausschließen\n• `reset`: eine Einstellung oder alles"
     },
     "dyeSearch": {
-      "name": "`/dye search <Suche>`",
-      "description": "Suche Farbstoffe nach Namen.\n• Fuzzy-Suche findet Teilübereinstimmungen\n• Zeigt Hex-Codes und Kategorien"
+      "name": "`/dye search <query>`",
+      "description": "Suche Farbstoffe nach Namen.\n• Teilnamen werden erkannt, auf Englisch oder in deiner Sprache\n• Zeigt Hex-Codes"
     },
     "dyeInfo": {
-      "name": "`/dye info <Name>`",
-      "description": "Erhalte detaillierte Informationen zu einem bestimmten Farbstoff.\n• Zeigt Hex-, RGB-, HSV-Werte\n• Zeigt Kategorie und Gegenstands-ID"
+      "name": "`/dye info <name>`",
+      "description": "Erhalte detaillierte Informationen zu einem bestimmten Farbstoff.\n• HEX-, RGB-, HSV- und LAB-Werte\n• Bezugsquelle, Marktartikel und nächste Farbstoffe"
     },
     "dyeList": {
-      "name": "`/dye list [Kategorie]`",
+      "name": "`/dye list [category]`",
       "description": "Liste alle Farbstoffe oder filtere nach Kategorie.\n• Kategorien: Rot, Braun, Gelb, Grün, Blau, Violett, Neutral, Spezial"
     },
     "dyeRandom": {
       "name": "`/dye random [unique_categories]`",
       "description": "Zeige 5 zufällig ausgewählte Farbstoffe.\n• Option zur Begrenzung auf 1 Farbstoff pro Kategorie"
     },
+    "comparison": {
+      "name": "`/comparison <dye1> <dye2> [dye3] [dye4]`",
+      "description": "Vergleiche 2-4 Farbstoffe nebeneinander mit Farbanalyse.\n• Akzeptiert Farbstoffnamen oder Hex-Codes"
+    },
+    "contrast": {
+      "name": "`/contrast <dye1> <dye2> [dye3] [dye4]`",
+      "description": "Miss WCAG-Leuchtdichteverhältnisse zwischen 2-4 Farbstoffen.\n• Markiert die 3:1-, 4.5:1- und 7:1-Linien"
+    },
+    "accessibility": {
+      "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
+      "description": "Zeige, wie Farbstoffe unter den vier Sehweisen wirken.\n• Ein Farbstoff: wie er sich unter jeder Sehweise verschiebt\n• Zwei Farbstoffe: wie weit sie auseinander bleiben (`vision` wählt eine Sehweise)\n• `/a11y` ist derselbe Befehl"
+    },
+    "budget": {
+      "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
+      "description": "Finde günstige Alternativen zu einem teuren Farbstoff anhand der Marktbrett-Preise.\n• `find`: günstigere Farbstoffe nahe deinem Ziel (`max_distance` 2-20)\n• `quick`: dasselbe für beliebte teure Farbstoffe\n• `set_world`: speichert deine Welt oder dein Datenzentrum"
+    },
+    "presetBrowse": {
+      "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
+      "description": "Durchsuche Community-Vorlagen.\n• 8 Kategorien\n• Sortierung nach Beliebtheit, Aktualität oder Name"
+    },
+    "presetShare": {
+      "name": "`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`",
+      "description": "Teile eigene Vorlagen und stimme über andere ab.\n• 3-6 Farbstoffe plus optionale Tags; Einreichungen werden moderiert\n• `edit` funktioniert nur bei eigenen Vorlagen"
+    },
+    "presetFavorite": {
+      "name": "`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`",
+      "description": "Führe eine persönliche Liste favorisierter Vorlagen (bis zu 50)."
+    },
+    "changelog": {
+      "name": "`/changelog [version]`",
+      "description": "Zeige, was neu im Bot ist.\n• Die neueste Version vollständig, oder wähle eine mit `version`"
+    },
+    "stats": {
+      "name": "`/stats summary`",
+      "description": "Zeige Nutzungsstatistiken des Bots. Panels außer `summary` sind auf berechtigte Nutzer beschränkt."
+    },
     "about": {
       "name": "`/about`",
       "description": "Zeige Bot-Informationen, Version und Links."
     },
     "manualCmd": {
-      "name": "`/manual`",
-      "description": "Zeige dieses Hilfe-Handbuch."
+      "name": "`/manual [topic]`",
+      "description": "Zeige dieses Hilfe-Handbuch oder ein ausführliches Thema: {topics}"
     },
     "tips": {
       "autocomplete": "**Autovervollständigung:** Beginne einen Farbstoffnamen einzugeben und Vorschläge erscheinen!",
       "hexColors": "**Hex-Farben:** Verwende das Standard-Webformat wie `#FF0000` (Rot) oder `#5865F2` (Blurple)",
       "dyeNames": "**Farbstoffnamen:** Gib Teilnamen ein - 'Dala' findet 'Dalamud-Rot'",
-      "facewearExcluded": "**Gesichtszubehör ausgeschlossen:** Generische Gesichtszubehör-Farbstoffe (wie 'Rot', 'Blau') sind von den Ergebnissen ausgeschlossen",
+      "facewearExcluded": "**Gesichtszubehör:** Gesichtszubehör-Farben (wie 'Rot', 'Blau') sind keine Farbstoffe und erscheinen nie in den Ergebnissen",
       "links": "**Links:**"
     }
   },
@@ -354,7 +391,7 @@
       "excluded": "Ausgeschlossen",
       "included": "Eingeschlossen",
       "updated": "Filter aktualisiert",
-      "affectsHint": "Betrifft: /match, /harmony, /gradient, /mixer",
+      "affectsHint": "Betrifft: /harmony, /gradient, /mixer",
       "title": "Farbstoff-Filter",
       "setHint": "Verwende /preferences filters set zum Anpassen",
       "resetSuccess": "Filter zurückgesetzt",
@@ -435,31 +472,31 @@
     "timeout": "Bild-Download hat zu lange gedauert. Bitte versuche es erneut."
   },
   "matchImageHelp": {
-    "title": "So verwendest du /match_image",
-    "description": "Der `/match_image`-Befehl analysiert dein hochgeladenes Bild, um die dominante Farbe zu finden und sie dem nächsten FFXIV-Farbstoff zuzuordnen. Hier sind einige Tipps für beste Ergebnisse!",
+    "title": "Farbabgleich aus einem Bild",
+    "description": "`/extractor image` analysiert ein hochgeladenes Bild, extrahiert die dominanten Farben und ordnet jede dem nächsten FFXIV-Farbstoff zu. Hier sind einige Tipps für die besten Ergebnisse!",
     "howItWorks": "So funktioniert es",
-    "howItWorksContent": "**1. Bildanalyse**\n- Dein Bild wird mit K-Means-Clustering verarbeitet\n- Die dominante(n) Farbe(n) werden extrahiert\n- Farben werden mit 136 FFXIV-Farbstoffen abgeglichen\n\n**2. Farbstoff-Zuordnung**\n- Verwendet euklidische Distanz im RGB-Farbraum\n- Gibt den/die nächsten passenden Farbstoff(e) zurück",
+    "howItWorksContent": "**1. Bildanalyse**\n- Dein Bild wird mit K-Means-Clustering verarbeitet\n- Die dominantesten Farben werden extrahiert (`colors` 3-10, Standard 4)\n\n**2. Farbstoff-Zuordnung**\n- Jede Farbe wird mit allen 125 FFXIV-Farbstoffen abgeglichen\n- Verwendet standardmäßig ΔE2000 - änderbar über die Option `matching`\n- Die Karte listet die fünf größten Farben auf; ihr Farbbalken zeigt alle",
     "tipsForBestResults": "Tipps für beste Ergebnisse",
     "tipsContent": "**Bilder zuschneiden**\n- Fokussiere auf den spezifischen Bereich, den du abgleichen möchtest\n- Entferne UI-Elemente und Hintergründe\n\n**Gute Beleuchtung wählen**\n- Mache Screenshots in gut beleuchteten Bereichen\n- Vermeide dunkle Schatten oder extreme Highlights\n\n**Dunkle Hintergründe vermeiden**\n- Schwarze Hintergründe können Ergebnisse verfälschen\n- Verwende wenn möglich neutrale, hellere Hintergründe",
     "commonIssues": "Häufige Probleme",
-    "commonIssuesContent": "**‚Ich habe eine dunkle Farbe bekommen, aber meine Ausrüstung ist hell!'**\n→ Dein Hintergrund ist wahrscheinlich dunkel. Schneide das Bild nur auf deine Ausrüstung zu.\n\n**‚Die Zuordnung scheint nicht zu stimmen'**\n→ Mehrere Farben? Der Algorithmus wählt die HÄUFIGSTE Farbe.\n\n**‚Kann ich einen bestimmten Teil abgleichen?'**\n→ Ja! Schneide vor dem Hochladen auf genau diesen Bereich zu.",
+    "commonIssuesContent": "**‚Ich habe eine dunkle Farbe bekommen, aber meine Ausrüstung ist hell!'**\n→ Dein Hintergrund ist wahrscheinlich dunkel. Schneide das Bild nur auf deine Ausrüstung zu.\n\n**‚Die Zuordnung scheint nicht zu stimmen'**\n→ Der Algorithmus wählt die HÄUFIGSTEN Farben. Schneide alles andere weg.\n\n**‚Kann ich einen bestimmten Teil abgleichen?'**\n→ Ja! Schneide vor dem Hochladen auf genau diesen Bereich zu.",
     "proTips": "Profi-Tipps",
-    "proTipsContent": "• Verwende Bildbearbeitungssoftware zum Zuschneiden vor dem Hochladen\n• Bei metallischer/glänzender Ausrüstung können Ergebnisse variieren\n• Wenn du den Hex-Code kennst, verwende stattdessen `/match`\n• Extrahiere mehrere Farben mit der `colors`-Option (1-5)\n• Screenshots in 1920x1080 oder höher für beste Qualität",
+    "proTipsContent": "• Verwende Bildbearbeitungssoftware zum Zuschneiden vor dem Hochladen\n• Bei metallischer/glänzender Ausrüstung können Ergebnisse variieren\n• Wenn du den Hex-Code kennst, verwende stattdessen `/extractor color`\n• Fordere mehr oder weniger Farben mit der `colors`-Option an (3-10)\n• Screenshots in 1920x1080 oder höher für beste Qualität",
     "footer": "XIV Dye Tools - Mit Liebe für FFXIV Glamour-Enthusiasten gemacht",
     "exampleUseCases": "Beispiel-Anwendungsfälle",
     "goodExamples": "Gute Beispiele",
     "goodExamplesContent": "• Zugeschnittener Screenshot eines einzelnen Bruststücks\n• Nahaufnahme von gefärbter Rüstung mit neutralem Hintergrund\n• Screenshot bei hellem Tageslicht\n• Bild fokussiert auf die Farbe, die du abgleichen möchtest",
     "poorExamples": "Schlechte Beispiele",
     "poorExamplesContent": "• Vollbild-Screenshot mit viel UI\n• Charakter in einem dunklen Dungeon oder einer Höhle\n• Mehrere Rüstungsteile mit verschiedenen Farbstoffen\n• Bild dominiert von Hintergrundfarben",
-    "whenToUse": "Wann /match_image vs /match verwenden",
-    "whenToUseContent": "**Verwende `/match_image` wenn:**\n• Du einen Screenshot hast und den Farbstoff finden möchtest\n• Du den genauen Farbcode nicht kennst\n• Du eine Farbe aus Inspirationsfotos abgleichen möchtest\n\n**Verwende `/match` wenn:**\n• Du den Hex-Farbcode bereits kennst\n• Du präzisere/exaktere Ergebnisse brauchst\n• Du mit Farbfeldern arbeitest",
+    "whenToUse": "Wann /extractor image vs /extractor color verwenden",
+    "whenToUseContent": "**Verwende `/extractor image` wenn:**\n• Du einen Screenshot hast und den Farbstoff finden möchtest\n• Du den genauen Farbcode nicht kennst\n• Du eine Farbe aus Inspirationsfotos abgleichen möchtest\n\n**Verwende `/extractor color` wenn:**\n• Du den Hex-Farbcode bereits kennst\n• Du präzisere/exaktere Ergebnisse brauchst\n• Du mit Farbfeldern arbeitest",
     "technicalDetails": "Technische Details",
     "supportedFormats": "Unterstützte Formate",
-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
+    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
     "fileLimits": "Dateilimits",
-    "fileLimitsContent": "• Maximale Größe: 8MB\n• Verarbeitungszeit: ~1-3 Sekunden",
-    "matchQualityRatings": "Qualitätsbewertungen",
-    "matchQualityRatingsContent": "**Perfekt** (0 Distanz)\n**Ausgezeichnet** (<10 Distanz)\n**Gut** (<25 Distanz)\n**Akzeptabel** (<50 Distanz)\n**Ungefähr** (≥50 Distanz)\n\n*Niedrigere Distanz = bessere Übereinstimmung*",
+    "fileLimitsContent": "• Maximale Größe: 10MB",
+    "matchQualityRatings": "Match-Distanz",
+    "matchQualityRatingsContent": "Jede aufgelistete Übereinstimmung zeigt ihre Distanz zu deiner Farbe - niedriger ist näher.\n\nDie sechs Matching-Methoden und wie ihre Bänder funktionieren: `/manual`-Thema {topic}",
     "poweredBy": "Powered by Photon WASM Bildverarbeitung"
   },
   "card": {
@@ -591,7 +628,7 @@
       },
       "characterFile": {
         "name": "Charakterdatei",
-        "body": "/swatch liest einen .chara-Export aus Anamnesis oder Ktisis: Farb-Slots (Haut, Haar, Augen, Lippe, Bemalung) und getragene Ausrüstungsfarben. Die Datei wird einmal für die Antwort gelesen und nicht gespeichert. Farben abseits des Rasters werden nach ihrem Live-Wert gematcht und als ABSEITS markiert."
+        "body": "/swatch liest einen .chara-Export aus Anamnesis oder Ktisis: Farb-Slots (Haut, Haar, Highlights, Augen, Lippe, Gesichtsbemalung, Tattoo/Limbalring) und getragene Ausrüstungsfarben. Die Datei wird einmal für die Antwort gelesen und nicht gespeichert. Farben abseits des Rasters werden nach ihrem Live-Wert gematcht und als ABSEITS markiert."
       }
     }
   },

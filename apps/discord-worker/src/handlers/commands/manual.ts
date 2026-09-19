@@ -104,7 +104,9 @@ function buildMatchImageHelpEmbeds(t: Translator): object[] {
         },
         {
           name: t.t('matchImageHelp.matchQualityRatings'),
-          value: t.t('matchImageHelp.matchQualityRatingsContent'),
+          value: t.t('matchImageHelp.matchQualityRatingsContent', {
+            topic: MANUAL_TOPICS.find((m) => m.id === 'matching_methods')?.emoji ?? '',
+          }),
           inline: false,
         },
       ],
@@ -123,12 +125,7 @@ function buildEmbeds(t: Translator): object[] {
     // Overview
     {
       title: `📖 ${t.t('manual.title')}`,
-      description: [
-        t.t('manual.welcome'),
-        '',
-        t.t('manual.commandsIntro'),
-        t.t('manual.autocompleteNote'),
-      ].join('\n'),
+      description: [t.t('manual.welcome'), '', t.t('manual.commandsIntro')].join('\n'),
       color: BRAND_ACCENT,
     },
 
@@ -193,6 +190,59 @@ function buildEmbeds(t: Translator): object[] {
       ],
     },
 
+    // Analysis — /a11y has no field of its own: it is a second registration
+    // of the accessibility handler, named inside that field
+    {
+      title: `🔬 ${t.t('manual.analysis')}`,
+      color: BRAND_ACCENT,
+      fields: [
+        {
+          name: t.t('manual.comparison.name'),
+          value: t.t('manual.comparison.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.contrast.name'),
+          value: t.t('manual.contrast.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.accessibility.name'),
+          value: t.t('manual.accessibility.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.budget.name'),
+          value: t.t('manual.budget.description'),
+          inline: false,
+        },
+      ],
+    },
+
+    // Community Presets — one command, three fields: a single syntax line
+    // for all nine subcommands would not fit Discord's 256-char field name
+    {
+      title: `🌐 ${t.t('manual.community')}`,
+      color: BRAND_ACCENT,
+      fields: [
+        {
+          name: t.t('manual.presetBrowse.name'),
+          value: t.t('manual.presetBrowse.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.presetShare.name'),
+          value: t.t('manual.presetShare.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.presetFavorite.name'),
+          value: t.t('manual.presetFavorite.description'),
+          inline: false,
+        },
+      ],
+    },
+
     // Bot Information
     {
       title: `ℹ️ ${t.t('manual.botInformation')}`,
@@ -204,13 +254,28 @@ function buildEmbeds(t: Translator): object[] {
           inline: false,
         },
         {
+          name: t.t('manual.changelog.name'),
+          value: t.t('manual.changelog.description'),
+          inline: false,
+        },
+        {
+          name: t.t('manual.stats.name'),
+          value: t.t('manual.stats.description'),
+          inline: false,
+        },
+        {
           name: t.t('manual.about.name'),
           value: t.t('manual.about.description'),
           inline: true,
         },
         {
           name: t.t('manual.manualCmd.name'),
-          value: t.t('manual.manualCmd.description'),
+          // Topic emoji are interpolated, never written into a locale string:
+          // font-coverage.test.ts scans every string for glyphs the card
+          // fonts can draw, and core's MANUAL_TOPICS is the roster of record
+          value: t.t('manual.manualCmd.description', {
+            topics: MANUAL_TOPICS.map((topic) => topic.emoji).join(' '),
+          }),
           inline: true,
         },
       ],

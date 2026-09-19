@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.8] - 2026-09-18
+
+`/manual` brought up to 5.0 — the 2026-09-18 documentation audit (`docs/audits/2026-09-18-documentation/`, DOC-003 … DOC-011) found it was still the 4.x manual in all six languages. The text lives in `@xivdyetools/bot-logic` 4.3.0 (see its changelog for the string-level list); this worker owns the structure and the guards. No slash-command shape changes: the `match_image` topic keeps its id and its 📸 choice label, so `register-commands` has nothing new to publish.
+
+### Fixed
+
+- `/manual`'s overview said it listed "all available commands" and named 9 of the 17 registered ones. `buildEmbeds()` gains an **Analysis** embed (`/comparison`, `/contrast`, `/accessibility` with `/a11y`, `/budget`) and a **Community Presets** embed (`/preset` in three fields — one syntax line for all nine subcommands would overflow Discord's 256-character field name), and **Bot Information** gains `/changelog` and `/stats`. Seven embeds, 21 fields; the largest reply is well inside the 6,000-character message limit.
+- `/manual topic:match_image` documented `/match` and `/match_image`, both deleted in 5.0 — and `/extractor image`'s own reply sends people to that topic. It now describes `/extractor image` with the real numbers (3-10 colours, default 4, of which the card lists matches for the five largest; 125 dyes; ΔE2000; 10 MB; BMP accepted). The retired Perfect/Excellent/Good rating ladder is replaced by a pointer to the Matching Methods topic.
+- `/swatch`, `/harmony`, `/gradient`, `/mixer`, `/preferences`, `/dye search`, `/dye info` and the Character File topic are described as they behave now; the autocomplete and Facewear tips no longer claim things that are untrue. Same defect class, found by the pre-commit review: the `/preferences filters set` footer no longer lists the deleted `/match` among the commands filters affect.
+
+### Changed
+
+- The six topic emoji in the `/manual` field and in the Image Matching topic's pointer are interpolated from core's `MANUAL_TOPICS` (`{topics}` / `{topic}`) rather than written into locale strings — `font-coverage.test.ts` scans every bot-logic string for glyphs the card fonts can draw, and the roster of record already owns them.
+- The three Noto Sans subsets were regenerated with `scripts/subset-cjk-fonts.py` for the glyphs the new help text uses — by cmap against `0fec18f4`, JP 622 → 629 codepoints (+11 −4), KR 582 → 588 (+7 −1), SC 1,202 → 1,206 (+10 −6). `font-coverage.test.ts` went red on 12 JP and 7 KR codepoints before the rerun.
+
+- `CLAUDE.md`: both webhook routes stream-count received bytes (it still said only the GitHub one did, DOC-016); `ENVIRONMENT` gates only `validateEnv` but is also printed by `/stats health`; `utils/read-text-capped.ts` is listed; "Setting Secrets" says a bare `wrangler secret put` writes to the beta bot and production needs `--env production`.
+
+### Added
+
+- `manual.test.ts` — "the shipped text": four guards that read the real locale files from bot-logic's **source** (the rest of the suite echoes keys and cannot see text). The overview must name every `COMMAND_REGISTRY` entry and nothing unregistered; every reply in every locale must fit Discord's embed limits (6,000 per message, 4,096 description, 256 title / field name, 1,024 field value, 25 fields, 10 embeds) and resolve every key; every syntax line must be byte-identical to English in the other five locales. Mutation-checked: before the translations landed, exactly the ten tests covering the five untranslated locales failed. The "nothing unregistered" guard matches a command at a line start, after whitespace or opening a backtick span — backticks alone would have missed the old un-quoted field name "When to Use /match_image vs /match" (pre-merge review).
+
 ## [5.5.7] - 2026-09-16
 
 2026-09-16 deep-dive Sprint 4 (`docs/audits/2026-09-16-deep-dive/`). Picks up `@xivdyetools/bot-logic` 4.3.0 (`/swatch` eye rows labelled `EYES·L` / `EYES·R` / `EYES·LR` so off-grid heterochromia rows are told apart, BUG-006). The `/preset` schema change means `register-commands` must run with the deploy.

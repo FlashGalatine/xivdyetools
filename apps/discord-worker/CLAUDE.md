@@ -39,6 +39,10 @@ npm run register-commands
 
 ### Setting Secrets
 
+A bare `wrangler secret put` writes to the top-level block — the **beta** bot
+(`xivdyetools-discord-worker-dev`). Append `--env production` to set the live bot's copy
+(`docs/operations/SECRET_ROTATION.md`).
+
 ```bash
 wrangler secret put DISCORD_TOKEN
 wrangler secret put DISCORD_PUBLIC_KEY
@@ -135,6 +139,7 @@ src/
 │   ├── discord-api.ts             # REST helpers (sendMessage, follow-ups, edits)
 │   ├── sanitize.ts                # sanitizePresetName / sanitizePresetDescription
 │   ├── text.ts                    # Line-boundary truncation for embed budgets
+│   ├── read-text-capped.ts        # Stream-counted body reads (`/swatch` downloads, `/webhooks/preset-submission`)
 │   └── env-validation.ts          # Validate required env vars at first request
 └── types/
     ├── env.ts                     # Env interface, InteractionType/ResponseType enums
@@ -160,7 +165,7 @@ hex helpers come from `@xivdyetools/bot-logic` / `@xivdyetools/core`. There is n
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 | `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s period) | Per-user command counters — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS`; KV is the fallback only when none is bound (FINDING-007) |
 
-Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID` — all four declared in **both** `wrangler.toml` blocks, since `vars` are not inheritable. `ENVIRONMENT` is `"development"` on the beta bot and `"production"` on the live one; the only thing that reads it is `validateEnv`, which requires the six `RL_*` bindings in production (FINDING-013). Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID` — all four declared in **both** `wrangler.toml` blocks, since `vars` are not inheritable. `ENVIRONMENT` is `"development"` on the beta bot and `"production"` on the live one; the only behaviour it gates is `validateEnv`, which requires the six `RL_*` bindings in production (FINDING-013) — `/stats health` also prints it, as a label only (BUG-012). Custom domains: `bot.xivdyetools.app`, `bot.xivdyetools.projectgalatine.com`. `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
 ### Required Secrets
 
@@ -230,7 +235,7 @@ Special routing inside `handleAutocomplete()`:
 
 ### Webhook Payload Limits
 
-Both webhook routes check `Content-Length` before reading the body, but the caps differ: `/webhooks/preset-submission` allows 10 KB (10,240 bytes), while `/webhooks/github` allows 1 MiB (`GITHUB_WEBHOOK_MAX_BYTES = 1_048_576` — GitHub's push payload carries the whole `repository` object plus up to 2048 commits, and a two-commit merge push measured 18,196 bytes). The GitHub route also counts actual streamed bytes and cancels immediately above its cap, since `Content-Length` can be missing or spoofed. It verifies HMAC over the bounded received bytes before text decoding; BOM removal or invalid UTF-8 replacement must never change the authenticated payload. Both refuse an oversized body with 413 before any JSON is parsed.
+Both webhook routes check `Content-Length` before reading the body, but the caps differ: `/webhooks/preset-submission` allows 10 KB (10,240 bytes), while `/webhooks/github` allows 1 MiB (`GITHUB_WEBHOOK_MAX_BYTES = 1_048_576` — GitHub's push payload carries the whole `repository` object plus up to 2048 commits, and a two-commit merge push measured 18,196 bytes). Both routes also stream-count the actual received bytes and cancel immediately above their own cap, since a client-declared `Content-Length` can be missing or spoofed — `/webhooks/preset-submission` through the shared `readTextCapped()` helper (`src/utils/read-text-capped.ts`, BUG-013), `/webhooks/github` through its own raw-byte reader. The GitHub route verifies HMAC over the bounded received bytes before text decoding; BOM removal or invalid UTF-8 replacement must never change the authenticated payload. Both refuse an oversized body with 413 before any JSON is parsed.
 
 ### User Content Sanitization
 

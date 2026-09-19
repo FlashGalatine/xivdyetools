@@ -10,7 +10,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { handleManualCommand } from './manual.js';
+import { COMMAND_REGISTRY } from '../../commands/registry.js';
 import type { DiscordInteraction, Env } from '../../types/env.js';
 
 vi.mock('../../services/bot-i18n.js', () => ({
@@ -302,5 +306,148 @@ describe('handleManualCommand', () => {
         undefined
       );
     });
+  });
+
+  // The suite above echoes locale keys, so it cannot see what the help text
+  // says. Until 2026-09-18 /manual shipped the 4.x text in all six languages
+  // (deleted /swatch subcommands, /match_image, 9 of 17 commands named) with
+  // every test green. These read the real locale files from source — not
+  // bot-logic's dist, which a stale build would make lie.
+  describe('the shipped text', () => {
+    const LOCALES_DIR = join(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../../../../packages/bot-logic/src/i18n/locales'
+    );
+    const LOCALES = ['en', 'ja', 'de', 'fr', 'ko', 'zh'] as const;
+    const TOPICS = [
+      undefined,
+      'match_image',
+      'color_vision',
+      'contrast',
+      'matching_methods',
+      'spectrum_prices',
+      'character_file',
+    ];
+
+    type Tree = { [key: string]: string | Tree };
+    type Embed = {
+      title?: string;
+      description?: string;
+      footer?: { text?: string };
+      fields?: { name: string; value: string }[];
+    };
+
+    const load = (locale: string) =>
+      JSON.parse(readFileSync(join(LOCALES_DIR, `${locale}.json`), 'utf-8')) as Tree;
+
+    /**
+     * Dotted-key lookup that answers the raw key on a miss — deliberately
+     * stricter than Translator.t(), which falls back to English first, so a key
+     * missing from one locale fails here instead of shipping English.
+     */
+    const realTranslator = (locale: string) => {
+      const tree = load(locale);
+      return {
+        t: (key: string, vars?: Record<string, unknown>) => {
+          let node: string | Tree | undefined = tree;
+          for (const part of key.split('.')) {
+            node = typeof node === 'object' ? node[part] : undefined;
+          }
+          if (typeof node !== 'string') return key;
+          return node.replace(/\{(\w+)\}/g, (whole, name: string) =>
+            vars && name in vars ? String(vars[name]) : whole
+          );
+        },
+        getLocale: () => locale,
+      };
+    };
+
+    const embedsFor = async (locale: string, topic?: string) => {
+      vi.mocked(createUserTranslatorWithPrefs).mockResolvedValue({
+        t: realTranslator(locale),
+        prefs: {},
+      } as never);
+      const body = await bodyOf(await handleManualCommand(interaction(topic), env, ctx));
+      return body.data.embeds as Embed[];
+    };
+
+    const stringsOf = (embeds: Embed[]) =>
+      embeds.flatMap((e) => [
+        e.title ?? '',
+        e.description ?? '',
+        e.footer?.text ?? '',
+        ...(e.fields ?? []).flatMap((f) => [f.name, f.value]),
+      ]);
+
+    it('names every registered command in the overview', async () => {
+      const text = stringsOf(await embedsFor('en')).join('\n');
+
+      // No exceptions: /a11y is named inside the /accessibility field.
+      const unnamed = COMMAND_REGISTRY.map((c) => c.name).filter(
+        (name) => !new RegExp(`/${name}(?![\\w-])`).test(text)
+      );
+
+      expect(unnamed).toEqual([]);
+    });
+
+    it('names no command that is not registered', async () => {
+      // The 📸 topic too: it documented /match and /match_image for a year
+      // after both were deleted.
+      const text = [
+        ...stringsOf(await embedsFor('en')),
+        ...stringsOf(await embedsFor('en', 'match_image')),
+      ].join('\n');
+      const registered = new Set(COMMAND_REGISTRY.map((c) => c.name));
+
+      // A command is a slash at the start of a line, after whitespace or opening
+      // a backtick span. The old field name "When to Use /match_image vs /match"
+      // had no backticks, so backticks alone would have missed it; "clan/gender"
+      // and "JPG/JPEG" have no such boundary and stay out.
+      const named = [...text.matchAll(/(?:^|[\s`])\/([a-z0-9_]+)/gm)].map((m) => m[1]);
+
+      expect(named.filter((name) => !registered.has(name))).toEqual([]);
+    });
+
+    it.each(LOCALES)('fits every %s reply inside Discord embed limits', async (locale) => {
+      for (const topic of TOPICS) {
+        const embeds = await embedsFor(locale, topic);
+        const strings = stringsOf(embeds);
+
+        expect(embeds.length).toBeLessThanOrEqual(10);
+        expect(strings.join('').length).toBeLessThanOrEqual(6000);
+        for (const embed of embeds) {
+          expect((embed.title ?? '').length).toBeLessThanOrEqual(256);
+          expect((embed.description ?? '').length).toBeLessThanOrEqual(4096);
+          expect((embed.fields ?? []).length).toBeLessThanOrEqual(25);
+          for (const field of embed.fields ?? []) {
+            expect(field.name.length).toBeLessThanOrEqual(256);
+            expect(field.value.length).toBeLessThanOrEqual(1024);
+          }
+        }
+        // A key the locale lacks comes back as the key itself — possibly
+        // behind a title's emoji or inside a joined description, so search
+        // for it rather than matching the whole string.
+        expect(
+          strings.filter((s) => /(^|\s)(manual5?|matchImageHelp)\.\w+(\.\w+)*/.test(s))
+        ).toEqual([]);
+      }
+    });
+
+    it.each(LOCALES.filter((l) => l !== 'en'))(
+      'keeps every syntax line in %s identical to English',
+      (locale) => {
+        const en = load('en').manual as Tree;
+        const other = load(locale).manual as Tree;
+
+        // Command, subcommand and option names are identifiers: the old text
+        // translated `<key> <value>` into five languages.
+        const drifted = Object.keys(en).filter((key) => {
+          const entry = en[key];
+          return typeof entry === 'object' && (other[key] as Tree)?.name !== entry.name;
+        });
+
+        expect(drifted).toEqual([]);
+      }
+    );
   });
 });
