@@ -1235,7 +1235,7 @@ async function migrate(db: D1Database) {
 |---------|------------|
 | Unauthorized submissions | Bot-only authentication via shared secret |
 | Vote manipulation | One vote per Discord user per preset |
-| Spam submissions | Rate limiting (10/hour per user) |
+| Spam submissions | Rate limiting (10/day per user) |
 | SQL injection | D1 parameterized queries |
 | Content abuse | Profanity filter + manual review queue |
 
@@ -1243,9 +1243,9 @@ async function migrate(db: D1Database) {
 
 | Action | Limit |
 |--------|-------|
-| Submit preset | 10 per hour per user |
-| Vote | 50 per hour per user |
-| List/Search | 100 per minute per IP |
+| Submit preset | 10 per day per user |
+| Any `/api/*` request | 100 per minute per acting Discord user, and 100 per minute per client IP (the IP layer is skipped for Service-Binding callers, which send no `CF-Connecting-IP`) |
+| Vote | No vote-specific limit — only the two layers above |
 
 ### Secrets Management
 
