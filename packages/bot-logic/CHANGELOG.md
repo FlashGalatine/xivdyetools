@@ -44,7 +44,12 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
   (TERM-001: core owns that vocabulary, and Discord's picker and the cards
   print it) — Korean harmony names, Japanese / Korean / French wheel names and
   Japanese / French / Korean / Chinese category names had all differed from
-  what the picker shows.
+  what the picker shows. From the pre-merge review (2026-09-19): the 📸 topic
+  says the `/extractor image` card lists matches for the five largest colours
+  only (its bar carries them all); the French Character File topic names the
+  card's real off-grid badge (`HORS G.`, not "HORS GRILLE"); six German lead
+  sentences use the file's imperative ("Ordne", "Miss", "Zeige") like their
+  neighbours; and the Korean preset range reads `3~6` like the file's others.
 
 ### Added
 

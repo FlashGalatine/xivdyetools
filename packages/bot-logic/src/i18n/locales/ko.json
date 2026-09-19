@@ -113,7 +113,7 @@
     },
     "presetShare": {
       "name": "`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`",
-      "description": "자신의 프리셋을 공유하고 다른 프리셋에 투표합니다.\n• 염료 3-6개와 선택적 태그; 제출은 검수를 거칩니다\n• `edit`은 자신의 프리셋에만 사용할 수 있습니다"
+      "description": "자신의 프리셋을 공유하고 다른 프리셋에 투표합니다.\n• 염료 3~6개와 선택적 태그; 제출은 검수를 거칩니다\n• `edit`은 자신의 프리셋에만 사용할 수 있습니다"
     },
     "presetFavorite": {
       "name": "`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`",
@@ -475,7 +475,7 @@
     "title": "이미지에서 색상 매칭하기",
     "description": "`/extractor image`는 업로드된 이미지를 분석해 주요 색상을 추출하고 각각을 가장 가까운 FFXIV 염료와 매칭합니다. 최상의 결과를 위한 팁을 알려드립니다!",
     "howItWorks": "작동 방식",
-    "howItWorksContent": "**1. 이미지 분석**\n- 이미지가 K-means 클러스터링으로 처리됩니다\n- 가장 주요한 색상이 추출됩니다 (`colors` 3-10, 기본값 4)\n\n**2. 염료 매칭**\n- 각 색상은 125개 FFXIV 염료 전체와 비교됩니다\n- 기본적으로 ΔE2000을 사용하며 - `matching` 옵션으로 변경할 수 있습니다",
+    "howItWorksContent": "**1. 이미지 분석**\n- 이미지가 K-means 클러스터링으로 처리됩니다\n- 가장 주요한 색상이 추출됩니다 (`colors` 3-10, 기본값 4)\n\n**2. 염료 매칭**\n- 각 색상은 125개 FFXIV 염료 전체와 비교됩니다\n- 기본적으로 ΔE2000을 사용하며 - `matching` 옵션으로 변경할 수 있습니다\n- 카드 목록에는 비중이 큰 5가지 색상만 표시되며, 색상 막대에는 모든 색상이 나타납니다",
     "tipsForBestResults": "최상의 결과를 위한 팁",
     "tipsContent": "**이미지 자르기**\n- 매칭하고 싶은 특정 영역에 집중\n- UI 요소와 배경 제거\n\n**좋은 조명 선택**\n- 밝은 곳에서 스크린샷 촬영\n- 어두운 그림자나 극단적인 하이라이트 피하기\n\n**어두운 배경 피하기**\n- 검은 배경은 결과를 왜곡할 수 있습니다\n- 가능하면 중립적이고 밝은 배경 사용",
     "commonIssues": "일반적인 문제",
@@ -496,7 +496,7 @@
     "fileLimits": "파일 제한",
     "fileLimitsContent": "• 최대 크기: 10MB",
     "matchQualityRatings": "매칭 거리",
-    "matchQualityRatingsContent": "모든 매칭은 입력 색상과의 거리를 함께 표시합니다 - 값이 낮을수록 더 가깝습니다.\n\n여섯 가지 매칭 방식과 밴드 판정 방식: `/manual` 주제 {topic}",
+    "matchQualityRatingsContent": "목록의 모든 매칭은 입력 색상과의 거리를 함께 표시합니다 - 값이 낮을수록 더 가깝습니다.\n\n여섯 가지 매칭 방식과 밴드 판정 방식: `/manual` 주제 {topic}",
     "poweredBy": "Photon WASM 이미지 처리 기반"
   },
   "card": {

@@ -475,7 +475,7 @@
     "title": "Faire correspondre les couleurs d'une image",
     "description": "La commande `/extractor image` analyse une image téléchargée, en extrait les couleurs dominantes et fait correspondre chacune à la teinture FFXIV la plus proche. Voici quelques conseils pour obtenir les meilleurs résultats !",
     "howItWorks": "Comment ça marche",
-    "howItWorksContent": "**1. Analyse d'image**\n- Votre image est traitée avec le clustering K-means\n- Les couleurs les plus dominantes sont extraites (`colors` 3-10, par défaut 4)\n\n**2. Correspondance de teinture**\n- Chaque couleur est comparée aux 125 teintures FFXIV\n- Utilise ΔE2000 par défaut - changez-le avec l'option `matching`",
+    "howItWorksContent": "**1. Analyse d'image**\n- Votre image est traitée avec le clustering K-means\n- Les couleurs les plus dominantes sont extraites (`colors` 3-10, par défaut 4)\n\n**2. Correspondance de teinture**\n- Chaque couleur est comparée aux 125 teintures FFXIV\n- Utilise ΔE2000 par défaut - changez-le avec l'option `matching`\n- La carte liste les cinq couleurs les plus présentes ; sa barre de couleurs les montre toutes",
     "tipsForBestResults": "Conseils pour de meilleurs résultats",
     "tipsContent": "**Recadrez vos images**\n- Concentrez-vous sur la zone spécifique que vous souhaitez faire correspondre\n- Supprimez les éléments d'interface et les arrière-plans\n\n**Choisissez un bon éclairage**\n- Prenez des captures d'écran dans des zones bien éclairées\n- Évitez les ombres sombres ou les reflets extrêmes\n\n**Évitez les arrière-plans sombres**\n- Les arrière-plans noirs peuvent fausser les résultats\n- Utilisez des arrière-plans neutres et clairs si possible",
     "commonIssues": "Problèmes courants",
@@ -496,7 +496,7 @@
     "fileLimits": "Limites de fichier",
     "fileLimitsContent": "• Taille maximale : 10 Mo",
     "matchQualityRatings": "Distance de correspondance",
-    "matchQualityRatingsContent": "Chaque correspondance indique sa distance par rapport à votre couleur - plus c'est bas, plus c'est proche.\n\nLes six méthodes de correspondance et le fonctionnement de leurs bandes : sujet {topic} de `/manual`",
+    "matchQualityRatingsContent": "Chaque correspondance listée indique sa distance par rapport à votre couleur - plus c'est bas, plus c'est proche.\n\nLes six méthodes de correspondance et le fonctionnement de leurs bandes : sujet {topic} de `/manual`",
     "poweredBy": "Propulsé par le traitement d'image Photon WASM"
   },
   "card": {
@@ -628,7 +628,7 @@
       },
       "characterFile": {
         "name": "Fichier de personnage",
-        "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, mèches, yeux, lèvres, peinture faciale, tatouage/anneau limbal) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS GRILLE."
+        "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, mèches, yeux, lèvres, peinture faciale, tatouage/anneau limbal) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS G."
       }
     }
   },

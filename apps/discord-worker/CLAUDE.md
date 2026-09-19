@@ -39,6 +39,10 @@ npm run register-commands
 
 ### Setting Secrets
 
+A bare `wrangler secret put` writes to the top-level block — the **beta** bot
+(`xivdyetools-discord-worker-dev`). Append `--env production` to set the live bot's copy
+(`docs/operations/SECRET_ROTATION.md`).
+
 ```bash
 wrangler secret put DISCORD_TOKEN
 wrangler secret put DISCORD_PUBLIC_KEY

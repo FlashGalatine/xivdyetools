@@ -475,7 +475,7 @@
     "title": "从图像匹配颜色",
     "description": "`/extractor image` 会分析您上传的图片，提取其中的主要颜色，并将每种颜色匹配到最接近的FFXIV染剂。以下是一些获得最佳结果的技巧！",
     "howItWorks": "工作原理",
-    "howItWorksContent": "**1. 图像分析**\n- 您的图片会通过K-means聚类处理\n- 提取最主要的颜色（`colors` 3-10，默认 4）\n\n**2. 染剂匹配**\n- 每种颜色都会与全部125种FFXIV染剂进行匹配\n- 默认使用 ΔE2000 - 可通过 `matching` 选项更改",
+    "howItWorksContent": "**1. 图像分析**\n- 您的图片会通过K-means聚类处理\n- 提取最主要的颜色（`colors` 3-10，默认 4）\n\n**2. 染剂匹配**\n- 每种颜色都会与全部125种FFXIV染剂进行匹配\n- 默认使用 ΔE2000 - 可通过 `matching` 选项更改\n- 卡片列表只列出占比最大的5种颜色，色带显示全部颜色",
     "tipsForBestResults": "获得最佳结果的技巧",
     "tipsContent": "**裁剪您的图片**\n- 专注于您想要匹配的特定区域\n- 移除UI元素和背景\n\n**选择良好的光线**\n- 在光线充足的区域截图\n- 避免暗影或过度高光\n\n**避免暗色背景**\n- 黑色背景可能会影响结果\n- 尽可能使用中性的浅色背景",
     "commonIssues": "常见问题",
@@ -496,7 +496,7 @@
     "fileLimits": "文件限制",
     "fileLimitsContent": "• 最大大小：10MB",
     "matchQualityRatings": "匹配距离",
-    "matchQualityRatingsContent": "每个匹配结果都会显示与您颜色的距离 - 数值越低越接近。\n\n六种匹配方式及其分档的运作方式：`/manual` 主题 {topic}",
+    "matchQualityRatingsContent": "列出的每个匹配结果都会显示与您颜色的距离 - 数值越低越接近。\n\n六种匹配方式及其分档的运作方式：`/manual` 主题 {topic}",
     "poweredBy": "由 Photon WASM 图像处理驱动"
   },
   "card": {

@@ -53,7 +53,7 @@
     "tipsResources": "Tipps & Ressourcen",
     "extractor": {
       "name": "`/extractor color <color> [count]` | `/extractor image <image> [colors]`",
-      "description": "Ordnet Farben FFXIV-Farbstoffen zu.\n• `color`: die nächsten Farbstoffe zu Hex-Code oder Farbstoffname (`count` 1-10)\n• `image`: die dominanten Farben eines hochgeladenen Bildes (`colors` 3-10)"
+      "description": "Ordne Farben FFXIV-Farbstoffen zu.\n• `color`: die nächsten Farbstoffe zu Hex-Code oder Farbstoffname (`count` 1-10)\n• `image`: die dominanten Farben eines hochgeladenen Bildes (`colors` 3-10)"
     },
     "harmony": {
       "name": "`/harmony <color> [type] [wheel] [companions]`",
@@ -69,7 +69,7 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "Ordnet die Farben eines Charakters Farbstoffen aus einer `.chara`-Datei zu (Anamnesis oder Ktisis).\n• Liest Haut, Haar, Highlights, Augen, Lippe, Gesichtsbemalung und Tattoo/Limbalring\n• `slot`: die fünf nächsten Farbstoffe für eine Farbe"
+      "description": "Ordne die Farben eines Charakters Farbstoffen aus einer `.chara`-Datei zu (Anamnesis oder Ktisis).\n• Liest Haut, Haar, Highlights, Augen, Lippe, Gesichtsbemalung und Tattoo/Limbalring\n• `slot`: die fünf nächsten Farbstoffe für eine Farbe"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -97,11 +97,11 @@
     },
     "contrast": {
       "name": "`/contrast <dye1> <dye2> [dye3] [dye4]`",
-      "description": "Misst WCAG-Leuchtdichteverhältnisse zwischen 2-4 Farbstoffen.\n• Markiert die 3:1-, 4.5:1- und 7:1-Linien"
+      "description": "Miss WCAG-Leuchtdichteverhältnisse zwischen 2-4 Farbstoffen.\n• Markiert die 3:1-, 4.5:1- und 7:1-Linien"
     },
     "accessibility": {
       "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
-      "description": "Zeigt, wie Farbstoffe unter den vier Sehweisen wirken.\n• Ein Farbstoff: wie er sich unter jeder Sehweise verschiebt\n• Zwei Farbstoffe: wie weit sie auseinander bleiben (`vision` wählt eine Sehweise)\n• `/a11y` ist derselbe Befehl"
+      "description": "Zeige, wie Farbstoffe unter den vier Sehweisen wirken.\n• Ein Farbstoff: wie er sich unter jeder Sehweise verschiebt\n• Zwei Farbstoffe: wie weit sie auseinander bleiben (`vision` wählt eine Sehweise)\n• `/a11y` ist derselbe Befehl"
     },
     "budget": {
       "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
@@ -121,11 +121,11 @@
     },
     "changelog": {
       "name": "`/changelog [version]`",
-      "description": "Zeigt, was neu im Bot ist.\n• Die neueste Version vollständig, oder wähle eine mit `version`"
+      "description": "Zeige, was neu im Bot ist.\n• Die neueste Version vollständig, oder wähle eine mit `version`"
     },
     "stats": {
       "name": "`/stats summary`",
-      "description": "Zeigt Nutzungsstatistiken des Bots. Panels außer `summary` sind auf berechtigte Nutzer beschränkt."
+      "description": "Zeige Nutzungsstatistiken des Bots. Panels außer `summary` sind auf berechtigte Nutzer beschränkt."
     },
     "about": {
       "name": "`/about`",
@@ -475,7 +475,7 @@
     "title": "Farbabgleich aus einem Bild",
     "description": "`/extractor image` analysiert ein hochgeladenes Bild, extrahiert die dominanten Farben und ordnet jede dem nächsten FFXIV-Farbstoff zu. Hier sind einige Tipps für die besten Ergebnisse!",
     "howItWorks": "So funktioniert es",
-    "howItWorksContent": "**1. Bildanalyse**\n- Dein Bild wird mit K-Means-Clustering verarbeitet\n- Die dominantesten Farben werden extrahiert (`colors` 3-10, Standard 4)\n\n**2. Farbstoff-Zuordnung**\n- Jede Farbe wird mit allen 125 FFXIV-Farbstoffen abgeglichen\n- Verwendet standardmäßig ΔE2000 - änderbar über die Option `matching`",
+    "howItWorksContent": "**1. Bildanalyse**\n- Dein Bild wird mit K-Means-Clustering verarbeitet\n- Die dominantesten Farben werden extrahiert (`colors` 3-10, Standard 4)\n\n**2. Farbstoff-Zuordnung**\n- Jede Farbe wird mit allen 125 FFXIV-Farbstoffen abgeglichen\n- Verwendet standardmäßig ΔE2000 - änderbar über die Option `matching`\n- Die Karte listet die fünf größten Farben auf; ihr Farbbalken zeigt alle",
     "tipsForBestResults": "Tipps für beste Ergebnisse",
     "tipsContent": "**Bilder zuschneiden**\n- Fokussiere auf den spezifischen Bereich, den du abgleichen möchtest\n- Entferne UI-Elemente und Hintergründe\n\n**Gute Beleuchtung wählen**\n- Mache Screenshots in gut beleuchteten Bereichen\n- Vermeide dunkle Schatten oder extreme Highlights\n\n**Dunkle Hintergründe vermeiden**\n- Schwarze Hintergründe können Ergebnisse verfälschen\n- Verwende wenn möglich neutrale, hellere Hintergründe",
     "commonIssues": "Häufige Probleme",
@@ -496,7 +496,7 @@
     "fileLimits": "Dateilimits",
     "fileLimitsContent": "• Maximale Größe: 10MB",
     "matchQualityRatings": "Match-Distanz",
-    "matchQualityRatingsContent": "Jede Übereinstimmung zeigt ihre Distanz zu deiner Farbe - niedriger ist näher.\n\nDie sechs Matching-Methoden und wie ihre Bänder funktionieren: `/manual`-Thema {topic}",
+    "matchQualityRatingsContent": "Jede aufgelistete Übereinstimmung zeigt ihre Distanz zu deiner Farbe - niedriger ist näher.\n\nDie sechs Matching-Methoden und wie ihre Bänder funktionieren: `/manual`-Thema {topic}",
     "poweredBy": "Powered by Photon WASM Bildverarbeitung"
   },
   "card": {

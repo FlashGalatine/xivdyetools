@@ -340,7 +340,11 @@ describe('handleManualCommand', () => {
     const load = (locale: string) =>
       JSON.parse(readFileSync(join(LOCALES_DIR, `${locale}.json`), 'utf-8')) as Tree;
 
-    /** Dotted-key lookup that answers the raw key on a miss, as Translator.t() does. */
+    /**
+     * Dotted-key lookup that answers the raw key on a miss — deliberately
+     * stricter than Translator.t(), which falls back to English first, so a key
+     * missing from one locale fails here instead of shipping English.
+     */
     const realTranslator = (locale: string) => {
       const tree = load(locale);
       return {
@@ -395,8 +399,11 @@ describe('handleManualCommand', () => {
       ].join('\n');
       const registered = new Set(COMMAND_REGISTRY.map((c) => c.name));
 
-      // A syntax line opens a backtick span with the command: `/name …`
-      const named = [...text.matchAll(/`\/([a-z0-9_]+)/g)].map((m) => m[1]);
+      // A command is a slash at the start of a line, after whitespace or opening
+      // a backtick span. The old field name "When to Use /match_image vs /match"
+      // had no backticks, so backticks alone would have missed it; "clan/gender"
+      // and "JPG/JPEG" have no such boundary and stay out.
+      const named = [...text.matchAll(/(?:^|[\s`])\/([a-z0-9_]+)/gm)].map((m) => m[1]);
 
       expect(named.filter((name) => !registered.has(name))).toEqual([]);
     });

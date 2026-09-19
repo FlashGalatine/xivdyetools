@@ -475,7 +475,7 @@
     "title": "Matching Colors from an Image",
     "description": "`/extractor image` analyzes an uploaded image, pulls out its dominant colors and matches each one to the closest FFXIV dye. Here are some tips to get the best results!",
     "howItWorks": "How It Works",
-    "howItWorksContent": "**1. Image Analysis**\n- Your image is processed using K-means clustering\n- The most dominant colors are extracted (`colors` 3-10, default 4)\n\n**2. Dye Matching**\n- Each color is matched against all 125 FFXIV dyes\n- Uses ΔE2000 by default - change it with the `matching` option",
+    "howItWorksContent": "**1. Image Analysis**\n- Your image is processed using K-means clustering\n- The most dominant colors are extracted (`colors` 3-10, default 4)\n\n**2. Dye Matching**\n- Each color is matched against all 125 FFXIV dyes\n- Uses ΔE2000 by default - change it with the `matching` option\n- The card lists the five largest colors; its color bar shows them all",
     "tipsForBestResults": "Tips for Best Results",
     "tipsContent": "**Crop Your Images**\n- Focus on the specific area you want to match\n- Remove UI elements and backgrounds\n\n**Choose Good Lighting**\n- Take screenshots in well-lit areas\n- Avoid dark shadows or extreme highlights\n\n**Avoid Dark Backgrounds**\n- Black backgrounds can skew results\n- Use neutral, lighter backgrounds when possible",
     "commonIssues": "Common Issues",
@@ -496,7 +496,7 @@
     "fileLimits": "File Limits",
     "fileLimitsContent": "• Maximum size: 10MB",
     "matchQualityRatings": "Match Distance",
-    "matchQualityRatingsContent": "Every match prints its distance from your color - lower is closer.\n\nThe six matching methods and how their bands work: `/manual` topic {topic}",
+    "matchQualityRatingsContent": "Every listed match prints its distance from your color - lower is closer.\n\nThe six matching methods and how their bands work: `/manual` topic {topic}",
     "poweredBy": "Powered by Photon WASM image processing"
   },
   "card": {
