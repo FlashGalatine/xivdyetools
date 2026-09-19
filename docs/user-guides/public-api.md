@@ -302,7 +302,7 @@ X-RateLimit-Remaining: 64
 X-RateLimit-Reset: 1712000000
 ```
 
-- `X-RateLimit-Remaining` is not a live countdown — the underlying rate limiter exposes no running count, so it simply reads `64` (limit minus one) on every allowed request and `0` once you're denied. Don't pace your client against it; back off on a `429` using `Retry-After` instead.
+- `X-RateLimit-Remaining` is not a live countdown — the underlying rate limiter exposes no running count, so it simply reads `64` (limit minus one) on an allowed request and `0` once you're denied. Don't pace your client against it; back off on a `429` using `Retry-After` instead.
 - If you exceed the limit, you'll receive a `429` response with a `Retry-After` header (and a top-level `retryAfter` in the body)
 - The `/health` endpoint is not rate-limited
 - The Universalis proxy has its own, separate limit — 30 requests per minute per IP on `/universalis/aggregated/*` (the data-center and world lists are unlimited)

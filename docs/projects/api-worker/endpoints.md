@@ -529,7 +529,7 @@ Validation stops at the first failing parameter — one error per response.
 
 > ⚠️ `X-RateLimit-Remaining` is **not a countdown.** The limiter is the native Workers Rate Limiting
 > binding, whose API exposes no live counter, so the header reads `limit - 1` (i.e. `64` — an "at
-> least one more" indicator) on every allowed request and `0` on a denied one. Counters are also
+> least one more" indicator) on an allowed request and `0` on a denied one. Counters are also
 > per-colo rather than global. Use `Retry-After` on a `429`, not this header, to pace a client.
 
 ### Request Headers

@@ -168,8 +168,9 @@ graph TD
 Notes:
 - As of v2.0.0, type re-exports are removed. Import Dye, RGB, HexColor, etc. from
   @xivdyetools/types directly. A handful of helpers and class members carry an @internal
-  JSDoc tag marking them unsupported API; the tag is advisory — it does not remove them
-  from the barrel export.
+  JSDoc tag marking them unsupported API. src/index.ts still lists them, but
+  tsconfig.build.json's stripInternal drops their declarations from the published
+  .d.ts, so they are not part of the supported (typed) API.
 - As of v2.6.0, ALLIED_SOCIETY_ACQUISITIONS is removed. Patch 7.5 collapsed those
   vendor categories out of the dye database.
 - As of v3.0.0 (schema v2), the data file is dyes.json (125 entries, stainID-keyed).

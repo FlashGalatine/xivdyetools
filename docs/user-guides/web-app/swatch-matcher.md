@@ -111,10 +111,11 @@ or a prop, has no menu — there is nothing to look up.
 undyed ones included, each marked **Undyed**. If nothing on the glamour is dyed you get a note
 saying so and pointing at that toggle.
 
-**Facewear.** If your character is wearing facewear it gets its own row below the gear, labelled
-**Facewear**. Facewear colours are not dyes and are not matched against the dye database, so the row
-names the colour rather than scoring it — and if the file does not identify one, it says the colour
-is unknown. Its **Open in…** menu is shorter: the game files facewear under a different kind of id
+**Facewear.** With **Show all** on in the **Pieces** view, facewear your character is wearing gets
+its own row below the gear, labelled **Facewear** — it carries no dye, so the default dyed-pieces
+list leaves it out. Facewear colours are not dyes and are not matched against the dye database, so
+the row names the colour rather than scoring it — and if the file does not identify one, it says
+the colour is unknown. Its **Open in…** menu is shorter: the game files facewear under a different kind of id
 than gear, so it offers only **Mirapri**, **GamerEscape** and **The Lodestone**. It looks up the
 plain, untinted version of the item first — a tinted pair is not a real item — so those entries can
 take a moment to appear, and if the lookup fails the menu says so rather than offering a link that
@@ -193,8 +194,9 @@ Distances are ΔE2000 by default — the industry-standard measure of how differ
 | 10 to 20 | NEAR | In the same family, but visibly different |
 | 20 and up | FAR | A different colour |
 
-Every other matching method has its own calibrated cut-offs on its own scale, so compare the band,
-never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.
+Here the band shows as the colour of the distance number; the Dye Comparison tool prints the word
+itself. Every other matching method has its own calibrated cut-offs on its own scale, so compare the
+band, never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.
 
 ---
 

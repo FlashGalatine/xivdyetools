@@ -87,15 +87,18 @@ Bindings: `KV`, `ANALYTICS`, the six `[[ratelimits]]` tiers `RL_5`/`RL_10`/`RL_1
 ### Setting Secrets
 
 ```bash
-cd xivdyetools-discord-worker
+cd apps/discord-worker
+
+# `--env production` is load-bearing: a bare `wrangler secret put` writes to the top-level
+# block, which here is the beta bot (xivdyetools-discord-worker-dev).
 
 # Required
-wrangler secret put DISCORD_TOKEN
-wrangler secret put DISCORD_PUBLIC_KEY
+wrangler secret put DISCORD_TOKEN --env production
+wrangler secret put DISCORD_PUBLIC_KEY --env production
 
 # Optional
-wrangler secret put BOT_API_SECRET
-wrangler secret put MODERATOR_IDS
+wrangler secret put BOT_API_SECRET --env production
+wrangler secret put MODERATOR_IDS --env production
 ```
 
 ### Local Development (.dev.vars)
@@ -144,8 +147,10 @@ with presets-api), and the `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` rate-limit
 ### Setting Secrets
 
 ```bash
-cd xivdyetools-oauth
+cd apps/oauth
 
+# No `--env` flag here, on purpose: oauth has no [env.production] — its top-level block IS
+# production (`--env development` targets xivdyetools-oauth-dev).
 wrangler secret put DISCORD_CLIENT_SECRET
 wrangler secret put JWT_SECRET
 wrangler secret put XIVAUTH_CLIENT_SECRET    # Optional: only for confidential client mode
@@ -195,14 +200,16 @@ While `ENVIRONMENT` reads `production`, `validateEnv` refuses every request — 
 ### Setting Secrets
 
 ```bash
-cd xivdyetools-presets-api
+cd apps/presets-api
 
-wrangler secret put BOT_API_SECRET
-wrangler secret put BOT_SIGNING_SECRET       # Required in production
-wrangler secret put JWT_SECRET
-wrangler secret put MODERATOR_IDS
-wrangler secret put PERSPECTIVE_API_KEY  # Optional
-wrangler secret put INTERNAL_WEBHOOK_SECRET  # Required in production
+# `--env production` is load-bearing: a bare `wrangler secret put` writes to the top-level
+# block, which here is xivdyetools-presets-api-dev — production never sees the value.
+wrangler secret put BOT_API_SECRET --env production
+wrangler secret put BOT_SIGNING_SECRET --env production       # Required in production
+wrangler secret put JWT_SECRET --env production               # Required in production
+wrangler secret put MODERATOR_IDS --env production
+wrangler secret put PERSPECTIVE_API_KEY --env production      # Optional
+wrangler secret put INTERNAL_WEBHOOK_SECRET --env production  # Required in production
 wrangler secret put CACHE_PURGE_API_TOKEN --env production  # Optional — preview-image edge purge (FINDING-018); CACHE_PURGE_ZONE_ID is a wrangler.toml var, not a secret
 ```
 

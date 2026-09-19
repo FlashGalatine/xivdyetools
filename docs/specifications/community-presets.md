@@ -1250,7 +1250,8 @@ async function migrate(db: D1Database) {
 ### Secrets Management
 
 ```bash
-# Cloudflare Worker secrets (set via wrangler)
+# Cloudflare Worker secrets (set via wrangler). The current list, and the `--env production`
+# flag production needs, are in ../developer-guides/environment-variables.md.
 
 # Required
 wrangler secret put BOT_API_SECRET       # Shared secret for bot authentication
@@ -1258,10 +1259,8 @@ wrangler secret put BOT_API_SECRET       # Shared secret for bot authentication
 # Moderation
 wrangler secret put MODERATOR_IDS        # Comma-separated Discord IDs who can moderate
 
-# Notifications (optional but recommended)
-wrangler secret put MODERATION_WEBHOOK_URL   # Discord webhook for mod channel
-wrangler secret put OWNER_DISCORD_ID         # Your Discord ID for DM notifications
-wrangler secret put DISCORD_BOT_TOKEN        # Bot token (for sending DMs)
+# (The three notification secrets specified here — MODERATION_WEBHOOK_URL, OWNER_DISCORD_ID,
+#  DISCORD_BOT_TOKEN — were removed with that code path on 2026-09-01; see "Not shipped" above.)
 
 # Multi-language moderation (optional)
 wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxicity detection)
