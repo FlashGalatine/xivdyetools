@@ -158,12 +158,12 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.5.7 | Sep 2026 | 2026-09-16 deep-dive Sprint 4 — `/manual` Spectrum & Prices topic defers so a cold world lookup cannot miss Discord's 3 s ack (BUG-008); `/webhooks/preset-submission` body bounded by streamed bytes (BUG-013); `/stats health` reports `env.ENVIRONMENT` (BUG-012); `/preset` schema carries the 2–50 / 10–200 length bounds and autocomplete names are capped at 100 chars (REFACTOR-003, needs `register-commands`); notify helpers log through the request logger (REFACTOR-002); `/mixer` and `/gradient` adapters gain suites and enter the coverage gate (BUG-033/034); picks up bot-logic 4.3.0 (`/swatch` eye markers) |
-| v5.5.6 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-008) — the test-only `getPreference` single-key reader removed; `getUserPreferences` is the one production path |
-| v5.5.5 | Sep 2026 | GitHub webhook HMAC checks the received bytes before text decoding; completes the Sprint 0 raw-byte requirement |
+| v5.5.7 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 4 — `/manual` Spectrum & Prices topic defers so a cold world lookup cannot miss Discord's 3 s ack (BUG-008); `/webhooks/preset-submission` body bounded by streamed bytes (BUG-013); `/stats health` reports `env.ENVIRONMENT` (BUG-012); `/preset` schema carries the 2–50 / 10–200 length bounds and autocomplete names are capped at 100 chars (REFACTOR-003, needs `register-commands`); notify helpers log through the request logger (REFACTOR-002); `/mixer` and `/gradient` adapters gain suites and enter the coverage gate (BUG-033/034); picks up bot-logic 4.3.0 (`/swatch` eye markers) |
+| v5.5.6 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-008) — the test-only `getPreference` single-key reader removed; `getUserPreferences` is the one production path |
+| v5.5.5 | Sep 2026 (prepared) | GitHub webhook HMAC checks the received bytes before text decoding; completes the Sprint 0 raw-byte requirement |
 | v5.5.4 | Sep 2026 | Legacy preview controls refresh the current image and require a second click |
-| v5.5.3 | Sep 2026 | Preview buttons and signed requests bind the exact reviewed image key; stale decisions conflict |
-| v5.5.2 | Sep 2026 | Bound GitHub webhook streams before authentication; bundle auth 2.0.2 for Discord interactions |
+| v5.5.3 | Sep 2026 (prepared) | Preview buttons and signed requests bind the exact reviewed image key; stale decisions conflict |
+| v5.5.2 | Sep 2026 (prepared) | Bound GitHub webhook streams before authentication; bundle auth 2.0.2 for Discord interactions |
 | v5.5.1 | Sep 2026 | Test-only — the root `CHANGELOG-laymans.md` gets the bot file's parse gates (grammar, ordering, uncut announcement); `announcements.ts` exports `DESCRIPTION_BUDGET` under `@testonly` |
 | **v5.5.0** | **Sep 2026** | **`/harmony` gains a `wheel` option with the five colour wheels (PR #167); the card names a non-default wheel and the embed title links to the web app on the same wheel; CJK subsets regenerated for the localized wheel names** |
 | v5.4.0 | Sep 2026 | The OKLAB method prints `ΔEOK2` everywhere (core 5.1.0); `MATCHING_METHODS` reads display names from core's `MATCHING_METHOD_TAGS` — needs `register-commands` |
@@ -527,8 +527,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v0.14.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
-| v0.14.1 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
+| v0.14.2 | Sep 2026 (prepared) | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
+| v0.14.1 | Sep 2026 (prepared) | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
 | **v0.14.0** | **Sep 2026** | **Colour wheels on the public API (PR #169) — `GET /v1/wheels`, `GET /v1/wheels/:id` (`ringStops` + every dye's `wheelHue`), `GET /v1/harmony/types`, `GET /v1/harmony` (core's `generateHarmonySlots` over the whole database), plus a Harmony docs group** |
 | v0.13.0 | Sep 2026 | Developer docs restyle on the web-app's design register (API Docs Directions 1d, PR #168) — self-hosted Space Grotesk / Onest / Fragment Mono, the 5.0 dark palette, console chrome; no route change |
 | **v0.12.0** | **Sep 2026** | **`?method=oklab` is ΔEOK2 (core 5.1.0) — different ranking and a ~1.4–2× scale; `/v1/match/within-distance` returns fewer results for an unchanged `maxDistance`; `ciede2000` byte-identical** |
