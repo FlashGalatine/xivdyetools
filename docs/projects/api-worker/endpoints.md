@@ -45,7 +45,7 @@ List all dyes with filtering, sorting, and pagination.
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | integer | `1` | Page number (min 1) |
+| `page` | integer | `1` | Page number (1–1000) |
 | `perPage` | integer | `50` | Results per page (1–200) |
 | `category` | string | — | Filter by exact category name (case-sensitive): `Blues`, `Browns`, `Greens`, `Neutral`, `Purples`, `Reds`, `Special`, `Yellows` |
 | `metallic` | boolean | — | Filter metallic dyes (`true`/`false`/`1`/`0`) |
@@ -150,7 +150,7 @@ Search dyes by name. Supports localized name search when a non-English locale is
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `q` | string | **required** | Search query (case-insensitive substring match) |
+| `q` | string | **required** | Search query (case-insensitive substring match, max 100 characters) |
 | `locale` | string | `en` | Locale for search and response names |
 
 **Examples:**
@@ -501,6 +501,8 @@ The fixed blob layout is documented in `docs/operations/ANALYTICS_QUERIES.md`.
 | `INVALID_MATCHING_METHOD` | 400 | Unknown distance algorithm |
 | `INVALID_LOCALE` | 400 | Unsupported locale |
 | `INVALID_STAIN_ID` | 400 | Stain ID not a positive integer |
+| `INVALID_COLOR_WHEEL` | 400 | Unknown colour wheel id |
+| `INVALID_HARMONY_TYPE` | 400 | Unknown harmony type |
 | `NOT_FOUND` | 404 | Dye or route not found |
 | `RATE_LIMITED` | 429 | Rate limit exceeded (body carries a top-level `retryAfter` in seconds; `Retry-After` header set) |
 | `INVALID_BODY` | 400 / 413 | `POST /v1/chara/resolve` body is not JSON / not an object (400) or over 8 KB (413) |
