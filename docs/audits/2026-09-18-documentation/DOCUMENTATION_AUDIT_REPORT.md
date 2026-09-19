@@ -6,7 +6,8 @@
 - **Method:** a collector ran the inventory, both docs gates, `manual-check.mjs` and the
   served-version lookups; twelve reviewers each fact-checked one cluster against source; three
   verifiers (plus the `/manual` pre-commit reviewer, for the late candidate) re-opened every candidate at `file:line` and graded it. 52 candidates → 49 confirmed →
-  merged into the findings below. The audit pass modified no source or living document; the
+  merged into the findings below, together with three facts the verifiers found outside the
+  candidate list (two became DOC-011, one DOC-038). The audit pass modified no source or living document; the
   remediation pass that followed the same day did, in separate commits (see *Remediation status*).
 - **Totals:** 38 findings — 1 HIGH, 26 MEDIUM, 11 LOW (DOC-038 surfaced while verifying a fix) ·
   **Status:** every finding fixed on a branch the same day — 29 in #190, 9 in #189, public-site
@@ -178,6 +179,7 @@ merged**.
 | DOC-016, 032, 037 | FIXED in `docs/`; app-local twins in #189 / #191 | `4b912720` · #189 `45051233` · #191 `2a87d3e0` |
 | DOC-026, 027, 028 | FIXED (7 of 22 marker removals live in #189 / #191) | `b9428956`, `da661eb0` |
 | DOC-003 … DOC-011 (`/manual`) | FIX PROPOSED — draft PR #189 | `29e055e9`, `45051233`, `ba97c9d4` |
+| Pre-merge review fixes (2026-09-19) | one corrective commit per PR | `8dbf57f2` · #189 `e94f8fd4` · #191 `c6de8507` |
 
 **What verification changed.** Every finding was confirmed resolved, but the verifiers found more
 than they were sent: a false sentence next to a fixed one (`dependency-graph.md` — `@internal`
@@ -187,6 +189,34 @@ the Swatch guide (which lens has which click target, the shorter Facewear menu, 
 about pasting into Discord that no source supports — the guide now says what the source says:
 bold in Word and Google Docs, plain text elsewhere), the telemetry route's own Origin allowlist,
 the root `README.md` still saying "Vitest 4", and DOC-038.
+
+**Pre-merge review (2026-09-19).** Before merging, nine independent reviewers went over the three
+PRs — code and English facts, the release contract and what each merge fires, the five
+translations, both halves of the living-doc diff, this folder, and the public docs site. No
+blockers; every finding was re-checked against source before it was applied:
+
+- **#190 (`8dbf57f2`).** The "Setting Secrets" blocks on the DOC-001 page (and in
+  `projects/presets-api/overview.md`) ran a bare `wrangler secret put`, which writes to the
+  top-level block — the routeless `-dev` worker — beside comments saying "Required in production";
+  they now carry `--env production`, as `operations/SECRET_ROTATION.md` already required.
+  `dependency-graph.md`'s `@internal` sentence, corrected once in verification, was still half the
+  story: the barrel lists those symbols, but `stripInternal` drops their declarations from the
+  published `.d.ts`. The Swatch guide said the Facewear row always appears (it needs Show all, in
+  the Pieces view); the SAME / CLOSE / NEAR / FAR words are printed by Dye Comparison and the
+  bot's comparison card only; `X-RateLimit-Remaining` reads 64 on "an" allowed request, not
+  "every" one (the fail-open branch answers 65); and the community-presets spec still listed
+  three deleted secrets.
+- **#189 (`e94f8fd4`).** The 📸 topic now says the `/extractor image` card lists matches for the
+  five largest colours only; the French Character File topic named a card badge that does not
+  exist ("HORS GRILLE" for `HORS G.`); six German lead sentences were third-person where their
+  neighbours are imperative; a Korean range used `-` for the file's `~`. The "names no
+  unregistered command" guard saw only back-ticked commands and would have missed the old field
+  name "When to Use /match_image vs /match". Japanese and Chinese: no findings.
+- **#191 (`c6de8507`).** The changelog's "every allowed request", as above.
+- **Corrected here:** the candidate arithmetic (DOC-011's two facts came from outside the 52), and
+  what #189's merge fires — discord-worker **and** a redeploy of moderation-worker, whose path
+  filter includes `packages/bot-logic/**` (no behaviour change, no bump: eight earlier
+  bot-logic-only commits on `main` did the same). The beta workflow ignores `main`.
 
 **The three PRs merge cleanly in any order.** A first trial merge conflicted in
 `docs/versions.md`: #189 inserts a row at the top of the discord-worker history table, beside
@@ -246,8 +276,8 @@ new — the `match_image` topic id and its choice label were deliberately left a
 ## Next steps
 
 1. Review and merge **#190** (this branch — documentation only, no deploy). It carries DOC-001.
-2. Review and merge **#189** (`/manual`; deploys discord-worker, and its root layman's changelog
-   commit fires the 5.8.1 announcement) and **#191** (public API docs; deploys api-worker 0.14.3).
+2. Review and merge **#189** (`/manual`; deploys discord-worker, redeploys moderation-worker
+   unchanged, and its root layman's changelog commit fires the 5.8.1 announcement) and **#191** (public API docs; deploys api-worker 0.14.3).
    Any order — see *Remediation status*.
 3. Actions → *Publish Packages to npm* → `all-modified` (logger, worker-kit, core, bot-logic).
 4. When web-app or presets-api next change, pick up the two deferred one-line corrections.

@@ -3,16 +3,19 @@
 Every document under `docs/` and the Discord bot's in-app `/manual`, checked against what
 production serves: all eight app deploy workflows last succeeded on `0fec18f4` (= `origin/main`),
 so the checkout was the served baseline. **38 findings — 1 HIGH, 26 MEDIUM, 11 LOW** — from 52
-reviewer candidates, 49 of which survived verification, plus one that surfaced while a fix was
-being verified.
+reviewer candidates, 49 of which survived verification (several merge into one finding), plus
+three a verifier found outside the candidate list: two while checking `/manual` (DOC-011) and one
+while a fix was being verified (DOC-038).
 
 **All 38 were fixed the same day, on three draft PRs — none merged yet.** The audit pass itself
-modified nothing; the remediation commits sit on top of it on this branch:
+modified nothing; the remediation commits sit on top of it on this branch. A pre-merge review on
+2026-09-19 (nine independent reviewers, no blockers) added one corrective commit to each PR — see
+*Pre-merge review* in the report:
 
 | PR | Carries | Deploys on merge |
 |----|---------|------------------|
 | [#190](https://github.com/FlashGalatine/xivdyetools/pull/190) (this branch) | the audit + 29 findings fixed in `docs/`, the root `README.md` and root `CLAUDE.md` | nothing |
-| [#189](https://github.com/FlashGalatine/xivdyetools/pull/189) | DOC-003 … DOC-011 — `/manual` in six languages, discord-worker 5.5.8 | discord-worker (+ the 5.8.1 release announcement) |
+| [#189](https://github.com/FlashGalatine/xivdyetools/pull/189) | DOC-003 … DOC-011 — `/manual` in six languages, discord-worker 5.5.8 | discord-worker, plus a no-change redeploy of moderation-worker (its path filter includes `packages/bot-logic/**`), plus the 5.8.1 release announcement |
 | [#191](https://github.com/FlashGalatine/xivdyetools/pull/191) | the public developer site's copies of DOC-032 / DOC-037, api-worker 0.14.3 | api-worker |
 
 They were trial-merged into `main` in three orders: clean each time, same tree, both docs gates green.
