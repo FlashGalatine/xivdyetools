@@ -55,7 +55,14 @@ The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, 
 
 **Config (`ExtractorConfig`):** `vibrancyBoost`, `maxColors` (3–10, default 4), `dragThreshold` (px, click-vs-drag), `sampleAreaSize` (`1|2|4|8|16`, NxN pixel average), `matchingMethod`, `preventDuplicates`, `displayOptions`, `dyeFilters`.
 
-**Share params:** none wired. `ExtractorShareParams` (`colors`, `algo`) is declared in `share-service.ts` but the tool has no share button and reads no params — the export sheet is the hand-off.
+**Share params** (restored in 5.11.0, BUG-002; `getShareParams()` / `restoreFromShareLink()`):
+
+| Param | Meaning |
+|-------|---------|
+| `colors` | palette colours, bare hex per entry (`RRGGBB`, no `#`, upper-case), comma-separated; capped at 5 (`MAX_EXTRACTOR_SHARE_COLORS`, matching og-worker's card slicing). Only extracted (K-means) entries are written — a pick has no dominance share and is excluded |
+| `algo` | matching method (normalised), applied to the restored palette |
+
+On read, the restored colours replace the roll with equal synthetic shares (the link carries no proportions) and clear any picks; an over-long list drops its tail and an invalid hex is skipped, both with a console warning rather than failing the link.
 
 ---
 
@@ -164,9 +171,13 @@ The XIV Dye Tools web app ships nine tools. Each has its own route, a `ToolId`, 
 
 ## 9. Swatch Matcher — 10A sheet + `.chara` import
 
-**Route:** `/swatch` (legacy `/character` redirects) · **ToolId:** `swatch` · **Files:** `src/components/swatch-tool.ts` (`SwatchTool`), `chara-import.ts` (the 10A file card / THIS CHARACTER sheet), core's `CharacterColorService`, `parseCharaFile`, `resolveCharaColors`. Spec: `10a-sheet-port-spec.md`. Locale namespaces `swatch.*` and `tools.character.*` (v3 name "Character Colors"; en title "Character Matcher", short name "Swatch").
+**Route:** `/swatch` (legacy `/character` redirects) · **ToolId:** `swatch` · **Files:** `src/components/swatch-tool.ts` (`SwatchTool`), `chara-import.ts` (the 10A file card / THIS CHARACTER sheet), `item-links-menu.ts` (5.9.0 — the DYES ON THIS GLAMOUR "Open in…" menu, loaded on demand), `glamour-list-actions.ts` (5.10.0 — Copy list / Export .md, also loaded on demand), core's `CharacterColorService`, `parseCharaFile`, `resolveCharaColors`. Spec: `10a-sheet-port-spec.md`. Locale namespaces `swatch.*` and `tools.character.*` (v3 name "Character Colors"; en title "Character Matcher", short name "Swatch").
 
 **What 5.0 shipped.** The front door is a reader: drop an Anamnesis / Ktisis / Brio `.chara` file (`swatch.dropTitle`) — parsed entirely on-device into a file card (producer, nickname, `LOCAL ONLY` chip, tribe/gender readout), a **THIS CHARACTER** sheet (one card per slot with its R·C grid address or amber `OFF GRID`, absent-slot reasons, best dye + tier-coloured ΔE2000, lip blend beside the raw cell), grid pins on the loaded palette, a five-row excerpt around a picked cell, and **DYES ON THIS GLAMOUR** (both channels, droppable chips, 3–6 counter → prefilled preset submission). **Save character colours** (`swatch.saveCharacter`) writes a `kind: 'character'` record. The grid path keeps a seven-palette rail (eye, hair, skin, highlight, lip, tattoo, face paint) with a Dark/Light range toggle for the split palettes (replacing the sidebar dropdown); race/gender selectors lock into a readout while a file is loaded (`SwatchConfig.fileProvided`; the sidebar subscribes to `swatch`); `SEND TO` hand-off row; the **Evercold deprecation banner** on the eye / hair / skin grids (`EVERCOLD_DEPRECATED_CATEGORIES`); 26 px desktop / 44 px mobile cells. Sixteen sub-races (`Helion` → `Helions` migrates on read) × two genders for the race-specific sheets. Reverse-match rings use the theme accent.
+
+**Item links (5.9.0).** A piece's icon tile or item name in the Pieces lens — and the carrier icon tiles in the Dyes lens, which names the dye rather than the piece — is a real button that opens an "Open in…" menu (`item-links-menu.ts`) onto five community sites: GarlandTools and Teamcraft (id-addressed, gear only), Mirapri and GamerEscape (name-addressed), and the Lodestone as a submenu of five regional searches (North America, Europe, Japan, Germany, France). Facewear has no Item id, so it gets only the three name-addressed entries, resolving its untinted base name first — a family's eleven tints carry the tint in their own name (e.g. the tints of "Simple Spectacles" are named "Silver Spectacles"). No Eorzea Collection entry: its item ids don't map onto FFXIV's own, so a wrong one would open a different item rather than 404.
+
+**Copy list / Export .md (5.10.0).** Two buttons beside Make a palette (`glamour-list-actions.ts`) write the *whole* worn glamour — the Pieces/Dyes lens and Show all only change what's on screen, not what's written — as a fixed submission template: a bold slot label, the item name, `Dye 1:` / `Dye 2:` for dyeable slots, and a blank `Acquisition:` line, ending at Facewear. The character's name is never included. Copy puts real bold on the clipboard (HTML for Word/Google Docs, a plain-text fallback with no Markdown syntax); Export downloads `glamour-equipment.md` with `**bold**` Markdown. Both wait for item names to resolve, but stay enabled under NAMES UNAVAILABLE.
 
 **Config (`SwatchConfig`):** `colorSheet` (`eyeColors | hairColors | skinColors | highlightColors | lipColorsDark | lipColorsLight | tattooColors | facePaintColorsDark | facePaintColorsLight`, default `hairColors`), `fileProvided`, `race` (sub-race, default `SeekerOfTheSun`), `gender` (`Male | Female`), `maxResults` (1–6, default 3), `matchingMethod`, `displayOptions`, `dyeFilters`.
 

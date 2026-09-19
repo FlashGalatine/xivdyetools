@@ -60,7 +60,7 @@ Picking a swatch (or a character slot) writes one plain sentence — which palet
 
 ### CLOSEST DYES
 
-The best matches, one card each, ranked by colour distance. Each card shows the dye swatch beside your colour, the distance in the current unit (ΔE2000 by default — see below), the hue and stain readouts, and the dye's colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…** (Universalis, GarlandTools).
+The best matches, one card each, ranked by colour distance. Each card shows the dye swatch beside your colour, the distance in the current unit (ΔE2000 by default — see below), the hue and stain readouts, and the dye's colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…** (Universalis, GarlandTools, TeamCraft, Saddlebag).
 
 Settings for the list live in the settings column (the gear icon on phones): **Max Results** (1–6), **Matching Algorithm**, display options, and the dye filters (exclude metallic, pastel, dark, cosmic, coffer, vendor, crafted…).
 
@@ -100,6 +100,13 @@ as chips, with a count of channels and distinct dyes.
 - **Dyes** collapses the same information into the distinct dyes used, so you can see the palette
   rather than the outfit.
 
+**Open a piece elsewhere.** Click a piece's icon or its name in the **Pieces** view (in **Dyes**, the
+small piece icons on the right of each row) for an
+**Open in…** menu with five lookup sites: **Mirapri**, **GarlandTools**, **Teamcraft**,
+**GamerEscape** and **The Lodestone** (which opens into five regional searches — North America,
+Europe, Japan, Germany and France). A piece the game gives no real item for, such as an NPC outfit
+or a prop, has no menu — there is nothing to look up.
+
 **Show all.** By default only dyed pieces are listed. Turn on **Show all** to see every piece worn,
 undyed ones included, each marked **Undyed**. If nothing on the glamour is dyed you get a note
 saying so and pointing at that toggle.
@@ -107,10 +114,23 @@ saying so and pointing at that toggle.
 **Facewear.** If your character is wearing facewear it gets its own row below the gear, labelled
 **Facewear**. Facewear colours are not dyes and are not matched against the dye database, so the row
 names the colour rather than scoring it — and if the file does not identify one, it says the colour
-is unknown.
+is unknown. Its **Open in…** menu is shorter: the game files facewear under a different kind of id
+than gear, so it offers only **Mirapri**, **GamerEscape** and **The Lodestone**. It looks up the
+plain, untinted version of the item first — a tinted pair is not a real item — so those entries can
+take a moment to appear, and if the lookup fails the menu says so rather than offering a link that
+would go nowhere.
 
 If item names cannot be looked up, the section falls back to slots only and says so; the dyes are
 read locally from your file and are never affected.
+
+**Copy list** and **Export .md**, beside **Make a palette**, write your outfit in the format
+glamour showcases such as GPOSERS ask for: a bold slot name, the piece, a **Dye 1** / **Dye 2** line
+for each dye it is actually wearing, and an **Acquisition:** line left blank for you to fill in.
+Only what you are wearing is listed — empty slots and undyed channels are left out, and neither the
+copy nor the file ever includes your character's name. **Copy list** keeps the bold when pasted into
+Word or Google Docs; anywhere that takes only plain text gets the same lines with no `**` marks.
+**Export .md** downloads the same list as `glamour-equipment.md`. Both wait for item names to arrive before they turn on, and still work from
+the file's own slots and dyes even if the names never do.
 
 Press **Make a palette** to turn the dyes into a preset: toggle chips off to drop dyes, give it a
 name, and either **Save to this device** or **Submit to Community**. Both buttons stay disabled
@@ -120,7 +140,7 @@ until you have between **3 and 6** dyes.
 
 ## Reverse Matching
 
-Pick any dye in the **Color Palette** drawer (or enter a hex under **Custom Color**) while the Swatch Matcher is open and the grid lights up the three closest swatches on the current sheet, ranked by glow. A **Closest Swatches** panel lists them; clicking one runs the normal forward match. Other tools' **Inspect Dye in… → Swatch Matcher** lands here the same way.
+Pick any dye in the **Color Palette** drawer (or enter a hex under **Custom Color**) while the Swatch Matcher is open and the grid lights up as many closest swatches on the current sheet as **Max Results** allows (1–6), ranked by glow. A **Closest Swatches** panel lists them; clicking one runs the normal forward match. Other tools' **Inspect Dye in… → Swatch Matcher** lands here the same way.
 
 ---
 
@@ -166,14 +186,15 @@ Turn on **Market Board** in the settings column to see current prices on the mat
 
 Distances are ΔE2000 by default — the industry-standard measure of how different two colours look. You can switch the **Matching Algorithm** to ΔEOK2, ΔE76, Weighted RGB (redmean), RGB or a 0–100 percentage; the unit printed beside **CLOSEST DYES** follows your choice.
 
-| ΔE2000 | Meaning |
-|--------|---------|
-| 0-1 | Virtually identical |
-| 1-2 | Very close, minor difference |
-| 2-10 | Noticeable but similar |
-| 10+ | Visibly different |
+| ΔE2000 | Band | Meaning |
+|--------|------|---------|
+| under 5 | SAME | You would not tell them apart |
+| 5 to 10 | CLOSE | A very good stand-in |
+| 10 to 20 | NEAR | In the same family, but visibly different |
+| 20 and up | FAR | A different colour |
 
-Lower scores mean better matches!
+Every other matching method has its own calibrated cut-offs on its own scale, so compare the band,
+never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.
 
 ---
 
