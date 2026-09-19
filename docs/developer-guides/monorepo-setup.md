@@ -149,7 +149,7 @@ Packages additionally carry a `tsconfig.build.json` with `stripInternal: true`, 
 | Tool | Version | Notes |
 |------|---------|-------|
 | Node | 22+ | Matches CI |
-| Vitest | 4 | Every package and app |
+| Vitest | 5 | Every package and app |
 | Playwright | — | `web-app` E2E only; Chromium is the gating project |
 | ESLint | 10 | Flat config with typescript-eslint |
 | Prettier | 3 | Formatting |

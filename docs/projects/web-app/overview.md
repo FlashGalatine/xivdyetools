@@ -239,9 +239,12 @@ Cloudflare injects `x-robots-tag: noindex` onto those hostnames itself.
 patterns **merge**, and an SPA catch-all plus `immutable` on `/assets/*` can cache an HTML fallback
 under a `.js` URL for a year. `functions/_middleware.ts` is the standing guard against the second.
 
-**CORS.** Every backend the app calls enforces an origin allowlist, so a new deployment origin (a
-preview URL, a new beta domain) must be added there **before** it works — the failure looks like a
-broken app but is a server-side config gap.
+**CORS.** The OAuth worker and Presets API enforce an origin allowlist, so a new deployment origin
+(a preview URL, a new beta domain) must be added there **before** it works — the failure looks like
+a broken app but is a server-side config gap. api-worker's read API allows any origin
+(`cors({ origin: '*' })`), so its dye and market calls need no entry — but `POST /v1/telemetry` keeps
+its own exact-Origin allowlist (`src/telemetry/origin.ts`), so a new origin must be added there or
+its opt-in analytics are silently dropped.
 
 | Worker | Purpose |
 |---|---|

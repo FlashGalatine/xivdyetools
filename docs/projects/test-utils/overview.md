@@ -128,10 +128,17 @@ import {
   createMockSubmission,
   createMockCategoryRow,
   mockDyes,
+  resetMockDyeSequence,
+  randomStainId,
 } from '@xivdyetools/test-utils/factories';
 
 const dye = createMockDye({ name: 'Test Red', category: 'Reds' });
-// Real-shaped: stainID lands in 1-254 and `id === itemID`.
+// Real-shaped: stainID lands in 1-254 and `id === itemID`. The default stainID
+// advances a deterministic 1-254 sequence rather than drawing at random, and
+// THROWS once a suite builds more than 254 default-stainID dyes without
+// resetting it — call resetMockDyeSequence() (e.g. in `beforeEach`) between
+// tests, or use randomStainId() for an opt-in non-deterministic draw that
+// doesn't advance the sequence.
 
 const row = createMockPresetRow({ status: 'pending' });   // a D1 PresetRow — `dyes`/`tags` are JSON strings
 const submission = createMockSubmission({ dyes: [1, 2, 3] });

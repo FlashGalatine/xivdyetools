@@ -472,15 +472,15 @@ public responses withhold).
 ```
 
 `status` ∈ `approved` | `rejected` | `flagged` | `pending` (`hidden` cannot be set here). The update
-and its `moderation_log` row (`approve` / `reject` / `flag` / `unflag`) land in one batch, conditional
-on the status the moderator saw. `revert` is the fifth action this API writes; `xivdyetools-moderation-worker`
+and its `moderation_log` row (`approve` / `reject` / `flag` / `unflag` / `requeue`) land in one batch,
+conditional on the status **and** the `content_revision` the moderator saw. `revert` is the sixth action this API writes; `xivdyetools-moderation-worker`
 writes four more of its own straight to the shared D1 — `ban` and `unban` (user-level, `preset_id` NULL)
 plus one `hide` / `restore` per preset a ban hides or an unban restores, so those appear in a preset's
 `GET /moderation/:presetId/history` too (migration 0013).
 
 **Response:** `{ "success": true, "preset": { …preset… } }`
 
-**409 (concurrent moderation):** `{ "success": false, "error": "DUPLICATE_RESOURCE", "message": "Preset status changed concurrently — reload and retry" }`
+**409 (concurrent moderation):** `{ "success": false, "error": "CONFLICT", "message": "Preset changed concurrently — reload and retry" }`
 
 ### PATCH /moderation/:presetId/revert
 
@@ -494,13 +494,20 @@ snapshot. Response: `{ "success": true, "preset": { … }, "message": "Preset re
 ### PATCH /moderation/:presetId/preview-image
 
 ```json
-{ "action": "approve" }
+{ "action": "approve", "preview_image_key": "6f1c1c9e-…/2b7d….webp" }
 ```
 
-`approve` → `{ "success": true, "preview_image_status": "approved" }` (the URL now appears in public
-responses). `reject` → clears the image and its R2 object → `{ "success": true, "preview_image_status": "none" }`.
-The preset's own `status` is untouched: a bad picture is not a bad palette. Anything else →
-400 `action must be 'approve' or 'reject'`.
+`preview_image_key` must identify the exact image the moderator reviewed (`<presetId>/<uuid>.webp`,
+≤ 128 characters); it is how the route refuses to act on an image that changed since the
+notification was sent. `approve` → `{ "success": true, "preview_image_status": "approved" }` (the
+URL now appears in public responses). `reject` → clears the image and its R2 object →
+`{ "success": true, "preview_image_status": "none" }`. The preset's own `status` is untouched: a bad
+picture is not a bad palette.
+
+400 `action must be 'approve' or 'reject'`, or `preview_image_key must identify the reviewed image`
+when it is missing or malformed. **409** `{ "success": false, "error": "CONFLICT", "message": "This
+preview image changed or was already moderated. Review the latest image notification." }` when the
+image was replaced or already moderated.
 
 ### GET /moderation/:presetId/history
 
@@ -731,8 +738,8 @@ per-IP limiter answers `{ "error": "Too Many Requests", "message": "…", "retry
 | `FORBIDDEN` | 403 | Not the owner / not a moderator / status filter not allowed |
 | `USER_BANNED` | 403 | Caller is in `banned_users` |
 | `NOT_FOUND` | 404 | Resource not found (also non-approved presets to non-privileged callers) |
-| `CONFLICT` | 409 | Reserved |
-| `DUPLICATE_RESOURCE` | 409 | Same dye combination exists (edit), or a concurrent moderation write |
+| `CONFLICT` | 409 | Optimistic-concurrency conflict: a stale `content_revision` on preset edit, moderation status change or revert, or a preview-image moderation action on an image already moderated/replaced |
+| `DUPLICATE_RESOURCE` | 409 | Same dye combination exists on submit/edit, or a moderator's status change/revert collided with another preset's dye signature (BUG-041) |
 | `RATE_LIMITED` | 429 | Daily submission limit reached |
 | `INTERNAL_ERROR` | 500 | Unhandled error (carries `requestId`) |
 | `SERVICE_UNAVAILABLE` | 500 | Worker misconfigured (env validation failed in production) |

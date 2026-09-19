@@ -65,6 +65,7 @@ sequenceDiagram
   "iat": 1702684800,
   "exp": 1702688400,
   "iss": "https://auth.xivdyetools.app",
+  "jti": "token-uuid",
   "username": "User#1234",
   "global_name": "Display Name",
   "avatar": "avatar_hash",

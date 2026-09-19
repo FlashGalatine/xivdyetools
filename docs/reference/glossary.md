@@ -23,15 +23,16 @@ Colors opposite each other on the color wheel (180° apart). Create high-contras
 ### Delta E (ΔE)
 Measure of perceptual color difference. Lower values = more similar.
 
-| Value | Meaning |
-|-------|---------|
-| 0-1 | Imperceptible |
-| 1-2 | Barely noticeable |
-| 2-10 | Noticeable at a glance |
-| 10-50 | Colors are similar |
-| 50+ | Colors are different |
+On the default method (ΔE2000) every match falls into one of four bands. The Dye Comparison tool and the bot's comparison card print the word; elsewhere the band sets the colour of the distance number:
 
-The bands above are for CIEDE2000; other methods use their own calibrated bands (`classifyBandTier` in `@xivdyetools/core`).
+| ΔE2000 | Band | Meaning |
+|--------|------|---------|
+| under 5 | SAME | You would not tell them apart |
+| 5 to 10 | CLOSE | A very good stand-in |
+| 10 to 20 | NEAR | In the same family, but visibly different |
+| 20 and up | FAR | A different colour |
+
+These cuts (5 / 10 / 20) are the `match` bands for `ciede2000` in `BAND_VOCABULARY` (`packages/core/src/config/band-vocabulary.ts`); every other method has its own calibrated cuts on its own scale (`classifyBandTier` in `@xivdyetools/core`), so compare the band, never the raw number, across methods. In the Dye Comparison tool the SAME cut follows its **Match line** setting (5 by default).
 
 ### Matching method
 The distance function used to rank dyes against a target colour. One vocabulary across core, web app, bot, og-worker and api-worker since 5.0: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`. The former `hyab` and `oklch-weighted` methods were retired; stored values normalise on read via `normalizeMatchingMethod()`.

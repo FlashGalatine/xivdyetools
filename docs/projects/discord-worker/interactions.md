@@ -92,7 +92,7 @@ Only `push` events from `FlashGalatine/xivdyetools` are announced, and each vers
 - **Ed25519 signature verification** on all interaction requests using the `X-Signature-Ed25519` and `X-Signature-Timestamp` headers
 - **Max body size**: 100 KB for interaction payloads
 - **Timing-safe comparison** for webhook secret validation
-- **Webhook payload limits**: 10 KB for `/webhooks/preset-submission`; 1 MiB for `/webhooks/github` (`GITHUB_WEBHOOK_MAX_BYTES`), which also re-checks the actual body length after reading it since `Content-Length` can be missing or spoofed
+- **Webhook payload limits**: 10 KB for `/webhooks/preset-submission`, 1 MiB for `/webhooks/github` (`GITHUB_WEBHOOK_MAX_BYTES`) — both routes stream-count actual received bytes against their own cap and answer 413 past it, since a client-declared `Content-Length` can be missing or spoofed. `/webhooks/preset-submission` uses the shared `readTextCapped()` helper; `/webhooks/github` keeps its own raw-byte reader because its HMAC must verify the exact undecoded bytes
 
 ## Related Documentation
 

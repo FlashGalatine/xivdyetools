@@ -121,7 +121,7 @@ The publish workflow needs **no secret**. It authenticates to npm with [trusted 
 - **Package management:** pnpm 11 with `workspace:*` protocol
 - **Build orchestration:** Turborepo 2.10 with dependency-aware caching
 - **Language:** TypeScript 5.9 (strict, ES2022, bundler module resolution, `verbatimModuleSyntax`)
-- **Testing:** Vitest 4; Playwright for `web-app` E2E
+- **Testing:** Vitest 5; Playwright for `web-app` E2E
 - **Linting:** ESLint 10 flat config with typescript-eslint
 - **Formatting:** Prettier 3
 - **Localization:** 6 languages (en, ja, de, fr, ko, zh)

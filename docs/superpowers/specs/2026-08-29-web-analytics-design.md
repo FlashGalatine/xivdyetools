@@ -1,7 +1,6 @@
 # Web-app analytics — making "Enable Analytics" real
 
-**Date:** 2026-08-29 · **Apps:** `apps/web-app`, `apps/api-worker` · **Status:** approved design,
-awaiting implementation plan · **Branch:** `web-analytics` (worktree `.worktrees/xivdyetools-analytics`)
+**Date:** 2026-08-29 · **Apps:** `apps/web-app`, `apps/api-worker` · **Status:** implemented (PR #149) · **Branch:** `web-analytics` (worktree `.worktrees/xivdyetools-analytics`)
 
 ## Problem
 

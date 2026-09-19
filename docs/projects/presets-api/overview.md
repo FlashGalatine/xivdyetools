@@ -273,14 +273,15 @@ vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://
 `INTERNAL_WEBHOOK_SECRET` — each of them degrades silently rather than loudly when missing, which is
 the reason for the check (FINDING-013).
 
-**Secrets:**
+**Secrets** (production — a bare `wrangler secret put` writes to the top-level block, the
+`xivdyetools-presets-api-dev` worker; drop the flag only to set the dev worker's own copy):
 ```bash
-wrangler secret put BOT_API_SECRET          # Required (all environments)
-wrangler secret put MODERATOR_IDS           # Required (all environments), comma-separated
-wrangler secret put BOT_SIGNING_SECRET      # Required in production — HMAC key for bot signatures
-wrangler secret put JWT_SECRET              # Required in production; shared with apps/oauth
-wrangler secret put INTERNAL_WEBHOOK_SECRET # Required in production — bearer for the discord-worker webhook
-wrangler secret put PERSPECTIVE_API_KEY     # Optional (and sunsetting 2026-12-31)
+wrangler secret put BOT_API_SECRET --env production          # Required (all environments)
+wrangler secret put MODERATOR_IDS --env production           # Required (all environments), comma-separated
+wrangler secret put BOT_SIGNING_SECRET --env production      # Required in production — HMAC key for bot signatures
+wrangler secret put JWT_SECRET --env production              # Required in production; shared with apps/oauth
+wrangler secret put INTERNAL_WEBHOOK_SECRET --env production # Required in production — bearer for the discord-worker webhook
+wrangler secret put PERSPECTIVE_API_KEY --env production     # Optional (and sunsetting 2026-12-31)
 wrangler secret put CACHE_PURGE_API_TOKEN --env production   # Optional, FINDING-018
 ```
 

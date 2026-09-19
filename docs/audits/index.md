@@ -49,6 +49,7 @@ report named below.
 | 2026-09-15 | Security audit, whole monorepo (6 findings — sprints 0–2 in PRs #183/#184) | [README.md](2026-09-15-security/README.md) |
 | 2026-09-15 | Dead-code audit, whole monorepo (17 cleanup entries + 4 KEEP — PR #186) | [README.md](2026-09-15-dead-code/README.md) |
 | 2026-09-16 | Deep-dive analysis, whole monorepo (53 findings: 8 MEDIUM, no HIGH; two reviewer HIGHs overturned by the verification pass) | [README.md](2026-09-16-deep-dive/README.md) |
+| 2026-09-18 | Documentation audit, `docs/` + the bot's `/manual` (38 findings: 1 HIGH, 26 MEDIUM; `/manual` was still the 4.x text in all six languages — all fixed the same day in PRs #189, #190 and #191) | [README.md](2026-09-18-documentation/README.md) |
 
 ## Conventions
 

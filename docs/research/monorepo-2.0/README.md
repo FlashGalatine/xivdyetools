@@ -2,7 +2,7 @@
 
 Research and planning documents for the version 5.0 upgrade of the XIV Dye Tools web app and the second-generation cleanup of the monorepo. The organizing principle is **"trim the fat"**: rebuild components from the ground up where that is simpler than carrying them forward, deprecate packages and apps whose purpose has lapsed, and align the data model with the game's own data model rather than our historical one.
 
-> **Status:** Research phase. No code changes are made by these documents.
+> **Status:** Shipped 2026-08-28 (PR #123). No further code changes are made by these documents.
 > **Started:** 2026-07-30
 
 ## Decisions Already Made

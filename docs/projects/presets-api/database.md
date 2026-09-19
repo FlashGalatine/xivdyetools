@@ -50,6 +50,7 @@ Core table storing community dye presets.
 | previous_values | TEXT | JSON, populated when edit is flagged |
 | created_at | TEXT | ISO timestamp |
 | updated_at | TEXT | ISO timestamp |
+| content_revision | INTEGER | NOT NULL DEFAULT 0 — internal optimistic-concurrency token, incremented by a trigger whenever content, ownership or status changes; a write conditioned on a stale value matches no row and is rejected with a 409 (migration 0014). Omitted from public preset responses |
 
 ### votes
 
@@ -191,6 +192,7 @@ rejected or hidden preset's dye combination stops blocking resubmission.
 | `0011_submission_events.sql` | `submission_events` append-only per-user quota log (FINDING-008) |
 | `0012_submission_events_text_edit.sql` | Rebuilds `submission_events` to allow the `text_edit` kind in its CHECK constraint, and adds `idx_submission_events_created` (FINDING-005) |
 | `0013_moderation_log_user_actions.sql` | Rebuilds `moderation_log` to make `preset_id` nullable and add `target_discord_id`, so moderation-worker's `ban` / `unban` / `hide` / `restore` rows can land here (FINDING-018) |
+| `0014_add_content_revision.sql` | Adds the `content_revision` column and the trigger that increments it on content/ownership/status changes — optimistic concurrency for edit, moderation status and revert |
 | `002_add_composite_indexes.sql` | Performance indexes for common query patterns (the odd name is historical — it predates the four-digit series and is the only file `db:migrate:indexes` applies) |
 
 `0012` and `0013` each **rebuild** a table (SQLite cannot alter a CHECK or a NOT NULL constraint in

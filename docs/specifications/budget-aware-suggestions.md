@@ -1,6 +1,19 @@
 # Budget-Aware Dye Suggestions - Feature Specification
 
-> Last Updated: December 5, 2025
+> Feature Status: ✅ Implemented — as its own tool, not a Color Matcher filter
+> Platforms: Web App + Discord Bot
+> Core Library Changes: No (implemented entirely in the consumer apps — Phase 1's optional
+> `DyeService` enhancement below was never built)
+>
+> **As shipped:** the Color Matcher tool and the `/match` command this document targets no longer
+> exist (Color Matcher became the Palette Extractor and `/match` was removed, both in 5.0). Budget
+> shipped as its own dedicated surface instead: the web app's **Budget Suggestions** tool
+> (`apps/web-app/src/components/budget-tool.ts`, `/budget` route) and the Discord bot's standalone
+> `/budget` command (`apps/discord-worker/src/commands/registry.ts`). Both start from a target dye
+> and return a ranked ledger of substitutes rather than filtering an existing match list. See
+> [Feature Roadmap](./feature-roadmap.md) for the as-shipped summary.
+
+> Design last updated: December 5, 2025
 
 ## Overview
 

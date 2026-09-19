@@ -195,7 +195,7 @@ If core library changes are deferred:
 
 | File | Changes |
 |------|---------|
-| `color-matcher-tool.ts` | Add mode toggle, palette UI |
+| `extractor-tool.ts` | Add mode toggle, palette UI |
 | `palette-extraction-service.ts` | New service (or use core) |
 | `palette-results.ts` | New component for palette display |
 

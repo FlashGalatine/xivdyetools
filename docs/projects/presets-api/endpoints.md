@@ -3,7 +3,7 @@
 Full API reference for the Presets API Cloudflare Worker.
 
 > **Since the 5.0 wave:** preset `dyes` are **stainIDs (1–254), 3–6 per preset** — legacy itemIDs
-> (≥ 5729) are rejected with "looks like a legacy item ID"; the `community` category is gone
+> (≥ 5000) are rejected with "looks like a legacy item ID"; the `community` category is gone
 > (migration 0007) and `appearance` / `zones` / `raids-trials` were added; a preset carries one
 > primary `category_id` plus up to two `secondary_categories` (0010), an optional `example_link`
 > (0008), and a moderated preview image (`preview_image_key` / `preview_image_status`, 0009 — R2
@@ -188,6 +188,14 @@ Edit an owned preset. Validates that the authenticated user owns the preset.
   unchanged change no status and notify nobody. Every notifying edit is charged to a second daily
   cap of 10 (`DAILY_FLAGGED_EDIT_LIMIT`, kind `flagged_edit`, its own `429 RATE_LIMITED`).
 
+The update is conditional on the `content_revision` read at the start of the request (optimistic
+concurrency, migration 0014); if another write landed first, the response is:
+
+```
+409  { "success": false, "error": "CONFLICT",
+       "message": "Preset changed concurrently — reload and retry" }
+```
+
 ### `DELETE /api/v1/presets/:id`
 
 Delete a preset. The caller must be the author **or** a moderator; anyone else gets `403`, and a
@@ -254,13 +262,14 @@ other. What the server does validate is that `status` is a member of that set; a
 `400`.
 
 The status update and its `moderation_log` insert run as one D1 `batch()`, and the `UPDATE` is
-conditional on the status this moderator observed (optimistic concurrency, BUG-020). If another
+conditional on both the status and the `content_revision` this moderator observed (optimistic
+concurrency, BUG-020 + migration 0014). If another
 moderator wrote first, the update matches zero rows, the log row is skipped
 (`WHERE changes() > 0`), and the response is:
 
 ```
-409  { "success": false, "error": "DUPLICATE_RESOURCE",
-       "message": "Preset status changed concurrently — reload and retry" }
+409  { "success": false, "error": "CONFLICT",
+       "message": "Preset changed concurrently — reload and retry" }
 ```
 
 A transition **into** the partial UNIQUE dye-signature index (`flagged`/`rejected` →
@@ -279,9 +288,23 @@ The action recorded is derived from the transition: `unflag` for `flagged → ap
 
 ### `PATCH /api/v1/moderation/:presetId/preview-image`
 
-Approve or reject a pending preview image (`{ action: 'approve' | 'reject' }`). Reject clears only
-the image, never the preset's status. Called by discord-worker's `previewimg_*` buttons as the
-clicking moderator.
+Approve or reject a pending preview image. Reject clears only the image, never the preset's status.
+Called by discord-worker's `previewimg_*` buttons as the clicking moderator.
+
+**Request Body:**
+
+| Field | Type | Constraints |
+|-------|------|-------------|
+| `action` | string | Required. One of `approve`, `reject` |
+| `preview_image_key` | string | Required, ≤ 128 characters, formatted `<presetId>/<uuid>.webp` — must identify the exact image the moderator reviewed |
+
+`400` if `action` is neither value (`action must be 'approve' or 'reject'`) or `preview_image_key`
+doesn't match that shape (`preview_image_key must identify the reviewed image`).
+
+```
+409  { "success": false, "error": "CONFLICT",
+       "message": "This preview image changed or was already moderated. Review the latest image notification." }
+```
 
 ### `GET /api/v1/moderation/:presetId/history`
 
@@ -299,6 +322,19 @@ the status back to `approved`.
 | `reason` | string | **Required, 10–200 characters** (`validateModerationReason`) — this is the route that enforces the length, not `/status` |
 
 `400` if the preset has no `previous_values` to revert to.
+
+The update is conditional on the `content_revision` and the exact `previous_values` snapshot read
+at the start of the request (optimistic concurrency, migration 0014); if another write landed
+first, the response is:
+
+```
+409  { "success": false, "error": "CONFLICT",
+       "message": "Preset changed concurrently — reload and retry" }
+```
+
+Reverting can also collide with the partial UNIQUE dye-signature index if another preset took the
+same combination meanwhile; that is a `409 DUPLICATE_RESOURCE` naming the preset in the way, the
+same recovery the status route above documents (BUG-041).
 
 ### `GET /api/v1/moderation/stats`
 
