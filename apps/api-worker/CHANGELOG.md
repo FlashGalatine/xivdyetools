@@ -16,8 +16,9 @@ public site that it had found in the monorepo hub copies.
 
 - `guide/rate-limits.md` and `guide/responses.md` showed `X-RateLimit-Remaining: 42` — a value
   production can never emit, and one that contradicted the warning box directly beneath it. With
-  the native Workers Rate Limiting binding the header is `limit − 1` (`64`) on every allowed
-  request and `0` on a refused one (`packages/worker-kit/src/rate-limiter/backends/cloudflare.ts`).
+  the native Workers Rate Limiting binding the header is `limit − 1` (`64`) on an allowed request
+  and `0` on a refused one (`packages/worker-kit/src/rate-limiter/backends/cloudflare.ts`; the
+  same file's fail-open branch answers `limit`, `65`, while the binding itself is unavailable).
   Both examples now show `64`.
 - `GET /v1/dyes` `page` is capped at 1000 and `GET /v1/dyes/search` `q` at 100 characters
   (`src/routes/dyes.ts` — a 400 past either). Neither cap was documented: both endpoint cards and
