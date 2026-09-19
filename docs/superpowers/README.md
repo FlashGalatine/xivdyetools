@@ -20,6 +20,7 @@ For the investigation that preceded a decision, see [`../research/`](../research
 | Web analytics (Enable Analytics made real) | [spec](specs/2026-08-29-web-analytics-design.md) | [plan](plans/2026-08-29-web-analytics.md) | Shipped — PR #149, api-worker 0.9.0 `POST /v1/telemetry` |
 | Dead-code guardrails | [spec](specs/2026-09-01-dead-code-guardrails-design.md) | [plan](plans/2026-09-01-dead-code-guardrails.md) | Shipped — PR #157, `knip.jsonc` + `scripts/check-dead-code.ts` |
 | Selectable harmony colour wheels | [spec](specs/2026-09-04-harmony-color-wheels-design.md) | [plan](plans/2026-09-04-harmony-color-wheels.md) | Shipped 2026-09-05 — PR #167 (+ #168 docs restyle, #169 API endpoints) |
+| GitHub webhook bytes (Sprint 0 follow-up) | — (spec: [FINDING-003](../audits/2026-09-15-security/findings/FINDING-003.md)) | [plan](plans/2026-09-15-sprint-0-webhook-bytes.md) | Shipped — PR #184, discord-worker 5.5.5 |
 
 ## Conventions
 

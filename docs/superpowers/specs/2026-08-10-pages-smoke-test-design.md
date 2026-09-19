@@ -1,7 +1,7 @@
 # Design — one Pages smoke test for both web-app workflows
 
 **Date:** 2026-08-10
-**Status:** approved
+**Status:** implemented — `apps/web-app/scripts/smoke-test-pages.js` runs in both web-app deploy workflows; plan `docs/superpowers/plans/2026-08-10-pages-smoke-test.md`
 **Deploy unit:** `web-app` (both deploy workflows; no runtime code changes)
 
 ---

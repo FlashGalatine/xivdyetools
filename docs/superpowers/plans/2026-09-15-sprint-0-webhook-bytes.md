@@ -1,6 +1,6 @@
 # Sprint 0 completion: preserve GitHub webhook bytes
 
-**Status:** implemented and locally verified; merge, deployment and authenticated moderation acceptance remain pending.
+**Status:** implemented and locally verified; merged 2026-09-16 as PR #184 and deployed, with authenticated moderation acceptance still pending.
 
 **Scope:** Sprint 0 of the 2026-09-15 coordinated dead-code cleanup plan. Its three security fixes already merged in [PR #183](https://github.com/FlashGalatine/xivdyetools/pull/183), with auth publication and production worker deployments. This follow-up completes FINDING-003's requirement to verify HMAC over the bounded original bytes. Later cleanup sprints are outside this change.
 
