@@ -23,13 +23,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.12.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.6.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.12.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.6.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.4 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.14.5 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -109,6 +109,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.12.1 | Sep 2026 | Follow-up to the 2026-09-19 i18n audit's pre-merge review — Korean Terms of Service disclaimer restructured so it can only read as a disclaimer; Korean Privacy Policy "never stored" sentence no longer ends on a positive verb; Japanese Terms header unwrapped. Policy documents only (read from GitHub), so the deployed bundle differs only in its version string |
 | v5.12.0 | Sep 2026 | 2026-09-19 i18n audit Sprints 2–3 — Privacy Policy and Terms of Service in all six languages, linked by app locale, English governing (I18N-010); Market Board is one official term per locale — fr `tableau des ventes`, ko `장터`, zh `市场布告板` (TERM-001); the result card's send-to-tool menu renders each tool's own title (TERM-002, seven `resultCard.tools.*` keys deleted); ko/zh say server for a World (TERM-003); config sidebar and tool panels share one label per concept (TERM-004); Korean `안팡` → `안팎` in two keys (I18N-004); name and category sorts use the app locale (I18N-008) |
 | v5.11.0 | Sep 2026 | 2026-09-16 deep-dive Sprints 1–2 + 7 (20 findings) — Palette Extractor **Share** restored (BUG-002: `colors` + `algo` in the link, up to five bar colours, no image; a shared link renders equal-share bands and the matched dyes; og-worker's `/og/extractor` card is reachable again); Back from a preset keeps `<v4-preset-tool>` mounted and resolves from the URL (BUG-005); preset detail renders the prices it fetches (BUG-004); "Submit to Community" chunk-load failure toasts (BUG-003); dead `navigate-to-tool` context actions deleted with a vocabulary guard (REFACTOR-001); new suites for preset-detail, preset-tool, collection-manager-modal, add-to-collection-menu |
 | **v5.10.0** | **Sep 2026** | **Swatch Manager's equipment list gains Copy list and Export .md — the GPOSERS submission template (bold slot labels, worn slots in the template's order, a `Dye` line per dyed channel, `Acquisition:` left blank); Copy puts HTML + plain text on the clipboard so Word / Google Docs keep the bold, Export saves Markdown; the clipboard and file-download mechanics move to `shared/clipboard` and `shared/download-file`** |
@@ -161,6 +162,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.6.1 | Sep 2026 | Follow-up to the 2026-09-19 i18n audit's pre-merge review — `/preferences set clan` tooltip examples localized in de / fr / ko through bot-logic 4.4.0 (`Wiesländer, Auri-Raen` / `Hyurois, Raen` / `미드랜더, 렌`); Chinese Terms of Service header unwrapped; the 5.6.0 I18N-002 note corrected (localized `/manual topic` names are text-only). **`register-commands` runs on deploy** |
 | v5.6.0 | Sep 2026 | 2026-09-19 i18n audit Sprints 6–7 — every subcommand and option tooltip in the command picker is localized (I18N-001, 134 of 151 descriptions were English in every locale; the test now asserts coverage and Discord's 8,000-character cap, counted at the longest localization per field); `/manual topic` choices localized (I18N-002); `/about` sentence keyed (HC-001); `/extractor` singular form (I18N-006); CJK subsets re-cut by cmap (JP +絵具, SC +告絵, KR −월) with picker text excluded from the subset. **`register-commands` runs on deploy** |
 | v5.5.8 | Sep 2026 | 2026-09-18 documentation audit — `/manual` brought up to 5.0 in all six languages: names all 17 commands (was 9), the `match_image` topic describes `/extractor image` instead of the deleted `/match_image`, `/swatch` is the `.chara` command; four guards in `manual.test.ts` read the real locale files (roster coverage, Discord embed limits per locale, syntax lines identical to English); text ships in bot-logic 4.3.0 |
 | v5.5.7 | Sep 2026 | 2026-09-16 deep-dive Sprint 4 — `/manual` Spectrum & Prices topic defers so a cold world lookup cannot miss Discord's 3 s ack (BUG-008); `/webhooks/preset-submission` body bounded by streamed bytes (BUG-013); `/stats health` reports `env.ENVIRONMENT` (BUG-012); `/preset` schema carries the 2–50 / 10–200 length bounds and autocomplete names are capped at 100 chars (REFACTOR-003, needs `register-commands`); notify helpers log through the request logger (REFACTOR-002); `/mixer` and `/gradient` adapters gain suites and enter the coverage gate (BUG-033/034); picks up bot-logic 4.3.0 (`/swatch` eye markers) |
@@ -534,6 +536,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.14.5 | Sep 2026 | Docs only — the reference page and the 0.14.4 note now say the accent / `ß` / width fold applies to the localized search (any non-English `locale`); the default English search is unchanged |
 | v0.14.4 | Sep 2026 | 2026-09-19 i18n audit Sprint 4 — `GET /v1/dyes/search?q=` matches more rows because core 5.4.0 folds case, accents, `ß` and width (no worker code change; documented on the reference page); `Variables.locale` is core's `LocaleCode`, not a hand-spelled union (I18N-009) |
 | v0.14.3 | Sep 2026 | 2026-09-18 documentation audit — developer docs site only, no route or response change: `page` (1–1000) and `q` (≤ 100 characters) caps documented on the `/v1/dyes` cards and in the Numeric Ranges table; the `X-RateLimit-Remaining` examples show `64`, a value production can emit, instead of `42` (the header is `limit − 1` while allowed and `0` when refused) |
 | v0.14.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |

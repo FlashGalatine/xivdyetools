@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.1] - 2026-09-20
+
+Follow-up to the 2026-09-19 i18n audit's pre-merge review (PR #192). Needs `@xivdyetools/bot-logic`
+4.4.0, which carries the string fix. **`register-commands` must run** — the corrected tooltips only
+reach the picker once the schema is re-registered (the deploy workflow does it).
+
+### Fixed
+
+- **`/preferences set clan` tooltip examples were English in de / fr / ko** ("Midlander, Raen") while
+  ja / zh were localized. bot-logic 4.4.0 now uses the names core's own locale data ships: de
+  `Wiesländer, Auri-Raen`, fr `Hyurois, Raen`, ko `미드랜더, 렌`.
+- `TERMS_OF_SERVICE.zh.md`: the header blockquote was still hard-wrapped mid-sentence, which renders
+  a stray space before each link. Joined.
+- 5.6.0's I18N-002 note said "the emoji prefix is kept" for `/manual topic`; only the English names
+  keep it — the localized names are text-only. Wording corrected, no behaviour change.
+
 ## [5.6.0] - 2026-09-20
 
 2026-09-19 i18n audit, Sprints 6–7 (`docs/audits/2026-09-19-i18n/`). Needs

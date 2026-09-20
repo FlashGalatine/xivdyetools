@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.5] - 2026-09-20
+
+Docs only — no route, response or worker code change.
+
+### Fixed
+
+- **The reference page overstated 0.14.4.** `docs/reference/dyes.md` and the 0.14.4 note below said
+  the accent / `ß` / width fold applies to `q=` in general. It applies to the localized search (any
+  non-English `locale`); the default English search still goes through `searchByName` and is
+  unchanged, so `q=schneeweiss` alone returns nothing while `q=schneeweiss&locale=de` matches
+  `Schneeweißer`. Found in the 2026-09-20 pre-merge review of PR #192.
+
 ## [0.14.4] - 2026-09-20
 
 From the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`, I18N-005 and I18N-009).
