@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-09-20
+
+2026-09-19 i18n audit, Sprint 5 (`docs/audits/2026-09-19-i18n/`). Minor rather than patch:
+`tc()` and `searchDyesByName` both change observable output, and 140 locale keys are added. No key
+is removed — `card.colours` stays beside its new `_one` / `_other` forms, because removing a
+locale key is a MAJOR. Needs `@xivdyetools/core` 5.4.0 (`foldForSearch`).
+
+### Fixed
+
+- **I18N-003**: `Translator.tc()` chose the plural form with `count === 1 ? 'one' : 'other'` for
+  every locale — the English rule. French treats 0 as singular, and `preset.cardVotes` is called
+  with a real `vote_count` of 0 on every new preset, so French cards read "0 votes". The category
+  now comes from `new Intl.PluralRules(locale).select(count)` (one instance cached per
+  Translator), falling back to `_other` and then the bare key. The suite only ever tested English;
+  it now pins fr 0 / 1 / 2, de 0, en 0 and a no-plural locale — which is also what makes a
+  stripped-ICU runtime fail loudly instead of quietly returning `other`.
+- **I18N-005**: `searchDyesByName` (every Discord dye option and autocomplete, via
+  `resolveColorInput`) matched localized names with `toLowerCase().includes()` only, so
+  `schneeweiss` and `creme` found nothing. Both sides are folded with core's `foldForSearch`.
+- **TERM-001 / TERM-003**: the Market Board is `市场布告板` in zh (was the player shorthand
+  `市场板`); a World is `서버` in ko (was `월드`) and a Data Center is `데이터 센터` / `大区` (were
+  `데이터센터` / `数据中心`) — the terms the Korean and Chinese game clients use, sourced in
+  `docs/reference/ffxiv-terminology.md`. Korean particles re-agreed after each swap.
+- ja `Web アプリ` / fr `Application Web` aligned with the other key for the same label; zh
+  `webhook.fields.category` uses `分类` like `common.category`.
+
+### Added
+
+- **I18N-001**: `commands.<cmd>.options.<…>.description` — 137 subcommand / option descriptions ×
+  6 locales, shaped exactly like the slash-command schema (`commands.dye.options.search.options
+  .query.description`), every value ≤ 95 characters (Discord drops anything over 100). The en
+  subtree is *generated* from discord-worker's `schemas.ts`
+  (`apps/discord-worker/scripts/gen-option-description-keys.ts`) and a test there fails on drift.
+- **HC-001**: `about.builtOnBody` ×6 — the sentence `/about` used to hardcode in English.
+- **I18N-006**: `card.colours_one` / `card.colours_other` ×6 for `t.tc('card.colours', n)`.
+
+### Tests
+
+- `locale-orphans.test.ts` enumerates the option-description paths for every registered command,
+  so the 137 new keys are reachable by rule rather than by namespace; `translator.test.ts` plural
+  cases per locale; `input-resolution.test.ts` de / fr folding cases.
+
 ## [4.3.0] - 2026-09-16
 
 Remediation from the 2026-09-16 deep-dive (`docs/audits/2026-09-16-deep-dive/`).

@@ -213,6 +213,25 @@ function readManualTopicKeys(): string[] {
   );
 }
 
+/** One node of en.json's `commands.<cmd>.options` subtree (mirrors the slash-command schema). */
+interface OptionDescriptionNode {
+  description?: string;
+  options?: Record<string, OptionDescriptionNode>;
+}
+
+/** Add `<prefix>.options.<name>.description`, recursively, for a schema-shaped subtree. */
+function addOptionDescriptionKeys(
+  keys: Set<string>,
+  prefix: string,
+  options: Record<string, OptionDescriptionNode> | undefined,
+): void {
+  for (const [name, node] of Object.entries(options ?? {})) {
+    const path = `${prefix}.options.${name}`;
+    keys.add(`${path}.description`);
+    addOptionDescriptionKeys(keys, path, node.options);
+  }
+}
+
 /** Build the exact set of enumerated (non-literal) reachable keys. */
 function buildEnumeratedKeys(): Set<string> {
   const keys = new Set<string>(META_KEYS);
@@ -229,8 +248,16 @@ function buildEnumeratedKeys(): Set<string> {
   for (const option of readFilterOptions()) {
     keys.add(`preferences.filters.labels.${option}`);
   }
+  const enCommands = (loadLocale('en').commands ?? {}) as Record<string, OptionDescriptionNode>;
   for (const name of readRegistryCommandNames()) {
     keys.add(`commands.${name}.description`);
+    // I18N-001 (2026-09-19 audit): discord-worker's `commands/localize.ts` walks the
+    // schema and reads `commands.<cmd>.options.<…>.description` for every
+    // subcommand, group and option. The paths are enumerated from en.json, which
+    // is not circular: discord-worker's `localize.test.ts` pins that subtree to
+    // `schemas.ts` key-for-key, so an option key with no schema counterpart fails
+    // THERE, and a command that left the registry still fails HERE.
+    addOptionDescriptionKeys(keys, `commands.${name}`, enCommands[name]?.options);
   }
   for (const method of Object.keys(MATCHING_METHOD_TAGS)) {
     keys.add(`preferences.methods.${method}`);

@@ -203,6 +203,7 @@
     "links": "Liens",
     "dyes": "Teintures",
     "builtOn": "Repose sur",
+    "builtOnBody": "Prix du marché via Universalis · Mélange des couleurs via spectral.js",
     "attribution": "Mentions légales",
     "poweredBy": "Propulsé par Cloudflare Workers",
     "categories": {
@@ -449,7 +450,7 @@
     },
     "editPending": "Modification de modèle en attente de validation",
     "sources": {
-      "web": "Application Web",
+      "web": "Application web",
       "discord": "Discord"
     }
   },
@@ -523,6 +524,8 @@
     "rampTitle": "Palette depuis l’image",
     "matchTitle": "Teintures les plus proches",
     "colours": "{n} couleurs",
+    "colours_one": "{n} couleur",
+    "colours_other": "{n} couleurs",
     "rampKey": "largeur = part de l’image",
     "matchKey": "plus proches par ΔE2000",
     "manualLead": "Couleurs inattendues ? Essayez",
@@ -655,55 +658,542 @@
   },
   "commands": {
     "harmony": {
-      "description": "Générer des combinaisons de teintures harmonieuses à partir d'une couleur"
+      "description": "Générer des combinaisons de teintures harmonieuses à partir d'une couleur",
+      "options": {
+        "color": {
+          "description": "Couleur de base (hex du type #FF5733 ou nom de teinture)"
+        },
+        "type": {
+          "description": "Type d'harmonie de couleurs"
+        },
+        "wheel": {
+          "description": "Roue chromatique pour les angles d'harmonie (défaut : RVB)"
+        },
+        "companions": {
+          "description": "Nombre de teintures compagnes par emplacement (1-3)"
+        },
+        "matching": {
+          "description": "Algorithme pour trouver les teintures compagnes"
+        },
+        "strict_matching": {
+          "description": "Resserre le seuil de distance pour des correspondances plus proches"
+        },
+        "prevent_duplicates": {
+          "description": "Éviter les doublons de teintures entre les emplacements"
+        }
+      }
     },
     "mixer": {
-      "description": "Mélanger deux teintures avec différents algorithmes"
+      "description": "Mélanger deux teintures avec différents algorithmes",
+      "options": {
+        "dye1": {
+          "description": "Première teinture à mélanger (hex ou nom de teinture)"
+        },
+        "dye2": {
+          "description": "Deuxième teinture à mélanger (hex ou nom de teinture)"
+        },
+        "mode": {
+          "description": "Algorithme de mélange des couleurs"
+        },
+        "matching": {
+          "description": "Algorithme pour trouver les teintures proches du résultat"
+        }
+      }
     },
     "gradient": {
-      "description": "Générer un dégradé entre deux couleurs avec les teintures intermédiaires"
+      "description": "Générer un dégradé entre deux couleurs avec les teintures intermédiaires",
+      "options": {
+        "start_color": {
+          "description": "Couleur de départ : hex (ex. #FF0000) ou nom de teinture"
+        },
+        "end_color": {
+          "description": "Couleur d'arrivée : hex (ex. #0000FF) ou nom de teinture"
+        },
+        "steps": {
+          "description": "Nombre d'étapes de couleur (défaut : 6, max 12)"
+        },
+        "color_space": {
+          "description": "Mode d'interpolation des couleurs du dégradé"
+        },
+        "matching": {
+          "description": "Algorithme pour trouver les teintures les plus proches"
+        }
+      }
     },
     "extractor": {
-      "description": "Extraire des couleurs et trouver les teintures FFXIV correspondantes"
+      "description": "Extraire des couleurs et trouver les teintures FFXIV correspondantes",
+      "options": {
+        "color": {
+          "description": "Trouver la ou les teintures FFXIV les plus proches d'une couleur",
+          "options": {
+            "color": {
+              "description": "Couleur à associer (hex comme #FF5733 ou nom de teinture)"
+            },
+            "count": {
+              "description": "Nombre de correspondances à afficher (1-10)"
+            },
+            "matching": {
+              "description": "Algorithme de correspondance des couleurs"
+            }
+          }
+        },
+        "image": {
+          "description": "Extraire les couleurs d'une image et trouver les teintures",
+          "options": {
+            "image": {
+              "description": "Image à analyser"
+            },
+            "colors": {
+              "description": "Nombre de couleurs à extraire (3-10)"
+            },
+            "matching": {
+              "description": "Algorithme de correspondance des couleurs"
+            },
+            "prevent_duplicates": {
+              "description": "Éviter d'associer plusieurs emplacements à la même teinture (défaut : true)"
+            }
+          }
+        }
+      }
     },
     "swatch": {
-      "description": "Associer les couleurs d'un fichier de personnage aux teintures les plus proches"
+      "description": "Associer les couleurs d'un fichier de personnage aux teintures les plus proches",
+      "options": {
+        "file": {
+          "description": "Fichier de personnage .chara (export Anamnesis / Ktisis)"
+        },
+        "order": {
+          "description": "Ordre des lignes — les deux affichent les mêmes cinq lignes"
+        },
+        "slot": {
+          "description": "Afficher les cinq teintures proches d'un seul emplacement"
+        }
+      }
     },
     "dye": {
-      "description": "Rechercher et explorer les teintures FFXIV"
+      "description": "Rechercher et explorer les teintures FFXIV",
+      "options": {
+        "search": {
+          "description": "Rechercher des teintures par nom",
+          "options": {
+            "query": {
+              "description": "Terme de recherche (nom de teinture)"
+            }
+          }
+        },
+        "info": {
+          "description": "Obtenir des informations détaillées sur une teinture",
+          "options": {
+            "name": {
+              "description": "Nom de la teinture"
+            }
+          }
+        },
+        "list": {
+          "description": "Lister les teintures par catégorie",
+          "options": {
+            "category": {
+              "description": "Catégorie de teinture"
+            }
+          }
+        },
+        "random": {
+          "description": "Afficher 5 teintures sélectionnées au hasard",
+          "options": {
+            "unique_categories": {
+              "description": "Limiter à 1 teinture par catégorie (défaut : false)"
+            }
+          }
+        }
+      }
     },
     "comparison": {
-      "description": "Comparer 2 à 4 teintures côte à côte avec analyse des couleurs"
+      "description": "Comparer 2 à 4 teintures côte à côte avec analyse des couleurs",
+      "options": {
+        "dye1": {
+          "description": "Première teinture (hex ou nom de teinture)"
+        },
+        "dye2": {
+          "description": "Deuxième teinture (hex ou nom de teinture)"
+        },
+        "dye3": {
+          "description": "Troisième teinture (facultatif)"
+        },
+        "dye4": {
+          "description": "Quatrième teinture (facultatif)"
+        }
+      }
     },
     "contrast": {
-      "description": "Contraste non textuel WCAG entre paires de teintures (seuil 3:1)"
+      "description": "Contraste non textuel WCAG entre paires de teintures (seuil 3:1)",
+      "options": {
+        "dye1": {
+          "description": "Première teinture (hex ou nom de teinture)"
+        },
+        "dye2": {
+          "description": "Deuxième teinture (hex ou nom de teinture)"
+        },
+        "dye3": {
+          "description": "Troisième teinture (facultatif)"
+        },
+        "dye4": {
+          "description": "Quatrième teinture (facultatif)"
+        }
+      }
     },
     "accessibility": {
-      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs"
+      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs",
+      "options": {
+        "dye": {
+          "description": "Teinture principale (hex ou nom de teinture)"
+        },
+        "dye2": {
+          "description": "Deuxième teinture — affiche les cadres de paire (facultatif)"
+        },
+        "vision": {
+          "description": "La vision : un type précis en affiche une, Toutes les affiche toutes"
+        }
+      }
     },
     "a11y": {
-      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs"
+      "description": "Comment une teinture ou une paire résiste à chaque type de vision des couleurs",
+      "options": {
+        "dye": {
+          "description": "Teinture principale (hex ou nom de teinture)"
+        },
+        "dye2": {
+          "description": "Deuxième teinture — affiche les cadres de paire (facultatif)"
+        },
+        "vision": {
+          "description": "La vision : un type précis en affiche une, Toutes les affiche toutes"
+        }
+      }
     },
     "budget": {
-      "description": "Trouver des teintures alternatives abordables via le tableau des ventes"
+      "description": "Trouver des teintures alternatives abordables via le tableau des ventes",
+      "options": {
+        "find": {
+          "description": "Trouver des alternatives moins chères à une teinture coûteuse",
+          "options": {
+            "target_dye": {
+              "description": "La teinture coûteuse pour laquelle chercher des alternatives"
+            },
+            "world": {
+              "description": "Monde ou centre de données pour les prix (sinon préférence enregistrée)"
+            },
+            "matching": {
+              "description": "Algorithme de correspondance pour la colonne ΔE"
+            },
+            "max_distance": {
+              "description": "Ligne de correspondance — ΔE2000 maximal à considérer (2-20, défaut : 8)"
+            },
+            "exclude_coffers": {
+              "description": "Exclure les teintures de coffre (gacha — prix de revente joueur uniquement)"
+            },
+            "exclude_wide_spectrum": {
+              "description": "Exclure les teintures Spectre étendu n°1/2 (scrips/cosmocrédits)"
+            }
+          }
+        },
+        "set_world": {
+          "description": "Enregistrer votre monde/centre de données préféré pour les prix",
+          "options": {
+            "world": {
+              "description": "Nom du monde ou du centre de données"
+            }
+          }
+        },
+        "quick": {
+          "description": "Vérification rapide pour les teintures coûteuses populaires",
+          "options": {
+            "preset": {
+              "description": "Teinture coûteuse populaire pour chercher des alternatives"
+            },
+            "world": {
+              "description": "Monde ou centre de données pour les prix (sinon préférence enregistrée)"
+            }
+          }
+        }
+      }
     },
     "preset": {
-      "description": "Parcourir, soumettre et voter pour des préréglages communautaires"
+      "description": "Parcourir, soumettre et voter pour des préréglages communautaires",
+      "options": {
+        "list": {
+          "description": "Parcourir les préréglages communautaires",
+          "options": {
+            "category": {
+              "description": "Filtrer par catégorie"
+            },
+            "sort": {
+              "description": "Ordre de tri"
+            }
+          }
+        },
+        "show": {
+          "description": "Afficher un préréglage spécifique",
+          "options": {
+            "name": {
+              "description": "Nom du préréglage"
+            }
+          }
+        },
+        "random": {
+          "description": "Obtenir un préréglage aléatoire pour s'inspirer",
+          "options": {
+            "category": {
+              "description": "Filtrer par catégorie"
+            }
+          }
+        },
+        "submit": {
+          "description": "Soumettre un nouveau préréglage communautaire",
+          "options": {
+            "preset_name": {
+              "description": "Nom de votre préréglage (2-50 caractères)"
+            },
+            "description": {
+              "description": "Décrivez votre préréglage (10-200 caractères)"
+            },
+            "category": {
+              "description": "Catégorie du préréglage"
+            },
+            "dye1": {
+              "description": "Première teinture (requise)"
+            },
+            "dye2": {
+              "description": "Deuxième teinture (requise)"
+            },
+            "dye3": {
+              "description": "Troisième teinture (requise)"
+            },
+            "dye4": {
+              "description": "Quatrième teinture (facultatif)"
+            },
+            "dye5": {
+              "description": "Cinquième teinture (facultatif)"
+            },
+            "dye6": {
+              "description": "Sixième teinture (facultatif)"
+            },
+            "tags": {
+              "description": "Tags séparés par des virgules (facultatif, max 10)"
+            }
+          }
+        },
+        "vote": {
+          "description": "Basculer votre vote sur un préréglage",
+          "options": {
+            "preset": {
+              "description": "Préréglage pour lequel voter"
+            }
+          }
+        },
+        "edit": {
+          "description": "Modifier l'un de vos préréglages",
+          "options": {
+            "preset": {
+              "description": "Le préréglage à modifier"
+            },
+            "name": {
+              "description": "Nouveau nom du préréglage (2-50 caractères)"
+            },
+            "description": {
+              "description": "Nouvelle description (10-200 caractères)"
+            },
+            "tags": {
+              "description": "Nouveaux tags (séparés par des virgules)"
+            },
+            "dye1": {
+              "description": "Première teinture"
+            },
+            "dye2": {
+              "description": "Deuxième teinture"
+            },
+            "dye3": {
+              "description": "Troisième teinture"
+            },
+            "dye4": {
+              "description": "Quatrième teinture"
+            },
+            "dye5": {
+              "description": "Cinquième teinture"
+            },
+            "dye6": {
+              "description": "Sixième teinture"
+            }
+          }
+        },
+        "favorite": {
+          "description": "Gérer vos préréglages communautaires favoris",
+          "options": {
+            "add": {
+              "description": "Ajouter un préréglage à vos favoris",
+              "options": {
+                "preset_name": {
+                  "description": "Préréglage à ajouter aux favoris"
+                }
+              }
+            },
+            "remove": {
+              "description": "Retirer un préréglage de vos favoris",
+              "options": {
+                "preset_name": {
+                  "description": "Préréglage à retirer des favoris"
+                }
+              }
+            },
+            "list": {
+              "description": "Lister vos préréglages favoris"
+            }
+          }
+        }
+      }
     },
     "preferences": {
-      "description": "Gérer vos préférences personnelles du bot"
+      "description": "Gérer vos préférences personnelles du bot",
+      "options": {
+        "show": {
+          "description": "Afficher vos préférences actuelles"
+        },
+        "set": {
+          "description": "Définir une ou plusieurs préférences (options facultatives)",
+          "options": {
+            "language": {
+              "description": "Langue de l'interface pour les noms et messages"
+            },
+            "blending": {
+              "description": "Mode de mélange par défaut pour /mixer"
+            },
+            "matching": {
+              "description": "Méthode de correspondance des couleurs par défaut"
+            },
+            "count": {
+              "description": "Nombre de correspondances par défaut pour /extractor color (1-10)"
+            },
+            "clan": {
+              "description": "Clan par défaut pour /swatch (ex. Midlander, Raen)"
+            },
+            "gender": {
+              "description": "Genre par défaut pour /swatch"
+            },
+            "world": {
+              "description": "Monde/centre de données par défaut pour les prix"
+            },
+            "market": {
+              "description": "Afficher les prix du tableau des ventes par défaut"
+            },
+            "show_hex": {
+              "description": "Afficher les codes hex sur les cartes de résultat"
+            },
+            "show_rgb": {
+              "description": "Afficher les valeurs RGB sur les cartes de résultat"
+            },
+            "show_hsv": {
+              "description": "Afficher les valeurs HSV sur les cartes de résultat"
+            },
+            "show_lab": {
+              "description": "Afficher les valeurs LAB sur les cartes de résultat"
+            },
+            "show_deltae": {
+              "description": "Afficher la distance Delta-E sur les cartes de résultat"
+            },
+            "show_acquisition": {
+              "description": "Afficher la source d'acquisition sur les cartes de résultat"
+            },
+            "theme": {
+              "description": "Thème des cartes pour chaque image générée"
+            }
+          }
+        },
+        "reset": {
+          "description": "Réinitialiser une préférence (ou toutes si aucune clé précisée)",
+          "options": {
+            "key": {
+              "description": "Préférence à réinitialiser (omettre pour tout)"
+            }
+          }
+        },
+        "filters": {
+          "description": "Gérer les filtres de type de teinture pour les résultats",
+          "options": {
+            "set": {
+              "description": "Définir les filtres de teinture (options facultatives)",
+              "options": {
+                "metallic": {
+                  "description": "Exclure les teintures métalliques"
+                },
+                "pastel": {
+                  "description": "Exclure les teintures pastel"
+                },
+                "dark": {
+                  "description": "Exclure les teintures sombres"
+                },
+                "cosmic": {
+                  "description": "Exclure les teintures cosmiques"
+                },
+                "ishgardian": {
+                  "description": "Exclure les teintures ishgardaises"
+                },
+                "expensive": {
+                  "description": "Exclure les teintures coûteuses (blanc pur / noir de jais)"
+                },
+                "vendor": {
+                  "description": "Exclure les teintures vendues par un marchand"
+                },
+                "craft": {
+                  "description": "Exclure les teintures artisanales"
+                }
+              }
+            },
+            "show": {
+              "description": "Afficher vos filtres de teinture actuels"
+            },
+            "reset": {
+              "description": "Effacer tous les filtres de teinture"
+            }
+          }
+        }
+      }
     },
     "manual": {
-      "description": "Afficher l'aide et le guide d'utilisation de toutes les commandes"
+      "description": "Afficher l'aide et le guide d'utilisation de toutes les commandes",
+      "options": {
+        "topic": {
+          "description": "Sujet d'aide spécifique"
+        }
+      }
     },
     "changelog": {
-      "description": "Nouveautés du bot Discord — notes de version, les plus récentes d'abord"
+      "description": "Nouveautés du bot Discord — notes de version, les plus récentes d'abord",
+      "options": {
+        "version": {
+          "description": "Développer une version spécifique (ex. 5.0.0)"
+        }
+      }
     },
     "about": {
       "description": "Afficher les informations sur le bot XIV Dye Tools"
     },
     "stats": {
-      "description": "Afficher les statistiques d'utilisation et les informations du bot"
+      "description": "Afficher les statistiques d'utilisation et les informations du bot",
+      "options": {
+        "summary": {
+          "description": "Afficher les informations de base du bot (public)"
+        },
+        "overview": {
+          "description": "Afficher les statistiques d'utilisation (admin uniquement)"
+        },
+        "commands": {
+          "description": "Afficher le détail par commande (admin uniquement)"
+        },
+        "preferences": {
+          "description": "Afficher les taux d'adoption des préférences (admin uniquement)"
+        },
+        "health": {
+          "description": "Afficher l'état de santé du système (admin uniquement)"
+        }
+      }
     }
   }
 }

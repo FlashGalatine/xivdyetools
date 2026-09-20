@@ -9,7 +9,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
-import { DyeService, dyeDatabase } from '@xivdyetools/core';
+import { DyeService, dyeDatabase, foldForSearch } from '@xivdyetools/core';
 import { resolveCssColorName } from './css-colors.js';
 import { getLocalizedDyeName, type LocaleCode } from './localization.js';
 
@@ -57,12 +57,17 @@ export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[
   }
   const english = dyeService.searchByName(query);
   if (locale === 'en') return english;
-  const q = query.toLowerCase().trim();
+  // I18N-005 (2026-09-19 audit): fold both sides so an accented, ß-bearing or
+  // half-width query matches a localized name that carries the same
+  // diacritic/width difference (e.g. 'schneeweiss' → 'Schneeweißer').
+  const q = foldForSearch(query.trim());
   if (q.length === 0) return english;
   const seen = new Set(english.map((d) => d.id));
   const localized = dyeService
     .getAllDyes()
-    .filter((d) => !seen.has(d.id) && getLocalizedDyeName(d.itemID, d.name, locale).toLowerCase().includes(q));
+    .filter(
+      (d) => !seen.has(d.id) && foldForSearch(getLocalizedDyeName(d.itemID, d.name, locale)).includes(q),
+    );
   return [...english, ...localized];
 }
 
