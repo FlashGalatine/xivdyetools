@@ -1,0 +1,40 @@
+{
+  "apps/web-app/src/locales": {
+    "en": [
+      ["config.mixingSpectral", "Spectral -Realistic Paint", "Realistic Paint"],
+      ["mixer.modelOklab", "Perceptual", "Modern Perceptual"],
+      ["mixer.modelLab", "LAB", "Perceptual"]
+    ],
+    "ja": [
+      ["config.mixingSpectral", "スペクトル - リアル絵の具", "リアル絵の具"],
+      ["mixer.modelOklab", "知覚的", "現代知覚的"],
+      ["mixer.modelLab", "LAB", "知覚的"]
+    ],
+    "de": [
+      ["config.mixingRyb", "Farbe", "Malfarbe"],
+      ["mixer.modelRyb", "Farbe", "Malfarbe"],
+      ["config.mixingSpectral", "Spektral - Realistische Farbe", "Realistische Malfarbe"],
+      ["config.mixingRybDesc", "Farbsimulation. Blau + Gelb = Grün.", "Malfarben-Simulation. Blau + Gelb = Grün."],
+      ["mixer.modelOklab", "Perzeptuell", "Moderne Wahrnehmung"],
+      ["mixer.modelLab", "LAB", "Perzeptuell"]
+    ],
+    "fr": [
+      ["config.mixingSpectral", "Spectral - Peinture réaliste", "Peinture réaliste"],
+      ["mixer.modelOklab", "Perceptuel", "Perceptuel moderne"],
+      ["mixer.modelLab", "LAB", "Perceptuel"]
+    ],
+    "ko": [
+      ["config.mixingSpectral", "스펙트럼 - 실제 물감", "실제 물감"],
+      ["mixer.modelOklab", "지각적", "현대 지각적"],
+      ["mixer.modelLab", "LAB", "지각적"]
+    ],
+    "zh": [
+      ["config.mixingRyb", "颜料画", "颜料"],
+      ["mixer.modelRyb", "颜料画", "颜料"],
+      ["mixer.modelSpectral", "颜料", "真实颜料"],
+      ["config.mixingSpectral", "光谱 - 真实颜料", "真实颜料"],
+      ["mixer.modelOklab", "感知", "现代感知"],
+      ["mixer.modelLab", "LAB", "感知"]
+    ]
+  }
+}
