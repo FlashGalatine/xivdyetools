@@ -10,7 +10,7 @@ read at its Step 0, so a run loads only the slices it needs. `model-routing.md` 
 
 | File | Words | Read it when |
 |---|---|---|
-| `model-routing.md` | ~1,200 | **Before executing a skill** — `collector` / `worker` / `verifier` roles as capability tiers, mapped per runtime (Claude Code, Codex, any other agent), native tools, coordinator rules, when delegation helps, and what stays with the coordinator |
+| `model-routing.md` | ~1,100 | **Before executing a skill** — `collector` / `worker` / `verifier` roles as capability tiers, mapped per runtime (Claude Code, Codex, any other agent), native tools, coordinator rules, when delegation helps, and what stays with the coordinator |
 | `conventions.md` | ~1,040 | Starting any audit — output folder, IDs, finding/report/README skeletons, evidence rules, fan-out contract (+ §7a, the audit short form of model routing), confirmation gate, planner hand-off |
 | `units.md` | ~430 | Tagging a finding's deploy unit / exposure class (17 units: filter names, kind, notes) |
 | `release-mechanics.md` | ~300 | Writing a sprint's "Ends with" line, deciding a version bump, the standing verification gate (planner, dead-code) |
