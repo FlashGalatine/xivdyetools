@@ -3,7 +3,7 @@
 import { readFileSync } from 'node:fs';
 
 const v = (p) => JSON.parse(readFileSync(`${p}/package.json`, 'utf8')).version;
-for (const p of ['types', 'core', 'svg', 'bot-logic']) {
+for (const p of ['types', 'logger', 'auth', 'worker-kit', 'core', 'svg', 'bot-logic']) {
   let registry = 'ERR';
   try {
     const r = await fetch(`https://registry.npmjs.org/@xivdyetools%2F${p}/latest`);

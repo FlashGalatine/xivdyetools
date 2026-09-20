@@ -27,4 +27,4 @@ Same EN value, different non-EN value, both visible in one session (sidebar sett
 - One pass per locale choosing the `config.*` or tool form; longer-term, have the sidebar read the tool's key instead of owning a duplicate. Guardrail: run `tool-name-consistency.py --all` in `validate:i18n` with an allow-list for context-dependent pairs.
 
 ## Status
-OPEN
+FIXED 2026-09-20 `329fcc58` — one form per concept per locale; same-English divergent groups in web-app 35 → 11, all context-dependent

@@ -6,7 +6,10 @@ the surface added since [2026-09-03-i18n](../2026-09-03-i18n/README.md). **15 fi
 duplicate, missing, extra or placeholder faults), every gate's tests pass, fonts are static, tight
 and tofu-free. What is left is what structural gates cannot see: the same noun translated three
 ways, Discord picker metadata that was never finished, an English plural rule applied to French,
-an accent-blind search, and one typo. No source or locale file was modified by this audit.
+an accent-blind search, and one typo. No source or locale file was modified by the audit itself;
+**all 15 findings were then fixed on the same branch on 2026-09-20**, one commit per sprint — see
+*Remediation status* in the report, which also lists what remediation found that the audit had not
+and seven open items that need a maintainer decision.
 
 | File | Purpose |
 |---|---|
@@ -14,6 +17,8 @@ an accent-blind search, and one typo. No source or locale file was modified by t
 | [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Sprint-sequenced plan (remediation-planner) |
 | `findings/` | One file per finding — `I18N-001…010`, `HC-001`, `TERM-001…004` |
 | `evidence/official-terms-research.md` | Web research requested mid-audit: the official Market Board / World / Data Center term in ja de fr ko zh, with sources and confidence |
+| `evidence/remediation-brief.md`, `policy-translation-brief.md`, `policy-verification-brief.md` | The briefs the 13 remediation agents, 5 translators and 2 `opus` verifiers worked from |
+| `evidence/same-en-groups-after.txt`, `market-board-term-after.txt` | The consistency sweeps re-run after remediation (35 → 11 groups; one Market Board term per locale) |
 | `evidence/reviewer-brief.md` | The shared brief the six per-unit reviewers worked from (checklist, do-not-re-file list, return schema) |
 | `evidence/review-*.md` | The six reviewer returns (web-app, discord-worker, bot-logic, og-worker, core-svg, api-workers) |
 | `evidence/_gate-summary.txt` + `*.txt` / `eslint.json` | Raw gate, parity, font and sweep output |

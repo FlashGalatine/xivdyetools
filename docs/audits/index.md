@@ -50,7 +50,7 @@ report named below.
 | 2026-09-15 | Dead-code audit, whole monorepo (17 cleanup entries + 4 KEEP — PR #186) | [README.md](2026-09-15-dead-code/README.md) |
 | 2026-09-16 | Deep-dive analysis, whole monorepo (53 findings: 8 MEDIUM, no HIGH; two reviewer HIGHs overturned by the verification pass) | [README.md](2026-09-16-deep-dive/README.md) |
 | 2026-09-18 | Documentation audit, `docs/` + the bot's `/manual` (38 findings: 1 HIGH, 26 MEDIUM; `/manual` was still the 4.x text in all six languages — all fixed the same day in PRs #189, #190 and #191) | [README.md](2026-09-18-documentation/README.md) |
-| 2026-09-19 | i18n audit, whole monorepo (15 findings: 8 P2, 7 P3; locale data and fonts clean again — "Market Board" translated three ways, Discord option tooltips never localized, French plural rule, accent-blind dye search) | [README.md](2026-09-19-i18n/README.md) |
+| 2026-09-19 | i18n audit, whole monorepo (15 findings: 2 P1, 6 P2, 7 P3; locale data and fonts clean again — "Market Board" translated three ways, Discord option tooltips never localized, French plural rule, accent-blind dye search — all 15 fixed the next day on the same branch, PR #192, incl. the Privacy / Terms documents translated into five languages) | [README.md](2026-09-19-i18n/README.md) |
 
 ## Conventions
 

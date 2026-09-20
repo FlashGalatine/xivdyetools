@@ -25,4 +25,4 @@
 - Delete the seven `resultCard.tools.*` keys (×6) and render `tools.<id>.title` (or `.shortName` if width requires) in `result-card.ts`; one source per tool name. `@shared/tool-handoff` is the natural owner of the label lookup.
 
 ## Status
-OPEN
+FIXED 2026-09-20 `329fcc58` — seven `resultCard.tools.*` keys deleted; `toolLabel()` renders the route's `titleKey`

@@ -17,4 +17,4 @@
 - web-app: fr `config.*` → `Tableau des ventes`; ko all six → `장터`; zh all six → `市场布告板`. bot-logic zh ×4 → `市场布告板` (then re-subset both workers' CJK fonts — `布`/`告` may be new glyphs). Add a Market Board row to the dictionary so `term-check.py` guards it.
 
 ## Status
-OPEN
+FIXED 2026-09-20 `329fcc58` + `b76623dd` — one official term per locale on both surfaces; dictionary section *Market and Server Terms* added

@@ -1,6 +1,6 @@
 # Remediation Plan — 2026-09-19
 
-**Sources:** [I18N_AUDIT_2026-09-19.md](I18N_AUDIT_2026-09-19.md) — 15 findings (`I18N-001…010`, `HC-001`, `TERM-001…004`) · **Status basis:** 15 total — 0 fixed, 15 outstanding, 0 superseded, 0 KEEP, 0 need rotation
+**Sources:** [I18N_AUDIT_2026-09-19.md](I18N_AUDIT_2026-09-19.md) — 15 findings (`I18N-001…010`, `HC-001`, `TERM-001…004`) · **Status basis:** 15 total — **15 fixed 2026-09-20**, 0 outstanding, 0 superseded, 0 KEEP, 0 need rotation
 **Ordering:** 1. one deploy unit per sprint 2. no P0; the two P1s lead their units 3. wrong text before missing text; fix the generator, not the artifact 4. a package change = one publish sprint, then one sprint per consumer 5. terminal work last — the CJK font re-cut, after every bot-logic string is final
 
 Tiering, ordering and the splits below were set by an `opus` verifier (it raised I18N-001 and I18N-005 to P1 and corrected two semver calls); the maintainer's two decisions of 2026-09-19 were folded in afterwards. Registry check the same day: `types 3.2.0`, `core 5.3.0`, `svg 4.1.0`, `bot-logic 4.3.0` are all **published** at their local versions, so every package change needs a bump (`evidence/versions-vs-registry.txt`).
@@ -14,7 +14,7 @@ Tiering, ordering and the splits below were set by an `opus` verifier (it raised
 
 No out-of-band items; no rotation.
 
-## Sprint 1 — `@xivdyetools/core`: search folding + generator hardening (publish)
+## Sprint 1 — `@xivdyetools/core`: search folding + generator hardening (publish)  **✅ COMPLETED 2026-09-20** `f7c6e1fc` · **Deploy needs:** merge, then publish `@xivdyetools/core` 5.4.0 FIRST
 
 The P1 that blocks the most surfaces starts here: core owns the fold that api-worker inherits and bot-logic will import. The two latent core items ride along because they touch the same package and one publish.
 
@@ -26,7 +26,7 @@ The P1 that blocks the most surfaces starts here: core owns the fold that api-wo
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/core` → whole-graph gate + `pnpm test:scripts && pnpm dead-code:check` → bump **core 5.3.0 → 5.4.0 (MINOR** — new public export, observable search change) → root `README.md` + `docs/versions.md` → core `CHANGELOG.md` → merge (path filters redeploy every core consumer) → Actions **Publish Packages to npm** → `@xivdyetools/core`.
 
-## Sprint 2 — `web-app`: wrong text and one name per concept (deploy)
+## Sprint 2 — `web-app`: wrong text and one name per concept (deploy)  **✅ COMPLETED 2026-09-20** `329fcc58` · **Deploy needs:** merge (ships as web-app 5.12.0 with Sprint 3)
 
 All hand-edited web-app locale work in one pass per locale file, so key order and parity are validated once. No worker font impact (web-app bundles Latin faces only).
 
@@ -41,7 +41,7 @@ All hand-edited web-app locale work in one pass per locale file, so key order an
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-web-app` + `pnpm --filter xivdyetools-web-app run validate:i18n` + `run i18n:unused` + `run build:check` → bump web-app 5.11.0 → 5.12.0 → web-app `CHANGELOG.md` + `CHANGELOG-laymans.md` (the `### ` heading is load-bearing) → versions docs → merge → `deploy-web-app.yml`.
 
-## Sprint 3 — `web-app`: Privacy + Terms of Service in six languages (deploy)
+## Sprint 3 — `web-app`: Privacy + Terms of Service in six languages (deploy)  **✅ COMPLETED 2026-09-20** `863cd0e7` · **Deploy needs:** merge → `deploy-web-app.yml`
 
 Kept apart from Sprint 2 because legal translations need their own read-through, and a parity failure here must not hold up a typo fix.
 
@@ -51,7 +51,7 @@ Kept apart from Sprint 2 because legal translations need their own read-through,
 
 **Ends with:** `python <skills>/audit-shared/scripts/policy-locale-parity.py` — the two web-app documents report `ok` ×5 → web-app gate as Sprint 2 (+ a test that the About modal picks the locale variant) → web-app 5.12.0 → 5.13.0 (or fold into 5.12.0 if Sprint 2 has not merged) → both web-app changelogs → merge → `deploy-web-app.yml`.
 
-## Sprint 4 — `api-worker`: locale type + the widened `q=` (deploy)
+## Sprint 4 — `api-worker`: locale type + the widened `q=` (deploy)  **✅ COMPLETED 2026-09-20** `7ae472e7` · **Deploy needs:** merge → `deploy-api-worker.yml`
 
 | ID | Tier | Locale(s) | Item |
 |---|---|---|---|
@@ -60,7 +60,7 @@ Kept apart from Sprint 2 because legal translations need their own read-through,
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-api-worker` + `pnpm docs:check-versions && pnpm docs:check-links` → api-worker 0.14.3 → 0.14.4 → merge → `deploy-api-worker.yml`.
 
-## Sprint 5 — `@xivdyetools/bot-logic`: plural rules, new keys, official terms (publish — **merges only with Sprints 6 and 7**)
+## Sprint 5 — `@xivdyetools/bot-logic`: plural rules, new keys, official terms (publish — **merges only with Sprints 6 and 7**)  **✅ COMPLETED 2026-09-20** `b76623dd` · **Deploy needs:** merge, then publish `@xivdyetools/bot-logic` 4.4.0 after core
 
 Every bot-logic *text* change of the wave lands here so the fonts are cut once. `deploy-discord-worker.yml` triggers on `packages/bot-logic/**` and `font-coverage.test.ts` reads these JSON files, so this sprint is red on its own by design.
 
@@ -77,7 +77,7 @@ Every bot-logic *text* change of the wave lands here so the fonts are cut once. 
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/bot-logic` (expect only discord-worker's `font-coverage.test.ts` red) → bump **bot-logic 4.3.0 → 4.4.0 (MINOR)** → hold the merge.
 
-## Sprint 6 — `discord-worker`: picker localization, `/about`, policy documents (deploy — same PR as Sprint 5)
+## Sprint 6 — `discord-worker`: picker localization, `/about`, policy documents (deploy — same PR as Sprint 5)  **✅ COMPLETED 2026-09-20** `354fe746` + `0008820a` · **Deploy needs:** merge → `deploy-discord-worker.yml` (runs `register-commands`)
 
 | ID | Tier | Locale(s) | Item |
 |---|---|---|---|
@@ -89,7 +89,7 @@ Every bot-logic *text* change of the wave lands here so the fonts are cut once. 
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-discord-worker` (font gate still red until Sprint 7) + parity script `ok` ×5 for the two bot documents → discord-worker 5.5.8 → 5.6.0 → hold the merge.
 
-## Sprint 7 — TERMINAL: re-cut the CJK subsets, then the wave's one bot merge
+## Sprint 7 — TERMINAL: re-cut the CJK subsets, then the wave's one bot merge  **✅ COMPLETED 2026-09-20** `1fb3341f` (+ root notes `ce455850`) · **Deploy needs:** none of its own
 
 No new IDs. Runs only when every bot-logic string above is final.
 

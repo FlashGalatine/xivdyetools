@@ -19,4 +19,4 @@
 - Add World + Data Center rows to `ffxiv-terminology.md` with the sources in `evidence/official-terms-research.md`. bot-logic text change → CJK re-subset (terminal sprint). Eyeball the two `ff14.co.kr` guide pages once before shipping (read via a summarizing fetch).
 
 ## Status
-OPEN — decision made 2026-09-19; scheduled in REMEDIATION_PLAN Sprints 2 (web-app) and 5 (bot-logic)
+FIXED 2026-09-20 `329fcc58` + `b76623dd` — ko `서버` / `데이터 센터`, zh `服务器` / `大区` on both surfaces, Korean particles re-agreed
