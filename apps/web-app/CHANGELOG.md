@@ -111,7 +111,7 @@ in one language behind six localized links.
   *bytes*, so the two never agreed: it crossed 40 KB on its 32nd release. `boundChangelog()` keeps
   the newest releases that fit 36 KB of JSON — contiguously, never fewer than ten — and exports
   `olderReleases`; the modal links "Older releases on GitHub" (`changelog.olderReleases` ×6) when
-  any were left out. 22 of 32 ship today; chunk 35.28 KB / 40 KB. The limit this branch briefly
+  any were left out. 20 of 32 ship today; chunk 34.74 KB / 40 KB (it was 22 until this entry itself grew — the bound let two older releases go instead of growing). The limit this branch briefly
   raised to 48 KB is back at 40 KB.
 
 ### Tests

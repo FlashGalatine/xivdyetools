@@ -1,8 +1,32 @@
 # Open items — best solutions (2026-09-20)
 
-**Status: PROPOSED.** Nothing here has been applied except §5, which is a record update (three
-terms verified, no shipped string changed). Everything else waits for the maintainer's go-ahead;
-§8 is the execution order if it is given.
+**Status: APPLIED 2026-09-20**, on the maintainer's go-ahead ("Please proceed", no exceptions — so
+each of the three open choices took the recommended option: the Terms say *whose* law, the Mixer
+tooltips were renamed, the German register pass went into this PR). One commit per step, on
+`worktree-i18n-audit-2026-09-19` / PR #192; nothing is merged. The sections below are the proposal
+as approved; *what was applied, and what differed* is the table here.
+
+| Step | Commit | What landed | Differed from the proposal |
+|---|---|---|---|
+| §2 + §6b mixing labels | `3b6fd288` | zh `颜料` / `真实颜料`, de `Malfarbe`, the `Spectral - ` prefix moved into the template (key is "Realistic Paint" ×6), Mixer tooltips "Modern Perceptual" / "Perceptual" ×6 | New test `config-sidebar.mixing-mode.test.ts` — the first draft of this very edit dropped the space after the dash again, and the test is what would have caught it |
+| §6a German register | `661d0d7e` | 54 values: 48 `Sie` → `du` (one third-person `Sie` stays), and `Farbe` → `Farbstoff` where English says dye — 10 tutorial strings plus 4 outside it | "Bitte versuche es erneut." follows the bot's existing phrasing, not the reviewer's "versuch es noch einmal" |
+| §3b web-app gate | `b8b5c71f`, `39672238` | `checkSameEnglish` in `i18n-parity.mjs`, `i18n-same-english-allowlist.json` (8 entries), `i18n-parity-gate.test.js`; the six drift groups fixed | The gate also fails on un-allow-listed identical-to-English values, asserts `de.json` never says `Sie`, and **runs `validate-i18n.js` itself** — that script was in no workflow either |
+| §3b–c bot-logic gate | `81bf7980` | `locale-quality.test.ts` + allow-list (identical-to-en, same-English, placeholders); `card.found` unified ×5; de `poweredBy` ×2, `card.slotLimbal` de / fr | `card.swatchSlot` de stays `SLOT` (allow-listed — the reviewer called it polish, and `BEREICH` is wider than the column needs) |
+| Fonts | — | no re-cut: `font-coverage` green with nothing missing and nothing surplus; all six unified labels fit the swatch card's 200 px column | as predicted |
+| §4 What's New | `7a47b52b` | `boundChangelog()` (36 KB JSON, contiguous, ≥ 10 releases), `olderReleases`, the GitHub link, limit back to 40 KB. 20 of 32 releases ship, 34.74 KB of 40 KB (22 before this pass added its own release notes — the bound let two older releases go rather than grow, which is the design working) | the optional −3.1 KB (derived fields) was not needed and not done |
+| §3d | `8a164a9a` | `harmony.deck-fit.test.ts` (500 cards, guard provably reached); `run-gates.sh` skips coverage | — |
+| §1 Terms | `b0e963a2` | the three English sentences; de / fr / ko / zh follow; ja unchanged; dates ×12 | "the law of the **place** where you live". Also unwrapped the four hard-wrapped zh policy files — 74 soft breaks that GitHub rendered as a stray space inside a sentence |
+| Review | `39672238` | a second `opus` reviewer read every string this pass wrote: 53 of 54 German strings correct, all twelve legal sentences correct; 8 corrections applied (`evidence/review-open-items-apply.md`) | — |
+| Notes | `131679b4`, `862a6e27` | unit changelogs + both `CLAUDE.md`; root product notes 5.9.0 in their own commit | — |
+
+Every gate was mutation-proved (a tamper turns it red, the restored tree is green). Final gate:
+`pnpm turbo run build type-check lint test` **62/62**, `test:scripts`, `dead-code:check`,
+`docs:check-versions`, `docs:check-links`, web-app `build:check`, policy parity PASS.
+
+**Still open after this pass** — §6c's notes (none was proposed): the unwritten ja 染料 / カララント
+boundary (86 : 38), three German words for *preset*, ko `스펙트럼` / `스펙트럴`, the limbal noun in
+ja / ko / zh (cards and core disagree; needs a dictionary row), core fr `RVB` / `RJB` in the wheel
+names. And §7's choices, which are the maintainer's.
 
 Scope: the items the [audit report](I18N_AUDIT_2026-09-19.md) left under *Open items*, the choices
 PR #192 flagged as vetoable, and what turned up while looking. Each section states the problem,

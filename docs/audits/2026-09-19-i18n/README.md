@@ -15,7 +15,7 @@ and seven open items that need a maintainer decision.
 |---|---|
 | [I18N_AUDIT_2026-09-19.md](I18N_AUDIT_2026-09-19.md) | The catalog: locale + font status, all 15 findings, positive controls, rejected suspicions, recommendations |
 | [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Sprint-sequenced plan (remediation-planner) |
-| [OPEN_ITEMS_SOLUTIONS.md](OPEN_ITEMS_SOLUTIONS.md) | 2026-09-20: the best solution for each item the report left open, measured and reviewed — **proposed, not applied** |
+| [OPEN_ITEMS_SOLUTIONS.md](OPEN_ITEMS_SOLUTIONS.md) | 2026-09-20: the best solution for each item the report left open, measured and reviewed — **applied the same day**; the commit table and what differed from the proposal are at its top |
 | `findings/` | One file per finding — `I18N-001…010`, `HC-001`, `TERM-001…004` |
 | `evidence/official-terms-research-glamour.md` | The second round of web research (2026-09-20): "glamour" as a system, as four item compounds, and as one outfit, in five languages — with the false friends and the refuted guesses |
 | `evidence/naming-glamour-brief.md` | The brief the five per-language agents worked from for the naming + glamour pass |
@@ -23,6 +23,8 @@ and seven open items that need a maintainer decision.
 | `evidence/remediation-brief.md`, `policy-translation-brief.md`, `policy-verification-brief.md` | The briefs the 13 remediation agents, 5 translators and 2 `opus` verifiers worked from |
 | `evidence/same-en-groups-after.txt`, `market-board-term-after.txt` | The consistency sweeps re-run after remediation (35 → 11 groups; one Market Board term per locale) |
 | `evidence/open-items-review-brief.md`, `review-open-items.md` | The brief and the hand-back of the `opus` reviewer who checked the open-item proposals in five languages |
+| `evidence/open-items-apply-review-brief.md`, `review-open-items-apply.md` | The second `opus` review: every string written while applying them (53 of 54 German strings and all twelve legal sentences correct; 8 corrections) |
+| `evidence/scripts/edits-0*.json`, `apply-locale-edits.py`, `apply-terms-clarification.py`, `unwrap-cjk-policy.py`, `add-older-releases-key.py` | Every string edit of that pass as data + the exact-match, idempotent appliers — re-running any of them on the final tree changes nothing |
 | `evidence/guardrail-measure.txt`, `whats-new-chunk-composition.txt` | What the two unbuilt guardrails would flag today; what the What's New chunk is made of |
 | `evidence/reviewer-brief.md` | The shared brief the six per-unit reviewers worked from (checklist, do-not-re-file list, return schema) |
 | `evidence/review-*.md` | The six reviewer returns (web-app, discord-worker, bot-logic, og-worker, core-svg, api-workers) |
