@@ -26,8 +26,9 @@ mechanics in `../audit-shared/release-mechanics.md`. Runs from the monorepo root
 
 Read `../audit-shared/units.md`, `release-mechanics.md`, `changelog-contract.md`,
 `model-routing.md`. For a `wave`,
-also the root `CHANGELOG.md` "Deploy sequence" block and `docs/operations/POST_MERGE_CHECKLIST.md`
-§0 (order and hand-run steps already live there).
+also the root `CHANGELOG.md` "Deploy sequence" block and the archived 5.0 checklist
+`docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md` §0 (order and hand-run steps live
+there; the living list of user-run items is `docs/operations/OPEN_ITEMS.md`).
 
 ## Step 1 — pre-flight (read-only)
 
@@ -113,7 +114,7 @@ git commit --only -- CHANGELOG-laymans.md -m "docs(changelog): player notes for 
 ```
 Push only on request. Then state what happens next: merge to `main` → `deploy-<unit>.yml`
 (discord-worker's job runs `register-commands`), Actions "Publish Packages to npm" in tier order
-for bumped packages, D1 migrations by hand if schema changed, POST_MERGE_CHECKLIST user-run items.
+for bumped packages, D1 migrations by hand if schema changed, the `docs/operations/OPEN_ITEMS.md` user-run items.
 
 ## Rules
 

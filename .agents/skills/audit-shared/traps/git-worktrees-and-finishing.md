@@ -64,7 +64,7 @@ Green-test traps (vacuous assertions, flush-count flakes, CI 5× slower) are in 
   discord/moderation deploys, not by hand).
 - **D1 schema changes** ship a migration file that is applied **by hand with `wrangler d1 execute
   --file`** before the dependent deploy. Never `wrangler d1 migrations apply`: `d1_migrations` is
-  empty, so it would replay every file (`docs/operations/POST_MERGE_CHECKLIST.md`).
+  empty, so it would replay every file (`docs/historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md`).
 - **Package version bumps** follow `release-mechanics.md` (unpublished local version → fold in, no
   extra bump; published → MAJOR for removals). Publishing is Actions-only after the merge.
 - Commit messages: `<type>(<scope>): <claim>` with scope = app/package directory name; root
