@@ -13,7 +13,7 @@ VALUES = {
     "ja": "以前のリリースを GitHub で見る",
     "de": "Ältere Versionen auf GitHub",
     "fr": "Versions antérieures sur GitHub",
-    "ko": "이전 릴리스는 GitHub에서 보기",
+    "ko": "더 오래된 릴리스는 GitHub에서 보기",
     "zh": "在 GitHub 上查看更早的版本",
 }
 for lc, value in VALUES.items():

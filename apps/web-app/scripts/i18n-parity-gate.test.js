@@ -14,12 +14,18 @@
  *   - same English, two translations — outside `i18n-same-english-allowlist.json`;
  *   - stale entries in either allow-list.
  *
+ * The other half of `validate:i18n` is `scripts/validate-i18n.js` — every key the
+ * code references exists in en.json, and every locale keeps en.json's key order.
+ * It prints and exits as it goes, so it is run here as the script it is and held
+ * to exit code 0, rather than rewritten into a library for the sake of a test.
+ *
  * The unit tests below feed `findSameEnglishDivergences` synthetic entries, so
  * the rule is proven able to fail rather than assumed to.
  *
  * @module scripts/i18n-parity-gate.test
  */
 
+import { spawnSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -27,7 +33,19 @@ import { describe, it, expect } from 'vitest';
 
 import { checkParity, findSameEnglishDivergences, flattenEntries } from './i18n-parity.mjs';
 
-const LOCALES_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'locales');
+const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
+const LOCALES_DIR = join(APP_DIR, 'src', 'locales');
+
+describe('validate-i18n.js (referenced keys exist, key order, stray whitespace)', () => {
+  it('exits 0 on the shipped source and locale files', () => {
+    const run = spawnSync(process.execPath, [join(APP_DIR, 'scripts', 'validate-i18n.js')], {
+      cwd: APP_DIR,
+      encoding: 'utf-8',
+    });
+    // The script's own report is the failure message — it names the file, line and key.
+    expect(run.status, `${run.stdout}\n${run.stderr}`.slice(-3000)).toBe(0);
+  }, 60_000);
+});
 
 describe('locale parity (the shipped files)', () => {
   const report = checkParity();

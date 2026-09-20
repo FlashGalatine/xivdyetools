@@ -15,7 +15,7 @@
       ["mixer.modelRyb", "Farbe", "Malfarbe"],
       ["config.mixingSpectral", "Spektral - Realistische Farbe", "Realistische Malfarbe"],
       ["config.mixingRybDesc", "Farbsimulation. Blau + Gelb = Grün.", "Malfarben-Simulation. Blau + Gelb = Grün."],
-      ["mixer.modelOklab", "Perzeptuell", "Moderne Wahrnehmung"],
+      ["mixer.modelOklab", "Perzeptuell", "Perzeptuell (modern)"],
       ["mixer.modelLab", "LAB", "Perzeptuell"]
     ],
     "fr": [

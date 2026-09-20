@@ -181,7 +181,7 @@
     "mixingMode": "Mischmodus",
     "mixingRgb": "Licht",
     "mixingLab": "Perzeptuell",
-    "mixingOklab": "Moderne Wahrnehmung",
+    "mixingOklab": "Perzeptuell (modern)",
     "mixingRyb": "Malfarbe",
     "mixingHsl": "Farbton-basiert",
     "mixingSpectral": "Realistische Malfarbe",
@@ -486,7 +486,7 @@
     "saveMix": "Mischung sichern",
     "modelRyb": "Malfarbe",
     "modelSpectral": "Pigment",
-    "modelOklab": "Moderne Wahrnehmung",
+    "modelOklab": "Perzeptuell (modern)",
     "modelLab": "Perzeptuell",
     "modelHsl": "Farbton",
     "modelRgb": "Licht",
@@ -780,7 +780,7 @@
     },
     "harmony": {
       "baseColor": {
-        "title": "Basisfarbe wählen",
+        "title": "Basisfarbstoff wählen",
         "description": "Wähle einen Farbstoff aus der Farbpalette als Basis. Klicke auf ein Farbfeld, um es auszuwählen."
       },
       "filters": {
@@ -825,7 +825,7 @@
       },
       "favorites": {
         "title": "Favoriten verwenden",
-        "description": "Greife schnell auf deine Lieblingsfarbstoffe zu, um sie zum Vergleich hinzuzufügen."
+        "description": "Greife schnell auf deine Favoriten zu, um sie zum Vergleich hinzuzufügen."
       }
     },
     "mixer": {
@@ -1177,7 +1177,7 @@
     "button": "Teilen",
     "copied": "Kopiert!",
     "invalidDye": "Dieser Link verweist auf einen Farbstoff, den diese Version nicht kennt.",
-    "legacyLink": "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farb-ID — bitte um einen neuen Link.",
+    "legacyLink": "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farbstoff-ID — bitte um einen neuen Link.",
     "invalidHex": "Dieser Link enthält einen ungültigen Farbwert.",
     "linkCopied": "Link in die Zwischenablage kopiert!",
     "copyManually": "Bitte kopiere die URL manuell",

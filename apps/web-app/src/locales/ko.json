@@ -183,13 +183,13 @@
     "mixingLab": "지각적",
     "mixingOklab": "현대 지각적",
     "mixingRyb": "물감",
-    "mixingHsl": "색조 기반",
+    "mixingHsl": "색상 기반",
     "mixingSpectral": "실제 물감",
     "mixingRgbDesc": "가산 혼합. 파랑 + 노랑 = 회색.",
     "mixingLabDesc": "지각적으로 균일한 혼합. 파랑 + 노랑 = 분홍.",
     "mixingOklabDesc": "현대 지각 색 공간. 파랑 + 노랑 = 청록.",
     "mixingRybDesc": "물감 시뮬레이션. 파랑 + 노랑 = 초록.",
-    "mixingHslDesc": "HSL 색 공간에서의 색조 기반 혼합.",
+    "mixingHslDesc": "HSL 색 공간에서의 색상 기반 혼합.",
     "mixingSpectralDesc": "쿠벨카-뭉크 물리학. 파랑 + 노랑 = 초록.",
     "colorSpaceRgbDesc": "선형 보간. 색상 사이에 회색 중간점 생성.",
     "colorSpaceHsvDesc": "색상환을 따름. 선명한 전환, 색조가 변할 수 있음.",
@@ -686,7 +686,7 @@
     "allReleases": "모든 릴리스",
     "pastLabel": "이전 릴리스",
     "currentTag": "현재",
-    "olderReleases": "이전 릴리스는 GitHub에서 보기"
+    "olderReleases": "더 오래된 릴리스는 GitHub에서 보기"
   },
   "welcome": {
     "title": "XIV 염색 도구에 오신 것을 환영합니다",

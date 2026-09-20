@@ -26,7 +26,7 @@
       ["tutorial.comparison.select.title", "Farben auswählen", "Farbstoffe auswählen"],
       ["tutorial.comparison.select.description", "Klicken Sie auf Farben in der Palette, um sie zum Vergleich hinzuzufügen. Bis zu 4 Farben.", "Klicke auf Farbstoffe in der Palette, um sie zum Vergleich hinzuzufügen. Bis zu 4 Farbstoffe."],
       ["tutorial.comparison.displayOptions.description", "Wählen Sie, welche Farbformate und Metadaten in der Vergleichsansicht angezeigt werden.", "Wähle, welche Farbformate und Metadaten in der Vergleichsansicht angezeigt werden."],
-      ["tutorial.comparison.favorites.description", "Greifen Sie schnell auf Ihre Lieblingsfarben zu, um sie zum Vergleich hinzuzufügen.", "Greife schnell auf deine Lieblingsfarbstoffe zu, um sie zum Vergleich hinzuzufügen."],
+      ["tutorial.comparison.favorites.description", "Greifen Sie schnell auf Ihre Lieblingsfarben zu, um sie zum Vergleich hinzuzufügen.", "Greife schnell auf deine Favoriten zu, um sie zum Vergleich hinzuzufügen."],
       ["tutorial.mixer.selectColors.description", "Wählen Sie Farben aus der Palette zum Mischen. Der Mixer blendet sie zu neuen Farben.", "Wähle Farbstoffe aus der Palette zum Mischen. Der Mixer mischt sie zu neuen Farben."],
       ["tutorial.mixer.mixingMode.description", "Wählen Sie den Farbmischalgorithmus: Spektral, RYB, OKLab, Lab, HSL oder RGB-Mischung.", "Wähle den Farbmischalgorithmus: Spektral, RYB, OKLab, Lab, HSL oder RGB-Mischung."],
       ["tutorial.mixer.maxResults.description", "Passen Sie an, wie viele passende Farbergebnisse für jede gemischte Farbe angezeigt werden.", "Passe an, wie viele passende Farbstoffe für jede gemischte Farbe angezeigt werden."],
