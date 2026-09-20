@@ -99,12 +99,12 @@ never the raw number, across methods. See the [Glossary](../../reference/glossar
 - **Screenshot colors** may vary due to lighting/effects — read the same piece of gear in two zones and compare
 - **The bar for the overall look, picks for the detail** — the sheet keeps both, and the count tells them apart
 - **Multiple matches** are often worth comparing in-game
-- Send a match to **Color Harmony Explorer** afterwards to build the rest of the outfit around it
+- Send a match to **Harmony Explorer** afterwards to build the rest of the outfit around it
 
 ---
 
 ## Related Tools
 
-- [Color Harmony Explorer](color-harmony.md) - Find complementary dyes
+- [Harmony Explorer](color-harmony.md) - Find complementary dyes
 - [Dye Comparison](dye-comparison.md) - Compare your matches
 - [Budget Suggestions](budget-suggestions.md) - Find affordable alternatives
