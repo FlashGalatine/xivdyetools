@@ -51,6 +51,15 @@ Rules:
 - Web app: the Privacy Policy now sends you to Advanced Settings, the real name of the panel behind the gear icon, to reset settings or switch analytics on or off.
 - Web app: a tool has the same name on its own page and in the "send to…" menu on a dye card, and the settings panel uses the same labels as the tools.
 - Discord bot: a French preset with no votes reads "0 vote" instead of "0 votes".
+- Web app: German speaks to you as "du" everywhere. About fifty older messages in the tutorial, presets and error texts still said "Sie".
+- Web app: the Dye Mixer's two paint models have proper names in Chinese and German, and the English mixing-mode picker reads "Spectral - Realistic Paint" with its missing space restored.
+- Discord bot: the "nearest dye" label reads the same on every card in every language. In French it still said "found".
+
+### 📜 Terms of Service
+- Web app and Discord bot: one sentence in each Terms of Service was reworded so it can only be read one way. The line about consumer-protection rights now says plainly that it means the law of the place where you live. Nothing you agreed to changed.
+
+### 🪶 What's New stays light
+- Web app: the What's New window shows the newest twenty or so releases and links to the older ones on GitHub, so it no longer grows with every release.
 
 ## [5.8.1] - 2026-09-18
 ### 📖 Discord bot: /manual catches up with 5.0
