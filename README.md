@@ -32,7 +32,7 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | [`presets-api`](apps/presets-api/) | 2.3.6 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
 | [`oauth`](apps/oauth/) | 3.1.1 | Discord OAuth + JWT issuance (CF Worker + D1) |
 | [`api-worker`](apps/api-worker/) | 0.14.4 | Public REST API at [data.xivdyetools.app](https://data.xivdyetools.app) + Universalis proxy routes + docs site at [developers.xivdyetools.app](https://developers.xivdyetools.app) (CF Worker + KV) |
-| [`og-worker`](apps/og-worker/) | 2.10.2 | Dynamic OpenGraph image generation (CF Worker + WASM) |
+| [`og-worker`](apps/og-worker/) | 2.10.3 | Dynamic OpenGraph image generation (CF Worker + WASM) |
 | [`stoat-worker`](apps/stoat-worker/) | 0.3.1 | Stoat (Revolt) bot (Node.js + revolt.js, WebSocket, prefix commands) — parked |
 
 ### Documentation (`docs/`)

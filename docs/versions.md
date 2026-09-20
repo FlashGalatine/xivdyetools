@@ -30,7 +30,7 @@
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.14.4 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.10.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.10.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -344,6 +344,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.10.3 | Sep 2026 | 2026-09-19 i18n audit follow-up (maintainer naming decisions 2026-09-20) — card names quote the official tool titles in every language: the Swatch Matcher card said "Character Matcher" in de / ja / ko / zh while English already said Swatch Matcher, and the Harmony card now reads Harmony Explorer ×6 (its "Color Harmony" shortening was cut from the retired three-word title); the fr and ko Budget lines name the Market Board (`tableau des ventes`, `장터`) instead of a generic "market price"; crawler descriptions: de `Glamour` → `Projektion`, ko `환영 장비` → `코디`, ko `시장 게시판` → `장터`. No font re-cut needed — every new string is drawable from the existing subsets (font-coverage green). The version bump is what retires the cached cards |
 | v2.10.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 10 — `wheel` is keyed into the cache only for the harmony dye card, not `/og/harmony/default` (BUG-018); the two SPA pass-through fetches carry a 5 s `AbortSignal` and fall back to the app redirect on timeout (OPT-001) |
 | v2.10.1 | Sep 2026 | Crawler metadata logs retain only tool, locale and crawler category |
 | **v2.10.0** | **Sep 2026** | **`/og/harmony/*` reads `?wheel=` (PR #167) — allowlisted against core's `COLOR_WHEEL_IDS`, cache-keyed beside `lang`/`frame`/`algo`, elided when `rgb`; the footer carries a short wheel tag so the X frame says which wheel chose the dyes** |

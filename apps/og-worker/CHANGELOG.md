@@ -5,6 +5,42 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.3] - 2026-09-20
+
+Follow-up to the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`), from three maintainer
+decisions made on 2026-09-20: the tools are officially **Swatch Matcher** and **Harmony Explorer**,
+and "glamour" follows `docs/reference/ffxiv-terminology.md` → *Glamour Terms*. Card text changed,
+so the version moves — it rides every `/og/*` cache key and is the only thing that retires cards
+already rendered at the edge.
+
+### Fixed
+
+- **The Swatch Matcher card named a different tool in four languages.** `OG_DECK.en.swatch.name`
+  has said "Swatch Matcher" since the 2026-08-07 string pass, but de / ja / ko / zh quoted the
+  web app's then-title, "Character Matcher" (`Charakter-Matcher`, `キャラクターマッチャー`, `캐릭터 매처`,
+  `角色配色器`). They now read `Farbmuster-Matcher`, `スウォッチマッチャー`, `스와치 매처`, `色板匹配器` —
+  the same strings the web app ships (fr `Nuancier` was already right).
+- **The Harmony card quotes the tool's title in full**: `Harmony Explorer`, `Harmonie-Explorer`,
+  `Explorateur d'harmonies`, `ハーモニーエクスプローラー`, `조화 탐색기`, `色彩和谐探索器`. It used to
+  read "Color Harmony" ×6, a deliberate shortening of the retired three-word title ("Color Harmony
+  Explorer"); that reason went with the rename, and the new title is shorter than "Palette
+  Extractor". The file header now records one card-shortening (Budget), not two.
+- **The Budget card named the Market Board in three languages and "the market" in two.** fr
+  `prix du marché` → `prix du tableau des ventes`, ko `시장 가격 기준` → `장터 가격 기준` — the
+  terms the French and Korean clients use, and what this worker's own crawler text already said in
+  French. The 2026-09-19 audit's Market Board sweep read the locale JSON only and never reached
+  this table.
+- **Crawler descriptions (`og-embed.ts`)**: de `Glamour` → `Projektion` ×5 (the German client's
+  word; "Gestalte inklusive Glamours!" became "Gestalte Projektionen für alle!" because *inklusive*
+  reads first as "including"), ko `환영 장비` → `코디` ×5 (a third Korean rendering of "glamour";
+  the web app and this table now agree), ko `시장 게시판` → `장터` ×2.
+
+### Notes
+
+- **No font re-cut.** Every new card string is drawable from the existing JP / KR / SC subsets —
+  `font-coverage.test.ts` is green with nothing missing and no surplus warning — so the three
+  subset files are untouched. `og-embed.ts` is browser-rendered and was never subset.
+
 ## [2.10.2] - 2026-09-17
 
 ### Fixed
