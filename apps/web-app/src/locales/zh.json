@@ -79,7 +79,7 @@
       "description": "寻找实惠的染料替代品"
     },
     "character": {
-      "title": "角色配色器",
+      "title": "色板匹配器",
       "shortName": "色板",
       "description": "为角色颜色匹配染料",
       "selectSubrace": "选择部族",
@@ -792,7 +792,7 @@
       },
       "toolBanner": {
         "title": "切换工具",
-        "description": "点击工具图标切换不同功能：色彩协调、提取器、比较等！"
+        "description": "点击工具图标切换不同功能：色彩和谐、提取器、比较等！"
       }
     },
     "matcher": {

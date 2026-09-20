@@ -2,11 +2,11 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-09-16 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-09-20 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
-l'Explorateur d'Harmonies de Couleurs, la Comparaison de Teintures, le Constructeur de Dégradé, le
+l'Explorateur d'harmonies, la Comparaison de Teintures, le Constructeur de Dégradé, le
 Mélangeur de Teintures, la Vérification d'accessibilité, les Suggestions Budget et le Nuancier —
 effectuent leur travail sur votre appareil. Rien de ce que vous importez, choisissez ou saisissez
 n'est envoyé où que ce soit, sauf si une section ci-dessous le précise, et les sections ci-dessous
@@ -27,16 +27,16 @@ en forment la liste complète.
 - Un fichier `.chara` (Anamnesis, Ktisis, Brio) est analysé sur votre appareil. Le nom du
   personnage qu'il contient n'est jamais envoyé où que ce soit, et n'est jamais utilisé comme nom
   de palette prédéfinie, nom d'auteur, ou toute autre chose visible par d'autres joueurs. Soumettre
-  un glamour aux palettes prédéfinies communautaires exige que vous saisissiez vous-même un nom —
+  un mirage aux palettes prédéfinies communautaires exige que vous saisissiez vous-même un nom —
   le champ commence vide exprès, car le nom du personnage et le nom du fichier sont tous deux des
   endroits où les joueurs mettent leur vrai nom.
-- **Une exception, qui reste sur votre appareil.** Si vous enregistrez un glamour ou sa palette
+- **Une exception, qui reste sur votre appareil.** Si vous enregistrez un mirage ou sa palette
   dans ce navigateur sans saisir de nom, l'enregistrement se rabat sur le surnom du personnage,
   puis sur le nom du fichier `.chara`. Ce nom vit dans le stockage de votre navigateur, à côté de
   vos autres collections enregistrées. Il n'est jamais téléversé, et le chemin communautaire
   ci-dessus ne le lit jamais. Renommez ou supprimez l'enregistrement, ou effacez les données de
   votre site, et il disparaît.
-- Pour nommer l'équipement sur le bloc de glamour, l'application interroge notre API pour connaître
+- Pour nommer l'équipement sur le bloc de mirage, l'application interroge notre API pour connaître
   l'objet derrière chaque emplacement. La requête ne transporte que les **numéros de modèle** de
   l'équipement provenant du fichier (une douzaine de petits entiers par fichier) — ni le fichier,
   ni le nom, ni les couleurs — et les icônes des objets reviennent depuis le même hôte
@@ -92,7 +92,7 @@ publicitaire ou social, et aucun cookie.
 
 Séparément de la liste ci-dessus, certains boutons vous font **naviguer** vers une base de données
 communautaire plutôt que de récupérer quoi que ce soit en arrière-plan. Le menu « Ouvrir dans… » du
-Nuancier sur une pièce de glamour ouvre [Mirapri](https://mirapri.com/),
+Nuancier sur une pièce de mirage ouvre [Mirapri](https://mirapri.com/),
 [Garland Tools](https://www.garlandtools.org/), [Teamcraft](https://ffxivteamcraft.com/),
 [Gamer Escape](https://ffxiv.gamerescape.com/) ou le Lodestone ; une fiche de résultat de teinture
 peut ouvrir Universalis, Garland Tools, Teamcraft ou [Saddlebag Exchange](https://saddlebagexchange.com/).

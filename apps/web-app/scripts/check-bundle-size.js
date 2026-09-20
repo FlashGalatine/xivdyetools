@@ -134,7 +134,15 @@ const BUNDLE_LIMITS = [
   // silently dropping seven of them, so treat that older figure as a symptom
   // rather than a baseline. Headroom is roughly a dozen more releases: trim the
   // oldest entries or raise the limit deliberately rather than be surprised.
-  { label: 'release notes (on open)', pattern: /^_virtual_changelog-/, limit: 40 * KB },
+  //
+  // Raised 40 -> 48 KB on 2026-09-20 (web-app 5.12.0): the 32nd release's notes
+  // put the chunk at 40.06 KB, 60 bytes over. Raising was chosen over trimming
+  // because the chunk loads only when What's New opens (nothing at first
+  // paint; 14.9 KB gzipped) while trimming deletes history the modal exists to
+  // show. It grew ~12 KB over the last 7 releases, so 48 KB is a handful more,
+  // not a dozen — the next time this trips, trimming the oldest entries is the
+  // better answer.
+  { label: 'release notes (on open)', pattern: /^_virtual_changelog-/, limit: 48 * KB },
 ];
 
 /**

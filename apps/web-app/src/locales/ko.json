@@ -38,7 +38,7 @@
   },
   "tools": {
     "harmony": {
-      "title": "색상 조화 탐색기",
+      "title": "조화 탐색기",
       "shortName": "조화",
       "description": "조화로운 색상 팔레트 생성"
     },
@@ -79,7 +79,7 @@
       "description": "저렴한 염료 대안 찾기"
     },
     "character": {
-      "title": "캐릭터 매처",
+      "title": "스와치 매처",
       "shortName": "견본",
       "description": "캐릭터 색상에 맞는 염료 찾기",
       "selectSubrace": "부족 선택",
@@ -792,7 +792,7 @@
       },
       "toolBanner": {
         "title": "도구 전환",
-        "description": "도구 아이콘을 클릭하여 기능을 전환하세요: 하모니, 추출기, 비교 등!"
+        "description": "도구 아이콘을 클릭하여 기능을 전환하세요: 조화, 추출기, 비교 등!"
       }
     },
     "matcher": {
@@ -987,7 +987,7 @@
     "tabSaved": "저장됨",
     "tabMine": "내 팔레트",
     "searchAll": "팔레트·염료·태그 검색",
-    "shotSlot": "글래머 샷 · 링크만 저장",
+    "shotSlot": "코디 샷 · 링크만 저장",
     "paletteLabel": "팔레트",
     "paletteCost": "팔레트 비용",
     "takeInto": "이 팔레트로 이동",
@@ -1039,7 +1039,7 @@
     "fieldTags": "태그",
     "fieldTagsHint": "검색 대상입니다. 잡 약칭도 사용 가능: mch, drk, whm.",
     "fieldLink": "예시 링크",
-    "fieldLinkHint": "허용된 사이트의 글래머 페이지를 연결하세요. Eorzea Collection, 로드스톤, X·Bluesky·pixiv 등의 게시물을 지원합니다. 이미지 사본이 아닌 링크만 저장하므로, 원본을 내리면 여기서도 사라집니다.",
+    "fieldLinkHint": "허용된 사이트의 코디 페이지를 연결하세요. Eorzea Collection, 로드스톤, X·Bluesky·pixiv 등의 게시물을 지원합니다. 이미지 사본이 아닌 링크만 저장하므로, 원본을 내리면 여기서도 사라집니다.",
     "fieldPreviewImage": "미리보기 이미지 (선택)",
     "fieldPreviewImageHint": "PNG, JPEG, WebP, 최대 5MB. 모더레이터 승인 후 카드에 표시됩니다.",
     "previewImageTooLarge": "이미지는 5MB 이하여야 합니다",
@@ -1157,7 +1157,7 @@
     "transformDyeIn": "염료 변환...",
     "openInBrowser": "브라우저에서 열기...",
     "sentToBudget": "예산 제안으로 전송됨",
-    "sentToSwatch": "색상 매칭으로 전송했습니다",
+    "sentToSwatch": "스와치 매처로 전송했습니다",
     "dyeAlreadyIn": "염료가 이미 추가되었습니다",
     "addedTo": "추가됨",
     "slotsFull": "모든 슬롯이 꽉 찼습니다. 교체할 슬롯을 선택하세요:",
@@ -1207,10 +1207,10 @@
     "matchesHead": "가장 가까운 염료",
     "inGrid": "캐릭터 제작 화면 위치",
     "sendTo": "보내기",
-    "equipHead": "이 글래머의 염료",
+    "equipHead": "이 코디의 염료",
     "gearHint": "7.0부터 부위당 두 개의 염색 채널. DyeId 0은 미염색이며 검정이 아닙니다.",
     "makePalette": "팔레트 만들기",
-    "paletteTitle": "이 글래머로 새 팔레트",
+    "paletteTitle": "이 코디로 새 팔레트",
     "paletteNamePlaceholder": "팔레트 이름",
     "paletteNameHint": "프리셋 이름과 설명은 번역되지 않습니다 — 여기에 쓴 그대로 모든 플레이어에게 보입니다.",
     "saveLocal": "이 기기에 저장",
@@ -1249,7 +1249,7 @@
     "glamourViewDyes": "염료",
     "glamourShowAll": "모두 표시",
     "undyed": "미염색",
-    "noDyedPieces": "이 글래머에는 염색된 장비가 없습니다. '모두 표시'를 켜면 착용 중인 모든 부위가 표시됩니다.",
+    "noDyedPieces": "이 코디에는 염색된 장비가 없습니다. '모두 표시'를 켜면 착용 중인 모든 부위가 표시됩니다.",
     "facewearSlot": "페이스웨어",
     "facewearColorTag": "{color} · 페이스웨어 색상",
     "facewearColorUnknown": "페이스웨어 색상 알 수 없음",
@@ -1300,7 +1300,7 @@
     "tooFewTag": "3색 이상",
     "tooFewBody": "팔레트에는 최소 3색이 필요합니다. 그 이하는 팔레트가 아니라 견본입니다. 저장과 제출은 비활성 상태로 유지됩니다.",
     "overCapBody": "{n}색은 카드 크기에서 읽을 수 없는 띠가 됩니다. 6색 이하로 줄이세요. 저장과 제출은 비활성 상태로 유지됩니다.",
-    "paletteDefaultName": "글래머 팔레트",
+    "paletteDefaultName": "코디 팔레트",
     "blendTag": "혼합 · α {alpha}",
     "blendPlain": "혼합",
     "blendNote": "입술색을 피부색 위에 합성한 결과 — 캐릭터가 실제로 보여주는 색입니다. 염료 매칭은 원본 셀이 아니라 이 색을 따릅니다.",

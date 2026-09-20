@@ -44,6 +44,29 @@ in one language behind six localized links.
   colorimétrique`, `Types de vision`), `Résultats maximum`, `RGB pondéré`, `Tous les Mondes`; ko
   `조화 유형`, `조화`, `최대 결과 수`, `머리카락`, `출처`; zh `颜料画` (so the Mixer's picker does
   not show two modes both labelled `颜料`), `加权RGB`.
+- **Tool names are official (maintainer decision 2026-09-20): "Swatch Matcher" and "Harmony
+  Explorer".** `tools.character.title` said "Character Matcher" and `tools.harmony.title` "Color
+  Harmony Explorer" while the docs, the policies, the toast and the link-preview card already used
+  the 5.0 names. The five locales follow with titles chosen from renderings that already existed —
+  ja `スウォッチマッチャー` / `ハーモニーエクスプローラー`, de `Farbmuster-Matcher` / `Harmonie-Explorer`,
+  fr `Nuancier` (unchanged) / `Explorateur d'harmonies`, ko `스와치 매처` / `조화 탐색기`, zh
+  `色板匹配器` / `色彩和谐探索器` (zh keeps 色彩: bare 和谐 reads oddly as a tool name). The toast
+  and the tutorial banner, which lists tools by short name and still said "Color Harmony" in en /
+  ko / zh, follow. Locale *keys* are unchanged (`tools.character.*`).
+- **"glamour" follows the terminology dictionary** (`docs/reference/ffxiv-terminology.md` →
+  *Glamour Terms*, researched on the publishers' sites). Korean `글래머` was a **false friend** — in
+  everyday Korean it means a voluptuous woman, so "이 글래머의 염료" read accordingly — now `코디`.
+  German mixed `Mirage` and `Glamour`, neither the client's word → feminine `Projektion`
+  (`FARBSTOFFE DIESER PROJEKTION`, `Projektionspalette`). French mixed `glamour` with a
+  wrong-gender `cette mirage` → masculine `ce mirage`. ja `ミラプリ` and zh `幻化` were already right.
+- **The Privacy Policy named a panel that does not exist.** It sent users to "Advanced Options" to
+  reset settings and to opt in or out of analytics; the header-gear panel is "Advanced Settings"
+  (`config.advancedSettings`). Corrected in `PRIVACY.md`; all five translations already quoted
+  the right label. A UI path a user must follow to opt out is content, so `Last updated` moves to
+  2026-09-20 on all six variants. The translations' tool names and glamour wording follow the UI
+  (ja uses the formal `コーディネート` and ko the official-register `의상` in the legal text).
+- ja `preset.fieldLinkHint` ended in a dangling `を。` with no verb; de `resultCard.sentToSwatch`
+  lacked its article (`An den Farbmuster-Matcher gesendet`).
 - **I18N-004**: Korean `안팡` (not a word) → `안팎` in `comparison.mCiede2000Desc` **and**
   `accessibility.unitDeDesc` — the audit found one; the fix pass found the second.
 - **I18N-008**: Budget Suggestions sorted localized dye names with the *browser's* collation

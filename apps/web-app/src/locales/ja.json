@@ -38,7 +38,7 @@
   },
   "tools": {
     "harmony": {
-      "title": "カラーハーモニーエクスプローラー",
+      "title": "ハーモニーエクスプローラー",
       "shortName": "ハーモニー",
       "description": "調和のとれたカラーパレットを生成"
     },
@@ -79,7 +79,7 @@
       "description": "手頃な代替染料を見つける"
     },
     "character": {
-      "title": "キャラクターマッチャー",
+      "title": "スウォッチマッチャー",
       "shortName": "見本",
       "description": "キャラクターの色に合う染料を探す",
       "selectSubrace": "部族を選択",
@@ -792,7 +792,7 @@
       },
       "toolBanner": {
         "title": "ツールを切り替え",
-        "description": "ツールアイコンをクリックして機能を切り替え：カラーハーモニー、抽出、比較など！"
+        "description": "ツールアイコンをクリックして機能を切り替え：ハーモニー、抽出、比較など！"
       }
     },
     "matcher": {
@@ -1039,7 +1039,7 @@
     "fieldTags": "タグ",
     "fieldTagsHint": "検索対象。ジョブ略称も使えます: mch, drk, whm。",
     "fieldLink": "作例リンク",
-    "fieldLinkHint": "許可されたサイトのミラプリページを。Eorzea Collection、ロードストーン、X・Bluesky・pixiv などの投稿に対応しています。画像は複製せずリンクだけ保存します — 元を削除すればここからも消えます。",
+    "fieldLinkHint": "許可されたサイトのミラプリページを入力してください。Eorzea Collection、ロードストーン、X・Bluesky・pixiv などの投稿に対応しています。画像は複製せずリンクだけ保存します — 元を削除すればここからも消えます。",
     "fieldPreviewImage": "プレビュー画像（任意）",
     "fieldPreviewImageHint": "PNG、JPEG、WebP、5MBまで。モデレーターの承認後にカードへ表示されます。",
     "previewImageTooLarge": "画像は5MB以内にしてください",

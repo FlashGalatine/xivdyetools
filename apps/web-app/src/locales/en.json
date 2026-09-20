@@ -38,7 +38,7 @@
   },
   "tools": {
     "harmony": {
-      "title": "Color Harmony Explorer",
+      "title": "Harmony Explorer",
       "shortName": "Harmony",
       "description": "Generate harmonious color palettes"
     },
@@ -79,7 +79,7 @@
       "description": "Find affordable dye alternatives"
     },
     "character": {
-      "title": "Character Matcher",
+      "title": "Swatch Matcher",
       "shortName": "Swatch",
       "description": "Match dyes to character colors",
       "selectSubrace": "Select Subrace",
@@ -792,7 +792,7 @@
       },
       "toolBanner": {
         "title": "Switch Tools",
-        "description": "Click any tool icon to switch between different features: Color Harmony, Extractor, Comparison, and more!"
+        "description": "Click any tool icon to switch between different features: Harmony, Extractor, Comparison, and more!"
       }
     },
     "matcher": {

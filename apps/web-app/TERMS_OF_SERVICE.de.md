@@ -15,9 +15,9 @@ nicht — dich davon zurückzuziehen kostet dich nichts.
 ## Was die Website tut
 
 Neun Werkzeuge laufen in deinem Browser: Paletten-Extraktor, Harmonie-Explorer, Vergleich,
-Verlauf-Ersteller, Farbstoffmixer, Barrierefreiheitsprüfung, Budget-Finder, Swatch-Matcher und der
+Verlauf-Ersteller, Farbstoffmixer, Barrierefreiheitsprüfung, Budget-Finder, Farbmuster-Matcher und der
 Community-Presets-Browser. Daneben kann die Website Marktbrett-Preise anzeigen, eine
-`.chara`-Datei lesen, die du hineinziehst, um die Ausrüstung einer Mirage zu benennen, und dich
+`.chara`-Datei lesen, die du hineinziehst, um die Ausrüstung einer Projektion zu benennen, und dich
 Paletten und Sammlungen auf deinem eigenen Gerät speichern lassen.
 
 Das meiste davon funktioniert ohne Konto und ohne irgendetwas irgendwohin zu senden. Die
@@ -102,7 +102,7 @@ Manche Funktionen leiten dich an Dienste weiter, die wir nicht selbst betreiben:
 - **Universalis** liefert Marktbrett-Preise.
 - **Discord** und **XIVAuth** übernehmen die Anmeldung; Discord hostet außerdem unseren
   Community-Server.
-- Die **Gegenstands-Links** bei einem Mirage-Teil öffnen diesen Gegenstand bei Garland Tools,
+- Die **Gegenstands-Links** bei einem Projektionsteil öffnen diesen Gegenstand bei Garland Tools,
   FFXIV Teamcraft, Gamer Escape, Mirapri, Saddlebag Exchange oder dem Lodestone.
 
 Sobald du einem dieser Links folgst, befindest du dich auf der Website einer anderen Partei, unter

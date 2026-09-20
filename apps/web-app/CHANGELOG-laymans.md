@@ -6,11 +6,14 @@
 
 ### Privacy Policy and Terms, in your language
 - **The Privacy Policy and Terms of Service can now be read in Japanese, German, French, Korean and Chinese.** The links in About open the version that matches the language you have the app set to.
+- **The Privacy Policy points at the right panel.** It told you to open "Advanced Options" to reset settings or turn analytics on or off; the panel behind the gear icon is called Advanced Settings.
 - **The English text is still the official one.** Each translation says so at the top and links back to it, in case the two ever differ.
 
 ### The game's own words, in every language
 - **The Market Board now has one name per language — the one the game itself uses.** French says "tableau des ventes", Korean "장터", Chinese "市场布告板". Before, the settings panel and the price panel could disagree, and one Chinese label was a typo.
 - **Korean and Chinese say "server" where the game does.** "All Worlds" is now 모든 서버 and 所有服务器, matching those versions of the game.
+- **Two tools have their proper names in the menu: Swatch Matcher and Harmony Explorer.** The menu still said "Character Matcher" and "Color Harmony Explorer" while the rest of the app, the guides and link previews used the newer names. Every language now uses one name for each.
+- **"Glamour" is the word your version of the game uses.** German says Projektion, French mirage, Korean 코디; Japanese ミラプリ and Chinese 幻化 were already right. The old Korean word was a mistranslation that means something quite different in everyday Korean.
 - **A tool is called the same thing everywhere.** The "send to…" menu on a dye card now uses each tool's real name. In German, French, Japanese and Korean it used to show a slightly different name from the page it opened.
 - **Settings and tools agree on their labels.** Words like Perceptual, Vision Types, Paint, Harmony Type and Max Results were translated one way in the settings panel and another way inside the tool. Each now has a single wording per language.
 

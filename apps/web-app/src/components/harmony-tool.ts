@@ -1,7 +1,7 @@
 /**
  * XIV Dye Tools v3.0.0 - Harmony Tool Component
  *
- * Phase 2: Color Harmony Explorer migration to v3 two-panel layout.
+ * Phase 2: Harmony Explorer migration to v3 two-panel layout.
  * Orchestrates existing v2 components within the new shell structure.
  *
  * Left Panel: Dye selector, harmony type selector, companion slider, filters, market board

@@ -14,11 +14,11 @@ vous coûte quoi que ce soit à abandonner.
 
 ## Ce que fait le site
 
-Neuf outils fonctionnent dans votre navigateur : l'Extracteur de palette, l'Explorateur d'Harmonies
-de Couleurs, la Comparaison, le Constructeur de Dégradé, le Mélangeur de Teintures, la Vérification
+Neuf outils fonctionnent dans votre navigateur : l'Extracteur de palette, l'Explorateur d'harmonies,
+la Comparaison, le Constructeur de Dégradé, le Mélangeur de Teintures, la Vérification
 d'accessibilité, les Suggestions Budget, le Nuancier, et le navigateur de Palettes Prédéfinies
 communautaires. À leurs côtés, le site peut afficher les prix du tableau des ventes, lire un fichier
-`.chara` que vous déposez pour nommer l'équipement d'un glamour, et vous permettre d'enregistrer des
+`.chara` que vous déposez pour nommer l'équipement d'un mirage, et vous permettre d'enregistrer des
 palettes et des collections sur votre propre appareil.
 
 La majeure partie de tout cela fonctionne sans compte et sans rien envoyer nulle part. Les
@@ -103,7 +103,7 @@ Certaines fonctionnalités vous redirigent vers des services que nous n'exploito
 
 - **Universalis** fournit les prix du tableau des ventes.
 - **Discord** et **XIVAuth** gèrent la connexion ; Discord héberge aussi notre serveur communautaire.
-- Les **liens d'objet** sur une pièce de glamour ouvrent cet objet sur Garland Tools, FFXIV
+- Les **liens d'objet** sur une pièce de mirage ouvrent cet objet sur Garland Tools, FFXIV
   Teamcraft, Gamer Escape, Mirapri, Saddlebag Exchange, ou le Lodestone.
 
 Une fois que vous suivez l'un de ces liens, vous êtes sur le site de quelqu'un d'autre, soumis à ses

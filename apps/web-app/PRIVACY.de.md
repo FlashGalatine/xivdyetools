@@ -2,11 +2,11 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-09-16 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-09-20 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
-Vergleich, Verlauf, Mixer, Barrierefreiheitsprüfung, Budget-Finder und Swatch-Matcher — erledigen
+Vergleich, Verlauf, Mixer, Barrierefreiheitsprüfung, Budget-Finder und Farbmuster-Matcher — erledigen
 ihre Arbeit auf deinem Gerät. Nichts, was du hochlädst, auswählst oder eingibst, wird irgendwohin
 gesendet, sofern nicht ein Abschnitt unten das Gegenteil sagt — und die Abschnitte unten sind die
 vollständige Liste.
@@ -26,16 +26,16 @@ vollständige Liste.
 
 - Eine `.chara`-Datei (Anamnesis, Ktisis, Brio) wird auf deinem Gerät ausgelesen. Ihr Charaktername
   wird niemals irgendwohin gesendet und niemals als Preset-Name, Autorenname oder irgendetwas
-  anderes verwendet, das andere Spieler sehen können. Um eine Mirage bei den Community-Presets
+  anderes verwendet, das andere Spieler sehen können. Um eine Projektion bei den Community-Presets
   einzureichen, musst du selbst einen Namen eingeben — das Feld ist absichtlich leer, denn sowohl
   der Charaktername als auch der Dateiname sind Orte, an denen Spieler ihren echten Namen ablegen.
-- **Eine Ausnahme, und die bleibt auf deinem Gerät.** Wenn du eine Mirage oder ihre Palette in
+- **Eine Ausnahme, und die bleibt auf deinem Gerät.** Wenn du eine Projektion oder ihre Palette in
   diesem Browser speicherst, ohne einen Namen einzugeben, greift der gespeicherte Eintrag auf den
   Spitznamen des Charakters zurück, dann auf den Namen der `.chara`-Datei. Dieser Name liegt im
   Speicher deines Browsers neben deinen anderen gespeicherten Sammlungen. Er wird niemals
   hochgeladen, und der Community-Pfad oben liest ihn nie. Benenne den Eintrag um, lösche ihn, oder
   lösche deine Website-Daten, und er ist verschwunden.
-- Um die Ausrüstung auf dem Mirage-Block zu benennen, fragt die App unsere API nach dem Gegenstand
+- Um die Ausrüstung auf dem Projektionsblock zu benennen, fragt die App unsere API nach dem Gegenstand
   hinter jedem Slot. Die Anfrage enthält nur die **Modellnummern** der Ausrüstung aus der Datei
   (ein Dutzend kleiner Ganzzahlen pro Datei) — nicht die Datei, nicht den Namen, nicht die Farben —
   und die Gegenstandssymbole kommen vom selben Host zurück (`data.xivdyetools.app`).
@@ -87,7 +87,7 @@ Drittanbietern und keine Cookies.
 
 Getrennt von der obigen Liste **navigieren** dich manche Schaltflächen zu einer
 Community-Datenbank, statt im Hintergrund etwas abzurufen. Das Menü "Öffnen in…" des
-Swatch-Matchers bei einem Mirage-Teil öffnet [Mirapri](https://mirapri.com/),
+Farbmuster-Matchers bei einem Projektionsteil öffnet [Mirapri](https://mirapri.com/),
 [Garland Tools](https://www.garlandtools.org/), [Teamcraft](https://ffxivteamcraft.com/),
 [Gamer Escape](https://ffxiv.gamerescape.com/) oder das Lodestone; eine Farbstoff-Ergebniskarte
 kann Universalis, Garland Tools, Teamcraft oder
