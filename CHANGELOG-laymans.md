@@ -45,6 +45,10 @@ Rules:
 ### 🗣️ The game's own words, one name for each thing
 - Web app and Discord bot: the Market Board is now called what the game calls it in each language: "tableau des ventes" in French, 장터 in Korean and 市场布告板 in Chinese. The web app used two or three different names for it, and one Chinese label was a typo.
 - Web app and Discord bot: Korean and Chinese say "server" (서버, 服务器) where those versions of the game do, and Chinese calls a Data Center 大区.
+- Web app: the menu uses the tools' proper names, Swatch Matcher and Harmony Explorer, in every language. It still said "Character Matcher" and "Color Harmony Explorer".
+- Web app, Discord bot and link previews: "glamour" is now the word each version of the game uses: Projektion in German, mirage in French, 코디 in Korean, ミラプリ in Japanese and 幻化 in Chinese. The old Korean and Japanese words meant something quite different in everyday speech.
+- Link previews: the Swatch Matcher and Harmony Explorer cards show those names in all six languages, and the Budget card names the Market Board in French and Korean too.
+- Web app: the Privacy Policy now sends you to Advanced Settings, the real name of the panel behind the gear icon, to reset settings or switch analytics on or off.
 - Web app: a tool has the same name on its own page and in the "send to…" menu on a dye card, and the settings panel uses the same labels as the tools.
 - Discord bot: a French preset with no votes reads "0 vote" instead of "0 votes".
 
