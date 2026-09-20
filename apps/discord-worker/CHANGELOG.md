@@ -33,8 +33,11 @@ the picker localizations only exist once the schema is re-registered (the deploy
 
 ### Changed
 
-- **Fonts re-cut**, compared by cmap: JP +`絵` +`具`, SC +`告` +`絵`, KR −`월`. 948.8 KiB raw
-  against 947.7 KiB before — the 411 new CJK picker strings added nothing, because
+- **Fonts re-cut**, compared by cmap: JP +`絵` +`具`, SC +`告` +`絵` +`幻`, KR −`월` (`幻` came
+  in a second cut, when the zh help footer moved from `时装` to `幻化`; the JP and KR cmaps were
+  identical that time, so those two files were restored byte-for-byte — fontTools rewrites a
+  timestamp on every run). 949.1 KiB raw against 947.7 KiB before — the 411 new CJK picker strings
+  added nothing, because
   `scripts/subset-cjk-fonts.py` and `font-coverage.test.ts` now both skip the
   `commands.<cmd>.options` subtrees: Discord draws that text, resvg never does, and this Worker
   sits close to its 3 MiB gzip ceiling.
