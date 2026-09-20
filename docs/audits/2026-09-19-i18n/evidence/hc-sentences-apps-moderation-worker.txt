@@ -1,0 +1,105 @@
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:63:    return ephemeralResponse('Invalid button interaction.');
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:67:    return ephemeralResponse('You do not have permission to ban users.');
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:81:    return ephemeralResponse('Invalid target user.');
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:86:    logger?.warn('Ban confirm button with a malformed target id', { customId });
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:87:    return ephemeralResponse('Invalid button data.');
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:102:              label: 'Reason for banning this user',
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:107:              placeholder: 'Explain why this user is being banned from Preset Palettes...',
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:133:    return ephemeralResponse('Invalid button interaction.');
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:137:    return ephemeralResponse('You do not have permission to ban users.');
+apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts:144:        description: 'The ban action was cancelled.',
+apps/moderation-worker/src/handlers/buttons/index.ts:96:  logger?.warn('Unknown button interaction', { customId });
+apps/moderation-worker/src/handlers/buttons/index.ts:97:  return ephemeralResponse('Unknown button action.');
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:82:    return ephemeralResponse('Invalid button interaction.');
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:90:    return ephemeralResponse('You do not have permission to approve presets.');
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:166:            description: `Preset approved by ${safeModerator}`,
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:175:      logger.error('Failed to approve preset', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:191:                value: `Failed to approve: ${sanitizeErrorMessage(error, 'Unable to approve preset.')}`,
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:219:    return ephemeralResponse('Invalid button interaction.');
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:227:    return ephemeralResponse('You do not have permission to reject presets.');
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:242:              label: 'Reason for rejection',
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:247:              placeholder: 'Please provide a clear reason for rejecting this preset...',
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:271:    return ephemeralResponse('Invalid button interaction.');
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:279:    return ephemeralResponse('You do not have permission to revert presets.');
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:294:              label: 'Reason for reverting',
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:299:              placeholder: 'Explain why the edit is being reverted...',
+apps/moderation-worker/src/handlers/commands/preset.ts:399:    return ephemeralResponse('This command must be used in the moderation channel.');
+apps/moderation-worker/src/handlers/commands/preset.ts:424:          'Unhandled error in processModerateCommand',
+apps/moderation-worker/src/handlers/commands/preset.ts:482:      embeds: [errorEmbed(t.t('common.error'), sanitizeErrorMessage(error, 'Moderation action failed.'))],
+apps/moderation-worker/src/handlers/commands/preset.ts:524:    return ephemeralResponse('Please specify a user to ban.');
+apps/moderation-worker/src/handlers/commands/preset.ts:634:    return ephemeralResponse('Please specify a user to unban.');
+apps/moderation-worker/src/handlers/commands/preset.ts:645:      logger?.error('Unhandled error in processUnban', err instanceof Error ? err : undefined);
+apps/moderation-worker/src/handlers/commands/preset.ts:678:          `Unban failed for ${targetUserId}`,
+apps/moderation-worker/src/handlers/commands/preset.ts:683:        embeds: [errorEmbed(t.t('common.error'), result.error || 'Failed to unban user.')],
+apps/moderation-worker/src/handlers/commands/preset.ts:700:          footer: { text: `Unbanned by moderator` },
+apps/moderation-worker/src/handlers/commands/preset.ts:715:      logger.error('Failed to unban user', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/commands/preset.ts:718:      embeds: [errorEmbed(t.t('common.error'), 'An unexpected error occurred while unbanning the user.')],
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:46:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal submission.')] });
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:50:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'You do not have permission to ban users.')] });
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:64:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid target user.')] });
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:73:    logger?.warn('Ban reason modal with a malformed target id', { customId });
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:74:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal data.')] });
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:81:    logger?.error('Failed to resolve target username', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:97:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid ban reason (at least 10 characters).')] });
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:160:          `Ban failed for ${targetUserId}`,
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:167:            errorEmbed('Ban Failed', result.error || 'Unknown error occurred.'),
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:171:      await resolveSpinner(errorEmbed('Ban Failed', result.error || 'Unknown error occurred.'));
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:222:      logger.error('Failed to ban user', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/ban-reason.ts:227:      `Failed to ban **${safeTarget}**: ${sanitizeErrorMessage(error, 'An unexpected error occurred while processing the ban.')}`
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:49:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal submission.')] });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:55:    logger?.warn('Rejection modal with a malformed preset id', { customId });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:60:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'You do not have permission to reject presets.')] });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:66:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid rejection reason (at least 10 characters).')] });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:120:            description: `Preset rejected by ${safeModerator}`,
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:130:      logger.error('Failed to reject preset', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:146:                value: `Failed to reject: ${sanitizeErrorMessage(error, 'Unable to reject preset.')}`,
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:175:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid modal submission.')] });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:180:    logger?.warn('Revert modal with a malformed preset id', { customId });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:185:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'You do not have permission to revert presets.')] });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:191:    return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid revert reason (at least 10 characters).')] });
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:222:            description: `The preset has been restored to its previous state.`,
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:242:            description: `Preset edit reverted by ${safeModerator}`,
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:252:      logger.error('Failed to revert preset', error instanceof Error ? error : undefined);
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:268:                value: `Failed to revert: ${sanitizeErrorMessage(error, 'Unable to revert preset.')}`,
+apps/moderation-worker/src/services/ban-service.ts:433:        error: 'User is already banned.',
+apps/moderation-worker/src/services/ban-service.ts:471:        error: 'Ban system not configured. Please run the database migration first.',
+apps/moderation-worker/src/services/ban-service.ts:484:        error: 'Ban system schema is out of date — apply presets-api migration 0013.',
+apps/moderation-worker/src/services/ban-service.ts:495:        error: 'User is already banned.',
+apps/moderation-worker/src/services/ban-service.ts:504:      error: 'Failed to ban user.',
+apps/moderation-worker/src/services/ban-service.ts:524:        error: 'User is not currently banned.',
+apps/moderation-worker/src/services/ban-service.ts:556:        error: 'Failed to update ban record.',
+apps/moderation-worker/src/services/ban-service.ts:569:      error: 'Failed to unban user.',
+apps/moderation-worker/src/services/bot-i18n.ts:42:    userNotFound: 'Could not identify user.',
+apps/moderation-worker/src/services/bot-i18n.ts:43:    missingSubcommand: 'Please specify a subcommand.',
+apps/moderation-worker/src/services/bot-i18n.ts:50:      noPending: 'No presets are currently awaiting moderation.',
+apps/moderation-worker/src/services/bot-i18n.ts:52:      missingId: 'Please specify a preset ID for this action.',
+apps/moderation-worker/src/services/bot-i18n.ts:55:      missingReason: 'Please provide a reason for rejection.',
+apps/moderation-worker/src/services/bot-i18n.ts:64:      imageOnlyNote: 'Picture pending review: {url}',
+apps/moderation-worker/src/services/bot-i18n.ts:65:      imageOnlyNoteNoUrl: 'Picture pending review',
+apps/moderation-worker/src/services/bot-i18n.ts:82:      'Are you sure you want to ban this user from Preset Palettes?\n\nThis will **hide all their presets** and prevent them from submitting, voting, or editing presets.',
+apps/moderation-worker/src/services/bot-i18n.ts:100:    alreadyBanned: 'User is already banned.',
+apps/moderation-worker/src/services/bot-i18n.ts:101:    notBanned: 'User is not currently banned.',
+apps/moderation-worker/src/services/bot-i18n.ts:102:    userNotFound: 'User not found or has no presets.',
+apps/moderation-worker/src/services/bot-i18n.ts:103:    channelRestricted: 'This command can only be used in the moderation channel.',
+apps/moderation-worker/src/services/bot-i18n.ts:104:    permissionDenied: 'You do not have permission to perform this action.',
+apps/moderation-worker/src/services/preset-api.ts:171:    throw new PresetAPIError(500, 'Failed to communicate with preset API', error);
+apps/moderation-worker/src/services/preset-api.ts:205:        'This reduces security for worker-to-worker communication.',
+apps/moderation-worker/src/services/preset-api.ts:474:        'Preset autocomplete search failed',
+apps/moderation-worker/src/utils/env-validation.ts:26:export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in production: ';
+apps/moderation-worker/src/utils/env-validation.ts:63:      errors.push(`Missing or empty required secret: ${key}`);
+apps/moderation-worker/src/utils/env-validation.ts:73:      errors.push(`Missing or empty required config: ${key}`);
+apps/moderation-worker/src/utils/env-validation.ts:134:    errors.push('Missing required service binding: PRESETS_API');
+apps/moderation-worker/src/utils/env-validation.ts:172:    logger.error('Environment validation failed', undefined, { errors });
+apps/moderation-worker/src/utils/env-validation.ts:174:    console.error('Environment validation failed:');
+apps/moderation-worker/src/utils/response.ts:190:  fallbackMessage = 'An unexpected error occurred.'
+apps/moderation-worker/src/utils/response.ts:267: * hand-typed uppercase id is rejected by the same "Pick a user from the
+apps/moderation-worker/src/utils/response.ts:301: * response, and a 429 would make it show "The application did not respond"
+apps/moderation-worker/src/utils/response.ts:320:      ? `Rate limit exceeded. Try again in ${secondsLeft} second${secondsLeft === 1 ? '' : 's'}.`
+apps/moderation-worker/src/utils/response.ts:321:      : 'Rate limit exceeded. Please wait before trying again.';
+apps/moderation-worker/src/utils/safe-json.ts:124:      error: `Potential prototype pollution detected: ${pollutionCheck.reason}`,
+apps/moderation-worker/src/utils/safe-json.ts:262:      error: `Object nesting exceeds maximum depth of ${maxDepth}`,
+apps/moderation-worker/src/utils/safe-json.ts:279:        error: `Array exceeds maximum length of ${MAX_ARRAY_LENGTH} (has ${obj.length})`,
+apps/moderation-worker/src/utils/safe-json.ts:285:      warnings.push(`Large array detected: ${obj.length} elements`);
+apps/moderation-worker/src/utils/safe-json.ts:296:        error: `Object has too many properties: ${keys.length} (max ${MAX_PROPERTIES})`,
+apps/moderation-worker/src/utils/sql-helpers.ts:124:      error: `Query must be at least ${minLength} characters`,
+apps/moderation-worker/src/utils/sql-helpers.ts:140:      error: 'Query contains invalid characters',

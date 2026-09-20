@@ -1,0 +1,286 @@
+TOOL TITLES (en): ['Accessibility Checker', 'Budget Suggestions', 'Character Matcher', 'Color Harmony Explorer', 'Dye Comparison', 'Dye Mixer', 'Gradient Builder', 'Palette Extractor', 'Preset Palettes'] 
+
+[web-app tool names] EN = 'Accessibility Checker'  (2 keys)
+    de: tools.accessibility.title = 'Barrierefreiheitsprüfung'
+    de: resultCard.tools.accessibility = 'Barrierefreiheits-Prüfer'
+    fr: tools.accessibility.title = "Vérification d'Accessibilité"
+    fr: resultCard.tools.accessibility = "Vérificateur d'Accessibilité"
+
+[web-app tool names] EN = 'Budget Suggestions'  (2 keys)
+    fr: tools.budget.title = 'Suggestions Budget'
+    fr: resultCard.tools.budget = 'Suggestions de Budget'
+
+[web-app tool names] EN = 'Dye Comparison'  (2 keys)
+    ja: tools.comparison.title = 'カララント比較'
+    ja: resultCard.tools.comparison = '染料比較'
+    de: tools.comparison.title = 'Farbstoffvergleich'
+    de: resultCard.tools.comparison = 'Farbstoff-Vergleich'
+
+[web-app tool names] EN = 'Dye Mixer'  (2 keys)
+    ja: tools.mixer.title = 'カララントミキサー'
+    ja: resultCard.tools.mixer = '染料ミキサー'
+    de: tools.mixer.title = 'Farbstoffmixer'
+    de: resultCard.tools.mixer = 'Farbstoff-Mischer'
+
+[web-app tool names] EN = 'Gradient Builder'  (2 keys)
+    de: tools.gradient.title = 'Verlauf-Ersteller'
+    de: resultCard.tools.gradient = 'Farbverlauf-Ersteller'
+    fr: tools.gradient.title = 'Constructeur de Dégradé'
+    fr: resultCard.tools.gradient = 'Créateur de Dégradé'
+    ko: tools.gradient.title = '그라데이션 빌더'
+    ko: resultCard.tools.gradient = '그라디언트 빌더'
+
+== web-app tool names: 5 same-EN key groups diverge in >=1 locale ==
+
+[web-app ALL same-EN groups] EN = 'Accessibility Checker'  (2 keys)
+    de: tools.accessibility.title = 'Barrierefreiheitsprüfung'
+    de: resultCard.tools.accessibility = 'Barrierefreiheits-Prüfer'
+    fr: tools.accessibility.title = "Vérification d'Accessibilité"
+    fr: resultCard.tools.accessibility = "Vérificateur d'Accessibilité"
+
+[web-app ALL same-EN groups] EN = 'All'  (3 keys)
+    fr: colorPalette.all = 'Tout'
+    fr: dyeSelector.allCategories = 'Toutes'
+    fr: preset.categories.all = 'Tous'
+
+[web-app ALL same-EN groups] EN = 'All Worlds'  (2 keys)
+    fr: config.allWorlds = 'Tous les mondes'
+    fr: marketBoard.allWorlds = 'Tous les Mondes'
+    ko: config.allWorlds = '모든 월드'
+    ko: marketBoard.allWorlds = '전체 월드'
+    zh: config.allWorlds = '所有服务器'
+    zh: marketBoard.allWorlds = '所有世界'
+
+[web-app ALL same-EN groups] EN = 'Budget Suggestions'  (2 keys)
+    fr: tools.budget.title = 'Suggestions Budget'
+    fr: resultCard.tools.budget = 'Suggestions de Budget'
+
+[web-app ALL same-EN groups] EN = 'Clear'  (2 keys)
+    ja: common.clear = 'クリア'
+    ja: accessibility.tierClear = '明瞭'
+    de: common.clear = 'Leeren'
+    de: accessibility.tierClear = 'Klar'
+    fr: common.clear = 'Effacer'
+    fr: accessibility.tierClear = 'Nette'
+    ko: common.clear = '지우기'
+    ko: accessibility.tierClear = '분명'
+    zh: common.clear = '清除'
+    zh: accessibility.tierClear = '清晰'
+
+[web-app ALL same-EN groups] EN = 'Color Space'  (2 keys)
+    fr: config.colorSpace = 'Espace colorimétrique'
+    fr: mixer.colorSpace = 'Espace Colorimétrique'
+
+[web-app ALL same-EN groups] EN = 'Compare'  (2 keys)
+    de: tools.comparison.shortName = 'Vergleich'
+    de: budget.handoffCompare = 'Vergleichen'
+
+[web-app ALL same-EN groups] EN = 'Dark'  (3 keys)
+    ko: colorPalette.dark = '다크'
+    ko: themes.standardDark = '다크'
+    ko: swatch.rangeDark = '어두움'
+
+[web-app ALL same-EN groups] EN = 'Dye Comparison'  (2 keys)
+    ja: tools.comparison.title = 'カララント比較'
+    ja: resultCard.tools.comparison = '染料比較'
+    de: tools.comparison.title = 'Farbstoffvergleich'
+    de: resultCard.tools.comparison = 'Farbstoff-Vergleich'
+
+[web-app ALL same-EN groups] EN = 'Dye Mixer'  (2 keys)
+    ja: tools.mixer.title = 'カララントミキサー'
+    ja: resultCard.tools.mixer = '染料ミキサー'
+    de: tools.mixer.title = 'Farbstoffmixer'
+    de: resultCard.tools.mixer = 'Farbstoff-Mischer'
+
+[web-app ALL same-EN groups] EN = 'Dyes'  (3 keys)
+    ja: export.hexDyesHeader = 'カララント'
+    ja: preset.dyes = '染料'
+    ja: swatch.glamourViewDyes = 'カララント'
+
+[web-app ALL same-EN groups] EN = 'Europe'  (2 keys)
+    ja: marketBoard.region.europe = 'ヨーロッパ'
+    ja: swatch.itemLinks.lodestoneRegion.eu = '欧州'
+
+[web-app ALL same-EN groups] EN = 'Gradient Builder'  (2 keys)
+    de: tools.gradient.title = 'Verlauf-Ersteller'
+    de: resultCard.tools.gradient = 'Farbverlauf-Ersteller'
+    fr: tools.gradient.title = 'Constructeur de Dégradé'
+    fr: resultCard.tools.gradient = 'Créateur de Dégradé'
+    ko: tools.gradient.title = '그라데이션 빌더'
+    ko: resultCard.tools.gradient = '그라디언트 빌더'
+
+[web-app ALL same-EN groups] EN = 'Hair'  (2 keys)
+    ko: swatch.slotHair = '머리카락'
+    ko: swatch.palHair = '머리'
+
+[web-app ALL same-EN groups] EN = 'Harmony'  (2 keys)
+    ko: tools.harmony.shortName = '조화'
+    ko: budget.handoffHarmony = '하모니'
+
+[web-app ALL same-EN groups] EN = 'Harmony Type'  (2 keys)
+    ko: config.harmonyType = '조화 유형'
+    ko: harmony.harmonyType = '하모니 타입'
+
+[web-app ALL same-EN groups] EN = 'Light'  (4 keys)
+    ja: config.mixingRgb = '光'
+    ja: mixer.modelRgb = '光'
+    ja: themes.standardLight = 'ライト'
+    ja: swatch.rangeLight = 'ライト'
+    de: config.mixingRgb = 'Licht'
+    de: mixer.modelRgb = 'Licht'
+    de: themes.standardLight = 'Hell'
+    de: swatch.rangeLight = 'Hell'
+    fr: config.mixingRgb = 'Lumière'
+    fr: mixer.modelRgb = 'Lumière'
+    fr: themes.standardLight = 'Clair'
+    fr: swatch.rangeLight = 'Clair'
+    ko: config.mixingRgb = '빛'
+    ko: mixer.modelRgb = '빛'
+    ko: themes.standardLight = '라이트'
+    ko: swatch.rangeLight = '밝음'
+    zh: config.mixingRgb = '光'
+    zh: mixer.modelRgb = '光'
+    zh: themes.standardLight = '浅色'
+    zh: swatch.rangeLight = '浅色'
+
+[web-app ALL same-EN groups] EN = 'Market Board'  (2 keys)
+    fr: config.marketBoard = 'Tableau des marchés'
+    fr: marketBoard.title = 'Tableau des ventes'
+    ko: config.marketBoard = '시장 게시판'
+    ko: marketBoard.title = '마켓보드'
+    zh: config.marketBoard = '市场版'
+    zh: marketBoard.title = '市场布告板'
+
+[web-app ALL same-EN groups] EN = 'Max Colors'  (2 keys)
+    fr: config.maxColors = 'Couleurs maximum'
+    fr: tutorial.matcher.maxColors.title = 'Max. couleurs'
+
+[web-app ALL same-EN groups] EN = 'Max Results'  (3 keys)
+    fr: config.maxResults = 'Résultats maximum'
+    fr: mixer.maxResults = 'Résultats max'
+    fr: tutorial.mixer.maxResults.title = 'Max. résultats'
+    ko: config.maxResults = '최대 결과 수'
+    ko: mixer.maxResults = '최대 결과'
+    ko: tutorial.mixer.maxResults.title = '최대 결과 수'
+
+[web-app ALL same-EN groups] EN = 'No matching dyes found'  (2 keys)
+    de: matcher.noMatchingDyes = 'Keine passenden Farben gefunden'
+    de: gradient.noMatchesFound = 'Keine passenden Farbstoffe gefunden'
+    ko: matcher.noMatchingDyes = '매칭되는 염료를 찾을 수 없습니다'
+    ko: gradient.noMatchesFound = '일치하는 염료를 찾을 수 없습니다'
+
+[web-app ALL same-EN groups] EN = 'Paint'  (2 keys)
+    ja: config.mixingRyb = '絵具'
+    ja: mixer.modelRyb = '絵の具'
+    zh: config.mixingRyb = '颜料'
+    zh: mixer.modelRyb = '颜料画'
+
+[web-app ALL same-EN groups] EN = 'Perceptual'  (3 keys)
+    de: config.mixingLab = 'Wahrnehmung'
+    de: config.matchingOklab = 'Wahrnehmungsbasiert'
+    de: mixer.modelOklab = 'Perzeptuell'
+
+[web-app ALL same-EN groups] EN = 'Remove'  (2 keys)
+    ko: common.remove = '제거'
+    ko: preset.previewImageRemove = '삭제'
+
+[web-app ALL same-EN groups] EN = 'SOURCE'  (2 keys)
+    ko: comparison.deltaSource = '입수처'
+    ko: resultCard.acquisitionShort = '출처'
+
+[web-app ALL same-EN groups] EN = 'Save'  (2 keys)
+    de: common.save = 'Speichern'
+    de: preset.save = 'Merken'
+
+[web-app ALL same-EN groups] EN = 'Saved'  (2 keys)
+    de: preset.tabSaved = 'Gespeichert'
+    de: preset.savedBtn = 'Gemerkt'
+    fr: preset.tabSaved = 'Enregistrés'
+    fr: preset.savedBtn = 'Enregistré'
+
+[web-app ALL same-EN groups] EN = 'Select a dye'  (2 keys)
+    ja: harmony.selectDye = 'カララントを選択'
+    ja: emptyStates.noHarmony.action = '染料を選択'
+
+[web-app ALL same-EN groups] EN = 'Show Prices'  (2 keys)
+    fr: config.showPrices = 'Afficher les prix'
+    fr: marketBoard.showPrices = 'Afficher les Prix'
+
+[web-app ALL same-EN groups] EN = 'Spectrum'  (3 keys)
+    ja: common.spectrum = 'スペクトラム'
+    ja: config.showSpectrum = 'スペクトル'
+    ja: colorPalette.spectrumFilterLabel = 'スペクトル'
+
+[web-app ALL same-EN groups] EN = 'Vision Types'  (3 keys)
+    ja: config.visionTypes = '視覚タイプ'
+    ja: accessibility.visionTypes = '色覚タイプ'
+    ja: tutorial.accessibility.visionTypes.title = '視覚タイプ'
+    de: config.visionTypes = 'Sichttypen'
+    de: accessibility.visionTypes = 'Sehtypen'
+    de: tutorial.accessibility.visionTypes.title = 'Sehtypen'
+    fr: config.visionTypes = 'Types de vision'
+    fr: accessibility.visionTypes = 'Types de Vision'
+    fr: tutorial.accessibility.visionTypes.title = 'Types de vision'
+
+[web-app ALL same-EN groups] EN = 'Vote'  (2 keys)
+    de: preset.vote = 'Stimme'
+    de: preset.gateVote = 'Abstimmen'
+
+[web-app ALL same-EN groups] EN = 'Weighted RGB'  (2 keys)
+    fr: config.matchingRedmean = 'RVB pondéré'
+    fr: comparison.mRedmeanLabel = 'RGB pondéré'
+    zh: config.matchingRedmean = '加权RGB'
+    zh: comparison.mRedmeanLabel = '加权 RGB'
+
+[web-app ALL same-EN groups] EN = '{n} preset'  (2 keys)
+    zh: preset.resultsCountOne = '{n} 个配色'
+    zh: preset.mineSummaryPresetsOne = '{n} 个'
+
+[web-app ALL same-EN groups] EN = '{n} presets'  (2 keys)
+    zh: preset.resultsCount = '{n} 个配色'
+    zh: preset.mineSummaryPresetsMany = '{n} 个'
+
+== web-app ALL same-EN groups: 35 same-EN key groups diverge in >=1 locale ==
+
+[bot-logic ALL same-EN groups] EN = 'Category'  (2 keys)
+    zh: common.category = '分类'
+    zh: webhook.fields.category = '类别'
+
+[bot-logic ALL same-EN groups] EN = 'NEAREST DYE'  (2 keys)
+    ja: card.found = '最も近い色'
+    ja: card.swatchNearest = '近いカララント'
+    de: card.found = 'NÄCHSTER FARBSTOFF'
+    de: card.swatchNearest = 'NÄCHSTE FARBE'
+    fr: card.found = 'TROUVÉ'
+    fr: card.swatchNearest = 'TEINTURE PROCHE'
+    ko: card.found = '가장 가까운'
+    ko: card.swatchNearest = '가까운 염료'
+    zh: card.found = '最接近'
+    zh: card.swatchNearest = '最近的染剂'
+
+[bot-logic ALL same-EN groups] EN = 'RATIO'  (2 keys)
+    ja: card.ratioCol = 'コントラスト比'
+    ja: card.ratioShort = '比率'
+    de: card.ratioCol = 'VERHÄLTNIS'
+    de: card.ratioShort = 'VERH.'
+    ko: card.ratioCol = '명암비'
+    ko: card.ratioShort = '비율'
+    zh: card.ratioCol = '对比度'
+    zh: card.ratioShort = '比率'
+
+[bot-logic ALL same-EN groups] EN = 'TARGET'  (2 keys)
+    ja: card.target = '目標色'
+    ja: card.lTarget = '目標'
+    ko: card.target = '목표색'
+    ko: card.lTarget = '목표'
+    zh: card.target = '目标色'
+    zh: card.lTarget = '目标'
+
+[bot-logic ALL same-EN groups] EN = 'Web App'  (2 keys)
+    ja: webhook.sources.web = 'Webアプリ'
+    ja: stats.summary.webApp = 'Web アプリ'
+    fr: webhook.sources.web = 'Application Web'
+    fr: stats.summary.webApp = 'Application web'
+
+== bot-logic ALL same-EN groups: 5 same-EN key groups diverge in >=1 locale ==
+

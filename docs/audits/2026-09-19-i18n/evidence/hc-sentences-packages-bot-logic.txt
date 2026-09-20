@@ -1,0 +1,2 @@
+packages/bot-logic/src/i18n/locale-resolution.ts:124:      'Failed to get user language preference',
+packages/bot-logic/src/i18n/translator.ts:71:   * // → 'Could not find a dye named "Snow White".'

@@ -1,0 +1,47 @@
+apps/oauth/src/handlers/callback.ts:58:        error: 'Invalid request body',
+apps/oauth/src/handlers/callback.ts:70:        error: 'Missing code or code_verifier',
+apps/oauth/src/handlers/callback.ts:128:      console.warn('Ignoring mismatched redirect_uri during token exchange', {
+apps/oauth/src/handlers/callback.ts:156:        console.error('Token exchange failed:', errorData);
+apps/oauth/src/handlers/callback.ts:158:        console.error('Token exchange failed');
+apps/oauth/src/handlers/callback.ts:164:          error: 'Failed to exchange authorization code',
+apps/oauth/src/handlers/callback.ts:175:      console.error('Token missing required identify scope', { scope: tokens.scope });
+apps/oauth/src/handlers/callback.ts:179:          error: 'Token missing required permissions',
+apps/oauth/src/handlers/callback.ts:197:          error: 'Failed to fetch user information',
+apps/oauth/src/handlers/callback.ts:208:      console.error('Discord user response missing required fields', {
+apps/oauth/src/handlers/callback.ts:215:          error: 'Invalid user data received',
+apps/oauth/src/handlers/oauth-flow.ts:243:      return frontendErrorRedirect(c, config, 'Missing code or state parameter');
+apps/oauth/src/handlers/oauth-flow.ts:283:      console.error('Blocked redirect to untrusted target:', stateData.redirect_uri);
+apps/oauth/src/handlers/oauth-flow.ts:284:      return frontendErrorRedirect(c, config, 'Untrusted redirect target');
+apps/oauth/src/handlers/token.ts:41:        error: 'Missing or invalid Authorization header',
+apps/oauth/src/handlers/token.ts:108:        error: 'Missing or invalid Authorization header',
+apps/oauth/src/handlers/token.ts:141:          message: 'Token revoked successfully',
+apps/oauth/src/handlers/token.ts:159:      getLogger(c)?.error('Token revocation write failed', undefined, {
+apps/oauth/src/handlers/token.ts:167:            'The token could not be revoked. Clear client-side storage and retry — the session may still be active until it expires.',
+apps/oauth/src/handlers/token.ts:177:      message: 'Token marked for revocation. Please clear client-side storage.',
+apps/oauth/src/handlers/token.ts:181:        : 'Token blacklist not configured',
+apps/oauth/src/handlers/xivauth.ts:89:        error: 'Invalid request body',
+apps/oauth/src/handlers/xivauth.ts:101:        error: 'Missing code or code_verifier',
+apps/oauth/src/handlers/xivauth.ts:188:          error: 'Failed to exchange authorization code',
+apps/oauth/src/handlers/xivauth.ts:217:          error: 'Token missing required permissions',
+apps/oauth/src/handlers/xivauth.ts:246:          error: 'Failed to fetch user information',
+apps/oauth/src/handlers/xivauth.ts:261:          error: 'Invalid user data received',
+apps/oauth/src/handlers/xivauth.ts:308:        logger?.warn('Failed to fetch XIVAuth characters', { status: charactersResponse.status });
+apps/oauth/src/middleware/body-validation.ts:29:        error: 'Payload too large',
+apps/oauth/src/middleware/body-validation.ts:30:        message: `Request body exceeds maximum size of ${MAX_BODY_SIZE} bytes`,
+apps/oauth/src/middleware/body-validation.ts:38:    c.json({ success: false, error: 'Invalid request body', message }, 400),
+apps/oauth/src/services/jwt-service.ts:247:      throw new Error('Token has been revoked');
+apps/oauth/src/services/user-service.ts:193:        'Discord identity is already linked to another account; not linked (explicit account linking required)',
+apps/oauth/src/services/user-service.ts:239:    logger?.warn('Discord identity was claimed concurrently; not linked', {
+apps/oauth/src/utils/env-validation.ts:62:      errors.push(`Missing or empty required env var: ${key}`);
+apps/oauth/src/utils/env-validation.ts:122:      errors.push('Missing required env var in production: RL_AUTH_10');
+apps/oauth/src/utils/env-validation.ts:125:      errors.push('Missing required env var in production: RL_AUTH_20');
+apps/oauth/src/utils/env-validation.ts:128:      errors.push('Missing required env var in production: RL_AUTH_30');
+apps/oauth/src/utils/env-validation.ts:131:      errors.push('Missing required env var in production: TOKEN_BLACKLIST');
+apps/oauth/src/utils/env-validation.ts:156:  console.error('Environment validation failed:');
+apps/oauth/src/utils/oauth-validation.ts:144:    throw new Error('Token response missing scope field');
+apps/oauth/src/utils/oauth-validation.ts:151:    throw new Error(`Token missing required scopes: ${missingScopes.join(', ')}`);
+apps/oauth/src/utils/state-signing.ts:68:      throw new Error('Invalid state signature');
+apps/oauth/src/utils/state-signing.ts:81:      throw new Error('State missing expiration timestamp');
+apps/oauth/src/utils/state-signing.ts:98:      throw new Error('Invalid state format');
+apps/oauth/src/utils/state-signing.ts:102:    console.warn('Accepted unsigned state (transition period):', {
+apps/oauth/src/utils/state-signing.ts:117:  throw new Error('Invalid state format or signature required');

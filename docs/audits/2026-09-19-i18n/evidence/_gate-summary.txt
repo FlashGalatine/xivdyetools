@@ -1,0 +1,369 @@
+### build-packages
+CMD: pnpm turbo run build --filter=./packages/*
+EXIT: 0
+TAIL:
+[36m@xivdyetools/core:build: [0m   ✓ ko.json
+[36m@xivdyetools/core:build: [0m   ✓ zh.json
+[36m@xivdyetools/core:build: [0m✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\dist\data\locales
+[35m@xivdyetools/svg:build: [0mcache hit, replaying logs [2mcc60082e0804e36a[0m
+[35m@xivdyetools/svg:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/bot-logic:build: [0mcache miss, executing [2mc266376c6912c592[0m
+[32m@xivdyetools/bot-logic:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+
+[1m Tasks:    [32m[1m8 successful[0m, 8 total[0m
+[1mCached:    [1m7 cached[0m, 8 total[0m
+[1m  Time:    [1m3.455s[0m [0m
+
+
+### core-build-locales
+CMD: pnpm --filter @xivdyetools/core run build:locales
+EXIT: 0
+TAIL:
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-19\packages\core\src\data\locales\de.json (125 dyes)
+
+Building French (fr)...
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-19\packages\core\src\data\locales\fr.json (125 dyes)
+
+Building Korean (ko)...
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-19\packages\core\src\data\locales\ko.json (125 dyes)
+
+Building Chinese (zh)...
+  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-19\packages\core\src\data\locales\zh.json (125 dyes)
+
+✅ Locale files already up to date (nothing written).
+
+### core-locale-drift (empty = no hand edits)
+
+### core-i18n-tests
+CMD: pnpm --filter @xivdyetools/core exec vitest run src/config/__tests__/band-vocabulary.parity.test.ts src/services/__tests__/DyeSearch.parity.test.ts src/services/__tests__/LocalizationService.explicit-locale.test.ts
+EXIT: 0
+TAIL:
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90mC:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/packages/core[39m
+
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m23 passed[39m[22m[90m (23)[39m
+[2m   Start at [22m 21:33:36
+[2m   Duration [22m 1.78s[2m (tests 48%, transform 34%, import 10%, worker 8%)[22m
+
+
+### botlogic-i18n
+CMD: pnpm --filter @xivdyetools/bot-logic exec vitest run src/i18n
+EXIT: 0
+TAIL:
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mgetLocale[2m > [22mreturns the current locale code[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mcreateTranslator[2m > [22mreturns a Translator instance[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mcreateTranslator[2m > [22mcreates translators for all supported locales[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/__tests__/locale-orphans.test.ts[2m > [22mbot-logic i18n orphan gate[2m > [22mevery key in en.json is reachable from a consumer tree or an enumerated dynamic key[32m 155[2mms[22m[39m
+ [32m✓[39m src/i18n/__tests__/locale-orphans.test.ts[2m > [22mbot-logic i18n orphan gate[2m > [22mevery static key passed to Translator.t() exists in en.json[32m 74[2mms[22m[39m
+ [32m✓[39m src/i18n/__tests__/locale-orphans.test.ts[2m > [22mbot-logic i18n orphan gate[2m > [22mkeeps identical key sets across all six locales[32m 9[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m72 passed[39m[22m[90m (72)[39m
+[2m   Start at [22m 21:33:39
+[2m   Duration [22m 1.59s[2m (transform 67%, import 17%, tests 13%, worker 3%)[22m
+
+
+### webapp-validate-i18n
+CMD: pnpm --filter xivdyetools-web-app run validate:i18n
+EXIT: 0
+TAIL:
+  ✓ 14 identical value(s) allow-listed as intentional
+
+== ko: dups=0 missing=0 extra=0 identical=17 empty=0 varMismatch=0
+  ✓ 17 identical value(s) allow-listed as intentional
+
+== zh: dups=0 missing=0 extra=0 identical=14 empty=0 varMismatch=0
+  ✓ 14 identical value(s) allow-listed as intentional
+
+======================================================================
+
+✅ i18n parity clean — no duplicates, no drift, no untranslated values.
+
+
+### webapp-i18n-unused
+CMD: pnpm --filter xivdyetools-web-app run i18n:unused
+EXIT: 0
+TAIL:
+[2m$ node scripts/analyze-unused-keys.js[22m
+
+🌍 i18n orphan check — 1133 keys in en.json (meta.* excluded)
+   used: 1133   orphaned: 0
+
+✅ No orphaned keys.
+
+### webapp-i18n-tests
+CMD: pnpm --filter xivdyetools-web-app exec vitest run src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts src/components/__tests__/chara-import-i18n.test.ts src/shared/__tests__/preset-i18n.test.ts src/shared/__tests__/method-tags.parity.test.ts src/__tests__/font-contract.test.ts src/__tests__/public-metadata.test.ts
+EXIT: 1
+TAIL:
+[31;1mStatements   : 24.86% ( 1273/5120 )[0m
+[31;1mBranches     : 17.06% ( 437/2561 )[0m
+[31;1mFunctions    : 36.68% ( 358/976 )[0m
+[31;1mLines        : 25.35% ( 1218/4804 )[0m
+================================================================================
+ERROR: Coverage for lines (25.35%) does not meet global threshold (80%)
+ERROR: Coverage for functions (36.68%) does not meet global threshold (76%)
+ERROR: Coverage for statements (24.86%) does not meet global threshold (79%)
+ERROR: Coverage for branches (17.06%) does not meet global threshold (65%)
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-19\apps\web-app:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts src/components/__tests__/chara-import-i18n.test.ts src/shared/__tests__/preset-i18n.test.ts src/shared/__tests__/method-tags.parity.test.ts src/__tests__/font-contract.test.ts src/__tests__/public-metadata.test.ts[39m
+
+### og-i18n
+CMD: pnpm --filter xivdyetools-og-worker exec vitest run src/services/og-strings.test.ts src/services/svg/roles-i18n.test.ts src/og-data-generator.test.ts src/services/font-coverage.test.ts src/services/font-faces.test.ts
+EXIT: 0
+TAIL:
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90mC:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/apps/og-worker[39m
+
+
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[32m141 passed[39m[22m[90m (141)[39m
+[2m   Start at [22m 21:34:20
+[2m   Duration [22m 1.64s[2m (transform 69%, import 20%, tests 8%, worker 2%)[22m
+
+[2m  Transform [22m [33mtransforming modules took 3.01s[39m[2m · 69% of tracked time, re-done on every run[22m
+[2m            [22m [2mpersist transforms across runs with [22m[33mfsModuleCache: true[39m
+[2m            [22m [2mlearn more: https://vitest.dev/guide/improving-performance#caching-between-reruns[22m
+
+
+### discord-i18n
+CMD: pnpm --filter xivdyetools-discord-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts src/services/font-coverage.filter.test.ts src/services/font-faces.test.ts
+EXIT: 1
+TAIL:
+[31;1mStatements   : 3.63% ( 94/2589 )[0m
+[31;1mBranches     : 1.57% ( 30/1903 )[0m
+[31;1mFunctions    : 1.99% ( 8/402 )[0m
+[31;1mLines        : 3.36% ( 79/2348 )[0m
+================================================================================
+ERROR: Coverage for lines (3.36%) does not meet global threshold (88%)
+ERROR: Coverage for functions (1.99%) does not meet global threshold (88%)
+ERROR: Coverage for statements (3.63%) does not meet global threshold (87%)
+ERROR: Coverage for branches (1.57%) does not meet global threshold (80%)
+[90mundefined[39m
+C:\dev\XIVProjects\xivdyetools\.claude\worktrees\i18n-audit-2026-09-19\apps\discord-worker:
+[41m[31m[[39m[49m[41m[30mERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL[39m[49m[41m[31m][39m[49m [31mCommand failed with exit code 1: vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts src/services/font-coverage.filter.test.ts src/services/font-faces.test.ts[39m
+
+### moderation-i18n
+CMD: pnpm --filter xivdyetools-moderation-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts
+EXIT: 0
+TAIL:
+[33m(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:31:25). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.[39m
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90mC:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/apps/moderation-worker[39m
+
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m81 passed[39m[22m[90m (81)[39m
+[2m   Start at [22m 21:34:27
+[2m   Duration [22m 612ms[2m (transform 72%, import 21%, tests 4%, worker 3%)[22m
+
+
+### locale-diff-botlogic
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/locale-diff.py packages/bot-logic/src/i18n/locales
+EXIT: 0
+TAIL:
+  SAME-AS-SOURCE  manual.presetShare.name = '`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`'
+  SAME-AS-SOURCE  manual.presetFavorite.name = '`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`'
+  SAME-AS-SOURCE  manual.changelog.name = '`/changelog [version]`'
+  SAME-AS-SOURCE  manual.stats.name = '`/stats summary`'
+  SAME-AS-SOURCE  manual.about.name = '`/about`'
+  SAME-AS-SOURCE  manual.manualCmd.name = '`/manual [topic]`'
+  SAME-AS-SOURCE  matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP'
+  SAME-AS-SOURCE  card.ratioBand1 = '≥ 3:1'
+  SAME-AS-SOURCE  card.ratioBand2 = '≥ 4.5:1'
+  SAME-AS-SOURCE  card.ratioBand3 = '≥ 7:1'
+  SAME-AS-SOURCE  card.perDe = 'GIL/ΔE'
+  SAME-AS-SOURCE  firstRun.title = 'XIV Dye Tools 5.0'
+
+### locale-diff-webapp
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/locale-diff.py apps/web-app/src/locales
+EXIT: 0
+TAIL:
+
+== zh: 1135 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=10
+  SAME-AS-SOURCE  common.gilAmount = '{n} {unit}'
+  SAME-AS-SOURCE  matcher.rollCount = '{extracted} + {picks}'
+  SAME-AS-SOURCE  comparison.mOklabShort = 'ΔEOK2 · OKLab'
+  SAME-AS-SOURCE  comparison.mCie76Short = 'ΔE76 · CIE 1976'
+  SAME-AS-SOURCE  budget.colPerDe = 'GIL / ΔE'
+  SAME-AS-SOURCE  swatch.itemLinks.mirapri = 'Mirapri'
+  SAME-AS-SOURCE  swatch.itemLinks.garlandTools = 'GarlandTools'
+  SAME-AS-SOURCE  swatch.itemLinks.teamcraft = 'Teamcraft'
+  SAME-AS-SOURCE  swatch.itemLinks.gamerEscape = 'GamerEscape'
+  SAME-AS-SOURCE  swatch.cellTag = '{palette} #{index}'
+
+### locale-diff-core
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/locale-diff.py packages/core/src/data/locales
+EXIT: 0
+TAIL:
+  SAME-AS-SOURCE  races.roegadyn = 'Roegadyn'
+  SAME-AS-SOURCE  races.hrothgar = 'Hrothgar'
+  SAME-AS-SOURCE  clans.raen = 'Raen'
+  SAME-AS-SOURCE  clans.xaela = 'Xaela'
+  SAME-AS-SOURCE  clans.rava = 'Rava'
+  SAME-AS-SOURCE  clans.veena = 'Veena'
+
+== ja: 238 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+== ko: 238 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+== zh: 238 keys | dup=0 missing=0 extra=0 placeholder=0 same-as-en=0
+
+### script-inventory
+CMD: python /c/dev/XIVProjects/.claude/skills/i18n-manager/scripts/script-inventory.py packages/core/src/data/locales packages/bot-logic/src/i18n/locales apps/web-app/src/locales apps/og-worker/src/services/og-strings.ts apps/og-worker/src/services/og-embed.ts
+EXIT: 0
+TAIL:
+packages/bot-logic/src/i18n/locales\ko.json: 538 codepoints | Hangul=433, Symbols=10, Latin-1=2, Greek=2, Fullwidth=2, Other=1
+   Other: U+FE0F(️)
+packages/bot-logic/src/i18n/locales\zh.json: 700 codepoints | CJK Unified=592, Symbols=10, Fullwidth=9, CJK Punct=4, Latin-1=2, Greek=2, Other=1
+   Other: U+FE0F(️)
+apps/web-app/src/locales\de.json: 104 codepoints | Latin-1=12, Symbols=8, Greek=2
+apps/web-app/src/locales\en.json: 96 codepoints | Symbols=7, Latin-1=4, Greek=2
+apps/web-app/src/locales\fr.json: 116 codepoints | Latin-1=23, Symbols=6, Latin Ext=2, Greek=2
+apps/web-app/src/locales\ja.json: 810 codepoints | CJK Unified=575, Katakana=76, Hiragana=62, CJK Punct=6, Fullwidth=6, Latin-1=4, Symbols=3, Greek=2
+apps/web-app/src/locales\ko.json: 673 codepoints | Hangul=578, Symbols=7, Latin-1=4, Greek=2, CJK Punct=1
+apps/web-app/src/locales\zh.json: 1005 codepoints | CJK Unified=905, Symbols=7, Fullwidth=7, CJK Punct=4, Latin-1=4, Greek=2
+apps/og-worker/src/services/og-strings.ts: 482 codepoints | CJK Unified=188, Hangul=134, Katakana=49, Hiragana=23, Latin-1=9, CJK Punct=3, Fullwidth=3, Symbols=2
+apps/og-worker/src/services/og-embed.ts: 513 codepoints | CJK Unified=192, Hangul=142, Hiragana=43, Katakana=43, Latin-1=7, Fullwidth=6, Symbols=5, CJK Punct=2
+
+### font-sizes
+FragmentMono-Regular.ttf  125368 bytes
+NotoSansJP-Subset.ttf  224672 bytes
+NotoSansKR-Subset.ttf  113816 bytes
+NotoSansSC-Subset.ttf  339780 bytes
+Onest-Bold.ttf  64392 bytes
+Onest-Regular.ttf  64224 bytes
+Onest-SemiBold.ttf  64420 bytes
+SpaceGrotesk-Bold.ttf  86608 bytes
+SpaceGrotesk-Regular.ttf  86664 bytes
+SpaceGrotesk-SemiBold.ttf  86640 bytes
+FragmentMono-Regular.ttf  125368 bytes
+NotoSansJP-Subset.ttf  331492 bytes
+NotoSansKR-Subset.ttf  144016 bytes
+NotoSansSC-Subset.ttf  494912 bytes
+Onest-Bold.ttf  64392 bytes
+Onest-Regular.ttf  64224 bytes
+Onest-SemiBold.ttf  64420 bytes
+SpaceGrotesk-Bold.ttf  86608 bytes
+SpaceGrotesk-Regular.ttf  86664 bytes
+SpaceGrotesk-SemiBold.ttf  86640 bytes
+
+### font-vs-locale-mtimes
+-- last commit touching each path --
+2026-09-05T09:40:57-04:00  packages/core/src/data/locales
+2026-09-19T01:35:00-04:00  packages/bot-logic/src/i18n/locales
+2026-09-17T10:04:29-04:00  apps/web-app/src/locales
+2026-08-21T00:02:00-04:00  apps/og-worker/src/services/og-strings.ts
+2026-08-20T23:57:03-04:00  apps/og-worker/src/services/og-embed.ts
+2026-09-05T11:06:17-04:00  apps/og-worker/src/fonts
+2026-09-18T20:52:49-04:00  apps/discord-worker/src/fonts
+
+eslint exit: 0
+### vocab-split
+CMD: python /c/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/docs/audits/2026-09-19-i18n/evidence/scripts/vocab-split.py
+EXIT: 0
+TAIL:
+[web-app] tools.comparison.title   vs core tools.comparison   (en = 'Dye Comparison')
+    de: web-app='Farbstoffvergleich'   core='Farbstoff-Vergleich'
+    zh: web-app='染剂比较'   core='染剂对比'
+
+[web-app] tools.gradient.title   vs core tools.gradient   (en = 'Gradient Builder')
+    de: web-app='Verlauf-Ersteller'   core='Verlaufs-Generator'
+    fr: web-app='Constructeur de Dégradé'   core='Créateur de dégradés'
+
+[web-app] tools.mixer.title   vs core tools.mixer   (en = 'Dye Mixer')
+    de: web-app='Farbstoffmixer'   core='Farbstoff-Mixer'
+    zh: web-app='染剂混合器'   core='染剂调色器'
+
+
+### term-check
+CMD: python /c/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/docs/audits/2026-09-19-i18n/evidence/scripts/term-check.py
+EXIT: 0
+TAIL:
+dictionary rows matched to a core key: 45
+dictionary rows with no core counterpart (skipped): 26
+value mismatches: 0
+
+
+### font-union-analysis
+CMD: python /c/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/docs/audits/2026-09-19-i18n/evidence/scripts/font-union-analysis.py
+EXIT: 0
+TAIL:
+      NotoSansSC-Subset.ttf        cjk_glyphs= 1072 needed_by_sources= 1072 surplus=    0  483 KiB
+
+===== og-worker =====
+  needed codepoints (all scripts): 977
+  union cmap of 10 bundled faces: 1769
+  NEEDED BUT IN NO FACE (real tofu): 0
+  per-face CJK-range glyphs vs. how many of those are actually needed:
+      FragmentMono-Regular.ttf     cjk_glyphs=    2 needed_by_sources=    0 surplus=    2  122 KiB
+      NotoSansJP-Subset.ttf        cjk_glyphs=  232 needed_by_sources=  232 surplus=    0  219 KiB
+      NotoSansKR-Subset.ttf        cjk_glyphs=  306 needed_by_sources=  306 surplus=    0  111 KiB
+      NotoSansSC-Subset.ttf        cjk_glyphs=  578 needed_by_sources=  578 surplus=    0  331 KiB
+
+
+### svg-literal-glyphs
+CMD: python /c/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/docs/audits/2026-09-19-i18n/evidence/scripts/svg-literal-glyphs.py
+EXIT: 0
+TAIL:
+  CJK-ONLY (falls to a Noto face)  U+9806 順   packages/svg/src/nearest-sheet.ts:52
+  TOFU  (no bundled face)          U+FE0F ️   packages/svg/src/emitted-glyphs.ts:39, packages/svg/src/preset-swatch.ts:87, packages/svg/src/preset-swatch.ts:88
+  CJK-ONLY (falls to a Noto face)  U+FF1A ：   packages/svg/src/base.ts:315
+  TOFU  (no bundled face)          U+1F342 🍂   packages/svg/src/preset-swatch.ts:89
+  TOFU  (no bundled face)          U+1F389 🎉   packages/svg/src/preset-swatch.ts:90
+  TOFU  (no bundled face)          U+1F3A8 🎨   packages/svg/src/preset-swatch.ts:91
+  TOFU  (no bundled face)          U+1F3D4 🏔   packages/svg/src/preset-swatch.ts:93
+  TOFU  (no bundled face)          U+1F3DB 🏛   packages/svg/src/preset-swatch.ts:88
+  TOFU  (no bundled face)          U+1F464 👤   packages/svg/src/preset-swatch.ts:92
+  TOFU  (no bundled face)          U+1F5E1 🗡   packages/svg/src/preset-swatch.ts:94
+
+(ok glyphs omitted)
+
+### variable-font-check
+CMD: python /c/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/docs/audits/2026-09-19-i18n/evidence/scripts/variable-font-check.py
+EXIT: 0
+TAIL:
+===== og-worker =====
+  static    FragmentMono-Regular.ttf       OS/2.usWeightClass=400
+  static    NotoSansJP-Subset.ttf          OS/2.usWeightClass=400
+  static    NotoSansKR-Subset.ttf          OS/2.usWeightClass=400
+  static    NotoSansSC-Subset.ttf          OS/2.usWeightClass=400
+  static    Onest-Bold.ttf                 OS/2.usWeightClass=700
+  static    Onest-Regular.ttf              OS/2.usWeightClass=400
+  static    Onest-SemiBold.ttf             OS/2.usWeightClass=600
+  static    SpaceGrotesk-Bold.ttf          OS/2.usWeightClass=700
+  static    SpaceGrotesk-Regular.ttf       OS/2.usWeightClass=400
+  static    SpaceGrotesk-SemiBold.ttf      OS/2.usWeightClass=600
+
+
+### dynamic-keys
+CMD: python /c/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/docs/audits/2026-09-19-i18n/evidence/scripts/check_dynamic_keys.py
+EXIT: 0
+TAIL:
+
+=== FAMILY11 mixer.model${Cap(model)} (mixer-tool.ts:1251/1886, MODELS domain) (6 keys) ===
+
+=== SECONDARY preset-i18n.ts CATEGORY_LABEL_KEYS (Record indirection) (9 keys) ===
+
+=== SECONDARY preset-i18n.ts VALIDATION_KEYS (Record indirection) (11 keys) ===
+
+=== SECONDARY preset-i18n.ts PRESET_ERROR_KEYS (Record indirection) (8 keys) ===
+
+
+TOTAL dynamic/indirect keys checked: 214
+TOTAL problems found: 0
+
+font-sweep exit: 0
+innerHTML sites: 20
+hc-sentences apps/discord-worker: 185
+hc-sentences apps/og-worker: 3
+hc-sentences apps/moderation-worker: 105
+hc-sentences apps/presets-api: 83
+hc-sentences apps/api-worker: 44
+hc-sentences apps/oauth: 47
+hc-sentences packages/bot-logic: 2
+hc-sentences packages/svg: 0
+hc-sentences packages/core: 42

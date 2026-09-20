@@ -1,0 +1,40 @@
+# 2026-09-19 — whole-monorepo i18n audit
+
+Six locales (`en ja de fr ko zh`) across every deploy unit, on `origin/main` `e86c7404`, focused on
+the surface added since [2026-09-03-i18n](../2026-09-03-i18n/README.md). **15 findings — 2 P1,
+6 P2, 7 P3.** All three locale sets are again structurally perfect (238 / 513 / 1135 keys × 6, zero
+duplicate, missing, extra or placeholder faults), every gate's tests pass, fonts are static, tight
+and tofu-free. What is left is what structural gates cannot see: the same noun translated three
+ways, Discord picker metadata that was never finished, an English plural rule applied to French,
+an accent-blind search, and one typo. No source or locale file was modified by this audit.
+
+| File | Purpose |
+|---|---|
+| [I18N_AUDIT_2026-09-19.md](I18N_AUDIT_2026-09-19.md) | The catalog: locale + font status, all 15 findings, positive controls, rejected suspicions, recommendations |
+| [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Sprint-sequenced plan (remediation-planner) |
+| `findings/` | One file per finding — `I18N-001…010`, `HC-001`, `TERM-001…004` |
+| `evidence/official-terms-research.md` | Web research requested mid-audit: the official Market Board / World / Data Center term in ja de fr ko zh, with sources and confidence |
+| `evidence/reviewer-brief.md` | The shared brief the six per-unit reviewers worked from (checklist, do-not-re-file list, return schema) |
+| `evidence/review-*.md` | The six reviewer returns (web-app, discord-worker, bot-logic, og-worker, core-svg, api-workers) |
+| `evidence/_gate-summary.txt` + `*.txt` / `eslint.json` | Raw gate, parity, font and sweep output |
+| `evidence/scripts/` | Every script used — `run-gates.sh` (reusable runner) and three new sweeps: `tool-name-consistency.py`, `market-board-term.py`, `en-needle-values.py` |
+
+## Top items
+
+1. **TERM-001 (P2)** — web-app + bot-logic: "Market Board" is `Tableau des ventes` *and* `Tableau des marchés`, `시장 게시판` *and* `마켓보드`, `市场板` *and* `市场版` *and* `市场布告板` — config sidebar vs panel. Official: `tableau des ventes`, `장터`, `市场布告板`; `市场版` exists in no source. The dictionary has no row for it.
+2. **I18N-001 (P1)** — discord-worker: 134 of 151 slash-command descriptions (every subcommand and option tooltip) are English in all locales — the never-executed phase 2 of 2026-08-20's F-03; the test pins the gap at 17.
+3. **I18N-005 (P1)** — core + bot-logic: dye search by localized name folds ASCII case only, so `schneeweiss` and `creme` find nothing; a third of de/fr dye names carry ß or an accent. Hits the public API and every Discord dye option.
+4. **I18N-003 (P2)** — bot-logic: `tc()` picks plural forms with `count === 1` for every locale; French treats 0 as singular, and `vote_count === 0` is the state of every new preset card.
+5. **TERM-002 (P2)** — web-app: the result card's "send to tool" menu names five tools differently from the tools' own titles in de/fr/ja/ko (`Farbstoff-Mischer` → page titled `Farbstoffmixer`).
+6. **I18N-002 / HC-001 / I18N-004 (P2)** — `/manual topic` choices English in the picker; `/about` has an English sentence under a translated heading; Korean ΔE explainer says `안팡` for `안팎`.
+
+## Decisions made during the audit (2026-09-19)
+
+- **TERM-003** — adopt the KR/CN client terms: ko `서버` / `데이터 센터`, zh `服务器` / `大区`.
+- **I18N-010** — translate all four policy documents (2 Privacy, 2 ToS) into ja de fr ko zh as `<STEM>.<locale>.md`; English stays governing. The audit skills now check them in every language (`audit-shared/policy-documents.md`, `scripts/policy-locale-parity.py`).
+
+## Caveats worth carrying forward
+
+- **The coordinator's own "official" Korean term was wrong** (`장터 게시판`; the client says `장터`). Terminology fixes need a cited source, not a fluent-sounding guess — the research file records both.
+- zh evidence is MED-HIGH: the official SDO site renders client-side and could not be fetched; the CN wiki and indexed official headlines agree. ko pages were read through a summarizing fetch — eyeball the two guide URLs once before shipping TERM-001/003.
+- Two gate runs exit 1 with every test green: `coverage.enabled: true` in web-app's and discord-worker's vitest configs trips thresholds on subset runs. Not a failure.

@@ -1,0 +1,64 @@
+• turbo 2.10.12
+
+   • Packages in scope: @xivdyetools/auth, @xivdyetools/bot-logic, @xivdyetools/core, @xivdyetools/logger, @xivdyetools/svg, @xivdyetools/test-utils, @xivdyetools/types, @xivdyetools/worker-kit
+   • Running build in 8 packages
+   • Remote caching disabled, using shared worktree cache
+
+[36m@xivdyetools/auth:build: [0mcache hit, replaying logs [2mdfff2a4f0d58d67e[0m
+[36m@xivdyetools/auth:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/logger:build: [0mcache hit, replaying logs [2m5c53f0df14916604[0m
+[32m@xivdyetools/logger:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[35m@xivdyetools/types:build: [0mcache hit, replaying logs [2mb969e907df8b012e[0m
+[35m@xivdyetools/types:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[33m@xivdyetools/worker-kit:build: [0mcache hit, replaying logs [2m71ba5237f28cb4d4[0m
+[33m@xivdyetools/worker-kit:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[34m@xivdyetools/test-utils:build: [0mcache hit, replaying logs [2m5af7476c56b730de[0m
+[34m@xivdyetools/test-utils:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[36m@xivdyetools/core:build: [0mcache hit, replaying logs [2mc08a90dc916b9c7f[0m
+[36m@xivdyetools/core:build: [0m[2m$ npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales[22m
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m> @xivdyetools/core@5.3.0 build:locales
+[36m@xivdyetools/core:build: [0m> tsx scripts/build-locales.ts
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m🌐 Building locale files...
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding English (en)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\en.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding Japanese (ja)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\ja.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding German (de)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\de.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding French (fr)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\fr.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding Korean (ko)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\ko.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0mBuilding Chinese (zh)...
+[36m@xivdyetools/core:build: [0m  = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\src\data\locales\zh.json (125 dyes)
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m✅ Locale files already up to date (nothing written).
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m> @xivdyetools/core@5.3.0 copy:locales
+[36m@xivdyetools/core:build: [0m> tsx scripts/copy-locales.ts
+[36m@xivdyetools/core:build: [0m
+[36m@xivdyetools/core:build: [0m📦 Copying 6 locale files to dist...
+[36m@xivdyetools/core:build: [0m   ✓ de.json
+[36m@xivdyetools/core:build: [0m   ✓ en.json
+[36m@xivdyetools/core:build: [0m   ✓ fr.json
+[36m@xivdyetools/core:build: [0m   ✓ ja.json
+[36m@xivdyetools/core:build: [0m   ✓ ko.json
+[36m@xivdyetools/core:build: [0m   ✓ zh.json
+[36m@xivdyetools/core:build: [0m✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\.claude\worktrees\deep-dive-2026-09-16\packages\core\dist\data\locales
+[35m@xivdyetools/svg:build: [0mcache hit, replaying logs [2mcc60082e0804e36a[0m
+[35m@xivdyetools/svg:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+[32m@xivdyetools/bot-logic:build: [0mcache miss, executing [2mc266376c6912c592[0m
+[32m@xivdyetools/bot-logic:build: [0m[2m$ tsc -p tsconfig.build.json[22m
+
+[1m Tasks:    [32m[1m8 successful[0m, 8 total[0m
+[1mCached:    [1m7 cached[0m, 8 total[0m
+[1m  Time:    [1m3.455s[0m [0m
+
