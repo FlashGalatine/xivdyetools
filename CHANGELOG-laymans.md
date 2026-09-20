@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.9.1] - 2026-09-20
+### 🧒 Lalafell character files open again
+- Web app: the Swatch Matcher accepts a Lalafell `.chara` file again. Dropping one used to fail straight away with "unrecognised value 'Lalafel'" — the file writes that race name with one L at the end, and the tool was only looking for the spelling with two.
+- Discord bot: the same file attached to `/swatch` now returns a card instead of that error.
+- Every other race was unaffected, and your file is still read on your own device in the web app.
+
 ## [5.9.0] - 2026-09-20
 ### 🌐 More of XIV Dye Tools in your language
 - Web app: the Privacy Policy and Terms of Service can now be read in Japanese, German, French, Korean and Chinese. The links in About open the version for the language you chose; the English text remains the official one.
