@@ -685,7 +685,8 @@
     "updatedEyebrow": "前回のご利用から更新されました",
     "allReleases": "すべてのリリース",
     "pastLabel": "過去のリリース",
-    "currentTag": "最新"
+    "currentTag": "最新",
+    "olderReleases": "以前のリリースを GitHub で見る"
   },
   "welcome": {
     "title": "XIV 染色ツールへようこそ",

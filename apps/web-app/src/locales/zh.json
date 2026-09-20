@@ -685,7 +685,8 @@
     "updatedEyebrow": "自上次访问以来已更新",
     "allReleases": "所有版本",
     "pastLabel": "早期版本",
-    "currentTag": "当前"
+    "currentTag": "当前",
+    "olderReleases": "在 GitHub 上查看更早的版本"
   },
   "welcome": {
     "title": "欢迎使用 XIV 染色工具",

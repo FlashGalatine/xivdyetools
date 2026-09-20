@@ -45,5 +45,8 @@ declare module 'virtual:changelog' {
     sections: ChangelogSection[];
   }
 
+  /** The newest releases that fit the module's byte budget (`boundChangelog`). */
   export const changelogEntries: ChangelogEntry[];
+  /** How many older releases the budget left out — the modal links to the full file. */
+  export const olderReleases: number;
 }

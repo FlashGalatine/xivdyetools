@@ -129,20 +129,23 @@ const BUNDLE_LIMITS = [
 
   // On-demand data: the parsed CHANGELOG-laymans.md, fetched when What's New
   // opens. Prose grows with every release, so it gets its own budget rather
-  // than the 60 KB default -- ~28 KB (69% of this limit) with the full history
-  // restored across 25 releases. It measured ~18 KB while the parser was
-  // silently dropping seven of them, so treat that older figure as a symptom
-  // rather than a baseline. Headroom is roughly a dozen more releases: trim the
-  // oldest entries or raise the limit deliberately rather than be surprised.
+  // than the 60 KB default.
   //
-  // Raised 40 -> 48 KB on 2026-09-20 (web-app 5.12.0): the 32nd release's notes
-  // put the chunk at 40.06 KB, 60 bytes over. Raising was chosen over trimming
-  // because the chunk loads only when What's New opens (nothing at first
-  // paint; 14.9 KB gzipped) while trimming deletes history the modal exists to
-  // show. It grew ~12 KB over the last 7 releases, so 48 KB is a handful more,
-  // not a dozen — the next time this trips, trimming the oldest entries is the
-  // better answer.
-  { label: 'release notes (on open)', pattern: /^_virtual_changelog-/, limit: 48 * KB },
+  // This limit is kept true by the PRODUCER, not by vigilance: the plugin bounds
+  // the module at MAX_MODULE_BYTES (36 KB of JSON, vite-plugin-changelog-parser
+  // -> boundChangelog), newest release first, and the modal links to the full
+  // file for whatever was left out. Release cadence can no longer trip it — only
+  // the newest ten releases outgrowing 36 KB between them can, and that is an
+  // oversized release note, which is worth being told about.
+  //
+  // History: the bound used to be a COUNT (50 releases, ~64 KB at the measured
+  // 1.27 KB per release) against this byte limit, so the two never agreed. The
+  // chunk crossed 40 KB on its 32nd release (40.06 KB, 2026-09-20) and the limit
+  // was raised to 48 KB for a day — about six releases of headroom at a cadence
+  // of fourteen in six weeks — before the bound moved into bytes and the limit
+  // came back. If this trips, read the release note that tripped it before
+  // touching either number.
+  { label: 'release notes (on open)', pattern: /^_virtual_changelog-/, limit: 40 * KB },
 ];
 
 /**

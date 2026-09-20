@@ -685,7 +685,8 @@
     "updatedEyebrow": "UPDATED SINCE YOUR LAST VISIT",
     "allReleases": "ALL RELEASES",
     "pastLabel": "EARLIER RELEASES",
-    "currentTag": "CURRENT"
+    "currentTag": "CURRENT",
+    "olderReleases": "Older releases on GitHub"
   },
   "welcome": {
     "title": "Welcome to XIV Dye Tools",

@@ -48,6 +48,14 @@ interface ChangelogEntry {
 /** Which entry point opened the modal — same layout, different framing */
 export type ChangelogMode = 'popup' | 'history';
 
+/**
+ * The full release notes. The module this modal loads is bounded in bytes
+ * (vite-plugin-changelog-parser → `boundChangelog`), so once the history outgrows
+ * that budget the oldest releases are reachable here instead of in the chunk.
+ */
+const FULL_CHANGELOG_URL =
+  'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app/CHANGELOG-laymans.md';
+
 // ============================================================================
 // Changelog Modal Class
 // ============================================================================
@@ -114,8 +122,9 @@ export class ChangelogModal {
     // when a user reaches for "What's New") the button did nothing at all, with
     // no toast and no console error. Tell the user to reload instead.
     let changelogEntries: ChangelogEntry[];
+    let olderReleases: number;
     try {
-      ({ changelogEntries } = await import('virtual:changelog'));
+      ({ changelogEntries, olderReleases } = await import('virtual:changelog'));
     } catch (error) {
       logger.error('[ChangelogModal] Failed to load changelog chunk:', error);
       ToastService.error(LanguageService.t('errors.tryAgainOrRefresh'));
@@ -126,7 +135,7 @@ export class ChangelogModal {
     if (generation !== this.generation || this.modalId) return;
 
     const mode = opts.mode ?? 'popup';
-    const content = this.createContent(mode, changelogEntries);
+    const content = this.createContent(mode, changelogEntries, olderReleases);
 
     this.modalId = ModalService.showChangelog({
       title:
@@ -164,7 +173,11 @@ export class ChangelogModal {
   /**
    * Create modal content: one release expanded, the rest collapsed rows.
    */
-  private createContent(mode: ChangelogMode, changelogEntries: ChangelogEntry[]): HTMLElement {
+  private createContent(
+    mode: ChangelogMode,
+    changelogEntries: ChangelogEntry[],
+    olderReleases = 0
+  ): HTMLElement {
     const container = document.createElement('div');
     container.className = 'changelog-modal-content';
 
@@ -206,7 +219,25 @@ export class ChangelogModal {
       container.appendChild(list);
     }
 
+    if (olderReleases > 0) container.appendChild(this.createOlderReleasesLink());
+
     return container;
+  }
+
+  /**
+   * Shown only when the build left releases out of the chunk: the history above
+   * is complete as far back as it goes, and this is where the rest of it lives.
+   */
+  private createOlderReleasesLink(): HTMLElement {
+    const link = document.createElement('a');
+    link.className = 'block mt-4 text-sm underline';
+    link.style.color = 'var(--theme-text-muted)';
+    link.href = FULL_CHANGELOG_URL;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.dataset.testid = 'changelog-older-releases';
+    link.textContent = LanguageService.t('changelog.olderReleases');
+    return link;
   }
 
   /**

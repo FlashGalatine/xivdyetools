@@ -685,7 +685,8 @@
     "updatedEyebrow": "MIS À JOUR DEPUIS VOTRE DERNIÈRE VISITE",
     "allReleases": "TOUTES LES VERSIONS",
     "pastLabel": "VERSIONS PRÉCÉDENTES",
-    "currentTag": "ACTUELLE"
+    "currentTag": "ACTUELLE",
+    "olderReleases": "Versions antérieures sur GitHub"
   },
   "welcome": {
     "title": "Bienvenue sur Outils de Teinture XIV",

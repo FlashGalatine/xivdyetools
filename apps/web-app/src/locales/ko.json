@@ -685,7 +685,8 @@
     "updatedEyebrow": "지난 방문 이후 업데이트됨",
     "allReleases": "모든 릴리스",
     "pastLabel": "이전 릴리스",
-    "currentTag": "현재"
+    "currentTag": "현재",
+    "olderReleases": "이전 릴리스는 GitHub에서 보기"
   },
   "welcome": {
     "title": "XIV 염색 도구에 오신 것을 환영합니다",
