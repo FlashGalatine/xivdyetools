@@ -15,12 +15,15 @@ and seven open items that need a maintainer decision.
 |---|---|
 | [I18N_AUDIT_2026-09-19.md](I18N_AUDIT_2026-09-19.md) | The catalog: locale + font status, all 15 findings, positive controls, rejected suspicions, recommendations |
 | [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Sprint-sequenced plan (remediation-planner) |
+| [OPEN_ITEMS_SOLUTIONS.md](OPEN_ITEMS_SOLUTIONS.md) | 2026-09-20: the best solution for each item the report left open, measured and reviewed — **proposed, not applied** |
 | `findings/` | One file per finding — `I18N-001…010`, `HC-001`, `TERM-001…004` |
 | `evidence/official-terms-research-glamour.md` | The second round of web research (2026-09-20): "glamour" as a system, as four item compounds, and as one outfit, in five languages — with the false friends and the refuted guesses |
 | `evidence/naming-glamour-brief.md` | The brief the five per-language agents worked from for the naming + glamour pass |
 | `evidence/official-terms-research.md` | Web research requested mid-audit: the official Market Board / World / Data Center term in ja de fr ko zh, with sources and confidence |
 | `evidence/remediation-brief.md`, `policy-translation-brief.md`, `policy-verification-brief.md` | The briefs the 13 remediation agents, 5 translators and 2 `opus` verifiers worked from |
 | `evidence/same-en-groups-after.txt`, `market-board-term-after.txt` | The consistency sweeps re-run after remediation (35 → 11 groups; one Market Board term per locale) |
+| `evidence/open-items-review-brief.md`, `review-open-items.md` | The brief and the hand-back of the `opus` reviewer who checked the open-item proposals in five languages |
+| `evidence/guardrail-measure.txt`, `whats-new-chunk-composition.txt` | What the two unbuilt guardrails would flag today; what the What's New chunk is made of |
 | `evidence/reviewer-brief.md` | The shared brief the six per-unit reviewers worked from (checklist, do-not-re-file list, return schema) |
 | `evidence/review-*.md` | The six reviewer returns (web-app, discord-worker, bot-logic, og-worker, core-svg, api-workers) |
 | `evidence/_gate-summary.txt` + `*.txt` / `eslint.json` | Raw gate, parity, font and sweep output |
@@ -49,5 +52,5 @@ and seven open items that need a maintainer decision.
 ## Caveats worth carrying forward
 
 - **Terminology needs a cited source, and the raw page beats a summary of it.** The coordinator guessed `장터 게시판` for the Korean Market Board; the researcher reported it refuted in favour of `장터`; the maintainer's raw capture of the official guide then showed both are official — `장터` is the feature (what the apps mean, and what shipped), `장터 게시판` the board object's in-game map label.
-- The maintainer supplied raw full-page captures on 2026-09-20 for the fetches the researchers could not make cleanly: they confirm ko `장터` and `서버` and zh `市场布告板` verbatim (quotes in `evidence/official-terms-research.md`). Still resting on a summarized fetch or indexed headlines only: ko `데이터 센터` (guide no. 1025), zh `服务器` and `大区`.
+- The maintainer supplied raw full-page captures on 2026-09-20 for the fetches the researchers could not make cleanly: they confirm ko `장터` and `서버` and zh `市场布告板` verbatim (quotes in `evidence/official-terms-research.md`). The three they did not cover — ko `데이터 센터` (guide no. 1025), zh `服务器` and `大区` — were verified the same day by loading the official pages in a real browser and reading the raw DOM text, so all eighteen values now rest on the publisher's own page.
 - Two gate runs exit 1 with every test green: `coverage.enabled: true` in web-app's and discord-worker's vitest configs trips thresholds on subset runs. Not a failure.

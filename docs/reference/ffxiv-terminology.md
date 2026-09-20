@@ -220,6 +220,9 @@ They are written by hand in `apps/web-app/src/locales/*.json`, in
 is the only thing pinning them. Each value is the term the game client of that language uses,
 taken from the publisher's own site on 2026-09-19 (sources and confidence:
 [2026-09-19 i18n audit — official terms research](../audits/2026-09-19-i18n/evidence/official-terms-research.md)).
+All six Korean and Chinese values were then read verbatim from the raw pages on 2026-09-20 — the
+Korean and Chinese official sites render client-side or sit behind a summarizing fetch, so they
+were checked from full-page captures and in a real browser rather than trusted from a summary.
 
 | EN | JA | DE | FR | KO | ZH |
 |----|----|----|----|----|----|
