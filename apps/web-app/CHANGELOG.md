@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.0] - 2026-09-20
+
+2026-09-19 i18n audit, Sprints 2–3 (`docs/audits/2026-09-19-i18n/`). The locale files were
+structurally perfect — every defect here is one a parity gate cannot see: the same noun translated
+two or three ways, a typo, a sort that ignored the app's locale, and legal documents that existed
+in one language behind six localized links.
+
+### Added
+
+- **I18N-010**: the Privacy Policy and Terms of Service now exist in all six languages —
+  `PRIVACY.<lc>.md` and `TERMS_OF_SERVICE.<lc>.md` for ja / de / fr / ko / zh beside the English
+  files, which stay the governing text; each translation opens with a localized "English
+  prevails" notice. `about-modal.ts` gains `policyDocFile(stem, locale)` and the About modal links
+  the variant for the app's current locale, falling back to English. Parity (structure, numbers,
+  commands, hosts, date, notice) is checked by `audit-shared/scripts/policy-locale-parity.py`.
+
+### Fixed
+
+- **TERM-001**: "Market Board" was `Tableau des marchés` in the config sidebar and `Tableau des
+  ventes` in the panel (fr), `시장 게시판` and `마켓보드` (ko), `市场版`, `市场板` and `市场布告板`
+  (zh). All six keys per locale now use the term the game client of that language uses — fr
+  `tableau des ventes`, ko `장터`, zh `市场布告板` — sourced from the publishers' own sites
+  (`docs/reference/ffxiv-terminology.md` → *Market and Server Terms*). `市场版` appeared in no
+  source at all.
+- **TERM-002**: the result card's "send to tool" menu named five tools differently from the tools'
+  own titles in de / fr / ja / ko (`Farbstoff-Mischer` opened a page titled `Farbstoffmixer`). The
+  seven `resultCard.tools.*` keys are deleted; the menu renders the route's own `titleKey` through
+  a new `toolLabel()` in `@shared/tool-handoff`, so a tool has one name. German
+  `resultCard.sentToSwatch` also named the wrong tool.
+- **TERM-003**: ko `모든 월드` / `전체 월드` → `모든 서버`, zh `所有世界` → `所有服务器` — the Korean
+  and Chinese clients call a World a server (maintainer decision 2026-09-19).
+- **TERM-004**: the config sidebar and the tool panels translated the same control label
+  differently. One form per concept now: de `Perzeptuell`, `Sehtypen`, `Farbstoffe`; ja `絵の具`,
+  `色覚タイプ`, `スペクトル`, `欧州`; fr sentence case (`Afficher les prix`, `Espace
+  colorimétrique`, `Types de vision`), `Résultats maximum`, `RGB pondéré`, `Tous les Mondes`; ko
+  `조화 유형`, `조화`, `최대 결과 수`, `머리카락`, `출처`; zh `颜料画` (so the Mixer's picker does
+  not show two modes both labelled `颜料`), `加权RGB`.
+- **I18N-004**: Korean `안팡` (not a word) → `안팎` in `comparison.mCiede2000Desc` **and**
+  `accessibility.unitDeDesc` — the audit found one; the fix pass found the second.
+- **I18N-008**: Budget Suggestions sorted localized dye names with the *browser's* collation
+  (`localeCompare` with no locale) — it now uses `compareDyeNames`; the dye selector's
+  "sort by category" ordered by the English category id under a localized UI — it now compares the
+  localized labels with the app locale.
+
+### Tests
+
+- `toolLabel` per tool + a mutation check that the menu follows the title key; `policyDocFile` for
+  all six locales and an unknown one, plus rendered hrefs under `ja`; both sort fixes.
+
 ## [5.11.0] - 2026-09-17
 
 Deep-dive remediation, Sprints 1–2 and 7 (docs/audits/2026-09-16-deep-dive). One restored

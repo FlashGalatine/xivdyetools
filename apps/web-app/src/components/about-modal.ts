@@ -19,6 +19,7 @@ import { ModalService } from '@services/modal-service';
 import { LanguageService } from '@services/language-service';
 import { dyeService } from '@services/dye-service-wrapper';
 import { APP_NAME, APP_VERSION, BUILD_DATE } from '@shared/constants';
+import type { LocaleCode } from '@shared/i18n-types';
 import { SOCIAL_LINKS as CORE_SOCIAL_LINKS } from '@xivdyetools/core';
 import {
   ICON_GITHUB,
@@ -70,6 +71,25 @@ const SOCIAL_LINKS: SocialLink[] = CORE_SOCIAL_LINKS.map(({ label, url }) => ({
  * policies findable from inside the product at all.
  */
 const POLICY_DOCS_BASE = 'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app';
+
+/**
+ * I18N-010: the maintainer decision was to translate the policy docs, not
+ * merely label the (English-only) link. Every variant is a sibling file named
+ * `<STEM>.<locale>.md` (`policy-locale-parity.py` gates that these five exist
+ * for every document); the unsuffixed file is English and stays the fallback
+ * for `en` and for any locale that somehow reaches this function outside the
+ * type's six values.
+ */
+const LOCALIZED_POLICY_LOCALES: readonly LocaleCode[] = ['ja', 'de', 'fr', 'ko', 'zh'];
+
+/**
+ * The filename for a policy document in the viewer's locale, falling back to
+ * the English (unsuffixed, governing) file for `en` or an unsupported locale.
+ * Pure and exported so it can be unit-tested without a DOM.
+ */
+export function policyDocFile(stem: 'PRIVACY' | 'TERMS_OF_SERVICE', locale: LocaleCode): string {
+  return LOCALIZED_POLICY_LOCALES.includes(locale) ? `${stem}.${locale}.md` : `${stem}.md`;
+}
 
 // ============================================================================
 // About Modal Class
@@ -397,6 +417,14 @@ export class AboutModal {
    * Privacy and Terms, as two text links under a mono label. Deliberately
    * plain: they sit directly above the attribution box so the legal material
    * reads as one region rather than competing with the social icons.
+   *
+   * I18N-010: each link opens the VIEWER's locale variant of the document
+   * (falling back to English), via `policyDocFile()`. This reads
+   * `LanguageService.getCurrentLocale()` once per call, and `createContent()`
+   * (and therefore this method) only runs from `show()` — the same as every
+   * other localized string in this modal, none of which subscribes to locale
+   * changes either. The row is correct on every OPEN; it does not hot-update
+   * if the locale changes while the modal is already showing.
    */
   private createPoliciesRow(): HTMLElement {
     const section = document.createElement('div');
@@ -409,6 +437,8 @@ export class AboutModal {
 
     const row = document.createElement('div');
     row.className = 'flex justify-center items-center gap-3 text-xs';
+
+    const locale = LanguageService.getCurrentLocale();
 
     const docLink = (key: string, file: string): HTMLAnchorElement => {
       const a = document.createElement('a');
@@ -426,9 +456,9 @@ export class AboutModal {
     separator.setAttribute('aria-hidden', 'true');
     separator.textContent = '·';
 
-    row.appendChild(docLink('about.privacyPolicy', 'PRIVACY.md'));
+    row.appendChild(docLink('about.privacyPolicy', policyDocFile('PRIVACY', locale)));
     row.appendChild(separator);
-    row.appendChild(docLink('about.termsOfService', 'TERMS_OF_SERVICE.md'));
+    row.appendChild(docLink('about.termsOfService', policyDocFile('TERMS_OF_SERVICE', locale)));
 
     section.appendChild(row);
     return section;

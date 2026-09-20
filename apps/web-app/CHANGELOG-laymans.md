@@ -2,6 +2,22 @@
 
 ---
 
+## Web-App Version 5.12.0 — September 20, 2026
+
+### Privacy Policy and Terms, in your language
+- **The Privacy Policy and Terms of Service can now be read in Japanese, German, French, Korean and Chinese.** The links in About open the version that matches the language you have the app set to.
+- **The English text is still the official one.** Each translation says so at the top and links back to it, in case the two ever differ.
+
+### The game's own words, in every language
+- **The Market Board now has one name per language — the one the game itself uses.** French says "tableau des ventes", Korean "장터", Chinese "市场布告板". Before, the settings panel and the price panel could disagree, and one Chinese label was a typo.
+- **Korean and Chinese say "server" where the game does.** "All Worlds" is now 모든 서버 and 所有服务器, matching those versions of the game.
+- **A tool is called the same thing everywhere.** The "send to…" menu on a dye card now uses each tool's real name. In German, French, Japanese and Korean it used to show a slightly different name from the page it opened.
+- **Settings and tools agree on their labels.** Words like Perceptual, Vision Types, Paint, Harmony Type and Max Results were translated one way in the settings panel and another way inside the tool. Each now has a single wording per language.
+
+### Smaller fixes
+- **Korean:** a misspelt word in the colour-difference explanations is corrected (안팎).
+- **Sorting follows the app's language.** Sorting Budget Suggestions by name, and the dye picker by category, now orders things by the language you chose rather than your browser's or English.
+
 ## Web-App Version 5.11.0 — September 17, 2026
 
 ### Share a palette from the Palette Extractor
