@@ -1072,7 +1072,7 @@
               "description": "Standardanzahl Treffer für /extractor color (1-10)"
             },
             "clan": {
-              "description": "Standard-Stamm für /swatch (z.B. Midlander, Raen)"
+              "description": "Standard-Stamm für /swatch (z.B. Wiesländer, Auri-Raen)"
             },
             "gender": {
               "description": "Standard-Geschlecht für /swatch"

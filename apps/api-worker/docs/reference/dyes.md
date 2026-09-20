@@ -74,7 +74,7 @@ Explicit stainID lookup — bypasses range-based auto-detection. Use this when y
 
 Search dyes by name. Case-insensitive substring match; with a non-English `locale` the localized names are searched and returned. Returns an array (not paginated) of every matching dye.
 
-From core 5.4.0, name search is case-, accent-, `ß`- and width-insensitive (`schneeweiss` matches `Schneeweiß`), so `q=` may return more rows than before.
+From core 5.4.0, the localized search (any non-English `locale`) is also accent-, `ß`- and width-insensitive (`q=schneeweiss&locale=de` matches `Schneeweißer`), so `q=` may return more rows than before. The default English search is unchanged.
 
 <EndpointCard
   endpoint="/v1/dyes/search"

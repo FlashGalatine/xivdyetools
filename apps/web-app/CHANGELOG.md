@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.1] - 2026-09-20
+
+Follow-up to the 2026-09-19 i18n audit's pre-merge review (PR #192). Policy documents only — they
+are read from GitHub, so the deployed bundle differs only in its version string.
+
+### Fixed
+
+- **`TERMS_OF_SERVICE.ko.md` § 보증의 부인**: the disclaimer ran on from "provided without warranties
+  of any kind" into "including implied warranties of merchantability …" with no subject, so the Korean
+  could be read as the site *including* those warranties. Split into two sentences; the second opens
+  "여기에는" so it can only qualify the disclaimed warranties. English governs and did not change.
+- **`PRIVACY.ko.md` "절대 저장되지 않는 것"**: the list ended "그 어떤 것도 포함됩니다", a
+  negative-polarity phrase on a positive verb. Now "저장되지 않습니다", matching the heading.
+- `TERMS_OF_SERVICE.ja.md`: the header line was still hard-wrapped mid-sentence (stray space before
+  the link). Joined.
+
 ## [5.12.0] - 2026-09-20
 
 2026-09-19 i18n audit, Sprints 2–3 (`docs/audits/2026-09-19-i18n/`). The locale files were

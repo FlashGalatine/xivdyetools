@@ -7,7 +7,7 @@
  * schema — the runtime Translator never reaches that surface. Until 5.0.x the
  * bot registered 17 commands / 152 descriptions / 166 choice labels in
  * English only, even for users with `/preferences set language:ja`; through
- * 5.10.x only the 17 top-level command descriptions were localized — every
+ * 5.5.x only the 17 top-level command descriptions were localized — every
  * subcommand, group and option tooltip (134 of 151 `description:` fields in
  * `schemas.ts`) stayed English in every locale (I18N-001).
  *

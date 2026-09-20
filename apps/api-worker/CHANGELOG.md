@@ -5,18 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.5] - 2026-09-20
+
+Docs only — no route, response or worker code change.
+
+### Fixed
+
+- **The reference page overstated 0.14.4.** `docs/reference/dyes.md` and the 0.14.4 note below said
+  the accent / `ß` / width fold applies to `q=` in general. It applies to the localized search (any
+  non-English `locale`); the default English search still goes through `searchByName` and is
+  unchanged, so `q=schneeweiss` alone returns nothing while `q=schneeweiss&locale=de` matches
+  `Schneeweißer`. Found in the 2026-09-20 pre-merge review of PR #192.
+
 ## [0.14.4] - 2026-09-20
 
 From the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`, I18N-005 and I18N-009).
 
 ### Changed
 
-- **`GET /v1/dyes/search?q=` matches more rows.** No worker code changed: the route calls
-  `DyeService.searchByLocalizedName`, and `@xivdyetools/core` 5.4.0 now folds case, accents, `ß`
+- **`GET /v1/dyes/search?q=` matches more rows with a non-English `locale`.** No worker code
+  changed: for every locale but `en` the route calls `DyeService.searchByLocalizedName`, and
+  `@xivdyetools/core` 5.4.0 now folds case, accents, `ß`
   and half-/full-width forms on both sides (`schneeweiss` finds `Schneeweißer`, `creme` finds
   `jaune crème`, a half-width `ｽﾉｳ` finds `スノウホワイト`). A client that relied on an accented
   query *not* matching its unaccented spelling will see extra results. Documented on the
-  reference page (`docs/reference/dyes.md`).
+  reference page (`docs/reference/dyes.md`). The default English search (`locale` omitted or `en`)
+  still goes through `searchByName` and is unchanged.
 
 ### Fixed
 

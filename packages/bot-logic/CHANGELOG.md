@@ -14,6 +14,10 @@ locale key is a MAJOR. Needs `@xivdyetools/core` 5.4.0 (`foldForSearch`).
 
 ### Fixed
 
+- **`commands.preferences.options.set.options.clan.description` was English in de / fr / ko**
+  ("Midlander, Raen") while ja / zh localized the example. Now the names core's own locale data
+  ships: de `Wiesländer, Auri-Raen`, fr `Hyurois, Raen`, ko `미드랜더, 렌`. Folded into 4.4.0 before
+  its npm publication (2026-09-20 pre-merge review of PR #192).
 - **I18N-003**: `Translator.tc()` chose the plural form with `count === 1 ? 'one' : 'other'` for
   every locale — the English rule. French treats 0 as singular, and `preset.cardVotes` is called
   with a real `vote_count` of 0 on every new preset, so French cards read "0 votes". The category

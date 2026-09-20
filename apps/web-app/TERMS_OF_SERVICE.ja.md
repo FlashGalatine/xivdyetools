@@ -2,8 +2,7 @@
 
 > これは利便性のために提供される翻訳版です。英文が正式な文書であり、内容に相違がある場合は英文が優先します。[English](TERMS_OF_SERVICE.md)
 
-**最終更新日:** 2026-09-20 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。データの取り扱いについては別の文書をご覧ください：[`PRIVACY.md`](PRIVACY.md)。Discord Botには専用の利用規約があります：
-[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
+**最終更新日:** 2026-09-20 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。データの取り扱いについては別の文書をご覧ください：[`PRIVACY.md`](PRIVACY.md)。Discord Botには専用の利用規約があります：[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
 
 XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカラーツールキットです。スクウェア・エニックスとは提携・承認・後援関係にありません。本サイトを利用することで、以下の内容に同意したものとみなされます。同意されない場合はご利用をお控えください——離れることに何の代償もありません。
 
