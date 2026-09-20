@@ -205,7 +205,7 @@
     "builtOn": "Basiert auf",
     "builtOnBody": "Marktpreise von Universalis · Farbmischung durch spectral.js",
     "attribution": "Rechtliches",
-    "poweredBy": "Powered by Cloudflare Workers",
+    "poweredBy": "Betrieben mit Cloudflare Workers",
     "categories": {
       "colorTools": "Farbwerkzeuge",
       "dyeDatabase": "Farbstoff-Datenbank",
@@ -498,7 +498,7 @@
     "fileLimitsContent": "• Maximale Größe: 10MB",
     "matchQualityRatings": "Match-Distanz",
     "matchQualityRatingsContent": "Jede aufgelistete Übereinstimmung zeigt ihre Distanz zu deiner Farbe - niedriger ist näher.\n\nDie sechs Matching-Methoden und wie ihre Bänder funktionieren: `/manual`-Thema {topic}",
-    "poweredBy": "Powered by Photon WASM Bildverarbeitung"
+    "poweredBy": "Betrieben mit Photon-WASM-Bildverarbeitung"
   },
   "card": {
     "stain": "FARBNR.",
@@ -578,7 +578,7 @@
     "budgetNoTarget": "Kein Zielpreis auf {world} — Zeilen unsortiert, Verhältnis leer",
     "budgetFloor": "Bereits die günstigste Stufe — nichts unterbietet {price}.",
     "swatchSlot": "SLOT",
-    "swatchNearest": "NÄCHSTE FARBE",
+    "swatchNearest": "NÄCHSTER FARBSTOFF",
     "slotSkin": "HAUT",
     "slotHair": "HAAR",
     "slotHl": "STRÄHN",
@@ -586,7 +586,7 @@
     "slotLip": "LIPPE",
     "slotPaint": "BEMAL",
     "slotTattoo": "TÄTOW.",
-    "slotLimbal": "LIMBAL",
+    "slotLimbal": "LIMBUS",
     "offGridShort": "ABSEITS",
     "swatchFootKey_one": "nächste per ΔE2000 · {s} von {n} Slot",
     "swatchFootKey_other": "nächste per ΔE2000 · {s} von {n} Slots",
