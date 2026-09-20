@@ -483,7 +483,7 @@
     "commonIssuesContent": "**‚Ich habe eine dunkle Farbe bekommen, aber meine Ausrüstung ist hell!'**\n→ Dein Hintergrund ist wahrscheinlich dunkel. Schneide das Bild nur auf deine Ausrüstung zu.\n\n**‚Die Zuordnung scheint nicht zu stimmen'**\n→ Der Algorithmus wählt die HÄUFIGSTEN Farben. Schneide alles andere weg.\n\n**‚Kann ich einen bestimmten Teil abgleichen?'**\n→ Ja! Schneide vor dem Hochladen auf genau diesen Bereich zu.",
     "proTips": "Profi-Tipps",
     "proTipsContent": "• Verwende Bildbearbeitungssoftware zum Zuschneiden vor dem Hochladen\n• Bei metallischer/glänzender Ausrüstung können Ergebnisse variieren\n• Wenn du den Hex-Code kennst, verwende stattdessen `/extractor color`\n• Fordere mehr oder weniger Farben mit der `colors`-Option an (3-10)\n• Screenshots in 1920x1080 oder höher für beste Qualität",
-    "footer": "XIV Dye Tools - Mit Liebe für FFXIV Glamour-Enthusiasten gemacht",
+    "footer": "XIV Dye Tools - Mit Liebe für FFXIV-Projektionsenthusiasten gemacht",
     "exampleUseCases": "Beispiel-Anwendungsfälle",
     "goodExamples": "Gute Beispiele",
     "goodExamplesContent": "• Zugeschnittener Screenshot eines einzelnen Bruststücks\n• Nahaufnahme von gefärbter Rüstung mit neutralem Hintergrund\n• Screenshot bei hellem Tageslicht\n• Bild fokussiert auf die Farbe, die du abgleichen möchtest",

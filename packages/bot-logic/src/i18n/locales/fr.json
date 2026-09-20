@@ -483,7 +483,7 @@
     "commonIssuesContent": "**« J'ai obtenu une couleur sombre mais mon équipement est clair ! »**\n→ Votre arrière-plan est probablement sombre. Recadrez l'image sur votre équipement uniquement.\n\n**« La correspondance semble incorrecte »**\n→ L'algorithme choisit les couleurs les PLUS courantes. Recadrez pour exclure le reste.\n\n**« Puis-je faire correspondre une partie spécifique ? »**\n→ Oui ! Recadrez sur cette zone exacte avant de télécharger.",
     "proTips": "Conseils pro",
     "proTipsContent": "• Utilisez un logiciel de retouche d'image pour recadrer avant de télécharger\n• Pour les équipements métalliques/brillants, les résultats peuvent varier\n• Si vous connaissez le code hexadécimal, utilisez `/extractor color` à la place\n• Demandez plus ou moins de couleurs avec l'option `colors` (3-10)\n• Captures d'écran en 1920x1080 ou plus pour une meilleure qualité",
-    "footer": "XIV Dye Tools - Fait avec amour pour les passionnés de glamour FFXIV",
+    "footer": "XIV Dye Tools - Fait avec amour pour les passionnés de mirages FFXIV",
     "exampleUseCases": "Exemples d'utilisation",
     "goodExamples": "Bons exemples",
     "goodExamplesContent": "• Capture d'écran recadrée d'une seule pièce de poitrine\n• Gros plan d'une armure teinte avec un arrière-plan neutre\n• Capture d'écran prise en plein jour\n• Image centrée sur la couleur que vous voulez faire correspondre",

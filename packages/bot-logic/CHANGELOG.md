@@ -28,6 +28,11 @@ locale key is a MAJOR. Needs `@xivdyetools/core` 5.4.0 (`foldForSearch`).
   `市场板`); a World is `서버` in ko (was `월드`) and a Data Center is `데이터 센터` / `大区` (were
   `데이터센터` / `数据中心`) — the terms the Korean and Chinese game clients use, sourced in
   `docs/reference/ffxiv-terminology.md`. Korean particles re-agreed after each swap.
+- **"glamour" in the help footer** (`matchImageHelp.footer`, "…for FFXIV glamour enthusiasts")
+  follows `docs/reference/ffxiv-terminology.md` → *Glamour Terms*: ja `グラマー` was a **false
+  friend** (everyday Japanese for a curvy figure) → `ミラプリ愛好家`; de `Glamour-Enthusiasten` →
+  `FFXIV-Projektionsenthusiasten`; fr `glamour` → `mirages`; zh `时装` (not an FFXIV term) →
+  `幻化爱好者`. ko `패션 애호가` already used the official genre word and is unchanged.
 - ja `Web アプリ` / fr `Application Web` aligned with the other key for the same label; zh
   `webhook.fields.category` uses `分类` like `common.category`.
 
