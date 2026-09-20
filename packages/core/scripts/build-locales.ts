@@ -44,6 +44,18 @@ interface FacewearCsvRow {
 
 type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
 
+/**
+ * I18N-007 (2026-09-19 audit): a (row id, locale) pair whose CSV cell was
+ * missing or empty and silently fell back to English. Collected across every
+ * locale so the report at the end of `main()` lists them all in one pass
+ * instead of failing on the first locale built.
+ */
+interface MissingCell {
+  source: 'dye' | 'facewear';
+  id: string;
+  locale: LocaleCode;
+}
+
 const LOCALE_NAMES: Record<LocaleCode, string> = {
   en: 'English',
   ja: 'Japanese',
@@ -55,6 +67,11 @@ const LOCALE_NAMES: Record<LocaleCode, string> = {
 
 async function main() {
   console.log('🌐 Building locale files...\n');
+
+  // I18N-007: an explicit opt-out for work in progress (e.g. a new dye added
+  // before ko/zh names are pasted in) — without it, any empty cell fails the
+  // build instead of silently shipping English under a translated heading.
+  const allowMissing = process.argv.includes('--allow-missing');
 
   // Use current working directory (where npm run is executed from)
   const workingDir = process.cwd();
@@ -92,11 +109,12 @@ async function main() {
   fs.mkdirSync(outputDir, { recursive: true });
 
   let updatedCount = 0;
+  const missingCells: MissingCell[] = [];
 
   for (const locale of locales) {
     console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
 
-    const localeData = buildLocaleData(locale, yamlData, csvRows, facewearRows);
+    const localeData = buildLocaleData(locale, yamlData, csvRows, facewearRows, missingCells);
     const outputPath = path.join(outputDir, `${locale}.json`);
     const existing = readExistingLocale(outputPath);
 
@@ -112,6 +130,28 @@ async function main() {
     fs.writeFileSync(outputPath, JSON.stringify(localeData, null, 2), 'utf-8');
     updatedCount++;
     console.log(`  ✓ Wrote ${outputPath} (${localeData.meta.dyeCount} dyes)\n`);
+  }
+
+  // I18N-007: report every empty cell that fell back to English, across all
+  // locales, in one place — rather than each locale silently shipping
+  // English under a translated heading.
+  if (missingCells.length > 0) {
+    console.log('');
+    console.error(
+      `⚠️  ${missingCells.length} missing translation cell(s) fell back to English:`,
+    );
+    for (const cell of missingCells) {
+      console.error(`  - ${cell.source} ${cell.id} (${cell.locale})`);
+    }
+
+    if (!allowMissing) {
+      console.error(
+        '\n❌ Missing translations — pass --allow-missing to build anyway (keeps the English fallback).',
+      );
+      process.exit(1);
+    }
+
+    console.log('');
   }
 
   console.log(
@@ -182,9 +222,10 @@ function buildLocaleData(
   yamlData: Record<string, YamlLabels>,
   csvRows: CsvRow[],
   facewearRows: FacewearCsvRow[],
+  missingCells: MissingCell[],
 ) {
   const labels = buildLabels(locale, yamlData[locale]);
-  const dyeNames = buildDyeNames(locale, csvRows);
+  const dyeNames = buildDyeNames(locale, csvRows, missingCells);
   const categories = buildCategories(locale);
 
   return {
@@ -210,7 +251,7 @@ function buildLocaleData(
     sheets: buildSheets(locale),
     races: buildRaces(locale),
     clans: buildClans(locale),
-    facewearColors: buildFacewearNames(locale, facewearRows),
+    facewearColors: buildFacewearNames(locale, facewearRows, missingCells),
   };
 }
 
@@ -265,7 +306,11 @@ function buildLabels(
   return labels;
 }
 
-function buildDyeNames(locale: LocaleCode, csvRows: CsvRow[]): Record<string, string> {
+function buildDyeNames(
+  locale: LocaleCode,
+  csvRows: CsvRow[],
+  missingCells: MissingCell[],
+): Record<string, string> {
   const nameColumn = `${LOCALE_NAMES[locale]} Name` as keyof CsvRow;
   // Fallback to English if a locale column is missing or empty
   const fallbackColumn = 'English Name' as keyof CsvRow;
@@ -274,10 +319,16 @@ function buildDyeNames(locale: LocaleCode, csvRows: CsvRow[]): Record<string, st
   for (const row of csvRows) {
     const itemID = row.itemID.trim();
     // Try locale column first, fall back to English
-    const name = row[nameColumn]?.trim() || row[fallbackColumn]?.trim();
+    const localeName = row[nameColumn]?.trim();
+    const name = localeName || row[fallbackColumn]?.trim();
 
     if (itemID && name) {
       dyeNames[itemID] = name;
+    }
+
+    // I18N-007: record every empty cell, even when the fallback filled it in.
+    if (itemID && !localeName) {
+      missingCells.push({ source: 'dye', id: itemID, locale });
     }
   }
 
@@ -287,6 +338,7 @@ function buildDyeNames(locale: LocaleCode, csvRows: CsvRow[]): Record<string, st
 function buildFacewearNames(
   locale: LocaleCode,
   rows: FacewearCsvRow[],
+  missingCells: MissingCell[],
 ): Record<string, string> {
   const nameColumn = `${LOCALE_NAMES[locale]} Name` as keyof FacewearCsvRow;
   const fallbackColumn = 'English Name' as keyof FacewearCsvRow;
@@ -294,8 +346,14 @@ function buildFacewearNames(
 
   for (const row of rows) {
     const id = row.id.trim();
-    const name = row[nameColumn]?.trim() || row[fallbackColumn]?.trim();
+    const localeName = row[nameColumn]?.trim();
+    const name = localeName || row[fallbackColumn]?.trim();
     if (id && name) names[id] = name;
+
+    // I18N-007: record every empty cell, even when the fallback filled it in.
+    if (id && !localeName) {
+      missingCells.push({ source: 'facewear', id, locale });
+    }
   }
 
   return names;

@@ -772,4 +772,14 @@ describe('getColorWheelName', () => {
   it('falls back to English for a locale it has never loaded', () => {
     expect(LocalizationService.getColorWheelName('ryb', 'xx' as never)).toBe("RYB (artist's)");
   });
+
+  it('formats an unrecognised wheel id instead of returning it raw (I18N-007)', () => {
+    // Neither the requested locale nor English has a translation for this id,
+    // so it must fall through to formatKey(id) like every sibling getter —
+    // not the bare id (formatKey only Title-Cases the leading letter for a
+    // kebab-case id; it does not split on hyphens).
+    expect(LocalizationService.getColorWheelName('unknown-wheel' as never, 'en')).toBe(
+      'Unknown-wheel',
+    );
+  });
 });

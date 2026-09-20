@@ -50,7 +50,8 @@ export const SUPPORTED_LOCALES: readonly LocaleCode[] = [
  * ```typescript
  * extractLocaleCode('en-US') // 'en'
  * extractLocaleCode('ja') // 'ja'
- * extractLocaleCode('zh-CN') // null (not supported)
+ * extractLocaleCode('zh-CN') // 'zh' (the prefix is supported)
+ * extractLocaleCode('pt-BR') // null (not supported)
  * ```
  */
 export function extractLocaleCode(locale: string): LocaleCode | null {

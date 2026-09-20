@@ -38,7 +38,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.3.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.4.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
@@ -68,6 +68,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 1 — minor: new public `foldForSearch()` and `searchByLocalizedName` now folds case, accents, `ß` and width on both sides, so `schneeweiss` finds Schneeweißer and `creme` finds jaune crème (I18N-005; a blanket mark-strip would have erased Japanese dakuten, so the strip is Latin-only); `build-locales.ts` exits 1 on an empty CSV cell instead of emitting English silently, `--allow-missing` to opt out (I18N-007); `getColorWheelName` falls back through `formatKey`; the `extractLocaleCode` JSDoc no longer claims `zh-CN` is unsupported (I18N-009) |
 | v5.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 8 — minor, not patch, because frozen records are an observable change (the house rule logger 2.2.0 set): `hexToHsv` validates before its LRU lookup (the only hex-keyed cache besides `hexToRgb`, which already did), so a bare `RRGGBB` throws cold and warm alike (BUG-009); dye records and their `rgb`/`hsv`/`lab` are frozen at the end of `initialize()` — a consumer mutation now throws `TypeError` instead of corrupting the shared indices (BUG-010); locale objects documented as shared; `CharacterMatchOptions.matchingMethod` JSDoc default corrected to `ciede2000` (BUG-011); the WCAG small-vs-large threshold test can fail (BUG-032) |
 | **v5.2.0** | **Sep 2026** | **Five selectable harmony colour wheels (PR #167) — `COLOR_WHEEL_IDS` (`rgb` / `ryb` / `munsell` / `oklch-hue` / `oklch-lightness`), `getColorWheel`, `parseColorWheelId`, `normalizeColorWheelId`, `HarmonySelectionConfig.wheel`, `HarmonySlot.wheelHue`; with `wheel` unset the output is byte-identical to 5.1.0** |
 | **v5.1.0** | **Sep 2026** | **`getDeltaE_Oklab` is now ΔEOK2 (CSS Color 4 §20.4, `a`/`b` scaled ×2) — changes both the ranking and the numeric scale (~1.4–2×) of the `oklab` matching method; `BAND_VOCABULARY` oklab cuts recalibrated, `HARMONY_MAX_DISTANCE.oklab` 0.13 → 0.21** |
