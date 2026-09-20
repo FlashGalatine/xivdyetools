@@ -8,7 +8,10 @@ Checks per document, each variant against the English file:
   existence · heading count + levels · list-item and table-row counts · multiset of numbers ·
   multiset of backticked tokens · multiset of URLs · slash-commands · Last-updated DATE ·
   English-prevails notice (a link to the English file in the first 15 lines) ·
-  staleness (variant's last commit older than the English file's).
+  staleness (variant's last commit older than the English file's) ·
+  CJK soft line breaks (a Markdown soft break renders as a SPACE, so a ja / ko / zh paragraph
+  hard-wrapped between two CJK characters shows a stray space inside the sentence — keep one
+  paragraph per line; found in all four zh files on 2026-09-20).
 
 Run from the monorepo root (xivdyetools/). Writes nothing. Exit 0 = all parity checks pass,
 1 = at least one FAIL, 2 = no policy document found (wrong directory).
@@ -94,6 +97,22 @@ def facts(text):
     }
 
 
+CJK_CHAR = r"[\u3000-\u30ff\u3400-\u9fff\uac00-\ud7af\uff00-\uffef]"
+NEW_BLOCK = re.compile(r"^\s*([-*+] |\d+[.)] |#|\||>|```|~~~|<)")
+
+
+def cjk_soft_breaks(text):
+    """Line numbers where a paragraph is hard-wrapped between two CJK characters."""
+    lines = text.split("\n")
+    hits = []
+    for i, (a, b) in enumerate(zip(lines, lines[1:]), start=1):
+        if not a.strip() or not b.strip() or NEW_BLOCK.match(b) or a.lstrip().startswith(("#", "|")):
+            continue
+        if re.search(CJK_CHAR + r"$", a.rstrip()) and re.match(r"^\s*" + CJK_CHAR, b):
+            hits.append(i)
+    return hits
+
+
 def diff_counter(a, b):
     missing = list((a - b).elements())
     extra = list((b - a).elements())
@@ -146,6 +165,13 @@ def main():
             head = "\n".join(text.splitlines()[:15])
             if os.path.basename(doc) not in head:
                 problems.append("no English-prevails notice linking the English file in the first 15 lines")
+            if lc in ("ja", "ko", "zh"):
+                breaks = cjk_soft_breaks(text)
+                if breaks:
+                    problems.append(
+                        f"{len(breaks)} CJK soft line break(s) render as stray spaces "
+                        f"(lines {breaks[:6]}{'…' if len(breaks) > 6 else ''}) — one paragraph per line"
+                    )
             vc = last_commit(path)
             if en_commit and vc and vc < en_commit:
                 problems.append(f"stale: last commit {vc} predates the English file's {en_commit}")
