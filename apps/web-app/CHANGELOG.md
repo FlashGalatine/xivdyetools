@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.2] - 2026-09-20
+
+### Fixed
+
+- **Swatch Matcher refused every Lalafell `.chara` file** with "Couldn't read this character file:
+  `.chara` field Race: unrecognised value \"Lalafel\"". Anamnesis writes the game's internal enum
+  name `Lalafel` (one trailing `L`) where core's race table expected the display spelling
+  `Lalafell`, so the parser threw before reading a colour. Fixed in `@xivdyetools/core` 5.4.1;
+  the web app picks it up through `workspace:*`. No web-app source changed.
+
 ## [5.12.1] - 2026-09-20
 
 Follow-up to the 2026-09-19 i18n audit's pre-merge review (PR #192). Policy documents only — they

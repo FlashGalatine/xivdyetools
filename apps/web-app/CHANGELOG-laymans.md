@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.12.2 — September 20, 2026
+
+### Lalafell character files open again
+- **Swatch Matcher now accepts a Lalafell `.chara` file.** Dropping one used to fail immediately with "unrecognised value 'Lalafel'" — the file writes the race name with one L at the end, and the tool was only looking for the spelling with two. Every other race was unaffected. Your file is still read entirely on your device.
+
 ## Web-App Version 5.12.0 — September 20, 2026
 
 ### Privacy Policy and Terms, in your language

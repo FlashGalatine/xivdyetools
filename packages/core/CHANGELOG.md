@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.1] - 2026-09-20
+
+PATCH: one missing alias in the `.chara` race table.
+
+### Fixed
+
+- **`parseCharaFile` rejected every Lalafell `.chara` file.** `RACE_MAP` was keyed on the display
+  spelling `Lalafell`, but Anamnesis — and the Ktisis / Brio files that share its schema —
+  serializes the game's internal enum name, `Lalafel`, with one trailing `L`. The parser threw
+  `.chara field Race: unrecognised value "Lalafel"` before reading a single colour, so the file
+  was refused outright by the web app's Swatch Matcher and by the bot's `/swatch` upload. The
+  table already carried the two other enum-vs-display mismatches (`Miqote`, `AuRa`); `Lalafel`
+  was simply missing. Both spellings are now accepted and stored as `Lalafell`. Verified against
+  12 real files (3 Lalafell) — all parse and resolve 8/8 colour slots with no slot errors.
+  `chara-parser.test.ts` now asserts every file spelling of all eight races, and that an
+  invented one still throws.
+
 ## [5.4.0] - 2026-09-20
 
 From the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`). MINOR: one new public export,

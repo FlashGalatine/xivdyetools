@@ -129,6 +129,34 @@ describe('parseCharaFile', () => {
     });
   });
 
+  describe('race spellings', () => {
+    const withRace = (Race: string, Tribe: string): ReturnType<typeof parseCharaFile> =>
+      parseCharaFile(JSON.stringify({ Race, Tribe, Gender: 'Feminine', Skintone: 1 }));
+
+    // Anamnesis (and the Ktisis/Brio files that share its schema) serializes
+    // the game's internal enum names, which are not the display spellings:
+    // "Lalafel" has one trailing L, "Miqote" has no apostrophe, "AuRa" is
+    // camel-cased. Every one of them must map to the display Race.
+    it.each([
+      ['Hyur', 'Midlander', 'Hyur'],
+      ['Elezen', 'Wildwood', 'Elezen'],
+      ['Lalafel', 'Dunesfolk', 'Lalafell'],
+      ['Lalafell', 'Dunesfolk', 'Lalafell'],
+      ['Miqote', 'SeekerOfTheSun', "Miqo'te"],
+      ["Miqo'te", 'SeekerOfTheSun', "Miqo'te"],
+      ['Roegadyn', 'SeaWolf', 'Roegadyn'],
+      ['AuRa', 'Xaela', 'AuRa'],
+      ['Hrothgar', 'Helions', 'Hrothgar'],
+      ['Viera', 'Rava', 'Viera'],
+    ])('maps the file spelling %s (%s) to %s', (fileRace, tribe, expected) => {
+      expect(withRace(fileRace, tribe).race).toBe(expected);
+    });
+
+    it('still rejects a race the game does not have', () => {
+      expect(() => withRace('Lalafelll', 'Dunesfolk')).toThrow(/unrecognised value "Lalafelll"/);
+    });
+  });
+
   describe('gear model quirks', () => {
     const base = { Race: 'Viera', Tribe: 'Rava', Gender: 'Feminine', Skintone: 1 };
 

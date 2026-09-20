@@ -151,10 +151,17 @@ const TRIBE_MAP: Record<string, SubRace> = {
   Veena: 'Veena',
 };
 
-/** File race spellings → Race (Anamnesis serializes "Miqote" and "AuRa"). */
+/**
+ * File race spellings → Race. Files carry the game's internal enum names, not
+ * the display ones: Anamnesis serializes "Lalafel" (one trailing L), "Miqote"
+ * (no apostrophe) and "AuRa". The display spellings are accepted too, since a
+ * hand-edited file may use them.
+ */
 const RACE_MAP: Record<string, Race> = {
   Hyur: 'Hyur',
   Elezen: 'Elezen',
+  // The game enum's spelling — what every Anamnesis/Ktisis/Brio file writes
+  Lalafel: 'Lalafell',
   Lalafell: 'Lalafell',
   Miqote: "Miqo'te",
   "Miqo'te": "Miqo'te",

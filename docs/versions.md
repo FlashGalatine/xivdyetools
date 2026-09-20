@@ -7,7 +7,7 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-09-20 (checked against the registry API), `@xivdyetools/core` 5.4.0 and
+> (PR #123). As of 2026-09-20 (checked against the registry API), `@xivdyetools/core` 5.4.1 and
 > `@xivdyetools/bot-logic` 4.4.0 are ahead of their published npm versions (5.3.0 / 4.3.0) and await
 > publication — publish core first, bot-logic depends on it; the other five packages are at parity;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
@@ -23,8 +23,8 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.12.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.6.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.12.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.6.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -39,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.4.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.4.1 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
