@@ -41,6 +41,15 @@ the picker localizations only exist once the schema is re-registered (the deploy
 
 ### Added
 
+- **I18N-010**: the bot's Privacy Policy and Terms of Service in all six languages —
+  `PRIVACY_POLICY.<lc>.md` and `TERMS_OF_SERVICE.<lc>.md` for ja / de / fr / ko / zh beside the
+  English files, which stay governing and now carry an "Also available in" line. The bot emits no
+  link to either document in code (checked), and Discord's developer portal takes one URL, so the
+  English page is the way in. Mechanical parity PASS; two `opus` reviewers then corrected what
+  parity cannot see — ja 当社 ("this company") for an individual maintainer ×22, ja 利用 ("use") for
+  "exploit" in the rate-limit rule, filter and preference names that did not match the `/preferences`
+  labels, and ko 서버 / zh 服务器 standing for both a Discord server and an FFXIV World two table
+  rows apart.
 - `scripts/gen-option-description-keys.ts` — generates the en `commands.*.options` subtree from
   `schemas.ts`. `buildOptionDescriptionTree()` is shared with a **drift test**: a schema edit
   without re-running the script fails `localize.test.ts`.

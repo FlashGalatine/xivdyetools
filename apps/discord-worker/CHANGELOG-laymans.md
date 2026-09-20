@@ -40,6 +40,7 @@ Rules:
 - When you type a command, every option and sub-command now shows its hint in your Discord language: Japanese, German, French, Korean or Chinese. Until now only the command's one-line summary was translated, and the 137 hints underneath it stayed in English.
 - The topic list in `/manual topic` is translated too.
 - `/about` no longer has an English sentence sitting under its "Built on" heading.
+- The bot's Privacy Policy and Terms of Service can now be read in Japanese, German, French, Korean and Chinese. The English text is still the official one, and it links to each translation at the top.
 
 ### 🔎 Finding a dye by its name in your language
 - You can type a dye name without its special letters. In German, `schneeweiss` now finds Schneeweiß; in French, `creme` finds crème. Before, about a third of the German and French dye names could only be found by typing the accent or the ß exactly.

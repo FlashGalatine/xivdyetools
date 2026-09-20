@@ -15,6 +15,8 @@
  * instead of silently drifting. Everything below the exports only runs when
  * this file executes as the CLI entry point, never on import, since a test
  * importing it must not also rewrite en.json.
+ *
+ * @entrypoint run by hand with tsx after a slash-command schema edit to regenerate the English picker keys; no import or package script reaches the CLI half, and the drift test is its only importer
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

@@ -1,5 +1,7 @@
 # XIV Dye Tools Discord Bot - Privacy Policy
 
+> Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
+
 **Last Updated**: September 16, 2026
 
 ## 1. Introduction

@@ -1,5 +1,7 @@
 # XIV Dye Tools Discord Bot - Terms of Service
 
+> Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
+
 **Last Updated**: September 16, 2026
 
 > The web app at xivdyetools.app has its own terms: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Data handling is covered by the [Privacy Policy](PRIVACY_POLICY.md).
