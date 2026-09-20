@@ -1,10 +1,10 @@
-===== apps/web-app/PRIVACY.md  (last updated (2026, 9, 16), last commit 2026-09-20T00:35:20-04:00)
+===== apps/web-app/PRIVACY.md  (last updated (2026, 9, 20), last commit 2026-09-20T07:52:25-04:00)
   ok   ja: apps/web-app/PRIVACY.ja.md
   ok   de: apps/web-app/PRIVACY.de.md
   ok   fr: apps/web-app/PRIVACY.fr.md
   ok   ko: apps/web-app/PRIVACY.ko.md
   ok   zh: apps/web-app/PRIVACY.zh.md
-===== apps/web-app/TERMS_OF_SERVICE.md  (last updated (2026, 9, 16), last commit 2026-09-20T00:35:20-04:00)
+===== apps/web-app/TERMS_OF_SERVICE.md  (last updated (2026, 9, 20), last commit 2026-09-20T00:35:20-04:00)
   ok   ja: apps/web-app/TERMS_OF_SERVICE.ja.md
   ok   de: apps/web-app/TERMS_OF_SERVICE.de.md
   ok   fr: apps/web-app/TERMS_OF_SERVICE.fr.md
@@ -16,7 +16,7 @@
   ok   fr: apps/discord-worker/PRIVACY_POLICY.fr.md
   ok   ko: apps/discord-worker/PRIVACY_POLICY.ko.md
   ok   zh: apps/discord-worker/PRIVACY_POLICY.zh.md
-===== apps/discord-worker/TERMS_OF_SERVICE.md  (last updated (2026, 9, 16), last commit 2026-09-20T00:35:58-04:00)
+===== apps/discord-worker/TERMS_OF_SERVICE.md  (last updated (2026, 9, 20), last commit 2026-09-20T00:35:58-04:00)
   ok   ja: apps/discord-worker/TERMS_OF_SERVICE.ja.md
   ok   de: apps/discord-worker/TERMS_OF_SERVICE.de.md
   ok   fr: apps/discord-worker/TERMS_OF_SERVICE.fr.md

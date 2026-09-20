@@ -2,7 +2,7 @@
 
 > これは利便性のために提供される翻訳版です。英文が正式な文書であり、内容に相違がある場合は英文が優先します。[English](TERMS_OF_SERVICE.md)
 
-**最終更新日**：2026-09-16
+**最終更新日**：2026-09-20
 
 > xivdyetools.appのウェブアプリには独自の利用規約があります：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。データの取り扱いについては[プライバシーポリシー](PRIVACY_POLICY.md)をご覧ください。
 

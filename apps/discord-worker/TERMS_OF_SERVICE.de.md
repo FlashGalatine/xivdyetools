@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert**: 2026-09-16
+**Zuletzt aktualisiert**: 2026-09-20
 
 > Die Web-App unter xivdyetools.app hat eigene Bedingungen:
 > [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Der Umgang mit Daten ist in
@@ -156,8 +156,8 @@ Kollisionsnormen. Jeder Streit, der nicht zunächst durch Verhandlungen nach Tre
 beigelegt werden kann, wird vor die staatlichen oder bundesstaatlichen Gerichte in North Carolina
 gebracht, und du stimmst diesem Gerichtsstand zu.
 
-Nichts in diesen Bedingungen nimmt dir ein Verbraucherschutzrecht, das dir dein örtliches Recht
-gewährt und das du nicht abbedingen kannst.
+Nichts in diesen Bedingungen nimmt dir ein Verbraucherschutzrecht, das dir das an deinem Wohnort
+geltende Recht gewährt und das nach diesem Recht unabdingbar ist.
 
 ## 12. Kontakt
 

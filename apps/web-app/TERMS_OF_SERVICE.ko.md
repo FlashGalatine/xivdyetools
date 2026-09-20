@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트:** 2026-09-16 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
+**최종 업데이트:** 2026-09-20 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
 XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 모음입니다. Square Enix와 제휴, 승인 또는 후원 관계가 없습니다. 이 사이트를 이용함으로써 사용자는 아래 내용에 동의하게 됩니다. 동의하지 않으신다면 이용하지 말아 주세요 — 이 사이트를 그만두는 데는 어떤 비용도 들지 않습니다.
 
@@ -107,7 +107,7 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY는
 
 ## 준거법
 
-이 약관은 미국 노스캐롤라이나 주법의 적용을 받으며, 그 법의 저촉 규정은 적용되지 않습니다. 먼저 대화로 해결할 수 없는 분쟁은 노스캐롤라이나 주에 소재한 주 법원 또는 연방 법원에 제기되며, 사용자와 저희는 그 관할에 동의합니다. 이 문서의 어떤 내용도 사용자의 거주 국가 법이 부여하고 포기할 수 없도록 정한 소비자 보호 권리를 빼앗지 않습니다.
+이 약관은 미국 노스캐롤라이나 주법의 적용을 받으며, 그 법의 저촉 규정은 적용되지 않습니다. 먼저 대화로 해결할 수 없는 분쟁은 노스캐롤라이나 주에 소재한 주 법원 또는 연방 법원에 제기되며, 사용자와 저희는 그 관할에 동의합니다. 이 문서의 어떤 내용도 사용자가 거주하는 지역의 법이 부여하고 그 법이 포기할 수 없도록 정한 소비자 보호 권리를 빼앗지 않습니다.
 
 ## 연락처
 

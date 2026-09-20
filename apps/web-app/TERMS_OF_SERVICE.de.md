@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert:** 2026-09-16 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
+**Zuletzt aktualisiert:** 2026-09-20 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
 wir mit deinen Daten umgehen, ist ein eigenes Dokument: [`PRIVACY.md`](PRIVACY.md). Der
 Discord-Bot hat eigene Bedingungen:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
@@ -176,8 +176,8 @@ entfernt werden.
 Diese Bedingungen unterliegen dem Recht des Staates North Carolina, USA, ohne Anwendung seiner
 Kollisionsnormen. Jeder Streit, der nicht zunächst im Gespräch beigelegt werden kann, wird vor die
 staatlichen oder bundesstaatlichen Gerichte in North Carolina gebracht, und du und wir stimmen
-diesem Gerichtsstand zu. Nichts hierin nimmt dir ein Verbraucherschutzrecht, das dir dein
-örtliches Recht gewährt und das du nicht abbedingen kannst.
+diesem Gerichtsstand zu. Nichts hierin nimmt dir ein Verbraucherschutzrecht, das dir das an
+deinem Wohnort geltende Recht gewährt und auf das du nach diesem Recht nicht verzichten kannst.
 
 ## Kontakt
 

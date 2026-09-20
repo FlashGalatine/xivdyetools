@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour** : 2026-09-16
+**Dernière mise à jour** : 2026-09-20
 
 > L'application web sur xivdyetools.app a ses propres conditions : [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Le traitement des données est couvert par la [Politique de confidentialité](PRIVACY_POLICY.md).
 
@@ -126,7 +126,7 @@ Nous pouvons, à notre seule discrétion, suspendre ou résilier votre accès au
 
 Ces Conditions sont régies par les lois de l'État de Caroline du Nord, États-Unis, sans égard à ses règles de conflit de lois. Tout litige qui ne peut d'abord être résolu par une négociation de bonne foi sera porté devant les tribunaux d'État ou fédéraux situés en Caroline du Nord, et vous acceptez cette juridiction compétente.
 
-Rien dans ces Conditions ne retire un droit de protection du consommateur que votre droit local vous accorde et auquel il ne vous permet pas de renoncer.
+Rien dans ces Conditions ne retire un droit de protection du consommateur que le droit de votre lieu de résidence vous accorde et auquel ce même droit ne vous permet pas de renoncer.
 
 ## 12. Contact
 
