@@ -203,6 +203,7 @@
     "links": "リンク",
     "dyes": "カララント",
     "builtOn": "使用技術",
+    "builtOnBody": "Universalisによるマーケット価格 · spectral.jsによる絵の具ブレンド",
     "attribution": "権利表記",
     "poweredBy": "Cloudflare Workersで動作中",
     "categories": {
@@ -482,7 +483,7 @@
     "commonIssuesContent": "**「暗い色が出たのに装備は明るいです！」**\n→ 背景が暗い可能性があります。装備だけに画像をトリミングしてください。\n\n**「マッチングがおかしいようです」**\n→ アルゴリズムは最も多く含まれる色を選びます。それ以外の部分はトリミングしてください。\n\n**「特定の部分だけマッチングできますか？」**\n→ はい！アップロード前にその部分だけにトリミングしてください。",
     "proTips": "プロのヒント",
     "proTipsContent": "• アップロード前に画像編集ソフトでトリミング\n• メタリック/光沢のある装備は結果が異なる場合があります\n• 16進数コードがわかっている場合は `/extractor color` を使用\n• `colors` オプションで色の数を増減（3-10）\n• 最高品質のために1920x1080以上でスクリーンショット",
-    "footer": "XIV Dye Tools - FFXIVグラマー愛好家のために愛を込めて作成",
+    "footer": "XIV Dye Tools - FFXIVミラプリ愛好家のために愛を込めて作成",
     "exampleUseCases": "使用例",
     "goodExamples": "良い例",
     "goodExamplesContent": "• 胴装備1点だけのトリミングされたスクリーンショット\n• ニュートラルな背景での染色された鎧のクローズアップ\n• 明るい日中エリアで撮影されたスクリーンショット\n• マッチングしたい色にフォーカスした画像",
@@ -507,7 +508,7 @@
     "nearest": "最も近いカララント",
     "nearestMore": "他{n}色",
     "ideal": "理想の色相",
-    "found": "最も近い色",
+    "found": "近いカララント",
     "name": "カララント",
     "cat": "カテゴリ",
     "bandKey": "バンド：≤6 / ≤12 / ≤20",
@@ -523,6 +524,8 @@
     "rampTitle": "画像からのパレット",
     "matchTitle": "最も近い色",
     "colours": "{n}色",
+    "colours_one": "{n}色",
+    "colours_other": "{n}色",
     "rampKey": "帯の幅＝画像内の割合",
     "matchKey": "ΔE2000 による最近傍",
     "manualLead": "色が想定と違う場合は",
@@ -647,7 +650,7 @@
       "stats": "統計",
       "commandsUsed": "コマンド実行数",
       "successRate": "成功率",
-      "webApp": "Web アプリ",
+      "webApp": "Webアプリ",
       "documentation": "ドキュメント",
       "supportServer": "サポートサーバー",
       "footer": "バージョン {version} • コマンドのヘルプは /manual"
@@ -655,55 +658,542 @@
   },
   "commands": {
     "harmony": {
-      "description": "基準色から調和するカララントの組み合わせを生成"
+      "description": "基準色から調和するカララントの組み合わせを生成",
+      "options": {
+        "color": {
+          "description": "ベースカラー（#FF5733のような16進数コードまたはカララント名）"
+        },
+        "type": {
+          "description": "ハーモニーの種類"
+        },
+        "wheel": {
+          "description": "ハーモニーの角度を測るカラーホイール（既定：RGB）"
+        },
+        "companions": {
+          "description": "各ハーモニースロットのコンパニオンカララント数（1〜3）"
+        },
+        "matching": {
+          "description": "コンパニオン拡張で最も近いカララントを探すアルゴリズム"
+        },
+        "strict_matching": {
+          "description": "距離のしきい値を厳しくしてより近いマッチのみ表示"
+        },
+        "prevent_duplicates": {
+          "description": "すべてのハーモニースロットでカララントの重複を排除"
+        }
+      }
     },
     "mixer": {
-      "description": "2つのカララントを各種アルゴリズムでブレンド"
+      "description": "2つのカララントを各種アルゴリズムでブレンド",
+      "options": {
+        "dye1": {
+          "description": "ブレンドする1つ目のカララント（16進数コードまたはカララント名）"
+        },
+        "dye2": {
+          "description": "ブレンドする2つ目のカララント（16進数コードまたはカララント名）"
+        },
+        "mode": {
+          "description": "カラーブレンドのアルゴリズム"
+        },
+        "matching": {
+          "description": "ブレンド結果に最も近いカララントを探すアルゴリズム"
+        }
+      }
     },
     "gradient": {
-      "description": "2色間のグラデーションと中間のカララントを生成"
+      "description": "2色間のグラデーションと中間のカララントを生成",
+      "options": {
+        "start_color": {
+          "description": "開始色：16進数（例：#FF0000）またはカララント名"
+        },
+        "end_color": {
+          "description": "終了色：16進数（例：#0000FF）またはカララント名"
+        },
+        "steps": {
+          "description": "色のステップ数（既定6、最大12）"
+        },
+        "color_space": {
+          "description": "グラデーションの色補間モード"
+        },
+        "matching": {
+          "description": "最も近いカララントを探すアルゴリズム"
+        }
+      }
     },
     "extractor": {
-      "description": "入力から色を抽出して一致するカララントを検索"
+      "description": "入力から色を抽出して一致するカララントを検索",
+      "options": {
+        "color": {
+          "description": "色に最も近いFFXIVカララントを検索",
+          "options": {
+            "color": {
+              "description": "マッチングする色（#FF5733のような16進数コードまたはカララント名）"
+            },
+            "count": {
+              "description": "表示するマッチ数（1〜10）"
+            },
+            "matching": {
+              "description": "カラーマッチングのアルゴリズム"
+            }
+          }
+        },
+        "image": {
+          "description": "画像から色を抽出し、一致するカララントを検索",
+          "options": {
+            "image": {
+              "description": "分析する画像"
+            },
+            "colors": {
+              "description": "抽出する色数（3〜10）"
+            },
+            "matching": {
+              "description": "カラーマッチングのアルゴリズム"
+            },
+            "prevent_duplicates": {
+              "description": "複数のスロットが同じカララントにならないようにする（既定：true）"
+            }
+          }
+        }
+      }
     },
     "swatch": {
-      "description": "キャラクターファイルの色を最も近いカララントに照合"
+      "description": "キャラクターファイルの色を最も近いカララントに照合",
+      "options": {
+        "file": {
+          "description": ".charaキャラクターファイル（AnamnesisまたはKtisisの書き出し）"
+        },
+        "order": {
+          "description": "行の並び順 — どちらも同じ5行を表示"
+        },
+        "slot": {
+          "description": "代わりに1つのスロットの最も近い5色を表示"
+        }
+      }
     },
     "dye": {
-      "description": "FFXIV のカララントを検索・閲覧"
+      "description": "FFXIV のカララントを検索・閲覧",
+      "options": {
+        "search": {
+          "description": "名前でカララントを検索",
+          "options": {
+            "query": {
+              "description": "検索キーワード（カララント名）"
+            }
+          }
+        },
+        "info": {
+          "description": "特定のカララントの詳細情報を取得",
+          "options": {
+            "name": {
+              "description": "カララント名"
+            }
+          }
+        },
+        "list": {
+          "description": "カテゴリでカララントを一覧表示",
+          "options": {
+            "category": {
+              "description": "カララントのカテゴリ"
+            }
+          }
+        },
+        "random": {
+          "description": "ランダムに5つのカララントを表示",
+          "options": {
+            "unique_categories": {
+              "description": "カテゴリごとに1つのカララントに制限（既定：false）"
+            }
+          }
+        }
+      }
     },
     "comparison": {
-      "description": "2〜4色のカララントを並べて色分析"
+      "description": "2〜4色のカララントを並べて色分析",
+      "options": {
+        "dye1": {
+          "description": "1つ目のカララント（16進数コードまたはカララント名）"
+        },
+        "dye2": {
+          "description": "2つ目のカララント（16進数コードまたはカララント名）"
+        },
+        "dye3": {
+          "description": "3つ目のカララント（任意）"
+        },
+        "dye4": {
+          "description": "4つ目のカララント（任意）"
+        }
+      }
     },
     "contrast": {
-      "description": "カララントペアの WCAG 非テキストコントラスト（下限 3:1）"
+      "description": "カララントペアの WCAG 非テキストコントラスト（下限 3:1）",
+      "options": {
+        "dye1": {
+          "description": "1つ目のカララント（16進数コードまたはカララント名）"
+        },
+        "dye2": {
+          "description": "2つ目のカララント（16進数コードまたはカララント名）"
+        },
+        "dye3": {
+          "description": "3つ目のカララント（任意）"
+        },
+        "dye4": {
+          "description": "4つ目のカララント（任意）"
+        }
+      }
     },
     "accessibility": {
-      "description": "各色覚でカララント（1色または2色）がどう見えるか"
+      "description": "各色覚でカララント（1色または2色）がどう見えるか",
+      "options": {
+        "dye": {
+          "description": "基準となるカララント（16進数コードまたはカララント名）"
+        },
+        "dye2": {
+          "description": "2つ目のカララント — ペア表示になります（任意）"
+        },
+        "vision": {
+          "description": "色覚レンズ：種類を指定すると1つ、Allで全レンズを表示"
+        }
+      }
     },
     "a11y": {
-      "description": "各色覚でカララント（1色または2色）がどう見えるか"
+      "description": "各色覚でカララント（1色または2色）がどう見えるか",
+      "options": {
+        "dye": {
+          "description": "基準となるカララント（16進数コードまたはカララント名）"
+        },
+        "dye2": {
+          "description": "2つ目のカララント — ペア表示になります（任意）"
+        },
+        "vision": {
+          "description": "色覚レンズ：種類を指定すると1つ、Allで全レンズを表示"
+        }
+      }
     },
     "budget": {
-      "description": "マーケットボード価格から手頃な代替カララントを検索"
+      "description": "マーケットボード価格から手頃な代替カララントを検索",
+      "options": {
+        "find": {
+          "description": "高価なカララントの安い代替品を検索",
+          "options": {
+            "target_dye": {
+              "description": "代替品を探したい高価なカララント"
+            },
+            "world": {
+              "description": "価格を調べるワールドまたはデータセンター（未指定時は保存済みの設定を使用）"
+            },
+            "matching": {
+              "description": "ΔE列に使うカラーマッチングアルゴリズム"
+            },
+            "max_distance": {
+              "description": "マッチライン — 考慮する最大ΔE2000（2〜20、既定：8）"
+            },
+            "exclude_coffers": {
+              "description": "リテイナーの宝箱のカララントを除外（ガチャ、プレイヤー転売価格のみ）"
+            },
+            "exclude_wide_spectrum": {
+              "description": "アディショナルカラー1／2を除外（振興券・クレジット入手）"
+            }
+          }
+        },
+        "set_world": {
+          "description": "価格検索用のワールド／データセンターを保存",
+          "options": {
+            "world": {
+              "description": "ワールドまたはデータセンター名"
+            }
+          }
+        },
+        "quick": {
+          "description": "人気の高価なカララントの手頃なチェック",
+          "options": {
+            "preset": {
+              "description": "代替品を探したい人気の高価なカララント"
+            },
+            "world": {
+              "description": "価格を調べるワールドまたはデータセンター（未指定時は保存済みの設定を使用）"
+            }
+          }
+        }
+      }
     },
     "preset": {
-      "description": "コミュニティのカラープリセットを閲覧・投稿・投票"
+      "description": "コミュニティのカラープリセットを閲覧・投稿・投票",
+      "options": {
+        "list": {
+          "description": "コミュニティのプリセットを閲覧",
+          "options": {
+            "category": {
+              "description": "カテゴリで絞り込み"
+            },
+            "sort": {
+              "description": "並べ替え順"
+            }
+          }
+        },
+        "show": {
+          "description": "特定のプリセットを表示",
+          "options": {
+            "name": {
+              "description": "プリセット名"
+            }
+          }
+        },
+        "random": {
+          "description": "ひらめきになるランダムなプリセットを取得",
+          "options": {
+            "category": {
+              "description": "カテゴリで絞り込み"
+            }
+          }
+        },
+        "submit": {
+          "description": "新しいコミュニティプリセットを投稿",
+          "options": {
+            "preset_name": {
+              "description": "プリセット名（2〜50文字）"
+            },
+            "description": {
+              "description": "プリセットの説明（10〜200文字）"
+            },
+            "category": {
+              "description": "プリセットのカテゴリ"
+            },
+            "dye1": {
+              "description": "1つ目のカララント（必須）"
+            },
+            "dye2": {
+              "description": "2つ目のカララント（必須）"
+            },
+            "dye3": {
+              "description": "3つ目のカララント（必須）"
+            },
+            "dye4": {
+              "description": "4つ目のカララント（任意）"
+            },
+            "dye5": {
+              "description": "5つ目のカララント（任意）"
+            },
+            "dye6": {
+              "description": "6つ目のカララント（任意）"
+            },
+            "tags": {
+              "description": "カンマ区切りのタグ（任意、最大10個）"
+            }
+          }
+        },
+        "vote": {
+          "description": "プリセットへの投票を切り替え",
+          "options": {
+            "preset": {
+              "description": "投票するプリセット"
+            }
+          }
+        },
+        "edit": {
+          "description": "自分のプリセットを編集",
+          "options": {
+            "preset": {
+              "description": "編集するプリセット"
+            },
+            "name": {
+              "description": "新しいプリセット名（2〜50文字）"
+            },
+            "description": {
+              "description": "新しい説明（10〜200文字）"
+            },
+            "tags": {
+              "description": "新しいタグ（カンマ区切り）"
+            },
+            "dye1": {
+              "description": "1つ目のカララント"
+            },
+            "dye2": {
+              "description": "2つ目のカララント"
+            },
+            "dye3": {
+              "description": "3つ目のカララント"
+            },
+            "dye4": {
+              "description": "4つ目のカララント"
+            },
+            "dye5": {
+              "description": "5つ目のカララント"
+            },
+            "dye6": {
+              "description": "6つ目のカララント"
+            }
+          }
+        },
+        "favorite": {
+          "description": "お気に入りのコミュニティプリセットを管理",
+          "options": {
+            "add": {
+              "description": "プリセットをお気に入りに追加",
+              "options": {
+                "preset_name": {
+                  "description": "お気に入りに追加するプリセット"
+                }
+              }
+            },
+            "remove": {
+              "description": "プリセットをお気に入りから削除",
+              "options": {
+                "preset_name": {
+                  "description": "お気に入りから削除するプリセット"
+                }
+              }
+            },
+            "list": {
+              "description": "お気に入りのプリセットを一覧表示"
+            }
+          }
+        }
+      }
     },
     "preferences": {
-      "description": "ボットの個人設定を管理"
+      "description": "ボットの個人設定を管理",
+      "options": {
+        "show": {
+          "description": "現在の設定を表示"
+        },
+        "set": {
+          "description": "1つ以上の設定を変更（すべて任意）",
+          "options": {
+            "language": {
+              "description": "カララント名とメッセージのUI言語"
+            },
+            "blending": {
+              "description": "/mixerの既定のブレンドモード"
+            },
+            "matching": {
+              "description": "既定のカラーマッチング方式"
+            },
+            "count": {
+              "description": "/extractor colorの既定のマッチ数（1〜10）"
+            },
+            "clan": {
+              "description": "/swatchの既定の部族（例：ミッドランダー、アウラ・レン）"
+            },
+            "gender": {
+              "description": "/swatchの既定の性別"
+            },
+            "world": {
+              "description": "マーケット価格用の既定のワールド／データセンター"
+            },
+            "market": {
+              "description": "既定でマーケットボード価格を表示"
+            },
+            "show_hex": {
+              "description": "結果カードに16進カラーコードを表示"
+            },
+            "show_rgb": {
+              "description": "結果カードにRGB値を表示"
+            },
+            "show_hsv": {
+              "description": "結果カードにHSV値を表示"
+            },
+            "show_lab": {
+              "description": "結果カードにLAB値を表示"
+            },
+            "show_deltae": {
+              "description": "結果カードに色差ΔEを表示"
+            },
+            "show_acquisition": {
+              "description": "結果カードにカララントの入手方法を表示"
+            },
+            "theme": {
+              "description": "生成するすべての画像のカードテーマ"
+            }
+          }
+        },
+        "reset": {
+          "description": "設定をデフォルトにリセット（キー未指定ですべてリセット）",
+          "options": {
+            "key": {
+              "description": "リセットする設定（未指定ですべて）"
+            }
+          }
+        },
+        "filters": {
+          "description": "検索結果のカララント種類フィルターを管理",
+          "options": {
+            "set": {
+              "description": "カララント種類フィルターを設定（すべて任意）",
+              "options": {
+                "metallic": {
+                  "description": "メタリック系カララントを除外"
+                },
+                "pastel": {
+                  "description": "パステル系カララントを除外"
+                },
+                "dark": {
+                  "description": "ダーク系カララントを除外"
+                },
+                "cosmic": {
+                  "description": "コスモ系カララントを除外"
+                },
+                "ishgardian": {
+                  "description": "イシュガルド系カララントを除外"
+                },
+                "expensive": {
+                  "description": "高価なカララントを除外（ピュアホワイト／ジェットブラック）"
+                },
+                "vendor": {
+                  "description": "ベンダー販売のカララントを除外"
+                },
+                "craft": {
+                  "description": "クラフトカララントを除外"
+                }
+              }
+            },
+            "show": {
+              "description": "現在のカララントフィルター設定を表示"
+            },
+            "reset": {
+              "description": "すべてのカララントフィルターをクリア"
+            }
+          }
+        }
+      }
     },
     "manual": {
-      "description": "全コマンドのヘルプと使い方を表示"
+      "description": "全コマンドのヘルプと使い方を表示",
+      "options": {
+        "topic": {
+          "description": "特定のヘルプトピック"
+        }
+      }
     },
     "changelog": {
-      "description": "Discord ボットの最新情報 — リリースノート（新しい順）"
+      "description": "Discord ボットの最新情報 — リリースノート（新しい順）",
+      "options": {
+        "version": {
+          "description": "特定のリリースを展開（例：5.0.0）"
+        }
+      }
     },
     "about": {
       "description": "XIV Dye Tools ボットの情報を表示"
     },
     "stats": {
-      "description": "ボットの利用統計と情報を表示"
+      "description": "ボットの利用統計と情報を表示",
+      "options": {
+        "summary": {
+          "description": "ボットの基本情報を表示（公開）"
+        },
+        "overview": {
+          "description": "利用状況の指標を表示（管理者限定）"
+        },
+        "commands": {
+          "description": "コマンド別の内訳を表示（管理者限定）"
+        },
+        "preferences": {
+          "description": "設定の利用率を表示（管理者限定）"
+        },
+        "health": {
+          "description": "システムの状態を表示（管理者限定）"
+        }
+      }
     }
   }
 }

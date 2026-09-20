@@ -24,7 +24,7 @@ heading, it is given in brackets.
 
 | Tool | Guide | Description |
 |------|-------|-------------|
-| **Color Harmony Explorer** | [Guide](web-app/color-harmony.md) | Discover harmonious dye combinations |
+| **Harmony Explorer** | [Guide](web-app/color-harmony.md) | Discover harmonious dye combinations |
 | **Palette Extractor** | [Guide](web-app/palette-extractor.md) | Find the closest FFXIV dye to any color |
 | **Accessibility Checker** | [Guide](web-app/accessibility.md) | Simulate colorblindness |
 | **Dye Comparison** | [Guide](web-app/dye-comparison.md) | Compare dyes side-by-side |
@@ -32,7 +32,7 @@ heading, it is given in brackets.
 | **Dye Mixer** | [Guide](web-app/dye-mixer.md) | Blend two dyes together |
 | **Community Presets** (app title: *Preset Palettes*) | [Guide](web-app/community-presets.md) | Browse community dye palettes |
 | **Budget Suggestions** | [Guide](web-app/budget-suggestions.md) | Find affordable dye alternatives |
-| **Swatch Matcher** (app title: *Character Matcher*) | [Guide](web-app/swatch-matcher.md) | Match character colors to dyes |
+| **Swatch Matcher** | [Guide](web-app/swatch-matcher.md) | Match character colors to dyes |
 
 ### Features
 
@@ -60,7 +60,7 @@ heading, it is given in brackets.
 
 1. **Know the color?** Use Palette Extractor to find the closest dye
 2. **Have an image?** Extract colors from it with palette extraction
-3. **Looking for harmony?** Use Color Harmony Explorer for combinations
+3. **Looking for harmony?** Use Harmony Explorer for combinations
 4. **Match your character?** Use Swatch Matcher for character colors
 
 ### Saving Your Work

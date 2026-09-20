@@ -25,7 +25,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ICON_CONTEXT_MENU } from '@shared/ui-icons';
-import { handoffTo } from '@shared/tool-handoff';
+import { handoffTo, toolLabel } from '@shared/tool-handoff';
 import { customDyeLabel, isCustomDye } from '@shared/custom-dye';
 import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeWithDistance } from '@xivdyetools/types';
@@ -1806,35 +1806,35 @@ export class ResultCard extends BaseLitComponent {
                             role="menuitem"
                             @click=${() => this.handleMenuAction('inspect-harmony')}
                           >
-                            ${LanguageService.t('resultCard.tools.harmony')}
+                            ${toolLabel('harmony')}
                           </button>
                           <button
                             class="menu-item"
                             role="menuitem"
                             @click=${() => this.handleMenuAction('inspect-budget')}
                           >
-                            ${LanguageService.t('resultCard.tools.budget')}
+                            ${toolLabel('budget')}
                           </button>
                           <button
                             class="menu-item"
                             role="menuitem"
                             @click=${() => this.handleMenuAction('inspect-accessibility')}
                           >
-                            ${LanguageService.t('resultCard.tools.accessibility')}
+                            ${toolLabel('accessibility')}
                           </button>
                           <button
                             class="menu-item"
                             role="menuitem"
                             @click=${() => this.handleMenuAction('inspect-comparison')}
                           >
-                            ${LanguageService.t('resultCard.tools.comparison')}
+                            ${toolLabel('comparison')}
                           </button>
                           <button
                             class="menu-item"
                             role="menuitem"
                             @click=${() => this.handleMenuAction('inspect-swatch')}
                           >
-                            ${LanguageService.t('resultCard.tools.swatch')}
+                            ${toolLabel('swatch')}
                           </button>
                         </div>
                       </div>
@@ -1848,14 +1848,14 @@ export class ResultCard extends BaseLitComponent {
                             role="menuitem"
                             @click=${() => this.handleMenuAction('transform-gradient')}
                           >
-                            ${LanguageService.t('resultCard.tools.gradient')}
+                            ${toolLabel('gradient')}
                           </button>
                           <button
                             class="menu-item"
                             role="menuitem"
                             @click=${() => this.handleMenuAction('transform-mixer')}
                           >
-                            ${LanguageService.t('resultCard.tools.mixer')}
+                            ${toolLabel('mixer')}
                           </button>
                         </div>
                       </div>

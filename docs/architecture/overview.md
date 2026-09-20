@@ -190,7 +190,7 @@ Layer 0: Shared Foundation
 **9 Tools**:
 1. **Palette Extractor** - Extract colors from images and find matching dyes
 2. **Gradient Builder** - Create color gradients between dyes
-3. **Color Harmony Explorer** - Discover harmonious dye combinations
+3. **Harmony Explorer** - Discover harmonious dye combinations
 4. **Dye Mixer** - RGB color blending between dyes
 5. **Swatch Matcher** - Match character colors to dyes
 6. **Dye Comparison** - Side-by-side dye analysis

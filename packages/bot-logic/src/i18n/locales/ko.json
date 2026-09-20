@@ -73,7 +73,7 @@
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
-      "description": "봇 설정을 관리합니다.\n• `set`: 언어, 블렌딩, 매칭, 결과 수, 부족/성별, 월드, 카드 값, 테마\n• `filters`: 특정 염료 그룹을 결과에서 제외\n• `reset`: 설정 하나 또는 전체"
+      "description": "봇 설정을 관리합니다.\n• `set`: 언어, 블렌딩, 매칭, 결과 수, 부족/성별, 서버, 카드 값, 테마\n• `filters`: 특정 염료 그룹을 결과에서 제외\n• `reset`: 설정 하나 또는 전체"
     },
     "dyeSearch": {
       "name": "`/dye search <query>`",
@@ -105,7 +105,7 @@
     },
     "budget": {
       "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
-      "description": "장터 가격을 사용해 고가 염료의 저렴한 대안을 찾습니다.\n• `find`: 목표 염료에 가까운 더 저렴한 염료 (`max_distance` 2-20)\n• `quick`: 인기 있는 고가 염료에 대한 동일한 검사\n• `set_world`: 월드 또는 데이터 센터 저장"
+      "description": "장터 가격을 사용해 고가 염료의 저렴한 대안을 찾습니다.\n• `find`: 목표 염료에 가까운 더 저렴한 염료 (`max_distance` 2-20)\n• `quick`: 인기 있는 고가 염료에 대한 동일한 검사\n• `set_world`: 서버 또는 데이터 센터 저장"
     },
     "presetBrowse": {
       "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
@@ -203,6 +203,7 @@
     "links": "링크",
     "dyes": "염료",
     "builtOn": "사용 기술",
+    "builtOnBody": "Universalis의 장터 가격 · spectral.js의 염료 혼합",
     "attribution": "권리 표기",
     "poweredBy": "Cloudflare Workers 기반",
     "categories": {
@@ -297,16 +298,16 @@
   "budget": {
     "findTitle": "{dyeName}의 저렴한 대안",
     "noAlternatives": "조건에 맞는 저렴한 대안을 찾을 수 없습니다.",
-    "worldSet": "기본 월드가 **{world}**(으)로 설정되었습니다.",
+    "worldSet": "기본 서버가 **{world}**(으)로 설정되었습니다.",
     "noWorldSet": {
-      "title": "월드가 설정되지 않았습니다",
-      "description": "`/budget set_world <world>`로 월드를 설정하거나 `world` 옵션을 지정해 주세요."
+      "title": "서버가 설정되지 않았습니다",
+      "description": "`/budget set_world <world>`로 서버를 설정하거나 `world` 옵션을 지정해 주세요."
     },
     "errors": {
       "notConfigured": "이 서버에서는 저렴한 염료 기능을 사용할 수 없습니다. 장터 연동이 설정되어 있지 않습니다.",
-      "worldNotFound": "월드 또는 데이터센터 \"{world}\"를 찾을 수 없습니다.\n\n철자를 확인하거나 \"모그리\" 또는 \"초코보\" 같은 데이터센터 이름을 시도해 보세요.",
-      "missingWorld": "월드를 지정해 주세요.",
-      "saveFailed": "월드 설정을 저장할 수 없습니다. 다시 시도해 주세요.",
+      "worldNotFound": "서버 또는 데이터 센터 \"{world}\"를 찾을 수 없습니다.\n\n철자를 확인하거나 \"모그리\" 또는 \"초코보\" 같은 데이터 센터 이름을 시도해 보세요.",
+      "missingWorld": "서버를 지정해 주세요.",
+      "saveFailed": "서버 설정을 저장할 수 없습니다. 다시 시도해 주세요.",
       "missingDye": "대상 염료를 지정해 주세요.",
       "dyeNotFound": "염료 \"{name}\"를 찾을 수 없습니다.",
       "missingPreset": "빠른 선택 프리셋을 선택해 주세요.",
@@ -349,7 +350,7 @@
       "count": "결과 수",
       "clan": "캐릭터 부족",
       "gender": "캐릭터 성별",
-      "world": "마켓 월드",
+      "world": "마켓 서버",
       "market": "마켓 가격 표시",
       "showHex": "16진수 코드 표시",
       "showRgb": "RGB 값 표시",
@@ -376,7 +377,7 @@
       "invalidCount": "잘못된 개수입니다. 1에서 10 사이의 숫자여야 합니다.",
       "invalidClan": "잘못된 부족입니다. 유효한 부족:\n{options}",
       "invalidGender": "잘못된 성별입니다. 유효한 옵션: `male`, `female`",
-      "invalidWorld": "잘못된 월드입니다. 유효한 FFXIV 월드 또는 데이터 센터 이름을 입력해 주세요.",
+      "invalidWorld": "잘못된 서버입니다. 유효한 FFXIV 서버 또는 데이터 센터 이름을 입력해 주세요.",
       "invalidMarket": "잘못된 값입니다. `on`/`off` 또는 `true`/`false`를 사용하세요.",
       "error": "설정 저장 중 오류가 발생했습니다. 다시 시도해 주세요.",
       "invalidTheme": "잘못된 테마입니다. `dark` 또는 `light`를 선택하세요."
@@ -507,7 +508,7 @@
     "nearest": "가장 가까운 염료",
     "nearestMore": "외 {n}개",
     "ideal": "이상 색상",
-    "found": "가장 가까운",
+    "found": "가까운 염료",
     "name": "염료",
     "cat": "분류",
     "bandKey": "구간: ≤6 / ≤12 / ≤20",
@@ -523,6 +524,8 @@
     "rampTitle": "이미지에서 추출한 팔레트",
     "matchTitle": "가장 가까운 염료",
     "colours": "{n}가지 색",
+    "colours_one": "{n}가지 색",
+    "colours_other": "{n}가지 색",
     "rampKey": "밴드 너비 = 이미지 비중",
     "matchKey": "ΔE2000 최근접",
     "manualLead": "예상과 다른 색이 나왔다면",
@@ -655,55 +658,542 @@
   },
   "commands": {
     "harmony": {
-      "description": "기준 색상에서 조화로운 염료 조합 생성"
+      "description": "기준 색상에서 조화로운 염료 조합 생성",
+      "options": {
+        "color": {
+          "description": "기본 색상 (예: #FF5733 같은 16진수 코드 또는 염료 이름)"
+        },
+        "type": {
+          "description": "색상 조화 유형"
+        },
+        "wheel": {
+          "description": "조화 각도를 측정하는 색상환 (기본값: RGB)"
+        },
+        "companions": {
+          "description": "조화 슬롯당 동반 염료 수 (1-3)"
+        },
+        "matching": {
+          "description": "동반 염료 확장에 쓸 가장 가까운 염료 탐색 알고리즘"
+        },
+        "strict_matching": {
+          "description": "더 가까운 매칭을 위해 거리 임계값 강화"
+        },
+        "prevent_duplicates": {
+          "description": "모든 조화 슬롯에서 중복 염료 제거"
+        }
+      }
     },
     "mixer": {
-      "description": "여러 색상 혼합 알고리즘으로 염료 두 개를 혼합"
+      "description": "여러 색상 혼합 알고리즘으로 염료 두 개를 혼합",
+      "options": {
+        "dye1": {
+          "description": "혼합할 첫 번째 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "dye2": {
+          "description": "혼합할 두 번째 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "mode": {
+          "description": "색상 혼합 알고리즘"
+        },
+        "matching": {
+          "description": "혼합 결과에 가장 가까운 염료 탐색 알고리즘"
+        }
+      }
     },
     "gradient": {
-      "description": "두 색상 사이의 그라데이션과 중간 염료 생성"
+      "description": "두 색상 사이의 그라데이션과 중간 염료 생성",
+      "options": {
+        "start_color": {
+          "description": "시작 색상: 16진수 (예: #FF0000) 또는 염료 이름"
+        },
+        "end_color": {
+          "description": "끝 색상: 16진수 (예: #0000FF) 또는 염료 이름"
+        },
+        "steps": {
+          "description": "색상 단계 수 (기본값 6, 최대 12)"
+        },
+        "color_space": {
+          "description": "그라데이션 색상 보간 모드"
+        },
+        "matching": {
+          "description": "가장 가까운 염료 탐색 알고리즘"
+        }
+      }
     },
     "extractor": {
-      "description": "입력에서 색상을 추출하고 일치하는 FFXIV 염료 찾기"
+      "description": "입력에서 색상을 추출하고 일치하는 FFXIV 염료 찾기",
+      "options": {
+        "color": {
+          "description": "특정 색상에 가장 가까운 FFXIV 염료 찾기",
+          "options": {
+            "color": {
+              "description": "매칭할 색상 (예: #FF5733 같은 16진수 코드 또는 염료 이름)"
+            },
+            "count": {
+              "description": "표시할 매치 수 (1-10)"
+            },
+            "matching": {
+              "description": "색상 매칭 알고리즘"
+            }
+          }
+        },
+        "image": {
+          "description": "이미지에서 색상을 추출하고 일치하는 염료 찾기",
+          "options": {
+            "image": {
+              "description": "분석할 이미지"
+            },
+            "colors": {
+              "description": "추출할 색상 수 (3-10)"
+            },
+            "matching": {
+              "description": "색상 매칭 알고리즘"
+            },
+            "prevent_duplicates": {
+              "description": "여러 슬롯이 같은 염료에 매핑되지 않도록 방지 (기본값: true)"
+            }
+          }
+        }
+      }
     },
     "swatch": {
-      "description": "캐릭터 파일의 색상을 가장 가까운 염료와 매칭"
+      "description": "캐릭터 파일의 색상을 가장 가까운 염료와 매칭",
+      "options": {
+        "file": {
+          "description": "`.chara` 캐릭터 파일 (Anamnesis / Ktisis 내보내기)"
+        },
+        "order": {
+          "description": "행 순서 — 어느 순서든 같은 5개 행을 표시"
+        },
+        "slot": {
+          "description": "대신 슬롯 하나에 대한 가장 가까운 염료 5개 표시"
+        }
+      }
     },
     "dye": {
-      "description": "FFXIV 염료 검색 및 탐색"
+      "description": "FFXIV 염료 검색 및 탐색",
+      "options": {
+        "search": {
+          "description": "이름으로 염료 검색",
+          "options": {
+            "query": {
+              "description": "검색어 (염료 이름)"
+            }
+          }
+        },
+        "info": {
+          "description": "특정 염료의 상세 정보 확인",
+          "options": {
+            "name": {
+              "description": "염료 이름"
+            }
+          }
+        },
+        "list": {
+          "description": "카테고리별 염료 목록",
+          "options": {
+            "category": {
+              "description": "염료 카테고리"
+            }
+          }
+        },
+        "random": {
+          "description": "무작위로 선택된 염료 5개 표시",
+          "options": {
+            "unique_categories": {
+              "description": "카테고리당 1개 염료로 제한 (기본값: false)"
+            }
+          }
+        }
+      }
     },
     "comparison": {
-      "description": "염료 2~4개를 나란히 놓고 색상 분석"
+      "description": "염료 2~4개를 나란히 놓고 색상 분석",
+      "options": {
+        "dye1": {
+          "description": "첫 번째 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "dye2": {
+          "description": "두 번째 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "dye3": {
+          "description": "세 번째 염료 (선택 사항)"
+        },
+        "dye4": {
+          "description": "네 번째 염료 (선택 사항)"
+        }
+      }
     },
     "contrast": {
-      "description": "염료 쌍의 WCAG 비텍스트 대비 (기준 3:1)"
+      "description": "염료 쌍의 WCAG 비텍스트 대비 (기준 3:1)",
+      "options": {
+        "dye1": {
+          "description": "첫 번째 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "dye2": {
+          "description": "두 번째 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "dye3": {
+          "description": "세 번째 염료 (선택 사항)"
+        },
+        "dye4": {
+          "description": "네 번째 염료 (선택 사항)"
+        }
+      }
     },
     "accessibility": {
-      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지"
+      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지",
+      "options": {
+        "dye": {
+          "description": "기본 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "dye2": {
+          "description": "두 번째 염료 — 지정 시 쌍 프레임 렌더링 (선택 사항)"
+        },
+        "vision": {
+          "description": "렌즈: 특정 유형은 해당 렌즈만, 전체 선택 시 모든 렌즈 렌더링"
+        }
+      }
     },
     "a11y": {
-      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지"
+      "description": "염료 하나 또는 한 쌍이 각 색각에서 어떻게 보이는지",
+      "options": {
+        "dye": {
+          "description": "기본 염료 (16진수 코드 또는 염료 이름)"
+        },
+        "dye2": {
+          "description": "두 번째 염료 — 지정 시 쌍 프레임 렌더링 (선택 사항)"
+        },
+        "vision": {
+          "description": "렌즈: 특정 유형은 해당 렌즈만, 전체 선택 시 모든 렌즈 렌더링"
+        }
+      }
     },
     "budget": {
-      "description": "장터 가격으로 저렴한 대체 염료 찾기"
+      "description": "장터 가격으로 저렴한 대체 염료 찾기",
+      "options": {
+        "find": {
+          "description": "고가 염료의 더 저렴한 대안 찾기",
+          "options": {
+            "target_dye": {
+              "description": "대안을 찾을 고가 염료"
+            },
+            "world": {
+              "description": "가격 조회용 서버 또는 데이터 센터 (미지정 시 저장된 설정 사용)"
+            },
+            "matching": {
+              "description": "ΔE 열에 쓸 색상 매칭 알고리즘"
+            },
+            "max_distance": {
+              "description": "매치 라인 — 허용할 최대 ΔE2000 거리 (2-20, 기본값 8)"
+            },
+            "exclude_coffers": {
+              "description": "벤처 코퍼 염료 제외 (가챠 — 플레이어 재판매 가격만 존재)"
+            },
+            "exclude_wide_spectrum": {
+              "description": "와이드 스펙트럼 #1/#2 염료 제외 (스크립/크레딧 획득 경로)"
+            }
+          }
+        },
+        "set_world": {
+          "description": "가격 조회용 선호 서버/데이터 센터 저장",
+          "options": {
+            "world": {
+              "description": "서버 또는 데이터 센터 이름"
+            }
+          }
+        },
+        "quick": {
+          "description": "인기 고가 염료의 빠른 예산 확인",
+          "options": {
+            "preset": {
+              "description": "대안을 찾을 인기 고가 염료"
+            },
+            "world": {
+              "description": "가격 조회용 서버 또는 데이터 센터 (미지정 시 저장된 설정 사용)"
+            }
+          }
+        }
+      }
     },
     "preset": {
-      "description": "커뮤니티 색상 프리셋 둘러보기, 제출, 투표"
+      "description": "커뮤니티 색상 프리셋 둘러보기, 제출, 투표",
+      "options": {
+        "list": {
+          "description": "커뮤니티 프리셋 둘러보기",
+          "options": {
+            "category": {
+              "description": "카테고리별 필터링"
+            },
+            "sort": {
+              "description": "정렬 순서"
+            }
+          }
+        },
+        "show": {
+          "description": "특정 프리셋 표시",
+          "options": {
+            "name": {
+              "description": "프리셋 이름"
+            }
+          }
+        },
+        "random": {
+          "description": "영감을 위한 무작위 프리셋 가져오기",
+          "options": {
+            "category": {
+              "description": "카테고리별 필터링"
+            }
+          }
+        },
+        "submit": {
+          "description": "새 커뮤니티 프리셋 제출",
+          "options": {
+            "preset_name": {
+              "description": "프리셋 이름 (2-50자)"
+            },
+            "description": {
+              "description": "프리셋 설명 (10-200자)"
+            },
+            "category": {
+              "description": "프리셋 카테고리"
+            },
+            "dye1": {
+              "description": "첫 번째 염료 (필수)"
+            },
+            "dye2": {
+              "description": "두 번째 염료 (필수)"
+            },
+            "dye3": {
+              "description": "세 번째 염료 (필수)"
+            },
+            "dye4": {
+              "description": "네 번째 염료 (선택 사항)"
+            },
+            "dye5": {
+              "description": "다섯 번째 염료 (선택 사항)"
+            },
+            "dye6": {
+              "description": "여섯 번째 염료 (선택 사항)"
+            },
+            "tags": {
+              "description": "쉼표로 구분한 태그 (선택 사항, 최대 10개)"
+            }
+          }
+        },
+        "vote": {
+          "description": "프리셋에 대한 투표 전환",
+          "options": {
+            "preset": {
+              "description": "투표할 프리셋"
+            }
+          }
+        },
+        "edit": {
+          "description": "자신의 프리셋 수정",
+          "options": {
+            "preset": {
+              "description": "수정할 프리셋"
+            },
+            "name": {
+              "description": "새 프리셋 이름 (2-50자)"
+            },
+            "description": {
+              "description": "새 설명 (10-200자)"
+            },
+            "tags": {
+              "description": "새 태그 (쉼표로 구분)"
+            },
+            "dye1": {
+              "description": "첫 번째 염료"
+            },
+            "dye2": {
+              "description": "두 번째 염료"
+            },
+            "dye3": {
+              "description": "세 번째 염료"
+            },
+            "dye4": {
+              "description": "네 번째 염료"
+            },
+            "dye5": {
+              "description": "다섯 번째 염료"
+            },
+            "dye6": {
+              "description": "여섯 번째 염료"
+            }
+          }
+        },
+        "favorite": {
+          "description": "즐겨찾기 커뮤니티 프리셋 관리",
+          "options": {
+            "add": {
+              "description": "프리셋을 즐겨찾기에 추가",
+              "options": {
+                "preset_name": {
+                  "description": "즐겨찾기에 추가할 프리셋"
+                }
+              }
+            },
+            "remove": {
+              "description": "프리셋을 즐겨찾기에서 제거",
+              "options": {
+                "preset_name": {
+                  "description": "즐겨찾기에서 제거할 프리셋"
+                }
+              }
+            },
+            "list": {
+              "description": "즐겨찾기한 프리셋 목록"
+            }
+          }
+        }
+      }
     },
     "preferences": {
-      "description": "개인 봇 설정 관리"
+      "description": "개인 봇 설정 관리",
+      "options": {
+        "show": {
+          "description": "현재 설정 표시"
+        },
+        "set": {
+          "description": "하나 이상의 설정 지정 (모든 옵션 선택 사항)",
+          "options": {
+            "language": {
+              "description": "염료 이름과 메시지에 쓸 UI 언어"
+            },
+            "blending": {
+              "description": "/mixer의 기본 블렌딩 모드"
+            },
+            "matching": {
+              "description": "기본 색상 매칭 방법"
+            },
+            "count": {
+              "description": "/extractor color의 기본 매치 수 (1-10)"
+            },
+            "clan": {
+              "description": "/swatch의 기본 부족 (예: Midlander, Raen)"
+            },
+            "gender": {
+              "description": "/swatch의 기본 성별"
+            },
+            "world": {
+              "description": "장터 가격용 기본 서버/데이터 센터"
+            },
+            "market": {
+              "description": "기본적으로 장터 가격 표시"
+            },
+            "show_hex": {
+              "description": "결과 카드에 16진수 색상 코드 표시"
+            },
+            "show_rgb": {
+              "description": "결과 카드에 RGB 값 표시"
+            },
+            "show_hsv": {
+              "description": "결과 카드에 HSV 값 표시"
+            },
+            "show_lab": {
+              "description": "결과 카드에 LAB 값 표시"
+            },
+            "show_deltae": {
+              "description": "결과 카드에 Delta-E 색상 거리 표시"
+            },
+            "show_acquisition": {
+              "description": "결과 카드에 염료 획득 경로 표시"
+            },
+            "theme": {
+              "description": "생성되는 모든 이미지의 카드 테마"
+            }
+          }
+        },
+        "reset": {
+          "description": "설정을 기본값으로 초기화 (키 미지정 시 전체)",
+          "options": {
+            "key": {
+              "description": "초기화할 설정 (전체는 생략)"
+            }
+          }
+        },
+        "filters": {
+          "description": "검색 결과의 염료 유형 필터 관리",
+          "options": {
+            "set": {
+              "description": "염료 유형 필터 지정 (모든 옵션 선택 사항)",
+              "options": {
+                "metallic": {
+                  "description": "메탈릭 염료 제외"
+                },
+                "pastel": {
+                  "description": "파스텔 염료 제외"
+                },
+                "dark": {
+                  "description": "다크 염료 제외"
+                },
+                "cosmic": {
+                  "description": "코스모 염료 제외"
+                },
+                "ishgardian": {
+                  "description": "이슈가르드 염료 제외"
+                },
+                "expensive": {
+                  "description": "고가 염료 제외 (순백색 / 칠흑색)"
+                },
+                "vendor": {
+                  "description": "상인 판매 염료 제외"
+                },
+                "craft": {
+                  "description": "제작 염료 제외"
+                }
+              }
+            },
+            "show": {
+              "description": "현재 염료 필터 설정 표시"
+            },
+            "reset": {
+              "description": "모든 염료 필터 초기화"
+            }
+          }
+        }
+      }
     },
     "manual": {
-      "description": "모든 명령어의 도움말과 사용 가이드 표시"
+      "description": "모든 명령어의 도움말과 사용 가이드 표시",
+      "options": {
+        "topic": {
+          "description": "특정 도움말 주제"
+        }
+      }
     },
     "changelog": {
-      "description": "Discord 봇의 새로운 소식 — 릴리스 노트 (최신순)"
+      "description": "Discord 봇의 새로운 소식 — 릴리스 노트 (최신순)",
+      "options": {
+        "version": {
+          "description": "특정 릴리스 펼치기 (예: 5.0.0)"
+        }
+      }
     },
     "about": {
       "description": "XIV Dye Tools 봇 정보 표시"
     },
     "stats": {
-      "description": "봇 사용 통계와 정보 표시"
+      "description": "봇 사용 통계와 정보 표시",
+      "options": {
+        "summary": {
+          "description": "기본 봇 정보 표시 (공개)"
+        },
+        "overview": {
+          "description": "사용 지표 표시 (관리자 전용)"
+        },
+        "commands": {
+          "description": "명령어별 통계 표시 (관리자 전용)"
+        },
+        "preferences": {
+          "description": "설정 사용률 표시 (관리자 전용)"
+        },
+        "health": {
+          "description": "시스템 상태 표시 (관리자 전용)"
+        }
+      }
     }
   }
 }

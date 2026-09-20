@@ -1,0 +1,45 @@
+{
+  "_readme": [
+    "Groups of keys that share ONE English value but are rightly translated",
+    "differently inside a locale, so that `scripts/i18n-parity.mjs` (and the vitest",
+    "gate `scripts/i18n-parity-gate.test.js`) can fail on every OTHER such group —",
+    "which is one concept drifting into two words, the defect behind TERM-001,",
+    "TERM-002 and TERM-004 of the 2026-09-19 i18n audit.",
+    "",
+    "Shape: { \"<exact English value>\": { \"<locale>\" | \"*\": \"<reason>\" } }.",
+    "\"*\" covers every locale in which the group diverges. An entry whose group no",
+    "longer diverges is reported as stale, so this file cannot rot.",
+    "",
+    "A reason names the two jobs the English word is doing: a verb vs an adjective,",
+    "gender / number agreement, a theme name vs a lightness range. \"It reads better",
+    "here\" is not a reason — if one English label truly needs two translations, the",
+    "cleaner fix is usually two English values.",
+    "",
+    "Seeded 2026-09-20; every entry was read in context by a reviewer at native",
+    "level (docs/audits/2026-09-19-i18n/evidence/review-open-items.md, Task 3)."
+  ],
+  "All": {
+    "fr": "agreement with three head nouns: Tout (chip set), Toutes (catégories), Tous (préréglages)"
+  },
+  "Clear": {
+    "*": "verb 'clear the field' (common.clear) vs the Clear distinctness tier, an adjective"
+  },
+  "Compare": {
+    "de": "nav-chip noun Vergleich vs hand-off menu infinitive Vergleichen"
+  },
+  "Dark": {
+    "ko": "theme / palette label 다크 vs the swatch lightness band 어두움"
+  },
+  "Light": {
+    "*": "the additive-light mixing model vs the Light theme name vs the swatch lightness band"
+  },
+  "Remove": {
+    "ko": "삭제 deletes the uploaded preview image; 제거 removes an item from a list"
+  },
+  "Save": {
+    "de": "Speichern saves a form; Merken bookmarks a preset"
+  },
+  "Saved": {
+    "fr": "plural tab label Enregistrés vs singular button state Enregistré"
+  }
+}

@@ -4,7 +4,7 @@
 
 The Swatch Matcher finds the FFXIV dyes closest to your character's customization colours — hair, eyes, skin, highlights, lips, tattoos and face paint. Pick a swatch from the same colour sheets the character creator uses, or drop in a `.chara` file and read every colour on your character at once.
 
-> **Note**: This tool was called "Character Color Matcher" in v3.x. In the 5.0 tool rail it is the **Swatch** chip; the tool menu lists it as **Character Matcher**.
+> **Note**: This tool was called "Character Color Matcher" in v3.x. In the 5.0 tool rail it is the **Swatch** chip; the tool menu lists it as **Swatch Matcher**.
 
 ---
 
@@ -66,7 +66,7 @@ Settings for the list live in the settings column (the gear icon on phones): **M
 
 ### SEND TO
 
-At the bottom of the flow a row of buttons sends the matched dyes on to **Color Harmony Explorer**, **Dye Comparison**, **Gradient Builder** or **Accessibility Checker**.
+At the bottom of the flow a row of buttons sends the matched dyes on to **Harmony Explorer**, **Dye Comparison**, **Gradient Builder** or **Accessibility Checker**.
 
 ### Share
 
@@ -203,7 +203,7 @@ band, never the raw number, across methods. See the [Glossary](../../reference/g
 ## Related Tools
 
 - [Palette Extractor](palette-extractor.md) - Find dyes from any color
-- [Color Harmony Explorer](color-harmony.md) - Build on your matches
+- [Harmony Explorer](color-harmony.md) - Build on your matches
 - [Dye Comparison](dye-comparison.md) - Compare matched dyes
 - [Budget Suggestions](budget-suggestions.md) - Find affordable options
 - [Favorites & Collections](favorites-collections.md) - Where saved character colours and palettes go

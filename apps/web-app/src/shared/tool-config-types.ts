@@ -221,7 +221,7 @@ export interface BudgetConfig {
 }
 
 /**
- * Swatch Matcher (Character Matcher) configuration
+ * Swatch Matcher configuration (locale namespace `tools.character`, the v3 name)
  */
 export interface SwatchConfig {
   /**

@@ -18,6 +18,11 @@ vi.mock('../../services/bot-i18n.js', () => ({
         'about.commands': 'Commands',
         'about.totalCount': `${vars?.count} total`,
         'about.links': 'Links',
+        'about.builtOn': 'Built on',
+        // Deliberately distinct from the retired hardcoded BUILT_ON constant's
+        // text, so this proves the field comes from the translator and not a
+        // reintroduced local constant.
+        'about.builtOnBody': 'MOCKED: Market prices from Universalis · Paint mixing by spectral.js',
         'about.poweredBy': 'Powered by xivdyetools-core',
         // Category names
         'about.categories.colorTools': 'Color Tools',
@@ -215,6 +220,26 @@ describe('about.ts', () => {
         expect(linksField!.value, label).toContain(`[${label}](${url})`);
       }
       expect(linksField!.value.length).toBeLessThanOrEqual(1024); // Discord's field cap
+    });
+
+    it('renders the built-on field body from the translator, not a hardcoded English constant (HC-001)', async () => {
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: { name: 'about' },
+        member: { user: { id: 'user-123' } },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      const response = await handleAboutCommand(interaction, mockEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
+
+      const builtOnField = data.data!.embeds![0].fields!.find((f) => f.name === 'Built on');
+      expect(builtOnField).toBeDefined();
+      expect(builtOnField!.value).toBe(
+        'MOCKED: Market prices from Universalis · Paint mixing by spectral.js',
+      );
     });
 
     it('should include footer with powered by info', async () => {

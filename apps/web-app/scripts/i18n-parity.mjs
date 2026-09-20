@@ -29,6 +29,17 @@
  *                   enumerated there with a reason; anything else is an
  *                   untranslated string. Allow-list entries that are no longer
  *                   identical are reported as stale, so the file cannot rot.
+ *   same-English    ERROR — keys that share one English value must share one
+ *                   value in every other locale, unless the group is listed in
+ *                   `scripts/i18n-same-english-allowlist.json` with a reason
+ *                   (a verb vs an adjective, French agreement, a theme name vs
+ *                   a lightness range). This is the check that would have caught
+ *                   three terminology findings of the 2026-09-19 audit at PR
+ *                   time; a stale allow-list entry is an error too.
+ *
+ * None of this ran in CI until 2026-09-20: `validate:i18n` is in no workflow.
+ * `scripts/i18n-parity-gate.test.js` now runs `checkParity()` under vitest, so
+ * every ERROR above — and an un-allow-listed identical value — fails `test`.
  *
  * Key ORDER and stray leading/trailing whitespace are gated by
  * `scripts/validate-i18n.js`, which runs first in `npm run validate:i18n`.
@@ -43,6 +54,7 @@ import { fileURLToPath } from 'url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const LOCALES_DIR = join(HERE, '..', 'src', 'locales');
 const ALLOWLIST_FILE = join(HERE, 'i18n-identical-allowlist.json');
+const SAME_ENGLISH_ALLOWLIST_FILE = join(HERE, 'i18n-same-english-allowlist.json');
 const REFERENCE = 'en';
 const TARGETS = ['de', 'fr', 'ja', 'ko', 'zh'];
 
@@ -229,13 +241,94 @@ function loadAllowlist() {
   }
 }
 
+function loadSameEnglishAllowlist() {
+  try {
+    const raw = JSON.parse(readFileSync(SAME_ENGLISH_ALLOWLIST_FILE, 'utf-8'));
+    /** @type {Record<string, Record<string, string>>} */
+    const byEnglish = {};
+    for (const [english, locales] of Object.entries(raw)) {
+      if (english.startsWith('_')) continue; // _readme
+      byEnglish[english] = /** @type {Record<string, string>} */ (locales);
+    }
+    return byEnglish;
+  } catch (error) {
+    console.error(`❌ Cannot read ${SAME_ENGLISH_ALLOWLIST_FILE}: ${error.message}`);
+    process.exit(1);
+  }
+}
+
+/**
+ * Same English, same translation.
+ *
+ * Groups the reference keys by their exact English value; a group diverges in
+ * a locale when its keys do not all carry one value there. Exact match only, on
+ * purpose: `Light` and `light` are usually different parts of speech, and a
+ * case-folded rule would train people to allow-list by reflex.
+ *
+ * Pure — takes the flattened entries — so the unit tests can prove it fails.
+ *
+ * @param {Map<string, unknown>} refEntries
+ * @param {Map<string, Map<string, unknown>>} entriesByLocale
+ * @param {Record<string, Record<string, string>>} allowlist English value → { locale | '*': reason }
+ */
+export function findSameEnglishDivergences(refEntries, entriesByLocale, allowlist) {
+  /** @type {Map<string, string[]>} */
+  const byEnglish = new Map();
+  for (const [key, value] of refEntries) {
+    if (typeof value !== 'string' || value.trim() === '') continue;
+    const keys = byEnglish.get(value);
+    if (keys) keys.push(key);
+    else byEnglish.set(value, [key]);
+  }
+
+  const divergences = [];
+  let groups = 0;
+  for (const [english, keys] of byEnglish) {
+    if (keys.length < 2) continue;
+    groups++;
+    for (const [locale, entries] of entriesByLocale) {
+      /** @type {Map<unknown, string[]>} */
+      const clusters = new Map();
+      for (const key of keys) {
+        if (!entries.has(key)) continue; // a missing key is reported as MISSING, once
+        const value = entries.get(key);
+        const cluster = clusters.get(value);
+        if (cluster) cluster.push(key);
+        else clusters.set(value, [key]);
+      }
+      if (clusters.size < 2) continue;
+      const entry = allowlist[english];
+      divergences.push({
+        english,
+        locale,
+        clusters: [...clusters].map(([value, clusterKeys]) => ({ value, keys: clusterKeys })),
+        allowed: Boolean(entry && (locale in entry || '*' in entry)),
+      });
+    }
+  }
+
+  // An allow-list entry that no longer describes a divergence is dead weight,
+  // and the next person to read it will believe it.
+  const live = new Set(divergences.map((d) => `${d.english}\u0000${d.locale}`));
+  const liveEnglish = new Set(divergences.map((d) => d.english));
+  const stale = [];
+  for (const [english, locales] of Object.entries(allowlist)) {
+    for (const locale of Object.keys(locales)) {
+      const isLive = locale === '*' ? liveEnglish.has(english) : live.has(`${english}\u0000${locale}`);
+      if (!isLive) stale.push({ english, locale });
+    }
+  }
+
+  return { groups, divergences, unexpected: divergences.filter((d) => !d.allowed), stale };
+}
+
 // ============================================================================
 // Main
 // ============================================================================
 
 /**
  * Run every parity check.
- * @returns {{ reference: { locale: string, keys: number, duplicates: unknown[] }, locales: unknown[] }}
+ * @returns {{ reference: { locale: string, keys: number, duplicates: unknown[] }, locales: unknown[], sameEnglish: ReturnType<typeof findSameEnglishDivergences> }}
  */
 export function checkParity() {
   const allowlist = loadAllowlist();
@@ -245,10 +338,13 @@ export function checkParity() {
   const refEntries = flattenEntries(refValue);
 
   const locales = [];
+  /** @type {Map<string, Map<string, unknown>>} */
+  const entriesByLocale = new Map();
   for (const locale of TARGETS) {
     const raw = readFileSync(join(LOCALES_DIR, `${locale}.json`), 'utf-8');
     const { value, duplicates } = parseJsonWithDuplicates(raw);
     const entries = flattenEntries(value);
+    entriesByLocale.set(locale, entries);
 
     const missing = [...refEntries.keys()].filter((k) => !entries.has(k));
     const extra = [...entries.keys()].filter((k) => !refEntries.has(k));
@@ -301,6 +397,7 @@ export function checkParity() {
   return {
     reference: { locale: REFERENCE, keys: refEntries.size, duplicates: refDuplicates },
     locales,
+    sameEnglish: findSameEnglishDivergences(refEntries, entriesByLocale, loadSameEnglishAllowlist()),
   };
 }
 
@@ -363,6 +460,26 @@ function main() {
     if (r.identicalAllowed > 0) {
       console.log(`  ✓ ${r.identicalAllowed} identical value(s) allow-listed as intentional`);
     }
+  }
+
+  const same = report.sameEnglish;
+  console.log(
+    `\n== same English, same translation: ${same.groups} groups, ` +
+      `${same.divergences.length} diverge, ${same.unexpected.length} not allow-listed`
+  );
+  for (const d of same.unexpected) {
+    errors++;
+    console.log(`  ❌ SPLIT   ${d.locale}: ${JSON.stringify(d.english)} is translated ${d.clusters.length} ways`);
+    for (const c of d.clusters) console.log(`             ${JSON.stringify(c.value)} ← ${c.keys.join(', ')}`);
+  }
+  for (const s of same.stale) {
+    errors++;
+    console.log(`  ❌ STALE   same-English allow-list entry no longer diverges: ${JSON.stringify(s.english)} (${s.locale})`);
+  }
+  if (same.unexpected.length > 0) {
+    console.log(
+      '   Give the keys one translation, or list the group in scripts/i18n-same-english-allowlist.json with a reason.'
+    );
   }
 
   console.log('\n' + '='.repeat(70));

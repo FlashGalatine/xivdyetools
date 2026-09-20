@@ -7,6 +7,129 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.0] - 2026-09-20
+
+2026-09-19 i18n audit, Sprints 2–3 (`docs/audits/2026-09-19-i18n/`). The locale files were
+structurally perfect — every defect here is one a parity gate cannot see: the same noun translated
+two or three ways, a typo, a sort that ignored the app's locale, and legal documents that existed
+in one language behind six localized links.
+
+### Added
+
+- **I18N-010**: the Privacy Policy and Terms of Service now exist in all six languages —
+  `PRIVACY.<lc>.md` and `TERMS_OF_SERVICE.<lc>.md` for ja / de / fr / ko / zh beside the English
+  files, which stay the governing text; each translation opens with a localized "English
+  prevails" notice. `about-modal.ts` gains `policyDocFile(stem, locale)` and the About modal links
+  the variant for the app's current locale, falling back to English. Parity (structure, numbers,
+  commands, hosts, date, notice) is checked by `audit-shared/scripts/policy-locale-parity.py`.
+
+### Fixed
+
+- **TERM-001**: "Market Board" was `Tableau des marchés` in the config sidebar and `Tableau des
+  ventes` in the panel (fr), `시장 게시판` and `마켓보드` (ko), `市场版`, `市场板` and `市场布告板`
+  (zh). All six keys per locale now use the term the game client of that language uses — fr
+  `tableau des ventes`, ko `장터`, zh `市场布告板` — sourced from the publishers' own sites
+  (`docs/reference/ffxiv-terminology.md` → *Market and Server Terms*). `市场版` appeared in no
+  source at all.
+- **TERM-002**: the result card's "send to tool" menu named five tools differently from the tools'
+  own titles in de / fr / ja / ko (`Farbstoff-Mischer` opened a page titled `Farbstoffmixer`). The
+  seven `resultCard.tools.*` keys are deleted; the menu renders the route's own `titleKey` through
+  a new `toolLabel()` in `@shared/tool-handoff`, so a tool has one name. German
+  `resultCard.sentToSwatch` also named the wrong tool.
+- **TERM-003**: ko `모든 월드` / `전체 월드` → `모든 서버`, zh `所有世界` → `所有服务器` — the Korean
+  and Chinese clients call a World a server (maintainer decision 2026-09-19).
+- **TERM-004**: the config sidebar and the tool panels translated the same control label
+  differently. One form per concept now: de `Perzeptuell`, `Sehtypen`, `Farbstoffe`; ja `絵の具`,
+  `色覚タイプ`, `スペクトル`, `欧州`; fr sentence case (`Afficher les prix`, `Espace
+  colorimétrique`, `Types de vision`), `Résultats maximum`, `RGB pondéré`, `Tous les Mondes`; ko
+  `조화 유형`, `조화`, `최대 결과 수`, `머리카락`, `출처`; zh `加权RGB` (the Mixer's Paint / Pigment
+  pair is the mixing-model entry below).
+- **Tool names are official (maintainer decision 2026-09-20): "Swatch Matcher" and "Harmony
+  Explorer".** `tools.character.title` said "Character Matcher" and `tools.harmony.title` "Color
+  Harmony Explorer" while the docs, the policies, the toast and the link-preview card already used
+  the 5.0 names. The five locales follow with titles chosen from renderings that already existed —
+  ja `スウォッチマッチャー` / `ハーモニーエクスプローラー`, de `Farbmuster-Matcher` / `Harmonie-Explorer`,
+  fr `Nuancier` (unchanged) / `Explorateur d'harmonies`, ko `스와치 매처` / `조화 탐색기`, zh
+  `色板匹配器` / `色彩和谐探索器` (zh keeps 色彩: bare 和谐 reads oddly as a tool name). The toast
+  and the tutorial banner, which lists tools by short name and still said "Color Harmony" in en /
+  ko / zh, follow. Locale *keys* are unchanged (`tools.character.*`).
+- **"glamour" follows the terminology dictionary** (`docs/reference/ffxiv-terminology.md` →
+  *Glamour Terms*, researched on the publishers' sites). Korean `글래머` was a **false friend** — in
+  everyday Korean it means a voluptuous woman, so "이 글래머의 염료" read accordingly — now `코디`.
+  German mixed `Mirage` and `Glamour`, neither the client's word → feminine `Projektion`
+  (`FARBSTOFFE DIESER PROJEKTION`, `Projektionspalette`). French mixed `glamour` with a
+  wrong-gender `cette mirage` → masculine `ce mirage`. ja `ミラプリ` and zh `幻化` were already right.
+- **The Privacy Policy named a panel that does not exist.** It sent users to "Advanced Options" to
+  reset settings and to opt in or out of analytics; the header-gear panel is "Advanced Settings"
+  (`config.advancedSettings`). Corrected in `PRIVACY.md`; all five translations already quoted
+  the right label. A UI path a user must follow to opt out is content, so `Last updated` moves to
+  2026-09-20 on all six variants. The translations' tool names and glamour wording follow the UI
+  (ja uses the formal `コーディネート` and ko the official-register `의상` in the legal text).
+- ja `preset.fieldLinkHint` ended in a dangling `を。` with no verb; de `resultCard.sentToSwatch`
+  lacked its article (`An den Farbmuster-Matcher gesendet`).
+- **I18N-004**: Korean `안팡` (not a word) → `안팎` in `comparison.mCiede2000Desc` **and**
+  `accessibility.unitDeDesc` — the audit found one; the fix pass found the second.
+- **I18N-008**: Budget Suggestions sorted localized dye names with the *browser's* collation
+  (`localeCompare` with no locale) — it now uses `compareDyeNames`; the dye selector's
+  "sort by category" ordered by the English category id under a localized UI — it now compares the
+  localized labels with the app locale.
+- **Mixing-model labels** (audit open items, approved 2026-09-20). zh: Chinese has one everyday
+  word, `颜料`, for both paint and pigment; the Mixer spec gave Pigment `颜料` and coined `颜料画`
+  for Paint — "a painting done in pigments", a picture, not a medium. RYB → `颜料`, Spectral →
+  `真实颜料`, the pair the zh sidebar already shipped. de: `Farbe` for Paint also means *colour* →
+  `Malfarbe`. `config-sidebar.ts` hard-coded `RYB - ` … `RGB - ` but left Spectral's id inside its
+  locale value, which is how en shipped **`"Spectral -Realistic Paint"`** (a dropped space in the
+  default locale, all five translations correct); the id is in the template now and the key is
+  "Realistic Paint" ×6. "Perceptual" named LAB in the sidebar (and in the bot) but OKLAB in the
+  Mixer's tooltips: `mixer.modelOklab` → "Modern Perceptual", `mixer.modelLab` → "Perceptual" ×6
+  (de `Perzeptuell (modern)` — the old `Moderne Wahrnehmung` paired a noun with an adjective).
+  ko named HSL's H two ways, `색조` ("tone") in the sidebar and `색상` in the tooltip → `색상`.
+- **German addresses the user as `du` everywhere.** 48 strings in the five oldest namespaces
+  (tutorial, preset, errors, emptyStates, dyeSelector) still said `Sie` while everything written
+  since 5.0, the bot and all four German policies say `du`. Rewritten, not regex-swapped
+  (reflexives, separable verbs, `dein*` capitalisation; one third-person `Sie` stays). The
+  tutorial also said `Farbe(n)` where it meant `Farbstoff(e)` — 10 strings, plus four outside it
+  with the same defect; the Mixer tutorial's `blendet` ("dazzles") → `mischt`.
+- **Same English, two translations** — found by the new gate: ja `preset.dyes` and the harmony
+  empty state said `染料` inside namespaces that say `カララント`; de "Vote" was a noun on the
+  button and a verb at the gate (→ `Abstimmen`, and "Voted" `Gewählt` → `Abgestimmt`); the de
+  "Saved" tab said `Gespeichert` although the action is `Merken` (→ `Gemerkt`); "All slots are
+  full…" had two wordings in ja / de / ko / zh.
+- **Terms of Service**: the consumer-rights sentence admitted two readings — who "does not let you
+  waive", and whose "local law" directly after the North Carolina venue sentence. Now "any
+  consumer-protection right that the law of the place where you live gives you and that the same
+  law does not let you waive"; de / fr / ko / zh follow (ja already said 居住地の法律). No
+  commitment changed; `Last updated` → 2026-09-20 on all six variants.
+- **The Chinese policy pages no longer show stray spaces inside sentences.** `PRIVACY.zh.md` and
+  `TERMS_OF_SERVICE.zh.md` were hard-wrapped, and a Markdown soft break renders as a space
+  (`您居住地 法律赋予`). Unwrapped, whitespace only; ja and ko were already one paragraph per line.
+
+### Changed
+
+- **The What's New module is bounded in bytes.** `vite-plugin-changelog-parser` capped it at 50
+  *releases* (~64 KB at the measured 1.27 KB each) while `check-bundle-size` gates the chunk in
+  *bytes*, so the two never agreed: it crossed 40 KB on its 32nd release. `boundChangelog()` keeps
+  the newest releases that fit 36 KB of JSON — contiguously, never fewer than ten — and exports
+  `olderReleases`; the modal links "Older releases on GitHub" (`changelog.olderReleases` ×6) when
+  any were left out. 20 of 32 ship today; chunk 34.74 KB / 40 KB (it was 22 until this entry itself grew — the bound let two older releases go instead of growing). The limit this branch briefly
+  raised to 48 KB is back at 40 KB.
+
+### Tests
+
+- `toolLabel` per tool + a mutation check that the menu follows the title key; `policyDocFile` for
+  all six locales and an unknown one, plus rendered hrefs under `ja`; both sort fixes.
+- **`scripts/i18n-parity-gate.test.js` — locale parity is a CI gate for the first time.**
+  `validate:i18n` runs in no workflow, so a dropped key, a broken `{placeholder}` or an untranslated
+  value never failed a pull request. The test runs `checkParity()` on the shipped files: every
+  ERROR, every identical-to-English value without an allow-listed reason, and the new
+  **same-English consistency** check (`findSameEnglishDivergences`, exceptions with reasons in
+  `scripts/i18n-same-english-allowlist.json`, stale entries fail) — the check that would have
+  caught TERM-001 / 002 / 004 at PR time. Also: `de.json` never addresses the user formally.
+  Mutation-proved three ways.
+- `config-sidebar.mixing-mode.test.ts` reads the six option labels as the browser shows them (it
+  caught the dropped space being reintroduced during this very fix); `boundChangelog` unit tests
+  and a real-file budget test; the modal renders the older-releases link only when needed.
+
 ## [5.11.0] - 2026-09-17
 
 Deep-dive remediation, Sprints 1–2 and 7 (docs/audits/2026-09-16-deep-dive). One restored

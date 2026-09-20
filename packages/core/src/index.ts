@@ -312,6 +312,7 @@ export {
   /** @public */
   generateChecksum,
   abbreviateDyeName,
+  foldForSearch,
 } from './utils/index.js';
 
 // Data (for browser environments - to be injected)

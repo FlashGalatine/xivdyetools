@@ -1,0 +1,21 @@
+{
+  "apps/web-app/src/locales": {
+    "ja": [
+      ["preset.dyes", "染料", "カララント"],
+      ["emptyStates.noHarmony.description", "ベースの染料を選択して色調和の提案を生成します。", "ベースのカララントを選択して色調和の提案を生成します。"],
+      ["emptyStates.noHarmony.action", "染料を選択", "カララントを選択"],
+      ["resultCard.slotsFull", "すべてのスロットが使用中です。置き換えるスロットを選択してください：", "すべてのスロットが埋まっています。置き換えるスロットを選択してください："]
+    ],
+    "de": [
+      ["preset.vote", "Stimme", "Abstimmen"],
+      ["preset.voted", "Gewählt", "Abgestimmt"],
+      ["preset.tabSaved", "Gespeichert", "Gemerkt"]
+    ],
+    "ko": [
+      ["resultCard.slotsFull", "모든 슬롯이 꽉 찼습니다. 교체할 슬롯을 선택하세요:", "모든 슬롯이 가득 찼습니다. 교체할 슬롯을 선택하세요:"]
+    ],
+    "zh": [
+      ["gradient.slotsFull", "所有槽位已满。请选择一个要替换的槽位：", "所有槽位已满。请选择要替换的槽位："]
+    ]
+  }
+}

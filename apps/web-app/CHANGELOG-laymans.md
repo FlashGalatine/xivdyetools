@@ -2,6 +2,35 @@
 
 ---
 
+## Web-App Version 5.12.0 — September 20, 2026
+
+### Privacy Policy and Terms, in your language
+- **The Privacy Policy and Terms of Service can now be read in Japanese, German, French, Korean and Chinese.** The links in About open the version that matches the language you have the app set to.
+- **The Privacy Policy points at the right panel.** It told you to open "Advanced Options" to reset settings or turn analytics on or off; the panel behind the gear icon is called Advanced Settings.
+- **The English text is still the official one.** Each translation says so at the top and links back to it, in case the two ever differ.
+- **Terms of Service: one sentence reworded so it can only be read one way.** The line about consumer-protection rights now says plainly that it means the law of the place where you live. Nothing you agreed to changed.
+
+### The game's own words, in every language
+- **The Market Board now has one name per language — the one the game itself uses.** French says "tableau des ventes", Korean "장터", Chinese "市场布告板". Before, the settings panel and the price panel could disagree, and one Chinese label was a typo.
+- **Korean and Chinese say "server" where the game does.** "All Worlds" is now 모든 서버 and 所有服务器, matching those versions of the game.
+- **Two tools have their proper names in the menu: Swatch Matcher and Harmony Explorer.** The menu still said "Character Matcher" and "Color Harmony Explorer" while the rest of the app, the guides and link previews used the newer names. Every language now uses one name for each.
+- **"Glamour" is the word your version of the game uses.** German says Projektion, French mirage, Korean 코디; Japanese ミラプリ and Chinese 幻化 were already right. The old Korean word was a mistranslation that means something quite different in everyday Korean.
+- **A tool is called the same thing everywhere.** The "send to…" menu on a dye card now uses each tool's real name. In German, French, Japanese and Korean it used to show a slightly different name from the page it opened.
+- **Settings and tools agree on their labels.** Words like Perceptual, Vision Types, Paint, Harmony Type and Max Results were translated one way in the settings panel and another way inside the tool. Each now has a single wording per language.
+
+### Wording
+- **German speaks to you the same way everywhere.** About fifty older messages — the tutorial, presets and error messages — still said "Sie" while the rest of the app says "du". They all say "du" now, and the tutorial calls a dye a Farbstoff rather than a Farbe.
+- **The Dye Mixer's two paint models have proper names in Chinese and German.** Chinese used a word that means "a painting" for one of them; German used "Farbe", which only means colour.
+- **The mixing-mode picker reads "Spectral - Realistic Paint".** The English label was missing a space. The Mixer's tooltips now call OKLAB "Modern Perceptual" and LAB "Perceptual", the same as the settings panel.
+- **A few labels that were translated two ways now have one form:** Vote and Saved in German, the word for a dye in the Japanese Presets pages, and the "all slots are full" message.
+
+### What's New stays light
+- **This window shows the newest twenty or so releases and links to the rest.** Older release notes are one click away on GitHub, so the list no longer grows forever.
+
+### Smaller fixes
+- **Korean:** a misspelt word in the colour-difference explanations is corrected (안팎).
+- **Sorting follows the app's language.** Sorting Budget Suggestions by name, and the dye picker by category, now orders things by the language you chose rather than your browser's or English.
+
 ## Web-App Version 5.11.0 — September 17, 2026
 
 ### Share a palette from the Palette Extractor

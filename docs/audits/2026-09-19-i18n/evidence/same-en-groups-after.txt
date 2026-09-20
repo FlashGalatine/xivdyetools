@@ -1,0 +1,124 @@
+TOOL TITLES (en): ['Accessibility Checker', 'Budget Suggestions', 'Character Matcher', 'Color Harmony Explorer', 'Dye Comparison', 'Dye Mixer', 'Gradient Builder', 'Palette Extractor', 'Preset Palettes'] 
+
+== web-app tool names: 0 same-EN key groups diverge in >=1 locale ==
+
+[web-app ALL same-EN groups] EN = 'All'  (3 keys)
+    fr: colorPalette.all = 'Tout'
+    fr: dyeSelector.allCategories = 'Toutes'
+    fr: preset.categories.all = 'Tous'
+
+[web-app ALL same-EN groups] EN = 'Clear'  (2 keys)
+    ja: common.clear = 'クリア'
+    ja: accessibility.tierClear = '明瞭'
+    de: common.clear = 'Leeren'
+    de: accessibility.tierClear = 'Klar'
+    fr: common.clear = 'Effacer'
+    fr: accessibility.tierClear = 'Nette'
+    ko: common.clear = '지우기'
+    ko: accessibility.tierClear = '분명'
+    zh: common.clear = '清除'
+    zh: accessibility.tierClear = '清晰'
+
+[web-app ALL same-EN groups] EN = 'Compare'  (2 keys)
+    de: tools.comparison.shortName = 'Vergleich'
+    de: budget.handoffCompare = 'Vergleichen'
+
+[web-app ALL same-EN groups] EN = 'Dark'  (3 keys)
+    ko: colorPalette.dark = '다크'
+    ko: themes.standardDark = '다크'
+    ko: swatch.rangeDark = '어두움'
+
+[web-app ALL same-EN groups] EN = 'Dyes'  (3 keys)
+    ja: export.hexDyesHeader = 'カララント'
+    ja: preset.dyes = '染料'
+    ja: swatch.glamourViewDyes = 'カララント'
+
+[web-app ALL same-EN groups] EN = 'Light'  (4 keys)
+    ja: config.mixingRgb = '光'
+    ja: mixer.modelRgb = '光'
+    ja: themes.standardLight = 'ライト'
+    ja: swatch.rangeLight = 'ライト'
+    de: config.mixingRgb = 'Licht'
+    de: mixer.modelRgb = 'Licht'
+    de: themes.standardLight = 'Hell'
+    de: swatch.rangeLight = 'Hell'
+    fr: config.mixingRgb = 'Lumière'
+    fr: mixer.modelRgb = 'Lumière'
+    fr: themes.standardLight = 'Clair'
+    fr: swatch.rangeLight = 'Clair'
+    ko: config.mixingRgb = '빛'
+    ko: mixer.modelRgb = '빛'
+    ko: themes.standardLight = '라이트'
+    ko: swatch.rangeLight = '밝음'
+    zh: config.mixingRgb = '光'
+    zh: mixer.modelRgb = '光'
+    zh: themes.standardLight = '浅色'
+    zh: swatch.rangeLight = '浅色'
+
+[web-app ALL same-EN groups] EN = 'Remove'  (2 keys)
+    ko: common.remove = '제거'
+    ko: preset.previewImageRemove = '삭제'
+
+[web-app ALL same-EN groups] EN = 'Save'  (2 keys)
+    de: common.save = 'Speichern'
+    de: preset.save = 'Merken'
+
+[web-app ALL same-EN groups] EN = 'Saved'  (2 keys)
+    de: preset.tabSaved = 'Gespeichert'
+    de: preset.savedBtn = 'Gemerkt'
+    fr: preset.tabSaved = 'Enregistrés'
+    fr: preset.savedBtn = 'Enregistré'
+
+[web-app ALL same-EN groups] EN = 'Select a dye'  (2 keys)
+    ja: harmony.selectDye = 'カララントを選択'
+    ja: emptyStates.noHarmony.action = '染料を選択'
+
+[web-app ALL same-EN groups] EN = 'Vote'  (2 keys)
+    de: preset.vote = 'Stimme'
+    de: preset.gateVote = 'Abstimmen'
+
+== web-app ALL same-EN groups: 11 same-EN key groups diverge in >=1 locale ==
+
+[bot-logic ALL same-EN groups] EN = 'Fourth dye (optional)'  (3 keys)
+    fr: commands.comparison.options.dye4.description = 'Quatrième teinture (facultatif)'
+    fr: commands.contrast.options.dye4.description = 'Quatrième teinture (facultatif)'
+    fr: commands.preset.options.submit.options.dye4.description = 'Quatrième teinture (facultative)'
+
+[bot-logic ALL same-EN groups] EN = 'NEAREST DYE'  (2 keys)
+    ja: card.found = '最も近い色'
+    ja: card.swatchNearest = '近いカララント'
+    de: card.found = 'NÄCHSTER FARBSTOFF'
+    de: card.swatchNearest = 'NÄCHSTE FARBE'
+    fr: card.found = 'TROUVÉ'
+    fr: card.swatchNearest = 'TEINTURE PROCHE'
+    ko: card.found = '가장 가까운'
+    ko: card.swatchNearest = '가까운 염료'
+    zh: card.found = '最接近'
+    zh: card.swatchNearest = '最近的染剂'
+
+[bot-logic ALL same-EN groups] EN = 'RATIO'  (2 keys)
+    ja: card.ratioCol = 'コントラスト比'
+    ja: card.ratioShort = '比率'
+    de: card.ratioCol = 'VERHÄLTNIS'
+    de: card.ratioShort = 'VERH.'
+    ko: card.ratioCol = '명암비'
+    ko: card.ratioShort = '비율'
+    zh: card.ratioCol = '对比度'
+    zh: card.ratioShort = '比率'
+
+[bot-logic ALL same-EN groups] EN = 'TARGET'  (2 keys)
+    ja: card.target = '目標色'
+    ja: card.lTarget = '目標'
+    ko: card.target = '목표색'
+    ko: card.lTarget = '목표'
+    zh: card.target = '目标色'
+    zh: card.lTarget = '目标'
+
+[bot-logic ALL same-EN groups] EN = 'Web App'  (2 keys)
+    ja: webhook.sources.web = 'Webアプリ'
+    ja: stats.summary.webApp = 'Web アプリ'
+    fr: webhook.sources.web = 'Application Web'
+    fr: stats.summary.webApp = 'Application web'
+
+== bot-logic ALL same-EN groups: 5 same-EN key groups diverge in >=1 locale ==
+

@@ -1,0 +1,42 @@
+packages/core/src/blending/conversions.ts:317:    throw new Error(`Invalid hex color: ${hex}. Use format #RRGGBB or #RGB`);
+packages/core/src/blending/types.ts:14:  { value: 'rgb', name: 'RGB', description: 'Additive channel averaging (default)' },
+packages/core/src/config/consolidated-ids.ts:66:      fr: 'Teinture additionnelle n°1',
+packages/core/src/config/consolidated-ids.ts:80:      fr: 'Teinture additionnelle n°2',
+packages/core/src/services/APIService.ts:402:        `Cache backend error for key ${cacheKey}: ${error instanceof Error ? error.message : 'Unknown error'}. Falling through to API fetch.`,
+packages/core/src/services/APIService.ts:429:        this.logger.warn(`Cache corruption detected for key: ${cacheKey}`);
+packages/core/src/services/APIService.ts:464:        `Cache write failed for ${cacheKey}: ${error instanceof Error ? error.message : String(error)}`,
+packages/core/src/services/APIService.ts:474:    this.logger.info('Price cache cleared');
+packages/core/src/services/APIService.ts:503:      this.logger.info(`Using pending request for item ${itemID}`);
+packages/core/src/services/APIService.ts:525:        this.logger.info(`Price cache hit for item ${itemID}`);
+packages/core/src/services/APIService.ts:549:      this.logger.error('Failed to fetch price data', error);
+packages/core/src/services/APIService.ts:592:        `Failed to fetch price data for item ${itemID}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+packages/core/src/services/APIService.ts:596:        `Failed to fetch price data for item ${itemID}`,
+packages/core/src/services/APIService.ts:672:        `Failed to fetch batch price data for ${itemIDs.length} items: ${error instanceof Error ? error.message : 'Unknown error'}`,
+packages/core/src/services/APIService.ts:700:        throw new Error('Invalid content type: expected application/json');
+packages/core/src/services/APIService.ts:709:            `Response too large: ${size} bytes (max: ${API_MAX_RESPONSE_SIZE} bytes)`,
+packages/core/src/services/APIService.ts:718:          `Response too large: ${text.length} bytes (max: ${API_MAX_RESPONSE_SIZE} bytes)`,
+packages/core/src/services/APIService.ts:753:        this.logger.warn(`No price data available for item ${itemID}`);
+packages/core/src/services/APIService.ts:759:        this.logger.warn(`Invalid result structure for item ${itemID}`);
+packages/core/src/services/APIService.ts:773:        this.logger.warn(`No price data available for item ${itemID}`);
+packages/core/src/services/APIService.ts:786:      this.logger.error(`Failed to parse price data for item ${itemID}`, error);
+packages/core/src/services/APIService.ts:810:        this.logger.warn('No results array in batch API response');
+packages/core/src/services/APIService.ts:840:          `Batch request had ${data.failedItems.length} failed items: ${data.failedItems.join(', ')}`,
+packages/core/src/services/APIService.ts:846:      this.logger.error('Failed to parse batch price data', error);
+packages/core/src/services/APIService.ts:879:        `Cannot fetch more than 100 items in one batch (got ${itemIDs.length})`,
+packages/core/src/services/color/ColorConverter.ts:212:        `Invalid hex color: ${hex}. Use format #RRGGBB or #RGB`,
+packages/core/src/services/color/ColorConverter.ts:453:        `Invalid hex color: ${hex}. Use format #RRGGBB or #RGB`,
+packages/core/src/services/dye/DyeDatabase.ts:124:      this.logger.warn('Dye missing required stainID (or legacy id/itemID) field');
+packages/core/src/services/dye/DyeDatabase.ts:175:        throw new Error('Invalid dye database format: null or undefined');
+packages/core/src/services/dye/DyeDatabase.ts:182:        throw new Error('Invalid dye database format: expected array or object');
+packages/core/src/services/dye/DyeDatabase.ts:189:        throw new Error('Invalid dye database format: empty or not an array');
+packages/core/src/services/dye/DyeDatabase.ts:388:      this.logger.info(`Dye database loaded: ${this.dyes.length} dyes`);
+packages/core/src/services/dye/DyeDatabase.ts:393:        `Failed to load dye database: ${error instanceof Error ? error.message : 'Unknown error'}`,
+packages/core/src/services/dye/DyeDatabase.ts:404:      throw new AppError(ErrorCode.DATABASE_LOAD_FAILED, 'Dye database is not loaded', 'critical');
+packages/core/src/services/dye/wheels/ColorWheel.ts:71:    throw new RangeError(`Unknown colour wheel: ${String(id)}`);
+packages/core/src/services/localization/LocaleLoader.ts:67:        throw new Error(`Invalid locale data structure for ${locale}`);
+packages/core/src/services/localization/LocaleLoader.ts:74:        `Failed to load locale "${locale}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+packages/core/src/services/localization/TranslationProvider.ts:445:   * // Returns "サンシーカー" (ja) or "Seeker of the Sun" (en fallback)
+packages/core/src/utils/index.ts:345: *     console.log('Request timed out or was aborted');
+packages/core/src/utils/index.ts:424:        logger?.warn(`Request timed out (attempt ${i + 1}/${attempts})`);
+packages/core/src/utils/index.ts:438:  throw lastError ?? new Error('All retry attempts failed');
+packages/core/src/utils/index.ts:511: *   console.warn('Cache corruption detected!');

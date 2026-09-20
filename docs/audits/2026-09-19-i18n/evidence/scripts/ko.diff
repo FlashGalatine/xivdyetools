@@ -1,0 +1,237 @@
+diff --git a/packages/bot-logic/src/i18n/locales/ko.json b/packages/bot-logic/src/i18n/locales/ko.json
+index ef0a2942..d3302d93 100644
+--- a/packages/bot-logic/src/i18n/locales/ko.json
++++ b/packages/bot-logic/src/i18n/locales/ko.json
+@@ -45,64 +45,101 @@
+     "title": "XIV Dye Tools 매뉴얼",
+     "welcome": "**XIV Dye Tools**에 오신 것을 환영합니다! 이 봇은 FFXIV 염료 색상 탐색 및 매칭을 도와드립니다.",
+     "commandsIntro": "아래에서 카테고리별로 정리된 모든 명령어를 확인하실 수 있습니다.",
+-    "autocompleteNote": "모든 명령어에서 염료 이름 **자동완성**을 지원합니다!",
+     "colorMatching": "색상 매칭",
+     "dyeInformation": "염료 정보",
++    "analysis": "분석",
++    "community": "커뮤니티 프리셋",
+     "botInformation": "봇 정보",
+     "tipsResources": "팁 및 리소스",
+     "extractor": {
+-      "name": "`/extractor color <색상> [개수]` | `/extractor image <이미지>`",
+-      "description": "색상을 추출하고 FFXIV 염료에 매칭합니다.\n• `color`: 16진수 코드 또는 염료 이름을 가장 가까운 염료에 매칭\n• `image`: 업로드된 이미지에서 주요 색상 추출"
++      "name": "`/extractor color <color> [count]` | `/extractor image <image> [colors]`",
++      "description": "FFXIV 염료에 매칭합니다.\n• `color`: 16진수 코드 또는 염료 이름에 가장 가까운 염료 (`count` 1-10)\n• `image`: 업로드된 이미지의 주요 색상 (`colors` 3-10)"
+     },
+     "harmony": {
+-      "name": "`/harmony <색상> [유형]`",
+-      "description": "조화로운 염료 조합을 생성합니다.\n• 유형: 보색, 유사색, 삼원색, 분할보색, 사각배색, 정방형, 단색\n• 시각적 색상환 생성"
++      "name": "`/harmony <color> [type] [wheel] [companions]`",
++      "description": "조화로운 염료 조합을 생성합니다.\n• 10가지 유형: 보색, 유사색, 삼원색, 분리보색, 사색, 반전 사색, 정사각형, 단색, 복합, 명암\n• 5가지 색상환: RGB, RYB, 먼셀, OKLCH 색상, OKLCH 명도"
+     },
+     "mixer": {
+-      "name": "`/mixer <염료1> <염료2> [모드]`",
+-      "description": "색 과학을 사용하여 두 염료를 블렌드합니다.\n• 6가지 블렌딩 모드: RGB, LAB, OKLAB, RYB, HSL, 스펙트럼\n• 블렌드 결과에 가장 가까운 FFXIV 염료 검색"
++      "name": "`/mixer <dye1> <dye2> [mode]`",
++      "description": "색 과학을 사용하여 두 염료를 블렌드합니다.\n• 6가지 블렌딩 모드: RGB, LAB, OKLAB, RYB, HSL, 스펙트럼\n• 다섯 가지 비율로 블렌드하고 각각에 가장 가까운 염료를 찾습니다"
+     },
+     "gradient": {
+-      "name": "`/gradient <시작> <끝> [단계]`",
+-      "description": "두 색상 사이의 그라데이션을 생성합니다.\n• 각 그라데이션 단계에 맞는 염료 표시\n• 단계 수 설정 가능 (2-10)"
++      "name": "`/gradient <start_color> <end_color> [steps] [color_space]`",
++      "description": "두 색상 사이의 그라데이션을 생성하며, 각 단계마다 매칭된 염료를 표시합니다.\n• 2-12단계 (기본값 6)\n• 9가지 색 공간 (기본 HSV)"
+     },
+     "swatch": {
+-      "name": "`/swatch color <유형> <인덱스>` | `/swatch grid <유형> <행> <열>`",
+-      "description": "FFXIV 캐릭터 색상을 염료에 매칭합니다.\n• 피부, 머리, 눈, 하이라이트, 입술, 문신, 페이스페인트 지원\n• 피부와 머리에 종족/부족별 팔레트"
++      "name": "`/swatch <file> [order] [slot]`",
++      "description": "캐릭터의 색상을 `.chara` 파일(Anamnesis 또는 Ktisis)에서 염료에 매칭합니다.\n• 피부, 머리, 브릿지, 눈, 입술, 페인트, 문신/림벌 링을 읽습니다\n• `slot`: 하나의 색상에 대해 가장 가까운 염료 5개"
+     },
+     "preferences": {
+-      "name": "`/preferences show` | `/preferences set <키> <값>` | `/preferences reset`",
+-      "description": "봇 설정을 관리합니다.\n• 블렌딩 모드, 매칭 방법, 결과 수의 기본값 설정\n• 캐릭터 부족/성별 및 마켓 월드 설정"
++      "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
++      "description": "봇 설정을 관리합니다.\n• `set`: 언어, 블렌딩, 매칭, 결과 수, 부족/성별, 월드, 카드 값, 테마\n• `filters`: 특정 염료 그룹을 결과에서 제외\n• `reset`: 설정 하나 또는 전체"
+     },
+     "dyeSearch": {
+-      "name": "`/dye search <검색어>`",
+-      "description": "이름으로 염료를 검색합니다.\n• 퍼지 검색으로 부분 일치 찾기\n• 16진수 코드와 카테고리 표시"
++      "name": "`/dye search <query>`",
++      "description": "이름으로 염료를 검색합니다.\n• 부분 이름이 일치하며, 영어 또는 사용자 언어로 검색 가능\n• 16진수 코드 표시"
+     },
+     "dyeInfo": {
+-      "name": "`/dye info <이름>`",
+-      "description": "특정 염료에 대한 상세 정보를 확인합니다.\n• Hex, RGB, HSV 값 표시\n• 카테고리 및 아이템 ID 표시"
++      "name": "`/dye info <name>`",
++      "description": "특정 염료에 대한 상세 정보를 확인합니다.\n• HEX, RGB, HSV, LAB 값\n• 획득처, 마켓 아이템, 가장 가까운 염료"
+     },
+     "dyeList": {
+-      "name": "`/dye list [카테고리]`",
+-      "description": "모든 염료 목록을 보거나 카테고리별로 필터링합니다.\n• 카테고리: 빨강, 갈색, 노랑, 초록, 파랑, 보라, 무채색, 특수"
++      "name": "`/dye list [category]`",
++      "description": "모든 염료 목록을 보거나 카테고리별로 필터링합니다.\n• 카테고리: 빨강, 갈색, 노랑, 녹색, 파랑, 보라, 중성, 특수"
+     },
+     "dyeRandom": {
+       "name": "`/dye random [unique_categories]`",
+       "description": "무작위로 선택된 5개의 염료를 표시합니다.\n• 카테고리당 1개로 제한하는 옵션"
+     },
++    "comparison": {
++      "name": "`/comparison <dye1> <dye2> [dye3] [dye4]`",
++      "description": "염료 2~4개를 나란히 놓고 색상을 분석합니다.\n• 염료 이름 또는 16진수 코드 사용 가능"
++    },
++    "contrast": {
++      "name": "`/contrast <dye1> <dye2> [dye3] [dye4]`",
++      "description": "염료 2~4개 사이의 WCAG 명암비를 측정합니다.\n• 3:1, 4.5:1, 7:1 기준선 표시"
++    },
++    "accessibility": {
++      "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
++      "description": "색각 이상에서 염료가 어떻게 보이는지 확인합니다.\n• 염료 하나: 모든 색각에서 어떻게 변하는지\n• 염료 둘: 얼마나 멀어 보이는지 (`vision`으로 하나의 색각 선택)\n• `/a11y`는 같은 명령어입니다"
++    },
++    "budget": {
++      "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
++      "description": "장터 가격을 사용해 고가 염료의 저렴한 대안을 찾습니다.\n• `find`: 목표 염료에 가까운 더 저렴한 염료 (`max_distance` 2-20)\n• `quick`: 인기 있는 고가 염료에 대한 동일한 검사\n• `set_world`: 월드 또는 데이터 센터 저장"
++    },
++    "presetBrowse": {
++      "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
++      "description": "커뮤니티 염료 프리셋을 둘러봅니다.\n• 8개 카테고리\n• 인기순, 최신순 또는 이름순으로 정렬"
++    },
++    "presetShare": {
++      "name": "`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`",
++      "description": "자신의 프리셋을 공유하고 다른 프리셋에 투표합니다.\n• 염료 3~6개와 선택적 태그; 제출은 검수를 거칩니다\n• `edit`은 자신의 프리셋에만 사용할 수 있습니다"
++    },
++    "presetFavorite": {
++      "name": "`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`",
++      "description": "즐겨찾기 프리셋 목록을 개인적으로 관리합니다 (최대 50개)."
++    },
++    "changelog": {
++      "name": "`/changelog [version]`",
++      "description": "봇의 새로운 소식을 표시합니다.\n• 최신 릴리스는 전체 내용, 또는 `version`으로 다른 릴리스 선택"
++    },
++    "stats": {
++      "name": "`/stats summary`",
++      "description": "봇 사용 통계를 표시합니다. `summary` 외의 패널은 승인된 사용자만 볼 수 있습니다."
++    },
+     "about": {
+       "name": "`/about`",
+       "description": "봇 정보, 버전 및 링크를 표시합니다."
+     },
+     "manualCmd": {
+-      "name": "`/manual`",
+-      "description": "이 도움말 가이드를 표시합니다."
++      "name": "`/manual [topic]`",
++      "description": "이 도움말 가이드 또는 심화 주제를 표시합니다: {topics}"
+     },
+     "tips": {
+       "autocomplete": "**자동완성:** 염료 이름을 입력하기 시작하면 제안이 나타납니다!",
+       "hexColors": "**16진수 색상:** `#FF0000`(빨강)이나 `#5865F2`(블러플) 같은 표준 웹 형식을 사용하세요",
+       "dyeNames": "**염료 이름:** 부분 이름을 입력하세요 - \"달라\"로 \"달라가브 레드\"를 찾을 수 있습니다",
+-      "facewearExcluded": "**얼굴장식 제외:** 일반 얼굴장식 염료(\"빨강\", \"파랑\" 등)는 결과에서 제외됩니다",
++      "facewearExcluded": "**얼굴장식:** 얼굴장식 색상(\"빨강\", \"파랑\" 등)은 염료가 아니며 결과에 나타나지 않습니다",
+       "links": "**링크:**"
+     }
+   },
+@@ -148,28 +185,13 @@
+   },
+   "harmony": {
+     "title": "{type} 하모니",
+-    "baseColor": "기본 색상",
+-    "complementary": "보색",
+-    "analogous": "유사색",
+-    "triadic": "삼원색",
+-    "splitComplementary": "분할보색",
+-    "tetradic": "사각배색",
+-    "square": "정방형",
+-    "monochromatic": "단색",
+-    "invertedTetradic": "반전 사각배색",
+-    "compound": "복합",
+-    "shades": "명암"
++    "baseColor": "기본 색상"
+   },
+   "mixer": {
+     "blendResult": "블렌드 결과",
+     "bothRequired": "염료1과 염료2 모두 필요합니다."
+   },
+   "accessibility": {
+-    "normalVision": "정상 시력",
+-    "protanopia": "적색맹",
+-    "deuteranopia": "녹색맹",
+-    "tritanopia": "청색맹",
+-    "achromatopsia": "전색맹",
+     "allLenses": "모든 색각"
+   },
+   "about": {
+@@ -214,6 +236,8 @@
+     "tags": "태그",
+     "author": "작성자",
+     "votes": "투표",
++    "cardVotes_one": "{count}표",
++    "cardVotes_other": "{count}표",
+     "api": {
+       "badRequest": "잘못된 요청입니다. 입력 내용을 확인하고 다시 시도해 주세요.",
+       "permissionDenied": "권한이 없습니다.",
+@@ -367,7 +391,7 @@
+       "excluded": "제외",
+       "included": "포함",
+       "updated": "필터 업데이트 완료",
+-      "affectsHint": "적용 대상: /match, /harmony, /gradient, /mixer",
++      "affectsHint": "적용 대상: /harmony, /gradient, /mixer",
+       "title": "염료 필터",
+       "setHint": "/preferences filters set으로 사용자 지정",
+       "resetSuccess": "필터 초기화 완료",
+@@ -448,31 +472,31 @@
+     "timeout": "이미지 다운로드 시간이 초과되었습니다. 다시 시도해 주세요."
+   },
+   "matchImageHelp": {
+-    "title": "/match_image 사용 방법",
+-    "description": "`/match_image` 명령어는 업로드된 이미지를 분석하여 지배적인 색상을 찾고 가장 가까운 FFXIV 염료와 매칭합니다. 최상의 결과를 위한 팁을 알려드립니다!",
++    "title": "이미지에서 색상 매칭하기",
++    "description": "`/extractor image`는 업로드된 이미지를 분석해 주요 색상을 추출하고 각각을 가장 가까운 FFXIV 염료와 매칭합니다. 최상의 결과를 위한 팁을 알려드립니다!",
+     "howItWorks": "작동 방식",
+-    "howItWorksContent": "**1. 이미지 분석**\n- 이미지가 K-means 클러스터링으로 처리됩니다\n- 지배적인 색상이 추출됩니다\n- 136종의 FFXIV 염료와 비교됩니다\n\n**2. 염료 매칭**\n- RGB 색공간에서 유클리드 거리 사용\n- 가장 가까운 염료를 반환합니다",
++    "howItWorksContent": "**1. 이미지 분석**\n- 이미지가 K-means 클러스터링으로 처리됩니다\n- 가장 주요한 색상이 추출됩니다 (`colors` 3-10, 기본값 4)\n\n**2. 염료 매칭**\n- 각 색상은 125개 FFXIV 염료 전체와 비교됩니다\n- 기본적으로 ΔE2000을 사용하며 - `matching` 옵션으로 변경할 수 있습니다\n- 카드 목록에는 비중이 큰 5가지 색상만 표시되며, 색상 막대에는 모든 색상이 나타납니다",
+     "tipsForBestResults": "최상의 결과를 위한 팁",
+     "tipsContent": "**이미지 자르기**\n- 매칭하고 싶은 특정 영역에 집중\n- UI 요소와 배경 제거\n\n**좋은 조명 선택**\n- 밝은 곳에서 스크린샷 촬영\n- 어두운 그림자나 극단적인 하이라이트 피하기\n\n**어두운 배경 피하기**\n- 검은 배경은 결과를 왜곡할 수 있습니다\n- 가능하면 중립적이고 밝은 배경 사용",
+     "commonIssues": "일반적인 문제",
+-    "commonIssuesContent": "**\"어두운 색상이 나왔는데 장비는 밝아요!\"**\n→ 배경이 어두울 가능성이 높습니다. 장비만 포함하도록 이미지를 잘라주세요.\n\n**\"매칭이 이상해 보여요\"**\n→ 여러 색상이 있나요? 알고리즘은 가장 흔한 색상을 선택합니다.\n\n**\"특정 부분만 매칭할 수 있나요?\"**\n→ 네! 업로드 전에 해당 영역만 잘라주세요.",
++    "commonIssuesContent": "**\"어두운 색상이 나왔는데 장비는 밝아요!\"**\n→ 배경이 어두울 가능성이 높습니다. 장비만 포함하도록 이미지를 잘라주세요.\n\n**\"매칭이 이상해 보여요\"**\n→ 알고리즘은 가장 흔한 색상들을 선택합니다. 나머지는 잘라내세요.\n\n**\"특정 부분만 매칭할 수 있나요?\"**\n→ 네! 업로드 전에 해당 영역만 잘라주세요.",
+     "proTips": "프로 팁",
+-    "proTipsContent": "• 업로드 전 이미지 편집 소프트웨어로 자르기\n• 금속성/반짝이는 장비는 결과가 다를 수 있습니다\n• 16진수 코드를 알고 있다면 `/match` 사용\n• `colors` 옵션으로 여러 색상 추출 (1-5)\n• 최상의 품질을 위해 1920x1080 이상으로 스크린샷",
++    "proTipsContent": "• 업로드 전 이미지 편집 소프트웨어로 자르기\n• 금속성/반짝이는 장비는 결과가 다를 수 있습니다\n• 16진수 코드를 알고 있다면 `/extractor color` 사용\n• `colors` 옵션으로 색상 개수 조절 (3-10)\n• 최상의 품질을 위해 1920x1080 이상으로 스크린샷",
+     "footer": "XIV Dye Tools - FFXIV 패션 애호가를 위해 사랑을 담아 제작",
+     "exampleUseCases": "사용 예시",
+     "goodExamples": "좋은 예시",
+     "goodExamplesContent": "• 단일 가슴 장비만 자른 스크린샷\n• 중립 배경에서 염색된 갑옷 클로즈업\n• 밝은 낮 지역에서 촬영한 스크린샷\n• 매칭하고 싶은 색상에 집중한 이미지",
+     "poorExamples": "나쁜 예시",
+     "poorExamplesContent": "• UI가 많은 전체 화면 스크린샷\n• 어두운 던전이나 동굴 속 캐릭터\n• 다른 염료가 적용된 여러 장비\n• 배경색이 지배하는 이미지",
+-    "whenToUse": "/match_image vs /match 사용 시점",
+-    "whenToUseContent": "**`/match_image` 사용 시:**\n• 스크린샷이 있고 염료를 찾고 싶을 때\n• 정확한 색상 코드를 모를 때\n• 영감 사진에서 색상을 매칭하고 싶을 때\n\n**`/match` 사용 시:**\n• 이미 16진수 색상 코드를 알고 있을 때\n• 더 정확한 결과가 필요할 때\n• 색상 견본으로 작업할 때",
++    "whenToUse": "/extractor image vs /extractor color 사용 시점",
++    "whenToUseContent": "**`/extractor image` 사용 시:**\n• 스크린샷이 있고 염료를 찾고 싶을 때\n• 정확한 색상 코드를 모를 때\n• 영감 사진에서 색상을 매칭하고 싶을 때\n\n**`/extractor color` 사용 시:**\n• 이미 16진수 색상 코드를 알고 있을 때\n• 더 정확한 결과가 필요할 때\n• 색상 견본으로 작업할 때",
+     "technicalDetails": "기술 세부사항",
+     "supportedFormats": "지원 형식",
+-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
++    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
+     "fileLimits": "파일 제한",
+-    "fileLimitsContent": "• 최대 크기: 8MB\n• 처리 시간: ~1-3초",
+-    "matchQualityRatings": "매칭 품질 등급",
+-    "matchQualityRatingsContent": "**완벽** (거리 0)\n**우수** (거리 <10)\n**좋음** (거리 <25)\n**적당** (거리 <50)\n**근사** (거리 ≥50)\n\n*거리가 낮을수록 = 더 좋은 매칭*",
++    "fileLimitsContent": "• 최대 크기: 10MB",
++    "matchQualityRatings": "매칭 거리",
++    "matchQualityRatingsContent": "목록의 모든 매칭은 입력 색상과의 거리를 함께 표시합니다 - 값이 낮을수록 더 가깝습니다.\n\n여섯 가지 매칭 방식과 밴드 판정 방식: `/manual` 주제 {topic}",
+     "poweredBy": "Photon WASM 이미지 처리 기반"
+   },
+   "card": {
+@@ -596,7 +620,7 @@
+       },
+       "matchingMethods": {
+         "name": "매칭 방식",
+-        "body": "여섯 가지 방식, 하나의 어휘: ΔE2000(기본), ΔEOK, ΔE76, REDMEAN, RGB DIST, DISTINGUISH %. 매치 라인을 따르는 것은 ΔE2000의 밴드뿐이며, 다른 방식의 밴드는 고정입니다. 티어는 방식 간에 비교하지 않으며, 티어가 표시되는 곳에는 항상 방식이 함께 표기됩니다."
++        "body": "여섯 가지 방식, 하나의 어휘: ΔE2000(기본), ΔEOK2, ΔE76, REDMEAN, RGB DIST, DISTINGUISH %. 매치 라인을 따르는 것은 ΔE2000의 밴드뿐이며, 다른 방식의 밴드는 고정입니다. 티어는 방식 간에 비교하지 않으며, 티어가 표시되는 곳에는 항상 방식이 함께 표기됩니다."
+       },
+       "spectrumPrices": {
+         "name": "스펙트럼과 가격",
+@@ -604,7 +628,7 @@
+       },
+       "characterFile": {
+         "name": "캐릭터 파일",
+-        "body": "/swatch는 Anamnesis / Ktisis의 .chara 내보내기를 읽습니다: 색상 부위(피부·머리·눈·입술·페인트)와 착용 장비 염색. 파일은 응답 생성을 위해 한 번만 읽히며 저장되지 않습니다. 게임 팔레트를 벗어나게 편집된 색상은 실제 값으로 매칭되고 '그리드 외'로 표시됩니다."
++        "body": "/swatch는 Anamnesis 또는 Ktisis의 .chara 내보내기를 읽습니다: 색상 부위(피부, 머리, 브릿지, 눈, 입술, 페인트, 문신/림벌 링)와 착용 장비 염색. 파일은 응답 생성을 위해 한 번만 읽히며 저장되지 않습니다. 게임 팔레트를 벗어나게 편집된 색상은 실제 값으로 매칭되고 '그리드 외'로 표시됩니다."
+       }
+     }
+   },

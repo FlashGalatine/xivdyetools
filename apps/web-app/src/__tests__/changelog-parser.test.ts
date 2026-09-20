@@ -13,7 +13,12 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseChangelog } from '../../vite-plugin-changelog-parser';
+import {
+  parseChangelog,
+  boundChangelog,
+  MAX_MODULE_BYTES,
+  MIN_RELEASES,
+} from '../../vite-plugin-changelog-parser';
 
 // A representative sample mirroring the real CHANGELOG-laymans.md structure:
 // page title, two releases (newest first), a section with bold-led bullets,
@@ -203,9 +208,6 @@ describe('the real CHANGELOG-laymans.md', () => {
   const realChangelog = readFileSync(resolve(here, '../../CHANGELOG-laymans.md'), 'utf8');
   const entries = parseChangelog(realChangelog);
 
-  /** Mirrors MAX_VERSIONS_TO_INCLUDE in vite-plugin-changelog-parser.ts. */
-  const PARSER_VERSION_CAP = 50;
-
   /** Every "## " line in the file, release header or not. */
   const h2Lines = realChangelog.split(/\r?\n/).filter((line) => line.startsWith('## '));
 
@@ -224,11 +226,21 @@ describe('the real CHANGELOG-laymans.md', () => {
 
   it('parses every release header in the file', () => {
     expect(h2Lines.length).toBeGreaterThan(0);
-    // Assert the cap explicitly. Without this, crossing it reds the parity
-    // check below with "expected 51, got 50" and points at the parser rather
-    // than at the limit that actually caused it.
-    expect(h2Lines.length).toBeLessThanOrEqual(PARSER_VERSION_CAP);
+    // parseChangelog has no cap of its own any more: it parses the whole file,
+    // and boundChangelog (below) decides what ships.
     expect(entries).toHaveLength(h2Lines.length);
+  });
+
+  it('ships a module inside its byte budget, newest releases first', () => {
+    // The chunk's gate is bytes (scripts/check-bundle-size.js, 40 KB). This is
+    // the assertion that keeps that gate true as releases accumulate.
+    const bounded = boundChangelog(entries);
+    const bytes = Buffer.byteLength(JSON.stringify(bounded.entries), 'utf-8');
+    expect(bytes).toBeLessThanOrEqual(MAX_MODULE_BYTES);
+    // A contiguous prefix: no hole in the history the modal shows.
+    expect(bounded.entries).toEqual(entries.slice(0, bounded.entries.length));
+    expect(bounded.entries.length).toBeGreaterThanOrEqual(Math.min(MIN_RELEASES, entries.length));
+    expect(bounded.olderReleases).toBe(entries.length - bounded.entries.length);
   });
 
   it('never advertises a release newer than the shipping build', () => {
@@ -253,5 +265,45 @@ describe('the real CHANGELOG-laymans.md', () => {
   it('gives every parsed release at least one bullet to render', () => {
     const empty = entries.filter((e) => !e.sections.some((s) => s.bullets.length > 0));
     expect(empty.map((e) => e.version)).toEqual([]);
+  });
+});
+
+describe('boundChangelog', () => {
+  const release = (version: string, words: number) => ({
+    version,
+    date: '',
+    highlights: [],
+    sections: [{ header: 'h', title: '', bullets: [Array(words).fill('word').join(' ')] }],
+  });
+  const size = (value: unknown) => Buffer.byteLength(JSON.stringify(value), 'utf-8');
+
+  it('keeps everything when it fits', () => {
+    const all = [release('3.0.0', 5), release('2.0.0', 5), release('1.0.0', 5)];
+    expect(boundChangelog(all, 10_000, 1)).toEqual({ entries: all, olderReleases: 0 });
+  });
+
+  it('drops the oldest releases first and says how many', () => {
+    const all = [release('3.0.0', 20), release('2.0.0', 20), release('1.0.0', 20)];
+    const budget = size([all[0], all[1]]) + 1; // room for two, not three
+    const bounded = boundChangelog(all, budget, 1);
+    expect(bounded.entries.map((e) => e.version)).toEqual(['3.0.0', '2.0.0']);
+    expect(bounded.olderReleases).toBe(1);
+    expect(size(bounded.entries)).toBeLessThanOrEqual(budget);
+  });
+
+  it('stops at the first release that does not fit, leaving no hole', () => {
+    // 2.0.0 is huge; 1.0.0 would fit on its own, but a history that skips a
+    // release is worse than one that ends.
+    const all = [release('3.0.0', 5), release('2.0.0', 500), release('1.0.0', 5)];
+    const bounded = boundChangelog(all, size([all[0]]) + size(all[2]) + 8, 1);
+    expect(bounded.entries.map((e) => e.version)).toEqual(['3.0.0']);
+    expect(bounded.olderReleases).toBe(2);
+  });
+
+  it('never ships fewer than the minimum, even over budget', () => {
+    const all = [release('3.0.0', 50), release('2.0.0', 50), release('1.0.0', 50)];
+    const bounded = boundChangelog(all, 10, 2);
+    expect(bounded.entries.map((e) => e.version)).toEqual(['3.0.0', '2.0.0']);
+    expect(bounded.olderReleases).toBe(1);
   });
 });

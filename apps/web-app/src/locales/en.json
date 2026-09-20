@@ -38,7 +38,7 @@
   },
   "tools": {
     "harmony": {
-      "title": "Color Harmony Explorer",
+      "title": "Harmony Explorer",
       "shortName": "Harmony",
       "description": "Generate harmonious color palettes"
     },
@@ -79,7 +79,7 @@
       "description": "Find affordable dye alternatives"
     },
     "character": {
-      "title": "Character Matcher",
+      "title": "Swatch Matcher",
       "shortName": "Swatch",
       "description": "Match dyes to character colors",
       "selectSubrace": "Select Subrace",
@@ -184,7 +184,7 @@
     "mixingOklab": "Modern Perceptual",
     "mixingRyb": "Paint",
     "mixingHsl": "Hue-based",
-    "mixingSpectral": "Spectral -Realistic Paint",
+    "mixingSpectral": "Realistic Paint",
     "mixingRgbDesc": "Additive light mixing. Blue + Yellow = Gray.",
     "mixingLabDesc": "Perceptually uniform blending. Blue + Yellow = Pink.",
     "mixingOklabDesc": "Modern perceptual space. Blue + Yellow = Cyan.",
@@ -486,8 +486,8 @@
     "saveMix": "Save mix",
     "modelRyb": "Paint",
     "modelSpectral": "Pigment",
-    "modelOklab": "Perceptual",
-    "modelLab": "LAB",
+    "modelOklab": "Modern Perceptual",
+    "modelLab": "Perceptual",
     "modelHsl": "Hue",
     "modelRgb": "Light",
     "exportMeta": "Blend: {model} @ {pct}%"
@@ -685,7 +685,8 @@
     "updatedEyebrow": "UPDATED SINCE YOUR LAST VISIT",
     "allReleases": "ALL RELEASES",
     "pastLabel": "EARLIER RELEASES",
-    "currentTag": "CURRENT"
+    "currentTag": "CURRENT",
+    "olderReleases": "Older releases on GitHub"
   },
   "welcome": {
     "title": "Welcome to XIV Dye Tools",
@@ -792,7 +793,7 @@
       },
       "toolBanner": {
         "title": "Switch Tools",
-        "description": "Click any tool icon to switch between different features: Color Harmony, Extractor, Comparison, and more!"
+        "description": "Click any tool icon to switch between different features: Harmony, Extractor, Comparison, and more!"
       }
     },
     "matcher": {
@@ -1163,15 +1164,6 @@
     "slotsFull": "All slots are full. Select one to replace:",
     "selectSlotToReplace": "Select Slot to Replace",
     "replacedInTool": "Replaced successfully",
-    "tools": {
-      "harmony": "Harmony Explorer",
-      "budget": "Budget Suggestions",
-      "accessibility": "Accessibility Checker",
-      "comparison": "Dye Comparison",
-      "gradient": "Gradient Builder",
-      "mixer": "Dye Mixer",
-      "swatch": "Swatch Matcher"
-    },
     "spectrumShort": "SPEC",
     "acquisitionShort": "SOURCE",
     "hueOff": "HUE OFF",

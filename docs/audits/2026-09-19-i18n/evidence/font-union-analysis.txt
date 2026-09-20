@@ -1,0 +1,23 @@
+===== discord-worker =====
+  needed codepoints (all scripts): 1697
+  union cmap of 10 bundled faces: 2453
+  NEEDED BUT IN NO FACE (real tofu): 2
+      U+000A 
+
+      U+FE0F ️
+  per-face CJK-range glyphs vs. how many of those are actually needed:
+      FragmentMono-Regular.ttf     cjk_glyphs=    2 needed_by_sources=    0 surplus=    2  122 KiB
+      NotoSansJP-Subset.ttf        cjk_glyphs=  521 needed_by_sources=  521 surplus=    0  323 KiB
+      NotoSansKR-Subset.ttf        cjk_glyphs=  493 needed_by_sources=  493 surplus=    0  140 KiB
+      NotoSansSC-Subset.ttf        cjk_glyphs= 1072 needed_by_sources= 1072 surplus=    0  483 KiB
+
+===== og-worker =====
+  needed codepoints (all scripts): 977
+  union cmap of 10 bundled faces: 1769
+  NEEDED BUT IN NO FACE (real tofu): 0
+  per-face CJK-range glyphs vs. how many of those are actually needed:
+      FragmentMono-Regular.ttf     cjk_glyphs=    2 needed_by_sources=    0 surplus=    2  122 KiB
+      NotoSansJP-Subset.ttf        cjk_glyphs=  232 needed_by_sources=  232 surplus=    0  219 KiB
+      NotoSansKR-Subset.ttf        cjk_glyphs=  306 needed_by_sources=  306 surplus=    0  111 KiB
+      NotoSansSC-Subset.ttf        cjk_glyphs=  578 needed_by_sources=  578 surplus=    0  331 KiB
+

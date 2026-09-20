@@ -307,6 +307,30 @@ describe('localized dye-name matching', () => {
     expect(resolveColorInput('スノウホワイト', { locale: 'ja' })?.name).toBe('Snow White');
     expect(resolveDyeInput('スノウホワイト')).toBeNull();
   });
+
+  // I18N-005 (2026-09-19 audit): searchDyesByName folds accents/ß/width on
+  // both sides via core's foldForSearch, so an ASCII-only query still finds
+  // a dye whose localized name carries a diacritic the user's keyboard
+  // cannot type.
+  describe('accent/ß/width folding (I18N-005)', () => {
+    it('finds the German dye "Schneeweißer" via an ASCII-only query', async () => {
+      await initializeLocale('de');
+      const hits = searchDyesByName('schneeweiss', 'de');
+      expect(hits.map((d) => d.name)).toContain('Snow White');
+    });
+
+    it('finds the German dye "Rußschwarzer" via an ASCII-only query', async () => {
+      await initializeLocale('de');
+      const hits = searchDyesByName('russschwarz', 'de');
+      expect(hits.map((d) => d.name)).toContain('Soot Black');
+    });
+
+    it('finds the French dye "jaune crème" via an unaccented query', async () => {
+      await initializeLocale('fr');
+      const hits = searchDyesByName('creme', 'fr');
+      expect(hits.map((d) => d.name)).toContain('Cream Yellow');
+    });
+  });
 });
 
 describe('resolveDyeInput', () => {

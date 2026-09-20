@@ -438,7 +438,17 @@ export class DyeSelector extends BaseComponent {
         return a.hsv.v - b.hsv.v;
       }
       case 'category': {
-        const categoryDiff = a.category.localeCompare(b.category);
+        // I18N-008: was `a.category.localeCompare(b.category)` on the raw
+        // English category id, so a localized UI still ordered categories
+        // alphabetically in English (Blues, Browns, Greens…) instead of by
+        // the labels actually shown. Compare the LOCALIZED labels instead,
+        // with the current locale passed to `localeCompare` so collation
+        // matches the app locale rather than the browser's.
+        const locale = LanguageService.getCurrentLocale();
+        const categoryDiff = LanguageService.getCategory(a.category).localeCompare(
+          LanguageService.getCategory(b.category),
+          locale
+        );
         if (categoryDiff !== 0) return categoryDiff;
         return compareDyeNames(a, b);
       }

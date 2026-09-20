@@ -16,6 +16,12 @@ const getUserPreferencesMock = vi.hoisted(() => vi.fn());
 const generateNearestSheetMock = vi.hoisted(() => vi.fn((_opts: unknown) => '<svg />'));
 const translatorStub = vi.hoisted(() => ({
   t: vi.fn((key: string) => (key === 'card.matchKey' ? 'nearest by ΔE2000' : key)),
+  // I18N-006: mirrors the real `card.colours` plural rule closely enough to
+  // prove the caller passes the count through `.tc()` rather than `.t()`.
+  tc: vi.fn((key: string, count: number, vars?: Record<string, unknown>) => {
+    if (key === 'card.colours') return count === 1 ? `${vars?.n} colour` : `${vars?.n} colours`;
+    return key;
+  }),
   getLocale: vi.fn(() => 'en'),
 }));
 
@@ -45,9 +51,12 @@ vi.mock('@xivdyetools/svg', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@xivdyetools/svg')>()),
   generateNearestSheet: generateNearestSheetMock,
 }));
-vi.mock('../../services/image-client.js', () => ({ extractImagePixels: vi.fn() }));
+const extractImagePixelsMock = vi.hoisted(() => vi.fn());
+vi.mock('../../services/image-client.js', () => ({ extractImagePixels: extractImagePixelsMock }));
 
 import { handleExtractorCommand } from './extractor.js';
+import { PaletteService } from '@xivdyetools/core';
+import { dyeService } from '@xivdyetools/bot-logic';
 
 function makeInteraction(
   colorOptions: Array<{ name: string; value: unknown }>,
@@ -199,5 +208,69 @@ describe('/extractor color — result count', () => {
     // The single-match case gets copy buttons on the response.
     const response = editOriginalResponseMock.mock.calls[0][2] as { components?: unknown[] };
     expect(response.components).toBeDefined();
+  });
+});
+
+describe('/extractor image — colour count line (I18N-006)', () => {
+  function makeImageInteraction(attachmentId: string, url: string): DiscordInteraction {
+    return {
+      id: 'i-image-1',
+      token: 'tok',
+      type: 2,
+      locale: 'en-US',
+      member: { user: { id: 'user-1' } },
+      data: {
+        name: 'extractor',
+        options: [{ name: 'image', options: [{ name: 'image', value: attachmentId }] }],
+        resolved: { attachments: { [attachmentId]: { url } } },
+      },
+    } as unknown as DiscordInteraction;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    renderSvgToPngMock.mockResolvedValue(new Uint8Array([1]));
+    getUserPreferencesMock.mockResolvedValue({});
+    extractImagePixelsMock.mockResolvedValue({
+      pixels: new Uint8Array([255, 0, 0, 255]),
+      width: 1,
+      height: 1,
+    });
+  });
+
+  it('renders the singular "1 colour" line when only one dye match survives', async () => {
+    const dye = dyeService.getAllDyes()[0];
+    const spy = vi.spyOn(PaletteService.prototype, 'extractAndMatchPalette').mockReturnValue([
+      { extracted: { r: 255, g: 0, b: 0 }, matchedDye: dye, distance: 0, dominance: 1 },
+    ]);
+    try {
+      const { ctx, flush } = makeCtx();
+      await handleExtractorCommand(makeImageInteraction('att-1', 'https://example.com/i.png'), env, ctx);
+      await flush();
+
+      const response = editOriginalResponseMock.mock.calls[0][2] as { embeds: Array<{ description: string }> };
+      expect(response.embeds[0].description).toContain('1 colour\n');
+      expect(response.embeds[0].description).not.toContain('1 colours');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('renders the plural form for more than one match', async () => {
+    const dyes = dyeService.getAllDyes().slice(0, 2);
+    const spy = vi.spyOn(PaletteService.prototype, 'extractAndMatchPalette').mockReturnValue([
+      { extracted: { r: 255, g: 0, b: 0 }, matchedDye: dyes[0], distance: 0, dominance: 0.6 },
+      { extracted: { r: 0, g: 255, b: 0 }, matchedDye: dyes[1], distance: 0, dominance: 0.4 },
+    ]);
+    try {
+      const { ctx, flush } = makeCtx();
+      await handleExtractorCommand(makeImageInteraction('att-1', 'https://example.com/i.png'), env, ctx);
+      await flush();
+
+      const response = editOriginalResponseMock.mock.calls[0][2] as { embeds: Array<{ description: string }> };
+      expect(response.embeds[0].description).toContain('2 colours');
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

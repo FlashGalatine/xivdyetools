@@ -1,0 +1,76 @@
+paired keys (same English value as a core vocabulary key): 27
+pairs that DIVERGE in >=1 locale: 17
+
+[bot-logic] preferences.filters.labels.dark   vs core labels.dark   (en = 'Dark')
+    fr: bot-logic='Sombre'   core='foncé'
+
+[bot-logic] preferences.filters.labels.pastel   vs core labels.pastel   (en = 'Pastel')
+    zh: bot-logic='粉彩'   core='柔和'
+
+[bot-logic] preferences.values.themeDark   vs core labels.dark   (en = 'dark')
+    fr: bot-logic='sombre'   core='foncé'
+    zh: bot-logic='深色'   core='暗色'
+
+[web-app] colorPalette.dark   vs core labels.dark   (en = 'Dark')
+    fr: web-app='Sombre'   core='foncé'
+    zh: web-app='深色'   core='暗色'
+
+[web-app] resultCard.tools.accessibility   vs core tools.accessibility   (en = 'Accessibility Checker')
+    de: web-app='Barrierefreiheits-Prüfer'   core='Barrierefreiheits-Check'
+    zh: web-app='无障碍检查器'   core='色彩辅助检测'
+
+[web-app] resultCard.tools.comparison   vs core tools.comparison   (en = 'Dye Comparison')
+    ja: web-app='染料比較'   core='カララント比較'
+    zh: web-app='染剂比较'   core='染剂对比'
+
+[web-app] resultCard.tools.gradient   vs core tools.gradient   (en = 'Gradient Builder')
+    de: web-app='Farbverlauf-Ersteller'   core='Verlaufs-Generator'
+    fr: web-app='Créateur de Dégradé'   core='Créateur de dégradés'
+    ko: web-app='그라디언트 빌더'   core='그라데이션 빌더'
+
+[web-app] resultCard.tools.harmony   vs core tools.harmony   (en = 'Harmony Explorer')
+    fr: web-app="Explorateur d'Harmonie"   core="Explorateur d'harmonies"
+    ko: web-app='하모니 탐색기'   core='하모니 익스플로러'
+    zh: web-app='色彩和谐探索器'   core='配色探索器'
+
+[web-app] resultCard.tools.mixer   vs core tools.mixer   (en = 'Dye Mixer')
+    de: web-app='Farbstoff-Mischer'   core='Farbstoff-Mixer'
+    ja: web-app='染料ミキサー'   core='カララントミキサー'
+    zh: web-app='染剂混合器'   core='染剂调色器'
+
+[web-app] resultCard.tools.swatch   vs core tools.swatch   (en = 'Swatch Matcher')
+    de: web-app='Farbmuster-Zuordnung'   core='Farbabgleich'
+    fr: web-app='Nuancier'   core='Comparateur de nuances'
+    ko: web-app='색상 매칭'   core='스와치 매처'
+
+[web-app] swatch.facewearSlot   vs core categories.Facewear   (en = 'Facewear')
+    de: web-app='Brille'   core='Gesichtsschmuck'
+    fr: web-app='Lunettes'   core='Accessoires faciaux'
+    zh: web-app='眼镜'   core='脸部配饰'
+
+[web-app] swatch.rangeDark   vs core labels.dark   (en = 'Dark')
+    fr: web-app='Sombre'   core='foncé'
+    ko: web-app='어두움'   core='다크'
+    zh: web-app='深色'   core='暗色'
+
+[web-app] themes.standardDark   vs core labels.dark   (en = 'Dark')
+    fr: web-app='Sombre'   core='foncé'
+    zh: web-app='深色'   core='暗色'
+
+[web-app] tools.accessibility.title   vs core tools.accessibility   (en = 'Accessibility Checker')
+    de: web-app='Barrierefreiheitsprüfung'   core='Barrierefreiheits-Check'
+    fr: web-app="Vérification d'Accessibilité"   core="Vérificateur d'accessibilité"
+    zh: web-app='无障碍检查器'   core='色彩辅助检测'
+
+[web-app] tools.comparison.title   vs core tools.comparison   (en = 'Dye Comparison')
+    de: web-app='Farbstoffvergleich'   core='Farbstoff-Vergleich'
+    zh: web-app='染剂比较'   core='染剂对比'
+
+[web-app] tools.gradient.title   vs core tools.gradient   (en = 'Gradient Builder')
+    de: web-app='Verlauf-Ersteller'   core='Verlaufs-Generator'
+    fr: web-app='Constructeur de Dégradé'   core='Créateur de dégradés'
+
+[web-app] tools.mixer.title   vs core tools.mixer   (en = 'Dye Mixer')
+    de: web-app='Farbstoffmixer'   core='Farbstoff-Mixer'
+    zh: web-app='染剂混合器'   core='染剂调色器'
+

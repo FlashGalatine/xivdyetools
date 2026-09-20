@@ -1,0 +1,16 @@
+{
+  "apps/web-app/src/locales": {
+    "de": [
+      ["tutorial.comparison.favorites.description", "Greife schnell auf deine Lieblingsfarbstoffe zu, um sie zum Vergleich hinzuzufügen.", "Greife schnell auf deine Favoriten zu, um sie zum Vergleich hinzuzufügen."],
+      ["config.mixingOklab", "Moderne Wahrnehmung", "Perzeptuell (modern)"],
+      
+      ["tutorial.harmony.baseColor.title", "Basisfarbe wählen", "Basisfarbstoff wählen"],
+      ["share.legacyLink", "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farb-ID — bitte um einen neuen Link.", "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farbstoff-ID — bitte um einen neuen Link."]
+    ],
+    "ko": [
+      ["changelog.olderReleases", "이전 릴리스는 GitHub에서 보기", "더 오래된 릴리스는 GitHub에서 보기"],
+      ["config.mixingHsl", "색조 기반", "색상 기반"],
+      ["config.mixingHslDesc", "HSL 색 공간에서의 색조 기반 혼합.", "HSL 색 공간에서의 색상 기반 혼합."]
+    ]
+  }
+}

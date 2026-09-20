@@ -136,7 +136,19 @@ def collect_characters(languages):
                 "Did the discord-worker locale folder move? Update BOT_LOCALES_DIR."
             )
         with open(path, "r", encoding="utf-8") as f:
-            add_strings(json.load(f))
+            data = json.load(f)
+        # I18N-001 (2026-09-19 i18n audit): commands.<cmd>.options.*.description
+        # feeds Discord's own command-picker tooltips, never resvg — Discord
+        # renders the picker client-side, this worker never draws it. Excluding
+        # just the `options` subtree (keeping `commands.<cmd>.description` as
+        # before) keeps these CJK subsets from growing on every option added to
+        # schemas.ts, on a worker already close to the 3 MiB gzip Worker limit.
+        cmds = data.get("commands")
+        if isinstance(cmds, dict):
+            for cmd in cmds.values():
+                if isinstance(cmd, dict):
+                    cmd.pop("options", None)
+        add_strings(data)
         print(f"  Bot  {lang}.json: loaded")
 
     # Consolidated market-item names (CONSOLIDATED_DYES[].names.<lang>) — the one

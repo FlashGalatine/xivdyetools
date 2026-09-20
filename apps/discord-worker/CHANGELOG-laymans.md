@@ -35,6 +35,29 @@ Rules:
   path filter.
 -->
 
+## [5.6.0] - 2026-09-20
+### 🌐 The command menu speaks your language all the way down
+- When you type a command, every option and sub-command now shows its hint in your Discord language: Japanese, German, French, Korean or Chinese. Until now only the command's one-line summary was translated, and the 137 hints underneath it stayed in English.
+- The topic list in `/manual topic` is translated too.
+- `/about` no longer has an English sentence sitting under its "Built on" heading.
+- The bot's Privacy Policy and Terms of Service can now be read in Japanese, German, French, Korean and Chinese. The English text is still the official one, and it links to each translation at the top.
+
+### 🔎 Finding a dye by its name in your language
+- You can type a dye name without its special letters. In German, `schneeweiss` now finds Schneeweiß; in French, `creme` finds crème. Before, about a third of the German and French dye names could only be found by typing the accent or the ß exactly.
+- Japanese names typed in half-width characters are found as well.
+
+### 🗣️ The game's own words
+- Chinese: the Market Board is 市场布告板 and a Data Center is 大区, the names the Chinese version of the game uses.
+- Korean: a World is 서버 and a Data Center is 데이터 센터, as in the Korean version of the game.
+- The word for a glamour in the image-matching help now follows each version of the game. The Japanese help footer used a word that means something quite different in everyday Japanese.
+- French: a preset nobody has voted on yet says "0 vote", which is correct French, instead of "0 votes".
+- `/extractor image` says "1 colour" rather than "1 colours" when an image has a single colour.
+- The "nearest dye" label on the harmony, swatch and extractor cards now reads the same on every card. In French it still said "found", and in German one card called a dye a colour.
+- German `/about` says "Betrieben mit Cloudflare Workers" instead of an English "Powered by".
+
+### 📜 Terms of Service
+- Two sentences were reworded so they can only be read one way: colour matching works from a hex code or from colours taken out of an image, and the line about consumer-protection rights now says plainly that it means the law of the place where you live. Nothing you agreed to changed.
+
 ## [5.5.8] - 2026-09-18
 ### 📖 /manual catches up with the bot you are using
 - `/manual` now lists every command. `/comparison`, `/contrast`, `/accessibility` (and its short name `/a11y`), `/budget`, `/preset`, `/changelog` and `/stats` were missing. The four analysis commands and `/preset` have their own Analysis and Community Presets sections now, and `/changelog` and `/stats` sit under Bot Information.

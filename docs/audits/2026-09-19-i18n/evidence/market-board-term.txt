@@ -1,0 +1,19 @@
+== web-app: 6 keys whose EN mentions Market Board
+   ja: 'マーケットボード' x6  e.g. ['footer.universalisCredit', 'config.marketBoard', 'config.enableMarketBoard']
+   de: 'Marktbrett' x6  e.g. ['footer.universalisCredit', 'config.marketBoard', 'config.enableMarketBoard']
+   fr: 'ableau des ventes' x3  e.g. ['footer.universalisCredit', 'marketBoard.title', 'errors.apiFailed']
+   fr: 'ableau des marchés' x2  e.g. ['config.marketBoard', 'config.enableMarketBoard']
+   fr: 'marché' x1  e.g. ['harmony.marketFailBody']
+   ko: '시장 게시판' x3  e.g. ['footer.universalisCredit', 'config.marketBoard', 'config.enableMarketBoard']
+   ko: '마켓보드' x3  e.g. ['harmony.marketFailBody', 'marketBoard.title', 'errors.apiFailed']
+   zh: '市场板' x2  e.g. ['footer.universalisCredit', 'harmony.marketFailBody']
+   zh: '市场版' x2  e.g. ['config.marketBoard', 'config.enableMarketBoard']
+   zh: '市场布告板' x2  e.g. ['marketBoard.title', 'errors.apiFailed']
+
+== bot-logic: 4 keys whose EN mentions Market Board
+   ja: 'マーケットボード' x4  e.g. ['manual.budget.description', 'budget.errors.notConfigured', 'budget.errors.apiError']
+   de: 'Marktbrett' x4  e.g. ['manual.budget.description', 'budget.errors.notConfigured', 'budget.errors.apiError']
+   fr: 'ableau des ventes' x4  e.g. ['manual.budget.description', 'budget.errors.notConfigured', 'budget.errors.apiError']
+   ko: '장터' x4  e.g. ['manual.budget.description', 'budget.errors.notConfigured', 'budget.errors.apiError']
+   zh: '市场板' x4  e.g. ['manual.budget.description', 'budget.errors.notConfigured', 'budget.errors.apiError']
+

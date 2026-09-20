@@ -16,6 +16,7 @@ import {
   isAbortError,
   generateChecksum,
   abbreviateDyeName,
+  foldForSearch,
   LRUCache,
 } from '../index.js';
 
@@ -58,6 +59,44 @@ describe('Utils', () => {
 
     it('returns an empty code for a name with no letters or digits', () => {
       expect(abbreviateDyeName('---', 'en')).toBe('');
+    });
+  });
+
+  describe('foldForSearch (I18N-005)', () => {
+    it('lower-cases and folds ß to ss', () => {
+      expect(foldForSearch('Schneeweißer')).toBe('schneeweisser');
+    });
+
+    it('folds ß in the middle of a word', () => {
+      expect(foldForSearch('Rußschwarzer')).toBe('russschwarzer');
+    });
+
+    it('strips a Latin diacritic', () => {
+      expect(foldForSearch('jaune crème')).toBe('jaune creme');
+      expect(foldForSearch('brun châtaigne')).toBe('brun chataigne');
+    });
+
+    it('folds half-width katakana to full-width via NFKC', () => {
+      expect(foldForSearch('ｽﾉｳ')).toBe('スノウ');
+      expect(foldForSearch('ｽﾉｳ')).toBe(foldForSearch('スノウ'));
+    });
+
+    it('does not turn が into か (dakuten is not a Latin diacritic)', () => {
+      expect(foldForSearch('が')).not.toBe(foldForSearch('か'));
+      expect(foldForSearch('が')).toBe('が');
+    });
+
+    it('round-trips Hangul unchanged', () => {
+      expect(foldForSearch('한글')).toBe('한글');
+    });
+
+    it('is a no-op on plain ASCII other than case', () => {
+      expect(foldForSearch('Snow White')).toBe('snow white');
+    });
+
+    it('is idempotent', () => {
+      const once = foldForSearch('Schneeweißer');
+      expect(foldForSearch(once)).toBe(once);
     });
   });
 

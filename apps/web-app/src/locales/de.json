@@ -38,7 +38,7 @@
   },
   "tools": {
     "harmony": {
-      "title": "Farbharmonie-Explorer",
+      "title": "Harmonie-Explorer",
       "shortName": "Harmonie",
       "description": "Harmonische Farbpaletten erstellen"
     },
@@ -79,7 +79,7 @@
       "description": "Erschwingliche Farbstoff-Alternativen finden"
     },
     "character": {
-      "title": "Charakter-Matcher",
+      "title": "Farbmuster-Matcher",
       "shortName": "Palette",
       "description": "Farbstoffe zu Charakterfarben zuordnen",
       "selectSubrace": "Volksgruppe wählen",
@@ -141,7 +141,7 @@
     "perceptualMatchingDesc": "Verwendet DeltaE für wahrnehmungsgetreue Farbzuordnung",
     "hueMatchingDesc": "Verwendet Farbwinkel für künstlerische Farbharmonie",
     "preventDuplicates": "Duplikate vermeiden",
-    "preventDuplicatesDesc": "Verhindert, dass dieselbe Farbe in mehreren Ergebnis-Slots erscheint",
+    "preventDuplicatesDesc": "Verhindert, dass derselbe Farbstoff in mehreren Ergebnis-Slots erscheint",
     "colorFormats": "Farbformate",
     "hexCodes": "Hex-Codes",
     "rgbValues": "RGB-Werte",
@@ -163,7 +163,7 @@
     "sampleAreaSize": "Pixel-Abtastbereich",
     "sampleAreaSizeTooltip": "Größe des Bereichs, der beim Abtasten einer Farbe aus dem Bild gemittelt wird",
     "singlePixel": "Pixel",
-    "visionTypes": "Sichttypen",
+    "visionTypes": "Sehtypen",
     "deuteranopia": "Deuteranopie",
     "protanopia": "Protanopie",
     "tritanopia": "Tritanopie",
@@ -180,15 +180,15 @@
     "wheelMunsellTrademark": "MUNSELL ist eine eingetragene Marke der Amazys Holding GmbH. Dieser Farbkreis wird aus veröffentlichten Renotationsdaten berechnet und steht in keiner Verbindung zu X-Rite oder Pantone.",
     "mixingMode": "Mischmodus",
     "mixingRgb": "Licht",
-    "mixingLab": "Wahrnehmung",
-    "mixingOklab": "Moderne Wahrnehmung",
-    "mixingRyb": "Farbe",
+    "mixingLab": "Perzeptuell",
+    "mixingOklab": "Perzeptuell (modern)",
+    "mixingRyb": "Malfarbe",
     "mixingHsl": "Farbton-basiert",
-    "mixingSpectral": "Spektral - Realistische Farbe",
+    "mixingSpectral": "Realistische Malfarbe",
     "mixingRgbDesc": "Additive Lichtmischung. Blau + Gelb = Grau.",
     "mixingLabDesc": "Wahrnehmungsgetreue Mischung. Blau + Gelb = Rosa.",
     "mixingOklabDesc": "Moderner Wahrnehmungsfarbraum. Blau + Gelb = Cyan.",
-    "mixingRybDesc": "Farbsimulation. Blau + Gelb = Grün.",
+    "mixingRybDesc": "Malfarben-Simulation. Blau + Gelb = Grün.",
     "mixingHslDesc": "Farbton-basierte Mischung im HSL-Farbraum.",
     "mixingSpectralDesc": "Kubelka-Munk Physik. Blau + Gelb = Grün.",
     "colorSpaceRgbDesc": "Lineare Interpolation. Erzeugt graue Mittelpunkte zwischen Farben.",
@@ -197,7 +197,7 @@
     "colorSpaceOklchDesc": "Moderner Wahrnehmungsfarbraum. Beste Gesamtverlaufsqualität.",
     "colorSpaceLchDesc": "Zylindrisches LAB. Gute Farbtonerhaltung mit wahrnehmungsbasierter Helligkeit.",
     "matchingMethod": "Zuordnungsalgorithmus",
-    "matchingOklab": "Wahrnehmungsbasiert",
+    "matchingOklab": "Perzeptuell",
     "matchingCiede2000": "Standard",
     "matchingCie76": "Schnell",
     "matchingRgb": "Einfach",
@@ -232,7 +232,7 @@
     "analyticsDesc": "Anonyme Nutzungsdaten teilen – welche Werkzeuge und Farbstoffe verwendet werden sowie .chara-Importe. Keine Kennungen, keine Bilder.",
     "exportSettings": "Exportieren",
     "importSettings": "Importieren",
-    "importError": "Einstellungen konnten nicht importiert werden. Bitte überprüfen Sie das Dateiformat.",
+    "importError": "Einstellungen konnten nicht importiert werden. Bitte überprüfe das Dateiformat.",
     "cmykValues": "CMYK-Werte",
     "matchingRedmean": "Gewichtetes RGB",
     "matchingRedmeanDesc": "Gewichtete RGB-Distanz — eine einfache Näherung des wahrgenommenen Unterschieds.",
@@ -300,7 +300,7 @@
     "takePhoto": "Foto aufnehmen",
     "privacyNote": "Bilder werden im Browser gelesen und nie hochgeladen.",
     "pasteNoImage": "Kein Bild in der Zwischenablage gefunden",
-    "noMatchingDyes": "Keine passenden Farben gefunden",
+    "noMatchingDyes": "Keine passenden Farbstoffe gefunden",
     "clickToSample": "Klicken zum Messen · ziehen für die Lupe",
     "zoomFit": "Einpassen",
     "zoomWidth": "Breite",
@@ -484,10 +484,10 @@
     "spread": "Modell-Streuung",
     "spreadDesc": "Wie weit die sechs Modelle auseinanderliegen. Hoch heißt: die Modellwahl ist bei diesem Paar entscheidend.",
     "saveMix": "Mischung sichern",
-    "modelRyb": "Farbe",
+    "modelRyb": "Malfarbe",
     "modelSpectral": "Pigment",
-    "modelOklab": "Perzeptuell",
-    "modelLab": "LAB",
+    "modelOklab": "Perzeptuell (modern)",
+    "modelLab": "Perzeptuell",
     "modelHsl": "Farbton",
     "modelRgb": "Licht",
     "exportMeta": "Mischung: {model} @ {pct} %"
@@ -543,11 +543,11 @@
     "sortCategory": "Kategorie, dann Name",
     "allCategories": "Alle",
     "selected": "Ausgewählt: {current}/{max}",
-    "gridAriaLabel": "Farbstoff-Auswahlraster. Verwenden Sie Pfeiltasten zum Navigieren, Enter oder Leertaste zum Auswählen.",
-    "noResults": "Keine Farbstoffe entsprechen Ihrer Suche",
-    "noResultsHint": "Versuchen Sie einen anderen Suchbegriff oder eine andere Kategorie",
+    "gridAriaLabel": "Farbstoff-Auswahlraster. Pfeiltasten zum Navigieren, Enter oder Leertaste zum Auswählen.",
+    "noResults": "Keine Farbstoffe entsprechen deiner Suche",
+    "noResultsHint": "Versuche einen anderen Suchbegriff oder eine andere Kategorie",
     "noDyesInCategory": "Keine Farbstoffe in dieser Kategorie",
-    "tryCategoryHint": "Versuchen Sie, eine andere Kategorie auszuwählen"
+    "tryCategoryHint": "Versuche, eine andere Kategorie auszuwählen"
   },
   "filters": {
     "dyeTypes": "Farbstofftypen",
@@ -573,7 +573,7 @@
     "pricesRefreshed": "Preise erfolgreich aktualisiert!",
     "refreshError": "Fehler beim Aktualisieren der Preise. Bitte erneut versuchen.",
     "priceUnavailable": "Preis nicht verfügbar",
-    "offlineWarning": "Sie sind offline. Preise können nicht aktualisiert werden.",
+    "offlineWarning": "Du bist offline. Preise können nicht aktualisiert werden.",
     "region": {
       "japan": "Japan",
       "northAmerica": "Nordamerika",
@@ -650,9 +650,9 @@
     "removeVoteFailed": "Stimme konnte nicht entfernt werden",
     "voteFailed": "Abstimmung fehlgeschlagen",
     "voteProcessFailed": "Abstimmung konnte nicht verarbeitet werden",
-    "submitPresetFailed": "Voreinstellung konnte nicht eingereicht werden. Bitte versuchen Sie es erneut.",
-    "saveChangesFailed": "Änderungen konnten nicht gespeichert werden. Bitte versuchen Sie es erneut.",
-    "deletePresetFailed": "Voreinstellung konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
+    "submitPresetFailed": "Voreinstellung konnte nicht eingereicht werden. Bitte versuche es erneut.",
+    "saveChangesFailed": "Änderungen konnten nicht gespeichert werden. Bitte versuche es erneut.",
+    "deletePresetFailed": "Voreinstellung konnte nicht gelöscht werden. Bitte versuche es erneut.",
     "presetDataMissing": "Löschen nicht möglich: Voreinstellungsdaten fehlen",
     "presetNoApiId": "Löschen nicht möglich: Voreinstellung hat keine API-ID",
     "canvasContextFailed": "Canvas-Kontext konnte nicht abgerufen werden",
@@ -663,10 +663,10 @@
     "tryAgain": "Erneut versuchen",
     "resetComponent": "Komponente zurücksetzen",
     "retryAttempts": "Wiederholungsversuche: {count}/{max}",
-    "requestTimeout": "Zeitüberschreitung der Anfrage. Bitte versuchen Sie es erneut.",
-    "networkError": "Netzwerkfehler. Bitte versuchen Sie es erneut.",
+    "requestTimeout": "Zeitüberschreitung der Anfrage. Bitte versuche es erneut.",
+    "networkError": "Netzwerkfehler. Bitte versuche es erneut.",
     "toolLoadFailed": "Werkzeug konnte nicht geladen werden",
-    "tryAgainOrRefresh": "Bitte versuchen Sie es erneut oder laden Sie die Seite neu."
+    "tryAgainOrRefresh": "Bitte versuche es erneut oder lade die Seite neu."
   },
   "success": {
     "copiedToClipboard": "In Zwischenablage kopiert!"
@@ -685,14 +685,15 @@
     "updatedEyebrow": "SEIT DEINEM LETZTEN BESUCH AKTUALISIERT",
     "allReleases": "ALLE VERSIONEN",
     "pastLabel": "FRÜHERE VERSIONEN",
-    "currentTag": "AKTUELL"
+    "currentTag": "AKTUELL",
+    "olderReleases": "Ältere Versionen auf GitHub"
   },
   "welcome": {
     "title": "Willkommen bei XIV Farbwerkzeuge",
     "eyebrow": "ERSTER BESUCH",
     "intro": "Jeder Farbstoff im Spiel, vermessen. Wähle eine Farbe, und die Werkzeuge zeigen dir, welcher der 125 Farbstoffe sie wirklich trifft — und was er kostet.",
     "lead": {
-      "harmony": "Von einer Farbe ausgehen und die vier oder fünf passenden dazu erhalten.",
+      "harmony": "Von einem Farbstoff ausgehen und die vier oder fünf passenden dazu erhalten.",
       "extractor": "Screenshot hochladen und zu jeder Farbe den nächsten Farbstoff finden.",
       "mixer": "Zwei Farbstoffe mischen und sehen, was dazwischen liegt.",
       "gradient": "Einen Verlauf zwischen zwei Farbstoffen bauen — jede Stufe ist tragbar."
@@ -722,10 +723,10 @@
     "saveFailed": "Palette konnte nicht gespeichert werden"
   },
   "offline": {
-    "banner": "Sie sind offline. Einige Funktionen sind möglicherweise eingeschränkt."
+    "banner": "Du bist offline. Einige Funktionen sind möglicherweise eingeschränkt."
   },
   "collections": {
-    "favoritesEmptyHint": "Klicke auf das ★ einer Farbe, um sie zu den Favoriten hinzuzufügen",
+    "favoritesEmptyHint": "Klicke auf das ★ eines Farbstoffs, um ihn zu den Favoriten hinzuzufügen",
     "favoritesFull": "Maximal {max} Favoriten erlaubt",
     "addToFavorites": "Zu Favoriten hinzufügen",
     "removeFromFavorites": "Aus Favoriten entfernen",
@@ -772,33 +773,33 @@
     "finish": "Fertig",
     "prompt": {
       "title": "Schnelltour",
-      "message": "Möchten Sie eine kurze Tour durch dieses Tool?",
+      "message": "Möchtest du eine kurze Tour durch dieses Tool?",
       "skip": "Überspringen",
       "disableAll": "Alle Touren deaktivieren",
       "start": "Tour starten"
     },
     "harmony": {
       "baseColor": {
-        "title": "Basisfarbe wählen",
-        "description": "Wählen Sie eine Farbe aus der Farbpalette als Basis. Klicken Sie auf ein Farbfeld, um es auszuwählen."
+        "title": "Basisfarbstoff wählen",
+        "description": "Wähle einen Farbstoff aus der Farbpalette als Basis. Klicke auf ein Farbfeld, um es auszuwählen."
       },
       "filters": {
         "title": "Suchen & Filtern",
-        "description": "Suchen Sie Farben nach Namen oder filtern Sie nach Typ: Metallic, Pastell, Dunkel oder Leuchtend."
+        "description": "Suche Farbstoffe nach Namen oder filtere nach Typ: Metallic, Pastell, Dunkel oder Leuchtend."
       },
       "favorites": {
-        "title": "Ihre Favoriten",
-        "description": "Markieren Sie Farben mit einem Stern, um sie zu speichern. Klicken Sie auf den Stern, um hinzuzufügen oder zu entfernen."
+        "title": "Deine Favoriten",
+        "description": "Markiere Farbstoffe mit einem Stern, um sie als Favoriten zu speichern. Klicke auf den Stern eines Farbfelds, um den Farbstoff hinzuzufügen oder zu entfernen."
       },
       "toolBanner": {
         "title": "Werkzeuge wechseln",
-        "description": "Klicken Sie auf ein Werkzeugsymbol, um zwischen Funktionen zu wechseln: Harmonie, Extraktor, Vergleich und mehr!"
+        "description": "Klicke auf ein Werkzeugsymbol, um zwischen Funktionen zu wechseln: Harmonie, Extraktor, Vergleich und mehr!"
       }
     },
     "matcher": {
       "palette": {
         "title": "Farbpalette",
-        "description": "Wählen Sie Farben aus der Palette rechts für Farbextraktion und Abgleich."
+        "description": "Wähle Farbstoffe aus der Palette rechts für Farbextraktion und Abgleich."
       },
       "settings": {
         "title": "Extraktionseinstellungen",
@@ -806,57 +807,57 @@
       },
       "maxColors": {
         "title": "Max. Farben",
-        "description": "Stellen Sie mit dem Schieberegler ein, wie viele Farben extrahiert werden sollen."
+        "description": "Stelle mit dem Schieberegler ein, wie viele Farben extrahiert werden sollen."
       },
       "displayOptions": {
         "title": "Anzeigeoptionen",
-        "description": "Passen Sie an, welche Farbwerte angezeigt werden: Hex, RGB, HSV, Lab, Preise und mehr."
+        "description": "Passe an, welche Farbwerte angezeigt werden: Hex, RGB, HSV, Lab, Preise und mehr."
       }
     },
     "comparison": {
       "select": {
-        "title": "Farben auswählen",
-        "description": "Klicken Sie auf Farben in der Palette, um sie zum Vergleich hinzuzufügen. Bis zu 4 Farben."
+        "title": "Farbstoffe auswählen",
+        "description": "Klicke auf Farbstoffe in der Palette, um sie zum Vergleich hinzuzufügen. Bis zu 4 Farbstoffe."
       },
       "displayOptions": {
         "title": "Anzeigeoptionen",
-        "description": "Wählen Sie, welche Farbformate und Metadaten in der Vergleichsansicht angezeigt werden."
+        "description": "Wähle, welche Farbformate und Metadaten in der Vergleichsansicht angezeigt werden."
       },
       "favorites": {
         "title": "Favoriten verwenden",
-        "description": "Greifen Sie schnell auf Ihre Lieblingsfarben zu, um sie zum Vergleich hinzuzufügen."
+        "description": "Greife schnell auf deine Favoriten zu, um sie zum Vergleich hinzuzufügen."
       }
     },
     "mixer": {
       "selectColors": {
         "title": "Farben auswählen",
-        "description": "Wählen Sie Farben aus der Palette zum Mischen. Der Mixer blendet sie zu neuen Farben."
+        "description": "Wähle Farbstoffe aus der Palette zum Mischen. Der Mixer mischt sie zu neuen Farben."
       },
       "mixingMode": {
         "title": "Mischmodus",
-        "description": "Wählen Sie den Farbmischalgorithmus: Spektral, RYB, OKLab, Lab, HSL oder RGB-Mischung."
+        "description": "Wähle den Farbmischalgorithmus: Spektral, RYB, OKLab, Lab, HSL oder RGB-Mischung."
       },
       "maxResults": {
         "title": "Max. Ergebnisse",
-        "description": "Passen Sie an, wie viele passende Farbergebnisse für jede gemischte Farbe angezeigt werden."
+        "description": "Passe an, wie viele passende Farbstoffe für jede gemischte Farbe angezeigt werden."
       },
       "displayOptions": {
         "title": "Anzeigeoptionen",
-        "description": "Passen Sie an, welche Farbwerte und Metadaten für gemischte Farben angezeigt werden."
+        "description": "Passe an, welche Farbwerte und Metadaten für gemischte Farben angezeigt werden."
       }
     },
     "accessibility": {
       "select": {
-        "title": "Farben auswählen",
-        "description": "Wählen Sie Farben aus der Palette, um zu sehen, wie sie bei verschiedenen Farbsehtypen aussehen."
+        "title": "Farbstoffe auswählen",
+        "description": "Wähle Farbstoffe aus der Palette, um zu sehen, wie sie bei verschiedenen Farbsehtypen aussehen."
       },
       "visionTypes": {
         "title": "Sehtypen",
-        "description": "Schalten Sie um, welche Farbsehsimulationen angezeigt werden: Deuteranopie, Protanopie, Tritanopie oder Achromasie."
+        "description": "Schalte um, welche Farbsehsimulationen angezeigt werden: Deuteranopie, Protanopie, Tritanopie oder Achromasie."
       },
       "displaySettings": {
         "title": "Anzeigeeinstellungen",
-        "description": "Konfigurieren Sie die Anzeigeoptionen für die Barrierefreiheitsprüfung."
+        "description": "Konfiguriere die Anzeigeoptionen für die Barrierefreiheitsprüfung."
       }
     },
     "stepOf": "Schritt {i} von {n}",
@@ -867,11 +868,11 @@
     "submitPreset": "Voreinstellung einreichen",
     "loading": "Voreinstellungen werden geladen...",
     "noPresets": "Keine Voreinstellungen gefunden",
-    "tryDifferentFilters": "Versuchen Sie andere Filter",
+    "tryDifferentFilters": "Versuche andere Filter",
     "edit": "Bearbeiten",
     "delete": "Löschen",
     "deleteTitle": "Preset löschen",
-    "confirmDelete": "Sind Sie sicher, dass Sie dieses Preset löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmDelete": "Möchtest du dieses Preset wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "categories": {
       "all": "Alle",
       "jobs": "Jobs",
@@ -899,26 +900,26 @@
       "recent": "Neueste",
       "name": "Alphabetisch"
     },
-    "loginToVote": "Melden Sie sich mit Discord oder XIVAuth an, um für diese Voreinstellung zu stimmen",
-    "signInToViewSubmissions": "Melden Sie sich an, um Ihre Einreichungen anzuzeigen",
-    "noSubmissionsYet": "Sie haben noch keine Voreinstellungen eingereicht.",
+    "loginToVote": "Melde dich mit Discord oder XIVAuth an, um für diese Voreinstellung zu stimmen",
+    "signInToViewSubmissions": "Melde dich an, um deine Einreichungen anzuzeigen",
+    "noSubmissionsYet": "Du hast noch keine Voreinstellungen eingereicht.",
     "dyes": "Farbstoffe",
     "tags": "Tags",
     "copyLink": "Link kopieren",
     "linkCopied": "Voreinstellungs-Link in die Zwischenablage kopiert!",
     "voteRemoved": "Stimme entfernt",
     "voteAdded": "Stimme hinzugefügt!",
-    "alreadyVoted": "Sie haben bereits für diese Voreinstellung gestimmt",
+    "alreadyVoted": "Du hast bereits für diese Voreinstellung gestimmt",
     "loginToSubmit": "Bitte anmelden, um Voreinstellungen einzureichen",
     "bannedFromPresets": "Das Einreichen von Voreinstellungen ist für dieses Konto gesperrt.",
     "loginToEdit": "Bitte anmelden, um Voreinstellungen zu bearbeiten",
-    "onlyEditOwn": "Sie können nur Ihre eigenen Voreinstellungen bearbeiten",
+    "onlyEditOwn": "Du kannst nur deine eigenen Voreinstellungen bearbeiten",
     "maxDyesAllowed": "Maximal {count} Farbstoffe erlaubt",
     "duplicateFound": "Diese Farbstoffkombination existiert bereits als \"{name}\"",
-    "duplicateWithVote": "Diese Farbstoffkombination existiert bereits als \"{name}\". Ihre Stimme wurde hinzugefügt!",
+    "duplicateWithVote": "Diese Farbstoffkombination existiert bereits als \"{name}\". Deine Stimme wurde hinzugefügt!",
     "submittedPendingReview": "Voreinstellung eingereicht! Sie wird nach Moderatorprüfung angezeigt.",
     "submittedSuccess": "Voreinstellung erfolgreich eingereicht!",
-    "editPendingReview": "Änderungen gespeichert! Ihre Bearbeitung wartet auf Moderatorprüfung.",
+    "editPendingReview": "Änderungen gespeichert! Deine Bearbeitung wartet auf Moderatorprüfung.",
     "editSuccess": "Voreinstellung erfolgreich aktualisiert!",
     "deleting": "Voreinstellung wird gelöscht...",
     "deleteSuccess": "Voreinstellung erfolgreich gelöscht",
@@ -984,17 +985,17 @@
     },
     "tabCommunity": "Community",
     "tabOfficial": "Offiziell",
-    "tabSaved": "Gespeichert",
+    "tabSaved": "Gemerkt",
     "tabMine": "Meine",
     "searchAll": "Paletten, Farbstoffe, Tags",
-    "shotSlot": "GLAMOUR-BILD · VERLINKT",
+    "shotSlot": "PROJEKTIONSBILD · VERLINKT",
     "paletteLabel": "PALETTE",
     "paletteCost": "PALETTENPREIS",
     "takeInto": "PALETTE ÖFFNEN IN",
     "offline": "Community-Feed nicht erreichbar",
     "offlineSub": "Der Preset-Dienst antwortet nicht. Die {n} offiziellen Paletten sind weiterhin da.",
-    "vote": "Stimme",
-    "voted": "Gewählt",
+    "vote": "Abstimmen",
+    "voted": "Abgestimmt",
     "save": "Merken",
     "savedBtn": "Gemerkt",
     "notSold": "nicht käuflich",
@@ -1039,7 +1040,7 @@
     "fieldTags": "Tags",
     "fieldTagsHint": "Durchsuchbar. Job-Kürzel funktionieren: mch, drk, whm.",
     "fieldLink": "Beispiel-Link",
-    "fieldLinkHint": "Eine Glamour-Seite auf einer erlaubten Website — Eorzea Collection, das Lodestone oder dein Beitrag auf X, Bluesky, pixiv und einigen weiteren. Gespeichert wird der Link, nie eine Kopie des Bildes — nimmst du ihn offline, verschwindet er auch hier.",
+    "fieldLinkHint": "Eine Projektionsseite auf einer erlaubten Website — Eorzea Collection, das Lodestone oder dein Beitrag auf X, Bluesky, pixiv und einigen weiteren. Gespeichert wird der Link, nie eine Kopie des Bildes — nimmst du ihn offline, verschwindet er auch hier.",
     "fieldPreviewImage": "Vorschaubild (optional)",
     "fieldPreviewImageHint": "PNG, JPEG oder WebP, bis zu 5 MB. Erscheint auf deiner Karte, sobald ein Moderator es freigibt.",
     "previewImageTooLarge": "Das Bild darf höchstens 5 MB groß sein",
@@ -1093,7 +1094,7 @@
       "dyesMin": "Es müssen mindestens {n} Farbstoffe enthalten sein",
       "nameMax": "Der Name darf höchstens {n} Zeichen lang sein",
       "descMax": "Die Beschreibung darf höchstens {n} Zeichen lang sein",
-      "category": "Bitte wählen Sie eine gültige Kategorie",
+      "category": "Bitte wähle eine gültige Kategorie",
       "dyesInvalid": "Ungültige Farbstoffauswahl",
       "tagsMax": "Maximal {n} Tags erlaubt",
       "tagLength": "Jeder Tag darf höchstens {n} Zeichen lang sein"
@@ -1105,12 +1106,12 @@
   "emptyStates": {
     "noSearchResults": {
       "title": "Keine Farbstoffe für \"{query}\" gefunden",
-      "description": "Überprüfen Sie die Schreibweise oder suchen Sie nach einer Kategorie wie \"lila\" oder \"rot\".",
+      "description": "Überprüfe die Schreibweise oder suche nach einer Kategorie wie \"lila\" oder \"rot\".",
       "action": "Suche löschen"
     },
     "filteredOut": {
       "title": "Alle Vorschläge wurden gefiltert",
-      "description": "Ihre aktuellen Filter verbergen alle passenden Farbstoffe. Passen Sie Ihre Filtereinstellungen an.",
+      "description": "Deine aktuellen Filter verbergen alle passenden Farbstoffe. Passe deine Filtereinstellungen an.",
       "action": "Filter zurücksetzen"
     },
     "noPrice": {
@@ -1119,17 +1120,17 @@
     },
     "noHarmony": {
       "title": "Keine Harmonievorschläge",
-      "description": "Wählen Sie einen Basisfarbstoff, um Harmonievorschläge zu generieren.",
+      "description": "Wähle einen Basisfarbstoff, um Harmonievorschläge zu generieren.",
       "action": "Farbstoff auswählen"
     },
     "noImage": {
       "title": "Kein Bild geladen",
-      "description": "Laden Sie ein Bild hoch, um mit dem Farbabgleich zu beginnen.",
+      "description": "Lade ein Bild hoch, um mit dem Farbabgleich zu beginnen.",
       "action": "Bild hochladen"
     },
     "loading": {
       "title": "Wird geladen...",
-      "description": "Bitte warten Sie, während wir die Daten abrufen."
+      "description": "Bitte warte, während wir die Daten abrufen."
     }
   },
   "aria": {
@@ -1157,21 +1158,12 @@
     "transformDyeIn": "Farbstoff umwandeln in...",
     "openInBrowser": "Im Browser öffnen...",
     "sentToBudget": "An Budget-Vorschläge gesendet",
-    "sentToSwatch": "An Farbmuster-Zuordnung gesendet",
+    "sentToSwatch": "An den Farbmuster-Matcher gesendet",
     "dyeAlreadyIn": "Farbstoff bereits hinzugefügt",
     "addedTo": "Erfolgreich hinzugefügt",
-    "slotsFull": "Alle Plätze belegt. Wählen Sie einen zum Ersetzen:",
+    "slotsFull": "Alle Plätze sind belegt. Wähle einen zum Ersetzen:",
     "selectSlotToReplace": "Platz zum Ersetzen auswählen",
     "replacedInTool": "Erfolgreich ersetzt",
-    "tools": {
-      "harmony": "Harmonie-Explorer",
-      "budget": "Budget-Vorschläge",
-      "accessibility": "Barrierefreiheits-Prüfer",
-      "comparison": "Farbstoff-Vergleich",
-      "gradient": "Farbverlauf-Ersteller",
-      "mixer": "Farbstoff-Mischer",
-      "swatch": "Farbmuster-Zuordnung"
-    },
     "spectrumShort": "SPEK.",
     "acquisitionShort": "QUELLE",
     "hueOff": "FARBTON",
@@ -1184,8 +1176,8 @@
   "share": {
     "button": "Teilen",
     "copied": "Kopiert!",
-    "invalidDye": "Dieser Link verweist auf eine Farbe, die diese Version nicht kennt.",
-    "legacyLink": "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farb-ID — bitte um einen neuen Link.",
+    "invalidDye": "Dieser Link verweist auf einen Farbstoff, den diese Version nicht kennt.",
+    "legacyLink": "Dieser Link stammt aus einer älteren Version und nutzt eine veraltete Farbstoff-ID — bitte um einen neuen Link.",
     "invalidHex": "Dieser Link enthält einen ungültigen Farbwert.",
     "linkCopied": "Link in die Zwischenablage kopiert!",
     "copyManually": "Bitte kopiere die URL manuell",
@@ -1216,10 +1208,10 @@
     "matchesHead": "NÄCHSTE FARBSTOFFE",
     "inGrid": "IM EDITOR",
     "sendTo": "SENDEN AN",
-    "equipHead": "FARBSTOFFE DIESER MIRAGE",
+    "equipHead": "FARBSTOFFE DIESER PROJEKTION",
     "gearHint": "Seit 7.0 zwei Farbkanäle je Teil. DyeId 0 heißt ungefärbt, nicht schwarz.",
     "makePalette": "Palette erstellen",
-    "paletteTitle": "Neue Palette aus dieser Mirage",
+    "paletteTitle": "Neue Palette aus dieser Projektion",
     "paletteNamePlaceholder": "Name der Palette",
     "paletteNameHint": "Preset-Namen und -Beschreibungen werden nicht übersetzt — was hier steht, sehen alle Spieler.",
     "saveLocal": "Auf diesem Gerät sichern",
@@ -1258,7 +1250,7 @@
     "glamourViewDyes": "Farbstoffe",
     "glamourShowAll": "Alle anzeigen",
     "undyed": "Ungefärbt",
-    "noDyedPieces": "An diesem Glamour ist nichts gefärbt. Schalte „Alle anzeigen“ ein, um jedes getragene Teil aufzulisten.",
+    "noDyedPieces": "An dieser Projektion ist nichts gefärbt. Schalte „Alle anzeigen“ ein, um jedes getragene Teil aufzulisten.",
     "facewearSlot": "Brille",
     "facewearColorTag": "{color} · Brillenfarbe",
     "facewearColorUnknown": "Brillenfarbe unbekannt",
@@ -1309,7 +1301,7 @@
     "tooFewTag": "MIND. 3",
     "tooFewBody": "Eine Palette braucht mindestens drei Farbstoffe — darunter ist es eine Farbprobe, keine Palette. Speichern und Einreichen bleiben deaktiviert.",
     "overCapBody": "{n} Farbstoffe ergeben einen Streifen, den in Kartengröße niemand lesen kann — auf sechs oder weniger reduzieren. Speichern und Einreichen bleiben deaktiviert.",
-    "paletteDefaultName": "Glamour-Palette",
+    "paletteDefaultName": "Projektionspalette",
     "blendTag": "MISCHUNG · α {alpha}",
     "blendPlain": "MISCHUNG",
     "blendNote": "Die Lippenfarbe über die Hautfarbe gelegt — was der Charakter tatsächlich zeigt. Die Farbstoffsuche richtet sich danach, nicht nach der reinen Zelle.",

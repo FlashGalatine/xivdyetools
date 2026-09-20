@@ -1354,6 +1354,12 @@ export class ConfigSidebar extends BaseLitComponent {
 
   /**
    * Render Dye Mixer config (NEW tool)
+   *
+   * Every mixing-mode option reads "<model id> - <translated name>". The ids are
+   * identifiers, identical in every locale (the Mixer's row headers use the same
+   * six). Spectral's id used to live inside its locale value instead, which is how
+   * en shipped "Spectral -Realistic Paint" and zh ended up with two words for one
+   * model that no same-English check could compare.
    */
   private renderMixerConfig(): TemplateResult {
     return html`
@@ -1368,7 +1374,9 @@ export class ConfigSidebar extends BaseLitComponent {
               this.handleConfigChange('mixer', 'mixingMode', value);
             }}
           >
-            <option value="spectral">${LanguageService.t('config.mixingSpectral')}</option>
+            <option value="spectral">
+              Spectral - ${LanguageService.t('config.mixingSpectral')}
+            </option>
             <option value="ryb">RYB - ${LanguageService.t('config.mixingRyb')}</option>
             <option value="oklab">OKLAB - ${LanguageService.t('config.mixingOklab')}</option>
             <option value="lab">LAB - ${LanguageService.t('config.mixingLab')}</option>

@@ -484,6 +484,61 @@ export function abbreviateDyeName(name: string, locale: string): string {
     .slice(0, 3);
 }
 
+/**
+ * I18N-005 (2026-09-19 audit): fold a string for locale-insensitive search
+ * matching — case, accent, `ß` and half-/full-width differences all
+ * disappear, but Japanese dakuten/handakuten and Hangul are preserved.
+ *
+ * Order matters:
+ * 1. `normalize('NFKC')` first — folds half-width kana and full-width Latin
+ *    to their standard forms (a half-width `ｽﾉｳ` query must match `スノウ`).
+ * 2. `toLowerCase()`.
+ * 3. `ß → ss` — German `ß` never lower-cases to anything ASCII-searchable on
+ *    its own, and `toLowerCase()` leaves it untouched.
+ * 4. Decompose with `NFD` and drop a combining mark (`\p{M}`) **only** when
+ *    the character immediately before it is a Latin base letter
+ *    (`\p{Script=Latin}`), then recompose with `NFC`. A blanket "strip all
+ *    combining marks" would also decompose Japanese dakuten (が → カ + ゙)
+ *    and drop the mark, silently turning が into か — this scopes the strip
+ *    to the Latin scripts where it's a diacritic, not a distinct sound.
+ *    Hangul syllables decompose into Jamo letters (not combining marks), so
+ *    they round-trip through NFD/NFC unchanged regardless of this check.
+ *
+ * @param s - The string to fold (a search query or a localized dye name)
+ * @returns The folded string, suitable for `.includes()` comparison against
+ *   another folded string
+ *
+ * @example
+ * ```typescript
+ * foldForSearch('Schneeweißer')  // 'schneeweisser'
+ * foldForSearch('schneeweiss')   // 'schneeweiss' (still a substring match)
+ * foldForSearch('jaune crème')   // 'jaune creme'
+ * foldForSearch('ｽﾉｳ')            // 'スノウ' (half-width → full-width via NFKC)
+ * foldForSearch('が') !== foldForSearch('か')  // true — dakuten preserved
+ * ```
+ */
+export function foldForSearch(s: string): string {
+  const prefolded = s.normalize('NFKC').toLowerCase().replace(/ß/g, 'ss');
+  const decomposed = prefolded.normalize('NFD');
+
+  let result = '';
+  let lastBaseIsLatin = false;
+
+  for (const ch of decomposed) {
+    if (/\p{M}/u.test(ch)) {
+      if (lastBaseIsLatin) {
+        continue; // Drop the diacritic — Latin base letter only
+      }
+      result += ch;
+    } else {
+      lastBaseIsLatin = /\p{Script=Latin}/u.test(ch);
+      result += ch;
+    }
+  }
+
+  return result.normalize('NFC');
+}
+
 // ============================================================================
 // Data Integrity Utilities
 // ============================================================================

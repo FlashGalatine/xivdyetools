@@ -32,7 +32,7 @@
   },
   "footer": {
     "createdBy": "由 Flash Galatine (Midgardsormr) 为 FFXIV 社区创建",
-    "universalisCredit": "市场板数据由以下提供：{link}",
+    "universalisCredit": "市场布告板数据由以下提供：{link}",
     "disclaimer": "FINAL FANTASY XIV © 2010-2025 SQUARE ENIX CO., LTD. 保留所有权利。",
     "notAffiliated": "XIV 染色工具是粉丝制作的应用程序，与 Square Enix 无关，也未获得其认可。"
   },
@@ -79,7 +79,7 @@
       "description": "寻找实惠的染料替代品"
     },
     "character": {
-      "title": "角色配色器",
+      "title": "色板匹配器",
       "shortName": "色板",
       "description": "为角色颜色匹配染料",
       "selectSubrace": "选择部族",
@@ -150,8 +150,8 @@
     "resultDetails": "结果详情",
     "showPrices": "显示价格",
     "showAcquisition": "显示获取方式",
-    "marketBoard": "市场版",
-    "enableMarketBoard": "启用市场版",
+    "marketBoard": "市场布告板",
+    "enableMarketBoard": "启用市场布告板",
     "pricesFetchedFrom": "从Universalis获取{server}的价格",
     "loadingServers": "正在加载服务器...",
     "allWorlds": "所有服务器",
@@ -184,7 +184,7 @@
     "mixingOklab": "现代感知",
     "mixingRyb": "颜料",
     "mixingHsl": "色相为基础",
-    "mixingSpectral": "光谱 - 真实颜料",
+    "mixingSpectral": "真实颜料",
     "mixingRgbDesc": "加色光混合。蓝 + 黄 = 灰。",
     "mixingLabDesc": "感知均匀混合。蓝 + 黄 = 粉红。",
     "mixingOklabDesc": "现代感知色彩空间。蓝 + 黄 = 青。",
@@ -292,7 +292,7 @@
     },
     "railSwipeHint": "滑动查看更多",
     "marketFailTitle": "无法获取价格",
-    "marketFailBody": "市场板未响应。颜色匹配不受影响，仅缺少价格行。",
+    "marketFailBody": "市场布告板未响应。颜色匹配不受影响，仅缺少价格行。",
     "harmonyN": "和谐 {n}",
     "baseColorTitle": "基础颜色：{hex}"
   },
@@ -443,7 +443,7 @@
     "mCie76Short": "ΔE76 · CIE 1976",
     "mCie76Desc": "CIE Lab 空间的直线距离——1976 年的原始公式，没有 ΔE2000 加入的亮度、彩度和色相修正。廉价、稳定，仍是实现最广的。",
     "mCie76Caveat": "在饱和蓝色中高估差异，在近中性色中低估差异——正是催生 ΔE2000 的缺陷。用于展示差距中有多少来自公式而非颜色。",
-    "mRedmeanLabel": "加权 RGB",
+    "mRedmeanLabel": "加权RGB",
     "mRedmeanShort": "Redmean · 加权 RGB",
     "mRedmeanDesc": "根据这对颜色的平均红色分量对各通道加权的 RGB 距离——不离开 RGB 就能大体接近感知结果的低成本近似。",
     "mRedmeanCaveat": "同样成本下明显优于原始 RGB 距离，若无法离开 RGB，这是诚实的升级路径。但它仍不是色彩空间——只是猜得更准。",
@@ -484,10 +484,10 @@
     "spread": "模型差异",
     "spreadDesc": "六个模型结果的差距。差距大说明模型选择对这对颜色影响很大。",
     "saveMix": "保存混色",
-    "modelRyb": "颜料画",
-    "modelSpectral": "颜料",
-    "modelOklab": "感知",
-    "modelLab": "LAB",
+    "modelRyb": "颜料",
+    "modelSpectral": "真实颜料",
+    "modelOklab": "现代感知",
+    "modelLab": "感知",
     "modelHsl": "色相",
     "modelRgb": "光",
     "exportMeta": "混合：{model} @ {pct}%"
@@ -501,7 +501,7 @@
     "gradientResults": "渐变结果",
     "noMatchesFound": "未找到匹配的染剂",
     "sameDyeWarning": "起始和结束染剂相同。请选择不同的染剂以创建渐变。",
-    "slotsFull": "所有槽位已满。请选择一个要替换的槽位：",
+    "slotsFull": "所有槽位已满。请选择要替换的槽位：",
     "mode": {
       "rgb": "线性（灰色中点）",
       "hsv": "基于色相（鲜艳）",
@@ -565,7 +565,7 @@
   "marketBoard": {
     "title": "市场布告板",
     "server": "服务器：",
-    "allWorlds": "所有世界",
+    "allWorlds": "所有服务器",
     "showPrices": "显示价格",
     "refresh": "刷新价格",
     "refreshing": "正在刷新...",
@@ -685,7 +685,8 @@
     "updatedEyebrow": "自上次访问以来已更新",
     "allReleases": "所有版本",
     "pastLabel": "早期版本",
-    "currentTag": "当前"
+    "currentTag": "当前",
+    "olderReleases": "在 GitHub 上查看更早的版本"
   },
   "welcome": {
     "title": "欢迎使用 XIV 染色工具",
@@ -792,7 +793,7 @@
       },
       "toolBanner": {
         "title": "切换工具",
-        "description": "点击工具图标切换不同功能：色彩协调、提取器、比较等！"
+        "description": "点击工具图标切换不同功能：色彩和谐、提取器、比较等！"
       }
     },
     "matcher": {
@@ -1099,8 +1100,8 @@
       "tagLength": "每个标签不能超过 {n} 个字符"
     },
     "cfgStoredLocallyHint": "保存在本机，绝不上传服务器，未登录也可使用。",
-    "mineSummaryPresetsOne": "{n} 个",
-    "mineSummaryPresetsMany": "{n} 个"
+    "mineSummaryPresetsOne": "{n} 个配色",
+    "mineSummaryPresetsMany": "{n} 个配色"
   },
   "emptyStates": {
     "noSearchResults": {
@@ -1163,15 +1164,6 @@
     "slotsFull": "所有槽位已满。请选择要替换的槽位：",
     "selectSlotToReplace": "选择要替换的槽位",
     "replacedInTool": "替换成功",
-    "tools": {
-      "harmony": "色彩和谐探索器",
-      "budget": "预算建议",
-      "accessibility": "无障碍检查器",
-      "comparison": "染剂比较",
-      "gradient": "渐变生成器",
-      "mixer": "染剂混合器",
-      "swatch": "色板匹配器"
-    },
     "spectrumShort": "光谱",
     "acquisitionShort": "来源",
     "hueOff": "色相差",

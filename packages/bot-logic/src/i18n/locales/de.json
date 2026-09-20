@@ -203,8 +203,9 @@
     "links": "Links",
     "dyes": "Farbstoffe",
     "builtOn": "Basiert auf",
+    "builtOnBody": "Marktpreise von Universalis · Farbmischung durch spectral.js",
     "attribution": "Rechtliches",
-    "poweredBy": "Powered by Cloudflare Workers",
+    "poweredBy": "Betrieben mit Cloudflare Workers",
     "categories": {
       "colorTools": "Farbwerkzeuge",
       "dyeDatabase": "Farbstoff-Datenbank",
@@ -482,7 +483,7 @@
     "commonIssuesContent": "**‚Ich habe eine dunkle Farbe bekommen, aber meine Ausrüstung ist hell!'**\n→ Dein Hintergrund ist wahrscheinlich dunkel. Schneide das Bild nur auf deine Ausrüstung zu.\n\n**‚Die Zuordnung scheint nicht zu stimmen'**\n→ Der Algorithmus wählt die HÄUFIGSTEN Farben. Schneide alles andere weg.\n\n**‚Kann ich einen bestimmten Teil abgleichen?'**\n→ Ja! Schneide vor dem Hochladen auf genau diesen Bereich zu.",
     "proTips": "Profi-Tipps",
     "proTipsContent": "• Verwende Bildbearbeitungssoftware zum Zuschneiden vor dem Hochladen\n• Bei metallischer/glänzender Ausrüstung können Ergebnisse variieren\n• Wenn du den Hex-Code kennst, verwende stattdessen `/extractor color`\n• Fordere mehr oder weniger Farben mit der `colors`-Option an (3-10)\n• Screenshots in 1920x1080 oder höher für beste Qualität",
-    "footer": "XIV Dye Tools - Mit Liebe für FFXIV Glamour-Enthusiasten gemacht",
+    "footer": "XIV Dye Tools - Mit Liebe für FFXIV-Projektionsenthusiasten gemacht",
     "exampleUseCases": "Beispiel-Anwendungsfälle",
     "goodExamples": "Gute Beispiele",
     "goodExamplesContent": "• Zugeschnittener Screenshot eines einzelnen Bruststücks\n• Nahaufnahme von gefärbter Rüstung mit neutralem Hintergrund\n• Screenshot bei hellem Tageslicht\n• Bild fokussiert auf die Farbe, die du abgleichen möchtest",
@@ -497,7 +498,7 @@
     "fileLimitsContent": "• Maximale Größe: 10MB",
     "matchQualityRatings": "Match-Distanz",
     "matchQualityRatingsContent": "Jede aufgelistete Übereinstimmung zeigt ihre Distanz zu deiner Farbe - niedriger ist näher.\n\nDie sechs Matching-Methoden und wie ihre Bänder funktionieren: `/manual`-Thema {topic}",
-    "poweredBy": "Powered by Photon WASM Bildverarbeitung"
+    "poweredBy": "Betrieben mit Photon-WASM-Bildverarbeitung"
   },
   "card": {
     "stain": "FARBNR.",
@@ -523,6 +524,8 @@
     "rampTitle": "Palette aus Bild",
     "matchTitle": "Nächste Farbstoffe",
     "colours": "{n} Farben",
+    "colours_one": "{n} Farbe",
+    "colours_other": "{n} Farben",
     "rampKey": "Bandbreite = Bildanteil",
     "matchKey": "nächste per ΔE2000",
     "manualLead": "Farben nicht wie erwartet? Siehe",
@@ -575,7 +578,7 @@
     "budgetNoTarget": "Kein Zielpreis auf {world} — Zeilen unsortiert, Verhältnis leer",
     "budgetFloor": "Bereits die günstigste Stufe — nichts unterbietet {price}.",
     "swatchSlot": "SLOT",
-    "swatchNearest": "NÄCHSTE FARBE",
+    "swatchNearest": "NÄCHSTER FARBSTOFF",
     "slotSkin": "HAUT",
     "slotHair": "HAAR",
     "slotHl": "STRÄHN",
@@ -583,7 +586,7 @@
     "slotLip": "LIPPE",
     "slotPaint": "BEMAL",
     "slotTattoo": "TÄTOW.",
-    "slotLimbal": "LIMBAL",
+    "slotLimbal": "LIMBUS",
     "offGridShort": "ABSEITS",
     "swatchFootKey_one": "nächste per ΔE2000 · {s} von {n} Slot",
     "swatchFootKey_other": "nächste per ΔE2000 · {s} von {n} Slots",
@@ -655,55 +658,542 @@
   },
   "commands": {
     "harmony": {
-      "description": "Harmonische Farbstoff-Kombinationen aus einer Farbe erzeugen"
+      "description": "Harmonische Farbstoff-Kombinationen aus einer Farbe erzeugen",
+      "options": {
+        "color": {
+          "description": "Basisfarbe (Hex-Code wie #FF5733 oder Farbstoffname)"
+        },
+        "type": {
+          "description": "Art der Farbharmonie"
+        },
+        "wheel": {
+          "description": "Farbrad, auf dem die Harmoniewinkel gemessen werden (Standard: RGB)"
+        },
+        "companions": {
+          "description": "Anzahl Begleitfarbstoffe je Harmonie-Slot (1-3)"
+        },
+        "matching": {
+          "description": "Algorithmus zur Suche des nächsten Farbstoffs für Begleiter"
+        },
+        "strict_matching": {
+          "description": "Abstandsschwelle für engere Treffer verschärfen"
+        },
+        "prevent_duplicates": {
+          "description": "Doppelte Farbstoffe in allen Harmonie-Slots entfernen"
+        }
+      }
     },
     "mixer": {
-      "description": "Zwei Farbstoffe mit verschiedenen Mischalgorithmen mischen"
+      "description": "Zwei Farbstoffe mit verschiedenen Mischalgorithmen mischen",
+      "options": {
+        "dye1": {
+          "description": "Erster Farbstoff zum Mischen (Hex-Code oder Farbstoffname)"
+        },
+        "dye2": {
+          "description": "Zweiter Farbstoff zum Mischen (Hex-Code oder Farbstoffname)"
+        },
+        "mode": {
+          "description": "Farbmisch-Algorithmus"
+        },
+        "matching": {
+          "description": "Algorithmus zur Suche des nächsten Farbstoffs zum Ergebnis"
+        }
+      }
     },
     "gradient": {
-      "description": "Farbverlauf zwischen zwei Farben mit Zwischen-Farbstoffen erzeugen"
+      "description": "Farbverlauf zwischen zwei Farben mit Zwischen-Farbstoffen erzeugen",
+      "options": {
+        "start_color": {
+          "description": "Startfarbe: Hex (z.B. #FF0000) oder Farbstoffname"
+        },
+        "end_color": {
+          "description": "Endfarbe: Hex (z.B. #0000FF) oder Farbstoffname"
+        },
+        "steps": {
+          "description": "Anzahl der Farbschritte (Standard: 6, max. 12)"
+        },
+        "color_space": {
+          "description": "Interpolationsmodus für den Farbverlauf"
+        },
+        "matching": {
+          "description": "Algorithmus zur Suche der nächsten Farbstoffe"
+        }
+      }
     },
     "extractor": {
-      "description": "Farben aus Eingaben extrahieren und passende FFXIV-Farbstoffe finden"
+      "description": "Farben aus Eingaben extrahieren und passende FFXIV-Farbstoffe finden",
+      "options": {
+        "color": {
+          "description": "Die nächsten FFXIV-Farbstoffe zu einer Farbe finden",
+          "options": {
+            "color": {
+              "description": "Farbe zum Abgleich (Hex-Code wie #FF5733 oder Farbstoffname)"
+            },
+            "count": {
+              "description": "Anzahl der anzuzeigenden Treffer (1-10)"
+            },
+            "matching": {
+              "description": "Farbabgleich-Algorithmus"
+            }
+          }
+        },
+        "image": {
+          "description": "Farben aus einem Bild extrahieren und passende Farbstoffe finden",
+          "options": {
+            "image": {
+              "description": "Zu analysierendes Bild"
+            },
+            "colors": {
+              "description": "Anzahl der zu extrahierenden Farben (3-10)"
+            },
+            "matching": {
+              "description": "Farbabgleich-Algorithmus"
+            },
+            "prevent_duplicates": {
+              "description": "Denselben Farbstoff für mehrere Slots vermeiden (Standard: true)"
+            }
+          }
+        }
+      }
     },
     "swatch": {
-      "description": "Die Farben einer Charakterdatei den nächsten Farbstoffen zuordnen"
+      "description": "Die Farben einer Charakterdatei den nächsten Farbstoffen zuordnen",
+      "options": {
+        "file": {
+          "description": ".chara-Charakterdatei (Export aus Anamnesis / Ktisis)"
+        },
+        "order": {
+          "description": "Zeilenreihenfolge — beide zeigen dieselben fünf Zeilen"
+        },
+        "slot": {
+          "description": "Zeigt stattdessen die fünf nächsten Farbstoffe für einen Slot"
+        }
+      }
     },
     "dye": {
-      "description": "FFXIV-Farbstoffe suchen und erkunden"
+      "description": "FFXIV-Farbstoffe suchen und erkunden",
+      "options": {
+        "search": {
+          "description": "Farbstoffe nach Namen suchen",
+          "options": {
+            "query": {
+              "description": "Suchbegriff (Farbstoffname)"
+            }
+          }
+        },
+        "info": {
+          "description": "Ausführliche Informationen zu einem Farbstoff abrufen",
+          "options": {
+            "name": {
+              "description": "Farbstoffname"
+            }
+          }
+        },
+        "list": {
+          "description": "Farbstoffe nach Kategorie auflisten",
+          "options": {
+            "category": {
+              "description": "Farbstoff-Kategorie"
+            }
+          }
+        },
+        "random": {
+          "description": "5 zufällig ausgewählte Farbstoffe anzeigen",
+          "options": {
+            "unique_categories": {
+              "description": "Begrenzt auf 1 Farbstoff pro Kategorie (Standard: false)"
+            }
+          }
+        }
+      }
     },
     "comparison": {
-      "description": "2–4 Farbstoffe nebeneinander mit Farbanalyse vergleichen"
+      "description": "2–4 Farbstoffe nebeneinander mit Farbanalyse vergleichen",
+      "options": {
+        "dye1": {
+          "description": "Erster Farbstoff (Hex-Code oder Farbstoffname)"
+        },
+        "dye2": {
+          "description": "Zweiter Farbstoff (Hex-Code oder Farbstoffname)"
+        },
+        "dye3": {
+          "description": "Dritter Farbstoff (optional)"
+        },
+        "dye4": {
+          "description": "Vierter Farbstoff (optional)"
+        }
+      }
     },
     "contrast": {
-      "description": "WCAG-Nicht-Text-Kontrast zwischen Farbstoffpaaren (Untergrenze 3:1)"
+      "description": "WCAG-Nicht-Text-Kontrast zwischen Farbstoffpaaren (Untergrenze 3:1)",
+      "options": {
+        "dye1": {
+          "description": "Erster Farbstoff (Hex-Code oder Farbstoffname)"
+        },
+        "dye2": {
+          "description": "Zweiter Farbstoff (Hex-Code oder Farbstoffname)"
+        },
+        "dye3": {
+          "description": "Dritter Farbstoff (optional)"
+        },
+        "dye4": {
+          "description": "Vierter Farbstoff (optional)"
+        }
+      }
     },
     "accessibility": {
-      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht"
+      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht",
+      "options": {
+        "dye": {
+          "description": "Primärer Farbstoff (Hex-Code oder Farbstoffname)"
+        },
+        "dye2": {
+          "description": "Zweiter Farbstoff — zeigt die Paar-Frames (optional)"
+        },
+        "vision": {
+          "description": "Die Sehweise: ein Typ zeigt eine, Alle zeigt jede Sehweise"
+        }
+      }
     },
     "a11y": {
-      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht"
+      "description": "Wie ein Farbstoff oder ein Paar unter jeder Art von Farbsehen besteht",
+      "options": {
+        "dye": {
+          "description": "Primärer Farbstoff (Hex-Code oder Farbstoffname)"
+        },
+        "dye2": {
+          "description": "Zweiter Farbstoff — zeigt die Paar-Frames (optional)"
+        },
+        "vision": {
+          "description": "Die Sehweise: ein Typ zeigt eine, Alle zeigt jede Sehweise"
+        }
+      }
     },
     "budget": {
-      "description": "Günstige Farbstoff-Alternativen anhand der Marktbrett-Preise finden"
+      "description": "Günstige Farbstoff-Alternativen anhand der Marktbrett-Preise finden",
+      "options": {
+        "find": {
+          "description": "Günstigere Alternativen zu einem teuren Farbstoff finden",
+          "options": {
+            "target_dye": {
+              "description": "Der teure Farbstoff, für den du Alternativen suchst"
+            },
+            "world": {
+              "description": "Welt oder Datenzentrum für Preise (sonst gespeicherte Einstellung)"
+            },
+            "matching": {
+              "description": "Farbabgleich-Algorithmus für die ΔE-Spalte"
+            },
+            "max_distance": {
+              "description": "Match-Linie — größter zu betrachtender ΔE2000 (2-20, Standard: 8)"
+            },
+            "exclude_coffers": {
+              "description": "Schatzkisten-Farbstoffe entfernen (Gacha — nur per Weiterverkauf bepreist)"
+            },
+            "exclude_wide_spectrum": {
+              "description": "Zusatzfarbstoff 1/2 entfernen (Bezug per Scrip/Credit)"
+            }
+          }
+        },
+        "set_world": {
+          "description": "Bevorzugte Welt/Datenzentrum für Preisabfragen speichern",
+          "options": {
+            "world": {
+              "description": "Name der Welt oder des Datenzentrums"
+            }
+          }
+        },
+        "quick": {
+          "description": "Schnellcheck für beliebte teure Farbstoffe",
+          "options": {
+            "preset": {
+              "description": "Beliebter teurer Farbstoff, für den du Alternativen suchst"
+            },
+            "world": {
+              "description": "Welt oder Datenzentrum für Preise (sonst gespeicherte Einstellung)"
+            }
+          }
+        }
+      }
     },
     "preset": {
-      "description": "Community-Farbvorlagen durchsuchen, einreichen und bewerten"
+      "description": "Community-Farbvorlagen durchsuchen, einreichen und bewerten",
+      "options": {
+        "list": {
+          "description": "Community-Vorlagen durchsuchen",
+          "options": {
+            "category": {
+              "description": "Nach Kategorie filtern"
+            },
+            "sort": {
+              "description": "Sortierreihenfolge"
+            }
+          }
+        },
+        "show": {
+          "description": "Eine bestimmte Vorlage anzeigen",
+          "options": {
+            "name": {
+              "description": "Vorlagenname"
+            }
+          }
+        },
+        "random": {
+          "description": "Eine zufällige Vorlage zur Inspiration erhalten",
+          "options": {
+            "category": {
+              "description": "Nach Kategorie filtern"
+            }
+          }
+        },
+        "submit": {
+          "description": "Eine neue Community-Vorlage einreichen",
+          "options": {
+            "preset_name": {
+              "description": "Name deiner Vorlage (2-50 Zeichen)"
+            },
+            "description": {
+              "description": "Beschreibe deine Vorlage (10-200 Zeichen)"
+            },
+            "category": {
+              "description": "Vorlagen-Kategorie"
+            },
+            "dye1": {
+              "description": "Erster Farbstoff (erforderlich)"
+            },
+            "dye2": {
+              "description": "Zweiter Farbstoff (erforderlich)"
+            },
+            "dye3": {
+              "description": "Dritter Farbstoff (erforderlich)"
+            },
+            "dye4": {
+              "description": "Vierter Farbstoff (optional)"
+            },
+            "dye5": {
+              "description": "Fünfter Farbstoff (optional)"
+            },
+            "dye6": {
+              "description": "Sechster Farbstoff (optional)"
+            },
+            "tags": {
+              "description": "Kommagetrennte Tags (optional, max. 10)"
+            }
+          }
+        },
+        "vote": {
+          "description": "Deine Stimme für eine Vorlage umschalten",
+          "options": {
+            "preset": {
+              "description": "Vorlage, für die du stimmen willst"
+            }
+          }
+        },
+        "edit": {
+          "description": "Eine deiner Vorlagen bearbeiten",
+          "options": {
+            "preset": {
+              "description": "Die zu bearbeitende Vorlage"
+            },
+            "name": {
+              "description": "Neuer Vorlagenname (2-50 Zeichen)"
+            },
+            "description": {
+              "description": "Neue Beschreibung (10-200 Zeichen)"
+            },
+            "tags": {
+              "description": "Neue Tags (kommagetrennt)"
+            },
+            "dye1": {
+              "description": "Erster Farbstoff"
+            },
+            "dye2": {
+              "description": "Zweiter Farbstoff"
+            },
+            "dye3": {
+              "description": "Dritter Farbstoff"
+            },
+            "dye4": {
+              "description": "Vierter Farbstoff"
+            },
+            "dye5": {
+              "description": "Fünfter Farbstoff"
+            },
+            "dye6": {
+              "description": "Sechster Farbstoff"
+            }
+          }
+        },
+        "favorite": {
+          "description": "Deine favorisierten Community-Vorlagen verwalten",
+          "options": {
+            "add": {
+              "description": "Eine Vorlage zu deinen Favoriten hinzufügen",
+              "options": {
+                "preset_name": {
+                  "description": "Zu favorisierende Vorlage"
+                }
+              }
+            },
+            "remove": {
+              "description": "Eine Vorlage aus deinen Favoriten entfernen",
+              "options": {
+                "preset_name": {
+                  "description": "Vorlage, die entfavorisiert werden soll"
+                }
+              }
+            },
+            "list": {
+              "description": "Deine favorisierten Vorlagen auflisten"
+            }
+          }
+        }
+      }
     },
     "preferences": {
-      "description": "Deine persönlichen Bot-Einstellungen verwalten"
+      "description": "Deine persönlichen Bot-Einstellungen verwalten",
+      "options": {
+        "show": {
+          "description": "Deine aktuellen Einstellungen anzeigen"
+        },
+        "set": {
+          "description": "Eine oder mehrere Einstellungen setzen (alle optional)",
+          "options": {
+            "language": {
+              "description": "UI-Sprache für Farbstoffnamen und Nachrichten"
+            },
+            "blending": {
+              "description": "Standard-Mischmodus für /mixer"
+            },
+            "matching": {
+              "description": "Standard-Methode für den Farbabgleich"
+            },
+            "count": {
+              "description": "Standardanzahl Treffer für /extractor color (1-10)"
+            },
+            "clan": {
+              "description": "Standard-Stamm für /swatch (z.B. Midlander, Raen)"
+            },
+            "gender": {
+              "description": "Standard-Geschlecht für /swatch"
+            },
+            "world": {
+              "description": "Standard-Welt/Datenzentrum für Marktpreise"
+            },
+            "market": {
+              "description": "Marktbrett-Preise standardmäßig anzeigen"
+            },
+            "show_hex": {
+              "description": "Hex-Farbcodes auf Ergebniskarten anzeigen"
+            },
+            "show_rgb": {
+              "description": "RGB-Werte auf Ergebniskarten anzeigen"
+            },
+            "show_hsv": {
+              "description": "HSV-Werte auf Ergebniskarten anzeigen"
+            },
+            "show_lab": {
+              "description": "LAB-Werte auf Ergebniskarten anzeigen"
+            },
+            "show_deltae": {
+              "description": "Delta-E-Farbabstand auf Ergebniskarten anzeigen"
+            },
+            "show_acquisition": {
+              "description": "Bezugsquelle des Farbstoffs auf Ergebniskarten anzeigen"
+            },
+            "theme": {
+              "description": "Karten-Design für jedes erzeugte Bild"
+            }
+          }
+        },
+        "reset": {
+          "description": "Eine Einstellung zurücksetzen (oder alle ohne Angabe)",
+          "options": {
+            "key": {
+              "description": "Zurückzusetzende Einstellung (leer lassen für alle)"
+            }
+          }
+        },
+        "filters": {
+          "description": "Farbstofftyp-Filter für Suchergebnisse verwalten",
+          "options": {
+            "set": {
+              "description": "Farbstofftyp-Filter setzen (alle Optionen optional)",
+              "options": {
+                "metallic": {
+                  "description": "Metallic-Farbstoffe ausschließen"
+                },
+                "pastel": {
+                  "description": "Pastell-Farbstoffe ausschließen"
+                },
+                "dark": {
+                  "description": "Dunkle Farbstoffe ausschließen"
+                },
+                "cosmic": {
+                  "description": "Kosmo-Farbstoffe ausschließen"
+                },
+                "ishgardian": {
+                  "description": "Ishgard-Farbstoffe ausschließen"
+                },
+                "expensive": {
+                  "description": "Teure Farbstoffe ausschließen (Reinweiß / Tiefschwarz)"
+                },
+                "vendor": {
+                  "description": "Vom Händler verkaufte Farbstoffe ausschließen"
+                },
+                "craft": {
+                  "description": "Hergestellte Farbstoffe ausschließen"
+                }
+              }
+            },
+            "show": {
+              "description": "Deine aktuellen Farbstoff-Filter anzeigen"
+            },
+            "reset": {
+              "description": "Alle Farbstoff-Filter löschen"
+            }
+          }
+        }
+      }
     },
     "manual": {
-      "description": "Hilfe und Anleitung für alle Befehle anzeigen"
+      "description": "Hilfe und Anleitung für alle Befehle anzeigen",
+      "options": {
+        "topic": {
+          "description": "Bestimmtes Hilfe-Thema"
+        }
+      }
     },
     "changelog": {
-      "description": "Was ist neu im Discord-Bot — Versionshinweise, neueste zuerst"
+      "description": "Was ist neu im Discord-Bot — Versionshinweise, neueste zuerst",
+      "options": {
+        "version": {
+          "description": "Eine bestimmte Version aufklappen (z.B. 5.0.0)"
+        }
+      }
     },
     "about": {
       "description": "Informationen über den XIV Dye Tools Bot anzeigen"
     },
     "stats": {
-      "description": "Nutzungsstatistiken und Informationen des Bots anzeigen"
+      "description": "Nutzungsstatistiken und Informationen des Bots anzeigen",
+      "options": {
+        "summary": {
+          "description": "Grundlegende Bot-Informationen anzeigen (öffentlich)"
+        },
+        "overview": {
+          "description": "Nutzungsmetriken anzeigen (nur Admins)"
+        },
+        "commands": {
+          "description": "Aufschlüsselung pro Befehl anzeigen (nur Admins)"
+        },
+        "preferences": {
+          "description": "Nutzungsraten der Einstellungen anzeigen (nur Admins)"
+        },
+        "health": {
+          "description": "Systemzustand anzeigen (nur Admins)"
+        }
+      }
     }
   }
 }

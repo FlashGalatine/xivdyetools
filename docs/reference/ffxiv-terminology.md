@@ -2,7 +2,7 @@
 
 **Official Square Enix terminology used throughout XIV Dye Tools**
 
-All game terms are sourced from official FFXIV game data and localized across 6 languages. These terms are stored in `@xivdyetools/core/src/data/locales/{locale}.json` and served through the `LocalizationService` API.
+All game terms are sourced from official FFXIV game data and localized across 6 languages. These terms are stored in `@xivdyetools/core/src/data/locales/{locale}.json` and served through the `LocalizationService` API. The one exception is tabled under [Market and Server Terms](#market-and-server-terms-3): three nouns core does not carry, which the apps write by hand.
 
 ---
 
@@ -209,6 +209,76 @@ cards render, and JA/ZH deliberately differ in how they gloss the condition.
 
 `visions` is a parallel 5-key section holding the short labels used where the parenthetical
 would not fit.
+
+---
+
+## Market and Server Terms (3)
+
+**Source:** none in `@xivdyetools/core` — these nouns are not part of the generated locale data.
+They are written by hand in `apps/web-app/src/locales/*.json`, in
+`packages/bot-logic/src/i18n/locales/*.json` and in the Privacy / Terms documents, so this table
+is the only thing pinning them. Each value is the term the game client of that language uses,
+taken from the publisher's own site on 2026-09-19 (sources and confidence:
+[2026-09-19 i18n audit — official terms research](../audits/2026-09-19-i18n/evidence/official-terms-research.md)).
+All six Korean and Chinese values were then read verbatim from the raw pages on 2026-09-20 — the
+Korean and Chinese official sites render client-side or sit behind a summarizing fetch, so they
+were checked from full-page captures and in a real browser rather than trusted from a summary.
+
+| EN | JA | DE | FR | KO | ZH |
+|----|----|----|----|----|----|
+| Market Board | マーケットボード | Marktbrett | tableau des ventes | 장터 | 市场布告板 |
+| World | ワールド | Welt | Monde | 서버 | 服务器 |
+| Data Center | データセンター | Datenzentrum | centre de données | 데이터 센터 | 大区 |
+
+- **The Korean and Chinese clients do not say "World".** Both publishers call the unit a *server*
+  (`서버`, `服务器`), and the Chinese client calls a Data Center a `大区`. `월드` / `世界` /
+  `数据中心` are glosses of the Global term and are not used here.
+- Rejected forms, so they are not reintroduced: FR `tableau des marchés` (on no official page);
+  KO `시장 게시판` and `마켓보드`; ZH `市场板` (player shorthand) and `市场版` (a typo found in no source).
+- Korean has **two official forms and both are right**: `장터` is the feature — the official guide
+  is titled 장터 ("장터란?", "장터 기능", "장터 위치") — and `장터 게시판` is the in-game map label of
+  the board object itself. The apps mean the feature and its prices ("Market Board prices", "Enable
+  Market Board"), so they say `장터`; use `장터 게시판` only for the physical board.
+- French capitalizes `Monde` as a game noun (`Tous les Mondes`) and keeps `tableau des ventes` and
+  `centre de données` lower-case in running text; German capitalizes all three as ordinary nouns.
+
+---
+
+## Glamour Terms
+
+**Source:** none in `@xivdyetools/core` — written by hand in the web-app and bot-logic locale
+files and in the Privacy / Terms documents, so this table is what pins them. Values are the terms
+each language's game client and publisher use, researched 2026-09-20 (sources, quotes and
+confidence:
+[2026-09-19 i18n audit — glamour research](../audits/2026-09-19-i18n/evidence/official-terms-research-glamour.md)).
+
+"Glamour" is three things, and no language uses one word for all three:
+
+| EN | JA | DE | FR | KO | ZH |
+|----|----|----|----|----|----|
+| Glamours (the system) | 武具投影 | Projektion | mirage | 장비 투영 | 武具投影 |
+| Glamour Prism | ミラージュプリズム | Projektionsprisma | prisme mirage | 환상의 프리즘 | 幻象棱晶 |
+| Glamour Dresser | ミラージュドレッサー | Projektionskommode | coiffeuse mirage | 환상의 옷장 | 投影台 |
+| Glamour Plate | ミラージュプレート | Projektionsplatte | planche mirage | 투영세트 | 投影模板 |
+| Glamour Dispeller | ミラージュディスペラー | Entprojizierungskristall | dissipateur de mirage | 해제의 프리즘 | 驱幻晶 |
+| **a glamour (one outfit)** — what this toolset means by the word | ミラプリ | Projektion | mirage | 코디 | 幻化 |
+
+- **The last row is the one the apps use** ("Dyes on this glamour", "glamour palette", "a glamour
+  page"). German `Projektion` is **feminine** (*diese Projektion*, *eine Projektion*); French
+  `mirage` is **masculine** (*ce mirage*, *un mirage* — never *cette mirage*).
+- **Two false friends, never to be used:** Japanese `グラマー` and Korean `글래머` both mean a
+  voluptuous figure in everyday speech. Neither appears in any official FFXIV text.
+- Not the client's word, so not used either: German `Mirage` and `Glamour` (the latter survives in
+  one marketing banner only), French `glamour`, Chinese `时装`.
+- Japanese `ミラプリ` is player shorthand that Square Enix's own campaigns use; the formal Play
+  Guide noun for a saved look is `コーディネート` — use that in a formal register (the policies).
+- Korean has **no official noun** for one outfit: official copy says `의상` / `스타일`, the genre is
+  `패션` (*패션 콘테스트*, *패션 체크* — so "glamour enthusiasts" is *패션 애호가*), and players say
+  `코디` / `룩`. `코디` is the house choice for one outfit in the UI; the Privacy / Terms documents
+  use the official-register `의상` — the same split as Japanese `ミラプリ` (UI) and `コーディネート`
+  (policies).
+- The compounds do not follow one template (`Entprojizierungskristall`, *dissipateur **de**
+  mirage*) — look each one up rather than deriving it.
 
 ---
 

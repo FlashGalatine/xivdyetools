@@ -29,3 +29,5 @@ export const changelogEntries = [
     ],
   },
 ];
+
+export const olderReleases = 0;

@@ -1,3 +1,5 @@
+import type { LocaleCode } from '@xivdyetools/types';
+
 /** Cloudflare Worker bindings */
 export interface Env {
   RATE_LIMIT: KVNamespace;
@@ -45,5 +47,8 @@ export interface Env {
 export type Variables = {
   requestId: string;
   // OPT-001 (2026-04-28 audit): set by localeMiddleware on /v1/*
-  locale: 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
+  // I18N-009 (2026-09-19 audit): was a hand-spelled literal union that would
+  // silently compile against a stale locale list — LocaleCode is the single
+  // source of truth (SUPPORTED_LOCALES in @xivdyetools/core).
+  locale: LocaleCode;
 };
