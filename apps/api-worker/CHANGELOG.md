@@ -11,12 +11,14 @@ From the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`, I18N-005 and I18
 
 ### Changed
 
-- **`GET /v1/dyes/search?q=` matches more rows.** No worker code changed: the route calls
-  `DyeService.searchByLocalizedName`, and `@xivdyetools/core` 5.4.0 now folds case, accents, `ß`
+- **`GET /v1/dyes/search?q=` matches more rows with a non-English `locale`.** No worker code
+  changed: for every locale but `en` the route calls `DyeService.searchByLocalizedName`, and
+  `@xivdyetools/core` 5.4.0 now folds case, accents, `ß`
   and half-/full-width forms on both sides (`schneeweiss` finds `Schneeweißer`, `creme` finds
   `jaune crème`, a half-width `ｽﾉｳ` finds `スノウホワイト`). A client that relied on an accented
   query *not* matching its unaccented spelling will see extra results. Documented on the
-  reference page (`docs/reference/dyes.md`).
+  reference page (`docs/reference/dyes.md`). The default English search (`locale` omitted or `en`)
+  still goes through `searchByName` and is unchanged.
 
 ### Fixed
 

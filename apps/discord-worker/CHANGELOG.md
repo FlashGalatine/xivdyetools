@@ -22,7 +22,8 @@ the picker localizations only exist once the schema is re-registered (the deploy
   same raw-key / 100-character guard as the top level.
 - **I18N-002**: `/manual topic` choices were English in the picker. `choiceLocalizations()` gains
   a `manual` / `topic` case reading `manual5.topics.<topic>.name`; `match_image` has no such key
-  and uses `matchImageHelp.title`. The emoji prefix is kept.
+  and uses `matchImageHelp.title`. The English choice names keep their emoji prefix; the localized
+  names are text-only.
 - **HC-001**: `/about` rendered the hardcoded English sentence "Market prices from Universalis ·
   Paint mixing by spectral.js" under a translated field name. It is `about.builtOnBody` now.
 - **I18N-006**: `/extractor image` printed "1 colours" / "1 Farben" when K-means collapsed to a

@@ -4,9 +4,7 @@
 
 **最后更新**：2026-09-20
 
-> 网站 xivdyetools.app 有自己的条款：
-> [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。数据处理方式见
-> [隐私政策](PRIVACY_POLICY.md)。
+> 网站 xivdyetools.app 有自己的条款：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。数据处理方式见[隐私政策](PRIVACY_POLICY.md)。
 
 ## 1. 引言
 

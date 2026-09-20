@@ -1072,7 +1072,7 @@
               "description": "Nombre de correspondances par défaut pour /extractor color (1-10)"
             },
             "clan": {
-              "description": "Clan par défaut pour /swatch (ex. Midlander, Raen)"
+              "description": "Clan par défaut pour /swatch (ex. Hyurois, Raen)"
             },
             "gender": {
               "description": "Genre par défaut pour /swatch"

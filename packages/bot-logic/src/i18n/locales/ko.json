@@ -1072,7 +1072,7 @@
               "description": "/extractor color의 기본 매치 수 (1-10)"
             },
             "clan": {
-              "description": "/swatch의 기본 부족 (예: Midlander, Raen)"
+              "description": "/swatch의 기본 부족 (예: 미드랜더, 렌)"
             },
             "gender": {
               "description": "/swatch의 기본 성별"

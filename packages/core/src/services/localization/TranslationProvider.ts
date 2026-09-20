@@ -264,7 +264,7 @@ export class TranslationProvider {
     const pick = (data: LocaleData | null): string | undefined =>
       data?.colorWheels && Object.hasOwn(data.colorWheels, id) ? data.colorWheels[id] : undefined;
     // I18N-007: match every sibling getter's final fallback — `formatKey(id)`
-    // renders "Oklch Hue" for an unrecognised id, not the raw "oklch-hue".
+    // renders "Oklch-hue" for an unrecognised id, not the raw "oklch-hue".
     return pick(this.registry.getLocale(locale)) ?? pick(this.registry.getLocale('en')) ?? this.formatKey(id);
   }
 
