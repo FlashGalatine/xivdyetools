@@ -16,6 +16,8 @@ and seven open items that need a maintainer decision.
 | [I18N_AUDIT_2026-09-19.md](I18N_AUDIT_2026-09-19.md) | The catalog: locale + font status, all 15 findings, positive controls, rejected suspicions, recommendations |
 | [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Sprint-sequenced plan (remediation-planner) |
 | `findings/` | One file per finding — `I18N-001…010`, `HC-001`, `TERM-001…004` |
+| `evidence/official-terms-research-glamour.md` | The second round of web research (2026-09-20): "glamour" as a system, as four item compounds, and as one outfit, in five languages — with the false friends and the refuted guesses |
+| `evidence/naming-glamour-brief.md` | The brief the five per-language agents worked from for the naming + glamour pass |
 | `evidence/official-terms-research.md` | Web research requested mid-audit: the official Market Board / World / Data Center term in ja de fr ko zh, with sources and confidence |
 | `evidence/remediation-brief.md`, `policy-translation-brief.md`, `policy-verification-brief.md` | The briefs the 13 remediation agents, 5 translators and 2 `opus` verifiers worked from |
 | `evidence/same-en-groups-after.txt`, `market-board-term-after.txt` | The consistency sweeps re-run after remediation (35 → 11 groups; one Market Board term per locale) |
@@ -38,8 +40,14 @@ and seven open items that need a maintainer decision.
 - **TERM-003** — adopt the KR/CN client terms: ko `서버` / `데이터 센터`, zh `服务器` / `大区`.
 - **I18N-010** — translate all four policy documents (2 Privacy, 2 ToS) into ja de fr ko zh as `<STEM>.<locale>.md`; English stays governing. The audit skills now check them in every language (`audit-shared/policy-documents.md`, `scripts/policy-locale-parity.py`).
 
+## Decisions made after remediation (2026-09-20)
+
+- **"Swatch Matcher" and "Harmony Explorer" are the official tool names** — `en.json` said "Character Matcher" and "Color Harmony Explorer". Applied to the six locales, the docs, the policy translations and og-worker's card table (2.10.3).
+- **The header-gear panel is "Advanced Settings"** — `PRIVACY.md` said "Advanced Options"; corrected, date moved on all six variants.
+- **"glamour" is in the terminology dictionary**, researched on the publishers' sites and applied everywhere: ja `ミラプリ`, de `Projektion` (f.), fr `mirage` (m.), ko `코디`, zh `幻化`. Japanese `グラマー` and Korean `글래머` were false friends. See `evidence/official-terms-research-glamour.md` and the report's *Follow-up* section.
+
 ## Caveats worth carrying forward
 
-- **The coordinator's own "official" Korean term was wrong** (`장터 게시판`; the client says `장터`). Terminology fixes need a cited source, not a fluent-sounding guess — the research file records both.
-- zh evidence is MED-HIGH: the official SDO site renders client-side and could not be fetched; the CN wiki and indexed official headlines agree. ko pages were read through a summarizing fetch — eyeball the two guide URLs once before shipping TERM-001/003.
+- **Terminology needs a cited source, and the raw page beats a summary of it.** The coordinator guessed `장터 게시판` for the Korean Market Board; the researcher reported it refuted in favour of `장터`; the maintainer's raw capture of the official guide then showed both are official — `장터` is the feature (what the apps mean, and what shipped), `장터 게시판` the board object's in-game map label.
+- The maintainer supplied raw full-page captures on 2026-09-20 for the fetches the researchers could not make cleanly: they confirm ko `장터` and `서버` and zh `市场布告板` verbatim (quotes in `evidence/official-terms-research.md`). Still resting on a summarized fetch or indexed headlines only: ko `데이터 센터` (guide no. 1025), zh `服务器` and `大区`.
 - Two gate runs exit 1 with every test green: `coverage.enabled: true` in web-app's and discord-worker's vitest configs trips thresholds on subset runs. Not a failure.
