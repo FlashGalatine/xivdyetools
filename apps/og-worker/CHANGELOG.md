@@ -35,6 +35,12 @@ already rendered at the edge.
   reads first as "including"), ko `환영 장비` → `코디` ×5 (a third Korean rendering of "glamour";
   the web app and this table now agree), ko `시장 게시판` → `장터` ×2.
 
+### Tests
+
+- `harmony.deck-fit.test.ts`: every dye × the two longest wheel names × de / fr — the deck stays
+  inside its 374 px budget, is cut from the end, and the `fit()` guard is provably reached
+  (audit recommendation 8; nothing exercised the long combination before). Test-only.
+
 ### Notes
 
 - **No font re-cut.** Every new card string is drawable from the existing JP / KR / SC subsets —

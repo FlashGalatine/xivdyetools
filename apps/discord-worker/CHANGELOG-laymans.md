@@ -52,6 +52,11 @@ Rules:
 - The word for a glamour in the image-matching help now follows each version of the game. The Japanese help footer used a word that means something quite different in everyday Japanese.
 - French: a preset nobody has voted on yet says "0 vote", which is correct French, instead of "0 votes".
 - `/extractor image` says "1 colour" rather than "1 colours" when an image has a single colour.
+- The "nearest dye" label on the harmony, swatch and extractor cards now reads the same on every card. In French it still said "found", and in German one card called a dye a colour.
+- German `/about` says "Betrieben mit Cloudflare Workers" instead of an English "Powered by".
+
+### 📜 Terms of Service
+- Two sentences were reworded so they can only be read one way: colour matching works from a hex code or from colours taken out of an image, and the line about consumer-protection rights now says plainly that it means the law of the place where you live. Nothing you agreed to changed.
 
 ## [5.5.8] - 2026-09-18
 ### 📖 /manual catches up with the bot you are using

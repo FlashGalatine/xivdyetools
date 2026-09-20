@@ -30,6 +30,21 @@ the picker localizations only exist once the schema is re-registered (the deploy
 - Through bot-logic 4.4.0: French preset cards say "0 vote", not "0 votes" (I18N-003); typing
   `schneeweiss` or `creme` finds the dye (I18N-005); zh says `市场布告板` and `大区`, ko says `서버`
   and `데이터 센터` (TERM-001 / TERM-003).
+- Also through bot-logic 4.4.0: the "NEAREST DYE" label on the harmony, swatch and extractor cards
+  has one translation per language (French still said `TROUVÉ`, a retired "FOUND"; Korean and
+  Chinese had a modifier with no noun; German's swatch column said `FARBE`, colour, for a dye);
+  the swatch card's limbal slot is `LIMBUS` / `LIMBE` in de / fr; German `/about` no longer says
+  "Powered by". Every new value reuses glyphs already in the subsets — `font-coverage` green
+  with nothing missing and nothing surplus, so **no re-cut**; all six labels fit the swatch
+  card's 200 px column untruncated.
+- **Terms of Service**: §3 said "dyes closest to any hex color or extracted from images" — it is
+  the *colors* that are extracted; §11's consumer-rights sentence left open who "does not permit
+  you to waive" and whose "local law" it meant, directly after the North Carolina venue sentence.
+  Now "…any consumer-protection right that the law of the place where you live grants you and
+  that the same law does not permit you to waive." de / fr / ko / zh follow (ja already said
+  居住地の法律). No commitment changed; `Last Updated` → 2026-09-20 on all six variants.
+- The Chinese Privacy Policy and Terms no longer show stray spaces inside sentences: both files
+  were hard-wrapped and a Markdown soft break renders as a space. Unwrapped, whitespace only.
 
 ### Changed
 

@@ -48,7 +48,11 @@ npm run test:e2e:mobile      # mobile-chrome project
 npm run test:e2e:comparison  # only dye-comparison.spec.ts
 
 npm run check-bundle-size    # validate dist/ bundles against limits
-npm run validate:i18n        # every referenced key exists (all six locales)
+npm run validate:i18n        # referenced keys exist + key order, then locale parity (missing / extra /
+                             # {placeholders} / left-in-English / same English → same translation).
+                             # In no workflow — scripts/i18n-parity-gate.test.js runs both scripts
+                             # under vitest, and THAT is the CI gate. Exceptions need a reason in
+                             # scripts/i18n-identical-allowlist.json / i18n-same-english-allowlist.json
 npm run i18n:unused          # every defined key is referenced (also a vitest gate)
 npm run build:check          # build + check-bundle-size (CI guard)
 VITE_APP_ENV=beta npm run build     # Beta build (beta.xivdyetools.app)
@@ -225,7 +229,7 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 | Plugin | File | Role |
 |--------|------|------|
 | `asyncCss` | `vite-plugin-async-css.ts` | Defers non-critical CSS to avoid render-block |
-| `changelogParser` | `vite-plugin-changelog-parser.ts` | Parses `CHANGELOG.md` into a JSON module the changelog modal imports |
+| `changelogParser` | `vite-plugin-changelog-parser.ts` | Parses `CHANGELOG-laymans.md` into the `virtual:changelog` module the What's New modal imports. The module is **bounded in bytes** (`boundChangelog`, 36 KB of JSON, newest first, never fewer than ten releases) because its chunk is gated in bytes (`check-bundle-size.js`, 40 KB); `olderReleases` tells the modal to link the full file. Do not swap the bound back to a release count — the two units never agree |
 | `betaBranding` | `vite-plugin-beta-branding.ts` | `VITE_APP_ENV=beta` only: `[BETA]` title, beta icon set, `__APP_ENV__` define, `X-Robots-Tag: noindex` on `dist/_headers`. Inert without the flag |
 
 ## Dependencies

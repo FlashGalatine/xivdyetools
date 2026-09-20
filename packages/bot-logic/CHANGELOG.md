@@ -35,6 +35,14 @@ locale key is a MAJOR. Needs `@xivdyetools/core` 5.4.0 (`foldForSearch`).
   `幻化爱好者`. ko `패션 애호가` already used the official genre word and is unchanged.
 - ja `Web アプリ` / fr `Application Web` aligned with the other key for the same label; zh
   `webhook.fields.category` uses `分类` like `common.category`.
+- **`card.found` still translated a retired English "FOUND".** It and `card.swatchNearest` both
+  read "NEAREST DYE", but fr said `TROUVÉ`, ko / zh a bare modifier with no noun, and de's other
+  key `NÄCHSTE FARBE` (*colour*, for a dye). One value per locale now, the one already shipping in
+  the tighter slot: ja `近いカララント`, de `NÄCHSTER FARBSTOFF`, fr `TEINTURE PROCHE`, ko
+  `가까운 염료`, zh `最近的染剂`. Every glyph was already drawn — no font re-cut.
+- **Three values were simply untranslated**: de `about.poweredBy` ("Powered by Cloudflare
+  Workers"), de `matchImageHelp.poweredBy` (half-English), and `card.slotLimbal` de `LIMBUS` / fr
+  `LIMBE` — core's own sheet name in those languages.
 
 ### Added
 
@@ -48,6 +56,12 @@ locale key is a MAJOR. Needs `@xivdyetools/core` 5.4.0 (`foldForSearch`).
 
 ### Tests
 
+- **`i18n/__tests__/locale-quality.test.ts`** — what key parity cannot see: values identical to
+  English (54, reviewed by no gate until now; command syntax exempt by rule, brands / units /
+  cognates allow-listed with one of five reasons), **same English → same translation** (`RATIO`
+  and `TARGET` allow-listed: one label, two jobs), and `{placeholder}` parity. Exceptions live in
+  `locale-quality-allowlist.json`; a stale one fails. Mutation-proved three ways. Recommendation 3
+  had been carried since the 2026-09-03 audit.
 - `locale-orphans.test.ts` enumerates the option-description paths for every registered command,
   so the 137 new keys are reachable by rule rather than by namespace; `translator.test.ts` plural
   cases per locale; `input-resolution.test.ts` de / fr folding cases.
