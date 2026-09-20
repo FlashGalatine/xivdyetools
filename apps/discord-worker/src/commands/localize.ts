@@ -1,24 +1,38 @@
 /**
- * Slash-command localization (2026-08-20 i18n audit, F-03).
+ * Slash-command localization (2026-08-20 i18n audit, F-03; extended by
+ * I18N-001/I18N-002, 2026-09-19 i18n audit).
  *
  * Discord renders the command picker, option tooltips and choice dropdowns
  * from `description_localizations` / `name_localizations` on the registered
  * schema — the runtime Translator never reaches that surface. Until 5.0.x the
  * bot registered 17 commands / 152 descriptions / 166 choice labels in
- * English only, even for users with `/preferences set language:ja`.
+ * English only, even for users with `/preferences set language:ja`; through
+ * 5.10.x only the 17 top-level command descriptions were localized — every
+ * subcommand, group and option tooltip (134 of 151 `description:` fields in
+ * `schemas.ts`) stayed English in every locale (I18N-001).
  *
  * `localizeCommands()` deep-copies the schema and attaches, per Discord locale:
- *   - `description_localizations` on every top-level command from
- *     `commands.<name>.description` (bot-logic locale files);
+ *   - `description_localizations` on every command, subcommand, group and
+ *     option, recursively, from `commands.<name>.description` /
+ *     `commands.<name>.options.<path>.description` (bot-logic locale files —
+ *     the key path mirrors the schema's own option nesting, e.g.
+ *     `commands.dye.options.search.options.query.description`);
  *   - `name_localizations` on choice lists whose values already have
  *     localized labels elsewhere in the suite (preferences reset keys,
- *     gender / theme values, harmony types, vision lenses, dye categories).
+ *     gender / theme values, harmony types, vision lenses, dye categories,
+ *     manual topics).
  *
  * A locale is only attached when the key resolves (the Translator returns the
  * raw key on a miss, which must never be registered) and the value fits
  * Discord's 100-character limit. Discord wants both `zh-CN` and `zh-TW`; the
  * bot ships one `zh`, so both map to it. English needs no entry — the base
  * `description` / `name` IS the English.
+ *
+ * Discord also caps a single command at 8,000 characters: name + description +
+ * every option name/description/choice name/value, where a localized field
+ * counts ONCE at its longest localization — not once per locale (I18N-001).
+ * `commandCharCount()` computes that total so `localize.test.ts` can assert
+ * every localized command stays under it.
  *
  * The runtime never imports this module; only `scripts/register-commands.ts`
  * (run by CI on merge) does, after `initializeLocale()` for every locale so
@@ -177,11 +191,32 @@ function choiceLocalizations(command: string, option: string, value: string): Lo
       return v === value ? undefined : v;
     });
   }
+  if (command === 'manual' && option === 'topic') {
+    // I18N-002: five of the six topics have a short localized name at
+    // `manual5.topics.<camelCase>.name` (the same names the /manual embed
+    // itself renders). `match_image` renders from a separate `matchImageHelp.*`
+    // section with no short "name" of its own — manual.ts's own TOPIC_KEYS
+    // mirrors this split — so it falls back to `matchImageHelp.title`, the
+    // closest short label, which fits Discord's 100-char cap.
+    if (value === 'match_image') return keyed('matchImageHelp.title');
+    return keyed(`manual5.topics.${snakeToCamel(value)}.name`);
+  }
   return undefined;
 }
 
-function localizeOption(command: string, option: Option): Option {
+/**
+ * Recursively attach `description_localizations` (from the key path mirroring
+ * the schema's own option nesting) and choice `name_localizations` to an
+ * option, its sub-options, and sub-command groups (I18N-001).
+ *
+ * @param keyPrefix the locale key prefix for THIS option's own description —
+ *   `commands.<cmd>.options` at the top level, `<parent>.options` one level
+ *   deeper for every nested option/subcommand.
+ */
+function localizeOption(command: string, keyPrefix: string, option: Option): Option {
   const out: Option = { ...option };
+  const desc = keyed(`${keyPrefix}.${option.name}.description`);
+  if (desc) out.description_localizations = desc;
   if (option.choices) {
     out.choices = option.choices.map((c) => {
       const loc = typeof c.value === 'string' ? choiceLocalizations(command, option.name, c.value) : undefined;
@@ -189,7 +224,8 @@ function localizeOption(command: string, option: Option): Option {
     });
   }
   if (option.options) {
-    out.options = option.options.map((o) => localizeOption(command, o));
+    const childPrefix = `${keyPrefix}.${option.name}.options`;
+    out.options = option.options.map((o) => localizeOption(command, childPrefix, o));
   }
   return out;
 }
@@ -203,9 +239,51 @@ export function localizeCommands<T extends readonly Command[]>(commands: T): Com
     const out: Command = { ...cmd };
     const desc = keyed(`commands.${cmd.name}.description`);
     if (desc) out.description_localizations = desc;
-    if (cmd.options) out.options = cmd.options.map((o) => localizeOption(cmd.name, o));
+    if (cmd.options) {
+      const prefix = `commands.${cmd.name}.options`;
+      out.options = cmd.options.map((o) => localizeOption(cmd.name, prefix, o));
+    }
     return out;
   });
+}
+
+// ============================================================================
+// Discord's 8,000-character per-command payload cap (I18N-001)
+// ============================================================================
+
+const strLen = (s?: string): number => s?.length ?? 0;
+
+/**
+ * What ONE field costs against the cap: the longest of its default value and
+ * its localizations. Discord's rule, verbatim: "When localization fields are
+ * present, only the longest localization for each field (including the default
+ * value) is counted towards the size limit." Summing every locale — this
+ * function's first draft — put `/preferences` at 9,909 and looked like a
+ * blocker; counted Discord's way it is a fraction of that.
+ */
+const fieldLen = (base?: string, loc?: Localizations): number =>
+  Object.values(loc ?? {}).reduce((max, v) => Math.max(max, v.length), strLen(base));
+
+function optionCharCount(o: Option): number {
+  let total = strLen(o.name) + fieldLen(o.description, o.description_localizations);
+  for (const c of o.choices ?? []) {
+    total += fieldLen(c.name, c.name_localizations) + String(c.value).length;
+  }
+  for (const sub of o.options ?? []) total += optionCharCount(sub);
+  return total;
+}
+
+/**
+ * Discord's per-command character budget (8,000): name + description + every
+ * option name / description / choice name / choice value, each field counted
+ * once at its longest localization. `register-commands.ts` has no dry-run
+ * against this cap, so `localize.test.ts` asserts it here instead.
+ * https://docs.discord.com/developers/interactions/application-commands
+ */
+export function commandCharCount(cmd: Command): number {
+  let total = strLen(cmd.name) + fieldLen(cmd.description, cmd.description_localizations);
+  for (const o of cmd.options ?? []) total += optionCharCount(o);
+  return total;
 }
 
 /** Count attached localizations (for the register script's summary line). */

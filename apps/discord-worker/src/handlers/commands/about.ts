@@ -28,9 +28,6 @@ const ATTRIBUTION = [
   'XIV Dye Tools is an unofficial fan project, not affiliated with or endorsed by Square Enix.',
 ].join('\n');
 
-/** Proper nouns — the two outside things the product genuinely rests on. */
-const BUILT_ON = 'Market prices from Universalis · Paint mixing by spectral.js';
-
 /** `[Label](url)` — the shape a Discord embed field takes. */
 const md = ({ label, url }: { label: string; url: string }): string => `[${label}](${url})`;
 
@@ -132,8 +129,12 @@ export async function handleAboutCommand(
               inline: false,
             },
             {
+              // HC-001: the sentence used to be a hardcoded English constant
+              // under a translated field name — only "Universalis" and
+              // "spectral.js" are proper nouns; the rest is prose, so it now
+              // comes from about.builtOnBody (×6) like every other field.
               name: t.t('about.builtOn'),
-              value: BUILT_ON,
+              value: t.t('about.builtOnBody'),
               inline: false,
             },
             // Last, and never conditional — this is the one piece of this

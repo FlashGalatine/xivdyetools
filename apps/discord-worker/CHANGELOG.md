@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-09-20
+
+2026-09-19 i18n audit, Sprints 6–7 (`docs/audits/2026-09-19-i18n/`). Needs
+`@xivdyetools/bot-logic` 4.4.0 and `@xivdyetools/core` 5.4.0. **`register-commands` must run** —
+the picker localizations only exist once the schema is re-registered (the deploy workflow does it).
+
+### Fixed
+
+- **I18N-001** (P1): 134 of the 151 descriptions Discord shows in the command picker — every
+  subcommand and option tooltip — were English in every locale. `localizeOption()` attached choice
+  names only, and `localize.test.ts` pinned the gap (`descriptions === commands.length`) instead
+  of closing it; this was the never-executed phase 2 of 2026-08-20's F-03. The walker now threads a
+  key prefix through the recursion and attaches `description_localizations` from
+  `commands.<cmd>.options.<…>.description` to every option, subcommand and group, through the
+  same raw-key / 100-character guard as the top level.
+- **I18N-002**: `/manual topic` choices were English in the picker. `choiceLocalizations()` gains
+  a `manual` / `topic` case reading `manual5.topics.<topic>.name`; `match_image` has no such key
+  and uses `matchImageHelp.title`. The emoji prefix is kept.
+- **HC-001**: `/about` rendered the hardcoded English sentence "Market prices from Universalis ·
+  Paint mixing by spectral.js" under a translated field name. It is `about.builtOnBody` now.
+- **I18N-006**: `/extractor image` printed "1 colours" / "1 Farben" when K-means collapsed to a
+  single cluster; it now calls `t.tc('card.colours', n)`.
+- Through bot-logic 4.4.0: French preset cards say "0 vote", not "0 votes" (I18N-003); typing
+  `schneeweiss` or `creme` finds the dye (I18N-005); zh says `市场布告板` and `大区`, ko says `서버`
+  and `데이터 센터` (TERM-001 / TERM-003).
+
+### Changed
+
+- **Fonts re-cut**, compared by cmap: JP +`絵` +`具`, SC +`告` +`絵`, KR −`월`. 948.8 KiB raw
+  against 947.7 KiB before — the 411 new CJK picker strings added nothing, because
+  `scripts/subset-cjk-fonts.py` and `font-coverage.test.ts` now both skip the
+  `commands.<cmd>.options` subtrees: Discord draws that text, resvg never does, and this Worker
+  sits close to its 3 MiB gzip ceiling.
+
+### Added
+
+- `scripts/gen-option-description-keys.ts` — generates the en `commands.*.options` subtree from
+  `schemas.ts`. `buildOptionDescriptionTree()` is shared with a **drift test**: a schema edit
+  without re-running the script fails `localize.test.ts`.
+- `commandCharCount()` + a test asserting every localized command stays under Discord's 8,000
+  characters. Discord counts each field **once, at its longest localization** — not once per
+  locale. The first draft summed every locale, put `/preferences` at 9,909 and looked like a
+  blocker; counted the documented way the largest command is `/preferences` at 2,736 (34%).
+
+### Tests
+
+- `localize.test.ts` asserts coverage, not a count: every command, subcommand, group and option is
+  localized for all six Discord locale tags, checked against each locale's **own** JSON — the
+  built payload alone would pass with zero translations, because `Translator.t()` falls back to
+  English. Plus the six `/manual` topics × five locales, the `/about` field, and the one-colour path.
+
 ## [5.5.8] - 2026-09-18
 
 `/manual` brought up to 5.0 — the 2026-09-18 documentation audit (`docs/audits/2026-09-18-documentation/`, DOC-003 … DOC-011) found it was still the 4.x manual in all six languages. The text lives in `@xivdyetools/bot-logic` 4.3.0 (see its changelog for the string-level list); this worker owns the structure and the guards. No slash-command shape changes: the `match_image` topic keeps its id and its 📸 choice label, so `register-commands` has nothing new to publish.

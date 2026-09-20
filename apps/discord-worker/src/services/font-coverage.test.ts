@@ -199,6 +199,16 @@ function stringsFor(locale: LocaleCode): string[] {
     unknown
   >;
   const { meta: _botMeta, ...botRest } = bot;
+  // I18N-001: commands.<cmd>.options.*.description feeds Discord's own
+  // command-picker tooltips, never resvg — exclude it here so this gate
+  // agrees with subset-cjk-fonts.py's identical exclusion (both keep
+  // commands.<cmd>.description, which the card system CAN render).
+  const commandsBlock = botRest.commands as Record<string, { options?: unknown }> | undefined;
+  if (commandsBlock) {
+    for (const cmd of Object.values(commandsBlock)) {
+      delete cmd.options;
+    }
+  }
   collectStrings(botRest, out);
   for (const entry of Object.values(CONSOLIDATED_DYES)) out.push(entry.names[locale] ?? "");
   collectStrings(Object.values(MATCHING_METHOD_TAGS), out);
