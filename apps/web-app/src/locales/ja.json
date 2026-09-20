@@ -117,7 +117,7 @@
     "original": "オリジナル",
     "cost": "コスト",
     "market": "マーケット",
-    "spectrum": "スペクトラム",
+    "spectrum": "スペクトル",
     "copied": "コピーしました！",
     "dismiss": "閉じる",
     "optional": "(任意)",
@@ -163,7 +163,7 @@
     "sampleAreaSize": "ピクセルサンプル範囲",
     "sampleAreaSizeTooltip": "画像から色を採取する際に平均化する範囲のサイズ",
     "singlePixel": "ピクセル",
-    "visionTypes": "視覚タイプ",
+    "visionTypes": "色覚タイプ",
     "deuteranopia": "2型色覚",
     "protanopia": "1型色覚",
     "tritanopia": "3型色覚",
@@ -182,9 +182,9 @@
     "mixingRgb": "光",
     "mixingLab": "知覚的",
     "mixingOklab": "現代知覚的",
-    "mixingRyb": "絵具",
+    "mixingRyb": "絵の具",
     "mixingHsl": "色相ベース",
-    "mixingSpectral": "スペクトル - リアル絵具",
+    "mixingSpectral": "スペクトル - リアル絵の具",
     "mixingRgbDesc": "加法混色。青 + 黄 = グレー。",
     "mixingLabDesc": "知覚的に均一なブレンド。青 + 黄 = ピンク。",
     "mixingOklabDesc": "現代知覚色空間。青 + 黄 = シアン。",
@@ -577,7 +577,7 @@
     "region": {
       "japan": "日本",
       "northAmerica": "北米",
-      "europe": "ヨーロッパ",
+      "europe": "欧州",
       "oceania": "オセアニア",
       "china": "中国",
       "korea": "韓国"
@@ -851,7 +851,7 @@
         "description": "パレットから染料を選択して、異なる色覚タイプでの見え方を確認します。"
       },
       "visionTypes": {
-        "title": "視覚タイプ",
+        "title": "色覚タイプ",
         "description": "表示する色覚シミュレーションを切り替え：緑色覚異常、赤色覚異常、青色覚異常、または全色覚異常。"
       },
       "displaySettings": {
@@ -1163,15 +1163,6 @@
     "slotsFull": "すべてのスロットが使用中です。置き換えるスロットを選択してください：",
     "selectSlotToReplace": "置き換えるスロットを選択",
     "replacedInTool": "置き換えました",
-    "tools": {
-      "harmony": "ハーモニーエクスプローラー",
-      "budget": "予算提案",
-      "accessibility": "アクセシビリティチェッカー",
-      "comparison": "染料比較",
-      "gradient": "グラデーションビルダー",
-      "mixer": "染料ミキサー",
-      "swatch": "スウォッチマッチャー"
-    },
     "spectrumShort": "スペクトル",
     "acquisitionShort": "入手先",
     "hueOff": "色相差",

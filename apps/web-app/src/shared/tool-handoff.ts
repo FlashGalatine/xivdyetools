@@ -26,7 +26,10 @@ import type { Dye } from '@xivdyetools/types';
 // mocks in their tests. Importing the module directly gives this file a second
 // instance that no component test can intercept — the hand-off then silently
 // does nothing under test while looking correct.
-import { RouterService } from '@services/index';
+import { RouterService, LanguageService } from '@services/index';
+// Type-only, so importing the module directly (rather than the barrel) never
+// creates a second runtime instance — see the note above.
+import type { ToolId } from '@services/router-service';
 
 /**
  * The query-param name each hand-off target reads a dye from.
@@ -68,4 +71,27 @@ export type HandoffTarget = keyof typeof HANDOFF_PARAM;
 export function handoffTo(tool: HandoffTarget, dye: Dye): void {
   if (dye.stainID === null) return;
   RouterService.navigateTo(tool, { [HANDOFF_PARAM[tool]]: String(dye.stainID) });
+}
+
+/**
+ * A tool's own display name — the same `tools.<id>.title` key that its nav
+ * entry, page header and `document.title` already render.
+ *
+ * TERM-002: the result card's "send to tool" menu used to keep a private
+ * second table (`resultCard.tools.<id>`) that drifted from the tool's real
+ * name in 5 of 9 tools (e.g. de "Farbstoff-Mischer" in the menu vs.
+ * "Farbstoffmixer" as the Mixer's actual title). `RouterService.getRouteForTool`
+ * already carries the legacy id/key remap two tools need — `extractor` reads
+ * `tools.matcher.*` and `swatch` reads `tools.character.*` — so this stays a
+ * thin lookup rather than a second table that could drift again.
+ */
+export function toolLabel(toolId: ToolId): string {
+  // Optional-chained: `RouterService` is mocked separately (and incompletely,
+  // for methods a given suite never exercised) in every tool component's own
+  // test file — files this fix does not own. A hard call here would turn a
+  // cosmetic menu label into an unhandled-rejection failure across every
+  // suite that mounts a ResultCard, for a method most of them never asserted
+  // on. Production's real RouterService always has `getRouteForTool`.
+  const route = RouterService.getRouteForTool?.(toolId);
+  return route ? LanguageService.t(route.titleKey) : '';
 }

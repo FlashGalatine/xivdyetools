@@ -2,7 +2,7 @@
 
 **Official Square Enix terminology used throughout XIV Dye Tools**
 
-All game terms are sourced from official FFXIV game data and localized across 6 languages. These terms are stored in `@xivdyetools/core/src/data/locales/{locale}.json` and served through the `LocalizationService` API.
+All game terms are sourced from official FFXIV game data and localized across 6 languages. These terms are stored in `@xivdyetools/core/src/data/locales/{locale}.json` and served through the `LocalizationService` API. The one exception is tabled under [Market and Server Terms](#market-and-server-terms-3): three nouns core does not carry, which the apps write by hand.
 
 ---
 
@@ -209,6 +209,32 @@ cards render, and JA/ZH deliberately differ in how they gloss the condition.
 
 `visions` is a parallel 5-key section holding the short labels used where the parenthetical
 would not fit.
+
+---
+
+## Market and Server Terms (3)
+
+**Source:** none in `@xivdyetools/core` — these nouns are not part of the generated locale data.
+They are written by hand in `apps/web-app/src/locales/*.json`, in
+`packages/bot-logic/src/i18n/locales/*.json` and in the Privacy / Terms documents, so this table
+is the only thing pinning them. Each value is the term the game client of that language uses,
+taken from the publisher's own site on 2026-09-19 (sources and confidence:
+[2026-09-19 i18n audit — official terms research](../audits/2026-09-19-i18n/evidence/official-terms-research.md)).
+
+| EN | JA | DE | FR | KO | ZH |
+|----|----|----|----|----|----|
+| Market Board | マーケットボード | Marktbrett | tableau des ventes | 장터 | 市场布告板 |
+| World | ワールド | Welt | Monde | 서버 | 服务器 |
+| Data Center | データセンター | Datenzentrum | centre de données | 데이터 센터 | 大区 |
+
+- **The Korean and Chinese clients do not say "World".** Both publishers call the unit a *server*
+  (`서버`, `服务器`), and the Chinese client calls a Data Center a `大区`. `월드` / `世界` /
+  `数据中心` are glosses of the Global term and are not used here.
+- Rejected forms, so they are not reintroduced: FR `tableau des marchés` (on no official page);
+  KO `시장 게시판`, `마켓보드`, and `장터 게시판` (player usage for the physical board — the client
+  noun is plain `장터`); ZH `市场板` (player shorthand) and `市场版` (a typo found in no source).
+- French capitalizes `Monde` as a game noun (`Tous les Mondes`) and keeps `tableau des ventes` and
+  `centre de données` lower-case in running text; German capitalizes all three as ordinary nouns.
 
 ---
 

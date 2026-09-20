@@ -10,14 +10,36 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const navigateTo = vi.fn();
+/**
+ * The real route table, not a stand-in: `getRouteForTool` is what carries the
+ * `extractor`→`tools.matcher.*` / `swatch`→`tools.character.*` legacy key
+ * remap, and a hand-rolled fake here could hide `toolLabel` reading the wrong
+ * key for those two tools.
+ */
+const ROUTE_TITLE_KEYS: Record<string, string> = {
+  harmony: 'tools.harmony.title',
+  extractor: 'tools.matcher.title',
+  accessibility: 'tools.accessibility.title',
+  comparison: 'tools.comparison.title',
+  gradient: 'tools.gradient.title',
+  presets: 'tools.presets.title',
+  budget: 'tools.budget.title',
+  swatch: 'tools.character.title',
+  mixer: 'tools.mixer.title',
+};
 vi.mock('@services/index', () => ({
   RouterService: {
     navigateTo: (...args: unknown[]) => navigateTo(...args),
+    getRouteForTool: (id: string) =>
+      ROUTE_TITLE_KEYS[id] ? { id, titleKey: ROUTE_TITLE_KEYS[id] } : undefined,
   },
+  // `t()` returns the key so a test can prove WHICH key was looked up.
+  LanguageService: { t: (key: string) => key },
 }));
 
 import type { Dye } from '@xivdyetools/types';
-import { HANDOFF_PARAM, handoffTo, type HandoffTarget } from '../tool-handoff';
+import type { ToolId } from '@services/router-service';
+import { HANDOFF_PARAM, handoffTo, toolLabel, type HandoffTarget } from '../tool-handoff';
 
 /** Dalamud Red's real ids: the ranges are disjoint, which is what makes the bug detectable. */
 const DYE = { name: 'Dalamud Red', stainID: 45, itemID: 30116 } as unknown as Dye;
@@ -69,6 +91,34 @@ describe('tool-handoff', () => {
     it('does not navigate at all for a dye with no stainID', () => {
       handoffTo('harmony', CUSTOM);
       expect(navigateTo).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('toolLabel (TERM-002)', () => {
+    // Every tool the result-card "send to tool" menu can target, mapped to
+    // the title key its OWN route uses — including the two whose id does not
+    // match its i18n namespace. A test pinned to `tools.<id>.title` for every
+    // id would pass even if `extractor`/`swatch` silently read the wrong key.
+    const EXPECTED_KEY: Record<string, string> = {
+      harmony: 'tools.harmony.title',
+      budget: 'tools.budget.title',
+      accessibility: 'tools.accessibility.title',
+      comparison: 'tools.comparison.title',
+      gradient: 'tools.gradient.title',
+      mixer: 'tools.mixer.title',
+      swatch: 'tools.character.title',
+    };
+
+    it.each(Object.keys(EXPECTED_KEY) as ToolId[])('%s renders its own route title key', (tool) => {
+      // `t()` is stubbed to echo the key, so the returned string IS the key
+      // that was looked up — this fails if `toolLabel` is pointed at a
+      // different tool's key (e.g. the old `resultCard.tools.<id>` table, or
+      // `swatch` reading `tools.swatch.title`, which does not exist).
+      expect(toolLabel(tool)).toBe(EXPECTED_KEY[tool]);
+    });
+
+    it('returns an empty string for an unknown tool id', () => {
+      expect(toolLabel('not-a-tool' as unknown as ToolId)).toBe('');
     });
   });
 });

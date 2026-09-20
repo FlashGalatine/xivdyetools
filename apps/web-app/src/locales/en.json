@@ -1163,15 +1163,6 @@
     "slotsFull": "All slots are full. Select one to replace:",
     "selectSlotToReplace": "Select Slot to Replace",
     "replacedInTool": "Replaced successfully",
-    "tools": {
-      "harmony": "Harmony Explorer",
-      "budget": "Budget Suggestions",
-      "accessibility": "Accessibility Checker",
-      "comparison": "Dye Comparison",
-      "gradient": "Gradient Builder",
-      "mixer": "Dye Mixer",
-      "swatch": "Swatch Matcher"
-    },
     "spectrumShort": "SPEC",
     "acquisitionShort": "SOURCE",
     "hueOff": "HUE OFF",

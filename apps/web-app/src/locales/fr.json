@@ -48,7 +48,7 @@
       "description": "Faire correspondre les couleurs des images"
     },
     "accessibility": {
-      "title": "Vérification d'Accessibilité",
+      "title": "Vérification d'accessibilité",
       "shortName": "Vision",
       "description": "Simuler le daltonisme"
     },
@@ -150,11 +150,11 @@
     "resultDetails": "Détails des résultats",
     "showPrices": "Afficher les prix",
     "showAcquisition": "Afficher l'acquisition",
-    "marketBoard": "Tableau des marchés",
-    "enableMarketBoard": "Activer le tableau des marchés",
+    "marketBoard": "Tableau des ventes",
+    "enableMarketBoard": "Activer le tableau des ventes",
     "pricesFetchedFrom": "Prix récupérés depuis Universalis pour {server}",
     "loadingServers": "Chargement des serveurs...",
-    "allWorlds": "Tous les mondes",
+    "allWorlds": "Tous les Mondes",
     "extractionSettings": "Paramètres d'extraction",
     "vibrancyBoost": "Boost de vivacité",
     "maxColors": "Couleurs maximum",
@@ -234,10 +234,10 @@
     "importSettings": "Importer",
     "importError": "Échec de l'importation des paramètres. Veuillez vérifier le format du fichier.",
     "cmykValues": "Valeurs CMYK",
-    "matchingRedmean": "RVB pondéré",
-    "matchingRedmeanDesc": "Distance RVB pondérée — une approximation simple de la différence perçue.",
+    "matchingRedmean": "RGB pondéré",
+    "matchingRedmeanDesc": "Distance RGB pondérée — une approximation simple de la différence perçue.",
     "matchingDistinguish": "Pourcentage",
-    "matchingDistinguishDesc": "Distance RVB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage.",
+    "matchingDistinguishDesc": "Distance RGB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage.",
     "matchingMethodImpact": "Pas seulement cosmétique — les autres méthodes choisissent une teinture la plus proche différente pour environ un quart à près de la moitié des couleurs.",
     "showHue": "Écart de teinte",
     "showStain": "ID Stain",
@@ -292,7 +292,7 @@
     },
     "railSwipeHint": "BALAYER POUR PLUS",
     "marketFailTitle": "Prix indisponibles",
-    "marketFailBody": "Le marché n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent.",
+    "marketFailBody": "Le tableau des ventes n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent.",
     "harmonyN": "Harmonie {n}",
     "baseColorTitle": "Couleur de base : {hex}"
   },
@@ -335,7 +335,7 @@
   },
   "accessibility": {
     "inspectDyes": "Inspecter les Teintures",
-    "visionTypes": "Types de Vision",
+    "visionTypes": "Types de vision",
     "selectDyesToSeeAnalysis": "Sélectionnez des teintures pour voir l'analyse d'accessibilité",
     "hardForDeuteranopia": "Difficile à distinguer pour la deutéranopie (rouge-vert)",
     "hardForProtanopia": "Difficile à distinguer pour la protanopie (rouge-vert)",
@@ -462,14 +462,14 @@
     "selectDyes": "Sélectionnez les teintures ci-dessous",
     "selectTwoDyes": "Sélectionnez deux teintures pour voir l'interpolation",
     "interpolationSettings": "Paramètres d'Interpolation",
-    "colorSpace": "Espace Colorimétrique",
+    "colorSpace": "Espace colorimétrique",
     "startDye": "Teinture de départ",
     "endDye": "Teinture de fin",
     "steps": "Étapes",
     "selectTwoDyesToMix": "Sélectionnez deux teintures à mélanger pour trouver des couleurs correspondantes",
     "dye1": "Teinture 1",
     "dye2": "Teinture 2",
-    "maxResults": "Résultats max",
+    "maxResults": "Résultats maximum",
     "matchingDyes": "Teintures correspondantes",
     "blend": "Mélanger",
     "mixSettings": "Paramètres de mélange",
@@ -566,7 +566,7 @@
     "title": "Tableau des ventes",
     "server": "Serveur :",
     "allWorlds": "Tous les Mondes",
-    "showPrices": "Afficher les Prix",
+    "showPrices": "Afficher les prix",
     "refresh": "Actualiser les Prix",
     "refreshing": "Actualisation...",
     "clearingCache": "Vidage du cache et récupération des nouveaux prix...",
@@ -805,7 +805,7 @@
         "description": "Activez des options comme le boost de vivacité pour améliorer l'extraction des couleurs."
       },
       "maxColors": {
-        "title": "Max. couleurs",
+        "title": "Couleurs maximum",
         "description": "Ajustez le curseur pour définir combien de couleurs extraire de votre image."
       },
       "displayOptions": {
@@ -837,7 +837,7 @@
         "description": "Sélectionnez l'algorithme de mélange : Spectral, RYB, OKLab, Lab, HSL ou RGB."
       },
       "maxResults": {
-        "title": "Max. résultats",
+        "title": "Résultats maximum",
         "description": "Ajustez combien de résultats de teintures correspondantes sont affichés pour chaque couleur mélangée."
       },
       "displayOptions": {
@@ -1163,15 +1163,6 @@
     "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
     "selectSlotToReplace": "Sélectionner l'emplacement à remplacer",
     "replacedInTool": "Remplacé avec succès",
-    "tools": {
-      "harmony": "Explorateur d'Harmonie",
-      "budget": "Suggestions de Budget",
-      "accessibility": "Vérificateur d'Accessibilité",
-      "comparison": "Comparaison de Teintures",
-      "gradient": "Créateur de Dégradé",
-      "mixer": "Mélangeur de Teintures",
-      "swatch": "Nuancier"
-    },
     "spectrumShort": "SPECTRE",
     "acquisitionShort": "SOURCE",
     "hueOff": "TEINTE",
