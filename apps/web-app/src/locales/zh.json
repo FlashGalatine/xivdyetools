@@ -501,7 +501,7 @@
     "gradientResults": "渐变结果",
     "noMatchesFound": "未找到匹配的染剂",
     "sameDyeWarning": "起始和结束染剂相同。请选择不同的染剂以创建渐变。",
-    "slotsFull": "所有槽位已满。请选择一个要替换的槽位：",
+    "slotsFull": "所有槽位已满。请选择要替换的槽位：",
     "mode": {
       "rgb": "线性（灰色中点）",
       "hsv": "基于色相（鲜艳）",

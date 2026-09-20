@@ -902,7 +902,7 @@
     "loginToVote": "このプリセットに投票するにはDiscordまたはXIVAuthでログインしてください",
     "signInToViewSubmissions": "投稿を表示するにはサインインしてください",
     "noSubmissionsYet": "まだプリセットを投稿していません。",
-    "dyes": "染料",
+    "dyes": "カララント",
     "tags": "タグ",
     "copyLink": "リンクをコピー",
     "linkCopied": "プリセットリンクをクリップボードにコピーしました！",
@@ -1119,8 +1119,8 @@
     },
     "noHarmony": {
       "title": "ハーモニーの提案がありません",
-      "description": "ベースの染料を選択して色調和の提案を生成します。",
-      "action": "染料を選択"
+      "description": "ベースのカララントを選択して色調和の提案を生成します。",
+      "action": "カララントを選択"
     },
     "noImage": {
       "title": "画像が読み込まれていません",
@@ -1160,7 +1160,7 @@
     "sentToSwatch": "スウォッチマッチャーに送信しました",
     "dyeAlreadyIn": "染料は既に追加されています",
     "addedTo": "追加しました",
-    "slotsFull": "すべてのスロットが使用中です。置き換えるスロットを選択してください：",
+    "slotsFull": "すべてのスロットが埋まっています。置き換えるスロットを選択してください：",
     "selectSlotToReplace": "置き換えるスロットを選択",
     "replacedInTool": "置き換えました",
     "spectrumShort": "スペクトル",

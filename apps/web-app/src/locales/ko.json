@@ -1160,7 +1160,7 @@
     "sentToSwatch": "스와치 매처로 전송했습니다",
     "dyeAlreadyIn": "염료가 이미 추가되었습니다",
     "addedTo": "추가됨",
-    "slotsFull": "모든 슬롯이 꽉 찼습니다. 교체할 슬롯을 선택하세요:",
+    "slotsFull": "모든 슬롯이 가득 찼습니다. 교체할 슬롯을 선택하세요:",
     "selectSlotToReplace": "교체할 슬롯 선택",
     "replacedInTool": "교체됨",
     "spectrumShort": "스펙트럼",
