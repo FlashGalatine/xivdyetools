@@ -36,24 +36,27 @@ cat "$EV/core-locale-drift.txt" >> "$EV/_gate-summary.txt"
 echo "" >> "$EV/_gate-summary.txt"
 
 echo "== 2. core parity tests =="
-run core-i18n-tests pnpm --filter @xivdyetools/core exec vitest run src/config/__tests__/band-vocabulary.parity.test.ts src/services/__tests__/DyeSearch.parity.test.ts src/services/__tests__/LocalizationService.explicit-locale.test.ts
+# Subset runs pass --coverage.enabled=false: most workspaces set coverage.enabled: true with
+# thresholds, so a green run of five files exits 1 on coverage and reads as a red gate
+# (recommendation 7 of this audit; it cost two false alarms before it was understood).
+run core-i18n-tests pnpm --filter @xivdyetools/core exec vitest run src/config/__tests__/band-vocabulary.parity.test.ts src/services/__tests__/DyeSearch.parity.test.ts src/services/__tests__/LocalizationService.explicit-locale.test.ts --coverage.enabled=false
 
 echo "== 3. bot-logic i18n gates =="
-run botlogic-i18n pnpm --filter @xivdyetools/bot-logic exec vitest run src/i18n
+run botlogic-i18n pnpm --filter @xivdyetools/bot-logic exec vitest run src/i18n --coverage.enabled=false
 
 echo "== 4. web-app gates =="
 run webapp-validate-i18n pnpm --filter xivdyetools-web-app run validate:i18n
 run webapp-i18n-unused pnpm --filter xivdyetools-web-app run i18n:unused
-run webapp-i18n-tests pnpm --filter xivdyetools-web-app exec vitest run src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts src/components/__tests__/chara-import-i18n.test.ts src/shared/__tests__/preset-i18n.test.ts src/shared/__tests__/method-tags.parity.test.ts src/__tests__/font-contract.test.ts src/__tests__/public-metadata.test.ts
+run webapp-i18n-tests pnpm --filter xivdyetools-web-app exec vitest run scripts/i18n-parity-gate.test.js src/__tests__/i18n-orphans.test.ts src/components/__tests__/v4/locale-switch.test.ts src/components/__tests__/chara-import-i18n.test.ts src/shared/__tests__/preset-i18n.test.ts src/shared/__tests__/method-tags.parity.test.ts src/__tests__/font-contract.test.ts src/__tests__/public-metadata.test.ts --coverage.enabled=false
 
 echo "== 5. og-worker gates =="
-run og-i18n pnpm --filter xivdyetools-og-worker exec vitest run src/services/og-strings.test.ts src/services/svg/roles-i18n.test.ts src/og-data-generator.test.ts src/services/font-coverage.test.ts src/services/font-faces.test.ts
+run og-i18n pnpm --filter xivdyetools-og-worker exec vitest run src/services/og-strings.test.ts src/services/svg/roles-i18n.test.ts src/og-data-generator.test.ts src/services/font-coverage.test.ts src/services/font-faces.test.ts --coverage.enabled=false
 
 echo "== 6. discord-worker gates =="
-run discord-i18n pnpm --filter xivdyetools-discord-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts src/services/font-coverage.filter.test.ts src/services/font-faces.test.ts
+run discord-i18n pnpm --filter xivdyetools-discord-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts src/services/locale-and-fonts.test.ts src/services/font-coverage.test.ts src/services/font-coverage.filter.test.ts src/services/font-faces.test.ts --coverage.enabled=false
 
 echo "== 6b. moderation-worker gates =="
-run moderation-i18n pnpm --filter xivdyetools-moderation-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts
+run moderation-i18n pnpm --filter xivdyetools-moderation-worker exec vitest run src/services/bot-i18n.test.ts src/services/i18n.test.ts --coverage.enabled=false
 
 echo "== 7. locale-diff sweeps =="
 run locale-diff-botlogic   python "$SK/locale-diff.py" packages/bot-logic/src/i18n/locales
