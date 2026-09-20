@@ -28,7 +28,7 @@
 | **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.3 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.14.4 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -529,6 +529,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.14.4 | Sep 2026 | 2026-09-19 i18n audit Sprint 4 — `GET /v1/dyes/search?q=` matches more rows because core 5.4.0 folds case, accents, `ß` and width (no worker code change; documented on the reference page); `Variables.locale` is core's `LocaleCode`, not a hand-spelled union (I18N-009) |
 | v0.14.3 | Sep 2026 | 2026-09-18 documentation audit — developer docs site only, no route or response change: `page` (1–1000) and `q` (≤ 100 characters) caps documented on the `/v1/dyes` cards and in the Numeric Ranges table; the `X-RateLimit-Remaining` examples show `64`, a value production can emit, instead of `42` (the header is `limit − 1` while allowed and `0` when refused) |
 | v0.14.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
 | v0.14.1 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
