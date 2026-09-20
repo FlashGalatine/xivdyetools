@@ -1,6 +1,8 @@
 # XIV Dye Tools — Privacy Guide (web app)
 
-**Last updated:** 2026-09-16 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+> Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
+
+**Last updated:** 2026-09-20 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
@@ -39,7 +41,7 @@ and the sections below are the complete list.
 `localStorage` holds lightweight preferences and your own saved work: theme, language, per-tool
 settings (including the analytics switch below), favourite dyes, saved palettes and collections,
 and — if you sign in — your community-presets session token. Nothing here is a tracking identifier.
-"Reset settings" in Advanced Options and your browser's site-data controls clear it.
+"Reset settings" in Advanced Settings and your browser's site-data controls clear it.
 
 `IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
 not repeated. It holds no images — an earlier version of the app kept your last extractor image
@@ -89,7 +91,7 @@ page you came from. Once you are there you are on someone else's site, under the
 
 ## Usage analytics (opt-in)
 
-Analytics are **off by default**. They run only while **Advanced Options → Enable Analytics** is
+Analytics are **off by default**. They run only while **Advanced Settings → Enable Analytics** is
 switched on, and never if your browser sends the
 [Global Privacy Control](https://globalprivacycontrol.org/) signal — even with the switch on. The
 server enforces this too: it accepts telemetry only from the app's own origins, and discards any

@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import type { LocaleCode } from '@shared/i18n-types';
 
 const mockShow = vi.fn().mockReturnValue('modal-id-123');
 const mockDismiss = vi.fn();
@@ -22,9 +23,13 @@ vi.mock('@services/modal-service', () => ({
 /** Overrides for the key-echoing default, so a test can supply real copy. */
 const mockTranslations: Record<string, string> = {};
 
+/** I18N-010: the app locale `createPoliciesRow()` reads for the policy links. */
+let mockLocale = 'en';
+
 vi.mock('@services/language-service', () => ({
   LanguageService: {
     t: (key: string) => mockTranslations[key] ?? key,
+    getCurrentLocale: () => mockLocale,
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
 }));
@@ -212,6 +217,7 @@ describe('AboutModal', () => {
 
     afterEach(() => {
       for (const key of Object.keys(mockTranslations)) delete mockTranslations[key];
+      mockLocale = 'en';
     });
 
     const showContent = async (): Promise<HTMLElement> => {
@@ -249,6 +255,62 @@ describe('AboutModal', () => {
       expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.md"]`)?.textContent).toBe(
         'Nutzungsbedingungen'
       );
+    });
+
+    // ==========================================================================
+    // I18N-010: link the VIEWER's locale variant, not always the English file.
+    // ==========================================================================
+
+    it('links the ja variant of both documents under a ja app locale', async () => {
+      mockLocale = 'ja';
+      const content = await showContent();
+
+      expect(content.querySelector(`a[href="${BASE}/PRIVACY.ja.md"]`)).not.toBeNull();
+      expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.ja.md"]`)).not.toBeNull();
+      // Never both — a stale build would otherwise still pass "links to both
+      // policy documents" above by finding the English hrefs instead.
+      expect(content.querySelector(`a[href="${BASE}/PRIVACY.md"]`)).toBeNull();
+      expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.md"]`)).toBeNull();
+    });
+
+    it('still links the English file for the en app locale', async () => {
+      mockLocale = 'en';
+      const content = await showContent();
+
+      expect(content.querySelector(`a[href="${BASE}/PRIVACY.md"]`)).not.toBeNull();
+      expect(content.querySelector(`a[href="${BASE}/TERMS_OF_SERVICE.md"]`)).not.toBeNull();
+    });
+  });
+
+  // ============================================================================
+  // policyDocFile (I18N-010)
+  // ============================================================================
+
+  describe('policyDocFile', () => {
+    it.each(['ja', 'de', 'fr', 'ko', 'zh'] as const)(
+      'returns the %s sibling for PRIVACY and TERMS_OF_SERVICE',
+      async (locale) => {
+        const { policyDocFile } = await import('../about-modal');
+
+        expect(policyDocFile('PRIVACY', locale)).toBe(`PRIVACY.${locale}.md`);
+        expect(policyDocFile('TERMS_OF_SERVICE', locale)).toBe(`TERMS_OF_SERVICE.${locale}.md`);
+      }
+    );
+
+    it('returns the unsuffixed English file for en', async () => {
+      const { policyDocFile } = await import('../about-modal');
+
+      expect(policyDocFile('PRIVACY', 'en')).toBe('PRIVACY.md');
+      expect(policyDocFile('TERMS_OF_SERVICE', 'en')).toBe('TERMS_OF_SERVICE.md');
+    });
+
+    it('falls back to the English file for a locale outside the supported list', async () => {
+      const { policyDocFile } = await import('../about-modal');
+
+      // Cast past the type: the parity script guarantees exactly five
+      // translated locales exist, but the fallback must still be safe against
+      // a value the type system did not catch.
+      expect(policyDocFile('PRIVACY', 'xx' as unknown as LocaleCode)).toBe('PRIVACY.md');
     });
   });
 

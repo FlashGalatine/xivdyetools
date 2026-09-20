@@ -1,0 +1,81 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.0 [39m[90mC:/dev/XIVProjects/xivdyetools/.claude/worktrees/i18n-audit-2026-09-19/packages/bot-logic[39m
+
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22maccepts en[32m 2[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22maccepts ja[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22maccepts de[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22maccepts fr[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22maccepts ko[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22maccepts zh[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22mrejects ""[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22mrejects "EN"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22mrejects "en-US"[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22mrejects "es"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22mrejects "zh-CN"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22mrejects "constructor"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22misValidLocale[2m > [22maccepts exactly the codes LOCALE_CODES declares[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps en-US to en[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps en-GB to en[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps ja to ja[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps de to de[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps fr to fr[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps ko to ko[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps zh-CN to zh[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mmaps zh-TW to zh[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mreturns null for "es-ES"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mreturns null for "pt-BR"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mreturns null for "ru"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mreturns null for ""[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mdiscordLocaleToLocaleCode[2m > [22mreturns null for "toString"[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mprefers the unified preferences blob[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mfalls back to the legacy key when the blob has no language[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mfalls back to the legacy key when there is no blob[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mfalls back to the Discord client locale[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mdefaults to English[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mignores an unsupported language in the blob[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mignores an unsupported value in the legacy key[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mfalls through a malformed preferences blob[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mresolves to English when every KV read throws[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mstill honours the Discord locale when KV is down[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locale-resolution.test.ts[2m > [22mresolveUserLocale[2m > [22mreads the two keys under the prefixes both workers agree on[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale completeness[2m > [22mja.json has all keys present in en.json[32m 3[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale completeness[2m > [22mde.json has all keys present in en.json[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale completeness[2m > [22mfr.json has all keys present in en.json[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale completeness[2m > [22mko.json has all keys present in en.json[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale completeness[2m > [22mzh.json has all keys present in en.json[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale structure[2m > [22men.json has a valid meta block[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale structure[2m > [22mja.json has a valid meta block[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale structure[2m > [22mde.json has a valid meta block[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale structure[2m > [22mfr.json has a valid meta block[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale structure[2m > [22mko.json has a valid meta block[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/locales.test.ts[2m > [22mlocale structure[2m > [22mzh.json has a valid meta block[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mtc (count-aware translate, F-09)[2m > [22mpicks the _one form for exactly 1 and _other otherwise (en)[32m 2[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mtc (count-aware translate, F-09)[2m > [22msingle-form locales carry identical _one/_other strings[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mtc (count-aware translate, F-09)[2m > [22mmerges count with extra variables and falls back to the bare key[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mconstructor[2m > [22mcreates a translator with the specified locale[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mconstructor[2m > [22mfalls back to English data for an invalid locale[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mtranslates a key with English locale[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mtranslates a deeply nested key[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mreturns the key for missing translations[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mlogs warning for missing translations when logger is provided[32m 1[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22minterpolates variables in a real translation key[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22minterpolates multiple variables[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mkeeps placeholder when variable is missing[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mhandles numeric variables[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mfalls back to English for missing translations in other locales[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mreturns the key when not found in any locale[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22minterpolates variables with non-English locale[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mreturns key when path traverses through a non-object value[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mt (translate)[2m > [22mreturns key for deeply nested non-existent path[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mTranslator[2m > [22mgetLocale[2m > [22mreturns the current locale code[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mcreateTranslator[2m > [22mreturns a Translator instance[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/translator.test.ts[2m > [22mcreateTranslator[2m > [22mcreates translators for all supported locales[32m 0[2mms[22m[39m
+ [32m✓[39m src/i18n/__tests__/locale-orphans.test.ts[2m > [22mbot-logic i18n orphan gate[2m > [22mevery key in en.json is reachable from a consumer tree or an enumerated dynamic key[32m 155[2mms[22m[39m
+ [32m✓[39m src/i18n/__tests__/locale-orphans.test.ts[2m > [22mbot-logic i18n orphan gate[2m > [22mevery static key passed to Translator.t() exists in en.json[32m 74[2mms[22m[39m
+ [32m✓[39m src/i18n/__tests__/locale-orphans.test.ts[2m > [22mbot-logic i18n orphan gate[2m > [22mkeeps identical key sets across all six locales[32m 9[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m72 passed[39m[22m[90m (72)[39m
+[2m   Start at [22m 21:33:39
+[2m   Duration [22m 1.59s[2m (transform 67%, import 17%, tests 13%, worker 3%)[22m
+

@@ -1,0 +1,34 @@
+TOOL TITLES (en): ['Accessibility Checker', 'Budget Suggestions', 'Character Matcher', 'Color Harmony Explorer', 'Dye Comparison', 'Dye Mixer', 'Gradient Builder', 'Palette Extractor', 'Preset Palettes'] 
+
+[web-app tool names] EN = 'Accessibility Checker'  (2 keys)
+    de: tools.accessibility.title = 'Barrierefreiheitsprüfung'
+    de: resultCard.tools.accessibility = 'Barrierefreiheits-Prüfer'
+    fr: tools.accessibility.title = "Vérification d'Accessibilité"
+    fr: resultCard.tools.accessibility = "Vérificateur d'Accessibilité"
+
+[web-app tool names] EN = 'Budget Suggestions'  (2 keys)
+    fr: tools.budget.title = 'Suggestions Budget'
+    fr: resultCard.tools.budget = 'Suggestions de Budget'
+
+[web-app tool names] EN = 'Dye Comparison'  (2 keys)
+    ja: tools.comparison.title = 'カララント比較'
+    ja: resultCard.tools.comparison = '染料比較'
+    de: tools.comparison.title = 'Farbstoffvergleich'
+    de: resultCard.tools.comparison = 'Farbstoff-Vergleich'
+
+[web-app tool names] EN = 'Dye Mixer'  (2 keys)
+    ja: tools.mixer.title = 'カララントミキサー'
+    ja: resultCard.tools.mixer = '染料ミキサー'
+    de: tools.mixer.title = 'Farbstoffmixer'
+    de: resultCard.tools.mixer = 'Farbstoff-Mischer'
+
+[web-app tool names] EN = 'Gradient Builder'  (2 keys)
+    de: tools.gradient.title = 'Verlauf-Ersteller'
+    de: resultCard.tools.gradient = 'Farbverlauf-Ersteller'
+    fr: tools.gradient.title = 'Constructeur de Dégradé'
+    fr: resultCard.tools.gradient = 'Créateur de Dégradé'
+    ko: tools.gradient.title = '그라데이션 빌더'
+    ko: resultCard.tools.gradient = '그라디언트 빌더'
+
+== web-app tool names: 5 same-EN key groups diverge in >=1 locale ==
+

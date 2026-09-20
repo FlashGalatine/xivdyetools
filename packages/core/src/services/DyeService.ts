@@ -36,6 +36,7 @@ export type { FindClosestOptions, FindWithinDistanceOptions } from './dye/DyeSea
 import { DyeSearch } from './dye/DyeSearch.js';
 import { HarmonyGenerator, type HarmonyOptions } from './dye/HarmonyGenerator.js';
 import { LocalizationService } from './LocalizationService.js';
+import { foldForSearch } from '../utils/index.js';
 
 /**
  * Configuration options for DyeService
@@ -341,7 +342,12 @@ export class DyeService {
       return this.searchByName(query); // Fallback to English-only
     }
 
-    const lowerQuery = query.toLowerCase().trim();
+    // I18N-005 (2026-09-19 audit): fold the query once — foldForSearch is a
+    // superset of toLowerCase().trim() for the ASCII English names backing
+    // nameLower, so the pre-computed fast path still matches, while a
+    // German/French/Japanese query with accents, ß or half-width kana now
+    // matches the localized name too.
+    const lowerQuery = foldForSearch(query.trim());
     const dyes = this.database.getDyesInternal();
 
     return dyes.filter((dye) => {
@@ -352,7 +358,7 @@ export class DyeService {
 
       // Search localized name (not pre-computed as it's dynamically loaded)
       const localizedName = LocalizationService.getDyeName(dye.itemID, locale);
-      if (localizedName?.toLowerCase().includes(lowerQuery)) {
+      if (localizedName && foldForSearch(localizedName).includes(lowerQuery)) {
         return true;
       }
 

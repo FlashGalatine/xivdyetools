@@ -1,6 +1,8 @@
 # XIV Dye Tools Discord Bot - Terms of Service
 
-**Last Updated**: September 16, 2026
+> Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
+
+**Last Updated**: September 20, 2026
 
 > The web app at xivdyetools.app has its own terms: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Data handling is covered by the [Privacy Policy](PRIVACY_POLICY.md).
 
@@ -18,7 +20,7 @@ By adding the Bot to your Discord server or using any of its commands, you ackno
 
 XIV Dye Tools Discord Bot provides:
 
-- **Color Matching**: Find FFXIV dyes closest to any hex color or extracted from images
+- **Color Matching**: Find the FFXIV dyes closest to any hex color, or to colors extracted from an image
 - **Color Harmonies**: Generate complementary, triadic, analogous, and other color schemes
 - **Accessibility Tools**: Colorblindness simulation for dye colors
 - **Community Preset Favorites**: Mark and list community presets you like (`/preset favorite`)
@@ -124,7 +126,7 @@ We may, at our sole discretion, suspend or terminate your access to the Bot for:
 
 These Terms are governed by the laws of the State of North Carolina, USA, without regard to its conflict-of-laws rules. Any dispute that cannot first be resolved through good-faith negotiation will be brought in the state or federal courts located in North Carolina, and you agree to that venue.
 
-Nothing in these Terms removes a consumer-protection right your local law grants you and does not permit you to waive.
+Nothing in these Terms removes any consumer-protection right that the law of the place where you live grants you and that the same law does not permit you to waive.
 
 ## 12. Contact
 

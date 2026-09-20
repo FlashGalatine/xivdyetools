@@ -105,7 +105,7 @@
     },
     "budget": {
       "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
-      "description": "利用市场板价格，寻找高价染剂的经济实惠替代品。\n• `find`：接近目标染剂、价格更低的染剂（`max_distance` 2-20）\n• `quick`：对受欢迎的高价染剂进行相同检查\n• `set_world`：保存您的服务器或数据中心"
+      "description": "利用市场布告板价格，寻找高价染剂的经济实惠替代品。\n• `find`：接近目标染剂、价格更低的染剂（`max_distance` 2-20）\n• `quick`：对受欢迎的高价染剂进行相同检查\n• `set_world`：保存您的服务器或大区"
     },
     "presetBrowse": {
       "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
@@ -203,6 +203,7 @@
     "links": "链接",
     "dyes": "染剂",
     "builtOn": "技术支持",
+    "builtOnBody": "价格数据来自 Universalis · 混色计算使用 spectral.js",
     "attribution": "权利声明",
     "poweredBy": "由 Cloudflare Workers 提供支持",
     "categories": {
@@ -303,18 +304,18 @@
       "description": "请使用 `/budget set_world <world>` 设置服务器，或指定 `world` 选项。"
     },
     "errors": {
-      "notConfigured": "此服务器不支持实惠染料功能。市场板集成未配置。",
-      "worldNotFound": "找不到服务器或数据中心「{world}」。\n\n请检查拼写，或尝试使用数据中心名称，如「陆行鸟」或「莫古力」。",
+      "notConfigured": "此服务器不支持实惠染料功能。市场布告板集成未配置。",
+      "worldNotFound": "找不到服务器或大区「{world}」。\n\n请检查拼写，或尝试使用大区名称，如「陆行鸟」或「莫古力」。",
       "missingWorld": "请指定服务器。",
       "saveFailed": "无法保存服务器设置。请重试。",
       "missingDye": "请指定目标染料。",
       "dyeNotFound": "找不到染料「{name}」。",
       "missingPreset": "请选择一个快速选择预设。",
       "presetNotFound": "找不到快速选择预设「{id}」。",
-      "apiError": "无法获取市场板数据。请稍后再试。",
+      "apiError": "无法获取市场布告板数据。请稍后再试。",
       "rateLimited": "请求过多。请稍等片刻后再查询价格。"
     },
-    "dataCenterLabel": "{name}（{region} 数据中心）"
+    "dataCenterLabel": "{name}（{region} 大区）"
   },
   "preferences": {
     "title": "您的偏好设置",
@@ -381,7 +382,7 @@
       "invalidCount": "无效的数量。必须是1到10之间的数字。",
       "invalidClan": "无效的部族。有效部族：\n{options}",
       "invalidGender": "无效的性别。有效选项：`male`, `female`",
-      "invalidWorld": "无效的服务器。请输入有效的FFXIV服务器或数据中心名称。",
+      "invalidWorld": "无效的服务器。请输入有效的FFXIV服务器或大区名称。",
       "invalidMarket": "无效的值。请使用 `on`/`off` 或 `true`/`false`。",
       "error": "保存设置时发生错误，请重试。",
       "invalidTheme": "无效的主题。请选择 `dark` 或 `light`。"
@@ -435,7 +436,7 @@
     "newPresetPublished": "新预设已发布",
     "previewImagePending": "预览图片待审核",
     "fields": {
-      "category": "类别",
+      "category": "分类",
       "author": "作者",
       "source": "来源",
       "dyes": "染剂",
@@ -482,7 +483,7 @@
     "commonIssuesContent": "**「我得到了暗色，但我的装备是亮色的！」**\n→ 您的背景可能是暗色的。请将图片裁剪到只包含装备。\n\n**「匹配结果似乎不对」**\n→ 算法会选择最常见的颜色。请裁剪排除其余部分。\n\n**「我能匹配特定部分吗？」**\n→ 可以！在上传前裁剪到该精确区域。",
     "proTips": "专业技巧",
     "proTipsContent": "• 使用图像编辑软件在上传前裁剪\n• 金属/闪亮装备的结果可能会有所不同\n• 如果您知道十六进制代码，请改用 `/extractor color`\n• 使用 `colors` 选项要求更多或更少的颜色（3-10）\n• 使用1920x1080或更高分辨率截图以获得最佳质量",
-    "footer": "XIV Dye Tools - 为FFXIV时装爱好者倾心打造",
+    "footer": "XIV Dye Tools - 为FFXIV幻化爱好者倾心打造",
     "exampleUseCases": "使用案例示例",
     "goodExamples": "好的示例",
     "goodExamplesContent": "• 裁剪后只包含单件胸甲的截图\n• 中性背景下染色盔甲的特写\n• 在明亮日光区域拍摄的截图\n• 聚焦于您想要匹配的颜色的图片",
@@ -507,7 +508,7 @@
     "nearest": "最接近的染剂",
     "nearestMore": "另有{n}项",
     "ideal": "理想色相",
-    "found": "最接近",
+    "found": "最近的染剂",
     "name": "染剂",
     "cat": "分类",
     "bandKey": "区间：≤6 / ≤12 / ≤20",
@@ -523,6 +524,8 @@
     "rampTitle": "从图像提取配色",
     "matchTitle": "最接近的染剂",
     "colours": "{n} 种颜色",
+    "colours_one": "{n} 种颜色",
+    "colours_other": "{n} 种颜色",
     "rampKey": "色带宽度＝画面占比",
     "matchKey": "按 ΔE2000 取最近",
     "manualLead": "颜色与预期不符？请试",
@@ -655,55 +658,542 @@
   },
   "commands": {
     "harmony": {
-      "description": "根据一种颜色生成和谐的染剂搭配"
+      "description": "根据一种颜色生成和谐的染剂搭配",
+      "options": {
+        "color": {
+          "description": "基础颜色（十六进制代码如 #FF5733，或染剂名称）"
+        },
+        "type": {
+          "description": "色彩和谐的类型"
+        },
+        "wheel": {
+          "description": "测量和谐角度所用的色轮（默认：RGB）"
+        },
+        "companions": {
+          "description": "每个和谐槽位的伴侣染剂数量（1-3）"
+        },
+        "matching": {
+          "description": "用于为伴侣染剂扩展查找最接近染剂的算法"
+        },
+        "strict_matching": {
+          "description": "收紧距离阈值，获得更接近的匹配"
+        },
+        "prevent_duplicates": {
+          "description": "在所有和谐槽位中去除重复染剂"
+        }
+      }
     },
     "mixer": {
-      "description": "使用多种混色算法混合两种染剂"
+      "description": "使用多种混色算法混合两种染剂",
+      "options": {
+        "dye1": {
+          "description": "要混合的第一种染剂（十六进制代码或染剂名称）"
+        },
+        "dye2": {
+          "description": "要混合的第二种染剂（十六进制代码或染剂名称）"
+        },
+        "mode": {
+          "description": "颜色混合算法"
+        },
+        "matching": {
+          "description": "用于查找混合结果最接近染剂的算法"
+        }
+      }
     },
     "gradient": {
-      "description": "生成两种颜色之间的渐变及中间染剂"
+      "description": "生成两种颜色之间的渐变及中间染剂",
+      "options": {
+        "start_color": {
+          "description": "起始颜色：十六进制代码（如 #FF0000）或染剂名称"
+        },
+        "end_color": {
+          "description": "结束颜色：十六进制代码（如 #0000FF）或染剂名称"
+        },
+        "steps": {
+          "description": "颜色步骤数（默认 6，最多 12）"
+        },
+        "color_space": {
+          "description": "渐变所用的颜色插值模式"
+        },
+        "matching": {
+          "description": "用于查找最接近染剂的算法"
+        }
+      }
     },
     "extractor": {
-      "description": "从输入中提取颜色并查找匹配的 FFXIV 染剂"
+      "description": "从输入中提取颜色并查找匹配的 FFXIV 染剂",
+      "options": {
+        "color": {
+          "description": "查找与某颜色最接近的 FFXIV 染剂",
+          "options": {
+            "color": {
+              "description": "要匹配的颜色（十六进制代码如 #FF5733，或染剂名称）"
+            },
+            "count": {
+              "description": "显示的匹配数量（1-10）"
+            },
+            "matching": {
+              "description": "颜色匹配算法"
+            }
+          }
+        },
+        "image": {
+          "description": "从图像中提取颜色，并查找匹配的染剂",
+          "options": {
+            "image": {
+              "description": "要分析的图像"
+            },
+            "colors": {
+              "description": "要提取的颜色数量（3-10）"
+            },
+            "matching": {
+              "description": "颜色匹配算法"
+            },
+            "prevent_duplicates": {
+              "description": "避免多个槽位映射到同一种染剂（默认：true）"
+            }
+          }
+        }
+      }
     },
     "swatch": {
-      "description": "将角色文件的颜色匹配到最接近的染剂"
+      "description": "将角色文件的颜色匹配到最接近的染剂",
+      "options": {
+        "file": {
+          "description": ".chara 角色文件（Anamnesis 或 Ktisis 导出）"
+        },
+        "order": {
+          "description": "行的排列顺序——两种顺序显示的都是相同的五行"
+        },
+        "slot": {
+          "description": "改为显示单个部位的五个最接近染剂"
+        }
+      }
     },
     "dye": {
-      "description": "搜索和浏览 FFXIV 染剂"
+      "description": "搜索和浏览 FFXIV 染剂",
+      "options": {
+        "search": {
+          "description": "按名称搜索染剂",
+          "options": {
+            "query": {
+              "description": "搜索词（染剂名称）"
+            }
+          }
+        },
+        "info": {
+          "description": "获取特定染剂的详细信息",
+          "options": {
+            "name": {
+              "description": "染剂名称"
+            }
+          }
+        },
+        "list": {
+          "description": "按分类列出染剂",
+          "options": {
+            "category": {
+              "description": "染剂分类"
+            }
+          }
+        },
+        "random": {
+          "description": "显示 5 个随机选择的染剂",
+          "options": {
+            "unique_categories": {
+              "description": "限制每个分类只显示 1 种染剂（默认：false）"
+            }
+          }
+        }
+      }
     },
     "comparison": {
-      "description": "并排比较 2-4 种染剂并进行颜色分析"
+      "description": "并排比较 2-4 种染剂并进行颜色分析",
+      "options": {
+        "dye1": {
+          "description": "第一种染剂（十六进制代码或染剂名称）"
+        },
+        "dye2": {
+          "description": "第二种染剂（十六进制代码或染剂名称）"
+        },
+        "dye3": {
+          "description": "第三种染剂（可选）"
+        },
+        "dye4": {
+          "description": "第四种染剂（可选）"
+        }
+      }
     },
     "contrast": {
-      "description": "染剂配对的 WCAG 非文本对比度（下限 3:1）"
+      "description": "染剂配对的 WCAG 非文本对比度（下限 3:1）",
+      "options": {
+        "dye1": {
+          "description": "第一种染剂（十六进制代码或染剂名称）"
+        },
+        "dye2": {
+          "description": "第二种染剂（十六进制代码或染剂名称）"
+        },
+        "dye3": {
+          "description": "第三种染剂（可选）"
+        },
+        "dye4": {
+          "description": "第四种染剂（可选）"
+        }
+      }
     },
     "accessibility": {
-      "description": "一种或一对染剂在各种色觉下的表现"
+      "description": "一种或一对染剂在各种色觉下的表现",
+      "options": {
+        "dye": {
+          "description": "主要染剂（十六进制代码或染剂名称）"
+        },
+        "dye2": {
+          "description": "第二种染剂——生成配对画面（可选）"
+        },
+        "vision": {
+          "description": "色觉类型：选定类型只显示该类型，选择「所有色觉」则显示全部"
+        }
+      }
     },
     "a11y": {
-      "description": "一种或一对染剂在各种色觉下的表现"
+      "description": "一种或一对染剂在各种色觉下的表现",
+      "options": {
+        "dye": {
+          "description": "主要染剂（十六进制代码或染剂名称）"
+        },
+        "dye2": {
+          "description": "第二种染剂——生成配对画面（可选）"
+        },
+        "vision": {
+          "description": "色觉类型：选定类型只显示该类型，选择「所有色觉」则显示全部"
+        }
+      }
     },
     "budget": {
-      "description": "利用市场板价格寻找经济实惠的替代染剂"
+      "description": "利用市场布告板价格寻找经济实惠的替代染剂",
+      "options": {
+        "find": {
+          "description": "查找某种高价染剂的更便宜替代品",
+          "options": {
+            "target_dye": {
+              "description": "您想寻找替代品的高价染剂"
+            },
+            "world": {
+              "description": "查询价格用的服务器或大区（未指定则使用已保存的偏好）"
+            },
+            "matching": {
+              "description": "ΔE列所用的颜色匹配算法"
+            },
+            "max_distance": {
+              "description": "匹配线——可考虑的最大ΔE2000（2-20，默认：8）"
+            },
+            "exclude_coffers": {
+              "description": "排除雇员宝箱染剂（扭蛋——仅有玩家转售价）"
+            },
+            "exclude_wide_spectrum": {
+              "description": "排除追加染剂1/追加染剂2（振兴票/CC 获取途径）"
+            }
+          }
+        },
+        "set_world": {
+          "description": "保存查询价格时使用的服务器/大区",
+          "options": {
+            "world": {
+              "description": "服务器或大区名称"
+            }
+          }
+        },
+        "quick": {
+          "description": "快速查询热门高价染剂的实惠替代品",
+          "options": {
+            "preset": {
+              "description": "要查找替代品的热门高价染剂"
+            },
+            "world": {
+              "description": "查询价格用的服务器或大区（未指定则使用已保存的偏好）"
+            }
+          }
+        }
+      }
     },
     "preset": {
-      "description": "浏览、提交社区配色预设并投票"
+      "description": "浏览、提交社区配色预设并投票",
+      "options": {
+        "list": {
+          "description": "浏览社区预设",
+          "options": {
+            "category": {
+              "description": "按类别筛选"
+            },
+            "sort": {
+              "description": "排序方式"
+            }
+          }
+        },
+        "show": {
+          "description": "显示特定预设",
+          "options": {
+            "name": {
+              "description": "预设名称"
+            }
+          }
+        },
+        "random": {
+          "description": "获取一个随机预设作为灵感",
+          "options": {
+            "category": {
+              "description": "按类别筛选"
+            }
+          }
+        },
+        "submit": {
+          "description": "提交一个新的社区预设",
+          "options": {
+            "preset_name": {
+              "description": "预设名称（2-50 个字符）"
+            },
+            "description": {
+              "description": "预设描述（10-200 个字符）"
+            },
+            "category": {
+              "description": "预设类别"
+            },
+            "dye1": {
+              "description": "第一种染剂（必填）"
+            },
+            "dye2": {
+              "description": "第二种染剂（必填）"
+            },
+            "dye3": {
+              "description": "第三种染剂（必填）"
+            },
+            "dye4": {
+              "description": "第四种染剂（可选）"
+            },
+            "dye5": {
+              "description": "第五种染剂（可选）"
+            },
+            "dye6": {
+              "description": "第六种染剂（可选）"
+            },
+            "tags": {
+              "description": "以逗号分隔的标签（可选，最多 10 个）"
+            }
+          }
+        },
+        "vote": {
+          "description": "切换您对某预设的投票",
+          "options": {
+            "preset": {
+              "description": "要投票的预设"
+            }
+          }
+        },
+        "edit": {
+          "description": "编辑您的某个预设",
+          "options": {
+            "preset": {
+              "description": "要编辑的预设"
+            },
+            "name": {
+              "description": "新的预设名称（2-50 个字符）"
+            },
+            "description": {
+              "description": "新的描述（10-200 个字符）"
+            },
+            "tags": {
+              "description": "新的标签（以逗号分隔）"
+            },
+            "dye1": {
+              "description": "第一种染剂"
+            },
+            "dye2": {
+              "description": "第二种染剂"
+            },
+            "dye3": {
+              "description": "第三种染剂"
+            },
+            "dye4": {
+              "description": "第四种染剂"
+            },
+            "dye5": {
+              "description": "第五种染剂"
+            },
+            "dye6": {
+              "description": "第六种染剂"
+            }
+          }
+        },
+        "favorite": {
+          "description": "管理您收藏的社区预设",
+          "options": {
+            "add": {
+              "description": "将一个预设添加到收藏",
+              "options": {
+                "preset_name": {
+                  "description": "要收藏的预设"
+                }
+              }
+            },
+            "remove": {
+              "description": "从收藏中移除一个预设",
+              "options": {
+                "preset_name": {
+                  "description": "要取消收藏的预设"
+                }
+              }
+            },
+            "list": {
+              "description": "列出您收藏的预设"
+            }
+          }
+        }
+      }
     },
     "preferences": {
-      "description": "管理您的个人机器人偏好设置"
+      "description": "管理您的个人机器人偏好设置",
+      "options": {
+        "show": {
+          "description": "显示您当前的偏好设置"
+        },
+        "set": {
+          "description": "设置一项或多项偏好（所有选项均为可选）",
+          "options": {
+            "language": {
+              "description": "染剂名称与消息所用的界面语言"
+            },
+            "blending": {
+              "description": "/mixer 的默认混合模式"
+            },
+            "matching": {
+              "description": "默认的颜色匹配方法"
+            },
+            "count": {
+              "description": "/extractor color 的默认匹配数量（1-10）"
+            },
+            "clan": {
+              "description": "/swatch 的默认部族（如中原之民、晨曦之民）"
+            },
+            "gender": {
+              "description": "/swatch 的默认性别"
+            },
+            "world": {
+              "description": "市场价格所用的默认服务器/大区"
+            },
+            "market": {
+              "description": "默认显示市场布告板价格"
+            },
+            "show_hex": {
+              "description": "在结果卡片上显示十六进制颜色代码"
+            },
+            "show_rgb": {
+              "description": "在结果卡片上显示 RGB 值"
+            },
+            "show_hsv": {
+              "description": "在结果卡片上显示 HSV 值"
+            },
+            "show_lab": {
+              "description": "在结果卡片上显示 LAB 值"
+            },
+            "show_deltae": {
+              "description": "在结果卡片上显示色差 Delta-E"
+            },
+            "show_acquisition": {
+              "description": "在结果卡片上显示染剂获取来源"
+            },
+            "theme": {
+              "description": "所有生成图片使用的卡片主题"
+            }
+          }
+        },
+        "reset": {
+          "description": "将某项偏好重置为默认值（不指定则重置全部）",
+          "options": {
+            "key": {
+              "description": "要重置的偏好（省略则重置全部）"
+            }
+          }
+        },
+        "filters": {
+          "description": "管理搜索结果的染剂类型过滤器",
+          "options": {
+            "set": {
+              "description": "设置染剂类型过滤器（所有选项均为可选）",
+              "options": {
+                "metallic": {
+                  "description": "排除金属染剂"
+                },
+                "pastel": {
+                  "description": "排除粉彩染剂"
+                },
+                "dark": {
+                  "description": "排除暗色染剂"
+                },
+                "cosmic": {
+                  "description": "排除宇宙染剂"
+                },
+                "ishgardian": {
+                  "description": "排除伊修加德染剂"
+                },
+                "expensive": {
+                  "description": "排除高价染剂（纯白／墨黑）"
+                },
+                "vendor": {
+                  "description": "排除商店染剂"
+                },
+                "craft": {
+                  "description": "排除制作染剂"
+                }
+              }
+            },
+            "show": {
+              "description": "显示您当前的染剂过滤设置"
+            },
+            "reset": {
+              "description": "清除所有染剂过滤器"
+            }
+          }
+        }
+      }
     },
     "manual": {
-      "description": "显示所有命令的帮助和使用指南"
+      "description": "显示所有命令的帮助和使用指南",
+      "options": {
+        "topic": {
+          "description": "特定的帮助主题"
+        }
+      }
     },
     "changelog": {
-      "description": "查看 Discord 机器人的新内容 — 发布说明（最新在前）"
+      "description": "查看 Discord 机器人的新内容 — 发布说明（最新在前）",
+      "options": {
+        "version": {
+          "description": "展开特定版本（例如 5.0.0）"
+        }
+      }
     },
     "about": {
       "description": "显示 XIV Dye Tools 机器人的信息"
     },
     "stats": {
-      "description": "显示机器人使用统计和信息"
+      "description": "显示机器人使用统计和信息",
+      "options": {
+        "summary": {
+          "description": "显示基本的机器人信息（公开）"
+        },
+        "overview": {
+          "description": "显示使用指标（仅限管理员）"
+        },
+        "commands": {
+          "description": "按命令显示细分数据（仅限管理员）"
+        },
+        "preferences": {
+          "description": "显示偏好设置采用率（仅限管理员）"
+        },
+        "health": {
+          "description": "显示系统健康状态（仅限管理员）"
+        }
+      }
     }
   }
 }

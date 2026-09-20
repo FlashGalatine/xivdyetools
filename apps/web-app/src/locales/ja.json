@@ -38,7 +38,7 @@
   },
   "tools": {
     "harmony": {
-      "title": "カラーハーモニーエクスプローラー",
+      "title": "ハーモニーエクスプローラー",
       "shortName": "ハーモニー",
       "description": "調和のとれたカラーパレットを生成"
     },
@@ -79,7 +79,7 @@
       "description": "手頃な代替染料を見つける"
     },
     "character": {
-      "title": "キャラクターマッチャー",
+      "title": "スウォッチマッチャー",
       "shortName": "見本",
       "description": "キャラクターの色に合う染料を探す",
       "selectSubrace": "部族を選択",
@@ -117,7 +117,7 @@
     "original": "オリジナル",
     "cost": "コスト",
     "market": "マーケット",
-    "spectrum": "スペクトラム",
+    "spectrum": "スペクトル",
     "copied": "コピーしました！",
     "dismiss": "閉じる",
     "optional": "(任意)",
@@ -163,7 +163,7 @@
     "sampleAreaSize": "ピクセルサンプル範囲",
     "sampleAreaSizeTooltip": "画像から色を採取する際に平均化する範囲のサイズ",
     "singlePixel": "ピクセル",
-    "visionTypes": "視覚タイプ",
+    "visionTypes": "色覚タイプ",
     "deuteranopia": "2型色覚",
     "protanopia": "1型色覚",
     "tritanopia": "3型色覚",
@@ -182,9 +182,9 @@
     "mixingRgb": "光",
     "mixingLab": "知覚的",
     "mixingOklab": "現代知覚的",
-    "mixingRyb": "絵具",
+    "mixingRyb": "絵の具",
     "mixingHsl": "色相ベース",
-    "mixingSpectral": "スペクトル - リアル絵具",
+    "mixingSpectral": "リアル絵の具",
     "mixingRgbDesc": "加法混色。青 + 黄 = グレー。",
     "mixingLabDesc": "知覚的に均一なブレンド。青 + 黄 = ピンク。",
     "mixingOklabDesc": "現代知覚色空間。青 + 黄 = シアン。",
@@ -486,8 +486,8 @@
     "saveMix": "保存",
     "modelRyb": "絵の具",
     "modelSpectral": "顔料",
-    "modelOklab": "知覚的",
-    "modelLab": "LAB",
+    "modelOklab": "現代知覚的",
+    "modelLab": "知覚的",
     "modelHsl": "色相",
     "modelRgb": "光",
     "exportMeta": "ブレンド：{model} @ {pct}%"
@@ -577,7 +577,7 @@
     "region": {
       "japan": "日本",
       "northAmerica": "北米",
-      "europe": "ヨーロッパ",
+      "europe": "欧州",
       "oceania": "オセアニア",
       "china": "中国",
       "korea": "韓国"
@@ -685,7 +685,8 @@
     "updatedEyebrow": "前回のご利用から更新されました",
     "allReleases": "すべてのリリース",
     "pastLabel": "過去のリリース",
-    "currentTag": "最新"
+    "currentTag": "最新",
+    "olderReleases": "以前のリリースを GitHub で見る"
   },
   "welcome": {
     "title": "XIV 染色ツールへようこそ",
@@ -792,7 +793,7 @@
       },
       "toolBanner": {
         "title": "ツールを切り替え",
-        "description": "ツールアイコンをクリックして機能を切り替え：カラーハーモニー、抽出、比較など！"
+        "description": "ツールアイコンをクリックして機能を切り替え：ハーモニー、抽出、比較など！"
       }
     },
     "matcher": {
@@ -851,7 +852,7 @@
         "description": "パレットから染料を選択して、異なる色覚タイプでの見え方を確認します。"
       },
       "visionTypes": {
-        "title": "視覚タイプ",
+        "title": "色覚タイプ",
         "description": "表示する色覚シミュレーションを切り替え：緑色覚異常、赤色覚異常、青色覚異常、または全色覚異常。"
       },
       "displaySettings": {
@@ -902,7 +903,7 @@
     "loginToVote": "このプリセットに投票するにはDiscordまたはXIVAuthでログインしてください",
     "signInToViewSubmissions": "投稿を表示するにはサインインしてください",
     "noSubmissionsYet": "まだプリセットを投稿していません。",
-    "dyes": "染料",
+    "dyes": "カララント",
     "tags": "タグ",
     "copyLink": "リンクをコピー",
     "linkCopied": "プリセットリンクをクリップボードにコピーしました！",
@@ -1039,7 +1040,7 @@
     "fieldTags": "タグ",
     "fieldTagsHint": "検索対象。ジョブ略称も使えます: mch, drk, whm。",
     "fieldLink": "作例リンク",
-    "fieldLinkHint": "許可されたサイトのミラプリページを。Eorzea Collection、ロードストーン、X・Bluesky・pixiv などの投稿に対応しています。画像は複製せずリンクだけ保存します — 元を削除すればここからも消えます。",
+    "fieldLinkHint": "許可されたサイトのミラプリページを入力してください。Eorzea Collection、ロードストーン、X・Bluesky・pixiv などの投稿に対応しています。画像は複製せずリンクだけ保存します — 元を削除すればここからも消えます。",
     "fieldPreviewImage": "プレビュー画像（任意）",
     "fieldPreviewImageHint": "PNG、JPEG、WebP、5MBまで。モデレーターの承認後にカードへ表示されます。",
     "previewImageTooLarge": "画像は5MB以内にしてください",
@@ -1119,8 +1120,8 @@
     },
     "noHarmony": {
       "title": "ハーモニーの提案がありません",
-      "description": "ベースの染料を選択して色調和の提案を生成します。",
-      "action": "染料を選択"
+      "description": "ベースのカララントを選択して色調和の提案を生成します。",
+      "action": "カララントを選択"
     },
     "noImage": {
       "title": "画像が読み込まれていません",
@@ -1160,18 +1161,9 @@
     "sentToSwatch": "スウォッチマッチャーに送信しました",
     "dyeAlreadyIn": "染料は既に追加されています",
     "addedTo": "追加しました",
-    "slotsFull": "すべてのスロットが使用中です。置き換えるスロットを選択してください：",
+    "slotsFull": "すべてのスロットが埋まっています。置き換えるスロットを選択してください：",
     "selectSlotToReplace": "置き換えるスロットを選択",
     "replacedInTool": "置き換えました",
-    "tools": {
-      "harmony": "ハーモニーエクスプローラー",
-      "budget": "予算提案",
-      "accessibility": "アクセシビリティチェッカー",
-      "comparison": "染料比較",
-      "gradient": "グラデーションビルダー",
-      "mixer": "染料ミキサー",
-      "swatch": "スウォッチマッチャー"
-    },
     "spectrumShort": "スペクトル",
     "acquisitionShort": "入手先",
     "hueOff": "色相差",

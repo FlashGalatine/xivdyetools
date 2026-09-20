@@ -41,6 +41,24 @@ const languageServiceMock = {
   subscribe: vi.fn().mockReturnValue(() => {}),
 };
 
+/**
+ * The real title-key table (`ROUTES` in `router-service.ts`), so `toolLabel`
+ * is exercised against the same `extractor`→`tools.matcher.*` /
+ * `swatch`→`tools.character.*` remap production code carries — a hand-picked
+ * fake here could hide `toolLabel` reading the wrong key for those two tools.
+ */
+const ROUTE_TITLE_KEYS: Record<string, string> = {
+  harmony: 'tools.harmony.title',
+  extractor: 'tools.matcher.title',
+  accessibility: 'tools.accessibility.title',
+  comparison: 'tools.comparison.title',
+  gradient: 'tools.gradient.title',
+  presets: 'tools.presets.title',
+  budget: 'tools.budget.title',
+  swatch: 'tools.character.title',
+  mixer: 'tools.mixer.title',
+};
+
 vi.mock('@services/index', () => ({
   LanguageService: languageServiceMock,
   StorageService: {
@@ -48,7 +66,11 @@ vi.mock('@services/index', () => ({
     setItem: vi.fn(),
     removeItem: vi.fn(),
   },
-  RouterService: { navigateTo: vi.fn() },
+  RouterService: {
+    navigateTo: vi.fn(),
+    getRouteForTool: (id: string) =>
+      ROUTE_TITLE_KEYS[id] ? { id, titleKey: ROUTE_TITLE_KEYS[id] } : undefined,
+  },
   ThemeService: { isDarkMode: vi.fn(() => false) },
 }));
 
@@ -319,6 +341,80 @@ describe('ResultCard', () => {
 
       const emitted = vi.mocked(RouterService.navigateTo).mock.calls[0]?.[1] as { dye: string };
       expect(Number(emitted.dye)).toBeLessThan(LEGACY_ITEM_ID_FLOOR);
+    });
+  });
+
+  // ==========================================================================
+  // "Send to tool" menu names (TERM-002)
+  //
+  // Each entry used to render a private `resultCard.tools.<id>` key that
+  // drifted from the tool's real name in 5 of 9 tools. The menu must now
+  // print exactly the string the tool's own route renders as its title —
+  // `toolLabel()` reads `RouterService.getRouteForTool(id).titleKey` through
+  // `LanguageService.t`, and `t` is stubbed to echo its key, so the rendered
+  // text below IS the key that was looked up.
+  // ==========================================================================
+
+  describe('"send to tool" menu names', () => {
+    it('renders each entry with its OWN tool route title key, not a private copy', async () => {
+      await import('../../v4/result-card');
+      const card = document.createElement('v4-result-card') as HTMLElement & {
+        data?: unknown;
+        showActions?: boolean;
+        updateComplete?: Promise<unknown>;
+      };
+      card.data = {
+        dye: {
+          id: 5729,
+          itemID: 5729,
+          stainID: 1,
+          name: 'Snow White',
+          hex: '#E4E4E4',
+          rgb: { r: 228, g: 228, b: 228 },
+          hsv: { h: 0, s: 0, v: 89 },
+          category: 'White',
+          acquisition: 'Vendor',
+          cost: 216,
+          currency: 'Gil',
+          isMetallic: false,
+          isPastel: false,
+          isDark: false,
+          isCosmic: false,
+          isIshgardian: false,
+          consolidationType: null,
+        },
+        originalColor: '#E4E4E4',
+        matchedColor: '#E4E4E4',
+      };
+      card.showActions = true;
+      container.appendChild(card);
+      await card.updateComplete;
+
+      // DOM order: "Inspect Dye in..." (harmony, budget, accessibility,
+      // comparison, swatch) then "Transform Dye in..." (gradient, mixer).
+      // `swatch` is deliberately `tools.character.title`, not
+      // `tools.swatch.title` — that key does not exist — mirroring
+      // `extractor` → `tools.matcher.title` at the route table.
+      const EXPECTED_KEYS = [
+        'tools.harmony.title',
+        'tools.budget.title',
+        'tools.accessibility.title',
+        'tools.comparison.title',
+        'tools.character.title', // swatch
+        'tools.gradient.title',
+        'tools.mixer.title',
+      ];
+
+      // Scoped to the first two submenus (Inspect / Transform) — the third,
+      // "Open in browser...", intentionally hardcodes brand names, not a
+      // locale key, and would otherwise pollute this comparison.
+      const submenus = card.shadowRoot!.querySelectorAll('.submenu');
+      const labels = [
+        ...submenus[0].querySelectorAll('.menu-item'),
+        ...submenus[1].querySelectorAll('.menu-item'),
+      ].map((el) => el.textContent!.trim());
+
+      expect(labels).toEqual(EXPECTED_KEYS);
     });
   });
 

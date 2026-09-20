@@ -73,6 +73,28 @@ vi.mock('@services/dye-service-wrapper', () => ({
   },
 }));
 
+// I18N-008: the "sort by name" column now goes through `compareDyeNames`
+// (`@shared/dye-name`), which imports LanguageService from its OWN module,
+// not the `@services/index` barrel — mocking only the barrel below would
+// leave that comparator talking to the real service. `@shared/custom-dye`
+// reaches LanguageService the same way, so this needs the full surface (a
+// `t`-only or `getDyeName`-only stub throws inside `makeCustomDye`, which
+// `safeRender()` swallows into a silently empty panel), not just the two
+// methods `compareDyeNames` calls. Mirrors the barrel mock below exactly so
+// the existing "re-sorts when a column header is clicked" ledger test keeps
+// its expected order.
+vi.mock('@services/language-service', () => ({
+  LanguageService: {
+    t: (key: string) => key,
+    tInterpolate: (key: string, params: Record<string, string>) =>
+      `${key}: ${Object.values(params).join('/')}`,
+    getDyeName: (itemId: number) => `Dye-${itemId}`,
+    getCurrentLocale: () => 'en',
+    getCurrency: (key: string) => `cur:${key}`,
+    subscribe: vi.fn().mockReturnValue(() => {}),
+  },
+}));
+
 vi.mock('@services/index', () => ({
   /**
    * The shared market-panel builder. Absent, renderMarketPanel throws and
@@ -233,6 +255,11 @@ vi.mock('@services/index', () => ({
     subscribe: vi.fn().mockReturnValue(() => {}),
     getCurrentToolId: vi.fn().mockReturnValue('budget'),
     navigateTo: vi.fn(),
+    // TERM-002: the ResultCard this tool mounts for the target-dye overview
+    // calls `toolLabel()`, which reads this. `toolLabel` optional-chains the
+    // call so an absent mock degrades to an empty label instead of throwing;
+    // this app's own ledger tests get the real title-key behaviour instead.
+    getRouteForTool: (id: string) => ({ id, titleKey: `tools.${id}.title` }),
   },
   WorldService: {
     getWorlds: vi.fn().mockReturnValue([]),
@@ -708,6 +735,22 @@ describe('BudgetTool', () => {
 
       // By name ascending: Dye-5733 (Wine) < Dye-5736 (Sunset) < Dye-5737 (Dalamud).
       expect(rowNames()).toEqual([label(WINE), label(SUNSET), label(DALAMUD)]);
+    });
+
+    it('sorts by name through the locale-aware comparator, not a bare localeCompare (I18N-008)', async () => {
+      await build();
+
+      const localeCompareSpy = vi.spyOn(String.prototype, 'localeCompare');
+      const nameHeader = Array.from(rightPanel.querySelectorAll('button')).find(
+        (b) => b.textContent === 'budget.colDye'
+      );
+      nameHeader!.click();
+
+      // `compareDyeNames` calls `localeCompare(other, LanguageService.getCurrentLocale())`.
+      // A bare `a.localeCompare(b)` regression calls it with ONE argument, so
+      // this fails the moment `sortRows` stops passing a locale through.
+      expect(localeCompareSpy).toHaveBeenCalledWith(expect.any(String), 'en');
+      localeCompareSpy.mockRestore();
     });
 
     it('picks a row as the new target', async () => {

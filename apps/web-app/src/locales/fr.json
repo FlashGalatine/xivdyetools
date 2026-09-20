@@ -38,7 +38,7 @@
   },
   "tools": {
     "harmony": {
-      "title": "Explorateur d'Harmonies de Couleurs",
+      "title": "Explorateur d'harmonies",
       "shortName": "Harmonie",
       "description": "Générer des palettes harmonieuses"
     },
@@ -48,7 +48,7 @@
       "description": "Faire correspondre les couleurs des images"
     },
     "accessibility": {
-      "title": "Vérification d'Accessibilité",
+      "title": "Vérification d'accessibilité",
       "shortName": "Vision",
       "description": "Simuler le daltonisme"
     },
@@ -150,11 +150,11 @@
     "resultDetails": "Détails des résultats",
     "showPrices": "Afficher les prix",
     "showAcquisition": "Afficher l'acquisition",
-    "marketBoard": "Tableau des marchés",
-    "enableMarketBoard": "Activer le tableau des marchés",
+    "marketBoard": "Tableau des ventes",
+    "enableMarketBoard": "Activer le tableau des ventes",
     "pricesFetchedFrom": "Prix récupérés depuis Universalis pour {server}",
     "loadingServers": "Chargement des serveurs...",
-    "allWorlds": "Tous les mondes",
+    "allWorlds": "Tous les Mondes",
     "extractionSettings": "Paramètres d'extraction",
     "vibrancyBoost": "Boost de vivacité",
     "maxColors": "Couleurs maximum",
@@ -184,7 +184,7 @@
     "mixingOklab": "Perceptuel moderne",
     "mixingRyb": "Peinture",
     "mixingHsl": "Basé sur la teinte",
-    "mixingSpectral": "Spectral - Peinture réaliste",
+    "mixingSpectral": "Peinture réaliste",
     "mixingRgbDesc": "Mélange additif de lumière. Bleu + Jaune = Gris.",
     "mixingLabDesc": "Mélange perceptuellement uniforme. Bleu + Jaune = Rose.",
     "mixingOklabDesc": "Espace colorimétrique perceptuel moderne. Bleu + Jaune = Cyan.",
@@ -234,10 +234,10 @@
     "importSettings": "Importer",
     "importError": "Échec de l'importation des paramètres. Veuillez vérifier le format du fichier.",
     "cmykValues": "Valeurs CMYK",
-    "matchingRedmean": "RVB pondéré",
-    "matchingRedmeanDesc": "Distance RVB pondérée — une approximation simple de la différence perçue.",
+    "matchingRedmean": "RGB pondéré",
+    "matchingRedmeanDesc": "Distance RGB pondérée — une approximation simple de la différence perçue.",
     "matchingDistinguish": "Pourcentage",
-    "matchingDistinguishDesc": "Distance RVB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage.",
+    "matchingDistinguishDesc": "Distance RGB ramenée de 0 à 100. Même classement que RGB DIST, affichée en pourcentage.",
     "matchingMethodImpact": "Pas seulement cosmétique — les autres méthodes choisissent une teinture la plus proche différente pour environ un quart à près de la moitié des couleurs.",
     "showHue": "Écart de teinte",
     "showStain": "ID Stain",
@@ -292,7 +292,7 @@
     },
     "railSwipeHint": "BALAYER POUR PLUS",
     "marketFailTitle": "Prix indisponibles",
-    "marketFailBody": "Le marché n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent.",
+    "marketFailBody": "Le tableau des ventes n'a pas répondu. La correspondance des couleurs n'est pas affectée — seules les lignes de prix manquent.",
     "harmonyN": "Harmonie {n}",
     "baseColorTitle": "Couleur de base : {hex}"
   },
@@ -335,7 +335,7 @@
   },
   "accessibility": {
     "inspectDyes": "Inspecter les Teintures",
-    "visionTypes": "Types de Vision",
+    "visionTypes": "Types de vision",
     "selectDyesToSeeAnalysis": "Sélectionnez des teintures pour voir l'analyse d'accessibilité",
     "hardForDeuteranopia": "Difficile à distinguer pour la deutéranopie (rouge-vert)",
     "hardForProtanopia": "Difficile à distinguer pour la protanopie (rouge-vert)",
@@ -462,14 +462,14 @@
     "selectDyes": "Sélectionnez les teintures ci-dessous",
     "selectTwoDyes": "Sélectionnez deux teintures pour voir l'interpolation",
     "interpolationSettings": "Paramètres d'Interpolation",
-    "colorSpace": "Espace Colorimétrique",
+    "colorSpace": "Espace colorimétrique",
     "startDye": "Teinture de départ",
     "endDye": "Teinture de fin",
     "steps": "Étapes",
     "selectTwoDyesToMix": "Sélectionnez deux teintures à mélanger pour trouver des couleurs correspondantes",
     "dye1": "Teinture 1",
     "dye2": "Teinture 2",
-    "maxResults": "Résultats max",
+    "maxResults": "Résultats maximum",
     "matchingDyes": "Teintures correspondantes",
     "blend": "Mélanger",
     "mixSettings": "Paramètres de mélange",
@@ -486,8 +486,8 @@
     "saveMix": "Enregistrer le mélange",
     "modelRyb": "Peinture",
     "modelSpectral": "Pigment",
-    "modelOklab": "Perceptuel",
-    "modelLab": "LAB",
+    "modelOklab": "Perceptuel moderne",
+    "modelLab": "Perceptuel",
     "modelHsl": "Teinte",
     "modelRgb": "Lumière",
     "exportMeta": "Mélange : {model} @ {pct} %"
@@ -566,7 +566,7 @@
     "title": "Tableau des ventes",
     "server": "Serveur :",
     "allWorlds": "Tous les Mondes",
-    "showPrices": "Afficher les Prix",
+    "showPrices": "Afficher les prix",
     "refresh": "Actualiser les Prix",
     "refreshing": "Actualisation...",
     "clearingCache": "Vidage du cache et récupération des nouveaux prix...",
@@ -685,7 +685,8 @@
     "updatedEyebrow": "MIS À JOUR DEPUIS VOTRE DERNIÈRE VISITE",
     "allReleases": "TOUTES LES VERSIONS",
     "pastLabel": "VERSIONS PRÉCÉDENTES",
-    "currentTag": "ACTUELLE"
+    "currentTag": "ACTUELLE",
+    "olderReleases": "Versions antérieures sur GitHub"
   },
   "welcome": {
     "title": "Bienvenue sur Outils de Teinture XIV",
@@ -805,7 +806,7 @@
         "description": "Activez des options comme le boost de vivacité pour améliorer l'extraction des couleurs."
       },
       "maxColors": {
-        "title": "Max. couleurs",
+        "title": "Couleurs maximum",
         "description": "Ajustez le curseur pour définir combien de couleurs extraire de votre image."
       },
       "displayOptions": {
@@ -837,7 +838,7 @@
         "description": "Sélectionnez l'algorithme de mélange : Spectral, RYB, OKLab, Lab, HSL ou RGB."
       },
       "maxResults": {
-        "title": "Max. résultats",
+        "title": "Résultats maximum",
         "description": "Ajustez combien de résultats de teintures correspondantes sont affichés pour chaque couleur mélangée."
       },
       "displayOptions": {
@@ -987,7 +988,7 @@
     "tabSaved": "Enregistrés",
     "tabMine": "Les miens",
     "searchAll": "Chercher palettes, teintures, tags",
-    "shotSlot": "APERÇU GLAMOUR · LIEN, PAS DE COPIE",
+    "shotSlot": "APERÇU MIRAGE · LIEN, PAS DE COPIE",
     "paletteLabel": "PALETTE",
     "paletteCost": "COÛT DE LA PALETTE",
     "takeInto": "OUVRIR CETTE PALETTE DANS",
@@ -1039,7 +1040,7 @@
     "fieldTags": "Tags",
     "fieldTagsHint": "Cherchables. Les abréviations de job marchent : mch, drk, whm.",
     "fieldLink": "Lien d'exemple",
-    "fieldLinkHint": "Une page de glamour sur un site autorisé — Eorzea Collection, le Lodestone, ou votre publication sur X, Bluesky, pixiv et quelques autres. Nous stockons le lien, jamais une copie de l'image — si vous la retirez, elle disparaît ici aussi.",
+    "fieldLinkHint": "Une page de mirage sur un site autorisé — Eorzea Collection, le Lodestone, ou votre publication sur X, Bluesky, pixiv et quelques autres. Nous stockons le lien, jamais une copie de l'image — si vous la retirez, elle disparaît ici aussi.",
     "fieldPreviewImage": "Image d'aperçu (facultatif)",
     "fieldPreviewImageHint": "PNG, JPEG ou WebP, jusqu'à 5 Mo. Affichée sur votre carte une fois validée par un modérateur.",
     "previewImageTooLarge": "L'image ne doit pas dépasser 5 Mo",
@@ -1163,15 +1164,6 @@
     "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
     "selectSlotToReplace": "Sélectionner l'emplacement à remplacer",
     "replacedInTool": "Remplacé avec succès",
-    "tools": {
-      "harmony": "Explorateur d'Harmonie",
-      "budget": "Suggestions de Budget",
-      "accessibility": "Vérificateur d'Accessibilité",
-      "comparison": "Comparaison de Teintures",
-      "gradient": "Créateur de Dégradé",
-      "mixer": "Mélangeur de Teintures",
-      "swatch": "Nuancier"
-    },
     "spectrumShort": "SPECTRE",
     "acquisitionShort": "SOURCE",
     "hueOff": "TEINTE",
@@ -1216,10 +1208,10 @@
     "matchesHead": "TEINTURES LES PLUS PROCHES",
     "inGrid": "DANS L'ÉDITEUR",
     "sendTo": "ENVOYER VERS",
-    "equipHead": "TEINTURES DE CETTE MIRAGE",
+    "equipHead": "TEINTURES DE CE MIRAGE",
     "gearHint": "Deux canaux de teinture par pièce depuis 7.0. DyeId 0 signifie non teint, pas noir.",
     "makePalette": "Créer une palette",
-    "paletteTitle": "Nouvelle palette depuis cette mirage",
+    "paletteTitle": "Nouvelle palette depuis ce mirage",
     "paletteNamePlaceholder": "Nom de la palette",
     "paletteNameHint": "Les noms et descriptions de presets ne sont pas traduits — ce que vous tapez ici est ce que chaque joueur verra.",
     "saveLocal": "Enregistrer sur cet appareil",
@@ -1258,7 +1250,7 @@
     "glamourViewDyes": "Teintures",
     "glamourShowAll": "Tout afficher",
     "undyed": "Non teint",
-    "noDyedPieces": "Rien n'est teint sur ce glamour. Activez « Tout afficher » pour lister chaque pièce portée.",
+    "noDyedPieces": "Rien n'est teint sur ce mirage. Activez « Tout afficher » pour lister chaque pièce portée.",
     "facewearSlot": "Lunettes",
     "facewearColorTag": "{color} · couleur de lunettes",
     "facewearColorUnknown": "Couleur de lunettes inconnue",
@@ -1309,7 +1301,7 @@
     "tooFewTag": "MIN. 3",
     "tooFewBody": "Une palette demande au moins trois teintures — en dessous, c'est un échantillon, pas une palette. Enregistrer et soumettre restent désactivés.",
     "overCapBody": "{n} teintures donnent une bande illisible à la taille d'une carte — redescendez à six ou moins. Enregistrer et soumettre restent désactivés.",
-    "paletteDefaultName": "Palette de glamour",
+    "paletteDefaultName": "Palette de mirage",
     "blendTag": "FUSION · α {alpha}",
     "blendPlain": "FUSION",
     "blendNote": "La couleur des lèvres composée sur celle de la peau — ce que le personnage montre réellement. La correspondance suit cette couleur, pas la cellule brute.",

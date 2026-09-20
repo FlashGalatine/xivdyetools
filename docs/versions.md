@@ -7,8 +7,9 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-09-18, `@xivdyetools/logger`, `@xivdyetools/worker-kit`, `@xivdyetools/core` and
-> `@xivdyetools/bot-logic` are ahead of their published npm versions and await publication;
+> (PR #123). As of 2026-09-20 (checked against the registry API), `@xivdyetools/core` 5.4.0 and
+> `@xivdyetools/bot-logic` 4.4.0 are ahead of their published npm versions (5.3.0 / 4.3.0) and await
+> publication — publish core first, bot-logic depends on it; the other five packages are at parity;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
@@ -22,14 +23,14 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.11.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.5.8 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.12.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.6.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.3 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.10.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Public REST API** | v0.14.4 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **OpenGraph Worker** | v2.10.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -38,13 +39,13 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.3.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.4.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.3.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.4.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -68,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 1 — minor: new public `foldForSearch()` and `searchByLocalizedName` now folds case, accents, `ß` and width on both sides, so `schneeweiss` finds Schneeweißer and `creme` finds jaune crème (I18N-005; a blanket mark-strip would have erased Japanese dakuten, so the strip is Latin-only); `build-locales.ts` exits 1 on an empty CSV cell instead of emitting English silently, `--allow-missing` to opt out (I18N-007); `getColorWheelName` falls back through `formatKey`; the `extractLocaleCode` JSDoc no longer claims `zh-CN` is unsupported (I18N-009) |
 | v5.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 8 — minor, not patch, because frozen records are an observable change (the house rule logger 2.2.0 set): `hexToHsv` validates before its LRU lookup (the only hex-keyed cache besides `hexToRgb`, which already did), so a bare `RRGGBB` throws cold and warm alike (BUG-009); dye records and their `rgb`/`hsv`/`lab` are frozen at the end of `initialize()` — a consumer mutation now throws `TypeError` instead of corrupting the shared indices (BUG-010); locale objects documented as shared; `CharacterMatchOptions.matchingMethod` JSDoc default corrected to `ciede2000` (BUG-011); the WCAG small-vs-large threshold test can fail (BUG-032) |
 | **v5.2.0** | **Sep 2026** | **Five selectable harmony colour wheels (PR #167) — `COLOR_WHEEL_IDS` (`rgb` / `ryb` / `munsell` / `oklch-hue` / `oklch-lightness`), `getColorWheel`, `parseColorWheelId`, `normalizeColorWheelId`, `HarmonySelectionConfig.wheel`, `HarmonySlot.wheelHue`; with `wheel` unset the output is byte-identical to 5.1.0** |
 | **v5.1.0** | **Sep 2026** | **`getDeltaE_Oklab` is now ΔEOK2 (CSS Color 4 §20.4, `a`/`b` scaled ×2) — changes both the ranking and the numeric scale (~1.4–2×) of the `oklab` matching method; `BAND_VOCABULARY` oklab cuts recalibrated, `HARMONY_MAX_DISTANCE.oklab` 0.13 → 0.21** |
@@ -107,6 +109,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.12.0 | Sep 2026 | 2026-09-19 i18n audit Sprints 2–3 — Privacy Policy and Terms of Service in all six languages, linked by app locale, English governing (I18N-010); Market Board is one official term per locale — fr `tableau des ventes`, ko `장터`, zh `市场布告板` (TERM-001); the result card's send-to-tool menu renders each tool's own title (TERM-002, seven `resultCard.tools.*` keys deleted); ko/zh say server for a World (TERM-003); config sidebar and tool panels share one label per concept (TERM-004); Korean `안팡` → `안팎` in two keys (I18N-004); name and category sorts use the app locale (I18N-008) |
 | v5.11.0 | Sep 2026 | 2026-09-16 deep-dive Sprints 1–2 + 7 (20 findings) — Palette Extractor **Share** restored (BUG-002: `colors` + `algo` in the link, up to five bar colours, no image; a shared link renders equal-share bands and the matched dyes; og-worker's `/og/extractor` card is reachable again); Back from a preset keeps `<v4-preset-tool>` mounted and resolves from the URL (BUG-005); preset detail renders the prices it fetches (BUG-004); "Submit to Community" chunk-load failure toasts (BUG-003); dead `navigate-to-tool` context actions deleted with a vocabulary guard (REFACTOR-001); new suites for preset-detail, preset-tool, collection-manager-modal, add-to-collection-menu |
 | **v5.10.0** | **Sep 2026** | **Swatch Manager's equipment list gains Copy list and Export .md — the GPOSERS submission template (bold slot labels, worn slots in the template's order, a `Dye` line per dyed channel, `Acquisition:` left blank); Copy puts HTML + plain text on the clipboard so Word / Google Docs keep the bold, Export saves Markdown; the clipboard and file-download mechanics move to `shared/clipboard` and `shared/download-file`** |
 | v5.9.1 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-001–007) — eight unused service/component methods removed (`getWithContext`, `isSaved`, `getBaseUrl`, `getRequiredColor`, `setStyle`, `setOptions`, `onStatusChange`, `updateMessage`); no user-visible change, coverage ratchet held |
@@ -158,6 +161,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.6.0 | Sep 2026 | 2026-09-19 i18n audit Sprints 6–7 — every subcommand and option tooltip in the command picker is localized (I18N-001, 134 of 151 descriptions were English in every locale; the test now asserts coverage and Discord's 8,000-character cap, counted at the longest localization per field); `/manual topic` choices localized (I18N-002); `/about` sentence keyed (HC-001); `/extractor` singular form (I18N-006); CJK subsets re-cut by cmap (JP +絵具, SC +告絵, KR −월) with picker text excluded from the subset. **`register-commands` runs on deploy** |
 | v5.5.8 | Sep 2026 | 2026-09-18 documentation audit — `/manual` brought up to 5.0 in all six languages: names all 17 commands (was 9), the `match_image` topic describes `/extractor image` instead of the deleted `/match_image`, `/swatch` is the `.chara` command; four guards in `manual.test.ts` read the real locale files (roster coverage, Discord embed limits per locale, syntax lines identical to English); text ships in bot-logic 4.3.0 |
 | v5.5.7 | Sep 2026 | 2026-09-16 deep-dive Sprint 4 — `/manual` Spectrum & Prices topic defers so a cold world lookup cannot miss Discord's 3 s ack (BUG-008); `/webhooks/preset-submission` body bounded by streamed bytes (BUG-013); `/stats health` reports `env.ENVIRONMENT` (BUG-012); `/preset` schema carries the 2–50 / 10–200 length bounds and autocomplete names are capped at 100 chars (REFACTOR-003, needs `register-commands`); notify helpers log through the request logger (REFACTOR-002); `/mixer` and `/gradient` adapters gain suites and enter the coverage gate (BUG-033/034); picks up bot-logic 4.3.0 (`/swatch` eye markers) |
 | v5.5.6 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-008) — the test-only `getPreference` single-key reader removed; `getUserPreferences` is the one production path |
@@ -340,6 +344,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.10.3 | Sep 2026 | 2026-09-19 i18n audit follow-up (maintainer naming decisions 2026-09-20) — card names quote the official tool titles in every language: the Swatch Matcher card said "Character Matcher" in de / ja / ko / zh while English already said Swatch Matcher, and the Harmony card now reads Harmony Explorer ×6 (its "Color Harmony" shortening was cut from the retired three-word title); the fr and ko Budget lines name the Market Board (`tableau des ventes`, `장터`) instead of a generic "market price"; crawler descriptions: de `Glamour` → `Projektion`, ko `환영 장비` → `코디`, ko `시장 게시판` → `장터`. No font re-cut needed — every new string is drawable from the existing subsets (font-coverage green). The version bump is what retires the cached cards |
 | v2.10.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 10 — `wheel` is keyed into the cache only for the harmony dye card, not `/og/harmony/default` (BUG-018); the two SPA pass-through fetches carry a 5 s `AbortSignal` and fall back to the app redirect on timeout (OPT-001) |
 | v2.10.1 | Sep 2026 | Crawler metadata logs retain only tool, locale and crawler category |
 | **v2.10.0** | **Sep 2026** | **`/og/harmony/*` reads `?wheel=` (PR #167) — allowlisted against core's `COLOR_WHEEL_IDS`, cache-keyed beside `lang`/`frame`/`algo`, elided when `rgb`; the footer carries a short wheel tag so the X frame says which wheel chose the dyes** |
@@ -471,6 +476,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 5 — minor: `tc()` picks the plural form with `Intl.PluralRules` per locale, so French `0` is singular (I18N-003, was the English rule for every locale); `searchDyesByName` folds accents, `ß` and width through core's `foldForSearch` (I18N-005); 137 subcommand/option descriptions × 6 under `commands.*.options`, generated from discord-worker's schema (I18N-001), plus `about.builtOnBody` and `card.colours_one/_other` (no key removed); zh `市场布告板` / `大区`, ko `서버` / `데이터 센터` (TERM-001, TERM-003). Needs core 5.4.0 |
 | v4.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 3 (minor, not patch — the marker is an observable change to rendered output) — `/swatch` eye rows carry the `·L`/`·R`/`·LR` marker on the row label so off-grid heterochromia rows are told apart (BUG-006); dye-info MKT row derives its item ID through core's `getMarketItemID` (REFACTOR-005) |
 | **v4.2.0** | **Sep 2026** | **`HarmonyInput.wheel` (`ColorWheelId`) passed through to core's `generateHarmonySlots`, `getLocalizedColorWheelName`, `/harmony` share URL carries `&wheel=` (PR #167); `HarmonyInput.harmonyOptions` deprecated — its `colorSpace` has been ignored since PR #159** |
 | v4.1.0 | Sep 2026 | `/comparison`'s duel readout prints `ΔEOK2`; the `/manual` matching-methods topic names it that way in all six locales |
@@ -528,6 +534,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.14.4 | Sep 2026 | 2026-09-19 i18n audit Sprint 4 — `GET /v1/dyes/search?q=` matches more rows because core 5.4.0 folds case, accents, `ß` and width (no worker code change; documented on the reference page); `Variables.locale` is core's `LocaleCode`, not a hand-spelled union (I18N-009) |
 | v0.14.3 | Sep 2026 | 2026-09-18 documentation audit — developer docs site only, no route or response change: `page` (1–1000) and `q` (≤ 100 characters) caps documented on the `/v1/dyes` cards and in the Numeric Ranges table; the `X-RateLimit-Remaining` examples show `64`, a value production can emit, instead of `42` (the header is `limit − 1` while allowed and `0` when refused) |
 | v0.14.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 11 — the SWR-expiry `cache.delete` is caught (BUG-019); `/v1/match` misses go through `ApiError` and every `/v1/*` error `meta` (incl. the route 404) carries `locale` (REFACTOR-004, docs/guide/errors.md updated); HTTP test for the legacy-Facewear negative-id 404 (BUG-037); `serializeDye` literal snapshots (BUG-036) |
 | v0.14.1 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-016) — the `CacheConfigKey` alias moves into the one test that used it; no route or response change |
@@ -582,7 +589,8 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 |----------|---------------------|-------|
 | Web App v5.7+ | @xivdyetools/core v5.2.0+ | Colour-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
-| Discord Worker v5.5+ | @xivdyetools/core v5.2.0+ | `@xivdyetools/bot-logic` v4.2.0+ (`HarmonyInput.wheel`) and `@xivdyetools/svg` v4.1.0+ (`wheelLabel`) |
+| Discord Worker v5.6+ | @xivdyetools/core v5.4.0+ | `@xivdyetools/bot-logic` v4.4.0+ — the `commands.*.options` description keys `localize.ts` reads, `about.builtOnBody`, `card.colours_one/_other`, and core's `foldForSearch` behind dye-name input |
+| Discord Worker v5.5 | @xivdyetools/core v5.2.0+ | `@xivdyetools/bot-logic` v4.2.0+ (`HarmonyInput.wheel`) and `@xivdyetools/svg` v4.1.0+ (`wheelLabel`) |
 | Discord Worker v5.2–5.4 | @xivdyetools/core v4.2.0+ | `@xivdyetools/bot-logic` v3.2.0+ (shared `generateHarmonySlots`); 5.3+ needs bot-logic v4.0.0+ and therefore `@xivdyetools/svg` v4.0.0+ (`generatePresetSwatch` signature) |
 | Moderation Worker v1.6.2+ | — | `@xivdyetools/types` v3.0.0+ (`ModerationStats` field names); `@xivdyetools/bot-logic` v3.1.0+ (shared locale layer) |
 | OG Worker v2.10+ | @xivdyetools/core v5.2.0+ | `?wheel=` validated against `COLOR_WHEEL_IDS`; `@xivdyetools/svg` v4.1.0+ |

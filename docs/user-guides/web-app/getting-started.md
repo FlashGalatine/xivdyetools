@@ -8,7 +8,7 @@
 
 The web app gives you 9 tools to explore FFXIV dye colors. Whether you're planning a glamour, designing housing, or just curious about color combinations, these tools have you covered.
 
-There is no home screen to click through: the app opens straight into a tool — the **Color Harmony Explorer** by default, or whichever tool a shared link points at — and you switch between the nine from the bar at the top.
+There is no home screen to click through: the app opens straight into a tool — the **Harmony Explorer** by default, or whichever tool a shared link points at — and you switch between the nine from the bar at the top.
 
 ---
 
@@ -60,7 +60,7 @@ In the order they appear in the rail. The `1`–`9` number keys follow a slightl
 they agree with the rail for the first five tools, then run `6` Community Presets, `7` Budget
 Suggestions, `8` Swatch Matcher, `9` Dye Mixer:
 
-### 1. Color Harmony Explorer
+### 1. Harmony Explorer
 **"Show me dyes that look good together"** — pick a base dye and get complementary, triadic, analogous, tetradic and other companions on a tappable colour wheel.
 
 ### 2. Palette Extractor
@@ -93,7 +93,7 @@ Suggestions, `8` Swatch Matcher, `9` Dye Mixer:
 
 Let's find dyes that go with one you already own:
 
-1. Open the app — you are in the **Color Harmony Explorer**.
+1. Open the app — you are in the **Harmony Explorer**.
 2. Open the **Color Palette** (on a phone, tap the palette button) and click a dye. It becomes the hub of the wheel.
 3. Pick a harmony from the icon row above the wheel — **Complementary**, **Triadic**, and so on.
 4. The cards under the wheel are the dyes for each slot, with a distance number showing how far each is from the ideal colour. Tap a small swatch dot on a card to swap in an alternate.

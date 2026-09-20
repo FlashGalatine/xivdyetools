@@ -203,6 +203,7 @@
     "links": "Links",
     "dyes": "Dyes",
     "builtOn": "Built on",
+    "builtOnBody": "Market prices from Universalis · Paint mixing by spectral.js",
     "attribution": "Attribution",
     "poweredBy": "Powered by Cloudflare Workers",
     "categories": {
@@ -523,6 +524,8 @@
     "rampTitle": "Palette from image",
     "matchTitle": "Nearest dyes",
     "colours": "{n} colours",
+    "colours_one": "{n} colour",
+    "colours_other": "{n} colours",
     "rampKey": "band width = share of image",
     "matchKey": "nearest by ΔE2000",
     "manualLead": "Colours not what you expected? Try",
@@ -655,55 +658,542 @@
   },
   "commands": {
     "harmony": {
-      "description": "Generate harmonious dye combinations from a color"
+      "description": "Generate harmonious dye combinations from a color",
+      "options": {
+        "color": {
+          "description": "Base color (hex code like #FF5733 or dye name)"
+        },
+        "type": {
+          "description": "Type of color harmony"
+        },
+        "wheel": {
+          "description": "Colour wheel the harmony angles are measured on (default: RGB)"
+        },
+        "companions": {
+          "description": "Number of companion dyes per harmony slot (1-3)"
+        },
+        "matching": {
+          "description": "Algorithm used to find closest dye for companion expansion"
+        },
+        "strict_matching": {
+          "description": "Tighten distance threshold for closer matches"
+        },
+        "prevent_duplicates": {
+          "description": "Deduplicate dyes across all harmony slots"
+        }
+      }
     },
     "mixer": {
-      "description": "Blend two dyes using various color mixing algorithms"
+      "description": "Blend two dyes using various color mixing algorithms",
+      "options": {
+        "dye1": {
+          "description": "First dye to blend (hex code or dye name)"
+        },
+        "dye2": {
+          "description": "Second dye to blend (hex code or dye name)"
+        },
+        "mode": {
+          "description": "Color blending algorithm"
+        },
+        "matching": {
+          "description": "Algorithm for finding closest dyes to the blended result"
+        }
+      }
     },
     "gradient": {
-      "description": "Generate a color gradient between two colors with intermediate dyes"
+      "description": "Generate a color gradient between two colors with intermediate dyes",
+      "options": {
+        "start_color": {
+          "description": "Starting color: hex (e.g., #FF0000) or dye name"
+        },
+        "end_color": {
+          "description": "Ending color: hex (e.g., #0000FF) or dye name"
+        },
+        "steps": {
+          "description": "Number of color steps (default: 6, max 12)"
+        },
+        "color_space": {
+          "description": "Color interpolation mode for gradient"
+        },
+        "matching": {
+          "description": "Algorithm for finding closest dyes"
+        }
+      }
     },
     "extractor": {
-      "description": "Extract colors from inputs and find matching FFXIV dyes"
+      "description": "Extract colors from inputs and find matching FFXIV dyes",
+      "options": {
+        "color": {
+          "description": "Find the closest FFXIV dye(s) to a color",
+          "options": {
+            "color": {
+              "description": "Color to match (hex code like #FF5733 or dye name)"
+            },
+            "count": {
+              "description": "Number of matches to show (1-10)"
+            },
+            "matching": {
+              "description": "Color matching algorithm"
+            }
+          }
+        },
+        "image": {
+          "description": "Extract colors from an image and find matching dyes",
+          "options": {
+            "image": {
+              "description": "Image to analyze"
+            },
+            "colors": {
+              "description": "Number of colors to extract (3-10)"
+            },
+            "matching": {
+              "description": "Color matching algorithm"
+            },
+            "prevent_duplicates": {
+              "description": "Avoid mapping multiple slots to the same dye (default: true)"
+            }
+          }
+        }
+      }
     },
     "swatch": {
-      "description": "Match a character file's colours to the nearest dyes"
+      "description": "Match a character file's colours to the nearest dyes",
+      "options": {
+        "file": {
+          "description": ".chara character file (Anamnesis / Ktisis export)"
+        },
+        "order": {
+          "description": "Row order — both orders show the same five rows"
+        },
+        "slot": {
+          "description": "Show the five nearest dyes for one slot instead"
+        }
+      }
     },
     "dye": {
-      "description": "Search and explore FFXIV dyes"
+      "description": "Search and explore FFXIV dyes",
+      "options": {
+        "search": {
+          "description": "Search for dyes by name",
+          "options": {
+            "query": {
+              "description": "Search term (dye name)"
+            }
+          }
+        },
+        "info": {
+          "description": "Get detailed information about a specific dye",
+          "options": {
+            "name": {
+              "description": "Dye name"
+            }
+          }
+        },
+        "list": {
+          "description": "List dyes by category",
+          "options": {
+            "category": {
+              "description": "Dye category"
+            }
+          }
+        },
+        "random": {
+          "description": "Show 5 randomly selected dyes",
+          "options": {
+            "unique_categories": {
+              "description": "Limit to 1 dye per category (default: false)"
+            }
+          }
+        }
+      }
     },
     "comparison": {
-      "description": "Compare 2-4 dyes side-by-side with color analysis"
+      "description": "Compare 2-4 dyes side-by-side with color analysis",
+      "options": {
+        "dye1": {
+          "description": "First dye (hex code or dye name)"
+        },
+        "dye2": {
+          "description": "Second dye (hex code or dye name)"
+        },
+        "dye3": {
+          "description": "Third dye (optional)"
+        },
+        "dye4": {
+          "description": "Fourth dye (optional)"
+        }
+      }
     },
     "contrast": {
-      "description": "WCAG non-text contrast between dye pairs (floor 3:1)"
+      "description": "WCAG non-text contrast between dye pairs (floor 3:1)",
+      "options": {
+        "dye1": {
+          "description": "First dye (hex code or dye name)"
+        },
+        "dye2": {
+          "description": "Second dye (hex code or dye name)"
+        },
+        "dye3": {
+          "description": "Third dye (optional)"
+        },
+        "dye4": {
+          "description": "Fourth dye (optional)"
+        }
+      }
     },
     "accessibility": {
-      "description": "How a dye or a pair of dyes survives each kind of color vision"
+      "description": "How a dye or a pair of dyes survives each kind of color vision",
+      "options": {
+        "dye": {
+          "description": "Primary dye (hex code or dye name)"
+        },
+        "dye2": {
+          "description": "Second dye — renders the pair frames (optional)"
+        },
+        "vision": {
+          "description": "The lens: a named type renders one lens, All renders every lens"
+        }
+      }
     },
     "a11y": {
-      "description": "How a dye or a pair of dyes survives each kind of color vision"
+      "description": "How a dye or a pair of dyes survives each kind of color vision",
+      "options": {
+        "dye": {
+          "description": "Primary dye (hex code or dye name)"
+        },
+        "dye2": {
+          "description": "Second dye — renders the pair frames (optional)"
+        },
+        "vision": {
+          "description": "The lens: a named type renders one lens, All renders every lens"
+        }
+      }
     },
     "budget": {
-      "description": "Find affordable dye alternatives using market board prices"
+      "description": "Find affordable dye alternatives using market board prices",
+      "options": {
+        "find": {
+          "description": "Find cheaper alternatives to an expensive dye",
+          "options": {
+            "target_dye": {
+              "description": "The expensive dye you want alternatives for"
+            },
+            "world": {
+              "description": "World or datacenter for prices (uses saved preference if not set)"
+            },
+            "matching": {
+              "description": "Color matching algorithm for the ΔE column"
+            },
+            "max_distance": {
+              "description": "Match line — furthest ΔE2000 to consider (2-20, default: 8)"
+            },
+            "exclude_coffers": {
+              "description": "Remove Venture Coffer dyes (gacha — priced by player resale only)"
+            },
+            "exclude_wide_spectrum": {
+              "description": "Remove Wide Spectrum #1/#2 dyes (scrip/credit acquisition path)"
+            }
+          }
+        },
+        "set_world": {
+          "description": "Save your preferred world/datacenter for price lookups",
+          "options": {
+            "world": {
+              "description": "World or datacenter name"
+            }
+          }
+        },
+        "quick": {
+          "description": "Quick budget check for popular expensive dyes",
+          "options": {
+            "preset": {
+              "description": "Popular expensive dye to find alternatives for"
+            },
+            "world": {
+              "description": "World or datacenter for prices (uses saved preference if not set)"
+            }
+          }
+        }
+      }
     },
     "preset": {
-      "description": "Browse, submit, and vote on community color presets"
+      "description": "Browse, submit, and vote on community color presets",
+      "options": {
+        "list": {
+          "description": "Browse community presets",
+          "options": {
+            "category": {
+              "description": "Filter by category"
+            },
+            "sort": {
+              "description": "Sort order"
+            }
+          }
+        },
+        "show": {
+          "description": "Display a specific preset",
+          "options": {
+            "name": {
+              "description": "Preset name"
+            }
+          }
+        },
+        "random": {
+          "description": "Get a random preset for inspiration",
+          "options": {
+            "category": {
+              "description": "Filter by category"
+            }
+          }
+        },
+        "submit": {
+          "description": "Submit a new community preset",
+          "options": {
+            "preset_name": {
+              "description": "Name for your preset (2-50 characters)"
+            },
+            "description": {
+              "description": "Describe your preset (10-200 characters)"
+            },
+            "category": {
+              "description": "Preset category"
+            },
+            "dye1": {
+              "description": "First dye (required)"
+            },
+            "dye2": {
+              "description": "Second dye (required)"
+            },
+            "dye3": {
+              "description": "Third dye (required)"
+            },
+            "dye4": {
+              "description": "Fourth dye (optional)"
+            },
+            "dye5": {
+              "description": "Fifth dye (optional)"
+            },
+            "dye6": {
+              "description": "Sixth dye (optional)"
+            },
+            "tags": {
+              "description": "Comma-separated tags (optional, max 10)"
+            }
+          }
+        },
+        "vote": {
+          "description": "Toggle your vote on a preset",
+          "options": {
+            "preset": {
+              "description": "Preset to vote on"
+            }
+          }
+        },
+        "edit": {
+          "description": "Edit one of your presets",
+          "options": {
+            "preset": {
+              "description": "The preset to edit"
+            },
+            "name": {
+              "description": "New preset name (2-50 characters)"
+            },
+            "description": {
+              "description": "New description (10-200 characters)"
+            },
+            "tags": {
+              "description": "New tags (comma-separated)"
+            },
+            "dye1": {
+              "description": "First dye"
+            },
+            "dye2": {
+              "description": "Second dye"
+            },
+            "dye3": {
+              "description": "Third dye"
+            },
+            "dye4": {
+              "description": "Fourth dye"
+            },
+            "dye5": {
+              "description": "Fifth dye"
+            },
+            "dye6": {
+              "description": "Sixth dye"
+            }
+          }
+        },
+        "favorite": {
+          "description": "Manage your favorite community presets",
+          "options": {
+            "add": {
+              "description": "Add a preset to your favorites",
+              "options": {
+                "preset_name": {
+                  "description": "Preset to favorite"
+                }
+              }
+            },
+            "remove": {
+              "description": "Remove a preset from your favorites",
+              "options": {
+                "preset_name": {
+                  "description": "Preset to unfavorite"
+                }
+              }
+            },
+            "list": {
+              "description": "List your favorited presets"
+            }
+          }
+        }
+      }
     },
     "preferences": {
-      "description": "Manage your personal bot preferences"
+      "description": "Manage your personal bot preferences",
+      "options": {
+        "show": {
+          "description": "Display your current preferences"
+        },
+        "set": {
+          "description": "Set one or more preferences (all options are optional)",
+          "options": {
+            "language": {
+              "description": "UI language for dye names and messages"
+            },
+            "blending": {
+              "description": "Default blending mode for /mixer"
+            },
+            "matching": {
+              "description": "Default color matching method"
+            },
+            "count": {
+              "description": "Default number of matches for /extractor color (1-10)"
+            },
+            "clan": {
+              "description": "Default clan for /swatch (e.g., Midlander, Raen)"
+            },
+            "gender": {
+              "description": "Default gender for /swatch"
+            },
+            "world": {
+              "description": "Default world/datacenter for market prices"
+            },
+            "market": {
+              "description": "Show Market Board prices by default"
+            },
+            "show_hex": {
+              "description": "Show hex color codes on result cards"
+            },
+            "show_rgb": {
+              "description": "Show RGB values on result cards"
+            },
+            "show_hsv": {
+              "description": "Show HSV values on result cards"
+            },
+            "show_lab": {
+              "description": "Show LAB values on result cards"
+            },
+            "show_deltae": {
+              "description": "Show Delta-E color distance on result cards"
+            },
+            "show_acquisition": {
+              "description": "Show dye acquisition source on result cards"
+            },
+            "theme": {
+              "description": "Card theme for every generated image"
+            }
+          }
+        },
+        "reset": {
+          "description": "Reset a preference to default (or all if no key specified)",
+          "options": {
+            "key": {
+              "description": "Preference to reset (omit for all)"
+            }
+          }
+        },
+        "filters": {
+          "description": "Manage dye type filters for search results",
+          "options": {
+            "set": {
+              "description": "Set dye type filters (all options are optional)",
+              "options": {
+                "metallic": {
+                  "description": "Exclude metallic dyes"
+                },
+                "pastel": {
+                  "description": "Exclude pastel dyes"
+                },
+                "dark": {
+                  "description": "Exclude dark dyes"
+                },
+                "cosmic": {
+                  "description": "Exclude cosmic dyes"
+                },
+                "ishgardian": {
+                  "description": "Exclude Ishgardian dyes"
+                },
+                "expensive": {
+                  "description": "Exclude expensive dyes (Pure White / Jet Black)"
+                },
+                "vendor": {
+                  "description": "Exclude vendor-sold dyes"
+                },
+                "craft": {
+                  "description": "Exclude crafted dyes"
+                }
+              }
+            },
+            "show": {
+              "description": "Display your current dye filter settings"
+            },
+            "reset": {
+              "description": "Clear all dye filters"
+            }
+          }
+        }
+      }
     },
     "manual": {
-      "description": "Show help and usage guide for all commands"
+      "description": "Show help and usage guide for all commands",
+      "options": {
+        "topic": {
+          "description": "Specific help topic"
+        }
+      }
     },
     "changelog": {
-      "description": "See what's new in the Discord bot — release notes, newest first"
+      "description": "See what's new in the Discord bot — release notes, newest first",
+      "options": {
+        "version": {
+          "description": "Expand a specific release (e.g. 5.0.0)"
+        }
+      }
     },
     "about": {
       "description": "Show information about the XIV Dye Tools bot"
     },
     "stats": {
-      "description": "Display bot usage statistics and information"
+      "description": "Display bot usage statistics and information",
+      "options": {
+        "summary": {
+          "description": "Show basic bot information (public)"
+        },
+        "overview": {
+          "description": "Show usage metrics (admin only)"
+        },
+        "commands": {
+          "description": "Show per-command breakdown (admin only)"
+        },
+        "preferences": {
+          "description": "Show preference adoption rates (admin only)"
+        },
+        "health": {
+          "description": "Show system health status (admin only)"
+        }
+      }
     }
   }
 }

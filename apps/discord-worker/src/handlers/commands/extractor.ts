@@ -583,7 +583,10 @@ async function processImageExtraction(
       embeds: [
         {
           title: t.t('card.rampTitle'),
-          description: `${t.t('card.colours', { n: matches.length })}\n${manualLine}`,
+          // I18N-006: `matches.length === 1` is reachable when K-means collapses
+          // to a single cluster (near-monochrome upload) — use `.tc()` so that
+          // path renders "1 colour" instead of the bare-key single form.
+          description: `${t.tc('card.colours', matches.length, { n: matches.length })}\n${manualLine}`,
           color: parseInt(dominantHex.replace('#', ''), 16),
           image: { url: 'attachment://extractor-image.png' },
         },

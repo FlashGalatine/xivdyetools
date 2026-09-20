@@ -69,7 +69,7 @@ Click a card to open it. **Back to list** returns. The page shows:
 - **PALETTE** — a readable list: swatch, dye name, hex, source, and the vendor price or *"not sold"*
 - **PALETTE COST** — a plain-language note: *"All 4 are vendor stock — buy the whole palette for 864 gil."* or *"2 of 5 are vendor stock. Jet Black · Pure White not sold — Venture Coffers."* Scrip, credit and coffer dyes are named with their source, never converted to gil.
 - **Tags**
-- **TAKE THIS PALETTE INTO** — four handoff buttons so the page doesn't dead-end: **Color Harmony Explorer** (*Build around one of these*), **Dye Comparison** (*Measure them against each other* — the first four dyes), **Gradient Builder** (*Blend two of them* — the first two), **Accessibility Checker** (*Check they stay distinct* — the first four)
+- **TAKE THIS PALETTE INTO** — four handoff buttons so the page doesn't dead-end: **Harmony Explorer** (*Build around one of these*), **Dye Comparison** (*Measure them against each other* — the first four dyes), **Gradient Builder** (*Blend two of them* — the first two), **Accessibility Checker** (*Check they stay distinct* — the first four)
 - Actions: **Copy Link**, **Vote · {n}** (community presets), and **Edit** / **Delete** on your own
 
 ---
@@ -148,7 +148,7 @@ the one thing only the web app can do — sign in, open **My Submissions**, and 
 
 ## Related Tools
 
-- [Color Harmony Explorer](color-harmony.md) - Build around a preset's dye
+- [Harmony Explorer](color-harmony.md) - Build around a preset's dye
 - [Dye Comparison](dye-comparison.md) - Measure a preset's dyes against each other
 - [Swatch Matcher](swatch-matcher.md) - Turn your character's glamour into a preset
 - [Favorites & Collections](favorites-collections.md) - Where saved presets and local palettes live

@@ -1,0 +1,80 @@
+{
+  "_readme": [
+    "Allow-lists for `locale-quality.test.ts`. Two rules, each with its exceptions:",
+    "",
+    "identicalToEnglish - a value literally equal to en.json is an untranslated",
+    "  string unless it is listed here with one of five reasons (the web app's",
+    "  scripts/i18n-identical-allowlist.json uses the same five):",
+    "    format     - placeholders / punctuation / symbols only",
+    "    unit       - a unit, ratio or colour-space name written the same everywhere",
+    "    identifier - an ALL-CAPS card label or a data field name used as a token",
+    "    brand      - a product, company or platform name",
+    "    cognate    - the word exists, spelled identically, in that language",
+    "  \"*\" lists keys identical in every locale by design. `manual.<topic>.name`",
+    "  is command syntax and is exempt by rule, not listed.",
+    "",
+    "sameEnglish - keys that share ONE English value share one value per locale,",
+    "  unless the group is listed with the two jobs the English label is doing.",
+    "  Shape: { \"<English value>\": { \"<locale>\" | \"*\": \"<reason>\" } }.",
+    "",
+    "An entry that no longer applies fails the test, so this file cannot rot.",
+    "Seeded 2026-09-20; every cognate and every same-English group was read in",
+    "context by a reviewer at native level",
+    "(docs/audits/2026-09-19-i18n/evidence/review-open-items.md, Tasks 3 and 5)."
+  ],
+  "identicalToEnglish": {
+    "*": {
+      "about.title": "brand - the bot's name (zh adds 机器人)",
+      "card.perDe": "unit - gil per delta-E column header",
+      "card.ratioBand1": "unit - WCAG contrast threshold",
+      "card.ratioBand2": "unit - WCAG contrast threshold",
+      "card.ratioBand3": "unit - WCAG contrast threshold",
+      "common.footer": "brand - product name",
+      "common.hsv": "unit - colour-space name",
+      "common.rgb": "unit - colour-space name",
+      "firstRun.title": "brand - product name and version",
+      "matchImageHelp.supportedFormatsContent": "format - a list of file-format names",
+      "webhook.sources.discord": "brand - platform name"
+    },
+    "ja": {},
+    "de": {
+      "about.categories.community": "cognate - 'Community' is German usage",
+      "about.links": "cognate - 'Links' is German",
+      "about.version": "cognate - 'Version' is German",
+      "card.restCol": "cognate - 'der Rest'",
+      "card.swatchSlot": "identifier - ALL-CAPS card column; 'Slot' is Duden-listed German",
+      "gradient.startColor": "cognate - 'Start' is German",
+      "manual.tips.links": "cognate - 'Links' is German",
+      "preferences.filters.labels.metallic": "cognate - core's own German label is 'Metallic'",
+      "preset.name": "cognate - 'Name' is German",
+      "preset.tags": "cognate - 'Tags' is German usage",
+      "webhook.fields.tags": "cognate - 'Tags' is German usage"
+    },
+    "fr": {
+      "about.version": "cognate - 'Version' is French",
+      "card.base": "cognate - 'base' is French",
+      "card.ratioCol": "cognate - 'ratio' is a French noun",
+      "card.ratioShort": "cognate - 'ratio' is a French noun",
+      "card.tier0": "cognate - 'exact' is French",
+      "preferences.filters.labels.pastel": "cognate - 'pastel' is French",
+      "preset.cardVotes_one": "cognate - 'vote' is French",
+      "preset.cardVotes_other": "cognate - 'votes' is French",
+      "preset.tags": "cognate - 'Tags' is French usage",
+      "preset.votes": "cognate - 'Votes' is French",
+      "quality.excellent": "cognate - 'Excellent' is French",
+      "stats.summary.documentation": "cognate - 'Documentation' is French",
+      "webhook.fields.source": "cognate - 'Source' is French",
+      "webhook.fields.tags": "cognate - 'Tags' is French usage"
+    },
+    "ko": {},
+    "zh": {}
+  },
+  "sameEnglish": {
+    "RATIO": {
+      "*": "the contrast card's wide column header vs its narrow in-cell label - both reach one generator"
+    },
+    "TARGET": {
+      "*": "target colour (sheet and extractor cards) vs the target-dye row of the budget ledger"
+    }
+  }
+}

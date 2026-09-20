@@ -1,6 +1,8 @@
 # XIV Dye Tools — Terms of Service (web app)
 
-**Last updated:** 2026-09-16 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
+> Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
+
+**Last updated:** 2026-09-20 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
 your data is a separate document: [`PRIVACY.md`](PRIVACY.md). The Discord bot has its own terms:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
@@ -156,8 +158,8 @@ may stay up after you leave, under the licence above — ask us if you want them
 These terms are governed by the laws of the State of North Carolina, USA, without regard to its
 conflict-of-laws rules. Any dispute that cannot be settled by talking it through first will be
 brought in the state or federal courts located in North Carolina, and you and we agree to that
-venue. Nothing here takes away a consumer-protection right your local law gives you and does not
-let you waive.
+venue. Nothing here takes away any consumer-protection right that the law of the place where you
+live gives you and that the same law does not let you waive.
 
 ## Contact
 

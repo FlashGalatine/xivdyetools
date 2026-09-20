@@ -1,0 +1,23 @@
+{
+  "packages/bot-logic/src/i18n/locales": {
+    "ja": [
+      ["card.found", "最も近い色", "近いカララント"]
+    ],
+    "de": [
+      ["card.swatchNearest", "NÄCHSTE FARBE", "NÄCHSTER FARBSTOFF"],
+      ["card.slotLimbal", "LIMBAL", "LIMBUS"],
+      ["about.poweredBy", "Powered by Cloudflare Workers", "Betrieben mit Cloudflare Workers"],
+      ["matchImageHelp.poweredBy", "Powered by Photon WASM Bildverarbeitung", "Betrieben mit Photon-WASM-Bildverarbeitung"]
+    ],
+    "fr": [
+      ["card.found", "TROUVÉ", "TEINTURE PROCHE"],
+      ["card.slotLimbal", "LIMBAL", "LIMBE"]
+    ],
+    "ko": [
+      ["card.found", "가장 가까운", "가까운 염료"]
+    ],
+    "zh": [
+      ["card.found", "最接近", "最近的染剂"]
+    ]
+  }
+}

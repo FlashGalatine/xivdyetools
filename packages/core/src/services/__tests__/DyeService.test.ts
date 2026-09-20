@@ -380,5 +380,76 @@ describe('DyeService', () => {
         expect(englishResults).toHaveLength(1);
       });
     });
+
+    describe('searchByLocalizedName — accent/case/width folding (I18N-005)', () => {
+      it('finds a German dye whose name contains ß via an ASCII-only query', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockImplementation((itemID: number) => {
+          if (itemID === 5729) return 'Schneeweißer'; // de name for Snow White
+          return null;
+        });
+
+        const results = dyeService.searchByLocalizedName('schneeweiss', 'de');
+        expect(results).toHaveLength(1);
+        expect(results[0].name).toBe('Snow White');
+      });
+
+      it('finds a German dye whose name contains ß in a different position', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockImplementation((itemID: number) => {
+          if (itemID === 5730) return 'Rußschwarzer'; // de name for Soot Black
+          return null;
+        });
+
+        const results = dyeService.searchByLocalizedName('russschwarz', 'de');
+        expect(results).toHaveLength(1);
+        expect(results[0].name).toBe('Ash Grey');
+      });
+
+      it('finds a French dye whose name carries an accent via an unaccented query', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockImplementation((itemID: number) => {
+          if (itemID === 5729) return 'jaune crème';
+          return null;
+        });
+
+        const results = dyeService.searchByLocalizedName('creme', 'fr');
+        expect(results).toHaveLength(1);
+        expect(results[0].name).toBe('Snow White');
+      });
+
+      it('finds a Japanese dye via a half-width kana query (NFKC folding)', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockImplementation((itemID: number) => {
+          if (itemID === 5729) return 'スノウホワイト';
+          return null;
+        });
+
+        // Half-width katakana equivalent of 'スノウ'
+        const results = dyeService.searchByLocalizedName('ｽﾉｳ', 'ja');
+        expect(results).toHaveLength(1);
+        expect(results[0].name).toBe('Snow White');
+      });
+
+      it('still matches an English query via the pre-computed nameLower fast path', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue(null);
+
+        const results = dyeService.searchByLocalizedName('SNOW', 'de');
+        expect(results).toHaveLength(1);
+        expect(results[0].name).toBe('Snow White');
+      });
+
+      it('does not fold Japanese dakuten — が must not match a か query', () => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockImplementation((itemID: number) => {
+          if (itemID === 5729) return 'があ'; // contains が (dakuten), not か
+          return null;
+        });
+
+        const results = dyeService.searchByLocalizedName('か', 'ja');
+        expect(results).toHaveLength(0);
+      });
+    });
   });
 });

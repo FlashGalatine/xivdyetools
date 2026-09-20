@@ -6,7 +6,12 @@
  * as a virtual module.
  *
  * Usage in code:
- *   import { changelogEntries } from 'virtual:changelog'
+ *   import { changelogEntries, olderReleases } from 'virtual:changelog'
+ *
+ * The module is bounded in BYTES (`boundChangelog`), newest release first: it is
+ * its own lazy chunk with a byte budget in `scripts/check-bundle-size.js`, and a
+ * bound in any other unit cannot keep that budget true. `olderReleases` says how
+ * many releases were left out, so the modal can link to the full file.
  *
  * Expected CHANGELOG-laymans.md format (one block per release, newest first):
  *
@@ -49,7 +54,6 @@ interface ChangelogEntry {
 // ============================================================================
 
 const MAX_HIGHLIGHTS_PER_VERSION = 6;
-const MAX_VERSIONS_TO_INCLUDE = 50; // Show the full release history; bounded to keep the bundle sane
 const MAX_HIGHLIGHT_LENGTH = 100; // Truncate very long highlights
 const MAX_BULLET_LENGTH = 200; // Truncate very long bullet descriptions
 
@@ -99,7 +103,7 @@ export function parseChangelog(content: string): ChangelogEntry[] {
     });
   }
 
-  for (let i = 0; i < Math.min(headers.length, MAX_VERSIONS_TO_INCLUDE); i++) {
+  for (let i = 0; i < headers.length; i++) {
     const header = headers[i];
     const nextHeader = headers[i + 1];
 
@@ -129,6 +133,51 @@ export function parseChangelog(content: string): ChangelogEntry[] {
   }
 
   return entries;
+}
+
+// ============================================================================
+// Size bound
+// ============================================================================
+
+/**
+ * JSON bytes the emitted module may carry. The chunk's gate is 40 KB
+ * (`scripts/check-bundle-size.js`, "release notes (on open)"); minification only
+ * shrinks the JSON (it drops the quotes around keys), so 36 KB here keeps the
+ * built chunk under that limit with room for the module wrapper.
+ *
+ * Until 2026-09-20 the bound was a COUNT — 50 releases — while the gate counted
+ * bytes. At the measured 1.27 KB per release that cap meant ~64 KB, so the two
+ * never agreed: the chunk crossed 40 KB on its 32nd release and the limit was
+ * raised to 48 KB, which was six releases away from tripping again.
+ */
+export const MAX_MODULE_BYTES = 36 * 1024;
+
+/** Always ship at least this many releases, whatever they weigh. */
+export const MIN_RELEASES = 10;
+
+/**
+ * Keep the newest releases that fit `maxBytes`, contiguously — the first release
+ * that does not fit ends the list, so the modal never shows a history with a
+ * hole in it. `minReleases` wins over the budget: if the newest ten really do
+ * outgrow it, the bundle gate goes red, and an oversized release note is worth
+ * being told about.
+ *
+ * Exported for unit testing.
+ */
+export function boundChangelog(
+  entries: ChangelogEntry[],
+  maxBytes: number = MAX_MODULE_BYTES,
+  minReleases: number = MIN_RELEASES
+): { entries: ChangelogEntry[]; olderReleases: number } {
+  const kept: ChangelogEntry[] = [];
+  let bytes = 2; // the enclosing []
+  for (const entry of entries) {
+    const size = Buffer.byteLength(JSON.stringify(entry), 'utf-8') + 1; // + the comma
+    if (kept.length >= minReleases && bytes + size > maxBytes) break;
+    kept.push(entry);
+    bytes += size;
+  }
+  return { entries: kept, olderReleases: entries.length - kept.length };
 }
 
 /**
@@ -265,7 +314,7 @@ const CHANGELOG_CANDIDATES = ['CHANGELOG-laymans.md', 'CHANGELOG-tldr.md'] as co
 
 export function changelogParser(): Plugin {
   let changelogPath: string;
-  let cachedEntries: ChangelogEntry[] | null = null;
+  let cached: { entries: ChangelogEntry[]; olderReleases: number } | null = null;
 
   return {
     name: 'changelog-parser',
@@ -296,19 +345,26 @@ export function changelogParser(): Plugin {
     load(id) {
       if (id === RESOLVED_VIRTUAL_MODULE_ID) {
         // Parse changelog if not cached
-        if (!cachedEntries) {
+        if (!cached) {
           try {
             const content = readFileSync(changelogPath, 'utf-8');
-            cachedEntries = parseChangelog(content);
-            console.log(`[changelog-parser] Parsed ${cachedEntries.length} changelog entries`);
+            const parsed = parseChangelog(content);
+            cached = boundChangelog(parsed);
+            console.log(
+              `[changelog-parser] Parsed ${parsed.length} changelog entries, ` +
+                `shipping the newest ${cached.entries.length}`
+            );
           } catch (error) {
             console.warn(`[changelog-parser] Failed to parse ${changelogPath}:`, error);
-            cachedEntries = [];
+            cached = { entries: [], olderReleases: 0 };
           }
         }
 
         // Export as ES module
-        return `export const changelogEntries = ${JSON.stringify(cachedEntries, null, 2)};`;
+        return (
+          `export const changelogEntries = ${JSON.stringify(cached.entries, null, 2)};\n` +
+          `export const olderReleases = ${cached.olderReleases};`
+        );
       }
     },
 
@@ -318,7 +374,7 @@ export function changelogParser(): Plugin {
       server.watcher.on('change', (path) => {
         if (path === changelogPath) {
           console.log('[changelog-parser] Changelog changed, invalidating cache');
-          cachedEntries = null;
+          cached = null;
 
           // Invalidate the virtual module to trigger HMR
           const mod = server.moduleGraph.getModuleById(RESOLVED_VIRTUAL_MODULE_ID);

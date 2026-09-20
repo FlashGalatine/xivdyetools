@@ -24,30 +24,47 @@ vi.mock('@services/telemetry-service', () => ({
 }));
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockGetByStainId, JA_DYE_NAMES } = vi.hoisted(() => ({
-  mockGetAllDyes: vi.fn(),
-  mockGetDyeById: vi.fn(),
-  mockGetByStainId: vi.fn(),
-  /**
-   * Localized names for the mockDyes itemIDs, deliberately numbered so that
-   * their alphabetical order is the REVERSE of the English one: `mockDyes[0]`
-   * ("Snow White", 5729) sorts last in English and first here. A sort or search
-   * that still reads `dye.name` therefore produces a different result, so these
-   * tests fail if the localized helpers are reverted.
-   */
-  JA_DYE_NAMES: {
-    5729: 'ja-01-スノーホワイト',
-    5730: 'ja-02-アッシュグレイ',
-    5731: 'ja-03-ソートブラック',
-    5732: 'ja-04-ローズピンク',
-    5733: 'ja-05-ワインレッド',
-    5734: 'ja-06-コーラルピンク',
-    5735: 'ja-07-ブラッドレッド',
-    5736: 'ja-08-サンセットオレンジ',
-    5737: 'ja-09-ダラガブレッド',
-    5738: 'ja-10-スカイブルー',
-  } as Record<number, string>,
-}));
+const { mockGetAllDyes, mockGetDyeById, mockGetByStainId, JA_DYE_NAMES, JA_CATEGORY_NAMES } =
+  vi.hoisted(() => ({
+    mockGetAllDyes: vi.fn(),
+    mockGetDyeById: vi.fn(),
+    mockGetByStainId: vi.fn(),
+    /**
+     * Localized names for the mockDyes itemIDs, deliberately numbered so that
+     * their alphabetical order is the REVERSE of the English one: `mockDyes[0]`
+     * ("Snow White", 5729) sorts last in English and first here. A sort or search
+     * that still reads `dye.name` therefore produces a different result, so these
+     * tests fail if the localized helpers are reverted.
+     */
+    JA_DYE_NAMES: {
+      5729: 'ja-01-スノーホワイト',
+      5730: 'ja-02-アッシュグレイ',
+      5731: 'ja-03-ソートブラック',
+      5732: 'ja-04-ローズピンク',
+      5733: 'ja-05-ワインレッド',
+      5734: 'ja-06-コーラルピンク',
+      5735: 'ja-07-ブラッドレッド',
+      5736: 'ja-08-サンセットオレンジ',
+      5737: 'ja-09-ダラガブレッド',
+      5738: 'ja-10-スカイブルー',
+    } as Record<number, string>,
+    /**
+     * I18N-008: localized CATEGORY labels, numbered so their alphabetical
+     * order is neither the English category-id order (Black, Blue, Grey,
+     * Orange, Red, White) nor coincidentally matching it — Blue sorts FIRST
+     * here and White sorts LAST, the reverse of English. A sort still
+     * comparing raw `dye.category` ids produces a different order, so these
+     * tests fail if the fix is reverted.
+     */
+    JA_CATEGORY_NAMES: {
+      White: 'ja-cat-06-white',
+      Grey: 'ja-cat-05-grey',
+      Black: 'ja-cat-04-black',
+      Red: 'ja-cat-02-red',
+      Orange: 'ja-cat-03-orange',
+      Blue: 'ja-cat-01-blue',
+    } as Record<string, string>,
+  }));
 
 // `@shared/dye-name` imports LanguageService from its own module, not the
 // `@services/index` barrel — mocking only the barrel would leave the helpers
@@ -86,7 +103,7 @@ vi.mock('@services/index', () => ({
       `${key}: ${Object.values(params).join('/')}`,
     getDyeName: (itemId: number) => JA_DYE_NAMES[itemId] ?? null,
     getCurrentLocale: () => 'ja',
-    getCategory: (category: string) => category,
+    getCategory: (category: string) => JA_CATEGORY_NAMES[category] ?? category,
     getAcquisition: (acquisition: string) => acquisition,
     getCurrency: (currency: string) => currency,
     subscribe: vi.fn().mockReturnValue(() => {}),
@@ -368,6 +385,37 @@ describe('DyeSelector', () => {
       // name 'Snow White' (ja-01) leads.
       expect(names[0]).toBe('ja-01-スノーホワイト');
       expect(names).toEqual([...names].sort((a, b) => a.localeCompare(b, 'ja')));
+    });
+
+    it('sorts by category using the localized category label, not the raw English id (I18N-008)', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+
+      fire('sort-changed', 'category');
+
+      // JA_CATEGORY_NAMES orders Blue < Red < Orange < Black < Grey < White —
+      // the reverse of the English category-id order (Black < Blue < Grey <
+      // Orange < Red < White). Comparing raw `dye.category` strings would
+      // produce the English order instead, so a category-id regression fails
+      // this on the very first dye.
+      const names = renderedNames();
+      expect(names).toHaveLength(mockDyes.length);
+      expect(names[0]).toBe('ja-10-スカイブルー'); // Sky Blue: only Blue dye
+
+      // Within the Red group (5 dyes), the tie-break is still the localized
+      // NAME comparator (compareDyeNames), so those five stay in their own
+      // localized-name order rather than falling back to insertion order.
+      const redGroupStart = names.indexOf('ja-04-ローズピンク');
+      expect(names.slice(redGroupStart, redGroupStart + 5)).toEqual([
+        'ja-04-ローズピンク',
+        'ja-05-ワインレッド',
+        'ja-06-コーラルピンク',
+        'ja-07-ブラッドレッド',
+        'ja-09-ダラガブレッド',
+      ]);
+
+      // Last category alphabetically (White) is last overall.
+      expect(names[names.length - 1]).toBe('ja-01-スノーホワイト'); // Snow White
     });
   });
 

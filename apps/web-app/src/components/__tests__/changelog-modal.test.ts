@@ -47,12 +47,18 @@ vi.mock('@shared/constants', () => ({
 // fallback -- expand the NEWEST release when the running version is missing
 // from the parsed changelog -- had no test. Hoisted and mutable so one test can
 // take that entry away.
-const { changelogEntriesFixture } = vi.hoisted(() => ({
+const { changelogEntriesFixture, olderReleasesFixture } = vi.hoisted(() => ({
   changelogEntriesFixture: [] as Array<Record<string, unknown>>,
+  // How many releases the build left out of the chunk (boundChangelog). Mutable
+  // for the same reason as the entries: one test needs it non-zero.
+  olderReleasesFixture: { value: 0 },
 }));
 
 vi.mock('virtual:changelog', () => ({
   changelogEntries: changelogEntriesFixture,
+  get olderReleases() {
+    return olderReleasesFixture.value;
+  },
 }));
 
 const DEFAULT_ENTRIES = [
@@ -89,6 +95,7 @@ describe('ChangelogModal', () => {
     // it in place rather than reassigning.
     changelogEntriesFixture.length = 0;
     changelogEntriesFixture.push(...DEFAULT_ENTRIES);
+    olderReleasesFixture.value = 0;
   });
 
   afterEach(() => {
@@ -267,6 +274,29 @@ describe('ChangelogModal', () => {
       // Full mode renders a "v<version> — <date>" heading for each parsed entry.
       expect(config.content.textContent).toContain('v4.0.0');
       expect(config.content.textContent).toContain('v3.3.0');
+    });
+
+    it('links to the full release notes only when the build left releases out', async () => {
+      const link = (content: HTMLElement) =>
+        content.querySelector<HTMLAnchorElement>('[data-testid="changelog-older-releases"]');
+
+      const complete = await freshModule();
+      await complete.showChangelogModal();
+      const whole = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
+      expect(link(whole.content)).toBeNull();
+
+      olderReleasesFixture.value = 9;
+      const bounded = await freshModule();
+      await bounded.showChangelogModal();
+      const trimmed = mockShowChangelog.mock.calls[0][0] as { content: HTMLElement };
+      const anchor = link(trimmed.content);
+      expect(anchor).not.toBeNull();
+      expect(anchor!.href).toBe(
+        'https://github.com/FlashGalatine/xivdyetools/blob/main/apps/web-app/CHANGELOG-laymans.md'
+      );
+      // Leaves the app, so it must not hand the new page a window.opener.
+      expect(anchor!.target).toBe('_blank');
+      expect(anchor!.rel).toBe('noopener noreferrer');
     });
 
     it('should reuse a single instance (singleton)', async () => {

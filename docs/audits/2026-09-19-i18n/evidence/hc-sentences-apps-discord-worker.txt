@@ -1,0 +1,185 @@
+apps/discord-worker/src/commands/registry.ts:25:  /** Marked for removal — carried in /about's "Removed in v5" field */
+apps/discord-worker/src/commands/schemas.ts:150:    description: 'Show information about the XIV Dye Tools bot',
+apps/discord-worker/src/commands/schemas.ts:158:    description: 'Generate harmonious dye combinations from a color',
+apps/discord-worker/src/commands/schemas.ts:169:        description: 'Type of color harmony',
+apps/discord-worker/src/commands/schemas.ts:176:        description: 'Colour wheel the harmony angles are measured on (default: RGB)',
+apps/discord-worker/src/commands/schemas.ts:183:        description: 'Number of companion dyes per harmony slot (1-3)',
+apps/discord-worker/src/commands/schemas.ts:191:        description: 'Algorithm used to find closest dye for companion expansion',
+apps/discord-worker/src/commands/schemas.ts:205:        description: 'Tighten distance threshold for closer matches',
+apps/discord-worker/src/commands/schemas.ts:211:        description: 'Deduplicate dyes across all harmony slots',
+apps/discord-worker/src/commands/schemas.ts:220:    description: 'Search and explore FFXIV dyes',
+apps/discord-worker/src/commands/schemas.ts:224:        description: 'Search for dyes by name',
+apps/discord-worker/src/commands/schemas.ts:238:        description: 'Get detailed information about a specific dye',
+apps/discord-worker/src/commands/schemas.ts:252:        description: 'List dyes by category',
+apps/discord-worker/src/commands/schemas.ts:294:    description: 'Extract colors from inputs and find matching FFXIV dyes',
+apps/discord-worker/src/commands/schemas.ts:298:        description: 'Find the closest FFXIV dye(s) to a color',
+apps/discord-worker/src/commands/schemas.ts:303:            description: 'Color to match (hex code like #FF5733 or dye name)',
+apps/discord-worker/src/commands/schemas.ts:310:            description: 'Number of matches to show (1-10)',
+apps/discord-worker/src/commands/schemas.ts:318:            description: 'Color matching algorithm',
+apps/discord-worker/src/commands/schemas.ts:334:        description: 'Extract colors from an image and find matching dyes',
+apps/discord-worker/src/commands/schemas.ts:339:            description: 'Image to analyze',
+apps/discord-worker/src/commands/schemas.ts:345:            description: 'Number of colors to extract (3-10)',
+apps/discord-worker/src/commands/schemas.ts:353:            description: 'Color matching algorithm',
+apps/discord-worker/src/commands/schemas.ts:367:            description: 'Avoid mapping multiple slots to the same dye (default: true)',
+apps/discord-worker/src/commands/schemas.ts:379:    description: 'Generate a color gradient between two colors with intermediate dyes',
+apps/discord-worker/src/commands/schemas.ts:397:        description: 'Number of color steps (default: 6, max 12)',
+apps/discord-worker/src/commands/schemas.ts:405:        description: 'Color interpolation mode for gradient',
+apps/discord-worker/src/commands/schemas.ts:422:        description: 'Algorithm for finding closest dyes',
+apps/discord-worker/src/commands/schemas.ts:440:    description: 'Blend two dyes using various color mixing algorithms',
+apps/discord-worker/src/commands/schemas.ts:444:        description: 'First dye to blend (hex code or dye name)',
+apps/discord-worker/src/commands/schemas.ts:451:        description: 'Second dye to blend (hex code or dye name)',
+apps/discord-worker/src/commands/schemas.ts:458:        description: 'Color blending algorithm',
+apps/discord-worker/src/commands/schemas.ts:472:        description: 'Algorithm for finding closest dyes to the blended result',
+apps/discord-worker/src/commands/schemas.ts:498:    description: 'How a dye or a pair of dyes survives each kind of color vision',
+apps/discord-worker/src/commands/schemas.ts:503:    description: 'How a dye or a pair of dyes survives each kind of color vision',
+apps/discord-worker/src/commands/schemas.ts:547:    description: 'Show help and usage guide for all commands',
+apps/discord-worker/src/commands/schemas.ts:551:        description: 'Specific help topic',
+apps/discord-worker/src/commands/schemas.ts:573:        description: 'Expand a specific release (e.g. 5.0.0)',
+apps/discord-worker/src/commands/schemas.ts:583:    description: 'Display bot usage statistics and information',
+apps/discord-worker/src/commands/schemas.ts:587:        description: 'Show basic bot information (public)',
+apps/discord-worker/src/commands/schemas.ts:592:        description: 'Show usage metrics (admin only)',
+apps/discord-worker/src/commands/schemas.ts:602:        description: 'Show preference adoption rates (admin only)',
+apps/discord-worker/src/commands/schemas.ts:607:        description: 'Show system health status (admin only)',
+apps/discord-worker/src/commands/schemas.ts:616:    description: 'Manage your personal bot preferences',
+apps/discord-worker/src/commands/schemas.ts:620:        description: 'Display your current preferences',
+apps/discord-worker/src/commands/schemas.ts:625:        description: 'Set one or more preferences (all options are optional)',
+apps/discord-worker/src/commands/schemas.ts:644:            description: 'Default blending mode for /mixer',
+apps/discord-worker/src/commands/schemas.ts:658:            description: 'Default color matching method',
+apps/discord-worker/src/commands/schemas.ts:672:            description: 'Default number of matches for /extractor color (1-10)',
+apps/discord-worker/src/commands/schemas.ts:680:            description: 'Default clan for /swatch (e.g., Midlander, Raen)',
+apps/discord-worker/src/commands/schemas.ts:687:            description: 'Default gender for /swatch',
+apps/discord-worker/src/commands/schemas.ts:714:            description: 'Show hex color codes on result cards',
+apps/discord-worker/src/commands/schemas.ts:744:            description: 'Show dye acquisition source on result cards',
+apps/discord-worker/src/commands/schemas.ts:750:            description: 'Card theme for every generated image',
+apps/discord-worker/src/commands/schemas.ts:762:        description: 'Reset a preference to default (or all if no key specified)',
+apps/discord-worker/src/commands/schemas.ts:767:            description: 'Preference to reset (omit for all)',
+apps/discord-worker/src/commands/schemas.ts:793:        description: 'Manage dye type filters for search results',
+apps/discord-worker/src/commands/schemas.ts:798:            description: 'Set dye type filters (all options are optional)',
+apps/discord-worker/src/commands/schemas.ts:803:                description: 'Exclude metallic dyes',
+apps/discord-worker/src/commands/schemas.ts:809:                description: 'Exclude pastel dyes',
+apps/discord-worker/src/commands/schemas.ts:815:                description: 'Exclude dark dyes',
+apps/discord-worker/src/commands/schemas.ts:821:                description: 'Exclude cosmic dyes',
+apps/discord-worker/src/commands/schemas.ts:833:                description: 'Exclude expensive dyes (Pure White / Jet Black)',
+apps/discord-worker/src/commands/schemas.ts:845:                description: 'Exclude crafted dyes',
+apps/discord-worker/src/commands/schemas.ts:853:            description: 'Display your current dye filter settings',
+apps/discord-worker/src/commands/schemas.ts:858:            description: 'Clear all dye filters',
+apps/discord-worker/src/commands/schemas.ts:869:    description: "Match a character file's colours to the nearest dyes",
+apps/discord-worker/src/commands/schemas.ts:889:        description: 'Show the five nearest dyes for one slot instead',
+apps/discord-worker/src/commands/schemas.ts:952:        description: 'Browse community presets',
+apps/discord-worker/src/commands/schemas.ts:957:            description: 'Filter by category',
+apps/discord-worker/src/commands/schemas.ts:977:        description: 'Display a specific preset',
+apps/discord-worker/src/commands/schemas.ts:991:        description: 'Get a random preset for inspiration',
+apps/discord-worker/src/commands/schemas.ts:996:            description: 'Filter by category',
+apps/discord-worker/src/commands/schemas.ts:1005:        description: 'Submit a new community preset',
+apps/discord-worker/src/commands/schemas.ts:1010:            description: 'Name for your preset (2-50 characters)',
+apps/discord-worker/src/commands/schemas.ts:1020:            description: 'Describe your preset (10-200 characters)',
+apps/discord-worker/src/commands/schemas.ts:1085:        description: 'Toggle your vote on a preset',
+apps/discord-worker/src/commands/schemas.ts:1090:            description: 'Preset to vote on',
+apps/discord-worker/src/commands/schemas.ts:1099:        description: 'Edit one of your presets',
+apps/discord-worker/src/commands/schemas.ts:1104:            description: 'The preset to edit',
+apps/discord-worker/src/commands/schemas.ts:1111:            description: 'New preset name (2-50 characters)',
+apps/discord-worker/src/commands/schemas.ts:1179:        description: 'Manage your favorite community presets',
+apps/discord-worker/src/commands/schemas.ts:1184:            description: 'Add a preset to your favorites',
+apps/discord-worker/src/commands/schemas.ts:1189:                description: 'Preset to favorite',
+apps/discord-worker/src/commands/schemas.ts:1198:            description: 'Remove a preset from your favorites',
+apps/discord-worker/src/commands/schemas.ts:1203:                description: 'Preset to unfavorite',
+apps/discord-worker/src/commands/schemas.ts:1212:            description: 'List your favorited presets',
+apps/discord-worker/src/commands/schemas.ts:1227:    description: 'Find affordable dye alternatives using market board prices',
+apps/discord-worker/src/commands/schemas.ts:1231:        description: 'Find cheaper alternatives to an expensive dye',
+apps/discord-worker/src/commands/schemas.ts:1236:            description: 'The expensive dye you want alternatives for',
+apps/discord-worker/src/commands/schemas.ts:1243:            description: 'World or datacenter for prices (uses saved preference if not set)',
+apps/discord-worker/src/commands/schemas.ts:1251:            description: 'Color matching algorithm for the ΔE column',
+apps/discord-worker/src/commands/schemas.ts:1287:        description: 'Save your preferred world/datacenter for price lookups',
+apps/discord-worker/src/commands/schemas.ts:1292:            description: 'World or datacenter name',
+apps/discord-worker/src/commands/schemas.ts:1302:        description: 'Quick budget check for popular expensive dyes',
+apps/discord-worker/src/commands/schemas.ts:1307:            description: 'Popular expensive dye to find alternatives for',
+apps/discord-worker/src/commands/schemas.ts:1322:            description: 'World or datacenter for prices (uses saved preference if not set)',
+apps/discord-worker/src/handlers/buttons/index.ts:96:    logger.warn(`Unknown button custom_id: ${customId}`);
+apps/discord-worker/src/handlers/buttons/preview-image.ts:78:  'This preview image changed or was already moderated. Review the latest image notification.';
+apps/discord-worker/src/handlers/buttons/preview-image.ts:186:  const refreshNotice = 'Review the refreshed image before choosing Approve or Reject.';
+apps/discord-worker/src/handlers/buttons/preview-image.ts:225:    if (!response.ok) throw new Error(`Preview review refresh failed (${response.status})`);
+apps/discord-worker/src/handlers/buttons/preview-image.ts:234:      'Failed to refresh preview-image review',
+apps/discord-worker/src/handlers/buttons/preview-image.ts:299:        logger?.error('Failed to update preview-image message after moderation action', undefined, {
+apps/discord-worker/src/handlers/buttons/preview-image.ts:328:          logger?.warn('Failed to retire stale preview-image buttons', { status: response.status });
+apps/discord-worker/src/handlers/buttons/preview-image.ts:331:          'Failed to retire stale preview-image buttons',
+apps/discord-worker/src/handlers/commands/about.ts:32:const BUILT_ON = 'Market prices from Universalis · Paint mixing by spectral.js';
+apps/discord-worker/src/handlers/commands/accessibility.ts:135:    if (logger) logger.error('Accessibility command failed');
+apps/discord-worker/src/handlers/commands/accessibility.ts:159:      logger.error('Accessibility render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/budget.ts:412:      logger.error('Budget find error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/budget.ts:413:      logger.error(`Budget error details: ${errorMsg}`);
+apps/discord-worker/src/handlers/commands/comparison.ts:91:    if (logger) logger.error('Comparison command failed');
+apps/discord-worker/src/handlers/commands/comparison.ts:125:    if (logger) logger.error('Comparison render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/contrast.ts:96:    if (logger) logger.error('Contrast command failed');
+apps/discord-worker/src/handlers/commands/contrast.ts:119:    if (logger) logger.error('Contrast render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/extractor.ts:608:      logger.error('Extractor image command error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/gradient.ts:145:    if (logger) logger.error('Gradient command error');
+apps/discord-worker/src/handlers/commands/gradient.ts:221:    if (logger) logger.error('Gradient render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/harmony.ts:151:      if (logger) logger.error('Harmony command error');
+apps/discord-worker/src/handlers/commands/harmony.ts:207:    if (logger) logger.error('Harmony render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/manual.ts:330:    // the whole budget and a slow proxy produced "The application did not
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:97:            if (logger) logger.error('Mixer command error');
+apps/discord-worker/src/handlers/commands/mixer-v4.ts:123:        if (logger) logger.error('Mixer render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset-notifications.ts:13: * messages posted with the main bot's token are dead ("This button is not
+apps/discord-worker/src/handlers/commands/preset-notifications.ts:106:      changes.join('\n') || 'No visible changes',
+apps/discord-worker/src/handlers/commands/preset-notifications.ts:199:      logger?.error('Moderation notification rejected by Discord', undefined, {
+apps/discord-worker/src/handlers/commands/preset-notifications.ts:209:      'Failed to send moderation notification',
+apps/discord-worker/src/handlers/commands/preset.ts:268:      logger.error('List presets error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:334:      logger.error('Show preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:396:      logger.error('Random preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:581:      logger.error('Submit preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:929:      logger.error('Edit preset error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/preset.ts:1117:      logger?.error('Submission channel notification rejected by Discord', undefined, {
+apps/discord-worker/src/handlers/commands/preset.ts:1126:        'Failed to notify submission channel',
+apps/discord-worker/src/handlers/commands/stats.ts:150:      logger.error('Error in stats command', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/stats.ts:275:          text: 'Stats stored in Cloudflare KV with 30-day retention',
+apps/discord-worker/src/handlers/commands/stats.ts:312:      : 'No commands executed yet';
+apps/discord-worker/src/handlers/commands/stats.ts:364:          text: `Total unique commands: ${sortedCommands.length}`,
+apps/discord-worker/src/handlers/commands/stats.ts:515:          text: 'Percentages based on sampled users',
+apps/discord-worker/src/handlers/commands/stats.ts:606:          text: 'Health check performed at request time',
+apps/discord-worker/src/handlers/commands/swatch.ts:180:    if (logger) logger.error('Swatch download error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/handlers/commands/swatch.ts:195:    if (logger) logger.warn('Swatch command failed', { error: result.error });
+apps/discord-worker/src/handlers/commands/swatch.ts:223:    if (logger) logger.error('Swatch render error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/analytics.ts:109:      logger.error('Analytics tracking error', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/budget-calculator.ts:131:    throw new Error(`Dye not found: ${targetDyeId}`);
+apps/discord-worker/src/services/budget/price-cache.ts:86:      logger.error('Failed to get cached price', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/price-cache.ts:125:      logger.error('Failed to cache price', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/price-cache.ts:225:      logger?.warn?.('Universalis fetch failed; serving stale cached prices', {
+apps/discord-worker/src/services/budget/universalis-client.ts:112:    throw new UniversalisError(503, 'Universalis proxy not configured');
+apps/discord-worker/src/services/budget/universalis-client.ts:177:      options.logger.error('Universalis request failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/universalis-client.ts:179:    throw new UniversalisError(500, 'Failed to communicate with Universalis API');
+apps/discord-worker/src/services/budget/universalis-client.ts:217:      `Too many items requested (${itemIds.length}). Maximum is ${MAX_BATCH_SIZE}.`
+apps/discord-worker/src/services/budget/universalis-client.ts:381:      logger.error('Failed to validate world', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/budget/universalis-client.ts:436:      logger.error('Failed to get world autocomplete', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/command-trace.ts:227:      logger.error('Analytics tracking failed', error);
+apps/discord-worker/src/services/image-client.ts:63:    let message = `Image processing failed: HTTP ${response.status}`;
+apps/discord-worker/src/services/image-input-errors.ts:12: * Deliberately not matched: `Image processing failed` (image-worker's 500
+apps/discord-worker/src/services/image-input-errors.ts:34:  ['format', 'Unsupported image format'],
+apps/discord-worker/src/services/image-input-errors.ts:36:  ['format', 'Failed to load image'],
+apps/discord-worker/src/services/image-input-errors.ts:47:  ['fetch', 'Failed to fetch image'],
+apps/discord-worker/src/services/preferences.ts:132:      logger.error('Failed to get user preferences', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/preferences.ts:286:      logger.error('Failed to set preferences', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/preferences.ts:341:      logger.error('Failed to reset preference', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/preferences.ts:546:        logger.info('Migrated legacy preferences to unified format', {
+apps/discord-worker/src/services/preferences.ts:555:        'Failed to migrate legacy preferences',
+apps/discord-worker/src/services/preset-api.ts:179:    throw new PresetAPIError(500, 'Failed to communicate with preset API', error);
+apps/discord-worker/src/services/preset-api.ts:405:      logger.error('Failed to check vote status', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/preset-api.ts:519:        'Preset autocomplete search failed',
+apps/discord-worker/src/services/preset-favorites.ts:97:      'Failed to get preset favorite entries',
+apps/discord-worker/src/services/preset-favorites.ts:160:      logger.error('Failed to add preset favorite', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/preset-favorites.ts:189:      logger.error('Failed to remove preset favorite', error instanceof Error ? error : undefined, {
+apps/discord-worker/src/services/rate-limiter.ts:163:    'No rate limiter backend configured. Bind an RL_* rate-limit tier or provide a KV namespace.',
+apps/discord-worker/src/services/rate-limiter.ts:254:      'Rate limiter using KV fallback: no RL_* binding bound — KV fallback cannot throttle fast clients',
+apps/discord-worker/src/services/rate-limiter.ts:282:      logger.error('Rate limit check failed', new Error(`${configuredBackend} backend error`));
+apps/discord-worker/src/services/rate-limiter.ts:296:      logger.error('Rate limit check failed', error instanceof Error ? error : undefined);
+apps/discord-worker/src/services/svg/renderer.ts:54:        `Failed to initialize SVG renderer: ${error instanceof Error ? error.message : 'Unknown error'}`,
+apps/discord-worker/src/services/svg/renderer.ts:116:      `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`,
+apps/discord-worker/src/types/preferences.ts:199: * key by spacing/casing (e.g. `SeekerOfTheSun` → `'Seeker of the Sun'`).
+apps/discord-worker/src/types/preferences.ts:209:  SeekerOfTheSun: 'Seeker of the Sun',
+apps/discord-worker/src/types/preferences.ts:210:  KeeperOfTheMoon: 'Keeper of the Moon',
+apps/discord-worker/src/utils/env-validation.ts:24:export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in production: ';
+apps/discord-worker/src/utils/env-validation.ts:48:      errors.push(`Missing or empty required secret: ${key}`);
+apps/discord-worker/src/utils/env-validation.ts:58:      errors.push(`Missing or empty required config: ${key}`);
+apps/discord-worker/src/utils/env-validation.ts:153:    logger.error('Environment validation failed', undefined, { errors });
+apps/discord-worker/src/utils/env-validation.ts:156:    console.error('Environment validation failed:');
+apps/discord-worker/src/utils/sanitize.ts:43: * sanitizeDisplayText("Too  many   spaces", 100)     // "Too many spaces"
+apps/discord-worker/src/utils/sanitize.ts:45: * sanitizeDisplayText("Very long text...", 10)       // "Very long…"

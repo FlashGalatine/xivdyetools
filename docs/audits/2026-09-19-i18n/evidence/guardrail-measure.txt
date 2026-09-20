@@ -1,0 +1,174 @@
+[A] web-app: EN keys=1128  same-EN groups=62  divergent groups=12  divergent (group x locale) cells=24
+[A] bot-logic: EN keys=653  same-EN groups=24  divergent groups=3  divergent (group x locale) cells=12
+[B] bot-logic ja: identical-to-en = 32
+[B] bot-logic de: identical-to-en = 45
+[B] bot-logic fr: identical-to-en = 47
+[B] bot-logic ko: identical-to-en = 32
+[B] bot-logic zh: identical-to-en = 31
+[B] bot-logic union of keys identical in >=1 locale = 56; identical in all 5 = 31
+
+===== A. same-English consistency: web-app =====
+
+EN = 'All'  (3 keys)  diverges in: fr
+    fr: 'Tout'  <- colorPalette.all
+    fr: 'Toutes'  <- dyeSelector.allCategories
+    fr: 'Tous'  <- preset.categories.all
+
+EN = 'Dark'  (3 keys)  diverges in: ko
+    ko: '다크'  <- colorPalette.dark, themes.standardDark
+    ko: '어두움'  <- swatch.rangeDark
+
+EN = 'Dyes'  (3 keys)  diverges in: ja
+    ja: 'カララント'  <- export.hexDyesHeader, swatch.glamourViewDyes
+    ja: '染料'  <- preset.dyes
+
+EN = 'Save'  (2 keys)  diverges in: de
+    de: 'Speichern'  <- common.save
+    de: 'Merken'  <- preset.save
+
+EN = 'Vote'  (2 keys)  diverges in: de
+    de: 'Stimme'  <- preset.vote
+    de: 'Abstimmen'  <- preset.gateVote
+
+EN = 'Clear'  (2 keys)  diverges in: ja, de, fr, ko, zh
+    ja: 'クリア'  <- common.clear
+    ja: '明瞭'  <- accessibility.tierClear
+    de: 'Leeren'  <- common.clear
+    de: 'Klar'  <- accessibility.tierClear
+    fr: 'Effacer'  <- common.clear
+    fr: 'Nette'  <- accessibility.tierClear
+    ko: '지우기'  <- common.clear
+    ko: '분명'  <- accessibility.tierClear
+    zh: '清除'  <- common.clear
+    zh: '清晰'  <- accessibility.tierClear
+
+EN = 'Light'  (4 keys)  diverges in: ja, de, fr, ko, zh
+    ja: '光'  <- config.mixingRgb, mixer.modelRgb
+    ja: 'ライト'  <- themes.standardLight, swatch.rangeLight
+    de: 'Licht'  <- config.mixingRgb, mixer.modelRgb
+    de: 'Hell'  <- themes.standardLight, swatch.rangeLight
+    fr: 'Lumière'  <- config.mixingRgb, mixer.modelRgb
+    fr: 'Clair'  <- themes.standardLight, swatch.rangeLight
+    ko: '빛'  <- config.mixingRgb, mixer.modelRgb
+    ko: '라이트'  <- themes.standardLight
+    ko: '밝음'  <- swatch.rangeLight
+    zh: '光'  <- config.mixingRgb, mixer.modelRgb
+    zh: '浅色'  <- themes.standardLight, swatch.rangeLight
+
+EN = 'Saved'  (2 keys)  diverges in: de, fr
+    de: 'Gespeichert'  <- preset.tabSaved
+    de: 'Gemerkt'  <- preset.savedBtn
+    fr: 'Enregistrés'  <- preset.tabSaved
+    fr: 'Enregistré'  <- preset.savedBtn
+
+EN = 'Remove'  (2 keys)  diverges in: ko
+    ko: '제거'  <- common.remove
+    ko: '삭제'  <- preset.previewImageRemove
+
+EN = 'Compare'  (2 keys)  diverges in: de
+    de: 'Vergleich'  <- tools.comparison.shortName
+    de: 'Vergleichen'  <- budget.handoffCompare
+
+EN = 'Select a dye'  (2 keys)  diverges in: ja
+    ja: 'カララントを選択'  <- harmony.selectDye
+    ja: '染料を選択'  <- emptyStates.noHarmony.action
+
+EN = 'All slots are full. Select one to replace:'  (2 keys)  diverges in: ja, de, ko, zh
+    ja: 'すべてのスロットが埋まっています。置き換えるスロットを選択してください：'  <- gradient.slotsFull
+    ja: 'すべてのスロットが使用中です。置き換えるスロットを選択してください：'  <- resultCard.slotsFull
+    de: 'Alle Plätze sind belegt. Wähle einen zum Ersetzen:'  <- gradient.slotsFull
+    de: 'Alle Plätze belegt. Wählen Sie einen zum Ersetzen:'  <- resultCard.slotsFull
+    ko: '모든 슬롯이 가득 찼습니다. 교체할 슬롯을 선택하세요:'  <- gradient.slotsFull
+    ko: '모든 슬롯이 꽉 찼습니다. 교체할 슬롯을 선택하세요:'  <- resultCard.slotsFull
+    zh: '所有槽位已满。请选择一个要替换的槽位：'  <- gradient.slotsFull
+    zh: '所有槽位已满。请选择要替换的槽位：'  <- resultCard.slotsFull
+
+===== A. same-English consistency: bot-logic =====
+
+EN = 'RATIO'  (2 keys)  diverges in: ja, de, ko, zh
+    ja: 'コントラスト比'  <- card.ratioCol
+    ja: '比率'  <- card.ratioShort
+    de: 'VERHÄLTNIS'  <- card.ratioCol
+    de: 'VERH.'  <- card.ratioShort
+    ko: '명암비'  <- card.ratioCol
+    ko: '비율'  <- card.ratioShort
+    zh: '对比度'  <- card.ratioCol
+    zh: '比率'  <- card.ratioShort
+
+EN = 'TARGET'  (2 keys)  diverges in: ja, ko, zh
+    ja: '目標色'  <- card.target
+    ja: '目標'  <- card.lTarget
+    ko: '목표색'  <- card.target
+    ko: '목표'  <- card.lTarget
+    zh: '目标色'  <- card.target
+    zh: '目标'  <- card.lTarget
+
+EN = 'NEAREST DYE'  (2 keys)  diverges in: ja, de, fr, ko, zh
+    ja: '最も近い色'  <- card.found
+    ja: '近いカララント'  <- card.swatchNearest
+    de: 'NÄCHSTER FARBSTOFF'  <- card.found
+    de: 'NÄCHSTE FARBE'  <- card.swatchNearest
+    fr: 'TROUVÉ'  <- card.found
+    fr: 'TEINTURE PROCHE'  <- card.swatchNearest
+    ko: '가장 가까운'  <- card.found
+    ko: '가까운 염료'  <- card.swatchNearest
+    zh: '最接近'  <- card.found
+    zh: '最近的染剂'  <- card.swatchNearest
+
+===== B. bot-logic identical-to-EN =====
+  [ja,de,fr,ko,zh] card.perDe = 'GIL/ΔE'
+  [ja,de,fr,ko,zh] card.ratioBand1 = '≥ 3:1'
+  [ja,de,fr,ko,zh] card.ratioBand2 = '≥ 4.5:1'
+  [ja,de,fr,ko,zh] card.ratioBand3 = '≥ 7:1'
+  [ja,de,fr,ko,zh] common.footer = 'XIV Dye Tools'
+  [ja,de,fr,ko,zh] common.hsv = 'HSV'
+  [ja,de,fr,ko,zh] common.rgb = 'RGB'
+  [ja,de,fr,ko,zh] firstRun.title = 'XIV Dye Tools 5.0'
+  [ja,de,fr,ko,zh] manual.about.name = '`/about`'
+  [ja,de,fr,ko,zh] manual.accessibility.name = '`/accessibility <dye> [dye2] [vision]` | `/a11y`'
+  [ja,de,fr,ko,zh] manual.budget.name = '`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`'
+  [ja,de,fr,ko,zh] manual.changelog.name = '`/changelog [version]`'
+  [ja,de,fr,ko,zh] manual.comparison.name = '`/comparison <dye1> <dye2> [dye3] [dye4]`'
+  [ja,de,fr,ko,zh] manual.contrast.name = '`/contrast <dye1> <dye2> [dye3] [dye4]`'
+  [ja,de,fr,ko,zh] manual.dyeInfo.name = '`/dye info <name>`'
+  [ja,de,fr,ko,zh] manual.dyeList.name = '`/dye list [category]`'
+  [ja,de,fr,ko,zh] manual.dyeRandom.name = '`/dye random [unique_categories]`'
+  [ja,de,fr,ko,zh] manual.dyeSearch.name = '`/dye search <query>`'
+  [ja,de,fr,ko,zh] manual.extractor.name = '`/extractor color <color> [count]` | `/extractor image <image> [colors]`'
+  [ja,de,fr,ko,zh] manual.gradient.name = '`/gradient <start_color> <end_color> [steps] [color_space]`'
+  [ja,de,fr,ko,zh] manual.harmony.name = '`/harmony <color> [type] [wheel] [companions]`'
+  [ja,de,fr,ko,zh] manual.manualCmd.name = '`/manual [topic]`'
+  [ja,de,fr,ko,zh] manual.mixer.name = '`/mixer <dye1> <dye2> [mode]`'
+  [ja,de,fr,ko,zh] manual.preferences.name = '`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`'
+  [ja,de,fr,ko,zh] manual.presetBrowse.name = '`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`'
+  [ja,de,fr,ko,zh] manual.presetFavorite.name = '`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`'
+  [ja,de,fr,ko,zh] manual.presetShare.name = '`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`'
+  [ja,de,fr,ko,zh] manual.stats.name = '`/stats summary`'
+  [ja,de,fr,ko,zh] manual.swatch.name = '`/swatch <file> [order] [slot]`'
+  [ja,de,fr,ko,zh] matchImageHelp.supportedFormatsContent = '• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP'
+  [ja,de,fr,ko,zh] webhook.sources.discord = 'Discord'
+  [ja,de,fr,ko   ] about.title = 'XIV Dye Tools Bot'
+  [de,fr         ] about.version = 'Version'
+  [de,fr         ] card.slotLimbal = 'LIMBAL'
+  [de,fr         ] preset.tags = 'Tags'
+  [de,fr         ] webhook.fields.tags = 'Tags'
+  [de            ] about.categories.community = 'Community'
+  [de            ] about.links = 'Links'
+  [de            ] about.poweredBy = 'Powered by Cloudflare Workers'
+  [fr            ] card.base = 'BASE'
+  [fr            ] card.ratioCol = 'RATIO'
+  [fr            ] card.ratioShort = 'RATIO'
+  [de            ] card.restCol = 'REST'
+  [de            ] card.swatchSlot = 'SLOT'
+  [fr            ] card.tier0 = 'EXACT'
+  [de            ] gradient.startColor = 'Start'
+  [de            ] manual.tips.links = '**Links:**'
+  [de            ] preferences.filters.labels.metallic = 'Metallic'
+  [fr            ] preferences.filters.labels.pastel = 'Pastel'
+  [fr            ] preset.cardVotes_one = '{count} vote'
+  [fr            ] preset.cardVotes_other = '{count} votes'
+  [de            ] preset.name = 'Name'
+  [fr            ] preset.votes = 'Votes'
+  [fr            ] quality.excellent = 'Excellent'
+  [fr            ] stats.summary.documentation = 'Documentation'
+  [fr            ] webhook.fields.source = 'Source'

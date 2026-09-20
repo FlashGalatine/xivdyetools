@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.4] - 2026-09-20
+
+From the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`, I18N-005 and I18N-009).
+
+### Changed
+
+- **`GET /v1/dyes/search?q=` matches more rows.** No worker code changed: the route calls
+  `DyeService.searchByLocalizedName`, and `@xivdyetools/core` 5.4.0 now folds case, accents, `ß`
+  and half-/full-width forms on both sides (`schneeweiss` finds `Schneeweißer`, `creme` finds
+  `jaune crème`, a half-width `ｽﾉｳ` finds `スノウホワイト`). A client that relied on an accented
+  query *not* matching its unaccented spelling will see extra results. Documented on the
+  reference page (`docs/reference/dyes.md`).
+
+### Fixed
+
+- **I18N-009**: `Variables.locale` (`src/types.ts`) spelled the six locale codes as a literal
+  union while `validation.ts` imported the type; a seventh locale would have compiled against
+  the stale list. It is now `LocaleCode` via `import type`. Type-only — no runtime change.
+
 ## [0.14.3] - 2026-09-18
 
 Developer docs site only (`docs/`, served on developers.xivdyetools.app) — no route, response or

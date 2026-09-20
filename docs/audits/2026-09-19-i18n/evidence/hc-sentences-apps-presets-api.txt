@@ -1,0 +1,83 @@
+apps/presets-api/src/handlers/moderation.ts:68:      message: 'Another visible preset already uses this dye combination',
+apps/presets-api/src/handlers/moderation.ts:163:        message: 'Preset changed concurrently — reload and retry',
+apps/presets-api/src/handlers/moderation.ts:210:    return validationErrorResponse(c, 'This preset has no previous values to revert to');
+apps/presets-api/src/handlers/moderation.ts:246:      message: 'Preset changed concurrently — reload and retry',
+apps/presets-api/src/handlers/moderation.ts:253:    message: 'Preset reverted to previous values',
+apps/presets-api/src/handlers/moderation.ts:294:    message: 'This preview image changed or was already moderated. Review the latest image notification.',
+apps/presets-api/src/handlers/moderation.ts:428:    return internalErrorResponse(c, 'Failed to resolve notification');
+apps/presets-api/src/handlers/presets.ts:198:      message: 'This dye combination already exists',
+apps/presets-api/src/handlers/presets.ts:233:    return validationErrorResponse(c, 'Invalid status filter');
+apps/presets-api/src/handlers/presets.ts:236:    return forbiddenResponse(c, 'Only moderators can filter by non-approved status');
+apps/presets-api/src/handlers/presets.ts:355:    return validationErrorResponse(c, 'Display name required for author refresh');
+apps/presets-api/src/handlers/presets.ts:409:    return forbiddenResponse(c, "Cannot delete another user's preset");
+apps/presets-api/src/handlers/presets.ts:553:    return forbiddenResponse(c, 'You can only edit your own presets');
+apps/presets-api/src/handlers/presets.ts:574:    return validationErrorResponse(c, 'No updates provided');
+apps/presets-api/src/handlers/presets.ts:593:          message: 'This dye combination already exists',
+apps/presets-api/src/handlers/presets.ts:606:    return forbiddenResponse(c, 'This preset cannot be edited');
+apps/presets-api/src/handlers/presets.ts:764:      // hit the same constraint and got a bare 409 "This dye combination
+apps/presets-api/src/handlers/presets.ts:779:          message: 'This dye combination already exists',
+apps/presets-api/src/handlers/presets.ts:795:      message: 'Preset changed concurrently — reload and retry',
+apps/presets-api/src/handlers/presets.ts:1093:      { success: false, error: ErrorCode.NOT_FOUND, message: 'Preset not found' },
+apps/presets-api/src/handlers/presets.ts:1108:        message: 'Only the author can set a preview image',
+apps/presets-api/src/handlers/presets.ts:1160:      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'No image data provided' },
+apps/presets-api/src/handlers/presets.ts:1171:        message: 'Image must be at most 5 MB',
+apps/presets-api/src/handlers/presets.ts:1183:        message: 'Image must be a PNG, JPEG or WebP',
+apps/presets-api/src/handlers/presets.ts:1195:      { success: false, error: ErrorCode.VALIDATION_ERROR, message: 'Image could not be processed' },
+apps/presets-api/src/handlers/presets.ts:1301:    return forbiddenResponse(c, 'Only the author can remove the preview image');
+apps/presets-api/src/handlers/presets.ts:1336:  if (!body.name) return 'Name is required';
+apps/presets-api/src/handlers/presets.ts:1340:  if (!body.description) return 'Description is required';
+apps/presets-api/src/handlers/presets.ts:1345:  if (!body.category_id) return 'Category is required';
+apps/presets-api/src/handlers/votes.ts:96:    (logger ?? console).error('Failed to add vote', error);
+apps/presets-api/src/handlers/votes.ts:99:      error: 'Failed to add vote',
+apps/presets-api/src/handlers/votes.ts:150:    (logger ?? console).error('Failed to remove vote', error);
+apps/presets-api/src/handlers/votes.ts:153:      error: 'Failed to remove vote',
+apps/presets-api/src/middleware/auth.ts:395:    return unauthorizedResponse(c, 'Valid authentication required');
+apps/presets-api/src/middleware/auth.ts:416:    return unauthorizedResponse(c, 'Valid authentication required');
+apps/presets-api/src/middleware/auth.ts:420:    return forbiddenResponse(c, 'Moderator privileges required');
+apps/presets-api/src/middleware/auth.ts:439:      'User context required (login or provide X-User-Discord-ID header)'
+apps/presets-api/src/middleware/ban-check.ts:69:      message: 'You have been banned from using Preset Palettes.',
+apps/presets-api/src/middleware/ban-check.ts:92:  (logger ?? console).error('Ban check failed', error);
+apps/presets-api/src/middleware/ban-check.ts:106:      message: 'Unable to verify account status right now. Please try again shortly.',
+apps/presets-api/src/middleware/body-validation.ts:68:        message: `Request body exceeds maximum size of ${MAX_BODY_SIZE} bytes`,
+apps/presets-api/src/middleware/body-validation.ts:82:          message: 'Image must be at most 5 MB',
+apps/presets-api/src/services/moderation-service.ts:179:        flaggedReason: 'Contains prohibited content',
+apps/presets-api/src/services/moderation-service.ts:229:    flaggedReason: 'Moderation service unavailable — queued for manual review',
+apps/presets-api/src/services/notification-service.ts:174:    (logger ?? console).info('Discord worker binding not configured, skipping notification');
+apps/presets-api/src/services/notification-service.ts:197:          (logger ?? console).info(`Discord notification succeeded on retry ${attempt}`);
+apps/presets-api/src/services/notification-service.ts:204:        throw new Error(`Discord worker returned ${response.status}: ${await response.text()}`);
+apps/presets-api/src/services/notification-service.ts:208:      lastError = new Error(`Discord worker returned ${response.status}`);
+apps/presets-api/src/services/notification-service.ts:221:      (logger ?? console).info(`Discord notification failed, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${NOTIFICATION_RETRY_CONFIG.maxRetries})`);
+apps/presets-api/src/services/notification-service.ts:227:  throw lastError || new Error('Discord notification failed after all retries');
+apps/presets-api/src/services/preset-service.ts:604: * bare 409 "This dye combination already exists" naming a field the author
+apps/presets-api/src/services/preview-image-service.ts:140:  // "Image could not be processed" the surrounding try/catch was written for.
+apps/presets-api/src/services/preview-image-service.ts:152:    throw new Error('Image could not be processed');
+apps/presets-api/src/services/validation-service.ts:152:    return 'Name is required';
+apps/presets-api/src/services/validation-service.ts:156:    return `Name must be ${rules.minLength}-${rules.maxLength} characters`;
+apps/presets-api/src/services/validation-service.ts:178:    return 'Description is required';
+apps/presets-api/src/services/validation-service.ts:182:    return `Description must be ${rules.minLength}-${rules.maxLength} characters`;
+apps/presets-api/src/services/validation-service.ts:239:    return 'Tags must be an array';
+apps/presets-api/src/services/validation-service.ts:249:    return `Each tag must be a string of max ${rules.itemMaxLength} characters`;
+apps/presets-api/src/services/validation-service.ts:262:    return 'Tags may only contain letters, numbers, spaces, hyphens, underscores and apostrophes, and must start and end with a letter or number';
+apps/presets-api/src/services/validation-service.ts:292:    return 'Secondary categories must be an array';
+apps/presets-api/src/services/validation-service.ts:301:      return 'Invalid secondary category';
+apps/presets-api/src/services/validation-service.ts:309:    return 'Secondary categories contain a duplicate';
+apps/presets-api/src/services/validation-service.ts:329:    return `Status must be one of: ${validStatuses.join(', ')}`;
+apps/presets-api/src/services/validation-service.ts:345:    return `Reason must be ${rules.minLength}-${rules.maxLength} characters`;
+apps/presets-api/src/services/validation-service.ts:349:    return `Reason must be ${rules.minLength}-${rules.maxLength} characters`;
+apps/presets-api/src/services/validation-service.ts:395:    return 'Example link must be a URL string';
+apps/presets-api/src/services/validation-service.ts:398:    return `Example link must be at most ${EXAMPLE_LINK_MAX_LENGTH} characters`;
+apps/presets-api/src/services/validation-service.ts:406:    return 'Example link is not a valid URL';
+apps/presets-api/src/services/validation-service.ts:410:    return 'Example link must use https';
+apps/presets-api/src/services/validation-service.ts:416:    return `Example link host must be one of: ${EXAMPLE_LINK_HOSTS.join(', ')}`;
+apps/presets-api/src/utils/api-response.ts:83: * return errorResponse(c, ErrorCode.NOT_FOUND, 'Preset not found', 404);
+apps/presets-api/src/utils/api-response.ts:168:export function internalErrorResponse(c: AnyContext, message = 'An unexpected error occurred'): Response {
+apps/presets-api/src/utils/env-validation.ts:54:      errors.push(`Missing or empty required env var: ${key}`);
+apps/presets-api/src/utils/env-validation.ts:98:    errors.push('Missing required env var in production: BOT_SIGNING_SECRET');
+apps/presets-api/src/utils/env-validation.ts:106:      errors.push('Missing required env var in production: JWT_SECRET');
+apps/presets-api/src/utils/env-validation.ts:109:      errors.push('Missing required env var in production: JWT_ISSUER');
+apps/presets-api/src/utils/env-validation.ts:112:      errors.push('Missing required env var in production: TOKEN_BLACKLIST');
+apps/presets-api/src/utils/env-validation.ts:115:      errors.push('Missing required env var in production: RL_PUBLIC');
+apps/presets-api/src/utils/env-validation.ts:132:      errors.push('Missing required env var in production: INTERNAL_WEBHOOK_SECRET');
+apps/presets-api/src/utils/env-validation.ts:135:      errors.push('Missing required service binding in production: DISCORD_WORKER');
+apps/presets-api/src/utils/env-validation.ts:138:      errors.push('Missing required service binding in production: IMAGE_WORKER');
+apps/presets-api/src/utils/env-validation.ts:172:  (logger ?? console).error('Environment validation failed:');

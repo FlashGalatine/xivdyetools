@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.4.0] - 2026-09-20
+
+From the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`). MINOR: one new public export,
+and name search now matches rows it used to miss.
+
+### Added
+
+- **`foldForSearch(s)`** (I18N-005) — folds a string for locale-insensitive name matching:
+  `NFKC` (half-width kana, full-width Latin) → lower-case → `ß → ss` → combining marks stripped
+  **from Latin base letters only** → `NFC`. The Latin-only scope is the point: a blanket
+  `NFD` + `\p{M}` strip also removes Japanese dakuten and would make `が` match `か`. Hangul
+  round-trips unchanged. Exported from the package root; `@xivdyetools/bot-logic` is its second
+  consumer.
+
+### Fixed
+
+- **I18N-005**: `DyeService.searchByLocalizedName` compared `toLowerCase()` on both sides and
+  nothing else, so `schneeweiss` never found `Schneeweißer`, `creme` never found `jaune crème`,
+  and a half-width `ｽﾉｳ` never found `スノウホワイト` — 31 of the 125 German names and 34 of the
+  French ones carry a letter a plain keyboard does not. Both the query and the localized name are
+  now folded with `foldForSearch`; the English fast path (`nameLower`) is kept. Reaches users
+  through `GET /v1/dyes/search?q=…&locale=` on api-worker, which may now return more rows.
+- **I18N-007**: `TranslationProvider.getColorWheelName` ended its fallback chain in the raw id
+  while every sibling getter ends in `formatKey()`. Latent — all five wheels exist in all six
+  locales.
+- **I18N-009**: the `extractLocaleCode` JSDoc example claimed `'zh-CN'` returns `null`. It returns
+  `'zh'` (and should: Discord's `zh-CN`/`zh-TW` and a browser's `zh-Hans` all have to resolve).
+  Doc-only, but the comment ships in the published `.d.ts`; the unsupported example is now `'pt-BR'`.
+
+### Changed
+
+- **I18N-007**: `scripts/build-locales.ts` no longer falls back to English silently when a
+  `dyenames.csv` / `facewear-names.csv` cell is empty. It collects every `(source, id, locale)` gap
+  and exits 1 after listing them; `--allow-missing` keeps the old fallback for work in progress.
+  Korean and Chinese names are pasted by hand for every new dye, and a blank cell used to ship as
+  English with every gate green — the same class as 2026-09-03's `Perlmutt-`. The current CSVs have
+  no empty cell, so the generated locale JSON is byte-identical.
+
+### Tests
+
+- `foldForSearch` unit cases (ß, accents, width, the `が`/`か` negative, Hangul), de/fr/ja
+  `searchByLocalizedName` cases, the `formatKey` fallback for an unknown wheel id.
+
 ## [5.3.0] - 2026-09-17
 
 ### Fixed

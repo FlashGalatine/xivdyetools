@@ -1,0 +1,44 @@
+apps/api-worker/src/chara/router.ts:83:    throw new ApiError(ErrorCode.INVALID_BODY, 'Body must be a JSON object with a `gear` array', 400);
+apps/api-worker/src/chara/router.ts:175:    throw new ApiError(ErrorCode.INVALID_BODY, 'Body is not valid JSON', 400);
+apps/api-worker/src/chara/router.ts:308:    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, `Icon upstream answered ${upstream.status}`, 503);
+apps/api-worker/src/chara/router.ts:312:    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon exceeds the size ceiling', 503);
+apps/api-worker/src/chara/router.ts:320:      throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon exceeds the size ceiling', 503);
+apps/api-worker/src/chara/router.ts:328:    throw new ApiError(ErrorCode.UPSTREAM_UNAVAILABLE, 'Icon upstream did not return a PNG', 503);
+apps/api-worker/src/lib/validation.ts:75:      `Invalid colour wheel "${value}". Must be one of: ${COLOR_WHEEL_IDS.join(', ')}`,
+apps/api-worker/src/lib/validation.ts:89:      `Invalid harmony type "${value}". Must be one of: ${VALID_HARMONY_TYPES.join(', ')}`,
+apps/api-worker/src/lib/validation.ts:170:    throw new ApiError(ErrorCode.MISSING_PARAMETER, `Missing required parameter: ${paramName}`, 400, {
+apps/api-worker/src/lib/validation.ts:177:    throw new ApiError(ErrorCode.INVALID_HEX, 'Invalid hex color format. Expected #RRGGBB or RRGGBB.', 400, {
+apps/api-worker/src/lib/validation.ts:180:      expected: 'Hex color string matching /^#?[0-9A-Fa-f]{6}$/',
+apps/api-worker/src/lib/validation.ts:196:    throw new ApiError(ErrorCode.MISSING_PARAMETER, `Missing required parameter: ${name}`, 400, {
+apps/api-worker/src/lib/validation.ts:238:    throw new ApiError(ErrorCode.MISSING_PARAMETER, `Missing required parameter: ${name}`, 400, {
+apps/api-worker/src/lib/validation.ts:283:    throw new ApiError(ErrorCode.MISSING_PARAMETER, `Missing required parameter: ${name}`, 400, {
+apps/api-worker/src/lib/validation.ts:290:    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Invalid value for "${name}". Must be one of: ${validValues.join(', ')}`, 400, {
+apps/api-worker/src/lib/validation.ts:344:    throw new ApiError(ErrorCode.MISSING_PARAMETER, `Missing required parameter: ${name}`, 400, {
+apps/api-worker/src/lib/validation.ts:406:    throw new ApiError(ErrorCode.INVALID_MATCHING_METHOD, `Invalid matching method "${value}". Must be one of: ${VALID_MATCHING_METHODS.join(', ')}`, 400, {
+apps/api-worker/src/middleware/rate-limit.ts:78:            'Rate limit exceeded. 60 requests per minute allowed. Retry after the indicated number of seconds.',
+apps/api-worker/src/middleware/rate-limit.ts:157:          message: 'Telemetry rate limit exceeded. Retry after the indicated number of seconds.',
+apps/api-worker/src/routes/dyes.ts:52:    throw new ApiError(ErrorCode.MISSING_PARAMETER, 'Missing required parameter: q', 400, {
+apps/api-worker/src/routes/dyes.ts:197:    throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with stain ID ${stainId}.`, 404);
+apps/api-worker/src/routes/dyes.ts:256:    throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with ID ${id}.${hint}`, 404);
+apps/api-worker/src/routes/harmony.ts:71:    throw new ApiError(ErrorCode.MISSING_PARAMETER, 'Missing required parameter: dye (or hex)', 400, {
+apps/api-worker/src/routes/harmony.ts:85:    throw new ApiError(ErrorCode.NOT_FOUND, `No dye found with ID ${dyeParam}.`, 404, {
+apps/api-worker/src/routes/match.ts:56:    throw new ApiError(ErrorCode.NOT_FOUND, 'No matching dye found.', 404);
+apps/api-worker/src/telemetry/router.ts:89:    throw new ApiError(ErrorCode.INVALID_BODY, 'Body must be JSON', 400);
+apps/api-worker/src/telemetry/router.ts:96:    throw new ApiError(ErrorCode.INVALID_BODY, 'Body must be a v1 telemetry batch', 400);
+apps/api-worker/src/universalis/router.ts:53:    super('Rate limit exceeded');
+apps/api-worker/src/universalis/router.ts:192:      return c.json({ error: 'Invalid datacenter or world name' }, 400);
+apps/api-worker/src/universalis/router.ts:207:        error: 'Item count must be between 1 and 100',
+apps/api-worker/src/universalis/router.ts:247:          error: 'Rate limit exceeded',
+apps/api-worker/src/universalis/router.ts:262:            error: 'Rate limited by upstream API',
+apps/api-worker/src/universalis/router.ts:264:            message: 'Please try again later',
+apps/api-worker/src/universalis/router.ts:291:      getLogger(c)?.error('Upstream response exceeded size limit', error, {
+apps/api-worker/src/universalis/router.ts:297:          error: 'Upstream response too large',
+apps/api-worker/src/universalis/router.ts:306:    getLogger(c)?.error('Error proxying to Universalis', error, {
+apps/api-worker/src/universalis/router.ts:312:        error: 'Failed to fetch from upstream API',
+apps/api-worker/src/universalis/router.ts:313:        message: 'The upstream request failed; retry later',
+apps/api-worker/src/universalis/router.ts:342:    getLogger(c)?.error('Error fetching data centers', error, {
+apps/api-worker/src/universalis/router.ts:345:    return c.json({ error: 'Failed to fetch data centers' }, 502);
+apps/api-worker/src/universalis/router.ts:371:    getLogger(c)?.error('Error fetching worlds', error, {
+apps/api-worker/src/universalis/router.ts:374:    return c.json({ error: 'Failed to fetch worlds' }, 502);
+apps/api-worker/src/universalis/services/cache-service.ts:146:            this.logger?.debug('Failed to delete cache entry beyond SWR window', {
+apps/api-worker/src/universalis/services/cached-fetch.ts:249:    super(`Response too large: ${sizeBytes} bytes exceeds limit of ${MAX_RESPONSE_SIZE_BYTES} bytes`);

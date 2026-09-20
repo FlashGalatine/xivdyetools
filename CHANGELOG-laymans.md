@@ -31,6 +31,36 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.9.0] - 2026-09-20
+### 🌐 More of XIV Dye Tools in your language
+- Web app: the Privacy Policy and Terms of Service can now be read in Japanese, German, French, Korean and Chinese. The links in About open the version for the language you chose; the English text remains the official one.
+- Discord bot: its Privacy Policy and Terms of Service are available in the same five languages, linked from the top of the English pages.
+- Discord bot: every option and sub-command in the command menu now shows its hint in your Discord language. Before, only each command's one-line summary was translated and the 137 hints underneath stayed in English.
+- Discord bot: the topic list in `/manual topic` is translated, and `/about` no longer shows an English sentence under a translated heading.
+
+### 🔎 Find a dye without its special letters
+- Discord bot: typing `schneeweiss` now finds Schneeweiß and `creme` finds crème. About a third of the German and French dye names used to need the accent or the ß typed exactly. Japanese names typed in half-width characters are found too.
+- Developers: the public dye search at data.xivdyetools.app matches the same way, so a search may return more dyes than before.
+
+### 🗣️ The game's own words, one name for each thing
+- Web app and Discord bot: the Market Board is now called what the game calls it in each language: "tableau des ventes" in French, 장터 in Korean and 市场布告板 in Chinese. The web app used two or three different names for it, and one Chinese label was a typo.
+- Web app and Discord bot: Korean and Chinese say "server" (서버, 服务器) where those versions of the game do, and Chinese calls a Data Center 大区.
+- Web app: the menu uses the tools' proper names, Swatch Matcher and Harmony Explorer, in every language. It still said "Character Matcher" and "Color Harmony Explorer".
+- Web app, Discord bot and link previews: "glamour" is now the word each version of the game uses: Projektion in German, mirage in French, 코디 in Korean, ミラプリ in Japanese and 幻化 in Chinese. The old Korean and Japanese words meant something quite different in everyday speech.
+- Link previews: the Swatch Matcher and Harmony Explorer cards show those names in all six languages, and the Budget card names the Market Board in French and Korean too.
+- Web app: the Privacy Policy now sends you to Advanced Settings, the real name of the panel behind the gear icon, to reset settings or switch analytics on or off.
+- Web app: a tool has the same name on its own page and in the "send to…" menu on a dye card, and the settings panel uses the same labels as the tools.
+- Discord bot: a French preset with no votes reads "0 vote" instead of "0 votes".
+- Web app: German speaks to you as "du" everywhere. About fifty older messages in the tutorial, presets and error texts still said "Sie".
+- Web app: the Dye Mixer's two paint models have proper names in Chinese and German, and the English mixing-mode picker reads "Spectral - Realistic Paint" with its missing space restored.
+- Discord bot: the "nearest dye" label reads the same on every card in every language. In French it still said "found".
+
+### 📜 Terms of Service
+- Web app and Discord bot: one sentence in each Terms of Service was reworded so it can only be read one way. The line about consumer-protection rights now says plainly that it means the law of the place where you live. Nothing you agreed to changed.
+
+### 🪶 What's New stays light
+- Web app: the What's New window shows the newest twenty or so releases and links to the older ones on GitHub, so it no longer grows with every release.
+
 ## [5.8.1] - 2026-09-18
 ### 📖 Discord bot: /manual catches up with 5.0
 - Discord bot: `/manual` now lists every command. `/comparison`, `/contrast`, `/accessibility` (and its short name `/a11y`), `/budget`, `/preset`, `/changelog` and `/stats` were missing from it.

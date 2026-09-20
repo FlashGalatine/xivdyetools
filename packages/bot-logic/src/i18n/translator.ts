@@ -53,12 +53,17 @@ export class Translator {
   private data: LocaleData;
   private fallbackData: LocaleData;
   private logger?: TranslatorLogger;
+  // I18N-003 (2026-09-19 audit): one Intl.PluralRules per Translator (its
+  // locale never changes after construction, so the instance is reused for
+  // every tc() call instead of being rebuilt per invocation).
+  private pluralRules: Intl.PluralRules;
 
   constructor(locale: LocaleCode, logger?: TranslatorLogger) {
     this.locale = locale;
     this.data = locales[locale] || locales.en;
     this.fallbackData = locales.en;
     this.logger = logger;
+    this.pluralRules = new Intl.PluralRules(locale);
   }
 
   /**
@@ -86,23 +91,34 @@ export class Translator {
   }
 
   /**
-   * Count-aware translate (2026-08-20 i18n audit, F-09). Resolves
-   * `${key}_one` when `count === 1`, else `${key}_other`, falling back to
-   * the bare `key`; `count` is always available as `{count}` in the
-   * template alongside `variables`. Every locale file carries both forms
-   * (ja/ko/zh with identical strings) so the six files keep key parity.
-   *
-   * Two CLDR categories (one/other) cover the shipped locales; a locale with
-   * few/many forms would extend this, not the call sites.
+   * Count-aware translate (2026-08-20 i18n audit, F-09; CLDR-correct plural
+   * category since I18N-003, 2026-09-19 audit). Picks the plural category
+   * for `count` with `Intl.PluralRules(locale).select(count)` — **not** the
+   * English `count === 1 ? 'one' : 'other'` rule applied to every locale,
+   * which rendered "0 votes" in French (CLDR French `one` = `i = 0, 1`, so
+   * the correct form is "0 vote"). Resolves `${key}_${category}`, falling
+   * back to `${key}_other` when that suffix is missing, then to the bare
+   * `key`; `count` is always available as `{count}` in the template
+   * alongside `variables`. Every locale file carries both `_one`/`_other`
+   * forms (ja/ko/zh with identical strings, since CLDR gives those three
+   * `other` only) so the six files keep key parity.
    *
    * @example
    * t.tc('gradient.steps', 1)  // → '1 Step'
    * t.tc('gradient.steps', 4)  // → '4 Steps'
+   * // fr locale:
+   * t.tc('preset.cardVotes', 0)  // → '0 vote'  (French 'one' covers 0 and 1)
+   * t.tc('preset.cardVotes', 2)  // → '2 votes'
    */
   tc(key: string, count: number, variables?: Record<string, string | number>): string {
     const vars = { count, ...(variables ?? {}) };
-    const suffixed = `${key}_${count === 1 ? 'one' : 'other'}`;
+    const category = this.pluralRules.select(count);
+    const suffixed = `${key}_${category}`;
     if (this.has(suffixed)) return this.t(suffixed, vars);
+
+    const otherSuffixed = `${key}_other`;
+    if (otherSuffixed !== suffixed && this.has(otherSuffixed)) return this.t(otherSuffixed, vars);
+
     return this.t(key, vars);
   }
 

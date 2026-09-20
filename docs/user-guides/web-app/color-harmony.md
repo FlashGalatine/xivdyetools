@@ -1,10 +1,10 @@
-# Color Harmony Explorer
+# Harmony Explorer
 
 **Discover harmonious dye combinations for your glamours**
 
-The Color Harmony Explorer uses color theory to suggest dyes that work beautifully together. In 5.0 it is built around a **dial**: a colour wheel whose hub is your base dye and whose pucks are the dyes for each slot — everything on it can be tapped.
+The Harmony Explorer uses color theory to suggest dyes that work beautifully together. In 5.0 it is built around a **dial**: a colour wheel whose hub is your base dye and whose pucks are the dyes for each slot — everything on it can be tapped.
 
-> **Note**: In the 5.0 tool rail this is the **Harmony** chip; the tool menu lists it as **Color Harmony Explorer**. It is also the tool the app opens on.
+> **Note**: In the 5.0 tool rail this is the **Harmony** chip; the tool menu lists it as **Harmony Explorer**. It is also the tool the app opens on.
 
 ---
 

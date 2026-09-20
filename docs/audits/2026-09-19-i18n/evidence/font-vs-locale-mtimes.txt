@@ -1,0 +1,8 @@
+-- last commit touching each path --
+2026-09-05T09:40:57-04:00  packages/core/src/data/locales
+2026-09-19T01:35:00-04:00  packages/bot-logic/src/i18n/locales
+2026-09-17T10:04:29-04:00  apps/web-app/src/locales
+2026-08-21T00:02:00-04:00  apps/og-worker/src/services/og-strings.ts
+2026-08-20T23:57:03-04:00  apps/og-worker/src/services/og-embed.ts
+2026-09-05T11:06:17-04:00  apps/og-worker/src/fonts
+2026-09-18T20:52:49-04:00  apps/discord-worker/src/fonts

@@ -56,6 +56,7 @@ import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
 import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { filterDyes } from '@shared/dye-filter-utils';
 import { methodShort } from '@components/metric-help';
+import { compareDyeNames } from '@shared/dye-name';
 
 // ============================================================================
 // Types and Constants
@@ -655,7 +656,11 @@ export class BudgetTool extends BaseComponent {
         case 'de':
           return (a.de - b.de) * dir;
         case 'name':
-          return this.dyeName(a.dye).localeCompare(this.dyeName(b.dye)) * dir;
+          // I18N-008: was a bare `localeCompare` with no locale argument, so it
+          // collated by the BROWSER's default locale rather than the app's —
+          // visible as wrong ä/ö placement under a German UI in an English
+          // browser. `compareDyeNames` passes `LanguageService.getCurrentLocale()`.
+          return compareDyeNames(a.dye, b.dye) * dir;
         case 'board': {
           const ab = a.price.board ?? Infinity;
           const bb = b.price.board ?? Infinity;

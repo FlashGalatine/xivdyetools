@@ -147,7 +147,8 @@ describe('executeSwatch', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.svgString).toContain('HAUT');
-    expect(result.svgString).toContain('NÄCHSTE FARBE');
+    // Farbstoff, not Farbe: the column names the nearest DYE (core de `labels.dye`).
+    expect(result.svgString).toContain('NÄCHSTER FARBSTOFF');
   });
 
   describe('chara-name privacy (PRIVACY_POLICY §3)', () => {

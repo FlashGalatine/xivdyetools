@@ -31,6 +31,46 @@ describe('Translator', () => {
     });
   });
 
+  describe('tc — CLDR plural category via Intl.PluralRules (I18N-003)', () => {
+    // CLDR French `one` = i = 0, 1 — unlike English, 0 takes the singular
+    // form. Before this fix, tc() applied the English one/other split to
+    // every locale and rendered "0 votes" in French.
+    it('fr: count 0 resolves to the _one form ("0 vote")', () => {
+      const t = createTranslator('fr');
+      expect(t.tc('preset.cardVotes', 0)).toBe('0 vote');
+    });
+
+    it('fr: count 1 resolves to the _one form', () => {
+      const t = createTranslator('fr');
+      expect(t.tc('preset.cardVotes', 1)).toBe('1 vote');
+    });
+
+    it('fr: count 2 resolves to the _other form', () => {
+      const t = createTranslator('fr');
+      expect(t.tc('preset.cardVotes', 2)).toBe('2 votes');
+    });
+
+    // CLDR German `one` = i = 1, exactly like English — 0 is `other`.
+    it('de: count 0 resolves to the _other form ("0 Stimmen")', () => {
+      const t = createTranslator('de');
+      expect(t.tc('preset.cardVotes', 0)).toBe('0 Stimmen');
+    });
+
+    it('en: count 0 resolves to the _other form ("0 votes")', () => {
+      const t = createTranslator('en');
+      expect(t.tc('preset.cardVotes', 0)).toBe('0 votes');
+    });
+
+    // CLDR ja/ko/zh have `other` only; the locale files carry identical
+    // _one/_other strings, so any count must still resolve to a translation.
+    it('ja: any count resolves (CLDR has no plural distinction)', () => {
+      const t = createTranslator('ja');
+      expect(t.tc('preset.cardVotes', 0)).toBe('0 票');
+      expect(t.tc('preset.cardVotes', 1)).toBe('1 票');
+      expect(t.tc('preset.cardVotes', 5)).toBe('5 票');
+    });
+  });
+
   describe('constructor', () => {
     it('creates a translator with the specified locale', () => {
       const translator = new Translator('ja');

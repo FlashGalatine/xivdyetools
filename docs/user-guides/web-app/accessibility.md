@@ -111,6 +111,6 @@ When designing glamours or housing:
 ## Related Tools
 
 - [Palette Extractor](palette-extractor.md) - Find alternative dyes
-- [Color Harmony Explorer](color-harmony.md) - Build the palette you are checking
+- [Harmony Explorer](color-harmony.md) - Build the palette you are checking
 - [Dye Comparison](dye-comparison.md) - Same units, one pair at a time
 - [Community Presets](community-presets.md) - **TAKE THIS PALETTE INTO → Accessibility Checker** checks a whole preset

@@ -1,0 +1,338 @@
+diff --git a/packages/bot-logic/src/i18n/locales/ja.json b/packages/bot-logic/src/i18n/locales/ja.json
+index caf56f16..07a66414 100644
+--- a/packages/bot-logic/src/i18n/locales/ja.json
++++ b/packages/bot-logic/src/i18n/locales/ja.json
+@@ -45,64 +45,101 @@
+     "title": "XIV Dye Tools マニュアル",
+     "welcome": "**XIV Dye Tools**へようこそ！このボットはFFXIVのカララント色の探索とマッチングをお手伝いします。",
+     "commandsIntro": "以下にカテゴリ別のすべてのコマンドをご紹介します。",
+-    "autocompleteNote": "すべてのコマンドでカララント名の**オートコンプリート**が使えます！",
+     "colorMatching": "カラーマッチング",
+     "dyeInformation": "カララント情報",
++    "analysis": "分析",
++    "community": "コミュニティプリセット",
+     "botInformation": "ボット情報",
+     "tipsResources": "ヒントとリソース",
+     "extractor": {
+-      "name": "`/extractor color <色> [件数]` | `/extractor image <画像>`",
+-      "description": "色を抽出してFFXIVカララントにマッチング。\n• `color`：16進数コードまたはカララント名を最も近いカララントにマッチング\n• `image`：アップロードした画像から主要な色を抽出"
++      "name": "`/extractor color <color> [count]` | `/extractor image <image> [colors]`",
++      "description": "色をFFXIVカララントにマッチング。\n• `color`：16進数コードまたはカララント名に最も近いカララント（`count` 1-10）\n• `image`：アップロードした画像の主要な色（`colors` 3-10）"
+     },
+     "harmony": {
+-      "name": "`/harmony <色> [タイプ]`",
+-      "description": "調和のとれたカララントの組み合わせを生成します。\n• タイプ：補色、類似色、トライアド、スプリット補色、テトラード、スクエア、モノクロマティック\n• カラーホイールを視覚的に作成"
++      "name": "`/harmony <color> [type] [wheel] [companions]`",
++      "description": "調和のとれたカララントの組み合わせを生成します。\n• 10種類：補色、類似色、三色配色、分裂補色、四色配色、逆四色配色、正方形配色、単色、複合、シェード\n• 5種類のカラーホイール：RGB、RYB、マンセル、OKLCH 色相、OKLCH 明度"
+     },
+     "mixer": {
+-      "name": "`/mixer <カララント1> <カララント2> [モード]`",
+-      "description": "色科学を使用して2つのカララントをブレンド。\n• 6つのブレンドモード：RGB、LAB、OKLAB、RYB、HSL、スペクトル\n• ブレンド結果に最も近いFFXIVカララントを検索"
++      "name": "`/mixer <dye1> <dye2> [mode]`",
++      "description": "色科学を使用して2つのカララントをブレンド。\n• 6つのブレンドモード：RGB、LAB、OKLAB、RYB、HSL、スペクトル\n• 5つの比率でブレンドし、それぞれに最も近いカララントを検索"
+     },
+     "gradient": {
+-      "name": "`/gradient <開始> <終了> [ステップ数]`",
+-      "description": "2色間のカラーグラデーションを作成します。\n• 各グラデーションステップに対応するカララントを表示\n• ステップ数を設定可能（2〜10）"
++      "name": "`/gradient <start_color> <end_color> [steps] [color_space]`",
++      "description": "2色間のカラーグラデーションを作成し、各ステップに対応するカララントを表示します。\n• 2-12ステップ（既定6）\n• 9種類の色空間（既定HSV）"
+     },
+     "swatch": {
+-      "name": "`/swatch color <タイプ> <インデックス>` | `/swatch grid <タイプ> <行> <列>`",
+-      "description": "FFXIVキャラクターカラーをカララントにマッチング。\n• 肌、髪、目、ハイライト、唇、タトゥー、フェイスペイントをサポート\n• 肌と髪は種族/部族固有のパレット"
++      "name": "`/swatch <file> [order] [slot]`",
++      "description": "`.chara`ファイル（Anamnesis / Ktisis）からキャラクターの色をカララントにマッチング。\n• 肌、髪、メッシュ、瞳、唇、フェイスペイント、刺青／リムバルを読み取ります\n• `slot`：いずれかの色に最も近い5つのカララントを表示"
+     },
+     "preferences": {
+-      "name": "`/preferences show` | `/preferences set <キー> <値>` | `/preferences reset`",
+-      "description": "ボット設定を管理します。\n• ブレンドモード、マッチング方法、結果件数のデフォルトを設定\n• キャラクターの部族/性別とマーケットワールドを設定"
++      "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
++      "description": "ボットの設定を管理します。\n• `set`：言語、ブレンド、マッチング、結果件数、部族／性別、ワールド、カード表示項目、テーマ\n• `filters`：特定のカララントグループを結果から除外\n• `reset`：個別の設定、またはすべて"
+     },
+     "dyeSearch": {
+-      "name": "`/dye search <検索語>`",
+-      "description": "名前でカララントを検索します。\n• あいまい検索で部分一致を検出\n• 16進数コードとカテゴリを表示"
++      "name": "`/dye search <query>`",
++      "description": "名前でカララントを検索します。\n• 英語またはお使いの言語で部分一致\n• 16進数コードを表示"
+     },
+     "dyeInfo": {
+-      "name": "`/dye info <名前>`",
+-      "description": "特定のカララントの詳細情報を取得します。\n• 16進数、RGB、HSV値を表示\n• カテゴリとアイテムIDを表示"
++      "name": "`/dye info <name>`",
++      "description": "特定のカララントの詳細情報を取得します。\n• 16進数、RGB、HSV、LAB値\n• 入手方法、マーケット品目、近いカララント"
+     },
+     "dyeList": {
+-      "name": "`/dye list [カテゴリ]`",
+-      "description": "すべてのカララントを一覧表示、またはカテゴリでフィルタリングします。\n• カテゴリ：レッド系、ブラウン系、イエロー系、グリーン系、ブルー系、パープル系、ニュートラル、スペシャル"
++      "name": "`/dye list [category]`",
++      "description": "すべてのカララントを一覧表示、またはカテゴリでフィルタリングします。\n• カテゴリ：赤系、茶系、黄系、緑系、青系、紫系、無彩色系、特殊"
+     },
+     "dyeRandom": {
+       "name": "`/dye random [unique_categories]`",
+       "description": "ランダムに5つのカララントを表示します。\n• カテゴリごとに1つのカララントに制限するオプション"
+     },
++    "comparison": {
++      "name": "`/comparison <dye1> <dye2> [dye3] [dye4]`",
++      "description": "2-4色のカララントを並べて色分析。\n• カララント名または16進数コードに対応"
++    },
++    "contrast": {
++      "name": "`/contrast <dye1> <dye2> [dye3] [dye4]`",
++      "description": "2-4色のカララント間のWCAG輝度比を測定。\n• 3:1、4.5:1、7:1のラインを表示"
++    },
++    "accessibility": {
++      "name": "`/accessibility <dye> [dye2] [vision]` | `/a11y`",
++      "description": "色覚異常のもとでカララントがどう見えるかを確認します。\n• 1色の場合：すべての色覚でどう変化するか\n• 2色の場合：どれだけ離れて見えるか（`vision`で色覚を選択）\n• `/a11y`は同じコマンドです"
++    },
++    "budget": {
++      "name": "`/budget find <target_dye> [world]` | `/budget quick <preset> [world]` | `/budget set_world <world>`",
++      "description": "マーケットボード価格を使って高価なカララントの手頃な代替品を検索します。\n• `find`：対象に近い、より安いカララント（`max_distance` 2-20）\n• `quick`：人気の高価なカララントで同様\n• `set_world`：ワールドまたはデータセンターを保存"
++    },
++    "presetBrowse": {
++      "name": "`/preset list [category] [sort]` | `/preset show <name>` | `/preset random [category]`",
++      "description": "コミュニティのカラープリセットを閲覧します。\n• 8つのカテゴリ\n• 人気順、新着順、名前順で並べ替え"
++    },
++    "presetShare": {
++      "name": "`/preset submit <preset_name> <description> <category> <dye1> <dye2> <dye3>` | `/preset edit <preset>` | `/preset vote <preset>`",
++      "description": "自分のプリセットを共有し、他のプリセットに投票します。\n• 3-6色のカララントと任意のタグ、投稿は審査制です\n• `edit`は自分のプリセットのみ編集可能"
++    },
++    "presetFavorite": {
++      "name": "`/preset favorite add <preset_name>` | `/preset favorite remove <preset_name>` | `/preset favorite list`",
++      "description": "お気に入りのプリセットを個人リストとして保持します（最大50件）。"
++    },
++    "changelog": {
++      "name": "`/changelog [version]`",
++      "description": "ボットの最新情報を表示します。\n• 最新リリースは詳細を表示、`version`で特定のリリースを選択可能"
++    },
++    "stats": {
++      "name": "`/stats summary`",
++      "description": "ボットの利用統計を表示します。`summary`以外のパネルは許可されたユーザーのみ利用できます。"
++    },
+     "about": {
+       "name": "`/about`",
+       "description": "ボット情報、バージョン、リンクを表示します。"
+     },
+     "manualCmd": {
+-      "name": "`/manual`",
+-      "description": "このヘルプガイドを表示します。"
++      "name": "`/manual [topic]`",
++      "description": "このヘルプガイド、または詳細トピック：{topics} を表示します。"
+     },
+     "tips": {
+       "autocomplete": "**オートコンプリート：** カララント名を入力し始めると候補が表示されます！",
+       "hexColors": "**16進数カラー：** `#FF0000`（赤）や`#5865F2`（ブラープル）などの標準的なWeb形式を使用します",
+       "dyeNames": "**カララント名：** 部分的な名前を入力してください -「ダラ」で「ダラガブレッド」が見つかります",
+-      "facewearExcluded": "**フェイスウェア除外：** 一般的なフェイスウェアカララント（「レッド」「ブルー」など）は結果から除外されます",
++      "facewearExcluded": "**フェイスウェア：** フェイスウェアの色（「レッド」「ブルー」など）はカララントではないため、結果には表示されません",
+       "links": "**リンク：**"
+     }
+   },
+@@ -148,28 +185,13 @@
+   },
+   "harmony": {
+     "title": "{type}ハーモニー",
+-    "baseColor": "ベースカラー",
+-    "complementary": "補色",
+-    "analogous": "類似色",
+-    "triadic": "トライアド",
+-    "splitComplementary": "スプリット補色",
+-    "tetradic": "テトラード",
+-    "square": "スクエア",
+-    "monochromatic": "モノクロマティック",
+-    "invertedTetradic": "逆テトラード",
+-    "compound": "複合",
+-    "shades": "シェード"
++    "baseColor": "ベースカラー"
+   },
+   "mixer": {
+     "blendResult": "ブレンド結果",
+     "bothRequired": "カララント1とカララント2の両方が必要です。"
+   },
+   "accessibility": {
+-    "normalVision": "通常の視覚",
+-    "protanopia": "1型色覚",
+-    "deuteranopia": "2型色覚",
+-    "tritanopia": "3型色覚",
+-    "achromatopsia": "1色覚（全色盲）",
+     "allLenses": "すべての色覚"
+   },
+   "about": {
+@@ -209,11 +231,13 @@
+     "submittedPending": "プリセットはモデレーターの承認を待っています。",
+     "voteRemoved": "投票を取り消しました",
+     "voteAdded": "投票しました",
+-    "currentVotes": "現在の投票数: {count}",
++    "currentVotes": "現在の投票数：{count}",
+     "colors": "カラー",
+     "tags": "タグ",
+     "author": "作成者",
+     "votes": "投票",
++    "cardVotes_one": "{count} 票",
++    "cardVotes_other": "{count} 票",
+     "api": {
+       "badRequest": "無効なリクエストです。入力内容を確認して、もう一度お試しください。",
+       "permissionDenied": "権限がありません。",
+@@ -230,7 +254,7 @@
+     "loadOneFailed": "プリセットを読み込めませんでした。",
+     "loadRandomFailed": "ランダムプリセットを読み込めませんでした。",
+     "duplicateIntro": "同じカララントのプリセットがすでに存在します：",
+-    "byAuthor": "作者: {author}",
++    "byAuthor": "作者：{author}",
+     "official": "公式",
+     "unknownAuthor": "不明",
+     "name": "名前",
+@@ -241,7 +265,7 @@
+     "edit": {
+       "noFields": "更新する項目を1つ以上指定してください。",
+       "notOwner": "編集できるのは自分のプリセットのみです。",
+-      "invalidDye": "無効なカララント: {name}",
++      "invalidDye": "無効なカララント：{name}",
+       "dyeCount": "プリセットのカララントは3〜6色にしてください。",
+       "duplicateTitle": "重複するカララントの組み合わせ",
+       "duplicateIntro": "このカララントの組み合わせは別のプリセットにすでに存在します：",
+@@ -306,7 +330,7 @@
+       "successCount": "{count}件の設定を更新しました",
+       "affects": "影響するコマンド",
+       "failedToUpdate": "更新に失敗",
+-      "noOptions": "少なくとも1つの設定を指定してください。\n\n例: `/preferences set language:ja blending:oklab`",
++      "noOptions": "少なくとも1つの設定を指定してください。\n\n例：`/preferences set language:ja blending:oklab`",
+       "noValidOptions": "有効な設定が指定されていません。",
+       "overrideNote": "コマンドパラメータはこの設定を上書きします"
+     },
+@@ -351,12 +375,12 @@
+       "themeLight": "ライト"
+     },
+     "validation": {
+-      "invalidLanguage": "無効な言語です。有効なオプション: `en`, `ja`, `de`, `fr`, `ko`, `zh`",
+-      "invalidBlendingMode": "無効なブレンドモードです。有効なオプション:\n{options}",
+-      "invalidMatchingMethod": "無効なマッチング方法です。有効なオプション:\n{options}",
++      "invalidLanguage": "無効な言語です。有効なオプション：`en`, `ja`, `de`, `fr`, `ko`, `zh`",
++      "invalidBlendingMode": "無効なブレンドモードです。有効なオプション：\n{options}",
++      "invalidMatchingMethod": "無効なマッチング方法です。有効なオプション：\n{options}",
+       "invalidCount": "無効な件数です。1から10の数字を入力してください。",
+-      "invalidClan": "無効な部族です。有効な部族:\n{options}",
+-      "invalidGender": "無効な性別です。有効なオプション: `male`, `female`",
++      "invalidClan": "無効な部族です。有効な部族：\n{options}",
++      "invalidGender": "無効な性別です。有効なオプション：`male`, `female`",
+       "invalidWorld": "無効なワールドです。有効なFFXIVワールドまたはデータセンター名を入力してください。",
+       "invalidMarket": "無効な値です。`on`/`off` または `true`/`false` を使用してください。",
+       "error": "設定の保存中にエラーが発生しました。もう一度お試しください。",
+@@ -367,7 +391,7 @@
+       "excluded": "除外",
+       "included": "含む",
+       "updated": "フィルター更新完了",
+-      "affectsHint": "影響するコマンド: /match, /harmony, /gradient, /mixer",
++      "affectsHint": "影響するコマンド：/harmony, /gradient, /mixer",
+       "title": "カララントフィルター",
+       "setHint": "/preferences filters set でカスタマイズ",
+       "resetSuccess": "フィルターリセット完了",
+@@ -448,31 +472,31 @@
+     "timeout": "画像のダウンロードがタイムアウトしました。もう一度お試しください。"
+   },
+   "matchImageHelp": {
+-    "title": "/match_image の使い方",
+-    "description": "`/match_image` コマンドはアップロードされた画像を分析し、最も近いFFXIVカララントに一致する主要な色を見つけます。最良の結果を得るためのヒントをご紹介します！",
++    "title": "画像からのカラーマッチング",
++    "description": "`/extractor image` はアップロードされた画像を分析し、主要な色を抽出してそれぞれを最も近いFFXIVカララントにマッチングします。最良の結果を得るためのヒントをご紹介します！",
+     "howItWorks": "仕組み",
+-    "howItWorksContent": "**1. 画像分析**\n- 画像はK-meansクラスタリングで処理されます\n- 主要な色が抽出されます\n- 136種類のFFXIVカララントと照合されます\n\n**2. カララントマッチング**\n- RGB色空間でのユークリッド距離を使用\n- 最も近いカララントを返します",
++    "howItWorksContent": "**1. 画像分析**\n- 画像はK-meansクラスタリングで処理されます\n- 主要な色が抽出されます（`colors` 3-10、既定4）\n\n**2. カララントマッチング**\n- 各色を全125色のFFXIVカララントと照合します\n- 既定ではΔE2000を使用 - `matching`オプションで変更可能\n- カードの一覧は割合の大きい5色まで - カラーバーには全色を表示",
+     "tipsForBestResults": "最良の結果を得るためのヒント",
+     "tipsContent": "**画像をトリミング**\n- マッチングしたい特定の部分にフォーカス\n- UI要素や背景を削除\n\n**良い照明を選ぶ**\n- 明るい場所でスクリーンショットを撮影\n- 暗い影や極端なハイライトを避ける\n\n**暗い背景を避ける**\n- 黒い背景は結果を歪める可能性があります\n- 可能であれば中間色の明るい背景を使用",
+     "commonIssues": "よくある問題",
+-    "commonIssuesContent": "**「暗い色が出たのに装備は明るいです！」**\n→ 背景が暗い可能性があります。装備だけに画像をトリミングしてください。\n\n**「マッチングがおかしいようです」**\n→ 複数の色がありますか？アルゴリズムは最も一般的な色を選択します。\n\n**「特定の部分だけマッチングできますか？」**\n→ はい！アップロード前にその部分だけにトリミングしてください。",
++    "commonIssuesContent": "**「暗い色が出たのに装備は明るいです！」**\n→ 背景が暗い可能性があります。装備だけに画像をトリミングしてください。\n\n**「マッチングがおかしいようです」**\n→ アルゴリズムは最も多く含まれる色を選びます。それ以外の部分はトリミングしてください。\n\n**「特定の部分だけマッチングできますか？」**\n→ はい！アップロード前にその部分だけにトリミングしてください。",
+     "proTips": "プロのヒント",
+-    "proTipsContent": "• アップロード前に画像編集ソフトでトリミング\n• メタリック/光沢のある装備は結果が異なる場合があります\n• 16進数コードがわかっている場合は `/match` を使用\n• `colors` オプションで複数の色を抽出（1-5）\n• 最高品質のために1920x1080以上でスクリーンショット",
++    "proTipsContent": "• アップロード前に画像編集ソフトでトリミング\n• メタリック/光沢のある装備は結果が異なる場合があります\n• 16進数コードがわかっている場合は `/extractor color` を使用\n• `colors` オプションで色の数を増減（3-10）\n• 最高品質のために1920x1080以上でスクリーンショット",
+     "footer": "XIV Dye Tools - FFXIVグラマー愛好家のために愛を込めて作成",
+     "exampleUseCases": "使用例",
+     "goodExamples": "良い例",
+     "goodExamplesContent": "• 胴装備1点だけのトリミングされたスクリーンショット\n• ニュートラルな背景での染色された鎧のクローズアップ\n• 明るい日中エリアで撮影されたスクリーンショット\n• マッチングしたい色にフォーカスした画像",
+     "poorExamples": "悪い例",
+     "poorExamplesContent": "• UIが多いフルスクリーンのスクリーンショット\n• 暗いダンジョンや洞窟内のキャラクター\n• 異なるカララントの複数の装備\n• 背景色に支配された画像",
+-    "whenToUse": "/match_image と /match の使い分け",
+-    "whenToUseContent": "**`/match_image` を使う場合：**\n• スクリーンショットがあり、カララントを見つけたい\n• 正確な色コードがわからない\n• インスピレーション写真の色をマッチングしたい\n\n**`/match` を使う場合：**\n• すでに16進数カラーコードを知っている\n• より正確な結果が必要\n• カラーパレットで作業している",
++    "whenToUse": "/extractor image と /extractor color の使い分け",
++    "whenToUseContent": "**`/extractor image` を使う場合：**\n• スクリーンショットがあり、カララントを見つけたい\n• 正確な色コードがわからない\n• インスピレーション写真の色をマッチングしたい\n\n**`/extractor color` を使う場合：**\n• すでに16進数カラーコードを知っている\n• より正確な結果が必要\n• カラーパレットで作業している",
+     "technicalDetails": "技術的な詳細",
+     "supportedFormats": "対応フォーマット",
+-    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP",
++    "supportedFormatsContent": "• PNG\n• JPG/JPEG\n• GIF\n• WebP\n• BMP",
+     "fileLimits": "ファイル制限",
+-    "fileLimitsContent": "• 最大サイズ：8MB\n• 処理時間：約1-3秒",
+-    "matchQualityRatings": "マッチ品質評価",
+-    "matchQualityRatingsContent": "**完璧** (距離0)\n**優秀** (距離<10)\n**良好** (距離<25)\n**まずまず** (距離<50)\n**おおよそ** (距離≥50)\n\n*距離が低いほど = より良いマッチ*",
++    "fileLimitsContent": "• 最大サイズ：10MB",
++    "matchQualityRatings": "マッチ距離",
++    "matchQualityRatingsContent": "一覧の各マッチには色からの距離が表示されます - 数値が低いほど近い色です。\n\n6つのマッチング方式とその帯の仕組み：`/manual` トピック {topic}",
+     "poweredBy": "Photon WASM画像処理を使用"
+   },
+   "card": {
+@@ -486,7 +510,7 @@
+     "found": "最も近い色",
+     "name": "カララント",
+     "cat": "カテゴリ",
+-    "bandKey": "バンド: ≤6 / ≤12 / ≤20",
++    "bandKey": "バンド：≤6 / ≤12 / ≤20",
+     "derivedNote": "ΔE2000 導出",
+     "tier0": "完全",
+     "tier1": "近い",
+@@ -515,9 +539,9 @@
+     "separationCol": "区別しやすさ",
+     "lensCol": "見え方の種類",
+     "shiftCol": "変化量",
+-    "sepBandKey": "バンド: ≥30 / ≥15 / ≥8（大きいほど安全）",
++    "sepBandKey": "バンド：≥30 / ≥15 / ≥8（大きいほど安全）",
+     "soloKey": "バー＝相対的な変化量・判定なし",
+-    "worstNote": "最も区別しにくい: {lens}",
++    "worstNote": "最も区別しにくい：{lens}",
+     "a11yVerdict": "{lens}で最も区別しにくく、差は{de}です。",
+     "worstPair": "最も弱いペア",
+     "pairCol": "ペア",
+@@ -547,7 +571,7 @@
+     "vendorCheaper": "店売りが安い",
+     "budgetKey": "GIL/ΔE =（目標 − 行）÷ ΔE2000",
+     "budgetKeyMethod": "ΔE列は{tag} · 比率はΔE2000固定",
+-    "budgetBest": "最高コスパ: **{name}** — ΔE {de}・{price}",
++    "budgetBest": "最高コスパ：**{name}** — ΔE {de}・{price}",
+     "budgetNoTarget": "{world}に目標の価格なし — 順位・比率は空欄",
+     "budgetFloor": "すでに最安ティア — {price}を下回るものはありません。",
+     "swatchSlot": "部位",
+@@ -565,8 +589,8 @@
+     "swatchFootKey_other": "ΔE2000 による最近傍 · 全{n}部位中{s}部位",
+     "swatchOffGrid": "{slot}はグリッド外 — インデックス {index}、実色 {float}",
+     "swatchLip": "唇 α {alpha} — 元色 {raw}、合成 {blend}",
+-    "swatchGear": "装備のカララント: {list}",
+-    "swatchDropped": "省略（最も近い一致）: {slot} · ΔE {de}",
++    "swatchGear": "装備のカララント：{list}",
++    "swatchDropped": "省略（最も近い一致）：{slot} · ΔE {de}",
+     "swatchParseError": "ファイルを読み取れません — {message}",
+     "swatchTitle": "キャラクターの色見本",
+     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
+@@ -596,7 +620,7 @@
+       },
+       "matchingMethods": {
+         "name": "マッチング方式",
+-        "body": "6つの方式、1つの語彙：ΔE2000（既定）・ΔEOK・ΔE76・REDMEAN・RGB DIST・DISTINGUISH %。マッチラインに追従するのは ΔE2000 の帯だけで、他の方式の帯は固定です。ティアを方式間で比較することはなく、ティアが表示される場所には必ず方式名が付きます。"
++        "body": "6つの方式、1つの語彙：ΔE2000（既定）・ΔEOK2・ΔE76・REDMEAN・RGB DIST・DISTINGUISH %。マッチラインに追従するのは ΔE2000 の帯だけで、他の方式の帯は固定です。ティアを方式間で比較することはなく、ティアが表示される場所には必ず方式名が付きます。"
+       },
+       "spectrumPrices": {
+         "name": "スペクトラムと価格",
+@@ -604,14 +628,14 @@
+       },
+       "characterFile": {
+         "name": "キャラクターファイル",
+-        "body": "/swatch は Anamnesis / Ktisis の .chara エクスポートを読み取ります：カラー部位（肌・髪・瞳・唇・ペイント）と装備の染色です。ファイルは返信の生成に一度だけ読み取られ、保存されません。パレット外に編集された色は実際の値でマッチされ、「グリッド外」と表示されます。"
++        "body": "/swatch は Anamnesis / Ktisis の .chara エクスポートを読み取ります：カラー部位（肌・髪・メッシュ・瞳・唇・フェイスペイント・刺青／リムバル）と装備の染色です。ファイルは返信の生成に一度だけ読み取られ、保存されません。パレット外に編集された色は実際の値でマッチされ、「グリッド外」と表示されます。"
+       }
+     }
+   },
+   "copy": {
+     "invalidFormat": "{format} の形式が無効です。",
+-    "rgbValues": "RGB 値:",
+-    "hsvValues": "HSV 値:"
++    "rgbValues": "RGB 値：",
++    "hsvValues": "HSV 値："
+   },
+   "stats": {
+     "accessDeniedTitle": "アクセス拒否",

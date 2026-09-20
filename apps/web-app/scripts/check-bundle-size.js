@@ -129,11 +129,22 @@ const BUNDLE_LIMITS = [
 
   // On-demand data: the parsed CHANGELOG-laymans.md, fetched when What's New
   // opens. Prose grows with every release, so it gets its own budget rather
-  // than the 60 KB default -- ~28 KB (69% of this limit) with the full history
-  // restored across 25 releases. It measured ~18 KB while the parser was
-  // silently dropping seven of them, so treat that older figure as a symptom
-  // rather than a baseline. Headroom is roughly a dozen more releases: trim the
-  // oldest entries or raise the limit deliberately rather than be surprised.
+  // than the 60 KB default.
+  //
+  // This limit is kept true by the PRODUCER, not by vigilance: the plugin bounds
+  // the module at MAX_MODULE_BYTES (36 KB of JSON, vite-plugin-changelog-parser
+  // -> boundChangelog), newest release first, and the modal links to the full
+  // file for whatever was left out. Release cadence can no longer trip it — only
+  // the newest ten releases outgrowing 36 KB between them can, and that is an
+  // oversized release note, which is worth being told about.
+  //
+  // History: the bound used to be a COUNT (50 releases, ~64 KB at the measured
+  // 1.27 KB per release) against this byte limit, so the two never agreed. The
+  // chunk crossed 40 KB on its 32nd release (40.06 KB, 2026-09-20) and the limit
+  // was raised to 48 KB for a day — about six releases of headroom at a cadence
+  // of fourteen in six weeks — before the bound moved into bytes and the limit
+  // came back. If this trips, read the release note that tripped it before
+  // touching either number.
   { label: 'release notes (on open)', pattern: /^_virtual_changelog-/, limit: 40 * KB },
 ];
 
