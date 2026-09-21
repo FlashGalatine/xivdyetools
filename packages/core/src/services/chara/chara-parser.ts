@@ -32,12 +32,17 @@
  *   both are accepted; 0 = no facewear. Resolution to item names happens
  *   off-device (api-worker) — the parser only carries the keys.
  * - **Never read `Base64Image`.**
- * - An unrecognised tribe/race/gender fails loudly (name got vs expected),
- *   never an empty palette.
+ * - **Tribe, not Race** (spec 10a): `Race` strings drift between producers
+ *   and producer versions — Anamnesis writes the game enum's `Lalafel` and
+ *   `Miqote`, older exports and hand edits use other spellings — while the
+ *   tribe names are stable. The tribe therefore *determines* the race, and
+ *   the file's `Race` key is only a fallback for a file that carries no
+ *   tribe. A tribe we do not know fails loudly (name got vs expected); an
+ *   unknown `Race` never does, so the next drift is not another outage.
  */
 
 import type { Gender, Race, RGB, SubRace } from '@xivdyetools/types';
-import { AppError, ErrorCode } from '@xivdyetools/types';
+import { AppError, ErrorCode, SUBRACE_TO_RACE } from '@xivdyetools/types';
 import { clamp } from '../../utils/index.js';
 import { isWornCharaModel, isCharaWeaponSlot, type CharaGearModel } from './chara-models.js';
 
@@ -151,15 +156,27 @@ const TRIBE_MAP: Record<string, SubRace> = {
   Veena: 'Veena',
 };
 
-/** File race spellings → Race (Anamnesis serializes "Miqote" and "AuRa"). */
-const RACE_MAP: Record<string, Race> = {
+/**
+ * Race spellings → Race, for the **fallback only**: the tribe determines the
+ * race whenever the file names one (spec 10a, "Tribe, not Race"), and this
+ * table is consulted solely for a file that carries no `Tribe` key. It is
+ * therefore best-effort and never fatal — an entry missing from it costs a
+ * tribe-less file its race readout, not the whole import.
+ *
+ * It carries the game enum's spellings (`Lalafel` with one trailing L,
+ * `Miqote` without the apostrophe, `AuRa`), our own `Race` identifiers, and
+ * the in-game display forms a hand edit is likely to use.
+ */
+const RACE_FALLBACK_MAP: Record<string, Race> = {
   Hyur: 'Hyur',
   Elezen: 'Elezen',
+  Lalafel: 'Lalafell',
   Lalafell: 'Lalafell',
   Miqote: "Miqo'te",
   "Miqo'te": "Miqo'te",
   Roegadyn: 'Roegadyn',
   AuRa: 'AuRa',
+  'Au Ra': 'AuRa',
   Hrothgar: 'Hrothgar',
   Viera: 'Viera',
 };
@@ -252,6 +269,20 @@ function readIndex(record: Record<string, unknown>, key: string): number | null 
   return value;
 }
 
+/**
+ * Best-effort table lookup: anything the table does not carry — an unknown
+ * spelling, a non-string, an absent key — is `null`, never a throw. Used for
+ * fields that are advisory rather than authoritative.
+ *
+ * Own-property lookup only, for the same reason `mapNamed` does it: on a
+ * plain object literal, `table[value]` lets "constructor" / "__proto__" /
+ * "toString" resolve to a Function or Object.prototype (FINDING-027).
+ */
+function lookupOptional<T>(table: Record<string, T>, value: unknown): T | null {
+  if (typeof value !== 'string') return null;
+  return Object.hasOwn(table, value) ? table[value] : null;
+}
+
 function mapNamed<T>(
   table: Record<string, T>,
   field: string,
@@ -281,9 +312,13 @@ function mapNamed<T>(
 
 /**
  * Parse a `.chara` file's text content. Structural problems (invalid JSON,
- * unrecognised tribe/race/gender, malformed colour values) throw AppError
+ * unrecognised tribe or gender, malformed colour values) throw AppError
  * naming field and value; per-slot range problems are left to the resolver,
  * which reports them as loud slot states.
+ *
+ * `race` is derived from the tribe and is never read from the file's own
+ * `Race` key unless no tribe is given, so an unrecognised `Race` is not an
+ * error — see "Tribe, not Race" in the module header.
  */
 export function parseCharaFile(text: string): ParsedCharaFile {
   let data: unknown;
@@ -299,9 +334,14 @@ export function parseCharaFile(text: string): ParsedCharaFile {
 
   // Identity fields first: a file that names a bad tribe deserves that
   // message, not the generic refusal below.
-  const { mapped: race } = mapNamed(RACE_MAP, 'Race', record['Race']);
   const { mapped: tribe, raw: tribeRaw } = mapNamed(TRIBE_MAP, 'Tribe', record['Tribe']);
   const { mapped: gender } = mapNamed(GENDER_MAP, 'Gender', record['Gender']);
+  // Tribe, not Race (spec 10a). The tribe is authoritative whenever the file
+  // names one, so a drifted, contradictory, absent or non-string `Race` key
+  // cannot change the answer — only a tribe-less file falls back to reading
+  // it, and an unrecognised spelling there is null rather than a refusal.
+  const race: Race | null =
+    tribe !== null ? SUBRACE_TO_RACE[tribe] : lookupOptional(RACE_FALLBACK_MAP, record['Race']);
 
   // Parse by key presence: a JSON carrying no colour field at all is some
   // other document that happens to be JSON, not a sparse character. Refuse

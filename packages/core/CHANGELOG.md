@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.5.0] - 2026-09-20
+
+**`.chara` import now reads the race off the tribe.** MINOR, not a patch: `parseCharaFile`
+returns for input that previously threw, which is observable to every consumer (house rule —
+logger 2.2.0, re-applied at core 5.3.0 and bot-logic 4.3.0).
+
+Spec 10a (`docs/research/monorepo-2.0/10a-sheet-port-spec.md`) says **"Tribe, not Race. Race
+strings drift (Lalafel/Miqote) … Tribe determines both"**. The parser was built against that
+spec but treated the `Race` key as authoritative anyway, which produced three separate bugs.
+The tribe is now the source of truth.
+
+### Changed
+
+- **`race` is derived from `tribe`** via `SUBRACE_TO_RACE`, not read from the file. The `Race`
+  key is consulted only when a file carries no `Tribe` at all, and an unrecognised value there
+  yields `null` instead of throwing — so the next producer spelling is a non-event rather than
+  another outage. An unrecognised **tribe** still fails loudly; that one is authoritative.
+- `RACE_MAP` became `RACE_FALLBACK_MAP`, internal and best-effort. It gained `Lalafel` and the
+  in-game display form `Au Ra`, neither of which parsed before.
+- `parseCharaFile` no longer throws on an unrecognised `Race`. Callers that relied on that
+  refusal should key off `tribe`, which is still validated strictly.
+
+### Fixed
+
+- **Every Lalafell `.chara` file was rejected outright**, in the web app's Swatch Matcher and
+  the bot's `/swatch` alike, with `.chara field Race: unrecognised value "Lalafel"` — thrown
+  before a single colour was read. Anamnesis (and the Ktisis / Brio files sharing its schema)
+  writes the game enum's `Lalafel`, one trailing `L`, which the old race table did not carry.
+  Broken since the feature shipped, not a regression.
+- **A Hrothgar file with no `Race` key had its fur pattern painted into the lip swatch.**
+  `LipsToneFurPattern` is a fur-pattern enum on Hrothgar, and the rule that inerts it read the
+  `Race` key — which a real file need not carry. `{Tribe: 'Helions', LipsToneFurPattern: 37}`
+  resolved as a live lip colour index 37; it now inerts as `furPattern`.
+- **An Au Ra's limbal ring was labelled and matched as a tattoo** whenever `Race` was absent or
+  disagreed with the tribe. The resolver picks `limbal` vs `tattoo` from the race while taking
+  its sheets from the tribe, so the two could disagree on the same character.
+
+### Security
+
+- The prototype-key hardening (FINDING-027) is preserved on the new path: the fallback lookup is
+  own-property only, so `"Race": "__proto__"` resolves to `null`, never `Object.prototype`. Its
+  test now asserts that directly rather than asserting a refusal.
+
+### Tests
+
+- `fixtures/lalafell-dunesfolk.chara` — a **real** Anamnesis export carrying `"Race": "Lalafel"`,
+  scrubbed of `Nickname` / `Author` / `Description` / `Tags` / `Base64Image` (asserted by the
+  suite). The synthetic objects could not prove what a producer actually emits.
+- All 16 tribes are asserted to derive the right race with no `Race` key present; drifted,
+  contradictory, non-string and absent `Race` values are all covered, as are the two slot rules
+  that key off the race.
+
 ## [5.4.0] - 2026-09-20
 
 From the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`). MINOR: one new public export,

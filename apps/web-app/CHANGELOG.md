@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.2] - 2026-09-20
+
+Needs `@xivdyetools/core` 5.5.0. No web-app source changed — all three fixes land in core's
+`.chara` parser and arrive through `workspace:*`.
+
+### Fixed
+
+- **Swatch Matcher refused every Lalafell `.chara` file** with "Couldn't read this character file:
+  `.chara` field Race: unrecognised value \"Lalafel\"". Anamnesis writes the game enum's `Lalafel`
+  (one trailing `L`) and the parser treated the `Race` key as authoritative, so it threw before
+  reading a colour. Broken since the Swatch Matcher shipped `.chara` import, not a regression.
+  Core now derives the race from the tribe, which does not drift.
+- **A Hrothgar file with no `Race` key showed a fur-pattern number as a lip colour.** The rule
+  that inerts `LipsToneFurPattern` on Hrothgar read the `Race` key, which a real file need not
+  carry.
+- **An Au Ra's limbal ring was labelled "Tattoo / Limbal" as a tattoo** — and matched against the
+  tattoo sheet — whenever the file's `Race` key was absent or disagreed with its tribe.
+
 ## [5.12.1] - 2026-09-20
 
 Follow-up to the 2026-09-19 i18n audit's pre-merge review (PR #192). Policy documents only — they

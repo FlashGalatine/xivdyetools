@@ -2,6 +2,16 @@
 
 ---
 
+## Web-App Version 5.12.2 — September 20, 2026
+
+### Lalafell character files can be read at last
+- **Swatch Matcher now accepts a Lalafell `.chara` file.** Dropping one always failed immediately with "unrecognised value 'Lalafel'" — the file writes the race name with one L at the end, and the tool was only looking for the spelling with two. This has never worked until now. Your file is still read entirely on your device.
+
+### Two colours that were read off the wrong sheet
+- **A Hrothgar file that leaves the race out no longer shows a fur-pattern number as a lip colour.** Those files store the fur pattern in the same field as the lip tone, and the tool needed the race to tell them apart.
+- **An Au Ra's limbal ring is matched as a limbal ring, not a tattoo.** It was labelled "Tattoo / Limbal" and matched against the wrong colour sheet when the file's race was missing or disagreed with its clan.
+- **The clan is what the tools trust now.** A character file names both a race and a clan and the two can disagree; the clan never drifts between versions of the character-file apps, so a file with an odd or missing race name still opens.
+
 ## Web-App Version 5.12.0 — September 20, 2026
 
 ### Privacy Policy and Terms, in your language

@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.6.2] - 2026-09-20
+### 🧒 Lalafell character files work in `/swatch` at last
+- Attaching a Lalafell `.chara` file to `/swatch` always came back with "unrecognised value 'Lalafel'" instead of a card. The file writes that race name with one L at the end and the bot was only looking for the spelling with two. This has never worked until now.
+- A Hrothgar file that leaves the race out no longer has its fur-pattern number matched as a lip colour, and an Au Ra's limbal ring is matched as a limbal ring rather than a tattoo.
+- Character files name both a race and a clan, and the two could disagree. The bot trusts the clan from now on, so a file with an odd or missing race name still works.
+
 ## [5.6.0] - 2026-09-20
 ### 🌐 The command menu speaks your language all the way down
 - When you type a command, every option and sub-command now shows its hint in your Discord language: Japanese, German, French, Korean or Chinese. Until now only the command's one-line summary was translated, and the 137 hints underneath it stayed in English.

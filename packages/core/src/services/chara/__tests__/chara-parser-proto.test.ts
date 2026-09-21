@@ -19,10 +19,26 @@ describe('parseCharaFile prototype-key hardening', () => {
     },
   );
 
-  it.each(['constructor', '__proto__'])('rejects Race = %s and Gender = %s as unrecognised', (key) => {
-    expect(() => parseCharaFile(JSON.stringify({ ...base, Race: key }))).toThrow(/unrecognised value/);
-    expect(() => parseCharaFile(JSON.stringify({ ...base, Gender: key }))).toThrow(/unrecognised value/);
-  });
+  it.each(['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'])(
+    'rejects Gender = %s as unrecognised',
+    (key) => {
+      expect(() => parseCharaFile(JSON.stringify({ ...base, Gender: key }))).toThrow(/unrecognised value/);
+    },
+  );
+
+  // Race is derived from the tribe and no longer throws on a value we do not
+  // know (spec 10a, "Tribe, not Race"), so the guarantee here is narrower and
+  // stricter than a refusal: a prototype key must never become the race.
+  it.each(['constructor', '__proto__', 'toString', 'hasOwnProperty', 'valueOf'])(
+    'never resolves Race = %s to anything off the prototype chain',
+    (key) => {
+      // With a tribe present the key is not consulted at all.
+      expect(parseCharaFile(JSON.stringify({ ...base, Race: key })).race).toBe('Viera');
+      // Without one it goes through the fallback table, which is own-property only.
+      const { Tribe: _omitted, ...tribeless } = base;
+      expect(parseCharaFile(JSON.stringify({ ...tribeless, Race: key })).race).toBeNull();
+    },
+  );
 
   it('still accepts the real spellings', () => {
     expect(parseCharaFile(JSON.stringify(base)).tribe).toBe('Rava');
