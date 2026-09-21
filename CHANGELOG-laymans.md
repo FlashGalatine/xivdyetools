@@ -37,6 +37,11 @@ Rules:
 - Dye names are untouched: Ash Grey, Goobbue Grey, Slate Grey and Charcoal Grey keep the spelling the game gives them.
 - The other five languages are unaffected, and nothing changed what it does — only how the English words are spelled.
 
+### 🏷️ The presets tool is called Community Presets
+- Web app: the tool is now titled **Community Presets**, the name the guides and the Discord bot already used. It had been showing "Preset Palettes" in the app only.
+- Renamed in all six languages, using the same wording the bot already uses.
+- Nothing about the tool changed — only its name.
+
 ## [5.9.1] - 2026-09-20
 ### 🧒 Lalafell character files can be read at last
 - Web app: the Swatch Matcher now accepts a Lalafell `.chara` file. Dropping one always used to fail straight away with "unrecognised value 'Lalafel'" — the file writes that race name with one L at the end, and the tool was only looking for the spelling with two. This never worked before now.
