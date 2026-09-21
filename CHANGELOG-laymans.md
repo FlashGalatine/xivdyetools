@@ -32,10 +32,15 @@ Rules:
 -->
 
 ## [5.9.1] - 2026-09-20
-### 🧒 Lalafell character files open again
-- Web app: the Swatch Matcher accepts a Lalafell `.chara` file again. Dropping one used to fail straight away with "unrecognised value 'Lalafel'" — the file writes that race name with one L at the end, and the tool was only looking for the spelling with two.
-- Discord bot: the same file attached to `/swatch` now returns a card instead of that error.
-- Every other race was unaffected, and your file is still read on your own device in the web app.
+### 🧒 Lalafell character files can be read at last
+- Web app: the Swatch Matcher now accepts a Lalafell `.chara` file. Dropping one always used to fail straight away with "unrecognised value 'Lalafel'" — the file writes that race name with one L at the end, and the tool was only looking for the spelling with two. This never worked before now.
+- Discord bot: the same file attached to `/swatch` returns a card instead of that error.
+- Your file is still read on your own device in the web app.
+
+### 🎨 Two colours that were read off the wrong sheet
+- Web app and Discord bot: a Hrothgar character file that leaves the race out could show a fur-pattern number as a lip colour. The tools now work the clan out from the file and read the right sheet.
+- Web app and Discord bot: an Au Ra's limbal ring was sometimes labelled and matched as a tattoo. It is matched as a limbal ring now.
+- Character files name both a race and a clan, and the two could disagree. The clan is the one the tools trust from now on, so a file with an odd or missing race name still opens.
 
 ## [5.9.0] - 2026-09-20
 ### 🌐 More of XIV Dye Tools in your language
