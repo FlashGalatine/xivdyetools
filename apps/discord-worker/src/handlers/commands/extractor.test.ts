@@ -240,23 +240,15 @@ describe('/extractor image — color count line (I18N-006)', () => {
 
   it('renders the singular "1 color" line when only one dye match survives', async () => {
     const dye = dyeService.getAllDyes()[0];
-    const spy = vi
-      .spyOn(PaletteService.prototype, 'extractAndMatchPalette')
-      .mockReturnValue([
-        { extracted: { r: 255, g: 0, b: 0 }, matchedDye: dye, distance: 0, dominance: 1 },
-      ]);
+    const spy = vi.spyOn(PaletteService.prototype, 'extractAndMatchPalette').mockReturnValue([
+      { extracted: { r: 255, g: 0, b: 0 }, matchedDye: dye, distance: 0, dominance: 1 },
+    ]);
     try {
       const { ctx, flush } = makeCtx();
-      await handleExtractorCommand(
-        makeImageInteraction('att-1', 'https://example.com/i.png'),
-        env,
-        ctx,
-      );
+      await handleExtractorCommand(makeImageInteraction('att-1', 'https://example.com/i.png'), env, ctx);
       await flush();
 
-      const response = editOriginalResponseMock.mock.calls[0][2] as {
-        embeds: Array<{ description: string }>;
-      };
+      const response = editOriginalResponseMock.mock.calls[0][2] as { embeds: Array<{ description: string }> };
       expect(response.embeds[0].description).toContain('1 color\n');
       expect(response.embeds[0].description).not.toContain('1 colors');
     } finally {
@@ -272,16 +264,10 @@ describe('/extractor image — color count line (I18N-006)', () => {
     ]);
     try {
       const { ctx, flush } = makeCtx();
-      await handleExtractorCommand(
-        makeImageInteraction('att-1', 'https://example.com/i.png'),
-        env,
-        ctx,
-      );
+      await handleExtractorCommand(makeImageInteraction('att-1', 'https://example.com/i.png'), env, ctx);
       await flush();
 
-      const response = editOriginalResponseMock.mock.calls[0][2] as {
-        embeds: Array<{ description: string }>;
-      };
+      const response = editOriginalResponseMock.mock.calls[0][2] as { embeds: Array<{ description: string }> };
       expect(response.embeds[0].description).toContain('2 colors');
     } finally {
       spy.mockRestore();

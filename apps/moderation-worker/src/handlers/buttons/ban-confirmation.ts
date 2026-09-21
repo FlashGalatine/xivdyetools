@@ -54,7 +54,7 @@ export async function handleBanConfirmButton(
   interaction: ButtonInteraction,
   env: Env,
   _ctx: ExecutionContext,
-  logger?: ExtendedLogger,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const customId = interaction.data?.custom_id || '';
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
@@ -125,7 +125,7 @@ export async function handleBanCancelButton(
   interaction: ButtonInteraction,
   env: Env,
   _ctx: ExecutionContext,
-  _logger?: ExtendedLogger,
+  _logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
 

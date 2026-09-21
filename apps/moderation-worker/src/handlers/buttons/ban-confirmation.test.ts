@@ -381,6 +381,7 @@ describe('handleBanCancelButton', () => {
 
     expect(json.data.components).toHaveLength(0);
   });
+
 });
 
 describe('isBanConfirmButton', () => {
@@ -474,12 +475,7 @@ describe('handleBanCancelButton — MOD-12 moderator gate', () => {
 
   it('denies when the user cannot be identified', async () => {
     const response = await handleBanCancelButton(
-      {
-        id: 'int-1',
-        token: 'token-1',
-        application_id: 'app-123',
-        data: { custom_id: 'ban_cancel_1' },
-      },
+      { id: 'int-1', token: 'token-1', application_id: 'app-123', data: { custom_id: 'ban_cancel_1' } },
       env,
       ctx,
     );
