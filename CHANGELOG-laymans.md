@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.9.2] - 2026-09-21
+### 🔤 One spelling of "color" everywhere
+- Web app and Discord bot: the English text now spells things the American way throughout — "color" rather than "colour", "behavior" rather than "behaviour". Both surfaces used to mix the two spellings from one screen to the next.
+- Dye names are untouched: Ash Grey, Goobbue Grey, Slate Grey and Charcoal Grey keep the spelling the game gives them.
+- The other five languages are unaffected, and nothing changed what it does — only how the English words are spelled.
+
 ## [5.9.1] - 2026-09-20
 ### 🧒 Lalafell character files can be read at last
 - Web app: the Swatch Matcher now accepts a Lalafell `.chara` file. Dropping one always used to fail straight away with "unrecognised value 'Lalafel'" — the file writes that race name with one L at the end, and the tool was only looking for the spelling with two. This never worked before now.

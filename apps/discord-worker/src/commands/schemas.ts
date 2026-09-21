@@ -34,7 +34,7 @@ const HARMONY_TYPE_LABELS: Record<HarmonyType, string> = {
   'inverted-tetradic': 'Inverted Tetradic (4 colors, mirrored)',
   square: 'Square (4 evenly spaced)',
   monochromatic: 'Monochromatic (shades of one hue)',
-  compound: 'Compound (complementary plus its neighbours)',
+  compound: 'Compound (complementary plus its neighbors)',
   shades: 'Shades (a narrow band around the hue)',
 };
 
@@ -58,9 +58,8 @@ const COLOR_WHEEL_LABELS: Record<ColorWheelId, string> = {
 };
 
 /** Derived from core's list so it cannot go stale. */
-const COLOR_WHEEL_CHOICES: ReadonlyArray<{ name: string; value: ColorWheelId }> = COLOR_WHEEL_IDS.map(
-  (value) => ({ name: COLOR_WHEEL_LABELS[value], value })
-);
+const COLOR_WHEEL_CHOICES: ReadonlyArray<{ name: string; value: ColorWheelId }> =
+  COLOR_WHEEL_IDS.map((value) => ({ name: COLOR_WHEEL_LABELS[value], value }));
 
 /**
  * Discord command option types
@@ -173,7 +172,7 @@ export const commands = [
       },
       {
         name: 'wheel',
-        description: 'Colour wheel the harmony angles are measured on (default: RGB)',
+        description: 'Color wheel the harmony angles are measured on (default: RGB)',
         type: OptionType.STRING,
         required: false,
         choices: COLOR_WHEEL_CHOICES,
@@ -553,7 +552,7 @@ export const commands = [
         required: false,
         choices: [
           { name: '📸 Image Matching Tips', value: 'match_image' },
-          { name: '♿ Colour Vision', value: 'color_vision' },
+          { name: '♿ Color Vision', value: 'color_vision' },
           { name: '🔲 Contrast', value: 'contrast' },
           { name: '📐 Matching Methods', value: 'matching_methods' },
           { name: '🪙 Spectrum & Prices', value: 'spectrum_prices' },
@@ -866,7 +865,7 @@ export const commands = [
   // /swatch - Character color matching
   {
     name: 'swatch',
-    description: "Match a character file's colours to the nearest dyes",
+    description: "Match a character file's colors to the nearest dyes",
     options: [
       {
         name: 'file',

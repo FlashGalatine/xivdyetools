@@ -259,7 +259,7 @@
     "official": "公式",
     "unknownAuthor": "不明",
     "name": "名前",
-    "colorCount": "{n} 色",
+    "colorCount": "{n}色",
     "submitFailed": "プリセットを送信できませんでした。",
     "editFailed": "プリセットを編集できませんでした。",
     "voteFailed": "投票を処理できませんでした。",

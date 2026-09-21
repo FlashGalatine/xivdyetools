@@ -7,9 +7,9 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-09-20 (checked against the registry API), `@xivdyetools/core` 5.5.0 and
-> `@xivdyetools/bot-logic` 4.4.0 are ahead of their published npm versions (5.3.0 / 4.3.0) and await
-> publication — publish core first, bot-logic depends on it; the other five packages are at parity;
+> (PR #123). As of 2026-09-21 (checked against the registry API), `@xivdyetools/bot-logic` 4.4.1
+> is ahead of its published npm version (4.4.0) and awaits publication; `@xivdyetools/core` 5.5.0
+> published on 2026-09-20 and the other six packages are at parity;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
@@ -23,13 +23,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.12.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.6.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.12.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.6.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.7.3 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.5 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.14.6 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -45,7 +45,7 @@
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.4.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.4.1 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated

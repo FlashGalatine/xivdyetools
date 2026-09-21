@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.6.3] - 2026-09-21
+### 🔤 One spelling of "color" everywhere
+- The bot's English text now spells things the American way — "color" rather than "colour". Command descriptions, card labels and `/manual` used to mix the two.
+- Dye names keep the game's own spelling, so Ash Grey and Slate Grey are unchanged.
+- The other five languages are unaffected.
+
 ## [5.6.2] - 2026-09-20
 ### 🧒 Lalafell character files work in `/swatch` at last
 - Attaching a Lalafell `.chara` file to `/swatch` always came back with "unrecognised value 'Lalafel'" instead of a card. The file writes that race name with one L at the end and the bot was only looking for the spelling with two. This has never worked until now.

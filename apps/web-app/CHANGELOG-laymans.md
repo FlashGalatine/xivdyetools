@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.12.3 — September 21, 2026
+
+### One spelling of "color" everywhere
+- **The English text now spells things the American way throughout** — "color" rather than "colour", "behavior" rather than "behaviour". The app used to mix the two from one panel to the next; the Accessibility Checker, Dye Comparison and Swatch Matcher had the most of it.
+- Dye names are untouched: Ash Grey, Goobbue Grey, Slate Grey and Charcoal Grey keep the spelling the game gives them.
+- The other five languages are unaffected, and nothing changed what it does.
+
 ## Web-App Version 5.12.2 — September 20, 2026
 
 ### Lalafell character files can be read at last

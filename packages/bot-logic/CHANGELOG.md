@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.1] - 2026-09-21
+
+Spelling only — American English across the `en` locale, per
+`.agents/skills/audit-shared/american-english.md`. No key is added, removed or renamed:
+`card.colours` keeps its British key name, because a key is an identifier and removing one
+is a MAJOR. Only its value changes.
+
+### Changed
+
+- **`en` locale values now use American spelling** (10 keys): `card.colours`, `card.colours_one`,
+  `card.colours_other`, `card.manualLead`, `card.swatchNoSlots`, `manual5.topics.colorVision.name`,
+  `manual5.topics.contrast.body`, `manual5.topics.characterFile.body`,
+  `commands.harmony.options.wheel.description`, `commands.swatch.description`.
+- **`preset.colorCount` harmonized in ja and ko.** Correcting `card.colours` to `{n} colors` made
+  it share one English value with `preset.colorCount`, which the *same English → same translation*
+  gate then binds together — and the two had diverged (ja `{n} 色` vs `{n}色`, ko `{n}색` vs
+  `{n}가지 색`). `preset.colorCount` now takes the `card.*` form in both, the majority reading and
+  the plural-aware entry. The British spelling had been hiding the inconsistency from the gate.
+  **Both values want a native review** — they were chosen by majority, not by a fluent reader.
+
 ## [4.4.0] - 2026-09-20
 
 2026-09-19 i18n audit, Sprint 5 (`docs/audits/2026-09-19-i18n/`). Minor rather than patch:

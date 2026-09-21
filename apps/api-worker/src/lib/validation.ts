@@ -17,11 +17,7 @@ import {
   parseColorWheelId,
 } from '@xivdyetools/core';
 import type { ColorWheelId, MatchingMethod } from '@xivdyetools/core';
-import {
-  EXPENSIVE_DYE_IDS,
-  VENDOR_ACQUISITIONS,
-  CRAFT_ACQUISITIONS,
-} from '@xivdyetools/core';
+import { EXPENSIVE_DYE_IDS, VENDOR_ACQUISITIONS, CRAFT_ACQUISITIONS } from '@xivdyetools/core';
 import { ApiError, ErrorCode } from './api-error.js';
 import { dyeService } from './services.js';
 
@@ -39,7 +35,12 @@ export type ValidLocale = LocaleCode;
 // oklch-weighted) stay accepted at the boundary for compatibility and are
 // normalised to their replacement.
 export const VALID_MATCHING_METHODS: MatchingMethod[] = [
-  'ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish',
+  'ciede2000',
+  'oklab',
+  'cie76',
+  'redmean',
+  'rgb',
+  'distinguish',
 ];
 
 export const VALID_SORT_FIELDS = ['name', 'brightness', 'saturation', 'hue', 'cost'] as const;
@@ -72,7 +73,7 @@ export function parseColorWheel(value: string | undefined, name = 'wheel'): Colo
   if (!wheel) {
     throw new ApiError(
       ErrorCode.INVALID_COLOR_WHEEL,
-      `Invalid colour wheel "${value}". Must be one of: ${COLOR_WHEEL_IDS.join(', ')}`,
+      `Invalid color wheel "${value}". Must be one of: ${COLOR_WHEEL_IDS.join(', ')}`,
       400,
       { parameter: name, received: value, expected: [...COLOR_WHEEL_IDS] },
     );
@@ -167,18 +168,28 @@ const HEX_PATTERN = /^#?[0-9A-Fa-f]{6}$/;
 /** Validate and normalize hex color. Auto-prepends # and uppercases. */
 export function parseHex(value: string | undefined, paramName = 'hex'): string {
   if (!value) {
-    throw new ApiError(ErrorCode.MISSING_PARAMETER, `Missing required parameter: ${paramName}`, 400, {
-      parameter: paramName,
-      required: true,
-    });
+    throw new ApiError(
+      ErrorCode.MISSING_PARAMETER,
+      `Missing required parameter: ${paramName}`,
+      400,
+      {
+        parameter: paramName,
+        required: true,
+      },
+    );
   }
 
   if (!HEX_PATTERN.test(value)) {
-    throw new ApiError(ErrorCode.INVALID_HEX, 'Invalid hex color format. Expected #RRGGBB or RRGGBB.', 400, {
-      parameter: paramName,
-      received: value,
-      expected: 'Hex color string matching /^#?[0-9A-Fa-f]{6}$/',
-    });
+    throw new ApiError(
+      ErrorCode.INVALID_HEX,
+      'Invalid hex color format. Expected #RRGGBB or RRGGBB.',
+      400,
+      {
+        parameter: paramName,
+        received: value,
+        expected: 'Hex color string matching /^#?[0-9A-Fa-f]{6}$/',
+      },
+    );
   }
 
   const normalized = value.startsWith('#') ? value.toUpperCase() : `#${value.toUpperCase()}`;
@@ -209,19 +220,29 @@ export function parseIntParam(
   }
 
   if (options.min !== undefined && num < options.min) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be >= ${options.min}.`, 400, {
-      parameter: name,
-      received: num,
-      expected: `>= ${options.min}`,
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      `Parameter "${name}" must be >= ${options.min}.`,
+      400,
+      {
+        parameter: name,
+        received: num,
+        expected: `>= ${options.min}`,
+      },
+    );
   }
 
   if (options.max !== undefined && num > options.max) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be <= ${options.max}.`, 400, {
-      parameter: name,
-      received: num,
-      expected: `<= ${options.max}`,
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      `Parameter "${name}" must be <= ${options.max}.`,
+      400,
+      {
+        parameter: name,
+        received: num,
+        expected: `<= ${options.max}`,
+      },
+    );
   }
 
   return num;
@@ -245,27 +266,42 @@ export function parseFloatParam(
   // FINDING-025 / API-13: parseFloat('Infinity') / '1e400' are not NaN but
   // are no more a usable distance than 'abc' is
   if (!Number.isFinite(num)) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be a finite number.`, 400, {
-      parameter: name,
-      received: value,
-      expected: 'finite number',
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      `Parameter "${name}" must be a finite number.`,
+      400,
+      {
+        parameter: name,
+        received: value,
+        expected: 'finite number',
+      },
+    );
   }
 
   if (options.min !== undefined && num < options.min) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be >= ${options.min}.`, 400, {
-      parameter: name,
-      received: num,
-      expected: `>= ${options.min}`,
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      `Parameter "${name}" must be >= ${options.min}.`,
+      400,
+      {
+        parameter: name,
+        received: num,
+        expected: `>= ${options.min}`,
+      },
+    );
   }
 
   if (options.max !== undefined && num > options.max) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be <= ${options.max}.`, 400, {
-      parameter: name,
-      received: num,
-      expected: `<= ${options.max}`,
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      `Parameter "${name}" must be <= ${options.max}.`,
+      400,
+      {
+        parameter: name,
+        received: num,
+        expected: `<= ${options.max}`,
+      },
+    );
   }
 
   return num;
@@ -287,11 +323,16 @@ export function parseEnumParam<T extends string>(
   }
 
   if (!validValues.includes(value as T)) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Invalid value for "${name}". Must be one of: ${validValues.join(', ')}`, 400, {
-      parameter: name,
-      received: value,
-      expected: validValues,
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      `Invalid value for "${name}". Must be one of: ${validValues.join(', ')}`,
+      400,
+      {
+        parameter: name,
+        received: value,
+        expected: validValues,
+      },
+    );
   }
 
   return value as T;
@@ -347,14 +388,22 @@ export function parseCommaSeparatedIds(
     });
   }
 
-  const parts = value.split(',').map((s) => s.trim()).filter(Boolean);
+  const parts = value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   if (parts.length > maxItems) {
-    throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" exceeds maximum of ${maxItems} items.`, 400, {
-      parameter: name,
-      received: parts.length,
-      expected: `<= ${maxItems} items`,
-    });
+    throw new ApiError(
+      ErrorCode.VALIDATION_ERROR,
+      `Parameter "${name}" exceeds maximum of ${maxItems} items.`,
+      400,
+      {
+        parameter: name,
+        received: parts.length,
+        expected: `<= ${maxItems} items`,
+      },
+    );
   }
 
   const ids: number[] = [];
@@ -364,11 +413,16 @@ export function parseCommaSeparatedIds(
     // each resolving to a real dye under a cache key of its own. Same
     // canonical form the single-id routes and the icon proxy require.
     if (!CANONICAL_DYE_ID.test(part) || isNaN(num)) {
-      throw new ApiError(ErrorCode.VALIDATION_ERROR, `Invalid ID "${part}" in "${name}". All values must be integers.`, 400, {
-        parameter: name,
-        received: part,
-        expected: 'integer',
-      });
+      throw new ApiError(
+        ErrorCode.VALIDATION_ERROR,
+        `Invalid ID "${part}" in "${name}". All values must be integers.`,
+        400,
+        {
+          parameter: name,
+          received: part,
+          expected: 'integer',
+        },
+      );
     }
     ids.push(num);
   }
@@ -380,11 +434,16 @@ export function parseCommaSeparatedIds(
 export function parseLocale(value: string | undefined): ValidLocale {
   if (!value || value === '') return 'en';
   if (!VALID_LOCALES.includes(value as ValidLocale)) {
-    throw new ApiError(ErrorCode.INVALID_LOCALE, `Unsupported locale "${value}". Supported: ${VALID_LOCALES.join(', ')}`, 400, {
-      parameter: 'locale',
-      received: value,
-      expected: VALID_LOCALES,
-    });
+    throw new ApiError(
+      ErrorCode.INVALID_LOCALE,
+      `Unsupported locale "${value}". Supported: ${VALID_LOCALES.join(', ')}`,
+      400,
+      {
+        parameter: 'locale',
+        received: value,
+        expected: VALID_LOCALES,
+      },
+    );
   }
   return value as ValidLocale;
 }
@@ -403,11 +462,16 @@ export function parseMatchingMethod(value: string | undefined): MatchingMethod {
     if (Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, value)) {
       return LEGACY_MATCHING_METHOD_MAP[value];
     }
-    throw new ApiError(ErrorCode.INVALID_MATCHING_METHOD, `Invalid matching method "${value}". Must be one of: ${VALID_MATCHING_METHODS.join(', ')}`, 400, {
-      parameter: 'method',
-      received: value,
-      expected: VALID_MATCHING_METHODS,
-    });
+    throw new ApiError(
+      ErrorCode.INVALID_MATCHING_METHOD,
+      `Invalid matching method "${value}". Must be one of: ${VALID_MATCHING_METHODS.join(', ')}`,
+      400,
+      {
+        parameter: 'method',
+        received: value,
+        expected: VALID_MATCHING_METHODS,
+      },
+    );
   }
   return value as MatchingMethod;
 }
@@ -488,7 +552,10 @@ export function buildFilterExcludeIds(filters: DyeQueryFilters): number[] {
   const key = JSON.stringify(filters);
   let ids = filterExcludeCache.get(key);
   if (!ids) {
-    ids = dyeService.getAllDyes().filter((d) => !dyeMatchesFilters(d, filters)).map((d) => d.id);
+    ids = dyeService
+      .getAllDyes()
+      .filter((d) => !dyeMatchesFilters(d, filters))
+      .map((d) => d.id);
     filterExcludeCache.set(key, ids);
   }
   return ids;

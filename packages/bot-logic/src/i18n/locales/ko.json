@@ -259,7 +259,7 @@
     "official": "공식",
     "unknownAuthor": "알 수 없음",
     "name": "이름",
-    "colorCount": "{n}색",
+    "colorCount": "{n}가지 색",
     "submitFailed": "프리셋을 제출하지 못했습니다.",
     "editFailed": "프리셋을 수정하지 못했습니다.",
     "voteFailed": "투표를 처리하지 못했습니다.",

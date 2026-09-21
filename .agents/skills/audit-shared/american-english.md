@@ -74,12 +74,19 @@ genuine identifiers.
 These are candidates. Confirm each at `file:line` before filing, exactly as with any other
 candidate in `conventions.md` §7.
 
-**Known standing rejections** (verified 2026-09-21, do not re-chase): `apps/web-app/CHANGELOG.md`
-names the shipped labels *Save character colours* (×2) and *Behaviour toggles*, which is what
-`apps/web-app/src/locales/en.json` still says (`swatch.saveCharacter`, `advanced.behaviorTitle` —
-an American key with a British value). The changelog is right to match the app. These three clear
-themselves the moment those `en` values are corrected, which is `i18n-manager`'s `TERM-` work, not
-an edit to the changelog.
+**A label change cascades, and the order matters.** Fix the `en` value first, then every document
+that quotes it — a doc naming a UI label is only correct while the app still shows that label. The
+2026-09-21 pass proved the cost: correcting 59 `en` values turned 15 quotations stale across 10
+documents and 2 tests, and the three `apps/web-app/CHANGELOG.md` references to *Save character
+colours* and *Behaviour toggles* had been protected as standing rejections one commit earlier,
+precisely because the app still said that. Sweep the docs for the old value after the `en` edit,
+not before; a paraphrased quotation (`{A}`/`{B}` for the real `{a}`/`{b}`) will not match a literal
+search, so read the surrounding paragraph too.
+
+**Known standing rejection** (verified 2026-09-21, do not re-chase): `packages/core/src/data/presets.json`
+still says *deep harbour water*. Nothing user-facing reads it — `apps/web-app/src/shared/preset-i18n.ts`
+resolves `preset.<id>.description` from the locale first and only falls back to this English — so it
+is an unpublished core change waiting on a core release, not a live defect.
 
 ## Filing
 

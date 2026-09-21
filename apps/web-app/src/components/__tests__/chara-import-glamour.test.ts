@@ -471,7 +471,7 @@ describe('CharaImport — Show all pieces', () => {
     ).toContain('/v1/chara/icon/51000');
     const chip = row.querySelector<HTMLElement>('[data-role="facewear-chip"]')!;
     expect(chip.dataset.facewearColor).toBe('silver');
-    expect(chip.title).toBe('Silver · facewear colour');
+    expect(chip.title).toBe('Silver · facewear color');
     expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe('Silver');
     // It is facewear, not a dye channel — never a dye chip.
     expect(row.querySelector('[data-role="dye-chip"]')).toBeNull();
@@ -522,9 +522,7 @@ describe('CharaImport — Show all pieces', () => {
     const row = block(glamour).querySelector<HTMLElement>('[data-slot="Facewear"]')!;
     expect(row.querySelector('[data-role="facewear-chip"]')).toBeNull();
     expect(row.querySelector('[data-role="undyed-chip"]')).not.toBeNull();
-    expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe(
-      'Facewear colour unknown'
-    );
+    expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe('Facewear color unknown');
   });
 
   it('no facewear row when the file wears none', async () => {

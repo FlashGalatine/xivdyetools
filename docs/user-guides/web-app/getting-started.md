@@ -106,7 +106,7 @@ Or start from a picture: switch to **Palette Extractor** (press `2`), drop in a 
 ## Saving Your Work
 
 - **Favorites** — the **★** on any drawer swatch. Up to 40, shown at the top of the drawer.
-- **Saved palettes** — several tools save what you built (**Save mix**, **Save swap**, **Save character colours**, **Make a palette**). They appear under **Community Presets → Saved**.
+- **Saved palettes** — several tools save what you built (**Save mix**, **Save swap**, **Save character colors**, **Make a palette**). They appear under **Community Presets → Saved**.
 - **Share links** — eight of the nine tools have a **Share** button (or press `Shift+S`) that copies a link. Seven carry the exact dyes and settings: Color Harmony, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. The eighth, Palette Extractor, carries its extracted colours and matching method instead of dyes — never the picture itself. Community Presets is the only tool without a Share button; a browsable list has nothing to put in a link.
 
 Everything is stored in your browser on this device; nothing needs an account. See [Favorites & Collections](favorites-collections.md).

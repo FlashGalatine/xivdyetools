@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.3] - 2026-09-21
+
+### Changed
+
+- **Registered command text now uses American spelling** (`src/commands/schemas.ts`): the
+  `/swatch` description, the `/harmony` `wheel` option tooltip, the `compound` harmony choice
+  label and the `♿ Color Vision` manual-topic choice. These are the English strings Discord shows;
+  the five localized variants come from bot-logic and were already correct.
+  **Merging re-registers the commands** (`deploy-discord-worker.yml`), because a changed
+  description changes the registered payload. All 151 descriptions stay inside Discord's 100-character limit.
+
 ## [5.6.2] - 2026-09-20
 
 Needs `@xivdyetools/core` 5.5.0 (reached through `@xivdyetools/bot-logic`). No

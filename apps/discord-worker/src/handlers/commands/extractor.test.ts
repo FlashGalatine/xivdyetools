@@ -19,7 +19,7 @@ const translatorStub = vi.hoisted(() => ({
   // I18N-006: mirrors the real `card.colours` plural rule closely enough to
   // prove the caller passes the count through `.tc()` rather than `.t()`.
   tc: vi.fn((key: string, count: number, vars?: Record<string, unknown>) => {
-    if (key === 'card.colours') return count === 1 ? `${vars?.n} colour` : `${vars?.n} colours`;
+    if (key === 'card.colours') return count === 1 ? `${vars?.n} color` : `${vars?.n} colors`;
     return key;
   }),
   getLocale: vi.fn(() => 'en'),
@@ -211,7 +211,7 @@ describe('/extractor color — result count', () => {
   });
 });
 
-describe('/extractor image — colour count line (I18N-006)', () => {
+describe('/extractor image — color count line (I18N-006)', () => {
   function makeImageInteraction(attachmentId: string, url: string): DiscordInteraction {
     return {
       id: 'i-image-1',
@@ -238,19 +238,27 @@ describe('/extractor image — colour count line (I18N-006)', () => {
     });
   });
 
-  it('renders the singular "1 colour" line when only one dye match survives', async () => {
+  it('renders the singular "1 color" line when only one dye match survives', async () => {
     const dye = dyeService.getAllDyes()[0];
-    const spy = vi.spyOn(PaletteService.prototype, 'extractAndMatchPalette').mockReturnValue([
-      { extracted: { r: 255, g: 0, b: 0 }, matchedDye: dye, distance: 0, dominance: 1 },
-    ]);
+    const spy = vi
+      .spyOn(PaletteService.prototype, 'extractAndMatchPalette')
+      .mockReturnValue([
+        { extracted: { r: 255, g: 0, b: 0 }, matchedDye: dye, distance: 0, dominance: 1 },
+      ]);
     try {
       const { ctx, flush } = makeCtx();
-      await handleExtractorCommand(makeImageInteraction('att-1', 'https://example.com/i.png'), env, ctx);
+      await handleExtractorCommand(
+        makeImageInteraction('att-1', 'https://example.com/i.png'),
+        env,
+        ctx,
+      );
       await flush();
 
-      const response = editOriginalResponseMock.mock.calls[0][2] as { embeds: Array<{ description: string }> };
-      expect(response.embeds[0].description).toContain('1 colour\n');
-      expect(response.embeds[0].description).not.toContain('1 colours');
+      const response = editOriginalResponseMock.mock.calls[0][2] as {
+        embeds: Array<{ description: string }>;
+      };
+      expect(response.embeds[0].description).toContain('1 color\n');
+      expect(response.embeds[0].description).not.toContain('1 colors');
     } finally {
       spy.mockRestore();
     }
@@ -264,11 +272,17 @@ describe('/extractor image — colour count line (I18N-006)', () => {
     ]);
     try {
       const { ctx, flush } = makeCtx();
-      await handleExtractorCommand(makeImageInteraction('att-1', 'https://example.com/i.png'), env, ctx);
+      await handleExtractorCommand(
+        makeImageInteraction('att-1', 'https://example.com/i.png'),
+        env,
+        ctx,
+      );
       await flush();
 
-      const response = editOriginalResponseMock.mock.calls[0][2] as { embeds: Array<{ description: string }> };
-      expect(response.embeds[0].description).toContain('2 colours');
+      const response = editOriginalResponseMock.mock.calls[0][2] as {
+        embeds: Array<{ description: string }>;
+      };
+      expect(response.embeds[0].description).toContain('2 colors');
     } finally {
       spy.mockRestore();
     }

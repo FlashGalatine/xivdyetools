@@ -28,7 +28,7 @@ The chosen pair fills the workspace as a **split panel** — one dye per half, t
 
 | Badge | Headline | When |
 |-------|----------|------|
-| **SAME COLOUR** | *"{A} and {B} are the same colour."* | Under the match line — *"Nobody will see the difference on a chest piece — so this is a price question, not a colour one."* |
+| **SAME COLOR** | *"{A} and {B} are the same color."* | Under the match line — *"Nobody will see the difference on a chest piece — so this is a price question, not a color one."* |
 | **SUBSTITUTABLE** | *"{A} can stand in for {B}."* | *"Side by side you can just about tell; at arm's length, on cloth, you cannot."* |
 | **DIFFERENT** | *"{A} and {B} are clearly different."* | *"These read as two different dyes at any distance."* |
 
@@ -55,7 +55,7 @@ When both dyes have a vendor price the verdict adds a **cost line**: *"{cheaper}
 
 Tap a method row and it becomes the tool's method — the chips re-sort, the split badge and verdict switch to it, and every tier word is that method's own calibrated cut, never ΔE2000's number under another name. The seventh readout, **RATIO**, sits last after a rule: the WCAG contrast ratio of the pair. It is not a colour difference, so it carries no tier word.
 
-The **ⓘ** beside **What actually differs** opens the method help: the current method's plain-language definition, its caveat, a **PERCEPTUAL / APPROXIMATE / NOT PERCEPTUAL** badge, a switcher for the six methods, and a link labelled **How colour difference is measured**.
+The **ⓘ** beside **What actually differs** opens the method help: the current method's plain-language definition, its caveat, a **PERCEPTUAL / APPROXIMATE / NOT PERCEPTUAL** badge, a switcher for the six methods, and a link labelled **How color difference is measured**.
 
 **This pair — each measured against the other.** Two mirrored full-size result cards, one per dye, each showing the other dye's colour as its reference and their ΔE2000. The cards keep price and source visible — once the colours tie, that is the decision. **Remove** on a card takes that dye out.
 
@@ -65,7 +65,7 @@ The **ⓘ** beside **What actually differs** opens the method help: the current 
 
 In the settings column (the gear icon on phones):
 
-- **Match line** (1–15, default 5) — the ΔE2000 value under which a pair is called **SAME COLOUR**; the verdict quotes it (*"the match line sits at ΔE 5"*). Other methods keep their fixed cut.
+- **Match line** (1–15, default 5) — the ΔE2000 value under which a pair is called **SAME COLOR**; the verdict quotes it (*"the match line sits at ΔE 5"*). Other methods keep their fixed cut.
 - **Display options** — which colour values and readouts the cards print
 - **Market Board** — turn prices on and choose your data centre or world; the duel refreshes when prices arrive
 
@@ -96,7 +96,7 @@ See the [Glossary](../../reference/glossary.md) for more on Delta E and the matc
 
 ### Outfit Planning
 1. Load your top candidates for one piece
-2. Read the chips — anything **SAME COLOUR** collapses to a price question
+2. Read the chips — anything **SAME COLOR** collapses to a price question
 3. Use the bench to cycle the fourth option in
 
 ### Similar Dye Investigation

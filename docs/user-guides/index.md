@@ -66,7 +66,7 @@ heading, it is given in brackets.
 ### Saving Your Work
 
 - **Favorites**: Star individual dyes you love, straight from the Color Palette drawer
-- **Saved palettes**: Written by a tool's own Save action — **Save mix** in the Dye Mixer, **Save swap** in Budget Suggestions, **Save character colours** or **Make a palette** in the Swatch Matcher. They are records of something you built, not folders you file dyes into by hand
+- **Saved palettes**: Written by a tool's own Save action — **Save mix** in the Dye Mixer, **Save swap** in Budget Suggestions, **Save character colors** or **Make a palette** in the Swatch Matcher. They are records of something you built, not folders you file dyes into by hand
 - **Presets**: Browse and save community-created palettes
 
 ### Getting Help
