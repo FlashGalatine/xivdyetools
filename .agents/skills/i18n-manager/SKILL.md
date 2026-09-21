@@ -1,6 +1,6 @@
 ---
 name: i18n-manager
-description: Use for any translation/localization work in xivdyetools — checking or syncing locales, missing or untranslated keys, terminology, hardcoded UI strings, CJK fonts or font subsets, or an i18n audit/remediation plan ("check translations", "sync locales", "i18n audit", "font subset", "CJK fonts", "localization").
+description: Use for any translation/localization work in xivdyetools — checking or syncing locales, missing or untranslated keys, terminology, American vs British spelling in the en locale, hardcoded UI strings, CJK fonts or font subsets, or an i18n audit/remediation plan ("check translations", "sync locales", "i18n audit", "British spellings", "font subset", "CJK fonts", "localization").
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent, Skill
 ---
 
@@ -29,6 +29,10 @@ Terminology dictionary: `docs/reference/ffxiv-terminology.md` (+ `docs/reference
 Game nouns come from core locale data (XIVAPI en/ja/de/fr; ko/zh hand-sourced in
 `dyenames.csv`) — reference the core key, never re-translate a dye/category/term by hand.
 Placeholders are single-brace `{name}`; confirm against the set's `en.json` before adding keys.
+**`en` is American English** — the standard, the carve-outs and the sweep are in
+`../audit-shared/american-english.md`. The dictionary above wins wherever it conflicts, so a game
+term keeps the game's spelling (**Grey** — the Facewear color and the four Grey dyes — and
+**Glamour**) and is never filed.
 
 ## Parameters
 
@@ -41,7 +45,8 @@ Placeholders are single-brace `{name}`; confirm against the set's `en.json` befo
 ## Step 0 — load (audit mode)
 
 Read `../audit-shared/conventions.md` + `model-routing.md`, `../audit-shared/traps/shell.md` and `traps/i18n-fonts.md`
-(generated files, fonts-by-cmap, deliberately-English list, lookup-pattern catalogue pointer). If a prior i18n
+(generated files, fonts-by-cmap, deliberately-English list, lookup-pattern catalogue pointer), and
+`../audit-shared/american-english.md` (the `en` spelling standard and its glossary exception). If a prior i18n
 audit exists for the scope, read its README + *Rejected suspicions*; carry-forwards get new IDs.
 
 ## Step 1 — gates first (capture to `<OUT>/evidence/`)
@@ -69,10 +74,12 @@ python "<SKILL_DIR>/scripts/locale-diff.py" packages/core/src/data/locales --sou
 python "<SKILL_DIR>/scripts/script-inventory.py" packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts   # codepoints per script block per file
 python "<SKILL_DIR>/scripts/font-coverage.py" apps/og-worker/src/fonts/NotoSansSC-Subset.ttf packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts --scripts cjk   # missing/stale per font
 python "<SKILL_DIR>/scripts/cmap-diff.py" <old.ttf> <new.ttf>                               # compare subsets by cmap, never md5
+node "<SKILL_DIR>/../audit-shared/scripts/american-spelling.mjs" . <en-file…>                # British spellings in en values (add --all for code zones)
 ```
 - **Hardcoded UI strings in handler code**: web-app → `pnpm --filter xivdyetools-web-app exec eslint src -f json > <OUT>/evidence/eslint.json` and keep rule IDs starting `xivdyetools-i18n/`; plus `git ls-files 'apps/web-app/src/**/*.ts' | xargs grep -n 'innerHTML = `'` for the unscanned sites. Bots/og → `git ls-files '<unit>/src/**/*.ts' | grep -v -E '\.test\.ts$|og-strings|og-embed|localize' | xargs grep -n -E "['\"\`][A-Z][a-z]+( [a-z]+){2,}"` for sentences, and on card/crawler surfaces (`services/svg/*.ts`, `og-data-generator.ts`, handlers) also 2-word labels `"['\`][A-Z][a-z]+ [A-Za-z]+['\`]"`; triage by surface (user-visible vs log/error code/identifier). Web-app key lookups follow 11 patterns (dynamic prefixes included) — catalogue in `docs/audits/2026-08-16-web-app-dead-code/evidence/agent-report-i18n.md` §A; `i18n:unused` resolves the prefixes, so check `swatch.*`-style families by hand.
 - **Missing keys at call sites** (raw dotted keys in UI): bot-logic's reverse gate covers `t.t()`; for web-app `validate:i18n` covers `t('literal')`; dynamic keys need the pattern catalogue.
 - **Terminology**: compare game nouns in hand-edited sets/tables against the dictionary and core values; flag generic translations where an official term exists (`TERM-`).
+- **`en` spelling**: `american-spelling.mjs` over each set's `en` file (`--keys=<prefix>` to narrow a shared file; a `.ts` table is read inside its `en:` block only). Confirm each candidate against `../audit-shared/american-english.md` before filing — the glossary wins, identifiers keep the code's spelling, and `og-strings.ts` is a positive control, not a target. One `TERM-` per set listing every key, never one per word.
 - **Fonts**: every `font-family`/`STACKS` stack that can draw CJK lists JP/SC/KR; subsets newer than the last string change (`git log -1 --format=%cI -- <fonts>` vs locale paths); SC/JP subsets > 500 KiB or KR > 300 KiB = over-inclusion; og-worker `font-coverage.test.ts stringsFor()` lists every card-drawn table.
 
 Scope > 1 unit → fan out per `conventions.md` §7 (one `worker` per unit/set,
@@ -85,7 +92,7 @@ Terminology calls against the dictionary and any "is this string user-visible?" 
 | Prefix | Covers | Header fields |
 |---|---|---|
 | `I18N-` | duplicate keys, missing/extra keys, untranslated values, placeholder/structure mismatches, raw keys shown in UI | **Tier** P0 dupes · P1 wrong/raw text in UI · P2 missing key (falls back to en) · **Locale(s)** · **Deploy unit** · **Generated?** (core → fix generator/CSV) |
-| `TERM-` | dictionary violations | Tier P2 · Locale(s) · Deploy unit · official term + source row |
+| `TERM-` | dictionary violations; British spellings in `en` | Tier P2 · Locale(s) · Deploy unit · official term + source row (spelling: the `american-english.md` rule, and the dictionary row when one settles it) |
 | `HC-` | hardcoded UI strings | Tier P1 user-visible / P3 tooltip-aria · Deploy unit · target set + proposed key |
 | `FONT-` | missing glyphs, stale subsets, stack gaps | Tier P1 tofu / P3 stale · Deploy unit — always scheduled **last** |
 
@@ -121,7 +128,11 @@ confirmation gate (`conventions.md` §8).
 ## Translation rules
 
 - Official term exactly as the dictionary/core gives it (spelling, case, script); flag unknown
-  game terms for review instead of inventing.
+  game terms for review instead of inventing. That includes a game term the dictionary spells the
+  British way (**Grey**, **Glamour**) — it outranks the American-English rule below.
+- New and edited `en` values are American English (`../audit-shared/american-english.md`): *color*,
+  *behavior*, *normalize*, *center*, *favorites*, *labeled*. Everything else in this list still
+  applies — an identifier, a code, or a quotation keeps its own spelling.
 - Match the register of the five neighbouring keys in that set; don't churn per-surface house
   choices (ja 染料 vs カララント) or the deliberately-English items in `traps/i18n-fonts.md`.
 - Identifiers, codes, tags, hex, brand names, `FFXIV`, `Universalis` stay as-is; CJK text uses
@@ -135,6 +146,7 @@ confirmation gate (`conventions.md` §8).
 | "check translations for web-app / bots" | that set's gates + `locale-diff.py`; summary table in chat |
 | "find missing/untranslated in `<locale>`" | `locale-diff.py <dir> --locale <code>` |
 | "scan for hardcoded strings" | Step 2 hardcoded bullet only |
+| "check en spelling" / "British spellings" | Step 2 `en` spelling bullet — `american-spelling.mjs` over the set's `en` file, triaged against `../audit-shared/american-english.md` |
 | "font subset audit" / "check fonts" | Step 2 fonts bullet + `font-coverage.py` per subset + both `font-coverage.test.ts` |
 | "full i18n audit" | Steps 0–5 |
 | "add key X" / "fix translations" | Step 6 |

@@ -15,6 +15,7 @@ read at its Step 0, so a run loads only the slices it needs. `model-routing.md` 
 | `units.md` | ~430 | Tagging a finding's deploy unit / exposure class (17 units: filter names, kind, notes) |
 | `release-mechanics.md` | ~300 | Writing a sprint's "Ends with" line, deciding a version bump, the standing verification gate (planner, dead-code) |
 | `policy-documents.md` | ~650 | Auditing or editing a Privacy policy / Terms of Service: the four documents, the six-language `<STEM>.<locale>.md` convention, what parity means, who files what (security-audit, documentation-audit, i18n-manager) + `scripts/policy-locale-parity.py` |
+| `american-english.md` | ~970 | Auditing or writing **any English text** — docs, READMEs, `en` locale values, `/manual`, English policy documents: American English is the standard, the FFXIV terminology glossary wins where it conflicts (Grey, Glamour), the identifier/quotation/non-English carve-outs, and how documentation-audit (`DOC-`) and i18n-manager (`TERM-`) file it + `scripts/american-spelling.mjs` |
 | `traps/shell.md` | ~350 | Before shell commands on Windows: explicit Bash vs PowerShell, resource/temp paths, tracked-file search, CJK output, heredoc limits |
 | `traps/knip-and-dead-verdicts.md` | ~400 | Before running knip or calling anything "dead"/"unreachable" |
 | `traps/tests-coverage.md` | ~150 | Before trusting green tests or a coverage number |
