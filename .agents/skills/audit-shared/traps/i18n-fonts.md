@@ -58,10 +58,10 @@
 - **A label assembled in a template needs a test that reads it as the browser shows it.** The
   Edit tool can eat a trailing space at the end of a replacement string: fixing en
   `"Spectral -Realistic Paint"` by moving the id into the Lit template produced
-  `Spectral -${…}` again on the first try. `config-sidebar.mixing-mode.test.ts` normalises
+  `Spectral -${…}` again on the first try. `config-sidebar.mixing-mode.test.ts` normalizes
   whitespace and pins all six labels.
 - House register: **German is `du` everywhere** (web app, bot, policies — gated for web-app
-  `de.json`); French is `vous`. German for a dye is **Farbstoff**, never Farbe (= colour); the
+  `de.json`); French is `vous`. German for a dye is **Farbstoff**, never Farbe (= color); the
   RYB "Paint" model is `Malfarbe`. Chinese has one word, `颜料`, for paint and pigment — the Mixer
   pair is `颜料` (RYB) / `真实颜料` (Spectral); `颜料画` means a painting. Korean Hue is `색상`,
   not `색조`.

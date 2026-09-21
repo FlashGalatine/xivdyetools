@@ -48,7 +48,7 @@ it in the report's *Rejected suspicions* with the reason, so the next audit does
 |---|---|---|
 | Identifiers | `favourites` as a KV key prefix, a JSON field, a CSS class, an env var, a branch or package name | The document must quote the identifier **exactly as the code spells it**. A British identifier is a code change with its own blast radius — note it for the owning unit, never rewrite the doc away from the truth. |
 | Non-English cells | fr `centre de données`, fr `Analogue`, de `Analog` in the terminology tables | The sweep tags these `multilingual-row?`. Reject. |
-| Quoted material | a spec title, a license name in its official form, an upstream error string, third-party product names | Quotations are reproduced, not corrected. |
+| Quoted material | a spec title, a license name in its official form, an upstream error string, third-party product names, **a shipped UI label a document names so the reader can find it** | Quotations are reproduced, not corrected. |
 | Same in both | `dialogue` (a conversation — only the UI element is `dialog`), `analyses` (the noun plural), `towards`, `forwards`, `glamour`, `judgement` inside a legal quotation | Not listed in the dictionary; do not "fix" them. |
 
 ## The sweep
@@ -73,6 +73,13 @@ genuine identifiers.
 
 These are candidates. Confirm each at `file:line` before filing, exactly as with any other
 candidate in `conventions.md` §7.
+
+**Known standing rejections** (verified 2026-09-21, do not re-chase): `apps/web-app/CHANGELOG.md`
+names the shipped labels *Save character colours* (×2) and *Behaviour toggles*, which is what
+`apps/web-app/src/locales/en.json` still says (`swatch.saveCharacter`, `advanced.behaviorTitle` —
+an American key with a British value). The changelog is right to match the app. These three clear
+themselves the moment those `en` values are corrected, which is `i18n-manager`'s `TERM-` work, not
+an edit to the changelog.
 
 ## Filing
 
@@ -102,4 +109,5 @@ than pasting the table. Rejected candidates — every `glossary?` hit the dictio
   "Colour Vision" in the next; that split is worse than either spelling. If only part of a surface is
   in scope, file the rest rather than half-fixing it.
 - The skills' own output follows the standard too: findings, reports, changelog prose and commit
-  messages are American English.
+  messages are American English. So does the `.agents/skills/` prose itself — it was swept on
+  2026-09-21, and this file's British words are quotations and worked examples, not slips.

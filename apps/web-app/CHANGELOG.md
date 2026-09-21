@@ -17,12 +17,12 @@ Needs `@xivdyetools/core` 5.5.0. No web-app source changed — all three fixes l
 - **Swatch Matcher refused every Lalafell `.chara` file** with "Couldn't read this character file:
   `.chara` field Race: unrecognised value \"Lalafel\"". Anamnesis writes the game enum's `Lalafel`
   (one trailing `L`) and the parser treated the `Race` key as authoritative, so it threw before
-  reading a colour. Broken since the Swatch Matcher shipped `.chara` import, not a regression.
+  reading a color. Broken since the Swatch Matcher shipped `.chara` import, not a regression.
   Core now derives the race from the tribe, which does not drift.
-- **A Hrothgar file with no `Race` key showed a fur-pattern number as a lip colour.** The rule
+- **A Hrothgar file with no `Race` key showed a fur-pattern number as a lip color.** The rule
   that inerts `LipsToneFurPattern` on Hrothgar read the `Race` key, which a real file need not
   carry.
-- **An Au Ra's limbal ring was labelled "Tattoo / Limbal" as a tattoo** — and matched against the
+- **An Au Ra's limbal ring was labeled "Tattoo / Limbal" as a tattoo** — and matched against the
   tattoo sheet — whenever the file's `Race` key was absent or disagreed with its tribe.
 
 ## [5.12.1] - 2026-09-20
@@ -110,7 +110,7 @@ in one language behind six localized links.
 - **Mixing-model labels** (audit open items, approved 2026-09-20). zh: Chinese has one everyday
   word, `颜料`, for both paint and pigment; the Mixer spec gave Pigment `颜料` and coined `颜料画`
   for Paint — "a painting done in pigments", a picture, not a medium. RYB → `颜料`, Spectral →
-  `真实颜料`, the pair the zh sidebar already shipped. de: `Farbe` for Paint also means *colour* →
+  `真实颜料`, the pair the zh sidebar already shipped. de: `Farbe` for Paint also means *color* →
   `Malfarbe`. `config-sidebar.ts` hard-coded `RYB - ` … `RGB - ` but left Spectral's id inside its
   locale value, which is how en shipped **`"Spectral -Realistic Paint"`** (a dropped space in the
   default locale, all five translations correct); the id is in the template now and the key is
@@ -174,8 +174,8 @@ defect the audit verified at `file:line`, each landed with a test that was red f
 
 - **Palette Extractor share link restored** (BUG-002). `extractor-tool.ts` wires `v4-share-button`
   (compact, beside Export in the section header): the link carries `colors` — the extracted
-  colours in bar order, `#`-less uppercase, capped at the five og-worker's card accepts, picks
-  excluded — and `algo`. Opening a link renders those colours as equal-share bands with their
+  colors in bar order, `#`-less uppercase, capped at the five og-worker's card accepts, picks
+  excluded — and `algo`. Opening a link renders those colors as equal-share bands with their
   matched dyes and no image (`sharedPalette`); the loupe and the `+` tile stay inert until an
   image is loaded, which replaces the shared palette. `ShareService.validateShareParams` gained an
   `extractor` arm (non-hex entries and more than five rejected); og-worker's crawler route already
@@ -258,9 +258,9 @@ defect the audit verified at `file:line`, each landed with a test that was red f
   `Acquisition:` line left blank for the submitter to fill in. Export saves
   the Markdown as `glamour-equipment.md` (`text/markdown`).
 - **Copy puts real formatting on the clipboard, never Markdown syntax.** The
-  clipboard carries an HTML flavour (`<strong>` labels, one paragraph per slot
+  clipboard carries an HTML flavor (`<strong>` labels, one paragraph per slot
   with `<br>` breaks) so a paste into Word or Google Docs keeps the bold, and
-  a plain-text flavour of the same lines with no asterisks for editors that
+  a plain-text flavor of the same lines with no asterisks for editors that
   take only text. Written with `ClipboardItem` where the browser has it,
   otherwise through the `copy` event of a selected off-screen textarea.
 - The list is written whole regardless of the Pieces/Dyes lens or the Show all
@@ -275,7 +275,7 @@ defect the audit verified at `file:line`, each landed with a test that was red f
   they land; NAMES UNAVAILABLE still enables them, since slots and dyes come
   from the file and a form with blank names beats no form.
 - Template labels are the submission format's own English wording and are not
-  localised (a document format, like the JSON export's canonical names); item
+  localized (a document format, like the JSON export's canonical names); item
   and dye names follow the app language, so the list matches the screen. The
   file name and content carry no character name, per the `.chara` privacy rule.
 - The generator is `shared/glamour-markdown.ts`, pure and tested against the
@@ -397,7 +397,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   against the live sheet: 41 blocks, 487 non-empty rows), so `glassesBaseRowId`
   finds the base by arithmetic and api-worker turns it into authoritative names
   in every language. A text rule could not do this: "Brass Goggles" is a base row
-  that merely starts with a colour word, and the tints of "Simple Spectacles" are
+  that merely starts with a color word, and the tints of "Simple Spectacles" are
   named "Silver Spectacles". While the lookup is in flight the entries are
   skeletons; if it fails they stay unavailable rather than offering a dead link.
 - GamerEscape facewear links use the **unlock item** title (`The Faces We Wear - …`),
@@ -428,52 +428,52 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   5.0 3C port). One column, three stages: the image with a **persistent loupe**
   (click/tap reads the pixels under it, a drag drives it live; the hint chip
   names the hex and the nearest dye; nothing commits by itself), the
-  **dominance bar butted under the image** (extracted colours as proportional
-  segments labelled with their share, a 3 px break, then each committed pick as
-  a fixed-width segment labelled with its slot number — a pick has no share and
+  **dominance bar butted under the image** (extracted colors as proportional
+  segments labeled with their share, a 3 px break, then each committed pick as
+  a fixed-width segment labeled with its slot number — a pick has no share and
   is never drawn as one — and the `+` tile that commits whatever the loupe
   holds), and the **card sheet** with one card per segment.
 - Bulk extraction is no longer a mode: it runs on image load and again, silently,
-  on every config change (colour count, matching method, filters); committed
+  on every config change (color count, matching method, filters); committed
   picks survive a re-extraction and clear with the image. Picks cap at 6, the
   bar's measured capacity.
 - Legend `IMAGE SHARE · n picks` with **Clear picks** under the bar; the section
   count reads `6 + 2` with picks (never `8 of 6`) and `6 of 6` without. Tapping
   a segment focuses its card.
-- One resolution path for extracted colours and picks alike: the nearest dye
+- One resolution path for extracted colors and picks alike: the nearest dye
   the dye filters allow that no earlier slot holds while *Prevent duplicates*
   is on, measured with the selected matching method. Dye filters now reach the
-  extracted colours too (they only ever applied to a sampled colour).
+  extracted colors too (they only ever applied to a sampled color).
 - **Vibrancy boost does something.** It re-extracted and changed nothing;
   it now orders the extracted run by the design's `0.55 × saturation + share`
   score so a small vivid accent can lead a large muted field (widths stay
   share-based).
 - The tool's settings are read from `ConfigController` alone. It used to seed
-  colour count and vibrancy from its own `v3_matcher_*` localStorage keys, a
+  color count and vibrancy from its own `v3_matcher_*` localStorage keys, a
   second copy of the sidebar's store that only its own `setConfig` wrote — so
   anything that changed the config without going through the tool (Reset
   settings, Restore backup, another tab) left the copy stale and the tool
   opened on the old values until the control was touched again. The seven
   legacy keys are purged on mount.
-- Only a colour-count change re-runs K-means. Changing the matching method,
+- Only a color-count change re-runs K-means. Changing the matching method,
   the dye filters, Prevent duplicates or the vibrancy boost re-resolves the
   existing clusters instead — K-means++ is seeded at random, so a re-run
   re-clusters and the user would read the new segments as an effect of the
   metric. Resolution goes through core's `findClosestDye` with `excludeIds`
   (unrounded ranking under DISTINGUISH % too) rather than a hand-rolled scan.
-- A colour whose eligible dyes are all taken by earlier slots keeps the
+- A color whose eligible dyes are all taken by earlier slots keeps the
   nearest eligible dye as a repeat rather than vanishing from the bar while
-  the legend still counted it; when the filters leave no dye for any colour
+  the legend still counted it; when the filters leave no dye for any color
   the sheet says so (`matcher.noMatchingDyes`, restored ×6).
 - A replacement image clears the previous palette before it extracts, so a
   drop whose extraction fails (a fully transparent PNG) no longer shows image
   A's segments and picks under image B.
 - A double-tap of `+` focuses the existing pick instead of committing the
-  same colour twice (3C de-duplicated by hex too).
-- Focus is tracked by colour, not by bar index, so a vibrancy re-order or a
-  dropped entry never moves the ring onto another colour.
+  same color twice (3C de-duplicated by hex too).
+- Focus is tracked by color, not by bar index, so a vibrancy re-order or a
+  dropped entry never moves the ring onto another color.
 - The loupe survives a language switch where it settled instead of vanishing
-  while the hint chip still named its colour.
+  while the hint chip still named its color.
 - A card rebuild for an unrelated setting no longer wipes the market error
   badge: cards and the in-place price update apply one market rule, and an
   unchanged `displayOptions` push no longer rebuilds the sheet at all.
@@ -492,14 +492,14 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 - On phones the zoom toolbar keeps its three essential controls (−, level, +)
   beside the hint chip rather than being hidden — it is the only
   touch-reachable zoom — and extracted segments shrink instead of pushing the
-  `+` tile off the frame at high colour counts.
+  `+` tile off the frame at high color counts.
 - The result-card `context-action` listener is gone: the 5.0 card performs
   its own Inspect / Transform / Open-in-browser hand-offs and never emitted
   the legacy action names the handler switched on.
 - Desktop scrolls the column; mobile pins the hero (image, bar, legend, header)
   and scrolls the sheet under it. Image card 276 px desktop / 226 px mobile,
   loupe 104 px / 74 px.
-- Export covers the whole roll — extracted colours and picks — as
+- Export covers the whole roll — extracted colors and picks — as
   sampled-pixel/resolved-dye pairs.
 - Locale keys ×6: `matcher.imageShare`, `picksCount`, `picksCountOne`,
   `clearPicks`, `rollCount`, `rollCountOf`, `pickCapReached` added; Korean
@@ -509,16 +509,16 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 ### Removed
 
 - Nothing is drawn onto the image any more: the numbered markers 3C painted
-  for each extracted colour and the zoom controller's red crosshair/rectangle
+  for each extracted color and the zoom controller's red crosshair/rectangle
   on every sample. The loupe is the only mark.
 - Sampling no longer replaces the sheet with the ten nearest dyes for one
-  colour, and the "Sampled Color" info card is gone — a committed pick is a
+  color, and the "Sampled Color" info card is gone — a committed pick is a
   card like any other.
 - **The 3C left panel and everything it kept alive.** The v4 shell passes one
   element as both `leftPanel` and `rightPanel`, and the workspace render
-  cleared it, so the upload display, the colour picker (with its EyeDropper
+  cleared it, so the upload display, the color picker (with its EyeDropper
   path), the Options panel (sample-size slider, palette-mode checkbox,
-  colour-count slider, Auto-extract) and the market panel were built and
+  color-count slider, Auto-extract) and the market panel were built and
   immediately wiped on every mount. Deleted with their tests:
   `image-upload-display.ts`, `color-picker-display.ts`,
   `camera-preview-modal.ts` (the 4.x webcam flow, unreachable since the shell
@@ -533,7 +533,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   `capture="environment"` file input, so the OS camera app supplies a
   full-resolution still with its own autofocus, white balance and HDR, where
   the deleted modal captured a 1280×720 video frame re-encoded at JPEG 0.92 —
-  strictly worse pixels for a tool that reads exact colour. `_headers` now
+  strictly worse pixels for a tool that reads exact color. `_headers` now
   sends `camera=()` beside `geolocation=()` and `microphone=()`; the
   directive gates `getUserMedia`, never the capture attribute. The 16A camera
   sheet stays drawn in the design register, so a future live-viewfinder
@@ -552,10 +552,10 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 - **Color wheel selector in Harmony's options.** A new setting lets you pick which
   wheel harmony angles are measured on: RGB (the existing screen wheel, still the
   default), RYB (the painter's wheel — red's complement is green), Munsell (the
-  perceptual wheel behind the JIS colour standard), OKLCH hue (perceptually even hue
+  perceptual wheel behind the JIS color standard), OKLCH hue (perceptually even hue
   spacing) or OKLCH lightness (every harmony partner held at the base dye's lightness).
   Backed by `@xivdyetools/core` 5.2.0's `ColorWheel` selector.
-- The colour wheel ring and the harmony dots are now drawn from the selected wheel's
+- The color wheel ring and the harmony dots are now drawn from the selected wheel's
   `ringStops`/`hueOf`, so the picture matches the dyes the tool suggests — on RYB, the
   dot opposite red sits at green, not cyan.
 - Harmony share URLs **always** carry `?wheel=`, `rgb` included — like `algo` and
@@ -566,15 +566,15 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   palette under someone else's RGB link. An empty or unrecognised value falls back to rgb
   with a warning. (The OG image URL still elides the default — the page and the cache key
   agree that absent means rgb.)
-- Pinned (hand-swapped) dyes are cleared when the colour wheel changes, from the sidebar
+- Pinned (hand-swapped) dyes are cleared when the color wheel changes, from the sidebar
   or from a share link. A pin is fixed to a slot INDEX, and a slot index is a different
-  target hue on a different wheel, so a carried-over pin lands on a colour it was never
+  target hue on a different wheel, so a carried-over pin lands on a color it was never
   chosen for — the harmony-type change already cleared pins for exactly this reason.
 - Only a URL carrying a share marker (`harmony`, `algo`, `perceptual`, `v` or `wheel`)
   resets the wheel and clears pins. A bare `?dye=` — an in-app hand-off through
   `handoffTo('harmony', …)` or `RouterService`'s `PRESERVED_PARAMS` — leaves the persisted
   wheel and its pins alone; it was the one setting an in-app navigation could clobber.
-- A persisted `harmony.wheel` is normalised on load (`ConfigController`, beside
+- A persisted `harmony.wheel` is normalized on load (`ConfigController`, beside
   `matchingMethod`) through core's `normalizeColorWheelId`, so every reader downstream
   can treat a config wheel as a valid id rather than each re-validating it.
 
@@ -603,7 +603,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   bullet-less run keeps its prose as a single folded bullet through the same shared helper the
   `### ` sections use, so a prose-only release is no longer dropped either. A release header
   with no content under it at all is still skipped, which is what the guard was written for.
-- **A headerless release is no longer summarised as blank.** `extractHighlights` skips a header
+- **A headerless release is no longer summarized as blank.** `extractHighlights` skips a header
   shorter than three characters, so such a release reached the modal with no highlights at all,
   and `createCollapsedRow`'s `??` chain cannot fall through an empty-string header — the row
   rendered as a bare `v5.0.0  March 3, 2026` button with no text. Both sides now fall back to
@@ -653,7 +653,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   `createModalElement`'s inline style, and the re-stacking pass in `render()`); the last runs every
   render and overwrites the other two, so fixing fewer than all three changes nothing.
 - **Toasts were painted under the corner FABs.** `toast-container` was `fixed z-50` in the same
-  bottom-centre band as both FABs.
+  bottom-center band as both FABs.
 
 ### Changed
 
@@ -682,7 +682,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 - **The Matching Algorithm picker now says that the choice changes the answer.** Measured against
   the 125-dye set over 2,000 random sRGB queries, taking the default `ciede2000` as the reference,
   the alternatives pick a *different* closest dye: `oklab` 24.4%, `cie76` 31.1%, `redmean` 39.1%,
-  `rgb` 43.8%, `distinguish` 44.4%. Nothing in the UI signalled that — a user could reasonably read
+  `rgb` 43.8%, `distinguish` 44.4%. Nothing in the UI signaled that — a user could reasonably read
   the toggle as changing only the number displayed beside a match, rather than which dye is
   returned. One new line under the method description, ×6 locales.
 - **Three harmony descriptions no longer claim an aesthetic outcome the scheme has no evidence
@@ -722,7 +722,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 
 ### Notes
 
-- Nothing in this app changed behaviourally beyond the strings — `mixer-blending-engine.ts` was
+- Nothing in this app changed behaviorally beyond the strings — `mixer-blending-engine.ts` was
   already a set of one-line delegations to core, which is why the fix landed entirely in core.
 
 ## [5.3.1] - 2026-09-03
@@ -740,14 +740,14 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 
   Found by the 2026-09-03 coverage sweep, and specifically by the pre-merge review of it: the
   new `result-card` suite mounted every card with `showDeltaE: false` and then asserted the
-  readout *was* present, so it had certified the bug as correct behaviour. Three tests now pin
+  readout *was* present, so it had certified the bug as correct behavior. Three tests now pin
   both directions and the stainID-only verdict strip.
 
 ### Testing
 
 - Five components that had no test file at all are now covered (`advanced-options-panel`
   0% → 97.7% statements, `v4/language-modal`, `export-sheet`, `v4/share-button`,
-  `v4/dye-filters-v4`), and three suites that asserted shape rather than behaviour were
+  `v4/dye-filters-v4`), and three suites that asserted shape rather than behavior were
   rewritten (`v4/v4-color-wheel`, `camera-preview-modal`, `v4/result-card`). Coverage moves
   74.9/61.9/70.4/76.1 → 78.5/64.1/74.6/79.8.
 - Two E2E specs reach modules the unit suite is not allowed to measure: `welcome-modal.spec.ts`
@@ -799,7 +799,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   so "send to Comparison / Mixer / Accessibility" had never done anything. The
   table and the guard live in `@shared/tool-handoff` now; Budget, Gradient,
   Harmony and Result Card all call it. A dye with no stainID no longer navigates
-  and then apologises — it simply does not navigate.
+  and then apologizes — it simply does not navigate.
 - **A `.chara` carrying only facewear gets its glamour block.** The gate counted
   worn gear and dyes but not `glassesId`, so the facewear row added in 5.2.0 was
   unreachable for exactly the character made of nothing else; the glasses were
@@ -811,7 +811,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 
 - **"Show all" in the Swatch Matcher's glamour block.** The block only ever listed pieces that
   carried a dye, which meant an accessory could never appear in it at all — no FFXIV earring,
-  necklace, bracelet or ring is dyeable — and worn-but-undyed armour was reduced to a number in
+  necklace, bracelet or ring is dyeable — and worn-but-undyed armor was reduced to a number in
   the footnote. A switch beside the Pieces/Dyes toggle flips the list's unit from "a dyed
   channel" to "a piece this character wears", so every worn slot gets a row with its icon, item
   name and slot tag. Empty slots stay out of the list and stay in the footnote, which is the
@@ -819,9 +819,9 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
   has no undyed unit to show.
 - **Facewear is listed too.** The glasses row was already being resolved from api-worker on every
   import and then thrown away — it now appears under the switch with its icon and name. The
-  `.chara` file stores no facewear tint, so its chip is read from the colour word in the item's
-  English name against the eleven facewear colours; a name with no colour word gets a neutral
-  chip and says the colour is unknown, rather than inventing one.
+  `.chara` file stores no facewear tint, so its chip is read from the color word in the item's
+  English name against the eleven facewear colors; a name with no color word gets a neutral
+  chip and says the color is unknown, rather than inventing one.
 
 ### Changed
 
@@ -872,7 +872,7 @@ Line counts below are the audit's declaration-and-body figures; each method's JS
 
 - `HARMONY_OFFSETS` moved to `@xivdyetools/core` and is re-exported from
   `@services/harmony-generator` (BUG-022). The values are byte-identical and no page
-  behaviour changes; the point is that og-worker carried a *different* private copy,
+  behavior changes; the point is that og-worker carried a *different* private copy,
   so the card unfurled for a share link drew dyes the page it opened never showed.
   One table, two consumers.
 
@@ -885,7 +885,7 @@ Dye identifiers (the 5.0 rewrite made stainID canonical; these call sites still 
 - Budget's SEND TO hand-offs to Harmony, Comparison, Mixer and Accessibility now use
   each receiver's own parameter grammar instead of sending a dye name nothing reads
   (BUG-018).
-- The `f` and `c` shortcuts in the dye grid toggle favourites and open the collection
+- The `f` and `c` shortcuts in the dye grid toggle favorites and open the collection
   menu again (BUG-069).
 - A one-dye Comparison or Accessibility share link restores its dye instead of
   silently showing the recipient's own (BUG-015).
@@ -895,7 +895,7 @@ Extractor:
 - Match cards show a distance measured with the algorithm they label it with. The
   extractor stored raw RGB distance next to a ΔE2000 label, so good matches were
   graded poorly and the printed number was on the wrong scale (BUG-007).
-- Auto-extract honours the selected matching method (BUG-091), and the closest dye is
+- Auto-extract honors the selected matching method (BUG-091), and the closest dye is
   no longer listed twice (BUG-092).
 
 Lifecycle and feedback:
@@ -923,14 +923,14 @@ Lifecycle and feedback:
 
 ### Fixed
 
-- **Test coverage restored for behaviour the 2026-09-01 cleanup left in place.** Nine tests
+- **Test coverage restored for behavior the 2026-09-01 cleanup left in place.** Nine tests
   were removed because they happened to call an accessor that went with the cleanup, not
-  because the behaviour they covered had gone: the character-resolve request contract (URL,
-  method and body shape — nothing else asserted any of the three), the max-favourites and
+  because the behavior they covered had gone: the character-resolve request contract (URL,
+  method and body shape — nothing else asserted any of the three), the max-favorites and
   max-collections limits, `deleteCollectionsByKind` (which still has a production caller),
   unknown-kind coercion on import, the only test that exercises the storage-unavailable
   branch, both changelog history-mode tests, and the 5.0 accent pins. Each is rewritten to
-  use a surviving accessor and mutation-checked: breaking the behaviour fails that test and
+  use a surviving accessor and mutation-checked: breaking the behavior fails that test and
   only that test. The accent pins deliberately go through `getTheme()` rather than the
   surviving `getRequiredColor()` twin, which has no production caller — using it would have
   kept a dead accessor alive on test evidence alone, and the reachability gate said so.
@@ -954,7 +954,7 @@ Lifecycle and feedback:
 - `toStainId` moved from `services/collection-service.ts` (module-private) to
   `services/dye-service-wrapper.ts`, alongside `resolvePresetDye`, and is now the single place the
   retired 4.x ID space is understood — for persisted local data only. Collections keep identical
-  behaviour; the lookup is now an O(1) id-map hit instead of a linear scan over all 125 dyes.
+  behavior; the lookup is now an O(1) id-map hit instead of a linear scan over all 125 dyes.
   `resolvePresetDye` itself stays strict.
 
 ### Changed
@@ -1000,7 +1000,7 @@ Lifecycle and feedback:
   `LOCALE_DISPLAY_INFO` use in `language-service.ts`.
   **Six of the 37 candidates were kept** after checking what they actually serve:
   `ToastService.dismissAll` / `.getToasts` and `ModalService.dismissAll` / `.getModals` are how ~60
-  real behaviour tests observe those services; `StorageService.resetAvailabilityCache`,
+  real behavior tests observe those services; `StorageService.resetAvailabilityCache`,
   `ThemeService.resetToDefault` and `clearCharaResolveCache` are `beforeEach` isolation hooks; and
   `MarketBoardService.getIsFetching` is the only observer of the flag whose stuck-true state was
   BUG-039. Each now says so in its docblock.
@@ -1016,7 +1016,7 @@ Lifecycle and feedback:
 - **A hashed asset this deployment doesn't have now 404s instead of caching the HTML shell for a year** (`docs/audits/2026-08-29-security` FINDING-027). `public/_redirects` answers every unmatched path with `index.html` and a `200`, and Cloudflare Pages *merges* overlapping `_headers` patterns rather than letting the narrower one win — so a request for an `/assets/<hash>.js` that isn't on the deployment (a pruned file, a client one deploy ahead, an alias still lagging) came back as the SPA shell wearing `/assets/*`'s `max-age=31536000, immutable`, and the browser and the edge then served that HTML as the script for a year. The failure is indistinguishable from a partial deploy, which is what made the same shape so hard to place the first time it hit this project. `functions/_middleware.ts` now inspects `/assets/*` responses and returns `404` with `Cache-Control: no-store` when the body came back as `text/html`; every other response — real assets, unlabelled bodies, the catch-all on real routes, the legacy-domain 301 — passes through byte-identical. `src/__tests__/pages-middleware.test.ts` is the first test the middleware has had.
 - **The sign-in modal now discloses the account record sign-in creates, and `PRIVACY.md` names a deletion route** (`docs/audits/2026-08-29-security` FINDING-002). The sign-in privacy note — "We store your display name and provider ID. No character data, no email, nothing sold." — never said *when*: an account record (your Discord or XIVAuth ID and username) is created the moment you sign in, whether or not you go on to submit or vote. `PRIVACY.md`'s community-presets item made the same mistake, framing the stored identity as something submitting or voting caused, and named no way to have it removed. Both now say sign-in itself creates the record, and the guide points to the Questions section as the (manual, contact-based) deletion route. `preset.privacyNote` is translated in all six locales; `pnpm run validate:i18n` re-verified key order and cross-locale parity.
 - **`PRIVACY.md` now names Google's Perspective API as the guide's second third party** (`docs/audits/2026-08-29-security` FINDING-006). The intro promised "the complete list" but only ever named Universalis, even though every preset submission and edit can send the preset's name and description to Google's Perspective API for a moderation score when it is configured (`apps/presets-api/src/services/moderation-service.ts`) — a disclosure the Discord bot's own privacy policy already carried ("Content moderation (optional)") while the web guide stayed silent. The community-presets item now names Perspective the same way, and states that the request asks Google not to store the text (`doNotStore`, shipped in presets-api 2.2.0) and carries no account identity.
-- **Server-side analytics enforcement is documented, and the dead `primary_character` readers are gone** (carried from Sprint 2). `PRIVACY.md`'s analytics section described only the *client* honouring Global Privacy Control; it now also states that api-worker (0.10.0) accepts telemetry solely from the app's own origins and discards any batch carrying the browser's `Sec-GPC` signal before writing it. Separately, `auth-service.ts` was still copying a JWT's `primary_character` claim into `AuthUser` at two call sites and logging a character name in a dev-only branch, even though oauth 3.0.0 never mints the claim — both reads are gone and the dev-log branch collapsed to the same generic `Logged in as …` line already used for Discord sign-ins (the optional field itself stays on `@xivdyetools/types` until Sprint 11 — nothing here touches the shared type). `auth-service.test.ts` now proves the field is dropped even when a payload still carries one.
+- **Server-side analytics enforcement is documented, and the dead `primary_character` readers are gone** (carried from Sprint 2). `PRIVACY.md`'s analytics section described only the *client* honoring Global Privacy Control; it now also states that api-worker (0.10.0) accepts telemetry solely from the app's own origins and discards any batch carrying the browser's `Sec-GPC` signal before writing it. Separately, `auth-service.ts` was still copying a JWT's `primary_character` claim into `AuthUser` at two call sites and logging a character name in a dev-only branch, even though oauth 3.0.0 never mints the claim — both reads are gone and the dev-log branch collapsed to the same generic `Logged in as …` line already used for Discord sign-ins (the optional field itself stays on `@xivdyetools/types` until Sprint 11 — nothing here touches the shared type). `auth-service.test.ts` now proves the field is dropped even when a payload still carries one.
 
 ### Added — 2026-08-29 analytics
 
@@ -1029,7 +1029,7 @@ Lifecycle and feedback:
 
 - **The async CSS loader is now content-hashed (`/assets/load-css-async-<hash>.js`).** It was the one un-hashed file under `/assets/*`, which `_headers` marks `immutable` for a year — so the edge and browsers kept a v4-era copy across deploys: production was still serving a loader that pulled the previous build's `index-*.css` and a Google Fonts stylesheet (blocked by the CSP, hence the console errors) weeks after the 5.0 release. The stale edge copy was purged by hand on 2026-08-29; from now on a changed stylesheet list is a new file name. `src/__tests__/vite-plugin-async-css.test.ts` pins the hashed name and that the loader lists nothing external.
 - **Layout shell no longer bundles the preset submission form.** `config-sidebar.ts` imported `showPresetSubmissionForm` statically while `swatch-tool.ts` loaded it lazily; vite 8.1.x happened to keep the form in its own chunk, but vite 8.2.2 (Dependabot #134) follows Rollup semantics — a module reached statically from the shell cannot be split out — and inlined ~27 KB of source into `v4-layout`, pushing it 8.4 KB past its 215 KB budget and failing the production deploy's bundle gate. The sidebar now loads the form on click like the swatch tool does; `v4-layout` is back to 210 KB and `preset-submission-form` is its own 14 KB chunk again.
-- **The Swatch Matcher's palette name is no longer pre-filled from the character file (chara-name privacy).** The make-a-palette name field opened with the Ktisis `Nickname`, and a blank field fell back to the nickname or the `.chara` filename — both of which feed the community preset submission form, and players use their real name in either. The field now opens empty, and *Submit to Community* passes only what was typed (blank means the form asks for a name; it never receives a generic default that would pass its length check unedited). *Save to this device* keeps the old on-device fallback — nickname, else file name, else "Glamour palette" — exactly like the "Save character colours" record; neither local record is ever sent anywhere. `chara-import-palette-name.test.ts` pins all three behaviours.
+- **The Swatch Matcher's palette name is no longer pre-filled from the character file (chara-name privacy).** The make-a-palette name field opened with the Ktisis `Nickname`, and a blank field fell back to the nickname or the `.chara` filename — both of which feed the community preset submission form, and players use their real name in either. The field now opens empty, and *Submit to Community* passes only what was typed (blank means the form asks for a name; it never receives a generic default that would pass its length check unedited). *Save to this device* keeps the old on-device fallback — nickname, else file name, else "Glamour palette" — exactly like the "Save character colours" record; neither local record is ever sent anywhere. `chara-import-palette-name.test.ts` pins all three behaviors.
 
 The 2026-08-20 i18n audit (`docs/audits/2026-08-20-web-app-i18n/`) found ≈270 hardcoded-English rows across the nine tools, one outright bug, and a 58-cell vocabulary split with core — this remediation closes all of it. Locale files grow from 1,075 to 1,153 keys per language (all six re-validated for structure, key order and value parity); no core package changed. It lands together with the 2026-08-21 security-audit remediation below.
 
@@ -1038,13 +1038,13 @@ The 2026-08-20 i18n audit (`docs/audits/2026-08-20-web-app-i18n/`) found ≈270 
 - **Remote strings no longer reach `innerHTML` unescaped (FINDING-011 / WEB-1, WEB-2).** The My Submissions modal interpolated the author's preset name and the moderator-typed `rejection_reason` straight into its row template — a moderator (or a `moderation_log` write) could have placed a phishing link or a full-modal overlay inside the app's own UI; the dye-search empty state did the same with the typed query. A tiny `escapeHtml()` is back in [`src/shared/utils.ts`](src/shared/utils.ts) (the documented home — it had been swept out by the May dead-code purge for having no callers) and is applied to every remote/user string in those two imperative templates (`getEmptyStateHTML` now escapes `title`/`description`; its icon slot was already SVG-only). Tests pin both sinks on rendered DOM.
 - **Prototype-safe category icon lookup (FINDING-027 / WEB-12).** `getCategoryIcon()` is keyed by the API's `category_id` / `secondary_categories` and feeds Lit `unsafeHTML()`; `CATEGORY_ICONS[name]` now uses `Object.hasOwn`, so `constructor` / `__proto__` / `toString` yield the neutral fallback glyph instead of an inherited function (which made the preset detail view throw).
 - **Response headers tightened (FINDING-031 / WEB-5, WEB-7, WEB-8)** in [`public/_headers`](public/_headers): `connect-src` drops `https://*.workers.dev` (nothing in the bundle talks to one, beta uses the production workers, and anyone can register a subdomain — it was the one CSP allowance that handed an injection a self-controlled exfil origin); `object-src 'none'; frame-src 'none'` added; the deprecated `X-XSS-Protection` header removed (the CSP is the control); `Permissions-Policy` becomes `camera=(self)` so the shipped webcam capture path (camera-service → camera preview modal) is no longer disabled by the document's own policy. `src/__tests__/security-headers.test.ts` pins the whole contract, positive controls included.
-- **OAuth client hardening (FINDING-032 / WEB-3, WEB-4).** `?provider=` is now honoured only on an actual callback (a `code` is present) and only for `discord` / `xivauth`; `login()` and `logout()` clear any stale provider marker, so a crafted `/presets?provider=xivauth` link can no longer route the victim's next Discord code exchange to the XIVAuth endpoint. `CommunityPresetService` no longer reads a DOM-clobberable `window.PRESET_API_URL` global for its API origin — build-time `VITE_PRESETS_API_URL` (now declared in `vite-env.d.ts`) or the default, like the other services.
+- **OAuth client hardening (FINDING-032 / WEB-3, WEB-4).** `?provider=` is now honored only on an actual callback (a `code` is present) and only for `discord` / `xivauth`; `login()` and `logout()` clear any stale provider marker, so a crafted `/presets?provider=xivauth` link can no longer route the victim's next Discord code exchange to the XIVAuth endpoint. `CommunityPresetService` no longer reads a DOM-clobberable `window.PRESET_API_URL` global for its API origin — build-time `VITE_PRESETS_API_URL` (now declared in `vite-env.d.ts`) or the default, like the other services.
 - **PKCE exchange forwards the worker's signed state (FINDING-012 / OAUTH-5).** The oauth worker's GET bounce now echoes its signed `state` envelope; `AuthService` reads it from the callback URL (alongside `code` / `csrf` / `provider`) and includes it in the POST body for both `/auth/callback` and `/auth/xivauth/callback` (`{ code, code_verifier, redirect_uri, state }`), so the worker can bind the verifier to the challenge it issued. Older bounces without `state` still exchange with the unchanged body.
 - **API path segments are percent-encoded (FINDING-020 / WEB-11)** in `community-preset-service.ts` (preset + vote routes) and `preset-submission-service.ts` (delete / edit / preview-image routes).
 - **Read-path guard on `exampleLink` / `previewImageUrl` (WEB-14).** The API→UI and snapshot→UI mappings (`hybrid-preset-service.ts`, `preset-tool.ts`) run the stored link through the same https + host-allowlist policy the submit/edit forms enforce (`sanitizeExampleLink`) and accept only absolute https URLs for the preview image (`sanitizePreviewImageUrl`), so a server-side regression cannot render an arbitrary `href`/`src` in a trusted card.
 - **One file-size cap for every user-supplied file (WEB-13).** `MAX_USER_FILE_BYTES` (20 MB) in `shared/constants.ts` now guards the Palette Extractor's drop and clipboard paths (previously uncapped — only the upload display enforced 20 MB) and the Swatch Matcher's `.chara` loader (`errors.fileTooLarge` ×6 locales), before the file is read.
 - **Import / persistence shape checks (WEB-6).** `CollectionService.importData` coerces an unknown `kind` to `palette` instead of persisting a record that then vanished from every kind-filtered view; `loadCollections` skips a malformed stored record (non-array `dyes`, missing name) instead of throwing on every `initialize()` until storage was cleared; `ConfigController.importConfigs` keeps only the fields each tool's default config declares, with the default's runtime shape.
-- **Fatal-error fallback works under the CSP (WEB-9).** The screen main.ts paints when service initialisation throws is built with DOM APIs in `shared/fatal-error.ts`; its Reload button had an inline `onclick`, which `script-src 'self'` blocks — it did nothing in production. The builder takes the i18n remediation's `navigator.language`-picked copy (six languages, no `LanguageService` dependency — it may be the very thing that failed) as a `copy` parameter and falls back to English.
+- **Fatal-error fallback works under the CSP (WEB-9).** The screen main.ts paints when service initialization throws is built with DOM APIs in `shared/fatal-error.ts`; its Reload button had an inline `onclick`, which `script-src 'self'` blocks — it did nothing in production. The builder takes the i18n remediation's `navigator.language`-picked copy (six languages, no `LanguageService` dependency — it may be the very thing that failed) as a `copy` parameter and falls back to English.
 - Not changed, by decision: sourcemaps still ship (WEB-10 — MIT project, no secrets; the maps feed the E2E coverage fixture and bundle bisecting, and `sourcemap: 'hidden'` would still deploy the files); JWT-in-localStorage stays the documented trade-off (WEB-15).
 
 ### Fixed
@@ -1068,15 +1068,15 @@ The 2026-08-20 i18n audit (`docs/audits/2026-08-20-web-app-i18n/`) found ≈270 
 
 ## [5.0.0] - 2026-08-16
 
-The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to its confirmed design spec on a new console-look shell, the theme catalogue collapses to Light/Dark, every stored and shared dye reference moves to the game's own **stainID**, and the six matching methods become one calibrated vocabulary shared with the Discord bot and the public API. Ships alongside `@xivdyetools/core@4.0.0`, `@xivdyetools/types@2.0.0`, `@xivdyetools/svg@2.0.0` (a new direct dependency — the icon home) and the absorbed Universalis proxy in `api-worker`. Locale files grew from 1,041 to 1,489 keys per language, parity-validated across all six.
+The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to its confirmed design spec on a new console-look shell, the theme catalog collapses to Light/Dark, every stored and shared dye reference moves to the game's own **stainID**, and the six matching methods become one calibrated vocabulary shared with the Discord bot and the public API. Ships alongside `@xivdyetools/core@4.0.0`, `@xivdyetools/types@2.0.0`, `@xivdyetools/svg@2.0.0` (a new direct dependency — the icon home) and the absorbed Universalis proxy in `api-worker`. Locale files grew from 1,041 to 1,489 keys per language, parity-validated across all six.
 
 ### ⚠️ BREAKING / Migration
 
 **Automatic on first load (no user action):**
 
 - **Themes**: `ThemeName` narrows to `standard-light | standard-dark` (`DEFAULT_THEME` = dark). Any of the ten retired theme names (`premium-dark`, `hydaelyn-light`, `og-classic-dark`, `parchment-light`, `cotton-candy`, `sugar-riot`, `grayscale-*`, `high-contrast-*`) left in `localStorage` is migrated on `ThemeService.initialize()` by family — `*-light`, `cotton-candy`, `parchment-light` → Light, everything else → Dark — and written back ([`src/services/theme-service.ts`](src/services/theme-service.ts) `migrateLegacyThemeName()`)
-- **Matching methods**: the persisted `matchingMethod` of every tool config is normalised through core's `normalizeMatchingMethod` as `ConfigController.loadFromStorage()` runs — retired 4.x values (`hyab`, `oklch-weighted`, the swatch tool's `euclidean`) become `ciede2000`; deep-link `algo` params normalise the same way
-- **Collections / favorites**: `CollectionService` schema 2.0.0 — every stored dye ref becomes a **stainID** (4.x stored `dye.id` = legacy market itemIDs; the ranges are disjoint, so favorites and collections migrate exactly on load and imports resolve legacy ids). Records gain a `kind` (`palette | swap | character`; 4.x records read as `palette`), deletes leave capped tombstones (200) that `importData` honours, and writes reject non-stainIDs loudly. The retired 4.x **PaletteService** store (localized dye *names*) is migrated into `kind: 'palette'` records on init and its key removed
+- **Matching methods**: the persisted `matchingMethod` of every tool config is normalized through core's `normalizeMatchingMethod` as `ConfigController.loadFromStorage()` runs — retired 4.x values (`hyab`, `oklch-weighted`, the swatch tool's `euclidean`) become `ciede2000`; deep-link `algo` params normalize the same way
+- **Collections / favorites**: `CollectionService` schema 2.0.0 — every stored dye ref becomes a **stainID** (4.x stored `dye.id` = legacy market itemIDs; the ranges are disjoint, so favorites and collections migrate exactly on load and imports resolve legacy ids). Records gain a `kind` (`palette | swap | character`; 4.x records read as `palette`), deletes leave capped tombstones (200) that `importData` honors, and writes reject non-stainIDs loudly. The retired 4.x **PaletteService** store (localized dye *names*) is migrated into `kind: 'palette'` records on init and its key removed
 - **Sub-race rename**: stored `Helion` → `Helions` (types 2.0.0) migrates on read in the Swatch tool / config sidebar
 - **Presets config**: `PresetsConfig` loses `showMyPresetsOnly` / `showFavorites` (replaced by the Feed / Saved sections below); `BudgetConfig` loses `maxPrice` / `maxResults` (the gil budget is gone — the sidebar slider is now the 2–20 ΔE match line); `AccessibilityConfig` loses the three dead simulation-display toggles and their `v3_*` storage key; gradient step counts stored from the old 2–10 range clamp into 3–12. All read tolerantly — unknown keys are ignored, new `DisplayOptionsConfig` fields (`showHue` / `showStain` / `showSpectrum`) default on
 - **Universalis endpoint**: `MarketBoardService` now calls `https://data.xivdyetools.app/universalis` (api-worker's absorbed proxy routes) instead of `proxy.xivdyetools.app` — see the operator note below
@@ -1084,7 +1084,7 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 **Share-URL grammar (old links to dyes stop resolving on purpose):**
 
 - Every dye-class parameter (`dye`, `dyes`, `start`/`end`, `dyeA`/`dyeB`, budget `dye`) now carries a **stainID (1–254)**. Legacy itemIDs (≥ 5729, a disjoint range) and unknown stainIDs are **rejected loudly** with a toast (`share.*` failure keys ×6) — never silently resolved to a fallback dye ([`src/services/share-service.ts`](src/services/share-service.ts) `resolveSharedDye()`)
-- New bare-colour grammar: `?hex=` (harmony/budget), `?hexStart=`/`?hexEnd=` (gradient), `?hexA=`/`?hexB=` (mixer), each mutually exclusive with its dye slot; swatch's `?color=` becomes `?hex=` (`color` kept as a read alias) and swatch links now identify a cell by `slot`+`i` (index) rather than hex; mixer links carry `ratio` and drop `dyeC`; budget's `?dye=NAME` outlier is removed (names are localized six ways). Cross-tool navigation (dye action menu, preset detail "take into" row, budget "Send to") emits the same stainID grammar; og-worker moved with it in the same release
+- New bare-color grammar: `?hex=` (harmony/budget), `?hexStart=`/`?hexEnd=` (gradient), `?hexA=`/`?hexB=` (mixer), each mutually exclusive with its dye slot; swatch's `?color=` becomes `?hex=` (`color` kept as a read alias) and swatch links now identify a cell by `slot`+`i` (index) rather than hex; mixer links carry `ratio` and drop `dyeC`; budget's `?dye=NAME` outlier is removed (names are localized six ways). Cross-tool navigation (dye action menu, preset detail "take into" row, budget "Send to") emits the same stainID grammar; og-worker moved with it in the same release
 
 **Removed surfaces (see Removed below):** twelve themes → two (default `premium-dark` → `standard-dark`); the third mixer slot; the budget gil-limit slider and 1–10 result cap; comparison's stat cards / charts / 4×4 matrix; accessibility's vision-cards / contrast table / distinguishability matrix; the harmony `PaletteExporter`; the standalone `PaletteService`; the `tool-banner`; the `community` preset category.
 
@@ -1099,23 +1099,23 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 
 - **Console shell** ([`src/components/v4/v4-app-header.ts`](src/components/v4/v4-app-header.ts), [`v4-layout-shell.ts`](src/components/v4/v4-layout-shell.ts)): the header is rewritten as the 54 px console bar on the theme ground (red wash gone). Desktop (> 768 px) carries the **3A tool rail** — nine 38 px icon chips inside the bar, active chip accent-filled with its short name, the others unrolling their name on hover/focus (`aria-current`, reduced-motion respected; the wordmark yields between 769–919 px). Mobile keeps the **2B title-menu switcher** (two-column menu, nine tools with one-liners, `data-tool` hooks). 3F locale chrome (globe+code desktop / code-only mobile), sun/moon theme glyph, paint-can About, and a **gear** that opens Advanced Options. On mobile the dye palette drawer starts **closed** and closes when the viewport crosses into the mobile layout; a one-time callout + pulse ring on the palette FAB (`STORAGE_KEYS.PALETTE_HINT_SEEN`, `colorPalette.mobileHint` ×6) tells new users where it went
 - **Advanced Options slide-over** ([`src/components/advanced-options-panel.ts`](src/components/advanced-options-panel.ts)): the inline Advanced Settings section leaves the config sidebar and becomes a 392 px right panel on the 16A `panel` variant — collapsible section cards (Data: five destructive resets through 16A alerts instead of `window.confirm`; Backup: JSON export/import; Behaviour toggles), new `advanced.*` locale namespace ×6. On mobile the panel also embeds the per-tool config surface (`v4-config-sidebar` `embedded` mode); desktop keeps the 252 px Simple-Settings column in the shell
-- **16A modal shell** ([`src/components/modal-container.ts`](src/components/modal-container.ts)): `ModalConfig` gains `variant` (sheet / panel / card / alert), `eyebrow`, `subtitle`, `sheetHeight` (content / tall 60 % / full 88 %), `destructive`, `panelWidth`, `onCancel`, `lightScrim`; bottom sheets on mobile with grab handle and drag-to-close, theme tokens instead of hardcoded greys, destructive convention (outlined destructive, wide Cancel), initial focus falls back to the dialog, body overflow restores to its prior value. Modal reworks on top of it: **W2 welcome** (four colour-in/colour-out leads ×6, mono row for the other five, "Get started" lands on `RouterService.getDefaultTool()`, dead `dontShowAgain` checkbox cut), **C2 changelog** (one layout for the popup and the header button — newest/current release open, earlier releases as collapsible rows, accent bullets, footer in the shell), **About** (VERSION / BUILD / DYES mono cells with a new `__BUILD_DATE__` define, seven 44 px icon links read from core's `SOCIAL_LINKS`, dev-API disclosure, boxed ATTRIBUTION; home world corrected to Midgardsormr), **theme picker** (three-band swatch cards, live-apply, reduced scrim, "Done" footer), **language** ("Done" footer; `LanguageService.setLocale` now sets `document.documentElement.lang`), **tour prompt**, **camera preview** (88 % full-bleed, explicit dismissal), **preset delete** (`destructive: true`), keyboard shortcuts **1–9** now switch all nine tools in `ROUTES` order (key 2 used to dispatch an unroutable `matcher`)
-- **Keyboard shortcuts actually work**: `KeyboardService.initialize()` was never called in the running app, so every shortcut (1–9, Shift+T, Shift+L, ?) was inert — now initialised in `initializeServices()`; new **Shift+S** shares the active tool via a public `ShareButton.share()`; the typing guard now looks through shadow DOM (`composedPath()[0]`) so digits typed into a search box no longer switch tools ([`src/services/keyboard-service.ts`](src/services/keyboard-service.ts))
+- **16A modal shell** ([`src/components/modal-container.ts`](src/components/modal-container.ts)): `ModalConfig` gains `variant` (sheet / panel / card / alert), `eyebrow`, `subtitle`, `sheetHeight` (content / tall 60 % / full 88 %), `destructive`, `panelWidth`, `onCancel`, `lightScrim`; bottom sheets on mobile with grab handle and drag-to-close, theme tokens instead of hardcoded grays, destructive convention (outlined destructive, wide Cancel), initial focus falls back to the dialog, body overflow restores to its prior value. Modal reworks on top of it: **W2 welcome** (four color-in/color-out leads ×6, mono row for the other five, "Get started" lands on `RouterService.getDefaultTool()`, dead `dontShowAgain` checkbox cut), **C2 changelog** (one layout for the popup and the header button — newest/current release open, earlier releases as collapsible rows, accent bullets, footer in the shell), **About** (VERSION / BUILD / DYES mono cells with a new `__BUILD_DATE__` define, seven 44 px icon links read from core's `SOCIAL_LINKS`, dev-API disclosure, boxed ATTRIBUTION; home world corrected to Midgardsormr), **theme picker** (three-band swatch cards, live-apply, reduced scrim, "Done" footer), **language** ("Done" footer; `LanguageService.setLocale` now sets `document.documentElement.lang`), **tour prompt**, **camera preview** (88 % full-bleed, explicit dismissal), **preset delete** (`destructive: true`), keyboard shortcuts **1–9** now switch all nine tools in `ROUTES` order (key 2 used to dispatch an unroutable `matcher`)
+- **Keyboard shortcuts actually work**: `KeyboardService.initialize()` was never called in the running app, so every shortcut (1–9, Shift+T, Shift+L, ?) was inert — now initialized in `initializeServices()`; new **Shift+S** shares the active tool via a public `ShareButton.share()`; the typing guard now looks through shadow DOM (`composedPath()[0]`) so digits typed into a search box no longer switch tools ([`src/services/keyboard-service.ts`](src/services/keyboard-service.ts))
 - **Two themes on the 5.0 palette**: `standard-dark` (#0B0B0C / #17171A, accent #EA4133) and `standard-light` (#F2F2F4 / #FFFFFF, accent #CE2222) as `THEME_PALETTES`; theme-aware glyph accent via [`src/shared/glyph-accent.ts`](src/shared/glyph-accent.ts); `theme-color` meta is a media-scoped pair and the pre-hydration `:root` default is the 5.0 red
 - **5.0 icon system + identity**: `shared/tool-icons.ts`, `harmony-icons.ts`, `category-icons.ts` and the new [`shared/state-icons.ts`](src/shared/state-icons.ts) are shims over `@xivdyetools/svg` (fluid, `currentColor`, one accent chip per glyph); `app-logo.ts` is the official bucket artwork; favicon / PWA / Windows-tile assets regenerated from the red tile (`manifest.json` moved into `public/` so it actually ships); `ICON_STAR` becomes the star / star-fill pair; empty states dissolve into the shared glyph set with the animated hourglass (CSS embedded in the SVG so it survives shadow DOM, reduced-motion → static)
 - **Fonts**: one font contract in [`src/styles/globals.css`](src/styles/globals.css) — Space Grotesk (display), Onest (body), Fragment Mono (numeric / mono, matching `packages/svg`) self-hosted as woff2 in `public/fonts/`, plus a `--font-cjk` local-family tail; `tailwind.config.js` reads the same variables; numeric columns use `tabular-nums`; no runtime Google Fonts request, `font-src 'self'`, 30-day `/fonts/*` cache rule; `src/__tests__/font-contract.test.ts` guards the class of bug that had silently deleted the Fragment Mono `@font-face` (a glob path in a CSS comment closed the comment early)
-- **Harmony — 1A dial** ([`src/components/harmony-tool.ts`](src/components/harmony-tool.ts), [`v4/v4-color-wheel.ts`](src/components/v4/v4-color-wheel.ts)): 42 px tappable pucks with slot numbers (tap jumps the base to the nearest dye), 114 px hub button that names the base and opens the picker, wheel mirrors the result grid (dedup + user swaps), monochromatic / compound / shades finally draw nodes (coincident nodes stagger inward), icon rail of every harmony type centred over the wheel (single scrolling row with a first-run SWIPE FOR MORE hint below 768 px), rail ↔ sidebar stay in sync through `ConfigController`; **companion alternates** as 22 px swatch dots on each card with one-tap slot swap and a 1–5 companion slider (`HarmonyConfig.companionDyesCount`); one dismissible market-failure strip instead of a dash on every card; confirmed empty state; **Inverted Tetradic** harmony type (offsets 120/180/300) and the tetradic wheel corrected to a rectangle
+- **Harmony — 1A dial** ([`src/components/harmony-tool.ts`](src/components/harmony-tool.ts), [`v4/v4-color-wheel.ts`](src/components/v4/v4-color-wheel.ts)): 42 px tappable pucks with slot numbers (tap jumps the base to the nearest dye), 114 px hub button that names the base and opens the picker, wheel mirrors the result grid (dedup + user swaps), monochromatic / compound / shades finally draw nodes (coincident nodes stagger inward), icon rail of every harmony type centered over the wheel (single scrolling row with a first-run SWIPE FOR MORE hint below 768 px), rail ↔ sidebar stay in sync through `ConfigController`; **companion alternates** as 22 px swatch dots on each card with one-tap slot swap and a 1–5 companion slider (`HarmonyConfig.companionDyesCount`); one dismissible market-failure strip instead of a dash on every card; confirmed empty state; **Inverted Tetradic** harmony type (offsets 120/180/300) and the tetradic wheel corrected to a rectangle
 - **Palette Extractor — 3C loupe** ([`src/components/extractor-tool.ts`](src/components/extractor-tool.ts)): a plain click / tap on the image samples the pixels under it (4.x opened the file dialog); 74 px drag loupe with crosshair + hex chip that samples on release; PALETTE ROLL strip of samples with Clear + **Auto-extract** (the bulk K-means path, demoted to a button); drawn drop zone with privacy chip and mobile take-a-photo lead; region-rect selection removed; `matcher.*` net +15 keys ×6; ~740 lines of dead mobile-drawer / left-panel code deleted; clear-image also clears the IndexedDB copy
 - **Gradient — 4C pin rail** ([`src/components/gradient-tool.ts`](src/components/gradient-tool.ts)): pin any middle step to make its matched dye a fixed waypoint — the ramp re-interpolates per segment between anchors, the pinned step reads ΔE 0.0, pins clear on endpoint or step-count change; FROM / swap / TO endpoint cards, ideal-over-achievable stacked bands above the rail, per-step drift in the active method, summary with avg + max drift and pinned count; endpoints resolve to themselves at 0.0; `preventDuplicates` (default on) walks flat stretches to the next-closest unused dye; one 3–12 step range everywhere; `gradient.*` net +31 keys ×6
 - **Mixer — 5C mixing field** ([`src/components/mixer-tool.ts`](src/components/mixer-tool.ts)): a two-dye tool now (third slot cut) — six blend models (RYB / Spectral / OKLAB / LAB / HSL / RGB) × five ratios (10–90) rendered as thirty real blends with nearest-dye ΔE; tapping a cell sets model + ratio and the match list follows; the tapped ratio survives re-blends and rides in the share URL; **Model spread** readout in the field header; **Save mix** stores the pair + resolved dye as a device-local palette record; field cells and results draw from one filtered pool; `mixer.*` net +23 keys ×6
-- **Accessibility — 6A lens** ([`src/components/accessibility-tool.ts`](src/components/accessibility-tool.ts), new [`metric-help.ts`](src/components/metric-help.ts)): five lens tabs with prevalence + worst-pair dot, the whole workspace repainted through the active lens (per-dye cards with the lens's ΔE2000 shift badge on the 5/10/20/35 ramp), pair readout in three switchable units (%, ratio, ΔE2000) with tier bands from core's calibrated `BAND_VOCABULARY`, `MetricHelp` expander (definition / caveat / NOT A STANDARD / tier legend / unit switcher / localized W3C learn-link from core's learn-links table), result cards as-designed → as-perceived; the four slots accept arbitrary colours (Custom Color in the drawer); a shared link opens on the lens it was shared as; `accessibility.*` net +27 keys ×6
-- **Comparison — 7C duel** ([`src/components/comparison-tool.ts`](src/components/comparison-tool.ts)): pair chips closest-first → split duel panel → tiered verdict (SAME / CLOSE / NEAR / FAR) with cost line → what-differs rows (Lab L*, saturation, hue, vendor, source) → seven readouts (six methods with tier words + RATIO) that double as method tiles → two mirrored full-size result cards; **Match line** slider (1–15) in Simple Settings; verdict cites each method's own calibrated cut; TIE badges; `MetricHelp` methods mode with per-method definitions/caveats and a perceptual-kind badge; arbitrary colours accepted; refreshes when market prices arrive; `comparison.*` net +59 keys ×6
-- **Presets — 8A gallery + 8S flows** ([`src/components/v4/preset-tool.ts`](src/components/v4/preset-tool.ts), [`preset-card.ts`](src/components/v4/preset-card.ts), [`preset-detail.ts`](src/components/v4/preset-detail.ts)): community-first tabs (Community / Official / Saved / Mine) with live counts, category rail (rail and detail honour secondary categories), one search field that also matches dye names, cycling sort, offline strip; picture-led post cards with vote / save pills; new **saved shelf** ([`src/services/saved-presets-service.ts`](src/services/saved-presets-service.ts) — local snapshots, tombstones for author-removed presets, capped 200, works signed out); the user's own local `CollectionService` palettes (incl. everything migrated from 4.x) appear in the gallery; detail page as a readable palette list with a PALETTE COST note (9C vocabulary) and a TAKE THIS PALETTE INTO handoff row (Harmony / Comparison / Gradient / Accessibility); the 15 curated presets render name/description/tags in the user's language (`preset.<id>.*` keys ×6, [`src/shared/preset-i18n.ts`](src/shared/preset-i18n.ts)); presets config sidebar → Feed (example images, blend Official, hide unbuyable) + Saved (saved first, keep deleted) sections. **8S modals**: sign-in (460 px, gates table + Discord / XIVAuth), submit (560 px, HOW IT WILL LOOK preview band, localized field hints, 3–6 dyes), **My Submissions** (620 px, stats + status rows + per-status actions, real rejection reasons). Submissions and edits: shared **1-primary + 2-secondary category selector** ([`preset-category-selector.ts`](src/components/preset-category-selector.ts)) over the eight categories (new: `appearance`, `zones`, `raids-trials`, with labels / icons ×6), optional **preview image** upload (rendered on approved cards; edit form can replace/remove it), **example link** (client mirror of the API allowlist in [`src/shared/example-link.ts`](src/shared/example-link.ts): Eorzea Collection, Mirapri, Reddit, X, Bluesky, Instagram, pixiv, the Lodestone, Misskey; validated on blur, editable after submission), edit PATCH sends only what changed; `preset.*` net +156 keys ×6 (incl. the fifteen curated `preset.<id>.*` sets)
+- **Accessibility — 6A lens** ([`src/components/accessibility-tool.ts`](src/components/accessibility-tool.ts), new [`metric-help.ts`](src/components/metric-help.ts)): five lens tabs with prevalence + worst-pair dot, the whole workspace repainted through the active lens (per-dye cards with the lens's ΔE2000 shift badge on the 5/10/20/35 ramp), pair readout in three switchable units (%, ratio, ΔE2000) with tier bands from core's calibrated `BAND_VOCABULARY`, `MetricHelp` expander (definition / caveat / NOT A STANDARD / tier legend / unit switcher / localized W3C learn-link from core's learn-links table), result cards as-designed → as-perceived; the four slots accept arbitrary colors (Custom Color in the drawer); a shared link opens on the lens it was shared as; `accessibility.*` net +27 keys ×6
+- **Comparison — 7C duel** ([`src/components/comparison-tool.ts`](src/components/comparison-tool.ts)): pair chips closest-first → split duel panel → tiered verdict (SAME / CLOSE / NEAR / FAR) with cost line → what-differs rows (Lab L*, saturation, hue, vendor, source) → seven readouts (six methods with tier words + RATIO) that double as method tiles → two mirrored full-size result cards; **Match line** slider (1–15) in Simple Settings; verdict cites each method's own calibrated cut; TIE badges; `MetricHelp` methods mode with per-method definitions/caveats and a perceptual-kind badge; arbitrary colors accepted; refreshes when market prices arrive; `comparison.*` net +59 keys ×6
+- **Presets — 8A gallery + 8S flows** ([`src/components/v4/preset-tool.ts`](src/components/v4/preset-tool.ts), [`preset-card.ts`](src/components/v4/preset-card.ts), [`preset-detail.ts`](src/components/v4/preset-detail.ts)): community-first tabs (Community / Official / Saved / Mine) with live counts, category rail (rail and detail honor secondary categories), one search field that also matches dye names, cycling sort, offline strip; picture-led post cards with vote / save pills; new **saved shelf** ([`src/services/saved-presets-service.ts`](src/services/saved-presets-service.ts) — local snapshots, tombstones for author-removed presets, capped 200, works signed out); the user's own local `CollectionService` palettes (incl. everything migrated from 4.x) appear in the gallery; detail page as a readable palette list with a PALETTE COST note (9C vocabulary) and a TAKE THIS PALETTE INTO handoff row (Harmony / Comparison / Gradient / Accessibility); the 15 curated presets render name/description/tags in the user's language (`preset.<id>.*` keys ×6, [`src/shared/preset-i18n.ts`](src/shared/preset-i18n.ts)); presets config sidebar → Feed (example images, blend Official, hide unbuyable) + Saved (saved first, keep deleted) sections. **8S modals**: sign-in (460 px, gates table + Discord / XIVAuth), submit (560 px, HOW IT WILL LOOK preview band, localized field hints, 3–6 dyes), **My Submissions** (620 px, stats + status rows + per-status actions, real rejection reasons). Submissions and edits: shared **1-primary + 2-secondary category selector** ([`preset-category-selector.ts`](src/components/preset-category-selector.ts)) over the eight categories (new: `appearance`, `zones`, `raids-trials`, with labels / icons ×6), optional **preview image** upload (rendered on approved cards; edit form can replace/remove it), **example link** (client mirror of the API allowlist in [`src/shared/example-link.ts`](src/shared/example-link.ts): Eorzea Collection, Mirapri, Reddit, X, Bluesky, Instagram, pixiv, the Lodestone, Misskey; validated on blur, editable after submission), edit PATCH sends only what changed; `preset.*` net +156 keys ×6 (incl. the fifteen curated `preset.<id>.*` sets)
 - **Budget — 9C ledger** ([`src/components/budget-tool.ts`](src/components/budget-tool.ts)): rewritten on Patch 7.5 pricing rules — `priceOf()` replaces `getBudgetComparablePrice` (which read Venture Coffer dyes as ~1 gil and scrips as gil): coffer dyes are board-only, Spectrum A = 216 gil vendor + the 52254 board, B/C = scrip/credit locally with the consolidated board price as the only gil figure, currencies never converted; tier-grouped ledger (A → B → C → X, price printed once per group, ×N CHEAPER, VENDOR SAVES) with sortable DYE | ΔE | BOARD | GIL/ΔE rows, verdict block, upgrade mode (ALREADY THE FLOOR) for Standard-Spectrum targets, quick picks generated from the live board (PRICIEST ON {world} NOW), 2–20 ΔE match line, SEND TO row (Harmony / Compare / Copy item name / **Save swap** — the store's first `kind: 'swap'` record) + a share button, arbitrary-hex targets, new **Exclude Coffer Dyes** filter (`excludeCoffers`, wired through every sidebar), localized currency lines, three-column ledger ≤ 480 px; `budget.*` net +35 keys ×6
-- **Swatch — 10A sheet + `.chara` import** ([`src/components/swatch-tool.ts`](src/components/swatch-tool.ts), new [`chara-import.ts`](src/components/chara-import.ts)): drop an Anamnesis / Ktisis `.chara` file — parsed entirely on-device (core's `parseCharaFile` → `resolveCharaColors`) into a file card (producer, nickname, LOCAL ONLY chip, tribe/gender readout), a THIS CHARACTER sheet (one card per slot with R·C grid address or amber OFF GRID, absent-slot reasons, best dye + tier-coloured ΔE2000, lip blend rendered beside the raw cell), grid pins on the loaded palette, a five-row excerpt around a picked cell, and DYES ON THIS GLAMOUR (both channels, droppable chips, 3–6 counter → prefilled preset submission); **Save character colours** (`kind: 'character'` record); seven-palette rail + Dark/Light range toggle on the grid (replacing the sidebar dropdown), race/gender readout lock when a file is loaded, SEND TO handoff row, share grammar keyed on cell address, 26 px desktop / 44 px mobile cells; **Evercold deprecation banner** on the eye / hair / skin grids (`EVERCOLD_DEPRECATED_CATEGORIES`, `tools.character.evercoldNotice*` ×6); `swatch.*` net +79 keys ×6; FR tool name becomes *Nuancier*, extractor title/shortName retranslated ×6
-- **Swatch — 11a/11c DYES ON THIS GLAMOUR, named** ([`src/components/chara-import.ts`](src/components/chara-import.ts), new [`src/services/chara-resolve-service.ts`](src/services/chara-resolve-service.ts)) — pulled forward from 5.1: nobody dyes "Body", they dye the Bouncer's Vest. The `.chara` file's model keys (`ModelBase`/`ModelVariant`, weapons `ModelSet`) resolve to the worn items through api-worker's new `POST /v1/chara/resolve` (one call per file, per-key edge cache, the SPA never talks to XIVAPI, CSP `connect-src` unchanged; `img-src` gains `data.xivdyetools.app` for the proxied icons). **11a Named rows** is the default lens — each dyed piece gains the item it sits on: 28 px icon tile, localised slot overline (`swatch.gearSlot.*` ×12 ×6) with a `+N` SAME MODEL badge whose tooltip lists the visually identical alternates (Augmented / Replica / +1 / role variants — lowest row_id names the row, prefixes are never stripped), the item name in the app language (`lang` + `hyphens: auto`, wraps, never ellipsises; ko/zh fall back to EN per item), the dye names, chips at the row's end; rows 40 → 48 px, grid 3 → 2 columns (1 on mobile). Off-hands resolve *through* the main hand (a quiver / focus / fist pair is the weapon's own `ModelSub` — same name, no suffix). **11c Dye-led** is the second lens behind a Pieces/Dyes toggle in the block head (persisted, `xivdyetools_swatch_glamour_view`): one row per unique dye, `ID <stain>`, carriers as 20 px icon tiles (slot + item in the tooltip), `×N` channel count. **Five states**: RESOLVING (dyes render from the file first; a skeleton where the name lands, never a spinner), NAMES UNAVAILABLE (api-worker down / XIVAPI re-indexing after a patch → exactly the shipped row plus one quiet line — a failure costs labels, not data), SAME MODEL ×N, NO ITEM ROW (NPC / prop models → the packed `MODEL base·variant` key, never an error), ICON MISSING (a blank tile). The footnote now splits what the shipped line conflated — *N worn pieces are undyed · M slots are empty* (`swatch.footSplit` / `footWornUndyed*` / `footEmpty*`; `undyedNote*` retired). Core: `parseCharaFile` emits `gearModels[]` + `glassesId` (accepts `Glasses` as int or `{ GlassesId }`, `null` hand records), `chara-models.ts` packing helpers (`gearModelKey`, `weaponModelKey`, `charaModelKey`, `formatCharaModelLabel`, `CHARA_SLOT_SEARCH_FIELD`)
-- **Result Card — 5B ticket** ([`src/components/v4/result-card.ts`](src/components/v4/result-card.ts)): verdict stub (swatch pair, hyphenating name, structural ΔE2000 in tier colour via core `classifyBandTier`, HUE OFF + STAIN readouts) over a perforation, two-column HEX / RGB / HSV / LAB (+ **CMYK** opt-in) matrix, SPEC / SOURCE / COST text zone with MARKET after a dashed rule, `alternates` swatch-dot row, compact variant in a shared centred `.v5-results-grid` (3-up desktop / 2-up mobile); German-proofed (`lang` attr, `overflow-wrap: anywhere`); verdict is always ΔE2000 even when the tool ordered by another method; `DisplayOptionsConfig` gains `showHue` / `showStain` / `showSpectrum` / `showCmyk`, `showLab` defaults on; `resultCard.spectrumShort` / `acquisitionShort` / `categoryShort` / `hueOff` ×6
-- **Shared export sheet** ([`src/components/export-sheet.ts`](src/components/export-sheet.ts), [`src/shared/palette-export.ts`](src/shared/palette-export.ts)): one 16A sheet with CSS custom properties / SCSS / JSON / HEX / Tailwind `@theme` formats, live preview, Copy as primary + Download, wired into Extractor, Gradient (which had no export), Comparison and Mixer; every entry carries source colour and resolved dye with name, stainID and ΔE
+- **Swatch — 10A sheet + `.chara` import** ([`src/components/swatch-tool.ts`](src/components/swatch-tool.ts), new [`chara-import.ts`](src/components/chara-import.ts)): drop an Anamnesis / Ktisis `.chara` file — parsed entirely on-device (core's `parseCharaFile` → `resolveCharaColors`) into a file card (producer, nickname, LOCAL ONLY chip, tribe/gender readout), a THIS CHARACTER sheet (one card per slot with R·C grid address or amber OFF GRID, absent-slot reasons, best dye + tier-colored ΔE2000, lip blend rendered beside the raw cell), grid pins on the loaded palette, a five-row excerpt around a picked cell, and DYES ON THIS GLAMOUR (both channels, droppable chips, 3–6 counter → prefilled preset submission); **Save character colours** (`kind: 'character'` record); seven-palette rail + Dark/Light range toggle on the grid (replacing the sidebar dropdown), race/gender readout lock when a file is loaded, SEND TO handoff row, share grammar keyed on cell address, 26 px desktop / 44 px mobile cells; **Evercold deprecation banner** on the eye / hair / skin grids (`EVERCOLD_DEPRECATED_CATEGORIES`, `tools.character.evercoldNotice*` ×6); `swatch.*` net +79 keys ×6; FR tool name becomes *Nuancier*, extractor title/shortName retranslated ×6
+- **Swatch — 11a/11c DYES ON THIS GLAMOUR, named** ([`src/components/chara-import.ts`](src/components/chara-import.ts), new [`src/services/chara-resolve-service.ts`](src/services/chara-resolve-service.ts)) — pulled forward from 5.1: nobody dyes "Body", they dye the Bouncer's Vest. The `.chara` file's model keys (`ModelBase`/`ModelVariant`, weapons `ModelSet`) resolve to the worn items through api-worker's new `POST /v1/chara/resolve` (one call per file, per-key edge cache, the SPA never talks to XIVAPI, CSP `connect-src` unchanged; `img-src` gains `data.xivdyetools.app` for the proxied icons). **11a Named rows** is the default lens — each dyed piece gains the item it sits on: 28 px icon tile, localized slot overline (`swatch.gearSlot.*` ×12 ×6) with a `+N` SAME MODEL badge whose tooltip lists the visually identical alternates (Augmented / Replica / +1 / role variants — lowest row_id names the row, prefixes are never stripped), the item name in the app language (`lang` + `hyphens: auto`, wraps, never ellipsises; ko/zh fall back to EN per item), the dye names, chips at the row's end; rows 40 → 48 px, grid 3 → 2 columns (1 on mobile). Off-hands resolve *through* the main hand (a quiver / focus / fist pair is the weapon's own `ModelSub` — same name, no suffix). **11c Dye-led** is the second lens behind a Pieces/Dyes toggle in the block head (persisted, `xivdyetools_swatch_glamour_view`): one row per unique dye, `ID <stain>`, carriers as 20 px icon tiles (slot + item in the tooltip), `×N` channel count. **Five states**: RESOLVING (dyes render from the file first; a skeleton where the name lands, never a spinner), NAMES UNAVAILABLE (api-worker down / XIVAPI re-indexing after a patch → exactly the shipped row plus one quiet line — a failure costs labels, not data), SAME MODEL ×N, NO ITEM ROW (NPC / prop models → the packed `MODEL base·variant` key, never an error), ICON MISSING (a blank tile). The footnote now splits what the shipped line conflated — *N worn pieces are undyed · M slots are empty* (`swatch.footSplit` / `footWornUndyed*` / `footEmpty*`; `undyedNote*` retired). Core: `parseCharaFile` emits `gearModels[]` + `glassesId` (accepts `Glasses` as int or `{ GlassesId }`, `null` hand records), `chara-models.ts` packing helpers (`gearModelKey`, `weaponModelKey`, `charaModelKey`, `formatCharaModelLabel`, `CHARA_SLOT_SEARCH_FIELD`)
+- **Result Card — 5B ticket** ([`src/components/v4/result-card.ts`](src/components/v4/result-card.ts)): verdict stub (swatch pair, hyphenating name, structural ΔE2000 in tier color via core `classifyBandTier`, HUE OFF + STAIN readouts) over a perforation, two-column HEX / RGB / HSV / LAB (+ **CMYK** opt-in) matrix, SPEC / SOURCE / COST text zone with MARKET after a dashed rule, `alternates` swatch-dot row, compact variant in a shared centered `.v5-results-grid` (3-up desktop / 2-up mobile); German-proofed (`lang` attr, `overflow-wrap: anywhere`); verdict is always ΔE2000 even when the tool ordered by another method; `DisplayOptionsConfig` gains `showHue` / `showStain` / `showSpectrum` / `showCmyk`, `showLab` defaults on; `resultCard.spectrumShort` / `acquisitionShort` / `categoryShort` / `hueOff` ×6
+- **Shared export sheet** ([`src/components/export-sheet.ts`](src/components/export-sheet.ts), [`src/shared/palette-export.ts`](src/shared/palette-export.ts)): one 16A sheet with CSS custom properties / SCSS / JSON / HEX / Tailwind `@theme` formats, live preview, Copy as primary + Download, wired into Extractor, Gradient (which had no export), Comparison and Mixer; every entry carries source color and resolved dye with name, stainID and ΔE
 - **Matching vocabulary**: the config sidebar lists the six suite methods with their tags — ΔE2000 (default), ΔEOK (raw dp3), ΔE76, REDMEAN, RGB DIST, DISTINGUISH % — dispatching through `ColorService.getDistanceForMethod`; `matchingRedmean` / `matchingDistinguish` keys ×6
 - **OpenGraph cards**: the site root now points `og:image` / `twitter:image` at 5.0 static cards under `public/og/` (1200×1050 Discord frame + 1200×630 X frame; the root card is the 3c rail of nine tool glyphs) with honest alt text; the nine per-tool paths keep their dynamic og-worker cards; the legacy `/assets/icons/opengraph.png` is overwritten with the new X artwork (693 KB → 35 KB) so already-posted embeds upgrade instead of breaking
 - **Beta build** (`VITE_APP_ENV=beta`): [`vite-plugin-beta-branding.ts`](vite-plugin-beta-branding.ts) + pure transforms in [`src/shared/beta-branding.ts`](src/shared/beta-branding.ts) — `[BETA] ` title prefix (routed through an environment-aware `APP_NAME`), blue favicon set from `public/assets/icons/beta/`, `X-Robots-Tag: noindex, nofollow` appended to `dist/_headers`, robots meta and og/twitter URLs rewritten to the beta origin; inert without the flag. `scripts/check-beta-build.js` asserts the result between build and deploy; `scripts/smoke-test-pages.js` proves the custom domain serves *this* build (sha-converged index.html, then the robots header — on the custom domain only, since Cloudflare injects `noindex` on `*.pages.dev`); `scripts/generate-beta-icons.mjs` regenerates the icon set. New `.github/workflows/deploy-web-app-beta.yml` deploys non-main branches to `beta.xivdyetools.app`
@@ -1124,18 +1124,18 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 ### Changed
 
 - **Every tool renders one main flow**: in the v4 shell `leftPanel === rightPanel`, so the old left-panel content had been silently wiped — the ports render into a single flow, pick dyes through the palette drawer (`selectDye` / `selectCustomColor`), and subscribe to `ConfigController` for market/server changes. Tool content lives inside the shell's shadow DOM, so shared empty-state / results-grid rules moved into the stylesheet the shell injects (fixes the 437 px Harmony empty glyph, the Evercold notice deciding the panel width, narrower Accessibility cards)
-- **Custom colours everywhere**: the palette drawer's Custom Color section ungates for Harmony, Comparison, Accessibility and Budget (virtual dye, `stainID: null` — never persisted, never shared as a bogus 0)
+- **Custom colors everywhere**: the palette drawer's Custom Color section ungates for Harmony, Comparison, Accessibility and Budget (virtual dye, `stainID: null` — never persisted, never shared as a bogus 0)
 - **`ConfigController` is two-way** where tools push config: the sidebar subscribes to `swatch` and `harmony` so tool-driven changes (loaded `.chara` file, rail-selected harmony type) are reflected
 - **Display options**: one `DEFAULT_DISPLAY_OPTIONS` (the helper's diverging second copy is gone); `applyDisplayOptions` / `getCardDisplayOptions` carry the 5.0 keys; the ΔE toggle leaves the display-options UI (`showDeltaE` kept as a deprecated pass-through); `primaryActionLabel` defaults to the localized `common.selectDye`
 - **Result-card external links** ("Open in Browser" → Universalis / GarlandTools / TeamCraft / Saddlebag) resolve consolidated dyes to the Spectrum itemID via `getMarketItemID()`
 - **Preset surfaces are localized end-to-end**: one `presetCategoryLabel()` map (typed so a dropped category is a compile error) instead of four drifting copies; category badge, vote / votes / Copy Link / Edit / Delete / Created by / Back to list all through locale keys; the surface re-renders on language switch; the `NO EXAMPLE LINK` caption is gone from link-less cards
 - **Preset dye resolution**: `resolvePresetDye()` in [`src/services/dye-service-wrapper.ts`](src/services/dye-service-wrapper.ts) routes 1–254 → `getByStainId`, ≥ 5729 → legacy `getDyeById`; submission / edit forms send `stainID`s (3–6 dyes, matching the API — the edit form allowed 2–5)
-- **Bundle budget** (`scripts/check-bundle-size.js`): reports **JS payload (one locale)** — the figure a visitor downloads, since `language-service` dynamically imports exactly one locale chunk — separately from **JS emitted (all locales)**; per-chunk limits are an ordered regex list with a 60 KB default (nine of sixteen tool limits had never matched Vite's `harmony-tool-<hash>.js` names), locale codes are read from `src/locales/`, ❌ means failed only; the 2,200 KB total was **not** raised; chunk labels corrected (`modals-*` is the shared colour engine, `vendor-core-*` is the two lazily-loaded race colour tables). `src/__tests__/bundle-budget.test.ts` locks the arithmetic
+- **Bundle budget** (`scripts/check-bundle-size.js`): reports **JS payload (one locale)** — the figure a visitor downloads, since `language-service` dynamically imports exactly one locale chunk — separately from **JS emitted (all locales)**; per-chunk limits are an ordered regex list with a 60 KB default (nine of sixteen tool limits had never matched Vite's `harmony-tool-<hash>.js` names), locale codes are read from `src/locales/`, ❌ means failed only; the 2,200 KB total was **not** raised; chunk labels corrected (`modals-*` is the shared color engine, `vendor-core-*` is the two lazily-loaded race color tables). `src/__tests__/bundle-budget.test.ts` locks the arithmetic
 - **Config sidebar / Simple Settings**: `embedded` mode; per-tool sections rebuilt for the 5.0 configs (presets Feed/Saved, budget match line, comparison match line, gradient duplicate toggle, harmony companion slider, `excludeCoffers` in every filter list); five stale `oklab` defaults corrected to ΔE2000
 - **CSP**: `public/_headers` is the single source of truth (`style-src 'self' 'unsafe-inline'`, `font-src 'self'`); social cards under `/og/*` get `max-age=3600, s-maxage=3600` (moved out of `/assets/` because Pages *merges* overlapping header rules and the cards were inheriting `immutable`)
 - **Turbo**: the build task's cache key includes `VITE_APP_ENV`
 - **Locale key growth ×6**: 1,041 → 1,489 keys per language; retired keys removed with their features (twelve `themes.*` names, `hyab` / `oklch-weighted`, `preset.categories.community`, `preset.noShot`, the eight accessibility display keys, `comparison.sixPairs` / `sixMethods`, the four dead `export.*` and eight tool export keys, `about.builtWith` / `connect`, `changelog.previousUpdates` / `viewFull`, `welcome.*` rebuilt)
-- **DEAD-025 (follow-up 5, adopt)**: `services/auth-service.ts`'s `AuthUser` / `AuthProvider` / `AuthResponse` / `JWTPayload`, `services/community-preset-service.ts`'s `PresetStatus` / `CommunityPreset` / `PresetFilters` / `PresetListResponse`, `services/preset-submission-service.ts`'s `PresetSubmission` / `PresetEditRequest`, and both local `PresetSortOption` copies (`services/hybrid-preset-service.ts`, `shared/tool-config-types.ts`) now import the restored `@xivdyetools/types` contracts instead of hand-rolling their own (type-only change, no runtime behaviour differs); the discriminated `AuthResponse` is narrowed with its `success` field at the one call site that reads it, and `apps/web-app/src/__tests__/mocks/handlers.ts`'s preset fixtures gained the now-required `secondary_categories` / `preview_image_status` fields. `community-preset-service.ts`'s `VoteResponse` stays local — its 409 ("already voted") handling deliberately reports `success: false` even though the real wire body is `success: true`, a shape the shared discriminated union has no variant for.
+- **DEAD-025 (follow-up 5, adopt)**: `services/auth-service.ts`'s `AuthUser` / `AuthProvider` / `AuthResponse` / `JWTPayload`, `services/community-preset-service.ts`'s `PresetStatus` / `CommunityPreset` / `PresetFilters` / `PresetListResponse`, `services/preset-submission-service.ts`'s `PresetSubmission` / `PresetEditRequest`, and both local `PresetSortOption` copies (`services/hybrid-preset-service.ts`, `shared/tool-config-types.ts`) now import the restored `@xivdyetools/types` contracts instead of hand-rolling their own (type-only change, no runtime behavior differs); the discriminated `AuthResponse` is narrowed with its `success` field at the one call site that reads it, and `apps/web-app/src/__tests__/mocks/handlers.ts`'s preset fixtures gained the now-required `secondary_categories` / `preview_image_status` fields. `community-preset-service.ts`'s `VoteResponse` stays local — its 409 ("already voted") handling deliberately reports `success: false` even though the real wire body is `success: true`, a shape the shared discriminated union has no variant for.
 
 ### Removed
 
@@ -1143,7 +1143,7 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 - **Components / services**: `src/services/palette-service.ts` (saved palettes are now `kind: 'palette'` collections), `src/components/palette-exporter.ts` (superseded by the export sheet), `src/components/v4/tool-banner.ts` (the title lives in the header switcher), `src/shared/empty-state-icons.ts` (→ `state-icons.ts` shim), `ICON_GRID`; comparison's stat cards / charts / 4×4 matrix (~26 KB); accessibility's vision-cards / contrast table / distinguishability matrix (~500 lines) and its three dead simulation-display toggles; the mixer's third dye slot and `dyeC` share param; budget's gil-limit slider, 1–10 result cap and 0.7/0.3 value sort; harmony's orphaned left-panel companion slider (now in the sidebar); extractor's region-rect selection and legacy `exportPaletteAsCss`; the changelog modal's `getRelevantEntries()` / `full` mode split (one layout now); the welcome modal's `dontShowAgain` checkbox
 - **Preset categories**: `community` (community-ness is a source tab, not a category); MSW fixtures updated
 - **Orphaned files** (Vite `root: 'src'` means none of these ever reached `dist/`): the package-root `index.html` and its drifting `<meta>` CSP, `netlify.toml`, `public/.htaccess` (a fourth, wrong CSP still permitting Google Fonts), `fonts/` (28 unreferenced woff2 — Cinzel, Cinzel Decorative, Lexend, Lexend Giga, a duplicate Habibi), `public/fonts/habibi-*.woff2` and the `numeric` Habibi family, `public/js/load-fonts.js` (Google Fonts loader), `assets/json/colors_xiv.json` + `public/json/colors_xiv.json` (stale pre-monorepo dye copies; the service-worker precache entry with them), the `.v4-app-root` rule and its ad-hoc Segoe UI stack, the `asyncCss` plugin's Google-Fonts branch, the last `#4F46E5` indigo literals
-- **E2E**: `e2e/color-matcher.spec.ts` (only a skipped block), `e2e/dye-comparison-coverage.spec.ts` (coverage-farming guards), the skipped pre-5.0 `describe` blocks in dye-comparison / dye-mixer / harmony-generator, ui-interactions' sixteen silent self-skips — every removed behaviour is listed in `e2e/COVERAGE-GAPS.md`
+- **E2E**: `e2e/color-matcher.spec.ts` (only a skipped block), `e2e/dye-comparison-coverage.spec.ts` (coverage-farming guards), the skipped pre-5.0 `describe` blocks in dye-comparison / dye-mixer / harmony-generator, ui-interactions' sixteen silent self-skips — every removed behavior is listed in `e2e/COVERAGE-GAPS.md`
 
 ### Removed (2026-08-18 dead-code audit)
 
@@ -1157,19 +1157,19 @@ The **XIV Dye Tools 5.0 redesign**. Every one of the nine tools was re-ported to
 
 - **Sign-in identity = Discord snowflake** — `AuthUser.id` now takes the JWT's `discord_id` claim (oauth's `sub` is the internal user UUID), falling back to `sub` for XIVAuth-only accounts, so ownership checks against `author_discord_id` line up with presets-api's fix (see presets-api 2.0.0)
 - **Desktop Options column × works** — `sidebar-collapse` had no listener; the shell now collapses the Simple Settings column on ×, and while it is collapsed the console-bar gear restores it (otherwise the gear opens Advanced Options as before; mobile unchanged; session-only). The `?` shortcuts panel drops the "Dye Selection" group (Tab/arrows/Enter) — nothing in the 5.0 palette drawer handled those keys — and its four `shortcuts.*` keys ×6
-- **Extractor honours the suite default and its stored settings** — the internal `matchingMethod` was hard-coded `oklab` (the sidebar showed ΔE2000) and the tool never read its persisted config on init; now `DEFAULT_MATCHING_METHOD` + `normalizeMatchingMethod` over the stored extractor config (method, prevent-duplicates, filters, display options), like its siblings
-- **Share links: bare-colour endpoints for Gradient and Mixer, and the swatch validator** — `hexStart`/`hexEnd` and `hexA`/`hexB` were declared but never written or read (a Custom Color endpoint shared as stainID `0` and failed on load); the tools now emit the dye's stainID **or** the slot's `hex*` param and read either back through the same custom-dye path (`validateColourSlot()`: stainID XOR well-formed hex; harmony's already-correct `{hex}` links had been failing the same check). Swatch links (`slot` + `i`, or `hex` / legacy `color`) no longer trip "Missing required parameter: color"; `SwatchShareParams` now describes what the tool writes; all-digit hexes survive URL number coercion; a rejected gradient start no longer leaves a hole that crashed the endpoint display ([`src/services/share-service.ts`](src/services/share-service.ts), `gradient-tool.ts`, `mixer-tool.ts`). og-worker still previews such links with the tool's default card
+- **Extractor honors the suite default and its stored settings** — the internal `matchingMethod` was hard-coded `oklab` (the sidebar showed ΔE2000) and the tool never read its persisted config on init; now `DEFAULT_MATCHING_METHOD` + `normalizeMatchingMethod` over the stored extractor config (method, prevent-duplicates, filters, display options), like its siblings
+- **Share links: bare-color endpoints for Gradient and Mixer, and the swatch validator** — `hexStart`/`hexEnd` and `hexA`/`hexB` were declared but never written or read (a Custom Color endpoint shared as stainID `0` and failed on load); the tools now emit the dye's stainID **or** the slot's `hex*` param and read either back through the same custom-dye path (`validateColourSlot()`: stainID XOR well-formed hex; harmony's already-correct `{hex}` links had been failing the same check). Swatch links (`slot` + `i`, or `hex` / legacy `color`) no longer trip "Missing required parameter: color"; `SwatchShareParams` now describes what the tool writes; all-digit hexes survive URL number coercion; a rejected gradient start no longer leaves a hole that crashed the endpoint display ([`src/services/share-service.ts`](src/services/share-service.ts), `gradient-tool.ts`, `mixer-tool.ts`). og-worker still previews such links with the tool's default card
 - **Comparison: Export + Share reachable for a real comparison** — the two actions lived in the single-dye "Selected Dyes" header, which the 7C duel hides for ≥2 dyes, so a 2–4-dye comparison could not be exported or shared; they now sit in their own action row shown whenever ≥1 dye is loaded (share payload refreshes on every results pass) ([`src/components/comparison-tool.ts`](src/components/comparison-tool.ts))
 - **Harmony**: cards printed the tool's ordering distance under the ΔE2000 label (verified 62.68 raw RGB where ΔE2000 was 16.65) — drift now uses `getDistanceForMethod` and the price refresh no longer drops `matchingMethod`; harmony / gradient / mixer no longer hard-boot `oklab` — they seed from config; the `?hex=` share slot is wired (a custom base used to share as `dye=0`); a first-run hint no longer burns itself on programmatic rail scroll
 - **Mixer**: `blendColorsInternal` ignored `mixRatio` and re-blended 50/50 on every dye / model / filter change; cells restate on a method change; result cards carry `vendorCost` (coffer dyes read "1 Venture Coffer", never gil)
 - **Gradient**: dye-filter fallback ranked by raw RGB while the primary path used the selected method; a 12-step gradient could be built but not shared (share reader clamped 2–10); the export button was wiped by `updateFocusHeader()` before first paint; direct deep-link loads never registered `<v4-result-card>` (type-only import elided — a latent 4.x bug, fixed with side-effect imports across accessibility / comparison / gradient)
 - **Comparison**: verdict quoted ΔE2000's slider number under other methods; "price 1" coffer leak in the VENDOR delta; the duel kept priceless cards after the market fetch resolved
-- **Accessibility**: pair-readout bands aligned to core's calibrated vocabulary (ΔE2000 30/15/8, distinguish 29/13/8; tiers score the displayed rounded value so a card can't print 30.0 and colour as Fine); learn-more honours core's per-locale learn-links (de/ja/ko render the absent state, never the English page)
+- **Accessibility**: pair-readout bands aligned to core's calibrated vocabulary (ΔE2000 30/15/8, distinguish 29/13/8; tiers score the displayed rounded value so a card can't print 30.0 and color as Fine); learn-more honors core's per-locale learn-links (de/ja/ko render the absent state, never the English page)
 - **Budget**: Venture Coffer dyes priced at ~1 gil and scrips read as gil (the `priceOf()` rewrite); verdict tones (green priced / amber offline / neutral upgrade) instead of accent red everywhere; sidebar match-line slider pins off-ΔE2000
 - **Swatch**: `algo` whitelist was `['oklab','ciede2000','euclidean']` — cie76 / redmean / rgb / distinguish links silently fell to the default; grid title went stale on category change; reverse-match rings used hardcoded `rgba(59,130,246,…)` instead of the theme accent; two cells sharing a hex resolved to the wrong one (address-keyed share grammar)
 - **Presets**: `SavedPresetsService.markDeleted` had no caller (tombstones now reconcile on feed load — never while offline, never against a search-filtered pool); category rail counts collapsed to 0 when a category was selected; edit form allowed 2–5 dyes against the API's 3–6; `example_link` was collected by the edit form but never sent in the PATCH; the edit form's image toasts contradicted each other on failure; category selector had no accessible field label; `zh` `raidsTrials` label read as generic duties; the preview-image upload sent an `application/octet-stream` fallback that the API's media-type gate rejects
 - **Extractor**: sample-area hint described the retired Shift+click gesture ×6; `clickToSample` copy said "drag for a region" after region-select was removed; roll header localized
-- **Shell / modals**: 16A shell styles were injected into `#modal-container`, which is cleared when the last modal closes — every modal after the first-ever open rendered unstyled (now injected into `document.head`); Discord default avatar derived a `parseInt` of an internal UUID (`embed/avatars/NaN.png`, a hard 404) — replaced with an initial chip (`avatarInitial()`); `theme-color` / tile colour / `:root` default were still 4.x indigo; `manifest.json` sat outside `public/` and 404'd in production
+- **Shell / modals**: 16A shell styles were injected into `#modal-container`, which is cleared when the last modal closes — every modal after the first-ever open rendered unstyled (now injected into `document.head`); Discord default avatar derived a `parseInt` of an internal UUID (`embed/avatars/NaN.png`, a hard 404) — replaced with an initial chip (`avatarInitial()`); `theme-color` / tile color / `:root` default were still 4.x indigo; `manifest.json` sat outside `public/` and 404'd in production
 - **Fonts**: numeric columns rendered in the retired proportional Habibi serif (`.number` / `.font-numeric` now Fragment Mono + `tabular-nums`); the Fragment Mono `@font-face` had been silently deleted by a glob in a CSS comment; the `<noscript>` path fetched three families no rule referenced
 - **Result cards**: `showHue` / `showStain` / `showSpectrum` were inert on five of eight surfaces (helper key lists only enumerated the legacy keys)
 - **`build:check` was a deploy blocker** — failing at 2.28 MB / 2.15 MB because the total summed all six locale chunks a visitor never downloads (see Changed → Bundle budget); the merge-base was already at 97.3 % of budget
@@ -2908,7 +2908,7 @@ const logger = createBrowserLogger();
 - Now stores existing count BEFORE modifying storage
 
 **Companion Dye Colors**
-- Fixed grey/placeholder swatches for companion dyes in saved palette modal
+- Fixed gray/placeholder swatches for companion dyes in saved palette modal
 - Added `getDyeHexByName()` lookup function to resolve dye names to hex colors
 - Swatches now display actual dye colors from the database
 
@@ -3297,7 +3297,7 @@ const logger = createBrowserLogger();
 
 **French Localization**
 - Corrected "Cosmic Fortunes" to "Roue de la fortune cosmique" (was "Fortune Cosmique")
-- Corrected "Dark" dye filter to "foncé" (was "Sombre")
+- Corrected "Dark" dye filter to "foncé" (was "Somber")
 
 **Korean Localization**
 - Corrected "Dark" dye filter to "짙은" (was "다크")

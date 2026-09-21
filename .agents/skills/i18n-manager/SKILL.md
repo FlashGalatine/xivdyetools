@@ -45,7 +45,7 @@ term keeps the game's spelling (**Grey** — the Facewear color and the four Gre
 ## Step 0 — load (audit mode)
 
 Read `../audit-shared/conventions.md` + `model-routing.md`, `../audit-shared/traps/shell.md` and `traps/i18n-fonts.md`
-(generated files, fonts-by-cmap, deliberately-English list, lookup-pattern catalogue pointer), and
+(generated files, fonts-by-cmap, deliberately-English list, lookup-pattern catalog pointer), and
 `../audit-shared/american-english.md` (the `en` spelling standard and its glossary exception). If a prior i18n
 audit exists for the scope, read its README + *Rejected suspicions*; carry-forwards get new IDs.
 
@@ -76,8 +76,8 @@ python "<SKILL_DIR>/scripts/font-coverage.py" apps/og-worker/src/fonts/NotoSansS
 python "<SKILL_DIR>/scripts/cmap-diff.py" <old.ttf> <new.ttf>                               # compare subsets by cmap, never md5
 node "<SKILL_DIR>/../audit-shared/scripts/american-spelling.mjs" . <en-file…>                # British spellings in en values (add --all for code zones)
 ```
-- **Hardcoded UI strings in handler code**: web-app → `pnpm --filter xivdyetools-web-app exec eslint src -f json > <OUT>/evidence/eslint.json` and keep rule IDs starting `xivdyetools-i18n/`; plus `git ls-files 'apps/web-app/src/**/*.ts' | xargs grep -n 'innerHTML = `'` for the unscanned sites. Bots/og → `git ls-files '<unit>/src/**/*.ts' | grep -v -E '\.test\.ts$|og-strings|og-embed|localize' | xargs grep -n -E "['\"\`][A-Z][a-z]+( [a-z]+){2,}"` for sentences, and on card/crawler surfaces (`services/svg/*.ts`, `og-data-generator.ts`, handlers) also 2-word labels `"['\`][A-Z][a-z]+ [A-Za-z]+['\`]"`; triage by surface (user-visible vs log/error code/identifier). Web-app key lookups follow 11 patterns (dynamic prefixes included) — catalogue in `docs/audits/2026-08-16-web-app-dead-code/evidence/agent-report-i18n.md` §A; `i18n:unused` resolves the prefixes, so check `swatch.*`-style families by hand.
-- **Missing keys at call sites** (raw dotted keys in UI): bot-logic's reverse gate covers `t.t()`; for web-app `validate:i18n` covers `t('literal')`; dynamic keys need the pattern catalogue.
+- **Hardcoded UI strings in handler code**: web-app → `pnpm --filter xivdyetools-web-app exec eslint src -f json > <OUT>/evidence/eslint.json` and keep rule IDs starting `xivdyetools-i18n/`; plus `git ls-files 'apps/web-app/src/**/*.ts' | xargs grep -n 'innerHTML = `'` for the unscanned sites. Bots/og → `git ls-files '<unit>/src/**/*.ts' | grep -v -E '\.test\.ts$|og-strings|og-embed|localize' | xargs grep -n -E "['\"\`][A-Z][a-z]+( [a-z]+){2,}"` for sentences, and on card/crawler surfaces (`services/svg/*.ts`, `og-data-generator.ts`, handlers) also 2-word labels `"['\`][A-Z][a-z]+ [A-Za-z]+['\`]"`; triage by surface (user-visible vs log/error code/identifier). Web-app key lookups follow 11 patterns (dynamic prefixes included) — catalog in `docs/audits/2026-08-16-web-app-dead-code/evidence/agent-report-i18n.md` §A; `i18n:unused` resolves the prefixes, so check `swatch.*`-style families by hand.
+- **Missing keys at call sites** (raw dotted keys in UI): bot-logic's reverse gate covers `t.t()`; for web-app `validate:i18n` covers `t('literal')`; dynamic keys need the pattern catalog.
 - **Terminology**: compare game nouns in hand-edited sets/tables against the dictionary and core values; flag generic translations where an official term exists (`TERM-`).
 - **`en` spelling**: `american-spelling.mjs` over each set's `en` file (`--keys=<prefix>` to narrow a shared file; a `.ts` table is read inside its `en:` block only). Confirm each candidate against `../audit-shared/american-english.md` before filing — the glossary wins, identifiers keep the code's spelling, and `og-strings.ts` is a positive control, not a target. One `TERM-` per set listing every key, never one per word.
 - **Fonts**: every `font-family`/`STACKS` stack that can draw CJK lists JP/SC/KR; subsets newer than the last string change (`git log -1 --format=%cI -- <fonts>` vs locale paths); SC/JP subsets > 500 KiB or KR > 300 KiB = over-inclusion; og-worker `font-coverage.test.ts stringsFor()` lists every card-drawn table.
@@ -133,7 +133,7 @@ confirmation gate (`conventions.md` §8).
 - New and edited `en` values are American English (`../audit-shared/american-english.md`): *color*,
   *behavior*, *normalize*, *center*, *favorites*, *labeled*. Everything else in this list still
   applies — an identifier, a code, or a quotation keeps its own spelling.
-- Match the register of the five neighbouring keys in that set; don't churn per-surface house
+- Match the register of the five neighboring keys in that set; don't churn per-surface house
   choices (ja 染料 vs カララント) or the deliberately-English items in `traps/i18n-fonts.md`.
 - Identifiers, codes, tags, hex, brand names, `FFXIV`, `Universalis` stay as-is; CJK text uses
   full-width punctuation; keep UI length comparable (cards truncate).

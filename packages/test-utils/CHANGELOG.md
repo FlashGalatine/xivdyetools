@@ -18,7 +18,7 @@ the bump is bookkeeping so the fix is dated.
   this audit's own coverage baseline failed. The default is now a module-level counter (1, 2, … 254,
   then a thrown error naming the cap); `resetMockDyeSequence()` is exported so a suite can restart it
   in its own `beforeEach`. The random draw survives only as the explicitly opt-in `randomStainId()`.
-- **`createMockDye({ stainID: null })` honours the null** (BUG-021). The override used `??`, so the
+- **`createMockDye({ stainID: null })` honors the null** (BUG-021). The override used `??`, so the
   documented legacy "null arm" fixture could not be built — null was replaced by a random decoy before
   `itemID`/`id` were derived. It now derives `itemID` 5729 through `legacyItemIdForStain(null)` as the
   type's comment describes.
@@ -45,7 +45,7 @@ fail in production.
   reading one page as the whole namespace). It also emitted `list_complete: false` *with no cursor*
   on an exactly-full page, a state real KV never returns, so a **correct** cursor loop would have
   spun on page one forever. Pages are now capped at 1000, a cursor is issued whenever keys remain,
-  and `cursor` is honoured on the next call.
+  and `cursor` is honored on the next call.
 
 - **BUG-100 — R2 `httpMetadata` was write-only.** `put()` stored it and neither `get()` nor `head()`
   exposed it, and there was no `writeHttpMetadata()`. `presets-api` writes the `immutable` +
@@ -109,7 +109,7 @@ fail in production.
 `run()` still reports `changes: 1` for a write the mock does not model. Reading a bare `null` as
 "affected zero rows" was implemented, tried, and reverted: nearly every `_setupMock` answers `null`
 for statements it simply does not model, so that reading silently reinterpreted three unrelated
-`presets-api` behaviours (a duplicate vote and two dead-letter cascades) as failures. To exercise a
+`presets-api` behaviors (a duplicate vote and two dead-letter cascades) as failures. To exercise a
 zero-change branch — `handlers/votes.ts`'s `already_voted`, or any `INSERT … ON CONFLICT DO NOTHING`
 that conflicted — return an explicit `meta` from the mock; there is a worked example in
 `tests/cloudflare/d1.test.ts`.
@@ -147,7 +147,7 @@ Security audit remediation (docs/audits/2026-08-29-security, FINDING-015, Sprint
 ### Removed
 
 - **`auth/signature.ts`** (`createBotSignature`, `createTimestampedSignature`, `verifyBotSignature`, `TEST_SIGNING_SECRET` — 103 lines) and its dedicated unit test `tests/auth/signature.test.ts` (18 tests). The 2026-08-18 dead-code audit (DEAD-026) called this module "shim-only" but kept it because `integration/setup.ts` and `integration/discord-presets/bot-authentication.test.ts` still imported `createBotSignature`/`createTimestampedSignature` — see the 1.2.0 entry below. That justification no longer holds: `@xivdyetools/auth` 2.0.0 (same finding) removed its own v1 `verifyBotSignature`, which had been the only signature presets-api still accepted a fallback for; once presets-api accepted only `X-Request-Signature-V2`, the v1-signature test blocks in `bot-authentication.test.ts` were asserting against a hand-rolled local simulation of a contract that no longer existed anywhere, and were deleted along with `setup.ts`'s `createSignedBotHeaders`/`createInvalidSignatureHeaders` header builders and `bot-authentication.test.ts`'s own `verifyBotRequestSignature`/`SIGNATURE_MAX_AGE_SECONDS` local verifier (both of which only those blocks used). `setup.ts`'s exported `BOT_SIGNING_SECRET` constant survives as an inline literal (was derived from the deleted `TEST_SIGNING_SECRET`) — `createMockPresetsEnv()`'s mock environment still needs a value for that field.
-- **`bot-authentication.test.ts` narrowed from 15 tests to 5.** Kept: the unsigned dev/test bot-auth bypass (API-secret path, user-context pass-through, moderator recognition) and wrong-API-secret / missing-Authorization rejection — all still real, still mirror live `presets-api/src/middleware/auth.ts` behaviour. Lost: all coverage of the signed (production) bot-request path, since this file's `processBotAuth` simulation never modeled the v2 contract and had nothing live left to assert once v1 was gone. Restoring that coverage — porting the harness to sign with `@xivdyetools/auth`'s `createBotSignatureV2` — is a follow-up, not done in this pass; the file's own module comment documents the gap.
+- **`bot-authentication.test.ts` narrowed from 15 tests to 5.** Kept: the unsigned dev/test bot-auth bypass (API-secret path, user-context pass-through, moderator recognition) and wrong-API-secret / missing-Authorization rejection — all still real, still mirror live `presets-api/src/middleware/auth.ts` behavior. Lost: all coverage of the signed (production) bot-request path, since this file's `processBotAuth` simulation never modeled the v2 contract and had nothing live left to assert once v1 was gone. Restoring that coverage — porting the harness to sign with `@xivdyetools/auth`'s `createBotSignatureV2` — is a follow-up, not done in this pass; the file's own module comment documents the gap.
 
 ## [1.2.0] - 2026-08-16
 

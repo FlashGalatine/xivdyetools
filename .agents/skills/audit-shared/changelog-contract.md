@@ -68,7 +68,8 @@ quantify only with real numbers; breaking changes say what the player must do; s
 are mentioned without exploit detail; developer-only changes collapse to one line or are
 omitted. Every meaningful technical entry must be represented by something — never lose
 information, but do merge. House style: content is **English only** (the modal/bot chrome is
-localized, the notes are not), British spelling as in the existing files (colour, behaviour),
+localized, the notes are not), American spelling per [american-english.md](american-english.md) —
+color, behavior, normalize; the FFXIV glossary still wins, so a dye keeps its Ash Grey —
 tools by their 5.0 names (Harmony Explorer, Palette Extractor, Gradient Builder, Dye Mixer,
 Accessibility Checker, Dye Comparison, Community Presets, Budget Suggestions, Swatch Matcher),
 `### ` topic headings in the file's own voice — not generic ✨/🔧/🐛 buckets. The web-app file

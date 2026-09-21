@@ -3,7 +3,7 @@
 - Removing fully-covered dead code lowers aggregate coverage — expect ratchet adjustments
   (web-app 71/55/65/72 is a ratchet: never lower; others are thresholds in `vitest.config.ts`).
 - A coverage drop with no source change and no failing test is usually a constant-valued mock
-  crossing a component threshold — bisect with historical test files, don't theorise.
+  crossing a component threshold — bisect with historical test files, don't theorize.
 - Tests that cannot fail are common in web-app tool suites (`expect(typeof x).toBe('function')`,
   `not.toThrow()` as the only assertion, guarded bodies with no else, asserting a value captured
   before the action). Ask "what source edit would make this fail?" before trusting green.

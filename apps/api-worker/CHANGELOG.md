@@ -97,7 +97,7 @@ Sprint 11 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-
 
 ## [0.14.0] - 2026-09-05
 
-Exposes PR #167's selectable colour wheels (core 5.2.0) through the public API and its docs. Four
+Exposes PR #167's selectable color wheels (core 5.2.0) through the public API and its docs. Four
 new `GET` endpoints under `/v1`, all deterministic and cached like the dye routes; nothing existing
 changed shape.
 
@@ -120,7 +120,7 @@ changed shape.
 - Error codes `INVALID_COLOR_WHEEL` and `INVALID_HARMONY_TYPE` (400, `details.expected` lists the
   valid ids). An unknown wheel is **refused**, not silently mapped to `rgb` as the bot does — the
   same policy og-worker applies to `?wheel=` and this API applies to `?method=`.
-- The API holds no wheel list, offsets table or hue maths of its own: ids, tags, defaults,
+- The API holds no wheel list, offsets table or hue math of its own: ids, tags, defaults,
   parsing (`parseColorWheelId`), `HARMONY_OFFSETS`, `isKnownHarmonyType` and the localized names all
   come from `@xivdyetools/core`.
 
@@ -156,19 +156,19 @@ Developer docs restyle (`developers.xivdyetools.app`) on the confirmed **API Doc
   replaced by a bottom section sheet opened from the bar's active chip.
 - **`/reference/` is the live endpoint index.** One row per endpoint, grouped by section, each
   making one real request on load — the hexes in the answer are painted as a swatch strip, an
-  answer with no colours prints its count, a failure prints the API's own error text verbatim,
+  answer with no colors prints its count, a failure prints the API's own error text verbatim,
   and the two no-preview rows (`POST /v1/chara/resolve`, the icon proxy) say so and never fetch.
 - **Every endpoint is one console card** (`EndpointCard.vue`, replacing `TryIt.vue`): the
   parameter form on the left **is** the parameter table (the Markdown `### Parameters` tables are
   gone — one source of truth per endpoint), the Dye Object's 19 fields fold under it, the response
   pane on the right sends on tap only (URL echo · Send · cURL · `status · ms · X-Request-ID` ·
-  two-colour JSON). `POST /v1/chara/resolve` gets an editable JSON body; the icon proxy card
+  two-color JSON). `POST /v1/chara/resolve` gets an editable JSON body; the icon proxy card
   renders the PNG it fetches. Quick Start makes the first request with the same card.
-- **Home** is 1b's hero — eyebrow, headline, base-URL field with Copy, the two actions, a labelled
+- **Home** is 1b's hero — eyebrow, headline, base-URL field with Copy, the two actions, a labeled
   *sample* envelope (nothing on the home page fetches) — and seven tiles, glyphs from
   `@xivdyetools/svg` only where a tool exists (Matching → extractor, Character Equipment → swatch,
   Languages → globe). The seventh tile is now **Character Equipment**.
-- Markdown code fences render on a two-colour Shiki theme (keys accent, values text) so they read
+- Markdown code fences render on a two-color Shiki theme (keys accent, values text) so they read
   the same as the card's JSON view.
 - The endpoint registry (`docs/.vitepress/theme/lib/endpoints.ts`) is the single source for the
   sidebar counts, the live index, the section sheet and the `N ENDPOINTS` tags.
@@ -194,7 +194,7 @@ Developer docs restyle (`developers.xivdyetools.app`) on the confirmed **API Doc
 ### Fixed
 
 - `guide/errors.md` now lists `INVALID_BODY` (400 / 413) and `UPSTREAM_UNAVAILABLE` (503) — both
-  were live on `/v1/chara/*` but missing from the code catalogue.
+  were live on `/v1/chara/*` but missing from the code catalog.
 - `guide/responses.md` no longer calls `/health` "the one exception" to the envelope: `/health`
   is outside `/v1`, and `GET /v1/chara/icon/:iconId` returns a PNG. It and `reference/chara.md`
   also say that `X-Cache` (and `Age`) are not CORS-exposed, so browser code cannot read them.
@@ -220,7 +220,7 @@ Fifteen review findings, all verified in the built site before and after:
 - **768–959 px** no longer overflows the bar (VitePress shows the nav chips from 768; they and the
   280 px search field are now icon-only below 960, where the section sheet is the navigation).
 - **≥ 1440 px** sidebar items no longer pin to the viewport edge while their counts float at the
-  far right of the widened box; the bar's wordmark follows the same centred offset.
+  far right of the widened box; the bar's wordmark follows the same centered offset.
 - **Local nav kept for its "On this page" dropdown** below 1280 px (it was hidden wholesale,
   leaving no way to jump between a page's endpoints on tablets); only its sidebar opener is
   hidden, and the closed mobile sidebar is now `visibility: hidden` so its eight links leave the
@@ -232,10 +232,10 @@ Fifteen review findings, all verified in the built site before and after:
   slot) — restored.
 - **Fields fold** on every dye-returning card (stain / search / batch / both matching cards), not
   just two; the Dyes intro no longer claims otherwise.
-- **cURL on the POST card** copied a re-serialised body and swallowed a parse error as "clipboard
+- **cURL on the POST card** copied a re-serialized body and swallowed a parse error as "clipboard
   denied"; it now copies the textarea verbatim (what Send posts) and surfaces a clipboard failure.
 - The sidebar count span no longer leaks into the prev/next pager; two overrides that lost to the
-  default theme's scoped selectors (sidebar hover colour, bar title padding) carry the
+  default theme's scoped selectors (sidebar hover color, bar title padding) carry the
   specificity they needed; the blob URL from an icon-card Send is revoked on unmount; the unused
   `search` glyph branch is gone.
 
@@ -245,7 +245,7 @@ Fifteen review findings, all verified in the built site before and after:
 
 - **`?method=oklab` changes both its ranking and its numeric scale**, inherited from
   `@xivdyetools/core` 5.1.0, where `getDeltaE_Oklab` became **ΔEOK2** (CSS Color 4 §20.4 —
-  `a` and `b` scaled by 2). No code here changed; the behaviour does, so this is a minor
+  `a` and `b` scaled by 2). No code here changed; the behavior does, so this is a minor
   bump rather than a patch.
 
   A given pair's `distance` is roughly 1.4–2× its former value. A pure lightness difference
@@ -276,7 +276,7 @@ Fifteen review findings, all verified in the built site before and after:
 ### Changed
 
 - `VALID_LOCALES` derives from core's `SUPPORTED_LOCALES` instead of re-spelling the six
-  codes (I18N-004). No behaviour change — every copy agreed — but adding a locale, or
+  codes (I18N-004). No behavior change — every copy agreed — but adding a locale, or
   folding `zh-TW` into `zh` as an earlier audit deferred, meant finding all of them.
 
 ## [0.11.0] - 2026-09-02
@@ -347,7 +347,7 @@ Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-020/021/022/023). Noth
 caller; the `/v1` contract is untouched.
 
 - `errorResponse` from `lib/response.ts` — an 18-line error envelope with zero call sites. Errors
-  have always travelled through `ApiError` and the app-level handler.
+  have always traveled through `ApiError` and the app-level handler.
 - The `LocalizationService` re-export from `lib/services.ts` — every consumer already imported it
   straight from `@xivdyetools/core`.
 - `createMockEnv` from `src/universalis/test-setup.ts` — a duplicate of the live helper in
@@ -404,7 +404,7 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-003 + FINDI
 ### Security
 
 - **`/v1/*` per-IP rate limiting now uses the native Workers Rate Limiting binding `API_RATE_LIMITER`** (`[[ratelimits]]`, `simple = { limit = 65, period = 60 }` = the 60 + 5 burst it always advertised) via `CloudflareRateLimiter` from `@xivdyetools/worker-kit` 1.1.0. The KV-backed limiter could not throttle a fast client — KV allows 1 write/s/key and the increment swallowed the resulting 429s, so a single client sending >1 req/s never reached the threshold, and any KV error failed open. KV `RATE_LIMIT` is kept only as the fallback when the binding is absent. `createApiRateLimitMiddleware()` / `selectApiRateLimiter()` are exported for tests; the 429 body is unchanged. (FINDING-003)
-- **FINDING-025 / API-2 — `POST /v1/chara/resolve` enforces its 8 KB cap on the stream** (new `src/lib/bounded-body.ts`): the body used to be buffered whole (`Request.text()`) before the size check, so a chunked / HTTP/2 POST with no `Content-Length` could push ~100 MB into the isolate. The reader is now cancelled the moment 8 KB (bytes, not UTF-16 units) is exceeded; `413 INVALID_BODY` as before.
+- **FINDING-025 / API-2 — `POST /v1/chara/resolve` enforces its 8 KB cap on the stream** (new `src/lib/bounded-body.ts`): the body used to be buffered whole (`Request.text()`) before the size check, so a chunked / HTTP/2 POST with no `Content-Length` could push ~100 MB into the isolate. The reader is now canceled the moment 8 KB (bytes, not UTF-16 units) is exceeded; `413 INVALID_BODY` as before.
 - **API-3 — truncated XIVAPI search pages are not cached**: when the single 500-row search comes back with a `next` cursor or a full page, the request is still answered from the rows that arrived, but its misses are no longer stored as "no item row" for ~8 days (`XivapiClient.searchItems` now returns `truncated`; a warn log notes it).
 - **API-4 — `GET /v1/chara/icon/:iconId` accepts the canonical decimal id only** (`/^[1-9]\d{0,5}$/`, otherwise `400 VALIDATION_ERROR`) and keys the edge cache on the canonical path. `041716`, `41716abc`, `41716%20` used to resolve to the same icon under distinct cache keys, each a fresh upstream fetch.
 - **API-12 — the icon proxy serves `image/png` or nothing**: the upstream `Content-Type` is never reflected; the body is read with a 1 MB byte budget (`Content-Length` is advisory), must start with the PNG signature (else `503 UPSTREAM_UNAVAILABLE`, not cached), and the response carries `Content-Disposition: inline` + `Content-Security-Policy: sandbox`.
@@ -450,7 +450,7 @@ Monorepo 2.0 / 5.0 release train (branch `monorepo-2.0-prep`, 2026-07-30 → 202
 ### ⚠️ BREAKING (public `/v1` API)
 
 - **Schema v2 (core 3.0 → 4.0): Facewear colors are no longer dyes.** `GET /v1/dyes` returns **125** entries (was 136 — the 11 Facewear rows are gone; `limit` on `/v1/match/within-distance` is capped at 125 accordingly). Negative "synthetic" Facewear IDs on `GET /v1/dyes/:id` now return an explanatory `404` (`NOT_FOUND`) whose message names the Facewear color and whose `details` carry the new string slug `facewearId` and `hex` — resolved through the frozen `LEGACY_FACEWEAR_ITEM_IDS` map, so old links degrade with a pointer rather than a bare 404. The `stainID` window in `resolveIdType()` widens from `1–125` to the full Stain-sheet byte range **`1–254`** so future dyes resolve without an API change; the "unassigned range" hint is now `255–5728`.
-- **5.0 matching vocabulary on `?method=`** (`VALID_MATCHING_METHODS`): `ciede2000` (new **default**, was `oklab`), `oklab`, `cie76`, `redmean` (new), `rgb`, `distinguish` (new). The retired v4 values `hyab` and `oklch-weighted` are still accepted at the boundary but **normalised to `ciede2000`** via core's `LEGACY_MATCHING_METHOD_MAP` (`euclidean` → `rgb`) instead of erroring, so existing clients keep working — but a request that omits `method`, or sends a retired one, now gets ΔE2000 numbers where it previously got OKLab / HyAB / weighted-OKLCh ones. The `kL` / `kC` / `kH` weight parameters on `/v1/match/closest` and `/v1/match/within-distance` are no longer read (silently ignored). Distances come from the single shared dispatch `ColorService.getDistanceForMethod()` in core.
+- **5.0 matching vocabulary on `?method=`** (`VALID_MATCHING_METHODS`): `ciede2000` (new **default**, was `oklab`), `oklab`, `cie76`, `redmean` (new), `rgb`, `distinguish` (new). The retired v4 values `hyab` and `oklch-weighted` are still accepted at the boundary but **normalized to `ciede2000`** via core's `LEGACY_MATCHING_METHOD_MAP` (`euclidean` → `rgb`) instead of erroring, so existing clients keep working — but a request that omits `method`, or sends a retired one, now gets ΔE2000 numbers where it previously got OKLab / HyAB / weighted-OKLCh ones. The `kL` / `kC` / `kH` weight parameters on `/v1/match/closest` and `/v1/match/within-distance` are no longer read (silently ignored). Distances come from the single shared dispatch `ColorService.getDistanceForMethod()` in core.
 
 ### Deploy window (operator steps — manual, see `DEPRECATIONS.md`)
 
@@ -474,7 +474,7 @@ Note: the deployed production worker predates this branch, so `data.xivdyetools.
 ### Changed
 
 - **Error strings tell the truth** — `/v1/dyes/stain/:stainId` validation `expected` now reads `positive integer (1-254)` (was `1-125`, contradicting the accepted window); the 429 body no longer promises "Register for an API key to get 300 requests per minute" (no API keys exist) — it now says `Rate limit exceeded. 60 requests per minute allowed. Retry after the indicated number of seconds.` (docs `guide/errors.md` + `guide/rate-limits.md` updated to match)
-- Migrated from `@xivdyetools/worker-middleware` + `@xivdyetools/rate-limiter` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) — Tier 1 package consolidation, no behaviour change.
+- Migrated from `@xivdyetools/worker-middleware` + `@xivdyetools/rate-limiter` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) — Tier 1 package consolidation, no behavior change.
 - Consumes `@xivdyetools/core` schema v2 (stainID-keyed `dyes.json`, `facewearColors` split out, `getFacewearColorByLegacyItemID`) and the 5.0 `DEFAULT_MATCHING_METHOD` / `LEGACY_MATCHING_METHOD_MAP` exports; `calculateDistance()` in `src/lib/services.ts` no longer takes weights.
 - Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0` (miniflare 5 / undici 7.29); `license: MIT` declared. Accepted and recorded (FINDING-004): `vitepress@1.6.4` pins `vite ^5.4` / `esbuild 0.21` with no patched release — revisit when VitePress 2 ships stable.
 - Docs: `README.md` and `CLAUDE.md` synced (absorbed apps, schema v2, worker-kit, dev-vs-production deploy).

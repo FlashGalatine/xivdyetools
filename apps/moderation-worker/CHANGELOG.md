@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Bundle `@xivdyetools/auth` 2.0.2 so oversized Discord interaction streams are cancelled before signature verification (2026-09-15 security audit, FINDING-001).
+- Bundle `@xivdyetools/auth` 2.0.2 so oversized Discord interaction streams are canceled before signature verification (2026-09-15 security audit, FINDING-001).
 
 ## [1.7.0] - 2026-09-03
 
@@ -56,7 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the queue's only summary view. `actions_last_week` is surfaced too; the query already computed it
   and nothing was reading it. Needs `@xivdyetools/types` **3.0.0**, where the interface describing
   this response was corrected.
-- **Moderation strings honour the language set on the main bot** (BUG-001). This worker read only
+- **Moderation strings honor the language set on the main bot** (BUG-001). This worker read only
   the legacy `i18n:user:` key, and nothing has written that key since the unified preferences
   system landed. Both bots bind the *same* production KV namespace, so a user who set their
   language through `/preferences` got every string here in their Discord client locale or English —
@@ -82,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The rejection-reason floor is the same on both surfaces** (moderation-worker-06). The modal
   demanded ten characters; the slash command accepted one, and presets-api validates the reason on
   `/revert` only.
-- **`freezeResult` is honoured on the warning path** (moderation-worker-03). The warning branch
+- **`freezeResult` is honored on the warning path** (moderation-worker-03). The warning branch
   returned before the freeze step, so a body that merely warned handed handlers a mutable payload
   under a frozen contract.
 - **Ban and unban bump `updated_at`** (moderation-worker-07). Both status writers set `status`
@@ -123,7 +123,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-014/015/016/017/018/019) —
-moderation-worker's first dead-code pass. No behaviour change.
+moderation-worker's first dead-code pass. No behavior change.
 
 - The eight barrel re-exports in `handlers/buttons/index.ts`. `index.ts` imports only
   `handleButtonInteraction`, and the two `import * as buttons` tests assert only that name.
@@ -154,7 +154,7 @@ This app is now gated on the monorepo's `knip` dead-code check (`pnpm run lint:d
 
 ## [1.6.0] - 2026-08-30
 
-Security audit remediation (docs/audits/2026-08-29-security — FINDING-011/012/013/015/018/023). Minor bump: one D1 migration (hand-run, presets-api-owned) and a wrangler-config regression test; no behaviour change for users under the limits.
+Security audit remediation (docs/audits/2026-08-29-security — FINDING-011/012/013/015/018/023). Minor bump: one D1 migration (hand-run, presets-api-owned) and a wrangler-config regression test; no behavior change for users under the limits.
 
 ### Deploy notes
 
@@ -185,7 +185,7 @@ Four small hardening fixes from `docs/audits/2026-08-29-security`, each already 
 
 ## [1.5.0] - 2026-08-21
 
-Security audit remediation (docs/audits/2026-08-21-security — FINDING-003/006/007/014/019/020/021/023/034). Minor bump: two new bindings, no behaviour change for users under the limits.
+Security audit remediation (docs/audits/2026-08-21-security — FINDING-003/006/007/014/019/020/021/023/034). Minor bump: two new bindings, no behavior change for users under the limits.
 
 ### Security
 
@@ -196,7 +196,7 @@ Security audit remediation (docs/audits/2026-08-21-security — FINDING-003/006/
 - **Bot → presets-api requests also carry `X-Request-Signature-V2` + `X-Request-Nonce`** (FINDING-014): binds method, path, the exact JSON body bytes sent, timestamp, nonce and identity (60 s window) via `@xivdyetools/auth` 1.4.0; v1 header stays during rollover. **Interaction timestamps enforced fresh** (FINDING-021, 5 min / 60 s future skew, via `verifyDiscordRequest`).
 - **Command registration narrowed** (`scripts/register-commands.ts`): `default_member_permissions` = Manage Server, `dm_permission: false`, guild contexts / guild install only. Re-register with `DISCORD_GUILD_ID=<moderation guild> pnpm run register-commands` after deploying.
 
-- **Every user-sourced string is sanitised before it reaches an embed, and every outbound payload carries `allowed_mentions: { parse: [] }`** (FINDING-019 / MOD-6). Preset names and author names (author-controlled, presets-api only length-checks them), moderators' Discord names, typed rejection / revert / ban reasons, the unban target's stored username and echoed option values now go through `@xivdyetools/bot-logic`'s `sanitizeEmbedText` (control / zero-width stripping, `@everyone` / `<@…>` defusing, markdown + masked-link escaping, length cap) via the new `utils/embed-text.ts` budgets (`sanitizeName` 100 / `sanitizeUserName` 64 / `sanitizeReason` 1024 — reasons keep their paragraph line breaks). A preset named `x](https://evil.example) [y` can no longer turn the *Confirm User Ban* "Recent Presets" links into a link to the attacker's site. `messageResponse` / `ephemeralResponse` / new `updateMessageResponse` / `rateLimitedResponse` and `sendFollowUp` / `editOriginalResponse` / `sendMessage` / `editMessage` all default `allowed_mentions` to `ALLOWED_MENTIONS_NONE` (caller override wins); the handlers' raw `Response.json` message bodies were moved onto those helpers.
+- **Every user-sourced string is sanitized before it reaches an embed, and every outbound payload carries `allowed_mentions: { parse: [] }`** (FINDING-019 / MOD-6). Preset names and author names (author-controlled, presets-api only length-checks them), moderators' Discord names, typed rejection / revert / ban reasons, the unban target's stored username and echoed option values now go through `@xivdyetools/bot-logic`'s `sanitizeEmbedText` (control / zero-width stripping, `@everyone` / `<@…>` defusing, markdown + masked-link escaping, length cap) via the new `utils/embed-text.ts` budgets (`sanitizeName` 100 / `sanitizeUserName` 64 / `sanitizeReason` 1024 — reasons keep their paragraph line breaks). A preset named `x](https://evil.example) [y` can no longer turn the *Confirm User Ban* "Recent Presets" links into a link to the attacker's site. `messageResponse` / `ephemeralResponse` / new `updateMessageResponse` / `rateLimitedResponse` and `sendFollowUp` / `editOriginalResponse` / `sendMessage` / `editMessage` all default `allowed_mentions` to `ALLOWED_MENTIONS_NONE` (caller override wins); the handlers' raw `Response.json` message bodies were moved onto those helpers.
 - **Identifiers are validated at the handler boundary and encoded in presets-api paths** (FINDING-020 / MOD-5). `preset-api.ts` runs every preset id through `encodeURIComponent` (`getPreset` / `approvePreset` / `rejectPreset` / `getModerationHistory` / `revertPreset`), so a value that slipped past validation can only address one path segment; the rejection and revert modals now apply the same `isValidUuid` gate as the buttons and slash paths (previously a `preset_reject_modal_../../presets/<uuid>` custom_id was interpolated raw); `/preset ban_user` and `unban_user` reject non-snowflake targets before touching D1 (the ban button / reason modal already did since FINDING-007).
 - **Moderator-facing preset links point at `https://xivdyetools.app`** (FINDING-023 / MOD-7) — `PRESETS_WEB_URL` was `https://xivdyetools.com`, which does not resolve and is not known to be project-owned.
 - **Hygiene (FINDING-034)**: MOD-4 — `banUser` / `unbanUser` run the ban-row write and the preset hide / restore in one `db.batch` (transactional), a UNIQUE-constraint race on `idx_banned_users_discord_active` maps to "User is already banned.", and both approve paths (`/preset moderate approve`, the approve button from the moderation embed) refuse a preset whose author holds an active ban (`banService.isPresetAuthorBanned`) — presets-api's `requireNotBanned` guards submission / edit / vote only and a ban hides just the *approved* presets, so pending / flagged entries were still approvable. MOD-8 — no channel-facing error text echoes internals any more: `BanResult` / `UnbanResult.error` is a fixed, channel-safe string (the raw D1 error moves to a new `cause` field that is logged, never posted), `sanitizeErrorMessage` now blocks D1 / SQLite internals (`D1_`, `SQLITE_`, `no such table`, `constraint`) and no longer lets a 5xx `PresetAPIError` body fall through to the generic-Error branch, and `/preset moderate` failures go through it (4xx API messages still pass — they are actionable). MOD-12 — button clicks and modal submits share the per-user `command` rate limiter with slash commands (they were the only unthrottled interaction types), and `ban_cancel_` is moderator-gated like every other button. MOD-13 — the `preset_id` autocomplete sends the moderator identity (`X-User-Discord-ID` + HMAC), so it returns the pending list instead of the always-empty `[]` presets-api's 403 produced. MOD-14 — the unban autocomplete no longer offers xivauth-only bans (`unbanUser` / `getActiveBan` key on `discord_id`, so the command could never lift them). Autocomplete choice names are clamped to Discord's 100-character cap so one long author name cannot blank the list.
@@ -209,7 +209,7 @@ Security audit remediation (docs/audits/2026-08-21-security — FINDING-003/006/
 
 ## [1.4.0] - 2026-08-16
 
-Monorepo 2.0 / 5.0-release follow-through (additive behaviour). Deploy note: production is now **only** `wrangler deploy --env production`; a bare `deploy` targets the routeless `xivdyetools-moderation-worker-dev` worker.
+Monorepo 2.0 / 5.0-release follow-through (additive behavior). Deploy note: production is now **only** `wrangler deploy --env production`; a bare `deploy` targets the routeless `xivdyetools-moderation-worker-dev` worker.
 
 ### Added
 
@@ -224,11 +224,11 @@ Monorepo 2.0 / 5.0-release follow-through (additive behaviour). Deploy note: pro
 
 - **`types/preset.ts`'s `CATEGORY_DISPLAY`** (DEAD-014): this worker's own copy had zero consumers of its own (only `STATUS_DISPLAY` and `PresetAPIError` from that module were ever imported elsewhere) — deleted outright rather than replaced with an `@xivdyetools/svg` import, since nothing here needs the table at all. `PresetCategory` dropped from the same file's local type-only import as a result.
 - **`types/preset.ts`'s dead `PresetSortOption` re-export** (DEAD-025): only reached this shim, never imported past it. `@xivdyetools/types`' own `PresetSortOption` alias is gone too — its one real use (`PresetFilters.sort`) now has the union inlined directly.
-- **`middleware/rate-limit.ts`'s `RATE_LIMIT_CONFIGS` adopts worker-kit's `MODERATION_LIMITS` preset** (DEAD-023, adopt): the numbers (`command`: 20/min + 5 burst, `autocomplete`: 60/min + 10 burst) were previously hand-declared here and separately in `@xivdyetools/worker-kit/rate-limiter`'s `MODERATION_LIMITS` — identical values, never reconciled. `RATE_LIMIT_CONFIGS` now calls the new `getModerationLimit(type)` lookup and adapts its `{ maxRequests, windowMs, burstAllowance }` shape to this middleware's pre-existing `{ requestsPerMinute, burstAllowance }` one. No behaviour change — the existing `RATE_LIMIT_CONFIGS` test asserting the exact numbers still passes unmodified.
+- **`middleware/rate-limit.ts`'s `RATE_LIMIT_CONFIGS` adopts worker-kit's `MODERATION_LIMITS` preset** (DEAD-023, adopt): the numbers (`command`: 20/min + 5 burst, `autocomplete`: 60/min + 10 burst) were previously hand-declared here and separately in `@xivdyetools/worker-kit/rate-limiter`'s `MODERATION_LIMITS` — identical values, never reconciled. `RATE_LIMIT_CONFIGS` now calls the new `getModerationLimit(type)` lookup and adapts its `{ maxRequests, windowMs, burstAllowance }` shape to this middleware's pre-existing `{ requestsPerMinute, burstAllowance }` one. No behavior change — the existing `RATE_LIMIT_CONFIGS` test asserting the exact numbers still passes unmodified.
 
 ### Changed
 
-- **Tier 1 package consolidation (2026-07-31)**: `@xivdyetools/worker-middleware` → `@xivdyetools/worker-kit` (`requestIdMiddleware`, `loggerMiddleware`, `MiddlewareVariables`) and `@xivdyetools/rate-limiter` → `@xivdyetools/worker-kit/rate-limiter` (`KVRateLimiter` in `src/middleware/rate-limit.ts`). No behaviour change; migration paths in `xivdyetools/DEPRECATIONS.md`.
+- **Tier 1 package consolidation (2026-07-31)**: `@xivdyetools/worker-middleware` → `@xivdyetools/worker-kit` (`requestIdMiddleware`, `loggerMiddleware`, `MiddlewareVariables`) and `@xivdyetools/rate-limiter` → `@xivdyetools/worker-kit/rate-limiter` (`KVRateLimiter` in `src/middleware/rate-limit.ts`). No behavior change; migration paths in `xivdyetools/DEPRECATIONS.md`.
 - **`wrangler.toml` deploy safety** (`docs/operations/DEPLOY_ENVIRONMENTS.md`): the top-level env is renamed `xivdyetools-moderation-worker-dev` with `workers_dev = false` and **no routes**; the two production custom domains (`moderation-bot.xivdyetools.app`, `moderation-bot.xivdyetools.projectgalatine.com`) moved under `[env.production]` so a bare `wrangler deploy` can no longer overwrite the production bot. `npm run deploy` therefore deploys the dev worker; production is `deploy:production`.
 - Docs: `README.md` rewritten from the audit template (accurate command surface, licensing/attribution, MIT + Square Enix legal notice, Blog link dropped); `CLAUDE.md` synced to worker-kit and the dev/production deploy split.
 - Tests: coverage thresholds raised to 90/80/90/90 (statements/branches/functions/lines) with new `src/utils/env-validation.test.ts` and `src/utils/sql-helpers.test.ts` suites and expanded `preset.test.ts` coverage of the pending listing.

@@ -8,7 +8,7 @@ change; the skills only point here.
 
 | Document | Owner unit | Linked from | `Last updated` format |
 |---|---|---|---|
-| `apps/web-app/PRIVACY.md` | web-app (covers web + beta; describes api-worker, og-worker, oauth, presets-api behaviour) | About modal → `about.privacyPolicy` (`about-modal.ts` `POLICY_DOCS_BASE`) | `**Last updated:** YYYY-MM-DD` |
+| `apps/web-app/PRIVACY.md` | web-app (covers web + beta; describes api-worker, og-worker, oauth, presets-api behavior) | About modal → `about.privacyPolicy` (`about-modal.ts` `POLICY_DOCS_BASE`) | `**Last updated:** YYYY-MM-DD` |
 | `apps/web-app/TERMS_OF_SERVICE.md` | web-app (added 2026-09-16; NC governing law) | About modal → `about.termsOfService` | check the file — keep its own format |
 | `apps/discord-worker/PRIVACY_POLICY.md` | discord-worker (describes presets-api, Perspective) | Discord developer-portal URL only — the bot emits **no** link to it in code (checked 2026-09-20), and the portal takes one URL, so it points at the English file, whose notice links nothing; a reader reaches a translation from the repo listing | `**Last Updated**: Month D, YYYY` |
 | `apps/discord-worker/TERMS_OF_SERVICE.md` | discord-worker | same | `**Last Updated**: Month D, YYYY` |
@@ -77,7 +77,7 @@ changing errors. Parity is necessary and nowhere near sufficient. Check for thes
   運営者 / 저희·자체 / 我们 / wir / nous.
 - **A modifier attached to the wrong verb flips a clause.** zh "presets published *after you
   leave* may stay up" (for: presets you published may stay up after you leave) dropped the
-  licence-survival promise; fr `ne vous permet pas de renoncer` without `auquel il` detached
+  license-survival promise; fr `ne vous permet pas de renoncer` without `auquel il` detached
   non-waivability from local law. Read every governing-law, liability and survival clause twice.
 - **False friends across CJK.** ja 利用 is plain "use" (zh 利用 = exploit): "do not abuse, *use*
   or circumvent rate limits" bound users to something the English never asks.

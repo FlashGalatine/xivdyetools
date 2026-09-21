@@ -60,7 +60,7 @@ inputs and the planner's conflict rules, so no audit files findings the next ste
 | 2 | `dead-code-finder` | Planner rule: **removal wins over fix/refactor**. Running it before deep-dive/i18n stops them filing `BUG-`/`HC-`/orphan findings in code about to be deleted, and every later audit reads a smaller tree. Its removals legitimately move coverage (ratchet), so it precedes the coverage baseline. |
 | 3 | `deep-dive-analysis` | Its Step 0 consumes the latest security + dead-code READMEs and *Rejected suspicions*. Reads every non-test file, so it gains most from the shrunk tree. Its terminal structural refactor moves handler code — exactly what i18n's hardcoded-string and call-site checks target — so i18n must follow it. |
 | 4 | `i18n-manager` | **Fonts are always last**: any locale text change (new error strings from security fixes, keys added for hardcoded strings, orphan-key removals) invalidates every CJK subset. Running after all code-changing audits means one re-subset, not three. Cheapest to re-run. |
-| 5 | `coverage-testing` | Measurement, not detection. Meaningful only after dead-code removals land and deep-dive's *Untested behaviour* BUGs get tests; becomes the baseline for the next cycle / `unit-test-writer`. |
+| 5 | `coverage-testing` | Measurement, not detection. Meaningful only after dead-code removals land and deep-dive's *Untested behavior* BUGs get tests; becomes the baseline for the next cycle / `unit-test-writer`. |
 
 Run `remediation-planner` after each catalog, passing every still-open catalog so the plan stays
 merged. If security finds nothing exploitable-now, steps 1↔2 are interchangeable (the August

@@ -2,7 +2,7 @@
 // American-English spelling sweep — candidate generator for documentation-audit
 // and i18n-manager.
 //
-//   node american-spelling.mjs <xivdyetools-dir> [path…] [--all] [--list] [--keys=a,b]
+//   node american-spelling.mjs <xivdyetools-dir> [path…] [--all] [--list] [--fix] [--keys=a,b]
 //
 // With no paths it sweeps the default English surfaces: the living docs tier
 // (docs/ minus audits/, historical/, research/, superpowers/ — the archive and
@@ -52,16 +52,17 @@
 //     system) and `programme` in a proper name are acceptable and not listed.
 // Exit 1 when any reportable candidate is found, 0 when clean, 2 on usage.
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const argv = process.argv.slice(2);
 const ALL = argv.includes('--all');
 const LIST = argv.includes('--list');
+const FIX = argv.includes('--fix');
 const KEYS = argv.find((a) => a.startsWith('--keys='))?.slice(7).split(',').filter(Boolean) ?? null;
 const [repo, ...paths] = argv.filter((a) => !a.startsWith('--'));
 if (!repo && !LIST) {
-  console.error('usage: node american-spelling.mjs <xivdyetools-dir> [path…] [--all] [--list] [--keys=a,b]');
+  console.error('usage: node american-spelling.mjs <xivdyetools-dir> [path…] [--all] [--list] [--fix] [--keys=a,b]');
   process.exit(2);
 }
 
@@ -229,8 +230,10 @@ const zonesFor = (line) => {
 };
 
 const hits = [];
-const push = (file, line, zone, found, note) =>
-  hits.push({ file, line, zone, found, want: dict.get(found.toLowerCase()), note });
+// `path` is the source file on disk and `col` the 0-based column in its raw
+// line; --fix needs both, and `file` may carry a `:key` suffix for display.
+const push = (file, line, zone, found, note, path, col) =>
+  hits.push({ file, line, zone, found, want: dict.get(found.toLowerCase()), note, path, col });
 
 const suppressed = (line, m) =>
   phrases.some((p) => {
@@ -255,15 +258,17 @@ const scanMarkdown = (file, text) => {
         soloTerms.has(m[0].toLowerCase()) ? 'glossary?' : '',
         multilingual ? 'multilingual-row?' : '',
       ].filter(Boolean).join(' ');
-      push(file, i + 1, zone, m[0], note);
+      push(file, i + 1, zone, m[0], note, file, m.index);
     }
   });
 };
 
-const scanValue = (file, path, line, value) => {
+/** `at` is the column where `value` starts inside its raw line. */
+const scanValue = (file, key, line, value, at) => {
   for (const m of value.matchAll(RE)) {
     if (suppressed(value, m)) continue;
-    push(`${file}:${path}`, line, 'ui-text', m[0], soloTerms.has(m[0].toLowerCase()) ? 'glossary?' : '');
+    push(`${file}:${key}`, line, 'ui-text', m[0], soloTerms.has(m[0].toLowerCase()) ? 'glossary?' : '',
+      file, at + m.index);
   }
 };
 
@@ -285,7 +290,7 @@ const scanLocaleJson = (file, text, prefixes) => {
     if (!pair) return;
     const path = [...stack.slice(0, pair[1].length / 2 - 1), pair[2]].join('.');
     if (prefixes && !prefixes.some((p) => path === p || path.startsWith(`${p}.`))) return;
-    scanValue(file, path, i + 1, pair[3]);
+    scanValue(file, path, i + 1, pair[3], line.lastIndexOf(`"${pair[3]}"`) + 1);
   });
 };
 
@@ -304,13 +309,18 @@ const scanTsStrings = (file, text) => {
     if (blocked && loc) inEn = loc[1] === 'en';
     if (!inEn || /^\s*(import|export type|\/\/)/.test(line)) return;
     for (const lit of line.matchAll(/'([^'\\]*)'|"([^"\\]*)"|`([^`\\]*)`/g)) {
-      scanValue(file, (line.match(/^\s*([\w.]+)\s*:/) ?? [, '?'])[1], i + 1, lit[1] ?? lit[2] ?? lit[3]);
+      scanValue(file, (line.match(/^\s*([\w.]+)\s*:/) ?? [, '?'])[1], i + 1,
+        lit[1] ?? lit[2] ?? lit[3], lit.index + 1);
     }
   });
 };
 
 const MANUAL_KEYS = ['manual', 'manual5', 'matchImageHelp'];
-for (const file of targets) {
+// This script is a dictionary of British words by construction, so it would
+// otherwise report ~136 candidates against itself — the same self-reference
+// trap scripts/check-dead-code.ts documents about its own files.
+const SELF = 'american-spelling.mjs';
+for (const file of targets.filter((f) => !f.endsWith(SELF))) {
   let text;
   try {
     text = readRepo(file);
@@ -330,6 +340,45 @@ for (const file of targets) {
 const REPORTED = new Set(ALL ? ['prose', 'diagram', 'ui-text', 'code', 'link'] : ['prose', 'diagram', 'ui-text']);
 const shown = hits.filter((h) => REPORTED.has(h.zone));
 const hidden = hits.length - shown.length;
+
+// --------------------------------------------------------------------- fix
+// Rewrites in place, at the exact columns the scan found, so an identifier in
+// a code span or a link target is never touched. Anything a human must settle
+// is left alone: a `glossary?` hit (the dictionary decides, and it wins) and a
+// `multilingual-row?` hit (the cell may not be English). Run it on a batch you
+// have already triaged — it applies candidates, it does not confirm them.
+if (FIX) {
+  const held = shown.filter((h) => h.note);
+  const byFile = new Map();
+  for (const h of shown) {
+    if (h.note) continue;
+    if (!byFile.has(h.path)) byFile.set(h.path, []);
+    byFile.get(h.path).push(h);
+  }
+  let applied = 0;
+  for (const [path, list] of byFile) {
+    const lines = readRepo(path).split('\n');
+    // Descending by line then column: every edit lands before the offsets of
+    // the ones still queued for that line.
+    for (const h of list.sort((a, b) => b.line - a.line || b.col - a.col)) {
+      const line = lines[h.line - 1];
+      if (line.slice(h.col, h.col + h.found.length) !== h.found) {
+        console.error(`! ${path}:${h.line}:${h.col} moved since the scan — left alone`);
+        continue;
+      }
+      lines[h.line - 1] =
+        line.slice(0, h.col) + matchCase(h.found, h.want) + line.slice(h.col + h.found.length);
+      applied++;
+    }
+    writeFileSync(join(repo, path), lines.join('\n'));
+  }
+  console.log(`Rewrote ${applied} spelling(s) in ${byFile.size} file(s).`);
+  if (held.length) {
+    console.log(`Left for review (${held.length}) — the glossary or a non-English cell decides these:`);
+    for (const h of held) console.log(`  ${h.file}:${h.line} ${h.found} — ${h.note}`);
+  }
+  process.exit(0);
+}
 
 console.log('| location | zone | found | suggested | note |');
 console.log('|---|---|---|---|---|');

@@ -21,7 +21,7 @@ further only when:
 
 1. **English text:** edit `packages/bot-logic/src/i18n/locales/en.json` (`manual.*`, `manual5.*`,
    `matchImageHelp.*`). Describe what the **served** command does, using `schemas.ts` for syntax
-   and the handlers for behaviour. Keep syntax lines in the existing form,
+   and the handlers for behavior. Keep syntax lines in the existing form,
    `` `/cmd sub <required> [optional]` ``.
 2. **Structure:** if you add or remove a field or embed, edit `buildEmbeds()` in
    `apps/discord-worker/src/handlers/commands/manual.ts`.

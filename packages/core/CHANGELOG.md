@@ -31,14 +31,14 @@ The tribe is now the source of truth.
 
 - **Every Lalafell `.chara` file was rejected outright**, in the web app's Swatch Matcher and
   the bot's `/swatch` alike, with `.chara field Race: unrecognised value "Lalafel"` — thrown
-  before a single colour was read. Anamnesis (and the Ktisis / Brio files sharing its schema)
+  before a single color was read. Anamnesis (and the Ktisis / Brio files sharing its schema)
   writes the game enum's `Lalafel`, one trailing `L`, which the old race table did not carry.
   Broken since the feature shipped, not a regression.
 - **A Hrothgar file with no `Race` key had its fur pattern painted into the lip swatch.**
   `LipsToneFurPattern` is a fur-pattern enum on Hrothgar, and the rule that inerts it read the
   `Race` key — which a real file need not carry. `{Tribe: 'Helions', LipsToneFurPattern: 37}`
-  resolved as a live lip colour index 37; it now inerts as `furPattern`.
-- **An Au Ra's limbal ring was labelled and matched as a tattoo** whenever `Race` was absent or
+  resolved as a live lip color index 37; it now inerts as `furPattern`.
+- **An Au Ra's limbal ring was labeled and matched as a tattoo** whenever `Race` was absent or
   disagreed with the tribe. The resolver picks `limbal` vs `tattoo` from the race while taking
   its sheets from the tribe, so the two could disagree on the same character.
 
@@ -116,7 +116,7 @@ and name search now matches rows it used to miss.
 - **BUG-011**: `CharacterMatchOptions.matchingMethod`'s JSDoc said the default was
   `'oklab'`; `findClosestDyes` has actually defaulted to `'ciede2000'` (the 5.0
   default everywhere else) since the harmony-convergence work. Doc-only fix — no
-  behaviour change, but the comment ships in the published `.d.ts`.
+  behavior change, but the comment ships in the published `.d.ts`.
 
 ### Changed
 
@@ -148,11 +148,11 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
 
 ### Added
 
-- **Five selectable harmony colour wheels** — `COLOR_WHEEL_IDS`, `DEFAULT_COLOR_WHEEL`,
+- **Five selectable harmony color wheels** — `COLOR_WHEEL_IDS`, `DEFAULT_COLOR_WHEEL`,
   `isColorWheelId`, `parseColorWheelId`, `normalizeColorWheelId`, `getColorWheel`,
   `COLOR_WHEEL_TAGS`, and the `ColorWheel` / `ColorWheelId` types. `rgb`
   (the existing sRGB/HSV wheel, unchanged), `ryb` (the painter's wheel), `munsell` (the
-  perceptual wheel behind the JIS colour standard), `oklch-hue` (perceptually even hue
+  perceptual wheel behind the JIS color standard), `oklch-hue` (perceptually even hue
   spacing) and `oklch-lightness` (every harmony partner held at the base dye's OKLCH
   lightness) are each a pure hue map plus ring paint — `hueOf`, `target`, `ringStops`.
   `HarmonySelectionConfig.wheel` and the new `HarmonySlot.wheelHue` thread the choice
@@ -161,9 +161,9 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   against its renotation anchors with a **max in-gamut deviation of 0.85°**. On the
   RYB wheel, the golden test confirms **more than 30% of the 125 dyes** get a different
   complementary partner than on RGB — this is the wheel doing its job, not a regression.
-  `parseColorWheelId` / `normalizeColorWheelId` are the ONE normaliser every surface
+  `parseColorWheelId` / `normalizeColorWheelId` are the ONE normalizer every surface
   reads an id off the wire with (trim, lower-case, membership); `COLOR_WHEEL_TAGS` is the
-  short, never-localised token a card footer prints.
+  short, never-localized token a card footer prints.
 - `ColorWheel.carriesBaseHsv` — false for `oklch-lightness`, whose target keeps the base's
   OKLab L and C instead of its HSV saturation and value. `generateHarmonySlots` reads it
   and **forces ΔE ranking for that wheel regardless of `usePerceptualMatching`**: hue-only
@@ -191,7 +191,7 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   of `build`) into `src/data/oklch-hue-table.json`; `scripts/lib/oklch-hue-table.test.ts`
   re-runs the derivation and fails if the committed table has drifted. Deriving it at
   module load cost 72 `hsvToHex` + `hexToOklch` round trips in every bundle that touched a
-  colour wheel. Its second column now records the HSV hue of the **same 8-bit sample** as
+  color wheel. Its second column now records the HSV hue of the **same 8-bit sample** as
   the OKLab hue beside it, rather than the generator loop's nominal degree — `hsvToHex`
   rounds to 8 bits, so the two were up to 0.12° apart. That moves 60 of 1,250 golden rows
   (16 of them a chosen dye, every one a swap with its own first companion), and the
@@ -201,10 +201,10 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   imports) and `src/data/munsell-anchors.json` (the 40 raw renotation anchors, read only by
   `munsell.test.ts`). The table is byte-identical to the one it replaced. `MUNSELL_ANCHORS`
   is no longer exported from `munsell.ts` — nothing at runtime read it.
-- `OKLCH_LIGHTNESS_WHEEL.hueOf` answers `0` for an achromatic colour (OKLCH chroma below
-  `ACHROMATIC_CHROMA`) instead of its measured OKLab angle, which for a grey is an artefact
+- `OKLCH_LIGHTNESS_WHEEL.hueOf` answers `0` for an achromatic color (OKLCH chroma below
+  `ACHROMATIC_CHROMA`) instead of its measured OKLab angle, which for a gray is an artifact
   of 8-bit rounding (#808080 reads ≈90°, Pure White ≈250°) and parked the base spoke at an
-  arbitrary, unstable angle. Every warp wheel already puts a grey at the ring origin.
+  arbitrary, unstable angle. Every warp wheel already puts a gray at the ring origin.
 
 ### Deprecated
 
@@ -261,7 +261,7 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   its output to 4 dp — LAB is an intermediate, not a display value.
 
   Impact is deliberately tiny: LAB moves by at most 9e-5, ΔE00 by at most 7.6e-5, and **no dye's
-  nearest-neighbour ranking changed** (0 of 125). The harmony golden moved **4 rows of 5,000
+  nearest-neighbor ranking changed** (0 of 125). The harmony golden moved **4 rows of 5,000
   (0.08%)**, all on one base dye, and **no chosen dye changed** — only two companions swapped
   order, having measured 8.6e-6 apart (14.166463869861 vs 14.166455222891), a gap the old 4-dp
   rounding collapsed into a tie.
@@ -270,7 +270,7 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   ASTM/Lindbloom pair and are consistent with each other, which is the property that matters.
 
 - `HarmonyGenerator`'s default ΔE formula moved `'cie76'` → `'ciede2000'`, matching
-  `DEFAULT_MATCHING_METHOD`. **This changes no shipped behaviour**: since the harmony convergence
+  `DEFAULT_MATCHING_METHOD`. **This changes no shipped behavior**: since the harmony convergence
   every surface goes through `generateHarmonySlots`, which takes `matchingMethod` explicitly, and
   the `find*Dyes()` methods this default serves are reached only through the `DyeService` façade,
   which nothing in the monorepo calls. It stops the published API contradicting the documented
@@ -280,7 +280,7 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
 ### Fixed
 
 - **The `@public` `RYB` interface documented its components as `0–255`; they are `0–1`.**
-  `blending/conversions.ts`'s `rgbToRyb` returns the normalised form (`#E4DFD0` → `r 0.8418`),
+  `blending/conversions.ts`'s `rgbToRyb` returns the normalized form (`#E4DFD0` → `r 0.8418`),
   while the 0–255 spelling belongs to `ColorService.rgbToRyb`/`rybToHex` in a different module.
   The `/blending` subpath exports the type but neither conversion function, so a consumer
   importing `RYB` from there had nothing in that barrel producing the documented units — and
@@ -307,7 +307,7 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   were erroneous" — cases no dye-based test reaches. Mutation-verified: flipping the `Rt` sign
   fails 11 of the 34.
 - **Algebraic-law gates for every blending mode, with no per-mode exemptions**
-  (`algebraic-laws.test.ts`): identity, commutativity, idempotence and greyscale monotonicity,
+  (`algebraic-laws.test.ts`): identity, commutativity, idempotence and grayscale monotonicity,
   all of which hold exactly (ΔE 0.000) across all six modes, plus the canonical pigment claims
   for `spectral` and `ryb` as bands. Both of the fact-check's P1 defects would have been caught
   on the first run.
@@ -322,9 +322,9 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
 
 ### Removed
 
-- **BREAKING — `RybColorMixer` is gone, and with it core's second RYB colour space** (ALGO-002).
+- **BREAKING — `RybColorMixer` is gone, and with it core's second RYB color space** (ALGO-002).
   Core shipped two implementations of the `ryb` mixing mode that disagreed by up to ΔE₀₀ 38, so
-  the same two dyes mixed one colour in the web app (`ColorService.mixColorsRyb` → the
+  the same two dyes mixed one color in the web app (`ColorService.mixColorsRyb` → the
   Gossett-Chen trilinear paint cube) and a different one on the Discord bot (`blendColors` →
   chromatic subtraction). The cube was retired rather than the approximation because it **fails
   the identity law**: its trilinear map lands in the convex hull of its eight corners, and pure
@@ -343,13 +343,13 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   same thing. What they gain is an exact inverse — the round trip is lossless where the old one
   drifted by up to ΔE₀₀ 27.9. Components may now be fractional; rounding them costs that
   exactness.
-- **BREAKING — the `ryb` mixing mode renders different colours.** Blue + yellow is now `#008000`,
+- **BREAKING — the `ryb` mixing mode renders different colors.** Blue + yellow is now `#008000`,
   a true green, where the cube gave an olive; red + yellow `#804000`; red + blue `#800080`. Any
   stored or cached `ryb` mix from 4.x will not reproduce.
 - **All six `ColorService.mixColors*` are now thin delegations to `blendColors`.** `rgb`, `lab`,
   `oklab`, `hsl` and `spectral` already agreed byte-for-byte, so only `ryb` changes output — but
   the delegation is what stops the other five drifting apart in future.
-  `ColorService.blending-parity.test.ts` asserts hex equality across six modes × eight colour
+  `ColorService.blending-parity.test.ts` asserts hex equality across six modes × eight color
   pairs × five ratios rather than approximate agreement.
   **Hex case is deliberately preserved on each surface**: `blendColors` still emits lowercase and
   `ColorService` still emits uppercase (the long-standing `rgbToHex` delta). Delegating naïvely
@@ -363,7 +363,7 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
 - **`blendColors` takes an optional `options` argument**: `{ hueMethod }` selects the hue travel
   direction (`shorter` | `longer` | `increasing` | `decreasing`) for `'hsl'`. Without it,
   delegating `mixColorsHsl` would have silently dropped a documented parameter. Non-breaking —
-  the argument is optional and defaults to the previous `'shorter'` behaviour.
+  the argument is optional and defaults to the previous `'shorter'` behavior.
 - `RYB`, `HueMethod` and `BlendOptions` are exported from `@xivdyetools/core/blending`.
 
 ## [4.4.0] - 2026-09-03
@@ -375,9 +375,9 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
   channels independently. K-M is defined per-wavelength on a *linear* spectral reflectance
   curve, and K/S diverges as R → 0 — so any channel that was dark in either input got pinned
   to ≈0 at **every** ratio. A blue→yellow gradient rendered nine near-black stops out of
-  eleven; even white + black came back `#010101` instead of a mid grey. Three independent
+  eleven; even white + black came back `#010101` instead of a mid gray. Three independent
   channels also cannot produce the blue + yellow = green result the mode is named for: that
-  effect lives in the *overlap* of two reflectance curves, and per-channel maths computes the
+  effect lives in the *overlap* of two reflectance curves, and per-channel math computes the
   green output from the two green inputs alone.
 
   `blendSpectral()` now delegates to `spectral.js`, which reconstructs a real 38-band
@@ -391,7 +391,7 @@ See `docs/audits/2026-09-16-deep-dive/` for the full findings.
 
 - **`mixColorsSpectral()` threw on shorthand `#RGB` hex.** `spectral.js` does not parse
   3-digit hex and does not throw on it — it yields the string `"#NANNANNAN"`, which
-  `normalizeHex` then rejected. Colours are now expanded to 6 digits before being handed to
+  `normalizeHex` then rejected. Colors are now expanded to 6 digits before being handed to
   the library. Every other mixing mode already accepted shorthand.
 
 ### Removed
@@ -407,7 +407,7 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
 
 ### Added
 
-- **Facewear tint names are localized** (I18N-008). The 11 Facewear colours are not dyes —
+- **Facewear tint names are localized** (I18N-008). The 11 Facewear colors are not dyes —
   schema v2 moved them out of `dyes.json` — and nothing ever carried their names into the
   locale pipeline, so all six locales rendered `Silver` / `Gold` / `Brass` in English
   underneath a category heading that *was* translated. They are keyed by slug rather than
@@ -447,7 +447,7 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
 
 ### Fixed
 
-- **`excludeItemIDs` is honoured whether or not `preventDuplicates` is set.** The two
+- **`excludeItemIDs` is honored whether or not `preventDuplicates` is set.** The two
   were one `Set`, and that `Set` is read only on the `preventDuplicates` branch — so with
   duplicates allowed the exclusions did nothing at all, against this function's own
   documented contract ("dyes that must never be chosen"). They are now separate: `excluded`
@@ -456,9 +456,9 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
   continues to win its slot, since an explicit hand-swap outranks our guess.
 
   `bot-logic` defaulted `preventDuplicates` to **false**, so it was the bot that shipped
-  it: `/harmony monochromatic` is a single `[0]` offset whose ideal *is* the base colour,
+  it: `/harmony monochromatic` is a single `[0]` offset whose ideal *is* the base color,
   so the nearest dye to it was the base dye — the card answered your own input at ΔE 0.
-  `/harmony analogous` on a near-grey returned the base twice.
+  `/harmony analogous` on a near-gray returned the base twice.
 
   Every pre-existing test passed `preventDuplicates: true`, the one setting where the old
   code happened to be right, which is why the whole class was invisible. Over the golden
@@ -491,7 +491,7 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
   This function is the **web app's** algorithm, lifted rather than rewritten — a
   parity test drove both implementations over 125 dyes × 10 types × 4 settings
   and required identical dyes before the page was rewired. That run's output is
-  frozen in `HarmonySelector.golden.test.ts`, so the page's pre-move behaviour is
+  frozen in `HarmonySelector.golden.test.ts`, so the page's pre-move behavior is
   what the digest pins.
 
   Because it reads `HARMONY_OFFSETS`, a harmony type is a row in a table rather
@@ -527,7 +527,7 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
 - **RYB blending no longer loses green (BUG-006).** `rgbToRyb` credited the leftover
   green to blue alone, so pure green and pure blue mapped to the same RYB triple and
   every green or teal that made a round trip came back blue — `#00FF00` blended with
-  itself gave `#0000ff`. It is now the exact inverse of `rybToRgb`, so colours
+  itself gave `#0000ff`. It is now the exact inverse of `rybToRgb`, so colors
   round-trip and blue + yellow still makes green. This is the Discord bot's default
   `/mix` and `/gradient` mode. `RybColorMixer` (behind `ColorService.mixColorsRyb`)
   was never affected.
@@ -576,29 +576,29 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
 
 ### Changed — BREAKING
 
-- **The 5.0 matching vocabulary** (`src/types/index.ts`) — one list suite-wide (web, Discord bot, og-worker, public API): `MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'`, ordered as `MATCHING_METHODS`, with `DEFAULT_MATCHING_METHOD = 'ciede2000'` (one answer to "what does CLOSE mean") and `MATCHING_METHOD_TAGS` (`ΔE2000` / `ΔEOK` / `ΔE76` / `REDMEAN` / `RGB DIST` / `DISTINGUISH %`, plus a display-only `ratio: 'RATIO'` for the two tools that print WCAG contrast — RATIO is not a distance and never ranks). Tags are identifiers and never localise.
+- **The 5.0 matching vocabulary** (`src/types/index.ts`) — one list suite-wide (web, Discord bot, og-worker, public API): `MatchingMethod = 'ciede2000' | 'oklab' | 'cie76' | 'redmean' | 'rgb' | 'distinguish'`, ordered as `MATCHING_METHODS`, with `DEFAULT_MATCHING_METHOD = 'ciede2000'` (one answer to "what does CLOSE mean") and `MATCHING_METHOD_TAGS` (`ΔE2000` / `ΔEOK` / `ΔE76` / `REDMEAN` / `RGB DIST` / `DISTINGUISH %`, plus a display-only `ratio: 'RATIO'` for the two tools that print WCAG contrast — RATIO is not a distance and never ranks). Tags are identifiers and never localize.
   - **Retired:** `'hyab'` and `'oklch-weighted'` as matching methods, plus the `OklchWeights` and `MatchingConfig` types, the `MATCHING_PRESETS` constant, and the `weights?` option on `FindClosestOptions` / `CharacterMatchOptions`. The HyAB / weighted-OKLCH math itself stays available on `ColorConverter` (`getDeltaE_HyAB`, `getDeltaE_OklchWeighted`; `DeltaEFormula` still includes `'hyab'`) — only the ranking vocabulary lost them.
   - **Migration:** run every stored/parsed value (KV preference, localStorage, URL `algo` param, API body) through `normalizeMatchingMethod(value)` — current values pass through, `LEGACY_MATCHING_METHOD_MAP` folds `hyab` / `oklch-weighted` → `ciede2000` and the informal deep-link `euclidean` → `rgb`, and anything else falls back to the default. `isMatchingMethod()` is the type guard.
   - **Defaults moved:** `DyeSearch.findClosestDye` / `DyeService.findClosestDye` and `CharacterColorService.findClosestDyes` now default to `ciede2000` (was `oklab`). Callers that relied on the implicit OKLAB ranking should pass `matchingMethod: 'oklab'` explicitly. (`findDyesWithinDistance`'s default followed suit later in the same unreleased version — see the `### Changed` entry below.)
   - `distinguish` ranks by the **unrounded** percent inside `DyeSearch` / `CharacterColorService` (identical ranks to RGB DIST, so display ties can never scramble an ordering); the display-rounded integer comes from `ColorService.getDistanceForMethod` / `getDistinguishabilityPercent`.
-- **`presets.json` 2.0.0 — curated palettes are stainID-keyed.** `PresetPalette.dyes` now holds **stainIDs** (3–6 per palette; was itemIDs, 2–5) and `PresetService.getPresetWithDyes()` / `resolvePresets()` resolve through `dyeService.getByStainId()` — the internal `IDyeService` contract now requires `getByStainId` alongside `getDyeById`. The curated set is 44 → **15 rows** (Grand Companies 3, Seasons 4, Events 8 — Little Ladies' Day and All Saints' Wake added; the Jobs and Aesthetics curated rows were cut, both categories stay submittable), with rewritten EN descriptions. A `curated parity` test asserts every curated stainID resolves (the silent-null guard). Localised names/descriptions/tags for the 15 rows live in the web-app locales as `preset.<id>.*`, not in core.
-- **`'community'` is no longer a `PresetCategory`** (community-ness is a *source*, not a category — `@xivdyetools/types` 2.0.0). `presets.json` categories are now **8**: `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, and the new `appearance` (a character's own colours — deliberately *not* `character`, which is the CollectionService record kind), `zones`, `raids-trials` (excludes dungeons; primals are descriptions inside it, never "duties"), each with name/description/icon metadata.
+- **`presets.json` 2.0.0 — curated palettes are stainID-keyed.** `PresetPalette.dyes` now holds **stainIDs** (3–6 per palette; was itemIDs, 2–5) and `PresetService.getPresetWithDyes()` / `resolvePresets()` resolve through `dyeService.getByStainId()` — the internal `IDyeService` contract now requires `getByStainId` alongside `getDyeById`. The curated set is 44 → **15 rows** (Grand Companies 3, Seasons 4, Events 8 — Little Ladies' Day and All Saints' Wake added; the Jobs and Aesthetics curated rows were cut, both categories stay submittable), with rewritten EN descriptions. A `curated parity` test asserts every curated stainID resolves (the silent-null guard). Localized names/descriptions/tags for the 15 rows live in the web-app locales as `preset.<id>.*`, not in core.
+- **`'community'` is no longer a `PresetCategory`** (community-ness is a *source*, not a category — `@xivdyetools/types` 2.0.0). `presets.json` categories are now **8**: `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, and the new `appearance` (a character's own colors — deliberately *not* `character`, which is the CollectionService record kind), `zones`, `raids-trials` (excludes dungeons; primals are descriptions inside it, never "duties"), each with name/description/icon metadata.
 - **`SubRace` `'Helion'` → `'Helions'`** (matches the `.chara` files and the game's plural; `@xivdyetools/types` 2.0.0). `character_colors.json` + the split race-specific hair/skin files re-key their Hrothgar entries, `build-locales.ts` fallback tables and all six locale JSONs use the `helions` clan key, and `parseCharaFile` stores the plural while still accepting the pre-5.0 `'Helion'` as a read alias. Consumers persisting a subrace must migrate the stored value on read.
 - **Band-vocabulary method ids** unified with `MatchingMethod` (`de2000` / `deok` / `de76` / `rgbdist` → `ciede2000` / `oklab` / `cie76` / `rgb`). Only relevant if you consumed the band table from an intermediate branch build — no npm release ever carried the old ids.
 
 ### Added
 
 - **`.chara` equipment identity (2026-08-20, web-app 5.0 Swatch 11a/11c)** — `parseCharaFile` now emits `gearModels: CharaGearModel[]` beside `gearDyes` (every WORN slot's `ModelBase`/`ModelVariant`, weapons add `ModelSet`; `base == 0` — weapons: `set == 0` too — is an empty slot and is skipped; `null` hand records are empty) and `glassesId` (`Glasses` as `{ GlassesId }` or the Brio-era bare integer; 0 → null); `resolveCharaColors` passes both through on `ResolvedCharaCharacter`. New `services/chara/chara-models.ts`: `gearModelKey(base, variant)` (= `base | variant << 16`, arithmetic so a high variant cannot overflow the signed shift), `weaponModelKey(set, base, variant)` (BigInt, `set | base << 16 | variant << 32`), `charaModelKey(model)` (decimal string — the wire/cache form), `formatCharaModelLabel` (`set·base·variant` / `base·variant`), `CHARA_SLOT_SEARCH_FIELD` (slot → `EquipSlotCategory` column, rings `FingerL`/`FingerR`), `CHARA_WEAPON_SLOTS`, `isCharaWeaponSlot`, `isWornCharaModel`. Pure packing only — nothing in core resolves; api-worker's `/v1/chara/resolve` does. Pinned against the seven live-verified pairs (`gearModelKey(361, 5) = 328041` → Beech Mask of Casting #18085, `weaponModelKey(634, 19, 1) = 4296213114n` → Runaway Bow #49486). Additive
-- **`PaletteExtractionOptions.matchingMethod`** — `PaletteService.extractAndMatchPalette()` forwards it to `DyeService.findClosestDye()` so a caller can pick each extracted colour's nearest dye under any of the six methods; omitted → the search's own default (`DEFAULT_MATCHING_METHOD`, ΔE2000). Additive; the k-means options are unchanged
+- **`PaletteExtractionOptions.matchingMethod`** — `PaletteService.extractAndMatchPalette()` forwards it to `DyeService.findClosestDye()` so a caller can pick each extracted color's nearest dye under any of the six methods; omitted → the search's own default (`DEFAULT_MATCHING_METHOD`, ΔE2000). Additive; the k-means options are unchanged
 - **Distance primitives** (`ColorConverter` + `ColorService` facade): `getRedmeanDistance` (weighted-RGB approximation, 0 – ~765), `getDistinguishabilityPercent` (RGB distance rescaled to an integer 0–100 — a display unit with identical ranks to RGB DIST, kept for continuity with the Accessibility readout; not WCAG), and `ColorService.getDistanceForMethod(hex1, hex2, method)` — the one dispatch every surface shares for a value in a method's native unit.
 - **`ColorManipulator.rotateHueLch` / `ColorService.rotateHueLch`** — perceptual hue rotation in CIE LCh (preserves perceived lightness and chroma; out-of-gamut results clamp), the basis for harmony ideal-hue math on the og-worker cards.
 - **Machado et al. (2009) severity-1.0 CVD matrices** — `MACHADO_MATRICES` constant plus `ColorblindnessSimulator.simulateColorblindnessMachado` / `…MachadoHex` (and `ColorService` mirrors) running a linear-RGB pipeline (sRGB linearise → matrix → re-encode). The legacy gamma-domain Brettel path (`BRETTEL_MATRICES`, `simulateColorblindness`) is untouched. The 5.0 band calibration's SEPARATION cuts were computed against Machado 1.0 lenses, which core previously could not reproduce.
 - **Calibrated 5.0 band vocabulary** (`src/config/band-vocabulary.ts`, generated by `scripts/calibrate-bands.ts` from the algorithm in `band-calibration.ts` and guarded by `band-vocabulary.parity.test.ts`, which recomputes it from `dyes.json` so a data change fails loudly until re-blessed): `BAND_VOCABULARY[context][method]` tier cuts for `match` / `harmony` / `separation` × all six methods (ΔE2000 rows are the settled ground truth — MATCH 5/10/20 · HARMONY 6/12/20 · SEPARATION 8/15/30; the others are accuracy-optimal cuts scored on display-rounded values; DISTINGUISH % derives from RGB DIST via `deriveDistinguishCuts`), `BAND_METHOD_DP`, `RATIO_BANDS` (Comparison `1/1/1` — the literal "unreachable through lightness" finding — and Accessibility `1/1.29/3`, anchored at WCAG 1.4.11's 3:1), `SEPARATION_TIER_KEYS` (`merged` / `tight` / `workable` / `clear`), `classifyBandTier(value, method, context)`, `classifyBandTierWithCuts` (for ΔE2000 with a user-moved match line), `roundToBandDisplay`, and the calibration API (`calibrateBandVocabulary`, `DE2000_GROUND_TRUTH`, `METHOD_DISPLAY_DP`; types `BandContext` / `BandMethod` / `BandTier` / `MethodBandSet` / `BandCalibrationResult` / `CalibratedMethodId` / `CalibratedMethodBands` / `RatioCalibration`). Standing rules: print the method wherever a tier appears; never compare a tier across methods; only ΔE2000's bands follow the user's match line.
 - **`.chara` character-file import** (`src/services/chara/`, the parse rules the 5.0 Swatch Matcher and the bot's `/swatch` share):
-  - `parseCharaFile(text)` → `ParsedCharaFile` — key-presence parsing (never trusts `TypeName`), crossed eye keys (`REyeColor` is the LEFT eye), linear-RGB extended floats gamma-encoded, flag gating (`EnableHighlights` false / `FacePaint` 0 / Hrothgar fur-pattern lip → `CharaSlotInertReason`), `MouthColor` alpha as continuous lip opacity, gear `DyeId` / `DyeId2` as stain IDs, `Base64Image` never read, and loud `AppError`s naming got-vs-expected for an unrecognised race/tribe/gender or for a JSON carrying none of the fifteen colour fields (the WRONG-KIND refusal — float-only files still parse).
-  - `resolveCharaColors(parsed, lookup)` → `ResolvedCharaCharacter` — index-vs-float arbitration (live floats only with `IsExtendedAppearanceValid`; more than `OFF_GRID_DELTA_E2000 = 6` apart = `offGrid` with both hexes named; missing flag = index wins), 0–95 / 128–223 dark-light sheet split with a loud 96–127 failure, lip composite over skin (raw + `blendHex` with alpha), limbal-vs-tattoo labelling, `R#.C#` grid addresses, shared-index eye merge signal, gear dyes resolved via a `StainIdLookup` (`getByStainId`). Slot verdicts: `index` / `offGrid` / `floatOnly` / `inert` / `error`. Types: `CharaSlotId`, `CharaGearSlotId`, `CharaColorSlotRaw`, `CharaGearDye`, `ResolvedCharaSlot`, `ResolvedGearDye`, `CharaSlotVerdict`, `CharaSlotErrorCode`.
+  - `parseCharaFile(text)` → `ParsedCharaFile` — key-presence parsing (never trusts `TypeName`), crossed eye keys (`REyeColor` is the LEFT eye), linear-RGB extended floats gamma-encoded, flag gating (`EnableHighlights` false / `FacePaint` 0 / Hrothgar fur-pattern lip → `CharaSlotInertReason`), `MouthColor` alpha as continuous lip opacity, gear `DyeId` / `DyeId2` as stain IDs, `Base64Image` never read, and loud `AppError`s naming got-vs-expected for an unrecognised race/tribe/gender or for a JSON carrying none of the fifteen color fields (the WRONG-KIND refusal — float-only files still parse).
+  - `resolveCharaColors(parsed, lookup)` → `ResolvedCharaCharacter` — index-vs-float arbitration (live floats only with `IsExtendedAppearanceValid`; more than `OFF_GRID_DELTA_E2000 = 6` apart = `offGrid` with both hexes named; missing flag = index wins), 0–95 / 128–223 dark-light sheet split with a loud 96–127 failure, lip composite over skin (raw + `blendHex` with alpha), limbal-vs-tattoo labeling, `R#.C#` grid addresses, shared-index eye merge signal, gear dyes resolved via a `StainIdLookup` (`getByStainId`). Slot verdicts: `index` / `offGrid` / `floatOnly` / `inert` / `error`. Types: `CharaSlotId`, `CharaGearSlotId`, `CharaColorSlotRaw`, `CharaGearDye`, `ResolvedCharaSlot`, `ResolvedGearDye`, `CharaSlotVerdict`, `CharaSlotErrorCode`.
   - Four measured fixtures under `services/chara/__tests__/fixtures/` (Duskwight heterochromia, Hrothgar Helions, Wildwood face paint, Xaela Anamnesis header). `Race` is now re-exported by `@xivdyetools/types` because the parser's public API needs it.
-- **`/manual` topic roster + learn-more links** (`src/config/learn-links.ts`): `MANUAL_TOPICS` (`match_image`, `color_vision`, `contrast`, `matching_methods`, `spectrum_prices`, `character_file`) with per-locale authorities (NEI / Portal der Augenmedizin / Wikipédia Daltonisme / 日本眼科医会 / KDCA for colour vision — ZH deliberately open; WCAG 1.4.11 only in its endorsed en/fr/zh translations), `getLearnLink(topic, locale)` (absent locale = `null`, never English), `LODESTONE_BY_REGION` + `getLodestoneLink(region)` keyed by game region (`na` / `eu` / `jp` / `de` / `fr`) not locale, and `XIVDYETOOLS_DOCS_URL`. All URLs liveness-checked 2026-08-07.
+- **`/manual` topic roster + learn-more links** (`src/config/learn-links.ts`): `MANUAL_TOPICS` (`match_image`, `color_vision`, `contrast`, `matching_methods`, `spectrum_prices`, `character_file`) with per-locale authorities (NEI / Portal der Augenmedizin / Wikipédia Daltonisme / 日本眼科医会 / KDCA for color vision — ZH deliberately open; WCAG 1.4.11 only in its endorsed en/fr/zh translations), `getLearnLink(topic, locale)` (absent locale = `null`, never English), `LODESTONE_BY_REGION` + `getLodestoneLink(region)` keyed by game region (`na` / `eu` / `jp` / `de` / `fr`) not locale, and `XIVDYETOOLS_DOCS_URL`. All URLs liveness-checked 2026-08-07.
 - **`abbreviateDyeName(name, locale)`** (`src/utils/`) — the three-character axis code for the bot's comparison triangle and contrast plot, hoisted from two identical bot-logic copies. Uppercases *before* slicing (`'ß'.toUpperCase()` is `'SS'`), strips punctuation (`Ul'dahbrauner` → `ULD`), and keeps the first three glyphs for ja/zh/ko. Codes are deliberately not unique.
 - **`SOCIAL_LINKS` / `PRODUCT_LINKS`** (`src/config/product-links.ts`, `ProductLink` type) — the one home for the seven social links and the web-app / invite-bot URLs printed by both the web About modal and the bot's `/about` (the bot had been advertising the pre-monorepo `xivdyetools-discord-worker` repo). Label + URL only; icons stay with the surface.
 - `PresetService.searchPresets(query, dyeService?)` — with a dye service, a palette also matches on the names of the dyes it contains ("search presets, dyes, tags").
@@ -612,7 +612,7 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
 ### Fixed
 
 - `config/facewear.ts` dropped an unnecessary type assertion that failed `turbo run lint` workspace-wide (and therefore CI for everything downstream of core).
-- `parseCharaFile` refuses a JSON document that carries none of the fifteen character-colour fields by name, instead of resolving eight dashed slots that read as a valid character wearing nothing (ordered after the race/tribe/gender mapping so a bad tribe still gets its own message).
+- `parseCharaFile` refuses a JSON document that carries none of the fifteen character-color fields by name, instead of resolving eight dashed slots that read as a valid character wearing nothing (ordered after the race/tribe/gender mapping so a bad tribe still gets its own message).
 
 ### Removed
 
@@ -632,7 +632,7 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
 - **~40 uncalled class methods + 4 legacy overload arms** (DEAD-034/035, Wave 3f): every listed method was verified to have zero callers outside its own facade wrapper and tests before removal.
   - `APIService`: `getPricesForItems`, static `getPriceTrend`, `getCacheStats`/`resetMetrics` + the `CacheMetrics` type and the now-write-only hit/miss/eviction/error counters. `getPricesForDataCenter` is unaffected and is now the only batch-fetch entry point.
   - **Legacy constructor arm removed** (DEAD-035): `APIService`'s positional `(cache, fetchClient, rateLimiter)` shape and its `isOptionsObject` sniffing guard — the constructor now takes a single `APIServiceOptions` object. All in-repo callers already used the options form.
-  - `DyeService`/`DyeDatabase`: `getDyesByIds`, `getDyesByStainIds`, `getLastLoadedTime` (and the now-write-only `DyeDatabase.lastLoaded` field). `DyeService`/`DyeSearch`: `getDyesSortedByBrightness`/`…BySaturation`/`…ByHue`. `DyeService`/`HarmonyGenerator`: `findCompoundDyes`, `findShadesDyes`. `DyeService`: `getLocalizedDyeById`, `getLocalizedDyeByStainId`, `getAllLocalizedDyes`, `getNonMetallicDyes` (apps localise via `LocalizationService.getDyeName` and filter on `Dye.isMetallic` directly).
+  - `DyeService`/`DyeDatabase`: `getDyesByIds`, `getDyesByStainIds`, `getLastLoadedTime` (and the now-write-only `DyeDatabase.lastLoaded` field). `DyeService`/`DyeSearch`: `getDyesSortedByBrightness`/`…BySaturation`/`…ByHue`. `DyeService`/`HarmonyGenerator`: `findCompoundDyes`, `findShadesDyes`. `DyeService`: `getLocalizedDyeById`, `getLocalizedDyeByStainId`, `getAllLocalizedDyes`, `getNonMetallicDyes` (apps localize via `LocalizationService.getDyeName` and filter on `Dye.isMetallic` directly).
   - **Legacy overload arms removed** (DEAD-035): `DyeSearch.findClosestDye`/`DyeService.findClosestDye` no longer accept a bare `excludeIds: number[]` — only `FindClosestOptions`. `DyeSearch.findDyesWithinDistance`/`DyeService.findDyesWithinDistance` no longer accept a bare `maxDistance: number` + trailing `limit?: number` — only `FindWithinDistanceOptions`. In-core callers migrated: `HarmonyGenerator`'s internal `findClosestNonFacewearDye` helper and `CharacterColorService.findClosestDye`'s delegation to `findClosestDyes`. At the time this task landed, `findDyesWithinDistance`'s `matchingMethod` default was still `'rgb'` (kept for backwards compatibility per `DyeSearch.ts`) — this task only fixed the one stale caller that omitted it (`discord-worker`'s `extractor.ts`, below); the default itself moved to `ciede2000` in a later follow-up within this same unreleased version — see the top-level `### Changed` entry.
   - `ColorService`: `mixColorsOklch`, `mixColorsLch`, `mixColorsHsv` (the live `MixingMode` union never included these three; `mixColorsHsl` stays, it backs `hsl`). `ColorService`/`SpectralMixer`: `mixMultipleSpectral`/`SpectralMixer.mixMultiple`, `gradientSpectral`/`SpectralMixer.gradient`, `isSpectralAvailable`/`SpectralMixer.isAvailable` — only `mixColorsSpectral`/`SpectralMixer.mixColors` had a caller.
   - `ColorConverter.getDeltaE_HyAB` (instance + static) and the `'hyab'` member of `DeltaEFormula` (plus its `getDeltaE` case) — corrects the 4.0.0 entry above, which said this math "stays available"; it did not have a caller. `'hyab'` survives only as a legacy `MatchingMethod` string token that `normalizeMatchingMethod`/`LEGACY_MATCHING_METHOD_MAP` fold to `'ciede2000'` (og-worker/discord-worker/api-worker still accept it on input) — unrelated to `DeltaEFormula`, unaffected.
@@ -642,7 +642,7 @@ Background and evidence: `docs/research/2026-09-03-algorithm-fact-check/`.
   - `PaletteService.pixelDataToRGB` (apps use `pixelDataToRGBFiltered`).
   - `KDTree.getSize` (test-only; `isEmpty()` remains).
   - **Stale-default fix**: `discord-worker`'s `extractor.ts` deduplication path called `findDyesWithinDistance` without `matchingMethod`, silently falling back to the RGB-radius default while its primary match used the user's chosen method — now passes `matchingMethod` explicitly.
-- **Inline clamps replaced with the exported `clamp()`** (DEAD-037, Wave 4a — pure refactor, no behaviour change): `blending/conversions.ts`'s six `Math.round(Math.max(0, Math.min(255, …)))` 0–255 clamps (LAB/OKLAB/RYB/Kubelka-Munk RGB conversions), `services/chara/chara-parser.ts` and `services/chara/chara-resolver.ts`'s `linearToSrgb255` 0–1 clamps, `services/chara/chara-resolver.ts`'s lip-alpha clamp, and `services/color/ColorConverter.ts`'s private `linearToSrgb`'s 0–1 clamp. `clamp()`'s `Math.min(Math.max(value, min), max)` is arithmetically identical to every inline `Math.max(min, Math.min(max, value))` / `Math.min(max, Math.max(min, value))` ordering replaced (including the shared NaN-propagates behaviour) — no new test needed, the existing suites for all four files are unchanged and green.
+- **Inline clamps replaced with the exported `clamp()`** (DEAD-037, Wave 4a — pure refactor, no behavior change): `blending/conversions.ts`'s six `Math.round(Math.max(0, Math.min(255, …)))` 0–255 clamps (LAB/OKLAB/RYB/Kubelka-Munk RGB conversions), `services/chara/chara-parser.ts` and `services/chara/chara-resolver.ts`'s `linearToSrgb255` 0–1 clamps, `services/chara/chara-resolver.ts`'s lip-alpha clamp, and `services/color/ColorConverter.ts`'s private `linearToSrgb`'s 0–1 clamp. `clamp()`'s `Math.min(Math.max(value, min), max)` is arithmetically identical to every inline `Math.max(min, Math.min(max, value))` / `Math.min(max, Math.max(min, value))` ordering replaced (including the shared NaN-propagates behavior) — no new test needed, the existing suites for all four files are unchanged and green.
 
 ### Changed (2026-08-18 dead-code audit)
 

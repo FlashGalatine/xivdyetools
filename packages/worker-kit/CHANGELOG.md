@@ -5,7 +5,7 @@ All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-
 ## [1.4.0] - 2026-09-17
 
 Deep-dive remediation, Sprint 13 (`docs/audits/2026-09-16-deep-dive/`). Minor bump: two new
-subpaths, nothing removed and no existing behaviour changed. `apps/oauth` (Sprint 14),
+subpaths, nothing removed and no existing behavior changed. `apps/oauth` (Sprint 14),
 `apps/image-worker` (Sprint 15) and `apps/presets-api` (Sprint 16) adopted them in the same
 release; only five exports keep a `@public` tag — the four `bodyGuards` option types (consumers
 pass option literals and never import the type names) plus `IMAGE_MAGIC_BYTES` (in-repo consumers
@@ -18,7 +18,7 @@ root barrel; `./image-sniff` is (it has no runtime dependency).
 - **REFACTOR-008 — `@xivdyetools/worker-kit/image-sniff`: magic-byte image detection.**
   `detectImageFormat(bytes)`, `sniffImageType(bytes, accept?)`, the `IMAGE_MAGIC_BYTES` table and
   the `ImageFormat` type. The table and the decision order are `apps/image-worker`'s, which was the
-  source of truth; the second copy in `apps/presets-api` recognised only PNG/JPEG/WebP, so a GIF or
+  source of truth; the second copy in `apps/presets-api` recognized only PNG/JPEG/WebP, so a GIF or
   BMP upload there was indistinguishable from a corrupt one. Same 12-byte precondition and the same
   `RIFF` + `WEBP` two-part WebP check as image-worker's, byte for byte. `sniffImageType` narrows its
   return type to the `accept` list, so a caller that supports three of the five formats keeps a
@@ -34,13 +34,13 @@ root barrel; `./image-sniff` is (it has no runtime dependency).
   is. The factory writes no response body of its own: `onTooLarge` and `onInvalidJson` are supplied
   by the consumer, which is what lets both Workers adopt it without changing a response byte.
   `exempt: { match, maxSize, onTooLarge }` reproduces the preview-image route — its own 5 MB cap,
-  its own `400`, and the JSON check skipped entirely (FINDING-004 / PAPI-3 behaviour preserved).
+  its own `400`, and the JSON check skipped entirely (FINDING-004 / PAPI-3 behavior preserved).
   The shared `validateStructure` is the two apps' copy unchanged: the two were byte-for-byte
   identical, so there was no stricter variant to pick.
 
 ## [1.3.0] - 2026-09-02
 
-Deep-dive remediation, Sprint 15 (docs/audits/2026-09-02-deep-dive). Minor bump: three behaviour
+Deep-dive remediation, Sprint 15 (docs/audits/2026-09-02-deep-dive). Minor bump: three behavior
 changes, no API removal. **The native rate-limit binding key format changed, so every counter
 resets once on deploy** — a one-off, and the counters are per-minute.
 
@@ -116,7 +116,7 @@ its own published `package.json#exports` entry.
 
 ## [1.2.0] - 2026-08-30
 
-Security audit remediation (docs/audits/2026-08-29-security, FINDING-010 + FINDING-012). Minor bump: a behaviour change in what gets logged, plus a constructor that now throws in a case it previously let through silently.
+Security audit remediation (docs/audits/2026-08-29-security, FINDING-010 + FINDING-012). Minor bump: a behavior change in what gets logged, plus a constructor that now throws in a case it previously let through silently.
 
 ### Security
 

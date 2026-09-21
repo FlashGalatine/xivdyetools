@@ -19,7 +19,7 @@ mechanics in `../audit-shared/release-mechanics.md`. Runs from the monorepo root
 | Param | Values |
 |---|---|
 | UNITS | one or more deploy units (`apps/og-worker`, `packages/core`, …) or `wave` (everything changed since `origin/main`) |
-| BUMP | `patch` (fixes, dependency bumps, lint sweeps) · `minor` (new capability, absorbed subpaths) · `major` (a consumer must change code / behaviour changes) · explicit `x.y.z` · default: inferred from the unit's `[Unreleased]` block |
+| BUMP | `patch` (fixes, dependency bumps, lint sweeps) · `minor` (new capability, absorbed subpaths) · `major` (a consumer must change code / behavior changes) · explicit `x.y.z` · default: inferred from the unit's `[Unreleased]` block |
 | DRY_RUN | `true` → report Steps 1–6, touch nothing |
 
 ## Step 0 — load
@@ -78,7 +78,7 @@ Confirm the block with the user before writing.
 ## Step 4 — version + matrix
 
 - **Apps**: `package.json` `version` only (web-app shows `__APP_VERSION__`; workers informational;
-  bump when behaviour changed). No other copies of the version exist in the unit.
+  bump when behavior changed). No other copies of the version exist in the unit.
 - **Packages**: version rule (`release-mechanics.md`) — local version still unpublished → fold, no
   bump; published → semver per the release-process definitions above. Choosing the bump for an
   **already-published** package is `verifier` work (it is irreversible once Actions publishes):
