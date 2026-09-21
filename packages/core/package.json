@@ -70,13 +70,13 @@
   },
   "devDependencies": {
     "@types/culori": "^4.0.1",
-    "@types/node": "^26.5.1",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@types/node": "^26.6.1",
+    "@vitest/coverage-v8": "^5.0.1",
     "csv-parse": "^7.0.2",
     "culori": "^4.0.2",
     "tsx": "^4.23.13",
-    "vitest": "^5.0.0",
-    "yaml": "^2.9.0"
+    "vitest": "^5.0.1",
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=18.0.0"

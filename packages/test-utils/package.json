@@ -60,8 +60,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260911.1",
-    "@vitest/coverage-v8": "^5.0.0",
-    "vitest": "^5.0.0"
+    "@vitest/coverage-v8": "^5.0.1",
+    "vitest": "^5.0.1"
   },
   "engines": {
     "node": ">=18.0.0"
