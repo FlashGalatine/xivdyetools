@@ -1,0 +1,9 @@
+$ pnpm docs:check-versions
+$ tsx scripts/check-doc-versions.ts
+  checked 34 version claims across README.md, docs/versions.md — all match package.json
+exit=0
+
+$ pnpm docs:check-links
+$ tsx scripts/check-doc-links.ts
+  checked 914 relative links across 241 documents — all resolve
+exit=0

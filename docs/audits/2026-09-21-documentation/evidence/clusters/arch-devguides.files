@@ -1,0 +1,17 @@
+docs/architecture/api-contracts.md
+docs/architecture/data-flow.md
+docs/architecture/dependency-graph.md
+docs/architecture/index.md
+docs/architecture/overview.md
+docs/architecture/security-trade-offs.md
+docs/architecture/service-bindings.md
+docs/developer-guides/contributing.md
+docs/developer-guides/deployment.md
+docs/developer-guides/environment-variables.md
+docs/developer-guides/index.md
+docs/developer-guides/local-setup.md
+docs/developer-guides/logging-standards.md
+docs/developer-guides/monorepo-setup.md
+docs/developer-guides/release-process.md
+docs/developer-guides/testing.md
+docs/developer-guides/troubleshooting.md

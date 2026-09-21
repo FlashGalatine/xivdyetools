@@ -106,7 +106,10 @@ bot-logic version does not decide it.
 | `/manual` structure | `apps/discord-worker/src/handlers/commands/manual.ts` |
 | `/manual` text | `packages/bot-logic/src/i18n/locales/<locale>.json` → `manual.*`, `manual5.*`, `matchImageHelp.*` |
 
-Run `node <SKILL_DIR>/scripts/manual-check.mjs <xivdyetools-dir> --ref <served-sha>`, and again with
+**`git fetch origin main` first.** A session's clone can carry a stale `origin/main`, and the check
+reads every file through it: the 2026-09-21 run's first pass reported 8 registered commands absent
+from the overview against an `origin/main` 159 commits behind, and none absent after the fetch.
+Then run `node <SKILL_DIR>/scripts/manual-check.mjs <xivdyetools-dir> --ref <served-sha>`, and again with
 `--ref origin/main` when the two differ. If `gh` cannot establish the served SHA, try
 `wrangler deployments list --env production` from `apps/discord-worker`, which is read-only. If
 that fails too, run the check against `origin/main` and record in the baseline table that the
@@ -170,8 +173,12 @@ row in the coverage table.
    from a spelling-only commit: record it in the audit's evidence so the next run does not chase it.
 3. **Links and surfaces**: every surface that links a policy links the **viewer's locale variant**
    and falls back to English only when the variant is absent — web-app's About modal
-   (`about-modal.ts`, `POLICY_DOCS_BASE`), the bot's `/about`, and the Discord developer-portal
-   URLs recorded in `docs/`. A localized link label over an English-only target is a finding.
+   (`about-modal.ts`, `policyDocFile()`) and the Discord developer-portal URLs recorded in `docs/`.
+   A localized link label over an English-only target is a finding. The bot's `/about` links **no**
+   policy — it renders `PRODUCT_LINKS.webApp` + `inviteBot` + `SOCIAL_LINKS` and nothing else
+   (verified 2026-09-21) — so there is nothing to check there; that the bot's two policies are
+   reachable only from the Discord listing is a product question, not a `DOC-` finding, unless a
+   living document claims otherwise.
    Relative links inside a variant resolve (`docs:check-links` does not cover `apps/*/PRIVACY*.md`
    variants unless the gate's tier list says so — check, don't assume).
 4. **Agreement with `docs/`**: `docs/projects/*/overview.md`, the user guides and
@@ -181,10 +188,11 @@ row in the coverage table.
 
 File as `DOC-` with **Deploy unit** = the document's owner (`web-app` or `discord-worker`) and list
 every affected variant in **Location**. Severity: MEDIUM for a missing or stale variant or a
-different claim, LOW for structure or a missing notice. Until `2026-09-19-i18n/I18N-010`'s
-remediation lands, "no variants exist" is that one known open finding — cite it, do not re-file it
-per document; once any variant of a document exists, each gap for that document is a new finding.
-A fix edits all six variants in one commit and bumps all six `Last updated` lines.
+different claim, LOW for structure or a missing notice. `2026-09-19-i18n/I18N-010` (the four
+documents were English-only) is **closed** — `FIXED 2026-09-20`, 20 translations plus locale-aware
+About links, parity PASS — so every variant now exists and each new gap is its own finding.
+A fix edits all six variants in one commit and bumps all six `Last updated` lines, **except** a
+spelling-only fix to the English file, which changes no claim and must leave the dates alone.
 
 ## Review and verify
 
@@ -226,7 +234,10 @@ such as **Grey** or **Glamour** keeps the game's spelling and is never filed). A
 means candidates, not a broken run. Each cluster's `worker` confirms its own file's candidates at
 `file:line` and also reads for British spellings the script's explicit dictionary misses. File one
 `DOC-` per document listing every location, not one per word, at LOW severity unless the spelling
-changes meaning or breaks a quoted identifier. Every `glossary?` and `multilingual-row?` candidate
+changes meaning or breaks a quoted identifier. When a whole tier is affected — the 2026-09-21 run
+found 418 across 56 documents — file one per **cluster** instead, with the top three documents in
+**Location** and the per-document table in `evidence/`; conventions.md §3 caps Location at three
+bullets, so one-per-document does not survive that volume. Every `glossary?` and `multilingual-row?` candidate
 the dictionary or a non-English table cell settles goes to *Rejected suspicions* with its reason.
 
 Verify every candidate at its document `file:line` and at its supporting source, release, or live
