@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.12.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.12.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.6.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |

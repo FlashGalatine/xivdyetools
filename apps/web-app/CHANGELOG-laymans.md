@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.12.4 — September 21, 2026
+
+### The presets tool is called Community Presets
+- **The tool is now titled "Community Presets" everywhere in the app.** It had been showing "Preset Palettes" while every guide, and the Discord bot, called it Community Presets. The name you read in the help is the name you will now see in the app.
+- Translated in all six languages, using the same wording the Discord bot already uses.
+- Nothing about the tool changed — only its name.
+
 ## Web-App Version 5.12.3 — September 21, 2026
 
 ### One spelling of "color" everywhere

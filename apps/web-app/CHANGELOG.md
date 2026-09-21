@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.4] - 2026-09-21
+
+### Changed
+
+- **The presets tool is titled "Community Presets" in all six languages** (`tools.presets.title`).
+  It had always been "Preset Palettes" in the app while 23 documents and `apps/web-app/CLAUDE.md`
+  called it Community Presets; the maintainer confirmed Community Presets is the official name, so
+  the app moves. Resolves `docs/audits/2026-09-21-documentation/findings/DOC-015.md`.
+- The five translations are lifted verbatim from bot-logic's shipped `manual.community`, which
+  already carries this exact term reviewed in all six locales — no new translation was written.
+  French `shortName` follows from *Palettes* to *Préréglages*, because the old short label
+  abbreviated *Palettes Prédéfinies* and no longer abbreviates the title; the other five short
+  labels still do and are unchanged.
+- `tools.character.evercoldNoticeTitle` also says "preset palettes" and is **not** this tool — it
+  is the Swatch Matcher's notice about the game's eye/hair/skin swatches. Left alone.
+
 ## [5.12.3] - 2026-09-21
 
 ### Changed

@@ -68,7 +68,7 @@
       "description": "色をブレンド"
     },
     "presets": {
-      "title": "プリセットパレット",
+      "title": "コミュニティプリセット",
       "shortName": "プリセット",
       "description": "テーマパレットを閲覧",
       "backToList": "リストに戻る"

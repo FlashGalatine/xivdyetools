@@ -6,7 +6,7 @@
 - **Method:** 2 documentation gates + `manual-check.mjs` (two refs) + `policy-locale-parity.py` +
   `american-spelling.mjs` (two modes); 5 delegated cluster reviews; every candidate re-verified by the
   coordinator at `file:line` against source before filing
-- **Totals:** **22 findings** — 0 HIGH · 13 MEDIUM · 9 LOW · **Act now:** none
+- **Totals:** **22 findings** — 0 HIGH · 13 MEDIUM · 9 LOW · **Act now:** none · **1 fixed since** (DOC-015)
 - **No source file and no document was modified by this audit.**
 
 ## Baseline and coverage
@@ -44,7 +44,7 @@ their paths have not changed — that is not drift. All 7 published packages are
 | DOC-011 | commands.md calls all 20 `/budget quick` dyes Cosmic Exploration; 4 are Cosmic Fortunes | MEDIUM | discord-worker |
 | DOC-013 | components.md's tool-rail order puts Mixer last; it is 6th | MEDIUM | web-app |
 | DOC-014 | components.md quotes "Colour wheel"; the shipped label is "Color wheel" | MEDIUM | web-app |
-| DOC-015 | 23 docs call the tool "Community Presets"; the app titles it "Preset Palettes" | MEDIUM | web-app |
+| DOC-015 | 23 docs call the tool "Community Presets"; the app titled it "Preset Palettes" — **FIXED** | MEDIUM | web-app |
 | DOC-016 | oauth setup omits `XIVAUTH_CLIENT_SECRET` | MEDIUM | oauth |
 | DOC-018 | the moderation runbook never mentions banning an XIVAuth-only author | MEDIUM | moderation-worker |
 | DOC-019 | OPEN_ITEMS.md lists cross-identity bans as unshipped; they shipped 2026-09-16 | MEDIUM | repo-wide |
@@ -115,6 +115,13 @@ their paths have not changed — that is not drift. All 7 published packages are
    bot's `/about` links a policy; "one `DOC-` per document" collides with conventions §3's three-bullet
    Location cap at 56 documents (hence the per-cluster filing here); and `--ref origin/main` now carries
    a **`git fetch` first** instruction, without which this audit would have filed a false HIGH.
+
+## Remediation status
+
+| ID | Status | Commit |
+|---|---|---|
+| DOC-015 | **FIXED** — maintainer confirmed *Community Presets* is the official name; the app moved, the 23 documents were already right | web-app 5.12.4 |
+| all others | OPEN | — |
 
 ## Next steps
 

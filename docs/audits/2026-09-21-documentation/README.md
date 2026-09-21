@@ -22,7 +22,7 @@ finding is OPEN and carries its own fix direction.
 
 ## Top items
 
-1. **DOC-015 (MEDIUM)** — web-app: 23 documents call the tool "Community Presets"; the app has always titled it "Preset Palettes". Needs a maintainer decision before either side moves.
+1. **DOC-015 (MEDIUM)** — ✅ **FIXED 2026-09-21.** The maintainer confirmed *Community Presets* is the official name, so the app moved: `tools.presets.title` renamed in all six locales (web-app 5.12.4). The 23 documents were already correct.
 2. **DOC-021 (MEDIUM)** — core: the multi-color-extraction spec's `PaletteService` signatures and its worked example no longer compile against the shipped code.
 3. **DOC-019 (MEDIUM)** — repo-wide: `OPEN_ITEMS.md` lists cross-identity bans as unshipped work; moderation-worker shipped it on 2026-09-16. Only a narrower residual remains.
 4. **DOC-020 (MEDIUM)** — repo-wide: the glossary defines "Special Dye" by an acquisition tier the schema does not have, contradicting the maintainer guide.
