@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.6.2] - 2026-09-20
 
-Needs `@xivdyetools/core` 5.4.1. No `register-commands` — the command schema is unchanged.
+Needs `@xivdyetools/core` 5.5.0 (reached through `@xivdyetools/bot-logic`). No
+`register-commands` — the command schema is unchanged. No discord-worker source changed.
 
 ### Fixed
 
 - **`/swatch` rejected every Lalafell `.chara` attachment** with "`.chara` field Race: unrecognised
-  value \"Lalafel\"". Anamnesis writes the game's internal enum name `Lalafel` (one trailing `L`)
-  where core's race table expected the display spelling `Lalafell`, so the parser threw before
-  reading a colour. Fixed in core 5.4.1 (reached through `@xivdyetools/bot-logic`); no
-  discord-worker source changed.
+  value \"Lalafel\"". Anamnesis writes the game enum's `Lalafel` (one trailing `L`) and core's
+  parser treated the `Race` key as authoritative, so it threw before reading a colour. Broken
+  since `/swatch` began taking file attachments, not a regression. Core now derives the race
+  from the tribe, which does not drift.
+- **A Hrothgar attachment with no `Race` key had its fur-pattern number matched as a lip colour**,
+  and an **Au Ra's limbal ring was matched against the tattoo sheet** when the `Race` key was
+  absent or disagreed with the tribe. Both card rows were wrong; both now follow the tribe.
 
 ## [5.6.1] - 2026-09-20
 

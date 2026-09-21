@@ -7,7 +7,7 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-09-20 (checked against the registry API), `@xivdyetools/core` 5.4.1 and
+> (PR #123). As of 2026-09-20 (checked against the registry API), `@xivdyetools/core` 5.5.0 and
 > `@xivdyetools/bot-logic` 4.4.0 are ahead of their published npm versions (5.3.0 / 4.3.0) and await
 > publication — publish core first, bot-logic depends on it; the other five packages are at parity;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
@@ -39,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.4.1 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.5.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
@@ -69,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.5.0 | Sep 2026 | `.chara` import reads the race off the **tribe** (spec 10a "Tribe, not Race") instead of the file's `Race` key — minor, not patch, because `parseCharaFile` now returns where it threw. Fixes three bugs at once: every Lalafell file was refused (Anamnesis writes the game enum's `Lalafel`, one L), a Hrothgar file with no `Race` key had its fur pattern painted into the lip swatch, and an Au Ra's limbal ring was matched as a tattoo. An unrecognised `Race` is no longer fatal; an unrecognised **tribe** still is |
 | v5.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 1 — minor: new public `foldForSearch()` and `searchByLocalizedName` now folds case, accents, `ß` and width on both sides, so `schneeweiss` finds Schneeweißer and `creme` finds jaune crème (I18N-005; a blanket mark-strip would have erased Japanese dakuten, so the strip is Latin-only); `build-locales.ts` exits 1 on an empty CSV cell instead of emitting English silently, `--allow-missing` to opt out (I18N-007); `getColorWheelName` falls back through `formatKey`; the `extractLocaleCode` JSDoc no longer claims `zh-CN` is unsupported (I18N-009) |
 | v5.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 8 — minor, not patch, because frozen records are an observable change (the house rule logger 2.2.0 set): `hexToHsv` validates before its LRU lookup (the only hex-keyed cache besides `hexToRgb`, which already did), so a bare `RRGGBB` throws cold and warm alike (BUG-009); dye records and their `rgb`/`hsv`/`lab` are frozen at the end of `initialize()` — a consumer mutation now throws `TypeError` instead of corrupting the shared indices (BUG-010); locale objects documented as shared; `CharacterMatchOptions.matchingMethod` JSDoc default corrected to `ciede2000` (BUG-011); the WCAG small-vs-large threshold test can fail (BUG-032) |
 | **v5.2.0** | **Sep 2026** | **Five selectable harmony colour wheels (PR #167) — `COLOR_WHEEL_IDS` (`rgb` / `ryb` / `munsell` / `oklch-hue` / `oklch-lightness`), `getColorWheel`, `parseColorWheelId`, `normalizeColorWheelId`, `HarmonySelectionConfig.wheel`, `HarmonySlot.wheelHue`; with `wheel` unset the output is byte-identical to 5.1.0** |
@@ -109,6 +110,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.12.2 | Sep 2026 | Swatch Matcher accepts Lalafell `.chara` files (core 5.5.0) — they were refused outright since `.chara` import shipped; a Hrothgar file with no `Race` key no longer shows a fur-pattern number as a lip colour, and an Au Ra's limbal ring is no longer matched as a tattoo. No web-app source changed |
 | v5.12.1 | Sep 2026 | Follow-up to the 2026-09-19 i18n audit's pre-merge review — Korean Terms of Service disclaimer restructured so it can only read as a disclaimer; Korean Privacy Policy "never stored" sentence no longer ends on a positive verb; Japanese Terms header unwrapped. Policy documents only (read from GitHub), so the deployed bundle differs only in its version string |
 | v5.12.0 | Sep 2026 | 2026-09-19 i18n audit Sprints 2–3 — Privacy Policy and Terms of Service in all six languages, linked by app locale, English governing (I18N-010); Market Board is one official term per locale — fr `tableau des ventes`, ko `장터`, zh `市场布告板` (TERM-001); the result card's send-to-tool menu renders each tool's own title (TERM-002, seven `resultCard.tools.*` keys deleted); ko/zh say server for a World (TERM-003); config sidebar and tool panels share one label per concept (TERM-004); Korean `안팡` → `안팎` in two keys (I18N-004); name and category sorts use the app locale (I18N-008) |
 | v5.11.0 | Sep 2026 | 2026-09-16 deep-dive Sprints 1–2 + 7 (20 findings) — Palette Extractor **Share** restored (BUG-002: `colors` + `algo` in the link, up to five bar colours, no image; a shared link renders equal-share bands and the matched dyes; og-worker's `/og/extractor` card is reachable again); Back from a preset keeps `<v4-preset-tool>` mounted and resolves from the URL (BUG-005); preset detail renders the prices it fetches (BUG-004); "Submit to Community" chunk-load failure toasts (BUG-003); dead `navigate-to-tool` context actions deleted with a vocabulary guard (REFACTOR-001); new suites for preset-detail, preset-tool, collection-manager-modal, add-to-collection-menu |
@@ -162,6 +164,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.6.2 | Sep 2026 | `/swatch` accepts Lalafell `.chara` attachments (core 5.5.0, via bot-logic) — refused outright since `/swatch` began taking files; the Hrothgar fur-pattern and Au Ra limbal-ring rows are read off the tribe now. No discord-worker source changed, no `register-commands` |
 | v5.6.1 | Sep 2026 | Follow-up to the 2026-09-19 i18n audit's pre-merge review — `/preferences set clan` tooltip examples localized in de / fr / ko through bot-logic 4.4.0 (`Wiesländer, Auri-Raen` / `Hyurois, Raen` / `미드랜더, 렌`); Chinese Terms of Service header unwrapped; the 5.6.0 I18N-002 note corrected (localized `/manual topic` names are text-only). **`register-commands` runs on deploy** |
 | v5.6.0 | Sep 2026 | 2026-09-19 i18n audit Sprints 6–7 — every subcommand and option tooltip in the command picker is localized (I18N-001, 134 of 151 descriptions were English in every locale; the test now asserts coverage and Discord's 8,000-character cap, counted at the longest localization per field); `/manual topic` choices localized (I18N-002); `/about` sentence keyed (HC-001); `/extractor` singular form (I18N-006); CJK subsets re-cut by cmap (JP +絵具, SC +告絵, KR −월) with picker text excluded from the subset. **`register-commands` runs on deploy** |
 | v5.5.8 | Sep 2026 | 2026-09-18 documentation audit — `/manual` brought up to 5.0 in all six languages: names all 17 commands (was 9), the `match_image` topic describes `/extractor image` instead of the deleted `/match_image`, `/swatch` is the `.chara` command; four guards in `manual.test.ts` read the real locale files (roster coverage, Discord embed limits per locale, syntax lines identical to English); text ships in bot-logic 4.3.0 |
@@ -590,9 +593,11 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
-| Web App v5.7+ | @xivdyetools/core v5.2.0+ | Colour-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
+| Web App v5.12.2+ | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this the Swatch Matcher refuses every Lalafell file |
+| Web App v5.7–5.12.1 | @xivdyetools/core v5.2.0+ | Colour-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
-| Discord Worker v5.6+ | @xivdyetools/core v5.4.0+ | `@xivdyetools/bot-logic` v4.4.0+ — the `commands.*.options` description keys `localize.ts` reads, `about.builtOnBody`, `card.colours_one/_other`, and core's `foldForSearch` behind dye-name input |
+| Discord Worker v5.6.2+ | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this `/swatch` refuses every Lalafell attachment |
+| Discord Worker v5.6–5.6.1 | @xivdyetools/core v5.4.0+ | `@xivdyetools/bot-logic` v4.4.0+ — the `commands.*.options` description keys `localize.ts` reads, `about.builtOnBody`, `card.colours_one/_other`, and core's `foldForSearch` behind dye-name input |
 | Discord Worker v5.5 | @xivdyetools/core v5.2.0+ | `@xivdyetools/bot-logic` v4.2.0+ (`HarmonyInput.wheel`) and `@xivdyetools/svg` v4.1.0+ (`wheelLabel`) |
 | Discord Worker v5.2–5.4 | @xivdyetools/core v4.2.0+ | `@xivdyetools/bot-logic` v3.2.0+ (shared `generateHarmonySlots`); 5.3+ needs bot-logic v4.0.0+ and therefore `@xivdyetools/svg` v4.0.0+ (`generatePresetSwatch` signature) |
 | Moderation Worker v1.6.2+ | — | `@xivdyetools/types` v3.0.0+ (`ModerationStats` field names); `@xivdyetools/bot-logic` v3.1.0+ (shared locale layer) |

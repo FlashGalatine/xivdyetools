@@ -1,0 +1,125 @@
+{
+  "FileExtension": ".chara",
+  "TypeName": "Anamnesis Character File",
+  "SaveMode": "All",
+  "ModelType": 0,
+  "ObjectKind": "Player",
+  "Race": "Lalafel",
+  "Gender": "Feminine",
+  "Age": "Normal",
+  "Height": 0,
+  "Tribe": "Dunesfolk",
+  "Head": 1,
+  "Hair": 108,
+  "EnableHighlights": true,
+  "Skintone": 122,
+  "REyeColor": 68,
+  "HairTone": 108,
+  "Highlights": 106,
+  "FacialFeatures": "First",
+  "LimbalEyes": 0,
+  "Eyebrows": 1,
+  "LEyeColor": 68,
+  "Eyes": 5,
+  "Nose": 0,
+  "Jaw": 2,
+  "Mouth": 128,
+  "LipsToneFurPattern": 186,
+  "EarMuscleTailSize": 0,
+  "TailEarsType": 3,
+  "Bust": 100,
+  "FacePaint": 129,
+  "FacePaintColor": 187,
+  "MainHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 801,
+    "ModelBase": 89,
+    "ModelVariant": 1,
+    "DyeId": 86,
+    "DyeId2": 6
+  },
+  "OffHand": {
+    "Color": "0, 0, 0",
+    "Scale": "0, 0, 0",
+    "ModelSet": 0,
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "HeadGear": {
+    "ModelBase": 964,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Body": {
+    "ModelBase": 6208,
+    "ModelVariant": 1,
+    "DyeId": 102,
+    "DyeId2": 64
+  },
+  "Hands": {
+    "ModelBase": 778,
+    "ModelVariant": 1,
+    "DyeId": 70,
+    "DyeId2": 6
+  },
+  "Legs": {
+    "ModelBase": 366,
+    "ModelVariant": 2,
+    "DyeId": 102,
+    "DyeId2": 0
+  },
+  "Feet": {
+    "ModelBase": 6029,
+    "ModelVariant": 1,
+    "DyeId": 102,
+    "DyeId2": 0
+  },
+  "Ears": {
+    "ModelBase": 186,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Neck": {
+    "ModelBase": 121,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Wrists": {
+    "ModelBase": 53,
+    "ModelVariant": 1,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "LeftRing": {
+    "ModelBase": 0,
+    "ModelVariant": 0,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "RightRing": {
+    "ModelBase": 58,
+    "ModelVariant": 2,
+    "DyeId": 0,
+    "DyeId2": 0
+  },
+  "Glasses": {
+    "GlassesId": 0
+  },
+  "SkinColor": "0.6462899, 0.51501733, 0.39863133",
+  "LeftEyeColor": "0.35530952, 0.11640139, 0.022206845",
+  "RightEyeColor": "0.35530952, 0.11640139, 0.022206845",
+  "LimbalRingColor": "0.6029066, 0.6029066, 0.6029066",
+  "HairColor": "0.27203387, 0.057224143, 0.10594387",
+  "HairHighlight": "0.35530952, 0.064975016, 0.10851212",
+  "MouthColor": "0.08421377, 0.03397155, 0.14173011, 0.2509804",
+  "BustScale": "1.08, 1.2, 1.184",
+  "Transparency": 1,
+  "MuscleTone": 1,
+  "HeightMultiplier": 0.945
+}

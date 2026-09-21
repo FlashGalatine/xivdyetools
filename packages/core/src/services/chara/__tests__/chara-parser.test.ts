@@ -129,31 +129,128 @@ describe('parseCharaFile', () => {
     });
   });
 
-  describe('race spellings', () => {
-    const withRace = (Race: string, Tribe: string): ReturnType<typeof parseCharaFile> =>
-      parseCharaFile(JSON.stringify({ Race, Tribe, Gender: 'Feminine', Skintone: 1 }));
+  // A real Anamnesis export, scrubbed of Nickname / Author / Description /
+  // Tags / Base64Image. It is here because it writes `"Race": "Lalafel"` —
+  // the game enum's one-L spelling — which the parser refused outright until
+  // the tribe became the source of truth. A synthetic object cannot prove
+  // what a producer actually emits.
+  describe('Lalafell Dunesfolk (real Anamnesis export, drifted Race spelling)', () => {
+    const text = fixture('lalafell-dunesfolk.chara');
+    const parsed = parseCharaFile(text);
 
-    // Anamnesis (and the Ktisis/Brio files that share its schema) serializes
-    // the game's internal enum names, which are not the display spellings:
-    // "Lalafel" has one trailing L, "Miqote" has no apostrophe, "AuRa" is
-    // camel-cased. Every one of them must map to the display Race.
+    it('the fixture really does carry the one-L spelling', () => {
+      expect(JSON.parse(text).Race).toBe('Lalafel');
+    });
+
+    it('parses, and reads the race off the tribe', () => {
+      expect(parsed.race).toBe('Lalafell');
+      expect(parsed.tribe).toBe('Dunesfolk');
+      expect(parsed.tribeRaw).toBe('Dunesfolk');
+      expect(parsed.gender).toBe('Female');
+      expect(parsed.producer).toBe('Anamnesis Character File');
+    });
+
+    it('fills all eight colour slots', () => {
+      expect(parsed.slots).toHaveLength(8);
+      expect(parsed.slots.filter((s) => s.index !== null)).toHaveLength(8);
+    });
+
+    it('carries the glamour dye channels', () => {
+      expect(parsed.gearDyes.length).toBeGreaterThan(0);
+      expect(parsed.gearDyes.every((d) => d.stainId > 0)).toBe(true);
+    });
+
+    it('carries no name, author or screenshot', () => {
+      const raw = JSON.parse(text) as Record<string, unknown>;
+      for (const key of ['Nickname', 'Author', 'Description', 'Tags', 'Base64Image']) {
+        expect(raw).not.toHaveProperty(key);
+      }
+      expect(parsed.nickname).toBeNull();
+    });
+  });
+
+  // Spec 10a ("Tribe, not Race"): Race strings drift between producers and
+  // producer versions, Tribe does not. Tribe therefore determines the race,
+  // and the file's own Race key is never allowed to contradict it.
+  describe('race comes from the tribe, not the Race key', () => {
+    const parse = (extra: Record<string, unknown>): ReturnType<typeof parseCharaFile> =>
+      parseCharaFile(JSON.stringify({ Gender: 'Feminine', Skintone: 1, ...extra }));
+
     it.each([
-      ['Hyur', 'Midlander', 'Hyur'],
-      ['Elezen', 'Wildwood', 'Elezen'],
+      ['Midlander', 'Hyur'],
+      ['Highlander', 'Hyur'],
+      ['Wildwood', 'Elezen'],
+      ['Duskwight', 'Elezen'],
+      ['Plainsfolk', 'Lalafell'],
+      ['Dunesfolk', 'Lalafell'],
+      ['SeekerOfTheSun', "Miqo'te"],
+      ['KeeperOfTheMoon', "Miqo'te"],
+      ['SeaWolf', 'Roegadyn'],
+      ['Hellsguard', 'Roegadyn'],
+      ['Raen', 'AuRa'],
+      ['Xaela', 'AuRa'],
+      ['Helions', 'Hrothgar'],
+      ['TheLost', 'Hrothgar'],
+      ['Rava', 'Viera'],
+      ['Veena', 'Viera'],
+    ])('derives %s → %s with no Race key at all', (tribe, expected) => {
+      expect(parse({ Tribe: tribe }).race).toBe(expected);
+    });
+
+    // The bug this replaced: Anamnesis writes the game enum's "Lalafel" (one
+    // trailing L), which the old race table did not carry, so the parser threw
+    // before reading a colour. Tribe answers it without consulting Race.
+    it.each([
       ['Lalafel', 'Dunesfolk', 'Lalafell'],
       ['Lalafell', 'Dunesfolk', 'Lalafell'],
       ['Miqote', 'SeekerOfTheSun', "Miqo'te"],
-      ["Miqo'te", 'SeekerOfTheSun', "Miqo'te"],
-      ['Roegadyn', 'SeaWolf', 'Roegadyn'],
       ['AuRa', 'Xaela', 'AuRa'],
+      ['Au Ra', 'Xaela', 'AuRa'],
       ['Hrothgar', 'Helions', 'Hrothgar'],
-      ['Viera', 'Rava', 'Viera'],
-    ])('maps the file spelling %s (%s) to %s', (fileRace, tribe, expected) => {
-      expect(withRace(fileRace, tribe).race).toBe(expected);
+    ])('ignores the file spelling %s (%s) and still reports %s', (Race, Tribe, expected) => {
+      expect(parse({ Race, Tribe }).race).toBe(expected);
     });
 
-    it('still rejects a race the game does not have', () => {
-      expect(() => withRace('Lalafelll', 'Dunesfolk')).toThrow(/unrecognised value "Lalafelll"/);
+    it('a Race spelling no producer has used yet is not fatal', () => {
+      // The whole point: the next drift must not be another P0. Tribe wins.
+      expect(parse({ Race: 'Lalafelle', Tribe: 'Dunesfolk' }).race).toBe('Lalafell');
+      expect(parse({ Race: 42, Tribe: 'Dunesfolk' }).race).toBe('Lalafell');
+      expect(parse({ Race: null, Tribe: 'Dunesfolk' }).race).toBe('Lalafell');
+    });
+
+    it('a Race that contradicts the Tribe loses to the Tribe', () => {
+      const parsed = parse({ Race: 'Lalafel', Tribe: 'Xaela' });
+      expect(parsed.race).toBe('AuRa');
+      expect(parsed.tribe).toBe('Xaela');
+    });
+
+    it('falls back to the Race key only when the file carries no Tribe', () => {
+      expect(parse({ Race: 'Lalafel' }).race).toBe('Lalafell');
+      expect(parse({ Race: 'Hrothgar' }).race).toBe('Hrothgar');
+      expect(parse({ Race: 'Nonesuch' }).race).toBeNull();
+      expect(parse({}).race).toBeNull();
+    });
+
+    it('still fails loudly on an unrecognised TRIBE — that one is authoritative', () => {
+      expect(() => parse({ Tribe: 'Dunesfolke' })).toThrow(/unrecognised value "Dunesfolke"/);
+    });
+
+    // Two slot rules key off the race. Before Tribe became the source of
+    // truth they read a Race key that a real file may simply not carry.
+    it('inerts a Hrothgar fur pattern even when the file has no Race key', () => {
+      const lip = parse({ Tribe: 'Helions', LipsToneFurPattern: 37 }).slots.find(
+        (s) => s.slot === 'lip',
+      );
+      expect(lip?.indexActive).toBe(false);
+      expect(lip?.inertReason).toBe('furPattern');
+    });
+
+    it('does not inert a lip tone for a non-Hrothgar tribe', () => {
+      const lip = parse({ Tribe: 'Dunesfolk', LipsToneFurPattern: 37 }).slots.find(
+        (s) => s.slot === 'lip',
+      );
+      expect(lip?.indexActive).toBe(true);
+      expect(lip?.inertReason).toBeUndefined();
     });
   });
 
