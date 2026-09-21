@@ -50,9 +50,9 @@
 //     the verb, so only the unambiguous forms are listed.
 //   - `towards`, `forwards`, `dialogue` (a conversation), `glamour` (the game
 //     system) and `programme` in a proper name are acceptable and not listed.
-//   - A directory argument is expanded to its tracked scannable files; a path
-//     that is neither readable nor a directory is fatal rather than skipped,
-//     so a swept-but-unread target can never read as clean (Codex P2, PR #196).
+//   - A directory argument expands to its tracked scannable files, and a path
+//     that is neither readable nor a directory is fatal rather than skipped:
+//     a swept-but-unread target must never read as clean (Codex P2, PR #196).
 // Exit 1 when any reportable candidate is found, 0 when clean, 2 on a usage
 // error or an unreadable/missing path.
 import { execFileSync } from 'node:child_process';
@@ -63,17 +63,10 @@ const argv = process.argv.slice(2);
 const ALL = argv.includes('--all');
 const LIST = argv.includes('--list');
 const FIX = argv.includes('--fix');
-const KEYS =
-  argv
-    .find((a) => a.startsWith('--keys='))
-    ?.slice(7)
-    .split(',')
-    .filter(Boolean) ?? null;
+const KEYS = argv.find((a) => a.startsWith('--keys='))?.slice(7).split(',').filter(Boolean) ?? null;
 const [repo, ...paths] = argv.filter((a) => !a.startsWith('--'));
 if (!repo && !LIST) {
-  console.error(
-    'usage: node american-spelling.mjs <xivdyetools-dir> [path…] [--all] [--list] [--fix] [--keys=a,b]',
-  );
+  console.error('usage: node american-spelling.mjs <xivdyetools-dir> [path…] [--all] [--list] [--fix] [--keys=a,b]');
   process.exit(2);
 }
 
@@ -88,165 +81,32 @@ const expand = (stems, suffixes, toAmerican) => {
 
 // -our → -or. `glamour` is the FFXIV system and is deliberately absent.
 expand(
-  [
-    'ardour',
-    'armour',
-    'behaviour',
-    'candour',
-    'clamour',
-    'colour',
-    'demeanour',
-    'endeavour',
-    'favour',
-    'fervour',
-    'flavour',
-    'harbour',
-    'honour',
-    'humour',
-    'labour',
-    'neighbour',
-    'odour',
-    'parlour',
-    'rigour',
-    'rumour',
-    'saviour',
-    'savour',
-    'splendour',
-    'succour',
-    'tumour',
-    'valour',
-    'vapour',
-    'vigour',
-  ],
-  [
-    '',
-    's',
-    'ed',
-    'ing',
-    'er',
-    'ers',
-    'al',
-    'ally',
-    'able',
-    'ably',
-    'ful',
-    'fully',
-    'fulness',
-    'less',
-    'lessly',
-    'ist',
-    'ists',
-    'ite',
-    'ites',
-    'hood',
-    'hoods',
-    'blind',
-    'blindness',
-    'ous',
-    'ously',
-    'ation',
-    'ations',
-  ],
+  ['ardour', 'armour', 'behaviour', 'candour', 'clamour', 'colour', 'demeanour', 'endeavour',
+   'favour', 'fervour', 'flavour', 'harbour', 'honour', 'humour', 'labour', 'neighbour', 'odour',
+   'parlour', 'rigour', 'rumour', 'saviour', 'savour', 'splendour', 'succour', 'tumour', 'valour',
+   'vapour', 'vigour'],
+  ['', 's', 'ed', 'ing', 'er', 'ers', 'al', 'ally', 'able', 'ably', 'ful', 'fully', 'fulness',
+   'less', 'lessly', 'ist', 'ists', 'ite', 'ites', 'hood', 'hoods', 'blind', 'blindness', 'ous',
+   'ously', 'ation', 'ations'],
   (s) => s.replace(/our$/, 'or'),
 );
 // -ise/-isation → -ize/-ization. Stems carry no trailing `e`, so `organis` +
 // `ation` covers organisation. The look-alikes that are -ise in both
 // (advise, comprise, exercise, supervise, surprise, …) are simply not listed.
 expand(
-  [
-    'amortis',
-    'apologis',
-    'authoris',
-    'canonis',
-    'categoris',
-    'centralis',
-    'characteris',
-    'colouris',
-    'computeris',
-    'criticis',
-    'customis',
-    'decentralis',
-    'digitis',
-    'dramatis',
-    'economis',
-    'emphasis',
-    'energis',
-    'equalis',
-    'familiaris',
-    'finalis',
-    'formalis',
-    'generalis',
-    'globalis',
-    'harmonis',
-    'humanis',
-    'idealis',
-    'immunis',
-    'initialis',
-    'itemis',
-    'jeopardis',
-    'legalis',
-    'localis',
-    'marginalis',
-    'materialis',
-    'maximis',
-    'mechanis',
-    'memoris',
-    'minimis',
-    'mobilis',
-    'modernis',
-    'modularis',
-    'monopolis',
-    'moralis',
-    'nationalis',
-    'neutralis',
-    'normalis',
-    'optimis',
-    'organis',
-    'ostracis',
-    'oxidis',
-    'parameteris',
-    'patronis',
-    'penalis',
-    'personalis',
-    'polaris',
-    'popularis',
-    'pressuris',
-    'prioritis',
-    'privatis',
-    'publicis',
-    'randomis',
-    'rationalis',
-    'realis',
-    'recognis',
-    'regularis',
-    'revitalis',
-    'sanitis',
-    'scrutinis',
-    'serialis',
-    'socialis',
-    'specialis',
-    'stabilis',
-    'standardis',
-    'sterilis',
-    'stigmatis',
-    'subsidis',
-    'summaris',
-    'symbolis',
-    'sympathis',
-    'synchronis',
-    'synthesis',
-    'systematis',
-    'tantalis',
-    'terroris',
-    'theoris',
-    'trivialis',
-    'urbanis',
-    'utilis',
-    'vaporis',
-    'verbalis',
-    'victimis',
-    'visualis',
-  ],
+  ['amortis', 'apologis', 'authoris', 'canonis', 'categoris', 'centralis', 'characteris',
+   'colouris', 'computeris', 'criticis', 'customis', 'decentralis', 'digitis', 'dramatis',
+   'economis', 'emphasis', 'energis', 'equalis', 'familiaris', 'finalis', 'formalis', 'generalis',
+   'globalis', 'harmonis', 'humanis', 'idealis', 'immunis', 'initialis', 'itemis', 'jeopardis',
+   'legalis', 'localis', 'marginalis', 'materialis', 'maximis', 'mechanis', 'memoris', 'minimis',
+   'mobilis', 'modernis', 'modularis', 'monopolis', 'moralis', 'nationalis', 'neutralis',
+   'normalis', 'optimis', 'organis', 'ostracis', 'oxidis', 'parameteris', 'patronis', 'penalis',
+   'personalis', 'polaris', 'popularis', 'pressuris', 'prioritis', 'privatis', 'publicis',
+   'randomis', 'rationalis', 'realis', 'recognis', 'regularis', 'revitalis', 'sanitis',
+   'scrutinis', 'serialis', 'socialis', 'specialis', 'stabilis', 'standardis', 'sterilis',
+   'stigmatis', 'subsidis', 'summaris', 'symbolis', 'sympathis', 'synchronis', 'synthesis',
+   'systematis', 'tantalis', 'terroris', 'theoris', 'trivialis', 'urbanis', 'utilis', 'vaporis',
+   'verbalis', 'victimis', 'visualis'],
   ['e', 'es', 'ed', 'ing', 'er', 'ers', 'able', 'ation', 'ations'],
   (s) => s.replace(/is$/, 'iz'),
 );
@@ -259,171 +119,59 @@ expand(
 // -re → -er. Stems are the British word minus its final `e`, so `centr` + `ed`
 // is `centred` on the British side and `center` + `ed` on the American one —
 // expanding `centre` itself would produce `centerd`.
-for (const stem of [
-  'calibr',
-  'centimetr',
-  'centr',
-  'fibr',
-  'goitr',
-  'kilometr',
-  'litr',
-  'louvr',
-  'lustr',
-  'meagr',
-  'metr',
-  'millimetr',
-  'mitr',
-  'nanometr',
-  'nitr',
-  'ochr',
-  'reconnoitr',
-  'saltpetr',
-  'sceptr',
-  'sepulchr',
-  'sombr',
-  'spectr',
-  'theatr',
-  'titr',
-]) {
+for (const stem of
+  ['calibr', 'centimetr', 'centr', 'fibr', 'goitr', 'kilometr', 'litr', 'louvr', 'lustr',
+   'meagr', 'metr', 'millimetr', 'mitr', 'nanometr', 'nitr', 'ochr', 'reconnoitr',
+   'saltpetr', 'sceptr', 'sepulchr', 'sombr', 'spectr', 'theatr', 'titr']) {
   const am = stem.replace(/r$/, 'er');
-  for (const [br, suf] of [
-    ['e', ''],
-    ['es', 's'],
-    ['ed', 'ed'],
-    ['ing', 'ing'],
-  ])
-    add(stem + br, am + suf);
+  for (const [br, suf] of [['e', ''], ['es', 's'], ['ed', 'ed'], ['ing', 'ing']]) add(stem + br, am + suf);
 }
 // -ce → -se (nouns), and the verb `practise`
-expand(['defence', 'licence', 'offence', 'pretence'], ['', 's', 'd', 'less', 'lessly'], (s) =>
-  s.replace(/ce$/, 'se'),
-);
-for (const [br, am] of [
-  ['practise', 'practice'],
-  ['practises', 'practices'],
-  ['practised', 'practiced'],
-  ['practising', 'practicing'],
-])
-  add(br, am);
+expand(['defence', 'licence', 'offence', 'pretence'], ['', 's', 'd', 'less', 'lessly'],
+  (s) => s.replace(/ce$/, 'se'));
+for (const [br, am] of [['practise', 'practice'], ['practises', 'practices'], ['practised', 'practiced'], ['practising', 'practicing']]) add(br, am);
 // Doubled consonant where American English keeps one
 for (const [br, am] of [
-  ['cancelled', 'canceled'],
-  ['cancelling', 'canceling'],
-  ['counselled', 'counseled'],
-  ['counselling', 'counseling'],
-  ['counsellor', 'counselor'],
-  ['counsellors', 'counselors'],
-  ['dialled', 'dialed'],
-  ['dialling', 'dialing'],
-  ['equalled', 'equaled'],
-  ['equalling', 'equaling'],
-  ['fuelled', 'fueled'],
-  ['fuelling', 'fueling'],
-  ['jeweller', 'jeweler'],
-  ['jewellers', 'jewelers'],
-  ['jewellery', 'jewelry'],
-  ['labelled', 'labeled'],
-  ['labelling', 'labeling'],
-  ['levelled', 'leveled'],
-  ['levelling', 'leveling'],
-  ['marvellous', 'marvelous'],
-  ['modelled', 'modeled'],
-  ['modelling', 'modeling'],
-  ['quarrelled', 'quarreled'],
-  ['signalled', 'signaled'],
-  ['signalling', 'signaling'],
-  ['totalled', 'totaled'],
-  ['totalling', 'totaling'],
-  ['travelled', 'traveled'],
-  ['traveller', 'traveler'],
-  ['travellers', 'travelers'],
-  ['travelling', 'traveling'],
+  ['cancelled', 'canceled'], ['cancelling', 'canceling'], ['counselled', 'counseled'],
+  ['counselling', 'counseling'], ['counsellor', 'counselor'], ['counsellors', 'counselors'],
+  ['dialled', 'dialed'], ['dialling', 'dialing'], ['equalled', 'equaled'], ['equalling', 'equaling'],
+  ['fuelled', 'fueled'], ['fuelling', 'fueling'], ['jeweller', 'jeweler'], ['jewellers', 'jewelers'],
+  ['jewellery', 'jewelry'], ['labelled', 'labeled'], ['labelling', 'labeling'],
+  ['levelled', 'leveled'], ['levelling', 'leveling'], ['marvellous', 'marvelous'],
+  ['modelled', 'modeled'], ['modelling', 'modeling'], ['quarrelled', 'quarreled'],
+  ['signalled', 'signaled'], ['signalling', 'signaling'], ['totalled', 'totaled'],
+  ['totalling', 'totaling'], ['travelled', 'traveled'], ['traveller', 'traveler'],
+  ['travellers', 'travelers'], ['travelling', 'traveling'],
   // …and where it takes two
-  ['appal', 'appall'],
-  ['distil', 'distill'],
-  ['enrol', 'enroll'],
-  ['enrolment', 'enrollment'],
-  ['enthral', 'enthrall'],
-  ['fulfil', 'fulfill'],
-  ['fulfils', 'fulfills'],
-  ['fulfilment', 'fulfillment'],
-  ['instalment', 'installment'],
-  ['instil', 'instill'],
-  ['skilful', 'skillful'],
-  ['wilful', 'willful'],
-])
-  add(br, am);
+  ['appal', 'appall'], ['distil', 'distill'], ['enrol', 'enroll'], ['enrolment', 'enrollment'],
+  ['enthral', 'enthrall'], ['fulfil', 'fulfill'], ['fulfils', 'fulfills'],
+  ['fulfilment', 'fulfillment'], ['instalment', 'installment'], ['instil', 'instill'],
+  ['skilful', 'skillful'], ['wilful', 'willful'],
+]) add(br, am);
 // -logue → -log. `dialogue` (a conversation) is American too; only the UI
 // element is `dialog`, so it is left to the reviewer and not listed.
 for (const stem of ['analog', 'catalog']) {
-  for (const [br, suf] of [
-    ['ue', ''],
-    ['ues', 's'],
-    ['ued', 'ed'],
-    ['uing', 'ing'],
-  ])
-    add(stem + br, stem + suf);
+  for (const [br, suf] of [['ue', ''], ['ues', 's'], ['ued', 'ed'], ['uing', 'ing']]) add(stem + br, stem + suf);
 }
 // Singles
 for (const [br, am] of [
-  ['aeroplane', 'airplane'],
-  ['ageing', 'aging'],
-  ['aluminium', 'aluminum'],
-  ['amongst', 'among'],
-  ['artefact', 'artifact'],
-  ['artefacts', 'artifacts'],
-  ['cheque', 'check'],
-  ['cheques', 'checks'],
-  ['cosy', 'cozy'],
-  ['draught', 'draft'],
-  ['draughts', 'drafts'],
-  ['dreamt', 'dreamed'],
-  ['encyclopaedia', 'encyclopedia'],
-  ['foetus', 'fetus'],
-  ['gaol', 'jail'],
-  ['grey', 'gray'],
-  ['greyed', 'grayed'],
-  ['greying', 'graying'],
-  ['greyish', 'grayish'],
-  ['greys', 'grays'],
-  ['greyscale', 'grayscale'],
-  ['judgement', 'judgment'],
-  ['judgements', 'judgments'],
-  ['kerb', 'curb'],
-  ['learnt', 'learned'],
-  ['manoeuvre', 'maneuver'],
-  ['manoeuvres', 'maneuvers'],
-  ['manoeuvred', 'maneuvered'],
-  ['manoeuvring', 'maneuvering'],
-  ['maths', 'math'],
-  ['mould', 'mold'],
-  ['moulded', 'molded'],
-  ['moulding', 'molding'],
-  ['moulds', 'molds'],
-  ['moult', 'molt'],
-  ['orientated', 'oriented'],
-  ['paediatric', 'pediatric'],
-  ['plough', 'plow'],
-  ['programme', 'program'],
-  ['programmes', 'programs'],
-  ['pyjamas', 'pajamas'],
-  ['sceptic', 'skeptic'],
-  ['sceptical', 'skeptical'],
-  ['scepticism', 'skepticism'],
-  ['smoulder', 'smolder'],
-  ['smouldering', 'smoldering'],
-  ['speciality', 'specialty'],
-  ['specialities', 'specialties'],
-  ['spelt', 'spelled'],
-  ['storey', 'story'],
-  ['storeys', 'stories'],
-  ['sulphate', 'sulfate'],
-  ['sulphur', 'sulfur'],
-  ['tyre', 'tire'],
-  ['tyres', 'tires'],
-  ['whilst', 'while'],
-])
-  add(br, am);
+  ['aeroplane', 'airplane'], ['ageing', 'aging'], ['aluminium', 'aluminum'], ['amongst', 'among'],
+  ['artefact', 'artifact'], ['artefacts', 'artifacts'], ['cheque', 'check'], ['cheques', 'checks'],
+  ['cosy', 'cozy'], ['draught', 'draft'], ['draughts', 'drafts'], ['dreamt', 'dreamed'],
+  ['encyclopaedia', 'encyclopedia'], ['foetus', 'fetus'], ['gaol', 'jail'], ['grey', 'gray'],
+  ['greyed', 'grayed'], ['greying', 'graying'], ['greyish', 'grayish'], ['greys', 'grays'],
+  ['greyscale', 'grayscale'], ['judgement', 'judgment'], ['judgements', 'judgments'],
+  ['kerb', 'curb'], ['learnt', 'learned'], ['manoeuvre', 'maneuver'], ['manoeuvres', 'maneuvers'],
+  ['manoeuvred', 'maneuvered'], ['manoeuvring', 'maneuvering'], ['maths', 'math'],
+  ['mould', 'mold'], ['moulded', 'molded'], ['moulding', 'molding'], ['moulds', 'molds'],
+  ['moult', 'molt'], ['orientated', 'oriented'], ['paediatric', 'pediatric'], ['plough', 'plow'],
+  ['programme', 'program'], ['programmes', 'programs'], ['pyjamas', 'pajamas'],
+  ['sceptic', 'skeptic'], ['sceptical', 'skeptical'], ['scepticism', 'skepticism'],
+  ['smoulder', 'smolder'], ['smouldering', 'smoldering'], ['speciality', 'specialty'],
+  ['specialities', 'specialties'], ['spelt', 'spelled'], ['storey', 'story'],
+  ['storeys', 'stories'], ['sulphate', 'sulfate'], ['sulphur', 'sulfur'], ['tyre', 'tire'],
+  ['tyres', 'tires'], ['whilst', 'while'],
+]) add(br, am);
 
 if (LIST) {
   console.log(`# american-spelling dictionary — ${dict.size} entries\n`);
@@ -441,10 +189,7 @@ const HAS = new RegExp(PATTERN, 'i'); // non-global: `g` + .test() is stateful
 // name can be ordinary prose, so it is flagged `glossary?` instead.
 const readRepo = (p) => readFileSync(join(repo, p), 'utf8');
 const names = [];
-for (const p of [
-  'packages/core/src/data/dyes.json',
-  'packages/core/src/data/facewear_colors.json',
-]) {
+for (const p of ['packages/core/src/data/dyes.json', 'packages/core/src/data/facewear_colors.json']) {
   try {
     for (const e of JSON.parse(readRepo(p))) if (e?.name) names.push(String(e.name));
   } catch {
@@ -469,8 +214,7 @@ const SCANNABLE = /\.(md|json|ts|tsx|js|mjs)$/;
  * A directory argument becomes its tracked, scannable files. Without this
  * `readFileSync` throws EISDIR, the per-file catch swallows it, and the run
  * reports zero candidates and exits 0 — a falsely clean audit over a whole
- * subtree. A path that is neither a readable file nor a directory is fatal
- * for the same reason: silence must never read as success.
+ * subtree.
  */
 const expandPath = (p) => {
   let st;
@@ -481,24 +225,21 @@ const expandPath = (p) => {
     process.exit(2);
   }
   if (!st.isDirectory()) return [p];
-  let found;
   try {
-    found = ls(p).filter((f) => SCANNABLE.test(f));
+    const found = ls(p).filter((f) => SCANNABLE.test(f));
+    if (found.length === 0) console.error(`! ${p}/ holds no tracked scannable file`);
+    return found;
   } catch {
     console.error(`! cannot list ${p}/ — is ${repo} a git checkout?`);
     process.exit(2);
   }
-  if (found.length === 0) console.error(`! ${p}/ holds no tracked scannable file`);
-  return found;
 };
 
 const targets = paths.length
   ? [...new Set(paths.flatMap(expandPath))]
   : [
       ...ls('docs').filter((f) => f.endsWith('.md') && !ARCHIVE.test(f)),
-      ...ls('apps/*/PRIVACY*.md', 'apps/*/TERMS_OF_SERVICE*.md').filter((f) =>
-        ENGLISH_POLICY.test(f),
-      ),
+      ...ls('apps/*/PRIVACY*.md', 'apps/*/TERMS_OF_SERVICE*.md').filter((f) => ENGLISH_POLICY.test(f)),
       MANUAL_EN,
     ];
 
@@ -547,9 +288,7 @@ const scanMarkdown = (file, text) => {
       const note = [
         soloTerms.has(m[0].toLowerCase()) ? 'glossary?' : '',
         multilingual ? 'multilingual-row?' : '',
-      ]
-        .filter(Boolean)
-        .join(' ');
+      ].filter(Boolean).join(' ');
       push(file, i + 1, zone, m[0], note, file, m.index);
     }
   });
@@ -559,15 +298,8 @@ const scanMarkdown = (file, text) => {
 const scanValue = (file, key, line, value, at) => {
   for (const m of value.matchAll(RE)) {
     if (suppressed(value, m)) continue;
-    push(
-      `${file}:${key}`,
-      line,
-      'ui-text',
-      m[0],
-      soloTerms.has(m[0].toLowerCase()) ? 'glossary?' : '',
-      file,
-      at + m.index,
-    );
+    push(`${file}:${key}`, line, 'ui-text', m[0], soloTerms.has(m[0].toLowerCase()) ? 'glossary?' : '',
+      file, at + m.index);
   }
 };
 
@@ -608,13 +340,8 @@ const scanTsStrings = (file, text) => {
     if (blocked && loc) inEn = loc[1] === 'en';
     if (!inEn || /^\s*(import|export type|\/\/)/.test(line)) return;
     for (const lit of line.matchAll(/'([^'\\]*)'|"([^"\\]*)"|`([^`\\]*)`/g)) {
-      scanValue(
-        file,
-        (line.match(/^\s*([\w.]+)\s*:/) ?? [, '?'])[1],
-        i + 1,
-        lit[1] ?? lit[2] ?? lit[3],
-        lit.index + 1,
-      );
+      scanValue(file, (line.match(/^\s*([\w.]+)\s*:/) ?? [, '?'])[1], i + 1,
+        lit[1] ?? lit[2] ?? lit[3], lit.index + 1);
     }
   });
 };
@@ -636,19 +363,13 @@ for (const file of targets.filter((f) => !f.endsWith(SELF))) {
   if (file.endsWith('.json')) {
     // The default sweep takes only /manual out of en.json; an explicitly named
     // file is read whole unless --keys narrows it.
-    scanLocaleJson(
-      file,
-      text,
-      KEYS ?? (paths.length === 0 && file === MANUAL_EN ? MANUAL_KEYS : null),
-    );
+    scanLocaleJson(file, text, KEYS ?? (paths.length === 0 && file === MANUAL_EN ? MANUAL_KEYS : null));
   } else if (/\.(ts|tsx|js|mjs)$/.test(file)) scanTsStrings(file, text);
   else scanMarkdown(file, text);
 }
 
 // ----------------------------------------------------------------- report
-const REPORTED = new Set(
-  ALL ? ['prose', 'diagram', 'ui-text', 'code', 'link'] : ['prose', 'diagram', 'ui-text'],
-);
+const REPORTED = new Set(ALL ? ['prose', 'diagram', 'ui-text', 'code', 'link'] : ['prose', 'diagram', 'ui-text']);
 const shown = hits.filter((h) => REPORTED.has(h.zone));
 const hidden = hits.length - shown.length;
 
@@ -685,9 +406,7 @@ if (FIX) {
   }
   console.log(`Rewrote ${applied} spelling(s) in ${byFile.size} file(s).`);
   if (held.length) {
-    console.log(
-      `Left for review (${held.length}) — the glossary or a non-English cell decides these:`,
-    );
+    console.log(`Left for review (${held.length}) — the glossary or a non-English cell decides these:`);
     for (const h of held) console.log(`  ${h.file}:${h.line} ${h.found} — ${h.note}`);
   }
   process.exit(0);
@@ -696,30 +415,18 @@ if (FIX) {
 console.log('| location | zone | found | suggested | note |');
 console.log('|---|---|---|---|---|');
 for (const h of shown) {
-  console.log(
-    `| ${h.file}:${h.line} | ${h.zone} | ${h.found} | ${matchCase(h.found, h.want)} | ${h.note || '—'} |`,
-  );
+  console.log(`| ${h.file}:${h.line} | ${h.zone} | ${h.found} | ${matchCase(h.found, h.want)} | ${h.note || '—'} |`);
 }
 
 const byWord = new Map();
-for (const h of shown)
-  byWord.set(h.found.toLowerCase(), (byWord.get(h.found.toLowerCase()) ?? 0) + 1);
-const top = [...byWord.entries()]
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 12)
-  .map(([w, n]) => `${w}→${dict.get(w)} ${n}`)
-  .join(' · ');
+for (const h of shown) byWord.set(h.found.toLowerCase(), (byWord.get(h.found.toLowerCase()) ?? 0) + 1);
+const top = [...byWord.entries()].sort((a, b) => b[1] - a[1]).slice(0, 12)
+  .map(([w, n]) => `${w}→${dict.get(w)} ${n}`).join(' · ');
 
-console.log(
-  `\nFiles swept: ${targets.length} · candidates: ${shown.length} in ${new Set(shown.map((h) => h.file)).size} files`,
-);
-console.log(
-  `Suppressed zones (code/link, --all shows them): ${hidden} · dictionary: ${dict.size} entries`,
-);
+console.log(`\nFiles swept: ${targets.length} · candidates: ${shown.length} in ${new Set(shown.map((h) => h.file)).size} files`);
+console.log(`Suppressed zones (code/link, --all shows them): ${hidden} · dictionary: ${dict.size} entries`);
 if (top) console.log(`Most frequent: ${top}`);
-console.log(
-  'Candidates, not findings — confirm each against ../american-english.md before filing.',
-);
+console.log('Candidates, not findings — confirm each against ../american-english.md before filing.');
 process.exit(shown.length > 0 ? 1 : 0);
 
 function matchCase(found, want) {
