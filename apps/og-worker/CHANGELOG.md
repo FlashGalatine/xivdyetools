@@ -51,7 +51,7 @@ already rendered at the edge.
 
 ### Fixed
 
-- **BUG-018: `?wheel=` no longer keys the cache for `/og/harmony/default.png`.** `ogCacheKey` keyed `wheel` for any path starting with `/og/harmony/`, which also matched the per-tool default card — a route that never reads `wheel` at render time. Up to five validated wheel ids were each minting their own byte-identical resvg render of that one card. The key now checks the parameterised `/og/harmony/:dyeId/:harmonyType[.png]` shape specifically (`docs/audits/2026-09-16-deep-dive/`).
+- **BUG-018: `?wheel=` no longer keys the cache for `/og/harmony/default.png`.** `ogCacheKey` keyed `wheel` for any path starting with `/og/harmony/`, which also matched the per-tool default card — a route that never reads `wheel` at render time. Up to five validated wheel ids were each minting their own byte-identical resvg render of that one card. The key now checks the parameterized `/og/harmony/:dyeId/:harmonyType[.png]` shape specifically (`docs/audits/2026-09-16-deep-dive/`).
 
 ### Changed
 
@@ -73,9 +73,9 @@ already rendered at the edge.
   `lang`/`frame`/`algo` so the five wheels of one dye+harmony each buy their own
   edge-cache entry, and elided from the URL when it is the default `rgb` wheel so an
   ordinary share link's cache key is unchanged from 2.9.0. Validation and the key both
-  go through core's one normaliser (`parseColorWheelId`), so `?wheel=RYB` and
+  go through core's one normalizer (`parseColorWheelId`), so `?wheel=RYB` and
   `?wheel=ryb` cannot buy two entries for one picture. The deck names the wheel when it
-  is not the default, and the **footer** carries a short non-localised tag
+  is not the default, and the **footer** carries a short non-localized tag
   (`ΔE2000 · RYB`) — the deck drops in the X frame, so without it a shared Twitter card
   said nothing at all about which wheel chose its dyes.
 - `wheel` keys the cache **only on `/og/harmony/*`**, the route that reads it. The
@@ -184,7 +184,7 @@ already rendered at the edge.
 ### Fixed — harmony convergence
 
 - The card now picks the same dyes the page does. It walked the shared
-  `HARMONY_OFFSETS` (2.5.0) but turned each offset into a colour with
+  `HARMONY_OFFSETS` (2.5.0) but turned each offset into a color with
   `ColorService.rotateHueLch` — rotating hue in LCh where the page rotates in HSV
   and preserves the base's saturation and value. That is a third algorithm
   alongside the page's and the bot's, and it is why an unfurled share link could
@@ -209,7 +209,7 @@ checklist step 4 is no longer optional for a card-design or dye-data change.
 
 - **Every Swatch share unfurled as the generic default card (BUG-021).** The 5.0
   Swatch Matcher shares a *cell address* — `?slot=<sheet>&i=<index>` — and no hex at
-  all: two cells can carry the same colour, and a hex lookup misses when the sheet
+  all: two cells can carry the same color, and a hex lookup misses when the sheet
   reloads under a different clan or gender, which is why the tool moved off it. This
   worker still read the retired `?hex=`/`?sheet=` pair, so `parseHexColor(null)` sent
   every share to `/og/swatch/default.png` with the generic tool name and a `og:url`
@@ -226,7 +226,7 @@ checklist step 4 is no longer optional for a card-design or dye-data change.
   hex link keeps its shape. An address that names no cell (an index past the sheet, a
   race-specific sheet shared without its clan, a race that is not one of the sixteen
   clans the tables are keyed by) degrades to the default card rather than inventing a
-  colour.
+  color.
 
   This makes `generateOGDataForTool` async: the seven shared sheets are bundled, but
   `hairColors` / `skinColors` come from a lazily-imported table. The bundle grew
@@ -243,7 +243,7 @@ checklist step 4 is no longer optional for a card-design or dye-data change.
   nearest-dye path: its single `[0]` offset is a no-op rotation, and the path fills
   four bands instead of one.
 
-- **The Swatch card ranked by one method and labelled with another (BUG-023).** It
+- **The Swatch card ranked by one method and labeled with another (BUG-023).** It
   sorted by a hardcoded `ciede2000` but printed `deltaForAlgorithm(…, algorithm)`
   under an `algorithm` footer. ΔEOK and ΔE2000 do not agree on order over 125 dyes,
   so rank 2 could display a smaller Δ than rank 1 — and the *set* could differ from
@@ -255,10 +255,10 @@ checklist step 4 is no longer optional for a card-design or dye-data change.
   a private table with no row for `hyab` or `oklch-weighted`, the two spellings
   pre-5.0 shared links still carry and `VALID_ALGORITHMS` still accepts. The lookup
   missed, the fallback upper-cased the raw param, and the footer read `HYAB` over
-  numbers `normalizeMatchingMethod` had folded to ΔE2000. Normalising *first* closes
+  numbers `normalizeMatchingMethod` had folded to ΔE2000. Normalizing *first* closes
   the class rather than the case: a legacy spelling can no longer reach the table, so
   the table can no longer lack a row for one. The table itself is now core's
-  `MATCHING_METHOD_TAGS`, shared with `@xivdyetools/svg`. `fmtDelta` normalises for
+  `MATCHING_METHOD_TAGS`, shared with `@xivdyetools/svg`. `fmtDelta` normalizes for
   the same reason — precision belongs to the method that ran, not the spelling.
 
 - **Cards went stale for up to seven days after a deploy (BUG-025).** The
@@ -336,7 +336,7 @@ ways one card can still have more than one URL, both intentionally left alone, b
 bounded the same way:** (1) a client can still request many *distinct*, canonically-formed
 ids — most of which render a "not found" default card rather than 400 — each a legitimate
 first-render cache miss; that is request-volume enumeration, not a cache-key problem. (2)
-comparison/accessibility accept up to 16 dye ids and extractor accepts more colour entries
+comparison/accessibility accept up to 16 dye ids and extractor accepts more color entries
 than either card actually draws, and gradient's `steps` / swatch's `limit` accept a wider
 numeric range than the card's own band cap uses — accepting *that* tail is deliberate (see
 below: rejecting it would `404` image URLs already embedded in links shared before this
@@ -354,7 +354,7 @@ spellings (see below) now `400` or `404` instead of rendering.
 
 - **`/og/*` now allows exactly three query keys — `lang`, `frame`, `algo`** (`index.ts`): any
   other key gets a `404 {"error":"Unknown query parameter"}` before the cache lookup or a
-  render, and the body never echoes the offending key (OG-8). **Behaviour change an operator
+  render, and the body never echoes the offending key (OG-8). **Behavior change an operator
   will see:** a client that appends a cache-buster or tracking param to an `/og/*` image URL —
   `…/complementary.png?cb=173…`, `…?utm_source=x` — now gets a `404` instead of a rendered PNG.
   Nothing changes for the nine tool share routes (`/harmony/`, `/gradient/`, …) or for any
@@ -368,26 +368,26 @@ spellings (see below) now `400` or `404` instead of rendering.
   allowlist above closes at the source; the canonical key closes the same gap for any
   *allowed* param spelling that resolves to the same card, e.g. `?lang=en-US` / `?lang=EN` /
   a missing `lang` now share one cache entry, as do an unrecognised `?frame=` and a missing
-  one). `algo` is kept verbatim, never normalised — two spellings `normalizeMatchingMethod`
+  one). `algo` is kept verbatim, never normalized — two spellings `normalizeMatchingMethod`
   treats differently at render time must not collapse onto one cache slot.
 - **`algo`'s value is now validated on every `/og/*` route, not just the five that read it**
   (`index.ts`, same guard as above; fix round 1 on this finding, ruling S7-R7): a present
   `?algo=` outside the 9 spellings in `VALID_ALGORITHMS` now gets `400
   {"error":"Invalid algorithm"}` — the same status and body the five algo-aware routes
   (harmony, gradient, both mixer routes, swatch) already returned for this — before the cache
-  lookup or a render. **Behaviour change an operator will see:** without this, the other seven
+  lookup or a render. **Behavior change an operator will see:** without this, the other seven
   `/og/*` route patterns (both default-card routes, comparison, accessibility, extractor,
   presets, budget) never read `algo` at all, so it was still a free key for the same
   cache-defeat amplification the query-key allowlist above closes, just narrowed to one
   parameter name. Bounds the cache key space to pathname × 6 locales × 2 frames × 10 algo
   states (9 spellings + absent).
 - **Three more axes of the same cache bound, closed together** (`index.ts`; fix round 2 on
-  this finding, rulings S7-R8/S7-R9/S7-R10 — all three are Hono-4.13.4-specific behaviour, not
+  this finding, rulings S7-R8/S7-R9/S7-R10 — all three are Hono-4.13.4-specific behavior, not
   reachable by reading this file alone, and were confirmed against the installed version):
   - **`HEAD` is cacheable exactly like `GET`.** Hono re-dispatches a `HEAD` request as `GET`
     for routing but builds the middleware `Context` from the original request, so
     `c.req.method` still read `'HEAD'` inside this guard — the cache lookup and store were
-    both skipped on every `HEAD`, so the render ran every time. **Behaviour change an operator
+    both skipped on every `HEAD`, so the render ran every time. **Behavior change an operator
     will see:** none for a real client — a `HEAD` on an already-rendered `/og/*` URL is now
     served from cache like a `GET` is, instead of always re-rendering; this was the *cheapest*
     version of the amplification this task closes (`curl -I` in a loop, no distinct URLs
@@ -405,7 +405,7 @@ spellings (see below) now `400` or `404` instead of rendering.
     and the cache key. `isAlgorithm('')` is false, so without this the `?algo=` validation
     added above would 400 a request that, before this whole entry, fell through
     `c.req.query('algo') || DEFAULT_MATCHING_METHOD` on the five algo-aware routes and
-    rendered the default algorithm's card — behaviour this sprint never set out to change.
+    rendered the default algorithm's card — behavior this sprint never set out to change.
 - **Every `/og/*` path parameter is canonical now too, not just query params** (`index.ts`;
   fix wave on this finding, ruling S7-R12 — the query axis was closed above, but the path
   axis was wide open at the same attacker cost): a dye/step/ratio/limit id with leading
@@ -418,7 +418,7 @@ spellings (see below) now `400` or `404` instead of rendering.
   being rejected. `:color` on swatch is validated for the first time ever (any of the 64
   case spellings of one hex value rendered the same card); extractor's `RRGGBB[-share]`
   entries get the same two rules. `presets/:presetId`'s existing slug grammar needed no
-  change — it was already canonical. **Behaviour change an operator will see:**
+  change — it was already canonical. **Behavior change an operator will see:**
   `/og/harmony/00102/complementary.png`, `/og/swatch/ff5500/5.png`, and
   `/og/comparison/1,2,x,3.png` (and their many equivalents) now `400` instead of rendering
   the same card their canonical spelling already serves; no canonically-formed request is
@@ -474,7 +474,7 @@ Security audit remediation (docs/audits/2026-08-21-security, FINDING-005 + FINDI
 - **Linear-time text layout** (`services/svg/band.ts`): `fit()` and `wrapName()` re-measured the remaining string on every trimmed character (quadratic / cubic). They now take one forward pass using `estimateTextWidth`'s per-code-point additivity, clip inputs at 512 code points, and hyphenate with a single scan per fragment. Same output for every real dye/preset name. (FINDING-005)
 - **Not-found card echo is capped** (`services/svg/band-shared.ts`): `notFoundBand` clips the echoed input to 32 code points + `…` (`clipLabel`, `NOT_FOUND_LABEL_MAX`) before it reaches layout. (FINDING-005)
 - **FINDING-024 / OG-2 + OG-6 — every echoed share parameter is validated before it reaches a link preview** (new `src/og-params.ts`, one vocabulary shared by the crawler and the image routes): `?harmony=`, `?vision=`, `?sheet=`, `?race=`, `?gender=`, `?hex=`/`?color=`, `?algo=` against their enums / regex (own-property lookups — `?race=constructor` / `?harmony=constructor` no longer stringify a function), `?steps=` / `?ratio=` / `?limit=` clamped to the image routes' bounds (NaN → the default, so no `NaN%` sentences), comparison / accessibility dye lists capped at 16, and the validated values are `encodeURIComponent`ed into `og:url` / `og:image`. An unknown value takes the parameter's default — the same thing a missing one gets — and a non-hex swatch target degrades to the swatch default card, so a share can neither spoof preview text under the real domain nor emit an image URL the image route would 400. Previously `xivdyetools.app/harmony/?dye=1&harmony=free%20gil%20giveaway%20at%20evil.example` unfurled under `xivdyetools.app` with that text in `og:title` (escaped — no XSS — but phishing-grade content spoofing).
-- **OG-3 — the crawler HTML carries security headers and `Vary: User-Agent`**: `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` on every crawler response (tool routes, root, catch-all), and `nosniff` on every `/og/*` image response. The HTML runs in the production app origin (defence in depth — it is fully escaped today) and is UA-dependent while advertising a public cache lifetime.
+- **OG-3 — the crawler HTML carries security headers and `Vary: User-Agent`**: `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` on every crawler response (tool routes, root, catch-all), and `nosniff` on every `/og/*` image response. The HTML runs in the production app origin (defense in depth — it is fully escaped today) and is UA-dependent while advertising a public cache lifetime.
 - **OG-5 — beta is off workers.dev** (`workers_dev = false` at the top level too — it already has the zone routes and `og-beta.xivdyetools.app`; `tests/wrangler-env.test.ts` guards both envs), and the human pass-through `fetch(request)` happens **only on the `APP_BASE_URL` host**: any other ingress (the og image host — BUG-069 — a workers.dev hostname, wrangler dev) 302s humans to the app instead of self-fetching into CF error 1042.
 
 ### Changed
@@ -516,7 +516,7 @@ localized but the **words around it** were not — and no link the web-app produ
 - **Tests:** a ja gate in `og-data-generator.test.ts` renders every tool's share and asserts no
   English word survives in the title or description; `roles-i18n.test.ts` asserts the role words
   per card per locale; `OG_EMBED` / `OG_ROLE` completeness and placeholder parity ×6; root and
-  catch-all honour `?lang=`.
+  catch-all honor `?lang=`.
 
 ### Fixed
 
@@ -554,14 +554,14 @@ and one guardrail restored.
 ### Fixed
 
 - **The three 5.0 tools' embeds finally reach their cards (DEAD-001).** `generateOGDataForTool` had no `extractor` / `presets` / `budget` cases, so every share URL for those tools emitted the *root* default card and `/og/extractor|presets|budget/*` were unreachable from any embed. Now `?colors=` → `/og/extractor/<colors>.png`, `/presets/<id>` (the web app shares presets as a **path**, so a `/presets/:presetId` crawler route exists) → `/og/presets/<id>.png` for curated slugs, `?dye=` → `/og/budget/<stainID>.png`; a share URL that resolves to nothing emits `/og/<tool>/default.png`, never the root card. The beta deploy workflow now follows a `/budget/?dye=102` embed end to end as well as harmony.
-- **Extractor accepts bare `RRGGBB` entries.** The web app's share grammar carries the palette but not each colour's share, so the image route and `generateExtractorOG` take `RRGGBB` or `RRGGBB-share`; without shares the bands are **equal and ranked** (no invented percentage — proportion is only claimed where it was measured).
-- **Comparison honours `?frame=x` (DEAD-010).** The route dropped `frame`, so `twitter:image` for a comparison was a 1200×1050 card X crops; it now renders 1200×630 like the other eight.
-- **`?algo=` rides the image URL for harmony / gradient / mixer (DEAD-022)** as it already did for swatch — normalised, with the suite default and unknown values kept off the URL for stable cache keys — so the card computes the Δ the page showed.
+- **Extractor accepts bare `RRGGBB` entries.** The web app's share grammar carries the palette but not each color's share, so the image route and `generateExtractorOG` take `RRGGBB` or `RRGGBB-share`; without shares the bands are **equal and ranked** (no invented percentage — proportion is only claimed where it was measured).
+- **Comparison honors `?frame=x` (DEAD-010).** The route dropped `frame`, so `twitter:image` for a comparison was a 1200×1050 card X crops; it now renders 1200×630 like the other eight.
+- **`?algo=` rides the image URL for harmony / gradient / mixer (DEAD-022)** as it already did for swatch — normalized, with the suite default and unknown values kept off the URL for stable cache keys — so the card computes the Δ the page showed.
 - Swatch's `?sheet=` / `?race=` / `?gender=` no longer travel on the *image* URL (the 15E card never drew them; they fragmented the edge cache key per tuple). They still shape the crawler description and the page URL.
 
 ### Removed
 
-- `services/svg/dye-helpers.ts`: the character-colour-sheet lookup block (~260 lines, test-only since the 15E rewrite) and the `CharacterColorService` it built at module load on every isolate.
+- `services/svg/dye-helpers.ts`: the character-color-sheet lookup block (~260 lines, test-only since the 15E rewrite) and the `CharacterColorService` it built at module load on every isolate.
 - `services/svg/base.ts` (indigo `THEME`, 1200×630 `OG_DIMENSIONS`, `linearGradient`, ten unused `@xivdyetools/svg` re-exports) and its 342-line test that re-tested the package; `band.ts` / `default-card.ts` import `escapeXml` / `estimateTextWidth` from the package directly.
 - `fonts.ts` `cjkStack` / `FONT_FAMILIES`; the `svg/index.ts` barrel is trimmed to what the route table imports; `Env.OG_CACHE` (never bound), `ShareParams`, `HarmonyParams.perceptual`, `SwatchParams.index`; `AnalyticsEvent.cacheHit` (hard-coded `false` at 12 sites — Analytics `doubles` are positional, so `double2` is simply no longer written); the unreachable "legacy 1200-wide SVG" render defaults; unused imports; orphaned JSDoc; item-ID-era comments.
 - `scripts/subset-cjk-fonts.py`: the 13 source-font fallback paths that could not exist (only `scripts/.font-sources/` is real).
@@ -595,17 +595,17 @@ an atomic web + og move, so neither side should go out without the other.
 
 ### ⚠️ BREAKING
 
-- **Share URLs key on stainID, not itemID.** Every dye-class parameter the crawler routes read (`?dye=`, `?start=`/`?end=`, `?a=`/`?b=`/`?c=`, comparison / accessibility dye lists, budget's `?dye=`) and every `/og/<tool>/:dyeId…` image path segment is now a **stainID (1–254)**. The dye lookup map in `services/svg/dye-helpers.ts` is re-keyed to `stainID`; legacy itemIDs (≥ 5729, a disjoint range) deliberately **miss into the default-card path** rather than guessing a dye. Budget's `?dye=NAME` outlier is gone (names are localized six ways and were never a stable key). Swatch's bare-colour param is `?hex=` with `?color=` accepted as a read alias. Old shared links from the 4.x web-app therefore unfurl as the tool's default card, not as a wrong dye. (`96f30fc`)
+- **Share URLs key on stainID, not itemID.** Every dye-class parameter the crawler routes read (`?dye=`, `?start=`/`?end=`, `?a=`/`?b=`/`?c=`, comparison / accessibility dye lists, budget's `?dye=`) and every `/og/<tool>/:dyeId…` image path segment is now a **stainID (1–254)**. The dye lookup map in `services/svg/dye-helpers.ts` is re-keyed to `stainID`; legacy itemIDs (≥ 5729, a disjoint range) deliberately **miss into the default-card path** rather than guessing a dye. Budget's `?dye=NAME` outlier is gone (names are localized six ways and were never a stable key). Swatch's bare-color param is `?hex=` with `?color=` accepted as a read alias. Old shared links from the 4.x web-app therefore unfurl as the tool's default card, not as a wrong dye. (`96f30fc`)
 - **`?algo=` speaks the 5.0 matching vocabulary.** `MatchingAlgorithm` is now core's `MatchingMethod` (`ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`); the retired `euclidean` / `hyab` / `oklch-weighted` values are still accepted in URLs and normalized on use via `normalizeMatchingMethod`, so old links keep rendering. Mixer / gradient blend-space switches cover the new methods; harmony's `HarmonyType` gains `inverted-tetradic` (offsets `[120, 180, 300]`). (`9f6a105`, `f0aed04`)
-- **`SubRace` `'Helion'` → `'Helions'`** in the swatch character-colour subrace list, in step with `@xivdyetools/types` 2.0.0. (`be884d1`)
+- **`SubRace` `'Helion'` → `'Helions'`** in the swatch character-color subrace list, in step with `@xivdyetools/types` 2.0.0. (`be884d1`)
 - **A bare `wrangler deploy` / `pnpm deploy` now publishes to real, public hostnames.** The top-level env is the *beta* worker and carries live `beta.xivdyetools.app/<tool>/*` routes (see "Two routed environments" below). It still cannot reach production — `[env.production]` declares its own `routes` and `workers_dev`. (`b06b6a8`)
 - `@xivdyetools/worker-middleware` → `@xivdyetools/worker-kit` (Tier 1 package consolidation): `requestIdMiddleware` / `loggerMiddleware` / `getLogger` now import from `@xivdyetools/worker-kit`. Internal to the worker; no route or output change. (`3f73b08`)
 
 ### Added
 
 - **The 15E band frame**, one shape for all nine tools, on a 400-wide design grid rastered ×3 (Discord 400×350 → 1200×1050, X 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). `og:image:width/height` state the raster size and the two frames take separate cache keys. Each tool is a thin adapter (`services/svg/<tool>.ts`) onto the shared `services/svg/band.ts` frame; the pre-5.0 1200×630 generators are gone.
-- **Routes for the three unwired tools** — extractor, presets and budget — in `SUPPORTED_TOOLS`, `wrangler.toml` (both envs) and `services/svg/`: `GET /og/extractor/:colors[.png]` (`RRGGBB-share` pairs, max 5), `GET /og/presets/:presetId[.png]` (slug `^[a-z0-9-]{1,64}$`), `GET /og/budget/:dyeId[.png]`. A shared preset or budget swap no longer unfurls as a bare URL. **Known gap:** the crawler-intercept HTML for these three still emits the generic site title and the root `/og/default.png` — `generateOGDataForTool` has no extractor / presets / budget case yet, so their 15E data cards are reachable only by direct PNG URL (`src/index.test.ts` pins the current behaviour).
-- **The 2a default cards**: `/og/default.png` and the new per-tool `GET /og/:tool/default.png` (registered before the parameterised routes so comparison can no longer parse `default.png` as a dye list). A default card never fakes data — no dye names, no Δ, no prices — the mark's six spill stripes carry the identity and the tool's banner glyph floats in a dark tile. The root card takes no tile and drops the method tag. `?lang=` reaches the defaults too (`buildDefaultCardSvg` is locale-aware).
+- **Routes for the three unwired tools** — extractor, presets and budget — in `SUPPORTED_TOOLS`, `wrangler.toml` (both envs) and `services/svg/`: `GET /og/extractor/:colors[.png]` (`RRGGBB-share` pairs, max 5), `GET /og/presets/:presetId[.png]` (slug `^[a-z0-9-]{1,64}$`), `GET /og/budget/:dyeId[.png]`. A shared preset or budget swap no longer unfurls as a bare URL. **Known gap:** the crawler-intercept HTML for these three still emits the generic site title and the root `/og/default.png` — `generateOGDataForTool` has no extractor / presets / budget case yet, so their 15E data cards are reachable only by direct PNG URL (`src/index.test.ts` pins the current behavior).
+- **The 2a default cards**: `/og/default.png` and the new per-tool `GET /og/:tool/default.png` (registered before the parameterized routes so comparison can no longer parse `default.png` as a dye list). A default card never fakes data — no dye names, no Δ, no prices — the mark's six spill stripes carry the identity and the tool's banner glyph floats in a dark tile. The root card takes no tile and drops the method tag. `?lang=` reaches the defaults too (`buildDefaultCardSvg` is locale-aware).
 - **Deck strings ×6** (`OG_DECK`) — ten tool name + one-liner pairs, verbatim from the String Pass, the worker's first tool-describing card strings.
 - **The localized header tool tag ×6** (`TOOL_TAG`) — `BandCardOptions.toolTag` was documented as localized and passed an English literal at all nine call sites. EN also takes the design's card vocabulary: COMPARE, VISION, EXTRACT, PRESET.
 - **Four authored deck lines ×6** (`OG_DECK_LINE`) for the headlines that are not pure data — swatch's "Nearest {n} to {hex}", extractor's count, budget's "Best per point:", accessibility's dye count.
@@ -613,7 +613,7 @@ an atomic web + og move, so neither side should go out without the other.
 - **Per-method Δ precision** (`fmtDelta` in `band-shared.ts`): ΔEOK prints its raw scale to 3 dp and DISTINGUISH an integer — a blanket `.toFixed(1)` was flattening raw OKLAB deltas to `0.0`.
 - **Fonts**: Fragment Mono is bundled and every value (hex, Δ, price, path) is set in it; a **Noto Sans JP subset** joins SC and KR so JA stops rendering in Chinese letterforms (JP-first fallback is per-locale, so `zh` never picks up Japanese letterforms). Six TTFs total; `scripts/subset-cjk-fonts.py` gains the JP target and downloads sources into the gitignored `scripts/.font-sources/`. (`9399a33`)
 - **The human redirect page** (`generateOGHTML`) — the body a refresh-blocking browser or pre-fetching client sees — now wears the console palette (mark stripes, the requested title + description, the accent link) instead of `#1a1a2e` system-font paragraphs. (`69dcbd3`)
-- **A routed beta environment.** `beta.xivdyetools.app` had no og-worker coverage, so every beta tool path fell through to web-app's static root card and no shared beta link could ever render a real card. The top-level env is now the beta worker (`xivdyetools-og-worker-dev`), mirroring discord-worker: it routes `beta.xivdyetools.app/<tool>/*` ×9 plus the `og-beta.xivdyetools.app` card host (wrangler provisions the DNS record on first deploy), with `APP_BASE_URL = https://beta.xivdyetools.app` so a shared beta link's embed links back to beta, and its own Analytics Engine dataset (`xivdyetools_og_analytics_beta`) so beta traffic cannot skew production metrics. `routes` and `workers_dev` are declared explicitly in **both** envs so beta's routes can never leak into production by inheritance. `og-beta.` is a separate hostname rather than `beta.xivdyetools.app/og` because `isOgImageHost()` recognises its own image host by comparing the request hostname to `OG_IMAGE_BASE_URL`'s and answers a match by redirecting humans to `APP_BASE_URL` — collapsing the two would bounce every real visitor off every beta tool page. (`b06b6a8`)
+- **A routed beta environment.** `beta.xivdyetools.app` had no og-worker coverage, so every beta tool path fell through to web-app's static root card and no shared beta link could ever render a real card. The top-level env is now the beta worker (`xivdyetools-og-worker-dev`), mirroring discord-worker: it routes `beta.xivdyetools.app/<tool>/*` ×9 plus the `og-beta.xivdyetools.app` card host (wrangler provisions the DNS record on first deploy), with `APP_BASE_URL = https://beta.xivdyetools.app` so a shared beta link's embed links back to beta, and its own Analytics Engine dataset (`xivdyetools_og_analytics_beta`) so beta traffic cannot skew production metrics. `routes` and `workers_dev` are declared explicitly in **both** envs so beta's routes can never leak into production by inheritance. `og-beta.` is a separate hostname rather than `beta.xivdyetools.app/og` because `isOgImageHost()` recognizes its own image host by comparing the request hostname to `OG_IMAGE_BASE_URL`'s and answers a match by redirecting humans to `APP_BASE_URL` — collapsing the two would bounce every real visitor off every beta tool page. (`b06b6a8`)
 - `tests/wrangler-env.test.ts` pins those config invariants per environment (image host ≠ app host, the `/og` prefix on `OG_IMAGE_BASE_URL`, the analytics dataset split, and that no production route names a beta host); each assertion was mutation-tested.
 - `.github/workflows/deploy-og-worker-beta.yml` — deploys the beta env off non-`main` branches and then **follows the emitted `og:image` URL end to end**, failing if it 404s or degrades to a default card. A health check stayed green throughout the v1 era while every emitted URL was missing the `/og/` prefix; nothing verified the URL in the metadata was one the worker would serve. The smoke check uses a stainID (`dye=1`, Snow White), not the item ID the old checklist carried — an unrecognised dye degrades to the default card rather than failing, so `dye=5771` rendered a valid-looking card that tested nothing.
 - `og.xivdyetools.app` is declared in `wrangler.toml` as a `custom_domain` route (BUG-069 closure — it was dashboard-only). (`d7dba9f`)

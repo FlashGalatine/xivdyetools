@@ -60,9 +60,9 @@ claim | why tests miss it | covered by test?`; coordinator verifies each at `fil
 | **Workers / Hono** | floating promises (side effects without `waitUntil`/await); module-scope caches or counters shared across requests; KV read-after-write assumptions (eventual consistency); D1 COUNT-then-INSERT TOCTOU, missing `.batch()`/transactions, `RETURNING` misuse; middleware ordering (auth after handler, rate-limit after work); error handler swallowing (`catch {}` → 200), opaque 500s from schema drift (schema.sql vs `migrations/`); fetch without timeout/AbortSignal (Universalis, XIVAPI, Perspective); cache key collisions; `ctx.executionCtx` casts; env validation latched once per isolate |
 | **Discord interactions** | 3-second ack vs deferred path; 15-minute interaction-token expiry on long jobs; component/custom_id state limits; 25-choice autocomplete cap; embed/field length limits; locale fallback (`Translator.t()` returns the key, never falsy → dead `|| 'x'`); `/stats`/`/preset` translator bypass history |
 | **Lit / web-app** | listeners added in `connectedCallback` without removal; `innerHTML =` re-render dropping listeners/state; shadow-DOM CSS boundary (tool CSS must be shadow-side); controllers with stale closures; rAF/`setTimeout(0)` timing; `LanguageService.t()` fallbacks; storage parsing without guards; OAuth `state` round-trip |
-| **Color / dye math (core)** | ΔE aliases (`ciede2000` canonical, `cie2000` normalised — `===` traps); k-d tree vs linear-scan code paths and their benchmarks; `getMarketItemID`/`CONSOLIDATED_DYES` mapping (105/125 dyes share 3 itemIDs); facewear legacy IDs frozen; `itemID > 0` (never null-checks); hex/branded-type validation; float equality; empty collections |
+| **Color / dye math (core)** | ΔE aliases (`ciede2000` canonical, `cie2000` normalized — `===` traps); k-d tree vs linear-scan code paths and their benchmarks; `getMarketItemID`/`CONSOLIDATED_DYES` mapping (105/125 dyes share 3 itemIDs); facewear legacy IDs frozen; `itemID > 0` (never null-checks); hex/branded-type validation; float equality; empty collections |
 | **Generic** | off-by-one, null/undefined through optional chains, swallowed rejections, inverted conditions, unreachable branches, stale caches/invalidation, integer parsing of user input |
-| **Tests that cannot fail** | `typeof x === 'function'`, `not.toThrow()` alone, guarded `if (count >= 2)` bodies, asserting a value captured before the action, arithmetic the test computed itself — file as BUG (type *Untested behaviour*): the hidden bug is whatever that test was supposed to catch |
+| **Tests that cannot fail** | `typeof x === 'function'`, `not.toThrow()` alone, guarded `if (count >= 2)` bodies, asserting a value captured before the action, arithmetic the test computed itself — file as BUG (type *Untested behavior*): the hidden bug is whatever that test was supposed to catch |
 
 ## Step 3 — refactoring + optimization (short lists)
 
@@ -79,7 +79,7 @@ cache / `Cache-Control`; bundle size (discord-worker gzip limit 3,072 KiB — ~1
 
 | Prefix | Header fields |
 |---|---|
-| `BUG-` | **Severity** CRITICAL/HIGH/MEDIUM/LOW · **Type** (Race, Edge case, Resource, Error handling, Logic, State, Untested behaviour) · **Deploy unit** · **Covered by test?** yes/no — Evidence includes the reproduction scenario in one line |
+| `BUG-` | **Severity** CRITICAL/HIGH/MEDIUM/LOW · **Type** (Race, Edge case, Resource, Error handling, Logic, State, Untested behavior) · **Deploy unit** · **Covered by test?** yes/no — Evidence includes the reproduction scenario in one line |
 | `REFACTOR-` | **Priority** · **Effort** LOW/MEDIUM/HIGH · **Risk** · **Deploy unit** (primary + others if cross-cutting) |
 | `OPT-` | **Impact** · **Category** (Algorithm, Memory, I/O, Caching, Bundle) · **Deploy unit** · **Expected gain** (quantified) · **Benchmark** (how to measure) |
 

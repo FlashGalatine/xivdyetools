@@ -2,14 +2,28 @@
 
 ---
 
+## Web-App Version 5.12.4 — September 21, 2026
+
+### The presets tool is called Community Presets
+- **The tool is now titled "Community Presets" everywhere in the app.** It had been showing "Preset Palettes" while every guide, and the Discord bot, called it Community Presets. The name you read in the help is the name you will now see in the app.
+- Translated in all six languages, using the same wording the Discord bot already uses.
+- Nothing about the tool changed — only its name.
+
+## Web-App Version 5.12.3 — September 21, 2026
+
+### One spelling of "color" everywhere
+- **The English text now spells things the American way throughout** — "color" rather than "colour", "behavior" rather than "behaviour". The app used to mix the two from one panel to the next; the Accessibility Checker, Dye Comparison and Swatch Matcher had the most of it.
+- Dye names are untouched: Ash Grey, Goobbue Grey, Slate Grey and Charcoal Grey keep the spelling the game gives them.
+- The other five languages are unaffected, and nothing changed what it does.
+
 ## Web-App Version 5.12.2 — September 20, 2026
 
 ### Lalafell character files can be read at last
 - **Swatch Matcher now accepts a Lalafell `.chara` file.** Dropping one always failed immediately with "unrecognised value 'Lalafel'" — the file writes the race name with one L at the end, and the tool was only looking for the spelling with two. This has never worked until now. Your file is still read entirely on your device.
 
-### Two colours that were read off the wrong sheet
-- **A Hrothgar file that leaves the race out no longer shows a fur-pattern number as a lip colour.** Those files store the fur pattern in the same field as the lip tone, and the tool needed the race to tell them apart.
-- **An Au Ra's limbal ring is matched as a limbal ring, not a tattoo.** It was labelled "Tattoo / Limbal" and matched against the wrong colour sheet when the file's race was missing or disagreed with its clan.
+### Two colors that were read off the wrong sheet
+- **A Hrothgar file that leaves the race out no longer shows a fur-pattern number as a lip color.** Those files store the fur pattern in the same field as the lip tone, and the tool needed the race to tell them apart.
+- **An Au Ra's limbal ring is matched as a limbal ring, not a tattoo.** It was labeled "Tattoo / Limbal" and matched against the wrong color sheet when the file's race was missing or disagreed with its clan.
 - **The clan is what the tools trust now.** A character file names both a race and a clan and the two can disagree; the clan never drifts between versions of the character-file apps, so a file with an odd or missing race name still opens.
 
 ## Web-App Version 5.12.0 — September 20, 2026
@@ -30,7 +44,7 @@
 
 ### Wording
 - **German speaks to you the same way everywhere.** About fifty older messages — the tutorial, presets and error messages — still said "Sie" while the rest of the app says "du". They all say "du" now, and the tutorial calls a dye a Farbstoff rather than a Farbe.
-- **The Dye Mixer's two paint models have proper names in Chinese and German.** Chinese used a word that means "a painting" for one of them; German used "Farbe", which only means colour.
+- **The Dye Mixer's two paint models have proper names in Chinese and German.** Chinese used a word that means "a painting" for one of them; German used "Farbe", which only means color.
 - **The mixing-mode picker reads "Spectral - Realistic Paint".** The English label was missing a space. The Mixer's tooltips now call OKLAB "Modern Perceptual" and LAB "Perceptual", the same as the settings panel.
 - **A few labels that were translated two ways now have one form:** Vote and Saved in German, the word for a dye in the Japanese Presets pages, and the "all slots are full" message.
 
@@ -38,23 +52,23 @@
 - **This window shows the newest twenty or so releases and links to the rest.** Older release notes are one click away on GitHub, so the list no longer grows forever.
 
 ### Smaller fixes
-- **Korean:** a misspelt word in the colour-difference explanations is corrected (안팎).
+- **Korean:** a misspelt word in the color-difference explanations is corrected (안팎).
 - **Sorting follows the app's language.** Sorting Budget Suggestions by name, and the dye picker by category, now orders things by the language you chose rather than your browser's or English.
 
 ## Web-App Version 5.11.0 — September 17, 2026
 
 ### Share a palette from the Palette Extractor
-- **The Extractor has its Share button back** — beside Export in the results header. The link carries the colours on the bar (up to five, in order) and your matching method, so a friend opening it sees the same colours as equal bands, matched to dyes with the same method (your own dye filters still apply). It does not carry your picture, which never leaves your device, and it does not carry hand-picked colours. Links pasted into Discord get a preview card again.
+- **The Extractor has its Share button back** — beside Export in the results header. The link carries the colors on the bar (up to five, in order) and your matching method, so a friend opening it sees the same colors as equal bands, matched to dyes with the same method (your own dye filters still apply). It does not carry your picture, which never leaves your device, and it does not carry hand-picked colors. Links pasted into Discord get a preview card again.
 
 ### Back works the way you expect in Presets
 - **Pressing Back from a preset returns you to the list you were on** — same tab, same search, no reload and no refetch. Before, Back rebuilt the whole Presets tool from scratch.
 
 ### Show prices now works on the preset page
-- **With "Show prices" on, a preset's dyes show the current market price** (lowest listing, with the world or data centre) instead of only the vendor cost. The app had been fetching the prices and then not displaying them.
+- **With "Show prices" on, a preset's dyes show the current market price** (lowest listing, with the world or data center) instead of only the vendor cost. The app had been fetching the prices and then not displaying them.
 
 ### Smaller fixes
 - **Make a palette → Submit to Community tells you when it cannot open.** If the form fails to load (for example a tab left open across an update), you now get an error message instead of a click that does nothing.
-- **Right-clicking the Palette Extractor's zoom view no longer picks a colour.** Only the main button samples; the right button just opens the browser menu.
+- **Right-clicking the Palette Extractor's zoom view no longer picks a color.** Only the main button samples; the right button just opens the browser menu.
 - **Importing collections skips a broken entry instead of stopping.** A malformed record in an imported file is reported and the rest of the file still loads.
 - **Editing a preset can no longer silently shorten its dye list.** If a stored dye cannot be looked up, the form keeps the original list and tells you rather than saving a shorter one.
 - **Add-to-collection menus stay on screen** near the right edge of the window.
@@ -95,33 +109,33 @@
 ## Web-App Version 5.8.0 — September 5, 2026
 
 ### The Palette Extractor reads like a bar chart now
-- **A colour bar sits right under your image.** Each extracted colour is a segment as wide as its share of the picture, with the percentage printed on it. Tap a segment and its dye card lights up below.
-- **The loupe stays where you put it.** Click or tap anywhere on the image and the loupe parks there, showing the colour it read and the closest dye's name. Drag it around to hunt for the exact pixel you want.
+- **A color bar sits right under your image.** Each extracted color is a segment as wide as its share of the picture, with the percentage printed on it. Tap a segment and its dye card lights up below.
+- **The loupe stays where you put it.** Click or tap anywhere on the image and the loupe parks there, showing the color it read and the closest dye's name. Drag it around to hunt for the exact pixel you want.
 - **Add your own picks with the `+` tile** at the right end of the bar. Picks join the bar as fixed-width numbered blocks after a small gap — they are not part of the image share, so they are never drawn as a percentage. Each pick gets its own dye card, and **Clear picks** takes them all away again. You can hold up to six.
-- **No more "Auto-extract" button.** The palette is pulled from the image the moment it loads, and again quietly whenever you change the colour count, the matching method or the dye filters. Your picks are kept through those changes.
-- **The count says what you have.** "6 + 2" means six colours from the image plus two of your picks; it never reads "8 of 6".
+- **No more "Auto-extract" button.** The palette is pulled from the image the moment it loads, and again quietly whenever you change the color count, the matching method or the dye filters. Your picks are kept through those changes.
+- **The count says what you have.** "6 + 2" means six colors from the image plus two of your picks; it never reads "8 of 6".
 - **Nothing is drawn over your image any more.** The numbered circles and the red crosshair are gone, so the pixels you are judging stay uncovered.
-- **Dye filters now apply to the extracted colours too**, not only to a colour you sampled by hand, and *Prevent duplicates* keeps your picks from taking a dye the image already claimed.
+- **Dye filters now apply to the extracted colors too**, not only to a color you sampled by hand, and *Prevent duplicates* keeps your picks from taking a dye the image already claimed.
 - **Vibrancy boost finally does something**: with it on, a small vivid accent can lead the bar ahead of a large dull area.
-- **Settings stick.** The tool kept its own private copy of the colour count and vibrancy switch, so a Reset or a Restore backup, or a change made in another tab, was ignored here until you touched the control again. There is one copy now.
-- **Changing the matching method no longer reshuffles the palette.** Picking a different method used to pull the colours out of the picture again, and because that step is partly random the segments and their sizes changed too. Now only the dye each colour resolves to changes.
-- **Colours never silently disappear.** If your dye filters and *Prevent duplicates* leave nothing unique for a colour, it keeps the nearest eligible dye as a repeat instead of dropping off the bar; if the filters leave no dye at all, the sheet says so.
-- **A new picture starts clean.** Dropping a replacement image clears the previous palette first, so a picture that cannot be read no longer sits under the old one's colours.
-- Tapping **+** twice on the same colour focuses the pick you already have instead of adding it again; the focus ring follows the colour, not its position, when the bar re-orders; the loupe stays where it was when you switch language.
+- **Settings stick.** The tool kept its own private copy of the color count and vibrancy switch, so a Reset or a Restore backup, or a change made in another tab, was ignored here until you touched the control again. There is one copy now.
+- **Changing the matching method no longer reshuffles the palette.** Picking a different method used to pull the colors out of the picture again, and because that step is partly random the segments and their sizes changed too. Now only the dye each color resolves to changes.
+- **Colors never silently disappear.** If your dye filters and *Prevent duplicates* leave nothing unique for a color, it keeps the nearest eligible dye as a repeat instead of dropping off the bar; if the filters leave no dye at all, the sheet says so.
+- **A new picture starts clean.** Dropping a replacement image clears the previous palette first, so a picture that cannot be read no longer sits under the old one's colors.
+- Tapping **+** twice on the same color focuses the pick you already have instead of adding it again; the focus ring follows the color, not its position, when the bar re-orders; the loupe stays where it was when you switch language.
 - A picture the browser cannot open now says so instead of doing nothing, and pasting into a text box on the page no longer hijacks the paste as an image.
-- On a phone the zoom controls stay (they are the only way to zoom by touch), trimmed to minus, level and plus so they sit beside the colour readout.
-- Sampling a colour no longer swaps the whole list for ten candidates of that one colour, and the separate "Sampled Color" box is gone — a pick is simply a card like the others.
+- On a phone the zoom controls stay (they are the only way to zoom by touch), trimmed to minus, level and plus so they sit beside the color readout.
+- Sampling a color no longer swaps the whole list for ten candidates of that one color, and the separate "Sampled Color" box is gone — a pick is simply a card like the others.
 - On a phone the image and the bar stay put while the cards scroll underneath.
 - **The app no longer asks your browser what cameras you have.** It did that on every visit, for a webcam feature that had not been reachable since 5.0, and the site now tells the browser it wants no camera access at all. Taking a photo on your phone works exactly as before, through your own camera app, which takes a better picture than the old built-in preview did.
 
 ## Web-App Version 5.7.0 — September 5, 2026
 
-### Pick the colour wheel your harmonies use
-- **A new "Color wheel" setting in Harmony's options.** RGB is the screen wheel you have always had. RYB is the painter's wheel that colour theory was written for, where red's complement is green rather than cyan. Munsell is the evenly spaced perceptual wheel behind Japan's JIS colour standard. OKLCH hue keeps the screen colours but spaces them by how different they look. OKLCH lightness keeps every partner at your base dye's brightness.
+### Pick the color wheel your harmonies use
+- **A new "Color wheel" setting in Harmony's options.** RGB is the screen wheel you have always had. RYB is the painter's wheel that color theory was written for, where red's complement is green rather than cyan. Munsell is the evenly spaced perceptual wheel behind Japan's JIS color standard. OKLCH hue keeps the screen colors but spaces them by how different they look. OKLCH lightness keeps every partner at your base dye's brightness.
 - **The ring changes with the wheel, and the dots sit on it.** On the RYB wheel the point opposite red is green, and that is where the complementary dot lands — the picture and the dye list finally say the same thing.
 - **Share links always carry the wheel**, RGB included, so a link opens on the wheel it was made with whatever wheel the person opening it had selected. A link without one opens on RGB. Nothing about your existing palettes changes until you choose a different wheel.
-- **Dyes you swapped by hand clear when you change the wheel.** A swap is pinned to a position in the harmony, and that position points at a different colour on a different wheel — so the pin is dropped and the slot is worked out fresh, the same as when you change the harmony type.
-- Changing the wheel changes the suggested dyes for most saturated base colours, sometimes a lot; muted and grey bases are barely affected.
+- **Dyes you swapped by hand clear when you change the wheel.** A swap is pinned to a position in the harmony, and that position points at a different color on a different wheel — so the pin is dropped and the slot is worked out fresh, the same as when you change the harmony type.
+- Changing the wheel changes the suggested dyes for most saturated base colors, sometimes a lot; muted and gray bases are barely affected.
 
 ## Web-App Version 5.6.1 — September 4, 2026
 
@@ -141,21 +155,21 @@
 ## Web-App Version 5.5.0 — September 4, 2026
 
 ### Honest labels on matching and harmony
-- **The Matching Algorithm setting now tells you it changes the answer, not just the number.** Nothing on the page said so, and it was reasonable to read the picker as only changing the score shown beside a match. It changes which dye you get: measured against the default across 2,000 colours, the alternatives return a *different* closest dye between a quarter and nearly half of the time.
-- **Three harmony descriptions stopped promising results they cannot deliver.** Triadic, Tetradic and Square described themselves as producing "vibrant, balanced palettes", "rich combinations" and "dynamic variety". Those are claims about how a palette will look to you, and there is no evidence behind them for these three schemes — so they now describe the shape they make on the colour wheel and leave the judgement to you. Analogous and Monochromatic keep their wording, because research does back those two.
-- **The OKLAB matching option is now labelled `ΔEOK2`**, which is the precise name of the formula the app uses. The old label named a slightly different one.
+- **The Matching Algorithm setting now tells you it changes the answer, not just the number.** Nothing on the page said so, and it was reasonable to read the picker as only changing the score shown beside a match. It changes which dye you get: measured against the default across 2,000 colors, the alternatives return a *different* closest dye between a quarter and nearly half of the time.
+- **Three harmony descriptions stopped promising results they cannot deliver.** Triadic, Tetradic and Square described themselves as producing "vibrant, balanced palettes", "rich combinations" and "dynamic variety". Those are claims about how a palette will look to you, and there is no evidence behind them for these three schemes — so they now describe the shape they make on the color wheel and leave the judgment to you. Analogous and Monochromatic keep their wording, because research does back those two.
+- **The OKLAB matching option is now labeled `ΔEOK2`**, which is the precise name of the formula the app uses. The old label named a slightly different one.
 
 ## Web-App Version 5.4.0 — September 3, 2026
 
 ### The Mixer, and the links you share from it
-- **The Mixer's RYB mode said "Blue + Yellow = Olive" and now genuinely makes green.** RYB is the paint-mixing mode — the one that should behave like colours on an artist's palette — and it had been running on a colour model that could not mix reliably: mixing a dye *with itself* failed to give you that same dye back for more than half of all dyes. Blue and yellow now make a true green, and mixing any dye with itself returns it.
-- **Shared Mixer links now preview in the mode you picked.** When you shared a mix, the preview image that unfurled in Discord was always drawn in CIELAB, whichever of the six mixing modes you had chosen — including the Mixer's own default. Whoever you sent it to saw a different colour from the one on your screen.
-- **Shared Mixer previews name the dye your chosen matching method actually picks.** The preview labelled its suggested dye with your matching method but had ranked the dyes by a different one, so the dye it named could disagree with the page the link opens — for some methods, on about half of all mixes.
+- **The Mixer's RYB mode said "Blue + Yellow = Olive" and now genuinely makes green.** RYB is the paint-mixing mode — the one that should behave like colors on an artist's palette — and it had been running on a color model that could not mix reliably: mixing a dye *with itself* failed to give you that same dye back for more than half of all dyes. Blue and yellow now make a true green, and mixing any dye with itself returns it.
+- **Shared Mixer links now preview in the mode you picked.** When you shared a mix, the preview image that unfurled in Discord was always drawn in CIELAB, whichever of the six mixing modes you had chosen — including the Mixer's own default. Whoever you sent it to saw a different color from the one on your screen.
+- **Shared Mixer previews name the dye your chosen matching method actually picks.** The preview labeled its suggested dye with your matching method but had ranked the dyes by a different one, so the dye it named could disagree with the page the link opens — for some methods, on about half of all mixes.
 
 ## Web-App Version 5.3.1 — September 3, 2026
 
 ### The "Show ΔE" switch
-- **The "Show ΔE" switch works now.** Turning it off left the match-quality number on every result card exactly where it was. The same setting is what the Accessibility checker uses to hide that number when no colour-vision lens is active, and what Dye Comparison and Budget use to keep it off their cards entirely — so all three were showing you a number they had been written not to show.
+- **The "Show ΔE" switch works now.** Turning it off left the match-quality number on every result card exactly where it was. The same setting is what the Accessibility checker uses to hide that number when no color-vision lens is active, and what Dye Comparison and Budget use to keep it off their cards entirely — so all three were showing you a number they had been written not to show.
 
 ## Web-App Version 5.3.0 — September 3, 2026
 
@@ -167,28 +181,28 @@
 ## Web-App Version 5.2.1 — September 3, 2026
 
 ### Sending a dye to another tool
-- **"Send this dye to another tool" works everywhere now.** Harmony's three send actions — to Comparison, Mixer and Accessibility — had *never* done anything: they passed the dye in a form no tool in the app reads. Budget was sending a dye *name*, and the Result Card and Gradient were sending an ID no tool would accept for any of the 125 dyes. All of them now hand the dye over correctly, and a dye that cannot be sent no longer navigates away and then apologises — it simply does not go.
+- **"Send this dye to another tool" works everywhere now.** Harmony's three send actions — to Comparison, Mixer and Accessibility — had *never* done anything: they passed the dye in a form no tool in the app reads. Budget was sending a dye *name*, and the Result Card and Gradient were sending an ID no tool would accept for any of the 125 dyes. All of them now hand the dye over correctly, and a dye that cannot be sent no longer navigates away and then apologizes — it simply does not go.
 - **A character wearing only facewear gets a glamour list.** The Swatch Matcher decided whether to show the list by counting worn gear and dyes, and never counted the glasses — so the facewear row added in 5.2.0 was unreachable for exactly the character made of nothing else.
 
 ## Web-App Version 5.2.0 — September 3, 2026
 
 ### Your whole glamour, not just the dyed parts
-- **"Show all" in the Swatch Matcher's glamour list.** The list only ever showed pieces carrying a dye, so an accessory could never appear at all — no earring, necklace, bracelet or ring in the game is dyeable — and worn-but-undyed armour was reduced to a number in the footnote. A new switch beside the Pieces/Dyes toggle changes the list from "one row per dyed channel" to "one row per piece this character is wearing", each with its icon, item name and slot. Empty slots stay in the footnote, which is the honest place for "nothing is there". Your choice is remembered.
-- **Facewear is listed too.** The glasses were already being looked up on every import and then thrown away — they now appear in the list with their icon and name. `.chara` files do not store a facewear tint, so the colour chip is read from the colour word in the item's English name; an item with no colour word gets a plain chip and says the colour is unknown, rather than inventing one.
+- **"Show all" in the Swatch Matcher's glamour list.** The list only ever showed pieces carrying a dye, so an accessory could never appear at all — no earring, necklace, bracelet or ring in the game is dyeable — and worn-but-undyed armor was reduced to a number in the footnote. A new switch beside the Pieces/Dyes toggle changes the list from "one row per dyed channel" to "one row per piece this character is wearing", each with its icon, item name and slot. Empty slots stay in the footnote, which is the honest place for "nothing is there". Your choice is remembered.
+- **Facewear is listed too.** The glasses were already being looked up on every import and then thrown away — they now appear in the list with their icon and name. `.chara` files do not store a facewear tint, so the color chip is read from the color word in the item's English name; an item with no color word gets a plain chip and says the color is unknown, rather than inventing one.
 - **Dye chips now sit where the channel does.** A piece dyed only on its second channel used to draw one chip in the *first* chip's place, so the picture said channel one while your file said channel two. Dyeable pieces now always show both channels, with a plain chip standing in for an empty one and the text naming it ("Metallic Orange + Undyed") instead of hiding it.
 - **A glamour with nothing dyed on it gets the list instead of nothing at all.** The whole panel used to disappear when no piece carried a dye — which would have hidden the new switch from exactly the character that needs it most.
 
 ## Web-App Version 5.1.0 — September 3, 2026
 
 ### Harmony agrees everywhere
-- **The Discord bot's `/harmony` now gives the same answer this page does.** The two were working from different colour maths, so the same dye and the same harmony type could produce two different sets of dyes depending on where you asked — most visibly on pale or near-grey dyes. The site's results are unchanged; the bot and the link previews moved to match them.
-- **Dye filters in Harmony pick the closest dye you are allowed to have.** They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the colour you asked for than it needed to.
+- **The Discord bot's `/harmony` now gives the same answer this page does.** The two were working from different color math, so the same dye and the same harmony type could produce two different sets of dyes depending on where you asked — most visibly on pale or near-gray dyes. The site's results are unchanged; the bot and the link previews moved to match them.
+- **Dye filters in Harmony pick the closest dye you are allowed to have.** They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the color you asked for than it needed to.
 
 ## Web-App Version 5.0.2 — September 2, 2026
 
 ### A round of fixes across the tools
 - **Right-clicking a dye and choosing "Harmony" works now.** That menu item quietly did nothing for every dye — it opened Harmony with an error and no dye selected. The Budget tool's SEND TO buttons had the same problem and are fixed too.
-- **Palette Extractor match scores are honest again.** The number under each match was measured one way and labelled another, so genuinely good matches were graded as mediocre. The score you see now matches the algorithm you picked, and the closest dye is no longer listed twice.
+- **Palette Extractor match scores are honest again.** The number under each match was measured one way and labeled another, so genuinely good matches were graded as mediocre. The score you see now matches the algorithm you picked, and the closest dye is no longer listed twice.
 - **Sharing a comparison of a single dye works.** A share link with just one dye opened the page showing whatever dyes the recipient already had, instead of yours.
 - **A dialog opened on top of another one no longer breaks the one underneath.** Its X, its buttons and clicking the background all stopped responding, so a confirmation box could become impossible to answer with the mouse. Escape still worked, which made it look like the buttons were broken rather than the window.
 - **The number keys 1-9 switch tools, as the shortcuts panel has always claimed.** They did nothing at all. Ctrl+Shift+T also no longer flips your theme while you are reopening a closed browser tab.
@@ -207,7 +221,7 @@
 - Gil amounts, dates, and numbers now format the way your language expects, and imported palette names read naturally in your language instead of always saying "(imported 2)" in English.
 - Chinese and Korean readers should also notice Chinese/Korean characters rendering in the correct regional style instead of borrowing Japanese letterforms when both fonts are installed.
 - **The Palette Extractor no longer remembers your last image between visits.** Uploaded, pasted, dragged-in or camera-captured images now stay only in your current tab and are gone on reload — nothing is written to disk any more. If an earlier visit saved one, the app wipes it the next time you open it.
-- **Presets you saved a while ago show their colors again.** Presets saved to your Saved shelf before late August were stored using the game's older dye numbering. After a recent change those older entries could come up with an empty row of swatches, most often for a preset whose author has since removed it, or when you were offline. The app now quietly updates them to the current numbering the first time it reads your shelf, so the colors come back on their own with nothing for you to do. Anything it cannot recognise is left alone rather than removed.
+- **Presets you saved a while ago show their colors again.** Presets saved to your Saved shelf before late August were stored using the game's older dye numbering. After a recent change those older entries could come up with an empty row of swatches, most often for a preset whose author has since removed it, or when you were offline. The app now quietly updates them to the current numbering the first time it reads your shelf, so the colors come back on their own with nothing for you to do. Anything it cannot recognize is left alone rather than removed.
 
 ---
 
@@ -218,37 +232,37 @@
 - **XIV Dye Tools 5.0 is a top-to-bottom redesign.** All nine tools were rebuilt on a cleaner layout, with a new logo, new icons, and new fonts.
 - **Desktop: the tools live in the top bar.** Nine small icons sit in the header — hover one to see its name, click to switch. On phones, tap the tool name at the top to open the tool menu.
 - **Two themes instead of twelve.** There is now one Light and one Dark theme. Your saved theme is mapped automatically: light-style themes become Light, everything else becomes Dark.
-- **Advanced Options is a slide-in panel.** The gear button in the top bar opens backup and restore, resets, and behaviour toggles. On phones, each tool's own settings live in that panel too.
+- **Advanced Options is a slide-in panel.** The gear button in the top bar opens backup and restore, resets, and behavior toggles. On phones, each tool's own settings live in that panel too.
 - **On phones, the dye palette starts closed** so the tool gets the whole screen. A one-time hint points you to the palette button.
 
 ### Old share links need to be re-made
 
 - **Share links now use the game's own dye numbers** instead of item numbers. Those numbers don't change when the game merges or reshuffles items, so new links will keep working for years.
 - **Links made with older versions that point at a dye will no longer open.** Rather than quietly guessing, the app shows a message asking for a fresh link.
-- Links that carry a plain colour code (a hex value) still work, and every link the app makes today — from the Share button or when one tool sends a colour to another — uses the new format.
+- Links that carry a plain color code (a hex value) still work, and every link the app makes today — from the Share button or when one tool sends a color to another — uses the new format.
 
 ### "Close" means the same thing in every tool
 
-- **The same six matching methods everywhere:** ΔE2000 (the default), ΔEOK, ΔE76, Redmean, RGB distance, and Distinguishability %. These are different ways of measuring how far apart two colours look.
+- **The same six matching methods everywhere:** ΔE2000 (the default), ΔEOK, ΔE76, Redmean, RGB distance, and Distinguishability %. These are different ways of measuring how far apart two colors look.
 - **Quality words are calibrated per method,** so a "close" match in Harmony means the same as one in Comparison — or in the Discord bot. Your saved choice carries over.
 
-### Harmony Explorer: a colour wheel you can steer
+### Harmony Explorer: a color wheel you can steer
 
-- **Click any dot on the wheel** to jump your base colour to the nearest dye. The big centre button names the base and opens the picker.
+- **Click any dot on the wheel** to jump your base color to the nearest dye. The big center button names the base and opens the picker.
 - **A row of harmony types sits over the wheel** so you can flip between them without the sidebar. New type: Inverted Tetradic.
 - **Companion swatches on every card.** Each result shows up to five nearby alternatives as small dots — tap one to swap it in. A new slider sets how many.
 - Monochromatic, compound, and shades harmonies finally draw their dots on the wheel.
 
 ### Palette Extractor: click the picture
 
-- **Click or tap anywhere on your image to sample that colour.** (Before, clicking opened the file dialog.) Drag to get a magnifying loupe with a crosshair and hex code, then let go to sample.
+- **Click or tap anywhere on your image to sample that color.** (Before, clicking opened the file dialog.) Drag to get a magnifying loupe with a crosshair and hex code, then let go to sample.
 - **Your samples collect in a Palette Roll strip.** Auto-extract is still there as a button when you want the whole palette in one go.
 - A clearer drop zone with a privacy note; on phones you can take a photo directly.
 
 ### Gradient Builder: pin a step
 
 - **Pin any middle step to its matched dye and the gradient bends through it** — the other steps re-blend around your pin. Handy for "I already own this one".
-- New From / To end cards with a swap button, and a summary of average and worst drift from the ideal colour.
+- New From / To end cards with a swap button, and a summary of average and worst drift from the ideal color.
 - No more repeated dyes on flat stretches (you can turn that off), 3–12 steps everywhere, and Gradient gets an export button for the first time.
 
 ### Dye Mixer: the mixing field
@@ -259,15 +273,15 @@
 
 ### Accessibility Checker: the lens view
 
-- **Pick a lens and the whole workspace repaints** the way someone with that kind of colour vision sees it — normal, two red-green types, blue-yellow, and no colour at all.
-- **Each lens tab shows how common that vision type is** and marks your worst pair. Read each pair as a percentage, a contrast ratio, or a colour difference, with a plain-language explainer for each.
-- Any of the four slots can be a custom colour, not just a dye.
+- **Pick a lens and the whole workspace repaints** the way someone with that kind of color vision sees it — normal, two red-green types, blue-yellow, and no color at all.
+- **Each lens tab shows how common that vision type is** and marks your worst pair. Read each pair as a percentage, a contrast ratio, or a color difference, with a plain-language explainer for each.
+- Any of the four slots can be a custom color, not just a dye.
 
 ### Dye Comparison: the duel
 
 - **Pick a pair and get a verdict** — Same, Close, Near, or Far — plus a "what differs" breakdown (lightness, saturation, hue, vendor, source) and a cost line.
 - **All six matching methods are shown side by side** for the pair, so you can see where they agree and where they don't.
-- Custom colours can be compared too. The old stat cards, charts, and grid are gone.
+- Custom colors can be compared too. The old stat cards, charts, and grid are gone.
 
 ### Community Presets: a proper gallery
 
@@ -285,16 +299,16 @@
 - **Scrip and credit dyes are priced in their own currency** — never quietly converted to gil.
 - **Results are grouped by tier in a ledger** you can sort by dye, closeness, board price, or gil-per-step, with a plain verdict and "× cheaper" callouts.
 - Quick picks come from live prices ("priciest on your world right now"), a new Exclude Coffer Dyes filter, and a Send To row (Harmony, Compare, copy name, Save swap).
-- The old gil-limit slider is replaced by a closeness slider — set how far from the target colour you're willing to go.
+- The old gil-limit slider is replaced by a closeness slider — set how far from the target color you're willing to go.
 
 ### Swatch Matcher: drop in your character
 
-- **Drop a `.chara` file from Anamnesis, Ktisis, or Brio** and every colour on your character — skin, hair, eyes, lips, and more — is matched to the closest dye at once.
+- **Drop a `.chara` file from Anamnesis, Ktisis, or Brio** and every color on your character — skin, hair, eyes, lips, and more — is matched to the closest dye at once.
 - **The file is read entirely on your device.** The only thing that leaves it is the equipment's model numbers — twelve small integers used to look up item names — never the file itself, your character's name, or the screenshot.
-- **Dyes on this glamour now names the pieces.** Instead of "Body" and "Legs", each dyed row shows the actual item — its icon, its name in your language, and the dyes it wears — with a small "+N" badge when several visually identical items share the same model (Augmented, Replica, +1 …). A Pieces/Dyes switch flips the list to one row per dye, showing which pieces carry it. Names arrive a moment after the dyes; if the lookup service is down you still get every dye, just labelled by slot.
+- **Dyes on this glamour now names the pieces.** Instead of "Body" and "Legs", each dyed row shows the actual item — its icon, its name in your language, and the dyes it wears — with a small "+N" badge when several visually identical items share the same model (Augmented, Replica, +1 …). A Pieces/Dyes switch flips the list to one row per dye, showing which pieces carry it. Names arrive a moment after the dyes; if the lookup service is down you still get every dye, just labeled by slot.
 - Save the whole set as a character record, send the matches on to other tools, or start a preset submission from the dyes on that glamour.
 - The palette rail and Dark/Light toggle sit right on the grid, and sharing a cell now identifies exactly which cell you meant.
-- **Heads-up:** the eye, hair, and skin grids carry a notice that these preset palettes are being retired in the Evercold expansion (January 2027) in favour of a free colour picker.
+- **Heads-up:** the eye, hair, and skin grids carry a notice that these preset palettes are being retired in the Evercold expansion (January 2027) in favor of a free color picker.
 
 ### Result cards, export, and saving
 
@@ -302,7 +316,7 @@
 - **One export sheet** in Extractor, Gradient, Comparison, and Mixer: CSS, SCSS, JSON, plain HEX, or Tailwind, with a live preview, Copy, and Download.
 - **Saved palettes, saved swaps, and character records now live in one place.** Everything you saved before is moved over automatically the first time you open 5.0.
 - If you delete something and later import an old backup, it stays deleted instead of coming back.
-- Custom colours can be used as the starting point in Harmony, Comparison, Accessibility, and Budget.
+- Custom colors can be used as the starting point in Harmony, Comparison, Accessibility, and Budget.
 
 ### Keyboard shortcuts finally work
 
@@ -322,7 +336,7 @@
 
 ### What you need to do
 
-- **Nothing, for most people.** Your theme, settings, favourites, and saved palettes are converted automatically the first time you open 5.0.
+- **Nothing, for most people.** Your theme, settings, favorites, and saved palettes are converted automatically the first time you open 5.0.
 - **Re-make any share links you've posted.** Links to specific dyes shared before 5.0 (Discord, forums, guides) now show a message instead of opening — open the tool and make a fresh link.
 - **If Market Board prices look empty right after the release,** wait a few minutes and refresh. The pricing server is being updated at the same time.
 

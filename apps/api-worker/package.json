@@ -1,6 +1,6 @@
 {
   "name": "xivdyetools-api-worker",
-  "version": "0.14.5",
+  "version": "0.14.6",
   "private": true,
   "description": "Public API for XIV Dye Tools - Dye database and color matching",
   "license": "MIT",

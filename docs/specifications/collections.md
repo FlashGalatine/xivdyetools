@@ -32,7 +32,7 @@ Simple starred dyes that appear prominently in dye selectors.
 ### 2. Collections (Organized Groups)
 
 Named groups of dyes for specific purposes. In 5.0 these are typed records written by the tools' own
-Save actions (**Save mix**, **Save swap**, **Save character colours**, **Make a palette**) rather
+Save actions (**Save mix**, **Save swap**, **Save character colors**, **Make a palette**) rather
 than folders the user files dyes into by hand.
 
 **Characteristics:**

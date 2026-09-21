@@ -23,14 +23,14 @@ Sprint 14 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-
   `bodyGuards()` factory** (REFACTOR-009 leg). This app previously carried its own copy of the same
   body-size cap and JSON depth / prototype-pollution check that `apps/presets-api` also had; both now
   live in the shared package (1.4.0), with this file supplying only the 10 KB cap and this app's two
-  error bodies. `bodySizeLimit` / `jsonDepthLimit` keep their names and behaviour — the existing test
+  error bodies. `bodySizeLimit` / `jsonDepthLimit` keep their names and behavior — the existing test
   suite passes unchanged.
 
 ## [3.1.0] - 2026-09-02
 
 ### Fixed — 2026-09-02 deep-dive audit, Sprint 10
 
-- **A cancelled login returns to the site it started on** (BUG-049). Every GET-callback failure
+- **A canceled login returns to the site it started on** (BUG-049). Every GET-callback failure
   redirected to `${FRONTEND_URL}/auth/callback`, discarding the allowlisted origin that began the
   flow — so a user on `beta.xivdyetools.app` who clicks Cancel was dumped on the **production**
   site, where their beta `sessionStorage` (PKCE verifier, CSRF nonce, return path) is unreachable
@@ -47,7 +47,7 @@ Sprint 14 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-
   which provider signed it and the POST leg enforces it; the GET leg did not, so a replay was
   accepted here and only rejected one round trip later.
 - **First-sign-in timestamps match the row that was written** (oauth-06). The INSERT relied on the
-  `datetime('now')` column defaults and then synthesised the returned row with
+  `datetime('now')` column defaults and then synthesized the returned row with
   `toISOString()` — so a first sign-in reported `2026-09-02T12:00:00.000Z` while the database held
   `2026-09-02 12:00:00`, and the same user's *second* sign-in returned the SQLite form. Both are
   now bound explicitly, so the value written and the value returned are the same string.
@@ -81,9 +81,9 @@ Sprint 14 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-
 ### Not done
 
 - **oauth-10** (`UPDATE … RETURNING *` to collapse two D1 round trips on the returning-user path).
-  It is a latency optimisation, and the hand-rolled D1 mock answers `.first()` from a scripted queue
+  It is a latency optimization, and the hand-rolled D1 mock answers `.first()` from a scripted queue
   without regard to the statement — so a `RETURNING` clause silently consumes the response meant for
-  the follow-up `SELECT`, and the change would ship with its behaviour unverifiable. Worth doing
+  the follow-up `SELECT`, and the change would ship with its behavior unverifiable. Worth doing
   alongside a statement-aware mock, not before one.
 
 ## [3.0.1] - 2026-09-02
@@ -91,7 +91,7 @@ Sprint 14 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-
 ### Removed
 
 Dead-code sweep (`docs/audits/2026-09-01-dead-code`, DEAD-025/026) — oauth's first dead-code pass.
-No route, token or D1 behaviour changes.
+No route, token or D1 behavior changes.
 
 - `DISCORD_REQUIRED_SCOPES` (`constants/oauth.ts`) and `isStateSigned` (`utils/state-signing.ts`) —
   neither had a single reference in the repo, tests included. State signatures are verified
@@ -117,7 +117,7 @@ Security audit remediation (docs/audits/2026-08-29-security, Sprint 2: FINDING-0
 
 - **`POST /auth/refresh` is gone; the route now 404s (FINDING-003).** It accepted a token on signature alone for `REFRESH_GRACE_SECONDS` past `exp` and minted the replacement from the **old token's claims** rather than the user row, with `orig_iat` capping the chain at 30 days and only the presented `jti` ever blacklisted. So whoever held a copied token could re-mint it every hour for up to a month, and the victim's `/auth/revoke` — which blacklists only the `jti` the victim holds — never touched the attacker's chain. There is no per-user revocation epoch and no reuse detection to catch it. **No client ever called the endpoint**: `grep -rn 'auth/refresh' apps/*/src` found callers only inside oauth itself, and the web app re-runs the PKCE sign-in flow instead of refreshing — so removing it costs nothing and closes the whole chain. A session now ends at `exp` (1 h, `JWT_EXPIRY`). `src/handlers/refresh.ts` is renamed `src/handlers/token.ts`, which keeps `GET /auth/me` and `POST /auth/revoke` unchanged. The `REFRESH_GRACE_SECONDS` blacklist-TTL grace in `revokeToken` **stays exactly as it is** (FINDING-001, 2026-08-21) — with no refresh endpoint it is simply a clock-skew margin on the revocation entry.
 
-- **The `xivauth_characters` table and every write to it (FINDING-001).** Each XIVAuth sign-in deleted and re-inserted the caller's entire FFXIV roster — Lodestone id, character name and home world, **unverified registrations included** — into `xivauth_characters` "for future features". Those features never arrived: `git ls-files 'apps/*/src/*.ts' 'packages/*/src/*.ts' | xargs grep -n 'getCharacters\|xivauth_characters'` found the store call, the definition and a test mock, and nothing else — no reader, no TTL, no purge, and no mention of a character roster in `apps/web-app/PRIVACY.md`, so users were never told. `storeCharacters` / `getCharacters` and the `XIVAuthCharacter` plumbing they alone used are deleted. The handler still reads the roster in memory to pick the verified character whose name becomes `username` / `global_name` (FINDING-013) and discards the rest, so login behaviour is unchanged for users with and without a verified character. If a future feature needs the roster, collect it then, minimally, and disclose it first.
+- **The `xivauth_characters` table and every write to it (FINDING-001).** Each XIVAuth sign-in deleted and re-inserted the caller's entire FFXIV roster — Lodestone id, character name and home world, **unverified registrations included** — into `xivauth_characters` "for future features". Those features never arrived: `git ls-files 'apps/*/src/*.ts' 'packages/*/src/*.ts' | xargs grep -n 'getCharacters\|xivauth_characters'` found the store call, the definition and a test mock, and nothing else — no reader, no TTL, no purge, and no mention of a character roster in `apps/web-app/PRIVACY.md`, so users were never told. `storeCharacters` / `getCharacters` and the `XIVAuthCharacter` plumbing they alone used are deleted. The handler still reads the roster in memory to pick the verified character whose name becomes `username` / `global_name` (FINDING-013) and discards the rest, so login behavior is unchanged for users with and without a verified character. If a future feature needs the roster, collect it then, minimally, and disclose it first.
 - **The `users.avatar_url` column and every write to it (FINDING-002).** Written on every Discord sign-in (`null` on the XIVAuth path) and never read back: `POST /auth/callback`, `GET /auth/me` and the web app all recompute the CDN URL from the Discord id and the `avatar` hash via `getAvatarUrl`. Responses are byte-identical; only the stored copy is gone. `CreateUserParams`, the `INSERT`/`UPDATE` statements, `UserRow` and both handler call sites drop it.
 - **Schema + migration.** `schema/users.sql` now builds `users` alone, without `avatar_url`, so a fresh database matches the code. An existing database is brought into line by the new `migrations/0001_drop_xivauth_characters.sql` (`DROP TABLE IF EXISTS xivauth_characters` + `ALTER TABLE users DROP COLUMN avatar_url`). It is **hand-run, and only AFTER this release is deployed** — running it first would 500 every sign-in on the missing column. From `apps/oauth`: `wrangler d1 execute xivdyetools-users --remote --file=migrations/0001_drop_xivauth_characters.sql`, with `SELECT COUNT(*) FROM xivauth_characters` before and `PRAGMA table_info(users)` after; the file's header carries the commands and the verified SQLite `DROP COLUMN` preconditions (no index, view, trigger, CHECK or FK names the column). Use `d1 execute --file=`, **not** `d1 migrations apply` — this database keeps no `d1_migrations` table and the `ALTER` is not idempotent. No `BEGIN TRANSACTION` (D1 rejects it).
 
@@ -139,7 +139,7 @@ Security audit remediation (docs/audits/2026-08-29-security, Sprint 2: FINDING-0
 
 - **Production startup validation now requires the security bindings the 2026-08-21 fixes depend on, and fails every request — not just logs — when one is missing (FINDING-013).** `validateEnv()` never checked for `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` or `TOKEN_BLACKLIST` in production, so a config edit or a dashboard change that silently dropped one degraded to the KV or in-memory rate-limit fallback, or no revocation check on `/auth/me`, with no error and no log anywhere. Production now additionally requires all four bindings to be present, using the same `Missing required env var in production: X` shape the file already uses. The env-validation middleware already failed every request in production when validation failed — not just the first one in the isolate (the BUG-017 pattern) — confirmed, not changed, by this release.
 
-- **A wrangler-config invariant test now pins the shapes a deploy-time config drift could quietly break (FINDING-023).** `src/__tests__/wrangler-config.test.ts` (new, modelled on `apps/presets-api/tests/wrangler-config.test.ts`) asserts the top-level worker stays `xivdyetools-oauth` with `ENVIRONMENT = "production"` and routes to `auth.xivdyetools.app`, exactly one `[env.development]` block exists and no `[env.preview]` / `[env.production]` (this worker's top level **is** production — a second production-shaped env is the invariant, not the label), the three `RL_AUTH_10/20/30` `[[ratelimits]]` tiers and their `[env.development.ratelimits]` counterparts are present with distinct dev namespace ids, the dev and production `TOKEN_BLACKLIST` KV ids actually match presets-api's (not just each other — the same pair presets-api's own test pins from its side), and `[env.development]`'s D1 `database_id` is not the production one. None of this was guarded before; a binding silently pointed at the wrong namespace is exactly the drift FINDING-013's fail-closed `validateEnv` cannot catch on its own, since a wrong-but-present binding still passes a truthy check.
+- **A wrangler-config invariant test now pins the shapes a deploy-time config drift could quietly break (FINDING-023).** `src/__tests__/wrangler-config.test.ts` (new, modeled on `apps/presets-api/tests/wrangler-config.test.ts`) asserts the top-level worker stays `xivdyetools-oauth` with `ENVIRONMENT = "production"` and routes to `auth.xivdyetools.app`, exactly one `[env.development]` block exists and no `[env.preview]` / `[env.production]` (this worker's top level **is** production — a second production-shaped env is the invariant, not the label), the three `RL_AUTH_10/20/30` `[[ratelimits]]` tiers and their `[env.development.ratelimits]` counterparts are present with distinct dev namespace ids, the dev and production `TOKEN_BLACKLIST` KV ids actually match presets-api's (not just each other — the same pair presets-api's own test pins from its side), and `[env.development]`'s D1 `database_id` is not the production one. None of this was guarded before; a binding silently pointed at the wrong namespace is exactly the drift FINDING-013's fail-closed `validateEnv` cannot catch on its own, since a wrong-but-present binding still passes a truthy check.
 
 ### Deploy notes
 
@@ -147,7 +147,7 @@ Security audit remediation (docs/audits/2026-08-29-security, Sprint 2: FINDING-0
 
 ## [2.7.0] - 2026-08-21
 
-Security audit remediation (docs/audits/2026-08-21-security — FINDING-001, FINDING-003, FINDING-012, FINDING-013, FINDING-029). Minor bump: behaviour changes on `/auth/refresh`, on authorize/callback validation and on XIVAuth account linking; no contract break for the web app.
+Security audit remediation (docs/audits/2026-08-21-security — FINDING-001, FINDING-003, FINDING-012, FINDING-013, FINDING-029). Minor bump: behavior changes on `/auth/refresh`, on authorize/callback validation and on XIVAuth account linking; no contract break for the web app.
 
 ### Security
 
@@ -163,7 +163,7 @@ Security audit remediation (docs/audits/2026-08-21-security — FINDING-001, FIN
 
 ## [2.6.0] - 2026-08-16
 
-Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipped until the branch merges. Minor bump: a new allowed origin plus a CORS behaviour fix; no contract break.
+Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipped until the branch merges. Minor bump: a new allowed origin plus a CORS behavior fix; no contract break.
 
 ### Added
 
@@ -171,12 +171,12 @@ Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipp
 
 ### Fixed
 
-- **CORS and redirect URIs now use one allowlist.** The CORS origin callback previously reflected only `env.FRONTEND_URL`, while the redirect check used `getAllowedRedirectOrigins()` — so an origin could be trusted to *start* a login (302 to the provider, callback returned) and then be blocked from every XHR that *finishes* one (token exchange, `/auth/me`) with no `Access-Control-Allow-Origin`. beta.xivdyetools.app hit exactly that and sat showing its two login buttons. CORS now consults `getAllowedRedirectOrigins(env)` (which already folds in `FRONTEND_URL` and strips localhost outside development); production behaviour is otherwise unchanged. Same class as BUG-018, which had swept the three redirect lists but not CORS. Two regression tests, both verified to fail against the old code.
+- **CORS and redirect URIs now use one allowlist.** The CORS origin callback previously reflected only `env.FRONTEND_URL`, while the redirect check used `getAllowedRedirectOrigins()` — so an origin could be trusted to *start* a login (302 to the provider, callback returned) and then be blocked from every XHR that *finishes* one (token exchange, `/auth/me`) with no `Access-Control-Allow-Origin`. beta.xivdyetools.app hit exactly that and sat showing its two login buttons. CORS now consults `getAllowedRedirectOrigins(env)` (which already folds in `FRONTEND_URL` and strips localhost outside development); production behavior is otherwise unchanged. Same class as BUG-018, which had swept the three redirect lists but not CORS. Two regression tests, both verified to fail against the old code.
 - `deploy:production` script could never succeed: this worker's `wrangler.toml` defines only `development` and `preview`, and the **top-level block is production** (`name = "xivdyetools-oauth"`, `auth.xivdyetools.app`), so `wrangler deploy --env production` hard-errors with "No environment found". The script is now an alias of the working bare `wrangler deploy` — the exact inverse of api-worker / presets-api, where the top-level block is the routeless `-dev` worker. Check the toml before assuming a convention.
 
 ### Changed
 
-- Migrated from `@xivdyetools/worker-middleware` / `@xivdyetools/rate-limiter` / `@xivdyetools/crypto` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) and `@xivdyetools/auth/encoding` (Base64URL helpers) — Tier 1 package consolidation, no behaviour change. The deploy workflow's path filter now watches `packages/auth/**` and `packages/worker-kit/**` (auth itself was missing before).
+- Migrated from `@xivdyetools/worker-middleware` / `@xivdyetools/rate-limiter` / `@xivdyetools/crypto` to `@xivdyetools/worker-kit` (`/rate-limiter` subpath) and `@xivdyetools/auth/encoding` (Base64URL helpers) — Tier 1 package consolidation, no behavior change. The deploy workflow's path filter now watches `packages/auth/**` and `packages/worker-kit/**` (auth itself was missing before).
 - Dependencies: `hono` floor raised to `^4.12.34` (2026-08-09 security advisories); `wrangler` `^4.114.0 → ^4.120.0`; removed the unused direct `miniflare` devDependency (never imported by any test — it only pinned a second, vulnerable undici); `description` and `license: MIT` declared.
 - Docs: `README.md` written (accuracy/licensing/attribution audit); `CLAUDE.md` corrected on the deploy command and synced to worker-kit / auth `/encoding`.
 
@@ -205,7 +205,7 @@ Monorepo 2.0 release train (branch `monorepo-2.0-prep`). Nothing below has shipp
 ### Documentation
 
 - **FINDING-006**: Added inline comment to the `[[d1_databases]]` binding in `wrangler.toml`'s dev environment documenting that `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` is a placeholder — it must be replaced with a real D1 instance ID (created via `wrangler d1 create`) before `wrangler dev` can perform local D1 operations against the users database
-- **FINDING-003**: Added JSDoc note to `verifyJWT()` in `src/services/jwt-service.ts` clarifying that this function validates signature and expiry but does **not** check the `TOKEN_BLACKLIST` KV store. Callers that need to honour token revocation must use `verifyJWTWithRevocationCheck()` instead — which is already used by `GET /auth/me` and `POST /auth/refresh`
+- **FINDING-003**: Added JSDoc note to `verifyJWT()` in `src/services/jwt-service.ts` clarifying that this function validates signature and expiry but does **not** check the `TOKEN_BLACKLIST` KV store. Callers that need to honor token revocation must use `verifyJWTWithRevocationCheck()` instead — which is already used by `GET /auth/me` and `POST /auth/refresh`
 
 ---
 

@@ -40,7 +40,7 @@
   them; check the worker before deleting assets. Root `assets/` vs Vite `publicDir: ../public`.
 - Locale keys: web-app's `analyze-unused-keys.js` resolves dynamic prefixes (`t(\`swatch.${k}\`)`)
   — `swatch.*` orphans are invisible to the gate; check dynamic-prefix families by hand (the 11
-  lookup patterns are catalogued in
+  lookup patterns are cataloged in
   `docs/audits/2026-08-16-web-app-dead-code/evidence/agent-report-i18n.md` §A).
 - Re-grep every symbol immediately before `git rm` — three live e2e fixture exports were flagged
   dead in 2026-08-16 by a stale pass.

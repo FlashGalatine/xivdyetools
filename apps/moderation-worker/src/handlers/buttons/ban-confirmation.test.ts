@@ -360,7 +360,7 @@ describe('handleBanCancelButton', () => {
     expect(json.data.embeds[0]).toEqual(
       expect.objectContaining({
         title: expect.stringContaining('Cancelled'),
-        description: 'The ban action was cancelled.',
+        description: 'The ban action was canceled.',
         color: 0x5865f2,
       }),
     );

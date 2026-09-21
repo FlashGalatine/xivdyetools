@@ -74,7 +74,7 @@ export function toolSwitcher(page: Page): Locator {
 /**
  * The switcher's naming of the current tool: the accent-filled rail chip on
  * desktop (short name, e.g. "Presets"), the title-menu button on mobile
- * (full title, e.g. "Preset Palettes"). Assert with a regex both satisfy.
+ * (full title, e.g. "Community Presets"). Assert with a regex both satisfy.
  */
 export function activeToolControl(page: Page): Locator {
   return page

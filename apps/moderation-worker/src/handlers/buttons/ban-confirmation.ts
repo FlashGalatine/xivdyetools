@@ -141,7 +141,7 @@ export async function handleBanCancelButton(
     embeds: [
       {
         title: '\u274C Ban Cancelled',
-        description: 'The ban action was cancelled.',
+        description: 'The ban action was canceled.',
         color: 0x5865f2,
       },
     ],

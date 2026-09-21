@@ -178,7 +178,7 @@ Blend two dyes across a ratio sweep (25/40/50/65/80 %, 12F card) using `@xivdyet
 
 ### /swatch
 
-Match a character file's colours to the nearest dyes. 5.0 replaced the v4 `color` / `grid` subcommands with a required `.chara` attachment (Anamnesis / Ktisis export, 1 MiB cap): core's `parseCharaFile` + `resolveCharaColors` resolve the live slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal), and the swatch card shows five rows. `slot:` routes to the 14J·2 colour sheet for one slot instead.
+Match a character file's colors to the nearest dyes. 5.0 replaced the v4 `color` / `grid` subcommands with a required `.chara` attachment (Anamnesis / Ktisis export, 1 MiB cap): core's `parseCharaFile` + `resolveCharaColors` resolve the live slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal), and the swatch card shows five rows. `slot:` routes to the 14J·2 colour sheet for one slot instead.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|

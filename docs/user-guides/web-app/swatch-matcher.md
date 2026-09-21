@@ -78,13 +78,13 @@ At the bottom of the flow a row of buttons sends the matched dyes on to **Harmon
 
 ### THIS CHARACTER
 
-One card per colour slot: **Left eye, Right eye, Hair, Highlights, Skin, Tattoo, Limbal ring, Lips, Face paint**. Each card shows the colour, its grid address (or an amber **OFF GRID** tag when the file holds an arbitrary colour that has no cell), and the closest dye with its distance. Slots the file doesn't set stay as dashed placeholders with the reason — for example *"Highlights are switched off in this file"* or *"On Hrothgar this field is a fur pattern, not a colour."*
+One card per colour slot: **Left eye, Right eye, Hair, Highlights, Skin, Tattoo, Limbal ring, Lips, Face paint**. Each card shows the colour, its grid address (or an amber **OFF GRID** tag when the file holds an arbitrary colour that has no cell), and the closest dye with its distance. Slots the file doesn't set stay as dashed placeholders with the reason — for example *"Highlights are switched off in this file"* or *"On Hrothgar this field is a fur pattern, not a color."*
 
 Lips get special handling: the game draws the lip colour over the skin, so the card shows the **BLEND** you actually see and matches dyes to that, not to the raw cell.
 
 Click a slot card to make it the selection: the sentence and excerpt follow it, and the grid switches to that slot's sheet with numbered **pins** marking where each of your character's colours sits (two colours on one cell share a pin, e.g. **1·2**).
 
-**Save character colours** stores the closest dye for every slot as a set on this device (see [Favorites & Collections](favorites-collections.md)).
+**Save character colors** stores the closest dye for every slot as a set on this device (see [Favorites & Collections](favorites-collections.md)).
 
 ### DYES ON THIS GLAMOUR
 

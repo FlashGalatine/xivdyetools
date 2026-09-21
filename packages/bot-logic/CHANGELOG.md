@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.1] - 2026-09-21
+
+Spelling only — American English across the `en` locale, per
+`.agents/skills/audit-shared/american-english.md`. No key is added, removed or renamed:
+`card.colours` keeps its British key name, because a key is an identifier and removing one
+is a MAJOR. Only its value changes.
+
+### Changed
+
+- **`en` locale values now use American spelling** (10 keys): `card.colours`, `card.colours_one`,
+  `card.colours_other`, `card.manualLead`, `card.swatchNoSlots`, `manual5.topics.colorVision.name`,
+  `manual5.topics.contrast.body`, `manual5.topics.characterFile.body`,
+  `commands.harmony.options.wheel.description`, `commands.swatch.description`.
+- **`preset.colorCount` harmonized in ja and ko.** Correcting `card.colours` to `{n} colors` made
+  it share one English value with `preset.colorCount`, which the *same English → same translation*
+  gate then binds together — and the two had diverged (ja `{n} 色` vs `{n}色`, ko `{n}색` vs
+  `{n}가지 색`). `preset.colorCount` now takes the `card.*` form in both, the majority reading and
+  the plural-aware entry. The British spelling had been hiding the inconsistency from the gate.
+  **Both values want a native review** — they were chosen by majority, not by a fluent reader.
+
 ## [4.4.0] - 2026-09-20
 
 2026-09-19 i18n audit, Sprint 5 (`docs/audits/2026-09-19-i18n/`). Minor rather than patch:
@@ -41,7 +61,7 @@ locale key is a MAJOR. Needs `@xivdyetools/core` 5.4.0 (`foldForSearch`).
   `webhook.fields.category` uses `分类` like `common.category`.
 - **`card.found` still translated a retired English "FOUND".** It and `card.swatchNearest` both
   read "NEAREST DYE", but fr said `TROUVÉ`, ko / zh a bare modifier with no noun, and de's other
-  key `NÄCHSTE FARBE` (*colour*, for a dye). One value per locale now, the one already shipping in
+  key `NÄCHSTE FARBE` (*color*, for a dye). One value per locale now, the one already shipping in
   the tighter slot: ja `近いカララント`, de `NÄCHSTER FARBSTOFF`, fr `TEINTURE PROCHE`, ko
   `가까운 염료`, zh `最近的染剂`. Every glyph was already drawn — no font re-cut.
 - **Three values were simply untranslated**: de `about.poweredBy` ("Powered by Cloudflare
@@ -80,7 +100,7 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
 
 - **`/swatch` dropped the L/R eye marker on off-grid heterochromia rows**
   (BUG-006). A heterochromia `.chara` file whose eyes are both OFF GRID
-  rendered two rows both labelled EYES with no way to tell which swatch was
+  rendered two rows both labeled EYES with no way to tell which swatch was
   which eye. The `·L`/`·R`/`·LR` marker now sits on the row's slot LABEL
   (e.g. `EYES·L`) instead of the address line, so it survives on off-grid
   rows too — the address line's OFF-GRID token was already at its card-width
@@ -95,7 +115,7 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
   instead of the `.chara` attachment; every `matchImageHelp.*` string described
   `/match` and `/match_image`, deleted in 5.0, and said "136 FFXIV dyes",
   "Euclidean distance in RGB", "`colors` option (1-5)" and "8MB" (125, ΔE2000,
-  3-10, 10 MB); `manual.harmony` listed 7 of the 10 types and no colour wheels;
+  3-10, 10 MB); `manual.harmony` listed 7 of the 10 types and no color wheels;
   `manual.gradient` had the option names and step range wrong (`start_color` /
   `end_color`, 2-12); `manual.mixer` described one blend rather than the
   five-ratio sweep; `manual.preferences` showed a `set <key> <value>` shape
@@ -104,17 +124,17 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
   the results show categories (they show name and hex), and
   `preferences.filters.affectsHint` — the footer of `/preferences filters set`
   — still listed the deleted `/match`. The placeholders inside syntax lines
-  are identifiers and are no longer translated. Harmony-type, colour-wheel
+  are identifiers and are no longer translated. Harmony-type, color-wheel
   and dye-category names in the manual are now core's own in every locale
   (TERM-001: core owns that vocabulary, and Discord's picker and the cards
   print it) — Korean harmony names, Japanese / Korean / French wheel names and
   Japanese / French / Korean / Chinese category names had all differed from
   what the picker shows. From the pre-merge review (2026-09-19): the 📸 topic
-  says the `/extractor image` card lists matches for the five largest colours
+  says the `/extractor image` card lists matches for the five largest colors
   only (its bar carries them all); the French Character File topic names the
   card's real off-grid badge (`HORS G.`, not "HORS GRILLE"); six German lead
   sentences use the file's imperative ("Ordne", "Miss", "Zeige") like their
-  neighbours; and the Korean preset range reads `3~6` like the file's others.
+  neighbors; and the Korean preset range reads `3~6` like the file's others.
 
 ### Added
 
@@ -147,14 +167,14 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
   `executeHarmony` passes through to core's `generateHarmonySlots`, plus
   `getLocalizedColorWheelName` for rendering the choice on the card and in embeds.
   The `/harmony` share URL now carries `&wheel=` when a non-default wheel was used.
-  The value is normalised at the boundary with core's `normalizeColorWheelId`: an
+  The value is normalized at the boundary with core's `normalizeColorWheelId`: an
   unrecognised id falls back to `rgb` **and warns** through `input.logger` instead of
   reaching `generateHarmonySlots`, whose `RangeError` the surrounding `catch` used to
   report to the user as `GENERATION_FAILED` — a typo'd wheel looked like a render bug.
 
 ### Deprecated
 
-- `HarmonyInput.harmonyOptions` is **deprecated** in favour of `wheel` — its `colorSpace`
+- `HarmonyInput.harmonyOptions` is **deprecated** in favor of `wheel` — its `colorSpace`
   field has been **ignored since PR #159**, and `executeHarmony` no longer even reads it
   (the `void harmonyOptions;` placeholder is gone); every surface shares core's
   `generateHarmonySlots`. The field remains on the input type only so an existing caller
@@ -187,7 +207,7 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
 
 ### Fixed
 
-- **The bot named harmonies and colour-vision types differently from the rest of the
+- **The bot named harmonies and color-vision types differently from the rest of the
   product** (TERM-001). It resolved them through its own locale keys while web-app
   (`harmony-generator.ts`) and og-worker (`translator.ts`) both used `@xivdyetools/core`,
   so Split-Complementary was 分裂補色 in the app and スプリット補色 in the bot, Tetradic
@@ -218,7 +238,7 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
 - **`/harmony` no longer answers your own dye.** `preventDuplicates` defaulted to `false`
   here while the Harmony Explorer defaults it `true`, and core's `excludeItemIDs` was only
   consulted on the de-duplication branch — so the base dye was never actually excluded on
-  the bot. `/harmony monochromatic` (one `[0]` offset, whose ideal is the base colour)
+  the bot. `/harmony monochromatic` (one `[0]` offset, whose ideal is the base color)
   returned the base dye at ΔE 0 as its entire harmony. Fixed in core (4.2.0), and both
   `preventDuplicates` and `strictMatching` now default to what `DEFAULT_CONFIGS.harmony`
   defaults them to in the web app, which is the point of converging these surfaces at all.
@@ -239,7 +259,7 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
   so a slot answers "the nearest allowed dye to the ideal" instead of "the
   nearest allowed dye to one that was thrown away".
 - An unrecognised harmony type is now refused with `NO_MATCHES` instead of
-  silently falling through to a triadic card labelled with the unknown name.
+  silently falling through to a triadic card labeled with the unknown name.
 
 ### Added
 
@@ -253,7 +273,7 @@ Minor rather than patch: the swatch card's eye marker is an observable change to
 ## [3.1.0] - 2026-09-02
 
 Deep-dive remediation, Sprint 19 (docs/audits/2026-09-02-deep-dive, REFACTOR-001,
-first half). Minor bump: new exports, no behaviour change to anything already
+first half). Minor bump: new exports, no behavior change to anything already
 here.
 
 ### Added
@@ -293,7 +313,7 @@ inherited value is not nullish. Found by writing the first test this layer has
 ever had; guarded with `Object.hasOwn`, the same fix FINDING-027 applied to help
 topics.
 
-Where the two copies disagreed, the louder behaviour won:
+Where the two copies disagreed, the louder behavior won:
 `getLegacyLanguagePreference` takes an optional logger and reports a KV failure
 (moderation-worker's copy did; discord-worker's swallowed it silently). It still
 resolves rather than throwing — locale resolution runs on every interaction and
@@ -319,7 +339,7 @@ Between them the two forked copies had one suite, and BUG-001 lived in the gap.
   second cut), which is the question someone reading that line is actually asking.
 
   The threshold is measured, not guessed: against the real 125-dye set the EXACT cut (5) admits
-  nothing at all — the tightest fourth-nearest neighbour anywhere is Ink Blue / Jet Black at 5.41 —
+  nothing at all — the tightest fourth-nearest neighbor anywhere is Ink Blue / Jet Black at 5.41 —
   so it would only have swapped one constant for another. At 10, forty dyes carry the line with n
   between 1 and 6 and eighty-five omit it; at the LOOSE cut (20) it fires for 122 of 125 with n as
   high as 33, which is noise rather than information.
@@ -336,10 +356,10 @@ Between them the two forked copies had one suite, and BUG-001 lived in the gap.
 
 ### Fixed — 2026-09-02 deep-dive audit
 
-- `resolveCssColorName` returns `null` for inherited object keys (BUG-011). A colour
+- `resolveCssColorName` returns `null` for inherited object keys (BUG-011). A color
   named `constructor` or `__proto__` used to resolve to a function, so
   `/contrast dye1:constructor` threw inside the handler instead of answering with the
-  localized "invalid colour" message.
+  localized "invalid color" message.
 
 ## [3.0.0] - 2026-08-29
 
@@ -361,7 +381,7 @@ Between them the two forked copies had one suite, and BUG-001 lived in the gap.
 
 ### Added — 2026-08-29
 
-- **Every dye input accepts an id as well as a name.** `parseDyeIdInput` reads a bare number as a stainID (1–254) or a legacy item id (≥ 5729 — the ranges are disjoint), and `searchDyesByName`, `findDyeByName`, `resolveColorInput` and `resolveDyeInput` all route through it, so a dye option can carry a stainID (what the Discord autocomplete now sends), a legacy item id (what 4.x habits type), or a name in any of the six locales. `resolveColorInput` checks the id before hex, so `'101'` is Pure White while `'#101'` stays the colour — a bare 3-digit hex shorthand without `#` was the one ambiguity and it resolves in the id's favour.
+- **Every dye input accepts an id as well as a name.** `parseDyeIdInput` reads a bare number as a stainID (1–254) or a legacy item id (≥ 5729 — the ranges are disjoint), and `searchDyesByName`, `findDyeByName`, `resolveColorInput` and `resolveDyeInput` all route through it, so a dye option can carry a stainID (what the Discord autocomplete now sends), a legacy item id (what 4.x habits type), or a name in any of the six locales. `resolveColorInput` checks the id before hex, so `'101'` is Pure White while `'#101'` stays the color — a bare 3-digit hex shorthand without `#` was the one ambiguity and it resolves in the id's favor.
 
 ## [2.1.0] - 2026-08-21
 
@@ -371,7 +391,7 @@ Between them the two forked copies had one suite, and BUG-001 lived in the gap.
 
 ### Added — 2026-08-21 security audit (FINDING-019)
 
-- `escapeDiscordMarkdown()`, `sanitizeEmbedText(text, maxLength?)` and `ALLOWED_MENTIONS_NONE` (`src/discord-markdown.ts`): one sanitiser for every user-sourced string that lands in a bot-authored Discord message/embed — strips control / zero-width / bidi characters, collapses whitespace, defuses `@everyone` / `@here` / `<@…>` mentions, escapes inline markdown and masked links, caps length with an ellipsis. Both bots adopt it in their 2026-08-21 releases instead of re-implementing it.
+- `escapeDiscordMarkdown()`, `sanitizeEmbedText(text, maxLength?)` and `ALLOWED_MENTIONS_NONE` (`src/discord-markdown.ts`): one sanitizer for every user-sourced string that lands in a bot-authored Discord message/embed — strips control / zero-width / bidi characters, collapses whitespace, defuses `@everyone` / `@here` / `<@…>` mentions, escapes inline markdown and masked links, caps length with an ellipsis. Both bots adopt it in their 2026-08-21 releases instead of re-implementing it.
 
 ### Added — 2026-08-20 i18n audit remediation
 
@@ -392,11 +412,11 @@ The 5.0 bot release: every `execute*` now renders a card from `@xivdyetools/svg`
 
 ### ⚠️ BREAKING
 
-- **`executeMatch` removed** with `MatchInput`, `MatchResult`, `MatchEntry` (`commands/match.ts` deleted). The v4 `/match` command is gone; colour → dye matching now lives in the `/extractor color` sheet, which discord-worker drives directly against `@xivdyetools/svg`'s `generateNearestSheet`.
+- **`executeMatch` removed** with `MatchInput`, `MatchResult`, `MatchEntry` (`commands/match.ts` deleted). The v4 `/match` command is gone; color → dye matching now lives in the `/extractor color` sheet, which discord-worker drives directly against `@xivdyetools/svg`'s `generateNearestSheet`.
 - **`executeAccessibility` is pair-based and routes on `vision`.** `AccessibilityInput.visionTypes?: VisionType[]` is replaced by `vision?: VisionType | 'all'` (a named lens → 13D, `'all'`/absent → 13E, a single dye → 13H regardless); `dyes` takes one or two entries (the 3–6 dye contrast matrix moved to `executeContrast`); new `theme` and `commandLabel` (`'/ACCESSIBILITY'` or `'/A11Y'` — the chip prints what the user typed). `AccessibilityResult.mode` is now `'lens' | 'all' | 'solo'` (was `'simulation' | 'contrast'`). `VISION_TYPES` gains `'achromatopsia'` as a full member.
 - **`RandomResult.dyeInfos` removed** (its `RandomDyeInfo` type left `@xivdyetools/svg`); `dyes` and `title` remain. `RandomInput.count` is clamped to `ROW_CAP` (5).
 - **`GradientStepResult` no longer extends svg's deleted `GradientStep`** — it is now `{ hex, dyeName?, dyeId?, dye?, distance }` with `distance` a ΔE2000 (was raw RGB). `GradientResult` gains `omittedRows`.
-- **`MixerResult` reshaped**: gains `svgString` (the 12F sweep card — the mixer's first image) and `sweep: MixerSweepStop[]`; `matches[].distance` is ΔE2000 (was raw RGB). `blendedHex` / `matches` still describe the 50 % blend for adapters that surface a single colour.
+- **`MixerResult` reshaped**: gains `svgString` (the 12F sweep card — the mixer's first image) and `sweep: MixerSweepStop[]`; `matches[].distance` is ΔE2000 (was raw RGB). `blendedHex` / `matches` still describe the 50 % blend for adapters that surface a single color.
 - **`HarmonyResult` / `DyeInfoResult` / `ComparisonResult` embeds are one line** — `embed.description` is now a share URL (`/dye?stain=…`, `/harmony?dye=…&harmony=…`) or the closest-pair line; the per-dye lists, `footer` strings and the `dye.info.detailedInfo` copy are gone. Adapters that parsed the description must stop.
 - **Every card-producing input gains `theme?: 'dark' | 'light'`** (`HarmonyInput`, `DyeInfoInput`, `RandomInput`, `GradientInput`, `MixerInput`, `ComparisonInput`, `AccessibilityInput`, `ContrastInput`, `SwatchInput`) — pass the user's stored preference; the default is dark.
 - **Locale namespaces removed** (×6): `match`, `favorites`, `collection`, `language` — the v4 commands they served were deleted. `matchImage` / `matchImageHelp` stay for the live `/extractor image` and `/manual` topic.
@@ -407,7 +427,7 @@ The 5.0 bot release: every `execute*` now renders a card from `@xivdyetools/svg`
 ### Added
 
 - **`executeContrast`** (`commands/contrast.ts`) — the new `/contrast` command (WCAG 1.4.11): 2–4 dyes → every pair once, worst first, `contrastRatio` from svg/core; the pair count routes the frame (13A one pair / 13B ledger / 13C·1 log-axis plot). Bands are named by their ratio — AA/AAA letter grades left the bot. Types `ContrastInput`, `ContrastDyeInput`, `ContrastResult`.
-- **`executeSwatch`** (`commands/swatch.ts`) — the new `/swatch` command over a `.chara` character file: core's `parseCharaFile` + `resolveCharaColors` (lazy `CharacterColorService`), live slots only, merged eyes as one row (`+LR`) or heterochromia as two (`+L` / `+R`), OFF GRID detection (index colour vs live float), the lip's composited blend, full-scan ΔE2000 matching, `order: 'slots' | 'hardest'` (past five live slots the SAFEST match drops so both orders show the same rows), and `slot:` routing to the 14J·2 nearest sheet with that slot's colour as target. The embed carries what the PNG leaves out (off-grid hex pairs, lip raw-vs-blend, gear-dye stainIDs, dropped slots). Types `SwatchInput`, `SwatchSlotOption`, `SwatchResult`. Tests run on core's vendored `.chara` fixture corpus (`commands/__fixtures__/chara-fixtures.ts`).
+- **`executeSwatch`** (`commands/swatch.ts`) — the new `/swatch` command over a `.chara` character file: core's `parseCharaFile` + `resolveCharaColors` (lazy `CharacterColorService`), live slots only, merged eyes as one row (`+LR`) or heterochromia as two (`+L` / `+R`), OFF GRID detection (index color vs live float), the lip's composited blend, full-scan ΔE2000 matching, `order: 'slots' | 'hardest'` (past five live slots the SAFEST match drops so both orders show the same rows), and `slot:` routing to the 14J·2 nearest sheet with that slot's color as target. The embed carries what the PNG leaves out (off-grid hex pairs, lip raw-vs-blend, gear-dye stainIDs, dropped slots). Types `SwatchInput`, `SwatchSlotOption`, `SwatchResult`. Tests run on core's vendored `.chara` fixture corpus (`commands/__fixtures__/chara-fixtures.ts`).
 - **Gradient**: `capGradientRows(steps)` (exported) — the R1 cap in three stages shared by both 12H frames: merge adjacent same-dye steps (range lead, worst ΔE), drop rows at ΔE 0.0 by value never by position (a bare-hex endpoint stays), then keep the five widest gaps in step order with the omitted count in the embed. Stage 0 (12H·4): ≥ 4 steps resolving to ≤ 2 rows collapses the card to the verdict frame (`card.gradVerdict`).
 - **Mixer**: `MIXER_SWEEP_RATIOS = [25, 40, 50, 65, 80]` and `MixerSweepStop` — the sweep replaces the hard-coded midpoint; the best landing is flagged `best: true` and named in the embed.
 - **Harmony**: ideal hues per type derived via `ColorService.rotateHue` (an internal per-type offset table), each found dye paired with its nearest ideal, the slot's angle label (`-30` reads as `330°`), each slot scored in the **chosen** matching method (not always ΔE2000), and the weakest-slot verdict composed as `angle · name · value` (a label overran the row in German). Base dye stainID share URL in the embed.
@@ -423,7 +443,7 @@ The 5.0 bot release: every `execute*` now renders a card from `@xivdyetools/svg`
 - **`executeHarmony` / `executeGradient` default `matchingMethod` is `DEFAULT_MATCHING_METHOD` (ΔE2000)**, not `'oklab'` — the two places bot-logic still carried the retired v4 default. A caller that passes nothing now gets the suite default (the discord-worker handlers pass an explicit method anyway); `MixerInput.matchingMethod` doc corrected to match its real ΔE2000 default
 - All `execute*` distances are ΔE2000 via `ColorService.getDistanceForMethod` (`getColorDistance` / `getMatchQualityInfo` in `color-math.ts` remain exported but no command uses them any more).
 - `executeHarmony`, `executeDyeInfo`, `executeRandom`, `executeGradient`, `executeMixer`, `executeComparison`, `executeAccessibility` call the 5.0 generators (`generateHarmonyCard`, `generateDyeInfoCard` 11B, `generateRandomDyesGrid` 11B, `generateGradientCard`, `generateMixerCard`, `generateComparisonCard`, `generateA11yCard`) with translated `labels` and the user's `theme`.
-- Accessibility simulation stays the Brettel path; separation is ΔE2000 between the **simulated** colours; the verdict sentence rides the embed (where it does not cost a lens row).
+- Accessibility simulation stays the Brettel path; separation is ΔE2000 between the **simulated** colors; the verdict sentence rides the embed (where it does not cost a lens row).
 - `MODERATOR_IDS` grammar (`parseModeratorIds` / `isModeratorId` / `isValidDiscordSnowflake`) is unchanged and remains the single parser for both bot workers.
 - Docs: `CLAUDE.md` / `README.md` synced to the 5.0 command list (`contrast.ts`, `swatch.ts`; `match.ts` gone) and the Tier 1 dependency set.
 
@@ -448,7 +468,7 @@ The 5.0 bot release: every `execute*` now renders a card from `@xivdyetools/svg`
 
 ### Removed (2026-08-18 dead-code audit, Task 13 — Wave 4a)
 
-- **DEAD-037**: `commands/accessibility.ts`'s local `VISION_TYPES` (the 4 simulated colourblind lenses, typed against `@xivdyetools/svg`'s `VisionType`) gains a compile-time bidirectional check against `@xivdyetools/types`' 5-member `VisionType` union minus its `'normal'` baseline, so the two cannot silently drift apart. No data moved — the register's two `VISION_TYPES` copies (here and web-app's `accessibility-tool.ts`) have different element shapes and one excludes the baseline lens, so they were never a byte-identical duplicate to consolidate into a shared table.
+- **DEAD-037**: `commands/accessibility.ts`'s local `VISION_TYPES` (the 4 simulated colorblind lenses, typed against `@xivdyetools/svg`'s `VisionType`) gains a compile-time bidirectional check against `@xivdyetools/types`' 5-member `VisionType` union minus its `'normal'` baseline, so the two cannot silently drift apart. No data moved — the register's two `VISION_TYPES` copies (here and web-app's `accessibility-tool.ts`) have different element shapes and one excludes the baseline lens, so they were never a byte-identical duplicate to consolidate into a shared table.
 
 ## [1.5.0] - 2026-08-01
 

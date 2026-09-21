@@ -660,7 +660,7 @@ export class ShareService {
         if (!hasCell && !hasHex) {
           errors.push('Missing required parameter: slot + i (or hex)');
         } else if (hasHex && this.parseSharedHex(hexRaw) === null) {
-          errors.push(`Invalid hex colour: ${String(hexRaw)}`);
+          errors.push(`Invalid hex color: ${String(hexRaw)}`);
         }
         break;
       }
@@ -681,7 +681,7 @@ export class ShareService {
         }
         if (colors.length > MAX_EXTRACTOR_SHARE_COLORS) {
           errors.push(
-            `Invalid parameter: colors carries at most ${MAX_EXTRACTOR_SHARE_COLORS} colours`
+            `Invalid parameter: colors carries at most ${MAX_EXTRACTOR_SHARE_COLORS} colors`
           );
         }
         for (const entry of colors) {

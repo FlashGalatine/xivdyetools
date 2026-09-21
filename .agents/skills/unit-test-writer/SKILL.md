@@ -39,7 +39,7 @@ unit keeps one (`*.test.ts` beside the source, `__tests__/`, or `tests/`); follo
 
 ## Step 2 — plan (one table in chat)
 
-`| file:line arm | what makes it run | test name | assertion | mock |` — prioritise public-contract
+`| file:line arm | what makes it run | test name | assertion | mock |` — prioritize public-contract
 arms; an arm unreachable from the public contract (dead fallback, impossible `?? default`) is
 reported as **uncoverable → delete the dead arm** (dead-code-finder territory), not tested via
 private access or fabricated inputs. That uncoverable call is a dead-code verdict — `verifier`

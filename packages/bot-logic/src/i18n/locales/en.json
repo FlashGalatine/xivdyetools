@@ -523,12 +523,12 @@
     "target": "TARGET",
     "rampTitle": "Palette from image",
     "matchTitle": "Nearest dyes",
-    "colours": "{n} colours",
-    "colours_one": "{n} colour",
-    "colours_other": "{n} colours",
+    "colours": "{n} colors",
+    "colours_one": "{n} color",
+    "colours_other": "{n} colors",
     "rampKey": "band width = share of image",
     "matchKey": "nearest by ΔE2000",
-    "manualLead": "Colours not what you expected? Try",
+    "manualLead": "Colors not what you expected? Try",
     "manualTail": "",
     "gradKey": "strip = every step · rows = the distinct dyes",
     "gradKeyCut_one": "strip = all {n} steps · rows = the {k} widest gap",
@@ -596,7 +596,7 @@
     "swatchDropped": "Dropped (safest): {slot} · ΔE {de}",
     "swatchParseError": "Could not read the file — {message}",
     "swatchTitle": "Character swatch",
-    "swatchNoSlots": "No live colour slots in this file.",
+    "swatchNoSlots": "No live color slots in this file.",
     "swatchSlotMissing": "{slot} is not a live slot in this file.",
     "perDe": "GIL/ΔE"
   },
@@ -614,12 +614,12 @@
     "learnLead": "Learn more: {link}",
     "topics": {
       "colorVision": {
-        "name": "Colour Vision",
+        "name": "Color Vision",
         "body": "The accessibility tools simulate four lenses — protanopia (PROT), deuteranopia (DEUT), tritanopia (TRIT) and achromatopsia (ACHR) — using the Brettel method, then measure how far apart two dyes remain under each lens. Larger separation is safer: the bands read 30 / 15 / 8 under ΔE2000."
       },
       "contrast": {
         "name": "Contrast",
-        "body": "/contrast measures WCAG luminance ratios between dyes (1:1–21:1). The non-text floor is 3:1 (WCAG 2.1, criterion 1.4.11); the frames mark 3 / 4.5 / 7 and name bands by their ratio — no letter grades. Ratio measures lightness only, not colour difference."
+        "body": "/contrast measures WCAG luminance ratios between dyes (1:1–21:1). The non-text floor is 3:1 (WCAG 2.1, criterion 1.4.11); the frames mark 3 / 4.5 / 7 and name bands by their ratio — no letter grades. Ratio measures lightness only, not color difference."
       },
       "matchingMethods": {
         "name": "Matching Methods",
@@ -631,7 +631,7 @@
       },
       "characterFile": {
         "name": "Character File",
-        "body": "/swatch reads a .chara export from Anamnesis or Ktisis: colour slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colours (edited past the game's palette) are matched by their live value and flagged OFF GRID."
+        "body": "/swatch reads a .chara export from Anamnesis or Ktisis: color slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colors (edited past the game's palette) are matched by their live value and flagged OFF GRID."
       }
     }
   },
@@ -667,7 +667,7 @@
           "description": "Type of color harmony"
         },
         "wheel": {
-          "description": "Colour wheel the harmony angles are measured on (default: RGB)"
+          "description": "Color wheel the harmony angles are measured on (default: RGB)"
         },
         "companions": {
           "description": "Number of companion dyes per harmony slot (1-3)"
@@ -757,7 +757,7 @@
       }
     },
     "swatch": {
-      "description": "Match a character file's colours to the nearest dyes",
+      "description": "Match a character file's colors to the nearest dyes",
       "options": {
         "file": {
           "description": ".chara character file (Anamnesis / Ktisis export)"

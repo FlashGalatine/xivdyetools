@@ -68,8 +68,8 @@
       "description": "Mélanger les couleurs"
     },
     "presets": {
-      "title": "Palettes Prédéfinies",
-      "shortName": "Palettes",
+      "title": "Préréglages communautaires",
+      "shortName": "Préréglages",
       "description": "Parcourir les palettes thématiques",
       "backToList": "Retour à la liste"
     },

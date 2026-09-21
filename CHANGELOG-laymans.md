@@ -31,15 +31,26 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.9.2] - 2026-09-21
+### 🔤 One spelling of "color" everywhere
+- Web app and Discord bot: the English text now spells things the American way throughout — "color" rather than "colour", "behavior" rather than "behaviour". Both surfaces used to mix the two spellings from one screen to the next.
+- Dye names are untouched: Ash Grey, Goobbue Grey, Slate Grey and Charcoal Grey keep the spelling the game gives them.
+- The other five languages are unaffected, and nothing changed what it does — only how the English words are spelled.
+
+### 🏷️ The presets tool is called Community Presets
+- Web app: the tool is now titled **Community Presets**, the name the guides and the Discord bot already used. It had been showing "Preset Palettes" in the app only.
+- Renamed in all six languages, using the same wording the bot already uses.
+- Nothing about the tool changed — only its name.
+
 ## [5.9.1] - 2026-09-20
 ### 🧒 Lalafell character files can be read at last
 - Web app: the Swatch Matcher now accepts a Lalafell `.chara` file. Dropping one always used to fail straight away with "unrecognised value 'Lalafel'" — the file writes that race name with one L at the end, and the tool was only looking for the spelling with two. This never worked before now.
 - Discord bot: the same file attached to `/swatch` returns a card instead of that error.
 - Your file is still read on your own device in the web app.
 
-### 🎨 Two colours that were read off the wrong sheet
-- Web app and Discord bot: a Hrothgar character file that leaves the race out could show a fur-pattern number as a lip colour. The tools now work the clan out from the file and read the right sheet.
-- Web app and Discord bot: an Au Ra's limbal ring was sometimes labelled and matched as a tattoo. It is matched as a limbal ring now.
+### 🎨 Two colors that were read off the wrong sheet
+- Web app and Discord bot: a Hrothgar character file that leaves the race out could show a fur-pattern number as a lip color. The tools now work the clan out from the file and read the right sheet.
+- Web app and Discord bot: an Au Ra's limbal ring was sometimes labeled and matched as a tattoo. It is matched as a limbal ring now.
 - Character files name both a race and a clan, and the two could disagree. The clan is the one the tools trust from now on, so a file with an odd or missing race name still opens.
 
 ## [5.9.0] - 2026-09-20
@@ -75,21 +86,21 @@ Rules:
 ## [5.8.1] - 2026-09-18
 ### 📖 Discord bot: /manual catches up with 5.0
 - Discord bot: `/manual` now lists every command. `/comparison`, `/contrast`, `/accessibility` (and its short name `/a11y`), `/budget`, `/preset`, `/changelog` and `/stats` were missing from it.
-- Discord bot: the 📸 Image Matching Tips topic now describes `/extractor image` instead of `/match_image`, a command removed in 5.0, with the right numbers: 3 to 10 colours, images up to 10 MB, BMP accepted.
+- Discord bot: the 📸 Image Matching Tips topic now describes `/extractor image` instead of `/match_image`, a command removed in 5.0, with the right numbers: 3 to 10 colors, images up to 10 MB, BMP accepted.
 - Discord bot: the help for `/swatch` explains attaching a `.chara` file instead of the old pick-by-number grid, and the help for `/harmony`, `/gradient`, `/mixer` and `/preferences` matches what those commands do today.
 - Discord bot: all of this is corrected in every one of the bot's six languages.
 
 ## [5.8.0] - 2026-09-17
 ### 🔗 Share a palette from the Palette Extractor
-- Web app: the Palette Extractor's Share button is back, beside Export. The link carries the colours on the bar (up to five, in order) and your matching method — not your picture and not hand-picked colours — and whoever opens it sees the same colours as equal bands, matched to dyes with the same method (their own dye filters still apply). Links pasted into Discord show a preview card again.
+- Web app: the Palette Extractor's Share button is back, beside Export. The link carries the colors on the bar (up to five, in order) and your matching method — not your picture and not hand-picked colors — and whoever opens it sees the same colors as equal bands, matched to dyes with the same method (their own dye filters still apply). Links pasted into Discord show a preview card again.
 
 ### 🔙 Back behaves in Presets, and prices show on a preset
 - Web app: pressing Back from a preset returns you to the list you were on — same tab, same search, no reload — instead of rebuilding the Presets tool.
 - Web app: with "Show prices" on, a preset's dyes show the current market price (lowest listing and where) rather than only the vendor cost; the prices were being fetched but never displayed.
-- Web app: "Submit to Community" from Make a palette shows an error if the form fails to load instead of doing nothing; right-clicking the Palette Extractor's zoom view no longer picks a colour; importing collections skips a broken record instead of stopping; editing a preset can no longer silently shorten its dye list; add-to-collection menus stay on screen near the window edge; a vote no longer flips back when a slow server check lands after you clicked.
+- Web app: "Submit to Community" from Make a palette shows an error if the form fails to load instead of doing nothing; right-clicking the Palette Extractor's zoom view no longer picks a color; importing collections skips a broken record instead of stopping; editing a preset can no longer silently shorten its dye list; add-to-collection menus stay on screen near the window edge; a vote no longer flips back when a slow server check lands after you clicked.
 
 ### 👁️ Discord bot: left and right eyes told apart, and a sturdier /manual
-- Discord bot: `/swatch` labels the eye rows EYES·L and EYES·R when your character's eyes differ (EYES·LR when they match), including off-grid colours, where both rows used to read the same "EYES · OFF GRID".
+- Discord bot: `/swatch` labels the eye rows EYES·L and EYES·R when your character's eyes differ (EYES·LR when they match), including off-grid colors, where both rows used to read the same "EYES · OFF GRID".
 - Discord bot: `/manual` Spectrum & Prices shows a brief "thinking…" and then the answer, instead of occasionally failing with "The application did not respond" when the bot had to look up your world's region from scratch.
 - Discord bot: `/preset submit` and `/preset edit` flag a too-short or too-long name or description in the command box before sending, instead of returning an error afterwards.
 
@@ -115,19 +126,19 @@ Rules:
 
 ## [5.5.0] - 2026-09-05
 ### 🖼️ Palette Extractor: one column, all three answers
-- Web app: a colour bar now sits right under your image — one segment per extracted colour, as wide as its share of the picture, with the percentage on it. Tap a segment and its dye card lights up below.
-- Web app: the loupe stays where you put it. Click or tap the image and it parks there showing the colour it read and the closest dye's name; drag it to hunt for the exact pixel.
+- Web app: a color bar now sits right under your image — one segment per extracted color, as wide as its share of the picture, with the percentage on it. Tap a segment and its dye card lights up below.
+- Web app: the loupe stays where you put it. Click or tap the image and it parks there showing the color it read and the closest dye's name; drag it to hunt for the exact pixel.
 - Web app: add your own picks with the `+` tile at the end of the bar. Picks join as fixed-width numbered blocks after a small gap (never a percentage — they are not part of the image share), each gets its own card, **Clear picks** removes them all, and you can hold up to six. The count reads "6 + 2", never "8 of 6".
-- Web app: the "Auto-extract" button is gone — the palette is pulled the moment an image loads and again quietly whenever you change the colour count, matching method or dye filters, with your picks kept.
-- Web app: nothing is drawn over your image any more (the numbered circles and red crosshair are gone); dye filters now apply to the extracted colours too; vibrancy boost finally changes the order; changing the matching method no longer reshuffles the palette; and the colour count and vibrancy settings no longer go stale after a Reset or Restore backup.
-- Web app: a colour never silently drops off the bar when the filters run out of unique dyes, a replacement picture starts clean, tapping + twice focuses the pick you already have, and a picture the browser cannot open says so.
+- Web app: the "Auto-extract" button is gone — the palette is pulled the moment an image loads and again quietly whenever you change the color count, matching method or dye filters, with your picks kept.
+- Web app: nothing is drawn over your image any more (the numbered circles and red crosshair are gone); dye filters now apply to the extracted colors too; vibrancy boost finally changes the order; changing the matching method no longer reshuffles the palette; and the color count and vibrancy settings no longer go stale after a Reset or Restore backup.
+- Web app: a color never silently drops off the bar when the filters run out of unique dyes, a replacement picture starts clean, tapping + twice focuses the pick you already have, and a picture the browser cannot open says so.
 - Web app: the site no longer asks your browser what cameras you have on every visit, and now tells it that it wants no camera access at all. Taking a photo on your phone is unchanged and goes through your own camera app, which takes a better picture than the old built-in preview did.
 
 ## [5.4.0] - 2026-09-05
-### 🎨 Choose your colour wheel in the Harmony Explorer
-- Web app: a new **Color wheel** setting in Harmony's options lets you pick which wheel the harmony angles are measured on: RGB (the screen wheel, unchanged default), RYB (the painter's wheel, where red's complement is green), Munsell (the perceptual wheel behind Japan's JIS colour standard), OKLCH hue (perceptually even spacing) or OKLCH lightness (keeps every partner at the base dye's brightness).
+### 🎨 Choose your color wheel in the Harmony Explorer
+- Web app: a new **Color wheel** setting in Harmony's options lets you pick which wheel the harmony angles are measured on: RGB (the screen wheel, unchanged default), RYB (the painter's wheel, where red's complement is green), Munsell (the perceptual wheel behind Japan's JIS color standard), OKLCH hue (perceptually even spacing) or OKLCH lightness (keeps every partner at the base dye's brightness).
 - Web app: the ring repaints for the wheel you pick and the harmony dots sit on it, so what you see matches the dyes suggested. Share links always carry the wheel, so a link you send opens on the wheel you made it with — even if the person opening it had a different one selected.
-- Web app: swapping a dye by hand pins it to that slot, and those pins now clear when you change the wheel — a slot points at a different colour on a different wheel.
+- Web app: swapping a dye by hand pins it to that slot, and those pins now clear when you change the wheel — a slot points at a different color on a different wheel.
 - Discord bot: `/harmony` gains a `wheel` option with the same five choices; the card names the wheel when it is not the default, and the embed title is now a link that opens the web app on the same wheel.
 - Link previews: a shared harmony link previews with the wheel it was made on, and the preview's footer prints a short wheel tag beside the matching method — including on the wide Twitter/X preview, which has no room for the full name.
 - Nothing changes unless you choose a wheel — the default is exactly what the tools did before.
@@ -147,22 +158,22 @@ Rules:
 
 ## [5.2.0] - 2026-09-04
 
-### 🎨 The colour mixing actually mixes now
+### 🎨 The color mixing actually mixes now
 
-- Discord bot: `spectral` mixes and gradients came out almost black. A blue-to-yellow `/gradient` rendered nine near-black steps out of eleven, and even white mixed with black came back nearly black instead of a mid grey. The mode is meant to imitate real paint pigments, and now it does — blue and yellow make a green. The web app was always correct here; the two now match exactly.
+- Discord bot: `spectral` mixes and gradients came out almost black. A blue-to-yellow `/gradient` rendered nine near-black steps out of eleven, and even white mixed with black came back nearly black instead of a mid gray. The mode is meant to imitate real paint pigments, and now it does — blue and yellow make a green. The web app was always correct here; the two now match exactly.
 - Web app: the Mixer's RYB mode promised "Blue + Yellow = Olive" and now genuinely makes green. It had been running on a paint model that could not mix reliably — mixing a dye *with itself* failed to return that same dye for more than half of all dyes. Both problems are gone.
-- Everywhere: the web app and the Discord bot had quietly been using two different recipes for RYB mixing, so the same two dyes could give you one colour on the site and another in Discord. There is one recipe now.
+- Everywhere: the web app and the Discord bot had quietly been using two different recipes for RYB mixing, so the same two dyes could give you one color on the site and another in Discord. There is one recipe now.
 
 ### 🔗 Shared links
 
-- Link previews: sharing a Mixer link always previewed it in one fixed mode, whichever of the six you had actually picked — including the Mixer's own default. Whoever you sent it to saw a different colour from the one on your screen. The preview now uses your mode.
+- Link previews: sharing a Mixer link always previewed it in one fixed mode, whichever of the six you had actually picked — including the Mixer's own default. Whoever you sent it to saw a different color from the one on your screen. The preview now uses your mode.
 - Link previews: the dye a Mixer preview named was chosen by a different measurement than the one printed beside it, so it could disagree with the page the link opens — on about half of all mixes for some settings. It now names the dye your chosen method actually picks.
 
 ### 📏 Matching
 
-- Everywhere: the OKLAB matching option was measuring on a scale that under-weighted how colourful two dyes are next to how light or dark they are. Roughly one search in four now returns a different, closer dye. It is also relabelled `ΔEOK2`, the precise name of the formula. The default matching method is unchanged, so this only affects you if you chose OKLAB yourself.
+- Everywhere: the OKLAB matching option was measuring on a scale that under-weighted how colorful two dyes are next to how light or dark they are. Roughly one search in four now returns a different, closer dye. It is also relabelled `ΔEOK2`, the precise name of the formula. The default matching method is unchanged, so this only affects you if you chose OKLAB yourself.
 - Web app: the Matching Algorithm setting now says that your choice changes *which dye you get*, not just the score shown beside it — measured against the default, the alternatives return a different closest dye between a quarter and nearly half of the time, and nothing on the page said so.
-- Web app: the Triadic, Tetradic and Square harmony descriptions stopped promising "vibrant, balanced palettes", "rich combinations" and "dynamic variety". There is no evidence behind those claims for these three schemes, so they now describe the shape they make on the colour wheel. Analogous and Monochromatic keep their wording — research does back those two.
+- Web app: the Triadic, Tetradic and Square harmony descriptions stopped promising "vibrant, balanced palettes", "rich combinations" and "dynamic variety". There is no evidence behind those claims for these three schemes, so they now describe the shape they make on the color wheel. Analogous and Monochromatic keep their wording — research does back those two.
 
 <!--
 BACKFILL, ARCHIVE ONLY — this block will never be announced, and that is
@@ -178,39 +189,39 @@ players received in early September as though it were new.
 
 ### 🎨 Harmony gives one answer, wherever you ask
 
-- Everywhere: `/harmony` in the Discord bot and the website's Harmony Explorer had been working from different colour maths, so the same dye and the same harmony type could hand you two different sets of dyes depending on where you asked. It showed up most on pale and near-grey dyes — `/harmony analogous` on Snow White answered Neon Green and Kobold Brown while the site showed Pure White and Pearl White. One answer now, in both places, and the site's results are the ones that stayed.
+- Everywhere: `/harmony` in the Discord bot and the website's Harmony Explorer had been working from different color math, so the same dye and the same harmony type could hand you two different sets of dyes depending on where you asked. It showed up most on pale and near-gray dyes — `/harmony analogous` on Snow White answered Neon Green and Kobold Brown while the site showed Pure White and Pearl White. One answer now, in both places, and the site's results are the ones that stayed.
 - Link previews: the picture that unfurls when you paste a harmony link into Discord had been choosing its dyes a third way of its own. It matches the page the link opens now.
-- Everywhere: filters on Harmony pick the closest dye you are *allowed* to have. They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the colour you asked for than it needed to.
+- Everywhere: filters on Harmony pick the closest dye you are *allowed* to have. They used to find the closest dye overall and then, if it was filtered out, look for something near *that* — which is not the same thing, and could land further from the color you asked for than it needed to.
 - Discord bot: `/harmony` has two more types to pick from, **Compound** and **Shades**. The web app has always offered them.
 
 ### 👗 Your whole glamour, not just the dyed parts
 
-- Web app: the Swatch Matcher's glamour list only ever showed pieces carrying a dye, so an accessory could never appear in it at all — no earring, necklace, bracelet or ring in the game is dyeable — and worn-but-undyed armour was reduced to a number in the footnote. A new "Show all" switch beside the Pieces/Dyes toggle changes the list from one row per dyed channel to one row per piece your character is wearing, each with its icon, item name and slot. Your choice is remembered.
-- Web app: facewear is listed too. The glasses were already being looked up on every import and then thrown away. `.chara` files do not store a facewear tint, so the colour chip is read from the colour word in the item's English name; an item with no colour word gets a plain chip and says the colour is unknown, rather than inventing one.
+- Web app: the Swatch Matcher's glamour list only ever showed pieces carrying a dye, so an accessory could never appear in it at all — no earring, necklace, bracelet or ring in the game is dyeable — and worn-but-undyed armor was reduced to a number in the footnote. A new "Show all" switch beside the Pieces/Dyes toggle changes the list from one row per dyed channel to one row per piece your character is wearing, each with its icon, item name and slot. Your choice is remembered.
+- Web app: facewear is listed too. The glasses were already being looked up on every import and then thrown away. `.chara` files do not store a facewear tint, so the color chip is read from the color word in the item's English name; an item with no color word gets a plain chip and says the color is unknown, rather than inventing one.
 - Web app: a piece dyed only on its second channel used to draw one chip in the *first* chip's place, so the picture said channel one while your file said channel two. Dyeable pieces now always show both channels, with a plain chip for an empty one and the text naming it ("Metallic Orange + Undyed").
 - Web app: a glamour with nothing dyed on it gets the list instead of nothing at all — the whole panel used to disappear, which would have hidden the new switch from exactly the character that needs it most.
 
 ### 🔀 Sending a dye to another tool
 
-- Web app: Harmony's three "send to Comparison / Mixer / Accessibility" actions had **never** done anything — they passed the dye in a form no tool in the app reads. Budget was sending a dye *name*, and the Result Card and Gradient an ID no tool would accept for any of the 125 dyes. All of them hand the dye over correctly now, and a dye that cannot be sent no longer navigates away and then apologises.
+- Web app: Harmony's three "send to Comparison / Mixer / Accessibility" actions had **never** done anything — they passed the dye in a form no tool in the app reads. Budget was sending a dye *name*, and the Result Card and Gradient an ID no tool would accept for any of the 125 dyes. All of them hand the dye over correctly now, and a dye that cannot be sent no longer navigates away and then apologizes.
 
 ### 🌏 Reading the app in your own language
 
 - Web app: Japanese, Korean and Chinese text is drawn in the right typeface again. 75 style blocks across 22 components named a font directly and fell back to whatever the browser happened to pick, which is how a Japanese reader ends up seeing Chinese letterforms for kanji the two languages share.
 - Discord bot: bold text on cards rendered too thin in Japanese, Korean and Chinese — headings and dye names meant to stand out were drawn at the lightest weight and blended into the rest of the card. Latin text was never affected.
 - Discord bot: `/budget quick preset` listed its 22 dye names in English no matter what language you use. All 125 dye names have been translated for a long time; that one menu just was not asking for them.
-- Discord bot: harmony names and colour-vision names in the command menus disagreed with the website in Japanese, Korean, Chinese and German. Both come from the same place now.
+- Discord bot: harmony names and color-vision names in the command menus disagreed with the website in Japanese, Korean, Chinese and German. Both come from the same place now.
 - Web app: if your account had been blocked from submitting community presets, the app answered "Failed to submit preset" — which is not what happened — with the real reason readable only in English underneath. It says you are blocked, in your own language.
 - Web app: the "Show ΔE" switch works. Turning it off left the match-quality number on every result card exactly where it was, and the same setting is what the Accessibility checker, Dye Comparison and Budget use to keep that number off their cards — so all three were showing you a number they had been written not to show.
 
 ### 🔗 Link previews and other fixes from the same merges
 
-- Link previews: sharing a colour from the Swatch Matcher unfurled the generic tool picture instead of your colour, and the link dropped the reader on the plain tool page rather than the cell you shared. Both work now.
+- Link previews: sharing a color from the Swatch Matcher unfurled the generic tool picture instead of your color, and the link dropped the reader on the plain tool page rather than the cell you shared. Both work now.
 - Link previews: a link you shared in your own language showed a card in that language and then opened the site in whatever language the reader's browser preferred. The link now carries your language through to the page.
 - Everywhere: 4K and ultrawide screenshots — the most common thing a player has to extract a palette from — were being refused before they were even read — by the bot's `/extractor image` and by community-preset preview uploads, which share one image service. (The website's Palette Extractor reads images in your browser and was never affected.) They work now.
-- Web app: the colour palette's category headings (Neutral, Reds, Blues…) and the entire Community Presets flow were stuck in English for every language. Both are translated now, and screens update the moment you switch language.
-- Web app: dialogs opened on top of dialogs stopped responding; the number keys 1–9 did nothing; the camera kept running after you navigated away from the Palette Extractor; saved presets past the first page were falsely marked "removed by author"; the Extractor's match scores were measured one way and labelled another; and a shared single-dye comparison link opened someone else's dyes. All fixed.
-- Discord bot: a batch of small fixes — missing colour chips on `/gradient` steps and `/harmony`'s base colour, text running off the edge of cards in Japanese and Korean, a stale version in `/stats`, preset names with Japanese, Korean or Chinese characters showing as empty boxes, `/preferences set` quietly dropping an option, and `/budget` blaming your own world when market data was simply unavailable.
+- Web app: the color palette's category headings (Neutral, Reds, Blues…) and the entire Community Presets flow were stuck in English for every language. Both are translated now, and screens update the moment you switch language.
+- Web app: dialogs opened on top of dialogs stopped responding; the number keys 1–9 did nothing; the camera kept running after you navigated away from the Palette Extractor; saved presets past the first page were falsely marked "removed by author"; the Extractor's match scores were measured one way and labeled another; and a shared single-dye comparison link opened someone else's dyes. All fixed.
+- Discord bot: a batch of small fixes — missing color chips on `/gradient` steps and `/harmony`'s base color, text running off the edge of cards in Japanese and Korean, a stale version in `/stats`, preset names with Japanese, Korean or Chinese characters showing as empty boxes, `/preferences set` quietly dropping an option, and `/budget` blaming your own world when market data was simply unavailable.
 
 ## [5.1.0] - 2026-08-31
 
@@ -220,8 +231,8 @@ players received in early September as though it were new.
 - Web app: every page load used to open a connection to an outside price service before you had asked for anything — handing it your IP address for a request that never came. That connection is gone; prices are still fetched normally when a tool actually needs them.
 - Web app: the sign-in box now says plainly what signing in creates — an account record holding your Discord or XIVAuth ID and username. The privacy guide covers how to ask for it to be removed.
 - Discord bot: the counters behind the per-command limits no longer leave Cloudflare. They used to be kept by an outside company, which meant your Discord ID sat in someone else's database purely to count how often you used a command.
-- Discord bot: `/preferences set world:` now checks that the world or data centre you type actually exists and saves it with the game's own spelling, instead of storing whatever you typed.
-- Discord bot: the privacy policy was refreshed — it now lists your preset favourites, the one-time welcome notice and your saved preference fields, along with the commands to view or delete them.
+- Discord bot: `/preferences set world:` now checks that the world or data center you type actually exists and saves it with the game's own spelling, instead of storing whatever you typed.
+- Discord bot: the privacy policy was refreshed — it now lists your preset favorites, the one-time welcome notice and your saved preference fields, along with the commands to view or delete them.
 - Everywhere: the servers stopped writing things into their logs that they had no business writing — your IP address on the web side, your Discord ID on the bot side when a rate-limit check failed. Those logs were never kept anywhere, so nothing about you was stored; the lines simply should not have been written in the first place.
 
 ## [5.0.0] - 2026-08-28
@@ -230,7 +241,7 @@ players received in early September as though it were new.
 
 - Web app: every tool was rebuilt on the new console look — a slim top bar with a tool rail on desktop, a slide-over Advanced Options panel, and redesigned result cards that never overflow, in any of the six languages.
 - Web app: themes are now just Light and Dark on the new red-accent palette; if you had one of the older themes selected, the closest of the two is picked for you automatically.
-- Web app: on phones the colour palette drawer now starts closed (with a one-time hint on how to open it), so the tool you opened is the first thing you see.
+- Web app: on phones the color palette drawer now starts closed (with a one-time hint on how to open it), so the tool you opened is the first thing you see.
 - Web app: keyboard shortcuts finally work — they had been silently disabled — and Shift+S shares the tool you are looking at.
 - Web app: fonts now ship with the app instead of being fetched from Google, so pages load a little faster and no font request leaves your browser.
 - Discord bot: every command's picture was redrawn — sharper, smaller cards that stay readable at Discord's display size, with dye names in your language.
@@ -239,23 +250,23 @@ players received in early September as though it were new.
 ### ⚠️ Old share links stop working
 
 - Everywhere: share links now key on the game's own dye numbers, so a link you save today keeps working even if the game reshuffles items — but links made before 5.0 that used the old item numbers no longer open. Please re-share anything you posted earlier.
-- Discord bot: the old `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands are gone. Colour matching lives in `/extractor`, and `/preferences` covers your language and theme.
+- Discord bot: the old `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands are gone. Color matching lives in `/extractor`, and `/preferences` covers your language and theme.
 
 ### 📏 One matching vocabulary
 
 - Everywhere: the six matching methods are the same list on every surface — ΔE2000 (the default), ΔEOK, ΔE76, REDMEAN, RGB DIST and DISTINGUISH % — and quality bands are calibrated per method, so a "close" match means the same thing wherever you read it.
-- Everywhere: the Facewear colours are no longer mixed into the dye list — they are their own set, and the dye list is the game's 125 real dyes.
+- Everywhere: the Facewear colors are no longer mixed into the dye list — they are their own set, and the dye list is the game's 125 real dyes.
 
 ### 🧰 Every tool, reworked
 
 - Web app: Harmony — click a node on the wheel to jump to that dye, and each result card offers alternate companion dyes you can swap in with one tap.
-- Web app: Palette Extractor — click anywhere on your picture to sample that exact colour; the auto-extract button is still there.
+- Web app: Palette Extractor — click anywhere on your picture to sample that exact color; the auto-extract button is still there.
 - Web app: Gradient — pin any step to a dye you own and the gradient bends through it.
 - Web app: Mixer — a mixing field shows six blending models across five ratios at once; tap a cell to see the nearest dye.
-- Web app: Accessibility — a lens view shows how your palette reads under four kinds of colour vision, with the worst pair called out.
+- Web app: Accessibility — a lens view shows how your palette reads under four kinds of color vision, with the worst pair called out.
 - Web app: Comparison — a duel view with a plain verdict on how far apart two dyes really are, and what differs.
 - Web app: Budget — prices follow the real Patch 7.5 market groups (one price per Spectrum tier), so coffer-only dyes are no longer shown as costing about 1 gil.
-- Web app: Swatch — drop a `.chara` character file from Anamnesis or Ktisis and every colour on your character is matched to a dye, entirely on your device, and the "Dyes on this glamour" list now names the actual pieces (icon, item name in your language, a +N badge for look-alike items, and a Pieces/Dyes switch) — only the gear's model numbers leave your device, never the file; a notice explains that the eye, hair and skin preset palettes are going away with the Evercold expansion.
+- Web app: Swatch — drop a `.chara` character file from Anamnesis or Ktisis and every color on your character is matched to a dye, entirely on your device, and the "Dyes on this glamour" list now names the actual pieces (icon, item name in your language, a +N badge for look-alike items, and a Pieces/Dyes switch) — only the gear's model numbers leave your device, never the file; a notice explains that the eye, hair and skin preset palettes are going away with the Evercold expansion.
 - Web app: your saved palettes, dye swaps and character records now live in one place and carry over automatically — nothing to redo.
 
 ### 🖼️ Community presets
@@ -268,13 +279,13 @@ players received in early September as though it were new.
 ### ♿ New commands
 
 - Discord bot: `/contrast` measures WCAG contrast between up to four dyes — the letter grades are gone, the ratios speak for themselves.
-- Discord bot: `/a11y` is a shorter way to type `/accessibility`, and both now simulate four colour-vision lenses.
-- Discord bot: `/changelog` shows the bot's own release notes without leaving Discord, and `/manual` grew topics for colour vision, contrast, matching methods, dye prices and character files.
+- Discord bot: `/a11y` is a shorter way to type `/accessibility`, and both now simulate four color-vision lenses.
+- Discord bot: `/changelog` shows the bot's own release notes without leaving Discord, and `/manual` grew topics for color vision, contrast, matching methods, dye prices and character files.
 - Discord bot: `/swatch` now takes a `.chara` character file, and `/budget` prices by the real market groups — one price per Spectrum tier, never an invented per-dye number.
 
 ### 🔗 Link previews
 
-- Link previews: sharing any tool link now unfurls a redrawn card — full-bleed colour bands that stay recognisable even as a tiny thumbnail, localised when the link carries a language, with a proper X/Twitter variant.
+- Link previews: sharing any tool link now unfurls a redrawn card — full-bleed color bands that stay recognizable even as a tiny thumbnail, localized when the link carries a language, with a proper X/Twitter variant.
 - Link previews: bare tool links (no dye in them) and the site's front page finally get real preview images instead of a broken picture.
 
 ## [4.12.0] - 2026-07-19

@@ -72,7 +72,7 @@ export function parseColorWheel(value: string | undefined, name = 'wheel'): Colo
   if (!wheel) {
     throw new ApiError(
       ErrorCode.INVALID_COLOR_WHEEL,
-      `Invalid colour wheel "${value}". Must be one of: ${COLOR_WHEEL_IDS.join(', ')}`,
+      `Invalid color wheel "${value}". Must be one of: ${COLOR_WHEEL_IDS.join(', ')}`,
       400,
       { parameter: name, received: value, expected: [...COLOR_WHEEL_IDS] },
     );

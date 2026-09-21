@@ -90,7 +90,7 @@ describe('ShareService', () => {
         ).toEqual(['Missing required parameter: slot + i (or hex)']);
         expect(
           ShareService.validateShareParams({ tool: 'swatch', params: { hex: 'zzz' } })
-        ).toEqual(['Invalid hex colour: zzz']);
+        ).toEqual(['Invalid hex color: zzz']);
         // slot without an index is not an address
         expect(
           ShareService.validateShareParams({ tool: 'swatch', params: { slot: 'eyes' } })

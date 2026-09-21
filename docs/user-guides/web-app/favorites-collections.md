@@ -46,7 +46,7 @@ A saved palette is a named group of dyes (up to 20) that a tool wrote to your de
 |------|--------|-----------------|
 | **Dye Mixer** | **Save mix** under the mixing field | Dye A, Dye B and the dye your current blend resolves to, named "A × B" |
 | **Swatch Matcher** | **Make a palette** → **Save to this device** (after loading a `.chara` file) | The 3–6 dyes your character's glamour is wearing |
-| **Swatch Matcher** | **Save character colours** on the character file card | The closest dye for each of your character's colours (hair, eyes, skin, lips…) |
+| **Swatch Matcher** | **Save character colors** on the character file card | The closest dye for each of your character's colours (hair, eyes, skin, lips…) |
 | **Budget Suggestions** | **Save swap** on a substitute row | The dye you priced and its cheapest substitute |
 
 Palettes you saved in earlier versions (harmony palettes, older collections) are carried over automatically the first time 5.0 loads.

@@ -1,0 +1,11 @@
+checked-at: 2026-09-21T03:29:49Z
+| package | npm latest | local (branch) | main |
+|---|---|---|---|
+| @xivdyetools/types | 3.2.0 | 3.2.0 | 3.2.0 |
+| @xivdyetools/logger | 2.2.1 | 2.2.1 | 2.2.1 |
+| @xivdyetools/auth | 2.0.2 | 2.0.2 | 2.0.2 |
+| @xivdyetools/worker-kit | 1.4.0 | 1.4.0 | 1.4.0 |
+| @xivdyetools/core | 5.5.0 | 5.5.0 | 5.5.0 |
+| @xivdyetools/svg | 4.1.0 | 4.1.0 | 4.1.0 |
+| @xivdyetools/bot-logic | 4.4.0 | 4.4.1 | 4.4.0 |
+| @xivdyetools/test-utils | private | 2.0.1 | — |

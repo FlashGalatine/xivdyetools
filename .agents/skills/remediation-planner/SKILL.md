@@ -54,7 +54,7 @@ Findings already marked FIXED in their `## Status` go to *Status basis*, not a s
 | Tier | Meaning | Typical |
 |---|---|---|
 | **P0** | actively harmful now | exploitable vuln; duplicate locale keys destroying translations; data-corrupting bug |
-| **P1** | wrong behaviour with a real path | HIGH bugs; INTERNET-AUTH vulns; untranslated/raw-key strings shipping in UI |
+| **P1** | wrong behavior with a real path | HIGH bugs; INTERNET-AUTH vulns; untranslated/raw-key strings shipping in UI |
 | **P2** | degraded but contained | MEDIUM bugs/vulns; missing locale keys; MEDIUM-confidence removals |
 | **P3** | preventative/cosmetic | hardening, INFO, optimizations, cleanup, LOW-risk removals |
 
@@ -65,7 +65,7 @@ gate); **every finding lands in exactly one sprint** (only dead-code KEEP goes t
 
 | Source | Leads with | Sprint 0 | Terminal |
 |---|---|---|---|
-| security | **Severity × Exposure** (INTERNET-UNAUTH MEDIUM > LOCAL HIGH) | exploitable now — ships **individually, out-of-band**, never batched | hardening / defence-in-depth |
+| security | **Severity × Exposure** (INTERNET-UNAUTH MEDIUM > LOCAL HIGH) | exploitable now — ships **individually, out-of-band**, never batched | hardening / defense-in-depth |
 | deep-dive | user-facing integrity before performance | ship what the analysis already fixed | the big structural refactor (reshapes files other fixes touch) |
 | dead-code | **Confidence × Blast** — safest first to prove the gates catch breakage | zero-risk hygiene (comments, unused devDeps, snapshots) | MAJOR-semver removals isolated; cascades never share their trigger's sprint; dep pruning last within a unit |
 | i18n | **data loss** first (duplicate keys), then wrong text before missing text | dedupe + JSON validity, no translation changes | **fonts last, always** — any locale text change invalidates every subset |

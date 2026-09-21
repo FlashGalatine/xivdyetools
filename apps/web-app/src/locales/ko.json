@@ -68,7 +68,7 @@
       "description": "색상 블렌딩"
     },
     "presets": {
-      "title": "프리셋 팔레트",
+      "title": "커뮤니티 프리셋",
       "shortName": "프리셋",
       "description": "테마 팔레트 탐색",
       "backToList": "목록으로 돌아가기"

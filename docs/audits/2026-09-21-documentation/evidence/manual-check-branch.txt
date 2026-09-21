@@ -1,0 +1,47 @@
+| locale | reply | total/6000 | max field value/1024 | embeds | missing keys |
+|---|---|---|---|---|---|
+| en | overview | 4408 | 238 | 7 | — |
+| en | match_image | 2618 | 347 | 3 | — |
+| en | topic:color_vision | 436 | 0 | 1 | — |
+| en | topic:contrast | 398 | 0 | 1 | — |
+| en | topic:matching_methods | 420 | 0 | 1 | — |
+| en | topic:spectrum_prices | 463 | 0 | 1 | — |
+| en | topic:character_file | 470 | 0 | 1 | — |
+| ja | overview | 3098 | 139 | 7 | — |
+| ja | match_image | 1459 | 192 | 3 | — |
+| ja | topic:color_vision | 289 | 0 | 1 | — |
+| ja | topic:contrast | 282 | 0 | 1 | — |
+| ja | topic:matching_methods | 292 | 0 | 1 | — |
+| ja | topic:spectrum_prices | 307 | 0 | 1 | — |
+| ja | topic:character_file | 314 | 0 | 1 | — |
+| de | overview | 4933 | 271 | 7 | — |
+| de | match_image | 3064 | 406 | 3 | — |
+| de | topic:color_vision | 469 | 0 | 1 | — |
+| de | topic:contrast | 451 | 0 | 1 | — |
+| de | topic:matching_methods | 443 | 0 | 1 | — |
+| de | topic:spectrum_prices | 484 | 0 | 1 | — |
+| de | topic:character_file | 494 | 0 | 1 | — |
+| fr | overview | 4997 | 266 | 7 | — |
+| fr | match_image | 3409 | 458 | 3 | — |
+| fr | topic:color_vision | 474 | 0 | 1 | — |
+| fr | topic:contrast | 448 | 0 | 1 | — |
+| fr | topic:matching_methods | 482 | 0 | 1 | — |
+| fr | topic:spectrum_prices | 514 | 0 | 1 | — |
+| fr | topic:character_file | 526 | 0 | 1 | — |
+| ko | overview | 3196 | 148 | 7 | — |
+| ko | match_image | 1503 | 231 | 3 | — |
+| ko | topic:color_vision | 299 | 0 | 1 | — |
+| ko | topic:contrast | 289 | 0 | 1 | — |
+| ko | topic:matching_methods | 312 | 0 | 1 | — |
+| ko | topic:spectrum_prices | 301 | 0 | 1 | — |
+| ko | topic:character_file | 322 | 0 | 1 | — |
+| zh | overview | 2695 | 121 | 7 | — |
+| zh | match_image | 1158 | 167 | 3 | — |
+| zh | topic:color_vision | 251 | 0 | 1 | — |
+| zh | topic:contrast | 251 | 0 | 1 | — |
+| zh | topic:matching_methods | 255 | 0 | 1 | — |
+| zh | topic:spectrum_prices | 246 | 0 | 1 | — |
+| zh | topic:character_file | 265 | 0 | 1 | — |
+
+Registry commands: 17 · absent from the /manual overview (en): none
+Topic handlers (TOPIC_KEYS + match_image): match_image, color_vision, contrast, matching_methods, spectrum_prices, character_file

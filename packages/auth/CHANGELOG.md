@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Enforce Discord interaction body limits while reading the stream, cancelling as soon as the byte cap is exceeded even when `Content-Length` is missing or inaccurate. Verify the original received bytes before returning the decoded body (2026-09-15 security audit, FINDING-001).
+- Enforce Discord interaction body limits while reading the stream, canceling as soon as the byte cap is exceeded even when `Content-Length` is missing or inaccurate. Verify the original received bytes before returning the decoded body (2026-09-15 security audit, FINDING-001).
 
 ## [2.0.1] - 2026-09-02
 
@@ -87,11 +87,11 @@ a public export is gone.
 
 ## [1.4.0] - 2026-08-21
 
-Security audit remediation (docs/audits/2026-08-21-security, FINDING-001 / FINDING-015). Minor bump: additive API, one behavioural change in `revokeToken` TTLs.
+Security audit remediation (docs/audits/2026-08-21-security, FINDING-001 / FINDING-015). Minor bump: additive API, one behavioral change in `revokeToken` TTLs.
 
 ### Security
 
-- **`revokeToken()` now keeps blacklist entries alive for `exp + REFRESH_GRACE_SECONDS`** (new exported constant, 15 min) instead of ending exactly at `exp`. The oauth worker's `/auth/refresh` honours tokens for a grace window past `exp`; with the old TTL a revoked token became refreshable the moment it expired (FINDING-001). Both sides now share the same constant. New `RevokeTokenOptions.graceSeconds` for callers that override the window.
+- **`revokeToken()` now keeps blacklist entries alive for `exp + REFRESH_GRACE_SECONDS`** (new exported constant, 15 min) instead of ending exactly at `exp`. The oauth worker's `/auth/refresh` honors tokens for a grace window past `exp`; with the old TTL a revoked token became refreshable the moment it expired (FINDING-001). Both sides now share the same constant. New `RevokeTokenOptions.graceSeconds` for callers that override the window.
 - **`verifyJWT` / `verifyJWTSignatureOnly` validate claim types** (FINDING-015): `exp` must be a finite numeric date, `sub` a non-empty string, `iat`/`nbf` numeric when present; a signed `exp: "9999999999"` or `sub: {}` is rejected instead of comparing as strings/objects. `verifyJWT` also enforces `nbf` (with optional `clockToleranceSeconds`), and accepts new `issuer` (string or list) and `audience` options that pin `iss`/`aud`.
 
 - **Bot request signature v2** (FINDING-014): `createBotSignatureV2` / `verifyBotSignatureV2` bind `method`, URL `path`, SHA-256 of the body, timestamp, an optional nonce and the identity headers with a length-prefixed canonical string (v1 signed only `timestamp:userId:userName` with an ambiguous `:` delimiter — `(123,"a:b")` ≡ `("123:a","b")`) and a 60 s window (`BOT_SIGNATURE_V2_MAX_AGE_MS`). Header names `BOT_SIGNATURE_V2_HEADER` (`X-Request-Signature-V2`) / `BOT_SIGNATURE_NONCE_HEADER` (`X-Request-Nonce`). `verifyBotSignature` (v1) is unchanged for rollover.

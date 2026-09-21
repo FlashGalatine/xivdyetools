@@ -1,6 +1,6 @@
 ---
 name: documentation-audit
-description: Use when asked for a documentation audit of xivdyetools, to check docs/ or the Discord bot's in-app /manual help for stale or inaccurate claims, to update /manual after bot commands changed, or to compare project documentation with currently deployed apps and published packages.
+description: Use when asked for a documentation audit of xivdyetools, to check docs/ or the Discord bot's in-app /manual help for stale or inaccurate claims, to update /manual after bot commands changed, to compare project documentation with currently deployed apps and published packages, or to check English documents for British spellings that should be American ("spell check the docs", "American English", "British spellings").
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent, Skill
 ---
 
@@ -20,7 +20,7 @@ applies its routing rules; this table gives the role for each step of this skill
 
 | Step | Role | Assignment → return |
 |---|---|---|
-| Docs inventory, `docs:check-*` gates, `manual-check.mjs`, served-version lookups | `collector` | Fixed commands → exit codes, counts, evidence paths |
+| Docs inventory, `docs:check-*` gates, `manual-check.mjs`, `american-spelling.mjs`, served-version lookups | `collector` | Fixed commands → exit codes, counts, evidence paths |
 | Review one living-docs cluster (see *Review and verify*) | `worker` | Cluster paths + checklist + baseline rows → conventions §7 schema, `evidence/review-<cluster>.md` |
 | Review `/manual` | `worker` | *`/manual` checklist* + served ref → same schema, `evidence/review-manual.md` |
 | Confirm candidates at `file:line`, grade severity, separate release drift from defects | `verifier` | Candidate rows verbatim → model-routing's verification contract |
@@ -37,7 +37,8 @@ Read the workspace and monorepo `CLAUDE.md`, `docs/CLAUDE.md`, applicable `AGENT
 [units.md](../audit-shared/units.md) for **Deploy unit** tags. Read a target unit's `CLAUDE.md`
 when checking its claims. Use [conventions.md](../audit-shared/conventions.md) §2–7a for IDs,
 finding files, reports, evidence and fan-out, and [shell guidance](../audit-shared/traps/shell.md)
-for its command patterns.
+for its command patterns. Read [american-english.md](../audit-shared/american-english.md) for the
+spelling standard — it applies to every English document in scope, and to this audit's own prose.
 
 By default the audit covers every document under `docs/`, including its entry pages, plus
 `/manual` and the **policy documents** — the two Privacy policies and two Terms of Service under
@@ -105,7 +106,10 @@ bot-logic version does not decide it.
 | `/manual` structure | `apps/discord-worker/src/handlers/commands/manual.ts` |
 | `/manual` text | `packages/bot-logic/src/i18n/locales/<locale>.json` → `manual.*`, `manual5.*`, `matchImageHelp.*` |
 
-Run `node <SKILL_DIR>/scripts/manual-check.mjs <xivdyetools-dir> --ref <served-sha>`, and again with
+**`git fetch origin main` first.** A session's clone can carry a stale `origin/main`, and the check
+reads every file through it: the 2026-09-21 run's first pass reported 8 registered commands absent
+from the overview against an `origin/main` 159 commits behind, and none absent after the fetch.
+Then run `node <SKILL_DIR>/scripts/manual-check.mjs <xivdyetools-dir> --ref <served-sha>`, and again with
 `--ref origin/main` when the two differ. If `gh` cannot establish the served SHA, try
 `wrangler deployments list --env production` from `apps/discord-worker`, which is read-only. If
 that fails too, run the check against `origin/main` and record in the baseline table that the
@@ -125,7 +129,11 @@ commands the overview never names. It exits 1 when a reply is over a limit or a 
 4. **Topics:** the schema's topic `choices`, the branches in `manual.ts` (`match_image` and
    `TOPIC_KEYS`), and `MANUAL_TOPICS` all list the same topics.
 5. **Locales:** each non-en locale makes the same claims as en. If a translation still describes
-   the old behavior, that is a finding for that locale.
+   the old behavior, that is a finding for that locale. The en text is American English
+   ([american-english.md](../audit-shared/american-english.md)); the sweep reads its `manual.*`,
+   `manual5.*` and `matchImageHelp.*` values as the `ui-text` zone. Fix a whole surface at a time —
+   correcting `/manual` while the rest of the bot's en strings stay British splits the bot's voice,
+   so file those as well rather than half-fixing (they are `i18n-manager`'s `TERM-`, not `DOC-`).
 6. **Other surfaces:** `/manual` agrees with `docs/user-guides/discord-bot/command-reference.md`
    and `docs/projects/discord-worker/commands.md`. Where they disagree, the source decides which
    one is wrong.
@@ -156,10 +164,21 @@ row in the coverage table.
    `<lc>.json` — the policy must use the label the user will see); game nouns that disagree with
    `docs/reference/ffxiv-terminology.md`. A difference in a privacy or data **claim** is
    `security-audit`'s finding — hand it over with the `file:line` pair rather than filing it twice.
+   The English file is the governing text, so it is also read for American English
+   ([american-english.md](../audit-shared/american-english.md)); the sweep's default surface already
+   includes all four. A spelling fix there changes no claim, so it owes no re-translation and must
+   **not** bump `Last updated` — the parity script fails every variant whose date differs from the
+   English one. It compares commits as well, so an English-only commit makes all five variants
+   report `stale: last commit … predates the English file's …` on the next run. That is expected
+   from a spelling-only commit: record it in the audit's evidence so the next run does not chase it.
 3. **Links and surfaces**: every surface that links a policy links the **viewer's locale variant**
    and falls back to English only when the variant is absent — web-app's About modal
-   (`about-modal.ts`, `POLICY_DOCS_BASE`), the bot's `/about`, and the Discord developer-portal
-   URLs recorded in `docs/`. A localized link label over an English-only target is a finding.
+   (`about-modal.ts`, `policyDocFile()`) and the Discord developer-portal URLs recorded in `docs/`.
+   A localized link label over an English-only target is a finding. The bot's `/about` links **no**
+   policy — it renders `PRODUCT_LINKS.webApp` + `inviteBot` + `SOCIAL_LINKS` and nothing else
+   (verified 2026-09-21) — so there is nothing to check there; that the bot's two policies are
+   reachable only from the Discord listing is a product question, not a `DOC-` finding, unless a
+   living document claims otherwise.
    Relative links inside a variant resolve (`docs:check-links` does not cover `apps/*/PRIVACY*.md`
    variants unless the gate's tier list says so — check, don't assume).
 4. **Agreement with `docs/`**: `docs/projects/*/overview.md`, the user guides and
@@ -169,10 +188,11 @@ row in the coverage table.
 
 File as `DOC-` with **Deploy unit** = the document's owner (`web-app` or `discord-worker`) and list
 every affected variant in **Location**. Severity: MEDIUM for a missing or stale variant or a
-different claim, LOW for structure or a missing notice. Until `2026-09-19-i18n/I18N-010`'s
-remediation lands, "no variants exist" is that one known open finding — cite it, do not re-file it
-per document; once any variant of a document exists, each gap for that document is a new finding.
-A fix edits all six variants in one commit and bumps all six `Last updated` lines.
+different claim, LOW for structure or a missing notice. `2026-09-19-i18n/I18N-010` (the four
+documents were English-only) is **closed** — `FIXED 2026-09-20`, 20 translations plus locale-aware
+About links, parity PASS — so every variant now exists and each new gap is its own finding.
+A fix edits all six variants in one commit and bumps all six `Last updated` lines, **except** a
+spelling-only fix to the English file, which changes no claim and must leave the dates alone.
 
 ## Review and verify
 
@@ -204,6 +224,22 @@ Keep out-of-scope failures separate. If a gate could not run, report it as unrun
 passing. Current-version tables belong only in the root `README.md` and `docs/versions.md`;
 mentioning a past release elsewhere is allowed.
 
+**Spelling.** Every English document in scope is read for American English, per
+[american-english.md](../audit-shared/american-english.md) — that reference holds the standard, the
+carve-outs, and the rule that the FFXIV terminology glossary wins wherever it conflicts (a game term
+such as **Grey** or **Glamour** keeps the game's spelling and is never filed). A `collector` runs
+`node "<SKILL_DIR>/../audit-shared/scripts/american-spelling.mjs" .` into
+`evidence/american-spelling.txt`, once more with `--all` for the prose that sits inside code fences
+(ASCII trees, English values in JSON examples), and returns the counts plus the exit status; exit 1
+means candidates, not a broken run. Each cluster's `worker` confirms its own file's candidates at
+`file:line` and also reads for British spellings the script's explicit dictionary misses. File one
+`DOC-` per document listing every location, not one per word, at LOW severity unless the spelling
+changes meaning or breaks a quoted identifier. When a whole tier is affected — the 2026-09-21 run
+found 418 across 56 documents — file one per **cluster** instead, with the top three documents in
+**Location** and the per-document table in `evidence/`; conventions.md §3 caps Location at three
+bullets, so one-per-document does not survive that volume. Every `glossary?` and `multilingual-row?` candidate
+the dictionary or a non-English table cell settles goes to *Rejected suspicions* with its reason.
+
 Verify every candidate at its document `file:line` and at its supporting source, release, or live
 evidence. Merge duplicate claims into one finding that lists every affected location. Separate
 confirmed inaccuracies, missing documentation for a feature that exists, release drift, and
@@ -226,7 +262,7 @@ Keep verification gaps in the report, without assigning them confirmed-finding I
 The report includes:
 
 - the baseline and coverage tables;
-- gate results, including `manual-check.mjs`;
+- gate results, including `manual-check.mjs` and `american-spelling.mjs`;
 - a linked findings catalog;
 - positive controls and rejected suspicions;
 - release drift and verification gaps;

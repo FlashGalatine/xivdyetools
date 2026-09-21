@@ -22,11 +22,11 @@ The **LENS** row is a set of tabs, one per vision type, each with a prevalence f
 
 | Lens | Prevalence shown | What it is |
 |------|------------------|------------|
-| **Normal** | ~92% | *"Standard colour perception — the palette as you painted it."* |
+| **Normal** | ~92% | *"Standard color perception — the palette as you painted it."* |
 | **Deuteranopia** | ~6% males | *"Red-green. The most common form, and about one man in twelve."* |
 | **Protanopia** | ~2% males | *"Red-green, with reds darkened as well as shifted."* |
 | **Tritanopia** | ~0.01% | *"Blue-yellow. Rare, and it hits teals and yellows hardest."* |
-| **Achromatopsia** | ~0.003% | *"No colour at all — only lightness separates two dyes."* |
+| **Achromatopsia** | ~0.003% | *"No color at all — only lightness separates two dyes."* |
 
 **The dot is the worst pair under that lens** — its colour is the tier (see below) of the two dyes that come closest together when seen that way, so you can spot the problem lens without clicking through them all. Selecting a tab repaints everything below it, and the lens you leave selected is remembered.
 
@@ -48,7 +48,7 @@ The three units:
 
 | Unit | Short label | What it measures |
 |------|-------------|------------------|
-| **Distinguishability** | Distinguishability % | *"The app's own measure: straight-line RGB distance between the two simulated colours, over the 441.67 diagonal of the colour cube."* Not a WCAG rating and not perceptual — reads high for dark colours. Good for ranking. |
+| **Distinguishability** | Distinguishability % | *"The app's own measure: straight-line RGB distance between the two simulated colors, over the 441.67 diagonal of the color cube."* Not a WCAG rating and not perceptual — reads high for dark colours. Good for ranking. |
 | **Contrast ratio** | Contrast ratio · WCAG 1.4.11 | WCAG relative-luminance contrast. Success Criterion 1.4.11 asks for at least 3:1 between adjacent meaningful colours. *"The only readout here backed by a published standard — but it only sees lightness."* |
 | **Perceptual distance** | ΔE2000 | The same colour-difference formula the other tools use for match quality. Perceptually honest, but *"no standard defines a pass mark — the cuts here are the app's calibrated separation bands."* |
 
