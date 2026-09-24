@@ -2,6 +2,56 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.4.1] - 2026-09-24
+
+Patch release closing the worker-kit half of `pkg-foundation-13`
+(`docs/audits/2026-09-02-deep-dive/evidence/review-pkg-foundation.md`, never promoted to that
+audit's catalog). Package metadata only — no source, declaration or runtime change: the published
+files differ from 1.4.0's only in `package.json` (`version`, the two peer ranges below and the
+devDependency floors) and in the README line quoting the peer ranges, which now matches
+`package.json` (it still said `hono ^4.13.5`).
+
+### Changed
+
+- **Optional `hono` peer floor `^4.13.7` → `^4.13.8`.** Not a change made for this release: it is
+  Dependabot's hono bump (PR #197), which rewrites this package's peer floor along with its
+  devDependency, and a release ships whatever floor is on `main` — as 1.2.0, 1.2.1 and 1.4.0 did.
+  A consumer pinned to hono 4.13.7 now hits the same install-time peer conflict the entry below
+  describes, and needs hono 4.13.8 or later.
+
+### Fixed
+
+- **The optional `@cloudflare/workers-types` peer range now admits 5.x: `^4.0.0` →
+  `^4.0.0 || ^5.0.0`.** `@cloudflare/workers-types` moved to a 5.x line on 2026-07-03 (4.x ends at
+  `4.20260702.1`) and every Worker in this monorepo installs `^5.2026…`, yet every published version
+  of this package, 1.1.0 through 1.4.0, declared `^4.0.0` while being built against a 5.x
+  devDependency — a mismatch inherited from `@xivdyetools/rate-limiter`. `optional` did not save a
+  consumer: it stops a package manager from installing a *missing* peer, but a peer that is
+  installed must still match. `npm install @xivdyetools/worker-kit@1.4.0 @cloudflare/workers-types@5`
+  failed outright with `ERESOLVE` (npm 10; only `--force` / `--legacy-peer-deps` got past it), and
+  pnpm 11 reported `✕ unmet peer @cloudflare/workers-types@^4.0.0`. The peer stays optional.
+
+  5.0 changed what the bare entrypoint means: in 4.x `@cloudflare/workers-types` exposed the
+  runtime types for a compatibility date before 2021-11-03, with newer ones behind
+  per-compatibility-date entrypoints (`/2023-07-01`, `/latest`, …); 5.x drops those entrypoints and
+  the bare one tracks the latest runtime. This package uses only the bare entrypoint, and the only
+  Workers-specific global in its published declarations is `KVNamespace`
+  (`KVRateLimiterOptions.kv`; the others are the web-standard `Request` / `Response`) — the
+  `CloudflareRateLimiter` tier binding is the structural `RateLimitBinding`, not the global
+  `RateLimit`. Verified on the packed tarball: `npm install` resolves with no flags next to the
+  first 4.x (`4.20221111.0`), the last 4.x (`4.20260702.1`) and the latest 5.x (`5.20260924.1`),
+  and under `strict` with `skipLibCheck: false` none of the three reports an error in this
+  package's declarations. Against the last 4.x and the latest 5.x, `src/` also compiles under this
+  repo's strict compiler options, and a consumer that imports every subpath and hands a
+  `KVNamespace` to `KVRateLimiter` and a `RateLimit` binding to a `CloudflareRateLimiter` tier has
+  no error of its own. (The only errors those `skipLibCheck: false` runs do report — the same six on
+  every version — are in `@xivdyetools/logger` 2.2.1's published declarations, whose barrels
+  re-export symbols its `stripInternal` build removed: pre-existing, and unrelated to this range.)
+
+  Two named majors rather than `>=4.0.0`: a peer range is where a consumer learns what was tested,
+  and a 6.x can change types the way 5.0 changed the bare entrypoint. When 6.x ships, repeat that
+  check and append `|| ^6.0.0`.
+
 ## [1.4.0] - 2026-09-17
 
 Deep-dive remediation, Sprint 13 (`docs/audits/2026-09-16-deep-dive/`). Minor bump: two new

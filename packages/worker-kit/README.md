@@ -13,7 +13,7 @@ Formed in the Monorepo 2.0 Tier 1 consolidation by merging `@xivdyetools/worker-
 pnpm add @xivdyetools/worker-kit
 ```
 
-**Optional peer dependencies:** `hono ^4.13.5` and `@cloudflare/workers-types ^4.0.0`. Both are optional so a consumer that only needs the rate-limiter engine, not the middleware, never pulls in Hono — no current in-repo consumer is rate-limiter-only (see Consumers below).
+**Optional peer dependencies:** `hono ^4.13.8` and `@cloudflare/workers-types ^4.0.0 || ^5.0.0`. Both are optional so a consumer that only needs the rate-limiter engine, not the middleware, never pulls in Hono — no current in-repo consumer is rate-limiter-only (see Consumers below).
 
 ## Import Paths
 
