@@ -2,14 +2,14 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: September 20, 2026*
+*Last Updated: September 24, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-09-21 (checked against the registry API), `@xivdyetools/bot-logic` 4.4.1
-> is ahead of its published npm version (4.4.0) and awaits publication; `@xivdyetools/core` 5.5.0
-> published on 2026-09-20 and the other six packages are at parity;
+> (PR #123). As of 2026-09-24 (checked against the registry API), `@xivdyetools/worker-kit` 1.4.1
+> is ahead of its published npm version (1.4.0) and awaits publication; the other six packages
+> are at parity;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
@@ -43,7 +43,7 @@
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
-| **Worker Kit** (middleware + `/rate-limiter`) | v1.4.0 | `@xivdyetools/worker-kit` | npm | Active |
+| **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.4.1 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
@@ -437,6 +437,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.4.1 | Sep 2026 | Packaging patch — the optional `@cloudflare/workers-types` peer range admits 5.x as well as 4.x (was `^4.0.0`, so `npm install` next to the 5.x line every Worker here uses failed with `ERESOLVE`); the optional `hono` peer stays at 1.4.0's `^4.13.7`; no code change — the published files differ from 1.4.0 only in `package.json` and the README line quoting the peer ranges |
 | v1.4.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 13 — two new subpaths: `/body-guards` (`bodyGuards({ maxSize, maxDepth, onTooLarge, onInvalidJson, exempt })` → `bodySizeLimit` + `jsonDepthLimit`, the oauth and presets-api copies folded in, REFACTOR-009) and `/image-sniff` (`detectImageFormat`, `sniffImageType(bytes, accept)`, `IMAGE_MAGIC_BYTES` — image-worker's table is the source of truth, REFACTOR-008); `body-guards` is subpath-only (it imports `hono/body-limit` at runtime and `hono` is an optional peer) |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 15) — `MemoryRateLimiter.check()` truncated history a wider window still needed (BUG-097; retention now bounded by the key's largest window); `X-RateLimit-*` headers no longer dropped for handlers returning a raw `Response`; the native binding key format changed, so every counter resets once on deploy** |
 | v1.2.1 | Sep 2026 | knip dead-code gate — 20 barrel exports tagged `@public` (incl. the published `/rate-limiter/presets` subpath) |
