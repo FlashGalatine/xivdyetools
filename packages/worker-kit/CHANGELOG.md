@@ -7,17 +7,17 @@ All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-
 Patch release closing the worker-kit half of `pkg-foundation-13`
 (`docs/audits/2026-09-02-deep-dive/evidence/review-pkg-foundation.md`, never promoted to that
 audit's catalog). Package metadata only — no source, declaration or runtime change: the published
-files differ from 1.4.0's only in `package.json` (`version`, the two peer ranges below and the
-devDependency floors) and in the README line quoting the peer ranges, which now matches
-`package.json` (it still said `hono ^4.13.5`).
+files differ from 1.4.0's only in `package.json` (`version`, the `@cloudflare/workers-types` peer
+range below and the devDependency floors) and in the README line quoting the peer ranges, which now
+matches `package.json` (it still said `hono ^4.13.5`).
 
-### Changed
-
-- **Optional `hono` peer floor `^4.13.7` → `^4.13.8`.** Not a change made for this release: it is
-  Dependabot's hono bump (PR #197), which rewrites this package's peer floor along with its
-  devDependency, and a release ships whatever floor is on `main` — as 1.2.0, 1.2.1 and 1.4.0 did.
-  A consumer pinned to hono 4.13.7 now hits the same install-time peer conflict the entry below
-  describes, and needs hono 4.13.8 or later.
+The optional `hono` peer deliberately stays at 1.4.0's `^4.13.7`, one patch below the `^4.13.8`
+devDependency (Dependabot, PR #197). Nothing in this package needs hono 4.13.8, and raising a peer
+floor in a patch release would make a consumer who pins `hono@4.13.7` fail with the same
+install-time `ERESOLVE` the entry below fixes. Keep the two strings different: when Dependabot's npm
+updater bumps a dependency it also rewrites a `peerDependencies` line that reads exactly like the
+requirement it is replacing, which is how the published floor crept from `^4.12.34` (1.1.0) to
+`^4.13.7` (1.4.0), one bump each in 1.2.0, 1.2.1 and 1.4.0.
 
 ### Fixed
 
