@@ -90,7 +90,7 @@ is no standing exclusion.
 
 ## Turborepo
 
-**Turborepo 2.10** orchestrates tasks with dependency-aware caching. The contract lives in
+**Turborepo 2.11** orchestrates tasks with dependency-aware caching. The contract lives in
 `turbo.json`:
 
 - `build`, `type-check`, `lint`, and `test` all declare `dependsOn: ["^build"]` — a task on a

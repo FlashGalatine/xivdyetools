@@ -109,7 +109,7 @@ Short form of `.agents/skills/audit-shared/traps/git-worktrees-and-finishing.md`
 
 ### Tooling
 - **pnpm 11.17** with `workspace:*` protocol for internal dependencies; workspace-level settings (overrides, `allowBuilds` script policy, `minimumReleaseAge` supply-chain window) live in `pnpm-workspace.yaml`
-- **Turborepo 2.10** for task orchestration with dependency-aware caching
+- **Turborepo 2.11** for task orchestration with dependency-aware caching
 - **TypeScript 5.9** with shared `tsconfig.base.json` (strict, ES2022, bundler resolution, `verbatimModuleSyntax`)
 - **Vitest 5** for all packages and apps; **Playwright** for `web-app` E2E
 - **ESLint 10** flat config with typescript-eslint
