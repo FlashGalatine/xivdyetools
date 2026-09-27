@@ -105,7 +105,7 @@ describe('pickItem', () => {
     // Dated Hempen Coif #372 takes no dye; its twins Hempen Coif #2629 / #2630 take one
     const coif = (rowId: number, en: string, dyeCount: number) =>
       row(rowId, en, '65540', ['Head'], {
-        rules: { dyeCount, glamourable: true, wearMask: ANYONE, jobs: ['GLA', 'PLD'] },
+        rules: { dyeCount, glamourable: true, wearMask: ANYONE, grandCompany: 0 },
       });
     const padding = Array.from({ length: MAX_ALTERNATES }, (_, i) => coif(400 + i, `Dated Filler ${i}`, 0));
     const item = pickItem([coif(2630, 'Hempen Coif of Gathering', 1), coif(372, 'Dated Hempen Coif', 0), ...padding, coif(2629, 'Hempen Coif', 1)])!;

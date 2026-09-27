@@ -139,14 +139,13 @@ describe('POST /v1/chara/resolve', () => {
   });
 
   it('answers the in-game rules, and a cache replay keeps them', async () => {
-    const casterJobs = Object.fromEntries(['THM', 'ACN', 'BLM', 'SMN', 'RDM', 'BLU', 'PCT'].map((j) => [j, true]));
     const everyone = { Hyur: true, Elezen: true, Lalafell: true, Miqote: true, Roegadyn: true, AuRa: true, Hrothgar: true, Viera: true, Male: true, Female: true };
     const mask = {
       ...BEECH_MASK,
-      fields: { ...BEECH_MASK.fields, DyeCount: 1, IsGlamorous: true, EquipRestriction: { fields: everyone }, ClassJobCategory: { fields: casterJobs } },
+      fields: { ...BEECH_MASK.fields, DyeCount: 1, IsGlamorous: true, EquipRestriction: { fields: everyone }, GrandCompany: { value: 0, row_id: 0 } },
     };
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: 'v', results: [mask] })));
-    const expected = [{ itemIds: [18085], dyeCount: 1, glamourable: true, wearMask: 0xffff, jobs: ['THM', 'BLM', 'ACN', 'SMN', 'RDM', 'BLU', 'PCT'] }];
+    const expected = [{ itemIds: [18085], dyeCount: 1, glamourable: true, wearMask: 0xffff, grandCompany: 0 }];
 
     const ctx = createMockExecutionContext();
     const first = (await (await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] }, ctx)).json()) as any;

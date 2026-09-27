@@ -45,7 +45,7 @@ export interface ResolvedCharaItem {
   viaMainHand: boolean;
   /**
    * What the game allows, as the family's distinct rule sets: dye channels,
-   * glamour flag, race/gender lock, classes and jobs. The first set holds
+   * glamour flag, race/gender lock, Grand Company. The first set holds
    * `itemId`. `[]` when XIVAPI did not return the fields. The browser checks
    * these against the file's dyes and character, which never reach us.
    */
