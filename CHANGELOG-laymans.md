@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.9.4] - 2026-09-27
+### 🌐 Your character file stays when you change language
+- Web app: switching the app's language no longer throws away a character file loaded into the Swatch Matcher. It used to go back to the empty drop zone, and you had to load the file again.
+- Web app: the file's colors, the dyes on its glamour and the names of its gear are redrawn in the new language, and Tribe & Gender stay locked to the file.
+- Web app: leaving the Swatch Matcher or reloading the page still clears the file, as before.
+
 ## [5.9.3] - 2026-09-27
 ### 🔓 Tribe & Gender no longer stay locked
 - Web app: in the Swatch Matcher, a loaded character file fills in Tribe & Gender and locks both settings to the file. That lock now ends as soon as the file is gone.
