@@ -1,0 +1,200 @@
+import { describe, expect, it } from 'vitest';
+import type { Cost, Entry, Inputs, Offer, Shop, Tables } from '../../scripts/acquisition/model.js';
+import { selectEntries, type Selection } from '../../scripts/acquisition/select.js';
+import { collectSources } from '../../scripts/acquisition/sources.js';
+import { emptyInputs, emptyTables, npc } from './helpers.js';
+
+const ITEM = 100;
+
+function shop(id: number, npcIds: number[], extra: Partial<Shop> = {}): Shop {
+  return { id, name: '', npcIds, festival: false, ...extra };
+}
+
+function offer(s: Shop, costs: Cost[]): Offer {
+  return { shop: s, costs };
+}
+
+function select(inputs: Inputs, tables: Tables = emptyTables()): Selection {
+  return selectEntries(collectSources(ITEM, inputs), inputs, tables);
+}
+
+const kinds = (entries: Entry[]): string[] => entries.map((e) => e.kind);
+
+describe('selectEntries', () => {
+  it('a relic shows only its saga, whatever else sells it', () => {
+    const i = emptyInputs();
+    i.relics.set(ITEM, 'Phantom Gear & Weapons');
+    i.offers.set(ITEM, [offer(shop(1770926, [1053905]), [{ itemId: 47750, amount: 3 }])]);
+    i.npcs.set(1053905, npc(1053905, 'Dodokkuli', 'Phantom Village'));
+    expect(select(i).entries).toEqual([{ kind: 'relic', saga: 'Phantom Gear & Weapons' }]);
+  });
+
+  it('Savage gear lists the encounters where the piece, its coffer or its token drops — never the book exchange', () => {
+    const i = emptyInputs();
+    i.items.set(32141, { name: 'Book of Litany', plural: 'Book of Litany', uiCategory: 61 });
+    i.duties.set(32141, [30100]);
+    i.duties.set(32147, [30100, 30102]);
+    i.containers.set(ITEM, [32147]);
+    i.offers.set(ITEM, [offer(shop(1770331, [1030123]), [{ itemId: 32141, amount: 6 }])]);
+    i.npcs.set(1030123, npc(1030123, 'Ghul Gul', 'Amh Araeng'));
+    expect(select(i).entries).toEqual([
+      { kind: 'duty', dutyId: 30100 },
+      { kind: 'duty', dutyId: 30102 },
+    ]);
+  });
+
+  it('an upgrade that also takes a base item keeps the vendor line', () => {
+    const i = emptyInputs();
+    i.items.set(40000, { name: 'Base Coat', plural: 'Base Coats', uiCategory: 35 });
+    i.items.set(40001, { name: 'Twine', plural: 'Twines', uiCategory: 61 });
+    i.duties.set(40001, [30100]);
+    i.offers.set(ITEM, [offer(shop(1, [10]), [{ itemId: 40000, amount: 1 }, { itemId: 40001, amount: 1 }])]);
+    i.npcs.set(10, npc(10, 'Djole', 'Radz-at-Han'));
+    expect(kinds(select(i).entries)).toEqual(['vendor']);
+  });
+
+  it('a general currency is never a duty token, even when duties reward it', () => {
+    const i = emptyInputs();
+    i.items.set(28, { name: 'Allagan Tomestone of Poetics', plural: 'Allagan Tomestones of Poetics', uiCategory: 63 });
+    i.duties.set(28, [1, 2, 3]);
+    i.offers.set(ITEM, [offer(shop(1, [10]), [{ itemId: 28, amount: 495 }])]);
+    i.npcs.set(10, npc(10, 'Auriana', 'Mor Dhona'));
+    expect(kinds(select(i).entries)).toEqual(['vendor']);
+  });
+
+  it('ignores repurchase shops and seasonal-event shops', () => {
+    const i = emptyInputs();
+    i.offers.set(ITEM, [
+      offer(shop(262680, [1006004], { name: 'Repurchase Monk Gear' }), [{ itemId: 1, amount: 2000 }]),
+      offer(shop(1769999, [20], { festival: true }), [{ itemId: 5, amount: 1 }]),
+    ]);
+    i.npcs.set(1006004, npc(1006004, 'Calamity salvager', 'Limsa Lominsa Lower Decks'));
+    i.npcs.set(20, npc(20, 'event vendor', 'New Gridania'));
+    const result = select(i);
+    expect(result.entries).toEqual([]);
+    expect(result.dropped).toEqual(['repurchaseShop', 'seasonalShop']);
+  });
+
+  it("turns a crafters'/gatherers' scrip offer into the scrip exchange and irregular tomestones into the Moogle Treasure Trove", () => {
+    const i = emptyInputs();
+    i.items.set(33913, { name: "Purple Crafters' Scrip", plural: "Purple Crafters' Scrips", uiCategory: 100 });
+    i.items.set(45000, { name: 'Irregular Tomestone of Heliometry', plural: 'Irregular Tomestones of Heliometry', uiCategory: 100 });
+    i.offers.set(ITEM, [
+      offer(shop(1, [10]), [{ itemId: 33913, amount: 250 }]),
+      offer(shop(2, [11]), [{ itemId: 45000, amount: 4 }]),
+    ]);
+    expect(select(i).entries).toEqual([{ kind: 'scrip', cost: { itemId: 33913, amount: 250 } }, { kind: 'treasureTrove' }]);
+  });
+
+  it('a random container appears only when it is the only source', () => {
+    const tables = emptyTables();
+    tables.gachaContainers.add(33441);
+    const alone = emptyInputs();
+    alone.containers.set(ITEM, [33441]);
+    expect(select(alone, tables).entries).toEqual([{ kind: 'container', containerId: 33441 }]);
+
+    const withVendor = emptyInputs();
+    withVendor.containers.set(ITEM, [33441]);
+    withVendor.offers.set(ITEM, [offer(shop(1770281, [1031680]), [{ itemId: 28063, amount: 1200 }])]);
+    withVendor.npcs.set(1031680, npc(1031680, 'Enie', 'The Firmament'));
+    const result = select(withVendor, tables);
+    expect(kinds(result.entries)).toEqual(['vendor']);
+    expect(result.dropped).toContain('gachaNotOnlySource');
+  });
+
+  it('a Eureka lockbox writes the guide line when it is the only source', () => {
+    const tables = emptyTables();
+    tables.eurekaLockboxes.set(22508, 'Eureka Anemos Lockboxes');
+    const i = emptyInputs();
+    i.containers.set(ITEM, [22508]);
+    expect(select(i, tables).entries).toEqual([{ kind: 'eurekaLockbox', line: 'Eureka Anemos Lockboxes' }]);
+  });
+
+  it('a quest appears only when it is the only source, and a seasonal quest never', () => {
+    const only = emptyInputs();
+    only.quests.set(ITEM, [1]);
+    only.questInfo.set(1, { name: 'Close to Home', kind: 'msq' });
+    expect(select(only).entries).toEqual([{ kind: 'quest', questId: 1 }]);
+
+    const withCraft = emptyInputs();
+    withCraft.quests.set(ITEM, [1]);
+    withCraft.questInfo.set(1, { name: 'Close to Home', kind: 'msq' });
+    withCraft.recipes.set(ITEM, [{ job: 13, level: 50 }]);
+    const crafted = select(withCraft);
+    expect(crafted.entries).toEqual([{ kind: 'craft', job: 13, level: 50 }]);
+    expect(crafted.dropped).toEqual(['questNotOnlySource']);
+
+    const seasonal = emptyInputs();
+    seasonal.quests.set(ITEM, [2]);
+    seasonal.questInfo.set(2, { name: 'Blue Starlight', kind: 'event' });
+    const result = select(seasonal);
+    expect(result.entries).toEqual([]);
+    expect(result.dropped).toEqual(['seasonalQuest']);
+  });
+
+  it('a fixed coffer takes its own source: store product, quest reward, or its own name', () => {
+    const store = emptyInputs();
+    store.containers.set(ITEM, [36814]);
+    store.onlineStore.add(36814);
+    expect(select(store).entries).toEqual([{ kind: 'onlineStore' }]);
+
+    const questCoffer = emptyInputs();
+    questCoffer.containers.set(ITEM, [500]);
+    questCoffer.quests.set(500, [3]);
+    questCoffer.questInfo.set(3, { name: 'The Coffer Quest', kind: 'side' });
+    expect(select(questCoffer).entries).toEqual([{ kind: 'quest', questId: 3 }]);
+
+    const plain = emptyInputs();
+    plain.containers.set(ITEM, [501]);
+    expect(select(plain).entries).toEqual([{ kind: 'container', containerId: 501 }]);
+  });
+});
+
+describe('vendor choice', () => {
+  function vendors(npcs: Array<[number, string | null, { unreachable?: boolean }?]>): Inputs {
+    const i = emptyInputs();
+    i.zoneLevels.set('Urqopacha', 90).set("Kozama'uka", 91).set('Old Gridania', 1).set('Central Shroud', 1);
+    i.offers.set(ITEM, [offer(shop(263178, npcs.map(([id]) => id)), [{ itemId: 1, amount: 28483 }])]);
+    for (const [id, zone, extra] of npcs) i.npcs.set(id, npc(id, 'merchant', zone, extra));
+    return i;
+  }
+  const chosen = (i: Inputs): number | undefined => {
+    const [entry] = select(i).entries;
+    return entry?.kind === 'vendor' ? entry.npc.id : undefined;
+  };
+
+  it('prefers Gridania over any level', () => {
+    expect(chosen(vendors([[1, 'Central Shroud'], [2, 'Old Gridania']]))).toBe(2);
+  });
+
+  it('otherwise takes the lowest-level zone, then the lowest NPC id', () => {
+    expect(chosen(vendors([[3, "Kozama'uka"], [4, 'Urqopacha']]))).toBe(4);
+    expect(chosen(vendors([[6, 'Urqopacha'], [5, 'Urqopacha']]))).toBe(5);
+  });
+
+  it('ranks a zone with no known level after every known zone', () => {
+    expect(chosen(vendors([[7, 'Brand New Zone'], [8, "Kozama'uka"]]))).toBe(8);
+    expect(chosen(vendors([[7, 'Brand New Zone']]))).toBe(7);
+  });
+
+  it('skips NPCs in duty or housing maps and drops a vendor nobody reachable runs', () => {
+    expect(chosen(vendors([[9, 'Old Gridania', { unreachable: true }], [10, 'Urqopacha']]))).toBe(10);
+    const nowhere = select(vendors([[11, null]]));
+    expect(nowhere.entries).toEqual([]);
+    expect(nowhere.dropped).toEqual(['vendorWithoutPosition']);
+  });
+
+  it('one segment per price: the same cost at two shops picks one NPC across both', () => {
+    const i = emptyInputs();
+    i.zoneLevels.set('Urqopacha', 90).set("Kozama'uka", 91);
+    i.offers.set(ITEM, [
+      offer(shop(1, [21]), [{ itemId: 1, amount: 500 }]),
+      offer(shop(2, [20]), [{ itemId: 1, amount: 500 }]),
+    ]);
+    i.npcs.set(21, npc(21, 'merchant', "Kozama'uka"));
+    i.npcs.set(20, npc(20, 'merchant', 'Urqopacha'));
+    const { entries } = select(i);
+    expect(entries).toHaveLength(1);
+    expect(entries[0]?.kind === 'vendor' && entries[0].npc.id).toBe(20);
+  });
+});
