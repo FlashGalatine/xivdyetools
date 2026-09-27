@@ -21,7 +21,8 @@ For the investigation that preceded a decision, see [`../research/`](../research
 | Dead-code guardrails | [spec](specs/2026-09-01-dead-code-guardrails-design.md) | [plan](plans/2026-09-01-dead-code-guardrails.md) | Shipped — PR #157, `knip.jsonc` + `scripts/check-dead-code.ts` |
 | Selectable harmony colour wheels | [spec](specs/2026-09-04-harmony-color-wheels-design.md) | [plan](plans/2026-09-04-harmony-color-wheels.md) | Shipped 2026-09-05 — PR #167 (+ #168 docs restyle, #169 API endpoints) |
 | GitHub webhook bytes (Sprint 0 follow-up) | — (spec: [FINDING-003](../audits/2026-09-15-security/findings/FINDING-003.md)) | [plan](plans/2026-09-15-sprint-0-webhook-bytes.md) | Shipped — PR #184, discord-worker 5.5.5 |
-| Glamour export — automatic Acquisition line | [spec](specs/2026-09-27-glamour-acquisition-design.md) | [plan](plans/2026-09-27-glamour-acquisition.md) | Proposed — awaiting review |
+| Glamour export — automatic Acquisition line | [spec](specs/2026-09-27-glamour-acquisition-design.md) | [plan](plans/2026-09-27-glamour-acquisition.md) | Approved 2026-09-27 — in progress (PR A) |
+| Glamour Reader — the tenth tool | [spec](specs/2026-09-27-glamour-reader-design.md) | [plan](plans/2026-09-27-glamour-reader.md) | Approved 2026-09-27 — in progress (PRs B–D) |
 
 ## Conventions
 

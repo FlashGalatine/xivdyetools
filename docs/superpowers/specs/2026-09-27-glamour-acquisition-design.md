@@ -1,8 +1,9 @@
 # Glamour export — automatic Acquisition line
 
 **Date:** 2026-09-27 · **Scope:** `api-worker` (build script, data table, one new field on
-`POST /v1/chara/resolve`, public docs) then `web-app` (the Swatch Matcher's glamour Markdown export) ·
-**Status:** proposed · **Research:** [`docs/research/2026-09-27-glamour-acquisition/`](../../research/2026-09-27-glamour-acquisition/README.md) ·
+`POST /v1/chara/resolve`, public docs) then `web-app` (the Glamour Reader's export sheet) ·
+**Status:** approved 2026-09-27 (Native execution), amended the same day by the Glamour Reader designs —
+see [Amendments](#amendments-2026-09-27-glamour-reader-designs) · **Research:** [`docs/research/2026-09-27-glamour-acquisition/`](../../research/2026-09-27-glamour-acquisition/README.md) ·
 **Branch:** `feat/glamour-acquisition`
 
 ## Problem
@@ -30,7 +31,8 @@ glamour written by hand to the guide can be reproduced line for line.
   Pieces whose only sources are these stay blank.
 - Facewear (the `Glasses` sheet): stays blank.
 - Localized acquisition lines (see D2).
-- Showing acquisition anywhere in the glamour block's UI; it is export text only.
+- ~~Showing acquisition anywhere in the glamour block's UI; it is export text only.~~ Superseded: the
+  Glamour Reader's export sheet (design 2c) shows each line, editable, before it is copied or saved.
 
 ## Decisions
 
@@ -40,17 +42,17 @@ The user delegated these ("proceed with your best recommendations"); each is rev
 |---|---|---|
 | D1 | A **build-time table in the api-worker**, attached to each item in the `POST /v1/chara/resolve` response as `acquisition` | The web-app already calls resolve when a file loads, so the line arrives with the item names at no extra request. The worker already ships two build-time tables of this size (ko/zh names, 1.1 and 0.9 MB). A web-app chunk would blow the 60 KB default chunk budget; runtime calls to Teamcraft/Garland would lean on unofficial or bulk-only sources per request. |
 | D2 | **English only** | GPOSERS is an English-language submission format, and the guide's wording ("Crafted (WVR Lvl. 92)", "Gil", plural currency names) is English-specific. `glamour-markdown.ts` already keeps its labels English for the same reason. Item names in the export still follow the app language. |
-| D3 | The line describes **the resolved item** — the one whose name the export prints (lowest `row_id` in its model family) — not its alternates | The line must match the name next to it. |
+| D3 | The line describes **the item the export names**. *Amended:* the Glamour Reader lets the player pick any twin, and its default is no longer the lowest `row_id`, so the resolve answer carries `acquisition` on the named item **and on every alternate**; the web-app writes the picked twin's line only | The line must match the name next to it. |
 | D4 | **Pin the inputs per build:** resolve Teamcraft `staging` to a commit SHA once and fetch every file at that SHA; record the SHA and the XIVAPI version key in `acquisition.meta.json` | Files fetched minutes apart from a moving branch can disagree; the meta file makes a build reproducible. (`build-item-names.mjs` reads `staging` unpinned; it is not changed here.) |
 | D5 | **Savage:** list only the encounters, never the book exchange or book count (user rule). The encounters are every duty where the item, its fixed coffer, or its token drops | User rule, 2026-09-27; reproduces the example's Edenmorn line exactly. |
-| D6 | **Other duty tokens** (normal and alliance raids, Extreme trials) follow the same rule as Savage — **recommendation, needs confirmation**. A cost item counts as a duty token when Teamcraft lists it in `instance-sources` and its UI category is neither "Other" (63: gil, seals, marks, tomestones, MGP) nor "Currency" (100: scrips, crystals, gemstones); the rule applies only when **every** cost of the exchange is a token, so an upgrade that also takes a base item keeps the upgrade format | Consistent with the guide putting duties first and with the example; the alternative is a vendor line the example suggests GPOSERS does not use. Implemented as recommended behind one constant in `select.mjs`, so reversing it is a one-line change. |
+| D6 | **Other duty tokens** (normal and alliance raids, Extreme trials) follow the same rule as Savage — **recommendation, needs confirmation**. A cost item counts as a duty token when Teamcraft lists it in `instance-sources` and its UI category is neither "Other" (63: gil, seals, marks, tomestones, MGP) nor "Currency" (100: scrips, crystals, gemstones); the rule applies only when **every** cost of the exchange is a token, so an upgrade that also takes a base item keeps the upgrade format | Consistent with the guide putting duties first and with the example; the alternative is a vendor line the example suggests GPOSERS does not use. Implemented as recommended behind one constant in `select.mjs`, so reversing it is a one-line change. **Confirmed** by the user's answers on design 2c ("token gear lists encounters only, like Savage"). |
 | D7 | **Random ("gacha") containers only when they are the item's only source** (user rule) — detected with a reviewed list seeded from description and name signals | The game data does not mark them; see research §6. |
 | D8 | **Repurchase shops are ignored** (gil shops whose English name starts "Repurchase", run by the Calamity/journeyman salvagers) | They sell back only what the player already owned, so they are not an acquisition route. |
 | D9 | **Vendor choice** when several NPCs sell a piece: an NPC in Old or New Gridania; else the NPC in the lowest-level zone players can reach — a zone's level is its lowest FATE level, and a zone without FATEs (a city) takes its expansion's starting level (1, 50, 60, 70, 80, 90); ties → lowest NPC id. NPCs in duty or housing maps are skipped; an NPC in a zone missing from the table still qualifies but ranks after every listed zone (and is counted in the meta, so a new patch's zones get added). A vendor with no known position is left out of the line | User rule plus determinism; a vendor line without a zone is not in the guide's format. |
 | D10 | **Outpost segment** only for the wilderness, Ul'dah and Ishgard (guide). A zone counts as wilderness when FATEs happen there — the game's own "overworld" flag also covers hubs such as Wolves' Den Pier, whose example line has no outpost — except Ishgard's districts, where the district is the outpost ("Ishgard - The Firmament", whose fêtes are FATEs). Wilderness: the nearest map area label within 3.0 map units, else no outpost segment. Ishgard districts get an "Ishgard - " prefix; Ul'dah's place names already carry "Ul'dah - " | Research §7; the guide says the outpost is not the nearest aetheryte. |
 | D11 | **Relic sagas** are computed each build from `relic-sagas.json` rules: the game's relic sheets (`RelicItem`, `AnimaWeaponItem`, `AnimaWeapon5` by Item link; `ResistanceWeaponAdjust`, `MandervilleWeaponEnhance` keyed by item id), relic-shop name patterns (Phantom Weapons…, Bozjan / Law's Order gear, Skysteel and Splendorous replicas, Eureka weapon replicas), vendor zones (the four Eureka zones), tool-only shop patterns (Cosmic Exploration exchanges), plus reviewed `include` / `exclude` lists. Known-answer spot checks (Nirvana Zeta, Curtana Zenith, Animated Hauteclaire, Augmented Law's Order Bastard Sword, Majestic Manderville Fists, Phantom Cleavers Penumbrae) fail the build if they stop matching. A relic gets only its saga line | The guide says "regardless of step". Rules over data keep up with patches; the lists only correct them. |
 | D12 | **Seasonal events are not formatted in v1:** event quests (journal section "Seasonal Events") and event shops (`SpecialShop.RequiredFestival` ≠ 0) are dropped as sources | Their guide format needs the event name and year, which no source carries; dropping them keeps Goal 2 ("blank beats wrong"). |
-| D13 | **Two pull requests.** PR 1: api-worker (this branch, off `main`). PR 2: web-app, stacked on PR #206 until it merges | #206 rewrites the glamour block the web-app change touches; the api-worker half is independent and deployable first. The web-app ignores an absent field, so deploy order is safe either way. |
+| D13 | **Two pull requests.** PR 1: api-worker (this branch, off `main`). PR 2: web-app, stacked on PR #206 until it merges. *Amended:* PR 2 is the Glamour Reader web tool, whose export sheet carries the line ([spec](2026-09-27-glamour-reader-design.md)) | #206 rewrites the glamour block the web-app change touches; the api-worker half is independent and deployable first. The web-app ignores an absent field, so deploy order is safe either way. |
 
 ## Architecture
 
@@ -154,8 +156,23 @@ and sometimes a measure phrase ("copies of the Book of Litany"), so the plural i
 
 ## Open questions
 
-1. **D6** — should normal-raid, alliance-raid and Extreme-trial token exchanges follow the Savage rule?
+1. ~~**D6** — should normal-raid, alliance-raid and Extreme-trial token exchanges follow the Savage rule?~~
+   Yes (design 2c answers).
 2. **The hand-kept tables** — especially `relic-sagas` and `gacha-containers` — need one review pass by
    someone who knows the GPOSERS conventions before PR 1 merges.
 3. **Deferred categories** — worth a hand-kept table later if the blank lines they leave turn out to
    be common.
+
+## Amendments (2026-09-27, Glamour Reader designs)
+
+The user pointed this work at the Claude Design project's Glamour Reader drawings (`Glamour Reader
+Directions.dc.html`, turn 2 = sheet 2c). They change three things here and nothing in the build
+script:
+
+1. **Every twin gets a line** (D3). `pickItem` attaches `acquisition` to `alternates[]` entries as well
+   as to the named item. Alternates stay capped at `MAX_ALTERNATES`.
+2. **D6 is confirmed.**
+3. **Where the line is shown** (non-goal 4, D13): the Glamour Reader's export sheet, one editable
+   field per piece; edits are saved on the device keyed by a hash of the gear, never the file or the
+   character. That is web-app work, specified in
+   [`2026-09-27-glamour-reader-design.md`](2026-09-27-glamour-reader-design.md).

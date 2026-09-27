@@ -1,6 +1,6 @@
 # Glamour Export — Automatic Acquisition Line Implementation Plan
 
-**Status:** proposed — awaiting review
+**Status:** approved 2026-09-27 — Native execution. Amended the same day by the Glamour Reader designs: Task 5 attaches the line to every alternate too, and Task 7 is superseded by the [Glamour Reader plan](2026-09-27-glamour-reader.md).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -28,7 +28,7 @@
 
 The inputs most likely to surprise a player that the spec implies but no rule test would catch unprompted — each is pinned by a test in the task named:
 
-1. **A family's named item has no line although an alternate does** — the export names the lowest `row_id`; the line must describe that item, not borrow an alternate's (spec D3). Test: Task 5, `pickItem` "uses the named item's line, never an alternate's".
+1. **A family's named item has no line although an alternate does** — each twin carries its own line and never borrows another's (spec D3, amended: the Glamour Reader writes the picked twin's line). Test: Task 5, `pickItem` "gives each twin its own line, never a sibling's".
 2. **The same price at two shops in different towns** — one vendor segment, choosing the preferred NPC across both shops. Test: Task 2, "one segment per price".
 3. **A single unit of a currency** — "(1 Wolf Mark)", singular. Test: Task 1, "writes a free vendor without parentheses and a single unit in the singular".
 4. **Duty names stored with a lowercase "the"** ("the Thousand Maws of Toto-Rak") — must read as the Duty Finder shows them. Test: Task 3, "capitalizes duty names".
@@ -2345,7 +2345,7 @@ vi.mock('./acquisition.js', () => ({
     expect(pickItem([itemRow(5)])).not.toHaveProperty('acquisition');
   });
 
-  it("uses the named item's line, never an alternate's", () => {
+  it("gives each twin its own line, never a sibling's", () => {
     const itemRow = (rowId: number): ItemRow => ({
       rowId,
       names: { en: `Item ${rowId}`, ja: '', de: '', fr: '' },
@@ -2357,6 +2357,11 @@ vi.mock('./acquisition.js', () => ({
     const item = pickItem([itemRow(47252), itemRow(5)]);
     expect(item?.itemId).toBe(5);
     expect(item).not.toHaveProperty('acquisition');
+    expect(item?.alternates[0]).toEqual({
+      itemId: 47252,
+      names: expect.any(Object),
+      acquisition: "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)",
+    });
   });
 ```
 
@@ -2398,10 +2403,12 @@ In `apps/api-worker/src/chara/types.ts`, inside `interface ResolvedCharaItem` af
    * Where the named item comes from, as one English line in the GPOSERS
    * submission format ("Crafted (WVR Lvl. 92) / Independent Merchant -
    * Urqopacha - Worlar's Echo (28,483 Gil)"). Omitted when the build-time
-   * table has none. Describes `itemId`, never the alternates.
+   * table has none. Describes `itemId` only; each alternate carries its own.
    */
   acquisition?: string;
 ```
+
+Still in `types.ts`, widen the alternates entry to `Array<{ itemId: number; names: ItemNames; acquisition?: string }>`.
 
 In `apps/api-worker/src/chara/resolver.ts`: add `import { acquisitionFor } from './acquisition.js';` beside the `regional-names.js` import, and replace `pickItem` with (the field is present only when there is a line):
 
@@ -2417,9 +2424,10 @@ export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
     names: withRegional(primary.rowId, primary.names),
     iconId: primary.iconId,
     familySize: sorted.length,
-    alternates: sorted
-      .slice(1, 1 + MAX_ALTERNATES)
-      .map((r) => ({ itemId: r.rowId, names: withRegional(r.rowId, r.names) })),
+    alternates: sorted.slice(1, 1 + MAX_ALTERNATES).map((r) => {
+      const line = acquisitionFor(r.rowId);
+      return { itemId: r.rowId, names: withRegional(r.rowId, r.names), ...(line ? { acquisition: line } : {}) };
+    }),
     viaMainHand: false,
     ...(acquisition ? { acquisition } : {}),
   };
@@ -2527,6 +2535,8 @@ Open the PR against `main` with `gh pr create`: summary, the six acceptance line
 ---
 
 ### Task 7: The web-app export (PR 2, stacked on #206)
+
+> **Superseded 2026-09-27.** The web-app half is now the Glamour Reader's export sheet (design 2c) — see [`2026-09-27-glamour-reader.md`](2026-09-27-glamour-reader.md), Task B6. The steps below are kept as the record.
 
 **Files:**
 - Modify: `apps/web-app/src/services/chara-resolve-service.ts` (`CharaResolvedItem`)
