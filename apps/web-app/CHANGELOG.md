@@ -22,7 +22,9 @@ away. Present since the readout lock shipped with the 10A `.chara` reader — no
   The tool's teardown (a trip to another tool) and its re-render (a language switch runs `update()`,
   which rebuilds the importer) both went through `destroy()`, which dropped the file without telling
   the host — so the grid kept the file's pins along with the lock. The call is guarded like
-  `loadFile`'s, so a throwing host cannot cut its own `destroy()` short.
+  `loadFile`'s, so a throwing host cannot cut its own `destroy()` short. A file still reading or
+  resolving when `destroy()` runs is dropped when it lands rather than reported, which would have
+  put the lock back over an empty drop zone.
 - **`swatch.fileProvided` is transient in `ConfigController`** (`TRANSIENT_FIELDS`): never written
   to localStorage, never read back from it — a `true` persisted by an earlier build is ignored, which
   unlocks every browser already stuck — and never taken from an imported settings file. A reload set
@@ -32,7 +34,8 @@ away. Present since the readout lock shipped with the 10A `.chara` reader — no
 ### Tests
 
 - Each red before the code that satisfies it: `chara-import-lifecycle.test.ts` (destroy reports the
-  clear; a throwing host is contained), two `swatch-tool.test.ts` cases (a real `.chara` load through the drop zone, then
+  clear; a throwing host is contained; a load that lands after destroy is dropped), two
+  `swatch-tool.test.ts` cases (a real `.chara` load through the drop zone, then
   teardown or a language switch), five `config-controller.test.ts` cases (save, load, both cross-tab
   reloads, import) and `e2e/swatch-readout-lock.spec.ts` (leave the tool and return; reload; a
   lock an earlier build left in storage).

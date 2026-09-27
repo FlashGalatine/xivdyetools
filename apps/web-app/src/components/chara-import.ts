@@ -260,6 +260,8 @@ export class CharaImport {
   private showAllPieces: boolean;
   /** The mounted DYES ON THIS GLAMOUR block, re-rendered in place when names land */
   private glamourBox: HTMLElement | null = null;
+  /** Set by destroy(): a file still loading then must not reach the host */
+  private isDestroyed = false;
 
   constructor(
     container: HTMLElement,
@@ -278,6 +280,7 @@ export class CharaImport {
   }
 
   destroy(): void {
+    this.isDestroyed = true;
     const hadFile = this.resolved !== null;
     this.resolveAbort?.abort();
     this.resolveAbort = null;
@@ -351,6 +354,10 @@ export class CharaImport {
       ok: true,
       producer: TelemetryService.normalizeProducer(resolved.producer),
     });
+    // Torn down while the file was still reading or resolving: its UI is gone
+    // and destroy() has released the lock, so reporting it now would put the
+    // lock back over an empty drop zone.
+    if (this.isDestroyed) return;
     this.resolved = resolved;
     this.fileName = file.name;
     this.droppedStainIds.clear();

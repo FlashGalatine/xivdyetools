@@ -78,3 +78,51 @@ describe('CharaImport — destroy() with a file loaded', () => {
     expect(container.childElementCount).toBe(0);
   });
 });
+
+describe('CharaImport — destroy() while a file is still loading', () => {
+  /** Sets tribe and gender too, so a late report would also rewrite them. */
+  const TRIBE_FIXTURE = JSON.stringify({
+    TypeName: 'Anamnesis Character File',
+    Tribe: 'Rava',
+    Gender: 'Feminine',
+    REyeColor: 42,
+  });
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    resolveMock.mockReset();
+    resolveMock.mockReturnValue(new Promise(() => {}));
+    container = createTestContainer('chara-host-late-load');
+  });
+
+  afterEach(() => {
+    cleanupTestContainer(container);
+    vi.restoreAllMocks();
+  });
+
+  it('drops the late result instead of reporting it to the host', async () => {
+    const onResolved = vi.fn();
+    const onTribeGender = vi.fn();
+    const importer = new CharaImport(container, { onSlotPick: vi.fn(), onResolved, onTribeGender });
+    importer.init();
+    // Still reading when the host tears the importer down (a trip to another
+    // tool, a language switch re-rendering the tool)
+    let finishReading!: (text: string) => void;
+    const file = charaFile(TRIBE_FIXTURE);
+    vi.spyOn(file, 'text').mockReturnValue(
+      new Promise<string>((resolve) => {
+        finishReading = resolve;
+      })
+    );
+    const loading = (importer as unknown as LoadFile).loadFile(file);
+
+    importer.destroy();
+    finishReading(TRIBE_FIXTURE);
+    await loading;
+
+    // A report now would put back the readout lock destroy() just released
+    expect(onTribeGender).not.toHaveBeenCalled();
+    expect(onResolved).not.toHaveBeenCalled();
+    expect(container.childElementCount).toBe(0);
+  });
+});
