@@ -104,7 +104,8 @@ export class CharaFileCard {
   /** The drop and Choose-file handlers' only job; failures become one toast. */
   private async loadFile(file: File): Promise<void> {
     const result = await loadCharaFile(file);
-    if (result.ok) return;
+    // Superseded: a newer drop replaced this one, so its outcome is moot.
+    if (result.ok || result.error === 'superseded') return;
     ToastService.error(
       result.error === 'tooLarge'
         ? LanguageService.t('errors.fileTooLarge')

@@ -25,6 +25,11 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   component that held it, so following a SEND TO or Inspect Dye in… link and coming back meant
   dropping the file again. It now stays loaded until SWAP, a reload or closing the tab. It is still
   held in memory only and never written to browser storage.
+- **Two drops in quick succession could load the wrong file.** The drop zone stays up while a file
+  is still being read, so a second drop started a second load, and whichever finished last won: a
+  slow earlier file could replace the one picked last. `loadCharaFile` now numbers its loads, only
+  the newest publishes, and a replaced load's failure is not toasted. The old component had the
+  same race.
 
 ### Changed
 

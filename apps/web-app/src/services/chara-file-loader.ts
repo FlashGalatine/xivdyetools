@@ -18,10 +18,21 @@ import { dyeService } from './dye-service-wrapper';
 import { TelemetryService } from './telemetry-service';
 
 export type CharaLoadResult =
-  { ok: true } | { ok: false; error: 'tooLarge' } | { ok: false; error: 'failed'; reason: string };
+  | { ok: true }
+  | { ok: false; error: 'tooLarge' }
+  | { ok: false; error: 'failed'; reason: string }
+  /** A newer file was chosen while this one was still loading: nothing to show */
+  | { ok: false; error: 'superseded' };
 
 /** Created on the first load; `resolveCharaColors` reads the creator sheets through it. */
 let characterColors: CharacterColorService | null = null;
+
+/**
+ * Bumped by every load. Only the newest may publish: two drops that overlap
+ * would otherwise finish in either order, and a slow earlier file could
+ * replace the one the player picked last.
+ */
+let loadGeneration = 0;
 
 function reasonOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -32,6 +43,9 @@ function reasonOf(error: unknown): string {
  * subscriber has already been told by the time this resolves.
  */
 export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
+  const generation = ++loadGeneration;
+  const superseded = (): boolean => generation !== loadGeneration;
+
   // Refuse before reading: a multi-GB drop would hang the tab in
   // file.text() / JSON.parse (WEB-13). Same cap as the image inputs.
   if (file.size > MAX_USER_FILE_BYTES) return { ok: false, error: 'tooLarge' };
@@ -42,9 +56,11 @@ export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
   try {
     text = await file.text();
   } catch (error) {
+    if (superseded()) return { ok: false, error: 'superseded' };
     logger.error('[CharaFileLoader] Read failed:', error);
     return { ok: false, error: 'failed', reason: reasonOf(error) };
   }
+  if (superseded()) return { ok: false, error: 'superseded' };
 
   characterColors ??= new CharacterColorService();
   let resolved: ResolvedCharaCharacter;
@@ -56,6 +72,7 @@ export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
   } catch (error) {
     TelemetryService.track('chara_parse', { ok: false, producer: 'none' });
     logger.error('[CharaFileLoader] Parse failed:', error);
+    if (superseded()) return { ok: false, error: 'superseded' };
     // Core's messages name the field and the value; they ride into the
     // localized sentence as {reason}.
     return { ok: false, error: 'failed', reason: reasonOf(error) };
@@ -67,6 +84,8 @@ export async function loadCharaFile(file: File): Promise<CharaLoadResult> {
     ok: true,
     producer: TelemetryService.normalizeProducer(resolved.producer),
   });
+  // The parse above still counts; only the newest file becomes the character.
+  if (superseded()) return { ok: false, error: 'superseded' };
   CharaSessionService.setSession({ resolved, fileName: file.name });
   logger.info(`[CharaFileLoader] Parsed ${file.name} (${resolved.producer ?? 'unknown producer'})`);
   return { ok: true };

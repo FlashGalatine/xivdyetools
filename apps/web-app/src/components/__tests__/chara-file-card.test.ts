@@ -179,6 +179,27 @@ describe('CharaFileCard — the loaded file', () => {
     expect(onSaveCharacter).toHaveBeenCalledWith(CharaSessionService.getSession());
   });
 
+  it('says nothing about a file that a newer drop replaced', async () => {
+    const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    const { card } = mountCard();
+    const older = new File(['{}'], 'older.chara', { type: 'application/json' });
+    let failRead!: (error: Error) => void;
+    Object.defineProperty(older, 'text', {
+      value: () =>
+        new Promise<string>((_resolve, reject) => {
+          failRead = reject;
+        }),
+    });
+
+    const olderLoad = (card as unknown as LoadFile).loadFile(older);
+    await (card as unknown as LoadFile).loadFile(charaFile(FIXTURE, 'newer.chara'));
+    failRead(new Error('file changed on disk'));
+    await olderLoad;
+
+    expect(errorToast).not.toHaveBeenCalled();
+    expect(CharaSessionService.getSession()?.fileName).toBe('newer.chara');
+  });
+
   it('stops following the session once destroyed', async () => {
     const { card, container } = mountCard();
     card.destroy();

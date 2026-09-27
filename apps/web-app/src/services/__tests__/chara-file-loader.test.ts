@@ -158,3 +158,46 @@ describe('loadCharaFile — telemetry', () => {
     expect(track).not.toHaveBeenCalled();
   });
 });
+
+/** A file whose read finishes only when the test says so. */
+function slowFile(name: string) {
+  const file = new File(['{}'], name, { type: 'application/json' });
+  const read: { finish?: (text: string) => void; fail?: (error: Error) => void } = {};
+  Object.defineProperty(file, 'text', {
+    value: () =>
+      new Promise<string>((resolve, reject) => {
+        read.finish = resolve;
+        read.fail = reject;
+      }),
+  });
+  return { file, read };
+}
+
+describe('loadCharaFile — overlapping loads', () => {
+  it('the newest file wins even when an older one finishes last', async () => {
+    const track = vi.spyOn(TelemetryService, 'track').mockImplementation(() => {});
+    const older = slowFile('older.chara');
+    const olderLoad = loadCharaFile(older.file);
+
+    const newer = await loadCharaFile(fileOfSize(10, ANAMNESIS_FIXTURE, 'newer.chara'));
+    older.read.finish!(ANAMNESIS_FIXTURE);
+
+    expect(newer).toEqual({ ok: true });
+    expect(await olderLoad).toEqual({ ok: false, error: 'superseded' });
+    expect(CharaSessionService.getSession()?.fileName).toBe('newer.chara');
+    // Replaced while it was still being read, the older file is never parsed,
+    // so only the newer parse is counted.
+    expect(track).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report a failure for a file a newer one replaced', async () => {
+    const older = slowFile('older.chara');
+    const olderLoad = loadCharaFile(older.file);
+
+    await loadCharaFile(fileOfSize(10, ANAMNESIS_FIXTURE, 'newer.chara'));
+    older.read.fail!(new Error('file changed on disk'));
+
+    expect(await olderLoad).toEqual({ ok: false, error: 'superseded' });
+    expect(CharaSessionService.getSession()?.fileName).toBe('newer.chara');
+  });
+});
