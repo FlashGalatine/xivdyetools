@@ -326,3 +326,48 @@ describe('RACE_GROUPS (DEAD-024 adoption)', () => {
     ]);
   });
 });
+
+describe('Swatch tribe/gender lock follows the loaded .chara file', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+  });
+
+  afterEach(async () => {
+    const { CharaSessionService } = await import('@services/chara-session-service');
+    CharaSessionService.setSession(null);
+    render(nothing, container);
+    container.remove();
+  });
+
+  /** The tribe select (grouped by race) and the gender select, as rendered. */
+  async function renderSwatchSelects(): Promise<HTMLSelectElement[]> {
+    const { ConfigSidebar } = await import('../../v4/config-sidebar');
+    const sidebar = new ConfigSidebar() as unknown as { renderSwatchConfig(): TemplateResult };
+    render(sidebar.renderSwatchConfig(), container);
+    const selects = Array.from(
+      container.querySelectorAll<HTMLSelectElement>('select.config-select')
+    );
+    const tribe = selects.find((s) => s.querySelector('optgroup'));
+    const gender = selects.find((s) => s.querySelector('option[value="Female"]'));
+    expect(tribe).toBeDefined();
+    expect(gender).toBeDefined();
+    return [tribe!, gender!];
+  }
+
+  it('leaves tribe and gender editable when no file is loaded', async () => {
+    for (const select of await renderSwatchSelects()) expect(select.disabled).toBe(false);
+  });
+
+  it('locks them into a readout while a file is loaded', async () => {
+    const { CharaSessionService } = await import('@services/chara-session-service');
+    CharaSessionService.setSession({
+      resolved: {} as never,
+      fileName: 'test.chara',
+    });
+
+    for (const select of await renderSwatchSelects()) expect(select.disabled).toBe(true);
+  });
+});

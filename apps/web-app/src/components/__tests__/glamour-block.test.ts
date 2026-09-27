@@ -5,8 +5,11 @@
  * round-trip is mocked so each state can be driven deterministically.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { CharaImport } from '../chara-import';
+import { GlamourBlock } from '../glamour-block';
+import { CharaFileCard } from '../chara-file-card';
 import { StorageService, ToastService } from '@services/index';
+import { CharaSessionService } from '@services/chara-session-service';
+import { loadCharaFile } from '@services/chara-file-loader';
 import {
   buildGlamourHtml,
   buildGlamourMarkdown,
@@ -141,30 +144,38 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
+/** Everything `mount` built. The session is app-wide, so each test tears it all down. */
+const mounted: Array<{ destroy(): void }> = [];
+
+afterEach(() => {
+  for (const component of mounted.splice(0)) component.destroy();
+  CharaSessionService.setSession(null);
+});
+
 async function mount(pending: Promise<CharaResolveResult>, fixture: string = FIXTURE) {
   resolveMock.mockReturnValue(pending);
   const container = createTestContainer('chara-host');
   const glamour = createTestContainer('chara-glamour');
-  const importer = new CharaImport(
-    container,
-    { onSlotPick: vi.fn(), onResolved: vi.fn() },
-    { glamourContainer: glamour }
-  );
-  importer.init();
-  // loadFile is the drop/choose handler's only job; drive it directly so the
-  // test is deterministic (jsdom's File lacks text() on some versions).
+  // The file card carries SWAP; the block draws whatever the session holds.
+  const card = new CharaFileCard(container);
+  card.init();
+  const block = new GlamourBlock(glamour);
+  block.init();
+  mounted.push(card, block);
+  // loadCharaFile is the drop/choose handler's only job; drive it directly so
+  // the test is deterministic (jsdom's File lacks text() on some versions).
   const file = new File([fixture], 'galatine.chara', { type: 'application/json' });
   if (typeof (file as Blob).text !== 'function') {
     (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(fixture);
   }
-  await (importer as unknown as { loadFile(f: File): Promise<void> }).loadFile(file);
-  return { importer, container, glamour };
+  await loadCharaFile(file);
+  return { container, glamour };
 }
 
 const block = (glamour: HTMLElement) =>
   glamour.querySelector<HTMLElement>('[data-role="glamour-block"]')!;
 
-describe('CharaImport — DYES ON THIS GLAMOUR (Turn 11)', () => {
+describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
   let hosts: HTMLElement[] = [];
 
   beforeEach(() => {
@@ -341,7 +352,7 @@ describe('CharaImport — DYES ON THIS GLAMOUR (Turn 11)', () => {
  * always shows channel 1 then channel 2, with a neutral chip standing in for
  * an undyed channel, so chip position reads as DyeId / DyeId2 everywhere.
  */
-describe('CharaImport — Show all pieces', () => {
+describe('GlamourBlock — Show all pieces', () => {
   let hosts: HTMLElement[] = [];
 
   beforeEach(() => {
@@ -553,7 +564,7 @@ describe('CharaImport — Show all pieces', () => {
  * bold on the clipboard (HTML) with a plain flavour beside it; the .md
  * download keeps Markdown.
  */
-describe('CharaImport — Copy list / Export .md', () => {
+describe('GlamourBlock — Copy list / Export .md', () => {
   let hosts: HTMLElement[] = [];
   let write: ReturnType<typeof vi.fn>;
   let createObjectURL: ReturnType<typeof vi.fn>;

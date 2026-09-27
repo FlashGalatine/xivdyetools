@@ -119,7 +119,8 @@ src/
 │   ├── comparison-tool.ts  gradient-tool.ts  mixer-tool.ts
 │   ├── budget-tool.ts  swatch-tool.ts        # eight of the nine tools
 │   ├── dye-selector.ts  dye-grid.ts  dye-search-box.ts  market-board.ts
-│   ├── metric-help.ts  chara-import.ts  export-sheet.ts  empty-state.ts
+│   ├── metric-help.ts  export-sheet.ts  empty-state.ts
+│   ├── chara-file-card.ts  chara-sheet.ts  chara-ui.ts  glamour-block.ts   # the Swatch Matcher's .chara views
 │   ├── image-zoom-controller.ts                         # the Extractor's canvas + loupe events
 │   ├── modal-container.ts  toast-container.ts  offline-banner.ts
 │   ├── welcome-modal.ts  changelog-modal.ts  about-modal.ts  signin-modal.ts
@@ -143,7 +144,8 @@ src/
 │   ├── community-preset-service.ts  hybrid-preset-service.ts
 │   ├── preset-submission-service.ts  auth-service.ts
 │   ├── share-service.ts  harmony-generator.ts  mixer-blending-engine.ts
-│   ├── chara-resolve-service.ts  telemetry-service.ts
+│   ├── chara-session-service.ts  chara-file-loader.ts  chara-resolve-service.ts
+│   ├── telemetry-service.ts
 │   └── display-options-helper.ts  tool-panel-builders.ts
 ├── shared/                     # Pure helpers, types, icon constants
 │   ├── tool-config-types.ts  types.ts  i18n-types.ts  constants.ts

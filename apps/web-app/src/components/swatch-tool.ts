@@ -24,7 +24,11 @@ import {
   ToastService,
 } from '@services/index';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
-import { CharacterColorService, normalizeMatchingMethod } from '@xivdyetools/core';
+import {
+  CharacterColorService,
+  normalizeMatchingMethod,
+  type CharaSlotId,
+} from '@xivdyetools/core';
 import { RACE_SUBRACES } from '@xivdyetools/types';
 import type {
   CharacterColor,
@@ -62,7 +66,11 @@ import '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
-import { CharaImport, type CharaSlotGridRef } from '@components/chara-import';
+import { CharaFileCard } from '@components/chara-file-card';
+import { CharaSheet, saveCharacterColors, type CharaSlotGridRef } from '@components/chara-sheet';
+import { hasGlamour } from '@components/chara-ui';
+import type { GlamourBlock } from '@components/glamour-block';
+import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 
 // ============================================================================
 // Types and Constants
@@ -187,6 +195,8 @@ interface SwatchSelectionContext {
   hex?: string;
   label?: string;
   gridRef?: CharaSlotGridRef | null;
+  /** slot source only — keeps the sheet's selection ring through a re-render */
+  slotKey?: CharaSlotId;
 }
 
 // ============================================================================
@@ -201,7 +211,14 @@ interface SwatchSelectionContext {
 export class SwatchTool extends BaseComponent {
   private options: SwatchToolOptions;
   private characterColorService: CharacterColorService;
-  private charaImport: CharaImport | null = null;
+  /** 10A .chara views — each draws the file loaded in CharaSessionService */
+  private charaFileCard: CharaFileCard | null = null;
+  private charaSheet: CharaSheet | null = null;
+  /** DYES ON THIS GLAMOUR — its own chunk, created once a file wears anything */
+  private glamourBlock: GlamourBlock | null = null;
+  private charaGlamourContainer: HTMLElement | null = null;
+  /** Invalidates an in-flight glamour chunk load on re-render and destroy */
+  private glamourLoadToken = 0;
   private marketBoardService: MarketBoardService;
 
   // State
@@ -274,8 +291,6 @@ export class SwatchTool extends BaseComponent {
   private gridPanel: HTMLElement | null = null;
   private paletteRailContainer: HTMLElement | null = null;
   private gridTitleEl: HTMLElement | null = null;
-  /** Loaded .chara character — drives grid pins and the readout lock */
-  private charaResolved: import('@xivdyetools/core').ResolvedCharaCharacter | null = null;
   /** What the selection card describes — the last slot pick or grid click */
   private selectionContext: SwatchSelectionContext | null = null;
 
@@ -364,6 +379,9 @@ export class SwatchTool extends BaseComponent {
       })
     );
 
+    // The loaded .chara outlives this tool, so follow it rather than own it.
+    this.subs.add(CharaSessionService.subscribe((session) => this.onCharaSession(session)));
+
     // Sync MarketBoard components with ConfigController on initial load
     const marketConfig = configController.getConfig('market');
     if (this.marketBoard) {
@@ -386,8 +404,8 @@ export class SwatchTool extends BaseComponent {
   destroy(): void {
     this.resultsPanelMediaQueryCleanup?.();
 
-    this.charaImport?.destroy();
-    this.charaImport = null;
+    // Only the views go: the loaded file stays in CharaSessionService.
+    this.destroyChara();
     this.marketBoard?.destroy();
     this.marketPanel?.destroy();
     this.racePanel?.destroy();
@@ -1490,11 +1508,11 @@ export class SwatchTool extends BaseComponent {
     resultsArea.appendChild(this.emptyStateContainer);
 
     // 10A: DYES ON THIS GLAMOUR renders here (after the matches, before the
-    // handoff row) — the CharaImport below owns its content.
-    const charaGlamourContainer = this.createElement('div', {
+    // handoff row) — the lazily loaded GlamourBlock owns its content.
+    this.charaGlamourContainer = this.createElement('div', {
       attributes: { style: 'width: 100%;' },
     });
-    resultsArea.appendChild(charaGlamourContainer);
+    resultsArea.appendChild(this.charaGlamourContainer);
 
     // 10A: SEND TO handoff row — always at the bottom of the flow.
     this.handoffContainer = this.createElement('div', {
@@ -1505,63 +1523,128 @@ export class SwatchTool extends BaseComponent {
     this.mainLayout.appendChild(resultsArea);
     right.appendChild(this.mainLayout);
 
-    this.charaImport?.destroy();
-    this.charaImport = new CharaImport(
-      charaContainer,
-      {
-        onSlotPick: (hex, label, gridRef) => {
-          this.selectionContext = { source: 'slot', hex, label, gridRef };
-          if (gridRef) {
-            // The selection card's excerpt centres on the slot's cell.
-            const target = gridRef.variant
-              ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
-              : gridRef.paletteBase;
-            if (target !== (this.colorCategory as string)) {
-              this.setConfig({ colorSheet: target });
-            } else {
-              this.updateColorGrid();
-            }
-          } else {
-            this.updateColorGrid();
-          }
-          this.selectCustomColor(hex);
-        },
-        onResolved: (resolved) => {
-          this.charaResolved = resolved;
-          if (resolved === null && this.selectionContext?.source === 'slot') {
-            this.selectionContext = null;
-          }
-          // Sidebar race/gender become a readout while a file is loaded —
-          // push through ConfigController so the sidebar sees the flag.
-          ConfigController.getInstance().setConfig('swatch', {
-            fileProvided: resolved !== null,
-          });
-          this.updateColorGrid();
-        },
-        onTribeGender: (tribe, gender) => {
-          // Through ConfigController so the sidebar readout follows the file.
-          ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
-        },
-        onSubmitPalette: (dyes, name) => {
-          void import('@components/preset-submission-form')
-            .then(({ showPresetSubmissionForm }) => {
-              showPresetSubmissionForm(undefined, { dyes, name });
-            })
-            .catch((error: unknown) => {
-              logger.error('[SwatchTool] Failed to load the preset submission form', error);
-              ToastService.error(LanguageService.t('errors.toolLoadFailed'));
-            });
-        },
-      },
-      { glamourContainer: charaGlamourContainer }
-    );
-    this.charaImport.init();
+    this.mountChara(charaContainer);
 
     // Initialize displays
     this.updateSelectionCard();
     this.updateEmptyState();
     this.updateColorGrid();
     this.updateHandoffRow();
+  }
+
+  /**
+   * 10A: the file card and THIS CHARACTER above the workspace, DYES ON THIS
+   * GLAMOUR in the results column. All three draw the file loaded in
+   * CharaSessionService, so a re-render (a language switch) rebuilds them
+   * around the same file instead of dropping it.
+   */
+  private mountChara(charaContainer: HTMLElement): void {
+    this.destroyChara();
+    const cardContainer = this.createElement('div');
+    const sheetContainer = this.createElement('div');
+    charaContainer.appendChild(cardContainer);
+    charaContainer.appendChild(sheetContainer);
+
+    this.charaFileCard = new CharaFileCard(cardContainer, {
+      onSaveCharacter: saveCharacterColors,
+    });
+    this.charaFileCard.init();
+
+    const context = this.selectionContext;
+    this.charaSheet = new CharaSheet(sheetContainer, {
+      onSlotPick: (hex, label, gridRef, slot) => this.pickCharaSlot(hex, label, gridRef, slot),
+      selectedSlot: context?.source === 'slot' ? (context.slotKey ?? null) : null,
+    });
+    this.charaSheet.init();
+
+    this.syncGlamourBlock();
+  }
+
+  private destroyChara(): void {
+    this.glamourLoadToken++;
+    this.charaFileCard?.destroy();
+    this.charaSheet?.destroy();
+    this.glamourBlock?.destroy();
+    this.charaFileCard = null;
+    this.charaSheet = null;
+    this.glamourBlock = null;
+  }
+
+  /** A THIS CHARACTER card was picked: its colour becomes the selection. */
+  private pickCharaSlot(
+    hex: string,
+    label: string,
+    gridRef: CharaSlotGridRef | null,
+    slot: CharaSlotId
+  ): void {
+    this.selectionContext = { source: 'slot', hex, label, gridRef, slotKey: slot };
+    if (gridRef) {
+      // The selection card's excerpt centres on the slot's cell.
+      const target = gridRef.variant
+        ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
+        : gridRef.paletteBase;
+      if (target !== (this.colorCategory as string)) {
+        this.setConfig({ colorSheet: target });
+      } else {
+        this.updateColorGrid();
+      }
+    } else {
+      this.updateColorGrid();
+    }
+    this.selectCustomColor(hex);
+  }
+
+  /**
+   * A file was loaded or cleared. The card, sheet and glamour block redraw
+   * themselves; this is what the tool derives from the file on top of them.
+   */
+  private onCharaSession(session: CharaSession | null): void {
+    // A slot pick describes the character it came from.
+    if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+    // The file's tribe and gender pick the hair and skin sheets. The sidebar
+    // shows them as a locked readout while the file is loaded.
+    const tribe = session?.resolved.tribe;
+    const gender = session?.resolved.gender;
+    if (tribe && gender) {
+      ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
+    }
+    this.updateColorGrid();
+    this.syncGlamourBlock();
+  }
+
+  /**
+   * DYES ON THIS GLAMOUR is its own chunk: imported the first time the loaded
+   * file wears anything, then left mounted, since it follows the session itself.
+   */
+  private syncGlamourBlock(): void {
+    const session = CharaSessionService.getSession();
+    const container = this.charaGlamourContainer;
+    if (this.glamourBlock || !container || !session || !hasGlamour(session.resolved)) return;
+    const token = ++this.glamourLoadToken;
+    void import('@components/glamour-block')
+      .then(({ GlamourBlock }) => {
+        if (token !== this.glamourLoadToken || this.glamourBlock) return;
+        this.glamourBlock = new GlamourBlock(container, {
+          onSubmitPalette: (dyes, name) => this.submitGlamourPalette(dyes, name),
+        });
+        this.glamourBlock.init();
+      })
+      .catch((error: unknown) => {
+        logger.error('[SwatchTool] Failed to load the glamour block', error);
+        ToastService.error(LanguageService.t('errors.toolLoadFailed'));
+      });
+  }
+
+  /** Make a palette → Submit to Community opens the preset form, loaded on demand. */
+  private submitGlamourPalette(dyes: Dye[], name?: string): void {
+    void import('@components/preset-submission-form')
+      .then(({ showPresetSubmissionForm }) => {
+        showPresetSubmissionForm(undefined, { dyes, name });
+      })
+      .catch((error: unknown) => {
+        logger.error('[SwatchTool] Failed to load the preset submission form', error);
+        ToastService.error(LanguageService.t('errors.toolLoadFailed'));
+      });
   }
 
   /**
@@ -1797,7 +1880,8 @@ export class SwatchTool extends BaseComponent {
    */
   private currentPalettePins(): Map<number, string> {
     const pins = new Map<number, string>();
-    if (!this.charaResolved) return pins;
+    const resolved = CharaSessionService.getSession()?.resolved;
+    if (!resolved) return pins;
 
     const current = this.colorCategory as string;
     const currentBase = current.replace(/(Dark|Light)$/, '');
@@ -1825,7 +1909,7 @@ export class SwatchTool extends BaseComponent {
                     : null;
 
     let pinNumber = 0;
-    for (const slot of this.charaResolved.slots) {
+    for (const slot of resolved.slots) {
       if (slot.sheetIndex === null) continue;
       pinNumber++;
       if (baseOf(slot.slot) !== currentBase) continue;

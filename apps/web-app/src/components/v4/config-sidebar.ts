@@ -16,6 +16,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
 import { authService, LanguageService } from '@services/index';
+import { CharaSessionService } from '@services/chara-session-service';
 import { COLOR_WHEEL_IDS, DEFAULT_COLOR_WHEEL, normalizeColorWheelId } from '@xivdyetools/core';
 import type { ColorWheelId } from '@xivdyetools/core';
 import { COMPANION_DYES_MIN, COMPANION_DYES_MAX, COMPANION_DYES_DEFAULT } from '@shared/constants';
@@ -215,7 +216,6 @@ export class ConfigSidebar extends BaseLitComponent {
   };
   @state() private swatchConfig: SwatchConfig = {
     colorSheet: 'eyeColors',
-    fileProvided: false,
     race: 'Midlander',
     gender: 'Male',
     maxResults: 3,
@@ -223,6 +223,13 @@ export class ConfigSidebar extends BaseLitComponent {
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
+  /**
+   * 10A: a loaded .chara file supplies tribe and gender, so the Swatch
+   * selectors become a readout. Read from the session itself: a persisted
+   * flag outlived the file (leaving the tool or reloading dropped the file
+   * and left the selectors locked).
+   */
+  @state() private charaLoaded = CharaSessionService.getSession() !== null;
 
   // Global display options shared across all tools
   @state() private globalDisplayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
@@ -245,6 +252,7 @@ export class ConfigSidebar extends BaseLitComponent {
   private configController: ConfigController | null = null;
   private languageUnsubscribe: (() => void) | null = null;
   private swatchConfigUnsubscribe: (() => void) | null = null;
+  private charaSessionUnsubscribe: (() => void) | null = null;
   private harmonyConfigUnsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
 
@@ -664,12 +672,16 @@ export class ConfigSidebar extends BaseLitComponent {
     this.loadConfigsFromController();
     void this.loadServerData();
     // 10A: the swatch tool pushes config changes of its own (a .chara file
-    // sets tribe/gender and the fileProvided readout lock) — the sidebar
-    // must follow, not just lead.
+    // sets tribe/gender) — the sidebar must follow, not just lead.
     this.swatchConfigUnsubscribe =
       this.configController?.subscribe('swatch', (config) => {
         this.swatchConfig = config;
       }) ?? null;
+    // The readout lock follows the loaded file, wherever it was loaded.
+    this.charaLoaded = CharaSessionService.getSession() !== null;
+    this.charaSessionUnsubscribe = CharaSessionService.subscribe((session) => {
+      this.charaLoaded = session !== null;
+    });
     // 1A: the harmony type rail sets the type from the workspace — the
     // sidebar dropdown has to follow it, same one-way gotcha as swatch.
     this.harmonyConfigUnsubscribe =
@@ -695,6 +707,8 @@ export class ConfigSidebar extends BaseLitComponent {
     this.authUnsubscribe = null;
     this.swatchConfigUnsubscribe?.();
     this.swatchConfigUnsubscribe = null;
+    this.charaSessionUnsubscribe?.();
+    this.charaSessionUnsubscribe = null;
     this.harmonyConfigUnsubscribe?.();
     this.harmonyConfigUnsubscribe = null;
   }
@@ -1843,7 +1857,7 @@ export class ConfigSidebar extends BaseLitComponent {
           <div class="config-label">${LanguageService.t('swatch.whoHead')}</div>
           <select
             class="config-select"
-            ?disabled=${this.swatchConfig.fileProvided}
+            ?disabled=${this.charaLoaded}
             .value=${this.swatchConfig.race}
             @change=${(e: Event) => {
               const value = (e.target as HTMLSelectElement).value;
@@ -1866,7 +1880,7 @@ export class ConfigSidebar extends BaseLitComponent {
           </select>
           <select
             class="config-select"
-            ?disabled=${this.swatchConfig.fileProvided}
+            ?disabled=${this.charaLoaded}
             .value=${this.swatchConfig.gender}
             @change=${(e: Event) => {
               const value = (e.target as HTMLSelectElement).value;

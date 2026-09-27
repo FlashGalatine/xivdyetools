@@ -48,6 +48,7 @@ const EMITTED = [
   'gradient-tool-Bp82TAg1.js',
   'extractor-tool-CH2K8_6m.js',
   'preset-tool-CoZ2lLlP.js',
+  'glamour-block-DWSqhuoi.js',
   'dye-selector-B6HfW2Vr.js',
   'result-card-BbI3D-js.js',
   'index-xwH458Lu.css',

@@ -9,7 +9,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { RACE_SUBRACES } from '@xivdyetools/types';
+import type { ResolvedCharaCharacter, ResolvedCharaSlot } from '@xivdyetools/core';
 import { SwatchTool, RACE_GROUPS } from '../swatch-tool';
+import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -177,6 +179,7 @@ vi.mock('@services/index', () => ({
     getInstance: vi.fn().mockReturnValue({
       getConfig: vi.fn().mockReturnValue({}),
       subscribe: vi.fn().mockReturnValue(() => {}),
+      setConfig: vi.fn(),
     }),
   },
   CollectionService: {
@@ -387,6 +390,48 @@ vi.mock('../market-board', () => ({
 
 vi.mock('@components/v4/result-card', () => ({}));
 
+// DYES ON THIS GLAMOUR asks api-worker for item names: never reach the network.
+vi.mock('@services/chara-resolve-service', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@services/chara-resolve-service')>()),
+  resolveCharaEquipment: vi.fn(() => new Promise(() => {})),
+}));
+
+/** A loaded character as core resolves it: both eyes on eye-sheet cell 3. */
+function charaSession(overrides: Partial<ResolvedCharaCharacter> = {}): CharaSession {
+  const eye = (slot: 'leftEye' | 'rightEye'): ResolvedCharaSlot => ({
+    slot,
+    kind: slot,
+    verdict: 'index',
+    index: 3,
+    sheetIndex: 3,
+    sheetVariant: null,
+    gridAddress: 'R1·C4',
+    indexHex: '#AA3344',
+    floatHex: null,
+    deltaE: null,
+    alpha: null,
+    blendHex: null,
+  });
+  return {
+    fileName: 'test.chara',
+    resolved: {
+      producer: 'Anamnesis Character File',
+      race: null,
+      tribe: 'Highlander',
+      gender: 'Female',
+      nickname: 'Test Subject',
+      extendedValid: false,
+      extendedDeclared: false,
+      slots: [eye('leftEye'), eye('rightEye')],
+      eyesShareIndex: true,
+      gearDyes: [],
+      gearModels: [],
+      glassesId: null,
+      ...overrides,
+    },
+  };
+}
+
 // BUG-003: the preset-submission-form chunk is loaded on demand from
 // onSubmitPalette. Rejecting the factory makes `import(...)` reject too, so
 // every test in this file sees a chunk-load failure — nothing else in this
@@ -441,6 +486,8 @@ describe('SwatchTool', () => {
         // Ignore cleanup errors
       }
     }
+    // The loaded .chara is app-wide: never let one test's file reach the next.
+    CharaSessionService.setSession(null);
     cleanupTestContainer(container);
     vi.restoreAllMocks();
   });
@@ -762,16 +809,12 @@ describe('SwatchTool', () => {
       tool = mount();
 
       const dye = { ...mockDyes[0], hex: '#AABBCC', name: 'Test Dye', itemID: 5729 };
+      // What the glamour block's Submit to Community calls on its host.
       const internal = tool as unknown as {
-        charaImport: {
-          callbacks: { onSubmitPalette?: (dyes: (typeof dye)[], name?: string) => void };
-        } | null;
+        submitGlamourPalette: (dyes: (typeof dye)[], name?: string) => void;
       };
 
-      expect(internal.charaImport).not.toBeNull();
-      expect(() =>
-        internal.charaImport?.callbacks.onSubmitPalette?.([dye], 'My Palette')
-      ).not.toThrow();
+      expect(() => internal.submitGlamourPalette([dye], 'My Palette')).not.toThrow();
 
       await flush();
 
@@ -780,6 +823,97 @@ describe('SwatchTool', () => {
         expect.anything()
       );
       expect(ToastService.error).toHaveBeenCalledWith('errors.toolLoadFailed');
+    });
+  });
+
+  describe('the loaded .chara file', () => {
+    const selection = () =>
+      (tool as unknown as { selectionContext: { source: string } | null }).selectionContext;
+
+    it('is still on the file card after the tool is left and entered again', () => {
+      tool = mount();
+      CharaSessionService.setSession(charaSession());
+      expect(rightPanel.textContent).toContain('Test Subject');
+
+      tool.destroy();
+      tool = mount();
+
+      expect(rightPanel.textContent).toContain('Test Subject');
+      expect(rightPanel.querySelector('input[type="file"]')).toBeNull();
+    });
+
+    it('survives a re-render, which is what a language switch does', () => {
+      tool = mount();
+      CharaSessionService.setSession(charaSession());
+
+      tool.update();
+
+      expect(rightPanel.textContent).toContain('Test Subject');
+      expect(rightPanel.querySelector('.chara-slots-grid')).not.toBeNull();
+    });
+
+    it("hands the file's tribe and gender to the sidebar config", async () => {
+      const { ConfigController } = await import('@services/index');
+      tool = mount();
+
+      CharaSessionService.setSession(charaSession());
+
+      expect(ConfigController.getInstance().setConfig).toHaveBeenCalledWith('swatch', {
+        race: 'Highlander',
+        gender: 'Female',
+      });
+    });
+
+    it('pins both eyes on their shared cell as one merged badge', async () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      await flush();
+
+      const cells = Array.from(rightPanel.querySelectorAll<HTMLElement>('button[data-index]'));
+      expect(cells[3]?.textContent).toBe('1·2');
+    });
+
+    it('retires a slot pick when the file is cleared', () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+      expect(selection()?.source).toBe('slot');
+
+      CharaSessionService.setSession(null);
+
+      expect(selection()).toBeNull();
+      expect(rightPanel.querySelector('input[type="file"]')).not.toBeNull();
+    });
+
+    it('keeps the picked slot ringed through a re-render', () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+
+      tool.update();
+
+      const ringed = Array.from(
+        rightPanel.querySelectorAll<HTMLElement>('.chara-slots-grid > button')
+      ).filter((b) => b.getAttribute('style')?.includes('0 0 0 1px var(--theme-primary)'));
+      expect(ringed).toHaveLength(1);
+    });
+
+    it('loads DYES ON THIS GLAMOUR only once the file wears something', async () => {
+      tool = mount();
+      CharaSessionService.setSession(charaSession());
+      await flush();
+      expect(rightPanel.querySelector('[data-role="glamour-block"]')).toBeNull();
+
+      CharaSessionService.setSession(
+        charaSession({
+          gearModels: [{ slot: 'Body', base: 200, variant: 1 }],
+          gearDyes: [{ slot: 'Body', channel: 1, stainId: 1, dye: null }],
+        })
+      );
+
+      await vi.waitFor(() =>
+        expect(rightPanel.querySelector('[data-role="glamour-block"]')).not.toBeNull()
+      );
     });
   });
 

@@ -134,6 +134,23 @@ describe('ConfigController', () => {
       expect(controller.getConfig('harmony').wheel).toBe(expected);
     });
 
+    // `swatch.fileProvided` persisted "a .chara file is loaded" and outlived
+    // the file, so a reload kept the sidebar's tribe/gender locked with no
+    // file. The lock reads CharaSessionService now; the stale key is dropped.
+    it('drops the retired swatch fileProvided flag on load, keeping the rest', () => {
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        colorSheet: 'skinColors',
+        fileProvided: true,
+        race: 'Xaela',
+      });
+
+      const config = ConfigController.getInstance().getConfig('swatch');
+
+      expect(config).not.toHaveProperty('fileProvided');
+      expect(config.colorSheet).toBe('skinColors');
+      expect(config.race).toBe('Xaela');
+    });
+
     // REFACTOR-010: the merge was `{ ...defaults, ...stored }` -- SHALLOW -- so
     // a nested object in storage replaced its default WHOLESALE and never
     // gained keys added to the default later.
