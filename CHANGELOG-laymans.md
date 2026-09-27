@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.9.3] - 2026-09-27
+### 🔓 Tribe & Gender no longer stay locked
+- Web app: in the Swatch Matcher, a loaded character file fills in Tribe & Gender and locks both settings to the file. That lock now ends as soon as the file is gone.
+- Web app: leaving the Swatch Matcher, switching language or reloading the page used to drop the character file but keep Tribe & Gender grayed out, until you loaded a file and pressed Swap.
+- Web app: if your Swatch Matcher's Tribe & Gender settings are stuck right now, they unlock the next time the app loads. No other setting changes.
+
 ## [5.9.2] - 2026-09-21
 ### 🔤 One spelling of "color" everywhere
 - Web app and Discord bot: the English text now spells things the American way throughout — "color" rather than "colour", "behavior" rather than "behaviour". Both surfaces used to mix the two spellings from one screen to the next.
