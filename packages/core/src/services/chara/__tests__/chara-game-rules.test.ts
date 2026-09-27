@@ -1,18 +1,21 @@
 /**
  * The in-game check, on rows taken from the Item sheet (ffxiv-datamining
- * English export, 7.55h): the Galatine sample's seven pieces, and three real
- * families whose twins disagree: Dated Hempen Coif / Hempen Coif (dye count),
- * Curtana Zenith / its Replica (glamour flag), Lord's / Lady's Yukata (gender).
+ * English export, 7.55h): the Galatine sample's pieces, and real families
+ * whose twins disagree: Dated Hempen Coif / Hempen Coif (dye count), Curtana
+ * Zenith / its Replica (glamour flag), Lord's / Lady's Yukata (gender), and
+ * the Grand Company privates' gear (company lock).
+ *
+ * Since patch 7.4 any job can wear any piece for glamour, so the check has no
+ * job test: dye channels, the glamour flag, race, gender — and Grand Company,
+ * which a .chara file does not record, so it is a flag and never a failure.
  */
 import { describe, it, expect } from 'vitest';
 import {
-  CHARA_JOB_COLUMNS,
-  charaJobsOf,
+  charaTwinProblems,
   charaWearMask,
   checkCharaLook,
   groupCharaTwinRules,
   type CharaItemRules,
-  type CharaJob,
   type CharaTwinRules,
 } from '../chara-game-rules.js';
 
@@ -29,15 +32,11 @@ const MEN = charaWearMask(raceRow(true, true, false));
 const WOMEN = charaWearMask(raceRow(true, false, true));
 const VIERA_WOMEN = charaWearMask(raceRow(['Viera'], false, true));
 
-const ALL_JOBS: CharaJob[] = [...CHARA_JOB_COLUMNS];
-const CASTERS: CharaJob[] = ['THM', 'BLM', 'ACN', 'SMN', 'RDM', 'BLU', 'PCT'];
+/** Grand Company rows: 1 Maelstrom, 2 Order of the Twin Adder, 3 Immortal Flames. */
+const TWIN_ADDER = 2;
 
-function rules(
-  dyeCount: number,
-  jobs: CharaJob[],
-  extra: Partial<CharaItemRules> = {},
-): CharaItemRules {
-  return { dyeCount, glamourable: true, wearMask: ANYONE, jobs, ...extra };
+function rules(dyeCount: number, extra: Partial<CharaItemRules> = {}): CharaItemRules {
+  return { dyeCount, glamourable: true, wearMask: ANYONE, grandCompany: 0, ...extra };
 }
 
 /** One family, grouped the way api-worker groups it. */
@@ -62,25 +61,12 @@ describe('charaWearMask', () => {
   });
 });
 
-describe('charaJobsOf', () => {
-  it('keeps ClassJobCategory column order and skips ADV and unknown keys', () => {
-    // ClassJobCategory 63, "THM ACN BLM SMN RDM BLU PCT"
-    const row: Record<string, unknown> = {
-      Name: 'THM ACN BLM SMN RDM BLU PCT',
-      ADV: true,
-      Unknown1: true,
-    };
-    for (const job of ['PCT', 'THM', 'ACN', 'BLM', 'SMN', 'RDM', 'BLU']) row[job] = true;
-    expect(charaJobsOf(row)).toEqual(CASTERS);
-  });
-});
-
 describe('groupCharaTwinRules', () => {
   it('groups identical rules, orders groups by their lowest row, and skips unknown rows', () => {
     const groups = groupCharaTwinRules([
-      { rowId: 2630, rules: rules(1, ALL_JOBS) },
-      { rowId: 372, rules: rules(0, ALL_JOBS) },
-      { rowId: 2629, rules: rules(1, ALL_JOBS) },
+      { rowId: 2630, rules: rules(1) },
+      { rowId: 372, rules: rules(0) },
+      { rowId: 2629, rules: rules(1) },
       { rowId: 9999, rules: null },
     ]);
     expect(groups.map((g) => [g.itemIds, g.dyeCount])).toEqual([
@@ -89,70 +75,52 @@ describe('groupCharaTwinRules', () => {
     ]);
   });
 
+  it('keeps twins locked to different Grand Companies apart', () => {
+    const groups = groupCharaTwinRules([
+      { rowId: 1618, rules: rules(0, { grandCompany: TWIN_ADDER }) },
+      { rowId: 1619, rules: rules(0, { grandCompany: 1 }) },
+      { rowId: 1620, rules: rules(0, { grandCompany: 3 }) },
+    ]);
+    expect(groups.map((g) => g.grandCompany)).toEqual([TWIN_ADDER, 1, 3]);
+  });
+
   it('answers [] when no row carries rules', () => {
     expect(groupCharaTwinRules([{ rowId: 1, rules: null }])).toEqual([]);
   });
 });
 
+describe('charaTwinProblems', () => {
+  it('names every check one twin fails, and never the Grand Company', () => {
+    const twin = family([1, rules(0, { glamourable: false, wearMask: MEN, grandCompany: 1 })])[0];
+    expect(charaTwinProblems(twin, 1, VIERA_WOMAN)).toEqual(['dye', 'glamour', 'wear']);
+    expect(charaTwinProblems(twin, 0, HYUR_MAN)).toEqual(['glamour']);
+  });
+});
+
 describe('checkCharaLook — the Galatine sample', () => {
-  // Head, body, hands, legs, feet, ears and bow, with the file's dyed channels
   const pieces = [
-    { slot: 'HeadGear', itemId: 18085, twins: family([18085, rules(1, CASTERS)]), dyedChannel: 1 },
-    {
-      slot: 'Body',
-      itemId: 44616,
-      twins: family([44616, rules(2, ['PGL', 'MNK', 'SAM', 'BST'])]),
-      dyedChannel: 2,
-    },
-    { slot: 'Hands', itemId: 36823, twins: family([36823, rules(2, ALL_JOBS)]), dyedChannel: 1 },
-    {
-      slot: 'Legs',
-      itemId: 42040,
-      twins: family([42040, rules(2, ['CNJ', 'WHM', 'SCH', 'AST', 'SGE'])]),
-      dyedChannel: 2,
-    },
-    { slot: 'Feet', itemId: 15461, twins: family([15461, rules(0, ALL_JOBS)]), dyedChannel: 0 },
-    {
-      slot: 'Ears',
-      itemId: 35464,
-      twins: family([35464, rules(0, ['MIN', 'BTN', 'FSH'])]),
-      dyedChannel: 0,
-    },
-    {
-      slot: 'MainHand',
-      itemId: 49486,
-      twins: family([49486, rules(0, ['ARC', 'BRD'])]),
-      dyedChannel: 0,
-    },
+    { slot: 'HeadGear', itemId: 18085, twins: family([18085, rules(1)]), dyedChannel: 1 },
+    { slot: 'Body', itemId: 44616, twins: family([44616, rules(2)]), dyedChannel: 2 },
+    { slot: 'Feet', itemId: 15461, twins: family([15461, rules(0)]), dyedChannel: 0 },
   ] as const;
 
-  it('finds every piece wearable and dyeable, but no job that can wear them all', () => {
+  it('finds every piece wearable and dyeable, with no job line', () => {
     const check = checkCharaLook(pieces, { race: 'Elezen', gender: 'Female' });
-    expect(check.pieces.map((p) => p.problems)).toEqual([[], [], [], [], [], [], []]);
-    expect(check.jobs).toEqual([]);
-    expect(check.pieces[0].jobs).toEqual(CASTERS);
-  });
-
-  it('names the jobs that can when the pieces overlap', () => {
-    const check = checkCharaLook([pieces[0], pieces[2], pieces[4]], HYUR_MAN);
-    expect(check.jobs).toEqual(CASTERS);
+    expect(check.pieces.map((p) => p.problems)).toEqual([[], [], []]);
+    expect(check).not.toHaveProperty('jobs');
+    expect(check.pieces[0]).not.toHaveProperty('jobs');
   });
 });
 
 describe('checkCharaLook — twins that disagree', () => {
   it('Dated Hempen Coif takes no dye; its twin Hempen Coif does', () => {
-    const twins = family(
-      [372, rules(0, ALL_JOBS)],
-      [2629, rules(1, ALL_JOBS)],
-      [2630, rules(1, ALL_JOBS)],
-    );
+    const twins = family([372, rules(0)], [2629, rules(1)], [2630, rules(1)]);
     const [piece] = checkCharaLook(
       [{ slot: 'HeadGear', itemId: 372, twins, dyedChannel: 1 }],
       HYUR_MAN,
     ).pieces;
     expect(piece.problems).toEqual([]);
     expect(piece.useInstead).toEqual({ itemId: 2629, fixes: ['dye'] });
-    // Undyed, the named coif is fine as it is
     const [undyed] = checkCharaLook(
       [{ slot: 'HeadGear', itemId: 372, twins, dyedChannel: 0 }],
       HYUR_MAN,
@@ -161,7 +129,7 @@ describe('checkCharaLook — twins that disagree', () => {
   });
 
   it('a second channel no twin has is a dye problem nothing fixes', () => {
-    const twins = family([2629, rules(1, ALL_JOBS)]);
+    const twins = family([2629, rules(1)]);
     const [piece] = checkCharaLook(
       [{ slot: 'HeadGear', itemId: 2629, twins, dyedChannel: 2 }],
       HYUR_MAN,
@@ -171,41 +139,25 @@ describe('checkCharaLook — twins that disagree', () => {
   });
 
   it('Curtana Zenith is no glamour; its Replica is', () => {
-    const twins = family(
-      [6257, rules(0, ['PLD'], { glamourable: false })],
-      [12118, rules(0, ['PLD'])],
-    );
+    const twins = family([6257, rules(0, { glamourable: false })], [12118, rules(0)]);
     const [piece] = checkCharaLook(
       [{ slot: 'MainHand', itemId: 6257, twins, dyedChannel: 0 }],
       HYUR_MAN,
     ).pieces;
     expect(piece.useInstead).toEqual({ itemId: 12118, fixes: ['glamour'] });
-    const alone = family([6257, rules(0, ['PLD'], { glamourable: false })]);
-    expect(
-      checkCharaLook([{ slot: 'MainHand', itemId: 6257, twins: alone, dyedChannel: 0 }], HYUR_MAN)
-        .pieces[0].problems,
-    ).toEqual(['glamour']);
   });
 
   it("Lord's Yukata is for men; a woman wears its twin, Lady's Yukata", () => {
-    const twins = family(
-      [2967, rules(0, ALL_JOBS, { wearMask: MEN })],
-      [2970, rules(0, ALL_JOBS, { wearMask: WOMEN })],
-    );
+    const twins = family([2967, rules(0, { wearMask: MEN })], [2970, rules(0, { wearMask: WOMEN })]);
     const [piece] = checkCharaLook(
       [{ slot: 'Body', itemId: 2967, twins, dyedChannel: 0 }],
       VIERA_WOMAN,
     ).pieces;
     expect(piece.useInstead).toEqual({ itemId: 2970, fixes: ['wear'] });
-    const [asMan] = checkCharaLook(
-      [{ slot: 'Body', itemId: 2967, twins, dyedChannel: 0 }],
-      HYUR_MAN,
-    ).pieces;
-    expect(asMan.useInstead).toBeNull();
   });
 
   it('Viera Chestwrap is locked to Viera women, and an unknown character is never flagged', () => {
-    const twins = family([25208, rules(2, ALL_JOBS, { wearMask: VIERA_WOMEN })]);
+    const twins = family([25208, rules(2, { wearMask: VIERA_WOMEN })]);
     const input = [{ slot: 'Body', itemId: 25208, twins, dyedChannel: 0 }] as const;
     expect(checkCharaLook(input, HYUR_MAN).pieces[0].problems).toEqual(['wear']);
     expect(checkCharaLook(input, VIERA_WOMAN).pieces[0].problems).toEqual([]);
@@ -213,45 +165,64 @@ describe('checkCharaLook — twins that disagree', () => {
   });
 
   it("reports the named item's problems when each check passes on a different twin", () => {
-    // Twin A takes the dye but not this character; twin B fits them but takes no dye
-    const twins = family([1, rules(1, ALL_JOBS, { wearMask: MEN })], [2, rules(0, ALL_JOBS)]);
+    const twins = family([1, rules(1, { wearMask: MEN })], [2, rules(0)]);
     const [piece] = checkCharaLook(
       [{ slot: 'Body', itemId: 1, twins, dyedChannel: 1 }],
       VIERA_WOMAN,
     ).pieces;
     expect(piece.problems).toEqual(['wear']);
-    expect(piece.jobs).toEqual([]);
+  });
+});
+
+describe('checkCharaLook — Grand Company', () => {
+  it('flags a Grand Company piece without failing it', () => {
+    const twins = family([1618, rules(0, { grandCompany: TWIN_ADDER })]);
+    const [piece] = checkCharaLook(
+      [{ slot: 'MainHand', itemId: 1618, twins, dyedChannel: 0 }],
+      HYUR_MAN,
+    ).pieces;
+    expect(piece.problems).toEqual([]);
+    expect(piece.needsGrandCompany).toBe(TWIN_ADDER);
+  });
+
+  it('suggests a twin any company can wear before a company-locked one', () => {
+    const twins = family(
+      [10, rules(0)],
+      [11, rules(1, { grandCompany: TWIN_ADDER })],
+      [12, rules(1)],
+    );
+    const [piece] = checkCharaLook(
+      [{ slot: 'Body', itemId: 10, twins, dyedChannel: 1 }],
+      HYUR_MAN,
+    ).pieces;
+    expect(piece.useInstead).toEqual({ itemId: 12, fixes: ['dye'] });
+    expect(piece.needsGrandCompany).toBeNull();
+  });
+
+  it('flags the suggested twin when only a company-locked one passes', () => {
+    const twins = family([10, rules(0)], [11, rules(1, { grandCompany: TWIN_ADDER })]);
+    const [piece] = checkCharaLook(
+      [{ slot: 'Body', itemId: 10, twins, dyedChannel: 1 }],
+      HYUR_MAN,
+    ).pieces;
+    expect(piece.useInstead).toEqual({ itemId: 11, fixes: ['dye'] });
+    expect(piece.needsGrandCompany).toBe(TWIN_ADDER);
   });
 });
 
 describe('checkCharaLook — what is left out', () => {
-  it('a model with no item is a problem and takes no part in the job overlap', () => {
-    const check = checkCharaLook(
-      [
-        { slot: 'Body', itemId: null, twins: [], dyedChannel: 0 },
-        {
-          slot: 'HeadGear',
-          itemId: 18085,
-          twins: family([18085, rules(1, CASTERS)]),
-          dyedChannel: 0,
-        },
-      ],
-      HYUR_MAN,
-    );
+  it('a model with no item is a problem', () => {
+    const check = checkCharaLook([{ slot: 'Body', itemId: null, twins: [], dyedChannel: 0 }], HYUR_MAN);
     expect(check.pieces[0]).toEqual({
       slot: 'Body',
       problems: ['noItem'],
       useInstead: null,
-      jobs: [],
+      needsGrandCompany: null,
     });
-    expect(check.jobs).toEqual(CASTERS);
   });
 
-  it('skips pieces whose rules are unknown, and answers null jobs when nothing is wearable', () => {
-    const check = checkCharaLook(
-      [{ slot: 'Feet', itemId: 15461, twins: [], dyedChannel: 0 }],
-      HYUR_MAN,
-    );
-    expect(check).toEqual({ pieces: [], jobs: null });
+  it('skips pieces whose rules are unknown', () => {
+    const check = checkCharaLook([{ slot: 'Feet', itemId: 15461, twins: [], dyedChannel: 0 }], HYUR_MAN);
+    expect(check).toEqual({ pieces: [] });
   });
 });

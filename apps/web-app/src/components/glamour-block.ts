@@ -20,12 +20,10 @@
  */
 
 import {
-  CHARA_JOB_COLUMNS,
   checkCharaLook,
   formatCharaModelLabel,
   facewearColors,
   type CharaCheckPieceInput,
-  type CharaLookCheck,
   type CharaPieceCheck,
   type CharaPieceProblem,
   type ResolvedCharaCharacter,
@@ -1189,25 +1187,6 @@ export class GlamourBlock {
       )
     );
 
-    if (check.jobs !== null) {
-      if (check.jobs.length === 0) {
-        section.appendChild(this.gameCheckLine(false, tSwatch('gameCheck.jobsNone'), 'jobs'));
-        section.appendChild(this.renderJobSpread(check, lang));
-      } else if (check.jobs.length === CHARA_JOB_COLUMNS.length) {
-        section.appendChild(this.gameCheckLine(true, tSwatch('gameCheck.jobsAll'), 'jobs'));
-      } else {
-        section.appendChild(
-          this.gameCheckLine(
-            true,
-            LanguageService.tInterpolate('swatch.gameCheck.jobsSome', {
-              jobs: check.jobs.join(' '),
-            }),
-            'jobs'
-          )
-        );
-      }
-    }
-
     const problems = check.pieces.flatMap((piece) =>
       piece.problems.map((problem) => ({ piece, problem }))
     );
@@ -1245,43 +1224,6 @@ export class GlamourBlock {
     line.dataset.role = role;
     line.dataset.state = ok ? 'ok' : 'problem';
     return line;
-  }
-
-  /**
-   * Under "no single job": who can wear each restricted piece, so the reader
-   * sees which pieces pull apart. All-classes pieces never cause the split,
-   * so they are left out.
-   */
-  private renderJobSpread(check: CharaLookCheck, lang: string): HTMLElement {
-    const list = el(
-      'div',
-      'display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 4px; padding-left: 13px;'
-    );
-    list.dataset.role = 'job-spread';
-    for (const piece of check.pieces) {
-      if (piece.problems.length > 0 || piece.jobs.length === CHARA_JOB_COLUMNS.length) continue;
-      list.appendChild(
-        el(
-          'span',
-          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; line-height: 1.9; color: var(--theme-text-muted); text-transform: uppercase; white-space: nowrap;`,
-          this.gearSlotLabel(piece.slot)
-        )
-      );
-      const cell = el(
-        'span',
-        'min-width: 0; font-size: 10.5px; line-height: 1.35; color: var(--theme-text); overflow-wrap: anywhere;'
-      );
-      cell.appendChild(el('span', '', this.gamePieceName(piece.slot, lang)));
-      cell.appendChild(
-        el(
-          'span',
-          `display: block; font-family: ${MONO}; font-size: 9.5px; color: var(--theme-text-muted);`,
-          piece.jobs.join(' ')
-        )
-      );
-      list.appendChild(cell);
-    }
-    return list;
   }
 
   /** The piece's name for a verdict: the item, or its model key when it has none. */

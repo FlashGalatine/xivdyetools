@@ -1262,9 +1262,6 @@
     "namesUnavailable": "无法获取物品名称 — 仅显示部位。染剂从文件本地读取，不受影响。",
     "gameCheck": {
       "head": "游戏内",
-      "jobsNone": "没有职业能穿上这整套外观",
-      "jobsAll": "所有职业都能穿这套外观",
-      "jobsSome": "{jobs} 可以穿上整套",
       "allClear": "每件装备都能按文件的样子穿戴和染色",
       "problemDye": "{slot}：{item} 用不了文件中的染剂",
       "problemGlamour": "{slot}：{item} 不能用于幻化",

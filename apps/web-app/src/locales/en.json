@@ -1262,9 +1262,6 @@
     "namesUnavailable": "Item names unavailable — showing slots only. Dyes are read locally from the file and are unaffected.",
     "gameCheck": {
       "head": "IN THE GAME",
-      "jobsNone": "No single job can wear this whole look",
-      "jobsAll": "Every class and job can wear this look",
-      "jobsSome": "Wearable together by {jobs}",
       "allClear": "Every piece can be worn and dyed the way the file shows it",
       "problemDye": "{slot}: {item} can't take the dyes the file gives it",
       "problemGlamour": "{slot}: {item} can't be used as a glamour",

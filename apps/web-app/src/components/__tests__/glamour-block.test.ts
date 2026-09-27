@@ -900,63 +900,12 @@ describe('GlamourBlock — IN THE GAME', () => {
     hosts = [];
   });
 
-  const ALL = [
-    'GLA',
-    'PGL',
-    'MRD',
-    'LNC',
-    'ARC',
-    'CNJ',
-    'THM',
-    'CRP',
-    'BSM',
-    'ARM',
-    'GSM',
-    'LTW',
-    'WVR',
-    'ALC',
-    'CUL',
-    'MIN',
-    'BTN',
-    'FSH',
-    'PLD',
-    'MNK',
-    'WAR',
-    'DRG',
-    'BRD',
-    'WHM',
-    'BLM',
-    'ACN',
-    'SMN',
-    'SCH',
-    'ROG',
-    'NIN',
-    'MCH',
-    'DRK',
-    'AST',
-    'SAM',
-    'RDM',
-    'BLU',
-    'GNB',
-    'DNC',
-    'RPR',
-    'SGE',
-    'VPR',
-    'PCT',
-    'BST',
-  ] as const;
-  const CASTERS = ['THM', 'BLM', 'ACN', 'SMN', 'RDM', 'BLU', 'PCT'] as const;
-  const rules = (
-    itemIds: number[],
-    dyeCount: number,
-    jobs: readonly string[],
-    wearMask = 0xffff
-  ) => ({
+  const rules = (itemIds: number[], dyeCount: number, wearMask = 0xffff) => ({
     itemIds,
     dyeCount,
     glamourable: true,
     wearMask,
-    jobs: [...jobs] as never[],
+    grandCompany: 0,
   });
   const item = (itemId: number, en: string, extra: Record<string, unknown> = {}) => ({
     itemId,
@@ -983,15 +932,15 @@ describe('GlamourBlock — IN THE GAME', () => {
     expect(check(glamour)).toBeNull();
   });
 
-  it('flags a dye the weapon cannot take and the NPC body, and names the jobs left', async () => {
+  it('flags a dye the weapon cannot take and the NPC body', async () => {
     // Runaway Bow takes no dye, but the file dyes it; Body 9903·1 has no item;
     // the quiver is the bow itself, so it is not checked twice.
-    const bow = item(49486, 'Runaway Bow', { rules: [rules([49486], 0, ['ARC', 'BRD'])] });
+    const bow = item(49486, 'Runaway Bow', { rules: [rules([49486], 0)] });
     const resolved: CharaResolveResult = {
       items: {
         MainHand: bow,
         OffHand: { ...bow, viaMainHand: true },
-        HeadGear: item(18085, 'Beech Mask of Casting', { rules: [rules([18085], 1, CASTERS)] }),
+        HeadGear: item(18085, 'Beech Mask of Casting', { rules: [rules([18085], 1)] }),
         Body: null,
       },
       glasses: null,
@@ -1002,7 +951,6 @@ describe('GlamourBlock — IN THE GAME', () => {
     await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
 
     expect(check(glamour)!.textContent).toContain('IN THE GAME');
-    expect(line(glamour, 'jobs')).toEqual(['Wearable together by THM BLM ACN SMN RDM BLU PCT']);
     expect(line(glamour, 'problem-dye')).toEqual([
       "Weapon: Runaway Bow can't take the dyes the file gives it",
     ]);
@@ -1012,19 +960,17 @@ describe('GlamourBlock — IN THE GAME', () => {
     expect(line(glamour, 'all-clear')).toEqual([]);
   });
 
-  it('shows who can wear each piece when no job can wear them all, and the twin that takes the dye', async () => {
+  it('names the twin that takes the dye', async () => {
     // Head is dyed on channel 2: the named Dated coif takes no dye, its twin takes two
     const resolved: CharaResolveResult = {
       items: {
         HeadGear: item(372, 'Dated Hempen Coif', {
           familySize: 2,
           alternates: [{ itemId: 2629, names: { en: 'Hempen Coif', ja: 'x', de: 'x', fr: 'x' } }],
-          rules: [rules([372], 0, ALL), rules([2629], 2, ALL)],
+          rules: [rules([372], 0), rules([2629], 2)],
         }),
-        Body: item(200, 'Casting Robe', { rules: [rules([200], 2, CASTERS)] }),
-        Hands: item(300, 'Striking Gloves', {
-          rules: [rules([300], 0, ['PGL', 'MNK', 'SAM', 'BST'])],
-        }),
+        Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }),
+        Hands: item(300, 'Striking Gloves', { rules: [rules([300], 0)] }),
       },
       glasses: null,
       version: 'test',
@@ -1033,12 +979,7 @@ describe('GlamourBlock — IN THE GAME', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
 
-    expect(line(glamour, 'jobs')).toEqual(['No single job can wear this whole look']);
-    const spread = check(glamour)!.querySelector<HTMLElement>('[data-role="job-spread"]')!;
-    expect(spread.textContent).toContain('Casting Robe');
-    expect(spread.textContent).toContain('THM BLM ACN SMN RDM BLU PCT');
-    expect(spread.textContent).toContain('PGL MNK SAM BST');
-    expect(spread.textContent).not.toContain('Dated Hempen Coif'); // every job wears the coif
+    expect(check(glamour)!.querySelector('[data-role="job-spread"]')).toBeNull();
     expect(line(glamour, 'all-clear')).toEqual([
       'Every piece can be worn and dyed the way the file shows it',
     ]);
@@ -1058,7 +999,7 @@ describe('GlamourBlock — IN THE GAME', () => {
     const menOnly = 0x5555;
     const resolved: CharaResolveResult = {
       items: {
-        Body: item(2967, "Lord's Yukata (Blue)", { rules: [rules([2967], 0, ALL, menOnly)] }),
+        Body: item(2967, "Lord's Yukata (Blue)", { rules: [rules([2967], 0, menOnly)] }),
       },
       glasses: null,
       version: 'test',
@@ -1070,6 +1011,5 @@ describe('GlamourBlock — IN THE GAME', () => {
     expect(line(glamour, 'problem-wear')).toEqual([
       "Body: this character can't wear Lord's Yukata (Blue)",
     ]);
-    expect(line(glamour, 'jobs')).toEqual([]);
   });
 });
