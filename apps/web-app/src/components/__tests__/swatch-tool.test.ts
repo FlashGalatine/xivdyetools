@@ -898,6 +898,30 @@ describe('SwatchTool', () => {
       expect(ringed).toHaveLength(1);
     });
 
+    it('keeps DYES ON THIS GLAMOUR, palette draft included, through a re-render', async () => {
+      const glamourBlock = () => rightPanel.querySelector('[data-role="glamour-block"]');
+      tool = mount();
+      CharaSessionService.setSession(
+        charaSession({
+          gearModels: [{ slot: 'Body', base: 200, variant: 1 }],
+          gearDyes: [{ slot: 'Body', channel: 1, stainId: 1, dye: null }],
+        })
+      );
+      await vi.waitFor(() => expect(glamourBlock()).not.toBeNull());
+      Array.from(glamourBlock()!.querySelectorAll('button'))
+        .find((b) => b.textContent?.includes('swatch.makePalette'))!
+        .click();
+      const draft = glamourBlock()!.querySelector<HTMLInputElement>('input[type="text"]')!;
+      draft.value = 'Sunset set';
+      draft.dispatchEvent(new Event('input'));
+
+      tool.update();
+
+      const after = glamourBlock()?.querySelector<HTMLInputElement>('input[type="text"]');
+      expect(after?.value).toBe('Sunset set');
+      expect(rightPanel.querySelectorAll('[data-role="glamour-block"]')).toHaveLength(1);
+    });
+
     it('loads DYES ON THIS GLAMOUR only once the file wears something', async () => {
       tool = mount();
       CharaSessionService.setSession(charaSession());

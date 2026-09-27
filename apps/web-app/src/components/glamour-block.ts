@@ -209,6 +209,17 @@ export class GlamourBlock {
     this.show(CharaSessionService.getSession());
   }
 
+  /**
+   * Draw into `container` from now on. The host calls this when it re-renders
+   * around the block (a language switch rebuilds the Swatch Matcher's panel),
+   * so the palette draft, dropped chips and item names survive the redraw.
+   */
+  moveTo(container: HTMLElement): void {
+    clearContainer(this.container);
+    this.container = container;
+    this.render();
+  }
+
   destroy(): void {
     this.unsubscribe?.();
     this.unsubscribe = null;

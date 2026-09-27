@@ -169,7 +169,7 @@ async function mount(pending: Promise<CharaResolveResult>, fixture: string = FIX
     (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(fixture);
   }
   await loadCharaFile(file);
-  return { container, glamour };
+  return { block, container, glamour };
 }
 
 const block = (glamour: HTMLElement) =>
@@ -327,6 +327,30 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
     hosts = [container, glamour];
     expect(block(glamour).querySelector('[data-role="dye-rows"]')).not.toBeNull();
     expect(block(glamour).querySelector('[data-role="piece-rows"]')).toBeNull();
+  });
+
+  it('moveTo redraws the block in a new container, keeping its names and palette draft', async () => {
+    const { block, container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    const makePalette = Array.from(glamour.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('Make a palette')
+    )!;
+    makePalette.click();
+    const name = glamour.querySelector<HTMLInputElement>('input[type="text"]')!;
+    name.value = 'Sunset set';
+    name.dispatchEvent(new Event('input'));
+    const next = createTestContainer('chara-glamour-next');
+    hosts.push(next);
+
+    block.moveTo(next);
+
+    expect(glamour.childElementCount).toBe(0);
+    expect(next.querySelector<HTMLInputElement>('input[type="text"]')?.value).toBe('Sunset set');
+    expect(next.querySelector('[data-slot="HeadGear"] [data-role="item-name"]')?.textContent).toBe(
+      'Beech Mask of Casting'
+    );
+    // The names came along: moving is not a new lookup.
+    expect(resolveMock).toHaveBeenCalledTimes(1);
   });
 
   it('SWAP aborts an in-flight resolve and the late answer never renders', async () => {

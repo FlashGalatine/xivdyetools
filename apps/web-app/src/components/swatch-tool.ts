@@ -1539,7 +1539,16 @@ export class SwatchTool extends BaseComponent {
    * around the same file instead of dropping it.
    */
   private mountChara(charaContainer: HTMLElement): void {
-    this.destroyChara();
+    // The card and sheet keep nothing worth saving, so they are rebuilt. The
+    // glamour block carries a palette draft and its item names, so it moves
+    // into the new container instead; a chunk load still in flight is retired
+    // (it was aimed at the old container) and started again below.
+    this.glamourLoadToken++;
+    this.charaFileCard?.destroy();
+    this.charaSheet?.destroy();
+    if (this.glamourBlock && this.charaGlamourContainer) {
+      this.glamourBlock.moveTo(this.charaGlamourContainer);
+    }
     const cardContainer = this.createElement('div');
     const sheetContainer = this.createElement('div');
     charaContainer.appendChild(cardContainer);
