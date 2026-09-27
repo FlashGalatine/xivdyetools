@@ -30,5 +30,13 @@
   { "id": 26744, "name": "Timeworn Gliderskin Map" },
   { "id": 36611, "name": "Timeworn Saigaskin Map" },
   { "id": 36612, "name": "Timeworn Kumbhiraskin Map" },
-  { "id": 43556, "name": "Timeworn Loboskin Map" }
+  { "id": 43556, "name": "Timeworn Loboskin Map" },
+  { "id": 17836, "name": "Timeworn Gazelleskin Map" },
+  { "id": 26745, "name": "Timeworn Zonureskin Map" },
+  { "id": 39591, "name": "Timeworn Ophiotauroskin Map" },
+  { "id": 43557, "name": "Timeworn Br'aaxskin Map" },
+  { "id": 46185, "name": "Timeworn Gargantuaskin Map" },
+  { "id": 38945, "name": "Bronze-tinged Sack" },
+  { "id": 38946, "name": "Silver-tinged Sack" },
+  { "id": 38947, "name": "Gold-tinged Sack" }
 ]

@@ -49,11 +49,12 @@ function raw(): RawFiles {
       66656: { name: { en: 'A Relic Reborn (Curtana)' } },
     },
     achievements: { 7: { en: 'Let the Bodies Hit the Floor', itemReward: 42027 } },
-    fateSources: { 42027: [506] },
+    fateSources: { 42027: [506], 701: [509] },
     fates: {
       506: { name: { en: 'He Taketh It with His Eyes' }, level: 92, location: 111 },
       507: { name: { en: 'Early FATE' }, level: 90, location: 111 },
       508: { name: { en: 'Unplaced' }, level: 50, location: 999 },
+      509: { name: { en: 'Eggstract and Eggspedite' }, level: 1, location: 112 },
     },
     voyageSources: { 42027: [{ type: 0, id: 1 }, { type: 1, id: 2 }, { type: 1, id: 3 }] },
     desynth: { 42027: [5000] },
@@ -83,7 +84,11 @@ function extras(): XivapiExtras {
       [70317, { category: 'Seasonal Events', section: 'Other Quests' }],
       [66656, { category: 'Disciple of War Job Quests', section: 'Class & Job Quests' }],
     ]),
-    levelZones: new Map([[111, 'Urqopacha']]),
+    levelZones: new Map([
+      [111, 'Urqopacha'],
+      [112, 'Old Gridania'],
+    ]),
+    overworld: new Set(['Urqopacha']),
     expansions: new Map([
       [1187, 5],
       [1269, 5],
@@ -92,17 +97,21 @@ function extras(): XivapiExtras {
     festivalShops: new Set([1770500]),
     outposts: new Map([[1048726, "Worlar's Echo"]]),
     relicSheetItems: new Map([['RelicItem', [10059]]]),
+    names: new Map([
+      [700, 'Cosmic Saw'],
+      [701, "Cosmic Explorer's Jacket"],
+    ]),
   };
 }
 
 function rule(saga: string, extra: Partial<RelicRule>): RelicRule {
-  return { saga, sheets: [], shops: [], zones: [], toolShops: [], include: [], exclude: [], spotChecks: [], ...extra };
+  return { saga, sheets: [], shops: [], zones: [], toolNames: [], include: [], exclude: [], spotChecks: [], ...extra };
 }
 
 const RULES: RelicRule[] = [
   rule('Zodiac Weapons Saga', { sheets: [{ sheet: 'RelicItem', items: 'links' }] }),
   rule('Phantom Gear & Weapons', { shops: ['^Phantom Weapons '] }),
-  rule('Cosmic Tools Saga', { toolShops: ['^Cosmic Exploration Token Exchange$'] }),
+  rule('Cosmic Tools Saga', { toolNames: ['^Cosmic '] }),
 ];
 
 describe('buildInputs', () => {
@@ -133,7 +142,12 @@ describe('buildInputs', () => {
   it('levels a zone by its lowest FATE and a FATE-less zone by its expansion', () => {
     expect(inputs.zoneLevels.get('Urqopacha')).toBe(90);
     expect(inputs.zoneLevels.get('Phantom Village')).toBe(90);
-    expect(fateZoneLevels(raw(), extras().levelZones)).toEqual(new Map([['Urqopacha', 90]]));
+    expect(fateZoneLevels(raw(), extras().levelZones, extras().overworld)).toEqual(new Map([['Urqopacha', 90]]));
+  });
+
+  it("never levels a town by a seasonal event's FATE, but still lists that FATE as a source", () => {
+    expect(inputs.zoneLevels.has('Old Gridania')).toBe(false);
+    expect(inputs.fates.get(701)).toEqual([{ name: 'Eggstract and Eggspedite', zone: 'Old Gridania' }]);
   });
 
   it('capitalizes duty names', () => {
@@ -164,7 +178,7 @@ describe('buildInputs', () => {
     expect(inputs.onlineStore.has(36814)).toBe(true);
   });
 
-  it('computes relic sagas from sheets, shop names and tool-only shops', () => {
+  it('computes relic sagas from sheets, shop names and tool names (tools only)', () => {
     expect(inputs.relics.get(10059)).toBe('Zodiac Weapons Saga');
     expect(inputs.relics.get(47878)).toBe('Phantom Gear & Weapons');
     expect(inputs.relics.get(700)).toBe('Cosmic Tools Saga');

@@ -1,0 +1,44 @@
+{
+  "generated": "2026-09-27",
+  "teamcraftCommit": "acc77d406cc50a78caf0210f805ec7b069607af0",
+  "xivapiVersion": "541c0c12e07da325",
+  "equippable": 29058,
+  "lines": 23589,
+  "sourcesButNoLine": 911,
+  "bytes": 1497798,
+  "itemsPerRoute": {
+    "vendor": 10613,
+    "craft": 6702,
+    "container": 1279,
+    "desynth": 40,
+    "duty": 7424,
+    "quest": 25,
+    "relic": 1127,
+    "achievement": 94,
+    "scrip": 1366,
+    "onlineStore": 396,
+    "voyage": 2,
+    "fate": 10,
+    "treasureTrove": 26,
+    "eurekaLockbox": 22
+  },
+  "dropped": {
+    "seasonalShop": 1046,
+    "vendorWithoutPosition": 1146,
+    "gachaNotOnlySource": 353,
+    "repurchaseShop": 178,
+    "questNotOnlySource": 4
+  },
+  "relicSagas": {
+    "Zodiac Weapons Saga": 88,
+    "Anima Weapons Saga": 112,
+    "Eureka Gear & Weapons": 89,
+    "Resistance Gear & Weapons": 176,
+    "Manderville Weapons Saga": 62,
+    "Phantom Gear & Weapons": 325,
+    "Skysteel Tools Saga": 66,
+    "Splendorous Tools Saga": 55,
+    "Cosmic Tools Saga": 154
+  },
+  "unleveledVendorZones": []
+}

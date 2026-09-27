@@ -34,3 +34,12 @@ export function emptyTables(): Tables {
 export function npc(id: number, name: string, zone: string | null, extra: Partial<Npc> = {}): Npc {
   return { id, name, zone, outpost: null, unreachable: false, ...extra };
 }
+
+/** The acceptance fixture stores every Map as entry pairs and the one Set as an array. */
+export function reviveInputs(json: Record<string, unknown>): Inputs {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(json)) {
+    out[key] = key === 'onlineStore' ? new Set(value as number[]) : new Map(value as Array<[unknown, unknown]>);
+  }
+  return out as unknown as Inputs;
+}

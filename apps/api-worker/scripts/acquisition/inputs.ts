@@ -45,6 +45,12 @@ export interface XivapiExtras {
   questJournal: Map<number, { category: string; section: string }>;
   /** Level row → zone name (FATE locations) */
   levelZones: Map<number, string>;
+  /**
+   * Zones whose territory is overworld (`TerritoryIntendedUse` 1). Only their
+   * FATEs level a zone or make it wilderness: seasonal events also run FATEs in
+   * towns (Hatching-tide in Old Gridania) and Cosmic Exploration on the moon.
+   */
+  overworld: Set<string>;
   /** TerritoryType → ExVersion (0 A Realm Reborn … 5 Dawntrail) */
   expansions: Map<number, number>;
   /** SpecialShops that open only during a seasonal event */
@@ -53,6 +59,8 @@ export interface XivapiExtras {
   outposts: Map<number, string>;
   /** Relic sheet name → the item ids it lists */
   relicSheetItems: Map<string, number[]>;
+  /** Equippable item → English name (for `RelicRule.toolNames`) */
+  names: Map<number, string>;
 }
 
 /** One saga's membership rules (`tables/relic-sagas.json`, spec D11). */
@@ -64,8 +72,11 @@ export interface RelicRule {
   shops: string[];
   /** Zones whose vendors sell only this saga's gear. */
   zones: string[];
-  /** Shop-name patterns that count only DoH/DoL tools. */
-  toolShops: string[];
+  /**
+   * Item-name patterns that count only DoH/DoL tools — for a saga no shop sells,
+   * like the Cosmic tools, which Cosmic Exploration missions hand out.
+   */
+  toolNames: string[];
   include: number[];
   exclude: number[];
   /** Known answers: the build fails when one of these is not in the saga. */
@@ -87,12 +98,12 @@ const VOYAGE: Record<number, 'airship' | 'submarine'> = { 0: 'airship', 1: 'subm
 
 type RawShop = RawFiles['shops'][number];
 
-/** Zone → its lowest FATE level. The zones listed are the wilderness (spec D10). */
-export function fateZoneLevels(raw: RawFiles, levelZones: Map<number, string>): Map<string, number> {
+/** Overworld zone → its lowest FATE level. The zones listed are the wilderness (spec D10). */
+export function fateZoneLevels(raw: RawFiles, levelZones: Map<number, string>, overworld: Set<string>): Map<string, number> {
   const out = new Map<string, number>();
   for (const fate of Object.values(raw.fates)) {
     const zone = levelZones.get(fate.location);
-    if (!zone || fate.level <= 0) continue;
+    if (!zone || !overworld.has(zone) || fate.level <= 0) continue;
     out.set(zone, Math.min(fate.level, out.get(zone) ?? Number.MAX_SAFE_INTEGER));
   }
   return out;
@@ -138,7 +149,7 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     });
   }
 
-  const zoneLevels = fateZoneLevels(raw, extras.levelZones);
+  const zoneLevels = fateZoneLevels(raw, extras.levelZones, extras.overworld);
   for (const map of Object.values(raw.maps)) {
     const zone = raw.places[map.placename_id]?.en;
     const expansion = extras.expansions.get(map.territory_id);
@@ -247,19 +258,18 @@ function relicsFrom(
     const members = new Set<number>();
     for (const { sheet } of rule.sheets) for (const id of extras.relicSheetItems.get(sheet) ?? []) members.add(id);
     const shopPatterns = rule.shops.map((p) => new RegExp(p));
-    const toolPatterns = rule.toolShops.map((p) => new RegExp(p));
     for (const s of raw.shops) {
       const name = shopName(s);
       const byName = shopPatterns.some((re) => re.test(name));
       const byZone = rule.zones.length > 0 && s.npcs.some((id) => rule.zones.includes(zoneOfNpc(id) ?? ''));
-      const byTool = toolPatterns.some((re) => re.test(name));
-      if (!byName && !byZone && !byTool) continue;
-      for (const trade of s.trades) {
-        for (const { id } of trade.items) {
-          const category = extras.equippable.get(id);
-          if (category === undefined) continue;
-          if (byName || byZone || TOOL_CATEGORY.test(category)) members.add(id);
-        }
+      if (!byName && !byZone) continue;
+      for (const trade of s.trades) for (const { id } of trade.items) if (extras.equippable.has(id)) members.add(id);
+    }
+    const toolPatterns = rule.toolNames.map((p) => new RegExp(p));
+    if (toolPatterns.length > 0) {
+      for (const [id, category] of extras.equippable) {
+        const name = extras.names.get(id) ?? '';
+        if (TOOL_CATEGORY.test(category) && toolPatterns.some((re) => re.test(name))) members.add(id);
       }
     }
     rule.include.forEach((id) => members.add(id));

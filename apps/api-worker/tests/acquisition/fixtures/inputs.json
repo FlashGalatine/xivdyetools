@@ -1,0 +1,816 @@
+{
+ "items": [
+  [
+   1,
+   {
+    "name": "Gil",
+    "plural": "Gil",
+    "uiCategory": 63
+   }
+  ],
+  [
+   28063,
+   {
+    "name": "Skybuilders' Scrip",
+    "plural": "Skybuilders' Scrips",
+    "uiCategory": 100
+   }
+  ],
+  [
+   32141,
+   {
+    "name": "Book of Litany",
+    "plural": "Book of Litany",
+    "uiCategory": 61
+   }
+  ],
+  [
+   36656,
+   {
+    "name": "Trophy Crystal",
+    "plural": "Trophy Crystals",
+    "uiCategory": 100
+   }
+  ],
+  [
+   47750,
+   {
+    "name": "Arcanite",
+    "plural": "Arcanite",
+    "uiCategory": 61
+   }
+  ],
+  [
+   47878,
+   {
+    "name": "Phantom Cleavers Penumbrae",
+    "plural": "Phantom Cleavers Penumbrae",
+    "uiCategory": 84
+   }
+  ],
+  [
+   33441,
+   {
+    "name": "Fête Present",
+    "plural": "Fête Presents",
+    "uiCategory": 61
+   }
+  ],
+  [
+   32147,
+   {
+    "name": "Edenmorn Hand Gear Coffer (IL 530)",
+    "plural": "Edenmorn Hand Gear Coffers (IL 530)",
+    "uiCategory": 61
+   }
+  ],
+  [
+   36814,
+   {
+    "name": "Street Attire Coffer",
+    "plural": "Street Attire Coffers",
+    "uiCategory": 61
+   }
+  ]
+ ],
+ "recipes": [
+  [
+   42027,
+   [
+    {
+     "job": 13,
+     "level": 92
+    }
+   ]
+  ],
+  [
+   42038,
+   [
+    {
+     "job": 13,
+     "level": 93
+    }
+   ]
+  ]
+ ],
+ "offers": [
+  [
+   42027,
+   [
+    {
+     "shop": {
+      "id": 263178,
+      "name": "Purchase Battlecraft Gear (DoW)",
+      "npcIds": [
+       1048726,
+       1048851,
+       1048931
+      ],
+      "festival": false
+     },
+     "costs": [
+      {
+       "itemId": 1,
+       "amount": 28483
+      }
+     ]
+    }
+   ]
+  ],
+  [
+   42038,
+   [
+    {
+     "shop": {
+      "id": 263183,
+      "name": "Purchase Battlecraft Gear (DoM)",
+      "npcIds": [
+       1048726,
+       1048851,
+       1048931
+      ],
+      "festival": false
+     },
+     "costs": [
+      {
+       "itemId": 1,
+       "amount": 47471
+      }
+     ]
+    }
+   ]
+  ],
+  [
+   32797,
+   [
+    {
+     "shop": {
+      "id": 1770281,
+      "name": "",
+      "npcIds": [
+       1031680,
+       1031691
+      ],
+      "festival": false
+     },
+     "costs": [
+      {
+       "itemId": 28063,
+       "amount": 1200
+      }
+     ]
+    }
+   ]
+  ],
+  [
+   32326,
+   [
+    {
+     "shop": {
+      "id": 1770331,
+      "name": "Eden's Promise Apocrypha Exchange (DoM)",
+      "npcIds": [
+       1030123,
+       1030124
+      ],
+      "festival": false
+     },
+     "costs": [
+      {
+       "itemId": 32141,
+       "amount": 6
+      }
+     ]
+    },
+    {
+     "shop": {
+      "id": 1770416,
+      "name": "Edenmorn Gear (IL 530-535)",
+      "npcIds": [
+       1033780
+      ],
+      "festival": false
+     },
+     "costs": [
+      {
+       "itemId": 32141,
+       "amount": 6
+      }
+     ]
+    }
+   ]
+  ],
+  [
+   47252,
+   [
+    {
+     "shop": {
+      "id": 1770732,
+      "name": "Trophy Crystal Exchange (Universal Gear) I",
+      "npcIds": [
+       1038441
+      ],
+      "festival": false
+     },
+     "costs": [
+      {
+       "itemId": 36656,
+       "amount": 1500
+      }
+     ]
+    }
+   ]
+  ],
+  [
+   47878,
+   [
+    {
+     "shop": {
+      "id": 1770926,
+      "name": "Phantom Weapons Penumbrae",
+      "npcIds": [
+       1053905,
+       1056094
+      ],
+      "festival": false
+     },
+     "costs": [
+      {
+       "itemId": 47750,
+       "amount": 3
+      }
+     ]
+    }
+   ]
+  ]
+ ],
+ "npcs": [
+  [
+   1048726,
+   {
+    "id": 1048726,
+    "name": "independent merchant",
+    "zone": "Urqopacha",
+    "outpost": "Worlar's Echo",
+    "unreachable": false
+   }
+  ],
+  [
+   1048851,
+   {
+    "id": 1048851,
+    "name": "local merchant",
+    "zone": "Kozama'uka",
+    "outpost": "Earthenshire",
+    "unreachable": false
+   }
+  ],
+  [
+   1048931,
+   {
+    "id": 1048931,
+    "name": "local merchant",
+    "zone": "Yak T'el",
+    "outpost": "Iq Br'aax",
+    "unreachable": false
+   }
+  ],
+  [
+   1030123,
+   {
+    "id": 1030123,
+    "name": "Ghul Gul",
+    "zone": "Amh Araeng",
+    "outpost": "Amarokeep",
+    "unreachable": false
+   }
+  ],
+  [
+   1030124,
+   {
+    "id": 1030124,
+    "name": "Yhal Yal",
+    "zone": "Eulmore",
+    "outpost": null,
+    "unreachable": false
+   }
+  ],
+  [
+   1031680,
+   {
+    "id": 1031680,
+    "name": "Enie",
+    "zone": "The Firmament",
+    "outpost": null,
+    "unreachable": false
+   }
+  ],
+  [
+   1031691,
+   {
+    "id": 1031691,
+    "name": "Enie",
+    "zone": "The Firmament",
+    "outpost": null,
+    "unreachable": false
+   }
+  ],
+  [
+   1033780,
+   {
+    "id": 1033780,
+    "name": "Mowen's merchant",
+    "zone": "The Crystarium",
+    "outpost": null,
+    "unreachable": false
+   }
+  ],
+  [
+   1038441,
+   {
+    "id": 1038441,
+    "name": "crystal quartermaster",
+    "zone": "Wolves' Den Pier",
+    "outpost": null,
+    "unreachable": false
+   }
+  ],
+  [
+   1053905,
+   {
+    "id": 1053905,
+    "name": "Dodokkuli",
+    "zone": "Phantom Village",
+    "outpost": null,
+    "unreachable": false
+   }
+  ],
+  [
+   1056094,
+   {
+    "id": 1056094,
+    "name": "Dodokkuli",
+    "zone": "Phantom Village",
+    "outpost": null,
+    "unreachable": false
+   }
+  ]
+ ],
+ "zoneLevels": [
+  [
+   "Central Shroud",
+   4
+  ],
+  [
+   "East Shroud",
+   10
+  ],
+  [
+   "South Shroud",
+   21
+  ],
+  [
+   "North Shroud",
+   3
+  ],
+  [
+   "Eastern Thanalan",
+   5
+  ],
+  [
+   "Middle La Noscea",
+   3
+  ],
+  [
+   "Lower La Noscea",
+   3
+  ],
+  [
+   "Eastern La Noscea",
+   30
+  ],
+  [
+   "Western La Noscea",
+   10
+  ],
+  [
+   "Upper La Noscea",
+   20
+  ],
+  [
+   "Western Thanalan",
+   5
+  ],
+  [
+   "Central Thanalan",
+   5
+  ],
+  [
+   "Southern Thanalan",
+   25
+  ],
+  [
+   "Northern Thanalan",
+   45
+  ],
+  [
+   "Coerthas Central Highlands",
+   35
+  ],
+  [
+   "Mor Dhona",
+   44
+  ],
+  [
+   "Outer La Noscea",
+   30
+  ],
+  [
+   "The Churning Mists",
+   54
+  ],
+  [
+   "The Dravanian Hinterlands",
+   58
+  ],
+  [
+   "Coerthas Western Highlands",
+   50
+  ],
+  [
+   "The Dravanian Forelands",
+   52
+  ],
+  [
+   "The Sea of Clouds",
+   50
+  ],
+  [
+   "Azys Lla",
+   59
+  ],
+  [
+   "The Lochs",
+   69
+  ],
+  [
+   "Yanxia",
+   64
+  ],
+  [
+   "The Fringes",
+   60
+  ],
+  [
+   "The Ruby Sea",
+   62
+  ],
+  [
+   "The Peaks",
+   60
+  ],
+  [
+   "The Azim Steppe",
+   65
+  ],
+  [
+   "The Tempest",
+   79
+  ],
+  [
+   "The Rak'tika Greatwood",
+   74
+  ],
+  [
+   "Kholusia",
+   70
+  ],
+  [
+   "Il Mheg",
+   72
+  ],
+  [
+   "Lakeland",
+   71
+  ],
+  [
+   "Amh Araeng",
+   70
+  ],
+  [
+   "Labyrinthos",
+   80
+  ],
+  [
+   "Thavnair",
+   80
+  ],
+  [
+   "Garlemald",
+   82
+  ],
+  [
+   "Mare Lamentorum",
+   83
+  ],
+  [
+   "Elpis",
+   86
+  ],
+  [
+   "Ultima Thule",
+   89
+  ],
+  [
+   "Shaaloani",
+   95
+  ],
+  [
+   "Urqopacha",
+   90
+  ],
+  [
+   "Yak T'el",
+   94
+  ],
+  [
+   "Living Memory",
+   99
+  ],
+  [
+   "Kozama'uka",
+   90
+  ],
+  [
+   "Heritage Found",
+   97
+  ],
+  [
+   "New Gridania",
+   1
+  ],
+  [
+   "Old Gridania",
+   1
+  ],
+  [
+   "Limsa Lominsa Upper Decks",
+   1
+  ],
+  [
+   "Limsa Lominsa Lower Decks",
+   1
+  ],
+  [
+   "Ul'dah - Steps of Nald",
+   1
+  ],
+  [
+   "Ul'dah - Steps of Thal",
+   1
+  ],
+  [
+   "Wolves' Den Pier",
+   1
+  ],
+  [
+   "Mist",
+   1
+  ],
+  [
+   "The Lavender Beds",
+   1
+  ],
+  [
+   "The Goblet",
+   1
+  ],
+  [
+   "The Gold Saucer",
+   1
+  ],
+  [
+   "Sanctum of the Twelve",
+   1
+  ],
+  [
+   "Foundation",
+   50
+  ],
+  [
+   "The Pillars",
+   50
+  ],
+  [
+   "Matoya's Cave",
+   50
+  ],
+  [
+   "Idyllshire",
+   50
+  ],
+  [
+   "Shirogane",
+   1
+  ],
+  [
+   "Rhalgr's Reach",
+   60
+  ],
+  [
+   "Kugane",
+   60
+  ],
+  [
+   "The Doman Enclave",
+   60
+  ],
+  [
+   "Eureka Pagos",
+   60
+  ],
+  [
+   "The Crystarium",
+   70
+  ],
+  [
+   "Eulmore",
+   70
+  ],
+  [
+   "Dutiful Sisters of the Edelweiss",
+   1
+  ],
+  [
+   "Dock Storehouse",
+   1
+  ],
+  [
+   "The Nabaath Mines",
+   70
+  ],
+  [
+   "Ronkan Reflections",
+   70
+  ],
+  [
+   "The Firmament",
+   50
+  ],
+  [
+   "Gangos",
+   70
+  ],
+  [
+   "Bozjan Southern Front",
+   70
+  ],
+  [
+   "Castrum Lacus Litore",
+   70
+  ],
+  [
+   "Zadnor",
+   70
+  ],
+  [
+   "The <i>Dalriada</i>",
+   70
+  ],
+  [
+   "Empyreum",
+   1
+  ],
+  [
+   "Old Sharlayan",
+   80
+  ],
+  [
+   "Radz-at-Han",
+   80
+  ],
+  [
+   "Unnamed Island",
+   1
+  ],
+  [
+   "Tuliyollal",
+   90
+  ],
+  [
+   "Solution Nine",
+   90
+  ],
+  [
+   "Blunderville Square",
+   1
+  ],
+  [
+   "South Horn",
+   90
+  ],
+  [
+   "Tower of Blood",
+   90
+  ],
+  [
+   "Sinus Ardorum",
+   80
+  ],
+  [
+   "Phantom Village",
+   90
+  ]
+ ],
+ "dutyNames": [
+  [
+   30100,
+   "Eden's Promise: Litany (Savage)"
+  ],
+  [
+   30102,
+   "Eden's Promise: Anamorphosis (Savage)"
+  ]
+ ],
+ "duties": [
+  [
+   32141,
+   [
+    30100
+   ]
+  ],
+  [
+   32147,
+   [
+    30100,
+    30102
+   ]
+  ]
+ ],
+ "containers": [
+  [
+   32326,
+   [
+    32147
+   ]
+  ],
+  [
+   32797,
+   [
+    33441
+   ]
+  ],
+  [
+   36828,
+   [
+    36814
+   ]
+  ]
+ ],
+ "onlineStore": [
+  36814,
+  44665
+ ],
+ "quests": [],
+ "questInfo": [],
+ "achievements": [],
+ "fates": [
+  [
+   33441,
+   [
+    {
+     "name": "A Twist of Fête",
+     "zone": "The Firmament"
+    },
+    {
+     "name": "Made of Softer Stuff",
+     "zone": "The Firmament"
+    },
+    {
+     "name": "Presents of Mind",
+     "zone": "The Firmament"
+    },
+    {
+     "name": "Shear-a-Yak",
+     "zone": "The Firmament"
+    },
+    {
+     "name": "Toy Hunter",
+     "zone": "The Firmament"
+    }
+   ]
+  ]
+ ],
+ "voyages": [],
+ "desynth": [],
+ "relics": [
+  [
+   10059,
+   "Zodiac Weapons Saga"
+  ],
+  [
+   47878,
+   "Phantom Gear & Weapons"
+  ]
+ ]
+}
