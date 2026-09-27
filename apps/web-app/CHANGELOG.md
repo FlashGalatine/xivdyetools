@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.5] - 2026-09-27
+
+Swatch Matcher's TRIBE & GENDER selectors stayed disabled after the `.chara` file was gone. A
+loaded file turns them into a readout (`SwatchConfig.fileProvided`), and only the file card's SWAP
+ever released it: leaving the tool and coming back, switching the app's language, or reloading all
+dropped the file and brought the drop zone back over two disabled selectors. The flag was persisted
+with the rest of the swatch config, so it survived every reload until a file was loaded and swapped
+away. Present since the readout lock shipped with the 10A `.chara` reader — not a regression.
+
+### Fixed
+
+- **`CharaImport.destroy()` reports the cleared file** through `onResolved(null)`, as SWAP does.
+  The tool's teardown (a trip to another tool) and its re-render (a language switch runs `update()`,
+  which rebuilds the importer) both went through `destroy()`, which dropped the file without telling
+  the host — so the grid kept the file's pins along with the lock. The call is guarded like
+  `loadFile`'s, so a throwing host cannot cut its own `destroy()` short.
+- **`swatch.fileProvided` is transient in `ConfigController`** (`TRANSIENT_FIELDS`): never written
+  to localStorage, never read back from it — a `true` persisted by an earlier build is ignored, which
+  unlocks every browser already stuck — and never taken from an imported settings file. A reload set
+  off by another tab's write or `localStorage.clear()` keeps this tab's value, so one tab's file no
+  longer locks, or unlocks, another tab's selectors.
+
+### Tests
+
+- Each red before the code that satisfies it: `chara-import-lifecycle.test.ts` (destroy reports the
+  clear; a throwing host is contained), two `swatch-tool.test.ts` cases (a real `.chara` load through the drop zone, then
+  teardown or a language switch), five `config-controller.test.ts` cases (save, load, both cross-tab
+  reloads, import) and `e2e/swatch-readout-lock.spec.ts` (leave the tool and return; reload; a
+  lock an earlier build left in storage).
+
 ## [5.12.4] - 2026-09-21
 
 ### Changed

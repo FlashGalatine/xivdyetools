@@ -278,6 +278,7 @@ export class CharaImport {
   }
 
   destroy(): void {
+    const hadFile = this.resolved !== null;
     this.resolveAbort?.abort();
     this.resolveAbort = null;
     // The menu lives in document.body, so nothing here would remove it — it
@@ -288,6 +289,17 @@ export class CharaImport {
     this.resolved = null;
     this.equipment = null;
     this.glamourBox = null;
+    // The file goes with the component, so tell the host as SWAP does — or its
+    // grid pins and the sidebar's tribe/gender readout lock outlive the file
+    // (a trip to another tool, a language switch re-rendering the tool).
+    // Guarded: a throw here would cut short the host's own destroy().
+    if (hadFile) {
+      try {
+        this.callbacks.onResolved?.(null);
+      } catch (error) {
+        logger.error('[CharaImport] Host callback failed:', error);
+      }
+    }
   }
 
   // ==========================================================================

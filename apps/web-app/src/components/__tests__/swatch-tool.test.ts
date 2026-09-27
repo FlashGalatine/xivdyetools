@@ -177,6 +177,9 @@ vi.mock('@services/index', () => ({
     getInstance: vi.fn().mockReturnValue({
       getConfig: vi.fn().mockReturnValue({}),
       subscribe: vi.fn().mockReturnValue(() => {}),
+      // The .chara host callbacks write tribe/gender and the sidebar's
+      // readout lock (`fileProvided`) through here.
+      setConfig: vi.fn(),
     }),
   },
   CollectionService: {
@@ -970,6 +973,73 @@ describe('SwatchTool', () => {
       await flush();
 
       expect(leftPanel.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  /**
+   * While a .chara file is loaded, the sidebar's tribe/gender selectors are a
+   * readout (`swatch.fileProvided`) and the grid carries the file's pins. Only
+   * SWAP used to release them: a file dropped by the tool's teardown or by a
+   * re-render left the selectors disabled over an empty drop zone.
+   */
+  describe('a loaded .chara file', () => {
+    /** Nothing but an eye colour: no gear, so no dye or equipment lookups. */
+    const CHARA = JSON.stringify({ TypeName: 'Anamnesis Character File', REyeColor: 5 });
+
+    const charaInput = () =>
+      rightPanel.querySelector<HTMLInputElement>('input[type="file"][accept*=".chara"]');
+    /** Grid cells wearing a pin badge from the loaded file. */
+    const pinnedCells = () => rightPanel.querySelectorAll('button[data-index] > span');
+
+    /** Every value the tool has written to the readout lock, oldest first. */
+    const lockWrites = async (): Promise<unknown[]> => {
+      const { ConfigController } = await import('@services/index');
+      return vi
+        .mocked(ConfigController.getInstance().setConfig)
+        .mock.calls.filter(([key, partial]) => key === 'swatch' && 'fileProvided' in partial)
+        .map(([, partial]) => (partial as { fileProvided?: boolean }).fileProvided);
+    };
+
+    /** Load the file through the drop zone's own input, as a user does. */
+    const loadChara = async () => {
+      const input = charaInput();
+      expect(input).not.toBeNull();
+      const file = new File([CHARA], 'test.chara', { type: 'application/json' });
+      if (typeof (file as Blob).text !== 'function') {
+        (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(CHARA);
+      }
+      Object.defineProperty(input, 'files', { value: [file] });
+      input!.dispatchEvent(new Event('change'));
+      // The file card replaces the drop zone once the file has resolved
+      await vi.waitFor(() => expect(charaInput()).toBeNull());
+    };
+
+    it('releases the readout lock when the tool is destroyed', async () => {
+      tool = mount();
+      await flush(); // the default eye sheet
+      await loadChara();
+      expect(await lockWrites()).toEqual([true]);
+
+      tool.destroy();
+
+      expect((await lockWrites()).at(-1)).toBe(false);
+    });
+
+    it('releases the lock and the grid pins when a language switch re-renders it', async () => {
+      const { LanguageService } = await import('@services/index');
+      tool = mount();
+      await flush();
+      await loadChara();
+      expect(pinnedCells().length).toBeGreaterThan(0);
+
+      // A language change notifies every subscriber; the tool re-renders,
+      // which rebuilds its CharaImport without the file.
+      for (const [notify] of vi.mocked(LanguageService.subscribe).mock.calls) notify('ja');
+      await flush();
+
+      expect(charaInput()).not.toBeNull(); // the drop zone is back...
+      expect((await lockWrites()).at(-1)).toBe(false); // ...so the selectors unlock
+      expect(pinnedCells()).toHaveLength(0); // ...and the file's pins go with it
     });
   });
 });

@@ -62,6 +62,25 @@ type AssertAllConfigKeysListed = ConfigKey extends (typeof CONFIG_KEYS)[number] 
 const _assertAllConfigKeysListed: AssertAllConfigKeysListed = true;
 void _assertAllConfigKeysListed;
 
+/**
+ * Fields that describe what THIS page is showing rather than a preference, so
+ * they live in memory only: never written to storage, never read back from it
+ * (a reload, another tab's write or a value an earlier build persisted cannot
+ * set them), and never imported.
+ *
+ * `swatch.fileProvided` is the readout lock a loaded .chara file puts on the
+ * sidebar's tribe/gender selectors. The file is held in one page's memory;
+ * persisted, the lock outlived it, and a reload came back to disabled
+ * selectors over an empty drop zone.
+ */
+const TRANSIENT_FIELDS: { readonly [K in ConfigKey]?: readonly (keyof ToolConfigMap[K])[] } = {
+  swatch: ['fileProvided'],
+};
+
+function transientFields(key: ConfigKey): readonly string[] {
+  return (TRANSIENT_FIELDS[key] ?? []) as readonly string[];
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -89,8 +108,9 @@ function hasShapeOf(reference: unknown, candidate: unknown): boolean {
 
 /**
  * Narrow an imported per-tool object to the fields its default config
- * declares, each with the default's runtime shape. `null` when the entry is
- * not a plain object at all (the tool is then left untouched).
+ * declares, each with the default's runtime shape — transient fields
+ * excepted. `null` when the entry is not a plain object at all (the tool is
+ * then left untouched).
  */
 function sanitizeConfigPartial<K extends ConfigKey>(
   key: K,
@@ -98,9 +118,11 @@ function sanitizeConfigPartial<K extends ConfigKey>(
 ): Partial<ToolConfigMap[K]> | null {
   if (!isPlainObject(value)) return null;
   const defaults = getDefaultConfig(key) as unknown as Record<string, unknown>;
+  const transient = transientFields(key);
   const partial: Record<string, unknown> = {};
   for (const [field, candidate] of Object.entries(value)) {
     if (!Object.hasOwn(defaults, field)) continue;
+    if (transient.includes(field)) continue;
     if (!hasShapeOf(defaults[field], candidate)) continue;
     partial[field] = candidate;
   }
@@ -134,6 +156,35 @@ function mergeWithDefaults<T extends object>(defaults: T, stored: Partial<T>): T
   }
 
   return merged as T;
+}
+
+/** `config` without its transient fields: the part that is persisted. */
+function withoutTransientFields<K extends ConfigKey>(
+  key: K,
+  config: ToolConfigMap[K]
+): Partial<ToolConfigMap[K]> {
+  const fields = transientFields(key);
+  if (fields.length === 0) return config;
+  const persisted: Record<string, unknown> = { ...config };
+  for (const field of fields) delete persisted[field];
+  return persisted as Partial<ToolConfigMap[K]>;
+}
+
+/**
+ * `loaded` with its transient fields replaced by `current`'s, whatever storage
+ * said about them. A copy: `loaded` may be the shared default object.
+ */
+function withTransientFieldsFrom<K extends ConfigKey>(
+  key: K,
+  loaded: ToolConfigMap[K],
+  current: ToolConfigMap[K]
+): ToolConfigMap[K] {
+  const fields = transientFields(key);
+  if (fields.length === 0) return loaded;
+  const source = current as unknown as Record<string, unknown>;
+  const merged: Record<string, unknown> = { ...loaded };
+  for (const field of fields) merged[field] = source[field];
+  return merged as unknown as ToolConfigMap[K];
 }
 
 /**
@@ -404,6 +455,10 @@ export class ConfigController {
   private loadFromStorage<K extends ConfigKey>(key: K): void {
     const storageKey = `${CONFIG_STORAGE_PREFIX}${key}`;
     const stored = StorageService.getItem<ToolConfigMap[K]>(storageKey);
+    // Transient fields keep this page's value (the defaults on a first load),
+    // also when another tab's write is what set off this reload.
+    const current =
+      (this.configs.get(key) as ToolConfigMap[K] | undefined) ?? getDefaultConfig(key);
 
     if (stored) {
       // Merge with defaults to ensure all keys exist
@@ -430,11 +485,11 @@ export class ConfigController {
         withWheel.wheel = normalizeColorWheelId(withWheel.wheel);
       }
 
-      this.configs.set(key, mergedConfig);
+      this.configs.set(key, withTransientFieldsFrom(key, mergedConfig, current));
       logger.debug(`[ConfigController] Loaded ${key} config from storage`);
     } else {
       // Use defaults if nothing in storage
-      this.configs.set(key, getDefaultConfig(key));
+      this.configs.set(key, withTransientFieldsFrom(key, getDefaultConfig(key), current));
       logger.debug(`[ConfigController] Using default ${key} config`);
     }
 
@@ -446,7 +501,7 @@ export class ConfigController {
    */
   private saveToStorage<K extends ConfigKey>(key: K, config: ToolConfigMap[K]): void {
     const storageKey = `${CONFIG_STORAGE_PREFIX}${key}`;
-    const success = StorageService.setItem(storageKey, config);
+    const success = StorageService.setItem(storageKey, withoutTransientFields(key, config));
 
     if (!success) {
       logger.warn(`[ConfigController] Failed to save ${key} config to storage`);

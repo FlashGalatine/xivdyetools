@@ -613,6 +613,73 @@ describe('ConfigController', () => {
     });
   });
 
+  // `swatch.fileProvided` is the readout lock a loaded .chara file puts on the
+  // sidebar's tribe/gender selectors. The file lives in one page's memory, so
+  // the lock has to as well: persisted, it outlived the file (a reload came
+  // back to disabled selectors over an empty drop zone), reached other tabs,
+  // and rode in on a settings import.
+  describe('the .chara readout lock (swatch.fileProvided)', () => {
+    const SWATCH_KEY = 'xivdyetools_v4_config_swatch';
+
+    it('is not written to storage', () => {
+      const controller = ConfigController.getInstance();
+
+      controller.setConfig('swatch', { fileProvided: true, maxResults: 5 });
+
+      const [key, saved] = vi.mocked(StorageService.setItem).mock.lastCall!;
+      expect(key).toBe(SWATCH_KEY);
+      expect(saved).toEqual(expect.objectContaining({ maxResults: 5 }));
+      expect((saved as { fileProvided?: boolean }).fileProvided).not.toBe(true);
+    });
+
+    it('is not restored from a value an earlier build persisted', () => {
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        fileProvided: true,
+        maxResults: 5,
+      });
+
+      const swatch = ConfigController.getInstance().getConfig('swatch');
+
+      expect(swatch.maxResults).toBe(5);
+      expect(swatch.fileProvided).toBe(false);
+    });
+
+    it("keeps this tab's lock when another tab saves the swatch config", () => {
+      const controller = ConfigController.getInstance();
+      controller.setConfig('swatch', { fileProvided: true }); // a file is loaded in this tab
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({ maxResults: 6 });
+
+      window.dispatchEvent(new StorageEvent('storage', { key: SWATCH_KEY }));
+
+      const swatch = controller.getConfig('swatch');
+      expect(swatch.maxResults).toBe(6); // the other tab's change arrived...
+      expect(swatch.fileProvided).toBe(true); // ...and this tab's file is still loaded
+    });
+
+    it("keeps this tab's lock when another tab clears storage", () => {
+      const controller = ConfigController.getInstance();
+      controller.setConfig('swatch', { fileProvided: true, maxResults: 5 });
+
+      window.dispatchEvent(new StorageEvent('storage', { key: null }));
+
+      const swatch = controller.getConfig('swatch');
+      expect(swatch.maxResults).toBe(getDefaultConfig('swatch').maxResults); // back to defaults...
+      expect(swatch.fileProvided).toBe(true); // ...but the file is still loaded here
+    });
+
+    it('is not taken from an imported settings file', () => {
+      const controller = ConfigController.getInstance();
+
+      controller.importConfigs({
+        swatch: { fileProvided: true, maxResults: 5 },
+      } as unknown as Partial<ToolConfigMap>);
+
+      const swatch = controller.getConfig('swatch');
+      expect(swatch.maxResults).toBe(5);
+      expect(swatch.fileProvided).toBe(false);
+    });
+  });
+
   describe('Storage Failure Handling', () => {
     it('should handle storage save failure gracefully', () => {
       (StorageService.setItem as ReturnType<typeof vi.fn>).mockReturnValue(false);

@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.12.5 — September 27, 2026
+
+### Tribe & Gender no longer stay locked
+- **Tribe & Gender unlock as soon as the character file is gone.** A `.chara` file loaded into the Swatch Matcher fills both settings in and locks them; the lock now ends with the file.
+- **Leaving the tool, switching language or reloading the page used to drop the file but keep the lock**, so both settings stayed grayed out until you loaded a file and pressed Swap.
+- **If yours are stuck right now, they unlock the next time the app loads.** Nothing else about your settings changes.
+
 ## Web-App Version 5.12.4 — September 21, 2026
 
 ### The presets tool is called Community Presets
