@@ -29,7 +29,7 @@ export const GLYPH_ACCENT_DARK = '#EA4133';
 /** Accent on light grounds (also the app-icon tile red). */
 export const GLYPH_ACCENT_LIGHT = '#CE2222';
 
-/** The nine tools + the tools-menu glyph (which takes no accent chip). */
+/** The ten tools + the tools-menu glyph (which takes no accent chip). */
 export type ToolGlyphName =
   | 'harmony'
   | 'extractor'
@@ -40,6 +40,7 @@ export type ToolGlyphName =
   | 'presets'
   | 'budget'
   | 'swatch'
+  | 'glamour'
   | 'tools';
 
 export type HarmonyGlyphName =
@@ -91,6 +92,10 @@ export type CategoryGlyphName =
 
 const RING = '<circle cx="16" cy="16" r="11.6" stroke-width="1.4"/>';
 
+/** Glamour Reader outline (1a, 2026-09-27): a tunic, shared by both variants. */
+const TUNIC =
+  '<path d="M12 3.6 L5 6.4 L2 13.6 L6.6 15.6 L9.6 12.8 L7.6 28.6 H24.4 L22.4 12.8 L25.4 15.6 L30 13.6 L27 6.4 L20 3.6 C19 7.2 13 7.2 12 3.6 Z"/>';
+
 /**
  * Raw geometry. `F` marks the single filled accent element and is substituted
  * at render. Do not hand-edit paths — the design project's `tool-glyph.js` is
@@ -115,6 +120,8 @@ const TOOL_COMPACT: Record<ToolGlyphName, string> = {
     '<g transform="rotate(-45 16 16)"><path d="M8.2 6.2 H17 L25.8 15 V23.8 a2 2 0 0 1 -2 2 H8.2 a2 2 0 0 1 -2 -2 V8.2 a2 2 0 0 1 2 -2 Z"/><circle F cx="19.4" cy="12" r="2.3"/></g>',
   swatch:
     '<path d="M5.4 30.4 V17.4 a10.6 10.6 0 0 1 21.2 0 V30.4"/><rect F x="12" y="17.2" width="8" height="8" rx="2"/>',
+  // Tenth tool (Glamour Reader Icon 1a): the tunic, dyed on the chest chip.
+  glamour: TUNIC + '<rect F x="12.6" y="15.6" width="6.8" height="6.8" rx="1.6"/>',
   // The Tools menu takes no chip: its centre dot renders in ink, not accent.
   tools:
     '<circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="24" cy="8" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="24" cy="16" r="2"/><circle cx="8" cy="24" r="2"/><circle cx="16" cy="24" r="2"/><circle cx="24" cy="24" r="2"/><circle cx="16" cy="16" r="2.6" fill="INK" stroke="none"/>',
@@ -140,6 +147,11 @@ const TOOL_DETAIL: Record<Exclude<ToolGlyphName, 'tools'>, string> = {
     '<g transform="rotate(-45 16 16)"><path d="M8.2 2.4 H17.6 L26.4 11.2" stroke-width="1.2"/><path d="M8.2 6.2 H17 L25.8 15 V23.8 a2 2 0 0 1 -2 2 H8.2 a2 2 0 0 1 -2 -2 V8.2 a2 2 0 0 1 2 -2 Z"/><circle F cx="19.4" cy="12" r="2.3"/></g>',
   swatch:
     '<path d="M 9.4 30.4 V 17.4 a 6.6 6.6 0 0 1 13.2 0 V 30.4" stroke-width="1.2"/><path d="M 5.4 30.4 V 17.4 a10.6 10.6 0 0 1 21.2 0 V 30.4"/><rect F x="12" y="17.2" width="8" height="8" rx="2"/>',
+  // Detail layer: the hem line and the placket above the chip.
+  glamour:
+    '<path d="M9.9 25 H22.1" stroke-width="1.2"/><path d="M16 9.4 V13.4" stroke-width="1.2"/>' +
+    TUNIC +
+    '<rect F x="12.6" y="15.6" width="6.8" height="6.8" rx="1.6"/>',
 };
 
 /** Harmony types: ten positions on a 1.4-weight ring at real generator offsets. */

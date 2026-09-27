@@ -23,8 +23,8 @@ function renderAll(options = {}): string[] {
 
 describe('5.0 icon system', () => {
   it('covers the confirmed rosters', () => {
-    expect(GLYPH_SETS.tool).toHaveLength(10); // 9 tools + tools menu
-    expect(GLYPH_SETS.toolDetail).toHaveLength(9); // detail set complete ×9
+    expect(GLYPH_SETS.tool).toHaveLength(11); // 10 tools + tools menu
+    expect(GLYPH_SETS.toolDetail).toHaveLength(10); // detail set complete ×10
     expect(GLYPH_SETS.harmony).toHaveLength(10); // ten ring positions
     expect(GLYPH_SETS.chrome).toEqual(['about', 'sun', 'moon', 'globe']);
     expect(GLYPH_SETS.category).toHaveLength(9); // eight categories + default
@@ -70,6 +70,18 @@ describe('5.0 icon system', () => {
       const accentFills = svg.split(`fill="${GLYPH_ACCENT_DARK}"`).length - 1;
       expect(accentFills, name).toBe(name === 'tools' ? 0 : 1);
     }
+  });
+
+  it('the Glamour Reader glyph (1a): tunic + chest chip, detail adds a hem and a placket at 1.2', () => {
+    const compact = toolGlyph('glamour', 'compact', { ink: '#ECECEE' });
+    expect(compact).toContain('M12 3.6 L5 6.4 L2 13.6');
+    expect(compact).toContain(
+      `<rect stroke="none" fill="${GLYPH_ACCENT_DARK}" x="12.6" y="15.6" width="6.8" height="6.8" rx="1.6"/>`
+    );
+    const detail = toolGlyph('glamour', 'detail', { ink: '#ECECEE' });
+    expect(detail.match(/stroke-width="1\.2"/g)).toHaveLength(2);
+    expect(detail).toContain('M9.9 25 H22.1');
+    expect(detail).toContain('M16 9.4 V13.4');
   });
 
   it('pins ink when told to (resvg has no currentColor)', () => {
