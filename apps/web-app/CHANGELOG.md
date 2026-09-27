@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.5] - 2026-09-27
+
+The Swatch Matcher's loaded `.chara` file moves out of the component that drew it and into a
+session-only store, and `chara-import.ts` splits along what each part shows.
+
+### Fixed
+
+- **Tribe and gender stayed locked after the `.chara` file was gone.** A loaded file turns the
+  sidebar's TRIBE & GENDER selectors into a read-only readout. The lock was a persisted config flag
+  (`SwatchConfig.fileProvided`) that only SWAP cleared, while the file itself lived in a component
+  the tool discarded on the way out. Switching tools and back, or reloading, showed the empty drop
+  zone with both selectors still disabled, and the only way out was to load a file and press SWAP.
+  The lock now reads the loaded file itself, and `ConfigController` drops a stored `fileProvided`
+  when it loads the Swatch config.
+- **Leaving the Swatch Matcher, or switching language, dropped the loaded file.** Both rebuilt the
+  component that held it, so following a SEND TO or Inspect Dye in… link and coming back meant
+  dropping the file again. It now stays loaded until SWAP, a reload or closing the tab. It is still
+  held in memory only and never written to browser storage.
+
+### Changed
+
+- **`chara-import.ts` is split by what each part shows.** `services/chara-session-service.ts`
+  holds the loaded character for every view of it and is small enough to live in the layout shell,
+  where the config sidebar subscribes; `services/chara-file-loader.ts` reads a file into it (the
+  size cap and the `chara_parse` event moved with it); `components/chara-file-card.ts` is the drop
+  zone and file card, `chara-sheet.ts` is THIS CHARACTER plus `saveCharacterColors`,
+  `glamour-block.ts` is DYES ON THIS GLAMOUR, and `chara-ui.ts` holds the helpers all three share.
+  Each subscribes to the session, so a re-render rebuilds them around the same file.
+- **DYES ON THIS GLAMOUR is its own chunk**, imported the first time a loaded file wears anything.
+  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 68.69 KB (72.3%);
+  `glamour-block` is 25.23 KB under a new 35 KB limit. The layout shell grows 0.57 KB for the
+  session store and the sidebar's subscription, to 216.16 of 218 KB.
+- The glamour block's item lookup, dropped chips and palette draft now reset when a new file
+  loads rather than whenever the whole view redraws, and picking a THIS CHARACTER card no longer
+  redraws DYES ON THIS GLAMOUR. A picked slot keeps its selection ring through a language switch.
+
+### Tests
+
+- `e2e/swatch-chara-session.spec.ts` follows the lock and the file through SWAP, leaving the
+  tool, a language switch and a reload; three of its four cases fail on 5.12.4.
+- The five `chara-import-*` suites moved with the code they cover (`glamour-block*.test.ts`,
+  `chara-file-card.test.ts`, `services/__tests__/chara-file-loader.test.ts`), assertions
+  unchanged apart from mounting. New suites for the session store and THIS CHARACTER; the
+  Swatch suite covers the file surviving a re-mount and a re-render, tribe/gender, merged pins
+  and the on-demand glamour chunk; the sidebar suite covers the lock.
+
 ## [5.12.4] - 2026-09-21
 
 ### Changed
