@@ -887,3 +887,189 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(ToastService.success).not.toHaveBeenCalled();
   });
 });
+
+describe('GlamourBlock — IN THE GAME', () => {
+  let hosts: HTMLElement[] = [];
+
+  beforeEach(() => {
+    resolveMock.mockReset();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    hosts.forEach(cleanupTestContainer);
+    hosts = [];
+  });
+
+  const ALL = [
+    'GLA',
+    'PGL',
+    'MRD',
+    'LNC',
+    'ARC',
+    'CNJ',
+    'THM',
+    'CRP',
+    'BSM',
+    'ARM',
+    'GSM',
+    'LTW',
+    'WVR',
+    'ALC',
+    'CUL',
+    'MIN',
+    'BTN',
+    'FSH',
+    'PLD',
+    'MNK',
+    'WAR',
+    'DRG',
+    'BRD',
+    'WHM',
+    'BLM',
+    'ACN',
+    'SMN',
+    'SCH',
+    'ROG',
+    'NIN',
+    'MCH',
+    'DRK',
+    'AST',
+    'SAM',
+    'RDM',
+    'BLU',
+    'GNB',
+    'DNC',
+    'RPR',
+    'SGE',
+    'VPR',
+    'PCT',
+    'BST',
+  ] as const;
+  const CASTERS = ['THM', 'BLM', 'ACN', 'SMN', 'RDM', 'BLU', 'PCT'] as const;
+  const rules = (
+    itemIds: number[],
+    dyeCount: number,
+    jobs: readonly string[],
+    wearMask = 0xffff
+  ) => ({
+    itemIds,
+    dyeCount,
+    glamourable: true,
+    wearMask,
+    jobs: [...jobs] as never[],
+  });
+  const item = (itemId: number, en: string, extra: Record<string, unknown> = {}) => ({
+    itemId,
+    names: { en, ja: en, de: en, fr: en },
+    iconId: null,
+    familySize: 1,
+    alternates: [],
+    viaMainHand: false,
+    ...extra,
+  });
+  const check = (glamour: HTMLElement) =>
+    block(glamour).querySelector<HTMLElement>('[data-role="game-check"]');
+  const line = (glamour: HTMLElement, role: string) =>
+    Array.from(check(glamour)!.querySelectorAll<HTMLElement>(`[data-role="${role}"]`)).map(
+      (l) => l.textContent
+    );
+
+  it('says nothing when api-worker answers without rules (an older worker)', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() =>
+      expect(block(glamour).querySelectorAll('[data-role="item-name"]').length).toBe(3)
+    );
+    expect(check(glamour)).toBeNull();
+  });
+
+  it('flags a dye the weapon cannot take and the NPC body, and names the jobs left', async () => {
+    // Runaway Bow takes no dye, but the file dyes it; Body 9903·1 has no item;
+    // the quiver is the bow itself, so it is not checked twice.
+    const bow = item(49486, 'Runaway Bow', { rules: [rules([49486], 0, ['ARC', 'BRD'])] });
+    const resolved: CharaResolveResult = {
+      items: {
+        MainHand: bow,
+        OffHand: { ...bow, viaMainHand: true },
+        HeadGear: item(18085, 'Beech Mask of Casting', { rules: [rules([18085], 1, CASTERS)] }),
+        Body: null,
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
+
+    expect(check(glamour)!.textContent).toContain('IN THE GAME');
+    expect(line(glamour, 'jobs')).toEqual(['Wearable together by THM BLM ACN SMN RDM BLU PCT']);
+    expect(line(glamour, 'problem-dye')).toEqual([
+      "Weapon: Runaway Bow can't take the dyes the file gives it",
+    ]);
+    expect(line(glamour, 'problem-noItem')).toEqual([
+      'Body: MODEL 9903·1 is a model with no item behind it',
+    ]);
+    expect(line(glamour, 'all-clear')).toEqual([]);
+  });
+
+  it('shows who can wear each piece when no job can wear them all, and the twin that takes the dye', async () => {
+    // Head is dyed on channel 2: the named Dated coif takes no dye, its twin takes two
+    const resolved: CharaResolveResult = {
+      items: {
+        HeadGear: item(372, 'Dated Hempen Coif', {
+          familySize: 2,
+          alternates: [{ itemId: 2629, names: { en: 'Hempen Coif', ja: 'x', de: 'x', fr: 'x' } }],
+          rules: [rules([372], 0, ALL), rules([2629], 2, ALL)],
+        }),
+        Body: item(200, 'Casting Robe', { rules: [rules([200], 2, CASTERS)] }),
+        Hands: item(300, 'Striking Gloves', {
+          rules: [rules([300], 0, ['PGL', 'MNK', 'SAM', 'BST'])],
+        }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), FIXTURE_ACC);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
+
+    expect(line(glamour, 'jobs')).toEqual(['No single job can wear this whole look']);
+    const spread = check(glamour)!.querySelector<HTMLElement>('[data-role="job-spread"]')!;
+    expect(spread.textContent).toContain('Casting Robe');
+    expect(spread.textContent).toContain('THM BLM ACN SMN RDM BLU PCT');
+    expect(spread.textContent).toContain('PGL MNK SAM BST');
+    expect(spread.textContent).not.toContain('Dated Hempen Coif'); // every job wears the coif
+    expect(line(glamour, 'all-clear')).toEqual([
+      'Every piece can be worn and dyed the way the file shows it',
+    ]);
+    expect(line(glamour, 'use-instead')).toEqual([
+      'Head: wear Hempen Coif instead. It looks the same and takes these dyes.',
+    ]);
+  });
+
+  it("checks race and gender against the file's own character", async () => {
+    const viera = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Tribe: 'Rava',
+      Gender: 'Feminine',
+      REyeColor: 42,
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+    });
+    const menOnly = 0x5555;
+    const resolved: CharaResolveResult = {
+      items: {
+        Body: item(2967, "Lord's Yukata (Blue)", { rules: [rules([2967], 0, ALL, menOnly)] }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), viera);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
+
+    expect(line(glamour, 'problem-wear')).toEqual([
+      "Body: this character can't wear Lord's Yukata (Blue)",
+    ]);
+    expect(line(glamour, 'jobs')).toEqual([]);
+  });
+});

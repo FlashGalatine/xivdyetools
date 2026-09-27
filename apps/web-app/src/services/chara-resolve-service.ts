@@ -16,7 +16,7 @@
  * @module services/chara-resolve-service
  */
 
-import type { CharaGearModel, CharaGearSlotId } from '@xivdyetools/core';
+import type { CharaGearModel, CharaGearSlotId, CharaTwinRules } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import { getApiWorkerBase } from './api-worker-origin';
 
@@ -40,6 +40,12 @@ export interface CharaResolvedItem {
   alternates: Array<{ itemId: number; names: CharaItemNames }>;
   /** OffHand only: the off-hand model is the main weapon's own ModelSub (quiver, focus, fist pair) */
   viaMainHand: boolean;
+  /**
+   * The family's in-game rules (dye channels, glamour flag, race/gender lock,
+   * jobs), one entry per distinct rule set. Absent from a worker that predates
+   * the in-game check; `[]` when XIVAPI did not say.
+   */
+  rules?: CharaTwinRules[];
 }
 
 export interface CharaResolvedGlasses {

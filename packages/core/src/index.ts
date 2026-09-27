@@ -207,6 +207,24 @@ export {
   isWornCharaModel,
 } from './services/chara/chara-models.js';
 export type { CharaGearModel } from './services/chara/chara-models.js';
+// In-game check: api-worker reads the rules off XIVAPI and groups each family
+// of identical items; the web-app checks them against the file in the browser
+export {
+  CHARA_JOB_COLUMNS,
+  CHARA_WEAR_RACE_COLUMNS,
+  charaWearMask,
+  charaJobsOf,
+  groupCharaTwinRules,
+  checkCharaLook,
+} from './services/chara/chara-game-rules.js';
+export type {
+  CharaItemRules,
+  CharaTwinRules,
+  CharaPieceProblem,
+  CharaPieceCheck,
+  CharaCheckPieceInput,
+  CharaLookCheck,
+} from './services/chara/chara-game-rules.js';
 export type {
   ResolvedCharaCharacter,
   ResolvedCharaSlot,

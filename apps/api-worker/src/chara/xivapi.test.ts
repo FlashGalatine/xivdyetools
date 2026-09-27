@@ -80,7 +80,48 @@ describe('cleanName / parseItemRow', () => {
       modelMain: '65589',
       modelSub: '0',
       slots: ['FingerL', 'FingerR'],
+      rules: null,
     });
+  });
+
+  it('reads the in-game rules: dye channels, glamour flag, race/gender lock, jobs', () => {
+    // Viera Chestwrap #25208: two channels, Viera women only (EquipRaceCategory 17), all classes
+    const jobs = Object.fromEntries(['GLA', 'PLD', 'WHM', 'PCT', 'ADV'].map((j) => [j, true]));
+    const row = parseItemRow({
+      row_id: 25208,
+      fields: {
+        Name: 'Viera Chestwrap',
+        ModelMain: 66117,
+        EquipSlotCategory: { fields: { Body: 1 } },
+        DyeCount: 2,
+        IsGlamorous: true,
+        EquipRestriction: { value: 17, fields: { Hyur: false, Viera: true, Male: false, Female: true } },
+        ClassJobCategory: { value: 1, fields: { ...jobs, MNK: false } },
+      },
+    });
+    expect(row.rules).toEqual({
+      dyeCount: 2,
+      glamourable: true,
+      wearMask: 0x8000,
+      jobs: ['GLA', 'PLD', 'WHM', 'PCT'],
+    });
+  });
+
+  it('answers null rules when a field is missing, never a guess', () => {
+    const fields = {
+      Name: 'Curtana Zenith',
+      ModelMain: 1,
+      DyeCount: 0,
+      IsGlamorous: false,
+      EquipRestriction: { fields: { Hyur: true, Male: true } },
+      ClassJobCategory: { fields: { PLD: true } },
+    };
+    expect(parseItemRow({ row_id: 6257, fields }).rules).toMatchObject({ glamourable: false, jobs: ['PLD'] });
+    for (const missing of ['DyeCount', 'IsGlamorous', 'EquipRestriction', 'ClassJobCategory']) {
+      const partial: Record<string, unknown> = { ...fields };
+      delete partial[missing];
+      expect(parseItemRow({ row_id: 6257, fields: partial }).rules).toBeNull();
+    }
   });
 
   it('keeps 64-bit weapon keys exact as strings and tolerates a missing icon', () => {
@@ -113,6 +154,10 @@ describe('XivapiClient', () => {
     expect(u.searchParams.get('schema')).toBe('exdschema@2:rev:deadbeef');
     expect(u.searchParams.get('query')).toBe('+((+EquipSlotCategory.Head=1 +ModelMain=328041))');
     expect(u.searchParams.get('fields')).toContain('EquipSlotCategory.FingerR');
+    // The in-game check's fields ride the same single search
+    const fields = u.searchParams.get('fields')!.split(',');
+    expect(fields).toEqual(expect.arrayContaining(['DyeCount', 'IsGlamorous', 'EquipRestriction.Viera', 'EquipRestriction.Female', 'ClassJobCategory.PCT']));
+    expect(fields).not.toContain('ClassJobCategory.ADV');
     expect((init.headers as Record<string, string>)['User-Agent']).toMatch(/XIVDyeTools/);
     // FINDING-025 / API-9: a redirecting upstream must not be followed to a third
     // host — `manual` (workerd has no `error` mode; it throws on it)

@@ -20,8 +20,14 @@
  */
 
 import {
+  CHARA_JOB_COLUMNS,
+  checkCharaLook,
   formatCharaModelLabel,
   facewearColors,
+  type CharaCheckPieceInput,
+  type CharaLookCheck,
+  type CharaPieceCheck,
+  type CharaPieceProblem,
   type ResolvedCharaCharacter,
   type ResolvedGearDye,
   type CharaGearSlotId,
@@ -495,6 +501,8 @@ export class GlamourBlock {
           ? this.renderDyeRows()
           : this.renderPieceRows(bySlot)
     );
+    const gameCheck = this.renderGameCheck();
+    if (gameCheck) box.appendChild(gameCheck);
     box.appendChild(this.renderGlamourFoot(bySlot));
 
     if (this.paletteOpen) {
@@ -1119,6 +1127,208 @@ export class GlamourBlock {
       grid.appendChild(row);
     }
     return grid;
+  }
+
+  // ==========================================================================
+  // IN THE GAME — can the look be worn the way the file shows it?
+  // ==========================================================================
+
+  /**
+   * The check's input: every worn piece api-worker answered for, with its
+   * family's rule sets and the highest channel the file dyes on it. A paired
+   * off-hand (quiver, focus) IS the main weapon, so it is not checked twice.
+   */
+  private gameCheckPieces(): CharaCheckPieceInput[] {
+    const resolved = this.resolved!;
+    const pieces: CharaCheckPieceInput[] = [];
+    for (const model of resolved.gearModels) {
+      const item = this.itemFor(model.slot);
+      if (item === undefined || item?.viaMainHand) continue;
+      const dyedChannel = resolved.gearDyes
+        .filter((gear) => gear.slot === model.slot)
+        .reduce((max, gear) => Math.max(max, gear.channel), 0);
+      pieces.push({
+        slot: model.slot,
+        itemId: item ? item.itemId : null,
+        twins: item?.rules ?? [],
+        dyedChannel,
+      });
+    }
+    return pieces;
+  }
+
+  /**
+   * The verdict panel. Posing tools put any model on anyone and any dye on
+   * any channel; the game does not. Drawn only once api-worker has answered
+   * WITH rules, so an older worker (or an unavailable one) leaves the block
+   * exactly as it was. The check itself runs here, in the browser: the file's
+   * dyes and the character's race and gender never leave the device.
+   */
+  private renderGameCheck(): HTMLElement | null {
+    const resolved = this.resolved;
+    if (this.resolveState !== 'ready' || !resolved || !this.equipment) return null;
+    const answered = Object.values(this.equipment.items).some((item) => item?.rules?.length);
+    if (!answered) return null;
+    const check = checkCharaLook(this.gameCheckPieces(), {
+      race: resolved.race,
+      gender: resolved.gender,
+    });
+    if (check.pieces.length === 0) return null;
+    const lang = LanguageService.getCurrentLocale();
+
+    const section = el(
+      'div',
+      'display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
+    );
+    section.dataset.role = 'game-check';
+    section.appendChild(
+      el(
+        'span',
+        `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 1.2px; color: var(--theme-text-muted); text-transform: uppercase;`,
+        tSwatch('gameCheck.head')
+      )
+    );
+
+    if (check.jobs !== null) {
+      if (check.jobs.length === 0) {
+        section.appendChild(this.gameCheckLine(false, tSwatch('gameCheck.jobsNone'), 'jobs'));
+        section.appendChild(this.renderJobSpread(check, lang));
+      } else if (check.jobs.length === CHARA_JOB_COLUMNS.length) {
+        section.appendChild(this.gameCheckLine(true, tSwatch('gameCheck.jobsAll'), 'jobs'));
+      } else {
+        section.appendChild(
+          this.gameCheckLine(
+            true,
+            LanguageService.tInterpolate('swatch.gameCheck.jobsSome', {
+              jobs: check.jobs.join(' '),
+            }),
+            'jobs'
+          )
+        );
+      }
+    }
+
+    const problems = check.pieces.flatMap((piece) =>
+      piece.problems.map((problem) => ({ piece, problem }))
+    );
+    if (problems.length === 0) {
+      section.appendChild(this.gameCheckLine(true, tSwatch('gameCheck.allClear'), 'all-clear'));
+    }
+    for (const { piece, problem } of problems) {
+      section.appendChild(
+        this.gameCheckLine(false, this.gameProblemText(piece.slot, problem), `problem-${problem}`)
+      );
+    }
+    for (const piece of check.pieces) {
+      if (piece.useInstead) {
+        section.appendChild(
+          this.gameCheckLine(false, this.useInsteadText(piece, lang), 'use-instead')
+        );
+      }
+    }
+    return section;
+  }
+
+  /** One verdict line: a green or amber dot, then the sentence that explains it. */
+  private gameCheckLine(ok: boolean, text: string, role: string): HTMLElement {
+    const line = el(
+      'div',
+      'display: flex; align-items: baseline; gap: 7px; font-size: 11px; line-height: 1.45; color: var(--theme-text); overflow-wrap: anywhere;'
+    );
+    const dot = el(
+      'span',
+      `flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: ${ok ? green() : amber()}; transform: translateY(-1px);`
+    );
+    dot.setAttribute('aria-hidden', 'true');
+    line.appendChild(dot);
+    line.appendChild(el('span', 'min-width: 0;', text));
+    line.dataset.role = role;
+    line.dataset.state = ok ? 'ok' : 'problem';
+    return line;
+  }
+
+  /**
+   * Under "no single job": who can wear each restricted piece, so the reader
+   * sees which pieces pull apart. All-classes pieces never cause the split,
+   * so they are left out.
+   */
+  private renderJobSpread(check: CharaLookCheck, lang: string): HTMLElement {
+    const list = el(
+      'div',
+      'display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 4px; padding-left: 13px;'
+    );
+    list.dataset.role = 'job-spread';
+    for (const piece of check.pieces) {
+      if (piece.problems.length > 0 || piece.jobs.length === CHARA_JOB_COLUMNS.length) continue;
+      list.appendChild(
+        el(
+          'span',
+          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; line-height: 1.9; color: var(--theme-text-muted); text-transform: uppercase; white-space: nowrap;`,
+          this.gearSlotLabel(piece.slot)
+        )
+      );
+      const cell = el(
+        'span',
+        'min-width: 0; font-size: 10.5px; line-height: 1.35; color: var(--theme-text); overflow-wrap: anywhere;'
+      );
+      cell.appendChild(el('span', '', this.gamePieceName(piece.slot, lang)));
+      cell.appendChild(
+        el(
+          'span',
+          `display: block; font-family: ${MONO}; font-size: 9.5px; color: var(--theme-text-muted);`,
+          piece.jobs.join(' ')
+        )
+      );
+      list.appendChild(cell);
+    }
+    return list;
+  }
+
+  /** The piece's name for a verdict: the item, or its model key when it has none. */
+  private gamePieceName(slot: CharaGearSlotId, lang: string): string {
+    const item = this.itemFor(slot);
+    if (item) return itemNameFor(item.names, lang);
+    const model = this.resolved!.gearModels.find((m) => m.slot === slot);
+    return model
+      ? LanguageService.tInterpolate('swatch.modelKeyTag', { key: formatCharaModelLabel(model) })
+      : this.gearSlotLabel(slot);
+  }
+
+  private gameProblemText(slot: CharaGearSlotId, problem: CharaPieceProblem): string {
+    const key = {
+      noItem: 'swatch.gameCheck.problemNoItem',
+      dye: 'swatch.gameCheck.problemDye',
+      glamour: 'swatch.gameCheck.problemGlamour',
+      wear: 'swatch.gameCheck.problemWear',
+    }[problem];
+    return LanguageService.tInterpolate(key, {
+      slot: this.gearSlotLabel(slot),
+      item: this.gamePieceName(slot, LanguageService.getCurrentLocale()),
+    });
+  }
+
+  /**
+   * "Wear the twin instead": the named item fails a check an identical item
+   * passes. The twin is the lowest row that passes, so it is almost always
+   * among the alternates the answer names; past that cap it falls back to
+   * its item number.
+   */
+  private useInsteadText(piece: CharaPieceCheck, lang: string): string {
+    const item = this.itemFor(piece.slot);
+    const twinId = piece.useInstead!.itemId;
+    const twin = item?.alternates.find((a) => a.itemId === twinId);
+    const fixes = piece.useInstead!.fixes.map((fix) =>
+      fix === 'dye'
+        ? tSwatch('gameCheck.fixDye')
+        : fix === 'glamour'
+          ? tSwatch('gameCheck.fixGlamour')
+          : tSwatch('gameCheck.fixWear')
+    );
+    return LanguageService.tInterpolate('swatch.gameCheck.useInstead', {
+      slot: this.gearSlotLabel(piece.slot),
+      twin: twin ? itemNameFor(twin.names, lang) : `#${twinId}`,
+      fixes: new Intl.ListFormat(lang, { type: 'conjunction' }).format(fixes),
+    });
   }
 
   /**

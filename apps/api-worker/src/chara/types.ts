@@ -8,9 +8,14 @@
  * identical alternates that share the mesh.
  */
 
-import type { CharaGearModel, CharaGearSlotId } from '@xivdyetools/core';
+import type {
+  CharaGearModel,
+  CharaGearSlotId,
+  CharaItemRules,
+  CharaTwinRules,
+} from '@xivdyetools/core';
 
-export type { CharaGearModel, CharaGearSlotId };
+export type { CharaGearModel, CharaGearSlotId, CharaItemRules, CharaTwinRules };
 
 /** en/ja/de/fr come from XIVAPI in the same call; ko/zh merge from the build-time tables when known. */
 export interface ItemNames {
@@ -38,6 +43,13 @@ export interface ResolvedCharaItem {
    * separate item.
    */
   viaMainHand: boolean;
+  /**
+   * What the game allows, as the family's distinct rule sets: dye channels,
+   * glamour flag, race/gender lock, classes and jobs. The first set holds
+   * `itemId`. `[]` when XIVAPI did not return the fields. The browser checks
+   * these against the file's dyes and character, which never reach us.
+   */
+  rules: CharaTwinRules[];
 }
 
 export interface ResolvedGlasses {
@@ -75,6 +87,8 @@ export interface ItemRow {
   modelSub: string;
   /** EquipSlotCategory columns set to 1 on this row (rings carry FingerL + FingerR) */
   slots: string[];
+  /** The in-game rules; null when the answer lacked any of their fields */
+  rules: CharaItemRules | null;
 }
 
 export interface GlassesRow {

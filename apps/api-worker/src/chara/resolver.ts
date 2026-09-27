@@ -19,7 +19,7 @@
  * - ko/zh merge from the build-time tables, EN fallback per item by omission.
  */
 
-import { CHARA_SLOT_SEARCH_FIELD, charaModelKey } from '@xivdyetools/core';
+import { CHARA_SLOT_SEARCH_FIELD, charaModelKey, groupCharaTwinRules } from '@xivdyetools/core';
 import type {
   CharaGearModel,
   CharaGearSlotId,
@@ -74,7 +74,11 @@ function withRegional(rowId: number, names: ItemRow['names']): ItemNames {
   return { ...names, ...regionalNames(rowId) };
 }
 
-/** Lowest row_id names the item; the rest are alternates, row_id ascending. */
+/**
+ * Lowest row_id names the item; the rest are alternates, row_id ascending.
+ * The in-game rules cover the WHOLE family, not the capped alternates: a twin
+ * past the cap can still be the one that takes the dye.
+ */
 export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
   if (rows.length === 0) return null;
   const sorted = [...rows].sort((a, b) => a.rowId - b.rowId);
@@ -88,6 +92,7 @@ export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
       .slice(1, 1 + MAX_ALTERNATES)
       .map((r) => ({ itemId: r.rowId, names: withRegional(r.rowId, r.names) })),
     viaMainHand: false,
+    rules: groupCharaTwinRules(sorted.map((r) => ({ rowId: r.rowId, rules: r.rules ?? null }))),
   };
 }
 
