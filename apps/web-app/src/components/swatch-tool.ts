@@ -1240,7 +1240,7 @@ export class SwatchTool extends BaseComponent {
 
     // 10A: the .chara reader sits ABOVE the workspace — the drop zone is an
     // offer, not a replacement; everything below keeps working without it.
-    // (Constructed further down, once the glamour container exists.)
+    // (Mounted further down, once the glamour container exists.)
     const charaContainer = this.createElement('div', {
       attributes: { style: 'width: 100%; max-width: 1400px;' },
     });
@@ -1505,57 +1505,65 @@ export class SwatchTool extends BaseComponent {
     this.mainLayout.appendChild(resultsArea);
     right.appendChild(this.mainLayout);
 
-    this.charaImport?.destroy();
-    this.charaImport = new CharaImport(
-      charaContainer,
-      {
-        onSlotPick: (hex, label, gridRef) => {
-          this.selectionContext = { source: 'slot', hex, label, gridRef };
-          if (gridRef) {
-            // The selection card's excerpt centres on the slot's cell.
-            const target = gridRef.variant
-              ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
-              : gridRef.paletteBase;
-            if (target !== (this.colorCategory as string)) {
-              this.setConfig({ colorSheet: target });
+    // Only the first render builds the reader. A re-render (a language switch)
+    // moves that same one into this render's containers, where it draws itself
+    // in the new language: a fresh one would drop the loaded file, and with it
+    // the grid pins and the sidebar's readout lock. The file goes with
+    // destroy() or SWAP, never with a re-render.
+    if (this.charaImport) {
+      this.charaImport.remount(charaContainer, { glamourContainer: charaGlamourContainer });
+    } else {
+      this.charaImport = new CharaImport(
+        charaContainer,
+        {
+          onSlotPick: (hex, label, gridRef) => {
+            this.selectionContext = { source: 'slot', hex, label, gridRef };
+            if (gridRef) {
+              // The selection card's excerpt centres on the slot's cell.
+              const target = gridRef.variant
+                ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
+                : gridRef.paletteBase;
+              if (target !== (this.colorCategory as string)) {
+                this.setConfig({ colorSheet: target });
+              } else {
+                this.updateColorGrid();
+              }
             } else {
               this.updateColorGrid();
             }
-          } else {
-            this.updateColorGrid();
-          }
-          this.selectCustomColor(hex);
-        },
-        onResolved: (resolved) => {
-          this.charaResolved = resolved;
-          if (resolved === null && this.selectionContext?.source === 'slot') {
-            this.selectionContext = null;
-          }
-          // Sidebar race/gender become a readout while a file is loaded —
-          // push through ConfigController so the sidebar sees the flag.
-          ConfigController.getInstance().setConfig('swatch', {
-            fileProvided: resolved !== null,
-          });
-          this.updateColorGrid();
-        },
-        onTribeGender: (tribe, gender) => {
-          // Through ConfigController so the sidebar readout follows the file.
-          ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
-        },
-        onSubmitPalette: (dyes, name) => {
-          void import('@components/preset-submission-form')
-            .then(({ showPresetSubmissionForm }) => {
-              showPresetSubmissionForm(undefined, { dyes, name });
-            })
-            .catch((error: unknown) => {
-              logger.error('[SwatchTool] Failed to load the preset submission form', error);
-              ToastService.error(LanguageService.t('errors.toolLoadFailed'));
+            this.selectCustomColor(hex);
+          },
+          onResolved: (resolved) => {
+            this.charaResolved = resolved;
+            if (resolved === null && this.selectionContext?.source === 'slot') {
+              this.selectionContext = null;
+            }
+            // Sidebar race/gender become a readout while a file is loaded —
+            // push through ConfigController so the sidebar sees the flag.
+            ConfigController.getInstance().setConfig('swatch', {
+              fileProvided: resolved !== null,
             });
+            this.updateColorGrid();
+          },
+          onTribeGender: (tribe, gender) => {
+            // Through ConfigController so the sidebar readout follows the file.
+            ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
+          },
+          onSubmitPalette: (dyes, name) => {
+            void import('@components/preset-submission-form')
+              .then(({ showPresetSubmissionForm }) => {
+                showPresetSubmissionForm(undefined, { dyes, name });
+              })
+              .catch((error: unknown) => {
+                logger.error('[SwatchTool] Failed to load the preset submission form', error);
+                ToastService.error(LanguageService.t('errors.toolLoadFailed'));
+              });
+          },
         },
-      },
-      { glamourContainer: charaGlamourContainer }
-    );
-    this.charaImport.init();
+        { glamourContainer: charaGlamourContainer }
+      );
+      this.charaImport.init();
+    }
 
     // Initialize displays
     this.updateSelectionCard();

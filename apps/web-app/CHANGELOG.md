@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.6] - 2026-09-27
+
+Switching the app's language while a `.chara` file was loaded in the Swatch Matcher dropped the
+file: the drop zone came back, and the parsed character, DYES ON THIS GLAMOUR and its resolved
+equipment names were gone until the file was loaded again. The selected color, the matches and the
+reverse match all survived the same switch; only the file did not, because the tool's re-render
+rebuilt its importer. 5.12.5 made the loss consistent — the tribe/gender lock and the grid pins now
+go with the file — and this release keeps the file. Present since the 10A `.chara` reader shipped;
+not a regression.
+
+### Fixed
+
+- **A language switch keeps the loaded `.chara` file.** `SwatchTool` re-renders on a language
+  change (`update()` → `renderRightPanel()`), and the re-render destroyed its `CharaImport` and
+  built a fresh one with no file. The importer is now built on the first render only; each later
+  render moves the same one into its new containers with the new **`CharaImport.remount()`**, which
+  draws it again in the current language. The file card, THIS CHARACTER sheet, DYES ON THIS
+  GLAMOUR with its equipment names, the Pieces/Dyes lens, the Make-a-palette drafts and the
+  selected slot all stay — and with them the grid pins and the TRIBE & GENDER readout lock, since a
+  remount reports nothing to the host. A file still reading, or an equipment lookup still in
+  flight, lands in the new containers; 5.12.5's late-load guard now only ever sees a real teardown
+  (leaving the tool).
+
+### Tests
+
+- Red before the fix: `swatch-tool.test.ts` › *a loaded .chara file* (5.12.5's language-switch
+  case asserted the drop; it now asserts the file, the lock and the pins survive, redrawn in the
+  new language), two `chara-import-lifecycle.test.ts` cases for `remount()` (drawn again in the new
+  containers in Japanese with its resolved item name, nothing left behind, nothing reported; an
+  equipment lookup in flight lands in the new block) and `e2e/swatch-readout-lock.spec.ts` › *a
+  language switch keeps the file and the lock*, driven through the header's language picker. A
+  third `remount()` case — a file still loading lands in the new containers — covers the
+  interaction with 5.12.5's late-load guard; it fails against a `remount()` that tears down.
+- The spec's TRIBE & GENDER locator finds the group by its gender option rather than its heading,
+  which a language switch translates.
+
 ## [5.12.5] - 2026-09-27
 
 Swatch Matcher's TRIBE & GENDER selectors stayed disabled after the `.chara` file was gone. A

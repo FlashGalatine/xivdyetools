@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.12.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.12.6 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.6.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -110,6 +110,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.12.6 | Sep 2026 | Swatch Matcher keeps a loaded `.chara` file across a language switch — the tool's re-render rebuilt its importer without the file, so the drop zone came back and the character, DYES ON THIS GLAMOUR and its equipment names were lost. The importer is now built once and moved into each re-render's containers with `CharaImport.remount()`, redrawn in the new language; the TRIBE & GENDER lock and the grid pins stay with the file |
 | v5.12.5 | Sep 2026 | Swatch Matcher's TRIBE & GENDER selectors no longer stay disabled once the `.chara` file is gone — leaving the tool and returning, a language switch, or a reload used to bring back the drop zone over a locked readout. `CharaImport.destroy()` reports the cleared file as SWAP does, and `swatch.fileProvided` is transient in `ConfigController` (never persisted, restored, synced across tabs or imported) |
 | v5.12.2 | Sep 2026 | Swatch Matcher accepts Lalafell `.chara` files (core 5.5.0) — they were refused outright since `.chara` import shipped; a Hrothgar file with no `Race` key no longer shows a fur-pattern number as a lip colour, and an Au Ra's limbal ring is no longer matched as a tattoo. No web-app source changed |
 | v5.12.1 | Sep 2026 | Follow-up to the 2026-09-19 i18n audit's pre-merge review — Korean Terms of Service disclaimer restructured so it can only read as a disclaimer; Korean Privacy Policy "never stored" sentence no longer ends on a positive verb; Japanese Terms header unwrapped. Policy documents only (read from GitHub), so the deployed bundle differs only in its version string |

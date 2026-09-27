@@ -5,6 +5,8 @@
  * readout (disabled). The lock used to outlive the file: leaving the tool and
  * coming back, or reloading, brought the drop zone back with both selectors
  * still disabled, and only loading another file and pressing SWAP undid it.
+ * A language switch is not a way out: it used to drop the file, and now the
+ * file and the lock both stay.
  */
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/coverage';
@@ -18,11 +20,29 @@ import {
 /** Nothing but an eye colour: parses, and has no gear to resolve over the network. */
 const fixture = JSON.stringify({ TypeName: 'Anamnesis Character File', REyeColor: 42 });
 
-/** The sidebar's two selectors under TRIBE & GENDER. */
+/**
+ * The sidebar's two selectors under TRIBE & GENDER. Found by the gender
+ * option's value, which a language switch does not translate.
+ */
 const tribeAndGender = (page: Page) =>
-  page.locator('.config-group').filter({ hasText: 'TRIBE & GENDER' }).locator('select');
+  page
+    .locator('.config-group')
+    .filter({ has: page.locator('option[value="Male"]') })
+    .locator('select');
 
 const dropZone = (page: Page) => page.getByText('Drop a .chara file');
+/** The drop zone's file input: there only while no file is loaded, in any language. */
+const charaInput = (page: Page) => page.locator('input[type="file"][accept*=".chara"]');
+
+/** Switch the app's language from the header's locale button, as a user does. */
+async function switchLanguage(page: Page, locale: string): Promise<void> {
+  await page
+    .locator('button.v4-header-nav-btn')
+    .filter({ has: page.locator('.lang-code') })
+    .click();
+  await page.locator(`button[data-locale="${locale}"]`).click();
+  await expect(page.locator('.lang-code')).toHaveText(locale.toUpperCase());
+}
 
 async function expectSelectors(page: Page, state: 'locked' | 'unlocked'): Promise<void> {
   const selects = tribeAndGender(page);
@@ -39,7 +59,7 @@ test.describe('with a file loaded', () => {
     await seedStartupStorage(page);
     await gotoTool(page, 'swatch');
     await expectSelectors(page, 'unlocked');
-    await page.locator('input[type="file"][accept*=".chara"]').setInputFiles({
+    await charaInput(page).setInputFiles({
       name: 'test.chara',
       mimeType: 'application/json',
       buffer: Buffer.from(fixture),
@@ -62,6 +82,15 @@ test.describe('with a file loaded', () => {
 
     await expect(dropZone(page)).toBeVisible();
     await expectSelectors(page, 'unlocked');
+  });
+
+  test('a language switch keeps the file and the lock', async ({ page }) => {
+    await switchLanguage(page, 'ja');
+
+    // The file card is drawn again, in Japanese, and the drop zone stays away
+    await expect(page.getByRole('button', { name: 'キャラクターの色を保存' })).toBeVisible();
+    await expect(charaInput(page)).toHaveCount(0);
+    await expectSelectors(page, 'locked');
   });
 });
 

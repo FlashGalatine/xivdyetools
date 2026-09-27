@@ -978,9 +978,9 @@ describe('SwatchTool', () => {
 
   /**
    * While a .chara file is loaded, the sidebar's tribe/gender selectors are a
-   * readout (`swatch.fileProvided`) and the grid carries the file's pins. Only
-   * SWAP used to release them: a file dropped by the tool's teardown or by a
-   * re-render left the selectors disabled over an empty drop zone.
+   * readout (`swatch.fileProvided`) and the grid carries the file's pins. They
+   * last exactly as long as the file: the tool's teardown drops the file and
+   * releases both, while a re-render (a language switch) keeps all three.
    */
   describe('a loaded .chara file', () => {
     /** Nothing but an eye colour: no gear, so no dye or equipment lookups. */
@@ -1025,21 +1025,24 @@ describe('SwatchTool', () => {
       expect((await lockWrites()).at(-1)).toBe(false);
     });
 
-    it('releases the lock and the grid pins when a language switch re-renders it', async () => {
+    it('keeps the file, the lock and the grid pins when a language switch re-renders it', async () => {
       const { LanguageService } = await import('@services/index');
       tool = mount();
       await flush();
       await loadChara();
-      expect(pinnedCells().length).toBeGreaterThan(0);
+      const pins = pinnedCells().length;
+      expect(pins).toBeGreaterThan(0);
 
-      // A language change notifies every subscriber; the tool re-renders,
-      // which rebuilds its CharaImport without the file.
+      // A language change notifies every subscriber, and the tool re-renders
+      // in the new language.
+      vi.spyOn(LanguageService, 't').mockImplementation((key: string) => `ja:${key}`);
       for (const [notify] of vi.mocked(LanguageService.subscribe).mock.calls) notify('ja');
       await flush();
 
-      expect(charaInput()).not.toBeNull(); // the drop zone is back...
-      expect((await lockWrites()).at(-1)).toBe(false); // ...so the selectors unlock
-      expect(pinnedCells()).toHaveLength(0); // ...and the file's pins go with it
+      expect(charaInput()).toBeNull(); // no drop zone: the file is still loaded...
+      expect(rightPanel.textContent).toContain('ja:swatch.saveCharacter'); // ...drawn in Japanese
+      expect(await lockWrites()).toEqual([true]); // the selectors were never unlocked
+      expect(pinnedCells()).toHaveLength(pins); // and the grid keeps the file's pins
     });
   });
 });

@@ -279,6 +279,24 @@ export class CharaImport {
     this.render();
   }
 
+  /**
+   * Move into a host's new containers and draw everything again there.
+   *
+   * A host re-render (the Swatch tool's, on a language switch) replaces the
+   * containers this was given. A fresh importer would drop the file; a
+   * remount keeps it — its equipment names, the lens, the palette drafts and
+   * the selected slot — and draws it in the current language. A file still
+   * loading, or an equipment lookup still in flight, lands in the new
+   * containers. The file is unchanged, so the host hears nothing.
+   */
+  remount(container: HTMLElement, options?: CharaImportOptions): void {
+    clearContainer(this.container);
+    if (this.glamourContainer) clearContainer(this.glamourContainer);
+    this.container = container;
+    this.glamourContainer = options?.glamourContainer ?? null;
+    this.render();
+  }
+
   destroy(): void {
     this.isDestroyed = true;
     const hadFile = this.resolved !== null;

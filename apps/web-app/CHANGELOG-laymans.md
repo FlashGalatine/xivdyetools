@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.12.6 — September 27, 2026
+
+### Your character file stays when you change language
+- **Switching the app's language no longer throws away a loaded `.chara` file.** The Swatch Matcher used to go back to the empty drop zone, and you had to load the file again.
+- **Everything the file showed is redrawn in the new language** — your character's colors, the dyes on the glamour and the names of the gear.
+- **Tribe & Gender stay locked to the file, and the grid keeps its pins.** Leaving the tool or reloading the page still clears the file, as before.
+
 ## Web-App Version 5.12.5 — September 27, 2026
 
 ### Tribe & Gender no longer stay locked
