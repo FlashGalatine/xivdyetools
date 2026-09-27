@@ -1,0 +1,64 @@
+[
+  {
+    "saga": "Zodiac Weapons Saga",
+    "sheets": [{ "sheet": "RelicItem", "items": "links" }],
+    "shops": [], "zones": [], "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": [10059, 6257]
+  },
+  {
+    "saga": "Anima Weapons Saga",
+    "sheets": [{ "sheet": "AnimaWeaponItem", "items": "links" }, { "sheet": "AnimaWeapon5", "items": "links" }],
+    "shops": [], "zones": [], "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": [13611, 14870]
+  },
+  {
+    "saga": "Eureka Gear & Weapons",
+    "sheets": [],
+    "shops": ["^Replicate Eureka Weapons"],
+    "zones": ["Eureka Anemos", "Eureka Pagos", "Eureka Pyros", "Eureka Hydatos"],
+    "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": []
+  },
+  {
+    "saga": "Resistance Gear & Weapons",
+    "sheets": [{ "sheet": "ResistanceWeaponAdjust", "items": "rowIds" }],
+    "shops": ["^Bozjan Gear (Exchange|Augmentation)$", "^Law's Order Gear (Exchange|Augmentation)$"],
+    "zones": [], "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": [32669]
+  },
+  {
+    "saga": "Manderville Weapons Saga",
+    "sheets": [{ "sheet": "MandervilleWeaponEnhance", "items": "rowIds" }],
+    "shops": [], "zones": [], "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": [39921]
+  },
+  {
+    "saga": "Phantom Gear & Weapons",
+    "sheets": [],
+    "shops": ["^Phantom Weapons ", "^Phantom Weapon Replication", "^Phantom Vision Gear Augmentation"],
+    "zones": [], "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": [47878]
+  },
+  {
+    "saga": "Skysteel Tools Saga",
+    "sheets": [],
+    "shops": ["^Skysteel Prototype (\\+1 )?Augmentation$", "^Purchase Skysteel (Prototypes|Replicas)$"],
+    "zones": [], "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": []
+  },
+  {
+    "saga": "Splendorous Tools Saga",
+    "sheets": [],
+    "shops": ["^Purchase Splendorous Replicas$"],
+    "zones": [], "toolShops": [], "include": [], "exclude": [],
+    "spotChecks": []
+  },
+  {
+    "saga": "Cosmic Tools Saga",
+    "sheets": [],
+    "shops": [], "zones": [],
+    "toolShops": ["^Cosmic Exploration Token Exchange$"],
+    "include": [], "exclude": [],
+    "spotChecks": []
+  }
+]
