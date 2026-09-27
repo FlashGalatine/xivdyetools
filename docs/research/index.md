@@ -8,6 +8,7 @@ For the "what and how" of a build, see the spec/plan pairs in [`../superpowers/`
 
 | Directory | Question | Outcome |
 |-----------|----------|---------|
+| [2026-09-27-glamour-acquisition/](2026-09-27-glamour-acquisition/README.md) | Can the glamour export fill its Acquisition line, and from which data (XIVAPI, Teamcraft, Garland Tools)? | Design proposed: Teamcraft files + XIVAPI at build time, served by the api-worker ([spec](../superpowers/specs/2026-09-27-glamour-acquisition-design.md)) |
 | [2026-09-04-harmony-color-wheels/](2026-09-04-harmony-color-wheels/README.md) | Which colour wheels should the Harmony Explorer offer, and is Munsell licensable? | Shipped 2026-09-05 (PR #167): five wheels in core 5.2.0; Munsell licence cleared |
 | [2026-09-03-algorithm-fact-check/](2026-09-03-algorithm-fact-check/README.md) | Are the matching and mixing algorithms correct? | Matching verified (CIEDE2000 passes Sharma's 34 pairs); mixing had a live P0 — fixed in PR #164 (core 4.4.0 / 5.0.0 / 5.1.0) |
 | [api/](api/README.md) | Design of the public REST API | Shipped as `apps/api-worker` (`data.xivdyetools.app`) |
