@@ -72,8 +72,9 @@ src/
 │   ├── harmony.ts        # Wheel summary / wheel position / harmony slot serializers (deviance → distance)
 │   └── validation.ts     # parseHex, parseLocale, parseMatchingMethod, parseColorWheel, parseHarmonyType, parseDyeFilters, resolveIdType, etc.
 ├── universalis/          # Market-board proxy absorbed from apps/universalis-proxy (router, cache-service, cached-fetch, coalescer, memory rate limiter)
-└── chara/                # .chara equipment resolution: router (POST /resolve, GET /icon/:id), xivapi client (UA, version/schema pin, 503→UpstreamUnavailableError), resolver (pure rules: slot column × ModelMain, lowest row_id, off-hand via main ModelSub), cache (per-key Cache API, own store), regional-names (+ data/item-names.{ko,zh}.json from scripts/build-item-names.mjs)
+└── chara/                # .chara equipment resolution: router (POST /resolve, GET /icon/:id), xivapi client (UA, version/schema pin, 503→UpstreamUnavailableError), resolver (pure rules: slot column × ModelMain, lowest row_id, off-hand via main ModelSub), cache (per-key Cache API, own store), regional-names (+ data/item-names.{ko,zh}.json from scripts/build-item-names.mjs), acquisition (+ data/acquisition.en.json from scripts/build-acquisition.ts)
 scripts/build-item-names.mjs  # Regenerates the ko/zh tables after a patch (local ffxiv-datamining clone or GitHub raw + Teamcraft JSON); manual, commit the output
+scripts/build-acquisition.ts  # Regenerates the GPOSERS acquisition table after a patch (Teamcraft at a pinned commit + XIVAPI); run from the repo root: pnpm exec tsx apps/api-worker/scripts/build-acquisition.ts — review the printed relic and random-container lists, commit the output
 docs/                     # VitePress site → developers.xivdyetools.app (built by `pnpm build:docs`, shipped as Workers Static Assets)
 ├── .vitepress/config.ts      # nav / sidebar (counts from the endpoint registry) / force-dark / two-colour Shiki theme / search `_render`
 ├── .vitepress/search-index.ts # expands each <EndpointCard> into Markdown at INDEX time so local search sees params + fields

@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-27 · **Scope:** `api-worker` (build script, data table, one new field on
 `POST /v1/chara/resolve`, public docs) then `web-app` (the Glamour Reader's export sheet) ·
-**Status:** approved 2026-09-27 (Native execution), amended the same day by the Glamour Reader designs —
+**Status:** in progress — PR A (api-worker 0.15.0) open; the web-app half ships with the Glamour Reader. Approved 2026-09-27 (Native execution), amended the same day by the Glamour Reader designs —
 see [Amendments](#amendments-2026-09-27-glamour-reader-designs) · **Research:** [`docs/research/2026-09-27-glamour-acquisition/`](../../research/2026-09-27-glamour-acquisition/README.md) ·
 **Branch:** `feat/glamour-acquisition`
 

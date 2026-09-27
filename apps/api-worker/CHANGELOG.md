@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2026-09-27
+
+### Added
+
+- **`acquisition` on each resolved item and alternate** (`POST /v1/chara/resolve`): where the item
+  comes from, as one English line in the GPOSERS submission format ("Crafted (WVR Lvl. 92) /
+  Independent Merchant - Urqopacha - Worlar's Echo (28,483 Gil)"). Omitted when unknown. The table
+  (23,589 lines for 29,058 equippable items) is built by hand after each patch by
+  `scripts/build-acquisition.ts` from Teamcraft's data files (MIT, one pinned commit) and XIVAPI, and
+  ships with the worker (`src/chara/data/acquisition.en.json`, provenance in
+  `acquisition.meta.json`); nothing is fetched at request time. Every twin carries its own line, so
+  a client that lets the player name a different twin writes that twin's source. Design:
+  `docs/superpowers/specs/2026-09-27-glamour-acquisition-design.md`.
+
 ## [0.14.6] - 2026-09-21
 
 ### Changed

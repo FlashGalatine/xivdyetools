@@ -42,7 +42,8 @@ Resolve every worn piece of one character in a single call. The body is the twel
         "iconId": 41716,
         "familySize": 1,
         "alternates": [],
-        "viaMainHand": false
+        "viaMainHand": false,
+        "acquisition": "Crafted (CRP Lvl. 61) / Norlaise - Ishgard - The Pillars (19,994 Gil)"
       },
       "Body": null,
       "MainHand": { "itemId": 49486, "names": { "en": "Runaway Bow", "…": "…" }, "iconId": 32065, "familySize": 1, "alternates": [], "viaMainHand": false },
@@ -62,8 +63,9 @@ Resolve every worn piece of one character in a single call. The body is the twel
 | `items.<slot>.names` | `en` / `ja` / `de` / `fr` always (soft hyphens stripped); `ko` / `zh` when the regional tables know the item — fall back to `en` per item when absent |
 | `items.<slot>.iconId` | For [`GET /v1/chara/icon/:iconId`](#get-v1-chara-icon-iconid); `null` when the row has none |
 | `items.<slot>.familySize` | Rows sharing this (slot, key). `1` = unique. Every family member is visually identical — the file cannot tell them apart and neither can the game. |
-| `items.<slot>.alternates` | The other family members (row_id ascending, at most 8), each `{ itemId, names }` |
+| `items.<slot>.alternates` | The other family members (row_id ascending, at most 8), each `{ itemId, names }` plus its own `acquisition` when known |
 | `items.OffHand.viaMainHand` | `true` when the off-hand key is the main-hand item's own `ModelSub` (quiver, focus, card holder, fist pair…) or the main-hand key itself — the row *is* the main weapon. Genuine off-hands (shields) resolve on their own and say `false`. |
+| `items.<slot>.acquisition` | Where the named item comes from, as one English line in the GPOSERS glamour-submission format — e.g. `Crafted (WVR Lvl. 92) / Independent Merchant - Urqopacha - Worlar's Echo (28,483 Gil)`. Omitted when unknown. Built after each patch from game data and Teamcraft's data files; describes `itemId` — each alternate carries its own. |
 | `glasses` | Present only when the request carried `glasses`; `null` when the row does not exist |
 
 Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the naming is inconsistent across languages.
