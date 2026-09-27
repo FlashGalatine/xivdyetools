@@ -41,7 +41,7 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   `glamour-block.ts` is DYES ON THIS GLAMOUR, and `chara-ui.ts` holds the helpers all three share.
   Each subscribes to the session, so a re-render rebuilds them around the same file.
 - **DYES ON THIS GLAMOUR is its own chunk**, imported the first time a loaded file wears anything.
-  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 68.85 KB (72.5%);
+  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 69.03 KB (72.7%);
   `glamour-block` is 25.28 KB under a new 35 KB limit. The layout shell grows 0.57 KB for the
   session store and the sidebar's subscription, to 216.16 of 218 KB.
 - The glamour block's item names, dropped chips and palette draft now reset only when a new file
