@@ -64,7 +64,7 @@ live in one place, the [Version Matrix](versions.md).
    Applications
    ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
    │  web-app            │  │ discord-worker      │  │ stoat-worker        │
-   │  9 tools, Light +   │  │ 17 slash commands   │  │ Revolt.js (parked)  │
+   │ 10 tools, Light +   │  │ 17 slash commands   │  │ Revolt.js (parked)  │
    │  Dark, Vite + Lit   │  │ HTTP Interactions   │  └─────────────────────┘
    └──────────┬──────────┘  └──────────┬──────────┘
               │                        │
@@ -298,7 +298,7 @@ filter category was retired by this consolidation.
 - **March 2026** — core v2.0.0 removed ~35 deprecated type re-exports (import from
   `@xivdyetools/types` instead).
 - **January 2026** — Web App v4.0.0 and Discord Bot v4.0.0: tool renaming, Lit.js web
-  components, 9 tools.
+  components, 10 tools.
 
 See [Version Matrix](versions.md) for detailed version history and
 [Feature Roadmap](specifications/feature-roadmap.md) for planned features.

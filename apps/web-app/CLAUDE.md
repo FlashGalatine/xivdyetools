@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes nine standalone tools backed by the 125-dye database.
+The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes ten standalone tools backed by the 125-dye database.
 
 **Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle on Cloudflare Pages (production `xivdyetools.app` + a second Pages project for `beta.xivdyetools.app`). There is no service worker — see Offline Behaviour below.
 
-### The Nine Tools (`ToolId` from `services/router-service.ts`)
+### The Ten Tools (`ToolId` from `services/router-service.ts`)
 
 | ID | Title | What it does |
 |----|-------|--------------|
@@ -21,6 +21,7 @@ The main XIV Dye Tools web application — a static SPA that runs entirely in th
 | `presets` | Community Presets | Browse / submit / vote on community dye presets via the presets-api worker |
 | `budget` | Budget Suggestions | Universalis-priced "what dyes can I afford?" picker |
 | `swatch` | Swatch Matcher | Match to character/skin/hair/eye reference swatches (was "character" in v3) |
+| `glamour` | Glamour Reader | Reads a loaded `.chara` file as a glamour: the in-game verdict first, every piece with its dyes, the twin a piece is named from (picker), and the GPOSERS list in an editable export sheet with each piece's Acquisition line. No sidebar; shares the file with the Swatch Matcher (`CharaSessionService`); key `0` |
 
 ## Commands
 
@@ -99,7 +100,7 @@ src/
 │   │   ├── preset-tool.ts           # <v4-preset-tool> — the only tool that is a Lit element
 │   │   ├── preset-card.ts / preset-detail.ts
 │   │   └── ... range-slider, toggle-switch, display-options, dye-filters, share-button, color-wheel
-│   ├── harmony-tool.ts              # The nine tool components (lazy-loaded chunks)
+│   ├── harmony-tool.ts              # The ten tool components (lazy-loaded chunks)
 │   ├── extractor-tool.ts
 │   ├── accessibility-tool.ts
 │   ├── comparison-tool.ts
@@ -107,14 +108,17 @@ src/
 │   ├── mixer-tool.ts
 │   ├── budget-tool.ts
 │   ├── swatch-tool.ts
-│   │                                # (the ninth, `presets`, is the Lit v4/preset-tool.ts above)
+│   │                                # (`glamour-tool.ts` is below; `presets` is the Lit v4/preset-tool.ts above)
 │   ├── modal-container.ts           # Modal stack/host
 │   ├── toast-container.ts           # ToastService host
 │   ├── tutorial-spotlight.ts        # First-run tutorial overlay
 │   ├── welcome-modal.ts             # First-visit welcome
 │   ├── changelog-modal.ts           # "What's New" modal (parses CHANGELOG.md at build time)
-│   ├── chara-file-card.ts / chara-sheet.ts / chara-ui.ts # Swatch Matcher .chara views: drop zone + file card, THIS CHARACTER, shared helpers
-│   ├── glamour-block.ts             # DYES ON THIS GLAMOUR — its own chunk, imported once a loaded file wears anything
+│   ├── chara-file-card.ts / chara-sheet.ts / chara-ui.ts # .chara views: drop zone + file card (both tools), THIS CHARACTER (Swatch), shared helpers
+│   ├── glamour-tool.ts              # Glamour Reader (tenth tool): header + file card + the glamour block
+│   ├── glamour-block.ts             # DYES ON THIS GLAMOUR + IN THE GAME verdict — its own chunk, imported by the reader once a loaded file wears anything
+│   ├── glamour-twin-picker.ts       # SAME LOOK · N ITEMS popover / sheet (twin rules: core chara-twins)
+│   ├── glamour-sheet.ts             # Export sheet (design 2c): editable Acquisition lines, Copy list / Save .md
 │   └── ... image-zoom-controller, dye-grid, dye-search-box, dye-selector, market-board, metric-help, etc.
 ├── services/
 │   ├── index.ts                     # initializeServices(), getServicesStatus(), re-exports

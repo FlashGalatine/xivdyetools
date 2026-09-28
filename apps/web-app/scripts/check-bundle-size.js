@@ -122,10 +122,14 @@ const BUNDLE_LIMITS = [
   { label: 'tool: gradient', pattern: /^gradient-tool-/, limit: 65 * KB },
   { label: 'tool: extractor', pattern: /^extractor-tool-/, limit: 100 * KB },
   { label: 'tool: preset', pattern: /^preset-tool-/, limit: 65 * KB },
-  // DYES ON THIS GLAMOUR, split out of the swatch chunk in 5.12.5 (that chunk
-  // sat at 97.7% of its limit) and imported only once a loaded .chara file
-  // wears something. Calibrated like the tools: 25.3 KB measured, ~30% headroom.
-  { label: 'swatch: glamour block', pattern: /^glamour-block-/, limit: 35 * KB },
+  // The Glamour Reader (5.13.0). Its shell is small; DYES ON THIS GLAMOUR (split
+  // out of the swatch chunk in 5.12.5, now the reader's body with the IN THE
+  // GAME verdict and the twin picker) and the export sheet each load on
+  // demand. Calibrated like the tools, ~30% headroom over what 5.13.0
+  // measured: block 34.4 KB, sheet 11.9 KB, shell 3.7 KB.
+  { label: 'tool: glamour', pattern: /^glamour-tool-/, limit: 10 * KB },
+  { label: 'glamour: block', pattern: /^glamour-block-/, limit: 45 * KB },
+  { label: 'glamour: export sheet', pattern: /^glamour-sheet-/, limit: 16 * KB },
 
   // Shared components
   { label: 'dye selector', pattern: /^dye-selector-/, limit: 50 * KB },

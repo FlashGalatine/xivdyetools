@@ -32,6 +32,7 @@ const TOOL_PATHS: Record<string, string> = {
   presets: '/presets',
   budget: '/budget',
   swatch: '/swatch',
+  glamour: '/glamour',
 };
 
 /**

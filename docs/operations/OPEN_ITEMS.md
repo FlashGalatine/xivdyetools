@@ -132,7 +132,7 @@ presets-api's tag charset / control-character rules, so users see the API's 400 
 | i18n | the parity / order / no-hardcoded-strings / font-coverage gates in `lint` / `test`; spot-check each locale on production | each release wave |
 | Bundle size | discord-worker gzip vs the 3 MiB limit (`check-bundle-size`), web-app `v4-layout` budget | every deploy (CI) |
 | E2E | Playwright runs in CI since 2026-09-03; a run against production after each wave | each release wave |
-| Accessibility / performance | Lighthouse + axe on the 9 tools (open 5.0 item: a11y bands) | next wave |
+| Accessibility / performance | Lighthouse + axe on the 10 tools (open 5.0 item: a11y bands) | next wave |
 | Documentation | `pnpm docs:check-versions` + `pnpm docs:check-links` (CI); a fact-check sweep like [2026-09-05](../audits/2026-09-05-documentation/README.md) after any large wave | each major wave |
 | Test quality | the standing review check "what source edit would make this test fail?" on touched suites | ongoing |
 

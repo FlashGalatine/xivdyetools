@@ -107,7 +107,7 @@ If you want to integrate XIV Dye Tools into your own project:
 | Document | Description |
 |----------|-------------|
 | [Web App Overview](web-app/overview.md) | Architecture, toolset, features |
-| [Web App Tools](web-app/tools.md) | Detailed guide to all 9 tools |
+| [Web App Tools](web-app/tools.md) | Detailed guide to all 10 tools |
 | [Web App Components](web-app/components.md) | Lit component architecture |
 | [Web App Theming](web-app/theming.md) | Light + Dark themes, CSS variables |
 

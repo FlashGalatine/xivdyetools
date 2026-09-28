@@ -60,7 +60,7 @@ A fully-featured web application built with Lit and Vite, offering 9 interactive
 - **Swatch Matcher** - Match character customization colors (hair, eyes, skin) to dyes
 - **Glassmorphism UI** - Modern design system with frosted glass effects
 - **Lit.js Web Components** - Full migration to Lit web component architecture
-- **9 Tools Total** - Up from 7 in v3.x
+- **10 Tools Total** - Up from 7 in v3.x (the Glamour Reader joined in 5.13.0)
 
 ### Previous Features (v3.2.x)
 
@@ -117,7 +117,7 @@ src/
 │   ├── v4-layout.ts            # Not a component: shell wiring + tool lazy-load
 │   ├── harmony-tool.ts  extractor-tool.ts  accessibility-tool.ts
 │   ├── comparison-tool.ts  gradient-tool.ts  mixer-tool.ts
-│   ├── budget-tool.ts  swatch-tool.ts        # eight of the nine tools
+│   ├── budget-tool.ts  swatch-tool.ts  glamour-tool.ts  # nine of the ten tools
 │   ├── dye-selector.ts  dye-grid.ts  dye-search-box.ts  market-board.ts
 │   ├── metric-help.ts  export-sheet.ts  empty-state.ts
 │   ├── chara-file-card.ts  chara-sheet.ts  chara-ui.ts  glamour-block.ts   # the Swatch Matcher's .chara views
@@ -259,7 +259,7 @@ its opt-in analytics are silently dropped.
 
 ## Related Documentation
 
-- [Tools](tools.md) - Detailed guide to all 9 tools
+- [Tools](tools.md) - Detailed guide to all 10 tools
 - [Components](components.md) - Lit component architecture
 - [Theming](theming.md) - Theme system documentation
 - [Deployment](../../developer-guides/deployment.md) - The shared deployment guide

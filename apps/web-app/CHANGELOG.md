@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.13.0] - 2026-09-27
+
+The Glamour Reader, the tenth tool (design: the Claude Design project's *Glamour Reader
+Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader-design.md`).
+
+### Added
+
+- **The Glamour Reader** (`/glamour`, key `0`, glyph 1a). It reads the loaded `.chara` file as a
+  glamour: every piece, its dyes, and whether the game lets it be worn. No sidebar; it shares the
+  file with the Swatch Matcher (`CharaSessionService`) — each file card links to the other tool,
+  and SWAP clears the file for both. On a phone the card's buttons wrap under the name as one
+  group, so the name keeps at least 140 px.
+- **IN THE GAME comes first.** The verdict tops the reader: a headline from the counts and FIXED
+  BY A TWIN / NO FIX / FINE AS IS / NEEDS A GRAND COMPANY chips. Since patch 7.4 any job can wear
+  any piece for glamour, so the check is dye channels, the glamour flag, race, gender and Grand
+  Company — a company lock is a flag, never a failure (a `.chara` records no company).
+- **Twins.** A model often stands for several identical items. Each row names the one the list
+  will write — the first that passes the check, preferring a dyeable one, then not Dated — and
+  says why ("Named instead of Dated Hempen Coif, which can't take these dyes"). The `+N` chip
+  opens a picker (popover on desktop, bottom sheet on a phone) listing each twin's facts; a pick
+  lives with the session only.
+- **The export sheet.** Copy list and Export .md open an editable preview of the GPOSERS list with
+  each piece's `Acquisition:` line filled from api-worker (≥ 0.15.0) for the twin it names. Edits
+  are kept on this device, keyed by a hash of the gear (slot, the family's row, the stains) —
+  never the file or the character — and a twin pick never overwrites one: the row offers Keep
+  mine / Use new source. Reset all clears the outfit's edits. Two identical rings are written
+  once as `Rings:` (GPOSERS reminders, March 2026).
+- Narrow desktop (769–919 px) drops the language button's globe so ten rail chips and a hovered
+  label fit. The shortcuts panel says `0-9`.
+
+### Changed
+
+- **DYES ON THIS GLAMOUR left the Swatch Matcher** for the reader. The Swatch Matcher keeps the
+  file card and THIS CHARACTER; its file card links to the Glamour Reader.
+
+### Removed
+
+- The prototype's job line and `swatch.gameCheck.*` strings (replaced by `glamour.*`).
+
 ## [5.12.5] - 2026-09-27
 
 The Swatch Matcher's loaded `.chara` file moves out of the component that drew it and into a

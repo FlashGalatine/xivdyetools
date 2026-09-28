@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-09-27
+
+Lands after 0.15.0 (the acquisition lines, PR #207).
+
+### Changed
+
+- **`/v1/chara/resolve` rules carry the Grand Company lock, not the job list.** Since patch 7.4 any
+  job can wear any piece for glamour, so the one Item search asks for `GrandCompany.row_id` instead
+  of 43 `ClassJobCategory` columns, and each rule set gains `grandCompany` (0 = any) and loses
+  `jobs`. Cache `SHAPE_VERSION` 2 → 3, so no week-old row replays in the old shape.
+
+### Added
+
+- **`glamour` in the telemetry tool allowlist** (the web app's tenth tool).
+- **The Character Equipment reference documents `items.<slot>.rules`** (dye channels, glamour
+  flag, the race/gender wear mask, the Grand Company lock), which the answer has carried since the
+  in-game check landed.
+
 ## [0.14.6] - 2026-09-21
 
 ### Changed
