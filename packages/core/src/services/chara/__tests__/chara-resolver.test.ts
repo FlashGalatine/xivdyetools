@@ -162,6 +162,67 @@ describe('resolveCharaColors', () => {
     expect(left?.deltaE).toBe(0);
   });
 
+  describe('floats the game stores as shading, not as the swatch', () => {
+    const squared = (rgb: { r: number; g: number; b: number }): string =>
+      [rgb.r, rgb.g, rgb.b].map((c) => ((c / 255) ** 2).toFixed(8)).join(', ');
+
+    it('never judges a live skin or hair float against its swatch — the index stands', async () => {
+      // Raen ♀ hair 42 is #FFDC98 in the creator and in the sheet; files store #E5D2AC
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({
+            Skintone: 3,
+            HairTone: 42,
+            SkinColor: '0.9, 0.9, 1',
+            HairColor: '0, 0, 1',
+            IsExtendedAppearanceValid: true,
+          })
+        ),
+        characterColors
+      );
+      for (const id of ['skin', 'hair'] as const) {
+        const slot = resolved.slots.find((s) => s.slot === id);
+        expect(slot?.verdict, id).toBe('index');
+        expect(slot?.deltaE, id).toBeNull();
+        expect(slot?.floatHex, id).toBeTruthy();
+        expect(slot?.indexWinNote, id).toBeUndefined();
+      }
+    });
+
+    it('judges a light-palette lip against the dark entry the game stores for it', async () => {
+      const dark = characterColors.getLipColorsDark()[10];
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({
+            LipsToneFurPattern: 138,
+            MouthColor: `${squared(dark.rgb)}, 0.8`,
+            IsExtendedAppearanceValid: true,
+          })
+        ),
+        characterColors
+      );
+      const lip = resolved.slots.find((s) => s.slot === 'lip');
+      expect(lip?.sheetVariant).toBe('light');
+      expect(lip?.indexHex).toBe(characterColors.getLipColorsLight()[10].hex);
+      expect(lip?.verdict).toBe('index');
+      expect(lip?.deltaE).toBe(0);
+    });
+
+    it('still calls a custom light-palette lip OFF GRID', async () => {
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({
+            LipsToneFurPattern: 138,
+            MouthColor: '0, 0, 1, 0.8',
+            IsExtendedAppearanceValid: true,
+          })
+        ),
+        characterColors
+      );
+      expect(resolved.slots.find((s) => s.slot === 'lip')?.verdict).toBe('offGrid');
+    });
+  });
+
   it('96-127 on a dark/light palette fails loudly, never clamps', async () => {
     const resolved = await resolveCharaColors(
       parseCharaFile(minimal({ LipsToneFurPattern: 100, MouthColor: '0.1, 0.1, 0.1, 0.5' })),

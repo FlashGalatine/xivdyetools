@@ -20,6 +20,10 @@
  * - Eye floats pair by name; a heterochromia file whose two floats each land
  *   on the other eye's palette entry is un-crossed first (4 of 157 in the
  *   2026-09-28 corpus) — see `uncrossEyeFloats`.
+ * - **Skin and hair floats are never judged against the swatch**: the game
+ *   stores a shading value derived from the entry, not the entry — see
+ *   `SHADING_FLOAT_SLOTS`. A light-palette lip is judged against the dark
+ *   entry the game stores for it.
  */
 
 import type { CharacterColor, Dye, Gender, SubRace } from '@xivdyetools/types';
@@ -77,7 +81,11 @@ export interface ResolvedCharaSlot {
   indexHex: string | null;
   /** Hex from the extended float (gamma-encoded), when present */
   floatHex: string | null;
-  /** ΔE2000 between indexHex and floatHex, when both exist */
+  /**
+   * ΔE2000 between a live float and the colour the game stores for the index
+   * (indexHex; a light lip's dark entry). Null when not judged — skin and hair
+   * floats never are.
+   */
   deltaE: number | null;
   /** Set when a float existed but was not live — the UI must say so */
   indexWinNote?: 'extendedMissing';
@@ -187,6 +195,17 @@ function uncrossEyeFloats(
     s === left ? swapped(left, right) : s === right ? swapped(right, left) : s,
   );
 }
+
+/**
+ * Slots whose stored float is a shading value the game derives from the
+ * palette entry, not the creator swatch, so it cannot say whether the file
+ * is OFF GRID. In the 2026-09-28 corpus the float is identical for a given
+ * tribe/gender/index in every file, yet equals the swatch for no skin entry
+ * (0 of 338) and almost no hair entry past index 31 — and the creator itself
+ * confirms the sheet: Raen ♀ hair 42 reads RGB 255,220,152 (#FFDC98, the
+ * sheet's value) while every file stores #E5D2AC for it.
+ */
+const SHADING_FLOAT_SLOTS: ReadonlySet<CharaSlotId> = new Set(['skin', 'hair']);
 
 interface SheetResolution {
   sheet: CharacterColor[] | null;
@@ -366,8 +385,15 @@ export async function resolveCharaColors(
       indexHex: entry.hex,
     };
 
-    if (floatLive && floatHex) {
-      const deltaE = ColorConverter.getDeltaE(entry.hex, floatHex, 'ciede2000');
+    if (floatLive && floatHex && !SHADING_FLOAT_SLOTS.has(raw.slot)) {
+      // A light-palette lip stores its DARK entry's colour (358 of 358 corpus
+      // files), so that is what an unedited file's float agrees with.
+      const storedHex =
+        raw.slot === 'lip' && resolution.variant === 'light'
+          ? (characterColors.getLipColorsDark().find((c) => c.index === resolution.sheetIndex)
+              ?.hex ?? entry.hex)
+          : entry.hex;
+      const deltaE = ColorConverter.getDeltaE(storedHex, floatHex, 'ciede2000');
       resolved.deltaE = deltaE;
       resolved.verdict = deltaE > OFF_GRID_DELTA_E2000 ? 'offGrid' : 'index';
     } else {
