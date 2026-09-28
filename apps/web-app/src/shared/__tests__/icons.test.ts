@@ -88,6 +88,7 @@ describe('Tool Icons', () => {
         'presets',
         'budget',
         'swatch',
+        'glamour',
         'matcher',
         'character',
         'tools',

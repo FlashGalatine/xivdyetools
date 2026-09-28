@@ -60,6 +60,7 @@ const TOOL_MENU: Array<{ id: ToolId; translationKey: string }> = [
   { id: 'presets', translationKey: 'tools.presets' },
   { id: 'budget', translationKey: 'tools.budget' },
   { id: 'swatch', translationKey: 'tools.character' },
+  { id: 'glamour', translationKey: 'tools.glamour' },
 ];
 
 @customElement('v4-app-header')
@@ -446,11 +447,16 @@ export class V4AppHeader extends BaseLitComponent {
         }
       }
 
-      /* Narrow desktop: the wordmark yields so all nine chips (and an open
-         name) fit between the logo and the chrome cluster; the rail rests at
-         ~406px and needs ~470px with a label unrolled. */
+      /* Narrow desktop: the wordmark yields so all ten chips (and an open
+         name) fit between the logo and the chrome cluster. Ten chips rest at
+         ~445px and need ~509px with a hovered label unrolled, so the language
+         button drops its globe here too, as mobile does (spec G2). */
       @media (min-width: 769px) and (max-width: 919px) {
         .v4-header-logo-text {
+          display: none;
+        }
+
+        .lang-globe {
           display: none;
         }
       }

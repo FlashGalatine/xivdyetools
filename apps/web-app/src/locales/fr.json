@@ -99,6 +99,11 @@
       "female": "Féminin",
       "evercoldNoticeTitle": "Evercold (janvier 2027) : les palettes prédéfinies seront retirées",
       "evercoldNotice": "Avec l'extension Evercold, les couleurs des yeux, des cheveux et de la peau se choisiront librement via un sélecteur de couleurs. Ces nuanciers prédéfinis seront alors remplacés ici par un sélecteur de couleurs."
+    },
+    "glamour": {
+      "title": "Lecteur de mirages",
+      "shortName": "Mirage",
+      "description": "Chaque pièce portée par un personnage, ses teintures et où l'obtenir"
     }
   },
   "common": {

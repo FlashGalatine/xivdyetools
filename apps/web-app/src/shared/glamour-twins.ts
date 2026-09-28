@@ -97,7 +97,10 @@ export function twinsOf(
 export function defaultTwin(twins: readonly GlamourTwin[]): GlamourTwin {
   const passing = twins.filter((t) => t.rules !== null && t.problems.length === 0);
   const best = [...passing].sort(
-    (a, b) => (b.rules?.dyeCount ?? 0) - (a.rules?.dyeCount ?? 0) || Number(a.dated) - Number(b.dated) || a.itemId - b.itemId
+    (a, b) =>
+      (b.rules?.dyeCount ?? 0) - (a.rules?.dyeCount ?? 0) ||
+      Number(a.dated) - Number(b.dated) ||
+      a.itemId - b.itemId
   );
   return best[0] ?? twins[0];
 }
@@ -131,13 +134,20 @@ export function twinFacts(
   }
   const rules = twin.rules;
   if (rules) {
-    facts.push({ key: 'dye', kind: twin.problems.includes('dye') ? 'warn' : 'ok', n: rules.dyeCount });
-    if (rules.wearMask === null || rules.wearMask === ANY_WEARER) facts.push({ key: 'anyTribe', kind: 'mute' });
-    else if (canWear(rules.wearMask, character) === false) facts.push({ key: 'tribeNo', kind: 'warn' });
+    facts.push({
+      key: 'dye',
+      kind: twin.problems.includes('dye') ? 'warn' : 'ok',
+      n: rules.dyeCount,
+    });
+    if (rules.wearMask === null || rules.wearMask === ANY_WEARER)
+      facts.push({ key: 'anyTribe', kind: 'mute' });
+    else if (canWear(rules.wearMask, character) === false)
+      facts.push({ key: 'tribeNo', kind: 'warn' });
     else facts.push({ key: 'tribeOk', kind: 'ok' });
   }
   if (twin.dated) facts.push({ key: 'dated', kind: 'mute' });
-  if (rules && rules.grandCompany > 0) facts.push({ key: 'grandCompany', kind: 'mute', n: rules.grandCompany });
+  if (rules && rules.grandCompany > 0)
+    facts.push({ key: 'grandCompany', kind: 'mute', n: rules.grandCompany });
   if (rules && !rules.glamourable) facts.push({ key: 'noGlamour', kind: 'warn' });
   return facts;
 }

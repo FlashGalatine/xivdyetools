@@ -689,6 +689,14 @@ async function loadToolContent(toolId: ToolId): Promise<void> {
         logger.info('[V4 Layout] Budget tool loaded');
         break;
       }
+      case 'glamour': {
+        const { GlamourTool } = await import('@components/glamour-tool');
+        if (superseded()) return; // BUG-040: a newer navigation took over
+        activeTool = new GlamourTool(toolContainer);
+        activeTool.init();
+        logger.info('[V4 Layout] Glamour Reader loaded');
+        break;
+      }
       case 'swatch': {
         const { SwatchTool } = await import('@components/swatch-tool');
         if (superseded()) return; // BUG-040: a newer navigation took over

@@ -194,6 +194,16 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       expect(storage.get(STORAGE_KEYS.PALETTE_HINT_SEEN)).toBe(true);
     });
 
+    it('the Glamour Reader has no palette, no Options panel and no Options FAB (design 1a: no sidebar)', async () => {
+      stubViewport(false);
+      const el = await mountShell('glamour');
+
+      expect(drawer(el)).toBeNull();
+      expect(fab(el).classList.contains('no-palette')).toBe(true);
+      expect(el.shadowRoot!.querySelector('v4-config-sidebar')).toBeNull();
+      expect(el.shadowRoot!.querySelector('.v4-options-toggle')).toBeNull();
+    });
+
     it('shows no hint (and no FAB) on tools without a palette', async () => {
       stubViewport(true);
       const el = await mountShell('presets');

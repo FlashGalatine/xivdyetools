@@ -89,7 +89,7 @@ describe('showShortcutsPanel', () => {
     showShortcutsPanel();
 
     const keys = [...config().content.querySelectorAll('kbd')].map((k) => k.textContent);
-    expect(keys).toEqual(['1-9', 'Esc', 'Shift + T', 'Shift + L', 'Shift + S', '?']);
+    expect(keys).toEqual(['0-9', 'Esc', 'Shift + T', 'Shift + L', 'Shift + S', '?']);
     expect(new Set(keys).size).toBe(keys.length);
   });
 

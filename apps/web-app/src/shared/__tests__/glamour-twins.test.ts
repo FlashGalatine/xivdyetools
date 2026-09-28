@@ -15,7 +15,11 @@ const VIERA_WOMEN = 0x8000;
 
 const names = (en: string) => ({ en, ja: en, de: en, fr: en });
 
-function group(itemIds: number[], dyeCount: number, extra: Partial<CharaTwinRules> = {}): CharaTwinRules {
+function group(
+  itemIds: number[],
+  dyeCount: number,
+  extra: Partial<CharaTwinRules> = {}
+): CharaTwinRules {
   return { itemIds, dyeCount, glamourable: true, wearMask: ANYONE, grandCompany: 0, ...extra };
 }
 
@@ -63,7 +67,10 @@ describe('twinsOf', () => {
       acquisition: 'Line A',
       alternates: [{ itemId: 2, names: names('B'), acquisition: 'Line B' }],
     });
-    expect(twinsOf(item, 0, MIDLANDER_WOMAN).map((t) => t.acquisition)).toEqual(['Line A', 'Line B']);
+    expect(twinsOf(item, 0, MIDLANDER_WOMAN).map((t) => t.acquisition)).toEqual([
+      'Line A',
+      'Line B',
+    ]);
   });
 
   it('knows nothing when the worker answered without rules', () => {
@@ -106,13 +113,21 @@ describe('defaultTwin', () => {
   });
 
   it('falls back to the lowest row when no twin passes', () => {
-    const gaskins = family([25210, 'Viera Gaskins'], [], [group([25210], 1, { wearMask: VIERA_WOMEN })]);
+    const gaskins = family(
+      [25210, 'Viera Gaskins'],
+      [],
+      [group([25210], 1, { wearMask: VIERA_WOMEN })]
+    );
     expect(defaultTwin(twinsOf(gaskins, 1, MIDLANDER_WOMAN)).itemId).toBe(25210);
   });
 
   it('never defaults to a twin without a name (one past the alternates cap)', () => {
     // Only row 999 takes the dye, and the answer names neither it nor anything past the cap
-    const item = family([10, 'Dated Cap'], [[11, 'Dated Cap']], [group([10, 11], 0), group([999], 1)]);
+    const item = family(
+      [10, 'Dated Cap'],
+      [[11, 'Dated Cap']],
+      [group([10, 11], 0), group([999], 1)]
+    );
     const pick = defaultTwin(twinsOf(item, 1, MIDLANDER_WOMAN));
     expect([10, 11]).toContain(pick.itemId);
     expect(pick.names.en).toBe('Dated Cap');
@@ -136,7 +151,11 @@ describe('pieceTone', () => {
   });
 
   it('block: no twin passes, or the player picked one that fails', () => {
-    const gaskins = family([25210, 'Viera Gaskins'], [], [group([25210], 1, { wearMask: VIERA_WOMEN })]);
+    const gaskins = family(
+      [25210, 'Viera Gaskins'],
+      [],
+      [group([25210], 1, { wearMask: VIERA_WOMEN })]
+    );
     const alone = twinsOf(gaskins, 1, MIDLANDER_WOMAN);
     expect(pieceTone(alone, alone[0])).toBe('block');
     const coif = twinsOf(COIF, 1, MIDLANDER_WOMAN);
@@ -163,11 +182,33 @@ describe('twinFacts', () => {
       { key: 'anyTribe', kind: 'mute' },
       { key: 'dated', kind: 'mute' },
     ]);
-    const serpent = twinsOf(family([1618, "Serpent Private's Sword"], [], [group([1618], 0, { grandCompany: 2 })]), 0, MIDLANDER_WOMAN);
-    expect(twinFacts(serpent[0], MIDLANDER_WOMAN, serpent[0])).toContainEqual({ key: 'grandCompany', kind: 'mute', n: 2 });
-    const yukata = twinsOf(family([2967, "Lord's Yukata"], [], [group([2967], 0, { wearMask: MEN })]), 0, MIDLANDER_WOMAN);
-    expect(twinFacts(yukata[0], MIDLANDER_WOMAN, yukata[0])).toContainEqual({ key: 'tribeNo', kind: 'warn' });
-    const curtana = twinsOf(family([6257, 'Curtana Zenith'], [], [group([6257], 0, { glamourable: false })]), 0, MIDLANDER_WOMAN);
-    expect(twinFacts(curtana[0], MIDLANDER_WOMAN, curtana[0])).toContainEqual({ key: 'noGlamour', kind: 'warn' });
+    const serpent = twinsOf(
+      family([1618, "Serpent Private's Sword"], [], [group([1618], 0, { grandCompany: 2 })]),
+      0,
+      MIDLANDER_WOMAN
+    );
+    expect(twinFacts(serpent[0], MIDLANDER_WOMAN, serpent[0])).toContainEqual({
+      key: 'grandCompany',
+      kind: 'mute',
+      n: 2,
+    });
+    const yukata = twinsOf(
+      family([2967, "Lord's Yukata"], [], [group([2967], 0, { wearMask: MEN })]),
+      0,
+      MIDLANDER_WOMAN
+    );
+    expect(twinFacts(yukata[0], MIDLANDER_WOMAN, yukata[0])).toContainEqual({
+      key: 'tribeNo',
+      kind: 'warn',
+    });
+    const curtana = twinsOf(
+      family([6257, 'Curtana Zenith'], [], [group([6257], 0, { glamourable: false })]),
+      0,
+      MIDLANDER_WOMAN
+    );
+    expect(twinFacts(curtana[0], MIDLANDER_WOMAN, curtana[0])).toContainEqual({
+      key: 'noGlamour',
+      kind: 'warn',
+    });
   });
 });

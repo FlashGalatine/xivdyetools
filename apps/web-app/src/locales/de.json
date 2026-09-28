@@ -99,6 +99,11 @@
       "female": "Weiblich",
       "evercoldNoticeTitle": "Evercold (Januar 2027): Voreingestellte Paletten werden eingestellt",
       "evercoldNotice": "Mit der Erweiterung Evercold lassen sich Augen-, Haar- und Hautfarben frei über einen Farbwähler auswählen. Diese Voreinstellungs-Farbfelder werden dann hier durch einen Farbwähler ersetzt."
+    },
+    "glamour": {
+      "title": "Projektionsleser",
+      "shortName": "Projektion",
+      "description": "Jedes Ausrüstungsteil eines Charakters mit Farbstoffen und Bezugsquelle"
     }
   },
   "common": {

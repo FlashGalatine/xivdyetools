@@ -115,6 +115,7 @@ describe('KeyboardService', () => {
       ['7', 'budget'],
       ['8', 'swatch'],
       ['9', 'mixer'],
+      ['0', 'glamour'],
     ])('navigates to the right tool for key %s', (key, toolId) => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key }));
 
@@ -505,14 +506,15 @@ describe('KeyboardService', () => {
       window.removeEventListener('keyboard-navigate-tool', listener);
     });
 
-    it('should ignore key 0 (not mapped)', () => {
+    it('maps key 0 to the tenth tool, the Glamour Reader (it used to be unmapped)', () => {
       const listener = vi.fn();
       window.addEventListener('keyboard-navigate-tool', listener);
 
-      const event = new KeyboardEvent('keydown', { key: '0' });
-      document.dispatchEvent(event);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '0' }));
 
-      expect(listener).not.toHaveBeenCalled();
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({ detail: { toolId: 'glamour' } })
+      );
 
       window.removeEventListener('keyboard-navigate-tool', listener);
     });

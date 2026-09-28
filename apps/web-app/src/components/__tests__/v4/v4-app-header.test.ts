@@ -51,6 +51,7 @@ vi.mock('@shared/tool-icons', () => {
     'presets',
     'budget',
     'swatch',
+    'glamour',
   ];
   return {
     TOOL_ICONS: Object.fromEntries(ids.map((id) => [id, `<svg data-glyph="${id}"></svg>`])),
@@ -67,6 +68,7 @@ const RAIL_ORDER = [
   'presets',
   'budget',
   'swatch',
+  'glamour',
 ];
 
 /** Translation-key prefix per tool (matcher/character are the 4.x key names). */
@@ -80,6 +82,7 @@ const KEY_PREFIX: Record<string, string> = {
   presets: 'tools.presets',
   budget: 'tools.budget',
   swatch: 'tools.character',
+  glamour: 'tools.glamour',
 };
 
 type HeaderEl = HTMLElement & { activeTool: string; updateComplete: Promise<unknown> };
@@ -111,7 +114,7 @@ describe('V4AppHeader', () => {
     Array.from(el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.tool-rail button.rail-chip'));
 
   describe('desktop rail (3A)', () => {
-    it('renders the nine tools as chips in the confirmed order', async () => {
+    it('renders the ten tools as chips in the confirmed order', async () => {
       const el = await mountHeader();
       const chips = railChips(el);
       expect(chips.map((c) => c.dataset.tool)).toEqual(RAIL_ORDER);
@@ -139,7 +142,7 @@ describe('V4AppHeader', () => {
     it('gives every chip its full tool name as the accessible name and tooltip', async () => {
       const el = await mountHeader();
       const chips = railChips(el);
-      expect(chips).toHaveLength(9);
+      expect(chips).toHaveLength(10);
       for (const chip of chips) {
         const full = `${KEY_PREFIX[chip.dataset.tool!]}.title`;
         expect(chip.getAttribute('aria-label')).toBe(full);
@@ -150,7 +153,7 @@ describe('V4AppHeader', () => {
     it('draws each chip with the confirmed glyph', async () => {
       const el = await mountHeader();
       const chips = railChips(el);
-      expect(chips).toHaveLength(9);
+      expect(chips).toHaveLength(10);
       for (const chip of chips) {
         const glyph = chip.querySelector('.glyph svg');
         expect(glyph?.getAttribute('data-glyph')).toBe(chip.dataset.tool);
@@ -196,7 +199,7 @@ describe('V4AppHeader', () => {
       expect(btn!.getAttribute('aria-expanded')).toBe('false');
     });
 
-    it('opens the nine-item menu and selects from it', async () => {
+    it('opens the ten-item menu and selects from it', async () => {
       const el = await mountHeader('harmony');
       const handler = vi.fn();
       el.addEventListener('tool-select', handler);
@@ -206,7 +209,7 @@ describe('V4AppHeader', () => {
       await el.updateComplete;
 
       const items = el.shadowRoot!.querySelectorAll('.tool-menu button.tool-menu-item');
-      expect(items).toHaveLength(9);
+      expect(items).toHaveLength(10);
       (items[3] as HTMLButtonElement).click();
       await el.updateComplete;
 

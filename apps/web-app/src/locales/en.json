@@ -99,6 +99,11 @@
       "female": "Female",
       "evercoldNoticeTitle": "Evercold (January 2027): preset palettes are being retired",
       "evercoldNotice": "Eye, hair, and skin colors are switching to a free color picker in the Evercold expansion. These preset swatches will be replaced by a color picker here when it launches."
+    },
+    "glamour": {
+      "title": "Glamour Reader",
+      "shortName": "Glamour",
+      "description": "List every piece a character wears, its dyes and where to get it"
     }
   },
   "common": {
