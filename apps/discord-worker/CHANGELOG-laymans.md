@@ -38,7 +38,7 @@ Rules:
 ## [5.6.4] - 2026-09-28
 ### 👀 `/swatch` reads character files more accurately
 - For characters with a different color in each eye, the `EYES·L` and `EYES·R` rows were the wrong way round. They're on the right sides now.
-- Fewer false "OFF GRID" rows: the eyes and the limbal ring or tattoo no longer claim a color is off the palette when it isn't. Skin, hair and some lip rows can still say it when nothing was changed; that needs a check in the game first.
+- No more false "OFF GRID" rows: a color that came straight from the character creator is no longer called off the palette. A color you really did customize still is.
 - The gear line no longer lists a dye on an empty slot, such as a hidden weapon.
 
 ## [5.6.3] - 2026-09-21

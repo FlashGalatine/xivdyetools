@@ -16,9 +16,9 @@ Needs `@xivdyetools/core` 5.6.0 (reached through `@xivdyetools/bot-logic`). No
   `REyeColor` as the left eye; 153 of 157 heterochromia files in a 1,142-file corpus pair it with
   `RightEyeColor`. Where a file's colors are live, each eye was also judged against the other's
   color, so both rows read OFF GRID.
-- **False OFF GRID on the eye and limbal/tattoo rows** in files whose colors are live (wrong
-  float decoding, and the game's limbal factor). Skin, hair and light-palette lip rows can still
-  read OFF GRID unedited; that waits on an in-game check.
+- **False OFF GRID on every color row** in files whose colors are live (wrong float decoding,
+  the game's limbal factor, and the shading values the game stores for skin, hair and
+  light-palette lips). A genuinely custom color still reads OFF GRID.
 - **The gear line listed dyes on empty slots** — a hidden weapon, gloves taken off.
 
 ## [5.6.3] - 2026-09-21

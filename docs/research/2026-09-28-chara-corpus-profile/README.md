@@ -5,9 +5,10 @@ in its header (measured on 112 files for Swatch Matcher 10A, and on 47 for the e
 still stand?
 
 **Outcome:** every file parses, but the corpus overturned the eye-pairing and float-decoding
-rules and showed that a dye can sit on an empty slot. Those are fixed in core 5.6.0. Three more
-findings — skin, hair and light-lip floats that never match the palette — need a look in the game
-before anything changes (see [Open](#open-skin-hair-and-light-lip-floats)).
+rules, showed that a dye can sit on an empty slot, and found that the game stores skin, hair and
+light-lip floats as shading values rather than as the creator's swatch (confirmed in the
+creator). All fixed in core 5.6.0; live-float files now show OFF GRID only for a real custom
+color. One question stays open: [the creator's highlight swatches](#open-highlight-swatches).
 
 ## Corpus and method
 
@@ -88,17 +89,19 @@ its dye for gloves nobody wore. A dye is now read only off a worn slot.
 |---|---:|---:|
 | Left / right eye | 11 / 11 | 1 / 1 (a real custom color) |
 | Limbal / tattoo | 32 | 0 |
-| Skin | 66 | 61 |
-| Hair | 31 | 34 |
-| Lip | 7 | 7 |
+| Skin | 66 | 0 |
+| Hair | 31 | 0 |
+| Lip | 7 | 0 |
+
+Skin, hair and lip reach zero through the shading-value finding below.
 
 Across the whole corpus, 22 lips that read as "no lip" off the never-read block now resolve
 from their index.
 
-## Open: skin, hair and light-lip floats
+## Skin, hair and light-lip floats are shading values
 
 These floats are as deterministic as the rest, but none of them is the palette color our sheets
-hold, so every live file reports them OFF GRID although nobody edited them:
+hold, so every live file reported them OFF GRID although nobody edited them:
 
 - **Skin** matches in no file (0 of 338 distinct entries). Red is kept; green and blue rise by
   about 1.47× and 1.78× in linear light.
@@ -107,10 +110,31 @@ hold, so every live file reports them OFF GRID although nobody edited them:
 - **Light-palette lips** (index 128+): the float equals the **dark** sheet's entry at the same
   position in 358 of 358 files. Dark-palette lips match exactly (270 of 271).
 
-Either the game shades these slots from values other than the creator's swatches, or our hair
-and light-lip sheets are wrong in those ranges; the files cannot tell which. One comparison in
-the character creator settles it — Raen ♀ hair index 42 is `#FFDC98` in our sheet, and the file
-float decodes to `#E5D2AC`. Until then, core still compares them.
+Either the game shades these slots from values other than the creator's swatches, or our sheets
+were wrong; the files cannot tell which, so the maintainer checked the character creator on
+2026-09-28. On the Hair Color screen with Raen ♀ hair 42 selected, the hair palette reads
+**RGB 255,220,152 — `#FFDC98`, exactly our sheet** — while every file stores `#E5D2AC` for that
+entry. Sampling the whole screenshot confirms it beyond the one readout: the creator draws its
+swatches about 1.086× brighter than their values (clipping the brightest cells and lifting the
+darkest), and with that divided out its hair grid matches our Au Ra hair sheet to within 0–2
+levels in the mid-tone columns of all 24 rows. (Raen ♀, Raen ♂ and Xaela ♀ share one hair sheet.)
+
+So the sheets hold the swatch and the game stores a shading value derived from it. Core 5.6.0
+no longer judges skin or hair floats against the swatch, and judges a light-palette lip against
+the dark entry the game stores for it. Nothing real is lost: no file in the corpus had edited
+one, since the float is identical wherever an entry recurs.
+
+## Open: highlight swatches
+
+The same screenshot shows the highlights palette beside the hair palette, and there the check
+runs the other way. At all 98 highlight indices used in the corpus, the stored float equals our
+highlight sheet exactly, so comparisons are sound. But the creator's own highlight swatch
+differs at some cells: with 42 selected it reads **RGB 225,186,112**, where the stored value
+(and our sheet) is 255,186,86. With the brightening divided out, the creator's highlight grid
+matches our sheet in most mid-tone cells but not around 40–43 or in rows 12, 20 and 21, where it
+is less saturated. For those entries the Swatch Matcher shows the stored color rather than the
+one the player picked from. Correcting them needs each cell's RGB readout; a screenshot's
+pixels are not exact enough.
 
 ## Also seen, no change needed
 

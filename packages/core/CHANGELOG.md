@@ -31,6 +31,11 @@ files parsed before and after.
   absent.
 - **A float block that is zero in every channel, alpha included, reads as absent** (22 files).
   Nothing was read, so it no longer resolves as a black character with no lip.
+- **Skin and hair floats are no longer judged against the swatch** (verdict `index`, `deltaE`
+  `null`), and **a light-palette lip is judged against its dark entry.** The game stores a
+  shading value for these, not the creator's swatch: Raen ♀ hair 42 reads RGB 255,220,152 in the
+  character creator — the sheet's `#FFDC98` — while every file stores `#E5D2AC`. A light lip's
+  float is its dark entry's color in 358 of 358 files; a custom lip color is still OFF GRID.
 
 ### Fixed
 
@@ -39,8 +44,7 @@ files parsed before and after.
   on a hidden weapon. `gearDyes` now holds only the dyes of worn pieces — the same worn test
   `gearModels` uses.
 - **False OFF GRID verdicts in files whose floats are live** (66 files): eyes 11 + 11 → 1 + 1
-  (the one left is a real custom color) and limbal 32 → 0. Skin, hair and light-palette lip
-  floats still never match the palette and are left for an in-game check (see the research doc).
+  (the one left is a real custom color), limbal 32 → 0, skin 66 → 0, hair 31 → 0 and lip 7 → 0.
 
 ## [5.5.0] - 2026-09-20
 
