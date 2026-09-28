@@ -35,6 +35,18 @@ Rules:
   path filter.
 -->
 
+## [5.6.5] - 2026-09-28
+### 🎨 `/swatch` uses the character creator's own colors
+- Lip, face paint and some highlight colors are now the exact shades the creator shows, so the dyes `/swatch` suggests for them change to match.
+- The tattoo / limbal row had been using the eye colors by mistake. It uses the real tattoo colors now.
+- A skin or hair color you customized reads "OFF GRID" again; one straight from the creator never does.
+
+## [5.6.4] - 2026-09-28
+### 👀 `/swatch` reads character files more accurately
+- For characters with a different color in each eye, the `EYES·L` and `EYES·R` rows were the wrong way round. They're on the right sides now.
+- No more false "OFF GRID" rows: a color that came straight from the character creator is no longer called off the palette. A color you really did customize still is.
+- The gear line no longer lists a dye on an empty slot, such as a hidden weapon.
+
 ## [5.6.3] - 2026-09-21
 ### 🔤 One spelling of "color" everywhere
 - The bot's English text now spells things the American way — "color" rather than "colour". Command descriptions, card labels and `/manual` used to mix the two.

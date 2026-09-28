@@ -5,6 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-09-28
+
+**The character color sheets now come straight from the game's `human.cmp`, both halves.** MINOR:
+four shared sheets return different colors and the resolver returns different verdicts. The game
+file keeps every palette twice — the **interface** colors the character creator shows, and the
+**shader** colors the game renders from, which a `.chara` float stores. Our sheets had mixed the
+two. See `docs/research/2026-09-28-chara-corpus-profile/` → *Both halves*.
+
+### Added
+
+- **`scripts/build-character-colors.ts`** (`pnpm run build:character-colors -- <human.cmp>`)
+  regenerates everything in `src/data/character_colors/` from the game file, which is not
+  vendored. The sheets `CharacterColorService` serves are the interface half; the new `shader/`
+  files are the shader half and are read only by the `.chara` resolver.
+
+### Changed
+
+- **Lip, face-paint, highlight and tattoo sheets show the creator's colors.** Lips and face paint
+  had held the shader half (95 of 96 entries differ; dark palette median ΔE 24), highlights too
+  (40 of 192 differ — highlight 42 is RGB 225,186,112 in the creator), and the tattoo / limbal
+  sheet was a copy of the **eye** palette (183 of 192 differ). Eye, hair and skin sheets are
+  byte-identical.
+- **The resolver judges every live float against the stored color of its entry.** This is exact
+  for every unedited float in the 1,142-file corpus, so skin and hair floats are judged again
+  (5.6.0 had to skip them), and the parser's ×0.643 limbal scale and entry-7 zero rule are gone —
+  the shader feature palette is the real thing. OFF GRID in live-float files is now exactly the
+  real custom colors.
+- **The shader tables load on first use, and a failed load is tried again.** The two `shader/`
+  files are dynamic imports, so the web app fetches them as a lazy chunk. A load that fails is
+  forgotten rather than cached, so one dropped request does not fail every later `.chara` in the
+  session (the BUG-013 rule `CharacterColorService` already follows).
+
+## [5.6.0] - 2026-09-28
+
+**What 1,142 real `.chara` files taught the parser.** MINOR, not a patch: `parseCharaFile`
+returns different slots, colors and dyes for the same file (house rule — an observable change is
+minor). Every number below is from `docs/research/2026-09-28-chara-corpus-profile/`; all 1,142
+files parsed before and after.
+
+### Changed
+
+- **Eye keys pair by name.** `leftEye` is now `LEyeColor` + `LeftEyeColor` and `rightEye` is
+  `REyeColor` + `RightEyeColor`. The Swatch Matcher 10A rule had `REyeColor` as the left eye,
+  crossed against the float names; 153 of 157 heterochromia files pair by name, all 143
+  Anamnesis files among them. The resolver swaps a file's two eye floats only when each lands
+  (ΔE2000 ≤ 1) on the *other* eye's palette entry and neither on its own — 4 files, all from the
+  producer that writes no `TypeName`. A half match, a custom color or a shared index is never
+  swapped.
+- **Extended floats are decoded as the color squared**, not as sRGB-linear. The game stores
+  each channel as `(n/255)²`; the square root lands eye and highlight floats on their palette
+  entry at ΔE 0.00, where the sRGB curve read every one about 3 ΔE off. `floatLinear` still
+  carries the stored triple.
+- **The limbal/tattoo float has the game's 0.643 divided out** of its decoded color (it stores
+  `0.643 × (n/255)²`), which puts every corpus limbal float within ΔE 3.5 of its entry. A zero
+  float on tattoo entry 7 — which the game stores as an exact zero, 194 of 194 files — reads as
+  absent.
+- **A float block that is zero in every channel, alpha included, reads as absent** (22 files).
+  Nothing was read, so it no longer resolves as a black character with no lip.
+  Only a complete block counts: a file naming some of the seven floats named them on purpose,
+  so a lone black custom color is kept (every corpus file carries seven floats or none).
+- **Skin and hair floats are no longer judged against the swatch** (verdict `index`, `deltaE`
+  `null`), and **a light-palette lip is judged against its dark entry.** The game stores a
+  shading value for these, not the creator's swatch: Raen ♀ hair 42 reads RGB 255,220,152 in the
+  character creator — the sheet's `#FFDC98` — while every file stores `#E5D2AC`. A light lip's
+  float is its dark entry's color in 358 of 358 files; a custom lip color is still OFF GRID.
+
+### Fixed
+
+- **A dye on an empty gear slot was reported as a worn dye.** 33 files carry one (main hand 14,
+  hands 12, off hand 10, head 9, feet 2, legs 1), including stains 254/255 that Anamnesis writes
+  on a hidden weapon. `gearDyes` now holds only the dyes of worn pieces — the same worn test
+  `gearModels` uses.
+- **False OFF GRID verdicts in files whose floats are live** (66 files): eyes 11 + 11 → 1 + 1
+  (the one left is a real custom color), limbal 32 → 0, skin 66 → 0, hair 31 → 0 and lip 7 → 0.
+
 ## [5.5.0] - 2026-09-20
 
 **`.chara` import now reads the race off the tribe.** MINOR, not a patch: `parseCharaFile`
