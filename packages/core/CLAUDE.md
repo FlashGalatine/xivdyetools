@@ -20,6 +20,7 @@ pnpm --filter @xivdyetools/core run lint
 pnpm --filter @xivdyetools/core run calibrate:bands  # Recompute the band vocabulary from dyes.json
 pnpm --filter @xivdyetools/core run build:oklch-hue  # Regenerate src/data/oklch-hue-table.json (not part of build)
 pnpm --filter @xivdyetools/core exec tsx scripts/build-munsell-hues.ts <real.dat>  # Regenerate the Munsell tables
+pnpm --filter @xivdyetools/core run build:character-colors -- <human.cmp>  # Regenerate src/data/character_colors/ from the game file
 pnpm --filter @xivdyetools/core run clean
 ```
 
@@ -53,7 +54,7 @@ src/
 │   ├── munsell-hues.json          # Generated Munsell warp table (build:munsell)
 │   ├── munsell-anchors.json       # Generated Munsell anchors — TEST DATA, no runtime import
 │   ├── oklch-hue-table.json       # Generated OKLCH-hue warp table (build:oklch-hue)
-│   ├── character_colors/          # FFXIV skin/hair color tables, split per-race
+│   ├── character_colors/          # Creator palettes (interface half of human.cmp), split shared / per-race; shader/ = the shader half (build:character-colors)
 │   └── locales/                   # Generated en/ja/de/fr/ko/zh JSON (after build:locales)
 ├── services/
 │   ├── ColorService.ts            # Facade: conversion, mixing, simulation
@@ -216,6 +217,9 @@ Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, 
 `oklch-lightness` keeps the base's OKLab L and C instead of its HSV S/V (`ColorWheel.carriesBaseHsv === false`), so the selector forces ΔE ranking for it regardless of `usePerceptualMatching`.
 
 `HarmonyGenerator`'s per-type `find*Dyes()` methods still support `'hue'` and `'deltaE'` matching with an `options.colorSpace` of `'hsv'` / `'oklch'` / `'lch'` / `'hsl'`, but **`colorSpace` is deprecated since 5.2.0** — it rotates hue without carrying the base's saturation and value, which is a different answer from the one every surface shows. `'oklch'` gamut-maps (CSS Color 4) since the 5.2.0 fix wave; `'lch'` and `'hsl'` still clip per channel and can therefore change hue. DeltaE tolerance defaults differ per formula (`cie76: 40`, `ciede2000`/`cie2000`: 25, `oklab`: 0.21).
+
+### Character color sheets (generated)
+`src/data/character_colors/` is generated from the game's `human.cmp` (`pnpm run build:character-colors <human.cmp>`, not part of `build`; the game file is not vendored). The file keeps every palette twice: the **interface** half is what the character creator shows (the sheets `CharacterColorService` serves) and the **shader** half is what the game renders from and a `.chara` float stores squared (`shader/`, read only by the chara resolver to judge OFF GRID). Never hand-edit either; regenerate.
 
 ### Generated wheel data
 `src/data/oklch-hue-table.json` and `src/data/munsell-hues.json` are **generated and committed**, not derived at import time (`pnpm run build:oklch-hue`, `pnpm run build:munsell <real.dat>`; neither runs as part of `build`). `src/data/munsell-anchors.json` holds the 40 raw renotation anchors and is imported by `munsell.test.ts` only — nothing at runtime reads it, so it stays out of every bundle. `scripts/lib/oklch-hue-table.test.ts` re-runs the OKLCH derivation and compares it to the committed JSON, which is the gate against the two drifting apart. A regenerated table is a deliberate re-baseline of `HarmonySelector.golden.test.ts` — put the before/after digests in the commit body.

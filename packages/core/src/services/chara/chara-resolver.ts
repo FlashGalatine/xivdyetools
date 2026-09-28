@@ -20,10 +20,11 @@
  * - Eye floats pair by name; a heterochromia file whose two floats each land
  *   on the other eye's palette entry is un-crossed first (4 of 157 in the
  *   2026-09-28 corpus) — see `uncrossEyeFloats`.
- * - **Skin and hair floats are never judged against the swatch**: the game
- *   stores a shading value derived from the entry, not the entry — see
- *   `SHADING_FLOAT_SLOTS`. A light-palette lip is judged against the dark
- *   entry the game stores for it.
+ * - **A float is judged against the color the game stores for its entry**,
+ *   never the swatch: `human.cmp` renders from a shader half that differs from
+ *   the creator's interface half (Raen ♀ hair 42: swatch #FFDC98, stored
+ *   #E5D2AC) — see `chara-shader-colors`. A light-palette lip stores its dark
+ *   entry. The swatch (`indexHex`) is still what the slot shows.
  */
 
 import type { CharacterColor, Dye, Gender, SubRace } from '@xivdyetools/types';
@@ -38,6 +39,7 @@ import type {
   ParsedCharaFile,
 } from './chara-parser.js';
 import type { CharaGearModel } from './chara-models.js';
+import { charaShaderHex, type CharaShaderPalette } from './chara-shader-colors.js';
 
 /** ΔE2000 beyond which a live float overrides the palette index (OFF GRID). */
 export const OFF_GRID_DELTA_E2000 = 6;
@@ -83,8 +85,8 @@ export interface ResolvedCharaSlot {
   floatHex: string | null;
   /**
    * ΔE2000 between a live float and the colour the game stores for the index
-   * (indexHex; a light lip's dark entry). Null when not judged — skin and hair
-   * floats never are.
+   * (the shader half of `human.cmp` — not `indexHex`, the swatch). Null when
+   * the float is absent or not live.
    */
   deltaE: number | null;
   /** Set when a float existed but was not live — the UI must say so */
@@ -176,6 +178,7 @@ function uncrossEyeFloats(
   const right = slots.find((s) => s.slot === 'rightEye');
   if (!left?.float || !right?.float || left.index === null || right.index === null) return slots;
   if (left.index === right.index) return slots;
+  // The eye palette's shader and interface halves are identical (192 of 192)
   const sheet = characterColors.getEyeColors();
   const lands = (index: number, float: CharaColorSlotRaw['float']): boolean => {
     const entry = sheet.find((c) => c.index === index);
@@ -199,17 +202,20 @@ function uncrossEyeFloats(
 }
 
 /**
- * Slots whose stored float is a shading value, not the creator swatch, so it
- * cannot say whether the file is OFF GRID. `human.cmp` keeps both per clan
- * and gender (`Skin`/`Hair` for the shader, `SkinInterface`/`HairInterface`
- * for the creator — Penumbra.GameData `CmpData`); the sheets are the latter.
- * In the 2026-09-28 corpus the float is identical for a given
- * tribe/gender/index in every file, yet equals the swatch for no skin entry
- * (0 of 338) and almost no hair entry past index 31 — and the creator itself
- * confirms the sheet: Raen ♀ hair 42 reads RGB 255,220,152 (#FFDC98, the
- * sheet's value) while every file stores #E5D2AC for it.
+ * The shader palette each slot's float is stored from. A light-palette lip
+ * stores its DARK entry (349 of 349 corpus files), so both halves map to
+ * `lipsDark` at the in-sheet index. Face paint carries no float.
  */
-const SHADING_FLOAT_SLOTS: ReadonlySet<CharaSlotId> = new Set(['skin', 'hair']);
+const SHADER_PALETTE: Record<CharaSlotId, CharaShaderPalette | null> = {
+  leftEye: 'eyes',
+  rightEye: 'eyes',
+  hair: 'hair',
+  highlights: 'highlights',
+  skin: 'skin',
+  limbal: 'features',
+  lip: 'lipsDark',
+  facePaint: null,
+};
 
 interface SheetResolution {
   sheet: CharacterColor[] | null;
@@ -389,14 +395,13 @@ export async function resolveCharaColors(
       indexHex: entry.hex,
     };
 
-    if (floatLive && floatHex && !SHADING_FLOAT_SLOTS.has(raw.slot)) {
-      // A light-palette lip stores its DARK entry's colour (358 of 358 corpus
-      // files), so that is what an unedited file's float agrees with.
+    if (floatLive && floatHex) {
+      // An unedited file's float IS the stored color, so that is the yardstick
+      const palette = SHADER_PALETTE[raw.slot];
       const storedHex =
-        raw.slot === 'lip' && resolution.variant === 'light'
-          ? (characterColors.getLipColorsDark().find((c) => c.index === resolution.sheetIndex)
-              ?.hex ?? entry.hex)
-          : entry.hex;
+        (palette &&
+          (await charaShaderHex(palette, resolution.sheetIndex, parsed.tribe, parsed.gender))) ??
+        entry.hex;
       const deltaE = ColorConverter.getDeltaE(storedHex, floatHex, 'ciede2000');
       resolved.deltaE = deltaE;
       resolved.verdict = deltaE > OFF_GRID_DELTA_E2000 ? 'offGrid' : 'index';
