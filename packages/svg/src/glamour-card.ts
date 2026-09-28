@@ -87,8 +87,17 @@ export interface GlamourCardOptions {
 
 const PAD = 15;
 const ROW_H = 48;
-/** The design's 56 px lead plus the room German and French look labels need. */
-const LEAD_W = 60;
+/**
+ * The slot column: the design's 56 px, wider for the game's own slot names —
+ * the game has no short forms, and the longest ("MAIN NON DIRECTRICE", the
+ * French off hand) needs 130 px. Only a card that shows such a slot gives up
+ * name width for it.
+ */
+const LEAD_MIN = 60;
+const LEAD_MAX = 132;
+/** The slot name's letter-spacing, dropped for a name that only fits without it. */
+const SLOT_TRACKING = 0.8;
+const slotWidth = (label: string): number => textWidth(label, CARD_TYPE.label, 'mono');
 const ICON = 32;
 const GAP = 10;
 /** The verdict column: 44 px as drawn, wider for a longer localized verdict, never past 72. */
@@ -190,7 +199,20 @@ export function generateGlamourCard(options: GlamourCardOptions): string {
   );
 
   // Rows — slot order, capped upstream
-  const iconX = PAD + LEAD_W + GAP;
+  // A slot name is set tracked (0.8 px) when it fits that way, untracked when
+  // only that fits: the game's word is never cut while any setting holds it.
+  const tracked = (label: string): number => slotWidth(label) + [...label].length * SLOT_TRACKING;
+  const leadW = Math.min(
+    LEAD_MAX,
+    Math.max(
+      LEAD_MIN,
+      ...options.rows.map((r) => {
+        const slot = tracked(r.slotLabel) <= LEAD_MAX ? tracked(r.slotLabel) : slotWidth(r.slotLabel);
+        return Math.ceil(Math.max(slot, textWidth(r.lookLabel, 10.5, 'mono')));
+      })
+    )
+  );
+  const iconX = PAD + leadW + GAP;
   const nameX = iconX + ICON + GAP;
   const statusW = Math.min(
     STATUS_MAX,
@@ -204,15 +226,15 @@ export function generateGlamourCard(options: GlamourCardOptions): string {
 
     // Lead: slot short over the look count
     parts.push(
-      cardText(PAD, y + 20, fitText(r.slotLabel, LEAD_W, CARD_TYPE.label, 'mono'), {
+      cardText(PAD, y + 20, fitText(r.slotLabel, leadW, CARD_TYPE.label, 'mono'), {
         fill: theme.value,
         size: CARD_TYPE.label,
         font: 'mono',
-        letterSpacing: 0.8,
+        ...(tracked(r.slotLabel) <= leadW ? { letterSpacing: SLOT_TRACKING } : {}),
       })
     );
     parts.push(
-      cardText(PAD, y + 34, fitText(r.lookLabel, LEAD_W, 10.5, 'mono'), {
+      cardText(PAD, y + 34, fitText(r.lookLabel, leadW, 10.5, 'mono'), {
         fill: lookInk(r.tone, r.twins, theme),
         size: 10.5,
         font: 'mono',

@@ -642,8 +642,8 @@
     "glamourResolveBusy": "Die Gegenstandssuche ist gerade ausgelastet. Versuche es in einer Minute erneut.",
     "glamourManual": "Mehr zu Charakterdateien:",
     "glamourSlot": {
-      "MainHand": "WAFFE",
-      "OffHand": "NEBENH.",
+      "MainHand": "HAUPTHAND",
+      "OffHand": "NEBENHAND",
       "HeadGear": "KOPF",
       "Body": "RUMPF",
       "Hands": "HÄNDE",
@@ -651,9 +651,9 @@
       "Feet": "FÜSSE",
       "Ears": "OHREN",
       "Neck": "HALS",
-      "Wrists": "ARMB.",
-      "RightRing": "RING RE.",
-      "LeftRing": "RING LI."
+      "Wrists": "HANDGELENKE",
+      "RightRing": "FINGER (RECHTS)",
+      "LeftRing": "FINGER (LINKS)"
     }
   },
   "firstRun": {

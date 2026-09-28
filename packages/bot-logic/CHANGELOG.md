@@ -26,7 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`getLocalizedRace`** — core's race names, per locale. The card names a one-race piece by its
   race (VIERA) when the race is what blocks it; a piece that fails on gender alone reads LOCKED.
 - **Strings ×6**: `card.glamour*` (card labels, counts, reasons, errors), `card.glamourSlot.*`,
-  `commands.glamour.*`, `manual.glamour.*`.
+  `commands.glamour.*`, `manual.glamour.*`. The slot labels are the game's own words (`Addon`
+  rows 738–750, per client; tabled in `docs/reference/ffxiv-terminology.md` § Equipment Slots),
+  uppercased where the script has case: MAIN HAND, not WEAPON; FINGER (RECHTS); 주 무기.
 
 ### Changed
 

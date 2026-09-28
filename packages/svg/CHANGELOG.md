@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`generateGlamourCard`** — the `/glamour` card (Glamour Reader Directions, turn 1, 2a "Pieces,
-  slot order"). One row per dyed piece: the slot short over the look count (+N LOOK / ONE LOOK),
+  slot order"). One row per dyed piece: the slot over the look count (+N LOOK / ONE LOOK),
   the item's icon tile, the name, the dyes it wears (chip + name), and the in-game verdict in the
   right column (TWIN green, a blocking problem amber, OK quiet). The count key wraps onto two
   lines beside the mark, as drawn. It isn't a measuredRow consumer: a piece has no measurement and
   no tier, so it's a second row kind. No character name. The header is the producer and tribe.
   The icon tile is the design's hatched placeholder.
+- **The slot column fits the game's slot names.** The game has no short forms (see
+  `docs/research/2026-09-28-equipment-slot-terms/`), so the column is sized to the longest label
+  on the card, from 60 to 132px, instead of fixed for "HEAD". A label that fits only without its
+  0.8px letter-spacing (French `MAIN NON DIRECTRICE`) drops the spacing, not the icon's clearance.
 
 ## [4.2.0] - 2026-09-27
 

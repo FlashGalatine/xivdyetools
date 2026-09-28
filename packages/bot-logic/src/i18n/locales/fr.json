@@ -642,8 +642,8 @@
     "glamourResolveBusy": "La recherche d’objets est très sollicitée pour le moment. Réessayez dans une minute.",
     "glamourManual": "En savoir plus sur les fichiers de personnage :",
     "glamourSlot": {
-      "MainHand": "ARME",
-      "OffHand": "MAIN G.",
+      "MainHand": "MAIN DIRECTRICE",
+      "OffHand": "MAIN NON DIRECTRICE",
       "HeadGear": "TÊTE",
       "Body": "TORSE",
       "Hands": "MAINS",
@@ -652,8 +652,8 @@
       "Ears": "OREILLES",
       "Neck": "COU",
       "Wrists": "POIGNETS",
-      "RightRing": "ANNEAU D",
-      "LeftRing": "ANNEAU G"
+      "RightRing": "BAGUE DROITE",
+      "LeftRing": "BAGUE GAUCHE"
     }
   },
   "firstRun": {

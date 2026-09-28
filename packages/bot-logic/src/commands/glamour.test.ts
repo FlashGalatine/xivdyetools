@@ -106,8 +106,8 @@ describe('executeGlamour', () => {
     if (!result.ok) return;
     const t = svgTexts(result.svgString);
 
-    expect(t.filter((s) => ['WEAPON', 'HEAD', 'BODY', 'HANDS', 'LEGS'].includes(s))).toEqual([
-      'WEAPON',
+    expect(t.filter((s) => ['MAIN HAND', 'HEAD', 'BODY', 'HANDS', 'LEGS'].includes(s))).toEqual([
+      'MAIN HAND',
       'HEAD',
       'BODY',
       'HANDS',

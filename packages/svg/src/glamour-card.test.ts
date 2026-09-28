@@ -162,6 +162,29 @@ describe('generateGlamourCard (2a)', () => {
     expect(name.x + textWidth(name.text, 13, 'body')).toBeLessThanOrEqual(verdictLeft);
   });
 
+  it('widens the slot column for a long official slot name, and the name gives way', () => {
+    // The game has no short forms: French names the main hand "Main directrice"
+    const svg = generateGlamourCard({
+      ...STRESS,
+      rows: [row({ slotLabel: 'MAIN DIRECTRICE', name: 'Augmented Deepshadow Gloves of Striking' })],
+    });
+    const t = texts(svg);
+    expect(t.map((r) => r.text)).toContain('MAIN DIRECTRICE');
+    const name = t.find((r) => r.text.startsWith('Augmented'))!;
+    expect(name.x).toBeGreaterThanOrEqual(15 + textWidth('MAIN DIRECTRICE', 11, 'mono') + 10 + 32 + 10);
+  });
+
+  it('never lets the longest official slot name run into the icon tile', () => {
+    // The French off hand, tracked at 0.8 px, is wider than the column's ceiling
+    const svg = generateGlamourCard({ ...STRESS, rows: [row({ slotLabel: 'MAIN NON DIRECTRICE' })] });
+    const label = /<text x="15" [^>]*>MAIN NON DIRECTRICE<\/text>/.exec(svg);
+    expect(label, 'the whole word is drawn').not.toBeNull();
+    const tracking = Number(/letter-spacing="([^"]+)"/.exec(label![0])?.[1] ?? 0);
+    const width = textWidth('MAIN NON DIRECTRICE', 11, 'mono') + tracking * 'MAIN NON DIRECTRICE'.length;
+    const iconX = Number(/<rect x="([\d.]+)" y="[\d.]+" width="32" height="32"/.exec(svg)![1]);
+    expect(15 + width).toBeLessThanOrEqual(iconX - 8);
+  });
+
   it('keeps the title and drops the dye count when both do not fit', () => {
     const both = texts(generateGlamourCard({ ...STRESS, title: '5 dyed pieces', titleExtra: '6 dyes' }));
     expect(both.map((r) => r.text)).toContain('5 dyed pieces · 6 dyes');

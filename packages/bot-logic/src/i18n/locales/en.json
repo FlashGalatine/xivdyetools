@@ -642,7 +642,7 @@
     "glamourResolveBusy": "The item lookup is busy right now. Try again in a minute.",
     "glamourManual": "More on character files:",
     "glamourSlot": {
-      "MainHand": "WEAPON",
+      "MainHand": "MAIN HAND",
       "OffHand": "OFF HAND",
       "HeadGear": "HEAD",
       "Body": "BODY",
@@ -652,8 +652,8 @@
       "Ears": "EARS",
       "Neck": "NECK",
       "Wrists": "WRISTS",
-      "RightRing": "RING R",
-      "LeftRing": "RING L"
+      "RightRing": "RIGHT RING",
+      "LeftRing": "LEFT RING"
     }
   },
   "firstRun": {

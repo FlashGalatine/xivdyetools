@@ -642,8 +642,8 @@
     "glamourResolveBusy": "アイテム検索が混み合っています。1分後にもう一度お試しください。",
     "glamourManual": "キャラクターファイルについて：",
     "glamourSlot": {
-      "MainHand": "武器",
-      "OffHand": "サブ",
+      "MainHand": "メインアーム",
+      "OffHand": "サブアーム",
       "HeadGear": "頭",
       "Body": "胴",
       "Hands": "手",

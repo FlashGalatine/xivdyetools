@@ -642,18 +642,18 @@
     "glamourResolveBusy": "物品查询当前繁忙，请一分钟后再试。",
     "glamourManual": "关于角色文件：",
     "glamourSlot": {
-      "MainHand": "武器",
+      "MainHand": "主手",
       "OffHand": "副手",
       "HeadGear": "头部",
       "Body": "身体",
-      "Hands": "手部",
+      "Hands": "手臂",
       "Legs": "腿部",
       "Feet": "脚部",
-      "Ears": "耳饰",
-      "Neck": "项链",
-      "Wrists": "手镯",
-      "RightRing": "右戒",
-      "LeftRing": "左戒"
+      "Ears": "耳部",
+      "Neck": "颈部",
+      "Wrists": "腕部",
+      "RightRing": "右指",
+      "LeftRing": "左指"
     }
   },
   "firstRun": {
