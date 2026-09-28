@@ -2,10 +2,12 @@
  * Glamour list — the GPOSERS submission template, in three renderings.
  *
  * Glamour showcases ask for the outfit as a fixed form: a bold slot label, the
- * piece, its dyes where the slot has channels, and an `Acquisition:` line the
- * submitter fills in by hand. The Swatch Manager already knows the pieces and
- * dyes from a `.chara` file, so it writes the form; the player adds the
- * acquisition notes and anything the file cannot carry.
+ * piece, its dyes where the slot has channels, and an `Acquisition:` line. The
+ * Glamour Reader knows the pieces and dyes from a `.chara` file and the
+ * acquisition line from api-worker's build-time table (or the player's edit
+ * in the export sheet), so it writes the form; a piece with no known source
+ * keeps the bare label for the player to fill in. Two identical rings are
+ * written once, as `Rings:` (GPOSERS reminders, March 2026).
  *
  * One model, three renderings: **Markdown** for the .md download, **HTML**
  * for the clipboard so the bold survives a paste into Word or Google Docs,
@@ -65,6 +67,11 @@ export interface GlamourMarkdownPiece {
   dye1?: string | null;
   /** Channel 2 dye name. */
   dye2?: string | null;
+  /**
+   * The `Acquisition:` value: the Glamour Reader's generated GPOSERS line or
+   * the player's edit. Absent or empty = the bare label, for filling in.
+   */
+  acquisition?: string | null;
 }
 
 export type GlamourMarkdownInput = Partial<Record<GlamourMarkdownSlot, GlamourMarkdownPiece>>;
@@ -110,6 +117,24 @@ const DYEABLE: ReadonlySet<GlamourMarkdownSlot> = new Set<GlamourMarkdownSlot>([
 
 const HEADER = 'Glamour Items:';
 
+/** The template's own field label — shown by the export sheet beside the editable line. */
+export const ACQUISITION_LABEL = 'Acquisition:';
+
+/** The template's label for one slot ("Main Hand", "Earrings"). */
+export function glamourSlotLabel(slot: GlamourMarkdownSlot): string {
+  return SLOT_LABELS[slot];
+}
+
+/**
+ * Two identical rings are written once, as `Rings: Item Name` (GPOSERS
+ * reminders, March 2026). Only when both are worn and share a name — a ring
+ * whose name never arrived is not known to be the same ring.
+ */
+function sameRings(input: GlamourMarkdownInput): boolean {
+  const right = text(input.RightRing?.name);
+  return right !== '' && right === text(input.LeftRing?.name);
+}
+
 /** One rendered line: a label, optionally bold, with an optional value. */
 interface Line {
   label: string;
@@ -127,17 +152,20 @@ function text(value: string | null | undefined): string {
 /** Worn slots as line groups, in template order. */
 function groups(input: GlamourMarkdownInput): Group[] {
   const out: Group[] = [];
+  const rings = sameRings(input);
   for (const slot of GLAMOUR_MARKDOWN_SLOTS) {
     const piece = input[slot];
     if (!piece) continue;
-    const group: Group = [{ label: `${SLOT_LABELS[slot]}:`, value: text(piece.name), bold: true }];
+    if (rings && slot === 'LeftRing') continue;
+    const label = rings && slot === 'RightRing' ? 'Rings' : SLOT_LABELS[slot];
+    const group: Group = [{ label: `${label}:`, value: text(piece.name), bold: true }];
     if (DYEABLE.has(slot)) {
       const dye1 = text(piece.dye1);
       const dye2 = text(piece.dye2);
       if (dye1) group.push({ label: 'Dye 1:', value: dye1, bold: false });
       if (dye2) group.push({ label: 'Dye 2:', value: dye2, bold: false });
     }
-    group.push({ label: 'Acquisition:', value: '', bold: false });
+    group.push({ label: ACQUISITION_LABEL, value: text(piece.acquisition), bold: false });
     out.push(group);
   }
   return out;

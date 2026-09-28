@@ -128,6 +128,39 @@ describe('buildGlamourMarkdown', () => {
   });
 });
 
+describe('the Acquisition line and the rings (GPOSERS reminders, March 2026)', () => {
+  const WITH_LINES: GlamourMarkdownInput = {
+    HeadGear: { name: 'Hempen Coif', dye1: 'Snow White', acquisition: 'Crafted (WVR Lvl. 3)' },
+    Body: { name: 'Plain Robe', acquisition: null },
+  };
+
+  it('writes the line in all three renderings, and the bare label without one', () => {
+    expect(buildGlamourMarkdown(WITH_LINES)).toContain('Acquisition: Crafted (WVR Lvl. 3)');
+    expect(buildGlamourPlainText(WITH_LINES)).toContain('Acquisition: Crafted (WVR Lvl. 3)');
+    expect(buildGlamourHtml(WITH_LINES)).toContain('Acquisition: Crafted (WVR Lvl. 3)');
+    expect(buildGlamourPlainText(WITH_LINES)).toContain('Body: Plain Robe\nAcquisition:\n');
+  });
+
+  it('writes two identical rings once, as Rings', () => {
+    const text = buildGlamourPlainText({
+      RightRing: { name: 'Ring of Ascension', acquisition: 'Some Vendor - Old Gridania (1 Gil)' },
+      LeftRing: { name: 'Ring of Ascension', acquisition: 'Some Vendor - Old Gridania (1 Gil)' },
+    });
+    expect(text).toBe(
+      'Glamour Items:\nRings: Ring of Ascension\nAcquisition: Some Vendor - Old Gridania (1 Gil)\n'
+    );
+  });
+
+  it('keeps two different rings apart', () => {
+    const text = buildGlamourPlainText({
+      RightRing: { name: 'Ring A' },
+      LeftRing: { name: 'Ring B' },
+    });
+    expect(text).toContain('Right Ring: Ring A');
+    expect(text).toContain('Left Ring: Ring B');
+  });
+});
+
 describe('buildGlamourPlainText', () => {
   it('is the Markdown rendering without the asterisks — nothing else differs', () => {
     expect(buildGlamourPlainText(FULL)).toBe(buildGlamourMarkdown(FULL).replaceAll('**', ''));

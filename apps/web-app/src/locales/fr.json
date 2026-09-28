@@ -1383,6 +1383,25 @@
       "dated": "ANCIEN",
       "grandCompany": "GRANDE COMPAGNIE",
       "noGlamour": "PAS DE MIRAGE"
+    },
+    "sheet": {
+      "title": "Liste d'équipement",
+      "sub": "Format GPOSERS · {n} pièces · modifiez ce que vous voulez avant de copier",
+      "countFilled": "{n} REMPLI",
+      "countEdited": "{n} MODIFIÉ",
+      "countBlank": "{n} VIDE",
+      "stateFilled": "REMPLI",
+      "stateEdited": "MODIFIÉ",
+      "stateBlank": "VIDE",
+      "preview": "CE QUI SERA COPIÉ",
+      "placeholder": "Aucune source trouvée : saisissez-en une ou laissez vide",
+      "warn": "Vous avez choisi {name}, qui a sa propre source. Votre ligne modifiée est toujours là.",
+      "keep": "Garder la mienne",
+      "useNew": "Prendre la nouvelle source",
+      "privacy": "Les modifications sont conservées sur cet appareil pour cette tenue. Le nom du personnage n'apparaît jamais dans la liste, et le fichier lui-même n'est jamais enregistré.",
+      "reset": "Tout réinitialiser",
+      "save": "Enregistrer le .md",
+      "cardNote": "Vos notes d'obtention modifiées sont conservées sur cet appareil."
     }
   }
 }

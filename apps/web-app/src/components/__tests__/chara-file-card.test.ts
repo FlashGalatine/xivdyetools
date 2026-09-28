@@ -195,6 +195,13 @@ describe('CharaFileCard — the loaded file', () => {
     expect(CharaSessionService.getSession()).not.toBeNull();
   });
 
+  it("adds the host's clause to the privacy line (the reader keeps edited acquisition notes)", async () => {
+    const noted = await mount(FIXTURE, 'test.chara', { privacyNote: 'Notes are kept here.' });
+    const plain = mountCard();
+    expect(noted.container.textContent).toContain('Notes are kept here.');
+    expect(plain.container.textContent).not.toContain('Notes are kept here.');
+  });
+
   it('says nothing about a file that a newer drop replaced', async () => {
     const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
     const { card } = mountCard();

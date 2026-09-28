@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GlamourBlock } from '../glamour-block';
+import { closeGlamourSheet } from '../glamour-sheet';
 import { CharaFileCard } from '../chara-file-card';
 import { StorageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
@@ -624,6 +625,19 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     block(glamour).querySelector<HTMLButtonElement>('[data-role="copy-list"]')!;
   const exportBtn = (glamour: HTMLElement) =>
     block(glamour).querySelector<HTMLButtonElement>('[data-role="export-markdown"]')!;
+  const sheetEl = () => document.querySelector<HTMLElement>('[data-role="glamour-sheet"]');
+  /** Copy list opens the export sheet (design 2c); its own Copy list writes. */
+  const copyVia = async (glamour: HTMLElement): Promise<void> => {
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    sheetEl()!.querySelector<HTMLButtonElement>('[data-role="sheet-copy"]')!.click();
+  };
+  /** Export .md opens the export sheet; its Save .md downloads. */
+  const exportVia = async (glamour: HTMLElement): Promise<void> => {
+    exportBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    sheetEl()!.querySelector<HTMLButtonElement>('[data-role="sheet-save"]')!.click();
+  };
 
   /** The flavours the last copy put on the clipboard, once they have landed. */
   const copied = async (): Promise<{ html: string; text: string }> => {
@@ -675,6 +689,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     vi.spyOn(ToastService, 'error').mockImplementation(() => 'toast');
   });
   afterEach(() => {
+    closeGlamourSheet();
     hosts.forEach(cleanupTestContainer);
     hosts = [];
     vi.restoreAllMocks();
@@ -700,6 +715,22 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(exportBtn(glamour).disabled).toBe(false);
   });
 
+  it('Copy list and Export .md open the export sheet before anything is copied or saved (design 2c)', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    expect(write).not.toHaveBeenCalled();
+    expect(sheetEl()!.textContent).toContain('Glamour list');
+    closeGlamourSheet();
+
+    exportBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    expect(clicked).toHaveLength(0);
+  });
+
   it('copies the worn slots as plain text with no Markdown syntax — names where known, dyes only where dyed — then confirms', async () => {
     // The file names its character; the submission form must never carry it.
     const named = JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: 'Galatine Ashe' });
@@ -707,7 +738,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
 
     const { text, html } = await copied();
@@ -746,16 +777,18 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(clicked).toHaveLength(0);
   });
 
-  it('starts the clipboard write inside the click, before the actions chunk has loaded', async () => {
+  it("starts the clipboard write inside the sheet's Copy click", async () => {
     // WebKit (Safari, every iOS browser) refuses a clipboard write once the
-    // click's activation has lapsed, and a chunk load lapses it. So the write
-    // must already be under way when the click handler returns — asserted
-    // with nothing awaited in between — and the content follows.
+    // click's activation has lapsed. The sheet is loaded before its button
+    // exists, so the write must already be under way when that click's
+    // handler returns — asserted with nothing awaited in between.
     const { container, glamour } = await mount(Promise.resolve(RESOLVED));
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
     copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    sheetEl()!.querySelector<HTMLButtonElement>('[data-role="sheet-copy"]')!.click();
     expect(write).toHaveBeenCalledTimes(1);
 
     expect((await copied()).text).toBe(EXPECTED_TEXT);
@@ -769,7 +802,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
 
     const { html } = await copied();
@@ -784,7 +817,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(exportBtn(glamour).disabled).toBe(false));
 
-    exportBtn(glamour).click();
+    await exportVia(glamour);
 
     await vi.waitFor(() => expect(clicked).toHaveLength(1));
     expect(clicked[0].download).toBe('glamour-equipment.md');
@@ -806,7 +839,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(exportBtn(glamour).disabled).toBe(false));
 
-    exportBtn(glamour).click();
+    await exportVia(glamour);
 
     await vi.waitFor(() =>
       expect(ToastService.error).toHaveBeenCalledWith("Couldn't save the equipment list")
@@ -821,7 +854,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
     block(glamour).querySelector<HTMLButtonElement>('[data-glamour-view="dyes"]')!.click();
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     expect((await copied()).text).toBe(EXPECTED_TEXT);
   });
@@ -839,7 +872,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     const { text } = await copied();
     expect(text).toContain('Body:\nDye 1: #999\nDye 2: Loam Brown\nAcquisition:');
@@ -854,7 +887,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     expect((await copied()).text).toBe('Glamour Items:\nFacewear:\nAcquisition:\n');
   });
@@ -864,7 +897,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     expect((await copied()).text).toContain('Main Hand:\nDye 1: Soot Black\nAcquisition:');
   });
@@ -880,7 +913,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() =>
       expect(ToastService.error).toHaveBeenCalledWith("Couldn't copy the equipment list")
     );

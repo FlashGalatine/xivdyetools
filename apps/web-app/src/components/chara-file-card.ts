@@ -48,6 +48,11 @@ export interface CharaFileCardOptions {
    * the other tool.
    */
   crossLink?: { label: string; onOpen: () => void };
+  /**
+   * A clause the host adds to the privacy line. The Glamour Reader keeps the
+   * player's edited acquisition notes on the device, so it says so (spec G8).
+   */
+  privacyNote?: string;
 }
 
 interface CharaWarning {
@@ -132,11 +137,12 @@ export class CharaFileCard {
     const warnings = charaWarnings(session.resolved);
     if (warnings.length > 0) this.container.appendChild(this.renderWarningsCard(warnings));
     // The privacy promise stays visible under the card (Extractor wording).
+    const note = this.options.privacyNote;
     this.container.appendChild(
       el(
         'div',
         'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-bottom: 11px;',
-        tSwatch('charaHint')
+        note ? `${tSwatch('charaHint')} ${note}` : tSwatch('charaHint')
       )
     );
   }

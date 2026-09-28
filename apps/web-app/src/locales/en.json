@@ -1383,6 +1383,25 @@
       "dated": "DATED",
       "grandCompany": "GRAND COMPANY",
       "noGlamour": "NO GLAMOUR"
+    },
+    "sheet": {
+      "title": "Glamour list",
+      "sub": "GPOSERS format · {n} pieces · edit anything before you copy it",
+      "countFilled": "{n} FILLED",
+      "countEdited": "{n} EDITED",
+      "countBlank": "{n} BLANK",
+      "stateFilled": "FILLED",
+      "stateEdited": "EDITED",
+      "stateBlank": "BLANK",
+      "preview": "WHAT GETS COPIED",
+      "placeholder": "No source found: type one, or leave it blank",
+      "warn": "You picked {name}, which has its own source. Your edited line is still here.",
+      "keep": "Keep mine",
+      "useNew": "Use new source",
+      "privacy": "Edits are kept on this device for this outfit. The character's name is never in the list, and the file itself is never saved.",
+      "reset": "Reset all",
+      "save": "Save .md",
+      "cardNote": "Your edited acquisition notes are kept on this device."
     }
   }
 }

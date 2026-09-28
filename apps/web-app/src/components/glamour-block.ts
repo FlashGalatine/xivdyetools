@@ -59,7 +59,6 @@ import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
 import { closeTwinPicker, showTwinPicker } from '@components/glamour-twin-picker';
 import { STORAGE_PREFIX } from '@shared/constants';
 import { logger } from '@shared/logger';
-import { copyRichTextToClipboard } from '@shared/clipboard';
 import { clearContainer } from '@shared/utils';
 import type { Dye } from '@xivdyetools/types';
 
@@ -699,6 +698,7 @@ export class GlamourBlock {
       const state = this.twinState(model.slot);
       if (state) {
         picked[model.slot] = {
+          itemId: state.picked.itemId,
           names: state.picked.names,
           ...(state.picked.acquisition ? { acquisition: state.picked.acquisition } : {}),
         };
@@ -707,47 +707,28 @@ export class GlamourBlock {
     return { resolved: this.resolved, equipment: this.equipment, picked };
   }
 
-  /**
-   * The list's builders live in `glamour-list-actions`, loaded on demand like
-   * the item-links menu: only a click needs them. A load that fails (offline,
-   * blocked) surfaces through the same toast the action itself would.
-   */
-  private loadListActions(): Promise<typeof import('@components/glamour-list-actions')> {
-    return import('@components/glamour-list-actions');
-  }
-
-  /**
-   * Copy starts the clipboard write HERE, synchronously in the click, and
-   * hands the content over as a promise that lands once the chunk has
-   * loaded. WebKit (Safari, every iOS browser) drops the click's user
-   * activation across that load: a write that waited for the module would
-   * be refused there, and the command fallback, gated the same way, would
-   * fail behind it — a "couldn't copy" toast on every iPhone.
-   */
   private copyList(): void {
-    const source = this.listSource();
-    if (!source) return;
-    const payload = this.loadListActions().then((m) => m.glamourCopyPayload(source));
-    void copyRichTextToClipboard(payload)
-      .then((ok) => {
-        if (ok) ToastService.success(tSwatch('listCopied'));
-        else ToastService.error(tSwatch('listCopyFailed'));
-      })
-      .catch((error: unknown) => {
-        logger.error('[GlamourBlock] Glamour list copy failed', error);
-        ToastService.error(tSwatch('listCopyFailed'));
-      });
+    this.openSheet('copy');
   }
 
-  /** A download needs no activation, so Export can wait for the module whole. */
   private exportList(): void {
+    this.openSheet('save');
+  }
+
+  /**
+   * Copy list and Export .md open the export sheet (design 2c): a preview of
+   * the GPOSERS list with each piece's Acquisition line, editable before
+   * anything is copied or saved. The sheet's own Copy list starts the
+   * clipboard write inside its click, which WebKit requires.
+   */
+  private openSheet(focus: 'copy' | 'save'): void {
     const source = this.listSource();
     if (!source) return;
-    void this.loadListActions()
-      .then((m) => m.exportGlamourList(source))
+    void import('@components/glamour-sheet')
+      .then((m) => m.openGlamourSheet(source, focus))
       .catch((error: unknown) => {
-        logger.error('[GlamourBlock] Glamour list export failed', error);
-        ToastService.error(tSwatch('listExportFailed'));
+        logger.error('[GlamourBlock] Glamour list sheet failed to load', error);
+        ToastService.error(tSwatch(focus === 'copy' ? 'listCopyFailed' : 'listExportFailed'));
       });
   }
 

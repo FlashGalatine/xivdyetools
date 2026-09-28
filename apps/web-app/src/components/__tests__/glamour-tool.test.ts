@@ -90,6 +90,14 @@ describe('GlamourTool', () => {
     ).toBeNull();
   });
 
+  it('says on the file card that edited acquisition notes are kept on this device', async () => {
+    await loadCharaFile(charaFile(FIXTURE));
+    mount();
+    expect(container.textContent).toContain(
+      'Your edited acquisition notes are kept on this device.'
+    );
+  });
+
   it('links the file to the Swatch Matcher', async () => {
     const navigate = vi.spyOn(RouterService, 'navigateTo').mockImplementation(() => {});
     await loadCharaFile(charaFile(FIXTURE));

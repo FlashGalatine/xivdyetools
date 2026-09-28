@@ -1383,6 +1383,25 @@
       "dated": "旧版",
       "grandCompany": "大国防联军",
       "noGlamour": "不可幻化"
+    },
+    "sheet": {
+      "title": "装备列表",
+      "sub": "GPOSERS 格式 · {n}件 · 复制前可随意编辑",
+      "countFilled": "{n} 已填写",
+      "countEdited": "{n} 已编辑",
+      "countBlank": "{n} 空白",
+      "stateFilled": "已填写",
+      "stateEdited": "已编辑",
+      "stateBlank": "空白",
+      "preview": "将复制的内容",
+      "placeholder": "未找到获取方式：可自行填写或留空",
+      "warn": "你选了{name}，它有自己的获取方式。你编辑过的那行仍然保留着。",
+      "keep": "保留我的",
+      "useNew": "使用新的获取方式",
+      "privacy": "编辑内容按这套装扮保存在本设备上。角色名字不会出现在列表中，文件本身也不会被保存。",
+      "reset": "全部重置",
+      "save": "保存 .md",
+      "cardNote": "你编辑过的获取方式备注保存在本设备上。"
     }
   }
 }

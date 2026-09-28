@@ -1,39 +1,30 @@
 /**
- * Copy list / Export .md — the click-time half of the glamour list.
+ * The glamour list's data — what the GPOSERS list says for each worn piece.
  *
- * `glamour-block` draws the two buttons; what a click needs lives here and is
- * loaded on demand, like the item-links menu, because none of this is needed
- * until someone asks for the list. The component hands over what it knows
- * (the resolved file and the equipment answer) as plain data.
- *
- * Copy is the one action the component keeps for itself: the clipboard write
- * has to start inside the click (WebKit drops the user activation across the
- * chunk load), so this module only builds the content and the component
- * hands it to the clipboard as a promise. Export has no such constraint and
- * runs here whole.
+ * `glamour-block` hands over what it knows (the resolved file, the equipment
+ * answer, the twin each row names) as plain data; this builds the template
+ * input and the export sheet's rows (`glamour-sheet`, design 2c). Loaded on
+ * demand with the sheet: nothing here is needed until someone asks for the list.
  *
  * @module components/glamour-list-actions
  */
 
 import type { ResolvedCharaCharacter, CharaGearSlotId } from '@xivdyetools/core';
-import { LanguageService, ToastService } from '@services/index';
+import { LanguageService } from '@services/index';
 import {
   itemNameFor,
   type CharaItemNames,
   type CharaResolveResult,
 } from '@services/chara-resolve-service';
-import type { RichText } from '@shared/clipboard';
-import { downloadTextFile } from '@shared/download-file';
 import { localizedDyeName } from '@shared/dye-name';
-import { logger } from '@shared/logger';
 import {
-  GLAMOUR_MARKDOWN_FILENAME,
-  buildGlamourHtml,
-  buildGlamourMarkdown,
-  buildGlamourPlainText,
+  GLAMOUR_MARKDOWN_SLOTS,
+  glamourSlotLabel,
   type GlamourMarkdownInput,
   type GlamourMarkdownPiece,
+  type GlamourMarkdownSlot,
 } from '@shared/glamour-markdown';
+import { gearHash } from '@shared/acquisition-edits';
 
 /** What the component knows when a button is clicked. */
 export interface GlamourListSource {
@@ -41,10 +32,29 @@ export interface GlamourListSource {
   /** api-worker's answer, or null before it lands / when it never did. */
   equipment: CharaResolveResult | null;
   /**
-   * The twin the Glamour Reader names per slot, when it differs from the
-   * lowest row (and its own acquisition line). Absent = the resolved item.
+   * The twin the Glamour Reader names per slot (it may differ from the lowest
+   * row), with its own acquisition line. Absent = the resolved item.
    */
-  picked?: Partial<Record<CharaGearSlotId, { names: CharaItemNames; acquisition?: string }>>;
+  picked?: Partial<
+    Record<CharaGearSlotId, { itemId: number; names: CharaItemNames; acquisition?: string }>
+  >;
+}
+
+/** One row of the export sheet (design 2c). */
+export interface GlamourSheetPiece {
+  slot: GlamourMarkdownSlot;
+  /** The template's label ("Main Hand") */
+  label: string;
+  name: string | null;
+  /** Dye names in channel order, dyed channels only */
+  dyes: string[];
+  /** The generated GPOSERS line for the named twin; null = none known */
+  generated: string | null;
+  /** The gear's key for a device-kept edit; null when the piece has no item */
+  hash: string | null;
+  /** The twin the list names now */
+  pickedItemId: number | null;
+  pickedName: string | null;
 }
 
 /**
@@ -95,23 +105,66 @@ export function glamourMarkdownInput({
 }
 
 /**
- * What Copy list puts on the clipboard — bold labels as real formatting for
- * Word and Google Docs, the same lines as plain text for everything else.
- * Markdown syntax never reaches the clipboard. The component starts the write
- * and owns the toast; this only builds the two flavours.
+ * The export sheet's rows (design 2c), in the template's order: what the
+ * list says for each worn piece, the generated Acquisition line of the twin
+ * it names, and the gear key a device-kept edit is filed under — slot, the
+ * family's row and the stains, so a twin pick keeps the key (spec G8).
  */
-export function glamourCopyPayload(source: GlamourListSource): RichText {
+export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece[] {
+  const { resolved, equipment, picked } = source;
+  const lang = LanguageService.getCurrentLocale();
   const input = glamourMarkdownInput(source);
-  return { html: buildGlamourHtml(input), text: buildGlamourPlainText(input) };
+  const pieces: GlamourSheetPiece[] = [];
+  for (const slot of GLAMOUR_MARKDOWN_SLOTS) {
+    const piece = input[slot];
+    if (!piece) continue;
+    const stains = resolved.gearDyes
+      .filter((gear) => gear.slot === slot)
+      .sort((a, b) => a.channel - b.channel)
+      .map((gear) => gear.stainId);
+    let family: number | null;
+    let pickedItemId: number | null;
+    let pickedName: string | null = null;
+    let generated: string | null = null;
+    if (slot === 'Facewear') {
+      const glasses = equipment?.glasses ?? null;
+      family = glasses?.id ?? null;
+      pickedItemId = family;
+    } else {
+      const item = equipment?.items[slot as CharaGearSlotId] ?? null;
+      const pick = picked?.[slot as CharaGearSlotId];
+      family = item?.itemId ?? null;
+      pickedItemId = pick?.itemId ?? item?.itemId ?? null;
+      pickedName = pick
+        ? itemNameFor(pick.names, lang)
+        : item
+          ? itemNameFor(item.names, lang)
+          : null;
+      generated = (pick ? pick.acquisition : item?.acquisition) ?? null;
+    }
+    pieces.push({
+      slot,
+      label: glamourSlotLabel(slot),
+      name: piece.name ?? null,
+      dyes: [piece.dye1, piece.dye2].filter((d): d is string => Boolean(d)),
+      generated,
+      hash: family !== null ? gearHash(slot, family, stains) : null,
+      pickedItemId,
+      pickedName,
+    });
+  }
+  return pieces;
 }
 
-/** Save the list as `glamour-equipment.md`; a failure says so rather than staying silent. */
-export function exportGlamourList(source: GlamourListSource): void {
-  try {
-    const markdown = buildGlamourMarkdown(glamourMarkdownInput(source));
-    downloadTextFile(markdown, GLAMOUR_MARKDOWN_FILENAME, 'text/markdown');
-  } catch (error) {
-    logger.error('[GlamourList] Export failed', error);
-    ToastService.error(LanguageService.t('swatch.listExportFailed'));
+/** The list with each piece's Acquisition line filled in (the sheet's text). */
+export function glamourInputWithAcquisition(
+  source: GlamourListSource,
+  acquisition: Partial<Record<GlamourMarkdownSlot, string>>
+): GlamourMarkdownInput {
+  const input = glamourMarkdownInput(source);
+  for (const [slot, line] of Object.entries(acquisition) as Array<[GlamourMarkdownSlot, string]>) {
+    const piece = input[slot];
+    if (piece) piece.acquisition = line;
   }
+  return input;
 }

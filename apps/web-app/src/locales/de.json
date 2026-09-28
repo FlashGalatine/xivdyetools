@@ -1383,6 +1383,25 @@
       "dated": "ALT",
       "grandCompany": "STAATL. GESELLSCHAFT",
       "noGlamour": "KEINE PROJEKTION"
+    },
+    "sheet": {
+      "title": "Ausrüstungsliste",
+      "sub": "GPOSERS-Format · {n} Teile · bearbeite alles, bevor du kopierst",
+      "countFilled": "{n} AUSGEFÜLLT",
+      "countEdited": "{n} BEARBEITET",
+      "countBlank": "{n} LEER",
+      "stateFilled": "AUSGEFÜLLT",
+      "stateEdited": "BEARBEITET",
+      "stateBlank": "LEER",
+      "preview": "DAS WIRD KOPIERT",
+      "placeholder": "Keine Quelle gefunden: eintragen oder leer lassen",
+      "warn": "Du hast {name} gewählt, das eine eigene Quelle hat. Deine bearbeitete Zeile ist noch da.",
+      "keep": "Meine behalten",
+      "useNew": "Neue Quelle nehmen",
+      "privacy": "Bearbeitungen werden für dieses Outfit auf diesem Gerät gespeichert. Der Name des Charakters steht nie in der Liste, und die Datei selbst wird nie gespeichert.",
+      "reset": "Alles zurücksetzen",
+      "save": ".md speichern",
+      "cardNote": "Deine bearbeiteten Bezugsquellen werden auf diesem Gerät gespeichert."
     }
   }
 }

@@ -1383,6 +1383,25 @@
       "dated": "구형",
       "grandCompany": "총사령부",
       "noGlamour": "투영 불가"
+    },
+    "sheet": {
+      "title": "장비 목록",
+      "sub": "GPOSERS 형식 · {n}개 · 복사하기 전에 무엇이든 수정하세요",
+      "countFilled": "{n} 입력됨",
+      "countEdited": "{n} 수정됨",
+      "countBlank": "{n} 빈칸",
+      "stateFilled": "입력됨",
+      "stateEdited": "수정됨",
+      "stateBlank": "빈칸",
+      "preview": "복사될 내용",
+      "placeholder": "획득처를 찾지 못했습니다: 직접 입력하거나 비워 두세요",
+      "warn": "{name}을(를) 골랐습니다. 이 아이템은 획득처가 다릅니다. 수정한 줄은 그대로 남아 있습니다.",
+      "keep": "내 것 유지",
+      "useNew": "새 획득처 사용",
+      "privacy": "수정 내용은 이 기기에 이 복장별로 저장됩니다. 캐릭터 이름은 목록에 들어가지 않으며, 파일 자체도 저장되지 않습니다.",
+      "reset": "모두 초기화",
+      "save": ".md 저장",
+      "cardNote": "수정한 획득처 메모는 이 기기에 저장됩니다."
     }
   }
 }
