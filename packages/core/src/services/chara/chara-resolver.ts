@@ -202,7 +202,8 @@ function uncrossEyeFloats(
  * Slots whose stored float is a shading value, not the creator swatch, so it
  * cannot say whether the file is OFF GRID. `human.cmp` keeps both per clan
  * and gender (`Skin`/`Hair` for the shader, `SkinInterface`/`HairInterface`
- * for the creator — Penumbra.GameData `CmpData`); the sheets are the latter. In the 2026-09-28 corpus the float is identical for a given
+ * for the creator — Penumbra.GameData `CmpData`); the sheets are the latter.
+ * In the 2026-09-28 corpus the float is identical for a given
  * tribe/gender/index in every file, yet equals the swatch for no skin entry
  * (0 of 338) and almost no hair entry past index 31 — and the creator itself
  * confirms the sheet: Raen ♀ hair 42 reads RGB 255,220,152 (#FFDC98, the
