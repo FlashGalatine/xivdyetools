@@ -2,7 +2,7 @@
  * XIV Dye Tools v2.1.0 - Keyboard Service
  *
  * Centralized keyboard shortcut management
- * Handles global shortcuts: 1-9 (tools), Shift+T (theme), Shift+L (language),
+ * Handles global shortcuts: 0-9 (tools), Shift+T (theme), Shift+L (language),
  * Shift+S (share the active tool), ? (help)
  *
  * @module services/keyboard-service

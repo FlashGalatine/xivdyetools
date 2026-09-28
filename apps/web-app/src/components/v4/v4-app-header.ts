@@ -9,14 +9,15 @@
  * The switcher has two shapes, chosen by viewport (Harmony Tool Directions,
  * 2B + 3A, confirmed 16 Aug):
  *
- * - **Desktop (> 768px) — the 3A rail.** Nine 38px chips in the bar, one
+ * - **Desktop (> 768px) — the 3A rail.** Ten 38px chips in the bar, one
  *   click each. The active chip is accent-filled and shows its short name;
- *   the other eight are icon-only (16px glyph, dim ink) until the pointer or
+ *   the other nine are icon-only (16px glyph, dim ink) until the pointer or
  *   keyboard focus arrives, when the chip widens and the name unrolls inside
  *   it (max-width 0 → 80px, 190ms). Icon-first is what keeps the wordmark in
- *   the bar: the rail rests at ~406px and a tenth tool costs 37px, not 86.
+ *   the bar: the nine-chip rail rested at ~406px, and the tenth tool cost
+ *   37px, not 86.
  * - **Mobile (≤ 768px) — the 2B title-menu, unchanged.** Tapping the current
- *   tool opens a two-column menu of all nine tools with one-line
+ *   tool opens a two-column menu of all ten tools with one-line
  *   descriptions; nothing is spent on permanent chrome and the list can grow.
  *
  * Both are rendered; a media query decides which is displayed, so resizing
@@ -148,7 +149,7 @@ export class V4AppHeader extends BaseLitComponent {
         user-select: none;
       }
 
-      /* ---- 3A desktop rail: nine icon-first chips ---------------------- */
+      /* ---- 3A desktop rail: ten icon-first chips ----------------------- */
       .tool-rail {
         /* Desktop only — the media query below turns it on */
         display: none;

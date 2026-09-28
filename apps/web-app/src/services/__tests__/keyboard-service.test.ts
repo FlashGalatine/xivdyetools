@@ -92,7 +92,7 @@ describe('KeyboardService', () => {
   // Tool Navigation Tests
   // ============================================================================
 
-  describe('Tool Navigation (1-9 keys)', () => {
+  describe('Tool Navigation (0-9 keys)', () => {
     beforeEach(() => {
       KeyboardService.initialize();
       vi.mocked(RouterService.navigateTo).mockClear();

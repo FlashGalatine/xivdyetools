@@ -90,6 +90,24 @@ describe('GlamourTool', () => {
     ).toBeNull();
   });
 
+  it('leaving the reader closes its export sheet rather than leaving it over the next tool', async () => {
+    await loadCharaFile(charaFile(FIXTURE));
+    mount();
+    const copy = () =>
+      container.querySelector<HTMLButtonElement>(
+        '[data-role="reader-actions"] [data-role="copy-list"]'
+      );
+    const sheet = () => document.querySelector('[data-role="glamour-sheet"]');
+    await vi.waitFor(() => expect(copy()?.disabled).toBe(false));
+    copy()!.click();
+    await vi.waitFor(() => expect(sheet()).not.toBeNull());
+
+    tool!.destroy();
+    tool = null;
+
+    expect(sheet()).toBeNull();
+  });
+
   it('says so when a loaded file wears no gear, and stops saying it when one does', async () => {
     const bare = JSON.stringify({ Tribe: 'Midlander', Gender: 'Feminine', REyeColor: 42 });
     await loadCharaFile(charaFile(bare));

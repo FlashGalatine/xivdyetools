@@ -117,6 +117,21 @@ function closeItemLinksMenuIfLoaded(): void {
   itemLinksMenu?.closeItemLinksMenu();
 }
 
+/**
+ * The export sheet, once Copy list or Export .md has loaded it. It lives in
+ * document.body as a modal, so the block closes it on destroy — left open, it
+ * sat over the next tool with its key handler still live.
+ */
+let glamourSheet: typeof import('@components/glamour-sheet') | null = null;
+/** Invalidates a sheet open still waiting on its chunk. */
+let sheetOpenToken = 0;
+
+/** Close the export sheet if it was ever loaded, and retire any open in flight. */
+function closeGlamourSheetIfLoaded(): void {
+  sheetOpenToken += 1;
+  glamourSheet?.closeGlamourSheet();
+}
+
 function readShowAllPieces(): boolean {
   return StorageService.getItem<string>(SHOW_ALL_KEY) === 'on';
 }
@@ -267,11 +282,12 @@ export class GlamourBlock {
     this.unsubscribe = null;
     this.resolveAbort?.abort();
     this.resolveAbort = null;
-    // The menu and the twin picker live in document.body, so nothing here
-    // would remove them — they would float over the next tool, anchored to a
-    // row that is gone.
+    // The menu, the twin picker and the export sheet live in document.body,
+    // so nothing here would remove them — they would float over the next
+    // tool, the first two anchored to a row that is gone.
     closeItemLinksMenuIfLoaded();
     closeTwinPicker();
+    closeGlamourSheetIfLoaded();
     clearContainer(this.container);
     if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
     this.resolved = null;
@@ -680,7 +696,11 @@ export class GlamourBlock {
    */
   private renderListActions(): HTMLElement[] {
     const resolving = this.resolveState === 'resolving';
-    const make = (role: string, label: string, onClick: () => void): HTMLElement => {
+    const make = (
+      role: string,
+      label: string,
+      onClick: (button: HTMLElement) => void
+    ): HTMLElement => {
       const btn = el(
         'button',
         `min-height: 30px; padding: 0 10px; border-radius: 8px; font-family: ${SANS}; font-size: 11px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: ${
@@ -692,12 +712,12 @@ export class GlamourBlock {
       button.type = 'button';
       button.disabled = resolving;
       btn.dataset.role = role;
-      btn.addEventListener('click', onClick);
+      btn.addEventListener('click', () => onClick(btn));
       return btn;
     };
     return [
-      make('copy-list', tSwatch('copyList'), () => this.copyList()),
-      make('export-markdown', tSwatch('exportMarkdown'), () => this.exportList()),
+      make('copy-list', tSwatch('copyList'), (btn) => this.openSheet('copy', btn)),
+      make('export-markdown', tSwatch('exportMarkdown'), (btn) => this.openSheet('save', btn)),
     ];
   }
 
@@ -721,25 +741,26 @@ export class GlamourBlock {
     return { resolved: this.resolved, equipment: this.equipment, picked };
   }
 
-  private copyList(): void {
-    this.openSheet('copy');
-  }
-
-  private exportList(): void {
-    this.openSheet('save');
-  }
-
   /**
    * Copy list and Export .md open the export sheet (design 2c): a preview of
    * the GPOSERS list with each piece's Acquisition line, editable before
    * anything is copied or saved. The sheet's own Copy list starts the
-   * clipboard write inside its click, which WebKit requires.
+   * clipboard write inside its click, which WebKit requires. `opener` gets
+   * focus back on close — handed over, because a click does not focus a
+   * button in Safari, and the shell's shadow root hides it from
+   * document.activeElement everywhere.
    */
-  private openSheet(focus: 'copy' | 'save'): void {
+  private openSheet(focus: 'copy' | 'save', opener: HTMLElement): void {
     const source = this.listSource();
     if (!source) return;
+    const token = ++sheetOpenToken;
     void import('@components/glamour-sheet')
-      .then((m) => m.openGlamourSheet(source, focus))
+      .then((m) => {
+        glamourSheet = m;
+        // Destroyed (or asked again) while the chunk loaded: this open is stale
+        if (token !== sheetOpenToken) return;
+        m.openGlamourSheet(source, focus, opener);
+      })
       .catch((error: unknown) => {
         logger.error('[GlamourBlock] Glamour list sheet failed to load', error);
         ToastService.error(tSwatch(focus === 'copy' ? 'listCopyFailed' : 'listExportFailed'));
@@ -1220,13 +1241,15 @@ export class GlamourBlock {
         tile.dataset.slot = slot;
         if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
         const slotLabel = this.gearSlotLabel(slot).toUpperCase();
-        tile.title = item ? `${slotLabel} — ${itemNameFor(item.names, lang)}` : slotLabel;
         // This lens names the dye, not the piece, so the carrier tile is the
         // only handle on the item — it opens the same menu the Pieces lens does.
+        // Title and menu both name the twin the list names (the menu's
+        // target), never the family's lowest row, so the links open the item
+        // the tile says.
         const carrierTarget = this.itemLinkTarget(slot);
-        if (carrierTarget && item) {
-          this.attachItemLinks(tile, carrierTarget, itemNameFor(item.names, lang));
-        }
+        const carrierName = carrierTarget ? itemNameFor(carrierTarget.names, lang) : null;
+        tile.title = carrierName ? `${slotLabel} — ${carrierName}` : slotLabel;
+        if (carrierTarget && carrierName) this.attachItemLinks(tile, carrierTarget, carrierName);
         right.appendChild(tile);
       }
       right.appendChild(

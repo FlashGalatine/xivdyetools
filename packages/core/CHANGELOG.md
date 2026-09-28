@@ -20,6 +20,8 @@ The Glamour Reader's rules for identical items. MINOR: new exports; the prototyp
   perfectly identical dyeable version"), then one any Grand Company can wear, then not Dated, then
   more dye channels, then the lowest row — and how the row reads (fixed by a twin / no fix / a
   free choice). Shared by the web app's Glamour Reader and the `/glamour` bot card.
+  `defaultCharaTwin([])` throws a `RangeError` instead of returning `undefined` as a
+  `CharaTwin`; `charaTwinsOf` never returns an empty list.
 - **`chara-gposers`** — the GPOSERS submission form as data (`gposersGroups`, `GPOSERS_SLOTS`,
   `gposersSlotLabel`, `gposersSameRings`, the header and `Acquisition:` label): which worn slots,
   in which order, with which lines; identical rings once as `Rings:`; every value one line. The

@@ -375,5 +375,23 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
 
       expect(column(el)!.hasAttribute('collapsed')).toBe(true);
     });
+
+    it('leaves no scrim over a tool without an Options panel when the route changes under an open one', async () => {
+      stubViewport(true);
+      const el = await mountShell('swatch');
+      optionsFab(el).click();
+      await el.updateComplete;
+      const visibleScrims = () =>
+        el.shadowRoot!.querySelectorAll('.v4-drawer-overlay.visible').length;
+      expect(visibleScrims()).toBe(1);
+
+      // Back/Forward (or any navigateTo) reaches the shell as this attribute,
+      // not as the app bar's tool-select, so nothing closes the panel first
+      el.setAttribute('active-tool', 'glamour');
+      await el.updateComplete;
+
+      expect(column(el)).toBeNull();
+      expect(visibleScrims()).toBe(0);
+    });
   });
 });

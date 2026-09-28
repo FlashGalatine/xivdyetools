@@ -1,6 +1,6 @@
 /* XIV Dye Tools 5.0 - Rules that must reach component markup wherever it mounts
  *
- * The nine tools are appended INSIDE V4LayoutShell's shadow root
+ * The ten tools are appended INSIDE V4LayoutShell's shadow root
  * (v4-layout.ts), where document stylesheets do not apply. The same
  * BaseComponent classes also mount in light-DOM modals (preset-edit-form ->
  * dye-selector -> dye-grid, the error boundary of any component). So the rules

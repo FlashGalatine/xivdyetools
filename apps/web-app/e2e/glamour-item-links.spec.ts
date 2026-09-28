@@ -1,3 +1,8 @@
+/**
+ * The "Open in…" item-links menu, end to end, on the Glamour Reader's rows —
+ * the only place DYES ON THIS GLAMOUR (GlamourBlock) is mounted since 5.13.0
+ * moved it out of the Swatch Matcher.
+ */
 import { test, expect } from './fixtures/coverage';
 import { gotoTool, seedStartupStorage } from './fixtures/navigation';
 
@@ -30,11 +35,13 @@ const equipment = {
 
 test.beforeEach(async ({ page }) => {
   await seedStartupStorage(page);
+  // Show all is what gives the facewear its row; the block still reads the
+  // key it had in the Swatch Matcher, so the stored setting carried over.
   await page.addInitScript(() => localStorage.setItem('xivdyetools_swatch_glamour_show_all', 'on'));
   await page.route('**/v1/chara/resolve', (route) =>
     route.fulfill({ json: { success: true, data: equipment } })
   );
-  await gotoTool(page, 'swatch');
+  await gotoTool(page, 'glamour');
   await page.locator('input[type="file"][accept*=".chara"]').setInputFiles({
     name: 'test.chara',
     mimeType: 'application/json',

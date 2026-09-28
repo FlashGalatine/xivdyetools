@@ -112,7 +112,7 @@ Facewear colours are **not dyes**; they live separately in `facewear_colors.json
 
 | Section | Description |
 |---------|-------------|
-| [Web App Guides](user-guides/web-app/getting-started.md) | Step-by-step guides for all 9 web tools |
+| [Web App Guides](user-guides/web-app/getting-started.md) | Step-by-step guides for all 10 web tools |
 | [Discord Bot Guides](user-guides/discord-bot/getting-started.md) | Command reference and usage examples |
 | [Public API](user-guides/public-api.md) | Using `data.xivdyetools.app` from your own project |
 
@@ -146,7 +146,7 @@ their `README.md` in the monorepo.
 
 | Project | Type | Purpose |
 |---------|------|---------|
-| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | Interactive web toolkit with 9 colour tools |
+| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | Interactive web toolkit with 10 colour tools |
 | [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | Discord bot, 17 registered slash commands |
 | [xivdyetools-image-worker](../apps/image-worker/README.md) | CF Worker | Photon host — `POST /extract` (pixels) + `POST /thumbnail` (WebP); reachable only via service bindings (discord-worker, presets-api) |
 | [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | Community preset moderation bot |
@@ -298,7 +298,7 @@ filter category was retired by this consolidation.
 - **March 2026** — core v2.0.0 removed ~35 deprecated type re-exports (import from
   `@xivdyetools/types` instead).
 - **January 2026** — Web App v4.0.0 and Discord Bot v4.0.0: tool renaming, Lit.js web
-  components, 10 tools.
+  components, 9 tools.
 
 See [Version Matrix](versions.md) for detailed version history and
 [Feature Roadmap](specifications/feature-roadmap.md) for planned features.

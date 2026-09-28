@@ -8,11 +8,11 @@
  * lowest row, the named alternates, and the in-game rules grouped by rule
  * set); this module decides which twin a list names and how a row reads.
  *
- * Default name: the first twin that passes the in-game check for this file —
- * it takes the file's dyes, can be a glamour, and allows this tribe and
- * gender — preferring the most dye channels (GPOSERS reminders, March 2026:
- * "use a perfectly identical dyeable version instead of an undyeable one"),
- * then a twin that is not Dated, then one any Grand Company can wear, then
+ * Default name: a twin that passes the in-game check for this file — it takes
+ * the file's dyes, can be a glamour, and allows this tribe and gender —
+ * preferring a dyeable one (GPOSERS reminders, March 2026: "use a perfectly
+ * identical dyeable version instead of an undyeable one"), then one any Grand
+ * Company can wear, then one that is not Dated, then more dye channels, then
  * the lowest row. When none passes, the lowest row. Only twins the answer
  * NAMES are candidates: a list can't print an item it has no name for.
  *
@@ -95,10 +95,15 @@ export function charaTwinsOf<N extends { en: string }>(
  * twin every player can wear beats an extra channel the file doesn't use,
  * while a dyeable twin still beats an undyeable one (GPOSERS: "use a
  * perfectly identical dyeable version").
+ *
+ * @throws {RangeError} for an empty list — there is no twin to name.
+ * `charaTwinsOf` never returns one: the named item is always a member.
  */
 export function defaultCharaTwin<N extends { en: string }>(
   twins: ReadonlyArray<CharaTwin<N>>,
 ): CharaTwin<N> {
+  const lowest = twins[0];
+  if (!lowest) throw new RangeError('defaultCharaTwin: no twins to choose from');
   const passing = twins.filter((t) => t.rules !== null && t.problems.length === 0);
   const channels = (t: CharaTwin<N>): number => t.rules?.dyeCount ?? 0;
   const locked = (t: CharaTwin<N>): number => Number((t.rules?.grandCompany ?? 0) > 0);
@@ -110,7 +115,7 @@ export function defaultCharaTwin<N extends { en: string }>(
       channels(b) - channels(a) ||
       a.itemId - b.itemId,
   );
-  return best[0] ?? twins[0];
+  return best[0] ?? lowest;
 }
 
 /**
