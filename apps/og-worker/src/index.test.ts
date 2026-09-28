@@ -510,11 +510,30 @@ describe('per-tool default OG images', () => {
       'extractor',
       'presets',
       'budget',
+      'glamour',
     ]) {
       const res = await app.request(`/og/${tool}/default.png`, {}, TEST_ENV);
       expect(res.status, tool).toBe(200);
       expect(res.headers.get('Content-Type')).toBe('image/png');
     }
+  });
+
+  it('the glamour card carries its glyph and no method tag: the reader measures no color distance', async () => {
+    rendered.length = 0;
+    const res = await app.request('/og/glamour/default.png', {}, TEST_ENV);
+    expect(res.status).toBe(200);
+    const svg = rendered.at(-1)!;
+    expect(svg).toContain('/GLAMOUR');
+    expect(svg).toContain('xivdyetools.app/glamour');
+    expect(svg).not.toContain('ΔE2000');
+  });
+
+  it('a crawler on /glamour gets the glamour default card', async () => {
+    const res = await app.request('/glamour/', { headers: { 'User-Agent': CRAWLER_UA } }, TEST_ENV);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('https://og.xivdyetools.app/og/glamour/default.png');
+    expect(html).toContain('Glamour Reader');
   });
 
   it('404s an unknown tool default', async () => {

@@ -91,6 +91,30 @@ describe('wrangler.toml environments', () => {
     expect(toml).toMatch(/^\[env\.production\][\s\S]*?^routes = \[/m);
   });
 
+  /**
+   * A crawler only reaches the worker on a routed path. A tool missing here
+   * unfurls as the site root in both environments however complete its card
+   * code is — the Glamour Reader (2026-09-27) is the tenth.
+   */
+  it('routes every tool page in both environments', () => {
+    const tools = [
+      'harmony',
+      'gradient',
+      'mixer',
+      'swatch',
+      'comparison',
+      'accessibility',
+      'extractor',
+      'presets',
+      'budget',
+      'glamour',
+    ];
+    for (const tool of tools) {
+      expect(toml, `beta ${tool}`).toContain(`"beta.xivdyetools.app/${tool}/*"`);
+      expect(toml, `production ${tool}`).toContain(`"xivdyetools.app/${tool}/*"`);
+    }
+  });
+
   it('never points a production route at a beta hostname', () => {
     const productionBlock = toml.slice(toml.indexOf('[env.production]'));
     const productionRoutes = productionBlock.slice(0, productionBlock.indexOf(']'));

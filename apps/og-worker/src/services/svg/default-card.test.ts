@@ -3,6 +3,7 @@
  * takes no tile.
  */
 import { describe, it, expect } from 'vitest';
+import { textWidth } from '@xivdyetools/svg';
 import { generateDefaultCard, DEFAULT_DECK } from './default-card';
 import { MARK_STRIPES } from './tokens';
 import { BAND_FRAMES } from './band';
@@ -66,10 +67,77 @@ describe('generateDefaultCard (2a)', () => {
     expect(svg).toContain('xivdyetools.app/harmony');
   });
 
-  it('DEFAULT_DECK names a glyph for all nine tools', () => {
-    expect(Object.keys(DEFAULT_DECK)).toHaveLength(9);
+  it('DEFAULT_DECK names a glyph for all ten tools', () => {
+    expect(Object.keys(DEFAULT_DECK)).toHaveLength(10);
+    expect(DEFAULT_DECK.glamour.glyphName).toBe('glamour');
     for (const [name, entry] of Object.entries(DEFAULT_DECK)) {
       expect(entry.glyphName, name).toBeTruthy();
     }
+  });
+});
+
+/** The deck's one-liner lines: 12 px in the muted grey, at the deck's left margin. */
+const subLines = (svg: string): Array<{ y: number; text: string }> =>
+  [
+    ...svg.matchAll(
+      /<text x="13" y="([\d.]+)" fill="#9C9CA2" font-size="12" font-family="[^"]*">([^<]*)<\/text>/g
+    ),
+  ].map((m) => ({ y: Number(m[1]), text: m[2] }));
+
+/** The one-liner's usable width: the 400 frame less the 13 px margins. */
+const LINE_W = BAND_FRAMES.discord.width - 26;
+
+describe('the deck one-liner wraps (2a deck; the design sets it with text-wrap)', () => {
+  const GLAMOUR =
+    'Load a character file and list every piece it wears, with its dyes and where to get it.';
+  const LONG = Array(12).fill('Load a character file and list every piece.').join(' ');
+
+  it('a one-liner wider than the card wraps onto a second line inside the card', () => {
+    const svg = generateDefaultCard({ ...tool, sub: GLAMOUR });
+    const lines = subLines(svg);
+
+    expect(lines).toHaveLength(2);
+    expect(lines.map((l) => l.text).join(' ')).toBe(GLAMOUR);
+    for (const l of lines) expect(textWidth(l.text, 12, 'body'), l.text).toBeLessThanOrEqual(LINE_W);
+    // Every line sits above the 26 px footer
+    const footerTop = BAND_FRAMES.discord.height - 26;
+    for (const l of lines) expect(l.y).toBeLessThan(footerTop - 4);
+  });
+
+  it('a one-liner that fits keeps one line and the 54 px deck', () => {
+    const svg = generateDefaultCard({ ...tool, sub: 'Color tools for FFXIV dyes.' });
+    expect(subLines(svg)).toHaveLength(1);
+    // The deck rule: 350 − 26 footer − 54 deck
+    expect(svg).toContain('y1="270"');
+  });
+
+  it('breaks a CJK one-liner that has no spaces, losing no character', () => {
+    const zh = '载入角色文件，列出穿戴的每件装备及其染剂与获取方式。载入角色文件，列出穿戴的每件装备及其染剂与获取方式。';
+    const lines = subLines(generateDefaultCard({ ...tool, sub: zh }));
+
+    expect(lines.length).toBeGreaterThan(1);
+    expect(lines.map((l) => l.text).join('')).toBe(zh);
+    for (const l of lines) expect(textWidth(l.text, 12, 'body')).toBeLessThanOrEqual(LINE_W);
+  });
+
+  it('stops at three lines, the last ending in an ellipsis', () => {
+    const lines = subLines(generateDefaultCard({ ...tool, sub: LONG }));
+
+    expect(lines).toHaveLength(3);
+    expect(lines[2].text.endsWith('…')).toBe(true);
+    expect(textWidth(lines[2].text, 12, 'body')).toBeLessThanOrEqual(LINE_W);
+  });
+
+  it('keeps the tile whole between the header and a grown deck', () => {
+    const svg = generateDefaultCard({ ...tool, sub: LONG });
+    // The deck rule is the one between the header's (30) and the footer's
+    const footerTop = BAND_FRAMES.discord.height - 26;
+    const rule = [...svg.matchAll(/<line x1="0" y1="([\d.]+)"/g)]
+      .map((m) => Number(m[1]))
+      .find((y) => y > 30 && y < footerTop)!;
+    const tile = /<rect x="[\d.]+" y="([\d.]+)" width="168" height="168"/.exec(svg)!;
+
+    expect(Number(tile[1])).toBeGreaterThanOrEqual(30);
+    expect(Number(tile[1]) + 168).toBeLessThanOrEqual(rule);
   });
 });

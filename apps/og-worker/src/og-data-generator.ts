@@ -925,6 +925,11 @@ export async function generateOGDataForTool(
       return generateBudgetOGData(params, env, locale);
     }
 
+    case 'glamour':
+      // No share grammar: a glamour lives in a .chara file that never leaves
+      // the browser, so every link is the default card (design turn 4).
+      return toolDefault('glamour', env, locale, embed('glamour.descriptionDefault', locale));
+
     default: {
       // Fallback for unknown tools
       return {
