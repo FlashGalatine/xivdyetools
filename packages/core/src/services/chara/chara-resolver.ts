@@ -161,10 +161,12 @@ function compositeHex(topHex: string, baseHex: string, alpha: number): string {
 
 /**
  * Eye floats pair with the index keys by name, but 4 of 157 heterochromia
- * files in the 2026-09-28 corpus store them crossed — one player's files go
- * both ways, so it is per file, not per producer. Swap the two floats only
- * when each lands on the OTHER eye's palette entry and neither on its own: a
- * custom colour or a half match stays where the file put it.
+ * files in the 2026-09-28 corpus store them crossed. All four are Brio's,
+ * whose shader struct called the lower-offset eye colour `LeftEyeColor` until
+ * its patch 7.5 update (2026-04-29) and `RightEyeColor` since, and a Brio file
+ * carries no version to tell the two apart. Swap the two floats only when each
+ * lands on the OTHER eye's palette entry and neither on its own: a custom
+ * colour or a half match stays where the file put it.
  */
 function uncrossEyeFloats(
   slots: CharaColorSlotRaw[],
@@ -197,9 +199,10 @@ function uncrossEyeFloats(
 }
 
 /**
- * Slots whose stored float is a shading value the game derives from the
- * palette entry, not the creator swatch, so it cannot say whether the file
- * is OFF GRID. In the 2026-09-28 corpus the float is identical for a given
+ * Slots whose stored float is a shading value, not the creator swatch, so it
+ * cannot say whether the file is OFF GRID. `human.cmp` keeps both per clan
+ * and gender (`Skin`/`Hair` for the shader, `SkinInterface`/`HairInterface`
+ * for the creator — Penumbra.GameData `CmpData`); the sheets are the latter. In the 2026-09-28 corpus the float is identical for a given
  * tribe/gender/index in every file, yet equals the swatch for no skin entry
  * (0 of 338) and almost no hair entry past index 31 — and the creator itself
  * confirms the sheet: Raen ♀ hair 42 reads RGB 255,220,152 (#FFDC98, the

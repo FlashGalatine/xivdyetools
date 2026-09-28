@@ -11,9 +11,10 @@
  * - **Eye keys pair by name**: `LEyeColor` + `LeftEyeColor` is the left eye,
  *   `REyeColor` + `RightEyeColor` the right. 153 of 157 heterochromia files
  *   pair this way, all 143 Anamnesis ones among them. The 10A rule had them
- *   crossed, read off a file that is one of the 4 exceptions — and crossing
- *   is per file (one player's files go both ways), so the resolver un-crosses
- *   a file only when each float lands on the OTHER eye's palette entry.
+ *   crossed, read off a file that is one of the 4 exceptions: Brio files
+ *   saved before its patch 7.5 update, which named the two eye fields the
+ *   other way round. A Brio file carries no version, so the resolver
+ *   un-crosses a file only when each float lands on the OTHER eye's entry.
  *   Never swap on a guess: 16% of files are heterochromia.
  * - **Extended floats are the colour squared** — the game's gamma-2.0 linear
  *   light, not the sRGB curve: square-root before use. Re-measured on 1,142

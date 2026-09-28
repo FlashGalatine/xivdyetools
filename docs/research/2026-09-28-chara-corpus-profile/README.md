@@ -24,9 +24,10 @@ distinct files). Producers, by `TypeName`:
 | `Ktisis Character File` | 25 | none | never written |
 
 The files with no `TypeName` also leave `Author`, `Description`, `Version`, `Tags` and
-`Base64Image` null and carry the Dawntrail-era `SkinGloss` / `HairGloss` / `MuscleTone`, so they
-are recent — probably Brio, not the "old Anamnesis" the test suite named them. They are the only
-producer whose floats can count as live.
+`Base64Image` null and carry the Dawntrail-era `SkinGloss` / `HairGloss` / `MuscleTone`. They are
+**Brio's**, not the "old Anamnesis" the test suite named them: Brio's `AnamnesisCharaFile`
+writes no `TypeName` and computes `IsExtendedAppearanceValid` from whether any shader value is
+present. They are the only producer whose floats can count as live.
 
 Method: the corpus was run through core's own `parseCharaFile` and `resolveCharaColors` (from
 source, under `tsx`), and each float compared with the palette entry its index names, in
@@ -63,10 +64,13 @@ off the data:
 | `REyeColor` ↔ `LeftEyeColor` (crossed) | 4 (all with no `TypeName`, all marked valid) |
 
 Crossing is per file: one player's files go both ways ("[Reporter]" crossed; "[Default]",
-"[Wuxia]" and "[Halloween]" by name). The fixture the 10A rule was read from,
-`duskwight-heterochromia.chara`, is one of the four. The parser now pairs by name, and the
-resolver swaps a file's two eye floats only when each lands on the *other* eye's palette entry and
-neither on its own.
+"[Wuxia]" and "[Halloween]" by name). Brio's history explains it. Its shader-parameter struct
+(`Brio/Game/Actor/Interop/BrioHuman.cs`) named the lower-offset eye color `LeftEyeColor` until
+its patch 7.5 update (commit `5bec2d0`, 2026-04-29) and `RightEyeColor` from then on, so a Brio
+file saved before that update stores the two eye floats swapped. The fixture the 10A rule was
+read from, `duskwight-heterochromia.chara`, is one of those. A Brio file carries no version, so
+the parser pairs by name and the resolver swaps a file's two eye floats only when each lands on
+the *other* eye's palette entry and neither on its own.
 
 ### The limbal/tattoo float carries a factor of 0.643
 
@@ -119,7 +123,11 @@ swatches about 1.086× brighter than their values (clipping the brightest cells 
 darkest), and with that divided out its hair grid matches our Au Ra hair sheet to within 0–2
 levels in the mid-tone columns of all 24 rows. (Raen ♀, Raen ♂ and Xaela ♀ share one hair sheet.)
 
-So the sheets hold the swatch and the game stores a shading value derived from it. Core 5.6.0
+So the sheets hold the swatch and the game stores a shading value. The game files say why:
+`human.cmp` keeps two palettes for each clan and gender, `Skin`/`Hair` for the shader and
+`SkinInterface`/`HairInterface` for the creator (Penumbra.GameData `CmpData`; Ktisis, Anamnesis
+and Brio all read the interface half for skin and hair), and the `.chara` floats are the shader
+half, squared (Glamourer's `CustomizeParameterValue`). Core 5.6.0
 no longer judges skin or hair floats against the swatch, and judges a light-palette lip against
 the dark entry the game stores for it. Nothing real is lost: no file in the corpus had edited
 one, since the float is identical wherever an entry recurs.
@@ -127,14 +135,17 @@ one, since the float is identical wherever an entry recurs.
 ## Open: highlight swatches
 
 The same screenshot shows the highlights palette beside the hair palette, and there the check
-runs the other way. At all 98 highlight indices used in the corpus, the stored float equals our
+runs the other way. `human.cmp` splits the shared palettes the same way (`Parameters` for the
+shader, `Interface` for the creator), but Anamnesis — and, it appears, the extraction our sheets
+came from — reads eyes and highlights from the **shader** half. At all 98 highlight indices used in the corpus, the stored float equals our
 highlight sheet exactly, so comparisons are sound. But the creator's own highlight swatch
 differs at some cells: with 42 selected it reads **RGB 225,186,112**, where the stored value
 (and our sheet) is 255,186,86. With the brightening divided out, the creator's highlight grid
 matches our sheet in most mid-tone cells but not around 40–43 or in rows 12, 20 and 21, where it
 is less saturated. For those entries the Swatch Matcher shows the stored color rather than the
-one the player picked from. Correcting them needs each cell's RGB readout; a screenshot's
-pixels are not exact enough.
+one the player picked from. The fix is to read both halves of `human.cmp` for every palette:
+the interface half for what the tool shows, the shader half for judging a float — which would
+also let skin and hair floats be judged again instead of skipped.
 
 ## Also seen, no change needed
 
