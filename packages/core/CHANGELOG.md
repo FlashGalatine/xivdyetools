@@ -24,7 +24,7 @@ two. See `docs/research/2026-09-28-chara-corpus-profile/` → *Both halves*.
 
 - **Lip, face-paint, highlight and tattoo sheets show the creator's colors.** Lips and face paint
   had held the shader half (95 of 96 entries differ; dark palette median ΔE 24), highlights too
-  (39 of 192 differ — highlight 42 is RGB 225,186,112 in the creator), and the tattoo / limbal
+  (40 of 192 differ — highlight 42 is RGB 225,186,112 in the creator), and the tattoo / limbal
   sheet was a copy of the **eye** palette (183 of 192 differ). Eye, hair and skin sheets are
   byte-identical.
 - **The resolver judges every live float against the stored color of its entry.** This is exact
@@ -32,6 +32,10 @@ two. See `docs/research/2026-09-28-chara-corpus-profile/` → *Both halves*.
   (5.6.0 had to skip them), and the parser's ×0.643 limbal scale and entry-7 zero rule are gone —
   the shader feature palette is the real thing. OFF GRID in live-float files is now exactly the
   real custom colors.
+- **The shader tables load on first use, and a failed load is tried again.** The two `shader/`
+  files are dynamic imports, so the web app fetches them as a lazy chunk. A load that fails is
+  forgotten rather than cached, so one dropped request does not fail every later `.chara` in the
+  session (the BUG-013 rule `CharacterColorService` already follows).
 
 ## [5.6.0] - 2026-09-28
 

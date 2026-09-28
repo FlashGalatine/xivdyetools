@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { charaShaderHex } from '../chara-shader-colors.js';
 import { CharacterColorService } from '../../CharacterColorService.js';
 
@@ -36,5 +36,44 @@ describe('charaShaderHex', () => {
     expect(await charaShaderHex('eyes', 192, null, null)).toBeNull();
     expect(await charaShaderHex('lipsDark', 96, null, null)).toBeNull();
     expect(await charaShaderHex('skin', 192, 'Raen', 'Female')).toBeNull();
+  });
+});
+
+// The web app gets both tables as a lazy chunk, so one dropped request must not
+// fail every later .chara import in the tab.
+describe('a table that failed to load', () => {
+  const tables = {
+    shared: '../../../data/character_colors/shader/shared.json',
+    clan: '../../../data/character_colors/shader/race_specific.json',
+  };
+
+  afterEach(() => {
+    vi.doUnmock(tables.shared);
+    vi.doUnmock(tables.clan);
+    vi.resetModules();
+  });
+
+  it('is loaded again by the next call — shared palettes', async () => {
+    vi.resetModules();
+    vi.doMock(tables.shared, () => {
+      throw new Error('chunk failed to load');
+    });
+    const fresh = await import('../chara-shader-colors.js');
+    await expect(fresh.charaShaderHex('highlights', 42, null, null)).rejects.toThrow();
+
+    vi.doUnmock(tables.shared);
+    expect(await fresh.charaShaderHex('highlights', 42, null, null)).toBe('#FFBA56');
+  });
+
+  it('is loaded again by the next call — clan tables', async () => {
+    vi.resetModules();
+    vi.doMock(tables.clan, () => {
+      throw new Error('chunk failed to load');
+    });
+    const fresh = await import('../chara-shader-colors.js');
+    await expect(fresh.charaShaderHex('hair', 42, 'Raen', 'Female')).rejects.toThrow();
+
+    vi.doUnmock(tables.clan);
+    expect(await fresh.charaShaderHex('hair', 42, 'Raen', 'Female')).toBe('#E5D2AC');
   });
 });

@@ -30,17 +30,25 @@ type SharedShaderData = Record<string, string[]>;
 let sharedShaderLoading: Promise<SharedShaderData> | null = null;
 let raceShaderLoading: Promise<RaceShaderData> | null = null;
 
+// A failed load is forgotten, so the next call tries again instead of rethrowing the
+// cached rejection for the rest of the session (BUG-013, as in CharacterColorService)
 function loadSharedShaderData(): Promise<SharedShaderData> {
-  sharedShaderLoading ??= import('../../data/character_colors/shader/shared.json').then(
-    (module) => (module.default ?? module) as SharedShaderData,
-  );
+  sharedShaderLoading ??= import('../../data/character_colors/shader/shared.json')
+    .then((module) => (module.default ?? module) as SharedShaderData)
+    .catch((err: unknown) => {
+      sharedShaderLoading = null;
+      throw err;
+    });
   return sharedShaderLoading;
 }
 
 function loadRaceShaderData(): Promise<RaceShaderData> {
-  raceShaderLoading ??= import('../../data/character_colors/shader/race_specific.json').then(
-    (module) => (module.default ?? module) as RaceShaderData,
-  );
+  raceShaderLoading ??= import('../../data/character_colors/shader/race_specific.json')
+    .then((module) => (module.default ?? module) as RaceShaderData)
+    .catch((err: unknown) => {
+      raceShaderLoading = null;
+      throw err;
+    });
   return raceShaderLoading;
 }
 

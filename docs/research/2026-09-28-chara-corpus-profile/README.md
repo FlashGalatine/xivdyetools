@@ -161,7 +161,7 @@ block (`FacialFeature` with `PaletteIndex = 0`), and the extraction behind our d
 `scripts/build-character-colors.ts` now regenerates every sheet from the file: the interface
 half for what the tools show (hair, skin and eyes come out byte-identical), and the shader half,
 in `shader/`, for judging a float. Moving to the creator's colors changes lips and face paint in 95
-of 96 entries (dark palette median ΔE 24), highlights in 39 of 192, and tattoo in 183 of 192
+of 96 entries (dark palette median ΔE 24), highlights in 40 of 192, and tattoo in 183 of 192
 (median ΔE 3).
 
 Judged against the shader half, every unedited float in the corpus is exact:
