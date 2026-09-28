@@ -20,8 +20,9 @@ references that skill names.
 
 Before executing any skill, read
 [.agents/skills/audit-shared/model-routing.md](.agents/skills/audit-shared/model-routing.md). It
-maps the skills' `collector` / `worker` / `verifier` roles to your runtime's models and tools,
-and lists what is never delegated (user approval, commits and pushes, outward-facing prose).
+maps the skills' `collector` / `worker` / `verifier` roles to your runtime's models, effort levels
+and tools, and lists what is never delegated (user approval, commits and pushes, outward-facing
+prose).
 Where a skill labels something a *Claude example* — a slash command, a plugin skill, a named
 tool — treat it as one runtime's shortcut and follow the stated procedure with your own tools.
 
