@@ -187,6 +187,56 @@ describe('/glamour', () => {
     await expect(resolve([{ slot: 'HeadGear', base: 361, variant: 5 }], null)).rejects.toMatchObject({ status: 429 });
   });
 
+  it("carries api-worker's own reason on a refused file, so the reply can say what is wrong with it", async () => {
+    const reason = 'gear[0].base must be an integer between 0 and 65535';
+    binding.fetch.mockResolvedValue(Response.json({ success: false, error: 'VALIDATION_ERROR', message: reason }, { status: 400 }));
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+    const { resolve } = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+
+    await expect(resolve([{ slot: 'Body', base: 70000, variant: 1 }], null)).rejects.toMatchObject({ status: 400, message: reason });
+  });
+
+  it('falls back to the status when a refusal carries no reason', async () => {
+    binding.fetch.mockResolvedValue(new Response('too large', { status: 413 }));
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+    const { resolve } = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+
+    await expect(resolve([{ slot: 'Body', base: 1, variant: 1 }], null)).rejects.toMatchObject({
+      status: 413,
+      message: 'api-worker answered 413',
+    });
+  });
+
+  it('answers a file api-worker refuses as a problem with the file, traced as input, not as an outage', async () => {
+    const { executeGlamour } = await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic');
+    mockExecuteGlamour.mockImplementation(executeGlamour);
+    // A hand edit past the game's uint16 model lane: the parser takes it, api-worker does not
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          Tribe: 'Midlander',
+          Gender: 'Feminine',
+          REyeColor: 42,
+          Body: { ModelBase: 70000, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+        })
+      )
+    );
+    const reason = 'gear[0].base must be an integer between 0 and 65535';
+    binding.fetch.mockResolvedValue(Response.json({ success: false, error: 'VALIDATION_ERROR', message: reason }, { status: 400 }));
+    const interaction = makeInteraction(CDN_URL);
+    await handleGlamourCommand(interaction, env, ctx);
+    await settle();
+
+    expect(markMock).toHaveBeenCalledWith(interaction, 'image_input');
+    const edit = lastEdit();
+    expect(edit.file).toBeUndefined();
+    expect(edit.embeds[0].description).toContain('Could not read the file');
+    expect(edit.embeds[0].description).toContain('65535');
+    expect(edit.embeds[0].description).not.toMatch(/try again/i);
+  });
+
   it('records a busy lookup as rate limited, not as a failure of ours', async () => {
     mockExecuteGlamour.mockResolvedValue({
       ok: false,

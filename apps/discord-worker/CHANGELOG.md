@@ -17,7 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   shares one api-worker rate-limit key (a binding request carries no client IP), so a `/glamour`
   spends exactly one resolve call and draws no item icons. The bucket is api-worker's
   `SERVICE_RATE_LIMITER` (1300 / 60 s); a 429 from it is answered as busy and traced as
-  `rate_limited`, not as a failure. Rate tier: the default 15/min.
+  `rate_limited`, not as a failure. Any other 4xx is api-worker refusing what the file describes
+  (a model lane past 0xFFFF from a hand edit or a damaged file): the resolver carries api-worker's
+  reason on the error, the reply says the file can't be read and why, and the trace is
+  `image_input`, not an outage. Rate tier: the default 15/min.
   Registered in the `color-tools` category, `/about` and `/manual`. **Merging re-registers the
   commands** (`deploy-discord-worker.yml`).
 

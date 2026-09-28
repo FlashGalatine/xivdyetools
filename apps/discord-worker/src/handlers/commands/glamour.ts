@@ -69,10 +69,21 @@ function resolveThroughApiWorker(env: Env): GlamourInput['resolve'] {
       throw new Error('api-worker binding not configured');
     }
     if (!response.ok) {
-      // The status rides on the error: bot-logic reads a 429 as "busy", not "broken"
-      throw Object.assign(new Error(`api-worker answered ${response.status}`), {
-        status: response.status,
-      });
+      // The status rides on the error: bot-logic reads a 429 as "busy", any
+      // other 4xx as a problem with the file, and the rest as "broken". A 4xx
+      // carries api-worker's own reason ("gear[0].base must be an integer
+      // between 0 and 65535") as the message, for the reply to name.
+      const reason =
+        response.status >= 400 && response.status < 500 && response.status !== 429
+          ? await response
+              .json()
+              .then((body: unknown) => (body as { message?: unknown } | null)?.message)
+              .catch(() => undefined)
+          : undefined;
+      throw Object.assign(
+        new Error(typeof reason === 'string' && reason ? reason : `api-worker answered ${response.status}`),
+        { status: response.status }
+      );
     }
     const envelope = (await response.json().catch(() => null)) as ResolveEnvelope | null;
     const items = envelope?.success === true ? envelope.data?.items : null;
@@ -146,6 +157,7 @@ async function processGlamourCommand(
   const result = await executeGlamour(input);
 
   if (!result.ok) {
+    // An unreadable file, or one api-worker refuses (a 4xx other than 429): user input
     if (result.error === 'PARSE_FAILED') markCommandOutcome(interaction, 'image_input');
     if (result.error === 'RESOLVE_FAILED') markCommandOutcome(interaction, 'unknown');
     // api-worker's service bucket is full for the minute: throttled, not broken
