@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.13.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.13.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.7.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -113,6 +113,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.13.1 | Sep 2026 | Tests only — `e2e/swatch-chara-session.spec.ts` covers both TRIBE & GENDER selectors, a file that names no tribe or gender, and a lock left in storage by a build before 5.12.7; its reload test waits for the app to boot (it raced the boot and failed when that took over five seconds). The deployed bundle differs only in its version string |
 | **v5.13.0** | **Sep 2026** | **The Glamour Reader, tenth tool (`/glamour`, key 0): DYES ON THIS GLAMOUR moves out of the Swatch Matcher behind an IN THE GAME verdict, each piece names the twin it can be worn as (twin picker), and Copy list / Export .md open an export sheet with each piece's GPOSERS Acquisition line — editable, kept on the device by gear hash. Two identical rings write once as Rings** |
 | v5.12.7 | Sep 2026 | Swatch Matcher keeps a loaded `.chara` file when you leave the tool or switch language (it lives in a session-only `CharaSessionService` now, never in browser storage), and TRIBE & GENDER no longer stay locked after the file is gone — that lock was a persisted flag that outlived the file. While a file is loaded, `ConfigController` pins the Swatch tribe/gender to it through a reset, an import or another tab's save. `chara-import.ts` split into file card, THIS CHARACTER sheet and DYES ON THIS GLAMOUR; the glamour block is its own on-demand chunk, taking the swatch chunk from 97.7% to 72.8% of its budget |
 | v5.12.6 | Sep 2026 | Swatch Matcher (core 5.7.0) — lip, face-paint, highlight and tattoo swatches are the creator's colors (the tattoo sheet had been the eye palette); a custom skin or hair color is OFF GRID again. No web-app source changed |

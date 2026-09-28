@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.13.1] - 2026-09-28
+
+Tests only; the deployed bundle differs only in its version string. No player notes.
+
+### Tests
+
+- **`e2e/swatch-chara-session.spec.ts` covers more of the TRIBE & GENDER lock.** Every lock
+  assertion now checks both selectors, where it had checked the tribe selector alone. Two cases
+  are new: a file that names no tribe or gender still locks them, and a config an earlier build
+  saved with `fileProvided: true` opens unlocked, which replays the original stuck-lock report
+  (PR #204). Both were checked against a broken lock: reading the saved flag fails the second,
+  and leaving the gender selector unlocked fails three.
+- **The reload case waits for the app to boot.** It asserted straight after `page.reload()`,
+  which raced the boot and failed whenever that took longer than the assertion's five seconds
+  (3 of 5 local runs on 2026-09-28; CI passed). It now calls `waitForAppReady`, as every other
+  navigation in the suite does.
+
 ## [5.13.0] - 2026-09-28
 
 The Glamour Reader, the tenth tool (design: the Claude Design project's *Glamour Reader
