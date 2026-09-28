@@ -75,8 +75,8 @@ fork (`"all"`, including its default in this runtime) inherits the parent's mode
 cannot accept a model override. Call collaboration tools directly, not inside `functions.exec`. If
 the exposed tool has a different schema, follow that schema rather than copying these arguments.
 An Astra coordinator at `high` or above, or a Sol coordinator at `xhigh` or above, may do verifier
-work inline; any other coordinator delegates it. Do not change the user's coordinator model or
-effort.
+work inline; any other coordinator, or one unsure of its own effort, delegates it. Do not change
+the user's coordinator model or effort.
 
 **Any other runtime:** use its native delegation mechanism and the tier and effort columns above.
 With no delegation at all, run every role inline in the order the skill gives, keep verbose command
