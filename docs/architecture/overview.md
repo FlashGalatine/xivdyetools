@@ -27,7 +27,7 @@ graph TB
     end
 
     subgraph "Consumer Applications"
-        WEB["xivdyetools-web-app<br/>─────────────<br/>9 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
+        WEB["xivdyetools-web-app<br/>─────────────<br/>10 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
         DISCORD["xivdyetools-discord-worker<br/>─────────────<br/>17 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
         STOAT["xivdyetools-stoat-worker<br/>─────────────<br/>Revolt.js bot (parked),<br/>shared bot-logic"]
     end
@@ -124,7 +124,7 @@ Layer 3: Backend Services (Cloudflare Workers)
 └── xivdyetools-api-worker → Public REST API + Universalis proxy + developer docs
 
 Layer 2: Consumer Applications
-├── xivdyetools-web-app → Browser-based tools (9 tools)
+├── xivdyetools-web-app → Browser-based tools (10 tools)
 ├── xivdyetools-discord-worker → Discord bot (17 registered commands)
 └── xivdyetools-stoat-worker → Revolt bot (parked; shared bot-logic)
 
@@ -187,7 +187,7 @@ Layer 0: Shared Foundation
 
 **Purpose**: Browser-based interactive toolkit for exploring FFXIV dye colors.
 
-**9 Tools**:
+**10 Tools**:
 1. **Palette Extractor** - Extract colors from images and find matching dyes
 2. **Gradient Builder** - Create color gradients between dyes
 3. **Harmony Explorer** - Discover harmonious dye combinations
@@ -197,6 +197,7 @@ Layer 0: Shared Foundation
 7. **Accessibility Checker** - Colorblindness simulation
 8. **Community Presets** - Browse and share dye presets
 9. **Budget Suggestions** - Find affordable dye alternatives
+10. **Glamour Reader** - Read a character file as a glamour: can it be worn, which twin to name, and the GPOSERS list with acquisition lines
 
 **Recent Highlights**:
 - **v5.0.0**: Themes reduced to **Light + Dark** (`standard-light` / `standard-dark`), with legacy stored theme names migrated on load; mobile-friendly redesign
@@ -449,6 +450,7 @@ xivdyetools-api-worker
 ├── RATE_LIMIT        → KV fallback for /v1/* rate limiting
 ├── API_RATE_LIMITER  → Native rate-limit binding for /v1/*
 ├── TELEMETRY_RATE_LIMITER → Native rate-limit binding for POST /v1/telemetry
+├── SERVICE_RATE_LIMITER → Native rate-limit binding for our own workers on /v1/* (service binding, no client IP)
 ├── ANALYTICS         → Analytics Engine dataset (web analytics)
 └── ASSETS            → Workers Static Assets (VitePress developer docs, production only)
 

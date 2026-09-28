@@ -23,13 +23,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.12.7 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.13.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.6.5 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.15.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.16.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.4 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -39,12 +39,12 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.7.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.8.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.1.0 | `@xivdyetools/svg` | npm | Active |
+| **SVG** | v4.2.0 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.4.2 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
@@ -69,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.8.0** | **Sep 2026** | **Glamour Reader: `chara-twins` (`charaTwinsOf`, `defaultCharaTwin`, `charaPieceTone`, `charaTwinFacts`) — which of a model's identical items a list names (passes the in-game check → dyeable → any Grand Company → not Dated → more dye channels → lowest row), shared by the web reader and the bot; `chara-gposers`, the GPOSERS form as data both render. The in-game rules drop jobs (any job wears any piece for glamour since 7.4) and carry the Grand Company lock as a flag** |
 | v5.7.0 | Sep 2026 | Character color sheets regenerated from the game's `human.cmp` (`build:character-colors`) — the creator's interface palette for every sheet (lips / face paint had been the shader palette, the tattoo sheet a copy of the eyes), and the shader palette in `shader/` for judging `.chara` floats, exactly; skin and hair are judged again and the 5.6.0 limbal scale / entry-7 rule are gone |
 | v5.6.0 | Sep 2026 | `.chara` parser re-measured on 1,142 real files — minor, not patch, because `parseCharaFile` returns different slots for the same file. Eye keys pair by name (the 10A "`REyeColor` is the left eye" rule was backwards for 153 of 157 heterochromia files; a proven crossing is un-crossed), floats decode as the color squared rather than sRGB-linear, the limbal float's 0.643 is divided out, skin and hair floats are no longer judged (the game stores a shading value — confirmed in the creator), light lips are judged against their dark entry, an all-zero block is absent, and a dye on an empty gear slot is dropped |
 | v5.5.0 | Sep 2026 | `.chara` import reads the race off the **tribe** (spec 10a "Tribe, not Race") instead of the file's `Race` key — minor, not patch, because `parseCharaFile` now returns where it threw. Fixes three bugs at once: every Lalafell file was refused (Anamnesis writes the game enum's `Lalafel`, one L), a Hrothgar file with no `Race` key had its fur pattern painted into the lip swatch, and an Au Ra's limbal ring was matched as a tattoo. An unrecognised `Race` is no longer fatal; an unrecognised **tribe** still is |
@@ -112,6 +113,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.13.0** | **Sep 2026** | **The Glamour Reader, tenth tool (`/glamour`, key 0): DYES ON THIS GLAMOUR moves out of the Swatch Matcher behind an IN THE GAME verdict, each piece names the twin it can be worn as (twin picker), and Copy list / Export .md open an export sheet with each piece's GPOSERS Acquisition line — editable, kept on the device by gear hash. Two identical rings write once as Rings** |
 | v5.12.7 | Sep 2026 | Swatch Matcher keeps a loaded `.chara` file when you leave the tool or switch language (it lives in a session-only `CharaSessionService` now, never in browser storage), and TRIBE & GENDER no longer stay locked after the file is gone — that lock was a persisted flag that outlived the file. While a file is loaded, `ConfigController` pins the Swatch tribe/gender to it through a reset, an import or another tab's save. `chara-import.ts` split into file card, THIS CHARACTER sheet and DYES ON THIS GLAMOUR; the glamour block is its own on-demand chunk, taking the swatch chunk from 97.7% to 72.8% of its budget |
 | v5.12.6 | Sep 2026 | Swatch Matcher (core 5.7.0) — lip, face-paint, highlight and tattoo swatches are the creator's colors (the tattoo sheet had been the eye palette); a custom skin or hair color is OFF GRID again. No web-app source changed |
 | v5.12.5 | Sep 2026 | Swatch Matcher (core 5.6.0) — heterochromia eyes on the correct sides, no false OFF GRID on any color row, no dyes from empty slots in DYES ON THIS GLAMOUR or the GPOSERS export. No web-app source changed |
@@ -471,6 +473,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.2.0 | Sep 2026 | The Glamour Reader glyph (1a: a tunic with the dye on a chest chip), compact + detail |
 | v4.1.0 | Sep 2026 | `HarmonyCardOptions.wheelLabel` — printed under the harmony type for a non-default colour wheel, fitted to the header row it shares with the `/HARMONY` pill (PR #167) |
 | **v4.0.0** | **Sep 2026** | **⚠️ BREAKING — `PresetSwatchOptions.authorLine` / `emptyLabel` required and `authorName` / `voteCount` removed: the caller passes finished localized text (I18N-011); the `★` vote glyph rendered as tofu in every bundled face (FONT-002)** |
 | v3.1.0 | Sep 2026 | `bandInk` exported so og-worker's diverging fork (white `onDim` 0.78 vs 0.72) could be deleted (REFACTOR-002); `/gradient` verdict and legend measured with `textWidth` before wrapping — CJK sentences no longer overrun the card (BUG-054) |
@@ -548,6 +551,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.16.0 | Sep 2026 | `/v1/chara/resolve` rules carry the Grand Company lock instead of the job list (any job wears any piece for glamour since 7.4); cache shape 3; `glamour` joins the telemetry tool allowlist. Lands after 0.15.0 (acquisition lines) |
 | **v0.15.0** | **Sep 2026** | **`acquisition` on `POST /v1/chara/resolve` items and their alternates — one English GPOSERS line per item from a build-time table (`scripts/build-acquisition.ts`: Teamcraft data at a pinned commit + XIVAPI), 23,585 lines** |
 | v0.14.5 | Sep 2026 | Docs only — the reference page and the 0.14.4 note now say the accent / `ß` / width fold applies to the localized search (any non-English `locale`); the default English search is unchanged |
 | v0.14.4 | Sep 2026 | 2026-09-19 i18n audit Sprint 4 — `GET /v1/dyes/search?q=` matches more rows because core 5.4.0 folds case, accents, `ß` and width (no worker code change; documented on the reference page); `Variables.locale` is core's `LocaleCode`, not a hand-spelled union (I18N-009) |

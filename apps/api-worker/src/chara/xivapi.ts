@@ -18,7 +18,8 @@
  * - German names carry U+00AD soft hyphens — stripped at ingest.
  */
 
-import type { GlassesRow, ItemRow, SlotLookup } from './types.js';
+import { CHARA_WEAR_RACE_COLUMNS, charaWearMask } from '@xivdyetools/core';
+import type { CharaItemRules, GlassesRow, ItemRow, SlotLookup } from './types.js';
 
 export interface XivapiEnv {
   XIVAPI_BASE?: string;
@@ -48,6 +49,20 @@ const SLOT_COLUMNS = [
   'FingerR',
 ] as const;
 
+/**
+ * The in-game check's fields: dye channels, the glamour flag, the race/gender
+ * lock (`EquipRaceCategory`, read column by column like the slot booleans, so a
+ * schema rename drops a field instead of the request) and the Grand Company
+ * lock. No classes or jobs: since patch 7.4 any job can wear any piece for
+ * glamour.
+ */
+const RULE_FIELDS = [
+  'DyeCount',
+  'IsGlamorous',
+  ...[...CHARA_WEAR_RACE_COLUMNS, 'Male', 'Female'].map((col) => `EquipRestriction.${col}`),
+  'GrandCompany.row_id',
+];
+
 const ITEM_FIELDS = [
   'Name',
   'Name@ja',
@@ -57,6 +72,7 @@ const ITEM_FIELDS = [
   'ModelMain',
   'ModelSub',
   ...SLOT_COLUMNS.map((col) => `EquipSlotCategory.${col}`),
+  ...RULE_FIELDS,
 ].join(',');
 
 const GLASSES_FIELDS = 'Name,Name@ja,Name@de,Name@fr,Icon.id';
@@ -136,14 +152,46 @@ function namesOf(fields: Record<string, unknown>): ItemRow['names'] {
   };
 }
 
+/** A relation's own columns: `{ value, sheet, row_id, fields: {…} }` → `fields`. */
+function relationFields(value: unknown): Record<string, unknown> | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const fields = (value as Record<string, unknown>)['fields'];
+  return typeof fields === 'object' && fields !== null
+    ? (fields as Record<string, unknown>)
+    : undefined;
+}
+
+/** A relation's row: `{ value, sheet, row_id, … }` → `row_id` (or `value`); null when absent. */
+function relationId(value: unknown): number | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const link = value as Record<string, unknown>;
+  const id = link['row_id'] ?? link['value'];
+  return typeof id === 'number' ? id : null;
+}
+
+/**
+ * The in-game rules, or null when any field is missing: a partial answer
+ * must not read as "takes no dye" or "any company can wear it".
+ */
+function rulesOf(f: Record<string, unknown>): CharaItemRules | null {
+  const dyeCount = f['DyeCount'];
+  const glamorous = f['IsGlamorous'];
+  const restriction = relationFields(f['EquipRestriction']);
+  const company = relationId(f['GrandCompany']);
+  if (typeof dyeCount !== 'number' || !restriction || company === null) return null;
+  if (typeof glamorous !== 'boolean' && glamorous !== 0 && glamorous !== 1) return null;
+  return {
+    dyeCount,
+    glamourable: glamorous === true || glamorous === 1,
+    wearMask: charaWearMask(restriction),
+    grandCompany: company,
+  };
+}
+
 /** Trim a raw search row to the cache shape. Exported for the resolver tests. */
 export function parseItemRow(raw: RawSearchRow): ItemRow {
   const f = raw.fields;
-  const esc = f['EquipSlotCategory'];
-  const escFields =
-    typeof esc === 'object' && esc !== null
-      ? ((esc as Record<string, unknown>)['fields'] as Record<string, unknown> | undefined)
-      : undefined;
+  const escFields = relationFields(f['EquipSlotCategory']);
   const slots = SLOT_COLUMNS.filter((col) => escFields?.[col] === 1);
   // ModelMain tops out at 65535 << 32 ≈ 2.8e14 — exact in a JS number, so
   // String() round-trips the packed value losslessly.
@@ -154,6 +202,7 @@ export function parseItemRow(raw: RawSearchRow): ItemRow {
     modelMain: String(f['ModelMain'] ?? 0),
     modelSub: String(f['ModelSub'] ?? 0),
     slots: [...slots],
+    rules: rulesOf(f),
   };
 }
 

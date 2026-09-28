@@ -6,8 +6,9 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GlamourBlock } from '../glamour-block';
+import { closeGlamourSheet } from '../glamour-sheet';
 import { CharaFileCard } from '../chara-file-card';
-import { StorageService, ToastService } from '@services/index';
+import { ModalService, StorageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile } from '@services/chara-file-loader';
 import {
@@ -217,7 +218,7 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
       rows[3].querySelectorAll('span[title*="·"], span[title^="#"]').length
     ).toBeGreaterThanOrEqual(2);
     // The slot tag is localised (en.json gearSlot.*), not the raw key.
-    expect(rows[0].textContent).toContain('Weapon');
+    expect(rows[0].textContent).toContain('Main Hand');
     expect(rows[0].textContent).not.toContain('MainHand');
   });
 
@@ -241,10 +242,10 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
       'Runaway Bow'
     );
 
-    const badge = row('HeadGear').querySelector<HTMLElement>('[data-role="same-model"]')!;
+    const badge = row('HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!;
     expect(badge.textContent).toBe('+2');
     expect(badge.title).toBe('Same model: Beech Mask of Casting Replica …');
-    expect(row('MainHand').querySelector('[data-role="same-model"]')).toBeNull();
+    expect(row('MainHand').querySelector('[data-role="twin-chip"]')).toBeNull();
 
     // NPC model: the packed key is the honest label — never an error
     expect(row('Body').querySelector('[data-role="item-name"]')).toBeNull();
@@ -306,7 +307,7 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
     const six = rows[0];
     const carriers = six.querySelectorAll<HTMLElement>('[data-role="carrier"]');
     expect(Array.from(carriers).map((c) => c.dataset.slot)).toEqual(['MainHand', 'OffHand']);
-    expect(carriers[0].title).toBe('WEAPON — Runaway Bow');
+    expect(carriers[0].title).toBe('MAIN HAND — Runaway Bow');
     expect(carriers[0].style.backgroundImage).toContain('/v1/chara/icon/32065');
     expect(six.textContent).toContain('×2');
     expect(six.textContent).toContain('ID 6');
@@ -624,6 +625,19 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     block(glamour).querySelector<HTMLButtonElement>('[data-role="copy-list"]')!;
   const exportBtn = (glamour: HTMLElement) =>
     block(glamour).querySelector<HTMLButtonElement>('[data-role="export-markdown"]')!;
+  const sheetEl = () => document.querySelector<HTMLElement>('[data-role="glamour-sheet"]');
+  /** Copy list opens the export sheet (design 2c); its own Copy list writes. */
+  const copyVia = async (glamour: HTMLElement): Promise<void> => {
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    sheetEl()!.querySelector<HTMLButtonElement>('[data-role="sheet-copy"]')!.click();
+  };
+  /** Export .md opens the export sheet; its Save .md downloads. */
+  const exportVia = async (glamour: HTMLElement): Promise<void> => {
+    exportBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    sheetEl()!.querySelector<HTMLButtonElement>('[data-role="sheet-save"]')!.click();
+  };
 
   /** The flavours the last copy put on the clipboard, once they have landed. */
   const copied = async (): Promise<{ html: string; text: string }> => {
@@ -675,6 +689,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     vi.spyOn(ToastService, 'error').mockImplementation(() => 'toast');
   });
   afterEach(() => {
+    closeGlamourSheet();
     hosts.forEach(cleanupTestContainer);
     hosts = [];
     vi.restoreAllMocks();
@@ -700,6 +715,62 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(exportBtn(glamour).disabled).toBe(false);
   });
 
+  it('Copy list and Export .md open the export sheet before anything is copied or saved (design 2c)', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    expect(write).not.toHaveBeenCalled();
+    expect(sheetEl()!.textContent).toContain('Glamour list');
+    closeGlamourSheet();
+
+    exportBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    expect(clicked).toHaveLength(0);
+  });
+
+  it('destroying the block closes its export sheet, so the sheet never outlives the reader', async () => {
+    const { container, glamour, block: glamourBlock } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+
+    glamourBlock.destroy();
+
+    expect(sheetEl()).toBeNull();
+    expect(ModalService.hasOpenModals()).toBe(false);
+  });
+
+  it('a sheet still loading when the block is destroyed never opens', async () => {
+    const { container, glamour, block: glamourBlock } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    glamourBlock.destroy();
+    await vi.dynamicImportSettled();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(sheetEl()).toBeNull();
+  });
+
+  it('closing the sheet gives focus back to the button that opened it', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+    // A click does not focus a button in Safari (nor in jsdom), so the block
+    // hands the sheet its opener instead of leaving it to document.activeElement.
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+
+    closeGlamourSheet();
+
+    expect(document.activeElement).toBe(copyBtn(glamour));
+  });
+
   it('copies the worn slots as plain text with no Markdown syntax — names where known, dyes only where dyed — then confirms', async () => {
     // The file names its character; the submission form must never carry it.
     const named = JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: 'Galatine Ashe' });
@@ -707,7 +778,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
 
     const { text, html } = await copied();
@@ -746,16 +817,18 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(clicked).toHaveLength(0);
   });
 
-  it('starts the clipboard write inside the click, before the actions chunk has loaded', async () => {
+  it("starts the clipboard write inside the sheet's Copy click", async () => {
     // WebKit (Safari, every iOS browser) refuses a clipboard write once the
-    // click's activation has lapsed, and a chunk load lapses it. So the write
-    // must already be under way when the click handler returns — asserted
-    // with nothing awaited in between — and the content follows.
+    // click's activation has lapsed. The sheet is loaded before its button
+    // exists, so the write must already be under way when that click's
+    // handler returns — asserted with nothing awaited in between.
     const { container, glamour } = await mount(Promise.resolve(RESOLVED));
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
     copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+    sheetEl()!.querySelector<HTMLButtonElement>('[data-role="sheet-copy"]')!.click();
     expect(write).toHaveBeenCalledTimes(1);
 
     expect((await copied()).text).toBe(EXPECTED_TEXT);
@@ -769,7 +842,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
 
     const { html } = await copied();
@@ -784,7 +857,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(exportBtn(glamour).disabled).toBe(false));
 
-    exportBtn(glamour).click();
+    await exportVia(glamour);
 
     await vi.waitFor(() => expect(clicked).toHaveLength(1));
     expect(clicked[0].download).toBe('glamour-equipment.md');
@@ -806,7 +879,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(exportBtn(glamour).disabled).toBe(false));
 
-    exportBtn(glamour).click();
+    await exportVia(glamour);
 
     await vi.waitFor(() =>
       expect(ToastService.error).toHaveBeenCalledWith("Couldn't save the equipment list")
@@ -821,7 +894,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
     block(glamour).querySelector<HTMLButtonElement>('[data-glamour-view="dyes"]')!.click();
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     expect((await copied()).text).toBe(EXPECTED_TEXT);
   });
@@ -839,7 +912,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     const { text } = await copied();
     expect(text).toContain('Body:\nDye 1: #999\nDye 2: Loam Brown\nAcquisition:');
@@ -854,7 +927,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     expect((await copied()).text).toBe('Glamour Items:\nFacewear:\nAcquisition:\n');
   });
@@ -864,7 +937,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() => expect(write).toHaveBeenCalledTimes(1));
     expect((await copied()).text).toContain('Main Hand:\nDye 1: Soot Black\nAcquisition:');
   });
@@ -880,10 +953,391 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
 
-    copyBtn(glamour).click();
+    await copyVia(glamour);
     await vi.waitFor(() =>
       expect(ToastService.error).toHaveBeenCalledWith("Couldn't copy the equipment list")
     );
     expect(ToastService.success).not.toHaveBeenCalled();
+  });
+});
+
+describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
+  let hosts: HTMLElement[] = [];
+
+  beforeEach(() => {
+    resolveMock.mockReset();
+    localStorage.clear();
+  });
+  afterEach(() => {
+    hosts.forEach(cleanupTestContainer);
+    hosts = [];
+  });
+
+  const rules = (itemIds: number[], dyeCount: number, extra: Record<string, unknown> = {}) => ({
+    itemIds,
+    dyeCount,
+    glamourable: true,
+    wearMask: 0xffff,
+    grandCompany: 0,
+    ...extra,
+  });
+  const names = (en: string) => ({ en, ja: en, de: en, fr: en });
+  const item = (itemId: number, en: string, extra: Record<string, unknown> = {}) => ({
+    itemId,
+    names: names(en),
+    iconId: null,
+    familySize: 1,
+    alternates: [],
+    viaMainHand: false,
+    ...extra,
+  });
+  const verdict = (glamour: HTMLElement) =>
+    glamour.querySelector<HTMLElement>('[data-role="verdict"]');
+  const counts = (glamour: HTMLElement) =>
+    Array.from(verdict(glamour)!.querySelectorAll<HTMLElement>('[data-role="verdict-count"]')).map(
+      (c) => c.textContent
+    );
+  const row = (glamour: HTMLElement, slot: string) =>
+    block(glamour).querySelector<HTMLElement>(`[data-slot="${slot}"]`)!;
+  const part = (glamour: HTMLElement, slot: string, role: string) =>
+    row(glamour, slot).querySelector<HTMLElement>(`[data-role="${role}"]`)?.textContent ?? null;
+
+  /** A Midlander woman wearing a head dyed on channel 2 and a body. */
+  const MIDLANDER = JSON.stringify({
+    TypeName: 'Anamnesis Character File',
+    Tribe: 'Midlander',
+    Gender: 'Feminine',
+    REyeColor: 42,
+    HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 0, DyeId2: 33 },
+    Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+    Glasses: { GlassesId: 0 },
+  });
+  const COIF = item(372, 'Dated Hempen Coif', {
+    familySize: 2,
+    alternates: [{ itemId: 2629, names: names('Hempen Coif') }],
+    rules: [rules([372], 0), rules([2629], 2)],
+  });
+
+  it('says nothing when api-worker answers without rules (an older worker)', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() =>
+      expect(block(glamour).querySelectorAll('[data-role="item-name"]').length).toBe(3)
+    );
+    expect(verdict(glamour)).toBeNull();
+  });
+
+  it('comes first, above ON THIS GLAMOUR', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF, Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }) },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    const children = Array.from(block(glamour).children);
+    expect(children.indexOf(verdict(glamour)!)).toBe(0);
+    expect(verdict(glamour)!.textContent).toContain('IN THE GAME');
+    expect(verdict(glamour)!.textContent).toContain('Since 7.4 any job can wear any piece');
+  });
+
+  it('names the twin that takes the dye, marks it FIXED BY A TWIN, and says why', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF, Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }) },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'HeadGear', 'item-name')).toBe('Hempen Coif');
+    expect(
+      row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!.dataset.tone
+    ).toBe('fix');
+    expect(part(glamour, 'HeadGear', 'piece-tag')).toBe('FIXED BY A TWIN');
+    expect(part(glamour, 'HeadGear', 'piece-note')).toBe(
+      "Named instead of Dated Hempen Coif, which can't take these dyes"
+    );
+    // The headline is built from the counts (spec §3)
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      '1 piece named from a twin'
+    );
+    expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN', '1 FINE AS IS']);
+  });
+
+  it('joins the counts into one headline', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        HeadGear: COIF,
+        Body: item(2967, "Lord's Yukata", { rules: [rules([2967], 1, { wearMask: 0x5555 })] }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      "1 piece named from a twin and 1 piece this character can't wear"
+    );
+  });
+
+  it('marks a piece nothing fixes as NO FIX, and says why', async () => {
+    const viera = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Tribe: 'Rava',
+      Gender: 'Feminine',
+      REyeColor: 42,
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+    });
+    const resolved: CharaResolveResult = {
+      items: {
+        Body: item(2967, "Lord's Yukata", { rules: [rules([2967], 1, { wearMask: 0x5555 })] }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), viera);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'piece-tag')).toBe('NO FIX');
+    expect(part(glamour, 'Body', 'piece-note')).toBe(
+      "This character can't wear it · Nothing with the same look fixes it"
+    );
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      "1 piece this character can't wear"
+    );
+    expect(counts(glamour)).toEqual(['1 NO FIX']);
+  });
+
+  it('flags a Grand Company piece without failing it', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        Body: item(1618, "Serpent Private's Coat", {
+          rules: [rules([1618], 2, { grandCompany: 2 })],
+        }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'piece-tag')).toBeNull();
+    expect(part(glamour, 'Body', 'piece-note')).toBe('Needs the right Grand Company');
+    // Its own outcome: the chips add up to the pieces (spec G7), and the headline says it
+    expect(counts(glamour)).toEqual(['1 NEEDS A GRAND COMPANY']);
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      '1 piece that needs the right Grand Company'
+    );
+  });
+
+  it('says a model with no item behind it has no fix', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF, Body: null },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'piece-tag')).toBe('NO FIX');
+    expect(part(glamour, 'Body', 'piece-note')).toBe('A model with no item behind it');
+    expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN', '1 NO FIX']);
+  });
+
+  it('marks twins that are a free choice in grey and names the other one', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        Body: item(30000, 'Augmented Deepshadow Coat of Striking', {
+          familySize: 2,
+          alternates: [{ itemId: 30001, names: names('Deepshadow Coat of Striking') }],
+          rules: [rules([30000, 30001], 2)],
+        }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(
+      row(glamour, 'Body').querySelector<HTMLElement>('[data-role="twin-chip"]')!.dataset.tone
+    ).toBe('choice');
+    expect(part(glamour, 'Body', 'piece-tag')).toBeNull();
+    expect(part(glamour, 'Body', 'piece-note')).toBe(
+      'Same look as Deepshadow Coat of Striking · either is fine'
+    );
+  });
+
+  it('opens the twin picker from +N; picking a twin renames the row and redoes the verdict', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!.click();
+    const choices = Array.from(document.querySelectorAll<HTMLElement>('[data-role="twin-option"]'));
+    expect(choices.map((c) => c.dataset.itemId)).toEqual(['372', '2629']);
+
+    // Pick the Dated coif, which can't take the dye: the row says so
+    choices[0]!.click();
+    expect(part(glamour, 'HeadGear', 'item-name')).toBe('Dated Hempen Coif');
+    expect(part(glamour, 'HeadGear', 'piece-tag')).toBe('NO FIX');
+    expect(part(glamour, 'HeadGear', 'piece-note')).toBe(
+      "It can't take the dyes the file puts on it · Hempen Coif can be worn instead"
+    );
+    expect(counts(glamour)).toEqual(['1 NO FIX']);
+  });
+
+  it('gives an undyed piece the verdict counts a row of its own, even with Show all off', async () => {
+    const file = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Tribe: 'Midlander',
+      Gender: 'Feminine',
+      REyeColor: 42,
+      HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 1, DyeId2: 0 },
+      Legs: { ModelBase: 777, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Feet: { ModelBase: 99, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Glasses: { GlassesId: 0 },
+    });
+    const resolved: CharaResolveResult = {
+      items: {
+        HeadGear: item(2629, 'Hempen Coif', { rules: [rules([2629], 1)] }),
+        Legs: item(9500, 'Viera Gaskins', { rules: [rules([9500], 1, { wearMask: 0xc000 })] }),
+        Feet: item(3000, 'Hempen Boots', { rules: [rules([3000], 1)] }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), file);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(counts(glamour)).toContain('1 NO FIX');
+    // The NO FIX piece takes no dye, but the rows explain the verdict
+    expect(part(glamour, 'Legs', 'item-name')).toBe('Viera Gaskins');
+    expect(part(glamour, 'Legs', 'piece-tag')).toBe('NO FIX');
+    // An undyed piece that is fine stays behind Show all
+    expect(block(glamour).querySelector('[data-slot="Feet"]')).toBeNull();
+  });
+
+  it('keeps a twin pick when the reader is left and opened again, and a new file starts clean', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour, block: first } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+    row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!.click();
+    document.querySelector<HTMLElement>('[data-role="twin-option"][data-item-id="372"]')!.click();
+
+    // Leave the reader (the block is torn down) and come back to the same file
+    first.destroy();
+    const again = createTestContainer('chara-glamour-again');
+    hosts.push(again);
+    const second = new GlamourBlock(again);
+    second.init();
+    mounted.push(second);
+    await vi.waitFor(() => expect(verdict(again)).not.toBeNull());
+    expect(part(again, 'HeadGear', 'item-name')).toBe('Dated Hempen Coif');
+
+    // A new file is a new session: its picks start from the default rule
+    const file = new File([MIDLANDER], 'other.chara', { type: 'application/json' });
+    if (typeof (file as Blob).text !== 'function') {
+      (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(MIDLANDER);
+    }
+    await loadCharaFile(file);
+    await vi.waitFor(() => expect(part(again, 'HeadGear', 'item-name')).toBe('Hempen Coif'));
+  });
+
+  it('a pick from the paired off-hand row names the weapon both rows show', async () => {
+    const replica = {
+      ...item(7863, 'Curtana Zenith', {
+        familySize: 2,
+        alternates: [{ itemId: 25000, names: names('Curtana Zenith Replica') }],
+        rules: [rules([7863], 1), rules([25000], 1)],
+      }),
+    };
+    const resolved: CharaResolveResult = {
+      items: { MainHand: replica, OffHand: { ...replica, viaMainHand: true } },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved));
+    hosts = [container, glamour];
+    await vi.waitFor(() =>
+      expect(row(glamour, 'OffHand').querySelector('[data-role="twin-chip"]')).not.toBeNull()
+    );
+
+    row(glamour, 'OffHand').querySelector<HTMLElement>('[data-role="twin-chip"]')!.click();
+    document.querySelector<HTMLElement>('[data-role="twin-option"][data-item-id="25000"]')!.click();
+
+    expect(part(glamour, 'MainHand', 'item-name')).toBe('Curtana Zenith Replica');
+    expect(part(glamour, 'OffHand', 'item-name')).toBe('Curtana Zenith Replica');
+  });
+
+  it('the Dyes lens names the twin the list names, on the carrier and on the menu it opens', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+    // The lowest row (#372) is the Dated coif; the list names Hempen Coif (#2629)
+    expect(part(glamour, 'HeadGear', 'item-name')).toBe('Hempen Coif');
+
+    block(glamour).querySelector<HTMLElement>('[data-glamour-view="dyes"]')!.click();
+    const carrier = block(glamour).querySelector<HTMLElement>(
+      '[data-role="carrier"][data-slot="HeadGear"]'
+    )!;
+    expect(carrier.title).toContain('Hempen Coif');
+    expect(carrier.title).not.toContain('Dated');
+    expect(carrier.getAttribute('aria-label')).not.toContain('Dated');
+
+    carrier.click();
+    const menu = () => document.querySelector<HTMLElement>('[data-role="item-links-menu"]');
+    await vi.waitFor(() => expect(menu()).not.toBeNull());
+    expect(menu()!.firstElementChild!.textContent).toBe('Hempen Coif');
+    menu()!.querySelector<HTMLElement>('[data-link="garlandTools"]')!.click();
+    expect(open).toHaveBeenCalledWith(
+      'https://www.garlandtools.org/db/#item/2629',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    open.mockRestore();
+  });
+
+  it('writes the twin it names into Copy list and Export .md', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const { block: b, container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    const { glamourMarkdownInput } = await import('../glamour-list-actions');
+    const source = (
+      b as unknown as { listSource(): import('../glamour-list-actions').GlamourListSource }
+    ).listSource();
+    expect(glamourMarkdownInput(source).HeadGear?.name).toBe('Hempen Coif');
   });
 });

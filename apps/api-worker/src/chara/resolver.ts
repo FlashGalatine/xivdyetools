@@ -19,7 +19,7 @@
  * - ko/zh merge from the build-time tables, EN fallback per item by omission.
  */
 
-import { CHARA_SLOT_SEARCH_FIELD, charaModelKey } from '@xivdyetools/core';
+import { CHARA_SLOT_SEARCH_FIELD, charaModelKey, groupCharaTwinRules } from '@xivdyetools/core';
 import type {
   CharaGearModel,
   CharaGearSlotId,
@@ -83,24 +83,40 @@ function withAcquisition(rowId: number): { acquisition?: string } {
 
 /**
  * Lowest row_id names the item; the rest are alternates, row_id ascending.
- * Each carries its own acquisition line: the Glamour Reader lets the player
- * name any twin, and the line must match the name it sits under.
+ * The in-game rules cover the WHOLE family, so the capped alternates name the
+ * lowest row of every rule set first and fill the rest in row order: a twin
+ * that passes the check is always one the reader can name, however many
+ * Dated rows sort ahead of it. Each carries its own acquisition line: the
+ * Glamour Reader lets the player name any twin, and the line must match the
+ * name it sits under.
  */
 export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
   if (rows.length === 0) return null;
   const sorted = [...rows].sort((a, b) => a.rowId - b.rowId);
   const primary = sorted[0];
+  const rules = groupCharaTwinRules(sorted.map((r) => ({ rowId: r.rowId, rules: r.rules ?? null })));
+  const chosen = new Set<number>();
+  for (const id of rules.map((g) => g.itemIds[0])) {
+    if (id !== primary.rowId && chosen.size < MAX_ALTERNATES) chosen.add(id);
+  }
+  for (const r of sorted.slice(1)) {
+    if (chosen.size >= MAX_ALTERNATES) break;
+    chosen.add(r.rowId);
+  }
   return {
     itemId: primary.rowId,
     names: withRegional(primary.rowId, primary.names),
     iconId: primary.iconId,
     familySize: sorted.length,
-    alternates: sorted.slice(1, 1 + MAX_ALTERNATES).map((r) => ({
-      itemId: r.rowId,
-      names: withRegional(r.rowId, r.names),
-      ...withAcquisition(r.rowId),
-    })),
+    alternates: sorted
+      .filter((r) => chosen.has(r.rowId))
+      .map((r) => ({
+        itemId: r.rowId,
+        names: withRegional(r.rowId, r.names),
+        ...withAcquisition(r.rowId),
+      })),
     viaMainHand: false,
+    rules,
     ...withAcquisition(primary.rowId),
   };
 }

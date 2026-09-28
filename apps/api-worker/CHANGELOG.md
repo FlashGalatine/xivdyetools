@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-09-28
+
+Lands after 0.15.0 (the acquisition lines, PR #207).
+
+### Added
+
+- **`items.<slot>.rules` on `POST /v1/chara/resolve`** — a new response field: the family's distinct
+  in-game rule sets, lowest row first (so the first set holds `itemId`), each `{ itemIds,
+  dyeCount, glamourable, wearMask, grandCompany }` — dye channels, the glamour flag, the race/gender
+  wear mask and the Grand Company lock (`0` = any). `[]` when XIVAPI's answer lacked the fields.
+  There is no job list: since patch 7.4 any job can wear any piece for glamour. The one Item search
+  now also asks for `DyeCount`, `IsGlamorous`, `EquipRestriction.*` and `GrandCompany.row_id`, and
+  the cache's `SHAPE_VERSION` goes 1 → 3 so no week-old row replays without the field. Every
+  existing field is unchanged. Documented in the Character Equipment reference.
+- **Our own workers get their own `/v1/*` bucket** (`SERVICE_RATE_LIMITER`, 1300 / 60 s, namespace
+  ids 1005 prod / 1006 dev). A service-binding request carries no `CF-Connecting-IP`, so every
+  discord-worker `/glamour` resolve used to share the one `'unknown'` key at a public IP's 60 a
+  minute. The same 20x ceiling BUG-048 gave the Universalis routes; the bot still limits each user.
+- **`glamour` in the telemetry tool allowlist** (the web app's tenth tool).
+
+### Changed
+
+- **The capped alternates name every rule set.** They were the next eight rows by row id, so a
+  family with many Dated rows could cut the one twin that takes the dye, and the reader then said
+  nothing fixes the piece. The lowest row of each rule set now goes in first, then the rest in row
+  order, still at most 8 and still sorted by row id.
 ## [0.15.0] - 2026-09-27
 
 ### Added

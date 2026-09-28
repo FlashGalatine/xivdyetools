@@ -2,7 +2,7 @@
  * Shared E2E navigation helpers.
  *
  * The 5.0 shell's tool switcher has two shapes, chosen by viewport: on desktop
- * (> 768px, the `chromium` project) it is the 3A icon rail — nine
+ * (> 768px, the `chromium` project) it is the 3A icon rail — ten
  * `button.rail-chip[data-tool]` always in the bar; on mobile (`mobile-chrome`)
  * it is the 2B title-menu, where `[data-tool]` buttons exist only once the
  * menu is open. Every spec used to carry its own `waitForSelector('[data-tool]')`
@@ -32,6 +32,7 @@ const TOOL_PATHS: Record<string, string> = {
   presets: '/presets',
   budget: '/budget',
   swatch: '/swatch',
+  glamour: '/glamour',
 };
 
 /**

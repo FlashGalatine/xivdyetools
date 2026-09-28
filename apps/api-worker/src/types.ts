@@ -14,6 +14,12 @@ export interface Env {
    * KV `RATE_LIMIT` under the `telemetry:ip:` prefix.
    */
   TELEMETRY_RATE_LIMITER?: RateLimit;
+  /**
+   * Native rate-limit binding for our own workers on /v1/* (1300 / 60 s):
+   * a service-binding request carries no client IP, so they share one key.
+   * Absent → KV `RATE_LIMIT` under the `api:svc:` prefix.
+   */
+  SERVICE_RATE_LIMITER?: RateLimit;
   ENVIRONMENT: string;
   API_VERSION: string;
   /** Universalis proxy routes (absorbed from apps/universalis-proxy) */

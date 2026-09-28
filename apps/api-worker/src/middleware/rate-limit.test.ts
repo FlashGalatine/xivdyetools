@@ -111,6 +111,22 @@ describe('api-worker rate-limit middleware backend selection', () => {
     expect(kv.puts).toBe(0); // KV never touched when the binding is present
   });
 
+  it('gives our own workers (a service binding: no client IP) their own, 20x bucket', async () => {
+    const apiBinding = fakeBinding([true]);
+    const serviceBinding = fakeBinding([true, false]);
+    const env = baseEnv({ API_RATE_LIMITER: apiBinding, SERVICE_RATE_LIMITER: serviceBinding });
+    const app = buildApp();
+
+    const first = await app.request('/v1/ping', {}, env);
+    const second = await app.request('/v1/ping', {}, env);
+    const publicCall = await app.request('/v1/ping', { headers: { 'CF-Connecting-IP': '203.0.113.9' } }, env);
+
+    expect([first.status, second.status, publicCall.status]).toEqual([200, 429, 200]);
+    // The bot's resolve calls never draw on a public IP's bucket, and vice versa
+    expect(serviceBinding.calls).toEqual(['api:svc:workers:t1300_60', 'api:svc:workers:t1300_60']);
+    expect(apiBinding.calls).toEqual(['api:ip:203.0.113.9:t65_60']);
+  });
+
   it('gives /v1/telemetry its own bucket so beacons never consume the API bucket', async () => {
     const apiBinding = fakeBinding([true]);
     const telemetryBinding = fakeBinding([true, true, false]);

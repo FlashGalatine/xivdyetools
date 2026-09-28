@@ -99,6 +99,12 @@
       "female": "여성",
       "evercoldNoticeTitle": "Evercold(2027년 1월): 프리셋 팔레트 지원 종료 예정",
       "evercoldNotice": "확장팩 Evercold에서는 눈, 머리카락, 피부 색상을 컬러 피커로 자유롭게 선택할 수 있게 됩니다. 출시 후 이 프리셋 견본은 컬러 피커로 대체될 예정입니다."
+    },
+    "glamour": {
+      "title": "코디 리더",
+      "shortName": "코디",
+      "description": "캐릭터가 착용한 모든 장비와 염색, 획득처를 한눈에",
+      "lead": "이 캐릭터가 입은 모든 장비와 염색, 그리고 게임에서 착용할 수 있는지."
     }
   },
   "common": {
@@ -1251,7 +1257,7 @@
     "glamourShowAll": "모두 표시",
     "undyed": "미염색",
     "noDyedPieces": "이 코디에는 염색된 장비가 없습니다. '모두 표시'를 켜면 착용 중인 모든 부위가 표시됩니다.",
-    "facewearSlot": "페이스웨어",
+    "facewearSlot": "얼굴 소품",
     "facewearColorTag": "{color} · 페이스웨어 색상",
     "facewearColorUnknown": "페이스웨어 색상 알 수 없음",
     "copyList": "목록 복사",
@@ -1285,18 +1291,18 @@
       "nameUnavailable": "아이템 이름을 불러올 수 없습니다. 닫고 잠시 후 다시 시도하세요."
     },
     "gearSlot": {
-      "MainHand": "무기",
-      "OffHand": "보조무기",
+      "MainHand": "주 무기",
+      "OffHand": "보조 무기",
       "HeadGear": "머리",
       "Body": "몸통",
       "Hands": "손",
       "Legs": "다리",
       "Feet": "발",
-      "Ears": "귀걸이",
-      "Neck": "목걸이",
-      "Wrists": "팔찌",
-      "LeftRing": "왼손 반지",
-      "RightRing": "오른손 반지"
+      "Ears": "귀",
+      "Neck": "목",
+      "Wrists": "손목",
+      "LeftRing": "왼쪽 손가락",
+      "RightRing": "오른쪽 손가락"
     },
     "tooFewTag": "3색 이상",
     "tooFewBody": "팔레트에는 최소 3색이 필요합니다. 그 이하는 팔레트가 아니라 견본입니다. 저장과 제출은 비활성 상태로 유지됩니다.",
@@ -1333,5 +1339,80 @@
     "fr": "프랑스어",
     "ko": "한국어",
     "zh": "중국어"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "게임 내",
+      "headClear": "모든 장비를 파일 그대로 착용할 수 있습니다",
+      "segFixed_one": "같은 외형으로 대체한 장비 {n}개",
+      "segFixed_other": "같은 외형으로 대체한 장비 {n}개",
+      "segWear_one": "이 캐릭터가 착용할 수 없는 장비 {n}개",
+      "segWear_other": "이 캐릭터가 착용할 수 없는 장비 {n}개",
+      "segDye_one": "이 염색을 할 수 없는 장비 {n}개",
+      "segDye_other": "이 염색을 할 수 없는 장비 {n}개",
+      "segGlamour_one": "투영할 수 없는 장비 {n}개",
+      "segGlamour_other": "투영할 수 없는 장비 {n}개",
+      "segNoItem_one": "대응하는 아이템이 없는 모델 {n}개",
+      "segNoItem_other": "대응하는 아이템이 없는 모델 {n}개",
+      "segCompany_one": "맞는 총사령부 소속이 필요한 장비 {n}개",
+      "segCompany_other": "맞는 총사령부 소속이 필요한 장비 {n}개",
+      "explain": "7.4부터는 어떤 직업이든 모든 장비를 투영할 수 있습니다. 확인할 것은 염색 칸, 투영 가능 여부, 종족, 성별, 총사령부입니다. 교체는 이미 아래 목록에 반영되어 있으며, 각 장비의 +N에서 바꿀 수 있습니다.",
+      "countFixed": "{n} 같은 외형으로 해결",
+      "countBlocked": "{n} 해결 불가",
+      "countFine": "{n} 그대로 가능",
+      "countCompany": "{n} 총사령부 필요"
+    },
+    "row": {
+      "tagFixed": "같은 외형으로 해결",
+      "tagBlocked": "해결 불가",
+      "fixedDye": "{name} 대신 표시 (이 염색을 할 수 없음)",
+      "fixedGlamour": "{name} 대신 표시 (투영할 수 없음)",
+      "fixedWear": "{name} 대신 표시 (이 캐릭터는 착용할 수 없음)",
+      "blockedDye": "파일의 염색을 이 장비에 할 수 없습니다",
+      "blockedGlamour": "이 장비는 투영할 수 없습니다",
+      "blockedWear": "이 캐릭터는 착용할 수 없습니다",
+      "blockedNoItem": "대응하는 아이템이 없는 모델입니다",
+      "noFix": "같은 외형의 아이템으로도 해결할 수 없습니다",
+      "otherWorks": "{name}(으)로는 착용할 수 있습니다",
+      "choice": "{name}와(과) 같은 외형 · 어느 쪽이든 괜찮습니다",
+      "company": "맞는 총사령부 소속이 필요합니다",
+      "twins": "같은 외형의 아이템 {n}개 더: 목록에 적을 것을 고르세요"
+    },
+    "picker": {
+      "head": "같은 외형 · {n}개",
+      "sub": "게임에서는 모두 똑같이 보입니다. 목록에 적을 것을 고르세요.",
+      "foot": "목록 복사와 .md 내보내기에는 고른 것이 들어갑니다.",
+      "itemId": "아이템 {id}"
+    },
+    "fact": {
+      "best": "추천",
+      "dye": "염색 ×{n}",
+      "anyTribe": "모든 종족",
+      "tribeOk": "이 캐릭터 가능",
+      "tribeNo": "이 캐릭터 불가",
+      "dated": "구형",
+      "grandCompany": "총사령부",
+      "noGlamour": "투영 불가"
+    },
+    "sheet": {
+      "title": "장비 목록",
+      "sub": "GPOSERS 형식 · {n}개 · 복사하기 전에 무엇이든 수정하세요",
+      "countFilled": "{n} 입력됨",
+      "countEdited": "{n} 수정됨",
+      "countBlank": "{n} 빈칸",
+      "stateFilled": "입력됨",
+      "stateEdited": "수정됨",
+      "stateBlank": "빈칸",
+      "preview": "복사될 내용",
+      "placeholder": "획득처를 찾지 못했습니다: 직접 입력하거나 비워 두세요",
+      "warn": "{name}을(를) 골랐습니다. 이 아이템은 획득처가 다릅니다. 수정한 줄은 그대로 남아 있습니다.",
+      "keep": "내 것 유지",
+      "useNew": "새 획득처 사용",
+      "privacy": "수정 내용은 이 기기에 이 복장별로 저장됩니다. 캐릭터 이름은 목록에 들어가지 않으며, 파일 자체도 저장되지 않습니다.",
+      "reset": "모두 초기화",
+      "save": ".md 저장",
+      "cardNote": "수정한 획득처 메모는 이 기기에 저장됩니다."
+    },
+    "empty": "이 파일에는 장비가 없습니다."
   }
 }

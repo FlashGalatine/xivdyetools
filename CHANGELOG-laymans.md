@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.0] - 2026-09-27
+### 👗 New in the web app: the Glamour Reader
+- Web app: drop in a character file and read it as a glamour: every piece, its dyes, and whether the game lets you wear it that way. It's the tenth tool (press 0).
+- Web app: pieces that look identical, like Dated Hempen Coif and Hempen Coif, are named as the one you can actually wear and dye. Tap +N to pick another.
+- Web app: Copy list and Export .md open a preview with an "Acquisition:" line filled in for each piece, in the GPOSERS submission format. Edit any line first; your edits are remembered on this device.
+- Web app: the list of dyes on your glamour moved from the Swatch Matcher to the Glamour Reader. A file loaded in one tool is already in the other.
+
 ## [5.9.3] - 2026-09-27
 ### 📂 Your character file stays loaded
 - Web app: the Swatch Matcher keeps your character file when you go to another tool and come back, or switch the app's language. It stays until you press SWAP, reload the page or close the tab.

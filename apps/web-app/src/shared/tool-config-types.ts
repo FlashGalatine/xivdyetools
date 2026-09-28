@@ -389,9 +389,12 @@ export interface ToolConfigMap {
 export type ToolConfig = ToolConfigMap[keyof ToolConfigMap];
 
 /**
- * Config key type (tool ID, 'global', 'market', or 'advanced')
+ * Config key type: every tool with settings, plus the shared sections
+ * ('global', 'market', 'advanced'). The Glamour Reader has
+ * none (spec G11: tribe and gender come from the file, nothing is a colour
+ * match), so it has no config slot.
  */
-export type ConfigKey = ToolId | 'global' | 'market' | 'advanced';
+export type ConfigKey = Exclude<ToolId, 'glamour'> | 'global' | 'market' | 'advanced';
 
 // ============================================================================
 // Default Values

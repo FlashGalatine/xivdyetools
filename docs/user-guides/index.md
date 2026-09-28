@@ -17,7 +17,7 @@ Whether you're using the web app or Discord bot, these guides will help you make
 
 ## Web App Guides
 
-### The 9 Tools
+### The 10 Tools
 
 In the order they appear in the app's tool rail. Where the app's own title differs from the guide's
 heading, it is given in brackets.
@@ -33,6 +33,7 @@ heading, it is given in brackets.
 | **Community Presets** (app title: *Preset Palettes*) | [Guide](web-app/community-presets.md) | Browse community dye palettes |
 | **Budget Suggestions** | [Guide](web-app/budget-suggestions.md) | Find affordable dye alternatives |
 | **Swatch Matcher** | [Guide](web-app/swatch-matcher.md) | Match character colors to dyes |
+| **Glamour Reader** | [Tools reference](../projects/web-app/tools.md#10-glamour-reader--design-1a1b--export-sheet-2c) | Read a character file as a glamour: verdict, twins, and the GPOSERS list with acquisition lines |
 
 ### Features
 

@@ -164,6 +164,25 @@ describe('POST /v1/chara/resolve', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it('answers the in-game rules, and a cache replay keeps them', async () => {
+    const everyone = { Hyur: true, Elezen: true, Lalafell: true, Miqote: true, Roegadyn: true, AuRa: true, Hrothgar: true, Viera: true, Male: true, Female: true };
+    const mask = {
+      ...BEECH_MASK,
+      fields: { ...BEECH_MASK.fields, DyeCount: 1, IsGlamorous: true, EquipRestriction: { fields: everyone }, GrandCompany: { value: 0, row_id: 0 } },
+    };
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: 'v', results: [mask] })));
+    const expected = [{ itemIds: [18085], dyeCount: 1, glamourable: true, wearMask: 0xffff, grandCompany: 0 }];
+
+    const ctx = createMockExecutionContext();
+    const first = (await (await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] }, ctx)).json()) as any;
+    expect(first.data.items.HeadGear.rules).toEqual(expected);
+    await flush(ctx);
+
+    const replay = await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] });
+    expect(replay.headers.get('X-Cache')).toBe('HIT');
+    expect(((await replay.json()) as any).data.items.HeadGear.rules).toEqual(expected);
+  });
+
   it('resolves facewear by Glasses row alongside the gear', async () => {
     const fetchMock = vi
       .fn()

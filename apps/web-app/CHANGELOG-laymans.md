@@ -2,6 +2,15 @@
 
 ---
 
+## Web-App Version 5.13.0 — September 28, 2026
+
+### New tool: the Glamour Reader
+- **Drop in a character file and read it as a glamour.** Every piece, what it's dyed, and whether the game actually lets you wear it that way. It's the tenth tool in the bar (press 0).
+- **"In the game" comes first.** It checks dye slots, whether a piece can be a glamour, and your race and gender. Since patch 7.4 any job can wear any piece, so jobs aren't checked. Grand Company gear is flagged, since a character file doesn't say which company you're in.
+- **Pieces that look identical.** Many items share one look, like Dated Hempen Coif and Hempen Coif. The reader names the one you can actually wear and dye, and tells you why. Tap the +N next to a piece to pick another.
+- **Where each piece comes from.** Copy list and Export .md now open a preview of your glamour list with an "Acquisition:" line filled in for each piece, in the GPOSERS submission format. You can edit any line before you copy it, and your edits are remembered on this device.
+- **Same file, two tools.** A file you load in the Swatch Matcher is already in the Glamour Reader, and each has a link to the other. The list of dyes on your glamour moved here from the Swatch Matcher.
+
 ## Web-App Version 5.12.7 — September 28, 2026
 
 ### Your character file stays loaded

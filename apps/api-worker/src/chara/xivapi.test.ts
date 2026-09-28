@@ -80,7 +80,55 @@ describe('cleanName / parseItemRow', () => {
       modelMain: '65589',
       modelSub: '0',
       slots: ['FingerL', 'FingerR'],
+      rules: null,
     });
+  });
+
+  it('reads the in-game rules: dye channels, glamour flag, race/gender lock, Grand Company', () => {
+    // Viera Chestwrap #25208: two channels, Viera women only (EquipRaceCategory 17), any company
+    const row = parseItemRow({
+      row_id: 25208,
+      fields: {
+        Name: 'Viera Chestwrap',
+        ModelMain: 66117,
+        EquipSlotCategory: { fields: { Body: 1 } },
+        DyeCount: 2,
+        IsGlamorous: true,
+        EquipRestriction: { value: 17, fields: { Hyur: false, Viera: true, Male: false, Female: true } },
+        GrandCompany: { value: 0, sheet: 'GrandCompany', row_id: 0, fields: {} },
+      },
+    });
+    expect(row.rules).toEqual({ dyeCount: 2, glamourable: true, wearMask: 0x8000, grandCompany: 0 });
+    // Serpent Private's Sword #1618: the Order of the Twin Adder only
+    const serpent = parseItemRow({
+      row_id: 1618,
+      fields: {
+        Name: "Serpent Private's Sword",
+        ModelMain: 1,
+        DyeCount: 0,
+        IsGlamorous: true,
+        EquipRestriction: { fields: { Hyur: true, Male: true, Female: true } },
+        GrandCompany: { value: 2, sheet: 'GrandCompany', row_id: 2, fields: {} },
+      },
+    });
+    expect(serpent.rules?.grandCompany).toBe(2);
+  });
+
+  it('answers null rules when a field is missing, never a guess', () => {
+    const fields = {
+      Name: 'Curtana Zenith',
+      ModelMain: 1,
+      DyeCount: 0,
+      IsGlamorous: false,
+      EquipRestriction: { fields: { Hyur: true, Male: true } },
+      GrandCompany: { value: 0, row_id: 0 },
+    };
+    expect(parseItemRow({ row_id: 6257, fields }).rules).toMatchObject({ glamourable: false, grandCompany: 0 });
+    for (const missing of ['DyeCount', 'IsGlamorous', 'EquipRestriction', 'GrandCompany']) {
+      const partial: Record<string, unknown> = { ...fields };
+      delete partial[missing];
+      expect(parseItemRow({ row_id: 6257, fields: partial }).rules).toBeNull();
+    }
   });
 
   it('keeps 64-bit weapon keys exact as strings and tolerates a missing icon', () => {
@@ -113,6 +161,13 @@ describe('XivapiClient', () => {
     expect(u.searchParams.get('schema')).toBe('exdschema@2:rev:deadbeef');
     expect(u.searchParams.get('query')).toBe('+((+EquipSlotCategory.Head=1 +ModelMain=328041))');
     expect(u.searchParams.get('fields')).toContain('EquipSlotCategory.FingerR');
+    // The in-game check's fields ride the same single search
+    const fields = u.searchParams.get('fields')!.split(',');
+    expect(fields).toEqual(
+      expect.arrayContaining(['DyeCount', 'IsGlamorous', 'EquipRestriction.Viera', 'EquipRestriction.Female', 'GrandCompany.row_id'])
+    );
+    // Since 7.4 any job wears any piece for glamour: no ClassJobCategory columns
+    expect(fields.some((f) => f.startsWith('ClassJobCategory'))).toBe(false);
     expect((init.headers as Record<string, string>)['User-Agent']).toMatch(/XIVDyeTools/);
     // FINDING-025 / API-9: a redirecting upstream must not be followed to a third
     // host — `manual` (workerd has no `error` mode; it throws on it)

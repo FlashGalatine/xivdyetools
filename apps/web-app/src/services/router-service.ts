@@ -32,7 +32,8 @@ export type ToolId =
   | 'presets'
   | 'budget'
   | 'swatch' // Was 'character' in v3
-  | 'mixer'; // NEW - Dye Mixer tool
+  | 'mixer' // NEW - Dye Mixer tool
+  | 'glamour'; // Glamour Reader, the tenth tool (2026-09-27)
 
 export interface RouteDefinition {
   id: ToolId;
@@ -80,6 +81,7 @@ export const ROUTES: RouteDefinition[] = [
   { id: 'budget', path: '/budget', titleKey: 'tools.budget.title' },
   { id: 'swatch', path: '/swatch', titleKey: 'tools.character.title' },
   { id: 'mixer', path: '/mixer', titleKey: 'tools.mixer.title' }, // NEW tool
+  { id: 'glamour', path: '/glamour', titleKey: 'tools.glamour.title' },
 ];
 
 /**

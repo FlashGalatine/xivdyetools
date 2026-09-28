@@ -28,7 +28,7 @@ xivdyetools/
 │   ├── api-worker/            # Public dye/color-matching API + absorbed Universalis proxy + VitePress docs (CF Worker + KV)
 │   ├── og-worker/             # Dynamic OpenGraph image generation (CF Worker)
 │   ├── stoat-worker/          # Revolt chat bot (Node.js + revolt.js, NOT a CF Worker)
-│   └── web-app/               # Main web app with 9 color tools (Vite + Lit + Tailwind)
+│   └── web-app/               # Main web app with 10 color tools (Vite + Lit + Tailwind)
 ├── docs/                    # Architecture, specs, deployment guides, research
 └── scripts/                 # Repo-level utility scripts
 ```

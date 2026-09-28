@@ -99,6 +99,12 @@
       "female": "Féminin",
       "evercoldNoticeTitle": "Evercold (janvier 2027) : les palettes prédéfinies seront retirées",
       "evercoldNotice": "Avec l'extension Evercold, les couleurs des yeux, des cheveux et de la peau se choisiront librement via un sélecteur de couleurs. Ces nuanciers prédéfinis seront alors remplacés ici par un sélecteur de couleurs."
+    },
+    "glamour": {
+      "title": "Lecteur de mirages",
+      "shortName": "Mirage",
+      "description": "Chaque pièce portée par un personnage, ses teintures et où l'obtenir",
+      "lead": "Chaque pièce que porte ce personnage, sa teinture, et si le jeu permet de la porter."
     }
   },
   "common": {
@@ -1251,7 +1257,7 @@
     "glamourShowAll": "Tout afficher",
     "undyed": "Non teint",
     "noDyedPieces": "Rien n'est teint sur ce mirage. Activez « Tout afficher » pour lister chaque pièce portée.",
-    "facewearSlot": "Lunettes",
+    "facewearSlot": "Accessoires de visage",
     "facewearColorTag": "{color} · couleur de lunettes",
     "facewearColorUnknown": "Couleur de lunettes inconnue",
     "copyList": "Copier la liste",
@@ -1285,18 +1291,18 @@
       "nameUnavailable": "Nom de l'objet indisponible — fermez ceci et réessayez dans un instant."
     },
     "gearSlot": {
-      "MainHand": "Arme",
-      "OffHand": "Main gauche",
+      "MainHand": "Main directrice",
+      "OffHand": "Main non directrice",
       "HeadGear": "Tête",
       "Body": "Torse",
       "Hands": "Mains",
       "Legs": "Jambes",
       "Feet": "Pieds",
-      "Ears": "Boucles d'oreilles",
-      "Neck": "Collier",
-      "Wrists": "Bracelets",
-      "LeftRing": "Anneau gauche",
-      "RightRing": "Anneau droit"
+      "Ears": "Oreilles",
+      "Neck": "Cou",
+      "Wrists": "Poignets",
+      "LeftRing": "Bague gauche",
+      "RightRing": "Bague droite"
     },
     "tooFewTag": "MIN. 3",
     "tooFewBody": "Une palette demande au moins trois teintures — en dessous, c'est un échantillon, pas une palette. Enregistrer et soumettre restent désactivés.",
@@ -1333,5 +1339,80 @@
     "fr": "Français",
     "ko": "Coréen",
     "zh": "Chinois"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "EN JEU",
+      "headClear": "Chaque pièce se porte comme le fichier la montre",
+      "segFixed_one": "{n} pièce remplacée par un jumeau",
+      "segFixed_other": "{n} pièces remplacées par un jumeau",
+      "segWear_one": "{n} pièce que ce personnage ne peut pas porter",
+      "segWear_other": "{n} pièces que ce personnage ne peut pas porter",
+      "segDye_one": "{n} pièce qui ne prend pas ces teintures",
+      "segDye_other": "{n} pièces qui ne prennent pas ces teintures",
+      "segGlamour_one": "{n} pièce qui ne peut pas servir de mirage",
+      "segGlamour_other": "{n} pièces qui ne peuvent pas servir de mirage",
+      "segNoItem_one": "{n} modèle sans objet derrière",
+      "segNoItem_other": "{n} modèles sans objet derrière",
+      "segCompany_one": "{n} pièce qui nécessite la bonne Grande Compagnie",
+      "segCompany_other": "{n} pièces qui nécessitent la bonne Grande Compagnie",
+      "explain": "Depuis la 7.4, toutes les classes peuvent porter n'importe quelle pièce en mirage ; restent à vérifier les canaux de teinture, l'option mirage, la race, le sexe et la Grande Compagnie. Les remplacements figurent déjà dans la liste ci-dessous ; modifiez-les via le +N de chaque pièce.",
+      "countFixed": "{n} RÉGLÉ PAR UN JUMEAU",
+      "countBlocked": "{n} SANS SOLUTION",
+      "countFine": "{n} OK TEL QUEL",
+      "countCompany": "{n} GRANDE COMPAGNIE REQUISE"
+    },
+    "row": {
+      "tagFixed": "RÉGLÉ PAR UN JUMEAU",
+      "tagBlocked": "SANS SOLUTION",
+      "fixedDye": "Nommé à la place de {name}, qui ne prend pas ces teintures",
+      "fixedGlamour": "Nommé à la place de {name}, qui ne peut pas servir de mirage",
+      "fixedWear": "Nommé à la place de {name}, que ce personnage ne peut pas porter",
+      "blockedDye": "Cette pièce ne prend pas les teintures du fichier",
+      "blockedGlamour": "Cette pièce ne peut pas servir de mirage",
+      "blockedWear": "Ce personnage ne peut pas la porter",
+      "blockedNoItem": "Un modèle sans objet derrière",
+      "noFix": "Aucune pièce d'apparence identique ne règle le problème",
+      "otherWorks": "{name} peut être porté à la place",
+      "choice": "Même apparence que {name} · l'un ou l'autre convient",
+      "company": "Nécessite la bonne Grande Compagnie",
+      "twins": "Même apparence que {n} autres objets : choisissez celui que la liste nomme"
+    },
+    "picker": {
+      "head": "MÊME APPARENCE · {n} OBJETS",
+      "sub": "Le jeu les affiche à l'identique. Choisissez celui que votre liste nomme.",
+      "foot": "Copier la liste et Exporter .md écrivent celui que vous choisissez.",
+      "itemId": "OBJET {id}"
+    },
+    "fact": {
+      "best": "MEILLEUR CHOIX",
+      "dye": "TEINTURE ×{n}",
+      "anyTribe": "TOUTES RACES",
+      "tribeOk": "CONVIENT AU PERSONNAGE",
+      "tribeNo": "PAS POUR CE PERSONNAGE",
+      "dated": "ANCIEN",
+      "grandCompany": "GRANDE COMPAGNIE",
+      "noGlamour": "PAS DE MIRAGE"
+    },
+    "sheet": {
+      "title": "Liste d'équipement",
+      "sub": "Format GPOSERS · {n} pièces · modifiez ce que vous voulez avant de copier",
+      "countFilled": "{n} REMPLI",
+      "countEdited": "{n} MODIFIÉ",
+      "countBlank": "{n} VIDE",
+      "stateFilled": "REMPLI",
+      "stateEdited": "MODIFIÉ",
+      "stateBlank": "VIDE",
+      "preview": "CE QUI SERA COPIÉ",
+      "placeholder": "Aucune source trouvée : saisissez-en une ou laissez vide",
+      "warn": "Vous avez choisi {name}, qui a sa propre source. Votre ligne modifiée est toujours là.",
+      "keep": "Garder la mienne",
+      "useNew": "Prendre la nouvelle source",
+      "privacy": "Les modifications sont conservées sur cet appareil pour cette tenue. Le nom du personnage n'apparaît jamais dans la liste, et le fichier lui-même n'est jamais enregistré.",
+      "reset": "Tout réinitialiser",
+      "save": "Enregistrer le .md",
+      "cardNote": "Vos notes d'obtention modifiées sont conservées sur cet appareil."
+    },
+    "empty": "Ce fichier ne porte aucun équipement."
   }
 }

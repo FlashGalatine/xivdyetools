@@ -31,7 +31,7 @@ function getShortcuts(): ShortcutGroup[] {
       title: LanguageService.t('shortcuts.navigation'),
       shortcuts: [
         {
-          keys: '1-9',
+          keys: '0-9',
           description: LanguageService.t('shortcuts.switchTool'),
         },
         {

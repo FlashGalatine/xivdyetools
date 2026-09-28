@@ -7,6 +7,81 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.13.0] - 2026-09-28
+
+The Glamour Reader, the tenth tool (design: the Claude Design project's *Glamour Reader
+Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader-design.md`).
+
+### Added
+
+- **The Glamour Reader** (`/glamour`, key `0`, glyph 1a). It reads the loaded `.chara` file as a
+  glamour: every piece, its dyes, and whether the game lets it be worn. No sidebar; it shares the
+  file with the Swatch Matcher (`CharaSessionService`) — each file card links to the other tool,
+  and SWAP clears the file for both. On a phone the card's buttons wrap under the name as one
+  group, so the name keeps at least 140 px. The phone's Options scrim is drawn only for a tool
+  that has an Options panel, so pressing Back into the reader with the Swatch Matcher's Options
+  open no longer leaves a dimmed screen with no panel on it.
+- **IN THE GAME comes first.** The verdict tops the reader: a headline built from the counts ("1
+  piece named from a twin and 1 piece this character can't wear") and FIXED BY A TWIN / NO FIX /
+  FINE AS IS / NEEDS A GRAND COMPANY chips, one outcome per piece, so the chips add up to the
+  pieces. Since patch 7.4 any job can wear
+  any piece for glamour, so the check is dye channels, the glamour flag, race, gender and Grand
+  Company — a company lock is a flag, never a failure (a `.chara` records no company).
+- **Twins.** A model often stands for several identical items. Each row names the one the list
+  will write — the first that passes the check, preferring a dyeable one, then one any Grand
+  Company can wear, then not Dated — and
+  says why ("Named instead of Dated Hempen Coif, which can't take these dyes"). The `+N` chip
+  opens a picker (popover on desktop, bottom sheet on a phone) listing each twin's facts. A pick
+  lives with the loaded file: it survives leaving the reader and coming back, and a new file
+  starts clean. A piece the verdict flags gets a row even when it's undyed and Show all is off.
+  In the Dyes lens a carrier icon's tooltip and its Open in… menu name that same twin, so the
+  menu's title and its links are one item.
+- **The export sheet.** Copy list and Export .md open an editable preview of the GPOSERS list with
+  each piece's `Acquisition:` line filled from api-worker (≥ 0.15.0) for the twin it names. Edits
+  are kept on this device, keyed by a hash of the gear (slot, the family's row, the stains) —
+  never the file or the character — and a twin pick never overwrites one: the row offers Keep
+  mine / Use new source. Reset all clears the outfit's edits. Two identical rings are written
+  once as `Rings:` and edited as one row (GPOSERS reminders, March 2026). A piece with no item
+  behind it keeps its edit under its model. When storage is off or full, edits last for the
+  page instead of vanishing, and an Acquisition line is always written as one line.
+- **Slot names are the game's own.** Every piece is labeled with the slot wording each client's
+  character window uses (`Addon` rows 738–750, 16050): Main Hand / Off Hand / Ears / Neck / Wrists /
+  Right Ring in English, Haupthand / Finger (rechts) in German, Main directrice / Bague droite in
+  French, 주 무기 / 오른쪽 손가락 in Korean, 主手 / 手臂 / 右指 in Chinese, メインアーム in Japanese —
+  and the facewear slot's own name, not "glasses". Several had been market-board item categories,
+  and some matched neither (glossary: Equipment Slots).
+- A loaded file that wears nothing says so under its card. The twin picker moves with the arrow
+  keys and gives focus back to its chip; it opens upward near the bottom of the screen. The export
+  sheet keeps Tab inside it and gives focus back to the button that opened it — handed over by
+  the reader, since the shell's shadow root hides that button from `document.activeElement`.
+- **The export sheet is a modal to the whole app.** While it is open the global shortcuts (`0-9`,
+  Shift+T/L/S, `?`) stand down — it registers through the new `ModalService.registerExternal()`,
+  as it draws itself rather than through the modal container — and leaving the reader closes it,
+  including a sheet whose chunk was still loading.
+- Narrow desktop (769–919 px) drops the language button's globe and closes the rail's gaps by a
+  pixel, so ten rail chips and a hovered label fit even at 769 px. The shortcuts panel says `0-9`.
+- **The site's share card shows ten tools.** `public/og/default.png` and `default-x.png` are
+  re-exported from the design's export sheet (turn 4) with the tenth glyph. The rail re-cuts to
+  22 px cells and 12 px gaps, so it stays 356 px wide in both frames. The alt text says ten.
+
+### Changed
+
+- **DYES ON THIS GLAMOUR left the Swatch Matcher** for the reader. The Swatch Matcher keeps the
+  file card and THIS CHARACTER; its file card links to the Glamour Reader.
+
+### Removed
+
+- The prototype's job line and `swatch.gameCheck.*` strings (replaced by `glamour.*`).
+
+### Bundle budget
+
+- **Two limits move for measured growth, not headroom** (`scripts/check-bundle-size.js`). The core
+  runtime chunk goes from 280 KB to 284 KB: it measures 281.43 KB (277.79 KB on 5.12.7) with the
+  Glamour Reader's rules from core and ModalService's self-drawn modals. The one-locale JS payload
+  goes from 2200 KB to 2250 KB: 5.12.7 sat at 98.5%, and the reader's three on-demand chunks put
+  it 649 B over. Splitting core's `.chara` code into its own chunk was tried and reverted, since
+  the index imports it statically and it would load on every visit anyway.
+
 ## [5.12.7] - 2026-09-28
 
 The Swatch Matcher's loaded `.chara` file moves out of the component that drew it and into a

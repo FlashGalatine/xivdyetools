@@ -106,6 +106,16 @@ describe('RouterService', () => {
       expect(toolIds).toContain('budget');
       expect(toolIds).toContain('swatch'); // Was 'character'
       expect(toolIds).toContain('mixer'); // NEW - Dye Mixer
+      expect(toolIds).toContain('glamour'); // Tenth tool, 2026-09-27
+    });
+
+    it('routes the Glamour Reader at /glamour', () => {
+      expect(ROUTES.find((r) => r.id === 'glamour')).toEqual({
+        id: 'glamour',
+        path: '/glamour',
+        titleKey: 'tools.glamour.title',
+      });
+      expect(RouterService.isValidToolId('glamour')).toBe(true);
     });
   });
 

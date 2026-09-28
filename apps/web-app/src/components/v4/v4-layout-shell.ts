@@ -94,7 +94,18 @@ export class V4LayoutShell extends BaseLitComponent {
   /**
    * Tools that should NOT show the Color Palette drawer
    */
-  private static readonly TOOLS_WITHOUT_PALETTE: ToolId[] = ['extractor', 'presets'];
+  private static readonly TOOLS_WITHOUT_PALETTE: ToolId[] = ['extractor', 'presets', 'glamour'];
+
+  /**
+   * Tools with no Options panel (and so no Options FAB): the Glamour Reader
+   * has nothing to configure — tribe and gender come from the file and
+   * nothing is a colour match (design 1a, "No sidebar").
+   */
+  private static readonly TOOLS_WITHOUT_OPTIONS: ToolId[] = ['glamour'];
+
+  private get shouldShowOptions(): boolean {
+    return !V4LayoutShell.TOOLS_WITHOUT_OPTIONS.includes(this.activeTool);
+  }
 
   /**
    * Check if the palette should be visible for the current tool
@@ -1004,18 +1015,27 @@ export class V4LayoutShell extends BaseLitComponent {
         <!-- Left tool-Options panel (drawn 1A desktop frames): an inline column
              on desktop, a left overlay on mobile. Both breakpoints reach it
              through the bottom-left Options FAB — never through the gear. -->
-        <v4-config-sidebar
-          class="v4-simple-settings"
-          .activeTool=${this.activeTool}
-          ?collapsed=${this.optionsCollapsed}
-          @sidebar-collapse=${this.handleOptionsCollapse}
-          @config-change=${this.handleConfigChange}
-          @clear-all-dyes=${this.handleClearAllDyes}
-        ></v4-config-sidebar>
+        ${
+          this.shouldShowOptions
+            ? html`<v4-config-sidebar
+                class="v4-simple-settings"
+                .activeTool=${this.activeTool}
+                ?collapsed=${this.optionsCollapsed}
+                @sidebar-collapse=${this.handleOptionsCollapse}
+                @config-change=${this.handleConfigChange}
+                @clear-all-dyes=${this.handleClearAllDyes}
+              ></v4-config-sidebar>`
+            : nothing
+        }
 
-        <!-- Mobile Options Overlay (tap outside to close the Options panel) -->
+        <!-- Mobile Options Overlay (tap outside to close the Options panel).
+             Gated on the tool having a panel, like the palette's below: a
+             route change that is not the app bar's tool-select (Back, a
+             cross-link) leaves optionsCollapsed as it was. -->
         <div
-          class="v4-drawer-overlay ${!this.optionsCollapsed && this.isMobile ? 'visible' : ''}"
+          class="v4-drawer-overlay ${
+            !this.optionsCollapsed && this.isMobile && this.shouldShowOptions ? 'visible' : ''
+          }"
           @click=${this.handleOptionsOverlayClick}
           role="button"
           tabindex="-1"
@@ -1084,20 +1104,24 @@ export class V4LayoutShell extends BaseLitComponent {
       }
 
       <!-- Tool-Options Toggle FAB (bottom-left; hidden while the panel is open) -->
-      <button
-        class="v4-options-toggle ${this.optionsCollapsed ? '' : 'panel-open'}"
-        type="button"
-        title="${LanguageService.t('common.options')}"
-        aria-label="${LanguageService.t('common.options')}"
-        aria-expanded=${!this.optionsCollapsed}
-        @click=${this.toggleOptionsPanel}
-      >
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path
-            d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
-          />
-        </svg>
-      </button>
+      ${
+        this.shouldShowOptions
+          ? html`<button
+              class="v4-options-toggle ${this.optionsCollapsed ? '' : 'panel-open'}"
+              type="button"
+              title="${LanguageService.t('common.options')}"
+              aria-label="${LanguageService.t('common.options')}"
+              aria-expanded=${!this.optionsCollapsed}
+              @click=${this.toggleOptionsPanel}
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path
+                  d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"
+                />
+              </svg>
+            </button>`
+          : nothing
+      }
 
       <!-- Palette Drawer Toggle FAB (hidden when drawer is open or tool doesn't use palette) -->
       <button

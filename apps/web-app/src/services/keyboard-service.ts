@@ -2,7 +2,7 @@
  * XIV Dye Tools v2.1.0 - Keyboard Service
  *
  * Centralized keyboard shortcut management
- * Handles global shortcuts: 1-9 (tools), Shift+T (theme), Shift+L (language),
+ * Handles global shortcuts: 0-9 (tools), Shift+T (theme), Shift+L (language),
  * Shift+S (share the active tool), ? (help)
  *
  * @module services/keyboard-service
@@ -24,7 +24,8 @@ import { logger } from '@shared/logger';
 // ============================================================================
 
 /**
- * Maps number keys 1-9 to the nine tools, in ROUTES order.
+ * Maps number keys 1-9 to the first nine tools, in ROUTES order, and 0 to the
+ * tenth (the Glamour Reader) — 0 sits after 9 on the number row.
  * (Pre-5.0 this stopped at 5 and still said 'matcher', which is not a
  * routable ToolId — key 2 dispatched a tool the router could not open.)
  */
@@ -38,6 +39,7 @@ const TOOL_KEY_MAP: Record<string, string> = {
   '7': 'budget',
   '8': 'swatch',
   '9': 'mixer',
+  '0': 'glamour',
 };
 
 /**

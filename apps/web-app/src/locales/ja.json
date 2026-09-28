@@ -99,6 +99,12 @@
       "female": "女性",
       "evercoldNoticeTitle": "Evercold（2027年1月）：プリセットパレットは廃止予定です",
       "evercoldNotice": "拡張パッケージ「Evercold」では、瞳・髪・肌の色をカラーピッカーで自由に選択できるようになります。発売後、このプリセットスウォッチはカラーピッカーに置き換えられる予定です。"
+    },
+    "glamour": {
+      "title": "ミラプリリーダー",
+      "shortName": "ミラプリ",
+      "description": "キャラクターファイルの装備、染色、入手方法を一覧で表示",
+      "lead": "このキャラクターが着ている装備、その染色、そしてゲーム内で着用できるかどうか。"
     }
   },
   "common": {
@@ -1251,7 +1257,7 @@
     "glamourShowAll": "すべて表示",
     "undyed": "未染色",
     "noDyedPieces": "このミラプリには染色された装備がありません。「すべて表示」をオンにすると、装備中のすべての部位が表示されます。",
-    "facewearSlot": "フェイスウェア",
+    "facewearSlot": "フェイスアクセサリー",
     "facewearColorTag": "{color}・フェイスウェアカラー",
     "facewearColorUnknown": "フェイスウェアカラー不明",
     "copyList": "リストをコピー",
@@ -1285,7 +1291,7 @@
       "nameUnavailable": "アイテム名を取得できません。閉じてしばらくしてからお試しください。"
     },
     "gearSlot": {
-      "MainHand": "武器",
+      "MainHand": "メインアーム",
       "OffHand": "サブアーム",
       "HeadGear": "頭",
       "Body": "胴",
@@ -1333,5 +1339,80 @@
     "fr": "フランス語",
     "ko": "韓国語",
     "zh": "中国語"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "ゲーム内",
+      "headClear": "どの装備もファイルどおりに着用できます",
+      "segFixed_one": "別アイテムで表示した{n}部位",
+      "segFixed_other": "別アイテムで表示した{n}部位",
+      "segWear_one": "このキャラクターが装備できない{n}部位",
+      "segWear_other": "このキャラクターが装備できない{n}部位",
+      "segDye_one": "この染色ができない{n}部位",
+      "segDye_other": "この染色ができない{n}部位",
+      "segGlamour_one": "投影できない{n}部位",
+      "segGlamour_other": "投影できない{n}部位",
+      "segNoItem_one": "対応するアイテムのないモデル{n}件",
+      "segNoItem_other": "対応するアイテムのないモデル{n}件",
+      "segCompany_one": "グランドカンパニーへの所属が必要な{n}部位",
+      "segCompany_other": "グランドカンパニーへの所属が必要な{n}部位",
+      "explain": "パッチ7.4以降、どのジョブでもあらゆる装備を投影できます。確認するのは染色枠、投影の可否、種族、性別、グランドカンパニーです。差し替えは下の一覧に反映済みで、各装備の +N から変更できます。",
+      "countFixed": "{n} 別アイテムで解決",
+      "countBlocked": "{n} 解決不可",
+      "countFine": "{n} そのまま可",
+      "countCompany": "{n} 要グランドカンパニー"
+    },
+    "row": {
+      "tagFixed": "別アイテムで解決",
+      "tagBlocked": "解決不可",
+      "fixedDye": "{name}の代わりに表示（この染色ができないため）",
+      "fixedGlamour": "{name}の代わりに表示（投影できないため）",
+      "fixedWear": "{name}の代わりに表示（このキャラクターは装備できないため）",
+      "blockedDye": "ファイルの染色をこの装備には施せません",
+      "blockedGlamour": "この装備は投影できません",
+      "blockedWear": "このキャラクターは装備できません",
+      "blockedNoItem": "対応するアイテムのないモデルです",
+      "noFix": "同じ見た目のアイテムでも解決できません",
+      "otherWorks": "{name}なら着用できます",
+      "choice": "{name}と同じ見た目 · どちらでも可",
+      "company": "対応するグランドカンパニーへの所属が必要です",
+      "twins": "同じ見た目のアイテムが他に{n}件：一覧に書くものを選択"
+    },
+    "picker": {
+      "head": "同じ見た目 · {n}件",
+      "sub": "ゲーム上はどれも同じに見えます。一覧に書くものを選んでください。",
+      "foot": "一覧のコピーと .md 書き出しには、選んだものが入ります。",
+      "itemId": "アイテム {id}"
+    },
+    "fact": {
+      "best": "おすすめ",
+      "dye": "染色 ×{n}",
+      "anyTribe": "全種族",
+      "tribeOk": "このキャラ可",
+      "tribeNo": "このキャラ不可",
+      "dated": "旧式",
+      "grandCompany": "グランドカンパニー",
+      "noGlamour": "投影不可"
+    },
+    "sheet": {
+      "title": "装備リスト",
+      "sub": "GPOSERS形式 · {n}点 · コピー前に自由に編集できます",
+      "countFilled": "{n} 入力済み",
+      "countEdited": "{n} 編集済み",
+      "countBlank": "{n} 空欄",
+      "stateFilled": "入力済み",
+      "stateEdited": "編集済み",
+      "stateBlank": "空欄",
+      "preview": "コピーされる内容",
+      "placeholder": "入手方法が見つかりません：入力するか空欄のままにしてください",
+      "warn": "{name}を選びました。こちらには別の入手方法があります。編集した行はそのまま残っています。",
+      "keep": "自分の行を使う",
+      "useNew": "新しい入手方法を使う",
+      "privacy": "編集内容はこの端末に、この装備ごとに保存されます。キャラクター名がリストに入ることはなく、ファイル自体も保存されません。",
+      "reset": "すべてリセット",
+      "save": ".md を保存",
+      "cardNote": "編集した入手方法はこの端末に保存されます。"
+    },
+    "empty": "このファイルには装備がありません。"
   }
 }

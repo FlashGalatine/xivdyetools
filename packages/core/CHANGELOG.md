@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-09-28
+
+The Glamour Reader's rules for identical items. MINOR: new exports; the prototype's
+`checkCharaLook` never shipped in a release.
+
+### Added
+
+- **`chara-twins`** — `charaTwinsOf(family, dyedChannel, character)`, `defaultCharaTwin(twins)`,
+  `charaPieceTone(twins, picked)`, `charaTwinFacts(twin, best)` and their types. A `.chara` model
+  names a family of items the game draws identically (Dated Hempen Coif / Hempen Coif, Curtana
+  Zenith / its Replica, Lord's / Lady's Yukata); these decide which one a glamour list names — the
+  first that passes the in-game check for the file, preferring a dyeable one (GPOSERS: "use a
+  perfectly identical dyeable version"), then one any Grand Company can wear, then not Dated, then
+  more dye channels, then the lowest row — and how the row reads (fixed by a twin / no fix / a
+  free choice). Shared by the web app's Glamour Reader and the `/glamour` bot card.
+  `defaultCharaTwin([])` throws a `RangeError` instead of returning `undefined` as a
+  `CharaTwin`; `charaTwinsOf` never returns an empty list.
+- **`chara-gposers`** — the GPOSERS submission form as data (`gposersGroups`, `GPOSERS_SLOTS`,
+  `gposersSlotLabel`, `gposersSameRings`, the header and `Acquisition:` label): which worn slots,
+  in which order, with which lines; identical rings once as `Rings:`; every value one line. The
+  web reader renders it as Markdown / plain text / HTML and the `/glamour` bot as an embed, so the
+  two can't drift.
+- **`chara-game-rules`**: `groupCharaTwinRules`, `charaWearMask` and the `CharaItemRules` /
+  `CharaTwinRules` / `CharaPieceProblem` types for api-worker's resolve answer.
+
+### Changed
+
+- **No job check.** Since patch 7.4 any job can wear any piece for glamour, so the rules carry
+  dye channels, the glamour flag, the race/gender lock and **`grandCompany`** (0 = any). A `.chara`
+  records no Grand Company, so a company-locked piece is a flag, never a failure.
 ## [5.7.0] - 2026-09-28
 
 **The character color sheets now come straight from the game's `human.cmp`, both halves.** MINOR:

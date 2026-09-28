@@ -30,6 +30,7 @@ export const ICON_TOOL_MIXER = glyph('mixer');
 export const ICON_TOOL_PRESETS = glyph('presets');
 export const ICON_TOOL_BUDGET = glyph('budget');
 export const ICON_TOOL_CHARACTER = glyph('swatch');
+export const ICON_TOOL_GLAMOUR = glyph('glamour');
 export const ICON_TOOL_MENU = glyph('tools');
 
 /**
@@ -45,6 +46,7 @@ export const TOOL_ICONS: Record<string, string> = {
   presets: ICON_TOOL_PRESETS,
   budget: ICON_TOOL_BUDGET,
   swatch: ICON_TOOL_CHARACTER,
+  glamour: ICON_TOOL_GLAMOUR,
   // Legacy aliases for backwards compatibility
   matcher: ICON_TOOL_EXTRACTOR,
   character: ICON_TOOL_CHARACTER,

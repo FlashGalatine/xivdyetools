@@ -47,6 +47,7 @@ const TOOL_IDS = [
   'presets',
   'budget',
   'swatch',
+  'glamour',
 ] as const;
 const ENTRIES = ['initial', 'share', 'nav'] as const;
 const VIAS = ['drawer', 'grid'] as const;

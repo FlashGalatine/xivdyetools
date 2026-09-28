@@ -277,8 +277,59 @@ confidence:
   `코디` / `룩`. `코디` is the house choice for one outfit in the UI; the Privacy / Terms documents
   use the official-register `의상` — the same split as Japanese `ミラプリ` (UI) and `コーディネート`
   (policies).
+- **The Glamour Reader is named from the last row too**: `ミラプリリーダー`, `Projektionsleser`,
+  `Lecteur de mirages`, `코디 리더`, `幻化查看器` (short: `ミラプリ` / `Projektion` / `Mirage` /
+  `코디` / `幻化`), on the web, the OG card and the `/glamour` card. An item that "can't be a
+  glamour" fails the system's check, so Japanese and Korean keep the system's verb there:
+  `投影できない`, `투영할 수 없음` / `투영 불가`, never `코디`.
 - The compounds do not follow one template (`Entprojizierungskristall`, *dissipateur **de**
   mirage*) — look each one up rather than deriving it.
+
+---
+
+## Equipment Slots
+
+**Source:** none in `@xivdyetools/core` — written by hand in web-app `swatch.gearSlot.*` /
+`swatch.facewearSlot` (the Glamour Reader's rows) and bot-logic `card.glamourSlot.*` (the `/glamour`
+card, uppercased where the script has case). Values are the game client's own strings, the `Addon`
+sheet's slot labels, read 2026-09-28 from the game data (XIVAPI v2 for EN/JA/DE/FR, the CN and KR
+client dumps for ZH/KO; rows, URLs and confidence:
+[equipment slot research](../research/2026-09-28-equipment-slot-terms/README.md)).
+
+| Slot | Addon row | EN | JA | DE | FR | KO | ZH |
+|------|-----------|----|----|----|----|----|----|
+| Main hand | 738 | Main Hand | メインアーム | Haupthand | Main directrice | 주 무기 | 主手 |
+| Off hand | 739 | Off Hand | サブアーム | Nebenhand | Main non directrice | 보조 무기 | 副手 |
+| Head | 740 | Head | 頭 | Kopf | Tête | 머리 | 头部 |
+| Body | 741 | Body | 胴 | Rumpf | Torse | 몸통 | 身体 |
+| Hands | 742 | Hands | 手 | Hände | Mains | 손 | 手臂 |
+| Legs | 744 | Legs | 脚 | Beine | Jambes | 다리 | 腿部 |
+| Feet | 745 | Feet | 足 | Füße | Pieds | 발 | 脚部 |
+| Ears | 746 | Ears | 耳 | Ohren | Oreilles | 귀 | 耳部 |
+| Neck | 747 | Neck | 首 | Hals | Cou | 목 | 颈部 |
+| Wrists | 748 | Wrists | 腕 | Handgelenke | Poignets | 손목 | 腕部 |
+| Right ring | 749 | Right Ring | 右指 | Finger (rechts) | Bague droite | 오른쪽 손가락 | 右指 |
+| Left ring | 750 | Left Ring | 左指 | Finger (links) | Bague gauche | 왼쪽 손가락 | 左指 |
+| Facewear | 16050 | Facewear | フェイスアクセサリー | Gesichtsaccessoires | Accessoires de visage | 얼굴 소품 | 面部配饰 |
+
+- **A slot is not an item type.** The game has a second vocabulary for what an item *is* — the
+  tooltip and market-board categories (`ItemUICategory` 40–43): Necklace / Earrings / Bracelets /
+  Ring; 首飾り / 耳飾り / 腕輪 / 指輪; Halskette / Ohrring / Armreif / Ring; Collier / Boucle
+  d'oreille / Bracelet / Bague; 목걸이 / 귀걸이 / 팔찌 / 반지; 项链 / 耳饰 / 手镯 / 戒指. Labels that
+  name **where a piece is worn** use the slot table above; never mix the two.
+- **The game has no short forms.** Nothing abbreviates a slot, so neither do the apps — the bot
+  card widens its slot column instead of inventing one (`반지(우)`, `RING R` and `NEBENH.` were ours).
+- The ring slot is a **finger** in the slot vocabulary of German (`Finger (rechts)`), Korean
+  (`손가락`) and Chinese / Japanese (`右指`); French uses `Bague`. `Anneau`, `Ring links` and
+  `반지` for a slot match neither vocabulary.
+- **Facewear** here is the slot's label (row 16050). It is not the dye category of the same English
+  name in [Dye Categories](#dye-categories-9-categories), which is core data (フェイスウェア,
+  Gesichtsschmuck, …) — two jobs, two words.
+- **Not slots:** Waist (row 743, retired — no glamour uses it) and Fashion Accessory (the umbrella
+  and fan prop system; a `.chara` never carries one).
+- **The GPOSERS export is not game UI.** It writes the English submission form's own labels (Main
+  Hand, Earrings, Necklace, Bracelets, Right Ring, Rings, Facewear) in every language, like any
+  document format.
 
 ---
 

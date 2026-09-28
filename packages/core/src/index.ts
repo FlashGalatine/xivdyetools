@@ -207,6 +207,46 @@ export {
   isWornCharaModel,
 } from './services/chara/chara-models.js';
 export type { CharaGearModel } from './services/chara/chara-models.js';
+// In-game check: api-worker reads the rules off XIVAPI and groups each family
+// of identical items; the web-app checks them against the file in the browser
+export {
+  CHARA_WEAR_RACE_COLUMNS,
+  charaWearMask,
+  groupCharaTwinRules,
+} from './services/chara/chara-game-rules.js';
+export type {
+  CharaItemRules,
+  CharaTwinRules,
+  CharaPieceProblem,
+} from './services/chara/chara-game-rules.js';
+// Which identical item a glamour list names — the web reader and the bot card
+export {
+  charaTwinsOf,
+  defaultCharaTwin,
+  charaPieceTone,
+  charaTwinFacts,
+} from './services/chara/chara-twins.js';
+export type {
+  CharaTwin,
+  /** @public */ CharaTwinFamily,
+  CharaPieceTone,
+  CharaTwinFact,
+} from './services/chara/chara-twins.js';
+// The GPOSERS submission form as data — the web reader and the bot render it
+export {
+  GPOSERS_SLOTS,
+  GPOSERS_HEADER,
+  GPOSERS_ACQUISITION_LABEL,
+  gposersSlotLabel,
+  gposersSameRings,
+  gposersGroups,
+} from './services/chara/chara-gposers.js';
+export type {
+  GposersSlot,
+  GposersPiece,
+  GposersInput,
+  GposersLine,
+} from './services/chara/chara-gposers.js';
 export type {
   ResolvedCharaCharacter,
   ResolvedCharaSlot,

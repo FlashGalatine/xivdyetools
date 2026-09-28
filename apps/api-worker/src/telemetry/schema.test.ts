@@ -38,6 +38,12 @@ describe('parseTelemetryBatch', () => {
     expect(parseTelemetryBatch({ ...envelope, events: 'nope' })).toBeNull();
   });
 
+  it('accepts the Glamour Reader as a tool', () => {
+    const parsed = parseTelemetryBatch(batch([{ n: 'tool_view', p: { tool: 'glamour', entry: 'nav' } }]));
+    expect(parsed!.dropped).toBe(0);
+    expect(parsed!.points[0]?.blobs[1]).toBe('glamour');
+  });
+
   it('maps tool_view onto the fixed column layout', () => {
     const parsed = parseTelemetryBatch(
       batch([{ n: 'tool_view', p: { tool: 'harmony', entry: 'initial' } }]),

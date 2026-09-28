@@ -101,7 +101,14 @@ const BUNDLE_LIMITS = [
   // The What's New release notes (virtual:changelog) used to be compiled in
   // here too and doubled with the 5.0 notes; changelog-modal now `import()`s
   // them on open, so they are their own chunk and no longer charge this budget.
-  { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 280 * KB },
+  // 5.13.0 re-budgets it from 280 KB for measured growth, not headroom: the
+  // Glamour Reader's rules in core (chara-twins, chara-gposers,
+  // chara-game-rules, ~2.8 KB) and ModalService's self-drawn modals land here
+  // because Rolldown merges every reachable core module into this chunk. It
+  // measured 281.43 KB (277.79 KB on 5.12.7). Splitting core's chara code out
+  // by manualChunks was tried and does not help: the index and this chunk
+  // import the split chunk statically, so it still loads on every visit.
+  { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 284 * KB },
 
   // Vendor chunks, code-split for caching
   // Despite the name this is purely `character_colors/race_specific/*.json`:
@@ -122,10 +129,14 @@ const BUNDLE_LIMITS = [
   { label: 'tool: gradient', pattern: /^gradient-tool-/, limit: 65 * KB },
   { label: 'tool: extractor', pattern: /^extractor-tool-/, limit: 100 * KB },
   { label: 'tool: preset', pattern: /^preset-tool-/, limit: 65 * KB },
-  // DYES ON THIS GLAMOUR, split out of the swatch chunk in 5.12.7 (that chunk
-  // sat at 97.7% of its limit) and imported only once a loaded .chara file
-  // wears something. Calibrated like the tools: 25.3 KB measured, ~30% headroom.
-  { label: 'swatch: glamour block', pattern: /^glamour-block-/, limit: 35 * KB },
+  // The Glamour Reader (5.13.0). Its shell is small; DYES ON THIS GLAMOUR (split
+  // out of the swatch chunk in 5.12.7, now the reader's body with the IN THE
+  // GAME verdict and the twin picker) and the export sheet each load on
+  // demand. Calibrated like the tools, ~30% headroom over what 5.13.0
+  // measured: block 34.4 KB, sheet 11.9 KB, shell 3.7 KB.
+  { label: 'tool: glamour', pattern: /^glamour-tool-/, limit: 10 * KB },
+  { label: 'glamour: block', pattern: /^glamour-block-/, limit: 45 * KB },
+  { label: 'glamour: export sheet', pattern: /^glamour-sheet-/, limit: 16 * KB },
 
   // Shared components
   { label: 'dye selector', pattern: /^dye-selector-/, limit: 50 * KB },
@@ -167,7 +178,7 @@ const LOCALE_CHUNK_LIMIT = 95 * KB;
  *
  * This is every emitted chunk, counting ONE locale rather than all six -- the
  * worst case being a visitor on the largest locale who opens every tool in one
- * session. It is still conservative (nobody opens all nine), but it measures
+ * session. It is still conservative (nobody opens all ten), but it measures
  * user cost, which is what a performance budget is for.
  *
  * The number is unchanged at 2200 KB. It did not need raising: the gate started
@@ -175,8 +186,14 @@ const LOCALE_CHUNK_LIMIT = 95 * KB;
  * work charged ~133 KB to the budget while adding ~22 KB to any real visitor.
  * Measured honestly, 205 commits of 5.0 work grew the payload by 88 KB and it
  * sits at ~91% of this limit.
+ *
+ * 5.13.0 raises it to 2250 KB, for a tenth tool rather than for headroom.
+ * 5.12.7 sat at 98.5% (the shader palettes of core 5.7.0 took most of what
+ * was left), and the Glamour Reader's three chunks (~52 KB) put the payload
+ * 649 B over 2200 KB. Every one of them loads on demand, so first paint does
+ * not pay for it. The next tool or data table trims something first.
  */
-const PAYLOAD_JS_LIMIT = 2200 * KB;
+const PAYLOAD_JS_LIMIT = 2250 * KB;
 
 /**
  * Artifact budget: everything we emit, all locales included.

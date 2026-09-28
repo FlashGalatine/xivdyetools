@@ -49,6 +49,8 @@ const EMITTED = [
   'extractor-tool-CH2K8_6m.js',
   'preset-tool-CoZ2lLlP.js',
   'glamour-block-DWSqhuoi.js',
+  'glamour-tool-CrbxSB0H.js',
+  'glamour-sheet-By9x4vGP.js',
   'dye-selector-B6HfW2Vr.js',
   'result-card-BbI3D-js.js',
   'index-xwH458Lu.css',

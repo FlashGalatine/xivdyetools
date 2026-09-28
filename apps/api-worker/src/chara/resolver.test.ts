@@ -32,8 +32,11 @@ const row = (
   modelMain,
   modelSub: '0',
   slots,
+  rules: null,
   ...extra,
 });
+
+const ANYONE = 0xffff;
 
 // Runaway Bow #49486 — ModelMain 634/19/1, ModelSub 698/149/1 (the quiver)
 const RUNAWAY_BOW = row(49486, 'Runaway Bow', '4296213114', ['MainHand'], {
@@ -114,6 +117,31 @@ describe('pickItem', () => {
     const item = pickItem(family)!;
     expect(item.familySize).toBe(MAX_ALTERNATES + 5);
     expect(item.alternates).toHaveLength(MAX_ALTERNATES);
+  });
+
+  it('names every rule set among the alternates, so a twin that passes is never cut by the cap', () => {
+    // Dated Hempen Coif #372 takes no dye; its twins Hempen Coif #2629 / #2630 take one
+    const coif = (rowId: number, en: string, dyeCount: number) =>
+      row(rowId, en, '65540', ['Head'], {
+        rules: { dyeCount, glamourable: true, wearMask: ANYONE, grandCompany: 0 },
+      });
+    const padding = Array.from({ length: MAX_ALTERNATES }, (_, i) => coif(400 + i, `Dated Filler ${i}`, 0));
+    const item = pickItem([coif(2630, 'Hempen Coif of Gathering', 1), coif(372, 'Dated Hempen Coif', 0), ...padding, coif(2629, 'Hempen Coif', 1)])!;
+    expect(item.itemId).toBe(372);
+    const alternates = item.alternates.map((a) => a.itemId);
+    // Hempen Coif #2629 sorts past eight Dated fillers, but it is the lowest
+    // row of the rule set that takes the dye — the reader must be able to name it
+    expect(alternates).toContain(2629);
+    expect(alternates).toHaveLength(MAX_ALTERNATES);
+    expect(alternates).toEqual([...alternates].sort((x, y) => x - y));
+    expect(item.rules.map((r) => [r.itemIds[0], r.dyeCount, r.itemIds.length])).toEqual([
+      [372, 0, MAX_ALTERNATES + 1],
+      [2629, 1, 2],
+    ]);
+  });
+
+  it('answers no rule sets when the rows carry none (an answer without the fields)', () => {
+    expect(pickItem([row(18085, 'Beech Mask of Casting', '328041', ['Head'])])!.rules).toEqual([]);
   });
 
   it('merges ko/zh from the build-time tables and omits them when unknown', () => {

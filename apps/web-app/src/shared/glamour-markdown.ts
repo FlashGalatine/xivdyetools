@@ -2,10 +2,12 @@
  * Glamour list — the GPOSERS submission template, in three renderings.
  *
  * Glamour showcases ask for the outfit as a fixed form: a bold slot label, the
- * piece, its dyes where the slot has channels, and an `Acquisition:` line the
- * submitter fills in by hand. The Swatch Manager already knows the pieces and
- * dyes from a `.chara` file, so it writes the form; the player adds the
- * acquisition notes and anything the file cannot carry.
+ * piece, its dyes where the slot has channels, and an `Acquisition:` line. The
+ * Glamour Reader knows the pieces and dyes from a `.chara` file and the
+ * acquisition line from api-worker's build-time table (or the player's edit
+ * in the export sheet), so it writes the form; a piece with no known source
+ * keeps the bare label for the player to fill in. Two identical rings are
+ * written once, as `Rings:` (GPOSERS reminders, March 2026).
  *
  * One model, three renderings: **Markdown** for the .md download, **HTML**
  * for the clipboard so the bold survives a paste into Word or Google Docs,
@@ -28,120 +30,56 @@
  * bare, as a prompt to fill in. A dye channel the player left empty gets no
  * line at all — the form lists what is there, not what is not.
  *
- * Pure by design — no DOM, no services — so the formats are unit-testable
- * without a browser.
+ * The form itself (slots, order, lines, rings, one-line values) is core's
+ * `chara-gposers` model, which the `/glamour` bot renders too; this module
+ * owns the three renderings. Pure by design — no DOM, no services — so the
+ * formats are unit-testable without a browser.
  *
  * @module shared/glamour-markdown
  */
 
-/** The template's slots, in the order it lists them. */
-export const GLAMOUR_MARKDOWN_SLOTS = [
-  'MainHand',
-  'OffHand',
-  'HeadGear',
-  'Body',
-  'Hands',
-  'Legs',
-  'Feet',
-  'Ears',
-  'Neck',
-  'Wrists',
-  'RightRing',
-  'LeftRing',
-  'Facewear',
-  'FashionAccessory',
-] as const;
+import {
+  GPOSERS_ACQUISITION_LABEL,
+  GPOSERS_HEADER,
+  GPOSERS_SLOTS,
+  gposersGroups,
+  gposersSlotLabel,
+  type GposersInput,
+  type GposersLine,
+  type GposersPiece,
+  type GposersSlot,
+} from '@xivdyetools/core';
 
-export type GlamourMarkdownSlot = (typeof GLAMOUR_MARKDOWN_SLOTS)[number];
+/** The template's slots, in the order it lists them (core's GPOSERS model). */
+export const GLAMOUR_MARKDOWN_SLOTS = GPOSERS_SLOTS;
+
+export type GlamourMarkdownSlot = GposersSlot;
 
 /**
  * What is known about one worn slot. An entry's presence means the slot is
  * worn; anything absent or empty inside it is written blank or omitted.
  */
-export interface GlamourMarkdownPiece {
-  /** The item's name as shown on screen. */
-  name?: string | null;
-  /** Channel 1 dye name (or `#id` for a stain the build does not know). */
-  dye1?: string | null;
-  /** Channel 2 dye name. */
-  dye2?: string | null;
-}
+export type GlamourMarkdownPiece = GposersPiece;
 
-export type GlamourMarkdownInput = Partial<Record<GlamourMarkdownSlot, GlamourMarkdownPiece>>;
+export type GlamourMarkdownInput = GposersInput;
 
 /** The download's name. Carries no character name by design. */
 export const GLAMOUR_MARKDOWN_FILENAME = 'glamour-equipment.md';
 
-/** The template's own slot wording — a document format, not UI copy. */
-const SLOT_LABELS: Record<GlamourMarkdownSlot, string> = {
-  MainHand: 'Main Hand',
-  OffHand: 'Off Hand',
-  HeadGear: 'Head',
-  Body: 'Body',
-  Hands: 'Hands',
-  Legs: 'Legs',
-  Feet: 'Feet',
-  Ears: 'Earrings',
-  Neck: 'Necklace',
-  Wrists: 'Bracelets',
-  RightRing: 'Right Ring',
-  LeftRing: 'Left Ring',
-  Facewear: 'Facewear',
-  FashionAccessory: 'Fashion Accessory',
-};
+const HEADER = GPOSERS_HEADER;
 
-/**
- * Slots whose items carry dye channels. Accessories and facewear have none
- * in the game, so they get no dye lines even if a file claims one.
- *
- * Deliberately a second copy of `DYEABLE_SLOTS` in `components/glamour-block`:
- * this module stays free of component imports (and is loaded on demand, so
- * the component must not import runtime values from it either). Change both.
- */
-const DYEABLE: ReadonlySet<GlamourMarkdownSlot> = new Set<GlamourMarkdownSlot>([
-  'MainHand',
-  'OffHand',
-  'HeadGear',
-  'Body',
-  'Hands',
-  'Legs',
-  'Feet',
-]);
+/** The template's own field label — shown by the export sheet beside the editable line. */
+export const ACQUISITION_LABEL = GPOSERS_ACQUISITION_LABEL;
 
-const HEADER = 'Glamour Items:';
-
-/** One rendered line: a label, optionally bold, with an optional value. */
-interface Line {
-  label: string;
-  value: string;
-  bold: boolean;
+/** The template's label for one slot ("Main Hand", "Earrings"). */
+export function glamourSlotLabel(slot: GlamourMarkdownSlot): string {
+  return gposersSlotLabel(slot);
 }
 
-/** A slot's lines — the bold label line first, then its fields. */
-type Group = Line[];
+type Line = GposersLine;
 
-function text(value: string | null | undefined): string {
-  return value?.trim() ?? '';
-}
-
-/** Worn slots as line groups, in template order. */
-function groups(input: GlamourMarkdownInput): Group[] {
-  const out: Group[] = [];
-  for (const slot of GLAMOUR_MARKDOWN_SLOTS) {
-    const piece = input[slot];
-    if (!piece) continue;
-    const group: Group = [{ label: `${SLOT_LABELS[slot]}:`, value: text(piece.name), bold: true }];
-    if (DYEABLE.has(slot)) {
-      const dye1 = text(piece.dye1);
-      const dye2 = text(piece.dye2);
-      if (dye1) group.push({ label: 'Dye 1:', value: dye1, bold: false });
-      if (dye2) group.push({ label: 'Dye 2:', value: dye2, bold: false });
-    }
-    group.push({ label: 'Acquisition:', value: '', bold: false });
-    out.push(group);
-  }
-  return out;
-}
+/** Worn slots as line groups, in template order — core's model, shared with the bot. */
+const groups = (input: GlamourMarkdownInput): Line[][] => gposersGroups(input);
 
 /** `Label:` plus the value when there is one — never a trailing space. */
 function lineText(line: Line, bold: (label: string) => string): string {

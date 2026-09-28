@@ -179,6 +179,29 @@ describe('CharaFileCard — the loaded file', () => {
     expect(onSaveCharacter).toHaveBeenCalledWith(CharaSessionService.getSession());
   });
 
+  it('links the loaded file to the other tool that reads it (one file, two tools)', async () => {
+    const onOpen = vi.fn();
+    const linked = await mount(FIXTURE, 'test.chara', {
+      crossLink: { label: 'Glamour Reader', onOpen },
+    });
+    const plain = mountCard();
+
+    const link = linked.container.querySelector<HTMLButtonElement>('[data-role="cross-link"]');
+    expect(link?.textContent).toContain('Glamour Reader');
+    expect(plain.container.querySelector('[data-role="cross-link"]')).toBeNull();
+    link!.click();
+    expect(onOpen).toHaveBeenCalledOnce();
+    // The file stays loaded: the other tool reads the same session.
+    expect(CharaSessionService.getSession()).not.toBeNull();
+  });
+
+  it("adds the host's clause to the privacy line (the reader keeps edited acquisition notes)", async () => {
+    const noted = await mount(FIXTURE, 'test.chara', { privacyNote: 'Notes are kept here.' });
+    const plain = mountCard();
+    expect(noted.container.textContent).toContain('Notes are kept here.');
+    expect(plain.container.textContent).not.toContain('Notes are kept here.');
+  });
+
   it('says nothing about a file that a newer drop replaced', async () => {
     const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
     const { card } = mountCard();

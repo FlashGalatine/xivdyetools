@@ -99,6 +99,12 @@
       "female": "Weiblich",
       "evercoldNoticeTitle": "Evercold (Januar 2027): Voreingestellte Paletten werden eingestellt",
       "evercoldNotice": "Mit der Erweiterung Evercold lassen sich Augen-, Haar- und Hautfarben frei über einen Farbwähler auswählen. Diese Voreinstellungs-Farbfelder werden dann hier durch einen Farbwähler ersetzt."
+    },
+    "glamour": {
+      "title": "Projektionsleser",
+      "shortName": "Projektion",
+      "description": "Jedes Ausrüstungsteil eines Charakters mit Farbstoffen und Bezugsquelle",
+      "lead": "Jedes Teil, das dieser Charakter trägt, womit es gefärbt ist und ob das Spiel es tragen lässt."
     }
   },
   "common": {
@@ -1251,7 +1257,7 @@
     "glamourShowAll": "Alle anzeigen",
     "undyed": "Ungefärbt",
     "noDyedPieces": "An dieser Projektion ist nichts gefärbt. Schalte „Alle anzeigen“ ein, um jedes getragene Teil aufzulisten.",
-    "facewearSlot": "Brille",
+    "facewearSlot": "Gesichtsaccessoires",
     "facewearColorTag": "{color} · Brillenfarbe",
     "facewearColorUnknown": "Brillenfarbe unbekannt",
     "copyList": "Liste kopieren",
@@ -1285,18 +1291,18 @@
       "nameUnavailable": "Gegenstandsname nicht verfügbar — schließe dies und versuche es gleich erneut."
     },
     "gearSlot": {
-      "MainHand": "Waffe",
+      "MainHand": "Haupthand",
       "OffHand": "Nebenhand",
       "HeadGear": "Kopf",
       "Body": "Rumpf",
       "Hands": "Hände",
       "Legs": "Beine",
       "Feet": "Füße",
-      "Ears": "Ohrringe",
-      "Neck": "Halskette",
-      "Wrists": "Armbänder",
-      "LeftRing": "Ring links",
-      "RightRing": "Ring rechts"
+      "Ears": "Ohren",
+      "Neck": "Hals",
+      "Wrists": "Handgelenke",
+      "LeftRing": "Finger (links)",
+      "RightRing": "Finger (rechts)"
     },
     "tooFewTag": "MIND. 3",
     "tooFewBody": "Eine Palette braucht mindestens drei Farbstoffe — darunter ist es eine Farbprobe, keine Palette. Speichern und Einreichen bleiben deaktiviert.",
@@ -1333,5 +1339,80 @@
     "fr": "Französisch",
     "ko": "Koreanisch",
     "zh": "Chinesisch"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "IM SPIEL",
+      "headClear": "Jedes Teil lässt sich so tragen, wie die Datei es zeigt",
+      "segFixed_one": "{n} Teil durch einen Zwilling ersetzt",
+      "segFixed_other": "{n} Teile durch einen Zwilling ersetzt",
+      "segWear_one": "{n} Teil, das dieser Charakter nicht tragen kann",
+      "segWear_other": "{n} Teile, die dieser Charakter nicht tragen kann",
+      "segDye_one": "{n} Teil, das diese Farbstoffe nicht annimmt",
+      "segDye_other": "{n} Teile, die diese Farbstoffe nicht annehmen",
+      "segGlamour_one": "{n} Teil, das sich nicht projizieren lässt",
+      "segGlamour_other": "{n} Teile, die sich nicht projizieren lassen",
+      "segNoItem_one": "{n} Modell ohne Gegenstand dahinter",
+      "segNoItem_other": "{n} Modelle ohne Gegenstand dahinter",
+      "segCompany_one": "{n} Teil, das die richtige Staatliche Gesellschaft braucht",
+      "segCompany_other": "{n} Teile, die die richtige Staatliche Gesellschaft brauchen",
+      "explain": "Seit 7.4 kann jede Klasse jedes Teil als Projektion tragen; geprüft werden Farbkanäle, Projektionsfähigkeit, Volk, Geschlecht und Staatliche Gesellschaft. Ersetzungen stehen schon in der Liste unten; ändere sie über das +N am Teil.",
+      "countFixed": "{n} DURCH ZWILLING GELÖST",
+      "countBlocked": "{n} KEINE LÖSUNG",
+      "countFine": "{n} PASST SO",
+      "countCompany": "{n} BRAUCHT GESELLSCHAFT"
+    },
+    "row": {
+      "tagFixed": "DURCH ZWILLING GELÖST",
+      "tagBlocked": "KEINE LÖSUNG",
+      "fixedDye": "Statt {name}, das diese Farbstoffe nicht annimmt",
+      "fixedGlamour": "Statt {name}, das sich nicht projizieren lässt",
+      "fixedWear": "Statt {name}, das dieser Charakter nicht tragen kann",
+      "blockedDye": "Es nimmt die Farbstoffe der Datei nicht an",
+      "blockedGlamour": "Es lässt sich nicht projizieren",
+      "blockedWear": "Dieser Charakter kann es nicht tragen",
+      "blockedNoItem": "Ein Modell ohne Gegenstand dahinter",
+      "noFix": "Nichts mit demselben Aussehen löst das",
+      "otherWorks": "{name} lässt sich stattdessen tragen",
+      "choice": "Sieht aus wie {name} · beides geht",
+      "company": "Braucht die richtige Staatliche Gesellschaft",
+      "twins": "Sieht aus wie {n} weitere Gegenstände: wähle, welchen die Liste nennt"
+    },
+    "picker": {
+      "head": "GLEICHES AUSSEHEN · {n} GEGENSTÄNDE",
+      "sub": "Das Spiel zeigt sie identisch an. Wähle den, den deine Liste nennt.",
+      "foot": "Liste kopieren und .md exportieren schreiben den gewählten.",
+      "itemId": "GEGENSTAND {id}"
+    },
+    "fact": {
+      "best": "BESTE WAHL",
+      "dye": "FARBE ×{n}",
+      "anyTribe": "JEDES VOLK",
+      "tribeOk": "PASST ZUM CHARAKTER",
+      "tribeNo": "NICHT FÜR DIESEN CHARAKTER",
+      "dated": "ALT",
+      "grandCompany": "STAATL. GESELLSCHAFT",
+      "noGlamour": "KEINE PROJEKTION"
+    },
+    "sheet": {
+      "title": "Ausrüstungsliste",
+      "sub": "GPOSERS-Format · {n} Teile · bearbeite alles, bevor du kopierst",
+      "countFilled": "{n} AUSGEFÜLLT",
+      "countEdited": "{n} BEARBEITET",
+      "countBlank": "{n} LEER",
+      "stateFilled": "AUSGEFÜLLT",
+      "stateEdited": "BEARBEITET",
+      "stateBlank": "LEER",
+      "preview": "DAS WIRD KOPIERT",
+      "placeholder": "Keine Quelle gefunden: eintragen oder leer lassen",
+      "warn": "Du hast {name} gewählt, das eine eigene Quelle hat. Deine bearbeitete Zeile ist noch da.",
+      "keep": "Meine behalten",
+      "useNew": "Neue Quelle nehmen",
+      "privacy": "Bearbeitungen werden für dieses Outfit auf diesem Gerät gespeichert. Der Name des Charakters steht nie in der Liste, und die Datei selbst wird nie gespeichert.",
+      "reset": "Alles zurücksetzen",
+      "save": ".md speichern",
+      "cardNote": "Deine bearbeiteten Bezugsquellen werden auf diesem Gerät gespeichert."
+    },
+    "empty": "Diese Datei trägt keine Ausrüstung."
   }
 }

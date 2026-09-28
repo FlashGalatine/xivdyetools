@@ -8,6 +8,7 @@ For the "what and how" of a build, see the spec/plan pairs in [`../superpowers/`
 
 | Directory | Question | Outcome |
 |-----------|----------|---------|
+| [2026-09-28-equipment-slot-terms/](2026-09-28-equipment-slot-terms/README.md) | What does each FFXIV client call the equipment slots, word for word? | Adopted in PR #208 / #210: the `Addon` slot labels (738–750, 16050) in all six languages; glossary → [Equipment Slots](../reference/ffxiv-terminology.md#equipment-slots) |
 | [2026-09-28-chara-corpus-profile/](2026-09-28-chara-corpus-profile/README.md) | Do the `.chara` parser's rules hold across 1,142 real files? | Eye pairing and float decoding overturned, phantom gear dyes dropped — core 5.6.0; `human.cmp`'s creator and shader palettes read separately (the tattoo sheet had been the eye palette) — core 5.7.0 |
 | [2026-09-27-glamour-acquisition/](2026-09-27-glamour-acquisition/README.md) | Can the glamour export fill its Acquisition line, and from which data (XIVAPI, Teamcraft, Garland Tools)? | Design proposed: Teamcraft files + XIVAPI at build time, served by the api-worker ([spec](../superpowers/specs/2026-09-27-glamour-acquisition-design.md)) |
 | [2026-09-04-harmony-color-wheels/](2026-09-04-harmony-color-wheels/README.md) | Which colour wheels should the Harmony Explorer offer, and is Munsell licensable? | Shipped 2026-09-05 (PR #167): five wheels in core 5.2.0; Munsell licence cleared |

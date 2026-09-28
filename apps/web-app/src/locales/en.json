@@ -99,6 +99,12 @@
       "female": "Female",
       "evercoldNoticeTitle": "Evercold (January 2027): preset palettes are being retired",
       "evercoldNotice": "Eye, hair, and skin colors are switching to a free color picker in the Evercold expansion. These preset swatches will be replaced by a color picker here when it launches."
+    },
+    "glamour": {
+      "title": "Glamour Reader",
+      "shortName": "Glamour",
+      "description": "List every piece a character wears, its dyes and where to get it",
+      "lead": "Every piece this character wears, what it is dyed, and whether the game lets it be worn."
     }
   },
   "common": {
@@ -1285,18 +1291,18 @@
       "nameUnavailable": "Item name unavailable — close this and try again in a moment."
     },
     "gearSlot": {
-      "MainHand": "Weapon",
-      "OffHand": "Off hand",
+      "MainHand": "Main Hand",
+      "OffHand": "Off Hand",
       "HeadGear": "Head",
       "Body": "Body",
       "Hands": "Hands",
       "Legs": "Legs",
       "Feet": "Feet",
-      "Ears": "Earrings",
-      "Neck": "Necklace",
-      "Wrists": "Bracelets",
-      "LeftRing": "Left ring",
-      "RightRing": "Right ring"
+      "Ears": "Ears",
+      "Neck": "Neck",
+      "Wrists": "Wrists",
+      "LeftRing": "Left Ring",
+      "RightRing": "Right Ring"
     },
     "tooFewTag": "NEEDS 3",
     "tooFewBody": "A palette needs at least three dyes — below that it is a swatch, not a palette. Save and submit stay disabled.",
@@ -1333,5 +1339,80 @@
     "fr": "French",
     "ko": "Korean",
     "zh": "Chinese"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "IN THE GAME",
+      "headClear": "Every piece can be worn the way the file shows it",
+      "segFixed_one": "{n} piece named from a twin",
+      "segFixed_other": "{n} pieces named from a twin",
+      "segWear_one": "{n} piece this character can't wear",
+      "segWear_other": "{n} pieces this character can't wear",
+      "segDye_one": "{n} piece that can't take these dyes",
+      "segDye_other": "{n} pieces that can't take these dyes",
+      "segGlamour_one": "{n} piece that can't be a glamour",
+      "segGlamour_other": "{n} pieces that can't be a glamour",
+      "segNoItem_one": "{n} model with no item behind it",
+      "segNoItem_other": "{n} models with no item behind them",
+      "segCompany_one": "{n} piece that needs the right Grand Company",
+      "segCompany_other": "{n} pieces that need the right Grand Company",
+      "explain": "Since 7.4 any job can wear any piece for glamour; what's left to check is dye channels, the glamour flag, race, gender and Grand Company. Swaps are already in the list below; change any of them from the piece's +N.",
+      "countFixed": "{n} FIXED BY A TWIN",
+      "countBlocked": "{n} NO FIX",
+      "countFine": "{n} FINE AS IS",
+      "countCompany": "{n} NEEDS A GRAND COMPANY"
+    },
+    "row": {
+      "tagFixed": "FIXED BY A TWIN",
+      "tagBlocked": "NO FIX",
+      "fixedDye": "Named instead of {name}, which can't take these dyes",
+      "fixedGlamour": "Named instead of {name}, which can't be a glamour",
+      "fixedWear": "Named instead of {name}, which this character can't wear",
+      "blockedDye": "It can't take the dyes the file puts on it",
+      "blockedGlamour": "It can't be a glamour",
+      "blockedWear": "This character can't wear it",
+      "blockedNoItem": "A model with no item behind it",
+      "noFix": "Nothing with the same look fixes it",
+      "otherWorks": "{name} can be worn instead",
+      "choice": "Same look as {name} · either is fine",
+      "company": "Needs the right Grand Company",
+      "twins": "Same look as {n} other items: pick the one the list names"
+    },
+    "picker": {
+      "head": "SAME LOOK · {n} ITEMS",
+      "sub": "The game draws these identically. Pick the one your list names.",
+      "foot": "Copy list and Export .md write the one you pick.",
+      "itemId": "ITEM {id}"
+    },
+    "fact": {
+      "best": "BEST FIT",
+      "dye": "DYE ×{n}",
+      "anyTribe": "ANY TRIBE",
+      "tribeOk": "FITS THIS CHARACTER",
+      "tribeNo": "NOT FOR THIS CHARACTER",
+      "dated": "DATED",
+      "grandCompany": "GRAND COMPANY",
+      "noGlamour": "NO GLAMOUR"
+    },
+    "sheet": {
+      "title": "Glamour list",
+      "sub": "GPOSERS format · {n} pieces · edit anything before you copy it",
+      "countFilled": "{n} FILLED",
+      "countEdited": "{n} EDITED",
+      "countBlank": "{n} BLANK",
+      "stateFilled": "FILLED",
+      "stateEdited": "EDITED",
+      "stateBlank": "BLANK",
+      "preview": "WHAT GETS COPIED",
+      "placeholder": "No source found: type one, or leave it blank",
+      "warn": "You picked {name}, which has its own source. Your edited line is still here.",
+      "keep": "Keep mine",
+      "useNew": "Use new source",
+      "privacy": "Edits are kept on this device for this outfit. The character's name is never in the list, and the file itself is never saved.",
+      "reset": "Reset all",
+      "save": "Save .md",
+      "cardNote": "Your edited acquisition notes are kept on this device."
+    },
+    "empty": "This file wears no gear."
   }
 }

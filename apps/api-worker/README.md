@@ -132,7 +132,7 @@ src/
   index.ts                 # Hono app, middleware stack, route mounting
   types.ts                 # Env bindings, Hono context variables
   middleware/
-    rate-limit.ts          # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER, KV fallback) + the worker-kit middleware
+    rate-limit.ts          # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER / SERVICE_RATE_LIMITER, KV fallback) + the worker-kit middleware
     locale.ts              # Reads ?locale=, calls LocalizationService.ensureLocaleLoaded once, sets c.var.locale
   routes/
     dyes.ts                # /v1/dyes/* (7 endpoints)
@@ -183,6 +183,7 @@ tests/
 |---------|------|---------|
 | `API_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 65 / 60 s) | The `/v1/*` per-IP limiter |
 | `TELEMETRY_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 240 / 60 s) | `POST /v1/telemetry`'s own bucket — fails **closed** |
+| `SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 1300 / 60 s) | Our own workers on `/v1/*` over a service binding (no client IP, one shared key) |
 | `RATE_LIMIT` | KV Namespace | Fallback rate-limit counters when a binding is absent (`api:ip:` / `telemetry:ip:`) |
 | `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `_dev`; absent → telemetry accepts and discards |
 | `ASSETS` | Static Assets (production only) | `docs/.vitepress/dist`, served for the `developers.xivdyetools.app` host |

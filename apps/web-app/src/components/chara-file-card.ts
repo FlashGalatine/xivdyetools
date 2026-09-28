@@ -42,6 +42,17 @@ export interface CharaFileCardOptions {
    * the card itself knows nothing about collection records.
    */
   onSaveCharacter?: (session: CharaSession) => void;
+  /**
+   * One file, two tools: a link to the other tool that reads the same session
+   * (Glamour Reader ↔ Swatch Matcher). The file stays loaded; the host opens
+   * the other tool.
+   */
+  crossLink?: { label: string; onOpen: () => void };
+  /**
+   * A clause the host adds to the privacy line. The Glamour Reader keeps the
+   * player's edited acquisition notes on the device, so it says so (spec G8).
+   */
+  privacyNote?: string;
 }
 
 interface CharaWarning {
@@ -126,11 +137,12 @@ export class CharaFileCard {
     const warnings = charaWarnings(session.resolved);
     if (warnings.length > 0) this.container.appendChild(this.renderWarningsCard(warnings));
     // The privacy promise stays visible under the card (Extractor wording).
+    const note = this.options.privacyNote;
     this.container.appendChild(
       el(
         'div',
         'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-bottom: 11px;',
-        tSwatch('charaHint')
+        note ? `${tSwatch('charaHint')} ${note}` : tSwatch('charaHint')
       )
     );
   }
@@ -211,8 +223,10 @@ export class CharaFileCard {
 
   /**
    * File loaded: 46px colour strip | producer + LOCAL ONLY chips, name,
-   * mono meta | 44px SWAP chip. The strip is the character's own thumbnail —
-   * Base64Image is never read.
+   * mono meta | the cross-link, 44px SWAP chip and Save. The strip is the
+   * character's own thumbnail — Base64Image is never read. The buttons wrap
+   * as one group under the name before the name drops below 140px, so a
+   * phone never loses it.
    */
   private renderFileCard(session: CharaSession): HTMLElement {
     const { resolved, fileName } = session;
@@ -220,7 +234,7 @@ export class CharaFileCard {
 
     const card = el(
       'div',
-      'display: flex; align-items: stretch; gap: 10px; padding: 9px; border-radius: 14px; margin-bottom: 11px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
+      'display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; padding: 9px; border-radius: 14px; margin-bottom: 11px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
     );
 
     // 46px vertical strip of the character's key colours.
@@ -240,7 +254,7 @@ export class CharaFileCard {
     // Middle column: chips, name, meta.
     const mid = el(
       'span',
-      'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; justify-content: center;'
+      'flex: 1 1 140px; min-width: 0; display: flex; flex-direction: column; gap: 3px; justify-content: center;'
     );
     const chips = el('span', 'display: flex; gap: 6px; flex-wrap: wrap;');
     if (resolved.producer) {
@@ -286,6 +300,20 @@ export class CharaFileCard {
     );
     card.appendChild(mid);
 
+    const actions = el('span', 'display: flex; gap: 10px; flex-shrink: 0; margin-left: auto;');
+    const crossLink = this.options.crossLink;
+    if (crossLink) {
+      const link = el(
+        'button',
+        `flex-shrink: 0; align-self: center; padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text); cursor: pointer; font-family: inherit; white-space: nowrap;`,
+        `${crossLink.label} →`
+      );
+      (link as HTMLButtonElement).type = 'button';
+      link.dataset.role = 'cross-link';
+      link.addEventListener('click', () => crossLink.onOpen());
+      actions.appendChild(link);
+    }
+
     // 44px SWAP chip — replace the file without losing the workspace.
     const swapBtn = el(
       'button',
@@ -295,7 +323,7 @@ export class CharaFileCard {
     (swapBtn as HTMLButtonElement).type = 'button';
     swapBtn.title = tSwatch('replaceFile');
     swapBtn.addEventListener('click', () => CharaSessionService.setSession(null));
-    card.appendChild(swapBtn);
+    actions.appendChild(swapBtn);
 
     const onSaveCharacter = this.options.onSaveCharacter;
     if (onSaveCharacter) {
@@ -308,8 +336,9 @@ export class CharaFileCard {
       );
       (saveBtn as HTMLButtonElement).type = 'button';
       saveBtn.addEventListener('click', () => onSaveCharacter(session));
-      card.appendChild(saveBtn);
+      actions.appendChild(saveBtn);
     }
+    card.appendChild(actions);
 
     return card;
   }

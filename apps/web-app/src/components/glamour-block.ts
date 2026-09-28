@@ -7,9 +7,9 @@
  * action buttons, Save to this device creating a `kind: 'palette'`
  * CollectionService record, Submit to Community handing off to the host.
  *
- * Reads the loaded character from CharaSessionService. The Swatch Matcher
+ * Reads the loaded character from CharaSessionService. The Glamour Reader
  * imports this module on demand, once a file wears anything, so the block is
- * charged to its own chunk instead of the swatch chunk's size budget.
+ * charged to its own chunk instead of the reader's.
  *
  * Renders inside the v4 shell's shadow DOM — inline styles + one injected
  * <style> block for the responsive grid.
@@ -20,8 +20,14 @@
  */
 
 import {
+  charaPieceTone,
+  charaTwinsOf,
+  defaultCharaTwin,
   formatCharaModelLabel,
   facewearColors,
+  type CharaPieceProblem,
+  type CharaPieceTone,
+  type CharaTwin,
   type ResolvedCharaCharacter,
   type ResolvedGearDye,
   type CharaGearSlotId,
@@ -32,6 +38,7 @@ import {
   resolveCharaEquipment,
   itemNameFor,
   charaIconUrl,
+  type CharaItemNames,
   type CharaResolveResult,
   type CharaResolvedItem,
 } from '@services/chara-resolve-service';
@@ -49,15 +56,25 @@ import {
   tSwatch,
 } from '@components/chara-ui';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
+import { closeTwinPicker, showTwinPicker } from '@components/glamour-twin-picker';
 import { STORAGE_PREFIX } from '@shared/constants';
 import { logger } from '@shared/logger';
-import { copyRichTextToClipboard } from '@shared/clipboard';
 import { clearContainer } from '@shared/utils';
 import type { Dye } from '@xivdyetools/types';
 
 /** Glamour export floor/cap (confirmed: floor 3 — Turn 10; hard cap 6 — Review). */
 const PALETTE_FLOOR = 3;
 const PALETTE_CAP = 6;
+
+/** A worn piece's twins as the reader shows them (spec G3–G5). */
+interface TwinState {
+  twins: Array<CharaTwin<CharaItemNames>>;
+  /** The twin the default rule names */
+  best: CharaTwin<CharaItemNames>;
+  /** The twin the list names: the player's pick, else `best` */
+  picked: CharaTwin<CharaItemNames>;
+  tone: CharaPieceTone;
+}
 
 /** The twelve dyeable slots — the footnote's "N slots are empty" denominator. */
 const GEAR_SLOT_COUNT = 12;
@@ -100,6 +117,21 @@ function closeItemLinksMenuIfLoaded(): void {
   itemLinksMenu?.closeItemLinksMenu();
 }
 
+/**
+ * The export sheet, once Copy list or Export .md has loaded it. It lives in
+ * document.body as a modal, so the block closes it on destroy — left open, it
+ * sat over the next tool with its key handler still live.
+ */
+let glamourSheet: typeof import('@components/glamour-sheet') | null = null;
+/** Invalidates a sheet open still waiting on its chunk. */
+let sheetOpenToken = 0;
+
+/** Close the export sheet if it was ever loaded, and retire any open in flight. */
+function closeGlamourSheetIfLoaded(): void {
+  sheetOpenToken += 1;
+  glamourSheet?.closeGlamourSheet();
+}
+
 function readShowAllPieces(): boolean {
   return StorageService.getItem<string>(SHOW_ALL_KEY) === 'on';
 }
@@ -109,7 +141,8 @@ function readShowAllPieces(): boolean {
  * on purpose: no FFXIV earring, necklace, bracelet or ring is dyeable, so a
  * chip there would invent a channel the game does not have.
  *
- * `shared/glamour-markdown` keeps its own copy (`DYEABLE`) — change both.
+ * core's GPOSERS model (`chara-gposers`, `DYEABLE`) keeps its own copy for the
+ * export and the bot — change both.
  */
 const DYEABLE_SLOTS: ReadonlySet<CharaGearSlotId> = new Set<CharaGearSlotId>([
   'MainHand',
@@ -168,12 +201,33 @@ const GLAMOUR_CSS = `
 export interface GlamourBlockCallbacks {
   /** Make-a-palette submit: kept worn dyes + the panel's name draft */
   onSubmitPalette?: (dyes: Dye[], name?: string) => void;
+  /**
+   * Where Copy list / Export .md go. The Glamour Reader puts them in its own
+   * header (design 1a); without a host they sit in the block's header.
+   */
+  actionsHost?: HTMLElement;
 }
 
 /**
  * DYES ON THIS GLAMOUR for whatever character is loaded; empty when none is,
  * or when the character wears nothing.
  */
+/**
+ * Twin picks, by slot, per loaded file: which identical item the list names.
+ * They live with the session and never in storage (design 1a), so leaving the
+ * reader and coming back keeps them, and a new file starts clean.
+ */
+const PICKS = new WeakMap<CharaSession, Map<CharaGearSlotId, number>>();
+
+function picksFor(session: CharaSession): Map<CharaGearSlotId, number> {
+  let picks = PICKS.get(session);
+  if (!picks) {
+    picks = new Map();
+    PICKS.set(session, picks);
+  }
+  return picks;
+}
+
 export class GlamourBlock {
   private container: HTMLElement;
   private callbacks: GlamourBlockCallbacks;
@@ -196,6 +250,8 @@ export class GlamourBlock {
   private showAllPieces: boolean;
   private glamourBox: HTMLElement | null = null;
   private unsubscribe: (() => void) | null = null;
+  /** Twin picks, by slot, for the loaded file (`PICKS`). */
+  private picks = new Map<CharaGearSlotId, number>();
 
   constructor(container: HTMLElement, callbacks: GlamourBlockCallbacks = {}) {
     this.container = container;
@@ -214,9 +270,10 @@ export class GlamourBlock {
    * around the block (a language switch rebuilds the Swatch Matcher's panel),
    * so the palette draft, dropped chips and item names survive the redraw.
    */
-  moveTo(container: HTMLElement): void {
+  moveTo(container: HTMLElement, actionsHost?: HTMLElement): void {
     clearContainer(this.container);
     this.container = container;
+    if (actionsHost) this.callbacks.actionsHost = actionsHost;
     this.render();
   }
 
@@ -225,10 +282,14 @@ export class GlamourBlock {
     this.unsubscribe = null;
     this.resolveAbort?.abort();
     this.resolveAbort = null;
-    // The menu lives in document.body, so nothing here would remove it — it
-    // would float over the next tool, anchored to a row that is gone.
+    // The menu, the twin picker and the export sheet live in document.body,
+    // so nothing here would remove them — they would float over the next
+    // tool, the first two anchored to a row that is gone.
     closeItemLinksMenuIfLoaded();
+    closeTwinPicker();
+    closeGlamourSheetIfLoaded();
     clearContainer(this.container);
+    if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
     this.resolved = null;
     this.fileName = null;
     this.equipment = null;
@@ -244,6 +305,7 @@ export class GlamourBlock {
     this.resolved = session?.resolved ?? null;
     this.fileName = session?.fileName ?? null;
     this.droppedStainIds.clear();
+    this.picks = session ? picksFor(session) : new Map();
     this.paletteOpen = false;
     this.paletteNameDraft = null;
     // Dyes never wait: the round-trip is started first so the block renders
@@ -255,10 +317,13 @@ export class GlamourBlock {
 
   private render(): void {
     closeItemLinksMenuIfLoaded();
+    closeTwinPicker();
     clearContainer(this.container);
     const glamour = this.resolved ? this.renderGlamour() : null;
     if (!glamour) {
       this.glamourBox = null;
+      // No file, no list: the host's Copy list / Export .md go with it.
+      if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
       return;
     }
     const style = document.createElement('style');
@@ -373,11 +438,12 @@ export class GlamourBlock {
     });
   }
 
-  /** The menu target for a gear slot, or null when the row has no item. */
+  /** The menu target for a gear slot — the twin the list names — or null when the row has no item. */
   private itemLinkTarget(slot: CharaGearSlotId): ItemLinksMenuTarget | null {
     const item = this.itemFor(slot);
     if (!item) return null;
-    return { kind: 'gear', itemId: item.itemId, names: item.names };
+    const shown = this.twinState(slot)?.picked ?? item;
+    return { kind: 'gear', itemId: shown.itemId, names: shown.names };
   }
 
   /** Worn dyes deduped by stain ID, in wear order. */
@@ -422,6 +488,10 @@ export class GlamourBlock {
     box.dataset.role = 'glamour-block';
     this.glamourBox = box;
 
+    // The reader's verdict comes first; the rows explain it (design 1a).
+    const verdict = this.renderVerdict();
+    if (verdict) box.appendChild(verdict);
+
     // Header: equipHead + counts left; Pieces/Dyes toggle + Make-a-palette right.
     const uniq = this.wornDyes();
     const channelCount = resolved.gearDyes.length;
@@ -459,7 +529,13 @@ export class GlamourBlock {
     );
     headerRight.appendChild(this.renderViewToggle());
     headerRight.appendChild(this.renderShowAllSwitch());
-    for (const action of this.renderListActions()) headerRight.appendChild(action);
+    const actionsHost = this.callbacks.actionsHost;
+    if (actionsHost) {
+      clearContainer(actionsHost);
+      for (const action of this.renderListActions()) actionsHost.appendChild(action);
+    } else {
+      for (const action of this.renderListActions()) headerRight.appendChild(action);
+    }
 
     const paletteBtn = el(
       'button',
@@ -620,7 +696,11 @@ export class GlamourBlock {
    */
   private renderListActions(): HTMLElement[] {
     const resolving = this.resolveState === 'resolving';
-    const make = (role: string, label: string, onClick: () => void): HTMLElement => {
+    const make = (
+      role: string,
+      label: string,
+      onClick: (button: HTMLElement) => void
+    ): HTMLElement => {
       const btn = el(
         'button',
         `min-height: 30px; padding: 0 10px; border-radius: 8px; font-family: ${SANS}; font-size: 11px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: ${
@@ -632,12 +712,12 @@ export class GlamourBlock {
       button.type = 'button';
       button.disabled = resolving;
       btn.dataset.role = role;
-      btn.addEventListener('click', onClick);
+      btn.addEventListener('click', () => onClick(btn));
       return btn;
     };
     return [
-      make('copy-list', tSwatch('copyList'), () => this.copyList()),
-      make('export-markdown', tSwatch('exportMarkdown'), () => this.exportList()),
+      make('copy-list', tSwatch('copyList'), (btn) => this.openSheet('copy', btn)),
+      make('export-markdown', tSwatch('exportMarkdown'), (btn) => this.openSheet('save', btn)),
     ];
   }
 
@@ -646,50 +726,44 @@ export class GlamourBlock {
    * buttons are not drawn then, so a click cannot reach here without one).
    */
   private listSource(): import('@components/glamour-list-actions').GlamourListSource | null {
-    return this.resolved ? { resolved: this.resolved, equipment: this.equipment } : null;
+    if (!this.resolved) return null;
+    const picked: import('@components/glamour-list-actions').GlamourListSource['picked'] = {};
+    for (const model of this.resolved.gearModels) {
+      const state = this.twinState(model.slot);
+      if (state) {
+        picked[model.slot] = {
+          itemId: state.picked.itemId,
+          names: state.picked.names,
+          ...(state.picked.acquisition ? { acquisition: state.picked.acquisition } : {}),
+        };
+      }
+    }
+    return { resolved: this.resolved, equipment: this.equipment, picked };
   }
 
   /**
-   * The list's builders live in `glamour-list-actions`, loaded on demand like
-   * the item-links menu: only a click needs them. A load that fails (offline,
-   * blocked) surfaces through the same toast the action itself would.
+   * Copy list and Export .md open the export sheet (design 2c): a preview of
+   * the GPOSERS list with each piece's Acquisition line, editable before
+   * anything is copied or saved. The sheet's own Copy list starts the
+   * clipboard write inside its click, which WebKit requires. `opener` gets
+   * focus back on close — handed over, because a click does not focus a
+   * button in Safari, and the shell's shadow root hides it from
+   * document.activeElement everywhere.
    */
-  private loadListActions(): Promise<typeof import('@components/glamour-list-actions')> {
-    return import('@components/glamour-list-actions');
-  }
-
-  /**
-   * Copy starts the clipboard write HERE, synchronously in the click, and
-   * hands the content over as a promise that lands once the chunk has
-   * loaded. WebKit (Safari, every iOS browser) drops the click's user
-   * activation across that load: a write that waited for the module would
-   * be refused there, and the command fallback, gated the same way, would
-   * fail behind it — a "couldn't copy" toast on every iPhone.
-   */
-  private copyList(): void {
+  private openSheet(focus: 'copy' | 'save', opener: HTMLElement): void {
     const source = this.listSource();
     if (!source) return;
-    const payload = this.loadListActions().then((m) => m.glamourCopyPayload(source));
-    void copyRichTextToClipboard(payload)
-      .then((ok) => {
-        if (ok) ToastService.success(tSwatch('listCopied'));
-        else ToastService.error(tSwatch('listCopyFailed'));
+    const token = ++sheetOpenToken;
+    void import('@components/glamour-sheet')
+      .then((m) => {
+        glamourSheet = m;
+        // Destroyed (or asked again) while the chunk loaded: this open is stale
+        if (token !== sheetOpenToken) return;
+        m.openGlamourSheet(source, focus, opener);
       })
       .catch((error: unknown) => {
-        logger.error('[GlamourBlock] Glamour list copy failed', error);
-        ToastService.error(tSwatch('listCopyFailed'));
-      });
-  }
-
-  /** A download needs no activation, so Export can wait for the module whole. */
-  private exportList(): void {
-    const source = this.listSource();
-    if (!source) return;
-    void this.loadListActions()
-      .then((m) => m.exportGlamourList(source))
-      .catch((error: unknown) => {
-        logger.error('[GlamourBlock] Glamour list export failed', error);
-        ToastService.error(tSwatch('listExportFailed'));
+        logger.error('[GlamourBlock] Glamour list sheet failed to load', error);
+        ToastService.error(tSwatch(focus === 'copy' ? 'listCopyFailed' : 'listExportFailed'));
       });
   }
 
@@ -794,7 +868,15 @@ export class GlamourBlock {
    * appended, since dropping a dye the file states would lose data.
    */
   private pieceRowSlots(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): CharaGearSlotId[] {
-    if (!this.showAllActive()) return [...bySlot.keys()];
+    if (!this.showAllActive()) {
+      // The verdict counts every worn piece, so one it flags gets a row even
+      // undyed — the rows explain the verdict. Fine undyed pieces wait for Show all.
+      const slots = [...bySlot.keys()];
+      for (const model of this.resolved!.gearModels) {
+        if (!slots.includes(model.slot) && this.flagged(model.slot)) slots.push(model.slot);
+      }
+      return slots;
+    }
     const slots: CharaGearSlotId[] = [];
     for (const model of this.resolved!.gearModels) {
       if (!slots.includes(model.slot)) slots.push(model.slot);
@@ -803,6 +885,16 @@ export class GlamourBlock {
       if (!slots.includes(slot)) slots.push(slot);
     }
     return slots;
+  }
+
+  /** A piece the verdict counts as FIXED BY A TWIN or NO FIX (its own rule, not a guess). */
+  private flagged(slot: CharaGearSlotId): boolean {
+    const item = this.itemFor(slot);
+    if (item === undefined || item?.viaMainHand) return false;
+    if (item === null) return true;
+    if (!item.rules?.length) return false;
+    const tone = this.twinState(slot)?.tone;
+    return tone === 'fix' || tone === 'block';
   }
 
   private renderPieceRow(
@@ -830,9 +922,12 @@ export class GlamourBlock {
     if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
     row.appendChild(tile);
 
+    const state = this.twinState(slot);
+    const shownNames = state?.picked.names ?? item?.names ?? null;
     const linkTarget = this.itemLinkTarget(slot);
-    const linkTitle = item ? itemNameFor(item.names, lang) : '';
+    const linkTitle = shownNames ? itemNameFor(shownNames, lang) : '';
     if (linkTarget) this.attachItemLinks(tile, linkTarget, linkTitle);
+    const note = this.pieceNote(slot, state, lang);
 
     const text = el(
       'span',
@@ -851,12 +946,41 @@ export class GlamourBlock {
     if (item && item.familySize > 1) {
       // A third of all keys are families of visually identical items. The
       // name never pretends to be unique: +N counts the rest, the tooltip
-      // lists them, prefixes are never stripped.
+      // lists them, prefixes are never stripped. Its colour is the row's tone
+      // (design 1a): green when a twin was named to fix a problem, amber when
+      // nothing fixes it, grey when the pick is just a choice.
+      const tone = state?.tone ?? 'choice';
+      const ink = tone === 'fix' ? green() : tone === 'block' ? amber() : 'var(--theme-text-muted)';
       const badge = el(
-        'span',
-        `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-primary); background: color-mix(in srgb, var(--theme-primary) 12%, transparent); border-radius: 4px; padding: 1px 5px; cursor: help; white-space: nowrap;`,
+        'button',
+        `font-family: ${MONO}; font-size: 8.5px; line-height: 1.4; color: ${ink}; background: color-mix(in srgb, ${ink} 12%, transparent); border: 1px solid color-mix(in srgb, ${ink} 35%, transparent); border-radius: 4px; padding: 1px 5px; cursor: pointer; white-space: nowrap;`,
         `+${item.familySize - 1}`
+      ) as HTMLButtonElement;
+      badge.type = 'button';
+      badge.dataset.tone = tone;
+      badge.setAttribute('aria-haspopup', 'dialog');
+      badge.setAttribute(
+        'aria-label',
+        LanguageService.tInterpolate('glamour.row.twins', { n: String(item.familySize - 1) })
       );
+      if (state) {
+        badge.addEventListener('click', (event) => {
+          event.stopPropagation();
+          showTwinPicker({
+            anchor: badge,
+            slotLabel: this.gearSlotLabel(slot),
+            twins: state.twins,
+            pickedId: state.picked.itemId,
+            best: state.best,
+            lang,
+            onPick: (itemId) => {
+              // A paired off-hand IS the main weapon: its row follows the main hand's pick
+              this.picks.set(item.viaMainHand ? 'MainHand' : slot, itemId);
+              this.rerenderGlamour();
+            },
+          });
+        });
+      }
       // `Intl.ListFormat` rather than `join(', ')`: a comma is not the list
       // separator in every language (ja/zh use 、, and ko/de/fr add a
       // conjunction), and the tooltip is prose, not data.
@@ -867,18 +991,27 @@ export class GlamourBlock {
       badge.title = `${LanguageService.tInterpolate('swatch.sameModelList', {
         list: alternates,
       })}${truncated}`;
-      badge.dataset.role = 'same-model';
+      badge.dataset.role = 'twin-chip';
       overline.appendChild(badge);
+    }
+    if (note.tag) {
+      const tag = monoChip(
+        LanguageService.t(note.tag === 'fixed' ? 'glamour.row.tagFixed' : 'glamour.row.tagBlocked'),
+        note.tag === 'fixed' ? green() : amber(),
+        'var(--theme-background-secondary)'
+      );
+      tag.dataset.role = 'piece-tag';
+      overline.appendChild(tag);
     }
     text.appendChild(overline);
 
-    if (item) {
+    if (item && shownNames) {
       // The item name is the label here: it wraps with lang + hyphens,
-      // never an ellipsis.
+      // never an ellipsis. It is the twin the list names, not the lowest row.
       const name = el(
         'span',
         'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); overflow-wrap: anywhere; hyphens: auto;',
-        itemNameFor(item.names, lang)
+        itemNameFor(shownNames, lang)
       );
       name.lang = lang;
       name.dataset.role = 'item-name';
@@ -917,13 +1050,22 @@ export class GlamourBlock {
     );
     dyeLine.dataset.role = 'dye-line';
     text.appendChild(dyeLine);
+    if (note.text) {
+      const noteLine = el(
+        'span',
+        'font-size: 10px; line-height: 1.35; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+        note.text
+      );
+      noteLine.dataset.role = 'piece-note';
+      text.appendChild(noteLine);
+    }
     row.appendChild(text);
 
     const chips = el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
     for (const chip of this.channelChips(slot, dyes)) chips.appendChild(chip);
     row.appendChild(chips);
 
-    if (item) row.title = itemNameFor(item.names, lang);
+    if (shownNames) row.title = itemNameFor(shownNames, lang);
     return row;
   }
 
@@ -1099,13 +1241,15 @@ export class GlamourBlock {
         tile.dataset.slot = slot;
         if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
         const slotLabel = this.gearSlotLabel(slot).toUpperCase();
-        tile.title = item ? `${slotLabel} — ${itemNameFor(item.names, lang)}` : slotLabel;
         // This lens names the dye, not the piece, so the carrier tile is the
         // only handle on the item — it opens the same menu the Pieces lens does.
+        // Title and menu both name the twin the list names (the menu's
+        // target), never the family's lowest row, so the links open the item
+        // the tile says.
         const carrierTarget = this.itemLinkTarget(slot);
-        if (carrierTarget && item) {
-          this.attachItemLinks(tile, carrierTarget, itemNameFor(item.names, lang));
-        }
+        const carrierName = carrierTarget ? itemNameFor(carrierTarget.names, lang) : null;
+        tile.title = carrierName ? `${slotLabel} — ${carrierName}` : slotLabel;
+        if (carrierTarget && carrierName) this.attachItemLinks(tile, carrierTarget, carrierName);
         right.appendChild(tile);
       }
       right.appendChild(
@@ -1119,6 +1263,216 @@ export class GlamourBlock {
       grid.appendChild(row);
     }
     return grid;
+  }
+
+  // ==========================================================================
+  // IN THE GAME — the reader's verdict, and the twins behind each row
+  // ==========================================================================
+
+  /** The highest channel the file dyes on a slot: 0, 1 or 2. */
+  private dyedChannel(slot: CharaGearSlotId): number {
+    return this.resolved!.gearDyes.filter((gear) => gear.slot === slot).reduce(
+      (max, gear) => Math.max(max, gear.channel),
+      0
+    );
+  }
+
+  /**
+   * A worn piece's twins: the named item and its alternates checked against
+   * this file and character, the one the list names (the player's pick, else
+   * the default rule), and the row's tone. A paired off-hand (quiver, focus)
+   * IS the main weapon, so it follows the main hand's pick. Null when
+   * api-worker has not named the piece.
+   */
+  private twinState(slot: CharaGearSlotId): TwinState | null {
+    const item = this.itemFor(slot);
+    if (!item) return null;
+    if (item.viaMainHand) return slot === 'MainHand' ? null : this.twinState('MainHand');
+    const resolved = this.resolved!;
+    const twins = charaTwinsOf(item, this.dyedChannel(slot), {
+      race: resolved.race,
+      gender: resolved.gender,
+    });
+    if (twins.length === 0) return null;
+    const best = defaultCharaTwin(twins);
+    const pickedId = this.picks.get(slot);
+    const picked = twins.find((t) => t.itemId === pickedId) ?? best;
+    return { twins, best, picked, tone: charaPieceTone(twins, picked) };
+  }
+
+  /** One problem, as a standalone sentence (a NO FIX row, a picker's why line). */
+  private problemText(problem: CharaPieceProblem): string {
+    return LanguageService.t(
+      {
+        noItem: 'glamour.row.blockedNoItem',
+        dye: 'glamour.row.blockedDye',
+        glamour: 'glamour.row.blockedGlamour',
+        wear: 'glamour.row.blockedWear',
+      }[problem]
+    );
+  }
+
+  /**
+   * What a row says under its dyes (design 1a): why a twin was named, why
+   * nothing fixes it, or which twin it could just as well be — plus the Grand
+   * Company flag, which never fails a piece (a .chara records no company).
+   */
+  private pieceNote(
+    slot: CharaGearSlotId,
+    state: TwinState | null,
+    lang: string
+  ): { tag: 'fixed' | 'blocked' | null; text: string | null } {
+    const item = this.itemFor(slot);
+    if (item === null) {
+      // An NPC or prop model: only a verdict once api-worker has spoken.
+      return this.resolveState === 'ready'
+        ? { tag: 'blocked', text: LanguageService.t('glamour.row.blockedNoItem') }
+        : { tag: null, text: null };
+    }
+    if (!state || !item?.rules?.length) return { tag: null, text: null };
+    const { twins, picked, tone } = state;
+    const parts: string[] = [];
+    let tag: 'fixed' | 'blocked' | null = null;
+    if (tone === 'fix') {
+      tag = 'fixed';
+      const lowest = twins[0];
+      const key = {
+        noItem: 'glamour.row.fixedWear',
+        dye: 'glamour.row.fixedDye',
+        glamour: 'glamour.row.fixedGlamour',
+        wear: 'glamour.row.fixedWear',
+      }[lowest.problems[0] ?? 'wear'];
+      parts.push(LanguageService.tInterpolate(key, { name: itemNameFor(lowest.names, lang) }));
+    } else if (tone === 'block') {
+      tag = 'blocked';
+      parts.push(this.problemText(picked.problems[0] ?? 'wear'));
+      const passing = twins.find((t) => t.rules !== null && t.problems.length === 0);
+      parts.push(
+        passing
+          ? LanguageService.tInterpolate('glamour.row.otherWorks', {
+              name: itemNameFor(passing.names, lang),
+            })
+          : LanguageService.t('glamour.row.noFix')
+      );
+    } else if (tone === 'choice') {
+      const other = twins.find((t) => t.itemId !== picked.itemId);
+      if (other) {
+        parts.push(
+          LanguageService.tInterpolate('glamour.row.choice', {
+            name: itemNameFor(other.names, lang),
+          })
+        );
+      }
+    }
+    if (tone !== 'block' && (picked.rules?.grandCompany ?? 0) > 0) {
+      parts.push(LanguageService.t('glamour.row.company'));
+    }
+    return { tag, text: parts.length > 0 ? parts.join(' · ') : null };
+  }
+
+  /**
+   * The verdict (design 1a): can the look be worn the way the file shows it?
+   * Drawn only once api-worker has answered WITH rules, so an older worker
+   * (or an unavailable one) leaves the block exactly as it was. The check
+   * runs here, in the browser: the file's dyes and the character's race and
+   * gender never leave the device.
+   */
+  private renderVerdict(): HTMLElement | null {
+    const resolved = this.resolved;
+    if (this.resolveState !== 'ready' || !resolved || !this.equipment) return null;
+    const answered = Object.values(this.equipment.items).some((item) => item?.rules?.length);
+    if (!answered) return null;
+
+    // One outcome per piece (spec G7), so the chips add up to the pieces: a
+    // fine piece that needs a Grand Company counts there, not as fine; a
+    // fixed one stays fixed and its row mentions the company.
+    let fixed = 0;
+    let fine = 0;
+    let company = 0;
+    const blockedBy: Record<CharaPieceProblem, number> = { wear: 0, dye: 0, glamour: 0, noItem: 0 };
+    for (const model of resolved.gearModels) {
+      const item = this.itemFor(model.slot);
+      if (item === undefined || item?.viaMainHand) continue;
+      if (item === null) {
+        blockedBy.noItem++;
+        continue;
+      }
+      if (!item.rules?.length) continue;
+      const state = this.twinState(model.slot);
+      if (!state) continue;
+      if (state.tone === 'block') blockedBy[state.picked.problems[0] ?? 'wear']++;
+      else if (state.tone === 'fix') fixed++;
+      else if ((state.picked.rules?.grandCompany ?? 0) > 0) company++;
+      else fine++;
+    }
+    const blocked = blockedBy.wear + blockedBy.dye + blockedBy.glamour + blockedBy.noItem;
+
+    const panel = el(
+      'div',
+      'display: flex; flex-direction: column; gap: 6px; padding: 11px 12px; border-radius: 12px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
+    );
+    panel.dataset.role = 'verdict';
+    panel.appendChild(
+      el(
+        'span',
+        `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 1.2px; color: var(--theme-text-muted); text-transform: uppercase;`,
+        LanguageService.t('glamour.verdict.head')
+      )
+    );
+    // The headline is built from the counts (spec §3): "3 pieces named from a
+    // twin and 1 piece this character can't wear". Literal one/other key pairs
+    // (the app has no plural helper) chosen by the locale's plural rules, and
+    // the locale's own "and" from Intl.ListFormat.
+    const lang = LanguageService.getCurrentLocale();
+    const plural = new Intl.PluralRules(lang);
+    const phrases: string[] = [];
+    const phrase = (n: number, one: string, other: string): void => {
+      if (n > 0) {
+        phrases.push(
+          LanguageService.tInterpolate(plural.select(n) === 'one' ? one : other, { n: String(n) })
+        );
+      }
+    };
+    phrase(fixed, 'glamour.verdict.segFixed_one', 'glamour.verdict.segFixed_other');
+    phrase(blockedBy.wear, 'glamour.verdict.segWear_one', 'glamour.verdict.segWear_other');
+    phrase(blockedBy.dye, 'glamour.verdict.segDye_one', 'glamour.verdict.segDye_other');
+    phrase(blockedBy.glamour, 'glamour.verdict.segGlamour_one', 'glamour.verdict.segGlamour_other');
+    phrase(blockedBy.noItem, 'glamour.verdict.segNoItem_one', 'glamour.verdict.segNoItem_other');
+    phrase(company, 'glamour.verdict.segCompany_one', 'glamour.verdict.segCompany_other');
+    const head = el(
+      'span',
+      `font-family: ${SANS}; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--theme-text);`,
+      phrases.length > 0
+        ? new Intl.ListFormat(lang, { style: 'long', type: 'conjunction' }).format(phrases)
+        : LanguageService.t('glamour.verdict.headClear')
+    );
+    head.dataset.role = 'verdict-head';
+    panel.appendChild(head);
+    panel.appendChild(
+      el(
+        'span',
+        'font-size: 11.5px; line-height: 1.45; color: var(--theme-text-muted);',
+        LanguageService.t('glamour.verdict.explain')
+      )
+    );
+
+    const chips = el('span', 'display: flex; gap: 6px; flex-wrap: wrap;');
+    const chip = (n: number, key: string, fg: string): void => {
+      if (n === 0) return;
+      const c = monoChip(
+        LanguageService.tInterpolate(key, { n: String(n) }),
+        fg,
+        'var(--theme-background-secondary)'
+      );
+      c.dataset.role = 'verdict-count';
+      chips.appendChild(c);
+    };
+    chip(fixed, 'glamour.verdict.countFixed', green());
+    chip(blocked, 'glamour.verdict.countBlocked', amber());
+    chip(fine, 'glamour.verdict.countFine', 'var(--theme-text-muted)');
+    chip(company, 'glamour.verdict.countCompany', 'var(--theme-text-muted)');
+    panel.appendChild(chips);
+    return panel;
   }
 
   /**

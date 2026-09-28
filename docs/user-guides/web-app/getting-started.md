@@ -6,9 +6,9 @@
 
 ## Welcome to XIV Dye Tools!
 
-The web app gives you 9 tools to explore FFXIV dye colors. Whether you're planning a glamour, designing housing, or just curious about color combinations, these tools have you covered.
+The web app gives you 10 tools to explore FFXIV dye colors. Whether you're planning a glamour, designing housing, or just curious about color combinations, these tools have you covered.
 
-There is no home screen to click through: the app opens straight into a tool — the **Harmony Explorer** by default, or whichever tool a shared link points at — and you switch between the nine from the bar at the top.
+There is no home screen to click through: the app opens straight into a tool — the **Harmony Explorer** by default, or whichever tool a shared link points at — and you switch between the ten from the bar at the top.
 
 ---
 
@@ -29,7 +29,7 @@ Everything hangs off one bar and one drawer:
 
 ### The console bar
 
-- **Tool switcher.** On a desktop-sized window the nine tools sit in the bar as a row of small icon chips — the **tool rail**. The active tool's chip is filled in and shows its short name (**Harmony**, **Extractor**, **Vision**, **Compare**, **Gradient**, **Mixer**, **Presets**, **Budget**, **Swatch**); hover any other chip and its name unrolls. On a phone or narrow window the rail folds into a **title menu**: the bar shows the current tool's name with a small ▾, and tapping it opens a two-column list of all nine tools with a one-line description of each.
+- **Tool switcher.** On a desktop-sized window the ten tools sit in the bar as a row of small icon chips — the **tool rail**. The active tool's chip is filled in and shows its short name (**Harmony**, **Extractor**, **Vision**, **Compare**, **Gradient**, **Mixer**, **Presets**, **Budget**, **Swatch**, **Glamour**); hover any other chip and its name unrolls. On a phone or narrow window the rail folds into a **title menu**: the bar shows the current tool's name with a small ▾, and tapping it opens a two-column list of all ten tools with a one-line description of each.
 - **What's New** (the scroll icon) — the release history, newest release open, earlier ones collapsed. It also pops up on its own the first time you open the app after an update.
 - **About XIV Dye Tools** (the ⓘ icon) — version, build date, dye count, links, and attribution.
 - **Language** — a globe plus a two-letter code (**EN**, **JA**, **DE**, **FR**, **KO**, **ZH**); on phones the code alone. Opens the language picker.
@@ -58,7 +58,7 @@ On desktop the drawer is open from the start. On phones it starts **closed** and
 
 In the order they appear in the rail. The `1`–`9` number keys follow a slightly different order —
 they agree with the rail for the first five tools, then run `6` Community Presets, `7` Budget
-Suggestions, `8` Swatch Matcher, `9` Dye Mixer:
+Suggestions, `8` Swatch Matcher, `9` Dye Mixer — and `0` is the Glamour Reader:
 
 ### 1. Harmony Explorer
 **"Show me dyes that look good together"** — pick a base dye and get complementary, triadic, analogous, tetradic and other companions on a tappable colour wheel.
@@ -87,6 +87,9 @@ Suggestions, `8` Swatch Matcher, `9` Dye Mixer:
 ### 9. Swatch Matcher
 **"Match my character's colors"** — the character creator's colour sheets, or a `.chara` file, matched to dyes.
 
+### 10. Glamour Reader
+**"What is this character wearing, and can I wear it?"** — a `.chara` file read as a glamour: every piece with its dyes, whether the game lets it be worn, and a list for GPOSERS with where each piece comes from. It shares the loaded file with the Swatch Matcher.
+
 ---
 
 ## Your First Color Match
@@ -107,7 +110,7 @@ Or start from a picture: switch to **Palette Extractor** (press `2`), drop in a 
 
 - **Favorites** — the **★** on any drawer swatch. Up to 40, shown at the top of the drawer.
 - **Saved palettes** — several tools save what you built (**Save mix**, **Save swap**, **Save character colors**, **Make a palette**). They appear under **Community Presets → Saved**.
-- **Share links** — eight of the nine tools have a **Share** button (or press `Shift+S`) that copies a link. Seven carry the exact dyes and settings: Color Harmony, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. The eighth, Palette Extractor, carries its extracted colours and matching method instead of dyes — never the picture itself. Community Presets is the only tool without a Share button; a browsable list has nothing to put in a link.
+- **Share links** — eight of the ten tools have a **Share** button (or press `Shift+S`) that copies a link. Seven carry the exact dyes and settings: Color Harmony, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. The eighth, Palette Extractor, carries its extracted colours and matching method instead of dyes — never the picture itself. Community Presets and the Glamour Reader have no Share button: a browsable list has nothing to put in a link, and the reader shows a file that stays on your device.
 
 Everything is stored in your browser on this device; nothing needs an account. See [Favorites & Collections](favorites-collections.md).
 
@@ -176,7 +179,7 @@ Press `?` anywhere (outside a text box) to see this list in the app.
 
 | Shortcut | Action |
 |----------|--------|
-| `1`–`9` | Switch tools: `1` Harmony, `2` Extractor, `3` Accessibility, `4` Comparison, `5` Gradient, `6` Presets, `7` Budget, `8` Swatch, `9` Mixer |
+| `0`–`9` | Switch tools: `1` Harmony, `2` Extractor, `3` Accessibility, `4` Comparison, `5` Gradient, `6` Presets, `7` Budget, `8` Swatch, `9` Mixer, `0` Glamour |
 | `Shift+T` | Toggle theme |
 | `Shift+L` | Cycle language |
 | `Shift+S` | Share the current tool (same as its Share button) |

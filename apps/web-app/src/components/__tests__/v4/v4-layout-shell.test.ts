@@ -194,6 +194,16 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       expect(storage.get(STORAGE_KEYS.PALETTE_HINT_SEEN)).toBe(true);
     });
 
+    it('the Glamour Reader has no palette, no Options panel and no Options FAB (design 1a: no sidebar)', async () => {
+      stubViewport(false);
+      const el = await mountShell('glamour');
+
+      expect(drawer(el)).toBeNull();
+      expect(fab(el).classList.contains('no-palette')).toBe(true);
+      expect(el.shadowRoot!.querySelector('v4-config-sidebar')).toBeNull();
+      expect(el.shadowRoot!.querySelector('.v4-options-toggle')).toBeNull();
+    });
+
     it('shows no hint (and no FAB) on tools without a palette', async () => {
       stubViewport(true);
       const el = await mountShell('presets');
@@ -364,6 +374,24 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       await el.updateComplete;
 
       expect(column(el)!.hasAttribute('collapsed')).toBe(true);
+    });
+
+    it('leaves no scrim over a tool without an Options panel when the route changes under an open one', async () => {
+      stubViewport(true);
+      const el = await mountShell('swatch');
+      optionsFab(el).click();
+      await el.updateComplete;
+      const visibleScrims = () =>
+        el.shadowRoot!.querySelectorAll('.v4-drawer-overlay.visible').length;
+      expect(visibleScrims()).toBe(1);
+
+      // Back/Forward (or any navigateTo) reaches the shell as this attribute,
+      // not as the app bar's tool-select, so nothing closes the panel first
+      el.setAttribute('active-tool', 'glamour');
+      await el.updateComplete;
+
+      expect(column(el)).toBeNull();
+      expect(visibleScrims()).toBe(0);
     });
   });
 });

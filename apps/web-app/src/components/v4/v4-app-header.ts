@@ -9,14 +9,15 @@
  * The switcher has two shapes, chosen by viewport (Harmony Tool Directions,
  * 2B + 3A, confirmed 16 Aug):
  *
- * - **Desktop (> 768px) — the 3A rail.** Nine 38px chips in the bar, one
+ * - **Desktop (> 768px) — the 3A rail.** Ten 38px chips in the bar, one
  *   click each. The active chip is accent-filled and shows its short name;
- *   the other eight are icon-only (16px glyph, dim ink) until the pointer or
+ *   the other nine are icon-only (16px glyph, dim ink) until the pointer or
  *   keyboard focus arrives, when the chip widens and the name unrolls inside
  *   it (max-width 0 → 80px, 190ms). Icon-first is what keeps the wordmark in
- *   the bar: the rail rests at ~406px and a tenth tool costs 37px, not 86.
+ *   the bar: the nine-chip rail rested at ~406px, and the tenth tool cost
+ *   37px, not 86.
  * - **Mobile (≤ 768px) — the 2B title-menu, unchanged.** Tapping the current
- *   tool opens a two-column menu of all nine tools with one-line
+ *   tool opens a two-column menu of all ten tools with one-line
  *   descriptions; nothing is spent on permanent chrome and the list can grow.
  *
  * Both are rendered; a media query decides which is displayed, so resizing
@@ -60,6 +61,7 @@ const TOOL_MENU: Array<{ id: ToolId; translationKey: string }> = [
   { id: 'presets', translationKey: 'tools.presets' },
   { id: 'budget', translationKey: 'tools.budget' },
   { id: 'swatch', translationKey: 'tools.character' },
+  { id: 'glamour', translationKey: 'tools.glamour' },
 ];
 
 @customElement('v4-app-header')
@@ -147,7 +149,7 @@ export class V4AppHeader extends BaseLitComponent {
         user-select: none;
       }
 
-      /* ---- 3A desktop rail: nine icon-first chips ---------------------- */
+      /* ---- 3A desktop rail: ten icon-first chips ----------------------- */
       .tool-rail {
         /* Desktop only — the media query below turns it on */
         display: none;
@@ -446,11 +448,22 @@ export class V4AppHeader extends BaseLitComponent {
         }
       }
 
-      /* Narrow desktop: the wordmark yields so all nine chips (and an open
-         name) fit between the logo and the chrome cluster; the rail rests at
-         ~406px and needs ~470px with a label unrolled. */
+      /* Narrow desktop: the wordmark yields so all ten chips (and an open
+         name) fit between the logo and the chrome cluster. Ten chips rest at
+         ~445px and need ~509px with a hovered label unrolled, so the language
+         button drops its globe here too, as mobile does (spec G2), and at
+         769px the rail's gaps close by a pixel each — the last 5px an open
+         name needs there. */
       @media (min-width: 769px) and (max-width: 919px) {
         .v4-header-logo-text {
+          display: none;
+        }
+
+        .tool-rail {
+          gap: 2px;
+        }
+
+        .lang-globe {
           display: none;
         }
       }

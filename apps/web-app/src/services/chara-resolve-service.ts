@@ -16,7 +16,7 @@
  * @module services/chara-resolve-service
  */
 
-import type { CharaGearModel, CharaGearSlotId } from '@xivdyetools/core';
+import type { CharaGearModel, CharaGearSlotId, CharaTwinRules } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import { getApiWorkerBase } from './api-worker-origin';
 
@@ -37,9 +37,21 @@ export interface CharaResolvedItem {
   iconId: number | null;
   /** Rows sharing this (slot, model key); 1 = unique */
   familySize: number;
-  alternates: Array<{ itemId: number; names: CharaItemNames }>;
+  /** Each alternate carries its own acquisition line (api-worker ≥ 0.15.0) */
+  alternates: Array<{ itemId: number; names: CharaItemNames; acquisition?: string }>;
   /** OffHand only: the off-hand model is the main weapon's own ModelSub (quiver, focus, fist pair) */
   viaMainHand: boolean;
+  /**
+   * The family's in-game rules (dye channels, glamour flag, race/gender lock,
+   * Grand Company), one entry per distinct rule set. Absent from a worker that
+   * predates the in-game check; `[]` when XIVAPI did not say.
+   */
+  rules?: CharaTwinRules[];
+  /**
+   * Where `itemId` comes from, as one English GPOSERS line ("Crafted (WVR Lvl.
+   * 92) / …"). Absent when the worker has none or predates 0.15.0.
+   */
+  acquisition?: string;
 }
 
 export interface CharaResolvedGlasses {
