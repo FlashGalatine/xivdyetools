@@ -14,7 +14,6 @@
  */
 
 import type { Gender, SubRace } from '@xivdyetools/types';
-import sharedShaderData from '../../data/character_colors/shader/shared.json';
 
 /** Shader palettes a `.chara` float can be judged against. */
 export type CharaShaderPalette = 'eyes' | 'highlights' | 'features' | 'lipsDark' | 'skin' | 'hair';
@@ -24,8 +23,19 @@ interface RaceShaderData {
   skin: ClanTable;
   hair: ClanTable;
 }
+type SharedShaderData = Record<string, string[]>;
 
+// Both tables load on first use: the web app's core-runtime chunk has no room for them, and
+// only a resolved .chara file ever needs them
+let sharedShaderLoading: Promise<SharedShaderData> | null = null;
 let raceShaderLoading: Promise<RaceShaderData> | null = null;
+
+function loadSharedShaderData(): Promise<SharedShaderData> {
+  sharedShaderLoading ??= import('../../data/character_colors/shader/shared.json').then(
+    (module) => (module.default ?? module) as SharedShaderData,
+  );
+  return sharedShaderLoading;
+}
 
 function loadRaceShaderData(): Promise<RaceShaderData> {
   raceShaderLoading ??= import('../../data/character_colors/shader/race_specific.json').then(
@@ -49,5 +59,5 @@ export async function charaShaderHex(
     const table = (await loadRaceShaderData())[palette];
     return table[subrace]?.[gender]?.[index] ?? null;
   }
-  return (sharedShaderData as Record<string, string[]>)[palette][index] ?? null;
+  return (await loadSharedShaderData())[palette][index] ?? null;
 }
