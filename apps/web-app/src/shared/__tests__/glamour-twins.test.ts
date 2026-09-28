@@ -100,6 +100,11 @@ describe('defaultTwin', () => {
     expect(defaultTwin(twinsOf(yukata, 0, MIDLANDER_WOMAN)).itemId).toBe(2970);
   });
 
+  it('prefers a perfectly identical dyeable twin over an undyeable one (GPOSERS reminders, Mar 2026)', () => {
+    const hat = family([10, 'Plain Hat'], [[11, 'Plain Hat']], [group([10], 0), group([11], 1)]);
+    expect(defaultTwin(twinsOf(hat, 0, MIDLANDER_WOMAN)).itemId).toBe(11);
+  });
+
   it('falls back to the lowest row when no twin passes', () => {
     const gaskins = family([25210, 'Viera Gaskins'], [], [group([25210], 1, { wearMask: VIERA_WOMEN })]);
     expect(defaultTwin(twinsOf(gaskins, 1, MIDLANDER_WOMAN)).itemId).toBe(25210);

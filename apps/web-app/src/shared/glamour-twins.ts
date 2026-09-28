@@ -9,8 +9,10 @@
  *
  * Default name (spec G4): the first twin that passes the in-game check for
  * this file — it takes the file's dyes, can be a glamour, and allows this
- * tribe and gender — preferring a twin that is not Dated, then the lowest
- * row. When none passes, the lowest row, as before. Only twins the answer
+ * tribe and gender — preferring the most dye channels (GPOSERS reminders,
+ * March 2026: "use a perfectly identical dyeable version instead of an
+ * undyeable one"), then a twin that is not Dated, then the lowest row. When
+ * none passes, the lowest row, as before. Only twins the answer
  * NAMES are candidates: a list can't print an item it has no name for.
  *
  * Pure — no DOM, no services — so the rules test without a browser.
@@ -91,10 +93,13 @@ export function twinsOf(
     .sort((a, b) => a.itemId - b.itemId);
 }
 
-/** Spec G4: passes → not Dated → lowest row; none passes → lowest row. */
+/** Spec G4: passes → most dye channels → not Dated → lowest row; none passes → lowest row. */
 export function defaultTwin(twins: readonly GlamourTwin[]): GlamourTwin {
   const passing = twins.filter((t) => t.rules !== null && t.problems.length === 0);
-  return passing.find((t) => !t.dated) ?? passing[0] ?? twins[0];
+  const best = [...passing].sort(
+    (a, b) => (b.rules?.dyeCount ?? 0) - (a.rules?.dyeCount ?? 0) || Number(a.dated) - Number(b.dated) || a.itemId - b.itemId
+  );
+  return best[0] ?? twins[0];
 }
 
 /**
