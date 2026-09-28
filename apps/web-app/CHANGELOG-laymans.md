@@ -2,19 +2,27 @@
 
 ---
 
-## Web-App Version 5.12.6 — September 27, 2026
+## Web-App Version 5.12.7 — September 28, 2026
 
 ### Your character file stays when you change language
 - **Switching the app's language no longer throws away a loaded `.chara` file.** The Swatch Matcher used to go back to the empty drop zone, and you had to load the file again.
 - **Everything the file showed is redrawn in the new language** — your character's colors, the dyes on the glamour and the names of the gear.
 - **Tribe & Gender stay locked to the file, and the grid keeps its pins.** Leaving the tool or reloading the page still clears the file, as before.
 
-## Web-App Version 5.12.5 — September 27, 2026
+## Web-App Version 5.12.6 — September 28, 2026
 
 ### Tribe & Gender no longer stay locked
 - **Tribe & Gender unlock as soon as the character file is gone.** A `.chara` file loaded into the Swatch Matcher fills both settings in and locks them; the lock now ends with the file.
 - **Leaving the tool, switching language or reloading the page used to drop the file but keep the lock**, so both settings stayed grayed out until you loaded a file and pressed Swap.
 - **If yours are stuck right now, they unlock the next time the app loads.** Nothing else about your settings changes.
+
+## Web-App Version 5.12.5 — September 28, 2026
+
+### Swatch Matcher reads character files more accurately
+- **Two different eye colors now appear on the correct sides.** For characters with a different color in each eye, the Swatch Matcher had the left and right eyes the wrong way round.
+- **No more false "OFF GRID" warnings.** Skin, hair, eyes, lips and the limbal ring or tattoo no longer claim a color is off the game's palette when it came straight from the character creator. A color you really did customize with a posing tool still shows the warning.
+- **The glamour list only shows what the character wears.** Some files store a dye on an empty slot (a hidden weapon, gloves taken off). Those dyes no longer appear in the dye list, in Make a palette, or as an empty "Hands:" line in the GPOSERS export.
+- A few files whose extra color data was never saved used to show no lip color. They show the lip color now.
 
 ## Web-App Version 5.12.4 — September 21, 2026
 

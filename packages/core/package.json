@@ -1,6 +1,6 @@
 {
   "name": "@xivdyetools/core",
-  "version": "5.5.0",
+  "version": "5.6.0",
   "description": "Core color algorithms and dye database for XIV Dye Tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -71,11 +71,11 @@
   "devDependencies": {
     "@types/culori": "^4.0.1",
     "@types/node": "^26.6.2",
-    "@vitest/coverage-v8": "^5.0.1",
-    "csv-parse": "^7.0.2",
+    "@vitest/coverage-v8": "^5.0.2",
+    "csv-parse": "^7.0.3",
     "culori": "^4.0.2",
     "tsx": "^4.23.15",
-    "vitest": "^5.0.1",
+    "vitest": "^5.0.2",
     "yaml": "^2.9.1"
   },
   "engines": {
