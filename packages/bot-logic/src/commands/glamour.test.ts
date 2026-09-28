@@ -236,6 +236,24 @@ describe('executeGlamour', () => {
     expect(result.embed.description).toContain('ヴィエラ・脚甲');
   });
 
+  it('names the race only when the race is what blocks it: a Viera man in a piece for Viera women reads LOCKED', async () => {
+    const vieraMan = JSON.stringify({
+      ...(JSON.parse(STRESS) as Record<string, unknown>),
+      Race: 'Viera',
+      Tribe: 'Rava',
+      Gender: 'Masculine',
+    });
+    const answer: GlamourResolveAnswer = {
+      items: { ...ANSWER.items, Legs: { ...ANSWER.items.Legs!, rules: [rules([9500], { wearMask: 0x8000 })] } },
+    };
+    const result = await executeGlamour(input({ fileText: vieraMan, resolve: async () => answer }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    const t = svgTexts(result.svgString);
+
+    expect(t).toContain('LOCKED');
+    expect(t).not.toContain('VIERA');
+  });
+
   it('answers a file it cannot read with the parse error', async () => {
     const result = await executeGlamour(input({ fileText: 'not json' }));
     expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });

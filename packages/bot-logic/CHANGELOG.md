@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   written once as `Rings`. Below the list it says which pieces were named from a twin and why,
   which have no fix, and which need a Grand Company. No character name, on the card or in the
   embed.
-- **`getLocalizedRace`** — core's race names, per locale (the card names a one-race piece by its
-  race: VIERA).
+- **`getLocalizedRace`** — core's race names, per locale. The card names a one-race piece by its
+  race (VIERA) when the race is what blocks it; a piece that fails on gender alone reads LOCKED.
 - **Strings ×6**: `card.glamour*` (card labels, counts, reasons, errors), `card.glamourSlot.*`,
   `commands.glamour.*`, `manual.glamour.*`.
 

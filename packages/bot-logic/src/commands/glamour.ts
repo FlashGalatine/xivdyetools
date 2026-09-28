@@ -22,6 +22,7 @@
  */
 
 import {
+  CHARA_WEAR_RACE_COLUMNS,
   charaPieceTone,
   charaTwinsOf,
   defaultCharaTwin,
@@ -207,18 +208,28 @@ function localName(names: GlamourItemNames, locale: LocaleCode): string {
   return (names as unknown as Record<string, string | undefined>)[locale] ?? names.en;
 }
 
-/** A wear mask that admits exactly one race (either gender) names it; otherwise null. */
-function onlyRace(mask: number | null): RaceKey | null {
+/**
+ * A wear mask that admits exactly one race (either gender) names it — unless
+ * that is the character's own race, when what blocks the piece is gender and
+ * "VIERA" would tell a Viera man nothing. Otherwise null.
+ */
+function onlyOtherRace(mask: number | null, race: string | null): RaceKey | null {
   if (mask === null) return null;
-  const races = RACE_KEYS.filter((_, i) => ((mask >> (2 * i)) & 0b11) !== 0);
-  return races.length === 1 ? races[0] : null;
+  const allowed = RACE_KEYS.map((_, i) => i).filter((i) => ((mask >> (2 * i)) & 0b11) !== 0);
+  if (allowed.length !== 1 || CHARA_WEAR_RACE_COLUMNS[allowed[0]] === race) return null;
+  return RACE_KEYS[allowed[0]];
 }
 
-function blockedStatus(twin: CharaTwin<GlamourItemNames>, t: Translator, locale: LocaleCode): string {
+function blockedStatus(
+  twin: CharaTwin<GlamourItemNames>,
+  race: string | null,
+  t: Translator,
+  locale: LocaleCode
+): string {
   const problem = twin.problems[0];
   if (problem === 'wear') {
-    const race = onlyRace(twin.rules?.wearMask ?? null);
-    return race ? getLocalizedRace(race, locale).toLocaleUpperCase(locale) : t.t('card.glamourStatusWear');
+    const other = onlyOtherRace(twin.rules?.wearMask ?? null, race);
+    return other ? getLocalizedRace(other, locale).toLocaleUpperCase(locale) : t.t('card.glamourStatusWear');
   }
   if (problem === 'dye') return t.t('card.glamourStatusDye');
   return t.t('card.glamourStatusGlamour');
@@ -257,7 +268,7 @@ function readPiece(
     tone === 'fix'
       ? t.t('card.glamourStatusTwin')
       : tone === 'block'
-        ? blockedStatus(picked, t, locale)
+        ? blockedStatus(picked, character.race, t, locale)
         : t.t('card.glamourStatusOk');
   return {
     slot,
