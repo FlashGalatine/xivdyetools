@@ -411,11 +411,14 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   };
   // A block that is zero in every channel of every float — alpha included —
   // was never read (22 of 1,142 corpus files), so it is absent, not a black
-  // character with no lip. One black float among live ones is kept.
-  const presentFloats = Object.values(parsedFloats).filter((f) => f !== null);
-  const uncaptured =
-    presentFloats.length > 0 &&
-    presentFloats.every((f) => f.linear.every((c) => c === 0) && (f.alpha ?? 0) === 0);
+  // character with no lip. One black float among live ones is kept, and so is
+  // a black float in a file that names only some of the seven: a tool that
+  // never read the block still writes all of it (every corpus file carries
+  // seven floats or none), so a sparse file named its color on purpose.
+  const allFloats = Object.values(parsedFloats);
+  const uncaptured = allFloats.every(
+    (f) => f !== null && f.linear.every((c) => c === 0) && (f.alpha ?? 0) === 0,
+  );
   const float = (f: ParsedFloat | null): ParsedFloat | null => (uncaptured ? null : f);
   const skinFloat = float(parsedFloats.skin);
   const leftEyeFloat = float(parsedFloats.leftEye);
