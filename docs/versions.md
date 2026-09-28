@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: September 24, 2026*
+*Last Updated: September 28, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.12.7 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.12.8 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.6.5 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -112,6 +112,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.12.8 | Sep 2026 | Tests only — browser coverage for 5.12.7's `.chara` readout lock: a reload unlocks TRIBE & GENDER, a lock an earlier build left in storage is ignored, and leaving the Swatch Matcher and coming back keeps the file and the lock. The deployed bundle differs only in its version string |
 | v5.12.7 | Sep 2026 | Swatch Matcher keeps a loaded `.chara` file when you leave the tool or switch language (it lives in a session-only `CharaSessionService` now, never in browser storage), and TRIBE & GENDER no longer stay locked after the file is gone — that lock was a persisted flag that outlived the file. While a file is loaded, `ConfigController` pins the Swatch tribe/gender to it through a reset, an import or another tab's save. `chara-import.ts` split into file card, THIS CHARACTER sheet and DYES ON THIS GLAMOUR; the glamour block is its own on-demand chunk, taking the swatch chunk from 97.7% to 72.8% of its budget |
 | v5.12.6 | Sep 2026 | Swatch Matcher (core 5.7.0) — lip, face-paint, highlight and tattoo swatches are the creator's colors (the tattoo sheet had been the eye palette); a custom skin or hair color is OFF GRID again. No web-app source changed |
 | v5.12.5 | Sep 2026 | Swatch Matcher (core 5.6.0) — heterochromia eyes on the correct sides, no false OFF GRID on any color row, no dyes from empty slots in DYES ON THIS GLAMOUR or the GPOSERS export. No web-app source changed |

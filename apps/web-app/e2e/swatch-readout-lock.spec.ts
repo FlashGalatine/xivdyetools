@@ -2,9 +2,11 @@
  * Swatch Matcher — the TRIBE & GENDER readout lasts exactly as long as the file.
  *
  * A loaded .chara file turns the sidebar's tribe and gender selectors into a
- * readout (disabled). The lock used to outlive the file: leaving the tool and
- * coming back, or reloading, brought the drop zone back with both selectors
- * still disabled, and only loading another file and pressing SWAP undid it.
+ * readout (disabled). Since 5.12.7 the file lives for the session (until SWAP,
+ * a reload or closing the tab) and the lock reads it, so leaving the tool keeps
+ * both. Up to 5.12.6 the lock was a persisted config flag that outlived the
+ * file: a reload, or a trip to another tool, brought the drop zone back over
+ * two disabled selectors.
  */
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/coverage';
@@ -23,6 +25,9 @@ const tribeAndGender = (page: Page) =>
   page.locator('.config-group').filter({ hasText: 'TRIBE & GENDER' }).locator('select');
 
 const dropZone = (page: Page) => page.getByText('Drop a .chara file');
+
+/** The file card's SWAP chip — only there while a file is loaded. */
+const swapChip = (page: Page) => page.getByRole('button', { name: 'SWAP', exact: true });
 
 async function expectSelectors(page: Page, state: 'locked' | 'unlocked'): Promise<void> {
   const selects = tribeAndGender(page);
@@ -48,12 +53,13 @@ test.describe('with a file loaded', () => {
     await expectSelectors(page, 'locked');
   });
 
-  test('leaving the tool and coming back unlocks the selectors', async ({ page }) => {
+  test('leaving the tool and coming back keeps the file and the lock', async ({ page }) => {
     await switchToolViaMenu(page, 'harmony');
     await switchToolViaMenu(page, 'swatch');
 
-    await expect(dropZone(page)).toBeVisible();
-    await expectSelectors(page, 'unlocked');
+    await expect(swapChip(page)).toBeVisible();
+    await expect(dropZone(page)).toHaveCount(0);
+    await expectSelectors(page, 'locked');
   });
 
   test('a reload unlocks the selectors', async ({ page }) => {

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.8] - 2026-09-28
+
+Tests only; the deployed bundle differs only in its version string.
+
+### Tests
+
+- **`e2e/swatch-readout-lock.spec.ts` covers 5.12.7's TRIBE & GENDER readout lock in the
+  browser**, where only unit tests covered it before. The lock lasts exactly as long as the
+  loaded `.chara` file. Leaving the Swatch Matcher and coming back keeps the file card (SWAP
+  chip) and both selectors disabled. A reload clears the session, so the drop zone returns and
+  the selectors unlock. A config an earlier build persisted with `fileProvided: true` opens
+  unlocked. The reload and stale-storage cases replay the original stuck-lock report
+  (PR #204, whose fix #206 superseded).
+
 ## [5.12.7] - 2026-09-28
 
 The Swatch Matcher's loaded `.chara` file moves out of the component that drew it and into a
