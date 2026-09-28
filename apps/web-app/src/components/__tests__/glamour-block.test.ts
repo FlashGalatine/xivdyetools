@@ -1021,10 +1021,28 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     expect(part(glamour, 'HeadGear', 'piece-note')).toBe(
       "Named instead of Dated Hempen Coif, which can't take these dyes"
     );
+    // The headline is built from the counts (spec §3)
     expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
-      "Wearable, with twins named where the file's own pick can't be worn"
+      '1 piece named from a twin'
     );
     expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN', '1 FINE AS IS']);
+  });
+
+  it('joins the counts into one headline', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        HeadGear: COIF,
+        Body: item(2967, "Lord's Yukata", { rules: [rules([2967], 1, { wearMask: 0x5555 })] }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      "1 piece named from a twin and 1 piece this character can't wear"
+    );
   });
 
   it('marks a piece nothing fixes as NO FIX, and says why', async () => {
@@ -1051,7 +1069,7 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
       "This character can't wear it · Nothing with the same look fixes it"
     );
     expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
-      "Some pieces can't be worn the way the file shows them"
+      "1 piece this character can't wear"
     );
     expect(counts(glamour)).toEqual(['1 NO FIX']);
   });
@@ -1072,7 +1090,11 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
 
     expect(part(glamour, 'Body', 'piece-tag')).toBeNull();
     expect(part(glamour, 'Body', 'piece-note')).toBe('Needs the right Grand Company');
-    expect(counts(glamour)).toEqual(['1 FINE AS IS', '1 NEEDS A GRAND COMPANY']);
+    // Its own outcome: the chips add up to the pieces (spec G7), and the headline says it
+    expect(counts(glamour)).toEqual(['1 NEEDS A GRAND COMPANY']);
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      '1 piece that needs the right Grand Company'
+    );
   });
 
   it('says a model with no item behind it has no fix', async () => {

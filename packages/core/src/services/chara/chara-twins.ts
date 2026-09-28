@@ -89,16 +89,25 @@ export function charaTwinsOf<N extends { en: string }>(
     .sort((a, b) => a.itemId - b.itemId);
 }
 
-/** passes → most dye channels → not Dated → any Grand Company → lowest row; none passes → lowest row. */
+/**
+ * passes → dyeable → any Grand Company → not Dated → more dye channels →
+ * lowest row; none passes → lowest row. Among twins that already pass, a
+ * twin every player can wear beats an extra channel the file doesn't use,
+ * while a dyeable twin still beats an undyeable one (GPOSERS: "use a
+ * perfectly identical dyeable version").
+ */
 export function defaultCharaTwin<N extends { en: string }>(
   twins: ReadonlyArray<CharaTwin<N>>,
 ): CharaTwin<N> {
   const passing = twins.filter((t) => t.rules !== null && t.problems.length === 0);
+  const channels = (t: CharaTwin<N>): number => t.rules?.dyeCount ?? 0;
+  const locked = (t: CharaTwin<N>): number => Number((t.rules?.grandCompany ?? 0) > 0);
   const best = [...passing].sort(
     (a, b) =>
-      (b.rules?.dyeCount ?? 0) - (a.rules?.dyeCount ?? 0) ||
+      Number(channels(b) > 0) - Number(channels(a) > 0) ||
+      locked(a) - locked(b) ||
       Number(a.dated) - Number(b.dated) ||
-      Number((a.rules?.grandCompany ?? 0) > 0) - Number((b.rules?.grandCompany ?? 0) > 0) ||
+      channels(b) - channels(a) ||
       a.itemId - b.itemId,
   );
   return best[0] ?? twins[0];

@@ -54,8 +54,22 @@ describe('wrangler.toml', () => {
       /^\[\[env\.production\.ratelimits\]\]\nname = "TELEMETRY_RATE_LIMITER"\nnamespace_id = "\d+"\nsimple = \{ limit = 240, period = 60 \}$/m,
     );
     const ids = [...toml.matchAll(/^namespace_id = "(\d+)"$/gm)].map((m) => m[1]);
-    expect(ids).toHaveLength(4);
-    expect(new Set(ids).size).toBe(4);
+    expect(ids).toHaveLength(6);
+    expect(new Set(ids).size).toBe(6);
+  });
+
+  /**
+   * Our own workers reach /v1/* over a service binding with no client IP, so
+   * they share one key; SERVICE_RATE_LIMITER gives that key a ceiling of 20x
+   * a public IP's (1300 / 60 s) in both environments (BUG-048's rule).
+   */
+  it('binds a service-binding bucket at 20x the public limit in both environments', () => {
+    expect(topLevel).toMatch(
+      /^\[\[ratelimits\]\]\nname = "SERVICE_RATE_LIMITER"\nnamespace_id = "\d+"\nsimple = \{ limit = 1300, period = 60 \}$/m,
+    );
+    expect(production).toMatch(
+      /^\[\[env\.production\.ratelimits\]\]\nname = "SERVICE_RATE_LIMITER"\nnamespace_id = "\d+"\nsimple = \{ limit = 1300, period = 60 \}$/m,
+    );
   });
 
   it('binds a separate Analytics Engine dataset per environment', () => {

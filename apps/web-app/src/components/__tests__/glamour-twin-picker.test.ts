@@ -88,6 +88,62 @@ describe('twin picker', () => {
     expect(onPick).not.toHaveBeenCalled();
   });
 
+  it('moves between twins with the arrow keys, only the pick in the tab order', () => {
+    open();
+    const [dated, coif, coif2] = options();
+    expect(document.activeElement).toBe(coif);
+    expect([dated!.tabIndex, coif!.tabIndex, coif2!.tabIndex]).toEqual([-1, 0, -1]);
+
+    const key = (k: string) =>
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: k, bubbles: true })
+      );
+    key('ArrowDown');
+    expect(document.activeElement).toBe(coif2);
+    key('ArrowDown');
+    expect(document.activeElement).toBe(dated);
+    key('ArrowUp');
+    expect(document.activeElement).toBe(coif2);
+    key('Home');
+    expect(document.activeElement).toBe(dated);
+    key('End');
+    expect(document.activeElement).toBe(coif2);
+  });
+
+  it('gives focus back to the chip that opened it', () => {
+    open();
+    anchor.tabIndex = 0;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.activeElement).toBe(anchor);
+  });
+
+  it('opens above the chip when there is no room below it', () => {
+    const tall = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(300);
+    anchor = createTestContainer('picker-anchor');
+    vi.spyOn(anchor, 'getBoundingClientRect').mockReturnValue({
+      top: window.innerHeight - 40,
+      bottom: window.innerHeight - 20,
+      left: 100,
+      right: 130,
+      width: 30,
+      height: 20,
+      x: 100,
+      y: window.innerHeight - 40,
+      toJSON: () => ({}),
+    });
+    showTwinPicker({
+      anchor,
+      slotLabel: 'Head',
+      twins: TWINS,
+      pickedId: BEST.itemId,
+      best: BEST,
+      lang: 'en',
+      onPick: vi.fn(),
+    });
+    expect(picker()!.style.top).toBe(`${window.innerHeight - 40 - 6 - 300}px`);
+    tall.mockRestore();
+  });
+
   it('is a bottom sheet on a phone (design 1b)', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('max-width'), media: q }));
     open();

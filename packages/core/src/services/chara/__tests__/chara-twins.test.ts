@@ -127,6 +127,36 @@ describe('defaultTwin', () => {
     expect(defaultTwin(twinsOf(coat, 1, MIDLANDER_WOMAN)).itemId).toBe(12);
   });
 
+  it('a twin anyone can wear beats an extra dye channel the file does not use', () => {
+    const coat = family(
+      [10, 'Plain Coat'],
+      [[11, "Serpent Private's Coat"]],
+      [group([10], 1), group([11], 2, { grandCompany: 2 })],
+    );
+    expect(defaultTwin(twinsOf(coat, 1, MIDLANDER_WOMAN)).itemId).toBe(10);
+  });
+
+  it('ranks any Grand Company above not Dated, and more channels last', () => {
+    const cap = family(
+      [10, 'Dated Cap'],
+      [
+        [11, 'Cap'],
+        [12, 'Cap'],
+        [13, 'Cap'],
+      ],
+      [group([10], 1), group([11], 1, { grandCompany: 1 }), group([12], 1), group([13], 2)],
+    );
+    // 12 and 13 are open to every company and not Dated; 13 has the extra channel
+    expect(defaultTwin(twinsOf(cap, 1, MIDLANDER_WOMAN)).itemId).toBe(13);
+    const dated = family(
+      [10, 'Dated Cap'],
+      [[11, 'Cap']],
+      [group([10], 1), group([11], 1, { grandCompany: 1 })],
+    );
+    // The Dated cap anyone can wear beats the company-locked one
+    expect(defaultTwin(twinsOf(dated, 1, MIDLANDER_WOMAN)).itemId).toBe(10);
+  });
+
   it('falls back to the lowest row when no twin passes', () => {
     const gaskins = family(
       [25210, 'Viera Gaskins'],

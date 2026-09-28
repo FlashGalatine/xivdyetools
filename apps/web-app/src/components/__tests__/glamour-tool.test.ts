@@ -90,6 +90,18 @@ describe('GlamourTool', () => {
     ).toBeNull();
   });
 
+  it('says so when a loaded file wears no gear, and stops saying it when one does', async () => {
+    const bare = JSON.stringify({ Tribe: 'Midlander', Gender: 'Feminine', REyeColor: 42 });
+    await loadCharaFile(charaFile(bare));
+    mount();
+    const empty = () => container.querySelector<HTMLElement>('[data-role="glamour-empty"]');
+    expect(empty()?.textContent).toBe('This file wears no gear.');
+    expect(empty()?.hidden).toBe(false);
+
+    await loadCharaFile(charaFile(FIXTURE));
+    expect(empty()?.hidden).toBe(true);
+  });
+
   it('says on the file card that edited acquisition notes are kept on this device', async () => {
     await loadCharaFile(charaFile(FIXTURE));
     mount();

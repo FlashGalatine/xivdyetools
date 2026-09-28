@@ -126,7 +126,8 @@ function readShowAllPieces(): boolean {
  * on purpose: no FFXIV earring, necklace, bracelet or ring is dyeable, so a
  * chip there would invent a channel the game does not have.
  *
- * `shared/glamour-markdown` keeps its own copy (`DYEABLE`) — change both.
+ * core's GPOSERS model (`chara-gposers`, `DYEABLE`) keeps its own copy for the
+ * export and the bot — change both.
  */
 const DYEABLE_SLOTS: ReadonlySet<CharaGearSlotId> = new Set<CharaGearSlotId>([
   'MainHand',
@@ -1359,25 +1360,29 @@ export class GlamourBlock {
     const answered = Object.values(this.equipment.items).some((item) => item?.rules?.length);
     if (!answered) return null;
 
+    // One outcome per piece (spec G7), so the chips add up to the pieces: a
+    // fine piece that needs a Grand Company counts there, not as fine; a
+    // fixed one stays fixed and its row mentions the company.
     let fixed = 0;
-    let blocked = 0;
     let fine = 0;
     let company = 0;
+    const blockedBy: Record<CharaPieceProblem, number> = { wear: 0, dye: 0, glamour: 0, noItem: 0 };
     for (const model of resolved.gearModels) {
       const item = this.itemFor(model.slot);
       if (item === undefined || item?.viaMainHand) continue;
       if (item === null) {
-        blocked++;
+        blockedBy.noItem++;
         continue;
       }
       if (!item.rules?.length) continue;
       const state = this.twinState(model.slot);
       if (!state) continue;
-      if (state.tone === 'block') blocked++;
+      if (state.tone === 'block') blockedBy[state.picked.problems[0] ?? 'wear']++;
       else if (state.tone === 'fix') fixed++;
+      else if ((state.picked.rules?.grandCompany ?? 0) > 0) company++;
       else fine++;
-      if (state.tone !== 'block' && (state.picked.rules?.grandCompany ?? 0) > 0) company++;
     }
+    const blocked = blockedBy.wear + blockedBy.dye + blockedBy.glamour + blockedBy.noItem;
 
     const panel = el(
       'div',
@@ -1391,16 +1396,32 @@ export class GlamourBlock {
         LanguageService.t('glamour.verdict.head')
       )
     );
+    // The headline is built from the counts (spec §3): "3 pieces named from a
+    // twin and 1 piece this character can't wear". Literal one/other key pairs
+    // (the app has no plural helper) chosen by the locale's plural rules, and
+    // the locale's own "and" from Intl.ListFormat.
+    const lang = LanguageService.getCurrentLocale();
+    const plural = new Intl.PluralRules(lang);
+    const phrases: string[] = [];
+    const phrase = (n: number, one: string, other: string): void => {
+      if (n > 0) {
+        phrases.push(
+          LanguageService.tInterpolate(plural.select(n) === 'one' ? one : other, { n: String(n) })
+        );
+      }
+    };
+    phrase(fixed, 'glamour.verdict.segFixed_one', 'glamour.verdict.segFixed_other');
+    phrase(blockedBy.wear, 'glamour.verdict.segWear_one', 'glamour.verdict.segWear_other');
+    phrase(blockedBy.dye, 'glamour.verdict.segDye_one', 'glamour.verdict.segDye_other');
+    phrase(blockedBy.glamour, 'glamour.verdict.segGlamour_one', 'glamour.verdict.segGlamour_other');
+    phrase(blockedBy.noItem, 'glamour.verdict.segNoItem_one', 'glamour.verdict.segNoItem_other');
+    phrase(company, 'glamour.verdict.segCompany_one', 'glamour.verdict.segCompany_other');
     const head = el(
       'span',
       `font-family: ${SANS}; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--theme-text);`,
-      LanguageService.t(
-        blocked > 0
-          ? 'glamour.verdict.headBlocked'
-          : fixed > 0
-            ? 'glamour.verdict.headFixed'
-            : 'glamour.verdict.headClear'
-      )
+      phrases.length > 0
+        ? new Intl.ListFormat(lang, { style: 'long', type: 'conjunction' }).format(phrases)
+        : LanguageService.t('glamour.verdict.headClear')
     );
     head.dataset.role = 'verdict-head';
     panel.appendChild(head);

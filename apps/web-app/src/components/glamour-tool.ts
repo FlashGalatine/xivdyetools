@@ -33,6 +33,8 @@ export class GlamourTool extends BaseComponent {
   private blockContainer: HTMLElement | null = null;
   /** Where the block draws Copy list / Export .md (the tool's header) */
   private actionsHost: HTMLElement | null = null;
+  /** "This file wears no gear." — shown while the loaded file wears nothing */
+  private emptyNote: HTMLElement | null = null;
   /** Invalidates an in-flight block chunk load on re-render and destroy */
   private blockLoadToken = 0;
 
@@ -88,6 +90,15 @@ export class GlamourTool extends BaseComponent {
     });
     this.fileCard.init();
 
+    // A file that wears nothing gets a line, not a silent gap below its card
+    const empty = this.createElement('p', {
+      textContent: LanguageService.t('glamour.empty'),
+      attributes: { 'data-role': 'glamour-empty' },
+    });
+    empty.style.cssText = 'margin: 0; font-size: 13px; color: var(--theme-text-muted);';
+    root.appendChild(empty);
+    this.emptyNote = empty;
+
     const blockContainer = this.createElement('div');
     blockContainer.style.cssText = 'width: 100%;';
     root.appendChild(blockContainer);
@@ -122,6 +133,7 @@ export class GlamourTool extends BaseComponent {
    */
   private syncBlock(): void {
     const session = CharaSessionService.getSession();
+    if (this.emptyNote) this.emptyNote.hidden = !session || hasGlamour(session.resolved);
     const container = this.blockContainer;
     if (this.block || !container || !session || !hasGlamour(session.resolved)) return;
     const token = ++this.blockLoadToken;

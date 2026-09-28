@@ -16,10 +16,15 @@ The Glamour Reader's rules for identical items. MINOR: new exports; the prototyp
   `charaPieceTone(twins, picked)`, `charaTwinFacts(twin, best)` and their types. A `.chara` model
   names a family of items the game draws identically (Dated Hempen Coif / Hempen Coif, Curtana
   Zenith / its Replica, Lord's / Lady's Yukata); these decide which one a glamour list names — the
-  first that passes the in-game check for the file, preferring the most dye channels (GPOSERS:
-  "use a perfectly identical dyeable version"), then not Dated, then any Grand Company, then the
-  lowest row — and how the row reads (fixed by a twin / no fix / a free choice). Shared by the
-  web app's Glamour Reader and the `/glamour` bot card.
+  first that passes the in-game check for the file, preferring a dyeable one (GPOSERS: "use a
+  perfectly identical dyeable version"), then one any Grand Company can wear, then not Dated, then
+  more dye channels, then the lowest row — and how the row reads (fixed by a twin / no fix / a
+  free choice). Shared by the web app's Glamour Reader and the `/glamour` bot card.
+- **`chara-gposers`** — the GPOSERS submission form as data (`gposersGroups`, `GPOSERS_SLOTS`,
+  `gposersSlotLabel`, `gposersSameRings`, the header and `Acquisition:` label): which worn slots,
+  in which order, with which lines; identical rings once as `Rings:`; every value one line. The
+  web reader renders it as Markdown / plain text / HTML and the `/glamour` bot as an embed, so the
+  two can't drift.
 - **`chara-game-rules`**: `groupCharaTwinRules`, `charaWearMask` and the `CharaItemRules` /
   `CharaTwinRules` / `CharaPieceProblem` types for api-worker's resolve answer.
 

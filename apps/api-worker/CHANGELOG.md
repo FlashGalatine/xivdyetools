@@ -15,6 +15,10 @@ Lands after 0.15.0 (the acquisition lines, PR #207).
   job can wear any piece for glamour, so the one Item search asks for `GrandCompany.row_id` instead
   of 43 `ClassJobCategory` columns, and each rule set gains `grandCompany` (0 = any) and loses
   `jobs`. Cache `SHAPE_VERSION` 2 → 3, so no week-old row replays in the old shape.
+- **Our own workers get their own `/v1/*` bucket** (`SERVICE_RATE_LIMITER`, 1300 / 60 s, namespace ids
+  1005 prod / 1006 dev). A service-binding request carries no `CF-Connecting-IP`, so every
+  discord-worker `/glamour` resolve used to share the one `'unknown'` key at a public IP's 60 a
+  minute. The same 20x ceiling BUG-048 gave the Universalis routes; the bot still limits each user.
 - **The capped alternates name every rule set.** They used to be the next eight rows by row id,
   so a family with many Dated rows could cut the one twin that takes the dye, and the reader then
   said nothing fixes the piece. The lowest row of each rule set now goes in first, then the rest

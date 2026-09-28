@@ -41,7 +41,8 @@ Request
   ├─► CORS (origin: *, GET/OPTIONS) (exposes RateLimit + Request-Id headers)
   ├─► rateLimitMiddleware           (only on /v1/*, native binding API_RATE_LIMITER, fail-open;
   │                                    POST /v1/telemetry is carved out onto its own TELEMETRY_RATE_LIMITER
-  │                                    bucket, which fails CLOSED — FINDING-014)
+  │                                    bucket, which fails CLOSED — FINDING-014; a request with no client
+  │                                    IP is one of our own workers and draws on SERVICE_RATE_LIMITER)
   ├─► localeMiddleware              (only on /v1/*, ensures locale data is loaded + sets c.var.locale)
   ├─► API version header            (X-API-Version)
   └─► Route handler                 ──► successResponse / paginatedResponse / ApiError
@@ -60,7 +61,7 @@ src/
 │   ├── wheels.ts         # 2 colour-wheel endpoints (list, :id with ringStops + every dye's wheelHue) — core 5.2.0's ColorWheel registry
 │   └── harmony.ts        # 2 harmony endpoints (/types, / = core's generateHarmonySlots with a `wheel`)
 ├── middleware/
-│   ├── rate-limit.ts     # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER, KV fallback) + the shared rateLimitMiddleware factory
+│   ├── rate-limit.ts     # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER / SERVICE_RATE_LIMITER, KV fallback) + the shared rateLimitMiddleware factory
 │   └── locale.ts         # Reads ?locale=, calls LocalizationService.ensureLocaleLoaded once, sets c.var.locale
 ├── telemetry/            # POST /v1/telemetry: router (bare 204), allowlist schema, Origin gate
 ├── lib/
@@ -133,6 +134,7 @@ Route registration in `routes/dyes.ts` is order-sensitive: static paths (`/searc
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Var | Proxy's per-IP memory limiter — `30`/`60` in production, `60`/`60` in dev |
 | `XIVAPI_BASE` / `XIVAPI_VERSION` / `XIVAPI_SCHEMA` | Var | `/v1/chara/*` upstream (`https://v2.xivapi.com`), the game-version pin (`latest` or a `/api/version` key — ALSO the row-cache namespace; after a patch search 503s on the new key until ingested, so roll forward by hand once a probe answers 200), optional `exdschema@2:rev:<sha>` schema pin |
 | `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `xivdyetools_web_analytics_dev` (top-level dev); absent → the route accepts and discards |
+| `SERVICE_RATE_LIMITER` | Rate Limiting binding | Our own workers on `/v1/*` (discord-worker's `/glamour` resolve over the service binding), 1300 / 60 s on ONE key — a binding request carries no `CF-Connecting-IP`, so they all share it; 20x a public IP's, BUG-048's rule (`namespace_id` 1005 prod / 1006 dev); absent → KV `RATE_LIMIT` under `api:svc:` |
 | `TELEMETRY_RATE_LIMITER` | Rate Limiting binding | `POST /v1/telemetry` bucket, 240 / 60 s per IP (`namespace_id` 1003 prod / 1004 dev); absent → KV `RATE_LIMIT` under `telemetry:ip:`. Unlike the API bucket this one fails **closed** (`failOpen: false` + `onError: 'fail-closed'`, FINDING-014) — a backend error answers 429 rather than admitting the batch |
 
 Routes (production env only): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app` (all custom domains). The top-level env is the routeless `xivdyetools-api-worker-dev` worker. Dev runs on port `8790`. Compatibility date `2024-12-01`. **No `nodejs_compat`** — the worker uses zero Node.js APIs (per ARCH-001 comment in `wrangler.toml`).

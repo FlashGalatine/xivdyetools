@@ -129,6 +129,8 @@ export function showTwinPicker(options: TwinPickerOptions): void {
     option.dataset.itemId = String(twin.itemId);
     option.setAttribute('role', 'radio');
     option.setAttribute('aria-checked', on ? 'true' : 'false');
+    // Roving focus: only the pick is in the tab order; the arrows move between twins
+    option.tabIndex = on ? 0 : -1;
 
     const dot = el(
       'span',
@@ -176,6 +178,26 @@ export function showTwinPicker(options: TwinPickerOptions): void {
     });
     list.appendChild(option);
   }
+  const items = Array.from(list.querySelectorAll<HTMLElement>('[data-role="twin-option"]'));
+  if (!items.some((item) => item.tabIndex === 0) && items[0]) items[0].tabIndex = 0;
+  list.addEventListener('keydown', (event) => {
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    if (i < 0) return;
+    const next =
+      event.key === 'ArrowDown' || event.key === 'ArrowRight'
+        ? (i + 1) % items.length
+        : event.key === 'ArrowUp' || event.key === 'ArrowLeft'
+          ? (i - 1 + items.length) % items.length
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? items.length - 1
+              : -1;
+    if (next < 0) return;
+    event.preventDefault();
+    items.forEach((item, j) => (item.tabIndex = j === next ? 0 : -1));
+    items[next]!.focus();
+  });
   root.appendChild(list);
   root.appendChild(
     el(
@@ -189,12 +211,20 @@ export function showTwinPicker(options: TwinPickerOptions): void {
   if (!sheet) {
     const rect = anchor.getBoundingClientRect();
     const width = root.offsetWidth || 360;
-    root.style.top = `${Math.round(rect.bottom + 6)}px`;
+    const height = root.offsetHeight;
+    // Below the chip, unless it would run off the screen and there is room above
+    const below = rect.bottom + 6;
+    const above = rect.top - 6 - height;
+    const top = below + height > window.innerHeight - 8 && above >= 8 ? above : below;
+    root.style.top = `${Math.round(top)}px`;
     root.style.left = `${Math.max(16, Math.min(Math.round(rect.left), window.innerWidth - width - 16))}px`;
   }
 
   const onKey = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') closeTwinPicker();
+    if (event.key !== 'Escape') return;
+    closeTwinPicker();
+    // Escape hands focus back to the +N chip it came from
+    if (anchor.isConnected) anchor.focus();
   };
   const onOutside = (event: MouseEvent): void => {
     const target = event.target as Node | null;

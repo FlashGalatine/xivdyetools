@@ -233,6 +233,38 @@ describe('glamour export sheet', () => {
     expect(preview()).toContain('Rings: Silver Ring\nAcquisition: Vendor');
   });
 
+  it('files an edit under the family row, not the pick, so a twin pick keeps the key', () => {
+    // The list names the Dated coif (#372), but the family's row is #2629
+    openGlamourSheet(source({ HeadGear: 372 }));
+    type('HeadGear', 'My note');
+
+    expect(AcquisitionEdits.get(HEAD_HASH)).toEqual({ text: 'My note', baseItemId: 372 });
+    expect(AcquisitionEdits.get(gearHash('HeadGear', 372, [1]))).toBeNull();
+  });
+
+  it('keeps Tab inside the sheet, and gives focus back to what opened it', () => {
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    opener.focus();
+    openGlamourSheet(source());
+    const panel = sheet()!.querySelector<HTMLElement>('[role="dialog"]')!;
+    const focusable = Array.from(panel.querySelectorAll<HTMLElement>('button, textarea'));
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+
+    last.focus();
+    last.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+    expect(document.activeElement).toBe(first);
+    first.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true })
+    );
+    expect(document.activeElement).toBe(last);
+
+    closeGlamourSheet();
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
+
   it('says what it keeps, and closes on Escape', () => {
     openGlamourSheet(source());
     expect(sheet()!.textContent).toContain(

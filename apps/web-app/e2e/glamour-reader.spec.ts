@@ -112,6 +112,23 @@ test('verdict first, a twin named and picked, and an edited Acquisition line kep
   await page.locator('[data-role="twin-option"][data-item-id="372"]').click();
   await expect(headRow(page).locator('[data-role="item-name"]')).toHaveText('Dated Hempen Coif');
   await expect(headRow(page).locator('[data-role="piece-tag"]')).toHaveText('NO FIX');
+
+  // The edit was made for Hempen Coif: reopened, the sheet keeps it and warns (spec G9)
+  await page.locator('[data-role="reader-actions"] [data-role="copy-list"]').click();
+  await expect(field).toHaveValue('Crafted (WVR Lvl. 3) / my note');
+  await expect(sheet.locator('[data-role="sheet-warn"]')).toContainText('Dated Hempen Coif');
+});
+
+test('SWAP in the reader clears the file for the Swatch Matcher too', async ({ page }) => {
+  await gotoTool(page, 'glamour');
+  await loadFixture(page);
+  await expect(fileInput(page)).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'SWAP' }).click();
+  await expect(fileInput(page)).toHaveCount(1);
+  await gotoTool(page, 'swatch');
+  await expect(fileInput(page)).toHaveCount(1);
+  await expect(page.getByText('Reader Test', { exact: true })).toHaveCount(0);
 });
 
 test('narrow desktop: ten chips and a hovered label stay inside the rail', async ({ page }) => {

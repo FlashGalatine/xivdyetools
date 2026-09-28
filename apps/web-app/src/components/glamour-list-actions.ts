@@ -11,6 +11,7 @@
 
 import {
   charaModelKey,
+  gposersSameRings,
   type ResolvedCharaCharacter,
   type CharaGearSlotId,
 } from '@xivdyetools/core';
@@ -131,8 +132,7 @@ export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece
   const lang = LanguageService.getCurrentLocale();
   const input = glamourMarkdownInput(source);
   // Two identical rings are written once, as Rings — so they are one row too
-  const rightRing = input.RightRing?.name?.trim();
-  const sameRings = !!rightRing && rightRing === input.LeftRing?.name?.trim();
+  const sameRings = gposersSameRings(input);
   const pieces: GlamourSheetPiece[] = [];
   for (const slot of GLAMOUR_MARKDOWN_SLOTS) {
     const piece = input[slot];

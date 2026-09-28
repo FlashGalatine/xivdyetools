@@ -57,6 +57,15 @@ name = "TELEMETRY_RATE_LIMITER"
 namespace_id = "1004"
 simple = { limit = 240, period = 60 }
 
+# Our own workers (discord-worker's /glamour resolve) reach /v1/* over a service
+# binding with no client IP, so they share one key. Their own bucket, at 20x a
+# public IP's (BUG-048's rule for the Universalis routes): a ceiling on the
+# aggregate — discord-worker limits each user itself.
+[[ratelimits]]
+name = "SERVICE_RATE_LIMITER"
+namespace_id = "1006"
+simple = { limit = 1300, period = 60 }
+
 # Web-app opt-in telemetry (POST /v1/telemetry → Analytics Engine). Separate
 # dev dataset so `pnpm dev` traffic never lands in the production series.
 [[analytics_engine_datasets]]
@@ -106,6 +115,12 @@ simple = { limit = 65, period = 60 }
 name = "TELEMETRY_RATE_LIMITER"
 namespace_id = "1003"
 simple = { limit = 240, period = 60 }
+
+# Service-binding bucket (see top-level block)
+[[env.production.ratelimits]]
+name = "SERVICE_RATE_LIMITER"
+namespace_id = "1005"
+simple = { limit = 1300, period = 60 }
 
 # Web-app telemetry — production dataset. Beta (beta.xivdyetools.app) also
 # reaches this worker; beta vs production is the `env` blob, not the dataset.

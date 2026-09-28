@@ -1344,8 +1344,18 @@
     "verdict": {
       "head": "EN JEU",
       "headClear": "Chaque pièce se porte comme le fichier la montre",
-      "headFixed": "Portable : un jumeau est nommé là où la pièce du fichier ne passe pas",
-      "headBlocked": "Certaines pièces ne se portent pas comme le fichier les montre",
+      "segFixed_one": "{n} pièce remplacée par un jumeau",
+      "segFixed_other": "{n} pièces remplacées par un jumeau",
+      "segWear_one": "{n} pièce que ce personnage ne peut pas porter",
+      "segWear_other": "{n} pièces que ce personnage ne peut pas porter",
+      "segDye_one": "{n} pièce qui ne prend pas ces teintures",
+      "segDye_other": "{n} pièces qui ne prennent pas ces teintures",
+      "segGlamour_one": "{n} pièce qui ne peut pas servir de mirage",
+      "segGlamour_other": "{n} pièces qui ne peuvent pas servir de mirage",
+      "segNoItem_one": "{n} modèle sans objet derrière",
+      "segNoItem_other": "{n} modèles sans objet derrière",
+      "segCompany_one": "{n} pièce qui nécessite la bonne Grande Compagnie",
+      "segCompany_other": "{n} pièces qui nécessitent la bonne Grande Compagnie",
       "explain": "Depuis la 7.4, toutes les classes peuvent porter n'importe quelle pièce en mirage ; restent à vérifier les canaux de teinture, l'option mirage, la race, le sexe et la Grande Compagnie. Les remplacements figurent déjà dans la liste ci-dessous ; modifiez-les via le +N de chaque pièce.",
       "countFixed": "{n} RÉGLÉ PAR UN JUMEAU",
       "countBlocked": "{n} SANS SOLUTION",
@@ -1402,6 +1412,7 @@
       "reset": "Tout réinitialiser",
       "save": "Enregistrer le .md",
       "cardNote": "Vos notes d'obtention modifiées sont conservées sur cet appareil."
-    }
+    },
+    "empty": "Ce fichier ne porte aucun équipement."
   }
 }

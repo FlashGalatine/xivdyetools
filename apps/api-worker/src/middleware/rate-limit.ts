@@ -48,6 +48,34 @@ export function selectApiRateLimiter(env: Env): RateLimiter {
   return new KVRateLimiter({ kv: env.RATE_LIMIT, keyPrefix: 'api:ip:' });
 }
 
+/**
+ * Our own workers on /v1/* — discord-worker's `/glamour` resolve over the
+ * service binding. Such a request carries no `CF-Connecting-IP` (Cloudflare
+ * sets it on every external request), so `getClientIp` answers `'unknown'`
+ * for all of them and they would share one public-sized key: the whole bot
+ * fleet at 60 a minute. They get their own bucket at 20x instead — BUG-048's
+ * rule for the Universalis routes: a ceiling on the aggregate that a bot bug
+ * cannot turn into an unbounded fan-out, while discord-worker limits each
+ * user itself.
+ */
+const SERVICE_LIMIT = { maxRequests: 1300, windowMs: 60_000, failOpen: true } as const;
+const SERVICE_KEY = 'workers';
+
+function selectServiceRateLimiter(env: Env): RateLimiter {
+  if (env.SERVICE_RATE_LIMITER) {
+    return new CloudflareRateLimiter({
+      tiers: [{ limit: SERVICE_LIMIT.maxRequests, periodSeconds: 60, binding: env.SERVICE_RATE_LIMITER }],
+      keyPrefix: 'api:svc:',
+    });
+  }
+  return new KVRateLimiter({ kv: env.RATE_LIMIT, keyPrefix: 'api:svc:' });
+}
+
+/** A request from one of our own workers over a service binding (no client IP). */
+function isServiceBinding(c: Context): boolean {
+  return getClientIp(c.req.raw) === 'unknown';
+}
+
 /** `POST /v1/telemetry` — carved out of the API bucket, limited on its own (see below). */
 export const TELEMETRY_PATH = '/v1/telemetry';
 
@@ -64,7 +92,27 @@ export function isTelemetryPath(path: string): boolean {
 export function createApiRateLimitMiddleware(
   skipPath?: (path: string) => boolean,
 ): MiddlewareHandler {
-  const limiter = createRateLimitMiddleware({
+  const service = createRateLimitMiddleware({
+    backend: (c: Context<{ Bindings: Env }>) => selectServiceRateLimiter(c.env),
+    keyExtractor: () => SERVICE_KEY,
+    config: SERVICE_LIMIT,
+    onError: 'fail-open',
+    formatError: (c: Context<{ Bindings: Env; Variables: Variables }>, retryAfter) =>
+      c.json(
+        {
+          success: false,
+          error: ErrorCode.RATE_LIMITED,
+          message: 'Service rate limit exceeded. Retry after the indicated number of seconds.',
+          retryAfter,
+          meta: {
+            requestId: c.get('requestId') || 'unknown',
+            apiVersion: c.env.API_VERSION || 'v1',
+          },
+        },
+        429,
+      ),
+  });
+  const publicLimiter = createRateLimitMiddleware({
     backend: (c: Context<{ Bindings: Env }>) => selectApiRateLimiter(c.env),
     keyExtractor: (c) => getClientIp(c.req.raw),
     config: API_LIMIT,
@@ -85,6 +133,8 @@ export function createApiRateLimitMiddleware(
         429,
       ),
   });
+  const limiter: MiddlewareHandler = (c, next) =>
+    isServiceBinding(c) ? service(c, next) : publicLimiter(c, next);
   if (!skipPath) return limiter;
   return async (c, next) => {
     if (skipPath(c.req.path)) {

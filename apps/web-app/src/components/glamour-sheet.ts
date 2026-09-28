@@ -38,15 +38,16 @@ import {
 
 type RowState = 'filled' | 'edited' | 'blank';
 
-let current: { root: HTMLElement; cleanup: () => void } | null = null;
+let current: { root: HTMLElement; cleanup: () => void; opener: HTMLElement | null } | null = null;
 
-/** Close the open sheet, if any. */
+/** Close the open sheet, if any, and give focus back to what opened it. */
 export function closeGlamourSheet(): void {
   if (!current) return;
-  const { root, cleanup } = current;
+  const { root, cleanup, opener } = current;
   current = null;
   cleanup();
   root.remove();
+  if (opener?.isConnected) opener.focus();
 }
 
 function isPhone(): boolean {
@@ -73,6 +74,7 @@ function staleEdit(piece: GlamourSheetPiece): boolean {
 /** Open the sheet for the loaded glamour; `focus` names the button that opened it. */
 export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'save' = 'copy'): void {
   closeGlamourSheet();
+  const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const pieces = glamourSheetPieces(source);
   const phone = isPhone();
 
@@ -380,9 +382,27 @@ export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'sav
   refresh();
   document.body.appendChild(root);
   const onKey = (event: KeyboardEvent): void => {
-    if (event.key === 'Escape') closeGlamourSheet();
+    if (event.key === 'Escape') {
+      closeGlamourSheet();
+      return;
+    }
+    // aria-modal: Tab and Shift+Tab stay inside the sheet
+    if (event.key !== 'Tab') return;
+    const focusable = Array.from(
+      panel.querySelectorAll<HTMLElement>('button, textarea, input, select, [href]')
+    ).filter((node) => !node.hasAttribute('disabled'));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
   document.addEventListener('keydown', onKey);
-  current = { root, cleanup: () => document.removeEventListener('keydown', onKey) };
+  current = { root, cleanup: () => document.removeEventListener('keydown', onKey), opener };
   (focus === 'save' ? save : copy).focus();
 }

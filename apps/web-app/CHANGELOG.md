@@ -19,12 +19,15 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   file with the Swatch Matcher (`CharaSessionService`) — each file card links to the other tool,
   and SWAP clears the file for both. On a phone the card's buttons wrap under the name as one
   group, so the name keeps at least 140 px.
-- **IN THE GAME comes first.** The verdict tops the reader: a headline from the counts and FIXED
-  BY A TWIN / NO FIX / FINE AS IS / NEEDS A GRAND COMPANY chips. Since patch 7.4 any job can wear
+- **IN THE GAME comes first.** The verdict tops the reader: a headline built from the counts ("1
+  piece named from a twin and 1 piece this character can't wear") and FIXED BY A TWIN / NO FIX /
+  FINE AS IS / NEEDS A GRAND COMPANY chips, one outcome per piece, so the chips add up to the
+  pieces. Since patch 7.4 any job can wear
   any piece for glamour, so the check is dye channels, the glamour flag, race, gender and Grand
   Company — a company lock is a flag, never a failure (a `.chara` records no company).
 - **Twins.** A model often stands for several identical items. Each row names the one the list
-  will write — the first that passes the check, preferring a dyeable one, then not Dated — and
+  will write — the first that passes the check, preferring a dyeable one, then one any Grand
+  Company can wear, then not Dated — and
   says why ("Named instead of Dated Hempen Coif, which can't take these dyes"). The `+N` chip
   opens a picker (popover on desktop, bottom sheet on a phone) listing each twin's facts. A pick
   lives with the loaded file: it survives leaving the reader and coming back, and a new file
@@ -37,6 +40,9 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   once as `Rings:` and edited as one row (GPOSERS reminders, March 2026). A piece with no item
   behind it keeps its edit under its model. When storage is off or full, edits last for the
   page instead of vanishing, and an Acquisition line is always written as one line.
+- A loaded file that wears nothing says so under its card. The twin picker moves with the arrow
+  keys and gives focus back to its chip; it opens upward near the bottom of the screen. The export
+  sheet keeps Tab inside it and gives focus back to the button that opened it.
 - Narrow desktop (769–919 px) drops the language button's globe and closes the rail's gaps by a
   pixel, so ten rail chips and a hovered label fit even at 769 px. The shortcuts panel says `0-9`.
 - **The site's share card shows ten tools.** `public/og/default.png` and `default-x.png` are

@@ -232,6 +232,21 @@ export type {
   CharaPieceTone,
   CharaTwinFact,
 } from './services/chara/chara-twins.js';
+// The GPOSERS submission form as data — the web reader and the bot render it
+export {
+  GPOSERS_SLOTS,
+  GPOSERS_HEADER,
+  GPOSERS_ACQUISITION_LABEL,
+  gposersSlotLabel,
+  gposersSameRings,
+  gposersGroups,
+} from './services/chara/chara-gposers.js';
+export type {
+  GposersSlot,
+  GposersPiece,
+  GposersInput,
+  GposersLine,
+} from './services/chara/chara-gposers.js';
 export type {
   ResolvedCharaCharacter,
   ResolvedCharaSlot,

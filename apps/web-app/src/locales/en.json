@@ -1344,8 +1344,18 @@
     "verdict": {
       "head": "IN THE GAME",
       "headClear": "Every piece can be worn the way the file shows it",
-      "headFixed": "Wearable, with twins named where the file's own pick can't be worn",
-      "headBlocked": "Some pieces can't be worn the way the file shows them",
+      "segFixed_one": "{n} piece named from a twin",
+      "segFixed_other": "{n} pieces named from a twin",
+      "segWear_one": "{n} piece this character can't wear",
+      "segWear_other": "{n} pieces this character can't wear",
+      "segDye_one": "{n} piece that can't take these dyes",
+      "segDye_other": "{n} pieces that can't take these dyes",
+      "segGlamour_one": "{n} piece that can't be a glamour",
+      "segGlamour_other": "{n} pieces that can't be a glamour",
+      "segNoItem_one": "{n} model with no item behind it",
+      "segNoItem_other": "{n} models with no item behind them",
+      "segCompany_one": "{n} piece that needs the right Grand Company",
+      "segCompany_other": "{n} pieces that need the right Grand Company",
       "explain": "Since 7.4 any job can wear any piece for glamour; what's left to check is dye channels, the glamour flag, race, gender and Grand Company. Swaps are already in the list below; change any of them from the piece's +N.",
       "countFixed": "{n} FIXED BY A TWIN",
       "countBlocked": "{n} NO FIX",
@@ -1402,6 +1412,7 @@
       "reset": "Reset all",
       "save": "Save .md",
       "cardNote": "Your edited acquisition notes are kept on this device."
-    }
+    },
+    "empty": "This file wears no gear."
   }
 }

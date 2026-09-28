@@ -1344,8 +1344,18 @@
     "verdict": {
       "head": "游戏内",
       "headClear": "每件装备都能按文件的样子穿戴",
-      "headFixed": "可以穿戴：文件里的装备不行的部位，已换成外观相同的装备",
-      "headBlocked": "有些装备无法按文件的样子穿戴",
+      "segFixed_one": "{n} 件以同外观装备代替",
+      "segFixed_other": "{n} 件以同外观装备代替",
+      "segWear_one": "{n} 件这个角色无法穿戴",
+      "segWear_other": "{n} 件这个角色无法穿戴",
+      "segDye_one": "{n} 件无法使用这些染剂",
+      "segDye_other": "{n} 件无法使用这些染剂",
+      "segGlamour_one": "{n} 件无法用于幻化",
+      "segGlamour_other": "{n} 件无法用于幻化",
+      "segNoItem_one": "{n} 个没有对应物品的模型",
+      "segNoItem_other": "{n} 个没有对应物品的模型",
+      "segCompany_one": "{n} 件需要所属对应的大国防联军",
+      "segCompany_other": "{n} 件需要所属对应的大国防联军",
       "explain": "自7.4起，任何职业都能把任何装备用作幻化；还需要检查染色栏、能否幻化、种族、性别和大国防联军。替换已写进下方列表，可在各件装备的 +N 处更改。",
       "countFixed": "{n} 以同外观装备解决",
       "countBlocked": "{n} 无法解决",
@@ -1402,6 +1412,7 @@
       "reset": "全部重置",
       "save": "保存 .md",
       "cardNote": "你编辑过的获取方式备注保存在本设备上。"
-    }
+    },
+    "empty": "这个文件没有穿戴装备。"
   }
 }

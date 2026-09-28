@@ -1344,8 +1344,18 @@
     "verdict": {
       "head": "IM SPIEL",
       "headClear": "Jedes Teil lässt sich so tragen, wie die Datei es zeigt",
-      "headFixed": "Tragbar – wo das Teil der Datei nicht geht, steht ein gleich aussehendes",
-      "headBlocked": "Manche Teile lassen sich nicht so tragen, wie die Datei sie zeigt",
+      "segFixed_one": "{n} Teil durch einen Zwilling ersetzt",
+      "segFixed_other": "{n} Teile durch einen Zwilling ersetzt",
+      "segWear_one": "{n} Teil, das dieser Charakter nicht tragen kann",
+      "segWear_other": "{n} Teile, die dieser Charakter nicht tragen kann",
+      "segDye_one": "{n} Teil, das diese Farbstoffe nicht annimmt",
+      "segDye_other": "{n} Teile, die diese Farbstoffe nicht annehmen",
+      "segGlamour_one": "{n} Teil, das sich nicht projizieren lässt",
+      "segGlamour_other": "{n} Teile, die sich nicht projizieren lassen",
+      "segNoItem_one": "{n} Modell ohne Gegenstand dahinter",
+      "segNoItem_other": "{n} Modelle ohne Gegenstand dahinter",
+      "segCompany_one": "{n} Teil, das die richtige Staatliche Gesellschaft braucht",
+      "segCompany_other": "{n} Teile, die die richtige Staatliche Gesellschaft brauchen",
       "explain": "Seit 7.4 kann jede Klasse jedes Teil als Projektion tragen; geprüft werden Farbkanäle, Projektionsfähigkeit, Volk, Geschlecht und Staatliche Gesellschaft. Ersetzungen stehen schon in der Liste unten; ändere sie über das +N am Teil.",
       "countFixed": "{n} DURCH ZWILLING GELÖST",
       "countBlocked": "{n} KEINE LÖSUNG",
@@ -1402,6 +1412,7 @@
       "reset": "Alles zurücksetzen",
       "save": ".md speichern",
       "cardNote": "Deine bearbeiteten Bezugsquellen werden auf diesem Gerät gespeichert."
-    }
+    },
+    "empty": "Diese Datei trägt keine Ausrüstung."
   }
 }
