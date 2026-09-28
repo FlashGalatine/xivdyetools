@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.12.5] - 2026-09-27
+## [5.12.7] - 2026-09-28
 
 The Swatch Matcher's loaded `.chara` file moves out of the component that drew it and into a
 session-only store, and `chara-import.ts` splits along what each part shows.
@@ -74,6 +74,43 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   reset, an import and another tab's save (without writing it back); the Swatch suite opens on a
   file loaded while the tool was closed and names a picked slot in the new language after a
   switch. Each of those fails before the fix.
+
+## [5.12.6] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0. No web-app source changed — the color sheets are regenerated in
+core from the game's own `human.cmp`.
+
+### Fixed
+
+- **Swatch Matcher showed lip, face-paint and some highlight swatches in colors the character
+  creator doesn't use.** Those sheets held the game's shader colors, not the creator's; lips and
+  face paint differ in 95 of 96 swatches. Every sheet now matches the creator, which the game
+  file and the creator's own RGB readouts confirm.
+- **The Tattoo / Limbal sheet was a copy of the eye colors.** It now holds the game's own
+  facial-feature palette.
+- **A custom skin or hair color is OFF GRID again**, and one straight from the creator never is:
+  each color is now checked against the value the game stores for it.
+
+## [5.12.5] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.6.0. No web-app source changed — every fix lands in core's `.chara`
+parser and resolver and arrives through `workspace:*`.
+
+### Fixed
+
+- **Swatch Matcher showed a heterochromia character's eyes on the wrong sides.** Core read
+  `REyeColor` as the left eye; 153 of 157 heterochromia files in a 1,142-file corpus pair it with
+  `RightEyeColor`. Where a file's colors are live, each eye was also judged against the other's
+  color, so both showed OFF GRID.
+- **False OFF GRID on every color row** in files whose colors are live. The extended colors
+  were decoded with the wrong curve, the limbal one carries a factor the game multiplies in, and
+  skin, hair and light-palette lips store a shading value rather than the creator's swatch
+  (checked in the character creator). A genuinely custom color is still OFF GRID.
+- **DYES ON THIS GLAMOUR and the GPOSERS export listed dyes on empty slots.** The export printed
+  a bare `Hands:` row and its dye for gloves the character isn't wearing, Make a palette counted
+  the dye, and a hidden weapon's stains showed as `#254` / `#255`.
+- **22 files read as having no lip color** because their extended block was stored as all zeros.
+  The block was never read; the lip now resolves from its index.
 
 ## [5.12.4] - 2026-09-21
 

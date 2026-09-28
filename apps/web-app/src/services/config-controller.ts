@@ -464,7 +464,7 @@ export class ConfigController {
         withWheel.wheel = normalizeColorWheelId(withWheel.wheel);
       }
 
-      // 5.12.5: `swatch.fileProvided` was a persisted copy of "a .chara file
+      // 5.12.7: `swatch.fileProvided` was a persisted copy of "a .chara file
       // is loaded", and it outlived the file: a reload kept the sidebar's
       // tribe/gender locked with no file. The lock reads CharaSessionService
       // now, so drop the retired key rather than round-trip it forever.

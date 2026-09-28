@@ -17,6 +17,14 @@
  * - Gear dye stain IDs resolve through the dye database
  *   (`stainID`/`legacyItemID`), never derived from ranges.
  * - Shared-index eyes (84% of files) merge into one badge — `eyesShareIndex`.
+ * - Eye floats pair by name; a heterochromia file whose two floats each land
+ *   on the other eye's palette entry is un-crossed first (4 of 157 in the
+ *   2026-09-28 corpus) — see `uncrossEyeFloats`.
+ * - **A float is judged against the color the game stores for its entry**,
+ *   never the swatch: `human.cmp` renders from a shader half that differs from
+ *   the creator's interface half (Raen ♀ hair 42: swatch #FFDC98, stored
+ *   #E5D2AC) — see `chara-shader-colors`. A light-palette lip stores its dark
+ *   entry. The swatch (`indexHex`) is still what the slot shows.
  */
 
 import type { CharacterColor, Dye, Gender, SubRace } from '@xivdyetools/types';
@@ -24,15 +32,23 @@ import { ColorConverter } from '../color/ColorConverter.js';
 import { clamp } from '../../utils/index.js';
 import type { CharacterColorService } from '../CharacterColorService.js';
 import type {
+  CharaColorSlotRaw,
   CharaGearSlotId,
   CharaSlotId,
   CharaSlotInertReason,
   ParsedCharaFile,
 } from './chara-parser.js';
 import type { CharaGearModel } from './chara-models.js';
+import { charaShaderHex, type CharaShaderPalette } from './chara-shader-colors.js';
 
 /** ΔE2000 beyond which a live float overrides the palette index (OFF GRID). */
 export const OFF_GRID_DELTA_E2000 = 6;
+
+/**
+ * ΔE2000 within which a stored eye float "lands on" a palette entry (the
+ * square root is exact to ±1 per channel).
+ */
+const EYE_LANDS_DELTA_E2000 = 1;
 
 export type CharaSlotVerdict =
   /** The palette index is the answer (float absent, not live, or agreeing) */
@@ -67,7 +83,11 @@ export interface ResolvedCharaSlot {
   indexHex: string | null;
   /** Hex from the extended float (gamma-encoded), when present */
   floatHex: string | null;
-  /** ΔE2000 between indexHex and floatHex, when both exist */
+  /**
+   * ΔE2000 between a live float and the colour the game stores for the index
+   * (the shader half of `human.cmp` — not `indexHex`, the swatch). Null when
+   * the float is absent or not live.
+   */
   deltaE: number | null;
   /** Set when a float existed but was not live — the UI must say so */
   indexWinNote?: 'extendedMissing';
@@ -140,6 +160,62 @@ function compositeHex(topHex: string, baseHex: string, alpha: number): string {
     linearToSrgb255(srgbToLinear(t) * alpha + srgbToLinear(b) * (1 - alpha));
   return ColorConverter.rgbToHex(mix(top.r, base.r), mix(top.g, base.g), mix(top.b, base.b));
 }
+
+/**
+ * Eye floats pair with the index keys by name, but 4 of 157 heterochromia
+ * files in the 2026-09-28 corpus store them crossed. All four are Brio's,
+ * whose shader struct called the lower-offset eye colour `LeftEyeColor` until
+ * its patch 7.5 update (2026-04-29) and `RightEyeColor` since, and a Brio file
+ * carries no version to tell the two apart. Swap the two floats only when each
+ * lands on the OTHER eye's palette entry and neither on its own: a custom
+ * colour or a half match stays where the file put it.
+ */
+function uncrossEyeFloats(
+  slots: CharaColorSlotRaw[],
+  characterColors: CharacterColorService,
+): CharaColorSlotRaw[] {
+  const left = slots.find((s) => s.slot === 'leftEye');
+  const right = slots.find((s) => s.slot === 'rightEye');
+  if (!left?.float || !right?.float || left.index === null || right.index === null) return slots;
+  if (left.index === right.index) return slots;
+  // The eye palette's shader and interface halves are identical (192 of 192)
+  const sheet = characterColors.getEyeColors();
+  const lands = (index: number, float: CharaColorSlotRaw['float']): boolean => {
+    const entry = sheet.find((c) => c.index === index);
+    return (
+      entry !== undefined &&
+      float !== null &&
+      ColorConverter.getDeltaE(entry.hex, rgbToHex(float), 'ciede2000') <= EYE_LANDS_DELTA_E2000
+    );
+  };
+  const straight = lands(left.index, left.float) && lands(right.index, right.float);
+  const crossed = lands(left.index, right.float) && lands(right.index, left.float);
+  if (straight || !crossed) return slots;
+  const swapped = (to: CharaColorSlotRaw, from: CharaColorSlotRaw): CharaColorSlotRaw => ({
+    ...to,
+    float: from.float,
+    floatLinear: from.floatLinear,
+  });
+  return slots.map((s) =>
+    s === left ? swapped(left, right) : s === right ? swapped(right, left) : s,
+  );
+}
+
+/**
+ * The shader palette each slot's float is stored from. A light-palette lip
+ * stores its DARK entry (349 of 349 corpus files), so both halves map to
+ * `lipsDark` at the in-sheet index. Face paint carries no float.
+ */
+const SHADER_PALETTE: Record<CharaSlotId, CharaShaderPalette | null> = {
+  leftEye: 'eyes',
+  rightEye: 'eyes',
+  hair: 'hair',
+  highlights: 'highlights',
+  skin: 'skin',
+  limbal: 'features',
+  lip: 'lipsDark',
+  facePaint: null,
+};
 
 interface SheetResolution {
   sheet: CharacterColor[] | null;
@@ -244,7 +320,7 @@ export async function resolveCharaColors(
 ): Promise<ResolvedCharaCharacter> {
   const slots: ResolvedCharaSlot[] = [];
 
-  for (const raw of parsed.slots) {
+  for (const raw of uncrossEyeFloats(parsed.slots, characterColors)) {
     const kind = raw.slot === 'limbal' ? (parsed.race === 'AuRa' ? 'limbal' : 'tattoo') : raw.slot;
     const floatHex = raw.float ? rgbToHex(raw.float) : null;
     const floatLive = parsed.extendedValid && floatHex !== null;
@@ -320,7 +396,13 @@ export async function resolveCharaColors(
     };
 
     if (floatLive && floatHex) {
-      const deltaE = ColorConverter.getDeltaE(entry.hex, floatHex, 'ciede2000');
+      // An unedited file's float IS the stored color, so that is the yardstick
+      const palette = SHADER_PALETTE[raw.slot];
+      const storedHex =
+        (palette &&
+          (await charaShaderHex(palette, resolution.sheetIndex, parsed.tribe, parsed.gender))) ??
+        entry.hex;
+      const deltaE = ColorConverter.getDeltaE(storedHex, floatHex, 'ciede2000');
       resolved.deltaE = deltaE;
       resolved.verdict = deltaE > OFF_GRID_DELTA_E2000 ? 'offGrid' : 'index';
     } else {

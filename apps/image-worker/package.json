@@ -18,15 +18,15 @@
   "license": "MIT",
   "dependencies": {
     "@cf-wasm/photon": "^0.4.0",
-    "@cloudflare/workers-types": "^5.20260918.1",
+    "@cloudflare/workers-types": "^5.20260925.1",
     "@xivdyetools/worker-kit": "workspace:*",
-    "hono": "^4.13.8"
+    "hono": "^4.13.9"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^5.0.1",
+    "@vitest/coverage-v8": "^5.0.2",
     "@types/node": "^26.6.2",
-    "vitest": "^5.0.1",
-    "wrangler": "^4.136.1"
+    "vitest": "^5.0.2",
+    "wrangler": "^4.140.0"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -122,7 +122,7 @@ const BUNDLE_LIMITS = [
   { label: 'tool: gradient', pattern: /^gradient-tool-/, limit: 65 * KB },
   { label: 'tool: extractor', pattern: /^extractor-tool-/, limit: 100 * KB },
   { label: 'tool: preset', pattern: /^preset-tool-/, limit: 65 * KB },
-  // DYES ON THIS GLAMOUR, split out of the swatch chunk in 5.12.5 (that chunk
+  // DYES ON THIS GLAMOUR, split out of the swatch chunk in 5.12.7 (that chunk
   // sat at 97.7% of its limit) and imported only once a loaded .chara file
   // wears something. Calibrated like the tools: 25.3 KB measured, ~30% headroom.
   { label: 'swatch: glamour block', pattern: /^glamour-block-/, limit: 35 * KB },

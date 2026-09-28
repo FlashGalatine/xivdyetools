@@ -2,7 +2,7 @@
 
 ---
 
-## Web-App Version 5.12.5 — September 27, 2026
+## Web-App Version 5.12.7 — September 28, 2026
 
 ### Your character file stays loaded
 - **The Swatch Matcher keeps your character file when you leave it.** Going to another tool and coming back no longer clears it, so there is no need to drop it in again.
@@ -13,6 +13,21 @@
 
 ### Behind the scenes
 - The Swatch Matcher has about a quarter less to download when it opens. The list of the dyes on your glamour loads only when a character file needs it.
+
+## Web-App Version 5.12.6 — September 28, 2026
+
+### Swatch Matcher colors match the character creator
+- **Lip, face paint and some highlight colors now look the way they do in the creator.** They had been shown in slightly different shades, lips and face paint most of all. Every color now comes straight from the game's own palette file.
+- **The Tattoo / Limbal colors were the eye colors by mistake.** They're the real tattoo and limbal ring colors now.
+- **A skin or hair color you customized with a posing tool shows "OFF GRID" again**, and one picked straight from the creator never does.
+
+## Web-App Version 5.12.5 — September 28, 2026
+
+### Swatch Matcher reads character files more accurately
+- **Two different eye colors now appear on the correct sides.** For characters with a different color in each eye, the Swatch Matcher had the left and right eyes the wrong way round.
+- **No more false "OFF GRID" warnings.** Skin, hair, eyes, lips and the limbal ring or tattoo no longer claim a color is off the game's palette when it came straight from the character creator. A color you really did customize with a posing tool still shows the warning.
+- **The glamour list only shows what the character wears.** Some files store a dye on an empty slot (a hidden weapon, gloves taken off). Those dyes no longer appear in the dye list, in Make a palette, or as an empty "Hands:" line in the GPOSERS export.
+- A few files whose extra color data was never saved used to show no lip color. They show the lip color now.
 
 ## Web-App Version 5.12.4 — September 21, 2026
 
