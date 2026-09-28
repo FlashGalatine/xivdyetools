@@ -109,6 +109,7 @@ src/
 ├── palette-grid.ts           # /extractor image    14K ramp
 ├── nearest-sheet.ts          # /extractor color    14J·2 colour sheet
 ├── swatch-card.ts            # /swatch             1a / 1b (order: option)
+├── glamour-card.ts           # /glamour            2a pieces in slot order (a second row kind, not measuredRow)
 └── preset-swatch.ts          # /preset             DEFERRED — pre-frame, see its docblock
 ```
 

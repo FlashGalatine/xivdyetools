@@ -71,6 +71,10 @@
       "name": "`/swatch <file> [order] [slot]`",
       "description": "Associe les couleurs d'un personnage aux teintures d'un fichier `.chara` (Anamnesis ou Ktisis).\n• Lit peau, cheveux, mèches, yeux, lèvre, peinture faciale et tatouage/anneau limbal\n• `slot` : les cinq teintures les plus proches pour une couleur"
     },
+    "glamour": {
+      "name": "`/glamour <file>`",
+      "description": "Liste le mirage que porte un fichier `.chara` (Anamnesis ou Ktisis).\n• Chaque pièce teinte, nommée d’après l’objet que vous pouvez vraiment porter\n• La liste complète au format GPOSERS, prête à copier"
+    },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
       "description": "Gérez vos préférences du bot.\n• `set` : langue, mélange, correspondance, nombre de résultats, clan/genre, monde, valeurs des cartes, thème\n• `filters` : exclure des groupes de teintures des résultats\n• `reset` : un réglage, ou tout"
@@ -598,7 +602,59 @@
     "swatchTitle": "Nuancier du personnage",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
     "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier.",
-    "perDe": "GIL/ΔE"
+    "perDe": "GIL/ΔE",
+    "glamourTitle": "Mirage",
+    "glamourPieces_one": "{n} pièce teinte",
+    "glamourPieces_other": "{n} pièces teintes",
+    "glamourWorn_one": "{n} pièce",
+    "glamourWorn_other": "{n} pièces",
+    "glamourDyes_one": "{n} teinture",
+    "glamourDyes_other": "{n} teintures",
+    "glamourNoDyes": "aucune teinture",
+    "glamourLooks": "+{n} ASPECT",
+    "glamourOneLook": "UNIQUE",
+    "glamourStatusTwin": "JUMEAU",
+    "glamourStatusOk": "OK",
+    "glamourStatusDye": "TEINTES",
+    "glamourStatusGlamour": "NON MIRAGE",
+    "glamourStatusWear": "RÉSERVÉ",
+    "glamourFootShown_one": "{s} sur {n} pièce teinte",
+    "glamourFootShown_other": "{s} sur {n} pièces teintes",
+    "glamourFootShownWorn_one": "{s} sur {n} pièce",
+    "glamourFootShownWorn_other": "{s} sur {n} pièces",
+    "glamourFootTwins_one": "{n} via un jumeau",
+    "glamourFootTwins_other": "{n} via un jumeau",
+    "glamourFootBlocked_one": "{n} sans solution",
+    "glamourFootBlocked_other": "{n} sans solution",
+    "glamourNamedLead": "Nommé d’après un jumeau :",
+    "glamourFixedDye": "{name} (à la place de {other}, qui ne prend pas ces teintures)",
+    "glamourFixedGlamour": "{name} (à la place de {other}, qui ne peut pas servir de mirage)",
+    "glamourFixedWear": "{name} (à la place de {other}, que ce personnage ne peut pas porter)",
+    "glamourBlockedLead": "Sans solution :",
+    "glamourBlockedDye": "{name} (ne prend pas les teintures du fichier)",
+    "glamourBlockedGlamour": "{name} (ne peut pas servir de mirage)",
+    "glamourBlockedWear": "{name} (ce personnage ne peut pas la porter)",
+    "glamourBlockedNoItem": "{name} (un modèle sans objet derrière)",
+    "glamourCompany": "Nécessite la bonne Grande Compagnie : {list}",
+    "glamourNoItemName": "Modèle {key}",
+    "glamourNoGear": "Ce fichier ne porte aucun équipement.",
+    "glamourResolveFailed": "Impossible de consulter les objets pour le moment. Réessayez dans une minute.",
+    "glamourResolveBusy": "La recherche d’objets est très sollicitée pour le moment. Réessayez dans une minute.",
+    "glamourManual": "En savoir plus sur les fichiers de personnage :",
+    "glamourSlot": {
+      "MainHand": "MAIN DIRECTRICE",
+      "OffHand": "MAIN NON DIRECTRICE",
+      "HeadGear": "TÊTE",
+      "Body": "TORSE",
+      "Hands": "MAINS",
+      "Legs": "JAMBES",
+      "Feet": "PIEDS",
+      "Ears": "OREILLES",
+      "Neck": "COU",
+      "Wrists": "POIGNETS",
+      "RightRing": "BAGUE DROITE",
+      "LeftRing": "BAGUE GAUCHE"
+    }
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",
@@ -767,6 +823,14 @@
         },
         "slot": {
           "description": "Afficher les cinq teintures proches d'un seul emplacement"
+        }
+      }
+    },
+    "glamour": {
+      "description": "Lire un fichier de personnage comme un mirage : chaque pièce, ses teintures et si elle se porte",
+      "options": {
+        "file": {
+          "description": "Fichier de personnage .chara (export Anamnesis / Ktisis)"
         }
       }
     },

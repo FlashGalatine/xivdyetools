@@ -20,7 +20,7 @@ xivdyetools/
 │   ├── bot-logic/           # Platform-agnostic Discord/Revolt command business logic + bot UI i18n (/i18n)
 │   └── test-utils/          # CF Workers mocks (D1, KV, R2) and test factories (workspace-private, not published)
 ├── apps/                    # Applications
-│   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 17 registered slash commands — see src/commands/registry.ts)
+│   ├── discord-worker/        # Primary Discord bot (CF Worker + Hono, 18 registered slash commands — see src/commands/registry.ts)
 │   ├── image-worker/          # Photon pixel extraction, service-binding-only (CF Worker)
 │   ├── moderation-worker/     # Moderation bot for community presets (CF Worker)
 │   ├── presets-api/           # Community presets REST API (CF Worker + D1)
@@ -140,7 +140,7 @@ Workers communicate via Cloudflare **Service Bindings** (direct Worker-to-Worker
 ```
 discord-worker ──► presets-api
 discord-worker ──► image-worker        (POST /extract — palette pixels)
-discord-worker ──► api-worker          (UNIVERSALIS_PROXY binding — market prices for /budget)
+discord-worker ──► api-worker          (UNIVERSALIS_PROXY binding — market prices for /budget, .chara resolve for /glamour)
 moderation-worker ──► presets-api
 presets-api ──► discord-worker (notifications)
 presets-api ──► image-worker           (POST /thumbnail — preview images)

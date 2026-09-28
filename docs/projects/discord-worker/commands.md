@@ -10,11 +10,11 @@ The registration script asserts schema parity against it, `/about` builds its in
 registration schema, and `/about` in three different states. **If this document and the registry
 disagree, the registry is right.**
 
-**17 registrations, 16 distinct commands:**
+**18 registrations, 17 distinct commands:**
 
 | Category | Commands |
 |----------|----------|
-| Colour tools | `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch` |
+| Colour tools | `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`, `/glamour` |
 | Dye database | `/dye` |
 | Analysis | `/comparison`, `/contrast`, `/accessibility`, `/a11y`, `/budget` |
 | Community | `/preset` |
@@ -64,7 +64,7 @@ this worker's own `LOCAL_COMMAND_LIMITS` rather than by the shared preset.
 |----------|-------|
 | `/dye`, `/preferences` | 20 requests/min |
 | `/accessibility` (and its alias `/a11y`), `/budget`, `/preset` | 10 requests/min |
-| `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/extractor color` | 15 requests/min |
+| `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/glamour`, `/extractor color` | 15 requests/min |
 | `/extractor image` | 5 requests/min (the Photon path through image-worker) |
 | `/about`, `/manual`, `/changelog` | 30 requests/min |
 | `/stats` | 15 requests/min (the `default` tier) |
@@ -193,6 +193,23 @@ Match a character file's colors to the nearest dyes. 5.0 replaced the v4 `color`
 ```
 
 **Rate limit:** 15/min
+
+---
+
+### /glamour
+
+The Glamour Reader in the bot (5.7.0, design 2a). It takes the same `.chara` attachment as `/swatch` (the guards are shared: `utils/chara-attachment.ts`). bot-logic's `executeGlamour` names every worn piece through api-worker's `POST /v1/chara/resolve`, which it reaches over the `UNIVERSALIS_PROXY` service binding. Each piece is named as the twin the character can actually wear (core `defaultCharaTwin`), with the in-game verdict: TWIN when a same-look item was named because the file's own pick can't be worn that way, the problem (a race, DYES, NO GLAM, LOCKED) when nothing fixes it, OK otherwise. The card shows the dyed pieces in slot order, five at most. The embed carries every piece in the GPOSERS form, the twin and no-fix notes, and a `/manual topic:👤` pointer. The character's name appears nowhere.
+
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `file` | Attachment | Yes | `.chara` character file (1 MiB max) |
+
+**Example usage:**
+```
+/glamour file:[attach .chara]
+```
+
+**Rate limit:** 15/min. Every binding request shares one api-worker key, its `SERVICE_RATE_LIMITER` bucket (1300/min), so a `/glamour` spends one resolve call and draws no item icons; a 429 from it is answered as busy.
 
 ---
 

@@ -15,7 +15,7 @@
 
 import { LocalizationService } from '@xivdyetools/core';
 import type { ColorWheelId } from '@xivdyetools/core';
-import type { HarmonyTypeKey, VisionType } from '@xivdyetools/types';
+import type { HarmonyTypeKey, RaceKey, VisionType } from '@xivdyetools/types';
 export type { LocaleCode } from './i18n/index.js';
 import type { LocaleCode } from './i18n/index.js';
 
@@ -160,6 +160,24 @@ export function getLocalizedVisionType(key: VisionType, locale: LocaleCode = 'en
     const instance = localeInstances.get(locale);
     if (!instance) return key;
     return instance.getVisionShort(key);
+  } catch {
+    return key;
+  }
+}
+
+/**
+ * Get a localized race name from xivdyetools-core — the /glamour card names a
+ * one-race piece by its race (VIERA) when the file's character can't wear it.
+ *
+ * @param key - Core's race key (`viera`, `auRa`, …)
+ * @param locale - Locale code (defaults to 'en')
+ * @returns Localized race name, or the key when the locale is not loaded
+ */
+export function getLocalizedRace(key: RaceKey, locale: LocaleCode = 'en'): string {
+  try {
+    const instance = localeInstances.get(locale);
+    if (!instance) return key;
+    return instance.getRace(key);
   } catch {
     return key;
   }

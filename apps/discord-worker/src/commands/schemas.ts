@@ -901,6 +901,20 @@ export const commands = [
     ],
   },
 
+  // /glamour - The Glamour Reader: a character file's pieces, dyes and in-game check
+  {
+    name: 'glamour',
+    description: 'Read a character file as a glamour: every piece, its dyes, and whether it can be worn',
+    options: [
+      {
+        name: 'file',
+        description: '.chara character file (Anamnesis / Ktisis export)',
+        type: OptionType.ATTACHMENT,
+        required: true,
+      },
+    ],
+  },
+
   // =========================================================================
   // Comparison & Settings
   // =========================================================================

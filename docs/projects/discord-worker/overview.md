@@ -59,7 +59,7 @@ Unlike traditional Gateway bots:
 ```
 src/
 ├── commands/
-│   ├── registry.ts       # COMMAND_REGISTRY — the roster of record (17 registrations)
+│   ├── registry.ts       # COMMAND_REGISTRY — the roster of record (18 registrations)
 │   ├── schemas.ts        # Slash-command schemas published by register-commands
 │   └── localize.ts       # Localized command names/descriptions for the schemas
 ├── handlers/
@@ -69,6 +69,7 @@ src/
 │   │   ├── gradient.ts      # was mixer.ts in v3
 │   │   ├── mixer-v4.ts      # /mixer blending
 │   │   ├── swatch.ts        # /swatch .chara file
+│   │   ├── glamour.ts       # /glamour .chara file → the Glamour Reader card + GPOSERS list
 │   │   ├── budget.ts        # market board ledger
 │   │   ├── contrast.ts      # 5.0 NEW: WCAG contrast
 │   │   ├── changelog.ts     # 5.0 NEW: /changelog
@@ -103,7 +104,7 @@ Note: SVG generation, bot command logic, and i18n are now in shared packages:
 
 ## Available Commands
 
-The roster of record is `src/commands/registry.ts` — 17 registrations, 16 distinct commands.
+The roster of record is `src/commands/registry.ts` — 18 registrations, 17 distinct commands.
 
 ### Color Tools
 | Command | Description |
@@ -113,6 +114,7 @@ The roster of record is `src/commands/registry.ts` — 17 registrations, 16 dist
 | `/gradient` | Create color gradient between two colors |
 | `/mixer` | Blend two dyes (rgb/lab/oklab/ryb/hsl/spectral ratio sweep) |
 | `/swatch` | Match a `.chara` character file's colours to dyes |
+| `/glamour` | Read a `.chara` character file as a glamour: every piece, its dyes, and whether it can be worn |
 
 ### Dye Database
 | Command | Description |

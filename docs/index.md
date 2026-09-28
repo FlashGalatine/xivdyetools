@@ -64,7 +64,7 @@ live in one place, the [Version Matrix](versions.md).
    Applications
    ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
    │  web-app            │  │ discord-worker      │  │ stoat-worker        │
-   │ 10 tools, Light +   │  │ 17 slash commands   │  │ Revolt.js (parked)  │
+   │ 10 tools, Light +   │  │ 18 slash commands   │  │ Revolt.js (parked)  │
    │  Dark, Vite + Lit   │  │ HTTP Interactions   │  └─────────────────────┘
    └──────────┬──────────┘  └──────────┬──────────┘
               │                        │
@@ -147,7 +147,7 @@ their `README.md` in the monorepo.
 | Project | Type | Purpose |
 |---------|------|---------|
 | [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | Interactive web toolkit with 10 colour tools |
-| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | Discord bot, 17 registered slash commands |
+| [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | Discord bot, 18 registered slash commands |
 | [xivdyetools-image-worker](../apps/image-worker/README.md) | CF Worker | Photon host — `POST /extract` (pixels) + `POST /thumbnail` (WebP); reachable only via service bindings (discord-worker, presets-api) |
 | [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | Community preset moderation bot |
 | [xivdyetools-oauth](projects/oauth/overview.md) | CF Worker + D1 | Discord OAuth + JWT issuance |
