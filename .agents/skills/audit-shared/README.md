@@ -10,7 +10,7 @@ read at its Step 0, so a run loads only the slices it needs. `model-routing.md` 
 
 | File | Words | Read it when |
 |---|---|---|
-| `model-routing.md` | ~1,100 | **Before executing a skill** — `collector` / `worker` / `verifier` roles as capability tiers, mapped per runtime (Claude Code, Codex, any other agent), native tools, coordinator rules, when delegation helps, and what stays with the coordinator |
+| `model-routing.md` | ~1,500 | **Before executing a skill** — `collector` / `worker` / `verifier` roles as capability tiers with an effort level each, mapped per runtime (Claude Code role agents, Codex spawn arguments, any other agent), native tools, coordinator rules, when delegation helps, and what stays with the coordinator |
 | `conventions.md` | ~1,040 | Starting any audit — output folder, IDs, finding/report/README skeletons, evidence rules, fan-out contract (+ §7a, the audit short form of model routing), confirmation gate, planner hand-off |
 | `units.md` | ~430 | Tagging a finding's deploy unit / exposure class (17 units: filter names, kind, notes) |
 | `release-mechanics.md` | ~300 | Writing a sprint's "Ends with" line, deciding a version bump, the standing verification gate (planner, dead-code) |
@@ -35,6 +35,10 @@ repo-root `AGENTS.md` points non-Claude agents at the `CLAUDE.md` project contex
 `model-routing.md`. Skills travel with clones and worktrees, so a branch carries the skill
 versions that match its code — and a stale branch carries stale skills.
 
+The Claude Code agents that pin each role's model and effort (see `model-routing.md`) are tracked
+beside them in `xivdyetools/.claude/agents/`. Codex needs no agent files: its coordinator passes
+the model and effort on each spawn.
+
 - **Windows:** the symlink needs Developer Mode (or an elevated shell) plus `core.symlinks=true`.
   Without both, git checks it out as a one-line text file and Claude Code finds no skills —
   nothing else breaks. Repair: `git config core.symlinks true`, delete `.claude/skills`, then
@@ -44,7 +48,9 @@ versions that match its code — and a stale branch carries stale skills.
   Codex scans only upward from its working directory. `XIVProjects/.claude/skills` and
   `XIVProjects/.agents/skills` are therefore local directory junctions to
   `xivdyetools/.agents/skills` — untracked, recreate them if the workspace moves
-  (`mklink /J <link> <target>`).
+  (`mklink /J <link> <target>`). Claude Code looks for agents only in the launch folder and its
+  parents, never below it, so `XIVProjects/.claude/agents` is a third junction, to
+  `xivdyetools/.claude/agents`.
 - Invoke by name: `/<skill-name>` in Claude Code, `$<skill-name>` in Codex. Restart the client if
   a new skill does not appear.
 

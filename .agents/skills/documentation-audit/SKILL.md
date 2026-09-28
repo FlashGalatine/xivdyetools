@@ -27,9 +27,10 @@ applies its routing rules; this table gives the role for each step of this skill
 | `/manual` update: ja/de/fr/ko/zh drafts; gate runs; pre-commit review | `worker`; `collector`; `verifier` | See [manual-update.md](manual-update.md) |
 | Report, finding files, changelog prose, all git operations | coordinator | Never delegated |
 
-Every agent call passes its role's model **explicitly**, taken from the model-routing.md table. A
-narrowed run with one cluster may run inline, except where model-routing's coordinator rules
-require delegation (some coordinator models must delegate all three roles).
+Every agent call sets its role's model **and** effort from the model-routing.md table (in Claude
+Code, by using the role's agent). A narrowed run with one cluster may run inline, except where
+model-routing's coordinator rules require delegation (some coordinator models must delegate all
+three roles).
 
 ## Context and scope
 

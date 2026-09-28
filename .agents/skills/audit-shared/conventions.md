@@ -112,11 +112,12 @@ Dropped candidates go to *Rejected suspicions*. Subagent IDs (`cand-…`) never 
 
 ## 7a. Model routing
 
-Read [model-routing.md](model-routing.md) for Claude/Codex model selection, runtime tools,
-coordinator rules, the *Never delegate* list, and the verification prompt contract. The audit
-short form: a `collector` runs noisy command blocks, a `worker` reviews each unit, and a
-`verifier` confirms candidates at `file:line` and grades them. Select the model explicitly
-when the runtime supports it. Rejected candidates carry their reason into *Rejected suspicions*.
+Read [model-routing.md](model-routing.md) for Claude/Codex model and effort selection, runtime
+tools, coordinator rules, the *Never delegate* list, and the verification prompt contract. The
+audit short form: a `collector` runs noisy command blocks, a `worker` reviews each unit, and a
+`verifier` confirms candidates at `file:line` and grades them. Delegate to the role's agent, which
+pins its model and effort; without one, set both explicitly where the runtime allows. Rejected
+candidates carry their reason into *Rejected suspicions*.
 
 ## 8. Confirmation gate
 

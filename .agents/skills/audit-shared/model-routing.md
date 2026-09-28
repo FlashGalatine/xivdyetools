@@ -5,20 +5,33 @@ written for any coding agent that loads `SKILL.md` folders (Claude Code, Codex, 
 everything runtime-specific lives in this file. The skill's `collector`, `worker`, and
 `verifier` names describe tasks, not tool arguments or model names.
 
-| Role | Tier | Give it / return contract |
-|---|---|---|
-| `collector` | Smallest, cheapest model available | Fixed commands without verdicts: build/test/coverage logs, tracked-file inventories, locale/font sweeps, git/npm facts. Return exit status per command, counts, relevant `file:line` hits, and saved log paths; never the raw log. |
-| `worker` | Mid-tier general model | One bounded review or writing task: a deploy unit against a checklist, one test file, a failing test plus its source, a draft table. Return the requested schema, normally ≤ 40 lines; save longer evidence to its assigned file. |
-| `verifier` | Strongest reasoning model available | Judgment where a wrong answer changes what ships: confirm findings, Severity × Exposure, dead-code verdicts, test-versus-source regressions, published-package semver, sprint ordering, unfamiliar root causes. Return a verdict and the evidence that settles it. |
-
-Select the model for the active runtime. These are workflow assignments, not claims of model
-equivalence across vendors.
-
-| Role | Claude Code | Codex | Any other runtime |
+| Role | Tier | Effort | Give it / return contract |
 |---|---|---|---|
-| `collector` | `haiku` | `gpt-5.6-luna` | Its smallest model that runs shell commands reliably |
-| `worker` | `sonnet` | `gpt-5.6-terra` | Its default mid-tier model |
-| `verifier` | `opus` | `gpt-5.6-sol` | Its strongest model; inline if the coordinator already is one |
+| `collector` | Smallest, cheapest model available | Lowest: the work is mechanical | Fixed commands without verdicts: build/test/coverage logs, tracked-file inventories, locale/font sweeps, git/npm facts. Return exit status per command, counts, relevant `file:line` hits, and saved log paths; never the raw log. |
+| `worker` | Mid-tier general model | Balanced, usually `medium` | One bounded review or writing task: a deploy unit against a checklist, one test file, a failing test plus its source, a draft table. Return the requested schema, normally ≤ 40 lines; save longer evidence to its assigned file. |
+| `verifier` | Top-tier reasoning model | High: enough to settle a verdict, short of the maximum | Judgment where a wrong answer changes what ships: confirm findings, Severity × Exposure, dead-code verdicts, test-versus-source regressions, published-package semver, sprint ordering, unfamiliar root causes. Return a verdict and the evidence that settles it. |
+
+Every delegated role runs at a set model **and** effort, never at whatever effort the coordinator's
+session happens to use: Claude Code pins both in a project agent per role, and a Codex coordinator
+passes both on every spawn. These are workflow assignments, not claims of model equivalence across
+vendors, and an effort name does not mean the same amount of thinking on different models.
+
+| Role | Claude Code agent: model · effort | Codex spawn: `model` · `reasoning_effort` to pass | Any other runtime |
+|---|---|---|---|
+| `collector` | `xivdye-collector`: `claude-haiku-4-5` · none | `gpt-6-luna` · `low` | Its smallest model that runs shell commands reliably, at its lowest effort |
+| `worker` | `xivdye-worker`: `claude-sonnet-5-5` · `medium` | `gpt-6-sol` · `medium` | Its default mid-tier model at its balanced effort |
+| `verifier` | `xivdye-verifier`: `claude-opus-5-5` · `high` | `gpt-6-sol` · `xhigh` | A top-tier reasoning model at high effort; inline if the coordinator already is one at that effort |
+
+The Claude Code agents live in `xivdyetools/.claude/agents/<agent>.md`; change a level there and in
+this table together. They name exact model IDs because a level suits one model, and an alias can
+resolve to another (a standalone Claude Code CLI mapped `sonnet` to Sonnet 5). Why these levels
+(checked 2026-09-28): Haiku 4.5 has no effort control (Claude Code drops the field).
+Anthropic starts Sonnet 5.5 at `medium` for agentic coding and asks for at least `high` on
+intelligence-sensitive work; Opus 5.5 defaults to `medium`, and `xhigh` / `max` are for measured
+gains. OpenAI's model-selection guide pairs Luna at low with simple extraction, Sol at medium with
+everyday coding, and Sol at extra high with thorough verification and careful review; GPT-6 has no
+Terra, and Astra costs five times as much as Sol. Raise a role's level only after a run shows it
+missing things.
 
 ## Delegate when it helps
 
@@ -38,32 +51,43 @@ waves. Never assume the whole monorepo fits into one concurrent batch.
 
 ## Runtime tools and coordinator rules
 
-**Claude Code:** use `Agent` with `subagent_type: "general-purpose"` and an explicit `model`
-from the Claude column. Avoid `subagent_type: "fork"` when choosing a cheaper model: it inherits
-the session model. Send independent calls together where supported. On an Opus or Sonnet
-coordinator, verifier work may run inline. **Fable coordinates:** delegate collector work to
-Haiku, worker work to Sonnet even for one unit, and verifier work to Opus. Fable retains prompts,
-collation, coordinator edits, final writing, and the responsibilities below.
+**Claude Code:** use `Agent` with `subagent_type` set to the role's agent and no `model` argument.
+The Agent tool has no effort argument, so the agent file is the only per-role effort control; its
+`effort` beats the session's effort and `modelSettings`, and only a `CLAUDE_CODE_EFFORT_LEVEL`
+environment variable overrides it. Do not use `general-purpose` or `fork` for role work: they run
+at the session's effort (a fork also at its model). If a role agent is missing (a session opened
+above the repo root without the junction in `README.md` § *Discovery*), use `general-purpose` with
+the role's model alias (`haiku` / `sonnet` / `opus`) and report that it ran at the session's
+effort. Send independent calls together where supported. An Opus or Sonnet coordinator may do
+verifier work inline only while its session runs at `high` or above (current builds set
+`CLAUDE_EFFORT` in Bash's environment); otherwise, or when unsure, delegate it. **Fable
+coordinates:** delegate every role to its agent, worker work even for one unit. Fable retains
+prompts, collation, coordinator edits, final writing, and the responsibilities below.
 
 **Codex:** use the available native collaboration tool. In a runtime exposing
-`collaboration.spawn_agent`, pass `task_name`, a self-contained `message`, the Codex `model` ID,
-and `fork_turns: "none"` (or a short supported history slice when necessary). A full-history
-fork (`"all"`, including its default in this runtime) inherits the parent model and cannot
-accept a model override. Call collaboration tools directly, not inside `functions.exec`.
-If the exposed tool has a different schema, follow that schema rather than copying these
-arguments. Use the selected model's default reasoning effort; increase it only for difficult
-verification. Astra or Sol coordinators may do verifier work inline; Terra or Luna coordinators
-delegate it to Sol when available. Do not change the user's coordinator model.
+`collaboration.spawn_agent`, pass `task_name`, a self-contained `message`, `fork_turns: "none"` (or
+a short supported history slice when necessary), and the role's `model` **and** `reasoning_effort`
+from the Codex column — always both. The table lists values to pass, not model defaults: a `model`
+without `reasoning_effort` runs at the model's own default, whatever the parent or this table uses
+(a `gpt-6-sol` spawned alone ran at `medium`, not a verifier's `xhigh`). Where the tool offers no
+GPT-6 model, use the GPT-5.6 model it offers for the same tier at the same effort. A full-history
+fork (`"all"`, including its default in this runtime) inherits the parent's model and effort and
+cannot accept a model override. Call collaboration tools directly, not inside `functions.exec`. If
+the exposed tool has a different schema, follow that schema rather than copying these arguments.
+An Astra coordinator at `high` or above, or a Sol coordinator at `xhigh` or above, may do verifier
+work inline; any other coordinator delegates it. Do not change the user's coordinator model or
+effort.
 
-**Any other runtime:** use its native delegation mechanism and the tier column above. With no
-delegation at all, run every role inline in the order the skill gives, keep verbose command
+**Any other runtime:** use its native delegation mechanism and the tier and effort columns above.
+With no delegation at all, run every role inline in the order the skill gives, keep verbose command
 output in files rather than the conversation, and do the verifier pass as a separate, explicit
 re-read of each `file:line` before filing anything.
 
-If native delegation or the requested model is unavailable, do not invent a tool/model or
-launch a separate CLI to simulate it. Continue inline when capable, or use an available suitable
-model and disclose a material fallback. Mark unresolved verdicts as unverified. These instructions
-do not install models, enable features, or override runtime tool/permission restrictions.
+If native delegation, the requested model, or a way to set its effort is unavailable, do not
+invent a tool/model or launch a separate CLI to simulate it. Continue inline when capable, or use
+an available suitable model and disclose a material fallback. Mark unresolved verdicts as
+unverified. These instructions do not install models, enable features, or override runtime
+tool/permission restrictions.
 
 **Shared skills and shell:** `allowed-tools` frontmatter uses Claude Code's tool names because
 Claude Code enforces the field; a runtime that does not support it ignores it and uses its
@@ -100,7 +124,12 @@ each claim on what the file actually says, return `| id | CONFIRMED / REJECTED |
 and nothing else. Read-only, write no files." Include relevant exposure/release rules when
 the verdict depends on them. Carry rejection reasons forward (audits: *Rejected suspicions*).
 
-Routing checked 2026-09-06 against the available Codex tools and official
-[subagent guidance](https://learn.chatgpt.com/docs/agent-configuration/subagents) and
-[model catalog](https://developers.openai.com/api/docs/models). Use the current runtime's
-advertised model IDs if availability changes.
+Routing checked 2026-09-28 by running it: in Claude Code 2.1.284, each role agent's effort as seen
+inside the agent (`printenv CLAUDE_EFFORT`), launched from a `max` session; in the Codex desktop
+app's client (0.158), each spawned child's model and effort in its session record. Sources: the
+[Claude Code subagent docs](https://code.claude.com/docs/en/sub-agents), Anthropic's per-model
+effort guidance, and OpenAI's
+[subagent guidance](https://learn.chatgpt.com/docs/agent-configuration/subagents),
+[model selection](https://learn.chatgpt.com/docs/model-selection) and
+[model catalog](https://developers.openai.com/api/docs/models). If availability changes, use the
+runtime's advertised model IDs and effort levels, and update the agent files with this table.
