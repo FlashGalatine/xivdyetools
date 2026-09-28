@@ -39,38 +39,6 @@ describe('parseCharaFile', () => {
       expect(hair?.float).toEqual({ r: 191, g: 111, b: 105 });
     });
 
-    it('undoes the 0.643 the game multiplies into the limbal/tattoo float', () => {
-      // #F7F7F7 is stored as 0.643 × (247/255)²; the raw triple stays as stored
-      const stored = 0.643 * (247 / 255) ** 2;
-      const limbal = parseCharaFile(
-        JSON.stringify({
-          Tribe: 'Raen',
-          Gender: 'Feminine',
-          LimbalEyes: 0,
-          LimbalRingColor: `${stored}, ${stored}, ${stored}`,
-        }),
-      ).slots.find((s) => s.slot === 'limbal');
-      expect(limbal?.float).toEqual({ r: 247, g: 247, b: 247 });
-      expect(limbal?.floatLinear?.[0]).toBeCloseTo(stored, 8);
-    });
-
-    it('reads the zero the game stores for limbal entry 7 as absent, and only there', () => {
-      const limbal = (index: number) =>
-        parseCharaFile(
-          // A live skin float, so the block is not the never-read all-zero one
-          JSON.stringify({
-            Tribe: 'Raen',
-            Gender: 'Feminine',
-            LimbalEyes: index,
-            LimbalRingColor: '0, 0, 0',
-            SkinColor: '0.25, 0.25, 0.25',
-          }),
-        ).slots.find((s) => s.slot === 'limbal');
-      expect(limbal(7)?.float).toBeNull();
-      expect(limbal(7)?.index).toBe(7);
-      expect(limbal(3)?.float).toEqual({ r: 0, g: 0, b: 0 });
-    });
-
     it('FacePaint: 0 inerts FacePaintColor (only 0 is load-bearing)', () => {
       const facePaint = parsed.slots.find((s) => s.slot === 'facePaint');
       expect(facePaint?.index).toBe(55);

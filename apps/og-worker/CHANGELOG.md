@@ -5,6 +5,17 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.10.4] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0. The version bump is what retires cached Swatch Matcher cards —
+it rides every `/og/*` cache key.
+
+### Fixed
+
+- **Swatch Matcher cards drew lip, face-paint and some highlight cells in shader colors, and
+  tattoo cells from the eye palette.** Core's character sheets now come from the game's
+  `human.cmp` creator palette, so a shared card shows the swatch the player picked.
+
 ## [2.10.3] - 2026-09-20
 
 Follow-up to the 2026-09-19 i18n audit (`docs/audits/2026-09-19-i18n/`), from three maintainer

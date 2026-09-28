@@ -2,19 +2,26 @@
 
 ---
 
-## Web-App Version 5.12.7 — September 28, 2026
+## Web-App Version 5.12.8 — September 28, 2026
 
 ### Your character file stays when you change language
 - **Switching the app's language no longer throws away a loaded `.chara` file.** The Swatch Matcher used to go back to the empty drop zone, and you had to load the file again.
 - **Everything the file showed is redrawn in the new language** — your character's colors, the dyes on the glamour and the names of the gear.
 - **Tribe & Gender stay locked to the file, and the grid keeps its pins.** Leaving the tool or reloading the page still clears the file, as before.
 
-## Web-App Version 5.12.6 — September 28, 2026
+## Web-App Version 5.12.7 — September 28, 2026
 
 ### Tribe & Gender no longer stay locked
 - **Tribe & Gender unlock as soon as the character file is gone.** A `.chara` file loaded into the Swatch Matcher fills both settings in and locks them; the lock now ends with the file.
 - **Leaving the tool, switching language or reloading the page used to drop the file but keep the lock**, so both settings stayed grayed out until you loaded a file and pressed Swap.
 - **If yours are stuck right now, they unlock the next time the app loads.** Nothing else about your settings changes.
+
+## Web-App Version 5.12.6 — September 28, 2026
+
+### Swatch Matcher colors match the character creator
+- **Lip, face paint and some highlight colors now look the way they do in the creator.** They had been shown in slightly different shades, lips and face paint most of all. Every color now comes straight from the game's own palette file.
+- **The Tattoo / Limbal colors were the eye colors by mistake.** They're the real tattoo and limbal ring colors now.
+- **A skin or hair color you customized with a posing tool shows "OFF GRID" again**, and one picked straight from the creator never does.
 
 ## Web-App Version 5.12.5 — September 28, 2026
 

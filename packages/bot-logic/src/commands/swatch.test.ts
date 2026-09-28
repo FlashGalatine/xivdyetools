@@ -3,7 +3,7 @@
  * fixture corpus (real parse rules, real palette sheets, real dye matching).
  */
 import { describe, it, expect } from 'vitest';
-import { parseCharaFile } from '@xivdyetools/core';
+import { CharacterColorService, parseCharaFile, resolveCharaColors } from '@xivdyetools/core';
 import { executeSwatch, type SwatchInput } from './swatch.js';
 import {
   DUSKWIGHT_HETEROCHROMIA,
@@ -302,5 +302,25 @@ describe('executeSwatch', () => {
       // Only one live row total (the merged eye row).
       expect(result.svgString.match(/OFF GRID</g)?.length).toBe(1);
     });
+  });
+});
+
+describe('the lip line', () => {
+  it('names the color the blend was made from: the creator swatch for an unedited lip', async () => {
+    const text = fixture('duskwight-heterochromia.chara');
+    const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
+    const lip = resolved.slots.find((s) => s.slot === 'lip');
+    // The file stores the shader color, the sheet holds the creator's: they differ,
+    // and an unedited lip is judged on the index
+    expect(lip?.verdict).toBe('index');
+    expect(lip?.floatHex).not.toBe(lip?.indexHex);
+
+    const result = await executeSwatch({ fileText: text, locale: 'en' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.embed.description).toContain(
+      `raw ${lip?.indexHex}, blended ${lip?.blendHex}`
+    );
+    expect(result.embed.description).not.toContain(`raw ${lip?.floatHex}`);
   });
 });

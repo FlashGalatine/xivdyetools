@@ -22,9 +22,10 @@
  *   lands eye and highlight floats on their palette entry at ΔE 0.00, where
  *   the sRGB curve read every colour ~3 ΔE off. A block that is zero in every
  *   channel was never read and counts as absent (22 files).
- * - **The limbal/tattoo float carries a ×0.643** the game multiplies in;
- *   divided out, every corpus float lands within ΔE 3.5 of its palette entry.
- *   Entry 7 is stored as an exact zero, which is that entry, not black.
+ * - **A float is the SHADER color, not the creator's swatch**: `human.cmp`
+ *   keeps both, and they differ for skin, hair, lips, the limbal/tattoo
+ *   palette and some highlights. The parser only decodes; the resolver judges
+ *   a float against the shader half (`chara-shader-colors`).
  * - **Flags gate live-looking data**: `EnableHighlights: false` inerts the
  *   highlight index (54% of samples, 47 of those with a live-looking index);
  *   `FacePaint: 0` inerts `FacePaintColor` (only 0 is load-bearing — values
@@ -212,21 +213,6 @@ function squaredToSrgb255(c: number): number {
   return Math.round(Math.sqrt(clamp(c, 0, 1)) * 255);
 }
 
-/**
- * The game multiplies the limbal-ring / tattoo float by ~0.643 (1,039 bright
- * channels in the 2026-09-28 corpus: p10 0.6415, median 0.6426, p90 0.6485).
- * Dividing it back out lands every corpus file within ΔE 3.5 of its palette
- * entry, under the OFF GRID threshold, where the raw value put 565 past it.
- */
-const LIMBAL_FLOAT_SCALE = 0.643;
-
-/**
- * The one limbal/tattoo palette entry the game stores as an exact zero: 194
- * of 194 corpus files with a zero `LimbalRingColor` sit on it, and it never
- * carries anything else. That zero is the entry itself, not a black ring.
- */
-const LIMBAL_ZERO_ENTRY = 7;
-
 interface ParsedFloat {
   srgb: RGB;
   linear: [number, number, number];
@@ -235,12 +221,11 @@ interface ParsedFloat {
 
 /**
  * Parse an extended-appearance float string ("r, g, b" or "r, g, b, a",
- * each channel squared — see `squaredToSrgb255`). `scale` is a factor the
- * game multiplied in, divided out of the colour only (`linear` stays as
- * stored). Throws loudly on a malformed value — a wrong-but-plausible colour
- * is worse than a failure that names the field.
+ * each channel squared — see `squaredToSrgb255`). Throws loudly on a malformed
+ * value — a wrong-but-plausible colour is worse than a failure that names the
+ * field.
  */
-function parseFloatColor(field: string, value: unknown, scale = 1): ParsedFloat | null {
+function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== 'string') {
     throw new AppError(
@@ -259,11 +244,7 @@ function parseFloatColor(field: string, value: unknown, scale = 1): ParsedFloat 
   }
   const [r, g, b] = parts;
   return {
-    srgb: {
-      r: squaredToSrgb255(r / scale),
-      g: squaredToSrgb255(g / scale),
-      b: squaredToSrgb255(b / scale),
-    },
+    srgb: { r: squaredToSrgb255(r), g: squaredToSrgb255(g), b: squaredToSrgb255(b) },
     linear: [r, g, b],
     alpha: parts.length === 4 ? parts[3] : null,
   };
@@ -404,7 +385,7 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     skin: parseFloatColor('SkinColor', record['SkinColor']),
     leftEye: parseFloatColor('LeftEyeColor', record['LeftEyeColor']),
     rightEye: parseFloatColor('RightEyeColor', record['RightEyeColor']),
-    limbal: parseFloatColor('LimbalRingColor', record['LimbalRingColor'], LIMBAL_FLOAT_SCALE),
+    limbal: parseFloatColor('LimbalRingColor', record['LimbalRingColor']),
     hair: parseFloatColor('HairColor', record['HairColor']),
     highlight: parseFloatColor('HairHighlight', record['HairHighlight']),
     mouth: parseFloatColor('MouthColor', record['MouthColor']),
@@ -423,11 +404,7 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   const skinFloat = float(parsedFloats.skin);
   const leftEyeFloat = float(parsedFloats.leftEye);
   const rightEyeFloat = float(parsedFloats.rightEye);
-  const limbalIndex = readIndex(record, 'LimbalEyes');
-  const limbalFloat =
-    limbalIndex === LIMBAL_ZERO_ENTRY && parsedFloats.limbal?.linear.every((c) => c === 0)
-      ? null
-      : float(parsedFloats.limbal);
+  const limbalFloat = float(parsedFloats.limbal);
   const hairFloat = float(parsedFloats.hair);
   const highlightFloat = float(parsedFloats.highlight);
   const mouthFloat = float(parsedFloats.mouth);
@@ -461,7 +438,7 @@ export function parseCharaFile(text: string): ParsedCharaFile {
       ...(enableHighlights ? {} : { inertReason: 'highlightsDisabled' as const }),
     }),
     slot('skin', readIndex(record, 'Skintone'), skinFloat),
-    slot('limbal', limbalIndex, limbalFloat),
+    slot('limbal', readIndex(record, 'LimbalEyes'), limbalFloat),
     slot('lip', readIndex(record, 'LipsToneFurPattern'), mouthFloat, {
       // On Hrothgar the key is a fur-pattern enum, not a colour index.
       indexActive: !isHrothgar,

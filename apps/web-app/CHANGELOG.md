@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.12.7] - 2026-09-28
+## [5.12.8] - 2026-09-28
 
 Switching the app's language while a `.chara` file was loaded in the Swatch Matcher dropped the
 file: the drop zone came back, and the parsed character, DYES ON THIS GLAMOUR and its resolved
 equipment names were gone until the file was loaded again. The selected color, the matches and the
 reverse match all survived the same switch; only the file did not, because the tool's re-render
-rebuilt its importer. 5.12.6 made the loss consistent — the tribe/gender lock and the grid pins now
+rebuilt its importer. 5.12.7 made the loss consistent — the tribe/gender lock and the grid pins now
 go with the file — and this release keeps the file. Present since the 10A `.chara` reader shipped;
 not a regression.
 
@@ -27,23 +27,23 @@ not a regression.
   GLAMOUR with its equipment names, the Pieces/Dyes lens, the Make-a-palette drafts and the
   selected slot all stay — and with them the grid pins and the TRIBE & GENDER readout lock, since a
   remount reports nothing to the host. A file still reading, or an equipment lookup still in
-  flight, lands in the new containers; 5.12.6's late-load guard now only ever sees a real teardown
+  flight, lands in the new containers; 5.12.7's late-load guard now only ever sees a real teardown
   (leaving the tool).
 
 ### Tests
 
-- Red before the fix: `swatch-tool.test.ts` › *a loaded .chara file* (5.12.6's language-switch
+- Red before the fix: `swatch-tool.test.ts` › *a loaded .chara file* (5.12.7's language-switch
   case asserted the drop; it now asserts the file, the lock and the pins survive, redrawn in the
   new language), two `chara-import-lifecycle.test.ts` cases for `remount()` (drawn again in the new
   containers in Japanese with its resolved item name, nothing left behind, nothing reported; an
   equipment lookup in flight lands in the new block) and `e2e/swatch-readout-lock.spec.ts` › *a
   language switch keeps the file and the lock*, driven through the header's language picker. A
   third `remount()` case — a file still loading lands in the new containers — covers the
-  interaction with 5.12.6's late-load guard; it fails against a `remount()` that tears down.
+  interaction with 5.12.7's late-load guard; it fails against a `remount()` that tears down.
 - The spec's TRIBE & GENDER locator finds the group by its gender option rather than its heading,
   which a language switch translates.
 
-## [5.12.6] - 2026-09-28
+## [5.12.7] - 2026-09-28
 
 Swatch Matcher's TRIBE & GENDER selectors stayed disabled after the `.chara` file was gone. A
 loaded file turns them into a readout (`SwatchConfig.fileProvided`), and only the file card's SWAP
@@ -75,6 +75,22 @@ away. Present since the readout lock shipped with the 10A `.chara` reader — no
   teardown or a language switch), five `config-controller.test.ts` cases (save, load, both cross-tab
   reloads, import) and `e2e/swatch-readout-lock.spec.ts` (leave the tool and return; reload; a
   lock an earlier build left in storage).
+
+## [5.12.6] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0. No web-app source changed — the color sheets are regenerated in
+core from the game's own `human.cmp`.
+
+### Fixed
+
+- **Swatch Matcher showed lip, face-paint and some highlight swatches in colors the character
+  creator doesn't use.** Those sheets held the game's shader colors, not the creator's; lips and
+  face paint differ in 95 of 96 swatches. Every sheet now matches the creator, which the game
+  file and the creator's own RGB readouts confirm.
+- **The Tattoo / Limbal sheet was a copy of the eye colors.** It now holds the game's own
+  facial-feature palette.
+- **A custom skin or hair color is OFF GRID again**, and one straight from the creator never is:
+  each color is now checked against the value the game stores for it.
 
 ## [5.12.5] - 2026-09-28
 
