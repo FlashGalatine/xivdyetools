@@ -1028,9 +1028,14 @@ export class V4LayoutShell extends BaseLitComponent {
             : nothing
         }
 
-        <!-- Mobile Options Overlay (tap outside to close the Options panel) -->
+        <!-- Mobile Options Overlay (tap outside to close the Options panel).
+             Gated on the tool having a panel, like the palette's below: a
+             route change that is not the app bar's tool-select (Back, a
+             cross-link) leaves optionsCollapsed as it was. -->
         <div
-          class="v4-drawer-overlay ${!this.optionsCollapsed && this.isMobile ? 'visible' : ''}"
+          class="v4-drawer-overlay ${
+            !this.optionsCollapsed && this.isMobile && this.shouldShowOptions ? 'visible' : ''
+          }"
           @click=${this.handleOptionsOverlayClick}
           role="button"
           tabindex="-1"

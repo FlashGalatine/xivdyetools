@@ -18,7 +18,9 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   glamour: every piece, its dyes, and whether the game lets it be worn. No sidebar; it shares the
   file with the Swatch Matcher (`CharaSessionService`) — each file card links to the other tool,
   and SWAP clears the file for both. On a phone the card's buttons wrap under the name as one
-  group, so the name keeps at least 140 px.
+  group, so the name keeps at least 140 px. The phone's Options scrim is drawn only for a tool
+  that has an Options panel, so pressing Back into the reader with the Swatch Matcher's Options
+  open no longer leaves a dimmed screen with no panel on it.
 - **IN THE GAME comes first.** The verdict tops the reader: a headline built from the counts ("1
   piece named from a twin and 1 piece this character can't wear") and FIXED BY A TWIN / NO FIX /
   FINE AS IS / NEEDS A GRAND COMPANY chips, one outcome per piece, so the chips add up to the
