@@ -1241,13 +1241,15 @@ export class GlamourBlock {
         tile.dataset.slot = slot;
         if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
         const slotLabel = this.gearSlotLabel(slot).toUpperCase();
-        tile.title = item ? `${slotLabel} — ${itemNameFor(item.names, lang)}` : slotLabel;
         // This lens names the dye, not the piece, so the carrier tile is the
         // only handle on the item — it opens the same menu the Pieces lens does.
+        // Title and menu both name the twin the list names (the menu's
+        // target), never the family's lowest row, so the links open the item
+        // the tile says.
         const carrierTarget = this.itemLinkTarget(slot);
-        if (carrierTarget && item) {
-          this.attachItemLinks(tile, carrierTarget, itemNameFor(item.names, lang));
-        }
+        const carrierName = carrierTarget ? itemNameFor(carrierTarget.names, lang) : null;
+        tile.title = carrierName ? `${slotLabel} — ${carrierName}` : slotLabel;
+        if (carrierTarget && carrierName) this.attachItemLinks(tile, carrierTarget, carrierName);
         right.appendChild(tile);
       }
       right.appendChild(

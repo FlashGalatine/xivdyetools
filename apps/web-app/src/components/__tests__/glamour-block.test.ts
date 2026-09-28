@@ -1290,6 +1290,40 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     expect(part(glamour, 'OffHand', 'item-name')).toBe('Curtana Zenith Replica');
   });
 
+  it('the Dyes lens names the twin the list names, on the carrier and on the menu it opens', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+    // The lowest row (#372) is the Dated coif; the list names Hempen Coif (#2629)
+    expect(part(glamour, 'HeadGear', 'item-name')).toBe('Hempen Coif');
+
+    block(glamour).querySelector<HTMLElement>('[data-glamour-view="dyes"]')!.click();
+    const carrier = block(glamour).querySelector<HTMLElement>(
+      '[data-role="carrier"][data-slot="HeadGear"]'
+    )!;
+    expect(carrier.title).toContain('Hempen Coif');
+    expect(carrier.title).not.toContain('Dated');
+    expect(carrier.getAttribute('aria-label')).not.toContain('Dated');
+
+    carrier.click();
+    const menu = () => document.querySelector<HTMLElement>('[data-role="item-links-menu"]');
+    await vi.waitFor(() => expect(menu()).not.toBeNull());
+    expect(menu()!.firstElementChild!.textContent).toBe('Hempen Coif');
+    menu()!.querySelector<HTMLElement>('[data-link="garlandTools"]')!.click();
+    expect(open).toHaveBeenCalledWith(
+      'https://www.garlandtools.org/db/#item/2629',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    open.mockRestore();
+  });
+
   it('writes the twin it names into Copy list and Export .md', async () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },

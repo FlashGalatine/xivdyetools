@@ -32,6 +32,8 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   opens a picker (popover on desktop, bottom sheet on a phone) listing each twin's facts. A pick
   lives with the loaded file: it survives leaving the reader and coming back, and a new file
   starts clean. A piece the verdict flags gets a row even when it's undyed and Show all is off.
+  In the Dyes lens a carrier icon's tooltip and its Open in… menu name that same twin, so the
+  menu's title and its links are one item.
 - **The export sheet.** Copy list and Export .md open an editable preview of the GPOSERS list with
   each piece's `Acquisition:` line filled from api-worker (≥ 0.15.0) for the twin it names. Edits
   are kept on this device, keyed by a hash of the gear (slot, the family's row, the stains) —
