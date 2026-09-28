@@ -31,6 +31,16 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.1] - 2026-09-28
+### 📜 Privacy Policy and Terms of Service updated
+- Web app and Discord bot: the Privacy Policy and Terms of Service now cover the Glamour Reader and the `/glamour` command. They were written before both arrived.
+- Nothing about how your data is handled has changed. The documents now describe what the tools already did.
+- To name your gear, the tools send only the equipment model numbers and the facewear id from your character file. Those numbers are looked up in XIVAPI, a community game-data service.
+- Your character file itself is never uploaded by the web app, and the Discord bot reads it in memory and discards it. Your character's name is never sent or stored.
+- Web app: Acquisition lines you rewrite in the Glamour Reader are saved on your own device. "Reset all" in the Glamour list deletes them.
+- Discord bot: the Terms of Service now list the newer commands, including `/swatch` and `/glamour`.
+- Both documents are updated in all six languages. In the web app, find them under About.
+
 ## [5.10.0] - 2026-09-27
 ### 👗 New in the web app: the Glamour Reader
 - Web app: drop in a character file and read it as a glamour: every piece, its dyes, and whether the game lets you wear it that way. It's the tenth tool (press 0).
