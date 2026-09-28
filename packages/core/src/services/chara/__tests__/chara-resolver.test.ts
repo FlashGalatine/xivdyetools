@@ -4,6 +4,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseCharaFile } from '../chara-parser.js';
 import { resolveCharaColors, OFF_GRID_DELTA_E2000 } from '../chara-resolver.js';
+import { charaShaderHex } from '../chara-shader-colors.js';
 import { CharacterColorService } from '../../CharacterColorService.js';
 import { DyeService } from '../../DyeService.js';
 import dyeData from '../../../data/dyes.json' with { type: 'json' };
@@ -162,46 +163,54 @@ describe('resolveCharaColors', () => {
     expect(left?.deltaE).toBe(0);
   });
 
-  describe('floats the game stores as shading, not as the swatch', () => {
-    const squared = (rgb: { r: number; g: number; b: number }): string =>
-      [rgb.r, rgb.g, rgb.b].map((c) => ((c / 255) ** 2).toFixed(8)).join(', ');
+  describe('a float is judged against the color the game stores, not the swatch', () => {
+    // As a .chara stores it: the shader color, each channel squared
+    const squared = (hex: string): string =>
+      [1, 3, 5].map((i) => ((parseInt(hex.slice(i, i + 2), 16) / 255) ** 2).toFixed(8)).join(', ');
+    const stored = async (
+      palette: 'skin' | 'hair' | 'features' | 'lipsDark',
+      index: number
+    ): Promise<string> => (await charaShaderHex(palette, index, 'Wildwood', 'Female'))!;
+    const judge = async (extra: Record<string, unknown>) =>
+      (
+        await resolveCharaColors(
+          parseCharaFile(minimal({ IsExtendedAppearanceValid: true, ...extra })),
+          characterColors
+        )
+      ).slots;
 
-    it('never judges a live skin or hair float against its swatch — the index stands', async () => {
-      // Raen ♀ hair 42 is #FFDC98 in the creator and in the sheet; files store #E5D2AC
-      const resolved = await resolveCharaColors(
-        parseCharaFile(
-          minimal({
-            Skintone: 3,
-            HairTone: 42,
-            SkinColor: '0.9, 0.9, 1',
-            HairColor: '0, 0, 1',
-            IsExtendedAppearanceValid: true,
-          })
-        ),
-        characterColors
-      );
+    it('an unedited skin or hair float agrees with its stored color, though not with the swatch', async () => {
+      const slots = await judge({
+        Skintone: 3,
+        HairTone: 42,
+        SkinColor: squared(await stored('skin', 3)),
+        HairColor: squared(await stored('hair', 42)),
+      });
       for (const id of ['skin', 'hair'] as const) {
-        const slot = resolved.slots.find((s) => s.slot === id);
+        const slot = slots.find((s) => s.slot === id);
         expect(slot?.verdict, id).toBe('index');
-        expect(slot?.deltaE, id).toBeNull();
-        expect(slot?.floatHex, id).toBeTruthy();
-        expect(slot?.indexWinNote, id).toBeUndefined();
+        expect(slot?.deltaE, id).toBe(0);
+        expect(slot?.floatHex, id).not.toBe(slot?.indexHex);
       }
     });
 
+    it('a custom skin or hair color is OFF GRID again', async () => {
+      const slots = await judge({
+        Skintone: 3,
+        HairTone: 42,
+        SkinColor: '0, 0, 1',
+        HairColor: '0, 1, 0',
+      });
+      expect(slots.find((s) => s.slot === 'skin')?.verdict).toBe('offGrid');
+      expect(slots.find((s) => s.slot === 'hair')?.verdict).toBe('offGrid');
+    });
+
     it('judges a light-palette lip against the dark entry the game stores for it', async () => {
-      const dark = characterColors.getLipColorsDark()[10];
-      const resolved = await resolveCharaColors(
-        parseCharaFile(
-          minimal({
-            LipsToneFurPattern: 138,
-            MouthColor: `${squared(dark.rgb)}, 0.8`,
-            IsExtendedAppearanceValid: true,
-          })
-        ),
-        characterColors
-      );
-      const lip = resolved.slots.find((s) => s.slot === 'lip');
+      const slots = await judge({
+        LipsToneFurPattern: 138,
+        MouthColor: `${squared(await stored('lipsDark', 10))}, 0.8`,
+      });
+      const lip = slots.find((s) => s.slot === 'lip');
       expect(lip?.sheetVariant).toBe('light');
       expect(lip?.indexHex).toBe(characterColors.getLipColorsLight()[10].hex);
       expect(lip?.verdict).toBe('index');
@@ -209,17 +218,28 @@ describe('resolveCharaColors', () => {
     });
 
     it('still calls a custom light-palette lip OFF GRID', async () => {
-      const resolved = await resolveCharaColors(
-        parseCharaFile(
-          minimal({
-            LipsToneFurPattern: 138,
-            MouthColor: '0, 0, 1, 0.8',
-            IsExtendedAppearanceValid: true,
-          })
-        ),
-        characterColors
+      const slots = await judge({ LipsToneFurPattern: 138, MouthColor: '0, 0, 1, 0.8' });
+      expect(slots.find((s) => s.slot === 'lip')?.verdict).toBe('offGrid');
+    });
+
+    it('judges the limbal ring against the stored feature color — entry 7 stores black', async () => {
+      const live = { SkinColor: '0.25, 0.25, 0.25' }; // so the block is not the never-read one
+      const at42 = (
+        await judge({
+          ...live,
+          LimbalEyes: 42,
+          LimbalRingColor: squared(await stored('features', 42)),
+        })
+      ).find((s) => s.slot === 'limbal');
+      expect([at42?.verdict, at42?.deltaE]).toEqual(['index', 0]);
+      const at7 = (await judge({ ...live, LimbalEyes: 7, LimbalRingColor: '0, 0, 0' })).find(
+        (s) => s.slot === 'limbal'
       );
-      expect(resolved.slots.find((s) => s.slot === 'lip')?.verdict).toBe('offGrid');
+      expect([at7?.verdict, at7?.deltaE]).toEqual(['index', 0]);
+      const custom = (await judge({ ...live, LimbalEyes: 42, LimbalRingColor: '0, 0, 1' })).find(
+        (s) => s.slot === 'limbal'
+      );
+      expect(custom?.verdict).toBe('offGrid');
     });
   });
 

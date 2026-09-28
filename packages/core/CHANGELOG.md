@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-09-28
+
+**The character color sheets now come straight from the game's `human.cmp`, both halves.** MINOR:
+four shared sheets return different colors and the resolver returns different verdicts. The game
+file keeps every palette twice — the **interface** colors the character creator shows, and the
+**shader** colors the game renders from, which a `.chara` float stores. Our sheets had mixed the
+two. See `docs/research/2026-09-28-chara-corpus-profile/` → *Both halves*.
+
+### Added
+
+- **`scripts/build-character-colors.ts`** (`pnpm run build:character-colors -- <human.cmp>`)
+  regenerates everything in `src/data/character_colors/` from the game file, which is not
+  vendored. The sheets `CharacterColorService` serves are the interface half; the new `shader/`
+  files are the shader half and are read only by the `.chara` resolver.
+
+### Changed
+
+- **Lip, face-paint, highlight and tattoo sheets show the creator's colors.** Lips and face paint
+  had held the shader half (95 of 96 entries differ; dark palette median ΔE 24), highlights too
+  (40 of 192 differ — highlight 42 is RGB 225,186,112 in the creator), and the tattoo / limbal
+  sheet was a copy of the **eye** palette (183 of 192 differ). Eye, hair and skin sheets are
+  byte-identical.
+- **The resolver judges every live float against the stored color of its entry.** This is exact
+  for every unedited float in the 1,142-file corpus, so skin and hair floats are judged again
+  (5.6.0 had to skip them), and the parser's ×0.643 limbal scale and entry-7 zero rule are gone —
+  the shader feature palette is the real thing. OFF GRID in live-float files is now exactly the
+  real custom colors.
+- **The shader tables load on first use, and a failed load is tried again.** The two `shader/`
+  files are dynamic imports, so the web app fetches them as a lazy chunk. A load that fails is
+  forgotten rather than cached, so one dropped request does not fail every later `.chara` in the
+  session (the BUG-013 rule `CharacterColorService` already follows).
+
 ## [5.6.0] - 2026-09-28
 
 **What 1,142 real `.chara` files taught the parser.** MINOR, not a patch: `parseCharaFile`
