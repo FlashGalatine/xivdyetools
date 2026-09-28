@@ -3,7 +3,7 @@
  * fixture corpus (real parse rules, real palette sheets, real dye matching).
  */
 import { describe, it, expect } from 'vitest';
-import { parseCharaFile } from '@xivdyetools/core';
+import { CharacterColorService, parseCharaFile, resolveCharaColors } from '@xivdyetools/core';
 import { executeSwatch, type SwatchInput } from './swatch.js';
 import {
   DUSKWIGHT_HETEROCHROMIA,
@@ -32,12 +32,13 @@ const WITH_NICKNAME = JSON.stringify({
 });
 
 /**
- * Minimal heterochromia file, both eyes pushed OFF GRID: `REyeColor: 42`
- * (left eye, index hex `#DCBA6C` — a golden tan) and `LEyeColor: 169` (right
- * eye, index hex `#87C0A3` — a sage green), each paired with an extended
- * float (`LeftEyeColor`/`RightEyeColor`, crossed per the parser's own rule)
- * set to a saturated primary nowhere near its index colour — pure blue and
- * pure red respectively — to push ΔE2000 far past `OFF_GRID_DELTA_E2000` (6).
+ * Minimal heterochromia file, both eyes pushed OFF GRID: `LEyeColor: 169`
+ * (left eye, index hex `#87C0A3` — a sage green) and `REyeColor: 42` (right
+ * eye, index hex `#DCBA6C` — a golden tan), each paired by name with an
+ * extended float (`LeftEyeColor`/`RightEyeColor`) set to a saturated primary
+ * nowhere near either index colour — pure blue and pure red — so neither
+ * lands on an eye, nothing is un-crossed, and ΔE2000 goes far past
+ * `OFF_GRID_DELTA_E2000` (6).
  * Every other colour key is omitted, so hair/skin/lip/etc. all resolve inert
  * and the only two live rows are the eyes (BUG-006).
  */
@@ -301,5 +302,25 @@ describe('executeSwatch', () => {
       // Only one live row total (the merged eye row).
       expect(result.svgString.match(/OFF GRID</g)?.length).toBe(1);
     });
+  });
+});
+
+describe('the lip line', () => {
+  it('names the color the blend was made from: the creator swatch for an unedited lip', async () => {
+    const text = fixture('duskwight-heterochromia.chara');
+    const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
+    const lip = resolved.slots.find((s) => s.slot === 'lip');
+    // The file stores the shader color, the sheet holds the creator's: they differ,
+    // and an unedited lip is judged on the index
+    expect(lip?.verdict).toBe('index');
+    expect(lip?.floatHex).not.toBe(lip?.indexHex);
+
+    const result = await executeSwatch({ fileText: text, locale: 'en' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.embed.description).toContain(
+      `raw ${lip?.indexHex}, blended ${lip?.blendHex}`
+    );
+    expect(result.embed.description).not.toContain(`raw ${lip?.floatHex}`);
   });
 });

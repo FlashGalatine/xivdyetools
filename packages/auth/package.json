@@ -54,9 +54,9 @@
     "discord-interactions": "^4.4.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260918.1",
-    "@vitest/coverage-v8": "^5.0.1",
-    "vitest": "^5.0.1"
+    "@cloudflare/workers-types": "^5.20260925.1",
+    "@vitest/coverage-v8": "^5.0.2",
+    "vitest": "^5.0.2"
   },
   "peerDependencies": {
     "@cloudflare/workers-types": "^4.0.0"

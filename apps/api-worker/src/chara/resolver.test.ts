@@ -2,7 +2,7 @@
  * The resolution rules from docs/research/chara-equipment-resolution §5/§8.2,
  * pinned as tests. Row fixtures mirror real XIVAPI answers (2026-08-19 probe).
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   indexRows,
   lookupsFor,
@@ -12,6 +12,12 @@ import {
 } from './resolver';
 import type { ItemRow } from './types';
 import { lookupKey } from './types';
+
+const TROPHY_LINE = "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)";
+vi.mock('./acquisition.js', () => ({
+  acquisitionFor: (itemId: number) =>
+    itemId === 47252 ? "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)" : undefined,
+}));
 
 const row = (
   rowId: number,
@@ -73,6 +79,18 @@ describe('indexRows', () => {
 describe('pickItem', () => {
   it('returns null for no rows — "no item row", never an error', () => {
     expect(pickItem([])).toBeNull();
+  });
+
+  it("adds the named item's acquisition line and omits the field when there is none", () => {
+    expect(pickItem([row(47252, 'Trophy Legs', '1', ['Legs'])])?.acquisition).toBe(TROPHY_LINE);
+    expect(pickItem([row(5, 'Plain Legs', '1', ['Legs'])])).not.toHaveProperty('acquisition');
+  });
+
+  it("gives each twin its own line, never a sibling's", () => {
+    const item = pickItem([row(47252, 'Trophy Legs', '1', ['Legs']), row(5, 'Plain Legs', '1', ['Legs'])]);
+    expect(item?.itemId).toBe(5);
+    expect(item).not.toHaveProperty('acquisition');
+    expect(item?.alternates[0]).toEqual({ itemId: 47252, names: expect.any(Object), acquisition: TROPHY_LINE });
   });
 
   it('names the family by its lowest row_id and carries the rest as alternates', () => {

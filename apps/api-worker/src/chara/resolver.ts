@@ -34,6 +34,7 @@ import type {
 } from './types.js';
 import { lookupKey } from './types.js';
 import { regionalNames } from './regional-names.js';
+import { acquisitionFor } from './acquisition.js';
 
 /** Alternates carried per row — the badge says `+N`; the tooltip lists these. */
 export const MAX_ALTERNATES = 8;
@@ -74,12 +75,20 @@ function withRegional(rowId: number, names: ItemRow['names']): ItemNames {
   return { ...names, ...regionalNames(rowId) };
 }
 
+/** The build-time acquisition line as an optional field: absent, never empty. */
+function withAcquisition(rowId: number): { acquisition?: string } {
+  const acquisition = acquisitionFor(rowId);
+  return acquisition ? { acquisition } : {};
+}
+
 /**
  * Lowest row_id names the item; the rest are alternates, row_id ascending.
  * The in-game rules cover the WHOLE family, so the capped alternates name the
  * lowest row of every rule set first and fill the rest in row order: a twin
  * that passes the check is always one the reader can name, however many
- * Dated rows sort ahead of it.
+ * Dated rows sort ahead of it. Each carries its own acquisition line: the
+ * Glamour Reader lets the player name any twin, and the line must match the
+ * name it sits under.
  */
 export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
   if (rows.length === 0) return null;
@@ -101,9 +110,14 @@ export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
     familySize: sorted.length,
     alternates: sorted
       .filter((r) => chosen.has(r.rowId))
-      .map((r) => ({ itemId: r.rowId, names: withRegional(r.rowId, r.names) })),
+      .map((r) => ({
+        itemId: r.rowId,
+        names: withRegional(r.rowId, r.names),
+        ...withAcquisition(r.rowId),
+      })),
     viaMainHand: false,
     rules,
+    ...withAcquisition(primary.rowId),
   };
 }
 

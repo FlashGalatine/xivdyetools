@@ -5,7 +5,7 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.11.0] - 2026-09-27
+## [2.11.0] - 2026-09-28
 
 The Glamour Reader, the web app's tenth tool, gets its card (Claude Design, *OG Default Cards*
 turn 4). Card output changed, so the version moves: it rides every `/og/*` cache key and is the
@@ -37,6 +37,17 @@ only thing that retires cards already rendered at the edge.
   "klare S". The one-liner now breaks by measured width (at spaces, or at any character in CJK),
   up to three lines with an ellipsis after that, and the deck grows a line for each line it adds,
   as the design sets it. A one-liner that fits keeps the 54 px deck.
+
+## [2.10.4] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0. The version bump is what retires cached Swatch Matcher cards —
+it rides every `/og/*` cache key.
+
+### Fixed
+
+- **Swatch Matcher cards drew lip, face-paint and some highlight cells in shader colors, and
+  tattoo cells from the eye palette.** Core's character sheets now come from the game's
+  `human.cmp` creator palette, so a shared card shows the swatch the player picked.
 
 ## [2.10.3] - 2026-09-20
 

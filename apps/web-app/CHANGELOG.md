@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.13.0] - 2026-09-27
+## [5.13.0] - 2026-09-28
 
 The Glamour Reader, the tenth tool (design: the Claude Design project's *Glamour Reader
 Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader-design.md`).
@@ -73,7 +73,16 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
 
 - The prototype's job line and `swatch.gameCheck.*` strings (replaced by `glamour.*`).
 
-## [5.12.5] - 2026-09-27
+### Bundle budget
+
+- **Two limits move for measured growth, not headroom** (`scripts/check-bundle-size.js`). The core
+  runtime chunk goes from 280 KB to 284 KB: it measures 281.43 KB (277.79 KB on 5.12.7) with the
+  Glamour Reader's rules from core and ModalService's self-drawn modals. The one-locale JS payload
+  goes from 2200 KB to 2250 KB: 5.12.7 sat at 98.5%, and the reader's three on-demand chunks put
+  it 649 B over. Splitting core's `.chara` code into its own chunk was tried and reverted, since
+  the index imports it statically and it would load on every visit anyway.
+
+## [5.12.7] - 2026-09-28
 
 The Swatch Matcher's loaded `.chara` file moves out of the component that drew it and into a
 session-only store, and `chara-import.ts` splits along what each part shows.
@@ -96,6 +105,16 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   slow earlier file could replace the one picked last. `loadCharaFile` now numbers its loads, only
   the newest publishes, and a replaced load's failure is not toasted. The old component had the
   same race.
+- **The tribe/gender lock could hold a tribe that was not the file's.** Only
+  `SwatchTool.onCharaSession` wrote the file's tribe and gender into the config, and only when a
+  file loaded while the tool was open. A settings reset or import, another tab's save, or a file
+  that finished loading after the player left the tool left the selectors locked on another tribe,
+  with that tribe's hair and skin sheets under the file's pins. `ConfigController` now follows the
+  session itself and pins `swatch.race`/`gender` to `CharaSessionService.getTribeAndGender()` in
+  `setConfig`, `resetConfig` and `loadFromStorage` (in memory only there, so two tabs holding
+  different files cannot bounce a save between them); `SwatchTool` opens on a loaded file's tribe.
+- **A picked slot's label stayed in the old language after a language switch.** The selection card
+  kept the label translated at pick time; it now rebuilds it from the slot key each time it draws.
 
 ### Changed
 
@@ -107,9 +126,10 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   `glamour-block.ts` is DYES ON THIS GLAMOUR, and `chara-ui.ts` holds the helpers all three share.
   Each subscribes to the session, so a re-render rebuilds them around the same file.
 - **DYES ON THIS GLAMOUR is its own chunk**, imported the first time a loaded file wears anything.
-  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 69.03 KB (72.7%);
-  `glamour-block` is 25.28 KB under a new 35 KB limit. The layout shell grows 0.57 KB for the
-  session store and the sidebar's subscription, to 216.16 of 218 KB.
+  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 69.18 KB (72.8%);
+  `glamour-block` is 25.24 KB under a new 35 KB limit. The session store sits in the main entry
+  (106.19 → 107.08 of 150 KB with the tribe/gender pin), since `ConfigController` imports it; the
+  layout shell grows 0.26 KB for the sidebar's subscription, to 215.85 of 218 KB.
 - The glamour block's item names, dropped chips and palette draft now reset only when a new file
   loads. A language switch moves the block into the redrawn panel (`GlamourBlock.moveTo`) instead
   of rebuilding it, and picking a THIS CHARACTER card no longer redraws it. A picked slot keeps its
@@ -125,6 +145,47 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   Swatch suite covers the file surviving a re-mount and a re-render (the glamour block's palette
   draft included), tribe/gender, merged pins and the on-demand glamour chunk; the sidebar suite
   covers the lock.
+- `config-controller.test.ts` keeps a loaded file's tribe and gender through a file load, a
+  reset, an import and another tab's save (without writing it back); the Swatch suite opens on a
+  file loaded while the tool was closed and names a picked slot in the new language after a
+  switch. Each of those fails before the fix.
+
+## [5.12.6] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0. No web-app source changed — the color sheets are regenerated in
+core from the game's own `human.cmp`.
+
+### Fixed
+
+- **Swatch Matcher showed lip, face-paint and some highlight swatches in colors the character
+  creator doesn't use.** Those sheets held the game's shader colors, not the creator's; lips and
+  face paint differ in 95 of 96 swatches. Every sheet now matches the creator, which the game
+  file and the creator's own RGB readouts confirm.
+- **The Tattoo / Limbal sheet was a copy of the eye colors.** It now holds the game's own
+  facial-feature palette.
+- **A custom skin or hair color is OFF GRID again**, and one straight from the creator never is:
+  each color is now checked against the value the game stores for it.
+
+## [5.12.5] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.6.0. No web-app source changed — every fix lands in core's `.chara`
+parser and resolver and arrives through `workspace:*`.
+
+### Fixed
+
+- **Swatch Matcher showed a heterochromia character's eyes on the wrong sides.** Core read
+  `REyeColor` as the left eye; 153 of 157 heterochromia files in a 1,142-file corpus pair it with
+  `RightEyeColor`. Where a file's colors are live, each eye was also judged against the other's
+  color, so both showed OFF GRID.
+- **False OFF GRID on every color row** in files whose colors are live. The extended colors
+  were decoded with the wrong curve, the limbal one carries a factor the game multiplies in, and
+  skin, hair and light-palette lips store a shading value rather than the creator's swatch
+  (checked in the character creator). A genuinely custom color is still OFF GRID.
+- **DYES ON THIS GLAMOUR and the GPOSERS export listed dyes on empty slots.** The export printed
+  a bare `Hands:` row and its dye for gloves the character isn't wearing, Make a palette counted
+  the dye, and a hidden weapon's stains showed as `#254` / `#255`.
+- **22 files read as having no lip color** because their extended block was stored as all zeros.
+  The block was never read; the lip now resolves from its index.
 
 ## [5.12.4] - 2026-09-21
 

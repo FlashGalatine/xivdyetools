@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.5] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0 (reached through `@xivdyetools/bot-logic`). No
+`register-commands`. No discord-worker source changed.
+
+### Fixed
+
+- **`/swatch` matched dyes against lip, face-paint and some highlight colors the character
+  creator doesn't use**, and against the eye palette for the tattoo / limbal row. Every sheet now
+  comes from the game's `human.cmp` creator palette.
+- **A customized skin or hair color reads OFF GRID again**; one straight from the creator never
+  does.
+- **The lip line under the card names the color its blend was made from** (bot-logic 4.4.2). It
+  had printed the file's stored shader color beside a blend of the creator's swatch.
+
+## [5.6.4] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.6.0 (reached through `@xivdyetools/bot-logic`). No
+`register-commands` — the command schema is unchanged. No discord-worker source changed.
+
+### Fixed
+
+- **`/swatch` swapped a heterochromia character's `EYES·L` and `EYES·R` rows.** Core read
+  `REyeColor` as the left eye; 153 of 157 heterochromia files in a 1,142-file corpus pair it with
+  `RightEyeColor`. Where a file's colors are live, each eye was also judged against the other's
+  color, so both rows read OFF GRID.
+- **False OFF GRID on every color row** in files whose colors are live (wrong float decoding,
+  the game's limbal factor, and the shading values the game stores for skin, hair and
+  light-palette lips). A genuinely custom color still reads OFF GRID.
+- **The gear line listed dyes on empty slots** — a hidden weapon, gloves taken off.
+
 ## [5.6.3] - 2026-09-21
 
 ### Changed

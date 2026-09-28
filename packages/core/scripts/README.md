@@ -12,6 +12,7 @@ Utility scripts for data processing and maintenance tasks.
 | `calibrate-bands.ts` | No (`pnpm run calibrate:bands`) | Recomputes the per-method band cuts behind `config/band-vocabulary.ts` (`BAND_VOCABULARY`). |
 | `build-oklch-hue-table.ts` | No (`pnpm run build:oklch-hue`) | Regenerates the committed `src/data/oklch-hue-table.json`. `scripts/lib/oklch-hue-table.test.ts` re-runs the derivation and compares it to the committed file — that test is the gate against drift. |
 | `build-munsell-hues.ts` | No (`pnpm run build:munsell <real.dat>`) | Regenerates the committed `src/data/munsell-hues.json` from the raw renotation data. |
+| `build-character-colors.ts` | No (`pnpm run build:character-colors <human.cmp>`) | Regenerates every sheet in `src/data/character_colors/` from the game's `chara/xls/charamake/human.cmp` (not vendored — extract it with any FFXIV data tool): the creator's **interface** half into `shared/` + `race_specific/` (what the tools show), the **shader** half into `shader/` (what a `.chara` float stores, read only by the resolver). A clean regeneration against the same game file leaves the tree untouched. |
 
 Regenerating either wheel table is a deliberate re-baseline of
 `HarmonySelector.golden.test.ts` — put the before/after digests in the commit body.

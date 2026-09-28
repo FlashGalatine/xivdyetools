@@ -120,6 +120,32 @@ describe('POST /v1/chara/resolve', () => {
     expect(url.searchParams.get('query')).toContain('(+EquipSlotCategory.OffHand=1 +ModelMain=4304732858)');
   });
 
+  it("carries each item's acquisition line from the build-time table, fresh or cached, and omits it when the table has none", async () => {
+    // Body {9903, 1} packs to ModelMain 75439; row 2 is not equippable, so the table has no line for it.
+    const UNLISTED_BODY = {
+      row_id: 2,
+      fields: { Name: 'Unlisted Body', Icon: { id: 1 }, ModelMain: 75439, ModelSub: 0, EquipSlotCategory: { fields: { Body: 1 } } },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(okJson({ version: 'v', results: [BEECH_MASK, RUNAWAY_BOW, UNLISTED_BODY] }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const ctx = createMockExecutionContext();
+    const fresh = await post(GALATINE_BODY, ctx);
+    await flush(ctx);
+    const cached = await post(GALATINE_BODY);
+    expect(fresh.headers.get('X-Cache')).toBe('MISS');
+    expect(cached.headers.get('X-Cache')).toBe('HIT');
+    for (const res of [fresh, cached]) {
+      const { items } = ((await res.json()) as any).data;
+      expect(items.HeadGear.acquisition).toBe('Crafted (CRP Lvl. 61) / Norlaise - Ishgard - The Pillars (19,994 Gil)');
+      expect(items.MainHand.acquisition).toBe('Hell on Rails (Extreme)');
+      expect(items.OffHand.acquisition).toBe('Hell on Rails (Extreme)');
+      expect(items.Body.itemId).toBe(2);
+      expect(items.Body).not.toHaveProperty('acquisition');
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('replays cached keys — the second identical import makes no upstream call', async () => {
     const fetchMock = vi.fn().mockResolvedValue(okJson({ version: 'v', results: [BEECH_MASK, RUNAWAY_BOW] }));
     vi.stubGlobal('fetch', fetchMock);

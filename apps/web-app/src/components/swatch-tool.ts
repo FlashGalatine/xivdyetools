@@ -69,7 +69,8 @@ import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
 import { CharaFileCard } from '@components/chara-file-card';
 import { CharaSheet, saveCharacterColors, type CharaSlotGridRef } from '@components/chara-sheet';
-import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
+import { slotLabel as charaSlotLabel } from '@components/chara-ui';
+import { CharaSessionService } from '@services/chara-session-service';
 
 // ============================================================================
 // Types and Constants
@@ -192,9 +193,11 @@ interface SwatchSelectionContext {
   source: 'slot' | 'grid';
   /** slot source only */
   hex?: string;
-  label?: string;
   gridRef?: CharaSlotGridRef | null;
-  /** slot source only — keeps the sheet's selection ring through a re-render */
+  /**
+   * slot source only — keeps the sheet's selection ring through a re-render,
+   * and names the slot in whatever language is current when the card draws
+   */
   slotKey?: CharaSlotId;
 }
 
@@ -313,6 +316,15 @@ export class SwatchTool extends BaseComponent {
           : ((storedSubrace as SubRace | null) ?? DEFAULTS.subrace);
     }
     this.gender = StorageService.getItem<Gender>(STORAGE_KEYS.gender) ?? DEFAULTS.gender;
+    // A file that finished loading while this tool was closed still decides
+    // the hair and skin sheets; the swatch config already follows it.
+    const file = CharaSessionService.getTribeAndGender();
+    if (file) {
+      this.subrace = file.tribe;
+      this.gender = file.gender;
+      StorageService.setItem(STORAGE_KEYS.subrace, file.tribe);
+      StorageService.setItem(STORAGE_KEYS.gender, file.gender);
+    }
     this.colorCategory =
       StorageService.getItem<ColorCategory>(STORAGE_KEYS.colorCategory) ?? DEFAULTS.colorCategory;
     this.maxResults =
@@ -374,7 +386,7 @@ export class SwatchTool extends BaseComponent {
     );
 
     // The loaded .chara outlives this tool, so follow it rather than own it.
-    this.subs.add(CharaSessionService.subscribe((session) => this.onCharaSession(session)));
+    this.subs.add(CharaSessionService.subscribe(() => this.onCharaSession()));
 
     // Sync MarketBoard components with ConfigController on initial load
     const marketConfig = configController.getConfig('market');
@@ -1544,7 +1556,7 @@ export class SwatchTool extends BaseComponent {
 
     const context = this.selectionContext;
     this.charaSheet = new CharaSheet(sheetContainer, {
-      onSlotPick: (hex, label, gridRef, slot) => this.pickCharaSlot(hex, label, gridRef, slot),
+      onSlotPick: (hex, _label, gridRef, slot) => this.pickCharaSlot(hex, gridRef, slot),
       selectedSlot: context?.source === 'slot' ? (context.slotKey ?? null) : null,
     });
     this.charaSheet.init();
@@ -1557,14 +1569,15 @@ export class SwatchTool extends BaseComponent {
     this.charaSheet = null;
   }
 
+  /** A picked THIS CHARACTER slot's label in the current language. */
+  private pickedSlotLabel(slotKey: CharaSlotId | undefined): string | null {
+    const slot = CharaSessionService.getSession()?.resolved.slots.find((s) => s.slot === slotKey);
+    return slot ? charaSlotLabel(slot) : null;
+  }
+
   /** A THIS CHARACTER card was picked: its colour becomes the selection. */
-  private pickCharaSlot(
-    hex: string,
-    label: string,
-    gridRef: CharaSlotGridRef | null,
-    slot: CharaSlotId
-  ): void {
-    this.selectionContext = { source: 'slot', hex, label, gridRef, slotKey: slot };
+  private pickCharaSlot(hex: string, gridRef: CharaSlotGridRef | null, slot: CharaSlotId): void {
+    this.selectionContext = { source: 'slot', hex, gridRef, slotKey: slot };
     if (gridRef) {
       // The selection card's excerpt centres on the slot's cell.
       const target = gridRef.variant
@@ -1585,16 +1598,11 @@ export class SwatchTool extends BaseComponent {
    * A file was loaded or cleared. The card and sheet redraw themselves; this
    * is what the tool derives from the file on top of them.
    */
-  private onCharaSession(session: CharaSession | null): void {
+  private onCharaSession(): void {
     // A slot pick describes the character it came from.
     if (this.selectionContext?.source === 'slot') this.selectionContext = null;
-    // The file's tribe and gender pick the hair and skin sheets. The sidebar
-    // shows them as a locked readout while the file is loaded.
-    const tribe = session?.resolved.tribe;
-    const gender = session?.resolved.gender;
-    if (tribe && gender) {
-      ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
-    }
+    // The file's tribe and gender arrive through the swatch config, which
+    // ConfigController pins to the loaded file.
     this.updateColorGrid();
   }
 
@@ -1998,12 +2006,12 @@ export class SwatchTool extends BaseComponent {
     let subjectHex: string | null = null;
     let anchor: number | null = null;
     let offGrid = false;
-    let slotLabel: string | null = null;
+    // Translated now, not at pick time: a language switch redraws this card.
+    const slotLabel = ctx?.source === 'slot' && ctx.hex ? this.pickedSlotLabel(ctx.slotKey) : null;
 
-    if (ctx?.source === 'slot' && ctx.hex && ctx.label) {
+    if (ctx?.source === 'slot' && ctx.hex && slotLabel) {
       subjectHex = ctx.hex;
-      slotLabel = ctx.label;
-      tag = ctx.label.toUpperCase();
+      tag = slotLabel.toUpperCase();
       if (ctx.gridRef) {
         const row = Math.floor(ctx.gridRef.sheetIndex / 8) + 1;
         const col = (ctx.gridRef.sheetIndex % 8) + 1;
