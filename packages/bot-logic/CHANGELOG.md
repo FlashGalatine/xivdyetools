@@ -29,8 +29,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   read the file — gear[0].base must be an integer between 0 and 65535") instead of
   `RESOLVE_FAILED`'s "try again in a minute", which a hand-edited or damaged file would fail
   every time. No new strings.
-- **`getLocalizedRace`** — core's race names, per locale. The card names a one-race piece by its
-  race (VIERA) when the race is what blocks it; a piece that fails on gender alone reads LOCKED.
+- **Race names on the card.** The card names a one-race piece by its race (VIERA) when the race
+  is what blocks it; a piece that fails on gender alone reads LOCKED. The names are core's, per
+  locale, through a new `getLocalizedRace` in `localization.ts` — internal to the package, not
+  exported from its barrel (only `/glamour` reads it).
   The check compares races by our `Race` identifier (a `Record<Race, …>` of wear-mask columns),
   not by the sheet's column spelling: the sheet writes `Miqote` where the parser answers
   `Miqo'te`, so a Miqo'te man in a piece for Miqo'te women was told MIQO'TE instead of LOCKED.

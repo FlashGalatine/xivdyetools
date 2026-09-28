@@ -489,7 +489,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v4.5.0** | **Sep 2026** | **`executeGlamour` (the resolver is injected — no I/O here), `getLocalizedRace`, and the `/glamour` strings ×6; `/swatch` and `/glamour` share `commands/chara-identity.ts`** |
+| **v4.5.0** | **Sep 2026** | **`executeGlamour` (the resolver is injected — no I/O here) and the `/glamour` strings ×6; `/swatch` and `/glamour` share `commands/chara-identity.ts`** |
 | v4.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 5 — minor: `tc()` picks the plural form with `Intl.PluralRules` per locale, so French `0` is singular (I18N-003, was the English rule for every locale); `searchDyesByName` folds accents, `ß` and width through core's `foldForSearch` (I18N-005); 137 subcommand/option descriptions × 6 under `commands.*.options`, generated from discord-worker's schema (I18N-001), plus `about.builtOnBody` and `card.colours_one/_other` (no key removed); zh `市场布告板` / `大区`, ko `서버` / `데이터 센터` (TERM-001, TERM-003). Needs core 5.4.0 |
 | v4.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 3 (minor, not patch — the marker is an observable change to rendered output) — `/swatch` eye rows carry the `·L`/`·R`/`·LR` marker on the row label so off-grid heterochromia rows are told apart (BUG-006); dye-info MKT row derives its item ID through core's `getMarketItemID` (REFACTOR-005) |
 | **v4.2.0** | **Sep 2026** | **`HarmonyInput.wheel` (`ColorWheelId`) passed through to core's `generateHarmonySlots`, `getLocalizedColorWheelName`, `/harmony` share URL carries `&wheel=` (PR #167); `HarmonyInput.harmonyOptions` deprecated — its `colorSpace` has been ignored since PR #159** |
