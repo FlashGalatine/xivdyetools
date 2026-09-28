@@ -2,14 +2,19 @@
  * `.chara` character-file parser — the 5.0 Swatch Matcher import.
  *
  * Rules measured across 112 sample files (design register, Swatch Matcher
- * 10A, confirmed):
+ * 10A, confirmed), re-measured 2026-09-28 across 1,142 real files
+ * (docs/research/2026-09-28-chara-corpus-profile) — which overturned the eye
+ * and float rules below:
  * - **Parse by key presence, never the declared `TypeName`** — producers
  *   (Anamnesis versions, Ktisis) write different key sets. `TypeName` is
  *   captured only to *show* the producer.
- * - **`REyeColor` holds the LEFT eye and `LEyeColor` the right** — crossed
- *   against the extended floats (`LeftEyeColor`/`RightEyeColor`); trust the
- *   extended naming. Never "fix" this by swapping — 16% of samples are
- *   heterochromia and a swap corrupts them silently.
+ * - **Eye keys pair by name**: `LEyeColor` + `LeftEyeColor` is the left eye,
+ *   `REyeColor` + `RightEyeColor` the right. 153 of 157 heterochromia files
+ *   pair this way, all 143 Anamnesis ones among them. The 10A rule had them
+ *   crossed, read off a file that is one of the 4 exceptions — and crossing
+ *   is per file (one player's files go both ways), so the resolver un-crosses
+ *   a file only when each float lands on the OTHER eye's palette entry.
+ *   Never swap on a guess: 16% of files are heterochromia.
  * - **Extended floats are the colour squared** — the game's gamma-2.0 linear
  *   light, not the sRGB curve: square-root before use. Re-measured on 1,142
  *   files (docs/research/2026-09-28-chara-corpus-profile): the square root
@@ -388,7 +393,6 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     presentFloats.every((f) => f.linear.every((c) => c === 0) && (f.alpha ?? 0) === 0);
   const float = (f: ParsedFloat | null): ParsedFloat | null => (uncaptured ? null : f);
   const skinFloat = float(parsedFloats.skin);
-  // Crossed keys: the index REyeColor pairs with the float LeftEyeColor.
   const leftEyeFloat = float(parsedFloats.leftEye);
   const rightEyeFloat = float(parsedFloats.rightEye);
   const limbalFloat = float(parsedFloats.limbal);
@@ -416,8 +420,9 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   });
 
   const slots: CharaColorSlotRaw[] = [
-    slot('leftEye', readIndex(record, 'REyeColor'), leftEyeFloat),
-    slot('rightEye', readIndex(record, 'LEyeColor'), rightEyeFloat),
+    // By name: the few files whose floats are crossed are the resolver's to spot
+    slot('leftEye', readIndex(record, 'LEyeColor'), leftEyeFloat),
+    slot('rightEye', readIndex(record, 'REyeColor'), rightEyeFloat),
     slot('hair', readIndex(record, 'HairTone'), hairFloat),
     slot('highlights', readIndex(record, 'Highlights'), highlightFloat, {
       indexActive: enableHighlights,

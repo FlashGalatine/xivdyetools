@@ -20,12 +20,13 @@ describe('parseCharaFile', () => {
       expect(parsed.extendedValid).toBe(true);
     });
 
-    it('crosses eye keys: REyeColor is the LEFT eye, LEyeColor the right', () => {
+    it('pairs eye keys by name: LEyeColor + LeftEyeColor, REyeColor + RightEyeColor', () => {
       const left = parsed.slots.find((s) => s.slot === 'leftEye');
       const right = parsed.slots.find((s) => s.slot === 'rightEye');
-      expect(left?.index).toBe(42);
-      expect(right?.index).toBe(169);
-      // Left float = LeftEyeColor (warm amber), right = RightEyeColor (green).
+      expect(left?.index).toBe(169);
+      expect(right?.index).toBe(42);
+      // By name, whatever the values say. This file is one of the few whose
+      // floats are crossed (amber on the left key); the resolver un-crosses it.
       expect(left?.floatLinear?.[0]).toBeCloseTo(0.7443291, 6);
       expect(right?.floatLinear?.[0]).toBeCloseTo(0.28027683, 6);
     });

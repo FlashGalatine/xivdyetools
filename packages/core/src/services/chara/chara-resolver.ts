@@ -17,6 +17,9 @@
  * - Gear dye stain IDs resolve through the dye database
  *   (`stainID`/`legacyItemID`), never derived from ranges.
  * - Shared-index eyes (84% of files) merge into one badge — `eyesShareIndex`.
+ * - Eye floats pair by name; a heterochromia file whose two floats each land
+ *   on the other eye's palette entry is un-crossed first (4 of 157 in the
+ *   2026-09-28 corpus) — see `uncrossEyeFloats`.
  */
 
 import type { CharacterColor, Dye, Gender, SubRace } from '@xivdyetools/types';
@@ -24,6 +27,7 @@ import { ColorConverter } from '../color/ColorConverter.js';
 import { clamp } from '../../utils/index.js';
 import type { CharacterColorService } from '../CharacterColorService.js';
 import type {
+  CharaColorSlotRaw,
   CharaGearSlotId,
   CharaSlotId,
   CharaSlotInertReason,
@@ -33,6 +37,9 @@ import type { CharaGearModel } from './chara-models.js';
 
 /** ΔE2000 beyond which a live float overrides the palette index (OFF GRID). */
 export const OFF_GRID_DELTA_E2000 = 6;
+
+/** ΔE2000 within which a stored eye float "lands on" a palette entry (the square root is exact to ±1). */
+const EYE_LANDS_DELTA_E2000 = 1;
 
 export type CharaSlotVerdict =
   /** The palette index is the answer (float absent, not live, or agreeing) */
@@ -141,6 +148,41 @@ function compositeHex(topHex: string, baseHex: string, alpha: number): string {
   return ColorConverter.rgbToHex(mix(top.r, base.r), mix(top.g, base.g), mix(top.b, base.b));
 }
 
+/**
+ * Eye floats pair with the index keys by name, but 4 of 157 heterochromia
+ * files in the 2026-09-28 corpus store them crossed — one player's files go
+ * both ways, so it is per file, not per producer. Swap the two floats only
+ * when each lands on the OTHER eye's palette entry and neither on its own: a
+ * custom colour or a half match stays where the file put it.
+ */
+function uncrossEyeFloats(
+  slots: CharaColorSlotRaw[],
+  characterColors: CharacterColorService,
+): CharaColorSlotRaw[] {
+  const left = slots.find((s) => s.slot === 'leftEye');
+  const right = slots.find((s) => s.slot === 'rightEye');
+  if (!left?.float || !right?.float || left.index === null || right.index === null) return slots;
+  if (left.index === right.index) return slots;
+  const sheet = characterColors.getEyeColors();
+  const lands = (index: number, float: CharaColorSlotRaw['float']): boolean => {
+    const entry = sheet.find((c) => c.index === index);
+    return (
+      entry !== undefined &&
+      float !== null &&
+      ColorConverter.getDeltaE(entry.hex, rgbToHex(float), 'ciede2000') <= EYE_LANDS_DELTA_E2000
+    );
+  };
+  const straight = lands(left.index, left.float) && lands(right.index, right.float);
+  const crossed = lands(left.index, right.float) && lands(right.index, left.float);
+  if (straight || !crossed) return slots;
+  const swapped = (to: CharaColorSlotRaw, from: CharaColorSlotRaw): CharaColorSlotRaw => ({
+    ...to,
+    float: from.float,
+    floatLinear: from.floatLinear,
+  });
+  return slots.map((s) => (s === left ? swapped(left, right) : s === right ? swapped(right, left) : s));
+}
+
 interface SheetResolution {
   sheet: CharacterColor[] | null;
   variant: 'dark' | 'light' | null;
@@ -244,7 +286,7 @@ export async function resolveCharaColors(
 ): Promise<ResolvedCharaCharacter> {
   const slots: ResolvedCharaSlot[] = [];
 
-  for (const raw of parsed.slots) {
+  for (const raw of uncrossEyeFloats(parsed.slots, characterColors)) {
     const kind = raw.slot === 'limbal' ? (parsed.race === 'AuRa' ? 'limbal' : 'tattoo') : raw.slot;
     const floatHex = raw.float ? rgbToHex(raw.float) : null;
     const floatLive = parsed.extendedValid && floatHex !== null;
