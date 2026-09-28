@@ -75,7 +75,7 @@ describe('resolveCharaColors', () => {
       parseCharaFile(
         minimal({
           REyeColor: 0,
-          LeftEyeColor: '0.9301, 0.9301, 0.9301', // ≈ linear of #F7F7F7
+          LeftEyeColor: '0.93817762, 0.93817762, 0.93817762', // (247/255)², #F7F7F7 as stored
           IsExtendedAppearanceValid: true,
         })
       ),
@@ -84,6 +84,9 @@ describe('resolveCharaColors', () => {
     const left = resolved.slots.find((s) => s.slot === 'leftEye');
     expect(left?.verdict).toBe('index');
     expect(left?.deltaE).toBeLessThanOrEqual(OFF_GRID_DELTA_E2000);
+    // The square root lands the stored value exactly on its palette entry
+    expect(left?.floatHex?.toUpperCase()).toBe('#F7F7F7');
+    expect(left?.deltaE).toBe(0);
   });
 
   it('96-127 on a dark/light palette fails loudly, never clamps', async () => {

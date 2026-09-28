@@ -30,12 +30,12 @@ describe('parseCharaFile', () => {
       expect(right?.floatLinear?.[0]).toBeCloseTo(0.28027683, 6);
     });
 
-    it('gamma-encodes linear floats to sRGB', () => {
+    it('square-roots the floats: the game stores each channel as (n/255)²', () => {
       const skin = parsed.slots.find((s) => s.slot === 'skin');
-      // linear 0.8858132 → sRGB ≈ 0.9497 → 242
-      expect(skin?.float?.r).toBe(242);
-      expect(skin?.float?.g).toBe(218);
-      expect(skin?.float?.b).toBe(226);
+      // 0.8858132 = (240/255)² exactly — the sRGB curve would read 242
+      expect(skin?.float).toEqual({ r: 240, g: 213, b: 222 });
+      const hair = parsed.slots.find((s) => s.slot === 'hair');
+      expect(hair?.float).toEqual({ r: 191, g: 111, b: 105 });
     });
 
     it('FacePaint: 0 inerts FacePaintColor (only 0 is load-bearing)', () => {
@@ -325,6 +325,38 @@ describe('parseCharaFile', () => {
     it('an absent MouthColor alpha ≠ 0 — here alpha is declared 0.7058824', () => {
       const lip = parsed.slots.find((s) => s.slot === 'lip');
       expect(lip?.alpha).toBeCloseTo(0.7058824, 6);
+    });
+  });
+
+  describe('an extended block that was never captured', () => {
+    const base = { Tribe: 'Raen', Gender: 'Feminine', Skintone: 1, REyeColor: 3, LEyeColor: 3 };
+    const zero = '0, 0, 0';
+    const floats = (value: string, mouth: string) => ({
+      SkinColor: value,
+      LeftEyeColor: value,
+      RightEyeColor: value,
+      LimbalRingColor: value,
+      HairColor: value,
+      HairHighlight: value,
+      MouthColor: mouth,
+    });
+
+    it('reads an all-zero block as absent, lip alpha included', () => {
+      // 22 of 1,142 corpus files: every float 0, 0, 0 — nothing was read, not a black character
+      const parsed = parseCharaFile(JSON.stringify({ ...base, ...floats(zero, '0, 0, 0, 0') }));
+      for (const slot of parsed.slots) {
+        expect(slot.float, slot.slot).toBeNull();
+        expect(slot.floatLinear, slot.slot).toBeNull();
+      }
+      expect(parsed.slots.find((s) => s.slot === 'lip')?.alpha).toBeNull();
+    });
+
+    it('keeps one black float among live ones — only a wholly empty block is uncaptured', () => {
+      const parsed = parseCharaFile(
+        JSON.stringify({ ...base, ...floats('0.25, 0.25, 0.25', '0.25, 0.25, 0.25, 0.5'), LimbalRingColor: zero }),
+      );
+      expect(parsed.slots.find((s) => s.slot === 'limbal')?.float).toEqual({ r: 0, g: 0, b: 0 });
+      expect(parsed.slots.find((s) => s.slot === 'skin')?.float).toEqual({ r: 128, g: 128, b: 128 });
     });
   });
 

@@ -10,8 +10,12 @@
  *   against the extended floats (`LeftEyeColor`/`RightEyeColor`); trust the
  *   extended naming. Never "fix" this by swapping — 16% of samples are
  *   heterochromia and a swap corrupts them silently.
- * - **Extended floats are linear RGB** — gamma-encode before use or every
- *   colour is wrong-but-plausible.
+ * - **Extended floats are the colour squared** — the game's gamma-2.0 linear
+ *   light, not the sRGB curve: square-root before use. Re-measured on 1,142
+ *   files (docs/research/2026-09-28-chara-corpus-profile): the square root
+ *   lands eye and highlight floats on their palette entry at ΔE 0.00, where
+ *   the sRGB curve read every colour ~3 ΔE off. A block that is zero in every
+ *   channel was never read and counts as absent (22 files).
  * - **Flags gate live-looking data**: `EnableHighlights: false` inerts the
  *   highlight index (54% of samples, 47 of those with a live-looking index);
  *   `FacePaint: 0` inerts `FacePaintColor` (only 0 is load-bearing — values
@@ -76,9 +80,9 @@ export interface CharaColorSlotRaw {
   /** False when a flag gates the index off (see inertReason) */
   indexActive: boolean;
   inertReason?: CharaSlotInertReason;
-  /** Extended float colour, gamma-encoded to sRGB; null = key absent */
+  /** Extended float colour, square-rooted to sRGB; null = key absent or never read */
   float: RGB | null;
-  /** The raw linear-RGB float triple as stored in the file */
+  /** The raw float triple as stored in the file (each channel the colour squared) */
   floatLinear: [number, number, number] | null;
   /** Lip only: continuous opacity. null = key absent (absent ≠ 0) */
   alpha: number | null;
@@ -190,12 +194,13 @@ const GENDER_MAP: Record<string, Gender> = {
   Female: 'Female',
 };
 
-/** Linear-light → sRGB gamma encoding, clamped, 0-255. */
-function linearToSrgb255(c: number): number {
-  const clamped = clamp(c, 0, 1);
-  const encoded =
-    clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
-  return Math.round(clamp(encoded, 0, 1) * 255);
+/**
+ * A stored float channel → 0-255. The game keeps each channel as the colour
+ * squared (a gamma-2.0 linear light, not the sRGB curve), so the square root
+ * is the colour: `(240/255)² = 0.8858132` reads back as exactly 240.
+ */
+function squaredToSrgb255(c: number): number {
+  return Math.round(Math.sqrt(clamp(c, 0, 1)) * 255);
 }
 
 interface ParsedFloat {
@@ -206,7 +211,7 @@ interface ParsedFloat {
 
 /**
  * Parse an extended-appearance float string ("r, g, b" or "r, g, b, a",
- * linear RGB). Throws loudly on a malformed value — a wrong-but-plausible
+ * each channel squared — see `squaredToSrgb255`). Throws loudly on a malformed value — a wrong-but-plausible
  * colour is worse than a failure that names the field.
  */
 function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
@@ -228,7 +233,7 @@ function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
   }
   const [r, g, b] = parts;
   return {
-    srgb: { r: linearToSrgb255(r), g: linearToSrgb255(g), b: linearToSrgb255(b) },
+    srgb: { r: squaredToSrgb255(r), g: squaredToSrgb255(g), b: squaredToSrgb255(b) },
     linear: [r, g, b],
     alpha: parts.length === 4 ? parts[3] : null,
   };
@@ -365,14 +370,31 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   const facePaintValue = readIndex(record, 'FacePaint');
   const facePaintNone = facePaintValue === 0;
 
-  const skinFloat = parseFloatColor('SkinColor', record['SkinColor']);
+  const parsedFloats = {
+    skin: parseFloatColor('SkinColor', record['SkinColor']),
+    leftEye: parseFloatColor('LeftEyeColor', record['LeftEyeColor']),
+    rightEye: parseFloatColor('RightEyeColor', record['RightEyeColor']),
+    limbal: parseFloatColor('LimbalRingColor', record['LimbalRingColor']),
+    hair: parseFloatColor('HairColor', record['HairColor']),
+    highlight: parseFloatColor('HairHighlight', record['HairHighlight']),
+    mouth: parseFloatColor('MouthColor', record['MouthColor']),
+  };
+  // A block that is zero in every channel of every float — alpha included —
+  // was never read (22 of 1,142 corpus files), so it is absent, not a black
+  // character with no lip. One black float among live ones is kept.
+  const presentFloats = Object.values(parsedFloats).filter((f) => f !== null);
+  const uncaptured =
+    presentFloats.length > 0 &&
+    presentFloats.every((f) => f.linear.every((c) => c === 0) && (f.alpha ?? 0) === 0);
+  const float = (f: ParsedFloat | null): ParsedFloat | null => (uncaptured ? null : f);
+  const skinFloat = float(parsedFloats.skin);
   // Crossed keys: the index REyeColor pairs with the float LeftEyeColor.
-  const leftEyeFloat = parseFloatColor('LeftEyeColor', record['LeftEyeColor']);
-  const rightEyeFloat = parseFloatColor('RightEyeColor', record['RightEyeColor']);
-  const limbalFloat = parseFloatColor('LimbalRingColor', record['LimbalRingColor']);
-  const hairFloat = parseFloatColor('HairColor', record['HairColor']);
-  const highlightFloat = parseFloatColor('HairHighlight', record['HairHighlight']);
-  const mouthFloat = parseFloatColor('MouthColor', record['MouthColor']);
+  const leftEyeFloat = float(parsedFloats.leftEye);
+  const rightEyeFloat = float(parsedFloats.rightEye);
+  const limbalFloat = float(parsedFloats.limbal);
+  const hairFloat = float(parsedFloats.hair);
+  const highlightFloat = float(parsedFloats.highlight);
+  const mouthFloat = float(parsedFloats.mouth);
 
   const slot = (
     id: CharaSlotId,
