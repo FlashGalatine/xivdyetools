@@ -11,7 +11,7 @@ export interface Npc {
   name: string;
   /** Place name of the NPC's map ("Urqopacha", "Old Gridania", "The Firmament"); null = position unknown. */
   zone: string | null;
-  /** Nearest map area label, wilderness NPCs only ("Worlar's Echo"). */
+  /** Nearest settlement on the map, wilderness NPCs only ("Worlar's Echo"); null when none is within 3 map units. */
   outpost: string | null;
   /** Stands in a duty or housing map. */
   unreachable: boolean;

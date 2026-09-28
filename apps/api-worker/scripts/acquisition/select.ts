@@ -156,18 +156,19 @@ export function selectEntries(sources: Source[], inputs: Inputs, tables: Tables)
   const dutyEntries = (ids: number[]): Entry[] => ids.sort((a, b) => a - b).map((dutyId): Entry => ({ kind: 'duty', dutyId }));
   const deep = [...duties].filter((d) => inputs.deepDungeons.has(d));
   const entries: Entry[] = [...dutyEntries([...duties].filter((d) => !inputs.deepDungeons.has(d))), ...rest];
-  // "Only if it is the only source" (guide + Mar 2026 reminders), in this order.
+  // "Only if it is the only source" (guide + Mar 2026 reminders), judged against
+  // the complete source set: a quest beside a random container is not the only
+  // source, and neither is the container, so both drop.
   const onlySource: Array<[Entry[], string]> = [
     [[...quests].map((questId): Entry => ({ kind: 'quest', questId })), 'questNotOnlySource'],
     [dutyEntries(deep), 'deepDungeonNotOnlySource'],
     [desynths, 'desynthNotOnlySource'],
     [gacha, 'gachaNotOnlySource'],
   ];
-  for (const [candidates, reason] of onlySource) {
-    if (candidates.length === 0) continue;
-    if (entries.length === 0) entries.push(...candidates);
-    else dropped.push(reason);
-  }
+  const present = onlySource.filter(([candidates]) => candidates.length > 0);
+  const [only] = present;
+  if (entries.length === 0 && only && present.length === 1) entries.push(...only[0]);
+  else for (const [, reason] of present) dropped.push(reason);
   return { entries, dropped };
 }
 

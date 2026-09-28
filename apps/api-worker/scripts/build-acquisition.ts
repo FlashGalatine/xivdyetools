@@ -6,12 +6,16 @@
  *
  *   pnpm exec tsx apps/api-worker/scripts/build-acquisition.ts
  *   pnpm exec tsx apps/api-worker/scripts/build-acquisition.ts --fixture 47878,42027
+ *   pnpm exec tsx apps/api-worker/scripts/build-acquisition.ts --pinned
  *
  * Inputs: Teamcraft's data files at ONE pinned commit (MIT) and XIVAPI v2 at one
  * game version. Output: src/chara/data/acquisition.en.json
  * ({ "<itemId>": "<line>" } for equippable items that have a line) and
  * acquisition.meta.json. `--fixture` writes the normalized inputs for the given
  * items to tests/acquisition/fixtures/inputs.json instead of the table.
+ * `--pinned` reuses the Teamcraft commit and XIVAPI version the current
+ * acquisition.meta.json records instead of pinning the newest ones — for a rule
+ * change, so the table diff shows the rule and nothing else.
  * Design: docs/superpowers/specs/2026-09-27-glamour-acquisition-design.md.
  */
 
@@ -20,7 +24,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatEntries } from './acquisition/format.js';
 import { buildInputs, fateZoneLevels, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
-import { markerCoordinate, nearestLabel, type MapLabel } from './acquisition/labels.js';
+import { markerCoordinate, nearestSettlement, type MapLabel } from './acquisition/labels.js';
 import type { Inputs, Tables } from './acquisition/model.js';
 import { overrideLine, selectEntries } from './acquisition/select.js';
 import { collectSources } from './acquisition/sources.js';
@@ -190,12 +194,26 @@ function itemLinks(fields: Record<string, unknown>): number[] {
 }
 
 async function mapLabels(range: number, sizeFactor: number): Promise<MapLabel[]> {
-  type Marker = { row_id: number; fields: { X: number; Y: number; PlaceNameSubtext?: { fields?: { Name?: string } } } };
-  const page = await xivapi<{ rows: Marker[] }>('sheet/MapMarker', { after: String(range - 1), limit: '500', fields: 'X,Y,PlaceNameSubtext.Name' });
+  type Marker = {
+    row_id: number;
+    fields: { X: number; Y: number; Icon?: { id?: number }; DataType?: number; PlaceNameSubtext?: { fields?: { Name?: string } } };
+  };
+  const page = await xivapi<{ rows: Marker[] }>('sheet/MapMarker', {
+    after: String(range - 1),
+    limit: '500',
+    fields: 'X,Y,Icon,DataType,PlaceNameSubtext.Name',
+  });
   const labels: MapLabel[] = [];
-  for (const row of page.rows) {
-    const name = row.fields.PlaceNameSubtext?.fields?.Name;
-    if (row.row_id === range && name) labels.push({ name, x: markerCoordinate(row.fields.X, sizeFactor), y: markerCoordinate(row.fields.Y, sizeFactor) });
+  for (const { row_id, fields } of page.rows) {
+    const name = fields.PlaceNameSubtext?.fields?.Name;
+    if (row_id !== range || !name) continue;
+    labels.push({
+      name,
+      x: markerCoordinate(fields.X, sizeFactor),
+      y: markerCoordinate(fields.Y, sizeFactor),
+      icon: fields.Icon?.id ?? 0,
+      dataType: fields.DataType ?? 0,
+    });
   }
   return labels;
 }
@@ -216,7 +234,7 @@ async function outpostsFor(npcIds: number[], raw: RawFiles, wilderness: Set<stri
     const labels = await mapLabels(map.fields.MapMarkerRange, map.fields.SizeFactor);
     for (const id of ids) {
       const position = raw.npcs[id]?.position;
-      const label = position ? nearestLabel(labels, position.x, position.y) : null;
+      const label = position ? nearestSettlement(labels, position.x, position.y) : null;
       if (label) out.set(id, label);
     }
   }
@@ -362,9 +380,13 @@ Relic-looking names in NO saga (review — a miss here is a wrong or blank line)
 async function main(): Promise<void> {
   const fixtureArg = process.argv.indexOf('--fixture');
   const fixtureIds = fixtureArg >= 0 ? (process.argv[fixtureArg + 1] ?? '').split(',').map(Number).filter(Boolean) : null;
+  const pinned = process.argv.includes('--pinned')
+    ? (JSON.parse(readFileSync(join(DATA_DIR, 'acquisition.meta.json'), 'utf8')) as { teamcraftCommit: string; xivapiVersion: string })
+    : null;
+  if (pinned) gameVersion = pinned.xivapiVersion;
 
-  const sha = await pinTeamcraft();
-  console.log(`Teamcraft staging pinned at ${sha}`);
+  const sha = pinned?.teamcraftCommit ?? (await pinTeamcraft());
+  console.log(pinned ? `Teamcraft ${sha} and XIVAPI ${gameVersion}, as acquisition.meta.json records` : `Teamcraft staging pinned at ${sha}`);
   const raw = await loadTeamcraft(sha);
   const rules = readTable<RelicRule[]>('relic-sagas.json');
   const tableFiles: TableFiles = {

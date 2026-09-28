@@ -39,6 +39,27 @@ describe('acquisition table invariants', () => {
     expect(offending((l) => /AAC Illustrated|\bTotems?\b|Totem of/.test(l))).toEqual([]);
   });
 
+  it('names a settlement as the outpost, never a stable, shop, forge or raid entrance beside the vendor (spec D10)', () => {
+    // The labels the nearest-label rule used to print, for a vendor standing next to them.
+    const facilities = new Set([
+      'Chocobokeep',
+      "Rowena's House of Splendors",
+      'The Diamond Forge',
+      'The Workbench',
+      'Crystal Tower',
+      'Longbeard Council',
+      'Heaven-on-High',
+    ]);
+    const outposts = (line: string): string[] =>
+      line.split(' / ').flatMap((segment) => {
+        const parts = segment.replace(/ \(.*\)$/, '').split(' - ');
+        return parts.length >= 3 ? [parts[parts.length - 1] ?? ''] : [];
+      });
+    expect(offending((l) => outposts(l).some((o) => facilities.has(o)))).toEqual([]);
+    // The GPOSERS reminders' own example vendor, in the zone-first order of the guide's template
+    expect((table as Record<string, string>)['15181']).toBe('E-Una-Kotor - South Shroud - Quarrymill (3 Aetherpool Grips)');
+  });
+
   it("writes The Emperor's New items as Goberin in Vesper Bay (Mar 2026 reminders)", () => {
     expect((table as Record<string, string>)['10033']).toBe('Goberin - Western Thanalan - Vesper Bay');
   });

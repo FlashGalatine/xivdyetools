@@ -65,7 +65,7 @@ export interface XivapiExtras {
    * token item → Duty Finder names. An empty list = a token whose duty is not known yet.
    */
   dutyTokens: Map<number, string[]>;
-  /** Wilderness NPC → nearest map area label */
+  /** Wilderness NPC → nearest settlement label on its map (`labels.ts`) */
   outposts: Map<number, string>;
   /** Relic sheet name → the item ids it lists */
   relicSheetItems: Map<string, number[]>;

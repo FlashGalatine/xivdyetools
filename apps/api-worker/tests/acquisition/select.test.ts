@@ -174,6 +174,27 @@ describe('selectEntries', () => {
     expect(result.dropped).toContain('gachaNotOnlySource');
   });
 
+  it('judges an only-source candidate against every source, not only the ones read before it', () => {
+    // A quest and a random container, nothing else: neither is the only source.
+    const tables = emptyTables();
+    tables.gachaContainers.add(33441);
+    const i = emptyInputs();
+    i.quests.set(ITEM, [1]);
+    i.questInfo.set(1, { name: 'Close to Home', kind: 'msq' });
+    i.containers.set(ITEM, [33441]);
+    const result = select(i, tables);
+    expect(result.entries).toEqual([]);
+    expect(result.dropped).toEqual(['questNotOnlySource', 'gachaNotOnlySource']);
+
+    const deepAndDesynth = emptyInputs();
+    deepAndDesynth.duties.set(ITEM, [60030]);
+    deepAndDesynth.deepDungeons.add(60030);
+    deepAndDesynth.desynth.set(ITEM, [{ sourceItemId: 5000, job: 15 }]);
+    const both = select(deepAndDesynth);
+    expect(both.entries).toEqual([]);
+    expect(both.dropped).toEqual(['deepDungeonNotOnlySource', 'desynthNotOnlySource']);
+  });
+
   it('a Eureka lockbox writes the guide line when it is the only source', () => {
     const tables = emptyTables();
     tables.eurekaLockboxes.set(22508, 'Eureka Anemos Lockboxes');
