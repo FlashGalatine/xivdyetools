@@ -35,6 +35,13 @@ Rules:
   path filter.
 -->
 
+## [5.7.1] - 2026-09-28
+### 📜 Privacy Policy and Terms of Service updated
+- The Privacy Policy now says how `/swatch` and `/glamour` handle a character file: it is read in memory, then discarded, and never stored.
+- To name your gear, `/glamour` sends only the equipment model numbers and the facewear id from the file. They are looked up in XIVAPI, a community game-data service.
+- The Terms of Service now list the newer commands, including `/swatch` and `/glamour`.
+- Nothing about how the bot handles your data has changed. The documents were behind the bot, and now match it in all six languages.
+
 ## [5.7.0] - 2026-09-28
 ### 👗 New: `/glamour`
 - Attach a character file to `/glamour` and the bot lists the glamour it wears: every dyed piece, its dyes, and whether the game lets that character wear it.

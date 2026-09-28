@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트:** 2026-09-20 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
+**최종 업데이트:** 2026-09-28 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
 XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 모음입니다. Square Enix와 제휴, 승인 또는 후원 관계가 없습니다. 이 사이트를 이용함으로써 사용자는 아래 내용에 동의하게 됩니다. 동의하지 않으신다면 이용하지 말아 주세요 — 이 사이트를 그만두는 데는 어떤 비용도 들지 않습니다.
 
@@ -66,8 +66,9 @@ XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 �
 일부 기능은 저희가 운영하지 않는 서비스로 사용자를 연결합니다:
 
 - **Universalis**는 장터 가격을 제공합니다.
+- **XIVAPI**는 `.chara` 파일의 장비에 해당하는 아이템 이름을 제공합니다.
 - **Discord**와 **XIVAuth**는 로그인을 처리하며, Discord는 저희 커뮤니티 서버도 호스팅합니다.
-- 의상 부위의 **아이템 링크**는 해당 아이템을 Garland Tools, FFXIV Teamcraft, Gamer Escape, Mirapri, Saddlebag Exchange 또는 Lodestone에서 엽니다.
+- 의상 부위의 **아이템 링크**는 해당 아이템을 Garland Tools, FFXIV Teamcraft, Gamer Escape, Mirapri 또는 Lodestone에서 엽니다. 염료 카드의 링크는 Universalis, Garland Tools, FFXIV Teamcraft 또는 Saddlebag Exchange를 엽니다.
 
 이러한 링크 중 하나를 따라가면 사용자는 다른 누군가의 사이트에, 그들의 약관과 개인정보처리방침 아래에 있게 됩니다. 저희는 그들을 통제하지 않으며 그들에 대한 책임을 지지 않습니다.
 

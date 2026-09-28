@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-09-16
+**Zuletzt aktualisiert**: 2026-09-28
 
 ## 1. Einführung
 
@@ -72,6 +72,7 @@ Wir erheben ausdrücklich **nicht**:
 - ❌ Direktnachrichten
 - ❌ Sprachdaten
 - ❌ Bilder (im Arbeitsspeicher verarbeitet, nicht gespeichert)
+- ❌ `.chara`-Dateien (im Arbeitsspeicher verarbeitet, nicht gespeichert)
 - ❌ Charakternamen aus `.chara`-Dateien (nie auf Karten oder Embeds angezeigt, nie gespeichert)
 
 ### Bildverarbeitung
@@ -81,6 +82,18 @@ Wenn du `/extractor image` verwendest, wird dein hochgeladenes Bild:
 2. Auf dominante Farben analysiert
 3. **Sofort verworfen** nach der Verarbeitung
 4. **Niemals gespeichert** auf unseren Servern
+
+### Charakterdateien
+
+Wenn du `/swatch` oder `/glamour` verwendest, wird deine hochgeladene `.chara`-Datei:
+1. Von Discord heruntergeladen und im Arbeitsspeicher auf Cloudflares Edge-Servern gelesen
+2. Auf ihre Farben, Farbstoffe und Ausrüstung ausgelesen
+3. **Sofort verworfen** nach der Verarbeitung
+4. **Niemals gespeichert** auf unseren Servern
+
+Um die Ausrüstung zu benennen, sendet `/glamour` die Modellnummern der Ausrüstung aus der Datei
+und die ID ihres Gesichtsaccessoires an unsere eigene API, die sie bei XIVAPI nachschlägt. Sonst
+wird nichts aus der Datei gesendet, und nichts über dich oder dein Discord-Konto.
 
 ## 4. Wie wir deine Daten verwenden
 
@@ -138,6 +151,7 @@ Der Bot ist mit diesen Drittanbieter-Diensten verbunden:
 | Discord | Bot-Plattform, Authentifizierung | [Discord-Datenschutzrichtlinie](https://discord.com/privacy) |
 | Cloudflare | Hosting, Datenspeicherung (KV, D1), Ratenbegrenzung, Analyse | [Cloudflare-Datenschutzrichtlinie](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV-Marktbrett-Daten | [Universalis](https://universalis.app/) |
+| XIVAPI | FFXIV-Gegenstandsnamen für `/glamour` | [XIVAPI](https://xivapi.com/) |
 | Perspective API | Inhaltsmoderation (optional) | [Google-Datenschutzrichtlinie](https://policies.google.com/privacy) |
 
 Wir verkaufen, tauschen oder teilen deine personenbezogenen Daten nicht mit Drittanbietern zu

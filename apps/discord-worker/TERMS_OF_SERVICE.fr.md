@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour** : 2026-09-20
+**Dernière mise à jour** : 2026-09-28
 
 > L'application web sur xivdyetools.app a ses propres conditions : [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Le traitement des données est couvert par la [Politique de confidentialité](PRIVACY_POLICY.md).
 
@@ -26,6 +26,11 @@ XIV Dye Tools Discord Bot fournit :
 - **Favoris de palettes prédéfinies communautaires** : marquer et lister les palettes prédéfinies communautaires que vous aimez (`/preset favorite`)
 - **Palettes prédéfinies communautaires** : parcourir, soumettre et voter sur des palettes de couleurs créées par les utilisateurs
 - **Prix du marché** : prix du tableau des ventes en temps réel via l'API Universalis
+- **Comparaison et contraste de teintures** : comparer des teintures côte à côte et mesurer le contraste entre elles (`/comparison`, `/contrast`)
+- **Mélanges et dégradés** : mélanger deux teintures, ou créer un dégradé entre deux couleurs (`/mixer`, `/gradient`)
+- **Alternatives économiques** : trouver des teintures moins chères proches d'une teinture coûteuse (`/budget`)
+- **Couleurs de personnage** : associer les couleurs d'un fichier `.chara` à des teintures (`/swatch`)
+- **Lecteur de mirages** : lister l'équipement et les teintures d'un fichier `.chara` (`/glamour`)
 
 Le Bot est fourni gratuitement en tant qu'outil communautaire créé par des fans.
 
@@ -71,11 +76,13 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
 
 Ce Bot est un outil créé par des fans et n'est **pas affilié à, approuvé par, ou parrainé par Square Enix Co., Ltd.** FINAL FANTASY est une marque déposée de Square Enix Holdings Co., Ltd.
 
-Les données du jeu, y compris les noms de teintures, les couleurs et les méthodes d'acquisition, sont la propriété de Square Enix Co., Ltd. et sont utilisées dans le cadre d'un usage loyal (fair use) à des fins éducatives et informatives uniquement.
+Les données du jeu, y compris les noms de teintures et d'objets, les couleurs et les méthodes d'acquisition, sont la propriété de Square Enix Co., Ltd. et sont utilisées dans le cadre d'un usage loyal (fair use) à des fins éducatives et informatives uniquement.
 
 ### Services tiers
 
 Les données du tableau des ventes sont fournies par [Universalis](https://universalis.app/), un service tiers indépendant non affilié à Square Enix.
+
+Les noms d'objets pour `/glamour` sont recherchés via [XIVAPI](https://xivapi.com/), lui aussi un service tiers indépendant non affilié à Square Enix.
 
 ### Votre contenu
 

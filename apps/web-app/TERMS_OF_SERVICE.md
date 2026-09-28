@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-09-20 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
+**Last updated:** 2026-09-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
 your data is a separate document: [`PRIVACY.md`](PRIVACY.md). The Discord bot has its own terms:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
@@ -91,9 +91,11 @@ against the live site.
 Some features hand you off to services we don't run:
 
 - **Universalis** supplies market-board prices.
+- **XIVAPI** supplies the item names behind the gear in a `.chara` file.
 - **Discord** and **XIVAuth** handle sign-in; Discord also hosts our community server.
 - The **item links** on a glamour piece open that item on Garland Tools, FFXIV Teamcraft, Gamer
-  Escape, Mirapri, Saddlebag Exchange, or the Lodestone.
+  Escape, Mirapri, or the Lodestone; the links on a dye card open Universalis, Garland Tools,
+  FFXIV Teamcraft, or Saddlebag Exchange.
 
 Once you follow one of those links you are on someone else's site, under their terms and their
 privacy policy. We don't control them and aren't responsible for them.

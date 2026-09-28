@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
 
-**Last Updated**: September 16, 2026
+**Last Updated**: September 28, 2026
 
 ## 1. Introduction
 
@@ -61,6 +61,7 @@ We explicitly do **not** collect:
 - ❌ Direct messages
 - ❌ Voice data
 - ❌ Images (processed in-memory, not stored)
+- ❌ `.chara` files (processed in-memory, not stored)
 - ❌ Character names from `.chara` files (never displayed on cards or embeds, never stored)
 
 ### Image Processing
@@ -70,6 +71,16 @@ When you use `/extractor image`, your uploaded image is:
 2. Analyzed for dominant colors
 3. **Immediately discarded** after processing
 4. **Never stored** on our servers
+
+### Character Files
+
+When you use `/swatch` or `/glamour`, your uploaded `.chara` file is:
+1. Downloaded from Discord and read in-memory on Cloudflare's edge servers
+2. Read for its colors, dyes and equipment
+3. **Immediately discarded** after processing
+4. **Never stored** on our servers
+
+To name the gear, `/glamour` sends the equipment model numbers from the file and the id of its facewear to our own API, which looks them up in XIVAPI. Nothing else from the file is sent, and nothing about you or your Discord account.
 
 ## 4. How We Use Your Data
 
@@ -117,6 +128,7 @@ The Bot integrates with these third-party services:
 | Discord | Bot platform, authentication | [Discord Privacy Policy](https://discord.com/privacy) |
 | Cloudflare | Hosting, data storage (KV, D1), rate limiting, analytics | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV market board data | [Universalis](https://universalis.app/) |
+| XIVAPI | FFXIV item names for `/glamour` | [XIVAPI](https://xivapi.com/) |
 | Perspective API | Content moderation (optional) | [Google Privacy Policy](https://policies.google.com/privacy) |
 
 We do not sell, trade, or share your personal data with third parties for marketing purposes.

@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](PRIVACY_POLICY.md)
 
-**最后更新**：2026-09-16
+**最后更新**：2026-09-28
 
 ## 1. 引言
 
@@ -61,6 +61,7 @@
 - ❌ 私信内容
 - ❌ 语音数据
 - ❌ 图像（在内存中处理，不会存储）
+- ❌ `.chara` 文件（在内存中处理，不会存储）
 - ❌ 来自 `.chara` 文件的角色名称（绝不会在卡片或嵌入消息上显示，绝不会存储）
 
 ### 图像处理
@@ -70,6 +71,16 @@
 2. 被分析以提取主色
 3. 处理完成后**立即被丢弃**
 4. **绝不会存储**在我们的服务器上
+
+### 角色文件
+
+当您使用 `/swatch` 或 `/glamour` 时，您上传的 `.chara` 文件会：
+1. 从 Discord 下载，并在 Cloudflare 的边缘服务器上于内存中读取
+2. 被读取其中的颜色、染剂和装备
+3. 处理完成后**立即被丢弃**
+4. **绝不会存储**在我们的服务器上
+
+为了给装备命名，`/glamour` 会把文件中的装备型号编号和面部配饰的 ID 发送到我们自己的 API，由它在 XIVAPI 中查询。文件中的其他内容不会被发送，与您或您的 Discord 账户有关的信息也不会被发送。
 
 ## 4. 我们如何使用您的数据
 
@@ -117,6 +128,7 @@
 | Discord | 机器人平台、身份验证 | [Discord 隐私政策](https://discord.com/privacy) |
 | Cloudflare | 托管、数据存储（KV、D1）、速率限制、分析 | [Cloudflare 隐私政策](https://www.cloudflare.com/privacypolicy/) |
 | Universalis | FFXIV 市场布告板数据 | [Universalis](https://universalis.app/) |
+| XIVAPI | 用于 `/glamour` 的 FFXIV 物品名称 | [XIVAPI](https://xivapi.com/) |
 | Perspective API | 内容审核（可选） | [Google 隐私政策](https://policies.google.com/privacy) |
 
 我们不会出于营销目的出售、交易或与第三方共享您的个人数据。

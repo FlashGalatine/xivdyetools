@@ -23,8 +23,8 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.13.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.7.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.13.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.7.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -113,6 +113,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.13.2 | Sep 2026 | Documents only — the Privacy Guide and Terms of Service catch up with the Glamour Reader in all six languages: it is named among the on-device tools, the gear lookup says it sends the facewear id and is answered from XIVAPI, rewritten Acquisition lines are listed as stored on the device, and the "Open in…" menu is the Glamour Reader's. No web-app source changed |
 | v5.13.1 | Sep 2026 | Tests only — `e2e/swatch-chara-session.spec.ts` covers both TRIBE & GENDER selectors, a file that names no tribe or gender, and a lock left in storage by a build before 5.12.7; its reload test waits for the app to boot (it raced the boot and failed when that took over five seconds). The deployed bundle differs only in its version string |
 | **v5.13.0** | **Sep 2026** | **The Glamour Reader, tenth tool (`/glamour`, key 0): DYES ON THIS GLAMOUR moves out of the Swatch Matcher behind an IN THE GAME verdict, each piece names the twin it can be worn as (twin picker), and Copy list / Export .md open an export sheet with each piece's GPOSERS Acquisition line — editable, kept on the device by gear hash. Two identical rings write once as Rings** |
 | v5.12.7 | Sep 2026 | Swatch Matcher keeps a loaded `.chara` file when you leave the tool or switch language (it lives in a session-only `CharaSessionService` now, never in browser storage), and TRIBE & GENDER no longer stay locked after the file is gone — that lock was a persisted flag that outlived the file. While a file is loaded, `ConfigController` pins the Swatch tribe/gender to it through a reset, an import or another tab's save. `chara-import.ts` split into file card, THIS CHARACTER sheet and DYES ON THIS GLAMOUR; the glamour block is its own on-demand chunk, taking the swatch chunk from 97.7% to 72.8% of its budget |
@@ -172,6 +173,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.7.1 | Sep 2026 | Documents only — the Privacy Policy and Terms of Service catch up with `/swatch` and `/glamour` in all six languages: how an uploaded `.chara` file is handled, what `/glamour` sends to api-worker, XIVAPI as a third-party service, and the commands the Terms had not listed. No discord-worker source changed, no `register-commands` |
 | **v5.7.0** | **Sep 2026** | **`/glamour`, the Glamour Reader in the bot: a `.chara` attachment in, card 2a out (the dyed pieces in slot order, each named as the twin the character can wear, with the in-game verdict) and every piece in the GPOSERS form in the embed. Resolves through api-worker's `POST /v1/chara/resolve` over the `UNIVERSALIS_PROXY` binding; the `.chara` attachment guards are shared with `/swatch` (`utils/chara-attachment.ts`)** |
 | v5.6.5 | Sep 2026 | `/swatch` (core 5.7.0, via bot-logic) — lip, face-paint, highlight and tattoo rows use the creator's colors; a custom skin or hair color reads OFF GRID again. No discord-worker source changed, no `register-commands` |
 | v5.6.4 | Sep 2026 | `/swatch` (core 5.6.0, via bot-logic) — `EYES·L` / `EYES·R` no longer swapped for heterochromia, no false OFF GRID rows, no dyes from empty slots on the gear line. No discord-worker source changed, no `register-commands` |

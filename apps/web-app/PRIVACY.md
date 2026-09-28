@@ -2,12 +2,13 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-09-20 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-09-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
-Comparison, Gradient, Mixer, Accessibility checker, Budget finder and Swatch Matcher — do their work
-on your device. Nothing you upload, pick or type is sent anywhere unless a section below says so,
+Comparison, Gradient, Mixer, Accessibility checker, Budget finder, Swatch Matcher and Glamour
+Reader — do their work on your device. Nothing you upload, pick or type is sent anywhere unless
+a section below says so,
 and the sections below are the complete list.
 
 ## Images and camera captures
@@ -31,17 +32,21 @@ and the sections below are the complete list.
   the `.chara` file name. That name lives in your browser's storage next to your other saved
   collections. It is never uploaded, and the community path above never reads it. Rename or delete
   the record, or clear your site data, and it is gone.
-- To name the gear on the glamour block, the app asks our API for the item behind each slot. The
-  request carries only the equipment **model numbers** from the file (a dozen small integers per
-  file) — not the file, not the name, not the colours — and the item icons come back from the same
-  host (`data.xivdyetools.app`).
+- To name the gear in the Glamour Reader, the app asks our API for the item behind each slot. The
+  request carries only the equipment **model numbers** from the file and the id of its facewear
+  (a dozen small integers per file) — not the file, not the name, not the colours, not the dyes.
+  Our API looks those numbers up in [XIVAPI](https://xivapi.com/), a community game-data service,
+  which is sent the numbers and nothing about you. The item names, where each item is obtained,
+  and the item icons come back from the same host (`data.xivdyetools.app`).
 
 ## What is stored on your device
 
 `localStorage` holds lightweight preferences and your own saved work: theme, language, per-tool
 settings (including the analytics switch below), favourite dyes, saved palettes and collections,
-and — if you sign in — your community-presets session token. Nothing here is a tracking identifier.
-"Reset settings" in Advanced Settings and your browser's site-data controls clear it.
+any Acquisition lines you rewrote in the Glamour Reader's "Glamour list", and — if you sign in —
+your community-presets session token. Nothing here is a tracking identifier. "Reset settings" in
+Advanced Settings and your browser's site-data controls clear it. "Reset all" in the Glamour list
+deletes the rewritten lines for that outfit.
 
 `IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
 not repeated. It holds no images — an earlier version of the app kept your last extractor image
@@ -78,7 +83,7 @@ cookies.
 ### Links that take you to other sites
 
 Separately from the list above, some buttons **navigate** you to a community database rather than
-fetching anything in the background. The Swatch Matcher's "Open in…" menu on a glamour piece opens
+fetching anything in the background. The Glamour Reader's "Open in…" menu on a glamour piece opens
 [Mirapri](https://mirapri.com/), [Garland Tools](https://www.garlandtools.org/),
 [Teamcraft](https://ffxivteamcraft.com/), [Gamer Escape](https://ffxiv.gamerescape.com/) or the
 Lodestone; a dye result card can open Universalis, Garland Tools, Teamcraft or

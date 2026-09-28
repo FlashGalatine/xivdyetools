@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](TERMS_OF_SERVICE.md)
 
-**最后更新**：2026-09-20
+**最后更新**：2026-09-28
 
 > 网站 xivdyetools.app 有自己的条款：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。数据处理方式见[隐私政策](PRIVACY_POLICY.md)。
 
@@ -26,6 +26,11 @@ XIV Dye Tools Discord 机器人提供：
 - **社区预设收藏**：标记并列出您喜欢的社区预设（`/preset favorite`）
 - **社区预设**：浏览、提交并为用户创建的调色板投票
 - **市场定价**：通过 Universalis API 提供的实时市场布告板价格
+- **染剂比较与对比度**：并排比较染剂，并测量它们之间的对比度（`/comparison`、`/contrast`）
+- **混合与渐变**：混合两种染剂，或在两种颜色之间创建渐变（`/mixer`、`/gradient`）
+- **平价替代**：寻找与高价染剂相近、价格更低的染剂（`/budget`）
+- **角色颜色**：将 `.chara` 文件中的颜色与染剂进行匹配（`/swatch`）
+- **幻化查看器**：列出 `.chara` 文件中的装备和染剂（`/glamour`）
 
 本机器人作为同人社区工具免费提供。
 
@@ -71,11 +76,13 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
 
 本机器人是一个同人工具，**与 Square Enix Co., Ltd. 没有从属关系，也未获得其认可或赞助。** FINAL FANTASY 是 Square Enix Holdings Co., Ltd. 的注册商标。
 
-游戏数据，包括染剂名称、颜色和获取方式，均为 Square Enix Co., Ltd. 的财产，仅在合理使用范围内用于教育和信息说明目的。
+游戏数据，包括染剂名称、物品名称、颜色和获取方式，均为 Square Enix Co., Ltd. 的财产，仅在合理使用范围内用于教育和信息说明目的。
 
 ### 第三方服务
 
 市场布告板数据由 [Universalis](https://universalis.app/) 提供，这是一项独立的第三方服务，与 Square Enix 没有从属关系。
+
+`/glamour` 的物品名称通过 [XIVAPI](https://xivapi.com/) 查询，它同样是一项独立的第三方服务，与 Square Enix 没有从属关系。
 
 ### 您的内容
 

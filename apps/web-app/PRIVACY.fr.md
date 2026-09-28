@@ -2,12 +2,13 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-09-20 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-09-28 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
 l'Explorateur d'harmonies, la Comparaison de Teintures, le Constructeur de Dégradé, le
-Mélangeur de Teintures, la Vérification d'accessibilité, les Suggestions Budget et le Nuancier —
+Mélangeur de Teintures, la Vérification d'accessibilité, les Suggestions Budget, le Nuancier et le
+Lecteur de mirages —
 effectuent leur travail sur votre appareil. Rien de ce que vous importez, choisissez ou saisissez
 n'est envoyé où que ce soit, sauf si une section ci-dessous le précise, et les sections ci-dessous
 en forment la liste complète.
@@ -36,19 +37,25 @@ en forment la liste complète.
   vos autres collections enregistrées. Il n'est jamais téléversé, et le chemin communautaire
   ci-dessus ne le lit jamais. Renommez ou supprimez l'enregistrement, ou effacez les données de
   votre site, et il disparaît.
-- Pour nommer l'équipement sur le bloc de mirage, l'application interroge notre API pour connaître
-  l'objet derrière chaque emplacement. La requête ne transporte que les **numéros de modèle** de
-  l'équipement provenant du fichier (une douzaine de petits entiers par fichier) — ni le fichier,
-  ni le nom, ni les couleurs — et les icônes des objets reviennent depuis le même hôte
+- Pour nommer l'équipement dans le Lecteur de mirages, l'application interroge notre API pour
+  connaître l'objet derrière chaque emplacement. La requête ne transporte que les **numéros de
+  modèle** de l'équipement provenant du fichier et l'identifiant de son accessoire de visage (une
+  douzaine de petits entiers par fichier) — ni le fichier, ni le nom, ni les couleurs, ni les
+  teintures. Notre API recherche ces numéros dans [XIVAPI](https://xivapi.com/), un service
+  communautaire de données du jeu, qui reçoit ces numéros et rien vous concernant. Les noms des
+  objets, la façon d'obtenir chaque objet et les icônes des objets reviennent depuis le même hôte
   (`data.xivdyetools.app`).
 
 ## Ce qui est stocké sur votre appareil
 
 `localStorage` conserve des préférences légères et votre propre travail enregistré : thème, langue,
 réglages par outil (y compris le commutateur d'analyses ci-dessous), teintures favorites, palettes
-et collections enregistrées, et — si vous vous connectez — le jeton de session de vos palettes
-prédéfinies communautaires. Rien ici n'est un identifiant de suivi. « Réinitialiser les paramètres »
-dans les Paramètres avancés et les contrôles de données de site de votre navigateur l'effacent.
+et collections enregistrées, les lignes d'obtention que vous avez réécrites dans la « Liste
+d'équipement » du Lecteur de mirages, et — si vous vous connectez — le jeton de session de vos
+palettes prédéfinies communautaires. Rien ici n'est un identifiant de suivi. « Réinitialiser les
+paramètres » dans les Paramètres avancés et les contrôles de données de site de votre navigateur
+l'effacent. « Tout réinitialiser » dans la Liste d'équipement supprime les lignes réécrites de
+cette tenue.
 
 `IndexedDB` conserve une seule chose : un cache des prix du tableau des ventes déjà récupérés, afin
 de ne pas répéter la même recherche. Il ne contient aucune image — une version antérieure de
@@ -92,7 +99,7 @@ publicitaire ou social, et aucun cookie.
 
 Séparément de la liste ci-dessus, certains boutons vous font **naviguer** vers une base de données
 communautaire plutôt que de récupérer quoi que ce soit en arrière-plan. Le menu « Ouvrir dans… » du
-Nuancier sur une pièce de mirage ouvre [Mirapri](https://mirapri.com/),
+Lecteur de mirages sur une pièce de mirage ouvre [Mirapri](https://mirapri.com/),
 [Garland Tools](https://www.garlandtools.org/), [Teamcraft](https://ffxivteamcraft.com/),
 [Gamer Escape](https://ffxiv.gamerescape.com/) ou le Lodestone ; une fiche de résultat de teinture
 peut ouvrir Universalis, Garland Tools, Teamcraft ou [Saddlebag Exchange](https://saddlebagexchange.com/).
