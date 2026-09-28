@@ -71,6 +71,10 @@
       "name": "`/swatch <file> [order] [slot]`",
       "description": "`.chara`ファイル（Anamnesis / Ktisis）からキャラクターの色をカララントにマッチング。\n• 肌、髪、メッシュ、瞳、唇、フェイスペイント、刺青／リムバルを読み取ります\n• `slot`：いずれかの色に最も近い5つのカララントを表示"
     },
+    "glamour": {
+      "name": "`/glamour <file>`",
+      "description": "`.chara`ファイル（Anamnesis / Ktisis）のミラプリを一覧表示。\n• 染色した各装備を、実際に装備できるアイテム名で表示\n• GPOSERS形式の全リストをそのままコピー可能"
+    },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
       "description": "ボットの設定を管理します。\n• `set`：言語、ブレンド、マッチング、結果件数、部族／性別、ワールド、カード表示項目、テーマ\n• `filters`：特定のカララントグループを結果から除外\n• `reset`：個別の設定、またはすべて"
@@ -598,7 +602,58 @@
     "swatchTitle": "キャラクターの色見本",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
     "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。",
-    "perDe": "GIL/ΔE"
+    "perDe": "GIL/ΔE",
+    "glamourTitle": "ミラプリ",
+    "glamourPieces_one": "染色済み{n}部位",
+    "glamourPieces_other": "染色済み{n}部位",
+    "glamourWorn_one": "{n}部位",
+    "glamourWorn_other": "{n}部位",
+    "glamourDyes_one": "{n}色",
+    "glamourDyes_other": "{n}色",
+    "glamourNoDyes": "染色なし",
+    "glamourLooks": "+{n} 同型",
+    "glamourOneLook": "唯一",
+    "glamourStatusTwin": "代替",
+    "glamourStatusOk": "問題なし",
+    "glamourStatusDye": "染色不可",
+    "glamourStatusGlamour": "投影不可",
+    "glamourStatusWear": "装備不可",
+    "glamourFootShown_one": "染色済み{n}部位中{s}部位",
+    "glamourFootShown_other": "染色済み{n}部位中{s}部位",
+    "glamourFootShownWorn_one": "{n}部位中{s}部位",
+    "glamourFootShownWorn_other": "{n}部位中{s}部位",
+    "glamourFootTwins_one": "別アイテムで表示 {n}",
+    "glamourFootTwins_other": "別アイテムで表示 {n}",
+    "glamourFootBlocked_one": "解決不可 {n}",
+    "glamourFootBlocked_other": "解決不可 {n}",
+    "glamourNamedLead": "別アイテムで表示：",
+    "glamourFixedDye": "{name}（{other}はこの染色ができないため）",
+    "glamourFixedGlamour": "{name}（{other}は投影できないため）",
+    "glamourFixedWear": "{name}（{other}はこのキャラクターが装備できないため）",
+    "glamourBlockedLead": "解決不可：",
+    "glamourBlockedDye": "{name}（ファイルの染色を施せません）",
+    "glamourBlockedGlamour": "{name}（投影できません）",
+    "glamourBlockedWear": "{name}（このキャラクターは装備できません）",
+    "glamourBlockedNoItem": "{name}（対応するアイテムのないモデル）",
+    "glamourCompany": "対応するグランドカンパニーへの所属が必要：{list}",
+    "glamourNoItemName": "モデル {key}",
+    "glamourNoGear": "このファイルには装備がありません。",
+    "glamourResolveFailed": "アイテム情報を取得できませんでした。1分後にもう一度お試しください。",
+    "glamourManual": "キャラクターファイルについて：",
+    "glamourSlot": {
+      "MainHand": "武器",
+      "OffHand": "サブ",
+      "HeadGear": "頭",
+      "Body": "胴",
+      "Hands": "手",
+      "Legs": "脚",
+      "Feet": "足",
+      "Ears": "耳",
+      "Neck": "首",
+      "Wrists": "腕",
+      "RightRing": "右指",
+      "LeftRing": "左指"
+    }
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",
@@ -767,6 +822,14 @@
         },
         "slot": {
           "description": "代わりに1つのスロットの最も近い5色を表示"
+        }
+      }
+    },
+    "glamour": {
+      "description": "キャラクターファイルをミラプリとして表示：各装備、染色、装備できるかどうか",
+      "options": {
+        "file": {
+          "description": ".charaキャラクターファイル（AnamnesisまたはKtisisの書き出し）"
         }
       }
     },

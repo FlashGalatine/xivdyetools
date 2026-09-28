@@ -19,7 +19,6 @@
  */
 
 import {
-  CharacterColorService,
   ColorService,
   parseCharaFile,
   resolveCharaColors,
@@ -41,6 +40,7 @@ import {
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import type { EmbedData } from './types.js';
+import { genderSymbol, getCharacterColors, producerToken, tribeDisplay } from './chara-identity.js';
 
 // ============================================================================
 // Types
@@ -97,18 +97,6 @@ export type SwatchResult =
 // Internals
 // ============================================================================
 
-/**
- * Shared palette-sheet service (data is bundled — no I/O). Constructed on
- * first use, NOT at module load: consumer test suites mock
- * `@xivdyetools/core` minimally, and an import-time `new` breaks every suite
- * whose mock lacks the class.
- */
-let characterColors: CharacterColorService | null = null;
-function getCharacterColors(): CharacterColorService {
-  characterColors ??= new CharacterColorService();
-  return characterColors;
-}
-
 const ROW_CAP = 5;
 
 /** kind → slot-short locale key (leftEye/rightEye share the eyes label). */
@@ -161,12 +149,6 @@ function nearestDye(hex: string): { dye: Dye; deltaE: number } {
   return best!;
 }
 
-/** "SeekerOfTheSun" → "SEEKER OF THE SUN". */
-function tribeDisplay(tribe: string | null): string {
-  if (!tribe) return '';
-  return tribe.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
-}
-
 /**
  * Strips the Ktisis nickname before a character record leaves this module —
  * `SwatchResult.character` must never carry the character's name (PRIVACY_POLICY §3).
@@ -175,25 +157,6 @@ function withoutNickname(character: ResolvedCharaCharacter): SwatchCharacter {
   const { nickname, ...safeCharacter } = character;
   void nickname;
   return safeCharacter;
-}
-
-/**
- * Producer token for the card's identifier line. `producer` is the file's raw
- * `TypeName` — free text the uploader controls — so only the known exporter
- * families print, as a fixed token; anything else is omitted rather than
- * rendered (the allowlist discipline core already applies to Race / Tribe /
- * Gender). Order matters only for a string naming several families.
- */
-const PRODUCER_TOKENS: ReadonlyArray<readonly [needle: string, token: string]> = [
-  ['brio', 'BRIO'],
-  ['ktisis', 'KTISIS'],
-  ['anamnesis', 'ANAMNESIS'],
-];
-
-function producerToken(producer: string | null): string | null {
-  if (!producer) return null;
-  const haystack = producer.toLowerCase();
-  return PRODUCER_TOKENS.find(([needle]) => haystack.includes(needle))?.[1] ?? null;
 }
 
 interface LiveRow {
@@ -280,10 +243,8 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       return { ok: false, error: 'NO_LIVE_SLOTS', errorMessage: t.t('card.swatchNoSlots') };
     }
 
-    const genderSymbol =
-      character.gender === 'Male' ? '♂' : character.gender === 'Female' ? '♀' : '';
     const charSub = [
-      [tribeDisplay(character.tribe), genderSymbol].filter(Boolean).join(' '),
+      [tribeDisplay(character.tribe), genderSymbol(character.gender)].filter(Boolean).join(' '),
       producerToken(character.producer),
     ]
       .filter(Boolean)

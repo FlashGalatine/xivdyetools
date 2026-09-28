@@ -71,6 +71,10 @@
       "name": "`/swatch <file> [order] [slot]`",
       "description": "将角色的颜色与 `.chara` 文件（Anamnesis 或 Ktisis）中的染剂进行匹配。\n• 读取皮肤、头发、挑染、眼睛、嘴唇、彩绘和纹身/角膜环\n• `slot`：显示其中一种颜色的 5 个最接近的染剂"
     },
+    "glamour": {
+      "name": "`/glamour <file>`",
+      "description": "列出 `.chara` 文件（Anamnesis 或 Ktisis）所穿戴的幻化。\n• 每件已染色装备，以实际能穿戴的物品命名\n• GPOSERS 格式的完整列表，可直接复制"
+    },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
       "description": "管理机器人偏好设置。\n• `set`：语言、混合模式、匹配方法、结果数量、部族/性别、服务器、卡片数值、主题\n• `filters`：从结果中排除染剂组\n• `reset`：单个设置，或全部重置"
@@ -598,7 +602,58 @@
     "swatchTitle": "角色色板",
     "swatchNoSlots": "此文件中没有有效的颜色部位。",
     "swatchSlotMissing": "{slot}在此文件中不是有效部位。",
-    "perDe": "GIL/ΔE"
+    "perDe": "GIL/ΔE",
+    "glamourTitle": "幻化",
+    "glamourPieces_one": "已染色 {n} 件",
+    "glamourPieces_other": "已染色 {n} 件",
+    "glamourWorn_one": "{n} 件装备",
+    "glamourWorn_other": "{n} 件装备",
+    "glamourDyes_one": "{n} 种染剂",
+    "glamourDyes_other": "{n} 种染剂",
+    "glamourNoDyes": "未染色",
+    "glamourLooks": "+{n} 同款",
+    "glamourOneLook": "唯一",
+    "glamourStatusTwin": "替代",
+    "glamourStatusOk": "正常",
+    "glamourStatusDye": "无法染色",
+    "glamourStatusGlamour": "无法幻化",
+    "glamourStatusWear": "无法穿戴",
+    "glamourFootShown_one": "已染色 {n} 件中的 {s} 件",
+    "glamourFootShown_other": "已染色 {n} 件中的 {s} 件",
+    "glamourFootShownWorn_one": "{n} 件中的 {s} 件",
+    "glamourFootShownWorn_other": "{n} 件中的 {s} 件",
+    "glamourFootTwins_one": "{n} 件以同外观装备代替",
+    "glamourFootTwins_other": "{n} 件以同外观装备代替",
+    "glamourFootBlocked_one": "{n} 件无法解决",
+    "glamourFootBlocked_other": "{n} 件无法解决",
+    "glamourNamedLead": "以同外观装备代替：",
+    "glamourFixedDye": "{name}（代替{other}，它无法使用这些染剂）",
+    "glamourFixedGlamour": "{name}（代替{other}，它无法用于幻化）",
+    "glamourFixedWear": "{name}（代替{other}，这个角色无法穿戴它）",
+    "glamourBlockedLead": "无法解决：",
+    "glamourBlockedDye": "{name}（它无法使用文件中的染剂）",
+    "glamourBlockedGlamour": "{name}（它无法用于幻化）",
+    "glamourBlockedWear": "{name}（这个角色无法穿戴它）",
+    "glamourBlockedNoItem": "{name}（没有对应物品的模型）",
+    "glamourCompany": "需要所属对应的大国防联军：{list}",
+    "glamourNoItemName": "模型 {key}",
+    "glamourNoGear": "这个文件没有穿戴装备。",
+    "glamourResolveFailed": "暂时无法查询物品，请一分钟后再试。",
+    "glamourManual": "关于角色文件：",
+    "glamourSlot": {
+      "MainHand": "武器",
+      "OffHand": "副手",
+      "HeadGear": "头部",
+      "Body": "身体",
+      "Hands": "手部",
+      "Legs": "腿部",
+      "Feet": "脚部",
+      "Ears": "耳饰",
+      "Neck": "项链",
+      "Wrists": "手镯",
+      "RightRing": "右戒",
+      "LeftRing": "左戒"
+    }
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",
@@ -767,6 +822,14 @@
         },
         "slot": {
           "description": "改为显示单个部位的五个最接近染剂"
+        }
+      }
+    },
+    "glamour": {
+      "description": "将角色文件作为幻化读取：每件装备、染剂，以及能否穿戴",
+      "options": {
+        "file": {
+          "description": ".chara 角色文件（Anamnesis 或 Ktisis 导出）"
         }
       }
     },

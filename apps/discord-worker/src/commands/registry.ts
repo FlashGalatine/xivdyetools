@@ -33,6 +33,7 @@ export const COMMAND_REGISTRY: readonly CommandRegistryEntry[] = [
   { name: 'gradient', category: 'color-tools' },
   { name: 'extractor', category: 'color-tools' },
   { name: 'swatch', category: 'color-tools' },
+  { name: 'glamour', category: 'color-tools' },
 
   // Dye database
   { name: 'dye', category: 'dye-database' },

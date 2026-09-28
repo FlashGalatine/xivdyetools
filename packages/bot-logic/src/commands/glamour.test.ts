@@ -1,0 +1,261 @@
+/**
+ * /glamour — the Glamour Reader in the bot (design 2a + its embed).
+ *
+ * The stress file from the design: a Midlander woman whose file names three
+ * items she can't wear as saved (each fixed by a twin), one free choice, one
+ * piece nothing fixes, an undyed pair of boots, and a quiver that is the
+ * bow's own off-hand model.
+ */
+import { describe, it, expect, vi } from 'vitest';
+import type { CharaGearModel } from '@xivdyetools/core';
+import { executeGlamour, type GlamourInput, type GlamourResolveAnswer } from './glamour.js';
+
+/** Stain IDs: Snow White 1, Wine Red 12, Dalamud Red 10, Coral Pink 13, Jet Black 102, Metallic Gold 113. */
+const STRESS = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  Nickname: 'Real Name',
+  Race: 'Hyur',
+  Tribe: 'Midlander',
+  Gender: 'Feminine',
+  REyeColor: 42,
+  MainHand: { ModelSet: 201, ModelBase: 20, ModelVariant: 1, DyeId: 113, DyeId2: 0 },
+  OffHand: { ModelSet: 201, ModelBase: 60, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 1, DyeId2: 0 },
+  Body: { ModelBase: 812, ModelVariant: 2, DyeId: 12, DyeId2: 10 },
+  Hands: { ModelBase: 640, ModelVariant: 1, DyeId: 102, DyeId2: 13 },
+  Legs: { ModelBase: 777, ModelVariant: 1, DyeId: 102, DyeId2: 0 },
+  Feet: { ModelBase: 99, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+});
+
+const names = (en: string, ja = en) => ({ en, ja, de: en, fr: en });
+const rules = (itemIds: number[], over: Partial<{ dyeCount: number; glamourable: boolean; wearMask: number; grandCompany: number }> = {}) => ({
+  itemIds,
+  dyeCount: 1,
+  glamourable: true,
+  wearMask: 0xffff,
+  grandCompany: 0,
+  ...over,
+});
+const MALE_ONLY = 0x5555;
+const FEMALE_ONLY = 0xaaaa;
+const VIERA_ONLY = 0xc000;
+
+const ANSWER: GlamourResolveAnswer = {
+  items: {
+    MainHand: {
+      itemId: 7863,
+      names: names('Curtana Zenith'),
+      alternates: [{ itemId: 25000, names: names('Curtana Zenith Replica'), acquisition: 'Zodiac Weapons Saga' }],
+      rules: [rules([7863], { glamourable: false }), rules([25000])],
+      acquisition: 'Zodiac Weapons Saga',
+    },
+    OffHand: { itemId: 7863, names: names('Curtana Zenith'), alternates: [], viaMainHand: true, rules: [] },
+    HeadGear: {
+      itemId: 372,
+      names: names('Dated Hempen Coif', 'ヘンプコイフ(旧)'),
+      alternates: [
+        { itemId: 2629, names: names('Hempen Coif', 'ヘンプコイフ'), acquisition: 'Crafted (WVR Lvl. 1)' },
+        { itemId: 2630, names: names('Hempen Coif', 'ヘンプコイフ') },
+      ],
+      rules: [rules([372], { dyeCount: 0 }), rules([2629, 2630])],
+    },
+    Body: {
+      itemId: 8001,
+      names: names('Lord’s Yukata'),
+      alternates: [{ itemId: 8002, names: names('Lady’s Yukata') }],
+      rules: [rules([8001], { dyeCount: 2, wearMask: MALE_ONLY }), rules([8002], { dyeCount: 2, wearMask: FEMALE_ONLY })],
+    },
+    Hands: {
+      itemId: 9001,
+      names: names('Augmented Deepshadow Gloves of Striking'),
+      alternates: [{ itemId: 9002, names: names('Deepshadow Gloves of Striking') }],
+      rules: [rules([9001, 9002], { dyeCount: 2 })],
+    },
+    Legs: {
+      itemId: 9500,
+      names: names('Viera Gaskins'),
+      alternates: [],
+      rules: [rules([9500], { wearMask: VIERA_ONLY })],
+    },
+    Feet: { itemId: 3000, names: names('Hempen Boots'), alternates: [], rules: [rules([3000])] },
+  },
+};
+
+const input = (over: Partial<GlamourInput> = {}): GlamourInput => ({
+  fileText: STRESS,
+  locale: 'en',
+  resolve: vi.fn(async () => ANSWER),
+  ...over,
+});
+
+/** Text content of every <text> run, in document order. */
+const svgTexts = (svg: string): string[] => [...svg.matchAll(/<text [^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
+
+describe('executeGlamour', () => {
+  it('asks the resolver for every worn piece, weapons with their set', async () => {
+    const i = input();
+    await executeGlamour(i);
+    const gear = (i.resolve as ReturnType<typeof vi.fn>).mock.calls[0][0] as CharaGearModel[];
+    expect(gear.map((g) => g.slot)).toEqual(['MainHand', 'OffHand', 'HeadGear', 'Body', 'Hands', 'Legs', 'Feet']);
+    expect(gear[0]).toEqual({ slot: 'MainHand', set: 201, base: 20, variant: 1 });
+  });
+
+  it('draws the dyed pieces in slot order, each named as the twin it can be worn as', async () => {
+    const result = await executeGlamour(input());
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const t = svgTexts(result.svgString);
+
+    expect(t.filter((s) => ['WEAPON', 'HEAD', 'BODY', 'HANDS', 'LEGS'].includes(s))).toEqual([
+      'WEAPON',
+      'HEAD',
+      'BODY',
+      'HANDS',
+      'LEGS',
+    ]);
+    // The boots take no dye and the quiver is the bow: neither is a row
+    expect(t).not.toContain('FEET');
+    expect(t).not.toContain('OFF HAND');
+    expect(t).toContain('Curtana Zenith Replica');
+    expect(t).toContain('Hempen Coif');
+    expect(t).toContain('Lady’s Yukata');
+    expect(t).not.toContain('Dated Hempen Coif');
+    expect(t).not.toContain('Lord’s Yukata');
+  });
+
+  it('marks three twins, one free choice, and a Viera-only piece nothing fixes', async () => {
+    const result = await executeGlamour(input());
+    if (!result.ok) throw new Error(result.errorMessage);
+    const t = svgTexts(result.svgString);
+
+    expect(t.filter((s) => s === 'TWIN')).toHaveLength(3);
+    expect(t).toContain('OK');
+    expect(t).toContain('VIERA');
+    expect(t).toContain('+2 LOOK');
+    expect(t).toContain('ONE LOOK');
+  });
+
+  it('heads the card with the counts and the file by producer and tribe', async () => {
+    const result = await executeGlamour(input());
+    if (!result.ok) throw new Error(result.errorMessage);
+    const t = svgTexts(result.svgString);
+
+    expect(t).toContain('5 dyed pieces · 6 dyes');
+    expect(t).toContain('ANAMNESIS · MIDLANDER ♀');
+    expect(t.join(' ')).toContain('5 of 5 dyed pieces · 3 named from a twin · 1 with no fix');
+  });
+
+  it('never prints the character name', async () => {
+    const result = await executeGlamour(input());
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(result.svgString).not.toContain('Real Name');
+    expect(JSON.stringify(result.embed)).not.toContain('Real Name');
+  });
+
+  it('keeps five rows and counts the rest in the footer', async () => {
+    const seven = JSON.stringify({
+      ...(JSON.parse(STRESS) as Record<string, unknown>),
+      Feet: { ModelBase: 99, ModelVariant: 1, DyeId: 1, DyeId2: 0 },
+      Ears: { ModelBase: 5, ModelVariant: 1 },
+      Wrists: { ModelBase: 7, ModelVariant: 1 },
+    });
+    const result = await executeGlamour(input({ fileText: seven }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    const t = svgTexts(result.svgString);
+
+    expect(t).not.toContain('FEET');
+    expect(t.join(' ')).toContain('5 of 6 dyed pieces');
+  });
+
+  it('writes every piece in the GPOSERS form in the embed', async () => {
+    const result = await executeGlamour(input());
+    if (!result.ok) throw new Error(result.errorMessage);
+    const d = result.embed.description ?? '';
+
+    expect(result.embed.title).toBe('Glamour · 5 dyed pieces');
+    expect(d).toContain('**Glamour Items:**');
+    expect(d).toContain('**Main Hand:** Curtana Zenith Replica\nDye 1: Metallic Gold\nAcquisition: Zodiac Weapons Saga');
+    expect(d).toContain('**Head:** Hempen Coif\nDye 1: Snow White\nAcquisition: Crafted (WVR Lvl. 1)');
+    expect(d).toContain('**Body:** Lady’s Yukata\nDye 1: Wine Red\nDye 2: Dalamud Red\nAcquisition:');
+    // Undyed pieces are in the list too — the embed carries what the cap drops
+    expect(d).toContain('**Feet:** Hempen Boots\nAcquisition:');
+    expect(d).not.toContain('Off Hand');
+  });
+
+  it('says in the embed which pieces were named from a twin, and why', async () => {
+    const result = await executeGlamour(input());
+    if (!result.ok) throw new Error(result.errorMessage);
+    const d = result.embed.description ?? '';
+
+    expect(d).toContain('Named from a twin:');
+    expect(d).toContain("Hempen Coif (not Dated Hempen Coif, which can't take these dyes)");
+    expect(d).toContain("Curtana Zenith Replica (not Curtana Zenith, which can't be a glamour)");
+    expect(d).toContain("Lady’s Yukata (not Lord’s Yukata, which this character can't wear)");
+    expect(d).toContain("No fix: Viera Gaskins (this character can't wear it)");
+    expect(d).toContain('/manual topic:👤');
+    expect(d).toContain('https://xivdyetools.app/glamour');
+  });
+
+  it('writes two identical rings once, as Rings', async () => {
+    const ringed = JSON.stringify({
+      ...(JSON.parse(STRESS) as Record<string, unknown>),
+      RightRing: { ModelBase: 50, ModelVariant: 1 },
+      LeftRing: { ModelBase: 50, ModelVariant: 1 },
+    });
+    const ring = { itemId: 4000, names: names('Silver Ring'), alternates: [], rules: [rules([4000])] };
+    const answer: GlamourResolveAnswer = { items: { ...ANSWER.items, RightRing: ring, LeftRing: ring } };
+    const result = await executeGlamour(input({ fileText: ringed, resolve: async () => answer }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    const d = result.embed.description ?? '';
+
+    expect(d).toContain('**Rings:** Silver Ring');
+    expect(d).not.toContain('Right Ring');
+    expect(d).not.toContain('Left Ring');
+  });
+
+  it('speaks the requested locale on the card', async () => {
+    const result = await executeGlamour(input({ locale: 'ja' }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    const t = svgTexts(result.svgString);
+
+    expect(t).toContain('ヘンプコイフ');
+    expect(t).toContain('頭');
+  });
+
+  it('draws a name the fonts cannot draw in English, and keeps it in the embed', async () => {
+    const kanji: GlamourResolveAnswer = {
+      items: { ...ANSWER.items, Legs: { ...ANSWER.items.Legs!, names: names('Viera Gaskins', 'ヴィエラ・脚甲') } },
+    };
+    const result = await executeGlamour(
+      input({ locale: 'ja', resolve: async () => kanji, canDraw: (text) => !text.includes('脚甲') })
+    );
+    if (!result.ok) throw new Error(result.errorMessage);
+
+    expect(svgTexts(result.svgString)).toContain('Viera Gaskins');
+    expect(result.svgString).not.toContain('脚甲');
+    expect(result.embed.description).toContain('ヴィエラ・脚甲');
+  });
+
+  it('answers a file it cannot read with the parse error', async () => {
+    const result = await executeGlamour(input({ fileText: 'not json' }));
+    expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
+  });
+
+  it('answers a file that wears nothing without calling the resolver', async () => {
+    const i = input({ fileText: JSON.stringify({ Race: 'Hyur', Tribe: 'Midlander', Gender: 'Feminine', REyeColor: 42 }) });
+    const result = await executeGlamour(i);
+    expect(result).toMatchObject({ ok: false, error: 'NO_GEAR' });
+    expect(i.resolve).not.toHaveBeenCalled();
+  });
+
+  it('answers a resolver failure as RESOLVE_FAILED, never a half-drawn card', async () => {
+    const result = await executeGlamour(
+      input({
+        resolve: async () => {
+          throw new Error('api-worker answered 503');
+        },
+      })
+    );
+    expect(result).toMatchObject({ ok: false, error: 'RESOLVE_FAILED' });
+  });
+});

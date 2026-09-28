@@ -108,6 +108,17 @@ export type {
   VisionType,
 } from './commands/accessibility.js';
 
+// Command: Glamour (the Glamour Reader's card + GPOSERS list; resolver injected)
+export { executeGlamour } from './commands/glamour.js';
+export type {
+  GlamourInput,
+  GlamourResolveAnswer,
+  /** @public */ GlamourResult,
+  /** @public */ GlamourResolvedItem,
+  /** @public */ GlamourItemNames,
+  /** @public */ GlamourResolver,
+} from './commands/glamour.js';
+
 // Command: Swatch (character-file frame — measuredRow consumer #5)
 export { executeSwatch } from './commands/swatch.js';
 export type {

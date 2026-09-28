@@ -48,7 +48,8 @@
       "preferences.filters.labels.metallic": "cognate - core's own German label is 'Metallic'",
       "preset.name": "cognate - 'Name' is German",
       "preset.tags": "cognate - 'Tags' is German usage",
-      "webhook.fields.tags": "cognate - 'Tags' is German usage"
+      "webhook.fields.tags": "cognate - 'Tags' is German usage",
+      "card.glamourStatusOk": "identifier - ALL-CAPS card verdict; 'OK' is Duden-listed German"
     },
     "fr": {
       "about.version": "cognate - 'Version' is French",
@@ -64,7 +65,8 @@
       "quality.excellent": "cognate - 'Excellent' is French",
       "stats.summary.documentation": "cognate - 'Documentation' is French",
       "webhook.fields.source": "cognate - 'Source' is French",
-      "webhook.fields.tags": "cognate - 'Tags' is French usage"
+      "webhook.fields.tags": "cognate - 'Tags' is French usage",
+      "card.glamourStatusOk": "identifier - ALL-CAPS card verdict; 'OK' is standard French usage"
     },
     "ko": {},
     "zh": {}

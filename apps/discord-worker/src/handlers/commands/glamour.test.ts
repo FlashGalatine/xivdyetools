@@ -1,0 +1,267 @@
+/**
+ * /glamour adapter: the .chara attachment guards it shares with /swatch, the
+ * resolve call through the api-worker service binding, and the card + embed
+ * it posts. The business logic is bot-logic's executeGlamour (mocked here).
+ */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { GlamourInput } from '@xivdyetools/bot-logic';
+import { handleGlamourCommand } from './glamour.js';
+import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
+
+vi.mock('../../services/svg/renderer.js', () => ({
+  renderSvgToPng: vi.fn().mockResolvedValue(new Uint8Array([1])),
+}));
+
+const mockSafeEdit = vi.fn().mockResolvedValue(true);
+vi.mock('../../utils/discord-api.js', () => ({
+  safeEditOriginalResponse: (...args: unknown[]) => mockSafeEdit(...args),
+}));
+
+vi.mock('../../services/preferences.js', () => ({
+  getUserPreferences: vi.fn().mockResolvedValue({ theme: 'light' }),
+}));
+
+vi.mock('../../services/bot-i18n.js', async () => {
+  const { createTranslator } = await import('@xivdyetools/bot-logic/i18n');
+  return {
+    createTranslator,
+    createUserTranslator: vi.fn().mockResolvedValue(createTranslator('en')),
+  };
+});
+
+const mockExecuteGlamour = vi.fn();
+vi.mock('@xivdyetools/bot-logic', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/bot-logic')>();
+  return {
+    ...actual,
+    executeGlamour: (...args: unknown[]) => mockExecuteGlamour(...args),
+  };
+});
+
+const CDN_URL = 'https://cdn.discordapp.com/attachments/1/2/look.chara?ex=1&is=2&hm=3';
+
+function makeInteraction(url: string, size = 2048): DiscordInteraction {
+  return {
+    id: 'int-1',
+    application_id: 'app-1',
+    type: 2,
+    token: 'token-1',
+    locale: 'en-US',
+    member: { user: { id: 'user-1' } },
+    data: {
+      name: 'glamour',
+      options: [{ name: 'file', type: 11, value: 'att-1' }],
+      resolved: {
+        attachments: {
+          'att-1': { id: 'att-1', filename: 'look.chara', size, url, proxy_url: url, content_type: 'application/json' },
+        },
+      },
+    },
+  } as unknown as DiscordInteraction;
+}
+
+describe('/glamour', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+  let pending: Promise<unknown>[];
+  let binding: { fetch: ReturnType<typeof vi.fn> };
+
+  const settle = () => Promise.all(pending);
+  const lastEdit = () => (mockSafeEdit.mock.calls.at(-1) as unknown[])[2] as {
+    embeds: Array<{ title?: string; description?: string; image?: { url: string } }>;
+    file?: { name: string; contentType: string };
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pending = [];
+    binding = {
+      fetch: vi.fn(async () =>
+        Response.json({ success: true, data: { items: { HeadGear: { itemId: 2629 } }, glasses: null } })
+      ),
+    };
+    env = {
+      DISCORD_PUBLIC_KEY: 'k',
+      DISCORD_TOKEN: 't',
+      DISCORD_CLIENT_ID: 'app-1',
+      KV: {} as KVNamespace,
+      UNIVERSALIS_PROXY: binding as unknown as Fetcher,
+    } as unknown as Env;
+    ctx = {
+      waitUntil: vi.fn((p: Promise<unknown>) => {
+        pending.push(p);
+      }),
+      passThroughOnException: vi.fn(),
+    } as unknown as ExecutionContext;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('{"REyeColor":42}'))
+    );
+    mockExecuteGlamour.mockResolvedValue({
+      ok: true,
+      svgString: '<svg/>',
+      embed: { title: 'Glamour · 5 dyed pieces', description: '**Glamour Items:**', color: 0 },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('refuses an attachment that is not on a Discord CDN host before deferring', async () => {
+    const res = await handleGlamourCommand(makeInteraction('https://evil.example/look.chara'), env, ctx);
+    const body = (await res.json()) as InteractionResponseBody;
+
+    expect(body.type).toBe(4);
+    expect(body.data?.flags).toBe(64);
+    expect(ctx.waitUntil).not.toHaveBeenCalled();
+  });
+
+  it('refuses a file past 1 MiB before deferring', async () => {
+    const res = await handleGlamourCommand(makeInteraction(CDN_URL, 2 * 1_048_576), env, ctx);
+    const body = (await res.json()) as InteractionResponseBody;
+    expect(body.data?.content).toContain('file too large');
+  });
+
+  it('defers, reads the file and posts the card with the list in the embed', async () => {
+    const res = await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+    await settle();
+
+    const call = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+    expect(call.fileText).toBe('{"REyeColor":42}');
+    expect(call.locale).toBe('en');
+    expect(call.theme).toBe('light');
+
+    const edit = lastEdit();
+    expect(edit.embeds[0].title).toBe('Glamour · 5 dyed pieces');
+    expect(edit.embeds[0].description).toBe('**Glamour Items:**');
+    expect(edit.embeds[0].image?.url).toBe('attachment://glamour.png');
+    expect(edit.file).toMatchObject({ name: 'glamour.png', contentType: 'image/png' });
+  });
+
+  it("tells the card which names the bundled fonts can't draw", async () => {
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+    const { canDraw } = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+
+    expect(canDraw).toBeTypeOf('function');
+    expect(canDraw!('Hempen Coif')).toBe(true);
+  });
+
+  it('resolves the worn models through the api-worker binding', async () => {
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+    const { resolve } = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+
+    const answer = await resolve([{ slot: 'HeadGear', base: 361, variant: 5 }], 40);
+
+    expect(answer.items.HeadGear).toEqual({ itemId: 2629 });
+    const request = binding.fetch.mock.calls[0][0] as Request;
+    expect(request.method).toBe('POST');
+    expect(new URL(request.url).pathname).toBe('/v1/chara/resolve');
+    expect(await request.json()).toEqual({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }], glasses: 40 });
+  });
+
+  it('rejects the resolve when api-worker does not answer with items', async () => {
+    binding.fetch.mockResolvedValue(new Response('busy', { status: 503 }));
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+    const { resolve } = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+
+    await expect(resolve([{ slot: 'HeadGear', base: 361, variant: 5 }], null)).rejects.toThrow('503');
+  });
+
+  it('answers a failed read with the error, never a card', async () => {
+    mockExecuteGlamour.mockResolvedValue({
+      ok: false,
+      error: 'RESOLVE_FAILED',
+      errorMessage: "Couldn't look up the items right now. Try again in a minute.",
+    });
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+
+    const edit = lastEdit();
+    expect(edit.embeds[0].description).toContain('look up the items');
+    expect(edit.file).toBeUndefined();
+  });
+
+  describe('the resolve transport', () => {
+    const resolveVia = async (over: Partial<Env>) => {
+      env = { ...env, ...over } as Env;
+      await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+      await settle();
+      return (mockExecuteGlamour.mock.calls[0][0] as GlamourInput).resolve;
+    };
+
+    it('uses UNIVERSALIS_PROXY_URL in local development, without glasses when there are none', async () => {
+      const resolve = await resolveVia({ UNIVERSALIS_PROXY: undefined, UNIVERSALIS_PROXY_URL: 'http://localhost:8787' });
+      const fetchMock = vi.mocked(fetch);
+      fetchMock.mockResolvedValueOnce(Response.json({ success: true, data: { items: {} } }));
+
+      const answer = await resolve([{ slot: 'Body', base: 1, variant: 1 }], null);
+
+      expect(answer).toEqual({ items: {}, glasses: null });
+      const [url, init] = fetchMock.mock.calls.at(-1)!;
+      expect(url).toBe('http://localhost:8787/v1/chara/resolve');
+      expect(JSON.parse((init as RequestInit).body as string)).toEqual({ gear: [{ slot: 'Body', base: 1, variant: 1 }] });
+    });
+
+    it('refuses to resolve with no binding and no URL', async () => {
+      const resolve = await resolveVia({ UNIVERSALIS_PROXY: undefined, UNIVERSALIS_PROXY_URL: undefined });
+      await expect(resolve([], null)).rejects.toThrow('not configured');
+    });
+
+    it('refuses an envelope that does not carry items', async () => {
+      binding.fetch.mockResolvedValue(Response.json({ success: false, error: 'NOPE' }));
+      const resolve = await resolveVia({});
+      await expect(resolve([], null)).rejects.toThrow('Malformed');
+    });
+  });
+
+  describe('failures answer with an error, never a card', () => {
+    it('a download the CDN refuses', async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(new Response('gone', { status: 403 }));
+      await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+      await settle();
+
+      expect(mockExecuteGlamour).not.toHaveBeenCalled();
+      expect(lastEdit().embeds[0].description).toContain('download failed (403)');
+    });
+
+    it('a download that never arrives', async () => {
+      vi.mocked(fetch).mockRejectedValueOnce(new Error('timeout'));
+      await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+      await settle();
+
+      expect(mockExecuteGlamour).not.toHaveBeenCalled();
+      expect(lastEdit().file).toBeUndefined();
+    });
+
+    it.each(['PARSE_FAILED', 'GENERATION_FAILED'])('%s', async (error) => {
+      mockExecuteGlamour.mockResolvedValue({ ok: false, error, errorMessage: 'Could not read the file — bad' });
+      await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+      await settle();
+      expect(lastEdit().embeds[0].description).toContain('Could not read the file');
+    });
+
+    it('a card that fails to render', async () => {
+      const { renderSvgToPng } = await import('../../services/svg/renderer.js');
+      vi.mocked(renderSvgToPng).mockRejectedValueOnce(new Error('resvg'));
+      await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+      await settle();
+      expect(lastEdit().file).toBeUndefined();
+    });
+  });
+
+  it('answers a request with no user in the interaction locale', async () => {
+    const interaction = makeInteraction(CDN_URL);
+    delete (interaction as { member?: unknown }).member;
+    await handleGlamourCommand(interaction, env, ctx);
+    await settle();
+
+    const call = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+    expect(call.locale).toBe('en');
+    expect(call.theme).toBeUndefined();
+  });
+});

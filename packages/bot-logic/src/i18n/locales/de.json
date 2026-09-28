@@ -71,6 +71,10 @@
       "name": "`/swatch <file> [order] [slot]`",
       "description": "Ordne die Farben eines Charakters Farbstoffen aus einer `.chara`-Datei zu (Anamnesis oder Ktisis).\n• Liest Haut, Haar, Highlights, Augen, Lippe, Gesichtsbemalung und Tattoo/Limbalring\n• `slot`: die fünf nächsten Farbstoffe für eine Farbe"
     },
+    "glamour": {
+      "name": "`/glamour <file>`",
+      "description": "Listet die Projektion einer `.chara`-Datei auf (Anamnesis oder Ktisis).\n• Jedes gefärbte Teil, benannt als der Gegenstand, den du wirklich tragen kannst\n• Die ganze Liste im GPOSERS-Format, bereit zum Kopieren"
+    },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
       "description": "Verwalte deine Bot-Einstellungen.\n• `set`: Sprache, Mischmodus, Matching, Ergebnisanzahl, Stamm/Geschlecht, Welt, Kartenwerte, Design\n• `filters`: Farbstoffgruppen aus den Ergebnissen ausschließen\n• `reset`: eine Einstellung oder alles"
@@ -598,7 +602,58 @@
     "swatchTitle": "Charakter-Farbmuster",
     "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
     "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot.",
-    "perDe": "GIL/ΔE"
+    "perDe": "GIL/ΔE",
+    "glamourTitle": "Projektion",
+    "glamourPieces_one": "{n} gefärbtes Teil",
+    "glamourPieces_other": "{n} gefärbte Teile",
+    "glamourWorn_one": "{n} Teil",
+    "glamourWorn_other": "{n} Teile",
+    "glamourDyes_one": "{n} Farbstoff",
+    "glamourDyes_other": "{n} Farbstoffe",
+    "glamourNoDyes": "keine Farbstoffe",
+    "glamourLooks": "+{n} OPTIK",
+    "glamourOneLook": "EINZIG",
+    "glamourStatusTwin": "ZWILLING",
+    "glamourStatusOk": "OK",
+    "glamourStatusDye": "FARBEN",
+    "glamourStatusGlamour": "KEINE PROJ",
+    "glamourStatusWear": "GESPERRT",
+    "glamourFootShown_one": "{s} von {n} gefärbten Teil",
+    "glamourFootShown_other": "{s} von {n} gefärbten Teilen",
+    "glamourFootShownWorn_one": "{s} von {n} Teil",
+    "glamourFootShownWorn_other": "{s} von {n} Teilen",
+    "glamourFootTwins_one": "{n} durch Zwilling benannt",
+    "glamourFootTwins_other": "{n} durch Zwilling benannt",
+    "glamourFootBlocked_one": "{n} ohne Lösung",
+    "glamourFootBlocked_other": "{n} ohne Lösung",
+    "glamourNamedLead": "Durch Zwilling benannt:",
+    "glamourFixedDye": "{name} (statt {other}, das diese Farbstoffe nicht annimmt)",
+    "glamourFixedGlamour": "{name} (statt {other}, das sich nicht projizieren lässt)",
+    "glamourFixedWear": "{name} (statt {other}, das dieser Charakter nicht tragen kann)",
+    "glamourBlockedLead": "Keine Lösung:",
+    "glamourBlockedDye": "{name} (nimmt die Farbstoffe der Datei nicht an)",
+    "glamourBlockedGlamour": "{name} (lässt sich nicht projizieren)",
+    "glamourBlockedWear": "{name} (dieser Charakter kann es nicht tragen)",
+    "glamourBlockedNoItem": "{name} (ein Modell ohne Gegenstand dahinter)",
+    "glamourCompany": "Braucht die richtige Staatliche Gesellschaft: {list}",
+    "glamourNoItemName": "Modell {key}",
+    "glamourNoGear": "Diese Datei trägt keine Ausrüstung.",
+    "glamourResolveFailed": "Die Gegenstände lassen sich gerade nicht abrufen. Versuche es in einer Minute erneut.",
+    "glamourManual": "Mehr zu Charakterdateien:",
+    "glamourSlot": {
+      "MainHand": "WAFFE",
+      "OffHand": "NEBENH.",
+      "HeadGear": "KOPF",
+      "Body": "RUMPF",
+      "Hands": "HÄNDE",
+      "Legs": "BEINE",
+      "Feet": "FÜSSE",
+      "Ears": "OHREN",
+      "Neck": "HALS",
+      "Wrists": "ARMB.",
+      "RightRing": "RING RE.",
+      "LeftRing": "RING LI."
+    }
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",
@@ -767,6 +822,14 @@
         },
         "slot": {
           "description": "Zeigt stattdessen die fünf nächsten Farbstoffe für einen Slot"
+        }
+      }
+    },
+    "glamour": {
+      "description": "Eine Charakterdatei als Projektion lesen: jedes Teil, seine Farbstoffe und ob es tragbar ist",
+      "options": {
+        "file": {
+          "description": ".chara-Charakterdatei (Export aus Anamnesis / Ktisis)"
         }
       }
     },
