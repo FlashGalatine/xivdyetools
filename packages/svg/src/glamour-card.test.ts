@@ -28,7 +28,7 @@ const STRESS: GlamourCardOptions = {
   title: '5 dyed pieces · 6 dyes',
   rows: [
     row({
-      slotLabel: 'WEAPON',
+      slotLabel: 'MAIN HAND',
       lookLabel: '+1 LOOK',
       twins: 1,
       name: 'Curtana Zenith Replica',
@@ -100,7 +100,7 @@ describe('generateGlamourCard (2a)', () => {
 
   it('one row per piece: slot, look count, name, its dyes and the verdict', () => {
     const svg = generateGlamourCard(STRESS);
-    for (const text of ['WEAPON', 'HEAD', 'BODY', 'HANDS', 'LEGS', '+2 LOOK', 'ONE LOOK', 'Hempen Coif', 'TWIN', 'OK', 'VIERA']) {
+    for (const text of ['MAIN HAND', 'HEAD', 'BODY', 'HANDS', 'LEGS', '+2 LOOK', 'ONE LOOK', 'Hempen Coif', 'TWIN', 'OK', 'VIERA']) {
       expect(svg, text).toContain(`>${text}</text>`);
     }
     // Two-dye pieces print both names; each dye also draws a chip in its colour

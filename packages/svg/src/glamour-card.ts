@@ -49,7 +49,7 @@ import { toolGlyph } from './icons/tool-icons.js';
 export type GlamourCardTone = 'fix' | 'block' | 'choice' | 'unique';
 
 export interface GlamourCardRow {
-  /** Localized slot short (WEAPON / HEAD / 頭 …) */
+  /** The slot's name in the game's own words, localized (MAIN HAND / HEAD / 頭 …) */
   slotLabel: string;
   /** "+2 LOOK" when the model has twins, "ONE LOOK" when it has none (localized) */
   lookLabel: string;
