@@ -30,6 +30,16 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   slow earlier file could replace the one picked last. `loadCharaFile` now numbers its loads, only
   the newest publishes, and a replaced load's failure is not toasted. The old component had the
   same race.
+- **The tribe/gender lock could hold a tribe that was not the file's.** Only
+  `SwatchTool.onCharaSession` wrote the file's tribe and gender into the config, and only when a
+  file loaded while the tool was open. A settings reset or import, another tab's save, or a file
+  that finished loading after the player left the tool left the selectors locked on another tribe,
+  with that tribe's hair and skin sheets under the file's pins. `ConfigController` now follows the
+  session itself and pins `swatch.race`/`gender` to `CharaSessionService.getTribeAndGender()` in
+  `setConfig`, `resetConfig` and `loadFromStorage` (in memory only there, so two tabs holding
+  different files cannot bounce a save between them); `SwatchTool` opens on a loaded file's tribe.
+- **A picked slot's label stayed in the old language after a language switch.** The selection card
+  kept the label translated at pick time; it now rebuilds it from the slot key each time it draws.
 
 ### Changed
 
@@ -41,9 +51,10 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   `glamour-block.ts` is DYES ON THIS GLAMOUR, and `chara-ui.ts` holds the helpers all three share.
   Each subscribes to the session, so a re-render rebuilds them around the same file.
 - **DYES ON THIS GLAMOUR is its own chunk**, imported the first time a loaded file wears anything.
-  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 69.03 KB (72.7%);
-  `glamour-block` is 25.28 KB under a new 35 KB limit. The layout shell grows 0.57 KB for the
-  session store and the sidebar's subscription, to 216.16 of 218 KB.
+  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 69.18 KB (72.8%);
+  `glamour-block` is 25.24 KB under a new 35 KB limit. The session store sits in the main entry
+  (106.19 → 107.08 of 150 KB with the tribe/gender pin), since `ConfigController` imports it; the
+  layout shell grows 0.26 KB for the sidebar's subscription, to 215.85 of 218 KB.
 - The glamour block's item names, dropped chips and palette draft now reset only when a new file
   loads. A language switch moves the block into the redrawn panel (`GlamourBlock.moveTo`) instead
   of rebuilding it, and picking a THIS CHARACTER card no longer redraws it. A picked slot keeps its
@@ -59,6 +70,10 @@ session-only store, and `chara-import.ts` splits along what each part shows.
   Swatch suite covers the file surviving a re-mount and a re-render (the glamour block's palette
   draft included), tribe/gender, merged pins and the on-demand glamour chunk; the sidebar suite
   covers the lock.
+- `config-controller.test.ts` keeps a loaded file's tribe and gender through a file load, a
+  reset, an import and another tab's save (without writing it back); the Swatch suite opens on a
+  file loaded while the tool was closed and names a picked slot in the new language after a
+  switch. Each of those fails before the fix.
 
 ## [5.12.4] - 2026-09-21
 

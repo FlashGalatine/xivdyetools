@@ -14,6 +14,7 @@
  */
 
 import { StorageService } from './storage-service';
+import { CharaSessionService } from './chara-session-service';
 import { normalizeColorWheelId, normalizeMatchingMethod } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import {
@@ -175,6 +176,9 @@ export class ConfigController {
   // Track which configs have been loaded from storage
   private loadedFromStorage: Set<ConfigKey> = new Set();
 
+  // Stops following the loaded .chara file (resetInstance)
+  private readonly unsubscribeCharaSession: () => void;
+
   /**
    * Private constructor (singleton pattern)
    */
@@ -187,6 +191,35 @@ export class ConfigController {
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', this.onStorage);
     }
+    // A .chara file can finish loading while any tool is open, so the swatch
+    // race and gender follow it here, not in the Swatch tool.
+    this.unsubscribeCharaSession = CharaSessionService.subscribe(this.onCharaSession);
+  }
+
+  /** A file was loaded or cleared. Clearing leaves its values, unlocked. */
+  private readonly onCharaSession = (): void => {
+    if (!CharaSessionService.getTribeAndGender()) return;
+    if (this.loadedFromStorage.has('swatch')) {
+      // setConfig pins, then persists and notifies only if something moved.
+      this.setConfig('swatch', {});
+    } else {
+      // Nothing read it yet: the first read pins it as it loads. Announce it.
+      this.reloadFromStorage('swatch');
+    }
+  };
+
+  /**
+   * While a .chara file is loaded, its tribe and gender ARE the swatch race and
+   * gender: the sidebar shows them locked and the hair and skin sheets are that
+   * character's. Every write of the swatch config passes through here — a
+   * change, a reset, an import, another tab's save (loadFromStorage) — so none
+   * of them can put a different tribe under the lock.
+   */
+  private pinToCharaFile<K extends ConfigKey>(key: K, config: ToolConfigMap[K]): ToolConfigMap[K] {
+    if (key !== 'swatch') return config;
+    const file = CharaSessionService.getTribeAndGender();
+    if (!file) return config;
+    return { ...config, race: file.tribe, gender: file.gender };
   }
 
   /**
@@ -232,6 +265,7 @@ export class ConfigController {
       if (typeof window !== 'undefined') {
         window.removeEventListener('storage', ConfigController.instance.onStorage);
       }
+      ConfigController.instance.unsubscribeCharaSession();
       ConfigController.instance.listeners.clear();
       ConfigController.instance.configs.clear();
       ConfigController.instance.loadedFromStorage.clear();
@@ -274,10 +308,10 @@ export class ConfigController {
     const currentConfig = this.getConfig(key);
 
     // Merge with partial update
-    const newConfig = {
+    const newConfig = this.pinToCharaFile(key, {
       ...currentConfig,
       ...partial,
-    } as ToolConfigMap[K];
+    } as ToolConfigMap[K]);
 
     // OPT-008: a no-op write is not free. One display-option toggle fans out
     // to NINE setConfig() calls by design (global + eight tools, so each tool
@@ -333,7 +367,7 @@ export class ConfigController {
    * @param key - Tool ID or 'global'
    */
   resetConfig<K extends ConfigKey>(key: K): void {
-    const defaultConfig = getDefaultConfig(key);
+    const defaultConfig = this.pinToCharaFile(key, getDefaultConfig(key));
     this.configs.set(key, defaultConfig);
     this.saveToStorage(key, defaultConfig);
     this.notifyListeners(key, defaultConfig);
@@ -438,11 +472,13 @@ export class ConfigController {
         delete (mergedConfig as { fileProvided?: unknown }).fileProvided;
       }
 
-      this.configs.set(key, mergedConfig);
+      // In memory only: persisting here would echo another tab's save back to
+      // it, and two tabs holding different files would bounce forever.
+      this.configs.set(key, this.pinToCharaFile(key, mergedConfig));
       logger.debug(`[ConfigController] Loaded ${key} config from storage`);
     } else {
       // Use defaults if nothing in storage
-      this.configs.set(key, getDefaultConfig(key));
+      this.configs.set(key, this.pinToCharaFile(key, getDefaultConfig(key)));
       logger.debug(`[ConfigController] Using default ${key} config`);
     }
 

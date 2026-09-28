@@ -852,16 +852,20 @@ describe('SwatchTool', () => {
       expect(rightPanel.querySelector('.chara-slots-grid')).not.toBeNull();
     });
 
-    it("hands the file's tribe and gender to the sidebar config", async () => {
-      const { ConfigController } = await import('@services/index');
-      tool = mount();
-
+    // PR #206 review: the file's tribe reached the tool only through a session
+    // change while it was open, so a file that finished loading after the
+    // player left (or that another tool loaded) opened on the old tribe's
+    // hair and skin sheets. The config side is config-controller.test.ts.
+    it('opens on the tribe and gender of a file loaded while it was closed', async () => {
+      const { CharacterColorService } = await import('@xivdyetools/core');
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
       CharaSessionService.setSession(charaSession());
 
-      expect(ConfigController.getInstance().setConfig).toHaveBeenCalledWith('swatch', {
-        race: 'Highlander',
-        gender: 'Female',
-      });
+      tool = mount();
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+
+      expect(getHairColors).toHaveBeenLastCalledWith('Highlander', 'Female');
     });
 
     it('pins both eyes on their shared cell as one merged badge', async () => {
@@ -896,6 +900,24 @@ describe('SwatchTool', () => {
         rightPanel.querySelectorAll<HTMLElement>('.chara-slots-grid > button')
       ).filter((b) => b.getAttribute('style')?.includes('0 0 0 1px var(--theme-primary)'));
       expect(ringed).toHaveLength(1);
+    });
+
+    // PR #206 review: the card kept the label translated at pick time, so after
+    // a language switch it still named the slot in the old language.
+    it('names a picked slot in the current language after a language switch', async () => {
+      const { LanguageService } = await import('@services/index');
+      const card = () =>
+        (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer;
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+      expect(card().textContent).toContain('SWATCH.SLOTLEFTEYE');
+
+      vi.spyOn(LanguageService, 't').mockImplementation((key: string) => `fr:${key}`);
+      tool.update();
+
+      expect(card().textContent).toContain('FR:SWATCH.SLOTLEFTEYE');
+      expect(card().textContent).toContain('fr:swatch.slotLeftEye');
     });
 
     it('keeps DYES ON THIS GLAMOUR, palette draft included, through a re-render', async () => {
