@@ -2,16 +2,29 @@
  * `.chara` character-file parser — the 5.0 Swatch Matcher import.
  *
  * Rules measured across 112 sample files (design register, Swatch Matcher
- * 10A, confirmed):
+ * 10A, confirmed), re-measured 2026-09-28 across 1,142 real files
+ * (docs/research/2026-09-28-chara-corpus-profile) — which overturned the eye
+ * and float rules below:
  * - **Parse by key presence, never the declared `TypeName`** — producers
  *   (Anamnesis versions, Ktisis) write different key sets. `TypeName` is
  *   captured only to *show* the producer.
- * - **`REyeColor` holds the LEFT eye and `LEyeColor` the right** — crossed
- *   against the extended floats (`LeftEyeColor`/`RightEyeColor`); trust the
- *   extended naming. Never "fix" this by swapping — 16% of samples are
- *   heterochromia and a swap corrupts them silently.
- * - **Extended floats are linear RGB** — gamma-encode before use or every
- *   colour is wrong-but-plausible.
+ * - **Eye keys pair by name**: `LEyeColor` + `LeftEyeColor` is the left eye,
+ *   `REyeColor` + `RightEyeColor` the right. 153 of 157 heterochromia files
+ *   pair this way, all 143 Anamnesis ones among them. The 10A rule had them
+ *   crossed, read off a file that is one of the 4 exceptions: Brio files
+ *   saved before its patch 7.5 update, which named the two eye fields the
+ *   other way round. A Brio file carries no version, so the resolver
+ *   un-crosses a file only when each float lands on the OTHER eye's entry.
+ *   Never swap on a guess: 16% of files are heterochromia.
+ * - **Extended floats are the colour squared** — the game's gamma-2.0 linear
+ *   light, not the sRGB curve: square-root before use. Re-measured on 1,142
+ *   files (docs/research/2026-09-28-chara-corpus-profile): the square root
+ *   lands eye and highlight floats on their palette entry at ΔE 0.00, where
+ *   the sRGB curve read every colour ~3 ΔE off. A block that is zero in every
+ *   channel was never read and counts as absent (22 files).
+ * - **The limbal/tattoo float carries a ×0.643** the game multiplies in;
+ *   divided out, every corpus float lands within ΔE 3.5 of its palette entry.
+ *   Entry 7 is stored as an exact zero, which is that entry, not black.
  * - **Flags gate live-looking data**: `EnableHighlights: false` inerts the
  *   highlight index (54% of samples, 47 of those with a live-looking index);
  *   `FacePaint: 0` inerts `FacePaintColor` (only 0 is load-bearing — values
@@ -23,7 +36,9 @@
  *   float-bearing files): the floats count as live only when it is present
  *   and true — a missing flag means the index wins, and the UI says so.
  * - **Gear dyes are stain IDs** (`DyeId`/`DyeId2` per slot, 0 = undyed; 35%
- *   of dyed channels are the second one).
+ *   of dyed channels are the second one), read only off a WORN slot: 33 of
+ *   1,142 corpus files carry a dye on an empty one — Anamnesis writes stains
+ *   254/255 on a hidden weapon — and it colours nothing in game.
  * - **Gear models are emitted beside the dyes** (`gearModels`): the
  *   `ModelBase`/`ModelVariant` pair (weapons add `ModelSet`) of every WORN
  *   slot — `ModelBase == 0` (weapons: `ModelSet == 0` too) is an empty slot
@@ -74,9 +89,9 @@ export interface CharaColorSlotRaw {
   /** False when a flag gates the index off (see inertReason) */
   indexActive: boolean;
   inertReason?: CharaSlotInertReason;
-  /** Extended float colour, gamma-encoded to sRGB; null = key absent */
+  /** Extended float colour, square-rooted to sRGB; null = key absent or never read */
   float: RGB | null;
-  /** The raw linear-RGB float triple as stored in the file */
+  /** The raw float triple as stored in the file (each channel the colour squared) */
   floatLinear: [number, number, number] | null;
   /** Lip only: continuous opacity. null = key absent (absent ≠ 0) */
   alpha: number | null;
@@ -86,7 +101,7 @@ export interface CharaGearDye {
   slot: CharaGearSlotId;
   /** Which dye channel (1 = DyeId, 2 = DyeId2) */
   channel: 1 | 2;
-  /** Stain ID as stored (1-254); 0/undyed channels are not emitted */
+  /** Stain ID as stored; 0/undyed channels and empty slots are not emitted */
   stainId: number;
 }
 
@@ -111,7 +126,7 @@ export interface ParsedCharaFile {
   /** Whether the IsExtendedAppearanceValid key was present at all */
   extendedDeclared: boolean;
   slots: CharaColorSlotRaw[];
-  /** Dyed gear channels only (stainId > 0), in file slot order */
+  /** Dyed channels of worn pieces only (stainId > 0), in file slot order */
   gearDyes: CharaGearDye[];
   /** Worn pieces only (model base > 0), in file slot order — undyed pieces included */
   gearModels: CharaGearModel[];
@@ -188,13 +203,29 @@ const GENDER_MAP: Record<string, Gender> = {
   Female: 'Female',
 };
 
-/** Linear-light → sRGB gamma encoding, clamped, 0-255. */
-function linearToSrgb255(c: number): number {
-  const clamped = clamp(c, 0, 1);
-  const encoded =
-    clamped <= 0.0031308 ? clamped * 12.92 : 1.055 * Math.pow(clamped, 1 / 2.4) - 0.055;
-  return Math.round(clamp(encoded, 0, 1) * 255);
+/**
+ * A stored float channel → 0-255. The game keeps each channel as the colour
+ * squared (a gamma-2.0 linear light, not the sRGB curve), so the square root
+ * is the colour: `(240/255)² = 0.8858132` reads back as exactly 240.
+ */
+function squaredToSrgb255(c: number): number {
+  return Math.round(Math.sqrt(clamp(c, 0, 1)) * 255);
 }
+
+/**
+ * The game multiplies the limbal-ring / tattoo float by ~0.643 (1,039 bright
+ * channels in the 2026-09-28 corpus: p10 0.6415, median 0.6426, p90 0.6485).
+ * Dividing it back out lands every corpus file within ΔE 3.5 of its palette
+ * entry, under the OFF GRID threshold, where the raw value put 565 past it.
+ */
+const LIMBAL_FLOAT_SCALE = 0.643;
+
+/**
+ * The one limbal/tattoo palette entry the game stores as an exact zero: 194
+ * of 194 corpus files with a zero `LimbalRingColor` sit on it, and it never
+ * carries anything else. That zero is the entry itself, not a black ring.
+ */
+const LIMBAL_ZERO_ENTRY = 7;
 
 interface ParsedFloat {
   srgb: RGB;
@@ -204,10 +235,12 @@ interface ParsedFloat {
 
 /**
  * Parse an extended-appearance float string ("r, g, b" or "r, g, b, a",
- * linear RGB). Throws loudly on a malformed value — a wrong-but-plausible
- * colour is worse than a failure that names the field.
+ * each channel squared — see `squaredToSrgb255`). `scale` is a factor the
+ * game multiplied in, divided out of the colour only (`linear` stays as
+ * stored). Throws loudly on a malformed value — a wrong-but-plausible colour
+ * is worse than a failure that names the field.
  */
-function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
+function parseFloatColor(field: string, value: unknown, scale = 1): ParsedFloat | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== 'string') {
     throw new AppError(
@@ -226,7 +259,11 @@ function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
   }
   const [r, g, b] = parts;
   return {
-    srgb: { r: linearToSrgb255(r), g: linearToSrgb255(g), b: linearToSrgb255(b) },
+    srgb: {
+      r: squaredToSrgb255(r / scale),
+      g: squaredToSrgb255(g / scale),
+      b: squaredToSrgb255(b / scale),
+    },
     linear: [r, g, b],
     alpha: parts.length === 4 ? parts[3] : null,
   };
@@ -363,14 +400,37 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   const facePaintValue = readIndex(record, 'FacePaint');
   const facePaintNone = facePaintValue === 0;
 
-  const skinFloat = parseFloatColor('SkinColor', record['SkinColor']);
-  // Crossed keys: the index REyeColor pairs with the float LeftEyeColor.
-  const leftEyeFloat = parseFloatColor('LeftEyeColor', record['LeftEyeColor']);
-  const rightEyeFloat = parseFloatColor('RightEyeColor', record['RightEyeColor']);
-  const limbalFloat = parseFloatColor('LimbalRingColor', record['LimbalRingColor']);
-  const hairFloat = parseFloatColor('HairColor', record['HairColor']);
-  const highlightFloat = parseFloatColor('HairHighlight', record['HairHighlight']);
-  const mouthFloat = parseFloatColor('MouthColor', record['MouthColor']);
+  const parsedFloats = {
+    skin: parseFloatColor('SkinColor', record['SkinColor']),
+    leftEye: parseFloatColor('LeftEyeColor', record['LeftEyeColor']),
+    rightEye: parseFloatColor('RightEyeColor', record['RightEyeColor']),
+    limbal: parseFloatColor('LimbalRingColor', record['LimbalRingColor'], LIMBAL_FLOAT_SCALE),
+    hair: parseFloatColor('HairColor', record['HairColor']),
+    highlight: parseFloatColor('HairHighlight', record['HairHighlight']),
+    mouth: parseFloatColor('MouthColor', record['MouthColor']),
+  };
+  // A block that is zero in every channel of every float — alpha included —
+  // was never read (22 of 1,142 corpus files), so it is absent, not a black
+  // character with no lip. One black float among live ones is kept, and so is
+  // a black float in a file that names only some of the seven: a tool that
+  // never read the block still writes all of it (every corpus file carries
+  // seven floats or none), so a sparse file named its color on purpose.
+  const allFloats = Object.values(parsedFloats);
+  const uncaptured = allFloats.every(
+    (f) => f !== null && f.linear.every((c) => c === 0) && (f.alpha ?? 0) === 0,
+  );
+  const float = (f: ParsedFloat | null): ParsedFloat | null => (uncaptured ? null : f);
+  const skinFloat = float(parsedFloats.skin);
+  const leftEyeFloat = float(parsedFloats.leftEye);
+  const rightEyeFloat = float(parsedFloats.rightEye);
+  const limbalIndex = readIndex(record, 'LimbalEyes');
+  const limbalFloat =
+    limbalIndex === LIMBAL_ZERO_ENTRY && parsedFloats.limbal?.linear.every((c) => c === 0)
+      ? null
+      : float(parsedFloats.limbal);
+  const hairFloat = float(parsedFloats.hair);
+  const highlightFloat = float(parsedFloats.highlight);
+  const mouthFloat = float(parsedFloats.mouth);
 
   const slot = (
     id: CharaSlotId,
@@ -392,15 +452,16 @@ export function parseCharaFile(text: string): ParsedCharaFile {
   });
 
   const slots: CharaColorSlotRaw[] = [
-    slot('leftEye', readIndex(record, 'REyeColor'), leftEyeFloat),
-    slot('rightEye', readIndex(record, 'LEyeColor'), rightEyeFloat),
+    // By name: the few files whose floats are crossed are the resolver's to spot
+    slot('leftEye', readIndex(record, 'LEyeColor'), leftEyeFloat),
+    slot('rightEye', readIndex(record, 'REyeColor'), rightEyeFloat),
     slot('hair', readIndex(record, 'HairTone'), hairFloat),
     slot('highlights', readIndex(record, 'Highlights'), highlightFloat, {
       indexActive: enableHighlights,
       ...(enableHighlights ? {} : { inertReason: 'highlightsDisabled' as const }),
     }),
     slot('skin', readIndex(record, 'Skintone'), skinFloat),
-    slot('limbal', readIndex(record, 'LimbalEyes'), limbalFloat),
+    slot('limbal', limbalIndex, limbalFloat),
     slot('lip', readIndex(record, 'LipsToneFurPattern'), mouthFloat, {
       // On Hrothgar the key is a fur-pattern enum, not a colour index.
       indexActive: !isHrothgar,
@@ -419,6 +480,16 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     const gear = record[gearSlot];
     if (typeof gear !== 'object' || gear === null) continue;
     const gearRecord = gear as Record<string, unknown>;
+    const set = readModelLane(gearRecord['ModelSet']);
+    const base = readModelLane(gearRecord['ModelBase']);
+    const variant = readModelLane(gearRecord['ModelVariant']);
+    // An empty slot's dye colours nothing (a hidden weapon even writes stains 254/255)
+    if (!isWornCharaModel(gearSlot, set, base)) continue;
+    gearModels.push(
+      isCharaWeaponSlot(gearSlot)
+        ? { slot: gearSlot, set, base, variant }
+        : { slot: gearSlot, base, variant },
+    );
     for (const [channel, key] of [
       [1, 'DyeId'],
       [2, 'DyeId2'],
@@ -427,16 +498,6 @@ export function parseCharaFile(text: string): ParsedCharaFile {
       if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
         gearDyes.push({ slot: gearSlot, channel, stainId: value });
       }
-    }
-    const set = readModelLane(gearRecord['ModelSet']);
-    const base = readModelLane(gearRecord['ModelBase']);
-    const variant = readModelLane(gearRecord['ModelVariant']);
-    if (isWornCharaModel(gearSlot, set, base)) {
-      gearModels.push(
-        isCharaWeaponSlot(gearSlot)
-          ? { slot: gearSlot, set, base, variant }
-          : { slot: gearSlot, base, variant },
-      );
     }
   }
 

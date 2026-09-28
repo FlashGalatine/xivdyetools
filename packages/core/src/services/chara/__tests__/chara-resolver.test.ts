@@ -31,6 +31,79 @@ describe('resolveCharaColors', () => {
     expect(resolved.eyesShareIndex).toBe(false);
   });
 
+  describe('eye pairing', () => {
+    // #DCBA6C (42) and #87C0A3 (169), stored squared the way the game writes them
+    const stored = (index: number): string => {
+      const { r, g, b } = characterColors.getEyeColors()[index].rgb;
+      return [r, g, b].map((c) => ((c / 255) ** 2).toFixed(8)).join(', ');
+    };
+    const eyes = async (extra: Record<string, unknown>) => {
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({ LEyeColor: 169, REyeColor: 42, IsExtendedAppearanceValid: true, ...extra })
+        ),
+        characterColors
+      );
+      return {
+        left: resolved.slots.find((s) => s.slot === 'leftEye'),
+        right: resolved.slots.find((s) => s.slot === 'rightEye'),
+      };
+    };
+
+    it('pairs by name when each float lands on its own eye (153 of 157 heterochromia files)', async () => {
+      const { left, right } = await eyes({ LeftEyeColor: stored(169), RightEyeColor: stored(42) });
+      expect(left?.floatHex?.toUpperCase()).toBe('#87C0A3');
+      expect(right?.floatHex?.toUpperCase()).toBe('#DCBA6C');
+      expect([left?.verdict, right?.verdict]).toEqual(['index', 'index']);
+      expect([left?.deltaE, right?.deltaE]).toEqual([0, 0]);
+    });
+
+    it('un-crosses a file whose two floats each land on the other eye', async () => {
+      const { left, right } = await eyes({ LeftEyeColor: stored(42), RightEyeColor: stored(169) });
+      expect(left?.index).toBe(169);
+      expect(left?.floatHex?.toUpperCase()).toBe('#87C0A3');
+      expect(right?.floatHex?.toUpperCase()).toBe('#DCBA6C');
+      expect([left?.verdict, right?.verdict]).toEqual(['index', 'index']);
+    });
+
+    it('un-crosses the duskwight fixture (amber stored on the left key, index 169 sage)', async () => {
+      const resolved = await resolveCharaColors(
+        parseCharaFile(fixture('duskwight-heterochromia.chara')),
+        characterColors
+      );
+      const left = resolved.slots.find((s) => s.slot === 'leftEye');
+      const right = resolved.slots.find((s) => s.slot === 'rightEye');
+      expect(left?.floatHex?.toUpperCase()).toBe(left?.indexHex?.toUpperCase());
+      expect(right?.floatHex?.toUpperCase()).toBe(right?.indexHex?.toUpperCase());
+      expect([left?.verdict, right?.verdict]).toEqual(['index', 'index']);
+    });
+
+    it('never swaps on half a match: a custom colour is OFF GRID on its own eye', async () => {
+      // The right float lands on the LEFT index, but the left float is custom
+      const { left, right } = await eyes({ LeftEyeColor: '0, 0, 1', RightEyeColor: stored(169) });
+      expect(left?.floatHex?.toUpperCase()).toBe('#0000FF');
+      expect(right?.floatHex?.toUpperCase()).toBe('#87C0A3');
+      expect([left?.verdict, right?.verdict]).toEqual(['offGrid', 'offGrid']);
+    });
+
+    it('does not un-cross when both eyes share an index', async () => {
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({
+            LEyeColor: 42,
+            REyeColor: 42,
+            LeftEyeColor: '0, 0, 1',
+            RightEyeColor: stored(42),
+            IsExtendedAppearanceValid: true,
+          })
+        ),
+        characterColors
+      );
+      expect(resolved.slots.find((s) => s.slot === 'leftEye')?.verdict).toBe('offGrid');
+      expect(resolved.slots.find((s) => s.slot === 'rightEye')?.verdict).toBe('index');
+    });
+  });
+
   it('merges shared-index eyes into one badge signal', async () => {
     const resolved = await resolveCharaColors(
       parseCharaFile(fixture('xaela-anamnesis-header.chara')),
@@ -54,7 +127,7 @@ describe('resolveCharaColors', () => {
     const resolved = await resolveCharaColors(
       parseCharaFile(
         minimal({
-          REyeColor: 0, // near-white sheet entry
+          LEyeColor: 0, // near-white sheet entry
           LeftEyeColor: '0.01, 0.01, 0.01', // near-black live float
           IsExtendedAppearanceValid: true,
         })
@@ -74,8 +147,8 @@ describe('resolveCharaColors', () => {
     const resolved = await resolveCharaColors(
       parseCharaFile(
         minimal({
-          REyeColor: 0,
-          LeftEyeColor: '0.9301, 0.9301, 0.9301', // ≈ linear of #F7F7F7
+          LEyeColor: 0,
+          LeftEyeColor: '0.93817762, 0.93817762, 0.93817762', // (247/255)², #F7F7F7 as stored
           IsExtendedAppearanceValid: true,
         })
       ),
@@ -84,6 +157,70 @@ describe('resolveCharaColors', () => {
     const left = resolved.slots.find((s) => s.slot === 'leftEye');
     expect(left?.verdict).toBe('index');
     expect(left?.deltaE).toBeLessThanOrEqual(OFF_GRID_DELTA_E2000);
+    // The square root lands the stored value exactly on its palette entry
+    expect(left?.floatHex?.toUpperCase()).toBe('#F7F7F7');
+    expect(left?.deltaE).toBe(0);
+  });
+
+  describe('floats the game stores as shading, not as the swatch', () => {
+    const squared = (rgb: { r: number; g: number; b: number }): string =>
+      [rgb.r, rgb.g, rgb.b].map((c) => ((c / 255) ** 2).toFixed(8)).join(', ');
+
+    it('never judges a live skin or hair float against its swatch — the index stands', async () => {
+      // Raen ♀ hair 42 is #FFDC98 in the creator and in the sheet; files store #E5D2AC
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({
+            Skintone: 3,
+            HairTone: 42,
+            SkinColor: '0.9, 0.9, 1',
+            HairColor: '0, 0, 1',
+            IsExtendedAppearanceValid: true,
+          })
+        ),
+        characterColors
+      );
+      for (const id of ['skin', 'hair'] as const) {
+        const slot = resolved.slots.find((s) => s.slot === id);
+        expect(slot?.verdict, id).toBe('index');
+        expect(slot?.deltaE, id).toBeNull();
+        expect(slot?.floatHex, id).toBeTruthy();
+        expect(slot?.indexWinNote, id).toBeUndefined();
+      }
+    });
+
+    it('judges a light-palette lip against the dark entry the game stores for it', async () => {
+      const dark = characterColors.getLipColorsDark()[10];
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({
+            LipsToneFurPattern: 138,
+            MouthColor: `${squared(dark.rgb)}, 0.8`,
+            IsExtendedAppearanceValid: true,
+          })
+        ),
+        characterColors
+      );
+      const lip = resolved.slots.find((s) => s.slot === 'lip');
+      expect(lip?.sheetVariant).toBe('light');
+      expect(lip?.indexHex).toBe(characterColors.getLipColorsLight()[10].hex);
+      expect(lip?.verdict).toBe('index');
+      expect(lip?.deltaE).toBe(0);
+    });
+
+    it('still calls a custom light-palette lip OFF GRID', async () => {
+      const resolved = await resolveCharaColors(
+        parseCharaFile(
+          minimal({
+            LipsToneFurPattern: 138,
+            MouthColor: '0, 0, 1, 0.8',
+            IsExtendedAppearanceValid: true,
+          })
+        ),
+        characterColors
+      );
+      expect(resolved.slots.find((s) => s.slot === 'lip')?.verdict).toBe('offGrid');
+    });
   });
 
   it('96-127 on a dark/light palette fails loudly, never clamps', async () => {
@@ -169,7 +306,7 @@ describe('resolveCharaColors', () => {
 
   it('produces grid addresses on the 8-column grid', async () => {
     const resolved = await resolveCharaColors(
-      parseCharaFile(minimal({ REyeColor: 10 })),
+      parseCharaFile(minimal({ LEyeColor: 10 })),
       characterColors
     );
     expect(resolved.slots.find((s) => s.slot === 'leftEye')?.gridAddress).toBe('R2·C3');

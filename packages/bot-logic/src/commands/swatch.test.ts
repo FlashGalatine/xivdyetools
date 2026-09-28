@@ -32,12 +32,13 @@ const WITH_NICKNAME = JSON.stringify({
 });
 
 /**
- * Minimal heterochromia file, both eyes pushed OFF GRID: `REyeColor: 42`
- * (left eye, index hex `#DCBA6C` — a golden tan) and `LEyeColor: 169` (right
- * eye, index hex `#87C0A3` — a sage green), each paired with an extended
- * float (`LeftEyeColor`/`RightEyeColor`, crossed per the parser's own rule)
- * set to a saturated primary nowhere near its index colour — pure blue and
- * pure red respectively — to push ΔE2000 far past `OFF_GRID_DELTA_E2000` (6).
+ * Minimal heterochromia file, both eyes pushed OFF GRID: `LEyeColor: 169`
+ * (left eye, index hex `#87C0A3` — a sage green) and `REyeColor: 42` (right
+ * eye, index hex `#DCBA6C` — a golden tan), each paired by name with an
+ * extended float (`LeftEyeColor`/`RightEyeColor`) set to a saturated primary
+ * nowhere near either index colour — pure blue and pure red — so neither
+ * lands on an eye, nothing is un-crossed, and ΔE2000 goes far past
+ * `OFF_GRID_DELTA_E2000` (6).
  * Every other colour key is omitted, so hair/skin/lip/etc. all resolve inert
  * and the only two live rows are the eyes (BUG-006).
  */
