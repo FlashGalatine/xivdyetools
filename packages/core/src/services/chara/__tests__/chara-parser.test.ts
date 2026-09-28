@@ -355,6 +355,18 @@ describe('parseCharaFile', () => {
       expect(parsed.slots.find((s) => s.slot === 'lip')?.alpha).toBeNull();
     });
 
+    it('keeps a lone black float: a block is uncaptured only when all seven floats are there', () => {
+      // A sparse file that names one color named it on purpose
+      const parsed = parseCharaFile(
+        JSON.stringify({
+          IsExtendedAppearanceValid: true,
+          LEyeColor: 3,
+          LeftEyeColor: '0, 0, 0',
+        }),
+      );
+      expect(parsed.slots.find((s) => s.slot === 'leftEye')?.float).toEqual({ r: 0, g: 0, b: 0 });
+    });
+
     it('keeps one black float among live ones — only a wholly empty block is uncaptured', () => {
       const parsed = parseCharaFile(
         JSON.stringify({

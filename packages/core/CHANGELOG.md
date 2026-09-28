@@ -63,6 +63,8 @@ files parsed before and after.
   absent.
 - **A float block that is zero in every channel, alpha included, reads as absent** (22 files).
   Nothing was read, so it no longer resolves as a black character with no lip.
+  Only a complete block counts: a file naming some of the seven floats named them on purpose,
+  so a lone black custom color is kept (every corpus file carries seven floats or none).
 - **Skin and hair floats are no longer judged against the swatch** (verdict `index`, `deltaE`
   `null`), and **a light-palette lip is judged against its dark entry.** The game stores a
   shading value for these, not the creator's swatch: Raen ♀ hair 42 reads RGB 255,220,152 in the
