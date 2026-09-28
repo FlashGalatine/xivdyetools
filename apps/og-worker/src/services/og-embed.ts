@@ -48,6 +48,7 @@ export type EmbedKey =
   | 'swatch.descriptionSheet'
   | 'swatch.descriptionSheetRace'
   | 'swatch.descriptionDefault'
+  | 'glamour.descriptionDefault'
   | 'comparison.title'
   | 'comparison.description'
   | 'comparison.descriptionDefault'
@@ -92,6 +93,7 @@ export const OG_EMBED: Record<LocaleCode, Record<EmbedKey, string>> = {
     'swatch.descriptionSheet': 'Find FFXIV dyes matching this {sheet} ({hex}).',
     'swatch.descriptionSheetRace': 'Find FFXIV dyes matching this {gender} {race} {sheet} ({hex}).',
     'swatch.descriptionDefault': 'Find the FFXIV dyes nearest any color — from a character file or a hex.',
+    'glamour.descriptionDefault': 'List every piece a character file wears — its dyes, whether the game lets it be worn, and where to get it.',
     'comparison.title': 'Compare: {names}',
     'comparison.description': 'Side-by-side comparison of {n} FFXIV dyes: {names}. See how they look together!',
     'comparison.descriptionDefault': 'Compare up to 4 FFXIV dyes side by side.',
@@ -135,6 +137,7 @@ export const OG_EMBED: Record<LocaleCode, Record<EmbedKey, string>> = {
     'swatch.descriptionSheet': 'Finde FFXIV-Farbstoffe passend zu dieser {sheet} ({hex}).',
     'swatch.descriptionSheetRace': 'Finde FFXIV-Farbstoffe passend zu dieser {sheet} ({hex}) – {race}, {gender}.',
     'swatch.descriptionDefault': 'Finde die FFXIV-Farbstoffe, die jeder Farbe am nächsten kommen – aus einer Charakterdatei oder einem Hexcode.',
+    'glamour.descriptionDefault': 'Jedes Teil, das eine Charakterdatei trägt – mit Farbstoffen, ob das Spiel es tragen lässt, und Bezugsquelle.',
     'comparison.title': 'Vergleich: {names}',
     'comparison.description': '{n} FFXIV-Farbstoffe nebeneinander: {names}. Sieh, wie sie zusammen wirken!',
     'comparison.descriptionDefault': 'Vergleiche bis zu 4 FFXIV-Farbstoffe nebeneinander.',
@@ -178,6 +181,7 @@ export const OG_EMBED: Record<LocaleCode, Record<EmbedKey, string>> = {
     'swatch.descriptionSheet': 'Trouvez les teintures FFXIV correspondant à cette {sheet} ({hex}).',
     'swatch.descriptionSheetRace': 'Trouvez les teintures FFXIV correspondant à cette {sheet} ({hex}) – {race} {gender}.',
     'swatch.descriptionDefault': "Trouvez les teintures FFXIV les plus proches de n'importe quelle couleur – depuis un fichier de personnage ou un code hexa.",
+    'glamour.descriptionDefault': "Chaque pièce portée dans un fichier de personnage – ses teintures, si le jeu permet de la porter, et où l'obtenir.",
     'comparison.title': 'Comparaison : {names}',
     'comparison.description': '{n} teintures FFXIV côte à côte : {names}. Voyez comment elles s’accordent !',
     'comparison.descriptionDefault': 'Comparez jusqu’à 4 teintures FFXIV côte à côte.',
@@ -221,6 +225,7 @@ export const OG_EMBED: Record<LocaleCode, Record<EmbedKey, string>> = {
     'swatch.descriptionSheet': 'この{sheet}（{hex}）に合うFFXIVのカララントを探す。',
     'swatch.descriptionSheetRace': '{race}（{gender}）のこの{sheet}（{hex}）に合うFFXIVのカララントを探す。',
     'swatch.descriptionDefault': 'どんな色にも最も近いFFXIVのカララントを探す——キャラクターファイルからでも、16進数からでも。',
+    'glamour.descriptionDefault': 'キャラクターファイルの装備を一覧に——染色、ゲーム内で着用できるか、入手方法まで。',
     'comparison.title': '比較：{names}',
     'comparison.description': 'FFXIVのカララント{n}色を並べて比較：{names}。組み合わせた見え方を確認！',
     'comparison.descriptionDefault': 'FFXIVのカララントを最大4色まで並べて比較。',
@@ -264,6 +269,7 @@ export const OG_EMBED: Record<LocaleCode, Record<EmbedKey, string>> = {
     'swatch.descriptionSheet': '이 {sheet}({hex})에 맞는 FFXIV 염료를 찾으세요.',
     'swatch.descriptionSheetRace': '{race} {gender}의 이 {sheet}({hex})에 맞는 FFXIV 염료를 찾으세요.',
     'swatch.descriptionDefault': '어떤 색이든 가장 가까운 FFXIV 염료 찾기 — 캐릭터 파일이나 16진수 코드로.',
+    'glamour.descriptionDefault': '캐릭터 파일이 입은 모든 장비 목록 — 염색, 게임에서 착용 가능한지, 획득처까지.',
     'comparison.title': '비교: {names}',
     'comparison.description': 'FFXIV 염료 {n}개 나란히 비교: {names}. 함께 놓았을 때 어떻게 보이는지 확인하세요!',
     'comparison.descriptionDefault': 'FFXIV 염료를 최대 4개까지 나란히 비교하세요.',
@@ -307,6 +313,7 @@ export const OG_EMBED: Record<LocaleCode, Record<EmbedKey, string>> = {
     'swatch.descriptionSheet': '找出与这个{sheet}（{hex}）相配的 FFXIV 染剂。',
     'swatch.descriptionSheetRace': '找出与{race}（{gender}）的这个{sheet}（{hex}）相配的 FFXIV 染剂。',
     'swatch.descriptionDefault': '找出最接近任意颜色的 FFXIV 染剂——来自角色文件或十六进制色值。',
+    'glamour.descriptionDefault': '列出角色文件穿戴的每件装备——染剂、游戏里能否穿戴，以及获取方式。',
     'comparison.title': '比较：{names}',
     'comparison.description': '{n} 种 FFXIV 染剂并排比较：{names}。看看它们搭在一起的效果！',
     'comparison.descriptionDefault': '最多 4 种 FFXIV 染剂并排比较。',

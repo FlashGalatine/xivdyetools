@@ -32,6 +32,7 @@ type DeckKey =
   | 'extractor'
   | 'presets'
   | 'budget'
+  | 'glamour'
   | 'root';
 
 export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
@@ -44,6 +45,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     accessibility: { name: 'Accessibility Checker', sub: 'See any pair as players with color-vision deficiencies see it — five lenses.' },
     budget: { name: 'Budget', sub: 'The cheapest dye near the one you want, priced from the market board.' },
     swatch: { name: 'Swatch Matcher', sub: 'Load a character file and match every color on it to a dye.' },
+    glamour: { name: 'Glamour Reader', sub: 'Load a character file and list every piece it wears, with its dyes and where to get it.' },
     presets: { name: 'Community Presets', sub: 'Curated and community palettes — browse, vote, submit your own.' },
     root: { name: 'XIV Dye Tools', sub: 'Color tools for FFXIV dyes — harmony, matching, prices, accessibility.' },
   },
@@ -56,6 +58,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     accessibility: { name: 'Barrierefreiheitsprüfung', sub: 'Sieh jedes Paar so, wie es Spieler mit Farbsehschwäche sehen — fünf Linsen.' },
     budget: { name: 'Budget', sub: 'Der günstigste Farbstoff nahe deinem Wunschton — Preise vom Marktbrett.' },
     swatch: { name: 'Farbmuster-Matcher', sub: 'Lade eine Charakterdatei und gleiche jede Farbe darauf mit einem Farbstoff ab.' },
+    glamour: { name: 'Projektionsleser', sub: 'Lade eine Charakterdatei und liste jedes getragene Teil auf — mit Farbstoffen und Bezugsquelle.' },
     presets: { name: 'Community-Vorlagen', sub: 'Kuratierte und Community-Paletten — stöbern, abstimmen, eigene einreichen.' },
     root: { name: 'XIV Dye Tools', sub: 'Farbwerkzeuge für FFXIV-Farbstoffe — Harmonie, Abgleich, Preise, Barrierefreiheit.' },
   },
@@ -68,6 +71,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     accessibility: { name: 'Vérification d’accessibilité', sub: 'Voyez chaque paire comme la voient les joueurs daltoniens — cinq filtres.' },
     budget: { name: 'Budget', sub: 'La teinture la moins chère proche de celle que vous voulez — prix du tableau des ventes.' },
     swatch: { name: 'Nuancier', sub: 'Chargez un fichier de personnage et associez chacune de ses couleurs à une teinture.' },
+    glamour: { name: 'Lecteur de mirages', sub: 'Chargez un fichier de personnage et listez chaque pièce qu’il porte, avec ses teintures et où l’obtenir.' },
     presets: { name: 'Palettes Communautaires', sub: 'Palettes sélectionnées et communautaires — parcourir, voter, proposer les vôtres.' },
     root: { name: 'XIV Dye Tools', sub: 'Outils couleur pour les teintures FFXIV — harmonie, correspondance, prix, accessibilité.' },
   },
@@ -80,6 +84,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     accessibility: { name: 'アクセシビリティチェッカー', sub: '色覚特性のあるプレイヤーの見え方でペアを確認——5つのレンズ。' },
     budget: { name: '予算', sub: '欲しい色に近い最安の染料——マーケットボードの価格で。' },
     swatch: { name: 'スウォッチマッチャー', sub: 'キャラクターファイルを読み込み、各色を染料にマッチング。' },
+    glamour: { name: 'ミラプリリーダー', sub: 'キャラクターファイルを読み込み、着ている装備を染色と入手方法つきで一覧に。' },
     presets: { name: 'コミュニティプリセット', sub: 'キュレーション＆コミュニティパレット——閲覧、投票、投稿。' },
     root: { name: 'XIV Dye Tools', sub: 'FFXIV染料のためのカラーツール——ハーモニー、マッチング、価格、アクセシビリティ。' },
   },
@@ -92,6 +97,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     accessibility: { name: '접근성 검사기', sub: '색각 이상이 있는 플레이어의 시점으로 색 조합 확인 — 5가지 렌즈.' },
     budget: { name: '예산', sub: '원하는 색에 가까운 가장 저렴한 염료 — 장터 가격 기준.' },
     swatch: { name: '스와치 매처', sub: '캐릭터 파일을 불러와 모든 색을 염료에 매칭.' },
+    glamour: { name: '투영 리더', sub: '캐릭터 파일을 불러와 착용한 모든 장비를 염색, 획득처와 함께 정리.' },
     presets: { name: '커뮤니티 프리셋', sub: '큐레이션 및 커뮤니티 팔레트 — 둘러보고, 투표하고, 직접 제출.' },
     root: { name: 'XIV Dye Tools', sub: 'FFXIV 염료를 위한 색상 도구 — 조화, 매칭, 가격, 접근성.' },
   },
@@ -104,6 +110,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     accessibility: { name: '无障碍检查器', sub: '以色觉障碍玩家的视角查看任意配色——五种滤镜。' },
     budget: { name: '预算', sub: '最接近目标色的低价染剂——按市场布告板价格。' },
     swatch: { name: '色板匹配器', sub: '载入角色文件，将其中每种颜色匹配到染剂。' },
+    glamour: { name: '幻化查看器', sub: '载入角色文件，列出穿戴的每件装备及其染剂与获取方式。' },
     presets: { name: '社区预设', sub: '精选与社区调色板——浏览、投票、提交你的作品。' },
     root: { name: 'XIV Dye Tools', sub: 'FFXIV 染剂的色彩工具——和谐、匹配、价格与无障碍。' },
   },
@@ -137,6 +144,7 @@ export const TOOL_TAG: Record<LocaleCode, Record<ToolTagKey, string>> = {
     gradient: 'GRADIENT',
     mixer: 'MIXER',
     swatch: 'SWATCH',
+    glamour: 'GLAMOUR',
     comparison: 'COMPARE',
     accessibility: 'VISION',
     extractor: 'EXTRACT',
@@ -148,6 +156,7 @@ export const TOOL_TAG: Record<LocaleCode, Record<ToolTagKey, string>> = {
     gradient: 'VERLAUF',
     mixer: 'MISCHER',
     swatch: 'FARBPROBE',
+    glamour: 'PROJEKTION',
     comparison: 'VERGLEICH',
     accessibility: 'SEHKRAFT',
     extractor: 'EXTRAKT',
@@ -159,6 +168,7 @@ export const TOOL_TAG: Record<LocaleCode, Record<ToolTagKey, string>> = {
     gradient: 'DÉGRADÉ',
     mixer: 'MÉLANGE',
     swatch: 'ÉCHANTILLON',
+    glamour: 'MIRAGE',
     comparison: 'COMPARER',
     accessibility: 'VISION',
     extractor: 'EXTRAIRE',
@@ -170,6 +180,7 @@ export const TOOL_TAG: Record<LocaleCode, Record<ToolTagKey, string>> = {
     gradient: 'グラデーション',
     mixer: 'ミックス',
     swatch: 'カラー照合',
+    glamour: 'ミラプリ',
     comparison: '比較',
     accessibility: '色覚',
     extractor: '抽出',
@@ -181,6 +192,7 @@ export const TOOL_TAG: Record<LocaleCode, Record<ToolTagKey, string>> = {
     gradient: '그라데이션',
     mixer: '믹서',
     swatch: '색상 대조',
+    glamour: '투영',
     comparison: '비교',
     accessibility: '색각',
     extractor: '추출',
@@ -192,6 +204,7 @@ export const TOOL_TAG: Record<LocaleCode, Record<ToolTagKey, string>> = {
     gradient: '渐变',
     mixer: '混色',
     swatch: '色样匹配',
+    glamour: '幻化',
     comparison: '比较',
     accessibility: '色觉',
     extractor: '提取',

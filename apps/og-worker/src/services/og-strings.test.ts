@@ -26,11 +26,12 @@ const TOOLS: ToolTagKey[] = [
   'extractor',
   'presets',
   'budget',
+  'glamour',
 ];
 const LINES: DeckLineKey[] = ['swatchNearest', 'extractorCount', 'budgetBest', 'a11yDyeCount'];
 
 describe('TOOL_TAG', () => {
-  it('covers all nine tools in all six locales', () => {
+  it('covers all ten tools in all six locales', () => {
     for (const locale of LOCALES) {
       for (const tool of TOOLS) {
         expect(TOOL_TAG[locale][tool], `${locale}.${tool}`).toBeTruthy();
@@ -43,6 +44,8 @@ describe('TOOL_TAG', () => {
     expect(getToolTag('accessibility', 'en')).toBe('VISION');
     expect(getToolTag('extractor', 'en')).toBe('EXTRACT');
     expect(getToolTag('presets', 'en')).toBe('PRESET');
+    // Turn 4 (2026-09-27): the Glamour Reader card reads /GLAMOUR
+    expect(getToolTag('glamour', 'en')).toBe('GLAMOUR');
   });
 
   it('falls back to EN for an unknown locale', () => {
@@ -51,13 +54,25 @@ describe('TOOL_TAG', () => {
 });
 
 describe('OG_DECK', () => {
-  it('covers nine tools plus root in all six locales', () => {
+  it('covers ten tools plus root in all six locales', () => {
     for (const locale of LOCALES) {
       for (const key of [...TOOLS, 'root'] as const) {
         expect(OG_DECK[locale][key].name, `${locale}.${key}.name`).toBeTruthy();
         expect(OG_DECK[locale][key].sub, `${locale}.${key}.sub`).toBeTruthy();
       }
     }
+  });
+
+  it('names the Glamour Reader as the web app titles it, with the drawn EN one-liner', () => {
+    expect(getOgDeck('glamour', 'en')).toEqual({
+      name: 'Glamour Reader',
+      sub: 'Load a character file and list every piece it wears, with its dyes and where to get it.',
+    });
+    expect(getOgDeck('glamour', 'ja').name).toBe('ミラプリリーダー');
+    expect(getOgDeck('glamour', 'de').name).toBe('Projektionsleser');
+    expect(getOgDeck('glamour', 'fr').name).toBe('Lecteur de mirages');
+    expect(getOgDeck('glamour', 'ko').name).toBe('투영 리더');
+    expect(getOgDeck('glamour', 'zh').name).toBe('幻化查看器');
   });
 
   it('the root name never localises', () => {

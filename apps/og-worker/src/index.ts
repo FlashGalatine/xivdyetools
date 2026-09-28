@@ -105,6 +105,7 @@ const SUPPORTED_TOOLS: ToolId[] = [
   'extractor',
   'presets',
   'budget',
+  'glamour',
 ];
 
 // FINDING-003 parameter bounds and BUG-002 enum allow-lists live in
@@ -630,6 +631,17 @@ app.get('/presets/:presetId', createToolHandler('presets'));
  * dark tile, and the deck explains. The root card takes no tile and drops
  * the method tag.
  */
+/**
+ * The footer's method tag is a fact about the tool: ΔE2000 where the tool
+ * measures color distance, CURATED on presets, and nothing on the Glamour
+ * Reader, which only lists the dyes a file already names.
+ */
+function defaultMethodTag(tool: ToolId, locale: LocaleCode): string | null {
+  if (tool === 'presets') return role('curated', locale);
+  if (tool === 'glamour') return null;
+  return 'ΔE2000';
+}
+
 function buildDefaultCardSvg(
   tool: ToolId | null,
   frame: 'discord' | 'x',
@@ -645,7 +657,7 @@ function buildDefaultCardSvg(
       name: strings.name,
       sub: strings.sub,
       path: `xivdyetools.app/${tool}`,
-      methodTag: tool === 'presets' ? role('curated', locale) : 'ΔE2000',
+      methodTag: defaultMethodTag(tool, locale),
       frame,
     });
   }

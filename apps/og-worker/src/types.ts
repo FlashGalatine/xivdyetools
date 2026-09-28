@@ -35,7 +35,8 @@ export type ToolId =
   | 'accessibility'
   | 'extractor'
   | 'presets'
-  | 'budget';
+  | 'budget'
+  | 'glamour';
 
 export type HarmonyType =
   | 'complementary'

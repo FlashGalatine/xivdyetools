@@ -580,6 +580,20 @@ describe('og-data-generator', () => {
       expect(swatchResult.imageUrl).toContain('/swatch/default.png');
     });
 
+    it('the Glamour Reader has no share grammar: every link is its default card', async () => {
+      // A glamour lives in a .chara file that never leaves the browser, so
+      // nothing in the URL can name one (design turn 4, 2026-09-27).
+      const result = await generateOGDataForTool('glamour', new URLSearchParams('hex=ABCDEF'), mockEnv);
+      expect(result.imageUrl).toContain('/glamour/default.png');
+      expect(result.url).toContain('/glamour/');
+      expect(result.title).toContain('Glamour Reader');
+      expect(result.description).toMatch(/every piece/i);
+
+      const ja = await generateOGDataForTool('glamour', new URLSearchParams(), mockEnv, 'ja');
+      expect(ja.title).toContain('ミラプリリーダー');
+      expect(ja.imageUrl).toContain('lang=ja');
+    });
+
     it('ignores the legacy perceptual param for harmony', async () => {
       const params = new URLSearchParams('dye=43&harmony=analogous&perceptual=1');
       const result = await generateOGDataForTool('harmony', params, mockEnv);
