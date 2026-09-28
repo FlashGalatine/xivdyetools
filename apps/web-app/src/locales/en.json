@@ -1291,18 +1291,18 @@
       "nameUnavailable": "Item name unavailable — close this and try again in a moment."
     },
     "gearSlot": {
-      "MainHand": "Weapon",
-      "OffHand": "Off hand",
+      "MainHand": "Main Hand",
+      "OffHand": "Off Hand",
       "HeadGear": "Head",
       "Body": "Body",
       "Hands": "Hands",
       "Legs": "Legs",
       "Feet": "Feet",
-      "Ears": "Earrings",
-      "Neck": "Necklace",
-      "Wrists": "Bracelets",
-      "LeftRing": "Left ring",
-      "RightRing": "Right ring"
+      "Ears": "Ears",
+      "Neck": "Neck",
+      "Wrists": "Wrists",
+      "LeftRing": "Left Ring",
+      "RightRing": "Right Ring"
     },
     "tooFewTag": "NEEDS 3",
     "tooFewBody": "A palette needs at least three dyes — below that it is a swatch, not a palette. Save and submit stay disabled.",

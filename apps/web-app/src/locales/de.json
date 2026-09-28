@@ -1257,7 +1257,7 @@
     "glamourShowAll": "Alle anzeigen",
     "undyed": "Ungefärbt",
     "noDyedPieces": "An dieser Projektion ist nichts gefärbt. Schalte „Alle anzeigen“ ein, um jedes getragene Teil aufzulisten.",
-    "facewearSlot": "Brille",
+    "facewearSlot": "Gesichtsaccessoires",
     "facewearColorTag": "{color} · Brillenfarbe",
     "facewearColorUnknown": "Brillenfarbe unbekannt",
     "copyList": "Liste kopieren",
@@ -1291,18 +1291,18 @@
       "nameUnavailable": "Gegenstandsname nicht verfügbar — schließe dies und versuche es gleich erneut."
     },
     "gearSlot": {
-      "MainHand": "Waffe",
+      "MainHand": "Haupthand",
       "OffHand": "Nebenhand",
       "HeadGear": "Kopf",
       "Body": "Rumpf",
       "Hands": "Hände",
       "Legs": "Beine",
       "Feet": "Füße",
-      "Ears": "Ohrringe",
-      "Neck": "Halskette",
-      "Wrists": "Armbänder",
-      "LeftRing": "Ring links",
-      "RightRing": "Ring rechts"
+      "Ears": "Ohren",
+      "Neck": "Hals",
+      "Wrists": "Handgelenke",
+      "LeftRing": "Finger (links)",
+      "RightRing": "Finger (rechts)"
     },
     "tooFewTag": "MIND. 3",
     "tooFewBody": "Eine Palette braucht mindestens drei Farbstoffe — darunter ist es eine Farbprobe, keine Palette. Speichern und Einreichen bleiben deaktiviert.",

@@ -110,7 +110,6 @@
     "resultCard.acquisitionShort": "cognate - 'SOURCE' is French",
     "resultCard.stainShort": "identifier - the game's stain data field",
     "swatch.footSplit": "format - placeholders and a separator only",
-    "swatch.gearSlot.Wrists": "cognate - the French FFXIV client says 'Bracelets'",
     "swatch.gridTitle": "format - '{name} ({count})' is placeholders only",
     "swatch.cellTag": "format - '{palette} #{index}' is placeholders only",
     "matcher.rollCount": "format - '{extracted} + {picks}' is placeholders only",

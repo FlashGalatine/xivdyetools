@@ -40,6 +40,12 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   once as `Rings:` and edited as one row (GPOSERS reminders, March 2026). A piece with no item
   behind it keeps its edit under its model. When storage is off or full, edits last for the
   page instead of vanishing, and an Acquisition line is always written as one line.
+- **Slot names are the game's own.** Every piece is labeled with the slot wording each client's
+  character window uses (`Addon` rows 738–750, 16050): Main Hand / Off Hand / Ears / Neck / Wrists /
+  Right Ring in English, Haupthand / Finger (rechts) in German, Main directrice / Bague droite in
+  French, 주 무기 / 오른쪽 손가락 in Korean, 主手 / 手臂 / 右指 in Chinese, メインアーム in Japanese —
+  and the facewear slot's own name, not "glasses". Several had been market-board item categories,
+  and some matched neither (glossary: Equipment Slots).
 - A loaded file that wears nothing says so under its card. The twin picker moves with the arrow
   keys and gives focus back to its chip; it opens upward near the bottom of the screen. The export
   sheet keeps Tab inside it and gives focus back to the button that opened it.

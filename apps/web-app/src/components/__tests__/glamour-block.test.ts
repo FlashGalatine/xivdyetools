@@ -218,7 +218,7 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
       rows[3].querySelectorAll('span[title*="·"], span[title^="#"]').length
     ).toBeGreaterThanOrEqual(2);
     // The slot tag is localised (en.json gearSlot.*), not the raw key.
-    expect(rows[0].textContent).toContain('Weapon');
+    expect(rows[0].textContent).toContain('Main Hand');
     expect(rows[0].textContent).not.toContain('MainHand');
   });
 
@@ -307,7 +307,7 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
     const six = rows[0];
     const carriers = six.querySelectorAll<HTMLElement>('[data-role="carrier"]');
     expect(Array.from(carriers).map((c) => c.dataset.slot)).toEqual(['MainHand', 'OffHand']);
-    expect(carriers[0].title).toBe('WEAPON — Runaway Bow');
+    expect(carriers[0].title).toBe('MAIN HAND — Runaway Bow');
     expect(carriers[0].style.backgroundImage).toContain('/v1/chara/icon/32065');
     expect(six.textContent).toContain('×2');
     expect(six.textContent).toContain('ID 6');

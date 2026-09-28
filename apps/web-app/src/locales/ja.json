@@ -1257,7 +1257,7 @@
     "glamourShowAll": "すべて表示",
     "undyed": "未染色",
     "noDyedPieces": "このミラプリには染色された装備がありません。「すべて表示」をオンにすると、装備中のすべての部位が表示されます。",
-    "facewearSlot": "フェイスウェア",
+    "facewearSlot": "フェイスアクセサリー",
     "facewearColorTag": "{color}・フェイスウェアカラー",
     "facewearColorUnknown": "フェイスウェアカラー不明",
     "copyList": "リストをコピー",
@@ -1291,7 +1291,7 @@
       "nameUnavailable": "アイテム名を取得できません。閉じてしばらくしてからお試しください。"
     },
     "gearSlot": {
-      "MainHand": "武器",
+      "MainHand": "メインアーム",
       "OffHand": "サブアーム",
       "HeadGear": "頭",
       "Body": "胴",
