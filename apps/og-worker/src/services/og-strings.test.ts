@@ -71,7 +71,7 @@ describe('OG_DECK', () => {
     expect(getOgDeck('glamour', 'ja').name).toBe('ミラプリリーダー');
     expect(getOgDeck('glamour', 'de').name).toBe('Projektionsleser');
     expect(getOgDeck('glamour', 'fr').name).toBe('Lecteur de mirages');
-    expect(getOgDeck('glamour', 'ko').name).toBe('투영 리더');
+    expect(getOgDeck('glamour', 'ko').name).toBe('코디 리더');
     expect(getOgDeck('glamour', 'zh').name).toBe('幻化查看器');
   });
 

@@ -18,7 +18,7 @@ only thing that retires cards already rendered at the edge.
   lives in a `.chara` file that never leaves the browser, so there is no share grammar: every link
   unfurls as `glamour/default.png`, the 2a card with glyph 1a in the tile.
 - **Strings ×6** for the card (`OG_DECK.glamour`, `TOOL_TAG.glamour`: GLAMOUR / PROJEKTION /
-  MIRAGE / ミラプリ / 투영 / 幻化) and the crawler (`glamour.descriptionDefault`). The names quote
+  MIRAGE / ミラプリ / 코디 / 幻化) and the crawler (`glamour.descriptionDefault`). The names quote
   the web app's tool title in each language. The EN one-liner is the design's draft. The CJK
   subsets are re-cut for the new glyphs.
 - `tests/wrangler-env.test.ts` checks that every tool page is routed in both environments. A
