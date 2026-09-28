@@ -37,6 +37,9 @@ Rules:
 - Web app: pieces that look identical, like Dated Hempen Coif and Hempen Coif, are named as the one you can actually wear and dye. Tap +N to pick another.
 - Web app: Copy list and Export .md open a preview with an "Acquisition:" line filled in for each piece, in the GPOSERS submission format. Edit any line first; your edits are remembered on this device.
 - Web app: the list of dyes on your glamour moved from the Swatch Matcher to the Glamour Reader. A file loaded in one tool is already in the other.
+- Link previews: a shared Glamour Reader link shows its own preview card, and the site's preview card shows all ten tools.
+- Link previews: the one-line description on a tool's preview card now wraps onto a second line instead of being cut off at the card's edge.
+- Discord bot: new `/glamour` command. Attach a character file and the bot lists the glamour: each dyed piece, its dyes, whether it can be worn, and the whole outfit in the GPOSERS format.
 
 ## [5.9.3] - 2026-09-27
 ### 📂 Your character file stays loaded

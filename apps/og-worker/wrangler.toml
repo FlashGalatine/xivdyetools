@@ -35,6 +35,7 @@ routes = [
   { pattern = "beta.xivdyetools.app/extractor/*", zone_name = "xivdyetools.app" },
   { pattern = "beta.xivdyetools.app/presets/*", zone_name = "xivdyetools.app" },
   { pattern = "beta.xivdyetools.app/budget/*", zone_name = "xivdyetools.app" },
+  { pattern = "beta.xivdyetools.app/glamour/*", zone_name = "xivdyetools.app" },
   # Beta renders its own cards, so card-design changes are previewable before
   # they reach production. Wrangler provisions the DNS record on first deploy.
   { pattern = "og-beta.xivdyetools.app", custom_domain = true }
@@ -73,6 +74,7 @@ routes = [
   { pattern = "xivdyetools.app/extractor/*", zone_name = "xivdyetools.app" },
   { pattern = "xivdyetools.app/presets/*", zone_name = "xivdyetools.app" },
   { pattern = "xivdyetools.app/budget/*", zone_name = "xivdyetools.app" },
+  { pattern = "xivdyetools.app/glamour/*", zone_name = "xivdyetools.app" },
   # BUG-069 closure: the og image host is IaC-declared, not dashboard-only
   { pattern = "og.xivdyetools.app", custom_domain = true }
 ]

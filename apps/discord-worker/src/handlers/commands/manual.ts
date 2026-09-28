@@ -159,6 +159,11 @@ function buildEmbeds(t: Translator): object[] {
           value: t.t('manual.swatch.description'),
           inline: false,
         },
+        {
+          name: t.t('manual.glamour.name'),
+          value: t.t('manual.glamour.description'),
+          inline: false,
+        },
       ],
     },
 

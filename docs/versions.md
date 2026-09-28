@@ -24,13 +24,13 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.13.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.6.5 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.7.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.10.4 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.11.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -44,8 +44,8 @@
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.2.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.4.2 | `@xivdyetools/bot-logic` | npm | Active |
+| **SVG** | v4.3.0 | `@xivdyetools/svg` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.5.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -171,6 +171,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v5.7.0** | **Sep 2026** | **`/glamour`, the Glamour Reader in the bot: a `.chara` attachment in, card 2a out (the dyed pieces in slot order, each named as the twin the character can wear, with the in-game verdict) and every piece in the GPOSERS form in the embed. Resolves through api-worker's `POST /v1/chara/resolve` over the `UNIVERSALIS_PROXY` binding; the `.chara` attachment guards are shared with `/swatch` (`utils/chara-attachment.ts`)** |
 | v5.6.5 | Sep 2026 | `/swatch` (core 5.7.0, via bot-logic) — lip, face-paint, highlight and tattoo rows use the creator's colors; a custom skin or hair color reads OFF GRID again. No discord-worker source changed, no `register-commands` |
 | v5.6.4 | Sep 2026 | `/swatch` (core 5.6.0, via bot-logic) — `EYES·L` / `EYES·R` no longer swapped for heterochromia, no false OFF GRID rows, no dyes from empty slots on the gear line. No discord-worker source changed, no `register-commands` |
 | v5.6.2 | Sep 2026 | `/swatch` accepts Lalafell `.chara` attachments (core 5.5.0, via bot-logic) — refused outright since `/swatch` began taking files; the Hrothgar fur-pattern and Au Ra limbal-ring rows are read off the tribe now. No discord-worker source changed, no `register-commands` |
@@ -358,6 +359,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v2.11.0** | **Sep 2026** | **The Glamour Reader's card (design turn 4): `/glamour` routed in both environments, `glamour/default.png` on the 2a shape with glyph 1a and no method tag (the reader measures no color distance), strings ×6, CJK subsets re-cut. The default card's one-liner now wraps (up to three lines, the deck grows) instead of running off the card's edge, which is what the live EN Mixer and DE Gradient cards did** |
 | v2.10.4 | Sep 2026 | Swatch Matcher cards draw the creator's lip, face-paint, highlight and tattoo colors (core 5.7.0); the bump retires cached cards |
 | v2.10.3 | Sep 2026 | 2026-09-19 i18n audit follow-up (maintainer naming decisions 2026-09-20) — card names quote the official tool titles in every language: the Swatch Matcher card said "Character Matcher" in de / ja / ko / zh while English already said Swatch Matcher, and the Harmony card now reads Harmony Explorer ×6 (its "Color Harmony" shortening was cut from the retired three-word title); the fr and ko Budget lines name the Market Board (`tableau des ventes`, `장터`) instead of a generic "market price"; crawler descriptions: de `Glamour` → `Projektion`, ko `환영 장비` → `코디`, ko `시장 게시판` → `장터`. No font re-cut needed — every new string is drawable from the existing subsets (font-coverage green). The version bump is what retires the cached cards |
 | v2.10.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 10 — `wheel` is keyed into the cache only for the harmony dye card, not `/og/harmony/default` (BUG-018); the two SPA pass-through fetches carry a 5 s `AbortSignal` and fall back to the app redirect on timeout (OPT-001) |
@@ -473,6 +475,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.3.0 | Sep 2026 | `generateGlamourCard` — the /glamour card (2a): pieces in slot order, a second row kind beside measuredRow |
 | v4.2.0 | Sep 2026 | The Glamour Reader glyph (1a: a tunic with the dye on a chest chip), compact + detail |
 | v4.1.0 | Sep 2026 | `HarmonyCardOptions.wheelLabel` — printed under the harmony type for a non-default colour wheel, fitted to the header row it shares with the `/HARMONY` pill (PR #167) |
 | **v4.0.0** | **Sep 2026** | **⚠️ BREAKING — `PresetSwatchOptions.authorLine` / `emptyLabel` required and `authorName` / `voteCount` removed: the caller passes finished localized text (I18N-011); the `★` vote glyph rendered as tofu in every bundled face (FONT-002)** |
@@ -493,6 +496,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v4.5.0** | **Sep 2026** | **`executeGlamour` (the resolver is injected — no I/O here) and the `/glamour` strings ×6; `/swatch` and `/glamour` share `commands/chara-identity.ts`** |
 | v4.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 5 — minor: `tc()` picks the plural form with `Intl.PluralRules` per locale, so French `0` is singular (I18N-003, was the English rule for every locale); `searchDyesByName` folds accents, `ß` and width through core's `foldForSearch` (I18N-005); 137 subcommand/option descriptions × 6 under `commands.*.options`, generated from discord-worker's schema (I18N-001), plus `about.builtOnBody` and `card.colours_one/_other` (no key removed); zh `市场布告板` / `大区`, ko `서버` / `데이터 센터` (TERM-001, TERM-003). Needs core 5.4.0 |
 | v4.3.0 | Sep 2026 | 2026-09-16 deep-dive Sprint 3 (minor, not patch — the marker is an observable change to rendered output) — `/swatch` eye rows carry the `·L`/`·R`/`·LR` marker on the row label so off-grid heterochromia rows are told apart (BUG-006); dye-info MKT row derives its item ID through core's `getMarketItemID` (REFACTOR-005) |
 | **v4.2.0** | **Sep 2026** | **`HarmonyInput.wheel` (`ColorWheelId`) passed through to core's `generateHarmonySlots`, `getLocalizedColorWheelName`, `/harmony` share URL carries `&wheel=` (PR #167); `HarmonyInput.harmonyOptions` deprecated — its `colorSpace` has been ignored since PR #159** |

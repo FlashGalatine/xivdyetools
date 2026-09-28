@@ -32,6 +32,7 @@ import {
   handlePreferencesCommand,
   handleMixerV4Command,
   handleSwatchCommand,
+  handleGlamourCommand,
   handleAccessibilityCommand,
   handleContrastCommand,
   handleManualCommand,
@@ -929,6 +930,10 @@ async function handleCommand(
 
       case 'swatch':
         response = await handleSwatchCommand(interaction, env, handlerCtx, logger);
+        break;
+
+      case 'glamour':
+        response = await handleGlamourCommand(interaction, env, handlerCtx, logger);
         break;
 
       // v5: /match, /match_image, /favorites, /collection and /language are

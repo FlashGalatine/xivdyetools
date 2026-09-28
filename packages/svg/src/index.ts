@@ -183,6 +183,14 @@ export type {
   /** @public */ SwatchCardOptions,
 } from './swatch-card.js';
 
+// Glamour card (/glamour 2a — pieces in slot order, a second row kind)
+export { generateGlamourCard } from './glamour-card.js';
+export type {
+  GlamourCardRow,
+  /** @public */ GlamourCardTone,
+  /** @public */ GlamourCardOptions,
+} from './glamour-card.js';
+
 // Dye Info Card (11B sheet)
 export { generateDyeInfoCard } from './dye-info-card.js';
 export type {

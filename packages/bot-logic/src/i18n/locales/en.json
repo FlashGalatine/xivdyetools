@@ -71,6 +71,10 @@
       "name": "`/swatch <file> [order] [slot]`",
       "description": "Match a character's colors to dyes from a `.chara` file (Anamnesis or Ktisis).\n• Reads skin, hair, highlights, eyes, lip, face paint and tattoo/limbal ring\n• `slot`: the five nearest dyes for one color"
     },
+    "glamour": {
+      "name": "`/glamour <file>`",
+      "description": "List the glamour a `.chara` file wears (Anamnesis or Ktisis).\n• Each dyed piece, named as the item you can actually wear\n• The full list in the GPOSERS form, ready to copy"
+    },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
       "description": "Manage your bot preferences.\n• `set`: language, blending, matching, result count, clan/gender, world, card values, theme\n• `filters`: leave dye groups out of results\n• `reset`: one setting, or everything"
@@ -598,7 +602,59 @@
     "swatchTitle": "Character swatch",
     "swatchNoSlots": "No live color slots in this file.",
     "swatchSlotMissing": "{slot} is not a live slot in this file.",
-    "perDe": "GIL/ΔE"
+    "perDe": "GIL/ΔE",
+    "glamourTitle": "Glamour",
+    "glamourPieces_one": "{n} dyed piece",
+    "glamourPieces_other": "{n} dyed pieces",
+    "glamourWorn_one": "{n} piece",
+    "glamourWorn_other": "{n} pieces",
+    "glamourDyes_one": "{n} dye",
+    "glamourDyes_other": "{n} dyes",
+    "glamourNoDyes": "no dyes",
+    "glamourLooks": "+{n} LOOK",
+    "glamourOneLook": "ONE LOOK",
+    "glamourStatusTwin": "TWIN",
+    "glamourStatusOk": "OK",
+    "glamourStatusDye": "DYES",
+    "glamourStatusGlamour": "NO GLAM",
+    "glamourStatusWear": "LOCKED",
+    "glamourFootShown_one": "{s} of {n} dyed piece",
+    "glamourFootShown_other": "{s} of {n} dyed pieces",
+    "glamourFootShownWorn_one": "{s} of {n} piece",
+    "glamourFootShownWorn_other": "{s} of {n} pieces",
+    "glamourFootTwins_one": "{n} named from a twin",
+    "glamourFootTwins_other": "{n} named from a twin",
+    "glamourFootBlocked_one": "{n} with no fix",
+    "glamourFootBlocked_other": "{n} with no fix",
+    "glamourNamedLead": "Named from a twin:",
+    "glamourFixedDye": "{name} (not {other}, which can't take these dyes)",
+    "glamourFixedGlamour": "{name} (not {other}, which can't be a glamour)",
+    "glamourFixedWear": "{name} (not {other}, which this character can't wear)",
+    "glamourBlockedLead": "No fix:",
+    "glamourBlockedDye": "{name} (it can't take the dyes the file puts on it)",
+    "glamourBlockedGlamour": "{name} (it can't be a glamour)",
+    "glamourBlockedWear": "{name} (this character can't wear it)",
+    "glamourBlockedNoItem": "{name} (a model with no item behind it)",
+    "glamourCompany": "Needs the right Grand Company: {list}",
+    "glamourNoItemName": "Model {key}",
+    "glamourNoGear": "This file wears no gear.",
+    "glamourResolveFailed": "Couldn't look up the items right now. Try again in a minute.",
+    "glamourResolveBusy": "The item lookup is busy right now. Try again in a minute.",
+    "glamourManual": "More on character files:",
+    "glamourSlot": {
+      "MainHand": "MAIN HAND",
+      "OffHand": "OFF HAND",
+      "HeadGear": "HEAD",
+      "Body": "BODY",
+      "Hands": "HANDS",
+      "Legs": "LEGS",
+      "Feet": "FEET",
+      "Ears": "EARS",
+      "Neck": "NECK",
+      "Wrists": "WRISTS",
+      "RightRing": "RIGHT RING",
+      "LeftRing": "LEFT RING"
+    }
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",
@@ -767,6 +823,14 @@
         },
         "slot": {
           "description": "Show the five nearest dyes for one slot instead"
+        }
+      }
+    },
+    "glamour": {
+      "description": "Read a character file as a glamour: every piece, its dyes, and whether it can be worn",
+      "options": {
+        "file": {
+          "description": ".chara character file (Anamnesis / Ktisis export)"
         }
       }
     },

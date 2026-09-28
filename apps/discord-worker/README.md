@@ -1,6 +1,6 @@
 # xivdyetools-discord-worker
 
-> The primary XIV Dye Tools Discord bot — 17 slash commands running on Cloudflare Workers via Discord HTTP Interactions. Fully serverless: no Gateway WebSocket.
+> The primary XIV Dye Tools Discord bot — 18 slash commands running on Cloudflare Workers via Discord HTTP Interactions. Fully serverless: no Gateway WebSocket.
 
 Deployed at `bot.xivdyetools.app`. [**Invite the bot →**](https://discord.com/oauth2/authorize?client_id=1447108133020369048)
 
@@ -21,6 +21,7 @@ Cards are generated as SVG strings by `@xivdyetools/svg` and rasterized to PNG i
 | `/gradient` | N-step gradient between two distinct dyes |
 | `/extractor` | Extract a palette from an image, or the nearest dyes to a color |
 | `/swatch` | Import a `.chara` character file and match its colors |
+| `/glamour` | Read a `.chara` character file as a glamour: every piece, its dyes, and whether it can be worn |
 
 ### 📚 Dye database
 

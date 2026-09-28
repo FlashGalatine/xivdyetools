@@ -5,6 +5,39 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.0] - 2026-09-28
+
+The Glamour Reader, the web app's tenth tool, gets its card (Claude Design, *OG Default Cards*
+turn 4). Card output changed, so the version moves: it rides every `/og/*` cache key and is the
+only thing that retires cards already rendered at the edge.
+
+### Added
+
+- **`/glamour`**: routed in both environments (`beta.xivdyetools.app/glamour/*`,
+  `xivdyetools.app/glamour/*`), in `SUPPORTED_TOOLS`, and in `generateOGDataForTool`. A glamour
+  lives in a `.chara` file that never leaves the browser, so there is no share grammar: every link
+  unfurls as `glamour/default.png`, the 2a card with glyph 1a in the tile.
+- **Strings ×6** for the card (`OG_DECK.glamour`, `TOOL_TAG.glamour`: GLAMOUR / PROJEKTION /
+  MIRAGE / ミラプリ / 코디 / 幻化) and the crawler (`glamour.descriptionDefault`). The names quote
+  the web app's tool title in each language. The EN one-liner is the design's draft. The CJK
+  subsets are re-cut for the new glyphs.
+- `tests/wrangler-env.test.ts` checks that every tool page is routed in both environments. A
+  missing route unfurls as the site root however complete the card code is.
+
+### Changed
+
+- **The glamour card carries no method tag.** ΔE2000 is a fact about the tools that measure color
+  distance. The reader only lists the dyes a file already names, so its footer shows the path
+  alone, like the root card.
+
+### Fixed
+
+- **A default card's one-liner ran off the card's right edge.** It was one `<text>` and resvg
+  wraps nothing. The live EN Mixer card stopped at "best first" → "be", and the DE Gradient card at
+  "klare S". The one-liner now breaks by measured width (at spaces, or at any character in CJK),
+  up to three lines with an ellipsis after that, and the deck grows a line for each line it adds,
+  as the design sets it. A one-liner that fits keeps the 54 px deck.
+
 ## [2.10.4] - 2026-09-28
 
 Needs `@xivdyetools/core` 5.7.0. The version bump is what retires cached Swatch Matcher cards —

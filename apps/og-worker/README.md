@@ -19,7 +19,7 @@ When someone pastes a share link like `xivdyetools.app/harmony/?dye=102&harmony=
 
 Mounted on the app's own domain so crawlers resolve real previews:
 
-`/harmony` · `/gradient` · `/mixer` · `/swatch` · `/comparison` · `/accessibility` · `/extractor` · `/presets` · `/budget`
+`/harmony` · `/gradient` · `/mixer` · `/swatch` · `/comparison` · `/accessibility` · `/extractor` · `/presets` · `/budget` · `/glamour`
 
 ### Image endpoints (PNG)
 
@@ -80,7 +80,7 @@ pnpm --filter xivdyetools-og-worker run deploy:production   # Production
 
 > ⚠️ Unlike the other workers, a bare `wrangler deploy` here is **not** a routeless sandbox: the top-level env is the live **beta** worker (`beta.xivdyetools.app/<tool>/*` + `og-beta.xivdyetools.app`, its own `xivdyetools_og_analytics_beta` dataset). Production always needs `--env production`. See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../docs/operations/DEPLOY_ENVIRONMENTS.md).
 
-Production takes both the `og.xivdyetools.app` custom domain and the nine `xivdyetools.app/<tool>/*` route patterns. Because those patterns sit in front of the web app, a broken deploy here takes those routes down for humans too — smoke-test a tool URL in a browser after deploying, not just the PNG endpoint.
+Production takes both the `og.xivdyetools.app` custom domain and the ten `xivdyetools.app/<tool>/*` route patterns. Because those patterns sit in front of the web app, a broken deploy here takes those routes down for humans too — smoke-test a tool URL in a browser after deploying, not just the PNG endpoint.
 
 ## Environment Bindings
 

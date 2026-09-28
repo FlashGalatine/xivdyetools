@@ -14,6 +14,7 @@ export { handleGradientCommand } from './gradient.js';
 export { handlePreferencesCommand } from './preferences.js';
 export { handleMixerV4Command } from './mixer-v4.js';
 export { handleSwatchCommand } from './swatch.js';
+export { handleGlamourCommand } from './glamour.js';
 
 export { handleAccessibilityCommand } from './accessibility.js';
 export { handleContrastCommand } from './contrast.js';

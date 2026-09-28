@@ -21,7 +21,14 @@
  * @module services/svg/default-card
  */
 
-import { toolGlyph, escapeXml, estimateTextWidth, type ToolGlyphName } from '@xivdyetools/svg';
+import {
+  toolGlyph,
+  escapeXml,
+  estimateTextWidth,
+  fitText,
+  textWidth,
+  type ToolGlyphName,
+} from '@xivdyetools/svg';
 import { COMPACT_GLYPH, GROUND, MARK_STRIPES, STACKS } from './tokens';
 import {
   BAND_FRAMES,
@@ -39,6 +46,45 @@ import {
  * confirmed one-liner to spend the second line on, and no data to protect.
  */
 const DEFAULT_DECK_H = 54;
+
+/** Each further line of the one-liner: 12 px at the drawn 1.45 line height. */
+const SUB_LINE_H = 17.4;
+/** The deck grows to three one-liner lines; the third ellipsises past that. */
+const SUB_MAX_LINES = 3;
+
+/**
+ * Break the one-liner into lines that fit `maxPx` — at a space where the
+ * script has one, at any character in CJK. The design sets the one-liner
+ * with `text-wrap` in a deck that grows; resvg wraps nothing, and one
+ * `<text>` ran off the card's edge (the live DE gradient card stopped at
+ * "klare S", the EN mixer at "best first" → "be").
+ */
+function wrapSub(content: string, maxPx: number): string[] {
+  const width = (cps: string[]): number => textWidth(cps.join(''), 12, 'body');
+  const lines: string[] = [];
+  let rest = [...content.trim()];
+  while (rest.length > 0) {
+    if (lines.length === SUB_MAX_LINES - 1) {
+      lines.push(fitText(rest.join(''), maxPx, 12, 'body'));
+      break;
+    }
+    if (width(rest) <= maxPx) {
+      lines.push(rest.join(''));
+      break;
+    }
+    let n = 1;
+    while (n < rest.length && width(rest.slice(0, n + 1)) <= maxPx) n++;
+    let cut = n;
+    if (rest[n] !== ' ') {
+      const space = rest.slice(0, n).lastIndexOf(' ');
+      if (space > 0) cut = space;
+    }
+    lines.push(rest.slice(0, cut).join('').trimEnd());
+    rest = rest.slice(cut);
+    while (rest[0] === ' ') rest.shift();
+  }
+  return lines;
+}
 
 export interface DefaultCardOptions {
   /** Compact glyph name + banner (detail) glyph name; null = the root card */
@@ -91,9 +137,12 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
       })
     );
 
-    // Deck (two lines here — a default card has a one-liner to spend them on)
-    // + footer 26px bound the stripe field
-    const deckTop = height - FOOTER_H - DEFAULT_DECK_H;
+    // Deck (two lines here — a default card has a one-liner to spend them on,
+    // and a line more for each line the one-liner wraps onto) + footer 26px
+    // bound the stripe field
+    const subLines = wrapSub(options.sub, width - 26);
+    const extra = (i: number): number => Math.round(i * SUB_LINE_H);
+    const deckTop = height - FOOTER_H - DEFAULT_DECK_H - extra(subLines.length - 1);
     const fieldTop = HEADER_H;
     const fieldH = deckTop - fieldTop;
     MARK_STRIPES.forEach((hex, i) => {
@@ -123,7 +172,9 @@ export function generateDefaultCard(options: DefaultCardOptions): string {
     parts.push(
       text(13, deckTop + 21, options.name, { fill: '#ECECEE', size: 14.5, family: STACKS.body, weight: 600 })
     );
-    parts.push(text(13, deckTop + 40, options.sub, { fill: '#9C9CA2', size: 12, family: STACKS.body }));
+    subLines.forEach((line, i) => {
+      parts.push(text(13, deckTop + 40 + extra(i), line, { fill: '#9C9CA2', size: 12, family: STACKS.body }));
+    });
 
     // Footer 26px: path · method tag (only where it is true) — shared chrome
     parts.push(cardFooter(width, height, { path: options.path, right: options.methodTag }));
@@ -195,4 +246,5 @@ export const DEFAULT_DECK: Record<string, { glyphName: ToolGlyphName }> = {
   extractor: { glyphName: 'extractor' },
   presets: { glyphName: 'presets' },
   budget: { glyphName: 'budget' },
+  glamour: { glyphName: 'glamour' },
 };

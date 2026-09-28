@@ -71,6 +71,10 @@
       "name": "`/swatch <file> [order] [slot]`",
       "description": "캐릭터의 색상을 `.chara` 파일(Anamnesis 또는 Ktisis)에서 염료에 매칭합니다.\n• 피부, 머리, 브릿지, 눈, 입술, 페인트, 문신/림벌 링을 읽습니다\n• `slot`: 하나의 색상에 대해 가장 가까운 염료 5개"
     },
+    "glamour": {
+      "name": "`/glamour <file>`",
+      "description": "`.chara` 파일(Anamnesis 또는 Ktisis)의 코디를 목록으로 보여줍니다.\n• 염색한 각 장비를 실제로 착용할 수 있는 아이템 이름으로 표시\n• GPOSERS 형식의 전체 목록, 바로 복사 가능"
+    },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
       "description": "봇 설정을 관리합니다.\n• `set`: 언어, 블렌딩, 매칭, 결과 수, 부족/성별, 서버, 카드 값, 테마\n• `filters`: 특정 염료 그룹을 결과에서 제외\n• `reset`: 설정 하나 또는 전체"
@@ -598,7 +602,59 @@
     "swatchTitle": "캐릭터 색상 견본",
     "swatchNoSlots": "이 파일에 활성 색상 부위가 없습니다.",
     "swatchSlotMissing": "{slot}은(는) 이 파일에서 활성 부위가 아닙니다.",
-    "perDe": "GIL/ΔE"
+    "perDe": "GIL/ΔE",
+    "glamourTitle": "코디",
+    "glamourPieces_one": "염색 {n}개",
+    "glamourPieces_other": "염색 {n}개",
+    "glamourWorn_one": "장비 {n}개",
+    "glamourWorn_other": "장비 {n}개",
+    "glamourDyes_one": "염료 {n}종",
+    "glamourDyes_other": "염료 {n}종",
+    "glamourNoDyes": "염색 없음",
+    "glamourLooks": "+{n} 동형",
+    "glamourOneLook": "유일",
+    "glamourStatusTwin": "대체",
+    "glamourStatusOk": "문제 없음",
+    "glamourStatusDye": "염색 불가",
+    "glamourStatusGlamour": "투영 불가",
+    "glamourStatusWear": "착용 불가",
+    "glamourFootShown_one": "염색한 장비 {n}개 중 {s}개",
+    "glamourFootShown_other": "염색한 장비 {n}개 중 {s}개",
+    "glamourFootShownWorn_one": "장비 {n}개 중 {s}개",
+    "glamourFootShownWorn_other": "장비 {n}개 중 {s}개",
+    "glamourFootTwins_one": "같은 외형으로 {n}개 대체",
+    "glamourFootTwins_other": "같은 외형으로 {n}개 대체",
+    "glamourFootBlocked_one": "해결 불가 {n}개",
+    "glamourFootBlocked_other": "해결 불가 {n}개",
+    "glamourNamedLead": "같은 외형으로 대체:",
+    "glamourFixedDye": "{name} ({other} 대신: 이 염색을 할 수 없음)",
+    "glamourFixedGlamour": "{name} ({other} 대신: 투영할 수 없음)",
+    "glamourFixedWear": "{name} ({other} 대신: 이 캐릭터는 착용할 수 없음)",
+    "glamourBlockedLead": "해결 불가:",
+    "glamourBlockedDye": "{name} (파일의 염색을 할 수 없음)",
+    "glamourBlockedGlamour": "{name} (투영할 수 없음)",
+    "glamourBlockedWear": "{name} (이 캐릭터는 착용할 수 없음)",
+    "glamourBlockedNoItem": "{name} (대응하는 아이템이 없는 모델)",
+    "glamourCompany": "맞는 총사령부 소속 필요: {list}",
+    "glamourNoItemName": "모델 {key}",
+    "glamourNoGear": "이 파일에는 장비가 없습니다.",
+    "glamourResolveFailed": "지금은 아이템을 조회할 수 없습니다. 1분 후에 다시 시도해 주세요.",
+    "glamourResolveBusy": "지금은 아이템 조회가 붐빕니다. 1분 후에 다시 시도해 주세요.",
+    "glamourManual": "캐릭터 파일 안내:",
+    "glamourSlot": {
+      "MainHand": "주 무기",
+      "OffHand": "보조 무기",
+      "HeadGear": "머리",
+      "Body": "몸통",
+      "Hands": "손",
+      "Legs": "다리",
+      "Feet": "발",
+      "Ears": "귀",
+      "Neck": "목",
+      "Wrists": "손목",
+      "RightRing": "오른쪽 손가락",
+      "LeftRing": "왼쪽 손가락"
+    }
   },
   "firstRun": {
     "title": "XIV Dye Tools 5.0",
@@ -767,6 +823,14 @@
         },
         "slot": {
           "description": "대신 슬롯 하나에 대한 가장 가까운 염료 5개 표시"
+        }
+      }
+    },
+    "glamour": {
+      "description": "캐릭터 파일을 코디로 읽기: 각 장비, 염색, 착용 가능 여부",
+      "options": {
+        "file": {
+          "description": "`.chara` 캐릭터 파일 (Anamnesis / Ktisis 내보내기)"
         }
       }
     },

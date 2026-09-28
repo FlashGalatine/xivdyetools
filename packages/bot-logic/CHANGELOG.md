@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0] - 2026-09-28
+
+### Added
+
+- **`executeGlamour`** — the Glamour Reader in the bot. It parses a `.chara` file with core's rules,
+  asks the injected resolver (the adapter's transport to api-worker's `POST /v1/chara/resolve`)
+  for every worn model, and names each piece with core's `defaultCharaTwin`. That's the first
+  twin that passes the in-game check, preferring a dyeable one, then one any Grand Company can
+  wear, then not Dated. The card (svg `generateGlamourCard`) shows the dyed pieces in slot order,
+  five at most, and "+N LOOK" counts the whole family (`familySize`), as the web does. The embed
+  carries every piece in the GPOSERS form, built on core's `chara-gposers` model (the one the web
+  reader renders): English labels, Dye lines only for dyed channels, an
+  `Acquisition:` line (the resolve answer's, or bare for filling in), and two identical rings
+  written once as `Rings`. Below the list it says which pieces were named from a twin and why,
+  which have no fix, and which need a Grand Company. No character name, on the card or in the
+  embed.
+- **A busy lookup is `RESOLVE_BUSY`.** When api-worker's service bucket answers 429, the reply
+  says the lookup is busy and to try again in a minute, instead of reading as a failure.
+- **A file api-worker refuses is `PARSE_FAILED`.** Core's parser takes any positive model lane or
+  glasses id; api-worker's resolve stops at 0xFFFF with a 400. A resolver error carrying a
+  refused-body status (400, 413, 422) is now answered with the parse-error message and api-worker's reason ("Could not
+  read the file — gear[0].base must be an integer between 0 and 65535") instead of
+  `RESOLVE_FAILED`'s "try again in a minute", which a hand-edited or damaged file would fail
+  every time. A 404, 401 or 403 is our deploy or configuration and stays `RESOLVE_FAILED`. No
+  new strings.
+- **Race names on the card.** The card names a one-race piece by its race (VIERA) when the race
+  is what blocks it; a piece that fails on gender alone reads LOCKED. The names are core's, per
+  locale, through a new `getLocalizedRace` in `localization.ts` — internal to the package, not
+  exported from its barrel (only `/glamour` reads it).
+  The check compares races by our `Race` identifier (a `Record<Race, …>` of wear-mask columns),
+  not by the sheet's column spelling: the sheet writes `Miqote` where the parser answers
+  `Miqo'te`, so a Miqo'te man in a piece for Miqo'te women was told MIQO'TE instead of LOCKED.
+  Tested for all eight races, both genders.
+- **Strings ×6**: `card.glamour*` (card labels, counts, reasons, errors), `card.glamourSlot.*`,
+  `commands.glamour.*`, `manual.glamour.*`. The slot labels are the game's own words (`Addon`
+  rows 738–750, per client; tabled in `docs/reference/ffxiv-terminology.md` § Equipment Slots),
+  uppercased where the script has case: MAIN HAND, not WEAPON; FINGER (RECHTS); 주 무기.
+
+### Changed
+
+- `/swatch` and `/glamour` share `commands/chara-identity.ts` (the palette-sheet service, the
+  producer token, the tribe line). No behavior change.
+
 ## [4.4.2] - 2026-09-28
 
 Needs `@xivdyetools/core` 5.7.0.
