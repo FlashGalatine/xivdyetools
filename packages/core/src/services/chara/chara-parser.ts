@@ -23,7 +23,9 @@
  *   float-bearing files): the floats count as live only when it is present
  *   and true — a missing flag means the index wins, and the UI says so.
  * - **Gear dyes are stain IDs** (`DyeId`/`DyeId2` per slot, 0 = undyed; 35%
- *   of dyed channels are the second one).
+ *   of dyed channels are the second one), read only off a WORN slot: 33 of
+ *   1,142 corpus files carry a dye on an empty one — Anamnesis writes stains
+ *   254/255 on a hidden weapon — and it colours nothing in game.
  * - **Gear models are emitted beside the dyes** (`gearModels`): the
  *   `ModelBase`/`ModelVariant` pair (weapons add `ModelSet`) of every WORN
  *   slot — `ModelBase == 0` (weapons: `ModelSet == 0` too) is an empty slot
@@ -86,7 +88,7 @@ export interface CharaGearDye {
   slot: CharaGearSlotId;
   /** Which dye channel (1 = DyeId, 2 = DyeId2) */
   channel: 1 | 2;
-  /** Stain ID as stored (1-254); 0/undyed channels are not emitted */
+  /** Stain ID as stored; 0/undyed channels and empty slots are not emitted */
   stainId: number;
 }
 
@@ -111,7 +113,7 @@ export interface ParsedCharaFile {
   /** Whether the IsExtendedAppearanceValid key was present at all */
   extendedDeclared: boolean;
   slots: CharaColorSlotRaw[];
-  /** Dyed gear channels only (stainId > 0), in file slot order */
+  /** Dyed channels of worn pieces only (stainId > 0), in file slot order */
   gearDyes: CharaGearDye[];
   /** Worn pieces only (model base > 0), in file slot order — undyed pieces included */
   gearModels: CharaGearModel[];
@@ -419,6 +421,16 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     const gear = record[gearSlot];
     if (typeof gear !== 'object' || gear === null) continue;
     const gearRecord = gear as Record<string, unknown>;
+    const set = readModelLane(gearRecord['ModelSet']);
+    const base = readModelLane(gearRecord['ModelBase']);
+    const variant = readModelLane(gearRecord['ModelVariant']);
+    // An empty slot's dye colours nothing (a hidden weapon even writes stains 254/255)
+    if (!isWornCharaModel(gearSlot, set, base)) continue;
+    gearModels.push(
+      isCharaWeaponSlot(gearSlot)
+        ? { slot: gearSlot, set, base, variant }
+        : { slot: gearSlot, base, variant },
+    );
     for (const [channel, key] of [
       [1, 'DyeId'],
       [2, 'DyeId2'],
@@ -427,16 +439,6 @@ export function parseCharaFile(text: string): ParsedCharaFile {
       if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
         gearDyes.push({ slot: gearSlot, channel, stainId: value });
       }
-    }
-    const set = readModelLane(gearRecord['ModelSet']);
-    const base = readModelLane(gearRecord['ModelBase']);
-    const variant = readModelLane(gearRecord['ModelVariant']);
-    if (isWornCharaModel(gearSlot, set, base)) {
-      gearModels.push(
-        isCharaWeaponSlot(gearSlot)
-          ? { slot: gearSlot, set, base, variant }
-          : { slot: gearSlot, base, variant },
-      );
     }
   }
 

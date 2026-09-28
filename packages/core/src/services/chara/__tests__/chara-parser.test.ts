@@ -280,9 +280,33 @@ describe('parseCharaFile', () => {
         }),
       );
       expect(parsed.gearModels).toEqual([{ slot: 'MainHand', set: 2099, base: 0, variant: 0 }]);
-      // The dye channel is still reported even though no model is worn — the
-      // file said so; the UI decides how to show a dye on nothing.
+    });
+
+    it('drops a dye on an empty slot — nothing is worn there to carry it', () => {
+      // 33 of 1,142 real files carry one (docs/research/2026-09-28-chara-corpus-profile)
+      const parsed = parseCharaFile(
+        JSON.stringify({
+          ...base,
+          Hands: { ModelBase: 0, ModelVariant: 3, DyeId: 6, DyeId2: 6 },
+          HeadGear: { ModelBase: 0, ModelVariant: 0, DyeId: 0, DyeId2: 2 },
+          Body: { ModelBase: 279, ModelVariant: 1, DyeId: 5 },
+        }),
+      );
       expect(parsed.gearDyes).toEqual([{ slot: 'Body', channel: 1, stainId: 5 }]);
+    });
+
+    it('drops the 254/255 stains Anamnesis writes on a hidden weapon', () => {
+      const hidden = { ModelSet: 0, ModelBase: 0, ModelVariant: 1, DyeId: 254, DyeId2: 255 };
+      const parsed = parseCharaFile(JSON.stringify({ ...base, MainHand: hidden, OffHand: hidden }));
+      expect(parsed.gearModels).toEqual([]);
+      expect(parsed.gearDyes).toEqual([]);
+    });
+
+    it('keeps the dyes of a weapon worn by set alone', () => {
+      const parsed = parseCharaFile(
+        JSON.stringify({ ...base, MainHand: { ModelSet: 2099, ModelBase: 0, ModelVariant: 0, DyeId: 9 } }),
+      );
+      expect(parsed.gearDyes).toEqual([{ slot: 'MainHand', channel: 1, stainId: 9 }]);
     });
   });
 
