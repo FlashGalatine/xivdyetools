@@ -13,8 +13,11 @@
  * does it.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { CharaImport } from '../chara-import';
+import { GlamourBlock } from '../glamour-block';
+import { CharaFileCard } from '../chara-file-card';
 import { closeItemLinksMenu } from '../item-links-menu';
+import { CharaSessionService } from '@services/chara-session-service';
+import { loadCharaFile } from '@services/chara-file-loader';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import type { CharaResolveResult } from '@services/chara-resolve-service';
 
@@ -134,21 +137,29 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+/** Everything `mount` built. The session is app-wide, so each test tears it all down. */
+const mounted: Array<{ destroy(): void }> = [];
+
+afterEach(() => {
+  for (const component of mounted.splice(0)) component.destroy();
+  CharaSessionService.setSession(null);
+});
+
 async function mount(fixture: string) {
   const container = createTestContainer('chara-host');
   const glamour = createTestContainer('chara-glamour');
-  const importer = new CharaImport(
-    container,
-    { onSlotPick: vi.fn(), onResolved: vi.fn() },
-    { glamourContainer: glamour }
-  );
-  importer.init();
+  // The file card carries SWAP; the block draws whatever the session holds.
+  const card = new CharaFileCard(container);
+  card.init();
+  const block = new GlamourBlock(glamour);
+  block.init();
+  mounted.push(card, block);
   const file = new File([fixture], 'test.chara', { type: 'application/json' });
   if (typeof (file as Blob).text !== 'function') {
     (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(fixture);
   }
-  await (importer as unknown as { loadFile(f: File): Promise<void> }).loadFile(file);
-  return { importer, container, glamour };
+  await loadCharaFile(file);
+  return { block, container, glamour };
 }
 
 /** Reveal every worn piece — the facewear row only exists under Show all. */
@@ -174,7 +185,7 @@ const entryIds = () =>
     .map((n) => n.dataset.link)
     .filter((id): id is string => id !== undefined);
 
-describe('CharaImport — "Open in…" menu', () => {
+describe('GlamourBlock — "Open in…" menu', () => {
   let hosts: HTMLElement[] = [];
   let openSpy: ReturnType<typeof vi.spyOn>;
 
@@ -427,13 +438,13 @@ describe('CharaImport — "Open in…" menu', () => {
       'cancels a pending lazy open when %s removes its row',
       async (action) => {
         resolveMock.mockResolvedValue(RESOLVED);
-        const { importer, container, glamour } = await mount(FIXTURE);
+        const { block, container, glamour } = await mount(FIXTURE);
         hosts.push(container, glamour);
         const trigger = glamour.querySelector<HTMLElement>(
           '[data-slot="HeadGear"] [data-role="item-name"]'
         )!;
         trigger.click();
-        if (action === 'destroy') importer.destroy();
+        if (action === 'destroy') block.destroy();
         else if (action === 'lens') {
           glamour.querySelector<HTMLElement>('[data-glamour-view="dyes"]')!.click();
         } else if (action === 'show-all') showAll(glamour);
@@ -487,7 +498,7 @@ describe('CharaImport — "Open in…" menu', () => {
 
     it('closes when the component is destroyed — it lives outside the container', async () => {
       resolveMock.mockResolvedValue(RESOLVED);
-      const { importer, glamour } = await mount(FIXTURE);
+      const { block, glamour } = await mount(FIXTURE);
       hosts.push(glamour);
 
       await openMenu(
@@ -495,7 +506,7 @@ describe('CharaImport — "Open in…" menu', () => {
       );
       expect(menu()).not.toBeNull();
 
-      importer.destroy();
+      block.destroy();
       expect(menu()).toBeNull();
     });
 

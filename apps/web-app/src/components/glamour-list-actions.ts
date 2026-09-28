@@ -1,11 +1,10 @@
 /**
  * Copy list / Export .md — the click-time half of the glamour list.
  *
- * `chara-import` draws the two buttons; what a click needs lives here and is
- * loaded on demand, like the item-links menu, because the swatch chunk sits
- * within a kilobyte of its size budget and none of this is needed until
- * someone asks for the list. The component hands over what it knows (the
- * resolved file and the equipment answer) as plain data.
+ * `glamour-block` draws the two buttons; what a click needs lives here and is
+ * loaded on demand, like the item-links menu, because none of this is needed
+ * until someone asks for the list. The component hands over what it knows
+ * (the resolved file and the equipment answer) as plain data.
  *
  * Copy is the one action the component keeps for itself: the clipboard write
  * has to start inside the click (WebKit drops the user activation across the

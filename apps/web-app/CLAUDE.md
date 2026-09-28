@@ -113,7 +113,9 @@ src/
 │   ├── tutorial-spotlight.ts        # First-run tutorial overlay
 │   ├── welcome-modal.ts             # First-visit welcome
 │   ├── changelog-modal.ts           # "What's New" modal (parses CHANGELOG.md at build time)
-│   └── ... image-zoom-controller, dye-grid, dye-search-box, dye-selector, market-board, metric-help, chara-import, etc.
+│   ├── chara-file-card.ts / chara-sheet.ts / chara-ui.ts # Swatch Matcher .chara views: drop zone + file card, THIS CHARACTER, shared helpers
+│   ├── glamour-block.ts             # DYES ON THIS GLAMOUR — its own chunk, imported once a loaded file wears anything
+│   └── ... image-zoom-controller, dye-grid, dye-search-box, dye-selector, market-board, metric-help, etc.
 ├── services/
 │   ├── index.ts                     # initializeServices(), getServicesStatus(), re-exports
 │   ├── router-service.ts            # ToolId, ROUTES, history.pushState navigation
@@ -123,6 +125,8 @@ src/
 │   ├── storage-service.ts           # localStorage wrapper, all keys prefixed
 │   ├── auth-service.ts              # Discord OAuth via oauth worker, JWT in localStorage
 │   ├── api-service-wrapper.ts       # Wraps core APIService (Universalis through proxy)
+│   ├── chara-session-service.ts     # The loaded .chara character, shared by every view of it — memory only (a reload clears it); tiny because ConfigController (main entry) imports it to pin the swatch tribe/gender to the file, and the sidebar's lock subscribes to it
+│   ├── chara-file-loader.ts         # Reads a dropped .chara into the session: 20 MB cap, core parse, chara_parse telemetry; returns the failure, the file card toasts it
 │   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → item names/icons (Swatch 11a/11c); session cache; any failure = CharaResolveUnavailableError
 │   ├── dye-service-wrapper.ts       # Wraps core DyeService
 │   ├── harmony-generator.ts         # The harmony-type UI vocabulary only (ids, icons, names) —

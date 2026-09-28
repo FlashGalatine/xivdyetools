@@ -10,8 +10,10 @@
  * reaches the network.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { CharaImport } from '../chara-import';
+import { GlamourBlock } from '../glamour-block';
 import { CollectionService, LanguageService } from '@services/index';
+import { CharaSessionService } from '@services/chara-session-service';
+import { loadCharaFile } from '@services/chara-file-loader';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 
 const { resolveMock } = vi.hoisted(() => ({ resolveMock: vi.fn() }));
@@ -45,8 +47,9 @@ const nameField = (root: HTMLElement): HTMLInputElement => {
   return input;
 };
 
-describe('CharaImport — palette naming never leaks the character name', () => {
+describe('GlamourBlock — palette naming never leaks the character name', () => {
   let hosts: HTMLElement[] = [];
+  let block: GlamourBlock | null = null;
   const onSubmitPalette = vi.fn<(dyes: unknown[], name?: string) => void>();
 
   beforeEach(() => {
@@ -56,26 +59,25 @@ describe('CharaImport — palette naming never leaks the character name', () => 
     localStorage.clear();
   });
   afterEach(() => {
+    // The session is app-wide: leave nothing loaded or subscribed behind.
+    block?.destroy();
+    block = null;
+    CharaSessionService.setSession(null);
     hosts.forEach(cleanupTestContainer);
     hosts = [];
   });
 
   /** Load the fixture as "Real Name.chara" and open the make-a-palette panel. */
   async function mountWithPanelOpen(): Promise<HTMLElement> {
-    const container = createTestContainer('chara-host');
     const glamour = createTestContainer('chara-glamour');
-    hosts = [container, glamour];
-    const importer = new CharaImport(
-      container,
-      { onSlotPick: vi.fn(), onSubmitPalette },
-      { glamourContainer: glamour }
-    );
-    importer.init();
+    hosts = [glamour];
+    block = new GlamourBlock(glamour, { onSubmitPalette });
+    block.init();
     const file = new File([FIXTURE], 'Real Name.chara', { type: 'application/json' });
     if (typeof (file as Blob).text !== 'function') {
       (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(FIXTURE);
     }
-    await (importer as unknown as { loadFile(f: File): Promise<void> }).loadFile(file);
+    await loadCharaFile(file);
     buttonByText(glamour, LanguageService.t('swatch.makePalette')).click();
     return glamour;
   }

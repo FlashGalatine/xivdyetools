@@ -2,6 +2,18 @@
 
 ---
 
+## Web-App Version 5.12.7 — September 28, 2026
+
+### Your character file stays loaded
+- **The Swatch Matcher keeps your character file when you leave it.** Going to another tool and coming back no longer clears it, so there is no need to drop it in again.
+- **Switching the app's language keeps it too.** It stays loaded until you press SWAP, reload the page or close the tab.
+- **Tribe & Gender unlock once the file is gone.** They used to stay locked after you left the tool or reloaded, and only loading a file and pressing SWAP freed them.
+- **While a file is loaded, Tribe & Gender always match your character.** Resetting or importing settings, or a change in another browser tab, no longer swaps in another tribe's hair and skin colors.
+- **Your file is still read only on your device,** and it is never saved in your browser.
+
+### Behind the scenes
+- The Swatch Matcher has about a quarter less to download when it opens. The list of the dyes on your glamour loads only when a character file needs it.
+
 ## Web-App Version 5.12.6 — September 28, 2026
 
 ### Swatch Matcher colors match the character creator

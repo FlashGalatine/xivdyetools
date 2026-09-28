@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.9.3] - 2026-09-27
+### 📂 Your character file stays loaded
+- Web app: the Swatch Matcher keeps your character file when you go to another tool and come back, or switch the app's language. It stays until you press SWAP, reload the page or close the tab.
+- Web app: the Tribe & Gender selectors unlock once the file is gone. They used to stay locked after you left the Swatch Matcher or reloaded, until you loaded a file and pressed SWAP.
+- Your file is still read only on your own device, and it is never saved in your browser.
+
 ## [5.9.2] - 2026-09-21
 ### 🔤 One spelling of "color" everywhere
 - Web app and Discord bot: the English text now spells things the American way throughout — "color" rather than "colour", "behavior" rather than "behaviour". Both surfaces used to mix the two spellings from one screen to the next.

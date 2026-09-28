@@ -6,6 +6,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ConfigController } from '../config-controller';
 import { StorageService } from '../storage-service';
+import { CharaSessionService, type CharaSession } from '../chara-session-service';
+import type { ResolvedCharaCharacter } from '@xivdyetools/core';
 import {
   getDefaultConfig,
   DEFAULT_DISPLAY_OPTIONS,
@@ -132,6 +134,23 @@ describe('ConfigController', () => {
       const controller = ConfigController.getInstance();
 
       expect(controller.getConfig('harmony').wheel).toBe(expected);
+    });
+
+    // `swatch.fileProvided` persisted "a .chara file is loaded" and outlived
+    // the file, so a reload kept the sidebar's tribe/gender locked with no
+    // file. The lock reads CharaSessionService now; the stale key is dropped.
+    it('drops the retired swatch fileProvided flag on load, keeping the rest', () => {
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        colorSheet: 'skinColors',
+        fileProvided: true,
+        race: 'Xaela',
+      });
+
+      const config = ConfigController.getInstance().getConfig('swatch');
+
+      expect(config).not.toHaveProperty('fileProvided');
+      expect(config.colorSheet).toBe('skinColors');
+      expect(config.race).toBe('Xaela');
     });
 
     // REFACTOR-010: the merge was `{ ...defaults, ...stored }` -- SHALLOW -- so
@@ -610,6 +629,135 @@ describe('ConfigController', () => {
       window.dispatchEvent(new StorageEvent('storage', { key: ADVANCED_KEY, newValue: '{}' }));
 
       expect(StorageService.getItem).not.toHaveBeenCalled();
+    });
+  });
+
+  // PR #206 review: the sidebar locks tribe/gender while a .chara file is
+  // loaded, but the VALUES used to be pushed into the config only by the
+  // Swatch tool, and only when a file loaded while it was open. A settings
+  // reset, an import or another tab's save then left the lock on the wrong
+  // tribe, and a file loaded with the tool closed never reached the config.
+  describe('a loaded .chara file owns the swatch tribe and gender', () => {
+    const SWATCH_KEY = 'xivdyetools_v4_config_swatch';
+    const file: CharaSession = {
+      fileName: 'a.chara',
+      resolved: { tribe: 'Highlander', gender: 'Male' } as unknown as ResolvedCharaCharacter,
+    };
+
+    afterEach(() => {
+      CharaSessionService.setSession(null);
+    });
+
+    it('takes them when the file loads, whichever tool is open', () => {
+      const controller = ConfigController.getInstance();
+      const listener = vi.fn();
+      controller.subscribe('swatch', listener);
+
+      CharaSessionService.setSession(file);
+
+      expect(controller.getConfig('swatch')).toMatchObject({ race: 'Highlander', gender: 'Male' });
+      expect(listener).toHaveBeenLastCalledWith(
+        expect.objectContaining({ race: 'Highlander', gender: 'Male' })
+      );
+    });
+
+    it('saves them when the config was already read, as the sidebar reads it', () => {
+      const controller = ConfigController.getInstance();
+      controller.getConfig('swatch');
+      const listener = vi.fn();
+      controller.subscribe('swatch', listener);
+      vi.mocked(StorageService.setItem).mockClear();
+
+      CharaSessionService.setSession(file);
+
+      expect(StorageService.setItem).toHaveBeenCalledWith(
+        SWATCH_KEY,
+        expect.objectContaining({ race: 'Highlander', gender: 'Male' })
+      );
+      expect(listener).toHaveBeenLastCalledWith(
+        expect.objectContaining({ race: 'Highlander', gender: 'Male' })
+      );
+    });
+
+    it('keeps them through a settings reset', () => {
+      const controller = ConfigController.getInstance();
+      CharaSessionService.setSession(file);
+      controller.setConfig('swatch', { race: 'Highlander', gender: 'Male', maxResults: 3 });
+      const listener = vi.fn();
+      controller.subscribe('swatch', listener);
+
+      controller.resetAllConfigs();
+
+      const swatch = controller.getConfig('swatch');
+      expect(swatch).toMatchObject({ race: 'Highlander', gender: 'Male' });
+      expect(swatch.maxResults).toBe(getDefaultConfig('swatch').maxResults);
+      expect(listener).toHaveBeenLastCalledWith(
+        expect.objectContaining({ race: 'Highlander', gender: 'Male' })
+      );
+    });
+
+    it('keeps them through a settings import', () => {
+      const controller = ConfigController.getInstance();
+      CharaSessionService.setSession(file);
+      controller.setConfig('swatch', { race: 'Highlander', gender: 'Male' });
+
+      controller.importConfigs({
+        swatch: { race: 'Raen', gender: 'Female', maxResults: 3 },
+      } as unknown as Partial<ToolConfigMap>);
+
+      expect(controller.getConfig('swatch')).toMatchObject({
+        race: 'Highlander',
+        gender: 'Male',
+        maxResults: 3,
+      });
+    });
+
+    it('keeps them when another tab saves a different tribe, and does not write back', () => {
+      const controller = ConfigController.getInstance();
+      CharaSessionService.setSession(file);
+      controller.setConfig('swatch', { race: 'Highlander', gender: 'Male' });
+      const listener = vi.fn();
+      controller.subscribe('swatch', listener);
+      vi.mocked(StorageService.setItem).mockClear();
+
+      (StorageService.getItem as ReturnType<typeof vi.fn>).mockReturnValue({
+        ...getDefaultConfig('swatch'),
+        race: 'Raen',
+        gender: 'Female',
+        maxResults: 3,
+      });
+      window.dispatchEvent(new StorageEvent('storage', { key: SWATCH_KEY, newValue: '{}' }));
+
+      expect(controller.getConfig('swatch')).toMatchObject({
+        race: 'Highlander',
+        gender: 'Male',
+        maxResults: 3,
+      });
+      expect(listener).toHaveBeenLastCalledWith(
+        expect.objectContaining({ race: 'Highlander', gender: 'Male' })
+      );
+      // Writing it back would bounce between two tabs holding different files.
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+    });
+
+    it('hands them back to the sidebar once the file is cleared', () => {
+      const controller = ConfigController.getInstance();
+      CharaSessionService.setSession(file);
+      CharaSessionService.setSession(null);
+
+      controller.setConfig('swatch', { race: 'Raen', gender: 'Female' });
+
+      expect(controller.getConfig('swatch')).toMatchObject({ race: 'Raen', gender: 'Female' });
+    });
+
+    it('stops following the file once the instance is reset', () => {
+      ConfigController.getInstance().getConfig('swatch');
+      ConfigController.resetInstance();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      CharaSessionService.setSession(file);
+
+      expect(StorageService.setItem).not.toHaveBeenCalled();
     });
   });
 

@@ -1,50 +1,33 @@
 /**
- * XIV Dye Tools 5.0 — .chara import (10A Sheet).
+ * XIV Dye Tools 5.0 — DYES ON THIS GLAMOUR (Turn 11 of the 10A sheet).
  *
- * The front door turns from a picker into a reader: drop a .chara file and
- * every colour on the character arrives at once — one card per slot with its
- * best dye already on it — plus the dyes the glamour is wearing. Absent
- * slots stay as dashed placeholders with the reason, so a sparse file reads
- * as a fact about the character, not a loading failure.
+ * What the loaded character is wearing: every piece with the dye on each
+ * channel, where to look a piece up ("Open in…"), the Copy list / Export .md
+ * submission template, and Make a palette — the 3–6 floor/cap enforced at the
+ * action buttons, Save to this device creating a `kind: 'palette'`
+ * CollectionService record, Submit to Community handing off to the host.
  *
- * Parsing is core's Phase-0 parser (parseCharaFile → resolveCharaColors);
- * everything here is presentation, plus two deliberate wires: the 3–6
- * floor/cap enforced at the Make-a-palette action buttons, and Save-to-this-
- * device creating a `kind: 'palette'` CollectionService record.
+ * Reads the loaded character from CharaSessionService. The Swatch Matcher
+ * imports this module on demand, once a file wears anything, so the block is
+ * charged to its own chunk instead of the swatch chunk's size budget.
  *
  * Renders inside the v4 shell's shadow DOM — inline styles + one injected
- * <style> block for the responsive grids. Privacy is on the card: parsed on
- * this device, nothing uploaded, Base64Image never read.
+ * <style> block for the responsive grid.
  *
  * Spec: docs/research/monorepo-2.0/10a-sheet-port-spec.md (10A "Sheet")
  *
- * @module components/chara-import
+ * @module components/glamour-block
  */
 
 import {
-  parseCharaFile,
-  resolveCharaColors,
-  CharacterColorService,
-  classifyBandTier,
-  roundToBandDisplay,
   formatCharaModelLabel,
   facewearColors,
   type ResolvedCharaCharacter,
-  type ResolvedCharaSlot,
   type ResolvedGearDye,
   type CharaGearSlotId,
-  type CharaSlotErrorCode,
 } from '@xivdyetools/core';
-import {
-  ColorService,
-  CollectionService,
-  dyeService,
-  LanguageService,
-  StorageService,
-  ToastService,
-} from '@services/index';
-import { ThemeService } from '@services/theme-service';
-import { TelemetryService } from '@services/telemetry-service';
+import { CollectionService, LanguageService, StorageService, ToastService } from '@services/index';
+import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 import {
   resolveCharaEquipment,
   itemNameFor,
@@ -53,25 +36,24 @@ import {
   type CharaResolvedItem,
 } from '@services/chara-resolve-service';
 import type { ItemLinksMenuTarget } from '@components/item-links-menu';
+import {
+  INSET_RING,
+  MONO,
+  SANS,
+  amber,
+  dyeName,
+  el,
+  green,
+  hasGlamour,
+  monoChip,
+  tSwatch,
+} from '@components/chara-ui';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
-import { STORAGE_PREFIX, MAX_USER_FILE_BYTES } from '@shared/constants';
+import { STORAGE_PREFIX } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { copyRichTextToClipboard } from '@shared/clipboard';
 import { clearContainer } from '@shared/utils';
-import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
-import type { Dye, SubRace, Gender } from '@xivdyetools/types';
-
-const MONO = 'var(--font-mono)';
-/** Matches globals.css h1–h6 — Space Grotesk with the system fallback. */
-const SANS = 'var(--font-display)';
-const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'] as const;
-const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'] as const;
-const OFF_GRID_AMBER = '#F4BF4F';
-const OFF_GRID_AMBER_LIGHT = '#B45309';
-const LOCAL_ONLY_GREEN = '#61C554';
-const LOCAL_ONLY_GREEN_LIGHT = '#137A33';
-/** The suite's swatch inset ring — load-bearing on extreme colours. */
-const INSET_RING = 'box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.28);';
+import type { Dye } from '@xivdyetools/types';
 
 /** Glamour export floor/cap (confirmed: floor 3 — Turn 10; hard cap 6 — Review). */
 const PALETTE_FLOOR = 3;
@@ -79,17 +61,6 @@ const PALETTE_CAP = 6;
 
 /** The twelve dyeable slots — the footnote's "N slots are empty" denominator. */
 const GEAR_SLOT_COUNT = 12;
-
-/**
- * Core slot-failure code → locale key. Spelled out (not `` `swatch.slotError.${code}` ``)
- * so every key is a literal the orphan scanner can see, and so an unmapped
- * code degrades to `swatch.slotError.unknown` instead of printing a raw path.
- */
-const SLOT_ERROR_KEY: Record<CharaSlotErrorCode, string> = {
-  midRangeIndex: 'swatch.slotError.midRangeIndex',
-  indexOutOfRange: 'swatch.slotError.indexOutOfRange',
-  noTribe: 'swatch.slotError.noTribe',
-};
 
 /**
  * DYES ON THIS GLAMOUR lens (Turn 11, confirmed): Pieces (11a, default) puts
@@ -114,10 +85,10 @@ const SHOW_ALL_KEY = `${STORAGE_PREFIX}_swatch_glamour_show_all`;
 
 /**
  * The "Open in…" menu is reached by clicking a row and by nothing else, so it
- * is loaded on that click rather than shipped inside the swatch chunk — the
- * same arrangement as the palette-submission form below. Statically imported
- * it put the chunk 3 KB over its budget, and every visitor who never opens the
- * menu paid for it.
+ * is loaded on that click rather than shipped with the block — the same
+ * arrangement as the preset submission form the host opens. Statically
+ * imported it once put the swatch chunk 3 KB over its budget, and every
+ * visitor who never opens the menu paid for it.
  */
 let itemLinksMenu: typeof import('@components/item-links-menu') | null = null;
 /** Invalidates lazy opens even before the menu module has loaded. */
@@ -183,69 +154,34 @@ function facewearColorForName(nameEn: string): (typeof facewearColors)[number] |
 }
 
 /**
- * Responsive grids for the sheet — injected once per render (shadow-DOM scoped).
- * The equip grid is 2-up (Turn 11: rows grew 40 → 48 px and the JA/DE item
- * names are the width budget — they wrap, never ellipsise).
+ * Responsive equipment grid — injected once per render (shadow-DOM scoped).
+ * 2-up (Turn 11: rows grew 40 → 48 px and the JA/DE item names are the width
+ * budget — they wrap, never ellipsise), 1-up on phones.
  */
-const CHARA_RESPONSIVE_CSS = `
-.chara-slots-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+const GLAMOUR_CSS = `
 .chara-equip-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 @media (max-width: 768px) {
-  .chara-slots-grid { grid-template-columns: repeat(2, 1fr); }
   .chara-equip-grid { grid-template-columns: 1fr; }
 }
 `;
 
-/** Where a picked slot lives in the creator, for pins and the grid excerpt. */
-export interface CharaSlotGridRef {
-  /** Palette base the slot indexes into (matches ColorCategory bases) */
-  paletteBase:
-    | 'eyeColors'
-    | 'hairColors'
-    | 'highlightColors'
-    | 'skinColors'
-    | 'tattooColors'
-    | 'lipColors'
-    | 'facePaintColors';
-  variant: 'dark' | 'light' | null;
-  sheetIndex: number;
-}
-
-export interface CharaImportCallbacks {
-  /** A slot card was picked — hand its winning colour to the workspace */
-  onSlotPick: (hex: string, label: string, gridRef: CharaSlotGridRef | null) => void;
-  /** The file supplied tribe + gender — the selectors become a readout */
-  onTribeGender?: (tribe: SubRace, gender: Gender) => void;
+export interface GlamourBlockCallbacks {
   /** Make-a-palette submit: kept worn dyes + the panel's name draft */
   onSubmitPalette?: (dyes: Dye[], name?: string) => void;
-  /** Fired on load (resolved) and on clear (null) — drives pins + readout lock */
-  onResolved?: (resolved: ResolvedCharaCharacter | null) => void;
-}
-
-export interface CharaImportOptions {
-  /**
-   * Where DYES ON THIS GLAMOUR renders. The 10A flow puts it after the
-   * match results, which live in the tool — the tool passes a container
-   * from its results column. Falls back to the main container.
-   */
-  glamourContainer?: HTMLElement | null;
 }
 
 /**
- * The 10A file card + THIS CHARACTER sheet + DYES ON THIS GLAMOUR block.
- * Mounted above the workspace; the workspace keeps working without it.
+ * DYES ON THIS GLAMOUR for whatever character is loaded; empty when none is,
+ * or when the character wears nothing.
  */
-export class CharaImport {
+export class GlamourBlock {
   private container: HTMLElement;
-  private callbacks: CharaImportCallbacks;
-  private glamourContainer: HTMLElement | null;
-  private characterColors = new CharacterColorService();
+  private callbacks: GlamourBlockCallbacks;
+  /** The loaded character this block is drawing (from the session) */
   private resolved: ResolvedCharaCharacter | null = null;
   private fileName: string | null = null;
   /** Deduped worn dyes; entries toggled off before palette actions */
   private droppedStainIds = new Set<number>();
-  /** Slot card carrying the accent selection ring */
-  private selectedSlotKey: string | null = null;
   /** Make-a-palette panel expansion state (survives re-renders) */
   private paletteOpen = false;
   /** Name field draft; null = empty field (deliberately NOT the character's nickname) */
@@ -258,107 +194,77 @@ export class CharaImport {
   private glamourView: GlamourView;
   /** Show all pieces, not just dyed ones — Pieces lens only; persists per user */
   private showAllPieces: boolean;
-  /** The mounted DYES ON THIS GLAMOUR block, re-rendered in place when names land */
   private glamourBox: HTMLElement | null = null;
+  private unsubscribe: (() => void) | null = null;
 
-  constructor(
-    container: HTMLElement,
-    callbacks: CharaImportCallbacks,
-    options?: CharaImportOptions
-  ) {
+  constructor(container: HTMLElement, callbacks: GlamourBlockCallbacks = {}) {
     this.container = container;
     this.callbacks = callbacks;
-    this.glamourContainer = options?.glamourContainer ?? null;
     this.glamourView = readGlamourView();
     this.showAllPieces = readShowAllPieces();
   }
 
   init(): void {
+    this.unsubscribe = CharaSessionService.subscribe((session) => this.show(session));
+    this.show(CharaSessionService.getSession());
+  }
+
+  /**
+   * Draw into `container` from now on. The host calls this when it re-renders
+   * around the block (a language switch rebuilds the Swatch Matcher's panel),
+   * so the palette draft, dropped chips and item names survive the redraw.
+   */
+  moveTo(container: HTMLElement): void {
+    clearContainer(this.container);
+    this.container = container;
     this.render();
   }
 
   destroy(): void {
+    this.unsubscribe?.();
+    this.unsubscribe = null;
     this.resolveAbort?.abort();
     this.resolveAbort = null;
     // The menu lives in document.body, so nothing here would remove it — it
     // would float over the next tool, anchored to a row that is gone.
     closeItemLinksMenuIfLoaded();
     clearContainer(this.container);
-    if (this.glamourContainer) clearContainer(this.glamourContainer);
     this.resolved = null;
+    this.fileName = null;
     this.equipment = null;
     this.glamourBox = null;
   }
 
-  // ==========================================================================
-  // Parsing
-  // ==========================================================================
-
-  private async loadFile(file: File): Promise<void> {
-    // Refuse before reading: a multi-GB drop would hang the tab in
-    // file.text() / JSON.parse (WEB-13). Same cap as the image inputs.
-    if (file.size > MAX_USER_FILE_BYTES) {
-      ToastService.error(LanguageService.t('errors.fileTooLarge'));
-      return;
-    }
-    // Reading is not parsing: a stale handle (the picker's File outliving the
-    // file on disk) fails here, before the parser ever sees it — no chara_parse.
-    let text: string;
-    try {
-      text = await file.text();
-    } catch (error) {
-      logger.error('[CharaImport] Read failed:', error);
-      ToastService.error(
-        LanguageService.tInterpolate('swatch.parseFailed', {
-          reason: error instanceof Error ? error.message : String(error),
-        })
-      );
-      return;
-    }
-    let resolved: ResolvedCharaCharacter;
-    try {
-      const parsed = parseCharaFile(text);
-      resolved = await resolveCharaColors(parsed, this.characterColors, {
-        getByStainId: (stainId: number) => dyeService.getByStainId(stainId),
-      });
-    } catch (error) {
-      TelemetryService.track('chara_parse', { ok: false, producer: 'none' });
-      logger.error('[CharaImport] Parse failed:', error);
-      // Loud failure naming the field and value — core's messages do that,
-      // and they ride in as {reason} inside the localized sentence.
-      ToastService.error(
-        LanguageService.tInterpolate('swatch.parseFailed', {
-          reason: error instanceof Error ? error.message : String(error),
-        })
-      );
-      return;
-    }
-    // The parse succeeded — recorded before the host callbacks run, so a
-    // consumer that throws is a host bug (logged below), not a parse failure.
-    TelemetryService.track('chara_parse', {
-      ok: true,
-      producer: TelemetryService.normalizeProducer(resolved.producer),
-    });
-    this.resolved = resolved;
-    this.fileName = file.name;
+  /**
+   * Adopt the loaded character (or none). A new file starts from a clean
+   * palette draft and its own item lookup; the lens and Show all are the
+   * user's, so they carry over.
+   */
+  private show(session: CharaSession | null): void {
+    this.resolved = session?.resolved ?? null;
+    this.fileName = session?.fileName ?? null;
     this.droppedStainIds.clear();
-    this.selectedSlotKey = null;
     this.paletteOpen = false;
     this.paletteNameDraft = null;
-    try {
-      if (resolved.tribe && resolved.gender && this.callbacks.onTribeGender) {
-        this.callbacks.onTribeGender(resolved.tribe, resolved.gender);
-      }
-      this.callbacks.onResolved?.(resolved);
-    } catch (error) {
-      logger.error('[CharaImport] Host callback failed:', error);
-    }
-    logger.info(`[CharaImport] Parsed ${file.name} (${resolved.producer ?? 'unknown producer'})`);
     // Dyes never wait: the round-trip is started first so the block renders
     // in its RESOLVING state (skeleton where the name lands) with the file's
     // stains already on it; the names re-render the block in place.
     this.startResolve();
     this.render();
+  }
+
+  private render(): void {
+    closeItemLinksMenuIfLoaded();
+    clearContainer(this.container);
+    const glamour = this.resolved ? this.renderGlamour() : null;
+    if (!glamour) {
+      this.glamourBox = null;
+      return;
+    }
+    const style = document.createElement('style');
+    style.textContent = GLAMOUR_CSS;
+    this.container.appendChild(style);
+    this.container.appendChild(glamour);
   }
 
   // ==========================================================================
@@ -396,7 +302,7 @@ export class CharaImport {
       },
       (error: unknown) => {
         if (controller.signal.aborted || this.resolved !== resolved) return;
-        logger.warn('[CharaImport] Equipment names unavailable:', error);
+        logger.warn('[GlamourBlock] Equipment names unavailable:', error);
         this.resolveState = 'unavailable';
         this.rerenderGlamour();
       }
@@ -412,7 +318,7 @@ export class CharaImport {
     return this.equipment?.items[slot];
   }
 
-  /** Swap the mounted block for a fresh render — the sheet above is untouched. */
+  /** Swap the mounted block for a fresh render, in place. */
   private rerenderGlamour(): void {
     const old = this.glamourBox;
     if (!old || !old.isConnected) return;
@@ -422,49 +328,6 @@ export class CharaImport {
     const fresh = this.renderGlamour();
     if (fresh) old.replaceWith(fresh);
     else old.remove();
-  }
-
-  // ==========================================================================
-  // Helpers
-  // ==========================================================================
-
-  private t(key: string): string {
-    return LanguageService.t(`swatch.${key}`);
-  }
-
-  /**
-   * Localized text for a core slot-failure code.
-   *
-   * Core's `error.message` is an EN engineering sentence naming the field and
-   * the index ("LipsToneFurPattern index 100 falls in the 96-127 gap…") — good
-   * for a log, not for a card. The `code` is the stable part, so the keys are
-   * spelled out literally here (one `Record` entry each) rather than built
-   * with a template: `scripts/analyze-unused-keys.js` only sees literals and a
-   * literal prefix, and a spelled-out map also survives a code being added
-   * upstream — anything unrecognised falls back to `slotError.unknown`.
-   */
-  private slotErrorText(code: CharaSlotErrorCode | undefined): string {
-    const key = code ? SLOT_ERROR_KEY[code] : undefined;
-    return LanguageService.t(key ?? 'swatch.slotError.unknown');
-  }
-
-  private ramp(): readonly string[] {
-    return ThemeService.isDarkMode() ? TIER_RAMP_DARK : TIER_RAMP_LIGHT;
-  }
-
-  private amber(): string {
-    return ThemeService.isDarkMode() ? OFF_GRID_AMBER : OFF_GRID_AMBER_LIGHT;
-  }
-
-  private green(): string {
-    return ThemeService.isDarkMode() ? LOCAL_ONLY_GREEN : LOCAL_ONLY_GREEN_LIGHT;
-  }
-
-  private el(tag: string, style: string, text?: string): HTMLElement {
-    const node = document.createElement(tag);
-    node.setAttribute('style', style);
-    if (text !== undefined) node.textContent = text;
-    return node;
   }
 
   /**
@@ -517,97 +380,6 @@ export class CharaImport {
     return { kind: 'gear', itemId: item.itemId, names: item.names };
   }
 
-  /** Mono chip label (8.5px, letter-spaced) — the drawn card vocabulary. */
-  private monoChip(text: string, fg: string, bg: string): HTMLElement {
-    return this.el(
-      'span',
-      `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; padding: 3px 7px; border-radius: 5px; background: ${bg}; color: ${fg}; white-space: nowrap;`,
-      text
-    );
-  }
-
-  private slotLabel(slot: ResolvedCharaSlot): string {
-    switch (slot.slot) {
-      case 'leftEye':
-        return this.t('slotLeftEye');
-      case 'rightEye':
-        return this.t('slotRightEye');
-      case 'hair':
-        return this.t('slotHair');
-      case 'highlights':
-        return this.t('slotHighlights');
-      case 'skin':
-        return this.t('slotSkin');
-      case 'limbal':
-        return slot.kind === 'tattoo' ? this.t('slotTattoo') : this.t('slotLimbal');
-      case 'lip':
-        return this.t('slotLips');
-      case 'facePaint':
-        return this.t('slotFacePaint');
-      default:
-        return slot.slot;
-    }
-  }
-
-  private absentReason(slot: ResolvedCharaSlot): string {
-    switch (slot.inertReason) {
-      case 'highlightsDisabled':
-        return this.t('absentHighlightsOff');
-      case 'facePaintNone':
-        return this.t('absentFacePaintOff');
-      case 'noLip':
-        return this.t('absentNoLips');
-      case 'furPattern':
-        return this.t('absentFurPattern');
-      default:
-        return this.t('absentNotInFile');
-    }
-  }
-
-  /** Palette base a slot indexes into (for pins + the grid excerpt). */
-  private gridRefOf(slot: ResolvedCharaSlot): CharaSlotGridRef | null {
-    if (slot.sheetIndex === null) return null;
-    const base: CharaSlotGridRef['paletteBase'] | null =
-      slot.slot === 'leftEye' || slot.slot === 'rightEye'
-        ? 'eyeColors'
-        : slot.slot === 'hair'
-          ? 'hairColors'
-          : slot.slot === 'highlights'
-            ? 'highlightColors'
-            : slot.slot === 'skin'
-              ? 'skinColors'
-              : slot.slot === 'limbal'
-                ? 'tattooColors'
-                : slot.slot === 'lip'
-                  ? 'lipColors'
-                  : slot.slot === 'facePaint'
-                    ? 'facePaintColors'
-                    : null;
-    if (!base) return null;
-    return { paletteBase: base, variant: slot.sheetVariant, sheetIndex: slot.sheetIndex };
-  }
-
-  /** The colour the slot is wearing: float wins off-grid, index otherwise. */
-  private winningHex(slot: ResolvedCharaSlot): string | null {
-    if (slot.verdict === 'offGrid' || slot.verdict === 'floatOnly') return slot.floatHex;
-    if (slot.verdict === 'index') return slot.indexHex;
-    return null;
-  }
-
-  private bestDye(hex: string): { dye: Dye; deltaE: number } | null {
-    let best: { dye: Dye; deltaE: number } | null = null;
-    for (const dye of dyeService.getAllDyes()) {
-      if (dye.itemID <= 0) continue;
-      const deltaE = ColorService.getDistanceForMethod(hex, dye.hex, 'ciede2000');
-      if (!best || deltaE < best.deltaE) best = { dye, deltaE };
-    }
-    return best;
-  }
-
-  private dyeName(dye: Dye): string {
-    return LanguageService.getDyeName(dye.itemID) || dye.name;
-  }
-
   /** Worn dyes deduped by stain ID, in wear order. */
   private wornDyes(): Array<{ stainId: number; dye: Dye | null }> {
     if (!this.resolved) return [];
@@ -616,532 +388,6 @@ export class CharaImport {
       if (!seen.has(gear.stainId)) seen.set(gear.stainId, gear.dye);
     }
     return Array.from(seen.entries()).map(([stainId, dye]) => ({ stainId, dye }));
-  }
-
-  /**
-   * Parse warnings for the amber card: loud slot failures (96–127 gap,
-   * out-of-range index, missing tribe) and extended-appearance drift
-   * (OFF GRID — the file wears a colour no cell can express).
-   */
-  private warnings(): Array<{ tag: string; text: string; severe: boolean }> {
-    if (!this.resolved) return [];
-    const out: Array<{ tag: string; text: string; severe: boolean }> = [];
-    for (const slot of this.resolved.slots) {
-      const label = this.slotLabel(slot);
-      if (slot.verdict === 'error' && slot.error) {
-        out.push({
-          tag: LanguageService.t('swatch.warnErrorTag'),
-          text: `${label} · ${this.slotErrorText(slot.error.code)}`,
-          severe: true,
-        });
-      } else if (slot.verdict === 'offGrid' || slot.verdict === 'floatOnly') {
-        out.push({
-          tag: this.t('offGrid'),
-          text: `${label} · ${this.t('offGridNote')}`,
-          severe: false,
-        });
-      }
-    }
-    return out;
-  }
-
-  // ==========================================================================
-  // Render
-  // ==========================================================================
-
-  private render(): void {
-    closeItemLinksMenuIfLoaded();
-    clearContainer(this.container);
-    if (this.glamourContainer) clearContainer(this.glamourContainer);
-
-    const style = document.createElement('style');
-    style.textContent = CHARA_RESPONSIVE_CSS;
-    this.container.appendChild(style);
-
-    if (this.resolved) {
-      this.container.appendChild(this.renderFileCard());
-      const warnings = this.warnings();
-      if (warnings.length > 0) this.container.appendChild(this.renderWarningsCard(warnings));
-      // The privacy promise stays visible under the card (Extractor wording).
-      this.container.appendChild(
-        this.el(
-          'div',
-          'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-bottom: 11px;',
-          this.t('charaHint')
-        )
-      );
-      this.container.appendChild(this.renderSheet());
-      const glamour = this.renderGlamour();
-      if (glamour) (this.glamourContainer ?? this.container).appendChild(glamour);
-    } else {
-      this.container.appendChild(this.renderDropZone());
-    }
-  }
-
-  /** The offer above the workspace — nothing below it is disabled. */
-  private renderDropZone(): HTMLElement {
-    const zone = this.el(
-      'div',
-      'border: 1px dashed var(--theme-border); border-radius: 14px; padding: 22px 20px; text-align: center; cursor: pointer; background: var(--theme-card-background); margin-bottom: 11px;'
-    );
-
-    zone.appendChild(
-      this.el(
-        'div',
-        `font-family: ${SANS}; font-size: 15px; font-weight: 600; color: var(--theme-text); margin-bottom: 4px;`,
-        this.t('dropTitle')
-      )
-    );
-    zone.appendChild(
-      this.el(
-        'div',
-        'font-size: 12.5px; line-height: 1.55; color: var(--theme-text-muted); max-width: 560px; margin: 0 auto 12px;',
-        this.t('dropBody')
-      )
-    );
-
-    // Accent Choose-file button, 44px — the one solid-accent element here.
-    const chooseBtn = this.el(
-      'button',
-      'height: 44px; padding: 0 18px; font-size: 13px; font-weight: 600; border-radius: 10px; border: none; background: var(--theme-primary); color: #fff; cursor: pointer; font-family: inherit;',
-      this.t('chooseFile')
-    );
-    (chooseBtn as HTMLButtonElement).type = 'button';
-    zone.appendChild(chooseBtn);
-
-    zone.appendChild(
-      this.el(
-        'div',
-        `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-top: 12px;`,
-        this.t('orGrid')
-      )
-    );
-    zone.appendChild(
-      this.el(
-        'div',
-        'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-top: 8px;',
-        this.t('charaHint')
-      )
-    );
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.chara,application/json';
-    input.style.display = 'none';
-    input.addEventListener('change', () => {
-      const file = input.files?.[0];
-      if (file) void this.loadFile(file);
-    });
-    zone.appendChild(input);
-
-    zone.addEventListener('click', () => input.click());
-    zone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      zone.style.borderColor = 'var(--theme-primary)';
-    });
-    zone.addEventListener('dragleave', () => {
-      zone.style.borderColor = 'var(--theme-border)';
-    });
-    zone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      zone.style.borderColor = 'var(--theme-border)';
-      const file = e.dataTransfer?.files?.[0];
-      if (file) void this.loadFile(file);
-    });
-
-    return zone;
-  }
-
-  /**
-   * File loaded: 46px colour strip | producer + LOCAL ONLY chips, name,
-   * mono meta | 44px SWAP chip. The strip is the character's own thumbnail —
-   * Base64Image is never read.
-   */
-  private renderFileCard(): HTMLElement {
-    const resolved = this.resolved!;
-    const live = resolved.slots.filter((s) => this.winningHex(s) !== null);
-
-    const card = this.el(
-      'div',
-      'display: flex; align-items: stretch; gap: 10px; padding: 9px; border-radius: 14px; margin-bottom: 11px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
-    );
-
-    // 46px vertical strip of the character's key colours.
-    const strip = this.el(
-      'span',
-      `display: flex; width: 46px; flex-shrink: 0; flex-direction: column; border-radius: 9px; overflow: hidden; ${INSET_RING}`
-    );
-    const stripColors = live.slice(0, 5);
-    if (stripColors.length === 0) {
-      strip.appendChild(this.el('span', 'flex: 1; background: var(--theme-background-secondary);'));
-    }
-    for (const slot of stripColors) {
-      strip.appendChild(this.el('span', `flex: 1; background: ${this.winningHex(slot)!};`));
-    }
-    card.appendChild(strip);
-
-    // Middle column: chips, name, meta.
-    const mid = this.el(
-      'span',
-      'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; justify-content: center;'
-    );
-    const chips = this.el('span', 'display: flex; gap: 6px; flex-wrap: wrap;');
-    if (resolved.producer) {
-      // Producer is shown so a missing slot is attributable — never used for parsing.
-      chips.appendChild(
-        this.monoChip(
-          resolved.producer.toUpperCase().replace(' CHARACTER FILE', ''),
-          'var(--theme-text-muted)',
-          'var(--theme-background-secondary)'
-        )
-      );
-    }
-    const localChip = this.monoChip(this.t('localOnly'), this.green(), 'rgba(97, 197, 84, 0.16)');
-    localChip.title = this.t('charaHint');
-    chips.appendChild(localChip);
-    mid.appendChild(chips);
-
-    mid.appendChild(
-      this.el(
-        'span',
-        `font-family: ${SANS}; font-weight: 600; font-size: 16px; color: var(--theme-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
-        resolved.nickname ?? this.fileName ?? LanguageService.t('swatch.unnamedCharacter')
-      )
-    );
-
-    const genderSym = resolved.gender === 'Female' ? '♀' : resolved.gender === 'Male' ? '♂' : '';
-    const tribeLabel = resolved.tribe
-      ? LanguageService.getClan(SUBRACE_TO_CLAN_KEY[resolved.tribe])
-      : '—';
-    const meta = [
-      `${tribeLabel} ${genderSym}`.trim(),
-      `${live.length}/${resolved.slots.length}`,
-      this.fileName ?? '',
-    ]
-      .filter(Boolean)
-      .join(' · ');
-    mid.appendChild(
-      this.el(
-        'span',
-        `font-family: ${MONO}; font-size: 10px; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
-        meta
-      )
-    );
-    card.appendChild(mid);
-
-    // 44px SWAP chip — replace the file without losing the workspace.
-    const swapBtn = this.el(
-      'button',
-      `width: 44px; flex-shrink: 0; font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text); cursor: pointer;`,
-      LanguageService.t('swatch.swap')
-    );
-    (swapBtn as HTMLButtonElement).type = 'button';
-    swapBtn.title = this.t('replaceFile');
-    swapBtn.addEventListener('click', () => {
-      this.resolveAbort?.abort();
-      this.resolveAbort = null;
-      this.resolved = null;
-      this.equipment = null;
-      this.resolveState = 'idle';
-      this.fileName = null;
-      this.selectedSlotKey = null;
-      this.paletteOpen = false;
-      this.paletteNameDraft = null;
-      this.callbacks.onResolved?.(null);
-      this.render();
-    });
-    card.appendChild(swapBtn);
-
-    // Save the character's own colours (not the glamour's) as the store's
-    // `kind: 'character'` record — the second half of the export flow.
-    const saveBtn = this.el(
-      'button',
-      `flex-shrink: 0; padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text); cursor: pointer; font-family: inherit;`,
-      LanguageService.t('swatch.saveCharacter')
-    );
-    (saveBtn as HTMLButtonElement).type = 'button';
-    saveBtn.addEventListener('click', () => this.saveCharacterRecord());
-    card.appendChild(saveBtn);
-
-    return card;
-  }
-
-  /**
-   * Save the character's resolved slot colours as a `kind: 'character'`
-   * CollectionService record — each slot contributes the dye closest to the
-   * colour it actually wears (the lip contributes its blend).
-   */
-  private saveCharacterRecord(): void {
-    const resolved = this.resolved;
-    if (!resolved) return;
-
-    const stainIds: number[] = [];
-    for (const slot of resolved.slots) {
-      const hex = slot.blendHex ?? this.winningHex(slot);
-      if (!hex) continue;
-      const best = this.bestDye(hex);
-      if (best?.dye.stainID != null && !stainIds.includes(best.dye.stainID)) {
-        stainIds.push(best.dye.stainID);
-      }
-    }
-    if (stainIds.length === 0) {
-      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
-      return;
-    }
-
-    const name = (
-      resolved.nickname ??
-      this.fileName ??
-      LanguageService.t('swatch.characterDefaultName')
-    ).slice(0, 50);
-    const record = CollectionService.createCollection(name, undefined, { kind: 'character' });
-    if (!record) {
-      ToastService.error(LanguageService.t('errors.saveChangesFailed'));
-      return;
-    }
-    for (const stainId of stainIds) {
-      CollectionService.addDyeToCollection(record.id, stainId);
-    }
-    logger.info(`[CharaImport] Saved character "${name}" (${stainIds.length} colours)`);
-    ToastService.success(
-      stainIds.length === 1
-        ? LanguageService.t('swatch.characterSavedOne')
-        : LanguageService.tInterpolate('swatch.characterSavedMany', { n: stainIds.length })
-    );
-  }
-
-  /** Amber warnings card: one row per parse warning — TAG chip + 11px text. */
-  private renderWarningsCard(
-    warnings: Array<{ tag: string; text: string; severe: boolean }>
-  ): HTMLElement {
-    const card = this.el(
-      'div',
-      'display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; border-radius: 14px; margin-bottom: 11px; background: rgba(244, 191, 79, 0.07); border: 1px solid rgba(244, 191, 79, 0.3);'
-    );
-    for (const warning of warnings) {
-      const row = this.el('div', 'display: flex; align-items: flex-start; gap: 7px; min-width: 0;');
-      const severeRed = ThemeService.isDarkMode() ? '#f4645a' : '#B91C1C';
-      row.appendChild(
-        this.monoChip(
-          warning.tag,
-          warning.severe ? severeRed : this.amber(),
-          warning.severe ? 'rgba(244, 100, 90, 0.18)' : 'rgba(244, 191, 79, 0.18)'
-        )
-      );
-      row.appendChild(
-        this.el(
-          'span',
-          'font-size: 11px; line-height: 1.45; color: var(--theme-text); min-width: 0;',
-          warning.text
-        )
-      );
-      card.appendChild(row);
-    }
-    return card;
-  }
-
-  /** THIS CHARACTER — one card per slot, best dye already on it. */
-  private renderSheet(): HTMLElement {
-    const resolved = this.resolved!;
-    const live = resolved.slots.filter((s) => this.winningHex(s) !== null);
-    const section = this.el('div', '');
-
-    const header = this.el(
-      'div',
-      'display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px;'
-    );
-    header.appendChild(
-      this.el(
-        'span',
-        `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 1.2px; color: var(--theme-text-muted); text-transform: uppercase;`,
-        this.t('slotsHead')
-      )
-    );
-    header.appendChild(
-      this.el(
-        'span',
-        `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 0.5px; color: var(--theme-text-muted);`,
-        `${live.length} / ${resolved.slots.length}`
-      )
-    );
-    section.appendChild(header);
-
-    const grid = this.el('div', 'margin-bottom: 13px;');
-    grid.className = 'chara-slots-grid';
-    for (const slot of resolved.slots) {
-      grid.appendChild(this.renderSlotCard(slot));
-    }
-    section.appendChild(grid);
-    return section;
-  }
-
-  private renderSlotCard(slot: ResolvedCharaSlot): HTMLElement {
-    const label = this.slotLabel(slot);
-    const hex = this.winningHex(slot);
-    const ramp = this.ramp();
-
-    if (!hex) {
-      // Absent, inert or error — dashed, with the reason. A fact, not a failure.
-      const isError = slot.verdict === 'error';
-      const card = this.el(
-        'div',
-        `border: 1px dashed ${isError ? 'rgba(244, 100, 90, 0.5)' : 'var(--theme-border)'}; border-radius: 11px; padding: 8px; display: flex; flex-direction: column; gap: 6px; min-height: 64px; box-sizing: border-box;`
-      );
-      const head = this.el('div', 'display: flex; align-items: center; gap: 6px; min-width: 0;');
-      // Hatched chip — visibly not a colour.
-      head.appendChild(
-        this.el(
-          'span',
-          'width: 26px; height: 26px; border-radius: 7px; flex: 0 0 auto; background: repeating-linear-gradient(45deg, transparent, transparent 3px, var(--theme-border) 3px, var(--theme-border) 4px);'
-        )
-      );
-      head.appendChild(
-        this.el(
-          'span',
-          'font-size: 11.5px; font-weight: 600; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
-          label
-        )
-      );
-      card.appendChild(head);
-      card.appendChild(
-        this.el(
-          'span',
-          `font-size: 10px; line-height: 1.4; color: ${isError ? (ThemeService.isDarkMode() ? '#f4645a' : '#B91C1C') : 'var(--theme-text-muted)'};`,
-          isError ? this.slotErrorText(slot.error?.code) : this.absentReason(slot)
-        )
-      );
-      return card;
-    }
-
-    const offGrid = slot.verdict === 'offGrid' || slot.verdict === 'floatOnly';
-    const selected = this.selectedSlotKey === slot.slot;
-    const card = this.el(
-      'button',
-      `display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 11px; cursor: pointer; text-align: left; font-family: inherit; box-sizing: border-box; width: 100%; background: ${
-        selected
-          ? 'color-mix(in srgb, var(--theme-primary) 12%, transparent)'
-          : 'var(--theme-card-background)'
-      }; border: 1px solid ${selected ? 'var(--theme-primary)' : 'var(--theme-border)'}; box-shadow: ${
-        selected ? '0 0 0 1px var(--theme-primary)' : 'none'
-      };`
-    );
-    (card as HTMLButtonElement).type = 'button';
-
-    // Top row: 26px swatch + label over address.
-    const head = this.el('span', 'display: flex; align-items: center; gap: 6px; min-width: 0;');
-    head.appendChild(
-      this.el(
-        'span',
-        `width: 26px; height: 26px; border-radius: 7px; flex: 0 0 auto; background: ${hex}; ${INSET_RING}`
-      )
-    );
-    const headText = this.el(
-      'span',
-      'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
-    );
-    headText.appendChild(
-      this.el(
-        'span',
-        'font-size: 11.5px; font-weight: 600; color: var(--theme-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
-        label
-      )
-    );
-    // Address line: R·C in the creator, or amber OFF GRID — never a fake one.
-    const addrStyle = `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`;
-    if (offGrid) {
-      const addr = this.el('span', `${addrStyle} color: ${this.amber()};`, this.t('offGrid'));
-      addr.title = this.t('offGridNote');
-      headText.appendChild(addr);
-    } else {
-      const addrText =
-        slot.sheetVariant === 'light'
-          ? `${slot.gridAddress ?? ''} · ${this.t('rangeLight')}`
-          : (slot.gridAddress ?? '');
-      const addr = this.el('span', `${addrStyle} color: var(--theme-text-muted);`, addrText);
-      if (slot.indexWinNote) {
-        addr.title = this.t('indexWinsNote');
-        addr.textContent = `${addrText} *`;
-      }
-      headText.appendChild(addr);
-    }
-    head.appendChild(headText);
-    card.appendChild(head);
-
-    // Lip only: the raw cell overstates a 0.25-alpha lip, so the card shows
-    // both — the cell the R·C address points at (above) and the colour the
-    // character actually wears, composited over skin. Matching follows the
-    // blend, because that is the colour you are trying to hit.
-    const blend = slot.blendHex;
-    const effective = blend ?? hex;
-    if (blend) {
-      const blendRow = this.el(
-        'span',
-        'display: flex; align-items: center; gap: 5px; min-width: 0; width: 100%;'
-      );
-      blendRow.appendChild(
-        this.el(
-          'span',
-          `width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto; background: ${blend}; ${INSET_RING}`
-        )
-      );
-      blendRow.appendChild(
-        this.el(
-          'span',
-          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.5px; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
-          slot.alpha !== null
-            ? LanguageService.tInterpolate('swatch.blendTag', { alpha: slot.alpha.toFixed(2) })
-            : LanguageService.t('swatch.blendPlain')
-        )
-      );
-      blendRow.title = LanguageService.t('swatch.blendNote');
-      card.appendChild(blendRow);
-    }
-
-    // Bottom row: best dye already on the card — the sheet answers first.
-    const best = this.bestDye(effective);
-    if (best) {
-      const tier = classifyBandTier(
-        roundToBandDisplay(best.deltaE, 'ciede2000'),
-        'ciede2000',
-        'match'
-      );
-      const row = this.el(
-        'span',
-        'display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; width: 100%;'
-      );
-      const left = this.el('span', 'display: flex; align-items: center; gap: 5px; min-width: 0;');
-      left.appendChild(
-        this.el(
-          'span',
-          `width: 13px; height: 13px; border-radius: 4px; flex: 0 0 auto; background: ${best.dye.hex}; ${INSET_RING}`
-        )
-      );
-      left.appendChild(
-        this.el(
-          'span',
-          'font-size: 10px; color: var(--theme-text-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;',
-          this.dyeName(best.dye)
-        )
-      );
-      row.appendChild(left);
-      row.appendChild(
-        this.el(
-          'span',
-          `font-family: ${MONO}; font-size: 11px; color: ${ramp[tier]}; flex: 0 0 auto;`,
-          roundToBandDisplay(best.deltaE, 'ciede2000').toFixed(1)
-        )
-      );
-      card.appendChild(row);
-      card.title = `${label} · ${effective.toUpperCase()} → ${this.dyeName(best.dye)}`;
-    }
-
-    card.addEventListener('click', () => {
-      this.selectedSlotKey = slot.slot;
-      this.render();
-      this.callbacks.onSlotPick(effective, label, offGrid ? null : this.gridRefOf(slot));
-    });
-
-    return card;
   }
 
   // ==========================================================================
@@ -1163,23 +409,13 @@ export class CharaImport {
     const resolved = this.resolved!;
     // The block used to appear only for a dyed glamour. Show all pieces has to
     // be reachable from a wholly undyed one too, so anything WORN earns the
-    // block; a character wearing nothing still gets none.
-    //
-    // `glassesId` counts as worn. It was omitted here while the block gained a
-    // facewear row, so a `.chara` carrying ONLY facewear rendered no block and
-    // that row was unreachable — `startResolve` fetched the glasses and threw
-    // the result away, exactly as before the row existed. This is the same
-    // three-way test the resolve path already makes.
-    if (
-      resolved.gearDyes.length === 0 &&
-      resolved.gearModels.length === 0 &&
-      resolved.glassesId === null
-    ) {
+    // block (facewear included); a character wearing nothing still gets none.
+    if (!hasGlamour(resolved)) {
       this.glamourBox = null;
       return null;
     }
 
-    const box = this.el(
+    const box = el(
       'div',
       'padding: 11px 12px; border-radius: 14px; margin-bottom: 12px; background: var(--theme-background-secondary); border: 1px solid var(--theme-border); display: flex; flex-direction: column; gap: 9px; width: 100%; box-sizing: border-box;'
     );
@@ -1190,23 +426,23 @@ export class CharaImport {
     const uniq = this.wornDyes();
     const channelCount = resolved.gearDyes.length;
 
-    const header = this.el(
+    const header = el(
       'div',
       'display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;'
     );
-    const headerLeft = this.el(
+    const headerLeft = el(
       'span',
       'display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap;'
     );
     headerLeft.appendChild(
-      this.el(
+      el(
         'span',
         `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 1.2px; color: var(--theme-text-muted); text-transform: uppercase;`,
-        this.t('equipHead')
+        tSwatch('equipHead')
       )
     );
     headerLeft.appendChild(
-      this.el(
+      el(
         'span',
         `font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; color: var(--theme-text-muted);`,
         LanguageService.tInterpolate('swatch.equipCount', {
@@ -1217,7 +453,7 @@ export class CharaImport {
     );
     header.appendChild(headerLeft);
 
-    const headerRight = this.el(
+    const headerRight = el(
       'span',
       'display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0;'
     );
@@ -1225,7 +461,7 @@ export class CharaImport {
     headerRight.appendChild(this.renderShowAllSwitch());
     for (const action of this.renderListActions()) headerRight.appendChild(action);
 
-    const paletteBtn = this.el(
+    const paletteBtn = el(
       'button',
       `display: flex; align-items: center; gap: 7px; height: 34px; padding: 0 11px; border-radius: 9px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600; ${
         this.paletteOpen
@@ -1234,13 +470,13 @@ export class CharaImport {
       }`
     );
     (paletteBtn as HTMLButtonElement).type = 'button';
-    const glyph = this.el(
+    const glyph = el(
       'span',
       'display: block; width: 14px; height: 14px; flex-shrink: 0; color: currentColor;'
     );
     glyph.innerHTML = ICON_TOOL_PRESETS || '';
     paletteBtn.appendChild(glyph);
-    paletteBtn.appendChild(this.el('span', '', this.t('makePalette')));
+    paletteBtn.appendChild(el('span', '', tSwatch('makePalette')));
     paletteBtn.addEventListener('click', () => {
       this.paletteOpen = !this.paletteOpen;
       this.render();
@@ -1281,27 +517,27 @@ export class CharaImport {
 
   /** Localised slot label (the design's GEAR_LABELS) — the mono overline uppercases it. */
   private gearSlotLabel(slot: CharaGearSlotId): string {
-    return this.t(`gearSlot.${slot}`);
+    return tSwatch(`gearSlot.${slot}`);
   }
 
   /** Pieces | Dyes — two-position pill, accent on the live lens. */
   private renderViewToggle(): HTMLElement {
-    const wrap = this.el(
+    const wrap = el(
       'span',
       'display: inline-flex; gap: 2px; padding: 2px; border-radius: 8px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
     );
     wrap.setAttribute('role', 'group');
-    wrap.setAttribute('aria-label', this.t('equipHead'));
+    wrap.setAttribute('aria-label', tSwatch('equipHead'));
     for (const view of ['pieces', 'dyes'] as const) {
       const active = this.glamourView === view;
-      const btn = this.el(
+      const btn = el(
         'button',
         `min-height: 26px; padding: 0 10px; border-radius: 6px; cursor: pointer; font-family: ${SANS}; font-weight: 600; font-size: 11px; border: none; ${
           active
             ? 'background: var(--theme-primary); color: #fff;'
             : 'background: transparent; color: var(--theme-text-muted);'
         }`,
-        this.t(view === 'pieces' ? 'glamourViewPieces' : 'glamourViewDyes')
+        tSwatch(view === 'pieces' ? 'glamourViewPieces' : 'glamourViewDyes')
       );
       (btn as HTMLButtonElement).type = 'button';
       btn.setAttribute('aria-pressed', String(active));
@@ -1331,7 +567,7 @@ export class CharaImport {
   private renderShowAllSwitch(): HTMLElement {
     const inert = this.glamourView !== 'pieces';
     const on = this.showAllPieces;
-    const btn = this.el(
+    const btn = el(
       'button',
       `display: inline-flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 9px 0 7px; border-radius: 8px; font-family: ${SANS}; font-size: 11px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: ${
         inert ? 'var(--theme-text-muted)' : 'var(--theme-text)'
@@ -1345,7 +581,7 @@ export class CharaImport {
     btn.dataset.role = 'show-all-switch';
 
     // Track + knob. `aria-checked` is the accessible truth; this is its picture.
-    const track = this.el(
+    const track = el(
       'span',
       `display: block; position: relative; width: 26px; height: 15px; flex-shrink: 0; border-radius: 999px; transition: background 120ms ease; background: ${
         on ? 'var(--theme-primary)' : 'color-mix(in srgb, var(--theme-text) 22%, transparent)'
@@ -1353,13 +589,13 @@ export class CharaImport {
     );
     track.setAttribute('aria-hidden', 'true');
     track.appendChild(
-      this.el(
+      el(
         'span',
         `display: block; position: absolute; top: 2px; left: ${on ? '13px' : '2px'}; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: left 120ms ease;`
       )
     );
     btn.appendChild(track);
-    btn.appendChild(this.el('span', '', this.t('glamourShowAll')));
+    btn.appendChild(el('span', '', tSwatch('glamourShowAll')));
 
     btn.addEventListener('click', () => {
       if (inert) return;
@@ -1385,7 +621,7 @@ export class CharaImport {
   private renderListActions(): HTMLElement[] {
     const resolving = this.resolveState === 'resolving';
     const make = (role: string, label: string, onClick: () => void): HTMLElement => {
-      const btn = this.el(
+      const btn = el(
         'button',
         `min-height: 30px; padding: 0 10px; border-radius: 8px; font-family: ${SANS}; font-size: 11px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: ${
           resolving ? 'var(--theme-text-muted)' : 'var(--theme-text)'
@@ -1400,8 +636,8 @@ export class CharaImport {
       return btn;
     };
     return [
-      make('copy-list', this.t('copyList'), () => this.copyList()),
-      make('export-markdown', this.t('exportMarkdown'), () => this.exportList()),
+      make('copy-list', tSwatch('copyList'), () => this.copyList()),
+      make('export-markdown', tSwatch('exportMarkdown'), () => this.exportList()),
     ];
   }
 
@@ -1415,9 +651,8 @@ export class CharaImport {
 
   /**
    * The list's builders live in `glamour-list-actions`, loaded on demand like
-   * the item-links menu — the swatch chunk sits within a kilobyte of its size
-   * budget. A load that fails (offline, blocked) surfaces through the same
-   * toast the action itself would.
+   * the item-links menu: only a click needs them. A load that fails (offline,
+   * blocked) surfaces through the same toast the action itself would.
    */
   private loadListActions(): Promise<typeof import('@components/glamour-list-actions')> {
     return import('@components/glamour-list-actions');
@@ -1437,12 +672,12 @@ export class CharaImport {
     const payload = this.loadListActions().then((m) => m.glamourCopyPayload(source));
     void copyRichTextToClipboard(payload)
       .then((ok) => {
-        if (ok) ToastService.success(this.t('listCopied'));
-        else ToastService.error(this.t('listCopyFailed'));
+        if (ok) ToastService.success(tSwatch('listCopied'));
+        else ToastService.error(tSwatch('listCopyFailed'));
       })
       .catch((error: unknown) => {
-        logger.error('[CharaImport] Glamour list copy failed', error);
-        ToastService.error(this.t('listCopyFailed'));
+        logger.error('[GlamourBlock] Glamour list copy failed', error);
+        ToastService.error(tSwatch('listCopyFailed'));
       });
   }
 
@@ -1453,17 +688,17 @@ export class CharaImport {
     void this.loadListActions()
       .then((m) => m.exportGlamourList(source))
       .catch((error: unknown) => {
-        logger.error('[CharaImport] Glamour list export failed', error);
-        ToastService.error(this.t('listExportFailed'));
+        logger.error('[GlamourBlock] Glamour list export failed', error);
+        ToastService.error(tSwatch('listExportFailed'));
       });
   }
 
   /** Nothing on this glamour is dyed — say so, rather than draw an empty grid. */
   private renderNoDyedPieces(): HTMLElement {
-    const line = this.el(
+    const line = el(
       'div',
       'font-size: 11px; line-height: 1.5; color: var(--theme-text-muted); padding: 6px 2px; overflow-wrap: anywhere;',
-      this.t('noDyedPieces')
+      tSwatch('noDyedPieces')
     );
     line.dataset.role = 'no-dyed-pieces';
     return line;
@@ -1471,13 +706,13 @@ export class CharaImport {
 
   /** 20×26 dye chip — the suite's swatch vocabulary; dashed when the stain is unknown. */
   private dyeChip(gear: ResolvedGearDye): HTMLElement {
-    const chip = this.el(
+    const chip = el(
       'span',
       `display: block; width: 20px; height: 26px; border-radius: 5px; background: ${
         gear.dye?.hex ?? 'transparent'
       }; ${gear.dye ? INSET_RING : 'border: 1px dashed var(--theme-border); box-sizing: border-box;'}`
     );
-    chip.title = gear.dye ? `${this.dyeName(gear.dye)} · ${gear.stainId}` : `#${gear.stainId}`;
+    chip.title = gear.dye ? `${dyeName(gear.dye)} · ${gear.stainId}` : `#${gear.stainId}`;
     chip.dataset.role = 'dye-chip';
     chip.dataset.channel = String(gear.channel);
     return chip;
@@ -1490,11 +725,11 @@ export class CharaImport {
    * costume of unknown.
    */
   private undyedChip(channel: 1 | 2): HTMLElement {
-    const chip = this.el(
+    const chip = el(
       'span',
       `display: block; width: 20px; height: 26px; border-radius: 5px; background: var(--theme-background-secondary); ${INSET_RING}`
     );
-    chip.title = this.t('undyed');
+    chip.title = tSwatch('undyed');
     chip.dataset.role = 'undyed-chip';
     chip.dataset.channel = String(channel);
     return chip;
@@ -1524,21 +759,21 @@ export class CharaImport {
    * WHICH channel is empty.
    */
   private dyeLineText(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): string {
-    const undyed = this.t('undyed');
+    const undyed = tSwatch('undyed');
     if (dyes.length === 0) return undyed;
     if (!DYEABLE_SLOTS.has(slot)) {
-      return dyes.map((g) => (g.dye ? this.dyeName(g.dye) : `#${g.stainId}`)).join(' + ');
+      return dyes.map((g) => (g.dye ? dyeName(g.dye) : `#${g.stainId}`)).join(' + ');
     }
     return DYE_CHANNELS.map((channel) => {
       const gear = dyes.find((g) => g.channel === channel);
       if (!gear) return undyed;
-      return gear.dye ? this.dyeName(gear.dye) : `#${gear.stainId}`;
+      return gear.dye ? dyeName(gear.dye) : `#${gear.stainId}`;
     }).join(' + ');
   }
 
   /** 11a — one 48px row per DYED piece: icon · slot overline (+N) · name · dyes · chips. */
   private renderPieceRows(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): HTMLElement {
-    const grid = this.el('div', '');
+    const grid = el('div', '');
     grid.className = 'chara-equip-grid';
     grid.dataset.role = 'piece-rows';
     const lang = LanguageService.getCurrentLocale();
@@ -1578,7 +813,7 @@ export class CharaImport {
     const item = this.itemFor(slot);
     const model = this.resolved!.gearModels.find((m) => m.slot === slot) ?? null;
 
-    const row = this.el(
+    const row = el(
       'div',
       'display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 6px 8px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; min-width: 0;'
     );
@@ -1586,7 +821,7 @@ export class CharaImport {
 
     // 28px icon tile. A failed asset leaves the tile blank — ICON MISSING
     // costs the tile, not the row (background-image errors are silent).
-    const tile = this.el(
+    const tile = el(
       'span',
       'display: block; width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; background-color: var(--theme-background-secondary); background-size: cover; background-position: center;'
     );
@@ -1599,18 +834,15 @@ export class CharaImport {
     const linkTitle = item ? itemNameFor(item.names, lang) : '';
     if (linkTarget) this.attachItemLinks(tile, linkTarget, linkTitle);
 
-    const text = this.el(
+    const text = el(
       'span',
       'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
     );
 
     // Overline: localised slot tag (mono, uppercased) + SAME MODEL badge.
-    const overline = this.el(
-      'span',
-      'display: flex; align-items: baseline; gap: 6px; min-width: 0;'
-    );
+    const overline = el('span', 'display: flex; align-items: baseline; gap: 6px; min-width: 0;');
     overline.appendChild(
-      this.el(
+      el(
         'span',
         `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; color: var(--theme-text-muted); text-transform: uppercase; white-space: nowrap;`,
         this.gearSlotLabel(slot)
@@ -1620,7 +852,7 @@ export class CharaImport {
       // A third of all keys are families of visually identical items. The
       // name never pretends to be unique: +N counts the rest, the tooltip
       // lists them, prefixes are never stripped.
-      const badge = this.el(
+      const badge = el(
         'span',
         `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-primary); background: color-mix(in srgb, var(--theme-primary) 12%, transparent); border-radius: 4px; padding: 1px 5px; cursor: help; white-space: nowrap;`,
         `+${item.familySize - 1}`
@@ -1643,7 +875,7 @@ export class CharaImport {
     if (item) {
       // The item name is the label here: it wraps with lang + hyphens,
       // never an ellipsis.
-      const name = this.el(
+      const name = el(
         'span',
         'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); overflow-wrap: anywhere; hyphens: auto;',
         itemNameFor(item.names, lang)
@@ -1655,7 +887,7 @@ export class CharaImport {
     } else if (this.resolveState === 'resolving') {
       // RESOLVING — a skeleton where the name will land, never a spinner
       // over the chips.
-      const skeleton = this.el(
+      const skeleton = el(
         'span',
         'display: block; width: 128px; max-width: 100%; height: 9px; margin: 3px 0; border-radius: 4px; background: color-mix(in srgb, var(--theme-text) 12%, transparent);'
       );
@@ -1665,7 +897,7 @@ export class CharaImport {
     } else if (item === null && model) {
       // NO ITEM ROW — NPC and prop models have none. The packed key is the
       // honest label: never an error, never a guess.
-      const key = this.el(
+      const key = el(
         'span',
         `font-family: ${MONO}; font-size: 10px; letter-spacing: 0.5px; color: var(--theme-text-muted);`,
         LanguageService.tInterpolate('swatch.modelKeyTag', {
@@ -1678,7 +910,7 @@ export class CharaImport {
     // NAMES UNAVAILABLE (or a dye on a slot wearing nothing): exactly the
     // shipped row — slot tag and dye names — with no name line at all.
 
-    const dyeLine = this.el(
+    const dyeLine = el(
       'span',
       'font-size: 10px; line-height: 1.3; color: var(--theme-text-muted); overflow-wrap: anywhere;',
       this.dyeLineText(slot, dyes)
@@ -1687,7 +919,7 @@ export class CharaImport {
     text.appendChild(dyeLine);
     row.appendChild(text);
 
-    const chips = this.el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
+    const chips = el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
     for (const chip of this.channelChips(slot, dyes)) chips.appendChild(chip);
     row.appendChild(chips);
 
@@ -1706,13 +938,13 @@ export class CharaImport {
     if (glassesId === null || glassesId === 0) return null;
     const glasses = this.equipment?.glasses ?? null;
 
-    const row = this.el(
+    const row = el(
       'div',
       'display: flex; align-items: center; gap: 9px; min-height: 48px; padding: 6px 8px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; min-width: 0;'
     );
     row.dataset.slot = FACEWEAR_ROW_SLOT;
 
-    const tile = this.el(
+    const tile = el(
       'span',
       'display: block; width: 28px; height: 28px; flex-shrink: 0; border-radius: 6px; background-color: var(--theme-background-secondary); background-size: cover; background-position: center;'
     );
@@ -1730,20 +962,20 @@ export class CharaImport {
     const linkTitle = glasses ? itemNameFor(glasses.names, lang) : '';
     if (linkTarget) this.attachItemLinks(tile, linkTarget, linkTitle);
 
-    const text = this.el(
+    const text = el(
       'span',
       'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
     );
     text.appendChild(
-      this.el(
+      el(
         'span',
         `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; color: var(--theme-text-muted); text-transform: uppercase; white-space: nowrap;`,
-        this.t('facewearSlot')
+        tSwatch('facewearSlot')
       )
     );
 
     if (glasses) {
-      const name = this.el(
+      const name = el(
         'span',
         'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); overflow-wrap: anywhere; hyphens: auto;',
         itemNameFor(glasses.names, lang)
@@ -1753,7 +985,7 @@ export class CharaImport {
       if (linkTarget) this.attachItemLinks(name, linkTarget, linkTitle);
       text.appendChild(name);
     } else if (this.resolveState === 'resolving') {
-      const skeleton = this.el(
+      const skeleton = el(
         'span',
         'display: block; width: 128px; max-width: 100%; height: 9px; margin: 3px 0; border-radius: 4px; background: color-mix(in srgb, var(--theme-text) 12%, transparent);'
       );
@@ -1763,17 +995,17 @@ export class CharaImport {
     }
 
     const colour = glasses ? facewearColorForName(glasses.names.en) : null;
-    const line = this.el(
+    const line = el(
       'span',
       'font-size: 10px; line-height: 1.3; color: var(--theme-text-muted); overflow-wrap: anywhere;',
-      colour ? LanguageService.getFacewearColorName(colour.id) : this.t('facewearColorUnknown')
+      colour ? LanguageService.getFacewearColorName(colour.id) : tSwatch('facewearColorUnknown')
     );
     line.dataset.role = 'dye-line';
     text.appendChild(line);
     row.appendChild(text);
 
-    const chips = this.el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
-    const chip = this.el(
+    const chips = el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
+    const chip = el(
       'span',
       `display: block; width: 20px; height: 26px; border-radius: 5px; background: ${
         colour ? colour.hex : 'var(--theme-background-secondary)'
@@ -1783,7 +1015,7 @@ export class CharaImport {
     if (colour) chip.dataset.facewearColor = colour.id;
     chip.title = colour
       ? LanguageService.tInterpolate('swatch.facewearColorTag', { color: colour.name })
-      : this.t('facewearColorUnknown');
+      : tSwatch('facewearColorUnknown');
     chips.appendChild(chip);
     row.appendChild(chips);
 
@@ -1793,7 +1025,7 @@ export class CharaImport {
 
   /** 11c — one 44px row per unique dye: chip · name + ID · carriers as icons · ×N. */
   private renderDyeRows(): HTMLElement {
-    const grid = this.el('div', '');
+    const grid = el('div', '');
     grid.className = 'chara-equip-grid';
     grid.dataset.role = 'dye-rows';
     const lang = LanguageService.getCurrentLocale();
@@ -1817,14 +1049,14 @@ export class CharaImport {
 
     for (const stainId of order) {
       const entry = info.get(stainId)!;
-      const row = this.el(
+      const row = el(
         'div',
         'display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 6px 8px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border); box-sizing: border-box; min-width: 0;'
       );
       row.dataset.stainId = String(stainId);
 
       row.appendChild(
-        this.el(
+        el(
           'span',
           `display: block; width: 22px; height: 28px; flex-shrink: 0; border-radius: 5px; background: ${
             entry.dye?.hex ?? 'transparent'
@@ -1832,21 +1064,21 @@ export class CharaImport {
         )
       );
 
-      const text = this.el(
+      const text = el(
         'span',
         'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;'
       );
       text.appendChild(
-        this.el(
+        el(
           'span',
           'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;',
-          entry.dye ? this.dyeName(entry.dye) : `#${stainId}`
+          entry.dye ? dyeName(entry.dye) : `#${stainId}`
         )
       );
       // Stain ID is an identifier by decision (2026-08-20 i18n audit) — mono,
       // never localised.
       text.appendChild(
-        this.el(
+        el(
           'span',
           `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 0.7px; color: var(--theme-text-muted);`,
           `ID ${stainId}`
@@ -1856,13 +1088,10 @@ export class CharaImport {
 
       // Carriers: one 20px icon tile per piece wearing the dye; the slot
       // retreats into the tooltip (the accepted cost of this lens).
-      const right = this.el(
-        'span',
-        'display: flex; align-items: center; gap: 4px; flex-shrink: 0;'
-      );
+      const right = el('span', 'display: flex; align-items: center; gap: 4px; flex-shrink: 0;');
       for (const slot of entry.carriers) {
         const item = this.itemFor(slot);
-        const tile = this.el(
+        const tile = el(
           'span',
           'display: block; width: 20px; height: 20px; border-radius: 5px; background-color: var(--theme-background-secondary); background-size: cover; background-position: center; cursor: help;'
         );
@@ -1880,7 +1109,7 @@ export class CharaImport {
         right.appendChild(tile);
       }
       right.appendChild(
-        this.el(
+        el(
           'span',
           `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-text-muted); min-width: 16px; text-align: right;`,
           entry.channels > 1 ? `×${entry.channels}` : ''
@@ -1904,8 +1133,8 @@ export class CharaImport {
     const undyedWorn = resolved.gearModels.filter((m) => !bySlot.has(m.slot)).length;
     const empty = Math.max(0, GEAR_SLOT_COUNT - worn);
 
-    const foot = this.el('div', 'display: flex; flex-direction: column; gap: 3px;');
-    const split = this.el(
+    const foot = el('div', 'display: flex; flex-direction: column; gap: 3px;');
+    const split = el(
       'div',
       'font-size: 10px; line-height: 1.5; color: var(--theme-text-muted); overflow-wrap: anywhere;',
       LanguageService.tInterpolate('swatch.footSplit', {
@@ -1919,15 +1148,15 @@ export class CharaImport {
             : LanguageService.tInterpolate('swatch.footEmptyMany', { n: empty }),
       })
     );
-    split.title = this.t('gearHint');
+    split.title = tSwatch('gearHint');
     split.dataset.role = 'glamour-foot';
     foot.appendChild(split);
 
     if (this.resolveState === 'unavailable') {
-      const note = this.el(
+      const note = el(
         'div',
         'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); overflow-wrap: anywhere;',
-        this.t('namesUnavailable')
+        tSwatch('namesUnavailable')
       );
       note.dataset.role = 'names-unavailable';
       foot.appendChild(note);
@@ -1949,27 +1178,27 @@ export class CharaImport {
     const overCap = kept.length > PALETTE_CAP;
     const valid = !tooFew && !overCap;
 
-    const panel = this.el(
+    const panel = el(
       'div',
       'border-top: 1px solid var(--theme-border); padding-top: 9px; display: flex; flex-direction: column; gap: 8px;'
     );
 
     // Title + 3–6 counter (colour = validity).
-    const titleRow = this.el(
+    const titleRow = el(
       'div',
       'display: flex; align-items: baseline; justify-content: space-between; gap: 8px;'
     );
     titleRow.appendChild(
-      this.el(
+      el(
         'span',
         'font-size: 12.5px; font-weight: 600; color: var(--theme-text);',
-        this.t('paletteTitle')
+        tSwatch('paletteTitle')
       )
     );
     titleRow.appendChild(
-      this.el(
+      el(
         'span',
-        `font-family: ${MONO}; font-size: 10.5px; color: ${valid ? this.green() : this.amber()};`,
+        `font-family: ${MONO}; font-size: 10.5px; color: ${valid ? green() : amber()};`,
         `${kept.length} / ${PALETTE_CAP}`
       )
     );
@@ -1980,7 +1209,7 @@ export class CharaImport {
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.value = this.paletteNameDraft ?? '';
-    nameInput.placeholder = this.t('paletteNamePlaceholder');
+    nameInput.placeholder = tSwatch('paletteNamePlaceholder');
     nameInput.maxLength = 50;
     nameInput.setAttribute(
       'style',
@@ -1991,21 +1220,18 @@ export class CharaImport {
     });
     panel.appendChild(nameInput);
     panel.appendChild(
-      this.el(
+      el(
         'div',
         'font-size: 10px; line-height: 1.5; color: var(--theme-text-muted);',
-        this.t('paletteNameHint')
+        tSwatch('paletteNameHint')
       )
     );
 
     // Dye toggle chips — 18px swatch + name + mono stainID; dimmed when dropped.
-    const chipRow = this.el(
-      'div',
-      'display: flex; align-items: center; gap: 6px; flex-wrap: wrap;'
-    );
+    const chipRow = el('div', 'display: flex; align-items: center; gap: 6px; flex-wrap: wrap;');
     for (const entry of worn) {
       const dropped = this.droppedStainIds.has(entry.stainId);
-      const chip = this.el(
+      const chip = el(
         'button',
         `display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; cursor: pointer; font-family: inherit; border: 1px solid var(--theme-border); background: ${
           dropped ? 'transparent' : 'var(--theme-card-background)'
@@ -2013,20 +1239,20 @@ export class CharaImport {
       );
       (chip as HTMLButtonElement).type = 'button';
       chip.appendChild(
-        this.el(
+        el(
           'span',
           `width: 18px; height: 18px; border-radius: 5px; flex: 0 0 auto; background: ${entry.dye.hex}; ${INSET_RING}`
         )
       );
-      chip.appendChild(this.el('span', 'font-size: 11px;', this.dyeName(entry.dye)));
+      chip.appendChild(el('span', 'font-size: 11px;', dyeName(entry.dye)));
       chip.appendChild(
-        this.el(
+        el(
           'span',
           `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-text-muted);`,
           String(entry.stainId)
         )
       );
-      chip.title = `${this.dyeName(entry.dye)} · ${entry.stainId}`;
+      chip.title = `${dyeName(entry.dye)} · ${entry.stainId}`;
       chip.addEventListener('click', () => {
         if (dropped) this.droppedStainIds.delete(entry.stainId);
         else this.droppedStainIds.add(entry.stainId);
@@ -2038,31 +1264,31 @@ export class CharaImport {
 
     // 24px strip preview of the kept dyes.
     if (kept.length > 0) {
-      const strip = this.el(
+      const strip = el(
         'div',
         `display: flex; height: 24px; border-radius: 6px; overflow: hidden; ${INSET_RING}`
       );
       for (const entry of kept) {
-        strip.appendChild(this.el('span', `flex: 1; background: ${entry.dye.hex};`));
+        strip.appendChild(el('span', `flex: 1; background: ${entry.dye.hex};`));
       }
       panel.appendChild(strip);
     }
 
     // Amber card saying why the actions are locked, in both directions.
     if (!valid) {
-      const warn = this.el(
+      const warn = el(
         'div',
         'display: flex; align-items: flex-start; gap: 7px; padding: 7px 9px; border-radius: 9px; background: rgba(244, 191, 79, 0.07); border: 1px solid rgba(244, 191, 79, 0.3);'
       );
       warn.appendChild(
-        this.monoChip(
+        monoChip(
           tooFew ? LanguageService.t('swatch.tooFewTag') : `${PALETTE_FLOOR}–${PALETTE_CAP}`,
-          this.amber(),
+          amber(),
           'rgba(244, 191, 79, 0.18)'
         )
       );
       warn.appendChild(
-        this.el(
+        el(
           'span',
           'font-size: 11px; line-height: 1.45; color: var(--theme-text);',
           tooFew
@@ -2075,15 +1301,15 @@ export class CharaImport {
 
     // Actions: Save to this device (outlined chip) · Submit to Community
     // (accent solid). Both 40px; both dead outside 3–6.
-    const actions = this.el('div', 'display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px;');
+    const actions = el('div', 'display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px;');
     const actionState = valid
       ? 'cursor: pointer; opacity: 1;'
       : 'cursor: not-allowed; opacity: 0.45;';
 
-    const saveBtn = this.el(
+    const saveBtn = el(
       'button',
       `height: 40px; padding: 0 14px; border-radius: 10px; font-family: inherit; font-size: 12.5px; font-weight: 600; background: var(--theme-card-background); border: 1px solid var(--theme-border); color: var(--theme-text); ${actionState}`,
-      this.t('saveLocal')
+      tSwatch('saveLocal')
     );
     (saveBtn as HTMLButtonElement).type = 'button';
     (saveBtn as HTMLButtonElement).disabled = !valid;
@@ -2093,10 +1319,10 @@ export class CharaImport {
     actions.appendChild(saveBtn);
 
     if (this.callbacks.onSubmitPalette) {
-      const submitBtn = this.el(
+      const submitBtn = el(
         'button',
         `height: 40px; padding: 0 14px; border-radius: 10px; font-family: inherit; font-size: 12.5px; font-weight: 600; background: var(--theme-primary); border: none; color: #fff; ${actionState}`,
-        this.t('submitCommunity')
+        tSwatch('submitCommunity')
       );
       (submitBtn as HTMLButtonElement).type = 'button';
       (submitBtn as HTMLButtonElement).disabled = !valid;
@@ -2138,7 +1364,7 @@ export class CharaImport {
     const fallback =
       this.resolved?.nickname ||
       this.fileName?.replace(/\.chara$/i, '') ||
-      this.t('paletteDefaultName');
+      tSwatch('paletteDefaultName');
     return (draft || fallback).slice(0, 50);
   }
 
@@ -2164,7 +1390,7 @@ export class CharaImport {
     for (const entry of kept) {
       CollectionService.addDyeToCollection(record.id, entry.stainId);
     }
-    logger.info(`[CharaImport] Saved glamour palette "${name}" (${kept.length} dyes)`);
+    logger.info(`[GlamourBlock] Saved glamour palette "${name}" (${kept.length} dyes)`);
     ToastService.success(LanguageService.t('palette.saveSuccess'));
   }
 }
