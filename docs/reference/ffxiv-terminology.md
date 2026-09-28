@@ -277,6 +277,11 @@ confidence:
   `코디` / `룩`. `코디` is the house choice for one outfit in the UI; the Privacy / Terms documents
   use the official-register `의상` — the same split as Japanese `ミラプリ` (UI) and `コーディネート`
   (policies).
+- **The Glamour Reader is named from the last row too**: `ミラプリリーダー`, `Projektionsleser`,
+  `Lecteur de mirages`, `코디 리더`, `幻化查看器` (short: `ミラプリ` / `Projektion` / `Mirage` /
+  `코디` / `幻化`), on the web, the OG card and the `/glamour` card. An item that "can't be a
+  glamour" fails the system's check, so Japanese and Korean keep the system's verb there:
+  `投影できない`, `투영할 수 없음` / `투영 불가`, never `코디`.
 - The compounds do not follow one template (`Entprojizierungskristall`, *dissipateur **de**
   mirage*) — look each one up rather than deriving it.
 
