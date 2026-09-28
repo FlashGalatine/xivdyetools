@@ -38,7 +38,10 @@ import type { CharaGearModel } from './chara-models.js';
 /** ΔE2000 beyond which a live float overrides the palette index (OFF GRID). */
 export const OFF_GRID_DELTA_E2000 = 6;
 
-/** ΔE2000 within which a stored eye float "lands on" a palette entry (the square root is exact to ±1). */
+/**
+ * ΔE2000 within which a stored eye float "lands on" a palette entry (the
+ * square root is exact to ±1 per channel).
+ */
 const EYE_LANDS_DELTA_E2000 = 1;
 
 export type CharaSlotVerdict =
@@ -180,7 +183,9 @@ function uncrossEyeFloats(
     float: from.float,
     floatLinear: from.floatLinear,
   });
-  return slots.map((s) => (s === left ? swapped(left, right) : s === right ? swapped(right, left) : s));
+  return slots.map((s) =>
+    s === left ? swapped(left, right) : s === right ? swapped(right, left) : s,
+  );
 }
 
 interface SheetResolution {

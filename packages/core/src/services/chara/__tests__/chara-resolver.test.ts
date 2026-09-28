@@ -39,7 +39,9 @@ describe('resolveCharaColors', () => {
     };
     const eyes = async (extra: Record<string, unknown>) => {
       const resolved = await resolveCharaColors(
-        parseCharaFile(minimal({ LEyeColor: 169, REyeColor: 42, IsExtendedAppearanceValid: true, ...extra })),
+        parseCharaFile(
+          minimal({ LEyeColor: 169, REyeColor: 42, IsExtendedAppearanceValid: true, ...extra })
+        ),
         characterColors
       );
       return {
@@ -87,7 +89,13 @@ describe('resolveCharaColors', () => {
     it('does not un-cross when both eyes share an index', async () => {
       const resolved = await resolveCharaColors(
         parseCharaFile(
-          minimal({ LEyeColor: 42, REyeColor: 42, LeftEyeColor: '0, 0, 1', RightEyeColor: stored(42), IsExtendedAppearanceValid: true })
+          minimal({
+            LEyeColor: 42,
+            REyeColor: 42,
+            LeftEyeColor: '0, 0, 1',
+            RightEyeColor: stored(42),
+            IsExtendedAppearanceValid: true,
+          })
         ),
         characterColors
       );
