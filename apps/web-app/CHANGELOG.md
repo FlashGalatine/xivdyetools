@@ -36,6 +36,9 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   once as `Rings:` (GPOSERS reminders, March 2026).
 - Narrow desktop (769–919 px) drops the language button's globe so ten rail chips and a hovered
   label fit. The shortcuts panel says `0-9`.
+- **The site's share card shows ten tools.** `public/og/default.png` and `default-x.png` are
+  re-exported from the design's export sheet (turn 4) with the tenth glyph. The rail re-cuts to
+  22 px cells and 12 px gaps, so it stays 356 px wide in both frames. The alt text says ten.
 
 ### Changed
 
