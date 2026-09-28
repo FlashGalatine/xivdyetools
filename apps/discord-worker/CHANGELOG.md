@@ -17,6 +17,8 @@ Needs `@xivdyetools/core` 5.7.0 (reached through `@xivdyetools/bot-logic`). No
   comes from the game's `human.cmp` creator palette.
 - **A customized skin or hair color reads OFF GRID again**; one straight from the creator never
   does.
+- **The lip line under the card names the color its blend was made from** (bot-logic 4.4.2). It
+  had printed the file's stored shader color beside a blend of the creator's swatch.
 
 ## [5.6.4] - 2026-09-28
 

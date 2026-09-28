@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.2] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0.
+
+### Fixed
+
+- **`/swatch`'s lip line named a color the blend was not made from.** `card.swatchLip` printed the
+  file's stored float as `raw`. Since core 5.7.0 that float is the game's shader color while the
+  blend is composited from the creator's swatch, so an unedited lip read "raw #340A1C, blended
+  #AE8F98" with nothing connecting the two. `raw` is now the color that won the verdict — the
+  swatch for an index verdict, the file's own color when it is OFF GRID or float-only.
+
 ## [4.4.1] - 2026-09-21
 
 Spelling only — American English across the `en` locale, per
