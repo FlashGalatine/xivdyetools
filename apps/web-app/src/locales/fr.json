@@ -1266,18 +1266,6 @@
     "listCopyFailed": "Échec de la copie de la liste d'équipement",
     "listExportFailed": "Échec de l'enregistrement de la liste d'équipement",
     "namesUnavailable": "Noms des objets indisponibles — seuls les emplacements sont affichés. Les teintures sont lues localement depuis le fichier et ne sont pas concernées.",
-    "gameCheck": {
-      "head": "EN JEU",
-      "allClear": "Chaque pièce se porte et se teint comme le montre le fichier",
-      "problemDye": "{slot} : {item} n'accepte pas les teintures du fichier",
-      "problemGlamour": "{slot} : {item} ne peut pas servir de mirage",
-      "problemWear": "{slot} : ce personnage ne peut pas porter {item}",
-      "problemNoItem": "{slot} : {item} est un modèle sans objet correspondant",
-      "useInstead": "{slot} : portez plutôt {twin}. Il a le même aspect et {fixes}.",
-      "fixDye": "accepte ces teintures",
-      "fixGlamour": "peut servir de mirage",
-      "fixWear": "convient à ce personnage"
-    },
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 pièce portée est non teinte (DyeId 0)",
     "footWornUndyedMany": "{n} pièces portées sont non teintes (DyeId 0)",
@@ -1351,5 +1339,33 @@
     "fr": "Français",
     "ko": "Coréen",
     "zh": "Chinois"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "EN JEU",
+      "headClear": "Chaque pièce se porte comme le fichier la montre",
+      "headFixed": "Portable : un jumeau est nommé là où la pièce du fichier ne passe pas",
+      "headBlocked": "Certaines pièces ne se portent pas comme le fichier les montre",
+      "explain": "Depuis la 7.4, toutes les classes peuvent porter n'importe quelle pièce en mirage ; restent à vérifier les canaux de teinture, l'option mirage, la race, le sexe et la Grande Compagnie. Les remplacements figurent déjà dans la liste ci-dessous ; modifiez-les via le +N de chaque pièce.",
+      "countFixed": "{n} RÉGLÉ PAR UN JUMEAU",
+      "countBlocked": "{n} SANS SOLUTION",
+      "countFine": "{n} OK TEL QUEL",
+      "countCompany": "{n} GRANDE COMPAGNIE REQUISE"
+    },
+    "row": {
+      "tagFixed": "RÉGLÉ PAR UN JUMEAU",
+      "tagBlocked": "SANS SOLUTION",
+      "fixedDye": "Nommé à la place de {name}, qui ne prend pas ces teintures",
+      "fixedGlamour": "Nommé à la place de {name}, qui ne peut pas servir de mirage",
+      "fixedWear": "Nommé à la place de {name}, que ce personnage ne peut pas porter",
+      "blockedDye": "Cette pièce ne prend pas les teintures du fichier",
+      "blockedGlamour": "Cette pièce ne peut pas servir de mirage",
+      "blockedWear": "Ce personnage ne peut pas la porter",
+      "blockedNoItem": "Un modèle sans objet derrière",
+      "noFix": "Aucune pièce d'apparence identique ne règle le problème",
+      "otherWorks": "{name} peut être porté à la place",
+      "choice": "Même apparence que {name} · l'un ou l'autre convient",
+      "company": "Nécessite la bonne Grande Compagnie"
+    }
   }
 }

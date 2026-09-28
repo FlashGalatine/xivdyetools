@@ -1266,18 +1266,6 @@
     "listCopyFailed": "复制装备列表失败",
     "listExportFailed": "保存装备列表失败",
     "namesUnavailable": "无法获取物品名称 — 仅显示部位。染剂从文件本地读取，不受影响。",
-    "gameCheck": {
-      "head": "游戏内",
-      "allClear": "每件装备都能按文件的样子穿戴和染色",
-      "problemDye": "{slot}：{item} 用不了文件中的染剂",
-      "problemGlamour": "{slot}：{item} 不能用于幻化",
-      "problemWear": "{slot}：这个角色无法装备 {item}",
-      "problemNoItem": "{slot}：{item} 是没有对应物品的模型",
-      "useInstead": "{slot}：改用外观相同的 {twin}（{fixes}）",
-      "fixDye": "可以用这些染剂",
-      "fixGlamour": "可以用于幻化",
-      "fixWear": "这个角色可以装备"
-    },
     "footSplit": "{undyed} · {empty}。",
     "footWornUndyedOne": "1 件已穿戴部位未染色（DyeId 0）",
     "footWornUndyedMany": "{n} 件已穿戴部位未染色（DyeId 0）",
@@ -1351,5 +1339,33 @@
     "fr": "法语",
     "ko": "韩语",
     "zh": "中文"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "游戏内",
+      "headClear": "每件装备都能按文件的样子穿戴",
+      "headFixed": "可以穿戴：文件里的装备不行的部位，已换成外观相同的装备",
+      "headBlocked": "有些装备无法按文件的样子穿戴",
+      "explain": "自7.4起，任何职业都能把任何装备用作幻化；还需要检查染色栏、能否幻化、种族、性别和大国防联军。替换已写进下方列表，可在各件装备的 +N 处更改。",
+      "countFixed": "{n} 以同外观装备解决",
+      "countBlocked": "{n} 无法解决",
+      "countFine": "{n} 保持即可",
+      "countCompany": "{n} 需要大国防联军"
+    },
+    "row": {
+      "tagFixed": "以同外观装备解决",
+      "tagBlocked": "无法解决",
+      "fixedDye": "代替{name}（它无法使用这些染剂）",
+      "fixedGlamour": "代替{name}（它无法用于幻化）",
+      "fixedWear": "代替{name}（这个角色无法穿戴它）",
+      "blockedDye": "它无法使用文件中的染剂",
+      "blockedGlamour": "它无法用于幻化",
+      "blockedWear": "这个角色无法穿戴它",
+      "blockedNoItem": "没有对应物品的模型",
+      "noFix": "外观相同的装备也无法解决",
+      "otherWorks": "可以改穿{name}",
+      "choice": "与{name}外观相同 · 哪个都可以",
+      "company": "需要所属对应的大国防联军"
+    }
   }
 }

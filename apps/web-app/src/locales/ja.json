@@ -1266,18 +1266,6 @@
     "listCopyFailed": "装備リストをコピーできませんでした",
     "listExportFailed": "装備リストを保存できませんでした",
     "namesUnavailable": "アイテム名を取得できません — スロット名のみ表示します。カララントはファイルからローカルに読み込み済みで、影響ありません。",
-    "gameCheck": {
-      "head": "ゲーム内",
-      "allClear": "どの装備もファイルの通りに装備・染色できます",
-      "problemDye": "{slot}: {item} にはファイルのカララントを使えません",
-      "problemGlamour": "{slot}: {item} はミラプリに使えません",
-      "problemWear": "{slot}: このキャラクターは {item} を装備できません",
-      "problemNoItem": "{slot}: {item} は対応するアイテムのないモデルです",
-      "useInstead": "{slot}: 代わりに同じ見た目の {twin} を使ってください（{fixes}）",
-      "fixDye": "カララントを使える",
-      "fixGlamour": "ミラプリに使える",
-      "fixWear": "このキャラクターが装備できる"
-    },
     "footSplit": "{undyed}・{empty}。",
     "footWornUndyedOne": "装備中1部位が未染色（DyeId 0）",
     "footWornUndyedMany": "装備中{n}部位が未染色（DyeId 0）",
@@ -1351,5 +1339,33 @@
     "fr": "フランス語",
     "ko": "韓国語",
     "zh": "中国語"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "ゲーム内",
+      "headClear": "どの装備もファイルどおりに着用できます",
+      "headFixed": "着用できます。ファイルの装備が使えない部位は、同じ見た目の別アイテムを表示しています",
+      "headBlocked": "ファイルどおりには着用できない装備があります",
+      "explain": "パッチ7.4以降、どのジョブでもあらゆる装備を投影できます。確認するのは染色枠、投影の可否、種族、性別、グランドカンパニーです。差し替えは下の一覧に反映済みで、各装備の +N から変更できます。",
+      "countFixed": "{n} 別アイテムで解決",
+      "countBlocked": "{n} 解決不可",
+      "countFine": "{n} そのまま可",
+      "countCompany": "{n} 要グランドカンパニー"
+    },
+    "row": {
+      "tagFixed": "別アイテムで解決",
+      "tagBlocked": "解決不可",
+      "fixedDye": "{name}の代わりに表示（この染色ができないため）",
+      "fixedGlamour": "{name}の代わりに表示（投影できないため）",
+      "fixedWear": "{name}の代わりに表示（このキャラクターは装備できないため）",
+      "blockedDye": "ファイルの染色をこの装備には施せません",
+      "blockedGlamour": "この装備は投影できません",
+      "blockedWear": "このキャラクターは装備できません",
+      "blockedNoItem": "対応するアイテムのないモデルです",
+      "noFix": "同じ見た目のアイテムでも解決できません",
+      "otherWorks": "{name}なら着用できます",
+      "choice": "{name}と同じ見た目 · どちらでも可",
+      "company": "対応するグランドカンパニーへの所属が必要です"
+    }
   }
 }

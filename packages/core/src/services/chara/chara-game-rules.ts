@@ -19,15 +19,14 @@
  * wear instead.
  *
  * api-worker reads the rules off XIVAPI (`charaWearMask`) and groups each
- * family by rule set (`groupCharaTwinRules`). The browser runs
- * `checkCharaLook` against the file's dyes and the character's race and
+ * family by rule set (`groupCharaTwinRules`). The browser checks each twin
+ * (`charaTwinProblems`, through `chara-twins.ts`) against the file's dyes and the character's race and
  * gender, which never leave the device. A `.chara` file records no Grand
- * Company, so a company-locked piece is flagged (`needsGrandCompany`), never
- * failed.
+ * Company, so a company-locked piece is flagged, never failed. Which twin a
+ * list names is `chara-twins.ts`.
  */
 
 import type { Gender, Race } from '@xivdyetools/types';
-import type { CharaGearSlotId } from './chara-parser.js';
 
 /**
  * `EquipRaceCategory` race columns in sheet order — also the wear-mask bit
@@ -131,41 +130,11 @@ export function groupCharaTwinRules(
 /** Why a piece can't be worn the way the file wears it. */
 export type CharaPieceProblem = 'noItem' | 'dye' | 'glamour' | 'wear';
 
-export interface CharaCheckPieceInput {
-  slot: CharaGearSlotId;
-  /** The item the block names (lowest row id); null = the model has no item (NPC or prop) */
-  itemId: number | null;
-  /** The family's rule sets (`groupCharaTwinRules`); `[]` = unknown, so the piece is skipped */
-  twins: readonly CharaTwinRules[];
-  /** The highest channel the file dyes on this piece: 0, 1 or 2 */
-  dyedChannel: number;
-}
-
-export interface CharaPieceCheck {
-  slot: CharaGearSlotId;
-  /** Problems no identical item avoids; `[]` = wearable as the file wears it */
-  problems: CharaPieceProblem[];
-  /** An identical item that avoids the named item's problems, and which ones */
-  useInstead: { itemId: number; fixes: CharaPieceProblem[] } | null;
-  /**
-   * The Grand Company the piece as worn (the named item, or `useInstead`) is
-   * locked to; null = any company. A flag, never a problem: the file does not
-   * say which company the character serves.
-   */
-  needsGrandCompany: number | null;
-}
-
-export interface CharaLookCheck {
-  /** Checked pieces in input order; pieces with unknown rules are left out */
-  pieces: CharaPieceCheck[];
-}
-
 export interface CharaCheckCharacter {
   race: Race | null;
   gender: Gender | null;
 }
 
-const TWIN_CHECKS = ['dye', 'glamour', 'wear'] as const;
 
 /** The checks one twin fails for this file and character. Grand Company is never one. */
 export function charaTwinProblems(
@@ -180,56 +149,4 @@ export function charaTwinProblems(
     problems.push('wear');
   }
   return problems;
-}
-
-function checkPiece(piece: CharaCheckPieceInput, character: CharaCheckCharacter): CharaPieceCheck {
-  const verdicts = piece.twins.map((twin) => ({
-    twin,
-    problems: charaTwinProblems(twin, piece.dyedChannel, character),
-  }));
-  const named = verdicts.find((v) => v.twin.itemIds.includes(piece.itemId as number)) ?? null;
-  // A twin any company can wear goes before a company-locked one (stable sort).
-  const passing = verdicts
-    .filter((v) => v.problems.length === 0)
-    .sort((a, b) => Number(a.twin.grandCompany > 0) - Number(b.twin.grandCompany > 0));
-  const gc = (twin: CharaTwinRules): number | null => (twin.grandCompany > 0 ? twin.grandCompany : null);
-
-  if (passing.length > 0) {
-    if (named && named.problems.length > 0) {
-      const instead = passing[0].twin;
-      return {
-        slot: piece.slot,
-        problems: [],
-        useInstead: { itemId: instead.itemIds[0], fixes: named.problems },
-        needsGrandCompany: gc(instead),
-      };
-    }
-    return {
-      slot: piece.slot,
-      problems: [],
-      useInstead: null,
-      needsGrandCompany: gc((named ?? passing[0]).twin),
-    };
-  }
-  // Nothing passes. Report the checks no twin meets; when every check is met
-  // by some twin but never all by one, fall back to the named item's own.
-  const unmet = TWIN_CHECKS.filter((check) => verdicts.every((v) => v.problems.includes(check)));
-  const problems = unmet.length > 0 ? [...unmet] : (named?.problems ?? []);
-  return { slot: piece.slot, problems, useInstead: null, needsGrandCompany: null };
-}
-
-/** Check every worn piece against the game's rules for this character. */
-export function checkCharaLook(
-  pieces: readonly CharaCheckPieceInput[],
-  character: CharaCheckCharacter,
-): CharaLookCheck {
-  const checked: CharaPieceCheck[] = [];
-  for (const piece of pieces) {
-    if (piece.itemId === null) {
-      checked.push({ slot: piece.slot, problems: ['noItem'], useInstead: null, needsGrandCompany: null });
-    } else if (piece.twins.length > 0) {
-      checked.push(checkPiece(piece, character));
-    }
-  }
-  return { pieces: checked };
 }

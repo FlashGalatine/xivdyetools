@@ -1266,18 +1266,6 @@
     "listCopyFailed": "장비 목록을 복사하지 못했습니다",
     "listExportFailed": "장비 목록을 저장하지 못했습니다",
     "namesUnavailable": "아이템 이름을 가져올 수 없습니다 — 부위만 표시합니다. 염료는 파일에서 로컬로 읽어오므로 영향이 없습니다.",
-    "gameCheck": {
-      "head": "게임 내",
-      "allClear": "모든 장비를 파일에 보이는 대로 장비하고 염색할 수 있습니다",
-      "problemDye": "{slot}: {item}에는 파일의 염료를 쓸 수 없습니다",
-      "problemGlamour": "{slot}: {item}은(는) 투영에 사용할 수 없습니다",
-      "problemWear": "{slot}: 이 캐릭터는 {item}을(를) 장비할 수 없습니다",
-      "problemNoItem": "{slot}: {item}은(는) 해당 아이템이 없는 모델입니다",
-      "useInstead": "{slot}: 대신 외형이 같은 {twin}을(를) 사용하세요({fixes})",
-      "fixDye": "이 염료를 쓸 수 있음",
-      "fixGlamour": "투영에 사용할 수 있음",
-      "fixWear": "이 캐릭터가 장비할 수 있음"
-    },
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "착용 중 1개 부위가 미염색(DyeId 0)",
     "footWornUndyedMany": "착용 중 {n}개 부위가 미염색(DyeId 0)",
@@ -1351,5 +1339,33 @@
     "fr": "프랑스어",
     "ko": "한국어",
     "zh": "중국어"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "게임 내",
+      "headClear": "모든 장비를 파일 그대로 착용할 수 있습니다",
+      "headFixed": "착용 가능합니다. 파일의 장비를 쓸 수 없는 부위는 같은 외형의 아이템으로 표시했습니다",
+      "headBlocked": "파일 그대로 착용할 수 없는 장비가 있습니다",
+      "explain": "7.4부터는 어떤 직업이든 모든 장비를 투영할 수 있습니다. 확인할 것은 염색 칸, 투영 가능 여부, 종족, 성별, 총사령부입니다. 교체는 이미 아래 목록에 반영되어 있으며, 각 장비의 +N에서 바꿀 수 있습니다.",
+      "countFixed": "{n} 같은 외형으로 해결",
+      "countBlocked": "{n} 해결 불가",
+      "countFine": "{n} 그대로 가능",
+      "countCompany": "{n} 총사령부 필요"
+    },
+    "row": {
+      "tagFixed": "같은 외형으로 해결",
+      "tagBlocked": "해결 불가",
+      "fixedDye": "{name} 대신 표시 (이 염색을 할 수 없음)",
+      "fixedGlamour": "{name} 대신 표시 (투영할 수 없음)",
+      "fixedWear": "{name} 대신 표시 (이 캐릭터는 착용할 수 없음)",
+      "blockedDye": "파일의 염색을 이 장비에 할 수 없습니다",
+      "blockedGlamour": "이 장비는 투영할 수 없습니다",
+      "blockedWear": "이 캐릭터는 착용할 수 없습니다",
+      "blockedNoItem": "대응하는 아이템이 없는 모델입니다",
+      "noFix": "같은 외형의 아이템으로도 해결할 수 없습니다",
+      "otherWorks": "{name}(으)로는 착용할 수 있습니다",
+      "choice": "{name}와(과) 같은 외형 · 어느 쪽이든 괜찮습니다",
+      "company": "맞는 총사령부 소속이 필요합니다"
+    }
   }
 }

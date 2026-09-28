@@ -20,12 +20,14 @@
  */
 
 import {
-  checkCharaLook,
+  charaPieceTone,
+  charaTwinsOf,
+  defaultCharaTwin,
   formatCharaModelLabel,
   facewearColors,
-  type CharaCheckPieceInput,
-  type CharaPieceCheck,
   type CharaPieceProblem,
+  type CharaPieceTone,
+  type CharaTwin,
   type ResolvedCharaCharacter,
   type ResolvedGearDye,
   type CharaGearSlotId,
@@ -36,6 +38,7 @@ import {
   resolveCharaEquipment,
   itemNameFor,
   charaIconUrl,
+  type CharaItemNames,
   type CharaResolveResult,
   type CharaResolvedItem,
 } from '@services/chara-resolve-service';
@@ -62,6 +65,16 @@ import type { Dye } from '@xivdyetools/types';
 /** Glamour export floor/cap (confirmed: floor 3 — Turn 10; hard cap 6 — Review). */
 const PALETTE_FLOOR = 3;
 const PALETTE_CAP = 6;
+
+/** A worn piece's twins as the reader shows them (spec G3–G5). */
+interface TwinState {
+  twins: Array<CharaTwin<CharaItemNames>>;
+  /** The twin the default rule names */
+  best: CharaTwin<CharaItemNames>;
+  /** The twin the list names: the player's pick, else `best` */
+  picked: CharaTwin<CharaItemNames>;
+  tone: CharaPieceTone;
+}
 
 /** The twelve dyeable slots — the footnote's "N slots are empty" denominator. */
 const GEAR_SLOT_COUNT = 12;
@@ -205,6 +218,11 @@ export class GlamourBlock {
   private showAllPieces: boolean;
   private glamourBox: HTMLElement | null = null;
   private unsubscribe: (() => void) | null = null;
+  /**
+   * Twin picks, by slot: which identical item the list names. They live with
+   * the session and never in storage (design 1a), so a new file starts clean.
+   */
+  private picks = new Map<CharaGearSlotId, number>();
 
   constructor(container: HTMLElement, callbacks: GlamourBlockCallbacks = {}) {
     this.container = container;
@@ -255,6 +273,7 @@ export class GlamourBlock {
     this.resolved = session?.resolved ?? null;
     this.fileName = session?.fileName ?? null;
     this.droppedStainIds.clear();
+    this.picks.clear();
     this.paletteOpen = false;
     this.paletteNameDraft = null;
     // Dyes never wait: the round-trip is started first so the block renders
@@ -386,11 +405,12 @@ export class GlamourBlock {
     });
   }
 
-  /** The menu target for a gear slot, or null when the row has no item. */
+  /** The menu target for a gear slot — the twin the list names — or null when the row has no item. */
   private itemLinkTarget(slot: CharaGearSlotId): ItemLinksMenuTarget | null {
     const item = this.itemFor(slot);
     if (!item) return null;
-    return { kind: 'gear', itemId: item.itemId, names: item.names };
+    const shown = this.twinState(slot)?.picked ?? item;
+    return { kind: 'gear', itemId: shown.itemId, names: shown.names };
   }
 
   /** Worn dyes deduped by stain ID, in wear order. */
@@ -434,6 +454,10 @@ export class GlamourBlock {
     );
     box.dataset.role = 'glamour-block';
     this.glamourBox = box;
+
+    // The reader's verdict comes first; the rows explain it (design 1a).
+    const verdict = this.renderVerdict();
+    if (verdict) box.appendChild(verdict);
 
     // Header: equipHead + counts left; Pieces/Dyes toggle + Make-a-palette right.
     const uniq = this.wornDyes();
@@ -514,8 +538,6 @@ export class GlamourBlock {
           ? this.renderDyeRows()
           : this.renderPieceRows(bySlot)
     );
-    const gameCheck = this.renderGameCheck();
-    if (gameCheck) box.appendChild(gameCheck);
     box.appendChild(this.renderGlamourFoot(bySlot));
 
     if (this.paletteOpen) {
@@ -667,7 +689,18 @@ export class GlamourBlock {
    * buttons are not drawn then, so a click cannot reach here without one).
    */
   private listSource(): import('@components/glamour-list-actions').GlamourListSource | null {
-    return this.resolved ? { resolved: this.resolved, equipment: this.equipment } : null;
+    if (!this.resolved) return null;
+    const picked: import('@components/glamour-list-actions').GlamourListSource['picked'] = {};
+    for (const model of this.resolved.gearModels) {
+      const state = this.twinState(model.slot);
+      if (state) {
+        picked[model.slot] = {
+          names: state.picked.names,
+          ...(state.picked.acquisition ? { acquisition: state.picked.acquisition } : {}),
+        };
+      }
+    }
+    return { resolved: this.resolved, equipment: this.equipment, picked };
   }
 
   /**
@@ -851,9 +884,12 @@ export class GlamourBlock {
     if (item?.iconId) tile.style.backgroundImage = `url("${charaIconUrl(item.iconId)}")`;
     row.appendChild(tile);
 
+    const state = this.twinState(slot);
+    const shownNames = state?.picked.names ?? item?.names ?? null;
     const linkTarget = this.itemLinkTarget(slot);
-    const linkTitle = item ? itemNameFor(item.names, lang) : '';
+    const linkTitle = shownNames ? itemNameFor(shownNames, lang) : '';
     if (linkTarget) this.attachItemLinks(tile, linkTarget, linkTitle);
+    const note = this.pieceNote(slot, state, lang);
 
     const text = el(
       'span',
@@ -872,12 +908,17 @@ export class GlamourBlock {
     if (item && item.familySize > 1) {
       // A third of all keys are families of visually identical items. The
       // name never pretends to be unique: +N counts the rest, the tooltip
-      // lists them, prefixes are never stripped.
+      // lists them, prefixes are never stripped. Its colour is the row's tone
+      // (design 1a): green when a twin was named to fix a problem, amber when
+      // nothing fixes it, grey when the pick is just a choice.
+      const tone = state?.tone ?? 'choice';
+      const ink = tone === 'fix' ? green() : tone === 'block' ? amber() : 'var(--theme-text-muted)';
       const badge = el(
         'span',
-        `font-family: ${MONO}; font-size: 8.5px; color: var(--theme-primary); background: color-mix(in srgb, var(--theme-primary) 12%, transparent); border-radius: 4px; padding: 1px 5px; cursor: help; white-space: nowrap;`,
+        `font-family: ${MONO}; font-size: 8.5px; color: ${ink}; background: color-mix(in srgb, ${ink} 12%, transparent); border: 1px solid color-mix(in srgb, ${ink} 35%, transparent); border-radius: 4px; padding: 1px 5px; cursor: help; white-space: nowrap;`,
         `+${item.familySize - 1}`
       );
+      badge.dataset.tone = tone;
       // `Intl.ListFormat` rather than `join(', ')`: a comma is not the list
       // separator in every language (ja/zh use 、, and ko/de/fr add a
       // conjunction), and the tooltip is prose, not data.
@@ -888,18 +929,27 @@ export class GlamourBlock {
       badge.title = `${LanguageService.tInterpolate('swatch.sameModelList', {
         list: alternates,
       })}${truncated}`;
-      badge.dataset.role = 'same-model';
+      badge.dataset.role = 'twin-chip';
       overline.appendChild(badge);
+    }
+    if (note.tag) {
+      const tag = monoChip(
+        LanguageService.t(note.tag === 'fixed' ? 'glamour.row.tagFixed' : 'glamour.row.tagBlocked'),
+        note.tag === 'fixed' ? green() : amber(),
+        'var(--theme-background-secondary)'
+      );
+      tag.dataset.role = 'piece-tag';
+      overline.appendChild(tag);
     }
     text.appendChild(overline);
 
-    if (item) {
+    if (item && shownNames) {
       // The item name is the label here: it wraps with lang + hyphens,
-      // never an ellipsis.
+      // never an ellipsis. It is the twin the list names, not the lowest row.
       const name = el(
         'span',
         'font-size: 11.5px; line-height: 1.3; font-weight: 600; color: var(--theme-text); overflow-wrap: anywhere; hyphens: auto;',
-        itemNameFor(item.names, lang)
+        itemNameFor(shownNames, lang)
       );
       name.lang = lang;
       name.dataset.role = 'item-name';
@@ -938,13 +988,22 @@ export class GlamourBlock {
     );
     dyeLine.dataset.role = 'dye-line';
     text.appendChild(dyeLine);
+    if (note.text) {
+      const noteLine = el(
+        'span',
+        'font-size: 10px; line-height: 1.35; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+        note.text
+      );
+      noteLine.dataset.role = 'piece-note';
+      text.appendChild(noteLine);
+    }
     row.appendChild(text);
 
     const chips = el('span', 'display: flex; gap: 3px; flex-shrink: 0;');
     for (const chip of this.channelChips(slot, dyes)) chips.appendChild(chip);
     row.appendChild(chips);
 
-    if (item) row.title = itemNameFor(item.names, lang);
+    if (shownNames) row.title = itemNameFor(shownNames, lang);
     return row;
   }
 
@@ -1143,149 +1202,193 @@ export class GlamourBlock {
   }
 
   // ==========================================================================
-  // IN THE GAME — can the look be worn the way the file shows it?
+  // IN THE GAME — the reader's verdict, and the twins behind each row
   // ==========================================================================
 
-  /**
-   * The check's input: every worn piece api-worker answered for, with its
-   * family's rule sets and the highest channel the file dyes on it. A paired
-   * off-hand (quiver, focus) IS the main weapon, so it is not checked twice.
-   */
-  private gameCheckPieces(): CharaCheckPieceInput[] {
-    const resolved = this.resolved!;
-    const pieces: CharaCheckPieceInput[] = [];
-    for (const model of resolved.gearModels) {
-      const item = this.itemFor(model.slot);
-      if (item === undefined || item?.viaMainHand) continue;
-      const dyedChannel = resolved.gearDyes
-        .filter((gear) => gear.slot === model.slot)
-        .reduce((max, gear) => Math.max(max, gear.channel), 0);
-      pieces.push({
-        slot: model.slot,
-        itemId: item ? item.itemId : null,
-        twins: item?.rules ?? [],
-        dyedChannel,
-      });
-    }
-    return pieces;
+  /** The highest channel the file dyes on a slot: 0, 1 or 2. */
+  private dyedChannel(slot: CharaGearSlotId): number {
+    return this.resolved!.gearDyes.filter((gear) => gear.slot === slot).reduce(
+      (max, gear) => Math.max(max, gear.channel),
+      0
+    );
   }
 
   /**
-   * The verdict panel. Posing tools put any model on anyone and any dye on
-   * any channel; the game does not. Drawn only once api-worker has answered
-   * WITH rules, so an older worker (or an unavailable one) leaves the block
-   * exactly as it was. The check itself runs here, in the browser: the file's
-   * dyes and the character's race and gender never leave the device.
+   * A worn piece's twins: the named item and its alternates checked against
+   * this file and character, the one the list names (the player's pick, else
+   * the default rule), and the row's tone. A paired off-hand (quiver, focus)
+   * IS the main weapon, so it follows the main hand's pick. Null when
+   * api-worker has not named the piece.
    */
-  private renderGameCheck(): HTMLElement | null {
+  private twinState(slot: CharaGearSlotId): TwinState | null {
+    const item = this.itemFor(slot);
+    if (!item) return null;
+    if (item.viaMainHand) return slot === 'MainHand' ? null : this.twinState('MainHand');
+    const resolved = this.resolved!;
+    const twins = charaTwinsOf(item, this.dyedChannel(slot), {
+      race: resolved.race,
+      gender: resolved.gender,
+    });
+    if (twins.length === 0) return null;
+    const best = defaultCharaTwin(twins);
+    const pickedId = this.picks.get(slot);
+    const picked = twins.find((t) => t.itemId === pickedId) ?? best;
+    return { twins, best, picked, tone: charaPieceTone(twins, picked) };
+  }
+
+  /** One problem, as a standalone sentence (a NO FIX row, a picker's why line). */
+  private problemText(problem: CharaPieceProblem): string {
+    return LanguageService.t(
+      {
+        noItem: 'glamour.row.blockedNoItem',
+        dye: 'glamour.row.blockedDye',
+        glamour: 'glamour.row.blockedGlamour',
+        wear: 'glamour.row.blockedWear',
+      }[problem]
+    );
+  }
+
+  /**
+   * What a row says under its dyes (design 1a): why a twin was named, why
+   * nothing fixes it, or which twin it could just as well be — plus the Grand
+   * Company flag, which never fails a piece (a .chara records no company).
+   */
+  private pieceNote(
+    slot: CharaGearSlotId,
+    state: TwinState | null,
+    lang: string
+  ): { tag: 'fixed' | 'blocked' | null; text: string | null } {
+    const item = this.itemFor(slot);
+    if (item === null) {
+      // An NPC or prop model: only a verdict once api-worker has spoken.
+      return this.resolveState === 'ready'
+        ? { tag: 'blocked', text: LanguageService.t('glamour.row.blockedNoItem') }
+        : { tag: null, text: null };
+    }
+    if (!state || !item?.rules?.length) return { tag: null, text: null };
+    const { twins, picked, tone } = state;
+    const parts: string[] = [];
+    let tag: 'fixed' | 'blocked' | null = null;
+    if (tone === 'fix') {
+      tag = 'fixed';
+      const lowest = twins[0];
+      const key = {
+        noItem: 'glamour.row.fixedWear',
+        dye: 'glamour.row.fixedDye',
+        glamour: 'glamour.row.fixedGlamour',
+        wear: 'glamour.row.fixedWear',
+      }[lowest.problems[0] ?? 'wear'];
+      parts.push(LanguageService.tInterpolate(key, { name: itemNameFor(lowest.names, lang) }));
+    } else if (tone === 'block') {
+      tag = 'blocked';
+      parts.push(this.problemText(picked.problems[0] ?? 'wear'));
+      const passing = twins.find((t) => t.rules !== null && t.problems.length === 0);
+      parts.push(
+        passing
+          ? LanguageService.tInterpolate('glamour.row.otherWorks', {
+              name: itemNameFor(passing.names, lang),
+            })
+          : LanguageService.t('glamour.row.noFix')
+      );
+    } else if (tone === 'choice') {
+      const other = twins.find((t) => t.itemId !== picked.itemId);
+      if (other) {
+        parts.push(
+          LanguageService.tInterpolate('glamour.row.choice', {
+            name: itemNameFor(other.names, lang),
+          })
+        );
+      }
+    }
+    if (tone !== 'block' && (picked.rules?.grandCompany ?? 0) > 0) {
+      parts.push(LanguageService.t('glamour.row.company'));
+    }
+    return { tag, text: parts.length > 0 ? parts.join(' · ') : null };
+  }
+
+  /**
+   * The verdict (design 1a): can the look be worn the way the file shows it?
+   * Drawn only once api-worker has answered WITH rules, so an older worker
+   * (or an unavailable one) leaves the block exactly as it was. The check
+   * runs here, in the browser: the file's dyes and the character's race and
+   * gender never leave the device.
+   */
+  private renderVerdict(): HTMLElement | null {
     const resolved = this.resolved;
     if (this.resolveState !== 'ready' || !resolved || !this.equipment) return null;
     const answered = Object.values(this.equipment.items).some((item) => item?.rules?.length);
     if (!answered) return null;
-    const check = checkCharaLook(this.gameCheckPieces(), {
-      race: resolved.race,
-      gender: resolved.gender,
-    });
-    if (check.pieces.length === 0) return null;
-    const lang = LanguageService.getCurrentLocale();
 
-    const section = el(
+    let fixed = 0;
+    let blocked = 0;
+    let fine = 0;
+    let company = 0;
+    for (const model of resolved.gearModels) {
+      const item = this.itemFor(model.slot);
+      if (item === undefined || item?.viaMainHand) continue;
+      if (item === null) {
+        blocked++;
+        continue;
+      }
+      if (!item.rules?.length) continue;
+      const state = this.twinState(model.slot);
+      if (!state) continue;
+      if (state.tone === 'block') blocked++;
+      else if (state.tone === 'fix') fixed++;
+      else fine++;
+      if (state.tone !== 'block' && (state.picked.rules?.grandCompany ?? 0) > 0) company++;
+    }
+
+    const panel = el(
       'div',
-      'display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; border-radius: 9px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
+      'display: flex; flex-direction: column; gap: 6px; padding: 11px 12px; border-radius: 12px; background: var(--theme-card-background); border: 1px solid var(--theme-border);'
     );
-    section.dataset.role = 'game-check';
-    section.appendChild(
+    panel.dataset.role = 'verdict';
+    panel.appendChild(
       el(
         'span',
         `font-family: ${MONO}; font-size: 9.5px; letter-spacing: 1.2px; color: var(--theme-text-muted); text-transform: uppercase;`,
-        tSwatch('gameCheck.head')
+        LanguageService.t('glamour.verdict.head')
+      )
+    );
+    const head = el(
+      'span',
+      `font-family: ${SANS}; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--theme-text);`,
+      LanguageService.t(
+        blocked > 0
+          ? 'glamour.verdict.headBlocked'
+          : fixed > 0
+            ? 'glamour.verdict.headFixed'
+            : 'glamour.verdict.headClear'
+      )
+    );
+    head.dataset.role = 'verdict-head';
+    panel.appendChild(head);
+    panel.appendChild(
+      el(
+        'span',
+        'font-size: 11.5px; line-height: 1.45; color: var(--theme-text-muted);',
+        LanguageService.t('glamour.verdict.explain')
       )
     );
 
-    const problems = check.pieces.flatMap((piece) =>
-      piece.problems.map((problem) => ({ piece, problem }))
-    );
-    if (problems.length === 0) {
-      section.appendChild(this.gameCheckLine(true, tSwatch('gameCheck.allClear'), 'all-clear'));
-    }
-    for (const { piece, problem } of problems) {
-      section.appendChild(
-        this.gameCheckLine(false, this.gameProblemText(piece.slot, problem), `problem-${problem}`)
+    const chips = el('span', 'display: flex; gap: 6px; flex-wrap: wrap;');
+    const chip = (n: number, key: string, fg: string): void => {
+      if (n === 0) return;
+      const c = monoChip(
+        LanguageService.tInterpolate(key, { n: String(n) }),
+        fg,
+        'var(--theme-background-secondary)'
       );
-    }
-    for (const piece of check.pieces) {
-      if (piece.useInstead) {
-        section.appendChild(
-          this.gameCheckLine(false, this.useInsteadText(piece, lang), 'use-instead')
-        );
-      }
-    }
-    return section;
-  }
-
-  /** One verdict line: a green or amber dot, then the sentence that explains it. */
-  private gameCheckLine(ok: boolean, text: string, role: string): HTMLElement {
-    const line = el(
-      'div',
-      'display: flex; align-items: baseline; gap: 7px; font-size: 11px; line-height: 1.45; color: var(--theme-text); overflow-wrap: anywhere;'
-    );
-    const dot = el(
-      'span',
-      `flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; background: ${ok ? green() : amber()}; transform: translateY(-1px);`
-    );
-    dot.setAttribute('aria-hidden', 'true');
-    line.appendChild(dot);
-    line.appendChild(el('span', 'min-width: 0;', text));
-    line.dataset.role = role;
-    line.dataset.state = ok ? 'ok' : 'problem';
-    return line;
-  }
-
-  /** The piece's name for a verdict: the item, or its model key when it has none. */
-  private gamePieceName(slot: CharaGearSlotId, lang: string): string {
-    const item = this.itemFor(slot);
-    if (item) return itemNameFor(item.names, lang);
-    const model = this.resolved!.gearModels.find((m) => m.slot === slot);
-    return model
-      ? LanguageService.tInterpolate('swatch.modelKeyTag', { key: formatCharaModelLabel(model) })
-      : this.gearSlotLabel(slot);
-  }
-
-  private gameProblemText(slot: CharaGearSlotId, problem: CharaPieceProblem): string {
-    const key = {
-      noItem: 'swatch.gameCheck.problemNoItem',
-      dye: 'swatch.gameCheck.problemDye',
-      glamour: 'swatch.gameCheck.problemGlamour',
-      wear: 'swatch.gameCheck.problemWear',
-    }[problem];
-    return LanguageService.tInterpolate(key, {
-      slot: this.gearSlotLabel(slot),
-      item: this.gamePieceName(slot, LanguageService.getCurrentLocale()),
-    });
-  }
-
-  /**
-   * "Wear the twin instead": the named item fails a check an identical item
-   * passes. The twin is the lowest row that passes, so it is almost always
-   * among the alternates the answer names; past that cap it falls back to
-   * its item number.
-   */
-  private useInsteadText(piece: CharaPieceCheck, lang: string): string {
-    const item = this.itemFor(piece.slot);
-    const twinId = piece.useInstead!.itemId;
-    const twin = item?.alternates.find((a) => a.itemId === twinId);
-    const fixes = piece.useInstead!.fixes.map((fix) =>
-      fix === 'dye'
-        ? tSwatch('gameCheck.fixDye')
-        : fix === 'glamour'
-          ? tSwatch('gameCheck.fixGlamour')
-          : tSwatch('gameCheck.fixWear')
-    );
-    return LanguageService.tInterpolate('swatch.gameCheck.useInstead', {
-      slot: this.gearSlotLabel(piece.slot),
-      twin: twin ? itemNameFor(twin.names, lang) : `#${twinId}`,
-      fixes: new Intl.ListFormat(lang, { type: 'conjunction' }).format(fixes),
-    });
+      c.dataset.role = 'verdict-count';
+      chips.appendChild(c);
+    };
+    chip(fixed, 'glamour.verdict.countFixed', green());
+    chip(blocked, 'glamour.verdict.countBlocked', amber());
+    chip(fine, 'glamour.verdict.countFine', 'var(--theme-text-muted)');
+    chip(company, 'glamour.verdict.countCompany', 'var(--theme-text-muted)');
+    panel.appendChild(chips);
+    return panel;
   }
 
   /**

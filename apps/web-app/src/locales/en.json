@@ -1266,18 +1266,6 @@
     "listCopyFailed": "Couldn't copy the equipment list",
     "listExportFailed": "Couldn't save the equipment list",
     "namesUnavailable": "Item names unavailable — showing slots only. Dyes are read locally from the file and are unaffected.",
-    "gameCheck": {
-      "head": "IN THE GAME",
-      "allClear": "Every piece can be worn and dyed the way the file shows it",
-      "problemDye": "{slot}: {item} can't take the dyes the file gives it",
-      "problemGlamour": "{slot}: {item} can't be used as a glamour",
-      "problemWear": "{slot}: this character can't wear {item}",
-      "problemNoItem": "{slot}: {item} is a model with no item behind it",
-      "useInstead": "{slot}: wear {twin} instead. It looks the same and {fixes}.",
-      "fixDye": "takes these dyes",
-      "fixGlamour": "can be used as a glamour",
-      "fixWear": "fits this character"
-    },
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 worn piece is undyed (DyeId 0)",
     "footWornUndyedMany": "{n} worn pieces are undyed (DyeId 0)",
@@ -1351,5 +1339,33 @@
     "fr": "French",
     "ko": "Korean",
     "zh": "Chinese"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "IN THE GAME",
+      "headClear": "Every piece can be worn the way the file shows it",
+      "headFixed": "Wearable, with twins named where the file's own pick can't be worn",
+      "headBlocked": "Some pieces can't be worn the way the file shows them",
+      "explain": "Since 7.4 any job can wear any piece for glamour; what's left to check is dye channels, the glamour flag, race, gender and Grand Company. Swaps are already in the list below; change any of them from the piece's +N.",
+      "countFixed": "{n} FIXED BY A TWIN",
+      "countBlocked": "{n} NO FIX",
+      "countFine": "{n} FINE AS IS",
+      "countCompany": "{n} NEEDS A GRAND COMPANY"
+    },
+    "row": {
+      "tagFixed": "FIXED BY A TWIN",
+      "tagBlocked": "NO FIX",
+      "fixedDye": "Named instead of {name}, which can't take these dyes",
+      "fixedGlamour": "Named instead of {name}, which can't be a glamour",
+      "fixedWear": "Named instead of {name}, which this character can't wear",
+      "blockedDye": "It can't take the dyes the file puts on it",
+      "blockedGlamour": "It can't be a glamour",
+      "blockedWear": "This character can't wear it",
+      "blockedNoItem": "A model with no item behind it",
+      "noFix": "Nothing with the same look fixes it",
+      "otherWorks": "{name} can be worn instead",
+      "choice": "Same look as {name} · either is fine",
+      "company": "Needs the right Grand Company"
+    }
   }
 }

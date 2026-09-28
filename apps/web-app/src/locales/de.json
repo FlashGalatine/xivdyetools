@@ -1266,18 +1266,6 @@
     "listCopyFailed": "Ausrüstungsliste konnte nicht kopiert werden",
     "listExportFailed": "Ausrüstungsliste konnte nicht gespeichert werden",
     "namesUnavailable": "Gegenstandsnamen nicht verfügbar — nur Slot-Namen. Farbstoffe werden lokal aus der Datei gelesen und sind nicht betroffen.",
-    "gameCheck": {
-      "head": "IM SPIEL",
-      "allClear": "Jedes Teil lässt sich so tragen und färben, wie die Datei es zeigt",
-      "problemDye": "{slot}: {item} nimmt die Farbstoffe aus der Datei nicht an",
-      "problemGlamour": "{slot}: {item} eignet sich nicht für eine Projektion",
-      "problemWear": "{slot}: Dieser Charakter kann {item} nicht tragen",
-      "problemNoItem": "{slot}: {item} ist ein Modell ohne Gegenstand",
-      "useInstead": "{slot}: Trag stattdessen {twin}. Es sieht gleich aus und {fixes}.",
-      "fixDye": "nimmt diese Farbstoffe an",
-      "fixGlamour": "eignet sich für eine Projektion",
-      "fixWear": "passt zu diesem Charakter"
-    },
     "footSplit": "{undyed} · {empty}.",
     "footWornUndyedOne": "1 getragenes Teil ist ungefärbt (DyeId 0)",
     "footWornUndyedMany": "{n} getragene Teile sind ungefärbt (DyeId 0)",
@@ -1351,5 +1339,33 @@
     "fr": "Französisch",
     "ko": "Koreanisch",
     "zh": "Chinesisch"
+  },
+  "glamour": {
+    "verdict": {
+      "head": "IM SPIEL",
+      "headClear": "Jedes Teil lässt sich so tragen, wie die Datei es zeigt",
+      "headFixed": "Tragbar – wo das Teil der Datei nicht geht, steht ein gleich aussehendes",
+      "headBlocked": "Manche Teile lassen sich nicht so tragen, wie die Datei sie zeigt",
+      "explain": "Seit 7.4 kann jede Klasse jedes Teil als Projektion tragen; geprüft werden Farbkanäle, Projektionsfähigkeit, Volk, Geschlecht und Staatliche Gesellschaft. Ersetzungen stehen schon in der Liste unten; ändere sie über das +N am Teil.",
+      "countFixed": "{n} DURCH ZWILLING GELÖST",
+      "countBlocked": "{n} KEINE LÖSUNG",
+      "countFine": "{n} PASST SO",
+      "countCompany": "{n} BRAUCHT GESELLSCHAFT"
+    },
+    "row": {
+      "tagFixed": "DURCH ZWILLING GELÖST",
+      "tagBlocked": "KEINE LÖSUNG",
+      "fixedDye": "Statt {name}, das diese Farbstoffe nicht annimmt",
+      "fixedGlamour": "Statt {name}, das sich nicht projizieren lässt",
+      "fixedWear": "Statt {name}, das dieser Charakter nicht tragen kann",
+      "blockedDye": "Es nimmt die Farbstoffe der Datei nicht an",
+      "blockedGlamour": "Es lässt sich nicht projizieren",
+      "blockedWear": "Dieser Charakter kann es nicht tragen",
+      "blockedNoItem": "Ein Modell ohne Gegenstand dahinter",
+      "noFix": "Nichts mit demselben Aussehen löst das",
+      "otherWorks": "{name} lässt sich stattdessen tragen",
+      "choice": "Sieht aus wie {name} · beides geht",
+      "company": "Braucht die richtige Staatliche Gesellschaft"
+    }
   }
 }

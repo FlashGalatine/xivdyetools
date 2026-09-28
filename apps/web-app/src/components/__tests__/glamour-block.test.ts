@@ -241,10 +241,10 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
       'Runaway Bow'
     );
 
-    const badge = row('HeadGear').querySelector<HTMLElement>('[data-role="same-model"]')!;
+    const badge = row('HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!;
     expect(badge.textContent).toBe('+2');
     expect(badge.title).toBe('Same model: Beech Mask of Casting Replica …');
-    expect(row('MainHand').querySelector('[data-role="same-model"]')).toBeNull();
+    expect(row('MainHand').querySelector('[data-role="twin-chip"]')).toBeNull();
 
     // NPC model: the packed key is the honest label — never an error
     expect(row('Body').querySelector('[data-role="item-name"]')).toBeNull();
@@ -888,7 +888,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
   });
 });
 
-describe('GlamourBlock — IN THE GAME', () => {
+describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
   let hosts: HTMLElement[] = [];
 
   beforeEach(() => {
@@ -900,28 +900,50 @@ describe('GlamourBlock — IN THE GAME', () => {
     hosts = [];
   });
 
-  const rules = (itemIds: number[], dyeCount: number, wearMask = 0xffff) => ({
+  const rules = (itemIds: number[], dyeCount: number, extra: Record<string, unknown> = {}) => ({
     itemIds,
     dyeCount,
     glamourable: true,
-    wearMask,
+    wearMask: 0xffff,
     grandCompany: 0,
+    ...extra,
   });
+  const names = (en: string) => ({ en, ja: en, de: en, fr: en });
   const item = (itemId: number, en: string, extra: Record<string, unknown> = {}) => ({
     itemId,
-    names: { en, ja: en, de: en, fr: en },
+    names: names(en),
     iconId: null,
     familySize: 1,
     alternates: [],
     viaMainHand: false,
     ...extra,
   });
-  const check = (glamour: HTMLElement) =>
-    block(glamour).querySelector<HTMLElement>('[data-role="game-check"]');
-  const line = (glamour: HTMLElement, role: string) =>
-    Array.from(check(glamour)!.querySelectorAll<HTMLElement>(`[data-role="${role}"]`)).map(
-      (l) => l.textContent
+  const verdict = (glamour: HTMLElement) =>
+    glamour.querySelector<HTMLElement>('[data-role="verdict"]');
+  const counts = (glamour: HTMLElement) =>
+    Array.from(verdict(glamour)!.querySelectorAll<HTMLElement>('[data-role="verdict-count"]')).map(
+      (c) => c.textContent
     );
+  const row = (glamour: HTMLElement, slot: string) =>
+    block(glamour).querySelector<HTMLElement>(`[data-slot="${slot}"]`)!;
+  const part = (glamour: HTMLElement, slot: string, role: string) =>
+    row(glamour, slot).querySelector<HTMLElement>(`[data-role="${role}"]`)?.textContent ?? null;
+
+  /** A Midlander woman wearing a head dyed on channel 2 and a body. */
+  const MIDLANDER = JSON.stringify({
+    TypeName: 'Anamnesis Character File',
+    Tribe: 'Midlander',
+    Gender: 'Feminine',
+    REyeColor: 42,
+    HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 0, DyeId2: 33 },
+    Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+    Glasses: { GlassesId: 0 },
+  });
+  const COIF = item(372, 'Dated Hempen Coif', {
+    familySize: 2,
+    alternates: [{ itemId: 2629, names: names('Hempen Coif') }],
+    rules: [rules([372], 0), rules([2629], 2)],
+  });
 
   it('says nothing when api-worker answers without rules (an older worker)', async () => {
     const { container, glamour } = await mount(Promise.resolve(RESOLVED));
@@ -929,87 +951,151 @@ describe('GlamourBlock — IN THE GAME', () => {
     await vi.waitFor(() =>
       expect(block(glamour).querySelectorAll('[data-role="item-name"]').length).toBe(3)
     );
-    expect(check(glamour)).toBeNull();
+    expect(verdict(glamour)).toBeNull();
   });
 
-  it('flags a dye the weapon cannot take and the NPC body', async () => {
-    // Runaway Bow takes no dye, but the file dyes it; Body 9903·1 has no item;
-    // the quiver is the bow itself, so it is not checked twice.
-    const bow = item(49486, 'Runaway Bow', { rules: [rules([49486], 0)] });
+  it('comes first, above ON THIS GLAMOUR', async () => {
     const resolved: CharaResolveResult = {
-      items: {
-        MainHand: bow,
-        OffHand: { ...bow, viaMainHand: true },
-        HeadGear: item(18085, 'Beech Mask of Casting', { rules: [rules([18085], 1)] }),
-        Body: null,
-      },
+      items: { HeadGear: COIF, Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }) },
       glasses: null,
       version: 'test',
     };
-    const { container, glamour } = await mount(Promise.resolve(resolved));
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
-    await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
 
-    expect(check(glamour)!.textContent).toContain('IN THE GAME');
-    expect(line(glamour, 'problem-dye')).toEqual([
-      "Weapon: Runaway Bow can't take the dyes the file gives it",
-    ]);
-    expect(line(glamour, 'problem-noItem')).toEqual([
-      'Body: MODEL 9903·1 is a model with no item behind it',
-    ]);
-    expect(line(glamour, 'all-clear')).toEqual([]);
+    const children = Array.from(block(glamour).children);
+    expect(children.indexOf(verdict(glamour)!)).toBe(0);
+    expect(verdict(glamour)!.textContent).toContain('IN THE GAME');
+    expect(verdict(glamour)!.textContent).toContain('Since 7.4 any job can wear any piece');
   });
 
-  it('names the twin that takes the dye', async () => {
-    // Head is dyed on channel 2: the named Dated coif takes no dye, its twin takes two
+  it('names the twin that takes the dye, marks it FIXED BY A TWIN, and says why', async () => {
     const resolved: CharaResolveResult = {
-      items: {
-        HeadGear: item(372, 'Dated Hempen Coif', {
-          familySize: 2,
-          alternates: [{ itemId: 2629, names: { en: 'Hempen Coif', ja: 'x', de: 'x', fr: 'x' } }],
-          rules: [rules([372], 0), rules([2629], 2)],
-        }),
-        Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }),
-        Hands: item(300, 'Striking Gloves', { rules: [rules([300], 0)] }),
-      },
+      items: { HeadGear: COIF, Body: item(200, 'Casting Robe', { rules: [rules([200], 2)] }) },
       glasses: null,
       version: 'test',
     };
-    const { container, glamour } = await mount(Promise.resolve(resolved), FIXTURE_ACC);
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
     hosts = [container, glamour];
-    await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
 
-    expect(check(glamour)!.querySelector('[data-role="job-spread"]')).toBeNull();
-    expect(line(glamour, 'all-clear')).toEqual([
-      'Every piece can be worn and dyed the way the file shows it',
-    ]);
-    expect(line(glamour, 'use-instead')).toEqual([
-      'Head: wear Hempen Coif instead. It looks the same and takes these dyes.',
-    ]);
+    expect(part(glamour, 'HeadGear', 'item-name')).toBe('Hempen Coif');
+    expect(
+      row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!.dataset.tone
+    ).toBe('fix');
+    expect(part(glamour, 'HeadGear', 'piece-tag')).toBe('FIXED BY A TWIN');
+    expect(part(glamour, 'HeadGear', 'piece-note')).toBe(
+      "Named instead of Dated Hempen Coif, which can't take these dyes"
+    );
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      "Wearable, with twins named where the file's own pick can't be worn"
+    );
+    expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN', '1 FINE AS IS']);
   });
 
-  it("checks race and gender against the file's own character", async () => {
+  it('marks a piece nothing fixes as NO FIX, and says why', async () => {
     const viera = JSON.stringify({
       TypeName: 'Anamnesis Character File',
       Tribe: 'Rava',
       Gender: 'Feminine',
       REyeColor: 42,
-      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
     });
-    const menOnly = 0x5555;
     const resolved: CharaResolveResult = {
       items: {
-        Body: item(2967, "Lord's Yukata (Blue)", { rules: [rules([2967], 0, menOnly)] }),
+        Body: item(2967, "Lord's Yukata", { rules: [rules([2967], 1, { wearMask: 0x5555 })] }),
       },
       glasses: null,
       version: 'test',
     };
     const { container, glamour } = await mount(Promise.resolve(resolved), viera);
     hosts = [container, glamour];
-    await vi.waitFor(() => expect(check(glamour)).not.toBeNull());
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
 
-    expect(line(glamour, 'problem-wear')).toEqual([
-      "Body: this character can't wear Lord's Yukata (Blue)",
-    ]);
+    expect(part(glamour, 'Body', 'piece-tag')).toBe('NO FIX');
+    expect(part(glamour, 'Body', 'piece-note')).toBe(
+      "This character can't wear it · Nothing with the same look fixes it"
+    );
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      "Some pieces can't be worn the way the file shows them"
+    );
+    expect(counts(glamour)).toEqual(['1 NO FIX']);
+  });
+
+  it('flags a Grand Company piece without failing it', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        Body: item(1618, "Serpent Private's Coat", {
+          rules: [rules([1618], 2, { grandCompany: 2 })],
+        }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'piece-tag')).toBeNull();
+    expect(part(glamour, 'Body', 'piece-note')).toBe('Needs the right Grand Company');
+    expect(counts(glamour)).toEqual(['1 FINE AS IS', '1 NEEDS A GRAND COMPANY']);
+  });
+
+  it('says a model with no item behind it has no fix', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF, Body: null },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'piece-tag')).toBe('NO FIX');
+    expect(part(glamour, 'Body', 'piece-note')).toBe('A model with no item behind it');
+    expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN', '1 NO FIX']);
+  });
+
+  it('marks twins that are a free choice in grey and names the other one', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        Body: item(30000, 'Augmented Deepshadow Coat of Striking', {
+          familySize: 2,
+          alternates: [{ itemId: 30001, names: names('Deepshadow Coat of Striking') }],
+          rules: [rules([30000, 30001], 2)],
+        }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(
+      row(glamour, 'Body').querySelector<HTMLElement>('[data-role="twin-chip"]')!.dataset.tone
+    ).toBe('choice');
+    expect(part(glamour, 'Body', 'piece-tag')).toBeNull();
+    expect(part(glamour, 'Body', 'piece-note')).toBe(
+      'Same look as Deepshadow Coat of Striking · either is fine'
+    );
+  });
+
+  it('writes the twin it names into Copy list and Export .md', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const { block: b, container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    const { glamourMarkdownInput } = await import('../glamour-list-actions');
+    const source = (
+      b as unknown as { listSource(): import('../glamour-list-actions').GlamourListSource }
+    ).listSource();
+    expect(glamourMarkdownInput(source).HeadGear?.name).toBe('Hempen Coif');
   });
 });

@@ -17,7 +17,11 @@
 
 import type { ResolvedCharaCharacter, CharaGearSlotId } from '@xivdyetools/core';
 import { LanguageService, ToastService } from '@services/index';
-import { itemNameFor, type CharaResolveResult } from '@services/chara-resolve-service';
+import {
+  itemNameFor,
+  type CharaItemNames,
+  type CharaResolveResult,
+} from '@services/chara-resolve-service';
 import type { RichText } from '@shared/clipboard';
 import { downloadTextFile } from '@shared/download-file';
 import { localizedDyeName } from '@shared/dye-name';
@@ -36,6 +40,11 @@ export interface GlamourListSource {
   resolved: ResolvedCharaCharacter;
   /** api-worker's answer, or null before it lands / when it never did. */
   equipment: CharaResolveResult | null;
+  /**
+   * The twin the Glamour Reader names per slot, when it differs from the
+   * lowest row (and its own acquisition line). Absent = the resolved item.
+   */
+  picked?: Partial<Record<CharaGearSlotId, { names: CharaItemNames; acquisition?: string }>>;
 }
 
 /**
@@ -54,6 +63,7 @@ export interface GlamourListSource {
 export function glamourMarkdownInput({
   resolved,
   equipment,
+  picked,
 }: GlamourListSource): GlamourMarkdownInput {
   const lang = LanguageService.getCurrentLocale();
   const input: GlamourMarkdownInput = {};
@@ -66,7 +76,9 @@ export function glamourMarkdownInput({
   for (const model of resolved.gearModels) {
     const item = equipment?.items[model.slot];
     const piece = pieceFor(model.slot);
-    if (item && !piece.name) piece.name = itemNameFor(item.names, lang);
+    const pick = picked?.[model.slot];
+    if (pick && !piece.name) piece.name = itemNameFor(pick.names, lang);
+    else if (item && !piece.name) piece.name = itemNameFor(item.names, lang);
   }
   for (const gear of resolved.gearDyes) {
     const piece = pieceFor(gear.slot);

@@ -212,19 +212,26 @@ export type { CharaGearModel } from './services/chara/chara-models.js';
 export {
   CHARA_WEAR_RACE_COLUMNS,
   charaWearMask,
-  charaTwinProblems,
   groupCharaTwinRules,
-  checkCharaLook,
 } from './services/chara/chara-game-rules.js';
 export type {
   CharaItemRules,
   CharaTwinRules,
   CharaPieceProblem,
-  CharaPieceCheck,
-  CharaCheckPieceInput,
-  CharaLookCheck,
-  CharaCheckCharacter,
 } from './services/chara/chara-game-rules.js';
+// Which identical item a glamour list names — the web reader and the bot card
+export {
+  charaTwinsOf,
+  defaultCharaTwin,
+  charaPieceTone,
+  charaTwinFacts,
+} from './services/chara/chara-twins.js';
+export type {
+  CharaTwin,
+  /** @public */ CharaTwinFamily,
+  CharaPieceTone,
+  CharaTwinFact,
+} from './services/chara/chara-twins.js';
 export type {
   ResolvedCharaCharacter,
   ResolvedCharaSlot,
