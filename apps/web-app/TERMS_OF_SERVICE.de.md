@@ -14,7 +14,7 @@ nicht — dich davon zurückzuziehen kostet dich nichts.
 
 ## Was die Website tut
 
-Neun Werkzeuge laufen in deinem Browser: Paletten-Extraktor, Harmonie-Explorer, Vergleich,
+Zehn Werkzeuge laufen in deinem Browser: Paletten-Extraktor, Harmonie-Explorer, Vergleich,
 Verlauf-Ersteller, Farbstoffmixer, Barrierefreiheitsprüfung, Budget-Finder, Farbmuster-Matcher und der
 Community-Presets-Browser. Daneben kann die Website Marktbrett-Preise anzeigen, eine
 `.chara`-Datei lesen, die du hineinziehst, um die Ausrüstung einer Projektion zu benennen, und dich

@@ -8,7 +8,7 @@ The dye database backing the app is **125 standard dyes** (`dyes.json`, schema v
 
 ## What is the Web App?
 
-A fully-featured web application built with Lit and Vite, offering 9 interactive tools for exploring FFXIV dye colors:
+A fully-featured web application built with Lit and Vite, offering 10 interactive tools for exploring FFXIV dye colors:
 
 | Tool | Purpose |
 |------|---------|
@@ -21,6 +21,7 @@ A fully-featured web application built with Lit and Vite, offering 9 interactive
 | **Accessibility Checker** | Colorblindness simulation |
 | **Community Presets** | Browse community dye palettes |
 | **Budget Suggestions** | Find affordable dye alternatives using market data |
+| **Glamour Reader** | Read a `.chara` file as a glamour: can it be worn, which twin to name, the GPOSERS list |
 
 ### New in v5.0.0
 
