@@ -7,9 +7,9 @@
  * action buttons, Save to this device creating a `kind: 'palette'`
  * CollectionService record, Submit to Community handing off to the host.
  *
- * Reads the loaded character from CharaSessionService. The Swatch Matcher
+ * Reads the loaded character from CharaSessionService. The Glamour Reader
  * imports this module on demand, once a file wears anything, so the block is
- * charged to its own chunk instead of the swatch chunk's size budget.
+ * charged to its own chunk instead of the reader's.
  *
  * Renders inside the v4 shell's shadow DOM — inline styles + one injected
  * <style> block for the responsive grid.
@@ -196,6 +196,22 @@ export interface GlamourBlockCallbacks {
  * DYES ON THIS GLAMOUR for whatever character is loaded; empty when none is,
  * or when the character wears nothing.
  */
+/**
+ * Twin picks, by slot, per loaded file: which identical item the list names.
+ * They live with the session and never in storage (design 1a), so leaving the
+ * reader and coming back keeps them, and a new file starts clean.
+ */
+const PICKS = new WeakMap<CharaSession, Map<CharaGearSlotId, number>>();
+
+function picksFor(session: CharaSession): Map<CharaGearSlotId, number> {
+  let picks = PICKS.get(session);
+  if (!picks) {
+    picks = new Map();
+    PICKS.set(session, picks);
+  }
+  return picks;
+}
+
 export class GlamourBlock {
   private container: HTMLElement;
   private callbacks: GlamourBlockCallbacks;
@@ -218,10 +234,7 @@ export class GlamourBlock {
   private showAllPieces: boolean;
   private glamourBox: HTMLElement | null = null;
   private unsubscribe: (() => void) | null = null;
-  /**
-   * Twin picks, by slot: which identical item the list names. They live with
-   * the session and never in storage (design 1a), so a new file starts clean.
-   */
+  /** Twin picks, by slot, for the loaded file (`PICKS`). */
   private picks = new Map<CharaGearSlotId, number>();
 
   constructor(container: HTMLElement, callbacks: GlamourBlockCallbacks = {}) {
@@ -275,7 +288,7 @@ export class GlamourBlock {
     this.resolved = session?.resolved ?? null;
     this.fileName = session?.fileName ?? null;
     this.droppedStainIds.clear();
-    this.picks.clear();
+    this.picks = session ? picksFor(session) : new Map();
     this.paletteOpen = false;
     this.paletteNameDraft = null;
     // Dyes never wait: the round-trip is started first so the block renders
@@ -833,7 +846,15 @@ export class GlamourBlock {
    * appended, since dropping a dye the file states would lose data.
    */
   private pieceRowSlots(bySlot: Map<CharaGearSlotId, ResolvedGearDye[]>): CharaGearSlotId[] {
-    if (!this.showAllActive()) return [...bySlot.keys()];
+    if (!this.showAllActive()) {
+      // The verdict counts every worn piece, so one it flags gets a row even
+      // undyed — the rows explain the verdict. Fine undyed pieces wait for Show all.
+      const slots = [...bySlot.keys()];
+      for (const model of this.resolved!.gearModels) {
+        if (!slots.includes(model.slot) && this.flagged(model.slot)) slots.push(model.slot);
+      }
+      return slots;
+    }
     const slots: CharaGearSlotId[] = [];
     for (const model of this.resolved!.gearModels) {
       if (!slots.includes(model.slot)) slots.push(model.slot);
@@ -842,6 +863,16 @@ export class GlamourBlock {
       if (!slots.includes(slot)) slots.push(slot);
     }
     return slots;
+  }
+
+  /** A piece the verdict counts as FIXED BY A TWIN or NO FIX (its own rule, not a guess). */
+  private flagged(slot: CharaGearSlotId): boolean {
+    const item = this.itemFor(slot);
+    if (item === undefined || item?.viaMainHand) return false;
+    if (item === null) return true;
+    if (!item.rules?.length) return false;
+    const tone = this.twinState(slot)?.tone;
+    return tone === 'fix' || tone === 'block';
   }
 
   private renderPieceRow(
@@ -921,7 +952,8 @@ export class GlamourBlock {
             best: state.best,
             lang,
             onPick: (itemId) => {
-              this.picks.set(slot, itemId);
+              // A paired off-hand IS the main weapon: its row follows the main hand's pick
+              this.picks.set(item.viaMainHand ? 'MainHand' : slot, itemId);
               this.rerenderGlamour();
             },
           });

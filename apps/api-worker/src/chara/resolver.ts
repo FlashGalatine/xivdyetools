@@ -76,23 +76,34 @@ function withRegional(rowId: number, names: ItemRow['names']): ItemNames {
 
 /**
  * Lowest row_id names the item; the rest are alternates, row_id ascending.
- * The in-game rules cover the WHOLE family, not the capped alternates: a twin
- * past the cap can still be the one that takes the dye.
+ * The in-game rules cover the WHOLE family, so the capped alternates name the
+ * lowest row of every rule set first and fill the rest in row order: a twin
+ * that passes the check is always one the reader can name, however many
+ * Dated rows sort ahead of it.
  */
 export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
   if (rows.length === 0) return null;
   const sorted = [...rows].sort((a, b) => a.rowId - b.rowId);
   const primary = sorted[0];
+  const rules = groupCharaTwinRules(sorted.map((r) => ({ rowId: r.rowId, rules: r.rules ?? null })));
+  const chosen = new Set<number>();
+  for (const id of rules.map((g) => g.itemIds[0])) {
+    if (id !== primary.rowId && chosen.size < MAX_ALTERNATES) chosen.add(id);
+  }
+  for (const r of sorted.slice(1)) {
+    if (chosen.size >= MAX_ALTERNATES) break;
+    chosen.add(r.rowId);
+  }
   return {
     itemId: primary.rowId,
     names: withRegional(primary.rowId, primary.names),
     iconId: primary.iconId,
     familySize: sorted.length,
     alternates: sorted
-      .slice(1, 1 + MAX_ALTERNATES)
+      .filter((r) => chosen.has(r.rowId))
       .map((r) => ({ itemId: r.rowId, names: withRegional(r.rowId, r.names) })),
     viaMainHand: false,
-    rules: groupCharaTwinRules(sorted.map((r) => ({ rowId: r.rowId, rules: r.rules ?? null }))),
+    rules,
   };
 }
 

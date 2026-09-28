@@ -1139,6 +1139,95 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     expect(counts(glamour)).toEqual(['1 NO FIX']);
   });
 
+  it('gives an undyed piece the verdict counts a row of its own, even with Show all off', async () => {
+    const file = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Tribe: 'Midlander',
+      Gender: 'Feminine',
+      REyeColor: 42,
+      HeadGear: { ModelBase: 361, ModelVariant: 5, DyeId: 1, DyeId2: 0 },
+      Legs: { ModelBase: 777, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Feet: { ModelBase: 99, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+      Glasses: { GlassesId: 0 },
+    });
+    const resolved: CharaResolveResult = {
+      items: {
+        HeadGear: item(2629, 'Hempen Coif', { rules: [rules([2629], 1)] }),
+        Legs: item(9500, 'Viera Gaskins', { rules: [rules([9500], 1, { wearMask: 0xc000 })] }),
+        Feet: item(3000, 'Hempen Boots', { rules: [rules([3000], 1)] }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), file);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(counts(glamour)).toContain('1 NO FIX');
+    // The NO FIX piece takes no dye, but the rows explain the verdict
+    expect(part(glamour, 'Legs', 'item-name')).toBe('Viera Gaskins');
+    expect(part(glamour, 'Legs', 'piece-tag')).toBe('NO FIX');
+    // An undyed piece that is fine stays behind Show all
+    expect(block(glamour).querySelector('[data-slot="Feet"]')).toBeNull();
+  });
+
+  it('keeps a twin pick when the reader is left and opened again, and a new file starts clean', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour, block: first } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+    row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!.click();
+    document.querySelector<HTMLElement>('[data-role="twin-option"][data-item-id="372"]')!.click();
+
+    // Leave the reader (the block is torn down) and come back to the same file
+    first.destroy();
+    const again = createTestContainer('chara-glamour-again');
+    hosts.push(again);
+    const second = new GlamourBlock(again);
+    second.init();
+    mounted.push(second);
+    await vi.waitFor(() => expect(verdict(again)).not.toBeNull());
+    expect(part(again, 'HeadGear', 'item-name')).toBe('Dated Hempen Coif');
+
+    // A new file is a new session: its picks start from the default rule
+    const file = new File([MIDLANDER], 'other.chara', { type: 'application/json' });
+    if (typeof (file as Blob).text !== 'function') {
+      (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(MIDLANDER);
+    }
+    await loadCharaFile(file);
+    await vi.waitFor(() => expect(part(again, 'HeadGear', 'item-name')).toBe('Hempen Coif'));
+  });
+
+  it('a pick from the paired off-hand row names the weapon both rows show', async () => {
+    const replica = {
+      ...item(7863, 'Curtana Zenith', {
+        familySize: 2,
+        alternates: [{ itemId: 25000, names: names('Curtana Zenith Replica') }],
+        rules: [rules([7863], 1), rules([25000], 1)],
+      }),
+    };
+    const resolved: CharaResolveResult = {
+      items: { MainHand: replica, OffHand: { ...replica, viaMainHand: true } },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved));
+    hosts = [container, glamour];
+    await vi.waitFor(() =>
+      expect(row(glamour, 'OffHand').querySelector('[data-role="twin-chip"]')).not.toBeNull()
+    );
+
+    row(glamour, 'OffHand').querySelector<HTMLElement>('[data-role="twin-chip"]')!.click();
+    document.querySelector<HTMLElement>('[data-role="twin-option"][data-item-id="25000"]')!.click();
+
+    expect(part(glamour, 'MainHand', 'item-name')).toBe('Curtana Zenith Replica');
+    expect(part(glamour, 'OffHand', 'item-name')).toBe('Curtana Zenith Replica');
+  });
+
   it('writes the twin it names into Copy list and Export .md', async () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },

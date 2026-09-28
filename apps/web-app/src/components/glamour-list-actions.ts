@@ -9,7 +9,11 @@
  * @module components/glamour-list-actions
  */
 
-import type { ResolvedCharaCharacter, CharaGearSlotId } from '@xivdyetools/core';
+import {
+  charaModelKey,
+  type ResolvedCharaCharacter,
+  type CharaGearSlotId,
+} from '@xivdyetools/core';
 import { LanguageService } from '@services/index';
 import {
   itemNameFor,
@@ -50,8 +54,8 @@ export interface GlamourSheetPiece {
   dyes: string[];
   /** The generated GPOSERS line for the named twin; null = none known */
   generated: string | null;
-  /** The gear's key for a device-kept edit; null when the piece has no item */
-  hash: string | null;
+  /** The gear's key for a device-kept edit (the model's, when the piece has no item) */
+  hash: string;
   /** The twin the list names now */
   pickedItemId: number | null;
   pickedName: string | null;
@@ -105,6 +109,18 @@ export function glamourMarkdownInput({
 }
 
 /**
+ * The key for a piece with no item behind it (the resolve failed, or the
+ * model has no Item row): its model instead of the family's row, so what the
+ * player types there is kept like any other edit.
+ */
+function modelHash(source: GlamourListSource, slot: GlamourMarkdownSlot, stains: number[]): string {
+  if (slot === 'Facewear')
+    return gearHash('Facewear@glasses', source.resolved.glassesId ?? 0, stains);
+  const model = source.resolved.gearModels.find((m) => m.slot === slot);
+  return gearHash(`${slot}@${model ? charaModelKey(model) : ''}`, 0, stains);
+}
+
+/**
  * The export sheet's rows (design 2c), in the template's order: what the
  * list says for each worn piece, the generated Acquisition line of the twin
  * it names, and the gear key a device-kept edit is filed under — slot, the
@@ -114,10 +130,14 @@ export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece
   const { resolved, equipment, picked } = source;
   const lang = LanguageService.getCurrentLocale();
   const input = glamourMarkdownInput(source);
+  // Two identical rings are written once, as Rings — so they are one row too
+  const rightRing = input.RightRing?.name?.trim();
+  const sameRings = !!rightRing && rightRing === input.LeftRing?.name?.trim();
   const pieces: GlamourSheetPiece[] = [];
   for (const slot of GLAMOUR_MARKDOWN_SLOTS) {
     const piece = input[slot];
     if (!piece) continue;
+    if (sameRings && slot === 'LeftRing') continue;
     const stains = resolved.gearDyes
       .filter((gear) => gear.slot === slot)
       .sort((a, b) => a.channel - b.channel)
@@ -144,11 +164,11 @@ export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece
     }
     pieces.push({
       slot,
-      label: glamourSlotLabel(slot),
+      label: sameRings && slot === 'RightRing' ? 'Rings' : glamourSlotLabel(slot),
       name: piece.name ?? null,
       dyes: [piece.dye1, piece.dye2].filter((d): d is string => Boolean(d)),
       generated,
-      hash: family !== null ? gearHash(slot, family, stains) : null,
+      hash: family !== null ? gearHash(slot, family, stains) : modelHash(source, slot, stains),
       pickedItemId,
       pickedName,
     });

@@ -43,13 +43,31 @@ function readAll(): Record<string, AcquisitionEdit> {
   return stored && typeof stored === 'object' ? stored : {};
 }
 
-function writeAll(edits: Record<string, AcquisitionEdit>): void {
-  if (Object.keys(edits).length === 0) StorageService.removeItem(KEY);
-  else StorageService.setItem(KEY, edits);
+function writeAll(edits: Record<string, AcquisitionEdit>): boolean {
+  return Object.keys(edits).length === 0
+    ? StorageService.removeItem(KEY)
+    : StorageService.setItem(KEY, edits);
+}
+
+/**
+ * Edits whose storage write failed (storage off, full, or a private window):
+ * they live for the page only, as the spec says, instead of vanishing while
+ * the field still shows them. `null` = removed for the page.
+ */
+const pageOnly = new Map<string, AcquisitionEdit | null>();
+
+/** Write, and keep `hash`'s outcome for the page when the write fails. */
+function commit(edits: Record<string, AcquisitionEdit>, hashes: readonly string[]): void {
+  const ok = writeAll(edits);
+  for (const hash of hashes) {
+    if (ok) pageOnly.delete(hash);
+    else pageOnly.set(hash, edits[hash] ?? null);
+  }
 }
 
 export const AcquisitionEdits = {
   get(hash: string): AcquisitionEdit | null {
+    if (pageOnly.has(hash)) return pageOnly.get(hash) ?? null;
     const edit = readAll()[hash];
     return edit && typeof edit.text === 'string' && typeof edit.baseItemId === 'number'
       ? edit
@@ -57,19 +75,19 @@ export const AcquisitionEdits = {
   },
 
   set(hash: string, edit: AcquisitionEdit): void {
-    writeAll({ ...readAll(), [hash]: edit });
+    commit({ ...readAll(), [hash]: edit }, [hash]);
   },
 
   remove(hash: string): void {
     const edits = readAll();
     delete edits[hash];
-    writeAll(edits);
+    commit(edits, [hash]);
   },
 
   /** Reset all: forget the edits of one outfit's pieces, and nothing else. */
   resetAll(hashes: readonly string[]): void {
     const edits = readAll();
     for (const hash of hashes) delete edits[hash];
-    writeAll(edits);
+    commit(edits, hashes);
   },
 };

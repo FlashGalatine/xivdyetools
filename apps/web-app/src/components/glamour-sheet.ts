@@ -55,18 +55,18 @@ function isPhone(): boolean {
 
 /** The line a piece writes now: the player's edit, else the generated line. */
 function lineOf(piece: GlamourSheetPiece): string {
-  const edit = piece.hash ? AcquisitionEdits.get(piece.hash) : null;
+  const edit = AcquisitionEdits.get(piece.hash);
   return edit ? edit.text : (piece.generated ?? '');
 }
 
 function stateOf(piece: GlamourSheetPiece): RowState {
-  if (piece.hash && AcquisitionEdits.get(piece.hash)) return 'edited';
+  if (AcquisitionEdits.get(piece.hash)) return 'edited';
   return piece.generated ? 'filled' : 'blank';
 }
 
 /** An edit made against a different twin than the one the list names now. */
 function staleEdit(piece: GlamourSheetPiece): boolean {
-  const edit = piece.hash ? AcquisitionEdits.get(piece.hash) : null;
+  const edit = AcquisitionEdits.get(piece.hash);
   return edit !== null && piece.pickedItemId !== null && edit.baseItemId !== piece.pickedItemId;
 }
 
@@ -247,7 +247,6 @@ export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'sav
       staleEdit(piece) ? amber() : 'var(--theme-border)'
     }; box-sizing: border-box;`;
     field.addEventListener('input', () => {
-      if (!piece.hash) return;
       if (field.value === (piece.generated ?? '')) AcquisitionEdits.remove(piece.hash);
       else
         AcquisitionEdits.set(piece.hash, {
@@ -289,8 +288,8 @@ export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'sav
       };
       warn.appendChild(
         action('sheet-keep', 'glamour.sheet.keep', () => {
-          const edit = piece.hash ? AcquisitionEdits.get(piece.hash) : null;
-          if (edit && piece.hash) {
+          const edit = AcquisitionEdits.get(piece.hash);
+          if (edit) {
             AcquisitionEdits.set(piece.hash, { ...edit, baseItemId: piece.pickedItemId ?? 0 });
           }
           row.replaceWith(renderRow(piece));
@@ -299,7 +298,7 @@ export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'sav
       );
       warn.appendChild(
         action('sheet-use-new', 'glamour.sheet.useNew', () => {
-          if (piece.hash) AcquisitionEdits.remove(piece.hash);
+          AcquisitionEdits.remove(piece.hash);
           row.replaceWith(renderRow(piece));
           refresh();
         })
@@ -344,7 +343,7 @@ export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'sav
   };
   foot.appendChild(
     button('sheet-reset', LanguageService.t('glamour.sheet.reset'), false, () => {
-      AcquisitionEdits.resetAll(pieces.map((p) => p.hash).filter((h): h is string => h !== null));
+      AcquisitionEdits.resetAll(pieces.map((p) => p.hash));
       rows.replaceChildren(...pieces.map(renderRow));
       refresh();
     })

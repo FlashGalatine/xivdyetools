@@ -3,7 +3,8 @@
  * hash of the gear — slot, the family's row, the dyes — never the file, its
  * name or the character; generated lines are never stored.
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { StorageService } from '@services/storage-service';
 import { AcquisitionEdits, gearHash } from '../acquisition-edits';
 
 beforeEach(() => localStorage.clear());
@@ -35,6 +36,19 @@ describe('AcquisitionEdits', () => {
     expect(AcquisitionEdits.get('a')).toBeNull();
     expect(AcquisitionEdits.get('b')).toBeNull();
     expect(AcquisitionEdits.get('other')).toEqual({ text: '3', baseItemId: 3 });
+  });
+
+  it('keeps an edit for the page when storage refuses the write (spec: edits live for the page only)', () => {
+    const refuse = vi.spyOn(StorageService, 'setItem').mockReturnValue(false);
+    AcquisitionEdits.set('page-only', { text: 'Typed while storage was full', baseItemId: 7 });
+    expect(AcquisitionEdits.get('page-only')).toEqual({
+      text: 'Typed while storage was full',
+      baseItemId: 7,
+    });
+
+    AcquisitionEdits.remove('page-only');
+    expect(AcquisitionEdits.get('page-only')).toBeNull();
+    refuse.mockRestore();
   });
 
   it('stores nothing that names the file or the character', () => {

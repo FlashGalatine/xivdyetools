@@ -182,6 +182,57 @@ describe('glamour export sheet', () => {
     expect(file).toBe('glamour-equipment.md');
   });
 
+  it('keeps an edit on a piece with no item behind it (the resolve failed)', () => {
+    openGlamourSheet({ ...source(), equipment: null, picked: {} });
+    type('Legs', 'Found it: Moogle Treasure Trove');
+
+    expect(preview()).toContain('Acquisition: Found it: Moogle Treasure Trove');
+    closeGlamourSheet();
+    openGlamourSheet({ ...source(), equipment: null, picked: {} });
+    expect(field('Legs').value).toBe('Found it: Moogle Treasure Trove');
+  });
+
+  it('writes an Acquisition line as one line, whatever the field holds', () => {
+    openGlamourSheet(source());
+    type('Body', 'Vendor\nOld Gridania');
+
+    expect(preview()).toContain('Acquisition: Vendor Old Gridania');
+    expect(preview()).not.toContain('Vendor\nOld');
+  });
+
+  it('shows two identical rings as one Rings row, the one the list writes', () => {
+    const base = source();
+    const ring = {
+      itemId: 4000,
+      names: names('Silver Ring'),
+      iconId: null,
+      familySize: 1,
+      alternates: [],
+      viaMainHand: false,
+    };
+    const ringed: GlamourListSource = {
+      ...base,
+      resolved: {
+        ...base.resolved,
+        gearModels: [
+          ...base.resolved.gearModels,
+          { slot: 'RightRing', base: 50, variant: 1 },
+          { slot: 'LeftRing', base: 50, variant: 1 },
+        ],
+      } as ResolvedCharaCharacter,
+      equipment: {
+        ...base.equipment!,
+        items: { ...base.equipment!.items, RightRing: ring, LeftRing: ring },
+      },
+    };
+    openGlamourSheet(ringed);
+
+    expect(sheet()!.querySelector('[data-role="sheet-row"][data-slot="LeftRing"]')).toBeNull();
+    expect(rowOf('RightRing').textContent).toContain('Rings');
+    type('RightRing', 'Vendor');
+    expect(preview()).toContain('Rings: Silver Ring\nAcquisition: Vendor');
+  });
+
   it('says what it keeps, and closes on Escape', () => {
     openGlamourSheet(source());
     expect(sheet()!.textContent).toContain(

@@ -101,7 +101,7 @@ describe('pickItem', () => {
     expect(item.alternates).toHaveLength(MAX_ALTERNATES);
   });
 
-  it('carries the in-game rules of the WHOLE family, grouped, past the alternates cap', () => {
+  it('names every rule set among the alternates, so a twin that passes is never cut by the cap', () => {
     // Dated Hempen Coif #372 takes no dye; its twins Hempen Coif #2629 / #2630 take one
     const coif = (rowId: number, en: string, dyeCount: number) =>
       row(rowId, en, '65540', ['Head'], {
@@ -110,7 +110,12 @@ describe('pickItem', () => {
     const padding = Array.from({ length: MAX_ALTERNATES }, (_, i) => coif(400 + i, `Dated Filler ${i}`, 0));
     const item = pickItem([coif(2630, 'Hempen Coif of Gathering', 1), coif(372, 'Dated Hempen Coif', 0), ...padding, coif(2629, 'Hempen Coif', 1)])!;
     expect(item.itemId).toBe(372);
-    expect(item.alternates.map((a) => a.itemId)).not.toContain(2629);
+    const alternates = item.alternates.map((a) => a.itemId);
+    // Hempen Coif #2629 sorts past eight Dated fillers, but it is the lowest
+    // row of the rule set that takes the dye — the reader must be able to name it
+    expect(alternates).toContain(2629);
+    expect(alternates).toHaveLength(MAX_ALTERNATES);
+    expect(alternates).toEqual([...alternates].sort((x, y) => x - y));
     expect(item.rules.map((r) => [r.itemIds[0], r.dyeCount, r.itemIds.length])).toEqual([
       [372, 0, MAX_ALTERNATES + 1],
       [2629, 1, 2],

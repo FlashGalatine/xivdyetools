@@ -15,6 +15,10 @@ Lands after 0.15.0 (the acquisition lines, PR #207).
   job can wear any piece for glamour, so the one Item search asks for `GrandCompany.row_id` instead
   of 43 `ClassJobCategory` columns, and each rule set gains `grandCompany` (0 = any) and loses
   `jobs`. Cache `SHAPE_VERSION` 2 → 3, so no week-old row replays in the old shape.
+- **The capped alternates name every rule set.** They used to be the next eight rows by row id,
+  so a family with many Dated rows could cut the one twin that takes the dye, and the reader then
+  said nothing fixes the piece. The lowest row of each rule set now goes in first, then the rest
+  in row order, still at most 8 and still sorted by row id.
 
 ### Added
 

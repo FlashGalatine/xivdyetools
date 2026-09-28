@@ -114,17 +114,25 @@ test('verdict first, a twin named and picked, and an edited Acquisition line kep
   await expect(headRow(page).locator('[data-role="piece-tag"]')).toHaveText('NO FIX');
 });
 
-test('narrow desktop: ten chips and a hovered label stay inside the bar', async ({ page }) => {
-  await page.setViewportSize({ width: 800, height: 800 });
+test('narrow desktop: ten chips and a hovered label stay inside the rail', async ({ page }) => {
+  // 769 px is the narrowest desktop width, where the rail is tightest
+  await page.setViewportSize({ width: 769, height: 800 });
   await gotoTool(page, 'glamour');
 
-  const header = page.locator('v4-app-header .v4-app-header');
+  const rail = page.locator('v4-app-header .tool-rail');
   const lastChip = page.locator('v4-app-header .rail-chip[data-tool="glamour"]');
-  const firstChip = page.locator('v4-app-header .rail-chip[data-tool="harmony"]');
-  await firstChip.hover();
-  const bar = await header.boundingBox();
-  const chip = await lastChip.boundingBox();
-  expect(bar).not.toBeNull();
-  expect(chip).not.toBeNull();
-  expect(chip!.x + chip!.width).toBeLessThanOrEqual(bar!.x + bar!.width);
+  for (const tool of ['harmony', 'glamour']) {
+    await page.locator(`v4-app-header .rail-chip[data-tool="${tool}"]`).hover();
+    // The label unrolls over 190 ms (max-width); measure once it has
+    await page.waitForTimeout(400);
+    // The rail clips (overflow: hidden), so a chip it cut off still sits inside
+    // the header — measure the rail's own content instead
+    const overflow = await rail.evaluate((el) => el.scrollWidth - el.clientWidth);
+    expect(overflow, `hovering ${tool}`).toBeLessThanOrEqual(0);
+    const railBox = await rail.boundingBox();
+    const chip = await lastChip.boundingBox();
+    expect(chip!.x + chip!.width, `hovering ${tool}`).toBeLessThanOrEqual(
+      railBox!.x + railBox!.width + 0.5
+    );
+  }
 });

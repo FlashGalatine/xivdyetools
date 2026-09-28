@@ -26,16 +26,19 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
 - **Twins.** A model often stands for several identical items. Each row names the one the list
   will write — the first that passes the check, preferring a dyeable one, then not Dated — and
   says why ("Named instead of Dated Hempen Coif, which can't take these dyes"). The `+N` chip
-  opens a picker (popover on desktop, bottom sheet on a phone) listing each twin's facts; a pick
-  lives with the session only.
+  opens a picker (popover on desktop, bottom sheet on a phone) listing each twin's facts. A pick
+  lives with the loaded file: it survives leaving the reader and coming back, and a new file
+  starts clean. A piece the verdict flags gets a row even when it's undyed and Show all is off.
 - **The export sheet.** Copy list and Export .md open an editable preview of the GPOSERS list with
   each piece's `Acquisition:` line filled from api-worker (≥ 0.15.0) for the twin it names. Edits
   are kept on this device, keyed by a hash of the gear (slot, the family's row, the stains) —
   never the file or the character — and a twin pick never overwrites one: the row offers Keep
   mine / Use new source. Reset all clears the outfit's edits. Two identical rings are written
-  once as `Rings:` (GPOSERS reminders, March 2026).
-- Narrow desktop (769–919 px) drops the language button's globe so ten rail chips and a hovered
-  label fit. The shortcuts panel says `0-9`.
+  once as `Rings:` and edited as one row (GPOSERS reminders, March 2026). A piece with no item
+  behind it keeps its edit under its model. When storage is off or full, edits last for the
+  page instead of vanishing, and an Acquisition line is always written as one line.
+- Narrow desktop (769–919 px) drops the language button's globe and closes the rail's gaps by a
+  pixel, so ten rail chips and a hovered label fit even at 769 px. The shortcuts panel says `0-9`.
 - **The site's share card shows ten tools.** `public/og/default.png` and `default-x.png` are
   re-exported from the design's export sheet (turn 4) with the tenth glyph. The rail re-cuts to
   22 px cells and 12 px gaps, so it stays 356 px wide in both frames. The alt text says ten.

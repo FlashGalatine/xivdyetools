@@ -145,8 +145,9 @@ interface Line {
 /** A slot's lines — the bold label line first, then its fields. */
 type Group = Line[];
 
+/** One line: GPOSERS values never break, whatever a field held (a pasted note). */
 function text(value: string | null | undefined): string {
-  return value?.trim() ?? '';
+  return value?.replace(/\s*[\r\n]+\s*/g, ' ').trim() ?? '';
 }
 
 /** Worn slots as line groups, in template order. */

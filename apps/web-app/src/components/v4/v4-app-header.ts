@@ -450,10 +450,16 @@ export class V4AppHeader extends BaseLitComponent {
       /* Narrow desktop: the wordmark yields so all ten chips (and an open
          name) fit between the logo and the chrome cluster. Ten chips rest at
          ~445px and need ~509px with a hovered label unrolled, so the language
-         button drops its globe here too, as mobile does (spec G2). */
+         button drops its globe here too, as mobile does (spec G2), and at
+         769px the rail's gaps close by a pixel each — the last 5px an open
+         name needs there. */
       @media (min-width: 769px) and (max-width: 919px) {
         .v4-header-logo-text {
           display: none;
+        }
+
+        .tool-rail {
+          gap: 2px;
         }
 
         .lang-globe {
