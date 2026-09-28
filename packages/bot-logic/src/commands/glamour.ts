@@ -81,7 +81,12 @@ export interface GlamourResolveAnswer {
   glasses?: { names: GlamourItemNames } | null;
 }
 
-/** Resolves the worn models; the adapter supplies the transport. */
+/**
+ * Resolves the worn models; the adapter supplies the transport. A failure may
+ * carry the HTTP `status` on the thrown error: 429 answers RESOLVE_BUSY, any
+ * other 4xx PARSE_FAILED with the error's message as the reason, the rest
+ * RESOLVE_FAILED.
+ */
 export type GlamourResolver = (gear: CharaGearModel[], glassesId: number | null) => Promise<GlamourResolveAnswer>;
 
 export interface GlamourInput {
@@ -355,9 +360,18 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
   try {
     answer = await input.resolve(gearModels, glassesId);
   } catch (error) {
+    const status = (error as { status?: unknown } | null)?.status;
     // A 429 is api-worker's service bucket, full for a minute — busy, not broken
-    if ((error as { status?: unknown } | null)?.status === 429) {
+    if (status === 429) {
       return { ok: false, error: 'RESOLVE_BUSY', errorMessage: t.t('card.glamourResolveBusy') };
+    }
+    // Any other 4xx is api-worker refusing what the file describes (the parser
+    // takes any positive model lane; api-worker stops at 0xFFFF), so a hand
+    // edit or a damaged file fails every time — the file's problem, not an
+    // outage to retry. The error carries api-worker's own reason.
+    if (typeof status === 'number' && status >= 400 && status < 500) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, error: 'PARSE_FAILED', errorMessage: t.t('card.swatchParseError', { message }) };
     }
     return { ok: false, error: 'RESOLVE_FAILED', errorMessage: t.t('card.glamourResolveFailed') };
   }

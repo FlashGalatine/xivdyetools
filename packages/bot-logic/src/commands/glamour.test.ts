@@ -324,6 +324,35 @@ describe('executeGlamour', () => {
     if (!result.ok) expect(result.errorMessage).toMatch(/busy/i);
   });
 
+  it.each([400, 404, 413, 422])(
+    'answers api-worker refusing what the file describes (%i) as a problem with the file, not an outage',
+    async (status) => {
+      const reason = 'gear[0].base must be an integer between 0 and 65535';
+      const result = await executeGlamour(
+        input({
+          resolve: async () => {
+            throw Object.assign(new Error(reason), { status });
+          },
+        })
+      );
+      expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
+      if (result.ok) return;
+      expect(result.errorMessage).toBe(`Could not read the file — ${reason}`);
+      expect(result.errorMessage).not.toMatch(/try again/i);
+    }
+  );
+
+  it('still answers a server error with a status as RESOLVE_FAILED', async () => {
+    const result = await executeGlamour(
+      input({
+        resolve: async () => {
+          throw Object.assign(new Error('api-worker answered 503'), { status: 503 });
+        },
+      })
+    );
+    expect(result).toMatchObject({ ok: false, error: 'RESOLVE_FAILED' });
+  });
+
   it('answers a file it cannot read with the parse error', async () => {
     const result = await executeGlamour(input({ fileText: 'not json' }));
     expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });

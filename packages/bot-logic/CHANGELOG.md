@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   embed.
 - **A busy lookup is `RESOLVE_BUSY`.** When api-worker's service bucket answers 429, the reply
   says the lookup is busy and to try again in a minute, instead of reading as a failure.
+- **A file api-worker refuses is `PARSE_FAILED`.** Core's parser takes any positive model lane or
+  glasses id; api-worker's resolve stops at 0xFFFF with a 400. A resolver error carrying any 4xx
+  other than 429 is now answered with the parse-error message and api-worker's reason ("Could not
+  read the file — gear[0].base must be an integer between 0 and 65535") instead of
+  `RESOLVE_FAILED`'s "try again in a minute", which a hand-edited or damaged file would fail
+  every time. No new strings.
 - **`getLocalizedRace`** — core's race names, per locale. The card names a one-race piece by its
   race (VIERA) when the race is what blocks it; a piece that fails on gender alone reads LOCKED.
   The check compares races by our `Race` identifier (a `Record<Race, …>` of wear-mask columns),
