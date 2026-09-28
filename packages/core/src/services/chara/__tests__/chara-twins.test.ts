@@ -177,6 +177,12 @@ describe('defaultTwin', () => {
     expect([10, 11]).toContain(pick.itemId);
     expect(pick.names.en).toBe('Dated Cap');
   });
+
+  it('refuses an empty list rather than return a twin that is not there', () => {
+    // twinsOf never returns one (the named item is always a member); a caller
+    // building its own list gets an error, not an undefined typed as a twin
+    expect(() => defaultTwin([])).toThrow(RangeError);
+  });
 });
 
 describe('pieceTone', () => {

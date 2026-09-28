@@ -171,7 +171,7 @@ const LOCALE_CHUNK_LIMIT = 95 * KB;
  *
  * This is every emitted chunk, counting ONE locale rather than all six -- the
  * worst case being a visitor on the largest locale who opens every tool in one
- * session. It is still conservative (nobody opens all nine), but it measures
+ * session. It is still conservative (nobody opens all ten), but it measures
  * user cost, which is what a performance budget is for.
  *
  * The number is unchanged at 2200 KB. It did not need raising: the gate started

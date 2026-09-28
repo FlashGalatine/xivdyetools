@@ -27,7 +27,7 @@ graph TB
     end
 
     subgraph "Consumer Applications"
-        WEB["xivdyetools-web-app<br/>─────────────<br/>9 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
+        WEB["xivdyetools-web-app<br/>─────────────<br/>10 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
         DISCORD["xivdyetools-discord-worker<br/>─────────────<br/>18 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
         STOAT["xivdyetools-stoat-worker<br/>─────────────<br/>Revolt.js bot (parked),<br/>shared bot-logic"]
     end

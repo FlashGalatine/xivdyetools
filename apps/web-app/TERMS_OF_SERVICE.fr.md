@@ -14,7 +14,7 @@ vous coûte quoi que ce soit à abandonner.
 
 ## Ce que fait le site
 
-Neuf outils fonctionnent dans votre navigateur : l'Extracteur de palette, l'Explorateur d'harmonies,
+Dix outils fonctionnent dans votre navigateur : l'Extracteur de palette, l'Explorateur d'harmonies,
 la Comparaison, le Constructeur de Dégradé, le Mélangeur de Teintures, la Vérification
 d'accessibilité, les Suggestions Budget, le Nuancier, et le navigateur de Palettes Prédéfinies
 communautaires. À leurs côtés, le site peut afficher les prix du tableau des ventes, lire un fichier

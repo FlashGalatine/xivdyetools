@@ -5,7 +5,8 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ResolvedCharaCharacter } from '@xivdyetools/core';
-import { ToastService } from '@services/index';
+import { LanguageService, ModalService, RouterService, ToastService } from '@services/index';
+import { KeyboardService } from '@services/keyboard-service';
 import { AcquisitionEdits, gearHash } from '@shared/acquisition-edits';
 import type { GlamourListSource } from '../glamour-list-actions';
 import { closeGlamourSheet, openGlamourSheet } from '../glamour-sheet';
@@ -263,6 +264,58 @@ describe('glamour export sheet', () => {
     closeGlamourSheet();
     expect(document.activeElement).toBe(opener);
     opener.remove();
+  });
+
+  it('gives focus back to an opener inside nested shadow roots, where every tool renders', () => {
+    // document.activeElement stops at the outermost host (v4-layout-shell in
+    // the app), and focusing a host does nothing — the real opener is inside.
+    const shell = document.createElement('div');
+    document.body.appendChild(shell);
+    const inner = document.createElement('div');
+    shell.attachShadow({ mode: 'open' }).appendChild(inner);
+    const opener = document.createElement('button');
+    inner.attachShadow({ mode: 'open' }).appendChild(opener);
+    opener.focus();
+    expect(document.activeElement).toBe(shell);
+
+    openGlamourSheet(source());
+    expect(inner.shadowRoot!.activeElement).not.toBe(opener);
+    closeGlamourSheet();
+
+    expect(inner.shadowRoot!.activeElement).toBe(opener);
+    shell.remove();
+  });
+
+  it('gives focus back to the opener it was handed, even one a click never focused', () => {
+    const opener = document.createElement('button');
+    document.body.appendChild(opener);
+    openGlamourSheet(source(), 'copy', opener);
+    closeGlamourSheet();
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
+
+  it('is a modal while it is up: global shortcuts stand down until it closes', () => {
+    const navigate = vi.spyOn(RouterService, 'navigateTo').mockImplementation(() => {});
+    const cycle = vi.spyOn(LanguageService, 'cycleToNextLocale').mockResolvedValue();
+    const press = (key: string, shiftKey = false) =>
+      document.body.dispatchEvent(new KeyboardEvent('keydown', { key, shiftKey, bubbles: true }));
+    KeyboardService.initialize();
+    try {
+      openGlamourSheet(source());
+      expect(ModalService.hasOpenModals()).toBe(true);
+      press('3');
+      press('L', true);
+      expect(navigate).not.toHaveBeenCalled();
+      expect(cycle).not.toHaveBeenCalled();
+
+      closeGlamourSheet();
+      expect(ModalService.hasOpenModals()).toBe(false);
+      press('3');
+      expect(navigate).toHaveBeenCalledWith('accessibility');
+    } finally {
+      KeyboardService.destroy();
+    }
   });
 
   it('says what it keeps, and closes on Escape', () => {

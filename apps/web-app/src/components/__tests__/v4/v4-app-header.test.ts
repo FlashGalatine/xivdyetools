@@ -2,7 +2,7 @@
  * XIV Dye Tools - V4AppHeader Unit Tests
  *
  * Covers the console bar's two tool switchers: the desktop icon-first rail
- * (3A — nine chips, the active one accent-filled and labelled, the others
+ * (3A — ten chips, the active one accent-filled and labelled, the others
  * icon-only until pointed at) and the mobile 2B title-menu it sits beside.
  * Which of the two is visible is a CSS media-query decision, so both are in
  * the DOM here; these tests assert structure, labels and events.

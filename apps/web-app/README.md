@@ -1,6 +1,6 @@
 # xivdyetools-web-app
 
-> The main XIV Dye Tools web app — nine interactive color tools for Final Fantasy XIV, built with Vite, Lit, and Tailwind.
+> The main XIV Dye Tools web app — ten interactive color tools for Final Fantasy XIV, built with Vite, Lit, and Tailwind.
 
 Live at **[xivdyetools.app](https://xivdyetools.app)**.
 
@@ -12,6 +12,7 @@ Live at **[xivdyetools.app](https://xivdyetools.app)**.
 | `/gradient` | **Gradient** | Build an N-step gradient between two colors and find the closest dye at each stop |
 | `/mixer` | **Mixer** | Blend colors in six modes — RGB, LAB, OKLAB, RYB, HSL, and physically-based Spectral (Kubelka-Munk) |
 | `/swatch` | **Swatch** | Import a `.chara` character file and match its colors to dyes |
+| `/glamour` | **Glamour** | Read the loaded `.chara` file as a glamour — every piece, its dyes, whether the game lets it be worn — and export the GPOSERS list |
 | `/comparison` | **Comparison** | Compare dyes side by side with perceptual distance readouts |
 | `/accessibility` | **Accessibility** | Color-vision deficiency simulation and WCAG contrast checking |
 | `/extractor` | **Extractor** | Extract a dominant-color palette from an uploaded image via K-means++ clustering |
@@ -60,7 +61,7 @@ pnpm --filter xivdyetools-web-app run build:check          # Build + all checks,
 - **State:** Per-tool component state; user preferences persist to `localStorage`
 - **Deploy target:** Cloudflare Pages
 
-All color math runs **client-side** through `@xivdyetools/core` — the dye database is bundled, so no tool needs a network round-trip to compute a result. The network is used for four things: market prices (any tool with Show Prices on — Budget, Harmony, Gradient, Mixer, Comparison, Extractor, Swatch and the preset detail), community presets and sign-in, `.chara` gear names in the Swatch tool, and opt-in telemetry.
+All color math runs **client-side** through `@xivdyetools/core` — the dye database is bundled, so no tool needs a network round-trip to compute a result. The network is used for four things: market prices (any tool with Show Prices on — Budget, Harmony, Gradient, Mixer, Comparison, Extractor, Swatch and the preset detail), community presets and sign-in, `.chara` gear names in the Glamour Reader, and opt-in telemetry.
 
 ## API Consumption
 

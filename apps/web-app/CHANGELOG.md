@@ -18,7 +18,9 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   glamour: every piece, its dyes, and whether the game lets it be worn. No sidebar; it shares the
   file with the Swatch Matcher (`CharaSessionService`) — each file card links to the other tool,
   and SWAP clears the file for both. On a phone the card's buttons wrap under the name as one
-  group, so the name keeps at least 140 px.
+  group, so the name keeps at least 140 px. The phone's Options scrim is drawn only for a tool
+  that has an Options panel, so pressing Back into the reader with the Swatch Matcher's Options
+  open no longer leaves a dimmed screen with no panel on it.
 - **IN THE GAME comes first.** The verdict tops the reader: a headline built from the counts ("1
   piece named from a twin and 1 piece this character can't wear") and FIXED BY A TWIN / NO FIX /
   FINE AS IS / NEEDS A GRAND COMPANY chips, one outcome per piece, so the chips add up to the
@@ -32,6 +34,8 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   opens a picker (popover on desktop, bottom sheet on a phone) listing each twin's facts. A pick
   lives with the loaded file: it survives leaving the reader and coming back, and a new file
   starts clean. A piece the verdict flags gets a row even when it's undyed and Show all is off.
+  In the Dyes lens a carrier icon's tooltip and its Open in… menu name that same twin, so the
+  menu's title and its links are one item.
 - **The export sheet.** Copy list and Export .md open an editable preview of the GPOSERS list with
   each piece's `Acquisition:` line filled from api-worker (≥ 0.15.0) for the twin it names. Edits
   are kept on this device, keyed by a hash of the gear (slot, the family's row, the stains) —
@@ -48,7 +52,12 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   and some matched neither (glossary: Equipment Slots).
 - A loaded file that wears nothing says so under its card. The twin picker moves with the arrow
   keys and gives focus back to its chip; it opens upward near the bottom of the screen. The export
-  sheet keeps Tab inside it and gives focus back to the button that opened it.
+  sheet keeps Tab inside it and gives focus back to the button that opened it — handed over by
+  the reader, since the shell's shadow root hides that button from `document.activeElement`.
+- **The export sheet is a modal to the whole app.** While it is open the global shortcuts (`0-9`,
+  Shift+T/L/S, `?`) stand down — it registers through the new `ModalService.registerExternal()`,
+  as it draws itself rather than through the modal container — and leaving the reader closes it,
+  including a sheet whose chunk was still loading.
 - Narrow desktop (769–919 px) drops the language button's globe and closes the rail's gaps by a
   pixel, so ten rail chips and a hovered label fit even at 769 px. The shortcuts panel says `0-9`.
 - **The site's share card shows ten tools.** `public/og/default.png` and `default-x.png` are

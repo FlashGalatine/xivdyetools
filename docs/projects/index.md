@@ -9,7 +9,7 @@
 | Project | Type | Platform | Key Technologies | Primary Purpose |
 |---------|------|----------|------------------|-----------------|
 | [@xivdyetools/core](core/overview.md) | npm library | Node.js / Browser | TypeScript, k-d tree, K-means++ | Color algorithms; the 125-dye database (schema v2) and the 11 Facewear colors |
-| [xivdyetools-web-app](web-app/overview.md) | Web app | Cloudflare Pages | Lit, Vite, Tailwind CSS | 9 interactive color tools |
+| [xivdyetools-web-app](web-app/overview.md) | Web app | Cloudflare Pages | Lit, Vite, Tailwind CSS | 10 interactive color tools |
 | [xivdyetools-discord-worker](discord-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions, resvg-wasm | 18 registered slash commands |
 | [xivdyetools-image-worker](../../apps/image-worker/README.md) | Image decode | Cloudflare Workers | `@cf-wasm/photon` | `POST /extract` (raw RGBA pixels for `discord-worker`) and `POST /thumbnail` (WebP previews for `presets-api`) — service binding only |
 | [xivdyetools-moderation-worker](moderation-worker/overview.md) | Discord bot | Cloudflare Workers | Hono, HTTP Interactions | Preset moderation commands |
@@ -37,7 +37,7 @@
 │  │ xivdyetools-web-app  │  │xivdyetools-discord-worker│  │xivdyetools-moderation-worker│  │
 │  │ ──────────────────── │  │─────────────────────────│  │─────────────────────────────│  │
 │  │ Vite + Lit web app   │  │ Discord bot (public)    │  │ Discord bot (moderators)    │  │
-│  │ 9 interactive tools  │  │ 18 slash commands       │  │ Preset moderation           │  │
+│  │ 10 interactive tools │  │ 18 slash commands       │  │ Preset moderation           │  │
 │  │ Light + Dark, PWA    │  │ SVG/PNG rendering       │  │ User ban management         │  │
 │  └──────────────────────┘  └─────────────────────────┘  └─────────────────────────────┘  │
 │  ┌──────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────────┐  │

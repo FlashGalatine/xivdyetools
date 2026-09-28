@@ -59,7 +59,7 @@ test.describe('Welcome modal — first visit', () => {
     await firstVisit(page);
     const modal = dialog(page).first();
 
-    // The four `WELCOME_LEADS` entries, not the full nine-tool list.
+    // The four `WELCOME_LEADS` entries, not the full ten-tool list.
     await expect(modal).toContainText(/Harmony/i);
     await expect(modal).toContainText(/Extractor|Palette Extractor/i);
     await expect(modal).toContainText(/Mixer/i);

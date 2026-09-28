@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GlamourBlock } from '../glamour-block';
 import { closeGlamourSheet } from '../glamour-sheet';
 import { CharaFileCard } from '../chara-file-card';
-import { StorageService, ToastService } from '@services/index';
+import { ModalService, StorageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile } from '@services/chara-file-loader';
 import {
@@ -731,6 +731,46 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(clicked).toHaveLength(0);
   });
 
+  it('destroying the block closes its export sheet, so the sheet never outlives the reader', async () => {
+    const { container, glamour, block: glamourBlock } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+
+    glamourBlock.destroy();
+
+    expect(sheetEl()).toBeNull();
+    expect(ModalService.hasOpenModals()).toBe(false);
+  });
+
+  it('a sheet still loading when the block is destroyed never opens', async () => {
+    const { container, glamour, block: glamourBlock } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    glamourBlock.destroy();
+    await vi.dynamicImportSettled();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(sheetEl()).toBeNull();
+  });
+
+  it('closing the sheet gives focus back to the button that opened it', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+    // A click does not focus a button in Safari (nor in jsdom), so the block
+    // hands the sheet its opener instead of leaving it to document.activeElement.
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+
+    closeGlamourSheet();
+
+    expect(document.activeElement).toBe(copyBtn(glamour));
+  });
+
   it('copies the worn slots as plain text with no Markdown syntax — names where known, dyes only where dyed — then confirms', async () => {
     // The file names its character; the submission form must never carry it.
     const named = JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: 'Galatine Ashe' });
@@ -1248,6 +1288,40 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
 
     expect(part(glamour, 'MainHand', 'item-name')).toBe('Curtana Zenith Replica');
     expect(part(glamour, 'OffHand', 'item-name')).toBe('Curtana Zenith Replica');
+  });
+
+  it('the Dyes lens names the twin the list names, on the carrier and on the menu it opens', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+    // The lowest row (#372) is the Dated coif; the list names Hempen Coif (#2629)
+    expect(part(glamour, 'HeadGear', 'item-name')).toBe('Hempen Coif');
+
+    block(glamour).querySelector<HTMLElement>('[data-glamour-view="dyes"]')!.click();
+    const carrier = block(glamour).querySelector<HTMLElement>(
+      '[data-role="carrier"][data-slot="HeadGear"]'
+    )!;
+    expect(carrier.title).toContain('Hempen Coif');
+    expect(carrier.title).not.toContain('Dated');
+    expect(carrier.getAttribute('aria-label')).not.toContain('Dated');
+
+    carrier.click();
+    const menu = () => document.querySelector<HTMLElement>('[data-role="item-links-menu"]');
+    await vi.waitFor(() => expect(menu()).not.toBeNull());
+    expect(menu()!.firstElementChild!.textContent).toBe('Hempen Coif');
+    menu()!.querySelector<HTMLElement>('[data-link="garlandTools"]')!.click();
+    expect(open).toHaveBeenCalledWith(
+      'https://www.garlandtools.org/db/#item/2629',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    open.mockRestore();
   });
 
   it('writes the twin it names into Copy list and Export .md', async () => {

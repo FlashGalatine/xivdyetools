@@ -110,6 +110,8 @@ const MAX_MODALS = 3;
 export class ModalService {
   private static modals: Modal[] = [];
   private static listeners: Set<(modals: Modal[]) => void> = new Set();
+  /** Modal surfaces that draw themselves (`registerExternal`) — open, but not the container's to draw. */
+  private static external: Set<symbol> = new Set();
 
   /**
    * Generate unique modal ID (WEB-TYPE-001: returns branded ModalId type)
@@ -262,10 +264,26 @@ export class ModalService {
   }
 
   /**
-   * Check if any modals are open
+   * Check if any modals are open — the container's, or one that draws itself
    */
   static hasOpenModals(): boolean {
-    return this.modals.length > 0;
+    return this.modals.length > 0 || this.external.size > 0;
+  }
+
+  /**
+   * Register a modal that renders itself instead of through the container
+   * (the Glamour Reader's export sheet is a full-height surface of its own).
+   * While it is registered `hasOpenModals()` is true, so the global keyboard
+   * shortcuts and first-visit prompts stand down exactly as they do for a
+   * container modal; subscribers are not notified, since there is nothing for
+   * the container to draw. Returns the release, which is safe to call twice.
+   */
+  static registerExternal(): () => void {
+    const token = Symbol('external-modal');
+    this.external.add(token);
+    return () => {
+      this.external.delete(token);
+    };
   }
 
   /**

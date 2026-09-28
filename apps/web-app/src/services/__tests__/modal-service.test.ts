@@ -282,6 +282,30 @@ describe('ModalService', () => {
     it('should return false when no modals are open', () => {
       expect(ModalService.hasOpenModals()).toBe(false);
     });
+
+    it('counts a modal that draws itself (registerExternal) until it is released', () => {
+      const listener = vi.fn();
+      ModalService.subscribe(listener, { immediate: false });
+      const release = ModalService.registerExternal();
+
+      expect(ModalService.hasOpenModals()).toBe(true);
+      // The container has nothing to draw for it
+      expect(ModalService.getModals()).toHaveLength(0);
+      expect(listener).not.toHaveBeenCalled();
+
+      release();
+      release(); // releasing twice is harmless
+      expect(ModalService.hasOpenModals()).toBe(false);
+    });
+
+    it('stays open while any one of several external modals is still registered', () => {
+      const releaseA = ModalService.registerExternal();
+      const releaseB = ModalService.registerExternal();
+      releaseA();
+      expect(ModalService.hasOpenModals()).toBe(true);
+      releaseB();
+      expect(ModalService.hasOpenModals()).toBe(false);
+    });
   });
 
   // ============================================================================
