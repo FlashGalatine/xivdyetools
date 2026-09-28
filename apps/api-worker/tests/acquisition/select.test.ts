@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Cost, Entry, Inputs, Offer, Shop, Tables } from '../../scripts/acquisition/model.js';
-import { selectEntries, type Selection } from '../../scripts/acquisition/select.js';
+import { overrideLine, selectEntries, type Selection } from '../../scripts/acquisition/select.js';
 import { collectSources } from '../../scripts/acquisition/sources.js';
 import { emptyInputs, emptyTables, npc } from './helpers.js';
 
@@ -34,6 +34,7 @@ describe('selectEntries', () => {
     i.items.set(32141, { name: 'Book of Litany', plural: 'Book of Litany', uiCategory: 61 });
     i.duties.set(32141, [30100]);
     i.duties.set(32147, [30100, 30102]);
+    i.highEndDuties.add(30100).add(30102);
     i.containers.set(ITEM, [32147]);
     i.offers.set(ITEM, [offer(shop(1770331, [1030123]), [{ itemId: 32141, amount: 6 }])]);
     i.npcs.set(1030123, npc(1030123, 'Ghul Gul', 'Amh Araeng'));
@@ -41,6 +42,41 @@ describe('selectEntries', () => {
       { kind: 'duty', dutyId: 30100 },
       { kind: 'duty', dutyId: 30102 },
     ]);
+  });
+
+  it('a normal raid token keeps the vendor and currency; only Savage, Extreme, Ultimate, Variant and Criterion list the duty', () => {
+    const i = emptyInputs();
+    i.items.set(12680, { name: 'Tarnished Gordian Bolt', plural: 'Tarnished Gordian Bolts', uiCategory: 61 });
+    i.duties.set(12680, [30010]);
+    i.offers.set(ITEM, [offer(shop(1, [10]), [{ itemId: 12680, amount: 1 }])]);
+    i.npcs.set(10, npc(10, 'Sabina', 'Idyllshire'));
+    expect(kinds(select(i).entries)).toEqual(['vendor']);
+  });
+
+  it('a Deep Dungeon appears only when it is the only source', () => {
+    const only = emptyInputs();
+    only.duties.set(ITEM, [60030]);
+    only.deepDungeons.add(60030);
+    expect(select(only).entries).toEqual([{ kind: 'duty', dutyId: 60030 }]);
+    const crafted = emptyInputs();
+    crafted.duties.set(ITEM, [60030]);
+    crafted.deepDungeons.add(60030);
+    crafted.recipes.set(ITEM, [{ job: 13, level: 50 }]);
+    const result = select(crafted);
+    expect(result.entries).toEqual([{ kind: 'craft', job: 13, level: 50 }]);
+    expect(result.dropped).toContain('deepDungeonNotOnlySource');
+  });
+
+  it('desynthesis appears only when it is the only source', () => {
+    const only = emptyInputs();
+    only.desynth.set(ITEM, [{ sourceItemId: 5000, job: 15 }]);
+    expect(kinds(select(only).entries)).toEqual(['desynth']);
+    const crafted = emptyInputs();
+    crafted.desynth.set(ITEM, [{ sourceItemId: 5000, job: 15 }]);
+    crafted.recipes.set(ITEM, [{ job: 15, level: 90 }]);
+    const result = select(crafted);
+    expect(kinds(result.entries)).toEqual(['craft']);
+    expect(result.dropped).toContain('desynthNotOnlySource');
   });
 
   it('an upgrade that also takes a base item keeps the vendor line', () => {
@@ -189,7 +225,18 @@ describe('selectEntries', () => {
 describe('vendor choice', () => {
   function vendors(npcs: Array<[number, string | null, { unreachable?: boolean }?]>): Inputs {
     const i = emptyInputs();
-    i.zoneLevels.set('Urqopacha', 90).set("Kozama'uka", 91).set('Old Gridania', 1).set('Central Shroud', 1);
+    i.zoneLevels
+      .set('Urqopacha', 90)
+      .set("Kozama'uka", 91)
+      .set('Old Gridania', 1)
+      .set('Central Shroud', 1)
+      .set('Tuliyollal', 90)
+      .set('Radz-at-Han', 80)
+      .set('Limsa Lominsa Lower Decks', 1)
+      .set('Sinus Ardorum', 90)
+      .set('Phaenna', 90);
+    for (const town of ['Old Gridania', 'Tuliyollal', 'Radz-at-Han', 'Limsa Lominsa Lower Decks']) i.towns.add(town);
+    i.zoneOrder.set('Sinus Ardorum', 1237).set('Phaenna', 1291);
     i.offers.set(ITEM, [offer(shop(263178, npcs.map(([id]) => id)), [{ itemId: 1, amount: 28483 }])]);
     for (const [id, zone, extra] of npcs) i.npcs.set(id, npc(id, 'merchant', zone, extra));
     return i;
@@ -206,6 +253,19 @@ describe('vendor choice', () => {
   it('otherwise takes the lowest-level zone, then the lowest NPC id', () => {
     expect(chosen(vendors([[3, "Kozama'uka"], [4, 'Urqopacha']]))).toBe(4);
     expect(chosen(vendors([[6, 'Urqopacha'], [5, 'Urqopacha']]))).toBe(5);
+  });
+
+  it('always favors a city over the field (Mar 2026 reminders)', () => {
+    expect(chosen(vendors([[3, 'Central Shroud'], [4, 'Tuliyollal']]))).toBe(4);
+  });
+
+  it('favors a main city over an end-game city', () => {
+    expect(chosen(vendors([[5, 'Tuliyollal'], [6, 'Radz-at-Han'], [7, 'Limsa Lominsa Lower Decks']]))).toBe(7);
+  });
+
+  it('favors the earliest Cosmic Exploration zone', () => {
+    expect(chosen(vendors([[9, 'Phaenna'], [8, 'Sinus Ardorum']]))).toBe(8);
+    expect(chosen(vendors([[8, 'Phaenna'], [9, 'Sinus Ardorum']]))).toBe(9);
   });
 
   it('ranks a zone with no known level after every known zone', () => {
@@ -232,5 +292,15 @@ describe('vendor choice', () => {
     const { entries } = select(i);
     expect(entries).toHaveLength(1);
     expect(entries[0]?.kind === 'vendor' && entries[0].npc.id).toBe(20);
+  });
+});
+
+describe('overrideLine', () => {
+  it("writes every Emperor's New item as Goberin in Vesper Bay (Mar 2026 reminders)", () => {
+    expect(overrideLine("Emperor's New Robe")).toBe('Goberin - Western Thanalan - Vesper Bay');
+    expect(overrideLine("Emperor's New Gloves")).toBe('Goberin - Western Thanalan - Vesper Bay');
+    // The game's own names carry the article
+    expect(overrideLine("The Emperor's New Robe")).toBe('Goberin - Western Thanalan - Vesper Bay');
+    expect(overrideLine('Hempen Coif')).toBeNull();
   });
 });

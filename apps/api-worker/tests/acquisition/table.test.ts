@@ -39,6 +39,17 @@ describe('acquisition table invariants', () => {
     expect(offending((l) => /AAC Illustrated|\bTotems?\b|Totem of/.test(l))).toEqual([]);
   });
 
+  it("writes The Emperor's New items as Goberin in Vesper Bay (Mar 2026 reminders)", () => {
+    expect((table as Record<string, string>)['10033']).toBe('Goberin - Western Thanalan - Vesper Bay');
+  });
+
+  it('lists desynthesis and Deep Dungeons only as the only source (Mar 2026 reminders)', () => {
+    const deep = /^(The Palace of the Dead|Heaven-on-High|Eureka Orthos|Pilgrim's Traverse) \(/;
+    const desynth = /^Desynthesis \(/;
+    expect(offending((l) => l.split(' / ').some((s) => desynth.test(s)) && !l.split(' / ').every((s) => desynth.test(s)))).toEqual([]);
+    expect(offending((l) => l.split(' / ').some((s) => deep.test(s)) && !l.split(' / ').every((s) => deep.test(s)))).toEqual([]);
+  });
+
   it('reads known relics as their saga, whatever step or replica', () => {
     const expected: Record<string, string> = {
       10059: 'Zodiac Weapons Saga', // Nirvana Zeta

@@ -66,10 +66,10 @@ describe('formatEntries', () => {
     );
   });
 
-  it('writes a free vendor without parentheses and a single unit in the singular', () => {
+  it('writes a free vendor without parentheses, and a currency in the plural even for one unit (Mar 2026 reminders)', () => {
     expect(line([{ kind: 'vendor', npc: npc(4, 'Varsarudh', 'Old Sharlayan'), costs: [] }])).toBe('Varsarudh - Old Sharlayan');
     expect(line([{ kind: 'vendor', npc: npc(5, 'mark quartermaster', "Wolves' Den Pier"), costs: [{ itemId: 25, amount: 1 }] }])).toBe(
-      "Mark Quartermaster - Wolves' Den Pier (1 Wolf Mark)"
+      "Mark Quartermaster - Wolves' Den Pier (1 Wolf Marks)"
     );
   });
 

@@ -32,6 +32,9 @@ const MINOR_WORDS = new Set(['a', 'an', 'and', 'for', 'in', 'of', 'on', 'the', '
 
 const GIL = 1;
 
+/** ItemUICategory rows of general currencies: 63 "Other" and 100 "Currency". */
+const CURRENCY_CATEGORIES = new Set([63, 100]);
+
 export function formatEntries(entries: Entry[], inputs: Inputs, tables: Tables): string | null {
   const ordered = [...entries].sort((a, b) => ORDER.indexOf(a.kind) - ORDER.indexOf(b.kind));
   const parts: string[] = [];
@@ -125,7 +128,9 @@ function costText(costs: Cost[], inputs: Inputs): string | null {
     }
     const item = inputs.items.get(itemId);
     if (!item) return null;
-    if (amount === 1) parts.push(costs.length > 1 ? item.name : `1 ${item.name}`);
+    // Mar 2026 reminders: currencies in the plural "as much as possible", even for one.
+    const currency = CURRENCY_CATEGORIES.has(item.uiCategory);
+    if (amount === 1 && !currency) parts.push(costs.length > 1 ? item.name : `1 ${item.name}`);
     else parts.push(`${count(amount)} ${item.plural}`);
   }
   return parts.join(', ');

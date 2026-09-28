@@ -19,7 +19,8 @@ export interface RawFiles {
   npcs: Record<string, { en: string; position?: { map: number; x: number; y: number } | null }>;
   maps: Record<string, { placename_id: number; territory_id: number; dungeon: boolean; housing: boolean }>;
   places: Record<string, { en: string }>;
-  instances: Record<string, { en: string }>;
+  /** `contentType`: 4 trials, 5 raids, 21 Deep Dungeons, 28 Ultimate, 30 Variant & Criterion */
+  instances: Record<string, { en: string; contentType?: number }>;
   instanceSources: Record<string, number[]>;
   lootSources: Record<string, number[]>;
   mogstationSources: Record<string, unknown>;
@@ -57,6 +58,8 @@ export interface XivapiExtras {
   festivalShops: Set<number>;
   /** SpecialShops with `UseCurrencyType` 16, whose tomestone prices Teamcraft misreads */
   unknownCostShops: Set<number>;
+  /** TerritoryType → TerritoryIntendedUse (0 town, 1 overworld, 60 Cosmic Exploration…) */
+  territoryUses: Map<number, number>;
   /**
    * Hand-kept duty tokens Teamcraft has no drop data for (`tables/duty-tokens.json`):
    * token item → Duty Finder names. An empty list = a token whose duty is not known yet.
@@ -111,6 +114,10 @@ const WEAPON_CATEGORY = /(Arm|Arms|Grimoire|Shield)$/;
  * Teamcraft misreads a `UseCurrencyType` 16 tomestone price (CostType 2).
  */
 const MISREAD_TOMESTONE = new Set([10309, 10311]);
+const CONTENT_DEEP_DUNGEON = 21;
+const CONTENT_ULTIMATE = 28;
+const CONTENT_VARIANT_CRITERION = 30;
+const TOWN = 0;
 const VOYAGE: Record<number, 'airship' | 'submarine'> = { 0: 'airship', 1: 'submarine' };
 
 type RawShop = RawFiles['shops'][number];
@@ -174,10 +181,15 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
   }
 
   const zoneLevels = fateZoneLevels(raw, extras.levelZones, extras.overworld);
+  const towns = new Set<string>();
+  const zoneOrder = new Map<string, number>();
   for (const map of Object.values(raw.maps)) {
     const zone = raw.places[map.placename_id]?.en;
+    if (!zone) continue;
     const expansion = extras.expansions.get(map.territory_id);
-    if (zone && expansion !== undefined && !zoneLevels.has(zone)) zoneLevels.set(zone, EXPANSION_LEVEL[expansion] ?? 1);
+    if (expansion !== undefined && !zoneLevels.has(zone)) zoneLevels.set(zone, EXPANSION_LEVEL[expansion] ?? 1);
+    if (extras.territoryUses.get(map.territory_id) === TOWN) towns.add(zone);
+    if (map.territory_id > 0) zoneOrder.set(zone, Math.min(map.territory_id, zoneOrder.get(zone) ?? Number.MAX_SAFE_INTEGER));
   }
 
   const items = new Map<number, ItemInfo>();
@@ -206,10 +218,16 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     duties.set(token, [...new Set([...(duties.get(token) ?? []), ...ids])]);
   }
   const dutyNames = new Map<number, string>();
+  const highEndDuties = new Set<number>();
+  const deepDungeons = new Set<number>();
   for (const list of duties.values()) {
     for (const id of list) {
-      const name = raw.instances[id]?.en;
-      if (name) dutyNames.set(id, dutyName(name));
+      const instance = raw.instances[id];
+      if (!instance?.en) continue;
+      const name = dutyName(instance.en);
+      dutyNames.set(id, name);
+      if (instance.contentType === CONTENT_DEEP_DUNGEON) deepDungeons.add(id);
+      else if (isHighEnd(name, instance.contentType)) highEndDuties.add(id);
     }
   }
 
@@ -269,7 +287,21 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     desynth,
     relics: relicsFrom(rules, raw, extras, shopName, zoneOfNpc),
     unmappedTokens,
+    highEndDuties,
+    deepDungeons,
+    towns,
+    zoneOrder,
   };
+}
+
+/**
+ * Savage, Extreme, Ultimate, Variant and Criterion duties (Mar 2026 reminders:
+ * their token gear lists the duty, not the vendor). The Minstrel's Ballad
+ * trials are Extreme without the suffix.
+ */
+function isHighEnd(name: string, contentType: number | undefined): boolean {
+  if (contentType === CONTENT_ULTIMATE || contentType === CONTENT_VARIANT_CRITERION) return true;
+  return /\((Savage|Extreme|Ultimate)\)$/.test(name) || /^The Minstrel's Ballad: /.test(name);
 }
 
 /** The Duty Finder name: game text markup stripped, spaces collapsed, a leading "the" capitalized. */

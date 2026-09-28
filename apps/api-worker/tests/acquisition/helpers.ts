@@ -21,6 +21,10 @@ export function emptyInputs(): Inputs {
     desynth: new Map(),
     relics: new Map(),
     unmappedTokens: new Set(),
+    highEndDuties: new Set(),
+    deepDungeons: new Set(),
+    towns: new Set(),
+    zoneOrder: new Map(),
   };
 }
 
@@ -36,11 +40,17 @@ export function npc(id: number, name: string, zone: string | null, extra: Partia
   return { id, name, zone, outpost: null, unreachable: false, ...extra };
 }
 
-const SET_KEYS = new Set(['onlineStore', 'unmappedTokens']);
+const SET_KEYS = new Set(['onlineStore', 'unmappedTokens', 'highEndDuties', 'deepDungeons', 'towns']);
 
 /** The acceptance fixture stores every Map as entry pairs and every Set as an array. */
 export function reviveInputs(json: Record<string, unknown>): Inputs {
-  const out: Record<string, unknown> = { unmappedTokens: new Set() };
+  const out: Record<string, unknown> = {
+    unmappedTokens: new Set(),
+    highEndDuties: new Set(),
+    deepDungeons: new Set(),
+    towns: new Set(),
+    zoneOrder: new Map(),
+  };
   for (const [key, value] of Object.entries(json)) {
     out[key] = SET_KEYS.has(key) ? new Set(value as number[]) : new Map(value as Array<[unknown, unknown]>);
   }

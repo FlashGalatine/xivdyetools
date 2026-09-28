@@ -49,11 +49,14 @@ function raw(): RawFiles {
     instances: {
       30100: { en: "Eden's Promise: Litany (Savage)" },
       1: { en: 'the Thousand Maws of Toto-Rak' },
-      2: { en: 'the <i>Whorleater</i> (Extreme)' },
-      3: { en: 'Heaven-on-High  (Floors 91-100)' },
-      30136: { en: 'AAC Light-heavyweight M1 (Savage)' },
+      2: { en: 'the <i>Whorleater</i> (Extreme)', contentType: 4 },
+      3: { en: 'Heaven-on-High  (Floors 91-100)', contentType: 21 },
+      30136: { en: 'AAC Light-heavyweight M1 (Savage)', contentType: 5 },
+      36001: { en: "the Sil'dihn Subterrane", contentType: 30 },
+      30162: { en: 'Dancing Mad (Ultimate)', contentType: 28 },
+      20105: { en: "the Minstrel's Ballad: Necron's Embrace", contentType: 4 },
     },
-    instanceSources: { 32147: [30100], 42027: [1], 14887: [2], 22993: [3] },
+    instanceSources: { 32147: [30100], 42027: [1], 14887: [2], 22993: [3], 900: [36001, 30162, 20105] },
     lootSources: { 36828: [36814] },
     mogstationSources: { 36814: { price: 22, id: 875 } },
     recipesPerItem: { 42027: [{ job: 13, lvl: 92 }], 5: [{ job: 8, lvl: 1 }] },
@@ -113,6 +116,11 @@ function extras(): XivapiExtras {
     ]),
     festivalShops: new Set([1770500]),
     unknownCostShops: new Set([1770095]),
+    territoryUses: new Map([
+      [1187, 1],
+      [1269, 0],
+      [1300, 60],
+    ]),
     dutyTokens: new Map([
       [43549, ['AAC Light-heavyweight M1 (Savage)']],
       [52321, []],
@@ -188,6 +196,17 @@ describe('buildInputs', () => {
     expect(() => buildInputs(raw(), { ...extras(), dutyTokens: new Map([[1, ['No Such Duty']]]) }, RULES)).toThrow(
       /No Such Duty/
     );
+  });
+
+  it('sorts duties into high-end (tokens list the duty) and Deep Dungeons (only-source)', () => {
+    expect([...inputs.highEndDuties].sort((a, b) => a - b)).toEqual([2, 20105, 30100, 30136, 30162, 36001]);
+    expect([...inputs.deepDungeons]).toEqual([3]);
+  });
+
+  it('knows which zones are towns, and the order zones were added in', () => {
+    expect(inputs.towns).toEqual(new Set(['Phantom Village']));
+    expect(inputs.zoneOrder.get('Urqopacha')).toBe(1187);
+    expect(inputs.zoneOrder.get('Sinus Ardorum')).toBe(1300);
   });
 
   it("flags a tomestone price Teamcraft misreads as a retired scrip, and nothing else in the shop", () => {

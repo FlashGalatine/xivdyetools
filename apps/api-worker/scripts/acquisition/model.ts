@@ -84,6 +84,14 @@ export interface Inputs {
   relics: Map<number, string>;
   /** Duty tokens whose duty is not known yet (`tables/duty-tokens.json` entries with no duty) */
   unmappedTokens: Set<number>;
+  /** Savage, Extreme, Ultimate, Variant and Criterion duties: their tokens list the duty, not the exchange */
+  highEndDuties: Set<number>;
+  /** Deep Dungeon floor sets: listed only when they are an item's only source */
+  deepDungeons: Set<number>;
+  /** Zones that are towns (`TerritoryIntendedUse` 0): vendors there are always favored */
+  towns: Set<string>;
+  /** Zone → its TerritoryType id, the order the game added it in (earliest Cosmic Exploration zone first) */
+  zoneOrder: Map<string, number>;
 }
 
 export interface Tables {

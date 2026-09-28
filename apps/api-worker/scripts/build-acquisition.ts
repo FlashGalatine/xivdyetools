@@ -22,7 +22,7 @@ import { formatEntries } from './acquisition/format.js';
 import { buildInputs, fateZoneLevels, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
 import { markerCoordinate, nearestLabel, type MapLabel } from './acquisition/labels.js';
 import type { Inputs, Tables } from './acquisition/model.js';
-import { selectEntries } from './acquisition/select.js';
+import { overrideLine, selectEntries } from './acquisition/select.js';
 import { collectSources } from './acquisition/sources.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -303,6 +303,10 @@ function writeFixture(inputs: Inputs, itemIds: number[]): void {
     desynth: pick(inputs.desynth, keep),
     relics: pick(inputs.relics, keep),
     unmappedTokens: [...inputs.unmappedTokens].filter((id) => keep.has(id)),
+    highEndDuties: [...inputs.highEndDuties].filter((id) => dutyIds.has(id)),
+    deepDungeons: [...inputs.deepDungeons].filter((id) => dutyIds.has(id)),
+    towns: [...inputs.towns],
+    zoneOrder: [...inputs.zoneOrder],
   };
   writeFileSync(FIXTURE, `${JSON.stringify(fixture, null, 1)}\n`);
   console.log(`wrote ${FIXTURE}`);
@@ -387,7 +391,11 @@ async function main(): Promise<void> {
     const territory = map !== undefined ? raw.maps[map]?.territory_id : undefined;
     return territory !== undefined ? [territory] : [];
   });
-  const territoryRows = await rows<{ ExVersion?: Link }>('TerritoryType', territoryIds, 'ExVersion.value');
+  const territoryRows = await rows<{ ExVersion?: Link; TerritoryIntendedUse?: Link }>(
+    'TerritoryType',
+    territoryIds,
+    'ExVersion.value,TerritoryIntendedUse.value'
+  );
   const specialIds = sellers.filter((s) => s.type === 'SpecialShop').map((s) => s.id);
   const specialRows = await rows<{ RequiredFestival?: Link; UseCurrencyType?: number }>(
     'SpecialShop',
@@ -416,6 +424,7 @@ async function main(): Promise<void> {
     levelZones,
     overworld,
     expansions: new Map([...territoryRows].map(([id, row]) => [id, row.ExVersion?.value ?? 0])),
+    territoryUses: new Map([...territoryRows].map(([id, row]) => [id, row.TerritoryIntendedUse?.value ?? -1])),
     festivalShops: new Set([...specialRows].filter(([, row]) => (row.RequiredFestival?.value ?? 0) > 0).map(([id]) => id)),
     // In UseCurrencyType 16 shops Teamcraft reads a tomestone price (CostType 2)
     // as a retired Red scrip; inputs.ts marks those offers' costs unknown.
@@ -446,6 +455,12 @@ async function main(): Promise<void> {
   const dropped: Record<string, number> = {};
   let sourcesButNoLine = 0;
   for (const itemId of [...equippable.keys()].sort((a, b) => a - b)) {
+    const fixed = overrideLine(equippableNames.get(itemId) ?? '');
+    if (fixed) {
+      table[itemId] = fixed;
+      entryCounts['override'] = (entryCounts['override'] ?? 0) + 1;
+      continue;
+    }
     const sources = collectSources(itemId, inputs);
     const selection = selectEntries(sources, inputs, tables);
     for (const reason of selection.dropped) dropped[reason] = (dropped[reason] ?? 0) + 1;

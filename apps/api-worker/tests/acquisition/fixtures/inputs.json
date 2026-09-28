@@ -820,5 +820,2273 @@
    "Phantom Gear & Weapons"
   ]
  ],
- "unmappedTokens": []
+ "unmappedTokens": [],
+ "highEndDuties": [
+  30100,
+  30102
+ ],
+ "deepDungeons": [],
+ "towns": [
+  "New Gridania",
+  "Old Gridania",
+  "Limsa Lominsa Upper Decks",
+  "Limsa Lominsa Lower Decks",
+  "Ul'dah - Steps of Nald",
+  "Ul'dah - Steps of Thal",
+  "Foundation",
+  "The Pillars",
+  "Idyllshire",
+  "Rhalgr's Reach",
+  "Kugane",
+  "The Doman Enclave",
+  "The Crystarium",
+  "Eulmore",
+  "Dutiful Sisters of the Edelweiss",
+  "Old Sharlayan",
+  "Radz-at-Han",
+  "Tuliyollal",
+  "Solution Nine"
+ ],
+ "zoneOrder": [
+  [
+   "Eorzea",
+   1
+  ],
+  [
+   "New Gridania",
+   132
+  ],
+  [
+   "Old Gridania",
+   133
+  ],
+  [
+   "Central Shroud",
+   148
+  ],
+  [
+   "East Shroud",
+   152
+  ],
+  [
+   "South Shroud",
+   137
+  ],
+  [
+   "North Shroud",
+   154
+  ],
+  [
+   "The Tam-Tara Deepcroft",
+   1037
+  ],
+  [
+   "The Thousand Maws of Toto-Rak",
+   1039
+  ],
+  [
+   "Mordion Gaol",
+   728
+  ],
+  [
+   "Limsa Lominsa Upper Decks",
+   128
+  ],
+  [
+   "Limsa Lominsa Lower Decks",
+   129
+  ],
+  [
+   "Ul'dah - Steps of Nald",
+   130
+  ],
+  [
+   "Ul'dah - Steps of Thal",
+   131
+  ],
+  [
+   "Middle La Noscea",
+   134
+  ],
+  [
+   "Lower La Noscea",
+   135
+  ],
+  [
+   "Eastern La Noscea",
+   137
+  ],
+  [
+   "Western La Noscea",
+   138
+  ],
+  [
+   "Upper La Noscea",
+   139
+  ],
+  [
+   "Western Thanalan",
+   140
+  ],
+  [
+   "Central Thanalan",
+   141
+  ],
+  [
+   "Eastern Thanalan",
+   145
+  ],
+  [
+   "Southern Thanalan",
+   146
+  ],
+  [
+   "Northern Thanalan",
+   147
+  ],
+  [
+   "Mor Dhona",
+   156
+  ],
+  [
+   "Mizzenmast Inn",
+   177
+  ],
+  [
+   "The Hourglass",
+   178
+  ],
+  [
+   "The Roost",
+   179
+  ],
+  [
+   "Outer La Noscea",
+   180
+  ],
+  [
+   "Sastasha",
+   1036
+  ],
+  [
+   "The Wanderer's Palace",
+   159
+  ],
+  [
+   "The Navel",
+   293
+  ],
+  [
+   "Copperbell Mines",
+   1038
+  ],
+  [
+   "Bowl of Embers",
+   292
+  ],
+  [
+   "Thornmarch",
+   1067
+  ],
+  [
+   "Stone Vigil",
+   1042
+  ],
+  [
+   "Aurum Vale",
+   1331
+  ],
+  [
+   "The Howling Eye",
+   294
+  ],
+  [
+   "The Sunken Temple of Qarn",
+   163
+  ],
+  [
+   "Brayflox's Longstop",
+   1041
+  ],
+  [
+   "Halatali",
+   142
+  ],
+  [
+   "Castrum Meridianum",
+   1043
+  ],
+  [
+   "Haukke Manor",
+   1040
+  ],
+  [
+   "Amdapor Keep",
+   167
+  ],
+  [
+   "Dzemael Darkhold",
+   1330
+  ],
+  [
+   "Wolves' Den Pier",
+   250
+  ],
+  [
+   "Cutter's Cry",
+   1303
+  ],
+  [
+   "Coerthas Central Highlands",
+   155
+  ],
+  [
+   "The Praetorium",
+   1044
+  ],
+  [
+   "Upper Aetheroacoustic Exploratory Site",
+   241
+  ],
+  [
+   "Lower Aetheroacoustic Exploratory Site",
+   242
+  ],
+  [
+   "Ragnarok Drive Cylinder",
+   244
+  ],
+  [
+   "Ragnarok Central Core",
+   245
+  ],
+  [
+   "Ragnarok Main Bridge",
+   247
+  ],
+  [
+   "The Ragnarok",
+   243
+  ],
+  [
+   "Central Decks",
+   357
+  ],
+  [
+   "Seat of the First Bow",
+   204
+  ],
+  [
+   "Lotus Stand",
+   205
+  ],
+  [
+   "Labyrinth of the Ancients",
+   174
+  ],
+  [
+   "Mist",
+   339
+  ],
+  [
+   "Command Room",
+   198
+  ],
+  [
+   "The Memory of Embers",
+   1166
+  ],
+  [
+   "A Future Rewritten",
+   1238
+  ],
+  [
+   "Heart of the Sworn",
+   210
+  ],
+  [
+   "Sigmascape V4.0",
+   751
+  ],
+  [
+   "The Waking Sands",
+   212
+  ],
+  [
+   "The Fold",
+   175
+  ],
+  [
+   "The Lavender Beds",
+   340
+  ],
+  [
+   "The Goblet",
+   341
+  ],
+  [
+   "Eorzean Subterrane",
+   338
+  ],
+  [
+   "Pharos Sirius",
+   160
+  ],
+  [
+   "Private Cottage - Mist",
+   282
+  ],
+  [
+   "Private House - Mist",
+   283
+  ],
+  [
+   "Private Mansion - Mist",
+   284
+  ],
+  [
+   "Private Cottage - The Lavender Beds",
+   342
+  ],
+  [
+   "Private House - The Lavender Beds",
+   343
+  ],
+  [
+   "Private Mansion - The Lavender Beds",
+   344
+  ],
+  [
+   "Private Cottage - The Goblet",
+   345
+  ],
+  [
+   "Private House - The Goblet",
+   346
+  ],
+  [
+   "Private Mansion - The Goblet",
+   347
+  ],
+  [
+   "The Rising Stones",
+   351
+  ],
+  [
+   "Haukke Manor (Hard)",
+   350
+  ],
+  [
+   "Copperbell Mines (Hard)",
+   349
+  ],
+  [
+   "Porta Decumana",
+   348
+  ],
+  [
+   "Griffin Crossing",
+   366
+  ],
+  [
+   "Halatali (Hard)",
+   360
+  ],
+  [
+   "Brayflox's Longstop (Hard)",
+   362
+  ],
+  [
+   "The Whorleater",
+   281
+  ],
+  [
+   "Dalamud's Shadow",
+   355
+  ],
+  [
+   "The Outer Coil",
+   356
+  ],
+  [
+   "The Holocharts",
+   358
+  ],
+  [
+   "The Lost City of Amdapor",
+   363
+  ],
+  [
+   "The Stone Vigil (Hard)",
+   365
+  ],
+  [
+   "Syrcus Tower",
+   372
+  ],
+  [
+   "The Tam-Tara Deepcroft (Hard)",
+   373
+  ],
+  [
+   "The Striking Tree",
+   374
+  ],
+  [
+   "Carteneau Flats: Borderland Ruins",
+   376
+  ],
+  [
+   "Hullbreaker Isle",
+   361
+  ],
+  [
+   "Sastasha (Hard)",
+   387
+  ],
+  [
+   "Private Chambers - Mist",
+   384
+  ],
+  [
+   "Private Chambers - The Lavender Beds",
+   385
+  ],
+  [
+   "Private Chambers - The Goblet",
+   386
+  ],
+  [
+   "Akh Afah Amphitheatre",
+   377
+  ],
+  [
+   "Snowcloak",
+   1062
+  ],
+  [
+   "IC-06 Central Decks",
+   193
+  ],
+  [
+   "IC-06 Regeneration Grid",
+   194
+  ],
+  [
+   "IC-06 Main Bridge",
+   195
+  ],
+  [
+   "The Burning Heart",
+   196
+  ],
+  [
+   "Intercessory",
+   395
+  ],
+  [
+   "The Sunken Temple of Qarn (Hard)",
+   367
+  ],
+  [
+   "The World of Darkness",
+   151
+  ],
+  [
+   "The Belly of the Beast",
+   151
+  ],
+  [
+   "Steps of Faith",
+   559
+  ],
+  [
+   "The Wanderer's Palace (Hard)",
+   188
+  ],
+  [
+   "Amdapor Keep (Hard)",
+   189
+  ],
+  [
+   "The Gold Saucer",
+   144
+  ],
+  [
+   "Chocobo Square",
+   389
+  ],
+  [
+   "The Keeper of the Lake",
+   1063
+  ],
+  [
+   "Company Workshop - Mist",
+   423
+  ],
+  [
+   "Company Workshop - The Goblet",
+   424
+  ],
+  [
+   "Company Workshop - The Lavender Beds",
+   425
+  ],
+  [
+   "The Chrysalis",
+   426
+  ],
+  [
+   "Sanctum of the Twelve",
+   152
+  ],
+  [
+   "Coerthas Western Highlands",
+   397
+  ],
+  [
+   "The Dravanian Forelands",
+   398
+  ],
+  [
+   "The Dravanian Hinterlands",
+   399
+  ],
+  [
+   "The Churning Mists",
+   400
+  ],
+  [
+   "The Sea of Clouds",
+   401
+  ],
+  [
+   "Azys Lla",
+   402
+  ],
+  [
+   "Foundation",
+   418
+  ],
+  [
+   "The Pillars",
+   419
+  ],
+  [
+   "Saint Endalim's Scholasticate",
+   427
+  ],
+  [
+   "Seat of the Lord Commander",
+   428
+  ],
+  [
+   "Fortemps Manor",
+   433
+  ],
+  [
+   "Cloud Nine",
+   429
+  ],
+  [
+   "The Lightfeather Proving Grounds",
+   439
+  ],
+  [
+   "Ruling Chamber",
+   440
+  ],
+  [
+   "Sacrificial Chamber",
+   462
+  ],
+  [
+   "Sohm Al Foothills",
+   1064
+  ],
+  [
+   "Neverreap",
+   420
+  ],
+  [
+   "Aetherochemical Research Facility",
+   1110
+  ],
+  [
+   "The Limitless Blue",
+   436
+  ],
+  [
+   "Singularity Reactor",
+   437
+  ],
+  [
+   "The Fist of the Father",
+   442
+  ],
+  [
+   "The Cuff of the Father",
+   443
+  ],
+  [
+   "The Arm of the Father",
+   444
+  ],
+  [
+   "The Burden of the Father",
+   445
+  ],
+  [
+   "The Great Gubal Library",
+   1109
+  ],
+  [
+   "Seal Rock",
+   431
+  ],
+  [
+   "Dusk Vigil",
+   434
+  ],
+  [
+   "The Fractal Continuum",
+   430
+  ],
+  [
+   "The Vault",
+   1066
+  ],
+  [
+   "The Aery",
+   1065
+  ],
+  [
+   "Matoya's Cave",
+   463
+  ],
+  [
+   "Thok ast Thok",
+   432
+  ],
+  [
+   "Idyllshire",
+   478
+  ],
+  [
+   "The Gordian Knot",
+   505
+  ],
+  [
+   "Central Azys Lla",
+   507
+  ],
+  [
+   "Pharos Sirius (Hard)",
+   510
+  ],
+  [
+   "The Eighteenth Floor",
+   504
+  ],
+  [
+   "Saint Mocianne's Arboretum",
+   511
+  ],
+  [
+   "Void Ark",
+   508
+  ],
+  [
+   "The Antitower",
+   1111
+  ],
+  [
+   "The Lost City of Amdapor (Hard)",
+   519
+  ],
+  [
+   "Containment Bay S1T7",
+   517
+  ],
+  [
+   "The Feasting Grounds",
+   518
+  ],
+  [
+   "The Fist of the Son",
+   520
+  ],
+  [
+   "The Cuff of the Son",
+   521
+  ],
+  [
+   "The Arm of the Son",
+   522
+  ],
+  [
+   "The Burden of the Son",
+   523
+  ],
+  [
+   "The Midan Knot",
+   505
+  ],
+  [
+   "Sohr Khai",
+   1112
+  ],
+  [
+   "The Battlehall",
+   579
+  ],
+  [
+   "The Fields of Glory",
+   554
+  ],
+  [
+   "Hullbreaker Isle (Hard)",
+   557
+  ],
+  [
+   "The Weeping City of Mhach",
+   556
+  ],
+  [
+   "The Parrock",
+   567
+  ],
+  [
+   "Leofard's Chambers",
+   568
+  ],
+  [
+   "Twin Adder Barracks",
+   534
+  ],
+  [
+   "Flame Barracks",
+   535
+  ],
+  [
+   "Maelstrom Barracks",
+   536
+  ],
+  [
+   "The Great Gubal Library (Hard)",
+   578
+  ],
+  [
+   "Xelphatol",
+   1113
+  ],
+  [
+   "The Palace of the Dead",
+   570
+  ],
+  [
+   "The Aquapolis",
+   558
+  ],
+  [
+   "Last Remnant",
+   353
+  ],
+  [
+   "Haunted Manor",
+   571
+  ],
+  [
+   "Topmast Apartment Lobby",
+   573
+  ],
+  [
+   "Lily Hills Apartment Lobby",
+   574
+  ],
+  [
+   "Sultana's Breath Apartment Lobby",
+   575
+  ],
+  [
+   "Topmast Apartment",
+   608
+  ],
+  [
+   "Lily Hills Apartment",
+   609
+  ],
+  [
+   "Sultana's Breath Apartment",
+   610
+  ],
+  [
+   "Eyes of the Creator",
+   580
+  ],
+  [
+   "Breath of the Creator",
+   581
+  ],
+  [
+   "Heart of the Creator",
+   582
+  ],
+  [
+   "Soul of the Creator",
+   583
+  ],
+  [
+   "Containment Bay P1T6",
+   576
+  ],
+  [
+   "Frondale's Home for Friendless Foundlings",
+   611
+  ],
+  [
+   "Shisui of the Violet Tides",
+   616
+  ],
+  [
+   "Baelsar's Wall",
+   1114
+  ],
+  [
+   "Dun Scaith",
+   627
+  ],
+  [
+   "Lichenweed",
+   631
+  ],
+  [
+   "Sohm Al (Hard)",
+   617
+  ],
+  [
+   "Containment Bay Z1T9",
+   637
+  ],
+  [
+   "Yanxia",
+   614
+  ],
+  [
+   "Omega Control",
+   636
+  ],
+  [
+   "The Diadem",
+   656
+  ],
+  [
+   "The Sirensong Sea",
+   1142
+  ],
+  [
+   "Kugane Castle",
+   662
+  ],
+  [
+   "The Temple of the Fist",
+   663
+  ],
+  [
+   "Shirogane",
+   641
+  ],
+  [
+   "Rhalgr's Reach",
+   635
+  ],
+  [
+   "The Fringes",
+   612
+  ],
+  [
+   "The Peaks",
+   620
+  ],
+  [
+   "The Lochs",
+   621
+  ],
+  [
+   "Kugane",
+   628
+  ],
+  [
+   "The Ruby Sea",
+   613
+  ],
+  [
+   "The Azim Steppe",
+   622
+  ],
+  [
+   "Ala Mhigo",
+   1146
+  ],
+  [
+   "Bardam's Mettle",
+   1143
+  ],
+  [
+   "The <i>Misery</i>",
+   680
+  ],
+  [
+   "Ruby Bazaar Offices",
+   639
+  ],
+  [
+   "The House of the Fierce",
+   681
+  ],
+  [
+   "The Doman Enclave",
+   682
+  ],
+  [
+   "Bokairo Inn",
+   629
+  ],
+  [
+   "The First Altar of Djanan Qhat",
+   683
+  ],
+  [
+   "The Resonatorium",
+   684
+  ],
+  [
+   "The Royal Menagerie",
+   727
+  ],
+  [
+   "Kobai Goten Apartment Lobby",
+   654
+  ],
+  [
+   "The Interdimensional Rift",
+   658
+  ],
+  [
+   "Deltascape V1.0",
+   691
+  ],
+  [
+   "Deltascape V2.0",
+   692
+  ],
+  [
+   "Deltascape V3.0",
+   693
+  ],
+  [
+   "Deltascape V4.0",
+   694
+  ],
+  [
+   "Doma Castle",
+   1144
+  ],
+  [
+   "Castrum Abania",
+   1145
+  ],
+  [
+   "Emanation",
+   719
+  ],
+  [
+   "The Blessed Treasury",
+   674
+  ],
+  [
+   "The Royal Airship Landing",
+   679
+  ],
+  [
+   "Transparency",
+   679
+  ],
+  [
+   "The Lost Canals of Uznair",
+   712
+  ],
+  [
+   "Astragalos",
+   729
+  ],
+  [
+   "The Drowned City of Skalla",
+   1172
+  ],
+  [
+   "Eureka Anemos",
+   732
+  ],
+  [
+   "The Binding Coil of Bahamut",
+   733
+  ],
+  [
+   "The Hall of the Griffin",
+   737
+  ],
+  [
+   "The <i>Prima Vista</i> Tiring Room",
+   735
+  ],
+  [
+   "The <i>Prima Vista</i> Bridge",
+   736
+  ],
+  [
+   "The Royal City of Rabanastre",
+   734
+  ],
+  [
+   "Private Cottage - Shirogane",
+   649
+  ],
+  [
+   "Private House - Shirogane",
+   650
+  ],
+  [
+   "Private Mansion - Shirogane",
+   651
+  ],
+  [
+   "Company Workshop - Shirogane",
+   652
+  ],
+  [
+   "Private Chambers - Shirogane",
+   653
+  ],
+  [
+   "Myth",
+   730
+  ],
+  [
+   "Kobai Goten Apartment",
+   655
+  ],
+  [
+   "Hells' Lid",
+   742
+  ],
+  [
+   "Crystal Tower Training Grounds",
+   745
+  ],
+  [
+   "The Fractal Continuum (Hard)",
+   743
+  ],
+  [
+   "Sigmascape V1.0",
+   748
+  ],
+  [
+   "Sigmascape V2.0",
+   749
+  ],
+  [
+   "Sigmascape V3.0",
+   750
+  ],
+  [
+   "The Jade Stoa",
+   746
+  ],
+  [
+   "Valentione's Ceremony",
+   741
+  ],
+  [
+   "Kienkan",
+   744
+  ],
+  [
+   "Reisen Temple",
+   764
+  ],
+  [
+   "The Swallow's Compass",
+   768
+  ],
+  [
+   "Eureka Pagos",
+   763
+  ],
+  [
+   "The Great Hunt",
+   761
+  ],
+  [
+   "Reisen Temple Road",
+   781
+  ],
+  [
+   "The Ridorana Lighthouse",
+   776
+  ],
+  [
+   "Ultimacy",
+   777
+  ],
+  [
+   "Castrum Fluminis",
+   778
+  ],
+  [
+   "Heaven-on-High",
+   780
+  ],
+  [
+   "The Burn",
+   769
+  ],
+  [
+   "Saint Mocianne's Arboretum (Hard)",
+   788
+  ],
+  [
+   "The Ridorana Cataract",
+   787
+  ],
+  [
+   "Eureka Pyros",
+   795
+  ],
+  [
+   "Psiscape V1.0",
+   798
+  ],
+  [
+   "Hidden Gorge",
+   791
+  ],
+  [
+   "Kugane Ohashi",
+   806
+  ],
+  [
+   "Blue Sky",
+   796
+  ],
+  [
+   "Lakeland",
+   813
+  ],
+  [
+   "Kholusia",
+   814
+  ],
+  [
+   "Amh Araeng",
+   815
+  ],
+  [
+   "Il Mheg",
+   816
+  ],
+  [
+   "The Rak'tika Greatwood",
+   817
+  ],
+  [
+   "The Tempest",
+   818
+  ],
+  [
+   "The Crystarium",
+   819
+  ],
+  [
+   "Eulmore",
+   820
+  ],
+  [
+   "The Shifting Altars of Uznair",
+   794
+  ],
+  [
+   "The Ghimlyt Dark",
+   1174
+  ],
+  [
+   "Psiscape V2.0",
+   799
+  ],
+  [
+   "Hells' Kier",
+   810
+  ],
+  [
+   "The Haunted Manor",
+   809
+  ],
+  [
+   "The Fall of Belah'dia",
+   792
+  ],
+  [
+   "The Qitana Ravel",
+   823
+  ],
+  [
+   "The Orbonne Monastery",
+   826
+  ],
+  [
+   "Eureka Hydatos",
+   827
+  ],
+  [
+   "The Wreath of Snakes",
+   824
+  ],
+  [
+   "Garlean Legion Tents",
+   829
+  ],
+  [
+   "Eorzean Alliance Headquarters",
+   829
+  ],
+  [
+   "Dohn Mheg",
+   821
+  ],
+  [
+   "The Twinning",
+   840
+  ],
+  [
+   "Amaurot",
+   838
+  ],
+  [
+   "Mt. Gulg",
+   822
+  ],
+  [
+   "Akadaemia Anyder",
+   841
+  ],
+  [
+   "Malikah's Well",
+   836
+  ],
+  [
+   "Holminster Switch",
+   837
+  ],
+  [
+   "The Syrcus Trench",
+   842
+  ],
+  [
+   "The Pendants Personal Suite",
+   843
+  ],
+  [
+   "The Ocular",
+   844
+  ],
+  [
+   "Dutiful Sisters of the Edelweiss",
+   129
+  ],
+  [
+   "Dock Storehouse",
+   137
+  ],
+  [
+   "The Nabaath Mines",
+   815
+  ],
+  [
+   "Ronkan Reflections",
+   817
+  ],
+  [
+   "The Crown of the Immaculate",
+   846
+  ],
+  [
+   "The Confessional of Toupasa the Elder",
+   859
+  ],
+  [
+   "The Dancing Plague",
+   845
+  ],
+  [
+   "The Dying Gasp",
+   847
+  ],
+  [
+   "The Core",
+   849
+  ],
+  [
+   "The Halo",
+   850
+  ],
+  [
+   "The Nereus Trench",
+   851
+  ],
+  [
+   "Atlas Peak",
+   852
+  ],
+  [
+   "The Dungeons of Lyhe Ghiah",
+   879
+  ],
+  [
+   "The Empty",
+   878
+  ],
+  [
+   "The Grand Cosmos",
+   884
+  ],
+  [
+   "Onsal Hakair",
+   888
+  ],
+  [
+   "The Copied Factory",
+   882
+  ],
+  [
+   "Liminal Space",
+   887
+  ],
+  [
+   "The Firmament",
+   886
+  ],
+  [
+   "Excavation Tunnels",
+   895
+  ],
+  [
+   "Lyhe Mheg",
+   889
+  ],
+  [
+   "The Imperial Palace",
+   893
+  ],
+  [
+   "Cinder Drift",
+   897
+  ],
+  [
+   "Anamnesis Anyder",
+   898
+  ],
+  [
+   "The Gandof Thunder Plains",
+   902
+  ],
+  [
+   "Ashfall",
+   903
+  ],
+  [
+   "The Heroes' Gauntlet",
+   916
+  ],
+  [
+   "Trial's Threshold",
+   914
+  ],
+  [
+   "Great Glacier",
+   905
+  ],
+  [
+   "Cid's Memory",
+   911
+  ],
+  [
+   "The Falling City of Nym",
+   899
+  ],
+  [
+   "Frozen Reflections",
+   905
+  ],
+  [
+   "Gangos",
+   915
+  ],
+  [
+   "The <i>Endeavor</i>",
+   900
+  ],
+  [
+   "Bozjan Southern Front",
+   920
+  ],
+  [
+   "Transmission Control",
+   913
+  ],
+  [
+   "The Puppets' Bunker",
+   917
+  ],
+  [
+   "The Seat of Sacrifice",
+   922
+  ],
+  [
+   "The Rift",
+   922
+  ],
+  [
+   "Anogg's Lair",
+   895
+  ],
+  [
+   "Castrum Lacus Litore",
+   920
+  ],
+  [
+   "Terncliff",
+   919
+  ],
+  [
+   "Terncliff Bay",
+   926
+  ],
+  [
+   "Matoya's Relict",
+   933
+  ],
+  [
+   "Sphere of Naught",
+   942
+  ],
+  [
+   "The Garden of Nowhere",
+   945
+  ],
+  [
+   "Laxan Loft",
+   943
+  ],
+  [
+   "Castrum Marinum Drydocks",
+   934
+  ],
+  [
+   "The Shifting Oubliettes of Lyhe Ghiah",
+   924
+  ],
+  [
+   "Delubrum Reginae",
+   936
+  ],
+  [
+   "The Last Trace",
+   964
+  ],
+  [
+   "Bygone Gaol",
+   944
+  ],
+  [
+   "The Tower at Paradigm's Breach",
+   966
+  ],
+  [
+   "Zadnor",
+   975
+  ],
+  [
+   "Paglth'an",
+   938
+  ],
+  [
+   "G-Savior Deck",
+   950
+  ],
+  [
+   "The <i>Dalriada</i>",
+   975
+  ],
+  [
+   "The Dark Inside",
+   992
+  ],
+  [
+   "The Mothercrystal",
+   995
+  ],
+  [
+   "The Final Day",
+   997
+  ],
+  [
+   "Empyreum",
+   979
+  ],
+  [
+   "Ingleside Apartment Lobby",
+   985
+  ],
+  [
+   "Private Cottage - Empyreum",
+   980
+  ],
+  [
+   "Private House - Empyreum",
+   981
+  ],
+  [
+   "Private Mansion - Empyreum",
+   982
+  ],
+  [
+   "Company Workshop - Empyreum",
+   984
+  ],
+  [
+   "Private Chambers - Empyreum",
+   983
+  ],
+  [
+   "Ingleside Apartment",
+   999
+  ],
+  [
+   "Old Sharlayan",
+   962
+  ],
+  [
+   "Radz-at-Han",
+   963
+  ],
+  [
+   "Labyrinthos",
+   956
+  ],
+  [
+   "Thavnair",
+   957
+  ],
+  [
+   "Garlemald",
+   958
+  ],
+  [
+   "Mare Lamentorum",
+   959
+  ],
+  [
+   "Ultima Thule",
+   960
+  ],
+  [
+   "Elpis",
+   961
+  ],
+  [
+   "The Tower of Zot",
+   952
+  ],
+  [
+   "The Phantoms' Feast",
+   994
+  ],
+  [
+   "Smileton",
+   976
+  ],
+  [
+   "The Gates of Pandæmonium",
+   1002
+  ],
+  [
+   "Ktisis Hyperboreia",
+   974
+  ],
+  [
+   "The Stigma Dreamscape",
+   986
+  ],
+  [
+   "The Aitiascope",
+   978
+  ],
+  [
+   "The Fervid Limbo",
+   1006
+  ],
+  [
+   "The Tower of Babil",
+   969
+  ],
+  [
+   "The Excitatron 6000",
+   1000
+  ],
+  [
+   "The Stagnant Limbo",
+   1004
+  ],
+  [
+   "The Sanguine Limbo",
+   1008
+  ],
+  [
+   "The Dead Ends",
+   973
+  ],
+  [
+   "Vanaspati",
+   970
+  ],
+  [
+   "Lemures Headquarters",
+   971
+  ],
+  [
+   "Main Hall",
+   987
+  ],
+  [
+   "Andron",
+   990
+  ],
+  [
+   "Strategy Room",
+   1001
+  ],
+  [
+   "Magna Glacies",
+   1010
+  ],
+  [
+   "Beyond the Stars",
+   1026
+  ],
+  [
+   "The Nethergate",
+   1024
+  ],
+  [
+   "Propylaion",
+   1031
+  ],
+  [
+   "Alzadaal's Legacy",
+   1050
+  ],
+  [
+   "Aglaia",
+   1054
+  ],
+  [
+   "Medias Res",
+   968
+  ],
+  [
+   "The Palaistra",
+   1032
+  ],
+  [
+   "The Volcanic Heart",
+   1033
+  ],
+  [
+   "The Porta Decumana",
+   1048
+  ],
+  [
+   "The Omphalos",
+   1061
+  ],
+  [
+   "Restricted Archives",
+   1057
+  ],
+  [
+   "The Fell Court of Troia",
+   1070
+  ],
+  [
+   "The Pestilent Purgatory",
+   1083
+  ],
+  [
+   "Unnamed Island",
+   1055
+  ],
+  [
+   "Zero's Domain",
+   1077
+  ],
+  [
+   "Meghaduta Guest Chambers",
+   1078
+  ],
+  [
+   "Sneaky Hollow",
+   1094
+  ],
+  [
+   "Storm's Crown",
+   1071
+  ],
+  [
+   "The Hollow Purgatory",
+   1085
+  ],
+  [
+   "Elysion",
+   1073
+  ],
+  [
+   "The Sil'dihn Subterrane",
+   1069
+  ],
+  [
+   "Another Sil'dihn Subterrane",
+   1075
+  ],
+  [
+   "The Caustic Purgatory",
+   1081
+  ],
+  [
+   "Stygian Insenescence Cells",
+   1087
+  ],
+  [
+   "Euphrosyne",
+   1118
+  ],
+  [
+   "Lapis Manalis",
+   1097
+  ],
+  [
+   "The Shifting Gymnasion Agonon",
+   1123
+  ],
+  [
+   "Sylphstep",
+   1098
+  ],
+  [
+   "Eureka Orthos",
+   1124
+  ],
+  [
+   "The Clockwork Castletown",
+   1116
+  ],
+  [
+   "Mount Ordeals",
+   1095
+  ],
+  [
+   "Khadga",
+   1125
+  ],
+  [
+   "The Voidcast Dais",
+   1140
+  ],
+  [
+   "The Aetherfont",
+   1126
+  ],
+  [
+   "The Dæmons' Nest",
+   1149
+  ],
+  [
+   "Ascension",
+   1153
+  ],
+  [
+   "Apex of Creation",
+   1154
+  ],
+  [
+   "The Aetherial Slough",
+   1147
+  ],
+  [
+   "The Gilded Araya",
+   1136
+  ],
+  [
+   "The Chamber of Fourteen",
+   1151
+  ],
+  [
+   "Estinien's Chambers",
+   1161
+  ],
+  [
+   "Senatus",
+   1160
+  ],
+  [
+   "The Red Moon",
+   1162
+  ],
+  [
+   "Mount Rokkon",
+   1137
+  ],
+  [
+   "Another Mount Rokkon",
+   1155
+  ],
+  [
+   "The Red Sands",
+   1138
+  ],
+  [
+   "Tuliyollal",
+   1185
+  ],
+  [
+   "Solution Nine",
+   1186
+  ],
+  [
+   "Urqopacha",
+   1187
+  ],
+  [
+   "Kozama'uka",
+   1188
+  ],
+  [
+   "Yak T'el",
+   1189
+  ],
+  [
+   "Shaaloani",
+   1190
+  ],
+  [
+   "Heritage Found",
+   1191
+  ],
+  [
+   "Living Memory",
+   1192
+  ],
+  [
+   "The Lunar Subterrane",
+   1164
+  ],
+  [
+   "Aloalo Island",
+   1176
+  ],
+  [
+   "Another Aloalo Island",
+   1179
+  ],
+  [
+   "Blunderville",
+   1165
+  ],
+  [
+   "Thaleia",
+   1178
+  ],
+  [
+   "Blunderville Square",
+   1197
+  ],
+  [
+   "The Abyssal Fracture",
+   1168
+  ],
+  [
+   "Cenote Ja Ja Gural",
+   1209
+  ],
+  [
+   "Ihuykatumu",
+   1167
+  ],
+  [
+   "Vanguard",
+   1198
+  ],
+  [
+   "Tender Valley",
+   1203
+  ],
+  [
+   "Worqor Zormor",
+   1193
+  ],
+  [
+   "Origenics",
+   1208
+  ],
+  [
+   "Alexandria",
+   1199
+  ],
+  [
+   "The Skydeep Cenote",
+   1194
+  ],
+  [
+   "Strayborough",
+   1204
+  ],
+  [
+   "Lovely Lovering",
+   1227
+  ],
+  [
+   "The Thundering",
+   1231
+  ],
+  [
+   "Worqor Lar Dor",
+   1195
+  ],
+  [
+   "Blasting Ring",
+   1229
+  ],
+  [
+   "Scratching Ring",
+   1225
+  ],
+  [
+   "Interphos",
+   1202
+  ],
+  [
+   "Summit of Everkeep",
+   1200
+  ],
+  [
+   "Sunperch",
+   1170
+  ],
+  [
+   "Earthen Sky Hideout",
+   1171
+  ],
+  [
+   "Main Deck",
+   1206
+  ],
+  [
+   "The Backroom",
+   1207
+  ],
+  [
+   "Skydeep Cenote Inner Chamber",
+   1222
+  ],
+  [
+   "Tritails Training",
+   1223
+  ],
+  [
+   "Greenroom",
+   1224
+  ],
+  [
+   "The For'ard Cabins",
+   1205
+  ],
+  [
+   "Manor Basement",
+   1233
+  ],
+  [
+   "Dreamlike Palace",
+   1234
+  ],
+  [
+   "Yuweyawata",
+   1242
+  ],
+  [
+   "Jeuno: The First Walk",
+   1248
+  ],
+  [
+   "Lower Jeuno",
+   1264
+  ],
+  [
+   "Starlight Stalls",
+   1247
+  ],
+  [
+   "Hall of the Unbound",
+   1255
+  ],
+  [
+   "Norvrandt",
+   1249
+  ],
+  [
+   "Hydaelyn",
+   1251
+  ],
+  [
+   "Zorgor the Boundless",
+   1246
+  ],
+  [
+   "South Horn",
+   1252
+  ],
+  [
+   "Tower of Blood",
+   1252
+  ],
+  [
+   "Rebel Ring",
+   1258
+  ],
+  [
+   "Groovy Ring",
+   1256
+  ],
+  [
+   "Hunter's Ring",
+   1262
+  ],
+  [
+   "Hunting Ground",
+   1262
+  ],
+  [
+   "The Underkeep",
+   1266
+  ],
+  [
+   "Demolition Site",
+   1260
+  ],
+  [
+   "Sinus Ardorum",
+   1237
+  ],
+  [
+   "Break Room",
+   1268
+  ],
+  [
+   "Throne Room",
+   1274
+  ],
+  [
+   "Phantom Village",
+   1269
+  ],
+  [
+   "Recollection",
+   1270
+  ],
+  [
+   "San d'Oria: The Second Walk",
+   1304
+  ],
+  [
+   "The Ageless Necropolis",
+   1295
+  ],
+  [
+   "The Lightless Abyss",
+   1295
+  ],
+  [
+   "Zirgorteh the Open-armed",
+   1297
+  ],
+  [
+   "The Meso Terminal",
+   1292
+  ],
+  [
+   "Vault Oneiron",
+   1279
+  ],
+  [
+   "The Bayside Battleground",
+   1293
+  ],
+  [
+   "The Pâtisserie",
+   1298
+  ],
+  [
+   "Containment Complex 10-29",
+   1299
+  ],
+  [
+   "The Windward Wilds",
+   1300
+  ],
+  [
+   "Phaenna",
+   1291
+  ],
+  [
+   "Mistwake",
+   1314
+  ],
+  [
+   "Pilgrim's Traverse",
+   1280
+  ],
+  [
+   "Ring Noir",
+   1320
+  ],
+  [
+   "Hell on Rails",
+   1307
+  ],
+  [
+   "???",
+   1307
+  ],
+  [
+   "The X-Ring",
+   1322
+  ],
+  [
+   "The Crown",
+   1324
+  ],
+  [
+   "<i>The Merchant's Tale</i>",
+   1315
+  ],
+  [
+   "Worqor Chirteh",
+   1313
+  ],
+  [
+   "Treno",
+   1328
+  ],
+  [
+   "Alexandria Crater",
+   1334
+  ],
+  [
+   "The Maiden's Home",
+   1337
+  ],
+  [
+   "Bentini Depot",
+   1338
+  ],
+  [
+   "Lilyswim",
+   1336
+  ],
+  [
+   "North Horn",
+   1346
+  ],
+  [
+   "Tower of Magic",
+   1346
+  ],
+  [
+   "Oizys",
+   1310
+  ],
+  [
+   "Kanilokka Corpus Substructure",
+   1329
+  ],
+  [
+   "Arcadia",
+   1326
+  ],
+  [
+   "Windurst: The Third Walk",
+   1368
+  ],
+  [
+   "The Clyteum",
+   1345
+  ],
+  [
+   "The Unmaking",
+   1361
+  ],
+  [
+   "Nihil",
+   1361
+  ],
+  [
+   "First Board of the Unbroken",
+   1339
+  ],
+  [
+   "Second Board of the Unbroken",
+   1340
+  ],
+  [
+   "Third Board of the Unbroken",
+   1341
+  ],
+  [
+   "First Master's Board",
+   1342
+  ],
+  [
+   "Second Master's Board",
+   1343
+  ],
+  [
+   "Archeia Harmonias",
+   1357
+  ],
+  [
+   "The Dire Deepcroft",
+   1369
+  ],
+  [
+   "Keybound Square",
+   1360
+  ],
+  [
+   "Unmoored Isle",
+   1364
+  ],
+  [
+   "Auxesia",
+   1319
+  ]
+ ]
 }

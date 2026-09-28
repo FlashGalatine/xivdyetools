@@ -1,5 +1,5 @@
 {
-  "_comment": "Duty tokens Teamcraft has no drop data for: token item id → { name, duties (Duty Finder names) }. An empty duties list = a known token whose duty is not in the data yet; its exchanges are dropped (blank beats wrong). Reviewed 2026-09-27.",
+  "_comment": "Duty tokens Teamcraft has no drop data for: token item id → { name, duties (Duty Finder names) }. Only Savage, Extreme, Ultimate, Variant and Criterion tokens belong here (Mar 2026 reminders: other tokens keep their vendor and currency). An empty duties list = a known high-end token whose duty is not in the data yet; its exchanges are dropped (blank beats wrong). Reviewed 2026-09-27.",
   "43549": { "name": "AAC Illustrated: LHW Edition I", "duties": ["AAC Light-heavyweight M1 (Savage)"] },
   "43550": { "name": "AAC Illustrated: LHW Edition II", "duties": ["AAC Light-heavyweight M2 (Savage)"] },
   "43551": { "name": "AAC Illustrated: LHW Edition III", "duties": ["AAC Light-heavyweight M3 (Savage)"] },
@@ -14,7 +14,5 @@
   "49748": { "name": "Runaway Totem", "duties": ["Hell on Rails (Extreme)"] },
   "50892": { "name": "Totem of Naught", "duties": ["the Unmaking (Extreme)"] },
   "52321": { "name": "Mad Harlequin's Totem", "duties": [] },
-  "12680": { "name": "Tarnished Gordian Bolt", "duties": [] },
-  "17521": { "name": "Proto Ultima Heat Shielding", "duties": [] },
   "41804": { "name": "Mica Magicog", "duties": [] }
 }

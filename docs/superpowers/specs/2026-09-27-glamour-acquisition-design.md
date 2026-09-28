@@ -192,3 +192,18 @@ script:
    - **Duty names** lose the game's text markup (`<i>…</i>`) and doubled spaces.
    - A table-invariant test (`tests/acquisition/table.test.ts`) guards the generated file against each
      of these classes, and the meta records the top cost currencies and vendor NPCs.
+5. **The GPOSERS "Reminders for Glam Artists/Proofreaders" (as of March 2026)**, supplied by the user
+   the same day, refine the October 2025 guide. Applied:
+   - **Currencies are written in the plural**, even for one unit ("1 Wolf Marks"); gil is not a
+     currency here. Plan Review Focus 3 ("a single unit in the singular") is superseded.
+   - **Vendor choice (D9 refined):** always a city over the field; a main (ARR) city over an end-game
+     city; New/Old Gridania over the other ARR cities; then the lowest-level zone; among Cosmic
+     Exploration zones the earliest (lowest TerritoryType id).
+   - **Token rule (D5/D6 narrowed):** only Savage, Extreme, Ultimate, Variant and Criterion token gear
+     lists the duty; any other token (normal raids, alliance raids, Deep Dungeon grips) keeps its vendor
+     and currency. D6's "all duties" answer from design 2c is superseded by the written reminder.
+   - **Only-source rules added:** Deep Dungeons and desynthesis, beside quests, maps and gacha.
+   - **Emperor's New items** always read `Goberin - Western Thanalan - Vesper Bay`.
+   - Not applied here: seasonal events, PvP Series Rewards and Veteran Rewards need data no source
+     carries (non-goals). "Rings: Item Name" for two identical rings and "prefer the dyeable twin" are
+     export rules and belong to the Glamour Reader (web).
