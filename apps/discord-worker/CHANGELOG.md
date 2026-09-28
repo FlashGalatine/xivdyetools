@@ -15,7 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   item lookup is api-worker's `POST /v1/chara/resolve` through the `UNIVERSALIS_PROXY` service
   binding (`UNIVERSALIS_PROXY_URL` in local development). Every request through the binding
   shares one api-worker rate-limit key (a binding request carries no client IP), so a `/glamour`
-  spends exactly one resolve call and draws no item icons. Rate tier: the default 15/min.
+  spends exactly one resolve call and draws no item icons. The bucket is api-worker's
+  `SERVICE_RATE_LIMITER` (1300 / 60 s); a 429 from it is answered as busy and traced as
+  `rate_limited`, not as a failure. Rate tier: the default 15/min.
   Registered in the `color-tools` category, `/about` and `/manual`. **Merging re-registers the
   commands** (`deploy-discord-worker.yml`).
 

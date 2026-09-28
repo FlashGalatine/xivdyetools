@@ -639,6 +639,7 @@
     "glamourNoItemName": "모델 {key}",
     "glamourNoGear": "이 파일에는 장비가 없습니다.",
     "glamourResolveFailed": "지금은 아이템을 조회할 수 없습니다. 1분 후에 다시 시도해 주세요.",
+    "glamourResolveBusy": "지금은 아이템 조회가 붐빕니다. 1분 후에 다시 시도해 주세요.",
     "glamourManual": "캐릭터 파일 안내:",
     "glamourSlot": {
       "MainHand": "무기",
@@ -650,9 +651,9 @@
       "Feet": "발",
       "Ears": "귀",
       "Neck": "목",
-      "Wrists": "팔",
-      "RightRing": "오른손",
-      "LeftRing": "왼손"
+      "Wrists": "팔찌",
+      "RightRing": "반지(우)",
+      "LeftRing": "반지(좌)"
     }
   },
   "firstRun": {

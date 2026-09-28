@@ -639,6 +639,7 @@
     "glamourNoItemName": "模型 {key}",
     "glamourNoGear": "这个文件没有穿戴装备。",
     "glamourResolveFailed": "暂时无法查询物品，请一分钟后再试。",
+    "glamourResolveBusy": "物品查询当前繁忙，请一分钟后再试。",
     "glamourManual": "关于角色文件：",
     "glamourSlot": {
       "MainHand": "武器",

@@ -68,7 +68,12 @@ function resolveThroughApiWorker(env: Env): GlamourInput['resolve'] {
     } else {
       throw new Error('api-worker binding not configured');
     }
-    if (!response.ok) throw new Error(`api-worker answered ${response.status}`);
+    if (!response.ok) {
+      // The status rides on the error: bot-logic reads a 429 as "busy", not "broken"
+      throw Object.assign(new Error(`api-worker answered ${response.status}`), {
+        status: response.status,
+      });
+    }
     const envelope = (await response.json().catch(() => null)) as ResolveEnvelope | null;
     const items = envelope?.success === true ? envelope.data?.items : null;
     if (!items || typeof items !== 'object') throw new Error('Malformed resolve envelope');
@@ -143,6 +148,8 @@ async function processGlamourCommand(
   if (!result.ok) {
     if (result.error === 'PARSE_FAILED') markCommandOutcome(interaction, 'image_input');
     if (result.error === 'RESOLVE_FAILED') markCommandOutcome(interaction, 'unknown');
+    // api-worker's service bucket is full for the minute: throttled, not broken
+    if (result.error === 'RESOLVE_BUSY') markCommandOutcome(interaction, 'rate_limited');
     if (result.error === 'GENERATION_FAILED') markCommandOutcome(interaction, 'render');
     if (logger) logger.warn('Glamour command failed', { error: result.error });
     // FINDING-019: the parser can echo .chara field VALUES; this edit is public

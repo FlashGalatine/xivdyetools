@@ -27,6 +27,8 @@ import {
   charaTwinsOf,
   defaultCharaTwin,
   formatCharaModelLabel,
+  GPOSERS_HEADER,
+  gposersGroups,
   parseCharaFile,
   resolveCharaColors,
   type CharaGearModel,
@@ -35,6 +37,7 @@ import {
   type CharaPieceTone,
   type CharaTwin,
   type CharaTwinRules,
+  type GposersInput,
   type ResolvedCharaCharacter,
 } from '@xivdyetools/core';
 import type { RaceKey } from '@xivdyetools/types';
@@ -64,6 +67,8 @@ export interface GlamourResolvedItem {
   itemId: number;
   names: GlamourItemNames;
   alternates: ReadonlyArray<{ itemId: number; names: GlamourItemNames; acquisition?: string }>;
+  /** Rows sharing this look — the whole family, past the named alternates' cap */
+  familySize?: number;
   /** OffHand only: the off-hand model is the main weapon's own (quiver, focus…) */
   viaMainHand?: boolean;
   rules?: CharaTwinRules[];
@@ -101,7 +106,7 @@ export type GlamourResult =
   | { ok: true; svgString: string; embed: EmbedData }
   | {
       ok: false;
-      error: 'PARSE_FAILED' | 'NO_GEAR' | 'RESOLVE_FAILED' | 'GENERATION_FAILED';
+      error: 'PARSE_FAILED' | 'NO_GEAR' | 'RESOLVE_FAILED' | 'RESOLVE_BUSY' | 'GENERATION_FAILED';
       errorMessage: string;
     };
 
@@ -126,33 +131,6 @@ const SLOT_ORDER: readonly CharaGearSlotId[] = [
   'RightRing',
   'LeftRing',
 ];
-
-/** The GPOSERS form's own labels — English in every locale, it is a submission format. */
-const GPOSERS_LABELS: Record<CharaGearSlotId, string> = {
-  MainHand: 'Main Hand',
-  OffHand: 'Off Hand',
-  HeadGear: 'Head',
-  Body: 'Body',
-  Hands: 'Hands',
-  Legs: 'Legs',
-  Feet: 'Feet',
-  Ears: 'Earrings',
-  Neck: 'Necklace',
-  Wrists: 'Bracelets',
-  RightRing: 'Right Ring',
-  LeftRing: 'Left Ring',
-};
-
-/** Accessories carry no dye channels; GPOSERS writes no Dye lines for them. */
-const DYEABLE: ReadonlySet<CharaGearSlotId> = new Set<CharaGearSlotId>([
-  'MainHand',
-  'OffHand',
-  'HeadGear',
-  'Body',
-  'Hands',
-  'Legs',
-  'Feet',
-]);
 
 /** Core's race keys, in `EquipRaceCategory` column (wear-mask bit) order. */
 const RACE_KEYS: readonly RaceKey[] = ['hyur', 'elezen', 'lalafell', 'miqote', 'roegadyn', 'auRa', 'hrothgar', 'viera'];
@@ -275,7 +253,8 @@ function readPiece(
     dyes,
     name: localName(picked.names, locale),
     nameEn: picked.names.en,
-    twins: twins.length - 1,
+    // The whole family, as the web counts it — not just the named alternates
+    twins: (item.familySize ?? twins.length) - 1,
     tone,
     status,
     acquisition: picked.acquisition ?? null,
@@ -313,23 +292,23 @@ function plain(text: string): string {
   return text.replace(/([*_~`|\\])/g, '\\$1');
 }
 
-/** Every piece in the GPOSERS form, Discord-bold labels, identical rings once. */
+/**
+ * Every piece in the GPOSERS form — core's model (`chara-gposers`), the one
+ * the web reader renders too — with Discord-bold labels and no blank lines.
+ */
 function gposersList(pieces: Piece[], glasses: string | null): string[] {
-  const right = pieces.find((p) => p.slot === 'RightRing');
-  const left = pieces.find((p) => p.slot === 'LeftRing');
-  const sameRings = !!right && !!left && right.name === left.name;
-  const lines = ['**Glamour Items:**'];
+  const input: GposersInput = {};
   for (const piece of pieces) {
-    if (sameRings && piece.slot === 'LeftRing') continue;
-    const label = sameRings && piece.slot === 'RightRing' ? 'Rings' : GPOSERS_LABELS[piece.slot];
-    lines.push(`**${label}:** ${plain(piece.name)}`);
-    if (DYEABLE.has(piece.slot)) {
-      for (const dye of piece.dyes) lines.push(`Dye ${dye.channel}: ${dye.name}`);
-    }
-    lines.push(piece.acquisition ? `Acquisition: ${plain(piece.acquisition)}` : 'Acquisition:');
+    const dye = (channel: 1 | 2): string | null => piece.dyes.find((d) => d.channel === channel)?.name ?? null;
+    input[piece.slot] = { name: piece.name, dye1: dye(1), dye2: dye(2), acquisition: piece.acquisition };
   }
-  if (glasses) {
-    lines.push(`**Facewear:** ${plain(glasses)}`, 'Acquisition:');
+  if (glasses) input.Facewear = { name: glasses };
+  const lines = [`**${GPOSERS_HEADER}**`];
+  for (const group of gposersGroups(input)) {
+    for (const line of group) {
+      const label = line.bold ? `**${line.label}**` : line.label;
+      lines.push(line.value ? `${label} ${plain(line.value)}` : label);
+    }
   }
   return lines;
 }
@@ -361,7 +340,11 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
   let answer: GlamourResolveAnswer;
   try {
     answer = await input.resolve(gearModels, glassesId);
-  } catch {
+  } catch (error) {
+    // A 429 is api-worker's service bucket, full for a minute — busy, not broken
+    if ((error as { status?: unknown } | null)?.status === 429) {
+      return { ok: false, error: 'RESOLVE_BUSY', errorMessage: t.t('card.glamourResolveBusy') };
+    }
     return { ok: false, error: 'RESOLVE_FAILED', errorMessage: t.t('card.glamourResolveFailed') };
   }
 
@@ -439,19 +422,19 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     if (fixed.length > 0) {
       notes.push(
         `${t.t('card.glamourNamedLead')} ${fixed
-          .map((p) => t.t(FIXED_KEYS[p.fixed!.problem], { name: p.name, other: p.fixed!.other }))
+          .map((p) => t.t(FIXED_KEYS[p.fixed!.problem], { name: plain(p.name), other: plain(p.fixed!.other) }))
           .join(' · ')}`
       );
     }
     const blocked = pieces.filter((p) => p.blocked);
     if (blocked.length > 0) {
       notes.push(
-        `${t.t('card.glamourBlockedLead')} ${blocked.map((p) => t.t(BLOCKED_KEYS[p.blocked!], { name: p.name })).join(' · ')}`
+        `${t.t('card.glamourBlockedLead')} ${blocked.map((p) => t.t(BLOCKED_KEYS[p.blocked!], { name: plain(p.name) })).join(' · ')}`
       );
     }
     const company = pieces.filter((p) => p.company);
     if (company.length > 0) {
-      notes.push(t.t('card.glamourCompany', { list: company.map((p) => p.name).join(' · ') }));
+      notes.push(t.t('card.glamourCompany', { list: company.map((p) => plain(p.name)).join(' · ') }));
     }
     notes.push(`${t.t('card.glamourManual')} \`/manual topic:👤\``, SHARE_URL);
 

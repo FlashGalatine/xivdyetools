@@ -639,6 +639,7 @@
     "glamourNoItemName": "Model {key}",
     "glamourNoGear": "This file wears no gear.",
     "glamourResolveFailed": "Couldn't look up the items right now. Try again in a minute.",
+    "glamourResolveBusy": "The item lookup is busy right now. Try again in a minute.",
     "glamourManual": "More on character files:",
     "glamourSlot": {
       "MainHand": "WEAPON",

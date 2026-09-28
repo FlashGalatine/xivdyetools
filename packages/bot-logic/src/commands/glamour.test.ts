@@ -254,6 +254,39 @@ describe('executeGlamour', () => {
     expect(t).not.toContain('VIERA');
   });
 
+  it('counts the whole family in +N, as the web does, not just the named alternates', async () => {
+    const big: GlamourResolveAnswer = {
+      items: { ...ANSWER.items, HeadGear: { ...ANSWER.items.HeadGear!, familySize: 53 } },
+    };
+    const result = await executeGlamour(input({ resolve: async () => big }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(svgTexts(result.svgString)).toContain('+52 LOOK');
+  });
+
+  it('escapes Discord formatting in the note lines too', async () => {
+    const starred: GlamourResolveAnswer = {
+      items: {
+        ...ANSWER.items,
+        Legs: { ...ANSWER.items.Legs!, names: names('Gaskins *Viera*') },
+      },
+    };
+    const result = await executeGlamour(input({ resolve: async () => starred }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(result.embed.description).toContain('No fix: Gaskins \\*Viera\\*');
+  });
+
+  it('says the lookup is busy, not broken, when api-worker rate-limits it', async () => {
+    const result = await executeGlamour(
+      input({
+        resolve: async () => {
+          throw Object.assign(new Error('api-worker answered 429'), { status: 429 });
+        },
+      })
+    );
+    expect(result).toMatchObject({ ok: false, error: 'RESOLVE_BUSY' });
+    if (!result.ok) expect(result.errorMessage).toMatch(/busy/i);
+  });
+
   it('answers a file it cannot read with the parse error', async () => {
     const result = await executeGlamour(input({ fileText: 'not json' }));
     expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });

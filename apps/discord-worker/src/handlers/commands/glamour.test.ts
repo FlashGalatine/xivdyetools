@@ -29,6 +29,12 @@ vi.mock('../../services/bot-i18n.js', async () => {
   };
 });
 
+const markMock = vi.fn();
+vi.mock('../../services/command-trace.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/command-trace.js')>();
+  return { ...actual, markCommandOutcome: (...args: unknown[]) => markMock(...args) };
+});
+
 const mockExecuteGlamour = vi.fn();
 vi.mock('@xivdyetools/bot-logic', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@xivdyetools/bot-logic')>();
@@ -170,6 +176,29 @@ describe('/glamour', () => {
     const { resolve } = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
 
     await expect(resolve([{ slot: 'HeadGear', base: 361, variant: 5 }], null)).rejects.toThrow('503');
+  });
+
+  it('carries the api-worker status on a refused resolve, so a 429 reads as busy', async () => {
+    binding.fetch.mockResolvedValue(new Response('slow down', { status: 429 }));
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+    await settle();
+    const { resolve } = mockExecuteGlamour.mock.calls[0][0] as GlamourInput;
+
+    await expect(resolve([{ slot: 'HeadGear', base: 361, variant: 5 }], null)).rejects.toMatchObject({ status: 429 });
+  });
+
+  it('records a busy lookup as rate limited, not as a failure of ours', async () => {
+    mockExecuteGlamour.mockResolvedValue({
+      ok: false,
+      error: 'RESOLVE_BUSY',
+      errorMessage: 'The item lookup is busy right now. Try again in a minute.',
+    });
+    const interaction = makeInteraction(CDN_URL);
+    await handleGlamourCommand(interaction, env, ctx);
+    await settle();
+
+    expect(markMock).toHaveBeenCalledWith(interaction, 'rate_limited');
+    expect(lastEdit().embeds[0].description).toContain('busy');
   });
 
   it('answers a failed read with the error, never a card', async () => {

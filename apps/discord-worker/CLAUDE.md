@@ -162,7 +162,7 @@ hex helpers come from `@xivdyetools/bot-logic` / `@xivdyetools/core`. There is n
 | `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters, announced-version memo (`announced:v:<version>`) |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
-| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes); `/glamour`'s `POST /v1/chara/resolve`. A binding request carries no client IP, so all of them share one `/v1/*` rate-limit key (60/min) — one resolve per `/glamour`, no icons |
+| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes); `/glamour`'s `POST /v1/chara/resolve`. A binding request carries no client IP, so all of them share one key — api-worker's `SERVICE_RATE_LIMITER` (1300/min, 20x a public IP's); one resolve per `/glamour`, no icons, and a 429 is answered as busy (`rate_limited`) |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 | `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s period) | Per-user command counters — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS`; KV is the fallback only when none is bound (FINDING-007) |
 

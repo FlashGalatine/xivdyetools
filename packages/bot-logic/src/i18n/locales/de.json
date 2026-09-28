@@ -639,6 +639,7 @@
     "glamourNoItemName": "Modell {key}",
     "glamourNoGear": "Diese Datei trägt keine Ausrüstung.",
     "glamourResolveFailed": "Die Gegenstände lassen sich gerade nicht abrufen. Versuche es in einer Minute erneut.",
+    "glamourResolveBusy": "Die Gegenstandssuche ist gerade ausgelastet. Versuche es in einer Minute erneut.",
     "glamourManual": "Mehr zu Charakterdateien:",
     "glamourSlot": {
       "MainHand": "WAFFE",

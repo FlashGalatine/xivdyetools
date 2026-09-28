@@ -209,7 +209,7 @@ The Glamour Reader in the bot (5.7.0, design 2a). It takes the same `.chara` att
 /glamour file:[attach .chara]
 ```
 
-**Rate limit:** 15/min. Every binding request shares one api-worker `/v1/*` key (60/min), so a `/glamour` spends one resolve call and draws no item icons.
+**Rate limit:** 15/min. Every binding request shares one api-worker key, its `SERVICE_RATE_LIMITER` bucket (1300/min), so a `/glamour` spends one resolve call and draws no item icons; a 429 from it is answered as busy.
 
 ---
 

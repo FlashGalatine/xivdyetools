@@ -639,6 +639,7 @@
     "glamourNoItemName": "Modèle {key}",
     "glamourNoGear": "Ce fichier ne porte aucun équipement.",
     "glamourResolveFailed": "Impossible de consulter les objets pour le moment. Réessayez dans une minute.",
+    "glamourResolveBusy": "La recherche d’objets est très sollicitée pour le moment. Réessayez dans une minute.",
     "glamourManual": "En savoir plus sur les fichiers de personnage :",
     "glamourSlot": {
       "MainHand": "ARME",
