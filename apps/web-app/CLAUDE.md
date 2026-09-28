@@ -129,7 +129,7 @@ src/
 │   ├── storage-service.ts           # localStorage wrapper, all keys prefixed
 │   ├── auth-service.ts              # Discord OAuth via oauth worker, JWT in localStorage
 │   ├── api-service-wrapper.ts       # Wraps core APIService (Universalis through proxy)
-│   ├── chara-session-service.ts     # The loaded .chara character, shared by every view of it — memory only (a reload clears it); tiny because the config sidebar's tribe/gender lock subscribes from the layout shell chunk
+│   ├── chara-session-service.ts     # The loaded .chara character, shared by every view of it — memory only (a reload clears it); tiny because ConfigController (main entry) imports it to pin the swatch tribe/gender to the file, and the sidebar's lock subscribes to it
 │   ├── chara-file-loader.ts         # Reads a dropped .chara into the session: 20 MB cap, core parse, chara_parse telemetry; returns the failure, the file card toasts it
 │   ├── chara-resolve-service.ts     # POST data.xivdyetools.app/v1/chara/resolve — .chara model keys → item names/icons (Swatch 11a/11c); session cache; any failure = CharaResolveUnavailableError
 │   ├── dye-service-wrapper.ts       # Wraps core DyeService

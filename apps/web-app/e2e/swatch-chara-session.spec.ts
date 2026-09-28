@@ -4,7 +4,7 @@
  * language switch, and the sidebar's TRIBE & GENDER lock follows it exactly:
  * locked while a file is loaded, editable again once it is gone.
  *
- * Before 5.12.5 the lock was persisted config and the file lived in a
+ * Before 5.12.7 the lock was persisted config and the file lived in a
  * component the tool destroyed on the way out, so the file vanished while
  * the lock stayed on, across reloads too.
  */

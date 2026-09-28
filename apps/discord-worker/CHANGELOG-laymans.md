@@ -35,12 +35,24 @@ Rules:
   path filter.
 -->
 
-## [5.7.0] - 2026-09-27
+## [5.7.0] - 2026-09-28
 ### 👗 New: `/glamour`
 - Attach a character file to `/glamour` and the bot lists the glamour it wears: every dyed piece, its dyes, and whether the game lets that character wear it.
 - Some items look identical to others. The bot names the one your character can actually wear and dye, and says why.
 - The message holds the whole outfit in the GPOSERS submission format, ready to copy, including the pieces that didn't fit on the picture.
 - Your character's name never appears. The picture says whose file it is by clan and gender only.
+
+## [5.6.5] - 2026-09-28
+### 🎨 `/swatch` uses the character creator's own colors
+- Lip, face paint and some highlight colors are now the exact shades the creator shows, so the dyes `/swatch` suggests for them change to match.
+- The tattoo / limbal row had been using the eye colors by mistake. It uses the real tattoo colors now.
+- A skin or hair color you customized reads "OFF GRID" again; one straight from the creator never does.
+
+## [5.6.4] - 2026-09-28
+### 👀 `/swatch` reads character files more accurately
+- For characters with a different color in each eye, the `EYES·L` and `EYES·R` rows were the wrong way round. They're on the right sides now.
+- No more false "OFF GRID" rows: a color that came straight from the character creator is no longer called off the palette. A color you really did customize still is.
+- The gear line no longer lists a dye on an empty slot, such as a hidden weapon.
 
 ## [5.6.3] - 2026-09-21
 ### 🔤 One spelling of "color" everywhere

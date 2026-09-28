@@ -36,7 +36,7 @@ export interface ResolvedCharaItem {
   /** Number of Item rows sharing this (slot, model key) — 1 = unique */
   familySize: number;
   /** The other family members, row_id ascending (capped — see MAX_ALTERNATES) */
-  alternates: Array<{ itemId: number; names: ItemNames }>;
+  alternates: Array<{ itemId: number; names: ItemNames; acquisition?: string }>;
   /**
    * OffHand only: true when the off-hand model is the main-hand item's own
    * ModelSub (quiver, focus, fist pair…) — the row is the main weapon, not a
@@ -50,6 +50,13 @@ export interface ResolvedCharaItem {
    * these against the file's dyes and character, which never reach us.
    */
   rules: CharaTwinRules[];
+  /**
+   * Where the named item comes from, as one English line in the GPOSERS
+   * submission format ("Crafted (WVR Lvl. 92) / Independent Merchant -
+   * Urqopacha - Worlar's Echo (28,483 Gil)"). Omitted when the build-time
+   * table has none. Describes `itemId` only; each alternate carries its own.
+   */
+  acquisition?: string;
 }
 
 export interface ResolvedGlasses {

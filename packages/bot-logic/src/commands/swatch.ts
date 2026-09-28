@@ -361,10 +361,14 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     }
     const lip = rows.find((r) => r.slot.slot === 'lip');
     if (lip && lip.slot.alpha !== null && lip.slot.alpha < 1 && lip.slot.blendHex) {
+      // The color the blend was made from: the file's own only when it won the verdict.
+      // An unedited file stores the shader color, which is not the swatch the blend used
+      const floatWon = lip.slot.verdict === 'offGrid' || lip.slot.verdict === 'floatOnly';
+      const raw = floatWon ? lip.slot.floatHex : lip.slot.indexHex;
       lines.push(
         t.t('card.swatchLip', {
           alpha: num(lip.slot.alpha, locale, 2),
-          raw: lip.slot.floatHex ?? lip.slot.indexHex ?? '—',
+          raw: raw ?? '—',
           blend: lip.slot.blendHex,
         })
       );

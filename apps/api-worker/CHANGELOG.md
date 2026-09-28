@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.16.0] - 2026-09-27
+## [0.16.0] - 2026-09-28
 
 Lands after 0.15.0 (the acquisition lines, PR #207).
 
@@ -31,6 +31,36 @@ Lands after 0.15.0 (the acquisition lines, PR #207).
   family with many Dated rows could cut the one twin that takes the dye, and the reader then said
   nothing fixes the piece. The lowest row of each rule set now goes in first, then the rest in row
   order, still at most 8 and still sorted by row id.
+## [0.15.0] - 2026-09-27
+
+### Added
+
+- **`acquisition` on each resolved item and alternate** (`POST /v1/chara/resolve`): where the item
+  comes from, as one English line in the GPOSERS submission format ("Crafted (WVR Lvl. 92) /
+  Independent Merchant - Urqopacha - Worlar's Echo (28,483 Gil)"). Omitted when unknown. The table
+  (23,585 lines for 29,058 equippable items) is built by hand after each patch by
+  `scripts/build-acquisition.ts` from Teamcraft's data files (MIT, one pinned commit) and XIVAPI, and
+  ships with the worker (`src/chara/data/acquisition.en.json`, provenance in
+  `acquisition.meta.json`); nothing is fetched at request time. Every twin carries its own line, so
+  a client that lets the player name a different twin writes that twin's source. Design:
+  `docs/superpowers/specs/2026-09-27-glamour-acquisition-design.md`.
+
+### Fixed
+
+Found in the review of PR #207, before 0.15.0 shipped:
+
+- **A vendor's outpost names the settlement, never the stable, shop or forge beside the vendor**
+  (`scripts/acquisition/labels.ts`, spec D10). Only map labels the game draws as an aetheryte
+  (`MapMarker.DataType` 3) or with the settlement symbol (icon 060448) count, and the segment is left
+  out when none is within 3 map units. 624 lines changed: 414 segments now name the settlement
+  ("E-Una-Kotor - South Shroud - Quarrymill", was "… - Chocobokeep"; "Revenant's Toll", was "Rowena's
+  House of Splendors" or "The Diamond Forge") and 263 lose the segment (facilities such as The
+  Workbench and Crystal Tower, and a few places the map draws only as landmarks, such as Memeroon's
+  Trading Post). Regenerated from the same pinned inputs with the build script's new `--pinned` flag.
+- **Quest, Deep Dungeon, desynthesis and random-container sources count as "the only source" only
+  against the item's whole source set** (`scripts/acquisition/select.ts`). A quest beside a random
+  container was printed as the only source, because only the sources read before it were counted. No
+  current line changes.
 
 ## [0.14.6] - 2026-09-21
 
