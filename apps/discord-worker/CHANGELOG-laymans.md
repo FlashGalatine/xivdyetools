@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.6.4] - 2026-09-28
+### 👀 `/swatch` reads character files more accurately
+- For characters with a different color in each eye, the `EYES·L` and `EYES·R` rows were the wrong way round. They're on the right sides now.
+- Fewer false "OFF GRID" rows: the eyes and the limbal ring or tattoo no longer claim a color is off the palette when it isn't. Skin, hair and some lip rows can still say it when nothing was changed; that needs a check in the game first.
+- The gear line no longer lists a dye on an empty slot, such as a hidden weapon.
+
 ## [5.6.3] - 2026-09-21
 ### 🔤 One spelling of "color" everywhere
 - The bot's English text now spells things the American way — "color" rather than "colour". Command descriptions, card labels and `/manual` used to mix the two.

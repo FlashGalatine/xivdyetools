@@ -2,6 +2,14 @@
 
 ---
 
+## Web-App Version 5.12.5 — September 28, 2026
+
+### Swatch Matcher reads character files more accurately
+- **Two different eye colors now appear on the correct sides.** For characters with a different color in each eye, the Swatch Matcher had the left and right eyes the wrong way round.
+- **Fewer false "OFF GRID" warnings.** The eyes and the limbal ring or tattoo no longer claim a color is off the game's palette when it isn't. Skin, hair and some lip colors can still show the warning when nothing was changed; that needs a check in the game first.
+- **The glamour list only shows what the character wears.** Some files store a dye on an empty slot (a hidden weapon, gloves taken off). Those dyes no longer appear in the dye list, in Make a palette, or as an empty "Hands:" line in the GPOSERS export.
+- A few files whose extra color data was never saved used to show no lip color. They show the lip color now.
+
 ## Web-App Version 5.12.4 — September 21, 2026
 
 ### The presets tool is called Community Presets

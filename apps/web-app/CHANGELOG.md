@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.5] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.6.0. No web-app source changed — every fix lands in core's `.chara`
+parser and resolver and arrives through `workspace:*`.
+
+### Fixed
+
+- **Swatch Matcher showed a heterochromia character's eyes on the wrong sides.** Core read
+  `REyeColor` as the left eye; 153 of 157 heterochromia files in a 1,142-file corpus pair it with
+  `RightEyeColor`. Where a file's colors are live, each eye was also judged against the other's
+  color, so both showed OFF GRID.
+- **False OFF GRID on eyes and limbal rings/tattoos** in files whose colors are live: the
+  extended colors were decoded with the wrong curve, and the limbal one carries a factor the game
+  multiplies in. Skin, hair and light-palette lips can still show OFF GRID when nothing was
+  edited; that waits on an in-game check.
+- **DYES ON THIS GLAMOUR and the GPOSERS export listed dyes on empty slots.** The export printed
+  a bare `Hands:` row and its dye for gloves the character isn't wearing, Make a palette counted
+  the dye, and a hidden weapon's stains showed as `#254` / `#255`.
+- **22 files read as having no lip color** because their extended block was stored as all zeros.
+  The block was never read; the lip now resolves from its index.
+
 ## [5.12.4] - 2026-09-21
 
 ### Changed

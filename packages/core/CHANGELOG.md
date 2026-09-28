@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - 2026-09-28
+
+**What 1,142 real `.chara` files taught the parser.** MINOR, not a patch: `parseCharaFile`
+returns different slots, colors and dyes for the same file (house rule — an observable change is
+minor). Every number below is from `docs/research/2026-09-28-chara-corpus-profile/`; all 1,142
+files parsed before and after.
+
+### Changed
+
+- **Eye keys pair by name.** `leftEye` is now `LEyeColor` + `LeftEyeColor` and `rightEye` is
+  `REyeColor` + `RightEyeColor`. The Swatch Matcher 10A rule had `REyeColor` as the left eye,
+  crossed against the float names; 153 of 157 heterochromia files pair by name, all 143
+  Anamnesis files among them. The resolver swaps a file's two eye floats only when each lands
+  (ΔE2000 ≤ 1) on the *other* eye's palette entry and neither on its own — 4 files, all from the
+  producer that writes no `TypeName`. A half match, a custom color or a shared index is never
+  swapped.
+- **Extended floats are decoded as the color squared**, not as sRGB-linear. The game stores
+  each channel as `(n/255)²`; the square root lands eye and highlight floats on their palette
+  entry at ΔE 0.00, where the sRGB curve read every one about 3 ΔE off. `floatLinear` still
+  carries the stored triple.
+- **The limbal/tattoo float has the game's 0.643 divided out** of its decoded color (it stores
+  `0.643 × (n/255)²`), which puts every corpus limbal float within ΔE 3.5 of its entry. A zero
+  float on tattoo entry 7 — which the game stores as an exact zero, 194 of 194 files — reads as
+  absent.
+- **A float block that is zero in every channel, alpha included, reads as absent** (22 files).
+  Nothing was read, so it no longer resolves as a black character with no lip.
+
+### Fixed
+
+- **A dye on an empty gear slot was reported as a worn dye.** 33 files carry one (main hand 14,
+  hands 12, off hand 10, head 9, feet 2, legs 1), including stains 254/255 that Anamnesis writes
+  on a hidden weapon. `gearDyes` now holds only the dyes of worn pieces — the same worn test
+  `gearModels` uses.
+- **False OFF GRID verdicts in files whose floats are live** (66 files): eyes 11 + 11 → 1 + 1
+  (the one left is a real custom color) and limbal 32 → 0. Skin, hair and light-palette lip
+  floats still never match the palette and are left for an in-game check (see the research doc).
+
 ## [5.5.0] - 2026-09-20
 
 **`.chara` import now reads the race off the tribe.** MINOR, not a patch: `parseCharaFile`

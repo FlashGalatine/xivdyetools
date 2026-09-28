@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.6.4] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.6.0 (reached through `@xivdyetools/bot-logic`). No
+`register-commands` — the command schema is unchanged. No discord-worker source changed.
+
+### Fixed
+
+- **`/swatch` swapped a heterochromia character's `EYES·L` and `EYES·R` rows.** Core read
+  `REyeColor` as the left eye; 153 of 157 heterochromia files in a 1,142-file corpus pair it with
+  `RightEyeColor`. Where a file's colors are live, each eye was also judged against the other's
+  color, so both rows read OFF GRID.
+- **False OFF GRID on the eye and limbal/tattoo rows** in files whose colors are live (wrong
+  float decoding, and the game's limbal factor). Skin, hair and light-palette lip rows can still
+  read OFF GRID unedited; that waits on an in-game check.
+- **The gear line listed dyes on empty slots** — a hidden weapon, gloves taken off.
+
 ## [5.6.3] - 2026-09-21
 
 ### Changed
