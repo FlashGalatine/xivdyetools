@@ -227,7 +227,7 @@ registration schema, and `/about` in three different states.
 - **Utility**: `/preferences`, `/manual`, `/changelog`, `/about`, `/stats`
 
 `/a11y` is a second registration sharing the `/accessibility` handler — Discord has no alias
-mechanism — so the roster is 17 registrations covering 16 distinct commands.
+mechanism — so the roster is 18 registrations covering 17 distinct commands.
 
 **v5.0 Highlights**:
 - `/contrast` split out of `/accessibility` for WCAG 1.4.11 pairs; `/changelog` added

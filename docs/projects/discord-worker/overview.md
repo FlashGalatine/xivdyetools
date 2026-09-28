@@ -59,7 +59,7 @@ Unlike traditional Gateway bots:
 ```
 src/
 ├── commands/
-│   ├── registry.ts       # COMMAND_REGISTRY — the roster of record (17 registrations)
+│   ├── registry.ts       # COMMAND_REGISTRY — the roster of record (18 registrations)
 │   ├── schemas.ts        # Slash-command schemas published by register-commands
 │   └── localize.ts       # Localized command names/descriptions for the schemas
 ├── handlers/
@@ -104,7 +104,7 @@ Note: SVG generation, bot command logic, and i18n are now in shared packages:
 
 ## Available Commands
 
-The roster of record is `src/commands/registry.ts` — 17 registrations, 16 distinct commands.
+The roster of record is `src/commands/registry.ts` — 18 registrations, 17 distinct commands.
 
 ### Color Tools
 | Command | Description |

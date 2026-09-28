@@ -37,7 +37,7 @@
 │  │ xivdyetools-web-app  │  │xivdyetools-discord-worker│  │xivdyetools-moderation-worker│  │
 │  │ ──────────────────── │  │─────────────────────────│  │─────────────────────────────│  │
 │  │ Vite + Lit web app   │  │ Discord bot (public)    │  │ Discord bot (moderators)    │  │
-│  │ 9 interactive tools  │  │ 17 slash commands       │  │ Preset moderation           │  │
+│  │ 9 interactive tools  │  │ 18 slash commands       │  │ Preset moderation           │  │
 │  │ Light + Dark, PWA    │  │ SVG/PNG rendering       │  │ User ban management         │  │
 │  └──────────────────────┘  └─────────────────────────┘  └─────────────────────────────┘  │
 │  ┌──────────────────────┐  ┌─────────────────────────┐  ┌─────────────────────────────┐  │
