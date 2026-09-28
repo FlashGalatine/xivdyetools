@@ -42,6 +42,12 @@ export interface CharaFileCardOptions {
    * the card itself knows nothing about collection records.
    */
   onSaveCharacter?: (session: CharaSession) => void;
+  /**
+   * One file, two tools: a link to the other tool that reads the same session
+   * (Glamour Reader ↔ Swatch Matcher). The file stays loaded; the host opens
+   * the other tool.
+   */
+  crossLink?: { label: string; onOpen: () => void };
 }
 
 interface CharaWarning {
@@ -285,6 +291,19 @@ export class CharaFileCard {
       )
     );
     card.appendChild(mid);
+
+    const crossLink = this.options.crossLink;
+    if (crossLink) {
+      const link = el(
+        'button',
+        `flex-shrink: 0; align-self: center; padding: 6px 10px; font-size: 11px; font-weight: 600; border-radius: 9px; border: 1px solid var(--theme-border); background: var(--theme-background-secondary); color: var(--theme-text); cursor: pointer; font-family: inherit; white-space: nowrap;`,
+        `${crossLink.label} →`
+      );
+      (link as HTMLButtonElement).type = 'button';
+      link.dataset.role = 'cross-link';
+      link.addEventListener('click', () => crossLink.onOpen());
+      card.appendChild(link);
+    }
 
     // 44px SWAP chip — replace the file without losing the workspace.
     const swapBtn = el(

@@ -103,7 +103,8 @@
     "glamour": {
       "title": "Projektionsleser",
       "shortName": "Projektion",
-      "description": "Jedes Ausrüstungsteil eines Charakters mit Farbstoffen und Bezugsquelle"
+      "description": "Jedes Ausrüstungsteil eines Charakters mit Farbstoffen und Bezugsquelle",
+      "lead": "Jedes Teil, das dieser Charakter trägt, womit es gefärbt ist und ob das Spiel es tragen lässt."
     }
   },
   "common": {

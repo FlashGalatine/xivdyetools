@@ -103,7 +103,8 @@
     "glamour": {
       "title": "Glamour Reader",
       "shortName": "Glamour",
-      "description": "List every piece a character wears, its dyes and where to get it"
+      "description": "List every piece a character wears, its dyes and where to get it",
+      "lead": "Every piece this character wears, what it is dyed, and whether the game lets it be worn."
     }
   },
   "common": {

@@ -20,6 +20,7 @@ import {
   dyeService,
   LanguageService,
   MarketBoardService,
+  RouterService,
   StorageService,
   ToastService,
 } from '@services/index';
@@ -68,8 +69,6 @@ import type { ShareButton } from '@components/v4/share-button';
 import { ShareService } from '@services/share-service';
 import { CharaFileCard } from '@components/chara-file-card';
 import { CharaSheet, saveCharacterColors, type CharaSlotGridRef } from '@components/chara-sheet';
-import { hasGlamour } from '@components/chara-ui';
-import type { GlamourBlock } from '@components/glamour-block';
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 
 // ============================================================================
@@ -214,11 +213,6 @@ export class SwatchTool extends BaseComponent {
   /** 10A .chara views — each draws the file loaded in CharaSessionService */
   private charaFileCard: CharaFileCard | null = null;
   private charaSheet: CharaSheet | null = null;
-  /** DYES ON THIS GLAMOUR — its own chunk, created once a file wears anything */
-  private glamourBlock: GlamourBlock | null = null;
-  private charaGlamourContainer: HTMLElement | null = null;
-  /** Invalidates an in-flight glamour chunk load on re-render and destroy */
-  private glamourLoadToken = 0;
   private marketBoardService: MarketBoardService;
 
   // State
@@ -1507,13 +1501,6 @@ export class SwatchTool extends BaseComponent {
     // Add empty state to results area (will be shown/hidden by updateMatchResults)
     resultsArea.appendChild(this.emptyStateContainer);
 
-    // 10A: DYES ON THIS GLAMOUR renders here (after the matches, before the
-    // handoff row) — the lazily loaded GlamourBlock owns its content.
-    this.charaGlamourContainer = this.createElement('div', {
-      attributes: { style: 'width: 100%;' },
-    });
-    resultsArea.appendChild(this.charaGlamourContainer);
-
     // 10A: SEND TO handoff row — always at the bottom of the flow.
     this.handoffContainer = this.createElement('div', {
       attributes: { style: 'width: 100%;' },
@@ -1533,22 +1520,14 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
-   * 10A: the file card and THIS CHARACTER above the workspace, DYES ON THIS
-   * GLAMOUR in the results column. All three draw the file loaded in
-   * CharaSessionService, so a re-render (a language switch) rebuilds them
-   * around the same file instead of dropping it.
+   * 10A: the file card and THIS CHARACTER above the workspace. Both draw the
+   * file loaded in CharaSessionService, so a re-render (a language switch)
+   * rebuilds them around the same file instead of dropping it. DYES ON THIS
+   * GLAMOUR moved to the Glamour Reader (2026-09-27); the card links there.
    */
   private mountChara(charaContainer: HTMLElement): void {
-    // The card and sheet keep nothing worth saving, so they are rebuilt. The
-    // glamour block carries a palette draft and its item names, so it moves
-    // into the new container instead; a chunk load still in flight is retired
-    // (it was aimed at the old container) and started again below.
-    this.glamourLoadToken++;
     this.charaFileCard?.destroy();
     this.charaSheet?.destroy();
-    if (this.glamourBlock && this.charaGlamourContainer) {
-      this.glamourBlock.moveTo(this.charaGlamourContainer);
-    }
     const cardContainer = this.createElement('div');
     const sheetContainer = this.createElement('div');
     charaContainer.appendChild(cardContainer);
@@ -1556,6 +1535,10 @@ export class SwatchTool extends BaseComponent {
 
     this.charaFileCard = new CharaFileCard(cardContainer, {
       onSaveCharacter: saveCharacterColors,
+      crossLink: {
+        label: LanguageService.t('tools.glamour.title'),
+        onOpen: () => RouterService.navigateTo('glamour'),
+      },
     });
     this.charaFileCard.init();
 
@@ -1565,18 +1548,13 @@ export class SwatchTool extends BaseComponent {
       selectedSlot: context?.source === 'slot' ? (context.slotKey ?? null) : null,
     });
     this.charaSheet.init();
-
-    this.syncGlamourBlock();
   }
 
   private destroyChara(): void {
-    this.glamourLoadToken++;
     this.charaFileCard?.destroy();
     this.charaSheet?.destroy();
-    this.glamourBlock?.destroy();
     this.charaFileCard = null;
     this.charaSheet = null;
-    this.glamourBlock = null;
   }
 
   /** A THIS CHARACTER card was picked: its colour becomes the selection. */
@@ -1604,8 +1582,8 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
-   * A file was loaded or cleared. The card, sheet and glamour block redraw
-   * themselves; this is what the tool derives from the file on top of them.
+   * A file was loaded or cleared. The card and sheet redraw themselves; this
+   * is what the tool derives from the file on top of them.
    */
   private onCharaSession(session: CharaSession | null): void {
     // A slot pick describes the character it came from.
@@ -1618,42 +1596,6 @@ export class SwatchTool extends BaseComponent {
       ConfigController.getInstance().setConfig('swatch', { race: tribe, gender });
     }
     this.updateColorGrid();
-    this.syncGlamourBlock();
-  }
-
-  /**
-   * DYES ON THIS GLAMOUR is its own chunk: imported the first time the loaded
-   * file wears anything, then left mounted, since it follows the session itself.
-   */
-  private syncGlamourBlock(): void {
-    const session = CharaSessionService.getSession();
-    const container = this.charaGlamourContainer;
-    if (this.glamourBlock || !container || !session || !hasGlamour(session.resolved)) return;
-    const token = ++this.glamourLoadToken;
-    void import('@components/glamour-block')
-      .then(({ GlamourBlock }) => {
-        if (token !== this.glamourLoadToken || this.glamourBlock) return;
-        this.glamourBlock = new GlamourBlock(container, {
-          onSubmitPalette: (dyes, name) => this.submitGlamourPalette(dyes, name),
-        });
-        this.glamourBlock.init();
-      })
-      .catch((error: unknown) => {
-        logger.error('[SwatchTool] Failed to load the glamour block', error);
-        ToastService.error(LanguageService.t('errors.toolLoadFailed'));
-      });
-  }
-
-  /** Make a palette → Submit to Community opens the preset form, loaded on demand. */
-  private submitGlamourPalette(dyes: Dye[], name?: string): void {
-    void import('@components/preset-submission-form')
-      .then(({ showPresetSubmissionForm }) => {
-        showPresetSubmissionForm(undefined, { dyes, name });
-      })
-      .catch((error: unknown) => {
-        logger.error('[SwatchTool] Failed to load the preset submission form', error);
-        ToastService.error(LanguageService.t('errors.toolLoadFailed'));
-      });
   }
 
   /**

@@ -103,7 +103,8 @@
     "glamour": {
       "title": "Lecteur de mirages",
       "shortName": "Mirage",
-      "description": "Chaque pièce portée par un personnage, ses teintures et où l'obtenir"
+      "description": "Chaque pièce portée par un personnage, ses teintures et où l'obtenir",
+      "lead": "Chaque pièce que porte ce personnage, sa teinture, et si le jeu permet de la porter."
     }
   },
   "common": {

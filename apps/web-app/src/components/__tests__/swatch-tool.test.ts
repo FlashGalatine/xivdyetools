@@ -797,35 +797,6 @@ describe('SwatchTool', () => {
     });
   });
 
-  describe('submitting a palette to the community (BUG-003)', () => {
-    /**
-     * `@components/preset-submission-form` is mocked (module scope, above)
-     * to throw on import, so every `import()` of it in this file rejects --
-     * exactly the stale-deploy chunk-404 scenario BUG-003 describes.
-     */
-    it('catches the rejected chunk load instead of leaving the click silently dead', async () => {
-      const { ToastService } = await import('@services/index');
-      const { logger } = await import('@shared/logger');
-      tool = mount();
-
-      const dye = { ...mockDyes[0], hex: '#AABBCC', name: 'Test Dye', itemID: 5729 };
-      // What the glamour block's Submit to Community calls on its host.
-      const internal = tool as unknown as {
-        submitGlamourPalette: (dyes: (typeof dye)[], name?: string) => void;
-      };
-
-      expect(() => internal.submitGlamourPalette([dye], 'My Palette')).not.toThrow();
-
-      await flush();
-
-      expect(logger.error).toHaveBeenCalledWith(
-        '[SwatchTool] Failed to load the preset submission form',
-        expect.anything()
-      );
-      expect(ToastService.error).toHaveBeenCalledWith('errors.toolLoadFailed');
-    });
-  });
-
   describe('the loaded .chara file', () => {
     const selection = () =>
       (tool as unknown as { selectionContext: { source: string } | null }).selectionContext;
@@ -898,8 +869,7 @@ describe('SwatchTool', () => {
       expect(ringed).toHaveLength(1);
     });
 
-    it('keeps DYES ON THIS GLAMOUR, palette draft included, through a re-render', async () => {
-      const glamourBlock = () => rightPanel.querySelector('[data-role="glamour-block"]');
+    it('no longer draws DYES ON THIS GLAMOUR: it moved to the Glamour Reader', async () => {
       tool = mount();
       CharaSessionService.setSession(
         charaSession({
@@ -907,37 +877,20 @@ describe('SwatchTool', () => {
           gearDyes: [{ slot: 'Body', channel: 1, stainId: 1, dye: null }],
         })
       );
-      await vi.waitFor(() => expect(glamourBlock()).not.toBeNull());
-      Array.from(glamourBlock()!.querySelectorAll('button'))
-        .find((b) => b.textContent?.includes('swatch.makePalette'))!
-        .click();
-      const draft = glamourBlock()!.querySelector<HTMLInputElement>('input[type="text"]')!;
-      draft.value = 'Sunset set';
-      draft.dispatchEvent(new Event('input'));
+      await flush();
 
-      tool.update();
-
-      const after = glamourBlock()?.querySelector<HTMLInputElement>('input[type="text"]');
-      expect(after?.value).toBe('Sunset set');
-      expect(rightPanel.querySelectorAll('[data-role="glamour-block"]')).toHaveLength(1);
+      expect(rightPanel.querySelector('[data-role="glamour-block"]')).toBeNull();
     });
 
-    it('loads DYES ON THIS GLAMOUR only once the file wears something', async () => {
+    it('links the loaded file to the Glamour Reader', async () => {
+      const { RouterService } = await import('@services/index');
       tool = mount();
       CharaSessionService.setSession(charaSession());
       await flush();
-      expect(rightPanel.querySelector('[data-role="glamour-block"]')).toBeNull();
 
-      CharaSessionService.setSession(
-        charaSession({
-          gearModels: [{ slot: 'Body', base: 200, variant: 1 }],
-          gearDyes: [{ slot: 'Body', channel: 1, stainId: 1, dye: null }],
-        })
-      );
+      rightPanel.querySelector<HTMLButtonElement>('[data-role="cross-link"]')!.click();
 
-      await vi.waitFor(() =>
-        expect(rightPanel.querySelector('[data-role="glamour-block"]')).not.toBeNull()
-      );
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('glamour');
     });
   });
 

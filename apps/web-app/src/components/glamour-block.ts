@@ -172,6 +172,11 @@ const GLAMOUR_CSS = `
 export interface GlamourBlockCallbacks {
   /** Make-a-palette submit: kept worn dyes + the panel's name draft */
   onSubmitPalette?: (dyes: Dye[], name?: string) => void;
+  /**
+   * Where Copy list / Export .md go. The Glamour Reader puts them in its own
+   * header (design 1a); without a host they sit in the block's header.
+   */
+  actionsHost?: HTMLElement;
 }
 
 /**
@@ -218,9 +223,10 @@ export class GlamourBlock {
    * around the block (a language switch rebuilds the Swatch Matcher's panel),
    * so the palette draft, dropped chips and item names survive the redraw.
    */
-  moveTo(container: HTMLElement): void {
+  moveTo(container: HTMLElement, actionsHost?: HTMLElement): void {
     clearContainer(this.container);
     this.container = container;
+    if (actionsHost) this.callbacks.actionsHost = actionsHost;
     this.render();
   }
 
@@ -233,6 +239,7 @@ export class GlamourBlock {
     // would float over the next tool, anchored to a row that is gone.
     closeItemLinksMenuIfLoaded();
     clearContainer(this.container);
+    if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
     this.resolved = null;
     this.fileName = null;
     this.equipment = null;
@@ -263,6 +270,8 @@ export class GlamourBlock {
     const glamour = this.resolved ? this.renderGlamour() : null;
     if (!glamour) {
       this.glamourBox = null;
+      // No file, no list: the host's Copy list / Export .md go with it.
+      if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
       return;
     }
     const style = document.createElement('style');
@@ -463,7 +472,13 @@ export class GlamourBlock {
     );
     headerRight.appendChild(this.renderViewToggle());
     headerRight.appendChild(this.renderShowAllSwitch());
-    for (const action of this.renderListActions()) headerRight.appendChild(action);
+    const actionsHost = this.callbacks.actionsHost;
+    if (actionsHost) {
+      clearContainer(actionsHost);
+      for (const action of this.renderListActions()) actionsHost.appendChild(action);
+    } else {
+      for (const action of this.renderListActions()) headerRight.appendChild(action);
+    }
 
     const paletteBtn = el(
       'button',
