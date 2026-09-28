@@ -9,13 +9,15 @@
  *
  * Memory only, by design: nothing here touches localStorage, sessionStorage or
  * IndexedDB, so a reload clears it. That is the LOCAL ONLY promise on the file
- * card. Parsing lives in `chara-file-loader` so this module stays small: the
- * config sidebar subscribes to it from the layout shell chunk.
+ * card. Parsing lives in `chara-file-loader` so this module stays small:
+ * ConfigController imports it into the main entry, where it pins the swatch
+ * tribe and gender to the file, and the config sidebar's lock subscribes to it.
  *
  * @module services/chara-session-service
  */
 
 import type { ResolvedCharaCharacter } from '@xivdyetools/core';
+import type { Gender, SubRace } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 
 /** One parsed character file. */
@@ -34,6 +36,18 @@ export class CharaSessionService {
   /** The loaded character, or null when no file is loaded. */
   static getSession(): CharaSession | null {
     return this.session;
+  }
+
+  /**
+   * The loaded file's tribe and gender, or null when no file is loaded or it
+   * lacks either. While this is non-null they are the Swatch Matcher's race
+   * and gender: ConfigController pins the swatch config to them.
+   */
+  static getTribeAndGender(): { tribe: SubRace; gender: Gender } | null {
+    const resolved = this.session?.resolved;
+    return resolved?.tribe && resolved.gender
+      ? { tribe: resolved.tribe, gender: resolved.gender }
+      : null;
   }
 
   /** Replace the loaded character (null clears it) and tell every subscriber. */
