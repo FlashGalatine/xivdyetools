@@ -65,6 +65,7 @@ The bot will respond with:
 | `/gradient` | Gradient between two colours | `/gradient start_color:#FF0000 end_color:#0000FF` |
 | `/mixer` | Blend two dyes | `/mixer dye1:Dalamud Red dye2:Metallic Gold` |
 | `/swatch` | Match a `.chara` character file's colours | `/swatch file:<attach .chara>` |
+| `/glamour` | List a `.chara` file's glamour: pieces, dyes, and whether they can be worn | `/glamour file:<attach .chara>` |
 
 > **Web app equivalents**
 >
@@ -74,6 +75,7 @@ The bot will respond with:
 > | `/gradient` | Gradient Builder |
 > | `/mixer` | Dye Mixer |
 > | `/swatch` | Swatch Matcher |
+> | `/glamour` | Glamour Reader |
 > | `/preset` commands | Community Presets |
 
 ### Dye Database
@@ -244,7 +246,7 @@ unlimited:
 |------------|----------|
 | 5 | `/extractor image` |
 | 10 | `/accessibility` (and `/a11y`), `/budget`, `/preset` |
-| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/stats` |
+| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/glamour`, `/stats` |
 | 20 | `/dye`, `/preferences` |
 | 30 | `/about`, `/manual`, `/changelog` |
 

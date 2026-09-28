@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.0] - 2026-09-27
+
+### Added
+
+- **`/glamour file:<.chara>`** — the Glamour Reader in the bot (design 2a). It posts a card of the
+  dyed pieces in slot order, each named as the twin the file's character can actually wear, with
+  the in-game verdict, and an embed holding every piece in the GPOSERS form, ready to copy. The
+  item lookup is api-worker's `POST /v1/chara/resolve` through the `UNIVERSALIS_PROXY` service
+  binding (`UNIVERSALIS_PROXY_URL` in local development). Every request through the binding
+  shares one api-worker rate-limit key (a binding request carries no client IP), so a `/glamour`
+  spends exactly one resolve call and draws no item icons. Rate tier: the default 15/min.
+  Registered in the `color-tools` category, `/about` and `/manual`. **Merging re-registers the
+  commands** (`deploy-discord-worker.yml`).
+
+### Changed
+
+- **The `.chara` attachment guards moved to `utils/chara-attachment.ts`** and are shared by
+  `/swatch` and `/glamour`: the Discord-CDN host allowlist, the 1 MiB cap, and the 10 s
+  no-redirect bounded download (FINDING-033). `/swatch` behaves the same.
+- CJK subsets re-cut for the `/glamour` card strings.
+
 ## [5.6.3] - 2026-09-21
 
 ### Changed

@@ -17,6 +17,7 @@
 > | `/gradient` | Gradient Builder |
 > | `/mixer` | Dye Mixer |
 > | `/swatch` | Swatch Matcher |
+> | `/glamour` | Glamour Reader |
 > | `/contrast`, `/accessibility` | Accessibility Checker |
 > | `/budget` | Budget Suggestions |
 > | `/preset` commands | Community Presets |
@@ -114,6 +115,17 @@ Match your character's colours to the nearest dyes from a `.chara` file (Anamnes
 | `slot` | Show the five nearest dyes for one slot: skin, hair, highlights, eyes, lip, facepaint, limbal | No |
 
 See `/manual topic:character_file` for how to export the file.
+
+---
+
+### /glamour
+Read a `.chara` file as a glamour: every dyed piece, its dyes, and whether the game lets your character wear it. Pieces that look identical to others are named as the one your character can actually wear and dye. The message holds the whole outfit in the GPOSERS submission format.
+
+**Usage**: `/glamour file:<attach .chara>`
+
+| Parameter | Description | Required |
+|-----------|-------------|----------|
+| `file` | `.chara` character file (1 MiB max) | Yes |
 
 ---
 

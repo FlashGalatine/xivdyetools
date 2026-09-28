@@ -57,6 +57,8 @@ src/
     ├── comparison.ts              # /comparison — side-by-side dye grid
     ├── contrast.ts                # /contrast — WCAG 1.4.11 ratios between dye pairs
     ├── swatch.ts                  # /swatch — character-colour reference matching
+    ├── glamour.ts                 # /glamour — the Glamour Reader (resolver injected) + GPOSERS list
+    ├── chara-identity.ts          # what /swatch and /glamour share: palette service, producer token, tribe line
     └── accessibility.ts           # /accessibility — colorblind sim + WCAG matrix
 ```
 
@@ -120,6 +122,10 @@ executeComparison(input: ComparisonInput): Promise<ComparisonResult>
 executeContrast(input: ContrastInput): Promise<ContrastResult>
 
 executeSwatch(input: SwatchInput): Promise<SwatchResult>
+
+executeGlamour(input: GlamourInput): Promise<GlamourResult>
+  // input.resolve(gear, glassesId) → GlamourResolveAnswer — the adapter's transport to api-worker
+  // POST /v1/chara/resolve; errors: PARSE_FAILED | NO_GEAR | RESOLVE_FAILED | GENERATION_FAILED
 
 executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult>
   const VISION_TYPES;

@@ -69,6 +69,7 @@ src/
 │   │   ├── gradient.ts      # was mixer.ts in v3
 │   │   ├── mixer-v4.ts      # /mixer blending
 │   │   ├── swatch.ts        # /swatch .chara file
+│   │   ├── glamour.ts       # /glamour .chara file → the Glamour Reader card + GPOSERS list
 │   │   ├── budget.ts        # market board ledger
 │   │   ├── contrast.ts      # 5.0 NEW: WCAG contrast
 │   │   ├── changelog.ts     # 5.0 NEW: /changelog
@@ -113,6 +114,7 @@ The roster of record is `src/commands/registry.ts` — 17 registrations, 16 dist
 | `/gradient` | Create color gradient between two colors |
 | `/mixer` | Blend two dyes (rgb/lab/oklab/ryb/hsl/spectral ratio sweep) |
 | `/swatch` | Match a `.chara` character file's colours to dyes |
+| `/glamour` | Read a `.chara` character file as a glamour: every piece, its dyes, and whether it can be worn |
 
 ### Dye Database
 | Command | Description |

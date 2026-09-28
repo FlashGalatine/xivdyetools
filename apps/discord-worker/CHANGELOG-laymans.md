@@ -35,6 +35,13 @@ Rules:
   path filter.
 -->
 
+## [5.7.0] - 2026-09-27
+### 👗 New: `/glamour`
+- Attach a character file to `/glamour` and the bot lists the glamour it wears: every dyed piece, its dyes, and whether the game lets that character wear it.
+- Some items look identical to others. The bot names the one your character can actually wear and dye, and says why.
+- The message holds the whole outfit in the GPOSERS submission format, ready to copy, including the pieces that didn't fit on the picture.
+- Your character's name never appears. The picture says whose file it is by clan and gender only.
+
 ## [5.6.3] - 2026-09-21
 ### 🔤 One spelling of "color" everywhere
 - The bot's English text now spells things the American way — "color" rather than "colour". Command descriptions, card labels and `/manual` used to mix the two.

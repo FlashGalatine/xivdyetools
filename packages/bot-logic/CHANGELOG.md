@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0] - 2026-09-27
+
+### Added
+
+- **`executeGlamour`** — the Glamour Reader in the bot. It parses a `.chara` file with core's rules,
+  asks the injected resolver (the adapter's transport to api-worker's `POST /v1/chara/resolve`)
+  for every worn model, and names each piece with core's `defaultCharaTwin`. That's the first
+  twin that passes the in-game check, preferring the most dye channels, then not Dated. The card
+  (svg `generateGlamourCard`) shows the dyed pieces in slot order, five at most. The embed carries
+  every piece in the GPOSERS form: English labels, Dye lines only for dyed channels, an
+  `Acquisition:` line (the resolve answer's, or bare for filling in), and two identical rings
+  written once as `Rings`. Below the list it says which pieces were named from a twin and why,
+  which have no fix, and which need a Grand Company. No character name, on the card or in the
+  embed.
+- **`getLocalizedRace`** — core's race names, per locale (the card names a one-race piece by its
+  race: VIERA).
+- **Strings ×6**: `card.glamour*` (card labels, counts, reasons, errors), `card.glamourSlot.*`,
+  `commands.glamour.*`, `manual.glamour.*`.
+
+### Changed
+
+- `/swatch` and `/glamour` share `commands/chara-identity.ts` (the palette-sheet service, the
+  producer token, the tribe line). No behavior change.
+
 ## [4.4.1] - 2026-09-21
 
 Spelling only — American English across the `en` locale, per

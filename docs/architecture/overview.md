@@ -28,7 +28,7 @@ graph TB
 
     subgraph "Consumer Applications"
         WEB["xivdyetools-web-app<br/>─────────────<br/>9 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
-        DISCORD["xivdyetools-discord-worker<br/>─────────────<br/>17 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
+        DISCORD["xivdyetools-discord-worker<br/>─────────────<br/>18 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
         STOAT["xivdyetools-stoat-worker<br/>─────────────<br/>Revolt.js bot (parked),<br/>shared bot-logic"]
     end
 
@@ -125,7 +125,7 @@ Layer 3: Backend Services (Cloudflare Workers)
 
 Layer 2: Consumer Applications
 ├── xivdyetools-web-app → Browser-based tools (10 tools)
-├── xivdyetools-discord-worker → Discord bot (17 registered commands)
+├── xivdyetools-discord-worker → Discord bot (18 registered commands)
 └── xivdyetools-stoat-worker → Revolt bot (parked; shared bot-logic)
 
 Layer 1: Core + Feature Libraries
@@ -219,8 +219,8 @@ registration script checks schema parity against, `/about` builds its index from
 `about.test.ts` asserts against. A command can no longer exist in the dispatch switch, the
 registration schema, and `/about` in three different states.
 
-**17 registered commands** by category:
-- **Colour tools**: `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`
+**18 registered commands** by category:
+- **Colour tools**: `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`, `/glamour`
 - **Dye database**: `/dye`
 - **Analysis**: `/comparison`, `/contrast`, `/accessibility`, `/a11y`, `/budget`
 - **Community**: `/preset`

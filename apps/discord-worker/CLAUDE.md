@@ -95,7 +95,7 @@ The `/webhooks/preset-submission` endpoint receives notifications from `presets-
 src/
 ├── index.ts                       # Hono app, routing, Ed25519 verification, webhooks
 ├── commands/
-│   ├── registry.ts                # COMMAND_REGISTRY — the roster of record (17 registrations)
+│   ├── registry.ts                # COMMAND_REGISTRY — the roster of record (18 registrations)
 │   ├── schemas.ts                 # Slash-command schemas published by register-commands
 │   └── localize.ts                # name/description_localizations for the schemas;
 │                                  # imported ONLY by scripts/register-commands.ts
@@ -103,7 +103,7 @@ src/
 │   └── emoji-mapping.json         # Per-application dye emoji ids, keyed by stainID (services/emoji.ts)
 ├── handlers/
 │   ├── commands/                  # One file per slash command (about, harmony, dye, accessibility,
-│   │                              # comparison, contrast, mixer-v4, gradient, swatch, extractor,
+│   │                              # comparison, contrast, mixer-v4, gradient, swatch, glamour, extractor,
 │   │                              # preset, preferences, stats, budget, changelog, manual).
 │   │                              # The v4 match / match-image / favorites / collection / language
 │   │                              # files were DELETED in 5.0 — don't reintroduce them.
@@ -139,7 +139,8 @@ src/
 │   ├── discord-api.ts             # REST helpers (sendMessage, follow-ups, edits)
 │   ├── sanitize.ts                # sanitizePresetName / sanitizePresetDescription
 │   ├── text.ts                    # Line-boundary truncation for embed budgets
-│   ├── read-text-capped.ts        # Stream-counted body reads (`/swatch` downloads, `/webhooks/preset-submission`)
+│   ├── chara-attachment.ts        # The .chara attachment guards /swatch and /glamour share (CDN allowlist, 1 MiB, bounded download)
+│   ├── read-text-capped.ts        # Stream-counted body reads (`.chara` downloads, `/webhooks/preset-submission`)
 │   └── env-validation.ts          # Validate required env vars at first request
 └── types/
     ├── env.ts                     # Env interface, InteractionType/ResponseType enums
@@ -161,7 +162,7 @@ hex helpers come from `@xivdyetools/bot-logic` / `@xivdyetools/core`. There is n
 | `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters, announced-version memo (`announced:v:<version>`) |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
-| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes) |
+| `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes); `/glamour`'s `POST /v1/chara/resolve`. A binding request carries no client IP, so all of them share one `/v1/*` rate-limit key (60/min) — one resolve per `/glamour`, no icons |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 | `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s period) | Per-user command counters — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS`; KV is the fallback only when none is bound (FINDING-007) |
 
@@ -264,6 +265,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `/mixer` | 12F ratio-sweep blending card |
 | `/gradient` | 12H gradient card (distinct dyes, 3-stage cap) |
 | `/swatch` | `.chara` character-file frame (required `file:` attachment) |
+| `/glamour` | The Glamour Reader: `.chara` attachment → card 2a (dyed pieces, twin named, in-game verdict) + the GPOSERS list in the embed; resolves via `UNIVERSALIS_PROXY` → api-worker `POST /v1/chara/resolve` |
 | `/extractor` | Image ramp (14K) / colour sheet (14J·2) |
 | `/preferences` | Race/clan/world/language/matching/theme preferences |
 | `/preset` | Browse/submit/vote/edit community presets |
@@ -323,7 +325,7 @@ npm run test:integration                                  # Integration suite
 
 **Dependencies:** `@xivdyetools/core` (incl. `/blending`), `@xivdyetools/types`, `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/svg`, `@xivdyetools/bot-logic` (incl. `/i18n`), `@xivdyetools/logger`, `@xivdyetools/worker-kit`
 
-**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-api-worker` (Universalis proxy routes), `xivdyetools-image-worker` (photon pixel extraction for `/extractor`)
+**Service Bindings (outbound):** `xivdyetools-presets-api`, `xivdyetools-api-worker` (Universalis proxy routes; `/v1/chara/resolve` for `/glamour`), `xivdyetools-image-worker` (photon pixel extraction for `/extractor`)
 
 **Service Bindings (inbound):** `xivdyetools-presets-api` calls back via `DISCORD_WORKER` for notifications
 
