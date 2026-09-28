@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. **Crawler interception** — when Discord, Twitter, Facebook, Slack, etc. fetch a tool URL like `xivdyetools.app/harmony/?dye=102&harmony=tetradic` (`102` is Jet Black's **stainID** — 5.0 share URLs and OG paths key on stainIDs, never item IDs), the worker detects the bot by `User-Agent` and returns HTML stuffed with locale-aware `og:*` meta tags. Real users get passed through to the SPA.
 2. **OG image rendering** — direct PNG endpoints under `/og/*` produce the 5.0 **15E band cards**: drawn on a 400 design grid and rastered ×3 through `resvg-wasm` (Discord frame 400×350 → 1200×1050; X frame 400×210 → 1200×630 via `?frame=x`, which `twitter:image` carries). Ten `*.ttf` data imports are bundled: Space Grotesk and Onest as **static Regular / SemiBold / Bold instances** (resvg cannot move a variable axis — a variable file renders only its default instance, and Space Grotesk's is Light; regenerate via `../discord-worker/scripts/instance-latin-fonts.py --app og-worker`, and `font-faces.test.ts` fails if two weights render alike), Fragment Mono, plus the CJK subsets NotoSansJP/SC/KR (regenerate via `scripts/subset-cjk-fonts.py` whenever dyes or card strings change).
 
-All nine tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget — each a thin adapter onto the shared `services/svg/band.ts` frame (plus the 2a default cards in `default-card.ts` and the ×6 card strings in `services/og-strings.ts`; the crawler's ×6 embed sentences are `services/og-embed.ts`). Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001). Core supplies game nouns only; every sentence and label the worker says in its own voice is authored ×6 in those two files, and tool names come from `OG_DECK`, never core `tools.*` (2026-08-20 i18n audit).
+All ten tools are supported: harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget, glamour — each a thin adapter onto the shared `services/svg/band.ts` frame (plus the 2a default cards in `default-card.ts`, which are glamour's only card since it has no share grammar, and the ×6 card strings in `services/og-strings.ts`; the crawler's ×6 embed sentences are `services/og-embed.ts`). Localization is handled via a stateless `TranslationProvider` with all 6 locales eagerly preloaded — concurrent requests with different `?lang=` cannot trample state (see REFACTOR-001). Core supplies game nouns only; every sentence and label the worker says in its own voice is authored ×6 in those two files, and tool names come from `OG_DECK`, never core `tools.*` (2026-08-20 i18n audit).
 
 ## Commands
 
@@ -69,7 +69,7 @@ src/
     └── svg/
         ├── band.ts             # ★ The 15E frame + the SHARED chrome (cardHeader/cardFooter/ogMark)
         ├── band-shared.ts      # ALGO_TAG, fmtDelta, bandGlyph, notFoundBand (takes the locale)
-        ├── default-card.ts     # The 2a default cards (stripes + glyph tile)
+        ├── default-card.ts     # The 2a default cards (stripes + glyph tile); the one-liner wraps to ≤ 3 lines and the deck grows
         ├── tokens.ts           # GROUND, font STACKS, MARK_STRIPES, COMPACT_GLYPH — one source
         ├── dye-helpers.ts      # Shared DyeService, stainID map, deltaForAlgorithm
         ├── harmony.ts          # generateHarmonyOG()
@@ -112,10 +112,10 @@ for.
 **Crawler-intercept routes** (return HTML with OG meta tags to bots, pass-through to origin for humans):
 
 - `GET /` — site root (redirects humans to `APP_BASE_URL`)
-- `GET /:tool` and `GET /:tool/` for all nine tools in `SUPPORTED_TOOLS`
+- `GET /:tool` and `GET /:tool/` for all ten tools in `SUPPORTED_TOOLS`
 - `GET /presets/:presetId` — the one tool whose share form is a **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card
 
-`generateOGDataForTool` has a case for every tool. Harmony / gradient / mixer / swatch forward a non-default `?algo=` onto the emitted image URL (normalised; the suite default and unknown values stay off it for stable cache keys), so the card computes the Δ the page showed. A share URL that resolves to nothing emits `/og/<tool>/default.png` — never the root card. `og-data-generator.test.ts` has a route ↔ emitter parity test over all nine.
+`generateOGDataForTool` has a case for every tool. Harmony / gradient / mixer / swatch forward a non-default `?algo=` onto the emitted image URL (normalised; the suite default and unknown values stay off it for stable cache keys), so the card computes the Δ the page showed. A share URL that resolves to nothing emits `/og/<tool>/default.png` — never the root card. `og-data-generator.test.ts` has a route ↔ emitter parity test over all ten.
 
 **OG image routes** (return `image/png`). Every route takes `?lang=` (the picture
 localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
@@ -231,8 +231,8 @@ worker, not a routeless sandbox — see `docs/operations/DEPLOY_ENVIRONMENTS.md`
 
 | Env | Worker | Routes | `APP_BASE_URL` | `OG_IMAGE_BASE_URL` |
 |---|---|---|---|---|
-| top-level (`pnpm deploy`) | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×9 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `https://og-beta.xivdyetools.app/og` |
-| `production` (`pnpm deploy:production`) | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×9 + `og.xivdyetools.app` | `https://xivdyetools.app` | `https://og.xivdyetools.app/og` |
+| top-level (`pnpm deploy`) | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×10 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `https://og-beta.xivdyetools.app/og` |
+| `production` (`pnpm deploy:production`) | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×10 + `og.xivdyetools.app` | `https://xivdyetools.app` | `https://og.xivdyetools.app/og` |
 
 Beta gets its own Analytics Engine dataset (`xivdyetools_og_analytics_beta`) so its traffic
 cannot skew production metrics. Both envs declare `routes` and `workers_dev` **explicitly**,
