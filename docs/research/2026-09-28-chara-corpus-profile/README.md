@@ -7,8 +7,11 @@ still stand?
 **Outcome:** every file parses, but the corpus overturned the eye-pairing and float-decoding
 rules, showed that a dye can sit on an empty slot, and found that the game stores skin, hair and
 light-lip floats as shading values rather than as the creator's swatch (confirmed in the
-creator). All fixed in core 5.6.0; live-float files now show OFF GRID only for a real custom
-color. One question stays open: [the creator's highlight swatches](#open-highlight-swatches).
+creator). Fixed in core 5.6.0. The game's `human.cmp` then explained the rest: it keeps a
+creator palette and a shader palette side by side, and our sheets mixed the two, including a
+tattoo sheet copied from the eyes. Core 5.7.0 regenerates the sheets from the file
+([Both halves](#both-halves-of-humancmp-core-570)); live-float files now show OFF GRID only for
+real custom colors.
 
 ## Corpus and method
 
@@ -74,6 +77,9 @@ the *other* eye's palette entry and neither on its own.
 
 ### The limbal/tattoo float carries a factor of 0.643
 
+*(Superseded in core 5.7.0: the factor approximated `human.cmp`'s shader feature palette, which
+the resolver now uses directly — see [Both halves](#both-halves-of-humancmp-core-570).)*
+
 `LimbalRingColor` is `0.643 × (n/255)²` (1,039 bright channels: p10 0.6415, median 0.6426, p90
 0.6485). Divided out, every limbal float in the corpus lands within ΔE 3.5 of its palette entry;
 the lone exception (a factor of 4–6.5) is a real custom color. Tattoo entry 7 is stored as an
@@ -132,20 +138,47 @@ no longer judges skin or hair floats against the swatch, and judges a light-pale
 the dark entry the game stores for it. Nothing real is lost: no file in the corpus had edited
 one, since the float is identical wherever an entry recurs.
 
-## Open: highlight swatches
+## Both halves of `human.cmp` (core 5.7.0)
 
-The same screenshot shows the highlights palette beside the hair palette, and there the check
-runs the other way. `human.cmp` splits the shared palettes the same way (`Parameters` for the
-shader, `Interface` for the creator), but Anamnesis — and, it appears, the extraction our sheets
-came from — reads eyes and highlights from the **shader** half. At all 98 highlight indices used in the corpus, the stored float equals our
-highlight sheet exactly, so comparisons are sound. But the creator's own highlight swatch
-differs at some cells: with 42 selected it reads **RGB 225,186,112**, where the stored value
-(and our sheet) is 255,186,86. With the brightening divided out, the creator's highlight grid
-matches our sheet in most mid-tone cells but not around 40–43 or in rows 12, 20 and 21, where it
-is less saturated. For those entries the Swatch Matcher shows the stored color rather than the
-one the player picked from. The fix is to read both halves of `human.cmp` for every palette:
-the interface half for what the tool shows, the shader half for judging a float — which would
-also let skin and hair floats be judged again instead of skipped.
+The maintainer extracted `chara/xls/charamake/human.cmp` (the file is not vendored). Its size
+matches Penumbra.GameData's `CmpData` layout to the byte, and all four ground-truth values fit
+it: the creator's two readouts (hair 42 = 255,220,152 and highlight 42 = 225,186,112, both in the
+interface half) and the files' two floats (229,210,172 and 255,186,86, both in the shader half).
+
+Our sheets turned out to be a mix of the two halves:
+
+| Sheet | Shader half | Interface half (the creator) |
+|---|---:|---:|
+| Hair, skin (32 clan/genders) | — | **6,144 / 6,144** |
+| Eyes | 192 / 192 | 192 / 192 (the halves are identical) |
+| Highlights | **192 / 192** | 152 / 192 |
+| Lips, face paint (dark and light) | **96 / 96** | 1 / 96 |
+| Tattoo / limbal | 0 / 192 | 9 / 192 — a copy of the **eye** palette |
+
+The tattoo sheet was byte-for-byte the eye palette. Anamnesis reads facial features from the eye
+block (`FacialFeature` with `PaletteIndex = 0`), and the extraction behind our data inherited that.
+
+`scripts/build-character-colors.ts` now regenerates every sheet from the file: the interface
+half for what the tools show (hair, skin and eyes come out byte-identical), and the shader half,
+in `shader/`, for judging a float. Moving to the creator's colors changes lips and face paint in 95
+of 96 entries (dark palette median ΔE 24), highlights in 39 of 192, and tattoo in 183 of 192
+(median ΔE 3).
+
+Judged against the shader half, every unedited float in the corpus is exact:
+
+| Slot | Float = stored color |
+|---|---:|
+| Hair | 982 / 982 |
+| Skin | 980 / 982 (2 custom) |
+| Eyes | 976 / 982 (the 4 crossed Brio files + 2 custom) |
+| Limbal / tattoo | 797 / 798 (1 custom); entry 7 is stored black, which explains the 194 zero floats |
+| Dark lips | 258 / 259 (1 custom) |
+| Light lips | 349 / 349, against the **dark** entry at the same position |
+
+The ×0.643 limbal factor was an approximation of the real feature palette. Core 5.7.0 drops it,
+along with the entry-7 rule and the skin/hair skip, and judges skin and hair floats again. In the
+66 live-float files the remaining OFF GRID verdicts are exactly the real custom colors: one eye
+and one skin.
 
 ## Also seen, no change needed
 

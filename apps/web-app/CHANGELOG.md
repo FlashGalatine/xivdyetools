@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.12.6] - 2026-09-28
+
+Needs `@xivdyetools/core` 5.7.0. No web-app source changed — the color sheets are regenerated in
+core from the game's own `human.cmp`.
+
+### Fixed
+
+- **Swatch Matcher showed lip, face-paint and some highlight swatches in colors the character
+  creator doesn't use.** Those sheets held the game's shader colors, not the creator's; lips and
+  face paint differ in 95 of 96 swatches. Every sheet now matches the creator, which the game
+  file and the creator's own RGB readouts confirm.
+- **The Tattoo / Limbal sheet was a copy of the eye colors.** It now holds the game's own
+  facial-feature palette.
+- **A custom skin or hair color is OFF GRID again**, and one straight from the creator never is:
+  each color is now checked against the value the game stores for it.
+
 ## [5.12.5] - 2026-09-28
 
 Needs `@xivdyetools/core` 5.6.0. No web-app source changed — every fix lands in core's `.chara`
