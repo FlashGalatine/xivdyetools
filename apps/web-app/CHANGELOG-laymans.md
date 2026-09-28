@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.13.2 — September 28, 2026
+
+### Privacy Guide and Terms of Service updated
+- **The Privacy Guide now covers the Glamour Reader.** It says exactly what the gear lookup sends: the equipment model numbers and the facewear id from your file, and nothing else. It also says those numbers are looked up in XIVAPI, a community game-data service.
+- **Acquisition lines you rewrite are listed as saved on your device.** "Reset all" in the Glamour list deletes them.
+- **Nothing about how the site handles your data has changed.** The documents were behind the app, and now match it in all six languages. Find them under About.
+
 ## Web-App Version 5.13.0 — September 28, 2026
 
 ### New tool: the Glamour Reader

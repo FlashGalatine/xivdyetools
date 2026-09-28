@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.13.2] - 2026-09-28
+
+Documents only; the deployed bundle differs only in its version string.
+
+### Changed
+
+- **`PRIVACY.md` and `TERMS_OF_SERVICE.md` catch up with the Glamour Reader**, in all six
+  languages, with `Last updated` moved to 2026-09-28 on every variant.
+  - The Privacy Guide names the Glamour Reader among the tools that work on the device.
+  - The gear lookup says what it sends: the equipment model numbers and the facewear id (sent
+    since 2026-08-20, never stated). It names XIVAPI as where api-worker looks them up, and says
+    the reply carries item names, the Acquisition line and icons.
+  - Rewritten Acquisition lines are listed under what `localStorage` holds, with "Reset all" as
+    the way to delete them. "Reset settings" does not clear them.
+  - The "Open in…" menu belongs to the Glamour Reader; the block moved out of the Swatch
+    Matcher in 5.13.0.
+  - The Terms name XIVAPI among the services we do not run, and no longer list Saddlebag
+    Exchange among a glamour piece's links. It is on the dye card.
+  - The Terms gained the Glamour Reader in 5.13.0 without a new date; this release dates them.
+
 ## [5.13.1] - 2026-09-28
 
 Tests only; the deployed bundle differs only in its version string. No player notes.

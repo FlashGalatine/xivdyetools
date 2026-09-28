@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
 
-**Last Updated**: September 20, 2026
+**Last Updated**: September 28, 2026
 
 > The web app at xivdyetools.app has its own terms: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Data handling is covered by the [Privacy Policy](PRIVACY_POLICY.md).
 
@@ -26,6 +26,11 @@ XIV Dye Tools Discord Bot provides:
 - **Community Preset Favorites**: Mark and list community presets you like (`/preset favorite`)
 - **Community Presets**: Browse, submit, and vote on user-created color palettes
 - **Market Pricing**: Real-time market board prices via Universalis API
+- **Dye Comparison and Contrast**: Compare dyes side by side and measure the contrast between them (`/comparison`, `/contrast`)
+- **Blending and Gradients**: Blend two dyes, or build a gradient between two colors (`/mixer`, `/gradient`)
+- **Budget Alternatives**: Find cheaper dyes close to an expensive one (`/budget`)
+- **Character Colors**: Match the colors in a `.chara` file to dyes (`/swatch`)
+- **Glamour Reader**: List the gear and dyes in a `.chara` file (`/glamour`)
 
 The Bot is provided free of charge as a fan-made community tool.
 
@@ -71,11 +76,13 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
 
 This Bot is a fan-made tool and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.** FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
 
-Game data, including dye names, colors, and acquisition methods, are property of Square Enix Co., Ltd. and are used under fair use for educational and informational purposes only.
+Game data, including dye and item names, colors, and acquisition methods, are property of Square Enix Co., Ltd. and are used under fair use for educational and informational purposes only.
 
 ### Third-Party Services
 
 Market board data is provided by [Universalis](https://universalis.app/), an independent third-party service not affiliated with Square Enix.
+
+Item names for `/glamour` are looked up through [XIVAPI](https://xivapi.com/), also an independent third-party service not affiliated with Square Enix.
 
 ### Your Content
 

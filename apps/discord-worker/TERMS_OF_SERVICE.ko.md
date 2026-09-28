@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트**: 2026-09-20
+**최종 업데이트**: 2026-09-28
 
 > 웹 앱(xivdyetools.app)에는 자체 약관이 있습니다: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). 데이터 처리 방식은 [개인정보처리방침](PRIVACY_POLICY.md)에서 다룹니다.
 
@@ -26,6 +26,11 @@ XIV Dye Tools Discord 봇은 다음을 제공합니다:
 - **커뮤니티 프리셋 즐겨찾기**: 마음에 드는 커뮤니티 프리셋을 표시하고 목록으로 봅니다 (`/preset favorite`)
 - **커뮤니티 프리셋**: 사용자가 만든 색상 팔레트를 둘러보고, 제출하고, 투표합니다
 - **장터 가격**: Universalis API를 통한 실시간 장터 가격
+- **염료 비교와 대비**: 염료를 나란히 비교하고 염료 사이의 대비를 측정합니다 (`/comparison`, `/contrast`)
+- **블렌드와 그라데이션**: 두 염료를 블렌드하거나 두 색상 사이의 그라데이션을 만듭니다 (`/mixer`, `/gradient`)
+- **저렴한 대안**: 고가 염료에 가까운 더 저렴한 염료를 찾습니다 (`/budget`)
+- **캐릭터 색상**: `.chara` 파일의 색상을 염료에 매칭합니다 (`/swatch`)
+- **코디 리더**: `.chara` 파일의 장비와 염료를 목록으로 보여줍니다 (`/glamour`)
 
 이 봇은 팬이 만든 커뮤니티 도구로서 무료로 제공됩니다.
 
@@ -71,11 +76,13 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
 
 이 봇은 팬이 만든 도구이며 **Square Enix Co., Ltd.와 제휴, 승인 또는 후원 관계가 없습니다.** FINAL FANTASY는 Square Enix Holdings Co., Ltd.의 등록 상표입니다.
 
-염료 이름, 색상, 획득 방법을 포함한 게임 데이터는 Square Enix Co., Ltd.의 재산이며, 교육 및 정보 제공 목적의 공정 이용 하에서만 사용됩니다.
+염료 이름과 아이템 이름, 색상, 획득 방법을 포함한 게임 데이터는 Square Enix Co., Ltd.의 재산이며, 교육 및 정보 제공 목적의 공정 이용 하에서만 사용됩니다.
 
 ### 제3자 서비스
 
 장터 데이터는 Square Enix와 제휴하지 않은 독립적인 제3자 서비스인 [Universalis](https://universalis.app/)가 제공합니다.
+
+`/glamour`의 아이템 이름은 마찬가지로 Square Enix와 제휴하지 않은 독립적인 제3자 서비스인 [XIVAPI](https://xivapi.com/)에서 조회합니다.
 
 ### 사용자의 콘텐츠
 

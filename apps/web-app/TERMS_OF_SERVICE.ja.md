@@ -2,7 +2,7 @@
 
 > これは利便性のために提供される翻訳版です。英文が正式な文書であり、内容に相違がある場合は英文が優先します。[English](TERMS_OF_SERVICE.md)
 
-**最終更新日:** 2026-09-20 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。データの取り扱いについては別の文書をご覧ください：[`PRIVACY.md`](PRIVACY.md)。Discord Botには専用の利用規約があります：[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
+**最終更新日:** 2026-09-28 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。データの取り扱いについては別の文書をご覧ください：[`PRIVACY.md`](PRIVACY.md)。Discord Botには専用の利用規約があります：[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
 
 XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカラーツールキットです。スクウェア・エニックスとは提携・承認・後援関係にありません。本サイトを利用することで、以下の内容に同意したものとみなされます。同意されない場合はご利用をお控えください——離れることに何の代償もありません。
 
@@ -66,8 +66,9 @@ XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカ�
 一部の機能は、運営者が運営していないサービスへユーザーを案内します：
 
 - **Universalis** がマーケットボード価格を提供します。
+- **XIVAPI** が `.chara` ファイルの装備に対応するアイテム名を提供します。
 - **Discord** と **XIVAuth** がサインインを処理し、Discordは運営者のコミュニティサーバーもホストしています。
-- コーディネートパーツの **アイテムリンク** は、そのアイテムをGarland Tools、FFXIV Teamcraft、Gamer Escape、Mirapri、Saddlebag Exchange、またはロードストーンで開きます。
+- コーディネートパーツの **アイテムリンク** は、そのアイテムをGarland Tools、FFXIV Teamcraft、Gamer Escape、Mirapri、またはロードストーンで開きます。カララントカードのリンクは、Universalis、Garland Tools、FFXIV Teamcraft、またはSaddlebag Exchangeを開きます。
 
 これらのリンクのいずれかをたどると、そこは他社のサイトであり、そのサイトの規約とプライバシーポリシーが適用されます。運営者はそれらを管理しておらず、責任も負いません。
 

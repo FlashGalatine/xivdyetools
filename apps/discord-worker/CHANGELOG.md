@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.1] - 2026-09-28
+
+Documents only. No source changed, no `register-commands`.
+
+### Changed
+
+- **`PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md` catch up with `/swatch` and `/glamour`**, in
+  all six languages, with `Last Updated` moved to September 28, 2026 on every variant.
+  - Privacy Policy §3 gains a *Character Files* subsection: the attachment is downloaded from
+    Discord, read in memory and discarded, as `utils/chara-attachment.ts` does it. It says what
+    `/glamour` sends to api-worker: the equipment model numbers and the facewear id.
+  - `.chara` files join the list of what is not collected, and XIVAPI joins the third-party
+    table in §6.
+  - Terms §3 lists `/comparison`, `/contrast`, `/mixer`, `/gradient`, `/budget`, `/swatch` and
+    `/glamour`. §6 names item names among the game data and XIVAPI among the third parties.
+
 ## [5.7.0] - 2026-09-28
 
 ### Added

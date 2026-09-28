@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert**: 2026-09-20
+**Zuletzt aktualisiert**: 2026-09-28
 
 > Die Web-App unter xivdyetools.app hat eigene Bedingungen:
 > [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Der Umgang mit Daten ist in
@@ -36,6 +36,14 @@ Der XIV Dye Tools Discord-Bot bietet:
 - **Community-Presets**: Durchsuche, reiche ein und stimme über von Nutzern erstellte Farbpaletten
   ab
 - **Marktpreise**: Marktbrett-Preise in Echtzeit über die Universalis-API
+- **Farbstoffvergleich und Kontrast**: Vergleicht Farbstoffe nebeneinander und misst den Kontrast
+  zwischen ihnen (`/comparison`, `/contrast`)
+- **Mischen und Farbverläufe**: Mischt zwei Farbstoffe oder erstellt einen Farbverlauf zwischen
+  zwei Farben (`/mixer`, `/gradient`)
+- **Günstige Alternativen**: Findet günstigere Farbstoffe, die einem teuren nahekommen (`/budget`)
+- **Charakterfarben**: Ordnet die Farben einer `.chara`-Datei Farbstoffen zu (`/swatch`)
+- **Projektionsleser**: Listet die Ausrüstung und die Farbstoffe einer `.chara`-Datei auf
+  (`/glamour`)
 
 Der Bot wird kostenlos als von Fans gemachtes Community-Werkzeug bereitgestellt.
 
@@ -90,14 +98,17 @@ Dieser Bot ist ein von Fans gemachtes Werkzeug und steht **in keiner Verbindung 
 Co., Ltd. und wird von diesem weder unterstützt noch gesponsert.** FINAL FANTASY ist eine
 eingetragene Marke der Square Enix Holdings Co., Ltd.
 
-Spieldaten, einschließlich Farbstoffnamen, Farben und Erwerbsmethoden, sind Eigentum der Square
-Enix Co., Ltd. und werden im Rahmen der Fair-Use-Regelung ausschließlich zu Bildungs- und
+Spieldaten, einschließlich Farbstoff- und Gegenstandsnamen, Farben und Erwerbsmethoden, sind
+Eigentum der Square Enix Co., Ltd. und werden im Rahmen der Fair-Use-Regelung ausschließlich zu Bildungs- und
 Informationszwecken verwendet.
 
 ### Drittanbieter-Dienste
 
 Marktbrett-Daten werden von [Universalis](https://universalis.app/) bereitgestellt, einem
 unabhängigen Drittanbieter-Dienst, der nicht mit Square Enix verbunden ist.
+
+Gegenstandsnamen für `/glamour` werden über [XIVAPI](https://xivapi.com/) nachgeschlagen,
+ebenfalls ein unabhängiger Drittanbieter-Dienst, der nicht mit Square Enix verbunden ist.
 
 ### Deine Inhalte
 

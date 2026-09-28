@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](TERMS_OF_SERVICE.md)
 
-**最后更新：** 2026-09-20 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
+**最后更新：** 2026-09-28 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
 
 XIV Dye Tools 是一款为《最终幻想 XIV》制作的免费同人染剂工具集。它与 Square Enix 没有从属关系，也未获得其认可或赞助。使用本网站即表示您同意以下内容。如果您不同意，请不要使用它——离开这里对您没有任何代价。
 
@@ -66,8 +66,9 @@ XIV Dye Tools 是一款为《最终幻想 XIV》制作的免费同人染剂工�
 有些功能会把您引导到我们不运营的服务：
 
 - **Universalis** 提供市场布告板价格。
+- **XIVAPI** 提供 `.chara` 文件中装备对应的物品名称。
 - **Discord** 和 **XIVAuth** 负责登录；Discord 也承载我们的社区服务器。
-- 幻化部件上的**物品链接**会在 Garland Tools、FFXIV Teamcraft、Gamer Escape、Mirapri、 Saddlebag Exchange 或 Lodestone 上打开该物品。
+- 幻化部件上的**物品链接**会在 Garland Tools、FFXIV Teamcraft、Gamer Escape、Mirapri 或 Lodestone 上打开该物品；染剂卡片上的链接会打开 Universalis、Garland Tools、FFXIV Teamcraft 或 Saddlebag Exchange。
 
 一旦您点击了这些链接中的任意一个，您就处于别人的网站上，受他们自己的条款和隐私政策约束。我们不控制这些网站，也不对它们负责。
 

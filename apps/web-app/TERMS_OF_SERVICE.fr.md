@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour :** 2026-09-20 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
+**Dernière mise à jour :** 2026-09-28 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
 façon dont nous traitons vos données fait l'objet d'un document séparé : [`PRIVACY.md`](PRIVACY.md).
 Le bot Discord a ses propres conditions :
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
@@ -102,9 +102,11 @@ démontrer contre le site en production.
 Certaines fonctionnalités vous redirigent vers des services que nous n'exploitons pas :
 
 - **Universalis** fournit les prix du tableau des ventes.
+- **XIVAPI** fournit les noms des objets correspondant à l'équipement d'un fichier `.chara`.
 - **Discord** et **XIVAuth** gèrent la connexion ; Discord héberge aussi notre serveur communautaire.
 - Les **liens d'objet** sur une pièce de mirage ouvrent cet objet sur Garland Tools, FFXIV
-  Teamcraft, Gamer Escape, Mirapri, Saddlebag Exchange, ou le Lodestone.
+  Teamcraft, Gamer Escape, Mirapri ou le Lodestone ; les liens sur une fiche de teinture ouvrent
+  Universalis, Garland Tools, FFXIV Teamcraft ou Saddlebag Exchange.
 
 Une fois que vous suivez l'un de ces liens, vous êtes sur le site de quelqu'un d'autre, soumis à ses
 propres conditions et à sa propre politique de confidentialité. Nous ne les contrôlons pas et n'en

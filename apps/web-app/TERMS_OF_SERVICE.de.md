@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert:** 2026-09-20 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
+**Zuletzt aktualisiert:** 2026-09-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
 wir mit deinen Daten umgehen, ist ein eigenes Dokument: [`PRIVACY.md`](PRIVACY.md). Der
 Discord-Bot hat eigene Bedingungen:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
@@ -100,10 +100,12 @@ Live-Website vorzuführen.
 Manche Funktionen leiten dich an Dienste weiter, die wir nicht selbst betreiben:
 
 - **Universalis** liefert Marktbrett-Preise.
+- **XIVAPI** liefert die Gegenstandsnamen zur Ausrüstung in einer `.chara`-Datei.
 - **Discord** und **XIVAuth** übernehmen die Anmeldung; Discord hostet außerdem unseren
   Community-Server.
 - Die **Gegenstands-Links** bei einem Projektionsteil öffnen diesen Gegenstand bei Garland Tools,
-  FFXIV Teamcraft, Gamer Escape, Mirapri, Saddlebag Exchange oder dem Lodestone.
+  FFXIV Teamcraft, Gamer Escape, Mirapri oder dem Lodestone; die Links auf einer Farbstoffkarte
+  öffnen Universalis, Garland Tools, FFXIV Teamcraft oder Saddlebag Exchange.
 
 Sobald du einem dieser Links folgst, befindest du dich auf der Website einer anderen Partei, unter
 deren Bedingungen und deren Datenschutzrichtlinie. Wir kontrollieren sie nicht und sind nicht für
