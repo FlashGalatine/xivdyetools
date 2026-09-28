@@ -22,7 +22,6 @@
  */
 
 import {
-  CHARA_WEAR_RACE_COLUMNS,
   charaPieceTone,
   charaTwinsOf,
   defaultCharaTwin,
@@ -40,7 +39,7 @@ import {
   type GposersInput,
   type ResolvedCharaCharacter,
 } from '@xivdyetools/core';
-import type { RaceKey } from '@xivdyetools/types';
+import type { Race, RaceKey } from '@xivdyetools/types';
 import { generateGlamourCard, type GlamourCardRow } from '@xivdyetools/svg';
 import { createTranslator, type LocaleCode, type Translator, type TranslatorLogger } from '../i18n/index.js';
 import { dyeService } from '../input-resolution.js';
@@ -132,8 +131,23 @@ const SLOT_ORDER: readonly CharaGearSlotId[] = [
   'LeftRing',
 ];
 
-/** Core's race keys, in `EquipRaceCategory` column (wear-mask bit) order. */
-const RACE_KEYS: readonly RaceKey[] = ['hyur', 'elezen', 'lalafell', 'miqote', 'roegadyn', 'auRa', 'hrothgar', 'viera'];
+/**
+ * Each race's `EquipRaceCategory` column (core's `CHARA_WEAR_RACE_COLUMNS`
+ * order; wear-mask bits `2 * column` and `2 * column + 1`) and its locale key.
+ * Keyed by our `Race` identifier, never the sheet's column spelling — the
+ * sheet writes `Miqote`, the parser answers `Miqo'te` — so a race is compared
+ * by identity and the compiler holds the table to every race.
+ */
+const WEAR_RACES: Record<Race, { column: number; key: RaceKey }> = {
+  Hyur: { column: 0, key: 'hyur' },
+  Elezen: { column: 1, key: 'elezen' },
+  Lalafell: { column: 2, key: 'lalafell' },
+  "Miqo'te": { column: 3, key: 'miqote' },
+  Roegadyn: { column: 4, key: 'roegadyn' },
+  AuRa: { column: 5, key: 'auRa' },
+  Hrothgar: { column: 6, key: 'hrothgar' },
+  Viera: { column: 7, key: 'viera' },
+};
 
 /** Slot → its card short (literal keys, so the i18n orphan gate can see them). */
 const SLOT_KEYS: Record<CharaGearSlotId, string> = {
@@ -191,16 +205,16 @@ function localName(names: GlamourItemNames, locale: LocaleCode): string {
  * that is the character's own race, when what blocks the piece is gender and
  * "VIERA" would tell a Viera man nothing. Otherwise null.
  */
-function onlyOtherRace(mask: number | null, race: string | null): RaceKey | null {
+function onlyOtherRace(mask: number | null, race: Race | null): RaceKey | null {
   if (mask === null) return null;
-  const allowed = RACE_KEYS.map((_, i) => i).filter((i) => ((mask >> (2 * i)) & 0b11) !== 0);
-  if (allowed.length !== 1 || CHARA_WEAR_RACE_COLUMNS[allowed[0]] === race) return null;
-  return RACE_KEYS[allowed[0]];
+  const allowed = Object.values(WEAR_RACES).filter(({ column }) => ((mask >> (2 * column)) & 0b11) !== 0);
+  if (allowed.length !== 1 || (race !== null && allowed[0] === WEAR_RACES[race])) return null;
+  return allowed[0].key;
 }
 
 function blockedStatus(
   twin: CharaTwin<GlamourItemNames>,
-  race: string | null,
+  race: Race | null,
   t: Translator,
   locale: LocaleCode
 ): string {

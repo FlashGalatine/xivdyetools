@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   says the lookup is busy and to try again in a minute, instead of reading as a failure.
 - **`getLocalizedRace`** — core's race names, per locale. The card names a one-race piece by its
   race (VIERA) when the race is what blocks it; a piece that fails on gender alone reads LOCKED.
+  The check compares races by our `Race` identifier (a `Record<Race, …>` of wear-mask columns),
+  not by the sheet's column spelling: the sheet writes `Miqote` where the parser answers
+  `Miqo'te`, so a Miqo'te man in a piece for Miqo'te women was told MIQO'TE instead of LOCKED.
+  Tested for all eight races, both genders.
 - **Strings ×6**: `card.glamour*` (card labels, counts, reasons, errors), `card.glamourSlot.*`,
   `commands.glamour.*`, `manual.glamour.*`. The slot labels are the game's own words (`Addon`
   rows 738–750, per client; tabled in `docs/reference/ffxiv-terminology.md` § Equipment Slots),

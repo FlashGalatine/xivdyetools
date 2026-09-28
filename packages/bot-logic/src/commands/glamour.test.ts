@@ -7,7 +7,7 @@
  * bow's own off-hand model.
  */
 import { describe, it, expect, vi } from 'vitest';
-import type { CharaGearModel } from '@xivdyetools/core';
+import { CHARA_WEAR_RACE_COLUMNS, type CharaGearModel } from '@xivdyetools/core';
 import { executeGlamour, type GlamourInput, type GlamourResolveAnswer } from './glamour.js';
 
 /** Stain IDs: Snow White 1, Wine Red 12, Dalamud Red 10, Coral Pink 13, Jet Black 102, Metallic Gold 113. */
@@ -236,22 +236,59 @@ describe('executeGlamour', () => {
     expect(result.embed.description).toContain('ヴィエラ・脚甲');
   });
 
-  it('names the race only when the race is what blocks it: a Viera man in a piece for Viera women reads LOCKED', async () => {
-    const vieraMan = JSON.stringify({
-      ...(JSON.parse(STRESS) as Record<string, unknown>),
-      Race: 'Viera',
-      Tribe: 'Rava',
-      Gender: 'Masculine',
-    });
+  /**
+   * Every race with a tribe the parser maps to it and the card's English race
+   * name. The wear-mask column comes from core's sheet order, matched without
+   * the apostrophe: Miqo'te is the one race whose sheet column (`Miqote`) is
+   * not spelled like our `Race` identifier (`Miqo'te`).
+   */
+  const RACES = [
+    { race: 'Hyur', tribe: 'Midlander', shown: 'HYUR' },
+    { race: 'Elezen', tribe: 'Wildwood', shown: 'ELEZEN' },
+    { race: 'Lalafell', tribe: 'Plainsfolk', shown: 'LALAFELL' },
+    { race: "Miqo'te", tribe: 'SeekerOfTheSun', shown: 'MIQO&apos;TE' },
+    { race: 'Roegadyn', tribe: 'SeaWolf', shown: 'ROEGADYN' },
+    { race: 'AuRa', tribe: 'Raen', shown: 'AU RA' },
+    { race: 'Hrothgar', tribe: 'Helions', shown: 'HROTHGAR' },
+    { race: 'Viera', tribe: 'Rava', shown: 'VIERA' },
+  ].map((r) => ({ ...r, column: (CHARA_WEAR_RACE_COLUMNS as readonly string[]).indexOf(r.race.replace("'", '')) }));
+
+  /** The stress file as another character, with Legs locked to `wearMask`. */
+  const wearing = async (tribe: string, gender: 'Masculine' | 'Feminine', wearMask: number) => {
+    const fileText = JSON.stringify({ ...(JSON.parse(STRESS) as Record<string, unknown>), Race: undefined, Tribe: tribe, Gender: gender });
     const answer: GlamourResolveAnswer = {
-      items: { ...ANSWER.items, Legs: { ...ANSWER.items.Legs!, rules: [rules([9500], { wearMask: 0x8000 })] } },
+      items: { ...ANSWER.items, Legs: { ...ANSWER.items.Legs!, rules: [rules([9500], { wearMask })] } },
     };
-    const result = await executeGlamour(input({ fileText: vieraMan, resolve: async () => answer }));
+    const result = await executeGlamour(input({ fileText, resolve: async () => answer }));
     if (!result.ok) throw new Error(result.errorMessage);
-    const t = svgTexts(result.svgString);
+    return svgTexts(result.svgString);
+  };
+
+  it.each(RACES)(
+    'names the race only when the race is what blocks it: $race man, piece for $race women → LOCKED',
+    async ({ tribe, shown, column }) => {
+      expect(column).toBeGreaterThanOrEqual(0);
+      const t = await wearing(tribe, 'Masculine', 1 << (2 * column + 1));
+
+      expect(t).toContain('LOCKED');
+      expect(t).not.toContain(shown);
+    }
+  );
+
+  it.each(RACES)('and the other way round: $race woman, piece for $race men → LOCKED', async ({ tribe, shown, column }) => {
+    const t = await wearing(tribe, 'Feminine', 1 << (2 * column));
 
     expect(t).toContain('LOCKED');
-    expect(t).not.toContain('VIERA');
+    expect(t).not.toContain(shown);
+  });
+
+  it.each(RACES)('but a piece for $race alone names the race to anyone else', async ({ race, shown, column }) => {
+    const other = RACES[(column + 1) % RACES.length];
+    const t = await wearing(other.tribe, 'Feminine', 0b11 << (2 * column));
+
+    expect(other.race).not.toBe(race);
+    expect(t).toContain(shown);
+    expect(t).not.toContain('LOCKED');
   });
 
   it('counts the whole family in +N, as the web does, not just the named alternates', async () => {
