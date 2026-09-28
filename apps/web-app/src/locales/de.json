@@ -1365,7 +1365,24 @@
       "noFix": "Nichts mit demselben Aussehen löst das",
       "otherWorks": "{name} lässt sich stattdessen tragen",
       "choice": "Sieht aus wie {name} · beides geht",
-      "company": "Braucht die richtige Staatliche Gesellschaft"
+      "company": "Braucht die richtige Staatliche Gesellschaft",
+      "twins": "Sieht aus wie {n} weitere Gegenstände: wähle, welchen die Liste nennt"
+    },
+    "picker": {
+      "head": "GLEICHES AUSSEHEN · {n} GEGENSTÄNDE",
+      "sub": "Das Spiel zeigt sie identisch an. Wähle den, den deine Liste nennt.",
+      "foot": "Liste kopieren und .md exportieren schreiben den gewählten.",
+      "itemId": "GEGENSTAND {id}"
+    },
+    "fact": {
+      "best": "BESTE WAHL",
+      "dye": "FARBE ×{n}",
+      "anyTribe": "JEDES VOLK",
+      "tribeOk": "PASST ZUM CHARAKTER",
+      "tribeNo": "NICHT FÜR DIESEN CHARAKTER",
+      "dated": "ALT",
+      "grandCompany": "STAATL. GESELLSCHAFT",
+      "noGlamour": "KEINE PROJEKTION"
     }
   }
 }

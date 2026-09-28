@@ -56,6 +56,7 @@ import {
   tSwatch,
 } from '@components/chara-ui';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
+import { closeTwinPicker, showTwinPicker } from '@components/glamour-twin-picker';
 import { STORAGE_PREFIX } from '@shared/constants';
 import { logger } from '@shared/logger';
 import { copyRichTextToClipboard } from '@shared/clipboard';
@@ -253,9 +254,11 @@ export class GlamourBlock {
     this.unsubscribe = null;
     this.resolveAbort?.abort();
     this.resolveAbort = null;
-    // The menu lives in document.body, so nothing here would remove it — it
-    // would float over the next tool, anchored to a row that is gone.
+    // The menu and the twin picker live in document.body, so nothing here
+    // would remove them — they would float over the next tool, anchored to a
+    // row that is gone.
     closeItemLinksMenuIfLoaded();
+    closeTwinPicker();
     clearContainer(this.container);
     if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
     this.resolved = null;
@@ -285,6 +288,7 @@ export class GlamourBlock {
 
   private render(): void {
     closeItemLinksMenuIfLoaded();
+    closeTwinPicker();
     clearContainer(this.container);
     const glamour = this.resolved ? this.renderGlamour() : null;
     if (!glamour) {
@@ -914,11 +918,34 @@ export class GlamourBlock {
       const tone = state?.tone ?? 'choice';
       const ink = tone === 'fix' ? green() : tone === 'block' ? amber() : 'var(--theme-text-muted)';
       const badge = el(
-        'span',
-        `font-family: ${MONO}; font-size: 8.5px; color: ${ink}; background: color-mix(in srgb, ${ink} 12%, transparent); border: 1px solid color-mix(in srgb, ${ink} 35%, transparent); border-radius: 4px; padding: 1px 5px; cursor: help; white-space: nowrap;`,
+        'button',
+        `font-family: ${MONO}; font-size: 8.5px; line-height: 1.4; color: ${ink}; background: color-mix(in srgb, ${ink} 12%, transparent); border: 1px solid color-mix(in srgb, ${ink} 35%, transparent); border-radius: 4px; padding: 1px 5px; cursor: pointer; white-space: nowrap;`,
         `+${item.familySize - 1}`
-      );
+      ) as HTMLButtonElement;
+      badge.type = 'button';
       badge.dataset.tone = tone;
+      badge.setAttribute('aria-haspopup', 'dialog');
+      badge.setAttribute(
+        'aria-label',
+        LanguageService.tInterpolate('glamour.row.twins', { n: String(item.familySize - 1) })
+      );
+      if (state) {
+        badge.addEventListener('click', (event) => {
+          event.stopPropagation();
+          showTwinPicker({
+            anchor: badge,
+            slotLabel: this.gearSlotLabel(slot),
+            twins: state.twins,
+            pickedId: state.picked.itemId,
+            best: state.best,
+            lang,
+            onPick: (itemId) => {
+              this.picks.set(slot, itemId);
+              this.rerenderGlamour();
+            },
+          });
+        });
+      }
       // `Intl.ListFormat` rather than `join(', ')`: a comma is not the list
       // separator in every language (ja/zh use 、, and ko/de/fr add a
       // conjunction), and the tooltip is prose, not data.

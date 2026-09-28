@@ -1365,7 +1365,24 @@
       "noFix": "Aucune pièce d'apparence identique ne règle le problème",
       "otherWorks": "{name} peut être porté à la place",
       "choice": "Même apparence que {name} · l'un ou l'autre convient",
-      "company": "Nécessite la bonne Grande Compagnie"
+      "company": "Nécessite la bonne Grande Compagnie",
+      "twins": "Même apparence que {n} autres objets : choisissez celui que la liste nomme"
+    },
+    "picker": {
+      "head": "MÊME APPARENCE · {n} OBJETS",
+      "sub": "Le jeu les affiche à l'identique. Choisissez celui que votre liste nomme.",
+      "foot": "Copier la liste et Exporter .md écrivent celui que vous choisissez.",
+      "itemId": "OBJET {id}"
+    },
+    "fact": {
+      "best": "MEILLEUR CHOIX",
+      "dye": "TEINTURE ×{n}",
+      "anyTribe": "TOUTES RACES",
+      "tribeOk": "CONVIENT AU PERSONNAGE",
+      "tribeNo": "PAS POUR CE PERSONNAGE",
+      "dated": "ANCIEN",
+      "grandCompany": "GRANDE COMPAGNIE",
+      "noGlamour": "PAS DE MIRAGE"
     }
   }
 }

@@ -1365,7 +1365,24 @@
       "noFix": "Nothing with the same look fixes it",
       "otherWorks": "{name} can be worn instead",
       "choice": "Same look as {name} · either is fine",
-      "company": "Needs the right Grand Company"
+      "company": "Needs the right Grand Company",
+      "twins": "Same look as {n} other items: pick the one the list names"
+    },
+    "picker": {
+      "head": "SAME LOOK · {n} ITEMS",
+      "sub": "The game draws these identically. Pick the one your list names.",
+      "foot": "Copy list and Export .md write the one you pick.",
+      "itemId": "ITEM {id}"
+    },
+    "fact": {
+      "best": "BEST FIT",
+      "dye": "DYE ×{n}",
+      "anyTribe": "ANY TRIBE",
+      "tribeOk": "FITS THIS CHARACTER",
+      "tribeNo": "NOT FOR THIS CHARACTER",
+      "dated": "DATED",
+      "grandCompany": "GRAND COMPANY",
+      "noGlamour": "NO GLAMOUR"
     }
   }
 }

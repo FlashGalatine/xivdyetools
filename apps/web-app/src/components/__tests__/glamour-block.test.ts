@@ -1082,6 +1082,30 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     );
   });
 
+  it('opens the twin picker from +N; picking a twin renames the row and redoes the verdict', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    row(glamour, 'HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!.click();
+    const choices = Array.from(document.querySelectorAll<HTMLElement>('[data-role="twin-option"]'));
+    expect(choices.map((c) => c.dataset.itemId)).toEqual(['372', '2629']);
+
+    // Pick the Dated coif, which can't take the dye: the row says so
+    choices[0]!.click();
+    expect(part(glamour, 'HeadGear', 'item-name')).toBe('Dated Hempen Coif');
+    expect(part(glamour, 'HeadGear', 'piece-tag')).toBe('NO FIX');
+    expect(part(glamour, 'HeadGear', 'piece-note')).toBe(
+      "It can't take the dyes the file puts on it · Hempen Coif can be worn instead"
+    );
+    expect(counts(glamour)).toEqual(['1 NO FIX']);
+  });
+
   it('writes the twin it names into Copy list and Export .md', async () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },
