@@ -46,8 +46,8 @@ Resolve every worn piece of one character in a single call. The body is the twel
         "acquisition": "Crafted (CRP Lvl. 61) / Norlaise - Ishgard - The Pillars (19,994 Gil)"
       },
       "Body": null,
-      "MainHand": { "itemId": 49486, "names": { "en": "Runaway Bow", "…": "…" }, "iconId": 32065, "familySize": 1, "alternates": [], "viaMainHand": false },
-      "OffHand":  { "itemId": 49486, "names": { "en": "Runaway Bow", "…": "…" }, "iconId": 32065, "familySize": 1, "alternates": [], "viaMainHand": true }
+      "MainHand": { "itemId": 49486, "names": { "en": "Runaway Bow", "…": "…" }, "iconId": 32065, "familySize": 1, "alternates": [], "viaMainHand": false, "acquisition": "Hell on Rails (Extreme)" },
+      "OffHand":  { "itemId": 49486, "names": { "en": "Runaway Bow", "…": "…" }, "iconId": 32065, "familySize": 1, "alternates": [], "viaMainHand": true, "acquisition": "Hell on Rails (Extreme)" }
     },
     "glasses": { "id": 40, "names": { "en": "Black Rose-colored Spectacles", "…": "…" }, "iconId": 200018 }
   },

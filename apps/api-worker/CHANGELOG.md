@@ -19,6 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a client that lets the player name a different twin writes that twin's source. Design:
   `docs/superpowers/specs/2026-09-27-glamour-acquisition-design.md`.
 
+### Fixed
+
+Found in the review of PR #207, before 0.15.0 shipped:
+
+- **A vendor's outpost names the settlement, never the stable, shop or forge beside the vendor**
+  (`scripts/acquisition/labels.ts`, spec D10). Only map labels the game draws as an aetheryte
+  (`MapMarker.DataType` 3) or with the settlement symbol (icon 060448) count, and the segment is left
+  out when none is within 3 map units. 624 lines changed: 414 segments now name the settlement
+  ("E-Una-Kotor - South Shroud - Quarrymill", was "… - Chocobokeep"; "Revenant's Toll", was "Rowena's
+  House of Splendors" or "The Diamond Forge") and 263 lose the segment (facilities such as The
+  Workbench and Crystal Tower, and a few places the map draws only as landmarks, such as Memeroon's
+  Trading Post). Regenerated from the same pinned inputs with the build script's new `--pinned` flag.
+- **Quest, Deep Dungeon, desynthesis and random-container sources count as "the only source" only
+  against the item's whole source set** (`scripts/acquisition/select.ts`). A quest beside a random
+  container was printed as the only source, because only the sources read before it were counted. No
+  current line changes.
+
 ## [0.14.6] - 2026-09-21
 
 ### Changed
