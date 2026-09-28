@@ -10,7 +10,12 @@
  */
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures/coverage';
-import { gotoTool, seedStartupStorage, switchToolViaMenu } from './fixtures/navigation';
+import {
+  gotoTool,
+  seedStartupStorage,
+  switchToolViaMenu,
+  waitForAppReady,
+} from './fixtures/navigation';
 
 const FIXTURE = JSON.stringify({
   TypeName: 'Anamnesis Character File',
@@ -23,8 +28,18 @@ const FIXTURE = JSON.stringify({
 });
 
 const fileInput = (page: Page) => page.locator('input[type="file"][accept*=".chara"]');
-/** The sidebar's tribe select: the one grouped by race. */
-const tribeSelect = (page: Page) => page.locator('select.config-select:has(optgroup)').first();
+/** The sidebar's two selectors under TRIBE & GENDER: the lock covers both. */
+const tribeAndGender = (page: Page) =>
+  page.locator('.config-group').filter({ hasText: 'TRIBE & GENDER' }).locator('select');
+
+async function expectSelectors(page: Page, state: 'locked' | 'unlocked'): Promise<void> {
+  const selects = tribeAndGender(page);
+  await expect(selects).toHaveCount(2);
+  for (const select of [selects.first(), selects.last()]) {
+    if (state === 'locked') await expect(select).toBeDisabled();
+    else await expect(select).toBeEnabled();
+  }
+}
 /** The character's own name on the file card; it reads the same in every language. */
 const nickname = (page: Page) => page.getByText('Session Test', { exact: true }).first();
 
@@ -48,14 +63,14 @@ test.beforeEach(async ({ page }) => {
 test('locks tribe and gender while a file is loaded, and unlocks them on SWAP', async ({
   page,
 }) => {
-  await expect(tribeSelect(page)).toBeEnabled();
+  await expectSelectors(page, 'unlocked');
 
   await loadFixture(page);
-  await expect(tribeSelect(page)).toBeDisabled();
+  await expectSelectors(page, 'locked');
 
   await page.getByRole('button', { name: 'SWAP', exact: true }).click();
   await expect(fileInput(page)).toBeAttached();
-  await expect(tribeSelect(page)).toBeEnabled();
+  await expectSelectors(page, 'unlocked');
 });
 
 test('keeps the file when you leave the tool and come back', async ({ page }) => {
@@ -66,7 +81,7 @@ test('keeps the file when you leave the tool and come back', async ({ page }) =>
 
   await expect(nickname(page)).toBeVisible();
   await expect(fileInput(page)).toHaveCount(0);
-  await expect(tribeSelect(page)).toBeDisabled();
+  await expectSelectors(page, 'locked');
 });
 
 test('keeps the file through a language switch', async ({ page }) => {
@@ -85,7 +100,39 @@ test('a reload clears the file and the lock with it, since the file is never sto
   await loadFixture(page);
 
   await page.reload();
+  // A reload boots the app again. Asserting before it is ready raced the boot
+  // and failed whenever that took longer than the assertion's five seconds.
+  await waitForAppReady(page);
 
   await expect(fileInput(page)).toBeAttached();
-  await expect(tribeSelect(page)).toBeEnabled();
+  await expectSelectors(page, 'unlocked');
+});
+
+test('locks for a file that names no tribe or gender', async ({ page }) => {
+  // The lock follows the file, not what the file says about the character
+  await fileInput(page).setInputFiles({
+    name: 'bare.chara',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ TypeName: 'Anamnesis Character File', REyeColor: 42 })),
+  });
+
+  await expect(page.getByRole('button', { name: 'SWAP', exact: true })).toBeVisible();
+  await expectSelectors(page, 'locked');
+});
+
+test('ignores a lock that a build before 5.12.7 left in storage', async ({ page }) => {
+  // Up to 5.12.6 the lock was saved with the swatch config and outlived the
+  // file, so the tool opened on the drop zone over two disabled selectors.
+  // This replays the original report (PR #204).
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'xivdyetools_v4_config_swatch',
+      JSON.stringify({ colorSheet: 'hairColors', fileProvided: true })
+    );
+  });
+  await page.reload();
+  await waitForAppReady(page);
+
+  await expect(fileInput(page)).toBeAttached();
+  await expectSelectors(page, 'unlocked');
 });
