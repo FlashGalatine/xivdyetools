@@ -69,9 +69,9 @@ function resolveThroughApiWorker(env: Env): GlamourInput['resolve'] {
       throw new Error('api-worker binding not configured');
     }
     if (!response.ok) {
-      // The status rides on the error: bot-logic reads a 429 as "busy", any
-      // other 4xx as a problem with the file, and the rest as "broken". A 4xx
-      // carries api-worker's own reason ("gear[0].base must be an integer
+      // The status rides on the error: bot-logic reads a 429 as "busy", a
+      // refused body (400, 413, 422) as a problem with the file, and the rest
+      // as "broken". A 4xx carries api-worker's own reason ("gear[0].base must be an integer
       // between 0 and 65535") as the message, for the reply to name.
       const reason =
         response.status >= 400 && response.status < 500 && response.status !== 429
@@ -157,7 +157,7 @@ async function processGlamourCommand(
   const result = await executeGlamour(input);
 
   if (!result.ok) {
-    // An unreadable file, or one api-worker refuses (a 4xx other than 429): user input
+    // An unreadable file, or one api-worker refuses (400, 413, 422): user input
     if (result.error === 'PARSE_FAILED') markCommandOutcome(interaction, 'image_input');
     if (result.error === 'RESOLVE_FAILED') markCommandOutcome(interaction, 'unknown');
     // api-worker's service bucket is full for the minute: throttled, not broken

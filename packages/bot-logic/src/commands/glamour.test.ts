@@ -324,7 +324,7 @@ describe('executeGlamour', () => {
     if (!result.ok) expect(result.errorMessage).toMatch(/busy/i);
   });
 
-  it.each([400, 404, 413, 422])(
+  it.each([400, 413, 422])(
     'answers api-worker refusing what the file describes (%i) as a problem with the file, not an outage',
     async (status) => {
       const reason = 'gear[0].base must be an integer between 0 and 65535';
@@ -341,6 +341,20 @@ describe('executeGlamour', () => {
       expect(result.errorMessage).not.toMatch(/try again/i);
     }
   );
+
+  // A missing route or a refused caller is our deploy or config, not the file
+  it.each([401, 403, 404])('answers a %i as RESOLVE_FAILED: the fault is ours', async (status) => {
+    const result = await executeGlamour(
+      input({
+        resolve: async () => {
+          throw Object.assign(new Error('Route POST /v1/chara/resolve not found'), { status });
+        },
+      })
+    );
+    expect(result).toMatchObject({ ok: false, error: 'RESOLVE_FAILED' });
+    if (result.ok) return;
+    expect(result.errorMessage).not.toContain('Route POST');
+  });
 
   it('still answers a server error with a status as RESOLVE_FAILED', async () => {
     const result = await executeGlamour(

@@ -83,9 +83,9 @@ export interface GlamourResolveAnswer {
 
 /**
  * Resolves the worn models; the adapter supplies the transport. A failure may
- * carry the HTTP `status` on the thrown error: 429 answers RESOLVE_BUSY, any
- * other 4xx PARSE_FAILED with the error's message as the reason, the rest
- * RESOLVE_FAILED.
+ * carry the HTTP `status` on the thrown error: 429 answers RESOLVE_BUSY; a
+ * refused body (400, 413, 422) PARSE_FAILED with the error's message as the
+ * reason; the rest RESOLVE_FAILED.
  */
 export type GlamourResolver = (gear: CharaGearModel[], glassesId: number | null) => Promise<GlamourResolveAnswer>;
 
@@ -153,6 +153,9 @@ const WEAR_RACES: Record<Race, { column: number; key: RaceKey }> = {
   Hrothgar: { column: 6, key: 'hrothgar' },
   Viera: { column: 7, key: 'viera' },
 };
+
+/** The statuses with which api-worker refuses a request body: malformed, too large, invalid. */
+const REFUSED_BODY_STATUSES: ReadonlySet<number> = new Set([400, 413, 422]);
 
 /** Slot → its card short (literal keys, so the i18n orphan gate can see them). */
 const SLOT_KEYS: Record<CharaGearSlotId, string> = {
@@ -365,11 +368,12 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     if (status === 429) {
       return { ok: false, error: 'RESOLVE_BUSY', errorMessage: t.t('card.glamourResolveBusy') };
     }
-    // Any other 4xx is api-worker refusing what the file describes (the parser
+    // A refused body is api-worker refusing what the file describes (the parser
     // takes any positive model lane; api-worker stops at 0xFFFF), so a hand
     // edit or a damaged file fails every time — the file's problem, not an
-    // outage to retry. The error carries api-worker's own reason.
-    if (typeof status === 'number' && status >= 400 && status < 500) {
+    // outage to retry. The error carries api-worker's own reason. A missing
+    // route or a refused caller (404, 401, 403) is our deploy, so it stays below.
+    if (typeof status === 'number' && REFUSED_BODY_STATUSES.has(status)) {
       const message = error instanceof Error ? error.message : String(error);
       return { ok: false, error: 'PARSE_FAILED', errorMessage: t.t('card.swatchParseError', { message }) };
     }
