@@ -3,7 +3,7 @@
 **Date:** 2026-09-27 · **Scope:** `web-app` (new tool), `core` (in-game check), `svg` (glyph + bot
 card), `api-worker` (resolve rules + acquisition), `og-worker` (default card), `discord-worker` +
 `bot-logic` (`/glamour`), Rich Presence art (exported files, uploaded by hand) ·
-**Status:** approved 2026-09-27 — "Everything drawn", the designer's picks adopted, Native execution ·
+**Status:** implemented 2026-09-27 — web + api-worker #208, og-worker #209, bot #210 (stacked in that order on #206 → the prototype), Rich Presence art exported; final review's Important findings fixed · "Everything drawn", the designer's picks adopted, Native execution ·
 **Design:** Claude Design project *XIV Dye Tools* — `Glamour Reader Directions.dc.html` (turn 1 web
 1a/1b + bot 2a/2b, turn 2 export sheet 2c), `Glamour Reader Icon.dc.html` (glyph 1a),
 `OG Default Cards - Export.dc.html` + `OG Card Directions.dc.html` (ten-tool root rail),

@@ -1,6 +1,6 @@
 # Glamour Reader Implementation Plan
 
-**Status:** approved 2026-09-27 — Native execution, "Everything drawn", the designer's picks adopted
+**Status:** executed 2026-09-27 — B #208, C #209, D #210, R1 exported (files outside the repo); final whole-branch review: 5 Important + 4 re-graded Minor fixed, 11 minors deferred · Native execution, "Everything drawn", the designer's picks adopted
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans (the user chose Native) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
