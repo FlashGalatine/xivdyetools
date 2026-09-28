@@ -73,7 +73,7 @@
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "`.chara` 파일(Anamnesis 또는 Ktisis)의 투영을 목록으로 보여줍니다.\n• 염색한 각 장비를 실제로 착용할 수 있는 아이템 이름으로 표시\n• GPOSERS 형식의 전체 목록, 바로 복사 가능"
+      "description": "`.chara` 파일(Anamnesis 또는 Ktisis)의 코디를 목록으로 보여줍니다.\n• 염색한 각 장비를 실제로 착용할 수 있는 아이템 이름으로 표시\n• GPOSERS 형식의 전체 목록, 바로 복사 가능"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -603,7 +603,7 @@
     "swatchNoSlots": "이 파일에 활성 색상 부위가 없습니다.",
     "swatchSlotMissing": "{slot}은(는) 이 파일에서 활성 부위가 아닙니다.",
     "perDe": "GIL/ΔE",
-    "glamourTitle": "투영",
+    "glamourTitle": "코디",
     "glamourPieces_one": "염색 {n}개",
     "glamourPieces_other": "염색 {n}개",
     "glamourWorn_one": "장비 {n}개",
@@ -827,7 +827,7 @@
       }
     },
     "glamour": {
-      "description": "캐릭터 파일을 투영으로 읽기: 각 장비, 염색, 착용 가능 여부",
+      "description": "캐릭터 파일을 코디로 읽기: 각 장비, 염색, 착용 가능 여부",
       "options": {
         "file": {
           "description": "`.chara` 캐릭터 파일 (Anamnesis / Ktisis 내보내기)"
