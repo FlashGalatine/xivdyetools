@@ -1,64 +1,204 @@
 [
   {
     "saga": "Zodiac Weapons Saga",
-    "sheets": [{ "sheet": "RelicItem", "items": "links" }],
-    "shops": [], "zones": [], "toolNames": [], "include": [], "exclude": [],
-    "spotChecks": [10059, 6257]
+    "sheets": [
+      {
+        "sheet": "RelicItem",
+        "items": "links"
+      }
+    ],
+    "shops": [
+      "^Replicate .* Zeta\\.$"
+    ],
+    "zones": [],
+    "names": [],
+    "toolNames": [],
+    "weaponNames": [
+      "^Unfinished "
+    ],
+    "include": [],
+    "exclude": [],
+    "spotChecks": [
+      10059,
+      6257,
+      12127,
+      1665
+    ]
   },
   {
     "saga": "Anima Weapons Saga",
-    "sheets": [{ "sheet": "AnimaWeaponItem", "items": "links" }, { "sheet": "AnimaWeapon5", "items": "links" }],
-    "shops": [], "zones": [], "toolNames": [], "include": [], "exclude": [],
-    "spotChecks": [13611, 14870]
+    "sheets": [
+      {
+        "sheet": "AnimaWeaponItem",
+        "items": "links"
+      },
+      {
+        "sheet": "AnimaWeapon5",
+        "items": "links"
+      }
+    ],
+    "shops": [
+      "^Replicate (Awoken|Hyperconductive|(Sharp |Complete )?Anima( Lux)?) Weapons"
+    ],
+    "zones": [],
+    "names": [],
+    "toolNames": [],
+    "weaponNames": [],
+    "include": [],
+    "exclude": [],
+    "spotChecks": [
+      13611,
+      14870
+    ]
   },
   {
     "saga": "Eureka Gear & Weapons",
     "sheets": [],
-    "shops": ["^Replicate Eureka Weapons"],
-    "zones": ["Eureka Anemos", "Eureka Pagos", "Eureka Pyros", "Eureka Hydatos"],
-    "toolNames": [], "include": [], "exclude": [],
+    "shops": [
+      "^Replicate Eureka Weapons"
+    ],
+    "zones": [
+      "Eureka Anemos",
+      "Eureka Pagos",
+      "Eureka Pyros",
+      "Eureka Hydatos"
+    ],
+    "names": [
+      "^Anemos ",
+      "^Elemental .+ of (Fending|Maiming|Striking|Aiming|Scouting|Casting|Healing)( \\+[12])?$"
+    ],
+    "toolNames": [],
+    "weaponNames": [
+      " (Anemos|Pagos|Elemental|Pyros|Hydatos|Eureka)( \\+[12])?( Replica)?$",
+      "^Replica .* (Anemos|Pagos|Elemental|Pyros|Hydatos|Eureka)$"
+    ],
+    "include": [],
+    "exclude": [],
     "spotChecks": []
   },
   {
     "saga": "Resistance Gear & Weapons",
-    "sheets": [{ "sheet": "ResistanceWeaponAdjust", "items": "rowIds" }],
-    "shops": ["^Bozjan Gear (Exchange|Augmentation)$", "^Law's Order Gear (Exchange|Augmentation)$"],
-    "zones": [], "toolNames": [], "include": [], "exclude": [],
-    "spotChecks": [32669]
+    "sheets": [
+      {
+        "sheet": "ResistanceWeaponAdjust",
+        "items": "rowIds"
+      }
+    ],
+    "shops": [
+      "^Bozjan Gear (Exchange|Augmentation)$",
+      "^Law's Order Gear (Exchange|Augmentation)$",
+      "^Purchase Resistance Weapon Replicas",
+      "^Blade's Gear Exchange$"
+    ],
+    "zones": [],
+    "names": [],
+    "toolNames": [],
+    "weaponNames": [
+      "^(Augmented )?Law's Order "
+    ],
+    "include": [],
+    "exclude": [],
+    "spotChecks": [
+      32669,
+      33613
+    ]
   },
   {
     "saga": "Manderville Weapons Saga",
-    "sheets": [{ "sheet": "MandervilleWeaponEnhance", "items": "rowIds" }],
-    "shops": [], "zones": [], "toolNames": [], "include": [], "exclude": [],
-    "spotChecks": [39921]
+    "sheets": [
+      {
+        "sheet": "MandervilleWeaponEnhance",
+        "items": "rowIds"
+      }
+    ],
+    "shops": [
+      "^Purchase Manderville Weapon Replicas"
+    ],
+    "zones": [],
+    "names": [],
+    "toolNames": [],
+    "weaponNames": [
+      "^(Amazing |Majestic )?Manderville ",
+      "^Mandervillous ",
+      "^Replica Manderville "
+    ],
+    "include": [],
+    "exclude": [],
+    "spotChecks": [
+      39921
+    ]
   },
   {
     "saga": "Phantom Gear & Weapons",
     "sheets": [],
-    "shops": ["^Phantom Weapons ", "^Phantom Weapon Replication", "^Phantom Vision Gear Augmentation"],
-    "zones": [], "toolNames": [], "include": [], "exclude": [],
-    "spotChecks": [47878]
+    "shops": [
+      "^Phantom Weapons ",
+      "^Phantom Weapon Replication",
+      "^Phantom Vision Gear Augmentation"
+    ],
+    "zones": [],
+    "names": [
+      "^Phantom Vision "
+    ],
+    "toolNames": [],
+    "weaponNames": [],
+    "include": [],
+    "exclude": [],
+    "spotChecks": [
+      47878
+    ]
   },
   {
     "saga": "Skysteel Tools Saga",
     "sheets": [],
-    "shops": ["^Skysteel Prototype (\\+1 )?Augmentation$", "^Purchase Skysteel (Prototypes|Replicas)$"],
-    "zones": [], "toolNames": [], "include": [], "exclude": [],
+    "shops": [
+      "^Skysteel Prototype (\\+1 )?Augmentation$",
+      "^Purchase Skysteel (Prototypes|Replicas)$"
+    ],
+    "zones": [],
+    "names": [],
+    "toolNames": [
+      "^(Augmented )?(Skysteel|Dragonsung|Skysung|Skybuilders') "
+    ],
+    "weaponNames": [],
+    "include": [],
+    "exclude": [],
     "spotChecks": []
   },
   {
     "saga": "Splendorous Tools Saga",
     "sheets": [],
-    "shops": ["^Purchase Splendorous Replicas$"],
-    "zones": [], "toolNames": [], "include": [], "exclude": [],
+    "shops": [
+      "^Purchase Splendorous Replicas$"
+    ],
+    "zones": [],
+    "names": [],
+    "toolNames": [
+      "^(Augmented )?(Splendorous|Crystalline|Chora-Zoi's Crystalline|Brilliant|Vrandtic Visionary's|Lodestar) "
+    ],
+    "weaponNames": [],
+    "include": [],
+    "exclude": [],
     "spotChecks": []
   },
   {
     "saga": "Cosmic Tools Saga",
     "sheets": [],
-    "shops": [], "zones": [],
-    "toolNames": ["^Cosmic "],
-    "include": [], "exclude": [],
-    "spotChecks": [45679, 49088]
+    "shops": [],
+    "zones": [],
+    "names": [],
+    "toolNames": [
+      "^Cosmic ",
+      "^Stellar ",
+      "Hyper\\w+( Replica)?$",
+      " of Stars( Replica)?$"
+    ],
+    "weaponNames": [],
+    "include": [],
+    "exclude": [],
+    "spotChecks": [
+      45679,
+      49088
+    ]
   }
 ]

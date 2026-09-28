@@ -10,8 +10,8 @@ function shop(id: number, npcIds: number[], extra: Partial<Shop> = {}): Shop {
   return { id, name: '', npcIds, festival: false, ...extra };
 }
 
-function offer(s: Shop, costs: Cost[]): Offer {
-  return { shop: s, costs };
+function offer(s: Shop, costs: Cost[], unknownCosts = false): Offer {
+  return { shop: s, costs, unknownCosts };
 }
 
 function select(inputs: Inputs, tables: Tables = emptyTables()): Selection {
@@ -73,6 +73,42 @@ describe('selectEntries', () => {
     const result = select(i);
     expect(result.entries).toEqual([]);
     expect(result.dropped).toEqual(['repurchaseShop', 'seasonalShop']);
+  });
+
+  it('ignores every salvager and recompense officer shop, whatever it is named (they sell back what a player once owned)', () => {
+    const i = emptyInputs();
+    i.offers.set(ITEM, [
+      offer(shop(262000, [1006004], { name: 'Purchase Achievement Rewards II' }), [{ itemId: 1, amount: 100 }]),
+      offer(shop(262001, [1017613], { name: 'Purchase Moonfire Faire Items I' }), [{ itemId: 1, amount: 59 }]),
+      offer(shop(262002, [1025913], { name: 'Ceremony Attire Exchange' }), [{ itemId: ITEM, amount: 1 }]),
+    ]);
+    i.npcs.set(1006004, npc(1006004, 'Calamity salvager', 'Old Gridania'));
+    i.npcs.set(1017613, npc(1017613, 'recompense officer', 'Old Gridania'));
+    i.npcs.set(1025913, npc(1025913, 'journeyman salvager', "Mor Dhona"));
+    const result = select(i);
+    expect(result.entries).toEqual([]);
+    expect(result.dropped).toEqual(['repurchaseShop', 'repurchaseShop', 'repurchaseShop']);
+  });
+
+  it('drops an offer whose costs the data gets wrong rather than print them', () => {
+    const i = emptyInputs();
+    i.items.set(10309, { name: "Red Crafters' Scrip", plural: "Red Crafters' Scrips", uiCategory: 100 });
+    i.offers.set(ITEM, [offer(shop(1770095, [10]), [{ itemId: 10309, amount: 600 }], true)]);
+    i.npcs.set(10, npc(10, 'Agora merchant', 'Radz-at-Han'));
+    const result = select(i);
+    expect(result.entries).toEqual([]);
+    expect(result.dropped).toEqual(['unknownCost']);
+  });
+
+  it('drops an exchange paid in a duty token whose duty is not known yet', () => {
+    const i = emptyInputs();
+    i.items.set(52321, { name: "Mad Harlequin's Totem", plural: "Mad Harlequin's Totems", uiCategory: 61 });
+    i.unmappedTokens.add(52321);
+    i.offers.set(ITEM, [offer(shop(1, [10]), [{ itemId: 52321, amount: 10 }])]);
+    i.npcs.set(10, npc(10, "Uah'shepya", 'Solution Nine'));
+    const result = select(i);
+    expect(result.entries).toEqual([]);
+    expect(result.dropped).toEqual(['tokenWithoutDuty']);
   });
 
   it("turns a crafters'/gatherers' scrip offer into the scrip exchange and irregular tomestones into the Moogle Treasure Trove", () => {

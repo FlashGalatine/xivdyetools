@@ -23,6 +23,15 @@ function raw(): RawFiles {
       { id: 1770926, type: 'SpecialShop', npcs: [1053905], trades: [{ currencies: [{ id: 47750, amount: 3 }], items: [{ id: 47878, amount: 1 }] }] },
       { id: 1770974, type: 'SpecialShop', npcs: [2], trades: [{ currencies: [{ id: 900, amount: 1 }], items: [{ id: 700, amount: 1 }, { id: 701, amount: 1 }] }] },
       { id: 1770500, type: 'SpecialShop', npcs: [3], trades: [{ currencies: [{ id: 901, amount: 0 }], items: [{ id: 702, amount: 1 }] }] },
+      {
+        id: 1770095,
+        type: 'SpecialShop',
+        npcs: [2],
+        trades: [
+          { currencies: [{ id: 10309, amount: 600 }], items: [{ id: 703, amount: 1 }] },
+          { currencies: [{ id: 33913, amount: 50 }], items: [{ id: 704, amount: 1 }] },
+        ],
+      },
     ],
     npcs: {
       1048726: { en: 'independent merchant', position: { map: 857, x: 30.47, y: 34.64 } },
@@ -37,8 +46,14 @@ function raw(): RawFiles {
       1002: { placename_id: 5002, territory_id: 1301, dungeon: true, housing: false },
     },
     places: { 4505: { en: 'Urqopacha' }, 5000: { en: 'Phantom Village' }, 5001: { en: 'Sinus Ardorum' }, 5002: { en: 'Some Duty' } },
-    instances: { 30100: { en: "Eden's Promise: Litany (Savage)" }, 1: { en: 'the Thousand Maws of Toto-Rak' } },
-    instanceSources: { 32147: [30100], 42027: [1] },
+    instances: {
+      30100: { en: "Eden's Promise: Litany (Savage)" },
+      1: { en: 'the Thousand Maws of Toto-Rak' },
+      2: { en: 'the <i>Whorleater</i> (Extreme)' },
+      3: { en: 'Heaven-on-High  (Floors 91-100)' },
+      30136: { en: 'AAC Light-heavyweight M1 (Savage)' },
+    },
+    instanceSources: { 32147: [30100], 42027: [1], 14887: [2], 22993: [3] },
     lootSources: { 36828: [36814] },
     mogstationSources: { 36814: { price: 22, id: 875 } },
     recipesPerItem: { 42027: [{ job: 13, lvl: 92 }], 5: [{ job: 8, lvl: 1 }] },
@@ -73,6 +88,8 @@ function extras(): XivapiExtras {
       [702, 'Legs'],
       [36828, 'Hands'],
       [10059, "Conjurer's Arm"],
+      [703, "Paladin's Arm"],
+      [704, 'Body'],
     ]),
     items: new Map([
       [47750, { name: 'Arcanite', plural: 'chunks of arcanite', uiCategory: 61, repairJob: 0 }],
@@ -95,6 +112,11 @@ function extras(): XivapiExtras {
       [1300, 5],
     ]),
     festivalShops: new Set([1770500]),
+    unknownCostShops: new Set([1770095]),
+    dutyTokens: new Map([
+      [43549, ['AAC Light-heavyweight M1 (Savage)']],
+      [52321, []],
+    ]),
     outposts: new Map([[1048726, "Worlar's Echo"]]),
     relicSheetItems: new Map([['RelicItem', [10059]]]),
     names: new Map([
@@ -105,7 +127,7 @@ function extras(): XivapiExtras {
 }
 
 function rule(saga: string, extra: Partial<RelicRule>): RelicRule {
-  return { saga, sheets: [], shops: [], zones: [], toolNames: [], include: [], exclude: [], spotChecks: [], ...extra };
+  return { saga, sheets: [], shops: [], zones: [], names: [], toolNames: [], weaponNames: [], include: [], exclude: [], spotChecks: [], ...extra };
 }
 
 const RULES: RelicRule[] = [
@@ -122,6 +144,7 @@ describe('buildInputs', () => {
       {
         shop: { id: 263178, name: 'Purchase Battlecraft Gear (DoW)', npcIds: [1048726], festival: false },
         costs: [{ itemId: 1, amount: 28483 }],
+        unknownCosts: false,
       },
     ]);
     expect(inputs.offers.has(5)).toBe(false);
@@ -150,10 +173,27 @@ describe('buildInputs', () => {
     expect(inputs.fates.get(701)).toEqual([{ name: 'Eggstract and Eggspedite', zone: 'Old Gridania' }]);
   });
 
-  it('capitalizes duty names', () => {
+  it('capitalizes duty names and strips the game text markup', () => {
     expect(inputs.dutyNames.get(1)).toBe('The Thousand Maws of Toto-Rak');
+    expect(inputs.dutyNames.get(2)).toBe('The Whorleater (Extreme)');
+    expect(inputs.dutyNames.get(3)).toBe('Heaven-on-High (Floors 91-100)');
     expect(inputs.dutyNames.get(30100)).toBe("Eden's Promise: Litany (Savage)");
     expect(inputs.duties.get(32147)).toEqual([30100]);
+  });
+
+  it('maps hand-kept duty tokens onto their duties, and marks the ones with no known duty', () => {
+    expect(inputs.duties.get(43549)).toEqual([30136]);
+    expect(inputs.dutyNames.get(30136)).toBe('AAC Light-heavyweight M1 (Savage)');
+    expect(inputs.unmappedTokens).toEqual(new Set([52321]));
+    expect(() => buildInputs(raw(), { ...extras(), dutyTokens: new Map([[1, ['No Such Duty']]]) }, RULES)).toThrow(
+      /No Such Duty/
+    );
+  });
+
+  it("flags a tomestone price Teamcraft misreads as a retired scrip, and nothing else in the shop", () => {
+    expect(inputs.offers.get(703)?.[0]?.unknownCosts).toBe(true);
+    expect(inputs.offers.get(704)?.[0]?.unknownCosts).toBe(false);
+    expect(inputs.offers.get(42027)?.[0]?.unknownCosts).toBe(false);
   });
 
   it('classifies quests: main scenario, seasonal event, everything else a sidequest', () => {
@@ -183,6 +223,24 @@ describe('buildInputs', () => {
     expect(inputs.relics.get(47878)).toBe('Phantom Gear & Weapons');
     expect(inputs.relics.get(700)).toBe('Cosmic Tools Saga');
     expect(inputs.relics.has(701)).toBe(false);
+  });
+
+  it('matches weapon names on weapons only', () => {
+    const e = extras();
+    e.equippable.set(900, "Gladiator's Arm").set(901, 'Body');
+    e.names.set(900, 'Unfinished Curtana').set(901, 'Unfinished Coat');
+    const relics = buildInputs(raw(), e, [rule('Zodiac Weapons Saga', { weaponNames: ['^Unfinished '] })]).relics;
+    expect(relics.get(900)).toBe('Zodiac Weapons Saga');
+    expect(relics.has(901)).toBe(false);
+  });
+
+  it('matches item names in any category', () => {
+    const e = extras();
+    e.equippable.set(905, 'Head').set(906, 'Head');
+    e.names.set(905, 'Anemos Brutal Visor').set(906, 'Brutal Visor');
+    const relics = buildInputs(raw(), e, [rule('Eureka Gear & Weapons', { names: ['^Anemos '] })]).relics;
+    expect(relics.get(905)).toBe('Eureka Gear & Weapons');
+    expect(relics.has(906)).toBe(false);
   });
 
   it('applies include and exclude, and the first matching rule wins', () => {

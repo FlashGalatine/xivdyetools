@@ -35,6 +35,11 @@ export interface Offer {
   shop: Shop;
   /** What one unit costs; empty = free. */
   costs: Cost[];
+  /**
+   * The data can't state the price: in `UseCurrencyType` 16 shops Teamcraft
+   * reads a tomestone price (CostType 2) as a retired Red scrip.
+   */
+  unknownCosts: boolean;
 }
 
 export type QuestKind = 'msq' | 'side' | 'event';
@@ -77,6 +82,8 @@ export interface Inputs {
   desynth: Map<number, Array<{ sourceItemId: number; job: number }>>;
   /** relic item → the guide's saga line (spec D11) */
   relics: Map<number, string>;
+  /** Duty tokens whose duty is not known yet (`tables/duty-tokens.json` entries with no duty) */
+  unmappedTokens: Set<number>;
 }
 
 export interface Tables {

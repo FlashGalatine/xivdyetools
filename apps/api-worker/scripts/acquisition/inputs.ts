@@ -55,6 +55,13 @@ export interface XivapiExtras {
   expansions: Map<number, number>;
   /** SpecialShops that open only during a seasonal event */
   festivalShops: Set<number>;
+  /** SpecialShops with `UseCurrencyType` 16, whose tomestone prices Teamcraft misreads */
+  unknownCostShops: Set<number>;
+  /**
+   * Hand-kept duty tokens Teamcraft has no drop data for (`tables/duty-tokens.json`):
+   * token item → Duty Finder names. An empty list = a token whose duty is not known yet.
+   */
+  dutyTokens: Map<number, string[]>;
   /** Wilderness NPC → nearest map area label */
   outposts: Map<number, string>;
   /** Relic sheet name → the item ids it lists */
@@ -72,11 +79,15 @@ export interface RelicRule {
   shops: string[];
   /** Zones whose vendors sell only this saga's gear. */
   zones: string[];
+  /** Item-name patterns, any category ("^Anemos " for Eureka armor). */
+  names: string[];
   /**
    * Item-name patterns that count only DoH/DoL tools — for a saga no shop sells,
    * like the Cosmic tools, which Cosmic Exploration missions hand out.
    */
   toolNames: string[];
+  /** Item-name patterns that count only weapons and shields ("^Unfinished " for the Zodiac line). */
+  weaponNames: string[];
   include: number[];
   exclude: number[];
   /** Known answers: the build fails when one of these is not in the saga. */
@@ -94,6 +105,12 @@ export interface TableFiles {
 /** Starting level of each expansion, by ExVersion. */
 const EXPANSION_LEVEL = [1, 50, 60, 70, 80, 90];
 const TOOL_CATEGORY = /(Primary|Secondary) Tool$/;
+const WEAPON_CATEGORY = /(Arm|Arms|Grimoire|Shield)$/;
+/**
+ * Red Crafters' / Gatherers' Scrip: retired currencies that appear only where
+ * Teamcraft misreads a `UseCurrencyType` 16 tomestone price (CostType 2).
+ */
+const MISREAD_TOMESTONE = new Set([10309, 10311]);
 const VOYAGE: Record<number, 'airship' | 'submarine'> = { 0: 'airship', 1: 'submarine' };
 
 type RawShop = RawFiles['shops'][number];
@@ -124,12 +141,19 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
   const offers = new Map<number, Offer[]>();
   const npcIds = new Set<number>();
   for (const s of raw.shops) {
-    const shop: Shop = { id: s.id, name: shopName(s), npcIds: s.npcs, festival: extras.festivalShops.has(s.id) };
+    const shop: Shop = {
+      id: s.id,
+      name: shopName(s),
+      npcIds: s.npcs,
+      festival: extras.festivalShops.has(s.id),
+    };
+    const misreads = extras.unknownCostShops.has(s.id);
     for (const trade of s.trades) {
       const costs = trade.currencies.filter((c) => c.amount > 0).map((c) => ({ itemId: c.id, amount: c.amount }));
       for (const product of trade.items) {
         if (!extras.equippable.has(product.id)) continue;
-        push(offers, product.id, { shop, costs });
+        const unknownCosts = misreads && costs.some((c) => MISREAD_TOMESTONE.has(c.itemId));
+        push(offers, product.id, { shop, costs, unknownCosts });
         s.npcs.forEach((id) => npcIds.add(id));
       }
     }
@@ -167,11 +191,25 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
   }
 
   const duties = numberLists(raw.instanceSources);
+  const unmappedTokens = new Set<number>();
+  const dutyByName = new Map(Object.entries(raw.instances).map(([id, d]) => [dutyName(d.en), Number(id)]));
+  for (const [token, names] of extras.dutyTokens) {
+    if (names.length === 0) {
+      unmappedTokens.add(token);
+      continue;
+    }
+    const ids = names.map((name) => {
+      const id = dutyByName.get(dutyName(name));
+      if (id === undefined) throw new Error(`duty-tokens.json: token ${token} names "${name}", which is not a Teamcraft instance`);
+      return id;
+    });
+    duties.set(token, [...new Set([...(duties.get(token) ?? []), ...ids])]);
+  }
   const dutyNames = new Map<number, string>();
   for (const list of duties.values()) {
     for (const id of list) {
       const name = raw.instances[id]?.en;
-      if (name) dutyNames.set(id, name.charAt(0).toUpperCase() + name.slice(1));
+      if (name) dutyNames.set(id, dutyName(name));
     }
   }
 
@@ -230,7 +268,14 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     voyages,
     desynth,
     relics: relicsFrom(rules, raw, extras, shopName, zoneOfNpc),
+    unmappedTokens,
   };
+}
+
+/** The Duty Finder name: game text markup stripped, spaces collapsed, a leading "the" capitalized. */
+function dutyName(raw: string): string {
+  const name = raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 export function tablesFrom(files: TableFiles, inputs: Inputs): Tables {
@@ -265,11 +310,15 @@ function relicsFrom(
       if (!byName && !byZone) continue;
       for (const trade of s.trades) for (const { id } of trade.items) if (extras.equippable.has(id)) members.add(id);
     }
-    const toolPatterns = rule.toolNames.map((p) => new RegExp(p));
-    if (toolPatterns.length > 0) {
+    const byName: Array<[RegExp, RegExp]> = [
+      ...rule.names.map((p): [RegExp, RegExp] => [new RegExp(p), /(?:)/]),
+      ...rule.toolNames.map((p): [RegExp, RegExp] => [new RegExp(p), TOOL_CATEGORY]),
+      ...rule.weaponNames.map((p): [RegExp, RegExp] => [new RegExp(p), WEAPON_CATEGORY]),
+    ];
+    if (byName.length > 0) {
       for (const [id, category] of extras.equippable) {
         const name = extras.names.get(id) ?? '';
-        if (TOOL_CATEGORY.test(category) && toolPatterns.some((re) => re.test(name))) members.add(id);
+        if (byName.some(([re, kind]) => kind.test(category) && re.test(name))) members.add(id);
       }
     }
     rule.include.forEach((id) => members.add(id));

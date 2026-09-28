@@ -540,7 +540,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| **v0.15.0** | **Sep 2026** | **`acquisition` on `POST /v1/chara/resolve` items and their alternates — one English GPOSERS line per item from a build-time table (`scripts/build-acquisition.ts`: Teamcraft data at a pinned commit + XIVAPI), 23,589 lines** |
+| **v0.15.0** | **Sep 2026** | **`acquisition` on `POST /v1/chara/resolve` items and their alternates — one English GPOSERS line per item from a build-time table (`scripts/build-acquisition.ts`: Teamcraft data at a pinned commit + XIVAPI), 23,541 lines** |
 | v0.14.5 | Sep 2026 | Docs only — the reference page and the 0.14.4 note now say the accent / `ß` / width fold applies to the localized search (any non-English `locale`); the default English search is unchanged |
 | v0.14.4 | Sep 2026 | 2026-09-19 i18n audit Sprint 4 — `GET /v1/dyes/search?q=` matches more rows because core 5.4.0 folds case, accents, `ß` and width (no worker code change; documented on the reference page); `Variables.locale` is core's `LocaleCode`, not a hand-spelled union (I18N-009) |
 | v0.14.3 | Sep 2026 | 2026-09-18 documentation audit — developer docs site only, no route or response change: `page` (1–1000) and `q` (≤ 100 characters) caps documented on the `/v1/dyes` cards and in the Numeric Ranges table; the `X-RateLimit-Remaining` examples show `64`, a value production can emit, instead of `42` (the header is `limit − 1` while allowed and `0` when refused) |

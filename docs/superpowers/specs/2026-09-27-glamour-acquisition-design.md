@@ -176,3 +176,19 @@ script:
    field per piece; edits are saved on the device keyed by a hash of the gear, never the file or the
    character. That is web-app work, specified in
    [`2026-09-27-glamour-reader-design.md`](2026-09-27-glamour-reader-design.md).
+4. **Review findings (2026-09-27, whole-branch review of PR A)** — rules the real data needed:
+   - **D8 widened:** every shop run by a Calamity or journeyman salvager, a recompense officer or the
+     MGF trader is ignored, whatever its name — they sell back quest, achievement, ceremony, seasonal
+     and old-gear rewards a player once earned (and the MGF trader ran a limited-time collaboration).
+   - **Unknown prices are dropped:** in `UseCurrencyType` 16 SpecialShops Teamcraft reads a tomestone
+     price as the retired Red Crafters'/Gatherers' Scrip; those offers are left out (`unknownCost`).
+   - **Duty tokens without drop data** (Dawntrail's AAC Illustrated books and recent totems) are
+     mapped by the reviewed `tables/duty-tokens.json`; a known token with no known duty drops its
+     exchange (`tokenWithoutDuty`) instead of printing it.
+   - **D11 extended:** replica and step shops (Zodiac Zeta replicas, Anima replication, Resistance and
+     Manderville replicas, Blade's gear) and name rules — any category (`names`: Eureka armor,
+     Phantom Vision gear), weapons only (`weaponNames`: Unfinished Zodiac, Eureka, Law's Order and
+     Manderville weapons), tools only (`toolNames`: the Skysteel, Splendorous and Cosmic lines).
+   - **Duty names** lose the game's text markup (`<i>…</i>`) and doubled spaces.
+   - A table-invariant test (`tests/acquisition/table.test.ts`) guards the generated file against each
+     of these classes, and the meta records the top cost currencies and vendor NPCs.

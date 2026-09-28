@@ -20,6 +20,14 @@ const GRIDANIA = new Set(['New Gridania', 'Old Gridania']);
 const SCRIP = / (Crafters'|Gatherers') Scrip$/;
 const IRREGULAR_TOMESTONE = /^Irregular Tomestone of /;
 
+/**
+ * NPCs whose shops only sell back what a player once earned (spec D8,
+ * widened): the Calamity and journeyman salvagers (quest, achievement, event,
+ * ceremony and old-gear repurchases) and the recompense officers (past
+ * seasonal events). The MGF trader ran a limited-time collaboration.
+ */
+const REPURCHASE_NPC = /^(Calamity salvager|journeyman salvager|recompense officer|MGF trader)$/i;
+
 export interface Selection {
   entries: Entry[];
   /** Rule names that removed a source — the build's meta counts. */
@@ -66,12 +74,23 @@ export function selectEntries(sources: Source[], inputs: Inputs, tables: Tables)
   }
 
   function addOffer(offer: Offer): void {
-    if (/^Repurchase\b/.test(offer.shop.name)) {
+    const repurchaseNpcs =
+      offer.shop.npcIds.length > 0 &&
+      offer.shop.npcIds.every((id) => REPURCHASE_NPC.test(inputs.npcs.get(id)?.name ?? ''));
+    if (/^Repurchase\b/.test(offer.shop.name) || repurchaseNpcs) {
       dropped.push('repurchaseShop');
       return;
     }
     if (offer.shop.festival) {
       dropped.push('seasonalShop');
+      return;
+    }
+    if (offer.unknownCosts) {
+      dropped.push('unknownCost');
+      return;
+    }
+    if (offer.costs.some((c) => inputs.unmappedTokens.has(c.itemId))) {
+      dropped.push('tokenWithoutDuty');
       return;
     }
     const tokenDuties = dutyTokenDuties(offer.costs, inputs);

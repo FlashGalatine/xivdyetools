@@ -249,6 +249,11 @@ async function fateLocationZones(sha: string, raw: RawFiles): Promise<{ levelZon
   return { levelZones, overworld };
 }
 
+/** The `n` largest counts, largest first — a meta diff shows a new vendor or currency taking over. */
+function top(counts: Record<string, number>, n: number): Record<string, number> {
+  return Object.fromEntries(Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, n));
+}
+
 function readTable<T>(file: string): T {
   return JSON.parse(readFileSync(join(TABLES_DIR, file), 'utf8')) as T;
 }
@@ -258,7 +263,7 @@ function checkRelics(rules: RelicRule[], inputs: Inputs): void {
   const problems: string[] = [];
   for (const rule of rules) {
     const count = [...inputs.relics.values()].filter((saga) => saga === rule.saga).length;
-    const hasRules = rule.sheets.length + rule.shops.length + rule.zones.length + rule.toolNames.length + rule.include.length > 0;
+    const hasRules = rule.sheets.length + rule.shops.length + rule.zones.length + rule.names.length + rule.toolNames.length + rule.include.length > 0;
     if (hasRules && count === 0) problems.push(`${rule.saga}: its rules matched no equippable item — was a sheet or shop renamed?`);
     for (const id of rule.spotChecks) {
       const saga = inputs.relics.get(id);
@@ -297,6 +302,7 @@ function writeFixture(inputs: Inputs, itemIds: number[]): void {
     voyages: pick(inputs.voyages, keep),
     desynth: pick(inputs.desynth, keep),
     relics: pick(inputs.relics, keep),
+    unmappedTokens: [...inputs.unmappedTokens].filter((id) => keep.has(id)),
   };
   writeFileSync(FIXTURE, `${JSON.stringify(fixture, null, 1)}\n`);
   console.log(`wrote ${FIXTURE}`);
@@ -313,6 +319,33 @@ async function printReview(inputs: Inputs, tables: Tables, raw: RawFiles): Promi
   const containers = [...new Set(Object.values(raw.lootSources).flat())].filter(
     (id) => !tables.gachaContainers.has(id) && !tables.eurekaLockboxes.has(id)
   );
+  // Exchanges paid only in Miscellany items with no duty behind them: raid and
+  // trial tokens Teamcraft has no drop data for belong in duty-tokens.json.
+  const relicLike = /Replica|Zenith|Zeta|Animus|Anima|Awoken|Hyperconductive|Anemos|Pagos|Elemental|Pyros|Hydatos|Law's Order|Blade's|Manderville|Skysteel|Dragonsung|Skysung|Splendorous|Crystalline|Unfinished|Phantom/;
+  const equippedNames = await rows<{ Name: string }>(
+    'Item',
+    [...inputs.offers.keys()].filter((id) => !inputs.relics.has(id)),
+    'Name'
+  );
+  const misses = [...equippedNames].filter(([, row]) => relicLike.test(row.Name)).map(([, row]) => row.Name);
+  console.log(`
+Relic-looking names in NO saga (review — a miss here is a wrong or blank line): ${misses.length}`);
+  console.log(`  ${misses.sort().join('; ')}`);
+
+  const tokenish = new Map<number, number>();
+  for (const offers of inputs.offers.values()) {
+    for (const { costs } of offers) {
+      const pure =
+        costs.length > 0 &&
+        costs.every((c) => inputs.items.get(c.itemId)?.uiCategory === 61 && !inputs.duties.has(c.itemId));
+      if (pure) for (const c of costs) tokenish.set(c.itemId, (tokenish.get(c.itemId) ?? 0) + 1);
+    }
+  }
+  console.log('\nMiscellany-only exchanges with no duty data (review for duty-tokens.json):');
+  for (const [id, n] of [...tokenish].sort((a, b) => b[1] - a[1])) {
+    console.log(`  ${id} ${inputs.items.get(id)?.name} — ${n} offers`);
+  }
+
   const described = await rows<{ Name: string; Description: string }>('Item', containers, 'Name,Description');
   console.log('\nRandom-container candidates NOT in gacha-containers.json (review):');
   for (const [id, row] of described) {
@@ -356,7 +389,11 @@ async function main(): Promise<void> {
   });
   const territoryRows = await rows<{ ExVersion?: Link }>('TerritoryType', territoryIds, 'ExVersion.value');
   const specialIds = sellers.filter((s) => s.type === 'SpecialShop').map((s) => s.id);
-  const specialRows = await rows<{ RequiredFestival?: Link }>('SpecialShop', specialIds, 'RequiredFestival.value');
+  const specialRows = await rows<{ RequiredFestival?: Link; UseCurrencyType?: number }>(
+    'SpecialShop',
+    specialIds,
+    'RequiredFestival.value,UseCurrencyType'
+  );
 
   const { levelZones, overworld } = await fateLocationZones(sha, raw);
   const ishgard = new Set(tableFiles.ishgardDistricts);
@@ -380,6 +417,14 @@ async function main(): Promise<void> {
     overworld,
     expansions: new Map([...territoryRows].map(([id, row]) => [id, row.ExVersion?.value ?? 0])),
     festivalShops: new Set([...specialRows].filter(([, row]) => (row.RequiredFestival?.value ?? 0) > 0).map(([id]) => id)),
+    // In UseCurrencyType 16 shops Teamcraft reads a tomestone price (CostType 2)
+    // as a retired Red scrip; inputs.ts marks those offers' costs unknown.
+    unknownCostShops: new Set([...specialRows].filter(([, row]) => row.UseCurrencyType === 16).map(([id]) => id)),
+    dutyTokens: new Map(
+      Object.entries(readTable<Record<string, { name: string; duties: string[] }>>('duty-tokens.json'))
+        .filter(([id]) => /^\d+$/.test(id))
+        .map(([id, token]) => [Number(id), token.duties])
+    ),
     outposts: await outpostsFor(npcIds, raw, wilderness),
     relicSheetItems: await relicSheetItems(rules),
     names: equippableNames,
@@ -396,6 +441,8 @@ async function main(): Promise<void> {
 
   const table: Record<string, string> = {};
   const entryCounts: Record<string, number> = {};
+  const costCurrencies: Record<string, number> = {};
+  const vendorNpcs: Record<string, number> = {};
   const dropped: Record<string, number> = {};
   let sourcesButNoLine = 0;
   for (const itemId of [...equippable.keys()].sort((a, b) => a - b)) {
@@ -406,6 +453,15 @@ async function main(): Promise<void> {
     if (line) {
       table[itemId] = line;
       for (const kind of new Set(selection.entries.map((e) => e.kind))) entryCounts[kind] = (entryCounts[kind] ?? 0) + 1;
+      for (const entry of selection.entries) {
+        if (entry.kind !== 'vendor' && entry.kind !== 'scrip') continue;
+        const costs = entry.kind === 'vendor' ? entry.costs : [entry.cost];
+        for (const c of costs) {
+          const name = c.itemId === 1 ? 'Gil' : (inputs.items.get(c.itemId)?.name ?? String(c.itemId));
+          costCurrencies[name] = (costCurrencies[name] ?? 0) + 1;
+        }
+        if (entry.kind === 'vendor') vendorNpcs[entry.npc.name] = (vendorNpcs[entry.npc.name] ?? 0) + 1;
+      }
     } else if (sources.length > 0) {
       sourcesButNoLine++;
     }
@@ -425,6 +481,8 @@ async function main(): Promise<void> {
     itemsPerRoute: entryCounts,
     dropped,
     relicSagas: sagas,
+    topCostCurrencies: top(costCurrencies, 25),
+    topVendorNpcs: top(vendorNpcs, 25),
     unleveledVendorZones: [...new Set([...inputs.npcs.values()].map((n) => n.zone).filter((z): z is string => z !== null && !inputs.zoneLevels.has(z)))].sort(),
   };
   writeFileSync(join(DATA_DIR, 'acquisition.en.json'), json);

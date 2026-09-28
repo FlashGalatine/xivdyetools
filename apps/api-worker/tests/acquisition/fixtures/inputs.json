@@ -113,7 +113,8 @@
        "itemId": 1,
        "amount": 28483
       }
-     ]
+     ],
+     "unknownCosts": false
     }
    ]
   ],
@@ -136,7 +137,8 @@
        "itemId": 1,
        "amount": 47471
       }
-     ]
+     ],
+     "unknownCosts": false
     }
    ]
   ],
@@ -158,7 +160,8 @@
        "itemId": 28063,
        "amount": 1200
       }
-     ]
+     ],
+     "unknownCosts": false
     }
    ]
   ],
@@ -180,7 +183,8 @@
        "itemId": 32141,
        "amount": 6
       }
-     ]
+     ],
+     "unknownCosts": false
     },
     {
      "shop": {
@@ -196,7 +200,8 @@
        "itemId": 32141,
        "amount": 6
       }
-     ]
+     ],
+     "unknownCosts": false
     }
    ]
   ],
@@ -217,7 +222,8 @@
        "itemId": 36656,
        "amount": 1500
       }
-     ]
+     ],
+     "unknownCosts": false
     }
    ]
   ],
@@ -239,7 +245,8 @@
        "itemId": 47750,
        "amount": 3
       }
-     ]
+     ],
+     "unknownCosts": false
     }
    ]
   ]
@@ -812,5 +819,6 @@
    47878,
    "Phantom Gear & Weapons"
   ]
- ]
+ ],
+ "unmappedTokens": []
 }
