@@ -10,12 +10,14 @@
  * this device, keyed by the gear (`acquisition-edits`). A twin pick never
  * overwrites an edit: the row warns and offers the new source (spec G9).
  *
- * Mounted on document.body; Escape or Close dismisses it.
+ * Mounted on document.body; Escape or Close dismisses it, and so does the
+ * reader going away (GlamourBlock.destroy). It registers with ModalService
+ * while it is up, so the global shortcuts stand down under it.
  *
  * @module components/glamour-sheet
  */
 
-import { LanguageService, ToastService } from '@services/index';
+import { LanguageService, ModalService, ToastService } from '@services/index';
 import { MONO, SANS, amber, el, green, monoChip } from '@components/chara-ui';
 import { AcquisitionEdits } from '@shared/acquisition-edits';
 import { copyRichTextToClipboard } from '@shared/clipboard';
@@ -50,6 +52,17 @@ export function closeGlamourSheet(): void {
   if (opener?.isConnected) opener.focus();
 }
 
+/**
+ * The element that really has focus. Every tool renders inside the shell's
+ * shadow root, so `document.activeElement` is the shell's host — and focusing
+ * a host does nothing, which dropped focus to <body> on close.
+ */
+function deepActiveElement(): HTMLElement | null {
+  let active: Element | null = document.activeElement;
+  while (active?.shadowRoot?.activeElement) active = active.shadowRoot.activeElement;
+  return active instanceof HTMLElement && active !== document.body ? active : null;
+}
+
 function isPhone(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 768px)').matches;
 }
@@ -71,10 +84,19 @@ function staleEdit(piece: GlamourSheetPiece): boolean {
   return edit !== null && piece.pickedItemId !== null && edit.baseItemId !== piece.pickedItemId;
 }
 
-/** Open the sheet for the loaded glamour; `focus` names the button that opened it. */
-export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'save' = 'copy'): void {
+/**
+ * Open the sheet for the loaded glamour. `focus` names the action that opened
+ * it; `opener` is what gets focus back on close — pass it, since a click does
+ * not focus a button in every browser. Without it, whatever has focus now.
+ */
+export function openGlamourSheet(
+  source: GlamourListSource,
+  focus: 'copy' | 'save' = 'copy',
+  opener?: HTMLElement | null
+): void {
   closeGlamourSheet();
-  const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  // Read after closing: a sheet reopened over itself returns to ITS opener
+  const returnTo = opener === undefined ? deepActiveElement() : opener;
   const pieces = glamourSheetPieces(source);
   const phone = isPhone();
 
@@ -403,6 +425,14 @@ export function openGlamourSheet(source: GlamourListSource, focus: 'copy' | 'sav
     }
   };
   document.addEventListener('keydown', onKey);
-  current = { root, cleanup: () => document.removeEventListener('keydown', onKey), opener };
+  const releaseModal = ModalService.registerExternal();
+  current = {
+    root,
+    cleanup: () => {
+      document.removeEventListener('keydown', onKey);
+      releaseModal();
+    },
+    opener: returnTo,
+  };
   (focus === 'save' ? save : copy).focus();
 }

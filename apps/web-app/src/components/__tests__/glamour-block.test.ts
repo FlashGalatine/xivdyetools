@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GlamourBlock } from '../glamour-block';
 import { closeGlamourSheet } from '../glamour-sheet';
 import { CharaFileCard } from '../chara-file-card';
-import { StorageService, ToastService } from '@services/index';
+import { ModalService, StorageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile } from '@services/chara-file-loader';
 import {
@@ -729,6 +729,46 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     exportBtn(glamour).click();
     await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
     expect(clicked).toHaveLength(0);
+  });
+
+  it('destroying the block closes its export sheet, so the sheet never outlives the reader', async () => {
+    const { container, glamour, block: glamourBlock } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+
+    glamourBlock.destroy();
+
+    expect(sheetEl()).toBeNull();
+    expect(ModalService.hasOpenModals()).toBe(false);
+  });
+
+  it('a sheet still loading when the block is destroyed never opens', async () => {
+    const { container, glamour, block: glamourBlock } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+
+    copyBtn(glamour).click();
+    glamourBlock.destroy();
+    await vi.dynamicImportSettled();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(sheetEl()).toBeNull();
+  });
+
+  it('closing the sheet gives focus back to the button that opened it', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED));
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
+    // A click does not focus a button in Safari (nor in jsdom), so the block
+    // hands the sheet its opener instead of leaving it to document.activeElement.
+    copyBtn(glamour).click();
+    await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
+
+    closeGlamourSheet();
+
+    expect(document.activeElement).toBe(copyBtn(glamour));
   });
 
   it('copies the worn slots as plain text with no Markdown syntax — names where known, dyes only where dyed — then confirms', async () => {

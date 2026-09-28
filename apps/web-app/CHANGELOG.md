@@ -48,7 +48,12 @@ Directions*, turns 1–2; spec `docs/superpowers/specs/2026-09-27-glamour-reader
   and some matched neither (glossary: Equipment Slots).
 - A loaded file that wears nothing says so under its card. The twin picker moves with the arrow
   keys and gives focus back to its chip; it opens upward near the bottom of the screen. The export
-  sheet keeps Tab inside it and gives focus back to the button that opened it.
+  sheet keeps Tab inside it and gives focus back to the button that opened it — handed over by
+  the reader, since the shell's shadow root hides that button from `document.activeElement`.
+- **The export sheet is a modal to the whole app.** While it is open the global shortcuts (`0-9`,
+  Shift+T/L/S, `?`) stand down — it registers through the new `ModalService.registerExternal()`,
+  as it draws itself rather than through the modal container — and leaving the reader closes it,
+  including a sheet whose chunk was still loading.
 - Narrow desktop (769–919 px) drops the language button's globe and closes the rail's gaps by a
   pixel, so ten rail chips and a hovered label fit even at 769 px. The shortcuts panel says `0-9`.
 - **The site's share card shows ten tools.** `public/og/default.png` and `default-x.png` are
