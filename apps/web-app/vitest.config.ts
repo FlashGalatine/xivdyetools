@@ -65,8 +65,8 @@ export default defineConfig({
       // v4/result-card). Measured after that work: 78.45/64.08/74.63/79.82.
       //
       // What is left is the nine tool components (accessibility, budget,
-      // comparison, extractor, gradient, harmony, mixer, swatch +
-      // chara-import) plus v4/config-sidebar and result-card's context-menu
+      // comparison, extractor, gradient, harmony, mixer, swatch + its
+      // .chara views) plus v4/config-sidebar and result-card's context-menu
       // action handlers; between them they hold most of the remaining
       // uncovered statements and almost all of the branch gap. Raise these
       // numbers as those tests deepen; do not lower them.

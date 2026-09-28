@@ -14,6 +14,7 @@
  */
 
 import { StorageService } from './storage-service';
+import { CharaSessionService } from './chara-session-service';
 import { normalizeColorWheelId, normalizeMatchingMethod } from '@xivdyetools/core';
 import { logger } from '@shared/logger';
 import {
@@ -62,25 +63,6 @@ type AssertAllConfigKeysListed = ConfigKey extends (typeof CONFIG_KEYS)[number] 
 const _assertAllConfigKeysListed: AssertAllConfigKeysListed = true;
 void _assertAllConfigKeysListed;
 
-/**
- * Fields that describe what THIS page is showing rather than a preference, so
- * they live in memory only: never written to storage, never read back from it
- * (a reload, another tab's write or a value an earlier build persisted cannot
- * set them), and never imported.
- *
- * `swatch.fileProvided` is the readout lock a loaded .chara file puts on the
- * sidebar's tribe/gender selectors. The file is held in one page's memory;
- * persisted, the lock outlived it, and a reload came back to disabled
- * selectors over an empty drop zone.
- */
-const TRANSIENT_FIELDS: { readonly [K in ConfigKey]?: readonly (keyof ToolConfigMap[K])[] } = {
-  swatch: ['fileProvided'],
-};
-
-function transientFields(key: ConfigKey): readonly string[] {
-  return (TRANSIENT_FIELDS[key] ?? []) as readonly string[];
-}
-
 // ============================================================================
 // Types
 // ============================================================================
@@ -108,9 +90,8 @@ function hasShapeOf(reference: unknown, candidate: unknown): boolean {
 
 /**
  * Narrow an imported per-tool object to the fields its default config
- * declares, each with the default's runtime shape — transient fields
- * excepted. `null` when the entry is not a plain object at all (the tool is
- * then left untouched).
+ * declares, each with the default's runtime shape. `null` when the entry is
+ * not a plain object at all (the tool is then left untouched).
  */
 function sanitizeConfigPartial<K extends ConfigKey>(
   key: K,
@@ -118,11 +99,9 @@ function sanitizeConfigPartial<K extends ConfigKey>(
 ): Partial<ToolConfigMap[K]> | null {
   if (!isPlainObject(value)) return null;
   const defaults = getDefaultConfig(key) as unknown as Record<string, unknown>;
-  const transient = transientFields(key);
   const partial: Record<string, unknown> = {};
   for (const [field, candidate] of Object.entries(value)) {
     if (!Object.hasOwn(defaults, field)) continue;
-    if (transient.includes(field)) continue;
     if (!hasShapeOf(defaults[field], candidate)) continue;
     partial[field] = candidate;
   }
@@ -156,35 +135,6 @@ function mergeWithDefaults<T extends object>(defaults: T, stored: Partial<T>): T
   }
 
   return merged as T;
-}
-
-/** `config` without its transient fields: the part that is persisted. */
-function withoutTransientFields<K extends ConfigKey>(
-  key: K,
-  config: ToolConfigMap[K]
-): Partial<ToolConfigMap[K]> {
-  const fields = transientFields(key);
-  if (fields.length === 0) return config;
-  const persisted: Record<string, unknown> = { ...config };
-  for (const field of fields) delete persisted[field];
-  return persisted as Partial<ToolConfigMap[K]>;
-}
-
-/**
- * `loaded` with its transient fields replaced by `current`'s, whatever storage
- * said about them. A copy: `loaded` may be the shared default object.
- */
-function withTransientFieldsFrom<K extends ConfigKey>(
-  key: K,
-  loaded: ToolConfigMap[K],
-  current: ToolConfigMap[K]
-): ToolConfigMap[K] {
-  const fields = transientFields(key);
-  if (fields.length === 0) return loaded;
-  const source = current as unknown as Record<string, unknown>;
-  const merged: Record<string, unknown> = { ...loaded };
-  for (const field of fields) merged[field] = source[field];
-  return merged as unknown as ToolConfigMap[K];
 }
 
 /**
@@ -226,6 +176,9 @@ export class ConfigController {
   // Track which configs have been loaded from storage
   private loadedFromStorage: Set<ConfigKey> = new Set();
 
+  // Stops following the loaded .chara file (resetInstance)
+  private readonly unsubscribeCharaSession: () => void;
+
   /**
    * Private constructor (singleton pattern)
    */
@@ -238,6 +191,35 @@ export class ConfigController {
     if (typeof window !== 'undefined') {
       window.addEventListener('storage', this.onStorage);
     }
+    // A .chara file can finish loading while any tool is open, so the swatch
+    // race and gender follow it here, not in the Swatch tool.
+    this.unsubscribeCharaSession = CharaSessionService.subscribe(this.onCharaSession);
+  }
+
+  /** A file was loaded or cleared. Clearing leaves its values, unlocked. */
+  private readonly onCharaSession = (): void => {
+    if (!CharaSessionService.getTribeAndGender()) return;
+    if (this.loadedFromStorage.has('swatch')) {
+      // setConfig pins, then persists and notifies only if something moved.
+      this.setConfig('swatch', {});
+    } else {
+      // Nothing read it yet: the first read pins it as it loads. Announce it.
+      this.reloadFromStorage('swatch');
+    }
+  };
+
+  /**
+   * While a .chara file is loaded, its tribe and gender ARE the swatch race and
+   * gender: the sidebar shows them locked and the hair and skin sheets are that
+   * character's. Every write of the swatch config passes through here — a
+   * change, a reset, an import, another tab's save (loadFromStorage) — so none
+   * of them can put a different tribe under the lock.
+   */
+  private pinToCharaFile<K extends ConfigKey>(key: K, config: ToolConfigMap[K]): ToolConfigMap[K] {
+    if (key !== 'swatch') return config;
+    const file = CharaSessionService.getTribeAndGender();
+    if (!file) return config;
+    return { ...config, race: file.tribe, gender: file.gender };
   }
 
   /**
@@ -283,6 +265,7 @@ export class ConfigController {
       if (typeof window !== 'undefined') {
         window.removeEventListener('storage', ConfigController.instance.onStorage);
       }
+      ConfigController.instance.unsubscribeCharaSession();
       ConfigController.instance.listeners.clear();
       ConfigController.instance.configs.clear();
       ConfigController.instance.loadedFromStorage.clear();
@@ -325,10 +308,10 @@ export class ConfigController {
     const currentConfig = this.getConfig(key);
 
     // Merge with partial update
-    const newConfig = {
+    const newConfig = this.pinToCharaFile(key, {
       ...currentConfig,
       ...partial,
-    } as ToolConfigMap[K];
+    } as ToolConfigMap[K]);
 
     // OPT-008: a no-op write is not free. One display-option toggle fans out
     // to NINE setConfig() calls by design (global + eight tools, so each tool
@@ -384,7 +367,7 @@ export class ConfigController {
    * @param key - Tool ID or 'global'
    */
   resetConfig<K extends ConfigKey>(key: K): void {
-    const defaultConfig = getDefaultConfig(key);
+    const defaultConfig = this.pinToCharaFile(key, getDefaultConfig(key));
     this.configs.set(key, defaultConfig);
     this.saveToStorage(key, defaultConfig);
     this.notifyListeners(key, defaultConfig);
@@ -455,10 +438,6 @@ export class ConfigController {
   private loadFromStorage<K extends ConfigKey>(key: K): void {
     const storageKey = `${CONFIG_STORAGE_PREFIX}${key}`;
     const stored = StorageService.getItem<ToolConfigMap[K]>(storageKey);
-    // Transient fields keep this page's value (the defaults on a first load),
-    // also when another tab's write is what set off this reload.
-    const current =
-      (this.configs.get(key) as ToolConfigMap[K] | undefined) ?? getDefaultConfig(key);
 
     if (stored) {
       // Merge with defaults to ensure all keys exist
@@ -485,11 +464,21 @@ export class ConfigController {
         withWheel.wheel = normalizeColorWheelId(withWheel.wheel);
       }
 
-      this.configs.set(key, withTransientFieldsFrom(key, mergedConfig, current));
+      // 5.12.7: `swatch.fileProvided` was a persisted copy of "a .chara file
+      // is loaded", and it outlived the file: a reload kept the sidebar's
+      // tribe/gender locked with no file. The lock reads CharaSessionService
+      // now, so drop the retired key rather than round-trip it forever.
+      if (key === 'swatch') {
+        delete (mergedConfig as { fileProvided?: unknown }).fileProvided;
+      }
+
+      // In memory only: persisting here would echo another tab's save back to
+      // it, and two tabs holding different files would bounce forever.
+      this.configs.set(key, this.pinToCharaFile(key, mergedConfig));
       logger.debug(`[ConfigController] Loaded ${key} config from storage`);
     } else {
       // Use defaults if nothing in storage
-      this.configs.set(key, withTransientFieldsFrom(key, getDefaultConfig(key), current));
+      this.configs.set(key, this.pinToCharaFile(key, getDefaultConfig(key)));
       logger.debug(`[ConfigController] Using default ${key} config`);
     }
 
@@ -501,7 +490,7 @@ export class ConfigController {
    */
   private saveToStorage<K extends ConfigKey>(key: K, config: ToolConfigMap[K]): void {
     const storageKey = `${CONFIG_STORAGE_PREFIX}${key}`;
-    const success = StorageService.setItem(storageKey, withoutTransientFields(key, config));
+    const success = StorageService.setItem(storageKey, config);
 
     if (!success) {
       logger.warn(`[ConfigController] Failed to save ${key} config to storage`);

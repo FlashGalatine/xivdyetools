@@ -9,7 +9,9 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { RACE_SUBRACES } from '@xivdyetools/types';
+import type { ResolvedCharaCharacter, ResolvedCharaSlot } from '@xivdyetools/core';
 import { SwatchTool, RACE_GROUPS } from '../swatch-tool';
+import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -177,8 +179,6 @@ vi.mock('@services/index', () => ({
     getInstance: vi.fn().mockReturnValue({
       getConfig: vi.fn().mockReturnValue({}),
       subscribe: vi.fn().mockReturnValue(() => {}),
-      // The .chara host callbacks write tribe/gender and the sidebar's
-      // readout lock (`fileProvided`) through here.
       setConfig: vi.fn(),
     }),
   },
@@ -390,6 +390,48 @@ vi.mock('../market-board', () => ({
 
 vi.mock('@components/v4/result-card', () => ({}));
 
+// DYES ON THIS GLAMOUR asks api-worker for item names: never reach the network.
+vi.mock('@services/chara-resolve-service', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@services/chara-resolve-service')>()),
+  resolveCharaEquipment: vi.fn(() => new Promise(() => {})),
+}));
+
+/** A loaded character as core resolves it: both eyes on eye-sheet cell 3. */
+function charaSession(overrides: Partial<ResolvedCharaCharacter> = {}): CharaSession {
+  const eye = (slot: 'leftEye' | 'rightEye'): ResolvedCharaSlot => ({
+    slot,
+    kind: slot,
+    verdict: 'index',
+    index: 3,
+    sheetIndex: 3,
+    sheetVariant: null,
+    gridAddress: 'R1·C4',
+    indexHex: '#AA3344',
+    floatHex: null,
+    deltaE: null,
+    alpha: null,
+    blendHex: null,
+  });
+  return {
+    fileName: 'test.chara',
+    resolved: {
+      producer: 'Anamnesis Character File',
+      race: null,
+      tribe: 'Highlander',
+      gender: 'Female',
+      nickname: 'Test Subject',
+      extendedValid: false,
+      extendedDeclared: false,
+      slots: [eye('leftEye'), eye('rightEye')],
+      eyesShareIndex: true,
+      gearDyes: [],
+      gearModels: [],
+      glassesId: null,
+      ...overrides,
+    },
+  };
+}
+
 // BUG-003: the preset-submission-form chunk is loaded on demand from
 // onSubmitPalette. Rejecting the factory makes `import(...)` reject too, so
 // every test in this file sees a chunk-load failure — nothing else in this
@@ -444,6 +486,8 @@ describe('SwatchTool', () => {
         // Ignore cleanup errors
       }
     }
+    // The loaded .chara is app-wide: never let one test's file reach the next.
+    CharaSessionService.setSession(null);
     cleanupTestContainer(container);
     vi.restoreAllMocks();
   });
@@ -765,16 +809,12 @@ describe('SwatchTool', () => {
       tool = mount();
 
       const dye = { ...mockDyes[0], hex: '#AABBCC', name: 'Test Dye', itemID: 5729 };
+      // What the glamour block's Submit to Community calls on its host.
       const internal = tool as unknown as {
-        charaImport: {
-          callbacks: { onSubmitPalette?: (dyes: (typeof dye)[], name?: string) => void };
-        } | null;
+        submitGlamourPalette: (dyes: (typeof dye)[], name?: string) => void;
       };
 
-      expect(internal.charaImport).not.toBeNull();
-      expect(() =>
-        internal.charaImport?.callbacks.onSubmitPalette?.([dye], 'My Palette')
-      ).not.toThrow();
+      expect(() => internal.submitGlamourPalette([dye], 'My Palette')).not.toThrow();
 
       await flush();
 
@@ -783,6 +823,143 @@ describe('SwatchTool', () => {
         expect.anything()
       );
       expect(ToastService.error).toHaveBeenCalledWith('errors.toolLoadFailed');
+    });
+  });
+
+  describe('the loaded .chara file', () => {
+    const selection = () =>
+      (tool as unknown as { selectionContext: { source: string } | null }).selectionContext;
+
+    it('is still on the file card after the tool is left and entered again', () => {
+      tool = mount();
+      CharaSessionService.setSession(charaSession());
+      expect(rightPanel.textContent).toContain('Test Subject');
+
+      tool.destroy();
+      tool = mount();
+
+      expect(rightPanel.textContent).toContain('Test Subject');
+      expect(rightPanel.querySelector('input[type="file"]')).toBeNull();
+    });
+
+    it('survives a re-render, which is what a language switch does', () => {
+      tool = mount();
+      CharaSessionService.setSession(charaSession());
+
+      tool.update();
+
+      expect(rightPanel.textContent).toContain('Test Subject');
+      expect(rightPanel.querySelector('.chara-slots-grid')).not.toBeNull();
+    });
+
+    // PR #206 review: the file's tribe reached the tool only through a session
+    // change while it was open, so a file that finished loading after the
+    // player left (or that another tool loaded) opened on the old tribe's
+    // hair and skin sheets. The config side is config-controller.test.ts.
+    it('opens on the tribe and gender of a file loaded while it was closed', async () => {
+      const { CharacterColorService } = await import('@xivdyetools/core');
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+      CharaSessionService.setSession(charaSession());
+
+      tool = mount();
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+
+      expect(getHairColors).toHaveBeenLastCalledWith('Highlander', 'Female');
+    });
+
+    it('pins both eyes on their shared cell as one merged badge', async () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      await flush();
+
+      const cells = Array.from(rightPanel.querySelectorAll<HTMLElement>('button[data-index]'));
+      expect(cells[3]?.textContent).toBe('1·2');
+    });
+
+    it('retires a slot pick when the file is cleared', () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+      expect(selection()?.source).toBe('slot');
+
+      CharaSessionService.setSession(null);
+
+      expect(selection()).toBeNull();
+      expect(rightPanel.querySelector('input[type="file"]')).not.toBeNull();
+    });
+
+    it('keeps the picked slot ringed through a re-render', () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+
+      tool.update();
+
+      const ringed = Array.from(
+        rightPanel.querySelectorAll<HTMLElement>('.chara-slots-grid > button')
+      ).filter((b) => b.getAttribute('style')?.includes('0 0 0 1px var(--theme-primary)'));
+      expect(ringed).toHaveLength(1);
+    });
+
+    // PR #206 review: the card kept the label translated at pick time, so after
+    // a language switch it still named the slot in the old language.
+    it('names a picked slot in the current language after a language switch', async () => {
+      const { LanguageService } = await import('@services/index');
+      const card = () =>
+        (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer;
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+      expect(card().textContent).toContain('SWATCH.SLOTLEFTEYE');
+
+      vi.spyOn(LanguageService, 't').mockImplementation((key: string) => `fr:${key}`);
+      tool.update();
+
+      expect(card().textContent).toContain('FR:SWATCH.SLOTLEFTEYE');
+      expect(card().textContent).toContain('fr:swatch.slotLeftEye');
+    });
+
+    it('keeps DYES ON THIS GLAMOUR, palette draft included, through a re-render', async () => {
+      const glamourBlock = () => rightPanel.querySelector('[data-role="glamour-block"]');
+      tool = mount();
+      CharaSessionService.setSession(
+        charaSession({
+          gearModels: [{ slot: 'Body', base: 200, variant: 1 }],
+          gearDyes: [{ slot: 'Body', channel: 1, stainId: 1, dye: null }],
+        })
+      );
+      await vi.waitFor(() => expect(glamourBlock()).not.toBeNull());
+      Array.from(glamourBlock()!.querySelectorAll('button'))
+        .find((b) => b.textContent?.includes('swatch.makePalette'))!
+        .click();
+      const draft = glamourBlock()!.querySelector<HTMLInputElement>('input[type="text"]')!;
+      draft.value = 'Sunset set';
+      draft.dispatchEvent(new Event('input'));
+
+      tool.update();
+
+      const after = glamourBlock()?.querySelector<HTMLInputElement>('input[type="text"]');
+      expect(after?.value).toBe('Sunset set');
+      expect(rightPanel.querySelectorAll('[data-role="glamour-block"]')).toHaveLength(1);
+    });
+
+    it('loads DYES ON THIS GLAMOUR only once the file wears something', async () => {
+      tool = mount();
+      CharaSessionService.setSession(charaSession());
+      await flush();
+      expect(rightPanel.querySelector('[data-role="glamour-block"]')).toBeNull();
+
+      CharaSessionService.setSession(
+        charaSession({
+          gearModels: [{ slot: 'Body', base: 200, variant: 1 }],
+          gearDyes: [{ slot: 'Body', channel: 1, stainId: 1, dye: null }],
+        })
+      );
+
+      await vi.waitFor(() =>
+        expect(rightPanel.querySelector('[data-role="glamour-block"]')).not.toBeNull()
+      );
     });
   });
 
@@ -973,73 +1150,6 @@ describe('SwatchTool', () => {
       await flush();
 
       expect(leftPanel.children.length).toBeGreaterThan(0);
-    });
-  });
-
-  /**
-   * While a .chara file is loaded, the sidebar's tribe/gender selectors are a
-   * readout (`swatch.fileProvided`) and the grid carries the file's pins. Only
-   * SWAP used to release them: a file dropped by the tool's teardown or by a
-   * re-render left the selectors disabled over an empty drop zone.
-   */
-  describe('a loaded .chara file', () => {
-    /** Nothing but an eye colour: no gear, so no dye or equipment lookups. */
-    const CHARA = JSON.stringify({ TypeName: 'Anamnesis Character File', REyeColor: 5 });
-
-    const charaInput = () =>
-      rightPanel.querySelector<HTMLInputElement>('input[type="file"][accept*=".chara"]');
-    /** Grid cells wearing a pin badge from the loaded file. */
-    const pinnedCells = () => rightPanel.querySelectorAll('button[data-index] > span');
-
-    /** Every value the tool has written to the readout lock, oldest first. */
-    const lockWrites = async (): Promise<unknown[]> => {
-      const { ConfigController } = await import('@services/index');
-      return vi
-        .mocked(ConfigController.getInstance().setConfig)
-        .mock.calls.filter(([key, partial]) => key === 'swatch' && 'fileProvided' in partial)
-        .map(([, partial]) => (partial as { fileProvided?: boolean }).fileProvided);
-    };
-
-    /** Load the file through the drop zone's own input, as a user does. */
-    const loadChara = async () => {
-      const input = charaInput();
-      expect(input).not.toBeNull();
-      const file = new File([CHARA], 'test.chara', { type: 'application/json' });
-      if (typeof (file as Blob).text !== 'function') {
-        (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(CHARA);
-      }
-      Object.defineProperty(input, 'files', { value: [file] });
-      input!.dispatchEvent(new Event('change'));
-      // The file card replaces the drop zone once the file has resolved
-      await vi.waitFor(() => expect(charaInput()).toBeNull());
-    };
-
-    it('releases the readout lock when the tool is destroyed', async () => {
-      tool = mount();
-      await flush(); // the default eye sheet
-      await loadChara();
-      expect(await lockWrites()).toEqual([true]);
-
-      tool.destroy();
-
-      expect((await lockWrites()).at(-1)).toBe(false);
-    });
-
-    it('releases the lock and the grid pins when a language switch re-renders it', async () => {
-      const { LanguageService } = await import('@services/index');
-      tool = mount();
-      await flush();
-      await loadChara();
-      expect(pinnedCells().length).toBeGreaterThan(0);
-
-      // A language change notifies every subscriber; the tool re-renders,
-      // which rebuilds its CharaImport without the file.
-      for (const [notify] of vi.mocked(LanguageService.subscribe).mock.calls) notify('ja');
-      await flush();
-
-      expect(charaInput()).not.toBeNull(); // the drop zone is back...
-      expect((await lockWrites()).at(-1)).toBe(false); // ...so the selectors unlock
-      expect(pinnedCells()).toHaveLength(0); // ...and the file's pins go with it
     });
   });
 });

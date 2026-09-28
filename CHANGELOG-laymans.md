@@ -32,10 +32,10 @@ Rules:
 -->
 
 ## [5.9.3] - 2026-09-27
-### 🔓 Tribe & Gender no longer stay locked
-- Web app: in the Swatch Matcher, a loaded character file fills in Tribe & Gender and locks both settings to the file. That lock now ends as soon as the file is gone.
-- Web app: leaving the Swatch Matcher, switching language or reloading the page used to drop the character file but keep Tribe & Gender grayed out, until you loaded a file and pressed Swap.
-- Web app: if your Swatch Matcher's Tribe & Gender settings are stuck right now, they unlock the next time the app loads. No other setting changes.
+### 📂 Your character file stays loaded
+- Web app: the Swatch Matcher keeps your character file when you go to another tool and come back, or switch the app's language. It stays until you press SWAP, reload the page or close the tab.
+- Web app: the Tribe & Gender selectors unlock once the file is gone. They used to stay locked after you left the Swatch Matcher or reloaded, until you loaded a file and pressed SWAP.
+- Your file is still read only on your own device, and it is never saved in your browser.
 
 ## [5.9.2] - 2026-09-21
 ### 🔤 One spelling of "color" everywhere

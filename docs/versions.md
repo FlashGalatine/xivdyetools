@@ -2,7 +2,7 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: September 28, 2026*
+*Last Updated: September 24, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
@@ -29,7 +29,7 @@
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.14.6 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.15.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.10.4 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -112,7 +112,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.12.7 | Sep 2026 | Swatch Matcher's TRIBE & GENDER selectors no longer stay disabled once the `.chara` file is gone — leaving the tool and returning, a language switch, or a reload used to bring back the drop zone over a locked readout. `CharaImport.destroy()` reports the cleared file as SWAP does, and `swatch.fileProvided` is transient in `ConfigController` (never persisted, restored, synced across tabs or imported) |
+| v5.12.7 | Sep 2026 | Swatch Matcher keeps a loaded `.chara` file when you leave the tool or switch language (it lives in a session-only `CharaSessionService` now, never in browser storage), and TRIBE & GENDER no longer stay locked after the file is gone — that lock was a persisted flag that outlived the file. While a file is loaded, `ConfigController` pins the Swatch tribe/gender to it through a reset, an import or another tab's save. `chara-import.ts` split into file card, THIS CHARACTER sheet and DYES ON THIS GLAMOUR; the glamour block is its own on-demand chunk, taking the swatch chunk from 97.7% to 72.8% of its budget |
 | v5.12.6 | Sep 2026 | Swatch Matcher (core 5.7.0) — lip, face-paint, highlight and tattoo swatches are the creator's colors (the tattoo sheet had been the eye palette); a custom skin or hair color is OFF GRID again. No web-app source changed |
 | v5.12.5 | Sep 2026 | Swatch Matcher (core 5.6.0) — heterochromia eyes on the correct sides, no false OFF GRID on any color row, no dyes from empty slots in DYES ON THIS GLAMOUR or the GPOSERS export. No web-app source changed |
 | v5.12.2 | Sep 2026 | Swatch Matcher accepts Lalafell `.chara` files (core 5.5.0) — they were refused outright since `.chara` import shipped; a Hrothgar file with no `Race` key no longer shows a fur-pattern number as a lip colour, and an Au Ra's limbal ring is no longer matched as a tattoo. No web-app source changed |
@@ -548,6 +548,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| **v0.15.0** | **Sep 2026** | **`acquisition` on `POST /v1/chara/resolve` items and their alternates — one English GPOSERS line per item from a build-time table (`scripts/build-acquisition.ts`: Teamcraft data at a pinned commit + XIVAPI), 23,585 lines** |
 | v0.14.5 | Sep 2026 | Docs only — the reference page and the 0.14.4 note now say the accent / `ß` / width fold applies to the localized search (any non-English `locale`); the default English search is unchanged |
 | v0.14.4 | Sep 2026 | 2026-09-19 i18n audit Sprint 4 — `GET /v1/dyes/search?q=` matches more rows because core 5.4.0 folds case, accents, `ß` and width (no worker code change; documented on the reference page); `Variables.locale` is core's `LocaleCode`, not a hand-spelled union (I18N-009) |
 | v0.14.3 | Sep 2026 | 2026-09-18 documentation audit — developer docs site only, no route or response change: `page` (1–1000) and `q` (≤ 100 characters) caps documented on the `/v1/dyes` cards and in the Numeric Ranges table; the `X-RateLimit-Remaining` examples show `64`, a value production can emit, instead of `42` (the header is `limit − 1` while allowed and `0` when refused) |

@@ -34,6 +34,7 @@ import type {
 } from './types.js';
 import { lookupKey } from './types.js';
 import { regionalNames } from './regional-names.js';
+import { acquisitionFor } from './acquisition.js';
 
 /** Alternates carried per row — the badge says `+N`; the tooltip lists these. */
 export const MAX_ALTERNATES = 8;
@@ -74,7 +75,17 @@ function withRegional(rowId: number, names: ItemRow['names']): ItemNames {
   return { ...names, ...regionalNames(rowId) };
 }
 
-/** Lowest row_id names the item; the rest are alternates, row_id ascending. */
+/** The build-time acquisition line as an optional field: absent, never empty. */
+function withAcquisition(rowId: number): { acquisition?: string } {
+  const acquisition = acquisitionFor(rowId);
+  return acquisition ? { acquisition } : {};
+}
+
+/**
+ * Lowest row_id names the item; the rest are alternates, row_id ascending.
+ * Each carries its own acquisition line: the Glamour Reader lets the player
+ * name any twin, and the line must match the name it sits under.
+ */
 export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
   if (rows.length === 0) return null;
   const sorted = [...rows].sort((a, b) => a.rowId - b.rowId);
@@ -84,10 +95,13 @@ export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
     names: withRegional(primary.rowId, primary.names),
     iconId: primary.iconId,
     familySize: sorted.length,
-    alternates: sorted
-      .slice(1, 1 + MAX_ALTERNATES)
-      .map((r) => ({ itemId: r.rowId, names: withRegional(r.rowId, r.names) })),
+    alternates: sorted.slice(1, 1 + MAX_ALTERNATES).map((r) => ({
+      itemId: r.rowId,
+      names: withRegional(r.rowId, r.names),
+      ...withAcquisition(r.rowId),
+    })),
     viaMainHand: false,
+    ...withAcquisition(primary.rowId),
   };
 }
 

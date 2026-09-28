@@ -9,36 +9,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [5.12.7] - 2026-09-28
 
-Swatch Matcher's TRIBE & GENDER selectors stayed disabled after the `.chara` file was gone. A
-loaded file turns them into a readout (`SwatchConfig.fileProvided`), and only the file card's SWAP
-ever released it: leaving the tool and coming back, switching the app's language, or reloading all
-dropped the file and brought the drop zone back over two disabled selectors. The flag was persisted
-with the rest of the swatch config, so it survived every reload until a file was loaded and swapped
-away. Present since the readout lock shipped with the 10A `.chara` reader — not a regression.
+The Swatch Matcher's loaded `.chara` file moves out of the component that drew it and into a
+session-only store, and `chara-import.ts` splits along what each part shows.
 
 ### Fixed
 
-- **`CharaImport.destroy()` reports the cleared file** through `onResolved(null)`, as SWAP does.
-  The tool's teardown (a trip to another tool) and its re-render (a language switch runs `update()`,
-  which rebuilds the importer) both went through `destroy()`, which dropped the file without telling
-  the host — so the grid kept the file's pins along with the lock. The call is guarded like
-  `loadFile`'s, so a throwing host cannot cut its own `destroy()` short. A file still reading or
-  resolving when `destroy()` runs is dropped when it lands rather than reported, which would have
-  put the lock back over an empty drop zone.
-- **`swatch.fileProvided` is transient in `ConfigController`** (`TRANSIENT_FIELDS`): never written
-  to localStorage, never read back from it — a `true` persisted by an earlier build is ignored, which
-  unlocks every browser already stuck — and never taken from an imported settings file. A reload set
-  off by another tab's write or `localStorage.clear()` keeps this tab's value, so one tab's file no
-  longer locks, or unlocks, another tab's selectors.
+- **Tribe and gender stayed locked after the `.chara` file was gone.** A loaded file turns the
+  sidebar's TRIBE & GENDER selectors into a read-only readout. The lock was a persisted config flag
+  (`SwatchConfig.fileProvided`) that only SWAP cleared, while the file itself lived in a component
+  the tool discarded on the way out. Switching tools and back, or reloading, showed the empty drop
+  zone with both selectors still disabled, and the only way out was to load a file and press SWAP.
+  The lock now reads the loaded file itself, and `ConfigController` drops a stored `fileProvided`
+  when it loads the Swatch config.
+- **Leaving the Swatch Matcher, or switching language, dropped the loaded file.** Both rebuilt the
+  component that held it, so following a SEND TO or Inspect Dye in… link and coming back meant
+  dropping the file again. It now stays loaded until SWAP, a reload or closing the tab. It is still
+  held in memory only and never written to browser storage.
+- **Two drops in quick succession could load the wrong file.** The drop zone stays up while a file
+  is still being read, so a second drop started a second load, and whichever finished last won: a
+  slow earlier file could replace the one picked last. `loadCharaFile` now numbers its loads, only
+  the newest publishes, and a replaced load's failure is not toasted. The old component had the
+  same race.
+- **The tribe/gender lock could hold a tribe that was not the file's.** Only
+  `SwatchTool.onCharaSession` wrote the file's tribe and gender into the config, and only when a
+  file loaded while the tool was open. A settings reset or import, another tab's save, or a file
+  that finished loading after the player left the tool left the selectors locked on another tribe,
+  with that tribe's hair and skin sheets under the file's pins. `ConfigController` now follows the
+  session itself and pins `swatch.race`/`gender` to `CharaSessionService.getTribeAndGender()` in
+  `setConfig`, `resetConfig` and `loadFromStorage` (in memory only there, so two tabs holding
+  different files cannot bounce a save between them); `SwatchTool` opens on a loaded file's tribe.
+- **A picked slot's label stayed in the old language after a language switch.** The selection card
+  kept the label translated at pick time; it now rebuilds it from the slot key each time it draws.
+
+### Changed
+
+- **`chara-import.ts` is split by what each part shows.** `services/chara-session-service.ts`
+  holds the loaded character for every view of it and is small enough to live in the layout shell,
+  where the config sidebar subscribes; `services/chara-file-loader.ts` reads a file into it (the
+  size cap and the `chara_parse` event moved with it); `components/chara-file-card.ts` is the drop
+  zone and file card, `chara-sheet.ts` is THIS CHARACTER plus `saveCharacterColors`,
+  `glamour-block.ts` is DYES ON THIS GLAMOUR, and `chara-ui.ts` holds the helpers all three share.
+  Each subscribes to the session, so a re-render rebuilds them around the same file.
+- **DYES ON THIS GLAMOUR is its own chunk**, imported the first time a loaded file wears anything.
+  `swatch-tool` drops from 92.84 KB (97.7% of its 95 KB budget) to 69.18 KB (72.8%);
+  `glamour-block` is 25.24 KB under a new 35 KB limit. The session store sits in the main entry
+  (106.19 → 107.08 of 150 KB with the tribe/gender pin), since `ConfigController` imports it; the
+  layout shell grows 0.26 KB for the sidebar's subscription, to 215.85 of 218 KB.
+- The glamour block's item names, dropped chips and palette draft now reset only when a new file
+  loads. A language switch moves the block into the redrawn panel (`GlamourBlock.moveTo`) instead
+  of rebuilding it, and picking a THIS CHARACTER card no longer redraws it. A picked slot keeps its
+  selection ring through a language switch too.
 
 ### Tests
 
-- Each red before the code that satisfies it: `chara-import-lifecycle.test.ts` (destroy reports the
-  clear; a throwing host is contained; a load that lands after destroy is dropped), two
-  `swatch-tool.test.ts` cases (a real `.chara` load through the drop zone, then
-  teardown or a language switch), five `config-controller.test.ts` cases (save, load, both cross-tab
-  reloads, import) and `e2e/swatch-readout-lock.spec.ts` (leave the tool and return; reload; a
-  lock an earlier build left in storage).
+- `e2e/swatch-chara-session.spec.ts` follows the lock and the file through SWAP, leaving the
+  tool, a language switch and a reload; three of its four cases fail on 5.12.4.
+- The five `chara-import-*` suites moved with the code they cover (`glamour-block*.test.ts`,
+  `chara-file-card.test.ts`, `services/__tests__/chara-file-loader.test.ts`), assertions
+  unchanged apart from mounting. New suites for the session store and THIS CHARACTER; the
+  Swatch suite covers the file surviving a re-mount and a re-render (the glamour block's palette
+  draft included), tribe/gender, merged pins and the on-demand glamour chunk; the sidebar suite
+  covers the lock.
+- `config-controller.test.ts` keeps a loaded file's tribe and gender through a file load, a
+  reset, an import and another tab's save (without writing it back); the Swatch suite opens on a
+  file loaded while the tool was closed and names a picked slot in the new language after a
+  switch. Each of those fails before the fix.
 
 ## [5.12.6] - 2026-09-28
 
