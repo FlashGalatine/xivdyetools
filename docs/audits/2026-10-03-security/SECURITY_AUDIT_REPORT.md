@@ -179,7 +179,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 
 | ID | Status | Commit |
 |---|---|---|
-| FINDING-001 | OPEN | — |
+| FINDING-001 | FIX COMMITTED, NOT DEPLOYED — awaiting push, live `curl -sI` acceptance and same-day merge | `61b7077b` (`fix/beta-security-headers`) |
 | FINDING-002 | OPEN | — |
 | FINDING-003 | OPEN | — |
 | FINDING-004 | OPEN | — |
@@ -197,7 +197,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-016 | OPEN | — |
 | FINDING-017 | OPEN | — |
 | FINDING-018 | OPEN | — |
-| FINDING-019 | OPEN | — |
+| FINDING-019 | OPEN — runbook part done; presets-api part Sprint 3 | `d8d5e3e8` (runbook) |
 | FINDING-020 | OPEN | — |
 | FINDING-021 | OPEN | — |
 | FINDING-022 | OPEN | — |
@@ -205,7 +205,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-024 | OPEN | — |
 | FINDING-025 | OPEN | — |
 | FINDING-026 | OPEN | — |
-| FINDING-027 | OPEN | — |
+| FINDING-027 | OPEN — Sprint 0 precondition is the maintainer's (secret length) | — |
 | FINDING-028 | OPEN | — |
 | FINDING-029 | OPEN | — |
 | FINDING-030 | OPEN | — |
@@ -213,4 +213,4 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 
 ## Next steps
 
-Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) after the §8 confirmation gate. **Publication hold:** `FlashGalatine/xivdyetools` is public. This folder holds working detail for unpatched findings (FINDING-001 above all), so do not push it until FINDING-001 is live on beta and confirmed with the `curl -sI` probe. A local commit is fine. No fix, rotation, commit, push or deployment was performed by this audit.
+Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) after the §8 confirmation gate. **Publication hold:** `FlashGalatine/xivdyetools` is public. This folder holds working detail for unpatched findings (FINDING-001 above all), so do not push it until FINDING-001 is live on beta and confirmed with the `curl -sI` probe. A local commit is fine. The audit itself changed no source. After the §8 gate (2026-10-03) the maintainer approved Sprint 0 with local commits only: FINDING-001 is fixed in `61b7077b` on `fix/beta-security-headers` and the FINDING-019 runbook in `d8d5e3e8`; nothing is pushed or deployed. The AMEND decisions, the FINDING-002 grade and the FINDING-017 window are still open.

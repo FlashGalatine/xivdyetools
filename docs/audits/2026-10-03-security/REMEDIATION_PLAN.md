@@ -29,7 +29,25 @@ Also at the gate:
 - FINDING-002 is graded HIGH by the skill's rule; the audit's calibration pass graded it MEDIUM. Confirm or downgrade it. The fix is the same either way.
 - FINDING-017 rollout: **fail closed**, per `docs/operations/security-remediation-2026-09-15.md`. Between the Sprint 3 and Sprint 4 deploys, moderators get 409 on approve/reject. Run both sprints in one held-workflow window.
 
+**Coordinator recommendations (2026-10-03). These await the maintainer's choice; none is decided.** The facts behind them were gathered at `file:line` after the gate.
+
+| ID | Recommended | Main reason |
+|---|---|---|
+| FINDING-004 | AMEND | The verified character name is the attribution XIVAuth users sign in for, and it is public in-game and on the Lodestone. Discord sign-in already publishes the display name the same way. The code option needs hand-applied backfills in two D1 databases (`presets.author_name`, `users.username`). The linked Discord id is the ownership key, so it stays and is disclosed. |
+| FINDING-005 | Minimize, then AMEND | Blank `username` and `reason` at unban. Delete lifted-ban rows 90 days after unban. Keep `moderation_log` 12 months, or until its preset is deleted. Purge on the moderation write path, like `pruneFailedNotifications`: no cron, no schema change. |
+| FINDING-007 | AMEND (wording) | The web path publishes the same `global_name \|\| username`. Changing only the bot gives one person two names, and `refresh-author` reverts it on the next web sign-in. A unique handle is not more private than a display name. |
+| FINDING-008 | AMEND + drop the log-embed mention | Buttons key on the preset id, so `<@id>` is display only. Drop it from the submission-log embed, and keep it in the moderation embed only if moderators act on it. Both policies name the channels, say posts stay in Discord until deleted, and say a deletion request removes them. |
+| FINDING-009 | AMEND | Copy the bot policy's two §8 rows into web item 3. The 30 / 90-day pruning already exists. |
+| FINDING-011 | Code | Move the market proxy to a native `[[ratelimits]]` binding (`CloudflareRateLimiter`, 60 s). PRIVACY's existing IP sentence then becomes true for every route, with no policy edit, and the limiter stops being per-isolate. |
+| FINDING-013 | Code (drop), unless used | The sampling is owner-only and read-only, and shows percentages over ≤ 100 records. Dropping it removes a use instead of adding a stated purpose. If the maintainer relies on it, the AMEND is the cheapest of the eight. |
+| FINDING-029 | AMEND | Mirror the bot policy: a private channel (email or Discord DM, not a public issue), a 30-day response, the self-serve deletes that exist, and what a request cannot remove (an active ban). |
+
 ## Sprint 0 — Emergency and prerequisites
+
+**FINDING-001: fix committed 2026-10-03 in `61b7077b`** on local branch `fix/beta-security-headers` (web-app 5.13.3, gates green, verified with `wrangler pages dev`).
+- Not yet pushed, deployed, accepted or merged; steps 3–7 below remain.
+- **FINDING-019 runbook: ✅ COMPLETED 2026-10-03, `d8d5e3e8`.**
+- **FINDING-027 precondition:** the maintainer's, still open.
 
 **FINDING-001 ships alone, out-of-band**, on its own branch, before everything else. The two other rows are maintainer prerequisites with no deploy. Nothing needs rotation.
 

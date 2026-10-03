@@ -17,4 +17,4 @@
 - No rotation is needed: no secret value was exposed.
 
 ## Status
-OPEN
+OPEN — the Sprint 0 precondition (`INTERNAL_WEBHOOK_SECRET` ≥ 32 characters on presets-api and discord-worker) is the maintainer's; code is Sprints 1 and 3.
