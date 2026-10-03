@@ -8,8 +8,11 @@
  * positive controls the audit verified, so a future edit cannot quietly
  * re-open the CSP.
  *
- * Remember that Cloudflare Pages MERGES overlapping path patterns: anything
- * declared under `/*` also applies to `/assets/*`, `/og/*`, `/fonts/*`.
+ * Remember that Cloudflare Pages MERGES distinct overlapping path patterns:
+ * anything declared under `/*` also applies to `/assets/*`, `/og/*`, `/fonts/*`.
+ * An IDENTICAL pattern declared twice is the opposite — last-wins — which
+ * `parseHeaders` below does not model (it folds repeats together), so the
+ * contract also pins that no pattern repeats (2026-10-03 FINDING-001).
  *
  * The second half pins `src/index.html`'s resource hints, because a
  * `dns-prefetch` / `preconnect` opens a connection the CSP never gets asked
@@ -22,6 +25,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findDuplicatePathPatterns } from '../shared/beta-branding';
 
 const APP_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const HEADERS = readFileSync(resolve(APP_ROOT, 'public/_headers'), 'utf-8');
@@ -175,10 +179,14 @@ describe('public/_headers security contract', () => {
     );
   });
 
-  it('does not ship the beta X-Robots-Tag block in production', () => {
-    // vite-plugin-beta-branding appends it at build time; public/_headers must
-    // never carry it (the beta plugin's idempotency guard reads a directive,
-    // not a comment — see shared/beta-branding.ts).
+  it('declares every path pattern once, since Pages keeps only the last rule for a repeat', () => {
+    expect(findDuplicatePathPatterns(HEADERS)).toEqual([]);
+  });
+
+  it('does not ship the beta X-Robots-Tag header in production', () => {
+    // vite-plugin-beta-branding adds it to the /* rule at build time;
+    // public/_headers must never carry it (the beta plugin's idempotency guard
+    // reads a parsed header line, not a comment — see shared/beta-branding.ts).
     expect(HEADERS).not.toMatch(/^\s+X-Robots-Tag:/im);
   });
 });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseArgs, ROBOTS_MODES, smokeTestPages } from './smoke-test-pages.js';
+import { parseArgs, REQUIRED_SECURITY_HEADERS, ROBOTS_MODES, smokeTestPages } from './smoke-test-pages.js';
 
 const ok = ['--deployment-url', 'https://abc.example.pages.dev', '--domain', 'https://site.test', '--expect-robots', 'noindex'];
 
@@ -96,11 +96,28 @@ const OTHER = '<!doctype html><title>an older build</title>';
 const ALIAS = 'https://abc.example.pages.dev';
 const SITE = 'https://site.test';
 
+/** Production values from public/_headers. */
+const SECURITY_DEFAULTS = {
+  'content-security-policy':
+    "default-src 'self'; script-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests;",
+  'x-frame-options': 'DENY',
+  'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+  'permissions-policy': 'geolocation=(), microphone=(), camera=()',
+};
+
 /** A response double. `headers` is a plain object with get() rather than a real
  *  Headers instance, because these tests run under the jsdom environment the
- *  web-app vitest config sets and we do not rely on jsdom exposing Headers. */
+ *  web-app vitest config sets and we do not rely on jsdom exposing Headers.
+ *  Carries the production security headers by default; pass `undefined` for a
+ *  name to drop it, or another value to override it. */
 function response(status, body, headers = {}) {
-  const lower = Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]));
+  const merged = { ...SECURITY_DEFAULTS };
+  for (const [k, v] of Object.entries(headers)) {
+    const key = k.toLowerCase();
+    if (v === undefined) delete merged[key];
+    else merged[key] = v;
+  }
+  const lower = merged;
   return {
     ok: status >= 200 && status < 300,
     status,
@@ -348,6 +365,138 @@ describe('smokeTestPages', () => {
     });
     expect(result.ok).toBe(false);
     expect(result.failures[0]).toMatch(/without X-Robots-Tag: noindex/);
+  });
+
+  describe('security headers on the custom domain', () => {
+    const pair = (siteHeaders) => ({
+      'abc.example.pages.dev': [response(200, BODY)],
+      'site.test': [response(200, BODY, siteHeaders)],
+    });
+
+    it('exposes the four required header names', () => {
+      expect(REQUIRED_SECURITY_HEADERS).toEqual([
+        'content-security-policy',
+        'x-frame-options',
+        'strict-transport-security',
+        'permissions-policy',
+      ]);
+    });
+
+    it('fails a beta domain missing CSP and X-Frame-Options, naming both and the cause', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          pair({ 'x-robots-tag': 'noindex', 'content-security-policy': undefined, 'x-frame-options': undefined })
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures).toHaveLength(1);
+      expect(result.failures[0]).toContain('content-security-policy');
+      expect(result.failures[0]).toContain('x-frame-options');
+      expect(result.failures[0]).not.toContain('strict-transport-security');
+      expect(result.failures[0]).not.toContain('permissions-policy');
+      expect(result.failures[0]).toMatch(/declared twice in dist\/_headers/);
+      expect(result.failures[0]).toMatch(/later identical pattern replace/);
+    });
+
+    it('fails a production domain missing only HSTS', async () => {
+      const result = await run({
+        expectRobots: 'none',
+        fetchImpl: fakeFetch(pair({ 'strict-transport-security': undefined })),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures).toHaveLength(1);
+      expect(result.failures[0]).toContain('strict-transport-security');
+      expect(result.failures[0]).not.toContain('x-frame-options');
+    });
+
+    it('fails when Permissions-Policy is missing', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(pair({ 'x-robots-tag': 'noindex', 'permissions-policy': undefined })),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toContain('permissions-policy');
+    });
+
+    it('treats a whitespace-only value as missing', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(pair({ 'x-robots-tag': 'noindex', 'x-frame-options': '   ' })),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toContain('x-frame-options');
+    });
+
+    it('fails a CSP that has no frame-ancestors directive', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          pair({ 'x-robots-tag': 'noindex', 'content-security-policy': "default-src 'self'; script-src 'self'" })
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toContain('frame-ancestors');
+    });
+
+    it('does not accept frame-ancestors appearing only inside another directive value', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          pair({
+            'x-robots-tag': 'noindex',
+            'content-security-policy': "default-src 'self'; report-uri https://r.test/frame-ancestors; img-src frame-ancestors.test",
+          })
+        ),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures[0]).toContain('frame-ancestors');
+    });
+
+    it('accepts frame-ancestors when it is the first directive', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(
+          pair({ 'x-robots-tag': 'noindex', 'content-security-policy': "frame-ancestors 'none'; default-src 'self'" })
+        ),
+      });
+      expect(result.ok).toBe(true);
+    });
+
+    it('reports robots and header failures together', async () => {
+      const result = await run({
+        fetchImpl: fakeFetch(pair({ 'content-security-policy': undefined })),
+      });
+      expect(result.ok).toBe(false);
+      expect(result.failures).toHaveLength(2);
+      expect(result.failures[0]).toMatch(/without X-Robots-Tag: noindex/);
+      expect(result.failures[1]).toContain('content-security-policy');
+    });
+
+    it('passes with every security header present, in both modes', async () => {
+      const beta = await run({ fetchImpl: fakeFetch(pair({ 'x-robots-tag': 'noindex' })) });
+      expect(beta.failures).toEqual([]);
+      expect(beta.ok).toBe(true);
+      expect(beta.summary).toMatch(/security headers/);
+      const prod = await run({ expectRobots: 'none', fetchImpl: fakeFetch(pair({})) });
+      expect(prod.failures).toEqual([]);
+      expect(prod.ok).toBe(true);
+    });
+
+    it('reads a real Headers instance with mixed-case names', async () => {
+      const headers = new Headers({
+        'Content-Security-Policy': "default-src 'self'; frame-ancestors 'none'",
+        'X-Frame-Options': 'DENY',
+        'Strict-Transport-Security': 'max-age=31536000',
+        'Permissions-Policy': 'camera=()',
+        'X-Robots-Tag': 'noindex',
+      });
+      const real = {
+        ok: true,
+        status: 200,
+        headers,
+        arrayBuffer: async () => new TextEncoder().encode(BODY).buffer,
+      };
+      const result = await run({
+        fetchImpl: fakeFetch({ 'abc.example.pages.dev': [response(200, BODY)], 'site.test': [real] }),
+      });
+      expect(result.failures).toEqual([]);
+      expect(result.ok).toBe(true);
+    });
   });
 
   it('sends the CI user agent and asks the edge not to serve a cached answer', async () => {

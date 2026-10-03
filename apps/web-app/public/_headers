@@ -82,12 +82,17 @@
 # TTL; that needs a cache purge for the specific URL.
 #
 # These live at /og/ rather than /assets/og/ for a mechanical reason: Cloudflare
-# Pages MERGES the rules of overlapping path patterns rather than letting the
-# more specific one replace the broader — the same behaviour the beta
-# X-Robots-Tag block relies on to append itself to /*. Under /assets/ this rule
-# won the max-age but inherited `immutable` from /assets/*, producing
+# Pages MERGES the rules of DISTINCT overlapping path patterns rather than letting
+# the more specific one replace the broader. Under /assets/ this rule won the
+# max-age but inherited `immutable` from /assets/*, producing
 # `max-age=86400, immutable, s-maxage=604800`. Moving out from under the
 # pattern removes the overlap instead of fighting the merge.
+#
+# An IDENTICAL pattern declared twice is the opposite case: last-wins, and the
+# earlier rule is dropped whole. Never repeat a pattern in this file. A beta
+# build that appended a second /* rule served none of the security headers
+# above from 2026-08-09 to 2026-10-03 (2026-10-03 security audit, FINDING-001);
+# the beta plugin now adds its robots header inside the /* rule instead.
 /og/*
   Cache-Control: public, max-age=3600, s-maxage=3600
 
