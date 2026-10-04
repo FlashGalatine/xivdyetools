@@ -199,7 +199,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-019 | FIX COMMITTED, NOT DEPLOYED | `d8d5e3e8` (runbook), `f1b54a0f` |
 | FINDING-020 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
 | FINDING-021 | FIX COMMITTED, NOT DEPLOYED | `c7fd9eba` |
-| FINDING-022 | OPEN — discord-worker part fixed; presets-api, moderation-worker, oauth, api-worker and og-worker parts committed | `8ecb878f`, `f1b54a0f`, `c7fd9eba`, `d853a765`, `1eaefd63`, `7c97fc1d` |
+| FINDING-022 | OPEN — discord-worker part fixed; the other six workers committed; CI invariant Sprint 11 | `8ecb878f`, `f1b54a0f`, `c7fd9eba`, `d853a765`, `1eaefd63`, `7c97fc1d`, `6e8c7d81` |
 | FINDING-023 | OPEN | — |
 | FINDING-024 | OPEN | — |
 | FINDING-025 | OPEN | — |
@@ -227,6 +227,7 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 - **Sprint 5:** `d1fdb89a` (discord-worker 5.8.0 and the six-language bot policy AMEND) and `f39e2cbe` (root player notes 5.10.3), open as PR #227. It merges after #224 and #225 are deployed.
 - **Sprint 6:** `d853a765` + `ee869d55` (oauth 3.1.2), open as PR #228. It is independent of the held window; merging deploys production oauth.
 - **Sprint 7:** `1eaefd63` (api-worker 0.16.1), open as PR #229. It is independent; merging deploys production api-worker.
+- **Sprint 10:** `6e8c7d81` (image-worker 1.3.3), open as PR #232. It is independent.
 - **Sprint 9:** `7c97fc1d` (og-worker 2.11.1), open as PR #231. It is independent; the branch push redeployed the beta OG worker.
 - **Sprint 8:** `59cc1d6a` (web-app 5.14.0, the six-language Privacy Guide AMENDs) and `7517a35d` (root player notes 5.10.4), open as PR #230, stacked on #223.
   - It merges last: after #223 merges, and after #224 (with its `migrations/0015` step), #225 and #227 are deployed.

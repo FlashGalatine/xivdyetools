@@ -306,6 +306,8 @@ This runs after Sprints 3–7, so every sentence describes code that is already 
 
 ## Sprint 10 — image-worker: Workers Logs pin
 
+**Committed 2026-10-04 in `6e8c7d81`** (image-worker 1.3.3). Open as PR #232; independent of every other PR. The full gate is green and an Opus review returned SHIP. It uses the unanchored guard from the start, and the new tests sit after the shadowing check, which must run first. A stale `src/index.ts` comment that said no `wrangler.toml` declares `[observability]` is corrected.
+
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-022 (image-worker) | security | LOW / LOCAL | Pin `[observability] enabled = false` and assert it in `src/wrangler-config.test.ts`. |
