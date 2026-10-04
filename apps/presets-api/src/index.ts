@@ -24,7 +24,7 @@ import {
   isPreviewImageUpload,
   PREVIEW_IMAGE_CONTENT_TYPES,
 } from './middleware/body-validation.js';
-import { validateEnv, logValidationErrors } from './utils/env-validation.js';
+import { validateEnv, logValidationErrors, logValidationWarnings } from './utils/env-validation.js';
 import { ErrorCode } from './utils/api-response.js';
 
 // Extend Hono context with our custom variables
@@ -39,6 +39,8 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 // string checks) so a misconfigured production isolate fails every request,
 // not just the first one. Only the error logging is once-per-isolate.
 let envErrorsLogged = false;
+// FINDING-027: non-fatal findings (never block a request), also once per isolate.
+let envWarningsLogged = false;
 
 // ============================================
 // GLOBAL MIDDLEWARE
@@ -59,6 +61,10 @@ app.use('*', loggerMiddleware({
 // Validates required env vars once per isolate and caches result
 app.use('*', async (c, next) => {
   const result = validateEnv(c.env);
+  if (result.warnings.length > 0 && !envWarningsLogged) {
+    envWarningsLogged = true;
+    logValidationWarnings(result.warnings, getLogger(c));
+  }
   if (!result.valid) {
     const logger = getLogger(c);
     if (!envErrorsLogged) {

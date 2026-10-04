@@ -703,7 +703,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            const stmt = prepareRevert(db, 'preset-1', previousValues, { contentRevision: 0, previousValuesRaw: JSON.stringify(previousValues) }, '2026-07-18T00:00:00.000Z');
+            const stmt = prepareRevert(db, 'preset-1', previousValues, { contentRevision: 0, status: 'flagged', previousValuesRaw: JSON.stringify(previousValues) }, '2026-07-18T00:00:00.000Z');
             await stmt.run();
 
             const query = db._queries[0];
@@ -718,7 +718,7 @@ describe('PresetService', () => {
             const db = createMockD1Database();
             db._setupMock(() => createMockPresetRow());
 
-            const stmt = prepareRevert(db, 'preset-1', previousValues, { contentRevision: 0, previousValuesRaw: JSON.stringify(previousValues) }, '2026-07-18T00:00:00.000Z');
+            const stmt = prepareRevert(db, 'preset-1', previousValues, { contentRevision: 0, status: 'flagged', previousValuesRaw: JSON.stringify(previousValues) }, '2026-07-18T00:00:00.000Z');
             await stmt.run();
 
             expect(db._bindings[0]).toContain('[10,20]');

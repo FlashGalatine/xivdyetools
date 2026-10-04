@@ -15,6 +15,8 @@ import {
     createMockSubmission,
     authHeaders,
     createTestJWT,
+    useCleanPerspective,
+    withPresetRereadRow,
 } from '../test-utils';
 
 type Variables = {
@@ -29,6 +31,7 @@ describe('PresetsHandler', () => {
     beforeEach(() => {
         resetCategoryCache(); // Reset category cache to prevent cross-test pollution
         mockDb = createMockD1Database();
+        withPresetRereadRow(mockDb);
         env = createMockEnv({ DB: mockDb as unknown as D1Database });
 
         app = new Hono<{ Bindings: Env; Variables: Variables }>();
@@ -40,6 +43,7 @@ describe('PresetsHandler', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
 
     // ============================================
@@ -546,6 +550,7 @@ describe('PresetsHandler', () => {
         // Skip: This test requires Cloudflare Workers ExecutionContext (for waitUntil)
         // which is not available in Node test environment
         it('should create preset successfully with mock executionCtx', async () => {
+            useCleanPerspective(env); // FINDING-019: approval needs a scorer
             const waitUntilPromises: Promise<unknown>[] = [];
             const mockExecutionCtx = {
                 waitUntil: (p: Promise<unknown>) => { waitUntilPromises.push(p); },
@@ -2418,6 +2423,7 @@ describe('PresetsHandler', () => {
         });
 
         it('should update preset with valid data', async () => {
+            useCleanPerspective(env); // FINDING-019: clean needs a scorer
             const mockRow = createMockPresetRow({
                 id: 'preset-123',
                 author_discord_id: '123',

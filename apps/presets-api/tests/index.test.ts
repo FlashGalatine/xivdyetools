@@ -317,6 +317,22 @@ describe('Index/App', () => {
             expect(second.status).toBe(500);
         });
 
+        // FINDING-027 (2026-10-03 security audit): a short webhook secret is
+        // reported but must stay out of the fatal path — the maintainer's
+        // ruling is "report it, never take the service down for it".
+        it('should keep serving, and log a warning, when INTERNAL_WEBHOOK_SECRET is short in production (FINDING-027)', async () => {
+            const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            const env = createMockEnv({
+                ...validProductionOverrides(),
+                INTERNAL_WEBHOOK_SECRET: 'too-short',
+            });
+
+            const res = await app.request('/health', {}, env);
+
+            expect(res.status).toBe(200);
+            logged.mockRestore();
+        });
+
         // FINDING-013 (2026-08-29 security audit): the same fail-closed,
         // fail-every-request behaviour must cover the new production-only
         // requirements too — a dropped TOKEN_BLACKLIST binding is exactly the

@@ -90,4 +90,37 @@ describe('wrangler.toml', () => {
   it('has no [env.preview] block', () => {
     expect(toml).not.toMatch(/^\[env\.preview\]$/m);
   });
+
+  /**
+   * FINDING-006 (2026-10-03 security audit): the retired
+   * xivdyetools.projectgalatine.com origin is gone from the CORS allowlist
+   * (DOMAIN_DEPRECATION Phase 1). Pin the exact production list so any
+   * addition is a reviewed change.
+   */
+  it('pins the exact production CORS allowlist', () => {
+    const additional = production.match(/ADDITIONAL_CORS_ORIGINS = "([^"]*)"/)?.[1];
+    expect(additional?.split(',')).toEqual([
+      'https://xiv-colorexplorer.pages.dev',
+      'https://beta.xivdyetools.app',
+    ]);
+    expect(production).toContain('CORS_ORIGIN = "https://xivdyetools.app"');
+    expect(toml).not.toMatch(/https:\/\/xivdyetools\.projectgalatine\.com/);
+  });
+
+  /**
+   * FINDING-022 (2026-10-03 security audit): both privacy policies promise
+   * Workers Logs are off, so the state is pinned in config in BOTH blocks and
+   * no log sink may be added without updating the policies in the same change.
+   */
+  it('pins observability off at the top level and in production', () => {
+    expect(topLevel).toMatch(/^\[observability\]\nenabled = false$/m);
+    expect(production).toMatch(/^\[env\.production\.observability\]\nenabled = false$/m);
+    expect(toml).not.toMatch(/^\s*enabled\s*=\s*true/m);
+  });
+
+  it('configures no logpush and no tail consumers', () => {
+    expect(toml).not.toMatch(/^\s*logpush\s*=\s*true/m);
+    expect(toml).not.toMatch(/^\s*\[\[(env\.[a-z]+\.)?tail_consumers\]\]/m);
+    expect(toml).not.toMatch(/^\s*tail_consumers\s*=\s*\[\s*[^\]\s]/m);
+  });
 });

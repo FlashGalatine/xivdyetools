@@ -132,8 +132,10 @@ gone, and a CHANGELOG line.
 
 Not removals, still open from the same list: the web-app submission form does not mirror
 presets-api's tag charset / control-character rules, so users see the API's 400 message
-(FINDING-019/028); cross-identity (`xivauth_id`) bans need oauth + moderation-worker changes
-(FINDING-017). The "`/preset submit` still sends legacy itemIDs" item closed on 2026-08-29.
+(FINDING-019/028); cross-identity (`xivauth_id`) bans: the presets-api side is done (2026-10-03 FINDING-014,
+Sprint 3: the ban check matches the acting id, JWT `sub` and `discord_id` claim against both ban
+columns, and `PATCH /refresh-author` re-keys an XIVAuth-only account's rows once it links Discord);
+the moderation-worker side follows in Sprint 4. The "`/preset submit` still sends legacy itemIDs" item closed on 2026-08-29.
 
 ## 6. Recurring audits
 

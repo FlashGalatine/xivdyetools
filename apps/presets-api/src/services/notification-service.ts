@@ -34,6 +34,13 @@ export interface PresetSubmissionNotification {
     author_name: string;
     author_discord_id: string;
     status: 'pending' | 'approved' | 'rejected';
+    /**
+     * FINDING-017 (2026-10-03 audit): the revision of exactly the text this
+     * notification carries — the row's value AFTER the write that produced it.
+     * The moderation buttons bind to it, so a button on an older embed cannot
+     * approve text edited since.
+     */
+    content_revision: number;
     moderation_status: 'clean' | 'flagged' | 'auto_approved';
     source: 'bot' | 'web' | 'none';
     created_at: string;
@@ -81,6 +88,8 @@ export interface DeadLetterRecord {
   preset_id: string;
   /** Only 'submission' carries one; a preview upload has nothing to judge yet. */
   moderation_status?: PresetSubmissionNotification['preset']['moderation_status'];
+  /** FINDING-017: a revision number is a counter, not content — kept so a retried embed binds to the right text. */
+  content_revision?: number;
 }
 
 /**
@@ -96,6 +105,7 @@ export function toDeadLetterRecord(payload: PresetNotificationPayload): DeadLett
         type: 'submission',
         preset_id: payload.preset.id,
         moderation_status: payload.preset.moderation_status,
+        content_revision: payload.preset.content_revision,
       }
     : { type: 'preview_image', preset_id: payload.preset.id };
 }

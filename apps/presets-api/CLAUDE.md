@@ -130,7 +130,13 @@ src/
 | `TOKEN_BLACKLIST` | KV (the `xivdyetools-oauth` namespace) | Revoked JWT `jti`s (FINDING-002) + the 120 s `botnonce:` replay cache |
 | `RL_PUBLIC` | Workers Rate Limiting (`[[ratelimits]]`, 100 / 60 s) | Backs both `publicRateLimitMiddleware` (`public:`) and `perUserRateLimitMiddleware` (`user:`) (FINDING-003) |
 
-**Production-required** (`validateEnv`, FINDING-013): every binding above plus `JWT_SECRET`, `JWT_ISSUER` (must start `https://`) and `INTERNAL_WEBHOOK_SECRET`. Each of these degrades *silently* when absent — no revocation, no issuer pinning, a fallback limiter, a moderation fan-out that logs and returns — which is why they fail the request instead.
+**Production-required** (`validateEnv`, FINDING-013): every binding above plus `JWT_SECRET`, `JWT_ISSUER` (must start `https://`) and `INTERNAL_WEBHOOK_SECRET`. Each of these degrades *silently* when absent — no revocation, no issuer pinning, a fallback limiter, a moderation fan-out that logs and returns — which is why they fail the request instead. A production `INTERNAL_WEBHOOK_SECRET` shorter than 32 characters (FINDING-027) is reported in `validateEnv`'s separate `warnings` list and logged once per isolate, but never makes `valid` false: the guard in `src/index.ts` 500s every request on an invalid env, and a short secret must not take the API down.
+
+**Workers Logs stay off (FINDING-022):** `wrangler.toml` pins `[observability] enabled = false` at the top level and under `[env.production]`. Both privacy policies promise it; enabling it (or adding logpush / `tail_consumers`) needs the policies updated in the same change, and `tests/wrangler-config.test.ts` fails until then.
+
+**Trigger parity (FINDING-031):** `tests/migration-trigger-parity.test.ts` asserts the `presets_content_revision_after_update` trigger in `migrations/0014` and `schema.sql` are identical after whitespace/`IF NOT EXISTS` normalization.
+
+**Notification payload:** the `submission` payload's `preset` carries `content_revision` (a counter, not content) so the moderation embed's buttons bind to the exact revision shown; the dead-letter record keeps it for the same reason.
 
 Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV), `JWT_ISSUER`, `CACHE_PURGE_ZONE_ID` (production only — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`, FINDING-018). Custom domains: `api.xivdyetools.app`, `api.xivdyetools.projectgalatine.com`.
 
@@ -148,7 +154,7 @@ Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS
 
 | Secret | Purpose |
 |--------|---------|
-| `PERSPECTIVE_API_KEY` | Google Perspective API for ML toxicity scoring. **⚠️ The service shuts down 2026-12-31** — delete this secret on or before that date, or FINDING-005's fail-closed branch queues every submission for manual review. With no key set the local word list decides, which is the intended degradation. See `DEPRECATIONS.md` |
+| `PERSPECTIVE_API_KEY` | Google Perspective API for ML toxicity scoring. **⚠️ The service shuts down 2026-12-31** — delete this secret on or before that date, or FINDING-005's fail-closed branch queues every submission for manual review. With no key set the local word list still flags, but it holds no profanity, so a clean local pass is reported as `method: 'unscored'` (`passed: false`) and new presets and text edits go to the moderator queue as `pending` (FINDING-019). See `DEPRECATIONS.md` |
 | `CACHE_PURGE_API_TOKEN` | FINDING-018: API token scoped to *Zone → Cache Purge* on the `xivdyetools.app` zone (the zone that serves `shots.xivdyetools.app`); pairs with the `CACHE_PURGE_ZONE_ID` **var** in `wrangler.toml` `[env.production]` (a zone id is config, not a secret). When set, every preview-image takedown purges the image URL from the edge cache and logs `[preview-image] cache purged …`. Absent → purge skipped, the object's one-day `s-maxage` is the only bound. Set on production 2026-08-21 |
 
 ## Database
@@ -170,11 +176,21 @@ write. The token is intentionally omitted from public preset responses.
 | `categories` | 8 seeded categories: jobs, grand-companies, seasons, events, aesthetics, plus appearance / zones / raids-trials added by `migrations/0010`. `community` was retired by `migrations/0007` — community-ness is a source, not a category; any stragglers land in `aesthetics` |
 | `presets` | Both curated and community palettes; `status ∈ {pending, approved, rejected, flagged, hidden}` (`hidden` is the ban-driven soft delete — never settable through `/moderation/:id/status`, whose validator accepts only the first four), `dye_signature` enforces unique dye combinations. Later columns arrived one migration each: `example_link` (`0008`), `preview_image_key` / `preview_image_status` (`0009`), `secondary_categories` (`0010`) |
 | `votes` | One row per (preset_id, user_discord_id); composite PK |
-| `moderation_log` | Audit trail of approve/reject/flag/unflag/revert actions, plus ban/unban/hide/restore written by moderation-worker directly (`migrations/0013` — `preset_id` is NULL on the user-level `ban`/`unban` rows, `target_discord_id` names the moderated user) |
+| `moderation_log` | Audit trail of approve/reject/flag/unflag/requeue/revert/image_approve/image_reject actions, plus ban/unban/hide/restore written by moderation-worker directly (`migrations/0013` — `preset_id` is NULL on the user-level `ban`/`unban` rows, `target_discord_id` names the moderated user). Retention: see "Moderation record retention" below |
 | `submission_events` | Append-only per-user quota log (`migrations/0011`; `0012` rebuilt it to allow the `text_edit` kind). `(user_discord_id, kind, created_at)` with `kind ∈ {submission, flagged_edit, preview_upload, text_edit}` — user actions never delete rows, so a daily cap cannot be refilled by deleting your own presets (FINDING-008) |
 | `rate_limits` | **Dropped** by `migrations/0006` (REFACTOR-018 — never read or written). NOT in `schema.sql` any more: only a comment marks where it stood, so a fresh local DB does not create it either |
-| `banned_users` | Tracked via `discord_id` or `xivauth_id`; partial unique index for active bans |
+| `banned_users` | Tracked via `discord_id` or `xivauth_id`; partial unique index for active bans. A lifted ban is deleted 90 days after `unbanned_at` (see below) |
 | `failed_notifications` | Dead-letter queue (BUG-015) for Discord notifications that exhausted retries |
+
+### Moderation record retention (FINDING-005)
+
+`services/moderation-retention-service.ts` (`pruneModerationRecords`) is the deletion; **these are the periods the FINDING-005 privacy-policy amendment (Sprint 5) will publish, so the constants are a commitment — change them only together with the policies**:
+
+- **Lifted bans** (`banned_users.unbanned_at` set) are deleted **90 days** after `unbanned_at` (`LIFTED_BAN_RETENTION_DAYS`). An active ban is never pruned.
+- **`moderation_log` rows whose `action` is `ban`, `unban`, `hide` or `restore`** are deleted **12 months** after `created_at` (`USER_ACTION_LOG_RETENTION_MONTHS`, calendar months). The rule keys on the action value, not on `preset_id` — `hide`/`restore` rows carry one.
+- **Every other log row** (approve, reject, flag, unflag, requeue, revert, image_approve, image_reject) lives as long as its preset: the FK cascades, and `DELETE /presets/:id` also deletes them explicitly in its batch rather than relying on the cascade.
+
+There is no cron, so the prune runs best-effort on the moderation write paths (`PATCH` status, revert and preview-image, after the request's own write succeeded). It never throws, binds every parameter, compares ISO-8601 strings (the format every writer binds), and logs counts only. Same precedent as `pruneFailedNotifications` and the `submission_events` prune.
 
 ### Composite Indexes (`migrations/002_add_composite_indexes.sql`)
 
@@ -220,9 +236,10 @@ Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (
 ### Moderator-Only
 
 - `GET /moderation/pending` — queue.
-- `PATCH /moderation/:presetId/status` — approve/reject/flag/unflag.
-- `PATCH /moderation/:presetId/revert` — restore `previous_values` after a problematic edit.
-- `PATCH /moderation/:presetId/preview-image` — approve or strip a submitted preview image.
+- `GET /moderation/:presetId` — the preset as a moderator reviews it, at any status, plus the `content_revision` a status change must be bound to (and a derived `moderation_status`). Registered after the single-segment literals above.
+- `PATCH /moderation/:presetId/status` — approve/reject/flag/unflag. **Fails closed (FINDING-017):** the body must carry `expected_revision` (non-negative integer) and `expected_status` (one of the five statuses) — what the moderator actually reviewed. A write that cannot be bound to a review answers 409 with `code`: `REVISION_REQUIRED` (either field missing/invalid) or `STALE_REVIEW` (the preset changed after the review). Both carry `current: { status, content_revision }` from a fresh read, so the client's recovery is one: re-read and review again. The update and its log row are one batch, so a stale action writes neither.
+- `PATCH /moderation/:presetId/revert` — restore `previous_values` after a problematic edit. **Fails closed like `/status` (FINDING-017):** the body must carry `reason` (10–200 chars) plus `expected_revision` and `expected_status`; missing/invalid → 409 `REVISION_REQUIRED`, a zero-row update (stale or concurrent) → 409 `STALE_REVIEW`, both with `current: { status, content_revision }`. The UPDATE binds the caller's expected revision and status plus the exact snapshot; the log row is gated by `changes() > 0`.
+- `PATCH /moderation/:presetId/preview-image` — approve or strip a submitted preview image; body carries the reviewed `preview_image_key`, and a stale one is a 409. Writes an `image_approve` / `image_reject` `moderation_log` row in the same batch as the conditional UPDATE (FINDING-020).
 - `GET /moderation/:presetId/history` — that preset's `moderation_log` entries.
 - `GET /moderation/stats` — moderation queue counters.
 - `GET /moderation/failed-notifications`, `PATCH /moderation/failed-notifications/:id/resolve` — dead-letter queue (BUG-015).
@@ -280,7 +297,7 @@ Service Binding is preferred over outbound HTTPS because Cloudflare Workers can'
 
 ### CORS
 
-Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. In dev mode only, specific localhost ports are also allowed: `5173` (Vite), `8787` (Wrangler), both with `localhost` and `127.0.0.1` — the loopback block is wrapped in `if (env.ENVIRONMENT === 'development')` (FINDING-002, mirroring `OAUTH-SEC-001`), so production never reflects a loopback origin on this credentialed endpoint. `maxAge: 3600` (1 hour) so policy changes propagate quickly.
+Allowlist comes from `CORS_ORIGIN` + `ADDITIONAL_CORS_ORIGINS`. Production's `ADDITIONAL_CORS_ORIGINS` is exactly `https://xiv-colorexplorer.pages.dev` and `https://beta.xivdyetools.app`; the retired `https://xivdyetools.projectgalatine.com` origin was removed (FINDING-006, DOMAIN_DEPRECATION Phase 1) and `tests/wrangler-config.test.ts` pins the list. In dev mode only, specific localhost ports are also allowed: `5173` (Vite), `8787` (Wrangler), both with `localhost` and `127.0.0.1` — the loopback block is wrapped in `if (env.ENVIRONMENT === 'development')` (FINDING-002, mirroring `OAUTH-SEC-001`), so production never reflects a loopback origin on this credentialed endpoint. `maxAge: 3600` (1 hour) so policy changes propagate quickly.
 
 `allowHeaders` is deliberately just `['Content-Type', 'Authorization']`. The bot identity headers below (`X-User-Discord-ID` / `X-User-Discord-Name`) are **not** listed: both bot callers arrive over Service Bindings and never preflight, so no real client needs the permission (FINDING-005).
 
