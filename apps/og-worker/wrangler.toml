@@ -61,6 +61,14 @@ type = "Data"
 globs = ["**/*.ttf"]
 fallthrough = true
 
+# FINDING-022 (2026-10-03 security audit): persistent Workers Logs stay OFF.
+# Both privacy policies promise it, so the state is pinned here rather than
+# living only in the Cloudflare dashboard. `observability` is an INHERITABLE
+# key, but it is declared explicitly in both blocks anyway. Turning it on
+# needs both privacy policies (all six languages) updated in the same change.
+[observability]
+enabled = false
+
 [env.production]
 name = "xivdyetools-og-worker"
 workers_dev = false
@@ -86,3 +94,7 @@ OG_IMAGE_BASE_URL = "https://og.xivdyetools.app/og"
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "xivdyetools_og_analytics"
+
+# FINDING-022: see the top-level [observability] comment. Workers Logs stay off.
+[env.production.observability]
+enabled = false
