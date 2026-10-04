@@ -101,7 +101,7 @@ The HIGH item plus the bot-side fixes that need no other unit and no policy edit
 **Committed 2026-10-04 in `3daa83fd`** (web-app 5.13.4) on local branch `fix/security-2026-10-03-sprint2`, with the root player notes in `ffd22726` (product 5.10.2). The full gate is green, `validate:i18n` passes and `policy-locale-parity.py` exits 0.
 - **Translations:** each language had one Sonnet translator and one Opus verifier.
 - **Applied corrections:** de 2, zh 7, ko 1. The ko fix: "nothing sold" had narrowed to "email is not sold".
-- **Not yet pushed.** Merging deploys production web-app. Because the root `CHANGELOG-laymans.md` changes, the merge also fires the Discord release announcement.
+- **Open as PR #223.** Merging deploys production web-app. Because the root `CHANGELOG-laymans.md` changes, the merge also fires the Discord release announcement.
 
 These are document and copy corrections with no code dependency, so they do not wait for the LOW sprints. The FINDING-003 sentence about images, and the false "No character data" clause, are wrong today. Each document edit is a six-file edit (`PRIVACY.md` / `TERMS_OF_SERVICE.md` + `.ja/.ko/.zh/.de/.fr`, all `Last updated` lines bumped). Locale-JSON edits touch all six `src/locales/*.json`. PRIVACY item 3 is edited again in Sprint 8; that is accepted.
 

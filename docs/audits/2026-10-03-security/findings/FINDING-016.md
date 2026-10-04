@@ -17,4 +17,4 @@
 - Defense in depth: have web-app sanitizeExampleLink return url.href rather than `trimmed`, and add tests for LF, U+202E and space inputs on both sides.
 
 ## Status
-FIX COMMITTED, NOT DEPLOYED — web part in `3daa83fd` (Sprint 2); presets-api part (reject control/bidi characters, store the href, strip author names) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed).
+FIX COMMITTED, NOT DEPLOYED — web part in `3daa83fd` (Sprint 2); presets-api part (reject control/bidi characters, store the href, strip author names) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; PR #224, open).

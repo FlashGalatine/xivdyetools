@@ -17,4 +17,4 @@
 - Add tests asserting history shows the image action and that a 409 stale review writes no log row
 
 ## Status
-FIX COMMITTED, NOT DEPLOYED — `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed).
+FIX COMMITTED, NOT DEPLOYED — `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; PR #224, open).

@@ -18,4 +18,4 @@
 - Optionally disable or strip the buttons from earlier embeds when presets-api re-notifies for the same preset.
 
 ## Status
-OPEN — presets-api part (status and revert bound to the reviewed revision, GET /moderation/:id, payload revision) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed); moderation-worker part (revision-bound buttons, modals and confirm, legacy refresh) in `c7fd9eba` (local branch `fix/security-2026-10-03-sprint4`, moderation-worker 1.8.0; not pushed). The discord-worker part (emit the new custom_ids) is Sprint 5. Revert was added to the contract during review.
+OPEN — presets-api part (status and revert bound to the reviewed revision, GET /moderation/:id, payload revision) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; PR #224, open); moderation-worker part (revision-bound buttons, modals and confirm, legacy refresh) in `c7fd9eba` (local branch `fix/security-2026-10-03-sprint4`, moderation-worker 1.8.0; PR #225, open). The discord-worker part (emit the new custom_ids) is Sprint 5. Revert was added to the contract during review.

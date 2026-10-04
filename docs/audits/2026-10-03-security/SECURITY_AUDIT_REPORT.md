@@ -223,6 +223,7 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 - **Sprint 0:** FINDING-001 is fixed and live on beta (`61b7077b`, PR #221 merged as `b89629d9`; the `curl -sI` acceptance passed). The FINDING-019 runbook is in `d8d5e3e8`.
 - **Sprint 1:** ✅ merged as `8ecb878f` (PR #222). The maintainer rotated the production `INTERNAL_WEBHOOK_SECRET` first.
 - **Sprint 2:** `3daa83fd` (web-app 5.13.4; the six-language policy edits) and `ffd22726` (root player notes 5.10.2), pushed as PR #223.
-- **Sprints 3 and 4:** committed locally as `f1b54a0f` (presets-api 2.4.0) and `c7fd9eba` (moderation-worker 1.8.0). Not yet pushed; they deploy together in one held window.
+- **Sprints 3 and 4:** `f1b54a0f` (presets-api 2.4.0) and `c7fd9eba` (moderation-worker 1.8.0), open as PR #224 and PR #225. They deploy together in one held window.
+- **Open PRs are held for the maintainer's batch review (2026-10-04).** Nothing merges without it.
 
 **Publication hold:** lifted for FINDING-001. The repository is public and this folder still details findings that are not yet deployed, so publishing it is the maintainer's call.

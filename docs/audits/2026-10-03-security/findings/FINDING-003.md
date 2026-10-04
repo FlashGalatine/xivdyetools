@@ -18,4 +18,4 @@
 - Make the same six-file edit in PRIVACY.ja/ko/zh/de/fr.md and bump 'Last updated'. No code change is needed, since the document is aligning to existing behavior.
 
 ## Status
-FIX COMMITTED, NOT DEPLOYED — `3daa83fd` (local branch `fix/security-2026-10-03-sprint2`, web-app 5.13.4; not pushed); all six locale variants.
+FIX COMMITTED, NOT DEPLOYED — `3daa83fd` (local branch `fix/security-2026-10-03-sprint2`, web-app 5.13.4; PR #223, open); all six locale variants.

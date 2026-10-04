@@ -17,4 +17,4 @@
 - No rotation is needed: no secret value was exposed.
 
 ## Status
-OPEN — discord-worker part fixed (`8ecb878f`, secret rotated to 64 characters 2026-10-03); presets-api part (non-fatal warning) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed).
+OPEN — discord-worker part fixed (`8ecb878f`, secret rotated to 64 characters 2026-10-03); presets-api part (non-fatal warning) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; PR #224, open).

@@ -18,4 +18,4 @@
 - Update DEPRECATIONS.md: state that the local list holds no profanity today, and make the decision 'replace the ML tier or default to pending' a blocking checklist step before the key is deleted.
 
 ## Status
-FIX COMMITTED, NOT DEPLOYED — runbook in `d8d5e3e8` (audit branch); presets-api part (no scorer → pending) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed).
+FIX COMMITTED, NOT DEPLOYED — runbook in `d8d5e3e8` (audit branch); presets-api part (no scorer → pending) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; PR #224, open).
