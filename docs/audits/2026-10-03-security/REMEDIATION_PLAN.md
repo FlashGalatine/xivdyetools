@@ -264,6 +264,16 @@ FINDING-004 needs no oauth change: §8 kept the verified character name and the 
 
 ## Sprint 8 — web-app: AMENDs to the privacy guide and Terms
 
+**Committed 2026-10-04 in `59cc1d6a`** (web-app 5.14.0), with the root player notes in `7517a35d` (5.10.4). It is open as PR #230, stacked on #223 (base `fix/security-2026-10-03-sprint2`). The Terms needed no edit; their removal route already points to `PRIVACY.md`.
+- **Merge order:** #223 merged; #224 deployed with `migrations/0015` run; #225 and #227 deployed; then #230. If it merges after 2026-10-04, bump `Last updated` on all six variants.
+- **New sections:** "Community presets: what we keep" and "Deleting your data". Item 3 is extended.
+- **English, fact-checked by Opus three times against #224/#225/#227** (two lenses, then one re-check of this guide and the bot policy together). The fact-checks changed code, not just wording:
+  - **#224 (presets-api), `e34ea70a`.** Retention ran only when other requests happened to trigger it; moderation-worker's ban and unban never triggered the ban-record and log clean-up. A daily Cron Trigger now runs all three prunes. `migrations/0015` is a required rollout step: it rewrites failed-notification records written before 2026-08-30, which still hold the author's ID and name.
+  - **#225 (moderation-worker), `aaa4467b` + `3a69828c`.** The ban post showed the account ID, and fell back to it when no author name was found.
+  - **#227 (bot policy).** The posts section listed only two kinds of post, presets were "kept indefinitely", and auto-votes and the pre-edit snapshot were missing. All corrected in English and in five translations (ja 3, zh 3, de 2, fr 1 corrections).
+  - **Both documents.** Posts made before the deploy can still carry IDs, so the promise is "posts made since the Last updated date"; a deletion request removes older posts too.
+- **Translations:** each reuses that language's reviewed bot-policy wording and the app's UI labels. Corrections: ja 1, ko 1, zh 6 (five were broken CommonMark bold after a full-width colon), de 6, fr 3. `policy-locale-parity.py` passes.
+
 This runs after Sprints 3–7, so every sentence describes code that is already live. The edits are one coordinated six-file commit per document. FINDING-005/008/009/029 all edit PRIVACY item 3 or Questions?. FINDING-004 shipped in Sprint 2, and FINDING-011 needs no policy edit.
 
 | ID | Source | Sev / Exposure | Item |

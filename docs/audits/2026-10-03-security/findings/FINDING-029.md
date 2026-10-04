@@ -18,4 +18,4 @@
 - Apply the same text to PRIVACY.{ja,ko,zh,de,fr}.md
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — web AMEND `59cc1d6a` (branch `fix/security-2026-10-03-sprint8`, web-app 5.14.0; PR #230, open, stacked on #223): new "Deleting your data" section with the self-serve deletes (not while banned), private requests by email to FlashGalatineFGC@gmail.com (the address the maintainer gave, written in the case already used in the bot policy and ToS) or Discord DM, never a public issue, 30-day handling, and the active-ban exception.

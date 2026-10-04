@@ -76,16 +76,16 @@ Every row is a **six-file edit per document** (English + `.ja/.ko/.zh/.de/.fr`),
 |---|---|---|---|---|
 | FINDING-003 | web `PRIVACY.md` | Images and camera captures; Network access item 3; How to verify | CORRECT | committed `3daa83fd`, six variants, not deployed |
 | FINDING-004 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md`, web `locales/*.json` `preset.privacyNote` | item 3; Accounts | **AMEND**, approved 2026-10-03: disclose the verified character name and the linked Discord id (plan Sprint 2) | committed `3daa83fd`, six variants, not deployed |
-| FINDING-005 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §2 / §5 / §8; item 3 | **AMEND**, approved 2026-10-03, after minimizing (plan Sprints 3–5, 8) | no |
+| FINDING-005 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §2 / §5 / §8; item 3 | **AMEND**, approved 2026-10-03, after minimizing (plan Sprints 3–5, 8) | bot: PR #227; web: `59cc1d6a` (PR #230); six variants each |
 | FINDING-007 | bot `PRIVACY_POLICY.md` | §2, §4 | **AMEND**, approved 2026-10-03: "display name" | committed `d1fdb89a`, six variants (PR #227) |
-| FINDING-008 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §5 / §7; item 3 | **AMEND** | bot: committed `d1fdb89a`, six variants (PR #227); web: Sprint 8 |
-| FINDING-009 | web `PRIVACY.md` | item 3 | **AMEND** | no |
+| FINDING-008 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §5 / §7; item 3 | **AMEND** | bot: PR #227; web: `59cc1d6a` (PR #230); six variants each |
+| FINDING-009 | web `PRIVACY.md` | item 3 | **AMEND** | `59cc1d6a`, six variants (PR #230) |
 | FINDING-010 | web `PRIVACY.md` | What is stored on your device | CORRECT | committed `3daa83fd`, six variants, not deployed |
 | FINDING-011 | — | — | none: §8 chose the native limiter (plan Sprint 7), which makes the current text true | n/a |
 | FINDING-012 | web `locales/*.json` `swatch.charaHint` (+ chip) | — | CORRECT (UI copy; PRIVACY.md is already right) | committed `3daa83fd` (new `swatch.charaHintGlamour`), not deployed |
 | FINDING-013 | — | — | none: §8 chose to drop the sampling (plan Sprint 5) | n/a |
 | FINDING-028 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md` | Links to other sites; Other people's services | CORRECT | committed `3daa83fd`, six variants, not deployed |
-| FINDING-029 | web `PRIVACY.md` | Questions?; item 3 | **AMEND**, approved 2026-10-03: contact `flashgalatinefgc@gmail.com` or a Discord DM, 30 days | no |
+| FINDING-029 | web `PRIVACY.md` | Questions?; item 3 | **AMEND**, approved 2026-10-03: contact `flashgalatinefgc@gmail.com` or a Discord DM, 30 days | `59cc1d6a`, six variants (PR #230), new "Deleting your data" section |
 
 FINDING-002 and FINDING-018 make the existing bot-policy text true by changing code; they need no policy edit. FINDING-005, -008, -009 and -029 all touch web `PRIVACY.md` item 3 and should land as one coordinated web-app policy commit (plan Sprint 8). FINDING-004's AMEND describes code that is already live, so it ships earlier, with the Sprint 2 CORRECTs.
 
@@ -182,11 +182,11 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-002 | FIXED 2026-10-03 | `28769473`, PR #222 → `8ecb878f` |
 | FINDING-003 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-004 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
-| FINDING-005 | OPEN — code parts and the bot AMEND committed; web AMEND Sprint 8 | `f1b54a0f`, `c7fd9eba`, `d1fdb89a` |
+| FINDING-005 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f`, `e34ea70a`, `c7fd9eba`, `d1fdb89a`, `f3554155`, `59cc1d6a` |
 | FINDING-006 | FIX COMMITTED, NOT DEPLOYED — old hostnames and Discord redirect URIs retired by the maintainer 2026-10-04; route lines dropped | `f1b54a0f`, `d853a765`, `ee869d55` |
 | FINDING-007 | FIX COMMITTED, NOT DEPLOYED | `d1fdb89a` (PR #227) |
-| FINDING-008 | OPEN — bot AMEND and mention drop committed; web AMEND Sprint 8 | `d1fdb89a`, `10a3b137` |
-| FINDING-009 | OPEN | — |
+| FINDING-008 | FIX COMMITTED, NOT DEPLOYED | `d1fdb89a`, `10a3b137`, `aaa4467b`, `3a69828c`, `f3554155`, `59cc1d6a` |
+| FINDING-009 | FIX COMMITTED, NOT DEPLOYED | `59cc1d6a` (PR #230) |
 | FINDING-010 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-011 | FIX COMMITTED, NOT DEPLOYED — minimized; no policy edit | `1eaefd63` (PR #229) |
 | FINDING-012 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
@@ -206,7 +206,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-026 | OPEN | — |
 | FINDING-027 | OPEN — discord-worker part fixed; secret rotated 2026-10-03; presets-api part committed | `8ecb878f`, `f1b54a0f` |
 | FINDING-028 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
-| FINDING-029 | OPEN | — |
+| FINDING-029 | FIX COMMITTED, NOT DEPLOYED | `59cc1d6a` (PR #230) |
 | FINDING-030 | OPEN | — |
 | FINDING-031 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
 
@@ -227,6 +227,12 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 - **Sprint 5:** `d1fdb89a` (discord-worker 5.8.0 and the six-language bot policy AMEND) and `f39e2cbe` (root player notes 5.10.3), open as PR #227. It merges after #224 and #225 are deployed.
 - **Sprint 6:** `d853a765` + `ee869d55` (oauth 3.1.2), open as PR #228. It is independent of the held window; merging deploys production oauth.
 - **Sprint 7:** `1eaefd63` (api-worker 0.16.1), open as PR #229. It is independent; merging deploys production api-worker.
+- **Sprint 8:** `59cc1d6a` (web-app 5.14.0, the six-language Privacy Guide AMENDs) and `7517a35d` (root player notes 5.10.4), open as PR #230, stacked on #223.
+  - It merges last: after #223 merges, and after #224 (with its `migrations/0015` step), #225 and #227 are deployed.
+  - Its fact-checks also changed three earlier PRs:
+    - #224 gained a daily retention job (`e34ea70a`);
+    - #225 removed the account ID from the ban post (`aaa4467b`, `3a69828c`);
+    - #227's bot policy was corrected and re-translated (`274407cc`, `5f83a81f`, `f3554155`, `4ebd09f2`).
 - **Open PRs are held for the maintainer's batch review (2026-10-04).** Nothing merges without it.
 
 **Publication hold:** lifted for FINDING-001. The repository is public and this folder still details findings that are not yet deployed, so publishing it is the maintainer's call.

@@ -17,4 +17,4 @@ Scope note: ban / moderation-log records are FINDING-005; the Discord moderation
 - Land together with the FINDING-005 and FINDING-008 edits to the same item, as one coordinated web-app policy commit.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — web AMEND `59cc1d6a` (branch `fix/security-2026-10-03-sprint8`, web-app 5.14.0; PR #230, open, stacked on #223): daily-limit counts (30 days) and failed-notification records (preset and error only; 30/90 days). Made true by presets-api 2.4.0's daily retention job and its `migrations/0015` legacy-row rewrite (PR #224).

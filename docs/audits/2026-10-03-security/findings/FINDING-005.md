@@ -18,4 +18,4 @@
 - Coordinate with FINDING-008 and FINDING-009, which edit the same web item; update `apps/moderation-worker/README.md` if it describes ban storage.
 
 ## Status
-OPEN — minimization in code (`f1b54a0f`, `c7fd9eba`); the bot policy AMEND (moderation records and retention, six languages) in `d1fdb89a` (branch `fix/security-2026-10-03-sprint5`, discord-worker 5.8.0; PR #227, open). The web PRIVACY item 3 AMEND is Sprint 8. Optional one-off backfill for bans lifted before the deploy: `UPDATE banned_users SET username = '', reason = '' WHERE unbanned_at IS NOT NULL`.
+FIX COMMITTED, NOT DEPLOYED — minimization: `f1b54a0f` + the daily retention job `e34ea70a` (PR #224; the prunes used to run only when other requests happened to trigger them) and `c7fd9eba` (PR #225). Bot policy AMEND `d1fdb89a` + `274407cc`/`5f83a81f`/`f3554155` (PR #227). Web AMEND `59cc1d6a` (branch `fix/security-2026-10-03-sprint8`, web-app 5.14.0; PR #230, open, stacked on #223). The optional backfill for bans lifted before the deploy: `UPDATE banned_users SET username = '', reason = '' WHERE unbanned_at IS NOT NULL`.
