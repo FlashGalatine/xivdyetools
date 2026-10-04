@@ -2,7 +2,7 @@
 
 **Status:** design approved 2026-08-09; Phase 0 checks 1–3 recorded the same day (check 4 not gathered).
 - **Phase 1:** step 1 (oauth allowlist) is done in oauth 3.1.2 (2026-10-03 security audit, FINDING-006). Step 2 (presets-api `ADDITIONAL_CORS_ORIGINS`) is in presets-api 2.4.0 (PR #224, not yet merged).
-- **Phase 2:** the `auth.` and `bot.` custom domains were removed in the dashboard on 2026-10-04, ahead of their route lines (see *Progress* under Phase 2). `moderation-bot.` and `api.` remain.
+- **Phase 2:** the `auth.` and `bot.` custom domains were removed in the dashboard on 2026-10-04, ahead of their route lines (see *Progress* under Phase 2). The two old-domain OAuth redirect URIs are unregistered. `moderation-bot.` and `api.` remain.
 - **Phase 4:** the old apex stopped serving on 2026-10-04; the redirect code remains.
 
 **Goal:** every service reachable only through its `xivdyetools.app` subdomain.
@@ -81,7 +81,7 @@ production the moment a route is removed.
 |---|---|---|
 | 1 | Main bot (`1447108133020369048`) → `https://bot.xivdyetools.app/` | ✅ **Clean** — already on `.app` |
 | 2 | Moderation bot (`1453806659708129374`) → `https://moderation-bot.xivdyetools.projectgalatine.com` | ❌ **Blocker** — see Phase 0.5 |
-| 3 | Two OAuth redirect URIs on the old domain: `https://xivdyetools.projectgalatine.com/auth/callback` and `https://auth.xivdyetools.projectgalatine.com/auth/callback` | ⚠️ Retire in Phase 2, **after** their routes. Both hostnames stopped serving on 2026-10-04, so both URIs can now be unregistered. |
+| 3 | Two OAuth redirect URIs on the old domain: `https://xivdyetools.projectgalatine.com/auth/callback` and `https://auth.xivdyetools.projectgalatine.com/auth/callback` | ✅ **Done** — neither URI is registered any more (checked 2026-10-04). The app now lists `http://localhost:8788/auth/callback`, `https://auth.xivdyetools.app/auth/callback` and `https://xivdyetools.app/auth/callback`. |
 | 4 | Per-hostname traffic | Not yet gathered |
 
 Incidental observation from check 3: `http://localhost:8788/auth/callback` is registered on the
