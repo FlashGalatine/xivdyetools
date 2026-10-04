@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.2] - 2026-10-04
+
+Sprint 6 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`). No route, token, schema or D1 change.
+
+### Security
+
+- **The retired origin is off the redirect and CORS allowlist** (FINDING-006). `https://xivdyetools.projectgalatine.com`
+  is removed from `ALLOWED_REDIRECT_ORIGINS`, which feeds both the `?code&state` redirect allowlist and CORS. The apex
+  already 301-redirects to `xivdyetools.app`, so no real browser presents it. The
+  `auth.xivdyetools.projectgalatine.com` custom domain and the two old-domain Discord redirect URIs are
+  DOMAIN_DEPRECATION Phase 2 maintainer steps and are untouched. A new test pins the exact production allowlist,
+  computed with `wrangler.toml`'s production `FRONTEND_URL` and `ENVIRONMENT`.
+- **Workers Logs are pinned off in config** (FINDING-022). `[observability] enabled = false` sits in the top-level
+  (production) block; `wrangler-config.test.ts` asserts it and that no logpush or tail consumer is configured. Turning
+  it on requires both privacy policies to be updated in the same change.
+
 ## [3.1.1] - 2026-09-17
 
 Sprint 14 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive/`).

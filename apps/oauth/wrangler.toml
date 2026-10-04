@@ -37,6 +37,15 @@ name = "RL_AUTH_30"
 namespace_id = "1023"
 simple = { limit = 30, period = 60 }
 
+# FINDING-022 (2026-10-03 security audit): persistent Workers Logs stay OFF.
+# Both privacy policies promise it, so the state is pinned here rather than
+# living only in the Cloudflare dashboard. This top-level block IS production
+# on this worker; `observability` is an inheritable key, so the development
+# env inherits it. Turning it on needs both privacy policies (all six
+# languages) updated in the same change.
+[observability]
+enabled = false
+
 # FINDING-029 (2026-08-21 security audit): the former `[env.preview]`
 # (xivdyetools-oauth-preview / auth-preview.xivdyetools.app) was deleted. It
 # bound the PRODUCTION D1 + KV behind a stale pages.dev FRONTEND_URL and, with

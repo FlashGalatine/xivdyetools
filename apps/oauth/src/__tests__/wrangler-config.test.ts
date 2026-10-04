@@ -144,4 +144,21 @@ describe('wrangler.toml', () => {
     // never alias production) has to keep holding after that happens too.
     expect(devId).not.toBe(prodId);
   });
+
+  /**
+   * FINDING-022 (2026-10-03 security audit): both privacy policies promise no
+   * persistent logs, so the state is pinned in config, not only the dashboard.
+   */
+  it('pins observability off in the top-level (production) block', () => {
+    expect(toml).toMatch(/^\[observability\]\nenabled = false$/m);
+    expect(toml).not.toMatch(/^\s*enabled\s*=\s*true/m);
+    // An inline table (`observability = { enabled = true }`) under an env block
+    expect(toml).not.toMatch(/observability\s*=\s*\{[^}]*enabled\s*=\s*true/);
+  });
+
+  it('configures no logpush and no tail consumers', () => {
+    expect(toml).not.toMatch(/^\s*logpush\s*=\s*true/m);
+    expect(toml).not.toMatch(/^\s*\[\[(env\.[a-z]+\.)?tail_consumers\]\]/m);
+    expect(toml).not.toMatch(/^\s*tail_consumers\s*=\s*\[\s*[^\]\s]/m);
+  });
 });

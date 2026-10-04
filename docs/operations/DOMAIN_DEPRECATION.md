@@ -1,6 +1,6 @@
 # Retiring `*.xivdyetools.projectgalatine.com`
 
-**Status:** design approved 2026-08-09, Phase 0 not yet run
+**Status:** design approved 2026-08-09. Phase 0 not yet run. Phase 1 step 1 (oauth allowlist) done in oauth 3.1.2 (2026-10-03 security audit, FINDING-006); step 2 (presets-api `ADDITIONAL_CORS_ORIGINS`) is in presets-api 2.4.0 (PR #224, not yet merged).
 **Goal:** every service reachable only through its `xivdyetools.app` subdomain.
 
 ---
@@ -43,7 +43,7 @@ Line numbers below are current as of 2026-09-05; the routes now live under each 
 
 | File | Entry |
 |---|---|
-| `apps/oauth/src/constants/oauth.ts:17` | `ALLOWED_REDIRECT_ORIGINS` (declared at `:10`) — the entry already carries `// Transition period - remove after migration complete` |
+| ~~`apps/oauth/src/constants/oauth.ts:17`~~ | `ALLOWED_REDIRECT_ORIGINS` — **removed in oauth 3.1.2** (2026-10-03 security audit, FINDING-006) |
 | `apps/presets-api/wrangler.toml:64` | `ADDITIONAL_CORS_ORIGINS` — retire only the `xivdyetools.projectgalatine.com` entry; leave `xiv-colorexplorer.pages.dev` and `beta.xivdyetools.app` |
 
 ### Migration mechanism (retire last)
@@ -176,7 +176,7 @@ moderation app's and not the beta bot's.
 | Layer | Configured where | Example |
 |---|---|---|
 | Discord → `oauth` Worker (registered at Discord) | Developer Portal → OAuth2 | `https://auth.xivdyetools.app/auth/callback` |
-| `oauth` Worker → front-end (this project's allowlist) | `ALLOWED_REDIRECT_ORIGINS`, `apps/oauth/src/constants/oauth.ts:10` | `https://xivdyetools.app/auth/callback` |
+| `oauth` Worker → front-end (this project's allowlist) | `ALLOWED_REDIRECT_ORIGINS`, `apps/oauth/src/constants/oauth.ts:13` | `https://xivdyetools.app/auth/callback` |
 
 Only the first is registered at Discord and gates Phase 2. The second is the allowlist Phase 1
 edits. `BUG-018` (2026-07-18 audit) was caused by exactly this blur — three divergent copies of
@@ -188,7 +188,9 @@ Landable immediately; nothing reachable changes.
 
 1. Remove the `xivdyetools.projectgalatine.com` entry from
    `apps/oauth/src/constants/oauth.ts:17`, closing the stale "transition period" TODO.
+   **Done in oauth 3.1.2.**
 2. Remove it from `ADDITIONAL_CORS_ORIGINS` in `apps/presets-api/wrangler.toml:64`.
+   **In presets-api 2.4.0 (PR #224).**
 3. Update the five documentation references listed above.
 4. Add the `DEPRECATIONS.md` entry.
 
@@ -196,8 +198,8 @@ Landable immediately; nothing reachable changes.
 `https://xivdyetools.projectgalatine.com` as an `Origin` — it is redirected to `xivdyetools.app`
 before any API call is made. The allowlist entries are already dead in practice.
 
-**Note:** these two changes only take effect on the next production deploy of `oauth` and
-`presets-api` respectively, which is gated behind the 5.0 merge.
+**Note:** each change takes effect when its worker's PR merges (merging deploys production via
+`deploy-oauth.yml` / `deploy-presets-api.yml`).
 
 ## Phase 2 — Retire the four internal subdomains
 

@@ -27,7 +27,7 @@
 | **Discord Bot** | v5.7.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.11.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
@@ -226,6 +226,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.1.2 | Oct 2026 | 2026-10-03 security audit Sprint 6 — retired `xivdyetools.projectgalatine.com` origin removed from the redirect + CORS allowlist, exact production allowlist pinned by test (FINDING-006); `[observability] enabled = false` pinned and asserted (FINDING-022) |
 | v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
 | v3.1.0 | Sep 2026 | 2026-09-02 deep-dive — a cancelled login returns to the allowlisted origin it started on instead of production (BUG-049); a non-array character roster no longer turns sign-in into a 500 (BUG-051) |
 | v3.0.1 | Sep 2026 | First dead-code sweep (DEAD-019/025/026) — unused constants, `isStateSigned`, three `findUserBy*` wrappers removed; no route, token or D1 change |

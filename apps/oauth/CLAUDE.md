@@ -138,7 +138,7 @@ All four bindings are **production-required** (`validateEnv`, FINDING-013): each
 when absent — a weaker rate-limit fallback, or no revocation check on `/auth/me` — with no error
 and no log.
 
-Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID` (required — the XIVAuth flow is not optional config), `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com`. The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID` (required — the XIVAuth flow is not optional config), `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com` (retiring — docs/operations/DOMAIN_DEPRECATION.md Phase 2). The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
 
 ### Required Secrets
 
@@ -236,7 +236,7 @@ include `Retry-After`.
 
 ### CORS
 
-CORS and redirect URIs share **one** allowlist (2.6.0 fix): the origin callback consults `getAllowedRedirectOrigins(env)` — `ALLOWED_REDIRECT_ORIGINS` in `src/constants/oauth.ts` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, the transition `projectgalatine.com` origin) plus `env.FRONTEND_URL`, with the loopback entries stripped outside `ENVIRONMENT === 'development'`. Development additionally allows `localhost`/`127.0.0.1` on whitelisted ports `3000`, `5173`, `8787`. Requests without an `Origin` header (curl/Postman) are denied — server-to-server callers must use the relevant API endpoints rather than OAuth.
+CORS and redirect URIs share **one** allowlist (2.6.0 fix): the origin callback consults `getAllowedRedirectOrigins(env)` — `ALLOWED_REDIRECT_ORIGINS` in `src/constants/oauth.ts` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`) plus `env.FRONTEND_URL`, with the loopback entries stripped outside `ENVIRONMENT === 'development'`. Development additionally allows `localhost`/`127.0.0.1` on whitelisted ports `3000`, `5173`, `8787`. Requests without an `Origin` header (curl/Postman) are denied — server-to-server callers must use the relevant API endpoints rather than OAuth.
 
 ### Body Hardening
 
