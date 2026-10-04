@@ -6,14 +6,23 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   BASE_APP_NAME,
-  BETA_HEADERS_BLOCK,
   BETA_ORIGIN,
   BETA_TITLE_PREFIX,
+  addBetaHeaders,
   brandHtmlForBeta,
-  hasBetaHeadersBlock,
+  findDuplicatePathPatterns,
 } from '../beta-branding';
+
+/** The real production `_headers`, which a beta build starts from. */
+const PUBLIC_HEADERS = readFileSync(
+  resolve(dirname(fileURLToPath(import.meta.url)), '../../../public/_headers'),
+  'utf-8'
+);
 
 /** The seven icon links as they appear in src/index.html, plus two links that must NOT change. */
 const SAMPLE_HTML = `<!DOCTYPE html>
@@ -182,50 +191,137 @@ describe('brandHtmlForBeta', () => {
     expect(BETA_ORIGIN).toBe('https://beta.xivdyetools.app');
   });
 
-  it('exposes a headers block that suppresses indexing', () => {
-    expect(BETA_HEADERS_BLOCK).toContain('X-Robots-Tag: noindex, nofollow');
-    expect(BETA_HEADERS_BLOCK).toContain('/*');
+  it('exposes the unprefixed product name', () => {
+    expect(BASE_APP_NAME).toBe('XIV Dye Tools');
   });
 });
 
-describe('hasBetaHeadersBlock', () => {
-  const WITH_BLOCK = `/assets/*\n  Cache-Control: public\n${BETA_HEADERS_BLOCK}`;
+/**
+ * The rules Cloudflare Pages would actually serve from a `_headers` file.
+ *
+ * Deliberately an independent model of wrangler (trimmed lines; `/` or
+ * `scheme://` opens a rule; a repeated header name is joined with `, `; rules
+ * keyed by path, so a repeated pattern is LAST-WINS) rather than a call into
+ * the module under test — the bug these tests pin was a wrong belief about
+ * exactly this behaviour.
+ */
+function servedRules(text: string): Map<string, Map<string, string>> {
+  const rules = new Map<string, Map<string, string>>();
+  let current: Map<string, string> | null = null;
+  for (const raw of text.split('\n')) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    if (/^([^\s]+:\/\/|\/)/.test(line)) {
+      current = new Map();
+      rules.set(line, current); // replaces an earlier rule for the same pattern
+      continue;
+    }
+    const at = line.indexOf(':');
+    if (at === -1 || !current) continue;
+    const name = line.slice(0, at).trim().toLowerCase();
+    const value = line.slice(at + 1).trim();
+    current.set(name, current.has(name) ? `${current.get(name)}, ${value}` : value);
+  }
+  return rules;
+}
 
-  it('detects a real appended block', () => {
-    expect(hasBetaHeadersBlock(WITH_BLOCK)).toBe(true);
+describe('addBetaHeaders', () => {
+  const branded = addBetaHeaders(PUBLIC_HEADERS);
+
+  /** FINDING-001 (2026-10-03 security audit). */
+  it('keeps every security header on the /* rule Pages serves for the real public/_headers', () => {
+    const global = servedRules(branded).get('/*')!;
+    expect(global.get('content-security-policy')).toMatch(/frame-ancestors 'none'/);
+    expect(global.get('x-frame-options')).toBe('DENY');
+    expect(global.get('strict-transport-security')).toMatch(/max-age=31536000/);
+    expect(global.get('permissions-policy')).toBe('geolocation=(), microphone=(), camera=()');
+    expect(global.get('x-robots-tag')).toBe('noindex, nofollow');
   });
 
-  it('reports absent when the file has no block', () => {
-    expect(hasBetaHeadersBlock('/assets/*\n  Cache-Control: public\n')).toBe(false);
+  it('declares /* exactly once and repeats no pattern', () => {
+    expect(branded.split('\n').filter((line) => line.trim() === '/*')).toHaveLength(1);
+    expect(findDuplicatePathPatterns(branded)).toEqual([]);
+  });
+
+  it('changes nothing but the one inserted directive', () => {
+    const before = PUBLIC_HEADERS.split('\n');
+    const after = branded.split('\n');
+    expect(after).toHaveLength(before.length + 1);
+    const inserted = after.findIndex((line, i) => line !== before[i]);
+    expect(after[inserted].replace(/\r$/, '')).toBe('  X-Robots-Tag: noindex, nofollow');
+    expect(after[inserted - 1].trim()).toBe('/*');
+    expect([...after.slice(0, inserted), ...after.slice(inserted + 1)]).toEqual(before);
   });
 
   /**
-   * The regression this exists for. `public/_headers` carries a comment
-   * explaining why the social-card rule sits outside /assets/, and that
-   * explanation names X-Robots-Tag. A substring check treats the prose as the
-   * header itself, concludes the block is already present, and skips appending
-   * it — shipping a beta build that search engines are free to index. Prose is
-   * input too.
+   * The mechanism of FINDING-001, pinned so the old belief cannot return: a
+   * second `/*` rule does not merge into the first, it replaces it.
+   */
+  it('would lose the CSP if the directive were appended as a second /* rule instead', () => {
+    const appended = `${PUBLIC_HEADERS}\n/*\n  X-Robots-Tag: noindex, nofollow\n`;
+    const global = servedRules(appended).get('/*')!;
+    expect(global.has('content-security-policy')).toBe(false);
+    expect(global.has('x-frame-options')).toBe(false);
+    expect(findDuplicatePathPatterns(appended)).toEqual(['/*']);
+  });
+
+  it('is idempotent', () => {
+    expect(addBetaHeaders(branded)).toBe(branded);
+  });
+
+  /**
+   * `public/_headers` carries comments that name the header. Prose is input
+   * too: an earlier guard read such a comment as proof the header was present
+   * and skipped it, shipping an indexable beta build.
    */
   it('is not satisfied by a comment that merely mentions the header', () => {
     const commentOnly = [
-      '# The X-Robots-Tag block relies on Pages merging /* rules to append itself.',
+      '# The X-Robots-Tag header keeps beta out of search results.',
       '#   X-Robots-Tag: noindex, nofollow  <- illustrative only',
-      '/assets/*',
-      '  Cache-Control: public',
+      '/*',
+      '  X-Frame-Options: DENY',
     ].join('\n');
-    expect(hasBetaHeadersBlock(commentOnly)).toBe(false);
+    expect(servedRules(addBetaHeaders(commentOnly)).get('/*')!.get('x-robots-tag')).toBe(
+      'noindex, nofollow'
+    );
   });
 
-  it('accepts the header under any path pattern and indentation', () => {
-    expect(hasBetaHeadersBlock('/*\n\tX-Robots-Tag: noindex, nofollow\n')).toBe(true);
+  it('treats an X-Robots-Tag without noindex as absent', () => {
+    const out = addBetaHeaders('/*\n  X-Robots-Tag: all\n');
+    expect(servedRules(out).get('/*')!.get('x-robots-tag')).toMatch(/\bnoindex\b/);
   });
 
-  it('ignores an unrelated X-Robots-Tag value', () => {
-    expect(hasBetaHeadersBlock('/*\n  X-Robots-Tag: all\n')).toBe(false);
+  it('targets the exact /* pattern, not a pattern that merely starts with it', () => {
+    const out = addBetaHeaders('/*.html\n  Cache-Control: no-cache\n/*\n  X-Frame-Options: DENY\n');
+    const rules = servedRules(out);
+    expect(rules.get('/*.html')!.has('x-robots-tag')).toBe(false);
+    expect(rules.get('/*')!.get('x-robots-tag')).toBe('noindex, nofollow');
   });
 
-  it('exposes the unprefixed product name', () => {
-    expect(BASE_APP_NAME).toBe('XIV Dye Tools');
+  it('keeps CRLF line endings intact', () => {
+    const out = addBetaHeaders('/*\r\n  X-Frame-Options: DENY\r\n');
+    expect(out).toBe('/*\r\n  X-Robots-Tag: noindex, nofollow\r\n  X-Frame-Options: DENY\r\n');
+  });
+
+  it('refuses a file with no /* rule, since that is where the CSP lives', () => {
+    expect(() => addBetaHeaders('/assets/*\n  Cache-Control: public\n')).toThrow(/no \/\* rule/);
+  });
+});
+
+describe('findDuplicatePathPatterns', () => {
+  it('finds none in the real public/_headers', () => {
+    expect(findDuplicatePathPatterns(PUBLIC_HEADERS)).toEqual([]);
+  });
+
+  it('does not count distinct overlapping patterns, which Pages merges', () => {
+    expect(findDuplicatePathPatterns('/*\n  A: 1\n/assets/*\n  B: 2\n')).toEqual([]);
+  });
+
+  it('reports a repeated pattern once, however often it repeats', () => {
+    expect(findDuplicatePathPatterns('/*\n  A: 1\n/*\n  B: 2\n  /*\n  C: 3\n')).toEqual(['/*']);
+  });
+
+  it('ignores a pattern named inside a comment', () => {
+    expect(findDuplicatePathPatterns('/*\n  A: 1\n# /* is the global rule\n')).toEqual([]);
   });
 });

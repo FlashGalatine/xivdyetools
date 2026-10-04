@@ -6,15 +6,23 @@
  *
  *   1. The deployment alias returns 2xx           -> this build serves at all
  *   2. The custom domain serves the same bytes    -> the domain is on THIS build
- *   3. x-robots-tag matches the environment       -> beta hidden, production not
+ *   3. Response headers on the custom domain:
+ *        - x-robots-tag matches the environment   -> beta hidden, production not
+ *        - the security headers are all present   -> CSP (with frame-ancestors),
+ *          X-Frame-Options, HSTS and Permissions-Policy, in both modes
  *
  * Phase 2 exists to make phase 3 trustworthy. A Pages custom domain is a mutable
  * alias that keeps serving the PREVIOUS deployment until propagation finishes, so
  * without it phase 3 could describe the build before this one.
  *
- * Phase 3 cannot be asserted on the alias: Cloudflare injects
- * `x-robots-tag: noindex` onto every *.pages.dev hostname itself, so the header is
- * only build-determined on the custom domain. See
+ * Phase 3 runs on the custom domain only. Cloudflare injects
+ * `x-robots-tag: noindex` onto every *.pages.dev hostname itself, so that header is
+ * only build-determined on the custom domain; and the security headers are the
+ * ones users actually receive there. The security check exists because a beta
+ * build once appended a second `/*` rule to dist/_headers: Pages keys rules by
+ * path, an identical pattern declared twice is last-wins, and the security-header
+ * rule was silently replaced (beta served none of them from 2026-08-09) while the
+ * robots-only check kept passing. See
  * docs/superpowers/specs/2026-08-10-pages-smoke-test-design.md
  *
  * Usage:
@@ -26,6 +34,18 @@ import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 export const ROBOTS_MODES = ['noindex', 'none'];
+
+/** Headers public/_headers sets on `/*` that must reach the custom domain in both modes. */
+export const REQUIRED_SECURITY_HEADERS = [
+  'content-security-policy',
+  'x-frame-options',
+  'strict-transport-security',
+  'permissions-policy',
+];
+
+// `frame-ancestors` as a directive name: at the start of the policy or right after
+// a `;`. A bare substring test would accept it inside another directive's value.
+const FRAME_ANCESTORS_DIRECTIVE = /(?:^|;)\s*frame-ancestors(?:\s|;|$)/i;
 
 export function parseArgs(argv) {
   const values = new Map();
@@ -186,7 +206,7 @@ export async function smokeTestPages({
         );
   }
 
-  // ---- Phase 3: robots policy, on the only host where it is ours -----------
+  // ---- Phase 3: robots + security headers, on the only host where they are ours
   const robots = domainHeaders.get('x-robots-tag');
   // `none` is defined as equivalent to `noindex, nofollow`, so it counts as
   // noindex here -- a production site served `none` is just as deindexed.
@@ -204,10 +224,23 @@ export async function smokeTestPages({
     );
   }
 
+  const missing = REQUIRED_SECURITY_HEADERS.filter(
+    (name) => (domainHeaders.get(name) ?? '').trim() === ''
+  );
+  const csp = domainHeaders.get('content-security-policy') ?? '';
+  if (csp.trim() !== '' && !FRAME_ANCESTORS_DIRECTIVE.test(csp)) {
+    missing.push('content-security-policy frame-ancestors directive');
+  }
+  if (missing.length > 0) {
+    failures.push(
+      `${site} is missing security headers: ${missing.join(', ')}. The likely cause is a path pattern declared twice in dist/_headers (e.g. a second \`/*\` rule): Cloudflare Pages lets the later identical pattern replace the earlier one rather than merge them`
+    );
+  }
+
   return {
     ok: failures.length === 0,
     failures,
-    summary: `${site} serves this deployment (sha256 ${want.slice(0, 12)}), robots as expected for --expect-robots ${expectRobots}.`,
+    summary: `${site} serves this deployment (sha256 ${want.slice(0, 12)}), robots as expected for --expect-robots ${expectRobots}, security headers present.`,
   };
 }
 

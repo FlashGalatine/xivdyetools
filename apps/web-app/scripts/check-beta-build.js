@@ -39,15 +39,49 @@ for (const href of referenced) {
   check(fs.existsSync(path.join(DIST, href.slice(1))), `referenced icon missing from dist: ${href}`);
 }
 
-// 4. Search engines are told to stay away.
-check(/X-Robots-Tag:\s*noindex/.test(headers), 'dist/_headers is missing X-Robots-Tag: noindex');
+// 4-6 read dist/_headers the way Cloudflare Pages does: trimmed lines, `#`
+// comments skipped, a line starting with `/` or `scheme://` opens a rule, and
+// rules are keyed by path, so a pattern declared twice keeps only its LAST
+// rule. A grep of the file cannot see that. Until 2026-10-03 this script
+// checked that the CSP string occurred anywhere in the file, and it passed
+// every beta build while a second `/*` rule hid the CSP from Pages
+// (2026-10-03 security audit, FINDING-001).
+const rules = [];
+for (const raw of headers.split('\n')) {
+  const line = raw.trim();
+  if (!line || line.startsWith('#')) continue;
+  if (/^([^\s]+:\/\/|\/)/.test(line)) {
+    rules.push({ path: line, headers: new Map() });
+    continue;
+  }
+  const at = line.indexOf(':');
+  if (at !== -1 && rules.length > 0) {
+    rules[rules.length - 1].headers.set(line.slice(0, at).trim().toLowerCase(), line.slice(at + 1).trim());
+  }
+}
 
-// 5. The production security headers survived the append.
-check(/Content-Security-Policy:/.test(headers), 'dist/_headers lost its Content-Security-Policy');
+// 4. No path pattern is declared twice.
+const paths = rules.map((rule) => rule.path);
+const repeated = [...new Set(paths.filter((p, i) => paths.indexOf(p) !== i))];
+check(
+  repeated.length === 0,
+  `dist/_headers declares ${repeated.join(', ')} more than once; Pages serves only the last rule for a repeated pattern`
+);
+
+// 5. The /* rule Pages will serve still carries the production security headers.
+const global = rules.filter((rule) => rule.path === '/*').at(-1);
+for (const name of ['content-security-policy', 'x-frame-options', 'strict-transport-security', 'permissions-policy']) {
+  check(Boolean(global?.headers.get(name)), `the /* rule in dist/_headers has no ${name}`);
+}
+
+// 6. Search engines are told to stay away, on that same rule.
+check(/\bnoindex\b/i.test(global?.headers.get('x-robots-tag') ?? ''), 'the /* rule in dist/_headers is missing X-Robots-Tag: noindex');
 
 if (failures.length > 0) {
   console.error('Beta build verification FAILED:');
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`Beta build verified: [BETA] title, ${referenced.length} beta icons, X-Robots-Tag present.`);
+console.log(
+  `Beta build verified: [BETA] title, ${referenced.length} beta icons, one /* rule carrying the security headers and X-Robots-Tag.`
+);
