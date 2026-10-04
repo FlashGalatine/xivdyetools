@@ -116,6 +116,13 @@ name = "RL_PUBLIC"
 namespace_id = "1011"
 simple = { limit = 100, period = 60 }
 
+# Daily retention sweep (src/retention-job.ts): submission_events (30 d),
+# failed_notifications (30 d resolved / 90 d unresolved) and the FINDING-005
+# moderation records. Production only: the top-level block is the routeless dev
+# worker and must not run a cron. 04:23 UTC is off-peak and off the :00 mark.
+[env.production.triggers]
+crons = ["23 4 * * *"]
+
 # FINDING-022: Workers Logs stay OFF in production too — see the top-level
 # [observability] comment (both privacy policies promise it; enabling it needs
 # the policies updated in the same change).

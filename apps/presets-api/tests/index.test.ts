@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import app from '../src/index';
+import { scheduled } from '../src/retention-job';
 import type { Env } from '../src/types';
 import { createMockEnv, createMockD1Database, createMockPresetRow } from './test-utils';
 import { createMockKV } from '@xivdyetools/test-utils';
@@ -40,6 +41,13 @@ describe('Index/App', () => {
     beforeEach(() => {
         env = createMockEnv();
         vi.clearAllMocks();
+    });
+
+    // The Workers runtime reads `fetch` AND `scheduled` off the default export;
+    // without `scheduled` the daily retention cron fails silently in production.
+    it('default export carries fetch and the cron handler', () => {
+        expect(typeof app.fetch).toBe('function');
+        expect((app as unknown as { scheduled: unknown }).scheduled).toBe(scheduled);
     });
 
     // ============================================

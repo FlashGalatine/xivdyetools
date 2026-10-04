@@ -240,7 +240,7 @@ export async function notifyDiscordBot(
 /**
  * FINDING-017: drop dead letters that have aged out.
  *
- * presets-api has no cron trigger, so retention has to ride requests — and the
+ * The daily retention job (src/retention-job.ts) runs this once a day; it also rides requests — and the
  * policy now promises a window ("30 days after resolution, 90 if unresolved"),
  * so it has to ride requests that actually happen. Hanging it off the
  * dead-letter *write* alone would not: that write only runs when a Discord
@@ -253,7 +253,8 @@ export async function notifyDiscordBot(
  *   2. `listFailedNotifications` — every moderator read of the queue;
  *   3. `resolveFailedNotification` — every moderator resolve;
  *   4. `POST /api/v1/presets`, via `waitUntil` — the busiest write in the
- *      worker, so the window holds as long as anyone submits a preset.
+ *      worker, so the window holds as long as anyone submits a preset;
+ *   5. the daily Cron Trigger (retention-job.ts).
  *
  * Deliberately NOT in the same `db.batch` as the insert in (1): a D1 batch is
  * atomic, so a prune that failed would take the dead-letter row down with it —

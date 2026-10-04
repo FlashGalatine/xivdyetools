@@ -118,6 +118,22 @@ describe('wrangler.toml', () => {
     expect(toml).not.toMatch(/^\s*enabled\s*=\s*true/m);
   });
 
+  /**
+   * The daily retention job (src/retention-job.ts) is what makes the published
+   * retention periods hold; it runs in production only. A top-level trigger
+   * would give the routeless dev worker a cron of its own.
+   */
+  it('runs exactly one daily retention cron in production and none at the top level', () => {
+    expect(topLevel).not.toMatch(/^\[triggers\]$/m);
+    expect(topLevel).not.toMatch(/^crons\s*=/m);
+    expect(production).toMatch(/^\[env\.production\.triggers\]$/m);
+    const crons = production.match(/^crons = \[([^\]]*)\]$/m)?.[1] ?? '';
+    const entries = crons.split(',').map((s) => s.trim().replace(/^"|"$/g, ''));
+    expect(entries).toHaveLength(1);
+    // minute hour * * * : once a day.
+    expect(entries[0]).toMatch(/^\d{1,2} \d{1,2} \* \* \*$/);
+  });
+
   it('configures no logpush and no tail consumers', () => {
     expect(toml).not.toMatch(/^\s*logpush\s*=\s*true/m);
     expect(toml).not.toMatch(/^\s*\[\[(env\.[a-z]+\.)?tail_consumers\]\]/m);

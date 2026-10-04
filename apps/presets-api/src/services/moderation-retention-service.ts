@@ -3,9 +3,9 @@
  *
  * `banned_users` and `moderation_log` hold Discord ids, a username copy, the
  * moderators' free-text reasons and moderator ids. Nothing ever deleted them.
- * This module is the deletion, run on the moderation write paths because the
- * worker has no cron trigger (same precedent as `pruneFailedNotifications` and
- * the submission-event prune).
+ * This module is the deletion. It runs once a day from the Cron Trigger
+ * (src/retention-job.ts) and, best-effort, on the moderation write paths (same
+ * pattern as `pruneFailedNotifications` and the submission-event prune).
  *
  * THE CODE IS THE COMMITMENT: these are the periods the FINDING-005 policy
  * amendment (Sprint 5: bot policy, web PRIVACY item 3) will publish in

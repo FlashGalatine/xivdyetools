@@ -52,7 +52,8 @@ and revert until its Sprint 4 build is live. No schema change and no migration.
   `image_approve` / `image_reject` `moderation_log` row in the same batch as the conditional
   UPDATE, gated on `changes() > 0`, so a stale review writes neither.
 - **Retention** (FINDING-005).
-  - `pruneModerationRecords` runs on the moderation write paths, best-effort:
+  - `pruneModerationRecords` runs on the moderation write paths, best-effort, and in the daily
+    retention job (see Added):
     - lifted bans are deleted 90 days after `unbanned_at`;
     - `ban`, `unban`, `hide` and `restore` log entries are deleted after 12 months;
     - every other log entry lives as long as its preset.
@@ -67,8 +68,48 @@ and revert until its Sprint 4 build is live. No schema change and no migration.
 - **Workers Logs pinned off** (FINDING-022). `[observability] enabled = false` is set in both
   `wrangler.toml` blocks, and asserted with no `logpush` or `tail_consumers`.
 
+### Added
+
+- **Daily retention job** (FINDING-005 / FINDING-017). A production-only Cron Trigger
+  (`[env.production.triggers]`, `23 4 * * *`, UTC) runs a new `scheduled` handler
+  (`src/retention-job.ts`) once a day. It runs all three prunes - `submission_events` (30 days),
+  `failed_notifications` (30 days after resolution, 90 days unresolved) and the moderation
+  records (lifted bans 90 days after the unban, `ban` / `unban` / `hide` / `restore` log rows
+  12 months) - each isolated with `Promise.allSettled`, so one failing does not stop the others.
+  It logs counts and error names only.
+  - **Why.** The prunes ran only lazily on write paths, so with no traffic a period was never
+    enforced, and moderation-worker's direct-D1 ban / unban and auto-approvals never reached
+    `pruneModerationRecords` at all. Every period the privacy documents promise now holds within a
+    day. The lazy write-path prunes are unchanged.
+  - The default export is still the Hono app, now with `scheduled` assigned onto it
+    (`Object.assign(app, { scheduled })`), so `app.request` / `app.fetch` are unchanged.
+  - `pruneSubmissionEvents` is exported for the job.
+
+### Rollout
+
+Run after the deploy, in the same window, from `apps/presets-api`. One hand-run statement, in
+`migrations/0015_rewrite_legacy_dead_letters.sql`. **Required:** the bot privacy policy already describes
+these rows as holding only the preset id, the error and timestamps, and unresolved legacy rows would
+otherwise keep the author id, name and preset text until they age out (90 days).
+
+Rows written before 2026-08-30 (commit `780cf992`, FINDING-017 of the 2026-08-29 audit) still hold the
+whole notification (author id, author name, preset text) in `failed_notifications.payload`. This
+rewrites them in place to the reduced `{ type, preset_id, moderation_status? }` shape and skips
+anything already reduced or unparsable. It is idempotent
+(`tests/services/failed-notifications-legacy-rewrite.test.ts` runs the file against SQLite):
+
+```bash
+wrangler d1 execute xivdyetools-presets --env production --remote --file=migrations/0015_rewrite_legacy_dead_letters.sql
+```
+
+(`json_patch` drops a null `moderation_status`, which is what a legacy preview-image row has.) Verify
+with `SELECT COUNT(*) FROM failed_notifications WHERE CASE WHEN json_valid(payload) THEN json_extract(payload, '$.preset.id') IS NOT NULL ELSE 0 END`:
+it should return 0.
+
 ### Tests
 
+- The retention job (all three prunes run, one throwing does not stop the others, `ctx.waitUntil`),
+  the wrangler cron invariant, and the one-off dead-letter rewrite (real SQLite).
 - Revision binding for status and revert, re-keying, retention, image audit, and text safety all
   run against the real-SQLite harness. They include injected races between read and write, and an
   injected ban between the ban check and the re-key batch.

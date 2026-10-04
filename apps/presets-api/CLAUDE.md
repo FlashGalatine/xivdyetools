@@ -190,7 +190,11 @@ write. The token is intentionally omitted from public preset responses.
 - **`moderation_log` rows whose `action` is `ban`, `unban`, `hide` or `restore`** are deleted **12 months** after `created_at` (`USER_ACTION_LOG_RETENTION_MONTHS`, calendar months). The rule keys on the action value, not on `preset_id` — `hide`/`restore` rows carry one.
 - **Every other log row** (approve, reject, flag, unflag, requeue, revert, image_approve, image_reject) lives as long as its preset: the FK cascades, and `DELETE /presets/:id` also deletes them explicitly in its batch rather than relying on the cascade.
 
-There is no cron, so the prune runs best-effort on the moderation write paths (`PATCH` status, revert and preview-image, after the request's own write succeeded). It never throws, binds every parameter, compares ISO-8601 strings (the format every writer binds), and logs counts only. Same precedent as `pruneFailedNotifications` and the `submission_events` prune.
+The prune runs in two places: **daily** from the retention job below, and best-effort on the moderation write paths (`PATCH` status, revert and preview-image, after the request's own write succeeded). The daily run is what makes the periods hold: moderation-worker's direct-D1 ban/unban and auto-approvals never touch these endpoints. It never throws, binds every parameter, compares ISO-8601 strings (the format every writer binds), and logs counts only.
+
+### Daily retention job (`src/retention-job.ts`)
+
+A Cron Trigger (`[env.production.triggers]`, `23 4 * * *` UTC, **production only** — the top-level block is the routeless dev worker) calls the `scheduled` handler, which runs `pruneSubmissionEvents` (30 d), `pruneFailedNotifications` (30 d resolved / 90 d unresolved) and `pruneModerationRecords` under `Promise.allSettled`, so one failing never stops the others. Logs counts and error names only. The lazy write-path prunes stay (cheap, idempotent). `src/index.ts` still default-exports the Hono app, with `scheduled` attached via `Object.assign(app, { scheduled })` so `app.request` / `app.fetch` keep working. `tests/wrangler-config.test.ts` pins exactly one daily cron in production and none at the top level.
 
 ### Composite Indexes (`migrations/002_add_composite_indexes.sql`)
 

@@ -121,8 +121,9 @@ This API only *checks* the table: banned users receive `403` on submissions, edi
 ### Retention (FINDING-005)
 
 Ban and moderation-log records hold Discord ids, a username copy and moderator reasons, so they age
-out. `services/moderation-retention-service.ts` runs best-effort on the moderation write paths
-(status, revert, preview-image — there is no cron) and never fails the request. **These are the periods the
+out. `services/moderation-retention-service.ts` runs once a day from the Cron Trigger
+(`src/retention-job.ts`, production only, together with the `submission_events` and `failed_notifications`
+prunes) and, best-effort, on the moderation write paths (status, revert, preview-image). It never fails a request. **These are the periods the
 FINDING-005 privacy-policy amendment (Sprint 5) will publish; the code constants are the commitment, so
 change them only together with those policies.**
 
