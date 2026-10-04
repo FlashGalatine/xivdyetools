@@ -17,4 +17,4 @@
 - Re-check with `gh api repos/FlashGalatine/xivdyetools/branches/main/protection` and tick the dated item in OPEN_ITEMS.md
 
 ## Status
-OPEN
+OPEN — settings only (maintainer): add `Secret scan (gitleaks)` to main's required checks; the job has no path filter. `strict` / `enforce_admins` held until the open PRs are merged. Re-read with `gh api repos/FlashGalatine/xivdyetools/branches/main/protection`. The `OPEN_ITEMS.md` pointer is in `3a158847` (branch `fix/security-2026-10-03-sprint11`; PR #233, draft).

@@ -18,4 +18,4 @@
 - Optionally add a non-blocking nightly `pnpm audit --audit-level moderate` (no `--prod`) step, so dev and moderate advisories are reported.
 
 ## Status
-OPEN
+OPEN — the in-repo part (non-blocking full-tree audit step) is in `3a158847` (branch `fix/security-2026-10-03-sprint11`; PR #233, draft). Settings (maintainer): turn on `sha_pinning_required`, Dependabot alerts and security updates; CodeQL default setup is optional. Re-read with `gh api`.

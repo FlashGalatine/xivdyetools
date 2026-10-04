@@ -16,4 +16,4 @@
 - Optionally add a non-blocking scheduled full `pnpm audit --audit-level moderate` job, so that advisories in dev tooling stay visible.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT MERGED — `3a158847` (branch `fix/security-2026-10-03-sprint11`; PR #233, draft): override `miniflare>undici: >=7.29.1 <8` resolves to 7.30.0. The full-tree audit goes from 10 undici advisories to 0, and the lockfile diff is limited to that entry. A non-blocking full-tree `pnpm audit --audit-level moderate` step was added to the `audit` job.

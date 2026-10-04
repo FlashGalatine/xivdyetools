@@ -319,6 +319,17 @@ This runs after Sprints 3–7, so every sentence describes code that is already 
 
 ## Sprint 11 — CI and repository hardening (terminal)
 
+**Committed 2026-10-04 in `3a158847`**, open as **draft** PR #233. Merging deploys no worker. The whole-graph gate is green (62/62); `test:scripts` passes 133. The Opus review returned FIX FIRST and every item is applied.
+- **FINDING-022 (CI): `pnpm workers:check-logs`** in the required job, after the build and test steps (`!cancelled()`).
+  - It catches more than the plan asked: an unanchored `enabled = true`, quoted keys, `streaming_tail_consumers` and `previews.*`.
+  - A worker with a `wrangler.json` / `.jsonc` is reported, and finding no config at all fails.
+  - **Deviation from the plan:** the escape hatch is a fail-closed, empty `ALLOWED_TO_LOG` list, not "both policies change in the same diff". Diff logic fails open on shallow or scheduled checkouts.
+  - It is red on main until #224/#225/#228/#229/#231/#232 merge. All seven pinned configs pass it.
+- **FINDING-025.** The override resolves undici to 7.30.0; the full-tree audit goes from 10 advisories to 0.
+- **FINDING-030 / -025.** A report-only full-tree audit step.
+- **FINDING-023 docs.** They describe the target state; the maintainer moves the secrets before merge.
+- **Settings (maintainer).** Move the four Discord secrets to the environments; require `Secret scan (gitleaks)`; turn on SHA pinning, Dependabot alerts and security updates (CodeQL optional). Hold `strict` / `enforce_admins` until the open PRs are merged.
+
 The settings rows are maintainer actions in GitHub, verified by re-reading them with `gh api`. `evidence/gh-settings-2026-10-03.txt` is the before-state. The in-repo rows touch no `apps/**` path, so merging triggers no worker deploy.
 
 | ID | Source | Sev / Exposure | Item |
