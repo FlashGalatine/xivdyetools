@@ -17,4 +17,4 @@
 - Keep OPEN_ITEMS.md §Workers Logs as the gate for deliberately turning logs on; flipping this pin should be the reviewed step that triggers the policy update
 
 ## Status
-OPEN — discord-worker part fixed (`8ecb878f`); presets-api part in `f1b54a0f` (PR #224; its comment corrected in `bb33f66b`: `observability` is an inheritable key); moderation-worker part in `c7fd9eba` (PR #225); oauth part in `d853a765` (branch `fix/security-2026-10-03-sprint6`, oauth 3.1.2; PR #228, open). api-worker, og-worker, image-worker and the CI invariant are Sprints 7, 9, 10 and 11.
+OPEN — discord-worker part fixed (`8ecb878f`); presets-api part in `f1b54a0f` (PR #224; its comment corrected in `bb33f66b`: `observability` is an inheritable key); moderation-worker part in `c7fd9eba` (PR #225); oauth part in `d853a765` (PR #228); api-worker part in `1eaefd63` (branch `fix/security-2026-10-03-sprint7`, api-worker 0.16.1; PR #229, open). og-worker, image-worker and the CI invariant are Sprints 9, 10 and 11.

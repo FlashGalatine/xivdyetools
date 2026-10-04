@@ -244,6 +244,14 @@ FINDING-004 needs no oauth change: §8 kept the verified character name and the 
 
 ## Sprint 7 — api-worker: market-proxy rate limiting
 
+**Committed 2026-10-04 in `1eaefd63`** (api-worker 0.16.1). Open as PR #229; independent of every other PR. The full gate is green and an Opus review returned SHIP.
+- **FINDING-011.** Two new bindings, kept separate from `/v1`'s: with a single tier, `CloudflareRateLimiter` ignores `maxRequests`, so sharing `API_RATE_LIMITER` / `SERVICE_RATE_LIMITER` would have changed the budgets.
+  - `UNIVERSALIS_RATE_LIMITER`: per IP, 30 / 60 s in production, namespaces 1007 / 1008.
+  - `UNIVERSALIS_SERVICE_RATE_LIMITER`: 600 / 60 s in production, namespaces 1009 / 1010.
+  - A drift test pins each binding's limit to `RATE_LIMIT_REQUESTS` (×1 / ×20) per environment.
+  - The limit is now enforced per colo. One web-app "Show Prices" action makes one batched request, so only rapid world switching approaches 30 misses a minute.
+- **FINDING-022.** Observability is pinned off in both blocks and asserted by test.
+
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-011 (api-worker) | security | LOW / INTERNET-UNAUTH | Decided at §8: rate-limit the Universalis proxy through the native binding and drop the module-scope `MemoryRateLimiter`. That needs no policy edit. |

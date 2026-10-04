@@ -17,4 +17,4 @@
 - Or AMEND the Abuse-prevention bullet (six files, bump `Last updated`): the market-price proxy also counts requests per IP in the serving instance's memory for one 60-second window, never written to storage and gone when the instance recycles — a new statement under a section that calls itself "the whole of what we do with it".
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — minimized, as decided at §8; the header's `Policy: AMEND` is superseded and no policy edit follows. `1eaefd63` (branch `fix/security-2026-10-03-sprint7`, api-worker 0.16.1; PR #229, open): the proxy counts cache misses through two native Workers Rate Limiting bindings (`UNIVERSALIS_RATE_LIMITER` per IP, 30 / 60 s in production; `UNIVERSALIS_SERVICE_RATE_LIMITER` for the service-binding key, 600 / 60 s), with the KV `RATE_LIMIT` fallback (120 s). The module-scope `MemoryRateLimiter` is gone, so PRIVACY.md's "Your IP address" section is accurate for the proxy as written.
