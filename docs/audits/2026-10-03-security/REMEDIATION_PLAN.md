@@ -224,6 +224,10 @@ This sprint lands after Sprints 3–4: the bot policy has to describe the minimi
 
 ## Sprint 6 — oauth: retired origin, logs pin
 
+**Committed 2026-10-04 in `d853a765`** (oauth 3.1.2). Open as PR #228; independent of the #224 / #225 window. The full gate is green, plus presets-api's cross-file `wrangler-config.test.ts`, and an Opus review returned SHIP.
+- **FINDING-006.** The retired origin is off `ALLOWED_REDIRECT_ORIGINS`. A test pins the exact production allowlist, computed from `wrangler.toml`'s top-level `FRONTEND_URL` and `ENVIRONMENT`. `DOMAIN_DEPRECATION.md` records Phase 1 progress. The finding stays open for the Phase 2 maintainer steps (route, custom domain, DNS, two Discord redirect URIs).
+- **FINDING-022.** `[observability] enabled = false` is in the top-level (production) block, and the development env inherits it. wrangler 4.140 normalizes `observability` with `inheritable()`. That corrected presets-api's comment on #224 (`bb33f66b`, comment-only).
+
 FINDING-004 needs no oauth change: §8 kept the verified character name and the linked Discord id, and disclosed them (Sprint 2).
 
 | ID | Source | Sev / Exposure | Item |

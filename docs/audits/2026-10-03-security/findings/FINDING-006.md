@@ -17,4 +17,4 @@
 - Add a test asserting that the production getAllowedRedirectOrigins() returns exactly the xivdyetools.app origins plus FRONTEND_URL
 
 ## Status
-OPEN — presets-api CORS part in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; PR #224, open); the oauth part is Sprint 6.
+OPEN — code parts committed: presets-api CORS in `f1b54a0f` (PR #224); oauth allowlist in `d853a765` (branch `fix/security-2026-10-03-sprint6`, oauth 3.1.2; PR #228, open), with a test pinning the exact production allowlist. Still open until DOMAIN_DEPRECATION Phase 2, which is maintainer-only: remove the `auth.xivdyetools.projectgalatine.com` route and its dashboard custom domain and DNS record, then unregister the two old-domain redirect URIs on Discord app 1447108133020369048. Phase 2 is gated on Phase 0 / 0.5.

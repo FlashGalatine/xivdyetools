@@ -183,7 +183,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-003 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-004 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-005 | OPEN — code parts and the bot AMEND committed; web AMEND Sprint 8 | `f1b54a0f`, `c7fd9eba`, `d1fdb89a` |
-| FINDING-006 | OPEN — presets-api part committed; oauth part Sprint 6 | `f1b54a0f` |
+| FINDING-006 | OPEN — presets-api and oauth parts committed; DOMAIN_DEPRECATION Phase 2 (maintainer) remains | `f1b54a0f`, `d853a765` |
 | FINDING-007 | FIX COMMITTED, NOT DEPLOYED | `d1fdb89a` (PR #227) |
 | FINDING-008 | OPEN — bot AMEND and mention drop committed; web AMEND Sprint 8 | `d1fdb89a`, `10a3b137` |
 | FINDING-009 | OPEN | — |
@@ -199,7 +199,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-019 | FIX COMMITTED, NOT DEPLOYED | `d8d5e3e8` (runbook), `f1b54a0f` |
 | FINDING-020 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
 | FINDING-021 | FIX COMMITTED, NOT DEPLOYED | `c7fd9eba` |
-| FINDING-022 | OPEN — discord-worker part fixed; presets-api and moderation-worker parts committed | `8ecb878f`, `f1b54a0f`, `c7fd9eba` |
+| FINDING-022 | OPEN — discord-worker part fixed; presets-api, moderation-worker and oauth parts committed | `8ecb878f`, `f1b54a0f`, `c7fd9eba`, `d853a765` |
 | FINDING-023 | OPEN | — |
 | FINDING-024 | OPEN | — |
 | FINDING-025 | OPEN | — |
@@ -225,6 +225,7 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 - **Sprint 2:** `3daa83fd` (web-app 5.13.4; the six-language policy edits) and `ffd22726` (root player notes 5.10.2), pushed as PR #223.
 - **Sprints 3 and 4:** `f1b54a0f` (presets-api 2.4.0) and `c7fd9eba` + `10a3b137` (moderation-worker 1.8.0), open as PR #224 and PR #225. They deploy together in one held window.
 - **Sprint 5:** `d1fdb89a` (discord-worker 5.8.0 and the six-language bot policy AMEND) and `f39e2cbe` (root player notes 5.10.3), open as PR #227. It merges after #224 and #225 are deployed.
+- **Sprint 6:** `d853a765` (oauth 3.1.2), open as PR #228. It is independent of the held window; merging deploys production oauth.
 - **Open PRs are held for the maintainer's batch review (2026-10-04).** Nothing merges without it.
 
 **Publication hold:** lifted for FINDING-001. The repository is public and this folder still details findings that are not yet deployed, so publishing it is the maintainer's call.
