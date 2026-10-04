@@ -347,6 +347,11 @@ The settings rows are maintainer actions in GitHub, verified by re-reading them 
 
 ## Sprint 12 — stoat-worker (parked)
 
+**Committed 2026-10-04 in `01465700`** (stoat-worker 0.3.2). Open as PR #234; it deploys nothing. The full gate is green.
+- **The fix had to differ from this plan.** The ZWJ pass runs **after** `sanitizeEmbedText`, which strips U+200D, and invisible characters are stripped first.
+- The Opus review found that the first version skipped `@onlinefoo`. That is fixed: there is no word-boundary condition.
+- **Related:** the Discord-alternatives research was refreshed the same day (PR #235). It recommends keeping Stoat parked or archiving it.
+
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-026 | security | LOW / LOCAL | `sanitizeEcho` defuses `@online` (and Revolt role mentions) with a ZWJ. Add unit tests for the three echo sites. |

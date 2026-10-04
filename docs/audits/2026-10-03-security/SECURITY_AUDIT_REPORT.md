@@ -203,7 +203,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-023 | OPEN — docs committed; maintainer moves the secrets | `3a158847` (PR #233) |
 | FINDING-024 | OPEN — settings (maintainer) | — |
 | FINDING-025 | FIX COMMITTED, NOT MERGED | `3a158847` (PR #233) |
-| FINDING-026 | OPEN | — |
+| FINDING-026 | FIX COMMITTED, NOT MERGED (parked, no deploy) | `01465700` (PR #234) |
 | FINDING-027 | OPEN — discord-worker part fixed; secret rotated 2026-10-03; presets-api part committed | `8ecb878f`, `f1b54a0f` |
 | FINDING-028 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-029 | FIX COMMITTED, NOT DEPLOYED | `59cc1d6a` (PR #230) |
@@ -227,6 +227,7 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 - **Sprint 5:** `d1fdb89a` (discord-worker 5.8.0 and the six-language bot policy AMEND) and `f39e2cbe` (root player notes 5.10.3), open as PR #227. It merges after #224 and #225 are deployed.
 - **Sprint 6:** `d853a765` + `ee869d55` (oauth 3.1.2), open as PR #228. It is independent of the held window; merging deploys production oauth.
 - **Sprint 7:** `1eaefd63` (api-worker 0.16.1), open as PR #229. It is independent; merging deploys production api-worker.
+- **Sprint 12:** `01465700` (stoat-worker 0.3.2, parked), open as PR #234. It is independent and deploys nothing.
 - **Sprint 11:** `3a158847`, open as draft PR #233. It adds the Workers Logs CI gate, the undici override, a report-only full-tree audit and the secrets docs. It merges after the six worker-pin PRs and after the maintainer moves the bot tokens; its CI is red until then by design. The settings (FINDING-023/-024/-030) are the maintainer's.
 - **Sprint 10:** `6e8c7d81` (image-worker 1.3.3), open as PR #232. It is independent.
 - **Sprint 9:** `7c97fc1d` (og-worker 2.11.1), open as PR #231. It is independent; the branch push redeployed the beta OG worker.

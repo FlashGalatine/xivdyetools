@@ -21,4 +21,4 @@
 - Before any redeploy, confirm the bot role does not hold a mention-everyone permission
 
 ## Status
-OPEN
+FIX COMMITTED, NOT MERGED (parked app, no deploy) — `01465700` (branch `fix/security-2026-10-03-sprint12`, stoat-worker 0.3.2; PR #234). sanitizeEcho now strips invisible characters first, rewrites `<%ULID>` tokens to plain text, and after the shared sanitiser inserts a ZWJ after the `@` of everyone/online/here. That last pass runs after sanitizeEmbedText because the latter strips U+200D, so this audit's suggested 'before' ordering would not have worked. There is no word-boundary condition, because Stoat's backend matching is unverified. 13 tests cover the three echo sites. packages/bot-logic is unchanged. Before any redeploy, confirm the bot's role cannot mention everyone.
