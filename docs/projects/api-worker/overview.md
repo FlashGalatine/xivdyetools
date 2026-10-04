@@ -48,7 +48,7 @@ pnpm --filter xivdyetools-api-worker run deploy:production    # production (run 
 Request → (developers.* host? → static docs ASSETS) → Request ID → Logger → Security Headers → CORS → Rate Limit (/v1/*) → Locale (/v1/*) → Route Handler
 ```
 
-`/universalis/*` and `/api/v2/*` sit outside `/v1/*` — no KV rate limiter, no locale middleware, and their responses are raw Universalis bodies rather than the `{ success, data, meta }` envelope.
+`/universalis/*` and `/api/v2/*` sit outside `/v1/*` — no `/v1` rate limiter, no locale middleware, and their responses are raw Universalis bodies rather than the `{ success, data, meta }` envelope.
 
 Unlike the presets-api (authenticated, restricted CORS), this API is fully anonymous with `Access-Control-Allow-Origin: *`.
 
@@ -59,7 +59,7 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 | Subdomain | `data.xivdyetools.app` | Separate from `api.xivdyetools.app` (presets-api) due to opposite security postures |
 | Auth | Anonymous | Public read-only data, no user state |
 | CORS | `origin: *` | Must be callable from any browser, plugin, or bot |
-| Rate Limiting | 60 req/min per IP + 5 burst on `/v1/*` | The native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`, per-colo counters), fail-open; `RATE_LIMIT` KV is the fallback when the binding is absent. `POST /v1/telemetry` has its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s) that fails **closed**. The proxy's `/aggregated` route has its own per-isolate memory limiter (30/min in production) |
+| Rate Limiting | 60 req/min per IP + 5 burst on `/v1/*` | The native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`, per-colo counters), fail-open; `RATE_LIMIT` KV is the fallback when the binding is absent. `POST /v1/telemetry` has its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s) that fails **closed**. The proxy's `/aggregated` route has its own cache-miss limiter on the native `UNIVERSALIS_RATE_LIMITER` binding (30 / 60 s per IP in production, KV fallback) and `UNIVERSALIS_SERVICE_RATE_LIMITER` (600 / 60 s) for the service-binding key (FINDING-011) |
 | Caching | `max-age=3600, s-maxage=86400` | Deterministic data, changes only with game patches |
 | Database | Bundled JSON | No D1 — the 125-dye database is part of the bundle via `@xivdyetools/core` |
 

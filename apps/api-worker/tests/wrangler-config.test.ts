@@ -44,7 +44,7 @@ describe('wrangler.toml', () => {
   /**
    * POST /v1/telemetry must not share the API bucket: both environments bind
    * TELEMETRY_RATE_LIMITER at 240 / 60 s, and every namespace_id in the file
-   * is unique (the platform requires uniqueness per account).
+   * (now including the two Universalis proxy buckets) is unique (the platform requires uniqueness per account).
    */
   it('binds a separate telemetry rate-limit bucket per environment with unique namespace ids', () => {
     expect(topLevel).toMatch(
@@ -54,8 +54,8 @@ describe('wrangler.toml', () => {
       /^\[\[env\.production\.ratelimits\]\]\nname = "TELEMETRY_RATE_LIMITER"\nnamespace_id = "\d+"\nsimple = \{ limit = 240, period = 60 \}$/m,
     );
     const ids = [...toml.matchAll(/^namespace_id = "(\d+)"$/gm)].map((m) => m[1]);
-    expect(ids).toHaveLength(6);
-    expect(new Set(ids).size).toBe(6);
+    expect(ids).toHaveLength(10);
+    expect(new Set(ids).size).toBe(10);
   });
 
   /**
@@ -80,5 +80,72 @@ describe('wrangler.toml', () => {
       /^\[\[env\.production\.analytics_engine_datasets\]\]\nbinding = "ANALYTICS"\ndataset = "xivdyetools_web_analytics"$/m,
     );
     expect(production).not.toContain('xivdyetools_web_analytics_dev');
+  });
+
+  /**
+   * FINDING-011 (2026-10-03 security audit): the Universalis proxy counts its
+   * cache misses through two native rate-limit bindings whose `simple` limit
+   * must equal what the code asks for — the CloudflareRateLimiter tier is
+   * chosen without regard to maxRequests, so a drifted number would silently
+   * change the budget. Parsed per environment: production's vars are an inline
+   * table under [env.production], which an anchored `^RATE_LIMIT_REQUESTS`
+   * regex would never see (it would find the dev value in both slices).
+   */
+  const SERVICE_BINDING_BUDGET_MULTIPLIER = 20;
+
+  describe.each([
+    ['development (top level)', topLevel, '[[ratelimits]]'],
+    ['production', production, '[[env.production.ratelimits]]'],
+  ])('Universalis proxy rate-limit bindings: %s', (_label, slice, header) => {
+    const requests = Number(slice.match(/\bRATE_LIMIT_REQUESTS = "(\d+)"/)?.[1]);
+    const windowSeconds = Number(slice.match(/\bRATE_LIMIT_WINDOW_SECONDS = "(\d+)"/)?.[1]);
+    const binding = (name: string) => {
+      const m = slice.match(
+        new RegExp(
+          `^${header.replace(/[[\]]/g, '\\$&')}\\nname = "${name}"\\nnamespace_id = "\\d+"\\nsimple = \\{ limit = (\\d+), period = (\\d+) \\}$`,
+          'm',
+        ),
+      );
+      return m ? { limit: Number(m[1]), period: Number(m[2]) } : undefined;
+    };
+
+    it('reads this environment\'s own RATE_LIMIT_* vars', () => {
+      expect(requests).toBeGreaterThan(0);
+      expect([10, 60]).toContain(windowSeconds);
+    });
+
+    it('UNIVERSALIS_RATE_LIMITER limit equals RATE_LIMIT_REQUESTS, period the window', () => {
+      expect(binding('UNIVERSALIS_RATE_LIMITER')).toEqual({ limit: requests, period: windowSeconds });
+    });
+
+    it('UNIVERSALIS_SERVICE_RATE_LIMITER limit is 20x RATE_LIMIT_REQUESTS, period the window', () => {
+      expect(binding('UNIVERSALIS_SERVICE_RATE_LIMITER')).toEqual({
+        limit: SERVICE_BINDING_BUDGET_MULTIPLIER * requests,
+        period: windowSeconds,
+      });
+    });
+  });
+
+  it('pins the expected Universalis limits (30 / 600 in production, 60 / 1200 in dev)', () => {
+    expect(production).toMatch(/\bRATE_LIMIT_REQUESTS = "30"/);
+    expect(topLevel).toMatch(/^RATE_LIMIT_REQUESTS = "60"$/m);
+  });
+
+  /**
+   * FINDING-022 (2026-10-03 security audit): both privacy policies promise
+   * persistent Workers Logs are off. `observability` is inheritable, but it is
+   * declared in both blocks so neither can drift on by accident.
+   */
+  it('pins Workers Logs off in both blocks (FINDING-022)', () => {
+    expect(topLevel).toMatch(/^\[observability\]\nenabled = false$/m);
+    expect(production).toMatch(/^\[env\.production\.observability\]\nenabled = false$/m);
+  });
+
+  it('never enables observability, logpush or tail consumers', () => {
+    expect(toml).not.toMatch(/^\s*enabled\s*=\s*true\b/m);
+    expect(toml).not.toMatch(/observability\s*=\s*\{[^}]*enabled\s*=\s*true/);
+    expect(toml).not.toMatch(/^\s*logpush\s*=\s*true/m);
+    expect(toml).not.toMatch(/tail_consumers/);
+    expect(toml).not.toMatch(/head_sampling_rate|invocation_logs/);
   });
 });
