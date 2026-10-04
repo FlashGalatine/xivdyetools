@@ -60,8 +60,8 @@ JWT_ISSUER = "http://localhost:8788"
 # promise persistent Workers Logs are disabled, so this is pinned here rather
 # than left to dashboard state. Enabling it (or adding logpush / tail_consumers)
 # requires updating those policies in the same change; tests/wrangler-config.test.ts
-# fails until then. `[env.production.observability]` below repeats the pin because
-# `observability` is not inherited by named environments.
+# fails until then. `observability` is an INHERITABLE key (wrangler 4.140), but
+# `[env.production.observability]` below repeats the pin explicitly anyway.
 [observability]
 enabled = false
 
