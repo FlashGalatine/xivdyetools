@@ -120,7 +120,7 @@ jobs:
         if: env.HAS_BETA_REGISTRATION_SECRETS != 'true'
         run: |
           echo "::notice::Beta worker deployed, but slash commands were NOT registered."
-          echo "Add repository secrets BETA_DISCORD_TOKEN and BETA_DISCORD_GUILD_ID to enable it."
+          echo "Add BETA_DISCORD_TOKEN and BETA_DISCORD_GUILD_ID as secrets on the beta environment to enable it."
           echo "Until then, register manually — always with DISCORD_GUILD_ID set."
 
       # No health smoke test: the beta worker is published on a *.workers.dev

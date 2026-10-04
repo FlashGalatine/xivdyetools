@@ -37,6 +37,10 @@ Verified with `gh api` on 2026-09-05; the state noted is the state found.
       deploy via *workflow_dispatch*, revoke the old token, log the date. The token's *homing* is
       done: it is an environment secret on `production`, `CLOUDFLARE_API_TOKEN_BETA` is one on
       `beta`, and no repository-level copy of either exists (verified 2026-09-05).
+- [ ] 2026-10-03 audit follow-ups: the Discord bot tokens (`DISCORD_TOKEN`, `MODERATION_DISCORD_TOKEN`,
+      `BETA_DISCORD_TOKEN`, `BETA_DISCORD_GUILD_ID`) still need moving from repository to
+      environment secrets (FINDING-023, [SECRET_ROTATION.md](SECRET_ROTATION.md) GitHub Actions
+      secrets section); see also FINDING-024 and FINDING-030 of that audit.
 
 Closed on the same walk, recorded here so the archived checklist's open boxes read correctly:
 the `beta` environment exists with `CLOUDFLARE_API_TOKEN_BETA` and the three beta deploy

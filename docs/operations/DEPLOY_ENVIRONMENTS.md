@@ -116,7 +116,11 @@ at the real minimum above, store it — and move `CLOUDFLARE_API_TOKEN` itself o
 repository secret store into the `production` environment, which closes the same gap for the
 eight *other* workflows gating a Cloudflare deploy on `environment: production` (their gate
 has the identical weakness until that move happens). `docs/operations/SECRET_ROTATION.md`
-carries the inventory and rotation procedure for both tokens.
+carries the inventory and rotation procedure for both tokens. The Discord bot tokens follow the same
+rule (2026-10-03 audit FINDING-023): `DISCORD_TOKEN` and `MODERATION_DISCORD_TOKEN` must be
+`production` environment secrets and `BETA_DISCORD_TOKEN` / `BETA_DISCORD_GUILD_ID` must be `beta`
+environment secrets, with no repository-level copy left; the maintainer makes the move before the
+PR documenting it merges (tracked in `OPEN_ITEMS.md`).
 
 ---
 
@@ -324,7 +328,10 @@ is the beta worker.
 | Smoke test | `bot.xivdyetools.app/health` | none (the `*.workers.dev` host is account-specific) |
 | Cloudflare credential | `environment: production` + `secrets.CLOUDFLARE_API_TOKEN` | `environment: beta` + `secrets.CLOUDFLARE_API_TOKEN_BETA` — separate credential since 2026-08-29 (FINDING-028) |
 
-**Optional secrets.** Add `BETA_DISCORD_TOKEN` and `BETA_DISCORD_GUILD_ID` to enable automatic
+**Optional secrets.** Add `BETA_DISCORD_TOKEN` and `BETA_DISCORD_GUILD_ID` as secrets on the
+`beta` environment, not the repository (a repository secret is readable by any workflow run
+regardless of its `environment:`; an environment secret follows that environment's branch policy),
+to enable automatic
 command registration. Without them the worker still deploys and the workflow emits a notice —
 so nothing breaks before they exist.
 

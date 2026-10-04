@@ -25,6 +25,11 @@ overrides:
   # - tsup 8.5 pins esbuild ^0.27 (GHSA-g7r4-m6w7-qqqr LOW); stoat-worker's
   #   build + vitest run on 0.28.x like every other workspace.
   'tsup>esbuild': '>=0.28.1'
+  # FINDING-025 (2026-10-03 security audit) - wrangler's miniflare pins an
+  # undici 7.x below the patched 7.29.1 (several advisories). miniflare only
+  # runs the local dev/test emulator, never in a deployed worker. Drop this
+  # once wrangler pulls a miniflare that ships a patched undici.
+  'miniflare>undici': '>=7.29.1 <8'
 
 # Explicit build-script policy (pnpm 11 `allowBuilds` map — replaces the
 # pnpm 10 onlyBuiltDependencies/ignoredBuiltDependencies pair): no dependency
