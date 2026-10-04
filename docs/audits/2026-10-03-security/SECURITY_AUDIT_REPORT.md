@@ -74,17 +74,17 @@ Every row is a **six-file edit per document** (English + `.ja/.ko/.zh/.de/.fr`),
 
 | ID | Document(s) | § | CORRECT/AMEND | Landed? |
 |---|---|---|---|---|
-| FINDING-003 | web `PRIVACY.md` | Images and camera captures; Network access item 3; How to verify | CORRECT | no |
-| FINDING-004 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md`, web `locales/*.json` `preset.privacyNote` | item 3; Accounts | **AMEND**, approved 2026-10-03: disclose the verified character name and the linked Discord id (plan Sprint 2) | no |
+| FINDING-003 | web `PRIVACY.md` | Images and camera captures; Network access item 3; How to verify | CORRECT | committed `3daa83fd`, six variants, not deployed |
+| FINDING-004 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md`, web `locales/*.json` `preset.privacyNote` | item 3; Accounts | **AMEND**, approved 2026-10-03: disclose the verified character name and the linked Discord id (plan Sprint 2) | committed `3daa83fd`, six variants, not deployed |
 | FINDING-005 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §2 / §5 / §8; item 3 | **AMEND**, approved 2026-10-03, after minimizing (plan Sprints 3–5, 8) | no |
 | FINDING-007 | bot `PRIVACY_POLICY.md` | §2, §4 | **AMEND**, approved 2026-10-03: "display name" | no |
 | FINDING-008 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §5 / §7; item 3 | **AMEND** | no |
 | FINDING-009 | web `PRIVACY.md` | item 3 | **AMEND** | no |
-| FINDING-010 | web `PRIVACY.md` | What is stored on your device | CORRECT | no |
+| FINDING-010 | web `PRIVACY.md` | What is stored on your device | CORRECT | committed `3daa83fd`, six variants, not deployed |
 | FINDING-011 | — | — | none: §8 chose the native limiter (plan Sprint 7), which makes the current text true | n/a |
-| FINDING-012 | web `locales/*.json` `swatch.charaHint` (+ chip) | — | CORRECT (UI copy; PRIVACY.md is already right) | no |
+| FINDING-012 | web `locales/*.json` `swatch.charaHint` (+ chip) | — | CORRECT (UI copy; PRIVACY.md is already right) | committed `3daa83fd` (new `swatch.charaHintGlamour`), not deployed |
 | FINDING-013 | — | — | none: §8 chose to drop the sampling (plan Sprint 5) | n/a |
-| FINDING-028 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md` | Links to other sites; Other people's services | CORRECT | no |
+| FINDING-028 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md` | Links to other sites; Other people's services | CORRECT | committed `3daa83fd`, six variants, not deployed |
 | FINDING-029 | web `PRIVACY.md` | Questions?; item 3 | **AMEND**, approved 2026-10-03: contact `flashgalatinefgc@gmail.com` or a Discord DM, 30 days | no |
 
 FINDING-002 and FINDING-018 make the existing bot-policy text true by changing code; they need no policy edit. FINDING-005, -008, -009 and -029 all touch web `PRIVACY.md` item 3 and should land as one coordinated web-app policy commit (plan Sprint 8). FINDING-004's AMEND describes code that is already live, so it ships earlier, with the Sprint 2 CORRECTs.
@@ -180,20 +180,20 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 |---|---|---|
 | FINDING-001 | FIXED 2026-10-03 — live on beta (`curl -sI` acceptance passed) and merged | `61b7077b`, PR #221 → `b89629d9` |
 | FINDING-002 | FIXED 2026-10-03 | `28769473`, PR #222 → `8ecb878f` |
-| FINDING-003 | OPEN | — |
-| FINDING-004 | OPEN | — |
+| FINDING-003 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
+| FINDING-004 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-005 | OPEN | — |
 | FINDING-006 | OPEN | — |
 | FINDING-007 | OPEN | — |
 | FINDING-008 | OPEN | — |
 | FINDING-009 | OPEN | — |
-| FINDING-010 | OPEN | — |
+| FINDING-010 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-011 | OPEN | — |
-| FINDING-012 | OPEN | — |
+| FINDING-012 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-013 | OPEN | — |
 | FINDING-014 | OPEN | — |
 | FINDING-015 | FIXED 2026-10-03; the one-off KV clean-up is the maintainer's | `28769473`, PR #222 → `8ecb878f` |
-| FINDING-016 | OPEN | — |
+| FINDING-016 | OPEN — web part committed; presets-api part Sprint 3 | `3daa83fd` (Sprint 2) |
 | FINDING-017 | OPEN | — |
 | FINDING-018 | FIXED 2026-10-03 | `28769473`, PR #222 → `8ecb878f` |
 | FINDING-019 | OPEN — runbook part done; presets-api part Sprint 3 | `d8d5e3e8` (runbook) |
@@ -205,7 +205,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-025 | OPEN | — |
 | FINDING-026 | OPEN | — |
 | FINDING-027 | OPEN — discord-worker part fixed; secret rotated to 64 characters 2026-10-03; presets-api part Sprint 3 | `28769473`, PR #222 → `8ecb878f` |
-| FINDING-028 | OPEN | — |
+| FINDING-028 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-029 | OPEN | — |
 | FINDING-030 | OPEN | — |
 | FINDING-031 | OPEN | — |
@@ -222,5 +222,6 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 **Progress:**
 - **Sprint 0:** FINDING-001 is fixed and live on beta (`61b7077b`, PR #221 merged as `b89629d9`; the `curl -sI` acceptance passed). The FINDING-019 runbook is in `d8d5e3e8`.
 - **Sprint 1:** ✅ merged as `8ecb878f` (PR #222). The maintainer rotated the production `INTERNAL_WEBHOOK_SECRET` first.
+- **Sprint 2:** committed locally as `3daa83fd` (web-app 5.13.4; the six-language policy edits) and `ffd22726` (root player notes 5.10.2). Not yet pushed.
 
 **Publication hold:** lifted for FINDING-001. The repository is public and this folder still details findings that are not yet deployed, so publishing it is the maintainer's call.

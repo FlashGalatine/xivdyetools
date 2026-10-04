@@ -17,4 +17,4 @@
 - Defense in depth: have web-app sanitizeExampleLink return url.href rather than `trimmed`, and add tests for LF, U+202E and space inputs on both sides.
 
 ## Status
-OPEN
+OPEN — web part (`sanitizeExampleLink` returns the normalized href) committed in `3daa83fd` (local branch `fix/security-2026-10-03-sprint2`, web-app 5.13.4; not pushed); presets-api part is Sprint 3.

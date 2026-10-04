@@ -18,4 +18,4 @@
 - Add a copy-parity test tying the modal claim to `xivauth.ts` so it cannot drift again (it drifted after the 2026-08-29 fix `114f6dde`).
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `3daa83fd` (local branch `fix/security-2026-10-03-sprint2`, web-app 5.13.4; not pushed). The §8 gate chose disclosure (no oauth change): sign-in note, Privacy item 3 and Terms §Accounts in six languages, plus `src/__tests__/privacy-copy-parity.test.ts` pinned to `xivauth.ts`.

@@ -17,4 +17,4 @@
 - Optional code alternative, which would also need the policy wording checked: add a real "Clear all local data" action that wipes the xivdyetools_* keys, then point the policy at it.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `3daa83fd` (local branch `fix/security-2026-10-03-sprint2`, web-app 5.13.4; not pushed); all six locale variants.
