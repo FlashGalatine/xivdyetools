@@ -31,6 +31,15 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.3] - 2026-10-04
+### 📜 Discord bot Privacy Policy updated
+- Discord bot: the Privacy Policy now covers moderation records. If a moderator bans someone from community presets, a ban record and a moderation log are kept, and the policy says what they hold.
+- Discord bot: a lifted ban's name and reason are cleared at once and the record is deleted 90 days later. Ban log entries are kept for 12 months.
+- Discord bot: presets that need review are posted to a private moderation channel in our Discord server, and published presets to a private log channel. Those posts never show your Discord account, and a deletion request removes them.
+- Discord bot: the name shown on your presets is your Discord display name, and the policy now says so. The policy is updated in all six languages.
+### 🛡️ Moderation
+- Discord bot: moderators' approve, reject and revert buttons now act only on the version of a preset they saw. A preset that changed since then is shown again for review.
+
 ## [5.10.1] - 2026-09-28
 ### 📜 Privacy Policy and Terms of Service updated
 - Web app and Discord bot: the Privacy Policy and Terms of Service now cover the Glamour Reader and the `/glamour` command. They were written before both arrived.
