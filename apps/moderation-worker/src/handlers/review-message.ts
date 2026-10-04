@@ -16,7 +16,6 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { isValidSnowflake } from '@xivdyetools/types';
 import type { Env } from '../types/env.js';
 import { STATUS_DISPLAY } from '../types/preset.js';
 import type { ModerationPresetView } from '../types/preset.js';
@@ -87,9 +86,9 @@ export function buildReviewEmbed(
   notice?: string,
 ): DiscordEmbed {
   const display = STATUS_DISPLAY[preset.status];
-  // The author mention only for a real snowflake — an XIVAuth-only author's id is a UUID
-  const authorId = preset.author_discord_id;
-  const mention = authorId && isValidSnowflake(authorId) ? ` (<@${authorId}>)` : '';
+  // No author mention (2026-10-03 FINDING-008): the moderation posts carry the
+  // author name only — the bot privacy policy promises they show no Discord
+  // User ID, and no moderation control needs it (bans search by username).
   // Tags are author-controlled; cap them so the description stays well under Discord's limit
   const tags = (preset.tags ?? []).map((tag) => sanitizeName(tag)).join(', ').slice(0, 300);
 
@@ -98,7 +97,7 @@ export function buildReviewEmbed(
     description: [
       `**Name:** ${sanitizeName(preset.name)}`,
       `**Description:** ${sanitizeDescription(preset.description)}`,
-      `**Author:** ${sanitizeUserName(preset.author_name || 'Unknown')}${mention}`,
+      `**Author:** ${sanitizeUserName(preset.author_name || 'Unknown')}`,
       `**Status:** ${preset.status}`,
       `**Category:** ${sanitizeName(preset.category_id)}`,
       ...(tags ? [`**Tags:** ${tags}`] : []),

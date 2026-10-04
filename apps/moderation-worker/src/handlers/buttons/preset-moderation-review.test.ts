@@ -465,6 +465,23 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       expect(description).not.toContain('<@');
     });
 
+    // 2026-10-03 FINDING-008: the bot privacy policy promises moderation posts
+    // show no Discord User ID — not even for a real snowflake author.
+    it('never mentions the author, even when the author id is a Discord snowflake', async () => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: preset({ author_name: 'Author', author_discord_id: '12345678901234567' }),
+        revision: 1,
+      } as any);
+
+      await handlePresetApproveButton(click(`preset_approve_${ID}`), env, ctx);
+      await flush();
+
+      const description: string = lastEdit().embeds[0].description;
+      expect(description).toContain('**Author:** Author');
+      expect(description).not.toContain('<@');
+      expect(description).not.toContain('12345678901234567');
+    });
+
     it('never presents moderation_status as a content-filter verdict', async () => {
       vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
         preset: preset({ moderation_status: 'flagged' }),
