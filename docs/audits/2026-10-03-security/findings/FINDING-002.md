@@ -19,4 +19,4 @@ budget-calculator.ts:180-185: logger.info('Budget ledger: candidates priced', { 
 - No policy edit is needed: once the fields are gone, §5 is true as written. Add a test that checks these log contexts contain no option-derived keys.
 
 ## Status
-FIX COMMITTED, NOT DEPLOYED — `28769473` (local branch `fix/security-2026-10-03-sprint1`, discord-worker 5.7.2; not pushed).
+FIXED 2026-10-03 — `28769473`, PR #222 merged as `8ecb878f` (discord-worker 5.7.2).

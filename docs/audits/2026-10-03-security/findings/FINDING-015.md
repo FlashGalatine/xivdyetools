@@ -18,4 +18,4 @@
 - One-off maintenance: list the `i18n:user:` and `budget:world:v1:` KV prefixes, migrate any users who have no prefs:v1 blob, then delete every legacy key so none remain
 
 ## Status
-FIX COMMITTED, NOT DEPLOYED — `28769473` (local branch `fix/security-2026-10-03-sprint1`, discord-worker 5.7.2; not pushed). The one-off clean-up of untouched legacy keys is in `docs/operations/OPEN_ITEMS.md` §2 (maintainer).
+FIXED 2026-10-03 — `28769473`, PR #222 merged as `8ecb878f` (discord-worker 5.7.2). The one-off clean-up of untouched legacy keys is the maintainer's (`docs/operations/OPEN_ITEMS.md` §2).

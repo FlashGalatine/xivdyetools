@@ -17,4 +17,4 @@
 - No rotation is needed: no secret value was exposed.
 
 ## Status
-OPEN — discord-worker part committed in `28769473` (local branch `fix/security-2026-10-03-sprint1`, discord-worker 5.7.2; not pushed). Enforced on the webhook route (503, retried and dead-lettered by presets-api) and reported non-fatally by `validateEnv`, so a short secret stops preset notifications but not the bot. presets-api part: Sprint 3. The maintainer still confirms the production secret is ≥ 32 characters before deploying.
+OPEN — discord-worker part fixed in `28769473`, PR #222 merged as `8ecb878f` (discord-worker 5.7.2) (enforced on the webhook route: 503, retried and dead-lettered by presets-api; `validateEnv` reports it non-fatally — approach approved by the maintainer). Precondition met: the maintainer rotated the production `INTERNAL_WEBHOOK_SECRET` to a 64-character value on both workers on 2026-10-03 (`docs/operations/SECRET_ROTATION.md` log). presets-api part: Sprint 3.

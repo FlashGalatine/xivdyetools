@@ -52,7 +52,7 @@ Also at the gate:
 **FINDING-001: ✅ COMPLETED 2026-10-03** — `61b7077b`, PR #221 merged as `b89629d9` (web-app 5.13.3). The live `curl -sI` acceptance on beta passed.
 - Step 6 (branch hygiene) and step 7 (recovery) remain the maintainer's.
 - **FINDING-019 runbook: ✅ COMPLETED 2026-10-03, `d8d5e3e8`.**
-- **FINDING-027 precondition:** the maintainer's, still open.
+- **FINDING-027 precondition:** ✅ done 2026-10-03; the secret was rotated rather than measured.
 
 **FINDING-001 ships alone, out-of-band**, on its own branch, before everything else. The two other rows are maintainer prerequisites with no deploy. Nothing needs rotation.
 
@@ -73,9 +73,9 @@ Also at the gate:
 
 ## Sprint 1 — discord-worker: logging promises and code-only fixes
 
-**Committed 2026-10-03 in `28769473`** (discord-worker 5.7.2), with `main` merged in as `93b11b89`. The full gate is green.
-- Pushed as PR #222, which deploys the beta bot.
-- **Merge needs:** the maintainer confirms the production `INTERNAL_WEBHOOK_SECRET` is ≥ 32 characters. A shorter one now stops preset notifications only.
+**✅ COMPLETED 2026-10-03** — `28769473` (discord-worker 5.7.2), PR #222 merged as `8ecb878f`.
+- The production `INTERNAL_WEBHOOK_SECRET` was rotated to a 64-character value on both workers before the merge (FINDING-027 precondition).
+- **Still the maintainer's:** the one-off legacy-key clean-up (FINDING-015, `docs/operations/OPEN_ITEMS.md` §2).
 - **Deviation from the row below, approved by the maintainer 2026-10-03:** FINDING-027 is enforced on the webhook route (503) rather than as a fatal `validateEnv` error.
   - With a short secret, the plan's fatal error would answer 500 to every interaction.
   - This choice instead stops only preset moderation notifications. Because Workers Logs are off, they stop with no visible signal and pile up in `failed_notifications` for up to 90 days.
