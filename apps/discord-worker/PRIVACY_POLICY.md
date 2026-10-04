@@ -28,8 +28,8 @@ We are committed to protecting your privacy and being transparent about our data
 | Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted), plus the time you last changed them | Until you reset them or request deletion |
 | Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
 | First-run notice flag | A per-user marker that the 5.0 welcome notice was shown to you; carries no content | Expires automatically after 180 days |
-| Preset Submissions | Name, description, dyes, tags, category | Indefinitely (community content) |
-| Votes | Your votes on community presets | Until you remove vote or request deletion |
+| Preset Submissions | Name, description, dyes, tags, category — and, when an edit is held for review, the version from before that edit, kept so a moderator can restore it | Indefinitely (community content) |
+| Votes | Your votes on community presets. Submitting a preset counts as your vote for it; if a published preset already has the same dyes, your submission becomes a vote for that preset instead | Until you remove vote or request deletion |
 
 ### Rate Limiting Data
 
@@ -113,7 +113,7 @@ To name the gear, `/glamour` sends the equipment model numbers from the file and
 | Cloudflare KV | Preferences, preset favorites, the first-run notice flag, usage counters and daily-activity keys (30-day TTL), and the rate-limit counters only on a deployment without the native rate-limiting bindings (120-second TTL) | Global edge network |
 | Cloudflare D1 | Community presets, Votes, Moderation records (see *Moderation Records*), moderation-notification failure records, daily submission / edit counters (see *Data Retention*) | Cloudflare's database infrastructure |
 | Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
-| Discord | Posts in two private channels of our Discord server: each preset that needs review is posted to a moderation channel, and each published preset to a submission-log channel. A post shows the preset (such as its name, description, category and dyes) and the author name. A post about a preview image that is waiting for review also includes the image. A post does not show your Discord User ID | Discord's infrastructure |
+| Discord | Posts in two private channels of our Discord server. The moderation channel gets each preset, edit or preview image that needs review: the post shows the preset (such as its name, description, category and dyes) and the author name, or, for a preview image, the preset's name and the image, and it is updated when a moderator decides. If a moderator bans you, the moderation channel also gets a post with your author name, the reason and how many of your presets were hidden. The submission-log channel gets each published preset with its author name, and a note when a moderator approves, rejects or reverts one, with the reason for a rejection or a revert. No post shows your Discord User ID | Discord's infrastructure |
 
 Everything except those Discord posts is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information. The Discord posts stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a moderator deletes them or until you request deletion (see *Your Rights*).
 
@@ -169,7 +169,7 @@ To request deletion of all your data:
    - Include your Discord User ID
 2. **Discord**: Join https://discord.gg/rzxDHNr6Wv and DM "Flash Galatine"
 
-We will process deletion requests within 30 days. A deletion request also removes the moderation-channel and submission-log posts about your presets from our Discord server. An active ban record is not deleted on request; once the ban is lifted, the record follows the retention under *Data Retention*.
+We will process deletion requests within 30 days. A deletion request also removes the posts about you and your presets from our Discord server, except the post about a ban that is still active. An active ban record is not deleted on request; once the ban is lifted, the record follows the retention under *Data Retention*.
 
 ## 8. Data Retention
 
@@ -185,11 +185,11 @@ We will process deletion requests within 30 days. A deletion request also remove
 | Community presets | Indefinitely (public content) |
 | Votes | Until removed or account deletion |
 | Moderation-notification failure records (preset id, error, timestamps) | 30 days after resolution, 90 days if unresolved — deleted immediately if the preset is deleted |
-| Daily submission / edit counters (user id, kind, timestamp) | 30 days |
-| Ban records | While the ban is active. When it is lifted, the author name and the reason are cleared at once, and the record is deleted 90 days later |
-| Moderation-log entries for a ban, unban, hide or restore | 12 months |
+| Daily submission / edit counters (user id, kind, preset id, timestamp) | 30 days |
+| Ban records | While the ban is active. When it is lifted, the author name and the reason are cleared from the record at once, and the record is deleted 90 days later |
+| Moderation-log entries for a ban, unban, hide or restore (these keep the moderator's reason) | 12 months, or until the preset is deleted for a hide or restore |
 | Other moderation-log entries about a preset (such as approve, reject or revert) | As long as the preset exists |
-| Moderation-channel and submission-log posts in our Discord server | Until a moderator deletes them, or until you request deletion |
+| Moderation-channel and submission-log posts in our Discord server | Until a moderator deletes them, or until you request deletion (the post about a ban that is still active stays) |
 
 ## 9. Children's Privacy
 
