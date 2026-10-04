@@ -430,7 +430,6 @@ describe('handleBanReasonModal', () => {
             description: expect.stringContaining('SpamUser'),
             color: 0xed4245,
             fields: expect.arrayContaining([
-              expect.objectContaining({ name: 'User ID', value: '123456789012345679' }),
               expect.objectContaining({ name: 'Presets Hidden', value: '7' }),
               expect.objectContaining({ name: 'Banned By', value: 'ModUser' }),
               expect.objectContaining({ name: 'Reason', value: 'Spamming inappropriate presets' }),
@@ -439,6 +438,11 @@ describe('handleBanReasonModal', () => {
         ]),
       }),
     );
+    // FINDING-008: the channel post (kept in Discord history) never carries the
+    // banned account's id, in any field or in the text.
+    const channelPost = JSON.stringify(vi.mocked(discordApi.sendMessage).mock.calls);
+    expect(channelPost).not.toContain('123456789012345679');
+    expect(channelPost).not.toContain('User ID');
   });
 
   it('should not send message when moderation channel is not configured', async () => {

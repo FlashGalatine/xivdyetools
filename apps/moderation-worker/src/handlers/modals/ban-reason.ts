@@ -179,8 +179,11 @@ async function processBan(
             title: '\uD83D\uDD28 User Banned',
             description: `**${safeTarget}** has been banned from Preset Palettes.`,
             color: 0xed4245,
+            // No `User ID` field (2026-10-03 FINDING-008): this post stays in the
+            // channel's history, and both privacy policies promise moderation posts
+            // show no Discord User ID. The ban record holds the id; unbanning goes
+            // through the username picker, so moderators never need it here.
             fields: [
-              { name: 'User ID', value: targetUserId, inline: true },
               { name: 'Presets Hidden', value: String(result.presetsHidden), inline: true },
               { name: 'Banned By', value: safeModerator, inline: true },
               { name: 'Reason', value: safeReason, inline: false },

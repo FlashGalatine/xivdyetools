@@ -48,6 +48,13 @@ revert against 2.4.0. The production deploy re-registers the commands, because
   - The restore skips a hidden preset whose dyes are now held by another approved or pending
     preset, keeping the lowest-id twin. The moderator sees how many stayed hidden and why.
   - A UNIQUE `dye_signature` error gets its own message.
+- **Moderation posts carry no account ID** (FINDING-008). The bot privacy policy promises posts in
+  the moderation and submission-log channels show no Discord User ID.
+  - The refreshed review embed no longer mentions the author.
+  - The "User Banned" post in the moderation channel no longer has a `User ID` field. For an
+    XIVAuth-only account, that field held the XIVAuth ID.
+  - The ban record still holds the ID, and unbanning goes through the username picker. The
+    moderator's private unban reply still shows it.
 - **Workers Logs pinned off** (FINDING-022) in both `wrangler.toml` blocks, and asserted.
 
 ### Tests
