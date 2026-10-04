@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.4] - 2026-10-04
+### 📜 Privacy Guide: community presets and deleting your data
+- Web app: the Privacy Guide has a new section on community presets. It lists what we keep when you sign in to share presets, and for how long.
+- Web app: that includes daily-limit counts, moderation records and the posts our moderators see in our Discord server. New posts there don't show your Discord user ID.
+- Web app: a new section explains how to delete your data. Delete a preset or a vote yourself, or ask us privately by email or Discord DM. We handle requests within 30 days.
+- Web app: the guide is updated in all six languages. Find it under About.
+
 ## [5.10.2] - 2026-10-04
 ### 📜 Privacy Guide and Terms of Service corrected
 - Web app: a preview image you attach to a community preset is uploaded and shown once a moderator approves it. The Privacy Guide now says so. Images in the color tools still never leave your device.
