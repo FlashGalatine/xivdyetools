@@ -18,4 +18,4 @@
 - Add an end-to-end test: ban a UUID author, mint a JWT for the same sub that now also carries discord_id, and expect requireNotBanned to return 403. Then close the OPEN_ITEMS.md:122 entry.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — presets-api part (ban check over every proven id; ban-guarded re-key on sign-in) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed); moderation-worker part (xivauth_id written and matched) in `c7fd9eba` (local branch `fix/security-2026-10-03-sprint4`, moderation-worker 1.8.0; not pushed). No oauth change was needed.

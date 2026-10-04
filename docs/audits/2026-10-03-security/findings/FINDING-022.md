@@ -17,4 +17,4 @@
 - Keep OPEN_ITEMS.md §Workers Logs as the gate for deliberately turning logs on; flipping this pin should be the reviewed step that triggers the policy update
 
 ## Status
-OPEN — discord-worker part fixed in `28769473`, PR #222 merged as `8ecb878f` (discord-worker 5.7.2); the other workers' pins are Sprints 3, 4, 6, 7, 9, 10 and the CI part Sprint 11.
+OPEN — discord-worker part fixed (`8ecb878f`); presets-api part in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed); moderation-worker part in `c7fd9eba` (local branch `fix/security-2026-10-03-sprint4`, moderation-worker 1.8.0; not pushed); the remaining workers and CI are Sprints 6, 7, 9, 10 and 11.

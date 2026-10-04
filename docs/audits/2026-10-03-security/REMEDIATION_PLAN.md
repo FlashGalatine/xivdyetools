@@ -124,6 +124,21 @@ These are document and copy corrections with no code dependency, so they do not 
 
 ## Sprint 3 — presets-api: moderation integrity, identity, validation, sunset
 
+**Committed 2026-10-04 in `f1b54a0f`** (presets-api 2.4.0) on local branch `fix/security-2026-10-03-sprint3`. 936 tests; the full gate is green.
+- **Review history:** two Opus reviews. The first found:
+  - a split-read notification race;
+  - a ban check that was not atomic with the re-key;
+  - a fabricated `clean` moderation status;
+  - the unbound revert route.
+
+  All four are fixed.
+- **Added during review: revert joins the contract.** `PATCH /moderation/:id/revert` now also requires `expected_revision` / `expected_status`.
+- **The final contract:**
+  - **Request body:** `expected_revision` and `expected_status` on `/status` and `/revert`.
+  - **409 response:** `{ success: false, error: 'CONFLICT', code: 'REVISION_REQUIRED' | 'STALE_REVIEW', message, current: { status, content_revision } }`.
+  - **Moderator read:** `GET /moderation/:presetId` returns the moderator view plus `content_revision`. Its `moderation_status` is `flagged | unknown`, derived from status. The category field is `category_id`.
+  - **Notification payload:** carries `content_revision`, read from the same row as its text and status.
+
 API guards first. Sprints 3 and 4 run in **one held-workflow maintenance window**, following `docs/operations/security-remediation-2026-09-15.md`:
 1. Disable `deploy-moderation-worker.yml`.
 2. Merge both sprints.
@@ -157,6 +172,12 @@ API guards first. Sprints 3 and 4 run in **one held-workflow maintenance window*
 
 ## Sprint 4 — moderation-worker: revision-bound approvals, ban minimization, identity
 
+**Committed 2026-10-04 in `c7fd9eba`** (moderation-worker 1.8.0) on local branch `fix/security-2026-10-03-sprint4`. 761 tests; the full gate is green. An Opus review confirmed the contract matches presets-api 2.4.0 and found no blockers.
+- **Revert ban check, added in review:** revert now refuses a banned author. The gap predated this sprint.
+- **`/preset moderate`:** the command lost its unused `reason` option. The production deploy re-registers commands.
+- **Optional hand-run backfill in the window:** for bans lifted before the deploy, `UPDATE banned_users SET username = '', reason = '' WHERE unbanned_at IS NOT NULL` (`wrangler d1 execute DB --env production --remote --command ...` from `apps/presets-api`).
+- **Until Sprint 5 ships,** discord-worker still posts legacy buttons. Each approval therefore takes two clicks: the first refreshes the embed with revision-bound buttons, the second acts.
+
 Deploys right after Sprint 3, in the same window, and **before** Sprint 5. Moderation embeds are posted with the moderation bot's token (`preset-notifications.ts:58-63`), so their buttons route here.
 
 | ID | Source | Sev / Exposure | Item |
@@ -182,7 +203,7 @@ This sprint lands after Sprints 3–4: the bot policy has to describe the minimi
 
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
-| FINDING-017 (discord-worker) | security | LOW / INTERNET-AUTH | Emit revision-bearing custom_ids (≤ 100 characters), taken from the Sprint 3 notification payload. |
+| FINDING-017 (discord-worker) | security | LOW / INTERNET-AUTH | Emit exactly the format moderation-worker 1.8.0 parses (`apps/moderation-worker/src/utils/review-custom-id.ts`):<br>• `preset_approve_<uuid>:<revision>:<status>`;<br>• `preset_reject_<uuid>:<revision>:<status>`;<br>• `preset_revert_<uuid>:<revision>:<status>`.<br>The revision and status come from the notification payload's `content_revision` and `status`. Keep each id ≤ 100 characters. |
 | FINDING-007 | security | LOW / INTERNET-UNAUTH | §8 chose the wording fix: AMEND §2 / §4 to say the Discord display name (`global_name`, else `username`) is published as the preset author. No code change. Also list the preferences `updatedAt` field, or stop storing it. |
 | FINDING-008 (discord-worker + bot policy) | security | LOW / INTERNET-UNAUTH | Drop `<@id>` from the submission-log embed (§8). Keep it in the moderation embed only if moderators act on it; first find which control opens the ban modal (`moderation-worker/src/handlers/buttons/ban-confirmation.ts:93`). AMEND three places:<br>• add a Discord-channels row to the §5 storage table;<br>• replace "All data is stored on Cloudflare";<br>• make §7 say whether a deletion removes the channel messages. |
 | FINDING-013 | security | LOW / INTERNET-UNAUTH | §8 chose to drop it. Remove the `/stats preferences` subcommand: the handler (`stats.ts` ~370-530), its schema entry and its tests. No policy edit. `deploy-discord-worker.yml` re-registers the commands. |

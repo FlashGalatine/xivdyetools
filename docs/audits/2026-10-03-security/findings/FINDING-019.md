@@ -18,4 +18,4 @@
 - Update DEPRECATIONS.md: state that the local list holds no profanity today, and make the decision 'replace the ML tier or default to pending' a blocking checklist step before the key is deleted.
 
 ## Status
-OPEN — runbook part done in `d8d5e3e8` (DEPRECATIONS.md: key deletion blocked on a presets-api scorer or `pending` default, ~2026-12-01 fallback, same-day six-language policy edits). The presets-api part is Sprint 3.
+FIX COMMITTED, NOT DEPLOYED — runbook in `d8d5e3e8` (audit branch); presets-api part (no scorer → pending) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed).

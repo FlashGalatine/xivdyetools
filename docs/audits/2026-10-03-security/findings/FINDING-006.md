@@ -17,4 +17,4 @@
 - Add a test asserting that the production getAllowedRedirectOrigins() returns exactly the xivdyetools.app origins plus FRONTEND_URL
 
 ## Status
-OPEN
+OPEN — presets-api CORS part in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed); the oauth part is Sprint 6.

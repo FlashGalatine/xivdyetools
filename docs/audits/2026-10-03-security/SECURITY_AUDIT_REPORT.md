@@ -182,8 +182,8 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-002 | FIXED 2026-10-03 | `28769473`, PR #222 → `8ecb878f` |
 | FINDING-003 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-004 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
-| FINDING-005 | OPEN | — |
-| FINDING-006 | OPEN | — |
+| FINDING-005 | OPEN — code parts committed (retention, unban blanking); AMEND Sprints 5 and 8 | `f1b54a0f`, `c7fd9eba` |
+| FINDING-006 | OPEN — presets-api part committed; oauth part Sprint 6 | `f1b54a0f` |
 | FINDING-007 | OPEN | — |
 | FINDING-008 | OPEN | — |
 | FINDING-009 | OPEN | — |
@@ -191,24 +191,24 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-011 | OPEN | — |
 | FINDING-012 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-013 | OPEN | — |
-| FINDING-014 | OPEN | — |
+| FINDING-014 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f`, `c7fd9eba` |
 | FINDING-015 | FIXED 2026-10-03; the one-off KV clean-up is the maintainer's | `28769473`, PR #222 → `8ecb878f` |
-| FINDING-016 | OPEN — web part committed; presets-api part Sprint 3 | `3daa83fd` (Sprint 2) |
-| FINDING-017 | OPEN | — |
+| FINDING-016 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd`, `f1b54a0f` |
+| FINDING-017 | OPEN — presets-api and moderation-worker parts committed; discord-worker part Sprint 5 | `f1b54a0f`, `c7fd9eba` |
 | FINDING-018 | FIXED 2026-10-03 | `28769473`, PR #222 → `8ecb878f` |
-| FINDING-019 | OPEN — runbook part done; presets-api part Sprint 3 | `d8d5e3e8` (runbook) |
-| FINDING-020 | OPEN | — |
-| FINDING-021 | OPEN | — |
-| FINDING-022 | OPEN — discord-worker part fixed | `28769473`, PR #222 → `8ecb878f` |
+| FINDING-019 | FIX COMMITTED, NOT DEPLOYED | `d8d5e3e8` (runbook), `f1b54a0f` |
+| FINDING-020 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
+| FINDING-021 | FIX COMMITTED, NOT DEPLOYED | `c7fd9eba` |
+| FINDING-022 | OPEN — discord-worker part fixed; presets-api and moderation-worker parts committed | `8ecb878f`, `f1b54a0f`, `c7fd9eba` |
 | FINDING-023 | OPEN | — |
 | FINDING-024 | OPEN | — |
 | FINDING-025 | OPEN | — |
 | FINDING-026 | OPEN | — |
-| FINDING-027 | OPEN — discord-worker part fixed; secret rotated to 64 characters 2026-10-03; presets-api part Sprint 3 | `28769473`, PR #222 → `8ecb878f` |
+| FINDING-027 | OPEN — discord-worker part fixed; secret rotated 2026-10-03; presets-api part committed | `8ecb878f`, `f1b54a0f` |
 | FINDING-028 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-029 | OPEN | — |
 | FINDING-030 | OPEN | — |
-| FINDING-031 | OPEN | — |
+| FINDING-031 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
 
 ## Next steps
 
@@ -222,6 +222,7 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 **Progress:**
 - **Sprint 0:** FINDING-001 is fixed and live on beta (`61b7077b`, PR #221 merged as `b89629d9`; the `curl -sI` acceptance passed). The FINDING-019 runbook is in `d8d5e3e8`.
 - **Sprint 1:** ✅ merged as `8ecb878f` (PR #222). The maintainer rotated the production `INTERNAL_WEBHOOK_SECRET` first.
-- **Sprint 2:** committed locally as `3daa83fd` (web-app 5.13.4; the six-language policy edits) and `ffd22726` (root player notes 5.10.2). Not yet pushed.
+- **Sprint 2:** `3daa83fd` (web-app 5.13.4; the six-language policy edits) and `ffd22726` (root player notes 5.10.2), pushed as PR #223.
+- **Sprints 3 and 4:** committed locally as `f1b54a0f` (presets-api 2.4.0) and `c7fd9eba` (moderation-worker 1.8.0). Not yet pushed; they deploy together in one held window.
 
 **Publication hold:** lifted for FINDING-001. The repository is public and this folder still details findings that are not yet deployed, so publishing it is the maintainer's call.

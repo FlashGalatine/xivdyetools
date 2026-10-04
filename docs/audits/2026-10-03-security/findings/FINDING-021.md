@@ -17,4 +17,4 @@
 - Longer term: move ban and unban behind a presets-api endpoint, so one service owns the dye_signature invariant. This is the FINDING-034 first-choice fix.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `c7fd9eba` (local branch `fix/security-2026-10-03-sprint4`, moderation-worker 1.8.0; not pushed).

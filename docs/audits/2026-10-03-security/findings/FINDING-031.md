@@ -17,4 +17,4 @@
 - Optionally add a cheap check in the deploy workflow or a health check: SELECT 1 FROM sqlite_master WHERE type='trigger' AND name='presets_content_revision_after_update'. Fail or alert when it returns nothing.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; not pushed) (trigger parity test).
