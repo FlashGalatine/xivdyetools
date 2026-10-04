@@ -200,14 +200,14 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-020 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
 | FINDING-021 | FIX COMMITTED, NOT DEPLOYED | `c7fd9eba` |
 | FINDING-022 | OPEN — discord-worker part fixed; the other six workers and the CI gate committed | `8ecb878f`, `f1b54a0f`, `c7fd9eba`, `d853a765`, `1eaefd63`, `7c97fc1d`, `6e8c7d81`, `3a158847` |
-| FINDING-023 | OPEN — docs committed; maintainer moves the secrets | `3a158847` (PR #233) |
-| FINDING-024 | OPEN — settings (maintainer) | — |
+| FINDING-023 | OPEN — environment secrets created 2026-10-04; delete repository copies after #225/#227 deploy | `3a158847`, `4925659e` (PR #233) |
+| FINDING-024 | FIXED 2026-10-04 (settings; strict/enforce_admins deferred) | `evidence/gh-settings-2026-10-04.txt` |
 | FINDING-025 | FIX COMMITTED, NOT MERGED | `3a158847` (PR #233) |
 | FINDING-026 | FIX COMMITTED, NOT MERGED (parked, no deploy) | `01465700` (PR #234) |
 | FINDING-027 | OPEN — discord-worker part fixed; secret rotated 2026-10-03; presets-api part committed | `8ecb878f`, `f1b54a0f` |
 | FINDING-028 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-029 | FIX COMMITTED, NOT DEPLOYED | `59cc1d6a` (PR #230) |
-| FINDING-030 | OPEN — report-only audit step committed; settings (maintainer) | `3a158847` (PR #233) |
+| FINDING-030 | OPEN — settings done 2026-10-04; report-only audit step in PR #233 | `3a158847`, `evidence/gh-settings-2026-10-04.txt` |
 | FINDING-031 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
 
 ## Next steps

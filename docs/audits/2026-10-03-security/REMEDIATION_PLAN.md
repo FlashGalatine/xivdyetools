@@ -329,6 +329,13 @@ This runs after Sprints 3–7, so every sentence describes code that is already 
 - **FINDING-030 / -025.** A report-only full-tree audit step.
 - **FINDING-023 docs.** They describe the target state; the maintainer moves the secrets before merge.
 - **Settings (maintainer).** Move the four Discord secrets to the environments; require `Secret scan (gitleaks)`; turn on SHA pinning, Dependabot alerts and security updates (CodeQL optional). Hold `strict` / `enforce_admins` until the open PRs are merged.
+  - **Done 2026-10-04 and verified** (`evidence/gh-settings-2026-10-04.txt`):
+    - the environment secrets are created;
+    - gitleaks is a required check;
+    - SHA pinning is required;
+    - Dependabot alerts and security updates are on.
+  - **Remaining:** delete the four repository secret copies after #225/#227 deploy, and optionally set up CodeQL.
+  - **Noted, outside this audit:** private vulnerability reporting is still off, although `SECURITY.md` points reporters to it (`OPEN_ITEMS.md`).
 
 The settings rows are maintainer actions in GitHub, verified by re-reading them with `gh api`. `evidence/gh-settings-2026-10-03.txt` is the before-state. The in-repo rows touch no `apps/**` path, so merging triggers no worker deploy.
 

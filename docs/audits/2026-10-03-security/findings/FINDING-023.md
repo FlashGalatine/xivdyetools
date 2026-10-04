@@ -17,4 +17,4 @@
 - No rotation is needed because no exposure was observed. If a branch workflow ever referenced these secrets, reset both bot tokens in the Discord developer portal and update every holder.
 
 ## Status
-OPEN — docs and comments in `3a158847` (branch `fix/security-2026-10-03-sprint11`; PR #233, draft) say the four Discord secrets must be environment secrets (`production`: DISCORD_TOKEN, MODERATION_DISCORD_TOKEN; `beta`: BETA_DISCORD_TOKEN, BETA_DISCORD_GUILD_ID). Every reading job already declares the environment, so no workflow logic changes. Waiting on the maintainer: create the environment secrets, let one run use them, delete the repository copies, then re-read with `gh api`.
+OPEN — the maintainer created the environment secrets on 2026-10-04: `DISCORD_TOKEN` and `MODERATION_DISCORD_TOKEN` on `production`, `BETA_DISCORD_TOKEN` and `BETA_DISCORD_GUILD_ID` on `beta` (verified, `evidence/gh-settings-2026-10-04.txt`). Environment copies take precedence over the repository ones. Remaining: delete the four repository copies after the production deploys of #225 and #227 have registered commands with them, then merge the docs in `3a158847` / `4925659e` (PR #233).
