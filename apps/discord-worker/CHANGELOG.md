@@ -24,10 +24,21 @@ production deploy re-registers commands (`/stats preferences` is gone).
     - a lifted ban's name and reason cleared at once, and the record deleted 90 days later;
     - ban, unban, hide and restore log entries kept 12 months;
     - other preset log entries kept as long as the preset exists.
-  - **Discord posts** (§5 Discord row, §7, §8). Presets needing review go to a private moderation
-    channel, published ones to a submission-log channel. The posts carry no Discord User ID. They
-    stay until a moderator deletes them, or until a deletion request removes them. "All data is
-    stored on Cloudflare" is no longer claimed.
+  - **Discord posts** (§5 Discord row, §7, §8). Every kind of post is listed:
+    - review posts for presets, edits and preview images, updated with the decision;
+    - the ban post and the moderators' list of pending presets;
+    - submission-log notes for presets published without review, and for approvals, rejections
+      and reverts (the latter two with their reason).
+    Posts made since the policy's Last Updated date carry no Discord User ID; older posts may.
+    They stay until a moderator deletes them, or until a deletion request removes the posts about
+    you and your presets, except the post about a ban that is still active. "All data is stored on
+    Cloudflare" is no longer claimed.
+  - **Presets and votes** (§2, §8). Presets are kept until you delete them (web app → My
+    Submissions) or request deletion, no longer "indefinitely". Submitting a preset counts as your
+    vote, or as a vote for the published preset with the same dyes. The version from before an
+    edit held by the automatic check is kept until a moderator restores it or the preset is
+    deleted. The daily counters list the preset id. The ban reason stays in the moderation-log
+    entries for 12 months. Hide and restore entries go when their preset is deleted.
   - **Author name** (§2, §4). The published author is the Discord display name, or the username
     when there is none. The preferences record's last-changed time is listed.
   - **Translations.** One translator per language, reviewed by an Opus verifier. Corrections were

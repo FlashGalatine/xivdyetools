@@ -39,7 +39,8 @@ Rules:
 ### 📜 Privacy Policy updated
 - The Privacy Policy now covers moderation records. If a moderator bans someone from community presets, the bot keeps a ban record and a moderation log, and the policy says what they hold.
 - It also says how long they are kept: a lifted ban's name and reason are cleared at once and the record is deleted 90 days later, and ban log entries are kept for 12 months.
-- Presets that need review are posted to a private moderation channel in our Discord server, and published presets to a private log channel. Those posts never show your Discord account, and a deletion request removes them.
+- Presets that need review are posted to a private moderation channel in our Discord server, and published presets to a private log channel. New posts don't show your Discord user ID, and a deletion request removes the posts about you.
+- It also says that submitting a preset counts as your vote for it, and that you can delete your presets in the web app.
 - The name shown on your presets is your Discord display name, and the policy now says so.
 - The updated policy is available in all six languages.
 ### 🛡️ Moderation

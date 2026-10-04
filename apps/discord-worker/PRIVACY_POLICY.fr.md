@@ -28,8 +28,8 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 | Préférences | Langue, mode de mélange, méthode de correspondance, nombre de résultats, clan, genre, Monde / centre de données par défaut, si les prix du tableau des ventes doivent être affichés par défaut, bascules d'affichage des couleurs, thème, et quelles catégories de teintures exclure des résultats de recherche (métallique, pastel, sombre, cosmique, ishgardienne, chère, de vendeur, artisanale), ainsi que le moment où vous les avez modifiées pour la dernière fois | Jusqu'à réinitialisation ou demande de suppression |
 | Palettes prédéfinies favorites | Jusqu'à 50 palettes prédéfinies communautaires que vous marquez avec `/preset favorite add` — l'id de la palette prédéfinie et le nom qu'elle portait quand vous l'avez enregistrée | Jusqu'à leur retrait ou demande de suppression |
 | Repère de premier lancement | Un repère par utilisateur indiquant que l'avis de bienvenue 5.0 vous a été montré ; ne porte aucun contenu | Expire automatiquement après 180 jours |
-| Soumissions de palettes prédéfinies | Nom, description, teintures, étiquettes, catégorie | Indéfiniment (contenu communautaire) |
-| Votes | Vos votes sur les palettes prédéfinies communautaires | Jusqu'à leur retrait ou demande de suppression |
+| Soumissions de palettes prédéfinies | Nom, description, teintures, étiquettes, catégorie — et, si notre vérification automatique retient pour examen le nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que la palette prédéfinie soit supprimée | Jusqu'à ce que vous la supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
+| Votes | Vos votes sur les palettes prédéfinies communautaires. Soumettre une palette prédéfinie compte comme votre vote pour elle ; si une palette prédéfinie publiée a déjà les mêmes teintures, votre soumission devient un vote pour cette palette à la place | Jusqu'à leur retrait ou demande de suppression |
 
 ### Données de limitation de débit
 
@@ -113,7 +113,7 @@ Pour nommer l'équipement, `/glamour` envoie les numéros de modèle de l'équip
 | Cloudflare KV | Préférences, palettes prédéfinies favorites, le repère de premier lancement, les compteurs d'utilisation et les clés d'activité quotidienne (TTL de 30 jours), et les compteurs de limitation de débit uniquement sur un déploiement sans les liaisons natives de limitation de débit (TTL de 120 secondes) | Réseau de périphérie mondial |
 | Cloudflare D1 | Palettes prédéfinies communautaires, Votes, Enregistrements de modération (voir *Enregistrements de modération*), enregistrements d'échec de notification de modération, compteurs quotidiens de soumission / modification (voir *Conservation des données*) | Infrastructure de base de données de Cloudflare |
 | Cloudflare Workers Analytics Engine | Télémétrie d'utilisation des commandes (voir *Statistiques d'utilisation*) | Infrastructure analytique de Cloudflare |
-| Discord | Messages publiés dans deux salons privés de notre serveur Discord : chaque palette prédéfinie qui nécessite une vérification est publiée dans un salon de modération, et chaque palette prédéfinie publiée l'est dans un salon de journal des soumissions. Un message montre la palette prédéfinie (par exemple son nom, sa description, sa catégorie et ses teintures) et le nom de l'auteur. Un message concernant une image d'aperçu en attente de vérification comprend aussi l'image. Un message ne montre pas votre identifiant utilisateur Discord | Infrastructure de Discord |
+| Discord | Messages publiés dans deux salons privés de notre serveur Discord. Le salon de modération reçoit chaque palette prédéfinie, modification ou image d'aperçu qui nécessite une vérification : le message montre la palette prédéfinie (par exemple son nom, sa description, sa catégorie et ses teintures) et le nom de l'auteur ou, pour une image d'aperçu, le nom de la palette prédéfinie et l'image, et il est mis à jour lorsqu'un modérateur tranche. Si un modérateur vous bannit, le salon de modération reçoit aussi un message avec votre nom d'auteur, le motif et le nombre de vos palettes prédéfinies qui ont été masquées. Les modérateurs peuvent aussi publier dans le salon de modération la liste des palettes prédéfinies en attente de vérification, avec le nom de leurs auteurs. Le salon de journal des soumissions reçoit chaque palette prédéfinie publiée sans vérification, avec le nom de son auteur, et une note nommant la palette prédéfinie lorsqu'un modérateur en approuve ou en rejette une, ou en annule une modification, avec le motif d'un rejet ou d'une annulation. Les messages publiés depuis la date de « Dernière mise à jour » de cette politique ne montrent pas votre identifiant utilisateur Discord ; les plus anciens peuvent le montrer | Infrastructure de Discord |
 
 Tout, sauf ces messages Discord, est stocké sur l'infrastructure de Cloudflare. Voir la [politique de confidentialité de Cloudflare](https://www.cloudflare.com/privacypolicy/) pour plus d'informations. Les messages Discord restent dans ces salons, soumis à la [politique de confidentialité de Discord](https://discord.com/privacy), jusqu'à ce qu'un modérateur les supprime ou jusqu'à ce que vous demandiez la suppression (voir *Vos droits*).
 
@@ -169,7 +169,7 @@ Pour demander la suppression de toutes vos données :
    - Indiquez votre identifiant utilisateur Discord
 2. **Discord** : Rejoignez https://discord.gg/rzxDHNr6Wv et envoyez un DM à « Flash Galatine »
 
-Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppression supprime aussi de notre serveur Discord les messages des salons de modération et de journal des soumissions concernant vos palettes prédéfinies. Un enregistrement de bannissement actif n'est pas supprimé sur demande ; une fois le bannissement levé, l'enregistrement suit la durée de conservation indiquée à la section *Conservation des données*.
+Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppression supprime aussi de notre serveur Discord les messages vous concernant et concernant vos palettes prédéfinies, à l'exception du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas supprimé sur demande ; une fois le bannissement levé, l'enregistrement suit la durée de conservation indiquée à la section *Conservation des données*.
 
 ## 8. Conservation des données
 
@@ -182,14 +182,14 @@ Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppre
 | Préférences utilisateur | Jusqu'à suppression par l'utilisateur |
 | Palettes prédéfinies favorites | Jusqu'à leur retrait par vous |
 | Repère de premier lancement | 180 jours |
-| Palettes prédéfinies communautaires | Indéfiniment (contenu public) |
-| Votes | Jusqu'à leur retrait ou suppression du compte |
+| Palettes prédéfinies communautaires | Jusqu'à ce que vous les supprimiez (application web → Mes soumissions) ou demandiez la suppression |
+| Votes | Jusqu'à leur retrait ou suppression du compte ; également supprimés lorsque la palette prédéfinie est supprimée |
 | Enregistrements d'échec de notification de modération (id de la palette prédéfinie, erreur, horodatages) | 30 jours après résolution, 90 jours si non résolu — supprimés immédiatement si la palette prédéfinie est supprimée |
-| Compteurs quotidiens de soumission / modification (id utilisateur, type, horodatage) | 30 jours |
-| Enregistrements de bannissement | Tant que le bannissement est actif. Lorsqu'il est levé, le nom d'auteur et le motif sont effacés immédiatement, et l'enregistrement est supprimé 90 jours plus tard |
-| Entrées du journal de modération pour un bannissement, une levée de bannissement, un masquage ou une restauration | 12 mois |
+| Compteurs quotidiens de soumission / modification (id utilisateur, type, id de la palette prédéfinie, horodatage) | 30 jours |
+| Enregistrements de bannissement | Tant que le bannissement est actif. Lorsqu'il est levé, le nom d'auteur et le motif sont effacés immédiatement de l'enregistrement, et l'enregistrement est supprimé 90 jours plus tard |
+| Entrées du journal de modération pour un bannissement, une levée de bannissement, un masquage ou une restauration (elles conservent le motif du modérateur) | 12 mois, ou jusqu'à la suppression de la palette prédéfinie pour un masquage ou une restauration |
 | Autres entrées du journal de modération concernant une palette prédéfinie (par exemple approuver, rejeter ou annuler une modification) | Tant que la palette prédéfinie existe |
-| Messages des salons de modération et de journal des soumissions de notre serveur Discord | Jusqu'à ce qu'un modérateur les supprime, ou jusqu'à ce que vous demandiez la suppression |
+| Messages des salons de modération et de journal des soumissions de notre serveur Discord | Jusqu'à ce qu'un modérateur les supprime, ou jusqu'à ce que vous demandiez la suppression (le message sur un bannissement toujours actif est conservé) |
 
 ## 9. Confidentialité des mineurs
 

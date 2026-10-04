@@ -31,8 +31,8 @@ Verbindung zu Square Enix.
 | Einstellungen | Sprache, Mischmodus, Matching-Algorithmus, Ergebnisanzahl, Stamm, Geschlecht, Standard-Welt / -Datenzentrum, ob Marktbrett-Preise standardmäßig angezeigt werden, Farbanzeige-Umschalter und Design sowie welche Farbstoffkategorien von den Suchergebnissen ausgeschlossen werden sollen (metallisch, pastellfarben, dunkel, kosmisch, ishgardisch, teuer, vom Händler verkauft, hergestellt), dazu der Zeitpunkt, zu dem du sie zuletzt geändert hast | Bis du sie zurücksetzt oder eine Löschung beantragst |
 | Favorisierte Presets | Bis zu 50 Community-Presets, die du mit `/preset favorite add` markierst — die ID des Presets und der Name, den es bei der Speicherung hatte | Bis du sie entfernst oder eine Löschung beantragst |
 | Erstlauf-Hinweis-Markierung | Eine Markierung pro Nutzer, dass dir der 5.0-Willkommenshinweis gezeigt wurde; enthält keinen Inhalt | Läuft automatisch nach 180 Tagen ab |
-| Preset-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie | Unbegrenzt (Community-Inhalt) |
-| Stimmen | Deine Stimmen zu Community-Presets | Bis du die Stimme entfernst oder eine Löschung beantragst |
+| Preset-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie — und, falls unsere automatische Prüfung den neuen Namen oder die neue Beschreibung einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator sie wiederherstellt oder das Preset gelöscht wird | Bis du es löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
+| Stimmen | Deine Stimmen zu Community-Presets. Das Einreichen eines Presets zählt als deine Stimme dafür; hat ein veröffentlichtes Preset bereits dieselben Farbstoffe, wird deine Einreichung stattdessen zu einer Stimme für dieses Preset | Bis du die Stimme entfernst oder eine Löschung beantragst |
 
 ### Ratenbegrenzungsdaten
 
@@ -136,7 +136,7 @@ wird nichts aus der Datei gesendet, und nichts über dich oder dein Discord-Kont
 | Cloudflare KV | Einstellungen, favorisierte Presets, die Erstlauf-Hinweis-Markierung, Nutzungszähler und tägliche Aktivitätsschlüssel (30-Tage-TTL) sowie die Ratenbegrenzungszähler nur auf einer Bereitstellung ohne die nativen Rate-Limiting-Bindings (120-Sekunden-TTL) | Globales Edge-Netzwerk |
 | Cloudflare D1 | Community-Presets, Stimmen, Moderationsdatensätze (siehe *Moderationsdatensätze*), Fehldatensätze zu Moderationsbenachrichtigungen, tägliche Zähler für Einreichungen / Bearbeitungen (siehe *Datenaufbewahrung*) | Cloudflares Datenbankinfrastruktur |
 | Cloudflare Workers Analytics Engine | Telemetrie zur Befehlsnutzung (siehe *Nutzungsanalyse*) | Cloudflares Analyseinfrastruktur |
-| Discord | Beiträge in zwei privaten Kanälen unseres Discord-Servers: Jedes Preset, das geprüft werden muss, wird in einem Moderationskanal gepostet, und jedes veröffentlichte Preset in einem Einreichungsprotokoll-Kanal. Ein Beitrag zeigt das Preset (etwa Name, Beschreibung, Kategorie und Farbstoffe) und den Autorennamen. Ein Beitrag zu einem Vorschaubild, das auf Prüfung wartet, enthält außerdem das Bild selbst. Ein Beitrag zeigt nicht deine Discord-Benutzer-ID | Discords Infrastruktur |
+| Discord | Beiträge in zwei privaten Kanälen unseres Discord-Servers. Der Moderationskanal erhält jedes Preset, jede Bearbeitung und jedes Vorschaubild, die geprüft werden müssen: Der Beitrag zeigt das Preset (etwa Name, Beschreibung, Kategorie und Farbstoffe) und den Autorennamen oder, bei einem Vorschaubild, den Namen des Presets und das Bild, und er wird aktualisiert, wenn ein Moderator entscheidet. Sperrt dich ein Moderator, erhält der Moderationskanal außerdem einen Beitrag mit deinem Autorennamen, dem Grund und der Anzahl deiner ausgeblendeten Presets. Moderatoren können im Moderationskanal auch die Liste der Presets, die auf Prüfung warten, mit ihren Autorennamen posten. Der Einreichungsprotokoll-Kanal erhält jedes ohne Prüfung veröffentlichte Preset mit seinem Autorennamen sowie einen Hinweis, der das Preset nennt, wenn ein Moderator eines genehmigt, ablehnt oder zurücksetzt, mit dem Grund bei einer Ablehnung oder einem Zurücksetzen. Beiträge, die seit dem Datum "Zuletzt aktualisiert" dieser Richtlinie entstanden sind, zeigen nicht deine Discord-Benutzer-ID; ältere Beiträge können sie zeigen | Discords Infrastruktur |
 
 Alles außer diesen Discord-Beiträgen wird auf Cloudflares Infrastruktur gespeichert. Siehe
 [Cloudflares Datenschutzrichtlinie](https://www.cloudflare.com/privacypolicy/) für weitere
@@ -206,7 +206,7 @@ Um die Löschung aller deiner Daten zu beantragen:
    - Gib deine Discord-Benutzer-ID an
 2. **Discord**: Tritt https://discord.gg/rzxDHNr6Wv bei und schreibe "Flash Galatine" eine DM
 
-Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfernt außerdem die Beiträge zu deinen Presets im Moderationskanal und im Einreichungsprotokoll-Kanal auf unserem Discord-Server. Ein aktiver Sperrdatensatz wird auf Anfrage nicht gelöscht; sobald die Sperre aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Datenaufbewahrung*.
+Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfernt außerdem die Beiträge über dich und deine Presets von unserem Discord-Server, außer dem Beitrag zu einer noch aktiven Sperre. Ein aktiver Sperrdatensatz wird auf Anfrage nicht gelöscht; sobald die Sperre aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Datenaufbewahrung*.
 
 ## 8. Datenaufbewahrung
 
@@ -219,14 +219,14 @@ Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfern
 | Nutzereinstellungen | Bis vom Nutzer gelöscht |
 | Favorisierte Presets | Bis von dir entfernt |
 | Erstlauf-Hinweis-Markierung | 180 Tage |
-| Community-Presets | Unbegrenzt (öffentlicher Inhalt) |
-| Stimmen | Bis entfernt oder Kontolöschung |
+| Community-Presets | Bis du sie löschst (Web-App → Meine Einreichungen) oder eine Löschung beantragst |
+| Stimmen | Bis entfernt oder Kontolöschung; auch gelöscht, wenn das Preset gelöscht wird |
 | Fehldatensätze zu Moderationsbenachrichtigungen (Preset-ID, Fehler, Zeitstempel) | 30 Tage nach Lösung, 90 Tage bei ungelöst — sofort gelöscht, wenn das Preset gelöscht wird |
-| Tägliche Zähler für Einreichungen / Bearbeitungen (Nutzer-ID, Art, Zeitstempel) | 30 Tage |
-| Sperrdatensätze | Solange die Sperre aktiv ist. Wird sie aufgehoben, werden der Autorenname und der Grund sofort gelöscht, und der Datensatz wird 90 Tage später gelöscht |
-| Einträge im Moderationsprotokoll zu einer Sperre, einer Aufhebung einer Sperre, einem Ausblenden oder einem Wiederherstellen | 12 Monate |
+| Tägliche Zähler für Einreichungen / Bearbeitungen (Nutzer-ID, Art, Preset-ID, Zeitstempel) | 30 Tage |
+| Sperrdatensätze | Solange die Sperre aktiv ist. Wird sie aufgehoben, werden der Autorenname und der Grund sofort aus dem Datensatz gelöscht, und der Datensatz wird 90 Tage später gelöscht |
+| Einträge im Moderationsprotokoll zu einer Sperre, einer Aufhebung einer Sperre, einem Ausblenden oder einem Wiederherstellen (diese behalten den Grund des Moderators) | 12 Monate oder, bei einem Ausblenden oder Wiederherstellen, bis das Preset gelöscht wird |
 | Andere Einträge im Moderationsprotokoll zu einem Preset (etwa Genehmigen, Ablehnen oder Zurücksetzen) | Solange das Preset existiert |
-| Beiträge im Moderationskanal und im Einreichungsprotokoll-Kanal auf unserem Discord-Server | Bis ein Moderator sie löscht oder bis du eine Löschung beantragst |
+| Beiträge im Moderationskanal und im Einreichungsprotokoll-Kanal auf unserem Discord-Server | Bis ein Moderator sie löscht oder bis du eine Löschung beantragst (der Beitrag zu einer noch aktiven Sperre bleibt bestehen) |
 
 ## 9. Datenschutz für Kinder
 
