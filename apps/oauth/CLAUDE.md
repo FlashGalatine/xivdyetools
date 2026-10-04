@@ -138,7 +138,7 @@ All four bindings are **production-required** (`validateEnv`, FINDING-013): each
 when absent — a weaker rate-limit fallback, or no revocation check on `/auth/me` — with no error
 and no log.
 
-Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID` (required — the XIVAuth flow is not optional config), `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domains: `auth.xivdyetools.app`, `auth.xivdyetools.projectgalatine.com` (retiring — docs/operations/DOMAIN_DEPRECATION.md Phase 2). The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `XIVAUTH_CLIENT_ID` (required — the XIVAuth flow is not optional config), `FRONTEND_URL`, `WORKER_URL`, `JWT_EXPIRY` (seconds, default `3600`). Custom domain: `auth.xivdyetools.app` only (`auth.xivdyetools.projectgalatine.com` was retired on 2026-10-04 — docs/operations/DOMAIN_DEPRECATION.md). The `wrangler.toml` also defines a development env (`xivdyetools-oauth-dev`) — note the dev D1 still has `database_id = "TODO_RUN_WRANGLER_D1_CREATE"` placeholder. There is no preview env (deleted in the 2026-08-21 audit, FINDING-029); `ENVIRONMENT` must be `development` or `production`, and anything other than `development` gets the production gates (HTTPS-only URLs, fail-closed env validation, HSTS).
 
 ### Required Secrets
 

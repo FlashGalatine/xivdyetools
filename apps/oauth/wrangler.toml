@@ -3,9 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 # ARCH-001: nodejs_compat removed — no Node.js APIs used
 
+# The retired auth.xivdyetools.projectgalatine.com custom domain was removed in
+# the dashboard on 2026-10-04 (docs/operations/DOMAIN_DEPRECATION.md Phase 2).
+# A deploy re-attaches every custom domain listed here, so it must not return.
 routes = [
-  { pattern = "auth.xivdyetools.app", custom_domain = true },
-  { pattern = "auth.xivdyetools.projectgalatine.com", custom_domain = true }
+  { pattern = "auth.xivdyetools.app", custom_domain = true }
 ]
 
 [dev]

@@ -7,8 +7,9 @@
  * Allowed redirect URI origins
  * These origins are permitted as OAuth callback destinations
  *
- * FINDING-006 (2026-10-03 security audit): the retired projectgalatine.com
- * origin was removed (DOMAIN_DEPRECATION Phase 1); the apex 301s to xivdyetools.app.
+ * FINDING-006 (2026-10-03 security audit): the retired
+ * xivdyetools.projectgalatine.com origin was removed (DOMAIN_DEPRECATION);
+ * that hostname no longer serves anything.
  */
 export const ALLOWED_REDIRECT_ORIGINS = [
   'https://xivdyetools.app',

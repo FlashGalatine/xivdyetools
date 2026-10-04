@@ -58,6 +58,14 @@ describe('wrangler.toml', () => {
     expect(toml).toContain('auth.xivdyetools.app');
   });
 
+  // FINDING-006 (2026-10-03): the retired auth.xivdyetools.projectgalatine.com
+  // custom domain was removed in the dashboard; a deploy would re-attach it if
+  // it were still listed, so auth.xivdyetools.app is the only route.
+  it('lists auth.xivdyetools.app as the only route', () => {
+    const patterns = [...toml.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['auth.xivdyetools.app']);
+  });
+
   /**
    * This worker's top level IS production (no [env.production] block
    * exists, or should ever exist again). FINDING-029 (2026-08-21 audit)
