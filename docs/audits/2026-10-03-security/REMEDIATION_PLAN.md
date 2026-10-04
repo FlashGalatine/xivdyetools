@@ -10,7 +10,7 @@
 
 Cross-unit findings are split into **parts**, one per deploy unit, e.g. *FINDING-017 (API)*. Each part sits in exactly one sprint. A finding closes only when all of its parts, plus any policy half, have landed. No finding needs credential rotation. This plan was reviewed adversarially before the gate: 3 blockers and 10 ordering / command corrections were applied, each verified at `file:line`.
 
-## Decisions needed at the §8 gate (before Sprint 3)
+## Decisions at the §8 gate — decided 2026-10-03
 
 Eight findings carry an **AMEND**, a new public commitment. Four of them have a code alternative that removes the need for the AMEND, so decide up front:
 
@@ -26,10 +26,15 @@ Eight findings carry an **AMEND**, a new public commitment. Four of them have a 
 | FINDING-029 | Web deletion steps, 30-day response time and retention | — | web PRIVACY Questions? (always) |
 
 Also at the gate:
-- FINDING-002 is graded HIGH by the skill's rule; the audit's calibration pass graded it MEDIUM. Confirm or downgrade it. The fix is the same either way.
-- FINDING-017 rollout: **fail closed**, per `docs/operations/security-remediation-2026-09-15.md`. Between the Sprint 3 and Sprint 4 deploys, moderators get 409 on approve/reject. Run both sprints in one held-workflow window.
+- FINDING-002: **HIGH, confirmed by the maintainer on 2026-10-03**. The skill's rule graded it HIGH; the calibration pass argued MEDIUM.
+- FINDING-017 rollout: **fail closed, approved by the maintainer on 2026-10-03.** This follows `docs/operations/security-remediation-2026-09-15.md`.
+  - A stale, missing or unversioned revision gets an error (409) wherever it applies.
+  - That includes the window between the Sprint 3 and Sprint 4 deploys. Run both sprints in one held-workflow window.
 
-**Coordinator recommendations (2026-10-03). These await the maintainer's choice; none is decided.** The facts behind them were gathered at `file:line` after the gate.
+**Decided 2026-10-03: the maintainer accepted every recommendation below.**
+- FINDING-013's preference sampling is dropped (code, no policy edit).
+- FINDING-029's contact address is `flashgalatinefgc@gmail.com`, the same mailbox the bot policy already names.
+- The sprint rows below are resolved to these choices. The facts behind them were gathered at `file:line` after the gate.
 
 | ID | Recommended | Main reason |
 |---|---|---|
@@ -91,7 +96,7 @@ These are document and copy corrections with no code dependency, so they do not 
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-003 | security | MEDIUM / INTERNET-UNAUTH | CORRECT three places:<br>• §Images: scope it to the colour tools; the optional preset preview image is uploaded, stored and shown after approval.<br>• item 3.<br>• How to verify. |
-| FINDING-004 (web copy) | security | MEDIUM / INTERNET-UNAUTH | CORRECT `preset.privacyNote` (all six locales): remove "No character data" and say "a provider ID and a name are stored". The precise AMEND waits for the Sprint 6 decision (row in Sprint 8). |
+| FINDING-004 (web) | security | MEDIUM / INTERNET-UNAUTH | §8 chose disclosure, and the code it describes is already live, so the final wording ships here (no Sprint 8 row). Three changes:<br>• `preset.privacyNote` (all six locales): remove "No character data". Say that signing in stores a provider ID and your name. For XIVAuth, that name is your verified character name, shown as the author of your presets. If your XIVAuth account is linked to Discord, the Discord ID is stored too.<br>• AMEND PRIVACY item 3 and ToS §Accounts to the same effect.<br>• Add a copy-parity test against `xivauth.ts`. |
 | FINDING-010 | security | LOW / INTERNET-UNAUTH | CORRECT §What is stored on your device to say what "Reset settings" actually clears. Or add a real "clear all local data" action, in which case the wording follows the action. |
 | FINDING-012 | security | LOW / INTERNET-UNAUTH | The Glamour Reader gets its own `charaHint` ("the gear model numbers are sent") and a conditional LOCAL ONLY chip. |
 | FINDING-028 | security | INFO / INTERNET-UNAUTH | CORRECT PRIVACY "Links to other sites" and ToS "Other people's services": add the author-supplied preset example links. |
@@ -121,7 +126,7 @@ API guards first. Sprints 3 and 4 run in **one held-workflow maintenance window*
 | FINDING-017 (API) | security | LOW / INTERNET-AUTH | Three changes:<br>• `PATCH /moderation/:id/status` takes `expected_revision` / `expected_status` from the caller and uses them in the `WHERE`. A mismatch or a missing revision gets 409: **fail closed**, with no unversioned acceptance.<br>• The submission/edit notification payload (`notification-service.ts:25-41`) carries the `content_revision` and status of the text being sent.<br>• The dead-letter allowlist (`toDeadLetterRecord`) is updated to match. |
 | FINDING-019 (presets-api) | security | LOW / INTERNET-AUTH | Either a real per-locale local filter (normalized profanity / slur lists), or new and text-edited presets default to `pending` when no scorer is configured. |
 | FINDING-014 (presets-api) | security | LOW / INTERNET-AUTH | Keep both JWT `sub` and `discord_id` on `AuthContext`. `isUserBanned` becomes `(discord_id IN (?sub, ?snowflake) OR xivauth_id = ?sub) AND unbanned_at IS NULL`. Lazy re-keying of UUID-keyed presets / votes / `submission_events` runs **only after `requireNotBanned` passes, and never for a `sub` with an active ban**. Tests:<br>• ban UUID → link → still 403, with no re-key;<br>• unban → restore finds the presets.<br>Cross-ref the 2026-09-16-deep-dive/BUG-001 residual. |
-| FINDING-005 (presets-api) | security | MEDIUM / INTERNET-AUTH | Retention for lifted bans and `moderation_log` reasons, pruned on the write path (no cron exists). **No schema change**: `banned_users.username` stays `NOT NULL`. |
+| FINDING-005 (presets-api) | security | MEDIUM / INTERNET-AUTH | Retention, pruned on the write path (no cron exists):<br>• delete lifted-ban rows 90 days after `unbanned_at`;<br>• `moderation_log` preset-level rows (approve / reject) go with their preset;<br>• user-level rows (ban / unban / hide) are deleted after 12 months.<br>**No schema change**: `banned_users.username` stays `NOT NULL`. |
 | FINDING-020 | security | LOW / INTERNET-AUTH | Batch an `image_approve` / `image_reject` `moderation_log` insert (`WHERE changes() > 0`) with each preview-image UPDATE. Tests include that a stale 409 writes no row. |
 | FINDING-016 (presets-api) | security | LOW / INTERNET-AUTH | `example_link`:<br>• **reject** it unless `hasOnlySupportedCharacters` passes;<br>• store `new URL(...).href`.<br>`author_name` comes from the token, not the user, so **strip** control / bidi / invisible characters instead of rejecting (keep ZWJ between emoji). |
 | FINDING-031 | security | INFO / LOCAL | A test that migration 0014's trigger equals the `schema.sql` copy, or run the revision tests on the pre-0014 schema plus 0014. Optionally add a `sqlite_master` probe in the deploy workflow. |
@@ -145,7 +150,7 @@ Deploys right after Sprint 3, in the same window, and **before** Sprint 5. Moder
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-017 (moderation-worker) | security | LOW / INTERNET-AUTH | Custom-id parsing and the revision round-trip:<br>• Parse both the old `preset_approve_<id>` / `preset_reject_<id>` format and the new revision-bearing format (today a `replace()` at `buttons/preset-moderation.ts:77,215` would read `<id>_<rev>` as the id). `preset_reject_modal_<id>` must carry the revision through.<br>• Old buttons with no revision get the 2026-09-15 recovery: refresh the embed and require a second, revision-bound click, or answer "re-review".<br>• `approvePreset` / `rejectPreset` send the revision and status that the moderator saw.<br>• `/preset moderate approve|reject` (typed id, no revision seen) looks up the current revision, shows the text being approved, and requires a confirm click bound to that revision. |
-| FINDING-005 (moderation-worker) | security | MEDIUM / INTERNET-AUTH | Blank `banned_users.username` (`''`) on unban. Keep it while the ban is active, because ban search uses it. |
+| FINDING-005 (moderation-worker) | security | MEDIUM / INTERNET-AUTH | Blank `banned_users.username` and `reason` (`''`) on unban. The 10–500 rule on `reason` is a comment, not a `CHECK`. Keep both while the ban is active, because ban search uses the username. |
 | FINDING-014 (moderation-worker) | security | LOW / INTERNET-AUTH | For an XIVAuth-only target, write the UUID to `banned_users.xivauth_id` and keep `discord_id` as today. The worker's own ban reads (`ban-service.ts:40,59,101,639`) also match `xivauth_id`. It has no oauth binding, so it cannot look up a linked Discord id. |
 | FINDING-021 | security | LOW / INTERNET-AUTH | The `unbanUser` restore skips presets whose `dye_signature` collides with an approved or pending row (`NOT EXISTS`) and reports them. A UNIQUE error maps to its own specific message. |
 | FINDING-022 (moderation-worker) | security | LOW / LOCAL | Pin `[observability] enabled = false` and assert it in `tests/wrangler-config.test.ts`. |
@@ -166,10 +171,10 @@ This sprint lands after Sprints 3–4: the bot policy has to describe the minimi
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-017 (discord-worker) | security | LOW / INTERNET-AUTH | Emit revision-bearing custom_ids (≤ 100 characters), taken from the Sprint 3 notification payload. |
-| FINDING-007 | security | LOW / INTERNET-UNAUTH | Per §8, one of:<br>• send `username` only (no policy edit);<br>• AMEND §2 / §4 to "display name".<br>Either way, list the preferences `updatedAt` field or stop storing it. |
-| FINDING-008 (discord-worker + bot policy) | security | LOW / INTERNET-UNAUTH | Optional minimization: drop `<@id>` from the submission-log embed. AMEND three places:<br>• add a Discord-channels row to the §5 storage table;<br>• replace "All data is stored on Cloudflare";<br>• make §7 say whether a deletion removes the channel messages. |
-| FINDING-013 | security | LOW / INTERNET-UNAUTH | Per §8, one of:<br>• drop the preference sampling;<br>• AMEND the §4 `/stats` row. |
-| FINDING-005 (bot policy) | security | MEDIUM / INTERNET-AUTH | AMEND §2 / §5 / §8 with the minimized ban and moderation-log fields and their retention. |
+| FINDING-007 | security | LOW / INTERNET-UNAUTH | §8 chose the wording fix: AMEND §2 / §4 to say the Discord display name (`global_name`, else `username`) is published as the preset author. No code change. Also list the preferences `updatedAt` field, or stop storing it. |
+| FINDING-008 (discord-worker + bot policy) | security | LOW / INTERNET-UNAUTH | Drop `<@id>` from the submission-log embed (§8). Keep it in the moderation embed only if moderators act on it; first find which control opens the ban modal (`moderation-worker/src/handlers/buttons/ban-confirmation.ts:93`). AMEND three places:<br>• add a Discord-channels row to the §5 storage table;<br>• replace "All data is stored on Cloudflare";<br>• make §7 say whether a deletion removes the channel messages. |
+| FINDING-013 | security | LOW / INTERNET-UNAUTH | §8 chose to drop it. Remove the `/stats preferences` subcommand: the handler (`stats.ts` ~370-530), its schema entry and its tests. No policy edit. `deploy-discord-worker.yml` re-registers the commands. |
+| FINDING-005 (bot policy) | security | MEDIUM / INTERNET-AUTH | AMEND §2 / §5 / §8 with the ban and moderation-log records:<br>• the Discord or XIVAuth id, the username at the time of the ban, the moderator, the reason and the dates;<br>• why they are kept;<br>• their retention: active bans until lifted; lifted bans 90 days with the name and reason cleared at unban; a preset's moderation notes for as long as the preset exists; ban / unban log entries 12 months. |
 
 **Ends with:**
 1. `pnpm turbo run build type-check lint test --filter=...xivdyetools-discord-worker` and `policy-locale-parity.py`.
@@ -177,12 +182,13 @@ This sprint lands after Sprints 3–4: the bot policy has to describe the minimi
 3. Merge. `deploy-discord-worker.yml` deploys.
 4. **Discord announcement** of the AMENDs (bot policy §11).
 
-## Sprint 6 — oauth: retired origin, author-name decision, logs pin
+## Sprint 6 — oauth: retired origin, logs pin
+
+FINDING-004 needs no oauth change: §8 kept the verified character name and the linked Discord id, and disclosed them (Sprint 2).
 
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-006 (oauth) | security | LOW / INTERNET-UNAUTH | Remove the retired origin from `ALLOWED_REDIRECT_ORIGINS` (DOMAIN_DEPRECATION Phase 1). Test the exact production allowlist. Phase 2 (the route and the Discord redirect URIs) are maintainer steps. |
-| FINDING-004 (oauth) | security | MEDIUM / INTERNET-UNAUTH | Only if §8 chose minimization: change what `xivauth.ts` stores as `username` / author name, and whether the linked Discord id is kept. Check the FINDING-014 identity rules before dropping the linked id. |
 | FINDING-022 (oauth) | security | LOW / LOCAL | Pin `[observability] enabled = false` in the single top-level block (that block **is** production). Assert it in `src/__tests__/wrangler-config.test.ts`. |
 
 **Ends with:**
@@ -196,7 +202,7 @@ This sprint lands after Sprints 3–4: the bot policy has to describe the minimi
 
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
-| FINDING-011 (api-worker) | security | LOW / INTERNET-UNAUTH | Per §8: rate-limit the Universalis proxy through the native binding and drop the module-scope `MemoryRateLimiter`. That needs no policy edit. |
+| FINDING-011 (api-worker) | security | LOW / INTERNET-UNAUTH | Decided at §8: rate-limit the Universalis proxy through the native binding and drop the module-scope `MemoryRateLimiter`. That needs no policy edit. |
 | FINDING-022 (api-worker) | security | LOW / LOCAL | Pin `[observability] enabled = false` and assert it in a wrangler-config test. |
 
 **Ends with:**
@@ -206,16 +212,14 @@ This sprint lands after Sprints 3–4: the bot policy has to describe the minimi
 
 ## Sprint 8 — web-app: AMENDs to the privacy guide and Terms
 
-This runs after Sprints 3–7, so every sentence describes code that is already live. The edits are one coordinated six-file commit per document. FINDING-004/005/008/009/029 all edit PRIVACY item 3 or Questions?.
+This runs after Sprints 3–7, so every sentence describes code that is already live. The edits are one coordinated six-file commit per document. FINDING-005/008/009/029 all edit PRIVACY item 3 or Questions?. FINDING-004 shipped in Sprint 2, and FINDING-011 needs no policy edit.
 
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
-| FINDING-004 (web AMEND) | security | MEDIUM / INTERNET-UNAUTH | AMEND PRIVACY item 3, ToS §Accounts and `preset.privacyNote` to name exactly what the Sprint 6 decision stores. Add a copy-parity test against `xivauth.ts`. |
-| FINDING-005 (web) | security | MEDIUM / INTERNET-AUTH | AMEND item 3 with the minimized ban and moderation records and their retention. |
+| FINDING-005 (web) | security | MEDIUM / INTERNET-AUTH | AMEND item 3 with the same ban and moderation records, purpose and retention as the bot policy (Sprint 5). |
 | FINDING-008 (web) | security | LOW / INTERNET-UNAUTH | AMEND item 3: submissions are posted to private Discord moderation channels. |
 | FINDING-009 | security | LOW / INTERNET-UNAUTH | AMEND item 3: the 30-day submission/edit counters and the notification-failure records. |
-| FINDING-029 | security | INFO / INTERNET-UNAUTH | AMEND Questions?: deletion steps, a private channel, a 30-day response time and the retention period. |
-| FINDING-011 (web) | security | LOW / INTERNET-UNAUTH | Only if §8 chose disclosure: AMEND the IP section. |
+| FINDING-029 | security | INFO / INTERNET-UNAUTH | AMEND Questions? to mirror bot policy §7:<br>• request deletion privately by email to `flashgalatinefgc@gmail.com` or by Discord DM, never in a public issue;<br>• requests are handled within 30 days;<br>• the self-serve deletes (your presets, your votes) are listed;<br>• data is kept until you delete it or ask;<br>• a request does not remove an active ban. |
 
 **Ends with:**
 1. Run the same gates as Sprint 2: `validate:i18n`, the build/type-check/lint/test gate, `build:check` and `policy-locale-parity.py`.

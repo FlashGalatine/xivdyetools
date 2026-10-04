@@ -1,6 +1,6 @@
 # FINDING-002: budget.ts:272 / budget-calculator.ts:180 log the option-derived target dye id, matching method and max_distance threshold, which PRIVACY_POLICY §5 says are never logged
 **Severity:** HIGH · **Exposure:** INTERNET-AUTH · **Deploy unit:** discord-worker · **Rotation:** NONE · **Policy:** NONE · **CWE:** CWE-532
-**Reconcile case:** 1 (Step 3a) · **Grade note:** HIGH by the skill rule (a field the policy explicitly promises is never in these lines). The calibration pass argued MEDIUM (catalog id / enum / number, Workers Logs off); the maintainer may downgrade at the §8 gate.
+**Reconcile case:** 1 (Step 3a) · **Grade note:** HIGH by the skill rule (a field the policy explicitly promises is never in these lines). The calibration pass argued MEDIUM (catalog id / enum / number, Workers Logs off); the maintainer confirmed HIGH at the §8 gate on 2026-10-03.
 
 ## Location
 - apps/discord-worker/src/handlers/commands/budget.ts:272 — logger.info('Budget: building ledger', { targetDyeId, hasWorld }); targetDyeId comes from the target_dye option (budget.ts:177)

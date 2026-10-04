@@ -18,7 +18,7 @@ Whole-monorepo security and privacy-policy audit: **31 confirmed findings — 1 
 ## Top items
 
 1. **FINDING-001 (MEDIUM, Sprint 0)** — web-app: beta.xivdyetools.app has served no CSP, X-Frame-Options, HSTS or Permissions-Policy since 2026-08-09, while it signs users in with production JWTs.
-2. **FINDING-002 (HIGH by rule)** — discord-worker: `/budget` log lines carry command option values that bot policy §5 promises are never logged.
+2. **FINDING-002 (HIGH, confirmed at the §8 gate)** — discord-worker: `/budget` log lines carry command option values that bot policy §5 promises are never logged.
 3. **FINDING-004 (MEDIUM)** — web-app + oauth: the sign-in note says "No character data", but XIVAuth sign-in stores and publishes the verified character name and stores a linked Discord id (a regression of 2026-08-29/FINDING-002's copy fix).
 4. **FINDING-003 (MEDIUM)** — web-app: PRIVACY.md says images never leave the device; the optional preset preview image is uploaded and stored.
 5. **FINDING-005 (MEDIUM)** — moderation-worker + presets-api: ban and moderation-log records (username copy, free-text reason) are kept indefinitely and appear in neither policy.

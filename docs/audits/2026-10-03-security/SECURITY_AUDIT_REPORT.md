@@ -58,7 +58,7 @@ FINDING-001 is the only exploitable-now item: beta signs users in with productio
 
 FINDING-019 is dated: the documented runbook deletes the Perspective key by 2026-12-31, and after that every preset auto-approves. The plan therefore puts a doc-only `DEPRECATIONS.md` blocking step in Sprint 0, and falls back to shipping the presets-api part alone if it has not merged by about 2026-12-01.
 
-FINDING-002 is HIGH by the skill’s rule — a field the policy explicitly promises is never in these log lines — not by impact: the values are a dye id, an enum and a number, and Workers Logs persistence is off. The calibration pass argued MEDIUM; that call is the maintainer's at the §8 gate.
+FINDING-002 is HIGH by the skill’s rule — a field the policy explicitly promises is never in these log lines — not by impact: the values are a dye id, an enum and a number, and Workers Logs persistence is off. The calibration pass argued MEDIUM; the maintainer confirmed HIGH at the §8 gate on 2026-10-03.
 
 ## Pending rotation
 
@@ -75,20 +75,19 @@ Every row is a **six-file edit per document** (English + `.ja/.ko/.zh/.de/.fr`),
 | ID | Document(s) | § | CORRECT/AMEND | Landed? |
 |---|---|---|---|---|
 | FINDING-003 | web `PRIVACY.md` | Images and camera captures; Network access item 3; How to verify | CORRECT | no |
-| FINDING-004 (now) | web `locales/*.json` `preset.privacyNote` | remove "No character data" | CORRECT (plan Sprint 2) | no |
-| FINDING-004 (later) | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md`, web `locales/*.json` `preset.privacyNote` | item 3; Accounts | **AMEND** after the minimization decision (plan Sprint 8) | no |
-| FINDING-005 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §2 / §5 / §8; item 3 | **AMEND** (after minimizing the username copy + retention) | no |
-| FINDING-007 | bot `PRIVACY_POLICY.md` | §2, §4 | **AMEND** — or none if the bot sends `username` | no |
+| FINDING-004 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md`, web `locales/*.json` `preset.privacyNote` | item 3; Accounts | **AMEND**, approved 2026-10-03: disclose the verified character name and the linked Discord id (plan Sprint 2) | no |
+| FINDING-005 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §2 / §5 / §8; item 3 | **AMEND**, approved 2026-10-03, after minimizing (plan Sprints 3–5, 8) | no |
+| FINDING-007 | bot `PRIVACY_POLICY.md` | §2, §4 | **AMEND**, approved 2026-10-03: "display name" | no |
 | FINDING-008 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §5 / §7; item 3 | **AMEND** | no |
 | FINDING-009 | web `PRIVACY.md` | item 3 | **AMEND** | no |
 | FINDING-010 | web `PRIVACY.md` | What is stored on your device | CORRECT | no |
-| FINDING-011 | web `PRIVACY.md` | Your IP address | **AMEND** — or none if the proxy moves to the native limiter | no |
+| FINDING-011 | — | — | none: §8 chose the native limiter (plan Sprint 7), which makes the current text true | n/a |
 | FINDING-012 | web `locales/*.json` `swatch.charaHint` (+ chip) | — | CORRECT (UI copy; PRIVACY.md is already right) | no |
-| FINDING-013 | bot `PRIVACY_POLICY.md` | §4 | **AMEND** — or none if sampling is dropped | no |
+| FINDING-013 | — | — | none: §8 chose to drop the sampling (plan Sprint 5) | n/a |
 | FINDING-028 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md` | Links to other sites; Other people's services | CORRECT | no |
-| FINDING-029 | web `PRIVACY.md` | Questions?; item 3 | **AMEND** (states a retention + response time) | no |
+| FINDING-029 | web `PRIVACY.md` | Questions?; item 3 | **AMEND**, approved 2026-10-03: contact `flashgalatinefgc@gmail.com` or a Discord DM, 30 days | no |
 
-FINDING-002 and FINDING-018 make the existing bot-policy text true by changing code; they need no policy edit. FINDING-004, -005, -008, -009 and -029 all touch web `PRIVACY.md` item 3 and should land as one coordinated web-app policy commit.
+FINDING-002 and FINDING-018 make the existing bot-policy text true by changing code; they need no policy edit. FINDING-005, -008, -009 and -029 all touch web `PRIVACY.md` item 3 and should land as one coordinated web-app policy commit (plan Sprint 8). FINDING-004's AMEND describes code that is already live, so it ships earlier, with the Sprint 2 CORRECTs.
 
 ## Evidence and validation
 
@@ -213,4 +212,4 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 
 ## Next steps
 
-Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) after the §8 confirmation gate. **Publication hold:** `FlashGalatine/xivdyetools` is public. This folder holds working detail for unpatched findings (FINDING-001 above all), so do not push it until FINDING-001 is live on beta and confirmed with the `curl -sI` probe. A local commit is fine. The audit itself changed no source. After the §8 gate (2026-10-03) the maintainer approved Sprint 0 with local commits only: FINDING-001 is fixed in `61b7077b` on `fix/beta-security-headers` and the FINDING-019 runbook in `d8d5e3e8`; nothing is pushed or deployed. The AMEND decisions, the FINDING-002 grade and the FINDING-017 window are still open.
+Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) after the §8 confirmation gate. **Publication hold:** `FlashGalatine/xivdyetools` is public. This folder holds working detail for unpatched findings (FINDING-001 above all), so do not push it until FINDING-001 is live on beta and confirmed with the `curl -sI` probe. A local commit is fine. The audit itself changed no source. After the §8 gate (2026-10-03) the maintainer approved Sprint 0 with local commits only: FINDING-001 is fixed in `61b7077b` on `fix/beta-security-headers` and the FINDING-019 runbook in `d8d5e3e8`; nothing is pushed or deployed. The §8 decisions were made on 2026-10-03: every AMEND recommendation was accepted (FINDING-011 and FINDING-013 by code, so six AMENDs remain), FINDING-002 stays HIGH, and FINDING-017 fails closed.
