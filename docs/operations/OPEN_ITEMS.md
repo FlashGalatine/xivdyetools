@@ -20,9 +20,10 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
 
 Verified with `gh api` on 2026-09-05; the state noted is the state found.
 
-- [ ] **Code security → Private vulnerability reporting: ON.** Found **disabled**
-      (`repos/…/private-vulnerability-reporting` → `enabled: false`) while `SECURITY.md` directs
-      reporters to it. The only item on this page a stranger can hit; do this one first.
+- [x] **Code security → Private vulnerability reporting: ON.** Done 2026-10-04 (verified with
+      `gh api`: `repos/…/private-vulnerability-reporting` → `enabled: true`), matching what
+      `SECURITY.md` tells reporters. Defaults kept: no CWE requirement, a daily limit of 10, no
+      trusted reporters.
 - [x] **Dependabot alerts + security updates: ON.** Done 2026-10-04 (2026-10-03 audit FINDING-030;
       verified with `gh api`: `vulnerability-alerts` → 204, `automated-security-fixes` →
       `enabled: true`). The nightly `pnpm audit --prod` job is the in-repo half; this is the
