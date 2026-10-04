@@ -87,7 +87,7 @@ Discord  ──POST /──►  Ed25519 verify (@xivdyetools/auth)
                   defer  →  follow-up via Discord REST
 ```
 
-The `/webhooks/preset-submission` endpoint receives notifications from `presets-api` and posts embeds + approve/reject buttons to the moderation channel. The `/webhooks/github` endpoint listens for pushes that modify `CHANGELOG-laymans.md` and announces releases to the announcement channel — only `push` events from `FlashGalatine/xivdyetools` (`GITHUB_ANNOUNCE_REPO`/`GITHUB_ANNOUNCE_REPO_URL` in `src/index.ts`; the payload's `repository` is only compared, never used to build a URL), and each version only once (KV `announced:v:<version>`, 90-day TTL, written after a successful send), so a GitHub *Redeliver* is safe (FINDING-021).
+The `/webhooks/preset-submission` endpoint receives notifications from `presets-api` and posts embeds + approve/reject buttons to the moderation channel. The embed names the author by sanitized name only — never a `<@id>` mention (FINDING-008). When presets-api sends `content_revision` (2.4.0+) the buttons carry `preset_<approve|reject|revert>_<uuid>:<revision>:<status>` (≤ 100 chars; the grammar moderation-worker 1.8.0 parses in `utils/review-custom-id.ts`) so a click is bound to the text the moderator saw; without it — and always on the `/preset submit`/`edit` paths, which hold only a `CommunityPreset` response with no revision — the legacy `preset_<kind>_<uuid>` ids are emitted, which moderation-worker answers with a refresh rather than acting (FINDING-017). The `/webhooks/github` endpoint listens for pushes that modify `CHANGELOG-laymans.md` and announces releases to the announcement channel — only `push` events from `FlashGalatine/xivdyetools` (`GITHUB_ANNOUNCE_REPO`/`GITHUB_ANNOUNCE_REPO_URL` in `src/index.ts`; the payload's `repository` is only compared, never used to build a URL), and each version only once (KV `announced:v:<version>`, 90-day TTL, written after a successful send), so a GitHub *Redeliver* is safe (FINDING-021).
 
 ### Key Directories
 
@@ -272,7 +272,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `/budget` | 13G ledger — tier-group pricing via Universalis |
 | `/changelog` | The bot's own release notes — `apps/discord-worker/CHANGELOG-laymans.md`, bundled as text at deploy time (ephemeral) |
 | `/manual` | Help topics (📸 ♿ 🔲 📐 🪙 👤) with learn-more links |
-| `/stats` | Usage stats incl. the 5.0 adoption panel (gated) |
+| `/stats` | Usage stats incl. the 5.0 adoption panel (`summary` public; `overview`/`commands`/`health` gated — `preferences` was removed, FINDING-013) |
 
 ## Dependencies
 

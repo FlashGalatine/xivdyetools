@@ -5,7 +5,6 @@
  * - summary: Public - basic bot information
  * - overview: Admin - usage metrics and trends
  * - commands: Admin - per-command breakdown and rankings
- * - preferences: Admin - user preference adoption rates
  * - health: Admin - system health and infrastructure status
  */
 
@@ -189,15 +188,6 @@ describe('stats.ts', () => {
       expect(data.data!.embeds![0].title).toContain('Command Usage Breakdown');
     });
 
-    it('should route to preferences subcommand for authorized user', async () => {
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      expect(data.data!.embeds![0].title).toContain('Preference Adoption');
-    });
-
     it('should route to health subcommand for authorized user', async () => {
       const interaction = makeInteraction('admin-123', 'health');
 
@@ -205,6 +195,16 @@ describe('stats.ts', () => {
       const data = (await response.json()) as InteractionResponseBody;
 
       expect(data.data!.embeds![0].title).toContain('System Health');
+    });
+
+    it('no longer serves the removed preferences subcommand (FINDING-013)', async () => {
+      const interaction = makeInteraction('admin-123', 'preferences');
+
+      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
+
+      expect(data.data!.embeds![0].description).toContain('Unknown subcommand');
+      expect(mockKV.list).not.toHaveBeenCalled();
     });
 
     it('should return error for unknown subcommand', async () => {
@@ -233,7 +233,7 @@ describe('stats.ts', () => {
       expect(data.data!.embeds![0].title).toContain('XIV Dye Tools Bot');
     });
 
-    it.each(['overview', 'commands', 'preferences', 'health'])(
+    it.each(['overview', 'commands', 'health'])(
       'should deny %s to unauthorized users',
       async (subcommand) => {
         const interaction = makeInteraction('random-user-789', subcommand);
@@ -247,7 +247,7 @@ describe('stats.ts', () => {
       },
     );
 
-    it.each(['overview', 'commands', 'preferences', 'health'])(
+    it.each(['overview', 'commands', 'health'])(
       'should allow authorized user for %s',
       async (subcommand) => {
         const interaction = makeInteraction('admin-123', subcommand);
@@ -656,122 +656,6 @@ describe('stats.ts', () => {
   });
 
   // ==========================================================================
-  // Preferences Subcommand (Admin)
-  // ==========================================================================
-
-  describe('preferences subcommand', () => {
-    it('should display preference adoption stats with zero users', async () => {
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      const embed = data.data!.embeds![0];
-      expect(embed.title).toContain('Preference Adoption');
-      expect(embed.description).toContain('0 user sample');
-    });
-
-    it('should query KV with prefs:v1: prefix', async () => {
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      await handleStatsCommand(interaction, mockEnv, mockCtx);
-
-      expect(mockKV.list).toHaveBeenCalledWith({ prefix: 'prefs:v1:' });
-    });
-
-    it('should sample preferences and calculate adoption rates', async () => {
-      // Set up KV mock with preference keys
-      vi.mocked(mockKV.list).mockResolvedValue({
-        keys: [{ name: 'prefs:v1:user1' }, { name: 'prefs:v1:user2' }, { name: 'prefs:v1:user3' }],
-        list_complete: true,
-        cursor: '',
-      } as unknown as KVNamespaceListResult<unknown>);
-
-      // Return preference data for each user
-      (mockKV.get as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce(JSON.stringify({ language: 'ja', blending: 'multiply' }))
-        .mockResolvedValueOnce(JSON.stringify({ language: 'en', clan: 'hyur_midlander' }))
-        .mockResolvedValueOnce(JSON.stringify({ world: 'Gilgamesh', market: true }));
-
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      const embed = data.data!.embeds![0];
-      expect(embed.description).toContain('3 user sample');
-      expect(embed.description).toContain('3 total users');
-    });
-
-    it('should display localization, color, character, and market fields', async () => {
-      vi.mocked(mockKV.list).mockResolvedValue({
-        keys: [{ name: 'prefs:v1:user1' }],
-        list_complete: true,
-        cursor: '',
-      } as unknown as KVNamespaceListResult<unknown>);
-      (mockKV.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
-        JSON.stringify({ language: 'en' }),
-      );
-
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      const fieldNames = data.data!.embeds![0].fields!.map((f: { name: string }) => f.name);
-      expect(fieldNames).toEqual(
-        expect.arrayContaining([
-          expect.stringContaining('Localization'),
-          expect.stringContaining('Color Settings'),
-          expect.stringContaining('Character'),
-          expect.stringContaining('Market'),
-          expect.stringContaining('Coverage'),
-        ]),
-      );
-    });
-
-    it('should handle malformed preference entries gracefully', async () => {
-      vi.mocked(mockKV.list).mockResolvedValue({
-        keys: [{ name: 'prefs:v1:user1' }, { name: 'prefs:v1:user2' }],
-        list_complete: true,
-        cursor: '',
-      } as unknown as KVNamespaceListResult<unknown>);
-
-      // First returns invalid JSON, second returns valid
-      (mockKV.get as ReturnType<typeof vi.fn>)
-        .mockResolvedValueOnce('not valid json')
-        .mockResolvedValueOnce(JSON.stringify({ language: 'en' }));
-
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      // Should not throw, embed should still render
-      expect(data.type).toBe(4);
-      expect(data.data!.embeds![0].title).toContain('Preference Adoption');
-    });
-
-    it('should be ephemeral', async () => {
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      expect(data.data!.flags).toBe(64);
-    });
-
-    it('should use yellow color', async () => {
-      const interaction = makeInteraction('admin-123', 'preferences');
-
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
-      const data = (await response.json()) as InteractionResponseBody;
-
-      expect(data.data!.embeds![0].color).toBe(0xfee75c);
-    });
-  });
-
-  // ==========================================================================
   // Health Subcommand (Admin)
   // ==========================================================================
 
@@ -1025,13 +909,6 @@ describe('stats.ts', () => {
     it('answers a getStats rejection from the commands subcommand with the fetch-failed embed', async () => {
       vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
       await fetchFailed(handleStatsCommand(makeInteraction('admin-123', 'commands'), mockEnv, mockCtx));
-    });
-
-    it('answers a KV list rejection from the preferences subcommand with the fetch-failed embed', async () => {
-      vi.mocked(mockKV.list).mockImplementationOnce(() =>
-        Promise.reject(new Error('KV list failed')),
-      );
-      await fetchFailed(handleStatsCommand(makeInteraction('admin-123', 'preferences'), mockEnv, mockCtx));
     });
 
     it('logs the failure when a logger is provided and records the outcome as unknown', async () => {

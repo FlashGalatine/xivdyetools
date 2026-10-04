@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-09-28
+**Zuletzt aktualisiert**: 2026-10-04
 
 ## 1. Einführung
 
@@ -20,7 +20,7 @@ Verbindung zu Square Enix.
 | Datentyp | Zweck | Aufbewahrung |
 |-----------|---------|-----------|
 | Discord-Benutzer-ID | Identifiziert Nutzer für Einstellungen, favorisierte Presets, Abstimmungen, Ratenbegrenzung und die Markierung des Erstlauf-Hinweises; dient außerdem als Schlüssel für einen täglichen Aktivitäts-Marker pro Nutzer und wird (nie aufgelistet) in Nutzungsstatistiken gezählt — siehe *Nutzungsanalyse* unten | Bis eine Datenlöschung beantragt wird (Nutzungsstatistik-Datensätze: siehe *Nutzungsanalyse*) |
-| Discord-Benutzername | Ordnet Einreichungen von Community-Presets zu | Bis eine Datenlöschung beantragt wird |
+| Discord-Anzeigename (dein Benutzername, wenn du keinen Anzeigenamen hast) | Wird öffentlich als Autor der von dir eingereichten Community-Presets angezeigt | Bis eine Datenlöschung beantragt wird |
 | Nutzer-Gebietsschema | Stellt lokalisierte Bot-Antworten bereit; die Sprache des Discord-Clients (eingeordnet in eine der sechs vom Bot unterstützten Sprachen, oder "andere") wird ebenfalls in Nutzungsstatistiken erfasst — siehe *Nutzungsanalyse* unten | Gespeicherte Einstellung: bis sie gelöscht wird. Nutzungsstatistik-Kategorie: siehe *Nutzungsanalyse* |
 | Server-ID / Kanal-ID | Verarbeitet Befehle im Kontext | Wird nicht gespeichert. Nutzungsstatistiken erfassen nur, *ob* ein Befehl in einem Server oder in einer DM ausgeführt wurde (die Werte `guild` / `dm`) — niemals die ID des Servers oder des Kanals |
 
@@ -28,7 +28,7 @@ Verbindung zu Square Enix.
 
 | Datentyp | Zweck | Aufbewahrung |
 |-----------|---------|-----------|
-| Einstellungen | Sprache, Mischmodus, Matching-Algorithmus, Ergebnisanzahl, Stamm, Geschlecht, Standard-Welt / -Datenzentrum, ob Marktbrett-Preise standardmäßig angezeigt werden, Farbanzeige-Umschalter und Design sowie welche Farbstoffkategorien von den Suchergebnissen ausgeschlossen werden sollen (metallisch, pastellfarben, dunkel, kosmisch, ishgardisch, teuer, vom Händler verkauft, hergestellt) | Bis du sie zurücksetzt oder eine Löschung beantragst |
+| Einstellungen | Sprache, Mischmodus, Matching-Algorithmus, Ergebnisanzahl, Stamm, Geschlecht, Standard-Welt / -Datenzentrum, ob Marktbrett-Preise standardmäßig angezeigt werden, Farbanzeige-Umschalter und Design sowie welche Farbstoffkategorien von den Suchergebnissen ausgeschlossen werden sollen (metallisch, pastellfarben, dunkel, kosmisch, ishgardisch, teuer, vom Händler verkauft, hergestellt), dazu der Zeitpunkt, zu dem du sie zuletzt geändert hast | Bis du sie zurücksetzt oder eine Löschung beantragst |
 | Favorisierte Presets | Bis zu 50 Community-Presets, die du mit `/preset favorite add` markierst — die ID des Presets und der Name, den es bei der Speicherung hatte | Bis du sie entfernst oder eine Löschung beantragst |
 | Erstlauf-Hinweis-Markierung | Eine Markierung pro Nutzer, dass dir der 5.0-Willkommenshinweis gezeigt wurde; enthält keinen Inhalt | Läuft automatisch nach 180 Tagen ab |
 | Preset-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie | Unbegrenzt (Community-Inhalt) |
@@ -60,6 +60,25 @@ den du ausführst, oder jede Kopier-Schaltfläche, die du drückst:
 Diese Datensätze enthalten niemals Nachrichteninhalte, Befehls-Optionswerte, Servernamen oder
 Kanal-IDs. Daten in Analytics Engine können nach dem Schreiben nicht pro Nutzer bearbeitet oder
 gelöscht werden; sie laufen nach Cloudflares Zeitplan ab.
+
+### Moderationsdatensätze
+
+Community-Presets werden moderiert. Um Sperren durchzusetzen und die Moderation nachvollziehbar zu
+halten, speichern wir:
+
+- **Sperrdatensätze.** Wenn dich ein Moderator für Community-Presets sperrt, enthält der
+  Sperrdatensatz deine Discord-Benutzer-ID oder, wenn du dich in der Web-App mit
+  einem XIVAuth-Konto angemeldet hast, das nicht mit Discord verknüpft ist, stattdessen deine XIVAuth-ID, den Autorennamen, der zum Zeitpunkt der Sperre bei deinen Presets
+  angezeigt wurde, die Discord-Benutzer-IDs des Moderators, der die Sperre verhängt hat, und des
+  Moderators, der sie aufgehoben hat, den Grund, den der Moderator angegeben hat, sowie das Datum
+  der Sperre und das Datum ihrer Aufhebung.
+- **Das Moderationsprotokoll.** Jede Moderationsmaßnahme wird mit der Discord-Benutzer-ID des
+  Moderators, der Maßnahme, einem optionalen Grund und dem Zeitpunkt protokolliert. Eine Maßnahme zu
+  einem Preset (etwa Genehmigen, Ablehnen oder Zurücksetzen) nennt das Preset. Eine Sperre, eine
+  Aufhebung einer Sperre, ein Ausblenden oder ein Wiederherstellen nennt außerdem den Nutzer, auf
+  den sich die Maßnahme bezog.
+
+Wie lange jeder Datensatz aufbewahrt wird, steht unter *Datenaufbewahrung*.
 
 ## 3. Daten, die wir NICHT erheben
 
@@ -102,7 +121,8 @@ wird nichts aus der Datei gesendet, und nichts über dich oder dein Discord-Kont
 | Bot-Funktionalität bereitstellen | Nutzer-ID, Server-ID, Kanal-ID |
 | Deine Einstellungen speichern | Nutzer-ID und die von dir festgelegten Einstellungswerte |
 | Deine favorisierten Presets verwalten | Nutzer-ID, Preset-ID |
-| Community-Presets | Nutzer-ID, Benutzername, Preset-Inhalt |
+| Community-Presets | Nutzer-ID, Anzeigename (öffentlich als Autor angezeigt), Preset-Inhalt |
+| Moderation | Sperrdatensätze und Einträge im Moderationsprotokoll (siehe *Moderationsdatensätze*) |
 | Abstimmungssystem | Nutzer-ID, Preset-ID |
 | Missbrauch verhindern | Nutzer-ID, Ratenbegrenzungszähler |
 | Nutzungsstatistiken (`/stats`) | Befehlsname und Unterbefehl, Ergebnisklasse, Latenz, Server-oder-DM-Kennzeichen, Client-Sprachkategorie, Art der Kopier-Schaltfläche, Nutzer-ID (gezählt, nie aufgelistet) |
@@ -114,12 +134,14 @@ wird nichts aus der Datei gesendet, und nichts über dich oder dein Discord-Kont
 | Dienst | Gespeicherte Daten | Standort |
 |---------|-------------|----------|
 | Cloudflare KV | Einstellungen, favorisierte Presets, die Erstlauf-Hinweis-Markierung, Nutzungszähler und tägliche Aktivitätsschlüssel (30-Tage-TTL) sowie die Ratenbegrenzungszähler nur auf einer Bereitstellung ohne die nativen Rate-Limiting-Bindings (120-Sekunden-TTL) | Globales Edge-Netzwerk |
-| Cloudflare D1 | Community-Presets, Stimmen, Moderationsverlauf, Fehldatensätze zu Moderationsbenachrichtigungen, tägliche Zähler für Einreichungen / Bearbeitungen (siehe *Datenaufbewahrung*) | Cloudflares Datenbankinfrastruktur |
+| Cloudflare D1 | Community-Presets, Stimmen, Moderationsdatensätze (siehe *Moderationsdatensätze*), Fehldatensätze zu Moderationsbenachrichtigungen, tägliche Zähler für Einreichungen / Bearbeitungen (siehe *Datenaufbewahrung*) | Cloudflares Datenbankinfrastruktur |
 | Cloudflare Workers Analytics Engine | Telemetrie zur Befehlsnutzung (siehe *Nutzungsanalyse*) | Cloudflares Analyseinfrastruktur |
+| Discord | Beiträge in zwei privaten Kanälen unseres Discord-Servers: Jedes Preset, das geprüft werden muss, wird in einem Moderationskanal gepostet, und jedes veröffentlichte Preset in einem Einreichungsprotokoll-Kanal. Ein Beitrag zeigt das Preset (etwa Name, Beschreibung, Kategorie und Farbstoffe) und den Autorennamen. Ein Beitrag zu einem Vorschaubild, das auf Prüfung wartet, enthält außerdem das Bild selbst. Ein Beitrag zeigt nicht deine Discord-Benutzer-ID | Discords Infrastruktur |
 
-Alle Daten werden auf Cloudflares Infrastruktur gespeichert. Siehe
+Alles außer diesen Discord-Beiträgen wird auf Cloudflares Infrastruktur gespeichert. Siehe
 [Cloudflares Datenschutzrichtlinie](https://www.cloudflare.com/privacypolicy/) für weitere
-Informationen.
+Informationen. Die Discord-Beiträge bleiben in diesen Kanälen, unter der
+[Datenschutzrichtlinie von Discord](https://discord.com/privacy), bis ein Moderator sie löscht oder bis du eine Löschung beantragst (siehe *Deine Rechte*).
 
 ### Datensicherheit
 
@@ -184,7 +206,7 @@ Um die Löschung aller deiner Daten zu beantragen:
    - Gib deine Discord-Benutzer-ID an
 2. **Discord**: Tritt https://discord.gg/rzxDHNr6Wv bei und schreibe "Flash Galatine" eine DM
 
-Wir bearbeiten Löschanfragen innerhalb von 30 Tagen.
+Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfernt außerdem die Beiträge zu deinen Presets im Moderationskanal und im Einreichungsprotokoll-Kanal auf unserem Discord-Server. Ein aktiver Sperrdatensatz wird auf Anfrage nicht gelöscht; sobald die Sperre aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Datenaufbewahrung*.
 
 ## 8. Datenaufbewahrung
 
@@ -201,6 +223,10 @@ Wir bearbeiten Löschanfragen innerhalb von 30 Tagen.
 | Stimmen | Bis entfernt oder Kontolöschung |
 | Fehldatensätze zu Moderationsbenachrichtigungen (Preset-ID, Fehler, Zeitstempel) | 30 Tage nach Lösung, 90 Tage bei ungelöst — sofort gelöscht, wenn das Preset gelöscht wird |
 | Tägliche Zähler für Einreichungen / Bearbeitungen (Nutzer-ID, Art, Zeitstempel) | 30 Tage |
+| Sperrdatensätze | Solange die Sperre aktiv ist. Wird sie aufgehoben, werden der Autorenname und der Grund sofort gelöscht, und der Datensatz wird 90 Tage später gelöscht |
+| Einträge im Moderationsprotokoll zu einer Sperre, einer Aufhebung einer Sperre, einem Ausblenden oder einem Wiederherstellen | 12 Monate |
+| Andere Einträge im Moderationsprotokoll zu einem Preset (etwa Genehmigen, Ablehnen oder Zurücksetzen) | Solange das Preset existiert |
+| Beiträge im Moderationskanal und im Einreichungsprotokoll-Kanal auf unserem Discord-Server | Bis ein Moderator sie löscht oder bis du eine Löschung beantragst |
 
 ## 9. Datenschutz für Kinder
 

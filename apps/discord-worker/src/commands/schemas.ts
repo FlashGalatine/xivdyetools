@@ -597,11 +597,6 @@ export const commands = [
         type: OptionType.SUB_COMMAND,
       },
       {
-        name: 'preferences',
-        description: 'Show preference adoption rates (admin only)',
-        type: OptionType.SUB_COMMAND,
-      },
-      {
         name: 'health',
         description: 'Show system health status (admin only)',
         type: OptionType.SUB_COMMAND,

@@ -550,7 +550,6 @@ Bot usage statistics. `summary` is public; the other subcommands are restricted 
 | `summary` | Basic bot information (public) |
 | `overview` | Usage metrics (admin only) |
 | `commands` | Per-command breakdown (admin only) |
-| `preferences` | Preference adoption rates (admin only) |
 | `health` | System health status (admin only) |
 
 **Rate limit:** 15/min (the `default` tier — the public `summary` runs paginated KV `list()` scans, so it is not exempt)

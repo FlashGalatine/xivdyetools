@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-10-04
+
+Sprint 5 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). **Deploy after
+moderation-worker 1.8.0 and presets-api 2.4.0.** The moderation buttons below are only
+understood by 1.8.0; the 1.7.x parser would read the new id as a malformed preset id. The
+production deploy re-registers commands (`/stats preferences` is gone).
+
+### Changed
+
+- **The Privacy Policy is amended in all six languages** (FINDING-005, -007, -008; approved at
+  the audit's §8 gate). `Last Updated` is October 4, 2026 on every variant.
+  - **Moderation records** (new §2 subsection, §4 row, §5 D1 row, §8 rows). Ban records hold the
+    Discord User ID, or the XIVAuth ID for an XIVAuth account not linked to Discord. They also
+    hold the author name at the time, the moderators, the reason and the dates. The moderation
+    log is described as well. Retention:
+    - active bans until lifted;
+    - a lifted ban's name and reason cleared at once, and the record deleted 90 days later;
+    - ban, unban, hide and restore log entries kept 12 months;
+    - other preset log entries kept as long as the preset exists.
+  - **Discord posts** (§5 Discord row, §7, §8). Presets needing review go to a private moderation
+    channel, published ones to a submission-log channel. The posts carry no Discord User ID. They
+    stay until a moderator deletes them, or until a deletion request removes them. "All data is
+    stored on Cloudflare" is no longer claimed.
+  - **Author name** (§2, §4). The published author is the Discord display name, or the username
+    when there is none. The preferences record's last-changed time is listed.
+  - **Translations.** One translator per language, reviewed by an Opus verifier. Corrections were
+    applied, three English sentences were clarified after review, and the change was propagated
+    to all five translations. Interpretation needed: none flagged.
+
+### Security
+
+- **Moderation buttons are bound to the reviewed revision** (FINDING-017, discord-worker part).
+  - When presets-api 2.4.0 sends `content_revision` in the submission notification, the
+    moderation embed's buttons are `preset_<approve|reject|revert>_<uuid>:<revision>:<status>`.
+    That is exactly the grammar of moderation-worker 1.8.0's `utils/review-custom-id.ts`
+    (≤ 100 characters), so a click acts only on the text the moderator saw.
+  - Without a revision, the legacy ids are emitted. That covers an older API, and the `/preset
+    submit` / `edit` paths, which hold only a `CommunityPreset` response with no revision.
+    moderation-worker answers a legacy click with a refresh instead of acting.
+- **The moderation embed no longer mentions the author's account** (FINDING-008). The sanitized
+  author name stays. No moderation control used the mention (bans search by username), and the
+  submission-log embeds never had one.
+- **`/stats preferences` is removed** (FINDING-013). It sampled stored preference records for a
+  purpose the policy did not state. Its handler, schema entry, tests and the
+  `commands.stats.options.preferences` bot-logic string (six locales) are gone.
+
 ## [5.7.2] - 2026-10-03
 
 Sprint 1 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). No command

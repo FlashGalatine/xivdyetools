@@ -24,7 +24,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.13.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.7.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.8.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -174,6 +174,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.0 | Oct 2026 | 2026-10-03 security audit, Sprint 5 — the Privacy Policy (six languages) adds moderation records and their retention, the moderation posts in our Discord server, and the author display name (FINDING-005/-007/-008); moderation embeds carry revision-bound buttons from the presets-api payload (FINDING-017) and no longer mention the author's account (FINDING-008); `/stats preferences` removed (FINDING-013). Deploy after moderation-worker 1.8.0 |
 | v5.7.2 | Oct 2026 | Security (2026-10-03 audit, Sprint 1) — `/budget` and preset-favorite log lines no longer carry command option values or the Discord user id, so the bot policy's "two log lines" promise holds (FINDING-002, FINDING-018); `/preferences reset` and the v4 migration delete the legacy `i18n:user:` / `budget:world:v1:` keys (FINDING-015); production refuses a webhook secret under 32 characters on the preset webhook only (FINDING-027); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
 | v5.7.1 | Sep 2026 | Documents only — the Privacy Policy and Terms of Service catch up with `/swatch` and `/glamour` in all six languages: how an uploaded `.chara` file is handled, what `/glamour` sends to api-worker, XIVAPI as a third-party service, and the commands the Terms had not listed. No discord-worker source changed, no `register-commands` |
 | **v5.7.0** | **Sep 2026** | **`/glamour`, the Glamour Reader in the bot: a `.chara` attachment in, card 2a out (the dyed pieces in slot order, each named as the twin the character can wear, with the in-game verdict) and every piece in the GPOSERS form in the embed. Resolves through api-worker's `POST /v1/chara/resolve` over the `UNIVERSALIS_PROXY` binding; the `.chara` attachment guards are shared with `/swatch` (`utils/chara-attachment.ts`)** |

@@ -82,7 +82,7 @@ In addition to Discord interactions, the worker exposes webhook endpoints for ex
 
 | Endpoint                            | Source       | Description                                            |
 |-------------------------------------|-------------|--------------------------------------------------------|
-| `POST /webhooks/preset-submission`  | presets-api  | Receives new preset notifications via Service Binding  |
+| `POST /webhooks/preset-submission`  | presets-api  | Receives new preset notifications via Service Binding; the moderation embed's buttons carry `preset_<kind>_<uuid>:<revision>:<status>` when the payload has `content_revision` (legacy `preset_<kind>_<uuid>` otherwise), and the embed names the author without a `<@id>` mention |
 | `POST /webhooks/github`            | GitHub       | Receives push events, posts changelog to announcement channel |
 
 Only `push` events from `FlashGalatine/xivdyetools` are announced, and each version is announced once (the repository is pinned to a constant and the version is memoised in KV for 90 days), so redelivering a qualifying delivery is safe. The memo key is versioned (`announced:v:<version>`), not delivery-specific, so a corrected changelog re-pushed under an already-announced version is not re-announced automatically — clear that KV key to force a re-announcement.
