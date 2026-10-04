@@ -53,6 +53,9 @@ revert against 2.4.0. The production deploy re-registers the commands, because
   - The refreshed review embed no longer mentions the author.
   - The "User Banned" post in the moderation channel no longer has a `User ID` field. For an
     XIVAuth-only account, that field held the XIVAuth ID.
+  - When a target has no author name on record, the ban posts (and the "Ban Failed" one) say
+    "an account with no author name" instead of falling back to the ID. The stored name still
+    falls back to the ID, because `banned_users.username` is `NOT NULL` and moderators search it.
   - The ban record still holds the ID, and unbanning goes through the username picker. The
     moderator's private unban reply still shows it.
 - **Workers Logs pinned off** (FINDING-022) in both `wrangler.toml` blocks, and asserted.

@@ -32,6 +32,9 @@ import { extractTextInputValue, getModalUserId, getModalUsername } from '../../t
 /**
  * Handle the ban reason modal submission
  */
+/** Shown in place of a name when the target has no author name on record (FINDING-008). */
+const UNNAMED_TARGET_LABEL = 'an account with no author name';
+
 export async function handleBanReasonModal(
   interaction: ModalInteraction,
   env: Env,
@@ -87,6 +90,10 @@ export async function handleBanReasonModal(
       // ignore — fall through to the id
     }
   }
+  // FINDING-008: no post shows an account id. With no author name to find, the
+  // STORED name still falls back to the id (banned_users.username is NOT NULL
+  // and moderators search it), but everything rendered uses a neutral label.
+  const postedName = targetUsername ?? UNNAMED_TARGET_LABEL;
   if (!targetUsername) {
     targetUsername = targetUserId;
   }
@@ -98,7 +105,17 @@ export async function handleBanReasonModal(
   }
 
   ctx.waitUntil(
-    processBan(interaction, env, targetUserId, targetUsername, moderatorId, moderatorName, reason, logger)
+    processBan(
+      interaction,
+      env,
+      targetUserId,
+      targetUsername,
+      postedName,
+      moderatorId,
+      moderatorName,
+      reason,
+      logger
+    )
   );
 
   return updateMessageResponse({
@@ -106,7 +123,7 @@ export async function handleBanReasonModal(
       {
         title: '\u23F3 Processing Ban...',
         // FINDING-019: the username comes from D1 (author-controlled)
-        description: `Banning **${sanitizeUserName(targetUsername)}** and hiding their presets...`,
+        description: `Banning **${sanitizeUserName(postedName)}** and hiding their presets...`,
         color: 0xfee75c,
       },
     ],
@@ -119,6 +136,7 @@ async function processBan(
   env: Env,
   targetUserId: string,
   targetUsername: string,
+  postedName: string,
   moderatorId: string,
   moderatorName: string,
   reason: string,
@@ -145,7 +163,7 @@ async function processBan(
   };
   // FINDING-019: everything rendered below is user-sourced — D1 username,
   // the moderator's Discord name, the typed reason
-  const safeTarget = sanitizeUserName(targetUsername);
+  const safeTarget = sanitizeUserName(postedName);
   const safeModerator = sanitizeUserName(moderatorName);
   const safeReason = sanitizeReason(reason);
 
