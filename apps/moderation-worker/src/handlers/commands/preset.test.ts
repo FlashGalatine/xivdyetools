@@ -10,6 +10,17 @@ import * as discordApi from '../../utils/discord-api.js';
 import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import { PresetAPIError } from '../../types/preset.js';
 
+const CURRENT_PRESET = {
+  id: 'a0000000-0000-4000-8000-000000000001',
+  name: 'Current Name',
+  description: 'Current description',
+  author_name: 'Author',
+  author_discord_id: '12345678901234567',
+  status: 'pending',
+  dyes: [1],
+  moderation_status: 'unknown',
+};
+
 // Mock modules
 vi.mock('../../utils/discord-api.js', () => {
   const editOriginalResponse = vi.fn();
@@ -33,6 +44,7 @@ vi.mock('../../services/preset-api.js', async () => {
     approvePreset: vi.fn(),
     rejectPreset: vi.fn(),
     getModerationStats: vi.fn(),
+    getModerationPreset: vi.fn(),
   };
 });
 
@@ -565,11 +577,27 @@ describe('handlePresetCommand', () => {
       );
     });
 
-    it('should process approve action successfully', async () => {
+    // FINDING-017: a typed id has no reviewed revision, so approve shows the
+    // CURRENT preset with a confirm button bound to the revision just fetched
+    it('approve: shows the current preset with a revision-bound confirm button and does not approve', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
 
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(banService.isPresetAuthorBanned).mockResolvedValue(false);
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: {
+          id: 'a0000000-0000-4000-8000-000000000001',
+          name: 'Current Name',
+          description: 'Current description',
+          author_name: 'Author',
+          author_discord_id: '12345678901234567',
+          status: 'pending',
+          dyes: [1, 2],
+          moderation_status: 'unknown',
+        },
+        revision: 7,
+      } as never);
       vi.mocked(presetApi.approvePreset).mockResolvedValue({
         id: 'a0000000-0000-4000-8000-000000000001',
         name: 'Test Preset',
@@ -617,26 +645,39 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(presetApi.approvePreset).toHaveBeenCalledWith(
+      expect(presetApi.getModerationPreset).toHaveBeenCalledWith(
         env,
         'a0000000-0000-4000-8000-000000000001',
         'mod-1',
-        undefined,
       );
+      // the command never approves on its own
+      expect(presetApi.approvePreset).not.toHaveBeenCalled();
       expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
-          embeds: expect.arrayContaining([
+          embeds: [
             expect.objectContaining({
-              title: expect.stringContaining('Approved'),
+              description: expect.stringContaining('Current Name'),
+              footer: { text: 'ID: a0000000-0000-4000-8000-000000000001 • Revision 7' },
             }),
-          ]),
+          ],
+          components: [
+            {
+              type: 1,
+              components: [
+                expect.objectContaining({
+                  label: 'Approve',
+                  custom_id: 'preset_approve_a0000000-0000-4000-8000-000000000001:7:pending',
+                }),
+              ],
+            },
+          ],
         }),
       );
     });
 
-    it('should send log message for approved preset', async () => {
+    it('approve: nothing is logged until the confirm click acts', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
 
@@ -688,18 +729,7 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.sendMessage).toHaveBeenCalledWith(
-        'test-bot-token',
-        'channel-log',
-        expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              title: expect.stringContaining('Test Preset'),
-              color: expect.any(Number),
-            }),
-          ]),
-        }),
-      );
+      expect(discordApi.sendMessage).not.toHaveBeenCalled();
     });
 
     it('should return error when approve is missing preset_id', async () => {
@@ -747,11 +777,24 @@ describe('handlePresetCommand', () => {
       );
     });
 
-    it('should process reject action successfully', async () => {
+    it('reject: shows the current preset with a revision-bound confirm button and does not reject', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
 
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: {
+          id: 'a0000000-0000-4000-8000-000000000001',
+          name: 'Current Name',
+          description: 'Current description',
+          author_name: 'Author',
+          author_discord_id: null,
+          status: 'flagged',
+          dyes: [1],
+          moderation_status: 'flagged',
+        },
+        revision: 2,
+      } as never);
       vi.mocked(presetApi.rejectPreset).mockResolvedValue({
         id: 'a0000000-0000-4000-8000-000000000001',
         name: 'Test Preset',
@@ -800,36 +843,120 @@ describe('handlePresetCommand', () => {
       ]?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(presetApi.rejectPreset).toHaveBeenCalledWith(
-        env,
-        'a0000000-0000-4000-8000-000000000001',
-        'mod-1',
-        'Contains inappropriate content',
-      );
+      expect(presetApi.rejectPreset).not.toHaveBeenCalled();
       expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
-          embeds: expect.arrayContaining([
+          embeds: [
             expect.objectContaining({
-              title: expect.stringContaining('Rejected'),
-              fields: expect.arrayContaining([
-                expect.objectContaining({
-                  name: 'Reason',
-                  value: 'Contains inappropriate content',
-                }),
-              ]),
+              description: expect.stringContaining('Current Name'),
+              footer: { text: 'ID: a0000000-0000-4000-8000-000000000001 • Revision 2' },
             }),
-          ]),
+          ],
+          // the confirm button opens the reason modal bound to this revision and status
+          components: [
+            {
+              type: 1,
+              components: [
+                expect.objectContaining({
+                  label: 'Reject',
+                  custom_id: 'preset_reject_a0000000-0000-4000-8000-000000000001:2:flagged',
+                }),
+              ],
+            },
+          ],
         }),
       );
     });
 
-    it('should return error when reject is missing reason', async () => {
+    it('approve and reject answer ephemerally; pending and stats stay public', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.getPendingPresets).mockResolvedValue([]);
+
+      const run = async (action: string) => {
+        const interaction: DiscordInteraction = {
+          id: 'int-1',
+          token: 'token-1',
+          application_id: 'app-123',
+          type: 2,
+          channel_id: 'channel-moderation',
+          member: { user: { id: 'mod-1', username: 'Moderator' } },
+          data: {
+            name: 'preset',
+            options: [
+              {
+                name: 'moderate',
+                type: 1,
+                options: [
+                  { name: 'action', type: 3, value: action },
+                  { name: 'preset_id', type: 3, value: 'a0000000-0000-4000-8000-000000000001' },
+                ],
+              },
+            ],
+          },
+        };
+        const response = await handlePresetCommand(interaction, env, ctx, t);
+        return (await response.json()) as any;
+      };
+
+      expect((await run('approve')).data?.flags).toBe(64);
+      expect((await run('reject')).data?.flags).toBe(64);
+      expect((await run('pending')).data?.flags).toBeUndefined();
+    });
+
+    it('approve/reject: answers "not found" for a preset that does not exist', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(banService.isPresetAuthorBanned).mockResolvedValue(false);
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue(null);
+
+      for (const action of ['approve', 'reject']) {
+        vi.mocked(discordApi.safeEditOriginalResponse).mockClear();
+        const interaction: DiscordInteraction = {
+          id: 'int-1',
+          token: 'token-1',
+          application_id: 'app-123',
+          type: 2,
+          channel_id: 'channel-moderation',
+          member: { user: { id: 'mod-1', username: 'Moderator' } },
+          data: {
+            name: 'preset',
+            options: [
+              {
+                name: 'moderate',
+                type: 1,
+                options: [
+                  { name: 'action', type: 3, value: action },
+                  { name: 'preset_id', type: 3, value: 'a0000000-0000-4000-8000-000000000001' },
+                ],
+              },
+            ],
+          },
+        };
+        await handlePresetCommand(interaction, env, ctx, t);
+        await vi.mocked(ctx.waitUntil).mock.calls.at(-1)?.[0];
+
+        expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
+          'app-123',
+          'token-1',
+          expect.objectContaining({
+            embeds: [expect.objectContaining({ description: 'Preset not found.' })],
+          }),
+        );
+      }
+      expect(presetApi.approvePreset).not.toHaveBeenCalled();
+      expect(presetApi.rejectPreset).not.toHaveBeenCalled();
+    });
+
+    it('reject: a missing reason is no longer an error - the modal asks for it', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
 
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: { ...CURRENT_PRESET },
+        revision: 3,
+      } as never);
 
       const interaction: DiscordInteraction = {
         id: 'int-1',
@@ -864,13 +991,19 @@ describe('handlePresetCommand', () => {
         'app-123',
         'token-1',
         expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              description: expect.stringContaining('reason'),
-            }),
-          ]),
+          components: [
+            {
+              type: 1,
+              components: [
+                expect.objectContaining({
+                  custom_id: expect.stringMatching(/^preset_reject_a0000000-[0-9a-f-]+:\d+:\w+$/),
+                }),
+              ],
+            },
+          ],
         }),
       );
+      expect(presetApi.rejectPreset).not.toHaveBeenCalled();
     });
 
     /**
@@ -880,8 +1013,12 @@ describe('handlePresetCommand', () => {
      * `/revert` only — so `reason:x` was stored as the `moderation_log.reason`
      * for a rejection. The old suite only ever covered a MISSING reason.
      */
-    it('rejects a reason shorter than the modal would accept', async () => {
+    it('reject: a typed reason is not used - rejecting needs the modal, which enforces the floor', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: { ...CURRENT_PRESET },
+        revision: 3,
+      } as never);
 
       const interaction: DiscordInteraction = {
         id: 'int-1',
@@ -910,16 +1047,23 @@ describe('handlePresetCommand', () => {
       const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls.at(-1)?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      // The preset is never touched…
+      // The preset is never touched, whatever reason was typed on the command…
       expect(presetApi.rejectPreset).not.toHaveBeenCalled();
-      // …and the moderator is told why.
+      // …the moderator gets the confirm button that opens the modal (10-character floor)
       expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
         'app-123',
         'token-1',
         expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({ description: expect.stringContaining('reason') }),
-          ]),
+          components: [
+            {
+              type: 1,
+              components: [
+                expect.objectContaining({
+                  custom_id: 'preset_reject_a0000000-0000-4000-8000-000000000001:3:pending',
+                }),
+              ],
+            },
+          ],
         }),
       );
     });
@@ -930,11 +1074,11 @@ describe('handlePresetCommand', () => {
      * modal rejection, the button approval and the revert. The suite asserted
      * the approve path posted and simply never asked about reject.
      */
-    it('posts a rejection to the submission log, as approve already did', async () => {
+    it('reject: nothing is logged until the modal submit acts (the log post lives there)', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
-      vi.mocked(presetApi.rejectPreset).mockResolvedValue({
-        id: 'a0000000-0000-4000-8000-000000000001',
-        name: 'Sunset Palette',
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: { ...CURRENT_PRESET },
+        revision: 3,
       } as never);
 
       const interaction: DiscordInteraction = {
@@ -964,17 +1108,8 @@ describe('handlePresetCommand', () => {
       const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls.at(-1)?.[0];
       if (waitUntilPromise) await waitUntilPromise;
 
-      expect(discordApi.safeSendMessage).toHaveBeenCalledWith(
-        env.DISCORD_TOKEN,
-        env.SUBMISSION_LOG_CHANNEL_ID,
-        expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              title: expect.stringContaining('Rejected'),
-            }),
-          ]),
-        }),
-      );
+      expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
+      expect(presetApi.rejectPreset).not.toHaveBeenCalled();
     });
 
     it('should process stats action successfully', async () => {
@@ -1573,6 +1708,71 @@ describe('handlePresetCommand', () => {
       );
     });
 
+    it('FINDING-021: tells the moderator how many presets stayed hidden and why', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
+
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(banService.getActiveBan).mockResolvedValue({
+        id: 'ban-1',
+        discordId: '123456789012345678',
+        xivAuthId: null,
+        username: 'BannedUser',
+        reason: 'Ban reason',
+        bannedAt: '2025-01-14T12:00:00Z',
+        moderatorDiscordId: 'mod-2',
+        unbannedAt: null,
+        unbanModeratorDiscordId: null,
+      });
+      vi.mocked(banService.unbanUser).mockResolvedValue({
+        success: true,
+        presetsRestored: 2,
+        presetsStillHidden: 1,
+      });
+
+      const interaction: DiscordInteraction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        type: 2,
+        channel_id: 'channel-moderation',
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+        data: {
+          name: 'preset',
+          options: [
+            {
+              name: 'unban_user',
+              type: 1,
+              options: [{ name: 'user', type: 3, value: '123456789012345678' }],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx, t);
+      const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+        vi.mocked(ctx.waitUntil).mock.calls.length - 1
+      ]?.[0];
+      if (waitUntilPromise) await waitUntilPromise;
+
+      expect(discordApi.safeEditOriginalResponse).toHaveBeenCalledWith(
+        'app-123',
+        'token-1',
+        expect.objectContaining({
+          embeds: expect.arrayContaining([
+            expect.objectContaining({
+              fields: expect.arrayContaining([
+                expect.objectContaining({
+                  name: 'Presets Still Hidden',
+                  value: expect.stringMatching(/^1 — .*same dye combination/),
+                }),
+              ]),
+            }),
+          ]),
+        }),
+      );
+    });
+
     it('should handle unban failure', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
@@ -1782,46 +1982,38 @@ describe('handlePresetCommand — security audit remediations', () => {
       expect(description).not.toContain('**Bob**');
     });
 
-    it('approve: the preset name is escaped in the reply and in the submission-log title', async () => {
-      vi.mocked(presetApi.approvePreset).mockResolvedValueOnce(
-        presetFixture({ name: '**Loud** [x](https://evil.example)', status: 'approved' }),
-      );
+    it.each(['approve', 'reject'])(
+      '%s: the preset text in the confirmation is escaped (name, description, author)',
+      async (action) => {
+        vi.mocked(presetApi.getModerationPreset).mockResolvedValueOnce({
+          preset: presetFixture({
+            name: '**Loud** [x](https://evil.example)',
+            description: '@everyone **bold**',
+            author_name: '@here Bob',
+            status: 'pending',
+          }),
+          revision: 1,
+        } as never);
 
-      await handlePresetCommand(
-        moderate([
-          { name: 'action', type: 3, value: 'approve' },
-          { name: 'preset_id', type: 3, value: PRESET_ID },
-        ]),
-        env,
-        ctx,
-        t,
-      );
-      await flushWaitUntil();
+        await handlePresetCommand(
+          moderate([
+            { name: 'action', type: 3, value: action },
+            { name: 'preset_id', type: 3, value: PRESET_ID },
+          ]),
+          env,
+          ctx,
+          t,
+        );
+        await flushWaitUntil();
 
-      expect(lastEdit().embeds[0].description).not.toContain('**Loud**');
-      expect(lastEdit().embeds[0].description).toContain('\\*\\*Loud\\*\\*');
-      const log = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
-      expect(log.embeds[0].title).not.toMatch(/\[x\]\(https:\/\/evil\.example\)/);
-    });
-
-    it('reject: the moderator-typed reason is escaped but keeps its line breaks', async () => {
-      vi.mocked(presetApi.rejectPreset).mockResolvedValueOnce(presetFixture({ status: 'rejected' }));
-
-      await handlePresetCommand(
-        moderate([
-          { name: 'action', type: 3, value: 'reject' },
-          { name: 'preset_id', type: 3, value: PRESET_ID },
-          { name: 'reason', type: 3, value: 'line one **bold**\nline two @here' },
-        ]),
-        env,
-        ctx,
-        t,
-      );
-      await flushWaitUntil();
-
-      const reason: string = lastEdit().embeds[0].fields[0].value;
-      expect(reason).toBe('line one \\*\\*bold\\*\\*\nline two @‍here');
-    });
+        const description: string = lastEdit().embeds[0].description;
+        expect(description).not.toContain('**Loud**');
+        expect(description).toContain('\\*\\*Loud\\*\\*');
+        expect(description).not.toMatch(/\[x\]\(https:\/\/evil\.example\)/);
+        expect(description).not.toContain('@everyone');
+        expect(description).not.toContain('@here');
+      },
+    );
 
     it('unknown action: the echoed action text is sanitised', async () => {
       await handlePresetCommand(moderate([{ name: 'action', type: 3, value: '@everyone **x**' }]), env, ctx, t);
@@ -1991,9 +2183,12 @@ describe('handlePresetCommand — security audit remediations', () => {
       expect(lastEdit().embeds[0].description).toMatch(/banned/i);
     });
 
-    it('approves normally when the author is not banned', async () => {
+    it('offers the confirm button when the author is not banned', async () => {
       vi.mocked(banService.isPresetAuthorBanned).mockResolvedValueOnce(false);
-      vi.mocked(presetApi.approvePreset).mockResolvedValueOnce(presetFixture({ status: 'approved' }));
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValueOnce({
+        preset: presetFixture({ status: 'pending' }),
+        revision: 9,
+      } as never);
 
       await handlePresetCommand(
         moderate([
@@ -2006,7 +2201,11 @@ describe('handlePresetCommand — security audit remediations', () => {
       );
       await flushWaitUntil();
 
-      expect(presetApi.approvePreset).toHaveBeenCalledWith(env, PRESET_ID, MOD, undefined);
+      // the command itself never approves; the confirm button is bound to revision 9
+      expect(presetApi.approvePreset).not.toHaveBeenCalled();
+      expect(lastEdit().components[0].components[0].custom_id).toBe(
+        `preset_approve_${PRESET_ID}:9:pending`,
+      );
     });
   });
 
@@ -2024,7 +2223,9 @@ describe('handlePresetCommand — security audit remediations', () => {
     });
 
     it('still shows a 4xx presets-api message (actionable for the moderator)', async () => {
-      vi.mocked(presetApi.approvePreset).mockRejectedValueOnce(new PresetAPIError(404, 'Preset not found'));
+      vi.mocked(presetApi.getModerationPreset).mockRejectedValueOnce(
+        new PresetAPIError(403, 'Preset not found'),
+      );
 
       await handlePresetCommand(
         moderate([

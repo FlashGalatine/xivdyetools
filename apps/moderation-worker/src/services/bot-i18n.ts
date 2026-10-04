@@ -97,6 +97,9 @@ const enLocale: LocaleData = {
     userUnbanned: 'User Unbanned',
     presetsHidden: 'Presets Hidden',
     presetsRestored: 'Presets Restored',
+    presetsStillHidden: 'Presets Still Hidden',
+    presetsStillHiddenWhy:
+      'another approved or pending preset already uses the same dye combination, so restoring it would duplicate that preset.',
     alreadyBanned: 'User is already banned.',
     notBanned: 'User is not currently banned.',
     userNotFound: 'User not found or has no presets.',

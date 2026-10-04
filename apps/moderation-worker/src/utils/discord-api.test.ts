@@ -3,6 +3,7 @@ import {
   editOriginalResponse,
   sendMessage,
   editMessage,
+  safeSendFollowUp,
   type FollowUpOptions,
   type SendMessageOptions,
 } from './discord-api.js';
@@ -286,5 +287,52 @@ describe('allowed_mentions on outbound payloads (FINDING-019)', () => {
       allowed_mentions: { parse: ['users'] },
     });
     expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: ['users'] });
+  });
+
+  it('safeSendFollowUp sends allowed_mentions: { parse: [] }', async () => {
+    await safeSendFollowUp('app', 'tok', { content: '@everyone' });
+    expect(bodyOfLastCall().allowed_mentions).toEqual({ parse: [] });
+  });
+});
+
+// FINDING-017: the follow-up a refresh uses to tell the moderator what happened
+describe('safeSendFollowUp', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('POSTs an ephemeral message to the interaction webhook', async () => {
+    global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
+
+    const ok = await safeSendFollowUp('app-123', 'tok-456', { content: 'hello', ephemeral: true });
+
+    expect(ok).toBe(true);
+    const [url, init] = (global.fetch as any).mock.calls[0];
+    expect(url).toBe('https://discord.com/api/v10/webhooks/app-123/tok-456');
+    expect(init.method).toBe('POST');
+    expect(init.headers).not.toHaveProperty('Authorization');
+    expect(JSON.parse(init.body)).toMatchObject({ content: 'hello', flags: 64 });
+  });
+
+  it('is not ephemeral unless asked', async () => {
+    global.fetch = vi.fn(() => Promise.resolve(new Response('{}', { status: 200 }))) as any;
+
+    await safeSendFollowUp('app', 'tok', { content: 'public' });
+
+    expect(JSON.parse((global.fetch as any).mock.calls[0][1].body).flags).toBeUndefined();
+  });
+
+  it('reports false (and does not throw) when Discord refuses', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    global.fetch = vi.fn(() => Promise.resolve(new Response('nope', { status: 404 }))) as any;
+
+    await expect(safeSendFollowUp('app', 'tok', { content: 'x' })).resolves.toBe(false);
+  });
+
+  it('reports false (and does not throw) when the request fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    global.fetch = vi.fn(() => Promise.reject(new Error('timeout'))) as any;
+
+    await expect(safeSendFollowUp('app', 'tok', { content: 'x' })).resolves.toBe(false);
   });
 });

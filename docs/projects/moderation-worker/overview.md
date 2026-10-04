@@ -84,8 +84,9 @@ src/
 │   │   └── index.ts
 │   ├── buttons/
 │   │   ├── ban-confirmation.ts   # Confirm/cancel ban buttons
-│   │   ├── preset-moderation.ts  # Approve / reject / revert buttons
+│   │   ├── preset-moderation.ts  # Approve / reject / revert buttons (revision-bound custom_ids)
 │   │   └── index.ts
+│   ├── review-message.ts    # Refresh-and-reclick review embed + buttons
 │   └── modals/
 │       ├── ban-reason.ts         # Ban reason input
 │       ├── preset-rejection.ts   # Rejection reason input
@@ -104,6 +105,7 @@ src/
 │   ├── ban.ts               # Ban-related types
 │   └── preset.ts            # Preset types
 ├── utils/
+│   ├── review-custom-id.ts  # Strict parser/builder for review custom_ids
 │   ├── verify.ts            # Ed25519 verification
 │   ├── response.ts          # Discord response builders
 │   ├── discord-api.ts       # Discord API helpers
@@ -138,16 +140,30 @@ Moderation actions for community presets.
 ```
 /preset moderate action:pending
 /preset moderate action:approve preset_id:abc123
-/preset moderate action:reject preset_id:abc123 reason:Contains inappropriate content
+/preset moderate action:reject preset_id:abc123
 /preset moderate action:stats
 ```
+
+`approve` and `reject` do not act on a typed id (FINDING-017). They answer privately with the
+preset's **current** text and one confirm button bound to the revision just fetched; for `reject`
+the reason is typed in the modal that button opens, so the command takes no reason.
+
+#### Buttons and `custom_id`s
+
+Approve / reject / revert buttons and the reject / revert modals name the text the moderator
+reviewed: `preset_approve_<uuid>:<revision>:<status>`, likewise `preset_reject_`,
+`preset_revert_`, `preset_reject_modal_` and `preset_revert_modal_`. The revision and status are
+forwarded to presets-api as `expected_revision` / `expected_status`; a mismatch is a `409` and
+changes nothing. A button that cannot name a revision (a message posted before this change) or
+that draws a `409` never acts: the message is refreshed to show the preset's current text with
+new buttons, and the moderator reviews it and clicks again.
 
 ### /preset ban_user
 
 Ban a user from the preset system. This:
 - Hides all their existing presets
 - Prevents new submissions
-- Records the ban in the database
+- Records the ban in the database (`banned_users`; an XIVAuth `sub` UUID target is stored in both `discord_id` and `xivauth_id`, and every ban check matches either column)
 
 ```
 /preset ban_user user:Username#1234
@@ -168,6 +184,13 @@ Unban a user and restore their presets.
 ```
 /preset unban_user user:Username#1234
 ```
+
+The statement that lifts the ban also blanks the stored `username` and ban `reason` (FINDING-005;
+they are kept while the ban is active, since ban search uses the username). Hidden presets are
+restored to `approved`, except any whose dye combination is now held by another approved or
+pending preset (and all but one of the author's own hidden twins): those stay hidden, because
+restoring them would trip the unique `dye_signature` index and abort the whole unban
+(FINDING-021). The confirmation embed reports how many stayed hidden and why.
 
 ---
 

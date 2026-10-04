@@ -35,6 +35,40 @@ export class PresetAPIError extends Error {
   }
 }
 
+/**
+ * FINDING-017: presets-api refused a status change because it is not bound to
+ * the review the moderator saw. `REVISION_REQUIRED` — the request named no
+ * revision — and `STALE_REVIEW` — the preset changed since — share one
+ * recovery: show the current text and ask for a fresh click. `current` is the
+ * status and revision the next review must be bound to (null when the API sent
+ * no usable value).
+ */
+export class PresetReviewConflictError extends PresetAPIError {
+  public readonly code: 'STALE_REVIEW' | 'REVISION_REQUIRED';
+  public readonly current: { status: PresetStatus; content_revision: number } | null;
+
+  constructor(
+    code: 'STALE_REVIEW' | 'REVISION_REQUIRED',
+    message: string,
+    current: { status: PresetStatus; content_revision: number } | null,
+    details?: unknown,
+  ) {
+    super(409, message, details);
+    this.name = 'PresetReviewConflictError';
+    this.code = code;
+    this.current = current;
+  }
+}
+
+/**
+ * The preset as `GET /api/v1/moderation/:id` returns it. `moderation_status` is
+ * derived from `status` alone ('flagged' | 'unknown') — it is NOT a content
+ * filter verdict and must not be shown as one.
+ */
+export interface ModerationPresetView extends CommunityPreset {
+  moderation_status: 'flagged' | 'unknown';
+}
+
 // ============================================================================
 // UI Constants
 // ============================================================================

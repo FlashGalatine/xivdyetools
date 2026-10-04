@@ -185,6 +185,22 @@ describe('wrangler.toml', () => {
     expect(new Set(ids).size).toBe(4);
   });
 
+  /**
+   * FINDING-022 (2026-10-03 audit): both privacy policies promise persistent
+   * Workers Logs are off. Pinning the key makes a deploy enforce that state;
+   * this test fails if anyone enables it, or adds a log sink (logpush, tail
+   * consumers), without going through the privacy-policy update.
+   */
+  it('pins Workers Logs off and ships no log sink in either block (FINDING-022)', () => {
+    for (const block of [topLevel, production]) {
+      expect(block).toMatch(/^\[(?:env\.production\.)?observability\]\nenabled = false$/m);
+      expect(block).not.toMatch(/^\s*enabled\s*=\s*true\b/m);
+      expect(block).not.toMatch(/^\s*logpush\s*=\s*true\b/m);
+      expect(block).not.toMatch(/^\s*tail_consumers\s*=\s*\[\s*[^\s\]]/m);
+      expect(block).not.toMatch(/^\[\[(?:env\.production\.)?tail_consumers\]\]/m);
+    }
+  });
+
   it('has no [env.preview] block', () => {
     expect(toml).not.toMatch(/^\[env\.preview\]$/m);
   });

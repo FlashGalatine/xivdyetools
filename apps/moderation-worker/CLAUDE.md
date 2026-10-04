@@ -79,6 +79,7 @@ src/
 │   ├── commands/
 │   │   ├── index.ts                    # Re-exports handlePresetCommand
 │   │   └── preset.ts                   # /preset moderate | ban_user | unban_user
+│   ├── review-message.ts               # Refresh-and-reclick: current-text review embed + revision-bound buttons
 │   ├── buttons/
 │   │   ├── index.ts                    # Dispatcher (custom_id prefix routing)
 │   │   ├── preset-moderation.ts        # Approve/Reject/Revert buttons from embeds
@@ -95,6 +96,7 @@ src/
 │   ├── i18n.ts                         # Locale resolution (KV → discord locale → 'en')
 │   └── bot-i18n.ts                     # createUserTranslator wrapper
 ├── utils/
+│   ├── review-custom-id.ts             # Strict parser/builder for revision-bound review custom_ids
 │   ├── verify.ts                       # Ed25519 + Content-Length guard (100KB)
 │   ├── safe-json.ts                    # safeParseJSON with depth/freeze checks
 │   ├── url-sanitizer.ts                # Strip sensitive query params from logs
@@ -171,6 +173,19 @@ production, `validateEnv` does not allow.
 
 Both fail open (allow on backend error) and use `ctx.waitUntil()` for the increment so the user response is not delayed. A fail-open is no longer silent: `checkRateLimit` returns `backendError: true` and `index.ts` warns `Rate limiter backend error — request allowed (fail-open)` with the interaction type on the request logger (FINDING-012). Nothing goes back to the client — a header would tell an abuser when the limiter is off.
 
+### Revision-Bound Review Buttons (FINDING-017)
+
+Approve / reject / revert buttons and the reject / revert modals carry what the moderator reviewed in their `custom_id`: `preset_approve_<uuid>:<revision>:<status>` (likewise `preset_reject_`, `preset_revert_`, `preset_reject_modal_`, `preset_revert_modal_`). `utils/review-custom-id.ts` is the one strict parser (≤ 100 chars; revision = non-negative integer, no leading zeros; status = full status word) and the only builder. The values go to presets-api as `expected_revision` / `expected_status`, and a `409` means the text or status changed. A legacy bare id (`preset_approve_<uuid>`) or a `409` never acts: `handlers/review-message.ts` fetches the current preset, edits the message to show its current text with fresh revision-bound buttons, and tells the moderator to review and click again. Every message edit there passes `components` (empty list when nothing is actionable) — omitting them leaves the old live buttons in place.
+
+### Ban Storage and Unban Restore
+
+Ban writes go straight to D1 through `ban-service.ts`, each in one `db.batch` with its `moderation_log` rows. Rules to keep:
+
+- **Both id columns (FINDING-014).** An XIVAuth-only target (the UUID shape `isBanTargetId` accepts) is written to `banned_users.discord_id` **and** `xivauth_id`; a snowflake leaves `xivauth_id` NULL. Every ban read matches `discord_id = ? OR xivauth_id = ?` with bound parameters, including `isPresetAuthorBanned` (approval refuses a banned author's preset) and the pickers. Mind the two partial unique indexes on active bans (`idx_banned_users_discord_active`, `idx_banned_users_xivauth_active`, `apps/presets-api/schema.sql`).
+- **Blank on unban (FINDING-005).** The statement that sets `unbanned_at` also sets `username = ''` and `reason = ''` (both `NOT NULL`). Keep them while the ban is active — ban search selects and sorts by `username`. Do not prune rows here: presets-api owns the retention rule.
+- **Restore skips collisions (FINDING-021).** `restoreGuard()` in `ban-service.ts` is spliced into both the restore UPDATE and its `moderation_log` INSERT…SELECT so they select the same rows: a hidden preset stays hidden when another approved/pending preset holds its `dye_signature`, or when the author has a lower-id hidden twin. `unbanUser` returns `presetsStillHidden` (counted after the batch; a failing count never fails the unban) and the embed reports it. A `UNIQUE … dye_signature` failure that still gets through (a racing submission) maps to its own channel-safe message.
+- `src/services/ban-service.sqlite.test.ts` runs these against real SQLite (`node:sqlite`) because the shared D1 mock records SQL without evaluating it.
+
 ### Moderator Authorization
 
 `MODERATOR_IDS` is parsed by splitting on `[\s,]+` and filtering empties — accepts comma-separated, whitespace-separated, or newline-separated lists. Every moderation action verifies the invoking user is in this list before mutating D1 or calling presets-api.
@@ -206,6 +221,10 @@ These are stricter than the main discord-worker because all responses contain po
 
 `app.onError()` returns generic `Internal Server Error` in production and only includes the message + stack in development. Stack traces never leak to Discord.
 
+### Workers Logs Stay Off (FINDING-022)
+
+`wrangler.toml` pins `[observability] enabled = false` in the top-level block and in `[env.production.observability]`; `tests/wrangler-config.test.ts` also fails on `logpush = true` or a non-empty `tail_consumers`. Both privacy policies promise persistent logs are off, so turning them on means updating the policies (all six languages) in the same change.
+
 ### Environment Validation
 
 `validateEnv()` runs on every request; the first request per isolate additionally reports it (`logValidationErrors` + `presetApi.validateSecurityConfig()`). Missing or misconfigured secrets are logged and the worker continues, so partial functionality (e.g., autocomplete) still works — **except** the production-only errors (FINDING-013): when `ENVIRONMENT === 'production'` and `RL_COMMAND` or `RL_AUTOCOMPLETE` is unbound, every request is refused with `500 {"error":"Service misconfigured"}`, `/health` included, until it is fixed. Those errors carry `PRODUCTION_ENV_ERROR_PREFIX` (exported by `utils/env-validation.ts`, matched in `index.ts`) and cannot be raised outside production, so the dev worker keeps the log-only path and its KV fallback.
@@ -229,7 +248,7 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 
 | Command | Description |
 |---------|-------------|
-| `/preset moderate` | Four actions on the required `action` option — `pending` (browse the queue), `approve`, `reject`, `stats` — plus an optional `preset_id` (autocompleted) and `reason`. Approve/reject are also available as buttons on the queue embed. Entries whose *preview picture* alone is awaiting review are marked 🖼 with a "Picture pending review" note — approve/reject there act on the preset's status, so picture review happens on the moderation embed discord-worker posts (1.4.0) |
+| `/preset moderate` | Four actions on the required `action` option — `pending` (browse the queue), `approve`, `reject`, `stats` — plus an optional `preset_id` (autocompleted). `approve` / `reject` never act on a typed id: they answer privately with the preset's **current** text and one confirm button bound to the revision just fetched (FINDING-017); the rejection reason is typed in the modal that button opens, so the old `reason` option is no longer read. Approve/reject are also available as buttons on the queue embed. Entries whose *preview picture* alone is awaiting review are marked 🖼 with a "Picture pending review" note — approve/reject there act on the preset's status, so picture review happens on the moderation embed discord-worker posts (1.4.0) |
 | `/preset ban_user` | Ban a user (autocomplete searches preset authors) |
 | `/preset unban_user` | Unban a user (autocomplete searches `banned_users`) |
 
@@ -286,5 +305,5 @@ npx vitest run -t "ban"                                   # Pattern match
 3. `npm run deploy` — publishes the routeless `xivdyetools-moderation-worker-dev` worker (there is no staging env).
 4. Run `/preset moderate` in the test guild — confirm pending list loads via Service Binding.
 5. `npm run deploy:production`.
-6. If slash command schemas changed: `npm run register-commands` (with prod `DISCORD_CLIENT_ID = 1453806659708129374`).
+6. If slash command schemas changed: `npm run register-commands` (with prod `DISCORD_CLIENT_ID = 1453806659708129374`). The Sprint 4 (FINDING-017) release removed the `reason` option from `/preset moderate`, so re-register against **both** the dev and production moderation apps — Discord keeps showing the old option until then.
 7. Confirm `https://moderation-bot.xivdyetools.app/health` returns `{ status: 'ok' }`.

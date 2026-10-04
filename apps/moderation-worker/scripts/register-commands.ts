@@ -76,12 +76,6 @@ const commands = [
             required: false,
             autocomplete: true,
           },
-          {
-            name: 'reason',
-            description: 'Reason for rejection (required for reject)',
-            type: OptionType.STRING,
-            required: false,
-          },
         ],
       },
       {
