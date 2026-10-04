@@ -6,7 +6,7 @@ Whole-monorepo security and privacy-policy audit: **31 confirmed findings — 1 
 - **Method:** automated evidence → 35 per-unit / cross-cutting / policy reviews → per-candidate verifier + adversarial refuter → completeness critic (2 gap rounds) → calibration → coordinator reconciliation → verifier-tier translation re-read → live read-only probes. Details in the report's header and *Evidence and validation*.
 - **Unit versions:** [evidence/versions.txt](evidence/versions.txt). **Build state for reproductions:** `pnpm install --frozen-lockfile` and `pnpm turbo run build --filter='./packages/*'` both exit 0 ([log](evidence/packages-build.txt)).
 
-**Publication hold:** `FlashGalatine/xivdyetools` is public. This folder holds working detail for unpatched findings (FINDING-001 above all), so do not push it until FINDING-001 is live on beta and confirmed with the `curl -sI` probe. A local commit is fine.
+**Publication hold:** lifted for FINDING-001 on 2026-10-03, when it went live on beta, the `curl -sI` probe passed, and it merged as `b89629d9`. `FlashGalatine/xivdyetools` is public, and the folder still holds working detail for findings that are not yet deployed.
 
 | File | Purpose |
 |---|---|

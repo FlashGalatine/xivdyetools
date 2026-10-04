@@ -17,4 +17,4 @@
 - No rotation is needed: no secret value was exposed.
 
 ## Status
-OPEN — the Sprint 0 precondition (`INTERNAL_WEBHOOK_SECRET` ≥ 32 characters on presets-api and discord-worker) is the maintainer's; code is Sprints 1 and 3.
+OPEN — discord-worker part committed in `28769473` (local branch `fix/security-2026-10-03-sprint1`, discord-worker 5.7.2; not pushed). Enforced on the webhook route (503, retried and dead-lettered by presets-api) and reported non-fatally by `validateEnv`, so a short secret stops preset notifications but not the bot. presets-api part: Sprint 3. The maintainer still confirms the production secret is ≥ 32 characters before deploying.

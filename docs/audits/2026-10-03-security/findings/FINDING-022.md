@@ -17,4 +17,4 @@
 - Keep OPEN_ITEMS.md §Workers Logs as the gate for deliberately turning logs on; flipping this pin should be the reviewed step that triggers the policy update
 
 ## Status
-OPEN
+OPEN — discord-worker part committed in `28769473` (local branch `fix/security-2026-10-03-sprint1`, discord-worker 5.7.2; not pushed); the other workers' pins are Sprints 3, 4, 6, 7, 9, 10 and the CI part Sprint 11.

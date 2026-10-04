@@ -49,8 +49,8 @@ Also at the gate:
 
 ## Sprint 0 — Emergency and prerequisites
 
-**FINDING-001: fix committed 2026-10-03 in `61b7077b`** on local branch `fix/beta-security-headers` (web-app 5.13.3, gates green, verified with `wrangler pages dev`).
-- Not yet pushed, deployed, accepted or merged; steps 3–7 below remain.
+**FINDING-001: ✅ COMPLETED 2026-10-03** — `61b7077b`, PR #221 merged as `b89629d9` (web-app 5.13.3). The live `curl -sI` acceptance on beta passed.
+- Step 6 (branch hygiene) and step 7 (recovery) remain the maintainer's.
 - **FINDING-019 runbook: ✅ COMPLETED 2026-10-03, `d8d5e3e8`.**
 - **FINDING-027 precondition:** the maintainer's, still open.
 
@@ -72,6 +72,11 @@ Also at the gate:
 7. Recovery, if a stale branch redeploys beta: `gh workflow run deploy-web-app-beta.yml --ref <fixed branch>`, then re-run the `curl -sI` check.
 
 ## Sprint 1 — discord-worker: logging promises and code-only fixes
+
+**Committed 2026-10-03 in `28769473`** on local branch `fix/security-2026-10-03-sprint1` (discord-worker 5.7.2). The full gate is green.
+- **Not yet pushed or deployed.**
+- **Deploy needs:** the maintainer confirms the production `INTERNAL_WEBHOOK_SECRET` is ≥ 32 characters (a shorter one now stops preset notifications only), then the beta-bot push and the merge.
+- **Deviation from the row below, reviewed:** FINDING-027 is enforced on the webhook route rather than as a fatal `validateEnv` error. A fatal error would answer 500 to every interaction.
 
 The HIGH item plus the bot-side fixes that need no other unit and no policy edit. Each makes the current bot policy true. Anchor: FINDING-002.
 

@@ -18,4 +18,4 @@
 - Ship via `deploy-web-app-beta.yml` and re-run the `curl -sI` probe above as acceptance.
 
 ## Status
-FIX COMMITTED, NOT DEPLOYED — `61b7077b` on local branch `fix/beta-security-headers` (from `main` @ `0ab33466`; web-app 5.13.3). Gates green 2026-10-03. Verified with wrangler 4.140.0 `pages dev`: the old output served neither CSP nor XFO, the fixed beta build serves CSP, XFO, HSTS, Permissions-Policy and `x-robots-tag`. Closes when pushed, the live `curl -sI` acceptance passes on beta.xivdyetools.app, and the branch merges the same day.
+FIXED 2026-10-03 — `61b7077b`, PR #221, merged as `b89629d9` (web-app 5.13.3). Live acceptance on beta.xivdyetools.app after the beta deploy: `content-security-policy`, `x-frame-options: DENY`, `strict-transport-security`, `permissions-policy` and `x-robots-tag: noindex, nofollow` all present. Branch hygiene (stale branches touching `apps/web-app/**`) is the maintainer's.

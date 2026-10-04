@@ -17,4 +17,4 @@
 - Optionally add a test asserting these service logs carry no userId, so the policy's 'two lines' statement stays true
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `28769473` (local branch `fix/security-2026-10-03-sprint1`, discord-worker 5.7.2; not pushed).

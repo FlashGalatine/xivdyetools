@@ -178,8 +178,8 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 
 | ID | Status | Commit |
 |---|---|---|
-| FINDING-001 | FIX COMMITTED, NOT DEPLOYED — awaiting push, live `curl -sI` acceptance and same-day merge | `61b7077b` (`fix/beta-security-headers`) |
-| FINDING-002 | OPEN | — |
+| FINDING-001 | FIXED 2026-10-03 — live on beta (`curl -sI` acceptance passed) and merged | `61b7077b`, PR #221 → `b89629d9` |
+| FINDING-002 | FIX COMMITTED, NOT DEPLOYED | `28769473` (Sprint 1) |
 | FINDING-003 | OPEN | — |
 | FINDING-004 | OPEN | — |
 | FINDING-005 | OPEN | — |
@@ -192,19 +192,19 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-012 | OPEN | — |
 | FINDING-013 | OPEN | — |
 | FINDING-014 | OPEN | — |
-| FINDING-015 | OPEN | — |
+| FINDING-015 | FIX COMMITTED, NOT DEPLOYED; KV clean-up is the maintainer's | `28769473` (Sprint 1) |
 | FINDING-016 | OPEN | — |
 | FINDING-017 | OPEN | — |
-| FINDING-018 | OPEN | — |
+| FINDING-018 | FIX COMMITTED, NOT DEPLOYED | `28769473` (Sprint 1) |
 | FINDING-019 | OPEN — runbook part done; presets-api part Sprint 3 | `d8d5e3e8` (runbook) |
 | FINDING-020 | OPEN | — |
 | FINDING-021 | OPEN | — |
-| FINDING-022 | OPEN | — |
+| FINDING-022 | OPEN — discord-worker part committed | `28769473` (Sprint 1) |
 | FINDING-023 | OPEN | — |
 | FINDING-024 | OPEN | — |
 | FINDING-025 | OPEN | — |
 | FINDING-026 | OPEN | — |
-| FINDING-027 | OPEN — Sprint 0 precondition is the maintainer's (secret length) | — |
+| FINDING-027 | OPEN — discord-worker part committed; presets-api part Sprint 3; secret-length check is the maintainer's | `28769473` (Sprint 1) |
 | FINDING-028 | OPEN | — |
 | FINDING-029 | OPEN | — |
 | FINDING-030 | OPEN | — |
@@ -212,4 +212,15 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 
 ## Next steps
 
-Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) after the §8 confirmation gate. **Publication hold:** `FlashGalatine/xivdyetools` is public. This folder holds working detail for unpatched findings (FINDING-001 above all), so do not push it until FINDING-001 is live on beta and confirmed with the `curl -sI` probe. A local commit is fine. The audit itself changed no source. After the §8 gate (2026-10-03) the maintainer approved Sprint 0 with local commits only: FINDING-001 is fixed in `61b7077b` on `fix/beta-security-headers` and the FINDING-019 runbook in `d8d5e3e8`; nothing is pushed or deployed. The §8 decisions were made on 2026-10-03: every AMEND recommendation was accepted (FINDING-011 and FINDING-013 by code, so six AMENDs remain), FINDING-002 stays HIGH, and FINDING-017 fails closed.
+Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no source.
+
+**§8 decisions (2026-10-03):**
+- Every AMEND recommendation was accepted. FINDING-011 and FINDING-013 are fixed by code, so six AMENDs remain.
+- FINDING-002 stays HIGH.
+- FINDING-017 fails closed.
+
+**Progress:**
+- **Sprint 0:** FINDING-001 is fixed and live on beta (`61b7077b`, PR #221 merged as `b89629d9`; the `curl -sI` acceptance passed). The FINDING-019 runbook is in `d8d5e3e8`.
+- **Sprint 1:** committed locally as `28769473`, not yet pushed.
+
+**Publication hold:** lifted for FINDING-001. The repository is public and this folder still details findings that are not yet deployed, so publishing it is the maintainer's call.
