@@ -95,19 +95,28 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    vous n'avez aucun personnage vérifié, le nom est « XIVAuth User » suivi des 8 premiers caractères
    de votre identifiant XIVAuth. Si votre compte XIVAuth est lié à Discord, l'enregistrement
    contient aussi cet identifiant utilisateur Discord. Le nom figurant dans l'enregistrement est
-   affiché comme auteur de chaque palette prédéfinie que vous publiez. Les palettes prédéfinies et
-   les votes que vous soumettez sont stockés sous ce compte. Une palette prédéfinie contient ce que
-   vous saisissez dans le formulaire, plus l'image d'aperçu facultative décrite sous Images
-   ci-dessus. Pour supprimer une image d'aperçu, utilisez le formulaire de modification de la
-   palette prédéfinie ; supprimer une palette prédéfinie depuis **Mes soumissions** supprime aussi
-   son image d'aperçu. Lorsque vous soumettez ou modifiez une palette prédéfinie, son
-   nom et sa description peuvent aussi être envoyés à la [Perspective API](https://perspectiveapi.com/)
-   de Google pour un score de modération (facultatif — modération de contenu uniquement) ; la
-   requête indique à Google de ne pas les stocker (`doNotStore`), et rien d'autre — aucune identité
-   de compte — n'y est envoyé. Pour faire supprimer votre enregistrement de compte et vos
-   soumissions, consultez la section Des questions ? ci-dessous. Les images d'aperçu des palettes
-   prédéfinies sont servies depuis `shots.xivdyetools.app` ; les avatars se chargent depuis le CDN
-   de Discord.
+   affiché comme auteur de chaque palette prédéfinie que vous publiez, et il est mis à jour sur
+   chacune d'elles à chaque fois que vous vous connectez (pas tant qu'un bannissement est actif). Si
+   vous liez ensuite Discord à votre compte XIVAuth, vos palettes prédéfinies, vos votes et vos
+   compteurs de limite quotidienne passent à cet identifiant utilisateur Discord à votre prochaine
+   connexion (là encore, pas tant qu'un bannissement est actif). Les palettes prédéfinies et les
+   votes que vous soumettez sont stockés sous ce compte. Soumettre une palette prédéfinie compte
+   comme votre vote pour elle ; si une palette prédéfinie publiée a déjà les mêmes teintures, votre
+   soumission devient un vote pour cette palette à la place. Une palette prédéfinie contient ce que
+   vous saisissez dans le formulaire — et, si notre vérification automatique retient pour examen le
+   nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première
+   modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que la palette
+   prédéfinie soit supprimée — plus l'image d'aperçu facultative décrite sous Images ci-dessus. Pour
+   supprimer une image d'aperçu, utilisez le formulaire de modification de la palette prédéfinie ;
+   supprimer une palette prédéfinie depuis **Mes soumissions** supprime aussi son image d'aperçu.
+   Lorsque vous soumettez ou modifiez une palette prédéfinie, son nom et sa description peuvent
+   aussi être envoyés à la [Perspective API](https://perspectiveapi.com/) de Google pour un score de
+   modération (facultatif — modération de contenu uniquement) ; la requête indique à Google de ne
+   pas les stocker (`doNotStore`), et rien d'autre — aucune identité de compte — n'y est envoyé. Ce
+   que nous conservons d'autre sur vos palettes prédéfinies, et pour combien de temps, figure sous
+   *Palettes prédéfinies communautaires : ce que nous conservons* ci-dessous ; la façon de le
+   supprimer figure sous *Supprimer vos données*. Les images d'aperçu des palettes prédéfinies sont
+   servies depuis `shots.xivdyetools.app` ; les avatars se chargent depuis le CDN de Discord.
 4. **Liens de partage** : un lien de partage encode dans son URL les teintures ou les couleurs que
    vous avez choisies. Ouvrir un tel lien charge cette URL comme n'importe quelle page ; les
    aperçus de lien sur Discord et ailleurs sont générés par notre propre `og-worker`, qui ne voit
@@ -139,6 +148,64 @@ Instagram, pixiv, Misskey, ou le site officiel de Final Fantasy XIV, qui inclut 
 L'application n'affiche aucun lien d'exemple vers un autre site. Le lien est celui de l'auteur, et
 il ne transporte rien vous concernant. Il s'ouvre de la même façon : dans un nouvel onglet, avec le
 référent supprimé.
+
+## Palettes prédéfinies communautaires : ce que nous conservons
+
+Cette section ne s'applique que si vous vous connectez aux palettes prédéfinies communautaires.
+Tout ce qui suit est stocké sur Cloudflare — l'enregistrement de compte par notre service de
+connexion (`auth.xivdyetools.app`), le reste par notre service de palettes prédéfinies
+(`api.xivdyetools.app`) — à l'exception des messages publiés sur notre serveur Discord.
+
+- **Votre enregistrement de compte, vos palettes prédéfinies et vos votes** (élément 3 ci-dessus)
+  sont conservés jusqu'à ce que vous les supprimiez ou nous demandiez de les supprimer (voir
+  *Supprimer vos données*).
+- **Limites quotidiennes.** Chaque palette prédéfinie que vous soumettez, chaque modification du nom
+  ou de la description d'une palette prédéfinie que vous envoyez, et chaque image d'aperçu que vous
+  téléversez est comptée afin que les limites quotidiennes puissent être appliquées. Le compteur
+  consigne l'identifiant de votre compte, le type d'action, la palette prédéfinie et l'heure, et il
+  est supprimé après **30 jours** ; supprimer la palette prédéfinie ne le supprime pas plus tôt.
+- **Messages sur notre serveur Discord.** Nos modérateurs travaillent dans deux salons privés de
+  notre serveur Discord. Le salon de modération reçoit chaque palette prédéfinie, modification ou
+  image d'aperçu qui nécessite une vérification : le message montre la palette prédéfinie (par
+  exemple son nom, sa description, sa catégorie et ses teintures) et le nom de l'auteur ou, pour une
+  image d'aperçu, le nom de la palette prédéfinie et l'image, et il est mis à jour lorsqu'un
+  modérateur tranche. Si un modérateur vous bannit, le salon de modération reçoit aussi un message
+  avec votre nom d'auteur, le motif et le nombre de vos palettes prédéfinies qui ont été masquées.
+  Les modérateurs peuvent aussi publier dans le salon de modération la liste des palettes
+  prédéfinies en attente de vérification, avec le nom de leurs auteurs. Le salon de journal des
+  soumissions reçoit chaque palette prédéfinie publiée sans vérification, avec le nom de son auteur,
+  et une note nommant la palette prédéfinie lorsqu'un modérateur en approuve ou en rejette une, ou
+  en annule une modification, avec le motif d'un rejet ou d'une annulation. Les messages publiés
+  depuis la date de *Dernière mise à jour* ci-dessus ne montrent pas votre identifiant utilisateur
+  Discord ; les plus anciens peuvent le montrer. Les messages restent dans ces salons, soumis à la
+  [politique de confidentialité de Discord](https://discord.com/privacy), jusqu'à ce qu'un
+  modérateur les supprime ou jusqu'à ce que vous demandiez la suppression.
+- **Notifications en échec.** Si une palette prédéfinie ne peut pas être publiée sur notre serveur
+  Discord, nous conservons un enregistrement qui nomme la palette prédéfinie et l'erreur, afin
+  qu'un modérateur puisse rattraper le retard. Il ne contient rien sur votre compte. Il est supprimé
+  **30 jours** après qu'un modérateur l'a résolu, après **90 jours** si personne ne le fait, et
+  immédiatement si la palette prédéfinie est supprimée.
+- **Enregistrements de bannissement.** Si un modérateur vous bannit des palettes prédéfinies
+  communautaires, l'enregistrement de bannissement contient votre identifiant utilisateur Discord
+  ou, si vous vous êtes connecté avec un compte XIVAuth qui n'est pas lié à Discord, votre
+  identifiant XIVAuth à la place. Il contient aussi le nom d'auteur affiché sur vos palettes
+  prédéfinies au moment du bannissement, les identifiants utilisateur Discord du modérateur qui a
+  prononcé le bannissement et de celui qui l'a levé, le motif indiqué par le modérateur, ainsi que
+  les dates du bannissement et de sa levée. L'enregistrement est conservé tant que le bannissement
+  est actif. Lorsque le bannissement est levé, le nom d'auteur et le motif sont effacés
+  immédiatement de l'enregistrement de bannissement, et l'enregistrement est supprimé **90 jours**
+  plus tard. Les entrées du journal de modération concernant le bannissement conservent le motif,
+  comme décrit ensuite.
+- **Le journal de modération.** Chaque action de modération est consignée avec l'identifiant
+  utilisateur Discord du modérateur, l'action, un motif facultatif et l'heure. Une action portant
+  sur une palette prédéfinie (par exemple approuver, rejeter ou annuler une modification) désigne
+  cette palette, et est conservée tant que la palette prédéfinie existe. Un bannissement, une levée
+  de bannissement, un masquage ou une restauration désigne aussi le compte concerné, et est supprimé
+  après **12 mois**, ou plus tôt pour un masquage ou une restauration si sa palette prédéfinie est
+  supprimée.
+
+Le bot Discord conserve les mêmes enregistrements pour les palettes prédéfinies soumises par son
+intermédiaire ; voir [sa politique](../discord-worker/PRIVACY_POLICY.md).
 
 ## Analyses d'utilisation (avec consentement)
 
@@ -215,8 +282,43 @@ nôtre est gérée par Cloudflare, et voici l'intégralité de ce que nous en fa
    d'image que l'application effectue jamais est une image d'aperçu de palette prédéfinie que vous
    joignez vous-même (voir Images ci-dessus).
 
+## Supprimer vos données
+
+Vous pouvez en supprimer une partie vous-même, à tout moment, sauf si un modérateur vous a banni des
+palettes prédéfinies communautaires (tant qu'un bannissement est actif, adressez-vous plutôt à
+nous) :
+
+- **Une palette prédéfinie :** supprimez-la depuis **Mes soumissions**. Son image d'aperçu, les
+  votes qui la concernent, les entrées du journal de modération à son sujet et tout enregistrement
+  de notification en échec qui la concerne sont supprimés avec elle. Ses compteurs de limite
+  quotidienne expirent d'eux-mêmes après 30 jours, et les messages à son sujet sur notre serveur
+  Discord restent, sauf si vous nous le demandez (ci-dessous).
+- **Un vote :** sélectionnez de nouveau le bouton de vote (**Voter** / **Voté**) de cette palette
+  prédéfinie.
+- **Votre session :** vous déconnecter (**Déconnexion**) supprime le jeton de session de ce
+  navigateur et demande à notre service de connexion de le révoquer.
+
+Pour tout le reste — votre enregistrement de compte, ou tout ce qui se trouve sous votre compte en
+une seule fois — demandez-nous en privé :
+
+1. **E-mail :** FlashGalatineFGC@gmail.com, avec l'objet « XIV Dye Tools Privacy ».
+2. **Discord :** rejoignez https://discord.gg/rzxDHNr6Wv et envoyez un message privé à « Flash
+   Galatine ».
+
+Précisez si vous vous connectez avec Discord ou avec XIVAuth, et indiquez votre identifiant
+utilisateur Discord ou le nom d'auteur affiché sur vos palettes prédéfinies. Merci de ne pas faire
+cette demande dans un ticket GitHub public : cela publierait justement les informations que vous voulez
+faire supprimer.
+
+Nous traitons les demandes de suppression sous **30 jours**. Une demande supprime aussi de notre
+serveur Discord les messages vous concernant et concernant vos palettes prédéfinies, à l'exception
+du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas
+supprimé sur demande ; une fois le bannissement levé, il suit la durée de conservation indiquée
+sous *Palettes prédéfinies communautaires : ce que nous conservons*.
+
 ## Des questions ?
 
 Ouvrez un ticket sur [GitHub](https://github.com/FlashGalatine/xivdyetools/issues) ou demandez sur
-Discord. Nous sommes heureux de documenter des garanties supplémentaires si cela aide la communauté
-à se sentir en sécurité en utilisant les outils.
+Discord. Pour une demande de suppression, utilisez plutôt les voies privées décrites sous
+*Supprimer vos données*. Nous sommes heureux de documenter des garanties supplémentaires si cela
+aide la communauté à se sentir en sécurité en utilisant les outils.
