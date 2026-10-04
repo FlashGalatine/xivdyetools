@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "Votre nom apparaît sur la carte.",
     "providerDiscordNote": "La plupart des joueurs en ont déjà un",
     "providerXivauthNote": "Vérifie votre personnage",
-    "privacyNote": "Se connecter crée un compte avec votre identifiant Discord ou XIVAuth et votre nom d'utilisateur. Votre nom d'affichage apparaît sur les palettes que vous proposez. Pas de données de personnage, pas d'e-mail, rien n'est vendu.",
+    "privacyNote": "Se connecter crée un enregistrement de compte : votre identifiant Discord ou XIVAuth et un nom, affiché comme auteur des palettes que vous proposez. Avec XIVAuth, ce nom est celui de votre personnage vérifié. Si votre compte XIVAuth est lié à Discord, cet identifiant Discord est aussi stocké. Pas d'e-mail, rien n'est vendu.",
     "submitTitle": "Proposer une palette",
     "submitSub": "Relue avant publication",
     "previewLabel": "APERÇU DU RENDU",
@@ -1202,6 +1202,7 @@
   },
   "swatch": {
     "charaHint": "Analysé sur cet appareil. Rien n'est envoyé — le fichier contient un nom de personnage et parfois une capture.",
+    "charaHintGlamour": "Analysé sur cet appareil. Pour nommer l'équipement, seuls ses numéros de modèle et l'identifiant de l'accessoire de visage sont envoyés à notre API. Le nom du personnage et les couleurs restent ici.",
     "localOnly": "LOCAL UNIQUEMENT",
     "replaceFile": "Charger un autre fichier",
     "dropTitle": "Déposez un fichier .chara",

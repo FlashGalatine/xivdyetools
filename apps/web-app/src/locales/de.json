@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "Dein Name steht auf der Karte.",
     "providerDiscordNote": "Haben die meisten schon",
     "providerXivauthNote": "Bestätigt deinen Charakter",
-    "privacyNote": "Beim Anmelden wird ein Kontoeintrag angelegt: deine Discord- oder XIVAuth-ID und dein Benutzername. Dein Anzeigename erscheint auf Paletten, die du einreichst. Keine Charakterdaten, keine E-Mail, nichts wird verkauft.",
+    "privacyNote": "Beim Anmelden wird ein Kontoeintrag angelegt: deine Discord- oder XIVAuth-ID und ein Name, der als Autor der Paletten angezeigt wird, die du einreichst. Bei XIVAuth ist das der Name deines verifizierten Charakters. Ist dein XIVAuth-Konto mit Discord verknüpft, wird auch diese Discord-ID gespeichert. Keine E-Mail, nichts wird verkauft.",
     "submitTitle": "Palette einreichen",
     "submitSub": "Wird vor Veröffentlichung geprüft",
     "previewLabel": "SO WIRD SIE AUSSEHEN",
@@ -1202,6 +1202,7 @@
   },
   "swatch": {
     "charaHint": "Wird auf diesem Gerät gelesen. Nichts wird übertragen — die Datei enthält einen Charakternamen und manchmal ein Bild.",
+    "charaHintGlamour": "Wird auf diesem Gerät gelesen. Um die Ausrüstung zu benennen, werden nur ihre Modellnummern und die ID des Gesichtsaccessoires an unsere API gesendet. Charaktername und Farben bleiben hier.",
     "localOnly": "NUR LOKAL",
     "replaceFile": "Andere Datei laden",
     "dropTitle": ".chara-Datei hier ablegen",

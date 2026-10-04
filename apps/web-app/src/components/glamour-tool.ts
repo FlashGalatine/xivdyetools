@@ -87,6 +87,7 @@ export class GlamourTool extends BaseComponent {
         onOpen: () => RouterService.navigateTo('swatch'),
       },
       privacyNote: LanguageService.t('glamour.sheet.cardNote'),
+      sendsGearIds: true,
     });
     this.fileCard.init();
 

@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-09-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-10-04 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
@@ -14,14 +14,20 @@ vollständige Liste.
 
 ## Bilder und Kamera-Aufnahmen
 
-- Hochgeladene, eingefügte, per Drag-and-drop abgelegte und mit der Kamera aufgenommene Bilder
-  verlassen niemals dein Gerät und werden niemals im Browser-Speicher abgelegt. Sie werden mit der
-  Canvas-API des Browsers gelesen, nur für die Dauer der Sitzung im Arbeitsspeicher der Seite
-  gehalten und verworfen, sobald du das Bild löschst, den Tab schließt oder die Seite neu lädst.
+- In den Farbwerkzeugen verlassen hochgeladene, eingefügte, per Drag-and-drop abgelegte und mit der
+  Kamera aufgenommene Bilder niemals dein Gerät und werden niemals im Browser-Speicher abgelegt. Sie
+  werden mit der Canvas-API des Browsers gelesen, nur für die Dauer der Sitzung im Arbeitsspeicher
+  der Seite gehalten und verworfen, sobald du das Bild löschst, den Tab schließt oder die Seite neu
+  lädst.
 - Der Paletten-Extraktor sagt an der Stelle, an der du eine Datei auswählst, dasselbe — "Bilder
   werden im Browser gelesen und nie hochgeladen", neben einem Vorhängeschloss. Dieser
   Hinweis ist reiner Text, kein Link; dieses Dokument erreichst du über **Über XIV Farbwerkzeuge →
   Datenschutz**.
+- **Eine Ausnahme, und nur, wenn du sie wählst.** Wenn du ein Community-Preset einreichst oder
+  bearbeitest, kannst du ihm ein optionales **Vorschaubild** anfügen. Dieses Bild wird zu
+  `api.xivdyetools.app` hochgeladen, in WebP umgewandelt, zusammen mit dem Preset gespeichert und
+  von `shots.xivdyetools.app` öffentlich angezeigt, sobald ein Moderator es freigibt. Punkt 3 unter
+  Netzwerkzugriff unten sagt, wie du es entfernst.
 
 ## Charakterdateien (`.chara`)
 
@@ -50,10 +56,17 @@ vollständige Liste.
 Sprache, Einstellungen pro Werkzeug (einschließlich des Analyse-Schalters unten), favorisierte
 Farbstoffe, gespeicherte Paletten und Sammlungen, Bezugsquellen, die du in der "Ausrüstungsliste"
 des Projektionslesers umgeschrieben hast, sowie — wenn du dich anmeldest — dein
-Sitzungs-Token für die Community-Presets. Nichts davon ist ein Tracking-Identifikator.
-"Einstellungen zurücksetzen" in den Erweiterten Einstellungen sowie die Website-Daten-Steuerung
-deines Browsers löschen es. "Alles zurücksetzen" in der Ausrüstungsliste löscht die
-umgeschriebenen Zeilen dieses Outfits.
+Sitzungs-Token für die Community-Presets. Nichts davon ist ein Tracking-Identifikator. Die
+Website-Daten-Steuerung deines Browsers löscht alles davon. In der App löscht jeder dieser Punkte
+einen Teil:
+
+- **Erweiterte Einstellungen → Einstellungen zurücksetzen** setzt die Einstellungen jedes Werkzeugs
+  auf ihre Standardwerte zurück. Deine gespeicherte Arbeit wird dabei nicht gelöscht.
+- **Erweiterte Einstellungen → Favoriten löschen** löscht deine favorisierten Farbstoffe.
+- **Erweiterte Einstellungen → Gespeicherte Paletten löschen** löscht deine gespeicherten Paletten.
+- **Sammlungen verwalten → Sammlung löschen** löscht eine gespeicherte Sammlung.
+- Das Abmelden löscht das Sitzungs-Token.
+- "Alles zurücksetzen" in der Ausrüstungsliste löscht die umgeschriebenen Zeilen dieses Outfits.
 
 `IndexedDB` enthält genau eine Sache: einen Cache bereits abgerufener Marktbrett-Preise, damit
 dieselbe Abfrage nicht wiederholt wird. Es enthält keine Bilder — eine frühere Version der App
@@ -71,10 +84,18 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
 2. **Ausrüstungsnamen und -symbole für `.chara`-Importe** — `data.xivdyetools.app` (siehe oben).
 3. **Community-Presets** (`api.xivdyetools.app`): Das Durchsuchen sendet nichts über dich. Die
    Anmeldung über `auth.xivdyetools.app` mit Discord oder XIVAuth legt sofort einen
-   Kontodatensatz an — deine Anbieter-ID und deinen Benutzernamen —, unabhängig davon, ob du
-   anschließend etwas einreichst oder abstimmst. Presets und Stimmen, die du einreichst, werden
-   unter diesem Konto gespeichert, und der Autorenname wird bei veröffentlichten Presets angezeigt.
-   Wenn du ein Preset einreichst oder bearbeitest, können sein Name und seine Beschreibung
+   Kontodatensatz an, unabhängig davon, ob du anschließend etwas einreichst oder abstimmst. Bei
+   Discord enthält der Datensatz deine Discord-Benutzer-ID und deinen Anzeigenamen (deinen
+   Benutzernamen, wenn du keinen Anzeigenamen hast). Bei XIVAuth enthält der Datensatz deine
+   XIVAuth-ID und den Namen deines verifizierten Charakters. Hast du keinen verifizierten
+   Charakter, lautet der Name "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID.
+   Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz zusätzlich diese
+   Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jedes Presets angezeigt, das du
+   veröffentlichst. Presets und Stimmen, die du einreichst, werden unter diesem Konto gespeichert.
+   Ein Preset enthält, was du im Formular eingibst, plus das optionale Vorschaubild, das oben unter
+   Bilder beschrieben ist. Um ein Vorschaubild zu entfernen, nutze das Bearbeitungsformular des
+   Presets; wenn du ein Preset unter **Meine Einreichungen** löschst, wird auch sein Vorschaubild
+   gelöscht. Wenn du ein Preset einreichst oder bearbeitest, können sein Name und seine Beschreibung
    zusätzlich an Googles [Perspective API](https://perspectiveapi.com/) für eine
    Moderationsbewertung gesendet werden (optional — nur zur Inhaltsmoderation); die Anfrage weist
    Google an, sie nicht zu speichern (`doNotStore`), und sonst wird nichts — auch keine
@@ -105,6 +126,13 @@ Gegenstands-ID oder der Name des Gegenstands in der Sprache, die diese Website v
 einem neuen Tab mit unterdrücktem Referrer, sodass die Website, auf der du landest, nicht erfährt,
 von welcher Seite du kamst. Sobald du dort bist, befindest du dich auf der Website einer anderen
 Partei, unter deren Datenschutzrichtlinie.
+
+Ein Community-Preset kann außerdem einen **Beispiel-Link** tragen, den der Autor des Presets
+gewählt hat. Er verweist auf eine Seite einer dieser Websites: Eorzea Collection, Mirapri, Reddit,
+X, Bluesky, Instagram, pixiv, Misskey oder die offizielle Final-Fantasy-XIV-Website, zu der auch
+das Lodestone gehört. Die App zeigt keinen Beispiel-Link zu einer anderen Website an. Der Link
+stammt vom Autor und enthält nichts über dich. Er öffnet sich auf dieselbe Weise: in einem neuen
+Tab, mit unterdrücktem Referrer.
 
 ## Nutzungsanalyse (Opt-in)
 
@@ -176,7 +204,8 @@ Unsere wird von Cloudflare verwaltet, und hier ist alles, was wir damit tun.
 1. Öffne DevTools → Netzwerk, aktiviere "Protokoll beibehalten".
 2. Verwende ein beliebiges Werkzeug mit einem Bild oder einer `.chara`-Datei.
 3. Du wirst keinen Bild-Upload sehen — nur die oben aufgeführten Anfragen, und `/v1/telemetry`-
-   Beacons nur, wenn du Analysen eingeschaltet hast.
+   Beacons nur, wenn du Analysen eingeschaltet hast. Der einzige Bild-Upload, den die App je
+   vornimmt, ist ein Preset-Vorschaubild, das du selbst anfügst (siehe Bilder oben).
 
 ## Fragen?
 

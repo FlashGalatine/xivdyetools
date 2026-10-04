@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "カードに名前が表示されます。",
     "providerDiscordNote": "ほとんどの人が持っています",
     "providerXivauthNote": "キャラクターを認証",
-    "privacyNote": "ログインするとアカウントの記録が作成され、Discord または XIVAuth の ID とユーザー名が保存されます。表示名は投稿したパレットに表示されます。キャラクター情報もメールも取得せず、販売もしません。",
+    "privacyNote": "ログインするとアカウントの記録が作成され、Discord または XIVAuth の ID と名前が保存されます。この名前は、投稿したプリセットの投稿者として表示されます。XIVAuth の場合、その名前は認証済みキャラクターのものです。XIVAuth アカウントが Discord と連携されている場合は、その Discord ID も保存されます。メールは取得せず、販売もしません。",
     "submitTitle": "パレット投稿",
     "submitSub": "公開前に審査があります",
     "previewLabel": "表示イメージ",
@@ -1202,6 +1202,7 @@
   },
   "swatch": {
     "charaHint": "この端末で解析します。送信はしません。ファイルには名前や画像が含まれることがあります。",
+    "charaHintGlamour": "この端末で解析します。装備名を表示するために運営者のAPIへ送信するのは、装備のモデル番号とフェイスアクセサリーのIDのみです。キャラクター名と色はこの端末にとどまります。",
     "localOnly": "ローカルのみ",
     "replaceFile": "別のファイルを読み込む",
     "dropTitle": ".chara ファイルをドロップ",
