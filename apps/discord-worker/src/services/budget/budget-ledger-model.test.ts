@@ -206,3 +206,69 @@ describe('findBudgetLedger (13G model)', () => {
     }
   });
 });
+
+// FINDING-002 (2026-10-03 security audit): PRIVACY_POLICY.md §5 says log lines
+// never include command option values. `method` and `threshold` come from the
+// `matching` / `max_distance` options (or the stored preference).
+describe('findBudgetLedger log hygiene (FINDING-002)', () => {
+  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each([
+    ['default method', {}],
+    ['explicit matching + max_distance', { method: 'oklab' as const, matchLine: 12 }],
+    ['distinguish', { method: 'distinguish' as const }],
+  ])('the candidates-priced line carries only counts (%s)', async (_label, options) => {
+    setPrices([price(jetBlack.itemID, 71400), price(CONSOLIDATED_IDS.A!, 248)]);
+
+    await findBudgetLedger(
+      createMockEnv(),
+      jetBlack.stainID!,
+      'Cactuar',
+      options,
+      logger as never,
+    );
+
+    const call = logger.info.mock.calls.find(
+      ([message]) => message === 'Budget ledger: candidates priced',
+    );
+    expect(call, 'the priced log line never ran').toBeDefined();
+    expect(Object.keys(call![1] as object).sort()).toEqual(['candidates', 'fetched']);
+  });
+});
+
+// FINDING-002 (2026-10-03 security audit): PRIVACY_POLICY.md §5 says log lines
+// never include command option values. `method` and `threshold` come from the
+// `matching` / `max_distance` options (or the stored preference).
+describe('findBudgetLedger log hygiene (FINDING-002)', () => {
+  const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each([
+    ['default method', {}],
+    ['explicit matching + max_distance', { method: 'oklab' as const, matchLine: 12 }],
+    ['distinguish', { method: 'distinguish' as const }],
+  ])('the candidates-priced line carries only counts (%s)', async (_label, options) => {
+    setPrices([price(jetBlack.itemID, 71400), price(CONSOLIDATED_IDS.A!, 248)]);
+
+    await findBudgetLedger(
+      createMockEnv(),
+      jetBlack.stainID!,
+      'Cactuar',
+      options,
+      logger as never,
+    );
+
+    const call = logger.info.mock.calls.find(
+      ([message]) => message === 'Budget ledger: candidates priced',
+    );
+    expect(call, 'the priced log line never ran').toBeDefined();
+    expect(Object.keys(call![1] as object).sort()).toEqual(['candidates', 'fetched']);
+  });
+});

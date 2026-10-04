@@ -95,6 +95,14 @@ ANNOUNCEMENT_CHANNEL_ID = "1441800851747508314"
 # secret at all: it runs on the `RL_*` bindings above and falls back to KV
 # only when no tier is bound (tests / local dev without bindings).
 
+# FINDING-022 (2026-10-03 security audit): persistent Workers Logs stay OFF.
+# Both privacy policies promise it, so the state is pinned here rather than
+# living only in the Cloudflare dashboard. `observability` is an INHERITABLE
+# key, but it is declared explicitly in both blocks anyway. Turning it on
+# needs both privacy policies (all six languages) updated in the same change.
+[observability]
+enabled = false
+
 [[rules]]
 type = "Data"
 globs = ["**/*.ttf"]
@@ -118,6 +126,10 @@ routes = [
   { pattern = "bot.xivdyetools.app", custom_domain = true },
   { pattern = "bot.xivdyetools.projectgalatine.com", custom_domain = true }
 ]
+
+# FINDING-022: see the top-level [observability] comment. Workers Logs stay off.
+[env.production.observability]
+enabled = false
 
 [env.production.vars]
 # FINDING-013: turns on validateEnv's production block (the six `RL_*`

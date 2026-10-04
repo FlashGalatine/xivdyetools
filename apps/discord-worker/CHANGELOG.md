@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.7.2] - 2026-10-03
+
+Sprint 1 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). No command
+schema changed, so `register-commands` publishes the same set. The bot policy needs no edit:
+every change below makes its existing text true.
+
+### Security
+
+- **`/budget` logs no command option values** (FINDING-002, HIGH). `PRIVACY_POLICY.md` §5 says
+  diagnostic lines never include option values. Two lines did:
+  - "Budget: building ledger" logged the `target_dye` dye id; it now logs only whether a home
+    world was resolved;
+  - "Budget ledger: candidates priced" logged the matching method and the `max_distance`
+    threshold; it now logs only the candidate and fetch counts.
+
+  `budget-ledger-model.test.ts` pins the exact key sets.
+- **Only the two documented log lines carry a Discord user id** (FINDING-018).
+  - The v4-preferences migration line and the three preset-favorite failure lines dropped
+    `userId`. The request id still ties them to the "Handling command" line.
+  - `src/__tests__/log-user-id-invariant.test.ts` scans the worker's source and fails if any
+    logger call other than "Handling command" and "User rate limited" carries a user id.
+- **`/preferences reset` no longer lets a reset language or world come back** (FINDING-015).
+  - A full reset also deletes the v4 keys `i18n:user:<id>` and `budget:world:v1:<id>`.
+  - Resetting `language` or `world` deletes the matching one.
+  - The v4 → `prefs:v1` migration deletes both once the unified write succeeds, never before it.
+  - Keys of users who never return need a one-off clean-up (`docs/operations/OPEN_ITEMS.md` §2).
+- **The preset webhook refuses a short secret in production** (FINDING-027).
+  - `POST /webhooks/preset-submission` is public and gated only by `INTERNAL_WEBHOOK_SECRET`.
+    Production now answers 503, before any comparison, when that secret is under 32 characters.
+  - presets-api retries a 5xx and then dead-letters it, so only preset notifications wait. The
+    rest of the bot keeps serving.
+  - `validateEnv` reports the condition, deliberately not as a fatal error.
+  - **Before deploying, confirm the production secret is at least 32 characters.** Cloudflare
+    cannot show it back, so check the stored copy, or reset it on presets-api and discord-worker
+    back-to-back.
+- **Workers Logs pinned off** (FINDING-022). `[observability] enabled = false` is set in both
+  `wrangler.toml` blocks, so a deploy enforces what both privacy policies promise rather than
+  leaving it to dashboard state. `tests/wrangler-config.test.ts` also rejects `logpush` or a
+  `tail_consumers` sink.
+
 ## [5.7.1] - 2026-09-28
 
 Documents only. No source changed, no `register-commands`.

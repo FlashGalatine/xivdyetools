@@ -331,6 +331,81 @@ describe('index.ts', () => {
       expect(res.status).toBe(401);
     });
 
+    // FINDING-027 (2026-10-03 security audit): the bearer secret is the route's
+    // only gate, so production refuses a short one — on this route only.
+    describe('production secret floor (FINDING-027)', () => {
+      let consoleErrorSpy: MockInstance;
+
+      /** A valid production env (all six RL_* tiers bound) with this webhook secret. */
+      function productionEnv(secret: string): Env {
+        return {
+          ...mockEnv,
+          ENVIRONMENT: 'production',
+          INTERNAL_WEBHOOK_SECRET: secret,
+          ...Object.fromEntries(
+            ['RL_5', 'RL_10', 'RL_15', 'RL_20', 'RL_30', 'RL_70'].map((name) => [
+              name,
+              { limit: vi.fn().mockResolvedValue({ success: true }) },
+            ]),
+          ),
+        } as unknown as Env;
+      }
+
+      function webhookRequest(secret: string, body: string): Request {
+        return new Request('http://localhost/webhooks/preset-submission', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${secret}` },
+          body,
+        });
+      }
+
+      beforeEach(() => {
+        // The non-fatal validateEnv error is logged once per isolate.
+        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('answers 503 without comparing when the production secret is under 32 characters', async () => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        vi.mocked(timingSafeEqual).mockClear();
+        vi.mocked(timingSafeEqual).mockResolvedValue(true);
+        const secret = 'x'.repeat(31);
+
+        const res = await app.fetch(
+          webhookRequest(secret, JSON.stringify({ type: 'submission' })),
+          productionEnv(secret),
+          mockCtx,
+        );
+
+        expect(res.status).toBe(503);
+        expect(timingSafeEqual).not.toHaveBeenCalled();
+      });
+
+      it('authenticates as before once the production secret is 32 characters', async () => {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        vi.mocked(timingSafeEqual).mockResolvedValue(true);
+        const secret = 'x'.repeat(32);
+
+        const res = await app.fetch(webhookRequest(secret, 'invalid json'), productionEnv(secret), mockCtx);
+
+        // Past authentication: the body is what gets rejected now.
+        expect(res.status).toBe(400);
+      });
+
+      it('keeps the rest of the bot serving while the webhook secret is short', async () => {
+        const res = await app.fetch(
+          new Request('http://localhost/health'),
+          productionEnv('short'),
+          mockCtx,
+        );
+
+        expect(res.status).toBe(200);
+      });
+    });
+
     it('should reject invalid JSON', async () => {
       const { timingSafeEqual } = await import('@xivdyetools/auth');
       vi.mocked(timingSafeEqual).mockResolvedValue(true);

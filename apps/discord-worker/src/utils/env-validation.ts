@@ -24,6 +24,15 @@ export interface EnvValidationResult {
 export const PRODUCTION_ENV_ERROR_PREFIX = 'Missing required env var in production: ';
 
 /**
+ * Shortest `INTERNAL_WEBHOOK_SECRET` production accepts (2026-10-03 security
+ * audit, FINDING-027). The bearer secret is the only gate on the public
+ * `POST /webhooks/preset-submission` route, so it needs the same floor as
+ * `BOT_SIGNING_SECRET`. Enforced by that route (`src/index.ts`), and reported
+ * by `validateEnv` below.
+ */
+export const MIN_WEBHOOK_SECRET_LENGTH = 32;
+
+/**
  * Validates all required environment variables for the Discord worker.
  *
  * Required variables:
@@ -122,6 +131,20 @@ export function validateEnv(env: Env): EnvValidationResult {
       if (!env[key]) {
         errors.push(`${PRODUCTION_ENV_ERROR_PREFIX}${key}`);
       }
+    }
+
+    // FINDING-027 (2026-10-03 security audit). Deliberately NOT prefixed with
+    // PRODUCTION_ENV_ERROR_PREFIX: that prefix makes an error fatal, and a
+    // short webhook secret should not answer 500 to every Discord interaction.
+    // The webhook route refuses to authenticate instead (503, which presets-api
+    // retries and then dead-letters), so only preset notifications stop.
+    if (
+      env.INTERNAL_WEBHOOK_SECRET &&
+      env.INTERNAL_WEBHOOK_SECRET.length < MIN_WEBHOOK_SECRET_LENGTH
+    ) {
+      errors.push(
+        `INTERNAL_WEBHOOK_SECRET must be at least ${MIN_WEBHOOK_SECRET_LENGTH} characters in production`,
+      );
     }
   }
 
