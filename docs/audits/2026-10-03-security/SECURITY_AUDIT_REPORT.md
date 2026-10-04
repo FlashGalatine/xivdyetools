@@ -183,7 +183,7 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-003 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-004 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-005 | OPEN — code parts and the bot AMEND committed; web AMEND Sprint 8 | `f1b54a0f`, `c7fd9eba`, `d1fdb89a` |
-| FINDING-006 | OPEN — presets-api and oauth parts committed; old hostnames removed 2026-10-04 and their route lines dropped; the two Discord redirect URIs remain (maintainer) | `f1b54a0f`, `d853a765`, `ee869d55` |
+| FINDING-006 | FIX COMMITTED, NOT DEPLOYED — old hostnames and Discord redirect URIs retired by the maintainer 2026-10-04; route lines dropped | `f1b54a0f`, `d853a765`, `ee869d55` |
 | FINDING-007 | FIX COMMITTED, NOT DEPLOYED | `d1fdb89a` (PR #227) |
 | FINDING-008 | OPEN — bot AMEND and mention drop committed; web AMEND Sprint 8 | `d1fdb89a`, `10a3b137` |
 | FINDING-009 | OPEN | — |

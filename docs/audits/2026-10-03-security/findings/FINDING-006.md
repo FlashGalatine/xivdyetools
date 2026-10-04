@@ -17,4 +17,7 @@
 - Add a test asserting that the production getAllowedRedirectOrigins() returns exactly the xivdyetools.app origins plus FRONTEND_URL
 
 ## Status
-OPEN — code parts committed: presets-api CORS in `f1b54a0f` (PR #224); oauth allowlist in `d853a765` (branch `fix/security-2026-10-03-sprint6`, oauth 3.1.2; PR #228, open), with a test pinning the exact production allowlist. On 2026-10-04 the maintainer removed the `auth.xivdyetools.projectgalatine.com` custom domain (and the old apex's and `bot.`'s). Neither hostname resolves any more. Their route lines come out in `ee869d55` (PR #228) and `b0f01e24` (PR #227), so the next deploy cannot re-attach them. Remaining, maintainer-only: unregister the two old-domain redirect URIs on Discord app 1447108133020369048.
+FIX COMMITTED, NOT DEPLOYED — presets-api CORS in `f1b54a0f` (PR #224); oauth allowlist in `d853a765` (branch `fix/security-2026-10-03-sprint6`, oauth 3.1.2; PR #228, open), with a test pinning the exact production allowlist. Phase 2 was carried out by the maintainer on 2026-10-04:
+- The `auth.`, `bot.` and old-apex custom domains were removed, and none of them resolves.
+- Their route lines come out in `ee869d55` (PR #228) and `b0f01e24` (PR #227), so a deploy cannot re-attach them.
+- Discord app 1447108133020369048 now registers only `http://localhost:8788/auth/callback`, `https://auth.xivdyetools.app/auth/callback` and `https://xivdyetools.app/auth/callback`; no old-domain redirect URI is left (portal screenshot, 2026-10-04).
