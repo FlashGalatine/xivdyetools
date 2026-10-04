@@ -290,6 +290,10 @@ This runs after Sprints 3–7, so every sentence describes code that is already 
 
 ## Sprint 9 — og-worker: Workers Logs pin
 
+**Committed 2026-10-04 in `7c97fc1d`** (og-worker 2.11.1). Open as PR #231; independent of every other PR. The branch push redeployed the live beta OG worker, which is config only. The full gate is green and an Opus review returned SHIP.
+- The version rides every `/og/*` cache key, so the bump re-renders cached cards once; they come out identical.
+- The review found that the anchored `enabled = true` assertion misses inline `logs = {…}`, subtables and dotted keys. og-worker uses the unanchored form. **Sprint 11:** use it in the CI invariant for every worker, including the merged discord-worker test.
+
 | ID | Source | Sev / Exposure | Item |
 |---|---|---|---|
 | FINDING-022 (og-worker) | security | LOW / LOCAL | Pin `[observability] enabled = false` in both blocks and assert it in a wrangler-config test. |
