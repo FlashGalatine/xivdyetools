@@ -76,7 +76,9 @@ Also at the gate:
 **Committed 2026-10-03 in `28769473`** on local branch `fix/security-2026-10-03-sprint1` (discord-worker 5.7.2). The full gate is green.
 - **Not yet pushed or deployed.**
 - **Deploy needs:** the maintainer confirms the production `INTERNAL_WEBHOOK_SECRET` is ≥ 32 characters (a shorter one now stops preset notifications only), then the beta-bot push and the merge.
-- **Deviation from the row below, reviewed:** FINDING-027 is enforced on the webhook route rather than as a fatal `validateEnv` error. A fatal error would answer 500 to every interaction.
+- **Deviation from the row below — the coordinator's choice, awaiting the maintainer's OK:** FINDING-027 is enforced on the webhook route (503) rather than as a fatal `validateEnv` error.
+  - With a short secret, the plan's fatal error would answer 500 to every interaction.
+  - This choice instead stops only preset moderation notifications. Because Workers Logs are off, they stop with no visible signal and pile up in `failed_notifications` for up to 90 days.
 
 The HIGH item plus the bot-side fixes that need no other unit and no policy edit. Each makes the current bot policy true. Anchor: FINDING-002.
 
