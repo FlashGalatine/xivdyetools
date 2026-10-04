@@ -77,8 +77,8 @@ Every row is a **six-file edit per document** (English + `.ja/.ko/.zh/.de/.fr`),
 | FINDING-003 | web `PRIVACY.md` | Images and camera captures; Network access item 3; How to verify | CORRECT | committed `3daa83fd`, six variants, not deployed |
 | FINDING-004 | web `PRIVACY.md`, web `TERMS_OF_SERVICE.md`, web `locales/*.json` `preset.privacyNote` | item 3; Accounts | **AMEND**, approved 2026-10-03: disclose the verified character name and the linked Discord id (plan Sprint 2) | committed `3daa83fd`, six variants, not deployed |
 | FINDING-005 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §2 / §5 / §8; item 3 | **AMEND**, approved 2026-10-03, after minimizing (plan Sprints 3–5, 8) | no |
-| FINDING-007 | bot `PRIVACY_POLICY.md` | §2, §4 | **AMEND**, approved 2026-10-03: "display name" | no |
-| FINDING-008 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §5 / §7; item 3 | **AMEND** | no |
+| FINDING-007 | bot `PRIVACY_POLICY.md` | §2, §4 | **AMEND**, approved 2026-10-03: "display name" | committed `d1fdb89a`, six variants (PR #227) |
+| FINDING-008 | bot `PRIVACY_POLICY.md`, web `PRIVACY.md` | §5 / §7; item 3 | **AMEND** | bot: committed `d1fdb89a`, six variants (PR #227); web: Sprint 8 |
 | FINDING-009 | web `PRIVACY.md` | item 3 | **AMEND** | no |
 | FINDING-010 | web `PRIVACY.md` | What is stored on your device | CORRECT | committed `3daa83fd`, six variants, not deployed |
 | FINDING-011 | — | — | none: §8 chose the native limiter (plan Sprint 7), which makes the current text true | n/a |
@@ -182,19 +182,19 @@ Source / configuration audit plus read-only live probes: `HEAD` requests to the 
 | FINDING-002 | FIXED 2026-10-03 | `28769473`, PR #222 → `8ecb878f` |
 | FINDING-003 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-004 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
-| FINDING-005 | OPEN — code parts committed (retention, unban blanking); AMEND Sprints 5 and 8 | `f1b54a0f`, `c7fd9eba` |
+| FINDING-005 | OPEN — code parts and the bot AMEND committed; web AMEND Sprint 8 | `f1b54a0f`, `c7fd9eba`, `d1fdb89a` |
 | FINDING-006 | OPEN — presets-api part committed; oauth part Sprint 6 | `f1b54a0f` |
-| FINDING-007 | OPEN | — |
-| FINDING-008 | OPEN | — |
+| FINDING-007 | FIX COMMITTED, NOT DEPLOYED | `d1fdb89a` (PR #227) |
+| FINDING-008 | OPEN — bot AMEND and mention drop committed; web AMEND Sprint 8 | `d1fdb89a`, `10a3b137` |
 | FINDING-009 | OPEN | — |
 | FINDING-010 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
 | FINDING-011 | OPEN | — |
 | FINDING-012 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd` (Sprint 2) |
-| FINDING-013 | OPEN | — |
+| FINDING-013 | FIX COMMITTED, NOT DEPLOYED | `d1fdb89a` (PR #227) |
 | FINDING-014 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f`, `c7fd9eba` |
 | FINDING-015 | FIXED 2026-10-03; the one-off KV clean-up is the maintainer's | `28769473`, PR #222 → `8ecb878f` |
 | FINDING-016 | FIX COMMITTED, NOT DEPLOYED | `3daa83fd`, `f1b54a0f` |
-| FINDING-017 | OPEN — presets-api and moderation-worker parts committed; discord-worker part Sprint 5 | `f1b54a0f`, `c7fd9eba` |
+| FINDING-017 | OPEN — all three parts committed; follow-up: bot submit/edit embeds still post legacy ids | `f1b54a0f`, `c7fd9eba`, `d1fdb89a` |
 | FINDING-018 | FIXED 2026-10-03 | `28769473`, PR #222 → `8ecb878f` |
 | FINDING-019 | FIX COMMITTED, NOT DEPLOYED | `d8d5e3e8` (runbook), `f1b54a0f` |
 | FINDING-020 | FIX COMMITTED, NOT DEPLOYED | `f1b54a0f` |
@@ -223,7 +223,8 @@ Follow [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md). The audit itself changed no s
 - **Sprint 0:** FINDING-001 is fixed and live on beta (`61b7077b`, PR #221 merged as `b89629d9`; the `curl -sI` acceptance passed). The FINDING-019 runbook is in `d8d5e3e8`.
 - **Sprint 1:** ✅ merged as `8ecb878f` (PR #222). The maintainer rotated the production `INTERNAL_WEBHOOK_SECRET` first.
 - **Sprint 2:** `3daa83fd` (web-app 5.13.4; the six-language policy edits) and `ffd22726` (root player notes 5.10.2), pushed as PR #223.
-- **Sprints 3 and 4:** `f1b54a0f` (presets-api 2.4.0) and `c7fd9eba` (moderation-worker 1.8.0), open as PR #224 and PR #225. They deploy together in one held window.
+- **Sprints 3 and 4:** `f1b54a0f` (presets-api 2.4.0) and `c7fd9eba` + `10a3b137` (moderation-worker 1.8.0), open as PR #224 and PR #225. They deploy together in one held window.
+- **Sprint 5:** `d1fdb89a` (discord-worker 5.8.0 and the six-language bot policy AMEND) and `f39e2cbe` (root player notes 5.10.3), open as PR #227. It merges after #224 and #225 are deployed.
 - **Open PRs are held for the maintainer's batch review (2026-10-04).** Nothing merges without it.
 
 **Publication hold:** lifted for FINDING-001. The repository is public and this folder still details findings that are not yet deployed, so publishing it is the maintainer's call.

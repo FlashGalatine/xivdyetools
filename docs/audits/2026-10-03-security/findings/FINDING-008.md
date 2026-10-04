@@ -16,4 +16,4 @@
 - Then AMEND both documents: add a §5 row "Discord — private moderation and submission-log channels: preset name, description, dyes, tags, author name and a mention of the author's account; kept in Discord's message history", replace the "All data is stored on Cloudflare" sentence, and say in bot §7 / web Questions? whether a deletion request removes those messages. Twelve-file edit; an AMEND is a significant change, so bot policy §11 calls for a Discord announcement.
 
 ## Status
-OPEN
+OPEN — the bot part is in `d1fdb89a` (branch `fix/security-2026-10-03-sprint5`, discord-worker 5.8.0; PR #227, open): the policy AMEND (Discord posts, no Discord User ID, removed on a deletion request) in six languages, and the author mention dropped from the moderation embed. moderation-worker's refreshed embed dropped its mention in `10a3b137` (PR #225). The web PRIVACY item 3 AMEND is Sprint 8.

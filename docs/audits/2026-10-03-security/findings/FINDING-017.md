@@ -18,4 +18,4 @@
 - Optionally disable or strip the buttons from earlier embeds when presets-api re-notifies for the same preset.
 
 ## Status
-OPEN — presets-api part (status and revert bound to the reviewed revision, GET /moderation/:id, payload revision) in `f1b54a0f` (local branch `fix/security-2026-10-03-sprint3`, presets-api 2.4.0; PR #224, open); moderation-worker part (revision-bound buttons, modals and confirm, legacy refresh) in `c7fd9eba` (local branch `fix/security-2026-10-03-sprint4`, moderation-worker 1.8.0; PR #225, open). The discord-worker part (emit the new custom_ids) is Sprint 5. Revert was added to the contract during review.
+OPEN — presets-api part in `f1b54a0f` (PR #224); moderation-worker part in `c7fd9eba` (PR #225); discord-worker part (revision-bearing webhook buttons) in `d1fdb89a` (branch `fix/security-2026-10-03-sprint5`, discord-worker 5.8.0; PR #227, open). Follow-up: the bot's own `/preset submit` / `edit` embeds still post legacy ids, because their `CommunityPreset` response has no `content_revision`. They are safe, since moderation-worker refreshes on a legacy click, but they take two clicks until presets-api returns the revision there.

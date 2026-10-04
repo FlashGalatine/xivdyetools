@@ -199,6 +199,13 @@ Deploys right after Sprint 3, in the same window, and **before** Sprint 5. Moder
 
 ## Sprint 5 — discord-worker: revision-bearing buttons, minimization choices, bot policy edits
 
+**Committed 2026-10-04 in `d1fdb89a`** (discord-worker 5.8.0), with the root player notes in `f39e2cbe` (5.10.3). Open as PR #227; merge after #224 and #225 are deployed. The full gate is green.
+- **Bot policy AMEND.** Six languages, each with one Sonnet translator and one Opus verifier.
+  - Corrections applied: ja 2, de 3, zh 4, fr 5.
+  - Three English sentences were clarified after review: the ban record holds one id, not both; a preview-image post includes the image; posts are also removed on a deletion request.
+- **FINDING-008.** No moderation control used the author mention (bans search by username), and the submission-log embeds never had one. The mention was dropped from discord-worker's moderation embed, and from moderation-worker's refreshed embed in `10a3b137` (PR #225).
+- **Follow-up (FINDING-017).** The bot's own `/preset submit` / `edit` embeds still post legacy ids: their `CommunityPreset` response carries no `content_revision`. It is safe, because a legacy click refreshes, but it takes two clicks until presets-api returns the revision on those responses.
+
 This sprint lands after Sprints 3–4: the bot policy has to describe the minimized ban data, and the button producer needs both the API guard and the new parser. All bot-policy edits go in one six-file commit (`PRIVACY_POLICY.md` + `.ja/.ko/.zh/.de/.fr`), with every `Last Updated` bumped to the same date and `policy-locale-parity.py` exiting 0.
 
 | ID | Source | Sev / Exposure | Item |

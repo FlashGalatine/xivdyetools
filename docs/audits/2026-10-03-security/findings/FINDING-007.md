@@ -18,4 +18,4 @@
 - Either way, add the preference record's `updatedAt` timestamp to the §2 Preferences row (or stop storing it).
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — bot policy AMEND (display name; the preferences record's last-changed time) in six languages, `d1fdb89a` (branch `fix/security-2026-10-03-sprint5`, discord-worker 5.8.0; PR #227, open).

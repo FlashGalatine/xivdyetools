@@ -17,4 +17,4 @@
 - Apply the same wording to the .ja/.ko/.zh/.de/.fr siblings (six-file AMEND, a new stated purpose). Alternative with no policy edit: drop the sampling and derive adoption from the Analytics Engine rows the policy already lists.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `/stats preferences` removed, `d1fdb89a` (branch `fix/security-2026-10-03-sprint5`, discord-worker 5.8.0; PR #227, open).
