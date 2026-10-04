@@ -50,6 +50,10 @@ production deploy re-registers commands (`/stats preferences` is gone).
 - **`/stats preferences` is removed** (FINDING-013). It sampled stored preference records for a
   purpose the policy did not state. Its handler, schema entry, tests and the
   `commands.stats.options.preferences` bot-logic string (six locales) are gone.
+- **The retired `bot.xivdyetools.projectgalatine.com` route is removed.** Its custom domain was
+  removed in the dashboard on 2026-10-04, and this production deploy would otherwise re-attach it.
+  Discord's interactions endpoint has used `bot.xivdyetools.app` since 2026-08-09. A test now
+  requires `bot.xivdyetools.app` to be the only production route.
 
 ## [5.7.2] - 2026-10-03
 
