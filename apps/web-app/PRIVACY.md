@@ -82,13 +82,15 @@ else) plus the third parties named below:
    character, the name is "XIVAuth User" followed by the first 8 characters of your XIVAuth ID. If
    your XIVAuth account is linked to Discord, the record also holds that Discord user ID. The name
    in the record is shown as the author of every preset you publish, and is updated on all of them
-   each time you sign in. If you later link Discord to your XIVAuth account, your presets, votes and
-   daily-limit counts move to that Discord user ID the next time you sign in. Presets and votes you
+   each time you sign in (not while a ban is active). If you later link Discord to your XIVAuth
+   account, your presets, votes and daily-limit counts move to that Discord user ID the next time you
+   sign in (again, not while a ban is active). Presets and votes you
    submit are stored under that account. Submitting a preset counts as your vote for it; if a
    published preset already has the same dyes, your submission becomes a vote for that preset
-   instead. A preset holds what you enter in the form — and, when an edit is held for review, the
-   version from before that edit, kept so a moderator can restore it — plus the optional preview
-   image described under Images above. To remove a
+   instead. A preset holds what you enter in the form — and, if our automatic check holds an edit's
+   new name or description for review, the version from before the first such edit, kept until a
+   moderator restores it or the preset is deleted — plus the optional preview image described under
+   Images above. To remove a
    preview image, use the preset's edit form; deleting a preset from **My Submissions** deletes its
    preview image too. When you submit or edit a preset, its name and description may also be sent to
    Google's [Perspective API](https://perspectiveapi.com/) for a moderation score (optional —
@@ -133,8 +135,8 @@ presets service (`api.xivdyetools.app`) — except the posts in our Discord serv
 
 - **Your account record, presets and votes** (item 3 above) are kept until you delete them or ask
   us to delete them (see *Deleting your data*).
-- **Daily limits.** Each preset you submit, each edit that changes a preset's name or description,
-  and each preview image you upload is counted so the daily limits can be enforced. The count
+- **Daily limits.** Each preset you submit, each edit to a preset's name or description that you
+  send, and each preview image you upload is counted so the daily limits can be enforced. The count
   records your account ID, the kind of action, the preset and the time, and is deleted after
   **30 days**; deleting the preset does not delete it sooner.
 - **Posts in our Discord server.** Our moderators work in two private channels of our Discord
@@ -142,9 +144,12 @@ presets service (`api.xivdyetools.app`) — except the posts in our Discord serv
   post shows the preset (such as its name, description, category and dyes) and the author name,
   or, for a preview image, the preset's name and the image, and it is updated when a moderator
   decides. If a moderator bans you, the moderation channel also gets a post with your author name,
-  the reason and how many of your presets were hidden. The submission-log channel gets each
-  published preset with its author name, and a note when a moderator approves, rejects or reverts
-  one, with the reason for a rejection or a revert. No post shows your Discord user ID. The posts
+  the reason and how many of your presets were hidden. Moderators can also post the list of presets
+  waiting for review, with their author names, in the moderation channel. The submission-log
+  channel gets each preset published without review, with its author name, and a note naming the
+  preset when a moderator approves, rejects or reverts one, with the reason for a rejection or a
+  revert. Posts made since the *Last updated* date above do not show your Discord user ID; older
+  posts may. The posts
   stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a
   moderator deletes them or until you request deletion.
 - **Failed notifications.** If a preset cannot be posted to our Discord server, we keep a record
