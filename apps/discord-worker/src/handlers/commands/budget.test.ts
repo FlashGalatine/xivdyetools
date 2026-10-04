@@ -275,7 +275,7 @@ describe('/budget world override validation (FINDING-033)', () => {
   // world name — a player's home world is mildly identifying, and the log
   // needs only to say whether one was resolved.
   describe('log hygiene (FINDING-011)', () => {
-    it('logs the target dye and whether a world resolved, never the world name', async () => {
+    it('logs only whether a world resolved, never the world name or the target dye', async () => {
       prefs.world = 'Balmung';
       mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
       const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
@@ -294,7 +294,8 @@ describe('/budget world override validation (FINDING-033)', () => {
         ([message]) => message === 'Budget: building ledger',
       );
       expect(call, 'the ledger log line never ran').toBeDefined();
-      expect(call![1]).toEqual({ targetDyeId: 5729, hasWorld: true });
+      // FINDING-002: target_dye is an option value, so it is not logged either.
+      expect(call![1]).toEqual({ hasWorld: true });
       expect(JSON.stringify(logger.info.mock.calls)).not.toContain('Balmung');
     });
   });

@@ -178,8 +178,6 @@ export async function findBudgetLedger(
 
   if (logger) {
     logger.info('Budget ledger: candidates priced', {
-      method,
-      threshold,
       candidates: candidates.length,
       fetched: marketIds.size,
     });

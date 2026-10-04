@@ -96,7 +96,6 @@ describe('preset-favorites.ts', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to get preset favorite entries',
         expect.any(Error),
-        { userId: mockUserId },
       );
     });
 
@@ -158,7 +157,7 @@ describe('preset-favorites.ts', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to add preset favorite',
         expect.any(Error),
-        { userId: mockUserId, presetId: 'preset-a' },
+        { presetId: 'preset-a' },
       );
     });
 
@@ -209,7 +208,7 @@ describe('preset-favorites.ts', () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Failed to remove preset favorite',
         expect.any(Error),
-        { userId: mockUserId, presetId: 'preset-a' },
+        { presetId: 'preset-a' },
       );
     });
 

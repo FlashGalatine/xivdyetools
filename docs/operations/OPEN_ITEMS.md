@@ -65,6 +65,19 @@ protection are on.
       (`workers_dev = false`, FINDING-025) — confirm once in the dashboard.
 - [ ] `xivdyetools-oauth-preview` / `auth-preview.xivdyetools.app` — no such worker exists in the
       account (2026-09-05); confirm the DNS record is absent too, then close.
+- [ ] **One-off: clear discord-worker's legacy preference keys → prod** (2026-10-03 security
+      audit, FINDING-015). Since discord-worker 5.7.2, migrating a user's v4 keys into
+      `prefs:v1:<id>` deletes them, and `/preferences reset` deletes them too. Keys of users who
+      never return stay, because nothing has written them since March 2026 and they have no TTL.
+      After 5.7.2 is live:
+  - List them with `wrangler kv key list --binding KV --env production --remote --prefix "i18n:user:"`,
+    then again with `--prefix "budget:world:v1:"`.
+  - For an id that already has a `prefs:v1:<id>` blob, delete its legacy keys with
+    `wrangler kv key delete --binding KV --env production --remote "<key>"`.
+  - For an id without one, the next command it runs migrates and deletes them. Delete whatever is
+    still left after 90 days.
+  - Afterwards, the legacy fallback in `@xivdyetools/bot-logic`'s `resolveUserLocale` and
+    moderation-worker's `getUserLanguagePreference` can go.
 - [ ] Start [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) Phase 0
       (`*.xivdyetools.projectgalatine.com`).
 

@@ -145,6 +145,78 @@ describe('Preferences Service', () => {
     });
   });
 
+  describe('legacy key cleanup (FINDING-015)', () => {
+    const i18nKey = `i18n:user:${testUserId}`;
+    const worldKey = `budget:world:v1:${testUserId}`;
+    const seedLegacy = () => {
+      mockKV._store.set(i18nKey, 'de');
+      mockKV._store.set(worldKey, JSON.stringify({ world: 'Cactuar' }));
+    };
+
+    it('migration deletes both legacy keys after a successful write', async () => {
+      seedLegacy();
+      const prefs = await getUserPreferences(mockKV, testUserId, mockLogger);
+      expect(prefs.language).toBe('de');
+      expect(prefs.world).toBe('Cactuar');
+      expect(mockKV._store.has(`prefs:v1:${testUserId}`)).toBe(true);
+      expect(mockKV._store.has(i18nKey)).toBe(false);
+      expect(mockKV._store.has(worldKey)).toBe(false);
+    });
+
+    it('a failing put leaves the legacy keys in place', async () => {
+      seedLegacy();
+      const del = vi.spyOn(mockKV, 'delete');
+      vi.spyOn(mockKV, 'put').mockRejectedValueOnce(new Error('kv down'));
+      await getUserPreferences(mockKV, testUserId, mockLogger);
+      expect(mockKV._store.has(i18nKey)).toBe(true);
+      expect(mockKV._store.has(worldKey)).toBe(true);
+      expect(del).not.toHaveBeenCalled();
+    });
+
+    it('migration log carries no userId', async () => {
+      seedLegacy();
+      await getUserPreferences(mockKV, testUserId, mockLogger);
+      const call = (
+        (mockLogger as unknown as { info: ReturnType<typeof vi.fn> }).info.mock.calls as unknown[][]
+      ).find((c) => String(c[0]).includes('Migrated legacy preferences'));
+      expect(call).toBeDefined();
+      expect(JSON.stringify(call)).not.toContain(testUserId);
+      expect(call![1]).toEqual({ keys: expect.any(Array) });
+    });
+
+    it('full reset deletes the unified blob and both legacy keys', async () => {
+      await setPreference(mockKV, testUserId, 'count', 8, mockLogger);
+      seedLegacy();
+      expect(await resetPreference(mockKV, testUserId, undefined, mockLogger)).toBe(true);
+      expect(mockKV._store.has(`prefs:v1:${testUserId}`)).toBe(false);
+      expect(mockKV._store.has(i18nKey)).toBe(false);
+      expect(mockKV._store.has(worldKey)).toBe(false);
+    });
+
+    it('language reset deletes only the legacy i18n key', async () => {
+      await setPreference(mockKV, testUserId, 'language', 'ja', mockLogger);
+      seedLegacy();
+      expect(await resetPreference(mockKV, testUserId, 'language', mockLogger)).toBe(true);
+      expect(mockKV._store.has(i18nKey)).toBe(false);
+      expect(mockKV._store.has(worldKey)).toBe(true);
+    });
+
+    it('world reset deletes only the legacy world key', async () => {
+      await setPreference(mockKV, testUserId, 'world', 'Gilgamesh', mockLogger);
+      seedLegacy();
+      expect(await resetPreference(mockKV, testUserId, 'world', mockLogger)).toBe(true);
+      expect(mockKV._store.has(worldKey)).toBe(false);
+      expect(mockKV._store.has(i18nKey)).toBe(true);
+    });
+
+    it('a reset language does not come back after the blob is emptied', async () => {
+      seedLegacy();
+      await getUserPreferences(mockKV, testUserId, mockLogger); // migrates + cleans
+      await resetPreference(mockKV, testUserId, undefined, mockLogger);
+      expect(await getUserPreferences(mockKV, testUserId, mockLogger)).toEqual({});
+    });
+  });
+
   describe('setPreference', () => {
     it('sets language preference', async () => {
       const result = await setPreference(mockKV, testUserId, 'language', 'ja', mockLogger);

@@ -81,6 +81,7 @@ import { sendModerationNotification } from './handlers/commands/preset-notificat
 import {
   validateEnv,
   logValidationErrors,
+  MIN_WEBHOOK_SECRET_LENGTH,
   PRODUCTION_ENV_ERROR_PREFIX,
 } from './utils/env-validation.js';
 import { requestIdMiddleware, loggerMiddleware } from '@xivdyetools/worker-kit';
@@ -267,6 +268,23 @@ app.post('/webhooks/preset-submission', async (c) => {
   if (!env.INTERNAL_WEBHOOK_SECRET) {
     logger.error('Webhook secret not configured');
     return c.json({ error: 'Unauthorized' }, 401);
+  }
+
+  // FINDING-027 (2026-10-03 security audit): the bearer secret is this public
+  // route's only gate, so production will not authenticate against a short
+  // one. Refused here rather than as a fatal env error, which would answer 500
+  // to every Discord interaction: a 503 is retried by presets-api and then
+  // dead-lettered (failed_notifications), so only preset notifications wait.
+  // Checked before the comparison and independent of the header sent, so it
+  // leaks nothing about the secret.
+  if (
+    env.ENVIRONMENT === 'production' &&
+    env.INTERNAL_WEBHOOK_SECRET.length < MIN_WEBHOOK_SECRET_LENGTH
+  ) {
+    logger.error('Webhook secret is shorter than the production minimum', {
+      minimum: MIN_WEBHOOK_SECRET_LENGTH,
+    });
+    return c.json({ error: 'Webhook misconfigured' }, 503);
   }
 
   // Always use timing-safe comparison for auth verification

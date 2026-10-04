@@ -2,7 +2,12 @@
  * Tests for Environment Variable Validation
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { validateEnv, logValidationErrors } from './env-validation.js';
+import {
+  validateEnv,
+  logValidationErrors,
+  MIN_WEBHOOK_SECRET_LENGTH,
+  PRODUCTION_ENV_ERROR_PREFIX,
+} from './env-validation.js';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { RateLimitBinding } from '@xivdyetools/worker-kit/rate-limiter';
@@ -312,6 +317,37 @@ describe('env-validation.ts', () => {
 
         expect(result.valid).toBe(true);
         expect(result.errors).toHaveLength(0);
+      });
+
+      // FINDING-027 (2026-10-03 security audit): the webhook's only gate.
+      it('reports a production INTERNAL_WEBHOOK_SECRET under 32 characters, without making it fatal', () => {
+        const result = validateEnv(
+          createValidProductionEnv({ INTERNAL_WEBHOOK_SECRET: 'x'.repeat(MIN_WEBHOOK_SECRET_LENGTH - 1) }),
+        );
+
+        expect(result.valid).toBe(false);
+        expect(result.errors).toEqual([
+          'INTERNAL_WEBHOOK_SECRET must be at least 32 characters in production',
+        ]);
+        // Fatal errors carry this prefix (src/index.ts refuses every request on
+        // them); a short webhook secret must only stop the webhook route.
+        expect(result.errors[0].startsWith(PRODUCTION_ENV_ERROR_PREFIX)).toBe(false);
+      });
+
+      it('accepts a production INTERNAL_WEBHOOK_SECRET of exactly 32 characters', () => {
+        const result = validateEnv(
+          createValidProductionEnv({ INTERNAL_WEBHOOK_SECRET: 'x'.repeat(MIN_WEBHOOK_SECRET_LENGTH) }),
+        );
+
+        expect(result.valid).toBe(true);
+      });
+
+      it('leaves a short INTERNAL_WEBHOOK_SECRET alone outside production', () => {
+        const result = validateEnv(
+          createMinimalEnv({ ENVIRONMENT: 'development', INTERNAL_WEBHOOK_SECRET: 'short' }),
+        );
+
+        expect(result.valid).toBe(true);
       });
     });
 

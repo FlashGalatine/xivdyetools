@@ -96,7 +96,6 @@ export async function getPresetFavoriteEntries(
     logger?.error(
       'Failed to get preset favorite entries',
       error instanceof Error ? error : undefined,
-      { userId },
     );
     return [];
   }
@@ -158,7 +157,6 @@ export async function addPresetFavorite(
   } catch (error) {
     if (logger) {
       logger.error('Failed to add preset favorite', error instanceof Error ? error : undefined, {
-        userId,
         presetId,
       });
     }
@@ -187,7 +185,6 @@ export async function removePresetFavorite(
   } catch (error) {
     if (logger) {
       logger.error('Failed to remove preset favorite', error instanceof Error ? error : undefined, {
-        userId,
         presetId,
       });
     }

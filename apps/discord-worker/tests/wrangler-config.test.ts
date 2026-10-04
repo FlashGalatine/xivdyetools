@@ -118,6 +118,21 @@ describe('wrangler.toml', () => {
     expect(toml).not.toMatch(/UPSTASH/i);
   });
 
+  /**
+   * FINDING-022 (2026-10-03 security audit): both privacy policies promise
+   * persistent Workers Logs are off. Pinned per block so the promise is not
+   * held only by a dashboard toggle.
+   */
+  it('pins Workers Logs off and ships no log sink in either block (FINDING-022)', () => {
+    for (const block of [topLevel, production]) {
+      expect(block).toMatch(/^\[(?:env\.production\.)?observability\]\r?\nenabled = false$/m);
+      expect(block).not.toMatch(/^\s*enabled\s*=\s*true\b/m);
+      expect(block).not.toMatch(/^\s*logpush\s*=\s*true\b/m);
+      expect(block).not.toMatch(/^\s*tail_consumers\s*=\s*\[\s*[^\s\]]/m);
+      expect(block).not.toMatch(/^\[\[(?:env\.production\.)?tail_consumers\]\]/m);
+    }
+  });
+
   it('has no [env.preview] block', () => {
     expect(toml).not.toMatch(/^\[env\.preview\]$/m);
   });

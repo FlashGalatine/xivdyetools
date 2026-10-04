@@ -181,7 +181,7 @@ Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANN
 |--------|---------|
 | `BOT_API_SECRET` | Bearer token for outbound calls to presets-api |
 | `BOT_SIGNING_SECRET` | HMAC-SHA256 key for bot request signing — min. 32 characters (checked by `validateEnv`; `@xivdyetools/auth` rejects shorter keys) |
-| `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` |
+| `INTERNAL_WEBHOOK_SECRET` | Auth for inbound `/webhooks/preset-submission` — min. 32 characters in production: a shorter one makes that route answer 503 (presets-api retries, then dead-letters) while the rest of the bot keeps serving (FINDING-027, 2026-10-03 audit) |
 | `GITHUB_WEBHOOK_SECRET` | HMAC-SHA256 key for GitHub push webhook |
 | `MODERATOR_IDS` | CSV of Discord IDs allowed to moderate presets |
 | `MODERATION_CHANNEL_ID` | Channel for pending presets posted from web app |

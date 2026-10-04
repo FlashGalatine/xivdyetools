@@ -59,6 +59,14 @@ const PREFS_KEY_PREFIX = 'prefs:v1:';
 const LEGACY_I18N_PREFIX = 'i18n:user:';
 const LEGACY_WORLD_PREFIX = 'budget:world:v1:';
 
+/** Build the legacy KV keys for a user (single source for migrate + reset). */
+function buildLegacyI18nKey(userId: string): string {
+  return `${LEGACY_I18N_PREFIX}${userId}`;
+}
+function buildLegacyWorldKey(userId: string): string {
+  return `${LEGACY_WORLD_PREFIX}${userId}`;
+}
+
 /**
  * Longest world / data-centre name this service will store.
  *
@@ -313,7 +321,11 @@ export async function resetPreference(
   try {
     if (!key) {
       // Reset all - delete the entire preferences object
+      // FINDING-015: also drop the legacy keys, or the migration (and
+      // resolveUserLocale's legacy fallback) would bring them back.
       await kv.delete(buildPrefsKey(userId));
+      await kv.delete(buildLegacyI18nKey(userId));
+      await kv.delete(buildLegacyWorldKey(userId));
       return true;
     }
 
@@ -333,6 +345,14 @@ export async function resetPreference(
       await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
     } else {
       await kv.delete(buildPrefsKey(userId));
+    }
+
+    // FINDING-015: a reset language / world must not resurrect from the
+    // legacy key. Runs only after the unified blob was updated successfully.
+    if (key === 'language') {
+      await kv.delete(buildLegacyI18nKey(userId));
+    } else if (key === 'world') {
+      await kv.delete(buildLegacyWorldKey(userId));
     }
 
     return true;
@@ -499,7 +519,9 @@ export function validatePreferenceValue(
  * This is called automatically when getUserPreferences finds no unified prefs.
  * Reads from legacy keys and creates a unified preferences object.
  *
- * Legacy keys are NOT deleted - they serve as fallback during transition.
+ * Once the unified write succeeds the legacy keys are deleted (FINDING-015);
+ * they are never deleted before it, nor when it throws. The legacy writers
+ * were removed in March 2026, so these keys only ever shrink.
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
@@ -516,14 +538,14 @@ async function migrateLegacyPreferences(
 
   try {
     // Migrate language from i18n:user:{userId}
-    const legacyLanguage = await kv.get(`${LEGACY_I18N_PREFIX}${userId}`);
+    const legacyLanguage = await kv.get(buildLegacyI18nKey(userId));
     if (legacyLanguage && isValidLocale(legacyLanguage)) {
       prefs.language = legacyLanguage;
       hasMigrated = true;
     }
 
     // Migrate world from budget:world:v1:{userId}
-    const legacyWorldData = await kv.get(`${LEGACY_WORLD_PREFIX}${userId}`);
+    const legacyWorldData = await kv.get(buildLegacyWorldKey(userId));
     if (legacyWorldData) {
       try {
         const worldPref = JSON.parse(legacyWorldData) as { world?: string };
@@ -542,9 +564,13 @@ async function migrateLegacyPreferences(
       prefs._version = SCHEMA_VERSION;
       await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
 
+      // Unified write succeeded - the legacy keys have served their purpose.
+      await kv.delete(buildLegacyI18nKey(userId));
+      await kv.delete(buildLegacyWorldKey(userId));
+
       if (logger) {
+        // FINDING-018: no userId (bot policy §5); `keys` is key NAMES only.
         logger.info('Migrated legacy preferences to unified format', {
-          userId,
           keys: Object.keys(prefs),
         });
       }

@@ -269,7 +269,7 @@ async function processFindCommand(
   try {
     // FINDING-011: a player's home world is mildly identifying — the log
     // needs only to say that one was resolved, never which.
-    if (logger) logger.info('Budget: building ledger', { targetDyeId, hasWorld: Boolean(world) });
+    if (logger) logger.info('Budget: building ledger', { hasWorld: Boolean(world) });
     const result = await findBudgetLedger(env, targetDyeId, world, searchOptions, logger);
 
     const locale = t.getLocale();
