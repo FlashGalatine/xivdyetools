@@ -10,9 +10,9 @@ import type { Plugin } from 'vite';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
 import {
+  addBetaHeaders,
   brandHtmlForBeta,
-  BETA_HEADERS_BLOCK,
-  hasBetaHeadersBlock,
+  findDuplicatePathPatterns,
 } from './src/shared/beta-branding';
 
 export function betaBranding(enabled: boolean): Plugin {
@@ -60,12 +60,17 @@ export function betaBranding(enabled: boolean): Plugin {
         );
       }
 
-      const current = readFileSync(headersPath, 'utf-8');
-      // Deliberately NOT a substring check — a comment in public/_headers that
-      // merely names the header would read as proof the block is present and
-      // silently skip the append. See hasBetaHeadersBlock's docstring.
-      if (hasBetaHeadersBlock(current)) return; // idempotent
-      writeFileSync(headersPath, current + BETA_HEADERS_BLOCK, 'utf-8');
+      // Into the existing /* rule, never as a second /* rule: Pages keeps only
+      // the last declaration of a repeated pattern, so an appended rule would
+      // replace the security headers (FINDING-001). See addBetaHeaders.
+      const branded = addBetaHeaders(readFileSync(headersPath, 'utf-8'));
+      const duplicates = findDuplicatePathPatterns(branded);
+      if (duplicates.length > 0) {
+        throw new Error(
+          `[beta-branding] ${headersPath} declares ${duplicates.join(', ')} more than once; Cloudflare Pages serves only the last rule for a repeated pattern, so the earlier rule's headers would be dropped`
+        );
+      }
+      writeFileSync(headersPath, branded, 'utf-8');
     },
   };
 }

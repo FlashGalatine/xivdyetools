@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.13.3] - 2026-10-03
+
+Beta deployment only. A production build is byte-identical apart from its version string and
+one comment in `_headers`.
+
+### Security
+
+- **`beta.xivdyetools.app` serves its security headers again** (`docs/audits/2026-10-03-security`
+  FINDING-001). Since the beta deployment shipped on 2026-08-09, the beta origin had been served
+  without `Content-Security-Policy`, `X-Frame-Options`, `Strict-Transport-Security` and
+  `Permissions-Policy`. Production was never affected.
+  - **Cause.** `vite-plugin-beta-branding` appended its `X-Robots-Tag` as a *second* `/*` rule
+    to `dist/_headers`, on the belief that Cloudflare Pages merges repeated patterns. Pages merges
+    *distinct* overlapping patterns, but an *identical* pattern declared twice is last-wins:
+    wrangler keys parsed rules by path. The robots rule therefore replaced the security-header
+    rule.
+  - **Why it mattered.** Beta signs people in with production tokens and writes production preset
+    data, so missing `frame-ancestors` / `X-Frame-Options` meant any site could frame it.
+  - **Fix.** `addBetaHeaders()` (`src/shared/beta-branding.ts`) now inserts the directive inside
+    the existing `/*` rule, keeping the line ending. It throws if the file has no `/*` rule. The
+    plugin then refuses to write a `_headers` that declares any pattern twice
+    (`findDuplicatePathPatterns()`).
+  - **Verified** against wrangler 4.140.0's own `pages dev`:
+    - the old output served neither CSP nor XFO;
+    - the new output serves all four plus `x-robots-tag`, and `/assets/*` still merges its
+      `Cache-Control`.
+- **The guards that missed it now look at what Pages serves.**
+  - `scripts/check-beta-build.js` used to grep for the CSP string anywhere in the file, which
+    passed throughout. It now parses `dist/_headers` the way Pages does, fails on a repeated
+    pattern, and requires CSP, XFO, HSTS, Permissions-Policy and `X-Robots-Tag: noindex` on the
+    `/*` rule.
+  - `scripts/smoke-test-pages.js` asserts those four headers, with a real `frame-ancestors`
+    directive, on both custom domains after every deploy. It previously checked only
+    `x-robots-tag`.
+  - `src/__tests__/security-headers.test.ts` pins that `public/_headers` repeats no pattern. Its
+    own parser folds repeats together, so on its own it could not have noticed.
+  - `src/shared/__tests__/beta-branding.test.ts` runs the transform on the real `public/_headers`
+    against an independent model of the Pages rule semantics, and pins the old append's failure.
+- The `/og/*` comment in `public/_headers` repeated the "repeated patterns merge" claim. It now
+  says which overlaps merge and which replace.
+
+---
+
 ## [5.13.2] - 2026-09-28
 
 Documents only; the deployed bundle differs only in its version string.

@@ -34,44 +34,104 @@ const BETA_ICON_PATH = '/assets/icons/beta/';
 const PRODUCTION_ORIGIN = 'https://xivdyetools.app';
 export const BETA_ORIGIN = 'https://beta.xivdyetools.app';
 
-/**
- * Appended to `dist/_headers` for a beta build.
- *
- * Cloudflare Pages merges the rules of repeated path patterns, so a second
- * `/*` section adds this header rather than replacing the security headers
- * already declared in `public/_headers`.
- */
-export const BETA_HEADERS_BLOCK = `
-# ============================================================================
-# Beta deployment - keep it out of search results.
-# Appended at build time by vite-plugin-beta-branding. Never present in a
-# production build; do not add this to public/_headers.
-# ============================================================================
-/*
-  X-Robots-Tag: noindex, nofollow
-`;
+/** The path pattern of the rule every security header lives in. */
+const GLOBAL_PATTERN = '/*';
+
+/** What a beta build adds to that rule: keep beta out of search results. */
+const BETA_ROBOTS_DIRECTIVE = '  X-Robots-Tag: noindex, nofollow';
+
+/** One path-pattern rule of a `_headers` file, in declaration order. */
+interface HeaderRule {
+  path: string;
+  /** Lowercased header name → value. */
+  headers: Map<string, string>;
+  /** Index of the pattern's own line in the file. */
+  line: number;
+}
 
 /**
- * Has `BETA_HEADERS_BLOCK` already been appended to a `_headers` file?
+ * Parse a `_headers` file the way Cloudflare Pages does.
  *
- * Used as the append step's idempotency guard. It matches an actual header
- * *directive* — indented under a path pattern, carrying the `noindex` value —
- * rather than the bare token anywhere in the file.
- *
- * That precision is the whole point. The guard was previously
- * `current.includes('X-Robots-Tag')`, and `public/_headers` carries a comment
- * explaining why the social-card rule sits outside `/assets/` — an explanation
- * that names the header. The substring check read the prose as proof the block
- * was already there and skipped the append, producing a beta build with
- * nothing to keep it out of search results. `#` comments cannot satisfy the
- * pattern below because a directive requires leading whitespace and nothing
- * else before the token.
- *
- * Lives here rather than in the Vite plugin so it is type-checked and tested;
- * being unreachable from the test suite is why the old guard's flaw survived.
+ * Mirrors wrangler's `parseHeaders`: every line is trimmed first, so blank
+ * lines and `#` comments are skipped wherever they are indented; a line that
+ * starts with `/` or a `scheme://` opens a rule; any other line holding a `:`
+ * is a header of the rule above it. Rules are returned one per declaration,
+ * duplicates included — collapsing them here would hide exactly the defect
+ * `findDuplicatePathPatterns` exists to report.
  */
-export function hasBetaHeadersBlock(headers: string): boolean {
-  return /^[ \t]+X-Robots-Tag:\s*noindex/m.test(headers);
+function parseHeaderRules(text: string): HeaderRule[] {
+  const rules: HeaderRule[] = [];
+  const lines = text.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith('#')) continue;
+    if (/^([^\s]+:\/\/|\/)/.test(line)) {
+      rules.push({ path: line, headers: new Map(), line: i });
+      continue;
+    }
+    const separator = line.indexOf(':');
+    const rule = rules[rules.length - 1];
+    if (separator === -1 || !rule) continue;
+    rule.headers.set(
+      line.slice(0, separator).trim().toLowerCase(),
+      line.slice(separator + 1).trim()
+    );
+  }
+  return rules;
+}
+
+/**
+ * Path patterns declared more than once in a `_headers` file.
+ *
+ * Cloudflare Pages *merges* the headers of distinct patterns that overlap
+ * (`/*` and `/assets/*` both apply to `/assets/app.js`), but an *identical*
+ * pattern declared twice is last-wins: wrangler keys the parsed rules by path,
+ * so the second declaration replaces the first outright. A repeated pattern is
+ * therefore never intended, and the vite plugin refuses to write a beta
+ * `_headers` that has one.
+ */
+export function findDuplicatePathPatterns(headers: string): string[] {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const { path } of parseHeaderRules(headers)) {
+    if (seen.has(path)) duplicates.add(path);
+    seen.add(path);
+  }
+  return [...duplicates];
+}
+
+/**
+ * Add `X-Robots-Tag: noindex, nofollow` to the global `/*` rule of a
+ * `_headers` file, for a beta build.
+ *
+ * The directive goes INSIDE the existing rule. Until 2026-10-03 this appended a
+ * second `/*` rule, on the belief that Pages merges repeated patterns; it does
+ * not (see `findDuplicatePathPatterns`), so from 2026-08-09 every beta build
+ * replaced the security-header rule with the robots one, and beta.xivdyetools.app
+ * was served without CSP, X-Frame-Options, HSTS or Permissions-Policy
+ * (2026-10-03 security audit, FINDING-001).
+ *
+ * Idempotent: a global rule that already carries a `noindex` X-Robots-Tag is
+ * left alone. The check reads parsed header lines, never prose, so the comment
+ * in `public/_headers` that names the header cannot satisfy it. The line ending
+ * of the `/*` line is reused, so a CRLF checkout stays CRLF.
+ *
+ * Throws when the file has no `/*` rule: that is where the CSP lives, so a
+ * build without one must not reach beta (or production) at all.
+ */
+export function addBetaHeaders(headers: string): string {
+  const global = parseHeaderRules(headers).find((rule) => rule.path === GLOBAL_PATTERN);
+  if (!global) {
+    throw new Error(
+      `[beta-branding] _headers has no ${GLOBAL_PATTERN} rule to add X-Robots-Tag to; refusing to publish a beta build without its security headers`
+    );
+  }
+  if (/\bnoindex\b/i.test(global.headers.get('x-robots-tag') ?? '')) return headers;
+
+  const lines = headers.split('\n');
+  const eol = lines[global.line].endsWith('\r') ? '\r' : '';
+  lines.splice(global.line + 1, 0, `${BETA_ROBOTS_DIRECTIVE}${eol}`);
+  return lines.join('\n');
 }
 
 /**
@@ -101,7 +161,7 @@ export function brandHtmlForBeta(html: string): string {
     return tag.replace(/\bhref="\/assets\/icons\/(?!beta\/)/, `href="${BETA_ICON_PATH}`);
   });
 
-  // The X-Robots-Tag header (BETA_HEADERS_BLOCK) is the mechanism search
+  // The X-Robots-Tag header (addBetaHeaders) is the mechanism search
   // engines actually respect, but an in-page <meta name="robots"> of
   // "index, follow" left untouched would contradict it, and conflict
   // resolution between the two is not uniformly specified across crawlers.

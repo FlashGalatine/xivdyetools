@@ -236,7 +236,10 @@ the Workers. `scripts/check-bundle-size.js` gates `dist/` per chunk and runs in 
 **After deploy**, both workflows run `scripts/smoke-test-pages.js` against the deployment just
 made: production asserts it is **not** a beta build (`--expect-robots none`), beta asserts the
 `noindex` header end-to-end — on the custom domain, not the `*.pages.dev` alias, because
-Cloudflare injects `x-robots-tag: noindex` onto those hostnames itself.
+Cloudflare injects `x-robots-tag: noindex` onto those hostnames itself. Both also assert that
+the custom domain serves the CSP (with `frame-ancestors`), `X-Frame-Options`, HSTS and
+`Permissions-Policy`, so a `_headers` rule that silently replaces the security-header rule fails
+the deploy.
 
 **Two Pages caching hazards** (both real incidents, see `docs/operations/`): overlapping `_headers`
 patterns **merge**, and an SPA catch-all plus `immutable` on `/assets/*` can cache an HTML fallback

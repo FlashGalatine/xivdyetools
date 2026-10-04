@@ -126,12 +126,21 @@ Three phases:
    (~175 s budget). A Pages custom domain keeps serving the *previous* deployment
    until propagation finishes, so this is what makes phase 3 describe the right
    build.
-3. `x-robots-tag` on that matched response must contain `noindex` or `none`
-   for beta, and must contain neither for production.
+3. Two header checks on that matched response, in both modes:
+   - `x-robots-tag` must contain `noindex` or `none` for beta, and neither for
+     production.
+   - `content-security-policy`, `x-frame-options`, `strict-transport-security`
+     and `permissions-policy` must all be present and non-blank, and the CSP must
+     carry a real `frame-ancestors` directive. Every missing header is reported in
+     one failure. The usual cause is a path pattern declared twice in
+     `dist/_headers`: Pages lets the later identical pattern replace the earlier
+     one instead of merging, which is how beta lost all four from 2026-08-09 while
+     the robots check kept passing.
 
 **Phase 3 only works on the custom domain.** Cloudflare injects
 `x-robots-tag: noindex` onto every `*.pages.dev` hostname itself, so asserting it
-on the deployment alias passes whether or not the build set it. See
+on the deployment alias passes whether or not the build set it; the security
+headers are checked on the custom domain because that is where users get them. See
 `docs/superpowers/specs/2026-08-10-pages-smoke-test-design.md`.
 
 Unit tests: `scripts/smoke-test-pages.test.js` and
