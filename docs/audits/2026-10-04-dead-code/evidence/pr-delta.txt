@@ -1,0 +1,166 @@
+# Code files each open PR changes, relative to its merge base with the preview chain
+# main = 8ecb878f; #230 is stacked on #223, so its base is #223's head
+
+## PR #226 @065e2987 (base 0ab33466, 0 code files)
+
+## PR #223 @ffd22726 (base 8ecb878f, 14 code files)
+  +1 -1 apps/web-app/package.json
+  +87 -0 apps/web-app/src/__tests__/privacy-copy-parity.test.ts
+  +40 -0 apps/web-app/src/components/__tests__/chara-file-card.test.ts
+  +14 -1 apps/web-app/src/components/__tests__/glamour-tool.test.ts
+  +21 -5 apps/web-app/src/components/chara-file-card.ts
+  +1 -0 apps/web-app/src/components/glamour-tool.ts
+  +2 -1 apps/web-app/src/locales/de.json
+  +2 -1 apps/web-app/src/locales/en.json
+  +2 -1 apps/web-app/src/locales/fr.json
+  +2 -1 apps/web-app/src/locales/ja.json
+  +2 -1 apps/web-app/src/locales/ko.json
+  +2 -1 apps/web-app/src/locales/zh.json
+  +28 -1 apps/web-app/src/shared/__tests__/example-link.test.ts
+  +10 -7 apps/web-app/src/shared/example-link.ts
+
+## PR #230 @7517a35d (base ffd22726, 1 code files)
+  +1 -1 apps/web-app/package.json
+
+## PR #224 @e34ea70a (base 8ecb878f, 40 code files)
+  +8 -0 apps/presets-api/migrations/0015_rewrite_legacy_dead_letters.sql
+  +1 -1 apps/presets-api/package.json
+  +1 -1 apps/presets-api/schema.sql
+  +163 -31 apps/presets-api/src/handlers/moderation.ts
+  +77 -22 apps/presets-api/src/handlers/presets.ts
+  +13 -3 apps/presets-api/src/index.ts
+  +7 -0 apps/presets-api/src/middleware/auth.ts
+  +25 -23 apps/presets-api/src/middleware/ban-check.ts
+  +65 -0 apps/presets-api/src/retention-job.ts
+  +64 -0 apps/presets-api/src/services/identity-rekey-service.ts
+  +92 -0 apps/presets-api/src/services/moderation-retention-service.ts
+  +20 -6 apps/presets-api/src/services/moderation-service.ts
+  +13 -2 apps/presets-api/src/services/notification-service.ts
+  +5 -2 apps/presets-api/src/services/preset-service.ts
+  +3 -3 apps/presets-api/src/services/rate-limit-service.ts
+  +43 -1 apps/presets-api/src/services/validation-service.ts
+  +26 -3 apps/presets-api/src/types.ts
+  +31 -0 apps/presets-api/src/utils/env-validation.ts
+  +319 -0 apps/presets-api/tests/handlers/identity-rekey.test.ts
+  +145 -0 apps/presets-api/tests/handlers/moderation-image-audit.test.ts
+  +345 -0 apps/presets-api/tests/handlers/moderation-retention.test.ts
+  +203 -0 apps/presets-api/tests/handlers/moderation-revert-binding.test.ts
+  +417 -0 apps/presets-api/tests/handlers/moderation-review-binding.test.ts
+  +11 -6 apps/presets-api/tests/handlers/moderation-revision.test.ts
+  +19 -18 apps/presets-api/tests/handlers/moderation.test.ts
+  +209 -0 apps/presets-api/tests/handlers/preset-text-safety.test.ts
+  +22 -2 apps/presets-api/tests/handlers/presets-quotas.test.ts
+  +6 -0 apps/presets-api/tests/handlers/presets.test.ts
+  +24 -0 apps/presets-api/tests/index.test.ts
+  +51 -0 apps/presets-api/tests/migration-trigger-parity.test.ts
+  +78 -0 apps/presets-api/tests/retention-job.test.ts
+  +44 -0 apps/presets-api/tests/services/example-link.test.ts
+  +143 -0 apps/presets-api/tests/services/failed-notifications-legacy-rewrite.test.ts
+  +51 -14 apps/presets-api/tests/services/moderation-service.test.ts
+  +2 -0 apps/presets-api/tests/services/notification-service-deadletter.test.ts
+  +2 -2 apps/presets-api/tests/services/preset-service.test.ts
+  +64 -0 apps/presets-api/tests/test-utils.ts
+  +40 -0 apps/presets-api/tests/utils/env-validation.test.ts
+  +49 -0 apps/presets-api/tests/wrangler-config.test.ts
+  +24 -1 apps/presets-api/wrangler.toml
+
+## PR #225 @3a69828c (base 8ecb878f, 34 code files)
+  +1 -1 apps/moderation-worker/package.json
+  +0 -6 apps/moderation-worker/scripts/register-commands.ts
+  +5 -2 apps/moderation-worker/src/autocomplete.test.ts
+  +1 -0 apps/moderation-worker/src/handlers/buttons/index.ts
+  +549 -0 apps/moderation-worker/src/handlers/buttons/preset-moderation-review.test.ts
+  +31 -16 apps/moderation-worker/src/handlers/buttons/preset-moderation.test.ts
+  +210 -152 apps/moderation-worker/src/handlers/buttons/preset-moderation.ts
+  +305 -104 apps/moderation-worker/src/handlers/commands/preset.test.ts
+  +71 -91 apps/moderation-worker/src/handlers/commands/preset.ts
+  +50 -1 apps/moderation-worker/src/handlers/modals/ban-reason.test.ts
+  +25 -4 apps/moderation-worker/src/handlers/modals/ban-reason.ts
+  +377 -0 apps/moderation-worker/src/handlers/modals/preset-rejection-review.test.ts
+  +32 -18 apps/moderation-worker/src/handlers/modals/preset-rejection.test.ts
+  +220 -139 apps/moderation-worker/src/handlers/modals/preset-rejection.ts
+  +219 -0 apps/moderation-worker/src/handlers/review-message.ts
+  +10 -11 apps/moderation-worker/src/index.ts
+  +390 -0 apps/moderation-worker/src/services/ban-service.sqlite.test.ts
+  +72 -13 apps/moderation-worker/src/services/ban-service.test.ts
+  +115 -17 apps/moderation-worker/src/services/ban-service.ts
+  +3 -0 apps/moderation-worker/src/services/bot-i18n.ts
+  +1 -1 apps/moderation-worker/src/services/preset-api-v2.test.ts
+  +150 -18 apps/moderation-worker/src/services/preset-api.test.ts
+  +94 -9 apps/moderation-worker/src/services/preset-api.ts
+  +6 -0 apps/moderation-worker/src/types/ban.ts
+  +2 -0 apps/moderation-worker/src/types/modal.ts
+  +34 -0 apps/moderation-worker/src/types/preset.ts
+  +48 -0 apps/moderation-worker/src/utils/discord-api.test.ts
+  +39 -0 apps/moderation-worker/src/utils/discord-api.ts
+  +10 -0 apps/moderation-worker/src/utils/embed-text.ts
+  +9 -0 apps/moderation-worker/src/utils/response.ts
+  +133 -0 apps/moderation-worker/src/utils/review-custom-id.test.ts
+  +117 -0 apps/moderation-worker/src/utils/review-custom-id.ts
+  +16 -0 apps/moderation-worker/tests/wrangler-config.test.ts
+  +12 -0 apps/moderation-worker/wrangler.toml
+
+## PR #227 @4ebd09f2 (base 8ecb878f, 17 code files)
+  +1 -1 apps/discord-worker/package.json
+  +0 -5 apps/discord-worker/src/commands/schemas.ts
+  +142 -0 apps/discord-worker/src/handlers/commands/preset-notifications.test.ts
+  +56 -5 apps/discord-worker/src/handlers/commands/preset-notifications.ts
+  +9 -132 apps/discord-worker/src/handlers/commands/stats.test.ts
+  +3 -158 apps/discord-worker/src/handlers/commands/stats.ts
+  +49 -0 apps/discord-worker/src/index.test.ts
+  +1 -0 apps/discord-worker/src/index.ts
+  +6 -0 apps/discord-worker/src/types/preset.ts
+  +5 -3 apps/discord-worker/tests/wrangler-config.test.ts
+  +4 -2 apps/discord-worker/wrangler.toml
+  +0 -3 packages/bot-logic/src/i18n/locales/de.json
+  +0 -3 packages/bot-logic/src/i18n/locales/en.json
+  +0 -3 packages/bot-logic/src/i18n/locales/fr.json
+  +0 -3 packages/bot-logic/src/i18n/locales/ja.json
+  +0 -3 packages/bot-logic/src/i18n/locales/ko.json
+  +0 -3 packages/bot-logic/src/i18n/locales/zh.json
+
+## PR #228 @9073d0df (base 8ecb878f, 6 code files)
+  +1 -1 apps/oauth/package.json
+  +23 -0 apps/oauth/src/__tests__/oauth-constants.test.ts
+  +25 -0 apps/oauth/src/__tests__/wrangler-config.test.ts
+  +5 -2 apps/oauth/src/constants/oauth.ts
+  +2 -2 apps/oauth/src/handlers/oauth-flow.ts
+  +13 -2 apps/oauth/wrangler.toml
+
+## PR #229 @1eaefd63 (base 8ecb878f, 8 code files)
+  +1 -1 apps/api-worker/package.json
+  +14 -1 apps/api-worker/src/types.ts
+  +190 -42 apps/api-worker/src/universalis/router.test.ts
+  +34 -12 apps/api-worker/src/universalis/router.ts
+  +90 -0 apps/api-worker/src/universalis/services/rate-limiter.test.ts
+  +69 -24 apps/api-worker/src/universalis/services/rate-limiter.ts
+  +70 -3 apps/api-worker/tests/wrangler-config.test.ts
+  +45 -3 apps/api-worker/wrangler.toml
+
+## PR #231 @7c97fc1d (base 8ecb878f, 3 code files)
+  +1 -1 apps/og-worker/package.json
+  +25 -0 apps/og-worker/tests/wrangler-env.test.ts
+  +12 -0 apps/og-worker/wrangler.toml
+
+## PR #232 @6e8c7d81 (base 8ecb878f, 4 code files)
+  +1 -1 apps/image-worker/package.json
+  +3 -3 apps/image-worker/src/index.ts
+  +20 -0 apps/image-worker/src/wrangler-config.test.ts
+  +14 -0 apps/image-worker/wrangler.toml
+
+## PR #233 @600f0568 (base 8ecb878f, 8 code files)
+  +20 -0 .github/workflows/ci.yml
+  +1 -1 .github/workflows/deploy-discord-worker-beta.yml
+  +2 -1 .github/workflows/sync-dye-emojis.yml
+  +2 -1 package.json
+  +5 -4 pnpm-lock.yaml
+  +5 -0 pnpm-workspace.yaml
+  +202 -0 scripts/check-worker-logs.test.ts
+  +198 -0 scripts/check-worker-logs.ts
+
+## PR #234 @01465700 (base 8ecb878f, 3 code files)
+  +1 -1 apps/stoat-worker/package.json
+  +87 -1 apps/stoat-worker/src/services/echo-sanitisation.test.ts
+  +40 -3 apps/stoat-worker/src/services/response-formatter.ts
+
+## PR #235 @b5f551e0 (base 8ecb878f, 0 code files)

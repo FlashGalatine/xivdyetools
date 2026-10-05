@@ -5,6 +5,84 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-10-04
+
+Sprint 4 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). **Deploy right
+after presets-api 2.4.0, in the same held-workflow window.** This build sends the reviewed
+revision that 2.4.0 now requires; the 1.7.x build gets a 409 on every approve, reject and
+revert against 2.4.0. The production deploy re-registers the commands, because
+`/preset moderate` lost its `reason` option.
+
+### Security
+
+- **Approve, reject and revert act on the revision the moderator reviewed** (FINDING-017).
+  - **Request fields.** `approvePreset`, `rejectPreset` and `revertPreset` send `expected_revision`
+    / `expected_status`. Their only callers carry a binding that is never null.
+  - **New button format.** Buttons and modals use
+    `preset_<approve|reject|revert>_<uuid>:<revision>:<status>` and
+    `preset_<reject|revert>_modal_<uuid>:<revision>:<status>`, at most 100 characters.
+    `utils/review-custom-id.ts` parses them strictly and documents the format discord-worker
+    adopts in Sprint 5.
+  - **Legacy buttons and modals never act.** Posted before this release, a legacy button or modal
+    refreshes the message instead: the current text, the revision in the footer, and new
+    revision-bound buttons (components are always replaced). The moderator is asked to review
+    and click again. The 2026-09-15 preview-image pattern.
+  - **Stale reviews refresh too.** A `STALE_REVIEW` / `REVISION_REQUIRED` 409 refreshes the same way.
+    The dye-signature 409 is handled as before.
+  - **`/preset moderate approve|reject <id>`** has no reviewed revision for a typed id. It now
+    answers privately with the preset's current text and one confirm button bound to that
+    revision. Reject takes its reason in the modal, so the command's unused `reason` option is
+    gone.
+- **Revert refuses a banned author** (found in review; the gap predates this release). Approve
+  already did.
+- **Bans follow XIVAuth identities** (FINDING-014).
+  - A ban on an XIVAuth-only account writes its UUID to `xivauth_id` as well as `discord_id`.
+  - Every ban read matches either column: the author-banned check, the pickers, search, the
+    active-ban lookup and unban.
+  - The unban picker offers a ban stored only in `xivauth_id`.
+- **A lifted ban keeps no name or reason** (FINDING-005). Unban blanks `username` and `reason`
+  in the same statement that sets `unbanned_at`. presets-api 2.4.0 deletes lifted bans after 90
+  days. Bans lifted before this release keep both until then, unless the optional one-off
+  backfill in the remediation plan is run.
+- **Unban no longer fails on a duplicate** (FINDING-021).
+  - The restore skips a hidden preset whose dyes are now held by another approved or pending
+    preset, keeping the lowest-id twin. The moderator sees how many stayed hidden and why.
+  - A UNIQUE `dye_signature` error gets its own message.
+- **Moderation posts carry no account ID** (FINDING-008). The bot privacy policy promises posts in
+  the moderation and submission-log channels show no Discord User ID.
+  - The refreshed review embed no longer mentions the author.
+  - The "User Banned" post in the moderation channel no longer has a `User ID` field. For an
+    XIVAuth-only account, that field held the XIVAuth ID.
+  - When a target has no author name on record, the ban posts (and the "Ban Failed" one) say
+    "an account with no author name" instead of falling back to the ID. The stored name still
+    falls back to the ID, because `banned_users.username` is `NOT NULL` and moderators search it.
+  - The ban record still holds the ID, and unbanning goes through the username picker. The
+    moderator's private unban reply still shows it.
+- **Workers Logs pinned off** (FINDING-022) in both `wrangler.toml` blocks, and asserted.
+- **Retired custom domain.** The maintainer removed
+  `moderation-bot.xivdyetools.projectgalatine.com` in the dashboard on 2026-10-05, so its route
+  line is gone from `[env.production]`. A deploy re-attaches every custom domain listed there. The
+  app's Interactions Endpoint URL has used `moderation-bot.xivdyetools.app` since 2026-08-09. A
+  test pins that host as the only route.
+
+### Fixed
+
+- **The pending-queue footer no longer offers a removed argument.** It said `reject <id> <reason>`;
+  the reason is now typed in the confirm modal, so it says `reject <id>` (2026-10-04 deep-dive
+  BUG-053).
+
+### Tests
+
+- 763 tests in total. They include `ban-service.sqlite.test.ts`, which runs real SQLite through
+  `node:sqlite` because the D1 mock never evaluates SQL, plus the parser and the legacy, stale
+  and confirm flows.
+
+### Removed
+
+- **Five strings the old approve/reject handlers used** (`preset.moderation.approved`,
+  `approvedDesc`, `missingReason`, `rejected`, `rejectedDesc` in `services/bot-i18n.ts`). The
+  confirm-button rewrite above left them with no reader (2026-10-04 dead-code audit, DEAD-001).
+
 ## [1.7.4] - 2026-09-21
 
 ### Changed

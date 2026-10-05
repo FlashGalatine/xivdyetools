@@ -8,6 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.3.0] - 2026-10-04
+
+Sprint 11 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`): CI and repository
+hardening. Minor bump: a new gate. No workspace, package or worker change; merging deploys nothing.
+
+### Added
+
+- **`pnpm workers:check-logs`** (`scripts/check-worker-logs.ts`, self-tested by `pnpm test:scripts`,
+  run in the required CI job) — FINDING-022. Every `apps/*/wrangler.toml` must pin
+  `[observability] enabled = false` at the top level and, where an `[env.production]` exists, in
+  `[env.production.observability]`. Any `enabled = true` fails (unanchored, so inline tables,
+  subtables, dotted and quoted keys are caught), as do `logpush = true`, `tail_consumers` and
+  `streaming_tail_consumers` (also under `previews`). Comments are stripped first. A worker with a
+  `wrangler.json` / `.jsonc` is reported rather than skipped, and finding no config at all fails.
+  Both privacy policies promise Workers Logs are off; the escape hatch is the empty `ALLOWED_TO_LOG`
+  list, edited in the same reviewed change as both policies.
+- **Full-tree audit (report only)** in the `audit` job: `pnpm audit --audit-level moderate` with
+  `continue-on-error`, so dev-tooling advisories are visible without blocking (FINDING-025/-030).
+
+### Fixed
+
+- **`miniflare>undici`** pinned to `>=7.29.1 <8` in `pnpm-workspace.yaml` (FINDING-025): wrangler
+  4.140's miniflare shipped undici 7.29.0 with ten dev-tree advisories (two high). It resolves to
+  7.30.0; the full-tree audit is clean.
+
+### Changed
+
+- **Discord bot tokens documented as environment secrets** (FINDING-023): `SECRET_ROTATION.md`,
+  `DEPLOY_ENVIRONMENTS.md`, the `sync-dye-emojis.yml` header and the beta workflow's skip message.
+  The maintainer moves the secrets before this merges.
+
 ## [2.2.0] - 2026-09-05
 
 **Documentation audit and the two gates that keep it honest.** Every document in the repository —

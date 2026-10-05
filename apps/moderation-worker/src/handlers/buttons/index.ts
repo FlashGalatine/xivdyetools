@@ -30,6 +30,7 @@ interface ButtonInteraction {
   channel_id?: string;
   message?: {
     id: string;
+    flags?: number;
     embeds?: Array<{
       title?: string;
       description?: string;

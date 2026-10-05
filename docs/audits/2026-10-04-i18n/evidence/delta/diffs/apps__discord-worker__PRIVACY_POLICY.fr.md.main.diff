@@ -1,0 +1,37 @@
+diff --git a/apps/discord-worker/PRIVACY_POLICY.fr.md b/apps/discord-worker/PRIVACY_POLICY.fr.md
+index ac40eb02..670a2bf2 100644
+--- a/apps/discord-worker/PRIVACY_POLICY.fr.md
++++ b/apps/discord-worker/PRIVACY_POLICY.fr.md
+@@ -3,5 +3,5 @@
+ > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY_POLICY.md)
+
+-**Dernière mise à jour** : 2026-09-16
++**Dernière mise à jour** : 2026-09-28
+
+ ## 1. Introduction
+@@ -62,4 +62,5 @@ Nous ne collectons explicitement **pas** :
+ - ❌ Les données vocales
+ - ❌ Les images (traitées en mémoire, non stockées)
++- ❌ Les fichiers `.chara` (traités en mémoire, non stockés)
+ - ❌ Les noms de personnage issus des fichiers `.chara` (jamais affichés sur les cartes ou les messages intégrés, jamais stockés)
+
+@@ -72,4 +73,14 @@ Lorsque vous utilisez `/extractor image`, votre image téléversée est :
+ 4. **Jamais stockée** sur nos serveurs
+
++### Fichiers de personnage
++
++Lorsque vous utilisez `/swatch` ou `/glamour`, votre fichier `.chara` téléversé est :
++1. Téléchargé depuis Discord et lu en mémoire sur les serveurs de périphérie de Cloudflare
++2. Lu pour en extraire les couleurs, les teintures et l'équipement
++3. **Immédiatement supprimé** après traitement
++4. **Jamais stocké** sur nos serveurs
++
++Pour nommer l'équipement, `/glamour` envoie les numéros de modèle de l'équipement provenant du fichier et l'identifiant de son accessoire de visage à notre propre API, qui les recherche dans XIVAPI. Rien d'autre provenant du fichier n'est envoyé, ni rien vous concernant ou concernant votre compte Discord.
++
+ ## 4. Comment nous utilisons vos données
+
+@@ -118,4 +129,5 @@ Le Bot s'intègre à ces services tiers :
+ | Cloudflare | Hébergement, stockage des données (KV, D1), limitation de débit, analytique | [Politique de confidentialité de Cloudflare](https://www.cloudflare.com/privacypolicy/) |
+ | Universalis | Données du tableau des ventes FFXIV | [Universalis](https://universalis.app/) |
++| XIVAPI | Noms d'objets FFXIV pour `/glamour` | [XIVAPI](https://xivapi.com/) |
+ | Perspective API | Modération de contenu (facultatif) | [Politique de confidentialité de Google](https://policies.google.com/privacy) |

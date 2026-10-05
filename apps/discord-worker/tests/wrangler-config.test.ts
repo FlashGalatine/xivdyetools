@@ -74,12 +74,14 @@ describe('wrangler.toml', () => {
     expect(topLevel).not.toMatch(/^routes = \[/m);
   });
 
-  it('routes production to xivdyetools-discord-worker on both custom domains', () => {
+  // The retired bot.xivdyetools.projectgalatine.com custom domain was removed in
+  // the dashboard on 2026-10-04; a deploy would re-attach it if it were listed.
+  it('routes production to xivdyetools-discord-worker on bot.xivdyetools.app only', () => {
     expect(production).toMatch(/^name = "xivdyetools-discord-worker"$/m);
     expect(production).toMatch(/^workers_dev = false$/m);
     expect(production).toMatch(/^routes = \[/m);
-    expect(production).toContain('bot.xivdyetools.app');
-    expect(production).toContain('bot.xivdyetools.projectgalatine.com');
+    const patterns = [...production.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['bot.xivdyetools.app']);
   });
 
   it.each([

@@ -1,0 +1,17 @@
+63276 apps/web-app
+17448 apps/discord-worker
+13957 packages/core
+7381 apps/presets-api
+6950 apps/moderation-worker
+6075 apps/og-worker
+5859 packages/svg
+5223 apps/api-worker
+4132 packages/bot-logic
+2998 apps/oauth
+2925 packages/worker-kit
+2651 packages/types
+2117 packages/test-utils
+1978 packages/logger
+1605 apps/stoat-worker
+1313 packages/auth
+1264 apps/image-worker

@@ -27,31 +27,34 @@ const EXAMPLE_LINK_HOSTS = [
   'misskey.io',
 ];
 
-/** Is `trimmed` (non-empty) an https URL on an allowlisted host? */
-function isAllowedExampleLink(trimmed: string): boolean {
+/** Parse `trimmed` (non-empty) as an https URL on an allowlisted host, else null. */
+function parseAllowedExampleLink(trimmed: string): URL | null {
   let url: URL;
   try {
     url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
   } catch {
-    return false;
+    return null;
   }
   const host = url.hostname.toLowerCase();
   const allowed = EXAMPLE_LINK_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-  return url.protocol === 'https:' && allowed;
+  return url.protocol === 'https:' && allowed ? url : null;
 }
 
 /** Validate an example link locally; returns an error string or null. */
 export function exampleLinkError(link: string): string | null {
   const trimmed = link.trim();
   if (!trimmed) return null;
-  return isAllowedExampleLink(trimmed) ? null : LanguageService.t('preset.fieldLinkHint');
+  return parseAllowedExampleLink(trimmed) ? null : LanguageService.t('preset.fieldLinkHint');
 }
 
 /**
  * Read-path counterpart of `exampleLinkError`: the link as stored by the API
  * (or a localStorage snapshot) is bound to `href` in trusted cards, so it
  * passes the same https + host-allowlist policy on the way in, and anything
- * else renders as "no link" (2026-08-21 security audit, WEB-14). Trims.
+ * else renders as "no link" (2026-08-21 security audit, WEB-14). Returns the
+ * parsed URL's `href`, not the raw string: tabs/newlines are stripped and
+ * bidi controls, spaces and non-ASCII characters are percent-encoded, so the
+ * link text a user reads cannot be visually spoofed (2026-10-03 FINDING-016).
  */
 export function sanitizeExampleLink(link: string | null | undefined): string | null {
   const trimmed = link?.trim() ?? '';
@@ -59,7 +62,7 @@ export function sanitizeExampleLink(link: string | null | undefined): string | n
   // The form validator tolerates a missing scheme; the read path does not —
   // a stored value without one would have failed server-side validation.
   if (!/^https:\/\//i.test(trimmed)) return null;
-  return isAllowedExampleLink(trimmed) ? trimmed : null;
+  return parseAllowedExampleLink(trimmed)?.href ?? null;
 }
 
 /**

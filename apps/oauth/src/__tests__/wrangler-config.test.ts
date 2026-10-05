@@ -58,6 +58,14 @@ describe('wrangler.toml', () => {
     expect(toml).toContain('auth.xivdyetools.app');
   });
 
+  // FINDING-006 (2026-10-03): the retired auth.xivdyetools.projectgalatine.com
+  // custom domain was removed in the dashboard; a deploy would re-attach it if
+  // it were still listed, so auth.xivdyetools.app is the only route.
+  it('lists auth.xivdyetools.app as the only route', () => {
+    const patterns = [...toml.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['auth.xivdyetools.app']);
+  });
+
   /**
    * This worker's top level IS production (no [env.production] block
    * exists, or should ever exist again). FINDING-029 (2026-08-21 audit)
@@ -143,5 +151,22 @@ describe('wrangler.toml', () => {
     // dev database is created, and the invariant that matters (dev must
     // never alias production) has to keep holding after that happens too.
     expect(devId).not.toBe(prodId);
+  });
+
+  /**
+   * FINDING-022 (2026-10-03 security audit): both privacy policies promise no
+   * persistent logs, so the state is pinned in config, not only the dashboard.
+   */
+  it('pins observability off in the top-level (production) block', () => {
+    expect(toml).toMatch(/^\[observability\]\nenabled = false$/m);
+    expect(toml).not.toMatch(/^\s*enabled\s*=\s*true/m);
+    // An inline table (`observability = { enabled = true }`) under an env block
+    expect(toml).not.toMatch(/observability\s*=\s*\{[^}]*enabled\s*=\s*true/);
+  });
+
+  it('configures no logpush and no tail consumers', () => {
+    expect(toml).not.toMatch(/^\s*logpush\s*=\s*true/m);
+    expect(toml).not.toMatch(/^\s*\[\[(env\.[a-z]+\.)?tail_consumers\]\]/m);
+    expect(toml).not.toMatch(/^\s*tail_consumers\s*=\s*\[\s*[^\]\s]/m);
   });
 });

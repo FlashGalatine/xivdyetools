@@ -17,6 +17,23 @@ the version moves and retires the cached ones.
   old names used (꾼 랜 민 온 헬); `NotoSansSC-Subset.ttf` gains 3 (密 掠 踪) and drops 4
   (光 失 瓦 纳). The JP subset's cmap is unchanged, so the file is not rewritten.
 
+## [2.11.1] - 2026-10-04
+
+Sprint 9 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`). No card, route or
+behaviour change.
+
+### Security
+
+- **Workers Logs pinned off** (FINDING-022): `[observability] enabled = false` in the top-level
+  (beta) block and `[env.production.observability]` in production. Both privacy policies promise
+  persistent logs are off, so the state now lives in config rather than only in the dashboard.
+  `tests/wrangler-env.test.ts` asserts it, along with no logpush and no tail consumers.
+
+### Notes
+
+- The version rides every `/og/*` edge-cache key (BUG-025), so this bump retires already-cached
+  cards once; each re-renders identically on its next request.
+
 ## [2.11.0] - 2026-09-28
 
 The Glamour Reader, the web app's tenth tool, gets its card (Claude Design, *OG Default Cards*

@@ -1,0 +1,1642 @@
+{
+ "slices": [
+  {
+   "slice": "ui-ja",
+   "positive": [
+    "All 189 delta rows read; BASE en diffed for every changed row: all en-only changes are spelling-only (colour/behaviour/armour/harbour/recognise/localised), so no ja value is stale.",
+    "Placeholders {x} identical en vs ja across every delta key (0 mismatches); en/ja key sets identical (web 1197, bot 706); no untranslated values except command text manual.glamour.name.",
+    "_one/_other plural pairs present in ja for all new seg*/card.glamour* keys; full-width punctuation throughout.",
+    "Slot names (12 slots + Facewear) in web swatch.gearSlot.* and bot card.glamourSlot.* equal the dictionary Equipment Slots table.",
+    "Glamour tool name ミラプリリーダー / short ミラプリ agrees across web title (ja.json:104), OG_DECK (og-strings.ts:87), TOOL_TAG (:183), bot card title and the dictionary; 投影できない/投影不可 used for the system check; no グラマー.",
+    "preset.privacyNote ja carries all new clauses; swatch.charaHintGlamour ja correct.",
+    "Length measured: Discord ja descriptions max 41 chars (limit 100); new Glamour ja values shorter than en; card status column auto-sizes (glamour-card.ts:217-221)."
+   ],
+   "rejected": [
+    "装備リスト as standalone dictionary violation: only the 'this outfit' sentence is a defect.",
+    "染料 (og) vs カララント (web/bot): house style.",
+    "OG TOOL_TAG swatch カラー照合 vs web 見本, og 予算 vs web 予算提案: pre-existing, outside delta.",
+    "全種族 for ANY TRIBE: game restrictions are by race.",
+    "ひ/，/； missing from JP subset: carried by SC face, font reviewer's slice.",
+    "card.glamourStatusDye 染色不可: ja meaning matches the row.",
+    "itemLinks.mirapri: site name verbatim."
+   ],
+   "covered": "\"web-app and bot-logic ja.json (+en) delta rows (122+67), core ja.json term lookups, ffxiv-terminology.md Market/Glamour/Equipment Slots, og-strings.ts and og-embed.ts ja blocks and diffs, bot glamour.ts, svg glamour-card.ts width logic. Written: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-ui-ja.md\"",
+   "verdicts": [
+    {
+     "cand": "ui-ja:TERM-JA-2",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ja.json:1412",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "glamour.sheet.privacy ja \"編集内容はこの端末に、この装備ごとに保存されます\" renders en \"kept on this device for this outfit\" as per-gear.",
+     "fix": "None for ja. The en slice should reword \"for this outfit\" to \"for each piece of gear\" so it matches the code.",
+     "reason": "ja is accurate. Edits are keyed per piece: gearHash = slot|family row|stains (apps/web-app/src/shared/acquisition-edits.ts:5-9, :30), so an edit follows the piece into any outfit. このミラプリごとに would be wrong; the inaccurate text is en \"for this outfit\". 装備リスト matches en's own \"Equipment list\" (:1266)."
+    },
+    {
+     "cand": "ui-ja:TERM-JA-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ja.json:1360",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "en says \"dye channels\" in all three keys, but ja glamour.verdict.explain says \"確認するのは染色枠\" while swatch.gearHint (:1219) says \"2チャンネル\" and swatch.equipCount (:1255) says \"{channels}チャンネル\".",
+     "fix": "Use one ja noun for the dye channel in all three keys. Pick it from the client's 7.0 dye UI text, then add it to the dictionary.",
+     "reason": "The split is factual from the files (en uses one term; ja uses two for the same game mechanic in the Glamour/Swatch views), so it does not depend on fluency. Which word is right is unpinned, so this is P3."
+    },
+    {
+     "cand": "ui-ja:TERM-JA-3",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ja.json:1374",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "blockedWear \"このキャラクターは装備できません\" uses 装備 while otherWorks (:1377) \"{name}なら着用できます\" uses 着用 for en \"wear\".",
+     "fix": "None.",
+     "reason": "装備できない is the natural game phrasing for a race/gender lock, and 着用できる is an ordinary synonym. A native reader takes the same meaning, so this is a stylistic choice in prose, not a term split."
+    },
+    {
+     "cand": "ui-ja:TERM-JA-4",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/ja.json:614",
+     "locales": "ja",
+     "unit": "packages/bot-logic",
+     "claim": "The bot card renders en \"+{n} LOOK\" / \"ONE LOOK\" / \"TWIN\" as \"+{n} 同型\" / \"唯一\" / \"代替\", while the web uses 同じ見た目.",
+     "fix": "None.",
+     "reason": "Twins really are same-model items, and web ja itself says 同一モデル (:1332), so 同型 is accurate. 唯一 and 代替 are defensible terse card tags, and en also splits LOOK/TWIN/\"same look\"."
+    },
+    {
+     "cand": "ui-ja:TERM-JA-5",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ja.json:1232",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "The limbal ring has three ja names: web slotLimbal \"リンバルリング\" / palTattoo \"刺青 / リンバル\" (:1239), web tattooColors \"タトゥー/リムバルの色\" (:94) and bot slotLimbal \"リムバル\" (bot ja.json:593, :72, :690), vs core sheets.tattooColors \"タトゥー／角膜\".",
+     "fix": "Pin the limbal noun in ffxiv-terminology.md from client text, as 2026-09-19 OPEN_ITEMS_SOLUTIONS.md:261 asked. Then align web :94/:1232/:1239 and bot :72/:593/:690, and core if it differs.",
+     "reason": "core sheets.tattooColors (packages/core/src/data/locales/ja.json:223) is a core value (terminology.md:346), and web :94 is the same sheet name hand-translated differently. Flagged at the 2026-09-19 audit and still unpinned. Neighbors diverge too: :91 メッシュの色 vs core ハイライト."
+    },
+    {
+     "cand": "ui-ja:I18N-JA-6",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ja.json:1392",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "Fact chips \"このキャラ可\" / \"このキャラ不可\" render en \"FITS THIS CHARACTER\" / \"NOT FOR THIS CHARACTER\".",
+     "fix": "None.",
+     "reason": "These are short chip labels. キャラ is standard player shorthand, and 可/不可 is the normal terse register for a Japanese UI tag. The meaning is unambiguous, so this is a stylistic choice."
+    },
+    {
+     "cand": "ui-ja:TERM-JA-7",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ja.json:1400",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "sheet.sub counts with \"{n}点\" while verdict uses \"{n}部位\", and copyList \"リストをコピー\" (:1264) vs picker.foot \"一覧のコピー\" (:1385).",
+     "fix": "None.",
+     "reason": "点 is the natural counter for items/garments in a list, and 部位 counts body slots, so they count different things. 一覧 and リスト are interchangeable prose synonyms, and foot paraphrases the button. The meaning is unchanged."
+    }
+   ]
+  },
+  {
+   "slice": "policy-ja",
+   "positive": [
+    "All quoted UI labels in web PRIVACY.ja.md equal current web-app ja.json (matcher.privacyNote, 設定をリセット, お気に入りをクリア, 保存したパレットをクリア, 分析を有効にする, コレクションを削除, マイ投稿, 装備リスト/すべてリセット, 開く…, ミラプリリーダー, 投票/投票済み, ログアウト)",
+    "Retention numbers (30/90 days, 12 months, 120s, 60s, 180 days, 8 chars), commands, hosts, email, Discord invite, XIVAPI, doNotStore verbatim in all four documents",
+    "No softening or dropped rights: ban-active carve-outs, deletion paths, public-GitHub-issue warning, and 'never' -> 一切 all preserved",
+    "Operator = 運営者 throughout, no 当社/弊社; 利用禁止 consistent; no グラマー; コーディネート is the dictionary's formal-register choice; フェイスアクセサリー matches dictionary slot row",
+    "One paragraph per line (scripted), no leftover English sentences, English-prevails notice and Last updated dates match English in all four",
+    "Discord TOS ja new feature bullets, item-name fair-use line and XIVAPI sentence faithful; web TOS ja account bullet, XIVAPI/dye-card links and example-link bullet faithful"
+   ],
+   "rejected": [
+    "Bold button labels 投票/投票済み/ログアウト added in web PRIVACY.ja.md:103-104: labels are correct",
+    "サインイン prose vs ログアウト UI label mix: mild, not filed",
+    "discord PP ja:9 awkward definition of 運営者 terms: pre-existing, faithful",
+    "Stray space in 'Cloudflareの Analytics Engine' (discord PP ja:47,183): cosmetic, pre-existing",
+    "約三ヶ月 vs 3か月 style split: cosmetic"
+   ],
+   "covered": "\"Read in full: apps/web-app/PRIVACY.ja.md + PRIVACY.md, apps/discord-worker/PRIVACY_POLICY.ja.md + PRIVACY_POLICY.md, apps/web-app/TERMS_OF_SERVICE.ja.md, discord TERMS_OF_SERVICE.ja.md (lines 1-60 plus matched lines), all *.main.diff/*.pr.diff for the four stems (EN and ja), web-app ja.json UI labels, terminology dictionary Glamour/Facewear rows. Review file: docs/audits/2026-10-04-i18n/evidence/review-policy-ja.md\"",
+   "verdicts": [
+    {
+     "cand": "policy-ja:JA-POL-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P1",
+     "origin": "PR#227",
+     "file_line": "apps/discord-worker/PRIVACY_POLICY.ja.md:192",
+     "locales": "ja",
+     "unit": "apps/discord-worker",
+     "claim": "Retention row \"12か月。ただし、非表示または再表示の場合は、プリセットが削除されるまで\" replaces 12 months with \"until the preset is deleted\" for hide/restore (unbounded), but the records are deleted after 12 months or sooner if the preset is deleted.",
+     "fix": "Reword to 「12か月。ただし、非表示または再表示の場合は、プリセットが削除された時点でそれより早く削除されます」, matching web PRIVACY.ja.md:63.",
+     "reason": "Blame f3554155, first carried by preview merge 0acaaf06 (#227); absent at 8ecb878f. The intended meaning is in presets-api moderation-retention-service.ts (12-month prune) plus presets.ts:466 (delete on preset delete): whichever comes first.",
+     "skeptic": {
+      "refuted": true,
+      "tier": "P2",
+      "reason": "The Japanese row does not differ in meaning from the English that governs it. apps/discord-worker/PRIVACY_POLICY.md:190 says \"12 months, or until the preset is deleted for a hide or restore\", and the most natural reading of that is the same replacement reading ja:192 gives (ただし…の場合は…まで). de:227, fr:190, ko:192 and zh:190 all render the same clause the same way. So ja is a faithful translation of the English, not a ja-only fault, and the fix proposed for ja alone would make ja disagree with the English and the other four locales. The inaccuracy the finding describes is real but lives in the English source. The code deletes hide/restore rows after 12 months (moderation-retention-service.ts:31-38, ban/unban/hide/restore) and also when the preset is deleted (presets.ts:466), whichever comes first. The web policy says this correctly (web-app PRIVACY.md:170 \"after 12 months, or sooner for a hide or restore\"; PRIVACY.ja.md:63). Suggest re-filing it against the English bot PRIVACY_POLICY.md:190, which the open bot-policy PRs touch (5f83a81f/274407cc), with the fix applied to all six variants in one commit. The policy states a longer retention than the code applies, which overstates rather than under-promises, so P2 rather than P1."
+     }
+    },
+    {
+     "cand": "policy-ja:JA-POL-2",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/TERMS_OF_SERVICE.ja.md:11",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "\"十のツールから成ります\" lists only nine tools, ending \"スウォッチマッチャー、そしてコミュニティのプリセットパレットブラウザです\". English L15-16 also names the Glamour Reader (ミラプリリーダー).",
+     "fix": "Insert 「、ミラプリリーダー」 after スウォッチマッチャー, using the tools.glamour.title value.",
+     "reason": "Line blamed to e15928b2 (2026-09-28) and identical at 8ecb878f; English TERMS_OF_SERVICE.md:15-16 lists Glamour Reader. Not in either 2026-10-04 catalog."
+    },
+    {
+     "cand": "policy-ja:JA-POL-3",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#227",
+     "file_line": "apps/discord-worker/PRIVACY_POLICY.md:190",
+     "locales": "en",
+     "unit": "apps/discord-worker",
+     "claim": "English row \"12 months, or until the preset is deleted for a hide or restore\" can be read as the longer of the two (the reading ja took), but the code deletes at whichever comes first.",
+     "fix": "Use web PRIVACY.md:170-171 wording: \"12 months, or sooner for a hide or restore if its preset is deleted\".",
+     "reason": "Blame 274407cc, carried by #227; not present at 8ecb878f. Same retention mechanism as JA-POL-1, but a separate English-side fix, so it is not merged."
+    },
+    {
+     "cand": "policy-ja:JA-POL-4",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/PRIVACY.ja.md:44",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "\"フォントは自社ホストです\" uses 自社 (\"our company\"), which casts the one-person operator as a company.",
+     "fix": "Change to 「フォントはセルフホストです」 (or 運営者のサーバーから配信).",
+     "reason": "Pinned by the policy-documents.md:75-77 operator-is-one-person rule, not by fluency. The text is unchanged since BASE 5c80fcba (blame 863cd0e7) and present at 8ecb878f. The only earlier mentions are 2026-10-03 security handoffs; it is in neither catalog."
+    }
+   ]
+  },
+  {
+   "slice": "ui-de",
+   "positive": [
+    "Key sets web 1197 and bot 706: de == en, no missing or extra keys; {placeholder} sets equal en/de on every key (scripted, 0 faults)",
+    "All 67 en-only 'changed' rows are colour->color/behaviour->behavior/localise->localize spelling only; no de value stale",
+    "All 12 gear slots + Facewear (web swatch.gearSlot.*, bot card.glamourSlot.*) equal the dictionary Equipment Slots table",
+    "Glamour tool name agrees across web title/short, OG_DECK, TOOL_TAG, bot card title (Projektionsleser / Projektion); Projektion feminine, projizieren; no Sie, Mirage or Glamour",
+    "Plural pairs present for all new _one/_other keys; no de command/option description over 100 chars (max 92)",
+    "OG de glamour block (name, sub, tag, embed text) is in du register and Latin-only",
+    "preset.privacyNote de faithfully carries the new XIVAuth/Discord-ID sentences"
+   ],
+   "rejected": [
+    "Staatliche Gesellschaft / Zwilling / Teil / Gegenstand / projizieren: no dictionary row, consistent across surfaces, no source for an alternative",
+    "DATED -> ALT: ambiguous, not wrong",
+    "web Budget-Vorschläge vs OG Budget, Palette vs FARBPROBE: not in this delta",
+    "OG en dash vs web em dash: cosmetic",
+    "Length risk on cards/buttons: statuses and slot labels fit by estimate (not rendered)"
+   ],
+   "covered": "\"delta/web-app.tsv (122 rows) and bot-logic.tsv (67 rows) in full; web-app and bot-logic de.json all keys scripted vs en; og-strings.ts and og-embed.ts de blocks plus both main.diffs; ffxiv-terminology.md Glamour/Equipment Slots/Facewear/Market sections; core de.json races/clans/categories; glamour-card.ts width constants. Review file: C:/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/docs/audits/2026-10-04-i18n/evidence/review-ui-de.md\"",
+   "verdicts": [
+    {
+     "cand": "ui-de:UIDE-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1262",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "swatch.facewearColorTag \"{color} · Brillenfarbe\" and facewearColorUnknown \"Brillenfarbe unbekannt\" (:1263) still say glasses, while facewearSlot (:1261) is now \"Gesichtsaccessoires\".",
+     "fix": "Replace \"Brillenfarbe\" in both keys with the dictionary's word for this job (slot = Gesichtsaccessoires, ffxiv-terminology.md:313/325). Do not invent a new compound.",
+     "reason": "BASE had facewearSlot \"Brille\". MAIN renamed it but not these two keys, and PR#227 charaHintGlamour also says Gesichtsaccessoire. Brille matches neither dictionary word."
+    },
+    {
+     "cand": "ui-de:UIDE-2",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1390",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "glamour.fact.dye \"FARBE ×{n}\" (en \"DYE ×{n}\") and bot card.glamourStatusDye \"FARBEN\" (en \"DYES\") use Farbe (color) for dye.",
+     "fix": "Web: \"FARBSTOFF ×{n}\". Also fix packages/bot-logic de.json:618 card.glamourStatusDye to \"FARBSTOFFE\" (est. ~66px, fits STATUS_MAX 72).",
+     "reason": "House register: German dye = Farbstoff, never Farbe. The same bot file says \"{n} Farbstoffe\" (:612) for the same count. Both values are present at 8ecb878f."
+    },
+    {
+     "cand": "ui-de:UIDE-3",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:875",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "Preset has three German names: web \"Voreinstellungen werden geladen...\" (24 lines Voreinstellung), \"Preset löschen\" (16 lines Preset), and the tool title \"Community-Vorlagen\" (:71) / bot 60× Vorlage / OG.",
+     "fix": "Follow the repo's own choice: MAIN retitled the tool Vorlagen, and the bot and OG use Vorlage. Move the web Voreinstellung/Preset keys to Vorlage and add a dictionary row.",
+     "reason": "The counts are measured. Preset is an app noun, so the repo's MAIN rename sets the word without fluency. That is unlike UIDE-4's game noun, which needs the client string."
+    },
+    {
+     "cand": "ui-de:UIDE-4",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1329",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "Clan is \"Volksgruppe\" in selectSubrace (:85) and glamour noTribe (:1329) but \"Stamm\" in swatch.dropBody/whoHead \"STAMM & GESCHLECHT\" (:1209/:1212) and bot preferences.keys.clan \"Charakter-Stamm\".",
+     "fix": "Add a dictionary row for the clan noun from the German client string, then align both keys to it.",
+     "reason": "The inconsistency is real (pre-existing at BASE 5c80fcba). Clan is a game noun, and the dictionary lists clan values (:159) but no noun, so the right word needs a cited source."
+    },
+    {
+     "cand": "ui-de:UIDE-5",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1412",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "glamour.sheet.privacy \"Bearbeitungen werden für dieses Outfit ... gespeichert\" uses the anglicism Outfit for one glamour, which the dictionary sets as die Projektion.",
+     "fix": "Use \"für diese Projektion\" (feminine). Consider glamour.sheet.title \"Ausrüstungsliste\" (en \"Glamour list\") together, using Projektion.",
+     "reason": "Narrowed to the dictionary-pinned part (ffxiv-terminology.md:264). Aussehen vs OPTIK/EINZIG and \"jede Klasse\" vs Jobs are unpinned (no row, no jobNames :348). PR#227 does not touch these keys."
+    },
+    {
+     "cand": "ui-de:UIDE-6",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1364",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "glamour.verdict.countCompany \"{n} BRAUCHT GESELLSCHAFT\" (en \"{n} NEEDS A GRAND COMPANY\") reads idiomatically as \"needs company/companionship\".",
+     "fix": "Use \"{n} BRAUCHT STAATL. GESELLSCHAFT\" or the full \"Staatliche Gesellschaft\" already used in explain (:1360), segCompany (:1358) and bot glamourCompany (:638).",
+     "reason": "Narrowed. Bot \"KEINE PROJ\" is rejected: en itself says \"NO GLAM\", and the no-short-forms rule (:320) covers slot names only. \"STAATL. GESELLSCHAFT\" (:1395) is a cosmetic abbreviation."
+    },
+    {
+     "cand": "ui-de:UIDE-7",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/de.json:621",
+     "locales": "de",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourFootShown_one \"{s} von {n} gefärbten Teil\" claimed ungrammatical.",
+     "fix": "None.",
+     "reason": "A digit is read as the inflected numeral (\"von einem gefärbten Teil\"), so the weak ending gefärbten is correct. The proposed \"gefärbtem\" would be wrong."
+    },
+    {
+     "cand": "ui-de:UIDE-8",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1380",
+     "locales": "en,de",
+     "unit": "apps/web-app",
+     "claim": "glamour.row.twins \"Sieht aus wie {n} weitere Gegenstände\" (en \"{n} other items\") and glamour.sheet.sub \"{n} Teile\" (:1400) have no singular form.",
+     "fix": "Split both into _one/_other in all six locales and route them through the existing phrase(n, key_one, key_other) helper (glamour-block.ts:1436), as glamour.verdict.seg* does.",
+     "reason": "glamour-block.ts:946/964 pass familySize-1 with familySize>1, so n=1 happens (\"1 weitere Gegenstände\"). glamour-sheet.ts:143 passes pieces.length, which can be 1."
+    },
+    {
+     "cand": "ui-de:UIDE-9",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1369",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "glamour.row.fixedDye/fixedGlamour/fixedWear \"Statt {name}, das diese Farbstoffe nicht annimmt\" hardcodes neuter das after an item name of any gender.",
+     "fix": "Rephrase gender-free, e.g. \"Statt {name} (nimmt diese Farbstoffe nicht an)\". Also fix packages/bot-logic de.json:630-632 card.glamourFixedDye/FixedGlamour/FixedWear.",
+     "reason": "A masculine or feminine item name (Gürtel, Hose) gets a plainly wrong relative pronoun. The en is \"which ...\". All of these are present at 8ecb878f."
+    },
+    {
+     "cand": "ui-de:UIDE-10",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/og-worker/src/services/og-embed.ts:140",
+     "locales": "de",
+     "unit": "apps/og-worker",
+     "claim": "de glamour.descriptionDefault \"– mit Farbstoffen, ob das Spiel es tragen lässt, und Bezugsquelle\" puts an ob-clause under the preposition mit.",
+     "fix": "Drop mit and parallel the en list, e.g. \"– seine Farbstoffe, ob das Spiel es tragen lässt, und woher es kommt.\"",
+     "reason": "The added \"mit\" cannot govern an ob-clause, so the coordination is ungrammatical, not a style choice. en has no \"with\". No PR touches og-embed.ts."
+    },
+    {
+     "cand": "ui-de:UIDE-11",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1055",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "preset.dyesHint \"... eine Palette muss kaufbar sein.\" drops en's \"so every slot must be a real dye\" and says Platz.",
+     "fix": "None.",
+     "reason": "The meaning survives: the no-hex/no-picker sentence plus \"kaufbar\" says the same. The omission and Platz vs Slot are stylistic, and the text is unchanged since BASE."
+    }
+   ]
+  },
+  {
+   "slice": "policy-de",
+   "positive": [
+    "Web PRIVACY.de HEAD matches English on every changed claim: facewear id, XIVAPI sentence, 'not the dyes', account-record contents per provider, 'XIVAuth User' + 8 chars, name refresh and account-link migration, held-edit version, vote rule, preview-image exception, example-link site list.",
+    "All retention numbers verbatim in de: 30 days (daily limits, failed notifications once resolved), 90 days (unresolved notifications, ban record after lift), 12 months (moderation log), 30-day deletion handling; hosts, email subject 'XIV Dye Tools Privacy', Discord invite, doNotStore unchanged.",
+    "Quoted UI labels equal current web-app de.json: Erweiterte Einstellungen, Einstellungen zurücksetzen, Favoriten löschen, Gespeicherte Paletten löschen, Sammlungen verwalten, Sammlung löschen, Ausrüstungsliste, Alles zurücksetzen, Meine Einreichungen, Abstimmen/Abgestimmt, Analysen aktivieren, Öffnen in…; 'Datenschutzhinweise' is PRIVACY.de.md's own title.",
+    "No right, deletion path or opt-out dropped or softened in the 'Deleting your data' section, the active-ban exception, or the Discord-post deletion sentence; the changed clauses with exceptions (ban active, if nobody resolves it) read correctly in de.",
+    "Register is du, operator is wir/uns (no Unternehmen). Terms: Marktbrett, Projektion/Projektionsleser (matches og-worker OG_DECK and de.json), Gesichtsaccessoires (dictionary Equipment Slots), Farbstoff, Stapel for batch vs Sammlung for collections; no English left in sentences.",
+    "Discord PRIVACY_POLICY.de and TERMS_OF_SERVICE.de: all new rows/bullets (.chara section, XIVAPI, Moderationsdatensätze, Discord posts, retention rows, six feature bullets, 'Gegenstandsnamen') are faithful; cross-references (*Moderationsdatensätze*, *Datenaufbewahrung*, *Deine Rechte*) match de headings."
+   ],
+   "rejected": [
+    "Verlauf/Mixer (PRIVACY.de) vs Verlauf-Ersteller/Farbstoffmixer (TERMS.de): English has the same short/long split, so it mirrors the source.",
+    "de.json tools.presets 'Community-Vorlagen' vs policies' 'Preset': settled at the 2026-09-19 audit, outside this slice.",
+    "Item 2 'Ausrüstungsnamen und -symbole' omits the acquisition source: English is equally stale, not a translation divergence.",
+    "Line-wrap/whitespace oddities (PRIVACY.de.md:9-10, 104-106; PRIVACY_POLICY.de.md:70-71): cosmetic in rendered markdown, not filed.",
+    "British colour/favourite in the English documents: covered by the american-spelling sweep."
+   ],
+   "covered": "\"HEAD English + de of apps/web-app/PRIVACY, apps/web-app/TERMS_OF_SERVICE, apps/discord-worker/PRIVACY_POLICY, apps/discord-worker/TERMS_OF_SERVICE (.md and .de.md) read in full or at every changed section; all 8 .main.diff + .pr.diff pairs; labels checked against web-app and bot-logic de.json, core de locale and ffxiv-terminology.md. Review file: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-policy-de.md\"",
+   "verdicts": [
+    {
+     "cand": "policy-de:POL-DE-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P1",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/TERMS_OF_SERVICE.de.md:17",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "\"Zehn Werkzeuge laufen in deinem Browser: Paletten-Extraktor, ... Budget-Finder, Farbmuster-Matcher und der Community-Presets-Browser\" lists nine tools; EN TERMS_OF_SERVICE.md:15-17 names \"Glamour Reader\" as the tenth",
+     "fix": "Insert \"Projektionsleser,\" after \"Farbmuster-Matcher,\" (de.json tools.glamour.title) so the list matches the English and the count.",
+     "reason": "Line exists identically at 8ecb878f (Zehn, no Projektionsleser); en.json tools.glamour.title = Glamour Reader, de = Projektionsleser. Graded P1 because a user sees wrong text (count contradicts list), not a missing key.",
+     "skeptic": {
+      "refuted": false,
+      "tier": "P2",
+      "reason": "The defect is real. apps/web-app/TERMS_OF_SERVICE.de.md:17-19 opens with \"Zehn Werkzeuge\" but lists only nine tools. Glamour Reader / Projektionsleser is missing, while the English TERMS_OF_SERVICE.md:15-17 lists ten. Users can see this page: about-modal.ts:461 links each locale's own copy through policyDocFile. I would grade it P2, not P1. The brief (reviewer-brief.md:106) makes a policy variant P1 only when it \"promises something different\". A tool missing from a list of features changes no obligation, liability or data-handling term. The next sentence (line 20) still describes reading .chara files to name the gear in a Projektion. So this is a policy variant whose meaning drifts from the English, and the count/list mismatch is cosmetic. The proposed fix is correct."
+     }
+    },
+    {
+     "cand": "policy-de:POL-DE-2",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#230",
+     "file_line": "apps/web-app/PRIVACY.md:168",
+     "locales": "en (de inherits at PRIVACY.de.md:191-197)",
+     "unit": "apps/web-app",
+     "claim": "\"An action on a preset (such as approve, reject or revert) ... is kept as long as the preset exists\" overlaps \"A ban, unban, hide or restore ... deleted after 12 months, or sooner for a hide or restore if its preset is deleted\"",
+     "fix": "Reword to \"Any other moderation-log entry about a preset (such as approve, reject or revert)\" as in discord-worker PRIVACY_POLICY.md:191; propagate to all six web PRIVACY variants in one commit.",
+     "reason": "Text absent at the #223 merge 1d5d34ea, present at the #230 merge 53fad4c7 (commit 1f752c80, sprint8 branch), so origin is PR#230, not PR#223. Hide/restore are preset actions too, so two retention rules literally apply."
+    },
+    {
+     "cand": "policy-de:POL-DE-3",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P2",
+     "origin": "PR#230",
+     "file_line": "apps/web-app/PRIVACY.md:151",
+     "locales": "en (de follows at PRIVACY.de.md:171-173)",
+     "unit": "apps/web-app",
+     "claim": "\"Posts made since the *Last updated* date above do not show your Discord user ID; older posts may\" anchors to a moving date (2026-10-04) that precedes the code change's deploy",
+     "fix": "Anchor to the fixed date the ID-free posts went live (the merge/deploy date), not the Last-updated date, in both web PRIVACY and discord-worker PRIVACY_POLICY.md:116 and all their variants.",
+     "reason": "The ID-removal code (aaa4467b, d1fdb89a, FINDING-008) is not an ancestor of 8ecb878f and deploys only on merge, so posts made on 2026-10-04 still carry the ID. Web text from PR#230; Discord copy from PR#227."
+    }
+   ]
+  },
+  {
+   "slice": "ui-fr",
+   "positive": [
+    "All 63 en-only changed rows (BASE en vs new en) are British to American spelling only, so no fr value is stale (no I18N filed)",
+    "web swatch.gearSlot.* + facewearSlot and bot card.glamourSlot.* equal the dictionary Equipment Slots fr column",
+    "'Lecteur de mirages' equal in web fr.json tools.glamour.title and og-strings.ts OG_DECK; short 'Mirage' equal in web, bot card.glamourTitle and TOOL_TAG; 'mirage' masculine throughout, no 'glamour' in fr",
+    "Placeholders verbatim in every delta row; every _one/_other pair present and grammatical for fr; register 'vous' throughout",
+    "Length measured: commands.glamour.description 95/100, no other commands.* value over 90; widest card slot 'MAIN NON DIRECTRICE' (19) is already budgeted by glamour-card.ts slotWidth/LEAD_MAX (comment at :91-94)",
+    "og-embed fr glamour.descriptionDefault and OG_DECK/TOOL_TAG glamour fr entries are grammatical and consistent with the web name; 'tableau des ventes' matches the dictionary"
+   ],
+   "rejected": [
+    "Space (not NBSP) before : ; ? ! in fr: repo house style, one NBSP only in unitPctDesc",
+    "Mixed ' and ’ in bot fr (115 vs 7): cosmetic and already mixed at BASE",
+    "'Nommé à la place de' gender agreement: subject ambiguous in en too",
+    "'classes' for jobs in verdict.explain: no dictionary row, not asserted",
+    "'HORS G.' abbreviation: not a slot, pre-existing at BASE",
+    "Nuancier vs ÉCHANTILLON tag and OG/web title casing: pre-existing, cosmetic",
+    "Any length risk on Discord descriptions or card status chips: measured, within limits"
+   ],
+   "covered": "\"delta/web-app.tsv (122 rows) and delta/bot-logic.tsv (67 rows) fr vs en in full; en-only rows diffed against BASE en; og-strings.ts and og-embed.ts main diffs plus HEAD fr blocks; docs/reference/ffxiv-terminology.md; core fr.json races/clans/facewear; glamour-card.ts width logic; term-check/vocab-split evidence. Review file: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-ui-fr.md\"",
+   "verdicts": [
+    {
+     "cand": "ui-fr:TERM-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/fr.json:1262",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "swatch.facewearColorTag '{color} · couleur de lunettes' / facewearColorUnknown 'Couleur de lunettes inconnue' name facewear 'lunettes' while the same tool's slot is 'Accessoires de visage' (fr.json:1261).",
+     "fix": "Use the slot word (row 16050) in both keys, e.g. '{color} · couleur d'accessoire de visage' / 'Couleur d'accessoire de visage inconnue'.",
+     "reason": "Present at MAIN (line 1261 there). Dictionary Equipment Slots row 16050 pins fr 'Accessoires de visage'; the PR-added charaHintGlamour already says 'l'accessoire de visage', so the tool has two names for one concept."
+    },
+    {
+     "cand": "ui-fr:TERM-2",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/og-worker/src/services/og-strings.ts:75",
+     "locales": "fr",
+     "unit": "apps/og-worker",
+     "claim": "OG_DECK fr presets name 'Palettes Communautaires' disagrees with the web tool title tools.presets.title 'Préréglages communautaires' (web fr.json:71).",
+     "fix": "Set OG_DECK fr presets.name to 'Préréglages communautaires'. Separately and unpinned: web 'preset' (880,1053,1077,1223) and bot 'modèle' (439,440,455) strays.",
+     "reason": "Web title retitled at MAIN by 7ce6830c (DOC-015); og-strings.ts:75 still 'Palettes Communautaires' at 8ecb878f. Tool names must agree across web title and OG_DECK; the anglicism/modèle part has no dictionary row."
+    },
+    {
+     "cand": "ui-fr:TERM-3",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/fr.json:1391",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "Clan/tribe is 'ethnie' (85,1329), 'tribu' (1209,1212), 'Clan' (bot 355) and 'TOUTES RACES' (1391) across fr surfaces.",
+     "fix": "Add a fr row for the generic clan/subrace word to docs/reference/ffxiv-terminology.md, then align the keys to it.",
+     "reason": "Dictionary Clans table has no fr column/generic word; core fr clans mix 'Tribu du Soleil'/'Clan de la Mer'. 'TOUTES RACES' is accurate: charaTwinFacts emits anyTribe when wearMask (per-race columns) is ANY_WEARER."
+    },
+    {
+     "cand": "ui-fr:TERM-4",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/fr.json:1360",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "glamour.verdict.explain says 'la race, le sexe et la Grande Compagnie' while 1209/1212/1329 and bot 355 say 'genre'.",
+     "fix": "Pin the client's fr word for character gender ('sexe' vs 'genre') in the dictionary, then use it everywhere.",
+     "reason": "Two words for one concept is real, but no dictionary row says which is the client's term (the FR client may itself use 'Sexe'), so the direction is unsourced."
+    },
+    {
+     "cand": "ui-fr:TERM-5",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/fr.json:614",
+     "locales": "fr",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourLooks '+{n} ASPECT' vs web 'MÊME APPARENCE · {n} OBJETS' / 'd'apparence identique' (fr.json:1376-1383) for the same 'look'.",
+     "fix": "Add a dictionary row for 'look' (twin appearance) and align bot and web to it.",
+     "reason": "Present at MAIN; no dictionary or core value pins the word, so it rests on fluency."
+    },
+    {
+     "cand": "ui-fr:I18N-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/fr.json:1385",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "glamour.picker.foot quotes the button as 'Exporter .md' but swatch.exportMarkdown reads 'Exporter en .md' (fr.json:1265).",
+     "fix": "Make picker.foot quote 'Exporter en .md' (or shorten exportMarkdown to 'Exporter .md') so the two match.",
+     "reason": "en quotes 'Export .md' in both places; fr mismatches. The sheet.save 'Enregistrer le .md' part is not a defect, since en also differs there ('Save .md')."
+    },
+    {
+     "cand": "ui-fr:I18N-2",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/fr.json:1399",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "glamour.sheet.title en 'Glamour list' is fr 'Liste d'équipement'.",
+     "fix": "None required.",
+     "reason": "en itself calls the same list 'Equipment list' (listCopied, en.json:1266), and fr 'Liste d'équipement' matches that; meaning unchanged, so this is a stylistic alternative."
+    },
+    {
+     "cand": "ui-fr:I18N-3",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P1",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/fr.json:618",
+     "locales": "fr",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourStatusDye 'TEINTES' (en 'DYES', the piece cannot take the dyes) reads as 'shades'/'dyed', not a dye problem.",
+     "fix": "Use the house dye word: 'TEINTURES' (fitText at glamour-card.ts:278 shrinks the status column).",
+     "reason": "glamour.ts:234 shows it for problem 'dye' (dyedChannel > dyeCount); house word is 'teinture' (bot 611-613, web 'TEINTURE ×{n}'). The 'NON MIRAGE' vs 'PAS DE MIRAGE' half is dropped: en also splits ('NO GLAM' vs 'NO GLAMOUR').",
+     "skeptic": {
+      "refuted": false,
+      "tier": "P2",
+      "reason": "The defect is real. packages/bot-logic/src/i18n/locales/fr.json:618 has \"glamourStatusDye\": \"TEINTES\", and glamour.ts:234 shows it as the blocked-status pill when a piece fails on dye (glamour-card.ts:278). Everywhere else in this codebase \"teinte\" means hue: \"Teinte OKLCH\" at fr.json:60, web \"deltaHue\": \"TEINTE\", and \"sortHue\". The house dye word is \"teinture\": bot fr.json:512/516/585 and web \"colDye\": \"TEINTURE\". So the pill reads as \"HUES\", or as the adjective \"dyed\", not as \"won't take these dyes\". I would grade it P2, not P1. This is the wrong house word for a concept, the same class as the German \"FARBEN\" on the same key, which the brief treats as a terminology fault (German dye = Farbstoff, never Farbe). The meaning can still be recovered: the pill is drawn in the blocked colour, and the card's footer lines explain the problem in correct French (\"qui ne prend pas ces teintures\" in glamourFixedDye, \"ne prend pas les teintures du fichier\" in glamourBlockedDye). The English \"DYES\" is just as terse. So this is a misleading short label with an explanation nearby, not text that is wrong with nothing to correct it. The proposed fix \"TEINTURES\" is correct (fitText shrinks the status column to fit). Dropping the \"NON MIRAGE\" half is also correct."
+     }
+    }
+   ]
+  },
+  {
+   "slice": "policy-fr",
+   "positive": [
+    "Retention numbers, hosts, commands, e-mail subject lines and Discord links verbatim in all four fr documents.",
+    "Every quoted UI label equals the current web-app fr.json (Paramètres avancés, Réinitialiser les paramètres, Effacer les favoris, Effacer les palettes sauvegardées, Gérer les collections, Supprimer la collection, Tout réinitialiser, Liste d'équipement, Mes soumissions, Voter/Voté, Déconnexion).",
+    "No softened claim and no dropped right, deletion path or opt-out found in the PR#223/#230/#227 hunks: the Community presets what-we-keep section, Deleting your data, ban/log retention, GPC and analytics opt-out all carry the English promises.",
+    "Operator voice is nous, never notre société; vous register throughout; the English-prevails notice is on line 3 of each document.",
+    "Dictionary terms hold: tableau des ventes, Monde (not serveur), mirage (m.), accessoire de visage (slot row 16050); Last-updated dates match English."
+   ],
+   "rejected": [
+    "Nuancier / Explorateur d'harmonies versus official English tool names: the policies quote the current fr.json, so any change belongs to the web-app locale slice.",
+    "\"tenue\" for outfit (PRIVACY.fr.md:71): equals fr.json glamour.sheet.privacy.",
+    "\"serveur\" for both infrastructure and a Discord server: English does the same, and World is correctly Monde.",
+    "\"Appels\" for appeals: a valid French legal term, filed only as P3.",
+    "British spellings in the English policies: covered by the american-spelling sweep, not this slice."
+   ],
+   "covered": "\"Four fr policy documents read in full at HEAD against the English files: web PRIVACY (324 lines), web TERMS (191), bot PRIVACY (223), bot TERMS (148), plus their main and pr diffs and the fr.json label lookups. The review file docs/audits/2026-10-04-i18n/evidence/review-policy-fr.md is written.\"",
+   "verdicts": [
+    {
+     "cand": "policy-fr:POL-FR-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/PRIVACY.fr.md:27",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "All four fr policies call a preset \"palette prédéfinie\" (109 hits; web TERMS fr:19 names the tool \"navigateur de Palettes Prédéfinies communautaires\"), but the UI says \"préréglage\" (web fr.json:71 \"Préréglages communautaires\"; bot-logic fr.json 57 hits).",
+     "fix": "Replace \"palette(s) prédéfinie(s)\" with \"préréglage(s)\" in all four fr policies (web-app and discord-worker) so they match fr.json tools.presets.title. Add a dictionary row for Preset.",
+     "reason": "Pinned by the current fr.json tool title (the brief requires quoted UI and tool names to equal fr.json), so it is not a fluency call. MAIN already has it (TERMS fr:30 at 8ecb878f); PR#223/#230 hunks add more. Counts in the original claim were slightly off."
+    },
+    {
+     "cand": "policy-fr:POL-FR-2",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/TERMS_OF_SERVICE.fr.md:17",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "\"Dix outils fonctionnent dans votre navigateur :\" lists nine tools. The Glamour Reader (\"Lecteur de mirages\"), which English TERMS:15-16 lists, is missing.",
+     "fix": "Add \"le Lecteur de mirages\" after \"le Nuancier\" in the list (match fr.json tools title), in the same commit as all six variants.",
+     "reason": "Same text at 8ecb878f:17-20. Neither catalog has it."
+    },
+    {
+     "cand": "policy-fr:POL-FR-3",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/TERMS_OF_SERVICE.fr.md:30",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "\"voter sur\", \"rejette\" (discards), \"pas tant qu'un bannissement est actif\", \"salon de journal des soumissions\" wording.",
+     "fix": "None required.",
+     "reason": "Defensible style. \"voter sur\" is valid French, \"rejeter\" reads as discard in context, and \"pas tant qu'un bannissement est actif\" says exactly \"not while a ban is active\". No native reader would take a different meaning."
+    },
+    {
+     "cand": "policy-fr:POL-FR-4",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/discord-worker/TERMS_OF_SERVICE.fr.md:75",
+     "locales": "fr",
+     "unit": "apps/discord-worker",
+     "claim": "\"FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.\" is left in English; headings \"Fin des choses\" and \"Appels\" are calques.",
+     "fix": "None required.",
+     "reason": "The copyright line is Square Enix's own notice, which its regional sites keep in English, so the brief's verbatim third-party rule covers it. \"Appel(s)\" is a legitimate term, and \"Fin des choses\" renders an informal English heading without changing its meaning."
+    },
+    {
+     "cand": "policy-fr:POL-FR-5",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/discord-worker/PRIVACY_POLICY.fr.md:170",
+     "locales": "fr",
+     "unit": "apps/discord-worker",
+     "claim": "\"envoyez un DM à « Flash Galatine »\" vs \"envoyez un message privé\" (web PRIVACY.fr.md:305).",
+     "fix": "None required.",
+     "reason": "French Discord users say \"DM\" routinely and both phrases name the same route unambiguously. This is a cosmetic choice with no dictionary row and no change of meaning."
+    },
+    {
+     "cand": "policy-fr:POL-FR-6",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#230",
+     "file_line": "apps/web-app/PRIVACY.md:150",
+     "locales": "en",
+     "unit": "apps/web-app",
+     "claim": "\"when a moderator approves, rejects or reverts one\" does not say what is reverted.",
+     "fix": "None required.",
+     "reason": "\"one\" clearly means the preset, and \"revert\" matches the bot's Revert button and the pre-edit snapshot described elsewhere. The fr \"annule une modification\" means the same thing, so no reader takes a different meaning (origin #230 for web, #227 for bot)."
+    }
+   ]
+  },
+  {
+   "slice": "ui-ko",
+   "positive": [
+    "All 66 en-only changed rows were diffed against BASE 5c80fcba: every one is a pure British to American spelling change, so no ko value is stale.",
+    "Placeholder parity en vs ko across all 1197 web-app and 706 bot-logic keys: zero mismatches. Key sets are identical.",
+    "Equipment slot ko values (swatch.gearSlot.*, card.glamourSlot.*, swatch.facewearSlot) equal the dictionary's Equipment Slots table.",
+    "The Glamour tool name is 코디 리더 / 코디 in web-app title/shortName, OG_DECK, TOOL_TAG and bot card/command/manual. The glamour-system verb stays 투영할 수 없음 / 투영 불가 as the dictionary requires.",
+    "Market Board = 장터 in every key that names the board (gate 6/6 web, 5/5 bot). Hrothgar, Midlander, Raen equal core.",
+    "Plural _one/_other pairs are present on all new glamour keys.",
+    "Discord limits: longest commands.* ko string is 41 chars (limit 100). No ko/en length ratio above 2.0 on any key with en of 8+ chars (bot) or 6+ chars (web-app).",
+    "The og-strings and og-embed ko blocks (glamour deck name and sub, tag, descriptionDefault) read naturally and agree with web-app."
+   ],
+   "rejected": [
+    "glamour.sheet.title ko \"장비 목록\" for en \"Glamour list\": ja, de, fr and zh also say \"equipment list\", so it is a cross-locale choice, not a ko fault.",
+    "glamour.fact.anyTribe \"모든 종족\" for en \"tribe\": ja, fr and zh say race, and gear restrictions are by race.",
+    "\"가슴 방어구\" for \"chest piece\": colloquial item wording, not a slot label.",
+    "web tools.harmony.title \"조화 탐색기\" vs core \"하모니 익스플로러\": the brief says tool names come from web-app and OG_DECK, not core, and those two agree.",
+    "swatch shortName \"견본\" vs OG tag \"색상 대조\": not in the delta, minor.",
+    "spectrumPrices.body \"창천가 진흥권\" and a stray \"염료:\" label: unpinned, and the meaning survives.",
+    "Full-width punctuation: Korean uses ASCII punctuation, and none of ，。、 occurs in any ko value.",
+    "Ko strings with no suffix on identical-to-en values (links, codes, brands) are deliberate."
+   ],
+   "covered": "\"delta/web-app.tsv (122 rows) and bot-logic.tsv (67 rows), every ko value. BASE en for the 66 en-only rows. og-strings.ts and og-embed.ts main diffs plus the HEAD ko blocks. Dictionary Glamour Terms and Equipment Slots. Core ko.json sections sheets, races, clans, categories, labels, acquisitions, currencies and tools. Full-file placeholder, length and same-as-en sweeps on web-app and bot-logic ko.json. Review written to docs/audits/2026-10-04-i18n/evidence/review-ui-ko.md.\"",
+   "verdicts": [
+    {
+     "cand": "ui-ko:UKO-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ko.json:451",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "comparison.mCie76Caveat \"바로 ΔE2000을 낙은 결함입니다\" uses the non-word 낙은 (for \"produced\"), and budget.perPointNote (:607) has the ungrammatical \"해당 행 가격을 뺌 값을\".",
+     "fix": "Change 낙은 to 낳은 in mCie76Caveat and 뺌 값을 to 뺀 값을 in perPointNote.",
+     "reason": "Both strings are as quoted at HEAD and were not touched by any PR (blame c10f854c, pre-BASE). The meaning can still be guessed from context, so this is a visible typo in secondary text: P2, not P1. UKO-2 is merged in as the same class of defect in the same file."
+    },
+    {
+     "cand": "ui-ko:UKO-2",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ko.json:607",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "budget.perPointNote \"해당 행 가격을 뺌 값을\" is ungrammatical.",
+     "fix": "See ui-ko:UKO-1.",
+     "reason": "merged into ui-ko:UKO-1"
+    },
+    {
+     "cand": "ui-ko:UKO-3",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ko.json:1229",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "Inside web ko.json, Highlights is \"하이라이트 색상\" (:91) but \"브릿지\" (:1229/:1237/:1245); Limbal is \"림발\" (:94) but \"림벌\" (:1232/:1239). Face paint is \"페이스 페인트\", while core sheets say 하이라이트 / 문신/홍채 / 얼굴 페인트.",
+     "fix": "Pick one ko word for each creator sheet (core `sheets` is the pinned value) and apply it to tools.character.*, swatch.slot*/pal*/absent*, and bot card.slotHl/slotPaint/slotLimbal plus the manual bodies.",
+     "reason": "Verified against core ko.json:220-225. The same file uses two names for one concept (하이라이트/브릿지, 림발/림벌), which is a factual inconsistency, not a fluency judgment. No PR touched these lines."
+    },
+    {
+     "cand": "ui-ko:UKO-4",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ko.json:1412",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "glamour.sheet.privacy says \"이 복장별로 저장됩니다\" for \"for this outfit\", but the dictionary's UI word for one glamour/outfit is 코디.",
+     "fix": "Change it to \"이 코디별로\" (matching swatch.equipHead/paletteTitle).",
+     "reason": "ffxiv-terminology.md Glamour Terms (l.264, l.275-278) pins 코디 for UI and 의상 for policies only, so 복장 is neither. The en text means one glamour. Blame 0e83fe74, at MAIN."
+    },
+    {
+     "cand": "ui-ko:UKO-5",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/ko.json:1185",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "share.invalidDye \"인식할 수 없는 염색약\" and share.legacyLink \"오래된 염색약 ID\" use 염색약 (a hair-dye product word), where core labels.dye and every other surface say 염료.",
+     "fix": "Replace 염색약 with 염료 in both keys.",
+     "reason": "Core ko.json:9 is labels.dye = 염료. This is two names for one concept in rare error text whose meaning stays intact, so P3."
+    },
+    {
+     "cand": "ui-ko:UKO-6",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/ko.json:357",
+     "locales": "ko",
+     "unit": "packages/bot-logic",
+     "claim": "preferences.keys.world \"마켓 서버\", keys.market \"마켓 가격 표시\" and manual5 spectrumPrices \"마켓 아이템\" (:686) use the loan 마켓, while the dictionary pins Market Board = 장터, which the same file uses elsewhere (:112, :1145, :1148).",
+     "fix": "Use 장터 (\"장터 서버\", \"장터 가격 표시\", \"장터 아이템\").",
+     "reason": "ffxiv-terminology.md l.229-241 pins 장터 and rejects 마켓보드. The bare 시장 column labels are not on the banned list, so they stay unpinned and are not part of this verdict."
+    },
+    {
+     "cand": "ui-ko:UKO-7",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/ko.json:614",
+     "locales": "ko",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourLooks \"+{n} 동형\" / card.glamourOneLook \"유일\" (en \"+{n} LOOK\" / \"ONE LOOK\") is judged stilted beside web 같은 외형.",
+     "fix": "Maintainer's choice; a short form such as \"+{n} 외형\" would align with web if wanted.",
+     "reason": "No dictionary row or core value covers this card label. 동형 means same form and is understandable in a narrow card column, and ja 同型 / zh 同款 follow the same pattern. The objection rests on fluency only."
+    },
+    {
+     "cand": "ui-ko:UKO-8",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/ko.json:607",
+     "locales": "ko",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourPieces_one/_other \"염색 {n}개\" (en \"{n} dyed piece(s)\") reads as a count of dye jobs rather than pieces. Its fallback sibling glamourWorn is \"장비 {n}개\".",
+     "fix": "Change it to \"염색 장비 {n}개\" (or \"염색한 장비 {n}개\") in both plural forms.",
+     "reason": "glamour.ts:411 swaps glamourPieces and glamourWorn into the same slot, and this value sits next to glamourDyes \"염료 {n}종\". A piece with two dye channels makes the count read differently. Blame bfd393e7, at MAIN."
+    }
+   ]
+  },
+  {
+   "slice": "policy-ko",
+   "positive": [
+    "Dates agree with English (web 2026-10-04, bot privacy 2026-10-04, bot terms 2026-09-28); all four ko files carry the English-prevails notice",
+    "Every quoted UI label equals current web-app ko.json (about.title/privacyPolicy, advancedSettings, resetSettings, clearFavorites, clearPalettes, manage/deleteCollection, mySubmissions, vote/voted, enableAnalytics, showPrices, openIn, glamour.sheet.title 장비 목록 and reset 모두 초기화, logout, Extractor privacyNote verbatim)",
+    "Glamour Reader = 코디 리더, Facewear slot = 얼굴 소품, policy register 의상 all match the dictionary",
+    "Retention numbers, hosts, commands and third-party names verbatim in all changed passages (30 d, 90 d, 12 months, 60 s, 120 s, 180 d, 7 d, XIVAPI, doNotStore, XIVAuth User + 8 chars)",
+    "No claim softened or added in the #223/#230/#227 hunks: ban-active exceptions, deletion paths, Discord-post ID statement, ban-record clearing, log retention, XIVAuth-to-Discord migration, vote-on-submit, pre-edit version retention all match English",
+    "Operator voice 저희/저희 자체 only; one paragraph per line (script-checked); no English-only lines; 합니다 register"
+   ],
+   "rejected": [
+    "'이에 국한되지 않습니다' in web TERMS:92: English 'including' is open-ended; same meaning",
+    "Extra '(투표 / 투표함)' in PRIVACY.ko.md:103: labels exist and are correct, no promise change",
+    "서버 for Discord server / our servers / World: Discord uses are qualified, World=서버 is the dictionary choice",
+    "블렌드 vs 혼합: locale JSON itself mixes both, not a policy defect",
+    "조정 as the word for moderation: unpinned in dictionary (ko.json uses 검토), only pointed at in TERM-1",
+    "Bot PRIVACY ko:28 category filter names (메탈릭, 파스텔...): filter names not core categories, unchanged since BASE"
+   ],
+   "covered": "\"Full read of apps/web-app/PRIVACY.ko.md, apps/web-app/TERMS_OF_SERVICE.ko.md, apps/discord-worker/PRIVACY_POLICY.ko.md; apps/discord-worker/TERMS_OF_SERVICE.ko.md lines 20-100 + main diff; English HEAD counterparts and all matching main/pr diffs; ffxiv-terminology.md; web-app ko.json label lookups; core ko locale. Review file: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-policy-ko.md\"",
+   "verdicts": [
+    {
+     "cand": "policy-ko:I18N-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/TERMS_OF_SERVICE.ko.md:11",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "'열 가지 도구가 ... 스와치 매처, 그리고 커뮤니티 프리셋 브라우저입니다' says ten but lists nine; Glamour Reader (코디 리더) is missing, though English TERMS_OF_SERVICE.md:15-16 lists it.",
+     "fix": "Insert '코디 리더' between 스와치 매처 and 커뮤니티 프리셋 브라우저 in the list, following the English order.",
+     "reason": "The line is identical at 8ecb878f, and no open PR touches TERMS_OF_SERVICE.ko.md. English line 16 names the Glamour Reader. Not in either catalog."
+    },
+    {
+     "cand": "policy-ko:TERM-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "PR#223",
+     "file_line": "apps/web-app/PRIVACY.ko.md:13",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "'Moderator' has two names: '운영자가 승인하면' (PRIVACY.ko.md:13, web TERMS ko:39/41, bot TERMS ko:57/59/67) vs '조정자' (PRIVACY.ko.md:40/60-63/100, bot PRIVACY ko:31/57/58/116/118/192/194).",
+     "fix": "Use one ko word for moderator in all four ko policies and pin it in ffxiv-terminology.md (the UI uses 모더레이터 in web ko.json:1051 and 관리자 in bot-logic ko). Also fix apps/discord-worker.",
+     "reason": "Blame puts line 13 in 3daa83fd, merged by #223; the TERMS lines are MAIN. The two words are on the page, so this does not rest on fluency. Not in either catalog."
+    },
+    {
+     "cand": "policy-ko:I18N-2",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#230 (web); PR#227 (bot PRIVACY_POLICY.ko.md:116)",
+     "file_line": "apps/web-app/PRIVACY.ko.md:60",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "'숨겨진 사용자의 프리셋 수' reads most naturally as [hidden user]'s preset count; English means 'how many of your presets were hidden'.",
+     "fix": "Reword to '숨겨진 사용자 프리셋의 수' or '사용자의 프리셋 중 숨겨진 수' in web PRIVACY.ko.md:60 and in discord-worker PRIVACY_POLICY.ko.md:116.",
+     "reason": "The relative clause attaches to the nearest noun (사용자), so a native reader takes 'the hidden user'. Blame: 59cc1d6a (#230) and f3554155 (#227). Not in either catalog."
+    },
+    {
+     "cand": "policy-ko:TERM-2",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "PR#223",
+     "file_line": "apps/web-app/PRIVACY.ko.md:30",
+     "locales": "ko",
+     "unit": "apps/web-app",
+     "claim": "'\"모두 초기화\"는 해당 복장의 고쳐 쓴 줄을 삭제합니다' uses 복장 for 'outfit'; the dictionary pins 의상 for the policies, and the same file uses 의상 at :17/:18/:48.",
+     "fix": "Replace '해당 복장의' with '해당 의상의'.",
+     "reason": "ffxiv-terminology.md (Glamour Terms) says the Privacy / Terms documents use official-register 의상. Blame: 3daa83fd (#223). Not in either catalog."
+    },
+    {
+     "cand": "policy-ko:TERM-3",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/discord-worker/PRIVACY_POLICY.ko.md:28",
+     "locales": "ko",
+     "unit": "apps/discord-worker",
+     "claim": "'기본 마켓 서버 / 데이터 센터' for 'default world / data center' adds an unpinned 마켓.",
+     "fix": "None in the policy.",
+     "reason": "It matches the bot's own preference label, bot-logic ko.json:357 'world': '마켓 서버'. It honors the dictionary's World = 서버 and Data Center = 데이터 센터, and 마켓 is not a listed false friend."
+    },
+    {
+     "cand": "policy-ko:I18N-3",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#230 (web); PR#227 (bot)",
+     "file_line": "apps/web-app/PRIVACY.md:157",
+     "locales": "en",
+     "unit": "apps/web-app",
+     "claim": "'after **90 days** if nobody does' / '90 days if unresolved' has no stated anchor.",
+     "fix": "None required.",
+     "reason": "The only sensible reading is 90 days from the record's creation, which matches FAILED_NOTIFICATION_UNRESOLVED_RETENTION_DAYS. ko renders the same meaning faithfully, so this is a stylistic option and not a meaning defect."
+    }
+   ]
+  },
+  {
+   "slice": "ui-zh",
+   "positive": [
+    "All 13 equipment-slot zh values (web swatch.gearSlot.*, swatch.facewearSlot, bot card.glamourSlot.*) equal the dictionary Equipment Slots column",
+    "Glamour outfit = 幻化 per dictionary; tool name 幻化查看器 agrees in web tools.glamour.title, og-strings.ts:113 and OG_DECK short 幻化 (og-strings.ts:207); card.glamourTitle = 幻化",
+    "Placeholders identical to en on all 191 delta rows (scripted); _one/_other pairs present and grammatical",
+    "No half-width punctuation beside CJK in any delta zh value (scripted)",
+    "All en-only delta rows are British to American spelling edits (verified via git diff -U0 BASE..HEAD), so no zh value is stale; preset.privacyNote (PR) zh carries every new clause",
+    "Longest Discord command/option description is 34 chars (limit 100); zh never longer than en by char count; glamour card widths are measured by fitText/textWidth",
+    "og-embed.ts:316 and og-strings.ts zh glamour name/sub fluent and consistent with web (获取方式, 染剂, 装备)",
+    "Grand Company 大国防联军, Hrothgar 硌狮族, clans, Market Board 市场布告板 and Gil 金币 consistent"
+   ],
+   "rejected": [
+    "glamour.fact.anyTribe 所有种族: the rule is the race/gender mask, so 种族 is right; the en 'tribe' label is the loose one",
+    "glamour.sheet.title 装备列表: consistent with listCopied and the other locales",
+    "「」 in bot-logic vs \"\" in web-app: per-surface style",
+    "Bare 和谐 in the harmony wheel option description: bot-wide usage, not new",
+    "你 (web) vs 您 (bot/policies): zh register not pinned in the brief, mixed before BASE",
+    "card.manualLead 请试: terse but grammatical before the command",
+    "染色栏 for dye channels: no dictionary row, unpinned, left alone"
+   ],
+   "covered": "\"web-app.tsv (123 rows) and bot-logic.tsv (68 rows) zh column and the old-vs-new en comparison; og-strings.ts and og-embed.ts zh blocks and diffs; dictionary Glamour Terms, Equipment Slots, Facewear Colors; core zh.json facewear entries; web-app and bot-logic zh.json at the cited lines; item-names.zh.json. Review file: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-ui-zh.md\"",
+   "verdicts": [
+    {
+     "cand": "ui-zh:TERM-ZH-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/zh.json:1394",
+     "locales": "zh",
+     "unit": "apps/web-app",
+     "claim": "glamour.fact.dated = \"旧版\" tags a Dated item, but the game's zh client writes that prefix as 过期 (e.g. #372 Dated Hempen Coif = 过期草布兜帽).",
+     "fix": "Set glamour.fact.dated to \"过期\" so the tag matches the item-name prefix printed beside it.",
+     "reason": "Pinned by game data, not fluency: item-names.zh.json has 1408 names starting with 过期 and none with 旧版. #372 = 过期草布兜帽 vs its twin #2629 = 草布兜帽. Blame 78ba2cda is in MAIN. Out of slice: ja 旧式 and ko 구형 (game prefix 낡은) need the same check."
+    },
+    {
+     "cand": "ui-zh:TERM-ZH-2",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/zh.json:146",
+     "locales": "zh",
+     "unit": "packages/bot-logic",
+     "claim": "manual tip facewearExcluded says \"**面部装备：** 面部装备颜色…\" for the Facewear dye category, whose core and dictionary value is 脸部配饰.",
+     "fix": "Replace both 面部装备 occurrences with 脸部配饰 (core categories.Facewear).",
+     "reason": "The dictionary's Dye Categories row Facewear = 脸部配饰, and core zh.json:153 agrees. The sentence is about the color category, not the slot (面部配饰). Blame 29e055e9 is in MAIN, and it is not in either catalog."
+    },
+    {
+     "cand": "ui-zh:TERM-ZH-3",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/zh.json:1262",
+     "locales": "zh (de/fr same narrowing)",
+     "unit": "apps/web-app",
+     "claim": "swatch.facewearColorTag / facewearColorUnknown say \"{color} · 眼镜颜色\" / \"眼镜颜色未知\" (glasses), while the slot beside them is 面部配饰.",
+     "fix": "Maintainer to pin a dictionary label for the facewear-color tag; if pinned to the Facewear noun, use e.g. 脸部配饰颜色.",
+     "reason": "No dictionary row pins the facewear-color phrase. The Facewear Colors section lists only the color names, and 眼镜 is accurate because the value comes from glassesId. Locale values: ja フェイスウェアカラー, ko 페이스웨어 색상, de Brillenfarbe, fr couleur de lunettes, zh 眼镜颜色."
+    },
+    {
+     "cand": "ui-zh:TERM-ZH-4",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/zh.json:614",
+     "locales": "zh",
+     "unit": "packages/bot-logic",
+     "claim": "Bot card badges \"+{n} 同款\" / \"唯一\" / \"替代\" vs web 相同外观 / 同外观装备 for the same-look concept.",
+     "fix": "None.",
+     "reason": "替代 is the 'fix' status (glamour.ts:269) and matches web's 以同外观装备代替. 唯一 in a compact look column is a defensible reading of ONE LOOK. There is no dictionary row: this is a stylistic choice, not a defect."
+    },
+    {
+     "cand": "ui-zh:I18N-ZH-5",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/zh.json:1385",
+     "locales": "zh",
+     "unit": "apps/web-app",
+     "claim": "glamour.picker.foot \"复制列表和导出 .md 会写入你选的那件。\" paraphrases the button \"导出为 .md\"; counter spacing {n}件 vs {n} 件 varies.",
+     "fix": "None.",
+     "reason": "Every locale's foot paraphrases the button loosely (ja/ko/de/fr), and no reader takes a different meaning. The numeral-CJK spacing split is cosmetic, the same as the zh ——/— split the brief says is not filed."
+    }
+   ]
+  },
+  {
+   "slice": "policy-zh",
+   "positive": [
+    "Every changed section in web PRIVACY, web TERMS, bot PRIVACY and bot TERMS matches English in claims: nothing softened, added or dropped. Checked 'never'/绝不, 立即, ban-active exceptions, and the deletion paths.",
+    "Retention numbers (30 days, 90 days, 12 months, 120 s), hosts, email, invite URL, doNotStore, XIVAuth User plus first 8 characters, WebP, localStorage/IndexedDB all verbatim.",
+    "Operator is 我们 throughout; no 本公司 or 我司 in any of the four files.",
+    "All quoted UI labels equal HEAD zh.json: 重置设置, 清除收藏夹, 清除已保存的调色板, 管理集合, 删除集合, 我的提交, 全部重置, 装备列表, 在以下网站打开…, 启用分析, 高级设置, matcher.privacyNote.",
+    "Tool names equal tools.*.title (色板匹配器, 幻化查看器, 预算建议, ...); bot docs use the same 幻化查看器 as web zh.json and og-worker OG_DECK.",
+    "Game nouns per dictionary: 市场布告板, 服务器/大区, 面部配饰; revert 还原, restore 恢复, hide 隐藏, unban 解除封禁 kept distinct.",
+    "Scripted check: one paragraph per line, no hard wrap between CJK characters; full-width punctuation; English-prevails notice present; no stray English sentences."
+   ],
+   "rejected": [
+    "脸部配饰 (core Facewear category) vs 面部配饰 (dictionary slot name used in the policies): policies mean the slot, so the dictionary value is correct.",
+    "「」 vs “” quote styles mixed: cosmetic, not filed.",
+    "您 in the policies vs 你 in glamour.sheet strings: different surfaces, no house rule.",
+    "平价替代 in the bot TERMS feature bullet vs 预算建议 on web: a feature bullet, not a tool name.",
+    "British spellings (colour, favourite, centre) in the English PRIVACY.md and TERMS_OF_SERVICE.md: belongs to the american-spelling slice (american-spelling-all.txt:436-445).",
+    "English-side ambiguity: found none that forces a translator choice."
+   ],
+   "covered": "\"The four zh policy documents at HEAD (changed sections, sentence by sentence) against HEAD English, and the eight .main.diff / .pr.diff pairs. Also web-app zh.json and en.json labels, bot-logic zh.json command names, and the dictionary facewear rows. Review file: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-policy-zh.md\"",
+   "verdicts": [
+    {
+     "cand": "policy-zh:ZH-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/TERMS_OF_SERVICE.zh.md:11",
+     "locales": "zh",
+     "unit": "apps/web-app",
+     "claim": "zh says '十个工具在您的浏览器中运行：…预算建议、色板匹配器，以及社区预设浏览器' but names only nine tools; English (TERMS_OF_SERVICE.md:15-17) lists 'Glamour Reader' as the tenth.",
+     "fix": "Insert 幻化查看器 (zh.json tools.glamour.title) between 色板匹配器 and 以及社区预设浏览器 so the list has ten tools in English order.",
+     "reason": "The HEAD line lists 9 items under 十个工具 and English lists Glamour Reader. Blame e15928b2 is an ancestor of 8ecb878f and the identical line exists at MAIN. Not in either catalog."
+    },
+    {
+     "cand": "policy-zh:ZH-2",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "PR#223",
+     "file_line": "apps/web-app/PRIVACY.zh.md:13",
+     "locales": "zh",
+     "unit": "apps/web-app",
+     "claim": "'在版主批准后通过 shots.xivdyetools.app 公开显示' calls the moderator 版主, while the same file uses 审核员 15 times (also discord-worker 13+3, web TERMS 2).",
+     "fix": "Change to 审核员 to match the other policy occurrences. Note web zh.json fieldPreviewImageHint also says 版主, so align it with the policies too.",
+     "reason": "Blame 3daa83fd is in PR#223 (preview merge 1d5d34ea). The count is 1 vs 15 in the file. No dictionary row exists, but this is an internal two-names-for-one-role inconsistency, not a judgment based on fluency."
+    },
+    {
+     "cand": "policy-zh:ZH-3",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "PR#223",
+     "file_line": "apps/web-app/PRIVACY.zh.md:29",
+     "locales": "zh",
+     "unit": "apps/web-app",
+     "claim": "'登出会删除会话令牌' and TERMS_OF_SERVICE.zh.md:21 '即可登出' use 登出, while PRIVACY.zh.md:104 quotes the label **退出登录**.",
+     "fix": "None required.",
+     "reason": "English uses unquoted prose there ('Signing out deletes…' PRIVACY.md:60, 'signs you out' TERMS:34). The only quoted label (line 104) equals config.logout 退出登录. Prose 登出 is a standard synonym, so the meaning is the same."
+    }
+   ]
+  },
+  {
+   "slice": "en",
+   "positive": [
+    "American English: 0 British spellings in the en column of web-app.tsv (122 keys) and bot-logic.tsv (67 keys); only identifier keys card.colours* (values 'colors'); both en.json files sweep clean",
+    "Glamour Reader name agrees: web title (en.json:104), nav shortName 'Glamour' (same pattern as Swatch Matcher/Swatch), og-strings.ts:48 OG_DECK, web and Discord TOS, web PRIVACY; bot /manual names only /glamour <file>",
+    "Equipment slot names (web swatch.gearSlot.*, bot card.glamourSlot.*) match the dictionary Equipment Slots EN column",
+    "Policy quoted labels equal current en.json: Reset Settings, Clear Favorites, Clear Saved Palettes, Manage Collections, Delete Collection, My Submissions, Advanced Settings, Open in…, Glamour list, Reset all, 'Images are read in your browser and never uploaded'; 'Item 3 under Network access' exists",
+    "Discord policy/TOS command names (/comparison /contrast /mixer /gradient /budget /swatch /glamour) are all registered (registry.ts:31-49)",
+    "Web TOS 'Ten tools' lists ten; retention numbers and dates agree between web and Discord privacy docs; preset.privacyNote and swatch.charaHintGlamour match what the policies say is stored/sent",
+    "tool-name-consistency.txt: 0 same-EN groups diverge for tool names"
+   ],
+   "rejected": [
+    "Lowercase 'market board' in prose vs 'Market Board' label: common-noun casing, not two names",
+    "'Signing out' prose vs 'Logout' button label: a verb, not a quoted label",
+    "comparison.mRgbDesc quoting removed 'Avg Distance' label: refers to the old panel deliberately",
+    "Identical _one/_other glamourFootTwins and card.colours: en has the same form, other-locale plural rules not this slice",
+    "Bot card title 'Glamour' vs 'Glamour Reader': short card title, same pattern as other tools",
+    "ΔE / ΔE2000 / CIEDE2000 notation: codes kept by the brief",
+    "British spellings in web PRIVACY/TOS (colour, favourite, centre, licence, unauthorised): routed to documentation-audit, not filed"
+   ],
+   "covered": "Read reviewer-brief.md, delta/web-app.tsv (122 keys) and bot-logic.tsv (67 keys) en columns, SUMMARY.txt, american-spelling-locales.txt, tool-name-consistency.txt; policy diffs web PRIVACY/TOS (main+pr), Discord PRIVACY (main+pr), Discord TOS (main); HEAD en.json glamour/swatch/tools blocks (web-app and bot-logic), dictionary Equipment Slots, registry.ts, og-strings.ts glamour lines, glamour-block/sheet label sites. Review file: C:\\dev\\XIVProjects\\xivdyetools\\.claude\\worktrees\\preview-2026-10-04\\docs\\audits\\2026-10-04-i18n\\evidence\\review-en.md (British-spelling list under 'Out of scope (documentation-audit)').",
+   "verdicts": [
+    {
+     "cand": "en:TERM-EN-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/en.json:1209",
+     "locales": "en",
+     "unit": "apps/web-app",
+     "claim": "swatch.dropBody 'the tribe and gender needed to look hair and skin up' and swatch.whoHead (:1212) 'TRIBE & GENDER' name the clan, while swatch.slotError.noTribe (:1329) says 'the file's clan and gender'; glamour.fact.anyTribe (:1391) 'ANY TRIBE' uses the same word for the race wear lock.",
+     "fix": "Use 'clan' (ffxiv-terminology.md:159, core `clans`) in dropBody and whoHead; use 'race' in glamour.fact.anyTribe/tribeOk/tribeNo, which test charaCanWear(wearMask, race, gender).",
+     "reason": "Lines read as quoted; the dictionary Clans section and core `clans` pin 'clan', and :1329 already says clan. chara-twins.ts:151 and chara-game-rules.ts:148 show anyTribe is a race/gender lock, so 'tribe' covers two concepts. All lines are unchanged since MAIN."
+    },
+    {
+     "cand": "en:TERM-EN-2",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/en.json:1360",
+     "locales": "en",
+     "unit": "apps/web-app",
+     "claim": "Same-model items are called 'twin' ('FIXED BY A TWIN' :1367), 'same look' ('SAME LOOK · {n} ITEMS' :1383) and 'swap' ('Swaps are already in the list below' :1360); bot chips '+{n} LOOK', 'DYES', 'LOCKED' and 'NO GLAM' (bot en.json:614-620).",
+     "fix": "Optional: add a dictionary row for the twin concept, then pick one noun across web and bot; give the bot chips a legend.",
+     "reason": "No dictionary row or core value covers twin/look/swap. 'Same look' reads as the definition of 'twin', and picker.sub defines it. '+N' matches the badge text '+2' (glamour-block.ts:957). NO GLAM is an abbreviation on a card chip. This is a style call."
+    },
+    {
+     "cand": "en:TERM-EN-3",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/en.json:1414",
+     "locales": "en",
+     "unit": "apps/web-app",
+     "claim": "The list is titled 'Glamour list' (:1399, quoted by PRIVACY.md:51), but its toasts say 'Equipment list copied to clipboard' / \"Couldn't save the equipment list\" (:1266-1268); one download flow is labelled 'Export .md' (:1265) and then 'Save .md' (:1414).",
+     "fix": "Say 'Glamour list' in swatch.listCopied/listCopyFailed/listExportFailed, and use one verb ('Export .md') on both the menu and the sheet buttons.",
+     "reason": "glamour-block.ts:720 opens the sheet in 'save' mode from exportMarkdown, and glamour-sheet.ts:375 downloads under glamour.sheet.save. The two names for one list both appear in this file. The source/acquisition-notes wording is a lesser part of the same class."
+    },
+    {
+     "cand": "en:TERM-EN-4",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/en.json:1412",
+     "locales": "en,de,fr,ja,ko,zh",
+     "unit": "apps/web-app",
+     "claim": "glamour.sheet.privacy 'Edits are kept on this device for this outfit' (and PRIVACY.md:61 'rewritten lines for that outfit') uses 'outfit' where the tool says glamour.",
+     "fix": "Write 'for this glamour' in en and in PRIVACY.md:61, then retranslate to the pinned words (de Projektion, fr mirage, ja ミラプリ, ko 코디, zh 幻化).",
+     "reason": "Every translation of :1412 followed 'outfit' rather than the glamour word pinned at ffxiv-terminology.md:264: de 'Outfit', fr 'tenue', ja '装備', ko '복장', zh '装扮'. That is a dictionary deviation in 5 locales caused by the English."
+    },
+    {
+     "cand": "en:TERM-EN-5",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/TERMS_OF_SERVICE.md:15",
+     "locales": "en",
+     "unit": "apps/web-app (+ apps/discord-worker TERMS_OF_SERVICE.md:29-31)",
+     "claim": "Policy prose names tools 'Comparison', 'Accessibility checker', 'Budget finder', 'community Presets browser' (TOS:15-17; PRIVACY.md:8-9 also 'Gradient, Mixer'). The UI titles are 'Dye Comparison', 'Accessibility Checker', 'Budget Suggestions', 'Community Presets', and the Discord TOS:31 says 'Budget Alternatives'.",
+     "fix": "Quote the en.json tools.*.title values in both web policies (Discord TOS may keep the command but should use the same tool name), and carry the change to all six variants.",
+     "reason": "en.json:51/56/71/77 titles confirmed, and the text is the same at 8ecb878f. 'Budget finder', 'Budget Suggestions' and 'Budget Alternatives' are three names for one tool. The Glamour Reader agrees everywhere."
+    },
+    {
+     "cand": "en:I18N-EN-6",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#230 (web PRIVACY.md); PR#227 (Discord PRIVACY_POLICY.md:116)",
+     "file_line": "apps/web-app/PRIVACY.md:151",
+     "locales": "en",
+     "unit": "apps/web-app + apps/discord-worker",
+     "claim": "'Posts made since the *Last updated* date above do not show your Discord user ID; older posts may' (Discord :116 'since this policy's \"Last Updated\" date') ties the cutoff to a date that moves with every edit.",
+     "fix": "Name the fixed date the change shipped (e.g. 'since 4 October 2026') in both English policies and all variants.",
+     "reason": "Neither sentence exists at 8ecb878f. Ancestry shows they came from 1f752c80/915b9127 (PR#230) and 274407cc/5f83a81f (PR#227). The text is true today but loses its cutoff at the next date bump. It never becomes false, because of the hedge 'may', so P3 rather than P2."
+    },
+    {
+     "cand": "en:I18N-EN-7",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/PRIVACY.md:22",
+     "locales": "en",
+     "unit": "apps/web-app",
+     "claim": "'this document is reached from **About → Privacy**' does not match en.json: the opener is 'About XIV Dye Tools' (header.about :9, about.title :16) and 'Privacy' sits under 'POLICIES' (:29-30).",
+     "fix": "Quote 'About XIV Dye Tools → Privacy' (or name the POLICIES row) so each locale variant can quote its own header.about value.",
+     "reason": "The text is present at MAIN and BASE. The opener is an icon button whose tooltip/aria-label is header.about (v4-app-header.ts:648-649). The brief requires quoted UI labels to equal the current <lc>.json value. Low impact."
+    },
+    {
+     "cand": "en:I18N-EN-8",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#230/PR#227 (policy sentence); MAIN (glamour strings)",
+     "file_line": "apps/web-app/PRIVACY.md:91",
+     "locales": "en",
+     "unit": "apps/web-app",
+     "claim": "'the version from before the first such edit, kept until a moderator restores it or the preset is deleted'; 'Nothing with the same look fixes it'; 'This file wears no gear.'; 'Since 7.4 any job can wear any piece'.",
+     "fix": "None required.",
+     "reason": "Both readings of 'restores it' (the version, or the preset to that version) give the same retention outcome. noFix reads clearly in its row context, 'wears no gear' is a style choice, and a bare patch number '7.4' is normal for FFXIV players. A native reader takes no different meaning."
+    }
+   ]
+  },
+  {
+   "slice": "web-app",
+   "positive": [
+    "Every literal t()/tInterpolate()/tSwatch() key in glamour-block, glamour-sheet, glamour-tool, glamour-twin-picker, chara-file-card, chara-sheet, chara-ui, glamour-list-actions, swatch-tool, v4 header/sidebar/layout/shell, chara services exists in all six locales (0 missing; script flagged an invented key, so it detects absences).",
+    "Dynamic key families enumerated from code and verified in all six locales: swatch.gearSlot.<12 CharaGearSlotId>, glamour.fact.<8 CharaTwinFact keys>, glamour.sheet.state{Filled,Edited,Blank}, glamour.row.* (blocked/fixed/tag/otherWorks/noFix/choice/company/twins), glamour.verdict.seg*_{one,other} x6 + count* x4, swatch.slot*/slotError.* (+unknown), tools.glamour.{title,shortName,description,lead}.",
+    "No hardcoded user-visible English in new or changed components (title/placeholder/aria-label/Toast/textContent grep clean). All 13 innerHTML sites route text through t(); only literals are the provider names Discord/XIVAuth and glyphs.",
+    "Language switch handled: GlamourTool subscribes and rebuilds, block moveTo()->render() closes the twin picker, SwatchTool stores slotKey and translates the slot label at draw time (swatch-tool.ts:2009), cross-link and privacyNote labels are rebuilt per render, config-sidebar charaLoaded is state.",
+    "Formatting is locale-aware: Intl.ListFormat(lang) for 'and' and item lists, Intl.PluralRules(lang) for verdict segments (glamour-block.ts:987,1427-1446); item names via itemNameFor(names, lang), dye names via localizedDyeName/dyeName, clans via LanguageService.getClan. No display-text localeCompare or sort in the new files.",
+    "#223: about-modal unchanged since BASE; policyDocFile() (about-modal.ts:90) maps ja/de/fr/ko/zh to <STEM>.<lc>.md and everything else to English; charaHintGlamour is wired into drop zone, privacy line and LOCAL ONLY chip title, and the chip is dropped when sendsGearIds is set (chara-file-card.ts:113,286); charaHintGlamour and preset.privacyNote use the one-operator register in all six locales."
+   ],
+   "rejected": [
+    "Sheet row labels ('Main Hand', 'Rings') and the 'Acquisition:' label in glamour-sheet.ts / glamour-list-actions.ts:158 are English: fixed GPOSERS template labels, deliberate per glamour-markdown.ts.",
+    "Acquisition lines in the sheet are api-worker's English GPOSERS text: same decision.",
+    "Sheet and twin picker mounted on document.body do not follow a language switch: unreachable while the sheet is open (overlay covers header, ModalService.registerExternal stands Shift+L down); the picker is closed by the block re-render.",
+    "swatch.parseFailed embeds core's English {reason}: deliberate, documented in chara-file-loader.ts / chara-file-card.ts:122.",
+    "toFixed(1/2) for deltaE and alpha (chara-sheet.ts:369,408; swatch-tool.ts:925): pre-existing, consistent with the other tools, not routed through format.ts anywhere.",
+    "share-service.ts English meta titles/descriptions and index.html 'ten ... tools' alt text: crawler text, English by design; colour->color fixes there are American-spelling clean.",
+    "de 'Paletten' vs tool name 'Vorlagen' in preset.privacyNote: pre-existing wording, 'palette' is a separate concept from the preset tool.",
+    "chara-resolve-service.ts:99 localeCompare is an identifier cache key, not display text.",
+    "shortcuts '0-9' label and keyboard map: no remaining 'nine tools' claim in locales or code."
+   ],
+   "covered": "Read in full: glamour-block (1750 lines), glamour-sheet, glamour-tool, glamour-twin-picker, glamour-list-actions, glamour-markdown, chara-file-card, chara-sheet, chara-ui, chara-file-loader, chara-session-service, about-modal policy code, example-link. Diffed BASE->HEAD: swatch-tool, v4-app-header, config-sidebar, v4-layout, v4-layout-shell, shortcuts-panel, keyboard/router/share/config/modal services, chara-resolve-service. Read all 13 innerHTML sites. Read delta/web-app.tsv (123 rows) and glamour.*/swatch.*/tools.glamour/preset.privacyNote/charaHintGlamour values in all six locales. Origin check: only 3daa83fd (#223) is MAIN..HEAD for web-app/src. Review file written: C:\\dev\\XIVProjects\\xivdyetools\\.claude\\worktrees\\preview-2026-10-04\\docs\\audits\\2026-10-04-i18n\\evidence\\review-web-app.md",
+   "verdicts": [
+    {
+     "cand": "web-app:W1",
+     "verdict": "CONFIRMED",
+     "prefix": "HC",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/components/glamour-block.ts:1159",
+     "locales": "ja,de,fr,ko,zh",
+     "unit": "apps/web-app",
+     "claim": "Facewear chip title passes `{ color: colour.name }` (core English 'Silver') into swatch.facewearColorTag, so ja reads 'Silver・フェイスウェアカラー'.",
+     "fix": "Interpolate LanguageService.getFacewearColorName(colour.id), the same call the dye-line at :1143 already uses.",
+     "reason": "glamour-block.ts:1159 uses colour.name; facewear_colors.json names are English; :1143 uses the localized getFacewearColorName. Blame: a18a2e9e (chara-import.ts era), no PR touches it."
+    },
+    {
+     "cand": "web-app:W2",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/components/glamour-block.ts:518",
+     "locales": "en,de,fr",
+     "unit": "apps/web-app",
+     "claim": "No plural forms: '{channels} channels · {dyes} dyes' gives '1 dyes'; glamour.row.twins gives 'Same look as 1 other items' / '1 weitere Gegenstände' / '1 autres objets' for a pair (:964, familySize>1); glamour.sheet.sub '1 pieces' (glamour-sheet.ts:143); footnote's `=== 1` (:1497-1501) gives fr '0 pièces portées sont non teintes'.",
+     "fix": "Add _one/_other variants and select with Intl.PluralRules(lang) as the verdict segments do (fr 0 = one).",
+     "reason": "All four sites and en/de/fr values at en.json:1255,1380,1400 and fr.json:1272,1274 verified; no PR commit touches these lines, origin MAIN."
+    },
+    {
+     "cand": "web-app:W3",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1390",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "glamour.fact.dye = 'FARBE ×{n}' uses Farbe (color) for dye; house register requires Farbstoff, which sibling keys use ('Farbstoffe', de.json:1372).",
+     "fix": "Change to 'FARBSTOFF ×{n}'.",
+     "reason": "de.json:1390 reads 'FARBE ×{n}' against en 'DYE ×{n}'; the brief's house register bans Farbe for dye. Blame 78ba2cda (2026-09-27), no PR commit, so origin MAIN."
+    },
+    {
+     "cand": "web-app:W4",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "PR#223",
+     "file_line": "apps/web-app/src/shared/example-link.ts:65",
+     "locales": "ja",
+     "unit": "apps/web-app",
+     "claim": "sanitizeExampleLink returns URL.href, so visible example-link text shows percent-encoded non-ASCII ('%E3%83%9F...').",
+     "fix": "None; keep as designed.",
+     "reason": "Intended security behavior: the docblock at example-link.ts:54-57 percent-encodes non-ASCII so visible link text cannot be spoofed (FINDING-016). Decoding the display, as proposed, would undo that fix."
+    },
+    {
+     "cand": "web-app:W5",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/components/chara-file-card.ts:158",
+     "locales": "ja,zh",
+     "unit": "apps/web-app",
+     "claim": "Privacy line built as `${this.privacyHint()} ${note}` puts an ASCII space after '。' in ja/zh (e.g. '…この端末にとどまります。 編集した入手方法は…').",
+     "fix": "Join with a locale-aware separator (no space for ja/zh), or move the join into a localized key.",
+     "reason": "The same space join existed at MAIN as `${tSwatch('charaHint')} ${note}`; PR#223 only swapped in the hint. ko writes a space between sentences, so ko is not affected and is dropped from the locales."
+    }
+   ]
+  },
+  {
+   "slice": "bots",
+   "positive": [
+    "commands.glamour.description and options.file.description exist in ja/de/fr/ko/zh, all <=100 chars (de 92, fr 95); changed wheel/swatch/clan descriptions present in all; localize.test, manual.test, glamour.test pass (69 tests)",
+    "Dynamic keys complete: card.glamourSlot.* 12/12 x 6 locales equals CharaGearSlotId, FIXED_KEYS/BLOCKED_KEYS/status keys all exist, 39 glamour keys in each locale",
+    "Plurals go through tc() with _one/_other for all counts except glamourLooks; zero cases guarded",
+    "Slot labels equal dictionary Equipment Slots; glamour terms (ミラプリ/Projektion/Mirage/코디/幻化) and Grand Company wording match dictionary and web; de du, fr vous",
+    "Locale threading KV pref -> interaction locale -> en holds for /glamour, including the deferred step; no buttons/components exist",
+    "Discord limits: embed budget 4000 with truncation, error text capped 1024, /manual limits asserted across all locales by passing test",
+    "#227 removed commands.stats.options.preferences.description in all six locales with no residual references",
+    "/manual lists /glamour with name+description in all six locales (manual.glamour.*)",
+    "HC sentence files triaged: all logs, schema descriptions, env errors, moderator and /stats English-by-decision"
+   ],
+   "rejected": [
+    "SUBRACE_DISPLAY_NAMES English clan names in /preferences (types/preferences.ts:202): unchanged since BASE, outside the diff",
+    "firstRun.body mentions only /swatch: announcement-class text",
+    "ja glamourDyes '{n}色' ambiguous with colors: ja house style",
+    "Missing CJK glyphs / font subsets: font tests green, fonts belong to another slice"
+   ],
+   "covered": "\"bot-logic commands glamour/chara-identity/swatch, localization.ts, 6 locale JSONs (delta 68 keys + 39 card.glamour*), discord-worker localize/schemas/registry/localize.test, handlers glamour/manual/swatch, chara-attachment, index.ts diff, both hc-sentences files, svg glamour-card header. Review file: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-bots.md\"",
+   "verdicts": [
+    {
+     "cand": "bots:B1",
+     "verdict": "CONFIRMED",
+     "prefix": "HC",
+     "tier": "P1",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/commands/chara-identity.ts:24",
+     "locales": "de,fr,ja,ko,zh",
+     "unit": "packages/bot-logic",
+     "claim": "tribeDisplay() turns the raw enum into English 'SEEKER OF THE SUN' on the /glamour card header (glamour.ts:438 charSub) and the /swatch identifier line (swatch.ts:247) in every locale.",
+     "fix": "Map the Tribe enum to core ClanKey and add getLocalizedClan() in bot-logic/localization.ts (core LocalizationService.getClan exists, e.g. de seekerOfTheSun='Goldtatze'); uppercase with toLocaleUpperCase(locale).",
+     "reason": "chara-identity.ts:24-26 only splits camelCase and uppercases; bot-logic has getLocalizedRace but no clan getter while core locales carry clans. No PR touches these files (8ecb878f..HEAD); not in either catalog.",
+     "skeptic": {
+      "refuted": false,
+      "tier": "P1",
+      "reason": "Confirmed, and it is the same at MAIN 8ecb878f. No commit in 8ecb878f..HEAD touches chara-identity.ts, glamour.ts, swatch.ts or localization.ts. At chara-identity.ts:24-26, tribeDisplay() only splits the camelCase enum and calls .toUpperCase(), so it never looks anything up. Its output goes into charSub, which glamour.ts:438 and swatch.ts:247 pass to the card header (glamour-card.ts:183, swatch-card.ts:130), so de/fr/ja/ko/zh users see English like 'SEEKER OF THE SUN'. Under the brief's terminology rule a clan name must equal core's value, and core already has it (de.json:246 seekerOfTheSun='Goldtatze', ja 'サンシーカー'; LocalizationService.getClan exists). bot-logic has getLocalizedRace (localization.ts:176) but no clan getter, even though glamour.ts:232 already uppercases a localized race with toLocaleUpperCase(locale). The web-app's chara-file-card.ts:301 shows the localized clan through LanguageService.getClan, so the bot is inconsistent. A font limit does not excuse it: the mono stack includes Noto Sans JP/SC/KR (frame.ts:154). Clan names are not on the brief's deliberately-English list. This is visible card text rather than a tooltip, so HC stays P1."
+     }
+    },
+    {
+     "cand": "bots:B2",
+     "verdict": "CONFIRMED",
+     "prefix": "HC",
+     "tier": "P1",
+     "origin": "MAIN",
+     "file_line": "apps/discord-worker/src/utils/chara-attachment.ts:62",
+     "locales": "de,fr,ja,ko,zh",
+     "unit": "apps/discord-worker",
+     "claim": "Localized card.swatchParseError is filled with English reasons: 'file too large (N bytes)', 'attachment must be uploaded to Discord', 'download failed (404)', 'file too large (over 1048576 bytes)' (lines 62,69,95,102); glamour.ts:84 relays api-worker's English reason into the same slot via bot-logic glamour.ts:377-378.",
+     "fix": "Give each pre-check its own localized key (tooLarge {size}, notDiscordCdn, downloadFailed {status}) and map api-worker/parser failures to a localized generic reason instead of interpolating error.message.",
+     "reason": "Lines verified identical at MAIN 8ecb878f; user-visible ephemeral/error reply, so HC visible-text = P1 per the brief table (reviewer's P2 is not an HC tier). Not in either catalog.",
+     "skeptic": {
+      "refuted": false,
+      "tier": "P1",
+      "reason": "The finding holds. In apps/discord-worker/src/utils/chara-attachment.ts, lines 62, 69, 95 and 102 put hardcoded English into the {message} slot of card.swatchParseError. The localized frame (ja: ファイルを読み取れません — {message}) is then followed by an English reason such as \"file too large (N bytes)\" or \"download failed (404)\". The same four lines are at MAIN 8ecb878f, so origin is MAIN. packages/bot-logic/src/commands/glamour.ts:377-378 likewise relays api-worker's English 4xx reason, which apps/discord-worker/src/handlers/commands/glamour.ts:74-84 reads from the response body, into the same slot. The brief does not exempt it: its deliberately-English list covers only the raw presets-api response.error, because clients localize that from an ErrorCode, and api-worker's resolve reason is shown to the user. The 2026-08-20 discord-worker i18n audit filed this splice as F-14 LOW, and it was never fixed, so it is still open rather than settled. The English part is the reason the reply gives, so it is half-English text a user sees, which is P1 under the HC table and under the I18N P1 row. A P2 argument exists: the lead clause is localized, these are rare error paths, and the non-Discord-CDN check is nearly unreachable because the URL comes from the signed payload. The brief's table still sets visible HC text at P1."
+     }
+    },
+    {
+     "cand": "bots:B3",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/de.json:618",
+     "locales": "de",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourStatusDye = 'FARBEN' (colors) for the core 'dye' problem (twin has fewer dye channels, chara-game-rules.ts:146); ja/ko/zh say 'can't be dyed'.",
+     "fix": "Use Farbstoff vocabulary that states the verdict, e.g. 'NICHT FÄRBBAR' (matching ja 染色不可 / ko 염색 불가); consider the same review for fr 'TEINTES'.",
+     "reason": "House register pins de dye = Farbstoff, never Farbe; a German reader sees 'COLORS', losing the meaning. Locale files only changed in PR d1fdb89a for /stats keys, so MAIN."
+    },
+    {
+     "cand": "bots:B4",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/de.json:619",
+     "locales": "en,de",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourStatusGlamour 'KEINE PROJ' (de) and 'NO GLAM' (en) abbreviate the verdict web-app writes as 'KEINE PROJEKTION' / 'NO GLAMOUR' (glamour.fact.noGlamour).",
+     "fix": "Use the full dictionary noun ('KEINE PROJEKTION', 'NO GLAMOUR') and widen the status column as the slot column was, rather than inventing a short form.",
+     "reason": "Dictionary glamour row is de Projektion and its 'no short forms' note rejects invented abbreviations; fr 'NON MIRAGE' vs 'PAS DE MIRAGE' and zh 无法幻化 vs 不可幻化 are defensible equivalents, so narrowed to en/de."
+    },
+    {
+     "cand": "bots:B5",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/en.json:614",
+     "locales": "en,de,fr",
+     "unit": "packages/bot-logic",
+     "claim": "card.glamourLooks '+{n} LOOK' / '+{n} OPTIK' / '+{n} ASPECT' is rendered with t() for any twins count > 0 (glamour.ts:428), so a card reads '+3 LOOK' / '+3 ASPECT'.",
+     "fix": "Split into glamourLooks_one/_other in all six locales and call t.tc('card.glamourLooks', p.twins, { n: p.twins }).",
+     "reason": "glamour.ts:428 passes n via t(), not tc(); the brief requires plurals through tc(); n can exceed 1. Cosmetic chip text, P3."
+    },
+    {
+     "cand": "bots:B6",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/en.json:690",
+     "locales": "en,ja,de,fr,ko,zh",
+     "unit": "packages/bot-logic",
+     "claim": "/glamour's reply sends users to '/manual topic:👤' (glamour.ts:471, 'More on character files:') but manual5.topics.characterFile.body begins '/swatch reads a .chara export…' and never mentions /glamour, in all six locales.",
+     "fix": "Extend the characterFile topic body in all six locales to cover /glamour (pieces, twins, wearability, GPOSERS list), one commit across locales.",
+     "reason": "Verified 👤 = character_file topic (schemas.ts:559); every locale's body names only /swatch. The help text a user is pointed to is wrong for that command."
+    },
+    {
+     "cand": "bots:B7",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/ko.json:819",
+     "locales": "ko",
+     "unit": "packages/bot-logic",
+     "claim": "ko commands.glamour/swatch.options.file.description = '`.chara` 캐릭터 파일 (Anamnesis / Ktisis 내보내기)' (lines 819, 833) shows literal backticks; en and the other locales use plain '.chara'.",
+     "fix": "Drop the backticks in both ko option descriptions to match en '.chara character file (…)'.",
+     "reason": "Discord does not render markdown in slash-option descriptions; only ko carries backticks at these keys. Cosmetic, P3."
+    }
+   ]
+  },
+  {
+   "slice": "og-svg-fonts",
+   "positive": [
+    "Every card-drawn glamour string is from OG_DECK.glamour and TOOL_TAG.glamour (og-strings.ts:48-113, 147-207), six locales with equal key sets. The default card's methodTag is null on glamour (index.ts:641), so no ΔE2000 literal. glamour-card.ts has no English literal: slot, look, status, title and footKey are all passed in.",
+    "OG_DECK.glamour.name equals web-app tools.glamour.title (locales line 104) in all six: Glamour Reader / Projektionsleser / Lecteur de mirages / ミラプリリーダー / 코디 리더 / 幻化查看器. TOOL_TAG words match the dictionary (PROJEKTION, MIRAGE, ミラプリ, 코디, 幻化), with no false friends.",
+    "Crawler: toolDefault('glamour') (og-data-generator.ts:928-931) takes its title from the localized OG_DECK name. glamour.descriptionDefault exists in all six (og-embed.ts:96,140,184,228,272,316). url uses appUrl(locale) and imageUrl uses withLang, so ?lang= is carried. Glamour has no share grammar (a .chara never leaves the browser), so there is no web-app share URL to check.",
+    "Fit measured with estimateTextWidth. Longest slot (fr MAIN NON DIRECTRICE) is 129.6 px untracked, within LEAD_MAX 132. Longest status is 68 px, within STATUS_MAX 72. Titles fit in all six locales at n=12. The footer wraps to two lines untruncated except the de worst case. wrapSub in default-card.ts covers CJK and the 3-line cap.",
+    "Fonts: og stringsFor() lists core + OG_DECK + TOOL_TAG + OG_DECK_LINE + OG_ROLE, so all card tables including the new glamour keys. discord stringsFor() = core + bot-logic (minus commands.*.options) + dyes + method tags. Both font-coverage tests were green (og 147, discord 99).",
+    "Staleness: og subsets were re-cut in the same commit as the last og-strings change (2026-09-28 08:38). Discord subsets were re-cut at 08:40:46, with the last bot-logic content commit. The only later bot-logic change (d1fdb89a, 10-04) is 3 deleted admin-only /stats lines per locale, not drawn, so nothing new needs cutting.",
+    "Sizes: discord SC 490.8 KiB (<500), JP 327.8 (<500), KR 141.3 (<300); og SC 335.9, JP 220.9, KR 112.2. No threshold is breached. Discord SC headroom is only about 9 KiB, so the next CJK-heavy bot string batch will likely cross 500 KiB. font-union-analysis shows og tofu 0."
+   ],
+   "rejected": [
+    "Discord font-coverage-manual '44 missing from SC' / '58 in no face': false positive. The script does not exclude commands.*.options.*.description (and stats subcommand descriptions), which the gate and the subset script exclude because Discord renders them itself. The characters occur only at bot-logic ja.json:1006,1249 and zh.json:729,738,809,955,1255.",
+    "KR/JP 'missing' CJK punctuation and og JP U+FF0C: carried by the SC face (union tofu 0).",
+    "web-app share-service.ts:339 and sibling English share descriptions: pre-existing and not glamour-specific, glamour has no share path. Left to the web-app slice.",
+    "ja 染色 vs カララント and ko 염색 vs 염료 in the glamour deck sub: per-surface house style, and the dictionary has no row to cite.",
+    "fr long item names squeezed to about 110 px: documented design trade-off, covered by tests.",
+    "hc-sentences-apps-og-worker hits (renderer.ts:50,108,141): internal error messages / 500 body, not card text."
+   ],
+   "covered": "\"og-worker: index.ts, og-data-generator.ts, types.ts, og-embed.ts, og-strings.ts, svg/default-card.ts, font-coverage.test.ts. svg: glamour-card.ts, frame.ts, base.ts, icons/tool-icons.ts. discord-worker: font-coverage.ts and its test. bot-logic card.glamour* in 6 locales, measured. web-app locales line 104 x6. Evidence files: font-sizes, font-union-analysis, font-coverage-manual, font-vs-locale-mtimes, svg-glamour, svg-literal-glyphs, hc-sentences-apps-og-worker, gate summary. No og-worker / svg / font change exists in MAIN..HEAD, so every origin is MAIN. Review file: C:\\\\dev\\\\XIVProjects\\\\xivdyetools\\\\.claude\\\\worktrees\\\\preview-2026-10-04\\\\docs\\\\audits\\\\2026-10-04-i18n\\\\evidence\\\\review-og-svg-fonts.md\"",
+   "verdicts": [
+    {
+     "cand": "og-svg-fonts:FONT-1",
+     "verdict": "DUPLICATE",
+     "prefix": "FONT",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/svg/src/glamour-card.ts:237",
+     "locales": "all six",
+     "unit": "packages/svg",
+     "claim": "Look-count line ('+{n} OPTIK' / 'ONE LOOK') drawn at `size: 10.5` (glamour-card.ts:211,237,239), below frame.ts's 'Nothing below 11, ever' floor (CARD_TYPE.label = 11).",
+     "fix": "Use CARD_TYPE.label at :211 and :237-239, then re-check the LEAD_MIN..LEAD_MAX lead-column fit.",
+     "reason": "Already deep-dive BUG-145 (same lines, same fix). Also the 'only sub-11 size in packages/svg' part is wrong: preset-swatch.ts:294 uses fontSize: 10."
+    },
+    {
+     "cand": "og-svg-fonts:I18N-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/svg/src/glamour-card.ts:113",
+     "locales": "de (truncation); all six (count split from noun)",
+     "unit": "packages/svg",
+     "claim": "wrapFoot breaks at plain spaces and ellipsises line 2, so de n>=10 with both clauses gives ['5 von 12 gefärbten Teilen · 3', 'durch Zwilling benannt · 2 ohne L…'], and en gives '… · 3 named from' / 'a twin · …'.",
+     "fix": "Break the footer only at ' · ' clause boundaries (or keep each count with its noun), and allow a third line or shorten the de clauses so nothing is cut.",
+     "reason": "Reproduced with base.ts estimateTextWidth and the frame textWidth factor (max 232.7 px). The de line ends 'ohne L…' and the count is split from its noun in en/fr too. Cosmetic because the embed carries the full list. Blamed to bfd393e7 (MAIN); not in either catalog."
+    },
+    {
+     "cand": "og-svg-fonts:I18N-2",
+     "verdict": "REJECTED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/svg/src/glamour-card.ts:282",
+     "locales": "de, fr",
+     "unit": "packages/svg",
+     "claim": "Status column width ignores letterSpacing 0.6 for de 'KEINE PROJ' / fr 'NON MIRAGE'.",
+     "fix": "None needed; optionally add length*0.6 to the statusW measurement.",
+     "reason": "Untracked 68.2 px makes statusW 69 (not 68); tracked ink is about 74.2 px and spills about 5 px into the 10 px GAP. The name and dye line stop at statusLeft-GAP, so nothing overlaps or is cut, and the user sees no defect."
+    },
+    {
+     "cand": "og-svg-fonts:I18N-3",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/og-worker/src/services/og-embed.ts:140",
+     "locales": "de",
+     "unit": "apps/og-worker",
+     "claim": "de glamour.descriptionDefault 'Jedes Teil, das eine Charakterdatei trägt – mit Farbstoffen, ob das Spiel es tragen lässt, und Bezugsquelle.' joins an ob-clause to the dative 'mit' noun list, which is ungrammatical.",
+     "fix": "Rephrase as a parallel list, e.g. '… – mit Farbstoffen, Tragbarkeit im Spiel und Bezugsquelle.', or as a full du-sentence.",
+     "reason": "Line 140 reads exactly this (blame 975175da, MAIN; no MAIN..HEAD change to og-embed.ts). 'mit' cannot govern an 'ob'-clause, so a native reader sees broken German. The meaning can still be worked out, so P3 (crawler text only)."
+    }
+   ]
+  },
+  {
+   "slice": "core-api-rest",
+   "positive": [
+    "Acquisition lines are English-only by documented decision: apps/api-worker/src/chara/acquisition.ts:1-10, spec 2026-09-27-glamour-acquisition-design.md:44 (D2), api-worker docs/reference/chara.md:69 says 'one English line'; item and dye names in the export stay localized.",
+    "GPOSERS slot labels are documented as deliberately not localised (packages/core/src/services/chara/chara-gposers.ts:15-17), matching the brief's deliberately-English list.",
+    "Core new data (shader color JSON, index.json, chara-game-rules/twins/shader-colors) has no user-visible names or strings; consolidated-ids.ts has 6-locale names and no diff since BASE.",
+    "api-worker: dye search still uses the shared localeMiddleware and localized search (routes/dyes.ts:61-67); docs/reference/dyes.md matches foldForSearch (DyeService.ts:350-361); chara routes carry all locales in `names`, so ?locale= does not apply; every error response carries an ErrorCode.",
+    "presets-api/oauth: new rejection text is an English wire `message` beside an ErrorCode. USER_BANNED is still client-mapped (web-app preset-submission-service.ts:71-72); new codes (REVISION_REQUIRED, STALE_REVIEW, DUPLICATE_RESOURCE) are moderator-facing only; oauth error redirect text is never displayed (auth-service.ts:215-258).",
+    "moderation-worker English-only decision holds: bot-i18n.ts:113-117 documents it and only enLocale exists. Scripted check of every .t('key') in the app: 32 used, 0 missing, so no raw key can show. No DM or outbound message to non-moderators; ban and review posts stay in the moderation channel (FINDING-008).",
+    "stoat-worker #234 only changes mention defusal in response-formatter.ts, with no new user strings; its English fallbacks predate BASE (parked, no regression)."
+   ],
+   "rejected": [
+    "Web-app toasts the presets-api English `message` as `details` beneath a localized headline (preset-submission-service.ts:20-31): documented wire-message design. The 'unsupported characters' suffix exists at MAIN 8ecb878f and #224 only reuses it for example links.",
+    "core BLENDING_MODES English descriptions (blending/types.ts:14): not user-visible; the bots use the bot-logic blendingModes.* locale keys.",
+    "'You do not have permission' (English) seen by a non-moderator: it appears only inside the moderation channel and guild, so it falls under the English-only moderation decision.",
+    "Unused moderation enLocale keys (ban.presetsHidden, ban.alreadyBanned, ban.userBanned, meta.*): a dead-code matter, not i18n.",
+    "All six hc-sentences-* files are logs, thrown Errors, env-validation text, ErrorCode messages or admin text; none is a finding.",
+    "oauth `?error=` redirect messages are English, but the web-app logs the value and silently navigates back, so it is never shown (a UX gap, not i18n)."
+   ],
+   "covered": "\"Review file: docs/audits/2026-10-04-i18n/evidence/review-core-api-rest.md. Covered: `git diff 5c80fcba HEAD` stat (128 files) for packages/core/src, apps/api-worker, apps/presets-api/src, apps/oauth/src, apps/moderation-worker/src, apps/stoat-worker/src; api-worker src/chara/*, routes/dyes.ts, middleware/rate-limit.ts, docs chara.md and dyes.md; core chara-* services, consolidated-ids.ts, blending/types.ts; presets-api handlers, ban-check, validation-service; moderation bot-i18n.ts (+ PR diff) and handlers; stoat response-formatter.ts; the six hc-sentences-* evidence files. Not covered: discord-worker and bot-logic (other slices); I did not read the 1.3 MB acquisition.en.json line by line.\"",
+   "verdicts": []
+  },
+  {
+   "slice": "gap-sheet-names-de-fr-zh",
+   "positive": [
+    "fr and zh highlights (Mèches / 挑染) and face paint (Peinture faciale / 面部彩绘) equal core across web, bot and manual text",
+    "de web :95/:96 Gesichtsbemalung equals core; eye/hair/skin/lip words equal core in de and fr",
+    "No policy document (6 files) uses any sheet or slot word; they mention only /swatch and the zh tool name",
+    "All keys predate 8ecb878f; none in delta tsv; swatch footer plurals present, no raw keys"
+   ],
+   "rejected": [
+    "web 'Colors'-suffixed composites (Strähnchen-Farben, 挑染颜色): sensible composition, not a conflict",
+    "zh policy 色板匹配器 and bot 角色色板 vs tool name: tool-name slice",
+    "de Slot / fr emplacement: slot is not a sheet concept",
+    "de/zh dark-light capitalisation and 头发颜色 vs 发色: wording only, cosmetic"
+   ],
+   "covered": "\"core {en,de,fr,zh}.json sheets; web-app {en,de,fr,zh}.json tools.character.* and swatch.*; bot-logic card.slot*, card.swatch*, commands.swatch, manual5 characterFile; 6 policy docs; swatch.ts:106-112; review-ui-ja/ko precedent; review file at docs/audits/2026-10-04-i18n/evidence/review-gap-sheet-names-de-fr-zh.md\"",
+   "verdicts": [
+    {
+     "cand": "gap-sheet-names-de-fr-zh:TERM-DE-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:91,94,1229,1231,1232,1234,1237,1239,1241,1245,1246; packages/bot-logic/src/i18n/locales/de.json:72,690",
+     "locales": "de",
+     "unit": "apps/web-app + packages/bot-logic",
+     "claim": "de sheet names diverge from core `sheets` (Strähnchen / Tätowierung/Limbus / Gesichtsbemalung): web `Strähnen` (:1229/:1237/:1245), `Tattoo/Limbal-Farben` (:94), `Limbal-Ring` (:1232), `Tattoo / Limbal` (:1239), `Schminke` (:1234/:1241/:1246, while :95 says `Gesichtsbemalung`); bot :72/:690 `Highlights`, `Tattoo/Limbalring`.",
+     "fix": "Use core's de `sheets` nouns in web swatch.slot*/pal*/absent* and tools.character.tattooColors, and in bot commands.swatch description + manual5 characterFile body (Strähnchen, Tätowierung/Limbus, Gesichtsbemalung).",
+     "reason": "Verified at HEAD: core de.json:220/223/224 vs web and bot lines as quoted; all keys used (chara-ui.ts:102-110, swatch-tool.ts:1173-1189, :1765). Unchanged 8ecb878f..HEAD (only privacyNote changed). Core value pins it; not in either catalog. Merges DE-2/DE-3 per one-row-per-class-per-file (ko UKO-3 precedent)."
+    },
+    {
+     "cand": "gap-sheet-names-de-fr-zh:TERM-DE-2",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:94,1231,1232,1239; packages/bot-logic/src/i18n/locales/de.json:592,593",
+     "locales": "de",
+     "unit": "apps/web-app + packages/bot-logic",
+     "claim": "Tattoo/limbal: web `Tattoo/Limbal-Farben`, `Limbal-Ring`, `Tattoo / Limbal` vs core `Tätowierung/Limbus`.",
+     "fix": "See TERM-DE-1.",
+     "reason": "merged into gap-sheet-names-de-fr-zh:TERM-DE-1"
+    },
+    {
+     "cand": "gap-sheet-names-de-fr-zh:TERM-DE-3",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/de.json:1234,1241,1246",
+     "locales": "de",
+     "unit": "apps/web-app",
+     "claim": "Face paint `Schminke` vs core `Gesichtsbemalung`.",
+     "fix": "See TERM-DE-1.",
+     "reason": "merged into gap-sheet-names-de-fr-zh:TERM-DE-1"
+    },
+    {
+     "cand": "gap-sheet-names-de-fr-zh:TERM-FR-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/fr.json:94,1232,1239; packages/bot-logic/src/i18n/locales/fr.json:72,690",
+     "locales": "fr",
+     "unit": "apps/web-app + packages/bot-logic",
+     "claim": "fr limbal half has three names: core `Tatouage/Limbe` and bot card `LIMBE` (:593) vs web `Couleurs de tatouage/limbal` (:94), `Anneau limbal` (:1232), `Tatouage / Limbal` (:1239) and bot `tatouage/anneau limbal` (:72/:690).",
+     "fix": "Align web tattooColors/slotLimbal/palTattoo and bot :72/:690 to core's `Limbe` (e.g. `Tatouage / Limbe`).",
+     "reason": "Lines read at HEAD match the claim; core fr.json:223 `Tatouage/Limbe`. Keys rendered (chara-ui.ts:106, swatch-tool.ts:1765). No PR touched them; not in either catalog."
+    },
+    {
+     "cand": "gap-sheet-names-de-fr-zh:I18N-FR-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/fr.json:92,93,95,96",
+     "locales": "fr",
+     "unit": "apps/web-app",
+     "claim": "`Couleurs de lèvres (Foncé)` / `(Clair)` and `Peinture faciale (Foncé)` / `(Clair)` put a masculine singular on feminine nouns; core fr.json:221-225 has `(foncées)`/`(claires)`/`(foncée)`/`(claire)`.",
+     "fix": "Use core's agreed forms (`Couleurs des lèvres (foncées)`, `Peinture faciale (foncée)`, etc.).",
+     "reason": "Text confirmed at HEAD; meaning is clear but the agreement is ungrammatical against a core value that already holds the correct form, so cosmetic P3. Origin MAIN; not in either catalog."
+    },
+    {
+     "cand": "gap-sheet-names-de-fr-zh:TERM-ZH-1",
+     "verdict": "CONFIRMED",
+     "prefix": "TERM",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/zh.json:94,1231,1232,1239; packages/bot-logic/src/i18n/locales/zh.json:72,593,690",
+     "locales": "zh",
+     "unit": "apps/web-app + packages/bot-logic",
+     "claim": "zh web uses both `纹身` (:94) and `刺青` (slotTattoo :1231, palTattoo :1239) for tattoo, and the limbal half is `虹膜` in core, `轮环` (web :94) and `角膜环` (web :1232/:1239, bot :593/:72/:690).",
+     "fix": "Align web and bot to core zh `纹身/虹膜` (one tattoo word, one limbal word).",
+     "reason": "Verified at HEAD against core zh.json:223 `纹身/虹膜`; split exists inside web zh.json itself. Unchanged by PRs; not in either catalog."
+    },
+    {
+     "cand": "gap-sheet-names-de-fr-zh:TERM-BOT-ABBR",
+     "verdict": "REJECTED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/i18n/locales/de.json:588-593",
+     "locales": "de, fr, zh",
+     "unit": "packages/bot-logic",
+     "claim": "Bot card slot heads `STRÄHN`, `BEMAL`, `TÄTOW.`, `PEINT.`, `TATOU.`, `CHEV.`, zh `彩绘` are truncations.",
+     "fix": "None.",
+     "reason": "en itself abbreviates these space-limited column heads with mixed dots (`TATT.`, `HL`, `PAINT`); de/fr/zh mirror that, every head reads unambiguously, and the stems match core. This is a style choice, not a wrong or split term."
+    },
+    {
+     "cand": "gap-sheet-names-de-fr-zh:TERM-ZH-2",
+     "verdict": "UNPINNED",
+     "prefix": "TERM",
+     "tier": "P3",
+     "origin": "MAIN",
+     "file_line": "apps/web-app/src/locales/zh.json:1273,1329,1330; packages/bot-logic/src/i18n/locales/zh.json:584,604",
+     "locales": "zh",
+     "unit": "apps/web-app + packages/bot-logic",
+     "claim": "Color slot is `栏位` on web (`1 个栏位为空`, `无法读取此栏位`) but `部位` on the bot card (`部位`, `{slot}在此文件中不是有效部位`).",
+     "fix": "Only if the dictionary adds a row for \"slot\": pick one word for both surfaces.",
+     "reason": "The split is real, but \"slot\" has no dictionary row or core value, so choosing a word would rest on fluency alone. The terms sit on separate products and each is used consistently within its own file."
+    }
+   ]
+  },
+  {
+   "slice": "gap-glamour-card-cjk-fallback",
+   "positive": [
+    "Embed keeps localized names (glamour.ts:325,451,457-469); test glamour.test.ts:225-238 asserts card=English, embed=ja",
+    "Fallback fails safe: no tofu; whole-name rule via filterToRenderable union (2,486 cps over 10 faces); own-face vs union give identical counts",
+    "Four real ja fixture item names are all drawable"
+   ],
+   "rejected": [
+    "Union-vs-per-locale face mismatch: deliberate, result-neutral",
+    "FONT P1 tofu: none drawn, fallback prevents it",
+    "Origin PR: git log 8ecb878f..HEAD on the four files is empty, so MAIN (bfd393e7)"
+   ],
+   "covered": "[\"packages/bot-logic glamour.ts+test; discord-worker glamour handler+test, font-coverage.ts, subset-cjk-fonts.py; 10 TTF cmaps; api-worker item-names.{ko,zh,meta}.json (28,986/28,992 names); CHANGELOGs, BUG-030 audit docs, glamour-reader spec/plans. Review file written.\"]",
+   "verdicts": [
+    {
+     "cand": "gap-glamour-card-cjk-fallback:I18N-GLAM-1",
+     "verdict": "CONFIRMED",
+     "prefix": "I18N",
+     "tier": "P2",
+     "origin": "MAIN",
+     "file_line": "packages/bot-logic/src/commands/glamour.ts:431",
+     "locales": "ko, zh, ja",
+     "unit": "apps/discord-worker",
+     "claim": "Card row draws `name: canDraw(p.name) ? p.name : p.nameEn`, and the CJK subsets hold no item names, so ko cards show English for 18,120/28,986 (62.5%) and zh for 28,223/28,992 (97.3%) of equippable items. ja cannot be measured.",
+     "fix": "Add item-name codepoints to discord-worker's subset-cjk-fonts.py inputs (about +363 Hangul and +1,171 hanzi, within the 3 MiB gzip cap). If that does not fit, record the English-card fallback as accepted, with these rates.",
+     "reason": "Line 431 matches, and the worker passes canDraw = filterToRenderable(...).dropped === 0 (handlers/commands/glamour.ts:153). Re-running the 2,486-codepoint union over item-names.{ko,zh}.json gives the same counts. Blame is bfd393e7 and nothing changed in 8ecb878f..HEAD. Not in either catalog."
+    }
+   ]
+  }
+ ],
+ "gaps": [
+  {
+   "id": "sheet-names-de-fr-zh",
+   "what": "Character-colour sheet and slot names (tattoo, limbal, highlights, face paint, lips) in de, fr, zh and en were never compared with core `sheets.*`. The ui-ja and ui-ko slices did this check and filed TERM rows. The ui-de, ui-fr and ui-zh slices list only races, clans, categories and facewear from core. A spot read shows they diverge: web de `tattooColors` 'Tattoo/Limbal-Farben', `slotLimbal` 'Limbal-Ring' and `slotFacePaint` 'Schminke', against core de 'Tätowierung/Limbus' and 'Gesichtsbemalung', while bot de `card.slotLimbal` says 'LIMBUS'. Web zh has `tattooColors` '纹身/轮环', `slotTattoo` '刺青' and `slotLimbal` '角膜环', against core zh '纹身/虹膜' and bot zh '纹身'. Web fr has 'Couleurs de tatouage/limbal' and 'Anneau limbal', against core 'Tatouage/Limbe'.",
+   "prompt": "You are one reviewer in the 2026-10-04 i18n audit. Work read-only. Repo root: C:\\dev\\XIVProjects\\xivdyetools\\.claude\\worktrees\\preview-2026-10-04. Read docs/audits/2026-10-04-i18n/evidence/reviewer-brief.md first and follow its rules and return format. Task: compare every user-visible label for the character-creation colour sheets and the Swatch slots in de, fr, zh and en against core's `sheets` section (packages/core/src/data/locales/{de,fr,zh,en}.json). docs/reference/ffxiv-terminology.md:346 pins `sheets` as the source of these names. Labels to check: (1) web-app apps/web-app/src/locales/<lc>.json `tools.character.*Colors`, `facePaintDark` and `facePaintLight`, `swatch.slot*` (slotTattoo, slotLimbal, slotHighlights, slotFacePaint, slotLips) and `swatch.pal*` (palTattoo, palHighlight, palFacepaint, palLip); (2) bot-logic packages/bot-logic/src/i18n/locales/<lc>.json `card.slot*` and `card.swatch*`; (3) any use of the same words in the four policy documents per locale (apps/web-app/PRIVACY.<lc>.md, apps/discord-worker/PRIVACY_POLICY.<lc>.md). For each concept, list what every surface says and report two problems: two names for one concept (TERM) and a hand translation that differs from core's value. Before filing, read the ja/ko precedent in docs/audits/2026-10-04-i18n/evidence/review-ui-ja.md and review-ui-ko.md (the limbal and highlights rows) so your rows use the same verdict and format, and do not re-file those ja/ko rows. Tag origin per the brief: MAIN when the key predates 8ecb878f (most do; check with `git log 8ecb878f..HEAD -- <file>`). A short-form slot label on the bot card (e.g. 'TATT.') is a known design choice only if the brief or the dictionary says so; otherwise report it. Write docs/audits/2026-10-04-i18n/evidence/review-gap-sheet-names-de-fr-zh.md and return the brief's table."
+  },
+  {
+   "id": "glamour-card-cjk-fallback",
+   "what": "No slice measured how often the /glamour Discord card swaps a localized item name for English. bot-logic glamour.ts:425-431 draws `nameEn` whenever `canDraw(name)` is false. apps/discord-worker/src/handlers/commands/glamour.ts:152-153 wires `canDraw` to `filterToRenderable`, which checks against the CJK subset fonts. apps/discord-worker/scripts/subset-cjk-fonts.py takes its glyphs from core locales, bot-logic and consolidated-ids only, never from item names. As a result, ja, ko and zh cards may show English item names on most rows. The og-svg-fonts and bots reviews checked glyph coverage only for table strings and never mention this fallback.",
+   "prompt": "You are one reviewer in the 2026-10-04 i18n audit. Work read-only and write no scratch files in the tree (use $TEMP). Repo root: C:\\dev\\XIVProjects\\xivdyetools\\.claude\\worktrees\\preview-2026-10-04. Read docs/audits/2026-10-04-i18n/evidence/reviewer-brief.md first and use its tiers and return format. Task: measure the /glamour card's English fallback for item names in ja, ko and zh. Read packages/bot-logic/src/commands/glamour.ts (the `canDraw` doc at ~:99-104, `nameEn` at ~:194/252/277 and the use at ~:425-431), apps/discord-worker/src/handlers/commands/glamour.ts:145-156, apps/discord-worker/src/services/font-coverage.ts (`filterToRenderable`) and apps/discord-worker/scripts/subset-cjk-fonts.py (its input sources). With fontTools, load the cmaps of apps/discord-worker/src/fonts/NotoSans{JP,SC,KR}-Subset.ttf and reproduce the drawability rule `filterToRenderable` applies (which face covers which locale, and whether the union counts). Then compute the share of names that would fall back to English: (a) all of apps/api-worker/src/chara/data/item-names.ko.json and item-names.zh.json, and, if possible, only the items that can be equipment (use whatever slot or category data those files or api-worker carry); (b) for ja, a sample of real ja item names, such as the ja `names` in apps/api-worker/tests or core test fixtures. Do not call XIVAPI. Also check whether the embed text keeps the localized name (the doc says it does). Look for an existing decision record or test that accepts this fallback (grep for BUG-030 in docs/ and the CHANGELOGs). Verdict: if most ja/ko/zh rows show English and no decision records that as accepted, file FONT P3 or I18N P2 with the measured percentages; if the rate is small or the fallback is documented as accepted, record it as POSITIVE with the numbers. Origin: check with `git log 8ecb878f..HEAD` on those files. Write docs/audits/2026-10-04-i18n/evidence/review-gap-glamour-card-cjk-fallback.md and return the brief's table."
+  }
+ ],
+ "missing": []
+}

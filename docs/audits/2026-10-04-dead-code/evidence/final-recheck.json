@@ -1,0 +1,165 @@
+{
+ "items": [
+  {
+   "item": "consistency #1 (findings/DEAD-008.md:16) DEAD-008 deletes DEAD-009/010 content while the plan sequences them separately",
+   "status": "RESOLVED",
+   "note": "DEAD-008's steps now cover only the factories (53-76, 87-108), the empty-state.ts import and its tests. DEAD-009 owns the state-icons.ts deletions and DEAD-010 owns the locale keys. DEAD-008 step 3, DEAD-009 'Sequencing', DEAD-010 'Sequencing', CLEANUP_PLAN.md:4/:150/:155/:174-175 and DEAD_CODE_REPORT.md:137 all agree: separate commits in the same Sprint 10 pull request. One leftover step overlap on the import lines is filed under newProblems."
+  },
+  {
+   "item": "consistency #2 (findings/DEAD-013.md:15) DEAD-013 deletes DEAD-016's test tail; conflicting ranges",
+   "status": "RESOLVED",
+   "note": "DEAD-013 now deletes only the two methods and the integration describe 158-182, and hands the msw handler and e2e route to DEAD-016. DEAD-016 owns handlers.ts:162-167, :296-309 and e2e :129-142, sequenced as the next commit in the same PR (DEAD-016:16/:20, plan:151/:178). Each range now appears in one finding only. DEAD-016:5's Location still names the integration describe (see newProblems)."
+  },
+  {
+   "item": "consistency #3 (DEAD_CODE_REPORT.md:12) headline totals double-count DEAD-008/009 and DEAD-013/016 overlaps",
+   "status": "RESOLVED",
+   "note": "catalog.json now has DEAD-008 src=50 (87 minus DEAD-009's 37) and DEAD-016 test=34 (the integration describe is no longer counted). The totals match across catalog, README:4 and report:16 at 1,554 source / 2,217 test. web-app's unit row (report:113) and Sprint 10 (plan:157) both read 1126/1300, and the per-sprint sums recompute exactly from the catalog."
+  },
+  {
+   "item": "consistency #4 (findings/DEAD-054.md:27) earlier-audit DEAD ids unqualified and colliding with this audit's ids",
+   "status": "OPEN",
+   "note": "Every cited location is now folder-qualified: DEAD-047/048/050-054/064, DEAD-013, DEAD-061/062, report register :151-168. DEAD-054's 'once DEAD-019 is resolved' precondition is gone. But the fix asked to qualify every cross-audit reference, and DEAD_CODE_REPORT.md:177-178 under 'The prior register (2026-09-15)' still read bare 'DEAD-019, DEAD-020 and DEAD-021 still hold' and 'DEAD-020 grew'. Those collide with this audit's DEAD-019 (SubscriptionManager), DEAD-020 (APIService) and DEAD-021 (color-service.test)."
+  },
+  {
+   "item": "consistency #5 (findings/DEAD-049.md:31) DEAD-049 re-deletes web-app language-service.ts:260-265 owned by DEAD-023",
+   "status": "RESOLVED",
+   "note": "DEAD-049 step 7 (line 18) now reads 'Confirm DEAD-023 has landed', and the deletion was removed."
+  },
+  {
+   "item": "consistency #6 (findings/DEAD-050.md:20) DEAD-050 duplicates DEAD-049's getToolName half and double-counts lines",
+   "status": "RESOLVED",
+   "note": "DEAD-050 is narrowed to the types half: ToolKey at localization/index.ts:46-54, LocaleData.tools at :145-147 and barrel :145, for 13 source / 0 test lines. The core-side deletions appear only in DEAD-049 step 1-2, and DEAD-049 is 257/100 (270 minus 13)."
+  },
+  {
+   "item": "consistency #7 (findings/DEAD-053.md:26) DEAD-053 deletes HarmonyOptions while DEAD-047 moves it",
+   "status": "RESOLVED",
+   "note": "DEAD-053:16 now only removes the import in bot-logic harmony.ts. DEAD-053:18 states HarmonyOptions is moved, not deleted, at core's major (DEAD-047 step 1), and can leave core only after bot-logic's major."
+  },
+  {
+   "item": "consistency #8 (findings/DEAD-037.md:16) filter --filter=...xivdyetools-oauth does not exist",
+   "status": "RESOLVED",
+   "note": "DEAD-036:19, DEAD-037:16 and plan:83 all use xivdyetools-oauth-worker, which matches apps/oauth/package.json. All 89 --filter uses across the audit docs name real packages."
+  },
+  {
+   "item": "consistency #9 (DEAD_CODE_REPORT.md:55) merged-finding titles disagree with catalog src/test and scope",
+   "status": "RESOLVED",
+   "note": "All 64 H1s, report catalog/KEEP rows and plan rows are byte-identical to catalog.json titles, and their conf/blast/semver/unit/origin/rec agree. The cited titles now match catalog and include the merged scope: DEAD-016 34, DEAD-023 17/43 + preloadLocales, DEAD-025 25/13, DEAD-030 24/12 + ban.*/meta/common.success, DEAD-049 257/100 + getLabel, DEAD-051 52/60 + preloadLocales, DEAD-064 54/106."
+  },
+  {
+   "item": "consistency #10 (findings/DEAD-030.md:25) 'apply with DEAD-001' impossible across Sprint 0/9",
+   "status": "RESOLVED",
+   "note": "DEAD-030:25 now reads 'DEAD-001 will already have landed in PR #225; apply this with the other DEAD-030 keys as one edit.'"
+  },
+  {
+   "item": "consistency #11 (CLEANUP_PLAN.md:215) core backlog 'about 1,250 source lines' wrong",
+   "status": "RESOLVED",
+   "note": "plan:222 and report:174 both say about 1,173, and the catalog sum of DEAD-047/048/049/051/052 is exactly 1,173."
+  },
+  {
+   "item": "consistency #12 (CLEANUP_PLAN.md:184) 'seven' re-confirmed items and the internal 'gap sweep' term",
+   "status": "RESOLVED",
+   "note": "plan:191 now reads 'The completeness re-sweep independently re-confirmed six published-package items, kept as evidence in DEAD-050, DEAD-053, DEAD-054, DEAD-056, DEAD-058 and DEAD-059.'"
+  },
+  {
+   "item": "consistency #13 (findings/DEAD-054.md:11) internal verifier/coordinator vocabulary in findings",
+   "status": "OPEN",
+   "note": "Fixed: recGuess, the gap-1 rows wording, 'first-pass grading', the 'Coordinator note' bullets and 'Two verifier rows merged'. Still present: DEAD-051.md:11 'does not depend on DEAD-023/02' (the cand-gap2-02 shorthand) and DEAD-044.md:15 'which the reviewer missed'. Further process wording not cited in the original problem is filed under newProblems."
+  },
+  {
+   "item": "consistency #14 (findings/DEAD-051.md:24) duplicated Location bullets, conflicting Steps blocks, truncated headings",
+   "status": "RESOLVED",
+   "note": "DEAD-050/053/054/056/058/059 each have one Location bullet. DEAD-051's two bullets point at different methods (:282, :609). DEAD-054 has one Steps block (types.ts 215-255, barrel :59 and :67-69). DEAD-051's second Steps block covers a different item, with a complete heading and a single range set (:711-730, :736-738). No truncated headings remain in DEAD-016 or DEAD-059."
+  },
+  {
+   "item": "consistency #15 (DEAD_CODE_REPORT.md:118) config-only cleanups classified inconsistently (source vs test)",
+   "status": "RESOLVED",
+   "note": "Config lines are now counted as source everywhere: catalog DEAD-037 3/0, DEAD-038 10/0, DEAD-040 10/0, DEAD-044 4/0, DEAD-045 1/0, DEAD-046 5/0. Report :118-120 and plan Sprint 3 (10 source + 0 test) and Sprint 4 (11 + 31) reflect this."
+  },
+  {
+   "item": "consistency #16 (evidence/preview-branch.md:65) 'fails once both PRs are on main' contradicts '#224 alone'",
+   "status": "RESOLVED",
+   "note": "preview-branch.md:67 now reads 'once #224 is on main, the next CI run that includes moderation-worker fails (for example #225's)', which is consistent with :61."
+  },
+  {
+   "item": "consistency #17 (findings/DEAD-009.md:15) garbled 'DEAD-008/DEAD-008'",
+   "status": "OPEN",
+   "note": "DEAD-009.md:15 step 2 still reads 'together with the DEAD-008/DEAD-008 preset removal'."
+  },
+  {
+   "item": "consistency #18 (findings/DEAD-048.md:19) step 4 prunes web-app color-service.test.ts that DEAD-021 deletes",
+   "status": "RESOLVED",
+   "note": "DEAD-048:23 adds: 'Step 4's pruning of web-app color-service.test.ts applies only if DEAD-021 has not landed; DEAD-021 deletes that whole file.'"
+  },
+  {
+   "item": "refute DEAD-004 partial (comment header is 425-427, not 424-426)",
+   "status": "RESOLVED",
+   "note": "The correction is at DEAD-004.md:19. But Fix :13 and step 2 :16 still say 424-426 (see newProblems)."
+  },
+  {
+   "item": "refute DEAD-041 partial (HS256 signature check moves to presets-api auth.test.ts:225/:289)",
+   "status": "RESOLVED",
+   "note": "Folded in at DEAD-041.md:25."
+  },
+  {
+   "item": "refute DEAD-003 partial (harmony-tool whole listener/method/import die; rewrite, not delete, the guard test)",
+   "status": "RESOLVED",
+   "note": "The correction is at DEAD-003.md:25. But step 5 (:19) still deletes only cases 1657-1680, and Fix :13 and step 7 :21 still say 'delete or rewrite' (see newProblems)."
+  },
+  {
+   "item": "refute DEAD-008 partial (also drop ICON_STATE_SEARCH/FUNNEL from the import or noUnusedLocals fails)",
+   "status": "RESOLVED",
+   "note": "Merged into DEAD-008.md:15 step 1, which drops SEARCH/FUNNEL and notes they stay exported for dye-grid.ts and preset-tool.ts."
+  },
+  {
+   "item": "refute DEAD-022 partial (port the 8-digit '#FF0000FF' case)",
+   "status": "RESOLVED",
+   "note": "Folded in at DEAD-022.md:17."
+  },
+  {
+   "item": "refute DEAD-021 partial (update apps/web-app/CLAUDE.md:283 example command)",
+   "status": "RESOLVED",
+   "note": "Folded in at DEAD-021.md:17."
+  },
+  {
+   "item": "refute DEAD-010 partial (five presets read the keys; error preset reads live errors.* keys; orphan gate would not catch leftovers)",
+   "status": "RESOLVED",
+   "note": "The five-preset correction is at DEAD-010.md:19, and the orphan-analyzer suffix caveat is at :17."
+  },
+  {
+   "item": "refute DEAD-020 partial (test path is src/services/__tests__/api-service-wrapper.test.ts)",
+   "status": "RESOLVED",
+   "note": "Folded in at DEAD-020.md:17."
+  },
+  {
+   "item": "refute DEAD-029 partial (three missed test breakages; comment starts at :57)",
+   "status": "RESOLVED",
+   "note": "The correction is at DEAD-029.md:21. But the H1/catalog title still say ban-reason.ts:58-92 and step 1 :15 says 'comment at lines 58-60' (see newProblems)."
+  }
+ ],
+ "newProblems": [
+  {
+   "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-009.md",
+   "line": 15,
+   "problem": "DEAD-008 and DEAD-009 delete the same lines. DEAD-008 step 1 (DEAD-008.md:15) already drops ICON_STATE_COINS, ICON_STATE_ALERT, ICON_STATE_WAIT_ANIMATED and ICON_DETAIL_EXTRACTOR from the empty-state.ts import at 13-21. It has to, because noUnusedLocals fails once the factories go. DEAD-009 step 2 then deletes 'empty-state.ts import lines 16-18 and 20' again. The same sentence has the 'DEAD-008/DEAD-008' garble. Separately, DEAD-016.md:5's Location still lists the integration describe('getFeaturedPresets'), which DEAD-013 now deletes and DEAD-016's steps do not.",
+   "fix": "Drop the import deletion from DEAD-009 step 2, since DEAD-008 owns it. Optionally move the 4 import lines' count from DEAD-009 to DEAD-008; the totals do not change. Fix the garble to 'the DEAD-008 preset removal'. Remove 'plus integration describe('getFeaturedPresets')' from DEAD-016.md:5."
+  },
+  {
+   "file": "docs/audits/2026-10-04-dead-code/DEAD_CODE_REPORT.md",
+   "line": 179,
+   "problem": "These references to the earlier audit name its date but not its folder, unlike the 2026-09-15-dead-code/DEAD-0NN form used everywhere else: DEAD_CODE_REPORT.md:179 'the 2026-09-15 register's DEAD-018', DEAD_CODE_REPORT.md:260 'the 2026-09-15 DEAD-018 entry', and CLEANUP_PLAN.md:233 'the 2026-09-15 DEAD-019 entry'. (The bare report:177-178 ids are recorded under consistency #4.)",
+   "fix": "Rewrite them as 2026-09-15-dead-code/DEAD-018 and 2026-09-15-dead-code/DEAD-019. Also qualify report:177-178 as 2026-09-15-dead-code/DEAD-019, DEAD-020 and DEAD-021."
+  },
+  {
+   "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-041.md",
+   "line": 10,
+   "problem": "Leftover coordinator and verifier process wording appears in finding records. DEAD-041:10: 'duplicate of integration/ suite ... (this finding). The cascade is that finding's fix steps ... fold them into that row.' This is an instruction, not a finding statement. Also: DEAD-016:6 'row cited :127'; DEAD-027:8 'REJECTED as part of this row'; DEAD-012:13 'a candidate for a later row'; DEAD-014:13 'File them as a separate row'; DEAD-010:8 'clears the reviewer's caveat'; DEAD-054:10 'the reviewer's REMOVE suggestion'. DEAD-051:11 says 'The getLabel half is a duplicate of getLabel / locale `labels` section / buildLabels', naming a candidate's symbol string instead of DEAD-049. DEAD-064:14, DEAD-017:8 and DEAD-018:8 use verdict words ('CONFIRMED for ...', 'EXCLUDED').",
+   "fix": "Rewrite each line in finding terms. Delete DEAD-041:10 or reduce it to 'Independently re-confirmed in the completeness re-sweep.' Use 'a separate follow-up finding' instead of 'row'. Drop the 'reviewer' asides. Change DEAD-051:11 to 'the getLabel half is DEAD-049'. Replace CONFIRMED/EXCLUDED with plain 'applies to' / 'is not included'."
+  },
+  {
+   "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-003.md",
+   "line": 19,
+   "problem": "Some refute corrections were appended as a 'Correction from the final adversarial check' paragraph, but the Fix and Steps still give the superseded values, so someone following the Steps edits the wrong lines. DEAD-003: step 5 (:19) deletes only 'the comment and legacy cases at 1657-1680', but the correction says the whole method 1653-1683, the listener 1638-1642 and the ContextAction import at line 68 go. Fix :13 and step 7 :21 still say 'deleted or rewritten', where the correction says rewrite. DEAD-004: Fix :13 and step 2 :16 say the header is at 424-426, and the correction says 425-427. DEAD-029: the H1 and catalog title say 'ban-reason.ts:58-92', and step 1 :15 says 'the comment at lines 58-60'; the correction says the comment starts at :57.",
+   "fix": "Merge each correction into the step it amends, as DEAD-008 step 1 does, and delete the appended paragraph. DEAD-003 step 5: delete harmony-tool.ts listener 1638-1642, method 1653-1683 and the ContextAction import at :68; step 7: 'rewrite, keeping the navigate-to-tool check'. DEAD-004: 425-427. DEAD-029: comment 57-60 and title/catalog ':57-92'."
+  }
+ ]
+}

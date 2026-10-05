@@ -1,0 +1,345 @@
+ea264d49 2026-10-04 chore(moderation-worker): drop five strings the confirm-button rewrite orphaned (DEAD-001)
+10a1cb77 2026-10-04 fix(presets-api): reword a comment that broke moderation-worker's stats contract test
+600f0568 2026-10-04 docs(operations): private vulnerability reporting enabled 2026-10-04
+065e2987 2026-10-04 docs(audits): maintainer settings changes verified 2026-10-04 (FINDING-023/-024/-030)
+4925659e 2026-10-04 docs(operations): record the 2026-10-04 GitHub settings changes (FINDING-023/-024/-030)
+87e124b0 2026-10-04 docs(audits): Sprint 12 open as PR #234 (stoat-worker 0.3.2); every planned sprint now has a PR
+b5f551e0 2026-10-04 docs(research): Discord alternatives, October 2026 refresh
+01465700 2026-10-04 fix(stoat-worker): 0.3.2 — 2026-10-03 security audit, Sprint 12: defuse Stoat's @online in echoes
+45394c37 2026-10-04 docs(audits): Sprint 11 open as draft PR #233; settings items handed to the maintainer
+3a158847 2026-10-04 ci: 2026-10-03 security audit, Sprint 11 — Workers Logs gate, undici override, secrets docs
+cd6296c0 2026-10-04 docs(audits): Sprint 10 open as PR #232 (image-worker 1.3.3); every worker now pins Workers Logs off
+6e8c7d81 2026-10-04 fix(image-worker): 1.3.3 — 2026-10-03 security audit, Sprint 10: Workers Logs pinned off
+b62be564 2026-10-04 docs(audits): FINDING-022 status — restore the literal \b in the regex (was a backspace)
+73003928 2026-10-04 docs(audits): Sprint 9 open as PR #231 (og-worker 2.11.1); note the unanchored assertion for Sprint 11
+7c97fc1d 2026-10-04 fix(og-worker): 2.11.1 — 2026-10-03 security audit, Sprint 9: Workers Logs pinned off
+5ff22e76 2026-10-04 docs(audits): Sprint 8 open as PR #230; its fact-checks changed #224, #225 and #227
+7517a35d 2026-10-04 docs(changelog): player notes for 5.10.4 — Privacy Guide covers community presets and deleting your data
+59cc1d6a 2026-10-04 fix(web-app): 5.14.0 — 2026-10-03 security audit, Sprint 8: Privacy Guide AMENDs
+4ebd09f2 2026-10-04 docs(changelog): player notes for 5.10.3 — new moderation posts carry no Discord user ID
+f3554155 2026-10-04 docs(discord-worker): bot policy translations, every moderation post, presets you can delete
+915b9127 2026-10-04 docs(web-app): Privacy Guide English — re-check corrections
+5f83a81f 2026-10-04 docs(discord-worker): bot policy English — re-check corrections (older posts, submission log, snapshot, preset retention)
+3a69828c 2026-10-04 fix(moderation-worker): a ban post never falls back to showing the account ID (FINDING-008)
+1f752c80 2026-10-04 docs(web-app): Privacy Guide English — community-preset records, Discord posts, deleting your data
+274407cc 2026-10-04 docs(discord-worker): bot policy English — every moderation post, auto-votes, pre-edit snapshot
+e34ea70a 2026-10-04 feat(presets-api): daily retention job, so the stated retention periods hold
+aaa4467b 2026-10-04 fix(moderation-worker): the ban post in the moderation channel carries no account ID (FINDING-008)
+41b74583 2026-10-04 docs(audits): Sprint 7 open as PR #229 (api-worker 0.16.1); FINDING-011 minimized
+1eaefd63 2026-10-04 fix(api-worker): 0.16.1 — 2026-10-03 security audit, Sprint 7
+9073d0df 2026-10-04 docs(operations): the old-domain OAuth redirect URIs are unregistered
+dec824af 2026-10-04 docs(audits): FINDING-006 maintainer steps done; fix committed, awaiting #224/#228
+38ac5250 2026-10-04 docs(audits): old hostnames removed 2026-10-04; route lines dropped in #227/#228
+b0f01e24 2026-10-04 fix(discord-worker): drop the retired bot.xivdyetools.projectgalatine.com route
+ee869d55 2026-10-04 fix(oauth): drop the retired auth.xivdyetools.projectgalatine.com route
+99393ce4 2026-10-04 docs(audits): Sprint 6 open as PR #228 (oauth 3.1.2); FINDING-006 awaits Phase 2
+bb33f66b 2026-10-04 docs(presets-api): observability IS an inheritable wrangler key
+d853a765 2026-10-04 fix(oauth): 3.1.2 — 2026-10-03 security audit, Sprint 6
+0e657dff 2026-10-04 docs(audits): Sprint 5 open as PR #227 (discord-worker 5.8.0, bot policy AMEND); FINDING-017 follow-up recorded
+10a3b137 2026-10-04 fix(moderation-worker): the refreshed review embed never mentions the author (FINDING-008)
+f39e2cbe 2026-10-04 docs(changelog): player notes for 5.10.3 — Discord bot Privacy Policy, moderation buttons
+d1fdb89a 2026-10-04 fix(discord-worker): 5.8.0 — 2026-10-03 security audit, Sprint 5
+5cc3c0fe 2026-10-04 docs(audits): Sprints 2-4 are open as PRs #223-#225, held for batch review
+018d1c86 2026-10-04 docs(audits): Sprints 3 and 4 committed (presets-api 2.4.0, moderation-worker 1.8.0); final review contract recorded
+c7fd9eba 2026-10-04 fix(moderation-worker): 1.8.0 — 2026-10-03 security audit, Sprint 4
+f1b54a0f 2026-10-04 fix(presets-api): 2.4.0 — 2026-10-03 security audit, Sprint 3
+c8ae0494 2026-10-04 docs(audits): Sprint 2 committed (web-app 5.13.4, six-language policy edits)
+ffd22726 2026-10-04 docs(changelog): player notes for 5.10.2 — privacy documents corrected, Glamour Reader card, /preferences reset
+3daa83fd 2026-10-04 fix(web-app): 5.13.4 — 2026-10-03 security audit, Sprint 2: privacy copy matches the code
+60f5d35c 2026-10-03 docs(audits): Sprint 1 merged (PR #222); INTERNAL_WEBHOOK_SECRET rotation logged
+1f83b9bd 2026-10-03 docs(audits): Sprint 1 pushed as PR #222; FINDING-027 approach approved
+a4939604 2026-10-03 docs(audits): FINDING-027's route-level enforcement awaits the maintainer's OK
+0c5ba916 2026-10-03 docs(audits): 2026-10-03 security — FINDING-001 fixed and live; Sprint 1 committed
+28769473 2026-10-03 fix(discord-worker): 5.7.2 — 2026-10-03 security audit, Sprint 1
+91d413e6 2026-10-03 docs(audits): 2026-10-03 security — §8 gate decisions recorded
+3c481f26 2026-10-03 docs(audits): FINDING-005 recommendation keeps rejection feedback with its preset
+97556142 2026-10-03 docs(audits): 2026-10-03 security — Sprint 0 status and AMEND recommendations
+d8d5e3e8 2026-10-03 docs(deprecations): Perspective sunset — deleting the key is blocked on a presets-api change
+61b7077b 2026-10-03 fix(web-app): 5.13.3 — beta keeps its security headers (2026-10-03 FINDING-001)
+e2a8058b 2026-10-03 docs(audits): 2026-10-03 security audit — 31 findings, six-language policy reconciliation
+7b919266 2026-09-28 fix(skills): collector resolves log placeholders; Codex inline verify needs a known effort
+1c114da7 2026-09-28 chore(skills): pin model and effort per routing role; Codex moves to GPT-6
+ad0e816f 2026-09-28 docs(changelog): player notes for 5.10.1 — the policy documents cover the Glamour Reader
+2e4cb0cb 2026-09-28 docs(policy): the Privacy and Terms documents catch up with the Glamour Reader, in six languages
+7d6a4ccc 2026-09-28 test(web-app): 5.13.1 — the .chara lock spec covers both selectors and a stale saved lock
+fb436fa6 2026-09-28 docs(api-worker): acquisition in the resolve examples; settlement outposts in the spec
+d9f043d5 2026-09-28 fix(api-worker): vendor outposts name the settlement, never the facility beside the vendor
+0c74244e 2026-09-28 fix(web-app): a loaded .chara file's tribe and gender hold through reset, import and other tabs
+918dd529 2026-09-28 docs(api-worker): 0.16.0 lists rules as a new resolve field
+47190a5f 2026-09-28 chore(web-app): the bundle budget's worst case opens all ten tools
+e7d8daa5 2026-09-28 chore(web-app): comments and test names count ten tools
+e15928b2 2026-09-28 docs(web-app): the living docs, README and terms say ten tools
+ce296d09 2026-09-28 fix(bot-logic): only a refused body is the file's problem; a 404 is ours
+2122a20b 2026-09-28 fix(web-app): no Options scrim over a tool that has no Options panel
+100facc4 2026-09-28 fix(core): defaultCharaTwin refuses an empty list, and its module states the real twin order
+c3f926af 2026-09-28 docs(bot-logic): getLocalizedRace is internal; RESOLVE_BUSY is an executeGlamour error
+8195daaa 2026-09-28 docs: the bot roster is 18 registrations, 17 distinct commands
+69eecceb 2026-09-28 fix(web-app): a Dyes-lens carrier names the twin its links open
+f5e3aac2 2026-09-28 fix(discord-worker): /glamour relays api-worker's reason when it refuses a file
+dfa45fd0 2026-09-28 fix(bot-logic): a file api-worker refuses is the file's problem, not an outage
+cfdf96d3 2026-09-28 fix(web-app): the export sheet is a modal, closes with the reader, and returns focus
+ca673469 2026-09-28 fix(bot-logic): a Miqo'te man in a piece for Miqo'te women reads LOCKED
+cf1696fc 2026-09-28 fix(core): a lone black float in a sparse file is kept
+cf7bb2c5 2026-09-28 test(web-app): run the item-links E2E on the Glamour Reader, where the rows now live
+1ce8c2b5 2026-09-28 fix(bot-logic): 4.4.2 — the /swatch lip line names the color its blend was made from
+4ef83e41 2026-09-28 fix(core): a shader table that failed to load is loaded again
+215cfa42 2026-09-28 chore(deps-dev): Bump the dev-deps group across 1 directory with 10 updates
+8ee1b689 2026-09-28 release: core 5.7.0, web-app 5.12.6, discord-worker 5.6.5, og-worker 2.10.4 — human.cmp palettes
+b65ac15d 2026-09-28 perf(core): load the shared shader table lazily too
+601dc4c0 2026-09-28 feat(core): read both halves of human.cmp — the creator's palettes to show, the shader's to judge
+404105f7 2026-09-28 chore(deps): Bump the production-deps group with 3 updates
+b00bd30e 2026-09-28 chore(deps): Bump cloudflare/wrangler-action from 4.0.0 to 4.1.3
+5568fdf0 2026-09-28 style(core): reflow an over-long resolver comment line
+018eb27a 2026-09-28 docs(core): name the causes — Brio's 7.5 eye rename, human.cmp's two palettes
+f364bcf6 2026-09-28 docs: the creator check answers the skin/hair/lip question; highlights stay open
+8b3f8c6f 2026-09-28 fix(core): stop judging .chara skin and hair floats; judge light lips by their dark entry
+8b6b0532 2026-09-28 release: core 5.6.0, web-app 5.12.5, discord-worker 5.6.4 — the .chara corpus fixes
+6969c861 2026-09-28 style(core): wrap the new .chara test lines and resolver helper at 100 columns
+f23ac4b0 2026-09-28 fix(core): divide the game's 0.643 out of the .chara limbal float
+defbd3cf 2026-09-28 fix(core): pair .chara eye keys by name; un-cross only a proven crossing
+150d3cd6 2026-09-28 fix(core): decode .chara floats as the colour squared; skip a block never read
+d524f23b 2026-09-28 fix(core): read a gear dye only off a worn slot
+c4e128bb 2026-09-28 i18n(bot-logic, ko): /glamour reads a file as a 코디
+a9e6b37a 2026-09-28 docs(svg): the glamour card's slot label is the game's word, not a short
+fbdc8c60 2026-09-28 feat(glamour): card slot labels in the game's own words
+73480209 2026-09-28 feat: resolve the bot's deferred minors (shared GPOSERS model, +N, escaping, busy, ko labels)
+8b2eaeeb 2026-09-27 fix(bot-logic): name the race on the /glamour card only when race is the block
+70e2482b 2026-09-27 chore(release): /glamour — svg 4.3.0, bot-logic 4.5.0, discord-worker 5.7.0
+bfd393e7 2026-09-27 feat: /glamour — the Glamour Reader in the Discord bot (design 2a)
+5f0763ec 2026-09-28 i18n(og-worker, ko): the Glamour Reader card says 코디 리더
+31c72cce 2026-09-27 chore(release): og-worker 2.11.0 — the Glamour Reader card
+975175da 2026-09-27 feat(og-worker): the Glamour Reader card, and a one-liner that wraps
+9de47a48 2026-09-28 i18n(ko): the Glamour Reader is 코디 리더
+2e0392be 2026-09-28 docs+i18n: equipment slots use the game's own wording (glossary: Equipment Slots)
+4df52961 2026-09-28 feat: resolve the reader's deferred minors (twin order, verdict, GPOSERS model, a11y, service bucket)
+bf5c3769 2026-09-27 docs(superpowers): the Glamour Reader spec and plan are executed
+088f4d38 2026-09-27 fix: the final review's reader findings (sheet edits, picks, verdict rows, rail, alternates)
+063e88b6 2026-09-27 feat(web-app): the site's share card shows ten tools
+b29b9562 2026-09-27 chore(release): the Glamour Reader — web-app 5.13.0, core 5.6.0, svg 4.2.0, api-worker 0.16.0
+0e83fe74 2026-09-27 feat(web-app): the export sheet — the Acquisition line, editable and kept on device
+78ba2cda 2026-09-27 feat(web-app): the twin picker (design 1a popover, 1b sheet)
+71f88d7f 2026-09-27 feat(web-app,core): the reader's verdict comes first; rows name the twin
+e6aba41d 2026-09-27 feat(web-app): DYES ON THIS GLAMOUR moves into the Glamour Reader
+adc815a4 2026-09-27 feat(web-app): the Glamour Reader joins the tool rail
+375a68d0 2026-09-27 feat(web-app): the default twin prefers a dyeable one (GPOSERS reminders, Mar 2026)
+559a219c 2026-09-27 feat(api-worker): acquisition follows the GPOSERS March 2026 reminders
+6e9159f2 2026-09-27 fix(api-worker): acquisition table — no sell-back shops, misread prices, token exchanges or relic misses
+7560d52e 2026-09-27 feat(web-app): Glamour Reader twins — default pick, row tone, picker facts
+5caddf70 2026-09-27 feat(svg): the Glamour Reader glyph (1a)
+1877c975 2026-09-27 feat(api-worker): resolve rules carry Grand Company, not jobs
+9f4b26ae 2026-09-27 feat(core): the in-game check drops jobs and flags Grand Company gear
+12af7a49 2026-09-27 docs(api-worker): 0.15.0 — acquisition on /v1/chara/resolve
+b36fd5a5 2026-09-27 feat(api-worker): acquisition line on /v1/chara/resolve items and their twins
+cda81279 2026-09-27 feat(api-worker): build the GPOSERS acquisition table
+8ebb30bc 2026-09-27 feat(api-worker): acquisition inputs — zones, outposts, relic sagas, tables
+6c2821a0 2026-09-27 feat(api-worker): acquisition rules — only-source, Savage, vendor choice
+78678c78 2026-09-27 feat(api-worker): GPOSERS acquisition formatter
+4d727522 2026-09-27 docs(superpowers): Glamour Reader spec + plan; acquisition spec amended by the designs
+4798cc66 2026-09-27 docs(superpowers): glamour Acquisition line — implementation plan
+611e3183 2026-09-27 docs(research): glamour Acquisition line — data sources and design
+f7b24d2d 2026-09-27 docs(web-app): swatch-tool is 69.03 KB (72.7%) after the drop-race fix
+6d34233f 2026-09-27 feat(chara): prototype an in-game check for DYES ON THIS GLAMOUR
+6628080e 2026-09-27 fix(web-app): only the newest .chara drop may load
+a365aefe 2026-09-27 fix(web-app): move the glamour block across a re-render instead of rebuilding it
+714de886 2026-09-27 docs(changelog): player notes for 5.9.3
+6bfdae81 2026-09-27 chore(web-app): 5.12.5 — a loaded .chara stays loaded; tribe/gender lock follows it
+6481d1c8 2026-09-27 fix(web-app): keep a loaded .chara across tools and unlock tribe/gender with it
+d25f37e4 2026-09-25 chore(deps-dev): Bump the dev-deps group across 1 directory with 16 updates
+48c7dc8b 2026-09-25 fix(worker-kit): keep the optional hono peer at ^4.13.7 in 1.4.1
+1d9b4465 2026-09-24 docs: Turborepo 2.11 in CLAUDE.md, the README and the monorepo setup guide
+c50ea318 2026-09-24 chore(worker-kit): release 1.4.1 -- optional workers-types peer accepts 5.x
+afce044d 2026-09-21 chore(deps-dev): Bump dotenv from 17.4.2 to 18.0.0
+43ee47e7 2026-09-21 chore(deps): Bump the production-deps group with 2 updates
+32e6ed37 2026-09-21 docs: announce the Community Presets rename in the product notes
+d4214f3b 2026-09-21 style: drop the Prettier churn from four source files
+7ce6830c 2026-09-21 feat(web-app): title the presets tool "Community Presets" (DOC-015)
+8d5dc9e9 2026-09-21 style(skills): undo the Prettier reflow of american-spelling.mjs
+fdd8d55f 2026-09-21 fix(skills): american-spelling.mjs reported a folder as clean
+d615680b 2026-09-21 docs: documentation audit 2026-09-21 — 22 findings, nothing urgent
+38bb94d2 2026-09-21 feat(i18n): American spelling across every English UI surface
+5dba4c5b 2026-09-21 docs: convert skill prose and every changelog to American spellings
+4b69240e 2026-09-21 skills: audit English text for American spellings, glossary wins
+d83023db 2026-09-20 docs(changelog): product notes 5.9.1 - Lalafell files, and two colours read off the wrong sheet
+8c057c34 2026-09-20 fix(core)!: read the .chara race off the tribe, not the Race key
+cebbd53f 2026-09-20 docs(changelog): product notes 5.9.1 - Lalafell character files open again
+d2673969 2026-09-20 fix(core): accept Anamnesis's "Lalafel" race spelling in .chara files
+91d8cee1 2026-09-20 chore(release): discord-worker 5.6.1, api-worker 0.14.5, web-app 5.12.1 for the #192 review corrections
+a53ad793 2026-09-20 docs(skills): cite the archived post-merge checklist and OPEN_ITEMS.md instead of a deleted path
+c92126df 2026-09-20 fix(i18n): review corrections for #192 - Korean legal wording, clan-name tooltips, doc accuracy
+f3f7951a 2026-09-20 docs(skills): correct model-routing word count in audit-shared README
+614bc3df 2026-09-20 chore(skills): track project skills in .agents/skills, vendor-neutral
+d970cb25 2026-09-20 docs(audit): evidence copy of the policy parity script - it now fails on CJK soft line breaks
+2fce8fb6 2026-09-20 docs(audit): open-item solutions APPLIED - commit table, what differed, what is still open
+862a6e27 2026-09-20 docs(changelog): product notes 5.9.0 - German du, Mixer paint names, nearest-dye label, Terms wording, What's New
+131679b4 2026-09-20 docs(changelog): the open-items pass in every unit's notes; CLAUDE.md describes the new locale gates
+b0e963a2 2026-09-20 docs(policy): Terms of Service - two sentences that admitted two readings, in six languages
+39672238 2026-09-20 fix(web-app): reviewer corrections to this pass's strings; validate-i18n.js gated under vitest
+8a164a9a 2026-09-20 test(og-worker): the harmony deck fits with the longest localized wheel names; gate runner skips coverage
+7a47b52b 2026-09-20 fix(web-app): bound the What's New module in bytes, link older releases; budget back to 40 KB
+81bf7980 2026-09-20 test(bot-logic): locale quality gate - untranslated values, split labels, placeholders
+b8b5c71f 2026-09-20 test(web-app): locale parity is a CI gate at last; same English must mean same translation
+661d0d7e 2026-09-20 fix(web-app): German addresses the user as "du" everywhere; "Farbe" no longer stands in for a dye
+3b6fd288 2026-09-20 fix(web-app): mixing-model labels - zh/de Paint, the Spectral prefix, one name per model
+8081bab3 2026-09-20 docs(audit): best solutions for the i18n audit's open items; last three official terms verified
+7d15c8e3 2026-09-20 docs(changelog): product notes 5.9.0 - tool names, glamour wording, link-preview cards, the Privacy Policy's panel name
+bb7d2f3b 2026-09-20 docs(audits): 2026-09-19 i18n audit - follow-up record: three maintainer decisions, glamour research, captures verified
+500ed8ec 2026-09-20 docs: official tool names, the Advanced Settings panel, and a Glamour Terms dictionary section
+bc45d025 2026-09-20 chore(discord-worker): SC subset gains 幻 for the zh help footer; changelogs note the glamour wording
+7e79b0a6 2026-09-20 fix(og-worker): card names quote the official tool titles in every language; Market Board and glamour terms (2.10.3)
+10817e0d 2026-09-20 fix(bot-logic): the help footer's word for "glamour" follows the terminology dictionary (4.4.0, unreleased)
+29b94984 2026-09-20 fix(web-app): official tool names, "glamour" from the terminology dictionary, the Privacy Policy names the right panel
+b14b1cda 2026-09-20 docs(audits): 2026-09-19 i18n audit - all 15 findings fixed; remediation record, what it found, open items
+ce455850 2026-09-20 docs(changelog): product notes 5.9.0 - more of XIV Dye Tools in your language
+0008820a 2026-09-20 feat(discord-worker): the bot's Privacy Policy and Terms of Service in six languages
+863cd0e7 2026-09-20 feat(web-app): Privacy Policy and Terms of Service in six languages, linked by app locale (5.12.0)
+1fb3341f 2026-09-20 chore(discord-worker): re-cut the CJK subsets for the final bot strings
+354fe746 2026-09-20 fix(discord-worker): localize every subcommand and option in the command picker; /manual topics, /about, /extractor (5.6.0)
+b76623dd 2026-09-20 fix(bot-logic): per-locale plural rules, accent-folding dye input, picker description keys, official ko/zh terms (4.4.0)
+329fcc58 2026-09-20 fix(web-app): one official term and one label per concept in every locale; sorts follow the app locale
+7ae472e7 2026-09-20 fix(api-worker): locale context type comes from core; document the widened q= search (0.14.4)
+f7c6e1fc 2026-09-20 fix(core): dye search folds accents, eszett and width; locale generator fails on an empty cell (5.4.0)
+c568104f 2026-09-19 docs(audits): 2026-09-19 i18n audit - 15 findings, remediation plan, official-term research
+9e73429f 2026-09-19 docs(audits): 2026-09-18 documentation audit - #189 and #191 are merged; record what happened
+ffb41949 2026-09-19 docs(audits): 2026-09-18 documentation audit - record the pre-merge review, fix the candidate arithmetic
+c6de8507 2026-09-19 docs(api-worker): changelog - the rate-limit header reads 64 on "an" allowed request, not "every" one
+e94f8fd4 2026-09-19 fix(discord-worker,bot-logic): /manual pre-merge review - top-five note, HORS G., German imperatives, stronger guard
+8dbf57f2 2026-09-19 docs: pre-merge review fixes - secret-put targets production, @internal vs stripInternal, Facewear row, band words
+c87e492a 2026-09-18 docs(audits): 2026-09-18 documentation audit - remediation status, DOC-038, nothing left open
+2a87d3e0 2026-09-18 docs(api-worker): public docs state the page / q caps and a rate-limit header value that can occur (0.14.3)
+ba97c9d4 2026-09-18 docs(versions): discord-worker rows drop the stale "(prepared)" markers
+da661eb0 2026-09-18 docs(versions): leave the discord-worker and api-worker history tables to their own PRs
+45051233 2026-09-18 fix(bot-logic): /manual uses core's harmony, wheel and category names in every locale
+b9428956 2026-09-18 docs(versions): what is really unpublished, 22 stale "(prepared)" markers, four status lines
+4b912720 2026-09-18 docs(api-worker,discord-worker): synthetic rate-limit header, parameter caps, webhook byte counting
+589846b0 2026-09-18 docs(web-app): Extractor share link, Swatch item links and list export, real match bands
+146cee72 2026-09-18 docs(developer-guides): presets-api secrets that production requires, and a full env-var sweep
+b7754ee9 2026-09-18 docs(presets-api): document content_revision, the real 409s and the preview-image body
+cae679c5 2026-09-18 docs(audits): close the 2026-09-18 documentation audit - late cluster, /manual PR link
+c6b66400 2026-09-18 docs(changelog): product notes 5.8.1 - Discord bot /manual catches up with 5.0
+29e055e9 2026-09-18 fix(discord-worker): bring /manual up to 5.0 in all six languages
+573ef385 2026-09-18 docs(audits): documentation audit 2026-09-18 — docs/ and the bot's /manual
+738cbb03 2026-09-18 fix(review): announcement text matches the shipped behaviour; exact share-param strip
+caa7acc7 2026-09-18 docs(audit): record the PR #188 review wave in the remediation plan
+8395eb59 2026-09-18 fix(review): web-app same-tool popstate still notifies; config defaults, share URL, ratchet
+ed885447 2026-09-18 fix(review): presets-api last-slot tie-break, fail-open docs, XIVAuth ban label
+77520aac 2026-09-18 fix(review): worker-kit README/overloads, bot-logic 4.3.0, test-utils undefined stainID
+41be98f1 2026-09-17 fix: final-review wave for Sprints 10–16
+4b4879d8 2026-09-17 docs: Sprints 13–16 bookkeeping — version rows (worker-kit 1.4.0, oauth 3.1.1, image-worker 1.3.2, presets-api 2.3.6), finding statuses, plan annotations; all 53 findings closed
+b6c96766 2026-09-17 chore(worker-kit): prune the @public tags the Sprint 14–16 consumers now cover
+a26fb857 2026-09-17 chore(presets-api): release 2.3.6 -- worker-kit bodyGuards + shared image sniffer
+5aba87c8 2026-09-17 chore(oauth): release 3.1.1 -- BUG-017 + REFACTOR-009 (Sprint 14)
+ba38251e 2026-09-17 refactor(presets-api): route sniffImageType through worker-kit's shared image sniffer (REFACTOR-008)
+3fcb5dd4 2026-09-17 refactor(oauth): adopt worker-kit's bodyGuards factory (REFACTOR-009)
+f3805db0 2026-09-17 chore(image-worker): release 1.3.2 -- worker-kit image-sniff adoption
+1237d7d5 2026-09-17 refactor(image-worker): adopt worker-kit's shared image sniffer (REFACTOR-008)
+e75328c5 2026-09-17 refactor(presets-api): replace body-validation middleware with worker-kit bodyGuards (REFACTOR-009)
+36a60081 2026-09-17 fix(oauth): carry security headers on the misconfiguration 500 (BUG-017)
+b639e9d2 2026-09-17 chore(worker-kit): release 1.4.0 -- ./body-guards and ./image-sniff subpaths
+7d3f137f 2026-09-17 feat(worker-kit): add the bodyGuards middleware factory (REFACTOR-009)
+951e7177 2026-09-17 feat(worker-kit): add the shared magic-byte image sniffer (REFACTOR-008)
+40d5fb54 2026-09-17 docs: Sprints 10–12 bookkeeping — version rows (og-worker 2.10.2, api-worker 0.14.2, stoat-worker 0.3.1), finding statuses, plan annotations, og-worker cache-key clause
+4b564e75 2026-09-17 chore(api-worker): bump to 0.14.2, changelog for Sprint 11
+1cf37231 2026-09-17 refactor(api-worker): route match.ts's 404 through ApiError, add locale to error meta (REFACTOR-004)
+f39cf88b 2026-09-17 test(api-worker): replace toBeDefined() boolean/enum checks with literal snapshots (BUG-036)
+55f212a3 2026-09-17 test(api-worker): add an HTTP-level test for the legacy-Facewear 404 (BUG-037)
+61dbb512 2026-09-17 chore(og-worker): release 2.10.2
+914c401f 2026-09-17 fix(og-worker): bound the SPA pass-through fetch() calls to a 5s timeout
+1d03a1bb 2026-09-17 Release 0.3.1: ping latency fix + test improvements
+a50ba98d 2026-09-17 Fix BUG-042: dye-info test should assert embed content
+19e36205 2026-09-17 Fix BUG-031: !xd ping should report real round-trip latency
+9963891f 2026-09-17 fix(og-worker): stop keying wheel into the cache for the harmony default card
+3e6d9a46 2026-09-17 fix(api-worker): catch the SWR-expiry cache.delete rejection (BUG-019)
+caa071af 2026-09-17 docs(audit): Sprint 8 ships core as 5.3.0 (final-review semver ruling)
+9b95d257 2026-09-17 chore(core,logger): core ships as 5.3.0; final-review fixes for Sprints 8–9
+622a1191 2026-09-17 test(core): type the .lab freeze assertions through DyeInternal
+62efb704 2026-09-17 docs(audit): mark Sprints 8 and 9 complete (core 5.2.1, logger 2.2.1)
+4c232c36 2026-09-17 test(core): centre the WCAG threshold fixture and assert .lab is frozen (Sprint 8 review)
+e8920849 2026-09-17 docs: version rows for core 5.2.1 and logger 2.2.1; correct the turbo filter direction in CLAUDE.md
+4f8a281b 2026-09-17 release: @xivdyetools/logger 2.2.1
+0d3d90b1 2026-09-17 fix: use safeStringify in browser error tracker (BUG-020) + add circular/BigInt tests
+64fb4939 2026-09-17 chore(core): release 5.2.1 (Sprint 8 of the 2026-09-16 deep-dive remediation)
+197226e3 2026-09-17 test(core): fix vacuous WCAG AA threshold assertion (BUG-032)
+86d9e0db 2026-09-17 fix(core): freeze dye records after initialize(); document locales as shared (BUG-010)
+6b9c4ec0 2026-09-17 fix(core): validate hex before cache lookup in hexToHsv (BUG-009)
+5e88e2f8 2026-09-17 fix(core): correct CharacterMatchOptions.matchingMethod JSDoc default (BUG-011)
+d6662950 2026-09-17 docs(audit): mark Sprint 7 complete (BUG-002 restored; web-app 5.11.0)
+24ba3888 2026-09-17 test(web-app): pin the extractor share-link layout and re-resolve arm (fix wave 7)
+686f3c2a 2026-09-17 docs(audit): Sprint 1/2 annotations now name the renamed release versions (5.11.0 / 5.8.0)
+bcbc20cc 2026-09-17 docs: rename the unreleased 5.7.1 What's New entry to 5.8.0 and add the Extractor share bullet
+390ff09e 2026-09-17 chore(web-app): release 5.11.0 (deep-dive Sprints 1–2 + 7)
+cb3f44f0 2026-09-17 docs(user-guides): document the Palette Extractor's Share link (BUG-002)
+3eaca5a7 2026-09-17 feat(web-app): restore the Palette Extractor's share link (BUG-002)
+161d0326 2026-09-17 feat(web-app): give ShareService an extractor arm (BUG-002)
+63eb1262 2026-09-17 docs(audit): mark Sprints 5 and 6 complete (BUG-001 path (a) + 5 findings; presets-api 2.3.5, moderation-worker 1.7.3)
+231fc05d 2026-09-17 fix(presets-api): release the daily preview-upload reservation on a body-read failure (B2)
+511261b2 2026-09-17 docs(presets-api): document the account-linking ban residual (B1)
+3c1b22bc 2026-09-17 fix(moderation-worker): minor cleanups from the whole-branch review (A3+A4)
+64391c47 2026-09-17 fix(moderation-worker): use fetch(url, init) for the PRESETS_API service binding (A2)
+17c6516f 2026-09-17 fix(moderation-worker): reject uppercase XIVAuth UUIDs as ban targets (A1)
+008b706f 2026-09-17 docs: version rows for presets-api 2.3.5 and moderation-worker 1.7.3
+c67e7dfd 2026-09-17 docs(presets-api): describe reserve-then-act daily caps where the removed checkDailyEventLimit was named
+030d6fd6 2026-09-17 chore(moderation-worker): release 1.7.3
+6d89f89e 2026-09-17 test(moderation-worker): make the rate-limit KV-error test falsifiable (BUG-035)
+596a3e4b 2026-09-17 fix(presets-api): review fixes round 1 for BUG-015/BUG-043 (fail-open, coverage, test precision)
+c6c8c5f7 2026-09-17 fix(moderation-worker): add a 10 s AbortSignal to presets-api requests (BUG-016)
+3c5e5648 2026-09-17 fix(moderation-worker): accept a Discord snowflake OR an XIVAuth UUID as a ban target (BUG-001 path (a))
+6523f62c 2026-09-17 chore(presets-api): release 2.3.5
+e5ad1fe1 2026-09-17 fix(presets-api): close the text_edit/flagged_edit/preview_upload daily-cap race with reserve-then-act (BUG-015)
+cfec7428 2026-09-17 fix(presets-api): reject refresh-author with 400 instead of binding an unset display name (BUG-014)
+7d922b89 2026-09-17 test(presets-api): make ban-check "banned" cases identity-aware (BUG-043)
+a6311d71 2026-09-17 docs(presets-api): document what banned_users.discord_id actually holds (BUG-001 path (a))
+5f71f50e 2026-09-16 docs(audit): mark Sprint 4 complete (7 findings; discord-worker 5.5.7)
+d018e704 2026-09-16 docs: add the Discord bot section to the 5.7.1 What's New entry
+a17ecffe 2026-09-16 chore(discord-worker): release 5.5.7 (deep-dive Sprint 4)
+551c2e33 2026-09-16 fix(discord-worker): check res.ok in notifySubmissionChannel (B6)
+fd5689a7 2026-09-16 test(discord-worker): fix vacuous defer assertions + comment the two byte readers (B4+B5)
+f0cadee2 2026-09-16 fix(discord-worker): restore log context on the webhook 413 + pin streaming preconditions (B3)
+469a2578 2026-09-16 fix(discord-worker): /manual defers only with a world, threads logger + outcome (B2)
+feae1b39 2026-09-16 test(discord-worker): un-exclude mixer-v4/gradient adapters from coverage (B1)
+3140db24 2026-09-16 docs(bot-logic,svg): fix letter-spacing arithmetic + stale swatch-card doc comment (A2+A3)
+1182d088 2026-09-16 docs(bot-logic): note L/R marker's other consumers + pin embed line (A1)
+18e86d3c 2026-09-16 test(discord-worker): add /gradient adapter suite (BUG-033)
+3180cba4 2026-09-16 test(discord-worker): add /mixer adapter suite (BUG-034)
+ae7e15f8 2026-09-16 fix(discord-worker): resolve lint findings on the BUG-013 body cap
+9d3d6774 2026-09-16 refactor(discord-worker): enforce /preset length bounds in schema, cap autocomplete choice names (REFACTOR-003)
+048081cc 2026-09-16 refactor(discord-worker): thread the request logger into /preset notification helpers (REFACTOR-002)
+3f72fc9e 2026-09-16 fix(discord-worker): bound the actual /webhooks/preset-submission body, not a client-declared length (BUG-013)
+7b2eaa66 2026-09-16 fix(discord-worker): report the actual worker environment in /stats health (BUG-012)
+21ae7d5b 2026-09-16 fix(discord-worker): defer /manual spectrum_prices to stay inside the 3s ack (BUG-008)
+ba3c8f77 2026-09-16 docs(audit): mark Sprint 3 complete (BUG-006, REFACTOR-005; bot-logic 4.2.1)
+085e498b 2026-09-16 fix(bot-logic): move the BUG-006 eye marker to the label line, not the address line
+c3bd53be 2026-09-16 chore(bot-logic): release 4.2.1
+0e706f0f 2026-09-16 refactor(bot-logic): derive dye-info MKT itemID via core's getMarketItemID (REFACTOR-005)
+98a62c5d 2026-09-16 fix(bot-logic): keep the L/R eye marker on off-grid swatch rows (BUG-006)
+13b66d8f 2026-09-16 docs(test-utils): fix stale factories JSDoc claiming random default IDs
+d45280ee 2026-09-16 fix(web-app): guard handleDeepLink's getPreset() await against a stale popstate (BUG-005 class)
+4af11218 2026-09-16 test(web-app): make the BUG-023 status-clear-timer test falsifiable
+33671cad 2026-09-16 docs: final-review prose fixes — drop the scroll claim, correct the Back-button clause, add the vote fix, 19 findings
+eef347fc 2026-09-16 docs(changelog): 5.7.1 product notes — Presets Back, preset prices, smaller web fixes
+aad319e3 2026-09-16 chore(web-app): 5.10.1 — release notes for the deep-dive Sprint 1–2 fixes
+d6693ebb 2026-09-16 docs(audits): mark Sprint 2 complete (10 findings fixed, BUG-040 partial)
+68297fe5 2026-09-16 test(web-app): make the displayOptions-merge tests falsifiable (BUG-039)
+74f19f75 2026-09-16 fix(web-app): diff preset dye edits against the resolved baseline, not the raw stored ids (BUG-030)
+1ad6d3dd 2026-09-16 fix(web-app): resolve preset popstate from the URL, guard the stale API-fallback race (BUG-005 review round 1)
+12d442b3 2026-09-16 fix(web-app): unbind stale listeners before handleRetry()/renderError() re-render (BUG-028)
+b6801990 2026-09-16 fix(web-app): route market-board's status-clear timer through safeTimeout (BUG-023)
+c3cccbd1 2026-09-16 fix(web-app): ignore non-primary mouse buttons in the extractor zoom canvas (BUG-022)
+4ff63654 2026-09-16 refactor(web-app): source config-sidebar's harmonyConfig initializer from getDefaultConfig (REFACTOR-007)
+cee186b5 2026-09-16 chore(test-utils): 2.0.1 — changelog + version tables for the Sprint 0 fixture fix
+ae399bbc 2026-09-16 refactor(web-app): rename stale [MixerTool] log tags to [GradientTool] (REFACTOR-006)
+8050c90f 2026-09-16 fix(web-app): clear the preset search debounce, route RouterService through the barrel (BUG-027, BUG-040)
+554fd745 2026-09-16 fix(web-app): keep v4-preset-tool mounted across Back from a preset (BUG-005)
+7116f1cf 2026-09-16 docs(audits): mark Sprint 1 complete (9 findings fixed, web-app)
+e76ccc71 2026-09-16 test(web-app): strengthen bare-existence assertions in task-1c suites (review round 1)
+250acb73 2026-09-16 test(web-app): cover collection-manager-modal and add-to-collection-menu (BUG-041)
+156f25f6 2026-09-16 style(web-app): reformat BUG-024 fix to satisfy prettier
+8869484c 2026-09-16 style(web-app): reformat BUG-025 test line to satisfy prettier
+dcadae88 2026-09-16 fix(web-app): measure the rendered menu width for off-screen clamping (BUG-029)
+a86e9dc0 2026-09-16 fix(web-app): stop importData aborting mid-loop on a bad record (BUG-024)
+17eeecb4 2026-09-16 fix(web-app): memoise in-flight logout to fix revoke/notify storm (BUG-025)
+78caa32e 2026-09-16 fix(web-app): render fetched market prices on preset detail, guard stale vote checks (BUG-004, BUG-026)
+a087e276 2026-09-16 fix(web-app): remove the literal navigate-to-tool substring from the REFACTOR-001 guard test
+500cbb9e 2026-09-16 fix(web-app): catch the palette-submit chunk load, delete dead context actions (BUG-003, REFACTOR-001, BUG-038)
+156134a5 2026-09-16 docs(audits): mark Sprint 0 complete (BUG-007, BUG-021 fixed in 98637eff)
+98637eff 2026-09-16 fix(test-utils): deterministic createMockDye stainIDs (BUG-007, BUG-021)
+a353f619 2026-09-16 docs(audits): deep-dive analysis 2026-09-16 — 53 findings, remediation plan

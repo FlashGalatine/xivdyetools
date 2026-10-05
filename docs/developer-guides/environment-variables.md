@@ -178,7 +178,7 @@ JWT_SECRET=development-jwt-secret-min-32-chars
 
 ```toml
 [env.production]
-vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app" }
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app" }
 ```
 
 Bindings: `DB` (D1), `DISCORD_WORKER` (service → `xivdyetools-discord-worker`, notifications), `IMAGE_WORKER` (service → `xivdyetools-image-worker`, `POST /thumbnail`), `THUMBNAILS` (R2 bucket `xivdyetools-presets-preview-thumbnails`, served at `shots.xivdyetools.app`), `TOKEN_BLACKLIST` (KV — the oauth worker's jti blacklist, shared so revoked tokens are rejected here too; FINDING-002). `JWT_ISSUER` pins the accepted `iss` claim (FINDING-015). `CACHE_PURGE_ZONE_ID` (production var, `ec1fb94c…` — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`) is the purge target for FINDING-018; it is config, not a secret, and pairs with the `CACHE_PURGE_API_TOKEN` secret below. Top-level block = `xivdyetools-presets-api-dev`; production under `[env.production]`.
@@ -239,7 +239,7 @@ MODERATOR_IDS=123456789,987654321
 ENVIRONMENT = "production"                              # "development" in the top-level block
 API_VERSION = "v1"
 UNIVERSALIS_API_BASE = "https://universalis.app/api/v2" # upstream for the proxy routes
-RATE_LIMIT_REQUESTS = "30"                              # per-IP memory limit, /universalis aggregated ("60" in the dev block)
+RATE_LIMIT_REQUESTS = "30"                              # per-IP cache-miss limit, /universalis aggregated ("60" in the dev block); = UNIVERSALIS_RATE_LIMITER limit
 RATE_LIMIT_WINDOW_SECONDS = "60"
 XIVAPI_BASE = "https://v2.xivapi.com"
 XIVAPI_VERSION = "latest"
@@ -374,6 +374,8 @@ Per-client abuse limiting uses the native **Workers Rate Limiting binding** (`[[
 | api-worker | `API_RATE_LIMITER` | 65 / 60 s (60 + 5 burst per IP on `/v1/*`, except `/v1/telemetry`) | 1001 / 1002 | KV `RATE_LIMIT` |
 | api-worker | `TELEMETRY_RATE_LIMITER` | 240 / 60 s per IP on `POST /v1/telemetry` — its own bucket, so web-app beacons behind a shared NAT address never 429 `/v1/chara/*` | 1003 / 1004 | KV `RATE_LIMIT` (`telemetry:ip:` prefix) |
 | api-worker | `SERVICE_RATE_LIMITER` | 1300 / 60 s on ONE key: our own workers on `/v1/*` (discord-worker's `/glamour` resolve) carry no client IP, so they share it — 20x a public IP's, BUG-048's rule | 1005 / 1006 | KV `RATE_LIMIT` (`api:svc:` prefix) |
+| api-worker | `UNIVERSALIS_RATE_LIMITER` | 30 / 60 s per IP (dev 60) = `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS`, charged on cache misses only, on `/universalis/aggregated` and `/api/v2/aggregated` (FINDING-011) | 1007 / 1008 | KV `RATE_LIMIT` (`universalis:ip:` prefix) |
+| api-worker | `UNIVERSALIS_SERVICE_RATE_LIMITER` | 600 / 60 s (dev 1200) = 20x `RATE_LIMIT_REQUESTS` on ONE key: discord-worker's `/budget` over the service binding carries no client IP (BUG-048) | 1009 / 1010 | KV `RATE_LIMIT` (`universalis:svc:` prefix) |
 | presets-api | `RL_PUBLIC` | 100 / 60 s per IP on `/api/*` | 1011 / 1012 | per-isolate memory |
 | oauth | `RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30` | 10 / 20 / 30 per 60 s per IP+path (`OAUTH_LIMITS`) | 1021-1023 (top-level = prod), 1024-1026 (development) — the preview tier (1027-1029) went with the deleted `[env.preview]` block (FINDING-029) | KV `TOKEN_BLACKLIST` (`rl:` prefix), then memory |
 | moderation-worker | `RL_COMMAND` / `RL_AUTOCOMPLETE` | 25 / 70 per 60 s per Discord user | 1031-1032 / 1033-1034 | KV `KV` |

@@ -78,12 +78,14 @@ Append-only audit trail of moderation actions. presets-api writes the preset-lev
 | id | TEXT | PRIMARY KEY — UUID v4 |
 | preset_id | TEXT | REFERENCES presets(id) ON DELETE CASCADE. **Nullable since migration 0013** — NULL for the user-level actions `ban` / `unban` |
 | moderator_discord_id | TEXT | NOT NULL |
-| action | TEXT | NOT NULL — `approve` \| `reject` \| `flag` \| `unflag` \| `requeue` \| `revert` (presets-api) and `ban` \| `unban` \| `hide` \| `restore` (moderation-worker). `requeue` is what a moderator's move **back to `pending`** records (`getActionFromStatusChange`) |
+| action | TEXT | NOT NULL — `approve` \| `reject` \| `flag` \| `unflag` \| `requeue` \| `revert` \| `image_approve` \| `image_reject` (presets-api; the two image actions are written by the preview-image moderation route, FINDING-020) and `ban` \| `unban` \| `hide` \| `restore` (moderation-worker). `requeue` is what a moderator's move **back to `pending`** records (`getActionFromStatusChange`) |
 | reason | TEXT | Optional; NULL on `unban` / `restore` (the unban command takes no reason) |
 | target_discord_id | TEXT | **Added by migration 0013** — the moderated user; set for `ban` / `unban` / `hide` / `restore`, NULL otherwise |
 | created_at | TEXT | DEFAULT `(datetime('now'))`, but every writer binds an ISO-8601 `…T…Z` string (BUG-050) |
 
 Indexes: `idx_moderation_log_preset(preset_id)`, `idx_moderation_log_moderator(moderator_discord_id)`, `idx_moderation_log_created(created_at DESC)`.
+
+**Retention (FINDING-005; the Sprint 5 privacy-policy amendment will publish these periods):** `ban` / `unban` / `hide` / `restore` rows are deleted 12 months after `created_at`; every other row lives as long as its preset (`DELETE /presets/:id` removes them explicitly as well as through the FK cascade). See [moderation.md](moderation.md) "Retention".
 
 Nothing enforces the `action` vocabulary in SQL (no CHECK constraint), and `GET /api/v1/moderation/:presetId/history` returns rows as stored — a `hide` / `restore` row therefore shows up in a preset's history, and `/moderation/stats` counts every row in its 7-day `actions_last_week` figure.
 
@@ -132,7 +134,7 @@ Users banned from the presets system (migration 0003). Written by `xivdyetools-m
 | unban_moderator_discord_id | TEXT | Moderator who lifted the ban |
 | | | CHECK (discord_id IS NOT NULL OR xivauth_id IS NOT NULL) |
 
-An unban closes the row (`unbanned_at`) rather than deleting it, and two **partial unique** indexes — `idx_banned_users_discord_active` on `discord_id` and `idx_banned_users_xivauth_active` on `xivauth_id`, both `WHERE … IS NOT NULL AND unbanned_at IS NULL` — allow only one *active* ban per identity while keeping the history. Also `idx_banned_users_active(banned_at DESC) WHERE unbanned_at IS NULL` and `idx_banned_users_moderator(moderator_discord_id)`.
+An unban closes the row (`unbanned_at`) rather than deleting it at once — a lifted ban is deleted **90 days** after `unbanned_at` by the presets-api retention prune (FINDING-005; an active ban is never pruned). Two **partial unique** indexes — `idx_banned_users_discord_active` on `discord_id` and `idx_banned_users_xivauth_active` on `xivauth_id`, both `WHERE … IS NOT NULL AND unbanned_at IS NULL` — allow only one *active* ban per identity while keeping the history. Also `idx_banned_users_active(banned_at DESC) WHERE unbanned_at IS NULL` and `idx_banned_users_moderator(moderator_discord_id)`.
 
 ---
 

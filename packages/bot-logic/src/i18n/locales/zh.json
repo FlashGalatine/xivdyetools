@@ -1251,9 +1251,6 @@
         "commands": {
           "description": "按命令显示细分数据（仅限管理员）"
         },
-        "preferences": {
-          "description": "显示偏好设置采用率（仅限管理员）"
-        },
         "health": {
           "description": "显示系统健康状态（仅限管理员）"
         }

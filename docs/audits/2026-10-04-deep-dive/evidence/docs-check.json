@@ -1,0 +1,187 @@
+[
+ {
+  "problems": [
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/REMEDIATION_PLAN.md",
+    "line": 248,
+    "problem": "Publish order runs against the package dependency graph. Sprint 8 publishes bot-logic before Sprint 9 (core) and Sprint 12 (svg), but bot-logic depends on both through `workspace:*`, and pnpm rewrites that to the exact version at publish. The npm bot-logic release would therefore pin the unfixed core 5.8.0 and svg 4.3.0. BUG-035's own fix names 'discord-worker via bot-logic' as a consumer. The same inversion hits Sprint 9 (core) and Sprint 14 (worker-kit): both publish before Sprint 13 (logger), and both depend on logger, so the BUG-140/141 redaction fixes would not reach their published dependency.",
+    "fix": "Reorder the package sprints to the dependency order: logger, then core, then svg, then bot-logic. worker-kit goes after logger. Alternatively, state that each dependent package is republished after its dependencies."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/BUG-003.md",
+    "line": 20,
+    "problem": "The Fix ends 'Pair with -01.' That is a reviewer-internal slice fragment; `discord-handlers-01` maps to BUG-004. catalog.json:57 has the same text.",
+    "fix": "Replace it with 'Pair with BUG-004.' in both the finding and catalog.json."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/BUG-003.md",
+    "line": 20,
+    "problem": "The Fix contradicts its own evidence. It says presets-api should add the pre-edit snapshot (previous_values) to the payload. But lines 6, 13, 14 and 16 say the payload already carries previous_values (rowToPreset spreads it), and that only the edit marker is missing. REMEDIATION_PLAN.md:153 copies the claim ('Add an edit flag and the pre-edit snapshot').",
+    "fix": "Say presets-api adds only the edit flag, and that discord-worker reads the previous_values already sent, adding it to its payload type if needed. Update REMEDIATION_PLAN.md:153 to match."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/BUG-026.md",
+    "line": 17,
+    "problem": "Two problems in one sentence: 'peer UNTESTED MEDIUMs (webapp-components-02, BUG-127)'. First, webapp-components-02 is a reviewer-internal slice id, and verdicts.tsv:72 shows that candidate REJECTED. Second, this catalog grades BUG-127 LOW (Untested behavior), not MEDIUM. The only UNTESTED MEDIUMs are BUG-011 and BUG-026.",
+    "fix": "Drop the slice id and correct the peer reference. Cite BUG-011, or qualify BUG-127 as an earlier-audit id if that is what was meant."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/BUG-061.md",
+    "line": 8,
+    "problem": "Lines 8 and 9 say 'Defects -01 and -02' and 'which is why -01 and -02 ship green'. These are reviewer-internal slice fragments (og-worker-01 is BUG-009, og-worker-02 is BUG-062).",
+    "fix": "Replace them with BUG-009 and BUG-062."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/BUG-011.md",
+    "line": 21,
+    "problem": "Calls 'BUG-078 (MEDIUM, budget's displayOptions reset)', but BUG-078 is LOW in its finding header, the report catalog and catalog.json.",
+    "fix": "Change it to LOW, or drop the severity from the parenthetical."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/REFACTOR-003.md",
+    "line": 9,
+    "problem": "Lines 9 and 10 attribute the removal of the svg GROUP_H/ROW_H barrel re-exports to '2026-10-04-dead-code/DEAD-015' (calling it 'an earlier dead-code audit'). That catalog's DEAD-015 is getRemainingSubmissions in web-app's preset-submission-service.ts. packages/svg/CHANGELOG.md shows the barrel removal came from the 2026-08-18 dead-code audit's DEAD-015. The line also contains a stray escaped `\\'`.",
+    "fix": "Qualify it as the 2026-08-18 dead-code audit's DEAD-015, with its folder or 'earlier-audit DEAD-015', and remove the backslash."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/BUG-047.md",
+    "line": 12,
+    "problem": "'a pre-OPT-007 (2026-07-18) v1 blob' is an unqualified id from an earlier audit, and it collides with this catalog's OPT-007 (mixer-tool and harmony-tool render passes). A date is not the 'earlier-audit' qualifier or a folder.",
+    "fix": "Write 'earlier-audit OPT-007' or '<folder>/OPT-007'."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/findings/BUG-063.md",
+    "line": 9,
+    "problem": "'Defended by the Rollout section and REMEDIATION_PLAN.md:268,271' reads as this audit's REMEDIATION_PLAN.md, whose line 268 is unrelated (the bot-logic sprint's Ends-with line). The next line shows the intended file is docs/audits/2026-10-03-security/REMEDIATION_PLAN.md.",
+    "fix": "Qualify the path as ../../2026-10-03-security/REMEDIATION_PLAN.md:268,271."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/evidence/catalog.json",
+    "line": 685,
+    "problem": "Several catalog.json fields still carry reviewer-internal slice ids that the finding files had cleaned: BUG-037 fix 'fix the api-worker-05 comment' (here); BUG-055 fix 'oauth-01 and oauth-02 fixes' (:1011); BUG-071 fix 'image-stoat-01 fix' (:1300); BUG-079 other 'overlaps webapp-v4-shell-01' (:1437); BUG-139 fix 'core-color-02 fix' (:2527); BUG-144 fix 'svg-02 fix' (:2617). BUG-003 fix 'Pair with -01' (:57) is covered in its own row above.",
+    "fix": "Regenerate catalog.json's fix and other fields from the cleaned finding text: 'stale comment', BUG-007/BUG-056, BUG-073, BUG-027, BUG-137 and BUG-145. The `cands` arrays can keep the slice ids."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/REMEDIATION_PLAN.md",
+    "line": 216,
+    "problem": "Says 'BUG-056 and BUG-057 turn null JSON into 400s.' BUG-057 is a null element in the roster returned by the upstream XIVAuth service (plus an empty verified name). Its fix filters the roster and falls back to the degraded 'XIVAuth User <id>' login, which is a 200, not a 400.",
+    "fix": "Reword it: 'BUG-056 turns a null JSON body into a 400; BUG-057 filters null roster elements and empty names, falling back to the degraded login.'"
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/DEEP_DIVE_REPORT.md",
+    "line": 324,
+    "problem": "Recommendation 5 ('Guard JSON null bodies and decode paths before keying limiters … each … closing a 500 or a limiter bypass') lists BUG-149. BUG-149 is a case-sensitive Content-Type check that lets bodies skip worker-kit's depth/__proto__ guard. It is neither a null body nor limiter keying, and it is not a 500 or a limiter bypass.",
+    "fix": "Move BUG-149 out of this recommendation, or broaden the wording to cover request-body guard bypasses."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/DEEP_DIVE_REPORT.md",
+    "line": 268,
+    "problem": "The Positive control claims character-name privacy holds 'on every path' and that 'exports and file names carry no name'. evidence/review-gap-4.md:38 shows otherwise: the Collection Manager's Export All JSON and the per-collection download filename (`xivdyetools-<name>.json`, collection-manager-modal.ts:535) carry the nickname-derived record name. The report's own line 295 says on-device saves fall back to the nickname. The only backing, review-webapp-glamour.md:71, covers the .md glamour export alone.",
+    "fix": "Narrow the bullet to the glamour/.md export and network paths, and say that collection exports keep the on-device nickname name that PRIVACY.md discloses."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/README.md",
+    "line": 25,
+    "problem": "Calls the plan's sprints '24 one-unit sprints', and REMEDIATION_PLAN.md:20 promises 'One deploy unit per sprint'. But Sprint 22 spans presets-api, moderation-worker and discord-worker plus a package, and Sprint 23 bundles two unrelated publish chains (core then web-app, and svg then discord-worker).",
+    "fix": "Describe Sprints 22–24 as cross-unit structural sprints, or split Sprint 23 into separate core and svg sprints."
+   },
+   {
+    "file": "docs/audits/2026-10-04-deep-dive/REMEDIATION_PLAN.md",
+    "line": 482,
+    "problem": "Uses bare DEAD-009, DEAD-010, DEAD-008 and DEAD-003, against the plan's own ID convention at line 6 ('dead-code IDs are qualified as dead-code/DEAD-NNN'). Lines 305 and 382 use a third form, `2026-10-04-dead-code/DEAD-NNN`.",
+    "fix": "Use the dead-code/DEAD-NNN form throughout."
+   }
+  ]
+ },
+ {
+  "claims": [
+   {
+    "claim": "(a) BUG-063: the presets-api 2.4.0 CHANGELOG intro says \"No schema change and no migration\"",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/presets-api/CHANGELOG.md:8 opens `## [2.4.0] - 2026-10-04`, and line 13 ends the intro with the exact words \"No schema change and no migration.\" The text came from f1b54a0f and e34ea70a. Both are on fix/security-2026-10-03-sprint3, the branch of PR #224 (preview merges 52233dd6 and 32a6a659)."
+   },
+   {
+    "claim": "(a) BUG-063: the same entry's Rollout section marks hand-running migration 0015 as Required, so someone deploying from the intro would skip it",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/presets-api/CHANGELOG.md:88 is `### Rollout`. Line 91 names `migrations/0015_rewrite_legacy_dead_letters.sql` with \"**Required:**\", and :102 gives `wrangler d1 execute xivdyetools-presets --env production --remote --file=migrations/0015_...`. The intro and the Rollout section contradict each other. PR #224's live head (gh) is 10a1cb77, which changes only a comment in moderation.ts, so the claim that no fix has been pushed also holds."
+   },
+   {
+    "claim": "(b) BUG-053: the moderation bot's footer still advertises the removed `reject <id> <reason>` option",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/moderation-worker/src/services/bot-i18n.ts:61 has footerTextOnly = 'Use /preset moderate approve <id> or reject <id> <reason>', and src/handlers/commands/preset.ts:215 renders it. PR #225 (c7fd9eba, which is on sprint4) removed the `reason` option from scripts/register-commands.ts. preset.ts:376 says the `reason` option is no longer read, and the CHANGELOG at :13 says `/preset moderate` lost its `reason` option. PR #225's live head ea264d49 leaves line 61 unchanged.",
+    "correction": "To be exact: `reject` is still a valid action. PR #225 removed the `reason` option, so the `<reason>` part of the footer is the stale part."
+   },
+   {
+    "claim": "(b) BUG-053: a test pins the stale footer (preset.test.ts:446)",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/moderation-worker/src/handlers/commands/preset.test.ts:446 asserts `footer: { text: 'Use /preset moderate approve <id> or reject <id> <reason>' }`."
+   },
+   {
+    "claim": "(c) api-worker routes the retired hostname proxy.xivdyetools.projectgalatine.com at wrangler.toml:110, and the change ships with #229",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/api-worker/wrangler.toml:110 is `{ pattern = \"proxy.xivdyetools.projectgalatine.com\", custom_domain = true }` under [env.production]. The line was already on main at :84. Preview merge f99ab488 (#229) touches apps/api-worker/**, and deploy-api-worker.yml:9 fires on that path on push to main and runs `deploy --env production` (:68).",
+    "correction": "The route line is not new in #229: it was already on main (api-worker wrangler.toml:84). Merging #229 matters because it changes apps/api-worker/**, which fires a production deploy that re-applies the route."
+   },
+   {
+    "claim": "(c) presets-api routes api.xivdyetools.projectgalatine.com at wrangler.toml:72, and the change ships with #224",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/presets-api/wrangler.toml:72 is `{ pattern = \"api.xivdyetools.projectgalatine.com\", custom_domain = true }`, already on main at :62. Merges 52233dd6 and 32a6a659 (#224) touch apps/presets-api/**, and deploy-presets-api.yml:7 and :60 then run `deploy --env production`.",
+    "correction": "The route line is already on main (presets-api wrangler.toml:62). #224 only triggers the production deploy that re-applies it."
+   },
+   {
+    "claim": "(c) moderation-worker routes moderation-bot.xivdyetools.projectgalatine.com at wrangler.toml:72, and the change ships with #225",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/moderation-worker/wrangler.toml:72 is `{ pattern = \"moderation-bot.xivdyetools.projectgalatine.com\", custom_domain = true }`, already on main at :64. Merges 8ae82770 and 80262a2f (#225) touch apps/moderation-worker/**, and deploy-moderation-worker.yml:7 and :64 then run `deploy --env production`.",
+    "correction": "The route line is already on main (moderation-worker wrangler.toml:64). #225 only triggers the production deploy that re-applies it."
+   },
+   {
+    "claim": "(c) docs/operations/DOMAIN_DEPRECATION.md records only auth., bot. and the apex as removed from the dashboard, so whether the other three are still attached is a question only the maintainer can answer",
+    "verdict": "WRONG",
+    "evidence": "The first half is true. DOMAIN_DEPRECATION.md:5 records the auth. and bot. custom domains as removed on 2026-10-04, :6 says the old apex stopped serving, and :227-229 repeats this. But the same status line :5 also says \"`moderation-bot.` and `api.` remain\". Phase 3 for proxy. (:237-245) is gated, and the doc records no progress on it. So the doc already answers the question for api. and moderation-bot. The doc's file:line table (:41-44) is also stale: it cites wrangler.toml:64, :62 and :75, against :72, :72 and :110 at HEAD.",
+    "correction": "`docs/operations/DOMAIN_DEPRECATION.md` records `auth.`, `bot.` and the apex as removed. It says `moderation-bot.` and `api.` remain, as of 2026-10-04, and it records no step taken on `proxy.` (Phase 3). The only open question is whether anything was removed in the dashboard after that note, and in particular whether `proxy.` was."
+   },
+   {
+    "claim": "(c) If a hostname was removed in the Cloudflare dashboard, a production deploy with custom_domain=true re-attaches it (or fails if the zone is gone)",
+    "verdict": "CONFIRMED",
+    "evidence": "DOMAIN_DEPRECATION.md:231-235 says: \"Until a route-line removal merges, a production deploy of that Worker re-attaches the hostname. `wrangler deploy` attaches every custom domain its config lists.\" It cites the 2026-10-04 discord-worker deploy, which reported `bot.xivdyetools.projectgalatine.com (custom domain)` among its triggers. All three deploy workflows run `deploy --env production` on a push to main under their app path. The doc's procedure (:211-219) removes the route lines first, then the dashboard domain, which supports Sprint 0's advice to delete the route lines first.",
+    "correction": "The \"or fails if the zone is gone\" clause cannot be checked from the repo. The doc has no evidence either way, so it should be stated as a possibility, not a fact."
+   },
+   {
+    "claim": "(d) Every HIGH and MEDIUM finding is origin MAIN, and the eight PR-origin findings are LOW or refactor",
+    "verdict": "CONFIRMED",
+    "evidence": "docs/audits/2026-10-04-deep-dive/evidence/catalog.json has 175 entries. Tally by kind, severity and origin: BUG HIGH MAIN 1; BUG MEDIUM MAIN 33; UNTESTED MEDIUM MAIN 2; OPT MEDIUM MAIN 1. No HIGH or MEDIUM entry has another origin. The 8 non-MAIN entries are all sev LOW: BUG-039 (PR-#229), BUG-052, BUG-053 and BUG-054 (PR-#225), BUG-063, BUG-066 and BUG-067 (PR-#224), and REFACTOR-001 (\"PR-#227 + PR-#225 + PR-#224\", kind REFACTOR, sev LOW). The report totals match: 156 BUG = 1 HIGH, 35 MEDIUM and 120 LOW; 17 untested; 9 REFACTOR; 10 OPT."
+   },
+   {
+    "claim": "Sprint 0: no finding in the batch is CRITICAL, HIGH or MEDIUM",
+    "verdict": "CONFIRMED",
+    "evidence": "This follows from the catalog tally above: every PR-origin finding is LOW. The Sprint 0 table lists DEAD-001 as \"HIGH/LOW\" and DEAD-002 as \"HIGH/NONE\" under the heading \"Sev/Pri\". docs/audits/2026-10-04-dead-code/findings/DEAD-001.md:2 shows these values are **Confidence** HIGH and **Blast radius** LOW, not severity.",
+    "correction": "Relabel the column for the dead-code rows as Confidence/Blast, for example \"Conf HIGH / Blast LOW\", so they do not read as HIGH severity inside the batch."
+   },
+   {
+    "claim": "BUG-054: the stale-deploy 404 case is covered by the documented deploy order",
+    "verdict": "CONFIRMED",
+    "evidence": "apps/moderation-worker/CHANGELOG.md:10-11 (1.8.0) says \"Deploy right after presets-api 2.4.0, in the same held-workflow window.\" This puts presets-api, which adds GET /moderation/:presetId, before moderation-worker. apps/presets-api/CHANGELOG.md:10 says to deploy it together with moderation-worker Sprint 4. findings/BUG-054.md says only a misordered deploy or a presets-api rollback hits the 404."
+   },
+   {
+    "claim": "(e) Base main@8ecb878f",
+    "verdict": "CONFIRMED",
+    "evidence": "Local main and origin/main are both 8ecb878fc52f…. The live `gh api repos/FlashGalatine/xivdyetools/commits/main` also returns 8ecb878fc52fc1fd55cdba86c648f9e8c50d94e6, the Merge of PR #222."
+   },
+   {
+    "claim": "(e) Audit commit preview/integration-2026-10-04@80262a2f = main + the 13 open PRs (#223 to #235)",
+    "verdict": "CONFIRMED",
+    "evidence": "HEAD is 80262a2f02fa…. The first-parent history shows 13 PR merges on top of 8ecb878f. Each subject's @sha matches the live headRefOid from gh: #226 065e2987, #223 ffd22726, #230 7517a35d, #224 10a1cb77, #225 ea264d49, #227 4ebd09f2, #228 9073d0df, #229 1eaefd63, #231 7c97fc1d, #232 6e8c7d81, #233 600f0568, #234 01465700, #235 b5f551e0. One note: PR #236 (docs/dead-code-audit-2026-10-04, 50c5b49c) is now also open, but it is not part of the batch."
+   },
+   {
+    "claim": "(e) #224 is now at 10a1cb77 and #225 at ea264d49, the two Sprint 0 fixes (\"the cross-PR test failure is already fixed in #224 (10a1cb77)\"; \"DEAD-001 already applied in #225 (ea264d49)\")",
+    "verdict": "CONFIRMED",
+    "evidence": "gh shows fix/security-2026-10-03-sprint3 (#224) at 10a1cb779756… and fix/security-2026-10-03-sprint4 (#225) at ea264d4910a5…. 10a1cb77 rewords the moderation.ts comment that broke moderation-worker's stats contract test (its commit message). ea264d49 deletes the five DEAD-001 strings."
+   },
+   {
+    "claim": "Sprint 0: the preview passes 62/62",
+    "verdict": "CONFIRMED",
+    "evidence": "docs/audits/2026-10-04-dead-code/evidence/gates-after-pr-fixes.txt:8961 reads \"Tasks: 62 successful, 62 total\". presets-api:test (:6701) and moderation-worker:test (:8616) are cache misses that execute, with 946 and 763 tests passing at :7342 and :8708, so the run reflects the two fixes rather than a replay from before them. The log does not print the exact HEAD SHA."
+   }
+  ]
+ }
+]

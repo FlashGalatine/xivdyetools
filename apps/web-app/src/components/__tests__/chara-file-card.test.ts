@@ -202,6 +202,46 @@ describe('CharaFileCard — the loaded file', () => {
     expect(plain.container.textContent).not.toContain('Notes are kept here.');
   });
 
+  describe('sendsGearIds (Glamour Reader: gear ids reach the API)', () => {
+    const plainHint = () => LanguageService.t('swatch.charaHint');
+    const glamourHint = () => LanguageService.t('swatch.charaHintGlamour');
+    const localOnly = () => LanguageService.t('swatch.localOnly');
+
+    it('uses the gear-ids sentence on the drop zone and drops the "nothing is uploaded" claim', () => {
+      const { container } = mountCard({ sendsGearIds: true });
+      expect(glamourHint()).not.toBe('swatch.charaHintGlamour');
+      expect(container.textContent).toContain(glamourHint());
+      expect(container.textContent).not.toContain(plainHint());
+    });
+
+    it('uses it under the loaded card (with the host note) and renders no LOCAL ONLY chip', async () => {
+      const { container } = await mount(FIXTURE, 'test.chara', {
+        sendsGearIds: true,
+        privacyNote: 'Notes are kept here.',
+      });
+      expect(container.textContent).toContain(`${glamourHint()} Notes are kept here.`);
+      expect(container.textContent).not.toContain(plainHint());
+      expect(container.textContent).not.toContain(localOnly());
+      expect(container.querySelector(`[title="${plainHint()}"]`)).toBeNull();
+      expect(container.querySelector(`[title="${glamourHint()}"]`)).toBeNull();
+    });
+
+    it('default mode is unchanged: plain hint at every site and the LOCAL ONLY chip titled with it', async () => {
+      const zone = mountCard();
+      expect(zone.container.textContent).toContain(plainHint());
+      expect(zone.container.textContent).not.toContain(glamourHint());
+
+      const { container } = await mount(FIXTURE);
+      expect(container.textContent).toContain(localOnly());
+      expect(container.textContent).toContain(plainHint());
+      expect(container.textContent).not.toContain(glamourHint());
+      const chip = Array.from(container.querySelectorAll<HTMLElement>('[title]')).find(
+        (e) => e.textContent === localOnly()
+      );
+      expect(chip?.title).toBe(plainHint());
+    });
+  });
+
   it('says nothing about a file that a newer drop replaced', async () => {
     const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
     const { card } = mountCard();

@@ -13,12 +13,25 @@ import * as discordApi from '../../utils/discord-api.js';
 // Valid UUID v4 for testing (implementation requires valid UUID format)
 const VALID_PRESET_ID = '12345678-1234-4123-8123-123456789abc';
 
+// FINDING-017: the revision-bound ids this worker and discord-worker emit
+const BINDING = { revision: 4, status: 'pending' } as const;
+const APPROVE_BOUND = `preset_approve_${VALID_PRESET_ID}:4:pending`;
+const REJECT_BOUND = `preset_reject_${VALID_PRESET_ID}:4:pending`;
+const REVERT_BOUND = `preset_revert_${VALID_PRESET_ID}:4:pending`;
+
 // Mock modules
 vi.mock('../../utils/discord-api.js', () => {
   const editMessage = vi.fn();
   const sendMessage = vi.fn();
   // BUG-035: handlers call the safe wrappers; alias to the same mocks
-  return { editMessage, sendMessage, safeEditMessage: editMessage, safeSendMessage: sendMessage };
+  return {
+    editMessage,
+    sendMessage,
+    safeEditMessage: editMessage,
+    safeSendMessage: sendMessage,
+    safeEditOriginalResponse: vi.fn(),
+    safeSendFollowUp: vi.fn(),
+  };
 });
 
 vi.mock('../../services/preset-api.js', async () => {
@@ -29,6 +42,7 @@ vi.mock('../../services/preset-api.js', async () => {
     approvePreset: vi.fn(),
     rejectPreset: vi.fn(),
     revertPreset: vi.fn(),
+    getModerationPreset: vi.fn(),
   };
 });
 
@@ -92,7 +106,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
     };
 
     const response = await handlePresetApproveButton(interaction, env, ctx);
@@ -108,7 +122,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       member: { user: { id: 'user-123', username: 'NormalUser' } },
     };
 
@@ -142,7 +156,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
       channel_id: 'channel-mod',
       message: {
@@ -192,7 +206,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
       channel_id: 'channel-mod',
       message: {
@@ -216,7 +230,7 @@ describe('handlePresetApproveButton', () => {
     ]?.[0];
     if (waitUntilPromise) await waitUntilPromise;
 
-    expect(presetApi.approvePreset).toHaveBeenCalledWith(env, VALID_PRESET_ID, 'mod-1');
+    expect(presetApi.approvePreset).toHaveBeenCalledWith(env, VALID_PRESET_ID, 'mod-1', BINDING);
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
       'channel-mod',
@@ -264,7 +278,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
       channel_id: 'channel-mod',
       message: {
@@ -320,7 +334,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
       channel_id: 'channel-mod',
       message: {
@@ -349,7 +363,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
       channel_id: 'channel-mod',
       message: {
@@ -416,7 +430,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
     };
 
@@ -454,7 +468,7 @@ describe('handlePresetApproveButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+      data: { custom_id: APPROVE_BOUND },
       user: { id: 'mod-1', username: 'Moderator' },
       channel_id: 'channel-mod',
       message: {
@@ -557,7 +571,7 @@ describe('handlePresetRejectButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_reject_${VALID_PRESET_ID}` },
+      data: { custom_id: REJECT_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
     };
 
@@ -565,7 +579,8 @@ describe('handlePresetRejectButton', () => {
     const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
-    expect(json.data.custom_id).toBe(`preset_reject_modal_${VALID_PRESET_ID}`);
+    // FINDING-017: the modal is bound to the same revision and status as the click
+    expect(json.data.custom_id).toBe(`preset_reject_modal_${VALID_PRESET_ID}:4:pending`);
     expect(json.data.title).toBe('Reject Preset');
     expect(json.data.components[0].components[0].custom_id).toBe('rejection_reason');
     expect(json.data.components[0].components[0].min_length).toBe(10);
@@ -642,7 +657,7 @@ describe('handlePresetRevertButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `preset_revert_${VALID_PRESET_ID}` },
+      data: { custom_id: REVERT_BOUND },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
     };
 
@@ -650,7 +665,7 @@ describe('handlePresetRevertButton', () => {
     const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
-    expect(json.data.custom_id).toBe(`preset_revert_modal_${VALID_PRESET_ID}`);
+    expect(json.data.custom_id).toBe(`preset_revert_modal_${VALID_PRESET_ID}:4:pending`);
     expect(json.data.title).toBe('Revert Preset Edit');
     expect(json.data.components[0].components[0].custom_id).toBe('revert_reason');
     expect(json.data.components[0].components[0].min_length).toBe(10);
@@ -670,7 +685,7 @@ describe('moderation buttons — security audit remediations', () => {
     id: 'int-1',
     token: 'token-1',
     application_id: 'app-123',
-    data: { custom_id: `preset_approve_${VALID_PRESET_ID}` },
+    data: { custom_id: APPROVE_BOUND },
     member: { user: { id: 'mod-1', username } },
     channel_id: 'channel-mod',
     message: { id: 'msg-1', embeds: [{ title: 'Preset Submission', description: 'd', fields: [] }] },

@@ -1,0 +1,112 @@
+########## DISCORD SC (core+bot-logic) ##########
+CMD: font-coverage.py apps/discord-worker/src/fonts/NotoSansSC-Subset.ttf packages/core/src/data/locales packages/bot-logic/src/i18n/locales --scripts cjk
+apps/discord-worker/src/fonts/NotoSansSC-Subset.ttf: needed=1143 covered=1099 missing=44 stale=0 (scripts=cjk)
+  MISSING U+3072 ひ
+  MISSING U+4E8C 二
+  MISSING U+4E94 五
+  MISSING U+4F34 伴
+  MISSING U+4FA3 侣
+  MISSING U+5065 健
+  MISSING U+5219 则
+  MISSING U+53B3 厳
+  MISSING U+53BB 去
+  MISSING U+552E 售
+  MISSING U+5C04 射
+  MISSING U+5C55 展
+  MISSING U+5EB7 康
+  MISSING U+5F35 張
+  MISSING U+5F84 径
+  MISSING U+614B 態
+  MISSING U+616E 慮
+  MISSING U+6269 扩
+  MISSING U+626D 扭
+  MISSING U+62E1 拡
+  MISSING U+6362 换
+  MISSING U+6642 時
+  MISSING U+69FD 槽
+  MISSING U+6CC1 況
+  MISSING U+70ED 热
+  MISSING U+72B6 状
+  MISSING U+73A9 玩
+  MISSING U+7B2C 第
+  MISSING U+7D27 紧
+  MISSING U+7D5E 絞
+  MISSING U+8003 考
+  MISSING U+8651 虑
+  MISSING U+86CB 蛋
+  MISSING U+8A33 訳
+  MISSING U+8AAC 説
+  MISSING U+8CA9 販
+  MISSING U+8EE2 転
+  MISSING U+8F6C 转
+  MISSING U+8FF0 述
+  MISSING U+9014 途
+  MISSING U+9017 逗
+  MISSING U+95E8 门
+  MISSING U+9608 阈
+  MISSING U+987A 顺
+exit=0
+
+########## DISCORD JP (core+bot-logic) ##########
+CMD: font-coverage.py apps/discord-worker/src/fonts/NotoSansJP-Subset.ttf packages/core/src/data/locales packages/bot-logic/src/i18n/locales --scripts kana
+apps/discord-worker/src/fonts/NotoSansJP-Subset.ttf: needed=145 covered=142 missing=3 stale=0 (scripts=kana)
+  MISSING U+3072 ひ
+  MISSING U+FF0C ，
+  MISSING U+FF1B ；
+exit=0
+
+########## DISCORD KR (core+bot-logic) ##########
+CMD: font-coverage.py apps/discord-worker/src/fonts/NotoSansKR-Subset.ttf packages/core/src/data/locales packages/bot-logic/src/i18n/locales --scripts hangul
+apps/discord-worker/src/fonts/NotoSansKR-Subset.ttf: needed=525 covered=499 missing=26 stale=0 (scripts=hangul)
+  MISSING U+3001 、
+  MISSING U+3002 。
+  MISSING U+300C 「
+  MISSING U+300D 」
+  MISSING U+301C 〜
+  MISSING U+B7B5 략
+  MISSING U+B86F 롯
+  MISSING U+C27C 쉼
+  MISSING U+C2AC 슬
+  MISSING U+C4F8 쓸
+  MISSING U+C9F8 째
+  MISSING U+CC60 챠
+  MISSING U+CCAB 첫
+  MISSING U+D37C 퍼
+  MISSING U+D3BC 펼
+  MISSING U+D551 핑
+  MISSING U+D5C8 허
+  MISSING U+FF01 ！
+  MISSING U+FF08 （
+  MISSING U+FF09 ）
+  MISSING U+FF0C ，
+  MISSING U+FF0F ／
+  MISSING U+FF1A ：
+  MISSING U+FF1B ；
+  MISSING U+FF1D ＝
+  MISSING U+FF1F ？
+exit=0
+
+########## OG SC (core+og-strings) ##########
+CMD: font-coverage.py apps/og-worker/src/fonts/NotoSansSC-Subset.ttf packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts --scripts cjk
+apps/og-worker/src/fonts/NotoSansSC-Subset.ttf: needed=592 covered=592 missing=0 stale=0 (scripts=cjk)
+exit=0
+
+########## OG JP (core+og-strings) ##########
+CMD: font-coverage.py apps/og-worker/src/fonts/NotoSansJP-Subset.ttf packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts --scripts kana
+apps/og-worker/src/fonts/NotoSansJP-Subset.ttf: needed=108 covered=107 missing=1 stale=0 (scripts=kana)
+  MISSING U+FF0C ，
+exit=0
+
+########## OG KR (core+og-strings) ##########
+CMD: font-coverage.py apps/og-worker/src/fonts/NotoSansKR-Subset.ttf packages/core/src/data/locales apps/og-worker/src/services/og-strings.ts --scripts hangul
+apps/og-worker/src/fonts/NotoSansKR-Subset.ttf: needed=322 covered=313 missing=9 stale=0 (scripts=hangul)
+  MISSING U+3001 、
+  MISSING U+3002 。
+  MISSING U+301C 〜
+  MISSING U+FF06 ＆
+  MISSING U+FF08 （
+  MISSING U+FF09 ）
+  MISSING U+FF0C ，
+  MISSING U+FF0F ／
+  MISSING U+FF1A ：
+exit=0

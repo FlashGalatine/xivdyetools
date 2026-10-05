@@ -339,7 +339,7 @@ Bot information, version, dye count, links, and (for one release) where each rem
 ---
 
 ### /stats
-`/stats summary` is public; `overview`, `commands`, `preferences`, `health` are for authorised users only.
+`/stats summary` is public; `overview`, `commands`, `health` are for authorised users only.
 
 ---
 

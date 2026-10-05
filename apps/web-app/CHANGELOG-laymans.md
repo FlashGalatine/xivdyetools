@@ -2,6 +2,30 @@
 
 ---
 
+## Web-App Version 5.14.0 — October 4, 2026
+
+### Privacy Guide: community presets and deleting your data
+- **New section on community presets.** It lists what we keep when you sign in to share presets, and for how long: daily-limit counts, moderation records and posts in our Discord server.
+- **No Discord ID in new moderation posts.** Posts in the private channels our moderators use show your author name, not your Discord user ID.
+- **New section on deleting your data.** Delete a preset or a vote yourself, or ask us privately by email or Discord DM. We handle requests within 30 days.
+- **Updated in all six languages.** Find the guide under About.
+
+## Web-App Version 5.13.4 — October 4, 2026
+
+### Privacy Guide and Terms of Service corrected
+- **Preset preview images are covered.** The guide said images never leave your device. That holds for the color tools, but a preview image you attach to a community preset is uploaded.
+- **Removing one is easy.** Use the preset's edit form, or delete the preset from My Submissions.
+- **The sign-in note is accurate.** It said "No character data", but XIVAuth sign-in keeps your verified character's name as your author name. The note, guide and Terms now say what is kept.
+- **"Reset Settings" is described correctly.** It resets tool settings and keeps your saved work. The guide now lists what each clear button does.
+- **Example links on presets are listed.** The preset's author picks them, and they lead to other sites such as Eorzea Collection or pixiv.
+- **Updated in all six languages.** Find the documents under About.
+
+### Glamour Reader
+- **The file card says what it sends.** To name your gear, it sends only the equipment model numbers and the facewear ID. Your character's name and colors stay on your device.
+
+### Behind the scenes
+- Example links on community presets are shown in a cleaned-up form.
+
 ## Web-App Version 5.13.2 — September 28, 2026
 
 ### Privacy Guide and Terms of Service updated

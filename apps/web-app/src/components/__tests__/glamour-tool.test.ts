@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GlamourTool } from '../glamour-tool';
-import { ToastService } from '@services/index';
+import { LanguageService, ToastService } from '@services/index';
 import { RouterService } from '@services/router-service';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile } from '@services/chara-file-loader';
@@ -71,6 +71,19 @@ describe('GlamourTool', () => {
     expect(container.querySelector('h1')?.textContent).toBe('Glamour Reader');
     expect(container.querySelector('input[type="file"]')).not.toBeNull();
     expect(container.querySelector('[data-role="glamour-block"]')).toBeNull();
+  });
+
+  it('tells the truth about gear ids: charaHintGlamour on the drop zone, never the "nothing is uploaded" line', () => {
+    mount();
+    expect(container.textContent).toContain(LanguageService.t('swatch.charaHintGlamour'));
+    expect(container.textContent).not.toContain(LanguageService.t('swatch.charaHint'));
+  });
+
+  it('shows no LOCAL ONLY chip once a file is loaded, and keeps the glamour hint', async () => {
+    await loadCharaFile(charaFile(FIXTURE));
+    mount();
+    expect(container.textContent).toContain(LanguageService.t('swatch.charaHintGlamour'));
+    expect(container.textContent).not.toContain(LanguageService.t('swatch.localOnly'));
   });
 
   it('reads a file the Swatch Matcher loaded: the file card, then DYES ON THIS GLAMOUR', async () => {

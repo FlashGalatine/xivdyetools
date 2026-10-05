@@ -406,6 +406,7 @@ app.post('/webhooks/preset-submission', async (c) => {
       {
         kind: 'new',
         preset,
+        contentRevision: preset.content_revision,
         extraFields: [
           {
             name: adminT.t('webhook.fields.source'),

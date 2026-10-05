@@ -1,0 +1,3 @@
+apps/stoat-worker/src/commands/info.ts:31:      'Please provide a dye name or ItemID.',
+apps/stoat-worker/src/commands/info.ts:62:        const msg = formatErrorReply(ctx.message.id, 'Could not resolve to a specific dye.');
+apps/stoat-worker/src/services/response-formatter.ts:153:  let content = `No dye found matching "${sanitizeEcho(query, 64)}".`;

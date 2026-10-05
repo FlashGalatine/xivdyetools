@@ -500,19 +500,18 @@ async function getUnbanUserAutocompleteChoices(
   try {
     const users = await banService.searchBannedUsers(env.DB, query);
 
-    // MOD-14 (FINDING-034, 2026-08-21 audit; reworded 2026-09-16 fix wave):
-    // unbanUser / getActiveBan key on discord_id, and BUG-001 path (a) now
-    // stores a BAN_TARGET_UUID_RE-shaped XIVAuth `sub` in that same column —
-    // that kind of row IS offered here below. Only a row with a NULL
-    // discord_id (a true xivauth_id-only ban, which nothing writes today)
-    // is excluded, since this bot has no way to lift one.
+    // MOD-14 (FINDING-034, 2026-08-21 audit; reworded 2026-10-04): getActiveBan
+    // and unbanUser match `discord_id` OR `xivauth_id` (FINDING-014), so a row
+    // is offered under whichever id it carries, a Discord id first. Only a row
+    // with neither id is excluded — there is nothing to hand the unban command.
     return users
-      .filter((user): user is typeof user & { discordId: string } => Boolean(user.discordId))
-      .map((user) => {
-        const idKind = isValidSnowflake(user.discordId) ? 'discord' : 'xivauth';
+      .map((user) => ({ user, id: user.discordId ?? user.xivAuthId }))
+      .filter((entry): entry is { user: (typeof users)[number]; id: string } => Boolean(entry.id))
+      .map(({ user, id }) => {
+        const idKind = isValidSnowflake(id) ? 'discord' : 'xivauth';
         return {
-          name: clampChoiceName(`${user.username} (${idKind}:${user.discordId})`),
-          value: user.discordId,
+          name: clampChoiceName(`${user.username} (${idKind}:${id})`),
+          value: id,
         };
       });
   } catch (error) {

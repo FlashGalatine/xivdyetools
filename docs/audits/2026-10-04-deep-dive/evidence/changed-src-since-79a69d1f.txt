@@ -1,0 +1,226 @@
+# Non-test source files changed 79a69d1f..HEAD (preview branch), grouped by deploy unit.
+# [open PR #N] = also changed by an open PR (code not yet on main).
+
+## apps/api-worker (22)
+  apps/api-worker/scripts/acquisition/format.ts
+  apps/api-worker/scripts/acquisition/inputs.ts
+  apps/api-worker/scripts/acquisition/labels.ts
+  apps/api-worker/scripts/acquisition/model.ts
+  apps/api-worker/scripts/acquisition/select.ts
+  apps/api-worker/scripts/acquisition/sources.ts
+  apps/api-worker/scripts/build-acquisition.ts
+  apps/api-worker/src/chara/acquisition.ts
+  apps/api-worker/src/chara/cache.ts
+  apps/api-worker/src/chara/resolver.ts
+  apps/api-worker/src/chara/types.ts
+  apps/api-worker/src/chara/xivapi.ts
+  apps/api-worker/src/index.ts
+  apps/api-worker/src/lib/response.ts
+  apps/api-worker/src/lib/validation.ts
+  apps/api-worker/src/middleware/rate-limit.ts
+  apps/api-worker/src/routes/match.ts
+  apps/api-worker/src/telemetry/schema.ts
+  apps/api-worker/src/types.ts   [open PR #229]
+  apps/api-worker/src/universalis/router.ts   [open PR #229]
+  apps/api-worker/src/universalis/services/cache-service.ts
+  apps/api-worker/src/universalis/services/rate-limiter.ts   [open PR #229]
+
+## apps/discord-worker (23)
+  apps/discord-worker/scripts/gen-option-description-keys.ts
+  apps/discord-worker/src/commands/localize.ts
+  apps/discord-worker/src/commands/registry.ts
+  apps/discord-worker/src/commands/schemas.ts   [open PR #227]
+  apps/discord-worker/src/handlers/commands/about.ts
+  apps/discord-worker/src/handlers/commands/budget.ts
+  apps/discord-worker/src/handlers/commands/extractor.ts
+  apps/discord-worker/src/handlers/commands/glamour.ts
+  apps/discord-worker/src/handlers/commands/index.ts
+  apps/discord-worker/src/handlers/commands/manual.ts
+  apps/discord-worker/src/handlers/commands/preset-notifications.ts   [open PR #227]
+  apps/discord-worker/src/handlers/commands/preset.ts
+  apps/discord-worker/src/handlers/commands/stats.ts   [open PR #227]
+  apps/discord-worker/src/handlers/commands/swatch.ts
+  apps/discord-worker/src/index.ts   [open PR #227]
+  apps/discord-worker/src/services/budget/budget-calculator.ts
+  apps/discord-worker/src/services/preferences.ts
+  apps/discord-worker/src/services/preset-api.ts
+  apps/discord-worker/src/services/preset-favorites.ts
+  apps/discord-worker/src/types/preset.ts   [open PR #227]
+  apps/discord-worker/src/utils/chara-attachment.ts
+  apps/discord-worker/src/utils/env-validation.ts
+  apps/discord-worker/src/utils/read-text-capped.ts
+
+## apps/image-worker (3)
+  apps/image-worker/src/index.ts   [open PR #232]
+  apps/image-worker/src/types.ts
+  apps/image-worker/src/validators.ts
+
+## apps/moderation-worker (19)
+  apps/moderation-worker/scripts/register-commands.ts   [open PR #225]
+  apps/moderation-worker/src/handlers/buttons/ban-confirmation.ts
+  apps/moderation-worker/src/handlers/buttons/index.ts   [open PR #225]
+  apps/moderation-worker/src/handlers/buttons/preset-moderation.ts   [open PR #225]
+  apps/moderation-worker/src/handlers/commands/preset.ts   [open PR #225]
+  apps/moderation-worker/src/handlers/modals/ban-reason.ts   [open PR #225]
+  apps/moderation-worker/src/handlers/modals/preset-rejection.ts   [open PR #225]
+  apps/moderation-worker/src/handlers/review-message.ts   [open PR #225]
+  apps/moderation-worker/src/index.ts   [open PR #225]
+  apps/moderation-worker/src/services/ban-service.ts   [open PR #225]
+  apps/moderation-worker/src/services/bot-i18n.ts   [open PR #225]
+  apps/moderation-worker/src/services/preset-api.ts   [open PR #225]
+  apps/moderation-worker/src/types/ban.ts   [open PR #225]
+  apps/moderation-worker/src/types/modal.ts   [open PR #225]
+  apps/moderation-worker/src/types/preset.ts   [open PR #225]
+  apps/moderation-worker/src/utils/discord-api.ts   [open PR #225]
+  apps/moderation-worker/src/utils/embed-text.ts   [open PR #225]
+  apps/moderation-worker/src/utils/response.ts   [open PR #225]
+  apps/moderation-worker/src/utils/review-custom-id.ts   [open PR #225]
+
+## apps/oauth (4)
+  apps/oauth/src/constants/oauth.ts   [open PR #228]
+  apps/oauth/src/handlers/oauth-flow.ts   [open PR #228]
+  apps/oauth/src/index.ts
+  apps/oauth/src/middleware/body-validation.ts
+
+## apps/og-worker (6)
+  apps/og-worker/src/index.ts
+  apps/og-worker/src/og-data-generator.ts
+  apps/og-worker/src/services/og-embed.ts
+  apps/og-worker/src/services/og-strings.ts
+  apps/og-worker/src/services/svg/default-card.ts
+  apps/og-worker/src/types.ts
+
+## apps/presets-api (18)
+  apps/presets-api/migrations/0015_rewrite_legacy_dead_letters.sql   [open PR #224]
+  apps/presets-api/src/handlers/moderation.ts   [open PR #224]
+  apps/presets-api/src/handlers/presets.ts   [open PR #224]
+  apps/presets-api/src/index.ts   [open PR #224]
+  apps/presets-api/src/middleware/auth.ts   [open PR #224]
+  apps/presets-api/src/middleware/ban-check.ts   [open PR #224]
+  apps/presets-api/src/middleware/body-validation.ts
+  apps/presets-api/src/retention-job.ts   [open PR #224]
+  apps/presets-api/src/services/identity-rekey-service.ts   [open PR #224]
+  apps/presets-api/src/services/moderation-retention-service.ts   [open PR #224]
+  apps/presets-api/src/services/moderation-service.ts   [open PR #224]
+  apps/presets-api/src/services/notification-service.ts   [open PR #224]
+  apps/presets-api/src/services/preset-service.ts   [open PR #224]
+  apps/presets-api/src/services/preview-image-service.ts
+  apps/presets-api/src/services/rate-limit-service.ts   [open PR #224]
+  apps/presets-api/src/services/validation-service.ts   [open PR #224]
+  apps/presets-api/src/types.ts   [open PR #224]
+  apps/presets-api/src/utils/env-validation.ts   [open PR #224]
+
+## apps/stoat-worker (3)
+  apps/stoat-worker/src/commands/ping.ts
+  apps/stoat-worker/src/services/response-formatter.ts   [open PR #234]
+  apps/stoat-worker/src/test-utils/revolt-mocks.ts
+
+## apps/web-app (53)
+  apps/web-app/scripts/check-beta-build.js
+  apps/web-app/scripts/check-bundle-size.js
+  apps/web-app/scripts/i18n-parity.mjs
+  apps/web-app/scripts/smoke-test-pages.js
+  apps/web-app/src/components/about-modal.ts
+  apps/web-app/src/components/add-to-collection-menu.ts
+  apps/web-app/src/components/base-component.ts
+  apps/web-app/src/components/budget-tool.ts
+  apps/web-app/src/components/changelog-modal.ts
+  apps/web-app/src/components/chara-file-card.ts   [open PR #223]
+  apps/web-app/src/components/chara-sheet.ts
+  apps/web-app/src/components/chara-ui.ts
+  apps/web-app/src/components/collection-manager-modal.ts
+  apps/web-app/src/components/dye-selector.ts
+  apps/web-app/src/components/extractor-tool.ts
+  apps/web-app/src/components/glamour-block.ts
+  apps/web-app/src/components/glamour-list-actions.ts
+  apps/web-app/src/components/glamour-sheet.ts
+  apps/web-app/src/components/glamour-tool.ts   [open PR #223]
+  apps/web-app/src/components/glamour-twin-picker.ts
+  apps/web-app/src/components/gradient-tool.ts
+  apps/web-app/src/components/harmony-tool.ts
+  apps/web-app/src/components/image-zoom-controller.ts
+  apps/web-app/src/components/market-board.ts
+  apps/web-app/src/components/mixer-tool.ts
+  apps/web-app/src/components/preset-edit-form.ts
+  apps/web-app/src/components/shortcuts-panel.ts
+  apps/web-app/src/components/swatch-tool.ts
+  apps/web-app/src/components/v4-layout.ts
+  apps/web-app/src/components/v4/config-sidebar.ts
+  apps/web-app/src/components/v4/preset-detail.ts
+  apps/web-app/src/components/v4/preset-tool.ts
+  apps/web-app/src/components/v4/result-card.ts
+  apps/web-app/src/components/v4/v4-app-header.ts
+  apps/web-app/src/components/v4/v4-layout-shell.ts
+  apps/web-app/src/services/auth-service.ts
+  apps/web-app/src/services/chara-file-loader.ts
+  apps/web-app/src/services/chara-resolve-service.ts
+  apps/web-app/src/services/chara-session-service.ts
+  apps/web-app/src/services/collection-service.ts
+  apps/web-app/src/services/config-controller.ts
+  apps/web-app/src/services/keyboard-service.ts
+  apps/web-app/src/services/modal-service.ts
+  apps/web-app/src/services/router-service.ts
+  apps/web-app/src/services/share-service.ts
+  apps/web-app/src/shared/acquisition-edits.ts
+  apps/web-app/src/shared/beta-branding.ts
+  apps/web-app/src/shared/example-link.ts   [open PR #223]
+  apps/web-app/src/shared/glamour-markdown.ts
+  apps/web-app/src/shared/tool-config-types.ts
+  apps/web-app/src/shared/tool-handoff.ts
+  apps/web-app/src/shared/tool-icons.ts
+  apps/web-app/src/vite-env.d.ts
+
+## packages/bot-logic (8)
+  packages/bot-logic/src/commands/chara-identity.ts
+  packages/bot-logic/src/commands/dye-info.ts
+  packages/bot-logic/src/commands/glamour.ts
+  packages/bot-logic/src/commands/swatch.ts
+  packages/bot-logic/src/i18n/translator.ts
+  packages/bot-logic/src/index.ts
+  packages/bot-logic/src/input-resolution.ts
+  packages/bot-logic/src/localization.ts
+
+## packages/core (18)
+  packages/core/scripts/build-character-colors.ts
+  packages/core/scripts/build-locales.ts
+  packages/core/src/index.ts
+  packages/core/src/services/CharacterColorService.ts
+  packages/core/src/services/DyeService.ts
+  packages/core/src/services/LocalizationService.ts
+  packages/core/src/services/chara/chara-game-rules.ts
+  packages/core/src/services/chara/chara-gposers.ts
+  packages/core/src/services/chara/chara-parser.ts
+  packages/core/src/services/chara/chara-resolver.ts
+  packages/core/src/services/chara/chara-shader-colors.ts
+  packages/core/src/services/chara/chara-twins.ts
+  packages/core/src/services/color/ColorConverter.ts
+  packages/core/src/services/dye/DyeDatabase.ts
+  packages/core/src/services/localization/LocaleLoader.ts
+  packages/core/src/services/localization/LocaleRegistry.ts
+  packages/core/src/services/localization/TranslationProvider.ts
+  packages/core/src/utils/index.ts
+
+## packages/logger (1)
+  packages/logger/src/presets/browser.ts
+
+## packages/svg (4)
+  packages/svg/src/glamour-card.ts
+  packages/svg/src/icons/tool-icons.ts
+  packages/svg/src/index.ts
+  packages/svg/src/swatch-card.ts
+
+## packages/test-utils (2)
+  packages/test-utils/src/factories/dye.ts
+  packages/test-utils/src/factories/index.ts
+
+## packages/worker-kit (7)
+  packages/worker-kit/src/body-guards/body-guards.ts
+  packages/worker-kit/src/body-guards/index.ts
+  packages/worker-kit/src/body-guards/structure.ts
+  packages/worker-kit/src/body-guards/types.ts
+  packages/worker-kit/src/image-sniff/detect.ts
+  packages/worker-kit/src/image-sniff/index.ts
+  packages/worker-kit/src/index.ts
+
+## root (1)
+  scripts/check-worker-logs.ts   [open PR #233]

@@ -1,0 +1,2 @@
+$ tsx scripts/check-doc-links.ts
+  checked 957 relative links across 249 documents — all resolve

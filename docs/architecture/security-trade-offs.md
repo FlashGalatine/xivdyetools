@@ -143,6 +143,10 @@ For a dye color tool, availability is more important than strict rate limiting.
    fail-open event there now produces **two** log lines (the backend's raw `console.warn` plus the
    worker's own structured one), which is accepted deliberately rather than treated as noise to
    suppress: visibility must not depend on whether a logger happened to be configured.
+   The exception is api-worker's Universalis proxy (FINDING-011, 0.16.1). It builds its backend per
+   request with the request-scoped logger, which carries no stale request id, and does not read
+   `backendError`, so a fail-open there logs once, through the structured logger, with `keyScope`
+   `universalis:ip` / `universalis:svc`.
 3. **Circuit breaker ready**: Architecture supports adding circuit breaker if needed.
 
 **Known gap, not closed by 1.2.0:** `rateLimitMiddleware`'s own fail-open handling — its caught

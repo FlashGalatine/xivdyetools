@@ -1,0 +1,52 @@
+diff --git a/apps/web-app/PRIVACY.de.md b/apps/web-app/PRIVACY.de.md
+index c8edd28b..35afe3fd 100644
+--- a/apps/web-app/PRIVACY.de.md
++++ b/apps/web-app/PRIVACY.de.md
+@@ -3,9 +3,10 @@
+ > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
+
+-**Zuletzt aktualisiert:** 2026-09-20 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
++**Zuletzt aktualisiert:** 2026-09-28 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+ Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
+
+ XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
+-Vergleich, Verlauf, Mixer, Barrierefreiheitsprüfung, Budget-Finder und Farbmuster-Matcher — erledigen
++Vergleich, Verlauf, Mixer, Barrierefreiheitsprüfung, Budget-Finder, Farbmuster-Matcher und
++Projektionsleser — erledigen
+ ihre Arbeit auf deinem Gerät. Nichts, was du hochlädst, auswählst oder eingibst, wird irgendwohin
+ gesendet, sofern nicht ein Abschnitt unten das Gegenteil sagt — und die Abschnitte unten sind die
+@@ -36,8 +37,11 @@ vollständige Liste.
+   hochgeladen, und der Community-Pfad oben liest ihn nie. Benenne den Eintrag um, lösche ihn, oder
+   lösche deine Website-Daten, und er ist verschwunden.
+-- Um die Ausrüstung auf dem Projektionsblock zu benennen, fragt die App unsere API nach dem Gegenstand
++- Um die Ausrüstung im Projektionsleser zu benennen, fragt die App unsere API nach dem Gegenstand
+   hinter jedem Slot. Die Anfrage enthält nur die **Modellnummern** der Ausrüstung aus der Datei
+-  (ein Dutzend kleiner Ganzzahlen pro Datei) — nicht die Datei, nicht den Namen, nicht die Farben —
+-  und die Gegenstandssymbole kommen vom selben Host zurück (`data.xivdyetools.app`).
++  und die ID ihres Gesichtsaccessoires (ein Dutzend kleiner Ganzzahlen pro Datei) — nicht die
++  Datei, nicht den Namen, nicht die Farben, nicht die Farbstoffe. Unsere API schlägt diese Nummern
++  bei [XIVAPI](https://xivapi.com/) nach, einem Community-Dienst für Spieldaten, der die Nummern
++  erhält und nichts über dich. Die Gegenstandsnamen, die Bezugsquelle jedes Gegenstands und die
++  Gegenstandssymbole kommen vom selben Host zurück (`data.xivdyetools.app`).
+
+ ## Was auf deinem Gerät gespeichert wird
+@@ -45,8 +49,10 @@ vollständige Liste.
+ `localStorage` enthält leichtgewichtige Einstellungen und deine eigene gespeicherte Arbeit: Design,
+ Sprache, Einstellungen pro Werkzeug (einschließlich des Analyse-Schalters unten), favorisierte
+-Farbstoffe, gespeicherte Paletten und Sammlungen sowie — wenn du dich anmeldest — dein
++Farbstoffe, gespeicherte Paletten und Sammlungen, Bezugsquellen, die du in der "Ausrüstungsliste"
++des Projektionslesers umgeschrieben hast, sowie — wenn du dich anmeldest — dein
+ Sitzungs-Token für die Community-Presets. Nichts davon ist ein Tracking-Identifikator.
+ "Einstellungen zurücksetzen" in den Erweiterten Einstellungen sowie die Website-Daten-Steuerung
+-deines Browsers löschen es.
++deines Browsers löschen es. "Alles zurücksetzen" in der Ausrüstungsliste löscht die
++umgeschriebenen Zeilen dieses Outfits.
+
+ `IndexedDB` enthält genau eine Sache: einen Cache bereits abgerufener Marktbrett-Preise, damit
+@@ -88,5 +94,5 @@ Drittanbietern und keine Cookies.
+ Getrennt von der obigen Liste **navigieren** dich manche Schaltflächen zu einer
+ Community-Datenbank, statt im Hintergrund etwas abzurufen. Das Menü "Öffnen in…" des
+-Farbmuster-Matchers bei einem Projektionsteil öffnet [Mirapri](https://mirapri.com/),
++Projektionslesers bei einem Projektionsteil öffnet [Mirapri](https://mirapri.com/),
+ [Garland Tools](https://www.garlandtools.org/), [Teamcraft](https://ffxivteamcraft.com/),
+ [Gamer Escape](https://ffxiv.gamerescape.com/) oder das Lodestone; eine Farbstoff-Ergebniskarte

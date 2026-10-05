@@ -240,4 +240,24 @@ describe('wrangler.toml', () => {
       productionName,
     );
   });
+
+  /**
+   * FINDING-022 (2026-10-03 security audit): both privacy policies promise
+   * persistent Workers Logs are off on every worker. `observability` is an
+   * inheritable key, but it is pinned explicitly in both blocks. The "on"
+   * check is deliberately UNANCHORED so inline tables, subtables and dotted
+   * keys cannot slip past it (an anchored check missed those in Sprint 9).
+   * Tail consumers and logpush are the other two ways to persist logs.
+   */
+  it('pins Workers Logs off in both blocks (FINDING-022)', () => {
+    expect(toml).toMatch(/^\[observability\]\nenabled = false$/m);
+    expect(toml).toMatch(/^\[env\.production\.observability\]\nenabled = false$/m);
+  });
+
+  it('never turns logging on, by any spelling, and has no logpush or tail consumers (FINDING-022)', () => {
+    expect(toml).not.toMatch(/\benabled\s*=\s*true\b/);
+    expect(toml).not.toMatch(/\blogpush\s*=\s*true\b/);
+    expect(toml).not.toMatch(/^\s*\[\[(?:env\.\w+\.)?tail_consumers\]\]/m);
+    expect(toml).not.toMatch(/\btail_consumers\s*=\s*\[\s*[^\s\]]/);
+  });
 });

@@ -44,7 +44,7 @@ Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` b
 | `BOT_SIGNING_SECRET` | discord-worker, moderation-worker, presets-api | shared HMAC key (≥ 32 chars; required in prod) | Quarterly / on compromise |
 | `INTERNAL_WEBHOOK_SECRET` | presets-api → discord-worker (`/webhooks/preset-submission`) | shared HMAC key | Quarterly / on compromise |
 | `DISCORD_TOKEN` | discord-worker (main bot) | Discord bot token | On compromise |
-| `DISCORD_TOKEN` | moderation-worker (moderation bot); the same value is the GitHub secret `MODERATION_DISCORD_TOKEN` (register-commands step) | Discord bot token | On compromise — **three holders move together** (this, `MODERATION_BOT_TOKEN`, the GitHub secret); reset 2026-08-29 |
+| `DISCORD_TOKEN` | moderation-worker (moderation bot); the same value is the `production` environment secret `MODERATION_DISCORD_TOKEN` (register-commands step) | Discord bot token | On compromise — **three holders move together** (this, `MODERATION_BOT_TOKEN`, the environment secret); reset 2026-08-29 |
 | `MODERATION_BOT_TOKEN` | discord-worker (same token as moderation-worker's `DISCORD_TOKEN`) | Discord bot token | Together with the moderation bot token |
 | `DISCORD_PUBLIC_KEY` | discord-worker, moderation-worker | Ed25519 public key (per Discord app) | Only if the app is recreated |
 | `DISCORD_CLIENT_SECRET` | oauth | Discord OAuth2 secret | On compromise |
@@ -59,16 +59,18 @@ Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` b
 | `OWNER_DISCORD_ID`, `DISCORD_BOT_TOKEN`, `MODERATION_WEBHOOK_URL`, `DISCORD_BOT_WEBHOOK_URL` | presets-api — **no longer read by any code** (the `notifyModerators` path was deleted 2026-09-01, dead-code audit DEAD-009) | — | **Delete, not rotate**, from `apps/presets-api`: `wrangler secret delete <NAME> --env production` |
 | `BOT_TOKEN` | stoat-worker (Node `.env`, parked) | Revolt bot token | On compromise |
 
-### GitHub Actions secrets (repository settings → Secrets)
+### GitHub Actions secrets (repository settings → Secrets; Cloudflare and Discord tokens live under Environments; `CLOUDFLARE_ACCOUNT_ID` stays a repository secret)
+
+The Discord tokens below **must be environment secrets** (`production` for the main and moderation bots, `beta` for the beta bot), not repository secrets: a repository secret is readable by any workflow run regardless of its `environment:`, whereas an environment secret follows that environment's branch policy (`main` only for `production`) (2026-10-03 security audit FINDING-023, same class as FINDING-028). The maintainer makes the move (create the environment secrets, then delete the repository copies) before the PR that documents it merges; `OPEN_ITEMS.md` tracks it. Every job that reads them already declares the matching `environment:`.
 
 | Secret | Used by | Rotation |
 |---|---|---|
 | `CLOUDFLARE_API_TOKEN` | every **production** deploy workflow (`environment: production`, `cloudflare/wrangler-action`) — account-wide token. Homed as an **environment secret on `production`** (verified 2026-09-05 via `gh api …/environments/production/secrets`); no repository-level copy remains — FINDING-028 closed. Scope narrowing (FINDING-030) is still open in `OPEN_ITEMS.md` §1 | Quarterly / on compromise; the real minimum is Account: **Workers Scripts: Edit + Cloudflare Pages: Edit** (this account only) and Zone: **Workers Routes: Edit** on `xivdyetools.app` — the routed workers reconcile their routes on every deploy. KV/D1/R2 Edit is what FINDING-030 asks you to *drop* if the live token still carries it |
 | `CLOUDFLARE_API_TOKEN_BETA` | the three beta deploy workflows (`deploy-discord-worker-beta.yml`, `deploy-og-worker-beta.yml`, `deploy-web-app-beta.yml`) — `environment: beta`, `cloudflare/wrangler-action`. Exists as an environment secret on `beta` (verified 2026-09-05; the beta deploys have been green since); there is deliberately no fallback to the production token | Quarterly / on compromise, same cadence as `CLOUDFLARE_API_TOKEN`; mint at the real minimum — Account: Workers Scripts + Pages Edit (this account only); Zone: Workers Routes Edit on `xivdyetools.app` (og-worker's beta routes need it). Cloudflare tokens can't be scoped below Account/Zone, so this is **not** narrower than production's own grants — see §7 |
 | `CLOUDFLARE_ACCOUNT_ID` | every deploy workflow | not secret (account id) — shared between beta and production on purpose, since both live in the one Cloudflare account |
-| `DISCORD_TOKEN` | `deploy-discord-worker.yml` register-commands step (main bot) | together with the worker secret |
-| `MODERATION_DISCORD_TOKEN` | `deploy-moderation-worker.yml` register-commands step (moderation bot, added 2026-08-29) | together with moderation-worker's `DISCORD_TOKEN` and discord-worker's `MODERATION_BOT_TOKEN` |
-| `BETA_DISCORD_TOKEN`, `BETA_DISCORD_GUILD_ID` | `deploy-discord-worker-beta.yml` (optional) | with the beta bot token |
+| `DISCORD_TOKEN` (`production` environment) | `deploy-discord-worker.yml` register-commands step and `sync-dye-emojis.yml` (main bot) | together with the worker secret |
+| `MODERATION_DISCORD_TOKEN` (`production` environment) | `deploy-moderation-worker.yml` register-commands step (moderation bot, added 2026-08-29) | together with moderation-worker's `DISCORD_TOKEN` and discord-worker's `MODERATION_BOT_TOKEN` |
+| `BETA_DISCORD_TOKEN`, `BETA_DISCORD_GUILD_ID` (`beta` environment) | `deploy-discord-worker-beta.yml` (optional) | with the beta bot token |
 
 npm publishing uses **OIDC trusted publishing** — there is no npm token to rotate.
 
@@ -133,9 +135,9 @@ Verify: submit a preset from the web app; the moderation embed must appear (othe
 
 Discord Developer Portal → application → **Bot** → *Reset Token* (copy immediately).
 
-- **Main bot** (`1447108133020369048`): `pnpm --filter xivdyetools-discord-worker exec wrangler secret put DISCORD_TOKEN --env production`, then update the GitHub secret `DISCORD_TOKEN` (register-commands in CI).
-- **Moderation bot** (`1453806659708129374`): `pnpm --filter xivdyetools-moderation-worker exec wrangler secret put DISCORD_TOKEN --env production` **and** `pnpm --filter xivdyetools-discord-worker exec wrangler secret put MODERATION_BOT_TOKEN --env production` (discord-worker posts the moderation embeds with it), then update the GitHub secret `MODERATION_DISCORD_TOKEN` (register-commands in `deploy-moderation-worker.yml`, since 2026-08-29). Three holders — a reset that updates only one leaves the other two answering 401.
-- **Beta bot** (`1536085517270261771`): bare `wrangler secret put DISCORD_TOKEN` on discord-worker (top-level = beta) + GitHub secret `BETA_DISCORD_TOKEN`.
+- **Main bot** (`1447108133020369048`): `pnpm --filter xivdyetools-discord-worker exec wrangler secret put DISCORD_TOKEN --env production`, then update the `production` environment secret `DISCORD_TOKEN` (register-commands in CI).
+- **Moderation bot** (`1453806659708129374`): `pnpm --filter xivdyetools-moderation-worker exec wrangler secret put DISCORD_TOKEN --env production` **and** `pnpm --filter xivdyetools-discord-worker exec wrangler secret put MODERATION_BOT_TOKEN --env production` (discord-worker posts the moderation embeds with it), then update the `production` environment secret `MODERATION_DISCORD_TOKEN` (register-commands in `deploy-moderation-worker.yml`, since 2026-08-29). Three holders — a reset that updates only one leaves the other two answering 401.
+- **Beta bot** (`1536085517270261771`): bare `wrangler secret put DISCORD_TOKEN` on discord-worker (top-level = beta) + the `beta` environment secret `BETA_DISCORD_TOKEN`.
 
 Verify: bot shows online; `/dye search red`; a moderation embed posts to the moderation channel.
 
@@ -188,3 +190,4 @@ Set on the listed consumers with `--env production`; no ordering constraints. Fo
 | 2026-08-21 | `CACHE_PURGE_API_TOKEN` | maintainer | created (not rotated) — purge-only token on the `xivdyetools.app` zone, set on the **production** presets-api worker (`--env production`) for FINDING-018; `CACHE_PURGE_ZONE_ID` shipped as a `wrangler.toml` var the same day |
 | 2026-08-29 | moderation bot token (`DISCORD_TOKEN` on moderation-worker, `MODERATION_BOT_TOKEN` on discord-worker, GitHub `MODERATION_DISCORD_TOKEN`) | maintainer | reset in the Developer Portal so the new *Register Discord commands* CI step could get a value it never had; all three holders updated the same day — GitHub secret first, then both production worker secrets (`--env production`, per §4). Between the reset and the worker updates, moderation channel posts / embed edits answered 401 — next time set the worker secrets in the same sitting |
 | 2026-08-29 | `GITHUB_WEBHOOK_SECRET` (discord-worker, production) | maintainer's session | regenerated (64 hex) and set on the worker in the same step that created GitHub webhook `671693119` → `https://bot.xivdyetools.app/webhooks/github` — the first hook ever pointed at that route, so the previous value had no consumer to break; creation ping answered 200 |
+| 2026-10-03 | `INTERNAL_WEBHOOK_SECRET` (presets-api → discord-worker, production) | maintainer | regenerated (64 hex, per §3) and set on both production workers in one PowerShell line — discord-worker first, then presets-api — ahead of discord-worker 5.7.2, which refuses a production webhook secret under 32 characters (2026-10-03 security audit, FINDING-027). The old value could not be read back to check its length, so rotating was the check; nobody holds a copy of the new one. |

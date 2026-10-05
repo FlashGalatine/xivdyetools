@@ -13,7 +13,8 @@
     "dead-code:check": "tsx scripts/check-dead-code.ts",
     "docs:check-versions": "tsx scripts/check-doc-versions.ts",
     "docs:check-links": "tsx scripts/check-doc-links.ts",
-    "test:scripts": "tsx --test scripts/check-dead-code.test.ts scripts/knip-config.test.ts scripts/check-doc-versions.test.ts scripts/check-doc-links.test.ts",
+    "workers:check-logs": "tsx scripts/check-worker-logs.ts",
+    "test:scripts": "tsx --test scripts/check-dead-code.test.ts scripts/knip-config.test.ts scripts/check-doc-versions.test.ts scripts/check-doc-links.test.ts scripts/check-worker-logs.test.ts",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\"",
     "clean": "turbo run clean"

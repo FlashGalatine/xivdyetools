@@ -300,7 +300,7 @@ requires never be cached, and the callback bounces carry an authorization code.
 
 ## CORS
 
-**Allowed origins:** `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`, transitional `https://xivdyetools.projectgalatine.com`) + `FRONTEND_URL`; in `ENVIRONMENT=development` also localhost / 127.0.0.1 on ports 3000, 5173, 8787
+**Allowed origins:** `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app`, `https://beta.xivdyetools.app`) + `FRONTEND_URL`; in `ENVIRONMENT=development` also localhost / 127.0.0.1 on ports 3000, 5173, 8787
 
 **Methods:** GET, POST, OPTIONS
 

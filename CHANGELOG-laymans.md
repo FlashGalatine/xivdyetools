@@ -37,6 +37,34 @@ Rules:
 - Web app and link previews: four Chinese clan names now match the game's Chinese client: Helions, The Lost, Rava and Veena.
 - Discord bot: when a `/glamour` card names the race a piece is made for, Korean now uses the game's own race names, for example 로스가르 for Hrothgar.
 
+## [5.10.4] - 2026-10-04
+### 📜 Privacy Guide: community presets and deleting your data
+- Web app: the Privacy Guide has a new section on community presets. It lists what we keep when you sign in to share presets, and for how long.
+- Web app: that includes daily-limit counts, moderation records and the posts our moderators see in our Discord server. New posts there don't show your Discord user ID.
+- Web app: a new section explains how to delete your data. Delete a preset or a vote yourself, or ask us privately by email or Discord DM. We handle requests within 30 days.
+- Web app: the guide is updated in all six languages. Find it under About.
+
+## [5.10.3] - 2026-10-04
+### 📜 Discord bot Privacy Policy updated
+- Discord bot: the Privacy Policy now covers moderation records. If a moderator bans someone from community presets, a ban record and a moderation log are kept, and the policy says what they hold.
+- Discord bot: a lifted ban's name and reason are cleared at once and the record is deleted 90 days later. Ban log entries are kept for 12 months.
+- Discord bot: presets that need review are posted to a private moderation channel in our Discord server, and published presets to a private log channel. New posts don't show your Discord user ID, and a deletion request removes the posts about you.
+- Discord bot: the policy now says which name is shown on your presets: your Discord display name, or your verified character's name if you signed in on the web app with XIVAuth. The policy is updated in all six languages.
+### 🛡️ Moderation
+- Discord bot: moderators' approve, reject and revert buttons now act only on the version of a preset they saw. A preset that changed since then is shown again for review.
+
+## [5.10.2] - 2026-10-04
+### 📜 Privacy Guide and Terms of Service corrected
+- Web app: a preview image you attach to a community preset is uploaded and shown once a moderator approves it. The Privacy Guide now says so. Images in the color tools still never leave your device.
+- Web app: signing in with XIVAuth keeps your verified character's name as your author name, and a linked Discord ID if you have one. The sign-in note no longer says "No character data".
+- Web app: the Privacy Guide now describes "Reset Settings" correctly and lists the example links community presets can carry. Both documents are updated in all six languages.
+### 🪞 Glamour Reader
+- Web app: the character-file card now says what the Glamour Reader sends to name your gear: the equipment model numbers and the facewear ID, nothing else.
+### 🤖 Discord bot
+- /preferences reset now also clears a language or home world saved by older versions of the bot, so a setting you reset no longer comes back.
+### 🔒 Behind the scenes
+- Web app and Discord bot: security and privacy improvements from our latest review.
+
 ## [5.10.1] - 2026-09-28
 ### 📜 Privacy Policy and Terms of Service updated
 - Web app and Discord bot: the Privacy Policy and Terms of Service now cover the Glamour Reader and the `/glamour` command. They were written before both arrived.
