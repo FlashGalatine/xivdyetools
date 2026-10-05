@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](TERMS_OF_SERVICE.md)
 
-**最后更新：** 2026-09-28 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
+**最后更新：** 2026-10-05 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
 
 XIV Dye Tools 是一款为《最终幻想 XIV》制作的免费同人染剂工具集。它与 Square Enix 没有从属关系，也未获得其认可或赞助。使用本网站即表示您同意以下内容。如果您不同意，请不要使用它——离开这里对您没有任何代价。
 
@@ -17,7 +17,7 @@ XIV Dye Tools 是一款为《最终幻想 XIV》制作的免费同人染剂工�
 使用颜色工具永远不需要账户。只有提交、编辑或投票社区预设时才需要账户。
 
 - 登录通过 Discord 或 XIVAuth 进行。我们永远不会看到或存储密码。
-- 登录会创建一条账户记录，保存您的提供商 ID 和用户名。您的用户名会以作者身份显示在您发布的预设上。
+- 登录会创建一条账户记录，保存您的提供商 ID 和一个名称。使用 Discord 登录时，该名称是您的显示名称。使用 XIVAuth 登录时，该名称是您已验证角色的名称，如果登录时没有可用的已验证角色，则为“XIVAuth User”后接您的 XIVAuth ID 的前 8 个字符，详见隐私指南。如果您的 XIVAuth 账户已关联 Discord，该记录还会保存那个 Discord 用户 ID。该记录中的名称会显示为您发布的每个预设的作者。
 - 您的会话是保存在浏览器中的一个令牌。清除浏览器的网站数据即可登出。
 - 您的账户下发生的事情由您本人负责。如果您认为有其他人访问了您的账户，请到您的登录提供商处撤销本应用的访问权限，并告知我们。
 - 我们可能会暂停或移除违反这些条款的账户。
@@ -69,6 +69,7 @@ XIV Dye Tools 是一款为《最终幻想 XIV》制作的免费同人染剂工�
 - **XIVAPI** 提供 `.chara` 文件中装备对应的物品名称。
 - **Discord** 和 **XIVAuth** 负责登录；Discord 也承载我们的社区服务器。
 - 幻化部件上的**物品链接**会在 Garland Tools、FFXIV Teamcraft、Gamer Escape、Mirapri 或 Lodestone 上打开该物品；染剂卡片上的链接会打开 Universalis、Garland Tools、FFXIV Teamcraft 或 Saddlebag Exchange。
+- 社区预设的**示例链接**由该预设的作者选择，而不是由我们选择。它指向第三方网站上的页面，例如 Eorzea Collection、Reddit 或 pixiv。
 
 一旦您点击了这些链接中的任意一个，您就处于别人的网站上，受他们自己的条款和隐私政策约束。我们不控制这些网站，也不对它们负责。
 

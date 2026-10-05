@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-09-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-10-05 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
@@ -13,12 +13,17 @@ and the sections below are the complete list.
 
 ## Images and camera captures
 
-- Uploaded, pasted, dragged-in and camera-captured images never leave your device, and are never
-  written to browser storage. They are read with the browser's Canvas API, held in the page's memory
-  for that session only, and discarded when you clear the image, close the tab or reload.
+- In the colour tools, uploaded, pasted, dragged-in and camera-captured images never leave your
+  device, and are never written to browser storage. They are read with the browser's Canvas API,
+  held in the page's memory for that session only, and discarded when you clear the image, close the
+  tab or reload.
 - The Palette Extractor says the same thing where you pick a file — "Images are read in your
   browser and never uploaded", beside a padlock. That notice is plain text, not a link; this
   document is reached from **About → Privacy**.
+- **One exception, and only if you choose it.** When you submit or edit a community preset, you
+  can attach an optional **preview image** to it. That image is uploaded to `api.xivdyetools.app`,
+  converted to WebP, stored with the preset, and shown publicly from `shots.xivdyetools.app` once a
+  moderator approves it. Item 3 under Network access below says how to remove it.
 
 ## Character files (`.chara`)
 
@@ -44,9 +49,16 @@ and the sections below are the complete list.
 `localStorage` holds lightweight preferences and your own saved work: theme, language, per-tool
 settings (including the analytics switch below), favourite dyes, saved palettes and collections,
 any Acquisition lines you rewrote in the Glamour Reader's "Glamour list", and — if you sign in —
-your community-presets session token. Nothing here is a tracking identifier. "Reset settings" in
-Advanced Settings and your browser's site-data controls clear it. "Reset all" in the Glamour list
-deletes the rewritten lines for that outfit.
+your community-presets session token. Nothing here is a tracking identifier. Your browser's
+site-data controls clear all of it. Inside the app, each of these clears one part:
+
+- **Advanced Settings → Reset Settings** puts every tool's settings back to their defaults. It
+  does not delete your saved work.
+- **Advanced Settings → Clear Favorites** deletes your favourite dyes.
+- **Advanced Settings → Clear Saved Palettes** deletes your saved palettes.
+- **Manage Collections → Delete Collection** deletes one saved collection.
+- Signing out deletes the session token.
+- "Reset all" in the Glamour list deletes the rewritten lines for that outfit.
 
 `IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
 not repeated. It holds no images — an earlier version of the app kept your last extractor image
@@ -63,10 +75,17 @@ else) plus the third parties named below:
    [Universalis](https://universalis.app).
 2. **Gear names and icons for `.chara` imports** — `data.xivdyetools.app` (see above).
 3. **Community presets** (`api.xivdyetools.app`): browsing sends nothing about you. Signing in
-   through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record — your
-   provider ID and username — right away, whether or not you go on to submit or vote. Presets and
-   votes you submit are stored under that account, and the author name is shown on published
-   presets. When you submit or edit a preset, its name and description may also be sent to
+   through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record right away,
+   whether or not you go on to submit or vote. With Discord, the record holds your Discord user ID
+   and your display name (your username if you have no display name). With XIVAuth, the record
+   holds your XIVAuth ID and the name of your verified character. If none is available when you
+   sign in, the name is "XIVAuth User" followed by the first 8 characters of your XIVAuth ID. If
+   your XIVAuth account is linked to Discord, the record also holds that Discord user ID. The name
+   in the record is shown as the author of every preset you publish. Presets and votes you submit
+   are stored under that account. A preset holds what you
+   enter in the form, plus the optional preview image described under Images above. To remove a
+   preview image, use the preset's edit form; deleting a preset from **My Submissions** deletes its
+   preview image too. When you submit or edit a preset, its name and description may also be sent to
    Google's [Perspective API](https://perspectiveapi.com/) for a moderation score (optional —
    content moderation only); the request tells Google not to store them (`doNotStore`), and
    nothing else — no account identity — is sent there. To have your account record and
@@ -93,6 +112,12 @@ What travels in those links is the game's own item — its numeric item id, or t
 language that site uses. Nothing about you, your palette, your character or your session is in the
 URL. They open in a new tab with the referrer suppressed, so the site you land on is not told which
 page you came from. Once you are there you are on someone else's site, under their privacy policy.
+
+A community preset can also carry an **example link**, which the preset's author chose. It points to
+a page on one of these sites: Eorzea Collection, Mirapri, Reddit, X, Bluesky, Instagram, pixiv,
+Misskey, or the official Final Fantasy XIV site, which includes the Lodestone. The app shows no
+example link to any other site. The link is the author's, and it carries nothing about you. It
+opens the same way: in a new tab, with the referrer suppressed.
 
 ## Usage analytics (opt-in)
 
@@ -156,7 +181,8 @@ by Cloudflare, and here is the whole of what we do with it.
 1. Open DevTools → Network, enable "Preserve log".
 2. Use any tool with an image or a `.chara` file.
 3. You will see no image upload — only the requests listed above, and `/v1/telemetry` beacons only
-   if you switched analytics on.
+   if you switched analytics on. The one image upload the app ever makes is a preset preview image
+   that you attach yourself (see Images above).
 
 ## Questions?
 

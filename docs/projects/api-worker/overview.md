@@ -10,7 +10,7 @@ A Cloudflare Worker deployed at `data.xivdyetools.app` that exposes the XIV Dye 
 
 Since Monorepo 2.0 (2026-07-31) the same worker also owns two surfaces absorbed from retired apps:
 
-- the **Universalis market-board proxy** (`/universalis/*` on `data.xivdyetools.app`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` / `proxy.xivdyetools.projectgalatine.com` and discord-worker's `UNIVERSALIS_PROXY` service binding) — from `apps/universalis-proxy`;
+- the **Universalis market-board proxy** (`/universalis/*` on `data.xivdyetools.app`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` and discord-worker's `UNIVERSALIS_PROXY` service binding) — from `apps/universalis-proxy`;
 - the **developer documentation site** at `developers.xivdyetools.app` (VitePress in `apps/api-worker/docs/`, shipped as Workers Static Assets in the production env) — from `apps/api-docs`.
 
 ---
@@ -48,7 +48,7 @@ pnpm --filter xivdyetools-api-worker run deploy:production    # production (run 
 Request → (developers.* host? → static docs ASSETS) → Request ID → Logger → Security Headers → CORS → Rate Limit (/v1/*) → Locale (/v1/*) → Route Handler
 ```
 
-`/universalis/*` and `/api/v2/*` sit outside `/v1/*` — no KV rate limiter, no locale middleware, and their responses are raw Universalis bodies rather than the `{ success, data, meta }` envelope.
+`/universalis/*` and `/api/v2/*` sit outside `/v1/*` — no `/v1` rate limiter, no locale middleware, and their responses are raw Universalis bodies rather than the `{ success, data, meta }` envelope.
 
 Unlike the presets-api (authenticated, restricted CORS), this API is fully anonymous with `Access-Control-Allow-Origin: *`.
 
@@ -59,7 +59,7 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 | Subdomain | `data.xivdyetools.app` | Separate from `api.xivdyetools.app` (presets-api) due to opposite security postures |
 | Auth | Anonymous | Public read-only data, no user state |
 | CORS | `origin: *` | Must be callable from any browser, plugin, or bot |
-| Rate Limiting | 60 req/min per IP + 5 burst on `/v1/*` | The native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`, per-colo counters), fail-open; `RATE_LIMIT` KV is the fallback when the binding is absent. `POST /v1/telemetry` has its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s) that fails **closed**. The proxy's `/aggregated` route has its own per-isolate memory limiter (30/min in production) |
+| Rate Limiting | 60 req/min per IP + 5 burst on `/v1/*` | The native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`, per-colo counters), fail-open; `RATE_LIMIT` KV is the fallback when the binding is absent. `POST /v1/telemetry` has its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s) that fails **closed**. The proxy's `/aggregated` route has its own cache-miss limiter on the native `UNIVERSALIS_RATE_LIMITER` binding (30 / 60 s per IP in production, KV fallback) and `UNIVERSALIS_SERVICE_RATE_LIMITER` (600 / 60 s) for the service-binding key (FINDING-011) |
 | Caching | `max-age=3600, s-maxage=86400` | Deterministic data, changes only with game patches |
 | Database | Bundled JSON | No D1 — the 125-dye database is part of the bundle via `@xivdyetools/core` |
 
@@ -124,7 +124,7 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 
 No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...`).
 
-Production routes (all custom domains): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app`. The top-level (bare `wrangler deploy`) env is the routeless `xivdyetools-api-worker-dev` worker — see [DEPLOY_ENVIRONMENTS.md](../../operations/DEPLOY_ENVIRONMENTS.md).
+Production routes (all custom domains): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app` (the retired `proxy.xivdyetools.projectgalatine.com` was removed in 0.16.1 — [DOMAIN_DEPRECATION.md](../../operations/DOMAIN_DEPRECATION.md)). The top-level (bare `wrangler deploy`) env is the routeless `xivdyetools-api-worker-dev` worker — see [DEPLOY_ENVIRONMENTS.md](../../operations/DEPLOY_ENVIRONMENTS.md).
 
 ---
 

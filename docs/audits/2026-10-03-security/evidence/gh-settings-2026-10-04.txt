@@ -1,0 +1,17 @@
+# GitHub settings re-read after the maintainer's Sprint 11 changes (read-only, 2026-10-04)
+## gh api repos/FlashGalatine/xivdyetools/environments/production/secrets --jq [.secrets[]|{name,updated_at}]
+[{"name":"CLOUDFLARE_API_TOKEN","updated_at":"2026-08-31T15:19:45Z"},{"name":"DISCORD_TOKEN","updated_at":"2026-10-04T22:12:10Z"},{"name":"MODERATION_DISCORD_TOKEN","updated_at":"2026-10-04T22:12:31Z"}]
+## gh api repos/FlashGalatine/xivdyetools/environments/beta/secrets --jq [.secrets[]|{name,updated_at}]
+[{"name":"BETA_DISCORD_GUILD_ID","updated_at":"2026-10-04T22:13:21Z"},{"name":"BETA_DISCORD_TOKEN","updated_at":"2026-10-04T22:12:58Z"},{"name":"CLOUDFLARE_API_TOKEN_BETA","updated_at":"2026-08-31T15:16:37Z"}]
+## gh api repos/FlashGalatine/xivdyetools/actions/secrets --jq [.secrets[].name]  (repository copies; deleted after the next production deploys use the environment copies)
+["BETA_DISCORD_GUILD_ID","BETA_DISCORD_TOKEN","CLOUDFLARE_ACCOUNT_ID","DISCORD_TOKEN","MODERATION_DISCORD_TOKEN"]
+## gh api repos/FlashGalatine/xivdyetools/branches/main/protection --jq {contexts:.required_status_checks.contexts,strict:.required_status_checks.strict,enforce_admins:.enforce_admins.enabled}
+{"contexts":["Lint, Type-check, Test, Build","Security audit (production dependencies)","E2E (Playwright, chromium)","Secret scan (gitleaks)"],"enforce_admins":false,"strict":false}
+## gh api repos/FlashGalatine/xivdyetools/actions/permissions
+{"enabled":true,"allowed_actions":"all","sha_pinning_required":true}
+## gh api repos/FlashGalatine/xivdyetools/vulnerability-alerts -i  (HTTP 204 = enabled)
+HTTP/2.0 204 No Content
+## gh api repos/FlashGalatine/xivdyetools/automated-security-fixes
+{"enabled":true,"paused":false}
+## gh api repos/FlashGalatine/xivdyetools/private-vulnerability-reporting   (not part of this audit; still off)
+{"enabled":false}

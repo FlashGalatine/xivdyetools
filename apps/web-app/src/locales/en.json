@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "Your name is shown on the card.",
     "providerDiscordNote": "Most players already have one",
     "providerXivauthNote": "Verifies your character",
-    "privacyNote": "Signing in creates an account record: your Discord or XIVAuth ID and username. Your display name appears on presets you submit. No character data, no email, nothing sold.",
+    "privacyNote": "Signing in creates an account record: your Discord or XIVAuth ID and a name, shown as the author of presets you submit. With XIVAuth, that name is your verified character's, or \"XIVAuth User\" plus the first 8 characters of your XIVAuth ID if none is available when you sign in. If your XIVAuth account is linked to Discord, that Discord ID is stored too. No email, nothing sold.",
     "submitTitle": "Submit a preset",
     "submitSub": "Reviewed before it appears",
     "previewLabel": "HOW IT WILL LOOK",
@@ -1202,6 +1202,7 @@
   },
   "swatch": {
     "charaHint": "Parsed on this device. Nothing is uploaded — the file holds a character name and sometimes a screenshot.",
+    "charaHintGlamour": "Parsed on this device. To name the gear, only its model numbers and the facewear ID are sent to our API. The character name and colors stay here.",
     "localOnly": "LOCAL ONLY",
     "replaceFile": "Load a different file",
     "dropTitle": "Drop a .chara file",
