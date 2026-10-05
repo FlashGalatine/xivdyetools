@@ -6,6 +6,10 @@
 /**
  * Allowed redirect URI origins
  * These origins are permitted as OAuth callback destinations
+ *
+ * FINDING-006 (2026-10-03 security audit): the retired
+ * xivdyetools.projectgalatine.com origin was removed (DOMAIN_DEPRECATION);
+ * that hostname no longer serves anything.
  */
 export const ALLOWED_REDIRECT_ORIGINS = [
   'https://xivdyetools.app',
@@ -14,7 +18,6 @@ export const ALLOWED_REDIRECT_ORIGINS = [
   // purpose, so testers log in with their real accounts.
   // See docs/superpowers/specs/2026-08-09-beta-web-app-deployment-design.md
   'https://beta.xivdyetools.app',
-  'https://xivdyetools.projectgalatine.com', // Transition period - remove after migration complete
   'http://localhost:5173',
   'http://localhost:3000',
   'http://127.0.0.1:5173',
@@ -24,7 +27,7 @@ export const ALLOWED_REDIRECT_ORIGINS = [
 /**
  * FINDING-012 / OAUTH-4 (2026-08-21 security audit): the only path on an
  * allowlisted origin that may receive the `?code=` bounce. Every frontend
- * (xivdyetools.app, beta, the transition domain, the localhost dev servers)
+ * (xivdyetools.app, beta, the localhost dev servers)
  * mounts its callback route here. Origin-only matching let an attacker-chosen
  * path on a trusted origin receive the authorization code; RFC 8252 §8.4 /
  * OAuth 2.1 want an exact redirect-URI match.

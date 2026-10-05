@@ -9,7 +9,7 @@ Runbooks and checklists for the maintainer. Everything here needs credentials CI
 | [Security remediation — 2026-09-15](security-remediation-2026-09-15.md) | Migration 0014, independent auth/bot/API/OG rollouts, and acceptance checks for the six security fixes |
 | [MODERATION.md](MODERATION.md) | Moderating community presets with the moderation bot |
 | [ANALYTICS_QUERIES.md](ANALYTICS_QUERIES.md) | The Analytics Engine datasets (web-app telemetry, bot command traces) and the queries that read them |
-| [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) | Retiring `*.xivdyetools.projectgalatine.com` in phases |
+| [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) | Retiring `*.xivdyetools.projectgalatine.com` in phases (custom domains removed 2026-10-04/05; the apex-redirect code remains) |
 | [OPEN_ITEMS.md](OPEN_ITEMS.md) | **The living list of open operational work** — dashboard settings, secrets, manual verifications, gated code removals, recurring audits, accepted residual risks. The 5.0 merge-day record it grew out of is archived at [`historical/20260828-PostMerge5.0/`](../historical/20260828-PostMerge5.0/POST_MERGE_CHECKLIST.md) |
 | [IMAGE_WORKER_SPLIT.md](IMAGE_WORKER_SPLIT.md) | The design record for splitting `image-worker` out of `discord-worker` (shipped 2026-08-11); its plan is in [`../superpowers/plans/`](../superpowers/plans/2026-08-09-image-worker-split.md) |
 

@@ -81,7 +81,7 @@ own rather than run out the clock.
 | Field       | Value |
 |-------------|-------|
 | Deprecated  | 2026-08-09 |
-| Removed     | Phased — see `docs/operations/DOMAIN_DEPRECATION.md` |
+| Removed     | Custom domains: `bot.`, `auth.` and the apex on 2026-10-04; `moderation-bot.`, `api.` and `proxy.` on 2026-10-05. Route lines and allowlist entries leave with the 2026-10-03 security audit batch. The apex-redirect code remains — see `docs/operations/DOMAIN_DEPRECATION.md` |
 | Severity    | Medium — five live custom domains; one is a public third-party surface |
 
 **What is being retired:** every `*.xivdyetools.projectgalatine.com` hostname. All services move
