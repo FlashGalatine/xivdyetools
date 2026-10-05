@@ -103,6 +103,12 @@ POST = [
     (re.compile(r'Pair with -01\.'), 'Pair with BUG-004.'),
     (re.compile(r'Have presets-api add an edit flag plus the pre-edit snapshot \(previous_values\) to the submission payload'),
      'Have presets-api add an edit flag to the submission payload (previous_values is already sent)'),
+    # BUG-034 (Codex review on #237): a null-only fall-through misses '013114', which parses as a real
+    # legacy item id (Pure White), so the six-digit case has to be decided before the id lookup.
+    (re.compile(r'In the bare-number branch, when parseDyeIdInput returns null and the input is 6 digits \(isValidHex\), fall through to the hex branch\.'),
+     "Treat every bare all-digit input of exactly six characters as hex, ahead of the bare-number branch, so only 1-5 digit "
+     "inputs are read as ids. A null-only fall-through is not enough: '013114' parses as a real legacy item id (Pure White). "
+     "Add regression tests for '000000', '123456' and '013114'."),
 ]
 
 
