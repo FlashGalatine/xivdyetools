@@ -67,9 +67,11 @@ enabled = false
 
 [env.production]
 name = "xivdyetools-presets-api"
+# The retired api.xivdyetools.projectgalatine.com custom domain was removed in
+# the dashboard on 2026-10-05 (docs/operations/DOMAIN_DEPRECATION.md Phase 2).
+# A deploy re-attaches every custom domain listed here, so it must not return.
 routes = [
-  { pattern = "api.xivdyetools.app", custom_domain = true },
-  { pattern = "api.xivdyetools.projectgalatine.com", custom_domain = true }
+  { pattern = "api.xivdyetools.app", custom_domain = true }
 ]
 vars ={ ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app", CACHE_PURGE_ZONE_ID = "ec1fb94c1ee9f6763f631b6fcfa3c52c" }
 # CACHE_PURGE_ZONE_ID is the `xivdyetools.app` zone that serves the R2 custom

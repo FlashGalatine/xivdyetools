@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Sprint 3 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). **Deploy only
 together with moderation-worker Sprint 4, in one held-workflow window.** The status and revert
 endpoints now fail closed, so the current moderation-worker gets a 409 on every approve, reject
-and revert until its Sprint 4 build is live. No schema change and no migration.
+and revert until its Sprint 4 build is live. No schema change; one hand-run data migration
+(`0015`) is **required** in the same window. See *Rollout*.
 
 ### Security
 
@@ -65,6 +66,9 @@ and revert until its Sprint 4 build is live. No schema change and no migration.
   discord-worker 5.7.2.
 - **Retired origin** (FINDING-006). `https://xivdyetools.projectgalatine.com` is out of
   `ADDITIONAL_CORS_ORIGINS`, and a test pins the exact list.
+- **Retired custom domain.** The maintainer removed `api.xivdyetools.projectgalatine.com` in the
+  dashboard on 2026-10-05, so its route line is gone from `[env.production]`. A deploy re-attaches
+  every custom domain listed there. A test pins `api.xivdyetools.app` as the only route.
 - **Workers Logs pinned off** (FINDING-022). `[observability] enabled = false` is set in both
   `wrangler.toml` blocks, and asserted with no `logpush` or `tail_consumers`.
 

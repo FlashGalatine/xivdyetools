@@ -138,7 +138,7 @@ src/
 
 **Notification payload:** the `submission` payload's `preset` carries `content_revision` (a counter, not content) so the moderation embed's buttons bind to the exact revision shown; the dead-letter record keeps it for the same reason.
 
-Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV), `JWT_ISSUER`, `CACHE_PURGE_ZONE_ID` (production only — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`, FINDING-018). Custom domains: `api.xivdyetools.app`, `api.xivdyetools.projectgalatine.com`.
+Vars: `ENVIRONMENT`, `API_VERSION = v1`, `CORS_ORIGIN`, `ADDITIONAL_CORS_ORIGINS` (CSV), `JWT_ISSUER`, `CACHE_PURGE_ZONE_ID` (production only — the `xivdyetools.app` zone id behind `shots.xivdyetools.app`, FINDING-018). Custom domain: `api.xivdyetools.app` only. The retired `api.xivdyetools.projectgalatine.com` was removed in the dashboard on 2026-10-05, and `tests/wrangler-config.test.ts` pins the single route so a deploy cannot re-attach it.
 
 ### Required Secrets
 

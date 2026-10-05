@@ -44,10 +44,13 @@ describe('wrangler.toml', () => {
     expect(topLevel).not.toMatch(/^routes = \[/m);
   });
 
-  it('routes production to xivdyetools-presets-api on its custom domain', () => {
+  // The retired api.xivdyetools.projectgalatine.com custom domain was removed in
+  // the dashboard on 2026-10-05; a deploy would re-attach it if it were listed.
+  it('routes production to xivdyetools-presets-api on api.xivdyetools.app only', () => {
     expect(production).toMatch(/^name = "xivdyetools-presets-api"$/m);
     expect(production).toMatch(/^routes = \[/m);
-    expect(production).toContain('api.xivdyetools.app');
+    const patterns = [...production.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['api.xivdyetools.app']);
   });
 
   it('pins production JWT_ISSUER and ENVIRONMENT', () => {
