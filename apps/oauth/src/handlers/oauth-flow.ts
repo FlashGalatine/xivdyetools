@@ -270,8 +270,8 @@ export function buildGetCallbackHandler(config: OAuthFlowConfig) {
 
     // OAUTH-CRITICAL-002 / BUG-018: validate the redirect target against the
     // same shared allowlist used at authorize time — prevents open redirects
-    // while keeping every allowlisted origin (incl. the transition domain)
-    // consistent across both flow steps. FINDING-012: exact callback path too.
+    // while keeping every allowlisted origin consistent across both flow
+    // steps. FINDING-012: exact callback path too.
     let redirectUrl: URL;
     try {
       redirectUrl = new URL(stateData.redirect_uri);

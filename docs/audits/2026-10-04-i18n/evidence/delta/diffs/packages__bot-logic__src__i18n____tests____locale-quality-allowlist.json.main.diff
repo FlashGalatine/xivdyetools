@@ -1,0 +1,20 @@
+diff --git a/packages/bot-logic/src/i18n/__tests__/locale-quality-allowlist.json b/packages/bot-logic/src/i18n/__tests__/locale-quality-allowlist.json
+index f7b3ec37..1fae8c82 100644
+--- a/packages/bot-logic/src/i18n/__tests__/locale-quality-allowlist.json
++++ b/packages/bot-logic/src/i18n/__tests__/locale-quality-allowlist.json
+@@ -49,5 +49,6 @@
+       "preset.name": "cognate - 'Name' is German",
+       "preset.tags": "cognate - 'Tags' is German usage",
+-      "webhook.fields.tags": "cognate - 'Tags' is German usage"
++      "webhook.fields.tags": "cognate - 'Tags' is German usage",
++      "card.glamourStatusOk": "identifier - ALL-CAPS card verdict; 'OK' is Duden-listed German"
+     },
+     "fr": {
+@@ -65,5 +66,6 @@
+       "stats.summary.documentation": "cognate - 'Documentation' is French",
+       "webhook.fields.source": "cognate - 'Source' is French",
+-      "webhook.fields.tags": "cognate - 'Tags' is French usage"
++      "webhook.fields.tags": "cognate - 'Tags' is French usage",
++      "card.glamourStatusOk": "identifier - ALL-CAPS card verdict; 'OK' is standard French usage"
+     },
+     "ko": {},

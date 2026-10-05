@@ -35,6 +35,19 @@ Rules:
   path filter.
 -->
 
+## [5.8.0] - 2026-10-04
+### 📜 Privacy Policy updated
+- The Privacy Policy now covers moderation records. If a moderator bans someone from community presets, the bot keeps a ban record and a moderation log, and the policy says what they hold.
+- It also says how long they are kept: a lifted ban's name and reason are cleared at once and the record is deleted 90 days later, and ban log entries are kept for 12 months.
+- Presets that need review are posted to a private moderation channel in our Discord server, and published presets to a private log channel. New posts don't show your Discord user ID, and a deletion request removes the posts about you.
+- It also says that submitting a preset counts as your vote for it, and that you can delete your presets in the web app.
+- The policy now says which name is shown on your presets: your Discord display name, or your verified character's name if you signed in on the web app with XIVAuth.
+- The updated policy is available in all six languages.
+### 🛡️ Moderation
+- Moderators' approve, reject and revert buttons now act only on the version of a preset they saw. A preset changed since then asks them to review it again.
+### 🔧 Fixes
+- `/preferences reset` now also clears a language or home world saved by older versions of the bot, so a setting you reset no longer comes back.
+
 ## [5.7.1] - 2026-09-28
 ### 📜 Privacy Policy and Terms of Service updated
 - The Privacy Policy now says how `/swatch` and `/glamour` handle a character file: it is read in memory, then discarded, and never stored.

@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
 
-**Last Updated**: September 28, 2026
+**Last Updated**: October 5, 2026
 
 ## 1. Introduction
 
@@ -17,7 +17,7 @@ We are committed to protecting your privacy and being transparent about our data
 | Data Type | Purpose | Retention |
 |-----------|---------|-----------|
 | Discord User ID | Identify users for preferences, preset favorites, voting, rate limiting, and the first-run notice flag; also keys a daily per-user activity marker and is counted (never listed) in usage statistics — see *Usage Analytics* below | Until data deletion requested (usage-statistics records: see *Usage Analytics*) |
-| Discord Username | Attribute community preset submissions | Until data deletion requested |
+| Author name: your Discord display name (your username if you have no display name). A preset you submit on the web app after signing in with XIVAuth shows the name of your verified character instead, or "XIVAuth User" followed by the first 8 characters of your XIVAuth ID if no verified character is available when you sign in | Shown publicly as the author of community presets you submit | Until data deletion requested |
 | User Locale | Provide localized bot responses; the Discord client language (bucketed to one of the six the Bot supports, or "other") is also recorded in usage statistics — see *Usage Analytics* below | Stored preference: until cleared. Usage-statistics bucket: see *Usage Analytics* |
 | Guild ID / Channel ID | Process commands in context | Not stored. Usage statistics record only *whether* a command ran in a server or in a DM (the values `guild` / `dm`) — never the server's or channel's ID |
 
@@ -25,11 +25,11 @@ We are committed to protecting your privacy and being transparent about our data
 
 | Data Type | Purpose | Retention |
 |-----------|---------|-----------|
-| Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted) | Until you reset them or request deletion |
+| Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted), plus the time you last changed them | Until you reset them or request deletion |
 | Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
 | First-run notice flag | A per-user marker that the 5.0 welcome notice was shown to you; carries no content | Expires automatically after 180 days |
-| Preset Submissions | Name, description, dyes, tags, category | Indefinitely (community content) |
-| Votes | Your votes on community presets | Until you remove vote or request deletion |
+| Preset Submissions | Name, description, dyes, tags, category — and, if our automatic check holds an edit's new name or description for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
+| Votes | Your votes on community presets. Submitting a preset counts as your vote for it; if a published preset already has the same dyes, your submission becomes a vote for that preset instead | Until you remove vote or request deletion |
 
 ### Rate Limiting Data
 
@@ -49,6 +49,15 @@ To keep the Bot healthy and to power the `/stats` dashboard we record, for each 
 | One key per user per day (`usertrack:{date}:{userId}`, value `1`) so daily active users can be counted | Cloudflare KV | 30 days (automatic TTL) |
 
 These records never include message content, command option values, server names or channel IDs. Analytics Engine data cannot be edited or deleted per user once written; it expires on Cloudflare's schedule.
+
+### Moderation Records
+
+Community presets are moderated. To enforce bans and to keep moderation accountable, we keep:
+
+- **Ban records.** If a moderator bans you from community presets, the ban record holds your Discord User ID or, if you signed in on the web app with an XIVAuth account that is not linked to Discord, the account ID our sign-in service gave you instead (a random identifier, not your XIVAuth ID), the author name shown on your presets at the time of the ban, the Discord User IDs of the moderator who issued the ban and of the one who lifted it, the reason the moderator gave, and the dates of the ban and of its lifting.
+- **The moderation log.** Each moderation action is logged with the moderator's Discord User ID, the action, an optional reason, and the time. An action on a preset (such as approve, reject or revert) names the preset. A ban, unban, hide or restore also names the user it applied to.
+
+How long each record is kept is listed under *Data Retention*.
 
 ## 3. Data We Do NOT Collect
 
@@ -89,7 +98,8 @@ To name the gear, `/glamour` sends the equipment model numbers from the file and
 | Provide Bot functionality | User ID, Guild ID, Channel ID |
 | Save your preferences | User ID and the preference values you set |
 | Manage your preset favorites | User ID, Preset ID |
-| Community presets | User ID, Username, Preset content |
+| Community presets | User ID, author name (shown publicly), Preset content |
+| Moderation | Ban records and moderation-log entries (see *Moderation Records*) |
 | Voting system | User ID, Preset ID |
 | Prevent abuse | User ID, Rate limit counters |
 | Usage statistics (`/stats`) | Command name and subcommand, outcome class, latency, server-or-DM flag, client language bucket, copy-button kind, User ID (counted, never listed) |
@@ -101,10 +111,11 @@ To name the gear, `/glamour` sends the equipment model numbers from the file and
 | Service | Data Stored | Location |
 |---------|-------------|----------|
 | Cloudflare KV | Preferences, preset favorites, the first-run notice flag, usage counters and daily-activity keys (30-day TTL), and the rate-limit counters only on a deployment without the native rate-limiting bindings (120-second TTL) | Global edge network |
-| Cloudflare D1 | Community presets, Votes, Moderation history, moderation-notification failure records, daily submission / edit counters (see *Data Retention*) | Cloudflare's database infrastructure |
+| Cloudflare D1 | Community presets, Votes, Moderation records (see *Moderation Records*), moderation-notification failure records, daily submission / edit counters (see *Data Retention*) | Cloudflare's database infrastructure |
 | Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
+| Discord | Posts in two private channels of our Discord server. The moderation channel gets each preset, edit or preview image that needs review: the post shows the preset (such as its name, description, category and dyes) and the author name, or, for a preview image, the preset's name and the image, and it is updated when a moderator decides. If a moderator bans you, the moderation channel also gets a post with your author name, the reason and how many of your presets were hidden. Moderators can also post the list of presets waiting for review, with their author names, in the moderation channel. The submission-log channel gets each preset published without review, with its author name, and a note naming the preset when a moderator approves, rejects or reverts one, with the reason for a rejection or a revert. Posts made since this policy's "Last Updated" date do not show your Discord User ID; older posts may | Discord's infrastructure |
 
-All data is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information.
+Everything except those Discord posts is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information. The Discord posts stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a moderator deletes them or until you request deletion (see *Your Rights*).
 
 ### Data Security
 
@@ -158,7 +169,7 @@ To request deletion of all your data:
    - Include your Discord User ID
 2. **Discord**: Join https://discord.gg/rzxDHNr6Wv and DM "Flash Galatine"
 
-We will process deletion requests within 30 days.
+We will process deletion requests within 30 days. A deletion request also removes the posts about you and your presets from our Discord server, except the post about a ban that is still active. An active ban record is not deleted on request; once the ban is lifted, the record follows the retention under *Data Retention*.
 
 ## 8. Data Retention
 
@@ -171,10 +182,14 @@ We will process deletion requests within 30 days.
 | User preferences | Until deleted by user |
 | Preset favorites | Until removed by you |
 | First-run notice flag | 180 days |
-| Community presets | Indefinitely (public content) |
-| Votes | Until removed or account deletion |
+| Community presets | Until you delete them (web app → My Submissions) or request deletion |
+| Votes | Until removed or account deletion; also deleted when the preset is deleted |
 | Moderation-notification failure records (preset id, error, timestamps) | 30 days after resolution, 90 days if unresolved — deleted immediately if the preset is deleted |
-| Daily submission / edit counters (user id, kind, timestamp) | 30 days |
+| Daily submission / edit counters (user id, kind, preset id, timestamp) | 30 days |
+| Ban records | While the ban is active. When it is lifted, the author name and the reason are cleared from the record at once, and the record is deleted 90 days later |
+| Moderation-log entries for a ban, unban, hide or restore (these keep the moderator's reason) | 12 months, or sooner for a hide or restore if its preset is deleted |
+| Other moderation-log entries about a preset (such as approve, reject or revert) | As long as the preset exists |
+| Moderation-channel and submission-log posts in our Discord server | Until a moderator deletes them, or until you request deletion (the post about a ban that is still active stays) |
 
 ## 9. Children's Privacy
 

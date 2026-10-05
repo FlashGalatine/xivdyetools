@@ -1,0 +1,9 @@
+xivdyetools-discord-worker|src/index.test.ts
+xivdyetools-discord-worker|src/handlers/commands/preferences.test.ts
+xivdyetools-moderation-worker|src/handlers/modals/ban-reason.test.ts
+xivdyetools-oauth-worker|src/__tests__/rate-limit.test.ts
+xivdyetools-api-worker|src/telemetry/schema.test.ts
+xivdyetools-presets-api|tests/services/preset-service.test.ts
+xivdyetools-presets-api|tests/middleware/auth.test.ts
+xivdyetools-web-app|src/services/__tests__/auth-service.test.ts
+@xivdyetools/worker-kit|src/rate-limiter/backends/kv.test.ts

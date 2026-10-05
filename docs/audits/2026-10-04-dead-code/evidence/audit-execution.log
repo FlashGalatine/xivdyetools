@@ -1,0 +1,8 @@
+api-worker exit 0
+discord-worker exit 0
+image-worker exit 0
+moderation-worker exit 0
+oauth exit 0
+og-worker exit 0
+presets-api exit 0
+markers exit 0

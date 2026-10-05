@@ -1251,9 +1251,6 @@
         "commands": {
           "description": "명령어별 통계 표시 (관리자 전용)"
         },
-        "preferences": {
-          "description": "설정 사용률 표시 (관리자 전용)"
-        },
         "health": {
           "description": "시스템 상태 표시 (관리자 전용)"
         }

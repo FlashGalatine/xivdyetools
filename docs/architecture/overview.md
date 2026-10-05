@@ -373,7 +373,7 @@ Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/
 
 ### xivdyetools-stoat-worker
 
-**Purpose**: Revolt.js bot bringing dye tools to the Revolt platform. **Parked** — kept in the repo, no 5.0 investment, no current demand.
+**Purpose**: Revolt.js bot bringing dye tools to the Revolt platform. **Parked** — kept in the repo, no 5.0 investment, no current demand. The [October 2026 refresh](../research/discord-alternatives/07-2026-10-refresh.md) of the Discord-alternatives research re-examines that.
 
 **Features**:
 - Shared command logic and i18n via `@xivdyetools/bot-logic` (incl. its `/i18n` engine)

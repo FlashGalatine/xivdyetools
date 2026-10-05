@@ -1,0 +1,3178 @@
+[
+ {
+  "id": "BUG-001",
+  "title": "swatch-tool setConfig applies ConfigController's full swatch config (default hairColors/SeekerOfTheSun/Female) over tool-local eyeColors/Midlander/Male state",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "HIGH",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-01"
+  ],
+  "fix": "Make ConfigController the single owner: seed subrace/gender/colorSheet/maxResults from getConfig('swatch'), route rail/slot picks through ConfigController.setConfig('swatch', {colorSheet}), align the default table with the tool (web-app deploy only)"
+ },
+ {
+  "id": "BUG-002",
+  "title": "budget.ts/preferences.ts: validateWorld cold-cache service calls are awaited inside the 3 s ack window",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Resource",
+  "unit": "apps/discord-worker",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-handlers-03"
+  ],
+  "fix": "Defer first and run validateWorld inside ctx.waitUntil, for find/quick and also set_world and /preferences set (ephemeral defer). Or race the lookup against a ~2 s budget and degrade. No package publish."
+ },
+ {
+  "id": "BUG-003",
+  "title": "discord-worker's preset webhook (index.ts:402-407) hard-codes kind 'new', so a flagged edit is posted as \"New preset pending\" with no diff and no Revert button",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/discord-worker",
+  "other": "apps/presets-api (payload lacks an edit marker)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-handlers-02",
+   "gap3-01",
+   "gap7-04",
+   "discord-core-05"
+  ],
+  "fix": "Have presets-api add an edit flag to the submission payload (previous_values is already sent); the webhook maps that to kind 'edit' with original. Both payload types are app-local (presets-api notification-service.ts:70, discord-worker types/preset.ts), so no package publish. Pair with BUG-004."
+ },
+ {
+  "id": "BUG-004",
+  "title": "A preset submitted or edited through the bot is posted twice: discord-worker's own moderation/submission-log post (legacy button ids) plus the presets-api webhook's revision-bound post",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/discord-worker",
+  "other": "apps/presets-api",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "contract-revision-binding-01",
+   "discord-handlers-01",
+   "gap7-01",
+   "presets-handlers-02",
+   "presets-core-01",
+   "discord-core-01"
+  ],
+  "fix": "Drop the bot-side moderation/submission-log posts (presets-api notifies for both sources), or skip one when source==='bot'. If kept for Revert/diff, pass the post-write content_revision. No package publish."
+ },
+ {
+  "id": "BUG-005",
+  "title": "command-trace isUserCondition counts the Universalis client's synthetic 408 timeout as an answered 'rejected' outcome",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/discord-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-services-02"
+  ],
+  "fix": "Classify timeouts as upstream: exclude 408 in isUserCondition, or throw UniversalisError(504/0) on abort. Add a 408 row to command-trace.test.ts:366-373."
+ },
+ {
+  "id": "BUG-006",
+  "title": "preset-favorites getPresetFavoriteEntries returns [] on read failure and addPresetFavorite overwrites the user's list",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Error handling",
+  "unit": "apps/discord-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-services-04"
+  ],
+  "fix": "Use a rethrowing read on the add and remove write paths, so the existing catch returns {success:false, reason:'error'}. Keep the lenient read for autocomplete and list."
+ },
+ {
+  "id": "BUG-007",
+  "title": "apps/oauth/src/index.ts /auth/* limiter keys and tiers on the raw percent-encoded pathname, while Hono routes on the decoded path",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/oauth",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "oauth-01",
+   "gap7-06"
+  ],
+  "fix": "Key and tier the limiter on c.req.path (the decoded path Hono routes on). Add an app-level test that posts /auth/%63allback past 20 requests and expects a 429. App-only change, no package publish."
+ },
+ {
+  "id": "BUG-008",
+  "title": "services/svg/gradient.ts interpolate(): the card ramps in a space derived from algo (Lab for the default ciede2000) and ignores the shared interpolation (page default hsv), so its middle dyes differ from the page",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/og-worker",
+  "other": "apps/web-app (gradient-tool interpolation)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap5-02"
+  ],
+  "fix": "og-worker only. Default the card's ramp to HSV (the page default), with the same hue-wrap math as gradient-tool.ts interpolateInSpace. Optionally add an allowlisted 5-value interp enum, carried on the image URL and folded into the cache key. Otherwise state in the docblock and CLAUDE.md that the card is an approximation."
+ },
+ {
+  "id": "BUG-009",
+  "title": "gradient.ts generateGradientOG ranks middle-band dyes by hardcoded 'ciede2000' while printing the delta and footer in the requested algo",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/og-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "og-worker-01"
+  ],
+  "fix": "Rank with rankKeyForAlgorithm(stepHex, candidate.hex, algorithm) and normalise algorithm once at the top, so interpolate() also sees 5.0 spellings. Add an algorithm test like harmony's. og-worker only; the card still interpolates by algo, not by the page's colorSpace, which is a separate divergence."
+ },
+ {
+  "id": "BUG-010",
+  "title": "validation-service validatePresetDyes accepts repeated dye ids, bypassing the 3-dye floor and dye_signature dedup",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Edge case",
+  "unit": "apps/presets-api",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "presets-core-02"
+  ],
+  "fix": "Reject when new Set(dyes).size !== dyes.length in validatePresetDyes (covers submit and edit). App-only, no publish."
+ },
+ {
+  "id": "BUG-011",
+  "title": "No tool test mounts against a non-default persisted config or asserts that dye filters reach matching (the swatch case is not.toThrow only)",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "MEDIUM",
+  "bugType": "Untested behavior",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap1-02",
+   "webapp-tools-a1-13",
+   "gap6-02"
+  ],
+  "fix": "Persist {excludeMetallic:true} for gradient/swatch via ConfigController before constructing, run the matcher, assert no metallic dye in results; also assert setConfig({dyeFilters}) changes results rather than not.toThrow."
+ },
+ {
+  "id": "BUG-012",
+  "title": "budget-tool.ts in-page match-line slider writes only local storage; next full budget-config broadcast resets it to ConfigController maxDeltaE",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-06"
+  ],
+  "fix": "Have the slider call ConfigController.getInstance().setConfig('budget', { maxDeltaE }) (on change), as mixer-tool.ts:524 does, or apply maxDeltaE only when it differs from the previous config. Web-app only."
+ },
+ {
+  "id": "BUG-013",
+  "title": "A stale preserved ?dye= deep link overrides the user's later choice in Budget (Set as budget target) and Harmony (base-dye pick)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-08",
+   "webapp-tools-a2-09"
+  ],
+  "fix": "Route setAsBudgetTarget through handoffTo('budget', dye) with budget:'dye' added to HANDOFF_PARAM (shared/tool-handoff.ts), so the explicit param wins over the preserved one. Web-app only."
+ },
+ {
+  "id": "BUG-014",
+  "title": "budget-tool.ts handleDeepLink: ?maxDelta= changes matchLine after the slider and label were rendered",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-10"
+  ],
+  "fix": "After applying maxDelta, update matchLineValueDisplay and mobileMatchLineValueDisplay and set the slider value, or apply the param before renderMain."
+ },
+ {
+  "id": "BUG-015",
+  "title": "budget-tool.ts findAlternatives has no run guard; a superseded run overwrites this.rows after a newer run",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Race",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-05"
+  ],
+  "fix": "const run = ++this.runId at the top; after the await (and in catch/finally), if (run !== this.runId) return; optionally debounce the slider input. Web-app only."
+ },
+ {
+  "id": "BUG-016",
+  "title": "chara-sheet.ts saveCharacterColors: a duplicate record name fails with a generic 'save failed' toast and has no suffix fallback",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap4-01"
+  ],
+  "fix": "Move the saveLocalPalette suffix loop into a shared uniqueCollectionName helper and call it from both save paths. Use a separate toast for the collection cap."
+ },
+ {
+  "id": "BUG-017",
+  "title": "collection-manager-modal.ts: creating from the manager never refreshes the manager list, count or create-limit state",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-components-03"
+  ],
+  "fix": "Pass a callback that does ModalService.dismissTop(); showCollectionManagerModal(); like the edit/delete/import paths do (the dialog has already dismissed itself)."
+ },
+ {
+  "id": "BUG-018",
+  "title": "comparison-tool.ts buildSevenReadouts: the ΔE2000 tier skips tierFor's 0->1 bump, so it contradicts the verdict when matchThreshold < 5",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-03"
+  ],
+  "fix": "Parameterise tierFor(value, method) and use it for the readout rows, so one function owns the SAME cut."
+ },
+ {
+  "id": "BUG-019",
+  "title": "gradient/swatch loadFromShareUrl applies share settings to tool-local state only; the next ConfigController notification reverts them",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-06"
+  ],
+  "fix": "After applying share params, write them through ConfigController.getInstance().setConfig('gradient'|'swatch', {...}) so the sidebar and the tool agree"
+ },
+ {
+  "id": "BUG-020",
+  "title": "gradient-tool calculateInterpolation seeds usedDyeIds with endpoints only, so a free step before a pinned step can match the pinned dye undeduplicated",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-05"
+  ],
+  "fix": "Seed usedDyeIds with every pinnedSteps value before the loop (keep the pinned rows exempt from dedupe themselves)"
+ },
+ {
+  "id": "BUG-021",
+  "title": "A language switch empties or hides the results of the Harmony, Mixer, Comparison and Accessibility tools (update() rebuilds the panels without regenerating them)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-01",
+   "webapp-tools-a2-02",
+   "webapp-tools-b-01",
+   "webapp-tools-b-02"
+  ],
+  "fix": "Add onUpdate(): void { if (this.selectedDye) this.generateHarmonies(); }, as gradient-tool.ts:466 does. Web-app only."
+ },
+ {
+  "id": "BUG-022",
+  "title": "Gradient, Swatch, Mixer and Budget never seed dyeFiltersConfig from the persisted config at mount, so saved dye filters are ignored until the sidebar is touched",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-03",
+   "gap1-01"
+  ],
+  "fix": "Seed this.dyeFiltersConfig from ConfigController.getConfig('mixer'|'budget').dyeFilters in each constructor, before the first match or findAlternatives. Web-app only."
+ },
+ {
+  "id": "BUG-023",
+  "title": "swatch-tool setConfig needsReload branch nulls selectedColor but leaves matchedDyes, result cards, SEND TO ids and an enabled share button",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-02"
+  ],
+  "fix": "In the needsReload branch, synchronously clear the forward state (selectedColor, matchedDyes, results container via updateMatchResults, updateShareButton) and keep a slot selectionContext. Do not call clearSelection() in the .then: that would null the slot context pickCharaSlot sets before setConfig."
+ },
+ {
+  "id": "BUG-024",
+  "title": "swatch-tool pickCharaSlot sets a slot selectionContext but keeps the earlier grid selectedColor/matchedDyes, so CLOSEST DYES, share and SEND TO describe the old cell",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-03"
+  ],
+  "fix": "In pickCharaSlot, clear the forward selection (selectedColor, matchedDyes, outline, share) before selectCustomColor, or have updateHandoffRow/selection prefer the slot's closest dye when source === 'slot'"
+ },
+ {
+  "id": "BUG-025",
+  "title": "swatch-tool findMatchingDyes filters after a top-(maxResults*3) request, so strong dye filters return fewer than maxResults; closestDyeTo ignores filters",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-04"
+  ],
+  "fix": "When filters are active, request every dye (or pass a filtered pool), then filter and slice to maxResults; apply isDyeExcluded in closestDyeTo too"
+ },
+ {
+  "id": "BUG-026",
+  "title": "preset-tool.test.ts: no coverage of reconcileTombstones, vote handling, tab pools/counts or savedFirst",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "MEDIUM",
+  "bugType": "Untested behavior",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-presets-09"
+  ],
+  "fix": "Add preset-tool.test.ts cases for: reconcileTombstones with local-* ids and with a search query that changed during the fetch, the vote failure, already-voted and removeVote failure branches, Saved pool dedupe and the categoryCount/tab-badge counts, and savedFirst ordering. Then consider removing preset-tool.ts from the vitest coverage exclude list. Web-app only, no package publish."
+ },
+ {
+  "id": "BUG-027",
+  "title": "config-sidebar.ts connectedCallback: local copies of 9 config keys never refresh after an external ConfigController write",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-shell-01"
+  ],
+  "fix": "Subscribe to every ConfigKey (global included) in connectedCallback and refresh the local copy, tearing all of them down from one unsubscribe list. Writes are key-level, so nothing else is clobbered. Web-app deploy only."
+ },
+ {
+  "id": "BUG-028",
+  "title": "dye-palette-drawer.ts renderSwatch: swatch is a click-only div, so keyboard users cannot pick a dye from the app-wide picker",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-shell-03"
+  ],
+  "fix": "Render each swatch as a <button> (or role=button, tabindex=0, Enter/Space). Show the star on :focus-within and under @media (hover:none), and make both section headers buttons. Web-app deploy only."
+ },
+ {
+  "id": "BUG-029",
+  "title": "preset-tool reconcileTombstones marks saved community presets \"Removed by its author\" in three live cases: a swallowed API failure, a saved local- palette, and a stale filtered response",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Race",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap7-08",
+   "webapp-v4-presets-01",
+   "webapp-v4-presets-02",
+   "webapp-services-04"
+  ],
+  "fix": "getPresets reports apiOk; loadPresets uses a seq plus the captured query and drops stale responses; reconcile requires apiOk and an empty fetched query, and skips local- ids. Also count API rows before hybrid's sort+slice: 15 curated + up to 50 API rows are sliced to 50, so stable/name sorts can drop API rows and get under the earlier-audit BUG-020 full-page guard."
+ },
+ {
+  "id": "BUG-030",
+  "title": "preset-tool.ts handleCardVote: every failed vote is shown as 'already voted'; a failed removeVote is silent",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Error handling",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-presets-03"
+  ],
+  "fix": "Treat the vote as already cast only when result.already_voted; otherwise toast voteErrorMessage(errorCode) and leave votedIds alone. Add an error toast when removeVote fails. web-app only."
+ },
+ {
+  "id": "BUG-031",
+  "title": "community-preset-service response cache never invalidated after delete/edit/submit",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-02"
+  ],
+  "fix": "Clear the community cache (or delete the presets:* prefix plus preset:<id>) on successful delete/edit/submit/vote; web-app only."
+ },
+ {
+  "id": "BUG-032",
+  "title": "preset-submission-service.deletePreset failure reported as success by both callers",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Error handling",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-01"
+  ],
+  "fix": "Callers check result.success and toast errors.deletePresetFailed (keep the modal open) on false, or make deletePreset throw on non-OK; web-app only, no package publish."
+ },
+ {
+  "id": "BUG-033",
+  "title": "gradient.ts/mixer.ts apply dyeFilters after a capped nearest-N search, so steps report no match although allowed dyes exist",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "packages/bot-logic",
+  "other": "apps/discord-worker (passes prefs.dyeFilters to gradient and mixer)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "bot-logic-02"
+  ],
+  "fix": "Build the pool once with filterDyes(dyeFilters, getAllDyes()) minus Facewear and take a linear nearest by the matching method, as harmony does, in gradient.ts and mixer.ts. Needs a @xivdyetools/bot-logic publish, then a discord-worker deploy."
+ },
+ {
+  "id": "BUG-034",
+  "title": "input-resolution.ts resolveColorInput: all-digit 6-char hex without '#' (000000, 333333, 123456) is read as a dye id and returns null",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Edge case",
+  "unit": "packages/bot-logic",
+  "other": "apps/discord-worker (gradient, mixer-v4, harmony, contrast, accessibility, comparison, extractor handlers), apps/stoat-worker dye-resolver",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "bot-logic-01"
+  ],
+  "fix": "Treat every bare all-digit input of exactly six characters as hex, ahead of the bare-number branch, so only 1-5 digit inputs are read as ids. A null-only fall-through is not enough: '013114' parses as a real legacy item id (Pure White). Add regression tests for '000000', '123456' and '013114'. Needs a @xivdyetools/bot-logic publish, then discord-worker/stoat-worker deploys."
+ },
+ {
+  "id": "BUG-035",
+  "title": "blending.ts blendHSL interpolates the hue of an achromatic input, which is meaningless (always 0), so grey/white/black mixes get a hue neither input has",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Logic",
+  "unit": "packages/core",
+  "other": "apps/web-app (mixer hsl), packages/bot-logic (mixer/gradient hsl) -> apps/discord-worker, apps/og-worker mixer card",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-color-01"
+  ],
+  "fix": "In blendHSL, if one side has s===0 use the other side's hue (CSS Color 4 powerless hue); both grey keep 0. Update the conversions.equivalence.test.ts:276 golden. Needs a @xivdyetools/core publish, then consumer deploys (web-app, discord-worker via bot-logic, og-worker)."
+ },
+ {
+  "id": "BUG-036",
+  "title": "PaletteService kMeansClustering caps k at pixel count, so images with fewer distinct colours than colorCount return duplicate 0-pixel clusters that discord /extractor renders as rows",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "MEDIUM",
+  "bugType": "Edge case",
+  "unit": "packages/core",
+  "other": "apps/discord-worker (extractor.ts:525-556 consumer), packages/svg (bandSlices MIN_SLICE floor)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-data-01"
+  ],
+  "fix": "Drop pixelCount===0 clusters in core extractPalette (or cap k at the distinct-colour count) and assert the exact result. Needs a @xivdyetools/core publish, then consumer deploys.\nApp-only alternative: filter pixelCount>0 in discord-worker extractor.ts before dedupe; no publish needed."
+ },
+ {
+  "id": "BUG-037",
+  "title": "index.ts telemetry limiter registered twice; each beacon is charged 2x against the 240/60s fail-closed bucket",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/api-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "api-worker-01"
+  ],
+  "fix": "Keep only app.use(`${TELEMETRY_PATH}/*`, ...) (Hono's /* also matches the bare path) and fix the stale comment. Add a test through index.ts's app asserting one limit() call per beacon."
+ },
+ {
+  "id": "BUG-038",
+  "title": "parseIntParam/parseFloatParam accept trailing garbage and exponent forms in query params",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/api-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "api-worker-02"
+  ],
+  "fix": "Before parsing, reject anything that is not /^-?\\d+$/ (ints) or a plain decimal regex (floats). This is an app-local change with no package publish."
+ },
+ {
+  "id": "BUG-039",
+  "title": "router.ts SERVICE_BINDING_BUDGET_MULTIPLIER can drift from the UNIVERSALIS_SERVICE_RATE_LIMITER binding with no failing test",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/api-worker",
+  "other": "none",
+  "origin": "PR-#229",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "contract-universalis-limiter-02"
+  ],
+  "fix": "Export the multiplier from one module, import it in wrangler-config.test.ts and router.test.ts, and add a service-scope 429 assertion on X-RateLimit-Limit (20 x RATE_LIMIT_REQUESTS). api-worker only, no package publish."
+ },
+ {
+  "id": "BUG-040",
+  "title": "XIVAPI_VERSION=\"latest\" makes the chara row-cache namespace constant, so a patch never cold-starts the cache",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/api-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "api-worker-03"
+  ],
+  "fix": "Pin a real /api/version key in [env.production].vars and bump it with the post-patch table rebuild, or derive the namespace from the search response's version. No package publish is needed."
+ },
+ {
+  "id": "BUG-041",
+  "title": "preview-image.ts puts a raw <@id> mention in the embed footer and drops the preset ID",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/discord-worker",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-handlers-04"
+  ],
+  "fix": "Keep `ID: <presetId>` in the footer and move the moderator into a field or the description (allowed_mentions is already empty). No package publish."
+ },
+ {
+  "id": "BUG-042",
+  "title": "extractor.ts renderColorSheet: render/edit failure is never logged and is reported to the user as 'no match found'",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/discord-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-handlers-10"
+  ],
+  "fix": "Pass logger from handleExtractorCommand into handleColorSubcommand and renderColorSheet. In the catch, call logger?.error('Extractor color render error', err) and answer t.t('errors.generationFailed'), as the gradient and extractor-image paths do. App-only change, no package publish."
+ },
+ {
+  "id": "BUG-043",
+  "title": "gradient.ts processGradientCommand: Start/End lines print the English Dye.name while step rows are localized",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/discord-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-handlers-09"
+  ],
+  "fix": "In gradient.ts, build startText/endText from getLocalizedDyeName(startColor.itemID, startColor.name, locale) (services/i18n.js) when startColor.dye/itemID is set; same for endColor. App-only change, no package publish."
+ },
+ {
+  "id": "BUG-044",
+  "title": "harmony.ts and sibling handlers echo the raw colour/dye option into errors.invalidColor embed descriptions with no sanitizeEmbedText or length cap",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/discord-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap8-02"
+  ],
+  "fix": "Apply sanitizeEmbedText(input, 100) at each invalidColor/dyeNotFound echo, or route them through one helper. Add max_length (~100) to the free-text dye/colour STRING options and a schema test that every non-choice STRING option has one. Changes discord-worker only."
+ },
+ {
+  "id": "BUG-045",
+  "title": "stats.ts overview: Avg Cmds/User divides a lifetime total by today's users",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/discord-worker",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-handlers-05"
+  ],
+  "fix": "Drop the metric, or divide a per-day command counter by today's unique users. No package publish."
+ },
+ {
+  "id": "BUG-046",
+  "title": "Router autocomplete paths for subcommand-group walk (/preset favorite remove), favourites back-fill incl. earlier-audit BUG-028 fix, clan autocomplete and preferences world autocomplete have no index.test.ts coverage.",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/discord-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-core-04",
+   "gap7-03"
+  ],
+  "fix": "Add app.fetch autocomplete cases for favorite remove (incl. savePresetFavoriteEntries rejecting and getPreset throwing), preferences clan, and preferences world."
+ },
+ {
+  "id": "BUG-047",
+  "title": "Favourites name back-fill converts any getPreset failure (5xx/timeout/429, swallowed by .catch(()=>null)) into the preset UUID as the persisted name, which is never retried; names also never refresh on rename and the whole-list write can lose a concurrent favorite add.",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/discord-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-core-03",
+   "gap7-02"
+  ],
+  "fix": "Persist names only from successful lookups. A null (404) may use a placeholder; a thrown lookup leaves name '' so the entry is retried. Skip the write when nothing resolved."
+ },
+ {
+  "id": "BUG-048",
+  "title": "preferences getUserPreferences swallows read failure as {} and the set/reset writes then overwrite or delete the user's whole prefs blob",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/discord-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "discord-services-03"
+  ],
+  "fix": "Add a strict internal read that rethrows on KV or parse failure, and use it in setPreferences and resetPreference so the write aborts and reports an error. Keep the lenient read for command-time lookups."
+ },
+ {
+  "id": "BUG-049",
+  "title": "preferences.ts getAffectedCommands and the /preferences schema advertise consumers that never read the key (clan/gender, blending->/gradient, matching->/swatch, and /harmony is left out)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/discord-worker",
+  "other": "packages/bot-logic (en.json preferences.descriptions.clan/gender option strings)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap8-01"
+  ],
+  "fix": "Trim getAffectedCommands: blending -> /mixer; matching -> add /harmony, drop /swatch. Then either remove the clan/gender options or wire a reader, and add a key-to-handler table test. Dropping the bot-logic locale strings needs a bot-logic publish, then a discord-worker deploy."
+ },
+ {
+  "id": "BUG-050",
+  "title": "preset-moderation.ts processApproval / preset-rejection.ts processRejection: success embed spreads a prior 'Error' field",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/moderation-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "moderation-worker-01"
+  ],
+  "fix": "Filter out fields named 'Error' before spreading in the success embeds (approve, reject, revert). On a repeat failure, replace the Error field rather than appending another."
+ },
+ {
+  "id": "BUG-051",
+  "title": "ban-reason.ts handleBanReasonModal: reason length check is untrimmed, so a whitespace-only reason is stored",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/moderation-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "moderation-worker-05"
+  ],
+  "fix": "Use `reason.trim().length < MIN_REJECTION_REASON_LENGTH` (shared constant) and store the trimmed reason."
+ },
+ {
+  "id": "BUG-052",
+  "title": "review-message.ts refreshReview: a losing concurrent click's 409 refresh overwrites the winner's 'Approved by'/'Reason' embed",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Race",
+  "unit": "apps/moderation-worker",
+  "other": "none",
+  "origin": "PR-#225",
+  "tested": "partly",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "moderation-worker-02"
+  ],
+  "fix": "When actionsFor() returns [], keep the original embed and append a 'Review' field (or skip the edit). Replace the embed only when buttons are being re-issued."
+ },
+ {
+  "id": "BUG-053",
+  "title": "bot-i18n.ts footerTextOnly advertises the removed `reject <id> <reason>` option; preset.test.ts:446 pins it",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/moderation-worker",
+  "other": "none",
+  "origin": "PR-#225",
+  "tested": "yes",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "moderation-worker-03"
+  ],
+  "fix": "Reword the footer to 'Use /preset moderate approve <id> or reject <id>'. Update preset.test.ts:446, and fix the CLAUDE.md queue-buttons sentence."
+ },
+ {
+  "id": "BUG-054",
+  "title": "moderation-worker getModerationPreset treats a missing-route 404 as 'preset gone' and strips live review buttons",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/moderation-worker",
+  "other": "apps/presets-api (GET /moderation/:presetId added in 2.4.0, moderation.ts:541)",
+  "origin": "PR-#225",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "contract-revision-binding-02"
+  ],
+  "fix": "Return null only when the 404 body is the notFoundResponse 'Preset not found'; treat other 404s as errors that keep the buttons. Optionally note the rollback consequence in the mw changelog. No package publish."
+ },
+ {
+  "id": "BUG-055",
+  "title": "oauth tests never send a percent-encoded /auth path through the app's limiter or a JSON `null` body to the POST callbacks",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/oauth",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "oauth-04"
+  ],
+  "fix": "Add an app.fetch test that posts /auth/%63allback past the 20/min limit and expects a 429, plus a test that posts body 'null' to both callbacks and expects a 400. Ship them with the BUG-007 and BUG-056 fixes."
+ },
+ {
+  "id": "BUG-056",
+  "title": "POST /auth/callback and /auth/xivauth/callback destructure a null JSON body outside the parse try, giving a 500 instead of a 400",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/oauth",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "oauth-02",
+   "gap7-07"
+  ],
+  "fix": "After parsing, return 400 'Invalid request body' when typeof body !== 'object' or body === null (both handlers). Add a test with body 'null'. App-only change."
+ },
+ {
+  "id": "BUG-057",
+  "title": "xivauth.ts roster guard (earlier-audit BUG-051) validates only that the roster is an array; a null element gives a 500, and an empty verified name gives an empty username",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/oauth",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "oauth-03"
+  ],
+  "fix": "Filter the roster to non-null objects before assigning. Use a verified character's name only when it is a non-empty string, otherwise fall back to 'XIVAuth User <id>'. Extend the earlier-audit BUG-051 it.each with [null] and an empty-name case."
+ },
+ {
+  "id": "BUG-058",
+  "title": "index.ts ogCacheKey keys algo and mode on every /og route although only 5 routes read algo and 2 read mode, contradicting its own docblock",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/og-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "og-worker-04"
+  ],
+  "fix": "Add readsAlgo(path) (harmony param route, gradient, mixer, swatch) and readsMode(path) (/og/mixer/*), and key only there, like readsWheel. Extend og-guards.test.ts to assert a budget path ignores algo and mode."
+ },
+ {
+  "id": "BUG-059",
+  "title": "og-data-generator.ts generateOGDataForTool: gradient/mixer/harmony crawler ignores hexStart/hexEnd/hexA/hexB/hex slots, so a custom-colour share unfurls the generic tool card",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/og-worker",
+  "other": "apps/web-app (share grammar)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap5-01"
+  ],
+  "fix": "og-worker only. Pin the degrade with a test and document it in CLAUDE.md for gradient/mixer/harmony, as budget does. Optionally keep the share params on og:url. Rendering hex endpoints would need an allowlist/cache-key ruling (S7-R7/R10)."
+ },
+ {
+  "id": "BUG-060",
+  "title": "extractor.ts matches by hardcoded ciede2000 and the crawler forwards algo only onto og:url, so the unfurl can name different dyes than the page",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/og-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "og-worker-05"
+  ],
+  "fix": "Either add extractor to the algo-aware routes (rank via rankKeyForAlgorithm, withAlgo on the imageUrl, key algo there) or document the exemption in og-worker CLAUDE.md. og-worker only."
+ },
+ {
+  "id": "BUG-061",
+  "title": "gradient.test.ts has no algorithm case; harmony.test.ts:233 lists only the six 5.0 spellings and asserts only '<svg'",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/og-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "og-worker-03"
+  ],
+  "fix": "Add a gradient case asserting ?algo=rgb vs ciede2000 can pick different middle dyes. Add harmony legacy spellings asserting their picks equal the normalised algo's picks."
+ },
+ {
+  "id": "BUG-062",
+  "title": "harmony.ts passes a raw legacy ?algo= (hyab/euclidean/oklch-weighted) to core generateHarmonySlots; getDistanceForMethod returns undefined and the card shows dyes in table order",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/og-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "og-worker-02"
+  ],
+  "fix": "Call normalizeMatchingMethod(algorithm) once at the top of generateHarmonyOG, or in getHarmonyMatches, before matchingMethod. Add the three legacy spellings to harmony.test.ts and assert their picks equal their normalised algo's. og-worker only, no core publish."
+ },
+ {
+  "id": "BUG-063",
+  "title": "presets-api 2.4.0 changelog intro denies a migration that its Rollout section requires (0015)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/presets-api",
+  "other": "N/A",
+  "origin": "PR-#224",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "contract-revision-binding-04"
+  ],
+  "fix": "Reword the intro: no schema change, but one required hand-run data rewrite (0015) and a new daily cron trigger. No package publish."
+ },
+ {
+  "id": "BUG-064",
+  "title": "presets PATCH/POST and moderation status/revert: JSON body `null` -> TypeError -> opaque 500 instead of 400",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/presets-api",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "presets-handlers-04"
+  ],
+  "fix": "After each c.req.json(), return invalidJsonResponse when typeof body !== 'object' || body === null || Array.isArray(body) (or do it once in presets-api's jsonDepthLimit onInvalidJson path). presets-api deploy only."
+ },
+ {
+  "id": "BUG-065",
+  "title": "presets PATCH /:id re-moderates unchanged text; a failing/unscored verdict re-queues an approved (or resubmits a rejected) preset",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/presets-api",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "presets-handlers-05"
+  ],
+  "fix": "Gate reserveDailyEvent('text_edit') and moderateContent on textChanged (skip both when the text equals what is stored), and add the unchanged + failing-verdict test case. presets-api deploy only."
+ },
+ {
+  "id": "BUG-066",
+  "title": "retention-job.ts runRetentionJob: prunes swallow D1 errors, so a failed sweep reports success with no durable signal",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/presets-api",
+  "other": "none",
+  "origin": "PR-#224",
+  "tested": "partly",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "contract-retention-0015-01"
+  ],
+  "fix": "Have each prune return a pruned-count or failed flag (keep swallowing on request paths). runRetentionJob should then throw, or log at error level, when any prune failed, so the invocation records an exception.\nNo package publish needed; presets-api deploy only."
+ },
+ {
+  "id": "BUG-067",
+  "title": "identity-rekey-service rekeyIdentity(db,id,id) silently wipes the user's votes; no self-guard or test",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/presets-api",
+  "other": "",
+  "origin": "PR-#224",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "presets-core-06"
+  ],
+  "fix": "if (fromId === toId) return false; at the top of rekeyIdentity, plus a test. App-only."
+ },
+ {
+  "id": "BUG-068",
+  "title": "validation-service name/description min-length counts whitespace; whitespace-only values pass",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/presets-api",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "presets-core-03"
+  ],
+  "fix": "Trim (or require a non-whitespace code point) before the min-length test and store the trimmed value. App-only."
+ },
+ {
+  "id": "BUG-069",
+  "title": "validation-service validateExampleLink rejects a leading-space link that normalizeExampleLink would accept",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/presets-api",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "presets-core-04"
+  ],
+  "fix": "link = link.trim() at the top of validateExampleLink, before the scheme test. App-only."
+ },
+ {
+  "id": "BUG-070",
+  "title": "stoat about.ts Quick Start advertises unrouted !xd random and an unimplemented ❓-reaction help",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/stoat-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "image-stoat-03"
+  ],
+  "fix": "List only routed commands (info/help/ping/about) and drop the reaction line and unimplemented feature bullets.\nAdd an about.test drift check against isRegisteredCommand."
+ },
+ {
+  "id": "BUG-071",
+  "title": "stoat dye-resolver.test.ts multiple/disambiguation tests cannot fail (any-kind else / guarded if)",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/stoat-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "yes",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "image-stoat-06"
+  ],
+  "fix": "Assert the exact kind for known real queries (e.g. 'white' -> multiple with 4, 'Blue' -> disambiguation) with no any-kind fallbacks; land it together with the BUG-073 fix."
+ },
+ {
+  "id": "BUG-072",
+  "title": "stoat dye-resolver.ts ignores locale and initializeLocale is never called, while help advertises localized names",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/stoat-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "image-stoat-02"
+  ],
+  "fix": "Fix that changes behaviour today: drop the localized-names claim and the スノウホワイト example from help.ts:28,44,49 (info.ts hard-codes 'en').\nLater: await initializeLocale at boot, pass the locale into resolveColorInput/resolveDyeInput, add per-user locale. App-only."
+ },
+ {
+  "id": "BUG-073",
+  "title": "stoat dye-resolver.ts resolveDyeInputMulti: step 1 resolveColorInput first-match makes multiple/disambiguation unreachable for name queries",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/stoat-worker",
+  "other": "none (the bot-logic behaviour is the documented contract; the fix lives in stoat)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "image-stoat-01"
+  ],
+  "fix": "Step 1 resolves exact matches only: bot-logic findDyeByName (covers bare ids) + isValidHex/closest-dye, then the substring step, then CSS-name fallback. App-only, no publish.\nThis makes 'multiple' live, which brings back the up-to-4-message fan-out (FINDING-035); the throttle bounds it."
+ },
+ {
+  "id": "BUG-074",
+  "title": "validate-i18n.js PATTERNS only see single-line literal LanguageService.t/tInterpolate calls, so wrapped calls and the local t() alias are never key-checked",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap8-03"
+  ],
+  "fix": "Scan whole-file text with multi-line regexes (allow whitespace/newlines after '(') and include the local t(...) alias form. Add a gate unit test with a wrapped-call fixture holding a missing key. Optionally exit non-zero when a non-en locale fails to load."
+ },
+ {
+  "id": "BUG-075",
+  "title": "budget-tool.test.ts Basic Rendering asserts non-null on test-created panels, so left-panel and drawer rendering is unverified",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap6-03"
+  ],
+  "fix": "Assert a known child in each panel, for example the target-dye selector and match-line slider in leftPanel, and the drawer's selector in drawerContent."
+ },
+ {
+  "id": "BUG-076",
+  "title": "No tool test invokes the LanguageService.subscribe callback, so the language-switch rebuild that empties four tools (see the MEDIUM finding) is untested",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap6-01",
+   "webapp-tools-b-14"
+  ],
+  "fix": "For each tool, select dyes, then invoke every vi.mocked(LanguageService.subscribe).mock.calls[i][0] and flush. Assert the result cards/grid are present and visible. Follow the pattern at extractor-tool.test.ts:810-821."
+ },
+ {
+  "id": "BUG-077",
+  "title": "tool setConfig tests (mixer maxResults/displayOptions guard/market marker, harmony type regeneration, extractor multi-key) assert only not.toThrow",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap6-04"
+  ],
+  "fix": "Assert observable effects in the style of mixer :887-905: mockGetAllDyes called after maxResults or a type change with a dye set, and not called on an identical displayOptions repeat. Check extractor state after the multi-key setConfig."
+ },
+ {
+  "id": "BUG-078",
+  "title": "budget-tool.ts ignores persisted ConfigController displayOptions at mount; showHue/Stain/Spectrum always reset to true",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-04"
+  ],
+  "fix": "In the constructor or onMount, apply getConfig('budget').displayOptions via applyDisplayOptions (or call setConfig once with it) before the first render of the target overview. Web-app only."
+ },
+ {
+  "id": "BUG-079",
+  "title": "budget-tool.ts onMount: forces and persists the global market.showPrices=true and never restores it",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "overlaps BUG-027 (sidebar desync)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-12"
+  ],
+  "fix": "Fetch Budget's prices regardless of showPrices without writing the preference, or save the old value and restore it in destroy."
+ },
+ {
+  "id": "BUG-080",
+  "title": "budget-tool.ts / mixer-tool.ts: theme-dependent inline colours are not refreshed on a theme change",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-13"
+  ],
+  "fix": "In onMount, this.subs.add(ThemeService.subscribe(() => { renderVerdict(); renderLedger(); })); do the same for the mixer field."
+ },
+ {
+  "id": "BUG-081",
+  "title": "budget-tool.ts saveSwapRecord breaks 216-gil ties by database order, not by ΔE",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-07"
+  ],
+  "fix": "Tie-break lexicographically on (gil, de), or pick the best perPoint row. Web-app only."
+ },
+ {
+  "id": "BUG-082",
+  "title": "chara-sheet.ts saveCharacterColors: ?? lets an empty or whitespace Nickname beat the file-name/default fallback, so the save always fails",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "packages/core (only if fixed in the parser)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap4-02"
+  ],
+  "fix": "Use `nickname?.trim() || fileName || default` at chara-sheet.ts:163 and chara-file-card.ts:295 (app-only fix). Normalising in the parser instead would need a core publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-083",
+  "title": "chara-sheet.ts slot-card click re-renders the whole sheet and drops keyboard focus; selected state has no aria-pressed",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "gap4-04"
+  ],
+  "fix": "Toggle the selection styles and aria-pressed on the old and new card in place instead of calling render(), or re-focus the rebuilt card for slot.slot after render."
+ },
+ {
+  "id": "BUG-084",
+  "title": "collection-manager-modal downloadSingleCollection filename strips all non-ASCII (CJK names become dashes)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-components-11"
+  ],
+  "fix": "Sanitize with /[^\\p{L}\\p{N}]+/gu (and trim the dashes), falling back to collection.id when the result is empty; optionally keep the import input attached until change fires. Web-app only, no package publish."
+ },
+ {
+  "id": "BUG-085",
+  "title": "comparison-tool.ts ensureActivePair: the index-based pair survives a removal and swaps out the surviving member",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-08"
+  ],
+  "fix": "Store the active pair by dye id and resolve it to indices at render, or remap/reset activePair in removeDye."
+ },
+ {
+  "id": "BUG-086",
+  "title": "comparison-tool.ts renders the market price row from its own showMarketPrices flag, while the service's showPrices (default off) blocks fetching",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "none (same pattern in harmony/gradient/mixer/swatch tools, same unit)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-13"
+  ],
+  "fix": "Gate card.showPrice and the price lookup on showMarketPrices && MarketBoardService.getShowPrices(), as extractor-tool.ts:1989 does (and apply the same to the duel path at :1472-1490)."
+ },
+ {
+  "id": "BUG-087",
+  "title": "comparison/accessibility getShareParams: Share stays enabled for an all-custom-colour selection that yields dyes:[]",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-06"
+  ],
+  "fix": "Compute disabled from the built params (disable when params.dyes is empty), as extractor does with 'colors' in params."
+ },
+ {
+  "id": "BUG-088",
+  "title": "dye-selector.ts handleGlobalKeydown: activeElement guard is blind inside the shell's shadow root, so '/' is swallowed in tool inputs",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-09"
+  ],
+  "fix": "Reuse the keyboard-service test: check event.composedPath()[0] for input/textarea/select/contenteditable before preventDefault (web-app only, no package publish)."
+ },
+ {
+  "id": "BUG-089",
+  "title": "dye-selector.ts updateFavoritesPanel hardcodes the 8-column grid and overrides compactMode's 3-column favourites layout at mount",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-10"
+  ],
+  "fix": "Extract one favouritesGridClass() helper honouring options.compactMode and use it in both createFavoritesPanel and updateFavoritesPanel."
+ },
+ {
+  "id": "BUG-090",
+  "title": "extractor-tool.ts fetchPricesForRoll: the catch, parseMarketError and lastMarketError are unreachable because every layer below swallows fetch failures",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/web-app",
+  "other": "packages/core",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-07"
+  ],
+  "fix": "Surface batch failures from core (e.g. an outcome or error on the result) and map them in MarketBoardService, which needs a @xivdyetools/core publish followed by a web-app deploy. Otherwise delete the dead parseMarketError/lastMarketError path."
+ },
+ {
+  "id": "BUG-091",
+  "title": "glamour-twin-picker (role=dialog) and item-links-menu never register with ModalService, so global 1-9/Shift+T/L/S shortcuts fire while they hold focus",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "apps/web-app/src/components/item-links-menu.ts:207 (capture handler stops only arrows/Escape)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-glamour-05"
+  ],
+  "fix": "Call ModalService.registerExternal() when the picker/menu opens and release it in their cleanup (web-app only, no publish)."
+ },
+ {
+  "id": "BUG-092",
+  "title": "gradient-tool.ts loadSelectedDyes drops persisted custom-colour endpoints and moves the remaining dye into the Start slot",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-11"
+  ],
+  "fix": "Persist the endpoints positionally as {id} or {hex} (custom dyes by hex, rebuilt with makeCustomDye on load), or persist nothing when a slot is custom. Never compact the array."
+ },
+ {
+  "id": "BUG-093",
+  "title": "swatch/gradient renderLeftPanel rebuilds CollapsiblePanel/MarketBoard/DyeSelector on every update() into the element renderRightPanel clears, without destroying the previous instances",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Resource",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-08"
+  ],
+  "fix": "Destroy the previous left-panel children at the top of renderLeftPanel, or skip building the left panel when leftPanel === rightPanel (V4); keep fetchPrices' marketBoard dependency in mind (swatch 2833)"
+ },
+ {
+  "id": "BUG-094",
+  "title": "gradient-tool.ts result-card slot picker (Set as End/Start) has no same-dye guard, and endpoint rows render cards",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-10"
+  ],
+  "fix": "Send add-mixer-slot-1/2 through the same swap/sameDyeWarning logic as selectDye (for example set activeEndpoint and call selectDye), or turn off showSlotPicker on the endpoint rows."
+ },
+ {
+  "id": "BUG-095",
+  "title": "harmony-tool.ts renderRightPanel: each render adds a new matchMedia listener; destroy removes only the last",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Resource",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-11"
+  ],
+  "fix": "Create railMql once in onMount, or remove the listener from the previous railMql before reassigning it."
+ },
+ {
+  "id": "BUG-096",
+  "title": "image-zoom-controller.ts Ctrl-drag pan ignores the centring margin, so a fitted image jumps on the first pan move",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-12"
+  ],
+  "fix": "On pan start, fold the current centring margin into panOffsetX/Y and clear isCentered, or compute the move margin through the same centring formula."
+ },
+ {
+  "id": "BUG-097",
+  "title": "image-zoom-controller.ts touch handlers: a second finger does not cancel the drag, so a two-finger gesture commits a colour sample on lift",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-b-11"
+  ],
+  "fix": "When touchstart sees touches.length>1, set isDragging=false, emit loupe-end if hasDraggedPastThreshold, and reset the threshold flag."
+ },
+ {
+  "id": "BUG-098",
+  "title": "mixer-tool.ts loadSelectedDyes: a legacy third slot is restored, giving an equal-weight 3-way blend",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-15"
+  ],
+  "fix": "Force selectedDyes[2]=null in loadSelectedDyes, and re-save when a stored slot 3 was dropped."
+ },
+ {
+  "id": "BUG-099",
+  "title": "mixer-tool.ts renderMixingField: a cell with no eligible match prints ΔE 0.0",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a2-14"
+  ],
+  "fix": "When there is no match, render an em dash (or no badge) instead of 0.0."
+ },
+ {
+  "id": "BUG-100",
+  "title": "modal-container.ts attachSheetDrag: ignores inner scrollers and touchcancel on mobile sheets",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-components-06"
+  ],
+  "fix": "Skip engagement when the touch target has a scrollable ancestor below body with scrollTop>0; reset the transform and transition on touchcancel."
+ },
+ {
+  "id": "BUG-101",
+  "title": "my-submissions-modal.ts: after a successful delete the modal keeps showing the deleted preset and stale stats",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-components-04"
+  ],
+  "fix": "On success, remove the row and recompute the tiles, or dismiss and re-open showMySubmissionsModal(onChanged); drop the redundant dismiss(confirmId)."
+ },
+ {
+  "id": "BUG-102",
+  "title": "preset-submission-form.ts: dismissTop() after awaited submit/upload can close the wrong modal; unguarded sessionStorage write inside the submit try",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Race",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-components-08"
+  ],
+  "fix": "Capture the id returned by ModalService.show and call dismiss(id), as earlier-audit BUG-088 does in my-submissions-modal; wrap the sessionStorage write in its own try/catch."
+ },
+ {
+  "id": "BUG-103",
+  "title": "swatch-tool registers its window resize listener with this.on in onMount; BaseComponent.update() unbinds it on a language switch and never re-adds it",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-07"
+  ],
+  "fix": "Register the resize listener in bindEvents(), or via this.subs with a manual add/removeEventListener pair"
+ },
+ {
+  "id": "BUG-104",
+  "title": "swatch-tool.ts updateHandoffRow: SEND TO does a full reload with window.location.assign, so the in-memory .chara session is dropped",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-09"
+  ],
+  "fix": "Navigate with RouterService.navigateTo(tool, params), or with handoffTo for single-dye targets, so the SPA and CharaSessionService survive. Keep the stainID params from handoffTargets."
+ },
+ {
+  "id": "BUG-105",
+  "title": "toast-container.ts: full rebuild on each change replays animations and re-announces alerts; Escape closes toast and modal together",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-components-07"
+  ],
+  "fix": "Keep a Map<id, HTMLElement> and add or remove only the toasts that changed; let one Escape keypress close only one layer."
+ },
+ {
+  "id": "BUG-106",
+  "title": "tutorial-spotlight.ts: window-only scroll listener and a fixed 100ms measurement leave the spotlight off-target after a container smooth-scroll",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-components-01"
+  ],
+  "fix": "Attach scroll listeners to the target's scrollable ancestors, walking across getRootNode().host, and remove them on hide/destroy.\nRe-run updatePositions on scrollend, or poll with rAF until the rect settles after scrollIntoView. Add a jsdom test with a scrollable ancestor inside a shadow root."
+ },
+ {
+  "id": "BUG-107",
+  "title": "dye-palette-drawer.ts filterByType: Metallic chip matches English name (14) instead of the gloss set isMetallic (16)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-shell-04"
+  ],
+  "fix": "Filter on d.isMetallic, and on d.isPastel for the pastel chip. Web-app deploy only."
+ },
+ {
+  "id": "BUG-108",
+  "title": "preset-detail.ts checkVoteStatus: a failed hasVoted check overwrites the vote count with 0",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-presets-04"
+  ],
+  "fix": "Have hasVoted signal failure (vote_count undefined, or an ok flag) or have checkVoteStatus keep preset.voteCount on failure. web-app only."
+ },
+ {
+  "id": "BUG-109",
+  "title": "preset-tool.ts categoryCount/renderTabs: counts ignore feedBlend, feedHideUnbuyable, keepDeleted and the saved search, and the Saved badge omits local palettes",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-presets-07"
+  ],
+  "fix": "Derive the rail and tab counts from currentTabPool() (before the category cut) instead of a separate base. web-app only."
+ },
+ {
+  "id": "BUG-110",
+  "title": "preset-tool.ts handleVoteUpdate: votedIds is not synced from the detail view, so card and detail vote state diverge",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-presets-05"
+  ],
+  "fix": "Add voted:boolean to the vote-update detail and add or remove preset.id in votedIds in handleVoteUpdate. web-app only."
+ },
+ {
+  "id": "BUG-111",
+  "title": "result-card.ts handleMenuClick/handleSelectClick: stopPropagation keeps other cards' open menus from closing",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-presets-06"
+  ],
+  "fix": "Drop stopPropagation and have the document handler ignore clicks whose composedPath() includes this card. Or broadcast a card-menu-open event that the other cards use to close. web-app only."
+ },
+ {
+  "id": "BUG-112",
+  "title": "v4-layout-shell.ts static styles have no @media print: browser print is one clipped page including chrome",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-shell-07"
+  ],
+  "fix": "Add @media print to the shell styles: hide the header, FABs, drawer and sidebar, and set :host and the scrollers to height:auto; overflow:visible. Web-app deploy only."
+ },
+ {
+  "id": "BUG-113",
+  "title": "v4-layout-shell.ts re-emits composed child events without stopPropagation, so v4-layout handlers run twice",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-v4-shell-05"
+  ],
+  "fix": "Call e.stopPropagation() on the original in each re-emitting handler, as handleDyeSelected does. Web-app deploy only."
+ },
+ {
+  "id": "BUG-114",
+  "title": "main.ts:126 non-critical tutorial-spotlight import failure triggers renderFatalError over the already-rendered shell",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-shared-02"
+  ],
+  "fix": "Wrap the tutorial-spotlight import/init in its own try/catch that logs and continues; keep the fatal overlay for services, language and layout init only. No published package change."
+ },
+ {
+  "id": "BUG-115",
+  "title": "auth-service performLogout awaits /auth/revoke with no timeout before clearing local session",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-10"
+  ],
+  "fix": "Clear storage and state and notify first, then send the revoke best-effort (void the promise, or use AbortSignal.timeout(~5s)). Web-app only, no package publish."
+ },
+ {
+  "id": "BUG-116",
+  "title": "chara-resolve-service resolveCharaEquipment sends unbounded model lanes/glasses id; one lane >0xffff 400s the whole resolve and the Reader reports an outage",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "packages/core (fix in web-app needs no publish)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-glamour-01",
+   "core-chara-01",
+   "gap7-09"
+  ],
+  "fix": "Web-app only (no publish): drop gear entries/glasses outside 1..0xffff before fetch, or map a 400 to a file-problem note like the bot does. Alternatively clamp in core readModelLane/readGlassesId — needs a @xivdyetools/core publish, then consumer deploys (web-app, discord-worker)."
+ },
+ {
+  "id": "BUG-117",
+  "title": "CollectionService.initialize re-enters and overflows the stack when a migration save fails",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-03"
+  ],
+  "fix": "Set initialized=true before loadFavorites/loadCollections, or suppress listener notification while initializing; web-app only."
+ },
+ {
+  "id": "BUG-118",
+  "title": "collection-service importData: earlier-audit BUG-024 guard dereferences a null collections[] element outside the per-record try",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-09"
+  ],
+  "fix": "Put `!collection || typeof collection !== 'object' ||` first in the guard, or move the guard inside the per-record try. Web-app only, no package publish."
+ },
+ {
+  "id": "BUG-119",
+  "title": "indexeddb-service has no db.onversionchange handler, so an open tab blocks a future DB_VERSION upgrade and the other tab caches initialize()=false",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-11"
+  ],
+  "fix": "In onsuccess, set db.onversionchange = () => { db.close(); this.db = null; this.initPromise = null; }. Clearing initPromise on false alone would not restore hydration (earlier-audit BUG-004 latch). Web-app only, no package publish."
+ },
+ {
+  "id": "BUG-120",
+  "title": "keyboard-service digit tool shortcuts unreachable from the AZERTY number row",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-07"
+  ],
+  "fix": "Map e.code Digit0-9/Numpad0-9 (allowing Shift when e.key is the digit), keeping the other-modifier exclusions; web-app only."
+ },
+ {
+  "id": "BUG-121",
+  "title": "LanguageService.setLocale has no sequencing; overlapping calls desync core and web locales",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Race",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-08"
+  ],
+  "fix": "Monotonic request token: after each await, drop the result if superseded, and re-apply core setLocale at commit time; web-app only."
+ },
+ {
+  "id": "BUG-122",
+  "title": "LanguageService.tInterpolate expands $ patterns in user-supplied values",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-services-05"
+  ],
+  "fix": "translation.replace(re, () => String(value)); web-app only."
+ },
+ {
+  "id": "BUG-123",
+  "title": "palette-export.ts:136 today() stamps exports with the UTC date, not the local date",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "webapp-shared-06"
+  ],
+  "fix": "Build yyyy-mm-dd from getFullYear/getMonth/getDate (local). No published package change."
+ },
+ {
+  "id": "BUG-124",
+  "title": "glamour.ts gposersList writes the 'Model <key>' placeholder as an item name and drops Facewear when glasses are unresolved",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "packages/bot-logic",
+  "other": "apps/web-app (reference behaviour), apps/discord-worker",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "bot-logic-03"
+  ],
+  "fix": "Keep the placeholder for card rows and notes only. Pass name null into GposersInput when there is no item, and add Facewear {name: resolved ?? null} whenever glassesId>0. Needs a @xivdyetools/bot-logic publish, then a discord-worker deploy."
+ },
+ {
+  "id": "BUG-125",
+  "title": "execute* final 'catch {}' blocks discard the exception and return GENERATION_FAILED; adapters log only the code",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "packages/bot-logic",
+  "other": "apps/discord-worker (adapter logging)",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "bot-logic-05"
+  ],
+  "fix": "catch (error) { input.logger?.warn('<cmd> failed', error) } at each site, without logging file-derived text (no character names). Make comparison reject fewer than 2 dyes explicitly. Needs a @xivdyetools/bot-logic publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-126",
+  "title": "locale-resolution.ts resolveUserLocale never passes a logger to getLegacyLanguagePreference, so the 'louder' KV-failure log never fires",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "packages/bot-logic",
+  "other": "apps/discord-worker, apps/moderation-worker (callers)",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "bot-logic-06"
+  ],
+  "fix": "Add an optional logger param to resolveUserLocale, forward it to the legacy reader and the unified-blob catch, and have both workers pass theirs. Needs a @xivdyetools/bot-logic publish, then discord-worker and moderation-worker deploys."
+ },
+ {
+  "id": "BUG-127",
+  "title": "bot-logic branch coverage 88.38% (502/568) is below its own 90% vitest threshold; glamour.ts has 25 uncovered branches; CI never enforces it",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "packages/bot-logic",
+  "other": "root (CI/scripts): repo-wide; core, auth and logger also sit below their thresholds",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "bot-logic-04"
+  ],
+  "fix": "Add about 10 targeted tests (glamour company, truncation, glasses, dye-blocked, undyed file; swatch NO_LIVE_SLOTS and lip float). Tests only, so no publish needed. Separately decide whether CI runs test:coverage for packages."
+ },
+ {
+  "id": "BUG-128",
+  "title": "build-locales.ts writes locale JSONs before exiting 1 on missing cells, and never checks dyes.json ids against dyenames.csv rows",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "packages/core",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-data-06"
+  ],
+  "fix": "Build all locale data first; write only if missingCells is empty or --allow-missing is set. Cross-check every dyes.json legacyItemID against the CSV, and add a test that each locale has a name for all 125. No publish unless the data changes."
+ },
+ {
+  "id": "BUG-129",
+  "title": "blendColors lets a NaN ratio through Math.max/Math.min and returns the invalid hex '#NaNNaNNaN'",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/core",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-color-05"
+  ],
+  "fix": "Guard with Number.isFinite(ratio): either default to 0.5 or throw a typed error, matching the ColorService path. Needs a @xivdyetools/core publish; no consumer deploy required."
+ },
+ {
+  "id": "BUG-130",
+  "title": "dyes.json English name 'Opo-Opo Brown' disagrees with en.json/dyenames.csv 'Opo-opo Brown' (stainID 24, itemID 5752)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "packages/core",
+  "other": "apps/og-worker (renders the en-locale form; swatch.test.ts:79)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-data-05"
+  ],
+  "fix": "Change dyes.json to 'Opo-opo Brown' (the XIVAPI spelling) and add a core test that en dyeNames[itemID] === dye.name. Needs a @xivdyetools/core publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-131",
+  "title": "CharacterColorService.findClosestDyes earlier-audit BUG-056 guard misses NaN/non-number count -> TypeError on best[-1]",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/core",
+  "other": "apps/web-app (swatch-tool storage read)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-chara-05"
+  ],
+  "fix": "`if (!(typeof count === 'number' && count >= 1)) return []; const k = Math.floor(count);` (optionally also validate maxResults on read in swatch-tool). Needs a @xivdyetools/core publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-132",
+  "title": "DyeService.searchByLocalizedName returns all 125 dyes for an empty or whitespace query when the locale is loaded",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/core",
+  "other": "apps/api-worker (sole caller, guarded)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-data-03"
+  ],
+  "fix": "Add `if (!lowerQuery) return [];` after the fold, plus a test. Needs a @xivdyetools/core publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-133",
+  "title": "chara-parser parseFloatColor accepts empty segments as 0 (and Infinity), producing a silent wrong lip/colour",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/core",
+  "other": "apps/web-app",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-chara-02"
+  ],
+  "fix": "Reject a part when p.trim()==='' or !Number.isFinite(n) in parseFloatColor. Needs a @xivdyetools/core publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-134",
+  "title": "ColorAccessibility.isLightColor/getOptimalTextColor use a luminance threshold of 0.5, which picks the lower-contrast text for luminance between about 0.18 and 0.5",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "packages/core",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-color-04"
+  ],
+  "fix": "getOptimalTextColor: return whichever of black/white has the higher getContrastRatio (equivalently, luminance > ~0.179). Needs a @xivdyetools/core publish; no in-repo consumer deploy needed."
+ },
+ {
+  "id": "BUG-135",
+  "title": "ColorConverter.hsvToRgb caches under a key rounded to 2 dp but stores the result computed from the unrounded inputs, so the output depends on call order",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "packages/core",
+  "other": "apps/web-app gradient-tool, packages/bot-logic gradient",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-color-06"
+  ],
+  "fix": "Compute from the rounded h/s/v that form the key (or key on exact values). Needs a @xivdyetools/core publish, then consumer deploys if wanted (web-app, discord-worker)."
+ },
+ {
+  "id": "BUG-136",
+  "title": "DyeDatabase.initialize accepts an all-invalid payload as a loaded empty DB, and duplicate ids only log through the NoOp logger",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "packages/core",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-data-04"
+  ],
+  "fix": "Throw if this.dyes is empty after the filter, and make a duplicate id throw (caught and wrapped as DATABASE_LOAD_FAILED). Needs a @xivdyetools/core publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-137",
+  "title": "HarmonySelector.generateHarmonySlots reserves a pinned dye only for later slots under preventDuplicates, so an earlier slot can choose the same dye",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "State",
+  "unit": "packages/core",
+  "other": "apps/web-app harmony-tool (the only pin caller)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-color-02"
+  ],
+  "fix": "When preventDuplicates is on, add every pinned dye's itemID to `used` before the offsets loop, so unpinned slots and companions skip them. Needs a @xivdyetools/core publish, then consumer deploys (web-app)."
+ },
+ {
+  "id": "BUG-138",
+  "title": "DyeSearch.test.ts findClosestDye/findDyesWithinDistance tests pass on null or empty results",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "packages/core",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "partly",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-data-02"
+  ],
+  "fix": "Use expect(closest).not.toBeNull() with exact expected names/ids, and drop the if-guards so the asserts run unconditionally. Test-only, no publish."
+ },
+ {
+  "id": "BUG-139",
+  "title": "HarmonySelector.test.ts pin test pins Jet Black, a dye no earlier slot picks, so it cannot detect the earlier-slot duplicate",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "packages/core",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "core-color-03"
+  ],
+  "fix": "Add a case: compute unpinned slots, pin a later index to slot 0's dye with preventDuplicates:true, assert all slot dyes are unique. Test-only, but ships with the BUG-137 fix (core publish)."
+ },
+ {
+  "id": "BUG-140",
+  "title": "logger context string values skip sanitizeErrorMessage key=value/JSON-key redaction",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "packages/logger",
+  "other": "all logger consumers",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "pkg-foundation-02"
+  ],
+  "fix": "When sanitizeErrors is on, run sanitizeErrorMessage over string context values and string array items after the shape scan. Needs a @xivdyetools/logger publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-141",
+  "title": "logger redactSensitiveFields spread-copies toJSON objects (Date/URL), logging them as {}",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/logger",
+  "other": "all logger consumers (every worker, web-app)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "pkg-foundation-01"
+  ],
+  "fix": "If a value has a toJSON function, call it first: scan a string result with looksLikeSecretValue and recurse into an object result. Keep spread-and-recurse for everything else (do NOT skip non-plain objects; that would bypass key redaction). Needs a @xivdyetools/logger publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-142",
+  "title": "contrast-card.ts tone/tier judged on the raw ratio while 13C·1 prints it rounded to 1 dp (2.96 shows '3.0' in failing red)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/svg",
+  "other": "apps/discord-worker (consumer)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "svg-04"
+  ],
+  "fix": "Keep the raw-ratio tier, because WCAG does not round thresholds. Floor the printed value to its dp instead (2.96 -> '2.9', 2.996 -> '2.99') so the print never rounds up across a cut. Do not round before ratioTier, since that would turn a fail into a false pass.\nNeeds an svg publish, then consumer deploys."
+ },
+ {
+  "id": "BUG-143",
+  "title": "emitted-glyphs.ts scanner fails open on \\u escapes in literals and on a keyword-preceded regex (return /'/)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/svg",
+  "other": "apps/discord-worker (font-coverage gate)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "svg-06"
+  ],
+  "fix": "Decode \\uXXXX / \\u{...} escapes in literals but drop surrogates (D800-DFFF) and noncharacters (FFFE/FFFF), or exempt RegExp-source strings, so base.ts:19-21 does not break the gate. Treat a preceding keyword (return/typeof/case/in/of/void/throw/yield/await) as regex start.\nNeeds an svg publish (test-time only consumers via workspace)."
+ },
+ {
+  "id": "BUG-144",
+  "title": "frame-budget.test.ts type-floor/text-extent gate omits glamour, swatch, a11y, dye-info and budget-ledger cards",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "packages/svg",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "svg-03"
+  ],
+  "fix": "Add German long-name binding cases for glamour, swatch, a11y (3 modes), dye-info and budget-ledger to `cards[]`.\nTest-only; this lands together with the BUG-145 fix."
+ },
+ {
+  "id": "BUG-145",
+  "title": "glamour-card.ts look label drawn at 10.5 px, below the documented 11 px type floor",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "packages/svg",
+  "other": "apps/discord-worker (consumer)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "svg-02"
+  ],
+  "fix": "Use CARD_TYPE.label (11) at :211 and :237-239, then re-check the LEAD_MIN..LEAD_MAX lead-column fit.\nNeeds an svg publish, then consumer deploys (discord-worker)."
+ },
+ {
+  "id": "BUG-146",
+  "title": "gradient.ts ROW_WIDTHS.lead=28 ellipsises two-digit merged step ranges ('9–10' -> '9–…', '10–12' -> '10…')",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/svg",
+  "other": "packages/bot-logic (range text), apps/discord-worker (consumer)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "svg-01"
+  ],
+  "fix": "Widen ROW_WIDTHS.lead to ~44 and take the 16 px from `name`, keeping the sum at 368. Alternatively draw the range at CARD_TYPE.label 11 px.\nAdd a 12-step '10–12' fixture to frame-budget.test.ts.\nNeeds an svg publish, then consumer deploys (discord-worker)."
+ },
+ {
+  "id": "BUG-147",
+  "title": "test-utils createMockD1Database first() returns undefined (real D1: null) when the mock fn returns undefined",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/test-utils",
+  "other": "consumers: presets-api tests, moderation-worker tests",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "worker-kit-test-utils-06"
+  ],
+  "fix": "Change line 261 to 'return (result ?? null) as T | null'.\ntest-utils is private: no publish, but rerun the presets-api and moderation-worker suites."
+ },
+ {
+  "id": "BUG-148",
+  "title": "test-utils KV/R2 mock list(): cursor resume never ends when the cursor's key was deleted; insertion order instead of lexicographic",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/test-utils",
+  "other": "same pattern in packages/test-utils/src/cloudflare/r2.ts:241",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "worker-kit-test-utils-05"
+  ],
+  "fix": "Sort the matching keys and resume with key > lastKey, so a deleted or expired cursor key no longer stalls the listing.\ntest-utils is workspace-private: no publish and no deploy."
+ },
+ {
+  "id": "BUG-149",
+  "title": "worker-kit jsonDepthLimit: case-sensitive Content-Type check lets oauth JSON bodies skip the depth/__proto__ guard",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/worker-kit",
+  "other": "apps/oauth (no Content-Type gate); presets-api already covered by its own hasBody gate at apps/presets-api/src/index.ts:184-219",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "worker-kit-test-utils-01"
+  ],
+  "fix": "Match the media type case-insensitively, accept +json, or gate on body presence the way presets-api does. Needs a @xivdyetools/worker-kit publish, then oauth/presets-api deploys.\nAlternatively, add a 415 Content-Type gate in oauth only (an oauth deploy, no publish)."
+ },
+ {
+  "id": "BUG-150",
+  "title": "worker-kit rateLimitMiddleware deny paths drop Retry-After/X-RateLimit-* when formatError returns a raw Response",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "packages/worker-kit",
+  "other": "none (no consumer passes formatError)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "worker-kit-test-utils-03"
+  ],
+  "fix": "Copy the computed headers onto the Response formatError returns (both deny paths, :167 and :210), or type and document that it must build through c.json/c.text.\nNeeds a @xivdyetools/worker-kit publish; consumers need no redeploy today since none use formatError."
+ },
+ {
+  "id": "BUG-151",
+  "title": "worker-kit KVRateLimiter.reset/resetAll read a single kv.list page (no cursor loop)",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "packages/worker-kit",
+  "other": "api-worker, discord-worker and moderation-worker construct KVRateLimiter but never call reset/resetAll",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "worker-kit-test-utils-04"
+  ],
+  "fix": "Loop on list_complete/cursor in both reset() and resetAll().\nNeeds a @xivdyetools/worker-kit publish; consumer deploys are optional, since none calls these methods."
+ },
+ {
+  "id": "BUG-152",
+  "title": "ci.yml workflow-level concurrency ci-${{ github.ref }} + cancel-in-progress: true cancels main-push and nightly-schedule runs against each other",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Race",
+  "unit": "root (CI/scripts)",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "root-ci-01"
+  ],
+  "fix": "cancel-in-progress: ${{ github.event_name == 'pull_request' }}, or add github.event_name (and sha for push) to the group. No package publish."
+ },
+ {
+  "id": "BUG-153",
+  "title": "Production deploy workflows' paths filters omit pnpm-lock.yaml / pnpm-workspace.yaml / turbo.json / tsconfig.base.json",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Edge case",
+  "unit": "root (CI/scripts)",
+  "other": "all 8 deploy-*.yml production workflows",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "root-ci-03"
+  ],
+  "fix": "Add pnpm-lock.yaml and pnpm-workspace.yaml (optionally turbo.json, tsconfig.base.json) to each production deploy's paths, or add a drift check. No package publish."
+ },
+ {
+  "id": "BUG-154",
+  "title": "publish-packages.yml Publish loop records FAILED+= and keeps publishing dependents of a failed package",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Error handling",
+  "unit": "root (CI/scripts)",
+  "other": "packages/svg, packages/bot-logic (npm consumers)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "root-ci-02"
+  ],
+  "fix": "Do not blanket-break (TIER_ORDER puts worker-kit before svg); skip any later package whose workspace: deps include a FAILED one, and in single-package mode verify each workspace dep version exists on npm. Workflow-only, no package publish."
+ },
+ {
+  "id": "BUG-155",
+  "title": "check-dead-code.ts findOrphanModules / findTestOnlyMembers read EXCLUDED_REFERRERS raw instead of via referrerTexts",
+  "prefix": "BUG",
+  "kind": "BUG",
+  "sev": "LOW",
+  "bugType": "Logic",
+  "unit": "root (CI/scripts)",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "root-ci-04"
+  ],
+  "fix": "Compute refTexts = referrerTexts(texts) in findOrphanModules and findTestOnlyMembers and use it for buildReferenceMap and the prodReferrers reference test; add a self-test. No package publish."
+ },
+ {
+  "id": "BUG-156",
+  "title": "check-doc-versions.ts promises failure on a non-semver version claim but silently drops the row",
+  "prefix": "BUG",
+  "kind": "UNTESTED",
+  "sev": "LOW",
+  "bugType": "Untested behavior",
+  "unit": "root (CI/scripts)",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "N/A",
+  "cands": [
+   "root-ci-05"
+  ],
+  "fix": "When the Version cell is non-empty and fails VERSION_CELL, push a claim/mismatch with the raw text so it reports; add a self-test. No package publish."
+ },
+ {
+  "id": "REFACTOR-001",
+  "title": "Review custom_id grammar and status list duplicated across discord-worker, moderation-worker and presets-api with no parity check",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/discord-worker",
+  "other": "apps/moderation-worker, apps/presets-api",
+  "origin": "PR-#227 + PR-#225 + PR-#224",
+  "tested": "no",
+  "effort": "MEDIUM",
+  "category": "N/A",
+  "cands": [
+   "contract-revision-binding-03"
+  ],
+  "fix": "Export a builder/parser + status const from @xivdyetools/bot-logic (or a PresetStatus const array from @xivdyetools/types) -> needs a bot-logic/types publish, then consumer deploys; or a cheaper repo-level parity test reading the three files."
+ },
+ {
+  "id": "REFACTOR-002",
+  "title": "searchPresetsForAutocomplete is called without logger, so its catch returns [] silently while the user-presets path logs.",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/discord-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "discord-core-07",
+   "gap7-05"
+  ],
+  "fix": "Pass { status: 'approved', logger } at index.ts:1137."
+ },
+ {
+  "id": "REFACTOR-003",
+  "title": "budget-calculator.ts mirrors the svg ledger geometry with literals (350-43-27, 24, 40, 32, 47) instead of the exported LEDGER_* constants",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/discord-worker",
+  "other": "packages/svg",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "svg-05"
+  ],
+  "fix": "Option A: import the 4 exported LEDGER_* constants and re-export GROUP_H/ROW_H (justified now that a real consumer exists). Needs an svg publish, then consumer deploys.\nOption B (no publish): add a discord-worker parity test that renders generateBudgetLedger at the calculator's maximum packing and asserts height <= 350."
+ },
+ {
+  "id": "REFACTOR-004",
+  "title": "glamour-block DYEABLE_SLOTS duplicates core chara-gposers private DYEABLE with a 'change both' comment",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/web-app",
+  "other": "packages/core (chara-gposers.ts:84-92)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "webapp-glamour-08"
+  ],
+  "fix": "Export the DYEABLE set (typed over the shared slot ids) from core and import it in glamour-block — needs a @xivdyetools/core publish, then consumer deploys (web-app)."
+ },
+ {
+  "id": "REFACTOR-005",
+  "title": "swatch-tool.ts (3146 lines) and gradient-tool.ts (2755 lines): duplicated desktop/mobile selector code already drifts (mobile steps skip pinnedSteps.clear), a dead left panel and drawer, and a mojibake literal at gradient-tool.ts:825",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "HIGH",
+  "category": "N/A",
+  "cands": [
+   "webapp-tools-a1-14"
+  ],
+  "fix": "Build each selector/settings group from one shared builder, so state sync lives in one place. Drop the V4-dead left panel and drawer paths, and replace the mis-encoded literal with a real bullet (or the right escape)."
+ },
+ {
+  "id": "REFACTOR-006",
+  "title": "auth JWTPayload doc falsely claims a re-export from types and mislabels sub",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "packages/auth",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "pkg-foundation-05"
+  ],
+  "fix": "Comment-only: say it is a deliberately narrower verifier-side shape (auth must not depend on types) and that sub is the internal user id. Do not derive one from the other (layer violation). Doc-only, so no consumer deploy needed; it ships with the next auth publish."
+ },
+ {
+  "id": "REFACTOR-007",
+  "title": "logger orphaned MAX_STRINGIFY_NODES JSDoc sits above AUTH_SCHEMES",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "packages/logger",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "pkg-foundation-06"
+  ],
+  "fix": "Move the doc block down onto const MAX_STRINGIFY_NODES at :730. Doc-only, so no consumer deploy needed; it ships with the next logger publish."
+ },
+ {
+  "id": "REFACTOR-008",
+  "title": "Stale comments: ci.yml check-bundle-size scope, web-app vitest coverage-report baseline, orphaned docblock above asReferrers",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "root (CI/scripts)",
+  "other": "apps/web-app (comment only)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "root-ci-06"
+  ],
+  "fix": "Update the three comments (name both web-app and discord-worker; match 80/80/80/80 or the intended target; delete the orphaned one-liner). No package publish."
+ },
+ {
+  "id": "REFACTOR-009",
+  "title": "OPEN_ITEMS Phase 0 entry and DOMAIN_DEPRECATION inventory line numbers are stale",
+  "prefix": "REFACTOR",
+  "kind": "REFACTOR",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "root (CI/scripts)",
+  "other": "docs/operations",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "N/A",
+  "cands": [
+   "contract-oauth-origin-03"
+  ],
+  "fix": "In the PR that schedules Phase 2, tick or replace the OPEN_ITEMS entry with the next real step and drop or refresh the inventory line numbers (cite patterns instead). No package publish needed."
+ },
+ {
+  "id": "OPT-001",
+  "title": "main.ts:111 boot awaits getServicesStatus() network probe used only by a dev-only log, delaying the v4 shell",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "MEDIUM",
+  "bugType": "N/A",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "I/O",
+  "cands": [
+   "webapp-shared-01"
+  ],
+  "fix": "Gate the status gather on import.meta.env.DEV, or fire-and-forget it after initializeV4Layout. No published package change."
+ },
+ {
+  "id": "OPT-002",
+  "title": "chara acquisition/ko/zh JSON tables (3.4 MB raw) are evaluated at isolate start for every route",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/api-worker",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "Bundle",
+  "cands": [
+   "api-worker-04"
+  ],
+  "fix": "Load the tables with a lazy `await import()` and a module-scope memo inside acquisitionFor/regionalNames. Measure first. No package publish is needed."
+ },
+ {
+  "id": "OPT-003",
+  "title": "preset.ts favorite list fans out one getPreset per favourite (up to 50)",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/discord-worker",
+  "other": "apps/presets-api (would need a batch-by-ids endpoint)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "I/O",
+  "cands": [
+   "discord-handlers-07"
+  ],
+  "fix": "Add GET /presets?ids= (batch) to presets-api and use it here. No package publish; two app deploys, presets-api first."
+ },
+ {
+  "id": "OPT-004",
+  "title": "stats.ts summary pages all of today's user keys it never displays",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/discord-worker",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "I/O",
+  "cands": [
+   "discord-handlers-06"
+  ],
+  "fix": "Move the unique-user count into its own function and call it only from overview. No package publish."
+ },
+ {
+  "id": "OPT-005",
+  "title": "preferences legacy-key migration re-reads two dead KV keys on every call for users with no prefs blob",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/discord-worker",
+  "other": "packages/bot-logic (resolveUserLocale legacy read)",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "I/O",
+  "cands": [
+   "discord-services-06"
+  ],
+  "fix": "Write a tombstone or empty blob on the first legacy miss, or retire the migration after a one-off sweep. Dropping resolveUserLocale's legacy fallback needs a bot-logic publish, then consumer deploys."
+ },
+ {
+  "id": "OPT-006",
+  "title": "renderer.ts renderSvgToPng never .free()s Resvg or RenderedImage, leaving each render's wasm allocations to FinalizationRegistry timing",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/og-worker",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "LOW",
+  "category": "Memory",
+  "cands": [
+   "og-worker-06"
+  ],
+  "fix": "Hold resvg/rendered outside the try and call rendered?.free(); resvg?.free() in a finally after asPng() has copied the bytes out. Add a test asserting free() is called on success and on error."
+ },
+ {
+  "id": "OPT-007",
+  "title": "mixer-tool.ts field-cell click renders the field twice; harmony-tool.ts market change runs a superseded price pass",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/web-app",
+  "other": "N/A",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "Algorithm",
+  "cands": [
+   "webapp-tools-a2-16"
+  ],
+  "fix": "Drop the explicit renderMixingField() in the cell handler; drop the market handler's extra fetchPricesForDisplayedDyes (generateHarmonies already fetches)."
+ },
+ {
+  "id": "OPT-008",
+  "title": "preset-tool.ts handleSearchInput/sort: refetches the API pool with a spinner on Saved/Mine tabs whose pools are local",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/web-app",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "I/O",
+  "cands": [
+   "webapp-v4-presets-08"
+  ],
+  "fix": "Refetch only when the tab is community or official; apply search and sortBy to the saved, local and mine pools locally. web-app only."
+ },
+ {
+  "id": "OPT-009",
+  "title": "IndexedDBCacheBackend.loadFromStorage hydrates the price cache with one serial readonly transaction per key",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "apps/web-app",
+  "other": "none",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "I/O",
+  "cands": [
+   "webapp-services-13"
+  ],
+  "fix": "Use indexedDBService.getAll(STORES.PRICE_CACHE) and skip keys already present in memoryCache. Web-app only, no package publish."
+ },
+ {
+  "id": "OPT-010",
+  "title": "logger redactSensitiveFields rebuilds the normalized redact Set per node per call",
+  "prefix": "OPT",
+  "kind": "OPT",
+  "sev": "LOW",
+  "bugType": "N/A",
+  "unit": "packages/logger",
+  "other": "",
+  "origin": "MAIN",
+  "tested": "no",
+  "effort": "N/A",
+  "category": "Caching",
+  "cands": [
+   "pkg-foundation-03"
+  ],
+  "fix": "Compute the normalized Set once in the constructor (or memoize per redactFields array) and dedupe it. Needs a @xivdyetools/logger publish, then consumer deploys."
+ }
+]

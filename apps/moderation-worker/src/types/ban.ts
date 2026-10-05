@@ -105,6 +105,12 @@ export interface UnbanResult {
   success: boolean;
   /** Number of presets restored */
   presetsRestored: number;
+  /**
+   * FINDING-021: hidden presets the restore skipped because their dye
+   * combination is now held by another approved or pending preset. Absent on
+   * failures.
+   */
+  presetsStillHidden?: number;
   /** Channel-safe error message if unsuccessful (MOD-8: never a raw D1 message) */
   error?: string;
   /** The underlying error, for logging only — never shown to Discord */

@@ -366,6 +366,13 @@ export async function authMiddleware(
           userDiscordId: userId,
           userName: displayName,
           authSource: 'web',
+          // FINDING-014: every id the token proves, for the ban check and the
+          // identity re-key — userDiscordId alone loses the pre-link UUID.
+          jwtSub: jwtPayload.sub,
+          jwtDiscordId:
+            typeof jwtPayload.discord_id === 'string' && jwtPayload.discord_id.length > 0
+              ? jwtPayload.discord_id
+              : undefined,
         };
       }
     }

@@ -1251,9 +1251,6 @@
         "commands": {
           "description": "Show per-command breakdown (admin only)"
         },
-        "preferences": {
-          "description": "Show preference adoption rates (admin only)"
-        },
         "health": {
           "description": "Show system health status (admin only)"
         }

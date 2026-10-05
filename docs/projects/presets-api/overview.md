@@ -251,7 +251,7 @@ JWT is verified using shared `JWT_SECRET` with OAuth worker.
 **wrangler.toml** (top-level block is `xivdyetools-presets-api-dev`; production under `[env.production]` — a bare `wrangler deploy` no longer touches production):
 ```toml
 [env.production]
-vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://xivdyetools.projectgalatine.com,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app", CACHE_PURGE_ZONE_ID = "…" }
+vars = { ENVIRONMENT = "production", API_VERSION = "v1", CORS_ORIGIN = "https://xivdyetools.app", ADDITIONAL_CORS_ORIGINS = "https://xiv-colorexplorer.pages.dev,https://beta.xivdyetools.app", JWT_ISSUER = "https://auth.xivdyetools.app", CACHE_PURGE_ZONE_ID = "…" }
 ```
 
 `JWT_ISSUER` pins the expected `iss` claim and must start with `https://` in production

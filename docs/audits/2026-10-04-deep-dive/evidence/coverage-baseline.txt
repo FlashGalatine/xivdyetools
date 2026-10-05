@@ -1,0 +1,142 @@
+$ tsx scripts/coverage-report.ts
+
+=====================================================================================
+  XIV DYE TOOLS — COVERAGE TESTING REPORT
+=====================================================================================
+
+PACKAGES (target: 90/90/90/90)
+─────────────────────────────────────────────────────────────────────────────────────
+  Project                     Stmts   Branch    Funcs    Lines  Status
+  ────────────────────────────────────────────────────────────────────────────────
+  auth                        95.0%    92.2%    94.3%    96.2%  PASS
+  bot-logic                   95.2%    88.4%    99.3%    96.6%  WARN
+  core                        95.8%    92.8%    98.9%    96.0%  PASS
+  logger                      96.8%    90.8%   100.0%    96.7%  PASS
+  svg                         98.4%    91.1%   100.0%    98.6%  PASS
+  test-utils                  96.3%    94.3%    96.3%    96.1%  PASS
+  types                       97.4%   100.0%   100.0%    97.4%  PASS
+  worker-kit                  99.5%    95.0%    97.0%    99.7%  PASS
+
+  Files below baseline:
+    auth:
+      src\encoding\index.ts                              statements: 0.0% (target 90%)
+      src\encoding\index.ts                              branches: 0.0% (target 90%)
+      src\encoding\index.ts                              functions: 0.0% (target 90%)
+      src\encoding\index.ts                              lines: 0.0% (target 90%)
+      src\timing.ts                                      branches: 50.0% (target 90%)
+      ... and 4 more files
+    bot-logic:
+      src\commands\types.ts                              statements: 0.0% (target 90%)
+      src\commands\types.ts                              branches: 0.0% (target 90%)
+      src\commands\types.ts                              functions: 0.0% (target 90%)
+      src\commands\types.ts                              lines: 0.0% (target 90%)
+      src\i18n\index.ts                                  statements: 0.0% (target 90%)
+      ... and 12 more files
+    core:
+      src\blending\index.ts                              statements: 0.0% (target 90%)
+      src\blending\index.ts                              branches: 0.0% (target 90%)
+      src\blending\index.ts                              functions: 0.0% (target 90%)
+      src\blending\index.ts                              lines: 0.0% (target 90%)
+      src\services\dye\wheels\types.ts                   statements: 0.0% (target 90%)
+      ... and 17 more files
+    logger:
+      src\presets\browser.ts                             branches: 76.7% (target 90%)
+      src\presets\browser.ts                             statements: 81.8% (target 90%)
+      src\presets\browser.ts                             lines: 81.8% (target 90%)
+    svg:
+      src\random-dyes-grid.ts                            branches: 60.0% (target 90%)
+      src\palette-grid.ts                                branches: 66.7% (target 90%)
+      src\budget-ledger.ts                               branches: 79.4% (target 90%)
+      src\glamour-card.ts                                branches: 82.3% (target 90%)
+      src\nearest-sheet.ts                               branches: 83.3% (target 90%)
+      ... and 3 more files
+    test-utils:
+      src\cloudflare\d1.ts                               branches: 84.6% (target 90%)
+    types:
+      src\api\moderation.ts                              statements: 0.0% (target 90%)
+      src\api\moderation.ts                              branches: 0.0% (target 90%)
+      src\api\moderation.ts                              functions: 0.0% (target 90%)
+      src\api\moderation.ts                              lines: 0.0% (target 90%)
+      src\api\price.ts                                   statements: 0.0% (target 90%)
+      ... and 65 more files
+    worker-kit:
+      src\body-guards\index.ts                           statements: 0.0% (target 90%)
+      src\body-guards\index.ts                           branches: 0.0% (target 90%)
+      src\body-guards\index.ts                           functions: 0.0% (target 90%)
+      src\body-guards\index.ts                           lines: 0.0% (target 90%)
+      src\body-guards\types.ts                           statements: 0.0% (target 90%)
+      ... and 31 more files
+
+APPS (target: 80/80/80/80)
+─────────────────────────────────────────────────────────────────────────────────────
+  Project                     Stmts   Branch    Funcs    Lines  Status
+  ────────────────────────────────────────────────────────────────────────────────
+  api-worker                  95.6%    90.5%    96.5%    95.9%  PASS
+  discord-worker              89.3%    81.6%    89.5%    90.2%  PASS
+  image-worker                91.9%    87.7%    97.4%    95.9%  PASS
+  moderation-worker           93.0%    86.0%    93.5%    93.5%  PASS
+  oauth                       95.5%    92.0%    93.7%    95.9%  PASS
+  og-worker                   97.8%    94.0%   100.0%    98.1%  PASS
+  presets-api                 95.3%    90.8%    96.5%    96.0%  PASS
+  stoat-worker                99.3%    90.7%    97.9%    99.6%  PASS
+  web-app                     81.3%    68.3%    78.4%    82.7%  FAIL
+
+  Files below baseline:
+    api-worker:
+      src\types.ts                                       statements: 0.0% (target 80%)
+      src\types.ts                                       branches: 0.0% (target 80%)
+      src\types.ts                                       functions: 0.0% (target 80%)
+      src\types.ts                                       lines: 0.0% (target 80%)
+      src\universalis\types.ts                           statements: 0.0% (target 80%)
+      ... and 11 more files
+    discord-worker:
+      src\services\bot-i18n.ts                           branches: 0.0% (target 80%)
+      src\services\i18n.ts                               statements: 0.0% (target 80%)
+      src\services\i18n.ts                               branches: 0.0% (target 80%)
+      src\services\i18n.ts                               functions: 0.0% (target 80%)
+      src\services\i18n.ts                               lines: 0.0% (target 80%)
+      ... and 23 more files
+    image-worker:
+      src\dimensions.ts                                  statements: 75.9% (target 80%)
+    moderation-worker:
+      src\services\i18n.ts                               statements: 0.0% (target 80%)
+      src\services\i18n.ts                               branches: 0.0% (target 80%)
+      src\services\i18n.ts                               functions: 0.0% (target 80%)
+      src\services\i18n.ts                               lines: 0.0% (target 80%)
+      src\utils\verify.ts                                statements: 0.0% (target 80%)
+      ... and 9 more files
+    oauth:
+      src\handlers\callback.ts                           functions: 50.0% (target 80%)
+      src\handlers\xivauth.ts                            functions: 71.4% (target 80%)
+      src\index.ts                                       branches: 72.2% (target 80%)
+    og-worker:
+      src\types.ts                                       statements: 0.0% (target 80%)
+      src\types.ts                                       branches: 0.0% (target 80%)
+      src\types.ts                                       functions: 0.0% (target 80%)
+      src\types.ts                                       lines: 0.0% (target 80%)
+      src\services\svg\index.ts                          statements: 0.0% (target 80%)
+      ... and 3 more files
+    presets-api:
+      src\types.ts                                       statements: 0.0% (target 80%)
+      src\types.ts                                       branches: 0.0% (target 80%)
+      src\types.ts                                       functions: 0.0% (target 80%)
+      src\types.ts                                       lines: 0.0% (target 80%)
+      src\services\identity-rekey-service.ts             branches: 50.0% (target 80%)
+      ... and 4 more files
+    stoat-worker:
+      src\commands\info.ts                               branches: 77.8% (target 80%)
+    web-app:
+      src\styles\tool-content.css                        statements: 0.0% (target 80%)
+      src\styles\tool-content.css                        branches: 0.0% (target 80%)
+      src\styles\tool-content.css                        functions: 0.0% (target 80%)
+      src\styles\tool-content.css                        lines: 0.0% (target 80%)
+      src\components\v4\config-sidebar.ts                functions: 34.6% (target 80%)
+      ... and 137 more files
+
+─────────────────────────────────────────────────────────────────────────────────────
+  SUMMARY
+  15 PASS  1 WARN  1 FAIL  (17 projects total)
+─────────────────────────────────────────────────────────────────────────────────────
+
+[ELIFECYCLE] Command failed with exit code 1.
+coverage:report exit 1

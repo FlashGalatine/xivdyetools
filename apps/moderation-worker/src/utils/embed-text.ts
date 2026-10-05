@@ -15,6 +15,8 @@ import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
 
 /** Preset names: presets-api caps them at 50 chars; escaping can double that. */
 export const NAME_MAX = 100;
+/** Preset descriptions as shown in a review embed. */
+const DESCRIPTION_MAX = 1000;
 /** Discord display names / usernames: 32 code points before escaping. */
 export const USER_MAX = 64;
 /** Embed field value limit. */
@@ -23,6 +25,14 @@ export const REASON_MAX = 1024;
 /** A preset name (author-controlled). */
 export function sanitizeName(text: unknown): string {
   return sanitizeEmbedText(text, NAME_MAX);
+}
+
+/**
+ * A preset description (author-controlled). presets-api caps it far lower; this
+ * cap only keeps a refreshed review embed inside Discord's description limit.
+ */
+export function sanitizeDescription(text: unknown): string {
+  return sanitizeEmbedText(text, DESCRIPTION_MAX);
 }
 
 /** A Discord username / display name / preset author name. */

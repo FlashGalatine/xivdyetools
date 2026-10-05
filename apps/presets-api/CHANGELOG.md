@@ -5,6 +5,121 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-10-04
+
+Sprint 3 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). **Deploy only
+together with moderation-worker Sprint 4, in one held-workflow window.** The status and revert
+endpoints now fail closed, so the current moderation-worker gets a 409 on every approve, reject
+and revert until its Sprint 4 build is live. No schema change; one hand-run data migration
+(`0015`) is **required** in the same window. See *Rollout*.
+
+### Security
+
+- **Moderation acts on the revision the moderator reviewed** (FINDING-017).
+  - **Request fields.** `PATCH /moderation/:presetId/status` and `PATCH /moderation/:presetId/revert`
+    now take `expected_revision` (the `content_revision` the moderator saw) and `expected_status`.
+    The conditional UPDATE binds those caller values instead of the row the handler had just
+    read.
+  - **Fail closed.** A request without them gets 409 `REVISION_REQUIRED`. A preset that changed
+    after the review, or that a concurrent moderator acted on, gets 409 `STALE_REVIEW`. Both
+    409s carry a fresh `current { status, content_revision }` (shared `parseReviewBinding` /
+    `reviewConflictResponse`), and neither writes a log row.
+  - **New `GET /moderation/:presetId`.** It returns the moderator view plus `content_revision`, so
+    a stale button can be refreshed. `moderation_status` is derived from status and is
+    `flagged` or `unknown`, never a fabricated `clean`.
+  - **Notification payload.** The submission notification carries `content_revision`. Text,
+    status and revision now all come from a single post-write read, and the notification is
+    skipped when that read no longer matches. The dead-letter record keeps the revision.
+- **Bans match every identity a session proves** (FINDING-014).
+  - `isUserBanned` checks the acting id, the JWT `sub` and its `discord_id` claim against
+    `banned_users.discord_id` and `xivauth_id`. A UUID-keyed ban no longer lapses when the
+    XIVAuth account links Discord.
+  - `PATCH /presets/refresh-author` (called on web sign-in) re-keys a linked account's presets,
+    votes and daily counters from the UUID to the Discord id (`identity-rekey-service.ts`):
+    - in one batch, idempotent;
+    - duplicate votes are collapsed, and `vote_count` is corrected;
+    - every statement is guarded against an active ban, so a banned identity is never re-keyed
+      and an unban still restores its presets.
+- **No scorer, no auto-approve** (FINDING-019). Without `PERSPECTIVE_API_KEY`, new presets and
+  text edits are queued for review (method `unscored`) instead of being approved on the local word
+  list alone. Production has the key, so it is unaffected. This is the presets-api half of
+  DEPRECATIONS.md's blocking step before the key is deleted.
+- **Example links and author names** (FINDING-016).
+  - `example_link` is rejected when it carries control, bidi or invisible characters, and is
+    stored as its normalized `href`.
+  - `author_name`, which comes from the token, has those characters stripped (a ZWJ between
+    emoji survives) on create, on `refresh-author` and in notifications.
+- **Image moderation is audited** (FINDING-020). Preview-image approve and reject write an
+  `image_approve` / `image_reject` `moderation_log` row in the same batch as the conditional
+  UPDATE, gated on `changes() > 0`, so a stale review writes neither.
+- **Retention** (FINDING-005).
+  - `pruneModerationRecords` runs on the moderation write paths, best-effort, and in the daily
+    retention job (see Added):
+    - lifted bans are deleted 90 days after `unbanned_at`;
+    - `ban`, `unban`, `hide` and `restore` log entries are deleted after 12 months;
+    - every other log entry lives as long as its preset.
+  - `DELETE /presets/:id` deletes the preset's log rows in its batch.
+  - These are the periods the Sprint 5 policy amendment will publish (`LIFTED_BAN_RETENTION_DAYS`,
+    `USER_ACTION_LOG_RETENTION_MONTHS`).
+- **Webhook secret floor** (FINDING-027). A production `INTERNAL_WEBHOOK_SECRET` under 32
+  characters is reported as an env-validation warning, never as a fatal error. This mirrors
+  discord-worker 5.7.2.
+- **Retired origin** (FINDING-006). `https://xivdyetools.projectgalatine.com` is out of
+  `ADDITIONAL_CORS_ORIGINS`, and a test pins the exact list.
+- **Retired custom domain.** The maintainer removed `api.xivdyetools.projectgalatine.com` in the
+  dashboard on 2026-10-05, so its route line is gone from `[env.production]`. A deploy re-attaches
+  every custom domain listed there. A test pins `api.xivdyetools.app` as the only route.
+- **Workers Logs pinned off** (FINDING-022). `[observability] enabled = false` is set in both
+  `wrangler.toml` blocks, and asserted with no `logpush` or `tail_consumers`.
+
+### Added
+
+- **Daily retention job** (FINDING-005 / FINDING-017). A production-only Cron Trigger
+  (`[env.production.triggers]`, `23 4 * * *`, UTC) runs a new `scheduled` handler
+  (`src/retention-job.ts`) once a day. It runs all three prunes - `submission_events` (30 days),
+  `failed_notifications` (30 days after resolution, 90 days unresolved) and the moderation
+  records (lifted bans 90 days after the unban, `ban` / `unban` / `hide` / `restore` log rows
+  12 months) - each isolated with `Promise.allSettled`, so one failing does not stop the others.
+  It logs counts and error names only.
+  - **Why.** The prunes ran only lazily on write paths, so with no traffic a period was never
+    enforced, and moderation-worker's direct-D1 ban / unban and auto-approvals never reached
+    `pruneModerationRecords` at all. Every period the privacy documents promise now holds within a
+    day. The lazy write-path prunes are unchanged.
+  - The default export is still the Hono app, now with `scheduled` assigned onto it
+    (`Object.assign(app, { scheduled })`), so `app.request` / `app.fetch` are unchanged.
+  - `pruneSubmissionEvents` is exported for the job.
+
+### Rollout
+
+Run after the deploy, in the same window, from `apps/presets-api`. One hand-run statement, in
+`migrations/0015_rewrite_legacy_dead_letters.sql`. **Required:** the bot privacy policy already describes
+these rows as holding only the preset id, the error and timestamps, and unresolved legacy rows would
+otherwise keep the author id, name and preset text until they age out (90 days).
+
+Rows written before 2026-08-30 (commit `780cf992`, FINDING-017 of the 2026-08-29 audit) still hold the
+whole notification (author id, author name, preset text) in `failed_notifications.payload`. This
+rewrites them in place to the reduced `{ type, preset_id, moderation_status? }` shape and skips
+anything already reduced or unparsable. It is idempotent
+(`tests/services/failed-notifications-legacy-rewrite.test.ts` runs the file against SQLite):
+
+```bash
+wrangler d1 execute xivdyetools-presets --env production --remote --file=migrations/0015_rewrite_legacy_dead_letters.sql
+```
+
+(`json_patch` drops a null `moderation_status`, which is what a legacy preview-image row has.) Verify
+with `SELECT COUNT(*) FROM failed_notifications WHERE CASE WHEN json_valid(payload) THEN json_extract(payload, '$.preset.id') IS NOT NULL ELSE 0 END`:
+it should return 0.
+
+### Tests
+
+- The retention job (all three prunes run, one throwing does not stop the others, `ctx.waitUntil`),
+  the wrangler cron invariant, and the one-off dead-letter rewrite (real SQLite).
+- Revision binding for status and revert, re-keying, retention, image audit, and text safety all
+  run against the real-SQLite harness. They include injected races between read and write, and an
+  injected ban between the ban check and the re-key batch.
+- `migration-trigger-parity.test.ts` pins migration 0014's trigger to `schema.sql` (FINDING-031).
+- 936 tests in total.
+
 ## [2.3.6] - 2026-09-17
 
 ### Fixed

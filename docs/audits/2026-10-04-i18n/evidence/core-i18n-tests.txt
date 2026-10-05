@@ -1,0 +1,12 @@
+
+ RUN  v5.0.2 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/packages/core
+
+
+ Test Files  9 passed (9)
+      Tests  258 passed (258)
+   Start at  23:42:29
+   Duration  1.71s (transform 49%, tests 28%, import 18%, worker 5%)
+
+  Transform  transforming modules took 2.23s · 49% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

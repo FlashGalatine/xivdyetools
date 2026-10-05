@@ -17,6 +17,8 @@ export interface ModalInteraction {
   channel_id?: string;
   message?: {
     id: string;
+    /** Discord message flags — 64 marks an ephemeral message (the /preset moderate confirmation) */
+    flags?: number;
     embeds?: Array<{
       title?: string;
       description?: string;

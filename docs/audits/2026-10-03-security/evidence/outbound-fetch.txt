@@ -1,0 +1,81 @@
+apps/api-worker/docs/.vitepress/theme/lib/live.ts:112:    const res = await fetch(API_BASE + query);
+apps/api-worker/docs/.vitepress/theme/lib/live.ts:154:  const res = await fetch(url, init);
+apps/api-worker/scripts/build-acquisition.ts:69:    const res = await fetch(url, { headers: { 'User-Agent': UA } });
+apps/api-worker/src/chara/xivapi.ts:234:      response = await fetch(url, {
+apps/api-worker/src/index.ts:48:    const asset = await c.env.ASSETS.fetch(c.req.raw);
+apps/api-worker/src/universalis/services/cached-fetch.ts:134:  const response = await fetch(url, {
+apps/discord-worker/scripts/register-commands.ts:82:    const response = await fetch(url, {
+apps/discord-worker/scripts/upload-emojis.ts:140:  const res = await fetch(API, { headers: HEADERS });
+apps/discord-worker/scripts/upload-emojis.ts:147:  const res = await fetch(API, {
+apps/discord-worker/scripts/upload-emojis.ts:172:  const res = await fetch(`${API}/${emoji.id}`, { method: 'DELETE', headers: HEADERS });
+apps/discord-worker/src/handlers/commands/glamour.ts:65:      response = await env.UNIVERSALIS_PROXY.fetch(new Request(`https://internal${RESOLVE_PATH}`, init));
+apps/discord-worker/src/handlers/commands/glamour.ts:67:      response = await fetch(`${env.UNIVERSALIS_PROXY_URL}${RESOLVE_PATH}`, init);
+apps/discord-worker/src/index.ts:623:  const changelogResponse = await fetch(changelogUrl, { signal: AbortSignal.timeout(10_000) });
+apps/discord-worker/src/services/budget/universalis-client.ts:126:        response = await env.UNIVERSALIS_PROXY.fetch(
+apps/discord-worker/src/services/budget/universalis-client.ts:143:        response = await fetch(url, {
+apps/discord-worker/src/services/image-client.ts:53:  const response = await env.IMAGE_WORKER.fetch(
+apps/discord-worker/src/services/preset-api.ts:141:      response = await env.PRESETS_API.fetch(
+apps/discord-worker/src/services/preset-api.ts:152:      response = await fetch(url, {
+apps/discord-worker/src/utils/chara-attachment.ts:87:  const response = await fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:90:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:149:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:178:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:235:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:364:  return fetch(url, {
+apps/discord-worker/src/utils/discord-api.ts:398:  return fetch(url, {
+apps/image-worker/src/photon.ts:166: * const response = await fetch(imageUrl);
+apps/image-worker/src/validators.ts:153: * const response = await fetch(result.normalizedUrl);
+apps/image-worker/src/validators.ts:423:    let response = await fetch(url, {
+apps/image-worker/src/validators.ts:449:      response = await fetch(redirectResult.normalizedUrl!, {
+apps/moderation-worker/scripts/register-commands.ts:155:    const response = await fetch(url, {
+apps/moderation-worker/src/services/preset-api.ts:125:      // A2 (Important 2, 2026-09-16 fix wave): `env.PRESETS_API.fetch(request)`
+apps/moderation-worker/src/services/preset-api.ts:137:      response = await env.PRESETS_API.fetch(`https://internal${path}`, {
+apps/moderation-worker/src/services/preset-api.ts:145:      response = await fetch(url, {
+apps/moderation-worker/src/utils/discord-api.ts:48:    return await fetch(url, {
+apps/moderation-worker/src/utils/discord-api.ts:134:    return await fetch(url, {
+apps/moderation-worker/src/utils/discord-api.ts:170:    return await fetch(url, {
+apps/moderation-worker/src/utils/url-sanitizer.ts:115: *   await fetch('https://discord.com/api/webhooks/123/SECRET/messages');
+apps/oauth/src/handlers/callback.ts:136:    const tokenResponse = await fetch('https://discord.com/api/oauth2/token', {
+apps/oauth/src/handlers/callback.ts:186:    const userResponse = await fetch('https://discord.com/api/users/@me', {
+apps/oauth/src/handlers/xivauth.ts:164:    const tokenResponse = await fetch(XIVAUTH_TOKEN_URL, {
+apps/oauth/src/handlers/xivauth.ts:225:    const userResponse = await fetch(XIVAUTH_USER_URL, {
+apps/oauth/src/handlers/xivauth.ts:276:      const charactersResponse = await fetch(XIVAUTH_CHARACTERS_URL, {
+apps/og-worker/src/index.ts:489: * dev — `fetch(request)` would self-fetch (CF error 1042) or reach nothing,
+apps/og-worker/src/index.ts:503: * `fetch(request)` / `fetch(c.req.raw)` sites below would give up. Both
+apps/og-worker/src/index.ts:534:    return await fetch(request, { signal: AbortSignal.timeout(SPA_PASSTHROUGH_TIMEOUT_MS) });
+apps/og-worker/src/index.ts:570:      // it. On the og. custom domain this worker IS the origin (fetch(request)
+apps/og-worker/src/index.ts:1278:  // BUG-069: never fetch(our own og. custom domain) — CF blocks worker
+apps/og-worker/src/index.ts:1284:  // FINDING-024 / OG-5: and never fetch() any other non-app ingress host
+apps/presets-api/src/services/moderation-service.ts:255:    const response = await fetch(PERSPECTIVE_ENDPOINT, {
+apps/presets-api/src/services/notification-service.ts:184:      const response = await env.DISCORD_WORKER.fetch(
+apps/presets-api/src/services/preview-image-service.ts:81:    const response = await fetch(
+apps/presets-api/src/services/preview-image-service.ts:143:  const response = await env.IMAGE_WORKER.fetch(
+apps/web-app/src/components/v4/config-sidebar.ts:722:        fetch('/json/data-centers.json'),
+apps/web-app/src/components/v4/config-sidebar.ts:723:        fetch('/json/worlds.json'),
+apps/web-app/src/services/auth-service.ts:407:      const response = await fetch(callbackEndpoint, {
+apps/web-app/src/services/auth-service.ts:524:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/refresh-author`, {
+apps/web-app/src/services/auth-service.ts:756:        await fetch(`${OAUTH_WORKER_URL}/auth/revoke`, {
+apps/web-app/src/services/chara-resolve-service.ts:135:    response = await fetch(`${getApiWorkerBase()}/v1/chara/resolve`, {
+apps/web-app/src/services/community-preset-service.ts:249:      const response = await fetch(url, {
+apps/web-app/src/services/preset-submission-service.ts:235:  const response = await fetch(
+apps/web-app/src/services/preset-submission-service.ts:263:  const response = await fetch(
+apps/web-app/src/services/preset-submission-service.ts:313:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets`, {
+apps/web-app/src/services/preset-submission-service.ts:392:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/mine`, {
+apps/web-app/src/services/preset-submission-service.ts:441:      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/rate-limit`, {
+apps/web-app/src/services/preset-submission-service.ts:480:      const response = await fetch(
+apps/web-app/src/services/preset-submission-service.ts:592:      const response = await fetch(
+apps/web-app/src/services/telemetry-service.ts:233:    void fetch(url, {
+apps/web-app/src/services/world-service.ts:51:        fetch('/json/data-centers.json'),
+apps/web-app/src/services/world-service.ts:52:        fetch('/json/worlds.json'),
+packages/core/src/services/APIService.ts:40:  fetch(url: string, options?: RequestInit): Promise<Response>;
+packages/core/src/services/APIService.ts:47:  async fetch(url: string, options?: RequestInit): Promise<Response> {
+packages/core/src/services/APIService.ts:48:    return fetch(url, options);
+packages/core/src/services/APIService.ts:691:      const response = await this.fetchClient.fetch(url, { signal: controller.signal });
+packages/core/src/services/APIService.ts:1031:      const response = await this.fetchClient.fetch(`${this.baseUrl}/data-centers`, {
+packages/core/src/utils/index.ts:342: *   await fetch(url, { signal: controller.signal });
+packages/core/src/utils/index.ts:373: *   () => fetch('https://api.example.com/data').then(r => r.json()),
+packages/logger/src/index.ts:25: *   async fetch(request: Request, env: Env) {
+packages/logger/src/presets/worker.ts:47: *   async fetch(request: Request, env: Env) {
+packages/test-utils/src/auth/headers.ts:13: * const response = await fetch('/api/protected', { headers });
+packages/test-utils/src/auth/jwt.ts:20: * const response = await fetch('/api/protected', {
+packages/worker-kit/src/rate-limiter/index.ts:17: *   async fetch(request: Request) {

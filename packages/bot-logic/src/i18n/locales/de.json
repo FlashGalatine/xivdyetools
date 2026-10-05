@@ -1251,9 +1251,6 @@
         "commands": {
           "description": "Aufschlüsselung pro Befehl anzeigen (nur Admins)"
         },
-        "preferences": {
-          "description": "Nutzungsraten der Einstellungen anzeigen (nur Admins)"
-        },
         "health": {
           "description": "Systemzustand anzeigen (nur Admins)"
         }

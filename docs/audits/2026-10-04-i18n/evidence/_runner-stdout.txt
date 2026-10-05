@@ -1,0 +1,46 @@
+== 0. build (packages needed by app tests) ==
+[0] build-packages
+== 1. core generated-locale drift ==
+[0] core-build-locales
+== 2. core i18n tests ==
+[0] core-i18n-tests
+== 3. bot-logic i18n gates ==
+[0] botlogic-i18n
+== 4. web-app gates ==
+[0] webapp-validate-i18n
+[0] webapp-i18n-unused
+[0] webapp-i18n-tests
+== 5. og-worker gates ==
+[0] og-i18n
+== 6. discord-worker gates ==
+[0] discord-i18n
+== 6b. moderation-worker gates ==
+[0] moderation-i18n
+== 6c. svg glamour card ==
+[0] svg-glamour
+== 7. locale-diff sweeps ==
+[0] locale-diff-botlogic
+[0] locale-diff-webapp
+[0] locale-diff-core
+== 8. script inventory ==
+[0] script-inventory
+== 9. font sizes ==
+== 10. font vs locale last-commit dates ==
+== 11. web-app eslint (i18n rules) ==
+== 12. policy documents + American English ==
+[0] policy-locale-parity
+[1] american-spelling
+[1] american-spelling-all
+[0] american-spelling-locales
+== 13. audit-local python sweeps ==
+[0] vocab-split
+[0] term-check
+[0] font-union-analysis
+[0] svg-literal-glyphs
+[0] variable-font-check
+[0] dynamic-keys
+[0] tool-name-consistency
+[0] market-board-term
+[1] en-needle-values
+== 14. innerHTML template sites + hardcoded-sentence grep (tracked files only) ==
+DONE

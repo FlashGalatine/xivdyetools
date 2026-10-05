@@ -1,0 +1,8 @@
+packages/core/src/services/CharacterColorService.ts
+packages/core/src/services/chara/chara-game-rules.ts
+packages/core/src/services/chara/chara-gposers.ts
+packages/core/src/services/chara/chara-models.ts
+packages/core/src/services/chara/chara-parser.ts
+packages/core/src/services/chara/chara-resolver.ts
+packages/core/src/services/chara/chara-shader-colors.ts
+packages/core/src/services/chara/chara-twins.ts

@@ -263,14 +263,26 @@ other. What the server does validate is that `status` is a member of that set; a
 
 The status update and its `moderation_log` insert run as one D1 `batch()`, and the `UPDATE` is
 conditional on both the status and the `content_revision` this moderator observed (optimistic
-concurrency, BUG-020 + migration 0014). If another
-moderator wrote first, the update matches zero rows, the log row is skipped
-(`WHERE changes() > 0`), and the response is:
+concurrency, BUG-020 + migration 0014). The observed pair comes **from the caller** and the route
+fails closed (FINDING-017): a request without a valid `expected_revision` / `expected_status` is
+rejected rather than bound to whatever row the server read a moment ago. A request without a valid
+binding is rejected with `REVISION_REQUIRED` before any write; if the preset changed after the
+review, the update matches zero rows, the log row is skipped (`WHERE changes() > 0`), and the
+response is `STALE_REVIEW`. Both `409`s share a shape:
 
 ```
-409  { "success": false, "error": "CONFLICT",
-       "message": "Preset changed concurrently — reload and retry" }
+409  { "success": false, "error": "CONFLICT", "code": "REVISION_REQUIRED",
+       "message": "expected_revision and expected_status are required — re-review the preset and retry",
+       "current": { "status": "pending", "content_revision": 3 } }
+
+409  { "success": false, "error": "CONFLICT", "code": "STALE_REVIEW",
+       "message": "The preset changed after it was reviewed — re-review the latest version",
+       "current": { "status": "approved", "content_revision": 4 } }
 ```
+
+`current` is a fresh read; the client's recovery is the same for both — re-read (see
+`GET /api/v1/moderation/:presetId` below) and review again. A preset deleted in the meantime is a
+`404`.
 
 A transition **into** the partial UNIQUE dye-signature index (`flagged`/`rejected` →
 `approved`/`pending`) can also collide with a preset that took the same signature meanwhile; that
@@ -281,15 +293,35 @@ is a `409` naming the preset in the way (BUG-041).
 | Field | Type | Constraints |
 |-------|------|-------------|
 | `status` | string | Required. One of `approved`, `rejected`, `flagged`, `pending` |
+| `expected_revision` | integer | **Required** (≥ 0) — the `content_revision` the moderator reviewed |
+| `expected_status` | string | **Required** — the status the moderator reviewed (any of `pending`, `approved`, `rejected`, `flagged`, `hidden`) |
 | `reason` | string | **Optional and unvalidated here** — stored verbatim (or `NULL`) on the `moderation_log` row, and surfaced to the owner as `rejection_reason` on `GET /presets/mine` |
 
 The action recorded is derived from the transition: `unflag` for `flagged → approved`, otherwise
 `approve` / `reject` / `flag` by target status, and `requeue` for a move back to `pending`.
 
+### `GET /api/v1/moderation/:presetId`
+
+The preset as a moderator reviews it, at **any** status, plus the revision a status change must be
+bound to. `404` if it does not exist.
+
+```json
+{ "success": true,
+  "preset": { "…public preset fields…": "…", "moderation_status": "unknown" },
+  "content_revision": 3 }
+```
+
+`moderation_status` is derived from the status alone, because the filter verdict is not stored:
+`flagged` when the preset's status is `flagged`, otherwise `unknown` — never `clean`. Do not render
+it as a filter verdict. The category is returned as `category_id`, as on every other route. Feed `content_revision` and the preset's `status` back as `expected_revision` /
+`expected_status` on `PATCH …/status`.
+
 ### `PATCH /api/v1/moderation/:presetId/preview-image`
 
 Approve or reject a pending preview image. Reject clears only the image, never the preset's status.
-Called by discord-worker's `previewimg_*` buttons as the clicking moderator.
+Called by discord-worker's `previewimg_*` buttons as the clicking moderator. The decision is audited
+(FINDING-020): an `image_approve` / `image_reject` `moderation_log` row is written in the same batch
+as the conditional `UPDATE`, so a stale review (the `409` below) writes neither.
 
 **Request Body:**
 
@@ -308,7 +340,8 @@ doesn't match that shape (`preview_image_key must identify the reviewed image`).
 
 ### `GET /api/v1/moderation/:presetId/history`
 
-Get the full moderation history for a preset.
+Get the full moderation history for a preset. Rows with the `ban` / `unban` / `hide` / `restore`
+actions are removed after 12 months (see [moderation.md](moderation.md) "Retention").
 
 ### `PATCH /api/v1/moderation/:presetId/revert`
 
@@ -320,17 +353,25 @@ the status back to `approved`.
 | Field | Type | Constraints |
 |-------|------|-------------|
 | `reason` | string | **Required, 10–200 characters** (`validateModerationReason`) — this is the route that enforces the length, not `/status` |
+| `expected_revision` | integer | **Required** (≥ 0) — the `content_revision` the moderator reviewed (FINDING-017) |
+| `expected_status` | string | **Required** — the status the moderator reviewed (any of `pending`, `approved`, `rejected`, `flagged`, `hidden`) |
 
 `400` if the preset has no `previous_values` to revert to.
 
-The update is conditional on the `content_revision` and the exact `previous_values` snapshot read
-at the start of the request (optimistic concurrency, migration 0014); if another write landed
-first, the response is:
+Like `PATCH …/status`, a revert fails closed. The update is conditional on the **caller's**
+`expected_revision`, `expected_status` and the exact `previous_values` snapshot (optimistic
+concurrency, migration 0014), and its `revert` log row is written in the same batch only when the
+update applied. Otherwise:
 
 ```
 409  { "success": false, "error": "CONFLICT",
-       "message": "Preset changed concurrently — reload and retry" }
+       "code": "REVISION_REQUIRED" | "STALE_REVIEW", "message": "…",
+       "current": { "status": "…", "content_revision": 4 } }
 ```
+
+`REVISION_REQUIRED` — `expected_revision` / `expected_status` missing or invalid; `STALE_REVIEW` —
+the preset changed after the review (or concurrently with this request). `current` is a fresh read;
+re-read and review again.
 
 Reverting can also collide with the partial UNIQUE dye-signature index if another preset took the
 same combination meanwhile; that is a `409 DUPLICATE_RESOURCE` naming the preset in the way, the

@@ -1,0 +1,693 @@
+[
+ {
+  "lc": "ja",
+  "read": {
+   "divergences": [
+    {
+     "id": "ja-1",
+     "file": "apps/web-app/TERMS_OF_SERVICE.ja.md",
+     "section": "Square Enix material / スクウェア・エニックスの資産について",
+     "english_claim": "L105-106: \"FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.\"",
+     "translated_text": "L77: \"FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.\"",
+     "back_translation": "(Left in English, untranslated.) The bot Terms ja L77 does translate the trademark sentence (FINAL FANTASYはスクウェア・エニックス・ホールディングス株式会社の登録商標です), and de/fr/ko/zh web Terms all translate it; only ja web Terms leaves it in English.",
+     "kind": "untranslated-claim",
+     "is_data_or_rights_claim": false,
+     "severity": "LOW"
+    },
+    {
+     "id": "ja-2",
+     "file": "apps/web-app/TERMS_OF_SERVICE.ja.md",
+     "section": "Square Enix material / スクウェア・エニックスの資産について",
+     "english_claim": "L109-110: \"Game data — dye names, colours, acquisition methods, item names and icons — belongs to Square Enix and is used here for informational purposes.\"",
+     "translated_text": "L79: \"カララント名、色、入手方法、アイテム名、アイコンなどのゲームデータはスクウェア・エニックスに帰属し、本サイトでは情報提供目的でのみ使用しています。\"",
+     "back_translation": "Game data such as dye names, colors, acquisition methods, item names, icons belongs to Square Enix, and on this site is used ONLY for informational purposes.",
+     "kind": "strengthened",
+     "is_data_or_rights_claim": false,
+     "severity": "INFO"
+    },
+    {
+     "id": "ja-3",
+     "file": "apps/web-app/TERMS_OF_SERVICE.ja.md",
+     "section": "Availability / サービスの提供について",
+     "english_claim": "L122-123: \"We may change, break, move, or shut down any part of it at any time, with or without notice.\"",
+     "translated_text": "L87: \"予告の有無にかかわらず、いつでも本サイトの一部を変更・停止・移転・終了することがあります。\"",
+     "back_translation": "Regardless of notice, we may at any time change, suspend, move, or end part of this site. ('break' rendered as 停止 'suspend'.)",
+     "kind": "other-claim",
+     "is_data_or_rights_claim": false,
+     "severity": "INFO"
+    },
+    {
+     "id": "ja-4",
+     "file": "apps/web-app/PRIVACY.ja.md",
+     "section": "Usage analytics (opt-in) / 利用状況分析",
+     "english_claim": "L111-112: \"Dye picks — the numeric id of a dye you explicitly picked from the palette drawer or a dye grid, and which tool you were in.\"",
+     "translated_text": "L51: \"カララント選択——パレットドロワーまたはカラーグリッドから明示的に選んだカララントの数値ID、およびどのツールで選んだか。\"",
+     "back_translation": "Dye selection — the numeric ID of a dye explicitly chosen from the palette drawer or a COLOR grid, and in which tool it was chosen. ('dye grid' became 'color grid'; the recorded field is unchanged.)",
+     "kind": "other-claim",
+     "is_data_or_rights_claim": true,
+     "severity": "INFO"
+    }
+   ],
+   "non_claim_defects": [
+    "DOC: apps/web-app/TERMS_OF_SERVICE.ja.md:11 says 十のツール (ten tools) but lists only nine. ミラプリリーダー (Glamour Reader) is missing, though English L15-16 names it. The English gained it on 2026-09-27 (b29b9562/e15928b2) and 2e4cb0cb never touched ja L11. Insert 、ミラプリリーダー after スウォッチマッチャー.",
+    "DOC (English is the stale one, faithfully mirrored in ja): apps/web-app/PRIVACY.md:47-48 says '\"Reset settings\" in Advanced Settings and your browser's site-data controls clear it', where 'it' is all of localStorage. In apps/web-app/src/components/advanced-options-panel.ts:237-240 that button only calls configController.resetAllConfigs(). Favourites, saved palettes and collections, the rewritten Acquisition lines (the commit 2e4cb0cb message itself says Reset settings does not clear them) and the session token are not cleared by it. PRIVACY.ja.md:22 repeats the over-claim. Separately, the English quotes 'Reset settings' while en.json config.resetSettings is 'Reset Settings' (case only).",
+    "I18N: apps/web-app/PRIVACY.ja.md:36 フォントは自社ホストです uses 自社 ('our company'), which casts the operator as a company. Use フォントはセルフホストしています or 運営者のサーバーから配信.",
+    "I18N: 他社 ('another company') is used for third-party sites and services, several of them community projects rather than companies: PRIVACY.ja.md:42 他社のサイト; TERMS_OF_SERVICE.ja.md:64 heading 他社のサービスについて and :73 他社のサイト. Prefer 第三者 or 他者.",
+    "I18N: apps/discord-worker/PRIVACY_POLICY.ja.md:120 has a stray space in Discordユーザー ID. Elsewhere the file writes DiscordユーザーID.",
+    "I18N: apps/discord-worker/PRIVACY_POLICY.ja.md:47 and :172 have a stray space in Cloudflareの Analytics Engine.",
+    "I18N: apps/web-app/PRIVACY.ja.md:22 renders 'for that outfit' as その装備 ('that equipment'). This matches the in-product string sheet.privacy (この装備ごと) in apps/web-app/src/locales/ja.json:1411, so it is consistent with the UI. The terminology doc, however, prescribes コーディネート for one outfit in the policies (as used elsewhere in this file).",
+    "I18N (in-product string, not policy): apps/web-app/src/locales/ja.json:238 analyticsDesc writes 染料 for 'dyes'. The policies and the rest of the UI use カララント. The claim itself (anonymous, no identifiers, no images) agrees with PRIVACY.ja.md §利用状況分析.",
+    "Checked, no defect: every quoted web UI label matches apps/web-app/src/locales/ja.json. That covers 画像はブラウザ内で処理され、送信されません。 (:307), XIV 染色ツールについて → プライバシー (:9/:30), 詳細設定 (:225), 設定をリセット (:226), 分析を有効にする (:237), 価格を表示 (:157), 開く… (:1276), 装備リスト (:1398) and すべてリセット (:1412). Tool names match too. Bot preference and filter labels (部族, コスモ, イシュガルド, ベンダー, クラフト) match packages/bot-logic/src/i18n/locales/ja.json. Facewear is フェイスアクセサリー, as in the terminology table's slot row.",
+    "Checked, no defect: in-product privacy strings agree with the ja policies. Web ja.json:1033 (account record holds provider ID and username; no character info or email collected; nothing sold), :1108 (stored on this device, not sent to the server), :1411 (edits kept on this device; character name and file never saved). Bot ja.json:690 (.chara read once for the reply, not stored)."
+   ],
+   "sections_checked": 65,
+   "pitfalls_checked": [
+    "Operator as company (当社/自社/弊社): no 当社 or 弊社. 運営者 is used throughout. Two leftovers: 自社ホスト (PRIVACY.ja:36) and 他社 for third parties (PRIVACY.ja:42, TERMS.ja:64,73).",
+    "Modifier on the wrong verb: re-read the survival clause (TERMS.ja:107; correctly attaches 'after you leave' to 'stay up'), both governing-law and non-waivable consumer-right clauses (TERMS.ja:111, bot TERMS.ja:134-136; the subject of the non-waiver is the same law of the place of residence), the liability clauses, and 'nothing else is sent' (bot PRIVACY.ja:85, web PRIVACY.ja:18). All correct.",
+    "CJK false friend 利用: bot TERMS.ja:42 renders 'abuse, exploit, or circumvent rate limits' as 悪用、不正利用、または回避. No bare 利用 binds the user to anything extra. Web TERMS.ja:57 has 回避 only, matching the English.",
+    "One word for two things: Discord server (サーバー) vs World (ワールド) are kept distinct. Batch (バッチ) vs collections (コレクション) are distinct. 装備 is used for both gear and outfit (noted).",
+    "Stale quoted UI labels: every quoted label was checked against the current web and bot ja.json. All match.",
+    "English is the stale one: found PRIVACY.md 'Reset settings … clear it' over-claims against advanced-options-panel.ts. Mirrored faithfully in ja; filed as DOC.",
+    "Game nouns per docs/reference/ffxiv-terminology.md: コーディネート (policy register), ミラプリリーダー, フェイスアクセサリー, 部族, ワールド/データセンター, ロードストーン. No グラマー.",
+    "Lexical digit and spelled-out quantities: 'a dozen' → 十数個 (digit-free); 'about three months' → 約三ヶ月; 60/120 seconds, 30/90/180 days, 50, 13, 7 and 3 months all preserved.",
+    "CJK hard wraps: none. One paragraph per line in all four ja files.",
+    "2e4cb0cb Glamour Reader hunks read first: web PRIVACY (tool list, facewear id, XIVAPI, reply contents, rewritten Acquisition lines, Reset all, Open in… owner), web TERMS (XIVAPI row, dye-card vs glamour-piece links), bot PRIVACY (.chara not-collected row, Character Files subsection, XIVAPI table row), bot TERMS (§3 command list, §6 item names and XIVAPI). All carry the same claims. The web TERMS 'What the site does' tool list was not touched by the commit and still lacks the Glamour Reader.",
+    "Untranslated claims: one found (web TERMS.ja:77 trademark sentence). The copyright line kept in English is conventional and also kept in bot TERMS.ja:75.",
+    "Retention, recipient and right claims (bot PRIVACY tables §2/§5/§8, rights §7, 30-day deletion, transfers §10, children §9; web analytics retention, IP/KV 120 s, logs off, doNotStore, opt-in and GPC): all match. No softening, no strengthening, no dropped or added right."
+   ]
+  },
+  "verified": [
+   {
+    "id": "ja-1",
+    "file": "apps/web-app/TERMS_OF_SERVICE.ja.md",
+    "section": "Square Enix material / スクウェア・エニックスの資産について",
+    "english_claim": "L105-106: \"FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.\"",
+    "translated_text": "L77: \"FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.\"",
+    "back_translation": "(Left in English, untranslated.) The bot Terms ja L77 does translate the trademark sentence (FINAL FANTASYはスクウェア・エニックス・ホールディングス株式会社の登録商標です), and de/fr/ko/zh web Terms all translate it; only ja web Terms leaves it in English.",
+    "kind": "untranslated-claim",
+    "is_data_or_rights_claim": false,
+    "severity": "LOW",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "Confirmed: apps/web-app/TERMS_OF_SERVICE.ja.md:77 keeps the copyright and trademark notice in English, word for word the same as the English file at lines 105-106. The ko, zh, de and fr web Terms translate the trademark sentence, and so does apps/discord-worker/TERMS_OF_SERVICE.ja.md:77. Because the text is identical to the governing English, the claim, its scope and the rights holder are all unchanged. It is a missing translation, not a different claim, so the severity is INFO rather than LOW."
+    }
+   },
+   {
+    "id": "ja-2",
+    "file": "apps/web-app/TERMS_OF_SERVICE.ja.md",
+    "section": "Square Enix material / スクウェア・エニックスの資産について",
+    "english_claim": "L109-110: \"Game data — dye names, colours, acquisition methods, item names and icons — belongs to Square Enix and is used here for informational purposes.\"",
+    "translated_text": "L79: \"カララント名、色、入手方法、アイテム名、アイコンなどのゲームデータはスクウェア・エニックスに帰属し、本サイトでは情報提供目的でのみ使用しています。\"",
+    "back_translation": "Game data such as dye names, colors, acquisition methods, item names, icons belongs to Square Enix, and on this site is used ONLY for informational purposes.",
+    "kind": "strengthened",
+    "is_data_or_rights_claim": false,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "The quoted text matches both files. In C:/dev/XIVProjects/xivdyetools/.claude/worktrees/security-audit-96f7ce/apps/web-app/TERMS_OF_SERVICE.md L109-110 the English says \"used here for informational purposes\". The Japanese at C:/dev/XIVProjects/xivdyetools/.claude/worktrees/security-audit-96f7ce/apps/web-app/TERMS_OF_SERVICE.ja.md L79 says 情報提供目的でのみ使用, which means \"used only for informational purposes\". So the translation adds \"only\" and makes it an exclusive-purpose statement. This is the normal wording for a Japanese fan-site disclaimer, and it does not change the rights claim. Square Enix still owns the game data, and the operator takes on no new obligation, recipient or data practice. The list of examples (など) and the ownership statement match the English. This is drift that does not change the claim, so INFO."
+    }
+   },
+   {
+    "id": "ja-3",
+    "file": "apps/web-app/TERMS_OF_SERVICE.ja.md",
+    "section": "Availability / サービスの提供について",
+    "english_claim": "L122-123: \"We may change, break, move, or shut down any part of it at any time, with or without notice.\"",
+    "translated_text": "L87: \"予告の有無にかかわらず、いつでも本サイトの一部を変更・停止・移転・終了することがあります。\"",
+    "back_translation": "Regardless of notice, we may at any time change, suspend, move, or end part of this site. ('break' rendered as 停止 'suspend'.)",
+    "kind": "other-claim",
+    "is_data_or_rights_claim": false,
+    "severity": "INFO",
+    "check": {
+     "outcome": "REFUTED",
+     "reason": "The quote is accurate (EN L122-123, JA L87), but the claim is the same. 変更・停止・移転・終了 renders change/break/move/shut down as a standard Japanese terms-of-service list. \"Break\" became 停止 (\"stop working\"), but the obligation, the scope (any part, anytime, with or without notice) and the no-warranty disclaimer (JA L93) are unchanged.",
+     "severity": "INFO"
+    }
+   },
+   {
+    "id": "ja-4",
+    "file": "apps/web-app/PRIVACY.ja.md",
+    "section": "Usage analytics (opt-in) / 利用状況分析",
+    "english_claim": "L111-112: \"Dye picks — the numeric id of a dye you explicitly picked from the palette drawer or a dye grid, and which tool you were in.\"",
+    "translated_text": "L51: \"カララント選択——パレットドロワーまたはカラーグリッドから明示的に選んだカララントの数値ID、およびどのツールで選んだか。\"",
+    "back_translation": "Dye selection — the numeric ID of a dye explicitly chosen from the palette drawer or a COLOR grid, and in which tool it was chosen. ('dye grid' became 'color grid'; the recorded field is unchanged.)",
+    "kind": "other-claim",
+    "is_data_or_rights_claim": true,
+    "severity": "INFO",
+    "check": {
+     "outcome": "REFUTED",
+     "reason": "Both quotes are verbatim (PRIVACY.md L111-112, PRIVACY.ja.md L51). Rendering \"dye grid\" as カラーグリッド is a wording drift, not a different claim: the data collected (the numeric ID of a dye the user explicitly picked, plus the tool), the opt-in condition, and the exclusions (random-dye picks, picks the tool rejected, the whole palette) are all the same.",
+     "severity": "INFO"
+    }
+   }
+  ]
+ },
+ {
+  "lc": "ko",
+  "read": {
+   "divergences": [
+    {
+     "id": "ko-1",
+     "file": "apps/discord-worker/TERMS_OF_SERVICE.ko.md",
+     "section": "4. User Conduct",
+     "english_claim": "L45: \"Not submit inappropriate, offensive, or copyrighted content to community features\"",
+     "translated_text": "L45: \"부적절하거나, 불쾌하거나, 저작권을 침해하는 콘텐츠를 커뮤니티 기능에 제출하지 않습니다\"",
+     "back_translation": "Will not submit inappropriate, offensive, or copyright-infringing content to community features",
+     "kind": "softened",
+     "is_data_or_rights_claim": false,
+     "severity": "LOW"
+    },
+    {
+     "id": "ko-2",
+     "file": "apps/web-app/TERMS_OF_SERVICE.ko.md",
+     "section": "Square Enix material",
+     "english_claim": "L109-110: \"Game data — dye names, colours, acquisition methods, item names and icons — belongs to Square Enix and is used here for informational purposes.\"",
+     "translated_text": "L79: \"게임 데이터 — 염료 이름, 색상, 획득 방법, 아이템 이름과 아이콘 — 는 Square Enix의 소유이며 이곳에서는 정보 제공 목적으로만 사용됩니다.\"",
+     "back_translation": "Game data ... is the property of Square Enix and is used here ONLY for informational purposes.",
+     "kind": "strengthened",
+     "is_data_or_rights_claim": false,
+     "severity": "LOW"
+    },
+    {
+     "id": "ko-3",
+     "file": "apps/web-app/PRIVACY.ko.md",
+     "section": "Character files (.chara)",
+     "english_claim": "L38-39: \"Our API looks those numbers up in XIVAPI, a community game-data service, which is sent the numbers and nothing about you.\"",
+     "translated_text": "L18: \"저희 API는 이 번호를 커뮤니티 게임 데이터 서비스인 [XIVAPI](https://xivapi.com/)에서 조회하며, XIVAPI에는 이 번호만 전달되고 사용자에 관한 정보는 전혀 전달되지 않습니다.\"",
+     "back_translation": "Our API looks these numbers up in XIVAPI ..., and ONLY these numbers are passed to XIVAPI, and no information about the user at all is passed.",
+     "kind": "strengthened",
+     "is_data_or_rights_claim": true,
+     "severity": "INFO"
+    },
+    {
+     "id": "ko-4",
+     "file": "apps/web-app/TERMS_OF_SERVICE.ko.md",
+     "section": "Using the site fairly",
+     "english_claim": "L80: \"work around rate limits, or automate the site in a way that degrades it for other people\"",
+     "translated_text": "L57: \"속도 제한을 우회하거나, 다른 사람에게 피해를 주는 방식으로 사이트를 자동화하는 행위\"",
+     "back_translation": "working around rate limits, or automating the site in a way that harms other people",
+     "kind": "other-claim",
+     "is_data_or_rights_claim": false,
+     "severity": "INFO"
+    },
+    {
+     "id": "ko-5",
+     "file": "apps/discord-worker/TERMS_OF_SERVICE.ko.md",
+     "section": "6. Intellectual Property / Square Enix Content",
+     "english_claim": "L79: \"Game data, including dye and item names, colors, and acquisition methods, are property of Square Enix Co., Ltd. and are used under fair use for educational and informational purposes only.\"",
+     "translated_text": "L79: \"염료 이름과 아이템 이름, 색상, 획득 방법을 포함한 게임 데이터는 Square Enix Co., Ltd.의 재산이며, 교육 및 정보 제공 목적의 공정 이용 하에서만 사용됩니다.\"",
+     "back_translation": "Game data ... is the property of Square Enix Co., Ltd. and is used ONLY under fair use for educational and informational purposes ('only' moved from the purposes to 'under fair use'; same practical effect).",
+     "kind": "modifier-misattached",
+     "is_data_or_rights_claim": false,
+     "severity": "INFO"
+    },
+    {
+     "id": "ko-6",
+     "file": "apps/discord-worker/TERMS_OF_SERVICE.ko.md",
+     "section": "5. Content Moderation / Appeal Process",
+     "english_claim": "L67: \"Contact a moderator or ping \"Flash Galatine\" in #dyetools-issues-and-suggestions\"",
+     "translated_text": "L67: \"#dyetools-issues-and-suggestions에서 운영자에게 문의하시거나 \"Flash Galatine\"을 멘션하세요\"",
+     "back_translation": "In #dyetools-issues-and-suggestions, contact a moderator or mention \"Flash Galatine\" (the channel now scopes both actions; the English is itself ambiguous).",
+     "kind": "modifier-misattached",
+     "is_data_or_rights_claim": false,
+     "severity": "INFO"
+    }
+   ],
+   "non_claim_defects": [
+    "DOC: apps/web-app/TERMS_OF_SERVICE.ko.md:11 'What the site does' says 열 가지 도구 (ten tools) but lists nine; 코디 리더 (Glamour Reader) is missing. English L15-16 lists ten with Glamour Reader. The sentence contradicts itself as well as omitting a tool. This is the known all-language defect, confirmed present in ko.",
+    "DOC: The governing English is the stale text. apps/web-app/PRIVACY.md:47-48 says '\"Reset settings\" in Advanced Settings and your browser's site-data controls clear it', where 'it' is all of localStorage: palettes, collections, rewritten Acquisition lines and the session token. The handler at apps/web-app/src/components/advanced-options-panel.ts:237-240 only calls configController.resetAllConfigs(), which loops CONFIG_KEYS (src/services/config-controller.ts:381-385). It does not touch the acquisition-edit key (src/shared/acquisition-edits.ts:28), saved palettes, collections or the token. Commit 2e4cb0cb's own message says 'Reset settings does not clear them'. PRIVACY.ko.md:22 faithfully copies this overstatement of a deletion path. Route to security-audit as a FINDING (Policy: AMEND, all six variants).",
+    "DOC: The English quotes the button as \"Reset settings\" (PRIVACY.md:47), but en.json config.resetSettings is \"Reset Settings\". Case drift only. The ko label 설정 초기화 matches ko.json:226.",
+    "I18N: apps/web-app/PRIVACY.ko.md:57 uses 서버 twice in one paragraph for two things: '캐릭터 이름이나 서버 이름' (game World names) and, one sentence later, '서버는 검증된 이벤트를…' (the operator's API server). This is the 'one word for two things' pitfall. L30 '서버 또는 데이터 센터' sits next to 'our proxy' too. The shipped label 마켓 서버 (bot-logic ko.json:357) or a disambiguation would fix it.",
+    "I18N: apps/web-app/PRIVACY.ko.md:12 has a doubled period after the quoted notice: '…업로드되지 않습니다.\". 이 안내는'.",
+    "I18N: apps/web-app/src/locales/ko.json:1033 (sign-in privacyNote) says '표시 이름은 투고한 팔레트에 표시됩니다' (palettes you posted). en.json:1033 and both ko policy documents say presets (프리셋). In-product wording disagrees with the policy terminology. The data claim itself (ID + username stored, no character data or email collected, nothing sold) agrees with PRIVACY.ko.md:32 and TERMS_OF_SERVICE.ko.md:20.",
+    "I18N: Verified, no defect. Every quoted web UI label in PRIVACY.ko.md matches current apps/web-app/src/locales/ko.json: 고급 설정 (225), 설정 초기화 (226), 분석 활성화 (237), 가격 표시 (157), 다음에서 열기… (1276), 장비 목록 (glamour sheet.title 1398), 모두 초기화 (1412), XIV 염색 도구 정보 → 개인정보처리방침 (9/30), privacyNote (307). Tool names match the tool titles. Bot slash-command names are not localized (apps/discord-worker/src/commands/localize.ts localizes only descriptions and choice names), so /preferences show|reset and /preset favorite list|remove are correct as quoted. In-product .chara/upload strings (bot-logic ko.json:690 'not stored'; web ko.json:1108, 1411) agree with the policies."
+   ],
+   "sections_checked": 68,
+   "pitfalls_checked": [
+    "Operator is one person, not a company: grep for 당사/자사/회사 in all four ko files found none. 저희 is used throughout.",
+    "Modifier attached to the wrong verb: web Terms L107 preset survival ('presets you published may stay up after you leave, under the licence') is correct. Governing law, conflict-of-laws exclusion, venue and the non-waiver clause (web L111, bot L134/136, 'law of the place where you live ... that the same law does not let you waive') are all correct. Minor shifts are logged as ko-5/ko-6 INFO.",
+    "CJK false friends: no 利用-type mistranslation. Bot Terms L42 '남용, 악용 또는 우회' renders the English 'abuse, exploit, or circumvent' as written. 이용 is used in the plain 'use' sense.",
+    "One word for two things: 서버 for World vs the API server in web PRIVACY.ko L57 (I18N filed). Bot privacy correctly uses 마켓 서버 (L28) for World vs 서버 for a Discord server (L22).",
+    "Quoted UI labels vs current ko.json: every web label checked (see non_claim_defects). Bot command names are confirmed not localized. Bot category choice labels (메탈릭/파스텔/다크/코스모/이슈가르드/고가/상인) match bot-logic ko.json:405-411.",
+    "English being the stale one: 'Reset settings ... clear it' (PRIVACY.md:47) overstates what the handler clears. Verified in code and filed as DOC. 'Advanced Settings' matches en.json.",
+    "Game nouns per docs/reference/ffxiv-terminology.md: policy register 의상 / 복장 for one glamour (no 글래머), 코디 리더 for Glamour Reader, 얼굴 소품 for the Facewear slot (row 16050), 서버 / 마켓 서버 for World, 데이터 센터, 장터 for market board, 부족 for clan.",
+    "Digit / lexical-number words: 제3자 is kept (not 제삼자). 'a dozen' becomes 십여 and 'about three months' becomes 약 석 달, both digit-free. 13세, 7일, 30일, 60초/120초, 180일, 50개 and 3개월 all match.",
+    "CJK hard-wrap: all four ko files are one paragraph per line, with no soft breaks between Hangul.",
+    "Glamour Reader change 2e4cb0cb: every changed hunk read first. ko carries the new .chara not-collected bullet, the Character Files subsection, the XIVAPI third-party row and Terms paragraph, the facewear id, the acquisition-edit storage and 'Reset all', the Glamour Reader 'Open in…' menu, the five new bot Terms §3 bullets, 'dye and item names', and the split item-link/dye-card list. The one miss is the web Terms 'What the site does' list.",
+    "Softening/strengthening sweep on never / off-by-default / optional / only / retention / recipient sentences across all four documents: no softening was found on data claims. One strengthening (ko-3 XIVAPI '만') is INFO.",
+    "In-product privacy strings (git grep privacy|never|stored|upload|send over both ko.json files) compared with the policy claims."
+   ]
+  },
+  "verified": [
+   {
+    "id": "ko-1",
+    "file": "apps/discord-worker/TERMS_OF_SERVICE.ko.md",
+    "section": "4. User Conduct",
+    "english_claim": "L45: \"Not submit inappropriate, offensive, or copyrighted content to community features\"",
+    "translated_text": "L45: \"부적절하거나, 불쾌하거나, 저작권을 침해하는 콘텐츠를 커뮤니티 기능에 제출하지 않습니다\"",
+    "back_translation": "Will not submit inappropriate, offensive, or copyright-infringing content to community features",
+    "kind": "softened",
+    "is_data_or_rights_claim": false,
+    "severity": "LOW",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "LOW",
+     "reason": "Both files have this bullet at line 45. The English line forbids \"copyrighted content\". The Korean line, 저작권을 침해하는, means \"copyright-infringing\". That narrows the user's obligation: under the Korean wording a user may submit copyrighted work they own or are licensed to use, which the English wording does not explicitly allow. The Korean probably matches what the clause was meant to say, but it is a narrower legal obligation than the governing English text. This is not a data, rights or retention claim, so the severity is LOW. Files: apps/discord-worker/TERMS_OF_SERVICE.md:45 and apps/discord-worker/TERMS_OF_SERVICE.ko.md:45."
+    }
+   },
+   {
+    "id": "ko-2",
+    "file": "apps/web-app/TERMS_OF_SERVICE.ko.md",
+    "section": "Square Enix material",
+    "english_claim": "L109-110: \"Game data — dye names, colours, acquisition methods, item names and icons — belongs to Square Enix and is used here for informational purposes.\"",
+    "translated_text": "L79: \"게임 데이터 — 염료 이름, 색상, 획득 방법, 아이템 이름과 아이콘 — 는 Square Enix의 소유이며 이곳에서는 정보 제공 목적으로만 사용됩니다.\"",
+    "back_translation": "Game data ... is the property of Square Enix and is used here ONLY for informational purposes.",
+    "kind": "strengthened",
+    "is_data_or_rights_claim": false,
+    "severity": "LOW",
+    "check": {
+     "outcome": "UPHELD",
+     "reason": "The quoted text matches both files. English TERMS_OF_SERVICE.md L109-110 says the data \"is used here for informational purposes\". Korean TERMS_OF_SERVICE.ko.md L79 says \"정보 제공 목적으로만 사용됩니다\". The particle 만 means \"only\", and the English has no matching word, so it is an addition, not an idiomatic choice. A faithful rendering would be \"정보 제공 목적으로 사용됩니다\". The Korean turns a plain description of use into a promise that the data is used for that purpose only. This narrows how the site says it uses Square Enix material, but it does not touch user data, retention or recipients. That makes it LOW, a legal claim of another kind.",
+     "severity": "LOW"
+    }
+   },
+   {
+    "id": "ko-3",
+    "file": "apps/web-app/PRIVACY.ko.md",
+    "section": "Character files (.chara)",
+    "english_claim": "L38-39: \"Our API looks those numbers up in XIVAPI, a community game-data service, which is sent the numbers and nothing about you.\"",
+    "translated_text": "L18: \"저희 API는 이 번호를 커뮤니티 게임 데이터 서비스인 [XIVAPI](https://xivapi.com/)에서 조회하며, XIVAPI에는 이 번호만 전달되고 사용자에 관한 정보는 전혀 전달되지 않습니다.\"",
+    "back_translation": "Our API looks these numbers up in XIVAPI ..., and ONLY these numbers are passed to XIVAPI, and no information about the user at all is passed.",
+    "kind": "strengthened",
+    "is_data_or_rights_claim": true,
+    "severity": "INFO",
+    "check": {
+     "outcome": "REFUTED",
+     "severity": "INFO",
+     "reason": "The quote is accurate: PRIVACY.md L38-39 and PRIVACY.ko.md L18 say what the reviewer reports. But \"XIVAPI에는 이 번호만 전달되고 사용자에 관한 정보는 전혀 전달되지 않습니다\" is a natural Korean way to say \"is sent the numbers and nothing about you.\" Both make the same claim about the same recipient: XIVAPI receives the looked-up numbers and nothing about the user. The 만 (\"only\") and 전혀 (\"at all\") are emphasis, and the English already says \"only\" one sentence earlier, about the request to our own API. The only literal widening is that 만 also rules out non-user data. The worker's search to v2.xivapi.com (apps/api-worker/src/chara/xivapi.ts L234-272) also sends slot-category columns, query parameters and a service User-Agent. None of that is about the user, so what the policy says about user data does not change."
+    }
+   },
+   {
+    "id": "ko-4",
+    "file": "apps/web-app/TERMS_OF_SERVICE.ko.md",
+    "section": "Using the site fairly",
+    "english_claim": "L80: \"work around rate limits, or automate the site in a way that degrades it for other people\"",
+    "translated_text": "L57: \"속도 제한을 우회하거나, 다른 사람에게 피해를 주는 방식으로 사이트를 자동화하는 행위\"",
+    "back_translation": "working around rate limits, or automating the site in a way that harms other people",
+    "kind": "other-claim",
+    "is_data_or_rights_claim": false,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "Both quotes are verbatim: TERMS_OF_SERVICE.md L80 and TERMS_OF_SERVICE.ko.md L57. The Korean drops \"degrades it\", the point that the harm is degraded service. It says \"harms other people\" (다른 사람에게 피해를 주는) instead, which is slightly broader. The banned conduct (getting around rate limits, harmful automation) and the strength of the obligation are the same, so this is minor drift, not a different legal claim."
+    }
+   },
+   {
+    "id": "ko-5",
+    "file": "apps/discord-worker/TERMS_OF_SERVICE.ko.md",
+    "section": "6. Intellectual Property / Square Enix Content",
+    "english_claim": "L79: \"Game data, including dye and item names, colors, and acquisition methods, are property of Square Enix Co., Ltd. and are used under fair use for educational and informational purposes only.\"",
+    "translated_text": "L79: \"염료 이름과 아이템 이름, 색상, 획득 방법을 포함한 게임 데이터는 Square Enix Co., Ltd.의 재산이며, 교육 및 정보 제공 목적의 공정 이용 하에서만 사용됩니다.\"",
+    "back_translation": "Game data ... is the property of Square Enix Co., Ltd. and is used ONLY under fair use for educational and informational purposes ('only' moved from the purposes to 'under fair use'; same practical effect).",
+    "kind": "modifier-misattached",
+    "is_data_or_rights_claim": false,
+    "severity": "INFO",
+    "check": {
+     "outcome": "REFUTED",
+     "reason": "TERMS_OF_SERVICE.ko.md:79 matches the reviewer's quote, but it says the same thing as the English. In Korean, \"교육 및 정보 제공 목적의 공정 이용\" is one noun phrase (\"fair use for educational and informational purposes\"), so \"-하에서만\" (\"only under\") restricts that whole phrase. That is the natural place for \"-만\" (\"only\"), and the use is limited to the same purposes as English L79. Same scope and obligation, so this is an idiomatic difference, not a different claim.",
+     "severity": "INFO"
+    }
+   },
+   {
+    "id": "ko-6",
+    "file": "apps/discord-worker/TERMS_OF_SERVICE.ko.md",
+    "section": "5. Content Moderation / Appeal Process",
+    "english_claim": "L67: \"Contact a moderator or ping \"Flash Galatine\" in #dyetools-issues-and-suggestions\"",
+    "translated_text": "L67: \"#dyetools-issues-and-suggestions에서 운영자에게 문의하시거나 \"Flash Galatine\"을 멘션하세요\"",
+    "back_translation": "In #dyetools-issues-and-suggestions, contact a moderator or mention \"Flash Galatine\" (the channel now scopes both actions; the English is itself ambiguous).",
+    "kind": "modifier-misattached",
+    "is_data_or_rights_claim": false,
+    "severity": "INFO",
+    "check": {
+     "outcome": "REFUTED",
+     "reason": "ko L67 matches en L67 as quoted. The English \"in #dyetools-issues-and-suggestions\" can apply to both actions, and the Korean wording is one valid reading of it. ja L67 takes the same reading. The appeal route (same server, same channel, same contacts) and the 7-day review are unchanged, so the claim is the same.",
+     "severity": "INFO"
+    }
+   }
+  ]
+ },
+ {
+  "lc": "zh",
+  "read": {
+   "divergences": [
+    {
+     "id": "zh-1",
+     "file": "apps/web-app/PRIVACY.zh.md",
+     "section": "Network access, item 1 (Market-board prices)",
+     "english_claim": "L61-62: \"item ids and the world or data centre you chose go to our proxy at `data.xivdyetools.app`\"",
+     "translated_text": "L30: \"您选择的物品 ID 以及所在的服务器或大区，会被发送到我们位于 `data.xivdyetools.app` 的代理\"",
+     "back_translation": "the item IDs you selected, and the server or data center [you are] located on, are sent to our proxy at data.xivdyetools.app",
+     "kind": "modifier-misattached",
+     "is_data_or_rights_claim": true,
+     "severity": "INFO"
+    },
+    {
+     "id": "zh-2",
+     "file": "apps/web-app/TERMS_OF_SERVICE.zh.md",
+     "section": "Square Enix material",
+     "english_claim": "L109-110: \"Game data — dye names, colours, acquisition methods, item names and icons — belongs to Square Enix and is used here for informational purposes.\"",
+     "translated_text": "L79: \"游戏数据——染剂名称、颜色、获取方式、物品名称及图标——归 Square Enix 所有，此处仅用于信息说明目的。\"",
+     "back_translation": "Game data (dye names, colors, acquisition methods, item names and icons) belongs to Square Enix and is used here ONLY for informational-explanation purposes.",
+     "kind": "strengthened",
+     "is_data_or_rights_claim": false,
+     "severity": "INFO"
+    }
+   ],
+   "non_claim_defects": [
+    "DOC: apps/web-app/TERMS_OF_SERVICE.zh.md:11 says 十个工具 (ten tools) but lists only nine (调色板提取、色彩和谐探索器、染剂比较、渐变生成器、染剂混合器、无障碍检查器、预算建议、色板匹配器，以及社区预设浏览器). It drops the Glamour Reader (幻化查看器), which English L15-16 names. Commit e15928b2 changed only the count and left the list for a reviewer, so this is confirmed and still open at 0ab33466.",
+    "I18N: stray ASCII space after full-width punctuation, left over from joining hard-wrapped lines. Each renders as a visible gap: apps/web-app/PRIVACY.zh.md:33 '任何网页一样； Discord'; :40 '.com/)、 [Garland', '.com/)、 [Gamer Escape', 'Universalis、 Garland Tools'; :57 '客户端标识符， Cookie'; :59 '代码是开源的： [`apps/'; apps/web-app/TERMS_OF_SERVICE.zh.md:5 '有自己的条款： [`apps/'; apps/discord-worker/PRIVACY_POLICY.zh.md:187 '同意此项传输。 Cloudflare'.",
+    "I18N: apps/web-app/TERMS_OF_SERVICE.zh.md:7 renders 'colour toolkit' as 染剂工具集 (dye toolkit). Elsewhere these documents translate the colour tools as 颜色工具 (e.g. TERMS L17), so 颜色工具集 would be consistent.",
+    "I18N: apps/discord-worker/TERMS_OF_SERVICE.zh.md:91 heading '担保声明' (Warranty statement) for 'Disclaimer of Warranties'. It loses 'disclaimer'; the body correctly disclaims, and the web Terms uses 无担保声明.",
+    "I18N: apps/discord-worker/PRIVACY_POLICY.zh.md:9 lists defined terms as (“本机器人”、“我们”) and drops the English 'our'. This is cosmetic.",
+    "I18N: apps/web-app/TERMS_OF_SERVICE.zh.md:22 '如果您认为有其他人访问了您的账户' means 'has accessed'; English L32-33 says 'has access to it'. Tense drift only; the instruction to revoke access and tell us is intact."
+   ],
+   "sections_checked": 70,
+   "pitfalls_checked": [
+    "Operator as company: grep finds no 本公司 or 公司 in the four zh files; 我们 is used throughout",
+    "Modifier on the wrong verb: the governing-law, liability, survival and 'presets stay up after you leave' clauses were each read twice and are correct. One misattached modifier was found in the market-prices item (zh-1, INFO)",
+    "CJK false friend 利用: bot ToS L42 滥用、利用或规避速率限制 translates 'exploit' correctly, and web ToS L60 利用本网站骚扰他人 is correct 'use X to harass'",
+    "One word for two things: 服务器 is used for Discord server / guild (bot PP L22, L60) and FFXIV World. The bot preference row uses the shipped label 市场服务器 (bot zh.json preferences world), and the web world/DC uses 服务器/大区 per the terminology table",
+    "Quoted UI labels against apps/web-app/src/locales/zh.json: 装备列表 (glamour.sheet.title), 全部重置 (glamour.sheet.reset), 重置设置 (config.resetSettings), 高级设置 (config.advancedSettings), 启用分析 (config.enableAnalytics), 显示价格 (config.showPrices), 隐私政策 (about.privacyPolicy), 在以下网站打开… (swatch.itemLinks.openIn), 图像仅在浏览器中读取，绝不上传 (matcher.privacyNote), 获取方式 (common.acquisition), and every tool title including 幻化查看器. All match",
+    "Quoted bot labels against packages/bot-logic/src/i18n/locales/zh.json: the exclude-category labels 金属/粉彩/暗色/宇宙/伊修加德/高价/商店/制作 and 市场服务器 all match",
+    "English being the stale one: the English labels Advanced Settings, Reset settings (Reset Settings), Show Prices, Enable Analytics, Glamour list, Reset all, Open in… and About → Privacy were checked against en.json, and all are current",
+    "Game nouns per docs/reference/ffxiv-terminology.md: glamour 幻化 (not 时装), Glamour Reader 幻化查看器, facewear slot 面部配饰, Market Board 市场布告板, World 服务器, Data Center 大区, Gil 金币",
+    "Glamour Reader change (2e4cb0cb) hunks: web PP tool list, the gear-lookup payload (model numbers plus facewear id, XIVAPI receives nothing about you), Acquisition-line storage and Reset all, the Open in… owner; web ToS XIVAPI and the dye-card links; bot PP .chara not-collected, the Character Files subsection and the XIVAPI row; bot ToS §3 commands and §6 item names and XIVAPI. All are rendered faithfully, except the web ToS tool list that predates them (DOC)",
+    "Softening or strengthening of never / off-by-default / only / opt-in claims: none found in the data claims; the only strengthening is the added 仅 in a non-data IP sentence (zh-2, INFO)",
+    "Retention values (60 s, 120 s, 30 days, 90 days, 180 days, about 3 months, deletion within 30 days, appeals within 7 days) and recipients (Cloudflare, Universalis, XIVAPI, Google Perspective, og-worker) all match",
+    "Rights and opt-out paths (/preferences show/reset, /preset favorite list/remove, email/Discord deletion, GPC, the analytics switch) all match",
+    "Age (13 or the local minimum, whichever is higher) and the consumer-rights carve-out (the law of the place where you live, which does not let you waive the right) both match",
+    "CJK hard wraps: every paragraph is on a single line. Seven stray spaces remain where wrapped lines were joined (I18N)",
+    "Untranslated claims: no English sentence is left untranslated",
+    "In-product strings checked against the policy: web zh.json privacyNote, charaHint, cfgStoredLocallyHint, gateSaveNote, fieldLinkHint, the account privacyNote (L1033) and glamour.sheet.privacy all agree with PRIVACY.zh.md"
+   ]
+  },
+  "verified": [
+   {
+    "id": "zh-1",
+    "file": "apps/web-app/PRIVACY.zh.md",
+    "section": "Network access, item 1 (Market-board prices)",
+    "english_claim": "L61-62: \"item ids and the world or data centre you chose go to our proxy at `data.xivdyetools.app`\"",
+    "translated_text": "L30: \"您选择的物品 ID 以及所在的服务器或大区，会被发送到我们位于 `data.xivdyetools.app` 的代理\"",
+    "back_translation": "the item IDs you selected, and the server or data center [you are] located on, are sent to our proxy at data.xivdyetools.app",
+    "kind": "modifier-misattached",
+    "is_data_or_rights_claim": true,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "The quoted text is present and the reviewer's reading is right. The English (PRIVACY.md L61-62) has \"you chose\" describing the world or data centre. The Chinese (PRIVACY.zh.md L30) moves \"您选择的\" (you chose) onto the item IDs and calls the server \"所在的\", meaning the one you are on, which changes where that value comes from. The claim itself is unchanged: the same two kinds of data (item IDs plus a world or data centre), the same recipient (data.xivdyetools.app, then Universalis), and it is still optional. At most the Chinese over-describes the data, so this is wording drift that does not change the claim. Severity stays INFO."
+    }
+   },
+   {
+    "id": "zh-2",
+    "file": "apps/web-app/TERMS_OF_SERVICE.zh.md",
+    "section": "Square Enix material",
+    "english_claim": "L109-110: \"Game data — dye names, colours, acquisition methods, item names and icons — belongs to Square Enix and is used here for informational purposes.\"",
+    "translated_text": "L79: \"游戏数据——染剂名称、颜色、获取方式、物品名称及图标——归 Square Enix 所有，此处仅用于信息说明目的。\"",
+    "back_translation": "Game data (dye names, colors, acquisition methods, item names and icons) belongs to Square Enix and is used here ONLY for informational-explanation purposes.",
+    "kind": "strengthened",
+    "is_data_or_rights_claim": false,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "reason": "Both quotes are verbatim: TERMS_OF_SERVICE.md L109-110 says \"used here for informational purposes\" with no \"only\", and TERMS_OF_SERVICE.zh.md L79 says \"此处仅用于信息说明目的\". \"仅\" means \"only\" and was added. Without it the sentence would still be idiomatic Chinese (此处用于信息说明目的). With it the translation states that informational use is the site's only use, which the English does not say. Ownership and the not-affiliated disclaimer are unchanged and the text grants or takes away no rights, so this is drift that leaves the claim intact (INFO). The same \"only\" was also added in TERMS_OF_SERVICE.ko.md L79 (\"정보 제공 목적으로만\").",
+     "severity": "INFO"
+    }
+   }
+  ]
+ },
+ {
+  "lc": "de",
+  "read": {
+   "divergences": [
+    {
+     "id": "de-1",
+     "file": "apps/web-app/src/locales/de.json",
+     "section": "In-product privacy string (swatch.charaHint), compared with PRIVACY.de.md 'Charakterdateien'",
+     "english_claim": "en.json:1204 \"Parsed on this device. Nothing is uploaded — the file holds a character name and sometimes a screenshot.\"",
+     "translated_text": "de.json:1204 \"Wird auf diesem Gerät gelesen. Nichts wird übertragen — die Datei enthält einen Charakternamen und manchmal ein Bild.\"",
+     "back_translation": "\"Read on this device. Nothing is transmitted — the file contains a character name and sometimes an image.\"",
+     "kind": "strengthened",
+     "is_data_or_rights_claim": true,
+     "severity": "MEDIUM"
+    },
+    {
+     "id": "de-2",
+     "file": "apps/web-app/TERMS_OF_SERVICE.de.md",
+     "section": "Anwendbares Recht (Governing law)",
+     "english_claim": "TERMS_OF_SERVICE.md:161-163 \"Any dispute that cannot be settled by talking it through first will be brought in the state or federal courts located in North Carolina, and you and we agree to that venue.\"",
+     "translated_text": "TERMS_OF_SERVICE.de.md:179-181 \"Jeder Streit, der nicht zunächst im Gespräch beigelegt werden kann, wird vor die staatlichen oder bundesstaatlichen Gerichte in North Carolina gebracht, und du und wir stimmen diesem Gerichtsstand zu.\"",
+     "back_translation": "\"Any dispute that cannot first be settled in conversation is brought before the state [governmental] or Bundesstaat-level courts in North Carolina, and you and we agree to that venue.\" German calls a US state a 'Bundesstaat', so 'bundesstaatliche Gerichte in North Carolina' reads naturally as the courts of the US state of North Carolina. Both adjectives can then mean state courts, and the English 'or federal' is lost. Unambiguous: 'vor die einzelstaatlichen Gerichte oder die Bundesgerichte in North Carolina'.",
+     "kind": "other-claim",
+     "is_data_or_rights_claim": false,
+     "severity": "LOW"
+    },
+    {
+     "id": "de-3",
+     "file": "apps/discord-worker/TERMS_OF_SERVICE.de.md",
+     "section": "11. Anwendbares Recht (Governing Law)",
+     "english_claim": "TERMS_OF_SERVICE.md:134 \"Any dispute that cannot first be resolved through good-faith negotiation will be brought in the state or federal courts located in North Carolina, and you agree to that venue.\"",
+     "translated_text": "TERMS_OF_SERVICE.de.md:166-168 \"Jeder Streit, der nicht zunächst durch Verhandlungen nach Treu und Glauben beigelegt werden kann, wird vor die staatlichen oder bundesstaatlichen Gerichte in North Carolina gebracht, und du stimmst diesem Gerichtsstand zu.\"",
+     "back_translation": "\"Any dispute that cannot first be settled through good-faith negotiation is brought before the state [governmental] or Bundesstaat-level courts in North Carolina, and you agree to that venue.\" This is the same ambiguity as de-2: 'bundesstaatliche Gerichte in North Carolina' reads as the courts of the US state, so the federal-court option is not clearly stated.",
+     "kind": "other-claim",
+     "is_data_or_rights_claim": false,
+     "severity": "LOW"
+    },
+    {
+     "id": "de-4",
+     "file": "apps/web-app/PRIVACY.de.md",
+     "section": "Charakterdateien (.chara)",
+     "english_claim": "PRIVACY.md:25-27 \"Its character name is never sent anywhere, and never used as a preset name, an author name, or anything else other people can see.\"",
+     "translated_text": "PRIVACY.de.md:28-30 \"Ihr Charaktername wird niemals irgendwohin gesendet und niemals als Preset-Name, Autorenname oder irgendetwas anderes verwendet, das andere Spieler sehen können.\"",
+     "back_translation": "\"Its character name is never sent anywhere and never used as a preset name, author name or anything else that other players can see.\" 'Other people' is narrowed to 'other players'. The protection is nominally scoped to fewer viewers, but in practice the commitment is the same.",
+     "kind": "softened",
+     "is_data_or_rights_claim": true,
+     "severity": "INFO"
+    }
+   ],
+   "non_claim_defects": [
+    "DOC: apps/web-app/TERMS_OF_SERVICE.de.md:17-19 says 'Zehn Werkzeuge' but lists only nine (Paletten-Extraktor … Farbmuster-Matcher und der Community-Presets-Browser). It drops 'Projektionsleser' (Glamour Reader), which the English lists at TERMS_OF_SERVICE.md:15-17. This confirms the coordinator's known defect for de.",
+    "DOC (English-level, carried faithfully into DE): PRIVACY.md:47-48 (DE 54-55 'Einstellungen zurücksetzen … löschen es') says 'Reset settings' in Advanced Settings clears localStorage. The handler at apps/web-app/src/components/advanced-options-panel.ts:237-240 only calls configController.resetAllConfigs(). It does not clear saved palettes, collections, favourites, the rewritten Acquisition lines (shared/acquisition-edits) or the session token. Commit 2e4cb0cb's own message says Reset settings does not clear the edits. This is a deletion path a user would follow, so the English needs the fix (all six variants).",
+    "DOC (English-level): PRIVACY.md:21 quotes 'About → Privacy', but the shipped en.json label is 'About XIV Dye Tools' (about.title / nav about). The DE text quotes the real shipped label 'Über XIV Farbwerkzeuge → Datenschutz', so DE is correct where the English is loose.",
+    "DOC: cross-document links inside the DE files point at the English siblings (PRIVACY.de.md:6 and :172 → ../discord-worker/PRIVACY_POLICY.md; TERMS_OF_SERVICE.de.md:6-8, :24, :81 → PRIVACY.md and the English bot terms; discord-worker TERMS_OF_SERVICE.de.md:8-9 → English web terms and PRIVACY_POLICY.md). fr and ja have the same pattern, so this is a convention question, not a de-only defect.",
+    "I18N: tool names in the web documents are not the shipped de.json labels. 'Budget-Finder' (PRIVACY.de.md:9, TERMS_OF_SERVICE.de.md:18) is shipped as 'Budget-Vorschläge' (de.json:77). 'Community-Presets-Browser' / 'Community-Presets' is shipped as 'Community-Vorlagen' / 'Vorlagen'. The bot locale also uses 'Vorlage' (bot-logic de.json:226). 'Presets' is used throughout all four documents.",
+    "I18N: apps/web-app/PRIVACY.de.md:115-116 'verwirft jeden Stapel, der das Sec-GPC-Signal deines Browsers trägt, bevor er sie schreibt'. The pronoun should be 'ihn' (der Stapel). As written, 'sie' grammatically picks up 'Telemetrie'. The meaning survives.",
+    "I18N: apps/discord-worker/PRIVACY_POLICY.de.md:202 '90 Tage bei ungelöst' is ungrammatical. Use '90 Tage, wenn ungelöst' or 'bei ungelösten Fällen 90 Tage'.",
+    "I18N: apps/discord-worker/TERMS_OF_SERVICE.de.md:30-31 'einer aus einem Bild extrahierten Farbe' is singular, where the English (TERMS_OF_SERVICE.md:23) has plural 'colors extracted from an image'. This is a service description, not a commitment.",
+    "I18N: 'Acquisition' has two German words in product. The policy (PRIVACY.de.md:44, 51) uses 'Bezugsquelle(n)', which matches the glamour sheet's cardNote (de.json:1414). The general 'acquisition' label is 'Beschaffung' (de.json:122). The policy matches the label nearest the feature it describes, so this is consistent enough. Noted for the terminology table.",
+    "I18N: apps/web-app/PRIVACY.de.md:8-10 and the other DE files hard-wrap mid-sentence (e.g. 'erledigen' / 'ihre Arbeit'). This is harmless in German (a space renders, which is correct), so it is not the CJK hard-wrap defect. Noted only for completeness."
+   ],
+   "sections_checked": 69,
+   "pitfalls_checked": [
+    "Operator as company: no 'Unternehmen' / 'Firma' / 'Gesellschaft' in any of the four DE files. Uses wir / uns / unser. Clean.",
+    "Modifier on the wrong verb: re-read the license-survival clause (web Terms DE:172-174 'Presets, die du veröffentlicht hast, können auch nach deinem Weggang … bestehen bleiben'). It is attached correctly. The non-waivable consumer-right clauses (web Terms DE:181-182, bot Terms DE:170-171) correctly bind non-waivability to the law of the place of residence. The venue clauses are filed as de-2 and de-3 (federal-court ambiguity).",
+    "CJK false friends (利用 etc.): N/A for de. Checked the equivalent German risk: bot Terms DE:55 'missbrauchen, auszunutzen oder zu umgehen' matches 'abuse, exploit, or circumvent'. It adds no obligation to 'use' the rate limits.",
+    "One word for two things: 'Sammlung' is used only for saved collections and 'Stapel' only for telemetry batches (the 2026-09-20 fix is holding). 'Server' is used for Discord servers and 'Welt' / 'Datenzentrum' for the FFXIV world / data center. Clean.",
+    "Stale quoted UI labels, checked against the current apps/web-app/src/locales/de.json. 'Bilder werden im Browser gelesen und nie hochgeladen' = privacyNote:307. 'Über XIV Farbwerkzeuge → Datenschutz' = about:9/16 + privacyPolicy:30. 'Preise anzeigen' = showPrices:157. 'Erweiterte Einstellungen → Analysen aktivieren' = 225/237. 'Einstellungen zurücksetzen' = resetSettings:226. 'Ausrüstungsliste' = glamour sheet.title:1398. 'Alles zurücksetzen' = sheet.reset:1412. 'Öffnen in…' = openIn:1276. 'Projektionsleser' = tools.glamour.title:104. All match. The bot documents quote slash commands only, and those stay verbatim.",
+    "The English being the stale one: the 'Reset settings' clears-localStorage claim is false for the saved-work items and the Acquisition edits (advanced-options-panel.ts:237-240). 'About → Privacy' does not match the shipped en.json label. Both are filed as DOC.",
+    "Game nouns per docs/reference/ffxiv-terminology.md: glamour = 'Projektion' (feminine; used as eine/einer Projektion). Glamour Reader = 'Projektionsleser'. Facewear slot = 'Gesichtsaccessoire(s)' (matches row 16050 and de.json:1260). Market Board = 'Marktbrett'. Data Center = 'Datenzentrum'. Clan = 'Stamm' (matches bot-logic de.json:355/387). No 'Mirage' or 'Glamour' appears in the DE prose.",
+    "Gate-forced wording / spelled-out quantities: 'a dozen small integers' is rendered digit-free as 'ein Dutzend kleiner Ganzzahlen'. Retention numbers (60 s, 120 s, 30 / 90 / 180 days, 3 months, 7 days, 13 years, 50 favorites) are identical.",
+    "Ambiguous English: 'colors extracted from an image' became singular in bot Terms (I18N note). The 'whose law' clause is resolved correctly ('das an deinem Wohnort geltende Recht').",
+    "CJK hard wraps: N/A for de. German wraps render as a correct space.",
+    "Glamour Reader change (2e4cb0cb) hunks read first. Web Privacy: the tool list includes Projektionsleser; the gear lookup sends model numbers + facewear id, not the dyes, and XIVAPI receives nothing about you; Acquisition-line storage and 'Alles zurücksetzen' are covered; the Open-in menu is the Projektionsleser's. Web Terms: XIVAPI is added and the item / dye-card link split is correct, but the tool list is missing the Projektionsleser (DOC). Bot Privacy: the .chara not-collected row, the Charakterdateien subsection (4 steps + the API sentence) and the XIVAPI table row are all present and faithful. Bot Terms: all five new bullets, 'Farbstoff- und Gegenstandsnamen' and the XIVAPI paragraph are present.",
+    "Sentence-by-sentence claim check of all four documents: data fields, retention, recipients (Perspective doNotStore, XIVAPI, Universalis, Cloudflare), opt-in / off-by-default analytics + GPC, never-stored lists, deletion paths and 30-day processing, age 13, international transfer consent, governing law, warranty / liability caps (incl. GIL), and licence scope. No softening, strengthening, dropped right or omitted field beyond de-1 to de-4.",
+    "In-product privacy strings (web de.json, bot-logic de.json) compared with the DE policy. cfgStoredLocallyHint, presets privacyNote:1033, glamour sheet.privacy:1411, cardNote:1414 and bot help:690 ('nicht gespeichert') agree. charaHint:1204 'Nichts wird übertragen' overstates the English 'Nothing is uploaded' and contradicts PRIVACY.de.md:39-45 (de-1)."
+   ]
+  },
+  "verified": [
+   {
+    "id": "de-1",
+    "file": "apps/web-app/src/locales/de.json",
+    "section": "In-product privacy string (swatch.charaHint), compared with PRIVACY.de.md 'Charakterdateien'",
+    "english_claim": "en.json:1204 \"Parsed on this device. Nothing is uploaded — the file holds a character name and sometimes a screenshot.\"",
+    "translated_text": "de.json:1204 \"Wird auf diesem Gerät gelesen. Nichts wird übertragen — die Datei enthält einen Charakternamen und manchmal ein Bild.\"",
+    "back_translation": "\"Read on this device. Nothing is transmitted — the file contains a character name and sometimes an image.\"",
+    "kind": "strengthened",
+    "is_data_or_rights_claim": true,
+    "severity": "MEDIUM",
+    "check": {
+     "outcome": "REFUTED",
+     "reason": "Both quotes are verbatim at en.json:1204 and de.json:1204. \"Nichts wird übertragen\" is the normal German UI wording for \"Nothing is uploaded\". The English line is already an absolute claim that nothing leaves the device, so the German does not widen its scope or add a new obligation; the ko/ja strings also use \"transmit/send\". \"gelesen\" for \"parsed\" and \"Bild\" for \"screenshot\" describe the same local parse and the same embedded image. PRIVACY.de.md 'Charakterdateien' matches PRIVACY.md 'Character files', which says the file is parsed on the device and the name is never sent. The gear-model-number API request is in tension with \"nothing\" in both languages equally, so it is not a translation divergence.",
+     "severity": "INFO"
+    }
+   },
+   {
+    "id": "de-2",
+    "file": "apps/web-app/TERMS_OF_SERVICE.de.md",
+    "section": "Anwendbares Recht (Governing law)",
+    "english_claim": "TERMS_OF_SERVICE.md:161-163 \"Any dispute that cannot be settled by talking it through first will be brought in the state or federal courts located in North Carolina, and you and we agree to that venue.\"",
+    "translated_text": "TERMS_OF_SERVICE.de.md:179-181 \"Jeder Streit, der nicht zunächst im Gespräch beigelegt werden kann, wird vor die staatlichen oder bundesstaatlichen Gerichte in North Carolina gebracht, und du und wir stimmen diesem Gerichtsstand zu.\"",
+    "back_translation": "\"Any dispute that cannot first be settled in conversation is brought before the state [governmental] or Bundesstaat-level courts in North Carolina, and you and we agree to that venue.\" German calls a US state a 'Bundesstaat', so 'bundesstaatliche Gerichte in North Carolina' reads naturally as the courts of the US state of North Carolina. Both adjectives can then mean state courts, and the English 'or federal' is lost. Unambiguous: 'vor die einzelstaatlichen Gerichte oder die Bundesgerichte in North Carolina'.",
+    "kind": "other-claim",
+    "is_data_or_rights_claim": false,
+    "severity": "LOW",
+    "check": {
+     "outcome": "REFUTED",
+     "reason": "Both quotes are verbatim at TERMS_OF_SERVICE.md:161-163 and TERMS_OF_SERVICE.de.md:179-181. \"staatlichen oder bundesstaatlichen Gerichte\" is the usual German rendering of \"state or federal courts\". Duden's first sense of \"Bundesstaat\" is the federation itself, so \"bundesstaatlich\" means federal. Set against \"staatlich\", the pair reads as state vs federal. Scope, venue and mutual consent all match the English. \"einzelstaatlichen Gerichte oder Bundesgerichte\" would read more clearly, but that is optional wording polish (at most INFO), not a different claim.",
+     "severity": "INFO"
+    }
+   },
+   {
+    "id": "de-3",
+    "file": "apps/discord-worker/TERMS_OF_SERVICE.de.md",
+    "section": "11. Anwendbares Recht (Governing Law)",
+    "english_claim": "TERMS_OF_SERVICE.md:134 \"Any dispute that cannot first be resolved through good-faith negotiation will be brought in the state or federal courts located in North Carolina, and you agree to that venue.\"",
+    "translated_text": "TERMS_OF_SERVICE.de.md:166-168 \"Jeder Streit, der nicht zunächst durch Verhandlungen nach Treu und Glauben beigelegt werden kann, wird vor die staatlichen oder bundesstaatlichen Gerichte in North Carolina gebracht, und du stimmst diesem Gerichtsstand zu.\"",
+    "back_translation": "\"Any dispute that cannot first be settled through good-faith negotiation is brought before the state [governmental] or Bundesstaat-level courts in North Carolina, and you agree to that venue.\" This is the same ambiguity as de-2: 'bundesstaatliche Gerichte in North Carolina' reads as the courts of the US state, so the federal-court option is not clearly stated.",
+    "kind": "other-claim",
+    "is_data_or_rights_claim": false,
+    "severity": "LOW",
+    "check": {
+     "outcome": "REFUTED",
+     "severity": "INFO",
+     "reason": "The quoted text is at TERMS_OF_SERVICE.de.md:166-168 and matches TERMS_OF_SERVICE.md:134 claim for claim: disputes go to courts in North Carolina after good-faith negotiation, and the user agrees to that venue. \"bundesstaatlich\" is a standard German adjective for \"federal\". Set against \"staatlichen\", the pair reads as state vs. federal, so the scope and the obligation stay the same. At most the wording is a little imprecise (\"einzelstaatliche oder Bundesgerichte\" would be clearer), and that does not change the claim."
+    }
+   },
+   {
+    "id": "de-4",
+    "file": "apps/web-app/PRIVACY.de.md",
+    "section": "Charakterdateien (.chara)",
+    "english_claim": "PRIVACY.md:25-27 \"Its character name is never sent anywhere, and never used as a preset name, an author name, or anything else other people can see.\"",
+    "translated_text": "PRIVACY.de.md:28-30 \"Ihr Charaktername wird niemals irgendwohin gesendet und niemals als Preset-Name, Autorenname oder irgendetwas anderes verwendet, das andere Spieler sehen können.\"",
+    "back_translation": "\"Its character name is never sent anywhere and never used as a preset name, author name or anything else that other players can see.\" 'Other people' is narrowed to 'other players'. The protection is nominally scoped to fewer viewers, but in practice the commitment is the same.",
+    "kind": "softened",
+    "is_data_or_rights_claim": true,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "Both quotes appear word for word at the cited lines (PRIVACY.md:25-27, PRIVACY.de.md:28-30). The German really does change \"other people\" to \"andere Spieler\" (other players), so in the wording the protection covers fewer viewers. The obligation is unchanged in substance. The first clause, \"never sent anywhere\" (\"wird niemals irgendwohin gesendet\"), is translated exactly and has no condition, so the name cannot reach anyone, player or not. Anyone who can see a community preset name or author name is someone using this FFXIV tool, so the narrower word removes no real protection. The drift is real but does not change the claim, so the severity is INFO. Optional fix: change \"andere Spieler\" to \"andere Personen\" or \"andere Leute\" so the German matches the English exactly."
+    }
+   }
+  ]
+ },
+ {
+  "lc": "fr",
+  "read": {
+   "divergences": [
+    {
+     "id": "fr-1",
+     "file": "apps/web-app/PRIVACY.fr.md",
+     "section": "Fichiers de personnage (.chara)",
+     "english_claim": "L25-27: \"Its character name is never sent anywhere, and never used as a preset name, an author name, or anything else other people can see.\"",
+     "translated_text": "L28-30: \"Le nom du personnage qu'il contient n'est jamais envoyé où que ce soit, et n'est jamais utilisé comme nom de palette prédéfinie, nom d'auteur, ou toute autre chose visible par d'autres joueurs.\"",
+     "back_translation": "The character name it contains is never sent anywhere, and is never used as a preset name, author name, or any other thing visible to other players.",
+     "kind": "softened",
+     "is_data_or_rights_claim": true,
+     "severity": "INFO"
+    },
+    {
+     "id": "fr-2",
+     "file": "apps/web-app/PRIVACY.fr.md",
+     "section": "Accès réseau (item 1, market-board prices)",
+     "english_claim": "L61-63: \"item ids and the world or data centre you chose go to our proxy at `data.xivdyetools.app`, which fetches from [Universalis](https://universalis.app).\"",
+     "translated_text": "L71-73: \"les identifiants d'objet et le Monde ou le centre de données que vous avez choisis sont envoyés à notre proxy sur `data.xivdyetools.app`, qui les récupère depuis [Universalis](https://universalis.app).\"",
+     "back_translation": "the item ids and the World or data centre you chose are sent to our proxy at data.xivdyetools.app, which retrieves them from Universalis. The only grammatical antecedent of 'les' (them) is the ids and World, so the sentence reads as if those came from Universalis; the intended object is the prices.",
+     "kind": "modifier-misattached",
+     "is_data_or_rights_claim": true,
+     "severity": "INFO"
+    },
+    {
+     "id": "fr-3",
+     "file": "apps/web-app/PRIVACY.fr.md; apps/web-app/TERMS_OF_SERVICE.fr.md",
+     "section": "Fichiers de personnage (exception) / Disponibilité",
+     "english_claim": "PRIVACY.md L33-34: \"Rename or delete the record, or clear your site data, and it is gone.\"; TERMS_OF_SERVICE.md L124: \"if you clear your site data, they are gone\"",
+     "translated_text": "PRIVACY.fr.md L38-39: \"Renommez ou supprimez l'enregistrement, ou effacez les données de votre site, et il disparaît.\"; TERMS_OF_SERVICE.fr.md L136: \"si vous effacez les données de votre site, elles disparaissent\"",
+     "back_translation": "...or erase the data of your (web)site, and it disappears. This reads as a website the user owns. The same files elsewhere use the correct 'données de site de votre navigateur' (PRIVACY.fr L56, L63-64; TERMS.fr L37-38). It is a deletion instruction, but the claim is unchanged.",
+     "kind": "other-claim",
+     "is_data_or_rights_claim": true,
+     "severity": "INFO"
+    }
+   ],
+   "non_claim_defects": [
+    "DOC: apps/web-app/TERMS_OF_SERVICE.fr.md L17-20 says 'Dix outils' (ten tools) but lists only nine: Extracteur de palette, Explorateur d'harmonies, Comparaison, Constructeur de Dégradé, Mélangeur de Teintures, Vérification d'accessibilité, Suggestions Budget, Nuancier, navigateur de Palettes Prédéfinies communautaires. The Lecteur de mirages (Glamour Reader) is missing, against English L15-17. The count contradicts the list. The French PRIVACY.fr.md intro (L8-11) does include the Lecteur de mirages, so only the Terms are affected.",
+    "I18N: In all four fr policy documents 'preset' is 'palette prédéfinie' / 'Palettes Prédéfinies communautaires', but the shipped UI says 'préréglage': web fr.json tools.presets.title is 'Préréglages communautaires' (26 hits), and bot-logic fr.json uses 'préréglage' 57 times (e.g. 'Tous vos préréglages favoris'). A French user following the policy will not find a feature by the policy's name. The web TERMS.fr L19 also capitalizes it inconsistently ('Palettes Prédéfinies').",
+    "I18N: apps/web-app/src/locales/fr.json L1204 charaHint 'Analysé sur cet appareil. Rien n'est envoyé — ...' means 'Nothing is sent'. The English en.json L1204 says 'Nothing is uploaded'. The French UI string claims more than the English and contradicts the French policy's own gear-lookup paragraph (PRIVACY.fr.md L40-47: equipment model numbers and the facewear id are sent to the API and on to XIVAPI). Suggest 'Rien n'est téléversé' or 'Le fichier n'est jamais envoyé'.",
+    "DOC: affects the English governing text, not a fr divergence. web en.json/fr.json L902 previewImagePendingReview ('Picture uploaded — it appears once a moderator approves it' / 'Image envoyée — elle apparaîtra après validation') reports a user-uploaded preset picture. Neither PRIVACY.md nor PRIVACY.fr.md says user-uploaded pictures are stored; L73-74 says only that previews are served from shots.xivdyetools.app. Route to the English policy owner.",
+    "DOC: English apps/web-app/PRIVACY.md L47 quotes \"Reset settings\" while en.json config.resetSettings is 'Reset Settings'. Casing only. The fr text 'Réinitialiser les paramètres' matches fr.json.",
+    "I18N: apps/discord-worker/TERMS_OF_SERVICE.fr.md L75 leaves 'All Rights Reserved.' in English. The web TERMS.fr L117 translates the same notice as 'Tous droits réservés.' The two fr documents are inconsistent.",
+    "I18N: in both fr privacy documents, the bold emphasis on the logging-off claim is dropped ('switched **off**' becomes plain 'désactivée' at web PRIVACY.fr L175 and bot PRIVACY_POLICY.fr L120). Typography only.",
+    "I18N: apps/web-app/PRIVACY.fr.md renders 'upload' inconsistently: 'importez' (L12), 'téléversé' (L37, L184), and 'envoyées' in the quoted padlock notice (L23, which matches fr.json). The bot policy consistently uses 'téléversé'.",
+    "I18N: apps/web-app/PRIVACY.fr.md L53 'lignes d'obtention' and the UI's glamour.sheet.cardNote 'notes d'obtention' use different nouns for the same Acquisition line. TERMS.fr L121 and bot TERMS.fr L79 use 'méthodes d'acquisition' for the game-data acquisition methods. These are not quoted labels."
+   ],
+   "sections_checked": 69,
+   "pitfalls_checked": [
+    "Operator as a company: grepped the four fr files for société / entreprise / compagnie. None found; 'nous' is used throughout (the one 'entreprises' match at bot TERMS.fr L111 is the verb 'actions entreprises').",
+    "Modifier on the wrong verb: read the governing-law, liability and survival clauses twice. Both Terms keep 'auquel ce même droit ne vous permet pas de renoncer' (web TERMS.fr L179-180, bot TERMS.fr L136). The survival clause 'Les palettes prédéfinies que vous avez publiées peuvent rester en ligne après votre départ' attaches 'après votre départ' to 'rester'. The one misattached pronoun found is fr-2.",
+    "CJK false friends such as 利用: checked, not applicable to fr. Also checked French false friends: 'abuser, d'exploiter ou de contourner' (bot TERMS.fr L42) matches the English verbs.",
+    "One word for two things: Discord 'serveur' (guild) vs FFXIV 'Monde' (stored) are kept apart in bot PRIVACY.fr L22/L28. 'lot' is used for the telemetry batch and 'collections' for saved work, with no collision.",
+    "Stale quoted UI labels: verified every quoted web label against the current apps/web-app/src/locales/fr.json: Afficher les prix, Paramètres avancés, Activer les analyses, Réinitialiser les paramètres, Liste d'équipement (glamour.sheet.title), Tout réinitialiser (glamour.sheet.reset), Ouvrir dans… (swatch.itemLinks.openIn), the padlock privacyNote, Confidentialité, plus tool titles Nuancier / Lecteur de mirages / Extracteur de palette. All match. Bot slash commands (/preferences reset, /preset favorite ...) have no command-name localizations (only choice name_localizations exist), so English command names are correct.",
+    "English as the stale one: checked every UI path the English quotes against en.json (Advanced Settings, Enable Analytics, Show Prices, Glamour list, Reset all, Open in…, About → Privacy). Only a casing slip, 'Reset settings' vs 'Reset Settings', was found.",
+    "Game nouns per docs/reference/ffxiv-terminology.md: 'mirage' (one outfit, masculine agreement 'un mirage'), 'Accessoires de visage' (slot row 16050, not the dye-category 'Accessoires faciaux'), 'Monde', 'centre de données', 'tableau des ventes', 'gils'.",
+    "Gate forcing unnatural wording / spelled-out quantities: 'une douzaine de petits entiers' and 'repère d'activité quotidien' stay digit-free as in the English.",
+    "Ambiguous English sentences: the hex/image sentence (bot TERMS.fr L23) parses as intended because 'extraite' agrees with 'couleur'. The non-waivable consumer-right sentence names 'votre lieu de résidence' and 'ce même droit' in both Terms.",
+    "CJK hard-wrap: checked, not applicable to fr (Latin-script soft wraps render correctly).",
+    "Glamour Reader change 2e4cb0cb: read every translated hunk first. Present in fr: the intro tool list in PRIVACY, the gear lookup (model numbers + facewear id + XIVAPI + names/acquisition/icons), the localStorage rewritten lines and 'Tout réinitialiser', the Glamour Reader's 'Ouvrir dans…' menu, XIVAPI under third-party services in web TERMS, the split item-link/dye-card lists, the bot Character Files subsection and the .chara not-collected row, the XIVAPI table row, the bot TERMS §3 new commands, and §6 item names + XIVAPI. Missing: the web TERMS 'What the site does' list item (DOC).",
+    "Data / retention / recipient / right / opt-out / deletion / liability / licence / age / governing-law sentences compared one by one: retention periods (60 s, 120 s, 30 days, 180 days, 3 months, 7 days, 30-day deletion SLA, 30/90-day failure records), recipients (Cloudflare, Universalis, XIVAPI, Perspective/doNotStore, Discord CDN), the analytics default-off and GPC rule, the never-stored field list, and age 13 / higher-of. No softening, strengthening or dropped right was found beyond the INFO rows.",
+    "In-product privacy strings (step 4): web fr.json privacyNote, charaHint, glamour.sheet.privacy, cfgStoredLocallyHint, fieldLinkHint, previewImagePendingReview; bot fr.json help body L690 ('n'est pas conservé'). charaHint over-claims (I18N item)."
+   ]
+  },
+  "verified": [
+   {
+    "id": "fr-1",
+    "file": "apps/web-app/PRIVACY.fr.md",
+    "section": "Fichiers de personnage (.chara)",
+    "english_claim": "L25-27: \"Its character name is never sent anywhere, and never used as a preset name, an author name, or anything else other people can see.\"",
+    "translated_text": "L28-30: \"Le nom du personnage qu'il contient n'est jamais envoyé où que ce soit, et n'est jamais utilisé comme nom de palette prédéfinie, nom d'auteur, ou toute autre chose visible par d'autres joueurs.\"",
+    "back_translation": "The character name it contains is never sent anywhere, and is never used as a preset name, author name, or any other thing visible to other players.",
+    "kind": "softened",
+    "is_data_or_rights_claim": true,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "The quoted text is at the lines given: PRIVACY.md L25-27 and PRIVACY.fr.md L28-30. Every clause carries over faithfully except one. English \"anything else other people can see\" becomes \"toute autre chose visible par d'autres joueurs\", which means \"other players\", so the French protects a narrower audience than the English. This is real drift, not an idiom: \"d'autres personnes\" was the natural rendering. It does not change the commitment in practice, because the same sentence still says the name is \"jamais envoyé où que ce soit\" (never sent anywhere). So nobody off the device can see it under either version. Suggested fix: \"visible par d'autres personnes\"."
+    }
+   },
+   {
+    "id": "fr-2",
+    "file": "apps/web-app/PRIVACY.fr.md",
+    "section": "Accès réseau (item 1, market-board prices)",
+    "english_claim": "L61-63: \"item ids and the world or data centre you chose go to our proxy at `data.xivdyetools.app`, which fetches from [Universalis](https://universalis.app).\"",
+    "translated_text": "L71-73: \"les identifiants d'objet et le Monde ou le centre de données que vous avez choisis sont envoyés à notre proxy sur `data.xivdyetools.app`, qui les récupère depuis [Universalis](https://universalis.app).\"",
+    "back_translation": "the item ids and the World or data centre you chose are sent to our proxy at data.xivdyetools.app, which retrieves them from Universalis. The only grammatical antecedent of 'les' (them) is the ids and World, so the sentence reads as if those came from Universalis; the intended object is the prices.",
+    "kind": "modifier-misattached",
+    "is_data_or_rights_claim": true,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "Both quotes match the files exactly (PRIVACY.md L61-63, PRIVACY.fr.md L71-73). The English \"which fetches from Universalis\" has no object. The French \"qui les récupère depuis Universalis\" adds the pronoun \"les\", whose only plural antecedent is \"les identifiants d'objet et le Monde ou le centre de données\". Read literally, the proxy would be retrieving the ids and the World from Universalis. That is a real grammatical misattachment, not an idiomatic choice. It does not change the data or recipient claim: the same data (item ids plus the World or data centre) goes to the same proxy (data.xivdyetools.app), which queries the same third party (Universalis). The scope and obligations are unchanged, so this is wording drift at INFO, not MEDIUM. A fix would be something like \"qui récupère les prix depuis Universalis\"."
+    }
+   },
+   {
+    "id": "fr-3",
+    "file": "apps/web-app/PRIVACY.fr.md; apps/web-app/TERMS_OF_SERVICE.fr.md",
+    "section": "Fichiers de personnage (exception) / Disponibilité",
+    "english_claim": "PRIVACY.md L33-34: \"Rename or delete the record, or clear your site data, and it is gone.\"; TERMS_OF_SERVICE.md L124: \"if you clear your site data, they are gone\"",
+    "translated_text": "PRIVACY.fr.md L38-39: \"Renommez ou supprimez l'enregistrement, ou effacez les données de votre site, et il disparaît.\"; TERMS_OF_SERVICE.fr.md L136: \"si vous effacez les données de votre site, elles disparaissent\"",
+    "back_translation": "...or erase the data of your (web)site, and it disappears. This reads as a website the user owns. The same files elsewhere use the correct 'données de site de votre navigateur' (PRIVACY.fr L56, L63-64; TERMS.fr L37-38). It is a deletion instruction, but the claim is unchanged.",
+    "kind": "other-claim",
+    "is_data_or_rights_claim": true,
+    "severity": "INFO",
+    "check": {
+     "outcome": "UPHELD",
+     "severity": "INFO",
+     "reason": "The quoted text is present word for word at PRIVACY.fr.md L38-39 and TERMS_OF_SERVICE.fr.md L136 in apps/web-app. \"les données de votre site\" literally means \"your website's data\". That wording is not idiomatic for browser site data, and the same files elsewhere use \"données de site de votre navigateur\" (PRIVACY.fr L56, TERMS.fr L37). This is real wording drift. The claim itself is unchanged: the data is stored locally and clearing it deletes it, and the nearby text (\"stockage de votre navigateur\" / \"dans votre propre navigateur\") makes the meaning clear. So the severity is INFO, not MEDIUM."
+    }
+   }
+  ]
+ }
+]

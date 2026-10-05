@@ -38,6 +38,15 @@ Rules:
 - Web app: a new section explains how to delete your data. Delete a preset or a vote yourself, or ask us privately by email or Discord DM. We handle requests within 30 days.
 - Web app: the guide is updated in all six languages. Find it under About.
 
+## [5.10.3] - 2026-10-04
+### 📜 Discord bot Privacy Policy updated
+- Discord bot: the Privacy Policy now covers moderation records. If a moderator bans someone from community presets, a ban record and a moderation log are kept, and the policy says what they hold.
+- Discord bot: a lifted ban's name and reason are cleared at once and the record is deleted 90 days later. Ban log entries are kept for 12 months.
+- Discord bot: presets that need review are posted to a private moderation channel in our Discord server, and published presets to a private log channel. New posts don't show your Discord user ID, and a deletion request removes the posts about you.
+- Discord bot: the policy now says which name is shown on your presets: your Discord display name, or your verified character's name if you signed in on the web app with XIVAuth. The policy is updated in all six languages.
+### 🛡️ Moderation
+- Discord bot: moderators' approve, reject and revert buttons now act only on the version of a preset they saw. A preset that changed since then is shown again for review.
+
 ## [5.10.2] - 2026-10-04
 ### 📜 Privacy Guide and Terms of Service corrected
 - Web app: a preview image you attach to a community preset is uploaded and shown once a moderator approves it. The Privacy Guide now says so. Images in the color tools still never leave your device.

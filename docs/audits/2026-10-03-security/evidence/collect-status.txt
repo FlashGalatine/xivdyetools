@@ -1,0 +1,37 @@
+pnpm-audit-json exit=0
+pnpm-audit-high exit=0
+gitleaks exit=BLOCKED at collection time — superseded: v8.30.1 (SHA256 verified) tree exit=0, history exit=0, see gitleaks.md
+potential-secrets exit=0
+wrangler-surface exit=0
+dev-vars-ignored exit=0
+delta exit=0
+delta-commits exit=0
+pii-sinks exit=0
+pii-sources exit=0
+policy-claims exit=0
+policy-variants exit=0
+policy-locale-parity exit=0
+policy-claims-i18n exit=0
+workflows exit=0
+outbound-fetch exit=0
+html-sinks exit=123 (xargs: a grep batch with no match exits 1 — not a tool failure; file is complete)
+    17 docs/audits/2026-10-03-security/evidence/collect-status.txt
+   378 docs/audits/2026-10-03-security/evidence/delta-commits.txt
+   496 docs/audits/2026-10-03-security/evidence/delta-since-last-audit.txt
+     3 docs/audits/2026-10-03-security/evidence/git-context.txt
+     1 docs/audits/2026-10-03-security/evidence/gitleaks-BLOCKED.txt
+   205 docs/audits/2026-10-03-security/evidence/html-sinks.txt
+    81 docs/audits/2026-10-03-security/evidence/outbound-fetch.txt
+   924 docs/audits/2026-10-03-security/evidence/pii-sinks.txt
+  1739 docs/audits/2026-10-03-security/evidence/pii-sources.txt
+     1 docs/audits/2026-10-03-security/evidence/pnpm-audit-summary.txt
+    25 docs/audits/2026-10-03-security/evidence/policy-claims-i18n.txt
+   196 docs/audits/2026-10-03-security/evidence/policy-claims.txt
+    26 docs/audits/2026-10-03-security/evidence/policy-locale-parity.txt
+    24 docs/audits/2026-10-03-security/evidence/policy-variants.txt
+    66 docs/audits/2026-10-03-security/evidence/potential-secrets.txt
+    17 docs/audits/2026-10-03-security/evidence/versions.txt
+    14 docs/audits/2026-10-03-security/evidence/workflows.txt
+   100 docs/audits/2026-10-03-security/evidence/wrangler-surface.txt
+    16 docs/audits/2026-10-03-security/evidence/pnpm-audit.json
+  4329 total
