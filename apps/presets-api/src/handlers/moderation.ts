@@ -15,6 +15,7 @@ import {
   rowToPreset,
   findDuplicateBySignature,
   isDyeSignatureCollision,
+  generateDyeSignature,
 } from '../services/preset-service.js';
 import {
   ErrorCode,
@@ -32,6 +33,7 @@ import {
   listFailedNotifications,
   resolveFailedNotification,
 } from '../services/notification-service.js';
+import { pruneModerationRecords } from '../services/moderation-retention-service.js';
 import {
   deletePreviewImage,
   getPresetImageState,
@@ -74,6 +76,63 @@ async function dyeSignatureConflictResponse(
   );
 }
 
+/** Every status a preset can be in — what a moderator may have been looking at. */
+const REVIEWED_STATUSES: readonly PresetStatus[] = ['pending', 'approved', 'rejected', 'flagged', 'hidden'];
+
+/**
+ * FINDING-017 (2026-10-03 audit): the 409 for a status change that is not bound
+ * to a review. `REVISION_REQUIRED` — the caller never said what it reviewed —
+ * and `STALE_REVIEW` — what it reviewed is no longer what is stored — share one
+ * shape so a client has one recovery: re-read `current` and review again.
+ *
+ * `current` is a fresh read, never the row the handler read earlier, so it is
+ * what the next review must be bound to. A preset deleted in the meantime has
+ * nothing to review: 404.
+ */
+async function reviewConflictResponse(
+  c: Context<{ Bindings: Env; Variables: Variables }>,
+  presetId: string,
+  code: 'REVISION_REQUIRED' | 'STALE_REVIEW'
+): Promise<Response> {
+  const fresh = await getPresetRowById(c.env.DB, presetId);
+  if (!fresh) return notFoundResponse(c, 'Preset');
+
+  return c.json(
+    {
+      success: false,
+      error: ErrorCode.CONFLICT,
+      code,
+      message:
+        code === 'REVISION_REQUIRED'
+          ? 'expected_revision and expected_status are required — re-review the preset and retry'
+          : 'The preset changed after it was reviewed — re-review the latest version',
+      current: { status: fresh.status, content_revision: fresh.content_revision },
+    },
+    409
+  );
+}
+
+/**
+ * FINDING-017: read the revision and status the moderator reviewed from a
+ * request body. `null` means "not bound to a review" — the caller answers
+ * REVISION_REQUIRED. Shared by the status and revert routes so the two cannot
+ * drift apart.
+ */
+function parseReviewBinding(body: {
+  expected_revision?: unknown;
+  expected_status?: unknown;
+}): { revision: number; status: PresetStatus } | null {
+  const revision = body.expected_revision;
+  const status = body.expected_status;
+  if (
+    typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0 ||
+    typeof status !== 'string' || !REVIEWED_STATUSES.includes(status as PresetStatus)
+  ) {
+    return null;
+  }
+  return { revision, status: status as PresetStatus };
+}
+
 /**
  * GET /api/v1/moderation/pending
  * List presets pending moderation
@@ -100,7 +159,12 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   const presetId = c.req.param('presetId');
 
   // Parse request body
-  let body: { status: PresetStatus; reason?: string };
+  let body: {
+    status: PresetStatus;
+    reason?: string;
+    expected_revision?: unknown;
+    expected_status?: unknown;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -120,14 +184,27 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   }
   const preset = rowToPreset(presetRow, c.get('logger'));
 
+  // FINDING-017: fail closed. The revision and status the moderator reviewed
+  // must come from the caller — an old button, a stale embed or a client that
+  // predates this contract sends neither, and binding the write to the row read
+  // a moment ago would approve whatever text is there now.
+  const binding = parseReviewBinding(body);
+  if (!binding) {
+    return reviewConflictResponse(c, presetId, 'REVISION_REQUIRED');
+  }
+  const expectedRevision = binding.revision;
+  const reviewedStatus = binding.status;
+
   // BUG-020 (2026-07-18 audit): status update + audit log run in one atomic
   // batch, and the update is conditional on the status and revision this moderator observed
   // — a concurrent moderator's write makes the update match zero rows, so the
   // stale action is rejected as a 409 instead of mislabeling the audit trail
   // or logging an action that never happened.
+  // FINDING-017: "observed" is the caller's expected pair, not this request's
+  // own read, so the same zero-row path also rejects a stale review.
   const logId = crypto.randomUUID();
   const now = new Date().toISOString();
-  const action = getActionFromStatusChange(preset.status, body.status);
+  const action = getActionFromStatusChange(reviewedStatus, body.status);
 
   // BUG-041: a transition INTO the partial unique index
   // (`flagged`/`rejected` → `approved`/`pending`) can collide with a preset
@@ -139,7 +216,7 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   let updateResult: D1Result<PresetRow>;
   try {
     [updateResult] = await c.env.DB.batch<PresetRow>([
-      prepareStatusUpdate(c.env.DB, presetId, body.status, preset.status, presetRow.content_revision, now),
+      prepareStatusUpdate(c.env.DB, presetId, body.status, reviewedStatus, expectedRevision, now),
       // changes() sees the preceding UPDATE in this batch's transaction, so the
       // log row is only written when the status transition actually happened
       c.env.DB
@@ -156,15 +233,11 @@ moderationRouter.patch('/:presetId/status', async (c) => {
 
   const updatedRow = updateResult.results?.[0];
   if (!updatedRow) {
-    return c.json(
-      {
-        success: false,
-        error: ErrorCode.CONFLICT,
-        message: 'Preset changed concurrently — reload and retry',
-      },
-      409
-    );
+    return reviewConflictResponse(c, presetId, 'STALE_REVIEW');
   }
+
+  // FINDING-005: age-based retention rides the write path; never fails it.
+  await pruneModerationRecords(c.env.DB, c.get('logger'));
 
   return c.json({
     success: true,
@@ -185,7 +258,7 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   const presetId = c.req.param('presetId');
 
   // Parse request body for reason
-  let body: { reason: string };
+  let body: { reason: string; expected_revision?: unknown; expected_status?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -205,6 +278,14 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   }
   const preset = rowToPreset(presetRow, c.get('logger'));
 
+  // FINDING-017: fail closed, exactly like the status route. A revert approves
+  // the stored snapshot, so it must be bound to the revision and status the
+  // moderator reviewed — never to this request's own read of the row.
+  const binding = parseReviewBinding(body);
+  if (!binding) {
+    return reviewConflictResponse(c, presetId, 'REVISION_REQUIRED');
+  }
+
   // Check if there are previous values to revert to
   if (!preset.previous_values || !presetRow.previous_values) {
     return validationErrorResponse(c, 'This preset has no previous values to revert to');
@@ -223,7 +304,8 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   try {
     [revertResult] = await c.env.DB.batch<PresetRow>([
       prepareRevert(c.env.DB, presetId, preset.previous_values, {
-        contentRevision: presetRow.content_revision,
+        contentRevision: binding.revision,
+        status: binding.status,
         previousValuesRaw: presetRow.previous_values,
       }, now),
       c.env.DB
@@ -235,17 +317,17 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
     ]);
   } catch (error) {
     if (!isDyeSignatureCollision(error)) throw error;
-    return dyeSignatureConflictResponse(c, presetId, preset.dye_signature);
+    // The collision is on the signature the revert would write, not the current one.
+    return dyeSignatureConflictResponse(c, presetId, generateDyeSignature(preset.previous_values.dyes));
   }
 
   const revertedRow = revertResult.results?.[0];
   if (!revertedRow) {
-    return c.json({
-      success: false,
-      error: ErrorCode.CONFLICT,
-      message: 'Preset changed concurrently — reload and retry',
-    }, 409);
+    return reviewConflictResponse(c, presetId, 'STALE_REVIEW');
   }
+
+  // FINDING-005: age-based retention rides the write path; never fails it.
+  await pruneModerationRecords(c.env.DB, c.get('logger'));
 
   return c.json({
     success: true,
@@ -264,6 +346,7 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
   const modError = requireModerator(c);
   if (modError) return modError;
 
+  const auth = c.get('auth');
   const presetId = c.req.param('presetId');
 
   let body: { action?: unknown; preview_image_key?: unknown } | null;
@@ -302,14 +385,28 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
 
   const now = new Date().toISOString();
 
+  // FINDING-020: the image decision and its audit row land in one batch, and
+  // `changes()` gates the log on the conditional UPDATE applying — so a stale
+  // review writes neither (mirrors the revert route above).
+  const logImageAction = (action: 'image_approve' | 'image_reject'): D1PreparedStatement =>
+    c.env.DB
+      .prepare(
+        `INSERT INTO moderation_log (id, preset_id, moderator_discord_id, action, reason, created_at)
+         SELECT ?, ?, ?, ?, NULL, ? WHERE changes() > 0`
+      )
+      .bind(crypto.randomUUID(), presetId, auth.userDiscordId!, action, now);
+
   if (body.action === 'approve') {
-    const result = await c.env.DB.prepare(
-      `UPDATE presets SET preview_image_status = 'approved', updated_at = ?
-       WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
-    )
-      .bind(now, presetId, reviewedKey)
-      .run();
+    const [result] = await c.env.DB.batch([
+      c.env.DB.prepare(
+        `UPDATE presets SET preview_image_status = 'approved', updated_at = ?
+         WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
+      ).bind(now, presetId, reviewedKey),
+      logImageAction('image_approve'),
+    ]);
     if (result.meta.changes !== 1) return staleReview();
+    // FINDING-005: age-based retention rides the write path; never fails it.
+    await pruneModerationRecords(c.env.DB, c.get('logger'));
     return c.json({ success: true, preview_image_status: 'approved' });
   }
 
@@ -319,13 +416,17 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
   // first would risk the opposite: a row still pointing at a key that no
   // longer exists, so the card serves a broken image. Never trade a broken
   // live image for a tidy bucket.
-  const result = await c.env.DB.prepare(
-    `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
-     WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
-  )
-    .bind(now, presetId, reviewedKey)
-    .run();
+  const [result] = await c.env.DB.batch([
+    c.env.DB.prepare(
+      `UPDATE presets SET preview_image_key = NULL, preview_image_status = 'none', updated_at = ?
+       WHERE id = ? AND preview_image_key = ? AND preview_image_status = 'pending'`
+    ).bind(now, presetId, reviewedKey),
+    logImageAction('image_reject'),
+  ]);
   if (result.meta.changes !== 1) return staleReview();
+
+  // FINDING-005: age-based retention rides the write path; never fails it.
+  await pruneModerationRecords(c.env.DB, c.get('logger'));
 
   // The DB already reflects the rejection, so the moderator's action has
   // succeeded. An R2 hiccup here must not 500 a request whose state is already
@@ -427,6 +528,37 @@ moderationRouter.patch('/failed-notifications/:id/resolve', async (c) => {
   } catch {
     return internalErrorResponse(c, 'Failed to resolve notification');
   }
+});
+
+/**
+ * GET /api/v1/moderation/:presetId
+ * The preset as a moderator reviews it, at any status, with the revision a
+ * status change must be bound to (FINDING-017).
+ *
+ * Registered after every single-segment GET above (`/pending`, `/stats`,
+ * `/failed-notifications`) so the parameter never shadows them.
+ */
+moderationRouter.get('/:presetId', async (c) => {
+  const modError = requireModerator(c);
+  if (modError) return modError;
+
+  const row = await getPresetRowById(c.env.DB, c.req.param('presetId'));
+  if (!row) {
+    return notFoundResponse(c, 'Preset');
+  }
+
+  return c.json({
+    success: true,
+    preset: {
+      ...rowToPreset(row, c.get('logger')),
+      // The filter verdict is not stored, only the status. A pending row may
+      // have been queued by the filter, by a missing key, or by a plain
+      // resubmission, so anything but 'flagged' is honestly 'unknown' — never
+      // 'clean'. Consumers must not render this as a filter verdict.
+      moderation_status: row.status === 'flagged' ? 'flagged' : 'unknown',
+    },
+    content_revision: row.content_revision,
+  });
 });
 
 // ============================================

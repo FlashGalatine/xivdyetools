@@ -5,6 +5,7 @@
  * This file contains project-specific utilities and re-exports.
  */
 
+import { vi } from 'vitest';
 import type { Env, PresetRow } from '../src/types';
 
 // Re-export shared test utilities
@@ -26,6 +27,40 @@ import { createMockD1Database, createMockR2Bucket, createMockPresetRow as create
 /** Include the API's internal revision without changing the shared public preset fixture. */
 export function createMockPresetRow(overrides: Partial<PresetRow> = {}): PresetRow {
   return { ...createSharedPresetRow(overrides), content_revision: 0, ...overrides };
+}
+
+/**
+ * The create / edit handlers re-read the row (`SELECT * FROM presets WHERE id = ?`)
+ * to build the moderation notification from one consistent read (FINDING-017).
+ * Many mocks answer unmodelled statements with a bare `{ success: true }`, which
+ * is not a row; give the re-read a valid one in that case only, and leave
+ * `null` and real rows alone so tests that model the row keep control.
+ * Only a re-read that follows an INSERT/UPDATE of `presets` is substituted (not
+ * the ownership read before it), it carries the requested id, and it is
+ * `pending` — the status every notifying flow in these suites sends, and one
+ * the handlers now require the re-read row to still hold.
+ */
+export function withPresetRereadRow(db: { _setupMock: (fn: (q: string, b: unknown[]) => unknown) => void }): void {
+  const original = db._setupMock.bind(db);
+  db._setupMock = (fn) => {
+    let written = false;
+    original((query, bindings) => {
+      if (/^\s*(INSERT INTO|UPDATE) presets\b/i.test(query)) written = true;
+      const result = fn(query, bindings);
+      const isReread = /SELECT \* FROM presets WHERE id = \?/.test(query);
+      if (
+        written &&
+        isReread &&
+        result &&
+        typeof result === 'object' &&
+        !Array.isArray(result) &&
+        !('dyes' in result)
+      ) {
+        return createMockPresetRow({ id: String(bindings[0]), status: 'pending' });
+      }
+      return result;
+    });
+  };
 }
 
 // ============================================
@@ -65,4 +100,33 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
     } as unknown as Fetcher,
     ...overrides,
   };
+}
+
+/**
+ * FINDING-019: with no PERSPECTIVE_API_KEY, `moderateContent` queues every
+ * submission (`method: 'unscored'`). Tests that need a clean pass configure a
+ * scorer: set the key on `env` and answer Perspective with near-zero scores.
+ * Pair with `vi.unstubAllGlobals()` in `afterEach`.
+ */
+export function useCleanPerspective(env: Env): Env {
+  env.PERSPECTIVE_API_KEY = 'test-perspective-key';
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            attributeScores: {
+              TOXICITY: { summaryScore: { value: 0.01 } },
+              SEVERE_TOXICITY: { summaryScore: { value: 0.01 } },
+              IDENTITY_ATTACK: { summaryScore: { value: 0.01 } },
+              INSULT: { summaryScore: { value: 0.01 } },
+              PROFANITY: { summaryScore: { value: 0.01 } },
+            },
+          }),
+          { status: 200 }
+        )
+    )
+  );
+  return env;
 }

@@ -137,7 +137,7 @@ describe('moderation revision contract', () => {
           .run(winnerStatus, presetId);
       });
 
-      const response = await moderationRequest('revert', { reason: 'Restore the original safe values' });
+      const response = await moderationRequest('revert', { reason: 'Restore the original safe values', expected_revision: 0, expected_status: 'flagged' });
 
       expect(response.status).toBe(409);
       expect(await state()).toMatchObject({
@@ -157,7 +157,12 @@ describe('moderation revision contract', () => {
       }
     });
 
-    const response = await moderationRequest('status', { status: 'rejected', reason: 'No longer suitable' });
+    const response = await moderationRequest('status', {
+      status: 'rejected',
+      reason: 'No longer suitable',
+      expected_revision: 0,
+      expected_status: 'approved',
+    });
 
     expect(response.status).toBe(409);
     expect(await state()).toMatchObject({ status: 'approved', name: 'Edited name', content_revision: 2 });
@@ -182,7 +187,7 @@ describe('moderation revision contract', () => {
         );
     });
 
-    const response = await moderationRequest('revert', { reason: 'Restore the reviewed revision' });
+    const response = await moderationRequest('revert', { reason: 'Restore the reviewed revision', expected_revision: 0, expected_status: 'flagged' });
 
     expect(response.status).toBe(409);
     expect(await state()).toMatchObject({
@@ -198,7 +203,7 @@ describe('moderation revision contract', () => {
   it('allows a fresh revert and writes exactly one audit row', async () => {
     await seedRevertablePreset();
 
-    const response = await moderationRequest('revert', { reason: 'Restore the reviewed original' });
+    const response = await moderationRequest('revert', { reason: 'Restore the reviewed original', expected_revision: 0, expected_status: 'flagged' });
 
     expect(response.status).toBe(200);
     expect(await state()).toMatchObject({
@@ -222,7 +227,7 @@ describe('moderation revision contract', () => {
       .bind(presetId, moderatorId)
       .run();
 
-    const response = await moderationRequest('revert', { reason: 'Restore the reviewed original' });
+    const response = await moderationRequest('revert', { reason: 'Restore the reviewed original', expected_revision: 0, expected_status: 'flagged' });
 
     expect(response.status).toBe(500);
     expect(await state()).toMatchObject({
@@ -243,7 +248,7 @@ describe('moderation revision contract', () => {
         .run(presetId);
     });
 
-    const response = await moderationRequest('revert', { reason: 'Restore the reviewed original' });
+    const response = await moderationRequest('revert', { reason: 'Restore the reviewed original', expected_revision: 0, expected_status: 'flagged' });
 
     expect(response.status).toBe(200);
     expect(await state()).toMatchObject({

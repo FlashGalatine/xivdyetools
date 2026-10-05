@@ -34,6 +34,7 @@ const submissionPayload: PresetNotificationPayload = {
         author_name: 'Author Displayname',
         author_discord_id: '123456789012345678',
         status: 'pending',
+        content_revision: 4,
         moderation_status: 'flagged',
         source: 'web',
         created_at: '2026-08-29T11:00:00.000Z',
@@ -105,6 +106,7 @@ describe('dead-letter queue (FINDING-017)', () => {
                 type: 'submission',
                 preset_id: 'preset-123',
                 moderation_status: 'flagged',
+                content_revision: 4,
             });
             for (const forbidden of ['name', 'description', 'author_name', 'author_discord_id', 'dyes', 'tags', 'preset']) {
                 expect(Object.keys(stored)).not.toContain(forbidden);

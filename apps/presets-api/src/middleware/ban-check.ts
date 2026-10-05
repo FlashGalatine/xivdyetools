@@ -11,8 +11,7 @@
  */
 
 import type { Context, Next } from 'hono';
-import type { Env } from '../types.js';
-import type { AuthContext } from '@xivdyetools/types';
+import type { Env, AuthContext } from '../types.js';
 import { ErrorCode } from '../utils/api-response.js';
 import { getLogger } from '@xivdyetools/worker-kit';
 
@@ -33,30 +32,33 @@ type Variables = {
  * UUID — in `banned_users.discord_id`, so this query needs no change: both
  * sides already agree on which value the column holds for a given user.
  *
- * B1 (Important 4, 2026-09-16 fix wave — residual, documented only): a
- * banned XIVAuth-only user can shed their ban by linking Discord.
- * `oauth`'s `attachIdentities` (`apps/oauth/src/services/user-service.ts`)
- * stamps a `discord_id` onto an XIVAuth-only `users` row on the user's next
- * sign-in that carries one; from that point on `resolveJWTUserId()` returns
- * the snowflake instead of the `sub`, so a `banned_users` row keyed on the
- * pre-link UUID stops matching here (their UUID-authored presets also stop
- * being "theirs" the same way — pre-existing, not new). Closing this needs
- * both sides of the contract to change together: moderation-worker writing
- * `xivauth_id` (not `discord_id`) when it bans an XIVAuth-only target, and
- * this query becoming `WHERE (discord_id = ? OR xivauth_id = ?) AND
- * unbanned_at IS NULL` against the token's Discord id *and* its XIVAuth id.
- * Neither side has changed yet — this paragraph documents the gap, it does
- * not close it.
+ * FINDING-014 (2026-10-03 audit) closes the B1 gap on this side: a banned
+ * XIVAuth-only user used to shed the ban by linking Discord, because the
+ * acting id switches from the `sub` UUID to the snowflake and a ban keyed on
+ * the UUID stopped matching. The caller now passes EVERY id the session
+ * proves (acting id, JWT `sub`, JWT `discord_id`) and an active ban matches if
+ * any of them equals `banned_users.discord_id` OR `banned_users.xivauth_id`.
+ * moderation-worker writing the right column is Sprint 4.
  *
  * @param db - D1 database binding
- * @param userId - the resolved acting-user id to check: a Discord snowflake,
- *   or the XIVAuth `sub` UUID when the account has no Discord ID
- * @returns True if user is banned, false otherwise
+ * @param userIds - every id the caller is known by; empty/duplicate entries
+ *   are ignored (a Discord snowflake, the XIVAuth `sub` UUID, or both)
+ * @returns True if any of them has an active ban, false otherwise
  */
-async function isUserBanned(db: D1Database, userId: string): Promise<boolean> {
+export async function isUserBanned(
+  db: D1Database,
+  userIds: ReadonlyArray<string | undefined>
+): Promise<boolean> {
+  const ids = [...new Set(userIds.filter((id): id is string => !!id))];
+  if (ids.length === 0) return false;
+
+  // Placeholders only — the ids are always bound, never interpolated.
+  const marks = ids.map(() => '?').join(', ');
   const result = await db
-    .prepare('SELECT 1 FROM banned_users WHERE discord_id = ? AND unbanned_at IS NULL LIMIT 1')
-    .bind(userId)
+    .prepare(
+      `SELECT 1 FROM banned_users WHERE (discord_id IN (${marks}) OR xivauth_id IN (${marks})) AND unbanned_at IS NULL LIMIT 1`
+    )
+    .bind(...ids, ...ids)
     .first();
   return result !== null && result !== undefined;
 }
@@ -142,7 +144,7 @@ export async function requireNotBanned(
 
   // Check if user is banned
   try {
-    if (await isUserBanned(c.env.DB, auth.userDiscordId)) {
+    if (await isUserBanned(c.env.DB, [auth.userDiscordId, auth.jwtSub, auth.jwtDiscordId])) {
       return bannedResponse(c);
     }
   } catch (error) {

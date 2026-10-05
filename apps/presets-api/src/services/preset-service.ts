@@ -473,14 +473,16 @@ export function prepareRevert(
   db: D1Database,
   id: string,
   previous: PresetPreviousValues,
-  expected: { contentRevision: number; previousValuesRaw: string },
+  expected: { contentRevision: number; status: CommunityPreset['status']; previousValuesRaw: string },
   now: string
 ): D1PreparedStatement {
+  // FINDING-017: `contentRevision` and `status` are the caller's reviewed
+  // values, not a re-read — the zero-row case is the stale-review signal.
   const query = `
     UPDATE presets
     SET name = ?, description = ?, dyes = ?, tags = ?, dye_signature = ?,
         status = 'approved', previous_values = NULL, updated_at = ?
-    WHERE id = ? AND content_revision = ? AND previous_values = ?
+    WHERE id = ? AND content_revision = ? AND status = ? AND previous_values = ?
     RETURNING *
   `;
   return db
@@ -494,6 +496,7 @@ export function prepareRevert(
       now,
       id,
       expected.contentRevision,
+      expected.status,
       expected.previousValuesRaw
     );
 }

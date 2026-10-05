@@ -178,7 +178,7 @@ describe('ModerationService', () => {
     // ============================================
 
     describe('moderateContent - Local Filter', () => {
-        it('should pass clean content', async () => {
+        it('queues clean content as unscored when no scorer is configured (FINDING-019)', async () => {
             const env = createMockEnv();
 
             const result = await moderateContent(
@@ -187,11 +187,11 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
-            expect(result.method).toBe('local'); // No Perspective API configured
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
+            expect(result.method).toBe('unscored');
         });
 
-        it('should pass content when local lists are empty (relies on Perspective API)', async () => {
+        it('does not auto-approve on the local list alone (FINDING-019)', async () => {
             const env = createMockEnv();
 
             // Since local profanity lists are intentionally empty,
@@ -202,11 +202,11 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
-            expect(result.method).toBe('local'); // No Perspective API configured
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
+            expect(result.method).toBe('unscored');
         });
 
-        it('should return local method when no Perspective API configured', async () => {
+        it('reports method unscored with a reason when no Perspective API configured', async () => {
             const env = createMockEnv({ PERSPECTIVE_API_KEY: undefined });
 
             const result = await moderateContent(
@@ -215,8 +215,45 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
+            expect(result.method).toBe('unscored');
+        });
+
+        // FINDING-019: the local list holds no profanity, so without a scorer a
+        // clean pass is not a verdict. The local list still flags first.
+        it('still flags a local match without a scorer, as a local verdict', async () => {
+            _setTestPatterns([/\bflaggedword\b/i]);
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: undefined });
+
+            const result = await moderateContent('Has flaggedword', 'Normal description', env);
+
+            expect(result.passed).toBe(false);
             expect(result.method).toBe('local');
+        });
+
+        it('queues with an explanatory reason and never calls out when keyless', async () => {
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: undefined });
+
+            const result = await moderateContent('Clean Name', 'Clean description text', env);
+
+            expect(result).toMatchObject({ passed: false, method: 'unscored', flaggedField: 'content' });
+            expect(result.flaggedReason).toMatch(/manual review/);
+            expect(fetchMock).not.toHaveBeenCalled();
+        });
+
+        it('passes clean content as method all when a scorer is configured', async () => {
+            const env = createMockEnv({ PERSPECTIVE_API_KEY: 'test-api-key' });
+            fetchMock.mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({
+                    attributeScores: { TOXICITY: { summaryScore: { value: 0.01 } } },
+                }),
+            });
+
+            const result = await moderateContent('Clean Name', 'Clean description text', env);
+
+            expect(result.passed).toBe(true);
+            expect(result.method).toBe('all');
         });
 
         it('should handle empty name gracefully', async () => {
@@ -228,7 +265,7 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
         });
 
         it('should handle empty description gracefully', async () => {
@@ -240,7 +277,7 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
         });
 
         it('should handle unicode content gracefully', async () => {
@@ -252,7 +289,7 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
         });
 
         it('should handle special regex characters in content', async () => {
@@ -265,7 +302,7 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
         });
 
         it('should handle very long content', async () => {
@@ -277,7 +314,7 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
         });
 
         it('should handle content with multiple whitespace', async () => {
@@ -289,7 +326,7 @@ describe('ModerationService', () => {
                 env
             );
 
-            expect(result.passed).toBe(true);
+            expect(result.passed).toBe(false); // FINDING-019: keyless = queued
         });
 
         it('should return early when local filter catches flagged content', async () => {
