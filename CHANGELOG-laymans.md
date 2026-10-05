@@ -31,6 +31,17 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.6] - 2026-10-05
+### ⚙️ Your settings stay put
+- Web app: the Swatch Matcher keeps the palette you picked. Changing another setting, in any tool, no longer switches it to Hair and the tribe to Seeker of the Sun.
+- Web app: saved dye filters, such as "exclude metallic", now work as soon as you open the Gradient Builder, Swatch Matcher, Dye Mixer or Budget Suggestions.
+- Web app: settings from a shared gradient or swatch link no longer snap back the first time you change something, and a broken link no longer changes your saved settings.
+- Web app: the Options sidebar always shows the current settings, including after Reset Settings or a change in another tab.
+### 💰 Budget Suggestions
+- Web app: the match line stays where you put it, and opening Budget no longer turns market prices on in every other tool.
+- Web app: Budget always loads market prices, because it compares dyes by price. The Privacy Guide now says so in all six languages.
+- Web app: the Budget target card now shows RGB, HSV and LAB, as the sidebar always said it did. Turn them off in Display Options.
+
 ## [5.10.5] - 2026-10-05
 ### 🌏 Race and clan names in Korean and Chinese
 - Web app and link previews: Korean race and clan names now match the game's Korean client, for example 휴런 for Hyur and 중원 부족 for Midlander.
