@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.9] - 2026-10-05
+### 🛠️ Smoother tools
+- Web app: changing the language keeps your results in Harmony, Dye Mixer, Comparison and Accessibility.
+- Web app: an old link no longer undoes your choice when you pick a new color in Harmony or send a dye to Budget.
+- Web app: Budget always shows your latest search, and the Swatch Matcher keeps a full list of matches with strong filters on.
+- Web app: the dye palette works from the keyboard, and the app starts a little faster.
+
 ## [5.10.7] - 2026-10-05
 ### 🎨 Community presets
 - Web app: a saved preset is no longer marked "Removed by its author" because the presets service hiccupped or a search was slow, and a wrong mark clears itself.
