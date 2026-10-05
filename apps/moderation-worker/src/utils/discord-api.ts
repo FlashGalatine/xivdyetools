@@ -104,6 +104,45 @@ export async function safeEditOriginalResponse(
 }
 
 /**
+ * FINDING-017: throw-safe interaction follow-up (a new message, ephemeral when
+ * asked). A deferred component / modal update has no visible reply of its own,
+ * so a refresh uses this to tell the moderator what happened. Never throws; a
+ * failure is logged and reported as `false`.
+ *
+ * @returns true when Discord accepted the follow-up
+ */
+export async function safeSendFollowUp(
+  applicationId: string,
+  interactionToken: string,
+  options: FollowUpOptions
+): Promise<boolean> {
+  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}`;
+
+  const body = baseBody(options);
+  if (options.content) body.content = options.content;
+  if (options.embeds) body.embeds = options.embeds;
+  if (options.components) body.components = options.components;
+  if (options.ephemeral) body.flags = 64;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) {
+      console.error('Discord follow-up failed', res.status, await res.text().catch(() => ''));
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Discord follow-up threw', sanitizeErrorMessage(error));
+    return false;
+  }
+}
+
+/**
  * Options for sending a message to a channel
  */
 export interface SendMessageOptions {

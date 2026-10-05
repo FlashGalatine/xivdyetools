@@ -68,7 +68,7 @@ describe('preset-api v2 request signatures', () => {
   it('binds the JSON body and identity on a moderator PATCH', async () => {
     mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p1' } }));
 
-    await approvePreset(mockEnv, 'p1', '12345678901234567', 'Mod');
+    await approvePreset(mockEnv, 'p1', '12345678901234567', { revision: 1, status: 'pending' }, 'Mod');
 
     const call = mockFetcher._calls[0];
     const sig = call.headers['x-request-signature-v2'];

@@ -10,6 +10,7 @@
  */
 
 import { validateAndEscapeQuery } from '../utils/sql-helpers.js';
+import { isXivAuthUuid } from '../utils/response.js';
 import type {
   BannedUserRow,
   BannedUser,
@@ -37,7 +38,9 @@ export async function isPresetAuthorBanned(db: D1Database, presetId: string): Pr
       `
       SELECT 1
       FROM presets p
-      JOIN banned_users b ON b.discord_id = p.author_discord_id AND b.unbanned_at IS NULL
+      JOIN banned_users b
+        ON (b.discord_id = p.author_discord_id OR b.xivauth_id = p.author_discord_id)
+        AND b.unbanned_at IS NULL
       WHERE p.id = ?
       LIMIT 1
       `
@@ -48,7 +51,12 @@ export async function isPresetAuthorBanned(db: D1Database, presetId: string): Pr
 }
 
 /**
- * Check if a user is currently banned by their Discord ID
+ * Check if a user is currently banned by their Discord ID.
+ *
+ * FINDING-014 (2026-10-03 audit): the target is a Discord snowflake or an
+ * XIVAuth `sub` UUID, and an active ban matches it in `discord_id` OR
+ * `xivauth_id` — rows written before `banUser` filled `xivauth_id` carry the
+ * UUID in `discord_id` only, newer ones in both.
  */
 export async function isUserBannedByDiscordId(
   db: D1Database,
@@ -56,9 +64,9 @@ export async function isUserBannedByDiscordId(
 ): Promise<boolean> {
   const result = await db
     .prepare(
-      'SELECT 1 FROM banned_users WHERE discord_id = ? AND unbanned_at IS NULL LIMIT 1'
+      'SELECT 1 FROM banned_users WHERE (discord_id = ? OR xivauth_id = ?) AND unbanned_at IS NULL LIMIT 1'
     )
-    .bind(discordId)
+    .bind(discordId, discordId)
     .first();
   return result !== null;
 }
@@ -98,7 +106,9 @@ export async function searchPresetAuthors(
           p.author_name as username,
           COUNT(*) as preset_count
         FROM presets p
-        LEFT JOIN banned_users b ON p.author_discord_id = b.discord_id AND b.unbanned_at IS NULL
+        LEFT JOIN banned_users b
+          ON (p.author_discord_id = b.discord_id OR p.author_discord_id = b.xivauth_id)
+          AND b.unbanned_at IS NULL
         WHERE p.author_discord_id IS NOT NULL
           AND p.author_name LIKE ? ESCAPE '\\'
           AND b.id IS NULL
@@ -176,12 +186,16 @@ export async function searchBannedUsers(
           banned_at
         FROM banned_users
         WHERE unbanned_at IS NULL
-          AND (username LIKE ? ESCAPE '\\' OR discord_id LIKE ? ESCAPE '\\')
+          AND (
+            username LIKE ? ESCAPE '\\'
+            OR discord_id LIKE ? ESCAPE '\\'
+            OR xivauth_id LIKE ? ESCAPE '\\'
+          )
         ORDER BY username ASC
         LIMIT ?
         `
       )
-      .bind(`%${escapedQuery}%`, `%${escapedQuery}%`, limit)
+      .bind(`%${escapedQuery}%`, `%${escapedQuery}%`, `%${escapedQuery}%`, limit)
       .all<{
         discord_id: string | null;
         xivauth_id: string | null;
@@ -383,6 +397,37 @@ function unbanLogStatement(
 }
 
 /**
+ * FINDING-021 (2026-10-03 audit): the extra WHERE terms that keep an unban's
+ * restore from tripping `idx_presets_dye_signature` (unique over `approved` +
+ * `pending` only, so hidden rows may share a signature while hidden). A hidden
+ * preset is skipped — and stays hidden — when
+ *   1. another approved or pending preset already holds its signature, or
+ *   2. the same author has a lower-id hidden preset with that signature (so at
+ *      most one of a set of hidden twins is restored, whatever order SQLite
+ *      evaluates the rows in).
+ * One shared fragment for the restore UPDATE and its `moderation_log` rows, so
+ * the trail lists exactly the presets that flipped. `alias` is the outer
+ * table's name or alias in the statement it is spliced into. A NULL signature
+ * never collides (NULL = NULL is not true).
+ */
+function restoreGuard(alias: string): string {
+  return `
+        AND NOT EXISTS (
+          SELECT 1 FROM presets o
+          WHERE o.dye_signature = ${alias}.dye_signature
+            AND o.id <> ${alias}.id
+            AND o.status IN ('approved', 'pending')
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM presets h
+          WHERE h.author_discord_id = ${alias}.author_discord_id
+            AND h.status = 'hidden'
+            AND h.dye_signature = ${alias}.dye_signature
+            AND h.id < ${alias}.id
+        )`;
+}
+
+/**
  * One row per preset the matching UPDATE is about to flip. `fromStatus` must be
  * the status that UPDATE's WHERE clause selects on (`hideUserPresetsStatement` /
  * `restoreUserPresetsStatement`), and this statement must sit BEFORE it in the
@@ -404,7 +449,7 @@ function presetActionLogStatement(
       INSERT INTO moderation_log (${MODERATION_LOG_COLUMNS})
       SELECT ${SQL_UUID_V4}, p.id, ?, ?, ?, ?, ?
       FROM presets p
-      WHERE p.author_discord_id = ? AND p.status = ?
+      WHERE p.author_discord_id = ? AND p.status = ?${action === 'restore' ? restoreGuard('p') : ''}
       `
     )
     .bind(moderatorDiscordId, action, reason, targetDiscordId, now, targetDiscordId, fromStatus);
@@ -436,6 +481,12 @@ export async function banUser(
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+    // FINDING-014: an XIVAuth-only target (the UUID shape `isBanTargetId`
+    // accepts) is ALSO recorded in `xivauth_id`; a snowflake leaves it NULL.
+    // `discord_id` keeps taking the raw target as before. Both columns then
+    // hold the same UUID, so each partial unique index refuses a second
+    // active ban of the same identity.
+    const xivAuthId = isXivAuthUuid(discordId) ? discordId : null;
 
     // MOD-4 (FINDING-034, 2026-08-21 audit): ban row + hide in ONE batch
     // (D1 batches are transactional) — a failed hide can no longer leave a
@@ -449,11 +500,11 @@ export async function banUser(
       db
         .prepare(
           `
-        INSERT INTO banned_users (id, discord_id, username, moderator_discord_id, reason, banned_at)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO banned_users (id, discord_id, xivauth_id, username, moderator_discord_id, reason, banned_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         `
         )
-        .bind(id, discordId, username, moderatorDiscordId, reason, now),
+        .bind(id, discordId, xivAuthId, username, moderatorDiscordId, reason, now),
       hideUserPresetsStatement(db, discordId, now),
     ]);
 
@@ -534,16 +585,28 @@ export async function unbanUser(
     // commits no row; the restore log still precedes the UPDATE it mirrors.
     // The unban command takes no reason, so the rows carry NULL rather than an
     // invented one.
+    //
+    // FINDING-005 (2026-10-03 audit): the same UPDATE blanks the ban's
+    // `username` copy and free-text `reason` (both NOT NULL, hence '' rather
+    // than NULL). They stay readable while the ban is active — ban search
+    // selects and sorts on `username` — and are scrubbed the moment it lifts.
+    // Pruning the lifted row itself is presets-api's retention rule, not this
+    // worker's.
+    //
+    // FINDING-021: the restore skips hidden presets whose dye_signature now
+    // belongs to an approved / pending preset (see `restoreGuard`), so another
+    // user's matching preset can no longer abort the whole all-or-nothing
+    // batch; they are counted afterwards and reported.
     const [updateResult, , , restoreResult] = await db.batch([
       db
         .prepare(
           `
         UPDATE banned_users
-        SET unbanned_at = ?, unban_moderator_discord_id = ?
-        WHERE discord_id = ? AND unbanned_at IS NULL
+        SET unbanned_at = ?, unban_moderator_discord_id = ?, username = '', reason = ''
+        WHERE (discord_id = ? OR xivauth_id = ?) AND unbanned_at IS NULL
         `
         )
-        .bind(now, moderatorDiscordId, discordId),
+        .bind(now, moderatorDiscordId, discordId, discordId),
       unbanLogStatement(db, discordId, moderatorDiscordId, now),
       presetActionLogStatement(db, 'restore', 'hidden', discordId, moderatorDiscordId, null, now),
       restoreUserPresetsStatement(db, discordId, now),
@@ -560,8 +623,22 @@ export async function unbanUser(
     return {
       success: true,
       presetsRestored: restoreResult?.meta?.changes || 0,
+      presetsStillHidden: await countHiddenPresets(db, discordId),
     };
   } catch (error) {
+    const message = error instanceof Error ? error.message : '';
+    // FINDING-021: a signature collision that slipped past `restoreGuard` (a
+    // submission racing the batch) rolled the whole unban back. Say so, in
+    // channel-safe words, instead of the generic failure.
+    if (/UNIQUE constraint failed:.*dye_signature/i.test(message)) {
+      return {
+        success: false,
+        presetsRestored: 0,
+        error:
+          'Unban blocked: a restored preset duplicates an existing one. Nothing was changed; try again.',
+        cause: error,
+      };
+    }
     // MOD-8: channel-safe message; raw D1 error kept in `cause` for logging
     return {
       success: false,
@@ -575,6 +652,27 @@ export async function unbanUser(
 // ============================================================================
 // Preset Visibility
 // ============================================================================
+
+/**
+ * FINDING-021: how many of the author's presets are still `hidden` after an
+ * unban's restore — i.e. the ones `restoreGuard` held back. The batch has
+ * already committed, so a failure here must never turn the unban into an
+ * error: it degrades to 0 and the moderator simply sees no "still hidden" line.
+ */
+async function countHiddenPresets(db: D1Database, discordId: string): Promise<number> {
+  try {
+    const row = await db
+      .prepare(
+        "SELECT COUNT(*) AS n FROM presets WHERE author_discord_id = ? AND status = 'hidden'"
+      )
+      .bind(discordId)
+      .first<{ n: number }>();
+    const n = Number(row?.n);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
 
 /** Statement form so `banUser` can batch it with the ban insert (MOD-4). */
 function hideUserPresetsStatement(
@@ -615,7 +713,7 @@ function restoreUserPresetsStatement(
       `
       UPDATE presets
       SET status = 'approved', updated_at = ?
-      WHERE author_discord_id = ? AND status = 'hidden'
+      WHERE author_discord_id = ? AND status = 'hidden'${restoreGuard('presets')}
       `
     )
     .bind(now, discordId);
@@ -637,11 +735,11 @@ export async function getActiveBan(
       `
       SELECT *
       FROM banned_users
-      WHERE discord_id = ? AND unbanned_at IS NULL
+      WHERE (discord_id = ? OR xivauth_id = ?) AND unbanned_at IS NULL
       LIMIT 1
       `
     )
-    .bind(discordId)
+    .bind(discordId, discordId)
     .first<BannedUserRow>();
 
   if (!row) return null;

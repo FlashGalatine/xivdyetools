@@ -170,18 +170,21 @@ describe('handleAutocomplete — FINDING-034 follow-ups', () => {
     );
   });
 
-  it('MOD-14: unban autocomplete only offers discord-id targets (xivauth-only bans cannot be unbanned here)', async () => {
+  it('MOD-14: unban autocomplete offers a row under whichever id it carries, and skips a row with none', async () => {
     vi.mocked(banService.searchBannedUsers).mockResolvedValueOnce([
       { discordId: '999999999999999999', xivAuthId: null, username: 'discord-person' },
       { discordId: null, xivAuthId: 'c2d9d2c4-0000-4000-8000-000000000000', username: 'xivauth-only' },
+      { discordId: null, xivAuthId: null, username: 'no-id' },
     ] as never);
 
     const res = await handleAutocomplete(autocompleteInteraction('111111111111111111', 'unban_user'), env, ctx, logger);
     const json = (await res.json()) as { data: { choices: Array<{ name: string; value: string }> } };
 
-    expect(json.data.choices).toHaveLength(1);
+    expect(json.data.choices).toHaveLength(2);
     expect(json.data.choices[0].value).toBe('999999999999999999');
     expect(json.data.choices[0].name).toContain('discord-person');
+    expect(json.data.choices[1].value).toBe('c2d9d2c4-0000-4000-8000-000000000000');
+    expect(json.data.choices[1].name).toContain('xivauth:c2d9d2c4');
   });
 
   // A4 (2026-09-16 fix wave): a row whose `discord_id` column actually holds

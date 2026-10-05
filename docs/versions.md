@@ -26,7 +26,7 @@
 | **Web Application** | v5.13.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.7.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.4.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
@@ -344,6 +344,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.8.0 | Oct 2026 | 2026-10-03 security audit, Sprint 4 — approve / reject / revert are bound to the revision the moderator reviewed (new `preset_<action>_<uuid>:<rev>:<status>` buttons; a legacy button or a stale one refreshes the embed and asks for a second click; `/preset moderate approve|reject` answers with a revision-bound confirm button); bans written and matched by `xivauth_id` too; a lifted ban's username and reason are blanked; unban restore skips presets whose dyes collide; revert refuses a banned author; Workers Logs pinned off. Deploy with presets-api 2.4.0 in one window |
 | v1.7.3 | Sep 2026 | 2026-09-16 deep-dive Sprint 6 — `/preset ban_user` / `unban_user`, the confirm button and the reason modal accept an XIVAuth UUID as well as a Discord snowflake, so XIVAuth-only authors can be banned (BUG-001 path (a): the UUID is stored in `banned_users.discord_id`); presets-api requests carry a 10 s `AbortSignal` (BUG-016); the rate-limit KV-error test pins fail-open (BUG-035) |
 | v1.7.2 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-009/010/011/012) — unbatched `hideUserPresets`/`restoreUserPresets` wrappers, the unused fetch-logging wrappers, their now-orphaned `sanitizeHeaders` helper and `Translator.getMeta` removed; ban/unban still batch the statement builders with their audit rows |
 | v1.7.1 | Sep 2026 | Bundle auth 2.0.2 to bound interaction streams while reading |

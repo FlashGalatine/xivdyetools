@@ -16,6 +16,14 @@ compatibility_date = "2024-12-01"
 # moderation bot's interactions endpoint points at the production domain.
 workers_dev = false
 
+# FINDING-022 (2026-10-03 security audit): persistent Workers Logs stay OFF.
+# Both privacy policies promise it, so the state is pinned here rather than
+# living only in the Cloudflare dashboard. `observability` is an INHERITABLE
+# key, but it is declared explicitly in both blocks anyway. Turning it on
+# needs both privacy policies (all six languages) updated in the same change.
+[observability]
+enabled = false
+
 [[kv_namespaces]]
 binding = "KV"
 id = "1fcb7e037ccd4172a47fccd97cf8e753"
@@ -59,10 +67,17 @@ PRESETS_API_URL = "https://api.xivdyetools.app"
 
 [env.production]
 name = "xivdyetools-moderation-worker"
+# The retired moderation-bot.xivdyetools.projectgalatine.com custom domain was removed
+# in the dashboard on 2026-10-05 (docs/operations/DOMAIN_DEPRECATION.md Phase 2); the
+# app's Interactions Endpoint URL has used moderation-bot.xivdyetools.app since
+# 2026-08-09. A deploy re-attaches every custom domain listed here, so it must not return.
 routes = [
-  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true },
-  { pattern = "moderation-bot.xivdyetools.projectgalatine.com", custom_domain = true }
+  { pattern = "moderation-bot.xivdyetools.app", custom_domain = true }
 ]
+
+# FINDING-022: see the top-level [observability] comment. Workers Logs stay off.
+[env.production.observability]
+enabled = false
 
 [env.production.vars]
 # FINDING-013: turns on validateEnv's production block (RL_COMMAND and

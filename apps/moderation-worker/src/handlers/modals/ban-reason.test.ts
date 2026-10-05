@@ -286,6 +286,51 @@ describe('handleBanReasonModal', () => {
     );
   });
 
+  // FINDING-008: no author name on record → the stored name is the id (NOT NULL,
+  // searched by moderators), but no post shows it.
+  it('posts a neutral label, never the account id, when no author name is found', async () => {
+    vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce(null);
+    vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 0 });
+
+    const interaction = {
+      id: 'int-1',
+      token: 'token-1',
+      application_id: 'app-123',
+      data: {
+        custom_id: 'ban_reason_modal_123456789012345677',
+        components: [
+          {
+            type: 1,
+            components: [{ type: 4, custom_id: 'ban_reason', value: 'Vote manipulation across many presets' }],
+          },
+        ],
+      },
+      member: { user: { id: 'mod-1', username: 'Moderator' } },
+    };
+
+    const response = await handleBanReasonModal(interaction, env, ctx);
+    const json = (await response.json()) as any;
+    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
+      vi.mocked(ctx.waitUntil).mock.calls.length - 1
+    ]?.[0];
+    if (waitUntilPromise) await waitUntilPromise;
+
+    expect(banService.banUser).toHaveBeenCalledWith(
+      env.DB,
+      '123456789012345677',
+      '123456789012345677',
+      'mod-1',
+      'Vote manipulation across many presets',
+    );
+    expect(json.data.embeds[0].description).toContain('an account with no author name');
+    expect(JSON.stringify(json)).not.toContain('123456789012345677');
+    const channelPost = JSON.stringify(vi.mocked(discordApi.sendMessage).mock.calls);
+    expect(channelPost).toContain('an account with no author name');
+    expect(channelPost).not.toContain('123456789012345677');
+  });
+
   // BUG-001 path (a) (2026-09-16 deep-dive): this is the last gate in the
   // ban_user flow (after the /preset command and the confirm button already
   // accepted the target) — a UUID target must still reach `banService.banUser`
@@ -430,7 +475,6 @@ describe('handleBanReasonModal', () => {
             description: expect.stringContaining('SpamUser'),
             color: 0xed4245,
             fields: expect.arrayContaining([
-              expect.objectContaining({ name: 'User ID', value: '123456789012345679' }),
               expect.objectContaining({ name: 'Presets Hidden', value: '7' }),
               expect.objectContaining({ name: 'Banned By', value: 'ModUser' }),
               expect.objectContaining({ name: 'Reason', value: 'Spamming inappropriate presets' }),
@@ -439,6 +483,11 @@ describe('handleBanReasonModal', () => {
         ]),
       }),
     );
+    // FINDING-008: the channel post (kept in Discord history) never carries the
+    // banned account's id, in any field or in the text.
+    const channelPost = JSON.stringify(vi.mocked(discordApi.sendMessage).mock.calls);
+    expect(channelPost).not.toContain('123456789012345679');
+    expect(channelPost).not.toContain('User ID');
   });
 
   it('should not send message when moderation channel is not configured', async () => {
