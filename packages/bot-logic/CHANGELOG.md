@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0] - 2026-10-05
+
+Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the bot speaks the user's language. Minor: one new function and new keys; no key removed except
+`card.glamourLooks`, which is split into plural forms.
+
+### Added
+
+- **`getLocalizedClan(key, locale)`** beside `getLocalizedRace`, backed by core's `getClan`
+  (HC-001). Its fallback spells the key out as words, never the raw key.
+- **`card.charaFileReason.{tooLarge,notOnDiscord,downloadFailed,unreadable}`** ×6 (HC-002): the
+  reason inside the translated file-error message.
+
+### Fixed
+
+- **The `/glamour` and `/swatch` cards print the clan in the user's language** (HC-001):
+  `tribeDisplay(tribe, locale)` upper-cases the localized clan with `toLocaleUpperCase(locale)`.
+  English output is unchanged.
+- **A refused file gives a localized reason** (HC-002): `/glamour` parser failures and api-worker's
+  400/413/422 answers, and `/swatch` parser failures, show `card.charaFileReason.unreadable`
+  instead of the English error message.
+- **`+1 LOOK` is singular** (I18N-016): `card.glamourLooks_one` / `_other` through `tc()`.
+- **The character-file manual topic covers `/glamour`** (I18N-019): pieces, twins, wearability
+  and the GPOSERS list, in all six languages.
+- **Translations:**
+  - de `FARBSTOFFE` and fr `TEINTURES` on the dye-problem chip (TERM-012);
+  - the facewear tip uses the client's word in zh `面部配饰` (TERM-013), and in ja, de and ko too;
+  - the character-creation sheet names follow the dictionary table in `manual.swatch.description`,
+    the manual topic and the card slot labels (TERM-004);
+  - ko `염색한 장비 {n}개` counts dyed pieces (I18N-017);
+  - de `card.glamourFixed*` and `glamourBlockedWear` no longer assume a neuter item (I18N-018);
+  - ko file-option descriptions drop literal backticks (I18N-020);
+  - the ko `/preferences set clan` tooltip gives the clients' clan names (중원 부족, 아우라 렌).
+
 ## [4.5.0] - 2026-09-28
 
 ### Added

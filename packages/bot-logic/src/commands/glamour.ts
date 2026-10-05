@@ -84,8 +84,9 @@ export interface GlamourResolveAnswer {
 /**
  * Resolves the worn models; the adapter supplies the transport. A failure may
  * carry the HTTP `status` on the thrown error: 429 answers RESOLVE_BUSY; a
- * refused body (400, 413, 422) PARSE_FAILED with the error's message as the
- * reason; the rest RESOLVE_FAILED.
+ * refused body (400, 413, 422) PARSE_FAILED with a localized reason (the
+ * error's own message is English, so it is not shown — HC-002); the rest
+ * RESOLVE_FAILED.
  */
 export type GlamourResolver = (gear: CharaGearModel[], glassesId: number | null) => Promise<GlamourResolveAnswer>;
 
@@ -345,12 +346,15 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
   const t = createTranslator(locale, input.logger);
   await initializeLocale(locale);
 
+  // HC-002: the parser's and api-worker's reasons are English, so a refused
+  // file gets one localized reason instead of either message
+  const unreadable = t.t('card.swatchParseError', { message: t.t('card.charaFileReason.unreadable') });
+
   let character: ResolvedCharaCharacter;
   try {
     character = await resolveCharaColors(parseCharaFile(input.fileText), getCharacterColors(), dyeService);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, error: 'PARSE_FAILED', errorMessage: t.t('card.swatchParseError', { message }) };
+  } catch {
+    return { ok: false, error: 'PARSE_FAILED', errorMessage: unreadable };
   }
   // The nickname never leaves this function (PRIVACY_POLICY §3)
   const { gearModels, gearDyes, glassesId, race, gender, tribe, producer } = character;
@@ -371,11 +375,11 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     // A refused body is api-worker refusing what the file describes (the parser
     // takes any positive model lane; api-worker stops at 0xFFFF), so a hand
     // edit or a damaged file fails every time — the file's problem, not an
-    // outage to retry. The error carries api-worker's own reason. A missing
+    // outage to retry. The error carries api-worker's own reason, but that is
+    // English, so the reply says it in the reader's language (HC-002). A missing
     // route or a refused caller (404, 401, 403) is our deploy, so it stays below.
     if (typeof status === 'number' && REFUSED_BODY_STATUSES.has(status)) {
-      const message = error instanceof Error ? error.message : String(error);
-      return { ok: false, error: 'PARSE_FAILED', errorMessage: t.t('card.swatchParseError', { message }) };
+      return { ok: false, error: 'PARSE_FAILED', errorMessage: unreadable };
     }
     return { ok: false, error: 'RESOLVE_FAILED', errorMessage: t.t('card.glamourResolveFailed') };
   }
@@ -425,7 +429,7 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     const canDraw = input.canDraw ?? ((): boolean => true);
     const cardRows: GlamourCardRow[] = rows.map((p) => ({
       slotLabel: t.t(SLOT_KEYS[p.slot]),
-      lookLabel: p.twins > 0 ? t.t('card.glamourLooks', { n: p.twins }) : t.t('card.glamourOneLook'),
+      lookLabel: p.twins > 0 ? t.tc('card.glamourLooks', p.twins, { n: p.twins }) : t.t('card.glamourOneLook'),
       twins: p.twins,
       tone: p.tone,
       name: canDraw(p.name) ? p.name : p.nameEn,
@@ -435,7 +439,7 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
 
     const svgString = generateGlamourCard({
       stripHexes,
-      charSub: [producerToken(producer), [tribeDisplay(tribe), genderSymbol(gender)].filter(Boolean).join(' ')]
+      charSub: [producerToken(producer), [tribeDisplay(tribe, locale), genderSymbol(gender)].filter(Boolean).join(' ')]
         .filter(Boolean)
         .join(' · '),
       title: count,

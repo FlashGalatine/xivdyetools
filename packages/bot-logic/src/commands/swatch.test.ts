@@ -5,6 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import { CharacterColorService, parseCharaFile, resolveCharaColors } from '@xivdyetools/core';
 import { executeSwatch, type SwatchInput } from './swatch.js';
+import { createTranslator } from '../i18n/index.js';
 import {
   DUSKWIGHT_HETEROCHROMIA,
   HROTHGAR_HELIONS,
@@ -138,6 +139,28 @@ describe('executeSwatch', () => {
     if (result.ok) return;
     expect(result.error).toBe('PARSE_FAILED');
     expect(result.errorMessage.length).toBeGreaterThan(0);
+  });
+
+  it('a file that fails to parse is refused in the reader’s language, not with the parser’s English (HC-002)', async () => {
+    const result = await executeSwatch({ fileText: '{not valid json', locale: 'de' });
+    if (result.ok) throw new Error('expected a refusal');
+    const de = createTranslator('de');
+    expect(de.t('card.charaFileReason.unreadable')).not.toBe('card.charaFileReason.unreadable');
+    expect(result.errorMessage).toBe(
+      de.t('card.swatchParseError', { message: de.t('card.charaFileReason.unreadable') })
+    );
+    expect(result.errorMessage).not.toContain('not valid JSON');
+  });
+
+  it("names the clan in the reader's language on the identifier line (HC-001)", async () => {
+    const de = await executeSwatch({ fileText: fixture('duskwight-heterochromia.chara'), locale: 'de' });
+    if (!de.ok) throw new Error(de.errorMessage);
+    expect(de.svgString).toContain('DUNKELALB ♀');
+    expect(de.svgString).not.toContain('DUSKWIGHT');
+
+    const en = await executeSwatch({ fileText: fixture('duskwight-heterochromia.chara'), locale: 'en' });
+    if (!en.ok) throw new Error(en.errorMessage);
+    expect(en.svgString).toContain('DUSKWIGHT ♀');
   });
 
   it('localizes slot shorts (DE)', async () => {

@@ -599,6 +599,12 @@
     "swatchGear": "Gear dyes: {list}",
     "swatchDropped": "Dropped (safest): {slot} · ΔE {de}",
     "swatchParseError": "Could not read the file — {message}",
+    "charaFileReason": {
+      "tooLarge": "it is larger than {mb} MB",
+      "notOnDiscord": "it must be uploaded to Discord",
+      "downloadFailed": "the download failed (HTTP {status})",
+      "unreadable": "it is not a .chara file the bot can read"
+    },
     "swatchTitle": "Character swatch",
     "swatchNoSlots": "No live color slots in this file.",
     "swatchSlotMissing": "{slot} is not a live slot in this file.",
@@ -611,7 +617,8 @@
     "glamourDyes_one": "{n} dye",
     "glamourDyes_other": "{n} dyes",
     "glamourNoDyes": "no dyes",
-    "glamourLooks": "+{n} LOOK",
+    "glamourLooks_one": "+{n} LOOK",
+    "glamourLooks_other": "+{n} LOOKS",
     "glamourOneLook": "ONE LOOK",
     "glamourStatusTwin": "TWIN",
     "glamourStatusOk": "OK",
@@ -687,7 +694,7 @@
       },
       "characterFile": {
         "name": "Character File",
-        "body": "/swatch reads a .chara export from Anamnesis or Ktisis: color slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colors (edited past the game's palette) are matched by their live value and flagged OFF GRID."
+        "body": "/swatch and /glamour read a .chara export from Anamnesis or Ktisis. The file is read once to build the reply and is not stored.\n\n/swatch matches the color slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) and worn gear dyes. Off-grid colors (edited past the game's palette) are matched by their live value and flagged OFF GRID.\n\n/glamour lists each worn piece and its dyes. One model can be several items, its twins (+N LOOKS). Each piece is named as an item this character can wear with those dyes: if the saved item can't take the dyes, can't be a glamour or can't be worn, a twin that can is named instead (TWIN). A piece no twin fixes shows what blocks it: DYES, NO GLAM, LOCKED or a race. The embed lists every piece in the GPOSERS form, with English labels in every language, ready to copy."
       }
     }
   },
