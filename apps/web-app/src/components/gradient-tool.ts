@@ -2107,38 +2107,23 @@ export class GradientTool extends BaseComponent {
     logger.info(`[GradientTool] Context action: ${action} for dye: ${dye.name}`);
 
     switch (action) {
-      // Inspect actions - navigate to tool
+      // Inspect and transform actions. The result card performs each of these
+      // itself (hand-off, storage write, toast, navigation, or its slot
+      // selection modal when the target is full) before it emits the action.
+      // BUG-013 (2026-10-04 deep-dive) found inspect-budget repeated here, and
+      // the Sprint 5 review the rest: repeating them toasted twice and
+      // navigated twice; with Comparison already holding four dyes the card
+      // opened its slot modal while this added the dye and navigated away
+      // under it. And the card's same-tool navigation destroys this tool
+      // first, so 'transform-gradient' saved the destroyed tool's emptied
+      // selection plus the dye over the two endpoints the card had just
+      // stored, losing the start dye.
       case 'inspect-harmony':
-        handoffTo('harmony', dye);
-        break;
       case 'inspect-budget':
-        // BUG-013 (2026-10-04 deep-dive): the result card hands the dye to
-        // Budget itself, by stainID, before it emits this action. Repeating
-        // it here toasted twice and navigated again without the dye.
-        break;
       case 'inspect-accessibility':
-        this.addDyeToTool('v3_accessibility_selected_dyes', dye, 4);
-        RouterService.navigateTo('accessibility');
-        break;
       case 'inspect-comparison':
-        this.addDyeToTool('v3_comparison_selected_dyes', dye, 4);
-        RouterService.navigateTo('comparison');
-        break;
-
-      // Transform actions
       case 'transform-gradient':
-        // Already in gradient tool - add to current selection
-        if (this.selectedDyes.length < 2) {
-          this.selectedDyes.push(dye);
-          this.updateAfterSlotSelection();
-          ToastService.success(LanguageService.t('resultCard.addedTo'));
-        } else {
-          ToastService.info(LanguageService.t('gradient.slotsFull'));
-        }
-        break;
       case 'transform-mixer':
-        this.addDyeToTool('v4_mixer_selected_dyes', dye, 2, true);
-        RouterService.navigateTo('mixer');
         break;
 
       // Legacy actions (for backwards compatibility)

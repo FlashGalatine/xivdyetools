@@ -507,7 +507,6 @@
     "gradientResults": "Résultats du Dégradé",
     "noMatchesFound": "Aucune teinture correspondante trouvée",
     "sameDyeWarning": "Les teintures de début et de fin sont identiques. Sélectionnez des teintures différentes pour un dégradé.",
-    "slotsFull": "Tous les emplacements sont pleins. Sélectionnez-en un à remplacer :",
     "mode": {
       "rgb": "Linéaire (points médians gris)",
       "hsv": "Basé sur la teinte (vif)",

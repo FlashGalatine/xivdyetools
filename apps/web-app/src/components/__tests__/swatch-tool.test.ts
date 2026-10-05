@@ -1454,6 +1454,32 @@ describe('SwatchTool', () => {
       expect(sentence).not.toContain(`Dye-${metallicDye.itemID}`);
     });
 
+    // BUG-025 follow-up (2026-10-04 Sprint 5 review): the order the other way
+    // round. A filter change after the pick re-ran the matches but drew
+    // neither the card nor SEND TO again, so both named the excluded dye.
+    it('a filter change after a slot pick names the closest allowed dye', async () => {
+      const allowed = mockDyes.filter((d) => !d.isMetallic);
+      mockGetAllDyes.mockReturnValue([metallicDye, ...allowed]);
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      await flush();
+      const sentence = (): string | null =>
+        (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
+          .textContent;
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+      expect(sentence()).toContain(`Dye-${metallicDye.itemID}`);
+      const handoffTargets = vi.spyOn(
+        tool as unknown as { handoffTargets: (ids: number[]) => unknown },
+        'handoffTargets'
+      );
+
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+
+      expect(handoffTargets).toHaveBeenLastCalledWith([allowed[0].stainID]);
+      expect(sentence()).toContain(`Dye-${allowed[0].itemID}`);
+      expect(sentence()).not.toContain(`Dye-${metallicDye.itemID}`);
+    });
+
     it('a slot on another palette commits that palette and survives its reload', async () => {
       CharaSessionService.setSession(charaSession());
       tool = mount();

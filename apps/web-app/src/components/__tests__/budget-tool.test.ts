@@ -1224,6 +1224,38 @@ describe('BudgetTool', () => {
       expect(rows()).toEqual([]);
     });
 
+    // The 2026-10-04 Sprint 5 review: clearing moved the run on, so the price
+    // fetch it was awaiting was thrown away, and the quick picks stayed on
+    // their unpriced offline fallback although the board had answered.
+    it('a clear during a price fetch still prices the quick picks', async () => {
+      await mount();
+      const board: Prices = new Map(
+        mockDyes.map((d, i) => [
+          d.itemID,
+          {
+            itemID: d.itemID,
+            currentAverage: 1000 + i,
+            currentMinPrice: 1000 + i,
+            currentMaxPrice: 1000 + i,
+            lastUpdate: 0,
+          },
+        ])
+      );
+      const pending = deferred();
+      fetchPrices()
+        .mockImplementationOnce(() => pending.promise)
+        .mockResolvedValue(board);
+
+      tool!.selectDye(TARGET);
+      tool!.clearDyes();
+      pending.resolve(board);
+      await settle();
+
+      expect(container.textContent).toContain('budget.priciestNow');
+      expect(container.textContent).not.toContain('budget.priciestOff');
+      expect(rows()).toEqual([]);
+    });
+
     it('a run in flight at destroy leaves no rows behind', async () => {
       await mount();
       const pending = deferred();
@@ -1286,18 +1318,19 @@ describe('BudgetTool', () => {
       vi.mocked(StorageService.setItem).mockReset();
     });
 
-    it('an in-tool pick takes a linked ?dye= out of the address bar, so coming back keeps it', async () => {
+    it('a linked ?dye= leaves the address bar once stored, so coming back keeps a later pick', async () => {
       window.history.replaceState({ toolId: 'budget' }, '', '/budget?dye=1&dc=Aether');
       await mount();
+
       expect(shownTarget()).toBe(LINKED.id);
-
-      tool!.selectDye(TARGET);
-      await settle();
-
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_budget_target', LINKED.id);
       expect(params().has('dye')).toBe(false);
       expect(params().get('dc')).toBe('Aether');
       // RouterService's popstate handler reads the entry's own state.
       expect(window.history.state).toEqual({ toolId: 'budget' });
+
+      tool!.selectDye(TARGET);
+      await settle();
 
       // Leaving and coming back builds a new tool at whatever the router kept.
       tool!.destroy();
@@ -1306,7 +1339,29 @@ describe('BudgetTool', () => {
       expect(rowNames()).toEqual([label(DALAMUD), label(WINE), label(SUNSET)]);
     });
 
-    it('takes a linked ?hex= out too, which the deep link falls back to without a dye', async () => {
+    // The 2026-10-04 Sprint 5 review's repro: the result card's "Set as budget
+    // target" lands on /budget?dye=…, and the next navigation carried that dye
+    // into Harmony, which replaced its own stored base with it.
+    it('a "Set as budget target" hand-off does not follow the user into the next tool', async () => {
+      // Not mocked: the barrel above is, this module is not.
+      const { RouterService: router } = await import('@services/router-service');
+      window.history.replaceState({ toolId: 'budget' }, '', `/budget?dye=${LINKED.stainID}`);
+      await mount();
+
+      router.navigateTo('harmony');
+
+      expect(window.location.pathname).toBe('/harmony');
+      expect(params().has('dye')).toBe(false);
+    });
+
+    it('leaves a ?hex= target in the address bar, which is never stored', async () => {
+      window.history.replaceState(null, '', '/budget?hex=123456');
+      await mount();
+
+      expect(params().get('hex')).toBe('123456');
+    });
+
+    it('takes a linked ?hex= out on a pick, which the deep link falls back to without a dye', async () => {
       window.history.replaceState(null, '', '/budget?hex=123456');
       await mount();
 
@@ -1315,20 +1370,19 @@ describe('BudgetTool', () => {
       expect(params().has('hex')).toBe(false);
     });
 
-    it('a custom colour from the palette drawer takes the linked dye out as well', async () => {
-      window.history.replaceState(null, '', '/budget?dye=1');
+    /** A pre-5.0 itemID: refused with a toast, so the link stays unapplied. */
+    const UNAPPLIED = '5772';
+
+    it.each<[string, (t: BudgetTool) => void]>([
+      ['an in-tool pick', (t) => t.selectDye(TARGET)],
+      ['a custom colour from the palette drawer', (t) => t.selectCustomColor('#123456')],
+      ['Clear All', (t) => t.clearDyes()],
+    ])('%s takes out a ?dye= the tool could not apply', async (_label, act) => {
+      window.history.replaceState(null, '', `/budget?dye=${UNAPPLIED}`);
       await mount();
+      expect(params().get('dye')).toBe(UNAPPLIED);
 
-      tool!.selectCustomColor('#123456');
-
-      expect(params().has('dye')).toBe(false);
-    });
-
-    it('Clear All takes the linked dye out as well', async () => {
-      window.history.replaceState(null, '', '/budget?dye=1');
-      await mount();
-
-      tool!.clearDyes();
+      act(tool!);
 
       expect(params().has('dye')).toBe(false);
     });

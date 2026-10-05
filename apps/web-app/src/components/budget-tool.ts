@@ -175,7 +175,8 @@ export class BudgetTool extends BaseComponent {
   private fetchProgress: { current: number; total: number } = { current: 0, total: 0 };
   /**
    * BUG-015 (2026-10-04 deep-dive): the ledger run that may still write.
-   * findAlternatives() takes the next id; clearDyes() and destroy() move it on.
+   * findAlternatives() takes the next id (clearDyes() starts a targetless
+   * run); destroy() moves it on.
    */
   private runId = 0;
 
@@ -476,6 +477,13 @@ export class BudgetTool extends BaseComponent {
         this.targetDye = dye;
         this.updateTargetDyeDisplay();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
+        // BUG-013 (2026-10-04 deep-dive): consumed once stored. The result
+        // card's "Set as budget target" lands here as ?dye=, and left in the
+        // URL, PRESERVED_PARAMS carried it into the next tool, where Harmony
+        // took it as its base and replaced (and stored over) the user's own.
+        // Only `dye`: a `?hex=` target is never stored, so it stays for a
+        // reload. A dye that did not resolve stays too; a pick drops it.
+        this.releaseLinkedTarget(['dye']);
       }
     } else if (hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
       // ?hex= is a bare colour target — exclusive with `dye`, never persisted
@@ -500,22 +508,21 @@ export class BudgetTool extends BaseComponent {
 
   /**
    * Take a linked target out of the address bar once the user picks or clears
-   * one here.
+   * one here, and a linked `dye` once handleDeepLink has stored it.
    *
    * BUG-013 (2026-10-04 deep-dive): RouterService carries `dye=` across every
    * navigation, and handleDeepLink applies it on every mount, so a pick that
    * reached storage only was replaced by the link's dye when the user came
    * back. The param is deleted rather than rewritten to the pick: rewritten,
    * it would follow the user into Harmony and replace that tool's own base.
-   * `hex` goes too, because handleDeepLink falls back to it without a `dye`.
-   * history.replaceState, not RouterService.replaceRoute, which notifies the
-   * layout and would remount this tool.
+   * A pick takes `hex` too, because handleDeepLink falls back to it without a
+   * `dye`. history.replaceState, not RouterService.replaceRoute, which
+   * notifies the layout and would remount this tool.
    */
-  private releaseLinkedTarget(): void {
+  private releaseLinkedTarget(keys: readonly string[] = ['dye', 'hex']): void {
     const url = new URL(window.location.href);
-    if (!url.searchParams.has('dye') && !url.searchParams.has('hex')) return;
-    url.searchParams.delete('dye');
-    url.searchParams.delete('hex');
+    if (!keys.some((key) => url.searchParams.has(key))) return;
+    for (const key of keys) url.searchParams.delete(key);
     history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
@@ -1994,8 +2001,6 @@ export class BudgetTool extends BaseComponent {
    * Called when "Clear All Dyes" button is clicked in Color Palette.
    */
   public clearDyes(): void {
-    // BUG-015: a run still awaiting prices would refill the rows just cleared
-    ++this.runId;
     this.targetDye = null;
     this.rows = [];
 
@@ -2010,6 +2015,14 @@ export class BudgetTool extends BaseComponent {
     this.updateTargetDyeDisplay();
     this.updateMobileTargetDyeDisplay();
     this.renderQuickPicks();
+
+    // BUG-015 (2026-10-04 deep-dive): a run still awaiting prices would refill
+    // the rows just cleared, so it must not write. This used to be a bare
+    // runId bump, which also threw that run's price fetch away: the quick
+    // picks stayed on their unpriced offline fallback although the board had
+    // answered. A targetless run supersedes it the same way and refetches the
+    // board for the quick picks, exactly as a mount with no target does.
+    void this.findAlternatives();
   }
 
   /**

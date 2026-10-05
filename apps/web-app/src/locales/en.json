@@ -507,7 +507,6 @@
     "gradientResults": "Gradient Results",
     "noMatchesFound": "No matching dyes found",
     "sameDyeWarning": "Start and end dyes are the same. Select different dyes for a gradient.",
-    "slotsFull": "All slots are full. Select one to replace:",
     "mode": {
       "rgb": "Linear (gray midpoints)",
       "hsv": "Hue-based (vibrant)",

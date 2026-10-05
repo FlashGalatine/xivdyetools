@@ -671,6 +671,12 @@ export class SwatchTool extends BaseComponent {
       // Re-match if maxResults or matchingMethod changed
       if (this.selectedColor) this.findMatchingDyes();
       if (this.reverseDyeHex) this.performReverseMatch();
+      // BUG-025 (2026-10-04 deep-dive): the selection card's sentence names
+      // the closest allowed dye, and so does SEND TO for a slot pick (a grid
+      // pick redraws it with its matches). Neither was redrawn, so after a
+      // filter change both still named a dye the filter now excludes.
+      this.updateSelectionCard();
+      if (this.selectionContext?.source === 'slot') this.updateHandoffRow();
     } else if (needsRedraw && this.matchedDyes.length > 0) {
       // Just redraw results if only display options changed
       this.updateMatchResults();

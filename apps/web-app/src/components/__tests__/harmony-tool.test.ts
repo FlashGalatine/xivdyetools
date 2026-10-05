@@ -443,9 +443,9 @@ describe('HarmonyTool', () => {
       (stainID: number) => mockDyes.find((d) => d.stainID === stainID) ?? null
     );
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
-    // A base-dye pick now writes `?dye=` into the URL (BUG-013), and jsdom's
-    // location outlives a test — so start every test from a bare URL, or the
-    // next mount() would deep-link whatever dye the last test picked.
+    // The tests deep-link through window.location, and jsdom's location
+    // outlives a test — so start every test from a bare URL, or the next
+    // mount() would apply whatever link the last test left there.
     window.history.replaceState(null, '', '/');
     // Mock scrollIntoView
     Element.prototype.scrollIntoView = vi.fn();
@@ -1285,12 +1285,14 @@ describe('HarmonyTool', () => {
   // BUG-013 (2026-10-04 deep-dive): RouterService's PRESERVED_PARAMS carries
   // `dye` across every tool switch, and Harmony never touched it. After a deep
   // link, a later base-dye pick reached storage only, so coming back to
-  // Harmony re-applied the stale link over the pick — and persisted it. A base
-  // change now drops the link's `dye` rather than rewriting it, so an ordinary
-  // pick does not start travelling into Budget's target either.
+  // Harmony re-applied the stale link over the pick — and persisted it. The
+  // tool now consumes a `dye` once it has applied and stored it, as Budget
+  // does its target, and a base change drops one it could not apply. Dropped,
+  // never rewritten to the pick, so an ordinary pick does not start
+  // travelling into Budget's target either.
   // ==========================================================================
 
-  describe('BUG-013: a base change drops a deep-linked ?dye=', () => {
+  describe('BUG-013: the linked base in the URL', () => {
     const search = (): URLSearchParams => new URLSearchParams(window.location.search);
     const shareDye = (t: HarmonyTool): unknown =>
       (t as unknown as { getShareParams(): Record<string, unknown> }).getShareParams().dye;
@@ -1302,6 +1304,16 @@ describe('HarmonyTool', () => {
           new CustomEvent('selection-changed', { detail: { selectedDyes: [mockDyes[8]] } })
         );
     };
+    /** Every user base change, each of which drops the link it replaces. */
+    const baseChanges: Array<[string, (t: HarmonyTool) => void]> = [
+      ['selectDye', (t) => t.selectDye(mockDyes[8])],
+      ['a pick from the desktop selector', () => pickFrom(leftPanel)],
+      ['a pick from the drawer selector', () => pickFrom(drawerContent)],
+      ['clearDyes', (t) => t.clearDyes()],
+      ['a custom colour', (t) => t.selectCustomColor('#123456')],
+    ];
+    /** A pre-5.0 itemID: refused with a toast, so the link stays unapplied. */
+    const UNAPPLIED = '5772';
 
     afterEach(async () => {
       // mockReturnValue replaces a test's mockImplementation; restoreAllMocks
@@ -1310,20 +1322,34 @@ describe('HarmonyTool', () => {
       vi.mocked(StorageService.getItem).mockReturnValue(null);
     });
 
-    it('a pick drops it and leaves the rest of the URL alone', async () => {
+    it('takes ?dye= out once it is applied and stored, and leaves the rest of the URL alone', async () => {
       window.history.replaceState({ toolId: 'harmony' }, '', '/harmony?dye=5&dc=Aether');
       tool = mount();
       await flush();
+
       expect(shareDye(tool)).toBe(5);
-
-      tool.selectDye(mockDyes[8]);
-
+      expect(await lastWrite(DYE_KEY)).toBe(mockDyes[4].itemID);
       expect(search().has('dye')).toBe(false);
       // The rest of the URL, and the history state popstate resolves the
       // tool from, are kept
       expect(search().get('dc')).toBe('Aether');
       expect(window.location.pathname).toBe('/harmony');
       expect(window.history.state).toEqual({ toolId: 'harmony' });
+    });
+
+    it('takes the legacy ?dyeId= alias out too, which names the same slot', () => {
+      window.history.replaceState(null, '', '/harmony?dyeId=5');
+      tool = mount();
+
+      expect(shareDye(tool)).toBe(5);
+      expect(search().has('dyeId')).toBe(false);
+    });
+
+    it('leaves a ?dye= it could not apply where it is', () => {
+      window.history.replaceState(null, '', `/harmony?dye=${UNAPPLIED}`);
+      tool = mount();
+
+      expect(search().get('dye')).toBe(UNAPPLIED);
     });
 
     it('coming back to Harmony keeps the pick instead of the stale link', async () => {
@@ -1354,38 +1380,70 @@ describe('HarmonyTool', () => {
       expect(await lastWrite(DYE_KEY)).toBeUndefined();
     });
 
-    it.each<[string, (t: HarmonyTool) => void]>([
-      ['selectDye', (t) => t.selectDye(mockDyes[8])],
-      ['a pick from the desktop selector', () => pickFrom(leftPanel)],
-      ['a pick from the drawer selector', () => pickFrom(drawerContent)],
-      ['clearDyes', (t) => t.clearDyes()],
-      ['a custom colour', (t) => t.selectCustomColor('#123456')],
-    ])('%s drops it', (_label, act) => {
-      window.history.replaceState(null, '', '/harmony?dye=5');
+    it.each(baseChanges)('%s drops a ?dye= the tool could not apply', (_label, act) => {
+      window.history.replaceState(null, '', `/harmony?dye=${UNAPPLIED}`);
       tool = mount();
+      expect(search().has('dye')).toBe(true);
 
       act(tool);
 
       expect(search().has('dye')).toBe(false);
     });
 
-    it('a pick drops the legacy ?dyeId= alias too, which names the same slot', () => {
-      window.history.replaceState(null, '', '/harmony?dyeId=5');
+    it('a pick drops an unapplied legacy ?dyeId= alias too', () => {
+      window.history.replaceState(null, '', `/harmony?dyeId=${UNAPPLIED}`);
       tool = mount();
+      expect(search().has('dyeId')).toBe(true);
 
       tool.selectDye(mockDyes[8]);
 
       expect(search().has('dyeId')).toBe(false);
     });
 
-    it('leaves a ?hex= link exactly as it arrived', async () => {
-      window.history.replaceState(null, '', '/harmony?hex=abcdef&dc=Aether');
-      const replaceState = vi.spyOn(window.history, 'replaceState');
-      tool = mount();
-      await flush();
+    // The 2026-10-04 Sprint 5 review: `hex`, the custom-base slot beside
+    // `dye`, was never taken out. After /harmony?hex=…, a pick reached storage
+    // only, so a reload applied the linked colour over it again and deleted
+    // the stored pick. Arriving keeps it — a custom base is never stored, so
+    // the link is all there is — and a base change by the user drops it.
+    describe('a ?hex= custom base', () => {
+      it('is left exactly as it arrived', async () => {
+        window.history.replaceState(null, '', '/harmony?hex=abcdef&dc=Aether');
+        const replaceState = vi.spyOn(window.history, 'replaceState');
+        tool = mount();
+        await flush();
 
-      expect(window.location.search).toBe('?hex=abcdef&dc=Aether');
-      expect(replaceState).not.toHaveBeenCalled();
+        expect(window.location.search).toBe('?hex=abcdef&dc=Aether');
+        expect(replaceState).not.toHaveBeenCalled();
+      });
+
+      it.each(baseChanges)('%s drops it and leaves the rest of the URL alone', (_label, act) => {
+        window.history.replaceState(null, '', '/harmony?hex=abcdef&dc=Aether');
+        tool = mount();
+        expect(search().get('hex')).toBe('abcdef');
+
+        act(tool);
+
+        expect(search().has('hex')).toBe(false);
+        expect(search().get('dc')).toBe('Aether');
+      });
+
+      it('a reload after a pick keeps the pick instead of the linked colour', async () => {
+        const { StorageService } = await import('@services/index');
+        window.history.replaceState(null, '', '/harmony?hex=abcdef');
+        tool = mount();
+        tool.selectDye(mockDyes[8]); // stainID 9
+        tool.destroy();
+
+        // A reload rebuilds the tool at whatever URL the pick left behind
+        vi.mocked(StorageService.getItem).mockImplementation(((key: string) =>
+          key === DYE_KEY ? mockDyes[8].itemID : null) as never);
+        vi.mocked(StorageService.removeItem).mockClear();
+        tool = mount();
+        await flush();
+
+        expect(shareDye(tool)).toBe(9);
+        expect(StorageService.removeItem).not.toHaveBeenCalledWith(DYE_KEY);
+      });
     });
   });
 });

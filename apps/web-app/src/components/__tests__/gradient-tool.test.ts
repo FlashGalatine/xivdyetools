@@ -1511,13 +1511,40 @@ describe('GradientTool', () => {
         }
       ).handleContextAction(action, dye(1));
 
-    it('inspect-accessibility navigates via the barrel-mocked RouterService', async () => {
+    // Every action the result card performs itself is a no-op below, so this
+    // pins the barrel import on a legacy action the tool still handles.
+    it('the legacy budget action navigates via the barrel-mocked RouterService', async () => {
       tool = mount();
       const { RouterService } = await import('@services/index');
 
-      contextAction('inspect-accessibility');
+      contextAction('budget');
 
-      expect(RouterService.navigateTo).toHaveBeenCalledWith('accessibility');
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('budget');
+    });
+
+    // The 2026-10-04 Sprint 5 review: the result card performs each of these
+    // before it emits the action, so the tool repeating it navigated twice and
+    // toasted twice — and with Comparison already holding four dyes, the card
+    // opened its slot-selection modal while the tool added the dye anyway and
+    // navigated away under it.
+    it.each([
+      'inspect-harmony',
+      'inspect-accessibility',
+      'inspect-comparison',
+      'transform-gradient',
+      'transform-mixer',
+    ])('leaves %s to the result card', async (action) => {
+      tool = mount();
+      const { RouterService, StorageService, ToastService } = await import('@services/index');
+      vi.mocked(RouterService.navigateTo).mockClear();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      contextAction(action);
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+      expect(ToastService.success).not.toHaveBeenCalled();
+      expect(ToastService.info).not.toHaveBeenCalled();
     });
 
     // BUG-013 (2026-10-04 deep-dive): the result card hands the dye to Budget

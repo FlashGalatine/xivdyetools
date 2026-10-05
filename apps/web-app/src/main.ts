@@ -3,6 +3,7 @@
  *
  * Initializes services and loads the v4 glassmorphism layout.
  *
+ * @entrypoint No importer by design — src/index.html loads this module with a script tag
  * @module main
  */
 
