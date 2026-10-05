@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-10-05T05:21:29.102Z",
+    "generated": "2026-10-05T21:29:18.443Z",
     "dyeCount": 125
   },
   "labels": {
@@ -263,7 +263,7 @@
     "red": "红色",
     "blue": "蓝色",
     "green": "绿色",
-    "brass": "黄铜色",
+    "brass": "铜色",
     "purple": "紫色",
     "brown": "棕色"
   }

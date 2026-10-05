@@ -1,7 +1,7 @@
 /**
  * The twin picker (design 1a popover, 1b sheet): "SAME LOOK · N ITEMS", one
  * radio row per twin with its facts, a why line for a twin that fails, and
- * the promise that Copy list / Export .md write the one picked.
+ * the promise that Copy list / Save .md write the one picked.
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { charaTwinsOf, defaultCharaTwin, type CharaTwinRules } from '@xivdyetools/core';
@@ -60,7 +60,7 @@ describe('twin picker', () => {
   it('lists every twin with its facts, the pick checked', () => {
     open();
     expect(picker()!.textContent).toContain('SAME LOOK · 3 ITEMS');
-    expect(picker()!.textContent).toContain('Copy list and Export .md write the one you pick.');
+    expect(picker()!.textContent).toContain('Copy list and Save .md write the one you pick.');
     expect(options()).toHaveLength(3);
     const checked = options().filter((o) => o.getAttribute('aria-checked') === 'true');
     expect(checked.map((o) => o.dataset.itemId)).toEqual(['2629']);

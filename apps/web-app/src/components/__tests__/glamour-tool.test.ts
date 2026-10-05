@@ -94,7 +94,7 @@ describe('GlamourTool', () => {
     await vi.waitFor(() =>
       expect(container.querySelector('[data-role="glamour-block"]')).not.toBeNull()
     );
-    // Copy list / Export .md sit in the reader's header, not the block's (design 1a).
+    // Copy list / Save .md sit in the reader's header, not the block's (design 1a).
     const actions = container.querySelector('[data-role="reader-actions"]')!;
     expect(actions.querySelector('[data-role="copy-list"]')).not.toBeNull();
     expect(actions.querySelector('[data-role="export-markdown"]')).not.toBeNull();

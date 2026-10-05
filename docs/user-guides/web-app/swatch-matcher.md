@@ -19,7 +19,7 @@ The colour sheet on the left is the character creator's palette, eight swatches 
 Above the grid is a **Drop a .chara file** zone (or press **Choose file**). It accepts character files exported by **Anamnesis, Ktisis or Brio**. The file is read entirely on your device — nothing is uploaded, and the screenshot some tools embed in the file is never opened. When it loads:
 
 - A **CHARACTER FILE** card shows which tool made it, your character's name, a **LOCAL ONLY** chip, and the tribe and gender it found. **SWAP** loads a different file.
-- The **TRIBE & GENDER** selectors in the settings column become a read-only readout, so hair and skin are looked up on the right sheet automatically.
+- The **CLAN & GENDER** selectors in the settings column become a read-only readout, so hair and skin are looked up on the right sheet automatically.
 - Any problems reading the file are listed on an amber warnings card rather than hidden.
 
 ---
@@ -124,13 +124,13 @@ would go nowhere.
 If item names cannot be looked up, the section falls back to slots only and says so; the dyes are
 read locally from your file and are never affected.
 
-**Copy list** and **Export .md**, beside **Make a palette**, write your outfit in the format
+**Copy list** and **Save .md**, beside **Make a palette**, write your outfit in the format
 glamour showcases such as GPOSERS ask for: a bold slot name, the piece, a **Dye 1** / **Dye 2** line
 for each dye it is actually wearing, and an **Acquisition:** line left blank for you to fill in.
 Only what you are wearing is listed — empty slots and undyed channels are left out, and neither the
 copy nor the file ever includes your character's name. **Copy list** keeps the bold when pasted into
 Word or Google Docs; anywhere that takes only plain text gets the same lines with no `**` marks.
-**Export .md** downloads the same list as `glamour-equipment.md`. Both wait for item names to arrive before they turn on, and still work from
+**Save .md** downloads the same list as `glamour-equipment.md`. Both wait for item names to arrive before they turn on, and still work from
 the file's own slots and dyes even if the names never do.
 
 Press **Make a palette** to turn the dyes into a preset: toggle chips off to drop dyes, give it a

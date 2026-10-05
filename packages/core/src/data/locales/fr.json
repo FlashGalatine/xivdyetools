@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-05T13:38:20.761Z",
+    "generated": "2026-10-05T21:29:18.441Z",
     "dyeCount": 125
   },
   "labels": {
@@ -263,7 +263,7 @@
     "red": "Rouge",
     "blue": "Bleu",
     "green": "Vert",
-    "brass": "Laiton",
+    "brass": "Bronze",
     "purple": "Violet",
     "brown": "Marron"
   }

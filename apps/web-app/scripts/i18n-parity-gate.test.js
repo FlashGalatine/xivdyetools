@@ -183,7 +183,7 @@ describe('German register', () => {
   // namespaces, never revisited. Formal address is always capitalised, which is
   // what makes it findable.
   const THIRD_PERSON = new Set([
-    // "Voreinstellung eingereicht! Sie wird … angezeigt." — sie = die Voreinstellung
+    // "Vorlage eingereicht! Sie wird … angezeigt." — sie = die Vorlage
     'preset.submittedPendingReview',
   ]);
 

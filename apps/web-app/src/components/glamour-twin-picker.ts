@@ -5,7 +5,7 @@
  * list names." One radio row per twin: its name, item number, facts (best
  * fit, dye channels against the file, the tribe lock, Dated, Grand Company,
  * glamour flag) and, for a twin that fails the check, why. A pick lives with
- * the session; Copy list and Export .md write it.
+ * the session; Copy list and Save .md write it.
  *
  * Mounted on document.body (it must escape the block's overflow), one at a
  * time; Escape, a click outside, or a pick closes it.
