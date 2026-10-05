@@ -65,10 +65,8 @@ protection are on.
       (`workers_dev = false`, FINDING-025) — confirm once in the dashboard.
 - [ ] `xivdyetools-oauth-preview` / `auth-preview.xivdyetools.app` — no such worker exists in the
       account (2026-09-05); confirm the DNS record is absent too, then close.
-- [ ] [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) Phase 4: remove the old-apex redirect from
-      `apps/web-app/functions/_middleware.ts` and its README section. Phases 0–3 are done: every
-      `*.xivdyetools.projectgalatine.com` custom domain was removed on 2026-10-04/05, and the
-      route lines leave with the 2026-10-03 security audit batch.
+- [ ] Start [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) Phase 0
+      (`*.xivdyetools.projectgalatine.com`).
 
 The og-worker WAF rate-limiting rule (FINDING-024) is **done** — deployed and active since
 2026-09-01; the rule and the Free-plan constraints that shaped it are recorded in the archived
