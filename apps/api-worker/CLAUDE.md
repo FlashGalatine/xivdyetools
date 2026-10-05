@@ -140,7 +140,7 @@ Route registration in `routes/dyes.ts` is order-sensitive: static paths (`/searc
 | `UNIVERSALIS_SERVICE_RATE_LIMITER` | Rate Limiting binding | Universalis proxy service-binding key, 20x (600 / 60 s prod, 1200 dev; `namespace_id` 1009 prod / 1010 dev); absent → KV `RATE_LIMIT` under `universalis:svc:` |
 | `TELEMETRY_RATE_LIMITER` | Rate Limiting binding | `POST /v1/telemetry` bucket, 240 / 60 s per IP (`namespace_id` 1003 prod / 1004 dev); absent → KV `RATE_LIMIT` under `telemetry:ip:`. Unlike the API bucket this one fails **closed** (`failOpen: false` + `onError: 'fail-closed'`, FINDING-014) — a backend error answers 429 rather than admitting the batch |
 
-Routes (production env only): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app` (all custom domains). The top-level env is the routeless `xivdyetools-api-worker-dev` worker. Dev runs on port `8790`. Compatibility date `2024-12-01`. **No `nodejs_compat`** — the worker uses zero Node.js APIs (per ARCH-001 comment in `wrangler.toml`).
+Routes (production env only): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app` (all custom domains; the retired `proxy.xivdyetools.projectgalatine.com` was removed in the dashboard on 2026-10-05, and `tests/wrangler-config.test.ts` pins the list so a deploy cannot re-attach it). The top-level env is the routeless `xivdyetools-api-worker-dev` worker. Dev runs on port `8790`. Compatibility date `2024-12-01`. **No `nodejs_compat`** — the worker uses zero Node.js APIs (per ARCH-001 comment in `wrangler.toml`).
 
 ### Required Secrets / Optional Secrets
 

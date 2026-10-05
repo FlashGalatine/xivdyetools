@@ -29,6 +29,10 @@ Sprint 7 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`).
   `tests/wrangler-config.test.ts` (no `enabled = true`, no inline `observability`, no `logpush`, no
   `tail_consumers`). Turning it on requires both privacy policies to change in all six languages in
   the same change.
+- **Retired custom domain.** The maintainer removed `proxy.xivdyetools.projectgalatine.com` in the
+  dashboard on 2026-10-05, so its route line is gone from `[env.production]`. A deploy re-attaches
+  every custom domain listed there. `proxy.xivdyetools.app` still serves the same compatibility
+  mount, and a test pins the three remaining routes.
 
 ## [0.16.0] - 2026-09-28
 

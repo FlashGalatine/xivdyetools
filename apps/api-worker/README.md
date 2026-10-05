@@ -194,7 +194,7 @@ tests/
 | `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream (`https://v2.xivapi.com`) and the game-version pin, which also namespaces the row cache |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin so an upstream field rename cannot break parsing |
 
-Production routes: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app`.
+Production routes: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app`. The retired `proxy.xivdyetools.projectgalatine.com` was removed on 2026-10-05.
 
 ## Deployment
 

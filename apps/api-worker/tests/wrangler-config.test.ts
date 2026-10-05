@@ -30,9 +30,12 @@ describe('wrangler.toml', () => {
     expect(topLevel).toMatch(/^preview_urls = false$/m);
   });
 
+  // The retired proxy.xivdyetools.projectgalatine.com custom domain was removed in
+  // the dashboard on 2026-10-05; a deploy would re-attach it if it were listed.
   it('keeps production on its custom domains only', () => {
     expect(production).toMatch(/^routes = \[/m);
-    expect(production).toContain('data.xivdyetools.app');
+    const patterns = [...production.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['data.xivdyetools.app', 'proxy.xivdyetools.app', 'developers.xivdyetools.app']);
     expect(production).not.toMatch(/^workers_dev = true$/m);
   });
 
