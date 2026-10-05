@@ -483,6 +483,55 @@ describe('index.ts', () => {
       expect(call.embeds[0].description).toContain('/preset moderate');
     });
 
+    // FINDING-017 / FINDING-008: the webhook hands the payload's
+    // content_revision to the builder, and the embed names no author mention.
+    it('binds the moderation buttons to content_revision and omits the author mention', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const presetId = '123e4567-e89b-42d3-a456-426614174000';
+      const req = new Request('http://localhost/webhooks/preset-submission', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test-webhook-secret' },
+        body: JSON.stringify({
+          type: 'submission',
+          preset: {
+            id: presetId,
+            name: 'Test Preset',
+            description: 'A test preset',
+            category_id: 'jobs',
+            author_name: 'Test Author',
+            author_discord_id: '123456789012345678',
+            source: 'web',
+            dyes: [1, 2, 3],
+            tags: [],
+            status: 'pending',
+            content_revision: 5,
+            created_at: new Date().toISOString(),
+          },
+        }),
+      });
+
+      const res = await app.fetch(
+        req,
+        { ...mockEnv, MODERATION_BOT_TOKEN: 'mod-token' },
+        mockCtx,
+      );
+      expect(res.status).toBe(200);
+
+      const call = vi.mocked(sendMessage).mock.calls.at(-1)?.[2] as {
+        components: Array<{ components: Array<{ custom_id: string }> }>;
+        embeds: Array<{ description?: string }>;
+      };
+      expect(call.components[0].components.map((c) => c.custom_id)).toEqual([
+        `preset_approve_${presetId}:5:pending`,
+        `preset_reject_${presetId}:5:pending`,
+      ]);
+      expect(call.embeds[0].description).not.toContain('<@');
+    });
+
     // discord-core-13: every webhook fixture in this file already carries the
     // correct stainID shape (`dyes: [1, 2, 3]`), but no assertion ever read the
     // rendered `Dyes` field -- only the title, the absence of components, and

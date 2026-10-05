@@ -1,11 +1,10 @@
 /**
  * /stats Command Handler (V4)
  *
- * Displays bot usage statistics with 5 subcommands:
+ * Displays bot usage statistics with 4 subcommands:
  * - summary: Public - basic bot information for anyone
  * - overview: Admin - usage metrics and trends
  * - commands: Admin - per-command breakdown and rankings
- * - preferences: Admin - user preference adoption rates
  * - health: Admin - system health and infrastructure status
  *
  * Admin subcommands restricted to users in STATS_AUTHORIZED_USERS env var.
@@ -104,7 +103,7 @@ export async function handleStatsCommand(
   const subcommand = subcommandOption?.name ?? 'summary';
 
   // Check authorization for admin subcommands
-  const adminSubcommands = ['overview', 'commands', 'preferences', 'health'];
+  const adminSubcommands = ['overview', 'commands', 'health'];
   if (adminSubcommands.includes(subcommand) && !isAuthorized(env, userId)) {
     return messageResponse({
       embeds: [
@@ -131,9 +130,6 @@ export async function handleStatsCommand(
 
       case 'commands':
         return await handleCommandsSubcommand(env, logger);
-
-      case 'preferences':
-        return await handlePreferencesSubcommand(env, logger);
 
       case 'health':
         return await handleHealthSubcommand(env, logger);
@@ -220,7 +216,7 @@ async function handleSummarySubcommand(
 // Overview Subcommand (Admin)
 // ============================================================================
 //
-// The four admin panels below (overview / commands / preferences / health) are
+// The three admin panels below (overview / commands / health) are
 // operator dashboards gated by STATS_AUTHORIZED_USERS. They are deliberately
 // English-only (2026-08-20 i18n audit, F-05): the public /stats summary and
 // every error reply are localized above, the dashboards take no Translator.
@@ -362,157 +358,6 @@ async function handleCommandsSubcommand(
         ],
         footer: {
           text: `Total unique commands: ${sortedCommands.length}`,
-        },
-      },
-    ],
-    flags: 64,
-  });
-}
-
-// ============================================================================
-// Preferences Subcommand (Admin)
-// ============================================================================
-
-/** Users read for the adoption percentages — the reads are issued together. */
-const PREFERENCE_SAMPLE_SIZE = 100;
-
-/**
- * Pages to walk before answering with a floor instead of an exact count.
- *
- * 20 pages is 20,000 users, well past anything this bot has, and it bounds the
- * work at ~20 sequential list calls so the 3-second ack survives a namespace
- * that grows by an order of magnitude. Keys-only listing is cheap; reading
- * values is what costs, and that stays capped at PREFERENCE_SAMPLE_SIZE.
- */
-const MAX_PREFERENCE_LIST_PAGES = 20;
-
-/**
- * Every `prefs:v1:` key, following KV's cursor rather than reading one page as
- * the whole namespace (BUG-035). `complete` is false when the page budget ran
- * out first, so the caller can say "20,000+" rather than a number it knows is
- * short.
- */
-async function listAllPreferenceKeys(
-  kv: KVNamespace,
-): Promise<{ keys: Array<{ name: string }>; complete: boolean }> {
-  const keys: Array<{ name: string }> = [];
-  let cursor: string | undefined;
-
-  for (let page = 0; page < MAX_PREFERENCE_LIST_PAGES; page++) {
-    const result = await kv.list({ prefix: 'prefs:v1:', cursor });
-    keys.push(...result.keys);
-    if (result.list_complete) return { keys, complete: true };
-    cursor = result.cursor;
-    if (!cursor) return { keys, complete: true };
-  }
-
-  return { keys, complete: false };
-}
-
-/**
- * Handles /stats preferences - Admin preference adoption rates
- */
-async function handlePreferencesSubcommand(
-  env: Env,
-  _logger?: ExtendedLogger,
-): Promise<Response> {
-  // BUG-035: this read a single `KV.list()` page as if it were the whole
-  // namespace. KV returns at most 1000 keys per call plus `list_complete` and a
-  // `cursor`, neither of which was read — so above a thousand users the figure
-  // pinned at exactly 1000 and stayed there for ever, which reads as a plateau
-  // in adoption rather than as the truncation it is. (The KV mock in
-  // test-utils always answers `list_complete: true`, which is why no test
-  // could see it — filed separately as BUG-098.)
-  const { keys, complete } = await listAllPreferenceKeys(env.KV);
-  const totalPrefsUsers = keys.length;
-
-  // Sample some preference data to estimate adoption
-  // (Full aggregation would require reading all values, which is expensive)
-  let languageSet = 0;
-  let blendingSet = 0;
-  let matchingSet = 0;
-  let clanSet = 0;
-  let genderSet = 0;
-  let worldSet = 0;
-  let marketSet = 0;
-
-  // BUG-036: the sample reads used to be a `for` loop of awaited `KV.get`s —
-  // up to 100 serialized round trips at 20–50 ms each, so 2–5 seconds on a
-  // path that answers with `messageResponse` (type 4) and therefore has
-  // Discord's 3-second ack as its entire budget. The admin saw "The
-  // application did not respond" and the work was thrown away. They are
-  // independent reads; issue them together.
-  const sample = keys.slice(0, PREFERENCE_SAMPLE_SIZE);
-  const sampleSize = sample.length;
-  const values = await Promise.all(sample.map((key) => env.KV.get(key.name).catch(() => null)));
-
-  for (const prefsJson of values) {
-    if (!prefsJson) continue;
-    try {
-      const prefs = JSON.parse(prefsJson) as Record<string, unknown>;
-      if (prefs.language) languageSet++;
-      if (prefs.blending) blendingSet++;
-      if (prefs.matching) matchingSet++;
-      if (prefs.clan) clanSet++;
-      if (prefs.gender) genderSet++;
-      if (prefs.world) worldSet++;
-      if (prefs.market !== undefined) marketSet++;
-    } catch {
-      // Skip malformed entries
-    }
-  }
-
-  // Say "20,000+" rather than a number we know is short.
-  const totalText = `${totalPrefsUsers.toLocaleString()}${complete ? '' : '+'}`;
-
-  // Calculate percentages (from sample)
-  const calcPercent = (count: number): string =>
-    sampleSize > 0 ? ((count / sampleSize) * 100).toFixed(1) : '0.0';
-
-  return messageResponse({
-    embeds: [
-      {
-        title: '⚙️ Preference Adoption',
-        description: `Based on ${sampleSize} user sample from ${totalText} total users with preferences.`,
-        color: COLORS.yellow,
-        fields: [
-          {
-            name: '🌐 Localization',
-            value: `**Language Set:** ${calcPercent(languageSet)}%`,
-            inline: true,
-          },
-          {
-            name: '🎨 Color Settings',
-            value: [
-              `**Blending Mode:** ${calcPercent(blendingSet)}%`,
-              `**Matching Method:** ${calcPercent(matchingSet)}%`,
-            ].join('\n'),
-            inline: true,
-          },
-          {
-            name: '👤 Character',
-            value: [
-              `**Clan Set:** ${calcPercent(clanSet)}%`,
-              `**Gender Set:** ${calcPercent(genderSet)}%`,
-            ].join('\n'),
-            inline: true,
-          },
-          {
-            name: '💰 Market',
-            value: [
-              `**World Set:** ${calcPercent(worldSet)}%`,
-              `**Market Enabled:** ${calcPercent(marketSet)}%`,
-            ].join('\n'),
-            inline: true,
-          },
-          {
-            name: '📊 Coverage',
-            value: `**Users with Preferences:** ${totalText}`,
-            inline: true,
-          },
-        ],
-        footer: {
-          text: 'Percentages based on sampled users',
         },
       },
     ],

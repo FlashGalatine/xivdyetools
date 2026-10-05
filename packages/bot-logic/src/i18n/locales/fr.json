@@ -1251,9 +1251,6 @@
         "commands": {
           "description": "Afficher le détail par commande (admin uniquement)"
         },
-        "preferences": {
-          "description": "Afficher les taux d'adoption des préférences (admin uniquement)"
-        },
         "health": {
           "description": "Afficher l'état de santé du système (admin uniquement)"
         }

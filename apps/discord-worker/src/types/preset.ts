@@ -63,6 +63,12 @@ export interface PresetSubmissionNotification {
     /** Submission source */
     source: 'bot' | 'web' | 'none';
     created_at: string;
+    /**
+     * presets-api 2.4.0+: the text revision the moderation buttons bind to
+     * (FINDING-017). Optional — an older presets-api omits it and the buttons
+     * fall back to the legacy ids.
+     */
+    content_revision?: number;
   };
 }
 

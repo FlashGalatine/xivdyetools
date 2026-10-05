@@ -206,6 +206,11 @@ see `docs/operations/DOMAIN_DEPRECATION.md`. Deleting them here would merge a me
 refactor with a user-facing domain retirement, so a post-deploy failure could not be attributed
 to either. Land this work first; remove routes afterwards.
 
+The block above shows the routes as they were moved. The `bot.` and `auth.` custom domains
+were retired on 2026-10-04 and `moderation-bot.`, `api.` and `proxy.` on 2026-10-05. Their route
+lines come out in discord-worker 5.8.0, oauth 3.1.2, moderation-worker 1.8.0, presets-api 2.4.0
+and api-worker 0.16.1. The current state is in `DOMAIN_DEPRECATION.md`.
+
 `workers_dev = true` is only required on `discord-worker`, whose dev Worker needs a reachable
 URL for Discord's Interactions Endpoint. On `moderation-worker` and `presets-api` the rename
 alone achieves the goal — a bare deploy lands on a harmless separate Worker instead of

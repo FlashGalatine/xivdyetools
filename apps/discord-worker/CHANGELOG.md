@@ -5,6 +5,86 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.0] - 2026-10-04
+
+Sprint 5 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). **Deploy after
+moderation-worker 1.8.0 and presets-api 2.4.0.** The moderation buttons below are only
+understood by 1.8.0; the 1.7.x parser would read the new id as a malformed preset id. The
+production deploy re-registers commands (`/stats preferences` is gone).
+
+### Changed
+
+- **The Privacy Policy is amended in all six languages** (FINDING-005, -007, -008; approved at
+  the audit's §8 gate). `Last Updated` is October 5, 2026 on every variant.
+  - **Moderation records** (new §2 subsection, §4 row, §5 D1 row, §8 rows). Ban records hold the
+    Discord User ID. For an XIVAuth account not linked to Discord they hold the account ID our
+    sign-in service assigned (the oauth worker's random `users.id`), which is not the XIVAuth ID.
+    They also hold the author name at the time, the moderators, the reason and the dates. The
+    moderation log is described as well. Retention:
+    - active bans until lifted;
+    - a lifted ban's name and reason cleared at once, and the record deleted 90 days later;
+    - ban, unban, hide and restore log entries kept 12 months at most, a hide or restore entry
+      less if its preset is deleted first;
+    - other preset log entries kept as long as the preset exists.
+  - **Discord posts** (§5 Discord row, §7, §8). Every kind of post is listed:
+    - review posts for presets, edits and preview images, updated with the decision;
+    - the ban post and the moderators' list of pending presets;
+    - submission-log notes for presets published without review, and for approvals, rejections
+      and reverts (the latter two with their reason).
+    Posts made since the policy's Last Updated date carry no Discord User ID; older posts may.
+    They stay until a moderator deletes them, or until a deletion request removes the posts about
+    you and your presets, except the post about a ban that is still active. "All data is stored on
+    Cloudflare" is no longer claimed.
+  - **Presets and votes** (§2, §8). Presets are kept until you delete them (web app → My
+    Submissions) or request deletion, no longer "indefinitely". Submitting a preset counts as your
+    vote, or as a vote for the published preset with the same dyes. The version from before an
+    edit held by the automatic check is kept until a moderator restores it or the preset is
+    deleted. The daily counters list the preset id. The ban reason stays in the moderation-log
+    entries for 12 months. Hide and restore entries go when their preset is deleted.
+  - **Author name** (§2, §4). The published author is the Discord display name, or the username
+    when there is none. A preset submitted on the web app through XIVAuth shows the verified
+    character's name, or "XIVAuth User" and the first 8 characters of the XIVAuth ID when no
+    verified character is available at sign-in. The preferences record's last-changed time is
+    listed.
+  - **Translations.** One translator per language, reviewed by an Opus verifier. Corrections were
+    applied, three English sentences were clarified after review, and the change was propagated
+    to all five translations. Interpretation needed: none flagged.
+  - **Corrected before release (2026-10-05),** after review of the open PR. The XIVAuth author name
+    and the ban record's XIVAuth identifier (both from the Codex review) are now right. The
+    hide/restore retention row read as having no 12-month limit (I18N-004). One Korean phrase read
+    as "the hidden user's presets" (I18N-006). All six variants were redone in one pass, with one
+    translator and one verifier per language, and `Last Updated` moved to the new date. The
+    "posts made since the Last Updated date" sentence depends on that date, so it must not be
+    earlier than the day this release deploys.
+
+### Removed
+
+- **`ModerationPresetInfo.author_discord_id`** (2026-10-04 dead-code audit, DEAD-002). Once the
+  moderation embed stopped mentioning the author (FINDING-008, below), nothing read the field.
+  Callers still pass a whole `CommunityPreset`, which carries the id. The FINDING-008 test now
+  includes the id in its fixture and checks that the embed never shows it.
+
+### Security
+
+- **Moderation buttons are bound to the reviewed revision** (FINDING-017, discord-worker part).
+  - When presets-api 2.4.0 sends `content_revision` in the submission notification, the
+    moderation embed's buttons are `preset_<approve|reject|revert>_<uuid>:<revision>:<status>`.
+    That is exactly the grammar of moderation-worker 1.8.0's `utils/review-custom-id.ts`
+    (≤ 100 characters), so a click acts only on the text the moderator saw.
+  - Without a revision, the legacy ids are emitted. That covers an older API, and the `/preset
+    submit` / `edit` paths, which hold only a `CommunityPreset` response with no revision.
+    moderation-worker answers a legacy click with a refresh instead of acting.
+- **The moderation embed no longer mentions the author's account** (FINDING-008). The sanitized
+  author name stays. No moderation control used the mention (bans search by username), and the
+  submission-log embeds never had one.
+- **`/stats preferences` is removed** (FINDING-013). It sampled stored preference records for a
+  purpose the policy did not state. Its handler, schema entry, tests and the
+  `commands.stats.options.preferences` bot-logic string (six locales) are gone.
+- **The retired `bot.xivdyetools.projectgalatine.com` route is removed.** Its custom domain was
+  removed in the dashboard on 2026-10-04, and this production deploy would otherwise re-attach it.
+  Discord's interactions endpoint has used `bot.xivdyetools.app` since 2026-08-09. A test now
+  requires `bot.xivdyetools.app` to be the only production route.
+
 ## [5.7.2] - 2026-10-03
 
 Sprint 1 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). No command

@@ -122,9 +122,11 @@ fallthrough = true
 [env.production]
 name = "xivdyetools-discord-worker"
 workers_dev = false
+# The retired bot.xivdyetools.projectgalatine.com custom domain was removed in
+# the dashboard on 2026-10-04 (docs/operations/DOMAIN_DEPRECATION.md Phase 2).
+# A deploy re-attaches every custom domain listed here, so it must not return.
 routes = [
-  { pattern = "bot.xivdyetools.app", custom_domain = true },
-  { pattern = "bot.xivdyetools.projectgalatine.com", custom_domain = true }
+  { pattern = "bot.xivdyetools.app", custom_domain = true }
 ]
 
 # FINDING-022: see the top-level [observability] comment. Workers Logs stay off.

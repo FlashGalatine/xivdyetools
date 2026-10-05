@@ -38,12 +38,22 @@ export interface ModerationPresetInfo {
   dyes: number[];
   tags?: string[];
   author_name?: string | null;
-  author_discord_id?: string | null;
+  /** The status the moderator will see; part of the revision-bound button ids (FINDING-017). */
+  status?: string;
 }
 
 export interface ModerationNotificationOptions {
   kind: 'new' | 'edit';
   preset: ModerationPresetInfo;
+  /**
+   * The preset's `content_revision` from presets-api (FINDING-017). When it is
+   * a valid non-negative integer, the buttons carry it (with `preset.status`) so
+   * moderation-worker can refuse a click on text that has since changed. When
+   * absent (an older presets-api, or a path that only holds a CommunityPreset
+   * response) the legacy ids are emitted, which moderation-worker turns into a
+   * refresh instead of acting.
+   */
+  contentRevision?: number | null;
   /** For kind 'edit': the pre-edit preset used to build the diff summary */
   original?: ModerationPresetInfo;
   /** Optional display name for the category (falls back to category_id) */
@@ -61,6 +71,44 @@ function moderationToken(env: Env): { token: string; buttonsRoutable: boolean } 
     return { token: env.MODERATION_BOT_TOKEN, buttonsRoutable: true };
   }
   return { token: env.DISCORD_TOKEN, buttonsRoutable: false };
+}
+
+const CUSTOM_ID_MAX = 100;
+
+// Copied from moderation-worker's review-custom-id.ts (parseReviewCustomId):
+// the revision is a non-negative decimal integer with no leading zeros, and the
+// status is one of the full words below. Keep in step with that parser.
+const REVISION_RE = /^(0|[1-9][0-9]*)$/;
+const REVIEW_STATUSES: ReadonlySet<string> = new Set([
+  'pending',
+  'approved',
+  'rejected',
+  'flagged',
+  'hidden',
+]);
+
+/**
+ * FINDING-017: `preset_<kind>_<uuid>:<revision>:<status>` when both a valid
+ * revision and status are known, otherwise the legacy `preset_<kind>_<uuid>`.
+ */
+function reviewCustomId(
+  kind: 'approve' | 'reject' | 'revert',
+  presetId: string,
+  revision: number | null | undefined,
+  status: string | undefined
+): string {
+  const legacy = `preset_${kind}_${presetId}`;
+  if (
+    typeof revision !== 'number' ||
+    !Number.isSafeInteger(revision) ||
+    !REVISION_RE.test(String(revision)) ||
+    typeof status !== 'string' ||
+    !REVIEW_STATUSES.has(status)
+  ) {
+    return legacy;
+  }
+  const bound = `${legacy}:${revision}:${status}`;
+  return bound.length <= CUSTOM_ID_MAX ? bound : legacy;
 }
 
 /**
@@ -99,7 +147,8 @@ export function buildModerationNotification(
 
     lines.push(
       `**Preset:** ${safeName}`,
-      `**${adminT.t('webhook.fields.author')}:** ${safeAuthor}${preset.author_discord_id ? ` (<@${preset.author_discord_id}>)` : ''}`,
+      // FINDING-008: the sanitized name only — a <@id> mention pings/resolves the author
+      `**${adminT.t('webhook.fields.author')}:** ${safeAuthor}`,
       `**${adminT.t('webhook.fields.category')}:** ${opts.categoryName || preset.category_id}`,
       '',
       '**Changes:**',
@@ -111,7 +160,7 @@ export function buildModerationNotification(
     lines.push(
       `**Name:** ${safeName}`,
       `**Description:** ${safeDescription}`,
-      `**Author:** ${safeAuthor}${preset.author_discord_id ? ` (<@${preset.author_discord_id}>)` : ''}`,
+      `**Author:** ${safeAuthor}`,
       `**${adminT.t('webhook.fields.category')}:** ${opts.categoryName || preset.category_id}`,
       `**${adminT.t('webhook.fields.dyes')}:** ${preset.dyes.length} colors`
     );
@@ -150,14 +199,14 @@ export function buildModerationNotification(
         type: 2, // Button
         style: 3, // Success (green)
         label: adminT.t('webhook.buttons.approve'),
-        custom_id: `preset_approve_${preset.id}`,
+        custom_id: reviewCustomId('approve', preset.id, opts.contentRevision, preset.status),
         emoji: { name: '✅' },
       },
       {
         type: 2, // Button
         style: 4, // Danger (red)
         label: adminT.t('webhook.buttons.reject'),
-        custom_id: `preset_reject_${preset.id}`,
+        custom_id: reviewCustomId('reject', preset.id, opts.contentRevision, preset.status),
         emoji: { name: '❌' },
       },
       ...(opts.kind === 'edit'
@@ -166,7 +215,7 @@ export function buildModerationNotification(
               type: 2 as const, // Button
               style: 4 as const, // Danger (red)
               label: adminT.t('webhook.buttons.revert'),
-              custom_id: `preset_revert_${preset.id}`,
+              custom_id: reviewCustomId('revert', preset.id, opts.contentRevision, preset.status),
               emoji: { name: '↩️' },
             },
           ]

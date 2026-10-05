@@ -1251,9 +1251,6 @@
         "commands": {
           "description": "コマンド別の内訳を表示（管理者限定）"
         },
-        "preferences": {
-          "description": "設定の利用率を表示（管理者限定）"
-        },
         "health": {
           "description": "システムの状態を表示（管理者限定）"
         }
