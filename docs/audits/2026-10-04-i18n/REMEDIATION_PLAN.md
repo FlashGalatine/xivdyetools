@@ -125,7 +125,9 @@ HC-001 (Sprint 2) prints core's clan names on the bot cards, so you chose to fix
 - **Merge order:** #240 is stacked on #239. Merge it after the batch and after #239, before Sprint 2.
 - **No ID:** it came from the research, not from a catalog.
 
-## Sprint 1 — web-app: tool settings have one owner (the HIGH)
+## Sprint 1 — web-app: tool settings have one owner (the HIGH) — PR #244 (open)
+
+**Done in PR #244** (web-app 5.14.1, `f20683f8` + `68599b74`). It also fixed deep-dive/BUG-014 (Sprint 5) and the Mixer's mixing-field mode (unnumbered), and changed one `PRIVACY.md` clause in all six languages. Details are in the re-verification file's *Sprint 1* section.
 
 deep-dive/BUG-001 is the anchor. Each tool keeps local copies of its settings, and `ConfigController` broadcasts a full config over them, or never seeds them at mount. Fix it once:
 - seed every tool from `getConfig()`;
@@ -230,6 +232,7 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 **Language switch:** the switch empties four tools (deep-dive/BUG-021), and no test fires it (deep-dive/BUG-076).
 
 **Stale deep links:** a stale deep link overrides the user's choice (deep-dive/BUG-013, deep-dive/BUG-014).
+- **deep-dive/BUG-014 is already fixed by Sprint 1 (PR #244);** skip it here. `?maxDelta=` now goes through `ConfigController`, and Budget's `setConfig` moves both thumbs and the label.
 
 **Matching and runs:**
 - budget runs without a supersede guard;
