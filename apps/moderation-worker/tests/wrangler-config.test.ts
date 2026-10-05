@@ -91,13 +91,15 @@ describe('wrangler.toml', () => {
    * (asserted above) and `[env.production]` deliberately does not repeat it.
    * The drift this guards against is an explicit override reappearing here.
    */
-  it('routes production to xivdyetools-moderation-worker on both custom domains', () => {
+  // The retired moderation-bot.xivdyetools.projectgalatine.com custom domain was removed
+  // in the dashboard on 2026-10-05; a deploy would re-attach it if it were listed.
+  it('routes production to xivdyetools-moderation-worker on moderation-bot.xivdyetools.app only', () => {
     expect(production).toMatch(/^name = "xivdyetools-moderation-worker"$/m);
     expect(production).not.toMatch(/^workers_dev = true$/m);
     expect(production).toMatch(/^routes = \[/m);
-    expect(production).toContain('moderation-bot.xivdyetools.app');
-    expect(production).toContain('moderation-bot.xivdyetools.projectgalatine.com');
-    expect(production.match(/custom_domain = true/g) ?? []).toHaveLength(2);
+    const patterns = [...production.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['moderation-bot.xivdyetools.app']);
+    expect(production.match(/custom_domain = true/g) ?? []).toHaveLength(1);
   });
 
   it('pins ENVIRONMENT in both environments (FINDING-013)', () => {

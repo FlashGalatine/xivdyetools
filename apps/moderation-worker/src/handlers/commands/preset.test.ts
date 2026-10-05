@@ -443,7 +443,7 @@ describe('handlePresetCommand', () => {
           embeds: expect.arrayContaining([
             expect.objectContaining({
               description: expect.stringContaining('2 preset(s) pending'),
-              footer: { text: 'Use /preset moderate approve <id> or reject <id> <reason>' },
+              footer: { text: 'Use /preset moderate approve <id> or reject <id>' },
             }),
           ]),
         }),

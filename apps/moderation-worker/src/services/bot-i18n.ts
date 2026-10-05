@@ -58,7 +58,7 @@ const enLocale: LocaleData = {
       // either no-op forever or wrongly pull a live palette from the gallery.
       imageOnlyNote: 'Picture pending review: {url}',
       imageOnlyNoteNoUrl: 'Picture pending review',
-      footerTextOnly: 'Use /preset moderate approve <id> or reject <id> <reason>',
+      footerTextOnly: 'Use /preset moderate approve <id> or reject <id>',
       footerMixedQueue:
         'approve/reject apply to the text entries only — 🖼 entries are reviewed on the moderation embed in Discord',
     },

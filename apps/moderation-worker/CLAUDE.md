@@ -124,7 +124,7 @@ src/
 
 Both rate-limit bindings are **required when `ENVIRONMENT = "production"`** (FINDING-013): losing one degrades silently to the KV limiter, so `index.ts` answers every request — `/health` included — with `500 Service misconfigured` while the error stands.
 
-Vars: `ENVIRONMENT` (`development` / `production`), `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS_API_URL`. **`vars` are not inheritable**, so `ENVIRONMENT` is declared in *both* `wrangler.toml` blocks — a production deploy missing that line would skip the production-only checks above. Custom domains: `moderation-bot.xivdyetools.app`, `moderation-bot.xivdyetools.projectgalatine.com`.
+Vars: `ENVIRONMENT` (`development` / `production`), `DISCORD_CLIENT_ID = 1453806659708129374` (separate Discord app), `PRESETS_API_URL`. **`vars` are not inheritable**, so `ENVIRONMENT` is declared in *both* `wrangler.toml` blocks — a production deploy missing that line would skip the production-only checks above. Custom domain: `moderation-bot.xivdyetools.app` only. The retired `moderation-bot.xivdyetools.projectgalatine.com` was removed in the dashboard on 2026-10-05, and `tests/wrangler-config.test.ts` pins the single route so a deploy cannot re-attach it.
 
 ### Required Secrets
 
@@ -248,7 +248,7 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 
 | Command | Description |
 |---------|-------------|
-| `/preset moderate` | Four actions on the required `action` option — `pending` (browse the queue), `approve`, `reject`, `stats` — plus an optional `preset_id` (autocompleted). `approve` / `reject` never act on a typed id: they answer privately with the preset's **current** text and one confirm button bound to the revision just fetched (FINDING-017); the rejection reason is typed in the modal that button opens, so the old `reason` option is no longer read. Approve/reject are also available as buttons on the queue embed. Entries whose *preview picture* alone is awaiting review are marked 🖼 with a "Picture pending review" note — approve/reject there act on the preset's status, so picture review happens on the moderation embed discord-worker posts (1.4.0) |
+| `/preset moderate` | Four actions on the required `action` option — `pending` (browse the queue), `approve`, `reject`, `stats` — plus an optional `preset_id` (autocompleted). `approve` / `reject` never act on a typed id: they answer privately with the preset's **current** text and one confirm button bound to the revision just fetched (FINDING-017); the rejection reason is typed in the modal that button opens, so the command has no `reason` option any more. The queue list itself carries no buttons: act through the confirm flow above, or with the approve / reject buttons on each preset's moderation embed. Entries whose *preview picture* alone is awaiting review are marked 🖼 with a "Picture pending review" note — approve/reject there act on the preset's status, so picture review happens on the moderation embed discord-worker posts (1.4.0) |
 | `/preset ban_user` | Ban a user (autocomplete searches preset authors) |
 | `/preset unban_user` | Unban a user (autocomplete searches `banned_users`) |
 

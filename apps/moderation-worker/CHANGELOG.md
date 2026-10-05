@@ -59,6 +59,17 @@ revert against 2.4.0. The production deploy re-registers the commands, because
   - The ban record still holds the ID, and unbanning goes through the username picker. The
     moderator's private unban reply still shows it.
 - **Workers Logs pinned off** (FINDING-022) in both `wrangler.toml` blocks, and asserted.
+- **Retired custom domain.** The maintainer removed
+  `moderation-bot.xivdyetools.projectgalatine.com` in the dashboard on 2026-10-05, so its route
+  line is gone from `[env.production]`. A deploy re-attaches every custom domain listed there. The
+  app's Interactions Endpoint URL has used `moderation-bot.xivdyetools.app` since 2026-08-09. A
+  test pins that host as the only route.
+
+### Fixed
+
+- **The pending-queue footer no longer offers a removed argument.** It said `reject <id> <reason>`;
+  the reason is now typed in the confirm modal, so it says `reject <id>` (2026-10-04 deep-dive
+  BUG-053).
 
 ### Tests
 
