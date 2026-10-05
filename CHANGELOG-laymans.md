@@ -31,6 +31,16 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.7] - 2026-10-05
+### 🎨 Community presets
+- Web app: a saved preset is no longer marked "Removed by its author" because the presets service hiccupped or a search was slow, and a wrong mark clears itself.
+- Web app: when the community feed is down, the gallery says so instead of showing an empty feed.
+- Web app: a failed vote or delete now says it failed, and the gallery shows your votes, deletes and edits right away.
+- Web app: tab counts match the presets shown, and search and sort work on the Saved and Mine tabs.
+### 📁 Collections
+- Web app: Manage Collections updates as soon as you create a collection, and exported file names keep Japanese, Korean and Chinese names.
+- Web app: saving the same character's colors twice no longer fails; the second copy is numbered.
+
 ## [5.10.6] - 2026-10-05
 ### ⚙️ Your settings stay put
 - Web app: the Swatch Matcher keeps the palette you picked. Changing another setting, in any tool, no longer switches it to Hair and the tribe to Seeker of the Sun.
