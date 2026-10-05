@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.14.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -39,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.8.1 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.8.2 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
@@ -69,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.2 | Oct 2026 | The Brass facewear color's fr / ko / zh names match the clients (Bronze, 구리색, 铜色); no font re-cut |
 | v5.8.1 | Oct 2026 | Korean race names and Korean / Chinese clan names match the game clients (2 + 13 + 4 corrections in `build-locales.ts`); CJK subsets re-cut in discord-worker and og-worker |
 | **v5.8.0** | **Sep 2026** | **Glamour Reader: `chara-twins` (`charaTwinsOf`, `defaultCharaTwin`, `charaPieceTone`, `charaTwinFacts`) — which of a model's identical items a list names (passes the in-game check → dyeable → any Grand Company → not Dated → more dye channels → lowest row), shared by the web reader and the bot; `chara-gposers`, the GPOSERS form as data both render. The in-game rules drop jobs (any job wears any piece for glamour since 7.4) and carry the Grand Company lock as a flag** |
 | v5.7.0 | Sep 2026 | Character color sheets regenerated from the game's `human.cmp` (`build:character-colors`) — the creator's interface palette for every sheet (lips / face paint had been the shader palette, the tattoo sheet a copy of the eyes), and the shader palette in `shader/` for judging `.chara` floats, exactly; skin and hair are judged again and the 5.6.0 limbal scale / entry-7 rule are gone |
@@ -114,6 +115,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.4 | Oct 2026 | Translations and terminology (2026-10-04 remediation, Sprint 6): the facewear color tag uses the client's word in five languages (TERM-007), character-creation sheet names follow the dictionary (TERM-003), Glamour Reader counts take singular forms (I18N-007), its facewear tooltip names the color in the reader's language (HC-003), "Save .md" and "Glamour list" everywhere (TERM-018), "clan" for the clan (TERM-009), German Vorlage for preset (TERM-006), with core 5.8.2's Brass names |
 | v5.14.3 | Oct 2026 | Tool correctness (2026-10-04 remediation, Sprint 5): a language switch keeps the results in four tools (BUG-021), a stale `?dye=` no longer overrides a choice (BUG-013), Budget runs are superseded safely (BUG-015), Comparison's tier matches its verdict (BUG-018), the palette drawer is keyboard-operable (BUG-028), boot no longer awaits a dev-only network probe (OPT-001); the shell's dead Accessibility CSS removed (DEAD-004) |
 | v5.14.2 | Oct 2026 | Community presets and collections (2026-10-04 remediation, Sprint 4): saved presets are no longer marked "Removed by its author" by a failed or partial feed (BUG-029), failed votes and deletes say so, the gallery updates at once after a change, tab counts match the cards, Manage Collections refreshes after a create, non-Latin collection names survive export, and Save character colors numbers a taken name. Dead preset-service code removed |
 | v5.14.1 | Oct 2026 | Tool settings have one owner (2026-10-04 remediation, Sprint 1): the Swatch palette no longer flips to Hair / Seeker of the Sun / Female on any settings change (BUG-001, HIGH); saved dye filters and display options apply when Gradient, Swatch, Mixer and Budget open; share-link settings stick; Budget's match line holds and Budget no longer switches market prices on for every tool; the Options sidebar follows every setting. The tools' own settings keys are retired (swatch and the Budget match line migrate once) |

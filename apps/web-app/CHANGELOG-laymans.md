@@ -2,6 +2,15 @@
 
 ---
 
+## Web-App Version 5.14.4 — October 5, 2026
+
+### Words that match the game
+- **Facewear and character-creation color names match the game** in every language, so what you read here is what you see in the character creator.
+- **"1 dye", "1 piece"**: the Glamour Reader's counts read naturally in the singular.
+- **The facewear tooltip names the color in your language.**
+- **The list is the "Glamour list" everywhere, and its download button says "Save .md".**
+- **German says "Vorlage" for presets throughout, and Korean, Chinese, Japanese and French fixes** for typos and terms.
+
 ## Web-App Version 5.14.3 — October 5, 2026
 
 ### Smoother tools
