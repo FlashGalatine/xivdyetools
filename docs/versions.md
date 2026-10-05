@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.13.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.13.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.7.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -113,6 +113,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.13.4 | Oct 2026 | Privacy Guide and Terms corrected in all six languages (2026-10-03 security audit, Sprint 2): the optional preset preview image upload is disclosed, the sign-in record names the verified XIVAuth character and a linked Discord ID ("No character data" removed from the sign-in note), "Reset Settings" is described as it behaves, preset example links are listed; the Glamour Reader's file card says it sends gear model numbers; example links render normalized |
 | v5.13.3 | Oct 2026 | Security — beta.xivdyetools.app has its security headers back (CSP, X-Frame-Options, HSTS, Permissions-Policy; missing since 2026-08-09 — 2026-10-03 security audit, FINDING-001): the beta build adds its robots header inside the existing `/*` rule instead of a second `/*` rule, which Cloudflare Pages treats as a replacement. The beta build check and the post-deploy smoke test now assert the security headers. Production output is unchanged |
 | v5.13.2 | Sep 2026 | Documents only — the Privacy Guide and Terms of Service catch up with the Glamour Reader in all six languages: it is named among the on-device tools, the gear lookup says it sends the facewear id and is answered from XIVAPI, rewritten Acquisition lines are listed as stored on the device, and the "Open in…" menu is the Glamour Reader's. No web-app source changed |
 | v5.13.1 | Sep 2026 | Tests only — `e2e/swatch-chara-session.spec.ts` covers both TRIBE & GENDER selectors, a file that names no tribe or gender, and a lock left in storage by a build before 5.12.7; its reload test waits for the app to boot (it raced the boot and failed when that took over five seconds). The deployed bundle differs only in its version string |
