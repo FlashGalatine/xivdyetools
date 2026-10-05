@@ -285,7 +285,7 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 | DEAD-001 | FIXED 2026-10-05 (PR #225) | `ea264d49` |
 | DEAD-002 | FIXED 2026-10-05 (PR #227) | `d3bf312a` |
 | DEAD-003 | OPEN | — |
-| DEAD-004 | OPEN | — |
+| DEAD-004 | REMOVED, NOT DEPLOYED (PR #247, open; pulled forward from Sprint 23) | `07c8a22e` |
 | DEAD-005 | OPEN | — |
 | DEAD-006 | OPEN | — |
 | DEAD-007 | OPEN | — |
