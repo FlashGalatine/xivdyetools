@@ -4,6 +4,7 @@
 > **Superseded on 2026-10-04 by the merged [REMEDIATION_PLAN.md](../2026-10-04-deep-dive/REMEDIATION_PLAN.md)** of the same day's deep-dive audit.
 > - It schedules all 64 of these findings, with the same IDs, alongside the deep-dive's fixes: one sprint per unit, fixes before removals.
 > - The sprint numbers below no longer apply; the findings and their steps are unchanged.
+> - That plan was itself superseded on 2026-10-05 by the i18n audit's [REMEDIATION_PLAN.md](../2026-10-04-i18n/REMEDIATION_PLAN.md), which schedules all three 2026-10-04 catalogs.
 
 **Sources:** [DEAD_CODE_REPORT.md](DEAD_CODE_REPORT.md), 64 findings.
 

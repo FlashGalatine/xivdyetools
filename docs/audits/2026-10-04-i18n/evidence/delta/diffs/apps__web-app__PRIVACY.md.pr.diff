@@ -1,0 +1,181 @@
+diff --git a/apps/web-app/PRIVACY.md b/apps/web-app/PRIVACY.md
+index 92782235..d58d5003 100644
+--- a/apps/web-app/PRIVACY.md
++++ b/apps/web-app/PRIVACY.md
+@@ -3,5 +3,5 @@
+ > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
+
+-**Last updated:** 2026-09-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
++**Last updated:** 2026-10-04 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+ bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
+
+@@ -14,10 +14,15 @@ and the sections below are the complete list.
+ ## Images and camera captures
+
+-- Uploaded, pasted, dragged-in and camera-captured images never leave your device, and are never
+-  written to browser storage. They are read with the browser's Canvas API, held in the page's memory
+-  for that session only, and discarded when you clear the image, close the tab or reload.
++- In the colour tools, uploaded, pasted, dragged-in and camera-captured images never leave your
++  device, and are never written to browser storage. They are read with the browser's Canvas API,
++  held in the page's memory for that session only, and discarded when you clear the image, close the
++  tab or reload.
+ - The Palette Extractor says the same thing where you pick a file — "Images are read in your
+   browser and never uploaded", beside a padlock. That notice is plain text, not a link; this
+   document is reached from **About → Privacy**.
++- **One exception, and only if you choose it.** When you submit or edit a community preset, you
++  can attach an optional **preview image** to it. That image is uploaded to `api.xivdyetools.app`,
++  converted to WebP, stored with the preset, and shown publicly from `shots.xivdyetools.app` once a
++  moderator approves it. Item 3 under Network access below says how to remove it.
+
+ ## Character files (`.chara`)
+@@ -45,7 +50,14 @@ and the sections below are the complete list.
+ settings (including the analytics switch below), favourite dyes, saved palettes and collections,
+ any Acquisition lines you rewrote in the Glamour Reader's "Glamour list", and — if you sign in —
+-your community-presets session token. Nothing here is a tracking identifier. "Reset settings" in
+-Advanced Settings and your browser's site-data controls clear it. "Reset all" in the Glamour list
+-deletes the rewritten lines for that outfit.
++your community-presets session token. Nothing here is a tracking identifier. Your browser's
++site-data controls clear all of it. Inside the app, each of these clears one part:
++
++- **Advanced Settings → Reset Settings** puts every tool's settings back to their defaults. It
++  does not delete your saved work.
++- **Advanced Settings → Clear Favorites** deletes your favourite dyes.
++- **Advanced Settings → Clear Saved Palettes** deletes your saved palettes.
++- **Manage Collections → Delete Collection** deletes one saved collection.
++- Signing out deletes the session token.
++- "Reset all" in the Glamour list deletes the rewritten lines for that outfit.
+
+ `IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
+@@ -64,13 +76,28 @@ else) plus the third parties named below:
+ 2. **Gear names and icons for `.chara` imports** — `data.xivdyetools.app` (see above).
+ 3. **Community presets** (`api.xivdyetools.app`): browsing sends nothing about you. Signing in
+-   through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record — your
+-   provider ID and username — right away, whether or not you go on to submit or vote. Presets and
+-   votes you submit are stored under that account, and the author name is shown on published
+-   presets. When you submit or edit a preset, its name and description may also be sent to
++   through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record right away,
++   whether or not you go on to submit or vote. With Discord, the record holds your Discord user ID
++   and your display name (your username if you have no display name). With XIVAuth, the record
++   holds your XIVAuth ID and the name of your verified character. If you have no verified
++   character, the name is "XIVAuth User" followed by the first 8 characters of your XIVAuth ID. If
++   your XIVAuth account is linked to Discord, the record also holds that Discord user ID. The name
++   in the record is shown as the author of every preset you publish, and is updated on all of them
++   each time you sign in (not while a ban is active). If you later link Discord to your XIVAuth
++   account, your presets, votes and daily-limit counts move to that Discord user ID the next time you
++   sign in (again, not while a ban is active). Presets and votes you
++   submit are stored under that account. Submitting a preset counts as your vote for it; if a
++   published preset already has the same dyes, your submission becomes a vote for that preset
++   instead. A preset holds what you enter in the form — and, if our automatic check holds an edit's
++   new name or description for review, the version from before the first such edit, kept until a
++   moderator restores it or the preset is deleted — plus the optional preview image described under
++   Images above. To remove a
++   preview image, use the preset's edit form; deleting a preset from **My Submissions** deletes its
++   preview image too. When you submit or edit a preset, its name and description may also be sent to
+    Google's [Perspective API](https://perspectiveapi.com/) for a moderation score (optional —
+    content moderation only); the request tells Google not to store them (`doNotStore`), and
+-   nothing else — no account identity — is sent there. To have your account record and
+-   submissions removed, see the Questions? section below. Preset preview images are served from
+-   `shots.xivdyetools.app`; avatars load from Discord's CDN.
++   nothing else — no account identity — is sent there. What else is kept about your presets, and
++   for how long, is under *Community presets: what we keep* below; how to delete it is under
++   *Deleting your data*. Preset preview images are served from `shots.xivdyetools.app`; avatars
++   load from Discord's CDN.
+ 4. **Share links**: a share link encodes the dyes or colours you chose in its URL. Opening one loads
+    that URL like any page; link previews on Discord and elsewhere are rendered by our own
+@@ -95,4 +122,56 @@ URL. They open in a new tab with the referrer suppressed, so the site you land o
+ page you came from. Once you are there you are on someone else's site, under their privacy policy.
+
++A community preset can also carry an **example link**, which the preset's author chose. It points to
++a page on one of these sites: Eorzea Collection, Mirapri, Reddit, X, Bluesky, Instagram, pixiv,
++Misskey, or the official Final Fantasy XIV site, which includes the Lodestone. The app shows no
++example link to any other site. The link is the author's, and it carries nothing about you. It
++opens the same way: in a new tab, with the referrer suppressed.
++
++## Community presets: what we keep
++
++This section applies only if you sign in to community presets. Everything here is stored on
++Cloudflare — the account record by our sign-in service (`auth.xivdyetools.app`), the rest by our
++presets service (`api.xivdyetools.app`) — except the posts in our Discord server.
++
++- **Your account record, presets and votes** (item 3 above) are kept until you delete them or ask
++  us to delete them (see *Deleting your data*).
++- **Daily limits.** Each preset you submit, each edit to a preset's name or description that you
++  send, and each preview image you upload is counted so the daily limits can be enforced. The count
++  records your account ID, the kind of action, the preset and the time, and is deleted after
++  **30 days**; deleting the preset does not delete it sooner.
++- **Posts in our Discord server.** Our moderators work in two private channels of our Discord
++  server. The moderation channel gets each preset, edit or preview image that needs review: the
++  post shows the preset (such as its name, description, category and dyes) and the author name,
++  or, for a preview image, the preset's name and the image, and it is updated when a moderator
++  decides. If a moderator bans you, the moderation channel also gets a post with your author name,
++  the reason and how many of your presets were hidden. Moderators can also post the list of presets
++  waiting for review, with their author names, in the moderation channel. The submission-log
++  channel gets each preset published without review, with its author name, and a note naming the
++  preset when a moderator approves, rejects or reverts one, with the reason for a rejection or a
++  revert. Posts made since the *Last updated* date above do not show your Discord user ID; older
++  posts may. The posts
++  stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a
++  moderator deletes them or until you request deletion.
++- **Failed notifications.** If a preset cannot be posted to our Discord server, we keep a record
++  naming the preset and the error, so a moderator can catch up. It holds nothing about your
++  account. It is deleted **30 days** after a moderator resolves it, after **90 days** if nobody
++  does, and at once if the preset is deleted.
++- **Ban records.** If a moderator bans you from community presets, the ban record holds your
++  Discord user ID or, if you signed in with an XIVAuth account that is not linked to Discord, your
++  XIVAuth ID instead. It also holds the author name shown on your presets at the time of the ban,
++  the Discord user IDs of the moderator who issued the ban and of the one who lifted it, the reason
++  the moderator gave, and the dates of the ban and of its lifting. The record is kept while the ban
++  is active. When the ban is lifted, the author name and the reason are cleared from the ban record
++  at once, and the record is deleted **90 days** later. The moderation-log entries for the ban keep
++  the reason, as described next.
++- **The moderation log.** Each moderation action is logged with the moderator's Discord user ID,
++  the action, an optional reason and the time. An action on a preset (such as approve, reject or
++  revert) names the preset, and is kept as long as the preset exists. A ban, unban, hide or restore
++  also names the account it applied to, and is deleted after **12 months**, or sooner for a hide or
++  restore if its preset is deleted.
++
++The Discord bot keeps the same records for presets submitted through it; see
++[its policy](../discord-worker/PRIVACY_POLICY.md).
++
+ ## Usage analytics (opt-in)
+
+@@ -157,8 +236,38 @@ by Cloudflare, and here is the whole of what we do with it.
+ 2. Use any tool with an image or a `.chara` file.
+ 3. You will see no image upload — only the requests listed above, and `/v1/telemetry` beacons only
+-   if you switched analytics on.
++   if you switched analytics on. The one image upload the app ever makes is a preset preview image
++   that you attach yourself (see Images above).
++
++## Deleting your data
++
++Some of it you can delete yourself, at any time unless a moderator has banned you from community
++presets (while a ban is active, ask us instead):
++
++- **A preset:** delete it from **My Submissions**. Its preview image, the votes on it, the
++  moderation-log entries about it and any failed-notification record for it are deleted with it.
++  Its daily-limit counts expire on their own after 30 days, and the posts about it in our Discord
++  server stay unless you ask us (below).
++- **A vote:** select the vote button on that preset again.
++- **Your session:** signing out deletes the session token from this browser and asks our sign-in
++  service to revoke it.
++
++For anything else — your account record, or everything under your account at once — ask us
++privately:
++
++1. **Email:** FlashGalatineFGC@gmail.com, with the subject "XIV Dye Tools Privacy".
++2. **Discord:** join https://discord.gg/rzxDHNr6Wv and send a direct message to "Flash Galatine".
++
++Say whether you sign in with Discord or with XIVAuth, and include your Discord user ID or the
++author name shown on your presets. Please don't ask in a public GitHub issue: that would publish
++the very details you want removed.
++
++We handle deletion requests within **30 days**. A request also removes the posts about you and
++your presets from our Discord server, except the post about a ban that is still active. An active
++ban record is not deleted on request; once the ban is lifted, it follows the retention under *Community presets:
++what we keep*.
+
+ ## Questions?
+
+ Open an issue on [GitHub](https://github.com/FlashGalatine/xivdyetools/issues) or ask on Discord.
++For a deletion request, use the private routes under *Deleting your data* instead.
+ We are happy to document further guarantees if it helps the community feel safe using the tools.

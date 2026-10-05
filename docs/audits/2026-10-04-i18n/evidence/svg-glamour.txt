@@ -1,0 +1,22 @@
+
+ RUN  v5.0.2 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/packages/svg
+
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > draws a 400-wide card inside the 350 budget, with the /GLAMOUR chip and the mark 4ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > says whose file it is by producer and tribe only, never by name 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > one row per piece: slot, look count, name, its dyes and the verdict 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > green marks a twin that fixed something, amber a piece nothing fixes, grey a free choice 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > draws an icon tile for each piece 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > keeps a long name inside the row, clear of the verdict column 0ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > prints the whole count key in the footer, wrapping onto a second line as drawn 0ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > grows with the rows: one piece is a short card 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > follows the light theme 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > widens the verdict column for a long verdict, and the name gives way 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > widens the slot column for a long official slot name, and the name gives way 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > never lets the longest official slot name run into the icon tile 0ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > keeps the title and drops the dye count when both do not fit 1ms
+ ✓ src/glamour-card.test.ts > generateGlamourCard (2a) > escapes item names 0ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  23:43:15
+   Duration  1.41s (transform 79%, import 18%, worker 2%, tests 1%)

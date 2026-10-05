@@ -53,6 +53,7 @@ report named below.
 | 2026-09-19 | i18n audit, whole monorepo (15 findings: 2 P1, 6 P2, 7 P3; locale data and fonts clean again — "Market Board" translated three ways, Discord option tooltips never localized, French plural rule, accent-blind dye search — all 15 fixed the next day on the same branch, PR #192, incl. the Privacy / Terms documents translated into five languages) | [README.md](2026-09-19-i18n/README.md) |
 | 2026-10-04 | Dead-code audit, whole monorepo, read on a local preview merge of the 13 PRs open that day (64 findings: 46 cleanup entries, 1,554 source + 2,217 test lines, and 18 KEEP; 2 introduced by open PRs; the preview's full gate also caught a cross-PR test failure from #224, fixed before merge) | [README.md](2026-10-04-dead-code/README.md) |
 | 2026-10-04 | Deep-dive analysis, whole monorepo, on the same preview of the 13-PR batch (175 findings: 1 HIGH, 35 MEDIUM, 120 LOW bugs, 9 refactors, 10 optimizations; 8 from open PRs, all LOW; none blocks the merge). Its REMEDIATION_PLAN.md merges the dead-code catalog and supersedes that audit's CLEANUP_PLAN.md | [README.md](2026-10-04-deep-dive/README.md) |
+| 2026-10-04 | i18n audit, whole monorepo, on the same preview of the 13-PR batch (45 findings: 2 P1, 17 P2, 26 P3, no P0; all three locale sets structurally clean and every gate green; 7 touch open-PR text, all P2 / P3 policy text, 6 of them Sprint 0 decisions; none blocks the merge). Its REMEDIATION_PLAN.md merges all three 2026-10-04 catalogs and supersedes the deep-dive's | [README.md](2026-10-04-i18n/README.md) |
 
 ## Conventions
 

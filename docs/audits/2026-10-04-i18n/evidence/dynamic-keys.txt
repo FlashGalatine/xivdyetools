@@ -1,0 +1,34 @@
+
+=== FAMILY1 accessibility.${key} wrapper (metric-help.ts:137-234) (18 keys) ===
+
+=== FAMILY3 accessibility.visionDesc${Cap(vision.id)} (accessibility-tool.ts:1338) (5 keys) ===
+
+=== FAMILY4 comparison.${key} wrapper (metric-help.ts:317, comparison-tool.ts:1555/1663) (34 keys) ===
+
+=== FAMILY5 comparison.${METHOD_STEM[method]}Short (metric-help.ts:302) (6 keys) ===
+
+=== FAMILY6 comparison.${TIER_KEYS[tier]} (comparison-tool.ts:1207) (4 keys) ===
+
+=== FAMILY7a swatch.gearSlot.${slot} (chara-import.ts:1121, CharaGearSlotId domain) (12 keys) ===
+
+=== FAMILY7b swatch.${key} via this.t() wrapper, all literal call sites in chara-import.ts (38 keys) ===
+
+=== FAMILY7c swatch.slotError.* (SLOT_ERROR_KEY Record, chara-import.ts:85-89) (4 keys) ===
+
+=== FAMILY8 themes.${localeKey} (theme-modal.ts:131, ThemeService.getAllThemes() domain) (2 keys) ===
+
+=== FAMILY9 preset.${id}.${field} (preset-i18n.ts:38, presets.json curated ids; has fallback to preset's own text) (30 keys) ===
+
+=== FAMILY10 ${tool.translationKey}.title/.shortName/.description (v4-app-header.ts:533/534/565/588, TOOL_MENU domain) (27 keys) ===
+
+=== FAMILY11 mixer.model${Cap(model)} (mixer-tool.ts:1251/1886, MODELS domain) (6 keys) ===
+
+=== SECONDARY preset-i18n.ts CATEGORY_LABEL_KEYS (Record indirection) (9 keys) ===
+
+=== SECONDARY preset-i18n.ts VALIDATION_KEYS (Record indirection) (11 keys) ===
+
+=== SECONDARY preset-i18n.ts PRESET_ERROR_KEYS (Record indirection) (8 keys) ===
+
+
+TOTAL dynamic/indirect keys checked: 214
+TOTAL problems found: 0

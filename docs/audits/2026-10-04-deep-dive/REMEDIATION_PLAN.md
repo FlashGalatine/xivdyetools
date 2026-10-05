@@ -1,5 +1,10 @@
 # Remediation Plan — 2026-10-04 (deep-dive + dead-code, merged)
 
+> [!NOTE]
+> **Superseded on 2026-10-05 by the merged [REMEDIATION_PLAN.md](../2026-10-04-i18n/REMEDIATION_PLAN.md)** of the same preview's i18n audit.
+> - It schedules every finding below, with the same IDs, alongside the i18n catalog's 45.
+> - Its sprints keep these rows unchanged, with i18n sprints inserted, so every sprint number from 2 on has moved.
+
 **Sources:**
 - [DEEP_DIVE_REPORT.md](DEEP_DIVE_REPORT.md): 175 findings.
 - [2026-10-04-dead-code/DEAD_CODE_REPORT.md](../2026-10-04-dead-code/DEAD_CODE_REPORT.md): 64 findings.
