@@ -387,7 +387,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-050 | OPEN | — |
 | BUG-051 | OPEN | — |
 | BUG-052 | OPEN | — |
-| BUG-053 | OPEN | — |
+| BUG-053 | FIXED 2026-10-05 (PR #225) | `6f2bb05c` |
 | BUG-054 | OPEN | — |
 | BUG-055 | OPEN | — |
 | BUG-056 | OPEN | — |
@@ -397,7 +397,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-060 | OPEN | — |
 | BUG-061 | OPEN | — |
 | BUG-062 | OPEN | — |
-| BUG-063 | OPEN | — |
+| BUG-063 | PARTIALLY FIXED 2026-10-05 (PR #224; the cron line goes to Sprint 8) | `12e7f887` |
 | BUG-064 | OPEN | — |
 | BUG-065 | OPEN | — |
 | BUG-066 | OPEN | — |
@@ -499,7 +499,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-006 | OPEN | — |
 | REFACTOR-007 | OPEN | — |
 | REFACTOR-008 | OPEN | — |
-| REFACTOR-009 | OPEN | — |
+| REFACTOR-009 | PARTIALLY FIXED 2026-10-05 (OPEN_ITEMS half; DOMAIN_DEPRECATION in Sprint 20) | `223b839f` |
 | OPT-001 | OPEN | — |
 | OPT-002 | OPEN | — |
 | OPT-003 | OPEN | — |

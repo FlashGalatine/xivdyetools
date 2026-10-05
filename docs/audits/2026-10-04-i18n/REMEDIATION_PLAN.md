@@ -13,9 +13,15 @@
 - The i18n rows are added to the units they belong to (11, 13, 14).
 - So every deep-dive sprint number from 2 on has moved.
 
-**Status basis:** 284 total.
-- 1 fixed: dead-code/DEAD-001, in #225, not merged.
-- 265 outstanding.
+> [!IMPORTANT]
+> **Re-verified on 2026-10-05 against `main@50165ec6`** (after the batch merge, #239 and #240): [evidence/reverify-2026-10-05.md](evidence/reverify-2026-10-05.md).
+> - It records what was fixed inside the PRs, the corrected anchors for findings whose files moved, and the fix steps that #239's dictionary table changes (TERM-003, TERM-004, TERM-021).
+> - **Read it before starting any sprint.** The finding files keep their as-audited line numbers.
+> - The whole-graph gate on that `main` is green (62/62).
+
+**Status basis:** 284 total (as of 2026-10-05).
+- 8 fixed, all inside their PRs before the batch merge: dead-code/DEAD-001 and DEAD-002, deep-dive/BUG-053, I18N-004, I18N-005, I18N-006, TERM-014 and TERM-015.
+- 258 outstanding. Four of them are partly fixed: deep-dive/BUG-063 (rest in Sprint 8), I18N-001 (optional rest in Sprint 7), TERM-001 (Sprint 7) and deep-dive/REFACTOR-009 (Sprint 20).
 - 2 deep-dive candidates superseded by dead-code removals, and 1 i18n candidate that duplicates deep-dive/BUG-145 (listed below).
 - 18 KEEP.
 - 0 need rotation.
@@ -45,7 +51,23 @@
 - Sprint 6 (i18n) and Sprint 22 (deep-dive LOWs) both touch `glamour-block.ts`; Sprint 6 lands first.
 - No i18n finding sits in code a dead-code entry removes.
 
-## Sprint 0 — Before the batch merge (your decision)
+## Sprint 0 — Before the batch merge (your decision) — ✅ APPLIED 2026-10-05 (inside the PRs; batch merged 2026-10-05)
+
+**Outcome** (re-verified; details in [evidence/reverify-2026-10-05.md](evidence/reverify-2026-10-05.md)):
+- **Fixed inside their PRs:**
+  - dead-code/DEAD-001 (`ea264d49`, #225) and dead-code/DEAD-002 (`d3bf312a`, #227);
+  - deep-dive/BUG-053 (`6f2bb05c`, #225);
+  - I18N-004 (`5805bf8a`, #227) and I18N-005 (`3f662657`, #230);
+  - I18N-006 (`3f662657` and `5805bf8a`);
+  - TERM-014 and TERM-015 (`91de5f8d`, #223).
+- **Partly fixed:**
+  - deep-dive/BUG-063 (`12e7f887`, #224): the intro names 0015 but not the new daily cron, which moves to Sprint 8.
+  - I18N-001: the lighter fix, *Last updated* 2026-10-05 on all twelve variants. The optional fixed-date rewording moves to Sprint 7.
+- **TERM-001's #223 line** is fixed (`91de5f8d`); the Terms documents remain, in Sprint 7.
+- **The domain question is settled.** The three route lines were deleted inside #224, #225 and #229 (`12e7f887`, `6f2bb05c`, `d1f9e5c5`). The custom domains were removed in the dashboard on 2026-10-05.
+- **Prerequisites done:** #239 and #240 are merged, and core 5.8.1 is on npm.
+
+The text below is the plan as written before the merge.
 
 **Merging tomorrow is safe from all three audits' point of view:**
 - no finding in the batch is CRITICAL or HIGH;
@@ -278,6 +300,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 **What lands here:** the Terms of Service variants missing the Glamour Reader (I18N-002), the "About → Privacy" path (I18N-013), the Korean moderator word (TERM-001), French "préréglage" (TERM-010), tool names in the policy prose (TERM-019) and Japanese 自社 (TERM-020).
 
 **Sprint 0 fallback:** any Sprint 0 policy item not fixed inside its PR lands here too.
+- **Carried from Sprint 0 (2026-10-05): I18N-001's optional full fix.** The lighter fix shipped. If you want the full fix, replace "since the *Last updated* date" with the go-live date (2026-10-05) in all twelve variants; the anchors are in the re-verification file.
+- **TERM-001 shrank to the two Korean Terms documents (five lines).** Both privacy documents now say 조정자.
+- **Do I18N-002 and TERM-019 in one pass:** they rewrite the same tools sentence in each variant.
 
 **How to edit:** one translator per language plus a verifier, as in the 2026-09-20 pass. Each document's six variants change in one commit, with `Last updated` on all six. The checklist is `.agents/skills/audit-shared/policy-documents.md`.
 
@@ -305,6 +330,8 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 - The change is additive, so it ships here, before discord-worker reads it.
 
 **Dead code:** the presets-api cleanups follow the fixes.
+
+**Carried from Sprint 0 (2026-10-05): deep-dive/BUG-063's remainder.** The 2.4.0 intro (`CHANGELOG.md:13-14`) should also name the new production-only daily Cron Trigger (`23 4 * * *`). Text only.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
@@ -558,6 +585,10 @@ The mock fixes come first. Then the dead-code removals, ending with the self-ref
 - Two gate-script fixes.
 
 **Then:** stale docs and two root config lines.
+
+**Since 2026-10-05:**
+- **deep-dive/REFACTOR-009 is half done.** `223b839f` (#228) fixed its OPEN_ITEMS entry. The DOMAIN_DEPRECATION inventory still cites route lines that were deleted, so strike them through; refreshing them is no longer possible.
+- **deep-dive/BUG-152 was seen live:** 11 of the batch's CI runs on `main` were cancelled.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
