@@ -51,7 +51,7 @@ report named below.
 | 2026-09-16 | Deep-dive analysis, whole monorepo (53 findings: 8 MEDIUM, no HIGH; two reviewer HIGHs overturned by the verification pass) | [README.md](2026-09-16-deep-dive/README.md) |
 | 2026-09-18 | Documentation audit, `docs/` + the bot's `/manual` (38 findings: 1 HIGH, 26 MEDIUM; `/manual` was still the 4.x text in all six languages — all fixed the same day in PRs #189, #190 and #191) | [README.md](2026-09-18-documentation/README.md) |
 | 2026-09-19 | i18n audit, whole monorepo (15 findings: 2 P1, 6 P2, 7 P3; locale data and fonts clean again — "Market Board" translated three ways, Discord option tooltips never localized, French plural rule, accent-blind dye search — all 15 fixed the next day on the same branch, PR #192, incl. the Privacy / Terms documents translated into five languages) | [README.md](2026-09-19-i18n/README.md) |
-| 2026-10-03 | Security audit, whole monorepo + both privacy policies in six languages (31 findings: 1 HIGH, 4 MEDIUM, 21 LOW, 5 INFO; Sprint 0 — beta.xivdyetools.app served no CSP / X-Frame-Options / HSTS since 2026-08-09; 12 policy edits, 8 of them AMENDs; no rotation) | [README.md](2026-10-03-security/README.md) |
+| 2026-10-03 | Security audit, whole monorepo + both privacy policies in six languages (31 findings: 1 HIGH, 4 MEDIUM, 21 LOW, 5 INFO; Sprint 0 — beta.xivdyetools.app served no CSP / X-Frame-Options / HSTS since 2026-08-09; 12 policy edits, 8 of them AMENDs; no credential exposed, so no exposure-driven rotation — `INTERNAL_WEBHOOK_SECRET` was rotated as a precaution for FINDING-027) | [README.md](2026-10-03-security/README.md) |
 
 ## Conventions
 

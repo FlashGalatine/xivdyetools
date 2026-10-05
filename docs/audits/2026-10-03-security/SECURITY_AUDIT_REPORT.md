@@ -3,7 +3,7 @@
 - **Branch/commit:** `claude/security-audit-96f7ce` @ `0ab33466c2e184e433b05aeb96cbe46e88f0e041` (= `main`). Previous audit: [2026-09-15-security](../2026-09-15-security/README.md) @ `0332fcc5` — 378 commits / 493 files since.
 - **Scope:** all 9 apps, 8 packages, CI / wrangler / GitHub settings, and the four policy documents in all six languages (24 files).
 - **Method:** Step 2 evidence ([collect.sh](evidence/scripts/collect.sh)); 29 review assignments + 6 completeness-critic gap assignments ([audit-workflow.js](evidence/scripts/audit-workflow.js), 35 `evidence/review-*.md`); every candidate verified at `file:line` by a verifier and challenged by an adversarial second verifier (tie-break on disagreement); a calibration pass over all confirmed rows; coordinator reconciliation against the rejected list, prior audits and the Step 3a policy rules ([final-catalog.json](evidence/scripts/final-catalog.json)); a verifier-tier re-read of all 20 translations; live read-only header and GitHub-settings probes.
-- **Totals:** **31 findings — 1 HIGH, 4 MEDIUM, 21 LOW, 5 INFO.** No CRITICAL, no credential exposed, no rotation.
+- **Totals:** **31 findings — 1 HIGH, 4 MEDIUM, 21 LOW, 5 INFO.** No CRITICAL, no credential exposed, so no exposure-driven rotation. `INTERNAL_WEBHOOK_SECRET` was rotated on 2026-10-03 as a precaution, before Sprint 1 (FINDING-027 precondition).
 - **Sprint 0 (act now):** **FINDING-001** — beta.xivdyetools.app serves no CSP / X-Frame-Options / HSTS (live).
 - **Source changes:** none. Only `docs/audits/2026-10-03-security/` was written.
 
