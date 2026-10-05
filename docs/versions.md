@@ -25,13 +25,13 @@
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.13.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.7.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.2 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.1 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.11.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
-| **Stoat Bot** | v0.3.1 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
+| **OpenGraph Worker** | v2.11.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
 
@@ -226,6 +226,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.1.2 | Oct 2026 | 2026-10-03 security audit Sprint 6 — retired `xivdyetools.projectgalatine.com` origin removed from the redirect + CORS allowlist and the retired `auth.` custom-domain route dropped, both pinned by tests (FINDING-006); `[observability] enabled = false` pinned and asserted (FINDING-022) |
 | v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
 | v3.1.0 | Sep 2026 | 2026-09-02 deep-dive — a cancelled login returns to the allowlisted origin it started on instead of production (BUG-049); a non-array character roster no longer turns sign-in into a 500 (BUG-051) |
 | v3.0.1 | Sep 2026 | First dead-code sweep (DEAD-019/025/026) — unused constants, `isStateSigned`, three `findUserBy*` wrappers removed; no route, token or D1 change |
@@ -364,6 +365,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.11.1 | Oct 2026 | 2026-10-03 security audit Sprint 9 — Workers Logs pinned off in both wrangler blocks (FINDING-022), asserted by `tests/wrangler-env.test.ts`; the bump retires cached cards once |
 | **v2.11.0** | **Sep 2026** | **The Glamour Reader's card (design turn 4): `/glamour` routed in both environments, `glamour/default.png` on the 2a shape with glyph 1a and no method tag (the reader measures no color distance), strings ×6, CJK subsets re-cut. The default card's one-liner now wraps (up to three lines, the deck grows) instead of running off the card's edge, which is what the live EN Mixer and DE Gradient cards did** |
 | v2.10.4 | Sep 2026 | Swatch Matcher cards draw the creator's lip, face-paint, highlight and tattoo colors (core 5.7.0); the bump retires cached cards |
 | v2.10.3 | Sep 2026 | 2026-09-19 i18n audit follow-up (maintainer naming decisions 2026-09-20) — card names quote the official tool titles in every language: the Swatch Matcher card said "Character Matcher" in de / ja / ko / zh while English already said Swatch Matcher, and the Harmony card now reads Harmony Explorer ×6 (its "Color Harmony" shortening was cut from the retired three-word title); the fr and ko Budget lines name the Market Board (`tableau des ventes`, `장터`) instead of a generic "market price"; crawler descriptions: de `Glamour` → `Projektion`, ko `환영 장비` → `코디`, ko `시장 게시판` → `장터`. No font re-cut needed — every new string is drawable from the existing subsets (font-coverage green). The version bump is what retires the cached cards |
@@ -396,6 +398,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.3 | Oct 2026 | 2026-10-03 security audit (FINDING-022, Sprint 10) — Workers Logs pinned off in both `wrangler.toml` blocks, asserted by `src/wrangler-config.test.ts`; no behaviour change |
 | v1.3.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 15 — the magic-byte table and `detectImageFormat` come from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008); the local byte-table test exercises the import unchanged |
 | v1.3.1 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-017) — `Env` is now an explicit empty binding contract (`Record<string, never>`) instead of carrying an `ENVIRONMENT` member nothing sets or reads |
 | **v1.3.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 12) — the dimension cap admitted the 4096² input it existed to reject (BUG-052: `>` not `>=`), and two 64 MiB RGBA buffers exceed the 128 MiB isolate; pixel cap 16 MP → 9.4 MP, everything up to 4K still passes** |
@@ -544,6 +547,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.3.2 | Oct 2026 | 2026-10-03 security audit Sprint 12 (parked, no deploy) — echoed text no longer carries Stoat's `@online` mass mention (`<%…>` tokens now rewritten explicitly) (FINDING-026) |
 | v0.3.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 12 (parked, no deploy) — `!xd ping` measures the round-trip after the send and edits it in (BUG-031); the dye-info test asserts embed title/colour/description (BUG-042) |
 | v0.3.0 | Sep 2026 | 2026-09-02 deep-dive (Sprint 17, P3 by policy) — an unhandled `'error'` event no longer crashes the process ahead of its own reconnect (BUG-101); the help text describes the command set the router actually serves (BUG-103); still parked |
 | **v0.2.3** | **Aug 2026** | **2026-08-29 security audit (FINDING-031, Sprint 13 — closes the audit) — `message-handler.ts` no longer logs the author id, channel id, or raw command text (the per-command debug line drops all three; the throttle-drop line logs `{ command, subcommand }` instead of the user id, matching Sprint 9's non-identifying rate-limiter scope); `index.ts`'s logger now defaults to `info` instead of the library preset's `debug`; the boot-time admin-roster log prints the authorized-admin count instead of every id (ruling S13-R2, not in the original finding); still parked** |
