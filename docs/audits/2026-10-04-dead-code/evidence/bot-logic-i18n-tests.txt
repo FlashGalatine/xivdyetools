@@ -1,0 +1,110 @@
+
+ RUN  v5.0.2 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/packages/bot-logic
+
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts en 2ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts ja 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts de 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts fr 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts ko 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts zh 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "EN" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "en-US" 1ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "es" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "zh-CN" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "constructor" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts exactly the codes LOCALE_CODES declares 1ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps en-US to en 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps en-GB to en 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps ja to ja 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps de to de 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps fr to fr 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps ko to ko 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps zh-CN to zh 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps zh-TW to zh 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "es-ES" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "pt-BR" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "ru" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "toString" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > prefers the unified preferences blob 2ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls back to the legacy key when the blob has no language 1ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls back to the legacy key when there is no blob 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls back to the Discord client locale 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > defaults to English 1ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > ignores an unsupported language in the blob 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > ignores an unsupported value in the legacy key 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls through a malformed preferences blob 1ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > resolves to English when every KV read throws 1ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > still honours the Discord locale when KV is down 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > reads the two keys under the prefixes both workers agree on 1ms
+ ✓ src/i18n/locales.test.ts > locale completeness > ja.json has all keys present in en.json 5ms
+ ✓ src/i18n/locales.test.ts > locale completeness > de.json has all keys present in en.json 2ms
+ ✓ src/i18n/locales.test.ts > locale completeness > fr.json has all keys present in en.json 2ms
+ ✓ src/i18n/locales.test.ts > locale completeness > ko.json has all keys present in en.json 2ms
+ ✓ src/i18n/locales.test.ts > locale completeness > zh.json has all keys present in en.json 2ms
+ ✓ src/i18n/locales.test.ts > locale structure > en.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > ja.json has a valid meta block 1ms
+ ✓ src/i18n/locales.test.ts > locale structure > de.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > fr.json has a valid meta block 1ms
+ ✓ src/i18n/locales.test.ts > locale structure > ko.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > zh.json has a valid meta block 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > picks the _one form for exactly 1 and _other otherwise (en) 4ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > single-form locales carry identical _one/_other strings 1ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > merges count with extra variables and falls back to the bare key 1ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > fr: count 0 resolves to the _one form ("0 vote") 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > fr: count 1 resolves to the _one form 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > fr: count 2 resolves to the _other form 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > de: count 0 resolves to the _other form ("0 Stimmen") 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > en: count 0 resolves to the _other form ("0 votes") 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > ja: any count resolves (CLDR has no plural distinction) 1ms
+ ✓ src/i18n/translator.test.ts > Translator > constructor > creates a translator with the specified locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > constructor > falls back to English data for an invalid locale 1ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > translates a key with English locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > translates a deeply nested key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns the key for missing translations 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > logs warning for missing translations when logger is provided 2ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates variables in a real translation key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates multiple variables 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > keeps placeholder when variable is missing 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > handles numeric variables 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > falls back to English for missing translations in other locales 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns the key when not found in any locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates variables with non-English locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns key when path traverses through a non-object value 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns key for deeply nested non-existent path 0ms
+ ✓ src/i18n/translator.test.ts > Translator > getLocale > returns the current locale code 0ms
+ ✓ src/i18n/translator.test.ts > createTranslator > returns a Translator instance 0ms
+ ✓ src/i18n/translator.test.ts > createTranslator > creates translators for all supported locales 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ja: every one is allow-listed with a reason 4ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ja: no allow-list entry has gone stale 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > de: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > de: no allow-list entry has gone stale 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > fr: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > fr: no allow-list entry has gone stale 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ko: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ko: no allow-list entry has gone stale 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > zh: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > zh: no allow-list entry has gone stale 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > "*" entries are still identical somewhere 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > every reason names one of the five accepted kinds 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > same English, same translation > no group is translated two ways without a listed reason 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > same English, same translation > no allow-list entry has gone stale 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > same English, same translation > can fail: a synthetic split is reported, a unified group is not 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > ja: every value carries en.json's {placeholders} 3ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > de: every value carries en.json's {placeholders} 3ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > fr: every value carries en.json's {placeholders} 2ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > ko: every value carries en.json's {placeholders} 2ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > zh: every value carries en.json's {placeholders} 2ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > every key in en.json is reachable from a consumer tree or an enumerated dynamic key 485ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > every static key passed to Translator.t() exists in en.json 301ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > keeps identical key sets across all six locales 23ms
+
+ Test Files  5 passed (5)
+      Tests  98 passed (98)
+   Start at  18:40:24
+   Duration  6.83s (transform 65%, import 14%, worker 11%, tests 10%)
+
+  Transform  transforming modules took 5.91s · 65% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
