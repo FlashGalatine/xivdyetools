@@ -35,6 +35,14 @@ Rules:
   path filter.
 -->
 
+## [5.8.2] - 2026-10-05
+### 🌏 The bot speaks your language
+- `/glamour` and `/swatch` cards name your character's clan in your language, for example 중원 부족 or WIESLÄNDER, instead of in English.
+- When the bot can't read a character file, it says why in your language: too big, not uploaded to Discord, or not readable.
+- German and French cards say "dyes" on the dye-problem chip, and German no longer guesses an item's gender.
+- `/manual` now explains `/glamour` as well as `/swatch` in its character-file topic, in all six languages.
+- Character-creation color names in `/manual` and on the cards match the game, for example Strähnen in German and 瞳の輪郭 in Japanese.
+
 ## [5.8.1] - 2026-10-05
 ### 🌏 Korean race names
 - When a `/glamour` card names the race a piece is made for, Korean now uses the game's own race names, for example 휴런 for Hyur and 로스가르 for Hrothgar.

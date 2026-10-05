@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.2] - 2026-10-05
+
+Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+with `@xivdyetools/bot-logic` 4.6.0 in the same PR. The production deploy re-registers commands (two
+Korean option descriptions changed).
+
+### Fixed
+
+- **A file the bot can't read gets a translated reason** (HC-002). `utils/chara-attachment.ts`
+  fills the translated file-error message with `card.charaFileReason.*` (size, not on Discord's CDN,
+  download status) instead of an English reason.
+- **Cards print the clan in the user's language** (HC-001, bot-logic), and the other drawn-text
+  fixes of bot-logic 4.6.0.
+
+### Changed
+
+- **Fonts re-cut** for the new drawn text (compared by cmap):
+  - `NotoSansJP-Subset.ttf` gains 6 glyphs (原 因 埋 超 輪 郭);
+  - `NotoSansSC-Subset.ttf` gains 7 (埋 妆 就 嵌 廓 輪 郭);
+  - `NotoSansKR-Subset.ttf` gains 2 (떤 벨) and drops 1 (벌).
+
 ## [5.8.1] - 2026-10-05
 
 CJK font subsets re-cut for `@xivdyetools/core` 5.8.1, whose Korean race names and Korean / Chinese
