@@ -56,6 +56,9 @@ slider apply locally and then write the controller.
 ### Changed
 
 - **Budget's target card shows RGB, HSV and LAB by default,** as the sidebar always said it did.
+- **On Budget, the sidebar's Market Board section shows only the server.** Budget loads its prices
+  whatever "Enable Market Board" says, so the switch is hidden there; it still appears on every
+  other tool that shows prices.
 - **The sidebar's TRIBE & GENDER group shows only on the Hair and Skin palettes.** It showed on Eye
   for a fresh profile only because the controller still said Hair.
 - **A Swatch share link's result count is capped at 6**, the slider's maximum (links accepted 20).

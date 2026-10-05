@@ -88,7 +88,7 @@ describe('config-sidebar follows the ConfigController (BUG-027)', () => {
   });
 
   it('shows the market toggle on after another component turns prices on', async () => {
-    el = await mount('budget');
+    el = await mount('harmony');
     const toggle = () =>
       el!.shadowRoot!.querySelector<ToggleEl>('.market-config v4-toggle-switch')!;
     expect(toggle().checked).toBe(false);
@@ -99,6 +99,19 @@ describe('config-sidebar follows the ConfigController (BUG-027)', () => {
     await el.updateComplete;
 
     expect(toggle().checked).toBe(true);
+  });
+
+  // BUG-079: Budget loads its own prices whatever the switch says, so on
+  // Budget the switch would change nothing there. The server choice stays.
+  it('shows no Enable Market Board switch on Budget, only the server', async () => {
+    el = await mount('budget');
+    const market = el.shadowRoot!.querySelector('.market-config')!;
+    expect(market.querySelector('v4-toggle-switch')).toBeNull();
+    expect(market.querySelector('select.config-select')).not.toBeNull();
+
+    el.activeTool = 'harmony';
+    await el.updateComplete;
+    expect(el.shadowRoot!.querySelector('.market-config v4-toggle-switch')).not.toBeNull();
   });
 
   it('shows the mixing mode the Mixer tool wrote', async () => {

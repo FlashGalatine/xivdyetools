@@ -12,7 +12,7 @@
 
 ### Budget Suggestions
 - **The match line stays where you put it.** Moving the slider no longer snaps back to 8 when you change another setting. A shared link with a match line now shows it on the slider too.
-- **Opening Budget no longer turns market prices on in every tool.** Budget loads its own prices. If an earlier visit already turned prices on, turn them off once in the sidebar. The Privacy Guide now says that Budget always loads market prices, in all six languages.
+- **Opening Budget no longer turns market prices on in every tool.** Budget loads its own prices. If an earlier visit already turned prices on, turn them off once in another tool's settings. Budget no longer shows that switch, since it always loads prices. The Privacy Guide now says that Budget always loads market prices, in all six languages.
 - **RGB, HSV and LAB now show on the target card,** as the sidebar always said they did. Turn them off in Display Options.
 
 ### Swatch Matcher and Dye Mixer

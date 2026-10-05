@@ -11,7 +11,7 @@
  * @module components/v4/config-sidebar
  */
 
-import { html, css, CSSResultGroup, TemplateResult } from 'lit';
+import { html, css, nothing, CSSResultGroup, TemplateResult } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
@@ -2060,14 +2060,21 @@ export class ConfigSidebar extends BaseLitComponent {
             >
           </div>
           <div class="config-group-content ${this.marketBoardCollapsed ? 'collapsed' : ''}">
-            <div class="config-row">
-              <v4-toggle-switch
-                label=${LanguageService.t('config.enableMarketBoard')}
-                .checked=${this.marketConfig.showPrices}
-                @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
-                  this.handleConfigChange('market', 'showPrices', e.detail.checked)}
-              ></v4-toggle-switch>
-            </div>
+            ${
+              // BUG-079 (2026-10-04 deep-dive): Budget loads its own prices
+              // whatever this switch says, so on Budget it would change
+              // nothing there. Only the server choice applies.
+              this.activeTool === 'budget'
+                ? nothing
+                : html`<div class="config-row">
+                    <v4-toggle-switch
+                      label=${LanguageService.t('config.enableMarketBoard')}
+                      .checked=${this.marketConfig.showPrices}
+                      @toggle-change=${(e: CustomEvent<{ checked: boolean }>) =>
+                        this.handleConfigChange('market', 'showPrices', e.detail.checked)}
+                    ></v4-toggle-switch>
+                  </div>`
+            }
             <select
               class="config-select"
               .value=${this.marketConfig.selectedServer}
