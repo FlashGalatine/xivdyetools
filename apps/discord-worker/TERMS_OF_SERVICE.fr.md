@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour** : 2026-09-28
+**Dernière mise à jour** : 2026-10-05
 
 > L'application web sur xivdyetools.app a ses propres conditions : [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Le traitement des données est couvert par la [Politique de confidentialité](PRIVACY_POLICY.md).
 
@@ -23,8 +23,8 @@ XIV Dye Tools Discord Bot fournit :
 - **Correspondance de couleurs** : trouver les teintures FFXIV les plus proches de n'importe quelle couleur hexadécimale ou extraite d'images
 - **Harmonies de couleurs** : générer des schémas de couleurs complémentaires, triadiques, analogues et autres
 - **Outils d'accessibilité** : simulation du daltonisme pour les couleurs de teinture
-- **Favoris de palettes prédéfinies communautaires** : marquer et lister les palettes prédéfinies communautaires que vous aimez (`/preset favorite`)
-- **Palettes prédéfinies communautaires** : parcourir, soumettre et voter sur des palettes de couleurs créées par les utilisateurs
+- **Favoris de préréglages communautaires** : marquer et lister les préréglages communautaires que vous aimez (`/preset favorite`)
+- **Préréglages communautaires** : parcourir, soumettre et voter sur des palettes de couleurs créées par les utilisateurs
 - **Prix du marché** : prix du tableau des ventes en temps réel via l'API Universalis
 - **Comparaison et contraste de teintures** : comparer des teintures côte à côte et mesurer le contraste entre elles (`/comparison`, `/contrast`)
 - **Mélanges et dégradés** : mélanger deux teintures, ou créer un dégradé entre deux couleurs (`/mixer`, `/gradient`)
@@ -50,9 +50,9 @@ Le Bot met en œuvre une limitation de débit pour garantir un usage équitable 
 
 ## 5. Modération de contenu
 
-### Palettes prédéfinies communautaires
+### Préréglages communautaires
 
-Les palettes prédéfinies soumises par les utilisateurs sont soumises à modération :
+Les préréglages soumis par les utilisateurs sont soumis à modération :
 
 - Les soumissions passent un contrôle de contenu automatisé. Celles qui le franchissent sont publiées immédiatement et journalisées pour audit ; tout ce qui est signalé, ou que le contrôle ne peut résoudre, est mis en attente pour un examen par un modérateur
 - Le contenu offensant, inapproprié, ou qui viole des droits de propriété intellectuelle sera rejeté
@@ -65,7 +65,7 @@ Si vous pensez que votre contenu a été modéré à tort :
 
 1. Rejoignez notre serveur Discord : https://discord.gg/rzxDHNr6Wv
 2. Contactez un modérateur ou mentionnez « Flash Galatine » dans #dyetools-issues-and-suggestions
-3. Indiquez votre identifiant utilisateur Discord et le nom de la palette prédéfinie rejetée
+3. Indiquez votre identifiant utilisateur Discord et le nom du préréglage rejeté
 4. Les appels sont examinés sous 7 jours
 
 ## 6. Propriété intellectuelle
@@ -86,7 +86,7 @@ Les noms d'objets pour `/glamour` sont recherchés via [XIVAPI](https://xivapi.c
 
 ### Votre contenu
 
-En soumettant des palettes prédéfinies ou tout autre contenu au Bot, vous nous accordez une licence non exclusive et libre de redevances pour utiliser, afficher et distribuer ce contenu au sein de l'écosystème XIV Dye Tools.
+En soumettant des préréglages ou tout autre contenu au Bot, vous nous accordez une licence non exclusive et libre de redevances pour utiliser, afficher et distribuer ce contenu au sein de l'écosystème XIV Dye Tools.
 
 ## 7. Exclusion de garanties
 
