@@ -1,0 +1,6 @@
+$ node scripts/analyze-unused-keys.js
+
+🌍 i18n orphan check — 1195 keys in en.json (meta.* excluded)
+   used: 1195   orphaned: 0
+
+✅ No orphaned keys.

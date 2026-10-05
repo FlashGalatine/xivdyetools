@@ -1,0 +1,22 @@
+diff --git a/apps/moderation-worker/src/services/bot-i18n.ts b/apps/moderation-worker/src/services/bot-i18n.ts
+index 0a3750b5..ff0a96d6 100644
+--- a/apps/moderation-worker/src/services/bot-i18n.ts
++++ b/apps/moderation-worker/src/services/bot-i18n.ts
+@@ -51,9 +51,4 @@ const enLocale: LocaleData = {
+       pendingCount: '{count} preset(s) pending review',
+       missingId: 'Please specify a preset ID for this action.',
+-      approved: 'Preset Approved',
+-      approvedDesc: '**{name}** has been approved and is now live!',
+-      missingReason: 'Please provide a reason for rejection.',
+-      rejected: 'Preset Rejected',
+-      rejectedDesc: '**{name}** has been rejected.',
+       stats: 'Moderation Statistics',
+       // FINDING-001 (2026-08-11 fix wave): the queue was widened to include
+@@ -98,4 +93,7 @@ const enLocale: LocaleData = {
+     presetsHidden: 'Presets Hidden',
+     presetsRestored: 'Presets Restored',
++    presetsStillHidden: 'Presets Still Hidden',
++    presetsStillHiddenWhy:
++      'another approved or pending preset already uses the same dye combination, so restoring it would duplicate that preset.',
+     alreadyBanned: 'User is already banned.',
+     notBanned: 'User is not currently banned.',

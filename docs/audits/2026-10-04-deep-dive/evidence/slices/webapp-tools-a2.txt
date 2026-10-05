@@ -1,0 +1,3 @@
+apps/web-app/src/components/budget-tool.ts
+apps/web-app/src/components/harmony-tool.ts
+apps/web-app/src/components/mixer-tool.ts

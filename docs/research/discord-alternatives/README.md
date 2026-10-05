@@ -2,6 +2,7 @@
 
 **Date:** 2026-02-14
 **Context:** Discord's mandatory age verification (face scan / government ID) rolling out March 2026
+**Status:** Stoat was built and then parked. Superseded in part by the [October 2026 refresh](./07-2026-10-refresh.md), which corrects several facts below; this file's body is kept as written.
 
 ## Background
 

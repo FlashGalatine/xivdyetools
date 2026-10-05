@@ -1,0 +1,176 @@
+
+ RUN  v5.0.2 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/packages/bot-logic
+
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts en 2ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts ja 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts de 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts fr 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts ko 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts zh 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "EN" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "en-US" 1ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "es" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "zh-CN" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > rejects "constructor" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > isValidLocale > accepts exactly the codes LOCALE_CODES declares 1ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps en-US to en 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps en-GB to en 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps ja to ja 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps de to de 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps fr to fr 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps ko to ko 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps zh-CN to zh 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > maps zh-TW to zh 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "es-ES" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "pt-BR" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "ru" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > discordLocaleToLocaleCode > returns null for "toString" 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > prefers the unified preferences blob 2ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls back to the legacy key when the blob has no language 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls back to the legacy key when there is no blob 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls back to the Discord client locale 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > defaults to English 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > ignores an unsupported language in the blob 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > ignores an unsupported value in the legacy key 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > falls through a malformed preferences blob 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > resolves to English when every KV read throws 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > still honours the Discord locale when KV is down 0ms
+ ✓ src/i18n/locale-resolution.test.ts > resolveUserLocale > reads the two keys under the prefixes both workers agree on 0ms
+ ✓ src/i18n/locales.test.ts > locale completeness > ja.json has all keys present in en.json 4ms
+ ✓ src/i18n/locales.test.ts > locale completeness > de.json has all keys present in en.json 2ms
+ ✓ src/i18n/locales.test.ts > locale completeness > fr.json has all keys present in en.json 2ms
+ ✓ src/i18n/locales.test.ts > locale completeness > ko.json has all keys present in en.json 2ms
+ ✓ src/i18n/locales.test.ts > locale completeness > zh.json has all keys present in en.json 1ms
+ ✓ src/i18n/locales.test.ts > locale structure > en.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > ja.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > de.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > fr.json has a valid meta block 1ms
+ ✓ src/i18n/locales.test.ts > locale structure > ko.json has a valid meta block 0ms
+ ✓ src/i18n/locales.test.ts > locale structure > zh.json has a valid meta block 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > picks the _one form for exactly 1 and _other otherwise (en) 3ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > single-form locales carry identical _one/_other strings 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc (count-aware translate, F-09) > merges count with extra variables and falls back to the bare key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > fr: count 0 resolves to the _one form ("0 vote") 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > fr: count 1 resolves to the _one form 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > fr: count 2 resolves to the _other form 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > de: count 0 resolves to the _other form ("0 Stimmen") 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > en: count 0 resolves to the _other form ("0 votes") 0ms
+ ✓ src/i18n/translator.test.ts > Translator > tc — CLDR plural category via Intl.PluralRules (I18N-003) > ja: any count resolves (CLDR has no plural distinction) 1ms
+ ✓ src/i18n/translator.test.ts > Translator > constructor > creates a translator with the specified locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > constructor > falls back to English data for an invalid locale 1ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > translates a key with English locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > translates a deeply nested key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns the key for missing translations 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > logs warning for missing translations when logger is provided 2ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates variables in a real translation key 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates multiple variables 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > keeps placeholder when variable is missing 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > handles numeric variables 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > falls back to English for missing translations in other locales 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns the key when not found in any locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > interpolates variables with non-English locale 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns key when path traverses through a non-object value 0ms
+ ✓ src/i18n/translator.test.ts > Translator > t (translate) > returns key for deeply nested non-existent path 0ms
+ ✓ src/i18n/translator.test.ts > Translator > getLocale > returns the current locale code 0ms
+ ✓ src/i18n/translator.test.ts > createTranslator > returns a Translator instance 0ms
+ ✓ src/i18n/translator.test.ts > createTranslator > creates translators for all supported locales 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ja: every one is allow-listed with a reason 4ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ja: no allow-list entry has gone stale 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > de: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > de: no allow-list entry has gone stale 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > fr: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > fr: no allow-list entry has gone stale 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ko: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > ko: no allow-list entry has gone stale 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > zh: every one is allow-listed with a reason 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > zh: no allow-list entry has gone stale 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > "*" entries are still identical somewhere 1ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > values identical to English > every reason names one of the five accepted kinds 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > same English, same translation > no group is translated two ways without a listed reason 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > same English, same translation > no allow-list entry has gone stale 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > same English, same translation > can fail: a synthetic split is reported, a unified group is not 0ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > ja: every value carries en.json's {placeholders} 2ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > de: every value carries en.json's {placeholders} 2ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > fr: every value carries en.json's {placeholders} 2ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > ko: every value carries en.json's {placeholders} 2ms
+ ✓ src/i18n/__tests__/locale-quality.test.ts > placeholders > zh: every value carries en.json's {placeholders} 1ms
+ ✓ src/localization.uninitialized.test.ts > localization getters before any locale is initialized > getLocalizedDyeName returns the fallback name 3ms
+ ✓ src/localization.uninitialized.test.ts > localization getters before any locale is initialized > getLocalizedCategory returns the raw category key 0ms
+ ✓ src/localization.uninitialized.test.ts > localization getters before any locale is initialized > getLocalizedAcquisition returns the raw acquisition key 0ms
+ ✓ src/localization.uninitialized.test.ts > localization getters before any locale is initialized > getLocalizedCurrency returns the raw currency key 0ms
+ ✓ src/localization.uninitialized.test.ts > localization getters before any locale is initialized > never throws for any supported locale 4ms
+ ✓ src/localization.uninitialized.test.ts > localization getters before any locale is initialized > defaults to English when no locale is passed 0ms
+ ✓ src/localization.test.ts > localization > initializeLocale > initializes English locale without error 4ms
+ ✓ src/localization.test.ts > localization > initializeLocale > initializes Japanese locale without error 0ms
+ ✓ src/localization.test.ts > localization > initializeLocale > initializes all supported locales 1ms
+ ✓ src/localization.test.ts > localization > initializeLocale > falls back to English when locale initialization fails (invalid locale) 1ms
+ ✓ src/localization.test.ts > localization > getLocalizedDyeName > returns localized name for a known dye item ID 1ms
+ ✓ src/localization.test.ts > localization > getLocalizedDyeName > returns fallback name when locale is not initialized 0ms
+ ✓ src/localization.test.ts > localization > getLocalizedDyeName > returns fallback name for unknown item ID 0ms
+ ✓ src/localization.test.ts > localization > getLocalizedDyeName > defaults to English when locale parameter omitted 0ms
+ ✓ src/localization.test.ts > localization > getLocalizedCategory > returns category name for a known category 1ms
+ ✓ src/localization.test.ts > localization > getLocalizedCategory > returns the input category when locale is not initialized 0ms
+ ✓ src/localization.test.ts > localization > getLocalizedCategory > defaults to English when locale parameter omitted 0ms
+ ✓ src/localization.test.ts > localization > cross-locale consistency > returns different names for different locales 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > asks the resolver for every worn piece, weapons with their set 11ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > draws the dyed pieces in slot order, each named as the twin it can be worn as 4ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > marks three twins, one free choice, and a Viera-only piece nothing fixes 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > heads the card with the counts and the file by producer and tribe 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > never prints the character name 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > keeps five rows and counts the rest in the footer 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > writes every piece in the GPOSERS form in the embed 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > says in the embed which pieces were named from a twin, and why 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > writes two identical rings once, as Rings 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > speaks the requested locale on the card 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > draws a name the fonts cannot draw in English, and keeps it in the embed 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Hyur man, piece for Hyur women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Elezen man, piece for Elezen women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Lalafell man, piece for Lalafell women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Miqo'te man, piece for Miqo'te women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Roegadyn man, piece for Roegadyn women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: AuRa man, piece for AuRa women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Hrothgar man, piece for Hrothgar women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > names the race only when the race is what blocks it: Viera man, piece for Viera women → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Hyur woman, piece for Hyur men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Elezen woman, piece for Elezen men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Lalafell woman, piece for Lalafell men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Miqo'te woman, piece for Miqo'te men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Roegadyn woman, piece for Roegadyn men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: AuRa woman, piece for AuRa men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Hrothgar woman, piece for Hrothgar men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > and the other way round: Viera woman, piece for Viera men → LOCKED 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Hyur alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Elezen alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Lalafell alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Miqo'te alone names the race to anyone else 2ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Roegadyn alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for AuRa alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Hrothgar alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > but a piece for Viera alone names the race to anyone else 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > counts the whole family in +N, as the web does, not just the named alternates 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > escapes Discord formatting in the note lines too 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > says the lookup is busy, not broken, when api-worker rate-limits it 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers api-worker refusing what the file describes (400) as a problem with the file, not an outage 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers api-worker refusing what the file describes (413) as a problem with the file, not an outage 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers api-worker refusing what the file describes (422) as a problem with the file, not an outage 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a 401 as RESOLVE_FAILED: the fault is ours 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a 403 as RESOLVE_FAILED: the fault is ours 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a 404 as RESOLVE_FAILED: the fault is ours 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > still answers a server error with a status as RESOLVE_FAILED 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a file it cannot read with the parse error 0ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a file that wears nothing without calling the resolver 1ms
+ ✓ src/commands/glamour.test.ts > executeGlamour > answers a resolver failure as RESOLVE_FAILED, never a half-drawn card 0ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > every key in en.json is reachable from a consumer tree or an enumerated dynamic key 144ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > every static key passed to Translator.t() exists in en.json 42ms
+ ✓ src/i18n/__tests__/locale-orphans.test.ts > bot-logic i18n orphan gate > keeps identical key sets across all six locales 11ms
+
+ Test Files  8 passed (8)
+      Tests  164 passed (164)
+   Start at  23:42:33
+   Duration  2.09s (transform 70%, import 23%, tests 5%, worker 3%)
+
+  Transform  transforming modules took 5.03s · 70% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

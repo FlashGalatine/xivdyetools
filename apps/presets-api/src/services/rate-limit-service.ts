@@ -148,12 +148,12 @@ export const SUBMISSION_EVENT_RETENTION_DAYS = 30;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
- * FINDING-017: drop events that have aged out, on the write path (presets-api
- * has no cron trigger). Never throws, and deliberately not batched with the
+ * FINDING-017: drop events that have aged out, on the write path and, via the
+ * daily retention job (`retention-job.ts`), once a day whatever the traffic. Never throws, and deliberately not batched with the
  * INSERT that follows: a D1 batch is atomic, so a failed prune would discard
  * the append-only row the daily caps depend on. Logs counts only.
  */
-async function pruneSubmissionEvents(db: D1Database, logger?: RetentionLogger): Promise<void> {
+export async function pruneSubmissionEvents(db: D1Database, logger?: RetentionLogger): Promise<void> {
   // `created_at` is strftime('%Y-%m-%dT%H:%M:%fZ', 'now') — the exact format
   // Date#toISOString produces, and the one getEventCountToday already binds.
   const cutoff = new Date(Date.now() - SUBMISSION_EVENT_RETENTION_DAYS * MS_PER_DAY).toISOString();

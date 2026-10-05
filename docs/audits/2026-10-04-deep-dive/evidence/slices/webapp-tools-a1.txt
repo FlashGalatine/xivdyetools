@@ -1,0 +1,2 @@
+apps/web-app/src/components/gradient-tool.ts
+apps/web-app/src/components/swatch-tool.ts

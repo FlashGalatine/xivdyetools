@@ -31,9 +31,12 @@ ENVIRONMENT = "development"
 API_VERSION = "v1"
 UNIVERSALIS_API_BASE = "https://universalis.app/api/v2"
 # RATE_LIMIT_REQUESTS / RATE_LIMIT_WINDOW_SECONDS govern ONLY the Universalis
-# proxy's per-IP memory limiter (/universalis/aggregated, /api/v2/aggregated),
-# and only on cache misses. The /v1/* limiter is the API_RATE_LIMITER binding
-# below (65 / 60 s, hard-coded in src/middleware/rate-limit.ts) — API-11.
+# proxy's cache-miss budget (/universalis/aggregated, /api/v2/aggregated) —
+# FINDING-011. They are the limit and period of the UNIVERSALIS_RATE_LIMITER
+# binding below, and the service-binding ceiling is 20x the limit
+# (UNIVERSALIS_SERVICE_RATE_LIMITER); tests/wrangler-config.test.ts pins both
+# to these values. The /v1/* limiter is the API_RATE_LIMITER binding below
+# (65 / 60 s, hard-coded in src/middleware/rate-limit.ts) — API-11.
 RATE_LIMIT_REQUESTS = "60"
 RATE_LIMIT_WINDOW_SECONDS = "60"
 # /v1/chara/* (equipment-model resolution for the web app's .chara import).
@@ -66,11 +69,34 @@ name = "SERVICE_RATE_LIMITER"
 namespace_id = "1006"
 simple = { limit = 1300, period = 60 }
 
+# FINDING-011: the Universalis proxy's cache-miss budget, per client IP. limit =
+# RATE_LIMIT_REQUESTS, period = RATE_LIMIT_WINDOW_SECONDS (a binding allows only
+# 10 or 60). Counts per colo through the native binding; KV is the fallback.
+[[ratelimits]]
+name = "UNIVERSALIS_RATE_LIMITER"
+namespace_id = "1008"
+simple = { limit = 60, period = 60 }
+
+# The Universalis proxy's service-binding key (discord-worker /budget): 20x
+# RATE_LIMIT_REQUESTS, BUG-048's SERVICE_BINDING_BUDGET_MULTIPLIER.
+[[ratelimits]]
+name = "UNIVERSALIS_SERVICE_RATE_LIMITER"
+namespace_id = "1010"
+simple = { limit = 1200, period = 60 }
+
 # Web-app opt-in telemetry (POST /v1/telemetry → Analytics Engine). Separate
 # dev dataset so `pnpm dev` traffic never lands in the production series.
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "xivdyetools_web_analytics_dev"
+
+# FINDING-022 (2026-10-03 security audit): Workers Logs stay OFF. `observability`
+# is an inheritable key, but it is declared explicitly in both blocks so neither
+# can start persisting logs by accident. Turning it on needs both privacy
+# policies (apps/web-app/PRIVACY*.md, apps/discord-worker/PRIVACY_POLICY*.md, all
+# six languages) updated in the same change (tests/wrangler-config.test.ts guards this).
+[observability]
+enabled = false
 
 [env.production]
 name = "xivdyetools-api-worker"
@@ -78,10 +104,12 @@ name = "xivdyetools-api-worker"
 # CUTOVER: the old xivdyetools-universalis-proxy worker must release these
 # custom domains (delete the worker or its domains in the CF dashboard) BEFORE
 # the first production deploy of this config — see DEPRECATIONS.md.
+# The retired proxy.xivdyetools.projectgalatine.com custom domain was removed in
+# the dashboard on 2026-10-05 (docs/operations/DOMAIN_DEPRECATION.md Phase 3).
+# A deploy re-attaches every custom domain listed here, so it must not return.
 routes = [
   { pattern = "data.xivdyetools.app", custom_domain = true },
   { pattern = "proxy.xivdyetools.app", custom_domain = true },
-  { pattern = "proxy.xivdyetools.projectgalatine.com", custom_domain = true },
   { pattern = "developers.xivdyetools.app", custom_domain = true }
 ]
 vars = { ENVIRONMENT = "production", API_VERSION = "v1", UNIVERSALIS_API_BASE = "https://universalis.app/api/v2", RATE_LIMIT_REQUESTS = "30", RATE_LIMIT_WINDOW_SECONDS = "60", XIVAPI_BASE = "https://v2.xivapi.com", XIVAPI_VERSION = "latest" }
@@ -122,8 +150,24 @@ name = "SERVICE_RATE_LIMITER"
 namespace_id = "1005"
 simple = { limit = 1300, period = 60 }
 
+# FINDING-011: production Universalis proxy buckets (see top-level block)
+[[env.production.ratelimits]]
+name = "UNIVERSALIS_RATE_LIMITER"
+namespace_id = "1007"
+simple = { limit = 30, period = 60 }
+
+[[env.production.ratelimits]]
+name = "UNIVERSALIS_SERVICE_RATE_LIMITER"
+namespace_id = "1009"
+simple = { limit = 600, period = 60 }
+
 # Web-app telemetry — production dataset. Beta (beta.xivdyetools.app) also
 # reaches this worker; beta vs production is the `env` blob, not the dataset.
 [[env.production.analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "xivdyetools_web_analytics"
+
+# FINDING-022: Workers Logs OFF in production, declared explicitly (see the
+# top-level [observability] block for why).
+[env.production.observability]
+enabled = false

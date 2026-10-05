@@ -339,6 +339,46 @@ describe('Environment Validation', () => {
                 expect(result.errors).toContain(message);
             });
 
+            // FINDING-027 (2026-10-03 security audit): a short secret is
+            // reported but must never turn `valid` false — that would answer
+            // 500 to every request in production.
+            it('warns, without failing, when INTERNAL_WEBHOOK_SECRET is under 32 characters', () => {
+                const result = validateEnv(
+                    createValidProductionEnv({ INTERNAL_WEBHOOK_SECRET: 'x'.repeat(31) })
+                );
+
+                expect(result.valid).toBe(true);
+                expect(result.errors).toHaveLength(0);
+                expect(result.warnings).toEqual([
+                    'INTERNAL_WEBHOOK_SECRET must be at least 32 characters in production',
+                ]);
+            });
+
+            it('does not warn at exactly 32 characters', () => {
+                const result = validateEnv(
+                    createValidProductionEnv({ INTERNAL_WEBHOOK_SECRET: 'x'.repeat(32) })
+                );
+
+                expect(result.valid).toBe(true);
+                expect(result.warnings).toHaveLength(0);
+            });
+
+            it('reports a missing secret as the fatal error only, not also as a warning', () => {
+                const result = validateEnv(createValidProductionEnv({ INTERNAL_WEBHOOK_SECRET: undefined }));
+
+                expect(result.valid).toBe(false);
+                expect(result.warnings).toHaveLength(0);
+            });
+
+            it('does not warn about the secret length outside production', () => {
+                const result = validateEnv(
+                    createValidEnv({ ENVIRONMENT: 'development', INTERNAL_WEBHOOK_SECRET: 'short' })
+                );
+
+                expect(result.valid).toBe(true);
+                expect(result.warnings).toHaveLength(0);
+            });
+
             it('keeps all four optional outside production', () => {
                 const result = validateEnv(
                     createValidEnv({

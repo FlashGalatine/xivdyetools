@@ -1,0 +1,34 @@
+diff --git a/apps/discord-worker/TERMS_OF_SERVICE.ja.md b/apps/discord-worker/TERMS_OF_SERVICE.ja.md
+index 79d2f82f..7892e53d 100644
+--- a/apps/discord-worker/TERMS_OF_SERVICE.ja.md
++++ b/apps/discord-worker/TERMS_OF_SERVICE.ja.md
+@@ -3,5 +3,5 @@
+ > これは利便性のために提供される翻訳版です。英文が正式な文書であり、内容に相違がある場合は英文が優先します。[English](TERMS_OF_SERVICE.md)
+
+-**最終更新日**：2026-09-20
++**最終更新日**：2026-09-28
+
+ > xivdyetools.appのウェブアプリには独自の利用規約があります：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。データの取り扱いについては[プライバシーポリシー](PRIVACY_POLICY.md)をご覧ください。
+@@ -27,4 +27,9 @@ XIV Dye Tools Discord Botは、次の機能を提供します：
+ - **コミュニティプリセット**：ユーザーが作成したカラーパレットの閲覧・投稿・投票
+ - **マーケット価格**：Universalis APIによるリアルタイムのマーケットボード価格
++- **カララントの比較とコントラスト**：カララントを並べて比較し、カララント間のコントラストを測定（`/comparison`、`/contrast`）
++- **ブレンドとグラデーション**：二つのカララントをブレンド、または二色間のグラデーションを作成（`/mixer`、`/gradient`）
++- **手頃な代替品**：高価なカララントに近い、より安いカララントを検索（`/budget`）
++- **キャラクターの色**：`.chara` ファイルの色をカララントにマッチング（`/swatch`）
++- **ミラプリリーダー**：`.chara` ファイルの装備とカララントを一覧表示（`/glamour`）
+
+ 本Botは、ファンメイドのコミュニティツールとして無料で提供されています。
+@@ -72,5 +77,5 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
+ 本Botはファンメイドのツールであり、**スクウェア・エニックス株式会社とは提携・承認・後援関係にありません。** FINAL FANTASYはスクウェア・エニックス・ホールディングス株式会社の登録商標です。
+
+-カララント名、色、入手方法を含むゲームデータは、スクウェア・エニックス株式会社の資産であり、教育・情報提供目的のフェアユースの範囲でのみ使用しています。
++カララント名、アイテム名、色、入手方法を含むゲームデータは、スクウェア・エニックス株式会社の資産であり、教育・情報提供目的のフェアユースの範囲でのみ使用しています。
+
+ ### 第三者サービス
+@@ -78,4 +83,6 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
+ マーケットボードデータは、スクウェア・エニックスとは提携関係にない独立した第三者サービスである [Universalis](https://universalis.app/) から提供されています。
+
++`/glamour` のアイテム名は、同じくスクウェア・エニックスとは提携関係にない独立した第三者サービスである [XIVAPI](https://xivapi.com/) で照会しています。
++
+ ### ユーザーのコンテンツ

@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-09-28 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-10-05 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
@@ -15,13 +15,19 @@ en forment la liste complète.
 
 ## Images et captures d'appareil photo
 
-- Les images importées, collées, glissées-déposées et capturées par l'appareil photo ne quittent
-  jamais votre appareil, et ne sont jamais écrites dans le stockage du navigateur. Elles sont lues
-  avec l'API Canvas du navigateur, conservées dans la mémoire de la page pour cette session
-  uniquement, et supprimées lorsque vous effacez l'image, fermez l'onglet ou rechargez la page.
+- Dans les outils de couleur, les images importées, collées, glissées-déposées et capturées par
+  l'appareil photo ne quittent jamais votre appareil, et ne sont jamais écrites dans le stockage du
+  navigateur. Elles sont lues avec l'API Canvas du navigateur, conservées dans la mémoire de la page
+  pour cette session uniquement, et supprimées lorsque vous effacez l'image, fermez l'onglet ou
+  rechargez la page.
 - L'Extracteur de palette affiche la même chose à l'endroit où vous choisissez un fichier —
   « Les images sont lues dans votre navigateur et jamais envoyées », à côté d'un cadenas. Cet avis
   est un texte simple, pas un lien ; ce document est accessible depuis **À propos → Confidentialité**.
+- **Une exception, et seulement si vous le choisissez.** Lorsque vous soumettez ou modifiez une
+  palette prédéfinie communautaire, vous pouvez y joindre une **image d'aperçu** facultative. Cette
+  image est envoyée à `api.xivdyetools.app`, convertie en WebP, stockée avec la palette prédéfinie,
+  et affichée publiquement depuis `shots.xivdyetools.app` une fois qu'un modérateur l'a approuvée.
+  L'élément 3 de la section Accès réseau ci-dessous explique comment la supprimer.
 
 ## Fichiers de personnage (`.chara`)
 
@@ -52,10 +58,17 @@ en forment la liste complète.
 réglages par outil (y compris le commutateur d'analyses ci-dessous), teintures favorites, palettes
 et collections enregistrées, les lignes d'obtention que vous avez réécrites dans la « Liste
 d'équipement » du Lecteur de mirages, et — si vous vous connectez — le jeton de session de vos
-palettes prédéfinies communautaires. Rien ici n'est un identifiant de suivi. « Réinitialiser les
-paramètres » dans les Paramètres avancés et les contrôles de données de site de votre navigateur
-l'effacent. « Tout réinitialiser » dans la Liste d'équipement supprime les lignes réécrites de
-cette tenue.
+palettes prédéfinies communautaires. Rien ici n'est un identifiant de suivi. Les contrôles de
+données de site de votre navigateur effacent tout cela. Dans l'application, chacune de ces actions
+en efface une partie :
+
+- **Paramètres avancés → Réinitialiser les paramètres** remet les réglages de chaque outil à leurs
+  valeurs par défaut. Cela ne supprime pas votre travail enregistré.
+- **Paramètres avancés → Effacer les favoris** supprime vos teintures favorites.
+- **Paramètres avancés → Effacer les palettes sauvegardées** supprime vos palettes enregistrées.
+- **Gérer les collections → Supprimer la collection** supprime une collection enregistrée.
+- Se déconnecter supprime le jeton de session.
+- « Tout réinitialiser » dans la Liste d'équipement supprime les lignes réécrites de cette tenue.
 
 `IndexedDB` conserve une seule chose : un cache des prix du tableau des ventes déjà récupérés, afin
 de ne pas répéter la même recherche. Il ne contient aucune image — une version antérieure de
@@ -75,10 +88,20 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    ci-dessus).
 3. **Palettes prédéfinies communautaires** (`api.xivdyetools.app`) : la navigation n'envoie rien
    vous concernant. Se connecter via `auth.xivdyetools.app` avec Discord ou XIVAuth crée
-   immédiatement un enregistrement de compte — votre identifiant de fournisseur et votre nom
-   d'utilisateur — que vous alliez ou non ensuite soumettre ou voter. Les palettes prédéfinies et
-   les votes que vous soumettez sont stockés sous ce compte, et le nom d'auteur est affiché sur les
-   palettes prédéfinies publiées. Lorsque vous soumettez ou modifiez une palette prédéfinie, son
+   immédiatement un enregistrement de compte, que vous alliez ou non ensuite soumettre ou voter.
+   Avec Discord, l'enregistrement contient votre identifiant utilisateur Discord et votre nom
+   d'affichage (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Avec XIVAuth,
+   l'enregistrement contient votre identifiant XIVAuth et le nom de votre personnage vérifié. Si
+   aucun n'est disponible lors de votre connexion, le nom est « XIVAuth User » suivi
+   des 8 premiers caractères de votre identifiant XIVAuth.
+   Si votre compte XIVAuth est lié à Discord, l'enregistrement
+   contient aussi cet identifiant utilisateur Discord. Le nom figurant dans l'enregistrement est
+   affiché comme auteur de chaque palette prédéfinie que vous publiez. Les palettes prédéfinies et
+   les votes que vous soumettez sont stockés sous ce compte. Une palette prédéfinie contient ce que
+   vous saisissez dans le formulaire, plus l'image d'aperçu facultative décrite sous Images
+   ci-dessus. Pour supprimer une image d'aperçu, utilisez le formulaire de modification de la
+   palette prédéfinie ; supprimer une palette prédéfinie depuis **Mes soumissions** supprime aussi
+   son image d'aperçu. Lorsque vous soumettez ou modifiez une palette prédéfinie, son
    nom et sa description peuvent aussi être envoyés à la [Perspective API](https://perspectiveapi.com/)
    de Google pour un score de modération (facultatif — modération de contenu uniquement) ; la
    requête indique à Google de ne pas les stocker (`doNotStore`), et rien d'autre — aucune identité
@@ -110,6 +133,13 @@ personnage, ni votre session, ne se trouve dans l'URL. Ils s'ouvrent dans un nou
 référent supprimé, de sorte que le site sur lequel vous arrivez n'est pas informé de la page d'où
 vous venez. Une fois là-bas, vous êtes sur le site de quelqu'un d'autre, soumis à sa propre
 politique de confidentialité.
+
+Une palette prédéfinie communautaire peut aussi porter un **lien d'exemple**, choisi par son auteur.
+Il pointe vers une page de l'un de ces sites : Eorzea Collection, Mirapri, Reddit, X, Bluesky,
+Instagram, pixiv, Misskey, ou le site officiel de Final Fantasy XIV, qui inclut le Lodestone.
+L'application n'affiche aucun lien d'exemple vers un autre site. Le lien est celui de l'auteur, et
+il ne transporte rien vous concernant. Il s'ouvre de la même façon : dans un nouvel onglet, avec le
+référent supprimé.
 
 ## Analyses d'utilisation (avec consentement)
 
@@ -182,7 +212,9 @@ nôtre est gérée par Cloudflare, et voici l'intégralité de ce que nous en fa
 1. Ouvrez les outils de développement → Réseau, activez « Conserver le journal ».
 2. Utilisez n'importe quel outil avec une image ou un fichier `.chara`.
 3. Vous ne verrez aucun téléversement d'image — seulement les requêtes listées ci-dessus, et des
-   signaux `/v1/telemetry` uniquement si vous avez activé les analyses.
+   signaux `/v1/telemetry` uniquement si vous avez activé les analyses. Le seul téléversement
+   d'image que l'application effectue jamais est une image d'aperçu de palette prédéfinie que vous
+   joignez vous-même (voir Images ci-dessus).
 
 ## Des questions ?
 

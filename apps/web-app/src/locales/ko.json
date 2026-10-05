@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "카드에 이름이 표시됩니다.",
     "providerDiscordNote": "대부분 이미 보유",
     "providerXivauthNote": "캐릭터를 인증",
-    "privacyNote": "로그인하면 계정 기록이 생성되어 Discord 또는 XIVAuth ID와 사용자 이름이 저장됩니다. 표시 이름은 투고한 팔레트에 표시됩니다. 캐릭터 정보도 이메일도 수집하지 않으며, 판매하지 않습니다.",
+    "privacyNote": "로그인하면 계정 기록이 생성되어 Discord 또는 XIVAuth ID와 이름이 저장되며, 이 이름은 투고한 프리셋의 작성자로 표시됩니다. XIVAuth의 경우 이 이름은 인증된 캐릭터의 이름이며, 로그인할 때 사용할 수 있는 인증된 캐릭터가 없으면 \"XIVAuth User\" 뒤에 XIVAuth ID의 처음 8자를 붙인 것입니다. XIVAuth 계정이 Discord와 연결되어 있으면 그 Discord ID도 저장됩니다. 이메일은 수집하지 않으며, 어떤 정보도 판매하지 않습니다.",
     "submitTitle": "팔레트 투고",
     "submitSub": "공개 전 검토를 거칩니다",
     "previewLabel": "표시 미리보기",
@@ -1202,6 +1202,7 @@
   },
   "swatch": {
     "charaHint": "이 기기에서 해석합니다. 아무것도 전송하지 않습니다 — 파일에는 캐릭터 이름과 때로는 스크린샷이 들어 있습니다.",
+    "charaHintGlamour": "이 기기에서 해석합니다. 장비 이름을 표시하기 위해 장비의 모델 번호와 얼굴 소품의 ID만 저희 API로 전송됩니다. 캐릭터 이름과 색상은 이 기기에 남습니다.",
     "localOnly": "로컬 전용",
     "replaceFile": "다른 파일 불러오기",
     "dropTitle": ".chara 파일을 끌어다 놓기",

@@ -244,6 +244,10 @@ rather than passing them through to the SPA — so collapsing the two would boun
 visitor off every tool page. This is why beta has a separate `og-beta.` domain instead of
 serving cards from `beta.xivdyetools.app/og`. `tests/wrangler-env.test.ts` guards both invariants.
 
+Workers Logs (`[observability]`) are pinned **off** in both blocks (FINDING-022): both privacy
+policies promise it, and enabling it needs the policies (all six languages) updated in the same
+change. `tests/wrangler-env.test.ts` guards it, plus no logpush / tail consumers.
+
 Compatibility date `2024-12-01`. **No `nodejs_compat`** (per ARCH-001). The `[[rules]]` block declares `**/*.ttf` as Data imports so wrangler bundles fonts as `ArrayBuffer`s.
 
 The site root `/` is deliberately **not** routed in either env — `xivdyetools.app/` and

@@ -1,0 +1,12 @@
+
+ RUN  v5.0.2 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/apps/discord-worker
+
+
+ Test Files  8 passed (8)
+      Tests  99 passed (99)
+   Start at  23:43:06
+   Duration  3.99s (transform 68%, import 24%, worker 6%, tests 2%)
+
+  Transform  transforming modules took 11.36s · 68% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns

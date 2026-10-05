@@ -24,11 +24,11 @@ import {
   isBanTargetId,
   sanitizeErrorMessage,
 } from '../../utils/response.js';
-import { sanitizeName, sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
-import { safeEditOriginalResponse, safeSendMessage } from '../../utils/discord-api.js';
+import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
-import { STATUS_DISPLAY } from '../../types/preset.js';
+import { buildReviewButtons, buildReviewEmbed } from '../review-message.js';
 
 // ============================================================================
 // Constants
@@ -231,12 +231,46 @@ async function handlePendingAction(ctx: ModerationContext): Promise<void> {
 }
 
 /**
- * Handle 'approve' action - approve a pending preset
+ * FINDING-017: a typed preset id has no reviewed revision, so `approve` and
+ * `reject` do not act. They fetch the CURRENT preset and answer with its text
+ * and one confirm button bound to the revision and status just fetched. The
+ * confirm click is an ordinary revision-bound button: approve acts through
+ * `processApproval`, and reject opens the reason modal bound to the same
+ * revision (the reason is asked there, so the command takes none).
+ */
+async function sendConfirmation(
+  ctx: ModerationContext,
+  presetId: string,
+  action: 'approve' | 'reject'
+): Promise<void> {
+  const current = await presetApi.getModerationPreset(ctx.env, presetId, ctx.userId);
+  if (!current) {
+    await sendModerationResponse(ctx, {
+      embeds: [errorEmbed(ctx.t.t('common.error'), 'Preset not found.')],
+    });
+    return;
+  }
+
+  const { preset, revision } = current;
+  await sendModerationResponse(ctx, {
+    embeds: [
+      buildReviewEmbed(
+        preset,
+        revision,
+        `Review this text, then click ${action === 'approve' ? 'Approve' : 'Reject'} to confirm. ` +
+          'The decision applies to this exact version.'
+      ),
+    ],
+    components: buildReviewButtons(presetId, { revision, status: preset.status }, [action]),
+  });
+}
+
+/**
+ * Handle 'approve' action - show the preset for confirmation, then approve on the confirm click
  */
 async function handleApproveAction(
   ctx: ModerationContext,
-  presetId: string | undefined,
-  reason: string | undefined
+  presetId: string | undefined
 ): Promise<void> {
   // Validate preset ID (shared validation)
   if (await validatePresetIdOrSendError(ctx, presetId)) {
@@ -254,97 +288,27 @@ async function handleApproveAction(
     return;
   }
 
-  const preset = await presetApi.approvePreset(ctx.env, presetId!, ctx.userId, reason);
-  const safeName = sanitizeName(preset.name); // FINDING-019
-
-  await sendModerationResponse(ctx, {
-    embeds: [
-      successEmbed(
-        ctx.t.t('preset.moderation.approved'),
-        ctx.t.t('preset.moderation.approvedDesc', { name: safeName })
-      ),
-    ],
-  });
-
-  // Notify submission log channel
-  if (ctx.env.SUBMISSION_LOG_CHANNEL_ID) {
-    await safeSendMessage(ctx.env.DISCORD_TOKEN, ctx.env.SUBMISSION_LOG_CHANNEL_ID, {
-      embeds: [
-        {
-          title: `\u2705 ${safeName} - Approved`,
-          description: `Preset approved`,
-          color: STATUS_DISPLAY.approved.color,
-          footer: { text: `ID: ${preset.id}` },
-        },
-      ],
-    });
-  }
+  await sendConfirmation(ctx, presetId!, 'approve');
 }
 
 /**
- * Handle 'reject' action - reject a pending preset with reason
+ * Handle 'reject' action - show the preset for confirmation; the confirm click
+ * opens the reason modal
+ *
+ * moderation-worker-06: the ten-character reason floor still holds on this
+ * entry point - the rejection modal the confirm click opens enforces it, and
+ * is now the only place the reason is typed (FINDING-017).
  */
 async function handleRejectAction(
   ctx: ModerationContext,
-  presetId: string | undefined,
-  reason: string | undefined
+  presetId: string | undefined
 ): Promise<void> {
   // Validate preset ID (shared validation)
   if (await validatePresetIdOrSendError(ctx, presetId)) {
     return;
   }
 
-  // Reason is required for rejection.
-  //
-  // moderation-worker-06: the floor used to depend on which surface the
-  // moderator used. The rejection MODAL demands ten characters ("Please
-  // provide a valid rejection reason (at least 10 characters)"), while this
-  // path accepted a single one \u2014 and presets-api applies
-  // `validateModerationReason` to `/revert` only, never to
-  // `/:presetId/status`, so nothing downstream closed the gap either. Same
-  // rule on both entry points now.
-  if (!reason || reason.trim().length < MIN_REJECTION_REASON_LENGTH) {
-    await sendModerationResponse(ctx, {
-      embeds: [errorEmbed(ctx.t.t('common.error'), ctx.t.t('preset.moderation.missingReason'))],
-    });
-    return;
-  }
-
-  const preset = await presetApi.rejectPreset(ctx.env, presetId!, ctx.userId, reason);
-
-  const safeName = sanitizeName(preset.name);
-
-  await sendModerationResponse(ctx, {
-    embeds: [
-      {
-        title: `\u274C ${ctx.t.t('preset.moderation.rejected')}`,
-        // FINDING-019: author-controlled name + moderator-typed reason sanitised
-        description: ctx.t.t('preset.moderation.rejectedDesc', { name: safeName }),
-        color: 0xed4245,
-        fields: [{ name: 'Reason', value: sanitizeReason(reason) }],
-      },
-    ],
-  });
-
-  // moderation-worker-05: rejection was the ONLY moderation action that never
-  // reached the submission log. `handleApproveAction` posts here, and so do
-  // `processRejection` (the modal), `processApproval` and `processRevert` \u2014 so
-  // the Discord-visible record of rejections was complete or not depending on
-  // which surface the moderator happened to use. (The durable trail was never
-  // affected: presets-api writes the `moderation_log` row either way.)
-  if (ctx.env.SUBMISSION_LOG_CHANNEL_ID) {
-    await safeSendMessage(ctx.env.DISCORD_TOKEN, ctx.env.SUBMISSION_LOG_CHANNEL_ID, {
-      embeds: [
-        {
-          title: `\u274C ${safeName} - Rejected`,
-          description: `Preset rejected`,
-          color: STATUS_DISPLAY.rejected.color,
-          fields: [{ name: 'Reason', value: sanitizeReason(reason) }],
-          footer: { text: `ID: ${preset.id}` },
-        },
-      ],
-    });
-  }
+  await sendConfirmation(ctx, presetId!, 'reject');
 }
 
 /**
@@ -409,16 +373,21 @@ async function handleModerateSubcommand(
 
   const action = options?.find((opt) => opt.name === 'action')?.value as string;
   const presetId = options?.find((opt) => opt.name === 'preset_id')?.value as string | undefined;
-  const reason = options?.find((opt) => opt.name === 'reason')?.value as string | undefined;
+  // The `reason` option is no longer read: approve and reject show the preset
+  // for confirmation, and a rejection reason is typed in the modal that
+  // confirmation opens (FINDING-017).
 
   if (!action) {
     return ephemeralResponse('Missing action');
   }
 
-  const deferResponse = deferredResponse();
+  // FINDING-017: approve / reject answer with the preset's text and a confirm
+  // button — the message is private to the moderator, and the confirm click
+  // edits it through the interaction webhook (see editReviewMessage).
+  const deferResponse = deferredResponse(action === 'approve' || action === 'reject');
 
   ctx.waitUntil(
-    processModerateCommand(interaction, env, t, userId, action, presetId, reason, logger).catch(
+    processModerateCommand(interaction, env, t, userId, action, presetId, logger).catch(
       (err) => {
         logger?.error(
           'Unhandled error in processModerateCommand',
@@ -442,7 +411,6 @@ async function processModerateCommand(
   userId: string,
   action: string,
   presetId?: string,
-  reason?: string,
   logger?: ExtendedLogger
 ): Promise<void> {
   // Build context object for handlers
@@ -455,11 +423,11 @@ async function processModerateCommand(
         break;
 
       case 'approve':
-        await handleApproveAction(ctx, presetId, reason);
+        await handleApproveAction(ctx, presetId);
         break;
 
       case 'reject':
-        await handleRejectAction(ctx, presetId, reason);
+        await handleRejectAction(ctx, presetId);
         break;
 
       case 'stats':
@@ -696,6 +664,17 @@ async function processUnban(
           fields: [
             { name: 'User ID', value: targetUserId, inline: true },
             { name: t.t('ban.presetsRestored'), value: String(result.presetsRestored), inline: true },
+            // FINDING-021: hidden presets the restore skipped because another
+            // approved or pending preset already holds their dye combination.
+            ...(result.presetsStillHidden
+              ? [
+                  {
+                    name: t.t('ban.presetsStillHidden'),
+                    value: `${result.presetsStillHidden} — ${t.t('ban.presetsStillHiddenWhy')}`,
+                    inline: false,
+                  },
+                ]
+              : []),
           ],
           footer: { text: `Unbanned by moderator` },
           timestamp: new Date().toISOString(),
@@ -708,6 +687,7 @@ async function processUnban(
         targetUserId,
         moderatorId,
         presetsRestored: result.presetsRestored,
+        presetsStillHidden: result.presetsStillHidden ?? 0,
       });
     }
   } catch (error) {

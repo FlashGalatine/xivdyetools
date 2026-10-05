@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "你的名字会显示在卡片上。",
     "providerDiscordNote": "大多数玩家已有账号",
     "providerXivauthNote": "验证你的游戏角色",
-    "privacyNote": "登录会创建账号记录，保存你的 Discord 或 XIVAuth ID 与用户名。你的显示名称会出现在你投稿的配色中。不收集角色数据和邮箱，也绝不出售。",
+    "privacyNote": "登录会创建账号记录，保存你的 Discord 或 XIVAuth ID 和一个名称，该名称会显示为你投稿配色的作者。使用 XIVAuth 时，该名称是你已验证角色的名称，如果登录时没有可用的已验证角色，则为“XIVAuth User”加上你的 XIVAuth ID 的前 8 个字符。如果你的 XIVAuth 账号已关联 Discord，该 Discord ID 也会被保存。不收集邮箱，也绝不出售。",
     "submitTitle": "投稿配色",
     "submitSub": "发布前需审核",
     "previewLabel": "展示效果",
@@ -1202,6 +1202,7 @@
   },
   "swatch": {
     "charaHint": "在本机解析。不会上传任何内容 — 文件包含角色名，有时还有截图。",
+    "charaHintGlamour": "在本机解析。为了给装备命名，只有其型号编号和面部配饰 ID 会发送到我们的 API。角色名和颜色都留在本机。",
     "localOnly": "仅限本地",
     "replaceFile": "载入其他文件",
     "dropTitle": "拖入 .chara 文件",

@@ -1,0 +1,199 @@
+{
+  "_doc": "Coordinator decisions over evidence/workflow-result.json. 'calib' = 1-based index into calib.findings. Fields here override the calibrator's. Render with render-findings.mjs, then hand-edit 008/009 (split) and 001 (live-curl evidence).",
+  "findings": [
+    {
+      "id": 1,
+      "calib": 1,
+      "note": "Primary evidence is the live probe 2026-10-03 06:52 UTC: beta.xivdyetools.app returns no CSP/XFO/HSTS/Permissions-Policy; production returns all four. Present since 4d1dfd97/af017fd0 (2026-08-09); three audits missed it because none probed beta. Fix must also make scripts/smoke-test-pages.js assert CSP + XFO on beta."
+    },
+    {
+      "id": 2,
+      "calib": 5,
+      "severity": "HIGH",
+      "note": "Re-graded MEDIUM->HIGH by the skill rule (a field the policy explicitly promises is never logged). Calibrator argued MEDIUM (non-personal values, Workers Logs off) — raise at the section-8 gate."
+    },
+    {
+      "id": 3,
+      "calib": 2
+    },
+    {
+      "id": 4,
+      "calib": 3,
+      "policy": "AMEND",
+      "reconcile_case": 2,
+      "note": "AMEND, not CORRECT: names fields (verified character name, linked Discord id) the text does not. Decide minimization first (should author_name default to the character name?). The 'No character data' UI string is false either way."
+    },
+    {
+      "id": 5,
+      "calib": 4
+    },
+    {
+      "id": 6,
+      "calib": 6
+    },
+    {
+      "id": 7,
+      "calib": 7,
+      "policy": "AMEND",
+      "reconcile_case": 2,
+      "note": "Minimize (send username) or AMEND (display name is a different field). Overrides the evidence-only 2026-08-29 rejection at review-discord-worker.md:276; both verifiers upheld."
+    },
+    {
+      "id": 8,
+      "calib": 8,
+      "policy": "AMEND",
+      "reconcile_case": 2,
+      "title": "Preset submissions post the author name, a <@id> mention, name and description to private Discord moderation / submission-log channels; bot policy §5 says all data is on Cloudflare and web PRIVACY.md item 3 is silent",
+      "policy_doc": "apps/discord-worker/PRIVACY_POLICY.md §5/§7; apps/web-app/PRIVACY.md §Network access item 3",
+      "note": "Absorbs the moderation-channel half of calib 9 (idx 39). Hand-edit: add the web PRIVACY.md variants."
+    },
+    {
+      "id": 9,
+      "calib": 9,
+      "policy": "AMEND",
+      "reconcile_case": 2,
+      "title": "apps/web-app/PRIVACY.md Community presets item claims completeness but omits the 30-day submission/edit counters and moderation-notification failure records that the bot policy discloses",
+      "note": "Ban records moved to FINDING-005, moderation-channel post to FINDING-008."
+    },
+    {
+      "id": 10,
+      "calib": 10
+    },
+    {
+      "id": 11,
+      "calib": 12,
+      "policy": "AMEND",
+      "reconcile_case": 2,
+      "note": "AMEND (new IP use under 'the whole of what we do'), or minimize by moving the universalis proxy to the native limiter."
+    },
+    {
+      "id": 12,
+      "calib": 13
+    },
+    {
+      "id": 13,
+      "calib": 14,
+      "policy": "AMEND",
+      "reconcile_case": 2,
+      "note": "New purpose for disclosed data: AMEND, or stop sampling."
+    },
+    {
+      "id": 14,
+      "calib": 16,
+      "note": "Cross-ref 2026-09-16-deep-dive/BUG-001 residual and OPEN_ITEMS.md:122. LOW: a banned user can already evade with a fresh Discord account."
+    },
+    {
+      "id": 15,
+      "calib": 17
+    },
+    {
+      "id": 16,
+      "calib": 18
+    },
+    {
+      "id": 17,
+      "calib": 19
+    },
+    {
+      "id": 18,
+      "calib": 20,
+      "note": "discord-worker only. The moderation-worker half (idx 25) is rejected as a re-file of the 2026-09-15 'Discord pseudonymous IDs in logs' suspicion."
+    },
+    {
+      "id": 19,
+      "calib": 22,
+      "note": "Deadline: Perspective key deletion by 2026-12-31 (DEPRECATIONS.md). DEPRECATIONS.md has no step to edit both privacy policies at removal — add one."
+    },
+    {
+      "id": 20,
+      "calib": 23
+    },
+    {
+      "id": 21,
+      "calib": 24
+    },
+    {
+      "id": 22,
+      "calib": 25
+    },
+    {
+      "id": 23,
+      "calib": 26
+    },
+    {
+      "id": 24,
+      "calib": 27
+    },
+    {
+      "id": 25,
+      "calib": 28
+    },
+    {
+      "id": 26,
+      "calib": 29
+    },
+    {
+      "id": 27,
+      "calib": 30
+    },
+    {
+      "id": 28,
+      "calib": 31
+    },
+    {
+      "id": 29,
+      "calib": 32,
+      "policy": "AMEND",
+      "reconcile_case": 2,
+      "note": "Stating a retention is a new commitment. The contact routing itself was accepted in 2026-08-29/FINDING-002 (114f6dde) — that part of policy-web-en#c2 stays rejected."
+    },
+    {
+      "id": 30,
+      "calib": 36
+    },
+    {
+      "id": 31,
+      "calib": 37
+    }
+  ],
+  "dropped": [
+    {
+      "calib": 11,
+      "to": "Rejected suspicions",
+      "reason": "Bot §6 Perspective row accepted by 2026-08-29/FINDING-006; text unchanged; sunset is future (tracked by FINDING-019 note)."
+    },
+    {
+      "calib": 15,
+      "to": "DOC- handoff",
+      "reason": "All five translated web ToS list nine tools (Glamour Reader missing) — a service-description omission, not a data claim; ja/ko/zh first readers missed it."
+    },
+    {
+      "calib": 21,
+      "to": "Rejected suspicions",
+      "reason": "moderation-worker id logging re-files the 2026-09-15 rejected 'Discord pseudonymous IDs in logs'; the 2026-09-16 §5 sentence is scoped to the Bot."
+    },
+    {
+      "calib": 33,
+      "to": "Rejected suspicions",
+      "reason": "sessionStorage holds transient OAuth flow state removed on callback; the storage section makes no closure claim."
+    },
+    {
+      "calib": 34,
+      "to": "Informational (not promoted)",
+      "reason": "Carried 2026-08-29 OAUTH-09 (XIVAuth refresh scope), code unchanged."
+    },
+    {
+      "calib": 35,
+      "to": "Rejected suspicions + Recommendation",
+      "reason": "Re-files the 2026-08-29 review-discord-worker rejection (response.ts allowed_mentions); nothing exploitable; add allowed_mentions centrally as hardening."
+    },
+    {
+      "calib": 38,
+      "to": "BUG- handoff (deep-dive)",
+      "reason": "Quadratic text() regex is reached only by the viewer's own typed note — self-DoS, no trust boundary."
+    }
+  ],
+  "pending": [
+    "Done 2026-10-03: verifier-tier translation re-read (wf_3a86d0f3-c03) — 19 divergences, 11 upheld, none commitment-changing; routed to evidence/handoffs.md."
+  ]
+}

@@ -5,7 +5,10 @@
  * project-specific types for the presets API worker.
  */
 
-import type { ModerationResult as SharedModerationResult } from '@xivdyetools/types';
+import type {
+  AuthContext as BaseAuthContext,
+  ModerationResult as SharedModerationResult,
+} from '@xivdyetools/types';
 
 // ============================================
 // RE-EXPORT SHARED TYPES
@@ -32,7 +35,22 @@ export type {
  * @deprecated Import directly from '@xivdyetools/types' instead.
  * These re-exports will be removed in the next major version.
  */
-export type { AuthSource, AuthContext } from '@xivdyetools/types';
+export type { AuthSource } from '@xivdyetools/types';
+
+/**
+ * The shared AuthContext plus the raw identity claims of a web (JWT) session.
+ *
+ * `userDiscordId` stays the single ACTING id (see resolveJWTUserId): the thing
+ * authorship, votes and quotas are keyed on. These two are every id the token
+ * proves, so a ban check can match a ban written under either identity
+ * (FINDING-014, 2026-10-03). Both are unset on the bot path, which has one id.
+ */
+export interface AuthContext extends BaseAuthContext {
+  /** The JWT `sub` — the oauth worker's internal user UUID. */
+  jwtSub?: string;
+  /** The JWT `discord_id` claim, when the account has a linked snowflake. */
+  jwtDiscordId?: string;
+}
 
 /**
  * @deprecated Import directly from '@xivdyetools/types' instead.
@@ -59,13 +77,18 @@ export type { ModerationResult, ModerationLogEntry, RateLimitResult } from '@xiv
  * and it is distinguishable from `'perspective'` (a real toxicity verdict) for
  * logging and for the moderator-facing copy.
  *
+ * `'unscored'` (FINDING-019) is the same shape for a different cause: no
+ * scorer is configured at all (no `PERSPECTIVE_API_KEY`), so the local word
+ * list is the only judge and it holds no profanity. Also `passed: false`.
+ *
  * This union is local to presets-api rather than widened in `@xivdyetools/types`
  * because it describes this worker's moderation pipeline, not the published
  * preset contract, which is unchanged.
  */
 export type PresetModerationMethod =
   | SharedModerationResult['method']
-  | 'perspective_unavailable';
+  | 'perspective_unavailable'
+  | 'unscored';
 
 /** A `ModerationResult` that can also report "the service could not answer". */
 export interface PresetModerationResult extends Omit<SharedModerationResult, 'method'> {

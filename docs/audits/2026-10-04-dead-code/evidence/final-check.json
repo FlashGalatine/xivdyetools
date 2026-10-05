@@ -1,0 +1,262 @@
+{
+ "refute": [
+  {
+   "id": "DEAD-004",
+   "refuted": false,
+   "partial": "Fix step 2 has the line numbers one off. The 'Accessibility Tool Styles & Global Helper Classes' comment header is at lines 425-427 of v4-layout-shell.ts, not 424-426. Line 424 is the closing brace of the mobile @media block. The deletion range 446-783 and the closing backtick at 784 are correct.",
+   "reason": "No tracked file outside docs/ produces any of the 27 base classes in lines 447-783, either as markup or as a template-built class name. The only non-docs hits are the shell itself and the two CHANGELOG lines (1469 and 1523), which record that the accessibility vision-cards, contrast table and matrix were removed in 5.0. Each modifier (.aa/.aaa/.fail/.good/.ok/.warning/.critical/.diagonal) appears only compounded with a dead base class. The one standalone rule, .warning-icon, has no consumer. Nothing re-exports V4LayoutShell.styles, and no test asserts on this CSS. .section-header and .section-title are still used by accessibility-tool and comparison-tool and stay outside the deletion range.",
+   "evidence": "git grep -lE over the full class list, repo-wide excluding docs, matches only apps/web-app/CHANGELOG.md and apps/web-app/src/components/v4/v4-layout-shell.ts. A grep for template-built class names (matrix-/vision-/wcag-/contrast-/pairwise-/warning- next to ${) finds nothing in apps or packages. Selector listing of 447-783: every .aa/.aaa/.fail rule is .wcag-badge.X, every .diagonal/.good/.warning/.critical/.ok rule is .matrix-cell.X, and the other .warning/.critical rules are .warning-callout.X. The only V4LayoutShell references are mocks in tests, docs and a type import in v4-layout.ts. The only hits outside the shell are in docs/historical (the v4 prototype index-full.html and styles.css). sed -n 425,427 shows the comment header there, line 446 is blank, 447 opens .contrast-table-container, 780 is .warning-callout strong and 784 is the closing backtick. stoat-worker is covered by the git grep over apps and has no hits."
+  },
+  {
+   "id": "DEAD-041",
+   "refuted": false,
+   "partial": "One gap the finding doesn't mention. tests/auth/jwt.test.ts only base64-decodes the header and payload, so jwt-validation.test.ts is the only test inside test-utils that checks createTestJWT produces a valid HS256 signature. Deleting the suite moves that check out of the package to presets-api tests/middleware/auth.test.ts:225 ('should authenticate with valid JWT') and :289 ('wrong secret'), which run the real verifier on test-utils' createTestJWT via tests/test-utils.ts. The fix's --filter=...@xivdyetools/test-utils gate does include presets-api, so the check still runs. Otherwise the steps are correct. Leaving the 'integration/**/*.test.ts' glob in place would also be harmless.",
+   "reason": "I could not find a live path. Both integration tests import only vitest, ../setup.js and ../../src/auth/jwt.js, and they test local copies of presets-api auth (processBotAuth, verifyJWT, processAuth). No tracked file outside integration/ imports setup.ts, including apps/stoat-worker and the scripts/ fixtures; the package is private, its exports map points only at dist/src subpaths, and tsconfig.json includes only src/. The real behaviour is covered by presets-api auth.test.ts, and test-utils' own tests/ cover jwt.ts and d1.ts.",
+   "evidence": "- packages/test-utils/integration/setup.ts:12-13 imports only ../src/cloudflare/d1.js and ../src/auth/jwt.js.\n- bot-authentication.test.ts:30-35 imports only ../setup.js and says it 'mirrors the dev/test + API-secret-gate subset of presets-api/src/middleware/auth.ts'. jwt-validation.test.ts:18-28 imports only setup and src/auth/jwt.\n- git grep for integration/setup, createMockPresetsEnv, createUserJWT, createWebAuthHeaders and SHARED_JWT_SECRET outside integration/ finds only docs, CHANGELOG, skill and comment lines, with no code importer.\n- The only config references are vitest.config.ts:7 (include), tsconfig.build.json:6 (exclude), knip.jsonc:96 (comment) and turbo.json:30 (comment). Nothing in .github or scripts names the directory.\n- packages/test-utils/tsconfig.json includes only src/**/*. package.json exports cover only ./dist/* subpaths.\n- presets-api tests/test-utils.ts:16-22 re-exports createTestJWT and createExpiredJWT from @xivdyetools/test-utils. auth.test.ts covers bot secret valid/invalid (105-140), moderator (141-175), bad Authorization (64-86), valid JWT (225), expired (272), wrong secret (289), malformed (309) and JWT moderator (361).\n- tests/auth/jwt.test.ts calls both createTestJWT and createExpiredJWT, including the default and custom payload branches. tests/cloudflare/d1.test.ts has 47 tests on createMockD1Database.\n- evidence/dead-code-check.txt lists packages/test-utils/integration/setup.ts among the 26 test-only exemptions, so removing it gives 25."
+  },
+  {
+   "id": "DEAD-018",
+   "refuted": false,
+   "partial": "",
+   "reason": "I could not refute it. Outside the tests, the only file that imports the service is apps/web-app/src/services/api-service-wrapper.ts:14. It calls six methods: initialize, set, delete, clear, keys and get (lines 86-162). Nothing outside indexeddb-service.test.ts reaches getAll, count or deleteDatabase, whether by a direct call, a computed key, a barrel re-export, a window exposure, an e2e spec, a script or stoat-worker. The fix's line ranges match the file, and removing them breaks no live behaviour or test that guards one.",
+   "evidence": "- I grepped tracked files for 'indexedDBService|IndexedDBService|indexeddb-service' outside tests and docs. The only hits are api-service-wrapper.ts:14,86,116,139,146,160,162 and the module itself.\n- I grepped apps/web-app (excluding tests) for '.getAll|.count|.deleteDatabase'. Every hit is unrelated:\n  - SavedPresetsService.getAll (preset-tool.ts:414, saved-presets-service.ts:106)\n  - Playwright locator.count() in e2e/\n  - native IDB store.getAll/count and indexedDB.deleteDatabase inside indexeddb-service.ts:293,361,403\n- No services/index.ts barrel re-exports the module. A bracket-key grep for getAll/count/deleteDatabase found nothing.\n- The only other mock of the module (extractor-tool.test.ts:244-251) stubs only get, set and delete, so it is unaffected.\n- The source ranges are correct:\n  - getAll's JSDoc plus body is 277-310.\n  - count is 345-377.\n  - 389 is the blank line after close(), so deleting 389-424 keeps the class's closing brace at 425.\n  - close() (381-388) stays and remains the test afterEach reset at :161. deleteDatabase's this.close() call is the only call to close() outside the tests, so close() keeps that test reset as its only remaining caller.\n- The test ranges match: describe getAll 396-415, count 439-458, deleteDatabase 476-495; the error-handling its 694-725, 760-791 and 793-851; the mockStore getAll/count stubs 64-69; and the mockIndexedDB.deleteDatabase stub 134-148. No surviving test uses those stubs: keys uses getAllKeys, and nothing else calls indexedDB.deleteDatabase.\n- The deleted tests cover only the three test-only methods, so no coverage of live production code is lost."
+  },
+  {
+   "id": "DEAD-017",
+   "refuted": false,
+   "partial": "",
+   "reason": "I couldn't find any live path to the six methods. Searching tracked files with git grep -w turned up only their declarations in world-service.ts and calls in world-service.test.ts. Production code reaches WorldService only through getWorldName, getAllDataCenters, getWorldsInDataCenter, initialize and isInitialized. None of the component-test or market-board-service mocks define these methods, and nothing indexes WorldService by a computed key. stoat-worker doesn't apply here: the service is private to web-app and is not a package export. The worldByName field is used only at lines 27, 83, 88, 132, 205 and 219, so deleting getWorldByName and isWorld leaves it orphaned. The tests listed for deletion cover only the removed methods. getWorldsInDataCenter and getAllDataCenters keep their own tests (lines 177-195), and the getAllWorlds assertions stay, so no live behavior loses coverage. The line ranges in the fix steps match the file.",
+   "evidence": "git grep -n -w -E 'getWorldById|getWorldByName|getDataCenter|getDataCenterForWorld|isDataCenter|isWorld|worldByName' (excluding docs/audits) matches only apps/web-app/src/services/world-service.ts (the declarations plus worldByName at 27/83/88/132/205/219) and apps/web-app/src/services/__tests__/world-service.test.ts. git grep 'WorldService' shows production calls only at extractor-tool.ts:2015, gradient-tool.ts:1946, harmony-tool.ts:1583 and market-board-service.ts:278 (getWorldName), market-board.ts:250 and 269 (getAllDataCenters / getWorldsInDataCenter), and index.ts:87-88 and market-board.ts:61 (initialize / isInitialized). 'WorldService\\s*\\[' has no matches. git diff 8ecb878f HEAD on world-service.ts and its test is empty, which confirms the MAIN origin. In the test file, the line ranges 130-139, 141-149, 167-175, 197-210, 213-247 and 290-312 cover exactly the removed methods' its and describes."
+  },
+  {
+   "id": "DEAD-003",
+   "refuted": false,
+   "partial": "Fix step 5 is incomplete. harmony-tool.ts handleContextAction (1653-1683) handles only the six legacy actions, so deleting them leaves an empty switch with just a logger.info. As with budget-tool and swatch-tool, harmony's whole listener (1638-1642), its method and its ContextAction import (line 68) die too. The Fix text names only budget and swatch as whole-method deletions. Separately, deleting the guard test also drops its unrelated check that swatch-tool.ts and mixer-tool.ts never contain the 'navigate-to-tool' event string, so a rewrite is better than a plain delete.",
+   "reason": "The dead-code claim holds. ResultCard (base emit at base-lit-component.ts:110) is the only component that dispatches 'context-action'. It does so from handleSlotAction (result-card.ts:1114, add-mixer-slot-1/2 only) and from handleMenuAction (1192), whose template call sites at 1807-1893 pass only inspect-*, transform-* and external-* literals. No other code dispatches it: not src, not e2e, not tests (result-card.test.ts:336 passes 'inspect-harmony'; gradient-tool.test.ts:1023 passes 'inspect-budget'). The six legacy literals appear only in the vocabulary, the handlers and the guard test. Nothing in stoat-worker, packages or e2e references ContextAction or CONTEXT_ACTIONS ('budget' in stoat parser.ts is an unrelated command name). common.copied is read only at gradient-tool.ts:2107 and has no dynamic 'common.' key access. success.copiedToClipboard stays live at budget-tool.ts:1188. The guard test is a static source scan with no runtime coverage of live code. The only flaw is that the fix plan leaves harmony's handler as an empty shell.",
+   "evidence": "result-card.ts:1111-1119,1134-1196,1807-1893; harmony-tool.ts:1638-1642,1653-1683 (every case is legacy); budget-tool.ts:1832-1853; swatch-tool.ts:2421-2428; gradient-tool.ts:2088-2109; mixer-tool.ts:2030-2034; context-action-vocabulary.test.ts (126 lines, LEGACY_EVENT_NAME check at 119-121); git grep of the legacy literals and of 'context-action' over apps/web-app, packages and apps/stoat-worker"
+  },
+  {
+   "id": "DEAD-008",
+   "refuted": false,
+   "partial": "Fix step 1 is incomplete. Deleting the factories at empty-state.ts:53-76 removes the only uses in that file of ICON_STATE_SEARCH (line 14) and ICON_STATE_FUNNEL (line 15), which the step keeps in the import. apps/web-app/tsconfig.json:9 sets noUnusedLocals: true, so `tsc --noEmit` fails with TS6133 and the @typescript-eslint/no-unused-vars rule fails lint. Step 1 must also drop those two names from the import at 13-21. They must stay exported from state-icons.ts, because dye-grid.ts:7/89/96 and v4/preset-tool.ts:19/1145 use them in production. Everything else in the finding holds.",
+   "reason": "I found no live path for the six factories, the four icons or the locale keys. The only production use of EMPTY_STATE_PRESETS is noHarmonyResults (harmony-tool.ts:60,1300). The only defect is step 1 leaving two imports unused, which breaks type-check.",
+   "evidence": "I ran git grep over apps and packages for EMPTY_STATE_PRESETS, the six factory names, the four icons (ICON_STATE_COINS, ICON_STATE_ALERT, ICON_STATE_WAIT_ANIMATED, ICON_DETAIL_EXTRACTOR), the emptyStates keys and marketBoard.priceUnavailable. Outside empty-state.ts the only hits are its test file, CHANGELOG/CLAUDE.md prose, and harmony-tool.ts:1300 calling noHarmonyResults. apps/stoat-worker, e2e, knip configs, .github and scripts have no references. No computed key exists (no t(`emptyStates.${…}`) or marketBoard.${…} template). No locale allow-list names these keys or their English values. The tests are not stale: the trimmed empty-state.test.ts keeps covering noHarmonyResults, EmptyState, createEmptyState and getEmptyStateHTML. The test ranges 257-280 (noSearchResults and allFilteredOut) and 291-313 (error and loading) leave line 314, which closes describe('Presets'), intact. The state-icons.ts ranges 28-29, 31-32, 43-44 and 46-72 are exact. The locale estimate is right: 23 emptyStates lines plus priceUnavailable is 24 per locale. Files checked: /c/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/apps/web-app/src/components/empty-state.ts, apps/web-app/src/shared/state-icons.ts, apps/web-app/src/components/__tests__/empty-state.test.ts, apps/web-app/tsconfig.json."
+  },
+  {
+   "id": "DEAD-022",
+   "refuted": false,
+   "partial": "One nuance, not a refutation. The package tests cover almost every case, but not quite all of them. branded.test.ts rejects the 4-, 5- and 7-digit lengths but has no 8-digit case like '#FF0000FF' (the alpha form). That case should be ported, which is exactly what the finding's \"port any uncovered case\" step says to do. Everything else in the web-app file has a counterpart in the package tests: toJSON, the severity levels, the prototype chain, all ErrorCode values, the edge cases, shorthand expansion and uppercase normalization.",
+   "reason": "The test file only tests @xivdyetools/types: its sole non-vitest import is that package (line 12). apps/web-app/src/shared/types.ts exports only ThemeName, ThemePalette, Theme, DataCenter and World, so the file tests no web-app code. The package's own tests already cover the same behaviour, and web-app's v8 coverage counts only web-app sources, so deleting the file loses no coverage anywhere. No config, script or workflow references the file; the only mentions are in CHANGELOGs.",
+   "evidence": "- apps/web-app/src/shared/__tests__/types.test.ts has 361 lines. Its only non-vitest import is `import { createHexColor, AppError, ErrorCode, type HexColor } from '@xivdyetools/types'`.\n- git grep -n export apps/web-app/src/shared/types.ts finds only ThemeName, ThemePalette, Theme, DataCenter and World. That file is also listed in coverage.exclude in apps/web-app/vitest.config.ts.\n- apps/web-app/vitest.config.ts covers src/**/*.{test,spec}.ts with no alias for @xivdyetools/types and no allowExternal setting, so code from packages/types is never measured as web-app coverage.\n- packages/types/src/error/app-error.test.ts has 35 its covering the constructor and default severity, all 4 severities, Error/AppError instanceof, the stack, all 11 ErrorCodes, toJSON and JSON.stringify, the prototype chain, catch-block instanceof, and empty/long/special/unicode messages, plus an exact 11-code count.\n- packages/types/src/color/branded.test.ts has 44 its covering createHexColor: 6- and 3-digit input, uppercase normalization, missing '#', lengths 1, 2, 4, 5 and 7, invalid characters, empty string and whitespace. It has no 8-digit case.\n- git grep for the file path finds only apps/web-app/CHANGELOG.md:1817 and :2878, plus unrelated presets-api and core types.test files.\n- git cat-file -e 8ecb878f:apps/web-app/src/shared/__tests__/types.test.ts succeeds, and git diff 8ecb878f HEAD shows no change to the file."
+  },
+  {
+   "id": "DEAD-021",
+   "refuted": false,
+   "partial": "The fix steps leave out apps/web-app/CLAUDE.md:283. Its Testing section gives `npx vitest run src/services/__tests__/color-service.test.ts` as the example single-file command, so deleting the test leaves a dead example in a living-tier doc. docs:check-links will not catch it because it is inside a code block, not a link. The fix should also swap that example for another test file.",
+   "reason": "The test file covers no web-app code. Its only import is `ColorService` from `@xivdyetools/core` (line 6), and web-app has no color-service.ts; the only matches are in CHANGELOG, CLAUDE.md and historical docs. Core's own suites cover the same behaviours with exact values. No CI workflow, knip config or script refers to the file. Deleting it does not change web-app coverage, because vitest coverage only measures web-app's own src. The cautious port-first fix breaks nothing that is live.",
+   "evidence": "The file is 280 lines with 39 `it(` blocks, and its only import is `@xivdyetools/core`. Web-app's production code does call `ColorService` (accessibility-tool.ts, budget-tool.ts, chara-sheet.ts, comparison-tool.ts), but those calls go to core. Core has packages/core/src/services/__tests__/ColorService.test.ts, ColorConverter.test.ts (441.67 and 360.62 distance cases at lines 586/592) and ColorblindnessSimulator.test.ts (achromatopsia cases). `git grep color-service` over .github, knip.jsonc, apps/web-app/knip.jsonc and scripts finds nothing. The only living-doc reference is apps/web-app/CLAUDE.md:283, as an example command."
+  },
+  {
+   "id": "DEAD-010",
+   "refuted": false,
+   "partial": "Minor wording only. The keys are read by five presets: noSearchResults, allFilteredOut, noPriceData, noImage and loading. The sixth test-only preset, `error`, reads errors.somethingWentWrong/tryAgain, which stay live. One side note: the orphan oracle's suffix rule (from the `${tool.translationKey}.title`/`.description` template in v4-app-header.ts) already marks every key ending in `.title` or `.description` as reachable. So the orphan gate would not catch these keys if they were left behind. That does not make removal unsafe.",
+   "reason": "I found no live reader. Across apps, packages, scripts and .github (stoat-worker, og-worker, api-worker and e2e included), git grep finds these keys only at empty-state.ts:55-107. Production uses EMPTY_STATE_PRESETS in one place: harmony-tool.ts:1300, which calls noHarmonyResults, and that key is kept. There are no `emptyStates`/`marketBoard` template prefixes and no computed preset access. dye-grid uses dyeSelector.* keys. No allow-list entry, typed key list or key-count assertion depends on these keys. All 6 locales have the same shape, and the line numbers and the 14-key count are correct.",
+   "evidence": "git grep 'emptyStates|priceUnavailable|noSearchResults|filteredOut|noPrice|noImage' (excluding locales and CHANGELOG): hits only in empty-state.ts:55-107 and empty-state.test.ts, plus the unrelated matcher.noImageForPalette. EMPTY_STATE_PRESETS outside tests: only harmony-tool.ts:60 and :1300 (noHarmonyResults). t(`...`) templates in web-app src: prefixes are accessibility, swatch, comparison, glamour.fact, lodestoneRegion, mixer.model, themes, harmony.types, and ${tool.translationKey}, where every TOOL_MENU translationKey is a tools.* key. i18n-same-english-allowlist.json and i18n-identical-allowlist.json have no entry for these keys or their English values (\"Loading...\", \"Price unavailable\", \"Clear search\", etc.). en.json: 1112 is emptyStates, 1113-1126 and 1132-1140 are the removable blocks, 581 is marketBoard.priceUnavailable. A python check confirmed all 6 locales have the same emptyStates keys and marketBoard.priceUnavailable. Outside the locale files and changelogs, the remaining references are frozen docs/audits snapshots. Files: C:\\dev\\XIVProjects\\xivdyetools\\.claude\\worktrees\\preview-2026-10-04\\apps\\web-app\\src\\components\\empty-state.ts, ...\\apps\\web-app\\src\\__tests__\\i18n-orphans.test.ts, ...\\apps\\web-app\\src\\locales\\en.json"
+  },
+  {
+   "id": "DEAD-020",
+   "refuted": false,
+   "partial": "The finding gives the test file as api-service-wrapper.test.ts. Its real path is apps/web-app/src/services/__tests__/api-service-wrapper.test.ts. The cited line ranges (68-85, 93-124, 477-498) are correct for that file.",
+   "reason": "Production code only calls APIService.getInstance(), clearCache() and resetInstance(). Nothing in production calls the wrapper's formatPrice, getPriceData or isInitialized, and nothing reads the initialized flag. The removal does not break any live behavior or any test that guards one.",
+   "evidence": "apps/web-app/src/services/api-service-wrapper.ts: the initialized field is at line 183 and its only write, inside the .then() callback, is at 207. isInitialized is at 221-227, formatPrice at 235-242 (delegates to CoreAPIService.formatPrice), and getPriceData at 250-259 (delegates to getInstance().getPriceData).\n\nA git grep for 'APIService.(formatPrice|getPriceData|isInitialized)' and 'APIService[' across apps and packages found three kinds of hit:\n- callers only in apps/web-app/src/services/__tests__/api-service-wrapper.test.ts;\n- a comment at market-board-service.ts:475, plus another in market-board-service.test.ts:496;\n- the core package's own APIService (APIService.test.ts, README), which is a different class and is untouched.\n\nThe other formatPrice and isInitialized hits are unrelated symbols:\n- formatPrice in gradient-tool, mixer-tool, v4/result-card, MarketBoard and market-board-service;\n- isInitialized in base-component, language-service, theme-service and WorldService.isInitialized.\n\nProduction uses of APIService are index.ts:126 (getInstance().getAPIStatus), market-board-service.ts:108 and :435 (getInstance and clearCache), and auth-service.ts:772 (clearCache). market-board-service.test.ts mocks api-service-wrapper with its own formatPrice, so removing the real method does not affect that mock.\n\nSearches of apps/stoat-worker and apps/web-app/e2e found no references. Nothing uses a computed key or a window debug hook to reach these methods. The class is not exported through a package exports map, because web-app is an app. Web-app's coverage thresholds are global ratchets, and the removal takes out source and tests together. The fix also keeps resetInstance and the .then() debug log, which other tests still use."
+  },
+  {
+   "id": "DEAD-012",
+   "refuted": false,
+   "partial": "",
+   "reason": "The finding holds. Nothing in production or tests calls getCategoryMeta, getRandomPreset, searchPresets, resolveDyes or getPresetWithDyes on HybridPresetService. The class is not exported, and the only ways in are the hybridPresetService singleton, used by preset-tool.ts and services/index.ts, plus type-only imports of UnifiedPreset. The import cleanup in the fix step is also safe: CategoryMeta, Dye and resolvePresetDye are used only inside the methods being deleted.",
+   "evidence": "Searched tracked files only (excluding docs/audits) with `git grep -w` for the five method names. The only web-app hits are the declarations at hybrid-preset-service.ts:242, 393, 404, 415 and 422, plus the internal resolveDyes call at :428. Line 285 is a call to localPresetService.searchPresets (the core PresetService), not to this class. Every other hit is in core PresetService, the discord-worker preset-api, or docs.\n\nNo hits in apps/stoat-worker, apps/web-app/e2e or apps/web-app/scripts. No string or bracket access to these names, and no `window.` exposure of the service. The class at :95 is not exported; the only export is the singleton at :465.\n\nEvery use of hybridPresetService calls only initialize, getPresets, getPreset and isAPIAvailable:\n- preset-tool.ts lines 430, 533, 568, 593 and 598\n- services/index.ts lines 91-94\n- the preset-tool.test.ts mock, which defines only those four methods\n\nIn hybrid-preset-service.ts itself, CategoryMeta appears only at :12 and :242, Dye only at :13, :415 and :424, and resolvePresetDye only at :16 and :416. PresetCategory and sharedDyeService stay in use elsewhere in the file, so they must be kept, and the fix keeps them. The comment at preset-tool.ts:589-592 confirms the category is no longer passed to getPresets, which backs the finding's follow-on note."
+  },
+  {
+   "id": "DEAD-029",
+   "refuted": false,
+   "partial": "The fix steps miss three test breakages. (1) ban-reason.test.ts 'should return processing message and ban user' (:375-420) and 'should ban user and send success message' (:422-491) leave banService.getPresetAuthorName as a bare vi.fn() that resolves undefined. The 'BadUser' and 'SpamUser' they assert, including banUser called with 'SpamUser' at ~:466, come only from the legacy base64 fallback at ban-reason.ts:86-92. Stripping the suffix at :390 and :437, as step 4 says, makes those assertions fail unless getPresetAuthorName is also mocked to return the name. (2) ban-confirmation.test.ts:99-114 uses 'ban_confirm__TestUser' and expects 'Invalid target user'. Once :77-78 becomes idPart, targetUserId is '_TestUser', isBanTargetId rejects it, and the handler returns 'Invalid button data.' Step 3 does not list this test, though step 4 does flag the matching ban-reason case at :175. (3) The comment to trim in ban-reason.ts runs from :57, not :58.",
+   "reason": "The legacy code is dead. Every emitter writes only the id (preset.ts:559 and :566, ban-confirmation.ts:93), and the suffix-free emitters have been in place since 8a05949d (2026-08-21). The ban_confirm message is ephemeral (flags: 64), and a legacy custom_id now fails safely at isBanTargetId. The fix plan is only partly right: as written it breaks tests it does not list (see partial).",
+   "evidence": "git grep 'ban_confirm\\|ban_reason_modal' (excluding tests and docs) finds only preset.ts:559 `ban_confirm_${targetUserId}` and ban-confirmation.ts:93 `ban_reason_modal_${targetUserId}` as emitters. No stoat-worker, discord-worker, script or config hits. git log -S legacyEncodedUsername points to 8a05949d (2026-08-21, FINDING-006/007). preset.ts:571 sets flags: 64. isBanTargetId (response.ts:283) accepts only a snowflake or a lowercase UUID, neither of which contains '_'. In ban-reason.test.ts:36, getPresetAuthorName: vi.fn() has no default. Tests :384/:431 build the suffix with base64UrlEncode('BadUser'/'SpamUser') and assert those names in the embed and the banUser call. ban-confirmation.test.ts:106 uses 'ban_confirm__TestUser' and expects 'Invalid target user'."
+  }
+ ],
+ "consistency": [
+  {
+   "problems": [
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-008.md",
+     "line": 16,
+     "problem": "The cascade sequencing contradicts the plan. DEAD-008's own steps already delete DEAD-009's and DEAD-010's content. Step 2 (line 16) deletes state-icons.ts 28-29, 31-32, 43-44 and 46-72, which is exactly DEAD-009. Step 3 (line 17) removes the emptyStates.* keys and marketBoard.priceUnavailable from all 6 locales, which is exactly DEAD-010. DEAD-009.md:13 says 'Remove in the same change as the six presets of DEAD-008' and DEAD-010.md:13 says 'Land this together with DEAD-008 and DEAD-009'. But CLEANUP_PLAN.md:4 and :172 put DEAD-009/010 in a separate Sprint 11 PR, 'only after Sprint 10 is merged and green', so the trigger and its cascades are not sequenced the same way across the documents.",
+     "fix": "Choose one model. Option 1: narrow DEAD-008's steps to the factories and the empty-state.ts import only, and keep DEAD-009/010 as Sprint 11 cascades. Option 2: fold DEAD-009/010 into DEAD-008's Sprint 10 change, and drop them from Sprint 11 and from the 'Cascades' lines in the report (line 133) and the plan (line 4)."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-013.md",
+     "line": 15,
+     "problem": "DEAD-013's steps already delete everything DEAD-016 lists: the msw handler handlers.ts:162-166, the integration describe at 158-182, and the e2e route at preset-gallery-api.spec.ts:128-142. Yet DEAD-016 is scheduled as a later cascade (CLEANUP_PLAN.md:178, Sprint 11). DEAD-016.md:16 then says 'Delete in the same change as the ... removals. Do not land it alone', which contradicts its separate Sprint 11 PR. Several ranges also disagree for the same deletions: community-preset-service.ts 330-340 (DEAD-013) vs 330-337 (DEAD-016:20); hybrid-preset-service.ts 331-352 vs 331-348; preset-submission-service.ts 425-466 (DEAD-015:15) vs 425-~455 (DEAD-016:20); handlers.ts 162-166 vs 162-167; e2e 128-142 vs 129-142.",
+     "fix": "Remove the test-tail deletions from DEAD-013 so DEAD-016 owns them, or merge DEAD-016 into Sprint 10 with DEAD-013/015. Then reconcile the line ranges, and fix the cascade wording in DEAD-016 and in CLEANUP_PLAN.md Sprint 11."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/DEAD_CODE_REPORT.md",
+     "line": 12,
+     "problem": "The headline totals of 1,578 source and 2,256 test lines (also at README.md:4) match catalog.json, but the catalog counts overlapping lines twice. Source: DEAD-008's src=87 already includes DEAD-009's 33 icon lines and 4 import lines (DEAD-008 steps 1-2), and DEAD-009 counts the same 37 again. Test: DEAD-013's test=31 (the integration describe 158-182) and DEAD-016's test=60 (the same describe, the msw handler and the 14-line e2e route that DEAD-013 also deletes) overlap. The headline therefore overstates source by about 37 lines and test by roughly 30-45 lines. The same inflation reaches the per-unit table (web-app 1163/1326 at line 109) and the Sprint 10/11 sums in CLEANUP_PLAN.md:145 and :172.",
+     "fix": "Deduplicate the line counts once ownership of the overlapping deletions is settled (see the DEAD-008 and DEAD-013 problems). Then recompute catalog.json src/test, the README/report/plan totals and the per-unit and per-sprint sums."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-054.md",
+     "line": 27,
+     "problem": "Several revisit triggers and preconditions cite earlier audits' DEAD ids that collide with this audit's own numbers. DEAD-054:27 makes 'once DEAD-019 is resolved' a step precondition, but DEAD-019 here is SubscriptionManager (web-app). DEAD-054:16 and the report's register line 154 say 'This is not DEAD-020', but DEAD-020 here is APIService. 'Same class as DEAD-018' or 'DEAD-018 family' is the revisit trigger in DEAD-047:13, DEAD-048:13, DEAD-050:16, DEAD-051:20, DEAD-052:13, DEAD-053:16 and in report lines 147, 148, 150, 151, 152 and 153, but DEAD-018 here is IndexedDBService. Other unqualified uses: DEAD-013:13 'dropped in DEAD-002', and DEAD-061:13/15 and DEAD-062:8 'DEAD-004'. Each trigger therefore points at the wrong finding in this catalog.",
+     "fix": "Qualify every cross-audit reference, for example '2026-09-15 DEAD-018' or 'the 2026-09-15 register's DEAD-019 (stoat)', or restate the trigger directly ('next core major'). DEAD-061 already does this for the CHANGELOG reference but not for its trigger text."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-049.md",
+     "line": 31,
+     "problem": "Two findings delete the same lines. DEAD-049 step 5 deletes web-app language-service.ts:260-265 and its test at :233. DEAD-023 (Sprint 10, CLEANUP_PLAN.md:160) already deletes those same lines (DEAD-023.md:18). DEAD-049's major-release step will therefore refer to code that is already gone.",
+     "fix": "In DEAD-049, replace step 5 with 'confirm DEAD-023 has landed' rather than repeating the deletion."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-050.md",
+     "line": 20,
+     "problem": "DEAD-050 is marked 'Cascade of: DEAD-049' (line 2), but its steps make the same deletions as DEAD-049's getToolName half: LocalizationService.ts:489-509, TranslationProvider getToolName, buildTools in build-locales.ts:815-870 and line 250, ToolKey and LocaleData.tools. The ranges differ: TranslationProvider ~336-370 (DEAD-049:20) vs 337-369 (DEAD-050:18) vs 338-369 (DEAD-050:21); ToolKey localization/index.ts:47-54 (DEAD-049:22) vs 46-54. So it is a duplicate, not a cascade, and its 66 source and 33 test lines are counted twice in the KEEP totals.",
+     "fix": "Merge DEAD-050 into DEAD-049, or narrow DEAD-050 to the types-only half (ToolKey, LocaleData.tools, the barrel line) that follows core's removal. Reconcile the ranges and drop the duplicated line counts."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-053.md",
+     "line": 26,
+     "problem": "One finding keeps what another removes. DEAD-053 says that at core 6.0.0, 'with DEAD-047', the HarmonyOptions interface (HarmonyGenerator.ts:105-~150) and the index.ts:50 barrel line are removed. DEAD-047.md:16 (step 1) instead says to move HarmonyOptions, HarmonyMatchingAlgorithm and HarmonyColorSpace to a surviving module and repoint the index.ts:49-55 exports, because bot-logic harmony.ts:11 needs HarmonyOptions.",
+     "fix": "Pick one outcome for HarmonyOptions at the core major. Either delete it, which requires bot-logic's major (DEAD-053) to ship first and must be stated in DEAD-047 step 1, or move it, in which case drop the deletion from DEAD-053."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-037.md",
+     "line": 16,
+     "problem": "The gate filter names a package that does not exist. DEAD-037:16 and DEAD-036:19 use `--filter=...xivdyetools-oauth`, but apps/oauth/package.json names the package `xivdyetools-oauth-worker`, as CLEANUP_PLAN.md:82 and gates-before.txt use. The step as written would fail with no matching package.",
+     "fix": "Change the filter to `--filter=...xivdyetools-oauth-worker` in DEAD-036.md:19 and DEAD-037.md:16."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/DEAD_CODE_REPORT.md",
+     "line": 55,
+     "problem": "In the merged findings, the titles (shared by the catalog, report and plan tables and the finding H1s) give line counts and scope that disagree with catalog.json's src/test fields, which feed the totals. DEAD-016: 46 test lines in the title vs 60 in the catalog. DEAD-023 (report :62): '6 lines + 5-line test' vs 17/43, and the title omits the merged preloadLocales. DEAD-025 (:64): 12-line test vs 13. DEAD-030 (:69): '8 lines + 10-line test' vs 24/12, and the title omits the merged ban.* and meta/common.success keys. DEAD-049 (:88 and the KEEP register :149): '~120 src + ~40 test' vs 270/100, and the title omits the merged getLabel/labels half that CLEANUP_PLAN.md:145 relies on. DEAD-051 (:90): '30 + 30' vs 52/60, and the title omits preloadLocales. DEAD-064 (:103): '56 source' vs 54.",
+     "fix": "Regenerate the titles of the merged findings so their scope and line counts match catalog.json, or correct the catalog values. Then update the H1s, the report catalog and KEEP register, and the plan tables."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-030.md",
+     "line": 25,
+     "problem": "DEAD-030's meta and common.success step says 'Apply this with DEAD-001 and the other DEAD-030 keys as one edit'. The plan puts DEAD-001 in Sprint 0, inside PR #225 before the batch merge (CLEANUP_PLAN.md:33), and DEAD-030 in Sprint 9 after it (CLEANUP_PLAN.md:138), so they cannot be one edit.",
+     "fix": "Drop the 'with DEAD-001' coupling from DEAD-030, or note that DEAD-001 will already have landed in #225."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/CLEANUP_PLAN.md",
+     "line": 215,
+     "problem": "The core row of the package-major backlog lists DEAD-047, 048, 049, 051 and 052 with '(about 1,250 source lines)'. Those five sum to 1,186 in catalog.json; 1,252 is reached only by adding DEAD-050, which belongs to packages/types. DEAD_CODE_REPORT.md:170 says 'DEAD-047–052, about 1,250', which includes DEAD-050 and also double-counts its overlap with DEAD-049.",
+     "fix": "Use about 1,190 for the core row (DEAD-047/048/049/051/052). Alternatively, state explicitly that the 1,250 figure includes types' DEAD-050, and fix it after the DEAD-049/050 deduplication."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/CLEANUP_PLAN.md",
+     "line": 184,
+     "problem": "The plan says 'the gap sweep re-confirmed seven published-package items, and those were folded into DEAD-050 and DEAD-053–DEAD-059'. catalog.json shows six gap-7 merges (into DEAD-050, 053, 054, 056, 058 and 059); DEAD-055 and DEAD-057 received none. The line also uses the internal 'gap sweep' process term.",
+     "fix": "Change it to 'six published-package items ... folded into DEAD-050, DEAD-053, DEAD-054, DEAD-056, DEAD-058 and DEAD-059', and drop the internal wording or describe it as 'the completeness re-sweep'."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-054.md",
+     "line": 11,
+     "problem": "Internal verifier and coordinator vocabulary appears in the finding records. DEAD-054:11 has 'the recGuess of REMOVE' (an internal field name). DEAD-030:21 and :23 say 'Apply this with the other gap-1 rows'. DEAD-051:12 has 'DEAD-023/02', shorthand for cand-gap2-02. The phrase 'This amends the first-pass grading ...' appears in DEAD-050:11, 053:11, 054:11, 056:11, 058:11 and 059:11. 'Coordinator note:' bullets appear in DEAD-002:11, DEAD-049:14 ('Two verifier rows merged') and DEAD-051:17. DEAD-044:15 says 'which the reviewer missed'.",
+     "fix": "Rewrite these lines in finding terms, for example 'apply with the other DEAD-030 keys' and 'DEAD-023 (preloadLocales)'. Delete the process notes, or turn them into neutral 'Scope:' sentences."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-051.md",
+     "line": 24,
+     "problem": "Several merged findings were not cleaned up. They repeat Location bullets: DEAD-050:5-6, 051:6-7, 053:5-6, 054:5-6, 056:5-6, 058:5-6 and 059:5-6. They also carry two conflicting Steps blocks for the same item, and the step headings are truncated mid-word. DEAD-051:24 vs :26 give test ranges 711-730 vs 707-731 and setup at 736-738 vs 737, with headings cut off at '(instance :609 + static :' and '(... static :6'. DEAD-054:22-25 vs :27-31 give types.ts 215-255 vs 215-256 and barrel :59 vs :58-59. DEAD-016:23 and DEAD-059:20 also have truncated headings.",
+     "fix": "Deduplicate the Location bullets, merge each pair of Steps blocks into one with a single set of line ranges, and write out the truncated headings in full."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/DEAD_CODE_REPORT.md",
+     "line": 118,
+     "problem": "Identical config-only cleanups are classified differently. DEAD-038, image-worker's '@' alias in vitest.config.ts and tsconfig.json (10 config lines), is counted as 0 source and 10 test lines (catalog; report :118; CLEANUP_PLAN.md:65). DEAD-040, the same alias in og-worker (10 config lines), is counted as 10 source lines (report :113; plan :96). DEAD-037's 3 config lines are counted as test, while DEAD-044's and DEAD-046's config lines are counted as source. This shifts the source/test split of the totals.",
+     "fix": "Pick one rule for config lines, either source or a separate config column. Apply it to DEAD-037, 038, 040, 044, 045 and 046, then recompute the unit and sprint sums."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/evidence/preview-branch.md",
+     "line": 65,
+     "problem": "Line 59 says 'PR #224 alone causes this'. Line 65 says it fails 'once both PRs are on main'. Since #224 alone introduces the alias, any CI run that includes moderation-worker fails as soon as #224 is on main.",
+     "fix": "Change line 65 to 'once #224 is on main, the next CI run that includes moderation-worker (for example #225's) fails'."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-009.md",
+     "line": 15,
+     "problem": "Step 2 has the garbled cross-reference 'together with the DEAD-008/DEAD-008 preset removal'.",
+     "fix": "Change it to 'together with the DEAD-008 preset removal'."
+    },
+    {
+     "file": "docs/audits/2026-10-04-dead-code/findings/DEAD-048.md",
+     "line": 19,
+     "problem": "Step 4 prunes the 'web-app color-service.test.ts blocks for these names'. DEAD-021 (Sprint 10, CLEANUP_PLAN.md:164) deletes that whole file, so this step will refer to a file that no longer exists.",
+     "fix": "Drop the web-app color-service.test.ts part of step 4, or note that it applies only if DEAD-021 has not landed."
+    }
+   ]
+  },
+  {
+   "claims": [
+    {
+     "claim": "(a1) apps/moderation-worker/tests/moderation-stats-contract.test.ts fails on preview/integration-2026-10-04, and only because of the #224 comment at apps/presets-api/src/handlers/moderation.ts:390.",
+     "verdict": "CONFIRMED",
+     "evidence": "The single-test run fails 1 of 2: 'declares exactly the keys presets-api returns' at :57, with exactly one extra alias, \"the\". The '_count' test passes. The test's regex is /SELECT\\b([\\s\\S]*?as\\s+actions_last_week)/i, so its span starts at the file's first SELECT. That is the INSERT…SELECT at line 225, not the stats query at 479; the test docblock's 'anchored to the statement' claim is weaker than it reads. Scanning the span (lines 225-484) with /\\bas\\s+([a-z_]+)/gi gives 390 'as the', then 480-484 pending, approved, rejected, flagged, actions_last_week. Nothing else in the span matches. Lines 129, 133 and 201 contain 'as …' but sit before line 225. gates-before.txt agrees: Tasks 61 successful, 62 total; moderation-worker 1 failed, 762 passed (763)."
+    },
+    {
+     "claim": "(a2) Rewording that comment alone makes the test pass, and no other text in the span would match.",
+     "verdict": "CONFIRMED",
+     "evidence": "I replaced line 390 in memory only, with no file written. Both '  // review writes neither (mirrors the revert route above).' and '…(same shape that the revert route above uses).' then yield exactly [actions_last_week, approved, flagged, pending, rejected], which equals Object.keys(declared). Two hazards for any future rewording: (1) the regex is case-insensitive, so 'As foo' also matches; (2) \\s+ crosses newlines, so a comment line ending in 'as' would capture the first identifier on the next line (here 'const')."
+    },
+    {
+     "claim": "(a3) PR #224 (head e34ea70a) alone introduces the comment and does not touch apps/moderation-worker.",
+     "verdict": "CONFIRMED",
+     "evidence": "Not at main: 'same shape as' is absent from 8ecb878f's moderation.ts. It is at e34ea70a:390. The only commit in 8ecb878f..HEAD that touches moderation.ts is f1b54a0f 'fix(presets-api): 2.4.0 … Sprint 3', and it is an ancestor of e34ea70a. #224's merge-base is 8ecb878f, and its diff touches 0 apps/moderation-worker files: outside apps/presets-api it touches only README.md and 7 docs/ files. 8ecb878f..HEAD has no commits on the contract test or packages/types/src. Nuance: the test already exists unchanged on main, so #224 by itself breaks main. 'Once both PRs are on main' only describes when CI first notices under the planned order, because #225's merge is the first push whose affected set includes moderation-worker."
+    },
+    {
+     "claim": "(a4) CI's affected-only filter explains why no PR's CI caught it.",
+     "verdict": "CONFIRMED",
+     "evidence": "In .github/workflows/ci.yml, lines 14-15 say that on a PR HEAD is the merge ref and HEAD^ the base tip. Lines 151-152 say every step is filtered by '...[HEAD^]' = changed packages plus their pnpm/turbo dependents. Lines 250-251 run 'pnpm turbo run test --filter=...[HEAD^]'. The ci job skips the schedule (`if: github.event_name != 'schedule'`). moderation-worker's package.json depends only on @xivdyetools/{auth,bot-logic,logger,types,worker-kit,test-utils}, not presets-api. turbo.json globalDependencies are only tsconfig.base.json, eslint.config.js and pnpm-workspace.yaml, none of which #224 touches. So #224's CI never selects moderation-worker. #225 (merge-base 8ecb878f, 37 moderation-worker files) ran the test against main without the comment. Precedent: ci.yml lines ~151-191 already run the cross-package wrangler-config file-reading tests unfiltered; this contract test is not in that list."
+    },
+    {
+     "claim": "(b1) discord-worker's /preset submit and /preset edit moderation notifications omit contentRevision, while the webhook path passes it.",
+     "verdict": "CONFIRMED",
+     "evidence": "Line 576 calls notifyModerationChannel, which at 1137-1150 passes {kind:'new', preset, categoryName}. Line 924 calls notifyEditModerationChannel, which at 1156-1172 passes {kind:'edit', preset, original, categoryName}. Neither passes contentRevision. The webhook path at apps/discord-worker/src/index.ts:404-409 passes contentRevision: preset.content_revision. ModerationNotificationOptions.contentRevision and the index.ts:409 line arrive with #227: the field is absent at 8ecb878f and present at 4ebd09f2."
+    },
+    {
+     "claim": "(b2) presets-api 2.4.0 submit/edit responses include content_revision in the object discord-worker receives.",
+     "verdict": "WRONG",
+     "evidence": "They do not.\n- Submit: the response is presetForViewer(preset), where preset is createPreset's literal object (preset-service.ts:420ff), which has no content_revision.\n- Edit: the response is presetForViewer(updatedPreset), where updatedPreset = updatePreset → rowToPreset (preset-service.ts:721). rowToPreset (52-129) does not map content_revision.\n- toPublicPreset returns the preset unchanged for authSource 'bot' (preset-service.ts:173-175), so it adds nothing.\n- packages/types/src has no content_revision, so CommunityPreset cannot carry it.\n- presets.ts:836-840 notes that RETURNING * does not see the AFTER-trigger bump, so even a raw RETURNING value would be stale.\n- apps/presets-api/CLAUDE.md says the token is intentionally omitted from public responses.\n- Only the webhook payloads add it, after a fresh re-read: presets.ts:853 (edit) and :1081 (submit).\nSo the direct /preset paths have no revision they could pass."
+    },
+    {
+     "claim": "(b3) Sprint 0 observation headline: bot-submitted presets get legacy moderation buttons.",
+     "verdict": "CONFIRMED",
+     "evidence": "True of the embed discord-worker posts itself, but incomplete. presets-api also fires the webhook for bot-sourced submits and edits: notifyDiscordBot at presets.ts ~1068-1090 and ~846-878 has no authSource filter, and DISCORD_WORKER is bound in both wrangler.toml blocks. discord-worker's webhook (index.ts:402) gates only on status === 'pending'. So a pending bot submission or flagged edit gets two moderation embeds: a revision-bound one from the webhook (Source: Discord) and a legacy-id one from preset.ts. This dual post already exists on main (both paths present at 8ecb878f); #227 did not introduce it. The practical remedy is to drop or merge the duplicate direct post, not to plumb a revision, which the response does not carry."
+    },
+    {
+     "claim": "(c1) Merge conflicts were only in README.md / docs/versions.md version rows (#225, #227, #228, #229, #231, #232, #234) and root CHANGELOG-laymans.md (#227); none was in code.",
+     "verdict": "CONFIRMED",
+     "evidence": "I ran legacy read-only `git merge-tree <base> <p1> <p2>` for all 13 preview merges and listed files with conflict markers:\n- #226, #223, #230, #224, #233, #235: none.\n- #225: README.md only.\n- #227: CHANGELOG-laymans.md, README.md, docs/versions.md.\n- #228, #229, #231, #232, #234: README.md and docs/versions.md.\nNo code file conflicted. One small inaccuracy: in #225 docs/versions.md auto-merged (its row edits are not adjacent); `--cc` shows it only because the combined hunk spans both sides' edits. The first-parent order and the heads match the table, and HEAD is 1e842b20. Spot checks: #234's versions.md keeps the higher version in every row. CHANGELOG-laymans.md reads 5.10.4 (line 34), 5.10.3 (41), 5.10.2 (50), 5.10.1 (62)."
+    },
+    {
+     "claim": "(c2) `pnpm install --frozen-lockfile` passes, so the open PRs' lockfile changes agree.",
+     "verdict": "CONFIRMED",
+     "evidence": "`pnpm install --frozen-lockfile --lockfile-only --offline` reports 'Already up to date' for all 18 workspace projects, and git status is unchanged afterwards. 'Agree' is trivially true: in 8ecb878f..HEAD only 3a158847 (#233, Sprint 11 undici override) touches pnpm-lock.yaml (+5/-4), and no merge conflicted on it."
+    },
+    {
+     "claim": "(Sprint 0) DEAD-001: the five preset.moderation.{approved,approvedDesc,missingReason,rejected,rejectedDesc} strings at moderation-worker bot-i18n.ts:53-57 are orphaned by #225.",
+     "verdict": "CONFIRMED",
+     "evidence": "Lines 53-57 of apps/moderation-worker/src/services/bot-i18n.ts hold exactly those five keys. On preview, git grep finds no reader in apps/moderation-worker/src, and there are no dynamic `moderation.${…}` keys. At 8ecb878f they were read at handlers/commands/preset.ts:263, 264, 308, 320 and 322."
+    },
+    {
+     "claim": "(Sprint 0) DEAD-002: ModerationPresetInfo.author_discord_id is unread in discord-worker's notification builder.",
+     "verdict": "CONFIRMED",
+     "evidence": "In apps/discord-worker/src/handlers/commands/preset-notifications.ts, the only occurrence is the declaration at :42, whose doc comment says it is 'Not rendered (FINDING-008)… kept so callers can pass a whole preset'. I did not re-verify the test-fixture reshaping note."
+    }
+   ],
+   "commentFix": "In PR #224, replace apps/presets-api/src/handlers/moderation.ts:390 with:\n  // review writes neither (mirrors the revert route above).\nVerified in memory: the stats-alias scan then yields exactly actions_last_week, approved, flagged, pending, rejected. Do not end the comment line with 'as': the regex is /i and \\s+ crosses newlines, so it would capture the next line's 'const'."
+  }
+ ]
+}

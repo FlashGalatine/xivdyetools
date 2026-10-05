@@ -44,10 +44,13 @@ describe('wrangler.toml', () => {
     expect(topLevel).not.toMatch(/^routes = \[/m);
   });
 
-  it('routes production to xivdyetools-presets-api on its custom domain', () => {
+  // The retired api.xivdyetools.projectgalatine.com custom domain was removed in
+  // the dashboard on 2026-10-05; a deploy would re-attach it if it were listed.
+  it('routes production to xivdyetools-presets-api on api.xivdyetools.app only', () => {
     expect(production).toMatch(/^name = "xivdyetools-presets-api"$/m);
     expect(production).toMatch(/^routes = \[/m);
-    expect(production).toContain('api.xivdyetools.app');
+    const patterns = [...production.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['api.xivdyetools.app']);
   });
 
   it('pins production JWT_ISSUER and ENVIRONMENT', () => {
@@ -89,5 +92,54 @@ describe('wrangler.toml', () => {
 
   it('has no [env.preview] block', () => {
     expect(toml).not.toMatch(/^\[env\.preview\]$/m);
+  });
+
+  /**
+   * FINDING-006 (2026-10-03 security audit): the retired
+   * xivdyetools.projectgalatine.com origin is gone from the CORS allowlist
+   * (DOMAIN_DEPRECATION Phase 1). Pin the exact production list so any
+   * addition is a reviewed change.
+   */
+  it('pins the exact production CORS allowlist', () => {
+    const additional = production.match(/ADDITIONAL_CORS_ORIGINS = "([^"]*)"/)?.[1];
+    expect(additional?.split(',')).toEqual([
+      'https://xiv-colorexplorer.pages.dev',
+      'https://beta.xivdyetools.app',
+    ]);
+    expect(production).toContain('CORS_ORIGIN = "https://xivdyetools.app"');
+    expect(toml).not.toMatch(/https:\/\/xivdyetools\.projectgalatine\.com/);
+  });
+
+  /**
+   * FINDING-022 (2026-10-03 security audit): both privacy policies promise
+   * Workers Logs are off, so the state is pinned in config in BOTH blocks and
+   * no log sink may be added without updating the policies in the same change.
+   */
+  it('pins observability off at the top level and in production', () => {
+    expect(topLevel).toMatch(/^\[observability\]\nenabled = false$/m);
+    expect(production).toMatch(/^\[env\.production\.observability\]\nenabled = false$/m);
+    expect(toml).not.toMatch(/^\s*enabled\s*=\s*true/m);
+  });
+
+  /**
+   * The daily retention job (src/retention-job.ts) is what makes the published
+   * retention periods hold; it runs in production only. A top-level trigger
+   * would give the routeless dev worker a cron of its own.
+   */
+  it('runs exactly one daily retention cron in production and none at the top level', () => {
+    expect(topLevel).not.toMatch(/^\[triggers\]$/m);
+    expect(topLevel).not.toMatch(/^crons\s*=/m);
+    expect(production).toMatch(/^\[env\.production\.triggers\]$/m);
+    const crons = production.match(/^crons = \[([^\]]*)\]$/m)?.[1] ?? '';
+    const entries = crons.split(',').map((s) => s.trim().replace(/^"|"$/g, ''));
+    expect(entries).toHaveLength(1);
+    // minute hour * * * : once a day.
+    expect(entries[0]).toMatch(/^\d{1,2} \d{1,2} \* \* \*$/);
+  });
+
+  it('configures no logpush and no tail consumers', () => {
+    expect(toml).not.toMatch(/^\s*logpush\s*=\s*true/m);
+    expect(toml).not.toMatch(/^\s*\[\[(env\.[a-z]+\.)?tail_consumers\]\]/m);
+    expect(toml).not.toMatch(/^\s*tail_consumers\s*=\s*\[\s*[^\]\s]/m);
   });
 });

@@ -111,6 +111,33 @@ function hasInvisibleCharacters(value: string): boolean {
 }
 
 /**
+ * Strip control, bidi and invisible characters from a display name that comes
+ * from the auth token (FINDING-016). The user cannot edit that name here, so
+ * rejecting it would 400 every create and refresh for them; stripping stores
+ * what the rest of the rule set would have accepted. A ZWJ survives only
+ * between emoji, exactly as `hasInvisibleCharacters` allows.
+ */
+export function sanitizeAuthorName(name: string): string {
+  const kept = Array.from(name).filter(
+    (ch) => ch === ZERO_WIDTH_JOINER || (!CONTROL_CHARS.test(ch) && !INVISIBLE_CHARS.test(ch))
+  );
+  return kept
+    .filter((ch, i) => {
+      if (ch !== ZERO_WIDTH_JOINER) return true;
+      const prev = kept[i - 1];
+      const next = kept[i + 1];
+      return (
+        prev !== undefined &&
+        next !== undefined &&
+        EMOJI_JOINABLE.test(prev) &&
+        EMOJI_JOINABLE.test(next)
+      );
+    })
+    .join('')
+    .trim();
+}
+
+/**
  * Shared character rule for a user-visible text field.
  *
  * @param value - the string to check
@@ -398,6 +425,13 @@ export function validateExampleLink(link: unknown): string | null {
     return `Example link must be at most ${EXAMPLE_LINK_MAX_LENGTH} characters`;
   }
 
+  // FINDING-016: the raw string is what a naive reader would see, so it gets
+  // the same character rule as name / description / tags. `new URL()` below
+  // silently strips tabs, newlines and spaces, which would hide them.
+  if (!hasOnlySupportedCharacters(link, false)) {
+    return `Example link ${UNSUPPORTED_CHARACTERS_SUFFIX}`;
+  }
+
   let url: URL;
   try {
     // Accept links pasted without a scheme ("eorzeacollection.com/…")
@@ -427,5 +461,13 @@ export function normalizeExampleLink(link: string | null | undefined): string | 
   if (link === undefined || link === null) return null;
   const trimmed = link.trim();
   if (!trimmed) return null;
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  // FINDING-016: store the canonical form (percent-encoded, whitespace and
+  // controls stripped), not the pasted text. An unparsable value never reaches
+  // here after validateExampleLink; fall back to the trimmed input regardless.
+  try {
+    return new URL(withScheme).href;
+  } catch {
+    return withScheme;
+  }
 }

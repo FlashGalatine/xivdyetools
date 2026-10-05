@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import {
   validateExampleLink,
   normalizeExampleLink,
+  sanitizeAuthorName,
   EXAMPLE_LINK_HOSTS,
 } from '../../src/services/validation-service';
 
@@ -63,6 +64,21 @@ describe('validateExampleLink', () => {
     expect(validateExampleLink(42)).not.toBeNull();
     expect(validateExampleLink('https://imgur.com/' + 'a'.repeat(300))).not.toBeNull();
   });
+
+  // FINDING-016: `new URL()` strips tabs / newlines and tolerates bidi marks, so
+  // the character rule has to run on the raw string.
+  it.each([
+    ['LF', 'https://x.com/a\n[b](https://evil.example)'],
+    ['tab', 'https://x.com/a\tb'],
+    ['right-to-left override', 'https://x.com/a‮evil'],
+    ['zero-width space', 'https://x.com/a​b'],
+  ])('rejects a link carrying %s', (_name, link) => {
+    expect(validateExampleLink(link)).toMatch(/Example link contains unsupported characters/);
+  });
+
+  it('accepts a space (stored percent-encoded by normalizeExampleLink)', () => {
+    expect(validateExampleLink('https://x.com/a b')).toBeNull();
+  });
 });
 
 describe('normalizeExampleLink', () => {
@@ -77,5 +93,33 @@ describe('normalizeExampleLink', () => {
     expect(normalizeExampleLink('')).toBeNull();
     expect(normalizeExampleLink(null)).toBeNull();
     expect(normalizeExampleLink(undefined)).toBeNull();
+  });
+
+  // FINDING-016: the canonical form is stored, not the pasted text.
+  it('stores the canonical href: percent-encodes a space, lowercases the host', () => {
+    expect(normalizeExampleLink('https://X.com/a b')).toBe('https://x.com/a%20b');
+  });
+
+  it('round-trips a valid link through validate then normalize', () => {
+    const link = 'eorzeacollection.com/glamour/38412?ref=a#top';
+    expect(validateExampleLink(link)).toBeNull();
+    expect(normalizeExampleLink(link)).toBe('https://eorzeacollection.com/glamour/38412?ref=a#top');
+  });
+});
+
+describe('sanitizeAuthorName', () => {
+  it('strips a right-to-left override, controls and zero-width characters', () => {
+    expect(sanitizeAuthorName('Ev‮il\u0007 Na​me')).toBe('Evil Name');
+  });
+
+  it('keeps a ZWJ between emoji and drops one between letters', () => {
+    const family = '\u{1F469}‍\u{1F467}';
+    expect(sanitizeAuthorName(`Mum ${family}`)).toBe(`Mum ${family}`);
+    expect(sanitizeAuthorName('a‍b')).toBe('ab');
+  });
+
+  it('leaves an ordinary name alone and returns empty for an all-invisible one', () => {
+    expect(sanitizeAuthorName('  Flash Galatine ')).toBe('Flash Galatine');
+    expect(sanitizeAuthorName('‮​')).toBe('');
   });
 });

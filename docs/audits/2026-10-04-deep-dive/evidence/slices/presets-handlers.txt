@@ -1,0 +1,4 @@
+apps/presets-api/src/handlers/categories.ts
+apps/presets-api/src/handlers/moderation.ts
+apps/presets-api/src/handlers/presets.ts
+apps/presets-api/src/handlers/votes.ts

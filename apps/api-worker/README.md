@@ -106,7 +106,7 @@ All dye and match endpoints return `Cache-Control: public, max-age=3600, s-maxag
 
 ### Universalis Proxy
 
-`src/universalis/` is the market-board proxy moved verbatim from the retired `apps/universalis-proxy`: Cache-API caching (aggregated 300 s + 120 s stale-while-revalidate; data-centers/worlds 24 h + 6 h), request coalescing, datacenter/world validation, and a per-isolate memory rate limiter on `/aggregated` (`RATE_LIMIT_REQUESTS`/`RATE_LIMIT_WINDOW_SECONDS` — 30/60 s in production, 60/60 s in dev). It is mounted at `/universalis` (canonical) and `/api/v2` (compat) and is deliberately outside `/v1/*`: no KV rate limiter, no locale middleware, and responses are raw Universalis bodies rather than the `{ success, data, meta }` envelope.
+`src/universalis/` is the market-board proxy moved verbatim from the retired `apps/universalis-proxy`: Cache-API caching (aggregated 300 s + 120 s stale-while-revalidate; data-centers/worlds 24 h + 6 h), request coalescing, datacenter/world validation, and a cache-miss rate limit on `/aggregated` through the native `UNIVERSALIS_RATE_LIMITER` binding (`RATE_LIMIT_REQUESTS`/`RATE_LIMIT_WINDOW_SECONDS` — 30/60 s in production, 60/60 s in dev; KV fallback; service-binding callers on `UNIVERSALIS_SERVICE_RATE_LIMITER` at 20x). It is mounted at `/universalis` (canonical) and `/api/v2` (compat) and is deliberately outside `/v1/*`: no `/v1` rate limiter, no locale middleware, and responses are raw Universalis bodies rather than the `{ success, data, meta }` envelope.
 
 ## Development
 
@@ -152,7 +152,7 @@ src/
   universalis/
     router.ts              # /universalis + /api/v2 proxy routes
     config/                # cache TTLs, datacenter/world lists
-    services/              # cached-fetch, cache-service, request-coalescer, memory rate-limiter
+    services/              # cached-fetch, cache-service, request-coalescer, rate-limiter selector
 scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables after a patch (manual; commit the output)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
 tests/
@@ -194,7 +194,7 @@ tests/
 | `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream (`https://v2.xivapi.com`) and the game-version pin, which also namespaces the row cache |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin so an upstream field rename cannot break parsing |
 
-Production routes: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app`.
+Production routes: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app`. The retired `proxy.xivdyetools.projectgalatine.com` was removed on 2026-10-05.
 
 ## Deployment
 

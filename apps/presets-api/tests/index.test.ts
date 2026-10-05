@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import app from '../src/index';
+import { scheduled } from '../src/retention-job';
 import type { Env } from '../src/types';
 import { createMockEnv, createMockD1Database, createMockPresetRow } from './test-utils';
 import { createMockKV } from '@xivdyetools/test-utils';
@@ -40,6 +41,13 @@ describe('Index/App', () => {
     beforeEach(() => {
         env = createMockEnv();
         vi.clearAllMocks();
+    });
+
+    // The Workers runtime reads `fetch` AND `scheduled` off the default export;
+    // without `scheduled` the daily retention cron fails silently in production.
+    it('default export carries fetch and the cron handler', () => {
+        expect(typeof app.fetch).toBe('function');
+        expect((app as unknown as { scheduled: unknown }).scheduled).toBe(scheduled);
     });
 
     // ============================================
@@ -315,6 +323,22 @@ describe('Index/App', () => {
 
             expect(first.status).toBe(500);
             expect(second.status).toBe(500);
+        });
+
+        // FINDING-027 (2026-10-03 security audit): a short webhook secret is
+        // reported but must stay out of the fatal path — the maintainer's
+        // ruling is "report it, never take the service down for it".
+        it('should keep serving, and log a warning, when INTERNAL_WEBHOOK_SECRET is short in production (FINDING-027)', async () => {
+            const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+            const env = createMockEnv({
+                ...validProductionOverrides(),
+                INTERNAL_WEBHOOK_SECRET: 'too-short',
+            });
+
+            const res = await app.request('/health', {}, env);
+
+            expect(res.status).toBe(200);
+            logged.mockRestore();
         });
 
         // FINDING-013 (2026-08-29 security audit): the same fail-closed,

@@ -50,11 +50,6 @@ const enLocale: LocaleData = {
       noPending: 'No presets are currently awaiting moderation.',
       pendingCount: '{count} preset(s) pending review',
       missingId: 'Please specify a preset ID for this action.',
-      approved: 'Preset Approved',
-      approvedDesc: '**{name}** has been approved and is now live!',
-      missingReason: 'Please provide a reason for rejection.',
-      rejected: 'Preset Rejected',
-      rejectedDesc: '**{name}** has been rejected.',
       stats: 'Moderation Statistics',
       // FINDING-001 (2026-08-11 fix wave): the queue was widened to include
       // approved presets whose picture alone is pending, but approve/reject
@@ -63,7 +58,7 @@ const enLocale: LocaleData = {
       // either no-op forever or wrongly pull a live palette from the gallery.
       imageOnlyNote: 'Picture pending review: {url}',
       imageOnlyNoteNoUrl: 'Picture pending review',
-      footerTextOnly: 'Use /preset moderate approve <id> or reject <id> <reason>',
+      footerTextOnly: 'Use /preset moderate approve <id> or reject <id>',
       footerMixedQueue:
         'approve/reject apply to the text entries only — 🖼 entries are reviewed on the moderation embed in Discord',
     },
@@ -97,6 +92,9 @@ const enLocale: LocaleData = {
     userUnbanned: 'User Unbanned',
     presetsHidden: 'Presets Hidden',
     presetsRestored: 'Presets Restored',
+    presetsStillHidden: 'Presets Still Hidden',
+    presetsStillHiddenWhy:
+      'another approved or pending preset already uses the same dye combination, so restoring it would duplicate that preset.',
     alreadyBanned: 'User is already banned.',
     notBanned: 'User is not currently banned.',
     userNotFound: 'User not found or has no presets.',
