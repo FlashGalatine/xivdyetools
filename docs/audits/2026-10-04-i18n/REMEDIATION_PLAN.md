@@ -189,7 +189,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** the same PR and merge as Sprint 2 (`deploy-discord-worker.yml`, which runs `register-commands`)
 
-## Sprint 4 — web-app: presets and collections
+## Sprint 4 — web-app: presets and collections — PR #245 (open)
+
+**Done in PR #245** (web-app 5.14.2, stacked on #244). It also fixed the Glamour Reader's copies of BUG-016 and BUG-082, and tagged core's `PresetService.getCategoryMeta` `@public`. Details are in the re-verification file's *Sprint 4* section.
 
 **The anchor is deep-dive/BUG-029:** `reconcileTombstones` marks live saved presets "Removed by its author".
 
