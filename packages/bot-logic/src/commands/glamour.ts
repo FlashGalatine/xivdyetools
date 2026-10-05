@@ -439,7 +439,10 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
 
     const svgString = generateGlamourCard({
       stripHexes,
-      charSub: [producerToken(producer), [tribeDisplay(tribe, locale), genderSymbol(gender)].filter(Boolean).join(' ')]
+      // Clan and gender first, as /swatch orders it: the header is fitted to a
+      // pixel budget, and a long localized clan (ja, fr) must push the producer
+      // into the ellipsis, not the gender symbol, which the card shows nowhere else.
+      charSub: [[tribeDisplay(tribe, locale), genderSymbol(gender)].filter(Boolean).join(' '), producerToken(producer)]
         .filter(Boolean)
         .join(' · '),
       title: count,

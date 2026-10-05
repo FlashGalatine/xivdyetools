@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.8.2] - 2026-10-05
 
 Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
-with `@xivdyetools/bot-logic` 4.6.0 in the same PR. The production deploy re-registers commands (two
-Korean option descriptions changed).
+with `@xivdyetools/bot-logic` 4.6.0 in the same PR. The production deploy re-registers commands: three Korean option descriptions changed (the
+`/swatch` and `/glamour` file options and the `/preferences set clan` tooltip).
 
 ### Fixed
 

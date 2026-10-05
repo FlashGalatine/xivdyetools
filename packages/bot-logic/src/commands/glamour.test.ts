@@ -142,21 +142,21 @@ describe('executeGlamour', () => {
     const t = svgTexts(result.svgString);
 
     expect(t).toContain('5 dyed pieces · 6 dyes');
-    expect(t).toContain('ANAMNESIS · MIDLANDER ♀');
+    expect(t).toContain('MIDLANDER ♀ · ANAMNESIS');
     expect(t.join(' ')).toContain('5 of 5 dyed pieces · 3 named from a twin · 1 with no fix');
   });
 
   it("names the clan in the reader's language, as the game does (HC-001)", async () => {
     const de = await executeGlamour(input({ locale: 'de' }));
     if (!de.ok) throw new Error(de.errorMessage);
-    expect(svgTexts(de.svgString)).toContain('ANAMNESIS · WIESLÄNDER ♀');
+    expect(svgTexts(de.svgString)).toContain('WIESLÄNDER ♀ · ANAMNESIS');
     expect(de.svgString).not.toContain('MIDLANDER');
 
+    // The header fits a pixel budget. A long localized clan pushes the producer
+    // into the ellipsis, never the gender symbol (the card's only one).
     const ja = await executeGlamour(input({ locale: 'ja' }));
     if (!ja.ok) throw new Error(ja.errorMessage);
-    // The header fits its pixel budget, as SEEKER OF THE SUN already does in en,
-    // so a long clan may lose the gender symbol to an ellipsis
-    expect(svgTexts(ja.svgString).find((s) => s.startsWith('ANAMNESIS'))).toMatch(/^ANAMNESIS · ミッドランダー/);
+    expect(svgTexts(ja.svgString).find((s) => s.startsWith('ミッドランダー'))).toMatch(/^ミッドランダー ♀/);
   });
 
   it('counts one other look in the singular (I18N-016)', async () => {

@@ -20,13 +20,13 @@ the bot speaks the user's language. Minor: one new function and new keys; no key
 
 ### Fixed
 
-- **The `/glamour` and `/swatch` cards print the clan in the user's language** (HC-001):
+- **The `/glamour` and `/swatch` cards print the clan in the user's language** (HC-001). The `/glamour` header now puts clan and gender first, as `/swatch` does, so a long localized clan pushes the producer, not the gender symbol, into the ellipsis:
   `tribeDisplay(tribe, locale)` upper-cases the localized clan with `toLocaleUpperCase(locale)`.
   English output is unchanged.
 - **A refused file gives a localized reason** (HC-002): `/glamour` parser failures and api-worker's
   400/413/422 answers, and `/swatch` parser failures, show `card.charaFileReason.unreadable`
   instead of the English error message.
-- **`+1 LOOK` is singular** (I18N-016): `card.glamourLooks_one` / `_other` through `tc()`.
+- **The look count takes a plural** (I18N-016): `+2 LOOKS`, `+1 LOOK`, through `card.glamourLooks_one` / `_other` and `tc()`; it read `+2 LOOK`.
 - **The character-file manual topic covers `/glamour`** (I18N-019): pieces, twins, wearability
   and the GPOSERS list, in all six languages.
 - **Translations:**
