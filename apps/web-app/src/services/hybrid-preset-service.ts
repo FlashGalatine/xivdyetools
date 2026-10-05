@@ -84,6 +84,57 @@ export interface GetPresetsOptions {
   limit?: number;
 }
 
+/**
+ * What one `getPresets()` call fetched.
+ *
+ * BUG-029 (2026-10-04 deep-dive): the bare list could not tell preset-tool
+ * whether the community leg answered. A failed leg was logged and swallowed,
+ * so a transient 5xx came back as the curated list alone, and tombstone
+ * reconciliation read that as "every saved community preset was deleted".
+ */
+export interface PresetPoolResult {
+  /** Curated + community presets, sorted, cut to `limit`. */
+  presets: UnifiedPreset[];
+  /**
+   * The community leg was asked and answered. False when the API was
+   * unavailable at init, `includeAPI` was off, or the request failed: in each
+   * case `presets` says nothing about which community presets exist.
+   */
+  apiOk: boolean;
+  /**
+   * The id of every community row the API returned, taken BEFORE the merged
+   * sort and `limit` cut. Up to 15 curated + `limit` API rows are cut to
+   * `limit`, and a row cut for space has not been deleted.
+   */
+  apiIds: string[];
+}
+
+// ============================================
+// Sorting
+// ============================================
+
+/**
+ * Order presets by one of the gallery's three sorts. Never mutates `presets`.
+ * Exported so preset-tool can sort its local shelves (Saved, Mine) the same
+ * way this service sorts the fetched pool (2026-10-04 deep-dive OPT-008).
+ */
+export function sortPresets(presets: UnifiedPreset[], sort: PresetSortOption): UnifiedPreset[] {
+  switch (sort) {
+    case 'popular':
+      return [...presets].sort((a, b) => b.voteCount - a.voteCount);
+    case 'recent':
+      return [...presets].sort((a, b) => {
+        if (!a.createdAt && !b.createdAt) return 0;
+        if (!a.createdAt) return 1;
+        if (!b.createdAt) return -1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    case 'name':
+    default:
+      return [...presets].sort((a, b) => a.name.localeCompare(b.name));
+  }
+}
+
 // ============================================
 // Service Implementation
 // ============================================
@@ -251,10 +302,12 @@ class HybridPresetService {
    * Get presets with optional filtering
    * Combines local and community presets
    */
-  async getPresets(options: GetPresetsOptions = {}): Promise<UnifiedPreset[]> {
+  async getPresets(options: GetPresetsOptions = {}): Promise<PresetPoolResult> {
     const { category, search, sort = 'name', includeAPI = true, limit } = options;
 
     let presets: UnifiedPreset[] = [];
+    let apiOk = false;
+    let apiIds: string[] = [];
 
     // 5.0: 'community' is no longer a category — kept only as an
     // unreachable guard while callers migrate.
@@ -269,11 +322,13 @@ class HybridPresetService {
             limit: limit || 50,
           });
           presets = response.presets.map((p) => this.communityToUnified(p));
+          apiOk = true;
+          apiIds = presets.map((p) => p.id);
         } catch (error) {
           logger.warn('HybridPresetService: Failed to fetch community presets', error);
         }
       }
-      return presets;
+      return { presets, apiOk, apiIds };
     }
 
     // Get local presets
@@ -304,6 +359,8 @@ class HybridPresetService {
 
         const response = await this.communityService.getPresets(filters);
         const communityPresets = response.presets.map((p) => this.communityToUnified(p));
+        apiOk = true;
+        apiIds = communityPresets.map((p) => p.id);
 
         // Merge and deduplicate (prefer community version if same name)
         const existingIds = new Set(presets.map((p) => p.id));
@@ -318,14 +375,14 @@ class HybridPresetService {
     }
 
     // Apply sorting
-    presets = this.sortPresets(presets, sort);
+    presets = sortPresets(presets, sort);
 
     // Apply limit
     if (limit && presets.length > limit) {
       presets = presets.slice(0, limit);
     }
 
-    return presets;
+    return { presets, apiOk, apiIds };
   }
 
   /**
@@ -391,7 +448,7 @@ class HybridPresetService {
    * Get random preset
    */
   async getRandomPreset(category?: PresetCategory): Promise<UnifiedPreset | null> {
-    const presets = await this.getPresets({ category, includeAPI: true });
+    const { presets } = await this.getPresets({ category, includeAPI: true });
     if (presets.length === 0) return null;
 
     const randomIndex = Math.floor(Math.random() * presets.length);
@@ -402,7 +459,7 @@ class HybridPresetService {
    * Search presets
    */
   async searchPresets(query: string): Promise<UnifiedPreset[]> {
-    return this.getPresets({ search: query });
+    return (await this.getPresets({ search: query })).presets;
   }
 
   // ============================================
@@ -432,26 +489,6 @@ class HybridPresetService {
   // ============================================
   // Utility Methods
   // ============================================
-
-  /**
-   * Sort presets
-   */
-  private sortPresets(presets: UnifiedPreset[], sort: PresetSortOption): UnifiedPreset[] {
-    switch (sort) {
-      case 'popular':
-        return [...presets].sort((a, b) => b.voteCount - a.voteCount);
-      case 'recent':
-        return [...presets].sort((a, b) => {
-          if (!a.createdAt && !b.createdAt) return 0;
-          if (!a.createdAt) return 1;
-          if (!b.createdAt) return -1;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
-      case 'name':
-      default:
-        return [...presets].sort((a, b) => a.name.localeCompare(b.name));
-    }
-  }
 
   /**
    * Clear API cache

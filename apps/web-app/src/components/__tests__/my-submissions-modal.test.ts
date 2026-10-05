@@ -17,15 +17,29 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { CommunityPreset } from '@services/community-preset-service';
 
-const { mockShow, mockGetMySubmissions } = vi.hoisted(() => ({
+const {
+  mockShow,
+  mockShowConfirm,
+  mockDismiss,
+  mockGetMySubmissions,
+  mockDeletePreset,
+  mockToastSuccess,
+  mockToastError,
+} = vi.hoisted(() => ({
   mockShow: vi.fn().mockReturnValue('modal-id-my-submissions'),
+  mockShowConfirm: vi.fn().mockReturnValue('modal-id-confirm'),
+  mockDismiss: vi.fn(),
   mockGetMySubmissions: vi.fn(),
+  mockDeletePreset: vi.fn(),
+  mockToastSuccess: vi.fn(),
+  mockToastError: vi.fn(),
 }));
 
 vi.mock('@services/modal-service', () => ({
   ModalService: {
     show: mockShow,
-    showConfirm: vi.fn(),
+    showConfirm: mockShowConfirm,
+    dismiss: mockDismiss,
     dismissTop: vi.fn(),
   },
 }));
@@ -39,15 +53,15 @@ vi.mock('@services/language-service', () => ({
 
 vi.mock('@services/toast-service', () => ({
   ToastService: {
-    success: vi.fn(),
-    error: vi.fn(),
+    success: mockToastSuccess,
+    error: mockToastError,
   },
 }));
 
 vi.mock('@services/preset-submission-service', () => ({
   presetSubmissionService: {
     getMySubmissions: mockGetMySubmissions,
-    deletePreset: vi.fn(),
+    deletePreset: mockDeletePreset,
   },
 }));
 
@@ -87,7 +101,13 @@ function getContent(): HTMLElement {
 describe('showMySubmissionsModal', () => {
   beforeEach(() => {
     mockShow.mockClear();
+    mockShowConfirm.mockClear();
+    mockDismiss.mockClear();
+    mockToastSuccess.mockClear();
+    mockToastError.mockClear();
     mockGetMySubmissions.mockReset();
+    // No default: every delete test states what the DELETE answers.
+    mockDeletePreset.mockReset();
   });
 
   it('renders one row per submission with its status chip and actions (positive control)', async () => {
@@ -174,5 +194,110 @@ describe('showMySubmissionsModal', () => {
 
       expect(mockShow).not.toHaveBeenCalled();
     });
+  });
+
+  /**
+   * Delete from a row: click its Delete, then run the confirm dialog's
+   * onConfirm the way modal-container does (called, not awaited — the
+   * container dismisses the confirm itself straight after) and let the
+   * DELETE settle.
+   */
+  async function confirmDeleteOfFirstRow(): Promise<void> {
+    getContent().querySelector<HTMLButtonElement>('button[data-action="delete"]')!.click();
+    const confirm = mockShowConfirm.mock.calls[mockShowConfirm.mock.calls.length - 1][0];
+    void confirm.onConfirm();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  // 2026-10-04 deep-dive BUG-032: deletePreset never throws — it answers
+  // { success: false } on a 403/429/5xx or a dropped connection — and this
+  // handler ignored the answer, so every failure toasted "deleted".
+  describe('when the delete fails (BUG-032)', () => {
+    const onChanged = vi.fn();
+
+    beforeEach(async () => {
+      onChanged.mockClear();
+      mockGetMySubmissions.mockResolvedValue({ presets: [makePreset()], total: 1 });
+      mockDeletePreset.mockResolvedValueOnce({ success: false, error: 'Forbidden' });
+      await showMySubmissionsModal(onChanged);
+      await confirmDeleteOfFirstRow();
+    });
+
+    it('says it failed, not that it succeeded', () => {
+      expect(mockToastError).toHaveBeenCalledWith('errors.deletePresetFailed');
+      expect(mockToastSuccess).not.toHaveBeenCalled();
+    });
+
+    it('leaves the list underneath and this modal alone', () => {
+      expect(onChanged).not.toHaveBeenCalled();
+      expect(mockDismiss).not.toHaveBeenCalled();
+      expect(mockShow).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // 2026-10-04 deep-dive BUG-101: the rows, stat tiles and subtitle are built
+  // once, so after a successful delete the modal kept listing the deleted
+  // preset with the old counts.
+  describe('when the delete succeeds (BUG-101)', () => {
+    const onChanged = vi.fn();
+
+    beforeEach(async () => {
+      onChanged.mockClear();
+      mockGetMySubmissions
+        .mockResolvedValueOnce({
+          presets: [makePreset({ id: 'gone', name: 'Deleted One' }), makePreset({ id: 'kept' })],
+          total: 2,
+        })
+        .mockResolvedValueOnce({ presets: [makePreset({ id: 'kept' })], total: 1 });
+      mockDeletePreset.mockResolvedValueOnce({ success: true });
+      await showMySubmissionsModal(onChanged);
+      await confirmDeleteOfFirstRow();
+    });
+
+    it('deletes the row that was clicked and says so', () => {
+      expect(mockDeletePreset).toHaveBeenCalledWith('gone');
+      expect(mockToastSuccess).toHaveBeenCalledWith('preset.deleteSuccess');
+      expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes this modal by its own id and reopens it from a fresh fetch', () => {
+      // By id, not dismissTop(): the DELETE settles at an arbitrary later
+      // moment, when another modal may be on top (BUG-088).
+      expect(mockDismiss).toHaveBeenCalledWith('modal-id-my-submissions');
+      expect(mockGetMySubmissions).toHaveBeenCalledTimes(2);
+      expect(mockShow).toHaveBeenCalledTimes(2);
+      expect(getContent().textContent).not.toContain('Deleted One');
+      expect(getContent().querySelectorAll('button[data-action="delete"]').length).toBe(1);
+    });
+
+    it('does not try to dismiss the confirm dialog, which modal-container already closed', () => {
+      expect(mockDismiss).not.toHaveBeenCalledWith('modal-id-confirm');
+    });
+  });
+
+  // The DELETE can take up to 15 s. A user who closed My Submissions in the
+  // meantime must not have it pop back up when the DELETE lands.
+  it('does not reopen My Submissions if the user closed it while the delete ran (BUG-101)', async () => {
+    const onChanged = vi.fn();
+    mockGetMySubmissions.mockResolvedValue({ presets: [makePreset()], total: 1 });
+    let resolveDelete!: (value: { success: boolean }) => void;
+    mockDeletePreset.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveDelete = resolve;
+      })
+    );
+    await showMySubmissionsModal(onChanged);
+    const modalConfig = mockShow.mock.calls[0][0];
+    await confirmDeleteOfFirstRow();
+
+    // ✕ / Esc / backdrop: ModalService.dismiss runs the modal's onClose.
+    modalConfig.onClose?.();
+    resolveDelete({ success: true });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(mockToastSuccess).toHaveBeenCalledWith('preset.deleteSuccess');
+    expect(onChanged).toHaveBeenCalledTimes(1);
+    expect(mockShow).toHaveBeenCalledTimes(1);
+    expect(mockDismiss).not.toHaveBeenCalled();
   });
 });

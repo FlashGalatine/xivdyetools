@@ -7,7 +7,7 @@
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
 import type { PresetCategory, PresetSubmission, PresetEditRequest } from '@xivdyetools/types';
-import type { CommunityPreset } from './community-preset-service';
+import { communityPresetService, type CommunityPreset } from './community-preset-service';
 
 // ============================================
 // Types
@@ -342,6 +342,9 @@ class PresetSubmissionServiceImpl {
       }
 
       logger.info('Preset submitted successfully:', result);
+      // BUG-031 (2026-10-04 deep-dive): the cached lists predate this preset
+      // (or, for a duplicate, the vote it just added to the existing one).
+      communityPresetService.invalidatePresets(result.duplicate?.id);
 
       // Handle duplicate detection
       if (result.duplicate) {
@@ -495,6 +498,8 @@ class PresetSubmissionServiceImpl {
         return { success: false, error: data.message || `Failed to delete (${response.status})` };
       }
 
+      // BUG-031 (2026-10-04 deep-dive): every cached list still carries it.
+      communityPresetService.invalidatePresets(presetId);
       return { success: true };
     } catch (err) {
       logger.error('Error deleting preset:', err);
@@ -626,6 +631,8 @@ class PresetSubmissionServiceImpl {
       }
 
       logger.info('Preset edited successfully:', result);
+      // BUG-031 (2026-10-04 deep-dive): every cached list carries the old copy.
+      communityPresetService.invalidatePresets(presetId);
 
       return {
         success: true,

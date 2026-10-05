@@ -753,6 +753,7 @@
     "addedToCollection": "Added to {name}",
     "removedFromCollection": "Removed from {name}",
     "collectionFull": "Collection is full ({max} dyes max)",
+    "collectionsLimitReached": "You've reached the collection limit. Delete a collection to save another.",
     "export": "Export",
     "exportAll": "Export All",
     "import": "Import",

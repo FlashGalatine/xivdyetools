@@ -58,6 +58,9 @@ const ringed = (container: HTMLElement) =>
 beforeEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
+  // CollectionService keeps its records in memory; clearing storage alone
+  // would leak one test's saves into the next one's duplicate-name check.
+  CollectionService.reset();
   CharaSessionService.setSession(null);
 });
 
@@ -141,4 +144,67 @@ describe('saveCharacterColors', () => {
     expect(saved?.dyes).toHaveLength(1);
     expect(success).toHaveBeenCalledWith(LanguageService.t('swatch.characterSavedOne'));
   });
+
+  const characterRecords = () =>
+    CollectionService.getCollections().filter((c) => c.kind === 'character');
+
+  // BUG-016 (2026-10-04 deep-dive): a second save under the same name hit
+  // createCollection's duplicate check and showed the generic failure toast.
+  it('saves a second copy under a numbered name instead of failing on the duplicate', async () => {
+    const success = vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+    const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    await load();
+    const session = CharaSessionService.getSession()!;
+
+    saveCharacterColors(session);
+    saveCharacterColors(session);
+
+    expect(error).not.toHaveBeenCalled();
+    expect(characterRecords().map((c) => c.name)).toEqual(['Test Subject', 'Test Subject (1)']);
+    expect(success).toHaveBeenCalledTimes(2);
+  });
+
+  it('numbers a 50-character name by trimming the name, never the suffix', async () => {
+    vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+    const long = 'N'.repeat(60);
+    await load(JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: long }));
+    const session = CharaSessionService.getSession()!;
+
+    saveCharacterColors(session);
+    saveCharacterColors(session);
+
+    expect(characterRecords().map((c) => c.name)).toEqual([
+      'N'.repeat(50),
+      `${'N'.repeat(46)} (1)`,
+    ]);
+  });
+
+  it('says the collection limit is reached instead of "save failed" when there is no room', async () => {
+    const warning = vi.spyOn(ToastService, 'warning').mockImplementation(() => '');
+    const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    for (let i = 0; i < 50; i++) CollectionService.createCollection(`Seed ${i}`);
+    await load();
+
+    saveCharacterColors(CharaSessionService.getSession()!);
+
+    expect(characterRecords()).toHaveLength(0);
+    expect(error).not.toHaveBeenCalledWith(LanguageService.t('errors.saveChangesFailed'));
+    expect(warning).toHaveBeenCalledWith(LanguageService.t('collections.collectionsLimitReached'));
+  });
+
+  // BUG-082 (2026-10-04 deep-dive): `??` kept an empty or whitespace Nickname,
+  // which trims to nothing, so createCollection rejected every save.
+  it.each(['', '   '])(
+    'names the record after the file when the Nickname is %j',
+    async (nickname) => {
+      vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+      const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+      await load(JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: nickname }), 'blank.chara');
+
+      saveCharacterColors(CharaSessionService.getSession()!);
+
+      expect(error).not.toHaveBeenCalled();
+      expect(characterRecords().map((c) => c.name)).toEqual(['blank.chara']);
+    }
+  );
 });

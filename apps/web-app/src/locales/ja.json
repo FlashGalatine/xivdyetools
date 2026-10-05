@@ -753,6 +753,7 @@
     "addedToCollection": "{name}に追加しました",
     "removedFromCollection": "{name}から削除しました",
     "collectionFull": "コレクションがいっぱいです（最大{max}個）",
+    "collectionsLimitReached": "コレクションの上限に達しました。新しく保存するには、コレクションを1つ削除してください。",
     "export": "エクスポート",
     "exportAll": "すべてエクスポート",
     "import": "インポート",

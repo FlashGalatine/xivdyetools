@@ -753,6 +753,7 @@
     "addedToCollection": "{name}에 추가됨",
     "removedFromCollection": "{name}에서 제거됨",
     "collectionFull": "컬렉션이 가득 찼습니다 (최대 {max}개 염료)",
+    "collectionsLimitReached": "컬렉션 한도에 도달했습니다. 새로 저장하려면 컬렉션을 하나 삭제하세요.",
     "export": "내보내기",
     "exportAll": "모두 내보내기",
     "import": "가져오기",

@@ -138,6 +138,21 @@ function bestDye(hex: string): { dye: Dye; deltaE: number } | null {
 }
 
 /**
+ * `base`, or `base (1)`, `base (2)`… — the first name no record holds yet.
+ * Trims the base, never the suffix: a 50-character base would otherwise
+ * truncate back to itself and never terminate.
+ */
+function uniqueCollectionName(base: string): string {
+  let name = base;
+  let suffix = 1;
+  while (CollectionService.getCollectionByName(name)) {
+    const tag = ` (${suffix++})`;
+    name = `${base.slice(0, 50 - tag.length)}${tag}`;
+  }
+  return name;
+}
+
+/**
  * Save the character's resolved slot colours as a `kind: 'character'`
  * CollectionService record — each slot contributes the dye closest to the
  * colour it actually wears (the lip contributes its blend).
@@ -159,10 +174,21 @@ export function saveCharacterColors(session: CharaSession): void {
     return;
   }
 
-  const name = (
-    resolved.nickname ??
-    (fileName || LanguageService.t('swatch.characterDefaultName'))
+  // BUG-082 (2026-10-04 deep-dive): `??` kept an empty or whitespace Nickname,
+  // which createCollection then rejected as blank on every save.
+  const base = (
+    resolved.nickname?.trim() ||
+    fileName ||
+    LanguageService.t('swatch.characterDefaultName')
   ).slice(0, 50);
+  // BUG-016 (2026-10-04 deep-dive): a full store and a taken name both made
+  // createCollection return null, shown as the generic save failure. Say which
+  // one it is, and number a taken name the way the glamour palette save does.
+  if (!CollectionService.canCreateCollection()) {
+    ToastService.warning(LanguageService.t('collections.collectionsLimitReached'));
+    return;
+  }
+  const name = uniqueCollectionName(base);
   const record = CollectionService.createCollection(name, undefined, { kind: 'character' });
   if (!record) {
     ToastService.error(LanguageService.t('errors.saveChangesFailed'));

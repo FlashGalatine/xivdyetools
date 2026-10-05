@@ -199,32 +199,49 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
     if (action === 'delete') {
       const confirmEl = document.createElement('p');
       confirmEl.textContent = t('preset.confirmDelete');
-      // BUG-088: `onConfirm` is async and nothing awaits it, so the DELETE
-      // resolves at an arbitrary later moment -- by which time the user may
-      // have opened another modal. `dismissTop()` would then close THAT one.
-      // Dismiss the confirm dialog by its own id.
-      const confirmId = ModalService.showConfirm({
+      // modal-container closes the confirm dialog itself as soon as Confirm is
+      // clicked, so nothing here dismisses it. BUG-088: `onConfirm` is async
+      // and nothing awaits it, so the DELETE resolves at an arbitrary later
+      // moment -- by which time the user may have opened another modal, and
+      // `dismissTop()` would close THAT one. Hence the dismiss by id below.
+      ModalService.showConfirm({
         title: t('preset.deleteTitle'),
         content: confirmEl,
         destructive: true,
         confirmText: t('common.delete'),
         cancelText: t('common.cancel'),
         onConfirm: async () => {
-          try {
-            await presetSubmissionService.deletePreset(preset.id);
-            ToastService.success(t('preset.deleteSuccess'));
-            ModalService.dismiss(confirmId);
-            onChanged?.();
-          } catch {
+          // BUG-032 (2026-10-04 deep-dive): deletePreset answers a failure
+          // ({ success: false }) rather than throwing it.
+          const result = await presetSubmissionService.deletePreset(preset.id);
+          if (!result.success) {
             ToastService.error(t('errors.deletePresetFailed'));
+            return;
+          }
+          ToastService.success(t('preset.deleteSuccess'));
+          onChanged?.();
+          // BUG-101 (2026-10-04 deep-dive): the rows, tiles and subtitle are
+          // built once, so this modal would keep listing the deleted preset.
+          // Close it and reopen it from a fresh fetch — unless the user has
+          // closed it while the DELETE ran.
+          if (open) {
+            ModalService.dismiss(modalId);
+            void showMySubmissionsModal(onChanged);
           }
         },
       });
     }
   });
 
-  ModalService.show({
+  // False once the modal is closed by any route (✕, Esc, backdrop, an action
+  // that leaves it, or the delete handler's own dismiss) — ModalService runs
+  // onClose on every one.
+  let open = true;
+  const modalId = ModalService.show({
     type: 'custom',
+    onClose: () => {
+      open = false;
+    },
     title: t('preset.mySubmissions'),
     subtitle: `${LanguageService.tInterpolate(
       presets.length === 1 ? 'preset.mineSummaryPresetsOne' : 'preset.mineSummaryPresetsMany',

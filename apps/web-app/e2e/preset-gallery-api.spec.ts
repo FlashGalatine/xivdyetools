@@ -233,7 +233,9 @@ test.describe('Preset gallery against a live-shaped API', () => {
     // could have their stubs swapped and still pass. What actually
     // distinguishes a 500 is that the community presets vanish while the
     // bundled curated ones stay: `hybrid-preset-service` catches the throw and
-    // returns the local set.
+    // returns the local set, flagged as a failed community leg, so the gallery
+    // says the feed is unavailable (BUG-029, 2026-10-04 deep-dive) rather than
+    // showing an empty feed.
     await page.route('**/api/v1/presets**', (route) =>
       route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' })
     );
@@ -251,13 +253,14 @@ test.describe('Preset gallery against a live-shaped API', () => {
     for (const p of PRESETS) {
       await expect(cards(page).filter({ hasText: p.name })).toHaveCount(0);
     }
+    await expect(page.getByText('Community feed unavailable').first()).toBeVisible();
   });
 
   test('goes properly offline when the health check fails', async ({ page }) => {
     // `isAPIAvailable()` gates every community fetch on /health. The beforeEach
-    // stub answers it 200, so a failing *presets* call alone never reaches the
-    // offline path — hybrid-preset-service swallows that throw. Failing health
-    // is what actually exercises it.
+    // stub answers it 200; a failing *presets* call is the test above. A failing
+    // health check is the other way into the offline path, where the community
+    // request is never made at all.
     await page.route('**/health', (route) => route.fulfill({ status: 503, body: '' }));
     await page.route('**/api/v1/presets**', (route) => route.abort('failed'));
 

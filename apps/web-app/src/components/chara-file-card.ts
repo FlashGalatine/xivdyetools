@@ -292,7 +292,7 @@ export class CharaFileCard {
       el(
         'span',
         `font-family: ${SANS}; font-weight: 600; font-size: 16px; color: var(--theme-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;`,
-        resolved.nickname ?? (fileName || LanguageService.t('swatch.unnamedCharacter'))
+        resolved.nickname?.trim() || fileName || LanguageService.t('swatch.unnamedCharacter')
       )
     );
 

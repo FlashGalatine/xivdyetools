@@ -753,6 +753,7 @@
     "addedToCollection": "Ajouté à {name}",
     "removedFromCollection": "Retiré de {name}",
     "collectionFull": "Collection pleine (max {max} teintures)",
+    "collectionsLimitReached": "Vous avez atteint la limite de collections. Supprimez une collection pour en enregistrer une autre.",
     "export": "Exporter",
     "exportAll": "Tout exporter",
     "import": "Importer",

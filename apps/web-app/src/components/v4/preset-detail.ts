@@ -60,17 +60,33 @@ function votesText(n: number): string {
   });
 }
 
-/** Localized text for a vote failure; `fallbackKey` covers a code-less result. */
-function voteErrorMessage(code: VoteErrorCode | undefined, fallbackKey: string): string {
+/**
+ * Localized text for a vote failure; `fallbackKey` covers a code-less result.
+ * preset-tool's card votes use it too, so both vote buttons word a failure the
+ * same way.
+ */
+export function voteErrorMessage(code: VoteErrorCode | undefined, fallbackKey: string): string {
   return LanguageService.t(code ? VOTE_ERROR_KEYS[code] : fallbackKey);
+}
+
+/**
+ * `vote-update` detail. `voted` is the user's vote state after the change:
+ * BUG-110 (2026-10-04 deep-dive) — without it the list could update the count
+ * but not its own voted set, so a vote removed here still read "Voted" on the
+ * card. Required, so every emit site has to say.
+ */
+export interface VoteUpdateDetail {
+  preset: UnifiedPreset;
+  voted: boolean;
 }
 
 /**
  * V4 Preset Detail - Full preset view with dye cards
  *
  * @fires back - Emits when the back button is clicked
- * @fires vote-update - Emits when vote count changes
+ * @fires vote-update - Emits when the vote count or the user's vote changes
  *   - `detail.preset`: The updated preset
+ *   - `detail.voted`: Whether the user now has a vote on it
  * @fires edit-preset - Emits when the edit button is clicked
  *   - `detail.preset`: The preset to edit
  * @fires delete-preset - Emits when the delete button is clicked
@@ -82,7 +98,7 @@ function voteErrorMessage(code: VoteErrorCode | undefined, fallbackKey: string):
  *   .preset=${selectedPreset}
  *   .isOwnPreset=${true}
  *   @back=${() => this.closeDetail()}
- *   @vote-update=${(e) => this.handleVoteUpdate(e.detail.preset)}
+ *   @vote-update=${(e) => this.handleVoteUpdate(e.detail)}
  *   @edit-preset=${(e) => this.handleEdit(e.detail.preset)}
  *   @delete-preset=${(e) => this.handleDelete(e.detail.preset)}
  * ></v4-preset-detail>
@@ -803,7 +819,7 @@ export class PresetDetail extends BaseLitComponent {
           this.currentVoteCount = result.new_vote_count;
           // Emit update with new vote count
           const updatedPreset = { ...this.preset, voteCount: result.new_vote_count };
-          this.emit<{ preset: UnifiedPreset }>('vote-update', { preset: updatedPreset });
+          this.emit<VoteUpdateDetail>('vote-update', { preset: updatedPreset, voted: false });
           ToastService.info(LanguageService.t('preset.voteRemoved'));
         } else {
           ToastService.error(voteErrorMessage(result.errorCode, 'errors.removeVoteFailed'));
@@ -816,10 +832,12 @@ export class PresetDetail extends BaseLitComponent {
           this.currentVoteCount = result.new_vote_count;
           // Emit update with new vote count
           const updatedPreset = { ...this.preset, voteCount: result.new_vote_count };
-          this.emit<{ preset: UnifiedPreset }>('vote-update', { preset: updatedPreset });
+          this.emit<VoteUpdateDetail>('vote-update', { preset: updatedPreset, voted: true });
           ToastService.success(LanguageService.t('preset.voteAdded'));
         } else if (result.already_voted) {
           this.hasVoted = true;
+          // The count is unchanged, but the list's card must read "Voted" too.
+          this.emit<VoteUpdateDetail>('vote-update', { preset: this.preset, voted: true });
           ToastService.info(LanguageService.t('preset.alreadyVoted'));
         } else {
           ToastService.error(voteErrorMessage(result.errorCode, 'errors.voteFailed'));
