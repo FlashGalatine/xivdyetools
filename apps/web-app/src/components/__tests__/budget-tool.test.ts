@@ -12,6 +12,10 @@ import { BudgetTool } from '../budget-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 import { formatGil } from '@shared/format';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import type { ResultCard } from '@components/v4/result-card';
+// The mocked barrel below: ConfigController is the real one, the other two are stubs.
+import { ConfigController, MarketBoardService, StorageService } from '@services/index';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const {
@@ -95,7 +99,27 @@ vi.mock('@services/language-service', () => ({
   },
 }));
 
-vi.mock('@services/index', () => ({
+vi.mock('@services/index', async () => ({
+  /**
+   * BUG-011 (2026-10-04 deep-dive): the REAL ConfigController and the REAL
+   * applyDisplayOptions. The stub this replaces answered getConfig with {} and
+   * had no setConfig, so nothing the tool reads from or writes to the
+   * sidebar's store could be tested — a persisted config, the slider commit,
+   * the broadcast that undid it (BUG-012) — and any setConfig carrying
+   * displayOptions threw on the missing helper. The tests import the
+   * controller through this barrel, so the tool and the tests share one
+   * singleton; beforeEach/afterEach clear localStorage and reset it.
+   */
+  ConfigController: (
+    await vi.importActual<typeof import('@services/config-controller')>(
+      '@services/config-controller'
+    )
+  ).ConfigController,
+  applyDisplayOptions: (
+    await vi.importActual<typeof import('@services/display-options-helper')>(
+      '@services/display-options-helper'
+    )
+  ).applyDisplayOptions,
   /**
    * The shared market-panel builder. Absent, renderMarketPanel throws and
    * safeRender swallows it, leaving the whole panel empty.
@@ -235,12 +259,6 @@ vi.mock('@services/index', () => ({
       removeEventListener: vi.fn(),
       setShowPrices: vi.fn(),
       getShowPrices: vi.fn().mockReturnValue(false),
-    }),
-  },
-  ConfigController: {
-    getInstance: vi.fn().mockReturnValue({
-      getConfig: vi.fn().mockReturnValue({}),
-      subscribe: vi.fn().mockReturnValue(() => {}),
     }),
   },
   CollectionService: {
@@ -433,6 +451,19 @@ describe('BudgetTool', () => {
     container.appendChild(drawerContent);
     tool = null;
     vi.clearAllMocks();
+    // jsdom localStorage outlives a test and setup.ts does not clear it; the
+    // controller singleton caches what it read. handleDeepLink reads the URL
+    // on every mount. A leak in any of the three moves the ledger's line.
+    localStorage.clear();
+    ConfigController.resetInstance();
+    window.history.replaceState(null, '', '/');
+    // clearAllMocks keeps implementations, so undo any per-test getItem one.
+    vi.mocked(StorageService.getItem).mockImplementation(() => null);
+    // Writes through like the real one (market-board-service.ts setShowPrices),
+    // so a test sees the persisted market config, not just the call.
+    vi.mocked(MarketBoardService.getInstance().setShowPrices).mockImplementation((show) => {
+      ConfigController.getInstance().setConfig('market', { showPrices: show });
+    });
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
@@ -451,6 +482,9 @@ describe('BudgetTool', () => {
     }
     cleanupTestContainer(container);
     vi.restoreAllMocks();
+    localStorage.clear();
+    ConfigController.resetInstance();
+    window.history.replaceState(null, '', '/');
   });
 
   // ============================================================================
@@ -761,6 +795,257 @@ describe('BudgetTool', () => {
 
       // Dalamud Red is now the target, so it can no longer be its own candidate.
       expect(rowNames()).not.toContain(label(DALAMUD));
+    });
+  });
+
+  // ============================================================================
+  // Settings owned by ConfigController
+  //
+  // BUG-012/022/078/079 and BUG-014 (2026-10-04 deep-dive). Every setting is
+  // seeded from, and committed to, the real controller — the sidebar's store.
+  // Distances and row counts are the ledger table above: from Blood Red, a
+  // line of 8 admits three dyes, 12 or 14 admit seven.
+  // ============================================================================
+
+  describe('Settings owned by ConfigController', () => {
+    const TARGET = mockDyes[6]; // Blood Red #CC0000
+    const DALAMUD = mockDyes[8]; // isMetallic, 2.6 away
+    const WINE = mockDyes[4];
+    const SUNSET = mockDyes[7];
+
+    const RETIRED_KEYS = [
+      'v5_budget_match_line',
+      'v3_budget_matching_method',
+      'v3_budget_show_hex',
+      'v3_budget_show_rgb',
+      'v3_budget_show_hsv',
+      'v3_budget_show_lab',
+      'v3_budget_show_cmyk',
+      'v3_budget_show_price',
+      'v3_budget_show_delta_e',
+      'v3_budget_show_acquisition',
+    ];
+
+    const controller = (): ConfigController => ConfigController.getInstance();
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const ledgerRows = (): HTMLElement[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]'));
+    const rowNames = (): string[] =>
+      ledgerRows().map((row) => row.querySelectorAll('span')[1]?.textContent ?? '');
+    const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+    const matchLine = (): number => (tool as unknown as { matchLine: number }).matchLine;
+
+    const slider = (panel: HTMLElement): HTMLInputElement =>
+      panel.querySelector<HTMLInputElement>('input[type="range"]')!;
+    /** The value span: the second span in the row above the slider. */
+    const lineLabel = (panel: HTMLElement): string =>
+      slider(panel).parentElement!.firstElementChild!.children[1].textContent ?? '';
+    const targetCard = (): ResultCard => rightPanel.querySelector('v4-result-card') as ResultCard;
+
+    const drag = (panel: HTMLElement, value: number): void => {
+      slider(panel).value = String(value);
+      slider(panel).dispatchEvent(new Event('input'));
+      slider(panel).dispatchEvent(new Event('change'));
+    };
+
+    const mount = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      tool.selectDye(TARGET);
+      await settle();
+    };
+
+    describe('seeded at mount', () => {
+      it('takes the match line from the persisted budget config', async () => {
+        controller().setConfig('budget', { maxDeltaE: 12 });
+        await mount();
+
+        expect(ledgerRows()).toHaveLength(7);
+        expect(slider(rightPanel).value).toBe('12');
+        expect(lineLabel(rightPanel)).toBe('12');
+      });
+
+      it('takes the dye filters from the persisted budget config (BUG-022)', async () => {
+        controller().setConfig('budget', {
+          dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true },
+        });
+        await mount();
+
+        // Dalamud Red is the one metallic dye inside the line.
+        expect(rowNames()).toEqual([label(WINE), label(SUNSET)]);
+        expect(rowNames()).not.toContain(label(DALAMUD));
+      });
+
+      it('takes the display options, the 5.0 rows included (BUG-078)', async () => {
+        controller().setConfig('budget', {
+          displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHue: false, showRgb: false },
+        });
+        await mount();
+
+        expect(targetCard().showHue).toBe(false);
+        expect(targetCard().showRgb).toBe(false);
+        expect(targetCard().showStain).toBe(true);
+      });
+
+      it('shows RGB, HSV and LAB by default, as the sidebar does', async () => {
+        await mount();
+
+        expect(targetCard().showRgb).toBe(true);
+        expect(targetCard().showHsv).toBe(true);
+        expect(targetCard().showLab).toBe(true);
+        expect(targetCard().showCmyk).toBe(false);
+      });
+
+      it('takes the matching method from the persisted budget config', async () => {
+        controller().setConfig('budget', { matchingMethod: 'oklab' });
+        await mount();
+
+        // Only ΔE2000 is calibrated against the slider; other methods pin it.
+        expect(slider(rightPanel).disabled).toBe(true);
+      });
+    });
+
+    describe('the in-page match line slider (BUG-012)', () => {
+      it('previews on input and commits to the controller on change', async () => {
+        await mount();
+
+        slider(rightPanel).value = '14';
+        slider(rightPanel).dispatchEvent(new Event('input'));
+        expect(matchLine()).toBe(14);
+        expect(lineLabel(rightPanel)).toBe('14');
+        expect(slider(drawerContent).value).toBe('14');
+        expect(controller().getConfig('budget').maxDeltaE).toBe(8);
+
+        slider(rightPanel).dispatchEvent(new Event('change'));
+        expect(controller().getConfig('budget').maxDeltaE).toBe(14);
+      });
+
+      it('keeps its value through a display-option broadcast', async () => {
+        await mount();
+        drag(rightPanel, 14);
+
+        // The sidebar's display-option toggle writes budget.displayOptions;
+        // the controller then notifies the FULL budget config, maxDeltaE too.
+        controller().setConfig('budget', {
+          displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHex: false },
+        });
+        await settle();
+
+        expect(matchLine()).toBe(14);
+        expect(slider(rightPanel).value).toBe('14');
+        expect(controller().getConfig('budget').maxDeltaE).toBe(14);
+        expect(ledgerRows()).toHaveLength(7);
+      });
+
+      it('moves both thumbs and labels when the sidebar changes the line', async () => {
+        await mount();
+
+        controller().setConfig('budget', { maxDeltaE: 15 });
+
+        expect(slider(rightPanel).value).toBe('15');
+        expect(slider(drawerContent).value).toBe('15');
+        expect(lineLabel(rightPanel)).toBe('15');
+        expect(lineLabel(drawerContent)).toBe('15');
+      });
+
+      it('writes none of the retired budget storage keys', async () => {
+        await mount();
+
+        drag(rightPanel, 14);
+        tool!.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showCmyk: true } });
+        tool!.setConfig({ matchingMethod: 'oklab' });
+
+        const written = vi.mocked(StorageService.setItem).mock.calls.map(([key]) => key);
+        expect(written.filter((key) => RETIRED_KEYS.includes(key))).toEqual([]);
+      });
+    });
+
+    describe('migration of the retired storage keys', () => {
+      it('moves a stored v5_budget_match_line into the controller, then deletes every retired key', async () => {
+        vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
+          key === 'v5_budget_match_line' ? 14 : null
+        );
+        await mount();
+
+        expect(controller().getConfig('budget').maxDeltaE).toBe(14);
+        expect(slider(rightPanel).value).toBe('14');
+        for (const key of RETIRED_KEYS) {
+          expect(StorageService.removeItem).toHaveBeenCalledWith(key);
+        }
+      });
+
+      it('drops an out-of-range legacy line without overwriting the saved one', async () => {
+        controller().setConfig('budget', { maxDeltaE: 12 });
+        vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
+          key === 'v5_budget_match_line' ? 50 : null
+        );
+        await mount();
+
+        expect(controller().getConfig('budget').maxDeltaE).toBe(12);
+        expect(StorageService.removeItem).toHaveBeenCalledWith('v5_budget_match_line');
+      });
+    });
+
+    describe('market prices (BUG-079)', () => {
+      it('fetches its own prices without switching the global Market Board on', async () => {
+        await mount();
+
+        const market = MarketBoardService.getInstance();
+        expect(controller().getConfig('market').showPrices).toBe(false);
+        expect(market.setShowPrices).not.toHaveBeenCalled();
+        expect(market.fetchPricesForDyes).toHaveBeenCalledWith(
+          expect.any(Array),
+          expect.any(Function),
+          { ignoreShowPrices: true }
+        );
+      });
+
+      it('refetches on a server change, not on a Market Board toggle', async () => {
+        await mount();
+        const fetchPrices = vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes);
+        fetchPrices.mockClear();
+
+        controller().setConfig('market', { showPrices: true });
+        controller().setConfig('market', { showPrices: false });
+        await settle();
+        expect(fetchPrices).not.toHaveBeenCalled();
+
+        controller().setConfig('market', { selectedServer: 'Aether' });
+        await settle();
+        expect(fetchPrices).toHaveBeenCalledTimes(1);
+      });
+    });
+
+    describe('share links', () => {
+      it('shows a linked ?maxDelta= on the label and both sliders (BUG-014)', async () => {
+        window.history.replaceState(null, '', '/budget?maxDelta=14');
+        await mount();
+
+        expect(lineLabel(rightPanel)).toBe('14');
+        expect(slider(rightPanel).value).toBe('14');
+        expect(slider(drawerContent).value).toBe('14');
+        expect(controller().getConfig('budget').maxDeltaE).toBe(14);
+        expect(ledgerRows()).toHaveLength(7);
+      });
+
+      it('ignores an out-of-range ?maxDelta= instead of resetting the saved line', async () => {
+        controller().setConfig('budget', { maxDeltaE: 12 });
+        window.history.replaceState(null, '', '/budget?maxDelta=50');
+        await mount();
+
+        expect(controller().getConfig('budget').maxDeltaE).toBe(12);
+        expect(slider(rightPanel).value).toBe('12');
+        expect(lineLabel(rightPanel)).toBe('12');
+      });
+
+      it('keeps the pinned-cut label when the method is not ΔE2000', async () => {
+        controller().setConfig('budget', { matchingMethod: 'oklab' });
+        window.history.replaceState(null, '', '/budget?maxDelta=14');
+        await mount();
+
+        expect(controller().getConfig('budget').maxDeltaE).toBe(14);
+        expect(lineLabel(rightPanel)).toMatch(/^≤ /);
+      });
     });
   });
 

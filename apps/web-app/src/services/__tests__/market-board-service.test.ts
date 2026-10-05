@@ -421,6 +421,104 @@ describe('MarketBoardService', () => {
     });
   });
 
+  // BUG-079 (2026-10-04 deep-dive): Budget used to force the global Market
+  // Board toggle on (and persist it) because this gate was its only way to get
+  // prices. The per-call override fetches regardless of the toggle and hands
+  // the result to that caller ONLY: tools that render from the shared cache
+  // gate on their own display flag, not on market.showPrices, so a Budget
+  // fetch landing there would leak prices into them with the board off.
+  describe('fetchPricesForDyes with ignoreShowPrices', () => {
+    // beforeEach leaves showPrices false (the getConfig mock), which is the
+    // state every test here is about.
+
+    it('fetches and returns prices while the Market Board toggle is off', async () => {
+      expect(service.getShowPrices()).toBe(false);
+      const dyes = [createMockDye({ itemID: 12345 })];
+      mockApiService.getPricesForDataCenter.mockResolvedValue(
+        new Map([[12345, createMockPriceData({ currentMinPrice: 4321 })]])
+      );
+
+      const result = await service.fetchPricesForDyes(dyes, undefined, { ignoreShowPrices: true });
+
+      expect(mockApiService.getPricesForDataCenter).toHaveBeenCalledWith([12345], 'Crystal');
+      expect(result.get(12345)?.currentMinPrice).toBe(4321);
+      expect(service.lastFetchOutcome).toBe('ok');
+    });
+
+    it('leaves the shared price cache untouched and emits no prices-updated', async () => {
+      const dyes = [createMockDye({ itemID: 12345 })];
+      mockApiService.getPricesForDataCenter.mockResolvedValue(
+        new Map([[12345, createMockPriceData()]])
+      );
+      const pricesUpdated = vi.fn();
+      service.addEventListener('prices-updated', pricesUpdated);
+
+      const result = await service.fetchPricesForDyes(dyes, undefined, { ignoreShowPrices: true });
+
+      expect(result.size).toBe(1);
+      expect(service.getPriceForDye(12345)).toBeUndefined();
+      expect(service.getPricesView().size).toBe(0);
+      expect(pricesUpdated).not.toHaveBeenCalled();
+    });
+
+    it('still skips dyes that are not on the market board', async () => {
+      const saved = { A: CONSOLIDATED_IDS.A, B: CONSOLIDATED_IDS.B, C: CONSOLIDATED_IDS.C };
+      CONSOLIDATED_IDS.A = null;
+      CONSOLIDATED_IDS.B = null;
+      CONSOLIDATED_IDS.C = null;
+      try {
+        const facewear = createMockDye({ itemID: -1 });
+        const preDatamine = createMockDye({ consolidationType: 'A', itemID: 5729 });
+        const tradeable = createMockDye({ itemID: 13114 });
+
+        await service.fetchPricesForDyes([facewear, preDatamine, tradeable], undefined, {
+          ignoreShowPrices: true,
+        });
+
+        expect(mockApiService.getPricesForDataCenter).toHaveBeenCalledTimes(1);
+        expect(mockApiService.getPricesForDataCenter).toHaveBeenCalledWith([13114], 'Crystal');
+      } finally {
+        CONSOLIDATED_IDS.A = saved.A;
+        CONSOLIDATED_IDS.B = saved.B;
+        CONSOLIDATED_IDS.C = saved.C;
+      }
+    });
+
+    it('still discards a response a newer request superseded', async () => {
+      const dyes = [createMockDye({ itemID: 12345 })];
+      let resolveSlowRequest: (value: Map<number, PriceData>) => void;
+      mockApiService.getPricesForDataCenter.mockReturnValueOnce(
+        new Promise<Map<number, PriceData>>((resolve) => {
+          resolveSlowRequest = resolve;
+        })
+      );
+      const firstRequest = service.fetchPricesForDyes(dyes, undefined, { ignoreShowPrices: true });
+
+      mockApiService.getPricesForDataCenter.mockResolvedValueOnce(
+        new Map([[12345, createMockPriceData({ currentMinPrice: 2000 })]])
+      );
+      const second = await service.fetchPricesForDyes(dyes, undefined, {
+        ignoreShowPrices: true,
+      });
+      resolveSlowRequest!(new Map([[12345, createMockPriceData({ currentMinPrice: 1000 })]]));
+      const first = await firstRequest;
+
+      expect(mockApiService.getPricesForDataCenter).toHaveBeenCalledTimes(2);
+      expect(second.get(12345)?.currentMinPrice).toBe(2000);
+      expect(first.size).toBe(0);
+      expect(service.lastFetchOutcome).toBe('superseded');
+    });
+
+    it('keeps the default call gated on the toggle', async () => {
+      const dyes = [createMockDye({ itemID: 12345 })];
+
+      const result = await service.fetchPricesForDyes(dyes);
+
+      expect(result.size).toBe(0);
+      expect(mockApiService.getPricesForDataCenter).not.toHaveBeenCalled();
+    });
+  });
+
   describe('request versioning (race condition protection)', () => {
     beforeEach(() => {
       if (configSubscriber) {

@@ -485,10 +485,13 @@ const DEFAULT_CONFIGS: ToolConfigMap = {
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   },
+  // BUG-001 (2026-10-04 deep-dive): these were hairColors / SeekerOfTheSun /
+  // Female while the Swatch tool opened on Eye / Midlander / Male, and the
+  // controller's full-config broadcast flipped the tool to these. One table now.
   swatch: {
-    colorSheet: 'hairColors',
-    race: 'SeekerOfTheSun',
-    gender: 'Female',
+    colorSheet: 'eyeColors',
+    race: 'Midlander',
+    gender: 'Male',
     maxResults: 3,
     matchingMethod: 'ciede2000',
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },

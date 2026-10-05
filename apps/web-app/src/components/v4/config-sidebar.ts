@@ -36,6 +36,7 @@ import type {
   SwatchConfig,
   MarketConfig,
   ConfigKey,
+  ToolConfigMap,
   DisplayOptionsConfig,
   DyeFiltersConfig,
   MatchingMethod,
@@ -111,6 +112,29 @@ export const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = (
 }));
 
 /**
+ * The config keys the sidebar keeps a copy of and follows. 'advanced' is
+ * deliberately left out: the sidebar renders none of it (performance mode and
+ * analytics live in advanced-options-panel).
+ */
+type MirroredConfigKey = Exclude<ConfigKey, 'advanced'>;
+
+/**
+ * A copy of a controller config for the sidebar's own state, nested objects
+ * (displayOptions, dyeFilters) included. getConfig() hands out the
+ * controller's live object, and a reset notifies with the DEFAULT_CONFIGS
+ * objects themselves, so the sidebar's state must never alias either.
+ */
+function cloneConfig<T extends object>(config: T): T {
+  const copy = { ...config } as Record<string, unknown>;
+  for (const [field, value] of Object.entries(copy)) {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      copy[field] = { ...value };
+    }
+  }
+  return copy as T;
+}
+
+/**
  * V4 Config Sidebar - Tool configuration panel
  *
  * @fires sidebar-collapse - When the header × is clicked (desktop Simple-Settings column; the shell collapses the column and the console-bar gear restores it)
@@ -150,9 +174,9 @@ export class ConfigSidebar extends BaseLitComponent {
   // =========================================================================
 
   // getDefaultConfig() returns the shared singleton from DEFAULT_CONFIGS —
-  // clone it (including its nested displayOptions/dyeFilters) like every
-  // other tool config below builds its own literal, so mutating this state
-  // can never leak into the module-level default other tools/instances read.
+  // clone it (including its nested displayOptions/dyeFilters), so mutating
+  // this state can never leak into the module-level default other
+  // tools/instances read.
   @state() private harmonyConfig: HarmonyConfig = {
     ...getDefaultConfig('harmony'),
     displayOptions: { ...getDefaultConfig('harmony').displayOptions },
@@ -191,12 +215,12 @@ export class ConfigSidebar extends BaseLitComponent {
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
+  // Cloned from the shared default like harmony/extractor above: a literal here
+  // said maxResults 3 while DEFAULT_CONFIGS.mixer said 4 (found with BUG-027).
   @state() private mixerConfig: MixerConfig = {
-    maxResults: 3,
-    mixingMode: 'ryb',
-    matchingMethod: 'ciede2000',
-    displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
-    dyeFilters: { ...DEFAULT_DYE_FILTERS },
+    ...getDefaultConfig('mixer'),
+    displayOptions: { ...getDefaultConfig('mixer').displayOptions },
+    dyeFilters: { ...getDefaultConfig('mixer').dyeFilters },
   };
   @state() private presetsConfig: PresetsConfig = {
     sortBy: 'popular',
@@ -214,14 +238,12 @@ export class ConfigSidebar extends BaseLitComponent {
     displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
     dyeFilters: { ...DEFAULT_DYE_FILTERS },
   };
+  // A second copy of the swatch defaults disagreed with DEFAULT_CONFIGS.swatch
+  // until BUG-001 realigned that table; clone it so there is only one.
   @state() private swatchConfig: SwatchConfig = {
-    colorSheet: 'eyeColors',
-    race: 'Midlander',
-    gender: 'Male',
-    maxResults: 3,
-    matchingMethod: 'ciede2000',
-    displayOptions: { ...DEFAULT_DISPLAY_OPTIONS },
-    dyeFilters: { ...DEFAULT_DYE_FILTERS },
+    ...getDefaultConfig('swatch'),
+    displayOptions: { ...getDefaultConfig('swatch').displayOptions },
+    dyeFilters: { ...getDefaultConfig('swatch').dyeFilters },
   };
   /**
    * 10A: a loaded .chara file supplies tribe and gender, so the Swatch
@@ -251,10 +273,52 @@ export class ConfigSidebar extends BaseLitComponent {
 
   private configController: ConfigController | null = null;
   private languageUnsubscribe: (() => void) | null = null;
-  private swatchConfigUnsubscribe: (() => void) | null = null;
   private charaSessionUnsubscribe: (() => void) | null = null;
-  private harmonyConfigUnsubscribe: (() => void) | null = null;
   private authUnsubscribe: (() => void) | null = null;
+
+  /**
+   * How each mirrored config lands in the sidebar's state. Seeding and every
+   * later notification go through here, so the two cannot drift. The mapped
+   * type is exhaustive: a ConfigKey added later without an entry fails to
+   * compile.
+   */
+  private readonly mirror: { [K in MirroredConfigKey]: (config: ToolConfigMap[K]) => void } = {
+    global: (config) => {
+      this.globalDisplayOptions = { ...(config.displayOptions || DEFAULT_DISPLAY_OPTIONS) };
+      this.globalDyeFilters = { ...(config.dyeFilters || DEFAULT_DYE_FILTERS) };
+    },
+    market: (config) => {
+      this.marketConfig = cloneConfig(config);
+    },
+    harmony: (config) => {
+      this.harmonyConfig = cloneConfig(config);
+    },
+    extractor: (config) => {
+      this.extractorConfig = cloneConfig(config);
+    },
+    accessibility: (config) => {
+      this.accessibilityConfig = cloneConfig(config);
+    },
+    comparison: (config) => {
+      this.comparisonConfig = cloneConfig(config);
+    },
+    gradient: (config) => {
+      this.gradientConfig = cloneConfig(config);
+    },
+    mixer: (config) => {
+      this.mixerConfig = cloneConfig(config);
+    },
+    presets: (config) => {
+      this.presetsConfig = cloneConfig(config);
+    },
+    budget: (config) => {
+      this.budgetConfig = cloneConfig(config);
+    },
+    swatch: (config) => {
+      this.swatchConfig = cloneConfig(config);
+    },
+  };
+  private configUnsubscribes: Array<() => void> = [];
 
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
@@ -671,23 +735,28 @@ export class ConfigSidebar extends BaseLitComponent {
     super.connectedCallback();
     this.loadConfigsFromController();
     void this.loadServerData();
-    // 10A: the swatch tool pushes config changes of its own (a .chara file
-    // sets tribe/gender) — the sidebar must follow, not just lead.
-    this.swatchConfigUnsubscribe =
-      this.configController?.subscribe('swatch', (config) => {
-        this.swatchConfig = config;
-      }) ?? null;
+    // BUG-027 (2026-10-04 deep-dive): the sidebar stays mounted across tool
+    // switches, so it must follow every config it shows, not just lead it. A
+    // .chara file sets the swatch tribe/gender (10A), the harmony type rail
+    // sets the type (1A), the Mixer writes its mixing mode, the market board
+    // turns prices on, and Reset / Import / another tab rewrite every key.
+    // Following only swatch and harmony left the rest stale, and the next
+    // display-option or dye-filter toggle wrote the stale set back over a reset.
+    // Subscribed in the same synchronous turn as the seed above: subscribe()
+    // never replays, so no write can fall in between. The listener re-reads
+    // getConfig() rather than trusting its argument, which can be stale when
+    // an earlier listener rewrote the same key, and never emits config-change
+    // (that event stays user-action-only, so v4-layout never forwards a
+    // broadcast into the active tool).
+    const controller = ConfigController.getInstance();
+    this.configUnsubscribes = (Object.keys(this.mirror) as MirroredConfigKey[]).map((key) =>
+      controller.subscribe(key, () => this.refreshFromController(key))
+    );
     // The readout lock follows the loaded file, wherever it was loaded.
     this.charaLoaded = CharaSessionService.getSession() !== null;
     this.charaSessionUnsubscribe = CharaSessionService.subscribe((session) => {
       this.charaLoaded = session !== null;
     });
-    // 1A: the harmony type rail sets the type from the workspace — the
-    // sidebar dropdown has to follow it, same one-way gotcha as swatch.
-    this.harmonyConfigUnsubscribe =
-      this.configController?.subscribe('harmony', (config) => {
-        this.harmonyConfig = config;
-      }) ?? null;
     // Subscribe to language changes to update translated text
     this.languageUnsubscribe = LanguageService.subscribe(() => {
       this.requestUpdate();
@@ -705,12 +774,9 @@ export class ConfigSidebar extends BaseLitComponent {
     this.languageUnsubscribe = null;
     this.authUnsubscribe?.();
     this.authUnsubscribe = null;
-    this.swatchConfigUnsubscribe?.();
-    this.swatchConfigUnsubscribe = null;
+    for (const unsubscribe of this.configUnsubscribes.splice(0)) unsubscribe();
     this.charaSessionUnsubscribe?.();
     this.charaSessionUnsubscribe = null;
-    this.harmonyConfigUnsubscribe?.();
-    this.harmonyConfigUnsubscribe = null;
   }
 
   /**
@@ -746,26 +812,20 @@ export class ConfigSidebar extends BaseLitComponent {
   }
 
   /**
-   * Load all configs from ConfigController
+   * Seed every mirrored config from ConfigController, through the same
+   * applier the change listeners use.
    */
   private loadConfigsFromController(): void {
     this.configController = ConfigController.getInstance();
+    for (const key of Object.keys(this.mirror) as MirroredConfigKey[]) {
+      this.refreshFromController(key);
+    }
+  }
 
-    // Load global display options first
-    const globalConfig = this.configController.getConfig('global');
-    this.globalDisplayOptions = globalConfig.displayOptions || { ...DEFAULT_DISPLAY_OPTIONS };
-    this.globalDyeFilters = globalConfig.dyeFilters || { ...DEFAULT_DYE_FILTERS };
-
-    this.harmonyConfig = this.configController.getConfig('harmony');
-    this.extractorConfig = this.configController.getConfig('extractor');
-    this.accessibilityConfig = this.configController.getConfig('accessibility');
-    this.comparisonConfig = this.configController.getConfig('comparison');
-    this.gradientConfig = this.configController.getConfig('gradient');
-    this.mixerConfig = this.configController.getConfig('mixer');
-    this.presetsConfig = this.configController.getConfig('presets');
-    this.budgetConfig = this.configController.getConfig('budget');
-    this.swatchConfig = this.configController.getConfig('swatch');
-    this.marketConfig = this.configController.getConfig('market');
+  /** Re-read one config from the controller into the sidebar's state. */
+  private refreshFromController<K extends MirroredConfigKey>(key: K): void {
+    const controller = this.configController ?? ConfigController.getInstance();
+    this.mirror[key](controller.getConfig(key));
   }
 
   /**

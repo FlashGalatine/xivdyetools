@@ -10,7 +10,13 @@
  * @module components/tools/gradient-tool
  */
 
-import { BAND_METHOD_DP, classifyBandTier, normalizeMatchingMethod } from '@xivdyetools/core';
+import {
+  BAND_METHOD_DP,
+  classifyBandTier,
+  isMatchingMethod,
+  LEGACY_MATCHING_METHOD_MAP,
+  normalizeMatchingMethod,
+} from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
 import { CollapsiblePanel } from '@components/collapsible-panel';
 import { DyeSelector } from '@components/dye-selector';
@@ -53,7 +59,11 @@ import type {
   MatchingMethod,
   DyeFiltersConfig,
 } from '@shared/tool-config-types';
-import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_DYE_FILTERS,
+  getDefaultConfig,
+} from '@shared/tool-config-types';
 import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
 
 // ============================================================================
@@ -80,8 +90,6 @@ interface InterpolationStep {
  * Storage keys for v3 mixer tool
  */
 const STORAGE_KEYS = {
-  stepCount: 'v3_mixer_steps',
-  colorSpace: 'v3_mixer_color_space',
   selectedDyes: 'v3_mixer_selected_dyes',
   // Legacy keys for migration
   startDyeId: 'v3_mixer_start_dye_id',
@@ -89,12 +97,11 @@ const STORAGE_KEYS = {
 } as const;
 
 /**
- * Default values
+ * BUG-019 (2026-10-04 deep-dive): the tool's own mirrors of the step count
+ * and colour space. ConfigController owns both settings (the sidebar always
+ * showed its values), so these are only ever removed, never read or written.
  */
-const DEFAULTS = {
-  stepCount: 8,
-  colorSpace: 'hsv' as const,
-};
+const RETIRED_SETTINGS_KEYS = ['v3_mixer_steps', 'v3_mixer_color_space'] as const;
 
 /**
  * 4C accent tints (the drawn accent-soft / accent-border), built on the
@@ -103,6 +110,23 @@ const DEFAULTS = {
 /** Ramp length, per the drawn 4C control — one range for slider, sidebar and share. */
 const STEP_MIN = 3;
 const STEP_MAX = 12;
+
+/**
+ * A finite step count, rounded and clamped into the ramp's range; null for
+ * anything else. An imported config is type-checked only, so the controller
+ * can hold 50 or 4.5.
+ */
+function toStepCount(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.min(STEP_MAX, Math.max(STEP_MIN, Math.round(value)));
+}
+
+/** The five spaces interpolateInSpace implements; anything else draws a flat grey ramp. */
+const INTERPOLATION_MODES: readonly InterpolationMode[] = ['rgb', 'hsv', 'lab', 'oklch', 'lch'];
+
+function isInterpolationMode(value: unknown): value is InterpolationMode {
+  return typeof value === 'string' && (INTERPOLATION_MODES as readonly string[]).includes(value);
+}
 
 const ACCENT_SOFT = 'color-mix(in srgb, var(--theme-primary) 14%, transparent)';
 const ACCENT_BORDER = 'color-mix(in srgb, var(--theme-primary) 45%, transparent)';
@@ -229,26 +253,27 @@ export class GradientTool extends BaseComponent {
     // Initialize shared MarketBoardService
     this.marketBoardService = MarketBoardService.getInstance();
 
-    // Load persisted settings
-    // Clamp: values stored under the old 2–10 slider still load
-    this.stepCount = Math.min(
-      STEP_MAX,
-      Math.max(
-        STEP_MIN,
-        StorageService.getItem<number>(STORAGE_KEYS.stepCount) ?? DEFAULTS.stepCount
-      )
-    );
-    this.colorSpace =
-      StorageService.getItem<InterpolationMode>(STORAGE_KEYS.colorSpace) ?? DEFAULTS.colorSpace;
-
-    // Load display options from ConfigController
-    const configController = ConfigController.getInstance();
-    const gradientConfig = configController.getConfig('gradient');
-    this.displayOptions = gradientConfig.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
-    // Seed the matching method from config (suite default ΔE2000) —
-    // normalized so persisted 4.x values (hyab, oklch-weighted) migrate
-    this.matchingMethod = normalizeMatchingMethod(gradientConfig.matchingMethod ?? 'ciede2000');
-    this.preventDuplicates = gradientConfig.preventDuplicates ?? true;
+    // BUG-019 / BUG-022 (2026-10-04 deep-dive): seed EVERY setting from
+    // ConfigController. subscribe() never replays, so this is the only
+    // mount-time source; the step count and colour space used to come from
+    // the tool's own v3 keys and the dye filters from nowhere, so a reload
+    // could disagree with the sidebar until its next broadcast.
+    // Nested objects are copied: getConfig can hand back the controller's
+    // live object, or DEFAULT_CONFIGS itself for a never-saved tool.
+    const defaults = getDefaultConfig('gradient');
+    const saved = ConfigController.getInstance().getConfig('gradient');
+    this.stepCount = toStepCount(saved.stepCount) ?? defaults.stepCount;
+    this.colorSpace = isInterpolationMode(saved.interpolation)
+      ? saved.interpolation
+      : defaults.interpolation;
+    // Normalized so persisted 4.x values (hyab, oklch-weighted) migrate
+    this.matchingMethod = normalizeMatchingMethod(saved.matchingMethod ?? 'ciede2000');
+    this.preventDuplicates = saved.preventDuplicates ?? defaults.preventDuplicates;
+    this.displayOptions = { ...DEFAULT_DISPLAY_OPTIONS, ...saved.displayOptions };
+    this.dyeFiltersConfig = { ...DEFAULT_DYE_FILTERS, ...saved.dyeFilters };
+    for (const key of RETIRED_SETTINGS_KEYS) {
+      StorageService.removeItem(key);
+    }
 
     // Note: showPrices now comes from MarketBoardService getter
 
@@ -361,26 +386,44 @@ export class GradientTool extends BaseComponent {
       this.selectedDyes = this.selectedDyes.filter((d): d is Dye => Boolean(d));
     }
 
-    // Load step count — the shared range is the slider's range, 3–12
-    if (typeof params.steps === 'number' && params.steps >= STEP_MIN && params.steps <= STEP_MAX) {
-      this.stepCount = params.steps;
-      StorageService.setItem(STORAGE_KEYS.stepCount, params.steps);
+    // BUG-019 (2026-10-04 deep-dive): the shared settings used to reach only
+    // this tool's fields (and its own v3 keys), so the controller's next
+    // broadcast — any sidebar touch — reverted them. Each one is validated
+    // first, so a malformed link cannot overwrite a saved setting.
+    const settings: Partial<GradientConfig> = {};
+
+    // Step count — the shared range is the slider's range, 3–12, whole steps
+    if (
+      typeof params.steps === 'number' &&
+      Number.isInteger(params.steps) &&
+      params.steps >= STEP_MIN &&
+      params.steps <= STEP_MAX
+    ) {
+      settings.stepCount = params.steps;
     }
 
-    // Load interpolation mode (color space)
-    if (params.interpolation && typeof params.interpolation === 'string') {
-      const validModes = ['rgb', 'hsv', 'lab', 'oklch', 'lch'];
-      if (validModes.includes(params.interpolation)) {
-        this.colorSpace = params.interpolation as typeof this.colorSpace;
-        StorageService.setItem(STORAGE_KEYS.colorSpace, params.interpolation);
-      }
+    // Interpolation mode (color space)
+    if (isInterpolationMode(params.interpolation)) {
+      settings.interpolation = params.interpolation;
     }
 
-    // Load matching algorithm
-    if (params.algo && typeof params.algo === 'string') {
-      {
-        this.matchingMethod = normalizeMatchingMethod(params.algo);
-      }
+    // Matching algorithm — a current or retired method name only. An unknown
+    // value would normalize to the suite default and replace the user's own.
+    if (
+      typeof params.algo === 'string' &&
+      (isMatchingMethod(params.algo) || Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, params.algo))
+    ) {
+      settings.matchingMethod = normalizeMatchingMethod(params.algo);
+    }
+
+    if (Object.keys(settings).length > 0) {
+      // Apply locally first, then write the controller once. This runs before
+      // onMount subscribes, and even if it ever ran after, the echoed config
+      // would find nothing changed.
+      this.stepCount = settings.stepCount ?? this.stepCount;
+      this.colorSpace = settings.interpolation ?? this.colorSpace;
+      this.matchingMethod = settings.matchingMethod ?? this.matchingMethod;
+      ConfigController.getInstance().setConfig('gradient', settings);
     }
 
     // If dyes were loaded, save and sync selectors
@@ -410,7 +453,9 @@ export class GradientTool extends BaseComponent {
   }
 
   onMount(): void {
-    // Load from share URL first (overrides localStorage if URL params present)
+    // Load from share URL first (overrides the saved dyes and settings if URL
+    // params present) — and before the config subscription below, so its
+    // ConfigController write is not echoed back into setConfig
     this.loadFromShareUrl();
 
     // Sync DyeSelector with loaded dyes (from URL or localStorage)
@@ -499,6 +544,10 @@ export class GradientTool extends BaseComponent {
   /**
    * Update tool configuration from external source (V4 ConfigSidebar)
    * Accepts both GradientConfig and MarketConfig properties
+   *
+   * Apply-only: this is the ConfigController subscriber (and the v4-layout
+   * forward's target, which re-delivers every sidebar change), so it never
+   * writes the controller or storage, and an unchanged value is a no-op.
    */
   public setConfig(config: Partial<GradientConfig> & Partial<MarketConfig>): void {
     let needsUpdate = false;
@@ -513,34 +562,31 @@ export class GradientTool extends BaseComponent {
       logger.info(`[GradientTool] setConfig: preventDuplicates -> ${config.preventDuplicates}`);
     }
 
-    // Handle stepCount
-    if (config.stepCount !== undefined && config.stepCount !== this.stepCount) {
-      this.stepCount = config.stepCount;
-      StorageService.setItem(STORAGE_KEYS.stepCount, config.stepCount);
+    // Handle stepCount — clamped the same way as the constructor's seed
+    const stepCount = toStepCount(config.stepCount);
+    if (stepCount !== null && stepCount !== this.stepCount) {
+      this.stepCount = stepCount;
       // A pin is an index into the ramp; re-counting moves every position,
       // so the pins no longer mean what the user set them to.
       this.pinnedSteps.clear();
       needsUpdate = true;
-      logger.info(`[GradientTool] setConfig: stepCount -> ${config.stepCount}`);
+      logger.info(`[GradientTool] setConfig: stepCount -> ${stepCount}`);
 
       // Update desktop display
       if (this.stepValueDisplay) {
-        this.stepValueDisplay.textContent = String(config.stepCount);
+        this.stepValueDisplay.textContent = String(stepCount);
       }
       // Update mobile display
       if (this.mobileStepValueDisplay) {
-        this.mobileStepValueDisplay.textContent = String(config.stepCount);
+        this.mobileStepValueDisplay.textContent = String(stepCount);
       }
     }
 
-    // Handle interpolation (maps to colorSpace)
-    if (config.interpolation !== undefined) {
-      if (config.interpolation !== this.colorSpace) {
-        this.colorSpace = config.interpolation;
-        StorageService.setItem(STORAGE_KEYS.colorSpace, config.interpolation);
-        needsUpdate = true;
-        logger.info(`[GradientTool] setConfig: interpolation -> ${config.interpolation}`);
-      }
+    // Handle interpolation (maps to colorSpace); an unknown mode is ignored
+    if (isInterpolationMode(config.interpolation) && config.interpolation !== this.colorSpace) {
+      this.colorSpace = config.interpolation;
+      needsUpdate = true;
+      logger.info(`[GradientTool] setConfig: interpolation -> ${config.interpolation}`);
     }
 
     // Handle matchingMethod - re-calculate gradient when algorithm changes
@@ -897,7 +943,8 @@ export class GradientTool extends BaseComponent {
       if (this.stepValueDisplay) {
         this.stepValueDisplay.textContent = String(this.stepCount);
       }
-      StorageService.setItem(STORAGE_KEYS.stepCount, this.stepCount);
+      // Applied above first, so the controller's synchronous echo is a no-op
+      ConfigController.getInstance().setConfig('gradient', { stepCount: this.stepCount });
       // Pins are ramp indices — a new count re-anchors them somewhere the
       // user never chose, so they clear with the count.
       this.pinnedSteps.clear();
@@ -953,7 +1000,8 @@ export class GradientTool extends BaseComponent {
 
     this.on(colorSpaceSelect, 'change', () => {
       this.colorSpace = colorSpaceSelect.value as InterpolationMode;
-      StorageService.setItem(STORAGE_KEYS.colorSpace, this.colorSpace);
+      // Applied above first, so the controller's synchronous echo is a no-op
+      ConfigController.getInstance().setConfig('gradient', { interpolation: this.colorSpace });
       this.updateInterpolation();
       this.updateDrawerContent();
     });
@@ -2434,7 +2482,8 @@ export class GradientTool extends BaseComponent {
       if (this.stepValueDisplay) {
         this.stepValueDisplay.textContent = String(this.stepCount);
       }
-      StorageService.setItem(STORAGE_KEYS.stepCount, this.stepCount);
+      // Applied above first, so the controller's synchronous echo is a no-op
+      ConfigController.getInstance().setConfig('gradient', { stepCount: this.stepCount });
       this.updateInterpolation();
     });
 
@@ -2486,7 +2535,8 @@ export class GradientTool extends BaseComponent {
 
     this.on(colorSpaceSelect, 'change', () => {
       this.colorSpace = colorSpaceSelect.value as InterpolationMode;
-      StorageService.setItem(STORAGE_KEYS.colorSpace, this.colorSpace);
+      // Applied above first, so the controller's synchronous echo is a no-op
+      ConfigController.getInstance().setConfig('gradient', { interpolation: this.colorSpace });
       this.updateInterpolation();
     });
 
