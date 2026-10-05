@@ -238,6 +238,9 @@ test.describe('Preset gallery against a live-shaped API', () => {
     for (const p of PRESETS) {
       await expect(cards(page).filter({ hasText: p.name })).toHaveCount(0);
     }
+    // The Community tab says why it is empty rather than showing no feed.
+    // (Scoped to the tab row: the tool bar has a "Community Presets" button.)
+    await page.locator('.tab-btn').filter({ hasText: 'Community' }).click();
     await expect(page.getByText('Community feed unavailable').first()).toBeVisible();
   });
 
