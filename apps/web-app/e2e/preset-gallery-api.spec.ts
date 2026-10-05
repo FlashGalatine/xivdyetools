@@ -126,21 +126,6 @@ async function stubPresetsApi(page: Page, presets: StubPreset[] = PRESETS): Prom
     });
   });
 
-  // Registered AFTER `**/api/v1/presets/*` on purpose: Playwright stores
-  // handlers newest-first, so the LAST registration wins. The first version of
-  // this file had these two the other way round with a comment asserting the
-  // opposite, and `/featured` was answered by the by-id route as
-  // `404 {"error":"not found"}` — getFeaturedPresets() threw on every run and
-  // hybrid-preset-service silently fell back to the curated set, so the
-  // featured path was only ever exercised through its error branch.
-  await page.route('**/api/v1/presets/featured', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ presets: presets.slice(0, 2) }),
-    })
-  );
-
   await page.route('**/api/v1/presets', (route) =>
     route.fulfill({
       status: 200,

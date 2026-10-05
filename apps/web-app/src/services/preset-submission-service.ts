@@ -426,48 +426,6 @@ class PresetSubmissionServiceImpl {
   }
 
   /**
-   * Get remaining submissions for today
-   */
-  async getRemainingSubmissions(): Promise<{
-    remaining: number;
-    limit: number;
-    resetAt: Date | null;
-  }> {
-    if (!authService.isAuthenticated()) {
-      return { remaining: 10, limit: 10, resetAt: null };
-    }
-
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-
-      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/rate-limit`, {
-        headers: {
-          ...authService.getAuthHeaders(),
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        logger.warn('Failed to fetch rate limit:', response.status);
-        return { remaining: 10, limit: 10, resetAt: null };
-      }
-
-      const result = await response.json();
-      return {
-        remaining: result.remaining,
-        limit: result.limit,
-        resetAt: result.reset_at ? new Date(result.reset_at) : null,
-      };
-    } catch (err) {
-      logger.error('Error fetching rate limit:', err);
-      return { remaining: 10, limit: 10, resetAt: null };
-    }
-  }
-
-  /**
    * Delete a preset by ID
    * Only the owner or a moderator can delete presets
    */

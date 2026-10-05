@@ -156,32 +156,6 @@ describe('CommunityPresetService Integration Tests', () => {
   });
 
   // ============================================
-  // Featured Presets Tests
-  // ============================================
-
-  describe('getFeaturedPresets', () => {
-    beforeEach(async () => {
-      await service.initialize();
-    });
-
-    it('should fetch featured presets', async () => {
-      const presets = await service.getFeaturedPresets();
-
-      expect(presets).toBeInstanceOf(Array);
-      expect(presets.length).toBeGreaterThan(0);
-    });
-
-    it('should return presets sorted by vote count', async () => {
-      const presets = await service.getFeaturedPresets();
-
-      // Verify sorted by vote_count descending
-      for (let i = 1; i < presets.length; i++) {
-        expect(presets[i - 1].vote_count).toBeGreaterThanOrEqual(presets[i].vote_count);
-      }
-    });
-  });
-
-  // ============================================
   // Single Preset Tests
   // ============================================
 

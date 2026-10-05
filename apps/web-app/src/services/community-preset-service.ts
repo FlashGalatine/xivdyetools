@@ -340,17 +340,6 @@ export class CommunityPresetService {
   }
 
   /**
-   * Get featured presets (top voted)
-   */
-  async getFeaturedPresets(): Promise<CommunityPreset[]> {
-    const response = await this.request<{ presets: CommunityPreset[] }>(
-      '/api/v1/presets/featured',
-      'presets:featured'
-    );
-    return response.presets;
-  }
-
-  /**
    * Get a single preset by ID
    */
   async getPreset(id: string): Promise<CommunityPreset | null> {

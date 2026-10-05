@@ -9,11 +9,9 @@ import type {
   PresetPalette,
   PresetCategory,
   PresetData,
-  CategoryMeta,
-  Dye,
   PresetSortOption,
 } from '@xivdyetools/types';
-import { dyeService as sharedDyeService, resolvePresetDye } from './dye-service-wrapper';
+import { dyeService as sharedDyeService } from './dye-service-wrapper';
 import {
   CommunityPresetService,
   communityPresetService,
@@ -287,13 +285,6 @@ class HybridPresetService {
     return Array.from(categoryMap.values());
   }
 
-  /**
-   * Get category metadata
-   */
-  getCategoryMeta(category: PresetCategory): CategoryMeta | null {
-    return this.localPresetService.getCategoryMeta(category) ?? null;
-  }
-
   // ============================================
   // Preset Methods
   // ============================================
@@ -305,31 +296,8 @@ class HybridPresetService {
   async getPresets(options: GetPresetsOptions = {}): Promise<PresetPoolResult> {
     const { category, search, sort = 'name', includeAPI = true, limit } = options;
 
-    let presets: UnifiedPreset[] = [];
     let apiOk = false;
     let apiIds: string[] = [];
-
-    // 5.0: 'community' is no longer a category — kept only as an
-    // unreachable guard while callers migrate.
-    if ((category as string) === 'community') {
-      if (this.apiAvailable && includeAPI) {
-        try {
-          const response = await this.communityService.getPresets({
-            status: 'approved',
-            is_curated: false,
-            search,
-            sort,
-            limit: limit || 50,
-          });
-          presets = response.presets.map((p) => this.communityToUnified(p));
-          apiOk = true;
-          apiIds = presets.map((p) => p.id);
-        } catch (error) {
-          logger.warn('HybridPresetService: Failed to fetch community presets', error);
-        }
-      }
-      return { presets, apiOk, apiIds };
-    }
 
     // Get local presets
     let localPresets: PresetPalette[];
@@ -342,7 +310,7 @@ class HybridPresetService {
       localPresets = this.localPresetService.getAllPresets();
     }
 
-    presets = localPresets.map((p) => this.localToUnified(p));
+    let presets = localPresets.map((p) => this.localToUnified(p));
 
     // Add community presets if API is available
     if (this.apiAvailable && includeAPI) {
@@ -386,28 +354,6 @@ class HybridPresetService {
   }
 
   /**
-   * Get featured presets (top voted community presets)
-   */
-  async getFeaturedPresets(limit: number = 10): Promise<UnifiedPreset[]> {
-    if (!this.apiAvailable) {
-      // Fall back to random curated presets
-      const allPresets = this.localPresetService.getAllPresets();
-      const shuffled = [...allPresets].sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, limit).map((p) => this.localToUnified(p));
-    }
-
-    try {
-      const featured = await this.communityService.getFeaturedPresets();
-      return featured.slice(0, limit).map((p) => this.communityToUnified(p));
-    } catch (error) {
-      logger.warn('HybridPresetService: Failed to fetch featured presets', error);
-      // Fall back to curated
-      const allPresets = this.localPresetService.getAllPresets();
-      return allPresets.slice(0, limit).map((p) => this.localToUnified(p));
-    }
-  }
-
-  /**
    * Get a single preset by ID
    */
   async getPreset(id: string): Promise<UnifiedPreset | null> {
@@ -442,48 +388,6 @@ class HybridPresetService {
     }
 
     return null;
-  }
-
-  /**
-   * Get random preset
-   */
-  async getRandomPreset(category?: PresetCategory): Promise<UnifiedPreset | null> {
-    const { presets } = await this.getPresets({ category, includeAPI: true });
-    if (presets.length === 0) return null;
-
-    const randomIndex = Math.floor(Math.random() * presets.length);
-    return presets[randomIndex];
-  }
-
-  /**
-   * Search presets
-   */
-  async searchPresets(query: string): Promise<UnifiedPreset[]> {
-    return (await this.getPresets({ search: query })).presets;
-  }
-
-  // ============================================
-  // Dye Resolution
-  // ============================================
-
-  /**
-   * Resolve dye IDs to Dye objects
-   */
-  resolveDyes(dyeIds: number[]): (Dye | null)[] {
-    return dyeIds.map((id) => resolvePresetDye(id) ?? null);
-  }
-
-  /**
-   * Get preset with resolved dyes
-   */
-  async getPresetWithDyes(
-    id: string
-  ): Promise<{ preset: UnifiedPreset; dyes: (Dye | null)[] } | null> {
-    const preset = await this.getPreset(id);
-    if (!preset) return null;
-
-    const dyes = this.resolveDyes(preset.dyes);
-    return { preset, dyes };
   }
 
   // ============================================
