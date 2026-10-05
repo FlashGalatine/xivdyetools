@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-10-04
+**Zuletzt aktualisiert**: 2026-10-05
 
 ## 1. Einführung
 
@@ -20,7 +20,7 @@ Verbindung zu Square Enix.
 | Datentyp | Zweck | Aufbewahrung |
 |-----------|---------|-----------|
 | Discord-Benutzer-ID | Identifiziert Nutzer für Einstellungen, favorisierte Presets, Abstimmungen, Ratenbegrenzung und die Markierung des Erstlauf-Hinweises; dient außerdem als Schlüssel für einen täglichen Aktivitäts-Marker pro Nutzer und wird (nie aufgelistet) in Nutzungsstatistiken gezählt — siehe *Nutzungsanalyse* unten | Bis eine Datenlöschung beantragt wird (Nutzungsstatistik-Datensätze: siehe *Nutzungsanalyse*) |
-| Discord-Anzeigename (dein Benutzername, wenn du keinen Anzeigenamen hast) | Wird öffentlich als Autor der von dir eingereichten Community-Presets angezeigt | Bis eine Datenlöschung beantragt wird |
+| Autorenname: dein Discord-Anzeigename (dein Benutzername, wenn du keinen Anzeigenamen hast). Ein Preset, das du in der Web-App nach der Anmeldung mit XIVAuth einreichst, zeigt stattdessen den Namen deines verifizierten Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn bei deiner Anmeldung kein verifizierter Charakter verfügbar ist | Wird öffentlich als Autor der von dir eingereichten Community-Presets angezeigt | Bis eine Datenlöschung beantragt wird |
 | Nutzer-Gebietsschema | Stellt lokalisierte Bot-Antworten bereit; die Sprache des Discord-Clients (eingeordnet in eine der sechs vom Bot unterstützten Sprachen, oder "andere") wird ebenfalls in Nutzungsstatistiken erfasst — siehe *Nutzungsanalyse* unten | Gespeicherte Einstellung: bis sie gelöscht wird. Nutzungsstatistik-Kategorie: siehe *Nutzungsanalyse* |
 | Server-ID / Kanal-ID | Verarbeitet Befehle im Kontext | Wird nicht gespeichert. Nutzungsstatistiken erfassen nur, *ob* ein Befehl in einem Server oder in einer DM ausgeführt wurde (die Werte `guild` / `dm`) — niemals die ID des Servers oder des Kanals |
 
@@ -68,7 +68,9 @@ halten, speichern wir:
 
 - **Sperrdatensätze.** Wenn dich ein Moderator für Community-Presets sperrt, enthält der
   Sperrdatensatz deine Discord-Benutzer-ID oder, wenn du dich in der Web-App mit
-  einem XIVAuth-Konto angemeldet hast, das nicht mit Discord verknüpft ist, stattdessen deine XIVAuth-ID, den Autorennamen, der zum Zeitpunkt der Sperre bei deinen Presets
+  einem XIVAuth-Konto angemeldet hast, das nicht mit Discord verknüpft ist, stattdessen die
+  Konto-ID, die dir unser Anmeldedienst gegeben hat (eine zufällige Kennung, nicht deine
+  XIVAuth-ID), den Autorennamen, der zum Zeitpunkt der Sperre bei deinen Presets
   angezeigt wurde, die Discord-Benutzer-IDs des Moderators, der die Sperre verhängt hat, und des
   Moderators, der sie aufgehoben hat, den Grund, den der Moderator angegeben hat, sowie das Datum
   der Sperre und das Datum ihrer Aufhebung.
@@ -121,7 +123,7 @@ wird nichts aus der Datei gesendet, und nichts über dich oder dein Discord-Kont
 | Bot-Funktionalität bereitstellen | Nutzer-ID, Server-ID, Kanal-ID |
 | Deine Einstellungen speichern | Nutzer-ID und die von dir festgelegten Einstellungswerte |
 | Deine favorisierten Presets verwalten | Nutzer-ID, Preset-ID |
-| Community-Presets | Nutzer-ID, Anzeigename (öffentlich als Autor angezeigt), Preset-Inhalt |
+| Community-Presets | Nutzer-ID, Autorenname (öffentlich angezeigt), Preset-Inhalt |
 | Moderation | Sperrdatensätze und Einträge im Moderationsprotokoll (siehe *Moderationsdatensätze*) |
 | Abstimmungssystem | Nutzer-ID, Preset-ID |
 | Missbrauch verhindern | Nutzer-ID, Ratenbegrenzungszähler |
@@ -224,7 +226,7 @@ Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfern
 | Fehldatensätze zu Moderationsbenachrichtigungen (Preset-ID, Fehler, Zeitstempel) | 30 Tage nach Lösung, 90 Tage bei ungelöst — sofort gelöscht, wenn das Preset gelöscht wird |
 | Tägliche Zähler für Einreichungen / Bearbeitungen (Nutzer-ID, Art, Preset-ID, Zeitstempel) | 30 Tage |
 | Sperrdatensätze | Solange die Sperre aktiv ist. Wird sie aufgehoben, werden der Autorenname und der Grund sofort aus dem Datensatz gelöscht, und der Datensatz wird 90 Tage später gelöscht |
-| Einträge im Moderationsprotokoll zu einer Sperre, einer Aufhebung einer Sperre, einem Ausblenden oder einem Wiederherstellen (diese behalten den Grund des Moderators) | 12 Monate oder, bei einem Ausblenden oder Wiederherstellen, bis das Preset gelöscht wird |
+| Einträge im Moderationsprotokoll zu einer Sperre, einer Aufhebung einer Sperre, einem Ausblenden oder einem Wiederherstellen (diese behalten den Grund des Moderators) | 12 Monate oder, bei einem Ausblenden oder Wiederherstellen, früher, wenn das Preset gelöscht wird |
 | Andere Einträge im Moderationsprotokoll zu einem Preset (etwa Genehmigen, Ablehnen oder Zurücksetzen) | Solange das Preset existiert |
 | Beiträge im Moderationskanal und im Einreichungsprotokoll-Kanal auf unserem Discord-Server | Bis ein Moderator sie löscht oder bis du eine Löschung beantragst (der Beitrag zu einer noch aktiven Sperre bleibt bestehen) |
 

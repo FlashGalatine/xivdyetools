@@ -15,14 +15,16 @@ production deploy re-registers commands (`/stats preferences` is gone).
 ### Changed
 
 - **The Privacy Policy is amended in all six languages** (FINDING-005, -007, -008; approved at
-  the audit's §8 gate). `Last Updated` is October 4, 2026 on every variant.
+  the audit's §8 gate). `Last Updated` is October 5, 2026 on every variant.
   - **Moderation records** (new §2 subsection, §4 row, §5 D1 row, §8 rows). Ban records hold the
-    Discord User ID, or the XIVAuth ID for an XIVAuth account not linked to Discord. They also
-    hold the author name at the time, the moderators, the reason and the dates. The moderation
-    log is described as well. Retention:
+    Discord User ID. For an XIVAuth account not linked to Discord they hold the account ID our
+    sign-in service assigned (the oauth worker's random `users.id`), which is not the XIVAuth ID.
+    They also hold the author name at the time, the moderators, the reason and the dates. The
+    moderation log is described as well. Retention:
     - active bans until lifted;
     - a lifted ban's name and reason cleared at once, and the record deleted 90 days later;
-    - ban, unban, hide and restore log entries kept 12 months;
+    - ban, unban, hide and restore log entries kept 12 months at most, a hide or restore entry
+      less if its preset is deleted first;
     - other preset log entries kept as long as the preset exists.
   - **Discord posts** (§5 Discord row, §7, §8). Every kind of post is listed:
     - review posts for presets, edits and preview images, updated with the decision;
@@ -40,10 +42,20 @@ production deploy re-registers commands (`/stats preferences` is gone).
     deleted. The daily counters list the preset id. The ban reason stays in the moderation-log
     entries for 12 months. Hide and restore entries go when their preset is deleted.
   - **Author name** (§2, §4). The published author is the Discord display name, or the username
-    when there is none. The preferences record's last-changed time is listed.
+    when there is none. A preset submitted on the web app through XIVAuth shows the verified
+    character's name, or "XIVAuth User" and the first 8 characters of the XIVAuth ID when no
+    verified character is available at sign-in. The preferences record's last-changed time is
+    listed.
   - **Translations.** One translator per language, reviewed by an Opus verifier. Corrections were
     applied, three English sentences were clarified after review, and the change was propagated
     to all five translations. Interpretation needed: none flagged.
+  - **Corrected before release (2026-10-05),** after review of the open PR. The XIVAuth author name
+    and the ban record's XIVAuth identifier (both from the Codex review) are now right. The
+    hide/restore retention row read as having no 12-month limit (I18N-004). One Korean phrase read
+    as "the hidden user's presets" (I18N-006). All six variants were redone in one pass, with one
+    translator and one verifier per language, and `Last Updated` moved to the new date. The
+    "posts made since the Last Updated date" sentence depends on that date, so it must not be
+    earlier than the day this release deploys.
 
 ### Removed
 

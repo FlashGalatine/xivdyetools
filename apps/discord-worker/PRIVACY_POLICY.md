@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
 
-**Last Updated**: October 4, 2026
+**Last Updated**: October 5, 2026
 
 ## 1. Introduction
 
@@ -17,7 +17,7 @@ We are committed to protecting your privacy and being transparent about our data
 | Data Type | Purpose | Retention |
 |-----------|---------|-----------|
 | Discord User ID | Identify users for preferences, preset favorites, voting, rate limiting, and the first-run notice flag; also keys a daily per-user activity marker and is counted (never listed) in usage statistics — see *Usage Analytics* below | Until data deletion requested (usage-statistics records: see *Usage Analytics*) |
-| Discord display name (your username if you have no display name) | Shown publicly as the author of community presets you submit | Until data deletion requested |
+| Author name: your Discord display name (your username if you have no display name). A preset you submit on the web app after signing in with XIVAuth shows the name of your verified character instead, or "XIVAuth User" followed by the first 8 characters of your XIVAuth ID if no verified character is available when you sign in | Shown publicly as the author of community presets you submit | Until data deletion requested |
 | User Locale | Provide localized bot responses; the Discord client language (bucketed to one of the six the Bot supports, or "other") is also recorded in usage statistics — see *Usage Analytics* below | Stored preference: until cleared. Usage-statistics bucket: see *Usage Analytics* |
 | Guild ID / Channel ID | Process commands in context | Not stored. Usage statistics record only *whether* a command ran in a server or in a DM (the values `guild` / `dm`) — never the server's or channel's ID |
 
@@ -54,7 +54,7 @@ These records never include message content, command option values, server names
 
 Community presets are moderated. To enforce bans and to keep moderation accountable, we keep:
 
-- **Ban records.** If a moderator bans you from community presets, the ban record holds your Discord User ID or, if you signed in on the web app with an XIVAuth account that is not linked to Discord, your XIVAuth ID instead, the author name shown on your presets at the time of the ban, the Discord User IDs of the moderator who issued the ban and of the one who lifted it, the reason the moderator gave, and the dates of the ban and of its lifting.
+- **Ban records.** If a moderator bans you from community presets, the ban record holds your Discord User ID or, if you signed in on the web app with an XIVAuth account that is not linked to Discord, the account ID our sign-in service gave you instead (a random identifier, not your XIVAuth ID), the author name shown on your presets at the time of the ban, the Discord User IDs of the moderator who issued the ban and of the one who lifted it, the reason the moderator gave, and the dates of the ban and of its lifting.
 - **The moderation log.** Each moderation action is logged with the moderator's Discord User ID, the action, an optional reason, and the time. An action on a preset (such as approve, reject or revert) names the preset. A ban, unban, hide or restore also names the user it applied to.
 
 How long each record is kept is listed under *Data Retention*.
@@ -98,7 +98,7 @@ To name the gear, `/glamour` sends the equipment model numbers from the file and
 | Provide Bot functionality | User ID, Guild ID, Channel ID |
 | Save your preferences | User ID and the preference values you set |
 | Manage your preset favorites | User ID, Preset ID |
-| Community presets | User ID, display name (shown publicly as the author), Preset content |
+| Community presets | User ID, author name (shown publicly), Preset content |
 | Moderation | Ban records and moderation-log entries (see *Moderation Records*) |
 | Voting system | User ID, Preset ID |
 | Prevent abuse | User ID, Rate limit counters |
@@ -187,7 +187,7 @@ We will process deletion requests within 30 days. A deletion request also remove
 | Moderation-notification failure records (preset id, error, timestamps) | 30 days after resolution, 90 days if unresolved — deleted immediately if the preset is deleted |
 | Daily submission / edit counters (user id, kind, preset id, timestamp) | 30 days |
 | Ban records | While the ban is active. When it is lifted, the author name and the reason are cleared from the record at once, and the record is deleted 90 days later |
-| Moderation-log entries for a ban, unban, hide or restore (these keep the moderator's reason) | 12 months, or until the preset is deleted for a hide or restore |
+| Moderation-log entries for a ban, unban, hide or restore (these keep the moderator's reason) | 12 months, or sooner for a hide or restore if its preset is deleted |
 | Other moderation-log entries about a preset (such as approve, reject or revert) | As long as the preset exists |
 | Moderation-channel and submission-log posts in our Discord server | Until a moderator deletes them, or until you request deletion (the post about a ban that is still active stays) |
 
