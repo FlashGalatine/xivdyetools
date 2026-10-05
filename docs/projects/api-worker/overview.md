@@ -10,7 +10,7 @@ A Cloudflare Worker deployed at `data.xivdyetools.app` that exposes the XIV Dye 
 
 Since Monorepo 2.0 (2026-07-31) the same worker also owns two surfaces absorbed from retired apps:
 
-- the **Universalis market-board proxy** (`/universalis/*` on `data.xivdyetools.app`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` / `proxy.xivdyetools.projectgalatine.com` and discord-worker's `UNIVERSALIS_PROXY` service binding) — from `apps/universalis-proxy`;
+- the **Universalis market-board proxy** (`/universalis/*` on `data.xivdyetools.app`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` and discord-worker's `UNIVERSALIS_PROXY` service binding) — from `apps/universalis-proxy`;
 - the **developer documentation site** at `developers.xivdyetools.app` (VitePress in `apps/api-worker/docs/`, shipped as Workers Static Assets in the production env) — from `apps/api-docs`.
 
 ---
@@ -124,7 +124,7 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 
 No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...`).
 
-Production routes (all custom domains): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `proxy.xivdyetools.projectgalatine.com`, `developers.xivdyetools.app`. The top-level (bare `wrangler deploy`) env is the routeless `xivdyetools-api-worker-dev` worker — see [DEPLOY_ENVIRONMENTS.md](../../operations/DEPLOY_ENVIRONMENTS.md).
+Production routes (all custom domains): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app` (the retired `proxy.xivdyetools.projectgalatine.com` was removed in 0.16.1 — [DOMAIN_DEPRECATION.md](../../operations/DOMAIN_DEPRECATION.md)). The top-level (bare `wrangler deploy`) env is the routeless `xivdyetools-api-worker-dev` worker — see [DEPLOY_ENVIRONMENTS.md](../../operations/DEPLOY_ENVIRONMENTS.md).
 
 ---
 
