@@ -18,8 +18,12 @@ const LEGACY_ID_RE = /^preset_(approve|reject|revert)_[0-9a-f-]{36}$/i;
 const routableEnv = { MODERATION_BOT_TOKEN: 'mod-token', DISCORD_TOKEN: 'main' } as unknown as Env;
 const unroutableEnv = { DISCORD_TOKEN: 'main' } as unknown as Env;
 
+/**
+ * Callers pass a whole CommunityPreset, which still carries the author's snowflake. The fixture
+ * keeps it at runtime, so the FINDING-008 assertion below proves the id is never rendered.
+ */
 function preset(overrides: Partial<ModerationPresetInfo> = {}): ModerationPresetInfo {
-  return {
+  const whole: ModerationPresetInfo & { author_discord_id: string } = {
     id: PRESET_ID,
     name: 'Sunset',
     description: 'Warm tones',
@@ -28,8 +32,8 @@ function preset(overrides: Partial<ModerationPresetInfo> = {}): ModerationPreset
     author_name: 'Alice',
     author_discord_id: '123456789012345678',
     status: 'pending',
-    ...overrides,
   };
+  return { ...whole, ...overrides };
 }
 
 function customIds(result: ReturnType<typeof buildModerationNotification>): string[] {

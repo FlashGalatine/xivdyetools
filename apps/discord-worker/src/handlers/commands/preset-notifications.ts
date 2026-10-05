@@ -38,8 +38,6 @@ export interface ModerationPresetInfo {
   dyes: number[];
   tags?: string[];
   author_name?: string | null;
-  /** Not rendered (FINDING-008: no author mention in the embed); kept so callers can pass a whole preset. */
-  author_discord_id?: string | null;
   /** The status the moderator will see; part of the revision-bound button ids (FINDING-017). */
   status?: string;
 }

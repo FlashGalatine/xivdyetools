@@ -45,6 +45,13 @@ production deploy re-registers commands (`/stats preferences` is gone).
     applied, three English sentences were clarified after review, and the change was propagated
     to all five translations. Interpretation needed: none flagged.
 
+### Removed
+
+- **`ModerationPresetInfo.author_discord_id`** (2026-10-04 dead-code audit, DEAD-002). Once the
+  moderation embed stopped mentioning the author (FINDING-008, below), nothing read the field.
+  Callers still pass a whole `CommunityPreset`, which carries the id. The FINDING-008 test now
+  includes the id in its fixture and checks that the embed never shows it.
+
 ### Security
 
 - **Moderation buttons are bound to the reviewed revision** (FINDING-017, discord-worker part).
