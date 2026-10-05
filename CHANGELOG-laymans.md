@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.10] - 2026-10-05
+### 🗣️ Words that match the game
+- Web app: facewear and character-creation color names now match the game in every language.
+- Web app: the Glamour Reader's counts read naturally in the singular ("1 dye"), and its facewear tooltip names the color in your language.
+- Web app: the Glamour list's download button now says "Save .md", and German calls presets "Vorlage" throughout.
+
 ## [5.10.9] - 2026-10-05
 ### 🛠️ Smoother tools
 - Web app: changing the language keeps your results in Harmony, Dye Mixer, Comparison and Accessibility.
