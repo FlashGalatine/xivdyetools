@@ -23,7 +23,7 @@
 
 **Two cheap text fixes are worth making inside their PRs before you merge them.** They are only recommended; nothing has been pushed.
 - **BUG-063 (#224):** the presets-api 2.4.0 changelog intro says "No schema change and no migration". Its own Rollout section marks hand-running migration 0015 as **Required**. Whoever deploys from the intro would skip the migration.
-- **BUG-053 (#225):** the moderation bot's footer still advertises the removed `reject <id> <reason>` option, and a test pins it.
+- **BUG-053 (#225):** the moderation bot's footer still reads `reject <id> <reason>`. `reject` is still valid, but #225 removed its `<reason>` argument (the reason is now typed in a modal). A test pins the old footer.
 
 **The other six PR-origin items can wait for their unit's sprint:**
 - BUG-039 (#229): an untested multiplier;
