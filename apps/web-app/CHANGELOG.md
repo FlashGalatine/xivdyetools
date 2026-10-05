@@ -26,7 +26,10 @@ their behaviour.
     deletion request removes them;
   - failed-notification records (preset and error only; 30 days after resolution, 90 unresolved);
   - ban records (cleared of name and reason when lifted, deleted 90 days later) and the moderation
-    log (12 months for ban, unban, hide and restore; as long as the preset for the rest).
+    log (12 months at most for ban, unban, hide and restore, a hide or restore sooner if its preset
+    is deleted; as long as the preset for every other entry). For an XIVAuth account not linked to
+    Discord, the ban record holds the account ID our sign-in service assigned (the oauth worker's
+    random `users.id`), not the XIVAuth ID.
   The periods hold within a day because of presets-api 2.4.0's daily retention job.
 - **Item 3 now also says** that the author name is refreshed on every sign-in, that an XIVAuth
   account's data moves to the Discord ID once Discord is linked (neither while a ban is active), that submitting a preset votes for
@@ -39,8 +42,15 @@ their behaviour.
   with it, a vote, the session), unless banned; private requests by email or Discord DM, never a
   public issue; handled within 30 days; a request also removes the Discord posts, except the post
   about an active ban, and does not remove an active ban record.
-- `Last updated` stays 2026-10-04 on all six variants. If this merges on a later date, bump all six
-  to the merge date.
+- **Corrected before release (2026-10-05),** after review of the open PR:
+  - the moderation-log bullet gave a hide or restore entry two retention rules; the 12-month rule
+    now comes first, and "any other entry" is kept as long as its preset (I18N-005);
+  - the ban record named the XIVAuth ID for an unlinked XIVAuth account, but it holds our own
+    account ID (Codex review, as in the bot policy);
+  - a Korean phrase read as "the hidden user's presets" (I18N-006).
+  One translator and one verifier per language.
+- `Last updated` is 2026-10-05 on all six variants, because the "posts made since the Last updated
+  date" sentence depends on it. If this merges on a later date, bump all six to the merge date.
 
 ## [5.13.4] - 2026-10-04
 

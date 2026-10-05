@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-04 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-10-05 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
@@ -157,18 +157,19 @@ presets service (`api.xivdyetools.app`) — except the posts in our Discord serv
   account. It is deleted **30 days** after a moderator resolves it, after **90 days** if nobody
   does, and at once if the preset is deleted.
 - **Ban records.** If a moderator bans you from community presets, the ban record holds your
-  Discord user ID or, if you signed in with an XIVAuth account that is not linked to Discord, your
-  XIVAuth ID instead. It also holds the author name shown on your presets at the time of the ban,
+  Discord user ID or, if you signed in with an XIVAuth account that is not linked to Discord, the
+  account ID our sign-in service gave you instead (a random identifier, not your XIVAuth ID). It
+  also holds the author name shown on your presets at the time of the ban,
   the Discord user IDs of the moderator who issued the ban and of the one who lifted it, the reason
   the moderator gave, and the dates of the ban and of its lifting. The record is kept while the ban
   is active. When the ban is lifted, the author name and the reason are cleared from the ban record
   at once, and the record is deleted **90 days** later. The moderation-log entries for the ban keep
   the reason, as described next.
 - **The moderation log.** Each moderation action is logged with the moderator's Discord user ID,
-  the action, an optional reason and the time. An action on a preset (such as approve, reject or
-  revert) names the preset, and is kept as long as the preset exists. A ban, unban, hide or restore
-  also names the account it applied to, and is deleted after **12 months**, or sooner for a hide or
-  restore if its preset is deleted.
+  the action, an optional reason and the time. A ban, unban, hide or restore also names the account
+  it applied to, and is deleted after **12 months**, or sooner for a hide or restore if its preset
+  is deleted. Any other entry about a preset (such as approve, reject or revert) names the preset,
+  and is kept as long as the preset exists.
 
 The Discord bot keeps the same records for presets submitted through it; see
 [its policy](../discord-worker/PRIVACY_POLICY.md).

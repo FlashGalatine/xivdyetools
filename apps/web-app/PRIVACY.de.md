@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-04 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-10-05 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
@@ -87,8 +87,8 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    Kontodatensatz an, unabhängig davon, ob du anschließend etwas einreichst oder abstimmst. Bei
    Discord enthält der Datensatz deine Discord-Benutzer-ID und deinen Anzeigenamen (deinen
    Benutzernamen, wenn du keinen Anzeigenamen hast). Bei XIVAuth enthält der Datensatz deine
-   XIVAuth-ID und den Namen deines verifizierten Charakters. Hast du keinen verifizierten
-   Charakter, lautet der Name "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID.
+   XIVAuth-ID und den Namen deines verifizierten Charakters. Ist keiner verfügbar, wenn du dich
+   anmeldest, lautet der Name "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID.
    Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz zusätzlich diese
    Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jedes Presets angezeigt, das du
    veröffentlichst, und wird bei jeder Anmeldung bei allen davon aktualisiert (nicht, solange eine
@@ -180,7 +180,8 @@ Discord-Server.
   das Preset gelöscht wird.
 - **Sperrdatensätze.** Wenn dich ein Moderator für Community-Presets sperrt, enthält der
   Sperrdatensatz deine Discord-Benutzer-ID oder, wenn du dich mit einem XIVAuth-Konto angemeldet
-  hast, das nicht mit Discord verknüpft ist, stattdessen deine XIVAuth-ID. Er enthält außerdem den
+  hast, das nicht mit Discord verknüpft ist, stattdessen die Konto-ID, die dir unser Anmeldedienst
+  gegeben hat (eine zufällige Kennung, nicht deine XIVAuth-ID). Er enthält außerdem den
   Autorennamen, der zum Zeitpunkt der Sperre bei deinen Presets angezeigt wurde, die
   Discord-Benutzer-IDs des Moderators, der die Sperre verhängt hat, und des Moderators, der sie
   aufgehoben hat, den Grund, den der Moderator angegeben hat, sowie das Datum der Sperre und das
@@ -189,12 +190,12 @@ Discord-Server.
   und der Datensatz wird **90 Tage** später gelöscht. Die Einträge im Moderationsprotokoll zur
   Sperre behalten den Grund, wie als Nächstes beschrieben.
 - **Das Moderationsprotokoll.** Jede Moderationsmaßnahme wird mit der Discord-Benutzer-ID des
-  Moderators, der Maßnahme, einem optionalen Grund und dem Zeitpunkt protokolliert. Eine Maßnahme
-  zu einem Preset (etwa Genehmigen, Ablehnen oder Zurücksetzen) nennt das Preset und wird
-  aufbewahrt, solange das Preset existiert. Eine Sperre, eine Aufhebung einer Sperre, ein
-  Ausblenden oder ein Wiederherstellen nennt außerdem das Konto, auf das sich die Maßnahme bezog,
-  und wird nach **12 Monaten** gelöscht oder, bei einem Ausblenden oder Wiederherstellen, früher,
-  wenn das Preset gelöscht wird.
+  Moderators, der Maßnahme, einem optionalen Grund und dem Zeitpunkt protokolliert. Eine Sperre,
+  eine Aufhebung einer Sperre, ein Ausblenden oder ein Wiederherstellen nennt außerdem das Konto,
+  auf das sich die Maßnahme bezog, und wird nach **12 Monaten** gelöscht oder, bei einem Ausblenden
+  oder Wiederherstellen, früher, wenn das Preset gelöscht wird. Jeder andere Eintrag zu einem
+  Preset (etwa Genehmigen, Ablehnen oder Zurücksetzen) nennt das Preset und wird aufbewahrt,
+  solange das Preset existiert.
 
 Der Discord-Bot bewahrt dieselben Datensätze für Presets auf, die über ihn eingereicht werden;
 siehe [seine Richtlinie](../discord-worker/PRIVACY_POLICY.md).

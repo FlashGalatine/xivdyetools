@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-10-04 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-10-05 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
@@ -92,8 +92,9 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    Avec Discord, l'enregistrement contient votre identifiant utilisateur Discord et votre nom
    d'affichage (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Avec XIVAuth,
    l'enregistrement contient votre identifiant XIVAuth et le nom de votre personnage vérifié. Si
-   vous n'avez aucun personnage vérifié, le nom est « XIVAuth User » suivi des 8 premiers caractères
-   de votre identifiant XIVAuth. Si votre compte XIVAuth est lié à Discord, l'enregistrement
+   aucun n'est disponible lors de votre connexion, le nom est « XIVAuth User » suivi
+   des 8 premiers caractères de votre identifiant XIVAuth.
+   Si votre compte XIVAuth est lié à Discord, l'enregistrement
    contient aussi cet identifiant utilisateur Discord. Le nom figurant dans l'enregistrement est
    affiché comme auteur de chaque palette prédéfinie que vous publiez, et il est mis à jour sur
    chacune d'elles à chaque fois que vous vous connectez (pas tant qu'un bannissement est actif). Si
@@ -187,8 +188,9 @@ connexion (`auth.xivdyetools.app`), le reste par notre service de palettes préd
   immédiatement si la palette prédéfinie est supprimée.
 - **Enregistrements de bannissement.** Si un modérateur vous bannit des palettes prédéfinies
   communautaires, l'enregistrement de bannissement contient votre identifiant utilisateur Discord
-  ou, si vous vous êtes connecté avec un compte XIVAuth qui n'est pas lié à Discord, votre
-  identifiant XIVAuth à la place. Il contient aussi le nom d'auteur affiché sur vos palettes
+  ou, si vous vous êtes connecté avec un compte XIVAuth qui n'est pas lié à Discord, l'identifiant
+  de compte que notre service de connexion vous a attribué à la place (un identifiant aléatoire, qui
+  n'est pas votre identifiant XIVAuth). Il contient aussi le nom d'auteur affiché sur vos palettes
   prédéfinies au moment du bannissement, les identifiants utilisateur Discord du modérateur qui a
   prononcé le bannissement et de celui qui l'a levé, le motif indiqué par le modérateur, ainsi que
   les dates du bannissement et de sa levée. L'enregistrement est conservé tant que le bannissement
@@ -197,12 +199,12 @@ connexion (`auth.xivdyetools.app`), le reste par notre service de palettes préd
   plus tard. Les entrées du journal de modération concernant le bannissement conservent le motif,
   comme décrit ensuite.
 - **Le journal de modération.** Chaque action de modération est consignée avec l'identifiant
-  utilisateur Discord du modérateur, l'action, un motif facultatif et l'heure. Une action portant
-  sur une palette prédéfinie (par exemple approuver, rejeter ou annuler une modification) désigne
-  cette palette, et est conservée tant que la palette prédéfinie existe. Un bannissement, une levée
-  de bannissement, un masquage ou une restauration désigne aussi le compte concerné, et est supprimé
-  après **12 mois**, ou plus tôt pour un masquage ou une restauration si sa palette prédéfinie est
-  supprimée.
+  utilisateur Discord du modérateur, l'action, un motif facultatif et l'heure. Un bannissement,
+  une levée de bannissement, un masquage ou une restauration désigne aussi le compte concerné, et
+  est supprimé après **12 mois**, ou plus tôt pour un masquage ou une restauration si sa palette
+  prédéfinie est supprimée. Toute autre entrée concernant une palette prédéfinie (par exemple
+  approuver, rejeter ou annuler une modification) désigne cette palette, et est conservée tant
+  que la palette prédéfinie existe.
 
 Le bot Discord conserve les mêmes enregistrements pour les palettes prédéfinies soumises par son
 intermédiaire ; voir [sa politique](../discord-worker/PRIVACY_POLICY.md).
