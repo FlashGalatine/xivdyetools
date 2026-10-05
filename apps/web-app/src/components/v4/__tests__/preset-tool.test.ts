@@ -69,7 +69,9 @@ vi.mock('@services/language-service', () => ({ LanguageService: languageServiceM
 
 const authServiceMock = {
   isAuthenticated: vi.fn(() => false),
-  subscribe: vi.fn(() => () => {}),
+  subscribe: vi.fn<(listener: (state: { isAuthenticated: boolean }) => void) => () => void>(
+    () => () => {}
+  ),
 };
 
 const modalServiceMock = {
@@ -139,6 +141,7 @@ const savedPresetsServiceMock = {
   subscribe: vi.fn(() => () => {}),
   toggle: vi.fn(),
   markDeleted: vi.fn(),
+  recordVoteCounts: vi.fn(),
 };
 vi.mock('@services/saved-presets-service', () => ({
   SavedPresetsService: savedPresetsServiceMock,
@@ -354,6 +357,10 @@ describe('PresetTool', () => {
     communityPresetServiceMock.voteForPreset.mockReset();
     communityPresetServiceMock.removeVote.mockReset();
     presetSubmissionServiceMock.deletePreset.mockReset();
+    presetSubmissionServiceMock.getMySubmissions.mockReset();
+    presetSubmissionServiceMock.getMySubmissions.mockImplementation(async () => ({
+      presets: mySubmissionsMock,
+    }));
     savedPresetsServiceMock.markDeleted.mockReset();
     resolvePresetDyeMock.mockReset();
     resolvePresetDyeMock.mockReturnValue(undefined);
@@ -1255,6 +1262,237 @@ describe('PresetTool', () => {
       await flush(el);
 
       expect(hybridPresetServiceMock.getPresets.mock.calls.length).toBe(calls);
+    });
+
+    // ------------------------------------------------------------------
+    // Sprint 4 review follow-ups
+    // ------------------------------------------------------------------
+
+    describe('signing out on Mine catches the pool up', () => {
+      function signOut(): void {
+        const listener = authServiceMock.subscribe.mock.calls.at(-1)![0];
+        listener({ isAuthenticated: false });
+      }
+
+      it('fetches the search typed on Mine', async () => {
+        const el = await mountLoaded(true);
+        await clickTab(el, 'mine');
+        typeSearch(el, 'zzz');
+        await flush(el);
+        hybridPresetServiceMock.getPresets.mockClear();
+
+        signOut();
+        await flush(el);
+
+        expect(el.tab).toBe('community');
+        expect(hybridPresetServiceMock.getPresets).toHaveBeenCalledWith(
+          expect.objectContaining({ search: 'zzz' })
+        );
+      });
+
+      it('fetches the sort chosen on Mine', async () => {
+        const el = await mountLoaded(true);
+        await clickTab(el, 'mine');
+        await sortBy(el, 'name');
+        hybridPresetServiceMock.getPresets.mockClear();
+
+        signOut();
+        await flush(el);
+
+        expect(el.tab).toBe('community');
+        expect(hybridPresetServiceMock.getPresets).toHaveBeenCalledWith(
+          expect.objectContaining({ sort: 'name' })
+        );
+      });
+
+      it('does not refetch when nothing changed on Mine', async () => {
+        const el = await mountLoaded(true);
+        await clickTab(el, 'mine');
+        hybridPresetServiceMock.getPresets.mockClear();
+
+        signOut();
+        await flush(el);
+
+        expect(el.tab).toBe('community');
+        expect(hybridPresetServiceMock.getPresets).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Mine during the first load', () => {
+      it('spins until the submissions arrive, without waiting for the presets', async () => {
+        hybridPresetServiceMock.getPresets.mockImplementation(() => new Promise(() => {}));
+        let resolveMine!: (value: { presets: CommunityPreset[] }) => void;
+        presetSubmissionServiceMock.getMySubmissions.mockImplementationOnce(
+          () => new Promise((resolve) => (resolveMine = resolve))
+        );
+        const el = await mountLoaded(true);
+
+        await clickTab(el, 'mine');
+
+        expect(el.shadowRoot.querySelector('.spinner')).not.toBeNull();
+        expect(el.shadowRoot.textContent).not.toContain('preset.noSubmissionsYet');
+        expect(presetSubmissionServiceMock.getMySubmissions).toHaveBeenCalled();
+
+        resolveMine({ presets: [makeCommunity({ id: 'm-1', name: 'Mine one' })] });
+        await flush(el);
+
+        expect(el.shadowRoot.querySelector('.spinner')).toBeNull();
+        expect(cardIds(el)).toEqual(['community-m-1']);
+      });
+
+      it('stops spinning when the submissions fail to load', async () => {
+        presetSubmissionServiceMock.getMySubmissions.mockRejectedValueOnce(new Error('down'));
+        const el = await mountLoaded(true);
+
+        await clickTab(el, 'mine');
+
+        expect(el.shadowRoot.querySelector('.spinner')).toBeNull();
+        expect(el.shadowRoot.textContent).toContain('preset.noSubmissionsYet');
+      });
+    });
+
+    describe('Community and Official badges while a Saved search is unfetched', () => {
+      const feed = [
+        makePreset({ id: 'community-a', name: 'Alpha' }),
+        makePreset({ id: 'community-b', name: 'Beta' }),
+        makePreset({ id: 'curated-1', isCurated: true, isFromAPI: false, apiPresetId: undefined }),
+      ];
+
+      it('read "—" until an API tab fetches the search', async () => {
+        hybridPresetServiceMock.getPresets.mockResolvedValue(pool(feed));
+        const el = await mountLoaded();
+        await clickTab(el, 'saved');
+
+        typeSearch(el, 'zzz');
+        await el.updateComplete;
+
+        expect(tabCount(el, 'community')).toBe('—');
+        expect(tabCount(el, 'official')).toBe('—');
+        expect(tabCount(el, 'saved')).toBe('0');
+
+        hybridPresetServiceMock.getPresets.mockResolvedValue(pool([]));
+        await clickTab(el, 'community');
+        await flush(el);
+
+        expect(tabCount(el, 'community')).toBe('0');
+        expect(tabCount(el, 'official')).toBe('0');
+      });
+
+      it('keep their numbers through a sort changed on Saved', async () => {
+        hybridPresetServiceMock.getPresets.mockResolvedValue(pool(feed));
+        const el = await mountLoaded();
+        await clickTab(el, 'saved');
+
+        await sortBy(el, 'name');
+
+        expect(tabCount(el, 'community')).toBe('2');
+        expect(tabCount(el, 'official')).toBe('1');
+      });
+    });
+
+    describe('the Saved shelf sorts on keys it owns', () => {
+      // The review's reproduction: A has more votes and was saved later; B
+      // was created later. Neither order may depend on which is in the pool.
+      const liveA = makePreset({
+        id: 'community-a',
+        name: 'Alpha',
+        voteCount: 40,
+        createdAt: '2024-01-01T00:00:00Z',
+      });
+      const liveB = makePreset({
+        id: 'community-b',
+        name: 'Beta',
+        voteCount: 5,
+        createdAt: '2026-06-01T00:00:00Z',
+      });
+      const savedA = makeSaved({
+        id: 'community-a',
+        name: 'Alpha',
+        voteCount: 40,
+        savedAt: '2026-10-04T00:00:00Z',
+      });
+      const savedB = makeSaved({
+        id: 'community-b',
+        name: 'Beta',
+        voteCount: 5,
+        savedAt: '2026-09-01T00:00:00Z',
+      });
+
+      it.each(['popular', 'recent'] as const)(
+        '%s: the order holds when a search drops a saved preset from the pool',
+        async (sort) => {
+          configControllerConfig = { ...defaultConfig(), sortBy: sort };
+          savedListMock = [savedB, savedA];
+          hybridPresetServiceMock.getPresets.mockResolvedValue(pool([liveA, liveB]));
+          const el = await mountLoaded();
+          await clickTab(el, 'saved');
+          expect(cardIds(el)).toEqual(['community-a', 'community-b']);
+
+          // A search only B matches, fetched on Community, then cleared on Saved
+          typeSearch(el, 'beta');
+          hybridPresetServiceMock.getPresets.mockResolvedValue(pool([liveB]));
+          await clickTab(el, 'community');
+          await flush(el);
+          await clickTab(el, 'saved');
+          typeSearch(el, '');
+          await el.updateComplete;
+
+          expect(el.presets.map((p) => p.id)).toEqual(['community-b']);
+          expect(cardIds(el)).toEqual(['community-a', 'community-b']);
+        }
+      );
+
+      it('popular: a snapshot with no recorded count, or a local palette, follows the known counts in shelf order', async () => {
+        savedListMock = [
+          makeSaved({ id: 'community-old-1', name: 'Old one' }),
+          makeSaved({ id: 'community-zero', name: 'Zero', voteCount: 0 }),
+          makeSaved({ id: 'community-old-2', name: 'Old two' }),
+          makeSaved({ id: 'community-three', name: 'Three', voteCount: 3 }),
+        ];
+        localPalettesMock = [makeLocalPalette('abc')];
+
+        const el = await mountLoaded();
+        await clickTab(el, 'saved');
+
+        expect(cardIds(el)).toEqual([
+          'community-three',
+          'community-zero',
+          'community-old-1',
+          'community-old-2',
+          'local-abc',
+        ]);
+      });
+
+      it('records the live counts it loads onto the saved snapshots', async () => {
+        savedListMock = [savedA];
+        hybridPresetServiceMock.getPresets.mockResolvedValue(pool([liveA, liveB]));
+
+        await mountLoaded();
+
+        expect(savedPresetsServiceMock.recordVoteCounts).toHaveBeenCalledWith(
+          expect.arrayContaining([expect.objectContaining({ id: 'community-a', voteCount: 40 })])
+        );
+      });
+
+      it('records the count a card vote returns', async () => {
+        savedListMock = [savedA];
+        hybridPresetServiceMock.getPresets.mockResolvedValue(pool([liveA]));
+        communityPresetServiceMock.voteForPreset.mockResolvedValueOnce({
+          success: true,
+          new_vote_count: 41,
+        });
+        const el = await mountLoaded(true);
+        savedPresetsServiceMock.recordVoteCounts.mockClear();
+
+        cardFor(el, 'community-a').dispatchEvent(
+          new CustomEvent('preset-vote', { detail: { preset: liveA } })
+        );
+        await flush(el);
+
+        expect(savedPresetsServiceMock.recordVoteCounts).toHaveBeenCalledWith([
+          expect.objectContaining({ id: 'community-a', voteCount: 41 }),
+        ]);
+      });
     });
   });
 });

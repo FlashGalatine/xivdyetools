@@ -35,12 +35,16 @@ const {
   mockToastError: vi.fn(),
 }));
 
+// My Submissions is the top modal throughout; the stack-order cases run on
+// the real ModalService in my-submissions-modal-stack.test.ts.
 vi.mock('@services/modal-service', () => ({
   ModalService: {
     show: mockShow,
     showConfirm: mockShowConfirm,
     dismiss: mockDismiss,
     dismissTop: vi.fn(),
+    getTopModal: () => ({ id: 'modal-id-my-submissions' }),
+    subscribe: () => () => {},
   },
 }));
 

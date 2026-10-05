@@ -87,6 +87,48 @@ function matchesSearch(preset: UnifiedPreset, q: string): boolean {
   );
 }
 
+/** A Saved-shelf row, with the sort keys the shelf itself holds. */
+interface ShelfRow {
+  preset: UnifiedPreset;
+  /** When it joined the shelf: the snapshot's `savedAt`, a local palette's `createdAt`. */
+  addedAt: string;
+  /** The live count, else the snapshot's last-known one; undefined when neither exists. */
+  votes: number | undefined;
+}
+
+/**
+ * Order the Saved shelf. OPT-008 review follow-up (2026-10-04 deep-dive): it
+ * used to go through `sortPresets`, whose keys came from the live copy when
+ * the preset happened to be in the fetched pool and from placeholders (0
+ * votes, `savedAt` standing in for the creation date) when it was not — so
+ * the same shelf reordered whenever a search, the 50-row cut or a failed
+ * request changed the pool. These keys do not depend on the pool:
+ * - recent: when the row joined the shelf;
+ * - popular: the live count, else the snapshot's last-known count; rows with
+ *   neither (snapshots saved before counts were recorded, local palettes)
+ *   follow every known count;
+ * - name: the name.
+ * Ties keep shelf order: snapshots in save order, then local palettes.
+ */
+function sortShelf(rows: ShelfRow[], sort: PresetsConfig['sortBy']): UnifiedPreset[] {
+  const time = (iso: string): number => Date.parse(iso) || 0;
+  const ordered = [...rows].sort((a, b) => {
+    switch (sort) {
+      case 'recent':
+        return time(b.addedAt) - time(a.addedAt);
+      case 'popular':
+        if (a.votes === undefined || b.votes === undefined) {
+          return Number(a.votes === undefined) - Number(b.votes === undefined);
+        }
+        return b.votes - a.votes;
+      case 'name':
+      default:
+        return a.preset.name.localeCompare(b.preset.name);
+    }
+  });
+  return ordered.map((row) => row.preset);
+}
+
 /**
  * V4 Preset Tool — the 8A Gallery.
  */
@@ -151,6 +193,14 @@ export class PresetTool extends BaseLitComponent {
 
   @state()
   private userSubmissions: CommunityPreset[] = [];
+
+  /**
+   * The signed-in user's submissions have answered (or failed) at least once.
+   * Until then Mine shows the spinner: its empty state would say "You haven't
+   * submitted any presets yet" to a user who has (Sprint 4 review follow-up).
+   */
+  @state()
+  private userSubmissionsLoaded: boolean = false;
 
   @state()
   private isAuthenticated: boolean = false;
@@ -437,7 +487,11 @@ export class PresetTool extends BaseLitComponent {
         void this.loadUserSubmissions();
       } else if (!this.isAuthenticated) {
         this.userSubmissions = [];
-        if (this.tab === 'mine') this.tab = 'community';
+        this.userSubmissionsLoaded = false;
+        // OPT-008 review follow-up: through the same catch-up as a tab click,
+        // or Community would show a pool fetched before the search or sort
+        // was changed on Mine.
+        if (this.tab === 'mine') this.showTab('community');
       }
     });
 
@@ -457,12 +511,12 @@ export class PresetTool extends BaseLitComponent {
       this.localPalettes = collections.filter((c) => c.kind === 'palette');
     });
 
+    // Mine's own list does not wait for the presets pool (Sprint 4 review
+    // follow-up: it used to start only once the whole first load was in).
+    const submissions = this.isAuthenticated ? this.loadUserSubmissions() : Promise.resolve();
     await hybridPresetService.initialize();
     await this.loadPresets();
-
-    if (this.isAuthenticated) {
-      await this.loadUserSubmissions();
-    }
+    await submissions;
 
     await this.handleDeepLink();
   }
@@ -638,6 +692,8 @@ export class PresetTool extends BaseLitComponent {
       this.presets = result.presets;
       this.offline = !result.apiOk;
       this.reconcileTombstones(result, query);
+      // The Saved shelf's Popular key for when a copy leaves the pool
+      SavedPresetsService.recordVoteCounts(result.presets);
     } catch (error) {
       if (seq !== this._loadSeq) return; // superseded by a newer load
       logger.error('[v4-preset-tool] Failed to load presets:', error);
@@ -711,6 +767,9 @@ export class PresetTool extends BaseLitComponent {
       this.userSubmissions = response.presets;
     } catch (error) {
       logger.warn('[v4-preset-tool] Failed to load user submissions:', error);
+    } finally {
+      // A failure changes nothing else, so this is what stops Mine's spinner
+      this.userSubmissionsLoaded = true;
     }
   }
 
@@ -787,10 +846,11 @@ export class PresetTool extends BaseLitComponent {
   }
 
   /**
-   * Search and sort a pool held in this browser (Saved, Mine). OPT-008
-   * (2026-10-04 deep-dive): these tabs used to refetch the API pool on every
-   * search and sort — a spinner and a request for a list they never show —
-   * while their own lists ignored the sort, and Mine ignored the search too.
+   * Search and sort Mine, which is held in this browser. OPT-008 (2026-10-04
+   * deep-dive): Saved and Mine used to refetch the API pool on every search
+   * and sort — a spinner and a request for a list they never show — while
+   * their own lists ignored the sort, and Mine ignored the search too. (Saved
+   * sorts on its own keys: see `sortShelf`.)
    */
   private searchAndSortLocally(pool: UnifiedPreset[]): UnifiedPreset[] {
     const q = this.searchQuery.toLowerCase();
@@ -856,13 +916,29 @@ export class PresetTool extends BaseLitComponent {
         // only tab that survives the presets worker being unreachable, which
         // is exactly where a purely local record belongs. A palette saved as
         // well (BUG-029: Save used to be offered on one) is listed once.
-        const locals = this.localPalettes.map((c) => this.localPaletteToUnified(c));
-        const localIds = new Set(locals.map((p) => p.id));
+        const locals = this.localPalettes.map((c): ShelfRow => ({
+          preset: this.localPaletteToUnified(c),
+          addedAt: c.createdAt,
+          votes: undefined,
+        }));
+        const localIds = new Set(locals.map((row) => row.preset.id));
         const snapshots = this.savedList
           .filter((s) => !localIds.has(s.id))
           .filter((s) => this.config.keepDeleted || !s.deletedByAuthor)
-          .map((s) => this.savedToUnified(s));
-        return this.searchAndSortLocally([...snapshots, ...locals]);
+          .map((s): ShelfRow => {
+            const live = this.presets.find((p) => p.id === s.id);
+            return {
+              preset: this.savedToUnified(s),
+              addedAt: s.savedAt,
+              votes: live?.voteCount ?? s.voteCount,
+            };
+          });
+        const q = this.searchQuery.toLowerCase();
+        const rows = [...snapshots, ...locals];
+        return sortShelf(
+          q ? rows.filter((row) => matchesSearch(row.preset, q)) : rows,
+          this.config.sortBy
+        );
       }
       case 'mine':
         return this.searchAndSortLocally(
@@ -884,7 +960,10 @@ export class PresetTool extends BaseLitComponent {
    * the tab badges and rail counts used to rebuild their own bases, which
    * skipped Blend, Hide unbuyable, Keep deleted, the Saved search and (in the
    * Saved badge) the local palettes, so a count could name more cards than
-   * the list showed. Now every number is read off the same pools.
+   * the list showed. Now every number is read off the same pools — with one
+   * gap: OPT-008 leaves a search typed on Saved or Mine unfetched until an
+   * API tab is chosen, so until then the Community and Official pools answer
+   * another search, and `renderTabs` shows their badges as unknown.
    */
   private tabPools(): Record<PresetTab, UnifiedPreset[]> {
     return {
@@ -910,20 +989,28 @@ export class PresetTool extends BaseLitComponent {
   // ============================================
 
   private handleTabSelect(tab: PresetTab): void {
-    this.tab = tab;
     this.selectedPreset = null;
-    // OPT-008: the API pool follows the search and sort only on the tabs that
-    // show it. A search debounce still pending is dropped here: on Saved or
-    // Mine it would fetch for nothing, and on an API tab this load covers it.
+    this.showTab(tab);
+    if (tab === 'mine' && !this.isAuthenticated) {
+      void import('../signin-modal').then(({ showSignInModal }) => showSignInModal());
+    }
+  }
+
+  /**
+   * Switch to `tab`: a tab click, or sign-out leaving Mine. OPT-008: the API
+   * pool follows the search and sort only on the tabs that show it, so
+   * choosing one catches the pool up. A search debounce still pending is
+   * dropped here: on Saved or Mine it would fetch for nothing, and on an API
+   * tab this load covers it.
+   */
+  private showTab(tab: PresetTab): void {
+    this.tab = tab;
     clearTimeout(this._searchDebounce);
     if (
       this.isApiTab(tab) &&
       (this.searchQuery !== this.poolQuery || this.config.sortBy !== this.poolSort)
     ) {
       void this.loadPresets();
-    }
-    if (tab === 'mine' && !this.isAuthenticated) {
-      void import('../signin-modal').then(({ showSignInModal }) => showSignInModal());
     }
   }
 
@@ -999,6 +1086,7 @@ export class PresetTool extends BaseLitComponent {
 
   private applyVoteCount(presetId: string, voteCount: number): void {
     this.presets = this.presets.map((p) => (p.id === presetId ? { ...p, voteCount } : p));
+    SavedPresetsService.recordVoteCounts([{ id: presetId, voteCount }]);
   }
 
   private handleBack(): void {
@@ -1013,6 +1101,7 @@ export class PresetTool extends BaseLitComponent {
   private handleVoteUpdate(e: CustomEvent<VoteUpdateDetail>): void {
     const { preset: updatedPreset, voted } = e.detail;
     this.presets = this.presets.map((p) => (p.id === updatedPreset.id ? updatedPreset : p));
+    SavedPresetsService.recordVoteCounts([updatedPreset]);
     // BUG-110 (2026-10-04 deep-dive): without this the card kept its own
     // voted state — a vote removed in the detail still read "Voted" on the
     // card, and clicking it removed a vote that no longer existed.
@@ -1112,16 +1201,21 @@ export class PresetTool extends BaseLitComponent {
   }
 
   private renderTabs(pools: Record<PresetTab, UnifiedPreset[]>): TemplateResult {
+    // OPT-008 review follow-up: the API pool answers `poolQuery`. A search
+    // typed on Saved or Mine is fetched only when an API tab is chosen, and
+    // until then these two would count the previous search. (A sort changes
+    // no count.)
+    const poolStale = this.searchQuery !== this.poolQuery;
     const tabs: Array<{ id: PresetTab; label: string; count: string }> = [
       {
         id: 'community',
         label: LanguageService.t('preset.tabCommunity'),
-        count: this.offline ? '—' : String(pools.community.length),
+        count: this.offline || poolStale ? '—' : String(pools.community.length),
       },
       {
         id: 'official',
         label: LanguageService.t('preset.tabOfficial'),
-        count: String(pools.official.length),
+        count: poolStale ? '—' : String(pools.official.length),
       },
       {
         id: 'saved',
@@ -1253,8 +1347,11 @@ export class PresetTool extends BaseLitComponent {
 
   private renderGrid(pool: UnifiedPreset[]): TemplateResult {
     // OPT-008: Saved and Mine are held in this browser; an API load in flight
-    // (a sort, an edit's reload) has nothing to show them.
-    if (this.isLoading && this.isApiTab()) {
+    // (a sort, an edit's reload) has nothing to show them. Mine waits only on
+    // its own first load.
+    const mineFirstLoad =
+      this.tab === 'mine' && this.isAuthenticated && !this.userSubmissionsLoaded;
+    if ((this.isLoading && this.isApiTab()) || mineFirstLoad) {
       return html`
         <div class="loading-container">
           <div class="spinner"></div>

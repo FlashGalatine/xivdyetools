@@ -251,6 +251,11 @@ export async function uploadPreviewImage(presetId: string, file: File): Promise<
   if (!response.ok) {
     throw new Error('Preview image upload failed');
   }
+
+  // BUG-031 (2026-10-04 deep-dive) review follow-up: an Edit-form save that
+  // changes only the picture never reaches editPreset, so the cached lists
+  // would serve the old picture to preset-tool's reload.
+  communityPresetService.invalidatePresets(presetId);
 }
 
 /**
@@ -273,6 +278,9 @@ export async function removePreviewImage(presetId: string): Promise<void> {
   if (!response.ok) {
     throw new Error('Preview image removal failed');
   }
+
+  // BUG-031 (2026-10-04 deep-dive) review follow-up: see uploadPreviewImage.
+  communityPresetService.invalidatePresets(presetId);
 }
 
 // ============================================

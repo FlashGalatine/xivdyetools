@@ -658,6 +658,58 @@ describe('PresetSubmissionService - cache invalidation (BUG-031)', () => {
     expect(await listedNames()).toEqual(['Fresh List']);
   });
 
+  // An Edit-form save that changes only the picture skips editPreset and goes
+  // through these two alone, so they invalidate too (BUG-031 review follow-up).
+  it('refetches the list after the preview image is removed', async () => {
+    await cacheThenChangeList();
+    server.use(
+      http.delete(`${API_URL}/api/v1/presets/:presetId/preview-image`, () =>
+        HttpResponse.json({ success: true })
+      )
+    );
+
+    await removePreviewImage('preset-1');
+
+    expect(await listedNames()).toEqual(['Fresh List']);
+  });
+
+  it('refetches the list after a preview image is uploaded', async () => {
+    await cacheThenChangeList();
+    // Only the upload is stubbed; the list GETs still reach msw.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'shot.png', {
+      type: 'image/png',
+    });
+
+    try {
+      await uploadPreviewImage('preset-1', file);
+
+      expect(await listedNames()).toEqual(['Fresh List']);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('keeps the cached list when the preview-image removal fails', async () => {
+    const before = (await communityPresetService.getPresets({ sort: 'popular', limit: 50 }))
+      .presets;
+    server.use(
+      http.get(`${API_URL}/api/v1/presets`, () =>
+        HttpResponse.json({ presets: [], total: 0, page: 1, limit: 50, has_more: false })
+      ),
+      http.delete(`${API_URL}/api/v1/presets/:presetId/preview-image`, () =>
+        HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+      )
+    );
+
+    await expect(removePreviewImage('preset-1')).rejects.toThrow();
+
+    const after = (await communityPresetService.getPresets({ sort: 'popular', limit: 50 })).presets;
+    expect(after).toEqual(before);
+  });
+
   it('keeps the cached list when the delete fails', async () => {
     const before = (await communityPresetService.getPresets({ sort: 'popular', limit: 50 }))
       .presets;

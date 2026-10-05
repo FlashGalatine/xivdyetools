@@ -1708,15 +1708,18 @@ export class GlamourBlock {
   }
 
   /**
-   * The name for the on-device `kind: 'palette'` record: the draft, else the
-   * same local-only fallback `saveCharacterRecord` uses (nickname → file name
-   * → localized default). It stays in this browser's storage like the
-   * character record; the community path above never reads it.
+   * The name for the on-device `kind: 'palette'` record: the draft, else a
+   * local-only fallback in the same order chara-sheet's `saveCharacterColors`
+   * uses (nickname → file name → localized default). It stays in this
+   * browser's storage like the character record; the community path above
+   * never reads it.
    */
   private localPaletteName(): string {
     const draft = (this.paletteNameDraft ?? '').trim();
+    // BUG-082 (2026-10-04 deep-dive): a whitespace Nickname is truthy, so it
+    // beat the file name and createCollection rejected the blank name.
     const fallback =
-      this.resolved?.nickname ||
+      this.resolved?.nickname?.trim() ||
       this.fileName?.replace(/\.chara$/i, '') ||
       tSwatch('paletteDefaultName');
     return (draft || fallback).slice(0, 50);
@@ -1727,6 +1730,13 @@ export class GlamourBlock {
    * CollectionService store (the 10A glamour export's sibling record).
    */
   private saveLocalPalette(kept: Array<{ stainId: number; dye: Dye }>): void {
+    // BUG-016 (2026-10-04 deep-dive): a full store made createCollection
+    // return null, shown as the generic save failure — say which it is, as
+    // the Swatch Matcher's character save does.
+    if (!CollectionService.canCreateCollection()) {
+      ToastService.warning(LanguageService.t('collections.collectionsLimitReached'));
+      return;
+    }
     const base = this.localPaletteName();
     let name = base;
     let suffix = 1;

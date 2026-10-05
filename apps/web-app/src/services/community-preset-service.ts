@@ -174,6 +174,14 @@ export class CommunityPresetService {
   private readonly cache: SimpleCache<unknown>;
   private initialized = false;
   private available = false;
+  /**
+   * Bumped by every invalidation. BUG-031 review follow-up (2026-10-04
+   * deep-dive): `deleteByPrefix` only clears what is already stored, so a
+   * list request in flight when the cache was invalidated used to write its
+   * pre-change answer back afterwards. `request()` caches an answer only when
+   * no invalidation ran while it was out.
+   */
+  private cacheGeneration = 0;
 
   private constructor() {
     // Build-time override only (same as auth-service / preset-submission-
@@ -281,6 +289,7 @@ export class CommunityPresetService {
     }
 
     const url = `${this.apiUrl}${path}`;
+    const generation = this.cacheGeneration;
 
     try {
       const response = await this.fetchWithTimeout(url);
@@ -300,8 +309,9 @@ export class CommunityPresetService {
 
       const data = (await response.json()) as T;
 
-      // Cache successful response
-      if (cacheKey) {
+      // Cache successful response, unless the cache was invalidated while
+      // this request was in flight: then the answer may predate the change.
+      if (cacheKey && generation === this.cacheGeneration) {
         this.cache.set(cacheKey, data);
       }
 
@@ -371,6 +381,7 @@ export class CommunityPresetService {
    * Clear all cached data
    */
   clearCache(): void {
+    this.cacheGeneration++;
     this.cache.clear();
     logger.info('CommunityPresetService: Cache cleared');
   }
@@ -378,7 +389,8 @@ export class CommunityPresetService {
   /**
    * Drop every cached preset list, and the cached copy of `presetId` when
    * given. Call after anything that changes what a list shows: a submit, an
-   * edit, a delete or a vote.
+   * edit, a preview-image upload or removal, a delete or a vote. A request
+   * already in flight is not cached when it lands (see `cacheGeneration`).
    *
    * BUG-031 (2026-10-04 deep-dive): lists are cached per query for 5 minutes,
    * and the only invalidation was per-id, after a vote. So preset-tool's
@@ -386,6 +398,7 @@ export class CommunityPresetService {
    * pre-delete list back, deleted preset included.
    */
   invalidatePresets(presetId?: string): void {
+    this.cacheGeneration++;
     this.cache.deleteByPrefix('presets:');
     if (presetId) this.cache.delete(`preset:${presetId}`);
   }

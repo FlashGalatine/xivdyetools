@@ -405,6 +405,70 @@ describe('CommunityPresetService Integration Tests', () => {
     });
   });
 
+  // BUG-031 review follow-up: a list request already in flight when the cache
+  // is invalidated used to write its pre-change answer back into the cache,
+  // where the next load with the same query found it for up to 5 minutes.
+  describe('a list request in flight across an invalidation (BUG-031)', () => {
+    function listOf(name: string) {
+      return {
+        presets: [{ ...mockPresets[0], name }],
+        total: 1,
+        page: 1,
+        limit: 20,
+        has_more: false,
+      };
+    }
+
+    /** Serve one list behind a gate; `arrived` settles once the request is in. */
+    function holdList(name: string): { arrived: Promise<void>; release: () => void } {
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      let reached!: () => void;
+      const arrived = new Promise<void>((resolve) => (reached = resolve));
+      server.use(
+        http.get(`${API_URL}/api/v1/presets`, async () => {
+          reached();
+          await gate;
+          return HttpResponse.json(listOf(name));
+        })
+      );
+      return { arrived, release };
+    }
+
+    function serveList(name: string): void {
+      server.use(http.get(`${API_URL}/api/v1/presets`, () => HttpResponse.json(listOf(name))));
+    }
+
+    it.each([
+      ['invalidatePresets()', (s: CommunityPresetService) => s.invalidatePresets('preset-1')],
+      ['clearCache()', (s: CommunityPresetService) => s.clearCache()],
+    ])('does not cache an answer that straddles %s', async (_label, invalidate) => {
+      const held = holdList('Before The Change');
+      const inFlight = service.getPresets({ sort: 'popular' });
+      await held.arrived;
+
+      invalidate(service);
+      held.release();
+      await inFlight;
+
+      serveList('After The Change');
+      const next = await service.getPresets({ sort: 'popular' });
+      expect(next.presets[0].name).toBe('After The Change');
+    });
+
+    it('still caches an answer no invalidation overlapped', async () => {
+      const held = holdList('Cached');
+      const inFlight = service.getPresets({ sort: 'popular' });
+      await held.arrived;
+      held.release();
+      await inFlight;
+
+      serveList('Not Fetched');
+      const next = await service.getPresets({ sort: 'popular' });
+      expect(next.presets[0].name).toBe('Cached');
+    });
+  });
+
   // ============================================
   // Cache Management Tests
   // ============================================
