@@ -1,0 +1,57 @@
+paired keys (same English value as a core vocabulary key): 23
+pairs that DIVERGE in >=1 locale: 13
+
+[bot-logic] preferences.filters.labels.dark   vs core labels.dark   (en = 'Dark')
+    fr: bot-logic='Sombre'   core='foncé'
+
+[bot-logic] preferences.filters.labels.pastel   vs core labels.pastel   (en = 'Pastel')
+    zh: bot-logic='粉彩'   core='柔和'
+
+[bot-logic] preferences.values.themeDark   vs core labels.dark   (en = 'dark')
+    fr: bot-logic='sombre'   core='foncé'
+    zh: bot-logic='深色'   core='暗色'
+
+[web-app] colorPalette.dark   vs core labels.dark   (en = 'Dark')
+    fr: web-app='Sombre'   core='foncé'
+    zh: web-app='深色'   core='暗色'
+
+[web-app] swatch.facewearSlot   vs core categories.Facewear   (en = 'Facewear')
+    de: web-app='Gesichtsaccessoires'   core='Gesichtsschmuck'
+    fr: web-app='Accessoires de visage'   core='Accessoires faciaux'
+    ja: web-app='フェイスアクセサリー'   core='フェイスウェア'
+    ko: web-app='얼굴 소품'   core='페이스웨어'
+    zh: web-app='面部配饰'   core='脸部配饰'
+
+[web-app] swatch.rangeDark   vs core labels.dark   (en = 'Dark')
+    fr: web-app='Sombre'   core='foncé'
+    ko: web-app='어두움'   core='다크'
+    zh: web-app='深色'   core='暗色'
+
+[web-app] themes.standardDark   vs core labels.dark   (en = 'Dark')
+    fr: web-app='Sombre'   core='foncé'
+    zh: web-app='深色'   core='暗色'
+
+[web-app] tools.accessibility.title   vs core tools.accessibility   (en = 'Accessibility Checker')
+    de: web-app='Barrierefreiheitsprüfung'   core='Barrierefreiheits-Check'
+    fr: web-app="Vérification d'accessibilité"   core="Vérificateur d'accessibilité"
+    zh: web-app='无障碍检查器'   core='色彩辅助检测'
+
+[web-app] tools.character.title   vs core tools.swatch   (en = 'Swatch Matcher')
+    de: web-app='Farbmuster-Matcher'   core='Farbabgleich'
+    fr: web-app='Nuancier'   core='Comparateur de nuances'
+
+[web-app] tools.comparison.title   vs core tools.comparison   (en = 'Dye Comparison')
+    de: web-app='Farbstoffvergleich'   core='Farbstoff-Vergleich'
+    zh: web-app='染剂比较'   core='染剂对比'
+
+[web-app] tools.gradient.title   vs core tools.gradient   (en = 'Gradient Builder')
+    de: web-app='Verlauf-Ersteller'   core='Verlaufs-Generator'
+    fr: web-app='Constructeur de Dégradé'   core='Créateur de dégradés'
+
+[web-app] tools.harmony.title   vs core tools.harmony   (en = 'Harmony Explorer')
+    ko: web-app='조화 탐색기'   core='하모니 익스플로러'
+    zh: web-app='色彩和谐探索器'   core='配色探索器'
+
+[web-app] tools.mixer.title   vs core tools.mixer   (en = 'Dye Mixer')
+    de: web-app='Farbstoffmixer'   core='Farbstoff-Mixer'
+    zh: web-app='染剂混合器'   core='染剂调色器'

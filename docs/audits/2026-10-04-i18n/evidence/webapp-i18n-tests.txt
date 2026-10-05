@@ -1,0 +1,11 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - `__dirname` (vitest.config.ts:103:20). Use `import.meta.dirname` instead
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.2 C:/dev/XIVProjects/xivdyetools/.claude/worktrees/preview-2026-10-04/apps/web-app
+
+
+ Test Files  10 passed (10)
+      Tests  139 passed (139)
+   Start at  23:42:42
+   Duration  17.16s (environment 71%, setup 13%, transform 12%, tests 3%, worker 1%)

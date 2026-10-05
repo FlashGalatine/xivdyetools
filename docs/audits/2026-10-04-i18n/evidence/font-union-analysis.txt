@@ -1,0 +1,60 @@
+===== discord-worker =====
+  needed codepoints (all scripts): 1787
+  union cmap of 10 bundled faces: 2486
+  NEEDED BUT IN NO FACE (real tofu): 58
+      U+000A
+
+      U+3072 ひ
+      U+4E8C 二
+      U+4E94 五
+      U+4F34 伴
+      U+4FA3 侣
+      U+5065 健
+      U+5219 则
+      U+53B3 厳
+      U+53BB 去
+      U+552E 售
+      U+5C04 射
+      U+5C55 展
+      U+5EB7 康
+      U+5F35 張
+      U+5F84 径
+      U+614B 態
+      U+616E 慮
+      U+6269 扩
+      U+626D 扭
+      U+62E1 拡
+      U+6362 换
+      U+6642 時
+      U+69FD 槽
+      U+6CC1 況
+      U+70ED 热
+      U+72B6 状
+      U+73A9 玩
+      U+7B2C 第
+      U+7D27 紧
+      U+7D5E 絞
+      U+8003 考
+      U+8651 虑
+      U+86CB 蛋
+      U+8A33 訳
+      U+8AAC 説
+      U+8CA9 販
+      U+8EE2 転
+      U+8F6C 转
+      U+8FF0 述
+  per-face CJK-range glyphs vs. how many of those are actually needed:
+      FragmentMono-Regular.ttf     cjk_glyphs=    2 needed_by_sources=    0 surplus=    2  122 KiB
+      NotoSansJP-Subset.ttf        cjk_glyphs=  536 needed_by_sources=  536 surplus=    0  327 KiB
+      NotoSansKR-Subset.ttf        cjk_glyphs=  499 needed_by_sources=  499 surplus=    0  141 KiB
+      NotoSansSC-Subset.ttf        cjk_glyphs= 1099 needed_by_sources= 1099 surplus=    0  490 KiB
+
+===== og-worker =====
+  needed codepoints (all scripts): 999
+  union cmap of 10 bundled faces: 1790
+  NEEDED BUT IN NO FACE (real tofu): 0
+  per-face CJK-range glyphs vs. how many of those are actually needed:
+      FragmentMono-Regular.ttf     cjk_glyphs=    2 needed_by_sources=    0 surplus=    2  122 KiB
+      NotoSansJP-Subset.ttf        cjk_glyphs=  238 needed_by_sources=  238 surplus=    0  220 KiB
+      NotoSansKR-Subset.ttf        cjk_glyphs=  313 needed_by_sources=  313 surplus=    0  112 KiB
+      NotoSansSC-Subset.ttf        cjk_glyphs=  592 needed_by_sources=  592 surplus=    0  335 KiB
