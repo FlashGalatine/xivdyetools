@@ -1894,7 +1894,7 @@ export class SwatchTool extends BaseComponent {
   /**
    * 10A palette rail: seven palettes with a Dark/Light range toggle for the
    * two split ones. Chips write the swatch colorSheet config (commitConfig);
-   * the sidebar has no sheet control since 10A, but shows TRIBE & GENDER only
+   * the sidebar has no sheet control since 10A, but shows CLAN & GENDER only
    * while that config names a hair or skin sheet.
    */
   private renderPaletteRail(): void {

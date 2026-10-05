@@ -1412,7 +1412,7 @@
       "stateBlank": "LEER",
       "preview": "DAS WIRD KOPIERT",
       "placeholder": "Keine Quelle gefunden: eintragen oder leer lassen",
-      "warn": "Du hast {name} gewählt, das eine eigene Quelle hat. Deine bearbeitete Zeile ist noch da.",
+      "warn": "Du hast {name} gewählt – dafür gibt es eine eigene Quelle. Deine bearbeitete Zeile ist noch da.",
       "keep": "Meine behalten",
       "useNew": "Neue Quelle nehmen",
       "privacy": "Bearbeitungen werden auf diesem Gerät für jedes Ausrüstungsteil gespeichert. Der Name des Charakters steht nie in der Liste, und die Datei selbst wird nie gespeichert.",

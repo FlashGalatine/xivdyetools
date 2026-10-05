@@ -107,6 +107,9 @@ Community-maintained API providing real-time FFXIV marketboard prices across all
 ### Community Presets
 Web app tool (v4) for browsing and sharing community dye palettes. Formerly called "Preset Browser" in v3. Discord bot uses `/preset` commands.
 
+### Preset
+A named dye palette, curated or shared by a player through Community Presets. An app noun, not a game one, so the tool's own title sets the word in each language: ja プリセット, de **Vorlage** (feminine: *die Vorlage*, so *sie* in a following sentence), fr préréglage, ko 프리셋, zh 预设. German uses Vorlage everywhere — the web app, the bot and the OG card — never Voreinstellung or Preset (2026-10-04 i18n audit, TERM-006).
+
 ### Dye Mixer (v4)
 Web app tool (v4) for blending two dyes together to create custom color combinations. Supports six blending modes (`BLENDING_MODES` in `@xivdyetools/core/blending`): RGB (additive channel averaging, the default), LAB (perceptual CIELAB), OKLAB (modern perceptual — fixes LAB's blue→purple drift), RYB (traditional artist's wheel), HSL (hue/saturation/lightness interpolation) and Spectral (Kubelka-Munk physics simulation). This is a **new tool in v4.0.0**, distinct from the renamed "Gradient Builder."
 

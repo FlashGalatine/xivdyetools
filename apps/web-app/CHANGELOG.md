@@ -32,6 +32,10 @@ translations and terminology, with `@xivdyetools/core` 5.8.2.
   - zh 过期 for Dated (TERM-008); ja names the dye channels as the client does, 染色1 / 染色2, and
     counts them with ヵ所, dropping チャンネル (a chat channel in the client) and 染色枠 (TERM-016;
     the client data is in the dictionary); ko 염료 in the share errors (TERM-017), the two Korean typos (I18N-003), and the Hrothgar name in the fur-pattern note;
+  - ja: the Glamour list's privacy note says edits are kept 装備1点ごとに (per piece of gear);
+    この装備ごとに could be read as "for this one piece";
+  - ko / zh: IN THE GAME's explanation uses the gear hint's dye-channel noun, 염색 채널 / 染色通道,
+    where it said 염색 칸 / 染色栏;
   - fr: the picker foot quotes both buttons (I18N-010);
   - the fur-pattern note uses the client's word (lobby row 1013) in every language.
 - **Core 5.8.2:** the Brass facewear color is Bronze / 구리색 / 铜色 in fr / ko / zh.
@@ -39,8 +43,12 @@ translations and terminology, with `@xivdyetools/core` 5.8.2.
 ### Changed
 
 - `docs/reference/ffxiv-terminology.md`: the facewear rows are the client's (Addon 16050 / 16054),
-  the Brass row follows the client, and lobby rows 1013 / 1014 (fur pattern and fur color) are in
-  the feature table.
+  the Brass row follows the client, lobby row 1014 (fur color) is the Hrothgar row of the palette
+  table and row 1013 (fur pattern) is in the feature table, and a new section pins the dye-channel
+  words. `docs/reference/glossary.md` gains a Preset entry (de Vorlage, TERM-006).
+- `scripts/validate-i18n.js` reads both keys of a `'…_one', '…_other'` pair, the shape every
+  `tCount` call passes, so a plural key the code asks for and `en.json` lacks now fails the i18n
+  gate; before, neither key was seen.
 
 ## [5.14.3] - 2026-10-05
 

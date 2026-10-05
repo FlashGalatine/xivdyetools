@@ -150,7 +150,7 @@ The 11 Facewear colours are **not dyes** — they live in `facewear_colors.json`
     [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md) read.
 - **Brass** is fr **bronze**, ko **구리색** and zh **铜色** in the client: all 61 Brass rows say so
   (*Lunettes ovales (bronze)*, *de couleur bronze*; 구리색 얼굴 소품; 铜色的面部配饰, with item names
-  prefixed 铜框).
+  prefixed 铜框 on 34 rows and 铜色 on 27).
   - Core 5.8.2 corrected Laiton, 황동색 and 黄铜色, which are not the client's. The clients do say
     황동 / 黄铜 for the *material*: the Brass Goggles item is 황동 고글 / 黄铜护目镜 (its brass-colored
     version: 구리색 황동 고글 / 铜框黄铜护目镜). The color is 구리색 / 铜色, so do not revert.
@@ -359,8 +359,10 @@ the 2026-10-04 i18n audit's TERM-016).
 - **Japanese:** count with `ヵ所` (`染色{n}ヵ所`) and say `染色できる箇所` for the idea. Never
   `チャンネル` (in the client it is only a chat channel) and never `染色枠` (no client text uses it).
   `部位` is the client's word for an equipment slot (`装備枠` / `部位`), not for a dye channel.
-- The other languages' existing UI words (`channel`, `Kanal`, `canal`, `채널`, `通道`) are house
-  words, not client words. Only the Japanese one was checked against the client's other uses.
+- The other languages' existing UI words (`channel`, `Kanal`, `canal`, `채널` / `염색 채널`,
+  `通道` / `染色通道`) are house words, not client words. Only the Japanese one was checked against
+  the client's other uses. Keep one per language: ko `염색 칸` and zh `染色栏` were unified onto
+  them in 5.14.4.
 
 ---
 
@@ -461,6 +463,7 @@ strings were read on 2026-10-05 from the sources named under [Facewear Colors](#
 |---------|----------|-----|----|----|----|----|----|----|
 | Skin | `skinColors` | 202 | Skin Color | 肌の色 | Hautfarbe | Couleur de peau | 피부색 | 肤色 |
 | Hair | `hairColors` | 236 | Hair Color | 髪の色 | Haarfarbe | Couleur des cheveux | 머리 색 | 发色 |
+| Hair (Hrothgar) | `hairColors` | 1014 | Fur Color | 体毛色 | Fellfarbe | Couleur du pelage | 털 색깔 | 毛色 |
 | Highlights | `highlightColors` | 237 | Highlights | メッシュの色 | Strähnen | Reflets | 부분염색 색상 | 挑染 |
 | Eyes | `eyeColors` | 245 | Eye Color | 瞳の色 | Augenfarbe | Couleur des yeux | 눈동자 색 | 瞳色 |
 | Lips | `lipColorsDark` / `…Light` | 248 | Lip Color | 唇の色 | Lippenfarbe | Couleur des lèvres | 입술 색 | 唇色 |
@@ -478,7 +481,6 @@ strings were read on 2026-10-05 from the sources named under [Facewear Colors](#
 | Limbal ring | 1746 | Limbal Ring | 瞳の輪郭 | Äußere Iris | Contour de l'iris | 눈동자 테두리 | 瞳孔轮廓 |
 | Face paint | 249 | Face Paint | フェイスペイント | Merkmale | Maquillage | 얼굴 치장 | 面妆 |
 | Fur pattern (Hrothgar) | 1013 | Fur Pattern | 体毛柄 | Fellzeichnung | Motif du pelage | 털 무늬 | 毛纹 |
-| Fur color (Hrothgar) | 1014 | Fur Color | 体毛色 | Fellfarbe | Couleur du pelage | 털 색깔 | 毛色 |
 
 - **The limbal ring is the iris's outline** in the five non-English client languages (瞳の輪郭, Äußere Iris, Contour de l'iris, 눈동자 테두리, 瞳孔轮廓). Not the client's word, so not used:
   - transliterations: ja リンバル / リムバル, ko 림발 / 림벌, de Limbal-Ring;
@@ -508,7 +510,7 @@ strings were read on 2026-10-05 from the sources named under [Facewear Colors](#
 - **Hrothgar has no hair or lip palette:**
   - Customize 10 is **Fur Color** (row 1014). It labels the palette core keys `hairColors` for Helions and The Lost.
   - Customize 20 is **Fur Pattern** (row 1013). It takes the lip slot and is not a color, so a Hrothgar file's lip value names a pattern.
-  - Both rows are in the feature table above, read from [`lobby-rows.json`](../research/2026-10-05-character-sheet-terms/lobby-rows.json) (`text`). Not the client's word, so not used for the pattern: 毛皮の模様, Fellmuster, motif de fourrure, 모피 무늬, 毛皮花纹.
+  - Fur Color is in the palette table and Fur Pattern in the feature table above, both read from [`lobby-rows.json`](../research/2026-10-05-character-sheet-terms/lobby-rows.json) (`text`). Not the client's word, so not used for the pattern: 毛皮の模様, Fellmuster, motif de fourrure, 모피 무늬, 毛皮花纹.
 
 ---
 

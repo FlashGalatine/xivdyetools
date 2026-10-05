@@ -2,8 +2,9 @@
 /**
  * XIV Dye Tools - i18n Translation Key Validator
  *
- * Validates that all LanguageService.t() and LanguageService.tInterpolate() calls
- * reference keys that exist in the locale files.
+ * Validates that all LanguageService.t() and LanguageService.tInterpolate() calls,
+ * and every '…_one', '…_other' plural pair (tCount), reference keys that exist in
+ * the locale files.
  *
  * Also performs cross-locale structural comparison to detect keys missing in
  * non-English locale files, plus two file-shape gates added by the 2026-08-20
@@ -41,6 +42,8 @@ import { join, relative, extname } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+import { extractKeysFromSource } from './i18n-key-patterns.mjs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -59,13 +62,7 @@ const SKIP_DIRS = ['node_modules', '__tests__', 'test', 'tests', '.git', 'dist']
 // File extensions to check
 const CHECK_EXTENSIONS = ['.ts', '.tsx'];
 
-// Regex patterns for extracting translation keys
-const PATTERNS = [
-  // LanguageService.t('key') or LanguageService.t("key")
-  /LanguageService\.t\(\s*['"]([^'"]+)['"]\s*\)/g,
-  // LanguageService.tInterpolate('key', ...) or LanguageService.tInterpolate("key", ...)
-  /LanguageService\.tInterpolate\(\s*['"]([^'"]+)['"]\s*,/g,
-];
+// The key patterns live in scripts/i18n-key-patterns.mjs (tested on their own).
 
 // ============================================================================
 // Helpers
@@ -136,28 +133,7 @@ function getFiles(dir, extensions) {
  * @returns {Array<{key: string, line: number}>} Array of keys with line numbers
  */
 function extractKeysFromFile(filePath) {
-  const content = readFileSync(filePath, 'utf-8');
-  const lines = content.split('\n');
-  const results = [];
-
-  for (let lineNum = 0; lineNum < lines.length; lineNum++) {
-    const line = lines[lineNum];
-
-    for (const pattern of PATTERNS) {
-      // Reset regex state
-      pattern.lastIndex = 0;
-
-      let match;
-      while ((match = pattern.exec(line)) !== null) {
-        results.push({
-          key: match[1],
-          line: lineNum + 1, // 1-indexed
-        });
-      }
-    }
-  }
-
-  return results;
+  return extractKeysFromSource(readFileSync(filePath, 'utf-8'));
 }
 
 /**

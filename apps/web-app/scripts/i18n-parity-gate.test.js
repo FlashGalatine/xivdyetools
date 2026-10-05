@@ -32,6 +32,7 @@ import { fileURLToPath } from 'url';
 import { describe, it, expect } from 'vitest';
 
 import { checkParity, findSameEnglishDivergences, flattenEntries } from './i18n-parity.mjs';
+import { extractKeysFromSource } from './i18n-key-patterns.mjs';
 
 const APP_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
 const LOCALES_DIR = join(APP_DIR, 'src', 'locales');
@@ -45,6 +46,23 @@ describe('validate-i18n.js (referenced keys exist, key order, stray whitespace)'
     // The script's own report is the failure message — it names the file, line and key.
     expect(run.status, `${run.stdout}\n${run.stderr}`.slice(-3000)).toBe(0);
   }, 60_000);
+
+  it('sees both keys of a one / other pair, inside tCount or a helper that forwards them', () => {
+    // Plural strings are chosen at run time (tCount, Intl.PluralRules), so the
+    // keys reach t() through a variable. The pair itself is literal at the call.
+    const source = [
+      "tCount(n, 'swatch.footEmpty_one', 'swatch.footEmpty_other')",
+      "phrase(fixed, 'glamour.verdict.segFixed_one', 'glamour.verdict.segFixed_other');",
+      "LanguageService.t('glamour.verdict.head')",
+    ].join('\n');
+    expect(extractKeysFromSource(source)).toEqual([
+      { key: 'swatch.footEmpty_one', line: 1 },
+      { key: 'swatch.footEmpty_other', line: 1 },
+      { key: 'glamour.verdict.segFixed_one', line: 2 },
+      { key: 'glamour.verdict.segFixed_other', line: 2 },
+      { key: 'glamour.verdict.head', line: 3 },
+    ]);
+  });
 });
 
 describe('locale parity (the shipped files)', () => {

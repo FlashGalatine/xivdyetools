@@ -12,13 +12,13 @@ The Swatch Matcher finds the FFXIV dyes closest to your character's customizatio
 
 ### Pick a swatch from the grid
 
-The colour sheet on the left is the character creator's palette, eight swatches to a row. Click any cell and its closest dyes appear on the right. Nothing else is required — tribe and gender only matter for the two race-specific sheets (hair and skin).
+The colour sheet on the left is the character creator's palette, eight swatches to a row. Click any cell and its closest dyes appear on the right. Nothing else is required — clan and gender only matter for the two race-specific sheets (hair and skin).
 
 ### Drop a `.chara` file
 
 Above the grid is a **Drop a .chara file** zone (or press **Choose file**). It accepts character files exported by **Anamnesis, Ktisis or Brio**. The file is read entirely on your device — nothing is uploaded, and the screenshot some tools embed in the file is never opened. When it loads:
 
-- A **CHARACTER FILE** card shows which tool made it, your character's name, a **LOCAL ONLY** chip, and the tribe and gender it found. **SWAP** loads a different file.
+- A **CHARACTER FILE** card shows which tool made it, your character's name, a **LOCAL ONLY** chip, and the clan and gender it found. **SWAP** loads a different file.
 - The **CLAN & GENDER** selectors in the settings column become a read-only readout, so hair and skin are looked up on the right sheet automatically.
 - Any problems reading the file are listed on an amber warnings card rather than hidden.
 
@@ -35,16 +35,16 @@ Lips and Face paint have a **Dark / Light** toggle beside the chips — the same
 | Palette | What it covers |
 |---------|----------------|
 | **Eye** | Iris colours |
-| **Hair** | Hair colours for your tribe and gender |
+| **Hair** | Hair colours for your clan and gender |
 | **Highlights** | Hair highlight colours |
-| **Skin** | Skin tones for your tribe and gender |
+| **Skin** | Skin tones for your clan and gender |
 | **Tattoo / Limbal** | Limbal rings and racial tattoos |
 | **Lips** | Lip colours (Dark or Light range) |
 | **Face paint** | Face paint colours (Dark or Light range) |
 
 Every swatch has a grid address — **R3·C5** means row 3, column 5, counted the way the sheet is laid out in the creator — so you can find it again in-game.
 
-**Available tribes** (for hair and skin): Hyur (Midlander, Highlander), Elezen (Wildwood, Duskwight), Lalafell (Plainsfolk, Dunesfolk), Miqo'te (Seeker of the Sun, Keeper of the Moon), Roegadyn (Sea Wolf, Hellsguard), Au Ra (Raen, Xaela), Hrothgar (Helions, The Lost), Viera (Rava, Veena).
+**Available clans** (for hair and skin): Hyur (Midlander, Highlander), Elezen (Wildwood, Duskwight), Lalafell (Plainsfolk, Dunesfolk), Miqo'te (Seeker of the Sun, Keeper of the Moon), Roegadyn (Sea Wolf, Hellsguard), Au Ra (Raen, Xaela), Hrothgar (Helions, The Lost), Viera (Rava, Veena).
 
 ### Evercold notice
 
@@ -70,7 +70,7 @@ At the bottom of the flow a row of buttons sends the matched dyes on to **Harmon
 
 ### Share
 
-**Share** copies a link that reopens this exact cell — the link carries the sheet and the cell's position (plus tribe and gender for hair and skin), not just the colour, so it lands on the right swatch even when two cells share a shade.
+**Share** copies a link that reopens this exact cell — the link carries the sheet and the cell's position (plus clan and gender for hair and skin), not just the colour, so it lands on the right swatch even when two cells share a shade.
 
 ---
 
@@ -88,8 +88,10 @@ Click a slot card to make it the selection: the sentence and excerpt follow it, 
 
 ### DYES ON THIS GLAMOUR
 
-Below the matches, the dyes your character's gear is wearing — both dye channels per piece — appear
-as chips, with a count of channels and distinct dyes.
+Since 5.13.0 this section lives in the **Glamour Reader** (key `0`); the file card's
+**Glamour Reader →** link opens it with the same file loaded. There, the dyes your character's gear
+is wearing — both dye channels per piece — appear as chips, with a count of channels and distinct
+dyes.
 
 **Two views.** A **Pieces / Dyes** toggle switches how the section is laid out:
 
@@ -124,14 +126,17 @@ would go nowhere.
 If item names cannot be looked up, the section falls back to slots only and says so; the dyes are
 read locally from your file and are never affected.
 
-**Copy list** and **Save .md**, beside **Make a palette**, write your outfit in the format
-glamour showcases such as GPOSERS ask for: a bold slot name, the piece, a **Dye 1** / **Dye 2** line
-for each dye it is actually wearing, and an **Acquisition:** line left blank for you to fill in.
-Only what you are wearing is listed — empty slots and undyed channels are left out, and neither the
-copy nor the file ever includes your character's name. **Copy list** keeps the bold when pasted into
-Word or Google Docs; anywhere that takes only plain text gets the same lines with no `**` marks.
-**Save .md** downloads the same list as `glamour-equipment.md`. Both wait for item names to arrive before they turn on, and still work from
-the file's own slots and dyes even if the names never do.
+**Copy list** and **Save .md**, at the top of the Glamour Reader beside its title, open the
+export sheet: a preview of your outfit in the format glamour showcases such as GPOSERS ask for — a
+bold slot name, the piece, a **Dye 1** / **Dye 2** line for each dye it is actually wearing, and an
+**Acquisition:** line. Each Acquisition line comes filled in where the site knows how the piece is
+obtained, and every one can be edited before anything is copied; your edits are kept on this device,
+one per piece of gear. Only what you are wearing is listed — empty slots and undyed channels are
+left out, and neither the copy nor the file ever includes your character's name. The sheet's
+**Copy list** keeps the bold when pasted into Word or Google Docs; anywhere that takes only plain
+text gets the same lines with no `**` marks. Its **Save .md** downloads the same list as
+`glamour-equipment.md`. Both buttons wait for item names to arrive before they turn on, and still
+work from the file's own slots and dyes even if the names never do.
 
 Press **Make a palette** to turn the dyes into a preset: toggle chips off to drop dyes, give it a
 name, and either **Save to this device** or **Submit to Community**. Both buttons stay disabled
@@ -161,7 +166,7 @@ Build outfits that complement your character's features:
 
 ### Planning Before Character Creation
 If you're making a new character:
-1. Browse available colors per tribe
+1. Browse available colors per clan
 2. See what dyes would match each option
 3. Plan your glamour before committing
 
