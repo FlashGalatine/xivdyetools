@@ -1,0 +1,9 @@
+$ tsx scripts/check-worker-logs.ts
+✓ api-worker: ok
+✓ discord-worker: ok
+✓ image-worker: ok
+✓ moderation-worker: ok
+✓ oauth: ok
+✓ og-worker: ok
+✓ presets-api: ok
+  checked 7 worker configs — Workers Logs pinned off everywhere
