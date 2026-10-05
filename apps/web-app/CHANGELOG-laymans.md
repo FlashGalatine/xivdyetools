@@ -2,6 +2,14 @@
 
 ---
 
+## Web-App Version 5.14.0 — October 4, 2026
+
+### Privacy Guide: community presets and deleting your data
+- **New section on community presets.** It lists what we keep when you sign in to share presets, and for how long: daily-limit counts, moderation records and posts in our Discord server.
+- **No Discord ID in new moderation posts.** Posts in the private channels our moderators use show your author name, not your Discord user ID.
+- **New section on deleting your data.** Delete a preset or a vote yourself, or ask us privately by email or Discord DM. We handle requests within 30 days.
+- **Updated in all six languages.** Find the guide under About.
+
 ## Web-App Version 5.13.4 — October 4, 2026
 
 ### Privacy Guide and Terms of Service corrected

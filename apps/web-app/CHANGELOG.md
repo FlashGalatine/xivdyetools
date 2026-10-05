@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.0] - 2026-10-04
+
+Sprint 8 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). `PRIVACY.md` is
+amended in all six languages (FINDING-005, -008, -009, -029; each approved at the audit's §8 gate as
+a new public commitment). No code change. **Deploy only after presets-api 2.4.0 (with its rollout
+step), moderation-worker 1.8.0 and discord-worker 5.8.0 are live:** every new sentence describes
+their behaviour.
+
+### Changed
+
+- **New section "Community presets: what we keep"** (FINDING-005, -008, -009). For a signed-in
+  user it lists, with retention:
+  - the daily-limit counts (30 days; only submissions, name/description edits and preview uploads);
+  - the posts in the two private Discord channels: review posts, the ban post, the moderators' list
+    of pending presets and submission-log notes. Posts made since the guide's `Last updated` date
+    show no Discord user ID; older posts may. They stay until a moderator deletes them or a
+    deletion request removes them;
+  - failed-notification records (preset and error only; 30 days after resolution, 90 unresolved);
+  - ban records (cleared of name and reason when lifted, deleted 90 days later) and the moderation
+    log (12 months at most for ban, unban, hide and restore, a hide or restore sooner if its preset
+    is deleted; as long as the preset for every other entry). For an XIVAuth account not linked to
+    Discord, the ban record holds the account ID our sign-in service assigned (the oauth worker's
+    random `users.id`), not the XIVAuth ID.
+  The periods hold within a day because of presets-api 2.4.0's daily retention job.
+- **Item 3 now also says** that the author name is refreshed on every sign-in, that an XIVAuth
+  account's data moves to the Discord ID once Discord is linked (neither while a ban is active), that submitting a preset votes for
+  it (or for the published preset with the same dyes), and that an edit held for review keeps the
+  earlier version until a moderator restores it or the preset is deleted.
+- **Translations.** One Sonnet translator per language, using the reviewed bot-policy wording and
+  the app's own button labels, each reviewed by Opus. Corrections: ja 1, ko 1, zh 6 (five were
+  bold markers that CommonMark would not close after a full-width colon), de 6, fr 3.
+- **New section "Deleting your data"** (FINDING-029). Self-serve deletes (a preset with what goes
+  with it, a vote, the session), unless banned; private requests by email or Discord DM, never a
+  public issue; handled within 30 days; a request also removes the Discord posts, except the post
+  about an active ban, and does not remove an active ban record.
+- **Corrected before release (2026-10-05),** after review of the open PR:
+  - the moderation-log bullet gave a hide or restore entry two retention rules; the 12-month rule
+    now comes first, and "any other entry" is kept as long as its preset (I18N-005);
+  - the ban record named the XIVAuth ID for an unlinked XIVAuth account, but it holds our own
+    account ID (Codex review, as in the bot policy);
+  - a Korean phrase read as "the hidden user's presets" (I18N-006).
+  One translator and one verifier per language.
+- `Last updated` is 2026-10-05 on all six variants, because the "posts made since the Last updated
+  date" sentence depends on it. If this merges on a later date, bump all six to the merge date.
+
 ## [5.13.4] - 2026-10-04
 
 Sprint 2 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). `PRIVACY.md`
