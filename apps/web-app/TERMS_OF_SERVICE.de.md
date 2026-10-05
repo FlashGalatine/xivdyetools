@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert:** 2026-10-04 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
+**Zuletzt aktualisiert:** 2026-10-05 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
 wir mit deinen Daten umgehen, ist ein eigenes Dokument: [`PRIVACY.md`](PRIVACY.md). Der
 Discord-Bot hat eigene Bedingungen:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
@@ -30,9 +30,11 @@ Community-Presets einzureichen, zu bearbeiten oder darüber abzustimmen.
 
 - Die Anmeldung läuft über Discord oder XIVAuth. Wir sehen oder speichern niemals ein Passwort.
 - Die Anmeldung legt einen Kontodatensatz mit deiner Anbieter-ID und einem Namen an. Bei Discord
-  ist der Name dein Anzeigename. Bei XIVAuth ist der Name der Name deines verifizierten Charakters,
-  wie in den Datenschutzhinweisen beschrieben. Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der
-  Datensatz zusätzlich diese Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jedes
+  ist der Name dein Anzeigename. Bei XIVAuth ist der Name der Name deines verifizierten
+  Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn bei
+  deiner Anmeldung kein verifizierter Charakter verfügbar ist, wie in den Datenschutzhinweisen
+  beschrieben. Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz
+  zusätzlich diese Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jedes
   Presets angezeigt, das du veröffentlichst.
 - Deine Sitzung ist ein Token, das in deinem Browser gehalten wird. Das Löschen der Website-Daten
   deines Browsers meldet dich ab.

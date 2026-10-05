@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](PRIVACY.md)
 
-**最后更新：** 2026-10-04 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。Discord 机器人有自己的政策：[`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md)。
+**最后更新：** 2026-10-05 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。Discord 机器人有自己的政策：[`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md)。
 
 XIV Dye Tools 在您的浏览器中运行。这些颜色工具——调色板提取、色彩和谐探索器、染剂比较、渐变生成器、染剂混合器、无障碍检查器、预算建议、色板匹配器和幻化查看器——都在您的设备本地完成工作。除非下方某一节另有说明，否则您上传、选择或输入的任何内容都不会被发送到任何地方，而下方的各节就是完整的清单。
 
@@ -10,7 +10,7 @@ XIV Dye Tools 在您的浏览器中运行。这些颜色工具——调色板提
 
 - 在颜色工具中，上传、粘贴、拖入以及相机拍摄的图像永远不会离开您的设备，也不会被写入浏览器存储。它们通过浏览器的 Canvas API 读取，仅在当前会话的页面内存中保留，并在您清除图像、关闭标签页或重新加载页面时被丢弃。
 - 调色板提取工具在您选择文件的地方写着同样的话——“图像仅在浏览器中读取，绝不上传”，旁边配有一个挂锁图标。该提示是纯文本，不是链接；本文档需从**关于 → 隐私政策**进入才能看到。
-- **有一个例外，而且只在您自己选择时才会发生。** 当您提交或编辑社区预设时，可以为其附上可选的**预览图片**。该图片会被上传到 `api.xivdyetools.app`，转换为 WebP，与该预设一起存储，并在版主批准后通过 `shots.xivdyetools.app` 公开显示。如何移除它，见下方「网络访问」一节的第 3 项。
+- **有一个例外，而且只在您自己选择时才会发生。** 当您提交或编辑社区预设时，可以为其附上可选的**预览图片**。该图片会被上传到 `api.xivdyetools.app`，转换为 WebP，与该预设一起存储，并在审核员批准后通过 `shots.xivdyetools.app` 公开显示。如何移除它，见下方「网络访问」一节的第 3 项。
 
 ## 角色文件（`.chara`）
 
@@ -37,7 +37,7 @@ XIV Dye Tools 在您的浏览器中运行。这些颜色工具——调色板提
 
 1. **市场布告板价格**（可选——「显示价格」开关）：您选择的物品 ID 以及所在的服务器或大区，会被发送到我们位于 `data.xivdyetools.app` 的代理，该代理再从 [Universalis](https://universalis.app) 获取数据。
 2. **`.chara` 导入所需的装备名称与图标**——`data.xivdyetools.app`（见上文）。
-3. **社区预设**（`api.xivdyetools.app`）：浏览时不会发送任何关于您的信息。通过 `auth.xivdyetools.app` 使用 Discord 或 XIVAuth 登录会立即创建一条账户记录，无论您之后是否提交或投票。使用 Discord 登录时，该记录保存您的 Discord 用户 ID 和您的显示名称（如果您没有显示名称，则为您的用户名）。使用 XIVAuth 登录时，该记录保存您的 XIVAuth ID 和您已验证角色的名称。如果您没有已验证的角色，该名称为“XIVAuth User”后接您的 XIVAuth ID 的前 8 个字符。如果您的 XIVAuth 账户已关联 Discord，该记录还会保存那个 Discord 用户 ID。该记录中的名称会显示为您发布的每个预设的作者。您提交的预设与投票会保存在该账户下。预设包含您在表单中填写的内容，以及上文「图像与相机拍摄」一节所述的可选预览图片。要移除预览图片，请使用该预设的编辑表单；从**我的提交**中删除预设时，其预览图片也会一并删除。当您提交或编辑一个预设时，其名称与描述也可能会被发送给 Google 的 [Perspective API](https://perspectiveapi.com/) 以获取内容审核评分（可选——仅用于内容审核）；该请求会告知 Google 不要存储这些内容（`doNotStore`），除此之外不会发送任何其他信息——包括账户身份。如需移除您的账户记录与提交内容，请参阅下方的「有问题？」一节。预设预览图由 `shots.xivdyetools.app` 提供；头像则来自 Discord 的 CDN。
+3. **社区预设**（`api.xivdyetools.app`）：浏览时不会发送任何关于您的信息。通过 `auth.xivdyetools.app` 使用 Discord 或 XIVAuth 登录会立即创建一条账户记录，无论您之后是否提交或投票。使用 Discord 登录时，该记录保存您的 Discord 用户 ID 和您的显示名称（如果您没有显示名称，则为您的用户名）。使用 XIVAuth 登录时，该记录保存您的 XIVAuth ID 和您已验证角色的名称。如果登录时没有可用的已验证角色，该名称为“XIVAuth User”后接您的 XIVAuth ID 的前 8 个字符。如果您的 XIVAuth 账户已关联 Discord，该记录还会保存那个 Discord 用户 ID。该记录中的名称会显示为您发布的每个预设的作者。您提交的预设与投票会保存在该账户下。预设包含您在表单中填写的内容，以及上文「图像与相机拍摄」一节所述的可选预览图片。要移除预览图片，请使用该预设的编辑表单；从**我的提交**中删除预设时，其预览图片也会一并删除。当您提交或编辑一个预设时，其名称与描述也可能会被发送给 Google 的 [Perspective API](https://perspectiveapi.com/) 以获取内容审核评分（可选——仅用于内容审核）；该请求会告知 Google 不要存储这些内容（`doNotStore`），除此之外不会发送任何其他信息——包括账户身份。如需移除您的账户记录与提交内容，请参阅下方的「有问题？」一节。预设预览图由 `shots.xivdyetools.app` 提供；头像则来自 Discord 的 CDN。
 4. **分享链接**：分享链接会把您选择的染剂或颜色编码进其 URL 中。打开这样的链接就像打开任何网页一样； Discord 等平台上的链接预览由我们自己的 `og-worker` 渲染，它只能看到这个 URL。
 5. **使用分析**（选择加入——见下一节）：`data.xivdyetools.app`。
 

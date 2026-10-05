@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-04 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-10-05 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
@@ -78,8 +78,8 @@ else) plus the third parties named below:
    through `auth.xivdyetools.app` with Discord or XIVAuth creates an account record right away,
    whether or not you go on to submit or vote. With Discord, the record holds your Discord user ID
    and your display name (your username if you have no display name). With XIVAuth, the record
-   holds your XIVAuth ID and the name of your verified character. If you have no verified
-   character, the name is "XIVAuth User" followed by the first 8 characters of your XIVAuth ID. If
+   holds your XIVAuth ID and the name of your verified character. If none is available when you
+   sign in, the name is "XIVAuth User" followed by the first 8 characters of your XIVAuth ID. If
    your XIVAuth account is linked to Discord, the record also holds that Discord user ID. The name
    in the record is shown as the author of every preset you publish. Presets and votes you submit
    are stored under that account. A preset holds what you

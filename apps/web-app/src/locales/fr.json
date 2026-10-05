@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "Votre nom apparaît sur la carte.",
     "providerDiscordNote": "La plupart des joueurs en ont déjà un",
     "providerXivauthNote": "Vérifie votre personnage",
-    "privacyNote": "Se connecter crée un enregistrement de compte : votre identifiant Discord ou XIVAuth et un nom, affiché comme auteur des palettes que vous proposez. Avec XIVAuth, ce nom est celui de votre personnage vérifié. Si votre compte XIVAuth est lié à Discord, cet identifiant Discord est aussi stocké. Pas d'e-mail, rien n'est vendu.",
+    "privacyNote": "Se connecter crée un enregistrement de compte : votre identifiant Discord ou XIVAuth et un nom, affiché comme auteur des palettes que vous proposez. Avec XIVAuth, ce nom est celui de votre personnage vérifié, ou « XIVAuth User » plus les 8 premiers caractères de votre identifiant XIVAuth si aucun n'est disponible lors de votre connexion. Si votre compte XIVAuth est lié à Discord, cet identifiant Discord est aussi stocké. Pas d'e-mail, rien n'est vendu.",
     "submitTitle": "Proposer une palette",
     "submitSub": "Relue avant publication",
     "previewLabel": "APERÇU DU RENDU",

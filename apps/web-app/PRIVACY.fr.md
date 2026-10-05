@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-10-04 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-10-05 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
@@ -92,8 +92,9 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    Avec Discord, l'enregistrement contient votre identifiant utilisateur Discord et votre nom
    d'affichage (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Avec XIVAuth,
    l'enregistrement contient votre identifiant XIVAuth et le nom de votre personnage vérifié. Si
-   vous n'avez aucun personnage vérifié, le nom est « XIVAuth User » suivi des 8 premiers caractères
-   de votre identifiant XIVAuth. Si votre compte XIVAuth est lié à Discord, l'enregistrement
+   aucun n'est disponible lors de votre connexion, le nom est « XIVAuth User » suivi
+   des 8 premiers caractères de votre identifiant XIVAuth.
+   Si votre compte XIVAuth est lié à Discord, l'enregistrement
    contient aussi cet identifiant utilisateur Discord. Le nom figurant dans l'enregistrement est
    affiché comme auteur de chaque palette prédéfinie que vous publiez. Les palettes prédéfinies et
    les votes que vous soumettez sont stockés sous ce compte. Une palette prédéfinie contient ce que
