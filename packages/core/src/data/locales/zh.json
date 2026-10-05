@@ -2,7 +2,7 @@
   "locale": "zh",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-05T13:38:20.763Z",
+    "generated": "2026-10-05T05:21:29.102Z",
     "dyeCount": 125
   },
   "labels": {
@@ -249,10 +249,10 @@
     "hellsguard": "红焰之民",
     "raen": "晨曦之民",
     "xaela": "暮晖之民",
-    "helions": "日光之民",
-    "theLost": "迷失之民",
-    "rava": "拉瓦族",
-    "veena": "维纳族"
+    "helions": "掠日之民",
+    "theLost": "迷踪之民",
+    "rava": "密林之民",
+    "veena": "山林之民"
   },
   "facewearColors": {
     "silver": "银色",

@@ -24,13 +24,13 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.14.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.0 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.8.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.4.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.11.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.11.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -39,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.8.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.8.1 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
@@ -69,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.1 | Oct 2026 | Korean race names and Korean / Chinese clan names match the game clients (2 + 13 + 4 corrections in `build-locales.ts`); CJK subsets re-cut in discord-worker and og-worker |
 | **v5.8.0** | **Sep 2026** | **Glamour Reader: `chara-twins` (`charaTwinsOf`, `defaultCharaTwin`, `charaPieceTone`, `charaTwinFacts`) — which of a model's identical items a list names (passes the in-game check → dyeable → any Grand Company → not Dated → more dye channels → lowest row), shared by the web reader and the bot; `chara-gposers`, the GPOSERS form as data both render. The in-game rules drop jobs (any job wears any piece for glamour since 7.4) and carry the Grand Company lock as a flag** |
 | v5.7.0 | Sep 2026 | Character color sheets regenerated from the game's `human.cmp` (`build:character-colors`) — the creator's interface palette for every sheet (lips / face paint had been the shader palette, the tattoo sheet a copy of the eyes), and the shader palette in `shader/` for judging `.chara` floats, exactly; skin and hair are judged again and the 5.6.0 limbal scale / entry-7 rule are gone |
 | v5.6.0 | Sep 2026 | `.chara` parser re-measured on 1,142 real files — minor, not patch, because `parseCharaFile` returns different slots for the same file. Eye keys pair by name (the 10A "`REyeColor` is the left eye" rule was backwards for 153 of 157 heterochromia files; a proven crossing is un-crossed), floats decode as the color squared rather than sRGB-linear, the limbal float's 0.643 is divided out, skin and hair floats are no longer judged (the game stores a shading value — confirmed in the creator), light lips are judged against their dark entry, an all-zero block is absent, and a dye on an empty gear slot is dropped |
@@ -176,7 +177,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.8.0 | Oct 2026 | 2026-10-03 security audit, Sprint 5 — the Privacy Policy (six languages) adds moderation records and their retention, the moderation posts in our Discord server, and the author display name (FINDING-005/-007/-008); moderation embeds carry revision-bound buttons from the presets-api payload (FINDING-017) and no longer mention the author's account (FINDING-008); `/stats preferences` removed (FINDING-013); retired `bot.xivdyetools.projectgalatine.com` route removed. Deploy after moderation-worker 1.8.0 |
+| v5.8.1 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients) |
 | v5.7.2 | Oct 2026 | Security (2026-10-03 audit, Sprint 1) — `/budget` and preset-favorite log lines no longer carry command option values or the Discord user id, so the bot policy's "two log lines" promise holds (FINDING-002, FINDING-018); `/preferences reset` and the v4 migration delete the legacy `i18n:user:` / `budget:world:v1:` keys (FINDING-015); production refuses a webhook secret under 32 characters on the preset webhook only (FINDING-027); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
 | v5.7.1 | Sep 2026 | Documents only — the Privacy Policy and Terms of Service catch up with `/swatch` and `/glamour` in all six languages: how an uploaded `.chara` file is handled, what `/glamour` sends to api-worker, XIVAPI as a third-party service, and the commands the Terms had not listed. No discord-worker source changed, no `register-commands` |
 | **v5.7.0** | **Sep 2026** | **`/glamour`, the Glamour Reader in the bot: a `.chara` attachment in, card 2a out (the dyed pieces in slot order, each named as the twin the character can wear, with the in-game verdict) and every piece in the GPOSERS form in the embed. Resolves through api-worker's `POST /v1/chara/resolve` over the `UNIVERSALIS_PROXY` binding; the `.chara` attachment guards are shared with `/swatch` (`utils/chara-attachment.ts`)** |
@@ -370,7 +371,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v2.11.1 | Oct 2026 | 2026-10-03 security audit Sprint 9 — Workers Logs pinned off in both wrangler blocks (FINDING-022), asserted by `tests/wrangler-env.test.ts`; the bump retires cached cards once |
+| v2.11.2 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients); cached cards retire with the version |
 | **v2.11.0** | **Sep 2026** | **The Glamour Reader's card (design turn 4): `/glamour` routed in both environments, `glamour/default.png` on the 2a shape with glyph 1a and no method tag (the reader measures no color distance), strings ×6, CJK subsets re-cut. The default card's one-liner now wraps (up to three lines, the deck grows) instead of running off the card's edge, which is what the live EN Mixer and DE Gradient cards did** |
 | v2.10.4 | Sep 2026 | Swatch Matcher cards draw the creator's lip, face-paint, highlight and tattoo colors (core 5.7.0); the bump retires cached cards |
 | v2.10.3 | Sep 2026 | 2026-09-19 i18n audit follow-up (maintainer naming decisions 2026-09-20) — card names quote the official tool titles in every language: the Swatch Matcher card said "Character Matcher" in de / ja / ko / zh while English already said Swatch Matcher, and the Harmony card now reads Harmony Explorer ×6 (its "Color Harmony" shortening was cut from the retired three-word title); the fr and ko Budget lines name the Market Board (`tableau des ventes`, `장터`) instead of a generic "market price"; crawler descriptions: de `Glamour` → `Projektion`, ko `환영 장비` → `코디`, ko `시장 게시판` → `장터`. No font re-cut needed — every new string is drawable from the existing subsets (font-coverage green). The version bump is what retires the cached cards |

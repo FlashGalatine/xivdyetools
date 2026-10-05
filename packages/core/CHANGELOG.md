@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.1] - 2026-10-05
+
+Korean and Chinese race and clan names now match the game clients. PATCH: data corrections only,
+no API change.
+
+### Fixed
+
+- **Korean race names** (`races`): Hyur 휴란 → **휴런**, Hrothgar 로스갈 → **로스가르**, as the KR
+  client's `Race` sheet writes them (rows 1 and 7).
+- **Korean clan names** (`clans`): 13 of 16 were not the client's. They are now the KR client's
+  `Tribe` sheet: 중원 부족, 고원 부족, 숲 부족, 황혼 부족, 평원 부족, 사막 부족, 불꽃지킴이, 아우라 렌,
+  아우라 젤라, 맴도는 별, 떠도는 별, 라바 비에라, 비나 비에라.
+- **Chinese clan names**: Helions 日光之民 → **掠日之民**, The Lost 迷失之民 → **迷踪之民**, Rava
+  拉瓦族 → **密林之民**, Veena 维纳族 → **山林之民**, as the CN client's `Tribe` sheet writes them.
+- Corrected in the generator (`scripts/build-locales.ts`, `buildRaces` / `buildClans`), from which
+  the locale JSON is rebuilt. Sources and method: `docs/research/2026-10-05-character-sheet-terms/`
+  (*Other findings*).
+
+The web app and the OG worker's Swatch cards show these names through `LocalizationService`; the
+Discord bot draws only the race names (the `/glamour` wear chip). The two workers' CJK font subsets
+are re-cut in the same change, because their font gates read core's locales.
+
 ## [5.8.0] - 2026-09-28
 
 The Glamour Reader's rules for identical items. MINOR: new exports; the prototype's

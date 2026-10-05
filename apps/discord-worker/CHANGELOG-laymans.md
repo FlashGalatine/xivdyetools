@@ -35,6 +35,10 @@ Rules:
   path filter.
 -->
 
+## [5.8.1] - 2026-10-05
+### 🌏 Korean race names
+- When a `/glamour` card names the race a piece is made for, Korean now uses the game's own race names, for example 휴런 for Hyur and 로스가르 for Hrothgar.
+
 ## [5.8.0] - 2026-10-04
 ### 📜 Privacy Policy updated
 - The Privacy Policy now covers moderation records. If a moderator bans someone from community presets, the bot keeps a ban record and a moderation log, and the policy says what they hold.

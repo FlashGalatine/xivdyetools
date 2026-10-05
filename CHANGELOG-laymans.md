@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.5] - 2026-10-05
+### 🌏 Race and clan names in Korean and Chinese
+- Web app and link previews: Korean race and clan names now match the game's Korean client, for example 휴런 for Hyur and 중원 부족 for Midlander.
+- Web app and link previews: four Chinese clan names now match the game's Chinese client: Helions, The Lost, Rava and Veena.
+- Discord bot: when a `/glamour` card names the race a piece is made for, Korean now uses the game's own race names, for example 로스가르 for Hrothgar.
+
 ## [5.10.4] - 2026-10-04
 ### 📜 Privacy Guide: community presets and deleting your data
 - Web app: the Privacy Guide has a new section on community presets. It lists what we keep when you sign in to share presets, and for how long.
