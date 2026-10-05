@@ -1,0 +1,15 @@
+apps/web-app/src/components/chara-file-card.ts
+apps/web-app/src/components/chara-sheet.ts
+apps/web-app/src/components/chara-ui.ts
+apps/web-app/src/components/glamour-block.ts
+apps/web-app/src/components/glamour-list-actions.ts
+apps/web-app/src/components/glamour-sheet.ts
+apps/web-app/src/components/glamour-tool.ts
+apps/web-app/src/components/glamour-twin-picker.ts
+apps/web-app/src/components/item-links-menu.ts
+apps/web-app/src/services/chara-file-loader.ts
+apps/web-app/src/services/chara-resolve-service.ts
+apps/web-app/src/services/chara-session-service.ts
+apps/web-app/src/shared/acquisition-edits.ts
+apps/web-app/src/shared/glamour-markdown.ts
+apps/web-app/src/shared/item-links.ts
