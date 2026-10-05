@@ -34,6 +34,13 @@ export interface PresetSubmissionNotification {
     author_name: string;
     author_discord_id: string;
     status: 'pending' | 'approved' | 'rejected';
+    /**
+     * FINDING-017 (2026-10-03 audit): the revision of exactly the text this
+     * notification carries — the row's value AFTER the write that produced it.
+     * The moderation buttons bind to it, so a button on an older embed cannot
+     * approve text edited since.
+     */
+    content_revision: number;
     moderation_status: 'clean' | 'flagged' | 'auto_approved';
     source: 'bot' | 'web' | 'none';
     created_at: string;
@@ -81,6 +88,8 @@ export interface DeadLetterRecord {
   preset_id: string;
   /** Only 'submission' carries one; a preview upload has nothing to judge yet. */
   moderation_status?: PresetSubmissionNotification['preset']['moderation_status'];
+  /** FINDING-017: a revision number is a counter, not content — kept so a retried embed binds to the right text. */
+  content_revision?: number;
 }
 
 /**
@@ -96,6 +105,7 @@ export function toDeadLetterRecord(payload: PresetNotificationPayload): DeadLett
         type: 'submission',
         preset_id: payload.preset.id,
         moderation_status: payload.preset.moderation_status,
+        content_revision: payload.preset.content_revision,
       }
     : { type: 'preview_image', preset_id: payload.preset.id };
 }
@@ -230,7 +240,7 @@ export async function notifyDiscordBot(
 /**
  * FINDING-017: drop dead letters that have aged out.
  *
- * presets-api has no cron trigger, so retention has to ride requests — and the
+ * The daily retention job (src/retention-job.ts) runs this once a day; it also rides requests — and the
  * policy now promises a window ("30 days after resolution, 90 if unresolved"),
  * so it has to ride requests that actually happen. Hanging it off the
  * dead-letter *write* alone would not: that write only runs when a Discord
@@ -243,7 +253,8 @@ export async function notifyDiscordBot(
  *   2. `listFailedNotifications` — every moderator read of the queue;
  *   3. `resolveFailedNotification` — every moderator resolve;
  *   4. `POST /api/v1/presets`, via `waitUntil` — the busiest write in the
- *      worker, so the window holds as long as anyone submits a preset.
+ *      worker, so the window holds as long as anyone submits a preset;
+ *   5. the daily Cron Trigger (retention-job.ts).
  *
  * Deliberately NOT in the same `db.batch` as the insert in (1): a D1 batch is
  * atomic, so a prune that failed would take the dead-letter row down with it —

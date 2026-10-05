@@ -154,6 +154,9 @@ The wheel a harmony is rotated on. Exposed publicly as `GET /v1/wheels`.
 | Hrothgar | ロスガル | Hrothgar | Hrothgar | 로스갈 | 硌狮族 |
 | Viera | ヴィエラ | Viera | Viéra | 비에라 | 维埃拉族 |
 
+> [!WARNING]
+> **Two KO values are core's, not the client's.** The KR client writes Hyur **휴런** and Hrothgar **로스가르** (`Race` rows 1 and 7; [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md#other-findings)). This table mirrors core, so fix core's generator first, then this row.
+
 ---
 
 ## Clans / Subraces (16 clans)
@@ -170,6 +173,15 @@ The wheel a harmony is rotated on. Exposed publicly as `GET /v1/wheels`.
 | Au Ra | Raen | Xaela | アウラ・レン | アウラ・ゼラ |
 | Hrothgar | Helions | The Lost | ヘリオン | ロスト |
 | Viera | Rava | Veena | ラヴァ・ヴィエラ | ヴィナ・ヴィエラ |
+
+> [!WARNING]
+> **Core's KO clans and four ZH clans are not the client's.** 13 of core's 16 Korean clan names differ from the KR client's `Tribe` sheet. The KR client writes, for example:
+> - 중원 부족 / 고원 부족 for Midlander / Highlander;
+> - 아우라 렌 / 아우라 젤라 for Raen / Xaela;
+> - 맴도는 별 / 떠도는 별 for Helions / The Lost;
+> - 라바 비에라 / 비나 비에라 for Rava / Veena.
+>
+> The CN client writes Helions 掠日之民, The Lost 迷踪之民, Rava 密林之民 and Veena 山林之民; core says 日光之民 / 迷失之民 / 拉瓦族 / 维纳族. The full list is in the [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md#other-findings). Fix core's generator before anything prints a localized clan name.
 
 ---
 
@@ -333,6 +345,64 @@ client dumps for ZH/KO; rows, URLs and confidence:
 
 ---
 
+## Character-Creation Color Sheets
+
+**Source:** the character creator's own labels, the game client's `Lobby` sheet rows that its
+`CharaMakeType` menus point to.
+- **Read on 2026-10-05:** XIVAPI v2 for EN / JA / DE / FR, and the CN and KR client dumps for ZH / KO.
+- **Checks:** a second extraction matched every value it covers. Rows, URLs, race variants and confidence: [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md).
+- **Core does not match.** Its `sheets` section is typed by hand in `packages/core/scripts/build-locales.ts` and disagrees with the client in five languages. This table is what pins the words; fix the generator from it, never the generated JSON.
+
+| Palette | Core key | Row | EN | JA | DE | FR | KO | ZH |
+|---------|----------|-----|----|----|----|----|----|----|
+| Skin | `skinColors` | 202 | Skin Color | 肌の色 | Hautfarbe | Couleur de peau | 피부색 | 肤色 |
+| Hair | `hairColors` | 236 | Hair Color | 髪の色 | Haarfarbe | Couleur des cheveux | 머리 색 | 发色 |
+| Highlights | `highlightColors` | 237 | Highlights | メッシュの色 | Strähnen | Reflets | 부분염색 색상 | 挑染 |
+| Eyes | `eyeColors` | 245 | Eye Color | 瞳の色 | Augenfarbe | Couleur des yeux | 눈동자 색 | 瞳色 |
+| Lips | `lipColorsDark` / `…Light` | 248 | Lip Color | 唇の色 | Lippenfarbe | Couleur des lèvres | 입술 색 | 唇色 |
+| Tattoos | `tattooColors` | 1744 | Tattoo Color | 刺青の色 | Tattoofarbe | Couleur des tatouages | 문신 색 | 刺青颜色 |
+| Limbal ring (Au Ra) | `tattooColors` | 1748 | Limbal Ring Color | 瞳の輪郭の色 | Farbe der äußeren Iris | Couleur du contour de l'iris | 눈동자 테두리 색 | 瞳孔轮廓颜色 |
+| Face paint | `facePaintColorsDark` / `…Light` | 250 | Face Paint Color | ペイントの色 | Farbe des Merkmals | Couleur du maquillage | 얼굴 치장 색 | 面妆颜色 |
+| Darker half (lips, face paint) | `…Dark` | 2122 | Dark | 濃い | Dunkel | Opaque | 짙게 | 浓艳 |
+| Lighter half (lips, face paint) | `…Light` | 2123 | Light | 薄い | Hell | Translucide | 옅게 | 清淡 |
+
+**The features themselves**, for a label that names the feature rather than its palette:
+
+| Feature | Row | EN | JA | DE | FR | KO | ZH |
+|---------|-----|----|----|----|----|----|----|
+| Tattoos | 1742 | Tattoos | 刺青 | Tattoos | Tatouages | 문신 | 刺青 |
+| Limbal ring | 1746 | Limbal Ring | 瞳の輪郭 | Äußere Iris | Contour de l'iris | 눈동자 테두리 | 瞳孔轮廓 |
+| Face paint | 249 | Face Paint | フェイスペイント | Merkmale | Maquillage | 얼굴 치장 | 面妆 |
+
+- **The limbal ring is the iris's outline** in the five non-English client languages (瞳の輪郭, Äußere Iris, Contour de l'iris, 눈동자 테두리, 瞳孔轮廓). Not the client's word, so not used:
+  - transliterations: ja リンバル / リムバル, ko 림발 / 림벌, de Limbal-Ring;
+  - anatomical terms: de Limbus, fr Limbe / limbal;
+  - organ names: ja 角膜 (cornea), ko 홍채 and zh 虹膜 (iris);
+  - zh 角膜环 / 轮环.
+- **Face paint is not "paint" in German or French:**
+  - de **Merkmale** / *Farbe des Merkmals*, never Gesichtsbemalung or Schminke. The German client also uses *Merkmal* for facial features (*Gesichtsmerkmale*), so keep the face-paint context explicit;
+  - fr **Maquillage**, never Peinture faciale;
+  - also ko **얼굴 치장**, never 얼굴 페인트 / 페이스 페인트, and zh **面妆**, never 面部彩绘 / 彩绘.
+- **Tattoos are 刺青** in Japanese and Chinese, never タトゥー / 纹身.
+- **Highlights:**
+  - ja **メッシュ**, never ハイライト;
+  - ko **부분염색**, never 하이라이트 / 브릿지 (row 237 writes it solid; the picker tab, row 2129, writes 부분 염색);
+  - de **Strähnen**, never Strähnchen / Highlights;
+  - the color picker's highlights toggle (row 2129) reads fr *Mèches colorées*, so fr has two client words. Reflets is the palette's own label; Mèches colorées is also official.
+- **Dark / Light:** the color picker's labels for the two halves of the lip and face-paint palettes.
+  - That pairing comes from context (their neighbors and wording); no sheet links them.
+  - French is **Opaque / Translucide**, never Foncé / Clair.
+  - The other languages: ja 濃い / 薄い, ko 짙게 / 옅게, zh 浓艳 / 清淡.
+- **Eyes:** the palette is ja **瞳の色** and zh **瞳色**; core's 目の色 / 眼睛颜色 are not the client's. The picker tab for both eyes says 両目の色 / 双眼颜色 (row 2124), and its heterochromia toggle Odd Eyes says オッドアイにする / 虹膜异色 (row 2125).
+- **One palette, three features.** Core's `tattooColors` is labeled by race:
+  - Tattoo Color (most clans);
+  - Limbal Ring Color (Au Ra);
+  - Ear Clasp Color (Wildwood ♂ ♀ and Keeper of the Moon ♀: 耳飾りの色, Ohrschmuckfarbe, Couleur des boucles d'oreilles, 귀걸이 색, 耳饰颜色).
+  - The client has no name for the palette as a whole. Ours, *Tattoo / Limbal Ring*, is a house choice built from the first two labels; it leaves out the ear clasps. The research note has the Hrothgar and Viera variants ("tattoos and ornaments" in four languages).
+- **Hrothgar has no hair or lip palette:** Customize 10 is **Fur Color** and Customize 20 is **Fur Pattern** (rows 1014 / 1013).
+
+---
+
 ## Other locale sections
 
 Each locale file has a `locale` string plus fifteen sections. Those not tabled above:
@@ -343,7 +413,7 @@ Each locale file has a `locale` string plus fifteen sections. Those not tabled a
 | `labels` | 7 | Dye trait labels: `dye`, `dark`, `metallic`, `pastel`, `cosmic`, `cosmicExploration`, `cosmicFortunes` |
 | `visions` | 5 | Short vision-type labels (see above) |
 | `tools` | 6 | Tool display names: Harmony Explorer, Gradient Builder, Dye Mixer, Swatch Matcher, Dye Comparison, Accessibility Checker |
-| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin |
+| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Typed by hand and not yet the client's wording: see [Character-Creation Color Sheets](#character-creation-color-sheets) |
 
 There is **no** `jobNames` or `grandCompanyNames` section — job and Grand Company names are not
 part of this dataset, because nothing in the toolset renders them.

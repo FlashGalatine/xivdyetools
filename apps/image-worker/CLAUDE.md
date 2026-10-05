@@ -19,7 +19,9 @@ service binding. `src/wrangler-config.test.ts` now pins that shape (2026-08-29 F
 config flip fails `pnpm test` instead of relying on a comment; a request that still reaches this
 Worker on a `*.workers.dev` hostname is refused with a `404` before any body read, fetch, or
 decode, as defence in depth. It holds no secrets and no storage bindings (KV/D1/R2); it is the
-smallest operational footprint in the monorepo.
+smallest operational footprint in the monorepo. Workers Logs are pinned off in both
+`wrangler.toml` blocks (2026-10-03 FINDING-022, asserted by the same test); turning them on needs
+both privacy policies updated in the same change.
 
 It has since become the monorepo's general photon host rather than a single-caller split. Two
 endpoints, two callers:

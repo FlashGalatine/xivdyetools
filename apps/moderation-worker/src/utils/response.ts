@@ -284,6 +284,15 @@ export function isBanTargetId(value: string): boolean {
   return isValidSnowflake(value) || BAN_TARGET_UUID_RE.test(value);
 }
 
+/**
+ * FINDING-014 (2026-10-03 audit): true for the XIVAuth `sub` UUID shape
+ * `isBanTargetId` accepts. `banUser` uses it to also write such a target to
+ * `banned_users.xivauth_id`.
+ */
+export function isXivAuthUuid(value: string): boolean {
+  return BAN_TARGET_UUID_RE.test(value);
+}
+
 // Base64URL encode/decode used to live here as a hand-rolled pair. They are now
 // `base64UrlEncode` / `base64UrlDecode` from `@xivdyetools/auth/encoding`, which this
 // worker already depends on (2026-09-01 dead-code audit, DEAD-017). The local copy also

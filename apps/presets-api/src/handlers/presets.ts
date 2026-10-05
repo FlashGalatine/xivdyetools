@@ -15,7 +15,8 @@ import type {
   PresetPreviousValues,
 } from '../types.js';
 import { requireAuth, requireUserContext } from '../middleware/auth.js';
-import { requireNotBanned } from '../middleware/ban-check.js';
+import { isUserBanned, requireNotBanned } from '../middleware/ban-check.js';
+import { rekeyIdentity } from '../services/identity-rekey-service.js';
 import {
   ErrorCode,
   invalidJsonResponse,
@@ -49,6 +50,7 @@ import {
   validateExampleLink,
   normalizeExampleLink,
   validateSecondaryCategories,
+  sanitizeAuthorName,
 } from '../services/validation-service.js';
 import { addVote } from './votes.js';
 import {
@@ -351,8 +353,33 @@ presetsRouter.patch('/refresh-author', async (c) => {
   // way this file's other two `auth.userName` call sites default it
   // (`|| 'Unknown User'` in POST /presets, `?? ''` in preview-image
   // notifications) instead of binding it raw.
-  if (!auth.userName || auth.userName.trim().length === 0) {
+  // FINDING-016: strip control / bidi / invisible characters (the name is the
+  // token's, not the user's to fix); a name that is nothing but those has
+  // nothing left to write.
+  const authorName = sanitizeAuthorName(auth.userName ?? '');
+  if (authorName.length === 0) {
     return validationErrorResponse(c, 'Display name required for author refresh');
+  }
+
+  // FINDING-014: an XIVAuth-only account that has since linked Discord signs in
+  // with a different acting id (snowflake) than its UUID-keyed rows. Move them
+  // across — but never for a banned identity: a later unban restores presets by
+  // the banned id, so they must still be keyed by it. A failed ban lookup skips
+  // the re-key (it is retried on the next sign-in) rather than risk it.
+  let rekeyed = false;
+  if (
+    auth.authSource === 'web' &&
+    auth.jwtSub &&
+    auth.jwtDiscordId &&
+    auth.jwtSub !== auth.jwtDiscordId
+  ) {
+    try {
+      if (!(await isUserBanned(c.env.DB, [auth.jwtSub, auth.jwtDiscordId]))) {
+        rekeyed = await rekeyIdentity(c.env.DB, auth.jwtSub, auth.jwtDiscordId);
+      }
+    } catch (err) {
+      c.get('logger')?.error('[FINDING-014] identity re-key skipped', err);
+    }
   }
 
   // Update all presets by this user to use their current display name
@@ -361,12 +388,13 @@ presetsRouter.patch('/refresh-author', async (c) => {
     SET author_name = ?
     WHERE author_discord_id = ?
   `)
-    .bind(auth.userName, auth.userDiscordId)
+    .bind(authorName, auth.userDiscordId)
     .run();
 
   return c.json({
     success: true,
     updated: result.meta.changes,
+    rekeyed,
   });
 });
 
@@ -432,6 +460,10 @@ presetsRouter.delete('/:id', async (c) => {
        WHERE json_valid(payload)
          AND (json_extract(payload, '$.preset_id') = ? OR json_extract(payload, '$.preset.id') = ?)`
     ).bind(id, id),
+    // FINDING-005: the audit rows live exactly as long as their preset. D1
+    // enforces the FK's ON DELETE CASCADE, but the cascade is a foreign-key
+    // setting, not something this delete should depend on — say it explicitly.
+    c.env.DB.prepare('DELETE FROM moderation_log WHERE preset_id = ?').bind(id),
     c.env.DB.prepare('DELETE FROM presets WHERE id = ?').bind(id),
   ]);
 
@@ -802,11 +834,23 @@ presetsRouter.patch('/:id', async (c) => {
   // Notify Discord for moderation when this edit brought something new to judge
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
   // but are logged with preset context for debugging
-  if (notifiesModerators) {
+  // FINDING-017: `updatePreset` returns RETURNING *, which does not see the
+  // AFTER-trigger revision bump — re-read so the embed's buttons bind to the
+  // revision the row actually holds now. A row deleted in between has nothing
+  // left to review, so no notification goes out for it.
+  const editedRow = notifiesModerators
+    ? await getPresetRowById(c.env.DB, updatedPreset.id)
+    : null;
+  // A status that moved since the write (a moderator, a ban hide) means the
+  // text/revision read no longer matches the 'pending' this embed would claim.
+  if (notifiesModerators && editedRow && editedRow.status === 'pending') {
     const editPayload: PresetNotificationPayload = {
       type: 'submission',
       preset: {
-        ...updatedPreset,
+        // One read supplies both the text and the revision, so the buttons are
+        // bound to exactly the text the embed shows.
+        ...rowToPreset(editedRow, c.get('logger')),
+        content_revision: editedRow.content_revision,
         author_name: preset.author_name || 'Unknown User',
         author_discord_id: preset.author_discord_id,
         // Every branch of `notifiesModerators` leaves the preset pending: one
@@ -953,13 +997,15 @@ presetsRouter.post('/', async (c) => {
   // Wrap createPreset in try-catch to handle UNIQUE constraint violations
   // If another request created the same preset while we were checking, we'll catch
   // the constraint violation and vote on that preset instead
+  // FINDING-016: the display name comes from the token; strip, never reject.
+  const authorName = sanitizeAuthorName(auth.userName ?? '') || 'Unknown User';
   let preset;
   try {
     preset = await createPreset(
       c.env.DB,
       body,
       auth.userDiscordId!,
-      auth.userName || 'Unknown User',
+      authorName,
       status
     );
   } catch (error) {
@@ -1022,28 +1068,37 @@ presetsRouter.post('/', async (c) => {
   // Send notification to Discord worker (non-blocking)
   // PRESETS-REF-002: Fire-and-forget notification - errors don't fail the request
   // Use waitUntil to keep the worker alive while notification completes
-  const submissionPayload: PresetNotificationPayload = {
+  // FINDING-017: bind the embed to the revision the row holds, not an assumed 0.
+  const submittedRow = await getPresetRowById(c.env.DB, preset.id);
+  // Text and revision come from the same re-read; a row that has vanished has
+  // nothing left to review, so no notification goes out for it.
+  // A status that moved since the write is treated like a missing row, so the
+  // payload's status always matches the read it came from.
+  const submissionPayload: PresetNotificationPayload | null = submittedRow && submittedRow.status === status ? {
     type: 'submission',
     preset: {
-      ...preset,
-      author_name: auth.userName?.trim() || 'Unknown User', // PRESETS-HIGH-002
+      ...rowToPreset(submittedRow, c.get('logger')),
+      content_revision: submittedRow.content_revision,
+      author_name: authorName, // PRESETS-HIGH-002
       author_discord_id: auth.userDiscordId!,
       status,
       moderation_status: moderationResult.passed ? 'clean' : 'flagged',
       source: auth.authSource,
     },
-  };
-  c.executionCtx.waitUntil(
-    notifyDiscordBot(c.env, submissionPayload, c.get('logger')).catch(async (err) => {
-      // FINDING-011: preset id only — never the user-typed preset name.
-      c.get('logger')?.error('[PRESETS-REF-002] Discord notification failed for new preset', err, {
-        presetId: preset.id,
-      });
-      // BUG-015: Persist failed notification for moderator review
-      // FINDING-017: preset id only, and ageing rows are pruned on the way in.
-      await storeFailedNotification(c.env.DB, submissionPayload, err, c.get('logger'));
-    })
-  );
+  } : null;
+  if (submissionPayload) {
+    c.executionCtx.waitUntil(
+      notifyDiscordBot(c.env, submissionPayload, c.get('logger')).catch(async (err) => {
+        // FINDING-011: preset id only — never the user-typed preset name.
+        c.get('logger')?.error('[PRESETS-REF-002] Discord notification failed for new preset', err, {
+          presetId: preset.id,
+        });
+        // BUG-015: Persist failed notification for moderator review
+        // FINDING-017: preset id only, and ageing rows are pruned on the way in.
+        await storeFailedNotification(c.env.DB, submissionPayload, err, c.get('logger'));
+      })
+    );
+  }
 
   // FINDING-017: the dead-letter retention window is a promise in the privacy
   // policy, so it cannot depend on the dead-letter write alone — that only runs
@@ -1242,7 +1297,7 @@ presetsRouter.post('/:id/preview-image', async (c) => {
     preset: {
       id: presetId,
       name: preset.name ?? '',
-      author_name: auth.userName ?? '',
+      author_name: sanitizeAuthorName(auth.userName ?? ''),
     },
   };
   c.executionCtx.waitUntil(

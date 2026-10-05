@@ -1,0 +1,3 @@
+apps/presets-api/tests/handlers/presets.test.ts:3393:    // These used to be three `it.skip`s marked "requires Cloudflare Workers"
+apps/web-app/e2e/ui-interactions.spec.ts:7: * `if (count === 0) test.skip()`. The result was 16 tests reporting green
+apps/web-app/src/components/__tests__/v4/locale-switch.test.ts:272: * Nothing is skipped silently — `it.skip` and bare `continue` are deliberately

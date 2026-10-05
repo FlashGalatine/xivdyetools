@@ -1,0 +1,196 @@
+
+===== apps/web-app/PRIVACY.md =====
+5:**Last updated:** 2026-09-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+6:bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
+10:Reader — do their work on your device. Nothing you upload, pick or type is sent anywhere unless
+12:and the sections below are the complete list.
+16:- Uploaded, pasted, dragged-in and camera-captured images never leave your device, and are never
+18:  for that session only, and discarded when you clear the image, close the tab or reload.
+20:  browser and never uploaded", beside a padlock. That notice is plain text, not a link; this
+25:- A `.chara` file (Anamnesis, Ktisis, Brio) is parsed on your device. Its character name is never
+26:  sent anywhere, and never used as a preset name, an author name, or anything else other people
+33:  collections. It is never uploaded, and the community path above never reads it. Rename or delete
+36:  request carries only the equipment **model numbers** from the file and the id of its facewear
+37:  (a dozen small integers per file) — not the file, not the name, not the colours, not the dyes.
+38:  Our API looks those numbers up in [XIVAPI](https://xivapi.com/), a community game-data service,
+39:  which is sent the numbers and nothing about you. The item names, where each item is obtained,
+42:## What is stored on your device
+44:`localStorage` holds lightweight preferences and your own saved work: theme, language, per-tool
+49:deletes the rewritten lines for that outfit.
+51:`IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
+52:not repeated. It holds no images — an earlier version of the app kept your last extractor image
+53:there, and that copy is deleted the first time you open the app after this update. Your browser's
+58:The app talks only to these first-party hosts (the site's Content-Security-Policy allows nothing
+59:else) plus the third parties named below:
+63:   [Universalis](https://universalis.app).
+67:   provider ID and username — right away, whether or not you go on to submit or vote. Presets and
+68:   votes you submit are stored under that account, and the author name is shown on published
+69:   presets. When you submit or edit a preset, its name and description may also be sent to
+70:   Google's [Perspective API](https://perspectiveapi.com/) for a moderation score (optional —
+71:   content moderation only); the request tells Google not to store them (`doNotStore`), and
+72:   nothing else — no account identity — is sent there. To have your account record and
+77:   `og-worker`, which sees only the URL.
+80:Fonts are self-hosted. There are no third-party analytics scripts, ad or social trackers, and no
+87:[Mirapri](https://mirapri.com/), [Garland Tools](https://www.garlandtools.org/),
+88:[Teamcraft](https://ffxivteamcraft.com/), [Gamer Escape](https://ffxiv.gamerescape.com/) or the
+90:[Saddlebag Exchange](https://saddlebagexchange.com/).
+94:URL. They open in a new tab with the referrer suppressed, so the site you land on is not told which
+99:Analytics are **off by default**. They run only while **Advanced Settings → Enable Analytics** is
+100:switched on, and never if your browser sends the
+101:[Global Privacy Control](https://globalprivacycontrol.org/) signal — even with the switch on. The
+102:server enforces this too: it accepts telemetry only from the app's own origins, and discards any
+104:sending immediately, in every open tab, and discards anything not yet sent.
+107:which stores them in Cloudflare Analytics Engine:
+112:  grid, and which tool you were in. Random-dye buttons and picks the tool did not accept are not
+113:  counted; your palette as a whole is never sent.
+115:  (Anamnesis, Ktisis, Brio, other). Never the file or the character.
+121:What is **never stored with your events**: your IP address, user agent or device details, any
+124:server discards everything about the request except the validated events, and the event list is an
+128:Analytics Engine keeps the data for about three months. The code is open source:
+129:[`apps/web-app/src/services/telemetry-service.ts`](src/services/telemetry-service.ts) (what the
+131:[`apps/api-worker/src/telemetry/schema.ts`](../api-worker/src/telemetry/schema.ts) (what the server
+139:- **Abuse prevention.** Our API counts requests per IP over a 60-second window so one source cannot
+141:  the address to without storing it ourselves. There is a fallback path, used only on a deployment
+142:  where that service is not wired up, which instead keeps a counter in Cloudflare KV under a key
+143:  containing the address, for **120 seconds**. Neither path writes your address to a database, and
+145:- **Your IP is never stored alongside anything you did** — not your events, not your presets, not
+146:  your votes. It is not used to link visits, build a profile, or identify you.
+149:  workers, so these lines are visible only to a maintainer watching a live stream while debugging,
+150:  and are not retained afterwards. If we ever turn persistent logging on, we will say so here
+152:  [its own policy](../discord-worker/PRIVACY_POLICY.md).
+158:3. You will see no image upload — only the requests listed above, and `/v1/telemetry` beacons only
+163:Open an issue on [GitHub](https://github.com/FlashGalatine/xivdyetools/issues) or ask on Discord.
+
+===== apps/web-app/TERMS_OF_SERVICE.md =====
+5:**Last updated:** 2026-09-28 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. How we handle
+7:[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
+9:XIV Dye Tools is a free, fan-made colour toolkit for Final Fantasy XIV. It is not affiliated with,
+10:endorsed by, or sponsored by Square Enix. By using the site you agree to what follows. If you do not
+25:You never need an account to use the colour tools. You need one only to submit, edit or vote on
+28:- Signing in goes through Discord or XIVAuth. We never see or store a password.
+43:show your preset to other players; it is not a transfer of ownership and we claim no right to sell
+46:Only submit content you have the right to submit.
+69:1. Join the Discord: <https://discord.gg/rzxDHNr6Wv>
+73:Appeals are reviewed within 7 days. To have your account record and everything submitted under it
+81:- scrape the site or the API beyond what the [developer documentation](https://developers.xivdyetools.app)
+108:This is a fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co.,
+127:## No warranty
+133:In plainer terms: we do not promise the site will stay up, that colour matches or market prices
+135:dye renders in game, and market prices come from a third party and go stale.
+139:TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE WILL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+143:Some jurisdictions don't allow these limits, in which case they apply to you only as far as the law
+148:We may update these terms. Changes are posted here with a new "Last updated" date, and significant
+154:You can stop using the site whenever you like. We may suspend or end your access to the community
+161:conflict-of-laws rules. Any dispute that cannot be settled by talking it through first will be
+164:live gives you and that the same law does not let you waive.
+169:- **Discord**: <https://discord.gg/rzxDHNr6Wv>
+171:- **Issues**: <https://github.com/FlashGalatine/xivdyetools/issues>
+
+===== apps/discord-worker/PRIVACY_POLICY.md =====
+5:**Last Updated**: September 28, 2026
+11:We are committed to protecting your privacy and being transparent about our data practices. This Bot is a fan-made community tool and is not affiliated with Square Enix.
+17:| Data Type | Purpose | Retention |
+19:| Discord User ID | Identify users for preferences, preset favorites, voting, rate limiting, and the first-run notice flag; also keys a daily per-user activity marker and is counted (never listed) in usage statistics — see *Usage Analytics* below | Until data deletion requested (usage-statistics records: see *Usage Analytics*) |
+20:| Discord Username | Attribute community preset submissions | Until data deletion requested |
+21:| User Locale | Provide localized bot responses; the Discord client language (bucketed to one of the six the Bot supports, or "other") is also recorded in usage statistics — see *Usage Analytics* below | Stored preference: until cleared. Usage-statistics bucket: see *Usage Analytics* |
+22:| Guild ID / Channel ID | Process commands in context | Not stored. Usage statistics record only *whether* a command ran in a server or in a DM (the values `guild` / `dm`) — never the server's or channel's ID |
+26:| Data Type | Purpose | Retention |
+28:| Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted) | Until you reset them or request deletion |
+29:| Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
+30:| First-run notice flag | A per-user marker that the 5.0 welcome notice was shown to you; carries no content | Expires automatically after 180 days |
+32:| Votes | Your votes on community presets | Until you remove vote or request deletion |
+36:- Per-user, per-command counters are held by Cloudflare's Workers rate-limiting service for the 60-second window and are never written to KV.
+37:- **Fallback**: on a deployment without the native rate-limiting bindings, the counters are kept in Cloudflare KV instead, under a key containing your Discord User ID and the command name, with a 120-second expiry. Both production and beta bind the native service, so this path is not in use there.
+38:- The Bot never sees or uses your IP address for rate limiting — it identifies you by Discord User ID, because commands arrive from Discord's servers rather than from you directly.
+39:- No third party is involved.
+43:To keep the Bot healthy and to power the `/stats` dashboard we record, for each command you run or copy button you press:
+45:| Data | Where | Retention |
+47:| Command name and subcommand, whether it was answered and — if anything went wrong — a coarse failure class (rate-limited, request rejected by the preset or market service, market data unavailable, preset service unavailable, the uploaded image or `.chara` file could not be read, rendering failed, unknown; never an error message), how long it took, whether it ran in a server or a DM (`guild` / `dm` — never the server's ID), your Discord client language (one of the six the Bot supports, or "other"), which copy button you pressed (hex / RGB / HSV), and your Discord User ID (used only to count unique users) | Cloudflare Workers Analytics Engine | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
+48:| Aggregate counters — total commands, per-command counts, successes/failures (no user data) | Cloudflare KV | 30 days (automatic TTL) |
+49:| One key per user per day (`usertrack:{date}:{userId}`, value `1`) so daily active users can be counted | Cloudflare KV | 30 days (automatic TTL) |
+51:These records never include message content, command option values, server names or channel IDs. Analytics Engine data cannot be edited or deleted per user once written; it expires on Cloudflare's schedule.
+53:## 3. Data We Do NOT Collect
+55:We explicitly do **not** collect:
+63:- ❌ Images (processed in-memory, not stored)
+64:- ❌ `.chara` files (processed in-memory, not stored)
+65:- ❌ Character names from `.chara` files (never displayed on cards or embeds, never stored)
+69:When you use `/extractor image`, your uploaded image is:
+72:3. **Immediately discarded** after processing
+73:4. **Never stored** on our servers
+77:When you use `/swatch` or `/glamour`, your uploaded `.chara` file is:
+80:3. **Immediately discarded** after processing
+81:4. **Never stored** on our servers
+83:To name the gear, `/glamour` sends the equipment model numbers from the file and the id of its facewear to our own API, which looks them up in XIVAPI. Nothing else from the file is sent, and nothing about you or your Discord account.
+95:| Usage statistics (`/stats`) | Command name and subcommand, outcome class, latency, server-or-DM flag, client language bucket, copy-button kind, User ID (counted, never listed) |
+99:### Where Your Data is Stored
+101:| Service | Data Stored | Location |
+103:| Cloudflare KV | Preferences, preset favorites, the first-run notice flag, usage counters and daily-activity keys (30-day TTL), and the rate-limit counters only on a deployment without the native rate-limiting bindings (120-second TTL) | Global edge network |
+104:| Cloudflare D1 | Community presets, Votes, Moderation history, moderation-notification failure records, daily submission / edit counters (see *Data Retention*) | Cloudflare's database infrastructure |
+105:| Cloudflare Workers Analytics Engine | Command usage telemetry (see *Usage Analytics*) | Cloudflare's analytics infrastructure |
+107:All data is stored on Cloudflare's infrastructure. See [Cloudflare's Privacy Policy](https://www.cloudflare.com/privacypolicy/) for more information.
+112:- No server-side sessions (stateless architecture)
+114:- No plaintext password storage (we don't collect passwords)
+118:While handling a command the Bot can print short diagnostic lines. Two of them include **your Discord User ID** — one when a command starts, one when a command is rate limited — alongside the command name. They never include command option values, message content, server names, channel IDs, or anything from an uploaded image or `.chara` file.
+120:Persistent log collection (Cloudflare Workers Logs) is switched **off** for the Bot, so these lines exist only in a live debugging stream a maintainer is watching at that moment, and are not retained afterwards. They are not a data store, are not queryable, and are separate from the usage analytics described above. If we ever enable persistent logging, this policy will be updated first.
+122:## 6. Third-Party Services
+124:The Bot integrates with these third-party services:
+128:| Discord | Bot platform, authentication | [Discord Privacy Policy](https://discord.com/privacy) |
+129:| Cloudflare | Hosting, data storage (KV, D1), rate limiting, analytics | [Cloudflare Privacy Policy](https://www.cloudflare.com/privacypolicy/) |
+130:| Universalis | FFXIV market board data | [Universalis](https://universalis.app/) |
+131:| XIVAPI | FFXIV item names for `/glamour` | [XIVAPI](https://xivapi.com/) |
+132:| Perspective API | Content moderation (optional) | [Google Privacy Policy](https://policies.google.com/privacy) |
+134:We do not sell, trade, or share your personal data with third parties for marketing purposes.
+141:- Use `/preferences show` to view your saved preferences
+142:- Use `/preset favorite list` to view your favorited presets
+145:### Delete Your Data
+146:- Use `/preferences reset` to reset all your preferences, or `/preferences reset key:<preference>` to reset just one
+147:- Use `/preset favorite remove` to remove a favorited preset
+148:- Contact us to request complete data deletion
+150:The first-run notice flag is not user-manageable — it expires on its own after 180 days.
+152:### Request Full Data Deletion
+154:To request deletion of all your data:
+159:2. **Discord**: Join https://discord.gg/rzxDHNr6Wv and DM "Flash Galatine"
+161:We will process deletion requests within 30 days.
+163:## 8. Data Retention
+165:| Data Type | Retention Period |
+167:| Rate limit counters | 60 seconds (120 seconds on a deployment without the native rate-limiting bindings) |
+168:| Usage counters (Cloudflare KV) | 30 days |
+169:| Daily per-user activity keys (Cloudflare KV) | 30 days |
+170:| Command usage telemetry (Analytics Engine) | Cloudflare's Analytics Engine retention window (3 months at the time of writing) |
+171:| User preferences | Until deleted by user |
+173:| First-run notice flag | 180 days |
+175:| Votes | Until removed or account deletion |
+176:| Moderation-notification failure records (preset id, error, timestamps) | 30 days after resolution, 90 days if unresolved — deleted immediately if the preset is deleted |
+177:| Daily submission / edit counters (user id, kind, timestamp) | 30 days |
+181:The Bot is intended for users who meet Discord's minimum age requirement (13 years or older, or the minimum age in your country). We do not knowingly collect data from children under these age limits.
+187:Your data may be processed in any country where Cloudflare operates edge servers. By using the Bot, you consent to this transfer. Cloudflare maintains appropriate safeguards for international data transfers.
+193:- Posted to this document with an updated "Last Updated" date
+203:- **Discord**: https://discord.gg/rzxDHNr6Wv
+
+===== apps/discord-worker/TERMS_OF_SERVICE.md =====
+5:**Last Updated**: September 28, 2026
+7:> The web app at xivdyetools.app has its own terms: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Data handling is covered by the [Privacy Policy](PRIVACY_POLICY.md).
+17:By adding the Bot to your Discord server or using any of its commands, you acknowledge that you have read, understood, and agree to be bound by these Terms. If you do not agree to these Terms, do not use the Bot.
+26:- **Community Preset Favorites**: Mark and list community presets you like (`/preset favorite`)
+29:- **Dye Comparison and Contrast**: Compare dyes side by side and measure the contrast between them (`/comparison`, `/contrast`)
+30:- **Blending and Gradients**: Blend two dyes, or build a gradient between two colors (`/mixer`, `/gradient`)
+31:- **Budget Alternatives**: Find cheaper dyes close to an expensive one (`/budget`)
+32:- **Character Colors**: Match the colors in a `.chara` file to dyes (`/swatch`)
+33:- **Glamour Reader**: List the gear and dyes in a `.chara` file (`/glamour`)
+41:- Use the Bot only for its intended purpose
+42:- Not attempt to abuse, exploit, or circumvent rate limits
+43:- Not use the Bot for spam, harassment, or any malicious purpose
+44:- Not attempt to reverse engineer, hack, or disrupt the Bot's functionality
+45:- Not submit inappropriate, offensive, or copyrighted content to community features
+66:1. Join our Discord server: https://discord.gg/rzxDHNr6Wv
+69:4. Appeals are reviewed within 7 days
+77:This Bot is a fan-made tool and is **not affiliated with, endorsed by, or sponsored by Square Enix Co., Ltd.** FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
+79:Game data, including dye and item names, colors, and acquisition methods, are property of Square Enix Co., Ltd. and are used under fair use for educational and informational purposes only.
+81:### Third-Party Services
+83:Market board data is provided by [Universalis](https://universalis.app/), an independent third-party service not affiliated with Square Enix.
+85:Item names for `/glamour` are looked up through [XIVAPI](https://xivapi.com/), also an independent third-party service not affiliated with Square Enix.
+95:We do not guarantee:
+104:TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF THE BOT.
+106:This includes but is not limited to:
+136:Nothing in these Terms removes any consumer-protection right that the law of the place where you live grants you and that the same law does not permit you to waive.
+143:- **Discord**: https://discord.gg/rzxDHNr6Wv

@@ -10,10 +10,14 @@ import {
   rejectPreset,
   getModerationStats,
   revertPreset,
+  getModerationPreset,
   searchPresetsForAutocomplete,
 } from './preset-api.js';
-import { PresetAPIError } from '../types/preset.js';
+import { PresetAPIError, PresetReviewConflictError } from '../types/preset.js';
 import type { Env } from '../types/env.js';
+
+// FINDING-017: what the moderator reviewed — sent as expected_revision / expected_status
+const EXPECTED = { revision: 3, status: 'pending' } as const;
 
 describe('preset-api', () => {
   let mockEnv: Env;
@@ -381,32 +385,39 @@ describe('preset-api', () => {
       const mockPreset = { id: 'preset-1', name: 'Approved', status: 'approved' };
       mockFetcher._setupHandler(() => Response.json({ preset: mockPreset }));
 
-      const result = await approvePreset(mockEnv, 'preset-1', 'mod-1');
+      const result = await approvePreset(mockEnv, 'preset-1', 'mod-1', EXPECTED);
 
       expect(result).toEqual(mockPreset);
     });
 
-    it('should send correct request body', async () => {
+    it('should send correct request body, bound to the reviewed revision and status', async () => {
       mockFetcher._setupHandler(() => Response.json({ preset: {} }));
 
-      await approvePreset(mockEnv, 'preset-123', 'mod-1', 'Looks good');
+      await approvePreset(mockEnv, 'preset-123', 'mod-1', EXPECTED, 'Looks good');
 
       const fetchCall = mockFetcher._calls[0];
       expect(fetchCall.method).toBe('PATCH');
 
       const body = JSON.parse(fetchCall.body as string);
-      expect(body).toEqual({ status: 'approved', reason: 'Looks good' });
+      expect(body).toEqual({
+        status: 'approved',
+        reason: 'Looks good',
+        expected_revision: 3,
+        expected_status: 'pending',
+      });
     });
 
     it('should work without reason', async () => {
       mockFetcher._setupHandler(() => Response.json({ preset: {} }));
 
-      await approvePreset(mockEnv, 'preset-123', 'mod-1');
+      await approvePreset(mockEnv, 'preset-123', 'mod-1', EXPECTED);
 
       const fetchCall = mockFetcher._calls[0];
       const body = JSON.parse(fetchCall.body as string);
       expect(body.status).toBe('approved');
       expect(body.reason).toBeUndefined();
+      expect(body.expected_revision).toBe(3);
+      expect(body.expected_status).toBe('pending');
     });
   });
 
@@ -415,15 +426,21 @@ describe('preset-api', () => {
       const mockPreset = { id: 'preset-1', name: 'Rejected', status: 'rejected' };
       mockFetcher._setupHandler(() => Response.json({ preset: mockPreset }));
 
-      const result = await rejectPreset(mockEnv, 'preset-1', 'mod-1', 'Does not meet standards');
+      const result = await rejectPreset(
+        mockEnv,
+        'preset-1',
+        'mod-1',
+        'Does not meet standards',
+        EXPECTED,
+      );
 
       expect(result).toEqual(mockPreset);
     });
 
-    it('should send correct request body with reason', async () => {
+    it('should send correct request body with reason, bound to the reviewed revision and status', async () => {
       mockFetcher._setupHandler(() => Response.json({ preset: {} }));
 
-      await rejectPreset(mockEnv, 'preset-123', 'mod-1', 'Inappropriate content');
+      await rejectPreset(mockEnv, 'preset-123', 'mod-1', 'Inappropriate content', EXPECTED);
 
       const fetchCall = mockFetcher._calls[0];
       const body = JSON.parse(fetchCall.body as string);
@@ -431,7 +448,118 @@ describe('preset-api', () => {
       expect(body).toEqual({
         status: 'rejected',
         reason: 'Inappropriate content',
+        expected_revision: 3,
+        expected_status: 'pending',
       });
+    });
+  });
+
+  // FINDING-017: the 409 presets-api answers for a review that is not bound to
+  // (or no longer matches) what is stored becomes a typed error carrying `current`
+  describe('review conflicts (FINDING-017)', () => {
+    const conflict = (code: string, current: unknown) =>
+      Response.json(
+        { success: false, error: 'CONFLICT', code, message: 'The preset changed', current },
+        { status: 409 },
+      );
+
+    it.each(['STALE_REVIEW', 'REVISION_REQUIRED'] as const)(
+      'raises PresetReviewConflictError for %s, carrying current',
+      async (code) => {
+        mockFetcher._setupHandler(() => conflict(code, { status: 'pending', content_revision: 7 }));
+
+        const error = await approvePreset(mockEnv, 'preset-1', 'mod-1', EXPECTED).catch(
+          (e: unknown) => e,
+        );
+
+        expect(error).toBeInstanceOf(PresetReviewConflictError);
+        expect(error).toBeInstanceOf(PresetAPIError);
+        const typed = error as PresetReviewConflictError;
+        expect(typed.statusCode).toBe(409);
+        expect(typed.code).toBe(code);
+        expect(typed.message).toBe('The preset changed');
+        expect(typed.current).toEqual({ status: 'pending', content_revision: 7 });
+      },
+    );
+
+    it('raises it from reject and revert as well', async () => {
+      mockFetcher._setupHandler(() =>
+        conflict('STALE_REVIEW', { status: 'approved', content_revision: 2 }),
+      );
+
+      await expect(
+        rejectPreset(mockEnv, 'preset-1', 'mod-1', 'a reason that is long enough', EXPECTED),
+      ).rejects.toBeInstanceOf(PresetReviewConflictError);
+      await expect(
+        revertPreset(mockEnv, 'preset-1', 'a reason that is long enough', 'mod-1', EXPECTED),
+      ).rejects.toBeInstanceOf(PresetReviewConflictError);
+    });
+
+    it('drops a malformed current instead of trusting it', async () => {
+      mockFetcher._setupHandler(() => conflict('STALE_REVIEW', { status: 'bogus', content_revision: -1 }));
+
+      const error = (await approvePreset(mockEnv, 'preset-1', 'mod-1', EXPECTED).catch(
+        (e: unknown) => e,
+      )) as PresetReviewConflictError;
+
+      expect(error).toBeInstanceOf(PresetReviewConflictError);
+      expect(error.current).toBeNull();
+    });
+
+    it('keeps the dye-signature 409 (no code) as a plain PresetAPIError', async () => {
+      mockFetcher._setupHandler(() =>
+        Response.json(
+          {
+            success: false,
+            error: 'DUPLICATE_RESOURCE',
+            message: 'Another visible preset already uses this dye combination',
+          },
+          { status: 409 },
+        ),
+      );
+
+      const error = await approvePreset(mockEnv, 'preset-1', 'mod-1', EXPECTED).catch(
+        (e: unknown) => e,
+      );
+
+      expect(error).toBeInstanceOf(PresetAPIError);
+      expect(error).not.toBeInstanceOf(PresetReviewConflictError);
+      expect((error as PresetAPIError).message).toBe(
+        'Another visible preset already uses this dye combination',
+      );
+    });
+  });
+
+  describe('getModerationPreset (FINDING-017)', () => {
+    it('GETs /moderation/:id as the moderator and returns the preset with its revision', async () => {
+      const preset = { id: 'p-1', name: 'Mine', status: 'pending', moderation_status: 'unknown' };
+      mockFetcher._setupHandler(() =>
+        Response.json({ success: true, preset, content_revision: 5 }),
+      );
+
+      const result = await getModerationPreset(mockEnv, 'p-1', '12345678901234567');
+
+      expect(result).toEqual({ preset, revision: 5 });
+      const call = mockFetcher._calls[0];
+      expect(call.method).toBe('GET');
+      expect(call.url).toBe('https://internal/api/v1/moderation/p-1');
+      expect(call.headers['x-user-discord-id']).toBe('12345678901234567');
+    });
+
+    it('returns null for a preset that does not exist', async () => {
+      mockFetcher._setupHandler(() =>
+        Response.json({ success: false, error: 'NOT_FOUND', message: 'Preset not found' }, { status: 404 }),
+      );
+
+      expect(await getModerationPreset(mockEnv, 'gone', 'mod-1')).toBeNull();
+    });
+
+    it('rethrows any other failure', async () => {
+      mockFetcher._setupHandler(() =>
+        Response.json({ success: false, error: 'FORBIDDEN', message: 'Moderators only' }, { status: 403 }),
+      );
+
+      await expect(getModerationPreset(mockEnv, 'p-1', 'mod-1')).rejects.toBeInstanceOf(PresetAPIError);
     });
   });
 
@@ -466,25 +594,29 @@ describe('preset-api', () => {
       const mockPreset = { id: 'preset-1', name: 'Reverted Preset' };
       mockFetcher._setupHandler(() => Response.json({ success: true, preset: mockPreset }));
 
-      const result = await revertPreset(mockEnv, 'preset-1', 'Flagged edit', 'mod-1');
+      const result = await revertPreset(mockEnv, 'preset-1', 'Flagged edit', 'mod-1', EXPECTED);
 
       expect(result).toEqual(mockPreset);
     });
 
-    it('should send reason in request body', async () => {
+    it('should send reason in request body, bound to the reviewed revision and status', async () => {
       mockFetcher._setupHandler(() => Response.json({ success: true, preset: {} }));
 
-      await revertPreset(mockEnv, 'preset-123', 'Inappropriate changes', 'mod-1');
+      await revertPreset(mockEnv, 'preset-123', 'Inappropriate changes', 'mod-1', EXPECTED);
 
       const fetchCall = mockFetcher._calls[0];
       const body = JSON.parse(fetchCall.body as string);
-      expect(body).toEqual({ reason: 'Inappropriate changes' });
+      expect(body).toEqual({
+        reason: 'Inappropriate changes',
+        expected_revision: 3,
+        expected_status: 'pending',
+      });
     });
 
     it('should call correct API endpoint', async () => {
       mockFetcher._setupHandler(() => Response.json({ success: true, preset: {} }));
 
-      await revertPreset(mockEnv, 'preset-xyz', 'Reason', 'mod-1');
+      await revertPreset(mockEnv, 'preset-xyz', 'Reason', 'mod-1', EXPECTED);
 
       const fetchCall = mockFetcher._calls[0];
       expect(fetchCall.url).toBe('https://internal/api/v1/moderation/preset-xyz/revert');
@@ -743,19 +875,19 @@ describe('path-segment encoding (FINDING-020)', () => {
 
   it('approvePreset encodes the preset id', async () => {
     mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
-    await approvePreset(mockEnv, TRAVERSAL, '12345678901234567');
+    await approvePreset(mockEnv, TRAVERSAL, '12345678901234567', EXPECTED);
     expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/status`);
   });
 
   it('rejectPreset encodes the preset id', async () => {
     mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
-    await rejectPreset(mockEnv, TRAVERSAL, '12345678901234567', 'reason');
+    await rejectPreset(mockEnv, TRAVERSAL, '12345678901234567', 'reason', EXPECTED);
     expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/status`);
   });
 
   it('revertPreset encodes the preset id', async () => {
     mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
-    await revertPreset(mockEnv, TRAVERSAL, 'reason', '12345678901234567');
+    await revertPreset(mockEnv, TRAVERSAL, 'reason', '12345678901234567', EXPECTED);
     expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/revert`);
   });
 
@@ -767,7 +899,7 @@ describe('path-segment encoding (FINDING-020)', () => {
 
   it('leaves a plain UUID untouched', async () => {
     mockFetcher._setupHandler(() => Response.json({ success: true, preset: { id: 'p' } }));
-    await approvePreset(mockEnv, 'a0000000-0000-4000-8000-000000000001', '12345678901234567');
+    await approvePreset(mockEnv, 'a0000000-0000-4000-8000-000000000001', '12345678901234567', EXPECTED);
     expect(mockFetcher._calls[0].url).toBe(
       'https://internal/api/v1/moderation/a0000000-0000-4000-8000-000000000001/status',
     );

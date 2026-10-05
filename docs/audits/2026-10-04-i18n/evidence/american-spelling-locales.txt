@@ -1,0 +1,6 @@
+| location | zone | found | suggested | note |
+|---|---|---|---|---|
+
+Files swept: 5 · candidates: 0 in 0 files
+Suppressed zones (code/link, --all shows them): 0 · dictionary: 1847 entries
+Candidates, not findings — confirm each against ../american-english.md before filing.

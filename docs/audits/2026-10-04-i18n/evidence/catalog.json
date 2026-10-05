@@ -1,0 +1,452 @@
+[
+ {
+  "id": "I18N-001",
+  "prefix": "I18N",
+  "tier": "P2",
+  "loc_": "en (+ the five variants of each document)",
+  "unit": "apps/web-app + apps/discord-worker",
+  "origin": "PR#230 (web), PR#227 (bot)",
+  "title": "Both English privacy documents anchor \"posts no longer show your Discord user ID\" to the moving *Last updated* date",
+  "sprint0": true
+ },
+ {
+  "id": "I18N-002",
+  "prefix": "I18N",
+  "tier": "P2",
+  "loc_": "de fr ja ko zh",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "The five web Terms of Service translations say \"ten tools\" and list nine: the Glamour Reader is missing",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-003",
+  "prefix": "I18N",
+  "tier": "P2",
+  "loc_": "ko",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "Korean ΔE explainer and budget note contain a non-word (낙은) and a broken verb form (뺌 값을)",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-004",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "en + de fr ja ko zh",
+  "unit": "apps/discord-worker",
+  "origin": "PR#227",
+  "title": "Bot privacy policy retention row reads as \"kept until the preset is deleted\" for a hide or restore, and the translations took that reading",
+  "sprint0": true
+ },
+ {
+  "id": "I18N-005",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "en (+ de fr ja ko zh)",
+  "unit": "apps/web-app",
+  "origin": "PR#230",
+  "title": "Web privacy guide gives two retention rules for a hide or restore log entry",
+  "sprint0": true
+ },
+ {
+  "id": "I18N-006",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "ko",
+  "unit": "apps/web-app + apps/discord-worker",
+  "origin": "PR#230 (web), PR#227 (bot)",
+  "title": "Korean privacy documents: \"숨겨진 사용자의 프리셋 수\" reads as \"the hidden user's preset count\"",
+  "sprint0": true
+ },
+ {
+  "id": "I18N-007",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "en de fr (keys in all six)",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "Glamour Reader counts have no singular form: \"1 dyes\", \"Same look as 1 other items\", \"1 pieces\"",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-008",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "de",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "German `glamour.row.fixed*` hardcodes neuter \"das\" after an item name of any gender",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-009",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "de",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "German `glamour.verdict.countCompany` \"{n} BRAUCHT GESELLSCHAFT\" reads as \"needs company\"",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-010",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "fr",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "French `glamour.picker.foot` quotes the button as \"Exporter .md\"; the button says \"Exporter en .md\"",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-011",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "fr",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "French lip and face-paint sheet labels put \"(Foncé)\" / \"(Clair)\" on feminine nouns",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-012",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "ja zh",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "The character-file card joins two ja / zh sentences with an ASCII space after 。",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-013",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "en",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "The web privacy guide says it is reached from \"About → Privacy\"; the UI says \"About XIV Dye Tools\" and \"POLICIES\"",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-014",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "de",
+  "unit": "apps/og-worker",
+  "origin": "MAIN",
+  "title": "German Glamour Reader crawler description is ungrammatical: an ob-clause under \"mit\"",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-015",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "all six (truncation in de)",
+  "unit": "packages/svg",
+  "origin": "MAIN",
+  "title": "Glamour card footer wraps at any space: counts split from their nouns, and long German is cut off",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-016",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "en de fr",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "Bot `card.glamourLooks` goes through `t()`, not `tc()`: the card reads \"+3 LOOK\" / \"+3 ASPECT\"",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-017",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "ko",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "Korean `card.glamourPieces` \"염색 {n}개\" counts dye jobs, not dyed pieces",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-018",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "de",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "German bot `card.glamourFixed*` hardcodes neuter \"das\" after an item name of any gender",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-019",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "all six",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "`/glamour` sends users to the character-file manual topic, which only describes `/swatch`",
+  "sprint0": false
+ },
+ {
+  "id": "I18N-020",
+  "prefix": "I18N",
+  "tier": "P3",
+  "loc_": "ko",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "Korean `/glamour` and `/swatch` file-option descriptions show literal backticks",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-001",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "ko",
+  "unit": "apps/web-app + apps/discord-worker",
+  "origin": "PR#223 (`PRIVACY.ko.md:13`) + MAIN",
+  "title": "Korean policy documents call the moderator two things: 운영자 and 조정자",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-002",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "en de fr ko zh (ja is right)",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "The Glamour list privacy note says edits are kept \"for this outfit\"; they are kept per piece of gear",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-003",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "ja ko de fr zh",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "web-app names character-creation sheets two ways within one file: highlights, tattoo, face paint, limbal ring",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-004",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "ja ko de fr zh",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "The bot names character-creation sheets differently from its own card labels and from web-app",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-005",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "de",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "German `glamour.fact.dye` \"FARBE ×{n}\" says color where it means dye",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-006",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "de",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "German web-app names a preset three ways: Voreinstellung, Preset and Vorlage",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-007",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "de fr zh",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "The facewear color tag says \"glasses\" in de, fr and zh, beside a slot that says facewear",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-008",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "zh",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "Chinese `glamour.fact.dated` \"旧版\"; the Chinese client prefixes Dated items 过期",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-009",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "en",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "English calls the clan \"tribe\" in Swatch Matcher, and calls the race lock \"ANY TRIBE\" in the Glamour Reader",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-010",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "fr",
+  "unit": "apps/web-app + apps/discord-worker",
+  "origin": "MAIN (the PRs add more)",
+  "title": "French policy documents call a preset \"palette prédéfinie\"; the UI says \"préréglage\"",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-011",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "fr",
+  "unit": "apps/og-worker",
+  "origin": "MAIN",
+  "title": "og-worker's French deck still calls Community Presets \"Palettes Communautaires\"",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-012",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "de fr",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "The bot's dye-problem chip says \"FARBEN\" (colors) in German and \"TEINTES\" (shades) in French",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-013",
+  "prefix": "TERM",
+  "tier": "P2",
+  "loc_": "zh",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "Chinese `/manual` tip calls the Facewear dye category 面部装备",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-014",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "ko",
+  "unit": "apps/web-app",
+  "origin": "PR#223",
+  "title": "Korean privacy guide says 복장 for \"outfit\" in a line #223 added",
+  "sprint0": true
+ },
+ {
+  "id": "TERM-015",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "zh",
+  "unit": "apps/web-app",
+  "origin": "PR#223",
+  "title": "Chinese privacy guide calls the moderator 版主 in a line #223 added, and 审核员 everywhere else",
+  "sprint0": true
+ },
+ {
+  "id": "TERM-016",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "ja",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "Japanese names the dye channel two ways: 染色枠 and チャンネル",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-017",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "ko",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "Korean share errors say 염색약 (hair dye) where every other surface says 염료",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-018",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "en",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "English calls the Glamour list \"Equipment list\" in its toasts, and its download \"Export .md\" then \"Save .md\"",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-019",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "en",
+  "unit": "apps/web-app + apps/discord-worker",
+  "origin": "MAIN",
+  "title": "Policy prose names four tools differently from their UI titles",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-020",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "ja",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "Japanese privacy guide says the fonts are 自社ホスト (\"hosted by our company\")",
+  "sprint0": false
+ },
+ {
+  "id": "TERM-021",
+  "prefix": "TERM",
+  "tier": "P3",
+  "loc_": "ja ko zh de fr",
+  "unit": "packages/core",
+  "origin": "MAIN",
+  "title": "Core's character-creation sheet names are typed by hand, and its limbal is \"cornea\" / \"iris\" in ja, ko and zh",
+  "sprint0": false
+ },
+ {
+  "id": "HC-001",
+  "prefix": "HC",
+  "tier": "P1",
+  "loc_": "ja de fr ko zh",
+  "unit": "packages/bot-logic",
+  "origin": "MAIN",
+  "title": "`tribeDisplay()` prints the clan in English on every `/glamour` and `/swatch` card",
+  "sprint0": false
+ },
+ {
+  "id": "HC-002",
+  "prefix": "HC",
+  "tier": "P1",
+  "loc_": "ja de fr ko zh",
+  "unit": "apps/discord-worker",
+  "origin": "MAIN",
+  "title": "The bot fills its translated file-error message with English reasons",
+  "sprint0": false
+ },
+ {
+  "id": "HC-003",
+  "prefix": "HC",
+  "tier": "P3",
+  "loc_": "ja de fr ko zh",
+  "unit": "apps/web-app",
+  "origin": "MAIN",
+  "title": "The Glamour Reader's facewear chip tooltip names the color in English",
+  "sprint0": false
+ },
+ {
+  "id": "FONT-001",
+  "prefix": "FONT",
+  "tier": "P2",
+  "loc_": "ko zh (ja not measurable)",
+  "unit": "apps/discord-worker",
+  "origin": "MAIN",
+  "title": "`/glamour` cards draw English item names for 62.5 % of items in Korean and 97.3 % in Chinese: the CJK subsets hold no item names",
+  "sprint0": false
+ }
+]

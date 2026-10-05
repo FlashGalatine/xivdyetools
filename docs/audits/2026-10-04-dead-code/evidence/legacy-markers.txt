@@ -1,0 +1,97 @@
+apps/api-worker/src/lib/validation.ts:14:  LEGACY_MATCHING_METHOD_MAP,
+apps/api-worker/src/lib/validation.ts:403:    if (Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, value)) {
+apps/api-worker/src/lib/validation.ts:404:      return LEGACY_MATCHING_METHOD_MAP[value];
+apps/api-worker/tests/routes/dyes-facewear-404.test.ts:5: * HTTP. `-1629` is a real row of core's frozen `LEGACY_FACEWEAR_ITEM_IDS` map
+apps/discord-worker/src/handlers/commands/preset-notifications.test.ts:16:const LEGACY_ID_RE = /^preset_(approve|reject|revert)_[0-9a-f-]{36}$/i;
+apps/discord-worker/src/handlers/commands/preset-notifications.test.ts:93:      for (const id of ids) expect(id).toMatch(LEGACY_ID_RE);
+apps/discord-worker/src/services/preferences.test.ts:39:  LEGACY_MATCHING_METHOD_MAP: {
+apps/discord-worker/src/services/preferences.ts:59:const LEGACY_I18N_PREFIX = 'i18n:user:';
+apps/discord-worker/src/services/preferences.ts:60:const LEGACY_WORLD_PREFIX = 'budget:world:v1:';
+apps/discord-worker/src/services/preferences.ts:64:  return `${LEGACY_I18N_PREFIX}${userId}`;
+apps/discord-worker/src/services/preferences.ts:67:  return `${LEGACY_WORLD_PREFIX}${userId}`;
+apps/discord-worker/src/types/preset.ts:15: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:21: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/discord-worker/src/types/preset.ts:27: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/moderation-worker/src/handlers/buttons/preset-moderation-review.test.ts:112:  describe('a LEGACY button never acts', () => {
+apps/moderation-worker/src/handlers/buttons/preset-moderation.ts:12: * The same three without `:{revision}:{status}` are LEGACY ids, on messages
+apps/moderation-worker/src/handlers/modals/preset-rejection-review.test.ts:212:  describe('a LEGACY modal submitted after the deploy never acts', () => {
+apps/moderation-worker/src/handlers/modals/preset-rejection.ts:10: * The same two without `:{revision}:{status}` are LEGACY ids — a modal opened
+apps/oauth/src/types.ts:13: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:19: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:25: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:31: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/oauth/src/types.ts:41: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:18: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:35: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/presets-api/src/types.ts:56: * @deprecated Import directly from '@xivdyetools/types' instead.
+apps/web-app/src/__tests__/mocks/services.test.ts:21:const LEGACY_ITEM_ID_FLOOR = 5729;
+apps/web-app/src/__tests__/mocks/services.test.ts:39:      expect(dye.itemID, `dye "${dye.name}" itemID`).toBeGreaterThanOrEqual(LEGACY_ITEM_ID_FLOOR);
+apps/web-app/src/components/__tests__/v4/context-action-vocabulary.test.ts:11: * CustomEvent(...))` cross-tool navigation event -- see `LEGACY_EVENT_NAME`
+apps/web-app/src/components/__tests__/v4/context-action-vocabulary.test.ts:74:const DEAD_LEGACY_ACTIONS: readonly ContextAction[] = [
+apps/web-app/src/components/__tests__/v4/context-action-vocabulary.test.ts:96:const LEGACY_EVENT_NAME = ['navigate', 'to', 'tool'].join('-');
+apps/web-app/src/components/__tests__/v4/context-action-vocabulary.test.ts:117:      for (const dead of DEAD_LEGACY_ACTIONS) {
+apps/web-app/src/components/__tests__/v4/context-action-vocabulary.test.ts:123:      expect(source).not.toContain(LEGACY_EVENT_NAME);
+apps/web-app/src/components/__tests__/v4/result-card.test.ts:303:    const LEGACY_ITEM_ID_FLOOR = 5729;
+apps/web-app/src/components/__tests__/v4/result-card.test.ts:343:      expect(Number(emitted.dye)).toBeLessThan(LEGACY_ITEM_ID_FLOOR);
+apps/web-app/src/components/extractor-tool.ts:111:const LEGACY_STORAGE_KEYS = [
+apps/web-app/src/components/extractor-tool.ts:431:    for (const key of LEGACY_STORAGE_KEYS) {
+apps/web-app/src/components/v4/display-options-v4.ts:113:   * @deprecated ΔE2000 verdict is structural on the 5.0 Result Card; the flag
+apps/web-app/src/services/__tests__/saved-presets-service.test.ts:16:const LEGACY_SNOW_WHITE = 5729;
+apps/web-app/src/services/__tests__/saved-presets-service.test.ts:17:const LEGACY_ASH_GREY = 5730;
+apps/web-app/src/services/__tests__/saved-presets-service.test.ts:83:    seed([LEGACY_SNOW_WHITE, LEGACY_ASH_GREY]);
+apps/web-app/src/services/__tests__/saved-presets-service.test.ts:91:    seed([LEGACY_SNOW_WHITE, LEGACY_ASH_GREY]);
+apps/web-app/src/services/__tests__/saved-presets-service.test.ts:100:    seed([LEGACY_SNOW_WHITE, 999999]);
+apps/web-app/src/services/__tests__/saved-presets-service.test.ts:108:    seed([LEGACY_SNOW_WHITE, LEGACY_ASH_GREY]);
+apps/web-app/src/services/__tests__/saved-presets-service.test.ts:123:    expect(store.getAll()[0].dyes).toEqual([LEGACY_SNOW_WHITE, LEGACY_ASH_GREY]);
+apps/web-app/src/services/preset-submission-service.ts:157:const LEGACY_ITEM_ID_FLOOR = 5000;
+apps/web-app/src/services/preset-submission-service.ts:198:  } else if (submission.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
+apps/web-app/src/services/preset-submission-service.ts:543:      } else if (updates.dyes.some((id) => id >= LEGACY_ITEM_ID_FLOOR)) {
+apps/web-app/src/services/router-service.ts:92:const LEGACY_ROUTE_REDIRECTS: Record<string, ToolId> = {
+apps/web-app/src/services/router-service.ts:402:    const legacyRedirect = LEGACY_ROUTE_REDIRECTS[path];
+apps/web-app/src/shared/logger.ts:21: * @deprecated Use createBrowserLogger({ isDev: () => true }) instead
+apps/web-app/src/shared/logger.ts:27: * @deprecated Use createBrowserLogger({ isDev: () => true }) instead
+apps/web-app/src/shared/logger.ts:141: * @deprecated Use `createBrowserLogger()` from '@xivdyetools/logger/browser' instead.
+apps/web-app/src/shared/tool-config-types.ts:330:   * @deprecated The ΔE2000 verdict is structural on the 5.0 Result Card and
+packages/bot-logic/src/commands/harmony.ts:78:  /** @deprecated Ignored since PR #159; the wheel is `wheel`. */
+packages/bot-logic/src/i18n/locale-resolution.ts:71:const LEGACY_KEY_PREFIX = 'i18n:user:';
+packages/bot-logic/src/i18n/locale-resolution.ts:120:    const value = await kv.get(`${LEGACY_KEY_PREFIX}${userId}`);
+packages/core/src/config/__tests__/dye-vocabulary.test.ts:23:import { LEGACY_FACEWEAR_ITEM_IDS } from '../facewear.js';
+packages/core/src/config/__tests__/dye-vocabulary.test.ts:128:  it('LEGACY_FACEWEAR_ITEM_IDS matches the frozen pre-v2 hash for every entry', () => {
+packages/core/src/config/__tests__/dye-vocabulary.test.ts:133:    expect(Object.keys(LEGACY_FACEWEAR_ITEM_IDS)).toHaveLength(11);
+packages/core/src/config/__tests__/dye-vocabulary.test.ts:136:      expect(LEGACY_FACEWEAR_ITEM_IDS[hash], `${f.name} (${hash})`).toBe(f.id);
+packages/core/src/config/__tests__/facewear.test.ts:4: * `LEGACY_FACEWEAR_ITEM_IDS` was computed once, at the schema-v2 split
+packages/core/src/config/__tests__/facewear.test.ts:16:  LEGACY_FACEWEAR_ITEM_IDS,
+packages/core/src/config/__tests__/facewear.test.ts:61:describe('LEGACY_FACEWEAR_ITEM_IDS', () => {
+packages/core/src/config/__tests__/facewear.test.ts:63:    expect(LEGACY_FACEWEAR_ITEM_IDS).toEqual({
+packages/core/src/config/__tests__/facewear.test.ts:79:    for (const id of Object.keys(LEGACY_FACEWEAR_ITEM_IDS)) {
+packages/core/src/config/__tests__/facewear.test.ts:85:    for (const slug of Object.values(LEGACY_FACEWEAR_ITEM_IDS)) {
+packages/core/src/config/__tests__/facewear.test.ts:91:    const mapped = new Set(Object.values(LEGACY_FACEWEAR_ITEM_IDS));
+packages/core/src/config/__tests__/facewear.test.ts:100:    for (const [id, slug] of Object.entries(LEGACY_FACEWEAR_ITEM_IDS)) {
+packages/core/src/config/__tests__/facewear.test.ts:120:    expect(Object.keys(LEGACY_FACEWEAR_ITEM_IDS)).not.toContain(String(wouldBe));
+packages/core/src/config/facewear.ts:22:export const LEGACY_FACEWEAR_ITEM_IDS: Readonly<Record<number, string>> = {
+packages/core/src/config/facewear.ts:43:  const slug = LEGACY_FACEWEAR_ITEM_IDS[legacyId];
+packages/core/src/index.ts:118:  LEGACY_MATCHING_METHOD_MAP,
+packages/core/src/index.ts:286:  LEGACY_FACEWEAR_ITEM_IDS,
+packages/core/src/services/DyeService.ts:214:   * @deprecated `options.colorSpace` only — the method itself is current.
+packages/core/src/services/DyeService.ts:230:   * @deprecated `options.colorSpace` only — the method itself is current.
+packages/core/src/services/DyeService.ts:244:   * @deprecated `options.colorSpace` only — the method itself is current.
+packages/core/src/services/DyeService.ts:258:   * @deprecated `options.colorSpace` only — the method itself is current.
+packages/core/src/services/DyeService.ts:272:   * @deprecated `options.colorSpace` only — the method itself is current.
+packages/core/src/services/DyeService.ts:286:   * @deprecated `options.colorSpace` only — the method itself is current.
+packages/core/src/services/DyeService.ts:310:   * @deprecated `options.colorSpace` only — the method itself is current.
+packages/core/src/services/LocalizationService.ts:494:   * @deprecated I18N-003 — covers only the six pre-5.0 tools (the product ships
+packages/core/src/services/LocalizationService.ts:505:   * @deprecated I18N-003 — see the instance method.
+packages/core/src/services/dye/HarmonyGenerator.ts:98: * @deprecated Since 5.2.0. Rotates hue at fixed L/C in a space that does not
+packages/core/src/services/dye/HarmonyGenerator.ts:121:   * @deprecated Since 5.2.0. Rotates hue at fixed L/C in a space that does not
+packages/core/src/services/dye/HarmonyGenerator.ts:466:   * @deprecated Since 5.2.0. Rotates hue at fixed L/C in a space that does not
+packages/core/src/types/__tests__/matching-method.test.ts:15:  LEGACY_MATCHING_METHOD_MAP,
+packages/core/src/types/__tests__/matching-method.test.ts:58:  it.each(Object.keys(LEGACY_MATCHING_METHOD_MAP))('rejects the retired value %s', (retired) => {
+packages/core/src/types/__tests__/matching-method.test.ts:93:    for (const [legacy, target] of Object.entries(LEGACY_MATCHING_METHOD_MAP)) {
+packages/core/src/types/__tests__/matching-method.test.ts:111:    for (const value of [...MATCHING_METHODS, ...Object.keys(LEGACY_MATCHING_METHOD_MAP), 'junk']) {
+packages/core/src/types/index.ts:73:export const LEGACY_MATCHING_METHOD_MAP: Record<string, MatchingMethod> = {
+packages/core/src/types/index.ts:100: * `LEGACY_MATCHING_METHOD_MAP` is a published export; changing its type would
+packages/core/src/types/index.ts:105:  if (typeof value === 'string' && Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, value)) {
+packages/core/src/types/index.ts:106:    return LEGACY_MATCHING_METHOD_MAP[value];
+packages/test-utils/src/factories/dye.ts:32:const LEGACY_ITEM_ID_BASE = 5728;
+packages/test-utils/src/factories/dye.ts:77:  return LEGACY_ITEM_ID_BASE + (stainID ?? 1);
+packages/types/src/localization/index.ts:49: * @deprecated I18N-003 — this covers only the six pre-5.0 tools (the product

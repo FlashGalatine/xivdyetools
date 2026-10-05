@@ -1,0 +1,494 @@
+{
+ "xivapi": {
+  "schema": "exdschema@2:rev:e773c41a90aed788cf4c1c48469fa85618ef01fb",
+  "version": "541c0c12e07da325"
+ },
+ "palettes": {
+  "8": {
+   "what": "skin",
+   "lobby_rows": {
+    "202": [
+     "Dunesfolk ♀",
+     "Dunesfolk ♂",
+     "Duskwight ♀",
+     "Duskwight ♂",
+     "Helions ♀",
+     "Helions ♂",
+     "Hellsguard ♀",
+     "Hellsguard ♂",
+     "Highlander ♀",
+     "Highlander ♂",
+     "Keeper of the Moon ♀",
+     "Keeper of the Moon ♂",
+     "Midlander ♀",
+     "Midlander ♂",
+     "Plainsfolk ♀",
+     "Plainsfolk ♂",
+     "Raen ♀",
+     "Raen ♂",
+     "Rava ♀",
+     "Rava ♂",
+     "Sea Wolf ♀",
+     "Sea Wolf ♂",
+     "Seeker of the Sun ♀",
+     "Seeker of the Sun ♂",
+     "The Lost ♀",
+     "The Lost ♂",
+     "Veena ♀",
+     "Veena ♂",
+     "Wildwood ♀",
+     "Wildwood ♂",
+     "Xaela ♀",
+     "Xaela ♂"
+    ]
+   }
+  },
+  "9": {
+   "what": "eyes",
+   "lobby_rows": {
+    "245": [
+     "Dunesfolk ♀",
+     "Dunesfolk ♂",
+     "Duskwight ♀",
+     "Duskwight ♂",
+     "Helions ♀",
+     "Helions ♂",
+     "Hellsguard ♀",
+     "Hellsguard ♂",
+     "Highlander ♀",
+     "Highlander ♂",
+     "Keeper of the Moon ♀",
+     "Keeper of the Moon ♂",
+     "Midlander ♀",
+     "Midlander ♂",
+     "Plainsfolk ♀",
+     "Plainsfolk ♂",
+     "Raen ♀",
+     "Raen ♂",
+     "Rava ♀",
+     "Rava ♂",
+     "Sea Wolf ♀",
+     "Sea Wolf ♂",
+     "Seeker of the Sun ♀",
+     "Seeker of the Sun ♂",
+     "The Lost ♀",
+     "The Lost ♂",
+     "Veena ♀",
+     "Veena ♂",
+     "Wildwood ♀",
+     "Wildwood ♂",
+     "Xaela ♀",
+     "Xaela ♂"
+    ]
+   }
+  },
+  "10": {
+   "what": "hair",
+   "lobby_rows": {
+    "236": [
+     "Dunesfolk ♀",
+     "Dunesfolk ♂",
+     "Duskwight ♀",
+     "Duskwight ♂",
+     "Hellsguard ♀",
+     "Hellsguard ♂",
+     "Highlander ♀",
+     "Highlander ♂",
+     "Keeper of the Moon ♀",
+     "Keeper of the Moon ♂",
+     "Midlander ♀",
+     "Midlander ♂",
+     "Plainsfolk ♀",
+     "Plainsfolk ♂",
+     "Raen ♀",
+     "Raen ♂",
+     "Rava ♀",
+     "Rava ♂",
+     "Sea Wolf ♀",
+     "Sea Wolf ♂",
+     "Seeker of the Sun ♀",
+     "Seeker of the Sun ♂",
+     "Veena ♀",
+     "Veena ♂",
+     "Wildwood ♀",
+     "Wildwood ♂",
+     "Xaela ♀",
+     "Xaela ♂"
+    ],
+    "1014": [
+     "Helions ♀",
+     "Helions ♂",
+     "The Lost ♀",
+     "The Lost ♂"
+    ]
+   }
+  },
+  "13": {
+   "what": "tattoo / limbal ring / ear clasps",
+   "lobby_rows": {
+    "1744": [
+     "Dunesfolk ♀",
+     "Dunesfolk ♂",
+     "Duskwight ♀",
+     "Duskwight ♂",
+     "Hellsguard ♀",
+     "Hellsguard ♂",
+     "Highlander ♀",
+     "Highlander ♂",
+     "Keeper of the Moon ♂",
+     "Midlander ♀",
+     "Midlander ♂",
+     "Plainsfolk ♀",
+     "Plainsfolk ♂",
+     "Rava ♀",
+     "Sea Wolf ♀",
+     "Sea Wolf ♂",
+     "Seeker of the Sun ♀",
+     "Seeker of the Sun ♂",
+     "Veena ♀"
+    ],
+    "1745": [
+     "Keeper of the Moon ♀",
+     "Wildwood ♀",
+     "Wildwood ♂"
+    ],
+    "1748": [
+     "Raen ♀",
+     "Raen ♂",
+     "Xaela ♀",
+     "Xaela ♂"
+    ],
+    "1750": [
+     "Helions ♂",
+     "The Lost ♂"
+    ],
+    "1046": [
+     "Helions ♀",
+     "The Lost ♀"
+    ],
+    "1756": [
+     "Rava ♂",
+     "Veena ♂"
+    ]
+   }
+  },
+  "20": {
+   "what": "lips",
+   "lobby_rows": {
+    "248": [
+     "Dunesfolk ♀",
+     "Dunesfolk ♂",
+     "Duskwight ♀",
+     "Duskwight ♂",
+     "Hellsguard ♀",
+     "Hellsguard ♂",
+     "Highlander ♀",
+     "Highlander ♂",
+     "Keeper of the Moon ♀",
+     "Keeper of the Moon ♂",
+     "Midlander ♀",
+     "Midlander ♂",
+     "Plainsfolk ♀",
+     "Plainsfolk ♂",
+     "Raen ♀",
+     "Raen ♂",
+     "Rava ♀",
+     "Rava ♂",
+     "Sea Wolf ♀",
+     "Sea Wolf ♂",
+     "Seeker of the Sun ♀",
+     "Seeker of the Sun ♂",
+     "Veena ♀",
+     "Veena ♂",
+     "Wildwood ♀",
+     "Wildwood ♂",
+     "Xaela ♀",
+     "Xaela ♂"
+    ],
+    "1013": [
+     "Helions ♀",
+     "Helions ♂",
+     "The Lost ♀",
+     "The Lost ♂"
+    ]
+   }
+  },
+  "24": {
+   "what": "face paint (pattern)",
+   "lobby_rows": {
+    "249": [
+     "Dunesfolk ♀",
+     "Dunesfolk ♂",
+     "Duskwight ♀",
+     "Duskwight ♂",
+     "Helions ♀",
+     "Helions ♂",
+     "Hellsguard ♀",
+     "Hellsguard ♂",
+     "Highlander ♀",
+     "Highlander ♂",
+     "Keeper of the Moon ♀",
+     "Keeper of the Moon ♂",
+     "Midlander ♀",
+     "Midlander ♂",
+     "Plainsfolk ♀",
+     "Plainsfolk ♂",
+     "Raen ♀",
+     "Raen ♂",
+     "Rava ♀",
+     "Rava ♂",
+     "Sea Wolf ♀",
+     "Sea Wolf ♂",
+     "Seeker of the Sun ♀",
+     "Seeker of the Sun ♂",
+     "The Lost ♀",
+     "The Lost ♂",
+     "Veena ♀",
+     "Veena ♂",
+     "Wildwood ♀",
+     "Wildwood ♂",
+     "Xaela ♀",
+     "Xaela ♂"
+    ]
+   }
+  },
+  "25": {
+   "what": "face paint (color)",
+   "lobby_rows": {
+    "250": [
+     "Dunesfolk ♀",
+     "Dunesfolk ♂",
+     "Duskwight ♀",
+     "Duskwight ♂",
+     "Helions ♀",
+     "Helions ♂",
+     "Hellsguard ♀",
+     "Hellsguard ♂",
+     "Highlander ♀",
+     "Highlander ♂",
+     "Keeper of the Moon ♀",
+     "Keeper of the Moon ♂",
+     "Midlander ♀",
+     "Midlander ♂",
+     "Plainsfolk ♀",
+     "Plainsfolk ♂",
+     "Raen ♀",
+     "Raen ♂",
+     "Rava ♀",
+     "Rava ♂",
+     "Sea Wolf ♀",
+     "Sea Wolf ♂",
+     "Seeker of the Sun ♀",
+     "Seeker of the Sun ♂",
+     "The Lost ♀",
+     "The Lost ♂",
+     "Veena ♀",
+     "Veena ♂",
+     "Wildwood ♀",
+     "Wildwood ♂",
+     "Xaela ♀",
+     "Xaela ♂"
+    ]
+   }
+  }
+ },
+ "text": {
+  "202": {
+   "en": "Skin Color",
+   "ja": "肌の色",
+   "de": "Hautfarbe",
+   "fr": "Couleur de peau",
+   "ko": "피부색",
+   "zh": "肤色"
+  },
+  "236": {
+   "en": "Hair Color",
+   "ja": "髪の色",
+   "de": "Haarfarbe",
+   "fr": "Couleur des cheveux",
+   "ko": "머리 색",
+   "zh": "发色"
+  },
+  "237": {
+   "en": "Highlights",
+   "ja": "メッシュの色",
+   "de": "Strähnen",
+   "fr": "Reflets",
+   "ko": "부분염색 색상",
+   "zh": "挑染"
+  },
+  "245": {
+   "en": "Eye Color",
+   "ja": "瞳の色",
+   "de": "Augenfarbe",
+   "fr": "Couleur des yeux",
+   "ko": "눈동자 색",
+   "zh": "瞳色"
+  },
+  "248": {
+   "en": "Lip Color",
+   "ja": "唇の色",
+   "de": "Lippenfarbe",
+   "fr": "Couleur des lèvres",
+   "ko": "입술 색",
+   "zh": "唇色"
+  },
+  "249": {
+   "en": "Face Paint",
+   "ja": "フェイスペイント",
+   "de": "Merkmale",
+   "fr": "Maquillage",
+   "ko": "얼굴 치장",
+   "zh": "面妆"
+  },
+  "250": {
+   "en": "Face Paint Color",
+   "ja": "ペイントの色",
+   "de": "Farbe des Merkmals",
+   "fr": "Couleur du maquillage",
+   "ko": "얼굴 치장 색",
+   "zh": "面妆颜色"
+  },
+  "1013": {
+   "en": "Fur Pattern",
+   "ja": "体毛柄",
+   "de": "Fellzeichnung",
+   "fr": "Motif du pelage",
+   "ko": "털 무늬",
+   "zh": "毛纹"
+  },
+  "1014": {
+   "en": "Fur Color",
+   "ja": "体毛色",
+   "de": "Fellfarbe",
+   "fr": "Couleur du pelage",
+   "ko": "털 색깔",
+   "zh": "毛色"
+  },
+  "1046": {
+   "en": "Tattoo Color",
+   "ja": "刺青や装飾の色",
+   "de": "Tattoofarbe",
+   "fr": "Couleur des tatouages",
+   "ko": "문신 및 장식 색",
+   "zh": "刺青与装饰颜色"
+  },
+  "1742": {
+   "en": "Tattoos",
+   "ja": "刺青",
+   "de": "Tattoos",
+   "fr": "Tatouages",
+   "ko": "문신",
+   "zh": "刺青"
+  },
+  "1744": {
+   "en": "Tattoo Color",
+   "ja": "刺青の色",
+   "de": "Tattoofarbe",
+   "fr": "Couleur des tatouages",
+   "ko": "문신 색",
+   "zh": "刺青颜色"
+  },
+  "1745": {
+   "en": "Ear Clasp Color",
+   "ja": "耳飾りの色",
+   "de": "Ohrschmuckfarbe",
+   "fr": "Couleur des boucles d'oreilles",
+   "ko": "귀걸이 색",
+   "zh": "耳饰颜色"
+  },
+  "1746": {
+   "en": "Limbal Ring",
+   "ja": "瞳の輪郭",
+   "de": "Äußere Iris",
+   "fr": "Contour de l'iris",
+   "ko": "눈동자 테두리",
+   "zh": "瞳孔轮廓"
+  },
+  "1748": {
+   "en": "Limbal Ring Color",
+   "ja": "瞳の輪郭の色",
+   "de": "Farbe der äußeren Iris",
+   "fr": "Couleur du contour de l'iris",
+   "ko": "눈동자 테두리 색",
+   "zh": "瞳孔轮廓颜色"
+  },
+  "1750": {
+   "en": "Tattoo Color",
+   "ja": "刺青や装飾の色",
+   "de": "Tattoofarbe",
+   "fr": "Couleur des tatouages",
+   "ko": "문신 및 장식 색",
+   "zh": "刺青与装饰颜色"
+  },
+  "1756": {
+   "en": "Tattoo Color",
+   "ja": "刺青や装飾の色",
+   "de": "Tattoo- und Verzierungsfarbe",
+   "fr": "Couleur des tatouages",
+   "ko": "문신 및 장식 색",
+   "zh": "刺青与装饰颜色"
+  },
+  "2122": {
+   "en": "Dark",
+   "ja": "濃い",
+   "de": "Dunkel",
+   "fr": "Opaque",
+   "ko": "짙게",
+   "zh": "浓艳"
+  },
+  "2123": {
+   "en": "Light",
+   "ja": "薄い",
+   "de": "Hell",
+   "fr": "Translucide",
+   "ko": "옅게",
+   "zh": "清淡"
+  },
+  "2124": {
+   "en": "Eye Color",
+   "ja": "両目の色",
+   "de": "Farbe der Augen",
+   "fr": "Couleur des yeux",
+   "ko": "눈동자 색",
+   "zh": "双眼颜色"
+  },
+  "2125": {
+   "en": "Odd Eyes",
+   "ja": "オッドアイにする",
+   "de": "Verschiedene Augenfarben",
+   "fr": "Yeux vairons",
+   "ko": "양쪽 눈 색을 서로 다르게 하기",
+   "zh": "虹膜异色"
+  },
+  "2128": {
+   "en": "Hair Color",
+   "ja": "髪の色",
+   "de": "Haarfarbe",
+   "fr": "Couleur des cheveux",
+   "ko": "머리 색",
+   "zh": "发色"
+  },
+  "2129": {
+   "en": "Highlights",
+   "ja": "メッシュを入れる",
+   "de": "Strähnen",
+   "fr": "Mèches colorées",
+   "ko": "부분 염색",
+   "zh": "挑染"
+  }
+ },
+ "checks": {
+  "second_extraction_mismatches": {
+   "en": [],
+   "ja": [],
+   "de": [],
+   "fr": [],
+   "zh": []
+  },
+  "regional_menus_equal_global": {
+   "ko": true,
+   "zh": true
+  }
+ }
+}

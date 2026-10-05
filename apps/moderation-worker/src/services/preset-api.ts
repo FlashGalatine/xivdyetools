@@ -25,8 +25,9 @@ import type {
   ModerationStats,
   PresetFilters,
 } from '@xivdyetools/types';
-import type { ModerationQueueEntry } from '../types/preset.js';
-import { PresetAPIError } from '../types/preset.js';
+import type { ModerationQueueEntry, ModerationPresetView } from '../types/preset.js';
+import { PresetAPIError, PresetReviewConflictError } from '../types/preset.js';
+import type { ReviewBinding } from '../utils/review-custom-id.js';
 
 // ============================================================================
 // Core Request Function
@@ -43,6 +44,30 @@ import { PresetAPIError } from '../types/preset.js';
  * a slightly longer budget before giving up.
  */
 const PRESETS_API_TIMEOUT_MS = 10_000;
+
+const REVIEW_STATUSES: ReadonlySet<string> = new Set([
+  'pending',
+  'approved',
+  'rejected',
+  'flagged',
+  'hidden',
+]);
+
+/** FINDING-017: trust the 409's `current` only when it has the documented shape. */
+function parseCurrent(value: unknown): PresetReviewConflictError['current'] {
+  if (!value || typeof value !== 'object') return null;
+  const { status, content_revision } = value as { status?: unknown; content_revision?: unknown };
+  if (
+    typeof status !== 'string' ||
+    !REVIEW_STATUSES.has(status) ||
+    typeof content_revision !== 'number' ||
+    !Number.isSafeInteger(content_revision) ||
+    content_revision < 0
+  ) {
+    return null;
+  }
+  return { status: status as ModerationPresetView['status'], content_revision };
+}
 
 /**
  * Make an authenticated request to the preset API
@@ -150,9 +175,21 @@ async function request<T>(
       });
     }
 
-    const data: T & { message?: string; error?: string } = await response.json();
+    const data: T & { message?: string; error?: string; code?: string; current?: unknown } =
+      await response.json();
 
     if (!response.ok) {
+      // FINDING-017: a status change that is not bound to the review the
+      // moderator saw. The dye-signature 409 carries no `code` and keeps the
+      // plain PresetAPIError below.
+      if (response.status === 409 && (data.code === 'STALE_REVIEW' || data.code === 'REVISION_REQUIRED')) {
+        throw new PresetReviewConflictError(
+          data.code,
+          data.message || 'The preset changed after it was reviewed.',
+          parseCurrent(data.current),
+          data,
+        );
+      }
       throw new PresetAPIError(
         response.status,
         data.message || data.error || `API request failed with status ${response.status}`,
@@ -351,12 +388,43 @@ export async function getPendingPresets(
 }
 
 /**
- * Approve a preset
+ * FINDING-017: the preset as a moderator reviews it, at any status, together
+ * with the `content_revision` a status change must be bound to. `null` when the
+ * preset does not exist.
+ */
+export async function getModerationPreset(
+  env: Env,
+  presetId: string,
+  moderatorId: string,
+): Promise<{ preset: ModerationPresetView; revision: number } | null> {
+  try {
+    const response = await request<{
+      preset: ModerationPresetView;
+      content_revision: number;
+    }>(env, 'GET', `/api/v1/moderation/${pathSegment(presetId)}`, {
+      userDiscordId: moderatorId,
+    });
+    return { preset: response.preset, revision: response.content_revision };
+  } catch (error) {
+    if (error instanceof PresetAPIError && error.statusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Approve a preset.
+ *
+ * FINDING-017: `expected` is the revision and status the moderator reviewed.
+ * presets-api answers 409 (`PresetReviewConflictError`) when either no longer
+ * matches, so a stale embed can never approve text edited after it was posted.
  */
 export async function approvePreset(
   env: Env,
   presetId: string,
   moderatorId: string,
+  expected: ReviewBinding,
   reason?: string,
 ): Promise<CommunityPreset> {
   const response = await request<{ preset: CommunityPreset }>(
@@ -364,7 +432,12 @@ export async function approvePreset(
     'PATCH',
     `/api/v1/moderation/${pathSegment(presetId)}/status`,
     {
-      body: { status: 'approved', reason },
+      body: {
+        status: 'approved',
+        reason,
+        expected_revision: expected.revision,
+        expected_status: expected.status,
+      },
       userDiscordId: moderatorId,
     },
   );
@@ -372,20 +445,26 @@ export async function approvePreset(
 }
 
 /**
- * Reject a preset
+ * Reject a preset (FINDING-017: bound to the reviewed revision and status, like approve)
  */
 export async function rejectPreset(
   env: Env,
   presetId: string,
   moderatorId: string,
   reason: string,
+  expected: ReviewBinding,
 ): Promise<CommunityPreset> {
   const response = await request<{ preset: CommunityPreset }>(
     env,
     'PATCH',
     `/api/v1/moderation/${pathSegment(presetId)}/status`,
     {
-      body: { status: 'rejected', reason },
+      body: {
+        status: 'rejected',
+        reason,
+        expected_revision: expected.revision,
+        expected_status: expected.status,
+      },
       userDiscordId: moderatorId,
     },
   );
@@ -406,20 +485,26 @@ export async function getModerationStats(env: Env, moderatorId: string): Promise
 }
 
 /**
- * Revert a preset to its previous values (moderators only)
+ * Revert a preset to its previous values (moderators only).
+ * FINDING-017: bound to the reviewed revision and status, like approve.
  */
 export async function revertPreset(
   env: Env,
   presetId: string,
   reason: string,
   moderatorId: string,
+  expected: ReviewBinding,
 ): Promise<CommunityPreset> {
   const response = await request<{ success: boolean; preset: CommunityPreset }>(
     env,
     'PATCH',
     `/api/v1/moderation/${pathSegment(presetId)}/revert`,
     {
-      body: { reason },
+      body: {
+        reason,
+        expected_revision: expected.revision,
+        expected_status: expected.status,
+      },
       userDiscordId: moderatorId,
     },
   );

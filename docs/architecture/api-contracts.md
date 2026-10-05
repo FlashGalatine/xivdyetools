@@ -468,28 +468,39 @@ public responses withhold).
 ### PATCH /moderation/:presetId/status
 
 ```json
-{ "status": "approved", "reason": "optional note" }
+{ "status": "approved", "reason": "optional note", "expected_revision": 3, "expected_status": "pending" }
 ```
 
-`status` ∈ `approved` | `rejected` | `flagged` | `pending` (`hidden` cannot be set here). The update
+`status` ∈ `approved` | `rejected` | `flagged` | `pending` (`hidden` cannot be set here).
+`expected_revision` (integer ≥ 0) and `expected_status` are **required** — the revision and status the
+moderator reviewed (FINDING-017); read them from `GET /moderation/:presetId`. The update
 and its `moderation_log` row (`approve` / `reject` / `flag` / `unflag` / `requeue`) land in one batch,
-conditional on the status **and** the `content_revision` the moderator saw. `revert` is the sixth action this API writes; `xivdyetools-moderation-worker`
+conditional on the status **and** the `content_revision` the moderator saw. `revert` is the sixth action this API writes, and the preview-image route adds `image_approve` / `image_reject`; `xivdyetools-moderation-worker`
 writes four more of its own straight to the shared D1 — `ban` and `unban` (user-level, `preset_id` NULL)
 plus one `hide` / `restore` per preset a ban hides or an unban restores, so those appear in a preset's
 `GET /moderation/:presetId/history` too (migration 0013).
 
 **Response:** `{ "success": true, "preset": { …preset… } }`
 
-**409 (concurrent moderation):** `{ "success": false, "error": "CONFLICT", "message": "Preset changed concurrently — reload and retry" }`
+**409 (review not bound / stale):** `{ "success": false, "error": "CONFLICT", "code": "REVISION_REQUIRED" | "STALE_REVIEW", "message": "…", "current": { "status": "…", "content_revision": 4 } }` — `REVISION_REQUIRED` when `expected_revision` / `expected_status` is missing or invalid, `STALE_REVIEW` when the preset changed after the review. `current` is a fresh read; re-read and review again. A preset deleted meanwhile is a 404.
+
+### GET /moderation/:presetId
+
+The preset as a moderator reviews it, at any status (404 if missing):
+`{ "success": true, "preset": { …preset…, "moderation_status": "unknown" | "flagged" }, "content_revision": 3 }`.
+`moderation_status` is derived from the status alone (`flagged` when the status is `flagged`, otherwise `unknown`; never `clean`, since the filter verdict is not stored, so do not render it as one). The category is `category_id`. The status and `content_revision` returned
+are what `PATCH …/status` and `PATCH …/revert` expect back as `expected_status` / `expected_revision`.
 
 ### PATCH /moderation/:presetId/revert
 
 ```json
-{ "reason": "Reverting flagged edit (10-200 chars)" }
+{ "reason": "Reverting flagged edit (10-200 chars)", "expected_revision": 3, "expected_status": "flagged" }
 ```
 
 Restores `previous_values`; 400 `This preset has no previous values to revert to` when there is no
-snapshot. Response: `{ "success": true, "preset": { … }, "message": "Preset reverted to previous values" }`.
+snapshot. `expected_revision` / `expected_status` are **required** and bound exactly as on `/status`
+(FINDING-017): missing or invalid → 409 `REVISION_REQUIRED`, stale or concurrent → 409 `STALE_REVIEW`,
+both with `current: { status, content_revision }`. Response: `{ "success": true, "preset": { … }, "message": "Preset reverted to previous values" }`.
 
 ### PATCH /moderation/:presetId/preview-image
 
@@ -668,6 +679,7 @@ Content-Type: application/json
     "author_discord_id": "123456789012345678",
     "status": "pending",
     "moderation_status": "flagged",
+    "content_revision": 2,
     "source": "web",
     "created_at": "2026-08-01T12:00:00.000Z"
   }
@@ -687,6 +699,7 @@ Content-Type: application/json
 |-------|--------|
 | `preset.status` | `pending` → moderation-channel embed; `approved` → submission-log embed ("new preset published"); other statuses post nothing |
 | `preset.moderation_status` | `clean` \| `flagged` \| `auto_approved` |
+| `preset.content_revision` | The preset's revision counter when the notification was sent (FINDING-017); the embed's buttons bind the moderator's decision to it as `expected_revision` |
 | `preset.source` | `bot` \| `web` \| `none` (the presets-api `authSource`) |
 | `preview_image_key` | R2 key; the embed's image URL is `https://shots.xivdyetools.app/<key>` |
 

@@ -134,3 +134,28 @@ describe('wrangler.toml environments', () => {
     expect(flags).toEqual(['false', 'false']);
   });
 });
+
+/**
+ * FINDING-022 (2026-10-03 security audit): both privacy policies promise that
+ * persistent Workers Logs are off, so the state is pinned in config. The key is
+ * inheritable but declared explicitly in both blocks. No logpush and no tail
+ * consumers either: each would persist request data outside the worker.
+ */
+describe('wrangler.toml Workers Logs (FINDING-022)', () => {
+  const text = toml.replace(/\r\n/g, '\n');
+
+  it('pins observability off in both blocks', () => {
+    expect(text).toMatch(/^\[observability\]\nenabled = false$/m);
+    expect(text).toMatch(/^\[env\.production\.observability\]\nenabled = false$/m);
+  });
+
+  it('never enables observability, logpush or tail consumers', () => {
+    // Unanchored on purpose: also catches `logs = { enabled = true }` inside the
+    // table, an `[env.production.observability.logs]` subtable, and a dotted
+    // `observability.logs.enabled = true` key.
+    expect(text).not.toMatch(/\benabled\s*=\s*true\b/);
+    expect(text).not.toMatch(/logpush\s*=\s*true/);
+    expect(text).not.toMatch(/^\s*\[\[(?:env\.[\w-]+\.)?tail_consumers\]\]/m);
+    expect(text).not.toMatch(/tail_consumers\s*=\s*\[\s*[^\s\]]/);
+  });
+});

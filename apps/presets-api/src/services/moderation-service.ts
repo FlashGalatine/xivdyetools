@@ -234,8 +234,8 @@ function moderationUnavailable(): PresetModerationResult {
 /**
  * Check text using Google Perspective API.
  *
- * Returns `null` only when no key is configured (dev / tests), where the local
- * word list alone decides. When a key IS configured, every call resolves to
+ * Returns `null` only when no key is configured (dev / tests); `moderateContent`
+ * then reports a clean local pass as `unscored` (FINDING-019). When a key IS configured, every call resolves to
  * either a real verdict or `moderationUnavailable()` — FINDING-005: a
  * configured moderation service that cannot answer must not read as an
  * all-clear.
@@ -342,8 +342,9 @@ async function checkWithPerspective(
  * FINDING-005: with a key configured this now has three outcomes, not two —
  * passed, flagged, and `method: 'perspective_unavailable'` (also `passed:
  * false`), which means "nobody has judged this yet". Callers must treat the
- * third exactly as they treat the second. Without a key the local list alone
- * decides, unchanged.
+ * third exactly as they treat the second. Without a key nothing has judged the
+ * text beyond the local list, so a local pass comes back as `method:
+ * 'unscored'` with `passed: false` (FINDING-019).
  */
 export async function moderateContent(
   name: string,
@@ -369,11 +370,24 @@ export async function moderateContent(
     return perspectiveResult;
   }
 
+  // FINDING-019: no scorer configured. The local list still flags (above), but
+  // it holds no profanity or slurs, so "it did not match" is not a verdict.
+  // Queue the text for a moderator instead of auto-approving it. Production
+  // has the key, so it never takes this branch.
+  if (!perspectiveResult) {
+    return {
+      passed: false,
+      flaggedField: 'content',
+      flaggedReason: 'No external moderation scorer configured — queued for manual review',
+      method: 'unscored',
+    };
+  }
+
   // All checks passed
   return {
     passed: true,
-    method: perspectiveResult ? 'all' : 'local',
-    scores: perspectiveResult?.scores,
+    method: 'all',
+    scores: perspectiveResult.scores,
   };
 }
 

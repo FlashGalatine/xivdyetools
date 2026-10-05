@@ -53,7 +53,7 @@ describe('ban-service', () => {
 
       await isUserBannedByDiscordId(db as unknown as D1Database, 'discord-id-789');
 
-      expect(db._bindings[0]).toEqual(['discord-id-789']);
+      expect(db._bindings[0]).toEqual(['discord-id-789', 'discord-id-789']);
     });
   });
 
@@ -231,7 +231,7 @@ describe('ban-service', () => {
       expect(results).toHaveLength(1);
       // `%%` matches everything; LIMIT 25 is what bounds it.
       expect(db._bindings[0][0]).toBe('%%');
-      expect(db._bindings[0][2]).toBe(25);
+      expect(db._bindings[0][3]).toBe(25);
     });
 
     it('still bounds an over-long query', async () => {
@@ -454,10 +454,12 @@ describe('ban-service', () => {
 
       const bindings = db._bindings[3];
       expect(bindings[1]).toBe('discord-789'); // discord_id
-      expect(bindings[2]).toBe('UserName'); // username
-      expect(bindings[3]).toBe('mod-123'); // moderator_discord_id
-      expect(bindings[4]).toBe('Ban reason here'); // reason
-      expect(bindings[5]).toBe('2025-01-15T12:00:00.000Z'); // banned_at
+      expect(insertQuery).toContain('xivauth_id');
+      expect(bindings[2]).toBeNull(); // xivauth_id — a snowflake leaves it NULL (FINDING-014)
+      expect(bindings[3]).toBe('UserName'); // username
+      expect(bindings[4]).toBe('mod-123'); // moderator_discord_id
+      expect(bindings[5]).toBe('Ban reason here'); // reason
+      expect(bindings[6]).toBe('2025-01-15T12:00:00.000Z'); // banned_at
     });
 
     it('should generate UUID for ban record', async () => {
@@ -606,13 +608,18 @@ describe('ban-service', () => {
       expect(updateQuery).toContain('UPDATE banned_users');
       expect(updateQuery).toContain('SET unbanned_at = ?');
       expect(updateQuery).toContain('unban_moderator_discord_id = ?');
-      expect(updateQuery).toContain('WHERE discord_id = ?');
+      expect(updateQuery).toContain('WHERE (discord_id = ? OR xivauth_id = ?)');
       expect(updateQuery).toContain('AND unbanned_at IS NULL');
+      // FINDING-005: the username copy and the free-text reason are blanked
+      // in the same statement that closes the ban
+      expect(updateQuery).toContain("username = ''");
+      expect(updateQuery).toContain("reason = ''");
 
       const bindings = db._bindings[1];
       expect(bindings[0]).toBe('2025-01-15T12:00:00.000Z'); // unbanned_at
       expect(bindings[1]).toBe('mod-123'); // unban_moderator_discord_id
       expect(bindings[2]).toBe('discord-789'); // discord_id
+      expect(bindings[3]).toBe('discord-789'); // xivauth_id
     });
 
     it('should fail if ban record update fails', async () => {
@@ -699,7 +706,7 @@ describe('ban-service', () => {
 
       await getActiveBan(db as unknown as D1Database, 'user-123');
 
-      expect(db._queries[0]).toContain('WHERE discord_id = ?');
+      expect(db._queries[0]).toContain('WHERE (discord_id = ? OR xivauth_id = ?)');
       expect(db._queries[0]).toContain('AND unbanned_at IS NULL');
       expect(db._queries[0]).toContain('LIMIT 1');
     });
@@ -709,7 +716,7 @@ describe('ban-service', () => {
 
       await getActiveBan(db as unknown as D1Database, 'discord-999');
 
-      expect(db._bindings[0]).toEqual(['discord-999']);
+      expect(db._bindings[0]).toEqual(['discord-999', 'discord-999']);
     });
   });
 });
@@ -806,10 +813,61 @@ describe('ban-service hardening (FINDING-034)', () => {
 
       const result = await unbanUser(db as unknown as D1Database, '123456789012345678', 'mod');
 
-      expect(result).toEqual({ success: true, presetsRestored: 3 });
+      expect(result).toEqual({ success: true, presetsRestored: 3, presetsStillHidden: 0 });
       expect(batchSpy).toHaveBeenCalledTimes(1);
       // 2 statements until FINDING-018 added the two moderation_log writes
       expect(batchSpy.mock.calls[0][0]).toHaveLength(4);
+    });
+
+    it('FINDING-021: restore UPDATE and its log rows share the dye_signature collision guard', async () => {
+      db._setBanStatus(true);
+      db._setupMock(() => ({ meta: { changes: 1 } }));
+
+      await unbanUser(db as unknown as D1Database, '123456789012345678', 'mod');
+
+      // [0] ban check, [1] banned_users UPDATE, [2] unban log, [3] restore log, [4] restore UPDATE
+      for (const q of [db._queries[3], db._queries[4]]) {
+        expect(q).toMatch(/NOT EXISTS \(\s*SELECT 1 FROM presets o/);
+        expect(q).toContain("o.status IN ('approved', 'pending')");
+        expect(q).toContain('o.id <>');
+      }
+      // the hide side has no guard
+      expect(db._queries.some((q) => q.includes("SET status = 'hidden'") && q.includes('NOT EXISTS'))).toBe(
+        false
+      );
+    });
+
+    it('FINDING-021: maps a UNIQUE dye_signature failure to its own channel-safe message', async () => {
+      db._setBanStatus(true);
+      const boom = new Error(
+        'D1_ERROR: UNIQUE constraint failed: presets.dye_signature: SQLITE_CONSTRAINT'
+      );
+      db._setupMock((query) => {
+        if (query.includes("SET status = 'approved'")) throw boom;
+        return { meta: { changes: 1 } };
+      });
+
+      const result = await unbanUser(db as unknown as D1Database, '123456789012345678', 'mod');
+
+      expect(result.success).toBe(false);
+      expect(result.presetsRestored).toBe(0);
+      expect(result.error).toContain('Unban blocked');
+      expect(result.error).toContain('duplicates an existing one');
+      // MOD-8: nothing from D1 reaches the channel
+      expect(result.error).not.toMatch(/SQLITE|UNIQUE|dye_signature|presets\./);
+      expect(result.cause).toBe(boom);
+    });
+
+    it('FINDING-021: a failing still-hidden count never turns a committed unban into an error', async () => {
+      db._setBanStatus(true);
+      db._setupMock((query) => {
+        if (query.includes('COUNT(*)')) throw new Error('D1_ERROR: boom');
+        return { meta: { changes: 1 } };
+      });
+
+      const result = await unbanUser(db as unknown as D1Database, '123456789012345678', 'mod');
+
+      expect(result).toEqual({ success: true, presetsRestored: 1, presetsStillHidden: 0 });
     });
 
     it('never returns a raw D1 message; keeps the cause for logging', async () => {
@@ -986,7 +1044,7 @@ describe('ban-service moderation_log rows (FINDING-018)', () => {
 
       const result = await unban();
 
-      expect(result).toEqual({ success: true, presetsRestored: 3 });
+      expect(result).toEqual({ success: true, presetsRestored: 3, presetsStillHidden: 0 });
       expect(batchSpy).toHaveBeenCalledTimes(1);
       expect(batchSpy.mock.calls[0][0]).toHaveLength(4);
 
@@ -1091,12 +1149,13 @@ describe('BUG-001 path (a) — UUID ban targets reach D1 unchanged', () => {
 
     // [0] = the pre-check (isUserBannedByDiscordId), then the batch:
     // [1] ban log, [2] hide log, [3] banned_users insert, [4] hide UPDATE.
-    expect(db._bindings[0]).toEqual([XIVAUTH_UUID]); // pre-check keyed on the UUID too
+    expect(db._bindings[0]).toEqual([XIVAUTH_UUID, XIVAUTH_UUID]); // pre-check keyed on the UUID too
 
     const insertQuery = db._queries[3];
     expect(insertQuery).toContain('INSERT INTO banned_users');
     expect(insertQuery).toContain('discord_id');
     expect(db._bindings[3][1]).toBe(XIVAUTH_UUID); // discord_id column — not coerced, not split
+    expect(db._bindings[3][2]).toBe(XIVAUTH_UUID); // FINDING-014: also xivauth_id
 
     const hideUpdateQuery = db._queries[4];
     expect(hideUpdateQuery).toContain('UPDATE presets');
@@ -1117,6 +1176,6 @@ describe('BUG-001 path (a) — UUID ban targets reach D1 unchanged', () => {
     expect(result).toBe(true);
     expect(db._queries[0]).toContain('SELECT 1 FROM banned_users');
     expect(db._queries[0]).toContain('unbanned_at IS NULL');
-    expect(db._bindings[0]).toEqual([XIVAUTH_UUID]);
+    expect(db._bindings[0]).toEqual([XIVAUTH_UUID, XIVAUTH_UUID]);
   });
 });

@@ -91,13 +91,15 @@ describe('wrangler.toml', () => {
    * (asserted above) and `[env.production]` deliberately does not repeat it.
    * The drift this guards against is an explicit override reappearing here.
    */
-  it('routes production to xivdyetools-moderation-worker on both custom domains', () => {
+  // The retired moderation-bot.xivdyetools.projectgalatine.com custom domain was removed
+  // in the dashboard on 2026-10-05; a deploy would re-attach it if it were listed.
+  it('routes production to xivdyetools-moderation-worker on moderation-bot.xivdyetools.app only', () => {
     expect(production).toMatch(/^name = "xivdyetools-moderation-worker"$/m);
     expect(production).not.toMatch(/^workers_dev = true$/m);
     expect(production).toMatch(/^routes = \[/m);
-    expect(production).toContain('moderation-bot.xivdyetools.app');
-    expect(production).toContain('moderation-bot.xivdyetools.projectgalatine.com');
-    expect(production.match(/custom_domain = true/g) ?? []).toHaveLength(2);
+    const patterns = [...production.matchAll(/pattern = "([^"]+)"/g)].map((m) => m[1]);
+    expect(patterns).toEqual(['moderation-bot.xivdyetools.app']);
+    expect(production.match(/custom_domain = true/g) ?? []).toHaveLength(1);
   });
 
   it('pins ENVIRONMENT in both environments (FINDING-013)', () => {
@@ -183,6 +185,22 @@ describe('wrangler.toml', () => {
 
     expect(ids.slice().sort((a, b) => a - b)).toEqual([1031, 1032, 1033, 1034]);
     expect(new Set(ids).size).toBe(4);
+  });
+
+  /**
+   * FINDING-022 (2026-10-03 audit): both privacy policies promise persistent
+   * Workers Logs are off. Pinning the key makes a deploy enforce that state;
+   * this test fails if anyone enables it, or adds a log sink (logpush, tail
+   * consumers), without going through the privacy-policy update.
+   */
+  it('pins Workers Logs off and ships no log sink in either block (FINDING-022)', () => {
+    for (const block of [topLevel, production]) {
+      expect(block).toMatch(/^\[(?:env\.production\.)?observability\]\nenabled = false$/m);
+      expect(block).not.toMatch(/^\s*enabled\s*=\s*true\b/m);
+      expect(block).not.toMatch(/^\s*logpush\s*=\s*true\b/m);
+      expect(block).not.toMatch(/^\s*tail_consumers\s*=\s*\[\s*[^\s\]]/m);
+      expect(block).not.toMatch(/^\[\[(?:env\.production\.)?tail_consumers\]\]/m);
+    }
   });
 
   it('has no [env.preview] block', () => {

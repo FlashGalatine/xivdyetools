@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-10-04
+
+Sprint 12 of the 2026-10-03 security audit (docs/audits/2026-10-03-security/).
+
+### Security
+
+- **FINDING-026 — `sanitizeEcho` did not defuse Stoat's own `@online`.** It rewrote `<@ULID>` user mentions and delegated to bot-logic's `sanitizeEmbedText`, whose mention defusal covers only Discord's `@everyone` / `@here`. Stoat's `@online` mass mention passed through the three echo sites: the unknown-command token in `router.ts`, and the "Found N dyes matching" / "No dye found matching" replies in `response-formatter.ts`. (`@everyone` was already defused by the shared sanitiser; `<@…>` / `<%…>` tokens were already broken by its `>` escape, and the rewrite now makes that explicit.)
+  - `sanitizeEcho` now strips invisible characters first, so `<ZWSP@ULID>` cannot reassemble into a live mention.
+  - It turns `<%ULID>` into a plain `%ULID`. That is the form revolt.js 7.2.0 emits for servers (`Server#toString`), and the presumed role-mention form.
+  - After the shared sanitiser, it inserts a zero-width joiner after the `@` of `@everyone` / `@online` / `@here` (case-insensitive, with no word-boundary condition). This pass runs last because `sanitizeEmbedText` strips U+200D.
+  - `packages/bot-logic` is unchanged.
+- **Tests.** `src/services/echo-sanitisation.test.ts` covers all three echo sites, case variants, role-mention tokens, hidden-character bypass attempts, and that an ordinary query is unchanged.
+- **The bot is parked; before any redeploy, confirm the bot's role cannot mention everyone** (any mention-everyone or role-mention permission the Stoat server exposes), since the fix defuses echoed text only.
+
 ## [0.3.1] - 2026-09-17
 
 Deep-dive remediation, Sprint 12 (docs/audits/2026-09-16-deep-dive).

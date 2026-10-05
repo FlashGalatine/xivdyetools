@@ -65,7 +65,13 @@
   RYB "Paint" model is `Malfarbe`. Chinese has one word, `颜料`, for paint and pigment — the Mixer
   pair is `颜料` (RYB) / `真实颜料` (Spectral); `颜料画` means a painting. Korean Hue is `색상`,
   not `색조`.
-- Still unpinned (needs a dictionary row before anyone edits it): the limbal-ring noun — cards say
-  LIMBUS / LIMBE / リムバル / 림벌 / 角膜环, core's sheet name says Limbus / Limbe / 角膜 / 홍채 / 虹膜;
-  the ja 染料 / カララント "by surface" boundary (web-app is 86 : 38 and the rule is written nowhere).
+- **Character-creation palette names are pinned** (2026-10-05) in `ffxiv-terminology.md` →
+  *Character-Creation Color Sheets*, from the client's `Lobby` rows.
+  - **Core's `sheets` section is NOT a source:** it is typed by hand in `build-locales.ts` and wrong in five languages.
+  - **Limbal ring = the iris's outline:** 瞳の輪郭 / Äußere Iris / Contour de l'iris / 눈동자 테두리 / 瞳孔轮廓. Never Limbus / Limbe / リムバル / 림벌 / 角膜 / 홍채 / 虹膜 / 角膜环.
+  - **Face paint:** de Merkmale and fr Maquillage.
+  - **Dark / Light:** fr Opaque / Translucide.
+  - **The same research found core's ko race and clan names (and four zh clans) are not the client's.** Check the glossary's warnings before relying on them.
+- Still unpinned (needs a dictionary row before anyone edits it): the ja 染料 / カララント "by
+  surface" boundary (web-app is 86 : 38 and the rule is written nowhere).
 

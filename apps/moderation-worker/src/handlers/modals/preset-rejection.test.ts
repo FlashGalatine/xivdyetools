@@ -15,8 +15,19 @@ vi.mock('../../utils/discord-api.js', () => {
   const editMessage = vi.fn();
   const sendMessage = vi.fn();
   // BUG-035: handlers call the safe wrappers; alias to the same mocks
-  return { editMessage, sendMessage, safeEditMessage: editMessage, safeSendMessage: sendMessage };
+  return {
+    editMessage,
+    sendMessage,
+    safeEditMessage: editMessage,
+    safeSendMessage: sendMessage,
+    safeEditOriginalResponse: vi.fn(),
+    safeSendFollowUp: vi.fn(),
+  };
 });
+
+vi.mock('../../services/ban-service.js', () => ({
+  isPresetAuthorBanned: vi.fn(async () => false),
+}));
 
 vi.mock('../../services/preset-api.js', async () => {
   const actual = await vi.importActual('../../services/preset-api.js');
@@ -25,6 +36,7 @@ vi.mock('../../services/preset-api.js', async () => {
     isModerator: vi.fn(),
     rejectPreset: vi.fn(),
     revertPreset: vi.fn(),
+    getModerationPreset: vi.fn(),
   };
 });
 
@@ -99,7 +111,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -129,7 +141,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -160,7 +172,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -191,7 +203,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [],
       },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
@@ -228,7 +240,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -284,7 +296,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -326,6 +338,7 @@ describe('handlePresetRejectionModal', () => {
       'a0000000-0000-4000-8000-000000000001',
       'mod-1',
       'Contains inappropriate imagery',
+      { revision: 5, status: 'pending' },
     );
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -373,7 +386,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -449,7 +462,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -492,7 +505,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -572,7 +585,7 @@ describe('handlePresetRejectionModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_reject_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -691,7 +704,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -722,7 +735,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -772,7 +785,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -806,6 +819,7 @@ describe('handlePresetRevertModal', () => {
       'a0000000-0000-4000-8000-000000000001',
       'The edit introduced errors in dye names',
       'mod-1',
+      { revision: 5, status: 'pending' },
     );
     expect(discordApi.editMessage).toHaveBeenCalledWith(
       'test-bot-token',
@@ -857,7 +871,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -917,7 +931,7 @@ describe('handlePresetRevertModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001',
+        custom_id: 'preset_revert_modal_a0000000-0000-4000-8000-000000000001:5:pending',
         components: [
           {
             type: 1,
@@ -1101,7 +1115,7 @@ describe('rejection / revert modals — security audit remediations', () => {
       } as any);
 
       await handlePresetRejectionModal(
-        modal(`preset_reject_modal_${PRESET_ID}`, 'rejection_reason', '**too loud** @everyone\nsecond line', '@here Mod'),
+        modal(`preset_reject_modal_${PRESET_ID}:5:pending`, 'rejection_reason', '**too loud** @everyone\nsecond line', '@here Mod'),
         env,
         ctx,
       );
@@ -1126,7 +1140,7 @@ describe('rejection / revert modals — security audit remediations', () => {
       } as any);
 
       await handlePresetRevertModal(
-        modal(`preset_revert_modal_${PRESET_ID}`, 'revert_reason', 'Reverting a bad edit here', '_Mod_'),
+        modal(`preset_revert_modal_${PRESET_ID}:5:pending`, 'revert_reason', 'Reverting a bad edit here', '_Mod_'),
         env,
         ctx,
       );

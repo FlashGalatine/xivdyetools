@@ -1,0 +1,162 @@
+{
+ "I18N-001": [
+  "policy-de:POL-DE-3",
+  "en:I18N-EN-6"
+ ],
+ "I18N-002": [
+  "policy-de:POL-DE-1",
+  "policy-fr:POL-FR-2",
+  "policy-ja:JA-POL-2",
+  "policy-ko:I18N-1",
+  "policy-zh:ZH-1"
+ ],
+ "I18N-003": [
+  "ui-ko:UKO-1",
+  "ui-ko:UKO-2"
+ ],
+ "I18N-004": [
+  "policy-ja:JA-POL-3",
+  "policy-ja:JA-POL-1 (refuted as a ja defect; the English is the source)"
+ ],
+ "I18N-005": [
+  "policy-de:POL-DE-2"
+ ],
+ "I18N-006": [
+  "policy-ko:I18N-2"
+ ],
+ "I18N-007": [
+  "ui-de:UIDE-8",
+  "web-app:W2"
+ ],
+ "I18N-008": [
+  "ui-de:UIDE-9 (web half)"
+ ],
+ "I18N-009": [
+  "ui-de:UIDE-6"
+ ],
+ "I18N-010": [
+  "ui-fr:I18N-1"
+ ],
+ "I18N-011": [
+  "gap-sheet-names-de-fr-zh:I18N-FR-1"
+ ],
+ "I18N-012": [
+  "web-app:W5"
+ ],
+ "I18N-013": [
+  "en:I18N-EN-7"
+ ],
+ "I18N-014": [
+  "ui-de:UIDE-10",
+  "og-svg-fonts:I18N-3"
+ ],
+ "I18N-015": [
+  "og-svg-fonts:I18N-1"
+ ],
+ "I18N-016": [
+  "bots:B5"
+ ],
+ "I18N-017": [
+  "ui-ko:UKO-8"
+ ],
+ "I18N-018": [
+  "ui-de:UIDE-9 (bot half)"
+ ],
+ "I18N-019": [
+  "bots:B6"
+ ],
+ "I18N-020": [
+  "bots:B7"
+ ],
+ "TERM-001": [
+  "policy-ko:TERM-1"
+ ],
+ "TERM-002": [
+  "en:TERM-EN-4",
+  "ui-de:UIDE-5",
+  "ui-ko:UKO-4",
+  "ui-ja:TERM-JA-2 (rejected: ja is accurate)"
+ ],
+ "TERM-003": [
+  "ui-ja:TERM-JA-5",
+  "ui-ko:UKO-3",
+  "gap-sheet-names-de-fr-zh:TERM-DE-1",
+  "gap-sheet-names-de-fr-zh:TERM-FR-1",
+  "gap-sheet-names-de-fr-zh:TERM-ZH-1"
+ ],
+ "TERM-004": [
+  "ui-ja:TERM-JA-5 (bot)",
+  "ui-ko:UKO-3 (bot)",
+  "gap-sheet-names-de-fr-zh:TERM-DE-1 (bot)",
+  "gap-sheet-names-de-fr-zh:TERM-FR-1 (bot)",
+  "gap-sheet-names-de-fr-zh:TERM-ZH-1 (bot)"
+ ],
+ "TERM-005": [
+  "ui-de:UIDE-2 (web half)",
+  "web-app:W3"
+ ],
+ "TERM-006": [
+  "ui-de:UIDE-3"
+ ],
+ "TERM-007": [
+  "ui-de:UIDE-1",
+  "ui-fr:TERM-1",
+  "ui-zh:TERM-ZH-3 (unpinned there; same defect)"
+ ],
+ "TERM-008": [
+  "ui-zh:TERM-ZH-1"
+ ],
+ "TERM-009": [
+  "en:TERM-EN-1"
+ ],
+ "TERM-010": [
+  "policy-fr:POL-FR-1"
+ ],
+ "TERM-011": [
+  "ui-fr:TERM-2"
+ ],
+ "TERM-012": [
+  "bots:B3",
+  "ui-fr:I18N-3",
+  "ui-de:UIDE-2 (bot half)"
+ ],
+ "TERM-013": [
+  "ui-zh:TERM-ZH-2"
+ ],
+ "TERM-014": [
+  "policy-ko:TERM-2"
+ ],
+ "TERM-015": [
+  "policy-zh:ZH-2"
+ ],
+ "TERM-016": [
+  "ui-ja:TERM-JA-1"
+ ],
+ "TERM-017": [
+  "ui-ko:UKO-5"
+ ],
+ "TERM-018": [
+  "en:TERM-EN-3"
+ ],
+ "TERM-019": [
+  "en:TERM-EN-5"
+ ],
+ "TERM-020": [
+  "policy-ja:JA-POL-4"
+ ],
+ "TERM-021": [
+  "coordinator: build-locales.ts read while verifying TERM-003"
+ ],
+ "HC-001": [
+  "bots:B1"
+ ],
+ "HC-002": [
+  "bots:B2"
+ ],
+ "HC-003": [
+  "web-app:W1"
+ ],
+ "FONT-001": [
+  "gap-glamour-card-cjk-fallback:I18N-GLAM-1"
+ ]
+}
