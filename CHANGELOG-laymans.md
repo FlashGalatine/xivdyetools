@@ -31,6 +31,18 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.2] - 2026-10-04
+### 📜 Privacy Guide and Terms of Service corrected
+- Web app: a preview image you attach to a community preset is uploaded and shown once a moderator approves it. The Privacy Guide now says so. Images in the color tools still never leave your device.
+- Web app: signing in with XIVAuth keeps your verified character's name as your author name, and a linked Discord ID if you have one. The sign-in note no longer says "No character data".
+- Web app: the Privacy Guide now describes "Reset Settings" correctly and lists the example links community presets can carry. Both documents are updated in all six languages.
+### 🪞 Glamour Reader
+- Web app: the character-file card now says what the Glamour Reader sends to name your gear: the equipment model numbers and the facewear ID, nothing else.
+### 🤖 Discord bot
+- /preferences reset now also clears a language or home world saved by older versions of the bot, so a setting you reset no longer comes back.
+### 🔒 Behind the scenes
+- Web app and Discord bot: security and privacy improvements from our latest review.
+
 ## [5.10.1] - 2026-09-28
 ### 📜 Privacy Policy and Terms of Service updated
 - Web app and Discord bot: the Privacy Policy and Terms of Service now cover the Glamour Reader and the `/glamour` command. They were written before both arrived.

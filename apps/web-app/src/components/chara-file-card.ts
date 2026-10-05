@@ -53,6 +53,14 @@ export interface CharaFileCardOptions {
    * player's edited acquisition notes on the device, so it says so (spec G8).
    */
   privacyNote?: string;
+  /**
+   * The host sends the file's gear model numbers and the facewear id to the
+   * API (the Glamour Reader's `/v1/chara/resolve` call). The file is still
+   * parsed locally, but "Nothing is uploaded" would be false, so the card
+   * swaps every privacy surface to `swatch.charaHintGlamour` and drops the
+   * LOCAL ONLY chip. The Swatch Matcher never calls resolve and leaves this off.
+   */
+  sendsGearIds?: boolean;
 }
 
 interface CharaWarning {
@@ -101,6 +109,11 @@ export class CharaFileCard {
     this.options = options;
   }
 
+  /** The privacy sentence for this host: gear ids are sent, or nothing is. */
+  private privacyHint(): string {
+    return tSwatch(this.options.sendsGearIds ? 'charaHintGlamour' : 'charaHint');
+  }
+
   init(): void {
     this.unsubscribe = CharaSessionService.subscribe(() => this.render());
     this.render();
@@ -142,7 +155,7 @@ export class CharaFileCard {
       el(
         'div',
         'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-bottom: 11px;',
-        note ? `${tSwatch('charaHint')} ${note}` : tSwatch('charaHint')
+        note ? `${this.privacyHint()} ${note}` : this.privacyHint()
       )
     );
   }
@@ -189,7 +202,7 @@ export class CharaFileCard {
       el(
         'div',
         'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-top: 8px;',
-        tSwatch('charaHint')
+        this.privacyHint()
       )
     );
 
@@ -267,9 +280,12 @@ export class CharaFileCard {
         )
       );
     }
-    const localChip = monoChip(tSwatch('localOnly'), green(), 'rgba(97, 197, 84, 0.16)');
-    localChip.title = tSwatch('charaHint');
-    chips.appendChild(localChip);
+    // LOCAL ONLY is only true when nothing leaves the device.
+    if (!this.options.sendsGearIds) {
+      const localChip = monoChip(tSwatch('localOnly'), green(), 'rgba(97, 197, 84, 0.16)');
+      localChip.title = this.privacyHint();
+      chips.appendChild(localChip);
+    }
     mid.appendChild(chips);
 
     mid.appendChild(

@@ -35,11 +35,38 @@ describe('exampleLinkError (form validator — positive control)', () => {
 });
 
 describe('sanitizeExampleLink (read path)', () => {
-  it('returns an allowlisted https link unchanged (trimmed)', () => {
+  it('returns the normalized href of an allowlisted https link (trimmed)', () => {
     expect(sanitizeExampleLink('https://mirapri.com/100814')).toBe('https://mirapri.com/100814');
     expect(sanitizeExampleLink('  https://www.reddit.com/r/ffxivglamours/x ')).toBe(
       'https://www.reddit.com/r/ffxivglamours/x'
     );
+    // href form: a bare host gains its trailing slash
+    expect(sanitizeExampleLink('https://mirapri.com')).toBe('https://mirapri.com/');
+  });
+
+  // FINDING-016: the output is the parsed URL's href, never the raw string.
+  // Percent-encoding bidi controls, spaces and non-ASCII is a deliberate
+  // choice: the visible link text is then pure ASCII, so it cannot be
+  // visually spoofed (an RLO reordering the text a user reads).
+  it('strips an embedded line feed', () => {
+    expect(sanitizeExampleLink('https://mirapri.com/10\n0814')).toBe('https://mirapri.com/100814');
+  });
+
+  it('percent-encodes a right-to-left override (U+202E)', () => {
+    const rlo = String.fromCharCode(0x202e);
+    const out = sanitizeExampleLink(`https://mirapri.com/a${rlo}b`);
+    expect(out).toBe('https://mirapri.com/a%E2%80%AEb');
+    expect(out).not.toContain(rlo);
+  });
+
+  it('percent-encodes a space in the path', () => {
+    expect(sanitizeExampleLink('https://mirapri.com/a b')).toBe('https://mirapri.com/a%20b');
+  });
+
+  it('percent-encodes a non-ASCII (Japanese) path', () => {
+    const out = sanitizeExampleLink('https://mirapri.com/グラマー');
+    expect(out).toBe('https://mirapri.com/%E3%82%B0%E3%83%A9%E3%83%9E%E3%83%BC');
+    expect(out).toMatch(/^[ -~]+$/);
   });
 
   it('drops anything the form validator would have refused', () => {

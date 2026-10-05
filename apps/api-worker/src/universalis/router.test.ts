@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
 import { universalisRouter } from './router';
 import { resetAllMocks, createMockExecutionContext } from './test-setup';
-import { clearRateLimits } from './services/rate-limiter';
+import { createMockKV } from '@xivdyetools/test-utils';
 import type { Env } from '../types';
 
 const env = {
@@ -20,6 +20,8 @@ const env = {
   UNIVERSALIS_API_BASE: 'https://universalis.example/api/v2',
   RATE_LIMIT_REQUESTS: '60',
   RATE_LIMIT_WINDOW_SECONDS: '60',
+  // KV fallback backend for tests that bind no native rate-limit binding.
+  RATE_LIMIT: createMockKV(),
 } as unknown as Env;
 
 const app = new Hono<{ Bindings: Env }>();
@@ -152,34 +154,102 @@ describe('universalis router', () => {
     expect(JSON.stringify(failedBody)).not.toContain('ECONNRESET');
   });
 
+  /**
+   * FINDING-011: the proxy counts through native Workers Rate Limiting
+   * bindings. A fake binding with a per-key counter stands in for the
+   * runtime's: `limit({ key })` succeeds for the first `allowed` calls per key.
+   */
+  function fakeBinding(allowed: number) {
+    const counts: Record<string, number> = {};
+    return {
+      counts,
+      limit: vi.fn(async ({ key }: { key: string }) => {
+        counts[key] = (counts[key] ?? 0) + 1;
+        return { success: counts[key] <= allowed };
+      }),
+    };
+  }
+
+  const IP = { 'CF-Connecting-IP': '203.0.113.9' };
+  const ctxFor = () => createMockExecutionContext() as unknown as ExecutionContext;
+  const waitAll = (ctx: ExecutionContext) =>
+    (ctx as unknown as { _waitForAll: () => Promise<unknown> })._waitForAll();
+  const stubUpstream = () =>
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(okJson({ results: [] }))));
+
   // FINDING-025 / API-7: the per-IP limiter is charged on cache misses only —
   // a fully cached answer is free, so a service-binding caller sharing one
   // bucket cannot throttle itself on repeats.
   it('charges the per-IP limiter only on cache misses (API-7)', async () => {
-    await clearRateLimits();
-    const tightEnv = { ...env, RATE_LIMIT_REQUESTS: '1' } as unknown as Env;
-    const ctx = createMockExecutionContext() as unknown as ExecutionContext;
+    const ipBinding = fakeBinding(1);
+    const tightEnv = { ...env, UNIVERSALIS_RATE_LIMITER: ipBinding } as unknown as Env;
+    const ctx = ctxFor();
     // BUG-048: send an IP. Without one this drives the SERVICE-BINDING bucket,
-    // which now has its own (much larger) budget — so the assertion below would
-    // be measuring the wrong path. This test is about "charge on miss only",
-    // not about which bucket, and the per-IP path is the one it means.
-    const tight = (path: string) =>
-      app.request(path, { headers: { 'CF-Connecting-IP': '203.0.113.9' } }, tightEnv, ctx);
-    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(okJson({ results: [] }))));
+    // which has its own (much larger) budget — this test is about "charge on
+    // miss only", and the per-IP path is the one it means.
+    const tight = (path: string) => app.request(path, { headers: IP }, tightEnv, ctx);
+    stubUpstream();
 
     const miss = await tight('/universalis/aggregated/Crystal/7001');
     expect(miss.status).toBe(200);
     expect(miss.headers.get('X-Cache')).toBe('MISS');
-    await (ctx as unknown as { _waitForAll: () => Promise<unknown> })._waitForAll();
+    await waitAll(ctx);
+    expect(ipBinding.limit).toHaveBeenCalledTimes(1);
 
     const hit = await tight('/universalis/aggregated/Crystal/7001');
     expect(hit.status).toBe(200);
     expect(hit.headers.get('X-Cache')).toBe('HIT');
+    // A cache hit never charges the limiter.
+    expect(ipBinding.limit).toHaveBeenCalledTimes(1);
 
     const secondMiss = await tight('/universalis/aggregated/Crystal/7002');
     expect(secondMiss.status).toBe(429);
-    expect(secondMiss.headers.get('Retry-After')).toBeTruthy();
-    await clearRateLimits();
+    expect(ipBinding.limit).toHaveBeenCalledTimes(2);
+  });
+
+  it('answers 429 with the unchanged body, Retry-After and X-RateLimit headers', async () => {
+    const ipBinding = fakeBinding(0);
+    const tightEnv = {
+      ...env,
+      RATE_LIMIT_REQUESTS: '30',
+      UNIVERSALIS_RATE_LIMITER: ipBinding,
+    } as unknown as Env;
+    stubUpstream();
+
+    const res = await app.request(
+      '/universalis/aggregated/Crystal/7101',
+      { headers: IP },
+      tightEnv,
+      ctxFor()
+    );
+    expect(res.status).toBe(429);
+    const body = (await res.json()) as { error: string; retryAfter: number };
+    expect(body.error).toBe('Rate limit exceeded');
+    expect(body.retryAfter).toBeGreaterThanOrEqual(1);
+    expect(body.retryAfter).toBeLessThanOrEqual(60);
+    expect(res.headers.get('Retry-After')).toBe(String(body.retryAfter));
+    expect(res.headers.get('X-RateLimit-Limit')).toBe('30');
+    // The binding reports no count: denied is always 0.
+    expect(res.headers.get('X-RateLimit-Remaining')).toBe('0');
+    expect(res.headers.get('X-RateLimit-Reset')).toBeTruthy();
+  });
+
+  it('counts per-IP traffic on UNIVERSALIS_RATE_LIMITER under the universalis:ip: prefix', async () => {
+    const ipBinding = fakeBinding(5);
+    const svcBinding = fakeBinding(5);
+    const e = {
+      ...env,
+      UNIVERSALIS_RATE_LIMITER: ipBinding,
+      UNIVERSALIS_SERVICE_RATE_LIMITER: svcBinding,
+    } as unknown as Env;
+    stubUpstream();
+
+    const res = await app.request('/universalis/aggregated/Crystal/7201', { headers: IP }, e, ctxFor());
+    expect(res.status).toBe(200);
+    expect(ipBinding.limit).toHaveBeenCalledTimes(1);
+    expect(svcBinding.limit).not.toHaveBeenCalled();
+    const key = ipBinding.limit.mock.calls[0]![0].key;
+    expect(key.startsWith('universalis:ip:203.0.113.9')).toBe(true);
   });
 
   /**
@@ -190,48 +260,126 @@ describe('universalis router', () => {
    * the cache in one window, the 31st `/budget` in ANY guild got a 429. The
    * "charge on miss only" mitigation above protects repeats of the SAME key,
    * which is not the pattern `/budget` produces: every new dye/world pair is a
-   * fresh miss.
-   *
-   * The old suite could not see this — it drove `app.request` with no IP, so it
-   * WAS the shared bucket, and with one caller the sharing is invisible.
+   * fresh miss. Service-binding traffic now draws on its own binding, key and
+   * 20x budget.
    */
-  it('does not throttle service-binding traffic at the public per-IP budget', async () => {
-    await clearRateLimits();
-    const tightEnv = { ...env, RATE_LIMIT_REQUESTS: '1' } as unknown as Env;
-    const ctx = createMockExecutionContext() as unknown as ExecutionContext;
+  it('routes service-binding traffic to its own binding and key, not the per-IP one', async () => {
+    const ipBinding = fakeBinding(0); // would 429 everything if it were consulted
+    const svcBinding = fakeBinding(20);
+    const e = {
+      ...env,
+      RATE_LIMIT_REQUESTS: '1',
+      UNIVERSALIS_RATE_LIMITER: ipBinding,
+      UNIVERSALIS_SERVICE_RATE_LIMITER: svcBinding,
+    } as unknown as Env;
+    const ctx = ctxFor();
     // No CF-Connecting-IP: exactly the shape discord-worker produces.
-    const svc = (path: string) => app.request(path, {}, tightEnv, ctx);
-    // A fresh Response per call: a body can only be read once, and this test
-    // makes several distinct (i.e. uncached) requests.
-    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(okJson({ results: [] }))));
+    stubUpstream();
 
-    // Two DISTINCT keys, so both are misses and both charge the limiter. On
-    // the public budget of 1 the second would be a 429.
-    const first = await svc('/universalis/aggregated/Crystal/8001');
-    const second = await svc('/universalis/aggregated/Crystal/8002');
+    const first = await app.request('/universalis/aggregated/Crystal/8001', {}, e, ctx);
+    const second = await app.request('/universalis/aggregated/Crystal/8002', {}, e, ctx);
 
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
     expect(second.headers.get('X-Cache')).toBe('MISS');
-    await clearRateLimits();
+    expect(ipBinding.limit).not.toHaveBeenCalled();
+    expect(svcBinding.limit).toHaveBeenCalledTimes(2);
+    const key = svcBinding.limit.mock.calls[0]![0].key;
+    expect(key.startsWith('universalis:svc:svc:universalis')).toBe(true);
   });
 
-  it('still bounds service-binding traffic — the bucket is separate, not absent', async () => {
-    await clearRateLimits();
-    // 1 × the 20× multiplier = 20 misses before the ceiling.
-    const tightEnv = { ...env, RATE_LIMIT_REQUESTS: '1' } as unknown as Env;
-    const ctx = createMockExecutionContext() as unknown as ExecutionContext;
-    const svc = (path: string) => app.request(path, {}, tightEnv, ctx);
-    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(okJson({ results: [] }))));
+  it('still bounds service-binding traffic at 20x — the bucket is separate, not absent', async () => {
+    // 20x RATE_LIMIT_REQUESTS = 20 misses before the ceiling.
+    const svcBinding = fakeBinding(20);
+    const e = {
+      ...env,
+      RATE_LIMIT_REQUESTS: '1',
+      UNIVERSALIS_SERVICE_RATE_LIMITER: svcBinding,
+    } as unknown as Env;
+    const ctx = ctxFor();
+    stubUpstream();
 
-    let lastStatus = 200;
+    const statuses: number[] = [];
     for (let i = 0; i < 22; i++) {
-      const res = await svc(`/universalis/aggregated/Crystal/${9000 + i}`);
-      lastStatus = res.status;
+      const res = await app.request(`/universalis/aggregated/Crystal/${9000 + i}`, {}, e, ctx);
+      statuses.push(res.status);
     }
 
-    expect(lastStatus).toBe(429);
-    await clearRateLimits();
+    expect(statuses.slice(0, 20).every((st) => st === 200)).toBe(true);
+    expect(statuses[20]).toBe(429);
+    expect(statuses[21]).toBe(429);
   });
 
+  it('falls back to KV (universalis:ip: prefix) when no binding is bound', async () => {
+    const kv = createMockKV();
+    const e = { ...env, RATE_LIMIT_REQUESTS: '1', RATE_LIMIT: kv } as unknown as Env;
+    const ctx = ctxFor();
+    stubUpstream();
+
+    const first = await app.request('/universalis/aggregated/Crystal/7301', { headers: IP }, e, ctx);
+    const second = await app.request('/universalis/aggregated/Crystal/7302', { headers: IP }, e, ctx);
+
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(429);
+    const keys = (await kv.list({ prefix: 'universalis:' })).keys.map((k) => k.name);
+    expect(keys.length).toBeGreaterThan(0);
+    expect(keys.every((k) => k.startsWith('universalis:ip:'))).toBe(true);
+  });
+
+  it('falls back to KV under universalis:svc: for service-binding traffic', async () => {
+    const kv = createMockKV();
+    const e = { ...env, RATE_LIMIT: kv } as unknown as Env;
+    stubUpstream();
+
+    const res = await app.request('/universalis/aggregated/Crystal/7401', {}, e, ctxFor());
+
+    expect(res.status).toBe(200);
+    const keys = (await kv.list({ prefix: 'universalis:' })).keys.map((k) => k.name);
+    expect(keys.length).toBeGreaterThan(0);
+    expect(keys.every((k) => k.startsWith('universalis:svc:'))).toBe(true);
+  });
+
+  it('fails open when the rate-limit binding throws', async () => {
+    const broken = {
+      limit: vi.fn(async () => {
+        throw new Error('binding unavailable');
+      }),
+    };
+    const e = { ...env, UNIVERSALIS_RATE_LIMITER: broken } as unknown as Env;
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    stubUpstream();
+
+    const res = await app.request('/universalis/aggregated/Crystal/7501', { headers: IP }, e, ctxFor());
+
+    expect(res.status).toBe(200);
+    expect(broken.limit).toHaveBeenCalled();
+  });
+
+  it('does not log the client IP when failing open', async () => {
+    const broken = {
+      limit: vi.fn(async () => {
+        throw new Error('binding unavailable');
+      }),
+    };
+    const e = { ...env, UNIVERSALIS_RATE_LIMITER: broken } as unknown as Env;
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    stubUpstream();
+
+    await app.request('/universalis/aggregated/Crystal/7502', { headers: IP }, e, ctxFor());
+
+    expect(warn).toHaveBeenCalled();
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('203.0.113.9');
+  });
+
+  it('surfaces a misnamed binding as a failure instead of a silent unlimited proxy', async () => {
+    // A bound value with no callable limit() — a wrangler name typo / wrong kind.
+    const e = { ...env, UNIVERSALIS_RATE_LIMITER: {} } as unknown as Env;
+    const fetchMock = vi.fn(() => Promise.resolve(okJson({ results: [] })));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = await app.request('/universalis/aggregated/Crystal/7601', { headers: IP }, e, ctxFor());
+
+    expect(res.status).toBe(500);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });

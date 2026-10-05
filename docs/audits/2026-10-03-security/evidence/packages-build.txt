@@ -1,0 +1,65 @@
+
+   • turbo 2.11.4
+   • Packages in scope: @xivdyetools/auth, @xivdyetools/bot-logic, @xivdyetools/core, @xivdyetools/logger, @xivdyetools/svg, @xivdyetools/test-utils, @xivdyetools/types, @xivdyetools/worker-kit
+   • Running build in 8 packages
+   • Remote caching disabled, using shared worktree cache
+
+@xivdyetools/auth:build: cache hit, replaying logs e447e1bf7ccb25b3
+@xivdyetools/auth:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/logger:build: cache hit, replaying logs ed01dff1993048f6
+@xivdyetools/logger:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/types:build: cache hit, replaying logs bc911cfe5a9e6c02
+@xivdyetools/types:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/worker-kit:build: cache hit, replaying logs 67f023fcc86b6d35
+@xivdyetools/worker-kit:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/test-utils:build: cache hit, replaying logs 8602fdb3b9c0dfe7
+@xivdyetools/test-utils:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/core:build: cache hit, replaying logs 8e1c2c6278316a04
+@xivdyetools/core:build: [2m$ npm run build:locales && tsc -p tsconfig.build.json && npm run copy:locales[22m
+@xivdyetools/core:build: 
+@xivdyetools/core:build: > @xivdyetools/core@5.8.0 build:locales
+@xivdyetools/core:build: > tsx scripts/build-locales.ts
+@xivdyetools/core:build: 
+@xivdyetools/core:build: 🌐 Building locale files...
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building English (en)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\glamour-reader\packages\core\src\data\locales\en.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building Japanese (ja)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\glamour-reader\packages\core\src\data\locales\ja.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building German (de)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\glamour-reader\packages\core\src\data\locales\de.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building French (fr)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\glamour-reader\packages\core\src\data\locales\fr.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building Korean (ko)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\glamour-reader\packages\core\src\data\locales\ko.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: Building Chinese (zh)...
+@xivdyetools/core:build:   = Unchanged, kept C:\dev\XIVProjects\xivdyetools\.claude\worktrees\glamour-reader\packages\core\src\data\locales\zh.json (125 dyes)
+@xivdyetools/core:build: 
+@xivdyetools/core:build: ✅ Locale files already up to date (nothing written).
+@xivdyetools/core:build: 
+@xivdyetools/core:build: > @xivdyetools/core@5.8.0 copy:locales
+@xivdyetools/core:build: > tsx scripts/copy-locales.ts
+@xivdyetools/core:build: 
+@xivdyetools/core:build: 📦 Copying 6 locale files to dist...
+@xivdyetools/core:build:    ✓ de.json
+@xivdyetools/core:build:    ✓ en.json
+@xivdyetools/core:build:    ✓ fr.json
+@xivdyetools/core:build:    ✓ ja.json
+@xivdyetools/core:build:    ✓ ko.json
+@xivdyetools/core:build:    ✓ zh.json
+@xivdyetools/core:build: ✅ Locale files copied to C:\dev\XIVProjects\xivdyetools\.claude\worktrees\glamour-reader\packages\core\dist\data\locales
+@xivdyetools/svg:build: cache hit, replaying logs 1b4b4a8bc2cb217e
+@xivdyetools/svg:build: [2m$ tsc -p tsconfig.build.json[22m
+@xivdyetools/bot-logic:build: cache hit, replaying logs fd876dfea1a284d3
+@xivdyetools/bot-logic:build: [2m$ tsc -p tsconfig.build.json[22m
+
+ Tasks:    8 successful, 8 total
+Cached:    8 cached, 8 total
+  Time:    1.333s >>> FULL TURBO
+
+exit=0

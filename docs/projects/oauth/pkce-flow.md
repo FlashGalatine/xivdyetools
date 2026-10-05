@@ -164,7 +164,7 @@ assembled by `getAllowedRedirectOrigins(env)`. It is not `FRONTEND_URL` alone:
 
 | Environment | Allowed Origins |
 |-------------|----------------|
-| Production | `https://xivdyetools.app`, `https://beta.xivdyetools.app`, `https://xivdyetools.projectgalatine.com` (transition domain), plus `env.FRONTEND_URL` |
+| Production | `https://xivdyetools.app`, `https://beta.xivdyetools.app`, plus `env.FRONTEND_URL` |
 | Development | All of the above plus `http://localhost:5173`, `http://localhost:3000`, `http://127.0.0.1:5173`, `http://127.0.0.1:3000` |
 
 The loopback entries are filtered out whenever `ENVIRONMENT !== 'development'`.

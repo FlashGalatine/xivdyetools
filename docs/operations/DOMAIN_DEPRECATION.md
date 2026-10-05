@@ -1,6 +1,11 @@
 # Retiring `*.xivdyetools.projectgalatine.com`
 
-**Status:** design approved 2026-08-09, Phase 0 not yet run
+**Status:** design approved 2026-08-09; Phase 0 checks 1–3 recorded the same day (check 4 not gathered).
+- **Phase 1:** step 1 (oauth allowlist) is done in oauth 3.1.2 (2026-10-03 security audit, FINDING-006). Step 2 (presets-api `ADDITIONAL_CORS_ORIGINS`) is in presets-api 2.4.0 (PR #224, not yet merged).
+- **Phase 2:** the `auth.` and `bot.` custom domains were removed in the dashboard on 2026-10-04, and `moderation-bot.` and `api.` on 2026-10-05, each ahead of its route line (see *Progress* under Phase 2). The two old-domain OAuth redirect URIs are unregistered.
+- **Phase 3:** the `proxy.` custom domain was removed on 2026-10-05, with the rest of the subdomain; its route line goes in api-worker 0.16.1 (PR #229, not yet merged).
+- **Phase 4:** the old apex stopped serving on 2026-10-04; the redirect code remains.
+
 **Goal:** every service reachable only through its `xivdyetools.app` subdomain.
 
 ---
@@ -33,17 +38,17 @@ Line numbers below are current as of 2026-09-05; the routes now live under each 
 
 | Worker | File | Route |
 |---|---|---|
-| `discord-worker` | `apps/discord-worker/wrangler.toml:119` | `bot.xivdyetools.projectgalatine.com` |
-| `moderation-worker` | `apps/moderation-worker/wrangler.toml:64` | `moderation-bot.xivdyetools.projectgalatine.com` |
-| `presets-api` | `apps/presets-api/wrangler.toml:62` | `api.xivdyetools.projectgalatine.com` |
-| `oauth` | `apps/oauth/wrangler.toml:8` | `auth.xivdyetools.projectgalatine.com` |
-| `api-worker` | `apps/api-worker/wrangler.toml:75` | `proxy.xivdyetools.projectgalatine.com` |
+| `discord-worker` | `apps/discord-worker/wrangler.toml:119` | `bot.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-04; route line removed in discord-worker 5.8.0 (PR #227, not yet merged) |
+| `moderation-worker` | `apps/moderation-worker/wrangler.toml:64` | `moderation-bot.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in moderation-worker 1.8.0 (PR #225, not yet merged) |
+| `presets-api` | `apps/presets-api/wrangler.toml:62` | `api.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in presets-api 2.4.0 (PR #224, not yet merged) |
+| `oauth` | ~~`apps/oauth/wrangler.toml:8`~~ | `auth.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-04; route line removed in oauth 3.1.2 |
+| `api-worker` | `apps/api-worker/wrangler.toml:75` | `proxy.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in api-worker 0.16.1 (PR #229, not yet merged) |
 
 ### Allowlists
 
 | File | Entry |
 |---|---|
-| `apps/oauth/src/constants/oauth.ts:17` | `ALLOWED_REDIRECT_ORIGINS` (declared at `:10`) — the entry already carries `// Transition period - remove after migration complete` |
+| ~~`apps/oauth/src/constants/oauth.ts:17`~~ | `ALLOWED_REDIRECT_ORIGINS` — **removed in oauth 3.1.2** (2026-10-03 security audit, FINDING-006) |
 | `apps/presets-api/wrangler.toml:64` | `ADDITIONAL_CORS_ORIGINS` — retire only the `xivdyetools.projectgalatine.com` entry; leave `xiv-colorexplorer.pages.dev` and `beta.xivdyetools.app` |
 
 ### Migration mechanism (retire last)
@@ -77,7 +82,7 @@ production the moment a route is removed.
 |---|---|---|
 | 1 | Main bot (`1447108133020369048`) → `https://bot.xivdyetools.app/` | ✅ **Clean** — already on `.app` |
 | 2 | Moderation bot (`1453806659708129374`) → `https://moderation-bot.xivdyetools.projectgalatine.com` | ❌ **Blocker** — see Phase 0.5 |
-| 3 | Two OAuth redirect URIs on the old domain: `https://xivdyetools.projectgalatine.com/auth/callback` and `https://auth.xivdyetools.projectgalatine.com/auth/callback` | ⚠️ Retire in Phase 2, **after** their routes |
+| 3 | Two OAuth redirect URIs on the old domain: `https://xivdyetools.projectgalatine.com/auth/callback` and `https://auth.xivdyetools.projectgalatine.com/auth/callback` | ✅ **Done** — neither URI is registered any more (checked 2026-10-04). The app now lists `http://localhost:8788/auth/callback`, `https://auth.xivdyetools.app/auth/callback` and `https://xivdyetools.app/auth/callback`. |
 | 4 | Per-hostname traffic | Not yet gathered |
 
 Incidental observation from check 3: `http://localhost:8788/auth/callback` is registered on the
@@ -176,7 +181,7 @@ moderation app's and not the beta bot's.
 | Layer | Configured where | Example |
 |---|---|---|
 | Discord → `oauth` Worker (registered at Discord) | Developer Portal → OAuth2 | `https://auth.xivdyetools.app/auth/callback` |
-| `oauth` Worker → front-end (this project's allowlist) | `ALLOWED_REDIRECT_ORIGINS`, `apps/oauth/src/constants/oauth.ts:10` | `https://xivdyetools.app/auth/callback` |
+| `oauth` Worker → front-end (this project's allowlist) | `ALLOWED_REDIRECT_ORIGINS`, `apps/oauth/src/constants/oauth.ts:14` | `https://xivdyetools.app/auth/callback` |
 
 Only the first is registered at Discord and gates Phase 2. The second is the allowlist Phase 1
 edits. `BUG-018` (2026-07-18 audit) was caused by exactly this blur — three divergent copies of
@@ -188,7 +193,9 @@ Landable immediately; nothing reachable changes.
 
 1. Remove the `xivdyetools.projectgalatine.com` entry from
    `apps/oauth/src/constants/oauth.ts:17`, closing the stale "transition period" TODO.
+   **Done in oauth 3.1.2.**
 2. Remove it from `ADDITIONAL_CORS_ORIGINS` in `apps/presets-api/wrangler.toml:64`.
+   **In presets-api 2.4.0 (PR #224).**
 3. Update the five documentation references listed above.
 4. Add the `DEPRECATIONS.md` entry.
 
@@ -196,8 +203,8 @@ Landable immediately; nothing reachable changes.
 `https://xivdyetools.projectgalatine.com` as an `Origin` — it is redirected to `xivdyetools.app`
 before any API call is made. The allowlist entries are already dead in practice.
 
-**Note:** these two changes only take effect on the next production deploy of `oauth` and
-`presets-api` respectively, which is gated behind the 5.0 merge.
+**Note:** each change takes effect when its worker's PR merges (merging deploys production via
+`deploy-oauth.yml` / `deploy-presets-api.yml`).
 
 ## Phase 2 — Retire the four internal subdomains
 
@@ -216,6 +223,34 @@ each. For each:
 4. Delete the leftover DNS record for that hostname.
 5. Verify the `.app` equivalent still serves, then confirm the old hostname no longer resolves.
 
+### Progress (2026-10-04)
+
+`auth.` and `bot.` were retired out of order. Their custom domains were removed in the dashboard
+(steps 3–4) before their route lines left `wrangler.toml` (steps 1–2), and both hostnames stopped
+resolving the same day.
+
+**Until a route-line removal merges, a production deploy of that Worker re-attaches the hostname.**
+`wrangler deploy` attaches every custom domain its config lists: the 2026-10-04 discord-worker
+deploy reported `bot.xivdyetools.projectgalatine.com (custom domain)` among its triggers. The
+route lines come out in oauth 3.1.2 and discord-worker 5.8.0 (PR #227). Do not dispatch either
+Worker's deploy workflow from `main` before its removal has merged.
+
+### Progress (2026-10-05)
+
+`moderation-bot.` and `api.` followed in the same order on 2026-10-05, when the maintainer
+removed the whole `xivdyetools.projectgalatine.com` subdomain in Cloudflare (`proxy.` went with
+it; see Phase 3). The `projectgalatine.com` zone itself stays, because it serves the maintainer's
+other projects. A Worker deploy can therefore still create a custom-domain record inside it, so
+the same rule applies to these Workers. Their route lines come out in:
+
+- moderation-worker 1.8.0 (PR #225);
+- presets-api 2.4.0 (PR #224);
+- api-worker 0.16.1 (PR #229).
+
+Do not dispatch any of those deploy workflows from `main` before its PR has merged. Each of the
+five PRs adds a `wrangler.toml` test that pins the production routes to the `.app` hostnames, so
+a removed hostname cannot come back unnoticed.
+
 ## Phase 3 — Retire `proxy.`
 
 **Gate:** Phase 2 complete, a public notice window elapsed, and Phase 0 check 4 showing
@@ -226,9 +261,17 @@ domain in this deprecation whose removal breaks **someone else's** software — 
 third-party tools may hardcode it, and they get no warning from a config change. Announce it,
 give it a window, then follow the same five steps as Phase 2.
 
+**Progress (2026-10-05):** retired together with the rest of the subdomain (see Phase 2's
+*Progress (2026-10-05)*), without waiting for the gate above. Phase 0 check 4 was never gathered.
+`proxy.xivdyetools.app` serves the same routes.
+
 ## Phase 4 — Remove the apex redirect
 
 **Gate:** a long window after Phase 2, with old-apex traffic at zero.
+
+**Progress (2026-10-04):** the old apex's custom domain was removed, so
+`xivdyetools.projectgalatine.com` no longer reaches the Pages project and the redirect block
+receives no traffic. Removing the code and its README section is what remains.
 
 Remove the redirect block at `apps/web-app/functions/_middleware.ts:17` and its
 `apps/web-app/functions/README.md` documentation. After this, old bookmarks fail rather than
