@@ -12,9 +12,9 @@ agree, please don't use it — nothing here costs you anything to walk away from
 
 ## What the site does
 
-Ten tools run in your browser: the Palette Extractor, Harmony Explorer, Comparison, Gradient
-Builder, Dye Mixer, Accessibility checker, Budget finder, Swatch Matcher, Glamour Reader, and the
-community Presets browser. Alongside them the site can show market-board prices, read a `.chara` file you drop in to
+Ten tools run in your browser: the Palette Extractor, Harmony Explorer, Dye Comparison, Gradient
+Builder, Dye Mixer, Accessibility Checker, Budget Suggestions, Swatch Matcher, Glamour Reader, and
+Community Presets. Alongside them the site can show market-board prices, read a `.chara` file you drop in to
 name the gear in a glamour, and let you save palettes and collections on your own device.
 
 Most of this works without an account and without sending anything anywhere. The exceptions are
