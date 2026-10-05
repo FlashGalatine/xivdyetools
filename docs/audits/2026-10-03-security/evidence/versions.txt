@@ -1,0 +1,17 @@
+apps/api-worker xivdyetools-api-worker@0.16.0
+apps/discord-worker xivdyetools-discord-worker@5.7.1
+apps/image-worker xivdyetools-image-worker@1.3.2
+apps/moderation-worker xivdyetools-moderation-worker@1.7.4
+apps/oauth xivdyetools-oauth-worker@3.1.1
+apps/og-worker xivdyetools-og-worker@2.11.0
+apps/presets-api xivdyetools-presets-api@2.3.6
+apps/stoat-worker xivdyetools-stoat-worker@0.3.1
+apps/web-app xivdyetools-web-app@5.13.2
+packages/auth @xivdyetools/auth@2.0.2
+packages/bot-logic @xivdyetools/bot-logic@4.5.0
+packages/core @xivdyetools/core@5.8.0
+packages/logger @xivdyetools/logger@2.2.1
+packages/svg @xivdyetools/svg@4.3.0
+packages/test-utils @xivdyetools/test-utils@2.0.1
+packages/types @xivdyetools/types@3.2.0
+packages/worker-kit @xivdyetools/worker-kit@1.4.1

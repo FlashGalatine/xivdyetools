@@ -24,6 +24,16 @@ compatibility_date = "2024-12-01"
 workers_dev = false
 preview_urls = false
 
+# FINDING-022 (2026-10-03 security audit): persistent Workers Logs stay OFF.
+# Both privacy policies promise it, so the state is pinned here rather than
+# living only in the Cloudflare dashboard. `observability` is an INHERITABLE
+# key, but it is declared explicitly in both blocks anyway. This worker reads
+# image bytes from its callers (it has no public route), so that promise
+# matters here too. Turning it on needs both privacy policies (all six
+# languages) updated in the same change.
+[observability]
+enabled = false
+
 [env.production]
 name = "xivdyetools-image-worker"
 # No routes and no workers_dev: reachable ONLY via service binding from
@@ -31,3 +41,7 @@ name = "xivdyetools-image-worker"
 # preview_urls pinned alongside workers_dev — see the top-level comment above.
 workers_dev = false
 preview_urls = false
+
+# FINDING-022: see the top-level [observability] comment. Workers Logs stay off.
+[env.production.observability]
+enabled = false

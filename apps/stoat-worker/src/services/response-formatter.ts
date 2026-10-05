@@ -69,14 +69,51 @@ export function formatErrorReply(
 const REVOLT_MENTION = /<@([0-9A-HJKMNP-TV-Z]{26})>/g;
 
 /**
+ * `<%ULID>`: the form revolt.js 7.2.0 emits for servers (`Server#toString`);
+ * defused here as the presumed Stoat role-mention form, which the installed
+ * libraries cannot confirm.
+ */
+const REVOLT_ROLE_MENTION = /<%([0-9A-HJKMNP-TV-Z]{26})>/g;
+
+/**
+ * Invisible characters that bot-logic's sanitiser strips. They are removed
+ * here first so `<ZWSP@ULID>` cannot collapse back into a live mention
+ * after the mention rewrite has already run.
+ */
+const INVISIBLE_CHARS = new RegExp(
+  '[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F-\\u009F' +
+    '\\u200B-\\u200F\\u202A-\\u202E\\u2060-\\u2064\\uFEFF]',
+  'g',
+);
+
+/**
+ * Stoat/Revolt mass-mention keywords. `@everyone` and `@online` notify on
+ * Stoat; `@here` is Discord-only but defused harmlessly. No word-boundary
+ * condition: nobody has checked whether Stoat's backend matches whole words,
+ * so `@onlinefoo` is defused too (the only cost is an invisible ZWJ). It
+ * cannot double up: bot-logic's ZWJ already sits after `@` for
+ * `@everyone` / `@here`, so the lookahead no longer matches those.
+ */
+const STOAT_MASS_MENTION = /@(?=(?:everyone|online|here))/gi;
+
+/**
  * Make user-supplied text safe to echo inside a bot-authored message:
- * defuse Revolt mentions, then apply the shared Discord-style sanitiser
- * (control / zero-width stripping, `@everyone`, markdown escaping, length cap).
+ * defuse Revolt user and role mentions, apply the shared Discord-style
+ * sanitiser (control / zero-width stripping, `@everyone`, markdown escaping,
+ * length cap), then defuse Stoat's mass-mention keywords.
  *
  * FINDING-019 / STOAT-4 (2026-08-21 security audit).
+ * FINDING-026 (2026-10-03 security audit): bot-logic only defuses Discord's
+ * `@everyone`/`@here`, not Stoat's `@online`, and nothing handled `<%ROLE>`.
+ * The ZWJ pass runs AFTER sanitizeEmbedText because that function strips
+ * U+200D as an invisible character.
  */
 export function sanitizeEcho(text: string, maxLength = 64): string {
-  return sanitizeEmbedText(text.replace(REVOLT_MENTION, '@$1'), maxLength);
+  const prepared = text
+    .replace(INVISIBLE_CHARS, '')
+    .replace(REVOLT_MENTION, '@$1')
+    .replace(REVOLT_ROLE_MENTION, '%$1');
+  return sanitizeEmbedText(prepared, maxLength).replace(STOAT_MASS_MENTION, '@\u200d');
 }
 
 /**
