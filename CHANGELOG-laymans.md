@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.5] - 2026-10-05
+### 🌏 Race and clan names in Korean and Chinese
+- Web app and link previews: Korean race and clan names now match the game's Korean client, for example 휴런 for Hyur and 중원 부족 for Midlander.
+- Web app and link previews: four Chinese clan names now match the game's Chinese client: Helions, The Lost, Rava and Veena.
+- Discord bot: when a `/glamour` card names the race a piece is made for, Korean now uses the game's own race names, for example 로스가르 for Hrothgar.
+
 ## [5.10.1] - 2026-09-28
 ### 📜 Privacy Policy and Terms of Service updated
 - Web app and Discord bot: the Privacy Policy and Terms of Service now cover the Glamour Reader and the `/glamour` command. They were written before both arrived.
