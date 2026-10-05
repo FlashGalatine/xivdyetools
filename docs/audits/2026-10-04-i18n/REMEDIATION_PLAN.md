@@ -263,7 +263,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 6 — web-app: translations and terminology (i18n)
+## Sprint 6 — web-app: translations and terminology (i18n) — PR #248 (open)
+
+**Done in PR #248** (web-app 5.14.4 and core 5.8.2, stacked on #247). All 18 rows, the fur-pattern note, and the core Brass names the maintainer asked for. **Deploy needs:** after merge, publish core 5.8.2 through the "Publish Packages to npm" workflow. Details are in the re-verification file's *Sprint 6* section.
 
 **Wrong English first:** the Glamour list privacy note claims a scope the code does not have (TERM-002), "tribe" names two things (TERM-009), and the list goes by two names (TERM-018).
 
@@ -830,8 +832,8 @@ These are not scheduled; the reasons and revisit triggers are in each finding. T
 | "Same look" twins | en twin / same look / swap; fr "+N ASPECT" vs "même apparence"; ko 동형 / 유일 vs 같은 외형 | an app glossary row |
 | A color slot | zh 栏位 (web) vs 部位 (bot) | an app glossary row |
 | Moderator, in the UI | zh `fieldPreviewImageHint` 版主 vs the policies' 审核员; ko UI 모더레이터 | a glossary row; TERM-001 settles the ko policies |
-| Dye channel (ja) | 染色枠 vs チャンネル (filed as TERM-016 for the split; the word is unpinned) | the client's dye UI text |
-| Facewear color tag (ja, ko) | ja フェイスウェアカラー, ko 페이스웨어 색상 transliterate "facewear" | follows TERM-007's choice |
+| Dye channel (ja) | 染色枠 vs チャンネル (filed as TERM-016 for the split; the word is unpinned) | the client's dye UI text — **pinned 2026-10-05** (dictionary *Dye channels*: 染色1 / 染色2, counted with ヵ所); fixed in PR #248 |
+| Facewear color tag (ja, ko) | ja フェイスウェアカラー, ko 페이스웨어 색상 transliterate "facewear" | follows TERM-007's choice — **pinned 2026-10-05** (dictionary, Addon 16050 + 16054); fixed in PR #248 |
 
 ## Standing guidance
 
