@@ -1030,7 +1030,7 @@
     "gateSubmitNote": "カードに名前が表示されます。",
     "providerDiscordNote": "ほとんどの人が持っています",
     "providerXivauthNote": "キャラクターを認証",
-    "privacyNote": "ログインするとアカウントの記録が作成され、Discord または XIVAuth の ID と名前が保存されます。この名前は、投稿したプリセットの投稿者として表示されます。XIVAuth の場合、その名前は認証済みキャラクターのものです。XIVAuth アカウントが Discord と連携されている場合は、その Discord ID も保存されます。メールは取得せず、販売もしません。",
+    "privacyNote": "ログインするとアカウントの記録が作成され、Discord または XIVAuth の ID と名前が保存されます。この名前は、投稿したプリセットの投稿者として表示されます。XIVAuth の場合、その名前は認証済みキャラクターのものです。ログイン時に認証済みキャラクターを取得できない場合は、「XIVAuth User」の後に XIVAuth ID の最初の 8 文字が続くものになります。XIVAuth アカウントが Discord と連携されている場合は、その Discord ID も保存されます。メールは取得せず、販売もしません。",
     "submitTitle": "パレット投稿",
     "submitSub": "公開前に審査があります",
     "previewLabel": "表示イメージ",

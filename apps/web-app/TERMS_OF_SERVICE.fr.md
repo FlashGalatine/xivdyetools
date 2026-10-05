@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour :** 2026-10-04 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
+**Dernière mise à jour :** 2026-10-05 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
 façon dont nous traitons vos données fait l'objet d'un document séparé : [`PRIVACY.md`](PRIVACY.md).
 Le bot Discord a ses propres conditions :
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
@@ -33,7 +33,9 @@ pour soumettre, modifier ou voter sur des palettes prédéfinies communautaires.
   passe.
 - La connexion crée un enregistrement de compte contenant votre identifiant de fournisseur et un
   nom. Avec Discord, le nom est votre nom d'affichage. Avec XIVAuth, le nom est celui de votre
-  personnage vérifié, comme décrit dans le Guide de confidentialité. Si votre compte XIVAuth est lié
+  personnage vérifié, ou « XIVAuth User » suivi des 8 premiers caractères de votre
+  identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion, comme
+  décrit dans le Guide de confidentialité. Si votre compte XIVAuth est lié
   à Discord, l'enregistrement contient aussi cet identifiant utilisateur Discord. Le nom figurant
   dans l'enregistrement est affiché comme auteur de chaque palette prédéfinie que vous publiez.
 - Votre session est un jeton conservé dans votre navigateur. Effacer les données de site de votre

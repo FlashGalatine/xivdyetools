@@ -55,7 +55,7 @@ their behaviour.
 ## [5.13.4] - 2026-10-04
 
 Sprint 2 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). `PRIVACY.md`
-and `TERMS_OF_SERVICE.md` are corrected in all six languages, with `Last updated` 2026-10-04 on
+and `TERMS_OF_SERVICE.md` are corrected in all six languages, with `Last updated` 2026-10-05 on
 every variant. One clause is a new commitment the maintainer approved (FINDING-004); the rest align
 the text to what the code already did.
 
@@ -68,11 +68,22 @@ the text to what the code already did.
   - The note, Privacy Guide item 3 and Terms §Accounts now say what each provider stores:
     - Discord: the user ID and the display name, falling back to the username;
     - XIVAuth: the XIVAuth ID and the verified character name, or "XIVAuth User" plus the first 8
-      characters of the XIVAuth ID when there is no verified character;
+      characters of the XIVAuth ID when no verified character is available at sign-in (none
+      exists, or the character list could not be read);
     - XIVAuth linked to Discord: that Discord ID as well.
   - `src/__tests__/privacy-copy-parity.test.ts` reads `apps/oauth/src/handlers/xivauth.ts` and
     fails if the copy and the handler drift apart again. The 2026-08-29 fix left the false clause
     in place.
+  - **Corrected before release (2026-10-05),** after review of the open PR. The sign-in note and the
+    Terms named the verified character but not the "XIVAuth User" fallback (Codex review). Both
+    documents also said the fallback applied only "if you have no verified character", but it
+    is also used when the character list cannot be read at sign-in. The note (six locales), the
+    Terms and Privacy Guide item 3 now state both cases, with one translator and one verifier per
+    language. The parity test now also requires the label in every locale's note and in the
+    Terms. Three translation words were aligned with the rest of each file (2026-10-04 i18n audit):
+    - ko 복장 → 의상 (TERM-014);
+    - ko 운영자 → 조정자 for the moderator;
+    - zh 版主 → 审核员 (TERM-015).
 - **The preset preview image is disclosed** (FINDING-003). The Privacy Guide said images never
   leave the device. That is true of the colour tools, but the optional preset preview image is
   uploaded to `api.xivdyetools.app`, converted to WebP, stored, and served from

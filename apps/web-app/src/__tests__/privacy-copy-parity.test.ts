@@ -30,6 +30,16 @@ const EN = JSON.parse(readFileSync(resolve(APP_ROOT, 'src/locales/en.json'), 'ut
 const NOTE = EN.preset.privacyNote;
 // PRIVACY.md wraps lines, so compare against whitespace-collapsed text.
 const PRIVACY = PRIVACY_MD.replace(/\s+/g, ' ');
+const TERMS = readFileSync(resolve(APP_ROOT, 'TERMS_OF_SERVICE.md'), 'utf-8').replace(/\s+/g, ' ');
+// The fallback label is stored verbatim, so every translation quotes it in English.
+const NOTES_BY_LOCALE = Object.fromEntries(
+  ['en', 'ja', 'de', 'fr', 'ko', 'zh'].map((lc) => {
+    const locale = JSON.parse(
+      readFileSync(resolve(APP_ROOT, `src/locales/${lc}.json`), 'utf-8')
+    ) as { preset: { privacyNote: string } };
+    return [lc, locale.preset.privacyNote];
+  })
+);
 
 const STORES_CHARACTER_NAME = /verifiedCharacter\s*\?\.\s*name/.test(XIVAUTH_SRC);
 const STORES_LINKED_DISCORD_ID = /discord_id\s*:\s*linkedDiscordId/.test(XIVAUTH_SRC);
@@ -82,6 +92,20 @@ describe('sign-in privacy copy matches what the oauth worker stores', () => {
     expect(
       PRIVACY.includes('first 8 characters'),
       'xivauth.ts slices the XIVAuth id to 8 characters: update apps/web-app/PRIVACY.md to say "first 8 characters"'
+    ).toBe(true);
+  });
+
+  it('every preset.privacyNote and the Terms name the "XIVAuth User" fallback', () => {
+    if (!STORES_FALLBACK_NAME) return;
+    for (const [lc, note] of Object.entries(NOTES_BY_LOCALE)) {
+      expect(
+        note.includes('XIVAuth User'),
+        `xivauth.ts falls back to "XIVAuth User <id>": update preset.privacyNote in apps/web-app/src/locales/${lc}.json to name the fallback`
+      ).toBe(true);
+    }
+    expect(
+      TERMS.includes('XIVAuth User'),
+      'xivauth.ts falls back to "XIVAuth User <id>": update apps/web-app/TERMS_OF_SERVICE.md (Accounts) to name the fallback'
     ).toBe(true);
   });
 });
