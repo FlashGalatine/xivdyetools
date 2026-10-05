@@ -387,7 +387,7 @@ moderationRouter.patch('/:presetId/preview-image', async (c) => {
 
   // FINDING-020: the image decision and its audit row land in one batch, and
   // `changes()` gates the log on the conditional UPDATE applying — so a stale
-  // review writes neither (same shape as the revert route above).
+  // review writes neither (mirrors the revert route above).
   const logImageAction = (action: 'image_approve' | 'image_reject'): D1PreparedStatement =>
     c.env.DB
       .prepare(
