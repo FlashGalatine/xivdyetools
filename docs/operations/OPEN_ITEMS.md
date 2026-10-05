@@ -78,8 +78,10 @@ protection are on.
     still left after 90 days.
   - Afterwards, the legacy fallback in `@xivdyetools/bot-logic`'s `resolveUserLocale` and
     moderation-worker's `getUserLanguagePreference` can go.
-- [ ] Start [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) Phase 0
-      (`*.xivdyetools.projectgalatine.com`).
+- [ ] [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) Phase 4: remove the old-apex redirect from
+      `apps/web-app/functions/_middleware.ts` and its README section. Phases 0–3 are done: every
+      `*.xivdyetools.projectgalatine.com` custom domain was removed on 2026-10-04/05, and the
+      route lines leave with the 2026-10-03 security audit batch.
 
 The og-worker WAF rate-limiting rule (FINDING-024) is **done** — deployed and active since
 2026-09-01; the rule and the Free-plan constraints that shaped it are recorded in the archived
@@ -132,8 +134,10 @@ gone, and a CHANGELOG line.
 
 Not removals, still open from the same list: the web-app submission form does not mirror
 presets-api's tag charset / control-character rules, so users see the API's 400 message
-(FINDING-019/028); cross-identity (`xivauth_id`) bans need oauth + moderation-worker changes
-(FINDING-017). The "`/preset submit` still sends legacy itemIDs" item closed on 2026-08-29.
+(FINDING-019/028); cross-identity (`xivauth_id`) bans: the presets-api side is done (2026-10-03 FINDING-014,
+Sprint 3: the ban check matches the acting id, JWT `sub` and `discord_id` claim against both ban
+columns, and `PATCH /refresh-author` re-keys an XIVAuth-only account's rows once it links Discord);
+the moderation-worker side follows in Sprint 4. The "`/preset submit` still sends legacy itemIDs" item closed on 2026-08-29.
 
 ## 6. Recurring audits
 

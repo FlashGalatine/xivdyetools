@@ -5,6 +5,14 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2026-10-04
+
+Sprint 10 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`).
+
+### Security
+
+- **Workers Logs pinned off (FINDING-022)** — `wrangler.toml` now declares `[observability] enabled = false` and `[env.production.observability] enabled = false`, so the privacy-policy promise that persistent logs are off no longer lives only in the Cloudflare dashboard. `src/wrangler-config.test.ts` asserts both pins, an unanchored "never on" check, and no logpush or tail consumers. No behaviour change.
+
 ## [1.3.2] - 2026-09-17
 
 Sprint 15 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive/`).

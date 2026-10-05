@@ -1,0 +1,10 @@
+xivdyetools-discord-worker | src/index.test.ts |  Test Files  1 passed (1)       Tests  81 passed (81) 
+xivdyetools-discord-worker | src/handlers/commands/preferences.test.ts |  Test Files  1 passed (1)       Tests  13 passed (13) 
+xivdyetools-moderation-worker | src/handlers/modals/ban-reason.test.ts |  Test Files  1 passed (1)       Tests  26 passed (26) 
+xivdyetools-oauth-worker | src/__tests__/rate-limit.test.ts |  Test Files  1 passed (1)       Tests  15 passed (15) 
+xivdyetools-api-worker | src/telemetry/schema.test.ts |  Test Files  1 passed (1)       Tests  18 passed (18) 
+xivdyetools-presets-api | tests/services/preset-service.test.ts |  Test Files  1 passed (1)       Tests  71 passed (71) 
+xivdyetools-presets-api | tests/middleware/auth.test.ts |  Test Files  1 passed (1)       Tests  49 passed (49) 
+xivdyetools-web-app | src/services/__tests__/auth-service.test.ts |  Test Files  1 passed (1)       Tests  66 passed (66) 
+@xivdyetools/worker-kit | src/rate-limiter/backends/kv.test.ts |  Test Files  1 passed (1)       Tests  17 passed (17) 
+DONE

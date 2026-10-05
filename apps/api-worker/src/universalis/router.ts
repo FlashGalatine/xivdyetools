@@ -18,9 +18,10 @@
  * envelope — consumers (core `APIService`, discord-worker's budget pipeline)
  * parse raw Universalis body shapes.
  *
- * NOT mounted under `/v1/*`: that would add the KV rate limiter and the locale
+ * NOT mounted under `/v1/*`: that would add the /v1 rate limiter and the locale
  * middleware to every market request; this router keeps the proxy's own
- * per-isolate memory rate limiter on the aggregated route.
+ * cache-miss rate limiter on the aggregated route (FINDING-011: native Workers
+ * Rate Limiting bindings, per colo, with a KV fallback).
  */
 
 import { Hono } from 'hono';
@@ -35,7 +36,13 @@ import {
   UpstreamError,
   ResponseTooLargeError,
 } from './services/cached-fetch';
-import { checkRateLimit, getRateLimitHeaders, type RateLimitConfig } from './services/rate-limiter';
+import {
+  checkRateLimit,
+  getRateLimitHeaders,
+  selectProxyRateLimiter,
+  type ProxyRateLimitScope,
+  type RateLimitConfig,
+} from './services/rate-limiter';
 
 /** Retry-After header value when rate limited (seconds) */
 const RATE_LIMIT_RETRY_AFTER = 60;
@@ -123,17 +130,19 @@ const SERVICE_BINDING_BUDGET_MULTIPLIER = 20;
  * A request with no `CF-Connecting-IP` is one of our own workers over a
  * Service Binding — the header is set by Cloudflare for every external
  * request, which is the same assumption `getClientIp` already documents.
+ * `scope` picks the backend: the per-IP binding or the service-binding one.
  */
 function resolveRateLimitScope(
   request: Request,
   config: RateLimitConfig
-): { key: string; config: RateLimitConfig } {
+): { key: string; scope: ProxyRateLimitScope; config: RateLimitConfig } {
   const clientIP = getClientIp(request);
   if (clientIP !== 'unknown') {
-    return { key: clientIP, config };
+    return { key: clientIP, scope: 'ip', config };
   }
   return {
     key: 'svc:universalis',
+    scope: 'service',
     config: {
       ...config,
       maxRequests: config.maxRequests * SERVICE_BINDING_BUDGET_MULTIPLIER,
@@ -143,24 +152,37 @@ function resolveRateLimitScope(
 
 /**
  * GET <mount>/aggregated/:datacenter/:itemIds — aggregated price data.
- * Rate-limited per IP, validated, cached (300s + 120s SWR), coalesced.
+ * Rate-limited per IP on cache misses (native binding, KV fallback), validated, cached (300s + 120s SWR), coalesced.
  */
 universalisRouter.get('/aggregated/:datacenter/:itemIds', async (c) => {
   const { datacenter, itemIds } = c.req.param();
 
-  // SECURITY (BUG-066/SEC-002): shared getClientIp prefers unspoofable CF-Connecting-IP
-  // BUG-048: service-binding traffic gets its own key and its own budget —
-  // it used to fall into the shared `'unknown'` bucket with every other
-  // IP-less caller, so the whole bot fleet competed for one public-sized
+  // SECURITY (SEC-002): shared getClientIp prefers unspoofable CF-Connecting-IP
+  // BUG-048: service-binding traffic gets its own key, its own budget and its
+  // own binding — it used to fall into the shared `'unknown'` bucket with every
+  // other IP-less caller, so the whole bot fleet competed for one public-sized
   // allowance and `/budget` commands 429'd each other across guilds.
-  const { key: rateLimitKey, config: rateLimitConfig } = resolveRateLimitScope(c.req.raw, {
+  const {
+    key: rateLimitKey,
+    scope: rateLimitScope,
+    config: rateLimitConfig,
+  } = resolveRateLimitScope(c.req.raw, {
     maxRequests: parseInt(c.env.RATE_LIMIT_REQUESTS, 10) || 60,
     windowSeconds: parseInt(c.env.RATE_LIMIT_WINDOW_SECONDS, 10) || 60,
   });
+  // FINDING-011 (replaces BUG-066's per-isolate memory limiter): counted by the
+  // native Workers Rate Limiting bindings — atomic per colo, no storage writes —
+  // with KV as the fallback where a binding is absent. Built per request from
+  // c.env (BUG-004: no module-scope singleton) and HERE, not inside onMiss: a
+  // misnamed binding makes the constructor throw, and that must surface as a
+  // 500 rather than be swallowed by the miss hook or reported as an upstream
+  // failure. The logger is the request-scoped one; backends log a key scope,
+  // never the client IP.
+  const limiter = selectProxyRateLimiter(c.env, rateLimitScope, rateLimitConfig, getLogger(c));
   // FINDING-025 / API-7: charged from cachedFetch's onMiss hook below — after
   // the Cache API lookup — so cache hits never consume the budget.
   const chargeLimiter = async (): Promise<void> => {
-    const result = await checkRateLimit(rateLimitKey, rateLimitConfig);
+    const result = await checkRateLimit(limiter, rateLimitKey, rateLimitConfig);
     if (!result.allowed) throw new ProxyRateLimitedError(result, rateLimitConfig);
   };
 

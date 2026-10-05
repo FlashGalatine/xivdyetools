@@ -28,20 +28,46 @@ behaviour for an outage. It is the wrong behaviour for a permanent shutdown: fro
 It would not look like an outage — submissions still return 201 — so the first symptom is a
 quietly growing manual-review backlog.
 
-**Migration — one command, and the graceful path already exists.** `checkWithPerspective` returns
-`null` when no key is set, and the local word list alone decides. So:
+**Migration — not one command: deleting the key alone turns moderation off.**
+- `checkWithPerspective` returns `null` when no key is set.
+- `moderateContent` then passes anything the local word list does not match, and
+  `POST /presets` publishes a passed preset as `approved`.
+- The local list (`apps/presets-api/src/data/profanity/*.ts`) holds a couple of anti-AI-slop
+  phrases per locale and **no profanity or slurs**.
+- So with the key gone and nothing else changed, every new or text-edited preset would go live
+  without review (2026-10-03 security audit, FINDING-019; the "graceful path" this section used
+  to describe was that).
+
+**The key must stay until presets-api ships one of these:**
+- a replacement scorer (another provider, or a curated per-locale list with case / leetspeak /
+  spacing normalisation); or
+- a `pending` default for new and text-edited presets when no scorer is configured, so they all go
+  to the moderator queue.
+
+Only then, before the shutdown (or the fail-closed branch runs in the gap):
 
 ```bash
-# On or before 2026-12-31, from apps/presets-api:
+# After that presets-api change is live, on or before 2026-12-31, from apps/presets-api:
 wrangler secret delete PERSPECTIVE_API_KEY --env production
 ```
 
-Removing the secret is the *supported* degradation, not a workaround. Do it before the shutdown,
-not after, or the fail-closed branch runs in the gap.
+If the presets-api change has not shipped by about 2026-12-01, ship the `pending` default on its
+own rather than run out the clock.
 
 **Removal checklist:**
-- [ ] Decide whether to replace the ML tier at all (local filter only, or another provider)
+- [ ] Decide whether to replace the ML tier (another provider, a real local list) or send every
+      submission to the moderator queue
+- [ ] **Blocking:** ship that presets-api change, then confirm on the `…-dev` worker (no key set)
+      that a new preset lands as `pending` or is scored. Until then the key must not be deleted.
 - [ ] Delete the `PERSPECTIVE_API_KEY` production secret **before 2026-12-31**
+- [ ] **Same day:** edit both privacy policies so neither names Perspective any more, all six
+      languages each:
+  - bot `apps/discord-worker/PRIVACY_POLICY.md` §6 (the Perspective API row of Third-Party
+    Services);
+  - web `apps/web-app/PRIVACY.md` item 3 (the Perspective sentence).
+
+  Bump every variant's `Last updated` and run
+  `python .agents/skills/audit-shared/scripts/policy-locale-parity.py` (exit 0).
 - [ ] Remove `checkWithPerspective`, `PERSPECTIVE_ENDPOINT`, `moderationUnavailable()`, the
       `perspective_unavailable` method value and the `PERSPECTIVE_API_KEY` `Env` field once the
       decision is made — and re-check FINDING-005's fail-closed reasoning still holds for whatever
@@ -55,7 +81,7 @@ not after, or the fail-closed branch runs in the gap.
 | Field       | Value |
 |-------------|-------|
 | Deprecated  | 2026-08-09 |
-| Removed     | Phased — see `docs/operations/DOMAIN_DEPRECATION.md` |
+| Removed     | Custom domains: `bot.`, `auth.` and the apex on 2026-10-04; `moderation-bot.`, `api.` and `proxy.` on 2026-10-05. Route lines and allowlist entries leave with the 2026-10-03 security audit batch. The apex-redirect code remains — see `docs/operations/DOMAIN_DEPRECATION.md` |
 | Severity    | Medium — five live custom domains; one is a public third-party surface |
 
 **What is being retired:** every `*.xivdyetools.projectgalatine.com` hostname. All services move

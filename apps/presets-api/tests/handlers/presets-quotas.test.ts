@@ -37,6 +37,8 @@ import {
     createMockD1Database,
     createMockPresetRow,
     createMockSubmission,
+    useCleanPerspective,
+    withPresetRereadRow,
 } from '../test-utils';
 
 type Variables = { auth: AuthContext };
@@ -124,6 +126,7 @@ describe('daily quotas (FINDING-008)', () => {
         resetCategoryCache();
         waitUntilPromises.length = 0;
         mockDb = createMockD1Database();
+        withPresetRereadRow(mockDb);
         env = createMockEnv({ DB: mockDb as unknown as D1Database });
         app = new Hono<{ Bindings: Env; Variables: Variables }>();
         app.use('*', authMiddleware);
@@ -137,6 +140,7 @@ describe('daily quotas (FINDING-008)', () => {
         const { _resetPatternsForTesting } = await import('../../src/services/moderation-service');
         _resetPatternsForTesting();
         vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
 
     describe('POST /api/v1/presets', () => {
@@ -222,6 +226,7 @@ describe('daily quotas (FINDING-008)', () => {
         });
 
         it('does not count a clean edit against the flagged-edit cap', async () => {
+            useCleanPerspective(env); // FINDING-019: clean needs a scorer
             const table = mockSubmissionEventsTable(mockDb, () => row());
             table.seed('flagged_edit', DAILY_FLAGGED_EDIT_LIMIT);
 
@@ -297,6 +302,9 @@ describe('daily quotas (FINDING-008)', () => {
                 DISCORD_WORKER: { fetch: discordFetch } as unknown as Fetcher,
                 INTERNAL_WEBHOOK_SECRET: 'test-webhook-secret',
             });
+            // FINDING-019: a keyless worker queues everything as 'unscored';
+            // these tests are about clean text, so they run with a scorer.
+            useCleanPerspective(notifyEnv);
         });
 
         const STORED_NAME = 'Stored Name';
@@ -315,7 +323,13 @@ describe('daily quotas (FINDING-008)', () => {
                 description: 'The stored description, long enough.',
                 status,
             });
-            table = mockSubmissionEventsTable(mockDb, () => row);
+            let written = false;
+            table = mockSubmissionEventsTable(mockDb, (query: string) => {
+                // After the UPDATE the re-read sees the queued row: every notifying edit
+                // leaves the preset pending, and the handler only notifies for a re-read that says so.
+                if (/^\s*UPDATE\s+presets/i.test(query)) written = true;
+                return written ? { ...row, status: 'pending' } : row;
+            });
             if (flaggedEditEventsUsedToday > 0) {
                 table.seed('flagged_edit', flaggedEditEventsUsedToday);
             }
@@ -747,7 +761,13 @@ describe('daily quotas (FINDING-008)', () => {
                 description: 'The stored description, long enough.',
                 status: 'approved',
             });
-            const table = mockSubmissionEventsTable(mockDb, () => row);
+            let written = false;
+            const table = mockSubmissionEventsTable(mockDb, (query: string) => {
+                // After the UPDATE the re-read sees the queued row: every notifying edit
+                // leaves the preset pending, and the handler only notifies for a re-read that says so.
+                if (/^\s*UPDATE\s+presets/i.test(query)) written = true;
+                return written ? { ...row, status: 'pending' } : row;
+            });
             perspectiveUnavailable();
 
             const res = await app.request(

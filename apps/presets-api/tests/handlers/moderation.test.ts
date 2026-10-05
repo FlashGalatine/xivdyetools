@@ -231,7 +231,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ status: 'approved' }),
+                    body: JSON.stringify({ status: 'approved', expected_revision: 0, expected_status: 'pending' }),
                 },
                 env
             );
@@ -256,7 +256,7 @@ describe('ModerationHandler', () => {
                         'X-User-Discord-ID': '123456789',
                     },
                     body: JSON.stringify({
-                        status: 'rejected',
+                        status: 'rejected', expected_revision: 0, expected_status: 'pending',
                         reason: 'Inappropriate content',
                     }),
                 },
@@ -280,7 +280,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ status: 'flagged' }),
+                    body: JSON.stringify({ status: 'flagged', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
@@ -377,7 +377,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ status: 'approved' }),
+                    body: JSON.stringify({ status: 'approved', expected_revision: 0, expected_status: 'pending' }),
                 },
                 env
             );
@@ -401,7 +401,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': 'not-a-moderator',
                     },
-                    body: JSON.stringify({ reason: 'Reverting due to policy violation issues' }),
+                    body: JSON.stringify({ reason: 'Reverting due to policy violation issues', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
@@ -431,7 +431,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ reason: 'Reverting because the edit was inappropriate edit' }),
+                    body: JSON.stringify({ reason: 'Reverting because the edit was inappropriate edit', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
@@ -458,7 +458,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ reason: 'Trying to revert when nothing to revert' }),
+                    body: JSON.stringify({ reason: 'Trying to revert when nothing to revert', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
@@ -513,7 +513,8 @@ describe('ModerationHandler', () => {
                 if (query.includes('UPDATE')) {
                     return { results: [], success: true, meta: { changes: 0 } };
                 }
-                return null;
+                // the STALE_REVIEW response re-reads the row for `current`
+                return mockRow;
             });
 
             const res = await app.request(
@@ -525,15 +526,15 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ reason: 'Valid revert reason here' }),
+                    body: JSON.stringify({ reason: 'Valid revert reason here', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
 
             expect(res.status).toBe(409);
-            const body = await res.json() as { error: string; message: string };
+            const body = await res.json() as { error: string; code: string };
             expect(body.error).toBe('CONFLICT');
-            expect(body.message).toBe('Preset changed concurrently — reload and retry');
+            expect(body.code).toBe('STALE_REVIEW');
         });
 
         it('should return 404 if preset not found', async () => {
@@ -548,7 +549,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ reason: 'Trying to revert nonexistent preset' }),
+                    body: JSON.stringify({ reason: 'Trying to revert nonexistent preset', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
@@ -570,7 +571,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ reason: 'Short' }),
+                    body: JSON.stringify({ reason: 'Short', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
@@ -619,7 +620,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ reason: 'Valid revert reason here' }),
+                    body: JSON.stringify({ reason: 'Valid revert reason here', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );
@@ -1062,7 +1063,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ status: 'approved' }),
+                    body: JSON.stringify({ status: 'approved', expected_revision: 0, expected_status: 'pending' }),
                 },
                 env
             );
@@ -1083,7 +1084,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ status: 'approved' }),
+                    body: JSON.stringify({ status: 'approved', expected_revision: 0, expected_status: 'flagged' }),
                 },
                 env
             );
@@ -1104,7 +1105,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ status: 'rejected' }),
+                    body: JSON.stringify({ status: 'rejected', expected_revision: 0, expected_status: 'pending' }),
                 },
                 env
             );
@@ -1125,7 +1126,7 @@ describe('ModerationHandler', () => {
                         Authorization: 'Bearer test-bot-secret',
                         'X-User-Discord-ID': '123456789',
                     },
-                    body: JSON.stringify({ status: 'flagged' }),
+                    body: JSON.stringify({ status: 'flagged', expected_revision: 0, expected_status: 'approved' }),
                 },
                 env
             );

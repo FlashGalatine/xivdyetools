@@ -81,9 +81,9 @@ app.use(
  * after them still satisfies "before any body read/fetch/decode". Fix
  * round 2 (S8-R13): this comment previously claimed the ordering makes a
  * config-drift hit "visible in the structured request log" — optimistic.
- * No `wrangler.toml` in this repo declares an `[observability]` block, and
- * the 2026-08-29 security audit found Workers Logs off on all nine
- * scripts, so by default nothing persists that log line anywhere. Ordering
+ * Workers Logs are pinned off in both of this worker's `wrangler.toml`
+ * blocks (2026-10-03 FINDING-022, asserted by src/wrangler-config.test.ts),
+ * so nothing persists that log line anywhere. Ordering
  * after requestId/logger means a hit is visible during a live
  * `wrangler tail` session, not after the fact — still worth the free
  * ordering, just not the retroactive visibility this used to claim.

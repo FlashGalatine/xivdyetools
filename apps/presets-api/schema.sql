@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS moderation_log (
   id TEXT PRIMARY KEY,                    -- UUID v4
   preset_id TEXT,                         -- NULL for user-level actions (ban | unban)
   moderator_discord_id TEXT NOT NULL,
-  action TEXT NOT NULL,                   -- approve | reject | flag | unflag | requeue | revert | ban | unban | hide | restore
+  action TEXT NOT NULL,                   -- approve | reject | flag | unflag | requeue | revert | ban | unban | hide | restore | image_approve | image_reject
   reason TEXT,
   target_discord_id TEXT,                 -- the moderated user: set for ban | unban | hide | restore
   created_at TEXT DEFAULT (datetime('now')),

@@ -5,6 +5,23 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.1] - 2026-10-04
+
+Sprint 9 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`). No card, route or
+behaviour change.
+
+### Security
+
+- **Workers Logs pinned off** (FINDING-022): `[observability] enabled = false` in the top-level
+  (beta) block and `[env.production.observability]` in production. Both privacy policies promise
+  persistent logs are off, so the state now lives in config rather than only in the dashboard.
+  `tests/wrangler-env.test.ts` asserts it, along with no logpush and no tail consumers.
+
+### Notes
+
+- The version rides every `/og/*` edge-cache key (BUG-025), so this bump retires already-cached
+  cards once; each re-renders identically on its next request.
+
 ## [2.11.0] - 2026-09-28
 
 The Glamour Reader, the web app's tenth tool, gets its card (Claude Design, *OG Default Cards*

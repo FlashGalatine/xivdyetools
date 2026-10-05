@@ -11,7 +11,23 @@ import { isValidSnowflake } from '@xivdyetools/types';
 export interface EnvValidationResult {
   valid: boolean;
   errors: string[];
+  /**
+   * Findings that are reported but never make `valid` false. The production
+   * guard in `src/index.ts` answers 500 to EVERY request when `valid` is
+   * false, so anything that must not take the whole API down goes here
+   * (FINDING-027: a short INTERNAL_WEBHOOK_SECRET).
+   */
+  warnings: string[];
 }
+
+/**
+ * Shortest `INTERNAL_WEBHOOK_SECRET` production should carry (2026-10-03
+ * security audit, FINDING-027). discord-worker enforces the same floor on its
+ * public webhook route; this side only reports it, because failing validation
+ * here would 500 the whole API (and every moderation write with it) over a
+ * secret that still authenticates.
+ */
+const MIN_WEBHOOK_SECRET_LENGTH = 32;
 
 /**
  * Validates all required environment variables for the Presets API worker.
@@ -38,6 +54,7 @@ export interface EnvValidationResult {
  */
 export function validateEnv(env: Env): EnvValidationResult {
   const errors: string[] = [];
+  const warnings: string[] = [];
 
   // Check required string environment variables
   const requiredStrings: Array<keyof Env> = [
@@ -130,6 +147,12 @@ export function validateEnv(env: Env): EnvValidationResult {
     // four other secrets were deleted from this worker on 2026-09-01.
     if (!env.INTERNAL_WEBHOOK_SECRET || env.INTERNAL_WEBHOOK_SECRET.trim() === '') {
       errors.push('Missing required env var in production: INTERNAL_WEBHOOK_SECRET');
+    } else if (env.INTERNAL_WEBHOOK_SECRET.length < MIN_WEBHOOK_SECRET_LENGTH) {
+      // FINDING-027: deliberately a warning, never an error — see
+      // `EnvValidationResult.warnings`. Only the length rule is reported.
+      warnings.push(
+        `INTERNAL_WEBHOOK_SECRET must be at least ${MIN_WEBHOOK_SECRET_LENGTH} characters in production`
+      );
     }
     if (!env.DISCORD_WORKER) {
       errors.push('Missing required service binding in production: DISCORD_WORKER');
@@ -150,6 +173,7 @@ export function validateEnv(env: Env): EnvValidationResult {
   return {
     valid: errors.length === 0,
     errors,
+    warnings,
   };
 }
 
@@ -161,6 +185,13 @@ export function validateEnv(env: Env): EnvValidationResult {
  */
 export interface EnvValidationLogger {
   error(message: string, ...args: unknown[]): void;
+}
+
+/** FINDING-027: logs non-fatal findings (see `EnvValidationResult.warnings`). */
+export function logValidationWarnings(warnings: string[], logger?: EnvValidationLogger): void {
+  for (const warning of warnings) {
+    (logger ?? console).error(`Environment validation warning: ${warning}`);
+  }
 }
 
 /**

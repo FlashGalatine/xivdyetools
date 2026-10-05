@@ -20,13 +20,26 @@ export interface Env {
    * Absent → KV `RATE_LIMIT` under the `api:svc:` prefix.
    */
   SERVICE_RATE_LIMITER?: RateLimit;
+  /**
+   * FINDING-011: native rate-limit binding for the Universalis proxy's
+   * cache-miss budget, per client IP (`RATE_LIMIT_REQUESTS` / 60 s: 30 in
+   * production, 60 in dev). Absent → KV `RATE_LIMIT` under `universalis:ip:`.
+   */
+  UNIVERSALIS_RATE_LIMITER?: RateLimit;
+  /**
+   * FINDING-011 / BUG-048: native rate-limit binding for our own workers on
+   * the Universalis proxy (20 × `RATE_LIMIT_REQUESTS` / 60 s: 600 in
+   * production) — a service-binding request carries no client IP, so they
+   * share one key. Absent → KV `RATE_LIMIT` under `universalis:svc:`.
+   */
+  UNIVERSALIS_SERVICE_RATE_LIMITER?: RateLimit;
   ENVIRONMENT: string;
   API_VERSION: string;
   /** Universalis proxy routes (absorbed from apps/universalis-proxy) */
   UNIVERSALIS_API_BASE: string;
   /** Static docs site (absorbed from apps/api-docs) — production env only */
   ASSETS?: Fetcher;
-  /** Per-IP memory rate limit for /universalis aggregated route */
+  /** Per-IP cache-miss budget (per window) for the /universalis aggregated route — see UNIVERSALIS_RATE_LIMITER */
   RATE_LIMIT_REQUESTS: string;
   RATE_LIMIT_WINDOW_SECONDS: string;
   /**

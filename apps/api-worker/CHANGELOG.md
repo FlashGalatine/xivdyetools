@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.1] - 2026-10-04
+
+Sprint 7 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`).
+
+### Security
+
+- **FINDING-011 — the Universalis market proxy's cache-miss limit now counts through native Workers
+  Rate Limiting.** `GET /universalis/aggregated/:datacenter/:itemIds` (and the `/api/v2` mount) used
+  a module-scope, per-isolate in-memory limiter, which a client routed across isolates simply
+  outran and which did not match the privacy guide's description of the counting. It now draws on two
+  bindings: `UNIVERSALIS_RATE_LIMITER` per client IP (30 / 60 s in production, 60 in dev) and
+  `UNIVERSALIS_SERVICE_RATE_LIMITER` for the service-binding key (600 / 60 s in production, 1200 in
+  dev — BUG-048's 20x), with the `RATE_LIMIT` KV namespace as the fallback when a binding is absent
+  (`universalis:ip:` / `universalis:svc:` prefixes). The per-isolate limiter and its test hook are
+  gone. The limit is therefore now enforced **per colo** rather than per isolate, and the 429's
+  `X-RateLimit-*` headers are unchanged (`Remaining` is `0`; successful proxy responses carry no
+  rate-limit headers). Unchanged: charge on cache miss only (FINDING-025), the separate service-binding bucket, the
+  429 body and `Retry-After`, fail-open. `tests/wrangler-config.test.ts` pins each binding's limit and
+  period to that environment's `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS`.
+- **FINDING-022 — Workers Logs pinned off.** `[observability] enabled = false` at the top level and
+  `[env.production.observability] enabled = false` are declared explicitly, asserted by
+  `tests/wrangler-config.test.ts` (no `enabled = true`, no inline `observability`, no `logpush`, no
+  `tail_consumers`). Turning it on requires both privacy policies to change in all six languages in
+  the same change.
+- **Retired custom domain.** The maintainer removed `proxy.xivdyetools.projectgalatine.com` in the
+  dashboard on 2026-10-05, so its route line is gone from `[env.production]`. A deploy re-attaches
+  every custom domain listed there. `proxy.xivdyetools.app` still serves the same compatibility
+  mount, and a test pins the three remaining routes.
+
 ## [0.16.0] - 2026-09-28
 
 Lands after 0.15.0 (the acquisition lines, PR #207).
