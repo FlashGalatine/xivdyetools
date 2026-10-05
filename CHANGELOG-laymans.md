@@ -35,7 +35,7 @@ Rules:
 ### 🌏 The Discord bot speaks your language
 - Discord bot: `/glamour` and `/swatch` cards name your character's clan in your language instead of in English.
 - Discord bot: when the bot can't read a character file, it says why in your language.
-- Discord bot: `/manual` now explains `/glamour` in its character-file topic, and character-creation color names match the game in every language.
+- Discord bot: `/manual` now explains `/glamour` in its character-file topic, and character-creation color names in `/manual` and on the cards match the game.
 
 ## [5.10.6] - 2026-10-05
 ### ⚙️ Your settings stay put
