@@ -20,16 +20,20 @@ api-worker, image-worker; the **routed beta** worker on og-worker; and **product
 
 Verified with `gh api` on 2026-09-05; the state noted is the state found.
 
-- [ ] **Code security → Private vulnerability reporting: ON.** Found **disabled**
-      (`repos/…/private-vulnerability-reporting` → `enabled: false`) while `SECURITY.md` directs
-      reporters to it. The only item on this page a stranger can hit; do this one first.
-- [ ] **Dependabot alerts + security updates: ON.** Found off (`vulnerability-alerts` → 404,
-      `automated-security-fixes` → `enabled: false`). The nightly `pnpm audit --prod` job is the
-      in-repo half; this is the GitHub half.
-- [ ] **Branch protection on `main`:** add *Secret scan (gitleaks)* to the required checks and
-      turn on **linear history**. Found: required checks are *Lint, Type-check, Test, Build*,
-      *Security audit (production dependencies)* and *E2E (Playwright, chromium)*; force-push
-      already blocked; linear history off; no rulesets.
+- [x] **Code security → Private vulnerability reporting: ON.** Done 2026-10-04 (verified with
+      `gh api`: `repos/…/private-vulnerability-reporting` → `enabled: true`), matching what
+      `SECURITY.md` tells reporters. Defaults kept: no CWE requirement, a daily limit of 10, no
+      trusted reporters.
+- [x] **Dependabot alerts + security updates: ON.** Done 2026-10-04 (2026-10-03 audit FINDING-030;
+      verified with `gh api`: `vulnerability-alerts` → 204, `automated-security-fixes` →
+      `enabled: true`). The nightly `pnpm audit --prod` job is the in-repo half; this is the
+      GitHub half. Actions now also require full-length SHA pins (`sha_pinning_required: true`,
+      same date).
+- [ ] **Branch protection on `main`:** turn on **linear history**. *Secret scan (gitleaks)* was
+      added to the required checks on 2026-10-04 (2026-10-03 audit FINDING-024, verified with
+      `gh api`), next to *Lint, Type-check, Test, Build*, *Security audit (production
+      dependencies)* and *E2E (Playwright, chromium)*; force-push already blocked; no rulesets.
+      `strict` and `enforce_admins` stay off until the 2026-10-03 remediation PRs are merged.
 - [ ] **`CLOUDFLARE_API_TOKEN` scoped to Workers Scripts: Edit + Pages: Edit on the account, and
       Workers Routes: Edit on the `xivdyetools.app` zone — no KV / D1 / R2 Edit** (2026-08-29
       FINDING-030, [SECRET_ROTATION.md](SECRET_ROTATION.md) §7). Inspect the live token's grants
@@ -37,6 +41,12 @@ Verified with `gh api` on 2026-09-05; the state noted is the state found.
       deploy via *workflow_dispatch*, revoke the old token, log the date. The token's *homing* is
       done: it is an environment secret on `production`, `CLOUDFLARE_API_TOKEN_BETA` is one on
       `beta`, and no repository-level copy of either exists (verified 2026-09-05).
+- [ ] 2026-10-03 audit FINDING-023: the Discord bot tokens were created as environment secrets on
+      2026-10-04 (`DISCORD_TOKEN`, `MODERATION_DISCORD_TOKEN` on `production`; `BETA_DISCORD_TOKEN`,
+      `BETA_DISCORD_GUILD_ID` on `beta`; verified with `gh api`). Still to do: delete the four
+      repository copies once a production deploy of discord-worker and of moderation-worker has
+      registered commands with them ([SECRET_ROTATION.md](SECRET_ROTATION.md) GitHub Actions
+      secrets section).
 
 Closed on the same walk, recorded here so the archived checklist's open boxes read correctly:
 the `beta` environment exists with `CLOUDFLARE_API_TOKEN_BETA` and the three beta deploy
