@@ -62,9 +62,15 @@ revert against 2.4.0. The production deploy re-registers the commands, because
 
 ### Tests
 
-- 761 tests in total. They include `ban-service.sqlite.test.ts`, which runs real SQLite through
+- 763 tests in total. They include `ban-service.sqlite.test.ts`, which runs real SQLite through
   `node:sqlite` because the D1 mock never evaluates SQL, plus the parser and the legacy, stale
   and confirm flows.
+
+### Removed
+
+- **Five strings the old approve/reject handlers used** (`preset.moderation.approved`,
+  `approvedDesc`, `missingReason`, `rejected`, `rejectedDesc` in `services/bot-i18n.ts`). The
+  confirm-button rewrite above left them with no reader (2026-10-04 dead-code audit, DEAD-001).
 
 ## [1.7.4] - 2026-09-21
 

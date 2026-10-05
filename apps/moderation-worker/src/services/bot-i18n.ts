@@ -50,11 +50,6 @@ const enLocale: LocaleData = {
       noPending: 'No presets are currently awaiting moderation.',
       pendingCount: '{count} preset(s) pending review',
       missingId: 'Please specify a preset ID for this action.',
-      approved: 'Preset Approved',
-      approvedDesc: '**{name}** has been approved and is now live!',
-      missingReason: 'Please provide a reason for rejection.',
-      rejected: 'Preset Rejected',
-      rejectedDesc: '**{name}** has been rejected.',
       stats: 'Moderation Statistics',
       // FINDING-001 (2026-08-11 fix wave): the queue was widened to include
       // approved presets whose picture alone is pending, but approve/reject
