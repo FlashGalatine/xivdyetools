@@ -24,7 +24,7 @@
 **Ordering:**
 1. Sprint 0 holds the decisions due before tomorrow's batch merge. Nothing is pushed without your yes.
 2. Correctness first:
-   - the deep-dive HIGH (Sprint 1), then the two i18n P1s (Sprints 2–3);
+   - the deep-dive HIGH (Sprint 1), then the two i18n P1s (Sprints 2–3), after #239 and #240 (the dictionary table and core's race and clan names);
    - then the units carrying MEDIUM / P2 findings;
    - then the LOW-only units.
 3. One deploy unit per sprint, with three exceptions:
@@ -88,11 +88,19 @@
 - **Translation-only edits (I18N-006, TERM-014, TERM-015):** one Korean or Chinese phrase each, inside #223, #227 and #230. Otherwise, Sprint 7.
 - **TERM-001:** #223's new line 13 can switch to 조정자 now, the word the rest of that file uses. The full fix is in Sprint 7.
 
-**Decision: the character-creation sheet names.** TERM-003, TERM-004 and TERM-021 need a dictionary table first:
-- all nine sheets × six locales, cited from the client's own text and read raw (`traps/i18n-fonts.md`);
-- core's names are typed by hand, and its limbal is "cornea" / "iris" in three languages;
-- options: research it (the 2026-09-20 browser method), or supply the client captures;
-- until then, those three findings stay where they are and their sprints ship without them.
+**Answered 2026-10-05: the character-creation sheet names.**
+- The client's own labels are now in the dictionary (#239, *Character-Creation Color Sheets*), read from the game data in all six languages.
+- So TERM-003, TERM-004 and TERM-021 are unblocked and stay in Sprints 6, 2 and 13. Merge #239 before those sprints.
+
+**Prerequisite before Sprint 2: core's race and clan names (#240).** The same research found three sets of names in core that aren't the clients':
+- two Korean race names (Hyur, Hrothgar);
+- 13 of 16 Korean clan names;
+- 4 Chinese clan names.
+
+HC-001 (Sprint 2) prints core's clan names on the bot cards, so you chose to fix core first.
+- **What #240 contains:** core 5.8.1, plus the discord-worker 5.8.1 and og-worker 2.11.2 CJK font re-cut.
+- **Merge order:** #240 is stacked on #239. Merge it after the batch and after #239, before Sprint 2.
+- **No ID:** it came from the research, not from a catalog.
 
 ## Sprint 1 — web-app: tool settings have one owner (the HIGH)
 
@@ -120,11 +128,13 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 ## Sprint 2 — bot-logic: the bot speaks the user's language (i18n, publish)
 
-**The anchor is HC-001 (P1):** `/glamour` and `/swatch` cards print the clan in English in every locale. Core already ships every clan name; bot-logic needs a clan getter.
+**The anchor is HC-001 (P1):** `/glamour` and `/swatch` cards print the clan in English in every locale. bot-logic needs a clan getter for the names core ships, and #240 (core 5.8.1) makes the Korean and Chinese ones the clients' own. Merge #240 before this sprint.
 
 **Also here:** the dye-problem chip (TERM-012), a Chinese category name (TERM-013), card plurals and wording (I18N-016 to I18N-018), the manual topic `/glamour` points to (I18N-019) and a Korean option description (I18N-020).
 
-**TERM-004** waits for the Sprint 0 sheet-name table. If the table is not ready, it moves to Sprint 15 and this sprint ships without it.
+**TERM-004:** the sheet names are pinned in the dictionary (#239, *Character-Creation Color Sheets*). Merge #239 first.
+
+**Also here (no ID):** the Korean `/preferences set clan` tooltip still gives core's old clan names as examples (미드랜더, 렌). Use the clients' (중원 부족, 아우라 렌).
 
 **Publishes bot-logic early.** It needs nothing from the core and svg sprints. bot-logic publishes again in Sprint 15.
 
@@ -234,7 +244,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 - singular forms (I18N-007);
 - the smaller wording rows.
 
-**TERM-003** waits for the Sprint 0 sheet-name table. If the table is not ready, it moves to Sprint 22.
+**TERM-003:** the sheet names are pinned in the dictionary (#239, *Character-Creation Color Sheets*).
+
+**Also here (no ID):** `swatch.absentFurPattern` still calls Hrothgar 로스갈 in Korean (core says 로스가르 since #240). All five translations also name the fur pattern differently from the client (体毛柄 / Fellzeichnung / Motif du pelage / 털 무늬 / 毛纹).
 
 **Before Sprint 22:** some rows touch `glamour-block.ts`, which several of Sprint 22's rows also touch, so this sprint lands first.
 
@@ -409,7 +421,7 @@ deep-dive/BUG-140: context strings skip key=value redaction. deep-dive/BUG-141: 
 
 **Also here:** LOW parser and data fixes, plus two tests that cannot fail.
 
-**`build-locales.ts`:** deep-dive/BUG-128 is the generator, so fix the generator, never the generated JSON. The sheet names (TERM-021) are in the same file and follow the Sprint 0 table. Without the table they stay as they are.
+**`build-locales.ts`:** deep-dive/BUG-128 is the generator, so fix the generator, never the generated JSON. The sheet names (TERM-021) are in the same file and follow the dictionary table (#239). The race and clan names there were corrected earlier, in #240 (core 5.8.1), so this sprint's bump is the next minor.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|

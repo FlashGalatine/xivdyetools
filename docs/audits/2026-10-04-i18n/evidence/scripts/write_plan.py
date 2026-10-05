@@ -74,9 +74,10 @@ SPRINTS = [
      B(1, 19, 22, 27, 12, 23, 24, 11, 78, 79),
      'web'),
     ('bot-logic: the bot speaks the user\'s language (i18n, publish)',
-     '**The anchor is HC-001 (P1):** `/glamour` and `/swatch` cards print the clan in English in every locale. Core already ships every clan name; bot-logic needs a clan getter.\n\n'
+     '**The anchor is HC-001 (P1):** `/glamour` and `/swatch` cards print the clan in English in every locale. bot-logic needs a clan getter for the names core ships, and #240 (core 5.8.1) makes the Korean and Chinese ones the clients\' own. Merge #240 before this sprint.\n\n'
      '**Also here:** the dye-problem chip (TERM-012), a Chinese category name (TERM-013), card plurals and wording (I18N-016 to I18N-018), the manual topic `/glamour` points to (I18N-019) and a Korean option description (I18N-020).\n\n'
-     '**TERM-004** waits for the Sprint 0 sheet-name table. If the table is not ready, it moves to Sprint 15 and this sprint ships without it.\n\n'
+     '**TERM-004:** the sheet names are pinned in the dictionary (#239, *Character-Creation Color Sheets*). Merge #239 first.\n\n'
+     '**Also here (no ID):** the Korean `/preferences set clan` tooltip still gives core\'s old clan names as examples (미드랜더, 렌). Use the clients\' (중원 부족, 아우라 렌).\n\n'
      '**Publishes bot-logic early.** It needs nothing from the core and svg sprints. bot-logic publishes again in Sprint 15.',
      H(1) + T(12, 13, 4) + I(16, 17, 18, 19, 20),
      BOT_WAVE),
@@ -116,7 +117,8 @@ SPRINTS = [
      '- the Chinese Dated tag (TERM-008);\n'
      '- singular forms (I18N-007);\n'
      '- the smaller wording rows.\n\n'
-     '**TERM-003** waits for the Sprint 0 sheet-name table. If the table is not ready, it moves to Sprint 22.\n\n'
+     '**TERM-003:** the sheet names are pinned in the dictionary (#239, *Character-Creation Color Sheets*).\n\n'
+     '**Also here (no ID):** `swatch.absentFurPattern` still calls Hrothgar 로스갈 in Korean (core says 로스가르 since #240). All five translations also name the fur pattern differently from the client (体毛柄 / Fellzeichnung / Motif du pelage / 털 무늬 / 毛纹).\n\n'
      '**Before Sprint 22:** some rows touch `glamour-block.ts`, which several of Sprint 22\'s rows also touch, so this sprint lands first.',
      T(2, 9, 18) + I(3) + T(5, 6, 7, 8, 3, 16, 17) + I(7, 8, 9, 10, 11, 12) + H(3),
      WEB + ' The edited `en` values re-key the allow-lists: re-run `pnpm --filter xivdyetools-web-app exec vitest run scripts/i18n-parity-gate.test.js --coverage.enabled=false` and update a stale allow-list reason in the same commit.'),
@@ -169,7 +171,7 @@ SPRINTS = [
      '- BUG-035: grey mixes get a hue neither input has.\n'
      '- BUG-036: palette extraction returns duplicate 0-pixel clusters.\n\n'
      '**Also here:** LOW parser and data fixes, plus two tests that cannot fail.\n\n'
-     '**`build-locales.ts`:** BUG-128 is the generator, so fix the generator, never the generated JSON. The sheet names (TERM-021) are in the same file and follow the Sprint 0 table. Without the table they stay as they are.',
+     '**`build-locales.ts`:** BUG-128 is the generator, so fix the generator, never the generated JSON. The sheet names (TERM-021) are in the same file and follow the dictionary table (#239). The race and clan names there were corrected earlier, in #240 (core 5.8.1), so this sprint\'s bump is the next minor.',
      B(35, 36, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139) + T(21),
      'bump `@xivdyetools/core` (minor) → `pnpm turbo run build type-check lint test --filter=...@xivdyetools/core` (all consumers) → merge (consumer deploy workflows fire on `packages/core/**`) → Actions publish. If TERM-021 lands, its CJK sheet names reach both workers\' font gates, which read core\'s locales. Re-cut the discord-worker and og-worker subsets in the same PR (compare by cmap).'),
     ('@xivdyetools/svg: card text fidelity (publish)',
@@ -297,7 +299,7 @@ parts = [f"""# Remediation Plan — 2026-10-04 (deep-dive + dead-code + i18n, me
 **Ordering:**
 1. Sprint 0 holds the decisions due before tomorrow's batch merge. Nothing is pushed without your yes.
 2. Correctness first:
-   - the deep-dive HIGH (Sprint 1), then the two i18n P1s (Sprints 2–3);
+   - the deep-dive HIGH (Sprint 1), then the two i18n P1s (Sprints 2–3), after #239 and #240 (the dictionary table and core's race and clan names);
    - then the units carrying MEDIUM / P2 findings;
    - then the LOW-only units.
 3. One deploy unit per sprint, with three exceptions:
@@ -349,11 +351,19 @@ parts.append(f"""## Sprint 0 — Before the batch merge (your decision)
 - **Translation-only edits (I18N-006, TERM-014, TERM-015):** one Korean or Chinese phrase each, inside #223, #227 and #230. Otherwise, Sprint 7.
 - **TERM-001:** #223's new line 13 can switch to 조정자 now, the word the rest of that file uses. The full fix is in Sprint 7.
 
-**Decision: the character-creation sheet names.** TERM-003, TERM-004 and TERM-021 need a dictionary table first:
-- all nine sheets × six locales, cited from the client's own text and read raw (`traps/i18n-fonts.md`);
-- core's names are typed by hand, and its limbal is "cornea" / "iris" in three languages;
-- options: research it (the 2026-09-20 browser method), or supply the client captures;
-- until then, those three findings stay where they are and their sprints ship without them.
+**Answered 2026-10-05: the character-creation sheet names.**
+- The client's own labels are now in the dictionary (#239, *Character-Creation Color Sheets*), read from the game data in all six languages.
+- So TERM-003, TERM-004 and TERM-021 are unblocked and stay in Sprints 6, 2 and 13. Merge #239 before those sprints.
+
+**Prerequisite before Sprint 2: core's race and clan names (#240).** The same research found three sets of names in core that aren't the clients':
+- two Korean race names (Hyur, Hrothgar);
+- 13 of 16 Korean clan names;
+- 4 Chinese clan names.
+
+HC-001 (Sprint 2) prints core's clan names on the bot cards, so you chose to fix core first.
+- **What #240 contains:** core 5.8.1, plus the discord-worker 5.8.1 and og-worker 2.11.2 CJK font re-cut.
+- **Merge order:** #240 is stacked on #239. Merge it after the batch and after #239, before Sprint 2.
+- **No ID:** it came from the research, not from a catalog.
 """)
 for n, (title, blurb, ids, ends) in enumerate(SPRINTS, 1):
     parts.append(f"## Sprint {n} — {title}\n\n{q(blurb)}\n\n{table(ids)}\n\n**Ends with:** {WEB if ends == 'web' else q(ends)}\n")
