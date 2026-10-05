@@ -1083,6 +1083,37 @@ describe('SwatchTool', () => {
 
       expect(reverseHexes()).toEqual(hair.slice(0, 3).map((c) => c.hex));
     });
+
+    // The previous sheet's cells stay on screen while the hair or skin sheet
+    // loads. A cell clicked there is not on the new sheet, so the pick is
+    // dropped rather than outlined on whichever new cell shares its index.
+    it('drops a cell picked from the old sheet while the new one loads', async () => {
+      const hair = Array.from({ length: 8 }, (_, i) => ({
+        index: i,
+        hex: `#1${i}1${i}1${i}`,
+        name: `Hair ${i}`,
+      }));
+      let land!: (colors: unknown) => void;
+      vi.spyOn(CharacterColorService.prototype, 'getHairColors').mockReturnValue(
+        new Promise((resolve) => {
+          land = resolve;
+        }) as never
+      );
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+
+      railChip('swatch.palHair').click();
+      cells()[5].click(); // still the eye sheet's cell
+      expect(cards()).toHaveLength(1);
+
+      land(hair);
+      await flush();
+
+      expect(outlined()).toEqual([]);
+      expect(cards()).toHaveLength(0);
+      expect(share().shareParams).toEqual({});
+    });
   });
 
   // ==========================================================================

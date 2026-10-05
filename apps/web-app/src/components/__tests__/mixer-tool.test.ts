@@ -1136,6 +1136,22 @@ describe('MixerTool', () => {
       expect(card.showCmyk).toBe(true);
     });
 
+    // An imported settings file is type-checked only, so the controller can
+    // hold a count or a blend model the Mixer has no use for.
+    it('clamps a saved count and ignores an unknown blend model at mount', () => {
+      persist({ maxResults: 50, mixingMode: 'cmyk' as never });
+      tool = mountWithPair();
+      expect(cardDyeIds()).toHaveLength(8);
+      expect(shareParams().mode).toBe(getDefaultConfig('mixer').mixingMode);
+    });
+
+    it('ignores a count or a blend model it cannot use when one arrives later', () => {
+      tool = mountWithPair();
+      tool.setConfig({ maxResults: Number.NaN, mixingMode: 'cmyk' as never });
+      expect(cardDyeIds()).toHaveLength(getDefaultConfig('mixer').maxResults);
+      expect(shareParams().mode).toBe(getDefaultConfig('mixer').mixingMode);
+    });
+
     it('falls back to the controller defaults for fields a config lacks', () => {
       // The constructor is the first getConfig reader after the reset above
       vi.spyOn(ConfigController.getInstance(), 'getConfig').mockImplementationOnce(

@@ -10,11 +10,11 @@ The XIV Dye Tools web app ships ten tools. Each has its own route and a `ToolId`
 
 **Picking dyes.** The palette drawer (`v4/dye-palette-drawer.ts`) is the app's dye picker. The shell routes `dye-selected` to the active tool's `selectDye(dye)` (or `addDye`) and `custom-color-selected` to `selectCustomColor(hex)`. The drawer is hidden for `extractor`, `presets` and `glamour` (`V4LayoutShell.TOOLS_WITHOUT_PALETTE`); its **Custom Color** section is shown for harmony, gradient, mixer, swatch, accessibility, comparison and budget (`DyePaletteDrawer.TOOLS_WITH_CUSTOM_COLOR`). A custom colour is a virtual dye with `stainID: null` — never persisted to a collection, never shared as `dye=0`.
 
-**Config.** Each tool's shape is an interface in `src/shared/tool-config-types.ts`, keyed by `ToolId` in `ToolConfigMap` (plus `global`, `market`, `advanced`). `ConfigController.getInstance().getConfig('harmony')` / `setConfig()` / `subscribe()`; persisted per key under `xivdyetools_v4_config_<key>` and merged over `DEFAULT_CONFIGS` on load. Every tool config carries `displayOptions: DisplayOptionsConfig` (result-card rows: `showHex/Rgb/Hsv/Lab/Cmyk`, `showPrice`, `showAcquisition`, 5.0 `showHue/showStain/showSpectrum`; `showDeltaE` is deprecated — the ΔE2000 verdict is structural) and most carry `dyeFilters: DyeFiltersConfig` (`Required<DyeTypeFilters>` + the web-only `excludeCoffers`).
+**Config.** Each tool's shape is an interface in `src/shared/tool-config-types.ts`, keyed by `ToolId` in `ToolConfigMap` (plus `global`, `market`, `advanced`). `ConfigController.getInstance().getConfig('harmony')` / `setConfig()` / `subscribe()`; persisted per key under `xivdyetools_v4_config_<key>` and merged over `DEFAULT_CONFIGS` on load. Since 5.14.1 the controller is the only owner of a setting: every tool reads every setting from `getConfig()` when it is built (`subscribe()` never replays), its own `setConfig()` only applies values that changed, and an in-tool pick, a share link or Budget's match-line slider applies locally and then writes `ConfigController.setConfig()`. No tool keeps its own copy in storage any more. The config sidebar seeds and subscribes to every key except `advanced`. Every tool config carries `displayOptions: DisplayOptionsConfig` (result-card rows: `showHex/Rgb/Hsv/Lab/Cmyk`, `showPrice`, `showAcquisition`, 5.0 `showHue/showStain/showSpectrum`; `showDeltaE` is deprecated — the ΔE2000 verdict is structural) and most carry `dyeFilters: DyeFiltersConfig` (`Required<DyeTypeFilters>` + the web-only `excludeCoffers`).
 
-**Matching method.** One vocabulary from `@xivdyetools/core` — `ciede2000` (default) · `oklab` · `cie76` · `redmean` · `rgb` · `distinguish`. The config sidebar's "Matching Algorithm" select prefixes each with its symbol — `ΔE2000`, `ΔEOK2`, `ΔE76`, `REDMEAN`, `RGB DIST`, `DISTINGUISH %` — over localized descriptions (`config.matching*` keys). Retired 4.x values (`hyab`, `oklch-weighted`, swatch's `euclidean`) are normalised through core's `normalizeMatchingMethod` in three places: `ConfigController.loadFromStorage()` (persisted configs), each tool's init (`normalizeMatchingMethod(config.matchingMethod ?? 'ciede2000')`), and the `algo` share param. Tools dispatch distance through `ColorService.getDistanceForMethod`; the result card's verdict is **always ΔE2000** regardless of the ordering method. `matchingMethod` exists on harmony, extractor, gradient, mixer, budget and swatch; comparison and accessibility have none (comparison shows all six as readouts).
+**Matching method.** One vocabulary from `@xivdyetools/core` — `ciede2000` (default) · `oklab` · `cie76` · `redmean` · `rgb` · `distinguish`. The config sidebar's "Matching Algorithm" select prefixes each with its symbol — `ΔE2000`, `ΔEOK2`, `ΔE76`, `REDMEAN`, `RGB DIST`, `DISTINGUISH %` — over localized descriptions (`config.matching*` keys). Retired 4.x values (`hyab`, `oklch-weighted`, swatch's `euclidean`) are normalised through core's `normalizeMatchingMethod` in three places: `ConfigController.loadFromStorage()` (persisted configs), each tool's init (`normalizeMatchingMethod(config.matchingMethod ?? 'ciede2000')`), and the `algo` share param (Gradient, Mixer and Swatch accept it only when it is a current or retired method, and ignore anything else rather than normalise it to the default). Tools dispatch distance through `ColorService.getDistanceForMethod`; the result card's verdict is **always ΔE2000** regardless of the ordering method. `matchingMethod` exists on harmony, extractor, gradient, mixer, budget and swatch; comparison and accessibility have none (comparison shows all six as readouts).
 
-**Share URLs** (`src/services/share-service.ts`, `v4/share-button.ts`; Shift+S shares the active tool). `ShareService.generateUrl({ tool, params })` builds `https://xivdyetools.app/<tool>/?…&v=1`. Grammar since 5.0: every dye-class param (`dye`, `dyes`, `start`/`end`, `dyeA`/`dyeB`) is a **stainID (1–254)**; `ShareService.resolveSharedDye()` rejects legacy itemIDs (≥ 5729, a disjoint range) and unknown values *loudly* — toast `share.legacyLink` / `share.invalidDye`, never a fallback dye. Bare colours travel as `hex`-class params (`RRGGBB`, `#` optional; `ShareService.parseSharedHex()` → `share.invalidHex`), mutually exclusive with the slot's dye param. Booleans are `1`/`0`, arrays comma-separated; `ShareService.parseUrl()` coerces numbers/booleans/arrays on read. Every generated link also carries `lang=<locale>` when the sharer's locale is not English (og-worker resolves the unfurl's language from that param and nothing else; the SPA ignores it), and `v=1`. The `ShareParams` interfaces are the declared grammar; the per-tool tables below list what each tool actually reads/writes today.
+**Share URLs** (`src/services/share-service.ts`, `v4/share-button.ts`; Shift+S shares the active tool). `ShareService.generateUrl({ tool, params })` builds `https://xivdyetools.app/<tool>/?…&v=1`. Grammar since 5.0: every dye-class param (`dye`, `dyes`, `start`/`end`, `dyeA`/`dyeB`) is a **stainID (1–254)**; `ShareService.resolveSharedDye()` rejects legacy itemIDs (≥ 5729, a disjoint range) and unknown values *loudly* — toast `share.legacyLink` / `share.invalidDye`, never a fallback dye. Bare colours travel as `hex`-class params (`RRGGBB`, `#` optional; `ShareService.parseSharedHex()` → `share.invalidHex`), mutually exclusive with the slot's dye param. Booleans are `1`/`0`, arrays comma-separated; `ShareService.parseUrl()` coerces numbers/booleans/arrays on read. Every generated link also carries `lang=<locale>` when the sharer's locale is not English (og-worker resolves the unfurl's language from that param and nothing else; the SPA ignores it), and `v=1`. Gradient, Mixer and Swatch validate a link's settings params and write the valid ones to `ConfigController`, so they persist like a sidebar choice (Budget's `maxDelta` too); a malformed value changes nothing. The `ShareParams` interfaces are the declared grammar; the per-tool tables below list what each tool actually reads/writes today.
 
 **Result cards, export, saving.** Matches render as `<v4-result-card>` (5B ticket, see Components). Extractor, Gradient, Comparison and Mixer open the shared export sheet (`components/export-sheet.ts` — CSS custom properties / SCSS / JSON / HEX / Tailwind `@theme`). "Save" actions write `CollectionService` records with a `kind`: `palette` (mixer "Save mix"), `swap` (budget "Save swap"), `character` (swatch "Save character colors"). Every stored dye ref is a stainID.
 
@@ -80,9 +80,9 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 |-------|---------|
 | `start`, `end` | endpoint stainIDs (`resolveSharedDye`) |
 | `hexStart`, `hexEnd` | bare-colour endpoints (`RRGGBB`), each mutually exclusive with its slot's dye param — a custom endpoint is written here, never as an invalid `start=0`. Read through `resolveSharedEndpoint()`, which prefers the dye slot when both are present |
-| `steps` | 3–12 |
+| `steps` | 3–12, an integer (anything else is ignored) |
 | `interpolation` | one of the five modes |
-| `algo` | matching method (normalised) |
+| `algo` | matching method: a current or retired method only, normalised |
 
 ---
 
@@ -102,7 +102,7 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 | `hexA`, `hexB` | bare-colour slots (`RRGGBB`), each mutually exclusive with its slot's dye param — a custom input is written here, never as an invalid `dyeA=0`. Read through `resolveSharedInput()`, which prefers the dye slot when both are present |
 | `ratio` | 0–100, percentage of dye A |
 | `mode` | one of the six blend models |
-| `algo` | matching method (normalised) |
+| `algo` | matching method: a current or retired method only, normalised |
 
 ---
 
@@ -163,7 +163,7 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 |-------|---------|
 | `dye` | target stainID |
 | `hex` | bare-colour target (`RRGGBB`), used only when `dye` is absent; never persisted |
-| `maxDelta` | match line, clamped to 2–20 |
+| `maxDelta` | match line, 2–20 (rounded); a value outside that range is ignored |
 
 `maxPrice` is declared in `BudgetShareParams` but no longer read. The 4.x `?dye=NAME` outlier is gone.
 
@@ -181,7 +181,7 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 
 **Copy list / Export .md (5.10.0).** Two buttons beside Make a palette (`glamour-list-actions.ts`) write the *whole* worn glamour — the Pieces/Dyes lens and Show all only change what's on screen, not what's written — as a fixed submission template: a bold slot label, the item name, `Dye 1:` / `Dye 2:` for dyeable slots, and a blank `Acquisition:` line, ending at Facewear. The character's name is never included. Copy puts real bold on the clipboard (HTML for Word/Google Docs, a plain-text fallback with no Markdown syntax); Export downloads `glamour-equipment.md` with `**bold**` Markdown. Both wait for item names to resolve, but stay enabled under NAMES UNAVAILABLE.
 
-**Config (`SwatchConfig`):** `colorSheet` (`eyeColors | hairColors | skinColors | highlightColors | lipColorsDark | lipColorsLight | tattooColors | facePaintColorsDark | facePaintColorsLight`, default `hairColors`), `race` (sub-race, default `SeekerOfTheSun`), `gender` (`Male | Female`), `maxResults` (1–6, default 3), `matchingMethod`, `displayOptions`, `dyeFilters`.
+**Config (`SwatchConfig`):** `colorSheet` (`eyeColors | hairColors | skinColors | highlightColors | lipColorsDark | lipColorsLight | tattooColors | facePaintColorsDark | facePaintColorsLight`, default `eyeColors`), `race` (sub-race, default `Midlander`), `gender` (`Male | Female`, default `Male`), `maxResults` (1–6, default 3), `matchingMethod`, `displayOptions`, `dyeFilters`.
 
 **Share params** (`loadFromShareUrl()` / `getShareParams()` — a cell is identified by address, not hex, because two cells can share a colour):
 
@@ -190,8 +190,8 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 | `slot` | colour sheet (`sheet` accepted as the pre-5.0 alias) |
 | `i` | cell index within the sheet (the R·C address derives from it) |
 | `race`, `gender` | written for race-specific sheets (hair, skin); validated on read |
-| `algo` | matching method (normalised — 4.x only whitelisted `oklab|ciede2000|euclidean`) |
-| `limit` | max results (≤ 20 on read) |
+| `algo` | matching method: a current or retired method only, normalised (4.x only whitelisted `oklab|ciede2000|euclidean`) |
+| `limit` | max results, clamped to 1–6 |
 | `hex` | bare-colour reverse match (`color` accepted as the legacy alias; `parseSharedHex`) |
 
 ## 10. Glamour Reader — design 1a/1b + export sheet 2c

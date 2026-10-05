@@ -118,6 +118,26 @@ const SLOT_SIZE = {
   result: 120, // 120x120px for result slot
 } as const;
 
+/** The six blend models, in the mixing field's row order. */
+const MIXING_MODES: readonly MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
+
+/** The result-count slider's range, in the sidebar and here. */
+const MAX_RESULTS_MIN = 3;
+const MAX_RESULTS_MAX = 8;
+
+// An imported settings file is type-checked only, so the controller can hold
+// a count or a model the Mixer cannot use: both are checked before applying.
+
+function isMixingMode(value: unknown): value is MixingMode {
+  return typeof value === 'string' && (MIXING_MODES as readonly string[]).includes(value);
+}
+
+/** A result count clamped to the slider's range; null when it is not a number. */
+function toMaxResults(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.min(MAX_RESULTS_MAX, Math.max(MAX_RESULTS_MIN, Math.round(value)));
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -209,8 +229,8 @@ export class MixerTool extends BaseComponent {
     // default table itself when nothing is stored.
     const defaults = getDefaultConfig('mixer');
     const config = ConfigController.getInstance().getConfig('mixer');
-    this.maxResults = config.maxResults ?? defaults.maxResults;
-    this.mixingMode = config.mixingMode ?? defaults.mixingMode;
+    this.maxResults = toMaxResults(config.maxResults) ?? defaults.maxResults;
+    this.mixingMode = isMixingMode(config.mixingMode) ? config.mixingMode : defaults.mixingMode;
     this.displayOptions = { ...DEFAULT_DISPLAY_OPTIONS, ...config.displayOptions };
     this.dyeFiltersConfig = { ...DEFAULT_DYE_FILTERS, ...config.dyeFilters };
     // Seed the matching method from config (suite default ΔE2000) —
@@ -707,11 +727,8 @@ export class MixerTool extends BaseComponent {
     const settings: Partial<MixerConfig> = {};
 
     // Load mixing mode (all six blend models round-trip)
-    if (
-      typeof params.mode === 'string' &&
-      ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'].includes(params.mode)
-    ) {
-      this.mixingMode = params.mode as MixingMode;
+    if (isMixingMode(params.mode)) {
+      this.mixingMode = params.mode;
       settings.mixingMode = this.mixingMode;
     }
 
@@ -910,10 +927,11 @@ export class MixerTool extends BaseComponent {
     }
 
     // Handle tool-specific config
-    if (config.maxResults !== undefined && config.maxResults !== this.maxResults) {
-      this.maxResults = config.maxResults;
+    const maxResults = toMaxResults(config.maxResults);
+    if (maxResults !== null && maxResults !== this.maxResults) {
+      this.maxResults = maxResults;
       needsUpdate = true;
-      logger.info(`[MixerTool] setConfig: maxResults -> ${config.maxResults}`);
+      logger.info(`[MixerTool] setConfig: maxResults -> ${maxResults}`);
 
       // Update slider displays
       if (this.maxResultsValueDisplay) {
@@ -925,7 +943,7 @@ export class MixerTool extends BaseComponent {
     }
 
     // Handle mixing mode changes
-    if (config.mixingMode !== undefined && config.mixingMode !== this.mixingMode) {
+    if (isMixingMode(config.mixingMode) && config.mixingMode !== this.mixingMode) {
       this.mixingMode = config.mixingMode;
       needsUpdate = true;
       logger.info(`[MixerTool] setConfig: mixingMode -> ${config.mixingMode}`);
@@ -1194,7 +1212,7 @@ export class MixerTool extends BaseComponent {
     if (!dyeA || !dyeB || this.selectedDyes[2]) return;
 
     const MONO = 'var(--font-mono)';
-    const MODELS: MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
+    const MODELS = [...MIXING_MODES];
     // Row headers name the blending method: identifiers by decision
     // (2026-08-20 i18n audit), identical in every locale. The tooltip carries
     // the translated model name (`mixer.model*`).

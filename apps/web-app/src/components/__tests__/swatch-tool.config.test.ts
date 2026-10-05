@@ -410,6 +410,21 @@ describe('SwatchTool with the real ConfigController', () => {
       expect(gridTitle()).toContain('tools.character.eyeColors');
     });
 
+    // A config that was never stored reads as the defaults of whichever build
+    // reads it, and builds before 5.14.1 default to hairColors / SeekerOfTheSun
+    // / Female. An older tab left open across the deploy would broadcast those
+    // back the next time it fanned out a display option.
+    it('stores the values it migrates, even when they equal the new defaults', async () => {
+      await mount();
+
+      expect(JSON.parse(localStorage.getItem(CONFIG_KEY)!)).toMatchObject({
+        colorSheet: 'eyeColors',
+        race: 'Midlander',
+        gender: 'Male',
+        maxResults: 3,
+      });
+    });
+
     it('validates each v3 value before it is persisted', async () => {
       localStorage.setItem(V3_KEYS.subrace, 'Nope');
       localStorage.setItem(V3_KEYS.gender, 'Other');

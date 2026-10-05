@@ -269,13 +269,18 @@ function migrateLegacySwatchSettings(): void {
 
   const category = StorageService.getItem<unknown>(LEGACY_SETTING_KEYS.colorCategory);
   const gender = StorageService.getItem<unknown>(LEGACY_SETTING_KEYS.gender);
-  ConfigController.getInstance().setConfig('swatch', {
+  const controller = ConfigController.getInstance();
+  controller.setConfig('swatch', {
     colorSheet: isColorCategory(category) ? category : DEFAULTS.colorCategory,
     race: toSubRace(StorageService.getItem(LEGACY_SETTING_KEYS.subrace)) ?? DEFAULTS.subrace,
     gender: isGender(gender) ? gender : DEFAULTS.gender,
     maxResults:
       toMaxResults(StorageService.getItem(LEGACY_SETTING_KEYS.maxResults)) ?? DEFAULTS.matchCount,
   });
+  // setConfig stores nothing when these equal the defaults, and a 5.14.0 tab
+  // still open would then read its own old defaults (hairColors /
+  // SeekerOfTheSun / Female) and broadcast them back on its next fan-out.
+  controller.persistConfig('swatch');
 
   for (const key of Object.values(LEGACY_SETTING_KEYS)) {
     StorageService.removeItem(key);
@@ -2088,8 +2093,17 @@ export class SwatchTool extends BaseComponent {
 
     // The cells are new, so re-apply the selected cell's outline. Without it
     // a share link's cell lost its outline whenever the constructor's own
-    // palette load landed after the link had selected it.
-    if (this.selectedColor) this.updateSwatchSelection();
+    // palette load landed after the link had selected it. A cell picked from
+    // the previous sheet while this one loaded is not on this sheet: drop it
+    // rather than outline whichever cell shares its index.
+    const selected = this.selectedColor;
+    if (selected) {
+      if (this.colors.find((c) => c.index === selected.index)?.hex === selected.hex) {
+        this.updateSwatchSelection();
+      } else {
+        this.clearForwardSelection();
+      }
+    }
     // Apply responsive sizing to newly created swatches
     this.updateSwatchLayout();
     // Re-run reverse match against potentially new palette, then highlight

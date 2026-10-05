@@ -7,6 +7,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.1] - 2026-10-05
+
+Sprint 1 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+tool settings have one owner. Each tool kept its own copies of its settings, `ConfigController`
+broadcast its whole config over them on every partial write, and several tools never read it at
+mount. Now every tool reads every setting from `ConfigController.getConfig()` when it is built, its
+`setConfig` only applies what changed, and in-tool picks, share links and the Budget match-line
+slider apply locally and then write the controller.
+
+### Fixed
+
+- **Swatch Matcher: the palette no longer flips** (BUG-001). Changing max results, a display
+  option, the matching method or a dye filter, from any tool, broadcast the controller's swatch
+  defaults (Hair, Seeker of the Sun, Female) over the tool's Eye / Midlander / Male, and dropped the
+  selected cell. The palette rail, the Dark/Light toggle and the THIS CHARACTER slots now write the
+  controller, and its swatch defaults match the tool.
+- **Saved settings apply when a tool opens** (BUG-022, BUG-078). Gradient, Swatch, Mixer and Budget
+  ignored saved dye filters (and Swatch and Budget the other saved settings) until a sidebar
+  control was touched.
+- **Share-link settings stick** (BUG-019). A Gradient or Swatch link's steps, colour space, palette,
+  tribe, result count and matching method were applied to the tool only, and the next sidebar change
+  reverted them (and cleared pinned gradient steps). They are now validated and saved like a sidebar
+  choice; a malformed value in a link is ignored instead of overwriting a saved setting. Mixer links
+  get the same validation, and a Mixer count or blend model from an imported settings file is checked
+  before it is applied.
+- **Swatch Matcher: no stale matches** (BUG-023, BUG-024). Changing the palette, or picking a THIS
+  CHARACTER slot after a grid cell, left the previous cell's cards, share link and SEND TO dyes in
+  place. They clear at once, and SEND TO carries the slot's closest dye. A cell clicked on the old
+  sheet while the Hair or Skin sheet is still loading is dropped when it lands.
+- **Budget: the match line holds** (BUG-012, BUG-014). The in-page slider saved to its own key, so
+  the next sidebar change snapped it back to 8. It now saves to the same setting as the sidebar
+  slider; sidebar changes and `?maxDelta=` links move both thumbs and the label.
+- **Budget no longer turns prices on everywhere** (BUG-079). Opening Budget switched the global
+  Market Board setting on and saved it. Budget now fetches its own prices whatever that setting says,
+  and they stay out of the shared price cache. A setting an earlier visit already switched on stays
+  on until you turn it off once. `PRIVACY.md` says so in all six languages (see *Changed*).
+- **The Options sidebar follows every setting** (BUG-027). It read most settings once, so it showed
+  stale values after a tool, a reset, an import or another tab changed them, and the next display or
+  filter toggle after a reset wrote the old values back.
+- **Dye Mixer: a mixing-field pick sticks.** Picking a cell in the mixing field changed the blend
+  model for the tool only, and the next settings change reverted it. It is now saved like the
+  sidebar's mixing-mode choice. (Not in the audit's catalog.)
+- **Tests** (BUG-011): the tool suites mount against a non-default saved config and assert outcomes;
+  every new test failed on the unfixed code.
+
+### Changed
+
+- **Budget's target card shows RGB, HSV and LAB by default,** as the sidebar always said it did.
+- **The sidebar's TRIBE & GENDER group shows only on the Hair and Skin palettes.** It showed on Eye
+  for a fresh profile only because the controller still said Hair.
+- **A Swatch share link's result count is capped at 6**, the slider's maximum (links accepted 20).
+- **Retired storage keys.** The tools' own copies are removed from `localStorage`:
+  `v3_character_{subrace,gender,category,color_index,max_results}` (migrated once into the swatch
+  config, marked by `xivdyetools_swatch_v3_migrated` and stored even when it equals the new defaults,
+  so a 5.14.0 tab left open cannot broadcast the old ones back), `v3_mixer_steps`, `v3_mixer_color_space`,
+  `v5_budget_match_line` (migrated once), `v3_budget_matching_method` and `v3_budget_show_*`.
+- **`PRIVACY.md`, all six languages,** item 1 of *Network access*: market prices are turned on by the
+  "Enable Market Board" switch in the settings column (it quoted a stale "Show Prices" label), and
+  Budget Suggestions always loads them, because it compares dyes by price. One translator and one
+  verifier per language. `Last updated` stays 2026-10-05; if this merges later, bump all six.
+- `ConfigController.persistConfig(key)` stores a config even when `setConfig` would skip it as
+  unchanged.
+- `MarketBoardService.fetchPricesForDyes` takes an `{ ignoreShowPrices }` option. The result goes to
+  the caller only: no shared-cache write, no `prices-updated` event.
+
 ## [5.14.0] - 2026-10-04
 
 Sprint 8 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). `PRIVACY.md` is
