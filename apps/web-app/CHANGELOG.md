@@ -50,7 +50,8 @@ slider apply locally and then write the controller.
   model for the tool only, and the next settings change reverted it. It is now saved like the
   sidebar's mixing-mode choice. (Not in the audit's catalog.)
 - **Tests** (BUG-011): the tool suites mount against a non-default saved config and assert outcomes;
-  every new test failed on the unfixed code.
+  every fix has a test that failed on the unfixed code. The other new tests pin behaviour that did
+  not change, and each was confirmed by a mutation that turns it red.
 
 ### Changed
 
