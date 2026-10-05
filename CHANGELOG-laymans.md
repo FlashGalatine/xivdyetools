@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.8] - 2026-10-05
+### 🌏 The Discord bot speaks your language
+- Discord bot: `/glamour` and `/swatch` cards name your character's clan in your language instead of in English.
+- Discord bot: when the bot can't read a character file, it says why in your language.
+- Discord bot: `/manual` now explains `/glamour` in its character-file topic, and character-creation color names match the game in every language.
+
 ## [5.10.6] - 2026-10-05
 ### ⚙️ Your settings stay put
 - Web app: the Swatch Matcher keeps the palette you picked. Changing another setting, in any tool, no longer switches it to Hair and the tribe to Seeker of the Sun.
