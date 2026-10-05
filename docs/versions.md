@@ -23,8 +23,8 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.14.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.8.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -115,6 +115,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.5 | Oct 2026 | Documents only (2026-10-04 remediation, Sprint 7) — the Privacy Guide and Terms of Service in all six languages: the Discord-ID cutoff is the fixed date 2026-10-05, not *Last updated* (I18N-001); every variant of the Terms lists all ten tools, the Glamour Reader included (I18N-002); the tools carry their UI titles (TERM-019); the About path quotes the current labels (I18N-013); French says préréglage (TERM-010) and German Vorlage; Korean says 조정자 for moderators (TERM-001); Japanese セルフホスト (TERM-020). No web-app source changed |
 | v5.14.4 | Oct 2026 | Translations and terminology (2026-10-04 remediation, Sprint 6): the facewear color tag uses the client's word in five languages (TERM-007), character-creation sheet names follow the dictionary (TERM-003), Glamour Reader counts take singular forms (I18N-007), its facewear tooltip names the color in the reader's language (HC-003), "Save .md" and "Glamour list" everywhere (TERM-018), "clan" for the clan (TERM-009), German Vorlage for preset (TERM-006), with core 5.8.2's Brass names |
 | v5.14.3 | Oct 2026 | Tool correctness (2026-10-04 remediation, Sprint 5): a language switch keeps the results in four tools (BUG-021), a stale `?dye=` no longer overrides a choice (BUG-013), Budget runs are superseded safely (BUG-015), Comparison's tier matches its verdict (BUG-018), the palette drawer is keyboard-operable (BUG-028), boot no longer awaits a dev-only network probe (OPT-001); the shell's dead Accessibility CSS removed (DEAD-004) |
 | v5.14.2 | Oct 2026 | Community presets and collections (2026-10-04 remediation, Sprint 4): saved presets are no longer marked "Removed by its author" by a failed or partial feed (BUG-029), failed votes and deletes say so, the gallery updates at once after a change, tab counts match the cards, Manage Collections refreshes after a create, non-Latin collection names survive export, and Save character colors numbers a taken name. Dead preset-service code removed |
@@ -182,6 +183,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.3 | Oct 2026 | Documents only (2026-10-04 remediation, Sprint 7) — the Privacy Policy and Terms of Service in all six languages: the Discord-ID cutoff is the fixed date 2026-10-05, not *Last Updated* (I18N-001); French says préréglage (TERM-010) and German Vorlage; Korean says 조정자 for moderators (TERM-001). 5.8.2 is Sprints 2 and 3, on a separate branch. No discord-worker source changed, no `register-commands` |
 | v5.8.1 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients) |
 | v5.7.2 | Oct 2026 | Security (2026-10-03 audit, Sprint 1) — `/budget` and preset-favorite log lines no longer carry command option values or the Discord user id, so the bot policy's "two log lines" promise holds (FINDING-002, FINDING-018); `/preferences reset` and the v4 migration delete the legacy `i18n:user:` / `budget:world:v1:` keys (FINDING-015); production refuses a webhook secret under 32 characters on the preset webhook only (FINDING-027); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
 | v5.7.1 | Sep 2026 | Documents only — the Privacy Policy and Terms of Service catch up with `/swatch` and `/glamour` in all six languages: how an uploaded `.chara` file is handled, what `/glamour` sends to api-worker, XIVAPI as a third-party service, and the commands the Terms had not listed. No discord-worker source changed, no `register-commands` |

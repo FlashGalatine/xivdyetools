@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.5] - 2026-10-05
+
+Sprint 7 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the policy documents. **Documents only** — no web-app source changed. `PRIVACY*.md` and
+`TERMS_OF_SERVICE*.md` are served from `main` (`about-modal.ts` `POLICY_DOCS_BASE`), so they are
+live at merge.
+
+### Changed
+
+- **Privacy Guide, all six languages:**
+  - The Discord-ID sentence names the date the change went live: posts made after 2026-10-05 do
+    not show your Discord user ID; posts made on or before that date may. It used to say "since
+    the *Last updated* date", which moves with every edit (I18N-001).
+  - The colour tools are named by their UI titles: Dye Comparison, Gradient Builder, Dye Mixer,
+    Accessibility Checker, Budget Suggestions (TERM-019).
+  - The way to this document quotes the current labels: About XIV Dye Tools → POLICIES → Privacy,
+    in each language's own words (I18N-013).
+  - "Reset all" deletes the rewritten line of every piece in the list. A line is kept per piece of
+    gear, so another outfit that shares a piece loses it too.
+  - ja: the fonts are セルフホスト, not 自社ホスト ("hosted by our company"; TERM-020).
+- **Terms of Service, all six languages:** the five translations listed nine of the "ten tools";
+  the Glamour Reader is back (I18N-002), and every tool carries its UI title (TERM-019).
+- **Both documents:**
+  - fr says préréglage, as the app does, never *palette prédéfinie* (TERM-010);
+  - de says Vorlage, following the app since 5.14.4 (TERM-006);
+  - ko says 조정자 for moderators in the Terms too (TERM-001).
+
 ## [5.14.4] - 2026-10-05
 
 Sprint 6 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

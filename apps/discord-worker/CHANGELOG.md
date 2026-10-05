@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.3] - 2026-10-05
+
+Sprint 7 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the policy documents. **Documents only** — no discord-worker source changed and no command schema,
+so no `register-commands`. 5.8.2 is Sprints 2 and 3, on a separate branch; merge that first.
+
+### Changed
+
+- **Privacy Policy, all six languages:** posts made after 2026-10-05 do not show your Discord User
+  ID; posts made on or before that date may. The sentence used to say "since this policy's Last
+  Updated date", which moves with every edit (I18N-001).
+- **Both documents:**
+  - fr says préréglage, as the bot does, never *palette prédéfinie* (TERM-010);
+  - de says Vorlage, as the bot does (TERM-006).
+- **Terms of Service:**
+  - ko says 조정자 for moderators, as the Privacy Policy does; 운영자 reads as "operator" (TERM-001);
+  - *Last Updated* is 2026-10-05 in all six languages.
+
 ## [5.8.1] - 2026-10-05
 
 CJK font subsets re-cut for `@xivdyetools/core` 5.8.1, whose Korean race names and Korean / Chinese
