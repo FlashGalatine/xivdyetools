@@ -342,6 +342,79 @@ describe('ResultCard', () => {
       const emitted = vi.mocked(RouterService.navigateTo).mock.calls[0]?.[1] as { dye: string };
       expect(Number(emitted.dye)).toBeLessThan(LEGACY_ITEM_ID_FLOOR);
     });
+
+    /**
+     * BUG-013 (2026-10-04 deep-dive): "Set as budget target" navigated with no
+     * params, so the `dye=` RouterService preserves across every navigation
+     * (from a share link or an earlier hand-off) reached Budget instead, and
+     * Budget's deep-link handler replaced the dye just sent. Named explicitly,
+     * the hand-off's `dye` replaces the preserved one.
+     */
+    const menuAction = (card: HTMLElement, action: string): void =>
+      (card as unknown as { handleMenuAction: (a: string) => void }).handleMenuAction(action);
+
+    const mountCard = (dye: Record<string, unknown>): HTMLElement => {
+      const card = document.createElement('v4-result-card') as HTMLElement & { data?: unknown };
+      card.data = { dye, originalColor: dye.hex, matchedColor: dye.hex };
+      container.appendChild(card);
+      return card;
+    };
+
+    const DALAMUD_RED = {
+      id: 30116,
+      itemID: 30116,
+      stainID: 45,
+      name: 'Dalamud Red',
+      hex: '#781A1A',
+      rgb: { r: 120, g: 26, b: 26 },
+      hsv: { h: 0, s: 78, v: 47 },
+      category: 'Red',
+      acquisition: 'Vendor',
+      cost: 216,
+      currency: 'Gil',
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
+      isIshgardian: false,
+      consolidationType: 'A',
+    };
+
+    /** The card imports ToastService from its own module, not the barrel. */
+    const spyOnToast = async () => {
+      const { ToastService } = await import('@services/toast-service');
+      return vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+    };
+
+    it('sends Budget the dye as an explicit stainID, so a preserved ?dye= cannot win (BUG-013)', async () => {
+      const { RouterService, StorageService } = await import('@services/index');
+      const toast = await spyOnToast();
+      await import('../../v4/result-card');
+
+      menuAction(mountCard(DALAMUD_RED), 'inspect-budget');
+
+      expect(RouterService.navigateTo).toHaveBeenCalledTimes(1);
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('budget', { dye: '45' });
+      // Budget's constructor reads the stored target before its deep link is
+      // handled, so the first paint already shows the dye just sent.
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_budget_target', 30116);
+      expect(toast).toHaveBeenCalledWith('resultCard.sentToBudget');
+    });
+
+    it('does not send a custom colour to Budget, as no hand-off does', async () => {
+      const { RouterService, StorageService } = await import('@services/index');
+      const toast = await spyOnToast();
+      await import('../../v4/result-card');
+
+      menuAction(
+        mountCard({ ...DALAMUD_RED, id: -1, itemID: -1, stainID: null }),
+        'inspect-budget'
+      );
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+      expect(toast).not.toHaveBeenCalled();
+    });
   });
 
   // ==========================================================================

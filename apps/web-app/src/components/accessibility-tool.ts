@@ -238,6 +238,30 @@ export class AccessibilityTool extends BaseComponent {
       showDeltaE: false,
       showAcquisition: false,
     };
+
+    this.loadSelectedDyes();
+  }
+
+  /**
+   * Restore the saved selection, once. The left panel shows it when it
+   * renders and onMount() draws the results once the containers exist. Only
+   * database dyes resolve, so a custom colour does not outlive the session.
+   */
+  private loadSelectedDyes(): void {
+    const savedDyeIds = StorageService.getItem<number[]>(STORAGE_KEYS.selectedDyes);
+    if (!savedDyeIds || savedDyeIds.length === 0) return;
+
+    const allDyes = dyeService.getAllDyes();
+    const restoredDyes = savedDyeIds
+      .map((id) => allDyes.find((d) => d.id === id))
+      .filter((d): d is Dye => d !== undefined);
+
+    if (restoredDyes.length > 0) {
+      this.selectedDyes = restoredDyes;
+      logger.info(
+        `[AccessibilityTool] Restored ${restoredDyes.length} saved dyes from localStorage`
+      );
+    }
   }
 
   // ============================================================================
@@ -287,6 +311,16 @@ export class AccessibilityTool extends BaseComponent {
     }
 
     logger.info('[AccessibilityTool] Mounted');
+  }
+
+  onUpdate(): void {
+    // BUG-021 (2026-10-04 deep-dive): update() (a language switch) rebuilds
+    // the right panel with the empty state up and the lens, pair and card
+    // sections hidden. The selection and the active lens survive it, so
+    // redraw them rather than leaving the results hidden until the next pick.
+    if (this.selectedDyes.length > 0) {
+      this.updateResults();
+    }
   }
 
   destroy(): void {
@@ -447,14 +481,7 @@ export class AccessibilityTool extends BaseComponent {
     }
 
     if (needsRerender) {
-      // BUG-096: `visibleVisions()` filters the TABS by enabledVisionTypes but
-      // nothing reconciled `activeVision` with it, so switching off the vision
-      // type currently being viewed left the whole panel painted through a lens
-      // that no longer had a tab -- and no way back except re-enabling it.
-      if (!this.enabledVisionTypes.has(this.activeVision)) {
-        this.activeVision = this.visibleVisions()[0]?.id ?? 'normal';
-        StorageService.setItem(STORAGE_KEYS.activeLens, this.activeVision);
-      }
+      this.reconcileActiveVision();
 
       // Save to storage
       StorageService.setItem(STORAGE_KEYS.enabledVisionTypes, Array.from(this.enabledVisionTypes));
@@ -561,23 +588,12 @@ export class AccessibilityTool extends BaseComponent {
     });
     this.dyeSelector.init();
 
-    // Restore saved dye selection from localStorage (UI only - results update in onMount)
-    const savedDyeIds = StorageService.getItem<number[]>(STORAGE_KEYS.selectedDyes);
-    if (savedDyeIds && savedDyeIds.length > 0) {
-      const allDyes = dyeService.getAllDyes();
-      const restoredDyes = savedDyeIds
-        .map((id) => allDyes.find((d) => d.id === id))
-        .filter((d): d is Dye => d !== undefined);
-
-      if (restoredDyes.length > 0) {
-        this.dyeSelector.setSelectedDyes(restoredDyes);
-        this.selectedDyes = restoredDyes;
-        this.updateSelectedDyesDisplay(selectedDisplay);
-        // NOTE: updateResults() called in onMount() after right panel containers exist
-        logger.info(
-          `[AccessibilityTool] Restored ${restoredDyes.length} saved dyes from localStorage`
-        );
-      }
+    // BUG-021 (2026-10-04 deep-dive): the saved selection is restored once,
+    // in the constructor. This runs again on every rebuild (update()), and
+    // re-reading storage here kept only the dyes the database resolves, which
+    // dropped a custom colour from a mixed selection.
+    if (this.selectedDyes.length > 0) {
+      this.dyeSelector.setSelectedDyes(this.selectedDyes);
     }
 
     // Listen for selection changes
@@ -689,6 +705,7 @@ export class AccessibilityTool extends BaseComponent {
         } else {
           this.enabledVisionTypes.delete(type.id);
         }
+        this.reconcileActiveVision();
         StorageService.setItem(
           STORAGE_KEYS.enabledVisionTypes,
           Array.from(this.enabledVisionTypes)
@@ -1280,6 +1297,21 @@ export class AccessibilityTool extends BaseComponent {
     return VISION_TYPES.filter((v) => this.enabledVisionTypes.has(v.id));
   }
 
+  /**
+   * BUG-096: `visibleVisions()` filters the TABS by enabledVisionTypes but
+   * nothing reconciled `activeVision` with it, so switching off the vision
+   * type currently being viewed left the whole panel painted through a lens
+   * that no longer had a tab -- and no way back except re-enabling it. Every
+   * path that switches a vision type off runs this: setConfig and, since
+   * BUG-076 (2026-10-04 deep-dive), the tool's own checkboxes too.
+   */
+  private reconcileActiveVision(): void {
+    if (!this.enabledVisionTypes.has(this.activeVision)) {
+      this.activeVision = this.visibleVisions()[0]?.id ?? 'normal';
+      StorageService.setItem(STORAGE_KEYS.activeLens, this.activeVision);
+    }
+  }
+
   /** Simulated hex of a selected dye under a vision type */
   private simHex(dyeIndex: number, vision: VisionTypeId): string {
     const result = this.dyeResults[dyeIndex];
@@ -1786,6 +1818,7 @@ export class AccessibilityTool extends BaseComponent {
         } else {
           this.enabledVisionTypes.delete(type.id);
         }
+        this.reconcileActiveVision();
         StorageService.setItem(
           STORAGE_KEYS.enabledVisionTypes,
           Array.from(this.enabledVisionTypes)

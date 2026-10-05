@@ -669,6 +669,18 @@ export class MixerTool extends BaseComponent {
     logger.info('[MixerTool] Mounted');
   }
 
+  onUpdate(): void {
+    // BUG-021 (2026-10-04 deep-dive): update() (a language switch) rebuilds
+    // the right panel with the results section hidden and its grid empty.
+    // The pair and blend survive it, so re-match and show them again rather
+    // than leaving Matching Dyes, Export and Share hidden until a slot changes.
+    if (this.selectedDyes[0] && this.selectedDyes[1]) {
+      this.findMatchingDyesInternal();
+      this.showEmptyState(false);
+      this.renderResultsGrid();
+    }
+  }
+
   /**
    * Find a dye by its itemID (FFXIV game item ID)
    * This is different from getDyeById which uses the internal database ID

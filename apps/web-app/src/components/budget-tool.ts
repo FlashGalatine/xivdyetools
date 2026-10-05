@@ -173,6 +173,11 @@ export class BudgetTool extends BaseComponent {
   private marketOnline: boolean = true;
   private isLoading: boolean = false;
   private fetchProgress: { current: number; total: number } = { current: 0, total: 0 };
+  /**
+   * BUG-015 (2026-10-04 deep-dive): the ledger run that may still write.
+   * findAlternatives() takes the next id; clearDyes() and destroy() move it on.
+   */
+  private runId = 0;
 
   // Display options (target Result Card), seeded from budget.displayOptions
   private showHex: boolean;
@@ -347,6 +352,8 @@ export class BudgetTool extends BaseComponent {
   }
 
   destroy(): void {
+    // BUG-015: a ledger run still awaiting prices must not write after this
+    ++this.runId;
     this.targetDye = null;
     this.rows = [];
     this.priceData.clear();
@@ -491,6 +498,27 @@ export class BudgetTool extends BaseComponent {
     }
   }
 
+  /**
+   * Take a linked target out of the address bar once the user picks or clears
+   * one here.
+   *
+   * BUG-013 (2026-10-04 deep-dive): RouterService carries `dye=` across every
+   * navigation, and handleDeepLink applies it on every mount, so a pick that
+   * reached storage only was replaced by the link's dye when the user came
+   * back. The param is deleted rather than rewritten to the pick: rewritten,
+   * it would follow the user into Harmony and replace that tool's own base.
+   * `hex` goes too, because handleDeepLink falls back to it without a `dye`.
+   * history.replaceState, not RouterService.replaceRoute, which notifies the
+   * layout and would remount this tool.
+   */
+  private releaseLinkedTarget(): void {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('dye') && !url.searchParams.has('hex')) return;
+    url.searchParams.delete('dye');
+    url.searchParams.delete('hex');
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
+  }
+
   // ============================================================================
   // Pricing engine (9C rules)
   // ============================================================================
@@ -587,6 +615,11 @@ export class BudgetTool extends BaseComponent {
    * Always fetches coffer prices too (quick picks are generated from the board).
    */
   private async findAlternatives(): Promise<void> {
+    // BUG-015 (2026-10-04 deep-dive): the target and line are read before the
+    // price fetch, and a newer run (a pick, a slider tick, a server change)
+    // can resolve first. This run then writes nothing, or it would draw the
+    // old target's rows under the new target's card.
+    const run = ++this.runId;
     const target = this.targetDye;
     const threshold = this.effectiveThreshold();
 
@@ -617,7 +650,8 @@ export class BudgetTool extends BaseComponent {
       if (target) toFetch.set(target.id, target);
       for (const d of candidates) toFetch.set(d.id, d);
       for (const d of this.cofferDyes()) toFetch.set(d.id, d);
-      await this.fetchPrices(Array.from(toFetch.values()));
+      await this.fetchPrices(Array.from(toFetch.values()), run);
+      if (run !== this.runId) return;
 
       if (target) {
         const targetGil = this.priceOf(target).gil;
@@ -644,16 +678,21 @@ export class BudgetTool extends BaseComponent {
       this.renderVerdict();
       this.renderLedger();
     } catch (error) {
+      // fetchPrices() never throws, so only the current run can land here.
       logger.error('[BudgetTool] Error building ledger:', error);
       ToastService.error(LanguageService.t('budget.errorFindingAlternatives'));
       this.isLoading = false;
       this.renderLedger();
     } finally {
-      this.renderTargetOverview();
-      this.updateTargetDyeDisplay();
-      this.updateMobileTargetDyeDisplay();
-      this.renderQuickPicks();
-      if (!this.targetDye) this.showEmptyState(true);
+      // Not a `return`: a superseded run reaches here from the guard above,
+      // and must not rebuild the target card under the user.
+      if (run === this.runId) {
+        this.renderTargetOverview();
+        this.updateTargetDyeDisplay();
+        this.updateMobileTargetDyeDisplay();
+        this.renderQuickPicks();
+        if (!this.targetDye) this.showEmptyState(true);
+      }
     }
   }
 
@@ -664,8 +703,13 @@ export class BudgetTool extends BaseComponent {
    * returned for three different reasons, only one of which is a failure -- a
    * superseded request (exactly what a rapid world change causes) reported the
    * market as offline. Ask the service which it was.
+   *
+   * BUG-015 (2026-10-04 deep-dive): `run` is the findAlternatives() run this
+   * fetch belongs to. Once a newer run has started, this one writes nothing:
+   * `lastFetchOutcome` is shared by every call, so by then it can describe a
+   * different request.
    */
-  private async fetchPrices(dyes: Dye[]): Promise<void> {
+  private async fetchPrices(dyes: Dye[], run: number): Promise<void> {
     this.fetchProgress = { current: 0, total: dyes.length };
     this.renderLedger();
 
@@ -682,6 +726,7 @@ export class BudgetTool extends BaseComponent {
         },
         { ignoreShowPrices: true }
       );
+      if (run !== this.runId) return;
       prices.forEach((data, itemId) => {
         this.priceData.set(itemId, data);
       });
@@ -694,6 +739,7 @@ export class BudgetTool extends BaseComponent {
       // 'superseded' and 'nothing-to-fetch' say nothing about the board, so
       // they leave the previous verdict alone.
     } catch (error) {
+      if (run !== this.runId) return;
       logger.warn('[BudgetTool] Error fetching prices:', error);
       this.marketOnline = false;
     }
@@ -1948,10 +1994,13 @@ export class BudgetTool extends BaseComponent {
    * Called when "Clear All Dyes" button is clicked in Color Palette.
    */
   public clearDyes(): void {
+    // BUG-015: a run still awaiting prices would refill the rows just cleared
+    ++this.runId;
     this.targetDye = null;
     this.rows = [];
 
     StorageService.removeItem(STORAGE_KEYS.targetDyeId);
+    this.releaseLinkedTarget();
     logger.info('[BudgetTool] All dyes cleared');
 
     if (this.ledgerContainer) clearContainer(this.ledgerContainer);
@@ -1972,6 +2021,7 @@ export class BudgetTool extends BaseComponent {
     this.targetDye = dye;
 
     StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
+    this.releaseLinkedTarget();
     logger.info(`[BudgetTool] Target selected: ${dye.name}`);
 
     void this.findAlternatives();

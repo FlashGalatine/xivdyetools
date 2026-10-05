@@ -2128,11 +2128,16 @@ export class SwatchTool extends BaseComponent {
     return target === (this.colorCategory as string);
   }
 
-  /** Closest pool dye to a bare colour under the current matching method. */
+  /**
+   * Closest pool dye to a bare colour under the current matching method,
+   * among the dyes the filters allow. BUG-025 (2026-10-04 deep-dive): it
+   * ignored the filters, so a slot's verdict sentence and SEND TO could name
+   * a dye the user had excluded.
+   */
   private closestDyeTo(hex: string): { dye: Dye; distance: number } | null {
     let best: { dye: Dye; distance: number } | null = null;
     for (const dye of dyeService.getAllDyes()) {
-      if (dye.itemID <= 0) continue;
+      if (dye.itemID <= 0 || isDyeExcluded(this.dyeFiltersConfig, dye)) continue;
       const distance = this.calculateColorDistance(hex, dye.hex);
       if (!best || distance < best.distance) best = { dye, distance };
     }
@@ -2936,10 +2941,13 @@ export class SwatchTool extends BaseComponent {
       return;
     }
 
-    // Request extra results if filters are active, then filter and trim
-    const requestCount = hasActiveFilters(this.dyeFiltersConfig)
-      ? Math.min(this.maxResults * 3, 136)
-      : this.maxResults;
+    // With filters active, rank the whole pool, then filter and trim. BUG-025
+    // (2026-10-04 deep-dive): core keeps only the top `count`, and a
+    // top-(maxResults×3) request was mostly excluded dyes whenever a strong
+    // filter was on (85 of the 125 dyes are Dye Vendor dyes), so fewer than
+    // maxResults cards survived.
+    const filtered = hasActiveFilters(this.dyeFiltersConfig);
+    const requestCount = filtered ? dyeService.getAllDyes().length : this.maxResults;
 
     let matches = this.characterColorService.findClosestDyes(this.selectedColor, dyeService, {
       count: requestCount,
@@ -2947,7 +2955,7 @@ export class SwatchTool extends BaseComponent {
     });
 
     // Apply dye filters
-    if (hasActiveFilters(this.dyeFiltersConfig)) {
+    if (filtered) {
       matches = matches.filter((m) => !isDyeExcluded(this.dyeFiltersConfig, m.dye));
       matches = matches.slice(0, this.maxResults);
     }

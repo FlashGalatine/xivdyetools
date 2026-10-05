@@ -9,6 +9,10 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ComparisonTool } from '../comparison-tool';
+import { CollapsiblePanel } from '../collapsible-panel';
+import { DyeSelector } from '../dye-selector';
+import { MarketBoard } from '../market-board';
+import { methodShort } from '../metric-help';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -640,6 +644,208 @@ describe('ComparisonTool', () => {
 
       // Second destroy should not throw
       expect(() => tool!.destroy()).not.toThrow();
+    });
+  });
+
+  // ==========================================================================
+  // Shared by the two describes below. The persisted-restore test above leaves
+  // StorageService.getItem answering with a saved selection, and
+  // clearAllMocks keeps implementations, so each describe resets it.
+  // ==========================================================================
+
+  const resetStorageReads = async () => {
+    const { StorageService } = await import('@services/index');
+    vi.mocked(StorageService.getItem).mockReturnValue(null);
+  };
+
+  /** Whether `el` or any ancestor up to `root` is display:none. */
+  const isHiddenWithin = (el: Element, root: HTMLElement): boolean => {
+    let node: HTMLElement | null = el as HTMLElement;
+    while (node && node !== root) {
+      if (node.style.display === 'none') return true;
+      node = node.parentElement;
+    }
+    return false;
+  };
+
+  /** The span or p in `root` whose whole text is `text`. */
+  const textEl = (root: HTMLElement, text: string): HTMLElement | undefined =>
+    [...root.querySelectorAll<HTMLElement>('span, p')].find((el) => el.textContent === text);
+
+  // ==========================================================================
+  // BUG-021 / BUG-076 (2026-10-04 deep-dive): a language switch runs update(),
+  // which re-ran renderContent only. The right panel came back with every
+  // section hidden and the empty state up, and the previous left-panel
+  // selector, panels and market board were never destroyed -- one more live
+  // set per switch. No test fired the LanguageService subscriber.
+  // ==========================================================================
+
+  describe('a language switch keeps the comparison on screen', () => {
+    beforeEach(resetStorageReads);
+
+    /** Every captured subscriber, as the extractor test does: not only `calls[0]`. */
+    const switchLanguage = async () => {
+      const { LanguageService } = await import('@services/index');
+      for (const [cb] of [...vi.mocked(LanguageService.subscribe).mock.calls]) {
+        (cb as () => void)();
+      }
+      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 0));
+    };
+
+    /** Mounted as the v4 shell mounts it: one element as both panels. */
+    const mountV4 = (): { tool: ComparisonTool; panel: HTMLElement } => {
+      const panel = document.createElement('div');
+      container.appendChild(panel);
+      const t = new ComparisonTool(container, {
+        leftPanel: panel,
+        rightPanel: panel,
+        drawerContent: null,
+      });
+      t.init();
+      return { tool: t, panel };
+    };
+
+    it('still shows the duel, the pair chips, Export and Share for three dyes', async () => {
+      const mounted = mountV4();
+      tool = mounted.tool;
+      const { panel } = mounted;
+      for (const dye of mockDyes.slice(0, 3)) tool.selectDye(dye);
+
+      await switchLanguage();
+
+      expect(isHiddenWithin(textEl(panel, 'comparison.selectAtLeastTwoDyes')!, panel)).toBe(true);
+      const heading = textEl(panel, 'comparison.allPairs: 3');
+      expect(heading).toBeDefined();
+      expect(isHiddenWithin(heading!, panel)).toBe(false);
+      const chips = [...panel.querySelectorAll('button')].filter((b) =>
+        b.textContent?.includes(' × ')
+      );
+      expect(chips).toHaveLength(3);
+      // Every pair reads 15 in the mocked ColorService: ΔE2000 15 is WIDE
+      const verdict = textEl(panel, 'comparison.badgeWide');
+      expect(verdict).toBeDefined();
+      expect(isHiddenWithin(verdict!, panel)).toBe(false);
+      const exportBtn = panel.querySelector('[data-testid="comparison-export"]')!;
+      const share = panel.querySelector('v4-share-button') as unknown as HTMLElement & {
+        disabled: boolean;
+        shareParams: { dyes?: number[] };
+      };
+      expect(isHiddenWithin(exportBtn, panel)).toBe(false);
+      expect(isHiddenWithin(share, panel)).toBe(false);
+      expect(share.disabled).toBe(false);
+      expect(share.shareParams.dyes).toEqual(mockDyes.slice(0, 3).map((d) => d.stainID));
+    });
+
+    it('destroys the previous selector, panels and market board on each rebuild', async () => {
+      const selectorDestroy = vi.spyOn(DyeSelector.prototype, 'destroy');
+      const boardDestroy = vi.spyOn(MarketBoard.prototype, 'destroy');
+      const panelDestroy = vi.spyOn(CollapsiblePanel.prototype, 'destroy');
+      tool = mountV4().tool;
+
+      await switchLanguage();
+      await switchLanguage();
+
+      expect(selectorDestroy).toHaveBeenCalledTimes(2);
+      expect(boardDestroy).toHaveBeenCalledTimes(2);
+      // Dye selection, options and market board: three panels per rebuild
+      expect(panelDestroy).toHaveBeenCalledTimes(6);
+    });
+
+    // Outside the v4 shell the rebuilt selector is on screen: an empty one
+    // replaced the whole comparison with its first pick.
+    it('hands the rebuilt dye selector the current selection', async () => {
+      const selectorInit = vi.spyOn(DyeSelector.prototype, 'init');
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+
+      await switchLanguage();
+
+      const rebuilt = selectorInit.mock.contexts.at(-1) as unknown as DyeSelector;
+      expect(selectorInit).toHaveBeenCalledTimes(2);
+      expect(rebuilt.getSelectedDyes()).toEqual([mockDyes[0], mockDyes[1]]);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-018 (2026-10-04 deep-dive): the ΔE2000 readout row classified its
+  // value without tierFor's 0 -> 1 bump, so with the match line below the
+  // first ΔE2000 cut (5) a pair between the two read CLOSE in the verdict and
+  // SAME on the row beneath it.
+  // ==========================================================================
+
+  describe('the ΔE2000 readout row tiers as the verdict does', () => {
+    beforeEach(resetStorageReads);
+
+    afterEach(async () => {
+      const { ColorService } = await import('@services/index');
+      vi.mocked(ColorService.getDistanceForMethod).mockImplementation(() => 15);
+    });
+
+    /** ΔE2000 reads `de2000` for every pair; every other method reads 15. */
+    const setDistances = async (de2000: number) => {
+      const { ColorService } = await import('@services/index');
+      vi.mocked(ColorService.getDistanceForMethod).mockImplementation((_a, _b, method) =>
+        method === 'ciede2000' ? de2000 : 15
+      );
+    };
+
+    const mountPair = (matchThreshold: number): ComparisonTool => {
+      const t = new ComparisonTool(container, { leftPanel, rightPanel });
+      t.init();
+      t.setConfig({ matchThreshold });
+      t.selectDye(mockDyes[0]);
+      t.selectDye(mockDyes[1]);
+      return t;
+    };
+
+    /**
+     * One method's readout tile: tag, value, tier word. The tag comes from
+     * metric-help, which reads the real LanguageService, so it is matched
+     * through the same helper rather than a key.
+     */
+    const readoutRow = (method: 'ciede2000' | 'oklab'): HTMLButtonElement | undefined =>
+      [...rightPanel.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find(
+        (b) => b.firstElementChild?.textContent === methodShort(method)
+      );
+
+    const rowTier = (method: 'ciede2000' | 'oklab') =>
+      readoutRow(method)?.lastElementChild?.textContent;
+
+    const BADGES = ['comparison.badgeSame', 'comparison.badgeClose', 'comparison.badgeWide'];
+    const verdictBadge = () =>
+      [...rightPanel.querySelectorAll('span')]
+        .map((s) => s.textContent)
+        .find((t) => BADGES.includes(t ?? ''));
+
+    it('reads CLOSE beside a CLOSE verdict when the match line sits below 5', async () => {
+      await setDistances(3);
+
+      tool = mountPair(2);
+
+      expect(verdictBadge()).toBe('comparison.badgeClose');
+      expect(rowTier('ciede2000')).toBe('comparison.tierClose');
+    });
+
+    it('keeps the ΔE2000 row on the match line while another method is active', async () => {
+      await setDistances(3);
+      tool = mountPair(2);
+
+      readoutRow('oklab')!.click();
+
+      expect(readoutRow('oklab')!.getAttribute('aria-pressed')).toBe('true');
+      expect(rowTier('ciede2000')).toBe('comparison.tierClose');
+    });
+
+    it('agrees on SAME below a match line raised past the first cut', async () => {
+      await setDistances(6);
+
+      tool = mountPair(8);
+
+      expect(verdictBadge()).toBe('comparison.badgeSame');
+      expect(rowTier('ciede2000')).toBe('comparison.tierSame');
     });
   });
 });

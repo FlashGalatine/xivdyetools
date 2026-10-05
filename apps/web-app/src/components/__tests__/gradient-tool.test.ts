@@ -1065,6 +1065,37 @@ describe('GradientTool', () => {
       expect(new Set(middleIds()).size).toBe(1);
     });
 
+    // BUG-020 (2026-10-04 deep-dive): only the endpoints were spoken for
+    // before the loop, and a pin joined them when the loop reached it — so a
+    // free step BEFORE a pin could match the pinned dye. Re-anchoring makes
+    // that the likely case: the step before a pin interpolates toward it.
+    it('keeps a pinned dye out of every free step, before the pin as well as after', async () => {
+      matchFirstNotExcluded();
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      // Dedupe off, so every middle step matches the same dye and the pins
+      // below both hold it
+      tool.setConfig({ preventDuplicates: false });
+      await flush();
+      const pinned = mockDyes[0].id;
+      expect(middleIds()).toEqual(Array(6).fill(pinned));
+      // Re-queried after each click: a pin re-renders the rail
+      const pinButtons = () => [...container.querySelectorAll<HTMLButtonElement>('.v5-grad-pin')];
+      pinButtons()[1].click(); // step 2
+      pinButtons()[4].click(); // step 5
+
+      tool.setConfig({ preventDuplicates: true });
+      await flush();
+
+      const middle = middleIds();
+      // A pinned row is an explicit choice: never deduped, even against another pin
+      expect([middle[1], middle[4]]).toEqual([pinned, pinned]);
+      const free = [middle[0], middle[2], middle[3], middle[5]];
+      expect(free).not.toContain(pinned);
+      expect(new Set(free).size).toBe(4);
+    });
+
     it('re-matches with a new matching method', async () => {
       tool = await mountWithRamp();
 
@@ -1473,17 +1504,36 @@ describe('GradientTool', () => {
   // ==========================================================================
 
   describe('context actions — hand off to another tool', () => {
-    it('inspect-budget navigates via the barrel-mocked RouterService', async () => {
-      tool = mount();
-      const { RouterService } = await import('@services/index');
-
+    const contextAction = (action: string): void =>
       (
         tool as unknown as {
           handleContextAction: (action: string, dye: unknown) => void;
         }
-      ).handleContextAction('inspect-budget', dye(1));
+      ).handleContextAction(action, dye(1));
 
-      expect(RouterService.navigateTo).toHaveBeenCalledWith('budget');
+    it('inspect-accessibility navigates via the barrel-mocked RouterService', async () => {
+      tool = mount();
+      const { RouterService } = await import('@services/index');
+
+      contextAction('inspect-accessibility');
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('accessibility');
+    });
+
+    // BUG-013 (2026-10-04 deep-dive): the result card hands the dye to Budget
+    // itself, by stainID, and then emits the action. The tool repeating it
+    // toasted twice and navigated again without the dye.
+    it('leaves inspect-budget to the result card', async () => {
+      tool = mount();
+      const { RouterService, StorageService } = await import('@services/index');
+
+      contextAction('inspect-budget');
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(
+        'v3_budget_target',
+        expect.anything()
+      );
     });
   });
 });

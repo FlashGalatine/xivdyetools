@@ -275,7 +275,8 @@ describe('SwatchTool with the real ConfigController', () => {
 
     expect(gridTitle()).toContain('tools.character.tattooColors');
     cells()[0].click();
-    expect(lastMatchRequest()).toEqual({ count: 15, matchingMethod: 'oklab' });
+    // The whole pool, because a filter is active (BUG-025), then trimmed to 5
+    expect(lastMatchRequest()).toEqual({ count: mockDyes.length, matchingMethod: 'oklab' });
     expect(cards().map((c) => c.data?.dye.id)).toEqual([mockDyes[0].id]);
     expect(cards()[0].showCmyk).toBe(true);
   });

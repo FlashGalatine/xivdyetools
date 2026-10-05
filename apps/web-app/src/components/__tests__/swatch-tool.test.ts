@@ -731,6 +731,19 @@ describe('SwatchTool', () => {
       matchingMethod: string;
     };
   const metallicDye = mockDyes.find((d) => d.isMetallic)!;
+  /**
+   * Core's matcher, as far as these tests need it: the first `count` dyes of
+   * the pool it is handed (nearest first), and never more — core keeps only
+   * the top k.
+   */
+  const rankPoolInOrder = () =>
+    mockCharaFindClosestDyes.mockImplementation(
+      (_color: unknown, pool: { getAllDyes: () => Dye[] }, options: { count: number }) =>
+        pool
+          .getAllDyes()
+          .slice(0, options.count)
+          .map((dye, rank) => ({ dye, distance: rank + 1 }))
+    );
 
   describe('setConfig — race, gender and colour sheet', () => {
     it.each([
@@ -906,6 +919,29 @@ describe('SwatchTool', () => {
       tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
       expect(mockCharaFindClosestDyes).not.toHaveBeenCalled();
     });
+
+    // BUG-025 (2026-10-04 deep-dive): the filter ran after a top-(maxResults×3)
+    // request, so when the nearest dyes were mostly excluded fewer than
+    // maxResults survived — 85 of the 125 dyes are Dye Vendor dyes.
+    it('fills every card from the allowed dyes, however many excluded dyes rank nearer', async () => {
+      const nearerExcluded = Array.from({ length: 9 }, (_, i) => ({
+        ...metallicDye,
+        id: 9100 + i,
+        itemID: 9100 + i,
+        stainID: 200 + i,
+      }));
+      const allowed = mockDyes.filter((d) => !d.isMetallic).slice(0, 3);
+      mockGetAllDyes.mockReturnValue([...nearerExcluded, ...allowed]);
+      rankPoolInOrder();
+      tool = mount();
+      await flush();
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+
+      cells()[0].click();
+
+      // maxResults is 3 (the default)
+      expect(cards().map((c) => c.data?.dye.id)).toEqual(allowed.map((d) => d.id));
+    });
   });
 
   // ==========================================================================
@@ -943,8 +979,8 @@ describe('SwatchTool', () => {
       expect(getTattooColors).toHaveBeenCalled();
 
       cells()[0].click();
-      // 5 results, tripled because a filter is active
-      expect(lastMatchRequest()).toEqual({ count: 15, matchingMethod: 'oklab' });
+      // The whole pool, because a filter is active (BUG-025), then trimmed to 5
+      expect(lastMatchRequest()).toEqual({ count: mockDyes.length, matchingMethod: 'oklab' });
       expect(cards().map((c) => c.data?.dye.id)).toEqual([mockDyes[0].id, mockDyes[1].id]);
       expect(cards().every((c) => c.showCmyk === true)).toBe(true);
 
@@ -1390,6 +1426,32 @@ describe('SwatchTool', () => {
       expect(share().disabled).toBe(true);
       expect(handoffTargets).toHaveBeenLastCalledWith([mockDyes[0].stainID]);
       expect(selection()?.source).toBe('slot');
+    });
+
+    // BUG-025 (2026-10-04 deep-dive): a slot's closest dye came from the whole
+    // pool, so the verdict sentence and SEND TO could name a dye the user had
+    // filtered out.
+    it("names the slot's closest dye from the dyes the filters allow", async () => {
+      const allowed = mockDyes.filter((d) => !d.isMetallic);
+      // Every distance is 15 in this suite, so the first dye the filter
+      // allows wins — and the metallic one sits ahead of it
+      mockGetAllDyes.mockReturnValue([metallicDye, ...allowed]);
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+      await flush();
+      const handoffTargets = vi.spyOn(
+        tool as unknown as { handoffTargets: (ids: number[]) => unknown },
+        'handoffTargets'
+      );
+
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+
+      expect(handoffTargets).toHaveBeenLastCalledWith([allowed[0].stainID]);
+      const sentence = (tool as unknown as { selectionCardContainer: HTMLElement })
+        .selectionCardContainer.textContent;
+      expect(sentence).toContain(`Dye-${allowed[0].itemID}`);
+      expect(sentence).not.toContain(`Dye-${metallicDye.itemID}`);
     });
 
     it('a slot on another palette commits that palette and survives its reload', async () => {

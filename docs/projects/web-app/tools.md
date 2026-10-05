@@ -36,7 +36,7 @@ The XIV Dye Tools web app ships ten tools. Each has its own route and a `ToolId`
 
 | Param | Meaning |
 |-------|---------|
-| `dye` | base stainID (`resolveSharedDye`); `dyeId` is accepted as the pre-5.0 alias on read |
+| `dye` | base stainID (`resolveSharedDye`); `dyeId` is accepted as the pre-5.0 alias on read. A base change in the tool (a pick, a custom colour, Clear) drops `dye`/`dyeId` from the URL, so the preserved param can't bring an old link back over the pick (BUG-013) |
 | `hex` | bare-colour base (`RRGGBB`), used only when `dye` is absent → `selectCustomColor()` |
 | `harmony` | harmony type id (validated against the known list) |
 | `algo` | matching method (`normalizeMatchingMethod`, synced to `ConfigController`) |
@@ -161,7 +161,7 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 
 | Param | Meaning |
 |-------|---------|
-| `dye` | target stainID |
+| `dye` | target stainID. The result card's "Set as budget target" sends it explicitly (`handoffTo`), so it replaces a preserved one (BUG-013) |
 | `hex` | bare-colour target (`RRGGBB`), used only when `dye` is absent; never persisted |
 | `maxDelta` | match line, 2–20 (rounded); a value outside that range is ignored |
 
@@ -210,7 +210,7 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 
 ## Tool ID to Route Mapping
 
-`ROUTES` in `src/services/router-service.ts` (History API, not hash). Legacy v3 paths in `LEGACY_ROUTE_REDIRECTS` are rewritten with `replaceRoute()`; root or unknown paths land on the default tool (`harmony`). `dc`, `dye`, `ui` query params are preserved across navigation (`PRESERVED_PARAMS`). Keyboard `1`–`9` switch the first nine tools in `ROUTES` order and `0` the tenth (`KeyboardService`).
+`ROUTES` in `src/services/router-service.ts` (History API, not hash). Legacy v3 paths in `LEGACY_ROUTE_REDIRECTS` are rewritten with `replaceRoute()`; root or unknown paths land on the default tool (`harmony`). `dc`, `dye`, `ui` query params are preserved across navigation (`PRESERVED_PARAMS`); a hand-off that names its own `dye` replaces the preserved one, and Harmony drops `dye` when its base changes. Keyboard `1`–`9` switch the first nine tools in `ROUTES` order and `0` the tenth (`KeyboardService`).
 
 | Tool (`ToolId`) | Route (`title`) | Key | Legacy v3 route / name |
 |------|---------------|-----|-----------------|

@@ -15,11 +15,14 @@ import { mockDyes } from '../../__tests__/mocks/services';
 import { HARMONY_OFFSETS, ColorConverter, getColorWheel } from '@xivdyetools/core';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
-  mockGetAllDyes: vi.fn(),
-  mockGetDyeById: vi.fn(),
-  mockFindClosestDyes: vi.fn(),
-}));
+const { mockGetAllDyes, mockGetDyeById, mockGetByStainId, mockFindClosestDyes } = vi.hoisted(
+  () => ({
+    mockGetAllDyes: vi.fn(),
+    mockGetDyeById: vi.fn(),
+    mockGetByStainId: vi.fn(),
+    mockFindClosestDyes: vi.fn(),
+  })
+);
 
 // Icon modules are NOT mocked. They are compile-time string constants with
 // no dependencies, and a hand-written stub only has to miss one export for
@@ -33,6 +36,9 @@ vi.mock('@services/dye-service-wrapper', () => ({
   dyeService: {
     getAllDyes: mockGetAllDyes,
     getDyeById: mockGetDyeById,
+    // ShareService.resolveSharedDye resolves a `?dye=` stainID through this
+    // singleton, so a deep link to a real stainID needs it.
+    getByStainId: mockGetByStainId,
     findClosestDyes: mockFindClosestDyes,
     getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
   },
@@ -433,7 +439,14 @@ describe('HarmonyTool', () => {
     vi.clearAllMocks();
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
+    mockGetByStainId.mockImplementation(
+      (stainID: number) => mockDyes.find((d) => d.stainID === stainID) ?? null
+    );
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
+    // A base-dye pick now writes `?dye=` into the URL (BUG-013), and jsdom's
+    // location outlives a test — so start every test from a bare URL, or the
+    // next mount() would deep-link whatever dye the last test picked.
+    window.history.replaceState(null, '', '/');
     // Mock scrollIntoView
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -1189,6 +1202,190 @@ describe('HarmonyTool', () => {
       routeListener?.({ toolId: 'harmony', sameTool: true });
 
       expect(handleDeepLinkSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-021 / BUG-076 (2026-10-04 deep-dive): a language switch runs update(),
+  // which rebuilds both panels around a fresh, empty results grid, and nothing
+  // regenerated it. No test caught it because none ever fired the language
+  // subscriber — the mock above records the callback and these are the first
+  // tests to call it.
+  // ==========================================================================
+
+  describe('BUG-021: a language switch keeps the harmony results', () => {
+    /** Fire every language listener the mount registered, as LanguageService does. */
+    const switchLanguage = async (): Promise<void> => {
+      const { LanguageService } = await import('@services/index');
+      for (const [listener] of vi.mocked(LanguageService.subscribe).mock.calls) {
+        (listener as () => void)();
+      }
+      await flush();
+    };
+
+    const resultsSection = (): HTMLElement =>
+      container.querySelector<HTMLElement>('.harmony-results-section')!;
+    /** The empty state is rendered as the results section's next sibling. */
+    const emptyState = (): HTMLElement => resultsSection().nextElementSibling as HTMLElement;
+
+    it('re-renders the result cards for the selected base', async () => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      await flush();
+      // complementary: the base card plus one slot
+      expect(container.querySelectorAll('v4-result-card')).toHaveLength(2);
+
+      await switchLanguage();
+
+      expect(container.querySelectorAll('v4-result-card')).toHaveLength(2);
+      expect(resultsSection().style.display).not.toBe('none');
+      expect(emptyState().style.display).toBe('none');
+    });
+
+    it('keeps the empty state, not a bare results header, with no base selected', async () => {
+      tool = mount();
+      await flush();
+      expect(resultsSection().style.display).toBe('none');
+
+      await switchLanguage();
+
+      expect(resultsSection().style.display).toBe('none');
+      expect(emptyState().style.display).toBe('flex');
+    });
+
+    /**
+     * handleDeepLink re-renders through update() and no longer calls
+     * generateHarmonies() itself — onUpdate does — so a same-tool route
+     * change (Back onto another `?dye=`) depends on onUpdate to show the new
+     * base's harmony.
+     */
+    it('a same-tool route change to another ?dye= shows the harmony for that dye', async () => {
+      const { RouterService } = await import('@services/index');
+      window.history.replaceState(null, '', '/harmony?dye=5');
+      tool = mount();
+      await flush();
+      const routeListener = vi.mocked(RouterService.subscribe).mock.calls.at(-1)?.[0] as (state: {
+        toolId: string;
+        sameTool?: boolean;
+      }) => void;
+
+      window.history.replaceState(null, '', '/harmony?dye=9');
+      routeListener({ toolId: 'harmony', sameTool: true });
+      await flush();
+
+      const cards = container.querySelectorAll('v4-result-card');
+      expect(cards).toHaveLength(2);
+      expect((cards[0] as unknown as { data: { dye: { stainID: number } } }).data.dye.stainID).toBe(
+        9
+      );
+    });
+  });
+
+  // ==========================================================================
+  // BUG-013 (2026-10-04 deep-dive): RouterService's PRESERVED_PARAMS carries
+  // `dye` across every tool switch, and Harmony never touched it. After a deep
+  // link, a later base-dye pick reached storage only, so coming back to
+  // Harmony re-applied the stale link over the pick — and persisted it. A base
+  // change now drops the link's `dye` rather than rewriting it, so an ordinary
+  // pick does not start travelling into Budget's target either.
+  // ==========================================================================
+
+  describe('BUG-013: a base change drops a deep-linked ?dye=', () => {
+    const search = (): URLSearchParams => new URLSearchParams(window.location.search);
+    const shareDye = (t: HarmonyTool): unknown =>
+      (t as unknown as { getShareParams(): Record<string, unknown> }).getShareParams().dye;
+    /** A pick from one of the tool's own DyeSelectors (desktop or drawer). */
+    const pickFrom = (panel: HTMLElement): void => {
+      panel
+        .querySelector('.dye-selector')!
+        .parentElement!.dispatchEvent(
+          new CustomEvent('selection-changed', { detail: { selectedDyes: [mockDyes[8]] } })
+        );
+    };
+
+    afterEach(async () => {
+      // mockReturnValue replaces a test's mockImplementation; restoreAllMocks
+      // and clearAllMocks leave it in place
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockReturnValue(null);
+    });
+
+    it('a pick drops it and leaves the rest of the URL alone', async () => {
+      window.history.replaceState({ toolId: 'harmony' }, '', '/harmony?dye=5&dc=Aether');
+      tool = mount();
+      await flush();
+      expect(shareDye(tool)).toBe(5);
+
+      tool.selectDye(mockDyes[8]);
+
+      expect(search().has('dye')).toBe(false);
+      // The rest of the URL, and the history state popstate resolves the
+      // tool from, are kept
+      expect(search().get('dc')).toBe('Aether');
+      expect(window.location.pathname).toBe('/harmony');
+      expect(window.history.state).toEqual({ toolId: 'harmony' });
+    });
+
+    it('coming back to Harmony keeps the pick instead of the stale link', async () => {
+      const { StorageService } = await import('@services/index');
+      window.history.replaceState(null, '', '/harmony?dye=5');
+      tool = mount();
+      tool.selectDye(mockDyes[8]); // stainID 9
+      tool.destroy();
+
+      // Leaving and coming back: PRESERVED_PARAMS copies `dye`, if the URL
+      // still has one, into /mixer and from there back into /harmony
+      const back = new URLSearchParams();
+      const carried = search().get('dye');
+      if (carried !== null) back.set('dye', carried);
+      const query = back.toString();
+      window.history.replaceState(null, '', query ? `/harmony?${query}` : '/harmony');
+
+      // The remounted tool restores the pick from storage, then applies
+      // whatever deep link came back with it
+      vi.mocked(StorageService.getItem).mockImplementation(((key: string) =>
+        key === DYE_KEY ? mockDyes[8].itemID : null) as never);
+      vi.mocked(StorageService.setItem).mockClear();
+      tool = mount();
+      await flush();
+
+      expect(shareDye(tool)).toBe(9);
+      // ...and nothing wrote another dye over the stored pick
+      expect(await lastWrite(DYE_KEY)).toBeUndefined();
+    });
+
+    it.each<[string, (t: HarmonyTool) => void]>([
+      ['selectDye', (t) => t.selectDye(mockDyes[8])],
+      ['a pick from the desktop selector', () => pickFrom(leftPanel)],
+      ['a pick from the drawer selector', () => pickFrom(drawerContent)],
+      ['clearDyes', (t) => t.clearDyes()],
+      ['a custom colour', (t) => t.selectCustomColor('#123456')],
+    ])('%s drops it', (_label, act) => {
+      window.history.replaceState(null, '', '/harmony?dye=5');
+      tool = mount();
+
+      act(tool);
+
+      expect(search().has('dye')).toBe(false);
+    });
+
+    it('a pick drops the legacy ?dyeId= alias too, which names the same slot', () => {
+      window.history.replaceState(null, '', '/harmony?dyeId=5');
+      tool = mount();
+
+      tool.selectDye(mockDyes[8]);
+
+      expect(search().has('dyeId')).toBe(false);
+    });
+
+    it('leaves a ?hex= link exactly as it arrived', async () => {
+      window.history.replaceState(null, '', '/harmony?hex=abcdef&dc=Aether');
+      const replaceState = vi.spyOn(window.history, 'replaceState');
+      tool = mount();
+      await flush();
+
+      expect(window.location.search).toBe('?hex=abcdef&dc=Aether');
+      expect(replaceState).not.toHaveBeenCalled();
     });
   });
 });

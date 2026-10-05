@@ -430,6 +430,16 @@ export class HarmonyTool extends BaseComponent {
     logger.info('[HarmonyTool] Mounted');
   }
 
+  onUpdate(): void {
+    // BUG-021 (2026-10-04 deep-dive): update() — a language switch, or a deep
+    // link re-rendering the panels — rebuilds the right panel around an empty
+    // results grid, and nothing refilled it, so the cards vanished under an
+    // enabled Share button until the next pick. Regenerate from the current
+    // state, as gradient-tool does; with no base this shows the empty state,
+    // exactly as onMount does.
+    this.generateHarmonies();
+  }
+
   destroy(): void {
     // Cleanup subscriptions
     this.railMql?.removeEventListener('change', this.onRailBreakpoint);
@@ -601,11 +611,9 @@ export class HarmonyTool extends BaseComponent {
           // Clear any previously swapped dyes since we're selecting a new base
           this.swappedDyes.clear();
 
-          // Re-render to update the current dye display elements
+          // Re-render to update the current dye display elements; onUpdate
+          // generates the harmonies for the newly selected dye
           this.update();
-
-          // Generate harmonies for the newly selected dye
-          this.generateHarmonies();
 
           // Fetch prices if enabled
           if (this.showPrices) {
@@ -618,6 +626,32 @@ export class HarmonyTool extends BaseComponent {
       this.swappedDyes.clear();
       this.generateHarmonies();
     }
+  }
+
+  /**
+   * BUG-013 (2026-10-04 deep-dive): once the user changes the base, drop the
+   * deep link that named the old one. RouterService's PRESERVED_PARAMS carries
+   * `dye` across every tool switch, and handleDeepLink applies it whenever
+   * Harmony is rebuilt — so a pick that reached storage only was overwritten
+   * (and the stale dye persisted) the next time the user came back. With the
+   * param gone, the rebuilt tool restores the pick from storage. `dyeId`, the
+   * legacy alias handleDeepLink reads as the same slot, goes too.
+   *
+   * Dropped rather than rewritten to the new pick: `dye` would then travel
+   * from every ordinary pick into every tool, and Budget's handleDeepLink
+   * takes it as its target. And history.replaceState rather than
+   * RouterService.replaceRoute, which notifies every route listener — so
+   * v4-layout would remount this tool on each pick and handleDeepLink would
+   * run again (the extractor's share-param cleanup avoids it the same way).
+   */
+  private dropDeepLinkedDye(): void {
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    if (!params.has('dye') && !params.has('dyeId')) return;
+
+    params.delete('dye');
+    params.delete('dyeId');
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
   // ============================================================================
@@ -965,6 +999,8 @@ export class HarmonyTool extends BaseComponent {
         StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
         logger.info('[HarmonyTool] Cleared saved dye');
       }
+      // A stale ?dye= link would override that on the way back (BUG-013)
+      this.dropDeepLinkedDye();
 
       // Clear swapped dyes when base dye changes
       this.swappedDyes.clear();
@@ -1348,6 +1384,7 @@ export class HarmonyTool extends BaseComponent {
         } else {
           StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
         }
+        this.dropDeepLinkedDye();
 
         // Clear swapped dyes when base dye changes
         this.swappedDyes.clear();
@@ -1958,8 +1995,9 @@ export class HarmonyTool extends BaseComponent {
   public clearDyes(): void {
     this.selectedDye = null;
 
-    // Clear from storage
+    // Clear from storage, and drop a deep-linked dye from the URL (BUG-013)
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
+    this.dropDeepLinkedDye();
     logger.info('[HarmonyTool] All dyes cleared');
 
     // Update dye selectors
@@ -1987,8 +2025,9 @@ export class HarmonyTool extends BaseComponent {
 
     this.selectedDye = dye;
 
-    // Persist to storage
+    // Persist to storage, and drop a deep-linked dye from the URL (BUG-013)
     StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
+    this.dropDeepLinkedDye();
     logger.info(`[HarmonyTool] External dye selected: ${dye.name} (itemID=${dye.itemID})`);
 
     // BUG-073: update BOTH selectors. clearDyes() already does; these two
@@ -2017,8 +2056,10 @@ export class HarmonyTool extends BaseComponent {
 
     this.selectedDye = virtualDye;
 
-    // Clear from storage (custom colors are not persisted)
+    // Clear from storage (custom colors are not persisted), and drop a
+    // deep-linked dye from the URL (BUG-013)
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
+    this.dropDeepLinkedDye();
     logger.info(`[HarmonyTool] Custom color selected: ${hex}`);
 
     // Clear dye selector selection (custom color is not in the list).

@@ -1852,9 +1852,16 @@ export class GradientTool extends BaseComponent {
       { index: steps - 1, hex: this.endDye.hex },
     ];
 
-    // Dyes already spoken for: the endpoints, then each step's match as the
-    // ramp resolves (see the dedupe branch below).
-    const usedDyeIds = new Set<number>([this.startDye.id, this.endDye.id]);
+    // Dyes already spoken for: the endpoints and every pinned dye up front,
+    // then each free step's match as the ramp resolves (see the dedupe branch
+    // below). BUG-020 (2026-10-04 deep-dive): pins used to join only when the
+    // loop reached them, so a free step BEFORE a pin — which interpolates
+    // toward that pin's own hex — could match the pinned dye undeduplicated.
+    const usedDyeIds = new Set<number>([
+      this.startDye.id,
+      this.endDye.id,
+      ...[...this.pinnedSteps.values()].map((dye) => dye.id),
+    ]);
 
     for (let i = 0; i < steps; i++) {
       // 4C fix: the drawn endpoint rows ARE the selected endpoint dyes at
@@ -1882,10 +1889,10 @@ export class GradientTool extends BaseComponent {
       const theoreticalColor = this.interpolateInSpace(lower.hex, upper.hex, t);
 
       // 4C: a pinned step is no longer aiming at anything â€” its matched dye
-      // IS the anchor and its drift reads 0.0.
+      // IS the anchor and its drift reads 0.0. Already in usedDyeIds (seeded
+      // above), and never deduped itself, even against another pin.
       const pinnedDye = this.pinnedSteps.get(i);
       if (pinnedDye) {
-        usedDyeIds.add(pinnedDye.id);
         result.push({
           position: steps === 1 ? 0 : i / (steps - 1),
           theoreticalColor,
@@ -1932,7 +1939,8 @@ export class GradientTool extends BaseComponent {
 
       // Dedupe: without it a flat stretch of the ramp can match the same dye
       // four steps running (harmony and extractor both carry this toggle).
-      // Pinned steps are explicit choices and never count as duplicates.
+      // Pinned steps are explicit choices and never count as duplicates; a
+      // free step is deduped against every pin, wherever it sits.
       if (this.preventDuplicates && matchedDye && usedDyeIds.has(matchedDye.id)) {
         const fallback = dyeService.findClosestDye(theoreticalColor, {
           excludeIds: [...excludeIds, ...usedDyeIds],
@@ -2104,9 +2112,9 @@ export class GradientTool extends BaseComponent {
         handoffTo('harmony', dye);
         break;
       case 'inspect-budget':
-        StorageService.setItem('v3_budget_target', dye.id);
-        ToastService.success(LanguageService.t('resultCard.sentToBudget'));
-        RouterService.navigateTo('budget');
+        // BUG-013 (2026-10-04 deep-dive): the result card hands the dye to
+        // Budget itself, by stainID, before it emits this action. Repeating
+        // it here toasted twice and navigated again without the dye.
         break;
       case 'inspect-accessibility':
         this.addDyeToTool('v3_accessibility_selected_dyes', dye, 4);
