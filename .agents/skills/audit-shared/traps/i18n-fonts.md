@@ -71,7 +71,7 @@
   - **Limbal ring = the iris's outline:** 瞳の輪郭 / Äußere Iris / Contour de l'iris / 눈동자 테두리 / 瞳孔轮廓. Never Limbus / Limbe / リムバル / 림벌 / 角膜 / 홍채 / 虹膜 / 角膜环.
   - **Face paint:** de Merkmale and fr Maquillage.
   - **Dark / Light:** fr Opaque / Translucide.
-  - **The same research found core's ko race and clan names (and four zh clans) are not the client's.** Check the glossary's warnings before relying on them.
+  - **The same research found core's ko race names, ko clans and four zh clans were not the client's.** Core 5.8.1 corrected them; the glossary's *Playable Races* and *Clans* tables are now checked against the clients.
 - Still unpinned (needs a dictionary row before anyone edits it): the ja 染料 / カララント "by
   surface" boundary (web-app is 86 : 38 and the rule is written nowhere).
 

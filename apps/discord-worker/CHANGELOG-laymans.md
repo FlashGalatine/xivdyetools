@@ -35,6 +35,10 @@ Rules:
   path filter.
 -->
 
+## [5.8.1] - 2026-10-05
+### 🌏 Korean race names
+- When a `/glamour` card names the race a piece is made for, Korean now uses the game's own race names, for example 휴런 for Hyur and 로스가르 for Hrothgar.
+
 ## [5.7.1] - 2026-09-28
 ### 📜 Privacy Policy and Terms of Service updated
 - The Privacy Policy now says how `/swatch` and `/glamour` handle a character file: it is read in memory, then discarded, and never stored.

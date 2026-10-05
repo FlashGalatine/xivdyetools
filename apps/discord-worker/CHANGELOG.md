@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.1] - 2026-10-05
+
+CJK font subsets re-cut for `@xivdyetools/core` 5.8.1, whose Korean race names and Korean / Chinese
+clan names now match the game clients. No command schema changed.
+
+### Changed
+
+- **Fonts:** `NotoSansKR-Subset.ttf` gains 4 glyphs (떠 런 맴 킴) and drops 4 that only the old
+  names used (꾼 민 온 헬); `NotoSansSC-Subset.ttf` gains 3 (密 掠 踪) and drops 2 (瓦 纳). The JP
+  subset's cmap is unchanged, so the file is not rewritten.
+- The only core name the bot draws is a race, on the `/glamour` card's wear chip, so Korean cards
+  now say 휴런 / 로스가르 there. The cards' clan line stays English until the 2026-10-04 i18n
+  audit's HC-001 (bot-logic) localizes it from core.
+
 ## [5.7.2] - 2026-10-03
 
 Sprint 1 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). No command

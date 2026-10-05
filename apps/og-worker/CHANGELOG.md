@@ -5,6 +5,18 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.2] - 2026-10-05
+
+CJK font subsets re-cut for `@xivdyetools/core` 5.8.1, whose Korean race names and Korean / Chinese
+clan names now match the game clients. Korean and Chinese cards that name a race or clan change, so
+the version moves and retires the cached ones.
+
+### Changed
+
+- **Fonts:** `NotoSansKR-Subset.ttf` gains 6 glyphs (떠 런 맴 별 족 킴) and drops 5 that only the
+  old names used (꾼 랜 민 온 헬); `NotoSansSC-Subset.ttf` gains 3 (密 掠 踪) and drops 4
+  (光 失 瓦 纳). The JP subset's cmap is unchanged, so the file is not rewritten.
+
 ## [2.11.0] - 2026-09-28
 
 The Glamour Reader, the web app's tenth tool, gets its card (Claude Design, *OG Default Cards*

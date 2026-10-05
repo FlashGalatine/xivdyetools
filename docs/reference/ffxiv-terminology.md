@@ -145,17 +145,17 @@ The wheel a harmony is rotated on. Exposed publicly as `GET /v1/wheels`.
 
 | EN | JA | DE | FR | KO | ZH |
 |----|----|----|----|----|-----|
-| Hyur | ヒューラン | Hyuran | Hyuran | 휴란 | 人族 |
+| Hyur | ヒューラン | Hyuran | Hyuran | 휴런 | 人族 |
 | Elezen | エレゼン | Elezen | Élézéen | 엘레젠 | 精灵族 |
 | Lalafell | ララフェル | Lalafell | Lalafell | 라라펠 | 拉拉菲尔族 |
 | Miqo'te | ミコッテ | Miqo'te | Miqo'te | 미코테 | 猫魅族 |
 | Roegadyn | ルガディン | Roegadyn | Roegadyn | 루가딘 | 鲁加族 |
 | Au Ra | アウラ | Au Ra | Ao Ra | 아우라 | 敖龙族 |
-| Hrothgar | ロスガル | Hrothgar | Hrothgar | 로스갈 | 硌狮族 |
+| Hrothgar | ロスガル | Hrothgar | Hrothgar | 로스가르 | 硌狮族 |
 | Viera | ヴィエラ | Viera | Viéra | 비에라 | 维埃拉族 |
 
-> [!WARNING]
-> **Two KO values are core's, not the client's.** The KR client writes Hyur **휴런** and Hrothgar **로스가르** (`Race` rows 1 and 7; [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md#other-findings)). This table mirrors core, so fix core's generator first, then this row.
+The KO and ZH columns are checked against the KR and CN clients' `Race` sheets (core 5.8.1 corrected
+KO Hyur and Hrothgar, which had been 휴란 and 로스갈; [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md#other-findings)).
 
 ---
 
@@ -174,14 +174,19 @@ The wheel a harmony is rotated on. Exposed publicly as `GET /v1/wheels`.
 | Hrothgar | Helions | The Lost | ヘリオン | ロスト |
 | Viera | Rava | Veena | ラヴァ・ヴィエラ | ヴィナ・ヴィエラ |
 
-> [!WARNING]
-> **Core's KO clans and four ZH clans are not the client's.** 13 of core's 16 Korean clan names differ from the KR client's `Tribe` sheet. The KR client writes, for example:
-> - 중원 부족 / 고원 부족 for Midlander / Highlander;
-> - 아우라 렌 / 아우라 젤라 for Raen / Xaela;
-> - 맴도는 별 / 떠도는 별 for Helions / The Lost;
-> - 라바 비에라 / 비나 비에라 for Rava / Veena.
->
-> The CN client writes Helions 掠日之民, The Lost 迷踪之民, Rava 密林之民 and Veena 山林之民; core says 日光之民 / 迷失之民 / 拉瓦族 / 维纳族. The full list is in the [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md#other-findings). Fix core's generator before anything prints a localized clan name.
+| Race | KO Clan 1 | KO Clan 2 | ZH Clan 1 | ZH Clan 2 |
+|------|-----------|-----------|-----------|-----------|
+| Hyur | 중원 부족 | 고원 부족 | 中原之民 | 高地之民 |
+| Elezen | 숲 부족 | 황혼 부족 | 森林之民 | 黑影之民 |
+| Lalafell | 평원 부족 | 사막 부족 | 平原之民 | 沙漠之民 |
+| Miqo'te | 태양의 추종자 | 달의 수호자 | 逐日之民 | 护月之民 |
+| Roegadyn | 바다늑대 | 불꽃지킴이 | 北洋之民 | 红焰之民 |
+| Au Ra | 아우라 렌 | 아우라 젤라 | 晨曦之民 | 暮晖之民 |
+| Hrothgar | 맴도는 별 | 떠도는 별 | 掠日之民 | 迷踪之民 |
+| Viera | 라바 비에라 | 비나 비에라 | 密林之民 | 山林之民 |
+
+- **Read from the KR and CN clients' `Tribe` sheets** (rows 1–16; [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md#other-findings)).
+- **Core 5.8.1 corrected 13 KO and 4 ZH names.** The old KO forms 미드랜더, 숲의 민, 불꽃 파수꾼, 렌, 헬리온 and 라바, and the old ZH forms 日光之民, 迷失之民, 拉瓦族 and 维纳族, are not the client's.
 
 ---
 

@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-05T13:38:20.762Z",
+    "generated": "2026-10-05T05:21:29.101Z",
     "dyeCount": 125
   },
   "labels": {
@@ -227,32 +227,32 @@
     "skinColors": "피부 색"
   },
   "races": {
-    "hyur": "휴란",
+    "hyur": "휴런",
     "elezen": "엘레젠",
     "lalafell": "라라펠",
     "miqote": "미코테",
     "roegadyn": "루가딘",
     "auRa": "아우라",
-    "hrothgar": "로스갈",
+    "hrothgar": "로스가르",
     "viera": "비에라"
   },
   "clans": {
-    "midlander": "미드랜더",
-    "highlander": "하이랜더",
-    "wildwood": "숲의 민",
-    "duskwight": "황혼의 민",
-    "plainsfolk": "평원의 민",
-    "dunesfolk": "사막의 민",
+    "midlander": "중원 부족",
+    "highlander": "고원 부족",
+    "wildwood": "숲 부족",
+    "duskwight": "황혼 부족",
+    "plainsfolk": "평원 부족",
+    "dunesfolk": "사막 부족",
     "seekerOfTheSun": "태양의 추종자",
     "keeperOfTheMoon": "달의 수호자",
     "seaWolf": "바다늑대",
-    "hellsguard": "불꽃 파수꾼",
-    "raen": "렌",
-    "xaela": "젤라",
-    "helions": "헬리온",
-    "theLost": "로스트",
-    "rava": "라바",
-    "veena": "비나"
+    "hellsguard": "불꽃지킴이",
+    "raen": "아우라 렌",
+    "xaela": "아우라 젤라",
+    "helions": "맴도는 별",
+    "theLost": "떠도는 별",
+    "rava": "라바 비에라",
+    "veena": "비나 비에라"
   },
   "facewearColors": {
     "silver": "은색",
