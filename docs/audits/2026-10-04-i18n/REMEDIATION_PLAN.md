@@ -18,6 +18,7 @@
 > - It records what was fixed inside the PRs, the corrected anchors for findings whose files moved, and the fix steps that #239's dictionary table changes (TERM-003, TERM-004, TERM-021).
 > - **Read it before starting any sprint.** The finding files keep their as-audited line numbers.
 > - The whole-graph gate on that `main` is green (62/62).
+> - The maintainer's answers to the open questions (Sprints 6, 7, 9, 15, 18, 24, 26, 30) are in its *Decisions* section. Sprint 24 is **not** skipped.
 
 **Status basis:** 284 total (as of 2026-10-05).
 - 8 fixed, all inside their PRs before the batch merge: dead-code/DEAD-001 and DEAD-002, deep-dive/BUG-053, I18N-004, I18N-005, I18N-006, TERM-014 and TERM-015.
@@ -268,6 +269,8 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **TERM-003:** the sheet names are pinned in the dictionary (#239, *Character-Creation Color Sheets*).
 
+**TERM-007, decided 2026-10-05:** a web-research agent first finds the client's own word for "facewear" in each language and records it in `docs/reference/ffxiv-terminology.md`. The fix and the facewear *Pin first* row then follow the dictionary.
+
 **Also here (no ID):** `swatch.absentFurPattern` still calls Hrothgar 로스갈 in Korean (core says 로스가르 since #240). All five translations also name the fur pattern differently from the client (体毛柄 / Fellzeichnung / Motif du pelage / 털 무늬 / 毛纹).
 
 **Before Sprint 22:** some rows touch `glamour-block.ts`, which several of Sprint 22's rows also touch, so this sprint lands first.
@@ -300,7 +303,7 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 **What lands here:** the Terms of Service variants missing the Glamour Reader (I18N-002), the "About → Privacy" path (I18N-013), the Korean moderator word (TERM-001), French "préréglage" (TERM-010), tool names in the policy prose (TERM-019) and Japanese 自社 (TERM-020).
 
 **Sprint 0 fallback:** any Sprint 0 policy item not fixed inside its PR lands here too.
-- **Carried from Sprint 0 (2026-10-05): I18N-001's optional full fix.** The lighter fix shipped. If you want the full fix, replace "since the *Last updated* date" with the go-live date (2026-10-05) in all twelve variants; the anchors are in the re-verification file.
+- **Carried from Sprint 0 (2026-10-05): I18N-001's full fix — decided: do it.** The lighter fix shipped. Replace "since the *Last updated* date" with the go-live date (2026-10-05) in all twelve variants; the anchors are in the re-verification file.
 - **TERM-001 shrank to the two Korean Terms documents (five lines).** Both privacy documents now say 조정자.
 - **Do I18N-002 and TERM-019 in one pass:** they rewrite the same tools sentence in each variant.
 
@@ -694,6 +697,8 @@ The rest of the dead-code catalog's web-app entries. Each cascade is the next co
 
 P3. Fix only if Stoat is resumed; otherwise these go with the app if it is archived (see `docs/research/discord-alternatives/07-2026-10-refresh.md`).
 
+**Decided 2026-10-05: not skipped.** Stoat may be unparked within 30 days, so this sprint runs in order.
+
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
 | [deep-dive/BUG-070](../2026-10-04-deep-dive/findings/BUG-070.md) | deep-dive | LOW · MAIN | stoat about.ts Quick Start advertises unrouted !xd random and an unimplemented ❓-reaction help |
@@ -716,6 +721,8 @@ A comment-only fix. It rides with the next auth change; no publish is needed for
 ## Sprint 26 — Structural: share the review custom_id grammar (terminal)
 
 deep-dive/REFACTOR-001: one module for the grammar and status list, consumed by presets-api, moderation-worker and discord-worker, or a parity test across them. One publish, then one deploy per consumer.
+
+**Decided 2026-10-05: the shared module**, in a published package.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
@@ -758,6 +765,7 @@ deep-dive/REFACTOR-005: the two largest files in the repo duplicate their deskto
 **FONT-001 is a decision first:**
 - **Option A:** widen discord-worker's CJK subsets with item names (about +363 Hangul and +1,171 hanzi).
 - **Option B:** record the English-name card as accepted, with the measured rates.
+- **Decided 2026-10-05: Option A**, widen the subsets.
 
 **Why it is last:** any text change before it would invalidate the subsets again.
 
