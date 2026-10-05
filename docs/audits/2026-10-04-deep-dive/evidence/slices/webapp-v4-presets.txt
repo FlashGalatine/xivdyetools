@@ -1,0 +1,12 @@
+apps/web-app/src/components/v4/base-lit-component.ts
+apps/web-app/src/components/v4/display-options-v4.ts
+apps/web-app/src/components/v4/dye-filters-v4.ts
+apps/web-app/src/components/v4/language-modal.ts
+apps/web-app/src/components/v4/preset-card.ts
+apps/web-app/src/components/v4/preset-detail.ts
+apps/web-app/src/components/v4/preset-tool.ts
+apps/web-app/src/components/v4/range-slider-v4.ts
+apps/web-app/src/components/v4/result-card.ts
+apps/web-app/src/components/v4/share-button.ts
+apps/web-app/src/components/v4/theme-modal.ts
+apps/web-app/src/components/v4/toggle-switch-v4.ts

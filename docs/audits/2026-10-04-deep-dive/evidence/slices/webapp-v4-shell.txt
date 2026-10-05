@@ -1,0 +1,5 @@
+apps/web-app/src/components/v4/config-sidebar.ts
+apps/web-app/src/components/v4/dye-palette-drawer.ts
+apps/web-app/src/components/v4/v4-app-header.ts
+apps/web-app/src/components/v4/v4-color-wheel.ts
+apps/web-app/src/components/v4/v4-layout-shell.ts

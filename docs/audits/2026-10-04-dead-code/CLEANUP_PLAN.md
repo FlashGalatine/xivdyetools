@@ -1,5 +1,10 @@
 # Cleanup Plan — 2026-10-04 dead-code audit
 
+> [!NOTE]
+> **Superseded on 2026-10-04 by the merged [REMEDIATION_PLAN.md](../2026-10-04-deep-dive/REMEDIATION_PLAN.md)** of the same day's deep-dive audit.
+> - It schedules all 64 of these findings, with the same IDs, alongside the deep-dive's fixes: one sprint per unit, fixes before removals.
+> - The sprint numbers below no longer apply; the findings and their steps are unchanged.
+
 **Sources:** [DEAD_CODE_REPORT.md](DEAD_CODE_REPORT.md), 64 findings.
 
 **Status basis:** 64 total:
