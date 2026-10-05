@@ -29,7 +29,7 @@
 | **Moderation Bot** | v1.7.4 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.3.6 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.16.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.11.1 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -565,6 +565,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.16.1 | Oct 2026 | 2026-10-03 security audit Sprint 7 — the Universalis proxy's cache-miss limit counts through two native Workers Rate Limiting bindings (per IP 30 / 60 s, service-binding ceiling 600 / 60 s in production) with a KV fallback, replacing the per-isolate in-memory limiter, so it is enforced per colo (FINDING-011); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
 | v0.16.0 | Sep 2026 | `/v1/chara/resolve` rules carry the Grand Company lock instead of the job list (any job wears any piece for glamour since 7.4); cache shape 3; `glamour` joins the telemetry tool allowlist. Lands after 0.15.0 (acquisition lines) |
 | **v0.15.0** | **Sep 2026** | **`acquisition` on `POST /v1/chara/resolve` items and their alternates — one English GPOSERS line per item from a build-time table (`scripts/build-acquisition.ts`: Teamcraft data at a pinned commit + XIVAPI), 23,585 lines** |
 | v0.14.5 | Sep 2026 | Docs only — the reference page and the 0.14.4 note now say the accent / `ß` / width fold applies to the localized search (any non-English `locale`); the default English search is unchanged |
