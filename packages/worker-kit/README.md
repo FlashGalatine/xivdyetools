@@ -113,6 +113,7 @@ Wires a `RateLimiter` backend into the request path, sets standard headers, and 
 - **Backend memoization** — the `backend` factory's result is cached per isolate. Never construct a `MemoryRateLimiter` inside the factory, or every request gets a fresh empty window.
 - **Fail-open by default** — backend errors let requests through (and log). Pass `onError: 'fail-closed'` to return `429` instead.
 - **Standard headers** — `X-RateLimit-Limit` / `-Remaining` / `-Reset` on every response; `Retry-After` on a `429`.
+- **`formatError`** — optional factory for the `429` response. Any rate-limit header the middleware computed (`X-RateLimit-*`, `Retry-After`) that the returned `Response` lacks is copied onto it, so a raw `new Response(...)` carries them just as `c.json(...)` does. A header `formatError` sets itself is never overwritten. The same applies to the fail-closed `429` (`Retry-After` only).
 
 ### Helpers and types
 
@@ -150,7 +151,7 @@ app.use('/auth/*', jsonDepthLimit);
 | `exempt` | `{ match, maxSize, onTooLarge }` | — | One request shape that gets a different cap **and** skips the JSON check entirely — e.g. a binary upload route. |
 
 - **`bodySizeLimit`** wraps Hono's `bodyLimit`, which decides on `Content-Length` alone when the header is present and otherwise counts the stream and cuts it at the cap — a header that understates the body is trusted, so a route that must not be lied to keeps its own post-read backstop.
-- **`jsonDepthLimit`** inspects `POST` / `PATCH` / `PUT` requests whose `Content-Type` includes `application/json`. A non-JSON content type, an empty body, and a body that cannot be read all pass through untouched. It rejects an own `__proto__`, `constructor` or `prototype` key at any level.
+- **`jsonDepthLimit`** inspects `POST` / `PATCH` / `PUT` requests whose `Content-Type` is JSON: `application/json` or any `type/subtype+json` (for example `application/vnd.api+json`), compared case-insensitively with parameters such as `charset` ignored. A header that merely contains `application/json` anywhere (`application/jsonp`, `text/plain; x=application/json`) is guarded too, so the guard is never narrower than a consumer's own substring-based 415 gate. A non-JSON content type, an empty body, and a body that cannot be read all pass through untouched. It rejects an own `__proto__`, `constructor` or `prototype` key at any level.
 - **`exempt.match`** is asked once per request by each middleware, so a route that is allowed a large binary body never pays for a JSON parse it cannot use.
 
 ```typescript
@@ -209,6 +210,8 @@ if (!result.allowed) {
 | `MemoryRateLimiter` | `/rate-limiter/memory` | Single isolate, tests, local dev. Not shared across isolates. |
 | `KVRateLimiter` | `/rate-limiter/kv` | Cloudflare KV. Eventually consistent — **cannot throttle a fast client** (1 write/s/key, swallowed put failures); a fallback only. |
 | `UpstashRateLimiter` | `/rate-limiter/upstash` | Upstash Redis. A real distributed sliding window; the strictest option. |
+
+`KVRateLimiter.reset()` / `resetAll()` page through `kv.list` with its cursor until the listing is complete (KV returns at most 1000 keys per call) and delete in chunks of 50 concurrent calls. A very large prefix can still exhaust the per-invocation KV operation budget and throw partway, so run a bulk reset from a queue or cron rather than a request path. KV errors propagate.
 
 `CloudflareRateLimiter` trades exactness for atomicity and is documented as such:
 `remaining` reports `limit - 1` while allowed and `0` when denied (the binding
