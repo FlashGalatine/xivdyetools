@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.9.0] - 2026-10-05
+
+Sprint 27 of the 2026-10-04 remediation plan. MINOR: additions only. No existing export changes
+shape or return value.
+
+### Added
+
+- **`APIService.getPricesForDataCenterWithOutcome(itemIDs, dataCenterID)`** →
+  `Promise<PriceBatchResult>` (`{ prices, outcome }`, with `PriceBatchOutcome = 'ok' | 'partial' |
+  'error'`). It never throws.
+  - `'ok'`: no upstream request failed. All-cached and empty calls make no request.
+  - `'partial'`: a request failed, but prices came back (cached or fetched).
+  - `'error'`: a request failed, and the Map is empty.
+  - Counted as failures: a thrown or timed-out fetch, retry exhaustion, a non-OK status, an
+    unparseable or `results`-less body, or the rate limiter rejecting. A 200 that prices none of
+    the items is `'ok'`.
+  - The outcome survives the >100-item chunk merge and the in-flight coalescing (every coalesced
+    caller sees it).
+  - Before this, a Universalis or proxy outage looked like an empty success, so no consumer could
+    tell "no prices" from "no answer" (2026-10-04 deep-dive BUG-090).
+- **`CHARA_DYEABLE_SLOTS`**: the seven gear slots that take dyes (MainHand, OffHand, HeadGear,
+  Body, Hands, Legs, Feet), typed over `GposersSlot`. It was a private copy in `chara-gposers`, and
+  the web app's Glamour Reader kept a second one (REFACTOR-004).
+
+### Fixed
+
+- **Chinese and Korean data centers and worlds** (陆行鸟, 한국, 红玉海, …) were sanitised to an empty
+  path segment, so every price lookup for them failed (`/aggregated//<ids>`). The segment now keeps
+  Unicode letters and digits and is percent-encoded. Each name gets its own cache key, where all of
+  them used to collapse to one. Path characters (`/`, `.`, `%`) are still stripped.
+
+### Changed
+
+- `getPricesForDataCenter` delegates to the new method. Its signature and its `Map` return are
+  unchanged.
+
 ## [5.8.2] - 2026-10-05
 
 The Brass facewear color's French, Korean and Chinese names now match the game clients. PATCH: a
