@@ -519,7 +519,9 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-moderation-worker` → merge → `deploy-moderation-worker.yml` (commands are registered by hand; shapes unchanged)
 
-## Sprint 18 — api-worker: telemetry double charge, param parsing, limiter test
+## Sprint 18 — api-worker: telemetry double charge, param parsing, limiter test — PR #273 (open)
+
+**Done in PR #273** (api-worker 0.17.0 — minor: malformed numeric parameters now answer 400). The first `/v1/chara/resolve` in each isolate now pays the table load (~0.9 s in Node), fine on Workers Paid.
 
 deep-dive/BUG-037: each telemetry beacon is charged twice. deep-dive/BUG-039 is from #229: pin the multiplier to the binding. deep-dive/OPT-002 moves the 3.4 MB acquisition tables off the cold start.
 

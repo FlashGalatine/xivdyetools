@@ -15,4 +15,4 @@
 Steps: Delete line 21 `export { createMockKV };` (and blank line 20) from apps/api-worker/tests/test-utils.ts; keep the line-6 import. Then run pnpm turbo run build type-check lint test --filter=...xivdyetools-api-worker && pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `6818070b` (branch `fix/remediation-2026-10-04-sprint18`, api-worker 0.17.0; PR #273, open).
