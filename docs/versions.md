@@ -190,7 +190,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v5.8.9 | Oct 2026 | `/glamour` cards name items in Korean and Chinese (2026-10-04 remediation, Sprint 30, FONT-001): CJK subsets widened with the ko / zh item-name tables (KR +364, SC +1,167); English fallback 63.2 % → 2 items (ko), 97.3 % → 0 (zh); bundle 2,626.8 KiB (85.5 % of the cap) |
+| v5.8.9 | Oct 2026 | `/glamour` cards name items in Korean, Chinese and Japanese (2026-10-04 remediation, Sprint 30, FONT-001): CJK subsets widened with the ko / zh / ja item-name tables (KR +364, SC +1,167, JP +443); English fallback 63.2 % → 2 items (ko), 97.3 % → 0 (zh), 7.3 % → 0 (ja); Japanese cards load JP first, so kanji draw in Japanese letterforms (zh / ko / en unchanged); bundle 2,717.2 KiB (88.5 % of the cap) |
 | v5.8.8 | Oct 2026 | Moderation button ids built by `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); byte-identical. No visible change |
 | v5.8.7 | Oct 2026 | Core 5.10.0 and bot-logic 4.8.2 (2026-10-04 remediation, Sprint 13): `/extractor` shows only real colours (BUG-036); grey `/gradient` and HSL `/mixer` endpoints keep the other hue (BUG-035); unreadable `.chara` colours refused (BUG-133); CJK subsets re-cut for the new sheet names (JP +2/−1, SC +5/−3) |
 | v5.8.6 | Oct 2026 | svg 4.4.0 and bot-logic 4.8.1 (2026-10-04 remediation, Sprints 14+28): `/contrast` card, embed and `/compare` print one floored ratio (BUG-142); de/fr decimal comma in every readout; whole `/gradient` step ranges (BUG-146); glamour footer and look label (I18N-015, BUG-145); `/budget` packs its ledger with svg's geometry (REFACTOR-003) |

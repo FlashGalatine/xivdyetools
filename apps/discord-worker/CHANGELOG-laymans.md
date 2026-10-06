@@ -37,7 +37,8 @@ Rules:
 
 ## [5.8.9] - 2026-10-06
 ### 🌏 Item names in your language
-- `/glamour` cards now name items in Korean and Chinese instead of falling back to English.
+- `/glamour` cards now name items in Korean, Chinese and Japanese instead of falling back to English.
+- Japanese cards draw kanji in Japanese letterforms; some used to appear in their Chinese forms.
 
 ## [5.8.7] - 2026-10-06
 ### 🎨 Truer greys and cleaner palettes
