@@ -55,7 +55,7 @@ export async function handleGradientCommand(
     string | undefined;
 
   const t = userId
-    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    ? await createUserTranslator(env.KV, userId, interaction.locale, logger)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
 
   if (!startInput || !endInput) {

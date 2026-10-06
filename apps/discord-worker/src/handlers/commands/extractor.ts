@@ -233,7 +233,7 @@ async function handleColorSubcommand(
   logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale, logger);
   const theme = prefs.theme;
 
   // Initialize localization for dye names
@@ -443,7 +443,7 @@ async function handleImageSubcommand(
 
   // Get translator for validation errors (before deferring)
   const t = userId
-    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    ? await createUserTranslator(env.KV, userId, interaction.locale, logger)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
 
   // Validate image attachment

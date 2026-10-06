@@ -173,8 +173,16 @@ vi.mock('../../utils/discord-api.js', () => {
   return { editOriginalResponse, safeEditOriginalResponse: editOriginalResponse };
 });
 
+// BUG-125: a passthrough — every case runs the real executeComparison unless
+// one stands in a result the Discord options cannot produce.
+vi.mock('@xivdyetools/bot-logic', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/bot-logic')>();
+  return { ...actual, executeComparison: vi.fn(actual.executeComparison) };
+});
+
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateComparisonCard } from '@xivdyetools/svg';
+import { executeComparison } from '@xivdyetools/bot-logic';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 
 describe('comparison.ts', () => {
@@ -630,6 +638,80 @@ describe('comparison.ts', () => {
         }),
       );
     });
+
+    it('hands its request logger to bot-logic, whose catch names the error class (BUG-125)', async () => {
+      vi.mocked(generateComparisonCard).mockImplementationOnce(() => {
+        throw new RangeError('Snow White quoted in a message');
+      });
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'comparison',
+          options: [
+            { name: 'dye1', value: 'snow white', type: 3 },
+            { name: 'dye2', value: 'soot black', type: 3 },
+          ],
+        },
+        user: { id: 'user-123' },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      await handleComparisonCommand(interaction, mockEnv, mockCtx, logger as never);
+      await Promise.all(waitUntilPromises);
+
+      expect(logger.warn).toHaveBeenCalledWith('[comparison] generation failed: RangeError');
+      const logged = [...logger.warn.mock.calls, ...logger.error.mock.calls].flat().map(String);
+      for (const line of logged) expect(line).not.toContain('Snow White');
+    });
+
+    it('answers NOT_ENOUGH_DYES with its message, not as a render failure (BUG-125)', async () => {
+      vi.mocked(executeComparison).mockResolvedValueOnce({
+        ok: false,
+        error: 'NOT_ENOUGH_DYES',
+        errorMessage: 'Both dye1 and dye2 are required.',
+      });
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'comparison',
+          options: [
+            { name: 'dye1', value: 'snow white', type: 3 },
+            { name: 'dye2', value: 'soot black', type: 3 },
+          ],
+        },
+        user: { id: 'user-123' },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      const { startCommandTrace } = await import('../../services/command-trace.js');
+      const trace = startCommandTrace(interaction, {
+        command: 'comparison',
+        subcommand: '',
+        userId: 'u1',
+        locale: 'en',
+      });
+
+      await handleComparisonCommand(interaction, mockEnv, mockCtx, logger as never);
+      await Promise.all(waitUntilPromises);
+
+      expect(editOriginalResponse).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          embeds: [expect.objectContaining({ description: 'Both dye1 and dye2 are required.' })],
+        }),
+      );
+      expect(trace.outcome).toBeNull();
+      expect(logger.error).not.toHaveBeenCalled();
+    });
   });
 
   describe('locale handling', () => {
@@ -650,10 +732,13 @@ describe('comparison.ts', () => {
         token: 'token-1',
       };
 
-      await handleComparisonCommand(interaction, mockEnv, mockCtx);
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+      await handleComparisonCommand(interaction, mockEnv, mockCtx, logger as never);
 
+      // BUG-126: the request logger reaches locale resolution, so a KV
+      // failure there is logged rather than silently falling back.
       const { createUserTranslatorWithPrefs } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 'de');
+      expect(createUserTranslatorWithPrefs).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 'de', logger);
     });
 
     it('should handle missing user info gracefully', async () => {

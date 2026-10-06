@@ -305,6 +305,10 @@ export function getDyeById(id: number): Dye | null {
  * old habits still type) must keep resolving, and the two ranges are disjoint
  * (the Stain sheet is a byte; item ids start at 5729), so the number itself
  * says which lookup applies. Anything in the gap, zero or negative is nothing.
+ *
+ * A number has already lost any zero padding, so the 1–5 digit rule for
+ * typed text (BUG-034, bot-logic's `parseDyeIdInput`) is applied by the
+ * /budget handler before it calls this, not here.
  */
 export function resolveTargetDye(id: number): Dye | null {
   if (!Number.isInteger(id) || id <= 0) return null;

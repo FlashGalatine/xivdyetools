@@ -66,7 +66,10 @@ function resolveThroughApiWorker(env: Env): GlamourInput['resolve'] {
     } else if (env.UNIVERSALIS_PROXY_URL) {
       response = await fetch(`${env.UNIVERSALIS_PROXY_URL}${RESOLVE_PATH}`, init);
     } else {
-      throw new Error('api-worker binding not configured');
+      // The codes ride into bot-logic's '[glamour] resolve failed: <class> <code>'
+      // line (failureKind), which never logs the message — without them a
+      // missing binding, a malformed envelope and an outage read alike.
+      throw Object.assign(new Error('api-worker binding not configured'), { code: 'BINDING_MISSING' });
     }
     if (!response.ok) {
       // The status rides on the error: bot-logic reads a 429 as "busy", a
@@ -88,7 +91,9 @@ function resolveThroughApiWorker(env: Env): GlamourInput['resolve'] {
     }
     const envelope = (await response.json().catch(() => null)) as ResolveEnvelope | null;
     const items = envelope?.success === true ? envelope.data?.items : null;
-    if (!items || typeof items !== 'object') throw new Error('Malformed resolve envelope');
+    if (!items || typeof items !== 'object') {
+      throw Object.assign(new Error('Malformed resolve envelope'), { code: 'MALFORMED_ENVELOPE' });
+    }
     return { items, glasses: envelope?.data?.glasses ?? null };
   };
 }
@@ -101,7 +106,7 @@ export async function handleGlamourCommand(
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const t = userId
-    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    ? await createUserTranslator(env.KV, userId, interaction.locale, logger)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
   const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 

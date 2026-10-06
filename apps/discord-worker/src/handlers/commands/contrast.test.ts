@@ -324,6 +324,31 @@ describe('handleContrastCommand', () => {
       );
     });
 
+    it('answers NOT_ENOUGH_DYES with its message, not as a render failure (BUG-125)', async () => {
+      vi.mocked(executeContrast).mockResolvedValue({
+        ok: false,
+        error: 'NOT_ENOUGH_DYES',
+        errorMessage: 'Both dye1 and dye2 are required.',
+      } as never);
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      const { startCommandTrace } = await import('../../services/command-trace.js');
+      const int = interaction(['Snow White', 'Soot Black']);
+      const trace = startCommandTrace(int, { command: 'contrast', subcommand: '', userId: 'u1', locale: 'en' });
+
+      await handleContrastCommand(int, env, ctx, logger as never);
+      await settle();
+
+      const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
+        embeds: Array<{ description?: string }>;
+      };
+      expect(payload.embeds[0].description).toBe('Both dye1 and dye2 are required.');
+      expect(JSON.stringify(payload)).not.toContain('errors.generationFailed');
+      expect(renderSvgToPng).not.toHaveBeenCalled();
+      expect(trace.outcome).toBeNull();
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
     it('edits in an error embed when rasterization throws', async () => {
       vi.mocked(renderSvgToPng).mockRejectedValue(new Error('resvg exploded'));
       const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };

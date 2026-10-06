@@ -40,7 +40,7 @@ export async function handleComparisonCommand(
   logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale, logger);
 
   const options = interaction.data?.options || [];
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
@@ -101,7 +101,17 @@ async function processComparisonCommand(
   const result = await executeComparison({ dyes, locale, theme, logger });
 
   if (!result.ok) {
-    // GENERATION_FAILED: the card generator threw inside bot-logic.
+    if (result.error === 'NOT_ENOUGH_DYES') {
+      // A refusal, not a render failure (BUG-125): bot-logic names what is
+      // missing in the reader's language, and the trace stays `ok`. The two
+      // required options above make this unreachable from Discord today.
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), result.errorMessage)],
+      });
+      return;
+    }
+    // GENERATION_FAILED: the card generator threw inside bot-logic, which
+    // logged the error's class on `logger` before answering.
     markCommandOutcome(interaction, 'render');
     if (logger) logger.error('Comparison command failed');
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {

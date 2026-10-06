@@ -13,6 +13,7 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { Dye } from '@xivdyetools/types';
 import {
   deferredResponse,
   errorEmbed,
@@ -231,6 +232,26 @@ async function refusePrivately(
 // ============================================================================
 
 /**
+ * Resolve the typed `target_dye` — an id or a name.
+ *
+ * BUG-032 (2026-07-18 audit): the input is an id only when it is entirely
+ * numeric — parseInt('255 Brown') would otherwise parse as 255.
+ *
+ * BUG-034 (2026-10-04 audit): and only when it is 1–5 digits — the rule
+ * `@xivdyetools/bot-logic`'s `parseDyeIdInput` applies for every other
+ * command. Every real id fits in five digits, so six bare digits are a hex
+ * colour there ('013114' is #013114, not zero-padded Pure White). /budget
+ * prices dyes, not colours, so six or more bare digits name no dye here:
+ * the user is told no such dye was found, as its autocomplete already
+ * offered none.
+ */
+function resolveTargetDyeInput(input: string, locale: LocaleCode): Dye | null {
+  if (!/^\s*\d+\s*$/.test(input)) return getDyeByName(input, locale);
+  const digits = input.trim();
+  return digits.length <= 5 ? resolveTargetDye(Number(digits)) : null;
+}
+
+/**
  * Handles /budget find <target_dye>
  */
 function handleFindSubcommand(
@@ -267,13 +288,7 @@ function handleFindSubcommand(
     return ephemeralResponse(t.t('budget.errors.missingDye'));
   }
 
-  // Resolve target dye (could be ID or name).
-  // BUG-032 (2026-07-18 audit): only treat the input as an ID when it's
-  // entirely numeric — parseInt('255 Brown') would otherwise parse as 255.
-  const isNumericInput = /^\s*\d+\s*$/.test(targetDyeInput);
-  const targetDye = isNumericInput
-    ? resolveTargetDye(parseInt(targetDyeInput, 10))
-    : getDyeByName(targetDyeInput, t.getLocale());
+  const targetDye = resolveTargetDyeInput(targetDyeInput, t.getLocale());
 
   if (!targetDye || targetDye.itemID <= 0) {
     // FINDING-019: typed option value echoed back — sanitise it
