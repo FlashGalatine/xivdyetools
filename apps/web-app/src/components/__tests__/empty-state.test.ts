@@ -9,15 +9,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock tool-panel-builders to prevent circular dependency when running with other tests
-vi.mock('@services/tool-panel-builders', () => ({
-  buildMarketPanel: vi.fn(),
-  buildPanelSection: vi.fn(),
-  buildCheckboxPanelSection: vi.fn(),
-  buildSelectPanelSection: vi.fn(),
-  buildRadioPanelSection: vi.fn(),
-}));
-
 import {
   EmptyState,
   EMPTY_STATE_PRESETS,

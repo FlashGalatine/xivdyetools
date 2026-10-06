@@ -19,16 +19,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Breaks the base-component <-> services import cycle, as modal-container's
-// suite does
-vi.mock('@services/tool-panel-builders', () => ({
-  buildMarketPanel: vi.fn(),
-  buildPanelSection: vi.fn(),
-  buildCheckboxPanelSection: vi.fn(),
-  buildSelectPanelSection: vi.fn(),
-  buildRadioPanelSection: vi.fn(),
-}));
-
 vi.mock('@services/tutorial-service', () => ({
   TutorialService: {
     subscribe: vi.fn(() => () => {}),
