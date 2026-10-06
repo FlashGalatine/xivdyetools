@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.9] - 2026-10-05
+
+Sprint 29 of the 2026-10-04 remediation plan: deep-dive REFACTOR-005, the last web-app sprint.
+The Gradient Builder and the Swatch Matcher each draw one workspace. Before, each also built a
+left panel that the right panel cleared at once, and a mobile drawer that the v4 shell never asks
+for (`drawerContent: null`).
+
+### Changed
+
+- **`gradient-tool.ts`** went from 2,782 lines to 1,922, and **`swatch-tool.ts`** from 3,314 to
+  2,689.
+  - Removed: their detached CollapsiblePanels, DyeSelectors, settings panels, MarketBoards, and
+    every mobile-drawer copy.
+  - The desktop and mobile copies had already drifted: the mobile steps slider skipped
+    `pinnedSteps.clear()`. The surviving path keeps the clear, and an end-to-end test pins it.
+- **The live jobs those detached pieces did now live on the path that remains.**
+  - Gradient's result cards read their server from `MarketBoardService`.
+  - Swatch keeps the market relay that its detached MarketBoard provided, now as its own service
+    listener, in the same order.
+  - A market change reaches each tool through its ConfigController subscription only.
+- **One user-visible difference:** on the Gradient Builder, the browser's Find (Ctrl+F) and `/`
+  quick-find are no longer swallowed. The detached DyeSelector used to catch them and focus a
+  search box that was not on the page.
+- The mis-encoded bullet in Gradient (` â€¢ `) went with the dead code that held it. The file's
+  mis-encoded comments (`â€”`, `â†’`) are fixed.
+- **Also removed, because they lost their last reader:**
+  - MarketBoard's `setSelectedServer`, `setShowPrices`, `getShowPrices`, `fetchPricesForDyes`,
+    `shouldFetchPrice` and static `formatPrice`, and `market-board-service`'s `formatPrice`
+    export. `getSelectedServer` stays, because Harmony reads it.
+  - The `tool-panel-builders` helper and `ICON_STAIRS`.
+  - Seven locale keys × 6 (`mixer.selectTwoDyes`, `mixer.interpolationSettings`,
+    `mixer.colorSpace`, `mixer.steps`, `tools.character.selectSubrace` / `selectGender` /
+    `colorCategory`).
+
 ## [5.14.8] - 2026-10-05
 
 Sprint 27 of the 2026-10-04 remediation plan, with `@xivdyetools/core` 5.9.0.

@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.8 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.14.9 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -116,6 +116,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.9 | Oct 2026 | One workspace per tool (2026-10-04 remediation, Sprint 29, REFACTOR-005): the Gradient Builder and Swatch Matcher lose the left panel and mobile drawer the v4 shell never showed (gradient-tool 2,782 → 1,922 lines, swatch-tool 3,314 → 2,689); browser Find (Ctrl+F) is no longer swallowed on Gradient; MarketBoard members, `tool-panel-builders` and seven locale keys that lost their readers removed |
 | v5.14.8 | Oct 2026 | Market failures show (core 5.9.0, 2026-10-04 remediation, Sprint 27): the Extractor's error badge, Harmony's strip and Budget's offline block appear on an outage (BUG-090); Chinese and Korean servers get prices; the Glamour Reader takes its dyeable slots from core (REFACTOR-004) |
 | v5.14.7 | Oct 2026 | Dead code (2026-10-04 remediation, Sprint 23): unused styles, test-only service methods, six test-only empty-state presets with their icons and keys, the six legacy context actions and their handlers, Mixer's unreachable third slot, 21 orphaned locale keys, and two test files that tested core and types instead of the web app. No behaviour change |
 | v5.14.6 | Oct 2026 | Remaining LOW fixes (2026-10-04 remediation, Sprint 22): 41 of 42 — theme switches redraw Budget, Mixer and THIS CHARACTER without losing focus (BUG-080, BUG-083), every tool's price row follows the market switch (BUG-086), one market change is one Harmony regeneration (OPT-007), overlays own the keyboard and Escape (BUG-091, BUG-105), AZERTY tool shortcuts (BUG-120), print without chrome (BUG-112), SEND TO keeps the loaded `.chara` (BUG-104), sign-out no longer waits on the revoke (BUG-115), local-date exports (BUG-123), and `validate-i18n.js` reads wrapped calls and aliases (BUG-074). BUG-090 waits for a core change |
