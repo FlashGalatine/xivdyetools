@@ -781,7 +781,9 @@ deep-dive/REFACTOR-003: svg exports the ledger geometry, and discord-worker's bu
 
 **Ends with:** svg publish → discord-worker deploy
 
-## Sprint 29 — Structural: split swatch-tool and gradient-tool (terminal)
+## Sprint 29 — Structural: split swatch-tool and gradient-tool (terminal) — PR #255 (open)
+
+**Done in PR #255** (web-app 5.14.9, stacked on #254). It is the last web-app sprint. Both tools keep one workspace; the v4-dead left panel and drawer are gone, and the duplication with them. Details are in the re-verification file's *Sprint 29* section.
 
 deep-dive/REFACTOR-005: the two largest files in the repo duplicate their desktop and mobile selector code. This goes after every other web-app sprint, because they all touch these files.
 

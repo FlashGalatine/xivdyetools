@@ -495,7 +495,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-002 | OPEN | — |
 | REFACTOR-003 | OPEN | — |
 | REFACTOR-004 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
-| REFACTOR-005 | OPEN | — |
+| REFACTOR-005 | FIX COMMITTED, NOT DEPLOYED (PR #255, open) | `51a058de` + `ccda155f` + `7c187084` |
 | REFACTOR-006 | OPEN | — |
 | REFACTOR-007 | OPEN | — |
 | REFACTOR-008 | OPEN | — |
