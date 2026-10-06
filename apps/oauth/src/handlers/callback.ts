@@ -61,6 +61,20 @@ callbackRouter.post('/callback', async (c) => {
     );
   }
 
+  // BUG-056: JSON `null` (and a bare number, boolean or string) parses fine and
+  // passes the body guards; destructuring `null` below would throw and answer
+  // 500. Same 400 as the malformed-JSON branch. Arrays fall through to the
+  // missing-field check.
+  if (typeof body !== 'object' || body === null) {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: 'Invalid request body',
+      },
+      400
+    );
+  }
+
   const { code, code_verifier, redirect_uri, state } = body;
 
   if (!code || !code_verifier) {

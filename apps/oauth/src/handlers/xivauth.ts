@@ -92,6 +92,20 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     );
   }
 
+  // BUG-056: JSON `null` (and a bare number, boolean or string) parses fine and
+  // passes the body guards; destructuring `null` below would throw and answer
+  // 500. Same 400 as the malformed-JSON branch. Arrays fall through to the
+  // missing-field check.
+  if (typeof body !== 'object' || body === null) {
+    return c.json<AuthResponse>(
+      {
+        success: false,
+        error: 'Invalid request body',
+      },
+      400
+    );
+  }
+
   const { code, code_verifier, state } = body;
 
   if (!code || !code_verifier) {
@@ -294,7 +308,16 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
         // for. Parse into a local first; the catch then genuinely means
         // "continue without characters".
         const roster = await charactersResponse.json();
-        characters = Array.isArray(roster) ? roster : [];
+
+        // BUG-057: the elements were never checked either. A `null` element
+        // made the `.filter` / `.find` callbacks throw (500), so non-object
+        // elements are dropped here and the display-name pick below requires a
+        // usable string name.
+        characters = Array.isArray(roster)
+          ? roster.filter(
+              (ch): ch is XIVAuthCharacterRegistration => typeof ch === 'object' && ch !== null
+            )
+          : [];
         if (!Array.isArray(roster)) {
           logger?.warn('XIVAuth character roster was not an array', {
             bodyType: roster === null ? 'null' : typeof roster,
@@ -339,8 +362,15 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
     // about it is stored (no `xivauth_characters` row) or minted (no
     // `primary_character` claim, no `primary_character` in the response) — an
     // unverified registration in particular is now dropped entirely.
-    const verifiedCharacter = characters.find((ch) => ch.verified) ?? null;
-    const displayName = verifiedCharacter?.name ?? null;
+    //
+    // BUG-057: "verified" alone is not enough. `?? null` keeps an empty name,
+    // which became an empty username / global_name in the JWT, so the first
+    // verified character whose name is a non-blank string wins, trimmed.
+    const verifiedCharacter =
+      characters.find(
+        (ch) => ch.verified && typeof ch.name === 'string' && ch.name.trim().length > 0
+      ) ?? null;
+    const displayName = verifiedCharacter ? verifiedCharacter.name.trim() : null;
     const username = displayName ?? `XIVAuth User ${xivauthUser.id.slice(0, 8)}`;
 
     logger?.debug('Resolving XIVAuth user', {

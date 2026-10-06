@@ -18,7 +18,6 @@ import {
 } from '@xivdyetools/auth/encoding';
 import {
   verifyJWTSignatureOnly as sharedVerifyJWTSignatureOnly,
-  decodeJWT as sharedDecodeJWT,
   isTokenRevoked as sharedIsTokenRevoked,
   revokeToken as sharedRevokeToken,
   hmacSign,
@@ -184,14 +183,6 @@ export async function verifyJWT(
   }
 
   return payload as unknown as JWTPayload;
-}
-
-/**
- * Decode JWT without verification (for debugging/display)
- * WARNING: Do not trust the contents without calling verifyJWT
- */
-export function decodeJWT(token: string): JWTPayload | null {
-  return sharedDecodeJWT(token) as unknown as JWTPayload | null;
 }
 
 /**

@@ -27,7 +27,7 @@
 | **Discord Bot** | v5.8.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
-| **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
+| **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.4.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.11.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
@@ -230,6 +230,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.1.3 | Oct 2026 | 2026-10-04 remediation Sprint 10 — `/auth/*` rate limiting keys and tiers on the decoded path, so a percent-encoded route spelling shares the real bucket (BUG-007); a non-object JSON body gets 400 on both callbacks (BUG-056); a malformed XIVAuth roster falls back to `XIVAuth User <id8>` instead of a 500 or an empty name (BUG-057); a non-empty callback body must be `application/json` (415), closing the `text/plain` bypass of the body guard (BUG-149, oauth half); dead `decodeJWT` wrapper and coverage excludes removed (DEAD-036, DEAD-037) |
 | v3.1.2 | Oct 2026 | 2026-10-03 security audit Sprint 6 — retired `xivdyetools.projectgalatine.com` origin removed from the redirect + CORS allowlist and the retired `auth.` custom-domain route dropped, both pinned by tests (FINDING-006); `[observability] enabled = false` pinned and asserted (FINDING-022) |
 | v3.1.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 14 — the security-headers middleware is registered before env validation, so the misconfiguration 500 carries nosniff / no-store / HSTS (BUG-017); body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards`, error bodies unchanged (REFACTOR-009) |
 | v3.1.0 | Sep 2026 | 2026-09-02 deep-dive — a cancelled login returns to the allowlisted origin it started on instead of production (BUG-049); a non-array character roster no longer turns sign-in into a 500 (BUG-051) |
