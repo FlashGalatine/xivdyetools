@@ -24,7 +24,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.14.9 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.5 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.8.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -44,8 +44,8 @@
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
-| **SVG** | v4.3.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.8.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.8.1 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated

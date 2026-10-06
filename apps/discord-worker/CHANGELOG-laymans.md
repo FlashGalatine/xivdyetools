@@ -35,6 +35,13 @@ Rules:
   path filter.
 -->
 
+## [5.8.6] - 2026-10-06
+### 📏 Numbers that agree
+- `/contrast` and `/compare` show the same contrast ratio for the same two dyes, and never round a failing ratio up to a passing one.
+- German and French show a decimal comma in every `/contrast` and `/compare` number.
+- `/gradient` no longer cuts off step numbers like "10–12".
+- `/glamour` cards keep each count next to its word in the footer, and long German footers fit.
+
 ## [5.8.5] - 2026-10-06
 ### 🎨 Colours you type, and filters that keep their matches
 - Colours typed as six digits, like `000000` or `333333`, work everywhere instead of being refused.
