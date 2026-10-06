@@ -29,6 +29,8 @@ import {
   getAttr,
 } from '../../__tests__/component-utils';
 import { ToastService } from '@services/toast-service';
+import { ModalService } from '@services/modal-service';
+import { ModalContainer } from '../modal-container';
 
 describe('ToastContainer', () => {
   let container: HTMLElement;
@@ -305,6 +307,204 @@ describe('ToastContainer', () => {
 
       const toasts = queryAll(container, '[data-toast-id]');
       expect(toasts.length).toBe(1);
+    });
+  });
+
+  // ============================================================================
+  // One Escape, one layer (BUG-105)
+  // ============================================================================
+
+  /**
+   * BUG-105: the toast and every overlay each listened for Escape on the
+   * document and neither stood aside, so one press closed a toast AND the
+   * modal, sheet or popover the user was working in. The overlay holding focus
+   * owns Escape; a toast is a passive notice (it times out, and it has its own
+   * dismiss button), so it yields — even though it is drawn above the modal
+   * layer. Escape reaches the toast only when nothing else wanted it.
+   */
+  describe('One Escape closes one layer', () => {
+    const escape = (target: EventTarget = document): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      });
+      target.dispatchEvent(event);
+      return event;
+    };
+
+    it('closes only the modal when a modal and a toast are both open', () => {
+      const modalRoot = createTestContainer('modal-root-under-test');
+      const modals = new ModalContainer(modalRoot);
+      modals.init();
+      try {
+        toastContainer = new ToastContainer(container);
+        toastContainer.init();
+        ModalService.show({ type: 'custom', title: 'Dialog' });
+        // A toast that arrives while the modal is open re-renders the toast
+        // container last, so its listener is not simply the later one
+        ToastService.error('Error!');
+
+        escape();
+
+        expect(ModalService.getModals()).toHaveLength(0);
+        expect(queryAll(container, '[data-toast-id]')).toHaveLength(1);
+
+        // The next Escape, with nothing else open, is the toast's
+        escape();
+        expect(queryAll(container, '[data-toast-id]')).toHaveLength(0);
+      } finally {
+        ModalService.dismissAll();
+        modals.destroy();
+        cleanupTestContainer(modalRoot);
+      }
+    });
+
+    // The Glamour Reader's export sheet (and any overlay like it) closes on
+    // Escape WITHOUT marking the key handled, and releases its registration as
+    // it closes. Judged after the fact, the toast would see "nothing open,
+    // nothing handled" and close as well; it has to judge by what was open
+    // when the key went down.
+    it('yields to an overlay that closes on Escape without marking it handled', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      ToastService.error('Error!');
+      const release = ModalService.registerExternal();
+      const closeSheet = (event: KeyboardEvent): void => {
+        if (event.key === 'Escape') release();
+      };
+      document.addEventListener('keydown', closeSheet);
+      try {
+        escape();
+
+        expect(ModalService.hasOpenModals()).toBe(false);
+        expect(queryAll(container, '[data-toast-id]')).toHaveLength(1);
+      } finally {
+        document.removeEventListener('keydown', closeSheet);
+        release();
+      }
+    });
+
+    it('yields to a nearer handler that already consumed the Escape', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      ToastService.error('Error!');
+      const field = document.createElement('input');
+      field.addEventListener('keydown', (event) => event.preventDefault());
+      document.body.appendChild(field);
+      try {
+        escape(field);
+
+        expect(queryAll(container, '[data-toast-id]')).toHaveLength(1);
+      } finally {
+        field.remove();
+      }
+    });
+
+    it('still closes the toast when nothing else is open', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      ToastService.error('Error!');
+
+      escape();
+
+      expect(queryAll(container, '[data-toast-id]')).toHaveLength(0);
+    });
+  });
+
+  // ============================================================================
+  // Keyed rendering (BUG-105)
+  // ============================================================================
+
+  /**
+   * BUG-105: every change cleared the container and rebuilt every toast, so a
+   * toast already on screen slid in again (fresh `toast-animate-in`) and, as a
+   * brand-new role=alert node, was announced again by screen readers whenever
+   * another toast came or went. A toast's node now lives as long as it does.
+   */
+  describe('Keyed rendering', () => {
+    const toastNode = (id: string): HTMLElement | null =>
+      query<HTMLElement>(container, `[data-toast-id="${id}"]`);
+
+    it('keeps a showing toast’s node when another toast arrives', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      const first = ToastService.error('First');
+      const firstNode = toastNode(first);
+
+      const second = ToastService.error('Second');
+
+      expect(toastNode(first)).toBe(firstNode);
+      expect(
+        queryAll<HTMLElement>(container, '[data-toast-id]').map((el) => el.dataset.toastId)
+      ).toEqual([first, second]);
+    });
+
+    it('removes only the toast that went, leaving the others untouched and in order', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      const a = ToastService.error('A');
+      const b = ToastService.error('B');
+      const c = ToastService.error('C');
+      const nodeA = toastNode(a);
+      const nodeC = toastNode(c);
+
+      ToastService.dismiss(b);
+
+      expect(toastNode(b)).toBeNull();
+      expect(toastNode(a)).toBe(nodeA);
+      expect(toastNode(c)).toBe(nodeC);
+      expect(
+        queryAll<HTMLElement>(container, '[data-toast-id]').map((el) => el.dataset.toastId)
+      ).toEqual([a, c]);
+    });
+
+    it('keeps the wrapper and its label across changes', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      const wrapper = query(container, '#toast-container');
+
+      ToastService.show('One');
+      ToastService.show('Two');
+
+      expect(query(container, '#toast-container')).toBe(wrapper);
+      expect(queryAll(container, '#toast-container')).toHaveLength(1);
+      expect(getAttr(wrapper, 'aria-label')).toBe('Notifications');
+    });
+
+    it('rebuilds cleanly if its content was replaced underneath it', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      ToastService.error('Before');
+      container.replaceChildren();
+
+      const after = ToastService.error('After');
+
+      expect(queryAll(container, '#toast-container')).toHaveLength(1);
+      expect(queryAll(container, '[data-toast-id]')).toHaveLength(2);
+      expect(toastNode(after)).not.toBeNull();
+    });
+
+    // The error boundary makes its own panel the component's element. A
+    // retry must draw the toasts into a fresh wrapper, not into that panel.
+    it('recovers from a render error through Try again', () => {
+      toastContainer = new ToastContainer(container);
+      toastContainer.init();
+      vi.spyOn(
+        ToastContainer.prototype as unknown as { createToastElement: () => HTMLElement },
+        'createToastElement'
+      ).mockImplementationOnce(() => {
+        throw new Error('render failed');
+      });
+      const id = ToastService.error('Survives');
+      expect(query(container, '.component-error-boundary')).not.toBeNull();
+
+      click(query(container, '[data-action="retry"]'));
+
+      expect(query(container, '.component-error-boundary')).toBeNull();
+      expect(queryAll(container, '#toast-container')).toHaveLength(1);
+      expect(query(container, '#toast-container')?.contains(toastNode(id))).toBe(true);
     });
   });
 

@@ -444,6 +444,36 @@ export class V4LayoutShell extends BaseLitComponent {
         letter-spacing: 1px;
       }
     `,
+    // BUG-112 (2026-10-04 deep-dive): print the tool, not the console. The
+    // 100vh overflow-hidden host and the content scroller clipped a printout
+    // to one sheet, with the app bar, FABs and Options column printed on it
+    // (styles/v4-layout.css reaches only the host, not this shadow root).
+    // Last in the list so it beats the max-width: 768px block, which a narrow
+    // print page also matches; overflow is !important because v4-layout.ts
+    // gives .v4-tool-main an inline overflow-y: auto. The rationale lives out
+    // here because comments inside a css`` literal ship verbatim.
+    css`
+      @media print {
+        :host,
+        .v4-layout-main,
+        .v4-layout-content,
+        .v4-layout-content-scroll,
+        .v4-tool-main {
+          display: block;
+          height: auto;
+          overflow: visible !important;
+        }
+        v4-app-header,
+        v4-config-sidebar,
+        dye-palette-drawer,
+        .v4-drawer-overlay,
+        .v4-palette-hint,
+        .v4-options-toggle,
+        .v4-palette-toggle {
+          display: none !important;
+        }
+      }
+    `,
   ];
 
   private languageUnsubscribe: (() => void) | null = null;
@@ -523,6 +553,10 @@ export class V4LayoutShell extends BaseLitComponent {
    * Re-emit config changes from the Simple-Settings column for v4-layout
    */
   private handleConfigChange(e: CustomEvent): void {
+    // BUG-113: emit() is bubbles + composed, so the original would reach
+    // v4-layout's host listener too and every handler there ran twice.
+    // Stop it, as handleDyeSelected does, and let only the re-emit through.
+    e.stopPropagation();
     this.emit('config-change', e.detail);
   }
 
@@ -578,7 +612,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle clear all dyes request from DyePaletteDrawer
    * Re-emits for parent to clear selections on active tool
    */
-  private handleClearAllDyes(): void {
+  private handleClearAllDyes(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('clear-all-dyes');
   }
 
@@ -595,7 +630,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle theme button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleThemeClick(): void {
+  private handleThemeClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('theme-click');
   }
 
@@ -603,7 +639,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle "What's New" (changelog) button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleChangelogClick(): void {
+  private handleChangelogClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('changelog-click');
   }
 
@@ -611,7 +648,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle about button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleAboutClick(): void {
+  private handleAboutClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('about-click');
   }
 
@@ -619,7 +657,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle language button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleLanguageClick(): void {
+  private handleLanguageClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('language-click');
   }
 
@@ -655,7 +694,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * else. The gear used to double as the Options-panel toggle, which on
    * mobile put both surfaces on screen at once.
    */
-  private handleAdvancedClick(): void {
+  private handleAdvancedClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('advanced-click');
   }
 

@@ -163,6 +163,47 @@ describe('add-to-collection-menu', () => {
     });
   });
 
+  /*
+   * One Escape closes one layer (BUG-105). The toast container takes Escape
+   * only when nothing else did, judged by `defaultPrevented`; this menu closed
+   * on Escape without marking it, so the same press also dismissed a
+   * dismissible toast.
+   */
+  describe('Escape', () => {
+    const press = (key: string): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      document.dispatchEvent(event);
+      return event;
+    };
+
+    async function openMenu(onClose = vi.fn()) {
+      showAddToCollectionMenu({ dye: makeDye(1), anchorElement: anchor, onClose });
+      // The key listener is installed 10 ms after opening
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      return onClose;
+    }
+
+    it('closes the menu and marks the Escape handled', async () => {
+      const onClose = await openMenu();
+
+      const event = press('Escape');
+
+      expect(document.querySelector('.add-to-collection-menu')).toBeNull();
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('leaves every other key alone', async () => {
+      await openMenu();
+
+      const event = press('Tab');
+
+      expect(document.querySelector('.add-to-collection-menu')).not.toBeNull();
+      expect(event.defaultPrevented).toBe(false);
+      press('Escape'); // close it, listeners and all
+    });
+  });
+
   describe('positioning clamp (BUG-029)', () => {
     it('keeps a full-width (256px) menu inside the right viewport edge', () => {
       Object.defineProperty(window, 'innerWidth', {
