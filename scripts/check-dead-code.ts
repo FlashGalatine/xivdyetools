@@ -579,7 +579,7 @@ export function loadWorkspaceAliases(files: readonly string[]): Map<string, Path
       if (typeof target !== 'string' || !target.endsWith('*')) continue;
       entries.push({
         prefix: key.slice(0, -1),
-        target: `${ws}/${target.slice(0, -1).replace(/^\.\//, '')}`,
+        target: `${ws}/${target.slice(0, -1).replace(/^\.[/]/, '')}`,
       });
     }
     if (entries.length) map.set(ws, entries);
@@ -640,7 +640,6 @@ export function isExcludedReferrer(file: string): boolean {
   return EXCLUDED_REFERRERS.has(file);
 }
 
-/** `files`, minus anything `isExcludedReferrer` rejects — the referrer-eligible subset. */
 /**
  * The referrer cohort. Every file stays in it — see `referrerTexts` for how the
  * two `EXCLUDED_REFERRERS` files are neutralised without being dropped.
@@ -739,8 +738,11 @@ export function findOrphanModules(
   const publicExempt: string[] = [];
   const tracked = new Set<string>([...prod, ...tests]);
   const basenameGroups = groupByBasename([...tracked]);
-  const prodRefs = buildReferenceMap(asReferrers(prod), tracked, basenameGroups, texts);
-  const testRefsMap = buildReferenceMap(asReferrers(tests), tracked, basenameGroups, texts);
+  // BUG-155: the referrer side reads the masked corpus (see referrerTexts); only
+  // the subject side below keeps raw text, since exemption tags live in comments.
+  const refTexts = referrerTexts(texts);
+  const prodRefs = buildReferenceMap(asReferrers(prod), tracked, basenameGroups, refTexts);
+  const testRefsMap = buildReferenceMap(asReferrers(tests), tracked, basenameGroups, refTexts);
   for (const file of prod) {
     if (!/\.(ts|tsx)$/.test(file)) continue;
     const base = basename(file).replace(/\.(tsx?|jsx?)$/, '');
@@ -1223,6 +1225,9 @@ export interface BlockFrame {
  * established; nested braces inside it (method bodies, control flow, object
  * literals) only ever push depth higher before returning to that same level,
  * so they can never close it early.
+ *
+ * @testonly name-only view of the frame walk, kept as the stable contract that
+ * the block-attribution tests in check-dead-code.test.ts pin; the checker itself reads the frame form.
  */
 export function attributeLinesToBlocks(lines: string[]): (string | null)[] {
   return attributeLinesToBlockFrames(lines).map((f) => f?.name ?? null);
@@ -1435,7 +1440,10 @@ export function findTestOnlyMembers(
 
   const tracked = new Set<string>([...prod, ...tests]);
   const basenameGroups = groupByBasename([...tracked]);
-  const testImportersOf = buildReferenceMap(asReferrers(tests), tracked, basenameGroups, texts);
+  // BUG-155: every REFERRER read below goes through the masked corpus; the
+  // subject file itself stays raw because exemption tags live in comments.
+  const refTexts = referrerTexts(texts);
+  const testImportersOf = buildReferenceMap(asReferrers(tests), tracked, basenameGroups, refTexts);
   const prodReferrers = asReferrers(prod);
 
   for (const file of prod) {
@@ -1495,12 +1503,12 @@ export function findTestOnlyMembers(
       const dotted = new RegExp(`\\.${escapeRe(name)}\\b`);
       const bracketed = new RegExp(`\\[\\s*(['"\`])${escapeRe(name)}\\1\\s*\\]`);
       const isReferenced = (text: string): boolean => dotted.test(text) || bracketed.test(text);
-      if (prodReferrers.some((f) => isReferenced(texts.get(f) ?? ''))) continue;
+      if (prodReferrers.some((f) => isReferenced(refTexts.get(f) ?? ''))) continue;
       // Only a test file that actually imports THIS file counts — otherwise an
       // unrelated same-named call in a test that never imports the declaring
       // module (e.g. Playwright's own Locator type's isVisible method)
       // inflates the count.
-      const testRefs = importingTests.filter((f) => isReferenced(texts.get(f) ?? '')).length;
+      const testRefs = importingTests.filter((f) => isReferenced(refTexts.get(f) ?? '')).length;
       if (testRefs === 0) continue; // knip's job
 
       let anyBare = false;

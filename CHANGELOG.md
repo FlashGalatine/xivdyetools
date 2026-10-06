@@ -8,6 +8,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.3.2] - 2026-10-06
+
+Sprint 20 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`): CI,
+deploy-filter, publish-loop and gate-script fixes (BUG-152, BUG-153, BUG-154, BUG-155, BUG-156, REFACTOR-008,
+REFACTOR-009, DEAD-045, DEAD-046). Patch: no workspace, package or worker code changes. **Merging starts all 8
+production deploys** (oauth included), because the deploy filters now watch the root inputs and this release changes
+`turbo.json`, `pnpm-workspace.yaml` and the lockfile; pushing a non-main branch that touches them starts the 3 beta
+deploys. Put `[skip ci]` on the merge commit for none.
+
+### Fixed
+
+- **CI concurrency** (BUG-152): `ci.yml` cancels only superseded `pull_request` runs (`ci-pr-<ref>`). Every `push`
+  (main, `*-prep`) and the nightly scheduled run has its own `ci-<run_id>` group and always completes, so a batch merge
+  keeps every post-merge run and the nightly run no longer cancels a push run.
+- **Deploy path filters** (BUG-153): all 8 production and 3 beta `deploy-*.yml` workflows also trigger on
+  `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json` and `tsconfig.base.json`, so an overrides- or lockfile-only
+  runtime fix ships. Accepted cost, commented in each file: a lockfile-only bump redeploys every worker with identical
+  code.
+- **Publish loop** (BUG-154): `publish-packages.yml` skips, and reports as an error with exit 1, any package whose
+  shipped `@xivdyetools/*` dependency failed or was skipped (transitively), and in single-package mode any whose
+  in-repo dependency is not on npm at its local version. Unrelated packages still publish.
+- **Dead-code gate** (BUG-155): the orphan-module and class-member scans read `EXCLUDED_REFERRERS` files masked, so
+  fixture strings and prose in the checker's own files can no longer fabricate or hide findings. A regex in the
+  checker's source that masked its own tail as a comment is fixed; that exposed `attributeLinesToBlocks` as test-only,
+  now tagged `@testonly` (26 test-only exemptions).
+- **Docs-version gate** (BUG-156): a workspace row whose Version cell is non-empty but not semver (`5.7`, a dash,
+  `n/a`, a prerelease) is a failing claim instead of being dropped silently.
+
+### Added
+
+- **`scripts/check-workflows.test.ts`**, in `pnpm test:scripts`: every `deploy-*.yml` `push.paths` carries the four
+  root inputs, and `ci.yml` cancels only `pull_request` runs. Self-tests 69-73 in `check-dead-code.test.ts`.
+
+### Removed
+
+- **The `qs` override** (DEAD-045): it named a package nothing installs (`pnpm why -r qs` is empty); the lockfile's
+  overrides block drops the same line.
+- **The turbo `deploy` task** (DEAD-046): a stray `pnpm turbo run deploy` now errors instead of running a bare
+  `wrangler deploy` in every worker (production, for oauth). The per-app `deploy` scripts are unchanged.
+
+### Changed
+
+- **Comments and docs** (REFACTOR-008, REFACTOR-009): the `check-bundle-size` comments in `ci.yml` and `turbo.json`
+  name both caps; web-app's `vitest.config.ts` goal comment says 80/80/80/80; the dead route-line citations in
+  `DOMAIN_DEPRECATION.md` are struck through. The root `CLAUDE.md`, `deployment.md`, `DEPLOY_ENVIRONMENTS.md`,
+  `monorepo-setup.md` and `release-process.md` describe all of the above.
+
 ## [2.3.1] - 2026-10-06
 
 Security patch: one transitive dependency floor. No package, worker or app source changes, and

@@ -7,7 +7,6 @@ settings:
 overrides:
   typescript: ^5.9.3
   rollup: '>=4.59.0'
-  qs: '>=6.15.2'
   seroval: '>=1.6.3'
   vitepress>vite: '>=6.4.3 <7'
   tsup>esbuild: '>=0.28.1'

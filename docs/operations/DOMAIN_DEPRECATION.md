@@ -1,9 +1,9 @@
 # Retiring `*.xivdyetools.projectgalatine.com`
 
 **Status:** design approved 2026-08-09; Phase 0 checks 1–3 recorded the same day (check 4 not gathered).
-- **Phase 1:** step 1 (oauth allowlist) is done in oauth 3.1.2 (2026-10-03 security audit, FINDING-006). Step 2 (presets-api `ADDITIONAL_CORS_ORIGINS`) is in presets-api 2.4.0 (PR #224, not yet merged).
+- **Phase 1:** step 1 (oauth allowlist) is done in oauth 3.1.2 (2026-10-03 security audit, FINDING-006). Step 2 (presets-api `ADDITIONAL_CORS_ORIGINS`) is in presets-api 2.4.0 (PR #224).
 - **Phase 2:** the `auth.` and `bot.` custom domains were removed in the dashboard on 2026-10-04, and `moderation-bot.` and `api.` on 2026-10-05, each ahead of its route line (see *Progress* under Phase 2). The two old-domain OAuth redirect URIs are unregistered.
-- **Phase 3:** the `proxy.` custom domain was removed on 2026-10-05, with the rest of the subdomain; its route line goes in api-worker 0.16.1 (PR #229, not yet merged).
+- **Phase 3:** the `proxy.` custom domain was removed on 2026-10-05, with the rest of the subdomain; its route line goes in api-worker 0.16.1 (PR #229).
 - **Phase 4:** the old apex stopped serving on 2026-10-04; the redirect code remains.
 
 **Goal:** every service reachable only through its `xivdyetools.app` subdomain.
@@ -38,11 +38,11 @@ Line numbers below are current as of 2026-09-05; the routes now live under each 
 
 | Worker | File | Route |
 |---|---|---|
-| `discord-worker` | `apps/discord-worker/wrangler.toml:119` | `bot.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-04; route line removed in discord-worker 5.8.0 (PR #227, not yet merged) |
-| `moderation-worker` | `apps/moderation-worker/wrangler.toml:64` | `moderation-bot.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in moderation-worker 1.8.0 (PR #225, not yet merged) |
-| `presets-api` | `apps/presets-api/wrangler.toml:62` | `api.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in presets-api 2.4.0 (PR #224, not yet merged) |
+| `discord-worker` | ~~`apps/discord-worker/wrangler.toml:119`~~ | `bot.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-04; route line removed in discord-worker 5.8.0 (PR #227) |
+| `moderation-worker` | ~~`apps/moderation-worker/wrangler.toml:64`~~ | `moderation-bot.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in moderation-worker 1.8.0 (PR #225) |
+| `presets-api` | ~~`apps/presets-api/wrangler.toml:62`~~ | `api.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in presets-api 2.4.0 (PR #224) |
 | `oauth` | ~~`apps/oauth/wrangler.toml:8`~~ | `auth.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-04; route line removed in oauth 3.1.2 |
-| `api-worker` | `apps/api-worker/wrangler.toml:75` | `proxy.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in api-worker 0.16.1 (PR #229, not yet merged) |
+| `api-worker` | ~~`apps/api-worker/wrangler.toml:75`~~ | `proxy.xivdyetools.projectgalatine.com` — custom domain removed 2026-10-05; route line removed in api-worker 0.16.1 (PR #229) |
 
 ### Allowlists
 

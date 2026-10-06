@@ -39,9 +39,20 @@ on:
 permissions:
   contents: read
 
+# BUG-152: only a superseded pull_request run is worth cancelling -- the newer
+# push to the same PR replaces it. A push to main and a nightly schedule run
+# are each a distinct signal and are never cancelled (the old
+# group `ci-${{ github.ref }}` put all of them on refs/heads/main, so a batch
+# merge left only the last push run alive and the 11:17 schedule run could
+# cancel an in-flight push run). Non-PR runs get a group of their own via
+# run_id, which also avoids GitHub's one-pending-run-per-group limit silently
+# dropping the middle runs of a 3+ PR batch.
+#   pull_request:      group ci-pr-refs/pull/N/merge, cancel-in-progress true
+#   push (main/*-prep), schedule (and any trigger added later):
+#                      group ci-<run_id>, cancel-in-progress false
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.event_name == 'pull_request' && format('ci-pr-{0}', github.ref) || format('ci-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # ARCH-003: Scan production dependencies for known vulnerabilities.
@@ -253,10 +264,11 @@ jobs:
       - name: Build (affected)
         run: pnpm turbo run build --filter='...[HEAD^]'
 
-      # OPT-002: only discord-worker declares `check-bundle-size`, so this is a
-      # no-op on any change that does not affect it. It gates the 3,072 KiB
-      # gzipped Worker cap here, on the PR, rather than leaving Cloudflare to
-      # refuse the upload after a merge has already triggered the deploy.
+      # OPT-002: `check-bundle-size` is declared by discord-worker (the 3,072 KiB
+      # gzipped Worker cap) and web-app (its bundle budget), so this is a no-op
+      # on any change that affects neither. It gates the caps here, on the PR,
+      # rather than leaving Cloudflare to refuse the upload after a merge has
+      # already triggered the deploy.
       - name: Check worker bundle sizes (affected)
         run: pnpm turbo run check-bundle-size --filter='...[HEAD^]'
 

@@ -107,7 +107,7 @@
       "outputs": ["coverage/**"]
     },
 
-    // OPT-002: only `apps/discord-worker` declares this today. It bundles ten
+    // OPT-002: `apps/discord-worker` and `apps/web-app` declare this. discord-worker bundles ten
     // TTFs, the resvg WASM and the CJK subsets against Cloudflare's 3,072 KiB
     // gzipped cap, and merging to `main` deploys it automatically — so an
     // over-budget bundle used to be discovered by Cloudflare refusing the
@@ -125,12 +125,6 @@
 
     "clean": {
       "cache": false
-    },
-
-    "deploy": {
-      "dependsOn": ["build", "type-check"],
-      "cache": false,
-      "persistent": false
     },
 
     "dev": {
