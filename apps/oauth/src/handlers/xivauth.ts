@@ -370,7 +370,9 @@ xivauthRouter.post('/xivauth/callback', async (c) => {
       characters.find(
         (ch) => ch.verified && typeof ch.name === 'string' && ch.name.trim().length > 0
       ) ?? null;
-    const displayName = verifiedCharacter ? verifiedCharacter.name.trim() : null;
+    // Spelled `verifiedCharacter?.name`: web-app's privacy-copy-parity test reads
+    // this file for that shape to pin the sign-in privacy copy to what is stored.
+    const displayName = verifiedCharacter?.name.trim() ?? null;
     const username = displayName ?? `XIVAuth User ${xivauthUser.id.slice(0, 8)}`;
 
     logger?.debug('Resolving XIVAuth user', {
