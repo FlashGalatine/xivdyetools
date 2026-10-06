@@ -842,7 +842,9 @@ deep-dive/REFACTOR-005: the two largest files in the repo duplicate their deskto
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 30 — Fonts: item names on the /glamour card (terminal, last of all)
+## Sprint 30 — Fonts: item names on the /glamour card (terminal, last of all) — PR #263 (open)
+
+**Done in PR #263** (discord-worker 5.8.9), stacked on #262 — the last PR of the discord-worker stack. Option A fit: 2,626.8 KiB gzipped (85.5 % of 3,072), Korean fallback 63.2 % → 2 items, Chinese 97.3 % → 0. **Recorded, not fixed:** Japanese item names (no in-repo table; about 550 now draw with some kanji in SC letterforms instead of falling back to English) and the two Korean names with a stray U+200F (strip format characters in `build-item-names.mjs`).
 
 **FONT-001 is a decision first:**
 - **Option A:** widen discord-worker's CJK subsets with item names (about +363 Hangul and +1,171 hanzi).
