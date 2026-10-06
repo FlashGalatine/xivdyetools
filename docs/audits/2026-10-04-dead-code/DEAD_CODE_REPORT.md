@@ -306,12 +306,12 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 | DEAD-022 | REMOVED, NOT DEPLOYED (PR #253, open) | `7763d4e1` |
 | DEAD-023 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
 | DEAD-024 | REMOVED, NOT DEPLOYED (PR #257, open) | `d9fdb57c` |
-| DEAD-025 | OPEN | — |
-| DEAD-026 | OPEN | — |
-| DEAD-027 | OPEN | — |
-| DEAD-028 | OPEN | — |
-| DEAD-029 | OPEN | — |
-| DEAD-030 | OPEN | — |
+| DEAD-025 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-026 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-027 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-028 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-029 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-030 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
 | DEAD-031 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
 | DEAD-032 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
 | DEAD-033 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |

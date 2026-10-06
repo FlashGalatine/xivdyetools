@@ -572,7 +572,13 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 
 **Ends with:** bump `@xivdyetools/worker-kit` (patch) → gate with `--filter=...@xivdyetools/worker-kit` → merge (oauth, presets-api, api-worker, image-worker and the bots redeploy) → Actions publish
 
-## Sprint 17 — moderation-worker: review edge cases, then cleanup
+## Sprint 17 — moderation-worker: review edge cases, then cleanup — PR #261 (open)
+
+**Done in PR #261** (moderation-worker 1.8.1), stacked on #260. All ten are fixed, with BUG-126's last call site and the Sprint 9 refresh-Revert note.
+- **Refresh Revert (maintainer's decision, 2026-10-06):** keep offering Revert when a snapshot exists, trusting presets-api 2.5.0's approved-only snapshots; the refreshed embed says "restores the saved version" (it cannot verify approval). **Hand-run step:** after presets-api 2.5.0 deploys and before this worker does, review the rows the read-only query in `apps/presets-api/CLAUDE.md` lists and clear any unapproved snapshot through `wrangler d1 execute --file`.
+- **BUG-052:** a channel post keeps the winner's embed and states the status in its message content; a private confirmation is rebuilt.
+- **Contract:** presets-api's own tests pin both 404 bodies moderation-worker tells apart, since a presets-api-only PR never runs moderation-worker's tests.
+- **Recorded, not fixed:** a narrow race where a loser's non-conflict failure (5xx) can still write an Error over a winner's embed.
 
 **From #225, after the merge:**
 - deep-dive/BUG-052: a losing concurrent click overwrites the winner's embed;
