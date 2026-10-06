@@ -312,10 +312,10 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 | DEAD-028 | OPEN | — |
 | DEAD-029 | OPEN | — |
 | DEAD-030 | OPEN | — |
-| DEAD-031 | OPEN | — |
-| DEAD-032 | OPEN | — |
-| DEAD-033 | OPEN | — |
-| DEAD-034 | OPEN | — |
+| DEAD-031 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
+| DEAD-032 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
+| DEAD-033 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
+| DEAD-034 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
 | DEAD-035 | OPEN | — |
 | DEAD-036 | OPEN | — |
 | DEAD-037 | OPEN | — |

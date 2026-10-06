@@ -15,4 +15,4 @@
 Steps: 1) apps/presets-api/scripts/migrate-presets.ts: delete line 81 (const isCurated ...) and change line 86 to emit `is_curated = 1`. 2) pnpm turbo run build type-check lint test --filter=...xivdyetools-presets-api && pnpm dead-code:check
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `a33842cc` (branch `fix/remediation-2026-10-04-sprint8`, presets-api 2.5.0; PR #256, open, on the join branch).
