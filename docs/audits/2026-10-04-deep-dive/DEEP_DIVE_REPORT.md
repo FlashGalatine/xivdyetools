@@ -476,11 +476,11 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-139 | OPEN | — |
 | BUG-140 | OPEN | — |
 | BUG-141 | OPEN | — |
-| BUG-142 | OPEN | — |
-| BUG-143 | OPEN | — |
-| BUG-144 | OPEN | — |
-| BUG-145 | OPEN | — |
-| BUG-146 | OPEN | — |
+| BUG-142 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2`, `7562d177` |
+| BUG-143 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2` |
+| BUG-144 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2` |
+| BUG-145 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2` |
+| BUG-146 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2` |
 | BUG-147 | OPEN | — |
 | BUG-148 | OPEN | — |
 | BUG-149 | OPEN | — |
@@ -493,7 +493,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-156 | OPEN | — |
 | REFACTOR-001 | OPEN | — |
 | REFACTOR-002 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
-| REFACTOR-003 | OPEN | — |
+| REFACTOR-003 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2`, `07c69bce` |
 | REFACTOR-004 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
 | REFACTOR-005 | FIX COMMITTED, NOT DEPLOYED (PR #255, open) | `51a058de` + `ccda155f` + `7c187084` |
 | REFACTOR-006 | OPEN | — |
