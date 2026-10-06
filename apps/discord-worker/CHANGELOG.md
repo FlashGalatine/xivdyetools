@@ -5,6 +5,94 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.4] - 2026-10-06
+
+Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+with `@xivdyetools/bot-logic` 4.7.0 and presets-api 2.6.0 in the same PR. **Merge after Sprint 8
+(presets-api 2.5.0, PR #256).** The production deploy re-registers commands, which it does on
+every deploy: free-text options gain `max_length`, and the `/preferences set clan` and `gender`
+descriptions change in all six languages. No font re-cut: no new text is drawn on a card.
+
+**Check after deploy, in the moderation channel:** a flagged `/preset submit` and a flagged
+`/preset edit` each produce exactly one post, and the edit is titled as an edit with a diff.
+
+**`/stats` success rate drops** after deploy on days when Universalis stalls (BUG-005, below).
+That is the old count being corrected, not a regression.
+
+### Fixed
+
+- **One moderation post per preset** (BUG-004). `/preset submit` and `/preset edit` no longer
+  post to the moderation channel or the submission log themselves. presets-api's webhook already
+  does, so every bot submission was posted twice.
+- **An owner's edit is posted as an edit** (BUG-003).
+  - The webhook reads presets-api's `is_edit` and posts kind `'edit'`. A payload without it is
+    still read as a new submission.
+  - The diff is against `edited_from` (presets-api 2.6.0), the text this edit replaced. Without
+    it (an older presets-api) the diff falls back to `previous_values`, headed *Changes since
+    the Revert snapshot*.
+  - Revert is offered only when `is_edit`, a well-formed `previous_values` and
+    `edited_from_status === 'approved'` all hold. The embed says which text Revert restores and,
+    when that differs from the replaced text, that it is older.
+  - Not fixed here: moderation-worker's refresh of a stale or legacy click still offers Revert on
+    any pending preset with a snapshot. That is its Sprint 17.
+- **A repeated dye is refused by name.** `/preset submit` and `/preset edit` answer
+  `preset.repeatedDye` ("**Snow White** is in this preset more than once…") instead of the generic
+  "Invalid request" from presets-api 2.5.0 (deep-dive BUG-010). On a cold start, `/preset submit`
+  may name the dye in English: it answers before deferring.
+- **World lookups no longer race Discord's 3-second ack** (BUG-002). `/budget find`,
+  `/budget quick`, `/budget set_world` and `/preferences set world:` defer first and look the
+  world up afterwards.
+  - A world `/budget find` or `quick` can't use is answered privately. The public deferred
+    message is deleted and the refusal is sent as an ephemeral follow-up; if the delete fails,
+    the refusal is edited over the message instead.
+- **A failed read no longer overwrites saved data.**
+  - Favourites (BUG-006): a failed KV read makes `/preset favorite add` and `remove` report an
+    error, not overwrite the list. A v2 list that will not parse falls back to the v1 list, and
+    the next save rewrites both.
+  - Preferences (BUG-048): a failed read aborts `/preferences set` and `reset`, including
+    `filters set` and `filters reset`. It used to write a one-key blob or delete the whole blob.
+    A stored blob that will not parse is logged and replaced on the next write, so it cannot
+    lock the user out. These failures now count as failed commands.
+- **Favourite names fill in without being replaced by the preset id** (BUG-047).
+  - A lookup that fails is retried on a later keystroke.
+  - A preset that answers 404 is marked `gone`.
+  - A name an older build saved as the id is looked up once more.
+  - The lookups share a 1.5-second deadline, so autocomplete answers inside Discord's 3 seconds.
+- **A Universalis timeout counts as an upstream failure** (BUG-005). The client's own 408 was
+  recorded as an answered `rejected` row; it is now `upstream_universalis` and unanswered.
+- **`/stats overview` drops "Avg Cmds/User"** (BUG-045), which divided a lifetime total by today's
+  users.
+- **Preview-image moderation keeps the preset ID in the footer**, and names the moderator as text,
+  never a mention (BUG-041). The stale-click and refresh edits keep the ID too.
+- **`/extractor color` reports a render failure as one** (BUG-042). It is logged and answered
+  "generation failed", not "no match found".
+- **`/gradient` names its Start and End dyes in your language** (BUG-043).
+- **Echoed colour and dye input is sanitised and capped at 100 characters** (BUG-044, embed half)
+  in `/harmony`, `/extractor`, `/gradient`, `/mixer`, `/comparison`, `/contrast`,
+  `/accessibility` and `/dye info`.
+- **Registered free-text options declare `max_length`** (BUG-044, schema half), so Discord refuses
+  an over-long value in the client: 100 for colours, dyes and the other free text, 400 for preset
+  tags (ten 30-character tags), with the world, preset name and description caps unchanged.
+- **`/preferences` no longer claims commands read what they don't** (BUG-049).
+  - The `clan` and `gender` option descriptions no longer say `/swatch` uses them. Nothing reads
+    them; `/swatch` takes both from the `.chara` file.
+  - Each preference's "affects" list names the commands that really read it.
+- **Moderation embeds name the category** ("FFXIV Jobs", not `jobs`), in the moderation channel
+  and the submission log.
+- **Approved-preset autocomplete logs a presets-api failure** (REFACTOR-002), as the other preset
+  autocompletes do.
+
+### Changed
+
+- **`/stats summary` reads two counters** instead of listing every user key for the day (OPT-004).
+- **A user with no legacy preferences is remembered per isolate**, so later reads cost one KV get,
+  not three (OPT-005, partial: the first read in each isolate still pays).
+- The autocomplete router's favourites, clan and world branches are tested (BUG-046).
+
+### Removed
+
+- `CommandRegistryEntry.deprecated`, never set or read (DEAD-024).
+
 ## [5.8.3] - 2026-10-05
 
 Sprint 7 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
@@ -22,6 +110,7 @@ so no `register-commands`. 5.8.2 is Sprints 2 and 3, on a separate branch; merge
 - **Terms of Service:**
   - ko says 조정자 for moderators, as the Privacy Policy does; 운영자 reads as "operator" (TERM-001);
   - *Last Updated* is 2026-10-05 in all six languages.
+
 ## [5.8.2] - 2026-10-05
 
 Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

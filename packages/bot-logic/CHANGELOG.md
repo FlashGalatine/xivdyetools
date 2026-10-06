@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-10-06
+
+Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+in the same PR as discord-worker 5.8.4. Minor: one new key.
+
+### Added
+
+- **`preset.repeatedDye`** ×6: the bot's own refusal of a preset that names a dye twice, with
+  the dye in `{dye}`. discord-worker answers it before presets-api's generic 400 (deep-dive
+  BUG-010).
+
+### Changed
+
+- **`commands.preferences.options.set.options.{clan,gender}.description`** ×6 no longer say
+  `/swatch` uses the stored value (deep-dive BUG-049). Nothing reads it; `/swatch` takes both
+  from the `.chara` file. ja and ko say the character's clan and gender, as those files' existing
+  labels do.
+
 ## [4.6.0] - 2026-10-05
 
 Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
