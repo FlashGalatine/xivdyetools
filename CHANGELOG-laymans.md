@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.17] - 2026-10-06
+### 🎨 Truer greys and cleaner palettes
+- Web app and Discord bot: gradients and HSL mixes from a grey dye (Slate Grey, Jet Black, Metallic Silver) or a grey hex code stay true to the other color instead of passing through purple or pink.
+- Discord bot: `/extractor` shows only the colours a picture really has, without empty rows.
+- Web app: in the Harmony Explorer, a dye you swap in with "no duplicates" on no longer shows up again in another slot.
+
 ## [5.10.16] - 2026-10-06
 ### 📏 Numbers that agree
 - Discord bot: `/contrast` and `/compare` show the same contrast ratio for the same two dyes, and never round a failing ratio up to a passing one.
