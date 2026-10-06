@@ -15,6 +15,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleManualCommand } from './manual.js';
 import { COMMAND_REGISTRY } from '../../commands/registry.js';
+import { MANUAL_TOPICS } from '@xivdyetools/core';
 import type { DiscordInteraction, Env } from '../../types/env.js';
 
 vi.mock('../../services/bot-i18n.js', () => ({
@@ -449,5 +450,77 @@ describe('handleManualCommand', () => {
         expect(drifted).toEqual([]);
       }
     );
+
+    // Every /glamour reply ends with "`/manual topic:👤`". Until PR #246 that
+    // topic described /swatch alone, so the pointer led nowhere useful; and
+    // until 2026-10-05 every .chara help string named two of the three
+    // producers the parser reads — Brio files worked, but nothing said so.
+    describe('the character-file help', () => {
+      const GLAMOUR_SOURCE = join(
+        dirname(fileURLToPath(import.meta.url)),
+        '../../../../../packages/bot-logic/src/commands/glamour.ts'
+      );
+      // The producers the card can name, read off chara-identity's PRODUCER_TOKENS
+      // (['brio', 'BRIO'], …) so a fourth one fails here until the help names it
+      const PRODUCERS = [
+        ...readFileSync(join(dirname(GLAMOUR_SOURCE), 'chara-identity.ts'), 'utf-8').matchAll(
+          /\['[a-z]+', '([A-Z]+)'\]/g
+        ),
+      ].map((m) => m[1][0] + m[1].slice(1).toLowerCase());
+      const CHARA_KEYS = [
+        'manual.swatch.description',
+        'manual.glamour.description',
+        'manual5.topics.characterFile.body',
+        'commands.swatch.options.file.description',
+        'commands.glamour.options.file.description',
+      ];
+
+      const valueAt = (tree: Tree, key: string) => {
+        let node: string | Tree | undefined = tree;
+        for (const part of key.split('.')) {
+          node = typeof node === 'object' ? node[part] : undefined;
+        }
+        return typeof node === 'string' ? node : '';
+      };
+
+      it.each(LOCALES)('lands the /glamour pointer on a %s topic that describes /glamour', async (locale) => {
+        const pointer = readFileSync(GLAMOUR_SOURCE, 'utf-8').match(/\/manual topic:([^\s`\\]+)/);
+        const topic = MANUAL_TOPICS.find((m) => m.emoji === pointer?.[1]);
+
+        expect(topic?.id).toBe('character_file');
+        expect(stringsOf(await embedsFor(locale, topic!.id)).join('\n')).toContain('/glamour');
+      });
+
+      it.each(LOCALES)('names every .chara producer in the %s help and option text', (locale) => {
+        // Not vacuous: the source read found the three producers the card names today
+        expect(PRODUCERS).toEqual(expect.arrayContaining(['Anamnesis', 'Ktisis', 'Brio']));
+        const tree = load(locale);
+        const missing = CHARA_KEYS.flatMap((key) =>
+          PRODUCERS.filter((p) => !valueAt(tree, key).includes(p)).map((p) => `${key}: ${p}`)
+        );
+
+        expect(missing).toEqual([]);
+      });
+
+      it.each(LOCALES)('quotes every %s /glamour verdict label the card can show', (locale) => {
+        const tree = load(locale);
+        const body = valueAt(tree, 'manual5.topics.characterFile.body');
+        // TWIN, DYES, NO GLAM and LOCKED as this locale's card prints them, and
+        // the dash a model with no item behind it gets (glamour.ts readPiece)
+        const labels = [
+          'card.glamourStatusTwin',
+          'card.glamourStatusDye',
+          'card.glamourStatusGlamour',
+          'card.glamourStatusWear',
+        ].map((key) => valueAt(tree, key));
+
+        expect(labels.every(Boolean)).toBe(true);
+        expect(labels.filter((label) => !body.includes(label))).toEqual([]);
+        // Quoted as the card shows it, not as punctuation: (—), （—） or 「—」
+        expect(body).toMatch(/[(（「]—[)）」]/);
+        // The GPOSERS list's labels are English in every language
+        expect(body).toContain('Acquisition');
+      });
+    });
   });
 });

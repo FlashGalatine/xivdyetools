@@ -864,7 +864,7 @@ export const commands = [
     options: [
       {
         name: 'file',
-        description: '.chara character file (Anamnesis / Ktisis export)',
+        description: '.chara character file (Anamnesis / Ktisis / Brio export)',
         type: OptionType.ATTACHMENT,
         required: true,
       },
@@ -903,7 +903,7 @@ export const commands = [
     options: [
       {
         name: 'file',
-        description: '.chara character file (Anamnesis / Ktisis export)',
+        description: '.chara character file (Anamnesis / Ktisis / Brio export)',
         type: OptionType.ATTACHMENT,
         required: true,
       },

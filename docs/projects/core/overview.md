@@ -15,7 +15,7 @@ The core library is a TypeScript package that provides:
 - **Color Algorithms** - Conversion (RGB/HSV/HSL/LAB/OKLAB/CMYK), accessibility, colorblindness simulation
 - **Color Blending** - Six algorithms incl. Kubelka-Munk spectral, via the `/blending` subpath
 - **Dye Matching** - k-d tree candidates re-ranked by one of six `MatchingMethod`s: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` (`hyab` / `oklch-weighted` retired in 4.0.0; `normalizeMatchingMethod()` folds stored values), with per-method quality bands (`classifyBandTier`)
-- **Character files** - `.chara` (Anamnesis / Ktisis) parser + slot resolver, `SubRace 'Helions'`
+- **Character files** - `.chara` (Anamnesis / Ktisis / Brio) parser + slot resolver, `SubRace 'Helions'`
 - **Color Harmonies** - Complementary, triadic, analogous, and more
 - **Palette Extraction** - K-means++ clustering from images
 - **Market Prices** - Universalis API integration with caching

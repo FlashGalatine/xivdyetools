@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.4] - 2026-10-05
+
+`/manual` catches up with `/glamour`, with `@xivdyetools/bot-logic` 4.6.1 in the same PR. It is stacked
+on PR #246 (5.8.2); 5.8.3 is Sprint 7, PR #249, on a separate branch. The production deploy
+re-registers commands, because the `/swatch` and `/glamour` `file` option descriptions now name Brio
+in all six languages.
+
+### Fixed
+
+- **The `.chara` help names Brio** (`commands/schemas.ts` and bot-logic's localized option and
+  `/manual` text). The bot has always read Brio files.
+- **The 👤 Character File topic explains every `/glamour` verdict**: the race name, the dash for a
+  model with no item, the automatic twin pick, and the English Acquisition lines (bot-logic 4.6.1).
+
+### Changed
+
+- **Fonts re-cut** for the new text (compared by cmap):
+  - `NotoSansSC-Subset.ttf` gains 6 glyphs (先 末 横 短 若 让);
+  - `NotoSansJP-Subset.ttf` gains 4 (先 尾 末 身);
+  - `NotoSansKR-Subset.ttf` gains 3 (넣 뜻 줄).
+
+### Tests
+
+- `manual.test.ts`, "the character-file help": three guards over the real locale files.
+  - The `/manual topic:` emoji that bot-logic's `glamour.ts` prints lands on a topic that names
+    `/glamour`, in every locale. This would have failed on `main`, whose topic described `/swatch`
+    alone.
+  - Every `.chara` help and option string names each producer that bot-logic's
+    `chara-identity.ts` `PRODUCER_TOKENS` lists. The list is read from source, so a new producer
+    fails the guard until the help names it.
+  - The topic quotes each locale's own TWIN / DYES / NO GLAM / LOCKED labels, the dash as the card
+    shows it (`(—)`, `（—）` or `「—」`), and "Acquisition".
+  - Mutation-checked: before the translations landed, exactly the ten tests covering the five
+    untranslated locales failed.
+
 ## [5.8.2] - 2026-10-05
 
 Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

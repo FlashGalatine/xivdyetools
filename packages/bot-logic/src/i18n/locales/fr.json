@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "Associe les couleurs d'un personnage aux teintures d'un fichier `.chara` (Anamnesis ou Ktisis).\n• Lit peau, cheveux, mèches, yeux, lèvre, maquillage et tatouage/contour de l'iris\n• `slot` : les cinq teintures les plus proches pour une couleur"
+      "description": "Associe les couleurs d'un personnage aux teintures d'un fichier `.chara` (Anamnesis, Ktisis ou Brio).\n• Lit peau, cheveux, mèches, yeux, lèvre, maquillage et tatouage/contour de l'iris\n• `slot` : les cinq teintures les plus proches pour une couleur"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "Liste le mirage que porte un fichier `.chara` (Anamnesis ou Ktisis).\n• Chaque pièce teinte, nommée d’après l’objet que vous pouvez vraiment porter\n• La liste complète au format GPOSERS, prête à copier"
+      "description": "Liste le mirage que porte un fichier `.chara` (Anamnesis, Ktisis ou Brio).\n• Chaque pièce teinte, nommée d’après l’objet que vous pouvez vraiment porter\n• La liste complète au format GPOSERS, prête à copier"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -694,7 +694,7 @@
       },
       "characterFile": {
         "name": "Fichier de personnage",
-        "body": "/swatch et /glamour lisent un export .chara d'Anamnesis ou de Ktisis. Le fichier est lu une fois pour construire la réponse et n'est pas conservé.\n\n/swatch associe aux teintures les emplacements de couleur (peau, cheveux, mèches, yeux, lèvres, maquillage, tatouage/contour de l'iris) et indique les teintures de l'équipement porté. Les couleurs hors grille (retouchées au-delà de la palette du jeu) sont associées par leur valeur réelle et marquées HORS G.\n\n/glamour liste chaque pièce portée et ses teintures. Un modèle peut servir à plusieurs objets : ses jumeaux (+N ASPECTS). Chaque pièce est nommée d'après un objet que ce personnage peut porter avec ces teintures : si l'objet enregistré ne les prend pas, ne peut pas servir de mirage ou ne peut pas être porté, un jumeau compatible est nommé à sa place (JUMEAU). Si aucun jumeau ne convient, la pièce affiche ce qui la bloque : TEINTURES, NON MIRAGE, RÉSERVÉ ou une race. La réponse inclut la liste complète au format GPOSERS, prête à copier, avec ses libellés en anglais, quelle que soit la langue."
+        "body": "/swatch et /glamour lisent un export .chara d'Anamnesis, de Ktisis ou de Brio. Le fichier est lu une fois pour construire la réponse et n'est pas conservé.\n\n/swatch associe aux teintures les emplacements de couleur (peau, cheveux, mèches, yeux, lèvres, maquillage, tatouage/contour de l'iris) et indique les teintures de l'équipement porté. Les couleurs hors grille (retouchées au-delà de la palette du jeu) sont associées par leur valeur réelle et marquées HORS G.\n\n/glamour liste chaque pièce portée et ses teintures. Un modèle peut servir à plusieurs objets : ses jumeaux (+N ASPECTS). Chaque pièce est nommée d'après un objet que ce personnage peut porter avec ces teintures : si l'objet enregistré ne les prend pas, ne peut pas servir de mirage ou ne peut pas être porté, un jumeau compatible est nommé à sa place (JUMEAU). Le bot choisit lui-même le jumeau, en privilégiant celui qui accepte les teintures ; le Lecteur de mirages de l'application web, dont le lien figure à la fin de la réponse, permet d'en choisir un autre. Si aucun jumeau ne convient, la pièce affiche ce qui la bloque : TEINTURES, NON MIRAGE, RÉSERVÉ (ou la seule race qui puisse la porter), ou un tiret (—) pour un modèle sans objet associé. La réponse inclut la liste complète au format GPOSERS, prête à copier. Les libellés et les lignes Acquisition de cette liste sont en anglais, quelle que soit la langue ; une ligne Acquisition vide signifie qu'aucune source n'est connue, à vous de la remplir."
       }
     }
   },
@@ -823,7 +823,7 @@
       "description": "Associer les couleurs d'un fichier de personnage aux teintures les plus proches",
       "options": {
         "file": {
-          "description": "Fichier de personnage .chara (export Anamnesis / Ktisis)"
+          "description": "Fichier de personnage .chara (export Anamnesis / Ktisis / Brio)"
         },
         "order": {
           "description": "Ordre des lignes — les deux affichent les mêmes cinq lignes"
@@ -837,7 +837,7 @@
       "description": "Lire un fichier de personnage comme un mirage : chaque pièce, ses teintures et si elle se porte",
       "options": {
         "file": {
-          "description": "Fichier de personnage .chara (export Anamnesis / Ktisis)"
+          "description": "Fichier de personnage .chara (export Anamnesis / Ktisis / Brio)"
         }
       }
     },

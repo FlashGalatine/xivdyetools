@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.1] - 2026-10-05
+
+The `.chara` help catches up with what `/glamour` and `/swatch` do: a follow-up to 4.6.0, in its own PR
+stacked on PR #246. Text only, no key added or removed.
+
+### Fixed
+
+- **Brio is named as a `.chara` producer**, ×6, in `manual.swatch.description`,
+  `manual.glamour.description`, `manual5.topics.characterFile.body` and the
+  `commands.{swatch,glamour}.options.file.description` option text. The parser reads Brio files and
+  the cards label them BRIO, but every help string named only Anamnesis and Ktisis.
+- **The character-file topic lists every `/glamour` verdict the card can show.** It read "DYES, NO
+  GLAM, LOCKED or a race". Now it says the race name stands in for LOCKED only when exactly one race
+  can wear the piece, and that a model with no item behind it shows a dash (—).
+- **The topic says the bot picks the twin itself**, preferring one that takes dyes, and that the web
+  app's Glamour Reader, linked at the end of the reply, lets you choose another.
+- **The topic says the GPOSERS list's labels and Acquisition lines are English in every language**,
+  and that a blank Acquisition line means no source is known.
+
 ## [4.6.0] - 2026-10-05
 
 Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

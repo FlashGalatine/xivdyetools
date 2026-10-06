@@ -24,7 +24,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.14.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.2 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.8.4 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -45,7 +45,7 @@
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.3.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.6.0 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.6.1 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -178,6 +178,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.4 | Oct 2026 | `/manual` catches up with `/glamour` (with bot-logic 4.6.1, stacked on PR #246; 5.8.3 is Sprint 7, PR #249): the `.chara` help and the `file` option text name Brio, and the 👤 Character File topic explains every verdict the card can show, the automatic twin pick and the English Acquisition lines; three guards in `manual.test.ts`; CJK subsets re-cut (SC +6, JP +4, KR +3). The deploy re-registers commands |
 | v5.8.2 | Oct 2026 | The bot speaks the user's language (2026-10-04 remediation, Sprints 2+3, with bot-logic 4.6.0): cards print the clan in the user's language (HC-001), file errors give a translated reason (HC-002), the look count takes a plural (`+2 LOOKS`), the character-file manual topic covers `/glamour`, translation and terminology fixes; CJK subsets re-cut (JP +6, SC +7, KR +2/−1) |
 | v5.8.1 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients) |
 | v5.7.2 | Oct 2026 | Security (2026-10-03 audit, Sprint 1) — `/budget` and preset-favorite log lines no longer carry command option values or the Discord user id, so the bot policy's "two log lines" promise holds (FINDING-002, FINDING-018); `/preferences reset` and the v4 migration delete the legacy `i18n:user:` / `budget:world:v1:` keys (FINDING-015); production refuses a webhook secret under 32 characters on the preset webhook only (FINDING-027); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
@@ -512,6 +513,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.6.1 | Oct 2026 | Text only: Brio named as a `.chara` producer ×6 (`manual.swatch` / `manual.glamour` descriptions, the character-file topic, the `file` option text); the character-file topic lists every `/glamour` verdict (the race name, the dash for a model with no item), says the bot picks the twin, and says the GPOSERS labels and Acquisition lines are English |
 | v4.6.0 | Oct 2026 | 2026-10-04 remediation, Sprints 2+3 — minor: `getLocalizedClan` (HC-001); `card.charaFileReason.*` ×6 (HC-002); `card.glamourLooks` split into `_one`/`_other` (I18N-016); the character-file manual topic covers `/glamour` (I18N-019); terminology and translation fixes (TERM-004, TERM-012, TERM-013, I18N-017, I18N-018, I18N-020). Needs core 5.8.1 |
 | **v4.5.0** | **Sep 2026** | **`executeGlamour` (the resolver is injected — no I/O here) and the `/glamour` strings ×6; `/swatch` and `/glamour` share `commands/chara-identity.ts`** |
 | v4.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 5 — minor: `tc()` picks the plural form with `Intl.PluralRules` per locale, so French `0` is singular (I18N-003, was the English rule for every locale); `searchDyesByName` folds accents, `ß` and width through core's `foldForSearch` (I18N-005); 137 subcommand/option descriptions × 6 under `commands.*.options`, generated from discord-worker's schema (I18N-001), plus `about.builtOnBody` and `card.colours_one/_other` (no key removed); zh `市场布告板` / `大区`, ko `서버` / `데이터 센터` (TERM-001, TERM-003). Needs core 5.4.0 |

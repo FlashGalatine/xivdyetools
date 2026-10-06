@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "Match a character's colors to dyes from a `.chara` file (Anamnesis or Ktisis).\n• Reads skin, hair, highlights, eyes, lip, face paint and tattoo/limbal ring\n• `slot`: the five nearest dyes for one color"
+      "description": "Match a character's colors to dyes from a `.chara` file (Anamnesis, Ktisis or Brio).\n• Reads skin, hair, highlights, eyes, lip, face paint and tattoo/limbal ring\n• `slot`: the five nearest dyes for one color"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "List the glamour a `.chara` file wears (Anamnesis or Ktisis).\n• Each dyed piece, named as the item you can actually wear\n• The full list in the GPOSERS form, ready to copy"
+      "description": "List the glamour a `.chara` file wears (Anamnesis, Ktisis or Brio).\n• Each dyed piece, named as the item you can actually wear\n• The full list in the GPOSERS form, ready to copy"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -694,7 +694,7 @@
       },
       "characterFile": {
         "name": "Character File",
-        "body": "/swatch and /glamour read a .chara export from Anamnesis or Ktisis. The file is read once to build the reply and is not stored.\n\n/swatch matches the color slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) to dyes and lists the worn gear dyes. Off-grid colors (edited past the game's palette) are matched by their live value and flagged OFF GRID.\n\n/glamour lists each worn piece and its dyes. One model can be several items, its twins (+N LOOKS). Each piece is named as an item this character can wear with those dyes: if the saved item can't take the dyes, can't be a glamour or can't be worn, a twin that can is named instead (TWIN). A piece no twin fixes shows what blocks it: DYES, NO GLAM, LOCKED or a race. The embed lists every piece in the GPOSERS form, with English labels in every language, ready to copy."
+        "body": "/swatch and /glamour read a .chara export from Anamnesis, Ktisis or Brio. The file is read once to build the reply and is not stored.\n\n/swatch matches the color slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) to dyes and lists the worn gear dyes. Off-grid colors (edited past the game's palette) are matched by their live value and flagged OFF GRID.\n\n/glamour lists each worn piece and its dyes. One model can be several items, its twins (+N LOOKS). Each piece is named as an item this character can wear with those dyes: if the saved item can't take the dyes, can't be a glamour or can't be worn, a twin that can is named instead (TWIN). The bot picks the twin, preferring one that takes dyes; the web app's Glamour Reader, linked at the end of the reply, lets you choose another. A piece no twin fixes shows what blocks it: DYES, NO GLAM, LOCKED (or the one race that can wear it), or a dash (—) for a model with no item behind it. The embed lists every piece in the GPOSERS form, ready to copy. Its labels and Acquisition lines are in English in every language; a blank Acquisition line means no source is known, so fill it in yourself."
       }
     }
   },
@@ -823,7 +823,7 @@
       "description": "Match a character file's colors to the nearest dyes",
       "options": {
         "file": {
-          "description": ".chara character file (Anamnesis / Ktisis export)"
+          "description": ".chara character file (Anamnesis / Ktisis / Brio export)"
         },
         "order": {
           "description": "Row order — both orders show the same five rows"
@@ -837,7 +837,7 @@
       "description": "Read a character file as a glamour: every piece, its dyes, and whether it can be worn",
       "options": {
         "file": {
-          "description": ".chara character file (Anamnesis / Ktisis export)"
+          "description": ".chara character file (Anamnesis / Ktisis / Brio export)"
         }
       }
     },
