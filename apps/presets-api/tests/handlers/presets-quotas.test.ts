@@ -52,6 +52,10 @@ const BOT_HEADERS = {
 /** What discord-worker receives on `/webhooks/preset-submission`. */
 type NotificationBody = {
     type: string;
+    /** BUG-003: true when the notification comes from an owner edit (PATCH). */
+    is_edit?: boolean;
+    /** BUG-003: the preset's status before the edit — PATCH only. */
+    edited_from_status?: string;
     preset: { id: string; status: string; moderation_status: string };
 };
 
@@ -315,12 +319,14 @@ describe('daily quotas (FINDING-008)', () => {
          * (the boundary tests below are all about that cap — text-edit's own
          * cap, DAILY_TEXT_EDIT_LIMIT, is far higher and unaffected).
          */
-        const ownPreset = (status: string, flaggedEditEventsUsedToday = 0) => {
+        const STORED_DESCRIPTION = 'The stored description, long enough.';
+
+        const ownPreset = (status: string, flaggedEditEventsUsedToday = 0, name = STORED_NAME) => {
             const row = createMockPresetRow({
                 id: 'preset-123',
                 author_discord_id: '123',
-                name: STORED_NAME,
-                description: 'The stored description, long enough.',
+                name,
+                description: STORED_DESCRIPTION,
                 status,
             });
             let written = false;
@@ -389,9 +395,10 @@ describe('daily quotas (FINDING-008)', () => {
 
             expect(res.status).toBe(200);
             expect(await notifications()).toEqual([]);
-            // It still cost a Perspective call, so it still cost a text-edit
-            // slot (FINDING-005) — but no moderator heard about it.
-            expect(table.events()).toEqual(['text_edit']);
+            // BUG-065: text identical to what is stored is not moderated again,
+            // so it spends no Perspective call and no text-edit slot.
+            expect(globalThis.fetch).not.toHaveBeenCalled();
+            expect(table.events()).toEqual([]);
         });
 
         it('a clean name change on a pending preset notifies once, as clean, and counts', async () => {
@@ -460,8 +467,9 @@ describe('daily quotas (FINDING-008)', () => {
             // No moderator hears about it, so no flagged_edit — but the
             // Perspective call it spent is counted (FINDING-005).
             expect(table.events()).toEqual(['text_edit']);
-            // BUG-052: the write-once revert snapshot is still taken
-            expect(appliedUpdate().query).toMatch(/previous_values\s*=\s*\?/);
+            // BUG-003 follow-up: no revert snapshot — only an approved
+            // preset's text is ever snapshotted (tests/handlers/edit-snapshot.test.ts)
+            expect(appliedUpdate().query).not.toMatch(/previous_values\s*=\s*\?/);
             expect(await res.json()).not.toHaveProperty('moderation_status');
         });
 
@@ -501,8 +509,9 @@ describe('daily quotas (FINDING-008)', () => {
             expect(sent[0].preset.status).toBe('pending');
             expect(sent[0].preset.moderation_status).toBe('flagged');
             expect(table.events()).toEqual(['text_edit', 'flagged_edit']);
-            // BUG-052: the write-once revert snapshot is still taken
-            expect(appliedUpdate().query).toMatch(/previous_values\s*=\s*\?/);
+            // BUG-003 follow-up: no revert snapshot of the rejected text — a
+            // Revert would approve it (tests/handlers/edit-snapshot.test.ts)
+            expect(appliedUpdate().query).not.toMatch(/previous_values\s*=\s*\?/);
             const body = (await res.json()) as { moderation_status: string };
             expect(body.moderation_status).toBe('pending');
         });
@@ -517,8 +526,186 @@ describe('daily quotas (FINDING-008)', () => {
             expect(res.status).toBe(200);
             expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
             expect(await notifications()).toEqual([]);
-            expect(table.events()).toEqual(['text_edit']);
+            // BUG-065: unchanged text is not moderated again — no Perspective
+            // call, so no text-edit slot either.
+            expect(table.events()).toEqual([]);
             expect(await res.json()).not.toHaveProperty('moderation_status');
+        });
+
+        // BUG-065 (2026-10-04 deep-dive): moderation ran whenever the request
+        // carried a name or description, not when either changed. Text a
+        // moderator approved after a flag — or any text once no scorer answers
+        // (`unscored`, the post-sunset default) — fails again when re-sent
+        // as-is, so `/preset edit name:<same name> tags:x` pulled an approved
+        // preset out of public view and pinged a moderator about nothing new.
+        describe('re-sending the stored text unchanged (BUG-065)', () => {
+            /** A name the local filter trips — a moderator approved it after a flag. */
+            const FLAGGED_STORED_NAME = 'A flagged name a moderator approved';
+
+            it.each(['approved', 'rejected'])(
+                'leaves a %s preset whose stored name trips the filter where it is',
+                async (status) => {
+                    ownPreset(status, 0, FLAGGED_STORED_NAME);
+
+                    const res = await patch({ name: FLAGGED_STORED_NAME, tags: ['a'] });
+
+                    expect(res.status).toBe(200);
+                    expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
+                    // Nothing tripped, so no revert snapshot is taken either
+                    expect(appliedUpdate().query).not.toMatch(/previous_values\s*=\s*\?/);
+                    expect(await notifications()).toEqual([]);
+                    expect(globalThis.fetch).not.toHaveBeenCalled();
+                    expect(table.events()).toEqual([]);
+                    const body = (await res.json()) as { moderation_status?: string };
+                    expect(body.moderation_status).toBe(status === 'approved' ? 'approved' : undefined);
+                }
+            );
+
+            it.each(['approved', 'rejected'])(
+                'leaves a %s preset where it is when no scorer is configured (unscored)',
+                async (status) => {
+                    notifyEnv.PERSPECTIVE_API_KEY = undefined;
+                    ownPreset(status);
+
+                    const res = await patch({
+                        name: STORED_NAME,
+                        description: STORED_DESCRIPTION,
+                        tags: ['a'],
+                    });
+
+                    expect(res.status).toBe(200);
+                    expect(appliedUpdate().query).not.toMatch(/status\s*=\s*\?/);
+                    expect(await notifications()).toEqual([]);
+                    expect(table.events()).toEqual([]);
+                    const body = (await res.json()) as { moderation_status?: string };
+                    expect(body.moderation_status).toBe(status === 'approved' ? 'approved' : undefined);
+                }
+            );
+
+            it('still moderates the pair when only one of the two fields changed', async () => {
+                // The stored name trips the filter; the description is new. The
+                // pair is judged together, exactly as before this fix.
+                ownPreset('approved', 0, FLAGGED_STORED_NAME);
+
+                const res = await patch({
+                    name: FLAGGED_STORED_NAME,
+                    description: 'A brand new description, long enough.',
+                });
+
+                expect(res.status).toBe(200);
+                expect(appliedUpdate().bindings).toContain('pending');
+                expect(await notifications()).toHaveLength(1);
+                expect(table.events()).toEqual(['text_edit', 'flagged_edit']);
+            });
+        });
+
+        // BUG-003 (2026-10-04 deep-dive), the presets-api half: discord-worker
+        // could not tell an edit from a new submission, so a flagged edit was
+        // posted as "New preset pending" with no diff and no Revert. The
+        // webhook payload now says which one it is; previous_values was
+        // already sent.
+        describe('the edit marker on the moderation notification (BUG-003)', () => {
+            it('marks a flagged edit of an approved preset as an edit', async () => {
+                ownPreset('approved');
+
+                const res = await patch({ name: 'flagged name that is long enough' });
+
+                expect(res.status).toBe(200);
+                const sent = await notifications();
+                expect(sent).toHaveLength(1);
+                expect(sent[0].type).toBe('submission');
+                expect(sent[0].is_edit).toBe(true);
+                expect(sent[0].preset.moderation_status).toBe('flagged');
+            });
+
+            it('marks every PATCH-sourced notification as an edit, clean ones included', async () => {
+                ownPreset('pending');
+
+                const res = await patch({ name: 'A perfectly clean name' });
+
+                expect(res.status).toBe(200);
+                const sent = await notifications();
+                expect(sent).toHaveLength(1);
+                expect(sent[0].is_edit).toBe(true);
+                expect(sent[0].preset.moderation_status).toBe('clean');
+            });
+
+            it('marks a new submission as not an edit', async () => {
+                mockSubmissionEventsTable(mockDb, (query: string) => {
+                    if (query.includes('COUNT') && query.includes('author_discord_id')) return { count: 0 };
+                    if (query.includes('FROM categories')) return [{ id: 'aesthetics' }, { id: 'jobs' }];
+                    if (query.includes('dye_signature')) return null;
+                    if (query.includes('INSERT')) return { success: true, meta: { changes: 1 } };
+                    if (query.includes('COUNT')) return { count: 1 };
+                    return { success: true };
+                });
+
+                // A name the local filter trips, so the new preset is queued
+                // (pending) and moderators are notified.
+                const res = await app.request(
+                    '/api/v1/presets',
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...BOT_HEADERS },
+                        body: JSON.stringify(
+                            createMockSubmission({ name: 'flagged name that is long enough' })
+                        ),
+                    },
+                    notifyEnv,
+                    ctx
+                );
+
+                expect(res.status).toBe(201);
+                const sent = await notifications();
+                expect(sent).toHaveLength(1);
+                expect(sent[0].type).toBe('submission');
+                expect(sent[0].is_edit).toBe(false);
+                expect(sent[0].preset.status).toBe('pending');
+                // A new preset had no status before — the key is absent, not undefined-valued
+                expect(sent[0]).not.toHaveProperty('edited_from_status');
+            });
+
+            // BUG-003 follow-up: `preset.status` is 'pending' on every edit
+            // notification, so it cannot say what the edit came from — and
+            // Revert approves `previous_values`. On a rejected preset's
+            // resubmission that snapshot is the rejected text, so a consumer
+            // that offered Revert there would approve text a moderator
+            // rejected. The payload now carries the status before the edit.
+            describe('the status the preset had before the edit', () => {
+                it.each([
+                    ['approved', 'flagged name that is long enough', 'flagged'],
+                    ['pending', 'A perfectly clean name', 'clean'],
+                    ['rejected', 'A perfectly clean name', 'clean'],
+                ])(
+                    'a notifying edit of a %s preset carries that status',
+                    async (status, name, moderationStatus) => {
+                        ownPreset(status);
+
+                        const res = await patch({ name });
+
+                        expect(res.status).toBe(200);
+                        const sent = await notifications();
+                        expect(sent).toHaveLength(1);
+                        expect(sent[0].is_edit).toBe(true);
+                        expect(sent[0].edited_from_status).toBe(status);
+                        // …while the preset itself is pending, whatever it came from
+                        expect(sent[0].preset.status).toBe('pending');
+                        expect(sent[0].preset.moderation_status).toBe(moderationStatus);
+                    }
+                );
+
+                it('carries rejected on a rejected preset resubmitted with flagged text', async () => {
+                    ownPreset('rejected');
+
+                    const res = await patch({ name: 'flagged name that is long enough' });
+
+                    expect(res.status).toBe(200);
+                    const sent = await notifications();
+                    expect(sent).toHaveLength(1);
+                    expect(sent[0].edited_from_status).toBe('rejected');
+                    expect(sent[0].preset.moderation_status).toBe('flagged');
+                });
+            });
         });
 
         it('refuses a rejected preset\'s resubmission once the notifying-edit cap is used up', async () => {

@@ -42,7 +42,7 @@ describe('moderation revert binding (FINDING-017 follow-up)', () => {
     d1.close();
   });
 
-  async function seed(status = 'flagged'): Promise<void> {
+  async function seed(status = 'flagged', snapshot: typeof previous = previous): Promise<void> {
     await d1
       .prepare(
         `INSERT INTO presets (
@@ -51,7 +51,7 @@ describe('moderation revert binding (FINDING-017 follow-up)', () => {
         ) VALUES (?, 'Edited name', 'An edited valid description', 'jobs', '[1,2,3]',
           '["edited"]', 'owner-9001', 'Owner', ?, '[1,2,3]', ?)`
       )
-      .bind(presetId, status, JSON.stringify(previous))
+      .bind(presetId, status, JSON.stringify(snapshot))
       .run();
   }
 
@@ -174,6 +174,30 @@ describe('moderation revert binding (FINDING-017 follow-up)', () => {
     expect(after.status).toBe('approved');
     expect(after.previous_values).toBeNull();
     expect(await auditCount()).toBe(1);
+  });
+
+  // BUG-010 follow-up (2026-10-04 deep-dive): submit and edit now refuse a
+  // repeated dye, but a snapshot written before that rule can still hold one,
+  // and a revert approves the snapshot without passing it through validation —
+  // it would re-approve exactly the [7,7,7] palette the rule exists to stop.
+  it.each([
+    ['repeats a dye', [4, 4, 6]],
+    ['holds too few dyes', [4, 5]],
+    ['holds a legacy item ID', [4, 5, 5729]],
+  ])('answers 400 VALIDATION_ERROR with no write and no log row when the snapshot %s', async (_label, dyes) => {
+    await seed('flagged', { ...previous, dyes });
+    const before = await row();
+
+    const res = await revert({ reason, expected_revision: before.content_revision, expected_status: 'flagged' });
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      success: false,
+      error: 'VALIDATION_ERROR',
+      message: expect.stringMatching(/^The previous values cannot be restored: /),
+    });
+    expect(await row()).toEqual(before);
+    expect(await auditCount()).toBe(0);
   });
 
   it("a write that lands between the read and the conditional UPDATE is a 409 STALE_REVIEW with no log row", async () => {
