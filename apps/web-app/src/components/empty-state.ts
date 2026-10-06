@@ -52,7 +52,8 @@ export interface EmptyStateOptions {
 export const EMPTY_STATE_PRESETS = {
   noSearchResults: (query: string, onClear?: () => void): EmptyStateOptions => ({
     icon: ICON_STATE_SEARCH,
-    title: LanguageService.t('emptyStates.noSearchResults.title').replace('{query}', query),
+    // A replacer function, so `$&` and friends in the user's query stay literal (BUG-122)
+    title: LanguageService.t('emptyStates.noSearchResults.title').replace('{query}', () => query),
     description: LanguageService.t('emptyStates.noSearchResults.description'),
     actionLabel: LanguageService.t('emptyStates.noSearchResults.action'),
     onAction: onClear,

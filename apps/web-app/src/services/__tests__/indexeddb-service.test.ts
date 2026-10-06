@@ -414,6 +414,47 @@ describe('IndexedDBService', () => {
       });
     });
 
+    // OPT-009: the price-cache hydration's bulk read — keys kept with their
+    // values, all from a single readonly transaction
+    describe('entries', () => {
+      it('should return key/value pairs from one readonly transaction', async () => {
+        mockStoreData.set('key1', { key: 'key1', value: 'value1' });
+        mockStoreData.set('key2', { key: 'key2', value: 'value2' });
+        const transaction = mockDB.transaction as ReturnType<typeof vi.fn>;
+        transaction.mockClear();
+
+        const result = await indexedDBService.entries<string>(STORES.PRICE_CACHE);
+
+        expect(result).toEqual([
+          ['key1', 'value1'],
+          ['key2', 'value2'],
+        ]);
+        expect(transaction).toHaveBeenCalledTimes(1);
+        expect(transaction).toHaveBeenCalledWith(STORES.PRICE_CACHE, 'readonly');
+      });
+
+      it('should skip records that are not { key, value } pairs', async () => {
+        mockStoreData.set('good', { key: 'good', value: 1 });
+        mockStoreData.set('no-value', { key: 'no-value' });
+        mockStoreData.set('no-key', { value: 3 });
+        mockStoreData.set('null', null);
+
+        const result = await indexedDBService.entries<number>(STORES.PRICE_CACHE);
+        expect(result).toEqual([['good', 1]]);
+      });
+
+      it('should return empty array when not initialized', async () => {
+        // @ts-expect-error - reset singleton
+        IndexedDBService.instance = null;
+        // @ts-expect-error - assigning undefined to global
+        global.indexedDB = undefined;
+
+        const service = IndexedDBService.getInstance();
+        const result = await service.entries(STORES.PRICE_CACHE);
+        expect(result).toEqual([]);
+      });
+    });
+
     describe('clear', () => {
       it('should clear all values from store', async () => {
         mockStoreData.set('key1', 'value1');
@@ -470,6 +511,57 @@ describe('IndexedDBService', () => {
     it('should handle close when not initialized', () => {
       // Should not throw
       expect(() => indexedDBService.close()).not.toThrow();
+    });
+
+    // BUG-119: with no versionchange handler, a tab left open on this
+    // version held its connection through another tab's DB_VERSION upgrade —
+    // the new tab's open went to `blocked`, resolved false, and cached it, so
+    // that tab's price cache was never hydrated from IndexedDB.
+    it('releases the connection when another tab upgrades the database (BUG-119)', async () => {
+      await indexedDBService.initialize();
+      expect(indexedDBService.isReady()).toBe(true);
+
+      const onversionchange = mockDB.onversionchange as
+        ((event: { oldVersion: number; newVersion: number }) => void) | undefined;
+      expect(typeof onversionchange).toBe('function');
+      onversionchange?.({ oldVersion: 3, newVersion: 4 });
+
+      expect(mockDB.close).toHaveBeenCalledTimes(1);
+      expect(indexedDBService.isReady()).toBe(false);
+
+      // Not latched: the next initialize() opens afresh
+      const openCalls = (global.indexedDB.open as ReturnType<typeof vi.fn>).mock.calls.length;
+      await expect(indexedDBService.initialize()).resolves.toBe(true);
+      expect((global.indexedDB.open as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
+        openCalls + 1
+      );
+    });
+
+    it('leaves a newer connection alone when a stale one gets versionchange (BUG-119)', async () => {
+      await indexedDBService.initialize();
+      const stale = mockDB.onversionchange as () => void;
+
+      // Reopen: the service now holds a different connection object
+      indexedDBService.close();
+      const newerDB = { ...mockDB, close: vi.fn(), onversionchange: null };
+      mockDB = newerDB;
+      (global.indexedDB.open as ReturnType<typeof vi.fn>).mockImplementationOnce(() => {
+        const request: MockIDBRequest = {
+          result: newerDB,
+          error: null,
+          onsuccess: null,
+          onerror: null,
+        };
+        setTimeout(() => request.onsuccess?.({ target: request }), 0);
+        return request;
+      });
+      await indexedDBService.initialize();
+      expect(indexedDBService.isReady()).toBe(true);
+
+      stale();
+
+      expect(newerDB.close).not.toHaveBeenCalled();
+      expect(indexedDBService.isReady()).toBe(true);
     });
   });
 
@@ -721,6 +813,41 @@ describe('IndexedDBService', () => {
       });
 
       const result = await indexedDBService.getAll(STORES.SETTINGS);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle entries error', async () => {
+      await indexedDBService.initialize();
+      mockStoreData.set('key1', { key: 'key1', value: 'value1' });
+
+      mockStore.getAll = vi.fn(() => {
+        const request: MockIDBRequest = {
+          result: undefined,
+          error: new Error('GetAll failed'),
+          onsuccess: null,
+          onerror: null,
+        };
+        setTimeout(() => {
+          if (request.onerror) {
+            request.onerror({ target: request });
+          }
+        }, 0);
+        return request;
+      });
+
+      const result = await indexedDBService.entries(STORES.PRICE_CACHE);
+      expect(result).toEqual([]);
+    });
+
+    it('should handle entries exception', async () => {
+      await indexedDBService.initialize();
+      mockStoreData.set('key1', { key: 'key1', value: 'value1' });
+
+      mockDB.transaction = vi.fn(() => {
+        throw new Error('Transaction error');
+      });
+
+      const result = await indexedDBService.entries(STORES.PRICE_CACHE);
       expect(result).toEqual([]);
     });
 

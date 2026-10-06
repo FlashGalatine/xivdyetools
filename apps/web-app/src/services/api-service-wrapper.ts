@@ -66,6 +66,13 @@ function getUniversalisBaseUrl(): string {
 export class IndexedDBCacheBackend implements ICacheBackend {
   private memoryCache: Map<string, CachedData<PriceData>> = new Map();
   private initPromise: Promise<void> | null = null;
+  /**
+   * Bumped by clear(). A hydration that began before a clear() (logout) —
+   * counted from the database open, not just the read — must not put the
+   * cleared prices back — FINDING-008 — and OPT-009's single snapshot read
+   * would otherwise restore every one of them.
+   */
+  private clearGeneration = 0;
 
   /**
    * Initialize the backend asynchronously
@@ -83,9 +90,14 @@ export class IndexedDBCacheBackend implements ICacheBackend {
    * Perform the actual initialization
    */
   private async doInitialize(): Promise<void> {
+    // OPT-009: the clear() guard is captured BEFORE the open. A clear() that
+    // lands while the open is pending queues behind it after this
+    // continuation, so a generation read once the open resolves would already
+    // include that clear while the snapshot is still taken before it
+    const generation = this.clearGeneration;
     const success = await indexedDBService.initialize();
     if (success) {
-      await this.loadFromStorage();
+      await this.loadFromStorage(generation);
     }
   }
 
@@ -142,6 +154,7 @@ export class IndexedDBCacheBackend implements ICacheBackend {
   }
 
   clear(): void {
+    this.clearGeneration++;
     this.memoryCache.clear();
     indexedDBService.clear(STORES.PRICE_CACHE).catch((error) => {
       logger.warn('Failed to clear IndexedDB cache:', error);
@@ -154,18 +167,27 @@ export class IndexedDBCacheBackend implements ICacheBackend {
 
   /**
    * Load all cached data from IndexedDB into memory
+   *
+   * OPT-009: one readonly transaction for the whole store — it was keys() and
+   * then a serial get() transaction per key. A price already in memory was
+   * fetched while the read was in flight, so it is the newer one and stays.
+   *
+   * @param generation - `clearGeneration` as it was when initialization began
    */
-  private async loadFromStorage(): Promise<void> {
+  private async loadFromStorage(generation: number): Promise<void> {
     try {
-      const keys = await indexedDBService.keys(STORES.PRICE_CACHE);
-      for (const key of keys) {
-        const data = await indexedDBService.get<CachedData<PriceData>>(STORES.PRICE_CACHE, key);
-        if (data) {
+      const entries = await indexedDBService.entries<CachedData<PriceData>>(STORES.PRICE_CACHE);
+      if (generation !== this.clearGeneration) {
+        logger.debug('Price cache cleared during hydration; stored entries discarded');
+        return;
+      }
+      for (const [key, data] of entries) {
+        if (data && !this.memoryCache.has(key)) {
           this.memoryCache.set(key, data);
         }
       }
-      if (keys.length > 0) {
-        logger.debug(`Loaded ${keys.length} price cache entries from IndexedDB`);
+      if (entries.length > 0) {
+        logger.debug(`Loaded ${entries.length} price cache entries from IndexedDB`);
       }
     } catch (error) {
       logger.warn('Failed to load price cache from IndexedDB:', error);

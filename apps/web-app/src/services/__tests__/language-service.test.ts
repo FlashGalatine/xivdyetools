@@ -502,6 +502,19 @@ describe('LanguageService tInterpolate', () => {
       const result = LanguageService.tInterpolate('No params {here}', {});
       expect(result).toBe('No params {here}');
     });
+
+    // BUG-122: the value went in as a replace() replacement STRING, so a user
+    // collection named "Budget $$" toasted as "Budget $", and `$&`, `` $` ``
+    // and `$'` spliced the matched placeholder or the text around it back in.
+    it('inserts $ patterns in a value literally (BUG-122)', () => {
+      expect(LanguageService.tInterpolate('Added to {name}', { name: 'Budget $$' })).toBe(
+        'Added to Budget $$'
+      );
+      expect(LanguageService.tInterpolate('Added to {name}', { name: 'A $& B' })).toBe(
+        'Added to A $& B'
+      );
+      expect(LanguageService.tInterpolate('<{name}>', { name: "$`|$'" })).toBe("<$`|$'>");
+    });
   });
 });
 
@@ -600,6 +613,53 @@ describe('translation loading resilience', () => {
 
     // Restore
     await LanguageService.setLocale('en');
+  });
+
+  // BUG-121: setLocale() had no sequencing. A call waiting on an uncached
+  // locale chunk committed after a later call for a cached locale had already
+  // finished — the UI strings, stored preference and <html lang> went back to
+  // the earlier choice while core (dye names) stayed on the later one.
+  it('lets the latest call win when an earlier one waits on an uncached chunk (BUG-121)', async () => {
+    const { LocalizationService } = await import('@xivdyetools/core');
+    const service = LanguageService as unknown as {
+      loadWebAppTranslations: (locale: LocaleCode) => Promise<void>;
+    };
+
+    LanguageService.clearCache();
+    await LanguageService.preloadLocales(['en', 'de']);
+
+    // Hold the 'ja' chunk until the 'de' switch has finished
+    let releaseJa: () => void = () => {};
+    const jaHeld = new Promise<void>((resolve) => {
+      releaseJa = resolve;
+    });
+    const original = service.loadWebAppTranslations.bind(LanguageService);
+    const load = vi
+      .spyOn(service, 'loadWebAppTranslations')
+      .mockImplementation(async (locale: LocaleCode) => {
+        if (locale === 'ja') await jaHeld;
+        return original(locale);
+      });
+    const listener = vi.fn();
+    const unsubscribe = LanguageService.subscribe(listener);
+
+    try {
+      const ja = LanguageService.setLocale('ja');
+      await LanguageService.setLocale('de');
+      releaseJa();
+      await ja;
+
+      expect(load).toHaveBeenCalledWith('ja');
+      expect(LanguageService.getCurrentLocale()).toBe('de');
+      expect(LocalizationService.getCurrentLocale()).toBe('de');
+      expect(StorageService.getItem<LocaleCode>(STORAGE_KEYS.LOCALE)).toBe('de');
+      expect(document.documentElement.lang).toBe('de');
+      expect(listener).toHaveBeenLastCalledWith('de');
+    } finally {
+      unsubscribe();
+      load.mockRestore();
+      await LanguageService.setLocale('en');
+    }
   });
 });
 
