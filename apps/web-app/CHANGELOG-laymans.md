@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.14.8 — October 5, 2026
+
+### Market prices you can trust
+- **Chinese and Korean servers now get market prices.** Picking 陆行鸟, 한국 or any other Chinese or Korean server used to load no prices at all.
+- **When the market board can't be reached, the tools say so** instead of quietly showing no prices: the Palette Extractor marks its cards, Harmony shows a notice, and Budget shows its offline note.
+
 ## Web-App Version 5.14.6 — October 5, 2026
 
 ### Polish everywhere

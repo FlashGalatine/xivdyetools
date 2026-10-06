@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.8] - 2026-10-05
+
+Sprint 27 of the 2026-10-04 remediation plan, with `@xivdyetools/core` 5.9.0.
+
+### Fixed
+
+- **A market-board outage is reported (BUG-090).**
+  - Core's batch fetch used to answer an outage as an empty success, so every market error path
+    was dead. Now `MarketBoardService` reads core's outcome, and a failed lookup records
+    `lastFetchOutcome = 'error'`, even when some prices did come back.
+  - The Extractor's cards show their market error badge (EUNK, or NOFF when the browser is
+    offline). A new roll no longer carries the previous fetch's badge.
+  - Harmony shows its "Prices unavailable" strip, and hides it when Market Board prices are
+    turned off.
+  - Budget shows its offline block.
+- **Chinese and Korean servers get prices.** Core sanitised their names to an empty path, so
+  every lookup for 陆行鸟, 한국, 红玉海 and the rest failed. They had silently priced nothing, and
+  after the fix above they would have looked permanently offline.
+- **The Glamour Reader takes its dyeable slots from core** (`CHARA_DYEABLE_SLOTS`). It no longer
+  keeps a second copy that could drift from the GPOSERS export (REFACTOR-004).
+
 ## [5.14.7] - 2026-10-05
 
 Sprint 23 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
