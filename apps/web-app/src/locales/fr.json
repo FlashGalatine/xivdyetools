@@ -124,7 +124,6 @@
     "cost": "Coût",
     "market": "Marché",
     "spectrum": "Spectre",
-    "copied": "Copié !",
     "dismiss": "Fermer",
     "optional": "(optionnel)",
     "done": "Terminé",
@@ -343,11 +342,6 @@
     "inspectDyes": "Inspecter les Teintures",
     "visionTypes": "Types de vision",
     "selectDyesToSeeAnalysis": "Sélectionnez des teintures pour voir l'analyse d'accessibilité",
-    "hardForDeuteranopia": "Difficile à distinguer pour la deutéranopie (rouge-vert)",
-    "hardForProtanopia": "Difficile à distinguer pour la protanopie (rouge-vert)",
-    "hardForTritanopia": "Difficile à distinguer pour la tritanopie (bleu-jaune)",
-    "verySimular": "Très similaire - peut être difficile à distinguer",
-    "somewhatSimilar": "Similaire - certains utilisateurs peuvent avoir du mal à distinguer",
     "redGreenWarning": "Les daltoniens rouge-vert peuvent voir cette couleur différemment",
     "tritanopiaWarning": "Peut être difficile à voir pour la tritanopie (daltonisme bleu-jaune)",
     "achromatopsiaWarning": "Peut être difficile à voir pour le daltonisme total",
@@ -483,7 +477,6 @@
     "replacedSlot2": "Emplacement 2 remplacé",
     "replaceSlot": "Remplacer l'emplacement",
     "selectDyesToBlend": "Sélectionner les teintures à mélanger",
-    "dye3": "Teinture 3",
     "fieldLabel": "Modèle × ratio",
     "fieldDesc": "Touchez une cellule pour en faire le mélange. Les lignes sont les modèles, les colonnes les ratios.",
     "fieldHint": "6 modèles × 5 ratios",
@@ -577,7 +570,6 @@
     "clearingCache": "Vidage du cache et récupération des nouveaux prix...",
     "pricesRefreshed": "Prix actualisés avec succès !",
     "refreshError": "Erreur lors de l'actualisation des prix. Veuillez réessayer.",
-    "priceUnavailable": "Prix indisponible",
     "offlineWarning": "Vous êtes hors ligne. Impossible de rafraîchir les prix.",
     "region": {
       "japan": "Japon",
@@ -1110,33 +1102,10 @@
     "mineSummaryPresetsMany": "{n} palettes"
   },
   "emptyStates": {
-    "noSearchResults": {
-      "title": "Aucune teinture ne correspond à \"{query}\"",
-      "description": "Vérifiez l'orthographe ou recherchez une catégorie comme \"violet\" ou \"rouge\".",
-      "action": "Effacer la recherche"
-    },
-    "filteredOut": {
-      "title": "Toutes les suggestions ont été filtrées",
-      "description": "Vos filtres actuels masquent toutes les teintures correspondantes. Essayez d'ajuster vos paramètres de filtre.",
-      "action": "Réinitialiser les filtres"
-    },
-    "noPrice": {
-      "description": "Cette teinture peut ne pas être échangeable ou Universalis n'a pas de données récentes pour ce serveur.",
-      "action": "Essayer un autre serveur"
-    },
     "noHarmony": {
       "title": "Aucune suggestion d'harmonie",
       "description": "Sélectionnez une teinture de base pour générer des suggestions d'harmonie.",
       "action": "Sélectionner une teinture"
-    },
-    "noImage": {
-      "title": "Aucune image chargée",
-      "description": "Téléchargez une image pour commencer à faire correspondre les couleurs.",
-      "action": "Télécharger une image"
-    },
-    "loading": {
-      "title": "Chargement...",
-      "description": "Veuillez patienter pendant que nous récupérons les données."
     }
   },
   "aria": {

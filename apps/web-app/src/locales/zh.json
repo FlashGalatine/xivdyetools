@@ -124,7 +124,6 @@
     "cost": "成本",
     "market": "市场",
     "spectrum": "光谱",
-    "copied": "已复制！",
     "dismiss": "关闭",
     "optional": "（可选）",
     "done": "完成",
@@ -343,11 +342,6 @@
     "inspectDyes": "检查染剂",
     "visionTypes": "视觉类型",
     "selectDyesToSeeAnalysis": "选择染剂以查看无障碍性分析",
-    "hardForDeuteranopia": "红绿色盲（绿色弱）难以区分",
-    "hardForProtanopia": "红绿色盲（红色弱）难以区分",
-    "hardForTritanopia": "蓝黄色盲难以区分",
-    "verySimular": "非常相似 - 可能难以区分",
-    "somewhatSimilar": "相似 - 部分用户可能难以区分",
     "redGreenWarning": "红绿色盲用户可能会看到不同的颜色",
     "tritanopiaWarning": "蓝黄色盲患者可能难以看到",
     "achromatopsiaWarning": "全色盲患者可能难以看到",
@@ -483,7 +477,6 @@
     "replacedSlot2": "已替换槽位 2",
     "replaceSlot": "替换槽位",
     "selectDyesToBlend": "选择要混合的染剂",
-    "dye3": "染剂 3",
     "fieldLabel": "模型 × 比例",
     "fieldDesc": "点击任意单元格将其设为混色。行是模型，列是比例。",
     "fieldHint": "6 模型 × 5 比例",
@@ -577,7 +570,6 @@
     "clearingCache": "正在清除缓存并获取新价格...",
     "pricesRefreshed": "价格刷新成功！",
     "refreshError": "刷新价格时出错。请重试。",
-    "priceUnavailable": "价格不可用",
     "offlineWarning": "您处于离线状态。无法刷新价格。",
     "region": {
       "japan": "日本",
@@ -1110,33 +1102,10 @@
     "mineSummaryPresetsMany": "{n} 个配色"
   },
   "emptyStates": {
-    "noSearchResults": {
-      "title": "没有匹配\"{query}\"的染剂",
-      "description": "请检查拼写或搜索\"紫色\"或\"红色\"等类别。",
-      "action": "清除搜索"
-    },
-    "filteredOut": {
-      "title": "所有建议都已被过滤",
-      "description": "您当前的过滤器隐藏了所有匹配的染剂。请尝试调整过滤器设置。",
-      "action": "重置过滤器"
-    },
-    "noPrice": {
-      "description": "此染剂可能不可交易，或Universalis没有此服务器的最新数据。",
-      "action": "尝试其他服务器"
-    },
     "noHarmony": {
       "title": "无和谐建议",
       "description": "选择基础染剂以生成色彩和谐建议。",
       "action": "选择染剂"
-    },
-    "noImage": {
-      "title": "未加载图像",
-      "description": "上传图像以开始颜色匹配。",
-      "action": "上传图像"
-    },
-    "loading": {
-      "title": "加载中...",
-      "description": "请稍候，我们正在获取数据。"
     }
   },
   "aria": {
