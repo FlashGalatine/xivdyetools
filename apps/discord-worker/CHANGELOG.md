@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.9] - 2026-10-06
+
+Sprint 30 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+the last sprint: i18n FONT-001, Option A, decided 2026-10-05. Merge after Sprint 26 (PR #262). No
+command shape changed.
+
+### Fixed
+
+- **`/glamour` cards name items in Korean and Chinese** (FONT-001). The CJK subsets held no item
+  names, so a card fell back to the English name whenever the font could not draw the localized
+  one.
+  - Korean fell back for 18,326 of 28,986 items; now 2 (both carry a stray U+200F in the source
+    table).
+  - Chinese fell back for 28,217 of 28,992; now none.
+  - The embed always had the localized name; only the card changes.
+
+### Changed
+
+- **Fonts re-cut from api-worker's ko and zh item-name tables**, compared by cmap:
+  - `NotoSansKR-Subset.ttf` gains 364 Hangul (595 → 959);
+  - `NotoSansSC-Subset.ttf` gains 1,167 (1,244 → 2,411);
+  - the JP subset is unchanged.
+- **The gzipped Worker grows 253.4 KiB**, to 2,626.8 KiB: 85.5% of the 3,072 KiB cap, with
+  445.2 KiB left.
+- **Re-cut trigger:** any locale edit or a `build-item-names.mjs` run.
+  `item-name-coverage.test.ts` fails if a ko or zh item name cannot be drawn. It runs in CI's
+  always-on build-free step, because a table-only change selects only api-worker. turbo's `test`
+  inputs name the tables, so a cached run cannot replay a green result.
+- **Japanese side effect:** Japanese item names are not in the repo (they come from XIVAPI at run
+  time), so nothing was added for ja. About 550 Japanese names that used to fall back to English
+  now draw, with some kanji in the Chinese subset's letterforms, as some already did. Covering ja
+  properly needs a ja item-name table and about 356 more codepoints.
+
 ## [5.8.8] - 2026-10-06
 
 Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor; the
