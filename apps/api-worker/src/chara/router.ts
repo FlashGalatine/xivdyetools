@@ -25,6 +25,8 @@ import { successResponse } from '../lib/response.js';
 import { parseIntParam } from '../lib/validation.js';
 import { CharaRowCache } from './cache.js';
 import { indexRows, lookupsFor, resolveCharaEquipment } from './resolver.js';
+import { loadAcquisition } from './acquisition.js';
+import { loadRegionalNames } from './regional-names.js';
 import { UpstreamUnavailableError, XivapiClient } from './xivapi.js';
 import type {
   CharaGearModel,
@@ -195,12 +197,20 @@ function upstreamDown(error: unknown): never {
 charaRouter.post('/resolve', async (c) => {
   const request = parseResolveBody(await readJsonBody(c.req.raw));
   const client = new XivapiClient(c.env);
+  // OPT-002: the ko/zh and acquisition tables load on first use. Start that
+  // now so it overlaps the cache read and the upstream search instead of
+  // following them; it is awaited just before the resolver needs it. The
+  // no-op catch only stops an unhandled-rejection report when the request
+  // fails earlier — the awaited promise below still rejects.
+  const tablesReady = Promise.all([loadRegionalNames(), loadAcquisition()]);
+  tablesReady.catch(() => undefined);
   // Same cast as the Universalis router — Hono's ctx type lags workers-types.
   // OPT-004 dropped the origin argument: `CacheService` builds its synthetic
   // keys from a fixed host now, so which of the worker's domains a request
   // arrived on no longer partitions the cache. `CACHE_NAME` was always the
   // real namespace.
-  const cache = new CharaRowCache(c.executionCtx as ExecutionContext, client.versionKey);
+  // BUG-040: the namespace is the game version `latest` points at, not the alias.
+  const cache = new CharaRowCache(c.executionCtx as ExecutionContext, await client.cacheNamespace());
 
   const lookups = lookupsFor(request.gear);
   const rows = await cache.getRows(lookups);
@@ -248,6 +258,7 @@ charaRouter.post('/resolve', async (c) => {
       }
     }
 
+    await tablesReady;
     const data = resolveCharaEquipment(
       request,
       (lookup) => rows.get(lookupKey(lookup)) ?? [],

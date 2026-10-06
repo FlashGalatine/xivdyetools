@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import app from '../../src/index.js';
 import { createMockEnv } from '../test-utils.js';
+import type { Env } from '../../src/types.js';
 
 const env = createMockEnv();
 
@@ -99,5 +100,56 @@ describe('App-level error handling', () => {
     const res = await app.request('/health', { method: 'GET' }, env);
 
     expect(res.headers.get('X-API-Version')).toBe('v1');
+  });
+});
+
+/**
+ * BUG-037: index.ts used to register the telemetry limiter on both the exact
+ * path and `/v1/telemetry/*`; Hono's `/*` also matches the bare path, so one
+ * beacon drew two tokens from the 240/60 s bucket (effective cap 120).
+ */
+describe('Telemetry rate limiter wiring (BUG-037)', () => {
+  // The shared middleware memoizes its backend per isolate (BUG-061), so the
+  // binding object captured on the first request lives for the whole file:
+  // one stable object, with its behavior reset between tests.
+  let used = 0;
+  let budget = Infinity;
+  const binding = {
+    limit: vi.fn(async (_o: { key: string }) => ({ success: ++used <= budget })),
+  };
+  beforeEach(() => {
+    used = 0;
+    budget = Infinity;
+    binding.limit.mockClear();
+  });
+
+  const beacon = (path: string, method = 'POST') =>
+    app.request(
+      path,
+      {
+        method,
+        headers: { 'CF-Connecting-IP': '203.0.113.9', 'Content-Type': 'application/json' },
+        body: method === 'POST' ? '{}' : undefined,
+      },
+      createMockEnv({ TELEMETRY_RATE_LIMITER: binding } as Partial<Env>),
+    );
+
+  it('charges the 240/60 s bucket exactly once per beacon on the bare path', async () => {
+    await beacon('/v1/telemetry');
+    expect(binding.limit).toHaveBeenCalledTimes(1);
+    expect(binding.limit.mock.calls[0]![0].key).toBe('telemetry:ip:203.0.113.9:t240_60');
+  });
+
+  it('allows exactly 240 beacons before the bucket denies (not 120)', async () => {
+    budget = 240;
+    const statuses: number[] = [];
+    for (let i = 0; i < 241; i++) statuses.push((await beacon('/v1/telemetry')).status);
+    expect(statuses.slice(0, 240).every((s) => s !== 429)).toBe(true);
+    expect(statuses[240]).toBe(429);
+  });
+
+  it('still charges the sub-tree once (api-worker-05: /v1/telemetry/x is limited, not free)', async () => {
+    await beacon('/v1/telemetry/x');
+    expect(binding.limit).toHaveBeenCalledTimes(1);
   });
 });

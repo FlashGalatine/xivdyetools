@@ -17,5 +17,3 @@ export function createMockEnv(overrides: Partial<Env> = {}): Env {
     ...overrides,
   };
 }
-
-export { createMockKV };
