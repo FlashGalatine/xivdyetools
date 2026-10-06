@@ -199,6 +199,14 @@ jobs:
           # reaches @xivdyetools/bot-logic and therefore dist/) stays filtered.
           pnpm --filter xivdyetools-discord-worker exec vitest run src/services/root-changelog.test.ts --coverage.enabled=false
           status=$((status + $?))
+          # item-name-coverage.test.ts (FONT-001) gates discord-worker's CJK font
+          # subsets against api-worker's ko / zh item-name tables. A push that
+          # regenerates only those tables selects api-worker, never discord-worker,
+          # so the filtered test step would not catch a missing re-cut. It reads
+          # the .ttf files and the JSON off disk and imports no workspace package,
+          # so it needs no build either.
+          pnpm --filter xivdyetools-discord-worker exec vitest run src/services/item-name-coverage.test.ts --coverage.enabled=false
+          status=$((status + $?))
           exit $status
 
       - name: Lint (affected)

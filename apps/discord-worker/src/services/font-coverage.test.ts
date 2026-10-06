@@ -215,6 +215,21 @@ function stringsFor(locale: LocaleCode): string[] {
   return out;
 }
 
+/**
+ * FONT-001: the ko / zh equippable-item names api-worker resolves for /glamour,
+ * which `subset-cjk-fonts.py` also cuts into the subsets. Their drawability is
+ * gated by `item-name-coverage.test.ts`; here they only count as NEEDED, so
+ * the surplus report below does not read ~1,500 item-name glyphs as bloat.
+ */
+function itemNameStrings(): string[] {
+  const dir = join(REPO_ROOT, 'apps', 'api-worker', 'src', 'chara', 'data');
+  return (['ko', 'zh'] as const).flatMap((lang) =>
+    Object.values(
+      JSON.parse(readFileSync(join(dir, `item-names.${lang}.json`), 'utf-8')) as Record<string, string>,
+    ),
+  );
+}
+
 const fontsDir = join(HERE, '..', 'fonts');
 const font = (name: string): Set<number> =>
   readCmapCodepoints(new Uint8Array(readFileSync(join(fontsDir, name))));
@@ -290,6 +305,7 @@ describe('bundled fonts cover every string the cards can render', () => {
   it('reports surplus CJK glyphs in the subsets (bloat, not breakage — a warning)', () => {
     const needed = new Set<number>();
     for (const locale of LOCALES) for (const cp of codepointsOf(stringsFor(locale))) needed.add(cp);
+    for (const cp of codepointsOf(itemNameStrings())) needed.add(cp);
     for (const [name, set] of [
       ['JP', cmaps.jp],
       ['SC', cmaps.sc],
