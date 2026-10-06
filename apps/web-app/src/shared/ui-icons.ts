@@ -56,15 +56,6 @@ export const ICON_CRYSTAL = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 </svg>`;
 
 /**
- * Warning icon - Triangle with exclamation
- */
-export const ICON_WARNING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 3L2 21h20L12 3Z" />
-  <line x1="12" y1="9" x2="12" y2="13" />
-  <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="none" />
-</svg>`;
-
-/**
  * Dice icon - Random selection
  */
 export const ICON_DICE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
