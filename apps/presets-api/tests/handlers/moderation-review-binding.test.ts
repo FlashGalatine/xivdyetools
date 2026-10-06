@@ -238,6 +238,19 @@ describe('moderation review binding (FINDING-017)', () => {
       expect(res.status).toBe(403);
     });
 
+    // CONTRACT with moderation-worker (deep-dive BUG-054): its getModerationPreset
+    // (apps/moderation-worker/src/services/preset-api.ts, isPresetMissing) reads
+    // ONLY this exact body as "the preset is gone" and strips the review
+    // buttons; any other 404 — a route this deploy does not have yet, pinned in
+    // tests/index.test.ts — keeps them. The two apps share no package edge, so
+    // a presets-api change never runs moderation-worker's tests: changing this
+    // body means changing isPresetMissing in the same PR.
+    it('answers a missing preset with the exact body moderation-worker reads as gone', async () => {
+      const gone = await app.request('/api/v1/moderation/00000000-0000-4000-8000-000000000000', { headers: headers() }, env);
+      expect(gone.status).toBe(404);
+      expect(await gone.json()).toMatchObject({ error: 'NOT_FOUND', message: 'Preset not found' });
+    });
+
     it('answers 404 for a missing preset', async () => {
       const res = await app.request('/api/v1/moderation/missing', { headers: headers() }, env);
       expect(res.status).toBe(404);
