@@ -13,7 +13,7 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | Package | Version | Description |
 |---------|---------|-------------|
 | [`@xivdyetools/types`](packages/types/) | 3.2.0 | Branded types (`HexColor`, `DyeId`, etc.) and shared interfaces |
-| [`@xivdyetools/logger`](packages/logger/) | 2.2.1 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
+| [`@xivdyetools/logger`](packages/logger/) | 2.3.0 | Multi-runtime logging (browser, Node, CF Workers) with secret redaction |
 | [`@xivdyetools/auth`](packages/auth/) | 2.0.2 | JWT verification, HMAC signing, Discord Ed25519 verification, Base64URL/hex encoding (`/encoding`) |
 | [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.4.1 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
 | [`@xivdyetools/core`](packages/core/) | 5.8.1 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |

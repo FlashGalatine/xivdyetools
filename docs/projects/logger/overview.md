@@ -109,7 +109,7 @@ interface LoggerConfig {
   format: 'json' | 'pretty';                    // output format
   timestamps: boolean;                          // include ISO timestamps
   prefix?: string;                              // message prefix
-  sanitizeErrors: boolean;                      // free-text secret sanitisation
+  sanitizeErrors: boolean;                      // free-text secret sanitisation (message, error, and context strings)
   redactFields?: string[];                      // merged with the defaults, never replaces them
 }
 ```

@@ -42,7 +42,7 @@
 | **Core** (incl. `/blending` + schema-v2 data) | v5.8.1 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
-| **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
+| **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.3.0 | `@xivdyetools/svg` | npm | Active |
 | **Bot Logic** (incl. `/i18n`) | v4.5.0 | `@xivdyetools/bot-logic` | npm | Active |
@@ -327,6 +327,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.3.0 | Oct 2026 | 2026-10-04 remediation Sprint 12 — minor, because log output changes (the rule 2.2.0 set): a context string gets the free-text redaction pass, so a secret inside a longer string is redacted (BUG-140; `sanitizeErrors: false` keeps the old output); a `Date`, `URL` or other `toJSON` value logs as its serialized, redacted form instead of `{}`, bounded and never throwing (BUG-141); URL user-info passwords redacted; the redact set is built once per logger (OPT-010) |
 | v2.2.1 | Sep 2026 | 2026-09-16 deep-dive Sprint 9 — the browser preset's error-tracker wrapper serialises a non-`Error` value with `safeStringify`, so a circular or BigInt-bearing value no longer throws inside `logger.error()` (BUG-020; latent — no app configures a tracker) |
 | **v2.2.0** | **Sep 2026** | **2026-09-02 deep-dive (Sprint 13) — a secret reachable only through a cycle is redacted (the cycle guards returned the raw original node, BUG-004); `sanitizeErrorMessage` output changes shape for non-`Bearer` auth schemes** |
 | v2.1.2 | Sep 2026 | knip dead-code gate — 30 barrel exports tagged `@public` (adjudicated KEEP from DEAD-021) |
