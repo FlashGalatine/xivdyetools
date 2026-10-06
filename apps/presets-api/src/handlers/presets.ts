@@ -869,7 +869,8 @@ presetsRouter.patch('/:id', async (c) => {
     const editPayload: PresetNotificationPayload = {
       type: 'submission',
       // BUG-003: lets discord-worker post this as an edit (diff + Revert) rather
-      // than as a new preset; previous_values rides in the preset spread below.
+      // than as a new preset. The diff base is `edited_from` below; the revert
+      // target, previous_values, rides in the preset spread.
       is_edit: true,
       // BUG-003 follow-up: the status before this edit, since `preset.status`
       // below is 'pending' for every notifying edit. Revert approves
@@ -879,6 +880,19 @@ presetsRouter.patch('/:id', async (c) => {
       // content_revision (migration 0014's trigger), so a status that moved
       // after that read would have failed the revision-bound UPDATE above.
       edited_from_status: preset.status,
+      // Sprint 9: the text this edit replaced — the moderator's diff base.
+      // previous_values cannot be one: a pending or rejected preset's edit
+      // never creates it (so there is usually none), and the write-once
+      // snapshot can be older than this text. Taken from
+      // the same first read for the same reason as the status above: a name,
+      // description, tags or dyes change also bumps content_revision, so the
+      // UPDATE succeeding proves this is exactly the text it overwrote.
+      edited_from: {
+        name: preset.name,
+        description: preset.description,
+        tags: preset.tags,
+        dyes: preset.dyes,
+      },
       preset: {
         // One read supplies both the text and the revision, so the buttons are
         // bound to exactly the text the embed shows.

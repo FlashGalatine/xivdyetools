@@ -32,7 +32,9 @@ type Variables = { auth: AuthContext };
 type NotificationBody = {
   is_edit?: boolean;
   edited_from_status?: string;
-  preset: { status: string; previous_values?: unknown };
+  /** Sprint 9: the text THIS edit replaced — the diff base, not the revert target. */
+  edited_from?: unknown;
+  preset: { status: string; previous_values?: unknown; name?: string; tags?: unknown; dyes?: unknown };
 };
 
 const schema = readFileSync(fileURLToPath(new URL('../../schema.sql', import.meta.url).toString()), 'utf8');
@@ -123,11 +125,14 @@ describe('the revert snapshot holds only approved text (BUG-003 follow-up)', () 
     };
   }
 
-  /** An owner text edit — new text, so it is moderated and (unscored) trips it. */
-  async function ownerEdit(name: string): Promise<Response> {
+  /**
+   * An owner text edit — new text, so it is moderated and (unscored) trips it.
+   * `extra` adds further fields to the same PATCH (tags, dyes, …).
+   */
+  async function ownerEdit(name: string, extra: Record<string, unknown> = {}): Promise<Response> {
     const res = await app.request(
       `/api/v1/presets/${presetId}`,
-      { method: 'PATCH', headers: headers(ownerId), body: JSON.stringify({ name }) },
+      { method: 'PATCH', headers: headers(ownerId), body: JSON.stringify({ name, ...extra }) },
       env,
       ctx
     );
@@ -256,5 +261,73 @@ describe('the revert snapshot holds only approved text (BUG-003 follow-up)', () 
     // The snapshot is the text the moderator approved — never the rejected one
     expect(last.preset.previous_values).toEqual({ ...STORED, name: 'A resubmitted name' });
     expect(JSON.parse((await stored()).previous_values!)).toEqual({ ...STORED, name: 'A resubmitted name' });
+    // …and the diff base is the text that further edit replaced
+    expect(last.edited_from).toEqual({ ...STORED, name: 'A resubmitted name' });
+  });
+
+  // Sprint 9 (2026-10-04 remediation): discord-worker's own edit post diffed
+  // against the real pre-edit text; with it gone (BUG-004) the webhook is the
+  // only edit post, and `previous_values` cannot be its diff base — a pending
+  // or rejected preset's edit has none, and a write-once snapshot can be older
+  // than the text being replaced. `edited_from` is the text THIS edit replaced.
+  describe('the pre-edit text of this edit (edited_from)', () => {
+    it('carries the replaced text on a flagged edit of an approved preset', async () => {
+      await seed('approved');
+
+      expect((await ownerEdit('An edited name')).status).toBe(200);
+
+      expect(bodies).toHaveLength(1);
+      expect(bodies[0].edited_from).toEqual(STORED);
+    });
+
+    it('carries the replaced text, not the older revert snapshot, when the two differ', async () => {
+      await seed('approved', OLDER_SNAPSHOT);
+
+      expect((await ownerEdit('An edited name')).status).toBe(200);
+
+      expect(bodies).toHaveLength(1);
+      // The diff base is what this edit replaced…
+      expect(bodies[0].edited_from).toEqual(STORED);
+      // …while Revert would still restore the older snapshot
+      expect(bodies[0].preset.previous_values).toEqual(OLDER_SNAPSHOT);
+    });
+
+    it('carries the replaced text on a pending preset\'s edit, which has no snapshot', async () => {
+      await seed('pending');
+
+      expect((await ownerEdit('A re-edited name')).status).toBe(200);
+
+      expect(bodies).toHaveLength(1);
+      expect(bodies[0]).toMatchObject({ is_edit: true, edited_from_status: 'pending' });
+      expect(bodies[0].edited_from).toEqual(STORED);
+      expect(bodies[0].preset.previous_values).toBeNull();
+    });
+
+    it('carries the rejected text on a rejected preset\'s resubmission, which has no snapshot', async () => {
+      await seed('rejected');
+
+      expect((await ownerEdit('A resubmitted name')).status).toBe(200);
+
+      expect(bodies).toHaveLength(1);
+      expect(bodies[0]).toMatchObject({ is_edit: true, edited_from_status: 'rejected' });
+      expect(bodies[0].edited_from).toEqual(STORED);
+      expect(bodies[0].preset.previous_values).toBeNull();
+    });
+
+    it('takes all four fields from before the write when the edit changes tags and dyes too', async () => {
+      await seed('pending');
+
+      const res = await ownerEdit('A re-edited name', { tags: ['edited'], dyes: [4, 5, 6] });
+
+      expect(res.status).toBe(200);
+      expect(bodies).toHaveLength(1);
+      expect(bodies[0].edited_from).toEqual(STORED);
+      // The preset itself is the text after the edit
+      expect(bodies[0].preset).toMatchObject({
+        name: 'A re-edited name',
+        tags: ['edited'],
+        dyes: [4, 5, 6],
+      });
+    });
   });
 });

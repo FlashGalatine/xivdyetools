@@ -56,6 +56,8 @@ type NotificationBody = {
     is_edit?: boolean;
     /** BUG-003: the preset's status before the edit — PATCH only. */
     edited_from_status?: string;
+    /** Sprint 9: the text the edit replaced — PATCH only. */
+    edited_from?: unknown;
     preset: { id: string; status: string; moderation_status: string };
 };
 
@@ -663,6 +665,8 @@ describe('daily quotas (FINDING-008)', () => {
                 expect(sent[0].preset.status).toBe('pending');
                 // A new preset had no status before — the key is absent, not undefined-valued
                 expect(sent[0]).not.toHaveProperty('edited_from_status');
+                // …and no text before either (Sprint 9: the edit's diff base)
+                expect(sent[0]).not.toHaveProperty('edited_from');
             });
 
             // BUG-003 follow-up: `preset.status` is 'pending' on every edit
@@ -688,6 +692,12 @@ describe('daily quotas (FINDING-008)', () => {
                         expect(sent).toHaveLength(1);
                         expect(sent[0].is_edit).toBe(true);
                         expect(sent[0].edited_from_status).toBe(status);
+                        // Sprint 9: the replaced text rides along on clean and
+                        // flagged edits alike — every PATCH notification carries it
+                        expect(sent[0].edited_from).toMatchObject({
+                            name: STORED_NAME,
+                            description: STORED_DESCRIPTION,
+                        });
                         // …while the preset itself is pending, whatever it came from
                         expect(sent[0].preset.status).toBe('pending');
                         expect(sent[0].preset.moderation_status).toBe(moderationStatus);

@@ -312,8 +312,9 @@ Every field is optional; at least one must be present (`No updates provided`).
   **Resubmit** button on a rejected preset is exactly this PATCH (it reopens the edit form).
 - Every notification counts against `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day — see the second 429
   below) and carries `moderation_status: "flagged"` when this edit tripped moderation, `"clean"`
-  otherwise, plus `is_edit: true` and `edited_from_status` — the status the preset had before this
-  edit (BUG-003; see [POST /webhooks/preset-submission](#post-webhookspreset-submission)).
+  otherwise, plus `is_edit: true`, `edited_from_status` — the status the preset had before this
+  edit (BUG-003) — and `edited_from`, the `{ name, description, tags, dyes }` this edit replaced
+  (the moderator's diff base; see [POST /webhooks/preset-submission](#post-webhookspreset-submission)).
 - Vote counts are preserved across edits.
 
 **Response** — `moderation_status` is the status the preset is in after the edit, and is
@@ -679,12 +680,19 @@ Content-Type: application/json
 (`PATCH /presets/:id`, `is_edit: true`) that brings a moderator new text to judge. That is **not only
 a flagged edit**: every PATCH that notifies sends one — an approved preset whose new text tripped
 moderation, a clean *or* flagged text edit of a preset still `pending`, and a `rejected` preset's
-resubmission (clean or flagged). An edit (here, a flagged edit of an approved preset):
+resubmission (clean or flagged). An edit (here, the first flagged edit of an approved preset, so
+`edited_from` and `previous_values` hold the same text — after that they diverge, see the table):
 ```json
 {
   "type": "submission",
   "is_edit": true,
   "edited_from_status": "approved",
+  "edited_from": {
+    "name": "Forest Warden",
+    "description": "Earthy tones for a Paladin glamour",
+    "tags": ["tank"],
+    "dyes": [23, 40, 57]
+  },
   "preset": {
     "id": "6f1c1c9e-…",
     "name": "Forest Guardian",
@@ -722,7 +730,8 @@ resubmission (clean or flagged). An edit (here, a flagged edit of an approved pr
 |-------|--------|
 | `is_edit` | `true` when an owner edit (`PATCH /presets/:id`) sent the notification, `false` for a new preset (BUG-003). Optional: treat absent as `false` |
 | `edited_from_status` | The preset's status **before** this edit — same vocabulary as `preset.status`; in practice `approved`, `pending` or `rejected` (an edit of a `flagged` preset notifies nobody, a `hidden` one cannot be edited). Present on every edit, **absent** on a new preset. Needed because `preset.status` is `pending` on every edit notification |
-| `preset.previous_values` | `{ name, description, tags, dyes }` — the write-once revert snapshot that `PATCH /moderation/:id/revert` restores (and approves), or `null`. Written by the first owner edit of an `approved` preset that trips moderation and cleared only by a revert, so it can be older than this edit; `null` after a rejected resubmission or a pending edit of a preset that was never snapshotted |
+| `edited_from` | `{ name, description, tags, dyes }` exactly as the row held them immediately **before this edit's write** — **the diff base**: show the edit's changes as `edited_from` → `preset`. Present on every edit (including a pending edit and a rejected resubmission, which never create a snapshot and so usually have none), **absent** on a new preset; treat absent as "no diff available". Never stored and never restored by any endpoint — it is not the revert target. It coincides with `preset.previous_values` on the first flagged edit of an approved preset that had no snapshot yet, and diverges after that |
+| `preset.previous_values` | `{ name, description, tags, dyes }` — the write-once revert snapshot that `PATCH /moderation/:id/revert` restores (and approves), or `null`. Written by the first owner edit of an `approved` preset that trips moderation and cleared only by a revert, so it can be older than this edit; `null` after a rejected resubmission or a pending edit of a preset that was never snapshotted. **Not a diff base** — use `edited_from` |
 | `preset.status` | `pending` → moderation-channel embed; `approved` → submission-log embed ("new preset published"); other statuses post nothing |
 | `preset.moderation_status` | `clean` \| `flagged` \| `auto_approved` |
 | `preset.content_revision` | The preset's revision counter when the notification was sent (FINDING-017); the embed's buttons bind the moderator's decision to it as `expected_revision` |
@@ -740,6 +749,12 @@ keeps those from being offered on a rejected resubmission or a pending edit, but
 has since been approved, nothing in the payload can tell (the row does not record which state its
 snapshot came from — a deploy consideration, see `apps/presets-api/CLAUDE.md`). An absent
 `edited_from_status` (an older presets-api) counts as "not approved".
+
+**What the embed shows:** the edit's changes as `edited_from` → `preset`, never against
+`previous_values`, which a pending edit or a rejected resubmission never creates (so there is
+usually none) and which can be older than the text being replaced. When Revert is offered, label it as restoring `previous_values`
+(and show that text), not as undoing this edit: approved A → a flagged edit B snapshots A → a
+moderator approves B → a flagged edit C reverts to **A**, discarding the approved B.
 
 **Behaviour:** the `submission` moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its
 approve/reject buttons route to moderation-worker); `preview_image` embeds are posted with this bot's
