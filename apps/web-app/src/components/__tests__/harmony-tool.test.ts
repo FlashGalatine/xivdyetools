@@ -752,6 +752,60 @@ describe('HarmonyTool', () => {
     });
   });
 
+  // BUG-086 (2026-10-04 deep-dive): the card's price row was gated on the
+  // tool's own showPrice display flag alone, so with the Market Board toggle
+  // off every card still kept its price row. Extractor and Comparison gate on
+  // both; Harmony now does too.
+  describe('BUG-086: the price row needs the market toggle as well', () => {
+    let priorDisplay: unknown = null;
+
+    beforeEach(async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      priorDisplay = ConfigController.getInstance().getConfig('harmony').displayOptions;
+      ConfigController.getInstance().setConfig('harmony', {
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true },
+      });
+    });
+
+    afterEach(async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { MarketBoardService } = await import('@services/index');
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(false);
+      ConfigController.getInstance().setConfig('harmony', {
+        displayOptions: priorDisplay as never,
+      });
+    });
+
+    const cardPriceFlags = (): unknown[] =>
+      Array.from(container.querySelectorAll('v4-result-card')).map(
+        (c) => (c as HTMLElement & { showPrice?: boolean }).showPrice
+      );
+
+    it('hides the price row while the market toggle is off', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(false);
+      tool = mount();
+      tool.selectDye(dye(1));
+      await flush();
+
+      const flags = cardPriceFlags();
+      expect(flags.length).toBeGreaterThan(1);
+      expect(flags.every((f) => f === false)).toBe(true);
+    });
+
+    it('shows it when both the display flag and the market toggle are on', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(true);
+      tool = mount();
+      tool.selectDye(dye(1));
+      await flush();
+
+      const flags = cardPriceFlags();
+      expect(flags.length).toBeGreaterThan(1);
+      expect(flags.every((f) => f === true)).toBe(true);
+    });
+  });
+
   describe('selectCustomColor', () => {
     it('is deliberately NOT persisted', async () => {
       const { StorageService } = await import('@services/index');
@@ -823,6 +877,21 @@ describe('HarmonyTool', () => {
   });
 
   describe('setConfig — the harmony type', () => {
+    /**
+     * The harmony type the visible type rail shows as pressed. The rail's
+     * chips are the only buttons carrying aria-pressed, one per type in
+     * getHarmonyTypes() order; exactly one is pressed.
+     */
+    const pressedRailType = async (): Promise<string | undefined> => {
+      const { getHarmonyTypes } = await import('@services/index');
+      const chips = Array.from(container.querySelectorAll<HTMLButtonElement>('[aria-pressed]'));
+      const types = (getHarmonyTypes as () => Array<{ id: string }>)();
+      expect(chips).toHaveLength(types.length);
+      const pressed = chips.filter((c) => c.getAttribute('aria-pressed') === 'true');
+      expect(pressed).toHaveLength(1);
+      return types[chips.indexOf(pressed[0])]?.id;
+    };
+
     // `complementary` is the default, so switching TO it on a fresh tool
     // writes nothing — the change-detection guard skips it. It gets its own
     // test below rather than being wrongly listed here.
@@ -866,12 +935,22 @@ describe('HarmonyTool', () => {
     it('regenerates against the new type when a base dye is set', async () => {
       tool = mount();
       tool.selectDye(dye(1));
+      const cards = () => container.querySelectorAll('v4-result-card');
+      expect(cards()).toHaveLength(1 + HARMONY_OFFSETS.complementary.length);
 
-      // Switching type with a base present must recompute, not just restyle
-      expect(() => tool!.setConfig({ harmonyType: 'tetradic' })).not.toThrow();
+      // Switching type with a base present must recompute, not just restyle.
+      // BUG-077 (2026-10-04 deep-dive): the storage write below happens
+      // before the regenerate, so on its own it passed with the grid still
+      // showing the old type's slots.
+      expect(await pressedRailType()).toBe('complementary');
+      tool.setConfig({ harmonyType: 'tetradic' });
       await flush();
 
       expect(await lastWrite(TYPE_KEY)).toBe('tetradic');
+      expect(cards()).toHaveLength(1 + HARMONY_OFFSETS.tetradic.length);
+      // The rail is the visible type picker in the v4 shell; it has to follow
+      // a sidebar change, or it keeps the old type pressed over the new cards.
+      expect(await pressedRailType()).toBe('tetradic');
     });
 
     it('accepts a type switch with no base dye selected', async () => {
@@ -881,6 +960,8 @@ describe('HarmonyTool', () => {
       await flush();
 
       expect(await lastWrite(TYPE_KEY)).toBe('analogous');
+      // No base to regenerate, but the rail still shows the chosen type
+      expect(await pressedRailType()).toBe('analogous');
     });
 
     it.each([
@@ -1444,6 +1525,272 @@ describe('HarmonyTool', () => {
         expect(shareDye(tool)).toBe(9);
         expect(StorageService.removeItem).not.toHaveBeenCalledWith(DYE_KEY);
       });
+    });
+  });
+
+  // ==========================================================================
+  // BUG-095 (2026-10-04 deep-dive): renderRightPanel runs on every update(),
+  // and each run built a fresh MediaQueryList and added the type rail's
+  // breakpoint listener to it. destroy() removed the listener from the last
+  // list only, so every language switch or deep-link re-render left one more
+  // list re-laying the rail at each 768px crossing — after the tool was gone,
+  // too.
+  // ==========================================================================
+
+  describe('BUG-095: the type rail breakpoint listener', () => {
+    const RAIL_QUERY = '(max-width: 768px)';
+
+    /**
+     * 'change' listeners still attached across every rail-query list the tool
+     * asked for. Lists, not listeners, would over-count: the rail's layout
+     * code also reads `.matches` off lists it never listens to.
+     */
+    const liveRailListeners = (): number => {
+      const matchMedia = vi.mocked(window.matchMedia);
+      let live = 0;
+      matchMedia.mock.calls.forEach(([query], i) => {
+        if (query !== RAIL_QUERY) return;
+        const list = matchMedia.mock.results[i].value as {
+          addEventListener: ReturnType<typeof vi.fn>;
+          removeEventListener: ReturnType<typeof vi.fn>;
+        };
+        const added = list.addEventListener.mock.calls.filter(([type]) => type === 'change');
+        const removed = list.removeEventListener.mock.calls.filter(([type]) => type === 'change');
+        live += Math.max(0, added.length - removed.length);
+      });
+      return live;
+    };
+
+    it('keeps exactly one listener across re-renders, and none after destroy', async () => {
+      tool = mount();
+      // A language switch and a deep link both re-render through update()
+      tool.update();
+      tool.update();
+      await flush();
+
+      // One, not zero: the rail must still re-lay at the breakpoint
+      expect(liveRailListeners()).toBe(1);
+
+      tool.destroy();
+
+      expect(liveRailListeners()).toBe(0);
+    });
+  });
+
+  // ==========================================================================
+  // OPT-007 (2026-10-04 deep-dive): a market change (server, or the prices
+  // toggle) regenerated the harmonies — which fetch prices themselves while
+  // prices are on — and then fetched again, so the first pass was superseded
+  // by a second over the same dyes.
+  //
+  // Sprint 22 review: dropping that fetch was not enough. A market change
+  // reaches the tool twice in production: through its own ConfigController
+  // 'market' subscription, and through the MarketBoard relay (the service's
+  // 'server-changed' / 'settings-changed', re-emitted by every live
+  // MarketBoard as a bubbling DOM event onto the container
+  // setupMarketBoardListeners watches). The module mocks above cut that relay
+  // (setupMarketBoardListeners is a no-op, MarketBoard a stub), so these
+  // tests rebuild it: the REAL setupMarketBoardListeners, and a 'market'
+  // listener subscribed before the tool — as MarketBoardService's is, in its
+  // constructor — that dispatches the relay's events from each board.
+  // ==========================================================================
+
+  describe('OPT-007: one price pass per market change', () => {
+    let priorMarket: Record<string, unknown> | null = null;
+    let unsubscribeRelay: (() => void) | null = null;
+
+    beforeEach(async () => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { MarketBoardService } = await import('@services/index');
+      const { setupMarketBoardListeners } = await import('@services/pricing-mixin');
+      const actual =
+        await vi.importActual<typeof import('@services/pricing-mixin')>('@services/pricing-mixin');
+      vi.mocked(setupMarketBoardListeners).mockImplementation(actual.setupMarketBoardListeners);
+      // The real service keeps showPrices in step with the market config
+      // before any tool's listener runs
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockImplementation(
+        () => ConfigController.getInstance().getConfig('market').showPrices
+      );
+      priorMarket = { ...ConfigController.getInstance().getConfig('market') };
+    });
+
+    afterEach(async () => {
+      const { MarketBoardService } = await import('@services/index');
+      const { setupMarketBoardListeners } = await import('@services/pricing-mixin');
+      unsubscribeRelay?.();
+      unsubscribeRelay = null;
+      // Back to the file-wide no-op (the tool ignores its return value)
+      vi.mocked(setupMarketBoardListeners).mockImplementation(() => {});
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(false);
+      // The real ConfigController is a module singleton that outlives the test
+      if (priorMarket) {
+        const { ConfigController } = await import('@services/config-controller');
+        ConfigController.getInstance().setConfig('market', priorMarket as never);
+        priorMarket = null;
+      }
+    });
+
+    /**
+     * Start from `showPrices`, then subscribe the relay ahead of the tool.
+     * Every board the tool built (desktop and drawer) relays, as both do in
+     * production.
+     */
+    const startMarket = async (showPrices: boolean): Promise<void> => {
+      const { ConfigController } = await import('@services/config-controller');
+      const { setupMarketBoardListeners } = await import('@services/pricing-mixin');
+      const controller = ConfigController.getInstance();
+      controller.setConfig('market', { showPrices });
+      let last = { ...controller.getConfig('market') };
+      unsubscribeRelay = controller.subscribe('market', (config) => {
+        const boards = vi
+          .mocked(setupMarketBoardListeners)
+          .mock.calls.map(([marketContent]) => marketContent.querySelector('.market-board'));
+        const relay = (type: string, detail: unknown): void => {
+          for (const board of boards) {
+            board?.dispatchEvent(new CustomEvent(type, { bubbles: true, detail }));
+          }
+        };
+        if (config.selectedServer !== last.selectedServer) {
+          relay('server-changed', { server: config.selectedServer });
+        }
+        if (config.showPrices !== last.showPrices) {
+          relay('showPricesChanged', { showPrices: config.showPrices });
+        }
+        last = { ...config };
+      });
+    };
+
+    /** Mount with a base, then count what one market change costs. */
+    const measure = async (
+      change: Record<string, unknown>
+    ): Promise<{ fetches: number; passes: number; boards: number }> => {
+      const { MarketBoardService } = await import('@services/index');
+      const { ConfigController } = await import('@services/config-controller');
+      const { setupMarketBoardListeners } = await import('@services/pricing-mixin');
+      const svc = MarketBoardService.getInstance();
+      tool = mount();
+      tool.selectDye(dye(1));
+      await flush();
+      const generate = vi.spyOn(
+        HarmonyTool.prototype as unknown as { generateHarmonies(): void },
+        'generateHarmonies'
+      );
+      vi.mocked(svc.fetchPricesForDyes).mockClear();
+
+      ConfigController.getInstance().setConfig('market', change as never);
+      await flush();
+
+      return {
+        fetches: vi.mocked(svc.fetchPricesForDyes).mock.calls.length,
+        passes: generate.mock.calls.length,
+        boards: vi.mocked(setupMarketBoardListeners).mock.calls.length,
+      };
+    };
+
+    it('regenerates and fetches once when the server changes with prices on', async () => {
+      await startMarket(true);
+      const server = priorMarket?.selectedServer === 'Aether' ? 'Primal' : 'Aether';
+
+      const { fetches, passes, boards } = await measure({ selectedServer: server });
+
+      // The relay really is wired: desktop and drawer boards both relay
+      expect(boards).toBe(2);
+      // One, not zero: zero would mean the market change never reached the tool
+      expect(passes).toBe(1);
+      expect(fetches).toBe(1);
+    });
+
+    it('regenerates and fetches once when prices are switched on', async () => {
+      await startMarket(false);
+
+      const { fetches, passes } = await measure({ showPrices: true });
+
+      expect(passes).toBe(1);
+      expect(fetches).toBe(1);
+    });
+
+    it('regenerates once, without a fetch, when prices are switched off', async () => {
+      await startMarket(true);
+
+      const { fetches, passes } = await measure({ showPrices: false });
+
+      // The grid is rebuilt so the cards drop their price rows
+      expect(passes).toBe(1);
+      expect(fetches).toBe(0);
+    });
+
+    it('the Refresh button still refetches through the board', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      const { setupMarketBoardListeners } = await import('@services/pricing-mixin');
+      await startMarket(true);
+      tool = mount();
+      tool.selectDye(dye(1));
+      await flush();
+      vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes).mockClear();
+
+      const [marketContent] = vi.mocked(setupMarketBoardListeners).mock.calls[0];
+      marketContent
+        .querySelector('.market-board')!
+        .dispatchEvent(new CustomEvent('refresh-requested', { bubbles: true, detail: {} }));
+      await flush();
+
+      expect(MarketBoardService.getInstance().fetchPricesForDyes).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // ==========================================================================
+  // The same superseded-pass pattern on the two mount paths (Sprint 22
+  // review): onMount ran generateHarmonies() — which fetches while prices are
+  // on — and then fetched again, and a deep link's update() regenerated
+  // through onUpdate and then fetched again too.
+  // ==========================================================================
+
+  describe('mounting with prices on fetches once per generation pass', () => {
+    afterEach(async () => {
+      const { MarketBoardService, StorageService } = await import('@services/index');
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(false);
+      vi.mocked(StorageService.getItem).mockReturnValue(null);
+    });
+
+    const countMount = async (): Promise<{ fetches: number; passes: number }> => {
+      const { MarketBoardService } = await import('@services/index');
+      const svc = MarketBoardService.getInstance();
+      vi.mocked(svc.getShowPrices).mockReturnValue(true);
+      const generate = vi.spyOn(
+        HarmonyTool.prototype as unknown as { generateHarmonies(): void },
+        'generateHarmonies'
+      );
+      vi.mocked(svc.fetchPricesForDyes).mockClear();
+
+      tool = mount();
+      await flush();
+
+      return {
+        fetches: vi.mocked(svc.fetchPricesForDyes).mock.calls.length,
+        passes: generate.mock.calls.length,
+      };
+    };
+
+    it('a stored base fetches once', async () => {
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockImplementation(((key: string) =>
+        key === DYE_KEY ? mockDyes[0].itemID : null) as never);
+
+      const { fetches, passes } = await countMount();
+
+      expect(passes).toBe(1);
+      expect(fetches).toBe(1);
+    });
+
+    it('a deep-linked base fetches only from its generation passes', async () => {
+      window.history.replaceState(null, '', '/harmony?dye=5');
+
+      const { fetches, passes } = await countMount();
+
+      // The link was applied (it regenerated at least once), and every fetch
+      // came from a generation pass rather than a second, explicit one
+      expect(passes).toBeGreaterThan(0);
+      expect(fetches).toBe(passes);
     });
   });
 });

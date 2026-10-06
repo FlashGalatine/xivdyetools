@@ -164,6 +164,9 @@ export class MixerTool extends BaseComponent {
   /** 5C: A-share of the two-dye mix, selected in the field (0-1, A weight) */
   private mixRatio: number = 0.5;
   private fieldContainer: HTMLElement | null = null;
+  /** The field's spread chip and the value it shows, so a theme switch re-tones it in place. */
+  private spreadChip: HTMLElement | null = null;
+  private spreadValue: number | null = null;
 
   // Market Board Service (shared price cache with race condition protection)
   private marketBoardService: MarketBoardService;
@@ -252,13 +255,21 @@ export class MixerTool extends BaseComponent {
     );
 
     if (savedDyeIds) {
+      // BUG-098 (2026-10-04 deep-dive): the mixer is a pair. A build from
+      // before the third slot was cut stored three ids here, and restoring
+      // the third gave an equal-weight three-way blend that ignored the ratio
+      // and hid the field -- under a share link too, which sets only A and B.
+      // Drop it, and save the pair back so the key stops carrying it.
       this.selectedDyes = [
         savedDyeIds[0] ? (dyeService.getDyeById(savedDyeIds[0]) ?? null) : null,
         savedDyeIds[1] ? (dyeService.getDyeById(savedDyeIds[1]) ?? null) : null,
-        savedDyeIds[2] ? (dyeService.getDyeById(savedDyeIds[2]) ?? null) : null,
+        null,
       ];
+      if (savedDyeIds[2]) {
+        this.saveSelectedDyes();
+      }
 
-      // Recalculate blend if at least two dyes present (slot 3 is optional)
+      // Recalculate the blend once both slots of the pair are filled
       if (this.selectedDyes[0] && this.selectedDyes[1]) {
         const hexColors = this.selectedDyes.filter((d): d is Dye => d !== null).map((d) => d.hex);
         this.blendedColor = this.blendColorsInternal(hexColors);
@@ -653,6 +664,18 @@ export class MixerTool extends BaseComponent {
       })
     );
 
+    // BUG-080 (2026-10-04 deep-dive): the field's spread chip takes its tone
+    // from the theme at render time (spreadTone), and nothing re-rendered it
+    // on a switch -- a dark-ramp colour stayed on the light theme's cards.
+    // Only the chip reads the theme, so only the chip changes: redrawing the
+    // field would drop a focused cell's focus (Shift+T from the keyboard) and
+    // re-run thirty blends and thirty full-pool scans per switch.
+    this.subs.add(
+      ThemeService.subscribe(() => {
+        this.retoneSpreadChip();
+      })
+    );
+
     // Check for share URL parameters (takes priority over localStorage)
     this.loadFromShareUrl();
 
@@ -799,6 +822,8 @@ export class MixerTool extends BaseComponent {
 
     this.selectedDyes = [null, null, null];
     this.matchedResults = [];
+    this.spreadChip = null;
+    this.spreadValue = null;
 
     super.destroy();
     logger.info('[MixerTool] Destroyed');
@@ -838,7 +863,7 @@ export class MixerTool extends BaseComponent {
 
   /**
    * Select a dye from the Color Palette drawer
-   * Adds to first empty slot, or shifts dyes if all three slots are full
+   * Fills the first empty slot of the pair, or shifts the pair (A←B, B←new) once both are full
    */
   public selectDye(dye: Dye): void {
     if (!dye) return;
@@ -870,7 +895,7 @@ export class MixerTool extends BaseComponent {
     this.saveSelectedDyes();
     this.updateSelectedDyesDisplay();
 
-    // Calculate blend if at least 2 dyes selected (slot 3 is optional)
+    // Calculate the blend once both slots of the pair are filled
     if (this.selectedDyes[0] && this.selectedDyes[1]) {
       const hexColors = this.selectedDyes.filter((d): d is Dye => d !== null).map((d) => d.hex);
       this.blendedColor = this.blendColorsInternal(hexColors);
@@ -915,6 +940,12 @@ export class MixerTool extends BaseComponent {
     let needsUpdate = false;
     let needsRerender = false;
     let needsPriceFetch = false;
+    // OPT-007 (2026-10-04 deep-dive): the field's cells restate their ΔEs on
+    // a model, method or filter change -- not on a count change, since every
+    // cell matches with maxResults 1 -- and only a new blend repaints the
+    // crafting row. Both redraws happen once, after the re-match below.
+    let fieldChanged = false;
+    let blendChanged = false;
 
     // Handle market config changes (_tool === 'market')
     // Note: MarketBoardService handles state persistence and cache clearing
@@ -958,13 +989,14 @@ export class MixerTool extends BaseComponent {
     if (isMixingMode(config.mixingMode) && config.mixingMode !== this.mixingMode) {
       this.mixingMode = config.mixingMode;
       needsUpdate = true;
+      fieldChanged = true;
       logger.info(`[MixerTool] setConfig: mixingMode -> ${config.mixingMode}`);
 
       // Recalculate blended color if at least 2 dyes are selected
       if (this.selectedDyes[0] && this.selectedDyes[1]) {
         const hexColors = this.selectedDyes.filter((d): d is Dye => d !== null).map((d) => d.hex);
         this.blendedColor = this.blendColorsInternal(hexColors);
-        this.updateCraftingUI();
+        blendChanged = true;
       }
     }
 
@@ -972,6 +1004,7 @@ export class MixerTool extends BaseComponent {
     if (config.matchingMethod !== undefined && config.matchingMethod !== this.matchingMethod) {
       this.matchingMethod = config.matchingMethod;
       needsUpdate = true;
+      fieldChanged = true;
       logger.info(`[MixerTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
     }
 
@@ -999,6 +1032,7 @@ export class MixerTool extends BaseComponent {
       if (filtersChanged) {
         this.dyeFiltersConfig = newFilters;
         needsUpdate = true;
+        fieldChanged = true;
         logger.info('[MixerTool] setConfig: dyeFilters updated');
       }
     }
@@ -1007,9 +1041,14 @@ export class MixerTool extends BaseComponent {
     if (needsUpdate && this.blendedColor) {
       this.findMatchingDyesInternal();
       this.renderResultsGrid();
+      if (blendChanged) {
+        this.renderCraftingUI();
+      }
       // The field's thirty cells carry their own ΔEs in the active method's
       // unit — a method, model or filter change restates every one of them.
-      this.renderMixingField();
+      if (fieldChanged) {
+        this.renderMixingField();
+      }
       if (this.showPrices) {
         void this.fetchPricesForDisplayedDyes();
       }
@@ -1100,7 +1139,7 @@ export class MixerTool extends BaseComponent {
     this.saveSelectedDyes();
     this.updateSelectedDyesDisplay();
 
-    // Calculate blend if at least 2 dyes selected (slot 3 is optional)
+    // Calculate the blend once both slots of the pair are filled
     if (this.selectedDyes[0] && this.selectedDyes[1]) {
       const hexColors = this.selectedDyes.filter((d): d is Dye => d !== null).map((d) => d.hex);
       this.blendedColor = this.blendColorsInternal(hexColors);
@@ -1214,13 +1253,23 @@ export class MixerTool extends BaseComponent {
     return ramp[tier];
   }
 
+  /** Recolour the spread chip for the current theme without redrawing the field. */
+  private retoneSpreadChip(): void {
+    if (!this.spreadChip || this.spreadValue === null) return;
+    this.spreadChip.style.color = this.spreadTone(this.spreadValue);
+  }
+
   private renderMixingField(): void {
     if (!this.fieldContainer) return;
     clearContainer(this.fieldContainer);
+    this.spreadChip = null;
+    this.spreadValue = null;
 
     const dyeA = this.selectedDyes[0];
     const dyeB = this.selectedDyes[1];
-    // The field is the two-dye map; a third slot switches to the multi-blend flow.
+    // The field is the map of the pair. Legacy: the `selectedDyes[2]` check is
+    // unreachable since BUG-098 (nothing fills a third slot any more); it and
+    // the n-ary blend path are left for the Sprint 23 dead-code pass.
     if (!dyeA || !dyeB || this.selectedDyes[2]) return;
 
     const MONO = 'var(--font-mono)';
@@ -1275,6 +1324,8 @@ export class MixerTool extends BaseComponent {
         },
       });
       head.appendChild(chip);
+      this.spreadChip = chip;
+      this.spreadValue = spread;
     }
     this.fieldContainer.appendChild(head);
     this.fieldContainer.appendChild(
@@ -1328,13 +1379,12 @@ export class MixerTool extends BaseComponent {
         // Same engine, same pool as the results grid: a cell must never quote
         // a ΔE against a dye the grid can't show (an input dye, or one the
         // user's filters exclude).
-        const deltaRaw =
-          findMatchingDyesEngine(
-            blend,
-            { matchingMethod: this.matchingMethod, maxResults: 1 },
-            fieldExcludeIds,
-            this.dyeFiltersConfig
-          )[0]?.distance ?? 0;
+        const nearest = findMatchingDyesEngine(
+          blend,
+          { matchingMethod: this.matchingMethod, maxResults: 1 },
+          fieldExcludeIds,
+          this.dyeFiltersConfig
+        )[0];
         const deltaDp = BAND_METHOD_DP[this.matchingMethod] ?? 1;
         const selected = model === this.mixingMode && r === currentRatioPct;
 
@@ -1356,7 +1406,10 @@ export class MixerTool extends BaseComponent {
         }) as HTMLButtonElement;
         cell.appendChild(
           this.createElement('span', {
-            textContent: deltaRaw.toFixed(deltaDp),
+            // BUG-099 (2026-10-04 deep-dive): the filters can exclude the
+            // whole pool, and a cell with no eligible dye printed 0.0 -- an
+            // exact match, by the look of it. There is no ΔE to quote.
+            textContent: nearest ? nearest.distance.toFixed(deltaDp) : '—',
             attributes: {
               style: `font-family: ${MONO}; font-size: 8px; color: ${ink}; pointer-events: none;`,
             },
@@ -1373,9 +1426,11 @@ export class MixerTool extends BaseComponent {
           // the ratio is session state and stays out of the config.
           ConfigController.getInstance().setConfig('mixer', { mixingMode: model });
           this.findMatchingDyesInternal();
+          // updateCraftingUI() redraws the field as well. OPT-007 (2026-10-04
+          // deep-dive): a second renderMixingField() here repeated all thirty
+          // blends and thirty full-pool scans on every click.
           this.updateCraftingUI();
           this.renderResultsGrid();
-          this.renderMixingField();
         });
         grid.appendChild(cell);
       }
@@ -1584,7 +1639,7 @@ export class MixerTool extends BaseComponent {
       },
     });
 
-    // Equation row: [Slot1] + [Slot2] + [Slot3?] → [Result]
+    // Equation row: [Slot1] + [Slot2] → [Result]
     const equationRow = this.createElement('div', {
       attributes: {
         style: `
@@ -2059,7 +2114,11 @@ export class MixerTool extends BaseComponent {
       (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
       (card as unknown as { showConsolidation: boolean }).showConsolidation =
         this.displayOptions.showSpectrum ?? true;
-      (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;
+      // BUG-086 sibling (2026-10-04 deep-dive): the service fetches nothing
+      // while the global Market Board toggle is off, so the row would read
+      // "—" forever. Both the tool's Price option and the toggle must be on.
+      (card as unknown as { showPrice: boolean }).showPrice =
+        this.displayOptions.showPrice && this.showPrices;
       (card as unknown as { showAcquisition: boolean }).showAcquisition =
         this.displayOptions.showAcquisition;
 

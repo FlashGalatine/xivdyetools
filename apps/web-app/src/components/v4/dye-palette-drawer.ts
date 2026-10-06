@@ -819,10 +819,13 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
   private filterByType(dyes: Dye[], filter: DyeFilter): Dye[] {
     switch (filter) {
+      // BUG-107: read core's derived flags, as "Exclude metallic" does. The
+      // English name missed Gunmetal Black and Pearl White, two of the 16
+      // dyes in the gloss set that have no "Metallic" in their name.
       case 'metallic':
-        return dyes.filter((d) => d.name.toLowerCase().includes('metallic'));
+        return dyes.filter((d) => d.isMetallic);
       case 'pastel':
-        return dyes.filter((d) => d.name.toLowerCase().includes('pastel'));
+        return dyes.filter((d) => d.isPastel);
       case 'dark':
         return dyes.filter((d) => d.hsv.v < 40);
       case 'vibrant':

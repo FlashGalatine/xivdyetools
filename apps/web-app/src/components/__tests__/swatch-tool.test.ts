@@ -17,7 +17,12 @@ import {
 } from '@xivdyetools/core';
 import { SwatchTool, RACE_GROUPS } from '../swatch-tool';
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
-import { ConfigController, StorageService } from '@services/index';
+import {
+  ConfigController,
+  MarketBoardService,
+  RouterService,
+  StorageService,
+} from '@services/index';
 import {
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_DYE_FILTERS,
@@ -706,6 +711,7 @@ describe('SwatchTool', () => {
     showCmyk?: boolean;
     showHex?: boolean;
     showRgb?: boolean;
+    showPrice?: boolean;
   };
   const cards = (): Card[] => Array.from(rightPanel.querySelectorAll<Card>('v4-result-card'));
   const share = () =>
@@ -1311,6 +1317,17 @@ describe('SwatchTool', () => {
   describe('the loaded .chara file', () => {
     const selection = () =>
       (tool as unknown as { selectionContext: { source: string } | null }).selectionContext;
+    /** THIS CHARACTER's live slot cards. */
+    const sheetCards = (): HTMLButtonElement[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLButtonElement>('.chara-slots-grid > button'));
+    /** Slot cards announced as the current pick. */
+    const sheetPressed = () =>
+      sheetCards().filter((b) => b.getAttribute('aria-pressed') === 'true');
+    /** Slot cards drawn with the accent selection ring. */
+    const sheetRinged = () =>
+      sheetCards().filter((b) =>
+        b.getAttribute('style')?.includes('box-shadow: 0 0 0 1px var(--theme-primary)')
+      );
 
     it('is still on the file card after the tool is left and entered again', () => {
       tool = mount();
@@ -1500,6 +1517,97 @@ describe('SwatchTool', () => {
         (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
           .textContent
       ).toContain('SWATCH.SLOTLEFTEYE');
+      // The palette's reload does not take the pick off the sheet card.
+      expect(sheetPressed().map((b) => b.dataset.slot)).toEqual(['leftEye']);
+    });
+
+    // BUG-083 follow-up (2026-10-04 Sprint 22 review): the sheet card's ring
+    // and its new aria-pressed were told about a pick, never about its end, so
+    // they kept announcing a slot the workspace no longer showed.
+    describe('the sheet stops showing a slot pick the workspace dropped', () => {
+      /** A lip on the dark lip sheet: its pick opens a palette with the range toggle. */
+      const lipSession = (): CharaSession =>
+        charaSession({
+          slots: [
+            {
+              slot: 'lip',
+              kind: 'lip',
+              verdict: 'index',
+              index: 3,
+              sheetIndex: 3,
+              sheetVariant: 'dark',
+              gridAddress: 'R1·C4',
+              indexHex: '#AA3344',
+              floatHex: null,
+              deltaE: null,
+              alpha: null,
+              blendHex: null,
+            } as ResolvedCharaSlot,
+          ],
+        });
+
+      const pickFirstSlot = async (): Promise<void> => {
+        sheetCards()[0]!.click();
+        await flush();
+        expect(selection()?.source).toBe('slot');
+        expect(sheetPressed()).toHaveLength(1);
+      };
+
+      const expectNoSlotShown = (): void => {
+        expect(sheetPressed()).toHaveLength(0);
+        expect(sheetRinged()).toHaveLength(0);
+      };
+
+      it('when a grid cell is picked', async () => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+
+        cells()[5].click();
+
+        expect(selection()?.source).toBe('grid');
+        expectNoSlotShown();
+      });
+
+      it('when a palette chip is picked', async () => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+
+        railChip('swatch.palTattoo').click();
+        await flush();
+
+        expect(selection()).toBeNull();
+        expectNoSlotShown();
+      });
+
+      it('when the Dark/Light range toggle is flipped', async () => {
+        CharaSessionService.setSession(lipSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+        expect(gridTitle()).toContain('tools.character.lipColorsDark');
+
+        railChip('swatch.rangeLight').click();
+        await flush();
+
+        expect(selection()).toBeNull();
+        expectNoSlotShown();
+      });
+
+      it('when the selection is cleared', async () => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+
+        tool.clearDyes();
+
+        expect(selection()).toBeNull();
+        expectNoSlotShown();
+      });
     });
 
     it('no longer draws DYES ON THIS GLAMOUR: it moved to the Glamour Reader', async () => {
@@ -1699,6 +1807,45 @@ describe('SwatchTool', () => {
 
       expect(() => tool!.setMarketConfig({})).not.toThrow();
     });
+
+    // BUG-086 sibling (2026-10-04 Sprint 22 review): the tool's own Price
+    // option alone drew the market row, but the service fetches nothing while
+    // the global Market Board toggle is off (its default), so the cards read
+    // "Market —" forever on a fresh profile.
+    describe('the price row needs the Market Board toggle too', () => {
+      const serviceShowPrices = () => vi.mocked(MarketBoardService.getInstance().getShowPrices);
+
+      afterEach(() => {
+        // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
+        serviceShowPrices().mockReturnValue(false);
+      });
+
+      const pickWithPriceOption = async (): Promise<void> => {
+        tool = mount();
+        await flush();
+        mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+        cells()[5].click();
+        tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true } });
+      };
+
+      it('draws no price row while the Market Board toggle is off', async () => {
+        serviceShowPrices().mockReturnValue(false);
+
+        await pickWithPriceOption();
+
+        expect(cards()).toHaveLength(1);
+        expect(cards()[0].showPrice).toBe(false);
+      });
+
+      it('draws it with both the option and the toggle on', async () => {
+        serviceShowPrices().mockReturnValue(true);
+
+        await pickWithPriceOption();
+
+        expect(cards()).toHaveLength(1);
+        expect(cards()[0].showPrice).toBe(true);
+      });
+    });
   });
 
   describe('lifecycle under interaction', () => {
@@ -1729,6 +1876,127 @@ describe('SwatchTool', () => {
       await flush();
 
       expect(leftPanel.children.length).toBeGreaterThan(0);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-093 (2026-10-04 deep-dive): update() — every language switch —
+  // rebuilt the child components without destroying the ones it replaced,
+  // and each kept its service subscriptions alive.
+  // ==========================================================================
+
+  describe('update() releases the child components it rebuilds', () => {
+    const CHILDREN = [
+      'marketBoard',
+      'marketPanel',
+      'racePanel',
+      'categoryPanel',
+      'mobileMarketBoard',
+      'mobileRacePanel',
+      'mobileCategoryPanel',
+      'mobileMarketPanel',
+    ] as const;
+    type Child = { destroy: () => void };
+    const childrenOf = (t: SwatchTool): Child[] =>
+      CHILDREN.map((key) => (t as unknown as Record<string, Child>)[key]);
+
+    it('destroys each previous child once and replaces it', () => {
+      tool = mount();
+      const previous = childrenOf(tool);
+      expect(previous.every(Boolean)).toBe(true);
+      const destroys = previous.map((child) => vi.spyOn(child, 'destroy'));
+
+      tool.update();
+
+      for (const destroy of destroys) expect(destroy).toHaveBeenCalledTimes(1);
+      childrenOf(tool).forEach((child, i) => {
+        expect(child).toBeTruthy();
+        expect(child).not.toBe(previous[i]);
+      });
+    });
+  });
+
+  // ==========================================================================
+  // BUG-103 (2026-10-04 deep-dive): the resize listener was added with
+  // this.on in onMount. update() unbinds every this.on listener and then
+  // re-runs only bindEvents, so after a language switch the grid stopped
+  // following the viewport.
+  // ==========================================================================
+
+  describe('the viewport listener survives update()', () => {
+    const setWidth = (value: number): void => {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value });
+    };
+
+    it('re-lays the grid out on a resize after update(), once per resize', () => {
+      const width = window.innerWidth;
+      // On the prototype before mount: the listener binds the method then
+      const layout = vi.spyOn(
+        SwatchTool.prototype as unknown as { updateSwatchLayout: () => void },
+        'updateSwatchLayout'
+      );
+      try {
+        setWidth(1024);
+        tool = mount();
+        tool.update();
+        tool.update();
+        const mainLayout = (tool as unknown as { mainLayout: HTMLElement }).mainLayout;
+        layout.mockClear();
+
+        setWidth(500);
+        window.dispatchEvent(new Event('resize'));
+
+        expect(layout).toHaveBeenCalledTimes(1);
+        expect(mainLayout.style.flexDirection).toBe('column');
+      } finally {
+        setWidth(width);
+      }
+    });
+  });
+
+  // ==========================================================================
+  // BUG-104 (2026-10-04 deep-dive): SEND TO was a full page load
+  // (window.location.assign), and the loaded .chara lives in memory only, so
+  // every hand-off dropped the character.
+  // ==========================================================================
+
+  describe('SEND TO stays in the app', () => {
+    /** Click a grid cell whose forward match is `dyes`, nearest first. */
+    const pickCellMatching = async (dyes: Dye[]): Promise<void> => {
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue(dyes.map((dye, i) => ({ dye, distance: i + 1 })));
+      cells()[3].click();
+    };
+
+    it("navigates in-app with each target's stainID params", async () => {
+      tool = mount();
+      await pickCellMatching([mockDyes[0], mockDyes[1]]);
+      const [a, b] = [String(mockDyes[0].stainID), String(mockDyes[1].stainID)];
+
+      for (const chip of handoffChips()) chip.click();
+
+      expect(vi.mocked(RouterService.navigateTo).mock.calls).toEqual([
+        ['harmony', { dye: a, harmony: 'complementary' }],
+        ['comparison', { dyes: `${a},${b}` }],
+        ['gradient', { start: a, end: b }],
+        ['accessibility', { dyes: `${a},${b}` }],
+      ]);
+    });
+
+    it('opens the gradient builder bare for a single match', async () => {
+      tool = mount();
+      await pickCellMatching([mockDyes[0]]);
+
+      handoffChips()[2].click();
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('gradient', {});
+    });
+
+    it('keeps every chip disabled with nothing to carry', () => {
+      tool = mount();
+
+      expect(handoffChips()).toHaveLength(4);
+      expect(handoffChips().every((c) => c.disabled)).toBe(true);
     });
   });
 });

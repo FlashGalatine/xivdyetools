@@ -14,6 +14,7 @@ import {
   BAND_METHOD_DP,
   classifyBandTier,
   isMatchingMethod,
+  isValidHexColor,
   LEGACY_MATCHING_METHOD_MAP,
   normalizeMatchingMethod,
 } from '@xivdyetools/core';
@@ -49,7 +50,7 @@ import { ICON_TOOL_GRADIENT } from '@shared/tool-icons';
 import { ICON_MARKET, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import { makeCustomDye } from '@shared/custom-dye';
+import { isCustomDye, makeCustomDye } from '@shared/custom-dye';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   GradientConfig,
@@ -286,13 +287,19 @@ export class GradientTool extends BaseComponent {
    */
   private loadSelectedDyes(): void {
     // Try new storage format first
-    const savedDyeIds = StorageService.getItem<number[]>(STORAGE_KEYS.selectedDyes);
+    const saved = StorageService.getItem<Array<number | string>>(STORAGE_KEYS.selectedDyes);
 
-    if (savedDyeIds && savedDyeIds.length > 0) {
-      // Load from new format
-      this.selectedDyes = savedDyeIds
-        .map((id) => dyeService.getDyeById(id))
-        .filter((dye): dye is Dye => dye !== null);
+    if (saved && saved.length > 0) {
+      // BUG-092 (2026-10-04 deep-dive): the list is positional — [0] is Start,
+      // [1] is End — so a slot that cannot be restored ends it. Filtering the
+      // slot out slid the End dye into Start.
+      const restored: Dye[] = [];
+      for (const entry of saved) {
+        const dye = this.restoreStoredEndpoint(entry);
+        if (!dye) break;
+        restored.push(dye);
+      }
+      this.selectedDyes = restored;
     } else {
       // Migrate from old format (separate start/end dye IDs)
       const startDyeId = StorageService.getItem<number>(STORAGE_KEYS.startDyeId);
@@ -321,11 +328,27 @@ export class GradientTool extends BaseComponent {
   }
 
   /**
-   * Save selected dyes to storage
+   * One stored endpoint: a dye id, or the hex of a Custom Color endpoint.
+   * Null when it no longer resolves.
+   */
+  private restoreStoredEndpoint(entry: unknown): Dye | null {
+    if (typeof entry === 'string') {
+      return isValidHexColor(entry) ? makeCustomDye(entry) : null;
+    }
+    if (typeof entry === 'number') {
+      return dyeService.getDyeById(entry) || null;
+    }
+    return null;
+  }
+
+  /**
+   * Save selected dyes to storage. A Custom Color endpoint is stored by its
+   * hex: its id is minted per session by makeCustomDye and resolves to
+   * nothing on the next load (BUG-092).
    */
   private saveSelectedDyes(): void {
-    const dyeIds = this.selectedDyes.map((d) => d.id);
-    StorageService.setItem(STORAGE_KEYS.selectedDyes, dyeIds);
+    const entries = this.selectedDyes.map((d) => (isCustomDye(d) ? d.hex : d.id));
+    StorageService.setItem(STORAGE_KEYS.selectedDyes, entries);
   }
 
   /**
@@ -438,6 +461,12 @@ export class GradientTool extends BaseComponent {
   // ============================================================================
 
   renderContent(): void {
+    // BUG-093 (2026-10-04 deep-dive): update() re-runs this on every language
+    // switch. A replaced child keeps its service subscriptions until it is
+    // destroyed, so each switch used to leave one more detached MarketBoard
+    // relaying server changes into this tool.
+    this.destroyChildComponents();
+
     this.renderLeftPanel();
     this.renderRightPanel();
 
@@ -446,6 +475,36 @@ export class GradientTool extends BaseComponent {
     }
 
     this.element = this.container;
+  }
+
+  /**
+   * Destroy the child components a render is about to rebuild — the same
+   * step HarmonyTool takes — and, from destroy(), the last set.
+   */
+  private destroyChildComponents(): void {
+    // Desktop components
+    this.dyeSelector?.destroy();
+    this.dyeSelector = null;
+    this.marketBoard?.destroy();
+    this.marketBoard = null;
+    this.dyeSelectionPanel?.destroy();
+    this.dyeSelectionPanel = null;
+    this.settingsPanel?.destroy();
+    this.settingsPanel = null;
+    this.marketPanel?.destroy();
+    this.marketPanel = null;
+
+    // Mobile drawer components
+    this.mobileDyeSelector?.destroy();
+    this.mobileDyeSelector = null;
+    this.mobileMarketBoard?.destroy();
+    this.mobileMarketBoard = null;
+    this.mobileDyeSelectionPanel?.destroy();
+    this.mobileDyeSelectionPanel = null;
+    this.mobileSettingsPanel?.destroy();
+    this.mobileSettingsPanel = null;
+    this.mobileMarketPanel?.destroy();
+    this.mobileMarketPanel = null;
   }
 
   bindEvents(): void {
@@ -516,19 +575,7 @@ export class GradientTool extends BaseComponent {
   }
 
   destroy(): void {
-    // Destroy desktop components
-    this.dyeSelector?.destroy();
-    this.marketBoard?.destroy();
-    this.dyeSelectionPanel?.destroy();
-    this.settingsPanel?.destroy();
-    this.marketPanel?.destroy();
-
-    // Destroy mobile drawer components
-    this.mobileDyeSelector?.destroy();
-    this.mobileMarketBoard?.destroy();
-    this.mobileDyeSelectionPanel?.destroy();
-    this.mobileSettingsPanel?.destroy();
-    this.mobileMarketPanel?.destroy();
+    this.destroyChildComponents();
 
     this.selectedDyes = [];
     this.currentSteps = [];
@@ -2030,29 +2077,29 @@ export class GradientTool extends BaseComponent {
       card.showHue = this.displayOptions.showHue ?? true;
       card.showStain = this.displayOptions.showStain ?? true;
       card.showConsolidation = this.displayOptions.showSpectrum ?? true;
-      card.showPrice = this.displayOptions.showPrice;
+      // BUG-086 sibling (2026-10-04 Sprint 22 review): the service fetches
+      // nothing while the global Market Board toggle is off (its default), so
+      // the tool's own Price option alone drew "Market —" forever.
+      card.showPrice = this.displayOptions.showPrice && this.showPrices;
       card.showAcquisition = this.displayOptions.showAcquisition;
 
       // Enable slot picker for gradient tool (Select Dye â†’ choose Start or End slot)
       card.showSlotPicker = true;
       card.primaryActionLabel = LanguageService.t('common.selectDye');
 
-      // Handle slot selection (add-mixer-slot-1 = Start, add-mixer-slot-2 = End)
+      // Handle slot selection (add-mixer-slot-1 = Start, add-mixer-slot-2 = End).
+      // BUG-094 (2026-10-04 deep-dive): through the endpoint rules — the
+      // endpoint rows carry cards too, and writing the slot directly let the
+      // start row's dye become the End as well.
       card.addEventListener('context-action', ((
         e: CustomEvent<{ action: ContextAction; dye: Dye }>
       ) => {
         const { action, dye: selectedDye } = e.detail;
 
         if (action === 'add-mixer-slot-1') {
-          // Set as start dye
-          this.selectedDyes[0] = selectedDye;
-          logger.info(`[GradientTool] Set ${selectedDye.name} as start dye from v4-result-card`);
-          this.updateAfterSlotSelection();
+          this.setEndpoint(0, selectedDye);
         } else if (action === 'add-mixer-slot-2') {
-          // Set as end dye
-          this.selectedDyes[1] = selectedDye;
-          logger.info(`[GradientTool] Set ${selectedDye.name} as end dye from v4-result-card`);
-          this.updateAfterSlotSelection();
+          this.setEndpoint(1, selectedDye);
         } else {
           // Handle other context actions (inspect, transform, external links)
           this.handleContextAction(action, selectedDye);
@@ -2081,6 +2128,38 @@ export class GradientTool extends BaseComponent {
       });
       this.matchesContainer.appendChild(noSteps);
     }
+  }
+
+  /**
+   * Put a dye into one endpoint: the armed endpoint's palette pick, and a
+   * result card's Start/End slot picker. That slot's own dye is a no-op, and
+   * the other endpoint's dye swaps the ends, so a gradient never runs from a
+   * dye to itself.
+   */
+  private setEndpoint(idx: 0 | 1, dye: Dye): void {
+    const cur = idx === 0 ? this.startDye : this.endDye;
+    const other = idx === 0 ? this.endDye : this.startDye;
+
+    if (cur && cur.id === dye.id) {
+      logger.info(`[GradientTool] ${dye.name} already set for that endpoint, ignoring`);
+      return;
+    }
+    if (other && other.id === dye.id) {
+      if (!cur) {
+        ToastService.warning(LanguageService.t('gradient.sameDyeWarning'));
+        return;
+      }
+      // Picked the other endpoint's dye — swap ends (existing gesture)
+      this.selectedDyes[idx === 0 ? 1 : 0] = cur;
+      this.selectedDyes[idx] = dye;
+    } else if (this.selectedDyes.length === 0) {
+      // The dense selection model always fills start first
+      this.selectedDyes = [dye];
+    } else {
+      this.selectedDyes[idx] = dye;
+    }
+    logger.info(`[GradientTool] Dye set into ${idx === 0 ? 'start' : 'end'}: ${dye.name}`);
+    this.updateAfterSlotSelection();
   }
 
   /**
@@ -2690,32 +2769,7 @@ export class GradientTool extends BaseComponent {
     // 4C endpoints row: a card click arms an endpoint — palette selections
     // land in the armed slot instead of the legacy fill-then-shift flow.
     if (this.activeEndpoint !== null) {
-      const idx = this.activeEndpoint;
-      const cur = idx === 0 ? this.startDye : this.endDye;
-      const other = idx === 0 ? this.endDye : this.startDye;
-
-      if (cur && cur.id === dye.id) {
-        logger.info(`[GradientTool] ${dye.name} already set for that endpoint, ignoring`);
-        return;
-      }
-      if (other && other.id === dye.id) {
-        if (!cur) {
-          ToastService.warning(LanguageService.t('gradient.sameDyeWarning'));
-          return;
-        }
-        // Picked the other endpoint's dye — swap ends (existing gesture)
-        this.selectedDyes[idx === 0 ? 1 : 0] = cur;
-        this.selectedDyes[idx] = dye;
-      } else if (this.selectedDyes.length === 0) {
-        // The dense selection model always fills start first
-        this.selectedDyes = [dye];
-      } else {
-        this.selectedDyes[idx] = dye;
-      }
-      logger.info(
-        `[GradientTool] External dye set into ${idx === 0 ? 'start' : 'end'}: ${dye.name}`
-      );
-      this.updateAfterSlotSelection();
+      this.setEndpoint(this.activeEndpoint, dye);
       return;
     }
 

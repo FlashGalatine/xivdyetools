@@ -12,7 +12,7 @@ import { GradientTool } from '../gradient-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 // The barrel is mocked below; the tool reads ConfigController through it
-import { ConfigController, dyeService, StorageService } from '@services/index';
+import { ConfigController, dyeService, MarketBoardService, StorageService } from '@services/index';
 // The module itself is NOT mocked — this is the real controller, backed by
 // the real StorageService and jsdom localStorage
 import { ConfigController as RealConfigController } from '@services/config-controller';
@@ -674,6 +674,7 @@ describe('GradientTool', () => {
     showHex: boolean;
     showRgb: boolean;
     showCmyk: boolean;
+    showPrice: boolean;
   };
 
   /** The rendered ramp, in step order: one card per step that matched a dye. */
@@ -1164,6 +1165,39 @@ describe('GradientTool', () => {
       expect(rematch).not.toHaveBeenCalled();
       expect(settingsInEffect()).toEqual({ steps: 8, interpolation: 'hsv', algo: 'ciede2000' });
     });
+
+    // BUG-086 sibling (2026-10-04 Sprint 22 review): the tool's own Price
+    // option alone drew the market row, but the service fetches nothing while
+    // the global Market Board toggle is off (its default), so the step cards
+    // read "Market —" forever on a fresh profile.
+    describe('the price row needs the Market Board toggle too', () => {
+      const serviceShowPrices = () => vi.mocked(MarketBoardService.getInstance().getShowPrices);
+
+      afterEach(() => {
+        // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
+        serviceShowPrices().mockReturnValue(false);
+      });
+
+      it('draws no price row while the Market Board toggle is off', async () => {
+        serviceShowPrices().mockReturnValue(false);
+        tool = await mountWithRamp();
+
+        tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true } });
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.showPrice)).toEqual(stepCards().map(() => false));
+      });
+
+      it('draws it with both the option and the toggle on', async () => {
+        serviceShowPrices().mockReturnValue(true);
+        tool = await mountWithRamp();
+
+        tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true } });
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.showPrice)).toEqual(stepCards().map(() => true));
+      });
+    });
   });
 
   // ==========================================================================
@@ -1561,6 +1595,167 @@ describe('GradientTool', () => {
         'v3_budget_target',
         expect.anything()
       );
+    });
+  });
+
+  // ==========================================================================
+  // BUG-092 (2026-10-04 deep-dive): a Custom Color endpoint was stored by its
+  // synthetic id, which resolves to nothing on the next load — and the
+  // missing slot was filtered out, so the End dye slid into Start.
+  // ==========================================================================
+
+  describe('stored endpoints survive a reload', () => {
+    beforeEach(() => {
+      // The real lookup misses with null, not the suite mock's undefined
+      mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id) ?? null);
+    });
+
+    afterEach(() => {
+      // restoreAllMocks keeps vi.fn implementations in Vitest 5
+      vi.mocked(StorageService.getItem).mockReset().mockReturnValue(null);
+    });
+
+    /** The tool's [start, end], as it holds them. */
+    const endpointsOf = (t: GradientTool): Dye[] =>
+      (t as unknown as { selectedDyes: Dye[] }).selectedDyes;
+
+    /** Hand the endpoints key `saved` on the next mount. */
+    const storeEndpoints = (saved: unknown): void => {
+      vi.mocked(StorageService.getItem).mockImplementation(((key: string) =>
+        key === DYES_KEY ? saved : null) as never);
+    };
+
+    /** Remount with whatever the current tool last persisted. */
+    const reload = async (): Promise<GradientTool> => {
+      const saved = await lastWrite(DYES_KEY);
+      tool!.destroy();
+      storeEndpoints(saved);
+      return mount();
+    };
+
+    it('keeps a custom-colour start and a dye end in their own slots', async () => {
+      tool = mount();
+      tool.selectCustomColor('#ff0000');
+      tool.selectDye(mockDyes[1]);
+
+      tool = await reload();
+
+      const [start, end] = endpointsOf(tool);
+      expect(start?.hex).toBe('#FF0000');
+      expect(end?.id).toBe(mockDyes[1].id);
+    });
+
+    it('keeps a dye start and a custom-colour end in their own slots', async () => {
+      tool = mount();
+      tool.selectDye(mockDyes[1]);
+      tool.selectCustomColor('#00ff00');
+
+      tool = await reload();
+
+      const [start, end] = endpointsOf(tool);
+      expect(start?.id).toBe(mockDyes[1].id);
+      expect(end?.hex).toBe('#00FF00');
+    });
+
+    it('never promotes the end dye into a start it cannot restore', () => {
+      // What the pre-fix code stored for a custom start: its synthetic id
+      storeEndpoints([-1700000000001, mockDyes[1].id]);
+
+      tool = mount();
+
+      expect(endpointsOf(tool)).toEqual([]);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-093 (2026-10-04 deep-dive): update() — every language switch —
+  // rebuilt the child components without destroying the ones it replaced,
+  // and each kept its service subscriptions alive.
+  // ==========================================================================
+
+  describe('update() releases the child components it rebuilds', () => {
+    const CHILDREN = [
+      'dyeSelector',
+      'marketBoard',
+      'dyeSelectionPanel',
+      'settingsPanel',
+      'marketPanel',
+      'mobileDyeSelector',
+      'mobileMarketBoard',
+      'mobileDyeSelectionPanel',
+      'mobileSettingsPanel',
+      'mobileMarketPanel',
+    ] as const;
+    type Child = { destroy: () => void };
+    const childrenOf = (t: GradientTool): Child[] =>
+      CHILDREN.map((key) => (t as unknown as Record<string, Child>)[key]);
+
+    it('destroys each previous child once and replaces it', () => {
+      tool = mount();
+      const previous = childrenOf(tool);
+      expect(previous.every(Boolean)).toBe(true);
+      const destroys = previous.map((child) => vi.spyOn(child, 'destroy'));
+
+      tool.update();
+
+      for (const destroy of destroys) expect(destroy).toHaveBeenCalledTimes(1);
+      childrenOf(tool).forEach((child, i) => {
+        expect(child).toBeTruthy();
+        expect(child).not.toBe(previous[i]);
+      });
+    });
+  });
+
+  // ==========================================================================
+  // BUG-094 (2026-10-04 deep-dive): the result card's Start/End slot picker
+  // wrote the slot directly, so the start row's own card set as End gave a
+  // flat start-to-start gradient.
+  // ==========================================================================
+
+  describe('result-card slot picker — the endpoint rules', () => {
+    const pickSlot = (card: StepCard, action: 'add-mixer-slot-1' | 'add-mixer-slot-2'): void => {
+      card.dispatchEvent(
+        new CustomEvent('context-action', { detail: { action, dye: card.data.dye } })
+      );
+    };
+
+    it("swaps the ends when the start row's dye is set as End", async () => {
+      tool = await mountWithRamp();
+      const startCard = stepCards()[0];
+      expect(startCard.data.dye.id).toBe(1);
+
+      pickSlot(startCard, 'add-mixer-slot-2');
+
+      expect(await endpoints()).toEqual([2, 1]);
+    });
+
+    it("swaps the ends when the end row's dye is set as Start", async () => {
+      tool = await mountWithRamp();
+      const endCard = stepCards().at(-1)!;
+      expect(endCard.data.dye.id).toBe(2);
+
+      pickSlot(endCard, 'add-mixer-slot-1');
+
+      expect(await endpoints()).toEqual([2, 1]);
+    });
+
+    it("leaves the ends alone when a row's dye is set into its own slot", async () => {
+      tool = await mountWithRamp();
+      const startCard = stepCards()[0];
+      vi.mocked(StorageService.setItem).mockClear();
+
+      pickSlot(startCard, 'add-mixer-slot-1');
+
+      expect(await endpoints()).toBeUndefined();
+    });
+
+    it("puts a middle step's dye into the chosen slot", async () => {
+      tool = await mountWithRamp();
+      const middleCard = stepCards()[1];
+
+      pickSlot(middleCard, 'add-mixer-slot-2');
+
+      expect(await endpoints()).toEqual([1, middleCard.data.dye.id]);
     });
   });
 });
