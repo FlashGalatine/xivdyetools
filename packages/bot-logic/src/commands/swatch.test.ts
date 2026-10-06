@@ -130,8 +130,28 @@ describe('executeSwatch', () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe('SLOT_MISSING');
-    expect(result.errorMessage).toContain('highlights');
+    expect(result.errorMessage).toBe('Highlights is not a live slot in this file.');
   });
+
+  // The sentence used to carry the option's raw English value ("highlights",
+  // "limbal") into every language.
+  it.each(['ja', 'de', 'fr', 'ko', 'zh'] as const)(
+    'a missing slot is named in the reader’s language (%s)',
+    async (locale) => {
+      const result = await executeSwatch({
+        fileText: fixture('hrothgar-helions.chara'),
+        locale,
+        slot: 'highlights',
+      });
+      if (result.ok) throw new Error('expected SLOT_MISSING');
+      const t = createTranslator(locale);
+      const name = t.t('card.swatchSlotName.highlights');
+      expect(name).not.toBe('card.swatchSlotName.highlights');
+      expect(name).not.toBe('Highlights');
+      expect(result.errorMessage).toBe(t.t('card.swatchSlotMissing', { slot: name }));
+      expect(result.errorMessage).not.toContain('highlights');
+    },
+  );
 
   it('a file that fails to parse names the failure — never a frame', async () => {
     const result = await executeSwatch({ fileText: '{not valid json', locale: 'en' });

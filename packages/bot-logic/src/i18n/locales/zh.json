@@ -609,6 +609,15 @@
     "swatchTitle": "角色色板",
     "swatchNoSlots": "此文件中没有有效的颜色部位。",
     "swatchSlotMissing": "{slot}在此文件中不是有效部位。",
+    "swatchSlotName": {
+      "skin": "皮肤",
+      "hair": "头发",
+      "highlights": "挑染",
+      "eyes": "眼睛",
+      "lip": "嘴唇",
+      "facepaint": "面妆",
+      "limbal": "刺青 / 瞳孔轮廓"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "幻化",
     "glamourPieces_one": "已染色 {n} 件",

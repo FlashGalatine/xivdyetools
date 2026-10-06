@@ -39,6 +39,7 @@ Rules:
 ### 🧹 Fewer surprises
 - `/preset submit` and `/preset edit` name the dye you picked twice, instead of a vague error.
 - `/gradient` names its start and end dyes in your language.
+- When your character file doesn't have the `/swatch` slot you asked for, the bot names that slot in your language.
 - If `/budget` can't find the world you asked for, only you see the message.
 - `/budget` and `/preferences` no longer run out of time while they check a world name.
 - A hiccup while saving no longer wipes your preferences or your favourite presets.

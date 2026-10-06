@@ -608,7 +608,16 @@
     },
     "swatchTitle": "Nuancier du personnage",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
-    "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier.",
+    "swatchSlotMissing": "\"{slot}\" n’est pas un emplacement actif dans ce fichier.",
+    "swatchSlotName": {
+      "skin": "Peau",
+      "hair": "Cheveux",
+      "highlights": "Reflets",
+      "eyes": "Yeux",
+      "lip": "Lèvres",
+      "facepaint": "Maquillage",
+      "limbal": "Tatouage / Contour de l’iris"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "Mirage",
     "glamourPieces_one": "{n} pièce teinte",

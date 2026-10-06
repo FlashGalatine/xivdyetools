@@ -608,7 +608,16 @@
     },
     "swatchTitle": "Charakter-Farbmuster",
     "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
-    "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot.",
+    "swatchSlotMissing": "\"{slot}\" ist in dieser Datei kein aktiver Slot.",
+    "swatchSlotName": {
+      "skin": "Haut",
+      "hair": "Haar",
+      "highlights": "Strähnen",
+      "eyes": "Augen",
+      "lip": "Lippen",
+      "facepaint": "Merkmale",
+      "limbal": "Tattoo / Äußere Iris"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "Projektion",
     "glamourPieces_one": "{n} gefärbtes Teil",

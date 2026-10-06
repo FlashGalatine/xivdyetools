@@ -609,6 +609,15 @@
     "swatchTitle": "キャラクターの色見本",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
     "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。",
+    "swatchSlotName": {
+      "skin": "肌",
+      "hair": "髪",
+      "highlights": "メッシュ",
+      "eyes": "瞳",
+      "lip": "唇",
+      "facepaint": "フェイスペイント",
+      "limbal": "刺青 / 瞳の輪郭"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "ミラプリ",
     "glamourPieces_one": "染色済み{n}部位",

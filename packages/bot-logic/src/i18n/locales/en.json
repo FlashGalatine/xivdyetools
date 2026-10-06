@@ -609,6 +609,15 @@
     "swatchTitle": "Character swatch",
     "swatchNoSlots": "No live color slots in this file.",
     "swatchSlotMissing": "{slot} is not a live slot in this file.",
+    "swatchSlotName": {
+      "skin": "Skin",
+      "hair": "Hair",
+      "highlights": "Highlights",
+      "eyes": "Eyes",
+      "lip": "Lip",
+      "facepaint": "Face paint",
+      "limbal": "Tattoo / Limbal ring"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "Glamour",
     "glamourPieces_one": "{n} dyed piece",

@@ -67,6 +67,8 @@ That is the old count being corrected, not a regression.
 - **`/extractor color` reports a render failure as one** (BUG-042). It is logged and answered
   "generation failed", not "no match found".
 - **`/gradient` names its Start and End dyes in your language** (BUG-043).
+- **`/swatch slot:` names a slot the file doesn't have in your language** (bot-logic 4.7.0). It
+  used to say "limbal" or "highlights" in every language.
 - **Echoed colour and dye input is sanitised and capped at 100 characters** (BUG-044, embed half)
   in `/harmony`, `/extractor`, `/gradient`, `/mixer`, `/comparison`, `/contrast`,
   `/accessibility` and `/dye info`.

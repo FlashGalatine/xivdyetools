@@ -123,6 +123,20 @@ const SLOT_OPTION_IDS: Record<SwatchSlotOption, CharaSlotId[]> = {
   limbal: ['limbal'],
 };
 
+/**
+ * The slot: option → its name in a sentence. The card labels above are short
+ * upper-case column heads ("HL", "TATT."), so the refusal has its own set.
+ */
+const SLOT_OPTION_NAME_KEYS: Record<SwatchSlotOption, string> = {
+  skin: 'card.swatchSlotName.skin',
+  hair: 'card.swatchSlotName.hair',
+  highlights: 'card.swatchSlotName.highlights',
+  eyes: 'card.swatchSlotName.eyes',
+  lip: 'card.swatchSlotName.lip',
+  facepaint: 'card.swatchSlotName.facepaint',
+  limbal: 'card.swatchSlotName.limbal',
+};
+
 /** The winning colour: float when off grid, the composited blend for lip. */
 function winningHex(slot: ResolvedCharaSlot): string | null {
   if (slot.slot === 'lip' && slot.blendHex) return slot.blendHex;
@@ -261,7 +275,9 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
         return {
           ok: false,
           error: 'SLOT_MISSING',
-          errorMessage: t.t('card.swatchSlotMissing', { slot: input.slot }),
+          errorMessage: t.t('card.swatchSlotMissing', {
+            slot: t.t(SLOT_OPTION_NAME_KEYS[input.slot]),
+          }),
         };
       }
       const nearest = dyeService
