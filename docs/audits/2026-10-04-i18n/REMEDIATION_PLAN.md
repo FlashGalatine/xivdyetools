@@ -400,7 +400,9 @@ deep-dive/BUG-009 and deep-dive/BUG-008: the gradient card ranks by a hard-coded
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-og-worker` → merge → `deploy-og-worker.yml` (bumping `CARD_VERSION` re-renders cached cards once; a bare deploy is the live beta). TERM-011 changes `og-strings.ts`: re-run og-worker's `scripts/subset-cjk-fonts.py` and compare by cmap (Latin-only, so expect no change).
 
-## Sprint 12 — @xivdyetools/logger: redaction gaps (publish)
+## Sprint 12 — @xivdyetools/logger: redaction gaps (publish) — PR #270 (open)
+
+**Done in PR #270** (logger 2.3.0 — minor, because log output changes). All four are fixed. The free-text rules were swept for super-linear cases: the new URL-userinfo rule and the JWT pattern (quadratic since 2.2.1) are now linear, and a test holds adversarial 100 KB input under 250 ms. Escalated twice to Fable; the known gaps are listed in the logger CHANGELOG.
 
 deep-dive/BUG-140: context strings skip key=value redaction. deep-dive/BUG-141: `toJSON` objects log as `{}`. Plus a stale doc and a per-call Set rebuild.
 

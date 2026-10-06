@@ -474,8 +474,8 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-137 | OPEN | — |
 | BUG-138 | OPEN | — |
 | BUG-139 | OPEN | — |
-| BUG-140 | OPEN | — |
-| BUG-141 | OPEN | — |
+| BUG-140 | FIX COMMITTED, NOT DEPLOYED (PR #270, open) | `8d2649d7` |
+| BUG-141 | FIX COMMITTED, NOT DEPLOYED (PR #270, open) | `8d2649d7` |
 | BUG-142 | OPEN | — |
 | BUG-143 | OPEN | — |
 | BUG-144 | OPEN | — |
@@ -497,7 +497,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-004 | OPEN | — |
 | REFACTOR-005 | OPEN | — |
 | REFACTOR-006 | OPEN | — |
-| REFACTOR-007 | OPEN | — |
+| REFACTOR-007 | FIX COMMITTED, NOT DEPLOYED (PR #270, open) | `8d2649d7` |
 | REFACTOR-008 | OPEN | — |
 | REFACTOR-009 | OPEN | — |
 | OPT-001 | OPEN | — |
@@ -509,7 +509,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | OPT-007 | OPEN | — |
 | OPT-008 | OPEN | — |
 | OPT-009 | OPEN | — |
-| OPT-010 | OPEN | — |
+| OPT-010 | FIX COMMITTED, NOT DEPLOYED (PR #270, open) | `8d2649d7` |
 
 ## Next steps
 
