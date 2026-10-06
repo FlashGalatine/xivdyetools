@@ -1382,6 +1382,7 @@
       "save": "Enregistrer le .md",
       "cardNote": "Vos notes d'obtention modifiées sont conservées sur cet appareil."
     },
-    "empty": "Ce fichier ne porte aucun équipement."
+    "empty": "Ce fichier ne porte aucun équipement.",
+    "dropBody": "Anamnesis, Ktisis ou Brio. Toutes les pièces que porte le personnage, avec leurs teintures."
   }
 }

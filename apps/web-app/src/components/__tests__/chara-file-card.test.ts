@@ -272,6 +272,38 @@ describe('CharaFileCard — the loaded file', () => {
     });
   });
 
+  // The Glamour Reader's drop zone used to pitch the Swatch Matcher: hair and
+  // skin colors, and a swatch grid the reader does not have.
+  describe('dropBody (a host that is not the Swatch Matcher)', () => {
+    const swatchBody = () => LanguageService.t('swatch.dropBody');
+    const orGrid = () => LanguageService.t('swatch.orGrid');
+    const hostBody = 'Every piece, with its dyes.';
+
+    it("pitches the host's body line and leaves out the swatch grid line", () => {
+      const { container } = mountCard({ dropBody: hostBody });
+      expect(container.textContent).toContain(hostBody);
+      expect(container.textContent).not.toContain(swatchBody());
+      expect(container.textContent).not.toContain(orGrid());
+      // The rest of the offer is the same.
+      expect(container.textContent).toContain(LanguageService.t('swatch.dropTitle'));
+      expect(container.querySelector('input[type="file"]')).not.toBeNull();
+    });
+
+    it('default mode is unchanged: the Swatch Matcher body line and its grid line', () => {
+      expect(swatchBody()).not.toBe('swatch.dropBody');
+      expect(orGrid()).not.toBe('swatch.orGrid');
+      const { container } = mountCard();
+      expect(container.textContent).toContain(swatchBody());
+      expect(container.textContent).toContain(orGrid());
+    });
+
+    it('changes only the drop zone, not the loaded file card', async () => {
+      const { container } = await mount(FIXTURE, 'test.chara', { dropBody: hostBody });
+      expect(container.textContent).toContain('Test Subject');
+      expect(container.textContent).not.toContain(hostBody);
+    });
+  });
+
   it('says nothing about a file that a newer drop replaced', async () => {
     const errorToast = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
     const { card } = mountCard();
