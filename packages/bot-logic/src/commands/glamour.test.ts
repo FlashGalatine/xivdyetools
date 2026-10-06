@@ -9,6 +9,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { CHARA_WEAR_RACE_COLUMNS, type CharaGearModel } from '@xivdyetools/core';
 import { executeGlamour, type GlamourInput, type GlamourResolveAnswer } from './glamour.js';
+import { createTranslator } from '../i18n/index.js';
 
 /** Stain IDs: Snow White 1, Wine Red 12, Dalamud Red 10, Coral Pink 13, Jet Black 102, Metallic Gold 113. */
 const STRESS = JSON.stringify({
@@ -131,7 +132,7 @@ describe('executeGlamour', () => {
     expect(t.filter((s) => s === 'TWIN')).toHaveLength(3);
     expect(t).toContain('OK');
     expect(t).toContain('VIERA');
-    expect(t).toContain('+2 LOOK');
+    expect(t).toContain('+2 LOOKS');
     expect(t).toContain('ONE LOOK');
   });
 
@@ -141,8 +142,33 @@ describe('executeGlamour', () => {
     const t = svgTexts(result.svgString);
 
     expect(t).toContain('5 dyed pieces · 6 dyes');
-    expect(t).toContain('ANAMNESIS · MIDLANDER ♀');
+    expect(t).toContain('MIDLANDER ♀ · ANAMNESIS');
     expect(t.join(' ')).toContain('5 of 5 dyed pieces · 3 named from a twin · 1 with no fix');
+  });
+
+  it("names the clan in the reader's language, as the game does (HC-001)", async () => {
+    const de = await executeGlamour(input({ locale: 'de' }));
+    if (!de.ok) throw new Error(de.errorMessage);
+    expect(svgTexts(de.svgString)).toContain('WIESLÄNDER ♀ · ANAMNESIS');
+    expect(de.svgString).not.toContain('MIDLANDER');
+
+    // The header fits a pixel budget. A long localized clan pushes the producer
+    // into the ellipsis, never the gender symbol (the card's only one).
+    const ja = await executeGlamour(input({ locale: 'ja' }));
+    if (!ja.ok) throw new Error(ja.errorMessage);
+    expect(svgTexts(ja.svgString).find((s) => s.startsWith('ミッドランダー'))).toMatch(/^ミッドランダー ♀/);
+  });
+
+  it('counts one other look in the singular (I18N-016)', async () => {
+    const one: GlamourResolveAnswer = {
+      items: { ...ANSWER.items, HeadGear: { ...ANSWER.items.HeadGear!, familySize: 2 } },
+    };
+    const result = await executeGlamour(input({ resolve: async () => one }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    const t = svgTexts(result.svgString);
+
+    expect(t).toContain('+1 LOOK');
+    expect(t).not.toContain('+1 LOOKS');
   });
 
   it('never prints the character name', async () => {
@@ -297,7 +323,7 @@ describe('executeGlamour', () => {
     };
     const result = await executeGlamour(input({ resolve: async () => big }));
     if (!result.ok) throw new Error(result.errorMessage);
-    expect(svgTexts(result.svgString)).toContain('+52 LOOK');
+    expect(svgTexts(result.svgString)).toContain('+52 LOOKS');
   });
 
   it('escapes Discord formatting in the note lines too', async () => {
@@ -337,10 +363,44 @@ describe('executeGlamour', () => {
       );
       expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
       if (result.ok) return;
-      expect(result.errorMessage).toBe(`Could not read the file — ${reason}`);
+      // HC-002: a localized reason, never api-worker's English one
+      expect(result.errorMessage).toBe('Could not read the file — it is not a .chara file the bot can read');
+      expect(result.errorMessage).not.toContain('65535');
       expect(result.errorMessage).not.toMatch(/try again/i);
     }
   );
+
+  describe('a file it cannot read is refused in the reader’s language (HC-002)', () => {
+    const de = createTranslator('de');
+    const unreadable = de.t('card.swatchParseError', { message: de.t('card.charaFileReason.unreadable') });
+
+    it('the reason is a real key, not its own name', () => {
+      expect(de.t('card.charaFileReason.unreadable')).not.toBe('card.charaFileReason.unreadable');
+    });
+
+    it('when api-worker refuses what the file describes', async () => {
+      const reason = 'gear[0].base must be an integer between 0 and 65535';
+      const result = await executeGlamour(
+        input({
+          locale: 'de',
+          resolve: async () => {
+            throw Object.assign(new Error(reason), { status: 400 });
+          },
+        })
+      );
+      if (result.ok) throw new Error('expected a refusal');
+      expect(result.errorMessage).toBe(unreadable);
+      expect(result.errorMessage).not.toContain(reason);
+    });
+
+    it('when the parser refuses the file', async () => {
+      const result = await executeGlamour(input({ locale: 'de', fileText: 'not json' }));
+      if (result.ok) throw new Error('expected a refusal');
+      expect(result).toMatchObject({ error: 'PARSE_FAILED' });
+      expect(result.errorMessage).toBe(unreadable);
+      expect(result.errorMessage).not.toContain('not valid JSON');
+    });
+  });
 
   // A missing route or a refused caller is our deploy or config, not the file
   it.each([401, 403, 404])('answers a %i as RESOLVE_FAILED: the fault is ours', async (status) => {

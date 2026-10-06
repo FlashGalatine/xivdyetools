@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { LocaleCode } from './i18n/index.js';
-import { initializeLocale, getLocalizedDyeName, getLocalizedCategory } from './localization.js';
+import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, getLocalizedClan } from './localization.js';
 
 describe('localization', () => {
   describe('initializeLocale', () => {
@@ -81,6 +81,24 @@ describe('localization', () => {
       const result = getLocalizedCategory('Whites');
       expect(typeof result).toBe('string');
       expect(result.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('getLocalizedClan (HC-001)', () => {
+    beforeEach(async () => {
+      await initializeLocale('en');
+      await initializeLocale('de');
+      await initializeLocale('ko');
+    });
+
+    it("returns core's clan name for the locale", () => {
+      expect(getLocalizedClan('seekerOfTheSun', 'en')).toBe('Seeker of the Sun');
+      expect(getLocalizedClan('seekerOfTheSun', 'de')).toBe('Goldtatze');
+      expect(getLocalizedClan('midlander', 'ko')).toBe('중원 부족');
+    });
+
+    it('defaults to English when locale parameter omitted', () => {
+      expect(getLocalizedClan('theLost')).toBe('The Lost');
     });
   });
 

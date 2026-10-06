@@ -127,7 +127,7 @@ executeGlamour(input: GlamourInput): Promise<GlamourResult>
   // input.resolve(gear, glassesId) → GlamourResolveAnswer — the adapter's transport to api-worker
   // POST /v1/chara/resolve; errors: PARSE_FAILED | NO_GEAR | RESOLVE_FAILED | RESOLVE_BUSY | GENERATION_FAILED
   // A resolver error may carry the HTTP `status`: 429 → RESOLVE_BUSY; 400/413/422 → PARSE_FAILED
-  // (api-worker refused what the file describes; the error's message is the reason shown); else RESOLVE_FAILED
+  // (api-worker refused what the file describes; the reply is card.swatchParseError wrapping the localized card.charaFileReason.unreadable, never the error's English message; no card is drawn); else RESOLVE_FAILED
 
 executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult>
   const VISION_TYPES;

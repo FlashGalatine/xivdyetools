@@ -14,9 +14,11 @@ import { describe, it, expect } from 'vitest';
 import {
   getLocalizedAcquisition,
   getLocalizedCategory,
+  getLocalizedClan,
   getLocalizedCurrency,
   getLocalizedDyeName,
 } from './localization.js';
+import { tribeDisplay } from './commands/chara-identity.js';
 
 describe('localization getters before any locale is initialized', () => {
   it('getLocalizedDyeName returns the fallback name', () => {
@@ -37,6 +39,17 @@ describe('localization getters before any locale is initialized', () => {
   it('getLocalizedCurrency returns the raw currency key', () => {
     expect(getLocalizedCurrency('Gil')).toBe('Gil');
     expect(getLocalizedCurrency('Gil', 'ko')).toBe('Gil');
+  });
+
+  it('getLocalizedClan spells the key out as words, never the raw camelCase key', () => {
+    expect(getLocalizedClan('seekerOfTheSun')).toBe('Seeker Of The Sun');
+    expect(getLocalizedClan('theLost', 'de')).toBe('The Lost');
+    expect(getLocalizedClan('raen', 'ja')).toBe('Raen');
+  });
+
+  it("tribeDisplay keeps the pre-HC-001 line — SEEKER OF THE SUN, not SEEKEROFTHESUN", () => {
+    expect(tribeDisplay('SeekerOfTheSun', 'de')).toBe('SEEKER OF THE SUN');
+    expect(tribeDisplay('Midlander', 'zh')).toBe('MIDLANDER');
   });
 
   it('never throws for any supported locale', () => {

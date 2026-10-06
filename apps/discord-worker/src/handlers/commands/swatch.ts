@@ -6,14 +6,15 @@
  * attachment (size-capped), passes its text to bot-logic's executeSwatch
  * (core parse rules: key presence not TypeName, gamma on the floats, flag
  * gating, never Base64Image), and posts the rendered card. A file that fails
- * to parse is embed text with the field and value named, never a frame.
+ * to parse is embed text in the reader's language, never a frame (since
+ * HC-002 it no longer carries the parser's English reason).
  *
  * FINDING-033 (2026-08-21 security audit): the download is hardened the way
  * image-worker hardens `/extractor image` — the guards live in
  * `utils/chara-attachment.ts`, shared with `/glamour`. FINDING-019: the
- * parser echoes `.chara` field VALUES into its message, and that message
- * lands in a PUBLIC embed, so it goes through the shared embed sanitiser
- * first.
+ * parser echoes `.chara` field VALUES into its message. bot-logic stopped
+ * relaying that message in HC-002, but the reply lands in a PUBLIC embed, so
+ * it still goes through the shared embed sanitiser first (defense in depth).
  *
  * @module handlers/commands/swatch
  */
@@ -126,8 +127,9 @@ async function processSwatchCommand(
     if (result.error === 'GENERATION_FAILED') markCommandOutcome(interaction, 'render');
     if (logger) logger.warn('Swatch command failed', { error: result.error });
     // FINDING-019: the parser names the offending field VALUE (file content)
-    // and this edit is public — escape markdown / masked links, defuse
-    // mentions, strip controls and cap it before it goes out.
+    // and this edit is public. bot-logic no longer relays the parser's message
+    // (HC-002), but the sanitiser stays as defense in depth — escape markdown /
+    // masked links, defuse mentions, strip controls and cap it before it goes out.
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         errorEmbed(t.t('common.error'), sanitizeEmbedText(result.errorMessage, MAX_ERROR_TEXT)),

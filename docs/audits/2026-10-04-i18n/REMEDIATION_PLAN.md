@@ -151,7 +151,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 2 — bot-logic: the bot speaks the user's language (i18n, publish)
+## Sprint 2 — bot-logic: the bot speaks the user's language (i18n, publish) — PR #246 (open, with Sprint 3)
+
+**Done in PR #246** (bot-logic 4.6.0 + discord-worker 5.8.2, stacked on #244). Details are in the re-verification file's *Sprints 2+3* section.
 
 **The anchor is HC-001 (P1):** `/glamour` and `/swatch` cards print the clan in English in every locale. bot-logic needs a clan getter for the names core ships, and #240 (core 5.8.1) makes the Korean and Chinese ones the clients' own. Merge #240 before this sprint.
 
@@ -177,7 +179,7 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** **one PR with the next sprint.** Bump `@xivdyetools/bot-logic` (minor) and discord-worker; re-cut discord-worker's CJK subsets (`python scripts/subset-cjk-fonts.py` in `apps/discord-worker`; compare the subsets by cmap, never md5); `pnpm turbo run build type-check lint test --filter=...@xivdyetools/bot-logic` (that includes discord-worker's `font-coverage.test.ts`) → merge (`deploy-discord-worker.yml` runs `register-commands`) → Actions "Publish Packages to npm" for bot-logic
 
-## Sprint 3 — discord-worker: localized file errors, and the font re-cut (same PR as Sprint 2)
+## Sprint 3 — discord-worker: localized file errors, and the font re-cut (same PR as Sprint 2) — PR #246 (open)
 
 **HC-002 (P1):** every pre-check in `chara-attachment.ts` puts an English reason into the translated error. The new keys live in bot-logic's locales, so this ships in Sprint 2's PR.
 

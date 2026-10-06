@@ -191,12 +191,12 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     character = withoutNickname(
       await resolveCharaColors(parsed, getCharacterColors(), dyeService)
     );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+  } catch {
+    // HC-002: the parser's reason is English, so the reply gives a localized one
     return {
       ok: false,
       error: 'PARSE_FAILED',
-      errorMessage: t.t('card.swatchParseError', { message }),
+      errorMessage: t.t('card.swatchParseError', { message: t.t('card.charaFileReason.unreadable') }),
     };
   }
 
@@ -244,7 +244,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     }
 
     const charSub = [
-      [tribeDisplay(character.tribe), genderSymbol(character.gender)].filter(Boolean).join(' '),
+      [tribeDisplay(character.tribe, locale), genderSymbol(character.gender)].filter(Boolean).join(' '),
       producerToken(character.producer),
     ]
       .filter(Boolean)

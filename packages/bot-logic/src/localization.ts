@@ -15,7 +15,7 @@
 
 import { LocalizationService } from '@xivdyetools/core';
 import type { ColorWheelId } from '@xivdyetools/core';
-import type { HarmonyTypeKey, RaceKey, VisionType } from '@xivdyetools/types';
+import type { ClanKey, HarmonyTypeKey, RaceKey, VisionType } from '@xivdyetools/types';
 export type { LocaleCode } from './i18n/index.js';
 import type { LocaleCode } from './i18n/index.js';
 
@@ -181,6 +181,37 @@ export function getLocalizedRace(key: RaceKey, locale: LocaleCode = 'en'): strin
   } catch {
     return key;
   }
+}
+
+/**
+ * Get a localized clan name from xivdyetools-core (HC-001, 2026-10-04 i18n
+ * audit) — the `/glamour` and `/swatch` identifier line names the file's clan
+ * the way the reader's client does (de Goldtatze, ko 중원 부족), not as the
+ * file's English tribe enum.
+ *
+ * Unlike the other getters, the fallback is never the raw key: the clan is
+ * drawn on a card, and a locale that failed to load must keep the line it
+ * printed before HC-001 ("Seeker Of The Sun", which the card upper-cases),
+ * not "seekerOfTheSun".
+ *
+ * @param key - Core's clan key (`seekerOfTheSun`, `theLost`, …)
+ * @param locale - Locale code (defaults to 'en')
+ * @returns Localized clan name, or the key spelled out as words when the locale is not loaded
+ */
+export function getLocalizedClan(key: ClanKey, locale: LocaleCode = 'en'): string {
+  try {
+    const instance = localeInstances.get(locale);
+    if (!instance) return clanKeyAsWords(key);
+    return instance.getClan(key);
+  } catch {
+    return clanKeyAsWords(key);
+  }
+}
+
+/** "seekerOfTheSun" → "Seeker Of The Sun": the words the tribe enum carries. */
+function clanKeyAsWords(key: ClanKey): string {
+  const words = key.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
 /**
