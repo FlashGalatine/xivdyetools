@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.15] - 2026-10-06
+### 🎨 Colours you type, and filters that keep their matches
+- Discord bot: colours typed as six digits, like `000000` or `333333`, work everywhere instead of being refused.
+- Discord bot: `/gradient` and `/mixer` find a dye for every step when you filter dyes out, instead of showing no match.
+- Discord bot: `/glamour`'s copy-ready list no longer shows placeholder names for pieces with no item, and it keeps your facewear.
+
 ## [5.10.14] - 2026-10-06
 ### 🤖 A steadier Discord bot
 - Discord bot: `/preset submit` and `/preset edit` name the dye you picked twice, instead of a vague error.
