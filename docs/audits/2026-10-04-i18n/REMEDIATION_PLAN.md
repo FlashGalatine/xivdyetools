@@ -755,7 +755,9 @@ deep-dive/REFACTOR-001: one module for the grammar and status list, consumed by 
 
 **Ends with:** publish the host package → presets-api, moderation-worker and discord-worker each in their own deploy, in the documented order (presets-api first)
 
-## Sprint 27 — Structural: one dyeable-slot set (terminal)
+## Sprint 27 — Structural: one dyeable-slot set (terminal) — PR #254 (open)
+
+**Done in PR #254** (core 5.9.0 and web-app 5.14.8, stacked on #253): REFACTOR-004 and BUG-090. The review also found that Chinese and Korean data centers sanitised to an empty path, which is fixed in the same core release. **Deploy needs:** publish core 5.9.0. It carries Sprint 6's unpublished 5.8.2 as well. Details are in the re-verification file's *Sprint 27* section.
 
 deep-dive/REFACTOR-004: core exports the dyeable-slot set, and web-app imports it.
 

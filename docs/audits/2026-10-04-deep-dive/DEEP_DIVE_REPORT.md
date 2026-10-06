@@ -424,7 +424,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-087 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
 | BUG-088 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
 | BUG-089 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
-| BUG-090 | OPEN (needs a core change; proposed for Sprint 27) | — |
+| BUG-090 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
 | BUG-091 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
 | BUG-092 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
 | BUG-093 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
@@ -494,7 +494,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-001 | OPEN | — |
 | REFACTOR-002 | OPEN | — |
 | REFACTOR-003 | OPEN | — |
-| REFACTOR-004 | OPEN | — |
+| REFACTOR-004 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
 | REFACTOR-005 | OPEN | — |
 | REFACTOR-006 | OPEN | — |
 | REFACTOR-007 | OPEN | — |
