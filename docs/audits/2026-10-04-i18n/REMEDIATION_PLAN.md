@@ -659,7 +659,9 @@ The rest of the dead-code catalog's web-app entries. Each cascade is the next co
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 24 — stoat-worker (parked)
+## Sprint 24 — stoat-worker (parked) — PR #277 (open)
+
+**Done in PR #277** (stoat-worker 0.3.3, parked; no deploy), done last as asked on 2026-10-06. A broad name now shows every match (up to 4 messages per command, bounded by `CommandThrottle`). bot-logic's `resolveDyeInput` is tagged `/** @public */` now that stoat no longer imports it.
 
 P3. Fix only if Stoat is resumed; otherwise these go with the app if it is archived (see `docs/research/discord-alternatives/07-2026-10-refresh.md`).
 
