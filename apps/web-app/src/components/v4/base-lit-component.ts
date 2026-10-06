@@ -28,15 +28,6 @@ export abstract class BaseLitComponent extends LitElement {
   protected isReady: boolean = false;
 
   /**
-   * Component error state for graceful degradation
-   */
-  @state()
-  protected hasError: boolean = false;
-
-  @state()
-  protected errorMessage: string = '';
-
-  /**
    * Base styles shared by all v4 components
    * Includes CSS custom property references for theming
    */
@@ -54,28 +45,6 @@ export abstract class BaseLitComponent extends LitElement {
     *::before,
     *::after {
       box-sizing: inherit;
-    }
-
-    /* Theme-aware text colors */
-    .text-primary {
-      color: var(--theme-text, #e0e0e0);
-    }
-
-    .text-secondary {
-      color: var(--v4-text-secondary, #a0a0a0);
-    }
-
-    .text-accent {
-      color: var(--theme-primary, #d4af37);
-    }
-
-    /* Glassmorphism utilities */
-    .glass-panel {
-      background: var(--v4-glass-bg, rgba(30, 30, 30, 0.7));
-      backdrop-filter: var(--v4-glass-blur, blur(12px));
-      -webkit-backdrop-filter: var(--v4-glass-blur, blur(12px));
-      border: 1px solid var(--v4-border-subtle, rgba(255, 255, 255, 0.1));
-      border-radius: 12px;
     }
   `;
 
@@ -118,12 +87,10 @@ export abstract class BaseLitComponent extends LitElement {
   }
 
   /**
-   * Set component error state
-   * Used for graceful degradation when rendering fails
+   * Report a component error
+   * Logs the message when an Error is passed
    */
   protected setError(message: string, error?: Error): void {
-    this.hasError = true;
-    this.errorMessage = message;
     if (error) {
       logger.error(`[${this.tagName}] ${message}`, error);
     }
