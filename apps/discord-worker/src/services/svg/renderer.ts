@@ -98,8 +98,22 @@ export async function renderSvgToPng(
 
   const { scale = 2, background, locale } = options;
 
+  // Both wasm allocations of a render, the parsed tree and the RGBA pixmap,
+  // are released in the `finally`: on success after `asPng()` has returned,
+  // and on a failure whichever of the two was allocated. Nothing else frees
+  // the tree: in @resvg/resvg-wasm 2.6.2 the `Resvg` constructor glue never
+  // calls `ResvgFinalization.register`, so before this fix every `Resvg`
+  // leaked for the life of the isolate, however often GC ran. Only
+  // `RenderedImage` registers, so the pixmap was reclaimed late, whenever GC
+  // ran its finalizer. Freeing is safe after `asPng()`: it returns a JS-owned
+  // copy, not a view over wasm memory. This is the fix the 2026-10-04
+  // deep-dive's OPT-006 prescribes for og-worker's renderer. `RenderedImage`
+  // is not exported from resvg-wasm's typings, hence the derived type.
+  let resvg: InstanceType<typeof Resvg> | undefined;
+  let rendered: ReturnType<InstanceType<typeof Resvg>['render']> | undefined;
+
   try {
-    const resvg = new Resvg(svgString, {
+    resvg = new Resvg(svgString, {
       fitTo: {
         mode: 'zoom',
         value: scale,
@@ -115,7 +129,7 @@ export async function renderSvgToPng(
       },
     });
 
-    const rendered = resvg.render();
+    rendered = resvg.render();
     const pngBuffer = rendered.asPng();
 
     return pngBuffer;
@@ -127,5 +141,8 @@ export async function renderSvgToPng(
       `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`,
       { cause: error },
     );
+  } finally {
+    rendered?.free();
+    resvg?.free();
   }
 }
