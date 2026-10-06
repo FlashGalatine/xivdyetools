@@ -369,8 +369,8 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-032 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
 | BUG-033 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a` |
 | BUG-034 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a`, `c1f60ec8` |
-| BUG-035 | OPEN | — |
-| BUG-036 | OPEN | — |
+| BUG-035 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab`, `49e6f31a` |
+| BUG-036 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
 | BUG-037 | OPEN | — |
 | BUG-038 | OPEN | — |
 | BUG-039 | OPEN | — |
@@ -462,18 +462,18 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-125 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a`, `c1f60ec8` |
 | BUG-126 | PARTIALLY FIXED (PR #258, open; moderation-worker in Sprint 17) | `b43e757a`, `c1f60ec8` |
 | BUG-127 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a` |
-| BUG-128 | OPEN | — |
-| BUG-129 | OPEN | — |
-| BUG-130 | OPEN | — |
-| BUG-131 | OPEN | — |
-| BUG-132 | OPEN | — |
-| BUG-133 | OPEN | — |
-| BUG-134 | OPEN | — |
-| BUG-135 | OPEN | — |
-| BUG-136 | OPEN | — |
-| BUG-137 | OPEN | — |
-| BUG-138 | OPEN | — |
-| BUG-139 | OPEN | — |
+| BUG-128 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-129 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-130 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-131 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-132 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-133 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-134 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-135 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-136 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-137 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-138 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
+| BUG-139 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
 | BUG-140 | OPEN | — |
 | BUG-141 | OPEN | — |
 | BUG-142 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2`, `7562d177` |

@@ -473,7 +473,13 @@ deep-dive/BUG-140: context strings skip key=value redaction. deep-dive/BUG-141: 
 
 **Ends with:** bump `@xivdyetools/logger` (patch) → gate with `--filter=...@xivdyetools/logger` → merge → Actions publish
 
-## Sprint 13 — @xivdyetools/core: blending, palette extraction, parser bounds (publish)
+## Sprint 13 — @xivdyetools/core: blending, palette extraction, parser bounds (publish) — PR #260 (open)
+
+**Done in PR #260** (core 5.10.0, bot-logic 4.8.2, web-app 5.14.10, og-worker 2.11.3, discord-worker 5.8.7), stacked on #259. All fourteen and TERM-021 are fixed; both workers' CJK subsets were re-cut and compared by cmap.
+- **BUG-035 grew:** the same grey-hue defect sat on the DEFAULT path of `/gradient` and the web Gradient Builder (hsv, oklch, lch); fixed there too. Exact greys only, as CSS Color 4 has it — near-greys keep their hue.
+- **og-worker:** its de/fr swatch descriptions reworded so no gendered word precedes the new sheet names; its version moves to retire cached HSL mixer cards.
+- **docs/versions.md** gets the history rows Sprints 9, 15 and 14+28 left out.
+- **Recorded, not fixed:** the web app's private text-colour helpers keep a 0.45/0.5 luminance threshold (BUG-134's class, in budget-tool, gradient-tool, mixer-tool, preset-edit-form, v4-color-wheel, mixer-blending-engine); three Infinity policies across blendColors (clamp), findClosestDyes (no cap) and PaletteService (default); og-worker's English swatch description says "this {sheet}" with plural sheet names; the web app's English tattoo label and core's en `Tattoo/Limbal` keep the unspaced slash.
 
 **MEDIUM fixes:**
 - deep-dive/BUG-035: grey mixes get a hue neither input has.
