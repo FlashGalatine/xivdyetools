@@ -6,6 +6,9 @@
  * row IDs, so a global `row_id` indexes them directly. `scripts/build-item-names.mjs`
  * regenerates `data/item-names.{ko,zh}.json` (equippable rows only) — run it
  * after a patch and commit; the worker never fetches GitHub at request time.
+ * It also writes `data/item-names.ja.json`, which is NOT imported here: ja
+ * names come from XIVAPI in the same call as en/de/fr, and that table exists
+ * only for discord-worker's JP font subset and its coverage gate.
  *
  * The tables can lag: the regional clients have historically trailed global by
  * months, so a brand-new item may have no ko/zh name for a while. Missing

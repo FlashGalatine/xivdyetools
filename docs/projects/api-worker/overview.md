@@ -91,7 +91,7 @@ src/
     router.ts              # /aggregated/:dc/:itemIds, /data-centers, /worlds
     config/                # cache TTLs, datacenter/world lists
     services/              # cached-fetch, cache-service, request-coalescer, memory rate-limiter
-scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables after a patch (manual)
+scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables (+ the build-time-only ja table discord-worker's font cut reads) after a patch (manual)
 scripts/build-acquisition.ts  # Regenerates the GPOSERS acquisition table after a patch (manual; run from the repo root with tsx)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
 ```
