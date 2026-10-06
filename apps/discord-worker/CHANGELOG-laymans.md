@@ -35,6 +35,11 @@ Rules:
   path filter.
 -->
 
+## [5.8.7] - 2026-10-06
+### 🎨 Truer greys and cleaner palettes
+- `/gradient` and `/mixer` no longer tint a grey dye: a gradient from Slate Grey, Jet Black or Metallic Silver to blue stays blue instead of passing through purple.
+- `/extractor` shows only the colours a picture really has, without empty rows.
+
 ## [5.8.6] - 2026-10-06
 ### 📏 Numbers that agree
 - `/contrast` and `/compare` show the same contrast ratio for the same two dyes, and never round a failing ratio up to a passing one.

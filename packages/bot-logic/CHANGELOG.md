@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.2] - 2026-10-06
+
+Sprint 13 of the 2026-10-04 remediation plan, in the same PR as core 5.10.0.
+
+### Fixed
+
+- **A grey `/gradient` endpoint keeps the other end's hue** (BUG-035's sibling). In hsv (the
+  default), oklch and lch, an exactly grey endpoint brought hue 0 (in lch, a noise value near
+  158) into the interpolation. Slate Grey → Royal Blue passed through purple, and white → blue
+  through pink. A grey endpoint now takes the other end's hue. Chromatic pairs and grey-to-grey
+  ramps are byte-identical.
+
 ## [4.8.1] - 2026-10-06
 
 Sprints 14 and 28 of the 2026-10-04 remediation plan, in the same PR as svg 4.4.0, which this

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.10] - 2026-10-06
+
+Sprint 13 of the 2026-10-04 remediation plan, carrying `@xivdyetools/core` 5.10.0. The web-app deploy
+fires on `packages/core/**`.
+
+### Fixed
+
+- **Gradient Builder:** a grey endpoint keeps the other end's hue in HSV (the default), OKLCH and
+  LCH, so Slate Grey → blue no longer passes through purple. This is the same rule as core's HSL
+  mix (BUG-035).
+- **Harmony Explorer:** with "no duplicates" on, a dye you swap into a slot no longer shows up in
+  an earlier slot or its alternatives (core BUG-137).
+- **Dye Mixer (HSL):** an exactly grey dye keeps the other dye's hue (core BUG-035).
+- **Character file import** refuses a colour it cannot read instead of showing a wrong one
+  (core BUG-133).
+- **Swatch Matcher:** the ja, ko and zh tattoo / limbal label is written with spaces around the
+  slash, as the rest of the app writes it.
+
 ## [5.14.9] - 2026-10-05
 
 Sprint 29 of the 2026-10-04 remediation plan: deep-dive REFACTOR-005, the last web-app sprint.

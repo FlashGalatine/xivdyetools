@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.7] - 2026-10-06
+
+Sprint 13 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+carrying `@xivdyetools/core` 5.10.0 and `@xivdyetools/bot-logic` 4.8.2. Merge after Sprints 14+28
+(PR #259). No command shape changed.
+
+### Fixed
+
+- **`/extractor` shows only the colours an image holds** (core BUG-036). A flat icon used to get
+  empty 0% rows with invented dye matches.
+- **`/gradient` and `/mixer` (HSL):** a grey endpoint keeps the other colour's hue, so grey →
+  blue no longer passes through purple or pink (BUG-035 and its `/gradient` sibling).
+- **`/swatch` and `/glamour`** refuse a `.chara` colour the parser cannot read instead of drawing
+  a wrong one (core BUG-133).
+
+### Changed
+
+- **Fonts re-cut for core 5.10.0's sheet names** (TERM-021). Compared by cmap:
+  - `NotoSansJP-Subset.ttf` gains 濃 薄 and drops 膜;
+  - `NotoSansSC-Subset.ttf` gains 浓 淡 濃 艳 薄 and drops 纹 绘 膜;
+  - the KR subset is unchanged.
+
 ## [5.8.6] - 2026-10-06
 
 Sprints 14 and 28 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

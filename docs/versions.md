@@ -23,14 +23,14 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.9 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.6 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.14.10 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.8.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.11.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.11.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -39,13 +39,13 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.9.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.10.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.8.1 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.8.2 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -69,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.10.0 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a grey input keeps the other colour's hue in an HSL mix (BUG-035); palette extraction returns only colours the image holds (BUG-036); the locale build checks dyes and facewear against their CSVs before writing (BUG-128, BUG-130); character-creation sheet names follow the game clients (TERM-021); `DyeDatabase.initialize` throws on an empty or colliding payload (BUG-136); text colour by real contrast (BUG-134); parser, search, cache and harmony-pin fixes (BUG-129, BUG-131 to BUG-133, BUG-135, BUG-137) |
 | v5.9.0 | Oct 2026 | `APIService.getPricesForDataCenterWithOutcome` (`ok` / `partial` / `error`) so consumers can tell an outage from "no listings" (BUG-090); `CHARA_DYEABLE_SLOTS` exported (REFACTOR-004); Chinese and Korean data centers and worlds no longer sanitise to an empty path |
 | v5.8.2 | Oct 2026 | The Brass facewear color's fr / ko / zh names match the clients (Bronze, 구리색, 铜色); no font re-cut |
 | v5.8.1 | Oct 2026 | Korean race names and Korean / Chinese clan names match the game clients (2 + 13 + 4 corrections in `build-locales.ts`); CJK subsets re-cut in discord-worker and og-worker |
@@ -116,6 +117,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.10 | Oct 2026 | Core 5.10.0 (2026-10-04 remediation, Sprint 13): the Gradient Builder keeps a grey endpoint's partner hue in HSV, OKLCH and LCH; Harmony keeps a swapped-in dye out of earlier slots; HSL mixes of a grey keep the other hue; unreadable `.chara` colours are refused; the ja/ko/zh tattoo label is spaced |
 | v5.14.9 | Oct 2026 | One workspace per tool (2026-10-04 remediation, Sprint 29, REFACTOR-005): the Gradient Builder and Swatch Matcher lose the left panel and mobile drawer the v4 shell never showed (gradient-tool 2,782 → 1,922 lines, swatch-tool 3,314 → 2,689); browser Find (Ctrl+F) is no longer swallowed on Gradient; MarketBoard members, `tool-panel-builders` and seven locale keys that lost their readers removed |
 | v5.14.8 | Oct 2026 | Market failures show (core 5.9.0, 2026-10-04 remediation, Sprint 27): the Extractor's error badge, Harmony's strip and Budget's offline block appear on an outage (BUG-090); Chinese and Korean servers get prices; the Glamour Reader takes its dyeable slots from core (REFACTOR-004) |
 | v5.14.7 | Oct 2026 | Dead code (2026-10-04 remediation, Sprint 23): unused styles, test-only service methods, six test-only empty-state presets with their icons and keys, the six legacy context actions and their handlers, Mixer's unreachable third slot, 21 orphaned locale keys, and two test files that tested core and types instead of the web app. No behaviour change |
@@ -188,6 +190,10 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.7 | Oct 2026 | Core 5.10.0 and bot-logic 4.8.2 (2026-10-04 remediation, Sprint 13): `/extractor` shows only real colours (BUG-036); grey `/gradient` and HSL `/mixer` endpoints keep the other hue (BUG-035); unreadable `.chara` colours refused (BUG-133); CJK subsets re-cut for the new sheet names (JP +2/−1, SC +5/−3) |
+| v5.8.6 | Oct 2026 | svg 4.4.0 and bot-logic 4.8.1 (2026-10-04 remediation, Sprints 14+28): `/contrast` card, embed and `/compare` print one floored ratio (BUG-142); de/fr decimal comma in every readout; whole `/gradient` step ranges (BUG-146); glamour footer and look label (I18N-015, BUG-145); `/budget` packs its ledger with svg's geometry (REFACTOR-003) |
+| v5.8.5 | Oct 2026 | bot-logic 4.8.0 (2026-10-04 remediation, Sprint 15): six typed digits are a colour (BUG-034, `/budget` included); filtered `/gradient` and `/mixer` steps find their dye (BUG-033); the GPOSERS list writes no placeholder items (BUG-124); every failure is logged by class, never message (BUG-125); locale-read failures logged from every handler (BUG-126) |
+| v5.8.4 | Oct 2026 | One moderation path (2026-10-04 remediation, Sprint 9, with presets-api 2.6.0 and bot-logic 4.7.0): bot submissions post once (BUG-004); edits post as edits, diffed against the replaced text, with Revert only under the three-part rule (BUG-003); repeated dyes refused by name; world lookups after the defer (BUG-002); failed reads never overwrite favourites or preferences (BUG-006, BUG-048); `max_length` on free-text options (BUG-044); a Universalis timeout counts as upstream (BUG-005) |
 | v5.8.3 | Oct 2026 | Documents only (2026-10-04 remediation, Sprint 7) — the Privacy Policy and Terms of Service in all six languages: the Discord-ID cutoff is the fixed date 2026-10-05, not *Last Updated* (I18N-001); French says préréglage (TERM-010) and German Vorlage; Korean says 조정자 for moderators (TERM-001). 5.8.2 is Sprints 2 and 3, on a separate branch. No discord-worker source changed, no `register-commands` |
 | v5.8.2 | Oct 2026 | The bot speaks the user's language (2026-10-04 remediation, Sprints 2+3, with bot-logic 4.6.0): cards print the clan in the user's language (HC-001), file errors give a translated reason (HC-002), the look count takes a plural (`+2 LOOKS`), the character-file manual topic covers `/glamour`, translation and terminology fixes; CJK subsets re-cut (JP +6, SC +7, KR +2/−1) |
 | v5.8.1 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients) |
@@ -269,6 +275,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.6.0 | Oct 2026 | 2026-10-04 remediation, Sprint 9 — every PATCH notification carries `edited_from`, the text the edit replaced, so the moderation embed can diff an edit; `previous_values` stays the Revert target only |
 | v2.5.0 | Oct 2026 | 2026-10-04 remediation, Sprint 8 — a preset may not repeat a dye (BUG-010); a `null` / non-object JSON body is a 400 (BUG-064); resending unchanged text no longer re-moderates (BUG-065); a failed retention sweep fails its cron invocation (BUG-066); a self-rekey is a no-op (BUG-067); trimmed name/description minimums and example links (BUG-068, BUG-069); the moderation webhook says whether it is an edit and from which status (for BUG-003's Revert in discord-worker) |
 | v2.4.0 | Oct 2026 | 2026-10-03 security audit, Sprint 3 — moderator status changes and reverts are bound to the revision the moderator reviewed (`expected_revision` / `expected_status`, fail closed with 409 `REVISION_REQUIRED` / `STALE_REVIEW`) and `GET /moderation/:presetId` added; bans match every id a session proves and a linked XIVAuth account's presets / votes / quota are re-keyed on sign-in (never while banned); no scorer → new and edited presets queue for review; example links validated and stored normalized; image moderation audited; lifted bans kept 90 days and user-level log entries 12 months, enforced by a daily production Cron Trigger that runs every retention prune; Workers Logs pinned off |
 | v2.3.6 | Sep 2026 | 2026-09-16 deep-dive Sprint 16 (terminal) — body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards` with the preview-image exemption (5 MB / 400, JSON check skipped) and every error body byte-identical (REFACTOR-009); `sniffImageType` calls the shared sniffer accepting png/jpeg/webp only (REFACTOR-008) |
@@ -385,6 +392,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.11.3 | Oct 2026 | Core 5.10.0 (2026-10-04 remediation, Sprint 13): CJK subsets re-cut for the new sheet names; de/fr swatch link descriptions reworded so no gendered word precedes the sheet name; the version retires cached HSL mixer cards with a grey input (BUG-035) |
 | v2.11.2 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients); cached cards retire with the version |
 | **v2.11.0** | **Sep 2026** | **The Glamour Reader's card (design turn 4): `/glamour` routed in both environments, `glamour/default.png` on the 2a shape with glyph 1a and no method tag (the reader measures no color distance), strings ×6, CJK subsets re-cut. The default card's one-liner now wraps (up to three lines, the deck grows) instead of running off the card's edge, which is what the live EN Mixer and DE Gradient cards did** |
 | v2.10.4 | Sep 2026 | Swatch Matcher cards draw the creator's lip, face-paint, highlight and tattoo colors (core 5.7.0); the bump retires cached cards |
@@ -503,6 +511,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.4.0 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — `formatContrastRatio`, one floored printer for card, embed and `/compare` (BUG-142); whole gradient step ranges (BUG-146); glamour footer wraps at clauses with an 11 px look label (I18N-015, BUG-145); the frame-budget gate covers every card (BUG-144); `scanEmittedGlyphs` fails closed (BUG-143); `LEDGER_GROUP_H` / `LEDGER_ROW_H` back in the barrel (REFACTOR-003) |
 | v4.3.0 | Sep 2026 | `generateGlamourCard` — the /glamour card (2a): pieces in slot order, a second row kind beside measuredRow |
 | v4.2.0 | Sep 2026 | The Glamour Reader glyph (1a: a tunic with the dye on a chest chip), compact + detail |
 | v4.1.0 | Sep 2026 | `HarmonyCardOptions.wheelLabel` — printed under the harmony type for a non-default colour wheel, fitted to the header row it shares with the `/HARMONY` pill (PR #167) |
@@ -524,6 +533,10 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.8.2 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a grey `/gradient` endpoint keeps the other end's hue in hsv, oklch and lch |
+| v4.8.1 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — the `/contrast` embed and `/compare` print svg's floored ratio; every `/compare` readout localized (requires svg 4.4.0) |
+| v4.8.0 | Oct 2026 | 2026-10-04 remediation, Sprint 15 — six bare digits are a colour (BUG-034); filters before the nearest-dye search (BUG-033); GPOSERS placeholders (BUG-124); failure logging by class and code (BUG-125); `resolveUserLocale` logger (BUG-126); `NOT_ENOUGH_DYES`; coverage enforced (BUG-127) |
+| v4.7.0 | Oct 2026 | 2026-10-04 remediation, Sprint 9 — `preset.repeatedDye` ×6; the `/preferences set clan` / `gender` descriptions no longer name `/swatch` (BUG-049); `card.swatchSlotName.*` ×6, so `/swatch slot:` names a missing slot in the reader's language |
 | v4.6.0 | Oct 2026 | 2026-10-04 remediation, Sprints 2+3 — minor: `getLocalizedClan` (HC-001); `card.charaFileReason.*` ×6 (HC-002); `card.glamourLooks` split into `_one`/`_other` (I18N-016); the character-file manual topic covers `/glamour` (I18N-019); terminology and translation fixes (TERM-004, TERM-012, TERM-013, I18N-017, I18N-018, I18N-020). Needs core 5.8.1 |
 | **v4.5.0** | **Sep 2026** | **`executeGlamour` (the resolver is injected — no I/O here) and the `/glamour` strings ×6; `/swatch` and `/glamour` share `commands/chara-identity.ts`** |
 | v4.4.0 | Sep 2026 | 2026-09-19 i18n audit Sprint 5 — minor: `tc()` picks the plural form with `Intl.PluralRules` per locale, so French `0` is singular (I18N-003, was the English rule for every locale); `searchDyesByName` folds accents, `ß` and width through core's `foldForSearch` (I18N-005); 137 subcommand/option descriptions × 6 under `commands.*.options`, generated from discord-worker's schema (I18N-001), plus `about.builtOnBody` and `card.colours_one/_other` (no key removed); zh `市场布告板` / `大区`, ko `서버` / `데이터 센터` (TERM-001, TERM-003). Needs core 5.4.0 |
