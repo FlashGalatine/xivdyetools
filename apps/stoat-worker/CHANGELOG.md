@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2026-10-06
+
+Sprint 24 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive/`). The bot stays **parked** (no deploy
+workflow); the maintainer decided on 2026-10-05 not to skip it, since it may be unparked within 30 days.
+
+### Fixed
+
+- **`!xd about` advertised commands the bot does not have** (BUG-070). It listed `!xd random` (which answered
+  `Unknown command`), a "React with ❓" line (no reaction listener exists) and feature bullets for six languages,
+  blending, harmony and accessibility. It now says "dye lookup bot", lists only `!xd info` and `!xd help`, and points to
+  Discord and the web app for the other tools.
+- **`!xd info` resolved a broad name to one arbitrary dye** (BUG-073). The resolver returned the first partial match, so
+  `white` answered with Snow White alone. The order is now: exact name or bare ID, then hex (closest dye), then a
+  substring match over English and locale names and categories, then a CSS color name, then none with suggestions.
+  Exact matches (`Snow White`, `5729`, `#FFF`) still answer with one card. A partial name sends one card per dye for 2-4
+  matches (`white` sends Snow, Bone, Pearl and Pure White) and a "Found N dyes" list for 5 or more (`Blue` finds 25,
+  shown capped at 12). This brings back up to 4 messages per command (FINDING-035), still bounded by `CommandThrottle`.
+
+### Changed
+
+- **The dye resolver honors its `locale`, and help no longer promises localized names** (BUG-072). The resolver awaits
+  bot-logic's `initializeLocale(locale)` and passes the locale to every lookup, so `スノウホワイト` under `ja` and
+  `Schneeweiß` under `de` resolve to Snow White. `resolveDyeInputMulti` is now async. Stoat has no per-user locale yet
+  (`info.ts` still uses `'en'`), so `!xd help` says names are matched in English and shows `!xd info #FFFFFF` instead of
+  the Japanese example.
+- Stoat no longer imports bot-logic's `resolveDyeInput`; bot-logic tags that export `/** @public */` (published API with
+  no in-repo consumer) so its knip gate stays green.
+
+### Tests
+
+- **The resolver tests could not fail** (BUG-071). `dye-resolver.test.ts` is rewritten against the real dye database
+  with a helper that throws on the wrong result kind, pinning `white` (4 dyes), `Blue` (25, capped at 12), `Red`,
+  `neutral`, `Coral`, localized exact and partial names, and English negatives. `dye-resolver.partial.test.ts`, which
+  mocked a branch real code never takes, is deleted. `info.test.ts` gains end-to-end cases through the real resolver,
+  and `about.test.ts` checks that every advertised command is registered. 209 tests; every fix was mutation-checked.
+
 ## [0.3.2] - 2026-10-04
 
 Sprint 12 of the 2026-10-03 security audit (docs/audits/2026-10-03-security/).

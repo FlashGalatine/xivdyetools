@@ -58,45 +58,17 @@ describe('handleHelpCommand', () => {
     expect(call.content).toContain('!xd info');
   });
 
-  it('sends command-specific help for "harmony"', async () => {
-    const ctx = createHelpContext(['harmony']);
-    await handleHelpCommand(ctx);
+  // Topics the router does not serve have no command page; they get the overview.
+  it.each(['harmony', 'match', 'gradient', 'mixer', 'comparison'])(
+    'unknown topic "%s" falls back to the overview, not a command page',
+    async (topic) => {
+      const ctx = createHelpContext([topic]);
+      await handleHelpCommand(ctx);
 
-    const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(call.content).toContain('harmony');
-  });
-
-  it('sends command-specific help for "match"', async () => {
-    const ctx = createHelpContext(['match']);
-    await handleHelpCommand(ctx);
-
-    const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(call.content).toContain('match');
-  });
-
-  it('sends command-specific help for "gradient"', async () => {
-    const ctx = createHelpContext(['gradient']);
-    await handleHelpCommand(ctx);
-
-    const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(call.content).toContain('gradient');
-  });
-
-  it('sends command-specific help for "mixer"', async () => {
-    const ctx = createHelpContext(['mixer']);
-    await handleHelpCommand(ctx);
-
-    const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(call.content).toContain('mixer');
-  });
-
-  it('sends command-specific help for "comparison"', async () => {
-    const ctx = createHelpContext(['comparison']);
-    await handleHelpCommand(ctx);
-
-    const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    expect(call.content).toContain('comparison');
-  });
+      const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(call.content).toContain('Command Reference');
+    },
+  );
 
   it('sends command-specific help for "ping"', async () => {
     const ctx = createHelpContext(['ping']);
@@ -128,6 +100,19 @@ describe('handleHelpCommand', () => {
 
     const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(call.content).toContain('!xd info');
+  });
+
+  // BUG-072: names are matched in English (info.ts has no per-user locale), so
+  // help must not promise localized names or show a Japanese example.
+  it('does not promise localized-name lookup', async () => {
+    for (const args of [[], ['info']]) {
+      const ctx = createHelpContext(args);
+      await handleHelpCommand(ctx);
+      const content = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock
+        .calls[0][0].content as string;
+      expect(content.toLowerCase()).not.toContain('localized');
+      expect(content).not.toContain('スノウホワイト');
+    }
   });
 
   // BUG-103: the overview advertised THIRTEEN commands while COMMAND_ROUTES has
