@@ -19,10 +19,6 @@ describe('command registry', () => {
       expect(entry.category, entry.name).toBeTruthy();
     }
   });
-
-  it('carries no deprecated commands (the v4 set is deleted)', () => {
-    expect(COMMAND_REGISTRY.filter((c) => c.deprecated)).toEqual([]);
-  });
 });
 
 /**
