@@ -28,7 +28,7 @@
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.4.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Presets API** | v2.5.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.11.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -269,6 +269,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.5.0 | Oct 2026 | 2026-10-04 remediation, Sprint 8 — a preset may not repeat a dye (BUG-010); a `null` / non-object JSON body is a 400 (BUG-064); resending unchanged text no longer re-moderates (BUG-065); a failed retention sweep fails its cron invocation (BUG-066); a self-rekey is a no-op (BUG-067); trimmed name/description minimums and example links (BUG-068, BUG-069); the moderation webhook says whether it is an edit and from which status (for BUG-003's Revert in discord-worker) |
 | v2.4.0 | Oct 2026 | 2026-10-03 security audit, Sprint 3 — moderator status changes and reverts are bound to the revision the moderator reviewed (`expected_revision` / `expected_status`, fail closed with 409 `REVISION_REQUIRED` / `STALE_REVIEW`) and `GET /moderation/:presetId` added; bans match every id a session proves and a linked XIVAuth account's presets / votes / quota are re-keyed on sign-in (never while banned); no scorer → new and edited presets queue for review; example links validated and stored normalized; image moderation audited; lifted bans kept 90 days and user-level log entries 12 months, enforced by a daily production Cron Trigger that runs every retention prune; Workers Logs pinned off |
 | v2.3.6 | Sep 2026 | 2026-09-16 deep-dive Sprint 16 (terminal) — body-size and JSON-depth middleware come from `@xivdyetools/worker-kit/body-guards` with the preview-image exemption (5 MB / 400, JSON check skipped) and every error body byte-identical (REFACTOR-009); `sniffImageType` calls the shared sniffer accepting png/jpeg/webp only (REFACTOR-008) |
 | v2.3.5 | Sep 2026 | 2026-09-16 deep-dive Sprint 5 — `text_edit` / `flagged_edit` / `preview_upload` daily caps are reserve-then-act (insert the event, count including it, refuse and release when over; BUG-015), still best-effort on a D1 write error; `PATCH /presets/refresh-author` answers 400 instead of binding an unset display name (BUG-014); ban-check tests bind the identity, incl. an XIVAuth UUID `sub` (BUG-043); `banned_users.discord_id` documented as the resolved user id, snowflake or UUID (BUG-001 path (a)) |
