@@ -24,11 +24,11 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.14.10 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.7 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.8.8 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
-| **Moderation Bot** | v1.8.1 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
+| **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
-| **Presets API** | v2.6.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
+| **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.11.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
@@ -40,7 +40,7 @@
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Core** (incl. `/blending` + schema-v2 data) | v5.10.0 | `@xivdyetools/core` | npm | Active |
-| **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
+| **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
@@ -190,6 +190,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.8 | Oct 2026 | Moderation button ids built by `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); byte-identical. No visible change |
 | v5.8.7 | Oct 2026 | Core 5.10.0 and bot-logic 4.8.2 (2026-10-04 remediation, Sprint 13): `/extractor` shows only real colours (BUG-036); grey `/gradient` and HSL `/mixer` endpoints keep the other hue (BUG-035); unreadable `.chara` colours refused (BUG-133); CJK subsets re-cut for the new sheet names (JP +2/−1, SC +5/−3) |
 | v5.8.6 | Oct 2026 | svg 4.4.0 and bot-logic 4.8.1 (2026-10-04 remediation, Sprints 14+28): `/contrast` card, embed and `/compare` print one floored ratio (BUG-142); de/fr decimal comma in every readout; whole `/gradient` step ranges (BUG-146); glamour footer and look label (I18N-015, BUG-145); `/budget` packs its ledger with svg's geometry (REFACTOR-003) |
 | v5.8.5 | Oct 2026 | bot-logic 4.8.0 (2026-10-04 remediation, Sprint 15): six typed digits are a colour (BUG-034, `/budget` included); filtered `/gradient` and `/mixer` steps find their dye (BUG-033); the GPOSERS list writes no placeholder items (BUG-124); every failure is logged by class, never message (BUG-125); locale-read failures logged from every handler (BUG-126) |
@@ -275,6 +276,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.6.1 | Oct 2026 | `expected_status` checked against `@xivdyetools/types`' `REVIEW_STATUSES` (2026-10-04 remediation, Sprint 26, REFACTOR-001); the two 404 bodies moderation-worker reads are pinned. No behaviour change |
 | v2.6.0 | Oct 2026 | 2026-10-04 remediation, Sprint 9 — every PATCH notification carries `edited_from`, the text the edit replaced, so the moderation embed can diff an edit; `previous_values` stays the Revert target only |
 | v2.5.0 | Oct 2026 | 2026-10-04 remediation, Sprint 8 — a preset may not repeat a dye (BUG-010); a `null` / non-object JSON body is a 400 (BUG-064); resending unchanged text no longer re-moderates (BUG-065); a failed retention sweep fails its cron invocation (BUG-066); a self-rekey is a no-op (BUG-067); trimmed name/description minimums and example links (BUG-068, BUG-069); the moderation webhook says whether it is an edit and from which status (for BUG-003's Revert in discord-worker) |
 | v2.4.0 | Oct 2026 | 2026-10-03 security audit, Sprint 3 — moderator status changes and reverts are bound to the revision the moderator reviewed (`expected_revision` / `expected_status`, fail closed with 409 `REVISION_REQUIRED` / `STALE_REVIEW`) and `GET /moderation/:presetId` added; bans match every id a session proves and a linked XIVAuth account's presets / votes / quota are re-keyed on sign-in (never while banned); no scorer → new and edited presets queue for review; example links validated and stored normalized; image moderation audited; lifted bans kept 90 days and user-level log entries 12 months, enforced by a daily production Cron Trigger that runs every retention prune; Workers Logs pinned off |
@@ -325,6 +327,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.3.0 | Oct 2026 | 2026-10-04 remediation, Sprint 26 (REFACTOR-001) — the moderation review custom_id grammar and `REVIEW_STATUSES`, shared by discord-worker, moderation-worker and presets-api; byte-identical to their former copies |
 | v3.2.0 | Sep 2026 | `ColorWheelId` — the five Harmony colour wheels as one literal union; `LocaleData.colorWheels?` (PR #167) |
 | v3.1.0 | Sep 2026 | `LocaleData.facewearColors?` (I18N-008); `ToolKey` deprecated (covers six pre-5.0 tools, nothing reads it) |
 | **v3.0.0** | **Sep 2026** | **BREAKING — `ModerationStats` field names corrected to `pending` / `approved` / `rejected` / `flagged` + `actions_last_week` (BUG-010); the old `*_count` keys never existed in the response and hid moderation-worker's "undefined" stats panel** |
@@ -368,6 +371,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.8.2 | Oct 2026 | Review custom_id grammar from `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); a parity test pins the routing prefixes. No visible change |
 | v1.8.1 | Oct 2026 | 2026-10-04 remediation, Sprint 17 — a losing concurrent click no longer overwrites the winner (BUG-052); a stale-deploy 404 keeps the buttons (BUG-054); success embeds drop stale Error / Review fields (BUG-050); trimmed ban reasons (BUG-051); a refreshed review says what Revert restores; dead middleware, helpers, parameter, ban suffix and strings removed (DEAD-025 to DEAD-030) |
 | v1.8.0 | Oct 2026 | 2026-10-03 security audit, Sprint 4 — approve / reject / revert are bound to the revision the moderator reviewed (new `preset_<action>_<uuid>:<rev>:<status>` buttons; a legacy button or a stale one refreshes the embed and asks for a second click; `/preset moderate approve|reject` answers with a revision-bound confirm button); bans written and matched by `xivauth_id` too; a lifted ban's username and reason are blanked; unban restore skips presets whose dyes collide; revert refuses a banned author; Workers Logs pinned off. Deploy with presets-api 2.4.0 in one window |
 | v1.7.3 | Sep 2026 | 2026-09-16 deep-dive Sprint 6 — `/preset ban_user` / `unban_user`, the confirm button and the reason modal accept an XIVAuth UUID as well as a Discord snowflake, so XIVAuth-only authors can be banned (BUG-001 path (a): the UUID is stored in `banned_users.discord_id`); presets-api requests carry a 10 s `AbortSignal` (BUG-016); the rate-limit KV-error test pins fail-open (BUG-035) |

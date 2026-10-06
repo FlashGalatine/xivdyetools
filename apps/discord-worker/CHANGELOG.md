@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.8] - 2026-10-06
+
+Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor; the
+moderation buttons' ids are byte-identical.
+
+### Changed
+
+- **Moderation embeds build their button ids with `@xivdyetools/types`'
+  `buildReviewCustomIdOrLegacy`**, the grammar moderation-worker parses with. The private builder
+  and the "keep in step" status list are gone.
+- The test parses every id it builds back with the shared parser, replacing a hand-copied regex.
+
 ## [5.8.7] - 2026-10-06
 
 Sprint 13 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
