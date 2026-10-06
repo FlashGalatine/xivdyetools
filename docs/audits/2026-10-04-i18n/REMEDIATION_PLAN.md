@@ -362,7 +362,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-discord-worker` → merge → `deploy-discord-worker.yml` (CI runs `register-commands`; no command shape changes)
 
-## Sprint 10 — oauth: limiter keying, null bodies
+## Sprint 10 — oauth: limiter keying, null bodies — PR #272 (open)
+
+**Done in PR #272** (oauth 3.1.3), with Sprint 25's REFACTOR-006 and the oauth half of BUG-149 (a 415 for a non-JSON callback body). Merge #271 before or with it. **Recorded, not fixed:** a display-name length cap and invisible-character filter for XIVAuth names; unrouted `/auth/*` paths still get their own default-tier bucket.
 
 deep-dive/BUG-007: decode the path before the `/auth/*` limiter keys it, then add the tests deep-dive/BUG-055 asks for. deep-dive/BUG-056 turns a null JSON body into a 400. deep-dive/BUG-057 filters null roster elements and empty names, falling back to the degraded login.
 
@@ -672,7 +674,9 @@ P3. Fix only if Stoat is resumed; otherwise these go with the app if it is archi
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=xivdyetools-stoat-worker` → merge (no deploy workflow)
 
-## Sprint 25 — auth: doc comment
+## Sprint 25 — auth: doc comment — folded into PR #272 (open)
+
+**Done in PR #272** (folded into Sprint 10): comment only, recorded under auth's `[Unreleased]`; no publish.
 
 A comment-only fix. It rides with the next auth change; no publish is needed for it alone.
 

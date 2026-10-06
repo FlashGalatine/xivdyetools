@@ -341,7 +341,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-004 | OPEN | — |
 | BUG-005 | OPEN | — |
 | BUG-006 | OPEN | — |
-| BUG-007 | OPEN | — |
+| BUG-007 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | BUG-008 | OPEN | — |
 | BUG-009 | OPEN | — |
 | BUG-010 | OPEN | — |
@@ -389,9 +389,9 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-052 | OPEN | — |
 | BUG-053 | OPEN | — |
 | BUG-054 | OPEN | — |
-| BUG-055 | OPEN | — |
-| BUG-056 | OPEN | — |
-| BUG-057 | OPEN | — |
+| BUG-055 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
+| BUG-056 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
+| BUG-057 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | BUG-058 | OPEN | — |
 | BUG-059 | OPEN | — |
 | BUG-060 | OPEN | — |
@@ -496,7 +496,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-003 | OPEN | — |
 | REFACTOR-004 | OPEN | — |
 | REFACTOR-005 | OPEN | — |
-| REFACTOR-006 | OPEN | — |
+| REFACTOR-006 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | REFACTOR-007 | OPEN | — |
 | REFACTOR-008 | OPEN | — |
 | REFACTOR-009 | OPEN | — |
