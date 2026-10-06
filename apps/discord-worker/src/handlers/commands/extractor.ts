@@ -27,7 +27,11 @@ import {
   errorEmbed,
   hexToDiscordColor,
 } from '../../utils/response.js';
-import { resolveColorInput as resolveColor, dyeService } from '@xivdyetools/bot-logic';
+import {
+  resolveColorInput as resolveColor,
+  dyeService,
+  sanitizeEmbedText,
+} from '@xivdyetools/bot-logic';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { createCopyButtons } from '../buttons/index.js';
 import {
@@ -78,6 +82,15 @@ const MIN_MATCH_COUNT = 1;
 
 /** Maximum match count for color subcommand */
 const MAX_MATCH_COUNT = 10;
+
+/**
+ * BUG-044: a user-typed option echoed into an error embed goes through the
+ * shared sanitiser (markdown / masked links / mentions defused) with the
+ * 100-character cap the other dye-name echoes use — an uncapped ~4000-char
+ * value pushed the description past Discord's 4096 limit and the reply was
+ * rejected outright.
+ */
+const MAX_ECHO_LENGTH = 100;
 
 // ============================================================================
 // Shared Utilities
@@ -186,7 +199,7 @@ export async function handleExtractorCommand(
 
   switch (subcommand) {
     case 'color':
-      return handleColorSubcommand(interaction, env, ctx, subcommandOption.options || []);
+      return handleColorSubcommand(interaction, env, ctx, subcommandOption.options || [], logger);
 
     case 'image':
       return handleImageSubcommand(interaction, env, ctx, subcommandOption.options || [], logger);
@@ -217,6 +230,7 @@ async function handleColorSubcommand(
   env: Env,
   ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
   const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
@@ -254,7 +268,12 @@ async function handleColorSubcommand(
   const resolved = resolveColorInput(colorInput, t.getLocale());
   if (!resolved) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput }))],
+      embeds: [
+        errorEmbed(
+          t.t('common.error'),
+          t.t('errors.invalidColor', { input: sanitizeEmbedText(colorInput, MAX_ECHO_LENGTH) }),
+        ),
+      ],
       flags: 64,
     });
   }
@@ -292,6 +311,7 @@ async function handleColorSubcommand(
       matchingMethod,
       theme,
       resolved.fromDye,
+      logger,
     ),
   );
   return deferredResponse();
@@ -312,6 +332,7 @@ async function renderColorSheet(
   matchingMethod: MatchingMethod,
   theme?: 'dark' | 'light',
   fromDye?: Dye,
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const locale = t.getLocale();
   try {
@@ -383,9 +404,16 @@ async function renderColorSheet(
       },
     });
   } catch (error) {
+    // BUG-042: the ranking already produced a match before the defer, so a
+    // throw here is our card / resvg work failing — log it (it used to leave
+    // no trace beyond the outcome class) and say so, instead of telling the
+    // user no match was found.
     markCommandOutcome(interaction, classifyError(error, 'render'));
+    if (logger) {
+      logger.error('Extractor color render error', error instanceof Error ? error : undefined);
+    }
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
-      embeds: [errorEmbed(t.t('common.error'), t.t('errors.noMatchFound'))],
+      embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
   }
 }

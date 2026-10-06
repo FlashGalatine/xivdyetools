@@ -80,6 +80,32 @@ export const OptionType = {
 } as const;
 
 /**
+ * The cap on a free-text STRING option (one with no `choices` list) — the
+ * colour, dye, preset and version inputs. Without `max_length` Discord accepts
+ * up to 6000 characters, and a handler that echoes an unrecognised value into
+ * an error embed could push its description past Discord's 4096-character cap,
+ * so the reply was rejected and the user saw "The application did not respond"
+ * (BUG-044, 2026-10-04 deep dive). Discord refuses an over-long value in the
+ * client instead.
+ *
+ * 100 because Discord caps an autocomplete choice's `value` at 100 characters,
+ * so no pick from an autocomplete list can be refused by it, and the longest
+ * dye name in any of the six locales is a fraction of it. The options that
+ * carry a different cap (world names, preset name / description / tags) say
+ * why beside the option; `schemas.test.ts` requires a cap on every free-text
+ * STRING option and lists those exceptions with their reasons.
+ */
+const FREE_TEXT_MAX_LENGTH = 100;
+
+/**
+ * The cap on `/preset submit|edit tags:`. presets-api accepts up to 10 tags of
+ * up to 30 characters each; joined by ", " that is 318 characters, so the
+ * default cap would refuse a valid tag list. 400 leaves room for extra spaces
+ * (the handler trims each tag and keeps the first 10).
+ */
+const TAGS_MAX_LENGTH = 400;
+
+/**
  * The `category` choice list shared by every `/preset` subcommand that filters
  * or assigns a category (`list`, `random`, `submit`).
  *
@@ -117,6 +143,7 @@ const ACCESSIBILITY_OPTIONS = [
     type: OptionType.STRING,
     required: true,
     autocomplete: true,
+    max_length: FREE_TEXT_MAX_LENGTH,
   },
   {
     name: 'dye2',
@@ -124,6 +151,7 @@ const ACCESSIBILITY_OPTIONS = [
     type: OptionType.STRING,
     required: false,
     autocomplete: true,
+    max_length: FREE_TEXT_MAX_LENGTH,
   },
   {
     name: 'vision',
@@ -162,6 +190,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'type',
@@ -229,6 +258,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
         ],
       },
@@ -243,6 +273,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
         ],
       },
@@ -303,6 +334,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'count',
@@ -383,6 +415,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'end_color',
@@ -390,6 +423,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'steps',
@@ -444,6 +478,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'dye2',
@@ -451,6 +486,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'mode',
@@ -516,6 +552,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'dye2',
@@ -523,6 +560,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'dye3',
@@ -530,6 +568,7 @@ export const commands = [
         type: OptionType.STRING,
         required: false,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'dye4',
@@ -537,6 +576,7 @@ export const commands = [
         type: OptionType.STRING,
         required: false,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
     ],
   },
@@ -572,6 +612,7 @@ export const commands = [
         description: 'Expand a specific release (e.g. 5.0.0)',
         type: OptionType.STRING,
         required: false,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
     ],
   },
@@ -671,14 +712,15 @@ export const commands = [
           },
           {
             name: 'clan',
-            description: 'Default clan for /swatch (e.g., Midlander, Raen)',
+            description: 'Your clan (saved with your preferences; no command reads it yet)',
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'gender',
-            description: 'Default gender for /swatch',
+            description: 'Your gender (saved with your preferences; no command reads it yet)',
             type: OptionType.STRING,
             required: false,
             choices: [
@@ -923,6 +965,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'dye2',
@@ -930,6 +973,7 @@ export const commands = [
         type: OptionType.STRING,
         required: true,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'dye3',
@@ -937,6 +981,7 @@ export const commands = [
         type: OptionType.STRING,
         required: false,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
       {
         name: 'dye4',
@@ -944,6 +989,7 @@ export const commands = [
         type: OptionType.STRING,
         required: false,
         autocomplete: true,
+        max_length: FREE_TEXT_MAX_LENGTH,
       },
     ],
   },
@@ -991,6 +1037,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
         ],
       },
@@ -1044,6 +1091,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye2',
@@ -1051,6 +1099,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye3',
@@ -1058,6 +1107,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye4',
@@ -1065,6 +1115,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye5',
@@ -1072,6 +1123,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye6',
@@ -1079,12 +1131,14 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'tags',
             description: 'Comma-separated tags (optional, max 10)',
             type: OptionType.STRING,
             required: false,
+            max_length: TAGS_MAX_LENGTH,
           },
         ],
       },
@@ -1099,6 +1153,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
         ],
       },
@@ -1113,6 +1168,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'name',
@@ -1137,6 +1193,7 @@ export const commands = [
             description: 'New tags (comma-separated)',
             type: OptionType.STRING,
             required: false,
+            max_length: TAGS_MAX_LENGTH,
           },
           {
             name: 'dye1',
@@ -1144,6 +1201,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye2',
@@ -1151,6 +1209,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye3',
@@ -1158,6 +1217,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye4',
@@ -1165,6 +1225,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye5',
@@ -1172,6 +1233,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'dye6',
@@ -1179,6 +1241,7 @@ export const commands = [
             type: OptionType.STRING,
             required: false,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
         ],
       },
@@ -1198,6 +1261,7 @@ export const commands = [
                 type: OptionType.STRING,
                 required: true,
                 autocomplete: true,
+                max_length: FREE_TEXT_MAX_LENGTH,
               },
             ],
           },
@@ -1212,6 +1276,7 @@ export const commands = [
                 type: OptionType.STRING,
                 required: true,
                 autocomplete: true,
+                max_length: FREE_TEXT_MAX_LENGTH,
               },
             ],
           },
@@ -1245,6 +1310,7 @@ export const commands = [
             type: OptionType.STRING,
             required: true,
             autocomplete: true,
+            max_length: FREE_TEXT_MAX_LENGTH,
           },
           {
             name: 'world',

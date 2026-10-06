@@ -19,11 +19,18 @@ import {
 } from '../../services/preferences.js';
 import { createUserTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale } from '../../services/i18n.js';
-import { resolveColorInput, executeMixer } from '@xivdyetools/bot-logic';
+import { resolveColorInput, executeMixer, sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+
+// BUG-044: a user-typed option echoed into an error embed goes through the
+// shared sanitiser (markdown / masked links / mentions defused) with the
+// 100-character cap the other dye-name echoes use — an uncapped ~4000-char
+// value pushed the description past Discord's 4096 limit and the reply was
+// rejected outright.
+const MAX_ECHO_LENGTH = 100;
 
 export async function handleMixerV4Command(
   interaction: DiscordInteraction,
@@ -51,7 +58,12 @@ export async function handleMixerV4Command(
   const dye1Resolved = resolveColorInput(dye1Input, { excludeFacewear: true, locale: t.getLocale() });
   if (!dye1Resolved) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye1Input }))],
+      embeds: [
+        errorEmbed(
+          t.t('common.error'),
+          t.t('errors.invalidColor', { input: sanitizeEmbedText(dye1Input, MAX_ECHO_LENGTH) }),
+        ),
+      ],
       flags: 64,
     });
   }
@@ -59,7 +71,12 @@ export async function handleMixerV4Command(
   const dye2Resolved = resolveColorInput(dye2Input, { excludeFacewear: true, locale: t.getLocale() });
   if (!dye2Resolved) {
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: dye2Input }))],
+      embeds: [
+        errorEmbed(
+          t.t('common.error'),
+          t.t('errors.invalidColor', { input: sanitizeEmbedText(dye2Input, MAX_ECHO_LENGTH) }),
+        ),
+      ],
       flags: 64,
     });
   }

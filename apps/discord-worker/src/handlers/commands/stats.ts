@@ -14,7 +14,7 @@
 
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { getStats } from '../../services/analytics.js';
+import { getCounter, getStats } from '../../services/analytics.js';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { messageResponse, errorEmbed } from '../../utils/response.js';
@@ -171,7 +171,14 @@ async function handleSummarySubcommand(
   t: Translator,
   _logger?: ExtendedLogger,
 ): Promise<Response> {
-  const stats = await getStats(env.KV);
+  // OPT-004: read the two counters this panel shows (two KV gets). getStats
+  // also pages every `usertrack:<today>:` key — one KV list op per 1,000 DAU,
+  // on the list quota — to count unique users this public summary never shows.
+  const [totalCommands, successCount] = await Promise.all([
+    getCounter(env.KV, 'total'),
+    getCounter(env.KV, 'success'),
+  ]);
+  const successRate = totalCommands > 0 ? (successCount / totalCommands) * 100 : 0;
   const lang = t.getLocale();
 
   return messageResponse({
@@ -189,8 +196,8 @@ async function handleSummarySubcommand(
           {
             name: `📈 ${t.t('stats.summary.stats')}`,
             value: [
-              `**${t.t('stats.summary.commandsUsed')}:** ${grp(stats.totalCommands, lang)}`,
-              `**${t.t('stats.summary.successRate')}:** ${num(stats.successRate, lang, 1)}%`,
+              `**${t.t('stats.summary.commandsUsed')}:** ${grp(totalCommands, lang)}`,
+              `**${t.t('stats.summary.successRate')}:** ${num(successRate, lang, 1)}%`,
             ].join('\n'),
             inline: true,
           },
@@ -231,9 +238,11 @@ async function handleOverviewSubcommand(
 ): Promise<Response> {
   const stats = await getStats(env.KV);
 
-  // Calculate some derived metrics
-  const avgCommandsPerUser =
-    stats.uniqueUsersToday > 0 ? (stats.totalCommands / stats.uniqueUsersToday).toFixed(1) : '0';
+  // BUG-045: no "Avg Cmds/User" here. totalCommands is the stats:total
+  // counter, whose 30-day TTL is renewed on every put — effectively lifetime —
+  // while uniqueUsersToday counts today's usertrack keys only, so their ratio
+  // (200,000 / 150 → 1333.3) meant nothing. A real per-user average needs a
+  // per-day command counter, which the KV stats do not keep.
 
   return messageResponse({
     embeds: [
@@ -252,10 +261,7 @@ async function handleOverviewSubcommand(
           },
           {
             name: '👥 Users',
-            value: [
-              `**Unique Today:** ${stats.uniqueUsersToday.toLocaleString()}`,
-              `**Avg Cmds/User:** ${avgCommandsPerUser}`,
-            ].join('\n'),
+            value: `**Unique Today:** ${stats.uniqueUsersToday.toLocaleString()}`,
             inline: true,
           },
           {

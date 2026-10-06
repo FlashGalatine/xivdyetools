@@ -104,6 +104,37 @@ describe('getPresetFavoriteEntries', () => {
     expect(await getPresetFavoriteEntries(kv, 'user-1')).toEqual([{ id: 'p9', name: '' }]);
   });
 
+  // BUG-047: autocomplete marks a favourite whose lookup answered 404 as
+  // `gone`, so it is not looked up again on every keystroke. A reader that
+  // dropped the marker would bring those lookups straight back.
+  it('keeps a gone marker, and only a boolean true one', async () => {
+    const { v2 } = await keyNames();
+    const kv = memoryKv({
+      [v2]: JSON.stringify([
+        { id: 'p1', name: '', gone: true },
+        { id: 'p2', name: 'Two', gone: 'yes' },
+        { id: 'p3', name: 'Three', gone: false },
+      ]),
+    });
+
+    expect(await getPresetFavoriteEntries(kv, 'user-1')).toStrictEqual([
+      { id: 'p1', name: '', gone: true },
+      { id: 'p2', name: 'Two' },
+      { id: 'p3', name: 'Three' },
+    ]);
+  });
+
+  it('keeps a gone marker through an add', async () => {
+    const { v2 } = await keyNames();
+    const kv = memoryKv({ [v2]: JSON.stringify([{ id: 'p1', name: '', gone: true }]) });
+
+    expect(await addPresetFavorite(kv, 'user-1', 'p2', 'Two')).toEqual({ success: true });
+    expect(JSON.parse(kv.store.get(v2)!)).toEqual([
+      { id: 'p1', name: '', gone: true },
+      { id: 'p2', name: 'Two' },
+    ]);
+  });
+
   it('blanks a v2 name that is not a string', async () => {
     const { v2 } = await keyNames();
     const kv = memoryKv({ [v2]: JSON.stringify([{ id: 'p1', name: 12345 }]) });
@@ -111,13 +142,26 @@ describe('getPresetFavoriteEntries', () => {
     expect(await getPresetFavoriteEntries(kv, 'user-1')).toEqual([{ id: 'p1', name: '' }]);
   });
 
-  it('returns empty rather than throwing on malformed JSON', async () => {
+  // A v2 blob that is not JSON is read like one with the wrong shape: logged,
+  // then the v1 blob (which every save keeps in sync) answers instead.
+  it('falls through to v1, and logs, when the v2 blob is not JSON', async () => {
+    const { v1, v2 } = await keyNames();
+    const kv = memoryKv({ [v2]: '{not json', [v1]: JSON.stringify(['p9']) });
+    const logger = silentLogger();
+
+    expect(await getPresetFavoriteEntries(kv, 'user-1', logger as never)).toEqual([
+      { id: 'p9', name: '' },
+    ]);
+    expect(logger.warn).toHaveBeenCalled();
+  });
+
+  it('returns empty rather than throwing when the v2 blob is not JSON and there is no v1', async () => {
     const { v2 } = await keyNames();
     const kv = memoryKv({ [v2]: '{not json' });
     const logger = silentLogger();
 
     expect(await getPresetFavoriteEntries(kv, 'user-1', logger as never)).toEqual([]);
-    expect(logger.error).toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
   });
 
   it('returns empty rather than throwing when KV itself fails', async () => {
@@ -256,5 +300,87 @@ describe('removePresetFavorite', () => {
     vi.mocked(kv.put).mockRejectedValue(new Error('KV down'));
 
     expect(await removePresetFavorite(kv, 'user-1', 'p1')).toMatchObject({ success: false });
+  });
+});
+
+// BUG-006 (2026-10-04 deep-dive): the lenient reader turns a failed read into
+// `[]`, which is right for autocomplete and `/preset favorite list` but wrong
+// for a write. add used to push onto that `[]` and save it — replacing a list
+// of up to 50 with one entry and reporting success. The write paths now read
+// strictly, so a failed read fails the write and leaves KV untouched.
+describe('a failed read on a write path (BUG-006)', () => {
+  async function seeded() {
+    const kv = memoryKv();
+    await addPresetFavorite(kv, 'user-1', 'p1', 'One');
+    await addPresetFavorite(kv, 'user-1', 'p2', 'Two');
+    vi.mocked(kv.put).mockClear();
+    vi.mocked(kv.delete).mockClear();
+    return { kv, before: new Map(kv.store) };
+  }
+
+  it('add reports an error and writes nothing when the read throws', async () => {
+    const { kv, before } = await seeded();
+    vi.mocked(kv.get).mockRejectedValueOnce(new Error('KV blip'));
+    const logger = silentLogger();
+
+    expect(await addPresetFavorite(kv, 'user-1', 'p3', 'Three', logger as never)).toEqual({
+      success: false,
+      reason: 'error',
+    });
+    expect(kv.put).not.toHaveBeenCalled();
+    expect(kv.delete).not.toHaveBeenCalled();
+    expect(kv.store).toEqual(before);
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  // Unlike a failed kv.get, which is transient, a v2 blob that is not JSON
+  // never fixes itself: failing every write on it locked the user out of add
+  // and remove for good. It is read like a wrong-shaped blob instead — through
+  // the v1 blob — and the write that follows replaces it with a valid one.
+  it('add recovers from a v2 blob that is not JSON through the v1 blob, and rewrites v2', async () => {
+    const { v1, v2 } = await keyNames();
+    const kv = memoryKv({ [v2]: '{not json', [v1]: JSON.stringify(['p1', 'p2']) });
+    const logger = silentLogger();
+
+    expect(await addPresetFavorite(kv, 'user-1', 'p3', 'Three', logger as never)).toEqual({
+      success: true,
+    });
+    expect(JSON.parse(kv.store.get(v2)!)).toEqual([
+      { id: 'p1', name: '' },
+      { id: 'p2', name: '' },
+      { id: 'p3', name: 'Three' },
+    ]);
+    expect(JSON.parse(kv.store.get(v1)!)).toEqual(['p1', 'p2', 'p3']);
+    expect(logger.warn).toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('remove recovers from a v2 blob that is not JSON through the v1 blob, and rewrites v2', async () => {
+    const { v1, v2 } = await keyNames();
+    const kv = memoryKv({ [v2]: '{not json', [v1]: JSON.stringify(['p1', 'p2']) });
+
+    expect(await removePresetFavorite(kv, 'user-1', 'p1')).toEqual({ success: true });
+    expect(JSON.parse(kv.store.get(v2)!)).toEqual([{ id: 'p2', name: '' }]);
+    expect(JSON.parse(kv.store.get(v1)!)).toEqual(['p2']);
+  });
+
+  it('remove reports an error, not notFound, when the read throws', async () => {
+    const { kv, before } = await seeded();
+    vi.mocked(kv.get).mockRejectedValueOnce(new Error('KV blip'));
+
+    expect(await removePresetFavorite(kv, 'user-1', 'p1')).toEqual({
+      success: false,
+      reason: 'error',
+    });
+    expect(kv.put).not.toHaveBeenCalled();
+    expect(kv.delete).not.toHaveBeenCalled();
+    expect(kv.store).toEqual(before);
+  });
+
+  it('the read paths stay lenient: a throwing read is still an empty list', async () => {
+    const { kv } = await seeded();
+    vi.mocked(kv.get).mockRejectedValueOnce(new Error('KV blip'));
+
+    expect(await getPresetFavoriteEntries(kv, 'user-1')).toEqual([]);
   });
 });

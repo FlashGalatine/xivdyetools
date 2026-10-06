@@ -254,6 +254,38 @@ describe('accessibility.ts', () => {
       expect(data.data!.flags).toBe(64);
     });
 
+    // BUG-044: the raw option was echoed unsanitised and uncapped — ~4000
+    // characters overflowed the 4096-character description and Discord
+    // rejected the reply ("The application did not respond").
+    it('sanitizes and caps the echoed input in the error (BUG-044)', async () => {
+      const hostile = `notfound @everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'accessibility',
+          options: [{ name: 'dye1', value: hostile, type: 3 }],
+        },
+        user: { id: 'user-123' },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      const response = await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
+
+      expect(data.type).toBe(4);
+      const description = data.data!.embeds![0].description!;
+      const prefix = 'Could not find dye or parse color: ';
+      expect(description.startsWith(prefix)).toBe(true);
+      const echoed = description.slice(prefix.length);
+      expect(echoed.startsWith('notfound ')).toBe(true);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+    });
+
     it('should handle member.user.id for guild interactions', async () => {
       const interaction: DiscordInteraction = {
         type: 2,

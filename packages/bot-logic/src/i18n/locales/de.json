@@ -229,6 +229,7 @@
     "randomTitle": "Zufällige Vorlage",
     "notEnoughDyes": "Bitte gib mindestens 3 Farbstoffe für deine Vorlage an.",
     "invalidDye": "Einer der angegebenen Farbstoffe wurde nicht gefunden.",
+    "repeatedDye": "**{dye}** ist mehr als einmal in dieser Vorlage enthalten. Jeder Farbstoff kann nur einmal verwendet werden.",
     "duplicateExists": "Ähnliche Vorlage existiert",
     "duplicateVoted": "Deine Stimme wurde der bestehenden Vorlage hinzugefügt.",
     "submitted": "Vorlage eingereicht!",
@@ -1143,10 +1144,10 @@
               "description": "Standardanzahl Treffer für /extractor color (1-10)"
             },
             "clan": {
-              "description": "Standard-Stamm für /swatch (z.B. Wiesländer, Auri-Raen)"
+              "description": "Dein Stamm (wird mit deinen Einstellungen gespeichert; bisher verwendet ihn kein Befehl)"
             },
             "gender": {
-              "description": "Standard-Geschlecht für /swatch"
+              "description": "Dein Geschlecht (wird mit deinen Einstellungen gespeichert; bisher verwendet es kein Befehl)"
             },
             "world": {
               "description": "Standard-Welt/Datenzentrum für Marktpreise"

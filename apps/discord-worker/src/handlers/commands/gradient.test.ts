@@ -47,6 +47,7 @@ vi.mock('../../services/bot-i18n.js', () => {
 vi.mock('../../services/i18n.js', () => ({
   discordLocaleToLocaleCode: vi.fn(() => 'en'),
   initializeLocale: vi.fn().mockResolvedValue(undefined),
+  getLocalizedDyeName: vi.fn((_itemID: number, name: string) => name),
 }));
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -78,7 +79,11 @@ function resolveFixture(value: string) {
   );
 }
 
-vi.mock('@xivdyetools/bot-logic', () => ({
+vi.mock('@xivdyetools/bot-logic', async () => ({
+  // The real sanitiser — a stub here would only test the stub (BUG-044).
+  sanitizeEmbedText: (
+    await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic')
+  ).sanitizeEmbedText,
   executeGradient: vi.fn().mockResolvedValue({
     ok: true,
     svgString: '<svg>gradient</svg>',
@@ -98,6 +103,8 @@ import { executeGradient, resolveColorInput } from '@xivdyetools/bot-logic';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { getDyeEmoji } from '../../services/emoji.js';
+import { getLocalizedDyeName } from '../../services/i18n.js';
+import { createUserTranslator } from '../../services/bot-i18n.js';
 
 describe('handleGradientCommand', () => {
   let env: Env;
@@ -160,6 +167,7 @@ describe('handleGradientCommand', () => {
     } as never);
     vi.mocked(renderSvgToPng).mockResolvedValue(new Uint8Array([1, 2, 3]) as never);
     vi.mocked(resolveColorInput).mockImplementation((value: string) => resolveFixture(value) as never);
+    vi.mocked(getLocalizedDyeName).mockImplementation((_itemID: number, name: string) => name);
   });
 
   describe('input validation', () => {
@@ -206,6 +214,132 @@ describe('handleGradientCommand', () => {
       expect(body.data.embeds[0].description).toBe('invalid:nosuchdye');
       expect(ctx.waitUntil).not.toHaveBeenCalled();
       expect(executeGradient).not.toHaveBeenCalled();
+    });
+
+    // BUG-044: the raw option was echoed unsanitised and uncapped — ~4000
+    // characters overflowed the 4096-character description and Discord
+    // rejected the reply ("The application did not respond").
+    const HOSTILE = `@everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+    const expectSafeEcho = (description: string) => {
+      expect(description.startsWith('invalid:')).toBe(true);
+      const echoed = description.slice('invalid:'.length);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+    };
+
+    it('sanitizes and caps an unresolvable start_color in the error (BUG-044)', async () => {
+      vi.mocked(resolveColorInput).mockReturnValueOnce(null);
+      const response = await handleGradientCommand(
+        interaction([
+          { name: 'start_color', value: HOSTILE },
+          { name: 'end_color', value: 'Celeste Green' },
+        ]),
+        env,
+        ctx,
+      );
+      const body = (await response.json()) as { data: { embeds: { description: string }[] } };
+
+      expectSafeEcho(body.data.embeds[0].description);
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+    });
+
+    it('sanitizes and caps an unresolvable end_color in the error (BUG-044)', async () => {
+      vi.mocked(resolveColorInput).mockImplementation(
+        (value: string) => (value === HOSTILE ? null : resolveFixture(value)) as never,
+      );
+      const response = await handleGradientCommand(
+        interaction([
+          { name: 'start_color', value: 'Rolanberry Red' },
+          { name: 'end_color', value: HOSTILE },
+        ]),
+        env,
+        ctx,
+      );
+      const body = (await response.json()) as { data: { embeds: { description: string }[] } };
+
+      expectSafeEcho(body.data.embeds[0].description);
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+    });
+  });
+
+  // BUG-043: the Start/End lines printed the English `Dye.name` that
+  // resolveColorInput returns, above step rows bot-logic had localized.
+  describe('Start/End lines use the localized dye name (BUG-043)', () => {
+    it('localizes both endpoint names through getLocalizedDyeName', async () => {
+      vi.mocked(getLocalizedDyeName).mockImplementation(
+        (_itemID: number, name: string) => `L10N(${name})`,
+      );
+
+      await handleGradientCommand(interaction(colorOptions()), env, ctx);
+      await settle();
+
+      expect(getLocalizedDyeName).toHaveBeenCalledWith(5729, 'Rolanberry Red', 'en');
+      expect(getLocalizedDyeName).toHaveBeenCalledWith(5730, 'Celeste Green', 'en');
+      const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
+        embeds: { description: string }[];
+      };
+      const lines = payload.embeds[0].description.split('\n');
+      expect(lines[0]).toBe('**gradient.startColor:** 🟥 **L10N(Rolanberry Red)** (`#FF0000`)');
+      expect(lines[1]).toBe('**gradient.endColor:** 🟩 **L10N(Celeste Green)** (`#00FF00`)');
+    });
+
+    // The case above runs as 'en', and so does the default, so it cannot tell
+    // the user's locale from a hard-coded 'en' — the shipped defect class
+    // (English Start/End names above Japanese step rows). Here the user's
+    // translator says 'ja' and the lookup's output depends on the locale it
+    // is handed, so only the real locale reaching it keeps both green.
+    it("looks the endpoint names up in the user's locale, not English", async () => {
+      vi.mocked(createUserTranslator).mockResolvedValueOnce({
+        t: (key: string) => key,
+        getLocale: () => 'ja',
+      } as never);
+      vi.mocked(getLocalizedDyeName).mockImplementation(
+        (_itemID: number, name: string, locale?: string) => `${locale}:${name}`,
+      );
+
+      await handleGradientCommand(interaction(colorOptions()), env, ctx);
+      await settle();
+
+      expect(vi.mocked(getLocalizedDyeName).mock.calls).toEqual([
+        [5729, 'Rolanberry Red', 'ja'],
+        [5730, 'Celeste Green', 'ja'],
+      ]);
+      const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
+        embeds: { description: string }[];
+      };
+      const lines = payload.embeds[0].description.split('\n');
+      expect(lines[0]).toBe('**gradient.startColor:** 🟥 **ja:Rolanberry Red** (`#FF0000`)');
+      expect(lines[1]).toBe('**gradient.endColor:** 🟩 **ja:Celeste Green** (`#00FF00`)');
+    });
+
+    it('keeps a bare hex line for a colour that resolved to no dye', async () => {
+      vi.mocked(resolveColorInput).mockImplementation(
+        (value: string) => (value === '#123456' ? { hex: '#123456' } : resolveFixture(value)) as never,
+      );
+      vi.mocked(getLocalizedDyeName).mockImplementation(
+        (_itemID: number, name: string) => `L10N(${name})`,
+      );
+
+      await handleGradientCommand(
+        interaction([
+          { name: 'start_color', value: '#123456' },
+          { name: 'end_color', value: 'Celeste Green' },
+        ]),
+        env,
+        ctx,
+      );
+      await settle();
+
+      // Only the end colour is a dye; the hex-only start is never looked up.
+      expect(vi.mocked(getLocalizedDyeName).mock.calls).toEqual([[5730, 'Celeste Green', 'en']]);
+      const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
+        embeds: { description: string }[];
+      };
+      const lines = payload.embeds[0].description.split('\n');
+      expect(lines[0]).toBe('**gradient.startColor:** `#123456`');
+      expect(lines[1]).toBe('**gradient.endColor:** 🟩 **L10N(Celeste Green)** (`#00FF00`)');
     });
   });
 

@@ -229,6 +229,7 @@
     "randomTitle": "Random Preset",
     "notEnoughDyes": "Please provide at least 3 dyes for your preset.",
     "invalidDye": "Could not find one of the specified dyes.",
+    "repeatedDye": "**{dye}** is in this preset more than once. Each dye can be used only once.",
     "duplicateExists": "Similar Preset Exists",
     "duplicateVoted": "Your vote has been added to the existing preset.",
     "submitted": "Preset Submitted!",
@@ -1143,10 +1144,10 @@
               "description": "Default number of matches for /extractor color (1-10)"
             },
             "clan": {
-              "description": "Default clan for /swatch (e.g., Midlander, Raen)"
+              "description": "Your clan (saved with your preferences; no command reads it yet)"
             },
             "gender": {
-              "description": "Default gender for /swatch"
+              "description": "Your gender (saved with your preferences; no command reads it yet)"
             },
             "world": {
               "description": "Default world/datacenter for market prices"

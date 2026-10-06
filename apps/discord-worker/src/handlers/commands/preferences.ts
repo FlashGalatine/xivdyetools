@@ -15,9 +15,17 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { ephemeralResponse, errorEmbed } from '../../utils/response.js';
+import {
+  deferredResponse,
+  ephemeralResponse,
+  errorEmbed,
+  type InteractionResponseData,
+} from '../../utils/response.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
+import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import {
   getUserPreferences,
+  getUserPreferencesStrict,
   setPreferences,
   resetPreference,
   getDefaultValue,
@@ -30,6 +38,7 @@ import {
   MATCHING_METHODS,
   CLANS_BY_RACE,
   type PreferenceKey,
+  type UserPreferences,
 } from '../../types/preferences.js';
 import type { DyeTypeFilters } from '@xivdyetools/types';
 import { hasActiveFilters } from '@xivdyetools/core';
@@ -120,6 +129,32 @@ function filterLabel(t: Translator, option: string): string {
   return t.t(`preferences.filters.labels.${option}`);
 }
 
+/**
+ * Read the preferences blob for a read-modify-write (BUG-048): `null` when
+ * the read failed, so the caller answers with an error instead of writing a
+ * blob rebuilt from nothing. The failure is marked on the trace here, so the
+ * caller's error embed is never recorded as a success.
+ */
+async function readForUpdate(
+  interaction: DiscordInteraction,
+  env: Env,
+  userId: string,
+  logger?: ExtendedLogger
+): Promise<UserPreferences | null> {
+  try {
+    return await getUserPreferencesStrict(env.KV, userId, logger);
+  } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
+    if (logger) {
+      logger.error(
+        'Failed to read preferences for an update',
+        error instanceof Error ? error : undefined
+      );
+    }
+    return null;
+  }
+}
+
 // ============================================================================
 // Main Handler
 // ============================================================================
@@ -132,7 +167,7 @@ function filterLabel(t: Translator, option: string): string {
 export async function handlePreferencesCommand(
   interaction: DiscordInteraction,
   env: Env,
-  _ctx: ExecutionContext,
+  ctx: ExecutionContext,
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
@@ -155,10 +190,25 @@ export async function handlePreferencesCommand(
       return handleShowSubcommand(env, userId, t, logger);
 
     case 'set':
-      return handleSetSubcommand(env, userId, subcommandOption.options || [], t, logger);
+      return handleSetSubcommand(
+        interaction,
+        env,
+        ctx,
+        userId,
+        subcommandOption.options || [],
+        t,
+        logger
+      );
 
     case 'reset':
-      return handleResetSubcommand(env, userId, subcommandOption.options || [], t, logger);
+      return handleResetSubcommand(
+        interaction,
+        env,
+        userId,
+        subcommandOption.options || [],
+        t,
+        logger
+      );
 
     case 'filters': {
       // Subcommand group — filters set/show/reset
@@ -170,11 +220,18 @@ export async function handlePreferencesCommand(
       }
       switch (filterSubcommand.name) {
         case 'set':
-          return handleFiltersSetSubcommand(env, userId, filterSubcommand.options || [], t, logger);
+          return handleFiltersSetSubcommand(
+            interaction,
+            env,
+            userId,
+            filterSubcommand.options || [],
+            t,
+            logger
+          );
         case 'show':
           return handleFiltersShowSubcommand(env, userId, t, logger);
         case 'reset':
-          return handleFiltersResetSubcommand(env, userId, t, logger);
+          return handleFiltersResetSubcommand(interaction, env, userId, t, logger);
         default:
           return ephemeralResponse({
             embeds: [errorEmbed(t.t('common.error'), t.t('preferences.errors.noSubcommand'))],
@@ -281,9 +338,20 @@ async function handleShowSubcommand(
  * Sets one or more preference values. Each preference is an optional parameter.
  * Users can set multiple preferences in a single command:
  *   /preferences set language:en blending:oklab market:true
+ *
+ * BUG-002 (2026-10-04 deep dive): a `world:` value is checked against
+ * Universalis (`validateWorld`), which on a cold cache is up to two
+ * sequential service-binding fetches with a 10 s timeout each. Awaited
+ * before the reply, that ran past Discord's 3-second ack window ("The
+ * application did not respond"). When a lookup is needed, the command now
+ * defers (ephemerally — every /preferences reply is private) and does the
+ * whole set — lookup, write, reply — after the ack. Without a `world:` value
+ * that needs one, nothing is slow, and it still answers in the ack itself.
  */
 async function handleSetSubcommand(
+  interaction: DiscordInteraction,
   env: Env,
+  ctx: ExecutionContext,
   userId: string,
   options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
@@ -298,6 +366,68 @@ async function handleSetSubcommand(
     });
   }
 
+  if (!needsWorldLookup(options)) {
+    return ephemeralResponse(await buildSetReply(interaction, env, userId, options, t, logger));
+  }
+
+  ctx.waitUntil(
+    (async (): Promise<void> => {
+      let reply: InteractionResponseData;
+      try {
+        reply = await buildSetReply(interaction, env, userId, options, t, logger);
+      } catch (error) {
+        // The ack is already sent: whatever broke, the user still gets an
+        // answer rather than a "thinking…" that never resolves.
+        markCommandOutcome(interaction, classifyError(error));
+        if (logger) {
+          logger.error(
+            'Preferences set failed after the defer',
+            error instanceof Error ? error : undefined
+          );
+        }
+        reply = {
+          embeds: [errorEmbed(t.t('common.error'), t.t('preferences.validation.error'))],
+        };
+      }
+      await safeEditOriginalResponse(
+        env.DISCORD_CLIENT_ID,
+        interaction.token,
+        { embeds: reply.embeds },
+        logger
+      );
+    })()
+  );
+  return deferredResponse(true);
+}
+
+/**
+ * True when this `/preferences set` carries a `world:` value that passes the
+ * cheap shape guard — i.e. one that will cost a Universalis lookup (BUG-002).
+ * A malformed value is refused without a lookup, so it needs no defer.
+ */
+function needsWorldLookup(
+  options: Array<{ name: string; value?: string | number | boolean }>
+): boolean {
+  return options.some(
+    (opt) =>
+      resolveOptionKey(opt.name) === 'world' &&
+      typeof opt.value === 'string' &&
+      validatePreferenceValue('world', opt.value.trim()).valid
+  );
+}
+
+/**
+ * Validate, write and describe one `/preferences set` — the reply body,
+ * sent either as the ack itself or as the edit over a deferred ack.
+ */
+async function buildSetReply(
+  interaction: DiscordInteraction,
+  env: Env,
+  userId: string,
+  options: Array<{ name: string; value?: string | number | boolean }>,
+  t: Translator,
+  logger?: ExtendedLogger
+): Promise<InteractionResponseData> {
   // Process each provided option.
   //
   // BUG-029: this used to call `setPreference` inside the loop, so k options
@@ -368,6 +498,11 @@ async function handleSetSubcommand(
       pending.map(({ key, value }) => ({ key, value })),
       logger,
     );
+    // `reason: 'error'` is the service saying its read or write failed —
+    // ours, not a value the user got wrong — so it is not a success either.
+    if (results.some((result) => result.reason === 'error')) {
+      markCommandOutcome(interaction, 'unknown');
+    }
     results.forEach((result, i) => {
       const { key, value, slot } = pending[i];
       updates[slot] = { key, value, success: result.success, reason: result.reason };
@@ -379,11 +514,11 @@ async function handleSetSubcommand(
 
   // Check if any updates were attempted
   if (updates.length === 0) {
-    return ephemeralResponse({
+    return {
       embeds: [
         errorEmbed(t.t('common.error'), t.t('preferences.set.noValidOptions')),
       ],
-    });
+    };
   }
 
   // Separate successes and failures
@@ -400,11 +535,11 @@ async function handleSetSubcommand(
       return `${emoji} **${label}**: ${reason}`;
     });
 
-    return ephemeralResponse({
+    return {
       embeds: [
         errorEmbed(t.t('common.error'), errorLines.join('\n\n')),
       ],
-    });
+    };
   }
 
   // Build success description
@@ -447,7 +582,7 @@ async function handleSetSubcommand(
     ? `✅ ${t.t('preferences.set.success')}`
     : `✅ ${t.t('preferences.set.successCount', { count: successes.length })}`;
 
-  return ephemeralResponse({
+  return {
     embeds: [
       {
         title,
@@ -459,7 +594,7 @@ async function handleSetSubcommand(
         },
       },
     ],
-  });
+  };
 }
 
 // ============================================================================
@@ -472,6 +607,7 @@ async function handleSetSubcommand(
  * Resets a single preference to default, or all preferences if no key provided.
  */
 async function handleResetSubcommand(
+  interaction: DiscordInteraction,
   env: Env,
   userId: string,
   options: Array<{ name: string; value?: string | number | boolean }>,
@@ -483,7 +619,7 @@ async function handleResetSubcommand(
 
   // Handle 'filters' reset specially (it's not a PreferenceKey)
   if (rawKeyValue === 'filters') {
-    return handleFiltersResetSubcommand(env, userId, t, logger);
+    return handleFiltersResetSubcommand(interaction, env, userId, t, logger);
   }
 
   // Map snake_case reset choice values (e.g. 'show_hex') to camelCase PreferenceKey
@@ -505,6 +641,8 @@ async function handleResetSubcommand(
   const success = await resetPreference(env.KV, userId, key, logger);
 
   if (!success) {
+    // The service logged and swallowed a failed read or write
+    markCommandOutcome(interaction, 'unknown');
     return ephemeralResponse({
       embeds: [errorEmbed(t.t('common.error'), t.t('preferences.reset.failed'))],
     });
@@ -684,6 +822,7 @@ function getValidationErrorMessage(t: Translator, _key: PreferenceKey, reason?: 
  * Sets dye type filter preferences. Each filter is an optional boolean.
  */
 async function handleFiltersSetSubcommand(
+  interaction: DiscordInteraction,
   env: Env,
   userId: string,
   options: Array<{ name: string; value?: string | number | boolean }>,
@@ -696,7 +835,15 @@ async function handleFiltersSetSubcommand(
     });
   }
 
-  const prefs = await getUserPreferences(env.KV, userId, logger);
+  // BUG-048: this read feeds a whole-blob write, so a failed read must stop
+  // here — the lenient `{}` would have put `{ dyeFilters }` over every other
+  // preference the user has.
+  const prefs = await readForUpdate(interaction, env, userId, logger);
+  if (!prefs) {
+    return ephemeralResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('preferences.validation.error'))],
+    });
+  }
   const filters: DyeTypeFilters = prefs.dyeFilters ?? {};
 
   // Apply each provided filter option
@@ -720,7 +867,18 @@ async function handleFiltersSetSubcommand(
   prefs.dyeFilters = filters;
   prefs.updatedAt = new Date().toISOString();
   const key = `prefs:v1:${userId}`;
-  await env.KV.put(key, JSON.stringify(prefs));
+  try {
+    await env.KV.put(key, JSON.stringify(prefs));
+  } catch (error) {
+    // Caught here, the rejection no longer reaches the dispatcher's mark
+    markCommandOutcome(interaction, classifyError(error));
+    if (logger) {
+      logger.error('Failed to save dye filters', error instanceof Error ? error : undefined);
+    }
+    return ephemeralResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('preferences.validation.error'))],
+    });
+  }
 
   return ephemeralResponse({
     embeds: [
@@ -773,21 +931,39 @@ async function handleFiltersShowSubcommand(
  * Clears all dye filters.
  */
 async function handleFiltersResetSubcommand(
+  interaction: DiscordInteraction,
   env: Env,
   userId: string,
   t: Translator,
   logger?: ExtendedLogger
 ): Promise<Response> {
-  const prefs = await getUserPreferences(env.KV, userId, logger);
+  const failed = (): Response =>
+    ephemeralResponse({
+      embeds: [errorEmbed(t.t('common.error'), t.t('preferences.reset.failed'))],
+    });
+
+  // BUG-048: with the lenient `{}`, a failed read made `hasPrefs` false
+  // below and deleted the user's whole blob.
+  const prefs = await readForUpdate(interaction, env, userId, logger);
+  if (!prefs) return failed();
+
   delete prefs.dyeFilters;
   prefs.updatedAt = new Date().toISOString();
 
   const hasPrefs = Object.keys(prefs).some((k) => !k.startsWith('_') && k !== 'updatedAt');
   const key = `prefs:v1:${userId}`;
-  if (hasPrefs) {
-    await env.KV.put(key, JSON.stringify(prefs));
-  } else {
-    await env.KV.delete(key);
+  try {
+    if (hasPrefs) {
+      await env.KV.put(key, JSON.stringify(prefs));
+    } else {
+      await env.KV.delete(key);
+    }
+  } catch (error) {
+    markCommandOutcome(interaction, classifyError(error));
+    if (logger) {
+      logger.error('Failed to reset dye filters', error instanceof Error ? error : undefined);
+    }
+    return failed();
   }
 
   return ephemeralResponse({

@@ -50,7 +50,11 @@ vi.mock('../../utils/discord-api.js', () => ({
   safeEditOriginalResponse: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-vi.mock('@xivdyetools/bot-logic', () => ({
+vi.mock('@xivdyetools/bot-logic', async () => ({
+  // The real sanitiser — a stub here would only test the stub (BUG-044).
+  sanitizeEmbedText: (
+    await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic')
+  ).sanitizeEmbedText,
   executeMixer: vi.fn().mockResolvedValue({
     ok: true,
     svgString: '<svg>mixer</svg>',
@@ -199,6 +203,39 @@ describe('handleMixerV4Command', () => {
       expect(body.data.embeds[0].description).toBe('invalid:nosuchdye');
       expect(ctx.waitUntil).not.toHaveBeenCalled();
     });
+
+    // BUG-044: the raw option was echoed unsanitised and uncapped — ~4000
+    // characters overflowed the 4096-character description and Discord
+    // rejected the reply ("The application did not respond").
+    const HOSTILE = `@everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+    const expectSafeEcho = (description: string) => {
+      expect(description.startsWith('invalid:')).toBe(true);
+      const echoed = description.slice('invalid:'.length);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+    };
+
+    it.each(['dye1', 'dye2'])(
+      'sanitizes and caps an unresolvable %s in the error (BUG-044)',
+      async (slot) => {
+        vi.mocked(resolveColorInput).mockImplementation((value: string) =>
+          value === HOSTILE
+            ? null
+            : ({ hex: '#FFFFFF', name: `Resolved ${value}`, id: 1, itemID: 5729, stainID: 1 } as never),
+        );
+        const response = await handleMixerV4Command(
+          interaction(dyeOptions([]).map((o) => (o.name === slot ? { ...o, value: HOSTILE } : o))),
+          env,
+          ctx,
+        );
+        const body = (await response.json()) as { data: { embeds: { description: string }[] } };
+
+        expectSafeEcho(body.data.embeds[0].description);
+        expect(ctx.waitUntil).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('mode option -> bot-logic call args', () => {

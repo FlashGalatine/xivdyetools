@@ -761,4 +761,38 @@ describe('dye.ts', () => {
       expect(title.endsWith('…')).toBe(true);
     });
   });
+
+  // BUG-044: `/dye info name:` was echoed into errors.dyeNotFound unsanitised
+  // and uncapped — ~4000 characters overflowed the 4096-character description
+  // and Discord rejected the reply ("The application did not respond").
+  describe('info name sanitisation (BUG-044)', () => {
+    it('sanitizes and caps the echoed name in the not-found error', async () => {
+      const hostile = `notfound @everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+      const response = await handleDyeCommand(
+        {
+          type: 2,
+          data: {
+            name: 'dye',
+            options: [{ name: 'info', type: 1, options: [{ name: 'name', value: hostile }] }],
+          },
+          user: { id: 'user-123' },
+          id: 'int-1',
+          application_id: 'app-1',
+          token: 'token-1',
+        },
+        mockEnv,
+        mockCtx,
+      );
+      const data = (await response.json()) as InteractionResponseBody;
+
+      const description = data.data!.embeds![0].description!;
+      expect(description.startsWith('Dye not found: notfound ')).toBe(true);
+      const echoed = description.slice('Dye not found: '.length);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+      expect(data.data!.flags).toBe(64);
+    });
+  });
 });

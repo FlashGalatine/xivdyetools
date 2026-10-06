@@ -175,8 +175,15 @@ function handleInfoSubcommand(
   const dye = findDyeByName(name, t.getLocale()) ?? results[0];
 
   if (!dye) {
+    // BUG-044: same treatment as the search query above — an uncapped
+    // ~4000-char name pushed the description past Discord's 4096 limit.
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name }))],
+      embeds: [
+        errorEmbed(
+          t.t('common.error'),
+          t.t('errors.dyeNotFound', { name: sanitizeEmbedText(name, 100) }),
+        ),
+      ],
       flags: 64,
     });
   }
