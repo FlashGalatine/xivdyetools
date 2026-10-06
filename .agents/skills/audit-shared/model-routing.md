@@ -51,7 +51,8 @@ waves. Never assume the whole monorepo fits into one concurrent batch.
 
 ## Runtime tools and coordinator rules
 
-**Claude Code:** use `Agent` with `subagent_type` set to the role's agent and no `model` argument.
+**Claude Code:** use `Agent` with `subagent_type` set to the role's agent and no `model` argument
+(except the two standing overrides under *Claude Code Workflow scripts* below).
 The Agent tool has no effort argument, so the agent file is the only per-role effort control; its
 `effort` beats the session's effort and `modelSettings`, and only a `CLAUDE_CODE_EFFORT_LEVEL`
 environment variable overrides it. Do not use `general-purpose` or `fork` for role work: they run
@@ -63,6 +64,23 @@ verifier work inline only while its session runs at `high` or above (current bui
 `CLAUDE_EFFORT` in Bash's environment); otherwise, or when unsure, delegate it. **Fable
 coordinates:** delegate every role to its agent, worker work even for one unit. Fable retains
 prompts, collation, coordinator edits, final writing, and the responsibilities below.
+
+**Claude Code Workflow scripts (Ultracode):** every `agent()` call passes its role's agent as
+`agentType`, for skill work and for any other task; this overrides the workflow reference's default
+of omitting `model`, because a bare call runs at the session's model **and** effort. If a role
+agent is missing, pass the role's `model` alias **and** its `effort` instead (`haiku`, `sonnet` +
+`medium`, `opus` + `high`), never neither. `agent()` also takes `model` and `effort`, which the
+`Agent` tool lacks: `model` swaps the model and keeps the agent file's prompt and effort, `effort`
+replaces the file's effort, and Haiku ignores `effort`. Two overrides are standing. A worker task
+too hard for Sonnet (a cross-unit refactor, an unfamiliar subsystem) runs as
+`agentType: 'xivdye-worker', model: 'opus', effort: 'high'`. An escalated verdict (verifier votes
+with no clear majority, a security-critical final call, a root cause the verifier missed) runs as
+`agentType: 'xivdye-verifier', model: 'fable'`, Fable 5.1 at `high`, which is 2.5× Opus per token,
+so use a handful per run at most; a Fable coordinator makes that call itself. With the `Agent` tool, the
+same `model` override also keeps the file's effort, so the Opus worker runs at `medium` there and
+the Fable verifier at `high`. Every spawn re-reads about 75k tokens of system prompt and project
+instructions, so a single short command still runs inline (*Delegate when it helps*) except under a
+Fable coordinator, which delegates every role.
 
 **Codex:** use the available native collaboration tool. In a runtime exposing
 `collaboration.spawn_agent`, pass `task_name`, a self-contained `message`, `fork_turns: "none"` (or
@@ -126,7 +144,10 @@ the verdict depends on them. Carry rejection reasons forward (audits: *Rejected 
 
 Routing checked 2026-09-28 by running it: in Claude Code 2.1.284, each role agent's effort as seen
 inside the agent (`printenv CLAUDE_EFFORT`), launched from a `max` session; in the Codex desktop
-app's client (0.158), each spawned child's model and effort in its session record. Sources: the
+app's client (0.158), each spawned child's model and effort in its session record. Rechecked
+2026-10-06 in Claude Code 2.1.286 from an `xhigh` Opus 5.5 session: each Workflow `agent()`
+combination of `agentType`, `model` and `effort` above, plus both `Agent` tool `model` overrides,
+by model ID and `printenv CLAUDE_EFFORT` inside the agent. Sources: the
 [Claude Code subagent docs](https://code.claude.com/docs/en/sub-agents), Anthropic's per-model
 effort guidance, and OpenAI's
 [subagent guidance](https://learn.chatgpt.com/docs/agent-configuration/subagents),
