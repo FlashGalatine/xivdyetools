@@ -24,7 +24,8 @@ No command shape changed, and no card changes.
   - `asPng()` returns a JS-owned copy, so freeing afterwards is safe.
   - Measured in Node only, not in workerd. With og-worker's fonts at ×3: no free grew wasm memory
     about 4.8 MB per render; freeing only the `RenderedImage` still leaked about 120 KB per render;
-    freeing both stayed flat. With this worker's fonts at ×2, 40 renders: no free grew about
+    freeing both stayed flat. With this worker's fonts at ×2, 40 renders of a synthetic 400×350
+    test SVG (not a real bot card, so the per-tree figure is indicative): no free grew about
     2.1 MB per render (64 KB per render once GC ran the pixmap finalizers); freeing only the
     `RenderedImage` leaked 64 KB per render; freeing both stayed flat.
   - `renderer.test.ts` mocks resvg-wasm. On success it checks that both `free()` calls run
