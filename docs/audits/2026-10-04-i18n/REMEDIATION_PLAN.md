@@ -518,7 +518,13 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 
 **Ends with:** bump `@xivdyetools/svg` (patch) → `pnpm turbo run build type-check lint test --filter=...@xivdyetools/svg` → merge → Actions publish
 
-## Sprint 15 — @xivdyetools/bot-logic: input resolution and filtered matching (publish)
+## Sprint 15 — @xivdyetools/bot-logic: input resolution and filtered matching (publish) — PR #258 (open)
+
+**Done in PR #258** (bot-logic 4.8.0, discord-worker 5.8.5), stacked on #257. All six are fixed; BUG-126 waits only on moderation-worker's caller (Sprint 17).
+- **Coverage is enforced:** `coverage.enabled` in bot-logic's `vitest.config.ts`, as discord-worker, oauth and web-app do, so the gate and CI fail below 90%. Branches are at 96.0%.
+- **One log format:** every caught failure logs `[cmd] generation failed: <class[ code]>` through an internal `failureKind`; never the message, which can quote the user's hex or the file.
+- **Published API (minor):** `NOT_ENOUGH_DYES` joins the comparison, contrast and accessibility result unions; the resolvers trim and read six bare digits as a colour; `resolveUserLocale` takes an optional logger. 4.7.0 (Sprint 9) may be skipped on npm.
+- **Recorded, not fixed:** six handlers call `getUserPreferences` without the logger they hold (accessibility, contrast, extractor, glamour, gradient, swatch), so a KV failure there is still silent; harmony's unknown-wheel warning echoes the caller's value; stoat-worker's `info.ts` has no logger to pass.
 
 **Fixes:**
 - deep-dive/BUG-034: an all-digit hex without `#` is read as a dye id.
@@ -576,6 +582,8 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 | [dead-code/DEAD-026](../2026-10-04-dead-code/findings/DEAD-026.md) | dead-code | Conf HIGH / Blast LOW · REMOVE | getPreset in moderation-worker services/preset-api.ts is test-only: 13 src lines + 34 test lines |
 | [dead-code/DEAD-030](../2026-10-04-dead-code/findings/DEAD-030.md) | dead-code | Conf HIGH / Blast LOW · REMOVE | moderation-worker bot-i18n.ts: older orphan strings (preset.categories.*, three ban.* keys, the meta block, common.success) — 24 source + 12 test lines |
 | [dead-code/DEAD-029](../2026-10-04-dead-code/findings/DEAD-029.md) | dead-code | Conf MEDIUM / Blast LOW · REMOVE WITH CAUTION | Legacy base64-username suffix parsing in ban-reason.ts:57-92 and ban-confirmation.ts:70-78 is unreachable: no emitter has produced the suffix since the 2026-08-21 FINDING-007 fix, and those flows are ephemeral — about 16 source lines, with a test-fixture rewrite |
+
+**From Sprint 15 (PR #258):** pass the request logger to `resolveUserLocale` in `src/services/bot-i18n.ts` (BUG-126's last call site).
 
 **From Sprint 9 (PR #257): the refresh Revert.** `review-message.ts` `actionsFor` still offers Revert on any pending preset with a snapshot. Apply the three-part rule (`is_edit`, a well-formed `previous_values`, `edited_from_status === 'approved'`). A refresh cannot show the edit's diff: `edited_from` travels only on the webhook and is never stored, and `GET /moderation/:id` has no edit marker either. So either refresh without a diff and without Revert unless the rule can be checked, or grow presets-api to persist the edit base first; decide before scheduling.
 

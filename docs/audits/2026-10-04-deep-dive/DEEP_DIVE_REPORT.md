@@ -367,8 +367,8 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-030 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
 | BUG-031 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
 | BUG-032 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
-| BUG-033 | OPEN | — |
-| BUG-034 | OPEN | — |
+| BUG-033 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a` |
+| BUG-034 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a`, `c1f60ec8` |
 | BUG-035 | OPEN | — |
 | BUG-036 | OPEN | — |
 | BUG-037 | OPEN | — |
@@ -458,10 +458,10 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-121 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
 | BUG-122 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
 | BUG-123 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
-| BUG-124 | OPEN | — |
-| BUG-125 | OPEN | — |
-| BUG-126 | OPEN | — |
-| BUG-127 | OPEN | — |
+| BUG-124 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a` |
+| BUG-125 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a`, `c1f60ec8` |
+| BUG-126 | PARTIALLY FIXED (PR #258, open; moderation-worker in Sprint 17) | `b43e757a`, `c1f60ec8` |
+| BUG-127 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a` |
 | BUG-128 | OPEN | — |
 | BUG-129 | OPEN | — |
 | BUG-130 | OPEN | — |
