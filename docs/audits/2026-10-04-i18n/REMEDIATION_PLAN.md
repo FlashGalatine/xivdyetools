@@ -632,7 +632,9 @@ Config only; the bundle is unchanged.
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-image-worker` → merge → `deploy-image-worker.yml`
 
-## Sprint 22 — web-app: remaining LOW fixes
+## Sprint 22 — web-app: remaining LOW fixes — PR #252 (open)
+
+**Done in PR #252** (web-app 5.14.6, stacked on #249): 41 of 42 rows. BUG-086 covers the four sibling tools it names. **deep-dive/BUG-090 stays open:** it needs core to surface a batch failure, so it moves to Sprint 27. The layout shell is at 215.75 of 218 KB; Sprint 23 should trim it. Details are in the re-verification file's *Sprint 22* section.
 
 Tool, shell, service and glamour LOWs. Most are one-line guards or listener teardown.
 
@@ -686,6 +688,10 @@ Tool, shell, service and glamour LOWs. Most are one-line guards or listener tear
 ## Sprint 23 — web-app: dead-code cleanup
 
 **dead-code/DEAD-004 is already removed** by Sprint 5 (PR #247); skip it here.
+
+**From Sprint 22 (PR #252):**
+- The layout shell is at 215.75 of 218 KB. Trim it here; do not raise the budget.
+- Sprint 22 made more code dead. Its re-verification section lists it; confirm each item by hand, because the gate cannot see some of it.
 
 The rest of the dead-code catalog's web-app entries. Each cascade is the next commit after its trigger, because web-app's knip gate fails on the orphaned exports in between: dead-code/DEAD-009 and dead-code/DEAD-010 after dead-code/DEAD-008. dead-code/DEAD-003, the context-action vocabulary, goes last.
 
@@ -750,6 +756,10 @@ deep-dive/REFACTOR-001: one module for the grammar and status list, consumed by 
 ## Sprint 27 — Structural: one dyeable-slot set (terminal)
 
 deep-dive/REFACTOR-004: core exports the dyeable-slot set, and web-app imports it.
+
+**Moved here from Sprint 22: deep-dive/BUG-090**, so core is released once, not twice.
+- **What core does:** it surfaces a failed batch price fetch as an addition (a new method, or an outcome beside the result). It must not change `getPricesForDataCenter`'s `Map` return, which is published API. A failed chunk of a partial batch counts as a failure, and the result has to survive the in-flight coalescing.
+- **What web-app does:** `MarketBoardService` maps that outcome to `lastFetchOutcome = 'error'`. Then the Extractor's error badge and Harmony's market-failure strip can appear.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
