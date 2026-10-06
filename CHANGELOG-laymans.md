@@ -33,7 +33,8 @@ Rules:
 
 ## [5.10.18] - 2026-10-06
 ### 🌏 Item names in your language
-- Discord bot: `/glamour` cards now name items in Korean and Chinese instead of falling back to English.
+- Discord bot: `/glamour` cards now name items in Korean, Chinese and Japanese instead of falling back to English.
+- Discord bot: Japanese cards draw kanji in Japanese letterforms; some used to appear in their Chinese forms.
 
 ## [5.10.17] - 2026-10-06
 ### 🎨 Truer greys and cleaner palettes
