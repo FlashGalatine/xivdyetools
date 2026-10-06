@@ -14,4 +14,4 @@
 - Export a builder/parser + status const from @xivdyetools/bot-logic (or a PresetStatus const array from @xivdyetools/types) -> needs a bot-logic/types publish, then consumer deploys; or a cheaper repo-level parity test reading the three files.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `20587699` hosts the grammar and `REVIEW_STATUSES` in @xivdyetools/types; `e92ea01f` moves discord-worker, moderation-worker and presets-api onto it, byte-identical, with a parity test on moderation-worker's routing prefixes. (branch `fix/remediation-2026-10-04-sprint26`, types 3.3.0; PR #262, open, on PR #261).
