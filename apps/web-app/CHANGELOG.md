@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [5.14.6] - 2026-10-05
 
 Sprint 22 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
-the web app's remaining LOW findings. 40 of 41 are fixed, each verified against this branch first
+the web app's remaining LOW findings. 41 of 42 are fixed, each verified against this branch first
 and each with a test that failed before its fix (or, for test-only findings, a mutation check).
 BUG-090 stays open: it needs a core API change (below).
 
