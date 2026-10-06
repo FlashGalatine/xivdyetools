@@ -36,13 +36,29 @@ import type { DyeService } from './DyeService.js';
  * Options for palette extraction
  */
 export interface PaletteExtractionOptions {
-  /** Number of colors to extract (3-5, default: 4) */
+  /**
+   * MAXIMUM number of colors to extract (clamped to 1-10, default: 4). A
+   * fraction is floored — 2.5 means at most 2. A value that is not a finite
+   * number — NaN, ±Infinity, an explicit `undefined` — uses the default; either
+   * correction (clamp or default) is logged as a warning. The result holds at
+   * most this many entries, each with `pixelCount > 0`, and fewer when the
+   * image holds fewer distinct colors or a cluster ends up empty — it is never
+   * padded (BUG-036).
+   */
   colorCount?: number;
-  /** Maximum K-means iterations (default: 25) */
+  /**
+   * Maximum K-means iterations (clamped to 1-100, default: 25). A value that
+   * is not a finite number uses the default; either correction is logged as a
+   * warning.
+   */
   maxIterations?: number;
   /** Convergence threshold in RGB distance (default: 1.0) */
   convergenceThreshold?: number;
-  /** Maximum pixels to sample (default: 10000) */
+  /**
+   * Maximum pixels to sample (minimum 2, default: 10000; a fraction is floored). A value that is not
+   * a finite number uses the default; either correction is logged as a
+   * warning.
+   */
   maxSamples?: number;
   /**
    * Matching method used to pick each extracted colour's nearest dye
@@ -256,6 +272,31 @@ function updateCentroids(
 }
 
 /**
+ * Count the distinct colours in `pixels`, stopping as soon as `limit` is
+ * reached (the caller only needs `min(k, distinct)`). Two pixels are the same
+ * colour exactly when their `rgbDistance` is 0, so the key is the exact
+ * channel triple — no packing that could merge non-integer channels.
+ *
+ * A limit that is not a finite number never stops the count (`size >= NaN` is
+ * never true), which would hand k-means one centroid per distinct colour — up
+ * to the whole sample. `extractPalette` normalises colorCount to a whole
+ * number in 1-10 before it gets here (a fractional limit would stop one colour
+ * late: `size >= 2.5` first holds at 3), so this is defence in depth: such a
+ * limit counts as 1, the single cluster a NaN k produced before the cap
+ * existed. It must not be 0 — with
+ * pixels but no centroids, assignToClusters indexes a cluster that is not there.
+ */
+function countDistinctColors(pixels: RGB[], limit: number): number {
+  if (!Number.isFinite(limit)) return Math.min(1, pixels.length);
+  const seen = new Set<string>();
+  for (const p of pixels) {
+    if (seen.size >= limit) break;
+    seen.add(`${p.r},${p.g},${p.b}`);
+  }
+  return seen.size;
+}
+
+/**
  * Run K-means clustering on pixel data
  */
 function kMeansClustering(
@@ -268,8 +309,12 @@ function kMeansClustering(
     return { centroids: [], clusterSizes: [] };
   }
 
-  // Limit k to number of unique pixels
-  const effectiveK = Math.min(k, pixels.length);
+  // BUG-036 (2026-10-04 deep dive): limit k to the number of DISTINCT colours,
+  // not the number of pixels. Once every distinct colour is a centroid,
+  // k-means++ has nothing left to pick but a duplicate, and the strict `<` in
+  // assignToClusters gives every clone 0 pixels — a flat two-colour icon asked
+  // for five colours came back with three fabricated empty clusters.
+  const effectiveK = countDistinctColors(pixels, k);
 
   // Initialize centroids using K-means++
   let centroids = kMeansPlusPlusInit(pixels, effectiveK);
@@ -356,7 +401,10 @@ export class PaletteService {
    *
    * @param pixels - Array of RGB pixel values
    * @param options - Extraction options (colorCount, maxIterations, etc.)
-   * @returns Array of extracted colors sorted by dominance (most dominant first)
+   * @returns Array of extracted colors sorted by dominance (most dominant first).
+   *   At most `colorCount` entries, each with `pixelCount > 0`; fewer when the
+   *   image holds fewer distinct colors or a cluster ends up empty (BUG-036 —
+   *   it used to pad the array with 0-pixel duplicate clusters).
    *
    * @example
    * ```typescript
@@ -368,37 +416,87 @@ export class PaletteService {
   extractPalette(pixels: RGB[], options: PaletteExtractionOptions = {}): ExtractedColor[] {
     const opts = { ...PaletteService.DEFAULT_OPTIONS, ...options };
 
-    // Validate colorCount - INPUT-003: Log warning when clamping occurs
-    if (opts.colorCount < 1 || opts.colorCount > 10) {
+    // A colorCount that is not a finite number means the default. An explicit
+    // `{ colorCount: undefined }` survives the spread above (the repo does not
+    // enable exactOptionalPropertyTypes), and neither it nor NaN trips either
+    // side of the range check below, so the clamp returned NaN — which the
+    // BUG-036 distinct-colour cap never stops at, making k every distinct
+    // colour in the sample. ±Infinity has a nearer end to clamp to, but is no
+    // more a count a caller can mean, so it takes the default too.
+    let requestedCount = opts.colorCount;
+    if (!Number.isFinite(requestedCount)) {
       this.logger.warn(
-        `PaletteService.extractPalette: colorCount ${opts.colorCount} clamped to [1, 10] range`,
+        `PaletteService.extractPalette: colorCount ${String(requestedCount)} is not a finite number; using the default ${PaletteService.DEFAULT_OPTIONS.colorCount}`,
+      );
+      requestedCount = PaletteService.DEFAULT_OPTIONS.colorCount;
+    }
+
+    // colorCount is a maximum, so a fraction is floored: 2.5 means "at most 2",
+    // as CharacterColorService floors its match count (BUG-131). Unfloored,
+    // the distinct-colour cap counts until `seen.size >= 2.5` — that is, to 3 —
+    // and seeds one centroid more than the caller allowed.
+    const wholeCount = Math.floor(requestedCount);
+
+    // Validate colorCount - INPUT-003: Log warning when clamping occurs
+    if (wholeCount < 1 || wholeCount > 10) {
+      this.logger.warn(
+        `PaletteService.extractPalette: colorCount ${requestedCount} clamped to [1, 10] range`,
       );
     }
-    const colorCount = Math.max(1, Math.min(10, opts.colorCount));
+    const colorCount = Math.max(1, Math.min(10, wholeCount));
+
+    // A maxIterations that is not a finite number means the default, as for
+    // colorCount above: NaN or an explicit `undefined` trips neither side of
+    // the clamp below, which then returned NaN, and `iter < NaN` skipped every
+    // Lloyd iteration — the palette was just the k-means++ seeds.
+    let requestedIterations = opts.maxIterations;
+    if (!Number.isFinite(requestedIterations)) {
+      this.logger.warn(
+        `PaletteService.extractPalette: maxIterations ${String(requestedIterations)} is not a finite number; using the default ${PaletteService.DEFAULT_OPTIONS.maxIterations}`,
+      );
+      requestedIterations = PaletteService.DEFAULT_OPTIONS.maxIterations;
+    }
 
     // SECURITY: Clamp maxIterations to prevent DoS via algorithmic complexity
     // INPUT-003: Log warning when clamping occurs
-    if (opts.maxIterations < 1 || opts.maxIterations > 100) {
+    if (requestedIterations < 1 || requestedIterations > 100) {
       this.logger.warn(
-        `PaletteService.extractPalette: maxIterations ${opts.maxIterations} clamped to [1, 100] range`,
+        `PaletteService.extractPalette: maxIterations ${requestedIterations} clamped to [1, 100] range`,
       );
     }
-    const maxIterations = Math.max(1, Math.min(100, opts.maxIterations));
+    const maxIterations = Math.max(1, Math.min(100, requestedIterations));
 
     if (pixels.length === 0) {
       this.logger.warn('PaletteService.extractPalette: Empty pixel array');
       return [];
     }
 
+    // A maxSamples that is not a finite number means the default. NaN or an
+    // explicit `undefined` slips past the `< 2` guard below, Math.max(2, NaN)
+    // is NaN, and samplePixels then neither returns the input
+    // (`length <= NaN`) nor runs its loop (`i < NaN`) — every pixel was
+    // dropped and the call returned [] without a word.
+    let requestedSamples = opts.maxSamples;
+    if (!Number.isFinite(requestedSamples)) {
+      this.logger.warn(
+        `PaletteService.extractPalette: maxSamples ${String(requestedSamples)} is not a finite number; using the default ${PaletteService.DEFAULT_OPTIONS.maxSamples}`,
+      );
+      requestedSamples = PaletteService.DEFAULT_OPTIONS.maxSamples;
+    }
+    // A sample count is whole: samplePixels runs its loop ceil(n) times but
+    // spaces the picks by n - 1, so a fraction walked past the array's end
+    // (2.5 on 100 pixels read index 132 and threw).
+    requestedSamples = Math.floor(requestedSamples);
+
     // BUG-044 (2026-07-18 audit): clamp maxSamples like the sibling options —
     // maxSamples 1 hit a 0/0 = NaN in the sampling interpolation (TypeError
     // deep in k-means); ≤ 0 silently produced an empty sample set
-    if (opts.maxSamples < 2) {
+    if (requestedSamples < 2) {
       this.logger.warn(
-        `PaletteService.extractPalette: maxSamples ${opts.maxSamples} clamped to minimum 2`,
+        `PaletteService.extractPalette: maxSamples ${requestedSamples} clamped to minimum 2`,
       );
     }
-    const maxSamples = Math.max(2, opts.maxSamples);
+    const maxSamples = Math.max(2, requestedSamples);
 
     this.logger.info(`Extracting ${colorCount} colors from ${pixels.length} pixels`);
 
@@ -416,12 +514,18 @@ export class PaletteService {
     // Calculate total pixels for dominance percentage
     const totalPixels = clusterSizes.reduce((sum, size) => sum + size, 0);
 
-    // Build result array
-    const result: ExtractedColor[] = centroids.map((color, i) => ({
-      color,
-      dominance: totalPixels > 0 ? Math.round((clusterSizes[i] / totalPixels) * 100) : 0,
-      pixelCount: clusterSizes[i],
-    }));
+    // Build result array. BUG-036: drop any cluster that ended with no pixels —
+    // capping k at the distinct-colour count stops k-means++ seeding clones,
+    // but Lloyd's iterations can still strand a centroid (updateCentroids keeps
+    // an empty one where it was), and an empty cluster is not a colour the
+    // image holds. totalPixels is unchanged, since an empty cluster adds 0.
+    const result: ExtractedColor[] = centroids
+      .map((color, i) => ({
+        color,
+        dominance: totalPixels > 0 ? Math.round((clusterSizes[i] / totalPixels) * 100) : 0,
+        pixelCount: clusterSizes[i],
+      }))
+      .filter((extracted) => extracted.pixelCount > 0);
 
     // Sort by dominance (most dominant first)
     result.sort((a, b) => b.dominance - a.dominance);
@@ -437,7 +541,9 @@ export class PaletteService {
    * @param pixels - Array of RGB pixel values
    * @param dyeService - DyeService instance for matching
    * @param options - Extraction options
-   * @returns Array of palette matches sorted by dominance
+   * @returns Array of palette matches sorted by dominance — one per color
+   *   `extractPalette` returns, so at most `colorCount` entries; fewer when the
+   *   image holds fewer distinct colors or a cluster ends up empty
    *
    * @example
    * ```typescript
@@ -473,7 +579,7 @@ export class PaletteService {
         const distance = ColorService.getDistanceForMethod(
           hex,
           matchedDye.hex,
-          options.matchingMethod ?? DEFAULT_MATCHING_METHOD
+          options.matchingMethod ?? DEFAULT_MATCHING_METHOD,
         );
 
         matches.push({
