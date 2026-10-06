@@ -15,4 +15,4 @@
 Steps: In apps/web-app/src/services/indexeddb-service.ts delete getAll (277-310), count (345-377) and deleteDatabase (389-424, keeping the class's closing brace). In indexeddb-service.test.ts delete describe('getAll') 396-415, describe('count') 439-458 and describe('deleteDatabase') 476-495. Also delete the error-handling its at 694-725, 760-791 and 793-851, the mockStore getAll/count stubs at 64-69, and the mockIndexedDB.deleteDatabase stub (around 134-148). Run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `057cba2f` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

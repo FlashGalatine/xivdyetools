@@ -17,4 +17,4 @@ Steps: Delete apps/web-app/src/shared/__tests__/types.test.ts after porting any 
 Correction from the final adversarial check: Port the 8-digit alpha case ('#FF0000FF') to packages/types branded.test.ts first; every other case already has a counterpart in the package tests.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `7763d4e1` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).
