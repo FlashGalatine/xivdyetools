@@ -341,7 +341,7 @@ async function processFindCommand(
   env: Env,
   targetDyeId: number,
   named: string,
-  searchOptions: LedgerSearchOptions,
+  searchOptions: LedgerSearchOptions & { method: MatchingMethod },
   t: Translator,
   theme?: 'dark' | 'light',
   logger?: ExtendedLogger
@@ -350,15 +350,30 @@ async function processFindCommand(
     const world = await resolveNamedWorld(interaction, env, named, t, logger);
     if (world === null) return;
 
+    // The footer's key lines, decided once (REFACTOR-003): the card prints
+    // this list, and the calculator packs the rows above a footer of exactly
+    // this many lines — so every line has to be known here, before the ledger
+    // is built. Off ΔE2000 the method note follows the formula.
+    const method = searchOptions.method;
+    const keyLines = [t.t('card.budgetKey')];
+    if (method !== 'ciede2000') {
+      keyLines.push(t.t('card.budgetKeyMethod', { tag: methodTag(method) }));
+    }
+
     // FINDING-011: a player's home world is mildly identifying — the log
     // needs only to say that one was resolved, never which.
     if (logger) logger.info('Budget: building ledger', { hasWorld: Boolean(world) });
-    const result = await findBudgetLedger(env, targetDyeId, world, searchOptions, logger);
+    const result = await findBudgetLedger(
+      env,
+      targetDyeId,
+      world,
+      { ...searchOptions, keyLineCount: keyLines.length },
+      logger
+    );
 
     const locale = t.getLocale();
     await initializeLocale(locale);
 
-    const method = result.method;
     const localizedTargetName = getLocalizedDyeName(
       result.targetDye.itemID,
       result.targetDye.name,
@@ -422,11 +437,6 @@ async function processFindCommand(
         perDe: r.perDe !== null ? fmtPerDe(r.perDe, locale) : null,
       })),
     }));
-
-    const keyLines = [t.t('card.budgetKey')];
-    if (method !== 'ciede2000') {
-      keyLines.push(t.t('card.budgetKeyMethod', { tag: methodTag(method) }));
-    }
 
     const svg = generateBudgetLedger({
       target: {
