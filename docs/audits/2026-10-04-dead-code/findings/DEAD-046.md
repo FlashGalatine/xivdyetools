@@ -15,4 +15,4 @@
 Steps: 1) turbo.json: delete lines 130-134 (the `deploy` block) and the blank line 135, and fix the trailing comma on the preceding `clean` block. 2) Leave the 7 apps/*/package.json `deploy` scripts as they are. 3) Check `pnpm turbo run deploy --dry-run` now errors as an unknown task. 4) `pnpm turbo run build type-check lint test && pnpm dead-code:check && pnpm docs:check-links`.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `26e43a64` (branch `fix/remediation-2026-10-04-sprint20`, root 2.3.2; PR #276, open, on PR #264).

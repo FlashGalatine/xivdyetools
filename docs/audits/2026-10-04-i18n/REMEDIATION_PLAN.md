@@ -549,7 +549,9 @@ The mock fixes come first. Then the dead-code removals, ending with the self-ref
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/test-utils` (every consumer re-runs) → merge; private, so no publish and no deploy
 
-## Sprint 20 — root (CI/scripts): workflow and gate fixes
+## Sprint 20 — root (CI/scripts): workflow and gate fixes — PR #276 (open)
+
+**Done in PR #276** (root 2.3.2), stacked on #264. **Merging starts all 8 production deploys** (the deploy filters now watch the root inputs, which this PR changes): merge it after any PR with a hand-run D1 step, or put `[skip ci]` on the merge commit.
 
 **Fixes:**
 - deep-dive/BUG-152: CI concurrency cancels main-branch and nightly runs.

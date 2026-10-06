@@ -14,4 +14,4 @@
 - In the PR that schedules Phase 2, tick or replace the OPEN_ITEMS entry with the next real step and drop or refresh the inventory line numbers (cite patterns instead). No package publish needed.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `26e43a64` (branch `fix/remediation-2026-10-04-sprint20`, root 2.3.2; PR #276, open, on PR #264).

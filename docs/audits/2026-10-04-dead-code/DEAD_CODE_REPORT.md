@@ -326,8 +326,8 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 | DEAD-042 | OPEN | — |
 | DEAD-043 | OPEN | — |
 | DEAD-044 | OPEN | — |
-| DEAD-045 | OPEN | — |
-| DEAD-046 | OPEN | — |
+| DEAD-045 | REMOVED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
+| DEAD-046 | REMOVED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
 | DEAD-047 | KEEP | — |
 | DEAD-048 | KEEP | — |
 | DEAD-049 | KEEP | — |

@@ -486,11 +486,11 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-149 | OPEN | — |
 | BUG-150 | OPEN | — |
 | BUG-151 | OPEN | — |
-| BUG-152 | OPEN | — |
-| BUG-153 | OPEN | — |
-| BUG-154 | OPEN | — |
-| BUG-155 | OPEN | — |
-| BUG-156 | OPEN | — |
+| BUG-152 | FIX COMMITTED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
+| BUG-153 | FIX COMMITTED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
+| BUG-154 | FIX COMMITTED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
+| BUG-155 | FIX COMMITTED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
+| BUG-156 | FIX COMMITTED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
 | REFACTOR-001 | OPEN | — |
 | REFACTOR-002 | OPEN | — |
 | REFACTOR-003 | OPEN | — |
@@ -498,8 +498,8 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-005 | OPEN | — |
 | REFACTOR-006 | OPEN | — |
 | REFACTOR-007 | OPEN | — |
-| REFACTOR-008 | OPEN | — |
-| REFACTOR-009 | OPEN | — |
+| REFACTOR-008 | FIX COMMITTED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
+| REFACTOR-009 | FIX COMMITTED, NOT DEPLOYED (PR #276, open) | `26e43a64` |
 | OPT-001 | OPEN | — |
 | OPT-002 | OPEN | — |
 | OPT-003 | OPEN | — |
