@@ -17,17 +17,17 @@ import {
 } from '@xivdyetools/auth';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { isValidSnowflake } from '@xivdyetools/types';
+import { isReviewStatus, isValidSnowflake } from '@xivdyetools/types';
 import { clampChoiceName } from '../utils/embed-text.js';
 import type {
   CommunityPreset,
   PresetListResponse,
   ModerationStats,
   PresetFilters,
+  ReviewBinding,
 } from '@xivdyetools/types';
 import type { ModerationQueueEntry, ModerationPresetView } from '../types/preset.js';
 import { PresetAPIError, PresetReviewConflictError } from '../types/preset.js';
-import type { ReviewBinding } from '../utils/review-custom-id.js';
 
 // ============================================================================
 // Core Request Function
@@ -45,28 +45,23 @@ import type { ReviewBinding } from '../utils/review-custom-id.js';
  */
 const PRESETS_API_TIMEOUT_MS = 10_000;
 
-const REVIEW_STATUSES: ReadonlySet<string> = new Set([
-  'pending',
-  'approved',
-  'rejected',
-  'flagged',
-  'hidden',
-]);
-
-/** FINDING-017: trust the 409's `current` only when it has the documented shape. */
+/**
+ * FINDING-017: trust the 409's `current` only when it has the documented shape.
+ * The status words are the shared review list (`isReviewStatus`, REFACTOR-001):
+ * the same ones a review custom_id carries and presets-api accepts.
+ */
 function parseCurrent(value: unknown): PresetReviewConflictError['current'] {
   if (!value || typeof value !== 'object') return null;
   const { status, content_revision } = value as { status?: unknown; content_revision?: unknown };
   if (
-    typeof status !== 'string' ||
-    !REVIEW_STATUSES.has(status) ||
+    !isReviewStatus(status) ||
     typeof content_revision !== 'number' ||
     !Number.isSafeInteger(content_revision) ||
     content_revision < 0
   ) {
     return null;
   }
-  return { status: status as ModerationPresetView['status'], content_revision };
+  return { status, content_revision };
 }
 
 /**

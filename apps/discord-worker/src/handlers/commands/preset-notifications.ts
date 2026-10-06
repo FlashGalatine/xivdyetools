@@ -34,7 +34,7 @@ import { sendMessage } from '../../utils/discord-api.js';
 import { sanitizePresetName, sanitizePresetDescription } from '../../utils/sanitize.js';
 import { createTranslator } from '../../services/bot-i18n.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import type { PresetPreviousValues } from '@xivdyetools/types';
+import { buildReviewCustomIdOrLegacy, type PresetPreviousValues } from '@xivdyetools/types';
 
 /** Subset of preset fields the notifications need (CommunityPreset satisfies it) */
 export interface ModerationPresetInfo {
@@ -99,43 +99,12 @@ function moderationToken(env: Env): { token: string; buttonsRoutable: boolean } 
   return { token: env.DISCORD_TOKEN, buttonsRoutable: false };
 }
 
-const CUSTOM_ID_MAX = 100;
-
-// Copied from moderation-worker's review-custom-id.ts (parseReviewCustomId):
-// the revision is a non-negative decimal integer with no leading zeros, and the
-// status is one of the full words below. Keep in step with that parser.
-const REVISION_RE = /^(0|[1-9][0-9]*)$/;
-const REVIEW_STATUSES: ReadonlySet<string> = new Set([
-  'pending',
-  'approved',
-  'rejected',
-  'flagged',
-  'hidden',
-]);
-
-/**
- * FINDING-017: `preset_<kind>_<uuid>:<revision>:<status>` when both a valid
- * revision and status are known, otherwise the legacy `preset_<kind>_<uuid>`.
- */
-function reviewCustomId(
-  kind: 'approve' | 'reject' | 'revert',
-  presetId: string,
-  revision: number | null | undefined,
-  status: string | undefined
-): string {
-  const legacy = `preset_${kind}_${presetId}`;
-  if (
-    typeof revision !== 'number' ||
-    !Number.isSafeInteger(revision) ||
-    !REVISION_RE.test(String(revision)) ||
-    typeof status !== 'string' ||
-    !REVIEW_STATUSES.has(status)
-  ) {
-    return legacy;
-  }
-  const bound = `${legacy}:${revision}:${status}`;
-  return bound.length <= CUSTOM_ID_MAX ? bound : legacy;
-}
+// FINDING-017: the buttons carry `preset_<kind>_<uuid>:<revision>:<status>`
+// when a valid revision and status are known, otherwise the legacy
+// `preset_<kind>_<uuid>`. REFACTOR-001 (2026-10-04 deep-dive): this builder,
+// the status list and the parser moderation-worker reads the ids back with are
+// one module in @xivdyetools/types (preset/review-custom-id.ts), no longer a
+// hand-copied set kept "in step" here.
 
 /** The four text fields an edit's diff and a Revert snapshot cover. */
 type PresetText = Pick<ModerationPresetInfo, 'name' | 'description' | 'dyes' | 'tags'>;
@@ -266,14 +235,24 @@ export function buildModerationNotification(
         type: 2, // Button
         style: 3, // Success (green)
         label: adminT.t('webhook.buttons.approve'),
-        custom_id: reviewCustomId('approve', preset.id, opts.contentRevision, preset.status),
+        custom_id: buildReviewCustomIdOrLegacy(
+          'approve',
+          preset.id,
+          opts.contentRevision,
+          preset.status
+        ),
         emoji: { name: '✅' },
       },
       {
         type: 2, // Button
         style: 4, // Danger (red)
         label: adminT.t('webhook.buttons.reject'),
-        custom_id: reviewCustomId('reject', preset.id, opts.contentRevision, preset.status),
+        custom_id: buildReviewCustomIdOrLegacy(
+          'reject',
+          preset.id,
+          opts.contentRevision,
+          preset.status
+        ),
         emoji: { name: '❌' },
       },
       // BUG-003: an explicit opt-in, so being an edit alone never shows Revert
@@ -283,7 +262,12 @@ export function buildModerationNotification(
               type: 2 as const, // Button
               style: 4 as const, // Danger (red)
               label: adminT.t('webhook.buttons.revert'),
-              custom_id: reviewCustomId('revert', preset.id, opts.contentRevision, preset.status),
+              custom_id: buildReviewCustomIdOrLegacy(
+                'revert',
+                preset.id,
+                opts.contentRevision,
+                preset.status
+              ),
               emoji: { name: '↩️' },
             },
           ]

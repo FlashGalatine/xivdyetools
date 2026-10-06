@@ -3,8 +3,8 @@
  *
  * Handles approve/reject/revert buttons on moderation messages.
  *
- * Button custom_id patterns (FINDING-017 — full grammar in
- * `utils/review-custom-id.ts`):
+ * Button custom_id patterns (FINDING-017 — full grammar in `@xivdyetools/types`,
+ * `preset/review-custom-id.ts`, shared with discord-worker since REFACTOR-001):
  * - preset_approve_{presetId}:{revision}:{status} - Approve the reviewed revision
  * - preset_reject_{presetId}:{revision}:{status}  - Opens the rejection reason modal
  * - preset_revert_{presetId}:{revision}:{status}  - Opens the revert reason modal
@@ -24,8 +24,8 @@ import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import { STATUS_DISPLAY, PresetReviewConflictError } from '../../types/preset.js';
 import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
-import { buildReviewCustomId, parseReviewCustomId } from '../../utils/review-custom-id.js';
-import type { ParsedReviewId, ReviewBinding, ReviewKind } from '../../utils/review-custom-id.js';
+import { buildReviewCustomId, parseReviewCustomId } from '@xivdyetools/types';
+import type { ParsedReviewId, ReviewBinding, ReviewKind } from '@xivdyetools/types';
 import { editReviewMessage, refreshReview, withoutTransientFields } from '../review-message.js';
 
 /** MOD-4: shown when the approve button targets a banned author's preset. */

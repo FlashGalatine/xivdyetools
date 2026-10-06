@@ -3,12 +3,13 @@
  * again" recovery.
  *
  * A moderator click is only honoured when it names the revision and status the
- * moderator reviewed (see `utils/review-custom-id.ts`). Anything that cannot
- * name them — a button on a message posted before the change, a modal opened
- * from one, a 409 from presets-api, a typed `/preset moderate approve <id>` —
- * lands here instead of acting: the current preset is fetched, the message is
- * edited to show its CURRENT text with new revision-bound buttons, and the
- * moderator is told to review it and click again.
+ * moderator reviewed (see `parseReviewCustomId` in `@xivdyetools/types`).
+ * Anything that cannot name them — a button on a message posted before the
+ * change, a modal opened from one, a 409 from presets-api, a typed
+ * `/preset moderate approve <id>` — lands here instead of acting: the current
+ * preset is fetched, the message is edited to show its CURRENT text with new
+ * revision-bound buttons, and the moderator is told to review it and click
+ * again.
  *
  * Every edit built here carries `components` (an empty list when nothing is
  * actionable). An edit without them leaves the old live buttons in place — the
@@ -30,8 +31,8 @@ import {
 } from '../utils/discord-api.js';
 import type { SendMessageOptions } from '../utils/discord-api.js';
 import { sanitizeDescription, sanitizeName, sanitizeUserName } from '../utils/embed-text.js';
-import { buildReviewCustomId } from '../utils/review-custom-id.js';
-import type { ReviewBinding } from '../utils/review-custom-id.js';
+import { buildReviewCustomId } from '@xivdyetools/types';
+import type { ReviewAction, ReviewBinding } from '@xivdyetools/types';
 import * as presetApi from '../services/preset-api.js';
 
 /**
@@ -55,8 +56,6 @@ export interface ReviewInteraction {
     }>;
   };
 }
-
-type ReviewAction = 'approve' | 'reject' | 'revert';
 
 /** The click came from an ephemeral message: the `/preset moderate` confirmation. */
 function isEphemeral(interaction: ReviewInteraction): boolean {
