@@ -35,6 +35,7 @@ Rules:
 ### 🤖 A steadier Discord bot
 - Discord bot: `/preset submit` and `/preset edit` name the dye you picked twice, instead of a vague error.
 - Discord bot: `/gradient` names its start and end dyes in your language.
+- Discord bot: when your character file doesn't have the `/swatch` slot you asked for, the bot names that slot in your language.
 - Discord bot: if `/budget` can't find the world you asked for, only you see the message.
 - Discord bot: a hiccup while saving no longer wipes your preferences or your favourite presets.
 - Discord bot: `/extractor color` says when it couldn't draw the card, instead of saying no match was found.
