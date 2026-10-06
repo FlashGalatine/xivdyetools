@@ -6,8 +6,7 @@
  * random IDs (`randomId()`/`randomStringId()`) so parallel test runs don't
  * collide. `createMockDye()`'s default stainID is no longer one of those
  * random draws — it is a deterministic 1..254 sequence (`resetMockDyeSequence()`
- * restarts it between tests; `randomStainId()` is available opt-in for a
- * non-deterministic stainID).
+ * restarts it between tests).
  */
 
 export * from './preset.js';

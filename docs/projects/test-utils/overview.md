@@ -22,7 +22,8 @@ monorepo:
 "devDependencies": { "@xivdyetools/test-utils": "workspace:*" }
 ```
 
-Subpaths: `.`, `./cloudflare`, `./auth`, `./factories`, `./constants`.
+Subpaths: `.`, `./cloudflare`, `./factories`, `./constants`. The auth helpers
+are in the root barrel only (the `./auth` subpath was removed 2026-10-06, DEAD-044).
 
 ---
 
@@ -53,9 +54,10 @@ db._bindings;  // [['preset-1']]  — every binding array
 db._reset();
 ```
 
-`createMockD1()` is the same mock pre-cast to `D1Database`; reach the helpers
-back through `(db as unknown as MockD1Database)`. Also available:
-`_setBanStatus(isBanned)` and `_setBatchFailure(index, message?)`.
+`.first()` resolves `null`, never `undefined`, when the router returns nothing,
+like real D1 (BUG-147). Also available: `_setBanStatus(isBanned)` and
+`_setBatchFailure(index, message?)`. (`createMockD1()` was removed 2026-10-06,
+DEAD-042: no consumers.)
 
 ### KV Namespace Mock
 
@@ -68,9 +70,14 @@ await kv.put('rate:user123', '5', { expirationTtl: 60 });
 const value = await kv.get('rate:user123');
 
 kv._store;   // Map<string, string>
-kv._ttls;    // Map<string, number>
+kv._ttls;    // Map<string, number> — expiry in epoch seconds
 kv._reset();
 ```
+
+`put()` rejects an `expirationTtl` under 60 seconds like real KV. `list()` returns
+keys sorted lexicographically, at most 1000 per page, and resumes with
+`key > cursorKey`, so a cursor whose key was deleted or expired still continues
+(BUG-148).
 
 ### R2 Bucket Mock
 
@@ -85,6 +92,8 @@ const obj = await bucket.get('preview/abc.webp');
 bucket._store;   // Map<string, StoredR2Object>
 bucket._reset();
 ```
+
+`list()` sorts and resumes the same way as the KV mock (BUG-148).
 
 ### Service Binding (Fetcher) Mock
 
@@ -129,7 +138,6 @@ import {
   createMockCategoryRow,
   mockDyes,
   resetMockDyeSequence,
-  randomStainId,
 } from '@xivdyetools/test-utils/factories';
 
 const dye = createMockDye({ name: 'Test Red', category: 'Reds' });
@@ -137,8 +145,7 @@ const dye = createMockDye({ name: 'Test Red', category: 'Reds' });
 // advances a deterministic 1-254 sequence rather than drawing at random, and
 // THROWS once a suite builds more than 254 default-stainID dyes without
 // resetting it — call resetMockDyeSequence() (e.g. in `beforeEach`) between
-// tests, or use randomStainId() for an opt-in non-deterministic draw that
-// doesn't advance the sequence.
+// tests. (randomStainId() was removed 2026-10-06, DEAD-043: no consumers.)
 
 const row = createMockPresetRow({ status: 'pending' });   // a D1 PresetRow — `dyes`/`tags` are JSON strings
 const submission = createMockSubmission({ dyes: [1, 2, 3] });
@@ -156,7 +163,7 @@ are re-exported here.
 ## Auth Helpers
 
 ```typescript
-import { createTestJWT, createExpiredJWT, authHeaders } from '@xivdyetools/test-utils/auth';
+import { createTestJWT, createExpiredJWT, authHeaders } from '@xivdyetools/test-utils';
 
 const token = await createTestJWT('test-secret', { sub: 'user-123', username: 'TestUser' });
 // createTestJWT(secret, payload, expiresInSeconds = 3600, issuer = 'xivdyetools-oauth-worker')
