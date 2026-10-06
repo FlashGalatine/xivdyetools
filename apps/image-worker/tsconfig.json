@@ -5,11 +5,7 @@
     "declaration": false,
     "declarationMap": false,
     "noImplicitReturns": false,
-    "types": ["@cloudflare/workers-types", "node"],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "types": ["@cloudflare/workers-types", "node"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
