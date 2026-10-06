@@ -244,7 +244,6 @@ vi.mock('@services/index', () => ({
  */
 vi.mock('@services/indexeddb-service', () => ({
   indexedDBService: {
-    get: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(true),
     delete: vi.fn().mockResolvedValue(undefined),
   },
@@ -2007,13 +2006,15 @@ describe('ExtractorTool', () => {
      */
     describe('image privacy (FINDING-009)', () => {
       it('does not restore an image an earlier version left in IndexedDB', async () => {
+        // IndexedDBService has no single-key read any more (OPT-009 moved the
+        // price cache to entries()); the module's spies stay the sentinel.
         const { indexedDBService } = await import('@services/indexeddb-service');
-        vi.mocked(indexedDBService.get).mockResolvedValue('data:image/png;base64,AAAA');
 
         tool = mount();
         for (let i = 0; i < 8; i++) await flush();
 
-        expect(indexedDBService.get).not.toHaveBeenCalled();
+        expect(indexedDBService.set).not.toHaveBeenCalled();
+        expect(indexedDBService.delete).not.toHaveBeenCalled();
         expect(resultCards().length).toBe(0);
       });
 
@@ -2033,7 +2034,6 @@ describe('ExtractorTool', () => {
       it('drops a legacy localStorage image instead of restoring it', async () => {
         const { indexedDBService } = await import('@services/indexeddb-service');
         const { StorageService } = await import('@services/index');
-        vi.mocked(indexedDBService.get).mockResolvedValue(null);
         vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
           key === 'v3_matcher_image' ? ('data:image/png;base64,AAAA' as never) : (null as never)
         );

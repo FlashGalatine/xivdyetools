@@ -58,14 +58,8 @@ describe('IndexedDBService', () => {
         mockStoreData.clear();
         return createMockRequest(undefined);
       }),
-      getAllKeys: vi.fn(() => {
-        return createMockRequest(Array.from(mockStoreData.keys()));
-      }),
       getAll: vi.fn(() => {
         return createMockRequest(Array.from(mockStoreData.values()));
-      }),
-      count: vi.fn(() => {
-        return createMockRequest(mockStoreData.size);
       }),
       createIndex: vi.fn(),
     };
@@ -131,21 +125,6 @@ describe('IndexedDBService', () => {
     // Mock indexedDB
     const mockIndexedDB = {
       open: vi.fn().mockImplementation(() => createMockOpenRequest()),
-      deleteDatabase: vi.fn().mockImplementation(() => {
-        const request: MockIDBRequest = {
-          result: undefined,
-          error: null,
-          onsuccess: null,
-          onerror: null,
-          onblocked: null,
-        };
-        setTimeout(() => {
-          if (request.onsuccess) {
-            request.onsuccess({ target: request });
-          }
-        }, 0);
-        return request;
-      }),
     };
 
     // @ts-expect-error - assigning mock to global
@@ -301,31 +280,6 @@ describe('IndexedDBService', () => {
       await indexedDBService.initialize();
     });
 
-    describe('get', () => {
-      it('should get a value from store', async () => {
-        mockStoreData.set('testKey', { key: 'testKey', value: 'testValue' });
-
-        const result = await indexedDBService.get(STORES.SETTINGS, 'testKey');
-        expect(result).toBe('testValue');
-      });
-
-      it('should return null for non-existent key', async () => {
-        const result = await indexedDBService.get(STORES.SETTINGS, 'nonExistent');
-        expect(result).toBeNull();
-      });
-
-      it('should return null when not initialized', async () => {
-        // @ts-expect-error - reset singleton
-        IndexedDBService.instance = null;
-        // @ts-expect-error - assigning undefined to global
-        global.indexedDB = undefined;
-
-        const service = IndexedDBService.getInstance();
-        const result = await service.get(STORES.SETTINGS, 'testKey');
-        expect(result).toBeNull();
-      });
-    });
-
     describe('set', () => {
       it('should set a value in store', async () => {
         const result = await indexedDBService.set(STORES.SETTINGS, 'newKey', 'newValue');
@@ -369,48 +323,6 @@ describe('IndexedDBService', () => {
         const service = IndexedDBService.getInstance();
         const result = await service.delete(STORES.SETTINGS, 'key');
         expect(result).toBe(false);
-      });
-    });
-
-    describe('keys', () => {
-      it('should get all keys from store', async () => {
-        mockStoreData.set('key1', { key: 'key1', value: 'value1' });
-        mockStoreData.set('key2', { key: 'key2', value: 'value2' });
-
-        const result = await indexedDBService.keys(STORES.SETTINGS);
-        expect(result).toEqual(['key1', 'key2']);
-      });
-
-      it('should return empty array when not initialized', async () => {
-        // @ts-expect-error - reset singleton
-        IndexedDBService.instance = null;
-        // @ts-expect-error - assigning undefined to global
-        global.indexedDB = undefined;
-
-        const service = IndexedDBService.getInstance();
-        const result = await service.keys(STORES.SETTINGS);
-        expect(result).toEqual([]);
-      });
-    });
-
-    describe('getAll', () => {
-      it('should get all values from store', async () => {
-        mockStoreData.set('key1', { key: 'key1', value: 'value1' });
-        mockStoreData.set('key2', { key: 'key2', value: 'value2' });
-
-        const result = await indexedDBService.getAll<string>(STORES.SETTINGS);
-        expect(result).toEqual(['value1', 'value2']);
-      });
-
-      it('should return empty array when not initialized', async () => {
-        // @ts-expect-error - reset singleton
-        IndexedDBService.instance = null;
-        // @ts-expect-error - assigning undefined to global
-        global.indexedDB = undefined;
-
-        const service = IndexedDBService.getInstance();
-        const result = await service.getAll(STORES.SETTINGS);
-        expect(result).toEqual([]);
       });
     });
 
@@ -474,27 +386,6 @@ describe('IndexedDBService', () => {
         const service = IndexedDBService.getInstance();
         const result = await service.clear(STORES.SETTINGS);
         expect(result).toBe(false);
-      });
-    });
-
-    describe('count', () => {
-      it('should return count of entries in store', async () => {
-        mockStoreData.set('key1', 'value1');
-        mockStoreData.set('key2', 'value2');
-
-        const result = await indexedDBService.count(STORES.SETTINGS);
-        expect(result).toBe(2);
-      });
-
-      it('should return 0 when not initialized', async () => {
-        // @ts-expect-error - reset singleton
-        IndexedDBService.instance = null;
-        // @ts-expect-error - assigning undefined to global
-        global.indexedDB = undefined;
-
-        const service = IndexedDBService.getInstance();
-        const result = await service.count(STORES.SETTINGS);
-        expect(result).toBe(0);
       });
     });
   });
@@ -565,27 +456,6 @@ describe('IndexedDBService', () => {
     });
   });
 
-  describe('deleteDatabase', () => {
-    it('should delete the database', async () => {
-      await indexedDBService.initialize();
-      const result = await indexedDBService.deleteDatabase();
-
-      expect(result).toBe(true);
-      expect(global.indexedDB.deleteDatabase).toHaveBeenCalled();
-    });
-
-    it('should return false when IndexedDB is not supported', async () => {
-      // @ts-expect-error - reset singleton
-      IndexedDBService.instance = null;
-      // @ts-expect-error - assigning undefined to global
-      global.indexedDB = undefined;
-
-      const service = IndexedDBService.getInstance();
-      const result = await service.deleteDatabase();
-      expect(result).toBe(false);
-    });
-  });
-
   describe('Error Handling', () => {
     it('should handle open error', async () => {
       // Mock open to fail
@@ -647,41 +517,6 @@ describe('IndexedDBService', () => {
       const service = IndexedDBService.getInstance();
       const result = await service.initialize();
       expect(result).toBe(false);
-    });
-
-    it('should handle get error', async () => {
-      await indexedDBService.initialize();
-
-      // Create a failing get request
-      mockStore.get = vi.fn(() => {
-        const request: MockIDBRequest = {
-          result: undefined,
-          error: new Error('Get failed'),
-          onsuccess: null,
-          onerror: null,
-        };
-        setTimeout(() => {
-          if (request.onerror) {
-            request.onerror({ target: request });
-          }
-        }, 0);
-        return request;
-      });
-
-      const result = await indexedDBService.get(STORES.SETTINGS, 'testKey');
-      expect(result).toBeNull();
-    });
-
-    it('should handle get exception', async () => {
-      await indexedDBService.initialize();
-
-      // Make transaction throw
-      mockDB.transaction = vi.fn(() => {
-        throw new Error('Transaction error');
-      });
-
-      const result = await indexedDBService.get(STORES.SETTINGS, 'testKey');
-      expect(result).toBeNull();
     });
 
     it('should handle set error', async () => {
@@ -750,72 +585,6 @@ describe('IndexedDBService', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle keys error', async () => {
-      await indexedDBService.initialize();
-
-      mockStore.getAllKeys = vi.fn(() => {
-        const request: MockIDBRequest = {
-          result: undefined,
-          error: new Error('GetAllKeys failed'),
-          onsuccess: null,
-          onerror: null,
-        };
-        setTimeout(() => {
-          if (request.onerror) {
-            request.onerror({ target: request });
-          }
-        }, 0);
-        return request;
-      });
-
-      const result = await indexedDBService.keys(STORES.SETTINGS);
-      expect(result).toEqual([]);
-    });
-
-    it('should handle keys exception', async () => {
-      await indexedDBService.initialize();
-
-      mockDB.transaction = vi.fn(() => {
-        throw new Error('Transaction error');
-      });
-
-      const result = await indexedDBService.keys(STORES.SETTINGS);
-      expect(result).toEqual([]);
-    });
-
-    it('should handle getAll error', async () => {
-      await indexedDBService.initialize();
-
-      mockStore.getAll = vi.fn(() => {
-        const request: MockIDBRequest = {
-          result: undefined,
-          error: new Error('GetAll failed'),
-          onsuccess: null,
-          onerror: null,
-        };
-        setTimeout(() => {
-          if (request.onerror) {
-            request.onerror({ target: request });
-          }
-        }, 0);
-        return request;
-      });
-
-      const result = await indexedDBService.getAll(STORES.SETTINGS);
-      expect(result).toEqual([]);
-    });
-
-    it('should handle getAll exception', async () => {
-      await indexedDBService.initialize();
-
-      mockDB.transaction = vi.fn(() => {
-        throw new Error('Transaction error');
-      });
-
-      const result = await indexedDBService.getAll(STORES.SETTINGS);
-      expect(result).toEqual([]);
-    });
-
     it('should handle entries error', async () => {
       await indexedDBService.initialize();
       mockStoreData.set('key1', { key: 'key1', value: 'value1' });
@@ -881,99 +650,6 @@ describe('IndexedDBService', () => {
       });
 
       const result = await indexedDBService.clear(STORES.SETTINGS);
-      expect(result).toBe(false);
-    });
-
-    it('should handle count error', async () => {
-      await indexedDBService.initialize();
-
-      mockStore.count = vi.fn(() => {
-        const request: MockIDBRequest = {
-          result: undefined,
-          error: new Error('Count failed'),
-          onsuccess: null,
-          onerror: null,
-        };
-        setTimeout(() => {
-          if (request.onerror) {
-            request.onerror({ target: request });
-          }
-        }, 0);
-        return request;
-      });
-
-      const result = await indexedDBService.count(STORES.SETTINGS);
-      expect(result).toBe(0);
-    });
-
-    it('should handle count exception', async () => {
-      await indexedDBService.initialize();
-
-      mockDB.transaction = vi.fn(() => {
-        throw new Error('Transaction error');
-      });
-
-      const result = await indexedDBService.count(STORES.SETTINGS);
-      expect(result).toBe(0);
-    });
-
-    it('should handle deleteDatabase error', async () => {
-      await indexedDBService.initialize();
-
-      const idbMock = global.indexedDB as unknown as Record<string, unknown>;
-      idbMock.deleteDatabase = vi.fn().mockImplementation(() => {
-        const request: MockIDBRequest = {
-          result: undefined,
-          error: new Error('Delete database failed'),
-          onsuccess: null,
-          onerror: null,
-          onblocked: null,
-        };
-        setTimeout(() => {
-          if (request.onerror) {
-            request.onerror({ target: request });
-          }
-        }, 0);
-        return request;
-      });
-
-      const result = await indexedDBService.deleteDatabase();
-      expect(result).toBe(false);
-    });
-
-    it('should handle deleteDatabase blocked', async () => {
-      await indexedDBService.initialize();
-
-      const idbMock = global.indexedDB as unknown as Record<string, unknown>;
-      idbMock.deleteDatabase = vi.fn().mockImplementation(() => {
-        const request: MockIDBRequest = {
-          result: undefined,
-          error: null,
-          onsuccess: null,
-          onerror: null,
-          onblocked: null,
-        };
-        setTimeout(() => {
-          if (request.onblocked) {
-            request.onblocked({ target: request });
-          }
-        }, 0);
-        return request;
-      });
-
-      const result = await indexedDBService.deleteDatabase();
-      expect(result).toBe(false);
-    });
-
-    it('should handle deleteDatabase exception', async () => {
-      await indexedDBService.initialize();
-
-      const idbMock = global.indexedDB as unknown as Record<string, unknown>;
-      idbMock.deleteDatabase = vi.fn().mockImplementation(() => {
-        throw new Error('Delete database error');
-      });
-
-      const result = await indexedDBService.deleteDatabase();
       expect(result).toBe(false);
     });
 

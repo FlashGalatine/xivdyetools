@@ -228,13 +228,6 @@ describe('LanguageService', () => {
     });
   });
 
-  describe('getLabel', () => {
-    it('should return localized label', () => {
-      const result = LanguageService.getLabel('category');
-      expect(typeof result).toBe('string');
-    });
-  });
-
   // ==========================================================================
   // Utility Methods
   // ==========================================================================
@@ -255,17 +248,6 @@ describe('LanguageService', () => {
       expect(LanguageService.isValidLocale(null)).toBe(false);
       expect(LanguageService.isValidLocale(undefined)).toBe(false);
       expect(LanguageService.isValidLocale(123)).toBe(false);
-    });
-  });
-
-  describe('preloadLocales', () => {
-    it('should preload multiple locales without error', async () => {
-      // Should not throw
-      await expect(LanguageService.preloadLocales(['ja', 'de'])).resolves.not.toThrow();
-    });
-
-    it('should handle empty array', async () => {
-      await expect(LanguageService.preloadLocales([])).resolves.not.toThrow();
     });
   });
 
@@ -425,35 +407,6 @@ describe('LanguageService Preload and Cache', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-  });
-
-  describe('preloadLocales behavior', () => {
-    it('should skip already cached locales', async () => {
-      // First, load Japanese
-      await LanguageService.setLocale('ja');
-
-      // Now preload - ja should be skipped (already cached)
-      await LanguageService.preloadLocales(['ja', 'de']);
-
-      // Verify both locales are accessible
-      await LanguageService.setLocale('ja');
-      expect(LanguageService.getCurrentLocale()).toBe('ja');
-
-      await LanguageService.setLocale('de');
-      expect(LanguageService.getCurrentLocale()).toBe('de');
-    });
-
-    it('should handle mixed cached and uncached locales', async () => {
-      // Load some locales first
-      await LanguageService.setLocale('fr');
-
-      // Preload mix of cached (fr) and uncached (ko)
-      await LanguageService.preloadLocales(['fr', 'ko']);
-
-      // Both should be accessible
-      await LanguageService.setLocale('ko');
-      expect(LanguageService.getCurrentLocale()).toBe('ko');
-    });
   });
 
   describe('clearCache behavior', () => {
@@ -626,7 +579,7 @@ describe('translation loading resilience', () => {
     };
 
     LanguageService.clearCache();
-    await LanguageService.preloadLocales(['en', 'de']);
+    await Promise.all([service.loadWebAppTranslations('en'), service.loadWebAppTranslations('de')]);
 
     // Hold the 'ja' chunk until the 'de' switch has finished
     let releaseJa: () => void = () => {};

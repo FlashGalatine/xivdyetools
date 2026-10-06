@@ -202,7 +202,6 @@ export class IndexedDBCacheBackend implements ICacheBackend {
 export class APIService {
   private static instance: CoreAPIService | null = null;
   private static cacheBackend: IndexedDBCacheBackend | null = null;
-  private static initialized: boolean = false;
 
   /**
    * Get singleton instance of APIService
@@ -226,7 +225,6 @@ export class APIService {
 
       // Initialize cache backend asynchronously (won't block)
       void APIService.cacheBackend.initialize().then(() => {
-        APIService.initialized = true;
         const dbg = (logger as unknown as Record<string, unknown>).debug as
           ((...args: unknown[]) => void) | undefined;
         if (typeof dbg === 'function') {
@@ -241,13 +239,6 @@ export class APIService {
   }
 
   /**
-   * Check if the cache backend is fully initialized
-   */
-  static isInitialized(): boolean {
-    return APIService.initialized;
-  }
-
-  /**
    * Reset singleton (for testing)
    */
   static resetInstance(): void {
@@ -255,29 +246,10 @@ export class APIService {
   }
 
   /**
-   * Format price with commas and G suffix
-   * Delegates to core APIService
-   */
-  static formatPrice(price: number): string {
-    return CoreAPIService.formatPrice(price);
-  }
-
-  /**
    * Clear all cached price data
    */
   static async clearCache(): Promise<void> {
     return APIService.getInstance().clearCache();
-  }
-
-  /**
-   * Get price data for a specific item
-   */
-  static async getPriceData(
-    itemID: number,
-    worldID?: number,
-    dataCenterID?: string
-  ): Promise<PriceData | null> {
-    return APIService.getInstance().getPriceData(itemID, worldID, dataCenterID);
   }
 }
 
