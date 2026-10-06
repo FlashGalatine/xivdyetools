@@ -18,7 +18,8 @@ with a `SKILL.md` (`name` + `description` frontmatter) plus scripts and referenc
 Use a matching skill when the task fits its description or the user names it, and read only the
 references that skill names.
 
-Before executing any skill, read
+Before executing any skill, and before delegating any step of a remediation sprint (which no skill
+drives), read
 [.agents/skills/audit-shared/model-routing.md](.agents/skills/audit-shared/model-routing.md). It
 maps the skills' `collector` / `worker` / `verifier` roles to your runtime's models, effort levels
 and tools, and lists what is never delegated (user approval, commits and pushes, outward-facing
