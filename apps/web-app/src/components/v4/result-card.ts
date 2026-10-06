@@ -99,16 +99,12 @@ export interface ResultCardData {
  * - Transform: gradient, mixer
  * - External: universalis, garlandtools, teamcraft, saddlebag
  *
- * Also includes legacy action names for backwards compatibility with
- * existing tool components that listen for context-action events. This
- * file's own emitters (`handleSlotAction`, `handleMenuAction` below) only
- * ever produce `inspect-*` / `transform-*` / `external-*` /
- * `add-mixer-slot-*` — the five `add-comparison` / `add-mixer` /
- * `add-accessibility` / `see-harmonies` / `budget` legacy members are dead
- * from ResultCard's own emitters and were removed from swatch-tool.ts and
- * mixer-tool.ts's handlers as unreachable (REFACTOR-001); they stay in this
- * vocabulary because budget-tool.ts, gradient-tool.ts and harmony-tool.ts
- * still handle them.
+ * Beyond those three groups, only the slot picker's pair remains:
+ * `add-mixer-slot-1` / `add-mixer-slot-2` (`handleSlotAction` below). This
+ * file's emitters produce nothing else, and the six legacy members that no
+ * emitter produced (`add-comparison`, `add-mixer`, `add-accessibility`,
+ * `see-harmonies`, `budget`, `copy-hex`) were removed with their handler
+ * cases in the tools (DEAD-003).
  */
 export const CONTEXT_ACTIONS = [
   // Inspect Dye in...
@@ -125,13 +121,7 @@ export const CONTEXT_ACTIONS = [
   'external-garlandtools',
   'external-teamcraft',
   'external-saddlebag',
-  // Legacy actions (for backwards compatibility with existing tool components)
-  'add-comparison', // → use 'inspect-comparison'
-  'add-mixer', // → use 'transform-mixer'
-  'add-accessibility', // → use 'inspect-accessibility'
-  'see-harmonies', // → use 'inspect-harmony'
-  'budget', // → use 'inspect-budget'
-  'copy-hex', // kept for clipboard functionality
+  // Slot picker (Select Dye → choose a slot)
   'add-mixer-slot-1',
   'add-mixer-slot-2',
 ] as const;

@@ -1532,9 +1532,11 @@ describe('GradientTool', () => {
   });
 
   // ==========================================================================
-  // BUG-040: RouterService must be imported through the @services/index
-  // barrel this suite mocks (line 44), or the mock above is inert and this
-  // assertion would pass vacuously against the REAL RouterService.
+  // Every action the result card performs itself is a no-op in the tool.
+  // DEAD-003 removed the legacy actions the tool handled, and with them its
+  // only RouterService call; BUG-040's lint rule keeps any future import on
+  // the @services/index barrel this suite mocks, so the not-called
+  // assertions below cannot pass against the REAL RouterService.
   // ==========================================================================
 
   describe('context actions — hand off to another tool', () => {
@@ -1544,17 +1546,6 @@ describe('GradientTool', () => {
           handleContextAction: (action: string, dye: unknown) => void;
         }
       ).handleContextAction(action, dye(1));
-
-    // Every action the result card performs itself is a no-op below, so this
-    // pins the barrel import on a legacy action the tool still handles.
-    it('the legacy budget action navigates via the barrel-mocked RouterService', async () => {
-      tool = mount();
-      const { RouterService } = await import('@services/index');
-
-      contextAction('budget');
-
-      expect(RouterService.navigateTo).toHaveBeenCalledWith('budget');
-    });
 
     // The 2026-10-04 Sprint 5 review: the result card performs each of these
     // before it emits the action, so the tool repeating it navigated twice and

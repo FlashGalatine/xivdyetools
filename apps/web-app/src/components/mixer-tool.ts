@@ -36,7 +36,6 @@ import {
   ToastService,
   MarketBoardService,
   // WEB-REF-003 FIX: Import from extracted blending engine
-  blendColors,
   findMatchingDyes as findMatchingDyesEngine,
   getContrastColor,
 } from '@services/index';
@@ -300,13 +299,10 @@ export class MixerTool extends BaseComponent {
    */
   private blendColorsInternal(hexColors: string[]): string {
     // The mixer is a two-dye pair: honour the tapped ratio instead of
-    // re-blending 50/50 every time something else changes. blendColors is
-    // still the path for any other arity (it weights equally).
-    if (hexColors.length === 2) {
-      // mixRatio is A's share; blendTwoColors' t runs toward B.
-      return blendTwoColors(hexColors[0], hexColors[1], this.mixingMode, 1 - this.mixRatio);
-    }
-    return blendColors(hexColors, this.mixingMode);
+    // re-blending 50/50 every time something else changes. Every caller
+    // passes the filled pair, since nothing fills a third slot (BUG-098).
+    // mixRatio is A's share; blendTwoColors' t runs toward B.
+    return blendTwoColors(hexColors[0], hexColors[1], this.mixingMode, 1 - this.mixRatio);
   }
 
   /**
@@ -421,13 +417,9 @@ export class MixerTool extends BaseComponent {
     }
 
     // Display each selected dye with role label
-    const labels = [
-      LanguageService.t('mixer.dye1'),
-      LanguageService.t('mixer.dye2'),
-      LanguageService.t('mixer.dye3'),
-    ];
+    const labels = [LanguageService.t('mixer.dye1'), LanguageService.t('mixer.dye2')];
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       const dye = this.selectedDyes[i];
       if (!dye) continue;
 
@@ -1267,10 +1259,8 @@ export class MixerTool extends BaseComponent {
 
     const dyeA = this.selectedDyes[0];
     const dyeB = this.selectedDyes[1];
-    // The field is the map of the pair. Legacy: the `selectedDyes[2]` check is
-    // unreachable since BUG-098 (nothing fills a third slot any more); it and
-    // the n-ary blend path are left for the Sprint 23 dead-code pass.
-    if (!dyeA || !dyeB || this.selectedDyes[2]) return;
+    // The field is the map of the pair.
+    if (!dyeA || !dyeB) return;
 
     const MONO = 'var(--font-mono)';
     const MODELS = [...MIXING_MODES];
@@ -1727,9 +1717,8 @@ export class MixerTool extends BaseComponent {
   /**
    * Create a dye input slot (100x100px)
    * @param index - Slot index (0, 1, or 2)
-   * @param isOptional - If true, shows different placeholder for optional slot
    */
-  private createDyeSlot(index: 0 | 1 | 2, isOptional: boolean = false): HTMLElement {
+  private createDyeSlot(index: 0 | 1 | 2): HTMLElement {
     const dye = this.selectedDyes[index];
     const size = SLOT_SIZE.input;
 
@@ -1754,7 +1743,6 @@ export class MixerTool extends BaseComponent {
           position: relative;
           overflow: hidden;
           flex-shrink: 0;
-          ${isOptional && !dye ? 'opacity: 0.6;' : ''}
         `,
       },
     });
@@ -1809,35 +1797,16 @@ export class MixerTool extends BaseComponent {
     } else {
       // Empty slot placeholder
       const plusSign = this.createElement('span', {
-        textContent: isOptional ? '?' : '+',
+        textContent: '+',
         attributes: {
           style: `
-            font-size: ${isOptional ? '28px' : '32px'};
+            font-size: 32px;
             font-weight: 300;
-            color: rgba(255, 255, 255, ${isOptional ? '0.3' : '0.4'});
+            color: rgba(255, 255, 255, 0.4);
           `,
         },
       });
       slot.appendChild(plusSign);
-
-      // Show "Optional" label for slot 3
-      if (isOptional) {
-        const optionalLabel = this.createElement('span', {
-          textContent: LanguageService.t('common.optional'),
-          attributes: {
-            style: `
-              font-size: 9px;
-              font-weight: 500;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              color: rgba(255, 255, 255, 0.3);
-              position: absolute;
-              bottom: 8px;
-            `,
-          },
-        });
-        slot.appendChild(optionalLabel);
-      }
     }
 
     // Hover effect
@@ -2150,12 +2119,6 @@ export class MixerTool extends BaseComponent {
         this.selectedDyes[1] = dye;
         this.handleDyeSelection(this.selectedDyes.filter((d): d is Dye => d !== null));
         ToastService.success(LanguageService.t('mixer.replacedSlot2'));
-        break;
-
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(LanguageService.t('success.copiedToClipboard'));
-        });
         break;
     }
   }

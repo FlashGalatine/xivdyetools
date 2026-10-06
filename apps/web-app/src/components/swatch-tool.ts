@@ -22,7 +22,6 @@ import {
   MarketBoardService,
   RouterService,
   StorageService,
-  ToastService,
 } from '@services/index';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 // Type-only: RouterService itself comes through the barrel above
@@ -64,7 +63,7 @@ import type {
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
 import { METHOD_TAGS } from '@shared/method-tags';
-import type { ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCardData } from '@components/v4/result-card';
 // Import v4-result-card custom element to ensure it's registered
 import '@components/v4/result-card';
 // Import v4-share-button for share functionality
@@ -425,9 +424,6 @@ export class SwatchTool extends BaseComponent {
   private mobileGenderSelect: HTMLSelectElement | null = null;
   private mobileCategorySelect: HTMLSelectElement | null = null;
 
-  // Subscriptions
-  private resultsPanelMediaQueryCleanup: (() => void) | null = null;
-
   constructor(container: HTMLElement, options: SwatchToolOptions) {
     super(container);
     this.options = options;
@@ -572,8 +568,6 @@ export class SwatchTool extends BaseComponent {
   }
 
   destroy(): void {
-    this.resultsPanelMediaQueryCleanup?.();
-
     // Only the views go: the loaded file stays in CharaSessionService.
     this.destroyChara();
     this.destroyChildComponents();
@@ -2618,27 +2612,7 @@ export class SwatchTool extends BaseComponent {
       (card as unknown as { showAcquisition: boolean }).showAcquisition =
         this.displayOptions.showAcquisition;
 
-      // Listen for context actions (both primary button and context menu trigger this)
-      card.addEventListener('context-action', ((
-        e: CustomEvent<{ action: ContextAction; dye: Dye }>
-      ) => {
-        this.handleContextAction(e.detail.action, e.detail.dye);
-      }) as EventListener);
-
       this.matchResultsContainer.appendChild(card);
-    }
-  }
-
-  /**
-   * Handle context menu actions from result cards
-   */
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    switch (action) {
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(LanguageService.t('success.copiedToClipboard'));
-        });
-        break;
     }
   }
 
