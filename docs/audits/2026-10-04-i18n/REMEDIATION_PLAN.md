@@ -376,7 +376,13 @@ Details are in the re-verification file's *Sprint 7* section.
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-presets-api` → merge → `deploy-presets-api.yml` (no D1 migration)
 
-## Sprint 9 — discord-worker: one moderation-notification path, KV failure handling
+## Sprint 9 — discord-worker: one moderation-notification path, KV failure handling — PR #257 (open)
+
+**Done in PR #257** (discord-worker 5.8.4, bot-logic 4.7.0, presets-api 2.6.0), stacked on #256. Everything below is fixed except OPT-003, which needs a presets-api `?ids=` batch endpoint first, and OPT-005, which is per-isolate only.
+- **presets-api grew one field.** The webhook only had `previous_values` to diff an edit against, and that is the Revert target, not the replaced text. 2.6.0 sends `edited_from`, the text the edit replaced; the bot diffs against it and labels Revert by what it restores.
+- **Command shapes changed after all:** free-text options gain `max_length` (BUG-044's schema half) and the clan/gender descriptions are reworded ×6 (BUG-049). The deploy workflow re-registers them.
+- **Also here:** the `/swatch slot:` refusal names the slot in the reader's language (from the Sprints 2+3 notes), and the moderation and submission-log embeds print the category's display name.
+- **Recorded, not fixed:** `refusePrivately` sends nothing when the delete succeeds and the follow-up fails (logged only); a favourite marked `gone` is never looked up again; `/preferences set`'s Universalis-outage reply is not marked `upstream_universalis`; a v1 favourites blob that will not parse still throws; `edited_from` carries name, description, tags and dyes only.
 
 **deep-dive/BUG-004:** the bot and the presets-api webhook both post for bot submissions.
 - Drop the bot-side posts.
@@ -414,7 +420,7 @@ Details are in the re-verification file's *Sprint 7* section.
 | [deep-dive/OPT-005](../2026-10-04-deep-dive/findings/OPT-005.md) | deep-dive | Opt LOW · MAIN | preferences legacy-key migration re-reads two dead KV keys on every call for users with no prefs blob |
 | [dead-code/DEAD-024](../2026-10-04-dead-code/findings/DEAD-024.md) | dead-code | Conf HIGH / Blast NONE · REMOVE | CommandRegistryEntry.deprecated in registry.ts is never set or read in production: 2 lines + 3-line test |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-discord-worker` → merge → `deploy-discord-worker.yml` (CI runs `register-commands`; no command shape changes)
+**Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/bot-logic --filter=...xivdyetools-presets-api` → merge → `deploy-discord-worker.yml` (CI runs `register-commands`; this sprint changes command shapes: `max_length` and the clan/gender descriptions) and `deploy-presets-api.yml` (presets-api 2.6.0)
 
 ## Sprint 10 — oauth: limiter keying, null bodies
 
@@ -570,6 +576,8 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 | [dead-code/DEAD-026](../2026-10-04-dead-code/findings/DEAD-026.md) | dead-code | Conf HIGH / Blast LOW · REMOVE | getPreset in moderation-worker services/preset-api.ts is test-only: 13 src lines + 34 test lines |
 | [dead-code/DEAD-030](../2026-10-04-dead-code/findings/DEAD-030.md) | dead-code | Conf HIGH / Blast LOW · REMOVE | moderation-worker bot-i18n.ts: older orphan strings (preset.categories.*, three ban.* keys, the meta block, common.success) — 24 source + 12 test lines |
 | [dead-code/DEAD-029](../2026-10-04-dead-code/findings/DEAD-029.md) | dead-code | Conf MEDIUM / Blast LOW · REMOVE WITH CAUTION | Legacy base64-username suffix parsing in ban-reason.ts:57-92 and ban-confirmation.ts:70-78 is unreachable: no emitter has produced the suffix since the 2026-08-21 FINDING-007 fix, and those flows are ephemeral — about 16 source lines, with a test-fixture rewrite |
+
+**From Sprint 9 (PR #257): the refresh Revert.** `review-message.ts` `actionsFor` still offers Revert on any pending preset with a snapshot. Apply the three-part rule (`is_edit`, a well-formed `previous_values`, `edited_from_status === 'approved'`). A refresh cannot show the edit's diff: `edited_from` travels only on the webhook and is never stored, and `GET /moderation/:id` has no edit marker either. So either refresh without a diff and without Revert unless the rule can be checked, or grow presets-api to persist the edit base first; decide before scheduling.
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-moderation-worker` → merge → `deploy-moderation-worker.yml` (commands are registered by hand; shapes unchanged)
 

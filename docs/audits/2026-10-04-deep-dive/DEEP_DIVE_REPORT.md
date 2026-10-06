@@ -336,11 +336,11 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | ID | Status | Commit |
 |---|---|---|
 | BUG-001 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
-| BUG-002 | OPEN | — |
-| BUG-003 | PARTIALLY FIXED (presets-api half in PR #256; discord-worker in Sprint 9) | `8c264798` |
-| BUG-004 | OPEN | — |
-| BUG-005 | OPEN | — |
-| BUG-006 | OPEN | — |
+| BUG-002 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-003 | FIX COMMITTED, NOT DEPLOYED (PR #256 + PR #257, open) | `8c264798`, `f1174a47`, `a9dac980` |
+| BUG-004 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-005 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-006 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-007 | OPEN | — |
 | BUG-008 | OPEN | — |
 | BUG-009 | OPEN | — |
@@ -375,15 +375,15 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-038 | OPEN | — |
 | BUG-039 | OPEN | — |
 | BUG-040 | OPEN | — |
-| BUG-041 | OPEN | — |
-| BUG-042 | OPEN | — |
-| BUG-043 | OPEN | — |
-| BUG-044 | OPEN | — |
-| BUG-045 | OPEN | — |
-| BUG-046 | OPEN | — |
-| BUG-047 | OPEN | — |
-| BUG-048 | OPEN | — |
-| BUG-049 | OPEN | — |
+| BUG-041 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-042 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-043 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-044 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-045 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-046 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-047 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-048 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| BUG-049 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-050 | OPEN | — |
 | BUG-051 | OPEN | — |
 | BUG-052 | OPEN | — |
@@ -492,7 +492,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-155 | OPEN | — |
 | BUG-156 | OPEN | — |
 | REFACTOR-001 | OPEN | — |
-| REFACTOR-002 | OPEN | — |
+| REFACTOR-002 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | REFACTOR-003 | OPEN | — |
 | REFACTOR-004 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
 | REFACTOR-005 | FIX COMMITTED, NOT DEPLOYED (PR #255, open) | `51a058de` + `ccda155f` + `7c187084` |
@@ -502,9 +502,9 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-009 | PARTIALLY FIXED 2026-10-05 (OPEN_ITEMS half; DOMAIN_DEPRECATION in Sprint 20) | `223b839f` |
 | OPT-001 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
 | OPT-002 | OPEN | — |
-| OPT-003 | OPEN | — |
-| OPT-004 | OPEN | — |
-| OPT-005 | OPEN | — |
+| OPT-003 | OPEN (needs presets-api `?ids=`) | — |
+| OPT-004 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
+| OPT-005 | PARTIALLY FIXED (PR #257, open) | `a9dac980` |
 | OPT-006 | OPEN | — |
 | OPT-007 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
 | OPT-008 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
