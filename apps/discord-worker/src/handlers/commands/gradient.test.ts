@@ -366,7 +366,7 @@ describe('handleGradientCommand', () => {
       await handleGradientCommand(interaction(colorOptions()), env, ctx);
       await settle();
 
-      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>gradient</svg>', { scale: 2 });
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>gradient</svg>', { scale: 2, locale: 'en' });
 
       const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
         embeds: { title: string; description: string; color: number; image: { url: string }; footer: { text: string } }[];

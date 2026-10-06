@@ -65,6 +65,7 @@ describe('fonts.ts', () => {
       // buffer, so it cannot tell a mocked font from an unmocked one.
       // Asserting the exact byte lengths is what makes a drifted mock
       // list fail loudly instead of silently rendering nothing.
+      // No locale (and every locale but ja) loads the CJK faces SC, KR, JP.
       expect(getFontBuffers().map((b) => b.byteLength)).toEqual([
         100, // Space Grotesk Regular
         101, // Space Grotesk SemiBold
@@ -79,12 +80,49 @@ describe('fonts.ts', () => {
       ]);
     });
 
+    // resvg fills a glyph the primary (Latin) face lacks from the loaded faces
+    // in LOAD order — the font-family list does not choose the fallback face.
+    // So this order is what decides Japanese vs Chinese letterforms for a
+    // kanji both JP and SC carry: JP first for ja, SC, KR, JP for the rest.
+    // font-load-order.test.ts proves it with real renders.
+    it('loads the CJK faces JP, SC, KR for ja', () => {
+      expect(getFontBuffers('ja').map((b) => b.byteLength)).toEqual([
+        100, // Space Grotesk Regular
+        101, // Space Grotesk SemiBold
+        102, // Space Grotesk Bold
+        200, // Onest Regular
+        201, // Onest SemiBold
+        202, // Onest Bold
+        175, // Fragment Mono
+        188, // Noto Sans JP
+        222, // Noto Sans SC
+        155, // Noto Sans KR
+      ]);
+    });
+
+    it.each(['en', 'de', 'fr', 'ko', 'zh'] as const)(
+      '%s keeps the SC, KR, JP order: the very array a call without a locale gets',
+      (locale) => {
+        expect(getFontBuffers(locale)).toBe(getFontBuffers());
+      },
+    );
+
+    it('reorders the same buffers for ja instead of copying them', () => {
+      const ja = getFontBuffers('ja');
+      const rest = getFontBuffers();
+      expect(ja).not.toBe(rest);
+      expect(ja).toHaveLength(rest.length);
+      for (const buffer of ja) expect(rest).toContain(buffer);
+    });
+
     it('should cache font buffers on subsequent calls', () => {
       const firstCall = getFontBuffers();
       const secondCall = getFontBuffers();
 
       // Same reference should be returned
       expect(firstCall).toBe(secondCall);
+      // …and per order: ja has its own cached array
+      expect(getFontBuffers('ja')).toBe(getFontBuffers('ja'));
     });
   });
 });

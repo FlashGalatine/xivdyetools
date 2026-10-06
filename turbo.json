@@ -97,8 +97,8 @@
       // CHANGELOG-laymans.md; without this a cached green would replay after
       // that file changed. Cheap: one file.
       // discord-worker's item-name-coverage / font-coverage suites read
-      // api-worker's ko / zh item-name tables (FONT-001: the CJK subsets are
-      // cut from them). Two files, regenerated only after a game patch.
+      // api-worker's ko / zh / ja item-name tables (FONT-001: the CJK subsets
+      // are cut from them). Three files, regenerated only after a game patch.
       "inputs": [
         "$TURBO_DEFAULT$",
         "$TURBO_ROOT$/apps/*/wrangler.toml",

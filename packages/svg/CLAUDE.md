@@ -129,7 +129,7 @@ Every `generate*` returns a self-contained `<svg>` string with `xmlns` and `view
 `estimateTextWidth(s, charWidth)` counts CJK ideographs, Hangul and CJK compatibility as **2×** Latin width. `frame.ts`'s `textWidth`/`fitText` wrap it with per-font-class factors. This is the only correct way to decide a truncation point.
 
 ### Font stacks
-`Fragment Mono` (mono), `Onest` (body), `Space Grotesk` (display), each falling back through `Noto Sans JP → SC → KR`. **Order matters**: JP must precede SC or Japanese renders in Chinese letterforms, and SC has zero Hangul glyphs so KR must come last. Habibi was retired in 5.0 — it was never a monospace, which is why no column of numbers in a v4 card lined up.
+`Fragment Mono` (mono), `Onest` (body), `Space Grotesk` (display), each falling back through `Noto Sans JP → SC → KR`. In these Latin-led stacks the CJK names do **not** choose the face for a glyph the Latin face lacks: resvg fills it from the loaded faces in the order the renderer loads them. discord-worker's `getFontBuffers` loads JP first for `ja` and SC first otherwise, so Japanese letterforms are the renderer's job, not this list's. The JP → SC → KR order is kept because it is what a CJK-led stack needs (og-worker's cards are CJK-led), and SC carries no Hangul, so KR comes last either way. Habibi was retired in 5.0 — it was never a monospace, which is why no column of numbers in a v4 card lined up.
 
 ### Rendering boundary (consumer's responsibility)
 1. Load the font files (Onest, Space Grotesk, Fragment Mono, Noto Sans JP + SC + KR subsets).

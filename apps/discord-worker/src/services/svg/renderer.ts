@@ -10,6 +10,7 @@
 
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { LocaleCode } from '@xivdyetools/types';
 
 // Static WASM import - wrangler bundles this at build time
 // @ts-expect-error - WASM imports are handled by wrangler bundler
@@ -81,13 +82,21 @@ export async function renderSvgToPng(
     scale?: number;
     /** Background color (default: transparent) */
     background?: string;
-  } = {},
+    /**
+     * The locale the card is drawn in. It picks the CJK font load order,
+     * which is what decides the face for a glyph the primary (Latin) face
+     * lacks: JP first for `ja` (Japanese letterforms), SC first otherwise.
+     * See `getFontBuffers`. Required, so a card command cannot silently fall
+     * back to the SC-first order for a Japanese user.
+     */
+    locale: LocaleCode;
+  },
   logger?: ExtendedLogger,
 ): Promise<Uint8Array> {
   // Ensure WASM is initialized
   await initRenderer(logger);
 
-  const { scale = 2, background } = options;
+  const { scale = 2, background, locale } = options;
 
   try {
     const resvg = new Resvg(svgString, {
@@ -97,8 +106,10 @@ export async function renderSvgToPng(
       },
       background,
       font: {
-        // Load bundled font files for text rendering
-        fontBuffers: getFontBuffers(),
+        // Load bundled font files for text rendering, in the locale's
+        // fallback order (resvg builds its font database per instance, so
+        // this array is the only thing cached across renders)
+        fontBuffers: getFontBuffers(locale),
         // Default to Onest (body font) for any unspecified text
         defaultFontFamily: 'Onest',
       },

@@ -463,7 +463,7 @@ async function processFindCommand(
       wideDe: WIDE_DE.has(method),
     });
 
-    const pngBuffer = await renderSvgToPng(svg, { scale: 2 }, logger);
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2, locale }, logger);
 
     // One line: the picture is self-contained; the verdict earns the embed
     let description =

@@ -147,6 +147,24 @@ describe('/glamour', () => {
     expect(edit.file).toMatchObject({ name: 'glamour.png', contentType: 'image/png' });
   });
 
+  it.each(['en', 'ja', 'zh'] as const)(
+    'renders the card with the %s user locale, which picks the CJK font load order',
+    async (locale) => {
+      // JP loads first only for ja, so Japanese item names draw in Japanese
+      // letterforms and zh/ko/en renders stay as they were (font-load-order.test.ts)
+      const { createUserTranslator } = await import('../../services/bot-i18n.js');
+      const { createTranslator } = await import('@xivdyetools/bot-logic/i18n');
+      vi.mocked(createUserTranslator).mockResolvedValueOnce(createTranslator(locale));
+      const { renderSvgToPng } = await import('../../services/svg/renderer.js');
+
+      await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+      await settle();
+
+      expect((mockExecuteGlamour.mock.calls[0][0] as GlamourInput).locale).toBe(locale);
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg/>', { scale: 2, locale });
+    },
+  );
+
   it('hands bot-logic the request logger, so a card that fails to draw says why (BUG-125)', async () => {
     const logger = { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } as unknown as ExtendedLogger;
     await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx, logger);

@@ -236,7 +236,7 @@ async function processInfoCard(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
     const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
     const emojiPrefix = emoji ? `${emoji} ` : '';
 
@@ -421,7 +421,7 @@ async function processRandomGrid(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     // Build description with Discord emojis
     const dyeList = result.dyes
