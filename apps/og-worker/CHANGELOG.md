@@ -5,6 +5,70 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0] - 2026-10-06
+
+Sprint 11 of the 2026-10-04 remediation plan. Minor rather than patch, as 2.8.0 (`mode`) and
+2.10.0 (`wheel`) were: a new query key (`interpolation`), an `?algo=` setting on the extractor card,
+and a repeated query key now gets a 400. The version also retires cached cards: gradient, extractor
+and legacy-`?algo=` harmony cards and the French presets card change under URLs already in the edge
+cache. Crawler HTML is cached for 24 hours unversioned, so for up to a day after deploy an old page
+can still point a default gradient share at `/5.png`.
+
+### Fixed
+
+- **Gradient previews show the Gradient Builder's own steps** (BUG-008, BUG-009).
+  - The card ramps in the share's `interpolation` (`hsv` by default, like the page) instead of a
+    space it picked from `?algo=`, and ranks the middle dyes by the requested method instead of a
+    hard-coded ΔE2000.
+  - The crawler forwards `interpolation` onto the image URL (`hsv` left off) and og:url. The image
+    route reads it, the guard answers 400 to anything but `rgb` / `hsv` / `lab` / `oklch` / `lch`,
+    and the cache key splits on it only on `/og/gradient/:start/:end/:steps`.
+  - Above five steps the card resolves the page's whole ramp, duplicate prevention included, and
+    draws the endpoints plus three of the page's own steps, labeled with the page's step numbers:
+    8 steps draws steps 1, 3, 5, 6 and 8. It used to resample its own five-point ramp, which could
+    name dyes the page never shows.
+  - The crawler reads `steps` as the page does: a whole number from 3 to 12, otherwise the page's
+    default of 8. It used to fall back to 5 and clamp to 2–20.
+  - Measured end to end against the mounted Gradient Builder: 6,682 of 6,682 share links match
+    (dyes, Δ, step labels, footer). Before, `lab` / `lch` / `oklch` / `rgb` shares matched 80–193
+    of 468 each.
+- **Legacy `?algo=` spellings on the harmony card** (`hyab`, `oklch-weighted`, `euclidean`) no longer
+  draw the first dyes of the table (BUG-062). They draw the card of the method they normalize to.
+- **Extractor previews follow `?algo=`** (BUG-060). The crawler puts it on the image URL and the route
+  passes it on. The card picks each color's dye with the page's own `findClosestDye`, exact `rgb`
+  ties included, and prints Δ and the footer tag for that method.
+- **Custom-color shares unfurl named** (BUG-059): gradient `hexStart` / `hexEnd`, mixer `hexA` /
+  `hexB` and harmony `hex` put the color in the title and as the theme color, and the og:url
+  reopens the share. The picture stays the tool's default card, as budget's `?hex=` already does.
+- **The cache key splits only where a route reads the key** (BUG-058). `algo` keys the six
+  algo-aware routes and `mode` the two mixer routes, so `/og/budget/5.png?algo=…` is one render.
+- **A repeated query key is refused with a 400.** A percent-encoded duplicate such as
+  `?interpolatio%6E=rgb&interpolation=lab` could make a route render one card under another card's
+  cache key for seven days. Neither the web app nor the crawler builds such a URL.
+- **French and German previews:** the French presets deck reads "Préréglages communautaires"
+  (TERM-011). The German Glamour Reader description is grammatical: "Jedes getragene Teil einer
+  Charakterdatei – seine Farbstoffe, ob das Spiel es tragen lässt, und seine Bezugsquelle."
+  (I18N-014). Both are Latin-only; a re-cut of the CJK subsets left every cmap unchanged.
+- **resvg memory** (OPT-006): every render frees its `Resvg` and `RenderedImage` once the PNG bytes
+  are copied out. At this worker's compatibility date (2024-12-01) `FinalizationRegistry` does not
+  exist, so before this both the parsed tree and the ~5 MB pixmap leaked for the life of the
+  isolate.
+
+### Removed
+
+- `CrawlerInfo.userAgent`, written but never read (DEAD-039), and the unused `@` path alias in
+  `tsconfig.json` and `vitest.config.ts` (DEAD-040).
+
+### Tests
+
+- `gradient-share-parity.test.ts` drives seven share links from crawler HTML through og:image to the
+  card and checks the page's dyes, step labels and Δ. Every wiring and sampling mutation tried turns
+  it red. The Δ oracle in it and in `gradient.test.ts` is core's own distance and precision, not
+  the card's helpers.
+- `gradient.test.ts` pins the page's whole ramp for 126 cases (3–12 steps, five modes, several
+  methods); `harmony.test.ts` and the new `extractor.test.ts` cover every accepted `?algo=` spelling
+  (BUG-061); `renderer.test.ts` covers the frees on every path.
+
 ## [2.11.3] - 2026-10-06
 
 Sprint 13 of the 2026-10-04 remediation plan, carrying `@xivdyetools/core` 5.10.0. The version moves
