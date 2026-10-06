@@ -20,6 +20,7 @@
  */
 
 import {
+  CHARA_DYEABLE_SLOTS,
   charaPieceTone,
   charaTwinsOf,
   defaultCharaTwin,
@@ -77,7 +78,7 @@ interface TwinState {
   tone: CharaPieceTone;
 }
 
-/** The twelve dyeable slots — the footnote's "N slots are empty" denominator. */
+/** The twelve gear slots — the footnote's "N slots are empty" denominator. */
 const GEAR_SLOT_COUNT = 12;
 
 /**
@@ -136,24 +137,6 @@ function closeGlamourSheetIfLoaded(): void {
 function readShowAllPieces(): boolean {
   return StorageService.getItem<string>(SHOW_ALL_KEY) === 'on';
 }
-
-/**
- * Slots whose items carry dye channels. The five accessory slots are absent
- * on purpose: no FFXIV earring, necklace, bracelet or ring is dyeable, so a
- * chip there would invent a channel the game does not have.
- *
- * core's GPOSERS model (`chara-gposers`, `DYEABLE`) keeps its own copy for the
- * export and the bot — change both.
- */
-const DYEABLE_SLOTS: ReadonlySet<CharaGearSlotId> = new Set<CharaGearSlotId>([
-  'MainHand',
-  'OffHand',
-  'HeadGear',
-  'Body',
-  'Hands',
-  'Legs',
-  'Feet',
-]);
 
 /** The two dye channels a dyeable piece always has, in `DyeId` / `DyeId2` order. */
 const DYE_CHANNELS = [1, 2] as const;
@@ -818,7 +801,7 @@ export class GlamourBlock {
    * the picture said channel 1 and the file said channel 2.
    */
   private channelChips(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): HTMLElement[] {
-    if (!DYEABLE_SLOTS.has(slot)) {
+    if (!CHARA_DYEABLE_SLOTS.has(slot)) {
       // An accessory carrying a dye is not a thing FFXIV can produce, but if a
       // file says so, show what it says rather than dropping the data.
       return dyes.map((gear) => this.dyeChip(gear));
@@ -837,7 +820,7 @@ export class GlamourBlock {
   private dyeLineText(slot: CharaGearSlotId, dyes: ResolvedGearDye[]): string {
     const undyed = tSwatch('undyed');
     if (dyes.length === 0) return undyed;
-    if (!DYEABLE_SLOTS.has(slot)) {
+    if (!CHARA_DYEABLE_SLOTS.has(slot)) {
       return dyes.map((g) => (g.dye ? dyeName(g.dye) : `#${g.stainId}`)).join(' + ');
     }
     return DYE_CHANNELS.map((channel) => {

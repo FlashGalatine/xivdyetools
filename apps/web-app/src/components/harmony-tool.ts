@@ -419,6 +419,16 @@ export class HarmonyTool extends BaseComponent {
         // current: MarketBoardService subscribed to 'market' in its
         // constructor, which this tool's constructor ran before this listener
         // was added, and ConfigController notifies in subscription order.
+        //
+        // Sprint 27 review: the market-failure strip is otherwise redrawn only
+        // after a fetch, and prices turned off fetch nothing -- so it outlived
+        // them. Forget the failure too: it described a fetch for prices the
+        // user has switched off, and must not reappear when they come back
+        // on before the next fetch has answered.
+        if (!this.showPrices) {
+          this.marketFailed = false;
+        }
+        this.renderMarketStrip();
         if (this.selectedDye) {
           this.generateHarmonies();
         }

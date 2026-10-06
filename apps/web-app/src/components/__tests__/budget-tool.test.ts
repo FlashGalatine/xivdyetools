@@ -280,6 +280,12 @@ vi.mock('@services/index', async () => ({
   },
   APIService: {
     formatPrice: vi.fn((price: number) => `${price.toLocaleString()} Gil`),
+    /**
+     * Core's Universalis client. The tool never touches it; the BUG-090 tests
+     * run the REAL MarketBoardService, whose constructor reaches core through
+     * this barrel.
+     */
+    getInstance: vi.fn(),
   },
   RouterService: {
     subscribe: vi.fn().mockReturnValue(() => {}),
@@ -1731,6 +1737,116 @@ describe('BudgetTool', () => {
       saveSwap();
 
       expect(addDye).toHaveBeenCalledWith('swap-1', SUNSET.stainID);
+    });
+  });
+
+  // ============================================================================
+  // BUG-090 (2026-10-04 deep-dive): fetchPrices() marks the market offline on
+  // `lastFetchOutcome` 'error', and on a Universalis proxy outage the service
+  // used to record 'ok' -- core resolves an outage with an empty Map, exactly
+  // like a board with no listings. The BUG-015 tests above set the outcome on
+  // a stub; these run the REAL MarketBoardService over a core that answers the
+  // way it does during an outage (Sprint 27 review).
+  // ============================================================================
+
+  describe('BUG-090: an unreachable market board', () => {
+    const TARGET = mockDyes[6]; // Blood Red: three dyes inside the line of 8
+
+    /** Mount over the real service, with core answering `outcome` and no prices. */
+    const withRealService = async (
+      outcome: 'ok' | 'partial' | 'error',
+      run: (core: Record<string, ReturnType<typeof vi.fn>>) => Promise<void>
+    ): Promise<void> => {
+      const { APIService } = await import('@services/index');
+      const actual = await vi.importActual<typeof import('@services/market-board-service')>(
+        '@services/market-board-service'
+      );
+      // What core can answer with `outcome`: 'error' only with an empty Map,
+      // 'partial' only beside at least one price (Sprint 27 review). No
+      // worldId, so the real service never asks the stubbed WorldService.
+      const pricesFor = (ids: number[]): Map<number, PriceData> =>
+        outcome === 'partial'
+          ? new Map([
+              [
+                ids[0],
+                {
+                  itemID: ids[0],
+                  currentAverage: 100,
+                  currentMinPrice: 100,
+                  currentMaxPrice: 100,
+                  lastUpdate: 0,
+                },
+              ],
+            ])
+          : new Map();
+      const core = {
+        // The Map-only call answers the same prices -- empty during an outage
+        getPricesForDataCenter: vi.fn(async (ids: number[]) => pricesFor(ids)),
+        getPricesForDataCenterWithOutcome: vi.fn(async (ids: number[]) => ({
+          prices: pricesFor(ids),
+          outcome,
+        })),
+      };
+      const sharedMock = MarketBoardService.getInstance();
+      vi.mocked(APIService.getInstance).mockReturnValue(core as never);
+      actual.MarketBoardService.resetInstance();
+      vi.mocked(MarketBoardService.getInstance).mockReturnValue(
+        actual.MarketBoardService.getInstance() as never
+      );
+      try {
+        await run(core);
+      } finally {
+        tool?.destroy();
+        tool = null;
+        vi.mocked(MarketBoardService.getInstance).mockReturnValue(sharedMock);
+        actual.MarketBoardService.resetInstance();
+      }
+    };
+
+    const settle = async (): Promise<void> => {
+      for (let i = 0; i < 4; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    };
+
+    const pick = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      await settle();
+      tool.selectDye(TARGET);
+      await settle();
+    };
+
+    it('shows the offline verdict on an outage', async () => {
+      await withRealService('error', async (core) => {
+        await pick();
+
+        // Budget fetches whatever the Market Board toggle says (BUG-079)
+        expect(
+          core.getPricesForDataCenterWithOutcome,
+          'the fetch really reached core'
+        ).toHaveBeenCalled();
+        expect(rightPanel.textContent).toContain('budget.offBadge');
+        expect(rightPanel.textContent).toContain('budget.offText');
+      });
+    });
+
+    it('shows it when only part of the lookup failed', async () => {
+      await withRealService('partial', async () => {
+        await pick();
+
+        expect(rightPanel.textContent).toContain('budget.offBadge');
+      });
+    });
+
+    it('keeps the priced verdict when the board answered with no listings', async () => {
+      await withRealService('ok', async (core) => {
+        await pick();
+
+        expect(core.getPricesForDataCenterWithOutcome).toHaveBeenCalled();
+        // A positive check too: an empty panel (a swallowed render throw)
+        // would not contain the offline badge either.
+        expect(rightPanel.textContent).toContain('budget.inRange');
+        expect(rightPanel.textContent).not.toContain('budget.offBadge');
+      });
     });
   });
 
