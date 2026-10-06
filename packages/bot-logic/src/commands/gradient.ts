@@ -144,6 +144,61 @@ function filteredOutDyeIds(dyeFilters: DyeTypeFilters): number[] {
 }
 
 /**
+ * Below these chromas an OKLCH / LCH endpoint is grey, and its hue is a
+ * placeholder. Core rounds chroma (OKLCH to 6 dp, LCH to 4 dp), so an exact
+ * grey (r = g = b) reads C = 0 in both — but not hue 0 in LCH, where float
+ * noise in a and b (raw chroma ≤ 2e-5) comes out of atan2 as h ≈ 158.2. The
+ * least chromatic non-greys found, scanning every colour within three units
+ * of a grey, are #FEFFFF at OKLCH C 0.001059 and #000101 at LCH C 0.2773.
+ * These thresholds sit 10× and 28× below those and far above the noise, so
+ * exactly the r = g = b colours count as grey — the set core's blendHSL treats
+ * as powerless (s === 0) — whether or not core keeps its rounding. The web
+ * app's gradient tool (components/gradient-tool.ts) uses the same two values.
+ */
+const OKLCH_GREY_CHROMA = 1e-4;
+const LCH_GREY_CHROMA = 0.01;
+
+/**
+ * The hue at `t` along the shorter arc from start to end, with CSS Color 4's
+ * "powerless hue" rule — the one core's blendHSL applies (BUG-035).
+ *
+ * A grey endpoint (white and black included) has no hue of its own; the hue
+ * core reports for it is a placeholder — 0 in HSV and OKLCH, ~158 in LCH.
+ * Interpolating it as a real hue swung every grey ramp through whatever lay
+ * between: Slate Grey #656565 → #2A3FD0 drew a purple midpoint (#975D9B) in
+ * HSV, the default, and ran through teal in LCH; white → blue went pink. So a
+ * grey side takes the other side's hue, and the chromatic end's hue holds
+ * along the whole ramp while the other two channels still interpolate. When
+ * both sides are grey the hue is irrelevant — the ramp has no chroma — and
+ * each keeps its own, so a grey-to-grey ramp is unchanged.
+ */
+function interpolateHue(
+  startHue: number,
+  endHue: number,
+  startIsGrey: boolean,
+  endIsGrey: boolean,
+  t: number,
+): number {
+  const from = startIsGrey && !endIsGrey ? endHue : startHue;
+  const to = endIsGrey && !startIsGrey ? startHue : endHue;
+  let hueDiff = to - from;
+  if (hueDiff > 180) hueDiff -= 360;
+  if (hueDiff < -180) hueDiff += 360;
+  return (from + hueDiff * t + 360) % 360;
+}
+
+/** One HSV step — the `hsv` mode and the fallback for an unknown one. */
+function interpolateHsv(startColor: string, endColor: string, t: number): string {
+  const startHsv = ColorService.hexToHsv(startColor);
+  const endHsv = ColorService.hexToHsv(endColor);
+  // From integer RGB, s is exactly 0 when r = g = b
+  const h = interpolateHue(startHsv.h, endHsv.h, startHsv.s === 0, endHsv.s === 0, t);
+  const s = startHsv.s + (endHsv.s - startHsv.s) * t;
+  const v = startHsv.v + (endHsv.v - startHsv.v) * t;
+  return ColorService.hsvToHex(h, s, v);
+}
+
+/**
  * Generates interpolated colors between start and end in the specified color space.
  */
 function generateGradientColorsMultiSpace(
@@ -170,15 +225,7 @@ function generateGradientColorsMultiSpace(
       }
 
       case 'hsv': {
-        const startHsv = ColorService.hexToHsv(startColor);
-        const endHsv = ColorService.hexToHsv(endColor);
-        let hueDiff = endHsv.h - startHsv.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
-        const h = (startHsv.h + hueDiff * t + 360) % 360;
-        const s = startHsv.s + (endHsv.s - startHsv.s) * t;
-        const v = startHsv.v + (endHsv.v - startHsv.v) * t;
-        interpolatedColor = ColorService.hsvToHex(h, s, v);
+        interpolatedColor = interpolateHsv(startColor, endColor, t);
         break;
       }
 
@@ -195,12 +242,15 @@ function generateGradientColorsMultiSpace(
       case 'oklch': {
         const startOklch = ColorService.hexToOklch(startColor);
         const endOklch = ColorService.hexToOklch(endColor);
-        let hueDiff = endOklch.h - startOklch.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
         const L = startOklch.L + (endOklch.L - startOklch.L) * t;
         const C = startOklch.C + (endOklch.C - startOklch.C) * t;
-        const h = (startOklch.h + hueDiff * t + 360) % 360;
+        const h = interpolateHue(
+          startOklch.h,
+          endOklch.h,
+          startOklch.C < OKLCH_GREY_CHROMA,
+          endOklch.C < OKLCH_GREY_CHROMA,
+          t,
+        );
         interpolatedColor = ColorService.oklchToHex(L, C, h);
         break;
       }
@@ -208,12 +258,15 @@ function generateGradientColorsMultiSpace(
       case 'lch': {
         const startLch = ColorService.hexToLch(startColor);
         const endLch = ColorService.hexToLch(endColor);
-        let hueDiff = endLch.h - startLch.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
         const L = startLch.L + (endLch.L - startLch.L) * t;
         const C = startLch.C + (endLch.C - startLch.C) * t;
-        const h = (startLch.h + hueDiff * t + 360) % 360;
+        const h = interpolateHue(
+          startLch.h,
+          endLch.h,
+          startLch.C < LCH_GREY_CHROMA,
+          endLch.C < LCH_GREY_CHROMA,
+          t,
+        );
         interpolatedColor = ColorService.lchToHex(L, C, h);
         break;
       }
@@ -228,15 +281,7 @@ function generateGradientColorsMultiSpace(
 
       default: {
         // Default to HSV
-        const startHsv = ColorService.hexToHsv(startColor);
-        const endHsv = ColorService.hexToHsv(endColor);
-        let hueDiff = endHsv.h - startHsv.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
-        const h = (startHsv.h + hueDiff * t + 360) % 360;
-        const s = startHsv.s + (endHsv.s - startHsv.s) * t;
-        const v = startHsv.v + (endHsv.v - startHsv.v) * t;
-        interpolatedColor = ColorService.hsvToHex(h, s, v);
+        interpolatedColor = interpolateHsv(startColor, endColor, t);
       }
     }
 

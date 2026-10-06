@@ -122,6 +122,50 @@ function toStepCount(value: unknown): number | null {
 /** The five spaces interpolateInSpace implements; anything else draws a flat grey ramp. */
 const INTERPOLATION_MODES: readonly InterpolationMode[] = ['rgb', 'hsv', 'lab', 'oklch', 'lch'];
 
+/**
+ * Below these chromas an OKLCH / LCH endpoint is grey, and its hue is a
+ * placeholder. Core rounds chroma (OKLCH to 6 dp, LCH to 4 dp), so an exact
+ * grey (r = g = b) reads C = 0 in both — but not hue 0 in LCH, where float
+ * noise in a and b (raw chroma ≤ 2e-5) comes out of atan2 as h ≈ 158.2. The
+ * least chromatic non-greys found, scanning every colour within three units
+ * of a grey, are #FEFFFF at OKLCH C 0.001059 and #000101 at LCH C 0.2773.
+ * These thresholds sit 10× and 28× below those and far above the noise, so
+ * exactly the r = g = b colours count as grey — the set core's blendHSL treats
+ * as powerless (s === 0) — whether or not core keeps its rounding. The bot's
+ * /gradient (bot-logic commands/gradient.ts) uses the same two values.
+ */
+const OKLCH_GREY_CHROMA = 1e-4;
+const LCH_GREY_CHROMA = 0.01;
+
+/**
+ * The hue at `t` along the shorter arc from start to end, with CSS Color 4's
+ * "powerless hue" rule — the one core's blendHSL applies (BUG-035).
+ *
+ * A grey endpoint (white and black included) has no hue of its own; the hue
+ * core reports for it is a placeholder — 0 in HSV and OKLCH, ~158 in LCH.
+ * Interpolating it as a real hue swung every grey ramp through whatever lay
+ * between: Slate Grey #656565 → #2A3FD0 drew a purple midpoint (#975D9B) in
+ * HSV, the default, and ran through teal in LCH; white → blue went pink. So a
+ * grey side takes the other side's hue, and the chromatic end's hue holds
+ * along the whole ramp while the other two channels still interpolate. When
+ * both sides are grey the hue is irrelevant — the ramp has no chroma — and
+ * each keeps its own, so a grey-to-grey ramp is unchanged.
+ */
+function interpolateHue(
+  startHue: number,
+  endHue: number,
+  startIsGrey: boolean,
+  endIsGrey: boolean,
+  t: number
+): number {
+  const from = startIsGrey && !endIsGrey ? endHue : startHue;
+  const to = endIsGrey && !startIsGrey ? startHue : endHue;
+  let hueDiff = to - from;
+  if (hueDiff > 180) hueDiff -= 360;
+  if (hueDiff < -180) hueDiff += 360;
+  return (from + hueDiff * t + 360) % 360;
+}
+
 function isInterpolationMode(value: unknown): value is InterpolationMode {
   return typeof value === 'string' && (INTERPOLATION_MODES as readonly string[]).includes(value);
 }
@@ -1387,10 +1431,8 @@ export class GradientTool extends BaseComponent {
       case 'hsv': {
         const startHsv = ColorService.hexToHsv(startHex);
         const endHsv = ColorService.hexToHsv(endHex);
-        let hueDiff = endHsv.h - startHsv.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
-        const h = (startHsv.h + hueDiff * t + 360) % 360;
+        // From integer RGB, s is exactly 0 when r = g = b
+        const h = interpolateHue(startHsv.h, endHsv.h, startHsv.s === 0, endHsv.s === 0, t);
         const s = startHsv.s + (endHsv.s - startHsv.s) * t;
         const v = startHsv.v + (endHsv.v - startHsv.v) * t;
         return ColorService.hsvToHex(h, s, v);
@@ -1406,23 +1448,29 @@ export class GradientTool extends BaseComponent {
       case 'oklch': {
         const startOklch = ColorService.hexToOklch(startHex);
         const endOklch = ColorService.hexToOklch(endHex);
-        let hueDiff = endOklch.h - startOklch.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
         const L = startOklch.L + (endOklch.L - startOklch.L) * t;
         const C = startOklch.C + (endOklch.C - startOklch.C) * t;
-        const h = (startOklch.h + hueDiff * t + 360) % 360;
+        const h = interpolateHue(
+          startOklch.h,
+          endOklch.h,
+          startOklch.C < OKLCH_GREY_CHROMA,
+          endOklch.C < OKLCH_GREY_CHROMA,
+          t
+        );
         return ColorService.oklchToHex(L, C, h);
       }
       case 'lch': {
         const startLch = ColorService.hexToLch(startHex);
         const endLch = ColorService.hexToLch(endHex);
-        let hueDiff = endLch.h - startLch.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
         const L = startLch.L + (endLch.L - startLch.L) * t;
         const C = startLch.C + (endLch.C - startLch.C) * t;
-        const h = (startLch.h + hueDiff * t + 360) % 360;
+        const h = interpolateHue(
+          startLch.h,
+          endLch.h,
+          startLch.C < LCH_GREY_CHROMA,
+          endLch.C < LCH_GREY_CHROMA,
+          t
+        );
         return ColorService.lchToHex(L, C, h);
       }
       default:

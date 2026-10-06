@@ -1558,8 +1558,14 @@ export class HarmonyTool extends BaseComponent {
       selectionConfig,
       {
         excludeItemIDs: [this.selectedDye.itemID],
-        // A dye the user swapped in by hand wins its slot outright, and still
-        // consumes its place so a later slot cannot pick it again.
+        // A dye the user swapped in by hand wins its slot. With 'no
+        // duplicates' on, core reserves an honoured pin ahead of EVERY other
+        // slot and companion list, earlier ones included (BUG-137) -- except
+        // that a slot with no other eligible unused dye still falls back to
+        // repeating one (a repeated dye beats a blank slot), and that fallback
+        // can repeat a pin. When two slots pin the same dye, only the lower
+        // slot index is honoured; the other is chosen as if it had no pin.
+        // See HarmonySelectionOptions.pinned in core.
         pinned: this.swappedDyes,
       }
     );

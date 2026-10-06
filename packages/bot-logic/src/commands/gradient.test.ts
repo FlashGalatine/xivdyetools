@@ -522,3 +522,143 @@ describe('executeGradient', () => {
     });
   });
 });
+
+// ============================================================================
+// A grey endpoint's hue is powerless (BUG-035's sibling on the hue paths)
+// ============================================================================
+
+describe('executeGradient — a grey endpoint has no hue of its own', () => {
+  /** The five step hexes of a gradient between two raw hexes. */
+  const ramp = async (
+    start: string,
+    end: string,
+    colorSpace: InterpolationMode,
+  ): Promise<string[]> => {
+    const result = await executeGradient({
+      startColor: { hex: start },
+      endColor: { hex: end },
+      colorSpace,
+      stepCount: 5,
+      locale: 'en',
+    });
+    if (!result.ok) throw new Error(`gradient failed: ${result.error}`);
+    return result.gradientSteps.map((step) => step.hex);
+  };
+
+  /** A colour's hue in the space the mode interpolates in (anything else is HSV). */
+  const hueIn = (colorSpace: InterpolationMode, hex: string): number => {
+    if (colorSpace === 'oklch') return ColorService.hexToOklch(hex).h;
+    if (colorSpace === 'lch') return ColorService.hexToLch(hex).h;
+    return ColorService.hexToHsv(hex).h;
+  };
+
+  /** The angle between two hues, the short way round. */
+  const hueGap = (a: number, b: number): number => {
+    const d = Math.abs(a - b) % 360;
+    return Math.min(d, 360 - d);
+  };
+
+  // Slate Grey is an exact grey dye; #2A3FD0 is a saturated blue.
+  const SLATE_GREY = '#656565';
+  const BLUE = '#2A3FD0';
+
+  // 'not-a-space' reaches the switch's default branch, which is HSV too.
+  const HUE_MODES: InterpolationMode[] = [
+    'hsv',
+    'oklch',
+    'lch',
+    'not-a-space' as InterpolationMode,
+  ];
+
+  // A grey reports hue 0 in HSV and OKLCH and ~158 in LCH (float noise in a
+  // and b) — a placeholder, not a colour. Interpolating it drew a purple
+  // midpoint (#975D9B) in HSV, sent the LCH ramp through teal (#276A68), and
+  // turned white → blue pink. Each pair runs both ways, so the grey side is
+  // tested as the start and as the end.
+  describe.each(HUE_MODES)('in %s', (colorSpace) => {
+    it.each([
+      [SLATE_GREY, BLUE],
+      [BLUE, SLATE_GREY],
+      ['#FFFFFF', '#0000FF'],
+      ['#0000FF', '#FFFFFF'],
+    ])('the midpoint of %s → %s keeps the blue end’s hue', async (start, end) => {
+      const blue = start === SLATE_GREY || start === '#FFFFFF' ? end : start;
+
+      const midpoint = (await ramp(start, end, colorSpace))[2];
+
+      expect(hueGap(hueIn(colorSpace, midpoint), hueIn(colorSpace, blue))).toBeLessThan(3);
+    });
+  });
+
+  // The exact ramps, pinned once the rule holds. The web app's gradient tool
+  // runs the same arithmetic, and its tests pin the same hexes.
+  it.each([
+    // Before: ['#656565', '#806674', '#975D9B', '#7549B5', '#2A3FD0']
+    ['hsv', ['#656565', '#666980', '#5D659B', '#4956B5', '#2A3FD0']],
+    // Before: ['#656565', '#77566D', '#754989', '#6042AF', '#2A3FD0']
+    ['oklch', ['#656565', '#556182', '#445A9D', '#364FB6', '#2A3FD0']],
+    // Before: ['#656565', '#276A68', '#006A91', '#0061C3', '#2A3FD0']
+    ['lch', ['#656565', '#635C80', '#5B529A', '#4C49B5', '#2A3FD0']],
+  ] as const)('pins the Slate Grey → blue ramp in %s', async (colorSpace, expected) => {
+    expect(await ramp(SLATE_GREY, BLUE, colorSpace)).toEqual(expected);
+  });
+
+  // Two chromatic ends are untouched: these are the ramps the code drew
+  // before the rule, byte for byte. Snow White (#E4DFD0) is a near-grey with a
+  // real, faint hue — only an exact grey (r = g = b) is powerless, as in
+  // core's blendHSL. White → black is grey at both ends, where the hue does
+  // not matter and the ends keep their own.
+  const UNCHANGED: Array<{
+    start: string;
+    end: string;
+    hsv: string[];
+    oklch: string[];
+    lch: string[];
+  }> = [
+    {
+      start: '#FF0000',
+      end: '#0000FF',
+      hsv: ['#FF0000', '#FF0080', '#FF00FF', '#8000FF', '#0000FF'],
+      oklch: ['#FF0000', '#E8007B', '#BA00C2', '#7A00F4', '#0000FF'],
+      lch: ['#FF0000', '#FF0045', '#FA0080', '#C500C3', '#0000FF'],
+    },
+    {
+      start: '#0000FF',
+      end: '#FF0000',
+      hsv: ['#0000FF', '#8000FF', '#FF00FF', '#FF0080', '#FF0000'],
+      oklch: ['#0000FF', '#7A00F4', '#BA00C2', '#E8007B', '#FF0000'],
+      lch: ['#0000FF', '#C500C3', '#FA0080', '#FF0045', '#FF0000'],
+    },
+    {
+      // Dalamud Red → Royal Blue
+      start: '#781A1A',
+      end: '#273067',
+      hsv: ['#781A1A', '#741E4C', '#6A216F', '#40246B', '#273067'],
+      oklch: ['#781A1A', '#6D1A3F', '#5B2158', '#432966', '#273067'],
+      lch: ['#781A1A', '#761035', '#68184D', '#4E265E', '#273067'],
+    },
+    {
+      // Snow White → Royal Blue
+      start: '#E4DFD0',
+      end: '#273067',
+      hsv: ['#E4DFD0', '#C59A99', '#A56B94', '#6B4586', '#273067'],
+      oklch: ['#E4DFD0', '#C8AA9C', '#A47783', '#6F4E79', '#273067'],
+      lch: ['#E4DFD0', '#C9AB9A', '#AC777C', '#7C4B70', '#273067'],
+    },
+    {
+      start: '#FFFFFF',
+      end: '#000000',
+      hsv: ['#FFFFFF', '#BFBFBF', '#808080', '#404040', '#000000'],
+      oklch: ['#FFFFFF', '#AEAEAE', '#636363', '#222222', '#000000'],
+      lch: ['#FFFFFF', '#B9B9B9', '#777777', '#3B3B3B', '#000000'],
+    },
+  ];
+
+  it.each(UNCHANGED)('leaves $start → $end byte-identical in every hue mode', async (row) => {
+    expect(await ramp(row.start, row.end, 'hsv')).toEqual(row.hsv);
+    expect(await ramp(row.start, row.end, 'oklch')).toEqual(row.oklch);
+    expect(await ramp(row.start, row.end, 'lch')).toEqual(row.lch);
+    // The default branch is HSV
+    expect(await ramp(row.start, row.end, 'not-a-space' as InterpolationMode)).toEqual(row.hsv);
+  });
+});
