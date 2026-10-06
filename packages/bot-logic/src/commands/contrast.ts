@@ -20,6 +20,7 @@ import { abbreviateDyeName } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
 import { generateContrastCard, contrastRatio, type ContrastPair } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -53,7 +54,15 @@ export type ContrastResult =
       pairs: Array<{ nameA: string; nameB: string; ratio: number }>;
       embed: EmbedData;
     }
-  | { ok: false; error: 'GENERATION_FAILED'; errorMessage: string };
+  | {
+      ok: false;
+      /**
+       * NOT_ENOUGH_DYES: fewer than two dyes (or no list at all) — refused
+       * before anything is drawn. GENERATION_FAILED: the card generator threw.
+       */
+      error: 'NOT_ENOUGH_DYES' | 'GENERATION_FAILED';
+      errorMessage: string;
+    };
 
 // ============================================================================
 // Execute
@@ -67,6 +76,14 @@ export async function executeContrast(input: ContrastInput): Promise<ContrastRes
   const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
+
+  // A contrast needs a pair. Fewer dyes used to reach `pairs[0].nameA` below
+  // and throw a TypeError that the catch reported as GENERATION_FAILED — a
+  // caller's mistake dressed as a render bug. `Array.isArray` first: this runs
+  // outside the try, so a non-array is refused, never thrown across the boundary.
+  if (!Array.isArray(dyes) || dyes.length < 2) {
+    return { ok: false, error: 'NOT_ENOUGH_DYES', errorMessage: t.t('mixer.bothRequired') };
+  }
 
   try {
     const localized = dyes.map((d) =>
@@ -126,7 +143,8 @@ export async function executeContrast(input: ContrastInput): Promise<ContrastRes
       pairs: pairs.map((p) => ({ nameA: p.nameA, nameB: p.nameB, ratio: p.ratio })),
       embed,
     };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[contrast] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

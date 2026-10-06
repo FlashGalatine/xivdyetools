@@ -25,6 +25,7 @@ import {
 } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -128,6 +129,18 @@ export function capGradientRows(steps: GradientStepResult[]): {
   const omitted = merged.length - keep.size;
   rows = rows.filter((r) => keep.has(r));
   return { rows, merged: merged.length, omitted };
+}
+
+/**
+ * IDs of every dye the user's filters exclude — handed to core's
+ * `findClosestDye` as `excludeIds`, so its search runs over the allowed pool
+ * only (BUG-033).
+ */
+function filteredOutDyeIds(dyeFilters: DyeTypeFilters): number[] {
+  return dyeService
+    .getAllDyes()
+    .filter((dye) => isDyeExcluded(dyeFilters, dye))
+    .map((dye) => dye.id);
 }
 
 /**
@@ -262,26 +275,21 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       colorSpace,
     );
 
-    // Find the closest non-Facewear dye per step; ΔE2000 is the number the
-    // old boundary threw away.
+    // Find the closest dye per step; ΔE2000 is the number the old boundary
+    // threw away.
+    //
+    // BUG-033 (2026-10-04 deep dive): the filters narrow the POOL before the
+    // search, so the answer is "the nearest allowed dye". They used to be
+    // checked on the search's answer one dye at a time, giving up after ten
+    // rejections — with `/preferences vendor` (85 of 125 dyes excluded) a
+    // white→black gradient printed "no match" on its #666666 step although
+    // 40 allowed dyes exist. Core's own search still does the ranking (k-d
+    // tree for rgb, unrounded percent for distinguish) and skips Facewear.
+    const excludeIds = dyeFilters ? filteredOutDyeIds(dyeFilters) : [];
     const gradientSteps: GradientStepResult[] = [];
 
     for (const hex of gradientHexColors) {
-      let closestDye: Dye | null = null;
-      const excludeIds: number[] = [];
-
-      for (let attempt = 0; attempt < 10; attempt++) {
-        const candidate = dyeService.findClosestDye(hex, { excludeIds, matchingMethod });
-        if (!candidate) break;
-        if (
-          candidate.category !== 'Facewear' &&
-          (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))
-        ) {
-          closestDye = candidate;
-          break;
-        }
-        excludeIds.push(candidate.id);
-      }
+      const closestDye = dyeService.findClosestDye(hex, { excludeIds, matchingMethod });
 
       const distance = closestDye
         ? ColorService.getDistanceForMethod(hex, closestDye.hex, 'ciede2000')
@@ -353,7 +361,10 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       omittedRows: omitted,
       embed,
     };
-  } catch {
+  } catch (error) {
+    // BUG-125: log the cause rather than discard it — its class, never its
+    // message, which quotes the hex the user typed ("Invalid hex color: …").
+    input.logger?.warn(`[gradient] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

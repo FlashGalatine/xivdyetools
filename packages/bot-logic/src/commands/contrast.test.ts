@@ -2,8 +2,8 @@
  * Tests for the /contrast command (13A/13B/13C·1 router).
  */
 
-import { describe, it, expect } from 'vitest';
-import { executeContrast } from './contrast.js';
+import { describe, it, expect, vi } from 'vitest';
+import { executeContrast, type ContrastInput } from './contrast.js';
 
 const white = { hex: '#F0EBE0', name: 'Snow White', itemID: 5729 };
 const black = { hex: '#2B2923', name: 'Soot Black', itemID: 5730 };
@@ -74,5 +74,60 @@ describe('executeContrast', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.svgString).toContain('VERH.');
+  });
+});
+
+describe('executeContrast — fewer than two dyes', () => {
+  /**
+   * A contrast needs a pair. Fewer dyes used to reach `pairs[0].nameA` and
+   * throw a TypeError that came back as GENERATION_FAILED — a caller's
+   * mistake reported as a render bug. A non-array (a JavaScript caller of the
+   * published package) is refused the same way rather than thrown across the
+   * boundary.
+   */
+  it.each([
+    ['no dyes', []],
+    ['one dye', [white]],
+    ['undefined', undefined],
+    ['null', null],
+  ])('refuses %s with its own code and a localized message', async (_label, dyes) => {
+    const warn = vi.fn();
+    const result = await executeContrast({
+      dyes: dyes as ContrastInput['dyes'],
+      locale: 'de',
+      logger: { warn },
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('NOT_ENOUGH_DYES');
+    expect(result.errorMessage).toBe('Beide Farbstoffe (dye1 und dye2) sind erforderlich.');
+    // A refusal is an answer, not a failure — nothing is logged as one
+    const lines = warn.mock.calls.flat().map(String);
+    expect(lines.some((l) => l.includes('generation failed'))).toBe(false);
+  });
+});
+
+describe('executeContrast — a generation failure is logged (BUG-125)', () => {
+  /**
+   * The catch used to be bare. A hex input is user-typed and core's parser
+   * quotes it in its message, so the line names the error's class — never
+   * the message, never a dye name or hex.
+   */
+  it('logs the error class and leaves names and hexes out of the line', async () => {
+    const warn = vi.fn();
+    const typed = { hex: '#ZZZZZZ', name: 'Sentinel Typed Name' };
+    const result = await executeContrast({ dyes: [white, typed], locale: 'en', logger: { warn } });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('GENERATION_FAILED');
+
+    const lines = warn.mock.calls.flat().map(String);
+    expect(lines.some((l) => /^\[contrast\] generation failed: \w+/.test(l))).toBe(true);
+    for (const line of lines) {
+      expect(line).not.toContain('ZZZZZZ');
+      expect(line).not.toContain('Sentinel Typed Name');
+    }
   });
 });

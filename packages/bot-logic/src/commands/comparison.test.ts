@@ -4,8 +4,8 @@
  * Tests for executeComparison — side-by-side dye comparison grid.
  */
 
-import { describe, it, expect } from 'vitest';
-import { executeComparison } from './comparison.js';
+import { describe, it, expect, vi } from 'vitest';
+import { executeComparison, type ComparisonInput } from './comparison.js';
 import { dyeService } from '../input-resolution.js';
 
 const snowWhite = dyeService.searchByName('Snow White')[0];
@@ -106,5 +106,64 @@ describe('executeComparison', () => {
     if (!result.ok) return;
 
     expect(result.svgString).toContain('<svg');
+  });
+});
+
+// ============================================================================
+// BUG-125 — fewer than two dyes, and the final catch
+// ============================================================================
+
+describe('executeComparison — fewer than two dyes (BUG-125)', () => {
+  /**
+   * One dye used to reach the duel renderer, which read `dyes[1].hex` and
+   * threw a TypeError that came back as GENERATION_FAILED — a caller's
+   * mistake reported as a render bug. It is refused up front now, in the
+   * reader's language, before anything is drawn.
+   */
+  it.each([
+    ['no dyes', []],
+    ['one dye', [snowWhite]],
+    // A JavaScript caller of the published package: refused, never thrown
+    // across the boundary (the guard reads `dyes` before the try)
+    ['undefined', undefined],
+    ['null', null],
+  ])('refuses %s with its own code and a localized message', async (_label, dyes) => {
+    const warn = vi.fn();
+    const result = await executeComparison({
+      dyes: dyes as ComparisonInput['dyes'],
+      locale: 'de',
+      logger: { warn },
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('NOT_ENOUGH_DYES');
+    expect(result.errorMessage).toBe('Beide Farbstoffe (dye1 und dye2) sind erforderlich.');
+    // A refusal is an answer, not a failure — nothing is logged as one
+    const lines = warn.mock.calls.flat().map(String);
+    expect(lines.some((l) => l.includes('generation failed'))).toBe(false);
+  });
+});
+
+describe('executeComparison — a generation failure is logged (BUG-125)', () => {
+  it('logs the error class and leaves dye names and hexes out of the line', async () => {
+    const warn = vi.fn();
+    const broken = { ...sootBlack, hex: '#ZZZZZZ', name: 'Sentinel Dye Name', itemID: 0 };
+    const result = await executeComparison({
+      dyes: [snowWhite, broken],
+      locale: 'en',
+      logger: { warn },
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('GENERATION_FAILED');
+
+    const lines = warn.mock.calls.flat().map(String);
+    expect(lines.some((l) => /^\[comparison\] generation failed: \w+/.test(l))).toBe(true);
+    for (const line of lines) {
+      expect(line).not.toContain('ZZZZZZ');
+      expect(line).not.toContain('Sentinel Dye Name');
+    }
   });
 });

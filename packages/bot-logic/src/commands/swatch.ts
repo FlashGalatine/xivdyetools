@@ -39,6 +39,7 @@ import {
 } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 import { genderSymbol, getCharacterColors, producerToken, tribeDisplay } from './chara-identity.js';
 
@@ -205,7 +206,11 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     character = withoutNickname(
       await resolveCharaColors(parsed, getCharacterColors(), dyeService)
     );
-  } catch {
+  } catch (error) {
+    // The try runs the resolver and the nickname strip too, so a bot-side bug
+    // lands here as well: log the class and code (never the message — the
+    // parser's reason quotes the file's field values).
+    input.logger?.warn(`[swatch] parse failed: ${failureKind(error)}`);
     // HC-002: the parser's reason is English, so the reply gives a localized one
     return {
       ok: false,
@@ -412,7 +417,9 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     };
 
     return { ok: true, svgString, embed, character };
-  } catch {
+  } catch (error) {
+    // Like the read's catch above, this names the error's class only.
+    input.logger?.warn(`[swatch] generation failed: ${failureKind(error)}`);
     return {
       ok: false,
       error: 'GENERATION_FAILED',
