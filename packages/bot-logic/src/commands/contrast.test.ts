@@ -69,6 +69,54 @@ describe('executeContrast', () => {
     expect(low.svgString).toContain('#f4645a');
   });
 
+  // BUG-142: the card floors the printed ratio; the embed above it in the
+  // same Discord message used to round it (toFixed), so about half of all
+  // dye pairs read two different figures — here 3.00:1 over a card saying
+  // 2.99:1 "under 3:1". Dalamud Red ↔ Coral Pink is 2.99504: its third
+  // decimal is 5, the case where floor and round part ways.
+  describe('the embed prints the same floored ratio as the card (BUG-142)', () => {
+    const dalamudRed = { hex: '#781A1A', name: 'Dalamud Red', itemID: 5738 };
+    const coralPink = { hex: '#CC6C5E', name: 'Coral Pink' };
+
+    it('reads 2.99:1 in the embed and on the card, never 3.00:1', async () => {
+      const result = await executeContrast({ dyes: [dalamudRed, coralPink], locale: 'en' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.pairs[0].ratio).toBeGreaterThan(2.995);
+      expect(result.pairs[0].ratio).toBeLessThan(3);
+      expect(result.embed.description?.endsWith(' · 2.99:1')).toBe(true);
+      expect(result.svgString).toContain('>2.99:1</text>');
+      expect(result.embed.description).not.toContain('3.00');
+      expect(result.svgString).not.toContain('3.00:1');
+    });
+
+    it("floors a real ratio a hair under the cut (2.9999999999993983 — the old epsilon's case)", async () => {
+      const result = await executeContrast({
+        dyes: [
+          { hex: '#1C5F98', name: '#1C5F98' },
+          { hex: '#190102', name: '#190102' },
+        ],
+        locale: 'en',
+      });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.embed.description?.endsWith(' · 2.99:1')).toBe(true);
+      expect(result.svgString).toContain('>2.99:1</text>');
+      expect(result.svgString).not.toContain('3.00:1');
+    });
+
+    it("prints the embed with the language's decimal separator, as the card does", async () => {
+      const result = await executeContrast({ dyes: [dalamudRed, coralPink], locale: 'de' });
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+
+      expect(result.embed.description?.endsWith(' · 2,99:1')).toBe(true);
+      expect(result.svgString).toContain('>2,99:1</text>');
+    });
+  });
+
   it('localizes the German column header (VERH.)', async () => {
     const result = await executeContrast({ dyes: [white, black, red, blue], locale: 'de' });
     expect(result.ok).toBe(true);
