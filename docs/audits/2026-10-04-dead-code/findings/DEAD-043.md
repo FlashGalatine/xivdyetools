@@ -15,4 +15,4 @@
 Steps: Delete packages/test-utils/src/factories/dye.ts 66-74 (JSDoc and fn) and the blank line after it. Delete the test 'exposes an opt-in random draw' at dye.test.ts 270-275, and drop randomStainId from the import on line 5. Reword the comment at factories/index.ts:9. Update docs/developer-guides/testing.md:50 and docs/projects/test-utils/overview.md:132,140. Add a new test-utils CHANGELOG entry and leave the old one at line 20 as is. Run `pnpm turbo run build type-check lint test --filter=...@xivdyetools/test-utils && pnpm dead-code:check && pnpm docs:check-links`.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `c73b702f` (branch `fix/remediation-2026-10-04-sprint19`, test-utils 3.0.0; PR #274, open).

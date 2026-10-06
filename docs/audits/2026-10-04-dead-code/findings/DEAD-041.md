@@ -25,4 +25,4 @@ Steps: 1. Delete packages/test-utils/integration/ (setup.ts, discord-presets/bot
 Correction from the final adversarial check: jwt-validation.test.ts is the only test inside test-utils that checks createTestJWT produces a valid HS256 signature (tests/auth/jwt.test.ts only decodes header and payload). After the deletion that check lives in presets-api tests/middleware/auth.test.ts:225 and :289, which the --filter=...@xivdyetools/test-utils gate still runs.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `c73b702f` (branch `fix/remediation-2026-10-04-sprint19`, test-utils 3.0.0; PR #274, open).

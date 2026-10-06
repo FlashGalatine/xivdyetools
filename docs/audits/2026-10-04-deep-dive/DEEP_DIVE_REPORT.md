@@ -481,8 +481,8 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-144 | OPEN | — |
 | BUG-145 | OPEN | — |
 | BUG-146 | OPEN | — |
-| BUG-147 | OPEN | — |
-| BUG-148 | OPEN | — |
+| BUG-147 | FIX COMMITTED, NOT DEPLOYED (PR #274, open) | `c73b702f` |
+| BUG-148 | FIX COMMITTED, NOT DEPLOYED (PR #274, open) | `c73b702f` |
 | BUG-149 | OPEN | — |
 | BUG-150 | OPEN | — |
 | BUG-151 | OPEN | — |
