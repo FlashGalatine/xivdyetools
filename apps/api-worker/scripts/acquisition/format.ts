@@ -92,8 +92,14 @@ function formatEntry(entry: Entry, inputs: Inputs, tables: Tables): string | nul
       return entry.saga;
     case 'eurekaLockbox':
       return entry.line;
-    case 'container':
-      return inputs.items.get(entry.containerId)?.name ?? null;
+    case 'container': {
+      const name = inputs.items.get(entry.containerId)?.name;
+      // These costume sets list the coffer's purchase source in the glamour export.
+      if (name && /^\w+fiend's Costume Coffer$/.test(name)) {
+        return "Enie - Ishgard - The Firmament (3,000 Skybuilders' Scrips)";
+      }
+      return name ?? null;
+    }
     case 'voyage':
       return entry.voyage === 'airship' ? 'Airship Voyages' : 'Subaquatic Voyages';
     case 'treasureTrove':
