@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Glamour acquisition lines for all 127 pieces from Mewazunte in Tuliyollal now omit the currency amount. The acquisition generator preserves the vendor-only wording on future refreshes.
 - Glamour acquisition lines for all 127 pieces from Varsarudh in Old Sharlayan now omit the currency amount. The acquisition generator preserves the vendor-only wording on future refreshes.
 - Glamour acquisition lines for all 55 pieces from fiend costume coffers now list Enie in Ishgard's Firmament and the 3,000 Skybuilders' Scrips cost. The acquisition generator preserves this wording when the table is refreshed.
 

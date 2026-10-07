@@ -118,9 +118,15 @@ function vendorText(npc: Npc, costs: Cost[], inputs: Inputs, tables: Tables): st
   if (npc.zone === null) return null;
   const place = tables.ishgardDistricts.has(npc.zone) ? `Ishgard - ${npc.zone}` : npc.zone;
   const outpost = npc.outpost ? ` - ${npc.outpost}` : '';
-  const head = `${titleCase(npc.name)} - ${place}${outpost}`;
-  // Varsarudh's acquisition line names the vendor without a currency amount.
-  if (titleCase(npc.name) === 'Varsarudh' && npc.zone === 'Old Sharlayan') return head;
+  const name = titleCase(npc.name);
+  const head = `${name} - ${place}${outpost}`;
+  // These acquisition lines name the vendor without a currency amount.
+  if (
+    (name === 'Varsarudh' && npc.zone === 'Old Sharlayan') ||
+    (name === 'Mewazunte' && npc.zone === 'Tuliyollal')
+  ) {
+    return head;
+  }
   if (costs.length === 0) return head;
   const cost = costText(costs, inputs);
   return cost === null ? null : `${head} (${cost})`;

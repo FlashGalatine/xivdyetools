@@ -95,7 +95,23 @@ describe('formatEntries', () => {
     );
   });
 
+  it.each([
+    { costs: [{ itemId: 1, amount: 2 }] },
+    { costs: [{ itemId: 25, amount: 500 }] },
+    { costs: [] },
+  ])('omits Mewazunte costs in Tuliyollal: %j', ({ costs }) => {
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Mewazunte', 'Tuliyollal'), costs }])).toBe(
+      'Mewazunte - Tuliyollal'
+    );
+  });
+
   it('keeps costs for other vendors and locations', () => {
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Merchant', 'Tuliyollal'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Merchant - Tuliyollal (2 Gil)'
+    );
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Mewazunte', 'Old Gridania'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Mewazunte - Old Gridania (2 Gil)'
+    );
     expect(line([{ kind: 'vendor', npc: npc(4, 'Merchant', 'Old Sharlayan'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
       'Merchant - Old Sharlayan (2 Gil)'
     );
