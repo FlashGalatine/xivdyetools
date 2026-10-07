@@ -85,6 +85,25 @@ describe('formatEntries', () => {
     );
   });
 
+  it.each([
+    { costs: [{ itemId: 1, amount: 2 }] },
+    { costs: [{ itemId: 25, amount: 500 }] },
+    { costs: [] },
+  ])('omits Varsarudh costs in Old Sharlayan: %j', ({ costs }) => {
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Varsarudh', 'Old Sharlayan'), costs }])).toBe(
+      'Varsarudh - Old Sharlayan'
+    );
+  });
+
+  it('keeps costs for other vendors and locations', () => {
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Merchant', 'Old Sharlayan'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Merchant - Old Sharlayan (2 Gil)'
+    );
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Varsarudh', 'Old Gridania'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Varsarudh - Old Gridania (2 Gil)'
+    );
+  });
+
   it('writes a free vendor without parentheses, and a currency in the plural even for one unit (Mar 2026 reminders)', () => {
     expect(line([{ kind: 'vendor', npc: npc(4, 'Varsarudh', 'Old Sharlayan'), costs: [] }])).toBe('Varsarudh - Old Sharlayan');
     expect(line([{ kind: 'vendor', npc: npc(5, 'mark quartermaster', "Wolves' Den Pier"), costs: [{ itemId: 25, amount: 1 }] }])).toBe(
