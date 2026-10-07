@@ -16,7 +16,7 @@ in all six languages.
 
 - **The `.chara` help names Brio** (`commands/schemas.ts` and bot-logic's localized option and
   `/manual` text). The bot has always read Brio files.
-- **The 👤 Character File topic explains every `/glamour` verdict**: the race name, the dash for a
+- **The 👤 Character File topic explains every `/glamour` verdict**: OK, the race name, the dash for a
   model with no item, the automatic twin pick, and the English Acquisition lines (bot-logic 4.6.1).
 
 ### Changed
@@ -35,8 +35,10 @@ in all six languages.
   - Every `.chara` help and option string names each producer that bot-logic's
     `chara-identity.ts` `PRODUCER_TOKENS` lists. The list is read from source, so a new producer
     fails the guard until the help names it.
-  - The topic quotes each locale's own TWIN / DYES / NO GLAM / LOCKED labels, the dash as the card
-    shows it (`(—)`, `（—）` or `「—」`), and "Acquisition".
+  - The topic quotes each locale's own OK / TWIN / DYES / NO GLAM / LOCKED labels, each as a word.
+    The en "OK" also sits inside "+N LOOKS", and a plain substring check passed without the OK
+    sentence. It also quotes the dash as the card shows it (`(—)`, `（—）` or `「—」`) and
+    "Acquisition".
   - Mutation-checked: before the translations landed, exactly the ten tests covering the five
     untranslated locales failed.
 

@@ -17,8 +17,10 @@ stacked on PR #246. Text only, no key added or removed.
   `commands.{swatch,glamour}.options.file.description` option text. The parser reads Brio files and
   the cards label them BRIO, but every help string named only Anamnesis and Ktisis.
 - **The character-file topic lists every `/glamour` verdict the card can show.** It read "DYES, NO
-  GLAM, LOCKED or a race". Now it says the race name stands in for LOCKED only when exactly one race
-  can wear the piece, and that a model with no item behind it shows a dash (—).
+  GLAM, LOCKED or a race" and never mentioned OK. Now it says:
+  - a piece with nothing to fix shows OK;
+  - the race name stands in for LOCKED only when exactly one race can wear the piece;
+  - a model with no item behind it shows a dash (—).
 - **The topic says the bot picks the twin itself**, preferring one that takes dyes, and that the web
   app's Glamour Reader, linked at the end of the reply, lets you choose another.
 - **The topic says the GPOSERS list's labels and Acquisition lines are English in every language**,

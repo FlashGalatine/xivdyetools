@@ -505,17 +505,29 @@ describe('handleManualCommand', () => {
       it.each(LOCALES)('quotes every %s /glamour verdict label the card can show', (locale) => {
         const tree = load(locale);
         const body = valueAt(tree, 'manual5.topics.characterFile.body');
-        // TWIN, DYES, NO GLAM and LOCKED as this locale's card prints them, and
-        // the dash a model with no item behind it gets (glamour.ts readPiece)
+        // Every status readPiece can print — OK, TWIN, DYES, NO GLAM and LOCKED as
+        // this locale's card prints them — and the dash a model with no item
+        // behind it gets
         const labels = [
+          'card.glamourStatusOk',
           'card.glamourStatusTwin',
           'card.glamourStatusDye',
           'card.glamourStatusGlamour',
           'card.glamourStatusWear',
         ].map((key) => valueAt(tree, key));
+        // As a word, not inside one: en "OK" is also the middle of "+N LOOKS"
+        const latin = /\p{Script=Latin}/u;
+        const quotes = (label: string) => {
+          for (let at = body.indexOf(label); at !== -1; at = body.indexOf(label, at + 1)) {
+            const before = body[at - 1] ?? '';
+            const after = body[at + label.length] ?? '';
+            if (!latin.test(before) && !latin.test(after)) return true;
+          }
+          return false;
+        };
 
         expect(labels.every(Boolean)).toBe(true);
-        expect(labels.filter((label) => !body.includes(label))).toEqual([]);
+        expect(labels.filter((label) => !quotes(label))).toEqual([]);
         // Quoted as the card shows it, not as punctuation: (—), （—） or 「—」
         expect(body).toMatch(/[(（「]—[)）」]/);
         // The GPOSERS list's labels are English in every language
