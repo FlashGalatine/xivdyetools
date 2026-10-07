@@ -31,6 +31,10 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [0.16.2] - 2026-10-07
+### 📜 Glamour costume sources
+- Web app: the Glamour Reader's Acquisition lines for fiend costume pieces now show Enie in Ishgard's Firmament and the 3,000 Skybuilders' Scrips cost.
+
 ## [5.10.5] - 2026-10-05
 ### 🌏 Race and clan names in Korean and Chinese
 - Web app and link previews: Korean race and clan names now match the game's Korean client, for example 휴런 for Hyur and 중원 부족 for Midlander.
