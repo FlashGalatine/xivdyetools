@@ -25,6 +25,7 @@ import {
 } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -131,6 +132,73 @@ export function capGradientRows(steps: GradientStepResult[]): {
 }
 
 /**
+ * IDs of every dye the user's filters exclude — handed to core's
+ * `findClosestDye` as `excludeIds`, so its search runs over the allowed pool
+ * only (BUG-033).
+ */
+function filteredOutDyeIds(dyeFilters: DyeTypeFilters): number[] {
+  return dyeService
+    .getAllDyes()
+    .filter((dye) => isDyeExcluded(dyeFilters, dye))
+    .map((dye) => dye.id);
+}
+
+/**
+ * Below these chromas an OKLCH / LCH endpoint is grey, and its hue is a
+ * placeholder. Core rounds chroma (OKLCH to 6 dp, LCH to 4 dp), so an exact
+ * grey (r = g = b) reads C = 0 in both — but not hue 0 in LCH, where float
+ * noise in a and b (raw chroma ≤ 2e-5) comes out of atan2 as h ≈ 158.2. The
+ * least chromatic non-greys found, scanning every colour within three units
+ * of a grey, are #FEFFFF at OKLCH C 0.001059 and #000101 at LCH C 0.2773.
+ * These thresholds sit 10× and 28× below those and far above the noise, so
+ * exactly the r = g = b colours count as grey — the set core's blendHSL treats
+ * as powerless (s === 0) — whether or not core keeps its rounding. The web
+ * app's gradient tool (components/gradient-tool.ts) uses the same two values.
+ */
+const OKLCH_GREY_CHROMA = 1e-4;
+const LCH_GREY_CHROMA = 0.01;
+
+/**
+ * The hue at `t` along the shorter arc from start to end, with CSS Color 4's
+ * "powerless hue" rule — the one core's blendHSL applies (BUG-035).
+ *
+ * A grey endpoint (white and black included) has no hue of its own; the hue
+ * core reports for it is a placeholder — 0 in HSV and OKLCH, ~158 in LCH.
+ * Interpolating it as a real hue swung every grey ramp through whatever lay
+ * between: Slate Grey #656565 → #2A3FD0 drew a purple midpoint (#975D9B) in
+ * HSV, the default, and ran through teal in LCH; white → blue went pink. So a
+ * grey side takes the other side's hue, and the chromatic end's hue holds
+ * along the whole ramp while the other two channels still interpolate. When
+ * both sides are grey the hue is irrelevant — the ramp has no chroma — and
+ * each keeps its own, so a grey-to-grey ramp is unchanged.
+ */
+function interpolateHue(
+  startHue: number,
+  endHue: number,
+  startIsGrey: boolean,
+  endIsGrey: boolean,
+  t: number,
+): number {
+  const from = startIsGrey && !endIsGrey ? endHue : startHue;
+  const to = endIsGrey && !startIsGrey ? startHue : endHue;
+  let hueDiff = to - from;
+  if (hueDiff > 180) hueDiff -= 360;
+  if (hueDiff < -180) hueDiff += 360;
+  return (from + hueDiff * t + 360) % 360;
+}
+
+/** One HSV step — the `hsv` mode and the fallback for an unknown one. */
+function interpolateHsv(startColor: string, endColor: string, t: number): string {
+  const startHsv = ColorService.hexToHsv(startColor);
+  const endHsv = ColorService.hexToHsv(endColor);
+  // From integer RGB, s is exactly 0 when r = g = b
+  const h = interpolateHue(startHsv.h, endHsv.h, startHsv.s === 0, endHsv.s === 0, t);
+  const s = startHsv.s + (endHsv.s - startHsv.s) * t;
+  const v = startHsv.v + (endHsv.v - startHsv.v) * t;
+  return ColorService.hsvToHex(h, s, v);
+}
+
+/**
  * Generates interpolated colors between start and end in the specified color space.
  */
 function generateGradientColorsMultiSpace(
@@ -157,15 +225,7 @@ function generateGradientColorsMultiSpace(
       }
 
       case 'hsv': {
-        const startHsv = ColorService.hexToHsv(startColor);
-        const endHsv = ColorService.hexToHsv(endColor);
-        let hueDiff = endHsv.h - startHsv.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
-        const h = (startHsv.h + hueDiff * t + 360) % 360;
-        const s = startHsv.s + (endHsv.s - startHsv.s) * t;
-        const v = startHsv.v + (endHsv.v - startHsv.v) * t;
-        interpolatedColor = ColorService.hsvToHex(h, s, v);
+        interpolatedColor = interpolateHsv(startColor, endColor, t);
         break;
       }
 
@@ -182,12 +242,15 @@ function generateGradientColorsMultiSpace(
       case 'oklch': {
         const startOklch = ColorService.hexToOklch(startColor);
         const endOklch = ColorService.hexToOklch(endColor);
-        let hueDiff = endOklch.h - startOklch.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
         const L = startOklch.L + (endOklch.L - startOklch.L) * t;
         const C = startOklch.C + (endOklch.C - startOklch.C) * t;
-        const h = (startOklch.h + hueDiff * t + 360) % 360;
+        const h = interpolateHue(
+          startOklch.h,
+          endOklch.h,
+          startOklch.C < OKLCH_GREY_CHROMA,
+          endOklch.C < OKLCH_GREY_CHROMA,
+          t,
+        );
         interpolatedColor = ColorService.oklchToHex(L, C, h);
         break;
       }
@@ -195,12 +258,15 @@ function generateGradientColorsMultiSpace(
       case 'lch': {
         const startLch = ColorService.hexToLch(startColor);
         const endLch = ColorService.hexToLch(endColor);
-        let hueDiff = endLch.h - startLch.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
         const L = startLch.L + (endLch.L - startLch.L) * t;
         const C = startLch.C + (endLch.C - startLch.C) * t;
-        const h = (startLch.h + hueDiff * t + 360) % 360;
+        const h = interpolateHue(
+          startLch.h,
+          endLch.h,
+          startLch.C < LCH_GREY_CHROMA,
+          endLch.C < LCH_GREY_CHROMA,
+          t,
+        );
         interpolatedColor = ColorService.lchToHex(L, C, h);
         break;
       }
@@ -215,15 +281,7 @@ function generateGradientColorsMultiSpace(
 
       default: {
         // Default to HSV
-        const startHsv = ColorService.hexToHsv(startColor);
-        const endHsv = ColorService.hexToHsv(endColor);
-        let hueDiff = endHsv.h - startHsv.h;
-        if (hueDiff > 180) hueDiff -= 360;
-        if (hueDiff < -180) hueDiff += 360;
-        const h = (startHsv.h + hueDiff * t + 360) % 360;
-        const s = startHsv.s + (endHsv.s - startHsv.s) * t;
-        const v = startHsv.v + (endHsv.v - startHsv.v) * t;
-        interpolatedColor = ColorService.hsvToHex(h, s, v);
+        interpolatedColor = interpolateHsv(startColor, endColor, t);
       }
     }
 
@@ -262,26 +320,21 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       colorSpace,
     );
 
-    // Find the closest non-Facewear dye per step; ΔE2000 is the number the
-    // old boundary threw away.
+    // Find the closest dye per step; ΔE2000 is the number the old boundary
+    // threw away.
+    //
+    // BUG-033 (2026-10-04 deep dive): the filters narrow the POOL before the
+    // search, so the answer is "the nearest allowed dye". They used to be
+    // checked on the search's answer one dye at a time, giving up after ten
+    // rejections — with `/preferences vendor` (85 of 125 dyes excluded) a
+    // white→black gradient printed "no match" on its #666666 step although
+    // 40 allowed dyes exist. Core's own search still does the ranking (k-d
+    // tree for rgb, unrounded percent for distinguish) and skips Facewear.
+    const excludeIds = dyeFilters ? filteredOutDyeIds(dyeFilters) : [];
     const gradientSteps: GradientStepResult[] = [];
 
     for (const hex of gradientHexColors) {
-      let closestDye: Dye | null = null;
-      const excludeIds: number[] = [];
-
-      for (let attempt = 0; attempt < 10; attempt++) {
-        const candidate = dyeService.findClosestDye(hex, { excludeIds, matchingMethod });
-        if (!candidate) break;
-        if (
-          candidate.category !== 'Facewear' &&
-          (!dyeFilters || !isDyeExcluded(dyeFilters, candidate))
-        ) {
-          closestDye = candidate;
-          break;
-        }
-        excludeIds.push(candidate.id);
-      }
+      const closestDye = dyeService.findClosestDye(hex, { excludeIds, matchingMethod });
 
       const distance = closestDye
         ? ColorService.getDistanceForMethod(hex, closestDye.hex, 'ciede2000')
@@ -353,7 +406,10 @@ export async function executeGradient(input: GradientInput): Promise<GradientRes
       omittedRows: omitted,
       embed,
     };
-  } catch {
+  } catch (error) {
+    // BUG-125: log the cause rather than discard it — its class, never its
+    // message, which quotes the hex the user typed ("Invalid hex color: …").
+    input.logger?.warn(`[gradient] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

@@ -61,7 +61,6 @@ describe('bot-i18n', () => {
         const translator = new Translator('en');
 
         expect(translator.t('common.error')).toBe('Error');
-        expect(translator.t('common.success')).toBe('Success');
       });
 
       it('should translate nested keys', () => {
@@ -162,19 +161,7 @@ describe('bot-i18n', () => {
         expect(translator.t('ban.confirmTitle')).toBe('Confirm User Ban');
         expect(translator.t('ban.yesBan')).toBe('Yes, Ban User');
         expect(translator.t('ban.cancel')).toBe('Cancel');
-        expect(translator.t('ban.userBanned')).toBe('User Banned');
         expect(translator.t('ban.userUnbanned')).toBe('User Unbanned');
-      });
-
-      it('should translate category keys', () => {
-        const translator = new Translator('en');
-
-        expect(translator.t('preset.categories.jobs')).toBe('FFXIV Jobs');
-        expect(translator.t('preset.categories.grand-companies')).toBe('Grand Companies');
-        expect(translator.t('preset.categories.seasons')).toBe('Seasons');
-        expect(translator.t('preset.categories.events')).toBe('FFXIV Events');
-        expect(translator.t('preset.categories.aesthetics')).toBe('Aesthetics');
-        expect(translator.t('preset.categories.community')).toBe('Community');
       });
     });
 
@@ -258,6 +245,24 @@ describe('bot-i18n', () => {
 
       expect(translator.getLocale()).toBe('en');
     });
+
+    // BUG-126 (2026-10-04 deep-dive): bot-logic's resolveUserLocale only logs a
+    // degraded step when it is handed a logger, and this caller held one but
+    // never passed it — so a KV outage during locale resolution was silent.
+    it('logs a KV failure during locale resolution on the logger it was given', async () => {
+      const kvError = new Error('KV unavailable');
+      const failingKV = { get: vi.fn().mockRejectedValue(kvError) } as unknown as KVNamespace;
+
+      const translator = await createUserTranslator(failingKV, 'user123', 'de', mockLogger);
+
+      // The interaction still resolves — to the Discord locale, the next step down
+      expect(translator.getLocale()).toBe('de');
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to read unified preferences for locale resolution',
+        kvError
+      );
+      expect(mockLogger.error).toHaveBeenCalledWith('Failed to get user language preference', kvError);
+    });
   });
 
   describe('interpolation edge cases', () => {
@@ -314,10 +319,10 @@ describe('bot-i18n', () => {
     it('should handle single-segment keys', () => {
       const translator = new Translator('en');
 
-      // 'meta' exists but returns an object, not a string
-      const result = translator.t('meta');
+      // 'common' exists but returns an object, not a string
+      const result = translator.t('common');
 
-      expect(result).toBe('meta');
+      expect(result).toBe('common');
     });
   });
 });

@@ -10,6 +10,7 @@
 
 import { Resvg, initWasm } from '@resvg/resvg-wasm';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import type { LocaleCode } from '@xivdyetools/types';
 
 // Static WASM import - wrangler bundles this at build time
 // @ts-expect-error - WASM imports are handled by wrangler bundler
@@ -81,30 +82,54 @@ export async function renderSvgToPng(
     scale?: number;
     /** Background color (default: transparent) */
     background?: string;
-  } = {},
+    /**
+     * The locale the card is drawn in. It picks the CJK font load order,
+     * which is what decides the face for a glyph the primary (Latin) face
+     * lacks: JP first for `ja` (Japanese letterforms), SC first otherwise.
+     * See `getFontBuffers`. Required, so a card command cannot silently fall
+     * back to the SC-first order for a Japanese user.
+     */
+    locale: LocaleCode;
+  },
   logger?: ExtendedLogger,
 ): Promise<Uint8Array> {
   // Ensure WASM is initialized
   await initRenderer(logger);
 
-  const { scale = 2, background } = options;
+  const { scale = 2, background, locale } = options;
+
+  // Both wasm allocations of a render, the parsed tree and the RGBA pixmap,
+  // are released in the `finally`: on success after `asPng()` has returned,
+  // and on a failure whichever of the two was allocated. Nothing else frees
+  // the tree: in @resvg/resvg-wasm 2.6.2 the `Resvg` constructor glue never
+  // calls `ResvgFinalization.register`, so before this fix every `Resvg`
+  // leaked for the life of the isolate, however often GC ran. Only
+  // `RenderedImage` registers, so the pixmap was reclaimed late, whenever GC
+  // ran its finalizer. Freeing is safe after `asPng()`: it returns a JS-owned
+  // copy, not a view over wasm memory. This is the fix the 2026-10-04
+  // deep-dive's OPT-006 prescribes for og-worker's renderer. `RenderedImage`
+  // is not exported from resvg-wasm's typings, hence the derived type.
+  let resvg: InstanceType<typeof Resvg> | undefined;
+  let rendered: ReturnType<InstanceType<typeof Resvg>['render']> | undefined;
 
   try {
-    const resvg = new Resvg(svgString, {
+    resvg = new Resvg(svgString, {
       fitTo: {
         mode: 'zoom',
         value: scale,
       },
       background,
       font: {
-        // Load bundled font files for text rendering
-        fontBuffers: getFontBuffers(),
+        // Load bundled font files for text rendering, in the locale's
+        // fallback order (resvg builds its font database per instance, so
+        // this array is the only thing cached across renders)
+        fontBuffers: getFontBuffers(locale),
         // Default to Onest (body font) for any unspecified text
         defaultFontFamily: 'Onest',
       },
     });
 
-    const rendered = resvg.render();
+    rendered = resvg.render();
     const pngBuffer = rendered.asPng();
 
     return pngBuffer;
@@ -116,5 +141,8 @@ export async function renderSvgToPng(
       `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`,
       { cause: error },
     );
+  } finally {
+    rendered?.free();
+    resvg?.free();
   }
 }

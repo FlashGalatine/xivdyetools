@@ -5,15 +5,14 @@
  * Match character customization colors to FFXIV dyes.
  * Allows players to find dyes that match their character's hair, eyes, skin, etc.
  *
- * Left Panel: Race/gender selection, color category selector
- * Right Panel: Color grid, matched dye results
+ * One panel: the .chara reader, the palette rail and colour grid, and the
+ * matched dye results. Tribe, gender, count, method and filters live in the
+ * v4 ConfigSidebar; the market settings in MarketBoardService.
  *
  * @module components/tools/swatch-tool
  */
 
 import { BaseComponent } from '@components/base-component';
-import { CollapsiblePanel } from '@components/collapsible-panel';
-import { MarketBoard } from '@components/market-board';
 import {
   ColorService,
   ConfigController,
@@ -22,9 +21,9 @@ import {
   MarketBoardService,
   RouterService,
   StorageService,
-  ToastService,
 } from '@services/index';
-import { setupMarketBoardListeners } from '@services/pricing-mixin';
+// Type-only: RouterService itself comes through the barrel above
+import type { ToolId } from '@services/router-service';
 import {
   CharacterColorService,
   isMatchingMethod,
@@ -33,24 +32,15 @@ import {
   type CharaSlotId,
 } from '@xivdyetools/core';
 import { RACE_SUBRACES } from '@xivdyetools/types';
-import type {
-  CharacterColor,
-  CharacterColorMatch,
-  SubRace,
-  Gender,
-  Race,
-} from '@xivdyetools/types';
+import type { CharacterColor, CharacterColorMatch, SubRace, Gender } from '@xivdyetools/types';
 import {
-  ICON_TOOL_CHARACTER,
   ICON_TOOL_HARMONY,
   ICON_TOOL_COMPARISON,
   ICON_TOOL_GRADIENT,
   ICON_TOOL_ACCESSIBILITY,
 } from '@shared/tool-icons';
-import { ICON_PALETTE, ICON_MARKET } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
-import { SUBRACE_TO_CLAN_KEY } from '@shared/subrace-clan';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type {
   SwatchConfig,
@@ -62,7 +52,7 @@ import type {
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { isDyeExcluded, hasActiveFilters } from '@shared/dye-filter-utils';
 import { METHOD_TAGS } from '@shared/method-tags';
-import type { ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCardData } from '@components/v4/result-card';
 // Import v4-result-card custom element to ensure it's registered
 import '@components/v4/result-card';
 // Import v4-share-button for share functionality
@@ -79,8 +69,11 @@ import { CharaSessionService } from '@services/chara-session-service';
 // ============================================================================
 
 export interface SwatchToolOptions {
+  /** Unread: v4-layout passes the same element as rightPanel (REFACTOR-005). */
   leftPanel: HTMLElement;
+  /** The one panel the tool renders into. */
   rightPanel: HTMLElement;
+  /** Unread: v4-layout passes null, and the mobile drawer was removed (REFACTOR-005). */
   drawerContent?: HTMLElement | null;
 }
 
@@ -140,35 +133,6 @@ const LEGACY_MIGRATED_KEY = 'xivdyetools_swatch_v3_migrated';
 
 /** The sidebar's max-results slider range (SwatchConfig.maxResults: 1-6). */
 const MAX_RESULTS_LIMIT = 6;
-
-/**
- * Localization key for each race — a presentation concern local to this
- * component (differs from the canonical `Race` key by casing).
- */
-const RACE_KEY_BY_RACE: Record<Race, string> = {
-  Hyur: 'hyur',
-  Elezen: 'elezen',
-  Lalafell: 'lalafell',
-  "Miqo'te": 'miqote',
-  Roegadyn: 'roegadyn',
-  AuRa: 'auRa',
-  Hrothgar: 'hrothgar',
-  Viera: 'viera',
-};
-
-/**
- * Race groups with their subraces and race key for localization.
- *
- * The race/subrace *set* and order are sourced from the shared
- * `RACE_SUBRACES` table in `@xivdyetools/types` (DEAD-024 adoption);
- * `RACE_KEY_BY_RACE` above is this component's own presentation layer.
- */
-export const RACE_GROUPS: Array<{ raceKey: string; subraces: SubRace[] }> = (
-  Object.entries(RACE_SUBRACES) as Array<[Race, readonly [SubRace, SubRace]]>
-).map(([race, subraces]) => ({
-  raceKey: RACE_KEY_BY_RACE[race],
-  subraces: [...subraces],
-}));
 
 /**
  * Categories that are race-specific (need subrace/gender)
@@ -363,7 +327,13 @@ export class SwatchTool extends BaseComponent {
    */
   private colorsRequestVersion = 0;
   private priceData: Map<number, PriceData> = new Map();
-  private showPrices: boolean = false;
+  /**
+   * The Market Board toggle as this tool last applied it: seeded from
+   * MarketBoardService at construction, then set by setMarketConfig. Kept as
+   * its own copy on purpose — listenToMarketService's toggle reaction runs
+   * before setMarketConfig, and reads the previous value.
+   */
+  private showPrices: boolean;
 
   // From ConfigController, seeded in the constructor (BUG-022): display
   // options for v4-result-card, the matching method (5.0: one vocabulary
@@ -381,18 +351,6 @@ export class SwatchTool extends BaseComponent {
     rank: number; // 1 = closest
   }> = [];
 
-  // Child components
-  private marketBoard: MarketBoard | null = null;
-  private marketPanel: CollapsiblePanel | null = null;
-  private racePanel: CollapsiblePanel | null = null;
-  private categoryPanel: CollapsiblePanel | null = null;
-
-  // Mobile components
-  private mobileMarketBoard: MarketBoard | null = null;
-  private mobileRacePanel: CollapsiblePanel | null = null;
-  private mobileCategoryPanel: CollapsiblePanel | null = null;
-  private mobileMarketPanel: CollapsiblePanel | null = null;
-
   // DOM References
   private colorGridContainer: HTMLElement | null = null;
   private matchResultsContainer: HTMLElement | null = null;
@@ -406,9 +364,6 @@ export class SwatchTool extends BaseComponent {
   private shareButton: ShareButton | null = null;
   private reverseResultsContainer: HTMLElement | null = null;
   private reverseSection: HTMLElement | null = null;
-  private subraceSelect: HTMLSelectElement | null = null;
-  private genderSelect: HTMLSelectElement | null = null;
-  private categorySelect: HTMLSelectElement | null = null;
 
   // Layout containers for responsive behavior
   private mainLayout: HTMLElement | null = null;
@@ -418,19 +373,14 @@ export class SwatchTool extends BaseComponent {
   /** What the selection card describes — the last slot pick or grid click */
   private selectionContext: SwatchSelectionContext | null = null;
 
-  // Mobile DOM References
-  private mobileSubraceSelect: HTMLSelectElement | null = null;
-  private mobileGenderSelect: HTMLSelectElement | null = null;
-  private mobileCategorySelect: HTMLSelectElement | null = null;
-
-  // Subscriptions
-  private resultsPanelMediaQueryCleanup: (() => void) | null = null;
-
   constructor(container: HTMLElement, options: SwatchToolOptions) {
     super(container);
     this.options = options;
     this.characterColorService = new CharacterColorService();
     this.marketBoardService = MarketBoardService.getInstance();
+    // REFACTOR-005: read here, not in onMount — a share link's cell is
+    // matched (and, with prices on, priced) at the start of onMount.
+    this.showPrices = this.marketBoardService.getShowPrices();
 
     // BUG-001 / BUG-022 (2026-10-04 deep-dive): ConfigController owns the
     // settings, and subscribe() never replays, so this read is the only
@@ -472,21 +422,27 @@ export class SwatchTool extends BaseComponent {
   // ============================================================================
 
   renderContent(): void {
-    this.renderLeftPanel();
+    // REFACTOR-005: the v3 left panel and mobile drawer are gone. In the v4
+    // shell the left panel was this same element and was cleared at once, and
+    // the drawer was never passed. The .chara views rebuilt here destroy their
+    // predecessors in mountChara.
     this.renderRightPanel();
-
-    if (this.options.drawerContent) {
-      this.renderDrawerContent();
-    }
-
     this.element = this.container;
   }
 
   bindEvents(): void {
-    // Event bindings handled in render methods
+    // Other event bindings are made in the render methods.
+    // BUG-103 (2026-10-04 deep-dive): the viewport listener belongs here, not
+    // in onMount. update() unbinds every this.on listener and then calls only
+    // this, so one added at mount was gone after the first language switch.
+    this.on(window, 'resize', this.updateSwatchLayout);
   }
 
   onMount(): void {
+    // Before anything else: the left panel's MarketBoard, which this replaces,
+    // was listening from the first render on.
+    this.subs.add(this.listenToMarketService());
+
     // Load state from share URL first (async, runs after colors loaded)
     void this.loadFromShareUrl();
 
@@ -517,39 +473,44 @@ export class SwatchTool extends BaseComponent {
     // The loaded .chara outlives this tool, so follow it rather than own it.
     this.subs.add(CharaSessionService.subscribe(() => this.onCharaSession()));
 
-    // Sync MarketBoard components with ConfigController on initial load
-    const marketConfig = configController.getConfig('market');
-    if (this.marketBoard) {
-      this.marketBoard.setSelectedServer(marketConfig.selectedServer);
-      this.marketBoard.setShowPrices(marketConfig.showPrices);
-      this.showPrices = marketConfig.showPrices;
-    }
-    if (this.mobileMarketBoard) {
-      this.mobileMarketBoard.setSelectedServer(marketConfig.selectedServer);
-      this.mobileMarketBoard.setShowPrices(marketConfig.showPrices);
-    }
-
-    // Set initial layout and listen for viewport changes
+    // Set initial layout (bindEvents follows viewport changes)
     this.updateSwatchLayout();
-    this.on(window, 'resize', this.updateSwatchLayout);
 
     logger.info('[SwatchTool] Mounted');
   }
 
-  destroy(): void {
-    this.resultsPanelMediaQueryCleanup?.();
+  /**
+   * REFACTOR-005: the job the v3 left panel's MarketBoard did here. The v4
+   * shell cleared that board off the page at once, but it stayed subscribed
+   * to MarketBoardService and relayed each server change and Market Board
+   * toggle back to this tool. These are the same two reactions, on the
+   * service directly. Like the relay they run inside the service's own
+   * 'market' subscriber, so before setMarketConfig: `showPrices` there is
+   * still the previous toggle.
+   */
+  private listenToMarketService(): () => void {
+    const service = this.marketBoardService;
+    const onServerChanged = (): void => {
+      if (this.selectedColor) this.findMatchingDyes();
+    };
+    const onSettingsChanged = (): void => {
+      if (this.showPrices && this.matchedDyes.length > 0) {
+        void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
+      } else {
+        this.updateMatchResults();
+      }
+    };
+    service.addEventListener('server-changed', onServerChanged);
+    service.addEventListener('settings-changed', onSettingsChanged);
+    return () => {
+      service.removeEventListener('server-changed', onServerChanged);
+      service.removeEventListener('settings-changed', onSettingsChanged);
+    };
+  }
 
+  destroy(): void {
     // Only the views go: the loaded file stays in CharaSessionService.
     this.destroyChara();
-    this.marketBoard?.destroy();
-    this.marketPanel?.destroy();
-    this.racePanel?.destroy();
-    this.categoryPanel?.destroy();
-
-    this.mobileMarketBoard?.destroy();
-    this.mobileRacePanel?.destroy();
-    this.mobileCategoryPanel?.destroy();
-    this.mobileMarketPanel?.destroy();
 
     this.selectedColor = null;
     this.matchedDyes = [];
@@ -645,12 +606,6 @@ export class SwatchTool extends BaseComponent {
       }
     }
 
-    // Sync UI selectors (both desktop and mobile)
-    if (sheetChanged || tribeChanged) {
-      this.syncDesktopSelectors();
-      this.syncMobileSelectors();
-    }
-
     // A tribe only decides the hair and skin sheets. Elsewhere (a .chara load
     // pins it while you look at the eye sheet) it must not drop the selection.
     const needsReload =
@@ -671,6 +626,12 @@ export class SwatchTool extends BaseComponent {
       // Re-match if maxResults or matchingMethod changed
       if (this.selectedColor) this.findMatchingDyes();
       if (this.reverseDyeHex) this.performReverseMatch();
+      // BUG-025 (2026-10-04 deep-dive): the selection card's sentence names
+      // the closest allowed dye, and so does SEND TO for a slot pick (a grid
+      // pick redraws it with its matches). Neither was redrawn, so after a
+      // filter change both still named a dye the filter now excludes.
+      this.updateSelectionCard();
+      if (this.selectionContext?.source === 'slot') this.updateHandoffRow();
     } else if (needsRedraw && this.matchedDyes.length > 0) {
       // Just redraw results if only display options changed
       this.updateMatchResults();
@@ -690,7 +651,9 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
-   * Update market configuration from external source (V4 ConfigSidebar)
+   * Apply the market configuration (this is the tool's ConfigController
+   * 'market' subscriber). MarketBoardService follows the same config itself,
+   * so there is nothing to forward to it.
    */
   public setMarketConfig(config: Partial<MarketConfig>): void {
     // Handle showPrices
@@ -698,14 +661,6 @@ export class SwatchTool extends BaseComponent {
       const showPrices = config.showPrices as boolean;
       this.showPrices = showPrices;
       logger.info(`[SwatchTool] setMarketConfig: showPrices -> ${showPrices}`);
-
-      // Update both MarketBoard UI instances
-      if (this.marketBoard) {
-        this.marketBoard.setShowPrices(showPrices);
-      }
-      if (this.mobileMarketBoard) {
-        this.mobileMarketBoard.setShowPrices(showPrices);
-      }
 
       // Fetch prices if enabled, or re-render to hide them
       if (showPrices && this.matchedDyes.length > 0) {
@@ -719,14 +674,6 @@ export class SwatchTool extends BaseComponent {
     if ('selectedServer' in config) {
       const selectedServer = config.selectedServer as string;
       logger.info(`[SwatchTool] setMarketConfig: selectedServer -> ${selectedServer}`);
-
-      // Update both MarketBoard UI instances with the new server
-      if (this.marketBoard) {
-        this.marketBoard.setSelectedServer(selectedServer);
-      }
-      if (this.mobileMarketBoard) {
-        this.mobileMarketBoard.setSelectedServer(selectedServer);
-      }
 
       // Re-fetch prices with the new server if prices are enabled
       if (this.showPrices && this.matchedDyes.length > 0) {
@@ -1104,279 +1051,12 @@ export class SwatchTool extends BaseComponent {
   }
 
   // ============================================================================
-  // Left Panel Rendering
-  // ============================================================================
-
-  private renderLeftPanel(): void {
-    const left = this.options.leftPanel;
-    clearContainer(left);
-
-    // Section 1: Race & Gender Selection
-    const raceContainer = this.createElement('div');
-    left.appendChild(raceContainer);
-    this.racePanel = new CollapsiblePanel(raceContainer, {
-      title: LanguageService.t('tools.character.selectSubrace'),
-      storageKey: 'v3_character_race_panel',
-      defaultOpen: true,
-      icon: ICON_TOOL_CHARACTER,
-    });
-    this.racePanel.init();
-    const raceContent = this.createElement('div');
-    this.renderRaceSection(raceContent);
-    this.racePanel.setContent(raceContent);
-
-    // Section 2: Color Category Selection
-    const categoryContainer = this.createElement('div');
-    left.appendChild(categoryContainer);
-    this.categoryPanel = new CollapsiblePanel(categoryContainer, {
-      title: LanguageService.t('tools.character.colorCategory'),
-      storageKey: 'v3_character_category_panel',
-      defaultOpen: true,
-      icon: ICON_PALETTE,
-    });
-    this.categoryPanel.init();
-    const categoryContent = this.createElement('div');
-    this.renderCategorySection(categoryContent);
-    this.categoryPanel.setContent(categoryContent);
-
-    // Section 3: Market Board
-    const marketContainer = this.createElement('div');
-    left.appendChild(marketContainer);
-    this.marketPanel = new CollapsiblePanel(marketContainer, {
-      title: LanguageService.t('marketBoard.title'),
-      storageKey: 'v3_character_market',
-      defaultOpen: false,
-      icon: ICON_MARKET,
-    });
-    this.marketPanel.init();
-
-    const marketContent = this.createElement('div');
-    this.marketBoard = new MarketBoard(marketContent);
-    this.marketBoard.init();
-
-    // Set up market board event listeners using shared utility
-    setupMarketBoardListeners(
-      marketContent,
-      () => this.showPrices && this.matchedDyes.length > 0,
-      () => void this.fetchPrices(this.matchedDyes.map((m) => m.dye)),
-      {
-        onPricesToggled: () => {
-          if (this.showPrices && this.matchedDyes.length > 0) {
-            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
-          } else {
-            this.updateMatchResults();
-          }
-        },
-        onServerChanged: () => {
-          if (this.selectedColor) {
-            this.findMatchingDyes();
-          }
-        },
-        onRefreshRequested: () => {
-          if (this.showPrices && this.matchedDyes.length > 0) {
-            this.priceData.clear();
-            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
-          }
-        },
-      }
-    );
-
-    // Initialize showPrices from MarketBoard state
-    this.showPrices = this.marketBoard.getShowPrices();
-
-    this.marketPanel.setContent(marketContent);
-  }
-
-  /**
-   * Render race/gender selection
-   */
-  private renderRaceSection(container: HTMLElement): void {
-    const section = this.createElement('div', { className: 'space-y-4 p-2' });
-
-    // Subrace selector
-    const subraceGroup = this.createElement('div', { className: 'space-y-2' });
-    const subraceLabel = this.createElement('label', {
-      className: 'block text-sm font-medium',
-      textContent: LanguageService.t('tools.character.selectSubrace'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    subraceGroup.appendChild(subraceLabel);
-
-    this.subraceSelect = this.createElement('select', {
-      className: 'w-full p-2 rounded-lg border text-sm',
-      attributes: {
-        style:
-          'background: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);',
-      },
-    }) as HTMLSelectElement;
-
-    // Group subraces by race with localized names
-    for (const group of RACE_GROUPS) {
-      const localizedRaceName = LanguageService.getRace(group.raceKey);
-      const optgroup = this.createElement('optgroup', {
-        attributes: { label: localizedRaceName },
-      }) as HTMLOptGroupElement;
-
-      for (const subrace of group.subraces) {
-        const clanKey = SUBRACE_TO_CLAN_KEY[subrace];
-        const localizedClanName = LanguageService.getClan(clanKey);
-        const option = this.createElement('option', {
-          textContent: localizedClanName,
-          attributes: { value: subrace },
-        }) as HTMLOptionElement;
-        if (subrace === this.subrace) {
-          option.selected = true;
-        }
-        optgroup.appendChild(option);
-      }
-      this.subraceSelect.appendChild(optgroup);
-    }
-
-    // setConfig syncs the other selects and does the reload and the clear.
-    this.subraceSelect.addEventListener('change', () => {
-      this.commitConfig({ race: this.subraceSelect!.value });
-    });
-
-    subraceGroup.appendChild(this.subraceSelect);
-    section.appendChild(subraceGroup);
-
-    // Gender selector
-    const genderGroup = this.createElement('div', { className: 'space-y-2' });
-    const genderLabel = this.createElement('label', {
-      className: 'block text-sm font-medium',
-      textContent: LanguageService.t('tools.character.selectGender'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    genderGroup.appendChild(genderLabel);
-
-    this.genderSelect = this.createElement('select', {
-      className: 'w-full p-2 rounded-lg border text-sm',
-      attributes: {
-        style:
-          'background: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);',
-      },
-    }) as HTMLSelectElement;
-
-    const maleOption = this.createElement('option', {
-      textContent: LanguageService.t('tools.character.male'),
-      attributes: { value: 'Male' },
-    }) as HTMLOptionElement;
-    if (this.gender === 'Male') maleOption.selected = true;
-
-    const femaleOption = this.createElement('option', {
-      textContent: LanguageService.t('tools.character.female'),
-      attributes: { value: 'Female' },
-    }) as HTMLOptionElement;
-    if (this.gender === 'Female') femaleOption.selected = true;
-
-    this.genderSelect.appendChild(maleOption);
-    this.genderSelect.appendChild(femaleOption);
-
-    this.genderSelect.addEventListener('change', () => {
-      this.commitConfig({ gender: this.genderSelect!.value });
-    });
-
-    genderGroup.appendChild(this.genderSelect);
-    section.appendChild(genderGroup);
-
-    // Show/hide gender based on category
-    this.updateGenderVisibility(genderGroup);
-
-    container.appendChild(section);
-  }
-
-  /**
-   * Render color category selection
-   */
-  private renderCategorySection(container: HTMLElement): void {
-    const section = this.createElement('div', { className: 'space-y-2 p-2' });
-
-    this.categorySelect = this.createElement('select', {
-      className: 'w-full p-2 rounded-lg border text-sm',
-      attributes: {
-        style:
-          'background: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);',
-      },
-    }) as HTMLSelectElement;
-
-    const categories: Array<{ value: ColorCategory; label: string }> = [
-      { value: 'eyeColors', label: LanguageService.t('tools.character.eyeColors') },
-      {
-        value: 'hairColors',
-        label: LanguageService.t('tools.character.hairColors'),
-      },
-      {
-        value: 'skinColors',
-        label: LanguageService.t('tools.character.skinColors'),
-      },
-      {
-        value: 'highlightColors',
-        label: LanguageService.t('tools.character.highlightColors'),
-      },
-      {
-        value: 'lipColorsDark',
-        label: LanguageService.t('tools.character.lipColorsDark'),
-      },
-      {
-        value: 'lipColorsLight',
-        label: LanguageService.t('tools.character.lipColorsLight'),
-      },
-      {
-        value: 'tattooColors',
-        label: LanguageService.t('tools.character.tattooColors'),
-      },
-      {
-        value: 'facePaintColorsDark',
-        label: LanguageService.t('tools.character.facePaintDark'),
-      },
-      {
-        value: 'facePaintColorsLight',
-        label: LanguageService.t('tools.character.facePaintLight'),
-      },
-    ];
-
-    for (const cat of categories) {
-      const option = this.createElement('option', {
-        textContent: cat.label,
-        attributes: { value: cat.value },
-      }) as HTMLOptionElement;
-      if (cat.value === this.colorCategory) {
-        option.selected = true;
-      }
-      this.categorySelect.appendChild(option);
-    }
-
-    this.categorySelect.addEventListener('change', () => {
-      this.commitConfig({ colorSheet: this.categorySelect!.value });
-
-      // Update gender visibility
-      const genderGroup = this.subraceSelect?.parentElement
-        ?.nextElementSibling as HTMLElement | null;
-      if (genderGroup) {
-        this.updateGenderVisibility(genderGroup);
-      }
-    });
-
-    section.appendChild(this.categorySelect);
-    container.appendChild(section);
-  }
-
-  /**
-   * Update gender selector visibility based on category
-   */
-  private updateGenderVisibility(genderGroup: HTMLElement): void {
-    const needsGender = RACE_SPECIFIC_CATEGORIES.includes(this.colorCategory);
-    genderGroup.style.display = needsGender ? 'block' : 'none';
-  }
-
-  // ============================================================================
-  // Right Panel Rendering (V4 Layout)
+  // Panel Rendering (V4 Layout)
   // ============================================================================
 
   private renderRightPanel(): void {
     const right = this.options.rightPanel;
-    // In V4, leftPanel and rightPanel are the same element.
-    // Clear to remove leftPanel content (V4 uses ConfigSidebar instead).
+    // update() re-runs this on every language switch: start from empty.
     clearContainer(right);
 
     // Apply V4-style layout to the panel
@@ -1731,6 +1411,19 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
+   * The workspace stops showing a THIS CHARACTER slot (a palette chip or the
+   * range toggle moved it to another sheet). BUG-083 follow-up (2026-10-04
+   * Sprint 22 review): the sheet card's ring and aria-pressed go with it, or
+   * they keep announcing a pick that is no longer current. selectColor and
+   * clearSelection, which replace or drop the context outright, tell the
+   * sheet the same way.
+   */
+  private dropSlotPick(): void {
+    if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+    this.charaSheet?.setSelectedSlot(null);
+  }
+
+  /**
    * A file was loaded or cleared. The card and sheet redraw themselves; this
    * is what the tool derives from the file on top of them.
    */
@@ -1888,7 +1581,7 @@ export class SwatchTool extends BaseComponent {
   /**
    * 10A palette rail: seven palettes with a Dark/Light range toggle for the
    * two split ones. Chips write the swatch colorSheet config (commitConfig);
-   * the sidebar has no sheet control since 10A, but shows TRIBE & GENDER only
+   * the sidebar has no sheet control since 10A, but shows CLAN & GENDER only
    * while that config names a hair or skin sheet.
    */
   private renderPaletteRail(): void {
@@ -1929,7 +1622,7 @@ export class SwatchTool extends BaseComponent {
         },
       }) as HTMLButtonElement;
       this.on(chip, 'click', () => {
-        if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+        this.dropSlotPick();
         const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
         this.commitConfig({ colorSheet: target });
       });
@@ -1959,7 +1652,7 @@ export class SwatchTool extends BaseComponent {
           },
         }) as HTMLButtonElement;
         this.on(btn, 'click', () => {
-          if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+          this.dropSlotPick();
           this.commitConfig({ colorSheet: `${currentBase}${range}` });
         });
         toggle.appendChild(btn);
@@ -2128,11 +1821,16 @@ export class SwatchTool extends BaseComponent {
     return target === (this.colorCategory as string);
   }
 
-  /** Closest pool dye to a bare colour under the current matching method. */
+  /**
+   * Closest pool dye to a bare colour under the current matching method,
+   * among the dyes the filters allow. BUG-025 (2026-10-04 deep-dive): it
+   * ignored the filters, so a slot's verdict sentence and SEND TO could name
+   * a dye the user had excluded.
+   */
   private closestDyeTo(hex: string): { dye: Dye; distance: number } | null {
     let best: { dye: Dye; distance: number } | null = null;
     for (const dye of dyeService.getAllDyes()) {
-      if (dye.itemID <= 0) continue;
+      if (dye.itemID <= 0 || isDyeExcluded(this.dyeFiltersConfig, dye)) continue;
       const distance = this.calculateColorDistance(hex, dye.hex);
       if (!best || distance < best.distance) best = { dye, distance };
     }
@@ -2404,34 +2102,39 @@ export class SwatchTool extends BaseComponent {
   /**
    * SEND TO targets on the 5.0 stainID share grammar — mirrors the handoff
    * row preset-detail builds (harmony ?dye=&harmony=, comparison and
-   * accessibility ?dyes=, gradient ?start=&end=).
+   * accessibility ?dyes=, gradient ?start=&end=). `params` is null while
+   * there is nothing to carry.
    */
-  private handoffTargets(ids: number[]): Array<{ icon: string; label: string; url: string }> {
+  private handoffTargets(
+    ids: number[]
+  ): Array<{ icon: string; label: string; tool: ToolId; params: Record<string, string> | null }> {
+    const first = ids.length > 0 ? String(ids[0]) : null;
+    const list = ids.slice(0, 4).join(',');
     return [
       {
         icon: ICON_TOOL_HARMONY,
         label: LanguageService.t('tools.harmony.title'),
-        url: ids.length > 0 ? `/harmony/?dye=${ids[0]}&harmony=complementary` : '',
+        tool: 'harmony',
+        params: first ? { dye: first, harmony: 'complementary' } : null,
       },
       {
         icon: ICON_TOOL_COMPARISON,
         label: LanguageService.t('tools.comparison.title'),
-        url: ids.length > 0 ? `/comparison/?dyes=${ids.slice(0, 4).join(',')}` : '',
+        tool: 'comparison',
+        params: first ? { dyes: list } : null,
       },
       {
         icon: ICON_TOOL_GRADIENT,
         label: LanguageService.t('tools.gradient.title'),
-        url:
-          ids.length >= 2
-            ? `/gradient/?start=${ids[0]}&end=${ids[1]}`
-            : ids.length > 0
-              ? '/gradient/'
-              : '',
+        tool: 'gradient',
+        params:
+          ids.length >= 2 ? { start: String(ids[0]), end: String(ids[1]) } : first ? {} : null,
       },
       {
         icon: ICON_TOOL_ACCESSIBILITY,
         label: LanguageService.t('tools.accessibility.title'),
-        url: ids.length > 0 ? `/accessibility/?dyes=${ids.slice(0, 4).join(',')}` : '',
+        tool: 'accessibility',
+        params: first ? { dyes: list } : null,
       },
     ];
   }
@@ -2469,7 +2172,8 @@ export class SwatchTool extends BaseComponent {
     }
 
     for (const target of this.handoffTargets(ids)) {
-      const enabled = target.url !== '';
+      const params = target.params;
+      const enabled = params !== null;
       const chip = this.createElement('button', {
         attributes: {
           type: 'button',
@@ -2488,8 +2192,10 @@ export class SwatchTool extends BaseComponent {
       glyph.innerHTML = target.icon || '';
       chip.appendChild(glyph);
       chip.appendChild(this.createElement('span', { textContent: target.label }));
-      if (enabled) {
-        this.on(chip, 'click', () => window.location.assign(target.url));
+      // BUG-104 (2026-10-04 deep-dive): in-app navigation. A full page load
+      // (location.assign) dropped the loaded .chara, which lives in memory only.
+      if (params) {
+        this.on(chip, 'click', () => RouterService.navigateTo(target.tool, params));
       }
       row.appendChild(chip);
     }
@@ -2551,278 +2257,16 @@ export class SwatchTool extends BaseComponent {
       (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
       (card as unknown as { showConsolidation: boolean }).showConsolidation =
         this.displayOptions.showSpectrum ?? true;
-      (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;
+      // BUG-086 sibling (2026-10-04 Sprint 22 review): the service fetches
+      // nothing while the global Market Board toggle is off (its default), so
+      // the tool's own Price option alone drew "Market —" forever.
+      (card as unknown as { showPrice: boolean }).showPrice =
+        this.displayOptions.showPrice && this.marketBoardService.getShowPrices();
       (card as unknown as { showAcquisition: boolean }).showAcquisition =
         this.displayOptions.showAcquisition;
 
-      // Listen for context actions (both primary button and context menu trigger this)
-      card.addEventListener('context-action', ((
-        e: CustomEvent<{ action: ContextAction; dye: Dye }>
-      ) => {
-        this.handleContextAction(e.detail.action, e.detail.dye);
-      }) as EventListener);
-
       this.matchResultsContainer.appendChild(card);
     }
-  }
-
-  /**
-   * Handle context menu actions from result cards
-   */
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    switch (action) {
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(LanguageService.t('success.copiedToClipboard'));
-        });
-        break;
-    }
-  }
-
-  // ============================================================================
-  // Mobile Drawer
-  // ============================================================================
-
-  private renderDrawerContent(): void {
-    const drawer = this.options.drawerContent;
-    if (!drawer) return;
-
-    // Race section
-    const raceContainer = this.createElement('div');
-    drawer.appendChild(raceContainer);
-    this.mobileRacePanel = new CollapsiblePanel(raceContainer, {
-      title: LanguageService.t('tools.character.selectSubrace'),
-      storageKey: 'v3_character_mobile_race_panel',
-      defaultOpen: true,
-      icon: ICON_TOOL_CHARACTER,
-    });
-    this.mobileRacePanel.init();
-    const mobileRaceContent = this.createElement('div');
-    this.renderMobileRaceSection(mobileRaceContent);
-    this.mobileRacePanel.setContent(mobileRaceContent);
-
-    // Category section
-    const categoryContainer = this.createElement('div');
-    drawer.appendChild(categoryContainer);
-    this.mobileCategoryPanel = new CollapsiblePanel(categoryContainer, {
-      title: LanguageService.t('tools.character.colorCategory'),
-      storageKey: 'v3_character_mobile_category_panel',
-      defaultOpen: true,
-      icon: ICON_PALETTE,
-    });
-    this.mobileCategoryPanel.init();
-    const mobileCategoryContent = this.createElement('div');
-    this.renderMobileCategorySection(mobileCategoryContent);
-    this.mobileCategoryPanel.setContent(mobileCategoryContent);
-
-    // Market Board
-    const marketContainer = this.createElement('div');
-    drawer.appendChild(marketContainer);
-    this.mobileMarketPanel = new CollapsiblePanel(marketContainer, {
-      title: LanguageService.t('marketBoard.title'),
-      storageKey: 'v3_character_mobile_market',
-      defaultOpen: false,
-      icon: ICON_MARKET,
-    });
-    this.mobileMarketPanel.init();
-
-    const mobileMarketContent = this.createElement('div');
-    this.mobileMarketBoard = new MarketBoard(mobileMarketContent);
-    this.mobileMarketBoard.init();
-
-    // Set up market board event listeners using shared utility
-    setupMarketBoardListeners(
-      mobileMarketContent,
-      () => this.showPrices && this.matchedDyes.length > 0,
-      () => void this.fetchPrices(this.matchedDyes.map((m) => m.dye)),
-      {
-        onPricesToggled: () => {
-          if (this.showPrices && this.matchedDyes.length > 0) {
-            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
-          } else {
-            this.updateMatchResults();
-          }
-        },
-        onServerChanged: () => {
-          if (this.selectedColor) {
-            this.findMatchingDyes();
-          }
-        },
-        onRefreshRequested: () => {
-          if (this.showPrices && this.matchedDyes.length > 0) {
-            this.priceData.clear();
-            void this.fetchPrices(this.matchedDyes.map((m) => m.dye));
-          }
-        },
-      }
-    );
-
-    this.mobileMarketPanel.setContent(mobileMarketContent);
-  }
-
-  /**
-   * Render mobile race section (mirrors desktop)
-   */
-  private renderMobileRaceSection(container: HTMLElement): void {
-    const section = this.createElement('div', { className: 'space-y-4 p-2' });
-
-    // Subrace selector
-    const subraceGroup = this.createElement('div', { className: 'space-y-2' });
-    const subraceLabel = this.createElement('label', {
-      className: 'block text-sm font-medium',
-      textContent: LanguageService.t('tools.character.selectSubrace'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    subraceGroup.appendChild(subraceLabel);
-
-    this.mobileSubraceSelect = this.createElement('select', {
-      className: 'w-full p-2 rounded-lg border text-sm',
-      attributes: {
-        style:
-          'background: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);',
-      },
-    }) as HTMLSelectElement;
-
-    // Group subraces by race with localized names
-    for (const group of RACE_GROUPS) {
-      const localizedRaceName = LanguageService.getRace(group.raceKey);
-      const optgroup = this.createElement('optgroup', {
-        attributes: { label: localizedRaceName },
-      }) as HTMLOptGroupElement;
-
-      for (const subrace of group.subraces) {
-        const clanKey = SUBRACE_TO_CLAN_KEY[subrace];
-        const localizedClanName = LanguageService.getClan(clanKey);
-        const option = this.createElement('option', {
-          textContent: localizedClanName,
-          attributes: { value: subrace },
-        }) as HTMLOptionElement;
-        if (subrace === this.subrace) {
-          option.selected = true;
-        }
-        optgroup.appendChild(option);
-      }
-      this.mobileSubraceSelect.appendChild(optgroup);
-    }
-
-    // setConfig syncs the other selects and does the reload and the clear.
-    this.mobileSubraceSelect.addEventListener('change', () => {
-      this.commitConfig({ race: this.mobileSubraceSelect!.value });
-    });
-
-    subraceGroup.appendChild(this.mobileSubraceSelect);
-    section.appendChild(subraceGroup);
-
-    // Gender selector
-    const genderGroup = this.createElement('div', { className: 'space-y-2' });
-    const genderLabel = this.createElement('label', {
-      className: 'block text-sm font-medium',
-      textContent: LanguageService.t('tools.character.selectGender'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    genderGroup.appendChild(genderLabel);
-
-    this.mobileGenderSelect = this.createElement('select', {
-      className: 'w-full p-2 rounded-lg border text-sm',
-      attributes: {
-        style:
-          'background: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);',
-      },
-    }) as HTMLSelectElement;
-
-    const maleOption = this.createElement('option', {
-      textContent: LanguageService.t('tools.character.male'),
-      attributes: { value: 'Male' },
-    }) as HTMLOptionElement;
-    if (this.gender === 'Male') maleOption.selected = true;
-
-    const femaleOption = this.createElement('option', {
-      textContent: LanguageService.t('tools.character.female'),
-      attributes: { value: 'Female' },
-    }) as HTMLOptionElement;
-    if (this.gender === 'Female') femaleOption.selected = true;
-
-    this.mobileGenderSelect.appendChild(maleOption);
-    this.mobileGenderSelect.appendChild(femaleOption);
-
-    this.mobileGenderSelect.addEventListener('change', () => {
-      this.commitConfig({ gender: this.mobileGenderSelect!.value });
-    });
-
-    genderGroup.appendChild(this.mobileGenderSelect);
-    section.appendChild(genderGroup);
-
-    this.updateGenderVisibility(genderGroup);
-    container.appendChild(section);
-  }
-
-  /**
-   * Render mobile category section
-   */
-  private renderMobileCategorySection(container: HTMLElement): void {
-    const section = this.createElement('div', { className: 'space-y-2 p-2' });
-
-    this.mobileCategorySelect = this.createElement('select', {
-      className: 'w-full p-2 rounded-lg border text-sm',
-      attributes: {
-        style:
-          'background: var(--theme-input-background); color: var(--theme-text); border-color: var(--theme-border);',
-      },
-    }) as HTMLSelectElement;
-
-    const categories: Array<{ value: ColorCategory; label: string }> = [
-      { value: 'eyeColors', label: LanguageService.t('tools.character.eyeColors') },
-      {
-        value: 'hairColors',
-        label: LanguageService.t('tools.character.hairColors'),
-      },
-      {
-        value: 'skinColors',
-        label: LanguageService.t('tools.character.skinColors'),
-      },
-      {
-        value: 'highlightColors',
-        label: LanguageService.t('tools.character.highlightColors'),
-      },
-      {
-        value: 'lipColorsDark',
-        label: LanguageService.t('tools.character.lipColorsDark'),
-      },
-      {
-        value: 'lipColorsLight',
-        label: LanguageService.t('tools.character.lipColorsLight'),
-      },
-      {
-        value: 'tattooColors',
-        label: LanguageService.t('tools.character.tattooColors'),
-      },
-      {
-        value: 'facePaintColorsDark',
-        label: LanguageService.t('tools.character.facePaintDark'),
-      },
-      {
-        value: 'facePaintColorsLight',
-        label: LanguageService.t('tools.character.facePaintLight'),
-      },
-    ];
-
-    for (const cat of categories) {
-      const option = this.createElement('option', {
-        textContent: cat.label,
-        attributes: { value: cat.value },
-      }) as HTMLOptionElement;
-      if (cat.value === this.colorCategory) {
-        option.selected = true;
-      }
-      this.mobileCategorySelect.appendChild(option);
-    }
-
-    this.mobileCategorySelect.addEventListener('change', () => {
-      this.commitConfig({ colorSheet: this.mobileCategorySelect!.value });
-    });
-
-    section.appendChild(this.mobileCategorySelect);
-    container.appendChild(section);
   }
 
   // ============================================================================
@@ -2889,6 +2333,7 @@ export class SwatchTool extends BaseComponent {
   private selectColor(color: CharacterColor): void {
     this.selectedColor = color;
     this.selectionContext = { source: 'grid' };
+    this.charaSheet?.setSelectedSlot(null);
 
     // Highlight selected swatch
     this.updateSwatchSelection();
@@ -2936,10 +2381,13 @@ export class SwatchTool extends BaseComponent {
       return;
     }
 
-    // Request extra results if filters are active, then filter and trim
-    const requestCount = hasActiveFilters(this.dyeFiltersConfig)
-      ? Math.min(this.maxResults * 3, 136)
-      : this.maxResults;
+    // With filters active, rank the whole pool, then filter and trim. BUG-025
+    // (2026-10-04 deep-dive): core keeps only the top `count`, and a
+    // top-(maxResults×3) request was mostly excluded dyes whenever a strong
+    // filter was on (85 of the 125 dyes are Dye Vendor dyes), so fewer than
+    // maxResults cards survived.
+    const filtered = hasActiveFilters(this.dyeFiltersConfig);
+    const requestCount = filtered ? dyeService.getAllDyes().length : this.maxResults;
 
     let matches = this.characterColorService.findClosestDyes(this.selectedColor, dyeService, {
       count: requestCount,
@@ -2947,7 +2395,7 @@ export class SwatchTool extends BaseComponent {
     });
 
     // Apply dye filters
-    if (hasActiveFilters(this.dyeFiltersConfig)) {
+    if (filtered) {
       matches = matches.filter((m) => !isDyeExcluded(this.dyeFiltersConfig, m.dye));
       matches = matches.slice(0, this.maxResults);
     }
@@ -2967,11 +2415,12 @@ export class SwatchTool extends BaseComponent {
    * Fetch prices for matched dyes
    */
   private async fetchPrices(dyes: Dye[]): Promise<void> {
-    const marketBoard = this.marketBoard || this.mobileMarketBoard;
-    if (!marketBoard) return;
+    // REFACTOR-005: this went through the left panel's MarketBoard, which only
+    // delegates to the service, and stopped once destroy() had dropped it.
+    if (this.isDestroyed) return;
 
     try {
-      const prices = await marketBoard.fetchPricesForDyes(dyes);
+      const prices = await this.marketBoardService.fetchPricesForDyes(dyes);
       prices.forEach((data, itemId) => {
         this.priceData.set(itemId, data);
       });
@@ -2986,6 +2435,7 @@ export class SwatchTool extends BaseComponent {
    */
   private clearSelection(): void {
     this.selectionContext = null;
+    this.charaSheet?.setSelectedSlot(null);
     this.clearForwardSelection();
   }
 
@@ -3145,9 +2595,6 @@ export class SwatchTool extends BaseComponent {
     // Reload colors if sheet/race/gender changed
     if (needsReload) {
       await this.loadColors();
-      // Sync UI selectors with new values
-      this.syncMobileSelectors();
-      this.syncDesktopSelectors();
     }
 
     // Load the cell by index — the confirmed grammar's identity handle.
@@ -3219,38 +2666,8 @@ export class SwatchTool extends BaseComponent {
   }
 
   // ============================================================================
-  // Sync Helpers
+  // Helpers
   // ============================================================================
-
-  /**
-   * Sync mobile selectors with desktop values
-   */
-  private syncMobileSelectors(): void {
-    if (this.mobileSubraceSelect) {
-      this.mobileSubraceSelect.value = this.subrace;
-    }
-    if (this.mobileGenderSelect) {
-      this.mobileGenderSelect.value = this.gender;
-    }
-    if (this.mobileCategorySelect) {
-      this.mobileCategorySelect.value = this.colorCategory;
-    }
-  }
-
-  /**
-   * Sync desktop selectors with mobile values
-   */
-  private syncDesktopSelectors(): void {
-    if (this.subraceSelect) {
-      this.subraceSelect.value = this.subrace;
-    }
-    if (this.genderSelect) {
-      this.genderSelect.value = this.gender;
-    }
-    if (this.categorySelect) {
-      this.categorySelect.value = this.colorCategory;
-    }
-  }
 
   /**
    * Get localized category display name

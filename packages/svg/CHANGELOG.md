@@ -5,6 +5,63 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-10-06
+
+Sprints 14 and 28 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+with bot-logic 4.8.1 and discord-worker 5.8.6 in the same PR. Minor: one new export and two back in
+the barrel. **Publish this before bot-logic 4.8.1**, which imports `formatContrastRatio` and pins
+the svg version it was built with.
+
+### Added
+
+- **`formatContrastRatio(ratio, dp = 2, lang = 'en')`**, the one printer for a WCAG contrast ratio.
+  - It floors and never rounds, with no epsilon, so a printed figure is at or above a cut (3, 4.5,
+    7) exactly when the ratio is.
+  - Every precision comes from one floored integer, so the 1 dp figure is always the 2 dp figure
+    with its last digit dropped.
+  - It uses the language's decimal separator.
+  - The contrast card uses it, and so do bot-logic's `/contrast` embed and `/compare` readout, so
+    the three never print different numbers.
+- **`LEDGER_GROUP_H` and `LEDGER_ROW_H` are back in the barrel.** DEAD-015 removed them for want of
+  a consumer. discord-worker's budget calculator now packs its rows with the ledger's own geometry
+  (REFACTOR-003), so all six ledger heights carry no `@public` tag.
+
+### Fixed
+
+- **The contrast card never prints a ratio across a band cut** (BUG-142). 2.96 printed "3.0" in
+  the failing tone, and 6.96 printed "7.0" in the 4.5:1 tone. The tier is still judged on the raw
+  ratio; every printed figure is floored.
+- **Gradient step ranges print whole** (BUG-146). "9–10" and "10–12" were cut to "9–…" and "10…".
+  The lead column is 42 px, up from 28. The space came from the pair and bar columns, so no dye
+  name that fit before is cut.
+- **The glamour card's look label is at the 11 px type floor** (BUG-145). It was 10.5 px.
+- **The glamour card footer keeps counts with their nouns and fits long German** (I18N-015).
+  - It wraps at ` · ` clauses, and between words only inside a clause too long for a line.
+  - The mark sits on the first line, and later lines run the full width, as on the budget
+    ledger. A two-line footer is 1 px taller.
+  - An empty key keeps the mark inside the card.
+- **`scanEmittedGlyphs` no longer drops glyphs silently** (BUG-143). It feeds discord-worker's CJK
+  font gate, so a drop there let tofu through.
+  - Escapes are decoded: `\uXXXX`, `\u{…}` of any length, `\xXX`, and surrogate pairs in every
+    spelling.
+  - A `/` after an `if`/`while`/`for`/`with` header, after `default` or `extends`, or after a
+    type literal (`as`, `satisfies`, `&`, `|`) is read correctly.
+  - A raw line break inside a string or regex, or an unclosed `${`, now throws instead of
+    desynchronising.
+- **The frame-budget gate covers every card** (BUG-144): glamour, swatch, a11y, dye-info and the
+  budget ledger joined it.
+
+### Changed
+
+- **`scanEmittedGlyphs` reports what fonts must draw, and only that.**
+  - Controls, default-ignorable format characters and U+20E3 are no longer returned.
+  - Astral codepoints are `emoji` only when Unicode gives them emoji presentation by default.
+    CJK Extension B and up, and the text-default symbols in U+1F000–U+1FAFF (tiles, arrows,
+    chess), are `text` and must be covered.
+  - A bare BMP character is `text` unless U+FE0F follows it, so a bare ⭐ stays in the gate.
+  - The docblock says that only discord-worker's gate consumes the scanner. og-worker still
+    checks a hand-kept list.
+
 ## [4.3.0] - 2026-09-27
 
 ### Added

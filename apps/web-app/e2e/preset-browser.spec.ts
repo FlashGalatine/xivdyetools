@@ -15,7 +15,6 @@ import {
  * - Category filter tabs
  * - Sort controls
  * - Preset grid display
- * - Featured section (if API available)
  */
 
 test.describe('Preset Browser Tool', () => {

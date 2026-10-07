@@ -5,6 +5,23 @@ All notable changes to the XIV Dye Tools OpenGraph Worker will be documented in 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.11.3] - 2026-10-06
+
+Sprint 13 of the 2026-10-04 remediation plan, carrying `@xivdyetools/core` 5.10.0. The version moves
+to retire cached cards: an `/og/mixer` card in HSL mode with an exactly grey input now keeps the
+other colour's hue (core BUG-035).
+
+### Changed
+
+- **Fonts re-cut for core 5.10.0's sheet names** (TERM-021). Compared by cmap:
+  - `NotoSansJP-Subset.ttf` gains 刺 濃 瞳 薄 輪 郭 and drops 膜 角 ／;
+  - `NotoSansSC-Subset.ttf` gains 刺 妆 廓 浓 淡 濃 瞳 艳 薄 輪 轮 郭 and drops 浅 眼 睛 纹 绘 膜 身 ／;
+  - `NotoSansKR-Subset.ttf` gains 게 and drops 채.
+- **German and French swatch link descriptions read correctly with every sheet name.** No
+  gendered word comes before the sheet any more: "aus der Palette „{sheet}“" and "dans la palette
+  « {sheet} »". The new names had broken the gender agreement, and some plural names already
+  broke it.
+
 ## [2.11.2] - 2026-10-05
 
 CJK font subsets re-cut for `@xivdyetools/core` 5.8.1, whose Korean race names and Korean / Chinese

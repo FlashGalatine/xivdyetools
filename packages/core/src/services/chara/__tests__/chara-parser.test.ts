@@ -412,6 +412,128 @@ describe('parseCharaFile', () => {
       ).toThrow(/SkinColor/);
     });
 
+    /**
+     * BUG-133: `Number('')` is 0 and `Number('Infinity')` is finite-looking
+     * enough to clamp, so a hand-edited float string with an empty or
+     * non-finite channel used to parse as a plausible-but-wrong colour.
+     *
+     * What the producers do on read: Anamnesis (`Color.FromString` /
+     * `Color4.FromString`) and Brio (`Vector3Converter` / `Vector4Converter`)
+     * split on ", " dropping empty entries, then demand exactly 3 or 4 parts —
+     * so they reject an empty channel only where it leaves the wrong part
+     * count, and their `float.Parse(…, InvariantCulture)` ACCEPTS "Infinity",
+     * "-Infinity" and an overflowing "1e999". We reject every non-finite
+     * channel on purpose: clamped, it is a wrong-but-plausible colour. (Ktisis
+     * does not read the extended floats.)
+     */
+    it.each([
+      // An Anamnesis MouthColor whose alpha was deleted but not its separator:
+      // it read as alpha 0 — "no lip" — instead of failing
+      ['MouthColor', '0.041584007, 0.0015378702, 0.012056901, '],
+      // A doubled separator read the green channel as 0
+      ['SkinColor', '0.8858132,, 0.7579239'],
+      // A whitespace-only channel trims to the same empty string
+      ['HairColor', '0.5610304, , 0.16955018'],
+      // A leading separator
+      ['LeftEyeColor', ', 0.53204155, 0.17937717'],
+      // .NET writes an infinite float as "Infinity": it clamped to 255
+      ['SkinColor', 'Infinity, 0.6977163, 0.7579239'],
+      ['LimbalRingColor', '0.12456748, -Infinity, 0.01777778'],
+      // An overflowing exponent is Infinity too
+      ['HairHighlight', '0.24804306, 0.06903499, 1e999'],
+      ['MouthColor', '0.041584007, 0.0015378702, 0.012056901, Infinity'],
+    ])('rejects an empty or non-finite channel in %s ("%s")', (field, value) => {
+      expect(() =>
+        parseCharaFile(JSON.stringify({ Tribe: 'Wildwood', Gender: 'Feminine', [field]: value }))
+      ).toThrow(new RegExp(`${field}: unparseable float colour`));
+    });
+
+    /**
+     * One stray separator after a 3-channel float ("r, g, b, ") is something
+     * Anamnesis and Brio both load — their split drops the empty entry and
+     * leaves exactly 3 parts — and the pre-BUG-133 parser read it right too
+     * (the empty 4th became an alpha only the lip slot reads). Tolerate exactly
+     * that, and only on the 3-channel fields: on MouthColor (a 4-part `Color4`)
+     * a trailing separator is a deleted alpha, which stays an error above.
+     */
+    describe('a single trailing separator on a 3-channel float', () => {
+      const THREE_CHANNEL: ReadonlyArray<[string, string]> = [
+        ['SkinColor', 'skin'],
+        ['LeftEyeColor', 'leftEye'],
+        ['RightEyeColor', 'rightEye'],
+        ['LimbalRingColor', 'limbal'],
+        ['HairColor', 'hair'],
+        ['HairHighlight', 'highlights'],
+      ];
+      const CLEAN = '0.8858132, 0.6977163, 0.7579239';
+
+      it.each(
+        THREE_CHANNEL.flatMap(([field, slot]) => [
+          [field, slot, `${CLEAN}, `],
+          [field, slot, `${CLEAN},`],
+        ]),
+      )('%s ("%s" slot) reads "%s" as the clean value', (field, slot, value) => {
+        const clean = parseCharaFile(JSON.stringify({ [field]: CLEAN }));
+        const withSeparator = parseCharaFile(JSON.stringify({ [field]: value }));
+
+        // Precondition: the clean value really lands on a live float
+        expect(clean.slots.find((s) => s.slot === slot)?.float).toEqual({ r: 240, g: 213, b: 222 });
+        expect(withSeparator).toEqual(clean);
+      });
+
+      it.each([
+        // Two trailing separators: Anamnesis and Brio would still load it, but
+        // one stray comma is the tolerance, not any number of them
+        ['SkinColor', `${CLEAN}, , `],
+        // Four real channels plus a separator is five parts — never valid
+        ['HairColor', `${CLEAN}, 0.5, `],
+        // A trailing separator does not excuse a missing channel
+        ['LeftEyeColor', '0.8858132, 0.6977163, '],
+      ])('still rejects %s "%s"', (field, value) => {
+        expect(() => parseCharaFile(JSON.stringify({ [field]: value }))).toThrow(
+          new RegExp(`${field}: unparseable float colour`),
+        );
+      });
+    });
+
+    /**
+     * `Number()` reads JavaScript literals no .NET reader would: '0x10' is 16,
+     * '0b1' is 1, '0o7' is 7. All finite, all non-empty, so they slipped past
+     * the empty/non-finite guard — "0x1, 0.5, 0.5" imported as a fully
+     * saturated red channel. Every channel must look like a .NET float.
+     */
+    it.each([
+      ['SkinColor', '0x1, 0.5, 0.5'],
+      ['HairColor', '0.5, 0b1, 0.5'],
+      ['LimbalRingColor', '0.5, 0.5, 0o7'],
+      ['MouthColor', '0.5, 0.5, 0.5, 0X1'],
+      // Digit separators and other non-.NET shapes
+      ['RightEyeColor', '0.5, 1_0, 0.5'],
+      ['HairHighlight', '0.5, 0.5e, 0.5'],
+      ['SkinColor', '0.5, ., 0.5'],
+    ])('rejects a channel that is not a .NET float in %s ("%s")', (field, value) => {
+      expect(() => parseCharaFile(JSON.stringify({ [field]: value }))).toThrow(
+        new RegExp(`${field}: unparseable float colour`),
+      );
+    });
+
+    it.each([
+      ['.5, 0.5, 0.5', [0.5, 0.5, 0.5]],
+      ['5., 0.5, 0.5', [5, 0.5, 0.5]],
+      ['+0.25, -0.0, 2.5E-1', [0.25, -0, 0.25]],
+    ])('still accepts the float shapes .NET reads ("%s")', (value, linear) => {
+      const parsed = parseCharaFile(JSON.stringify({ SkinColor: value }));
+      expect(parsed.slots.find((s) => s.slot === 'skin')?.floatLinear).toEqual(linear);
+    });
+
+    it('still accepts the exponent form .NET writes for a tiny float', () => {
+      // float.ToString(InvariantCulture) prints 0.00001 as "1E-05"
+      const parsed = parseCharaFile(JSON.stringify({ SkinColor: '1E-05, 0.5, 0.25' }));
+      const skin = parsed.slots.find((s) => s.slot === 'skin');
+      expect(skin?.floatLinear).toEqual([0.00001, 0.5, 0.25]);
+      expect(skin?.float).toEqual({ r: 1, g: 180, b: 128 });
+    });
+
     it('an absent MouthColor leaves the lip index valid (Ktisis omits the key)', () => {
       const parsed = parseCharaFile(
         JSON.stringify({ Race: 'Viera', Tribe: 'Rava', Gender: 'Feminine', LipsToneFurPattern: 12 })

@@ -7,20 +7,26 @@
  * @module components/__tests__/budget-tool.test
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 import { BudgetTool } from '../budget-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 import { formatGil } from '@shared/format';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import type { ResultCard } from '@components/v4/result-card';
+import type { ThemeName } from '@shared/types';
+import type { PriceData } from '@xivdyetools/types';
 // The mocked barrel below: ConfigController is the real one, the other two are stubs.
 import { ConfigController, MarketBoardService, StorageService } from '@services/index';
+// The tool imports these two from their own modules, past the barrel stub: real services.
+import { ThemeService } from '@services/theme-service';
+import { CollectionService } from '@services/collection-service';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const {
   mockGetAllDyes,
   mockGetDyeById,
+  mockGetByStainId,
   mockFindClosestDyes,
   mockFindDyesWithinDistance,
   mockDistance,
@@ -33,6 +39,7 @@ const {
   return {
     mockGetAllDyes: vi.fn(),
     mockGetDyeById: vi.fn(),
+    mockGetByStainId: vi.fn(),
     mockFindClosestDyes: vi.fn(),
     mockFindDyesWithinDistance: vi.fn(),
     /**
@@ -74,6 +81,11 @@ vi.mock('@services/dye-service-wrapper', () => ({
       findDyesWithinDistance: mockFindDyesWithinDistance,
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
+  },
+  // ShareService.resolveSharedDye imports this module's singleton directly,
+  // so a `?dye=` deep link resolves its stainID here.
+  dyeService: {
+    getByStainId: mockGetByStainId,
   },
 }));
 
@@ -120,33 +132,6 @@ vi.mock('@services/index', async () => ({
       '@services/display-options-helper'
     )
   ).applyDisplayOptions,
-  /**
-   * The shared market-panel builder. Absent, renderMarketPanel throws and
-   * safeRender swallows it, leaving the whole panel empty.
-   */
-  buildMarketPanel: vi.fn(() => ({
-    panel: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      setContent: vi.fn(),
-      getContentContainer: vi.fn(() => document.createElement('div')),
-      open: vi.fn(),
-      close: vi.fn(),
-    },
-    // Mirrors the real MarketBoard component's public surface
-    marketBoard: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      getShowPrices: vi.fn().mockReturnValue(false),
-      setShowPrices: vi.fn(),
-      getSelectedServer: vi.fn().mockReturnValue(null),
-      setSelectedServer: vi.fn(),
-      loadServerData: vi.fn().mockResolvedValue(undefined),
-      refreshPrices: vi.fn().mockResolvedValue(undefined),
-      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
-      shouldFetchPrice: vi.fn().mockReturnValue(false),
-    },
-  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
@@ -268,6 +253,12 @@ vi.mock('@services/index', async () => ({
   },
   APIService: {
     formatPrice: vi.fn((price: number) => `${price.toLocaleString()} Gil`),
+    /**
+     * Core's Universalis client. The tool never touches it; the BUG-090 tests
+     * run the REAL MarketBoardService, whose constructor reaches core through
+     * this barrel.
+     */
+    getInstance: vi.fn(),
   },
   RouterService: {
     subscribe: vi.fn().mockReturnValue(() => {}),
@@ -351,13 +342,11 @@ vi.mock('../collapsible-panel', () => ({
 
 vi.mock('../market-board', () => ({
   /**
-   * Mirrors the real MarketBoard component's public surface. Tools that build
-   * a second, mobile board construct it directly from here rather than through
-   * buildMarketPanel, so a gap shows up only on the mobile path.
+   * Mirrors the real MarketBoard component's public surface. Every board a
+   * tool builds is constructed from here.
    */
   MarketBoard: class MockMarketBoard {
     container: HTMLElement;
-    private showPrices = false;
     private selectedServer: string | null = null;
     constructor(container: HTMLElement) {
       this.container = container;
@@ -371,26 +360,11 @@ vi.mock('../market-board', () => ({
     destroy() {
       this.container.innerHTML = '';
     }
-    getShowPrices() {
-      return this.showPrices;
-    }
-    setShowPrices(value: boolean) {
-      this.showPrices = value;
-    }
     getSelectedServer() {
       return this.selectedServer;
     }
-    setSelectedServer(server: string | null) {
-      this.selectedServer = server;
-    }
     async loadServerData() {}
     async refreshPrices() {}
-    async fetchPricesForDyes() {
-      return new Map();
-    }
-    shouldFetchPrice() {
-      return false;
-    }
   },
 }));
 
@@ -466,6 +440,9 @@ describe('BudgetTool', () => {
     });
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
+    mockGetByStainId.mockImplementation(
+      (stainID: number) => mockDyes.find((d) => d.stainID === stainID) ?? null
+    );
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
     mockFindDyesWithinDistance.mockReturnValue(mockDyes.slice(0, 20));
     // Mock scrollIntoView
@@ -492,30 +469,60 @@ describe('BudgetTool', () => {
   // ============================================================================
 
   describe('Basic Rendering', () => {
+    // BUG-075 (2026-10-04 deep-dive): the three panel tests asserted
+    // not.toBeNull() on the panels this file's beforeEach creates, so they
+    // passed on an empty render. They now look for what each panel draws.
+    const slider = (panel: HTMLElement): HTMLInputElement | null =>
+      panel.querySelector<HTMLInputElement>('input[type="range"]');
+
     it('should render budget tool', () => {
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       expect(() => tool!.init()).not.toThrow();
     });
 
-    it('should render left panel content', () => {
-      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+    it('should render the controls into the panel the shell shares', () => {
+      // v4-layout.ts hands the tool ONE element as both leftPanel and
+      // rightPanel; the controls open the flow drawn into it.
+      tool = new BudgetTool(container, { leftPanel: rightPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(leftPanel).not.toBeNull();
+      expect(rightPanel.textContent).toContain('budget.targetDye');
+      expect(rightPanel.textContent).toContain('budget.selectTargetDye');
+      expect(rightPanel.textContent).toContain('budget.priciestOff');
+      expect(rightPanel.textContent).toContain('budget.matchLineDesc');
+      expect(slider(rightPanel)?.value).toBe('8');
     });
 
-    it('should render right panel content', () => {
+    it('should render the empty state below the controls, all into the right panel', () => {
+      // A separate left panel is cleared, not drawn into: the flow is one
+      // column. The panel starts empty, so without a sentinel to clear the
+      // null check below would pass on a tool that never touched it.
+      const sentinel = document.createElement('input');
+      sentinel.type = 'range';
+      leftPanel.appendChild(sentinel);
+
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(rightPanel).not.toBeNull();
+      const empty = rightPanel.querySelector('.v5-empty-state');
+      expect(empty?.textContent).toContain('budget.selectTargetToStart');
+      expect(slider(rightPanel)).not.toBeNull();
+      expect(leftPanel.contains(sentinel)).toBe(false);
+      expect(slider(leftPanel)).toBeNull();
     });
 
     it('should render drawer content when provided', () => {
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(drawerContent).not.toBeNull();
+      expect(drawerContent.textContent).toContain('budget.targetDye');
+      expect(drawerContent.textContent).toContain('budget.selectTargetDye');
+      expect(drawerContent.textContent).toContain('budget.priciestOff');
+      // The drawer carries its own slider, and the main flow keeps its own.
+      // (The panels are siblings, so the two can never be one node: an
+      // identity check could not fail. Both existing is what is in question.)
+      expect(slider(drawerContent)?.value).toBe('8');
+      expect(slider(rightPanel)).not.toBeNull();
     });
 
     it('should work without drawer content', () => {
@@ -1045,6 +1052,756 @@ describe('BudgetTool', () => {
 
         expect(controller().getConfig('budget').maxDeltaE).toBe(14);
         expect(lineLabel(rightPanel)).toMatch(/^≤ /);
+      });
+    });
+  });
+
+  // ============================================================================
+  // Superseded runs (BUG-015, 2026-10-04 deep-dive)
+  //
+  // findAlternatives() reads the target and the line before it awaits prices,
+  // and wrote this.rows after it with nothing checking that a newer run had
+  // started meanwhile. Two fetches over different market IDs can resolve out
+  // of order; the later-resolving older run then drew its rows under the new
+  // target. Distances are the ledger table above.
+  // ============================================================================
+
+  describe('Superseded runs (BUG-015)', () => {
+    const TARGET = mockDyes[6]; // Blood Red: Dalamud, Wine, Sunset inside the line of 8
+    const OTHER = mockDyes[0]; // Snow White: Sky Blue and Rose Pink instead
+    const DALAMUD = mockDyes[8];
+    const WINE = mockDyes[4];
+    const SUNSET = mockDyes[7];
+
+    type Prices = Awaited<ReturnType<MarketBoardService['fetchPricesForDyes']>>;
+    type Outcome = MarketBoardService['lastFetchOutcome'];
+
+    /** A price fetch the test settles when it chooses. */
+    const deferred = (): {
+      promise: Promise<Prices>;
+      resolve: (prices: Prices) => void;
+      reject: (error: Error) => void;
+    } => {
+      let resolve!: (prices: Prices) => void;
+      let reject!: (error: Error) => void;
+      const promise = new Promise<Prices>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    };
+
+    const market = (): MarketBoardService => MarketBoardService.getInstance();
+    const fetchPrices = () => vi.mocked(market().fetchPricesForDyes);
+    /** The stub has no lastFetchOutcome; the real one is shared by every call. */
+    const setOutcome = (outcome: Outcome): void => {
+      (market() as unknown as { lastFetchOutcome: Outcome }).lastFetchOutcome = outcome;
+    };
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const ledgerRows = (): HTMLElement[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]'));
+    const rowNames = (): string[] =>
+      ledgerRows().map((row) => row.querySelectorAll('span')[1]?.textContent ?? '');
+    const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+    const rows = (): unknown[] => (tool as unknown as { rows: unknown[] }).rows;
+    const BLOOD_RED_ROWS = [label(DALAMUD), label(WINE), label(SUNSET)];
+
+    const mount = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      await settle();
+    };
+
+    afterEach(() => {
+      // mockReset drops any unconsumed Once queue, then restore the stub's default.
+      fetchPrices().mockReset();
+      fetchPrices().mockResolvedValue(new Map());
+      delete (market() as unknown as { lastFetchOutcome?: Outcome }).lastFetchOutcome;
+    });
+
+    it('a mount fetch that resolves after the first pick does not empty its ledger', async () => {
+      const mountFetch = deferred();
+      const pickFetch = deferred();
+      fetchPrices()
+        .mockImplementationOnce(() => mountFetch.promise)
+        .mockImplementationOnce(() => pickFetch.promise);
+
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init(); // the mount run, with no target yet
+      tool.selectDye(TARGET);
+
+      pickFetch.resolve(new Map());
+      await settle();
+      expect(rowNames()).toEqual(BLOOD_RED_ROWS);
+
+      // The mount run read `target = null` before its await.
+      mountFetch.resolve(new Map());
+      await settle();
+      expect(rowNames()).toEqual(BLOOD_RED_ROWS);
+    });
+
+    it("an earlier pick's late fetch does not draw its rows under the later pick", async () => {
+      await mount();
+      const first = deferred();
+      const second = deferred();
+      fetchPrices()
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => second.promise);
+
+      tool!.selectDye(OTHER);
+      tool!.selectDye(TARGET);
+
+      second.resolve(new Map());
+      await settle();
+      const card = rightPanel.querySelector('v4-result-card');
+      first.resolve(new Map());
+      await settle();
+
+      expect(rowNames()).toEqual(BLOOD_RED_ROWS);
+      // Nor does it rebuild the target card, whose menu the user may have open.
+      expect(rightPanel.querySelector('v4-result-card')).toBe(card);
+    });
+
+    /**
+     * The older request fails after the newer one finished. The real service
+     * reports a failure as an empty Map plus a shared `lastFetchOutcome`, which
+     * then describes that request, not the run on screen; a rejection is the
+     * other way fetchPrices() can hear of one.
+     */
+    const failures: Array<[string, (pending: ReturnType<typeof deferred>) => void]> = [
+      [
+        'reports an error outcome',
+        (pending) => {
+          setOutcome('error');
+          pending.resolve(new Map());
+        },
+      ],
+      ['rejects', (pending) => pending.reject(new Error('board down'))],
+    ];
+
+    it.each(failures)(
+      'a superseded fetch that %s does not mark the market offline over a newer success',
+      async (_how, fail) => {
+        await mount();
+        const first = deferred();
+        fetchPrices()
+          .mockImplementationOnce(() => first.promise)
+          .mockImplementationOnce(() => {
+            setOutcome('ok');
+            return Promise.resolve(new Map());
+          });
+
+        tool!.selectDye(OTHER);
+        tool!.selectDye(TARGET);
+        await settle();
+        expect(rightPanel.textContent).not.toContain('budget.offBadge');
+
+        fail(first);
+        await settle();
+        // Re-sorting redraws the ledger without a fetch: an offline market
+        // flags the unpriced coffer group with the offline badge.
+        Array.from(rightPanel.querySelectorAll('button'))
+          .find((b) => b.textContent === 'budget.colDye')!
+          .click();
+        expect(rightPanel.textContent).not.toContain('budget.offBadge');
+      }
+    );
+
+    it('a run in flight when the target is cleared leaves no rows behind', async () => {
+      await mount();
+      const pending = deferred();
+      fetchPrices().mockImplementationOnce(() => pending.promise);
+
+      tool!.selectDye(TARGET);
+      tool!.clearDyes();
+      pending.resolve(new Map());
+      await settle();
+
+      expect(rows()).toEqual([]);
+    });
+
+    // The 2026-10-04 Sprint 5 review: clearing moved the run on, so the price
+    // fetch it was awaiting was thrown away, and the quick picks stayed on
+    // their unpriced offline fallback although the board had answered.
+    it('a clear during a price fetch still prices the quick picks', async () => {
+      await mount();
+      const board: Prices = new Map(
+        mockDyes.map((d, i) => [
+          d.itemID,
+          {
+            itemID: d.itemID,
+            currentAverage: 1000 + i,
+            currentMinPrice: 1000 + i,
+            currentMaxPrice: 1000 + i,
+            lastUpdate: 0,
+          },
+        ])
+      );
+      const pending = deferred();
+      fetchPrices()
+        .mockImplementationOnce(() => pending.promise)
+        .mockResolvedValue(board);
+
+      tool!.selectDye(TARGET);
+      tool!.clearDyes();
+      pending.resolve(board);
+      await settle();
+
+      expect(container.textContent).toContain('budget.priciestNow');
+      expect(container.textContent).not.toContain('budget.priciestOff');
+      expect(rows()).toEqual([]);
+    });
+
+    it('a run in flight at destroy leaves no rows behind', async () => {
+      await mount();
+      const pending = deferred();
+      fetchPrices().mockImplementationOnce(() => pending.promise);
+
+      tool!.selectDye(TARGET);
+      tool!.destroy();
+      pending.resolve(new Map());
+      await settle();
+
+      expect(rows()).toEqual([]);
+    });
+  });
+
+  // ============================================================================
+  // The target in the address bar (BUG-013, 2026-10-04 deep-dive)
+  //
+  // RouterService carries `dye=` across every navigation, and the deep-link
+  // handler applies it on every mount. A pick made in Budget reached storage
+  // only, so leaving and coming back put the link's dye back over it.
+  // ============================================================================
+
+  describe('The target in the address bar (BUG-013)', () => {
+    const TARGET = mockDyes[6]; // Blood Red
+    const LINKED = mockDyes[0]; // Snow White, stainID 1
+    const DALAMUD = mockDyes[8];
+    const WINE = mockDyes[4];
+    const SUNSET = mockDyes[7];
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const params = (): URLSearchParams => new URLSearchParams(window.location.search);
+    const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+    const rowNames = (): string[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]')).map(
+        (row) => row.querySelectorAll('span')[1]?.textContent ?? ''
+      );
+    const shownTarget = (): number | undefined =>
+      (rightPanel.querySelector('v4-result-card') as ResultCard | null)?.data?.dye.id;
+
+    const mount = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      await settle();
+    };
+
+    beforeEach(() => {
+      // A store that reads back what it was given, so a remount sees the pick.
+      const stored = new Map<string, unknown>();
+      vi.mocked(StorageService.setItem).mockImplementation((key: string, value: unknown) => {
+        stored.set(key, value);
+        return true;
+      });
+      vi.mocked(StorageService.getItem).mockImplementation(
+        (key: string) => (stored.get(key) ?? null) as never
+      );
+    });
+
+    afterEach(() => {
+      // The outer beforeEach resets getItem; setItem is this block's alone.
+      vi.mocked(StorageService.setItem).mockReset();
+    });
+
+    it('a linked ?dye= leaves the address bar once stored, so coming back keeps a later pick', async () => {
+      window.history.replaceState({ toolId: 'budget' }, '', '/budget?dye=1&dc=Aether');
+      await mount();
+
+      expect(shownTarget()).toBe(LINKED.id);
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_budget_target', LINKED.id);
+      expect(params().has('dye')).toBe(false);
+      expect(params().get('dc')).toBe('Aether');
+      // RouterService's popstate handler reads the entry's own state.
+      expect(window.history.state).toEqual({ toolId: 'budget' });
+
+      tool!.selectDye(TARGET);
+      await settle();
+
+      // Leaving and coming back builds a new tool at whatever the router kept.
+      tool!.destroy();
+      await mount();
+      expect(shownTarget()).toBe(TARGET.id);
+      expect(rowNames()).toEqual([label(DALAMUD), label(WINE), label(SUNSET)]);
+    });
+
+    // The 2026-10-04 Sprint 5 review's repro: the result card's "Set as budget
+    // target" lands on /budget?dye=…, and the next navigation carried that dye
+    // into Harmony, which replaced its own stored base with it.
+    it('a "Set as budget target" hand-off does not follow the user into the next tool', async () => {
+      // Not mocked: the barrel above is, this module is not.
+      const { RouterService: router } = await import('@services/router-service');
+      window.history.replaceState({ toolId: 'budget' }, '', `/budget?dye=${LINKED.stainID}`);
+      await mount();
+
+      router.navigateTo('harmony');
+
+      expect(window.location.pathname).toBe('/harmony');
+      expect(params().has('dye')).toBe(false);
+    });
+
+    it('leaves a ?hex= target in the address bar, which is never stored', async () => {
+      window.history.replaceState(null, '', '/budget?hex=123456');
+      await mount();
+
+      expect(params().get('hex')).toBe('123456');
+    });
+
+    it('takes a linked ?hex= out on a pick, which the deep link falls back to without a dye', async () => {
+      window.history.replaceState(null, '', '/budget?hex=123456');
+      await mount();
+
+      tool!.selectDye(TARGET);
+
+      expect(params().has('hex')).toBe(false);
+    });
+
+    /** A pre-5.0 itemID: refused with a toast, so the link stays unapplied. */
+    const UNAPPLIED = '5772';
+
+    it.each<[string, (t: BudgetTool) => void]>([
+      ['an in-tool pick', (t) => t.selectDye(TARGET)],
+      ['a custom colour from the palette drawer', (t) => t.selectCustomColor('#123456')],
+      ['Clear All', (t) => t.clearDyes()],
+    ])('%s takes out a ?dye= the tool could not apply', async (_label, act) => {
+      window.history.replaceState(null, '', `/budget?dye=${UNAPPLIED}`);
+      await mount();
+      expect(params().get('dye')).toBe(UNAPPLIED);
+
+      act(tool!);
+
+      expect(params().has('dye')).toBe(false);
+    });
+  });
+
+  // ============================================================================
+  // Theme switches (BUG-080, 2026-10-04 deep-dive)
+  //
+  // The tier ramp, the verdict tones and the sort accent are inline hexes read
+  // from ThemeService.isDarkMode() at render. Nothing redrew them on a switch,
+  // so a ledger drawn in one theme kept its palette on the other theme's cards.
+  // budget-tool.ts imports the REAL ThemeService (not the barrel stub above).
+  // ============================================================================
+
+  describe('Theme switches (BUG-080)', () => {
+    const TARGET = mockDyes[6]; // Blood Red: three coffer rows inside the line
+    /** TIER_RAMP_LIGHT and GLYPH_ACCENT_LIGHT, exactly as budget-tool.ts spells them. */
+    const LIGHT_ONLY = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C', '#CE2222'];
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const inlineStyles = (): string =>
+      Array.from(rightPanel.querySelectorAll('[style]'))
+        .map((el) => el.getAttribute('style') ?? '')
+        .join('\n');
+
+    let startTheme: ThemeName;
+
+    beforeEach(() => {
+      // setup.ts sets standard-light; whatever it is, put it back afterwards.
+      startTheme = ThemeService.getCurrentTheme();
+      ThemeService.setTheme('standard-light');
+    });
+
+    afterEach(() => {
+      ThemeService.setTheme(startTheme);
+    });
+
+    const mount = async (): Promise<BudgetTool> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      tool.selectDye(TARGET);
+      await settle();
+      return tool;
+    };
+
+    it('redraws the verdict and the ledger in the new palette', async () => {
+      await mount();
+      // Baseline: the light verdict badge and the light coffer-tier rule.
+      expect(inlineStyles()).toContain('background: #137A33');
+      expect(inlineStyles()).toContain('border-left: 3px solid #B91C1C');
+
+      ThemeService.setTheme('standard-dark');
+
+      const styles = inlineStyles();
+      for (const hex of LIGHT_ONLY) {
+        expect(styles).not.toContain(hex);
+      }
+      expect(styles).toContain('background: #5bbd68');
+      expect(styles).toContain('border-left: 3px solid #f4645a');
+      expect(styles).toContain('#EA4133');
+    });
+
+    it('stops listening once destroyed', async () => {
+      const mounted = await mount();
+      mounted.destroy();
+      const internals = mounted as unknown as { renderVerdict(): void; renderLedger(): void };
+      const renderVerdict = vi.spyOn(internals, 'renderVerdict');
+      const renderLedger = vi.spyOn(internals, 'renderLedger');
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(renderVerdict).not.toHaveBeenCalled();
+      expect(renderLedger).not.toHaveBeenCalled();
+    });
+
+    // ------------------------------------------------------------------------
+    // A switch during a price fetch (2026-10-04 Sprint 22 review). The verdict
+    // reads the target and the rows, and mid-fetch those disagree: the target
+    // is already the new pick, the rows are still the last run's (or none).
+    // The ledger shows its spinner then; the verdict waits for the run.
+    // ------------------------------------------------------------------------
+
+    describe('during a price fetch', () => {
+      const OTHER = mockDyes[0]; // Snow White: Sky Blue and Rose Pink inside the line
+      const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+      /** The tInterpolate mock prints `key: value`. */
+      const headline = (dye: (typeof mockDyes)[number]): string =>
+        `budget.ledgerHead: ${label(dye)}`;
+
+      type Prices = Awaited<ReturnType<MarketBoardService['fetchPricesForDyes']>>;
+      const fetchPrices = () => vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes);
+
+      /** The next price fetch, held until the test resolves it. */
+      const holdNextFetch = (): ((prices: Prices) => void) => {
+        let resolve!: (prices: Prices) => void;
+        fetchPrices().mockImplementationOnce(
+          () =>
+            new Promise<Prices>((res) => {
+              resolve = res;
+            })
+        );
+        return (prices) => resolve(prices);
+      };
+
+      const verdict = (): HTMLElement =>
+        (tool as unknown as { verdictContainer: HTMLElement }).verdictContainer;
+
+      afterEach(() => {
+        // mockReset drops an unconsumed Once; then restore the stub's default.
+        fetchPrices().mockReset();
+        fetchPrices().mockResolvedValue(new Map());
+      });
+
+      it("does not draw the new pick's name over the last run's rows", async () => {
+        await mount();
+        const block = verdict().firstElementChild;
+        expect(block?.textContent).toContain(headline(TARGET));
+        expect(block?.textContent).toContain('budget.inRange: 3');
+
+        const release = holdNextFetch();
+        tool!.selectDye(OTHER);
+        // The pick itself leaves the verdict alone until its run lands.
+        expect(verdict().firstElementChild).toBe(block);
+
+        ThemeService.setTheme('standard-dark');
+
+        expect(verdict().firstElementChild).toBe(block);
+        expect(verdict().textContent).not.toContain(headline(OTHER));
+
+        // The run lands and draws the new verdict, in the new palette.
+        release(new Map());
+        await settle();
+        expect(verdict().textContent).toContain(headline(OTHER));
+        expect(verdict().textContent).toContain('budget.inRange: 2');
+        expect(inlineStyles()).toContain('background: #5bbd68');
+      });
+
+      it("draws no '0 in range' verdict while the first pick's prices load", async () => {
+        tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+        tool.init();
+        await settle();
+
+        const release = holdNextFetch();
+        tool.selectDye(TARGET);
+        ThemeService.setTheme('standard-dark');
+
+        expect(verdict().textContent).toBe('');
+
+        release(new Map());
+        await settle();
+        expect(verdict().textContent).toContain(headline(TARGET));
+        expect(verdict().textContent).toContain('budget.inRange: 3');
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Focus (2026-10-04 Sprint 22 review). The redraw replaces every ledger
+    // node, so a keyboard user who pressed Shift+T on a row or a sort header
+    // was dropped to <body>. The equivalent node takes focus back.
+    // ------------------------------------------------------------------------
+
+    describe('keyboard focus in the ledger', () => {
+      const ledgerRows = (root: ParentNode = rightPanel): HTMLElement[] =>
+        Array.from(root.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]'));
+      const sortHeaders = (root: ParentNode = rightPanel): HTMLButtonElement[] =>
+        Array.from(root.querySelectorAll<HTMLButtonElement>('button')).filter(
+          (b) => b.textContent === 'budget.colDye'
+        );
+
+      it('keeps focus on the same ledger row', async () => {
+        await mount();
+        const before = ledgerRows()[1];
+        before.focus();
+        expect(document.activeElement).toBe(before);
+
+        ThemeService.setTheme('standard-dark');
+
+        const after = ledgerRows()[1];
+        expect(after).not.toBe(before); // redrawn, not left in place
+        expect(document.activeElement).toBe(after);
+      });
+
+      it("keeps focus on the same sort header, in the same tier's group", async () => {
+        // Two populated groups, so each draws its own row of sort headers.
+        mockGetAllDyes.mockReturnValue(
+          mockDyes.map((d) =>
+            d.id === mockDyes[4].id ? { ...d, consolidationType: 'A' as const } : d
+          )
+        );
+        await mount();
+        const headers = sortHeaders();
+        expect(headers).toHaveLength(2);
+        headers[1].focus();
+
+        ThemeService.setTheme('standard-dark');
+
+        const after = sortHeaders();
+        expect(after[1]).not.toBe(headers[1]);
+        expect(document.activeElement).toBe(after[1]);
+      });
+
+      it('keeps focus on the row inside a shadow root, as in the v4 shell', async () => {
+        // The shell renders tools into its shadow root, where document.activeElement
+        // is the host — the focused row is only visible through the root's own.
+        const host = document.createElement('div');
+        container.appendChild(host);
+        const shadow = host.attachShadow({ mode: 'open' });
+        const panel = document.createElement('div');
+        shadow.appendChild(panel);
+        tool = new BudgetTool(container, { leftPanel: panel, rightPanel: panel, drawerContent });
+        tool.init();
+        tool.selectDye(TARGET);
+        await settle();
+
+        const before = ledgerRows(panel)[2];
+        before.focus();
+        expect(shadow.activeElement).toBe(before);
+
+        ThemeService.setTheme('standard-dark');
+
+        const after = ledgerRows(panel)[2];
+        expect(after).not.toBe(before);
+        expect(shadow.activeElement).toBe(after);
+      });
+
+      // A guard, not a red-first test: focus outside the ledger is not the
+      // listener's to move.
+      it('leaves focus that was outside the ledger where it was', async () => {
+        await mount();
+        const slider = rightPanel.querySelector<HTMLInputElement>('input[type="range"]')!;
+        slider.focus();
+
+        ThemeService.setTheme('standard-dark');
+
+        expect(document.activeElement).toBe(slider);
+      });
+    });
+  });
+
+  // ============================================================================
+  // Save swap (BUG-081, 2026-10-04 deep-dive)
+  //
+  // Every Standard (tier A) dye costs the same 216 gil, and the pick kept the
+  // first row at the lowest price — database order, not the closest. Distances
+  // from Blood Red are the ledger table above.
+  // ============================================================================
+
+  describe('Save swap (BUG-081)', () => {
+    const TARGET = mockDyes[6]; // Blood Red, a coffer dye: not upgrade mode
+    const WINE = mockDyes[4]; // 2.8 away, first of the three in database order
+    const SUNSET = mockDyes[7]; // 5.7 away
+    const DALAMUD = mockDyes[8]; // 2.6 away, the closest
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const fetchPrices = () => vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes);
+
+    /** The fixture with the given dyes moved into the Standard (216 gil) tier. */
+    const withStandard = (...standard: Array<(typeof mockDyes)[number]>) =>
+      mockDyes.map((d) =>
+        standard.some((s) => s.id === d.id) ? { ...d, consolidationType: 'A' as const } : d
+      );
+
+    const saveSwap = (): void => {
+      const button = Array.from(rightPanel.querySelectorAll('button')).find(
+        (b) => b.textContent === 'budget.saveSwap'
+      );
+      expect(button).toBeDefined();
+      button!.click();
+    };
+
+    let addDye: MockInstance<typeof CollectionService.addDyeToCollection>;
+
+    beforeEach(() => {
+      vi.spyOn(CollectionService, 'createCollection').mockReturnValue({
+        id: 'swap-1',
+      } as ReturnType<typeof CollectionService.createCollection>);
+      addDye = vi.spyOn(CollectionService, 'addDyeToCollection').mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      fetchPrices().mockReset();
+      fetchPrices().mockResolvedValue(new Map());
+    });
+
+    const mount = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      tool.selectDye(TARGET);
+      await settle();
+    };
+
+    it('saves the closest of the 216-gil Standard dyes, not the first in database order', async () => {
+      mockGetAllDyes.mockReturnValue(withStandard(WINE, SUNSET, DALAMUD));
+      await mount();
+
+      saveSwap();
+
+      expect(addDye).toHaveBeenCalledTimes(1);
+      expect(addDye).toHaveBeenCalledWith('swap-1', DALAMUD.stainID);
+    });
+
+    it('still saves a cheaper dye over a closer one', async () => {
+      // Sunset Red stays a coffer dye, on the board below the 216 floor: the
+      // furthest of the three and the last but one in database order.
+      mockGetAllDyes.mockReturnValue(withStandard(WINE, DALAMUD));
+      fetchPrices().mockResolvedValue(
+        new Map([[SUNSET.itemID, { itemID: SUNSET.itemID, currentMinPrice: 150 } as PriceData]])
+      );
+      await mount();
+
+      saveSwap();
+
+      expect(addDye).toHaveBeenCalledWith('swap-1', SUNSET.stainID);
+    });
+  });
+
+  // ============================================================================
+  // BUG-090 (2026-10-04 deep-dive): fetchPrices() marks the market offline on
+  // `lastFetchOutcome` 'error', and on a Universalis proxy outage the service
+  // used to record 'ok' -- core resolves an outage with an empty Map, exactly
+  // like a board with no listings. The BUG-015 tests above set the outcome on
+  // a stub; these run the REAL MarketBoardService over a core that answers the
+  // way it does during an outage (Sprint 27 review).
+  // ============================================================================
+
+  describe('BUG-090: an unreachable market board', () => {
+    const TARGET = mockDyes[6]; // Blood Red: three dyes inside the line of 8
+
+    /** Mount over the real service, with core answering `outcome` and no prices. */
+    const withRealService = async (
+      outcome: 'ok' | 'partial' | 'error',
+      run: (core: Record<string, ReturnType<typeof vi.fn>>) => Promise<void>
+    ): Promise<void> => {
+      const { APIService } = await import('@services/index');
+      const actual = await vi.importActual<typeof import('@services/market-board-service')>(
+        '@services/market-board-service'
+      );
+      // What core can answer with `outcome`: 'error' only with an empty Map,
+      // 'partial' only beside at least one price (Sprint 27 review). No
+      // worldId, so the real service never asks the stubbed WorldService.
+      const pricesFor = (ids: number[]): Map<number, PriceData> =>
+        outcome === 'partial'
+          ? new Map([
+              [
+                ids[0],
+                {
+                  itemID: ids[0],
+                  currentAverage: 100,
+                  currentMinPrice: 100,
+                  currentMaxPrice: 100,
+                  lastUpdate: 0,
+                },
+              ],
+            ])
+          : new Map();
+      const core = {
+        // The Map-only call answers the same prices -- empty during an outage
+        getPricesForDataCenter: vi.fn(async (ids: number[]) => pricesFor(ids)),
+        getPricesForDataCenterWithOutcome: vi.fn(async (ids: number[]) => ({
+          prices: pricesFor(ids),
+          outcome,
+        })),
+      };
+      const sharedMock = MarketBoardService.getInstance();
+      vi.mocked(APIService.getInstance).mockReturnValue(core as never);
+      actual.MarketBoardService.resetInstance();
+      vi.mocked(MarketBoardService.getInstance).mockReturnValue(
+        actual.MarketBoardService.getInstance() as never
+      );
+      try {
+        await run(core);
+      } finally {
+        tool?.destroy();
+        tool = null;
+        vi.mocked(MarketBoardService.getInstance).mockReturnValue(sharedMock);
+        actual.MarketBoardService.resetInstance();
+      }
+    };
+
+    const settle = async (): Promise<void> => {
+      for (let i = 0; i < 4; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+    };
+
+    const pick = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      await settle();
+      tool.selectDye(TARGET);
+      await settle();
+    };
+
+    it('shows the offline verdict on an outage', async () => {
+      await withRealService('error', async (core) => {
+        await pick();
+
+        // Budget fetches whatever the Market Board toggle says (BUG-079)
+        expect(
+          core.getPricesForDataCenterWithOutcome,
+          'the fetch really reached core'
+        ).toHaveBeenCalled();
+        expect(rightPanel.textContent).toContain('budget.offBadge');
+        expect(rightPanel.textContent).toContain('budget.offText');
+      });
+    });
+
+    it('shows it when only part of the lookup failed', async () => {
+      await withRealService('partial', async () => {
+        await pick();
+
+        expect(rightPanel.textContent).toContain('budget.offBadge');
+      });
+    });
+
+    it('keeps the priced verdict when the board answered with no listings', async () => {
+      await withRealService('ok', async (core) => {
+        await pick();
+
+        expect(core.getPricesForDataCenterWithOutcome).toHaveBeenCalled();
+        // A positive check too: an empty panel (a swallowed render throw)
+        // would not contain the offline badge either.
+        expect(rightPanel.textContent).toContain('budget.inRange');
+        expect(rightPanel.textContent).not.toContain('budget.offBadge');
       });
     });
   });

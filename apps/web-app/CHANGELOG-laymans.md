@@ -2,6 +2,66 @@
 
 ---
 
+## Web-App Version 5.14.11 — October 6, 2026
+
+### Glamour Reader
+- **The Glamour Reader's file drop area describes the Glamour Reader.** Before you load a file, it says the reader shows every piece your character wears, with its dyes. It used to promise hair and skin colors and a swatch grid, and the Glamour Reader has neither.
+
+## Web-App Version 5.14.10 — October 6, 2026
+
+### Truer greys
+- **Gradients and HSL mixes from a grey stay true to the other color.** Slate Grey, Jet Black, Metallic Silver or a grey hex code going to blue stays blue instead of passing through purple or pink.
+- **Harmony Explorer keeps a swapped-in dye in its slot.** With "no duplicates" on, it no longer shows up again in an earlier slot.
+
+## Web-App Version 5.14.8 — October 5, 2026
+
+### Market prices you can trust
+- **Chinese and Korean servers now get market prices.** Picking 陆行鸟, 한국 or any other Chinese or Korean server used to load no prices at all.
+- **When the market board can't be reached, the tools say so** instead of quietly showing no prices: the Palette Extractor marks its cards, Harmony shows a notice, and Budget shows its offline note.
+
+## Web-App Version 5.14.6 — October 5, 2026
+
+### Polish everywhere
+- **Switching themes keeps your place**: Budget, Dye Mixer and your character sheet repaint in the new colors without losing what you had selected.
+- **Prices show only when the Market Board is on**, in every tool.
+- **The keyboard behaves**: shortcuts pause while a menu or picker is open, Escape closes just the top thing, and tool shortcuts work on French (AZERTY) keyboards.
+- **Sending colors from the Swatch Matcher to another tool keeps your loaded character file.**
+- **Printing a tool prints the results**, without the app around them.
+- **Signing out is instant**, and exported files carry your local date.
+
+## Web-App Version 5.14.4 — October 5, 2026
+
+### Words that match the game
+- **Facewear and character-creation color names match the game** in every language, so what you read here is what you see in the character creator.
+- **"1 dye", "1 piece"**: the Glamour Reader's counts read naturally in the singular.
+- **The facewear tooltip names the color in your language.**
+- **The list is the "Glamour list" everywhere, and its download button says "Save .md".**
+- **German says "Vorlage" for presets throughout, and Korean, Chinese, Japanese and French fixes** for typos and terms.
+
+## Web-App Version 5.14.3 — October 5, 2026
+
+### Smoother tools
+- **Changing the language keeps your results** in Harmony, Dye Mixer, Comparison and Accessibility.
+- **An old link no longer undoes your choice.** Picking a new base color in Harmony, or sending a dye to Budget, sticks.
+- **Budget always shows your latest search**, Comparison's ΔE tier matches its verdict, Gradient doesn't repeat a pinned dye, and the Swatch Matcher keeps a full list of matches with strong filters on.
+- **The dye palette works from the keyboard,** and the favorite star shows on touch screens.
+- **The app starts a little faster.**
+
+## Web-App Version 5.14.2 — October 5, 2026
+
+### Community presets
+- **Saved presets stay saved.** A preset is no longer marked "Removed by its author" because the service hiccupped or a search was slow. A wrong mark clears itself, and your own palettes are never marked.
+- **When the community feed is down, the gallery says so** instead of showing an empty feed.
+- **Votes tell the truth.** A failed vote says it failed instead of "already voted", and a vote on a preset's page shows on its card.
+- **Changes show at once.** After you vote, delete, edit or submit, the gallery updates right away.
+- **Deleting works as it says.** A failed delete says it failed, and My Submissions refreshes after a delete.
+- **Tab counts match what you see,** and search and sort work on the Saved and Mine tabs.
+
+### Collections and character colors
+- **Manage Collections updates right away** when you create a collection there.
+- **Exported file names keep Japanese, Korean and Chinese collection names.**
+- **Saving the same character twice works:** the second becomes "Name (1)". A full collection store and a blank nickname are handled too.
+
 ## Web-App Version 5.14.1 — October 5, 2026
 
 ### Your settings stay put

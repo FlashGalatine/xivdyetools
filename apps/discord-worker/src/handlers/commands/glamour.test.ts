@@ -5,6 +5,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { GlamourInput } from '@xivdyetools/bot-logic';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import { handleGlamourCommand } from './glamour.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 
@@ -144,6 +145,60 @@ describe('/glamour', () => {
     expect(edit.embeds[0].description).toBe('**Glamour Items:**');
     expect(edit.embeds[0].image?.url).toBe('attachment://glamour.png');
     expect(edit.file).toMatchObject({ name: 'glamour.png', contentType: 'image/png' });
+  });
+
+  it.each(['en', 'ja', 'zh'] as const)(
+    'renders the card with the %s user locale, which picks the CJK font load order',
+    async (locale) => {
+      // JP loads first only for ja, so Japanese item names draw in Japanese
+      // letterforms and zh/ko/en renders stay as they were (font-load-order.test.ts)
+      const { createUserTranslator } = await import('../../services/bot-i18n.js');
+      const { createTranslator } = await import('@xivdyetools/bot-logic/i18n');
+      vi.mocked(createUserTranslator).mockResolvedValueOnce(createTranslator(locale));
+      const { renderSvgToPng } = await import('../../services/svg/renderer.js');
+
+      await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
+      await settle();
+
+      expect((mockExecuteGlamour.mock.calls[0][0] as GlamourInput).locale).toBe(locale);
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg/>', { scale: 2, locale });
+    },
+  );
+
+  it('hands bot-logic the request logger, so a card that fails to draw says why (BUG-125)', async () => {
+    const logger = { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } as unknown as ExtendedLogger;
+    await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx, logger);
+    await settle();
+
+    expect((mockExecuteGlamour.mock.calls[0][0] as GlamourInput).logger).toBe(logger);
+  });
+
+  it('logs the failure code, never the reply text, when bot-logic fails', async () => {
+    // The reply can quote the file (a name, a gear value); none of it may reach a log
+    const SENTINEL = 'Real Name Sentinel 7f3a';
+    const logger = { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() };
+    mockExecuteGlamour.mockResolvedValue({
+      ok: false,
+      error: 'GENERATION_FAILED',
+      errorMessage: `Failed to generate the card for ${SENTINEL}`,
+    });
+    const interaction = makeInteraction(CDN_URL);
+    await handleGlamourCommand(interaction, env, ctx, logger as unknown as ExtendedLogger);
+    await settle();
+
+    expect(markMock).toHaveBeenCalledWith(interaction, 'render');
+    expect(logger.warn).toHaveBeenCalledWith('Glamour command failed', { error: 'GENERATION_FAILED' });
+    // The reply did carry it, so its absence below is the adapter's doing
+    expect(lastEdit().embeds[0].description).toContain(SENTINEL);
+    const logged = [logger.debug, logger.info, logger.warn, logger.error]
+      .flatMap((level) => level.mock.calls.flat())
+      .map((arg: unknown) =>
+        arg instanceof Error
+          ? `${arg.name} ${arg.message} ${arg.stack ?? ''}`
+          : JSON.stringify(arg),
+      )
+      .join('\n');
+    expect(logged).not.toContain(SENTINEL);
   });
 
   it("tells the card which names the bundled fonts can't draw", async () => {
@@ -287,15 +342,23 @@ describe('/glamour', () => {
       expect(JSON.parse((init as RequestInit).body as string)).toEqual({ gear: [{ slot: 'Body', base: 1, variant: 1 }] });
     });
 
+    // bot-logic logs '[glamour] resolve failed: <class> <code>' (never the
+    // message), so the code is what tells these two apart from an outage.
     it('refuses to resolve with no binding and no URL', async () => {
       const resolve = await resolveVia({ UNIVERSALIS_PROXY: undefined, UNIVERSALIS_PROXY_URL: undefined });
-      await expect(resolve([], null)).rejects.toThrow('not configured');
+      await expect(resolve([], null)).rejects.toMatchObject({
+        message: expect.stringContaining('not configured'),
+        code: 'BINDING_MISSING',
+      });
     });
 
     it('refuses an envelope that does not carry items', async () => {
       binding.fetch.mockResolvedValue(Response.json({ success: false, error: 'NOPE' }));
       const resolve = await resolveVia({});
-      await expect(resolve([], null)).rejects.toThrow('Malformed');
+      await expect(resolve([], null)).rejects.toMatchObject({
+        message: expect.stringContaining('Malformed'),
+        code: 'MALFORMED_ENVELOPE',
+      });
     });
   });
 

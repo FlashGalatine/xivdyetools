@@ -35,12 +35,46 @@ Rules:
   path filter.
 -->
 
-## [5.8.4] - 2026-10-05
+## [5.8.11] - 2026-10-06
 ### 📖 /manual explains /glamour in full
 - `/manual`'s character-file topic now lists every verdict a `/glamour` card can show, including the race name and the dash for a model with no item behind it.
 - `/manual` says the bot picks the twin for you, and that the web app's Glamour Reader, linked at the end of every `/glamour` reply, lets you pick a different one.
 - `/manual` says the list's labels and Acquisition lines are in English in every language, and that a blank Acquisition line means no source is known.
 - The `/swatch` and `/glamour` help and file hints now say Brio character files work too, alongside Anamnesis and Ktisis.
+
+## [5.8.9] - 2026-10-06
+### 🌏 Item names in your language
+- `/glamour` cards now name items in Korean, Chinese and Japanese instead of falling back to English.
+- Japanese cards draw kanji in Japanese letterforms; some used to appear in their Chinese forms.
+
+## [5.8.7] - 2026-10-06
+### 🎨 Truer greys and cleaner palettes
+- `/gradient` and `/mixer` no longer tint a grey dye: a gradient from Slate Grey, Jet Black or Metallic Silver to blue stays blue instead of passing through purple.
+- `/extractor` shows only the colours a picture really has, without empty rows.
+
+## [5.8.6] - 2026-10-06
+### 📏 Numbers that agree
+- `/contrast` and `/compare` show the same contrast ratio for the same two dyes, and never round a failing ratio up to a passing one.
+- German and French show a decimal comma in every `/contrast` and `/compare` number.
+- `/gradient` no longer cuts off step numbers like "10–12".
+- `/glamour` cards keep each count next to its word in the footer, and long German footers fit.
+
+## [5.8.5] - 2026-10-06
+### 🎨 Colours you type, and filters that keep their matches
+- Colours typed as six digits, like `000000` or `333333`, work everywhere instead of being refused.
+- `/gradient` and `/mixer` find a dye for every step when you filter dyes out, instead of showing no match.
+- `/glamour`'s copy-ready list no longer shows placeholder names for pieces with no item, and it keeps your facewear.
+
+## [5.8.4] - 2026-10-06
+### 🧹 Fewer surprises
+- `/preset submit` and `/preset edit` name the dye you picked twice, instead of a vague error.
+- `/gradient` names its start and end dyes in your language.
+- When your character file doesn't have the `/swatch` slot you asked for, the bot names that slot in your language.
+- If `/budget` can't find the world you asked for, only you see the message.
+- `/budget` and `/preferences` no longer run out of time while they check a world name.
+- A hiccup while saving no longer wipes your preferences or your favourite presets.
+- `/extractor color` says when it couldn't draw the card, instead of saying no match was found.
+- `/preferences set` no longer says the clan and gender options change `/swatch`. `/swatch` reads both from your character file.
 
 ## [5.8.2] - 2026-10-05
 ### 🌏 The bot speaks your language

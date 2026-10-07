@@ -277,12 +277,16 @@ describe('svg/base.ts', () => {
     });
 
     /**
-     * The CJK fallback order is not cosmetic and it is not interchangeable:
-     * - JP must precede SC. Both carry the shared kanji, so if SC wins the
-     *   lookup a Japanese player reads their own language in Chinese
-     *   letterforms (F-17, fixed 2026-08-20 by adding JP *in front*).
-     * - KR must follow SC. Noto Sans SC ships zero Hangul, so nothing is lost
-     *   by asking it first, and KR carries no Han the other two need.
+     * The order of the CJK names, held for the stacks where it decides the
+     * face:
+     * - JP before SC. In a CJK-LED stack (og-worker's cards) the first CJK name
+     *   is the primary face, so a Japanese card draws kanji in JP letterforms.
+     *   In the Latin-led stacks discord-worker draws, the names do not choose
+     *   the fallback face at all: resvg fills a glyph the Latin face lacks from
+     *   the faces in LOAD order, which getFontBuffers makes JP-first for ja
+     *   (apps/discord-worker/src/services/font-load-order.test.ts proves it).
+     * - KR after SC. Noto Sans SC ships zero Hangul, so nothing is lost by
+     *   asking it first, and KR carries no Han the other two need.
      * This rule used to live only in a prose comment and in
      * `apps/discord-worker/scripts/test-font-rendering.ts`, a manual script
      * nothing ran and which went stale (DEAD-028, 2026-09-01 dead-code audit).

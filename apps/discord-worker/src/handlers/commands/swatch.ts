@@ -57,7 +57,7 @@ export async function handleSwatchCommand(
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const t = userId
-    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    ? await createUserTranslator(env.KV, userId, interaction.locale, logger)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
   const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 
@@ -139,7 +139,7 @@ async function processSwatchCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [

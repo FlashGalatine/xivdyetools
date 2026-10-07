@@ -15,4 +15,4 @@
 Steps: 1) apps/presets-api/src/utils/api-response.ts: delete lines 63-69 (ApiSuccessResponse docblock + interface, plus its trailing blank) and lines 101-124 (successResponse docblock + function, plus its trailing blank). 2) apps/presets-api/tests/utils/api-response.test.ts: delete import line 11 and the describe('successResponse') block at lines 50-79. 3) pnpm turbo run build type-check lint test --filter=...xivdyetools-presets-api && pnpm dead-code:check
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `a33842cc` (branch `fix/remediation-2026-10-04-sprint8`, presets-api 2.5.0; PR #256, open, on the join branch).

@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-10-05T05:21:29.101Z",
+    "generated": "2026-10-06T09:59:03.362Z",
     "dyeCount": 125
   },
   "labels": {
@@ -217,14 +217,14 @@
   },
   "sheets": {
     "eyeColors": "눈동자 색",
-    "highlightColors": "하이라이트",
-    "lipColorsDark": "입술 색 (어두운)",
-    "lipColorsLight": "입술 색 (밝은)",
-    "tattooColors": "문신/홍채",
-    "facePaintColorsDark": "얼굴 페인트 (어두운)",
-    "facePaintColorsLight": "얼굴 페인트 (밝은)",
+    "highlightColors": "부분염색 색상",
+    "lipColorsDark": "입술 색 (짙게)",
+    "lipColorsLight": "입술 색 (옅게)",
+    "tattooColors": "문신 / 눈동자 테두리",
+    "facePaintColorsDark": "얼굴 치장 (짙게)",
+    "facePaintColorsLight": "얼굴 치장 (옅게)",
     "hairColors": "머리 색",
-    "skinColors": "피부 색"
+    "skinColors": "피부색"
   },
   "races": {
     "hyur": "휴런",
@@ -263,7 +263,7 @@
     "red": "빨간색",
     "blue": "파란색",
     "green": "초록색",
-    "brass": "황동색",
+    "brass": "구리색",
     "purple": "보라색",
     "brown": "갈색"
   }

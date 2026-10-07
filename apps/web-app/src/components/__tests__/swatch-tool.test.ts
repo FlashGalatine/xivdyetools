@@ -1,23 +1,29 @@
 /**
  * XIV Dye Tools - SwatchTool Unit Tests
  *
- * Tests the swatch tool (character color matcher) component.
- * Covers rendering, race/gender selection, color categories, and matching.
+ * Tests the swatch tool (character color matcher) component, mounted the way
+ * the v4 shell mounts it: one panel, no drawer.
+ * Covers rendering, the sidebar's tribe / sheet / matching settings, the
+ * market relay, and matching.
  *
  * @module components/__tests__/swatch-tool.test
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { RACE_SUBRACES } from '@xivdyetools/types';
 import type { Dye } from '@xivdyetools/types';
 import {
   CharacterColorService,
   type ResolvedCharaCharacter,
   type ResolvedCharaSlot,
 } from '@xivdyetools/core';
-import { SwatchTool, RACE_GROUPS } from '../swatch-tool';
+import { SwatchTool } from '../swatch-tool';
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
-import { ConfigController, StorageService } from '@services/index';
+import {
+  ConfigController,
+  MarketBoardService,
+  RouterService,
+  StorageService,
+} from '@services/index';
 import {
   DEFAULT_DISPLAY_OPTIONS,
   DEFAULT_DYE_FILTERS,
@@ -54,33 +60,6 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
-  /**
-   * The shared market-panel builder. Absent, renderMarketPanel throws and
-   * safeRender swallows it, leaving the whole panel empty.
-   */
-  buildMarketPanel: vi.fn(() => ({
-    panel: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      setContent: vi.fn(),
-      getContentContainer: vi.fn(() => document.createElement('div')),
-      open: vi.fn(),
-      close: vi.fn(),
-    },
-    // Mirrors the real MarketBoard component's public surface
-    marketBoard: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      getShowPrices: vi.fn().mockReturnValue(false),
-      setShowPrices: vi.fn(),
-      getSelectedServer: vi.fn().mockReturnValue(null),
-      setSelectedServer: vi.fn(),
-      loadServerData: vi.fn().mockResolvedValue(undefined),
-      refreshPrices: vi.fn().mockResolvedValue(undefined),
-      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
-      shouldFetchPrice: vi.fn().mockReturnValue(false),
-    },
-  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
   /** Used by six of the tools; absent it throws as an unhandled rejection. */
@@ -316,100 +295,6 @@ vi.mock('@shared/logger', () => ({
 // hand-written stub only has to miss one name (`ICON_TOOL_HARMONY` did) for
 // the render to throw into safeRender's catch and silently produce nothing.
 
-vi.mock('@services/pricing-mixin', () => ({
-  setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
-}));
-
-/**
- * `setContent` used to be a no-op here, which silently swallowed every
- * control the tool put inside a panel — the panel rendered as an empty div
- * and nothing downstream was reachable. The mock now attaches what it is
- * given, the way the real panel does, so assertions can see the content.
- */
-vi.mock('../collapsible-panel', () => ({
-  /**
-   * Mirrors the real CollapsiblePanel's public API. `setContent` as a no-op
-   * silently swallowed every control the tools place in a panel, and a
-   * missing `getContentContainer` throws into BaseComponent.safeRender()'s
-   * catch — which converts it to an error state, so the panel renders
-   * nothing and the tests see an empty DOM instead of a failure.
-   */
-  CollapsiblePanel: class MockCollapsiblePanel {
-    container: HTMLElement;
-    options: Record<string, unknown>;
-    private body: HTMLElement | null = null;
-    constructor(container: HTMLElement, options: Record<string, unknown>) {
-      this.container = container;
-      this.options = options;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'collapsible-panel';
-      div.id = (this.options.id as string) || 'panel';
-      this.container.appendChild(div);
-      this.body = div;
-    }
-    getContentContainer(): HTMLElement {
-      if (!this.body) this.init();
-      return this.body!;
-    }
-    setContent(content: HTMLElement | string) {
-      if (!this.body) this.init();
-      if (typeof content === 'string') this.body!.innerHTML = content;
-      else if (content) this.body!.appendChild(content);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-      this.body = null;
-    }
-    open() {}
-    close() {}
-    expand() {}
-    collapse() {}
-    toggle() {}
-  },
-}));
-
-/**
- * Mirrors the real MarketBoard's getter/setter pair. `getShowPrices` was
- * absent, and the tool reads it while building the left panel — same failure
- * mode as the LanguageService gap above.
- */
-vi.mock('../market-board', () => ({
-  MarketBoard: class MockMarketBoard {
-    container: HTMLElement;
-    private showPrices = false;
-    private selectedServer: string | null = null;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'market-board';
-      div.id = 'market-board';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getShowPrices() {
-      return this.showPrices;
-    }
-    setShowPrices(value: boolean) {
-      this.showPrices = value;
-    }
-    getSelectedServer() {
-      return this.selectedServer;
-    }
-    setSelectedServer(server: string | null) {
-      this.selectedServer = server;
-    }
-    async fetchPricesForDyes() {
-      return new Map();
-    }
-  },
-}));
-
 vi.mock('@components/v4/result-card', () => ({}));
 
 // DYES ON THIS GLAMOUR asks api-worker for item names: never reach the network.
@@ -464,22 +349,15 @@ vi.mock('@components/preset-submission-form', () => {
 
 describe('SwatchTool', () => {
   let container: HTMLElement;
-  let leftPanel: HTMLElement;
+  /** The v4 shell's one panel: passed as both leftPanel and rightPanel. */
   let rightPanel: HTMLElement;
-  let drawerContent: HTMLElement;
   let tool: SwatchTool | null;
 
   beforeEach(() => {
     container = createTestContainer();
-    leftPanel = document.createElement('div');
-    leftPanel.id = 'left-panel';
     rightPanel = document.createElement('div');
     rightPanel.id = 'right-panel';
-    drawerContent = document.createElement('div');
-    drawerContent.id = 'drawer-content';
-    container.appendChild(leftPanel);
     container.appendChild(rightPanel);
-    container.appendChild(drawerContent);
     tool = null;
     vi.clearAllMocks();
     mockGetAllDyes.mockReturnValue(mockDyes);
@@ -519,44 +397,57 @@ describe('SwatchTool', () => {
     window.history.replaceState(null, '', INITIAL_URL);
   });
 
+  /**
+   * Build + init a tool the way v4-layout does: one panel is both leftPanel
+   * and rightPanel, and drawerContent is null.
+   */
+  const mount = (): SwatchTool => {
+    const t = new SwatchTool(container, {
+      leftPanel: rightPanel,
+      rightPanel,
+      drawerContent: null,
+    });
+    t.init();
+    return t;
+  };
+
+  const flush = async () => {
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+  };
+
   // ============================================================================
   // Basic Rendering Tests
   // ============================================================================
 
   describe('Basic Rendering', () => {
     it('should render swatch tool', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
+      tool = mount();
 
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      expect(rightPanel.children.length).toBeGreaterThan(0);
     });
 
-    it('should render left panel content', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
+    // REFACTOR-005: the v3 left panel (tribe, gender and sheet selects, and a
+    // Market Board, each in a collapsible panel) was built and then cleared in
+    // the v4 shell, and the mobile drawer was never built. Both are gone.
+    it('builds no v3 left panel: no selects, no collapsible panels', () => {
+      tool = mount();
 
-      expect(leftPanel.innerHTML.length).toBeGreaterThan(0);
+      expect(rightPanel.querySelector('select')).toBeNull();
+      expect(rightPanel.querySelector('.collapsible-panel')).toBeNull();
     });
 
-    it('should render right panel content', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel, drawerContent });
+    it('writes nothing into a drawer element, even when one is passed', () => {
+      const drawer = document.createElement('div');
+      tool = new SwatchTool(container, {
+        leftPanel: rightPanel,
+        rightPanel,
+        drawerContent: drawer,
+      });
       tool.init();
 
-      expect(rightPanel).not.toBeNull();
-    });
-
-    it('should render drawer content when provided', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(drawerContent).not.toBeNull();
-    });
-
-    it('should work without drawer content', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      expect(drawer.childNodes).toHaveLength(0);
+      expect(rightPanel.children.length).toBeGreaterThan(0);
     });
   });
 
@@ -566,8 +457,7 @@ describe('SwatchTool', () => {
 
   describe('Configuration', () => {
     it('should have setConfig method', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       expect(typeof tool.setConfig).toBe('function');
     });
@@ -575,8 +465,7 @@ describe('SwatchTool', () => {
     // BUG-011: this only asserted that the left panel had children, which no
     // change to maxResults could ever break.
     it('applies a maxResults change to the live reverse match', async () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
       await Promise.resolve();
       tool.selectDye({ ...mockDyes[0], hex: '#AABBCC' } as never);
       const reverse = () =>
@@ -590,49 +479,19 @@ describe('SwatchTool', () => {
   });
 
   // ============================================================================
-  // Race Selection Tests
-  // ============================================================================
-
-  describe('Race Selection', () => {
-    it('should render race selection controls', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      // Tool should render race-related content in left panel
-      expect(leftPanel.innerHTML.length).toBeGreaterThan(0);
-    });
-  });
-
-  // ============================================================================
-  // Color Category Tests
-  // ============================================================================
-
-  describe('Color Category', () => {
-    it('should render color category controls', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      // Tool should render category-related content in left panel
-      expect(leftPanel.innerHTML.length).toBeGreaterThan(0);
-    });
-  });
-
-  // ============================================================================
   // Lifecycle Tests
   // ============================================================================
 
   describe('Lifecycle', () => {
     it('should clean up on destroy', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
+      tool = mount();
 
       // Should not throw
       expect(() => tool!.destroy()).not.toThrow();
     });
 
     it('should handle double destroy gracefully', () => {
-      tool = new SwatchTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       tool.destroy();
 
@@ -652,21 +511,6 @@ describe('SwatchTool', () => {
   // do to it at runtime.
   // ==========================================================================
 
-  /** Build + init a tool with the standard three panels. */
-  const mount = (opts: { drawer?: boolean } = {}): SwatchTool => {
-    const t = new SwatchTool(
-      container,
-      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
-    );
-    t.init();
-    return t;
-  };
-
-  const flush = async () => {
-    await Promise.resolve();
-    await new Promise((r) => setTimeout(r, 0));
-  };
-
   /** The one stable object the mocked ConfigController.getInstance() returns. */
   const controller = () => ConfigController.getInstance();
   /** Make the mocked controller hold `config` for 'swatch' (reset in afterEach). */
@@ -681,8 +525,8 @@ describe('SwatchTool', () => {
   };
 
   /**
-   * The five retired v3 settings keys. Matched exactly: the collapsible
-   * panels' v3_character_*_panel / _market keys share the prefix and stay.
+   * The five retired v3 settings keys. Matched exactly, so a key that only
+   * shares the v3_character_ prefix never counts.
    */
   const RETIRED_KEYS = [
     'v3_character_subrace',
@@ -706,6 +550,7 @@ describe('SwatchTool', () => {
     showCmyk?: boolean;
     showHex?: boolean;
     showRgb?: boolean;
+    showPrice?: boolean;
   };
   const cards = (): Card[] => Array.from(rightPanel.querySelectorAll<Card>('v4-result-card'));
   const share = () =>
@@ -731,6 +576,19 @@ describe('SwatchTool', () => {
       matchingMethod: string;
     };
   const metallicDye = mockDyes.find((d) => d.isMetallic)!;
+  /**
+   * Core's matcher, as far as these tests need it: the first `count` dyes of
+   * the pool it is handed (nearest first), and never more — core keeps only
+   * the top k.
+   */
+  const rankPoolInOrder = () =>
+    mockCharaFindClosestDyes.mockImplementation(
+      (_color: unknown, pool: { getAllDyes: () => Dye[] }, options: { count: number }) =>
+        pool
+          .getAllDyes()
+          .slice(0, options.count)
+          .map((dye, rank) => ({ dye, distance: rank + 1 }))
+    );
 
   describe('setConfig — race, gender and colour sheet', () => {
     it.each([
@@ -906,6 +764,29 @@ describe('SwatchTool', () => {
       tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
       expect(mockCharaFindClosestDyes).not.toHaveBeenCalled();
     });
+
+    // BUG-025 (2026-10-04 deep-dive): the filter ran after a top-(maxResults×3)
+    // request, so when the nearest dyes were mostly excluded fewer than
+    // maxResults survived — 85 of the 125 dyes are Dye Vendor dyes.
+    it('fills every card from the allowed dyes, however many excluded dyes rank nearer', async () => {
+      const nearerExcluded = Array.from({ length: 9 }, (_, i) => ({
+        ...metallicDye,
+        id: 9100 + i,
+        itemID: 9100 + i,
+        stainID: 200 + i,
+      }));
+      const allowed = mockDyes.filter((d) => !d.isMetallic).slice(0, 3);
+      mockGetAllDyes.mockReturnValue([...nearerExcluded, ...allowed]);
+      rankPoolInOrder();
+      tool = mount();
+      await flush();
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+
+      cells()[0].click();
+
+      // maxResults is 3 (the default)
+      expect(cards().map((c) => c.data?.dye.id)).toEqual(allowed.map((d) => d.id));
+    });
   });
 
   // ==========================================================================
@@ -943,8 +824,8 @@ describe('SwatchTool', () => {
       expect(getTattooColors).toHaveBeenCalled();
 
       cells()[0].click();
-      // 5 results, tripled because a filter is active
-      expect(lastMatchRequest()).toEqual({ count: 15, matchingMethod: 'oklab' });
+      // The whole pool, because a filter is active (BUG-025), then trimmed to 5
+      expect(lastMatchRequest()).toEqual({ count: mockDyes.length, matchingMethod: 'oklab' });
       expect(cards().map((c) => c.data?.dye.id)).toEqual([mockDyes[0].id, mockDyes[1].id]);
       expect(cards().every((c) => c.showCmyk === true)).toBe(true);
 
@@ -1192,31 +1073,6 @@ describe('SwatchTool', () => {
     });
   });
 
-  // The left-panel and drawer selects are unreachable in V4 (renderRightPanel
-  // clears the shared panel; the drawer is never passed), but they exist under
-  // these unit-test panels until REFACTOR-005 deletes them.
-  describe('the v3 selects', () => {
-    it.each([
-      ['subraceSelect', 'Raen', { race: 'Raen' }],
-      ['genderSelect', 'Female', { gender: 'Female' }],
-      ['categorySelect', 'tattooColors', { colorSheet: 'tattooColors' }],
-      ['mobileSubraceSelect', 'Raen', { race: 'Raen' }],
-      ['mobileGenderSelect', 'Female', { gender: 'Female' }],
-      ['mobileCategorySelect', 'tattooColors', { colorSheet: 'tattooColors' }],
-    ])('%s writes the controller, not a storage key of its own', (field, value, partial) => {
-      tool = mount();
-      const select = (tool as unknown as Record<string, HTMLSelectElement>)[field];
-      vi.mocked(StorageService.setItem).mockClear();
-      vi.mocked(controller().setConfig).mockClear();
-
-      select.value = value;
-      select.dispatchEvent(new Event('change'));
-
-      expect(controller().setConfig).toHaveBeenCalledWith('swatch', partial);
-      expect(retiredWrites()).toEqual([]);
-    });
-  });
-
   describe('reverse matching from the palette drawer', () => {
     const dye = { ...mockDyes[0], hex: '#AABBCC', name: 'Test Dye', itemID: 5729 };
 
@@ -1275,6 +1131,17 @@ describe('SwatchTool', () => {
   describe('the loaded .chara file', () => {
     const selection = () =>
       (tool as unknown as { selectionContext: { source: string } | null }).selectionContext;
+    /** THIS CHARACTER's live slot cards. */
+    const sheetCards = (): HTMLButtonElement[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLButtonElement>('.chara-slots-grid > button'));
+    /** Slot cards announced as the current pick. */
+    const sheetPressed = () =>
+      sheetCards().filter((b) => b.getAttribute('aria-pressed') === 'true');
+    /** Slot cards drawn with the accent selection ring. */
+    const sheetRinged = () =>
+      sheetCards().filter((b) =>
+        b.getAttribute('style')?.includes('box-shadow: 0 0 0 1px var(--theme-primary)')
+      );
 
     it('is still on the file card after the tool is left and entered again', () => {
       tool = mount();
@@ -1392,6 +1259,58 @@ describe('SwatchTool', () => {
       expect(selection()?.source).toBe('slot');
     });
 
+    // BUG-025 (2026-10-04 deep-dive): a slot's closest dye came from the whole
+    // pool, so the verdict sentence and SEND TO could name a dye the user had
+    // filtered out.
+    it("names the slot's closest dye from the dyes the filters allow", async () => {
+      const allowed = mockDyes.filter((d) => !d.isMetallic);
+      // Every distance is 15 in this suite, so the first dye the filter
+      // allows wins — and the metallic one sits ahead of it
+      mockGetAllDyes.mockReturnValue([metallicDye, ...allowed]);
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+      await flush();
+      const handoffTargets = vi.spyOn(
+        tool as unknown as { handoffTargets: (ids: number[]) => unknown },
+        'handoffTargets'
+      );
+
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+
+      expect(handoffTargets).toHaveBeenLastCalledWith([allowed[0].stainID]);
+      const sentence = (tool as unknown as { selectionCardContainer: HTMLElement })
+        .selectionCardContainer.textContent;
+      expect(sentence).toContain(`Dye-${allowed[0].itemID}`);
+      expect(sentence).not.toContain(`Dye-${metallicDye.itemID}`);
+    });
+
+    // BUG-025 follow-up (2026-10-04 Sprint 5 review): the order the other way
+    // round. A filter change after the pick re-ran the matches but drew
+    // neither the card nor SEND TO again, so both named the excluded dye.
+    it('a filter change after a slot pick names the closest allowed dye', async () => {
+      const allowed = mockDyes.filter((d) => !d.isMetallic);
+      mockGetAllDyes.mockReturnValue([metallicDye, ...allowed]);
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      await flush();
+      const sentence = (): string | null =>
+        (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
+          .textContent;
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+      expect(sentence()).toContain(`Dye-${metallicDye.itemID}`);
+      const handoffTargets = vi.spyOn(
+        tool as unknown as { handoffTargets: (ids: number[]) => unknown },
+        'handoffTargets'
+      );
+
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+
+      expect(handoffTargets).toHaveBeenLastCalledWith([allowed[0].stainID]);
+      expect(sentence()).toContain(`Dye-${allowed[0].itemID}`);
+      expect(sentence()).not.toContain(`Dye-${metallicDye.itemID}`);
+    });
+
     it('a slot on another palette commits that palette and survives its reload', async () => {
       CharaSessionService.setSession(charaSession());
       tool = mount();
@@ -1412,6 +1331,97 @@ describe('SwatchTool', () => {
         (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
           .textContent
       ).toContain('SWATCH.SLOTLEFTEYE');
+      // The palette's reload does not take the pick off the sheet card.
+      expect(sheetPressed().map((b) => b.dataset.slot)).toEqual(['leftEye']);
+    });
+
+    // BUG-083 follow-up (2026-10-04 Sprint 22 review): the sheet card's ring
+    // and its new aria-pressed were told about a pick, never about its end, so
+    // they kept announcing a slot the workspace no longer showed.
+    describe('the sheet stops showing a slot pick the workspace dropped', () => {
+      /** A lip on the dark lip sheet: its pick opens a palette with the range toggle. */
+      const lipSession = (): CharaSession =>
+        charaSession({
+          slots: [
+            {
+              slot: 'lip',
+              kind: 'lip',
+              verdict: 'index',
+              index: 3,
+              sheetIndex: 3,
+              sheetVariant: 'dark',
+              gridAddress: 'R1·C4',
+              indexHex: '#AA3344',
+              floatHex: null,
+              deltaE: null,
+              alpha: null,
+              blendHex: null,
+            } as ResolvedCharaSlot,
+          ],
+        });
+
+      const pickFirstSlot = async (): Promise<void> => {
+        sheetCards()[0]!.click();
+        await flush();
+        expect(selection()?.source).toBe('slot');
+        expect(sheetPressed()).toHaveLength(1);
+      };
+
+      const expectNoSlotShown = (): void => {
+        expect(sheetPressed()).toHaveLength(0);
+        expect(sheetRinged()).toHaveLength(0);
+      };
+
+      it('when a grid cell is picked', async () => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+
+        cells()[5].click();
+
+        expect(selection()?.source).toBe('grid');
+        expectNoSlotShown();
+      });
+
+      it('when a palette chip is picked', async () => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+
+        railChip('swatch.palTattoo').click();
+        await flush();
+
+        expect(selection()).toBeNull();
+        expectNoSlotShown();
+      });
+
+      it('when the Dark/Light range toggle is flipped', async () => {
+        CharaSessionService.setSession(lipSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+        expect(gridTitle()).toContain('tools.character.lipColorsDark');
+
+        railChip('swatch.rangeLight').click();
+        await flush();
+
+        expect(selection()).toBeNull();
+        expectNoSlotShown();
+      });
+
+      it('when the selection is cleared', async () => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+
+        tool.clearDyes();
+
+        expect(selection()).toBeNull();
+        expectNoSlotShown();
+      });
     });
 
     it('no longer draws DYES ON THIS GLAMOUR: it moved to the Glamour Reader', async () => {
@@ -1611,6 +1621,45 @@ describe('SwatchTool', () => {
 
       expect(() => tool!.setMarketConfig({})).not.toThrow();
     });
+
+    // BUG-086 sibling (2026-10-04 Sprint 22 review): the tool's own Price
+    // option alone drew the market row, but the service fetches nothing while
+    // the global Market Board toggle is off (its default), so the cards read
+    // "Market —" forever on a fresh profile.
+    describe('the price row needs the Market Board toggle too', () => {
+      const serviceShowPrices = () => vi.mocked(MarketBoardService.getInstance().getShowPrices);
+
+      afterEach(() => {
+        // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
+        serviceShowPrices().mockReturnValue(false);
+      });
+
+      const pickWithPriceOption = async (): Promise<void> => {
+        tool = mount();
+        await flush();
+        mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+        cells()[5].click();
+        tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true } });
+      };
+
+      it('draws no price row while the Market Board toggle is off', async () => {
+        serviceShowPrices().mockReturnValue(false);
+
+        await pickWithPriceOption();
+
+        expect(cards()).toHaveLength(1);
+        expect(cards()[0].showPrice).toBe(false);
+      });
+
+      it('draws it with both the option and the toggle on', async () => {
+        serviceShowPrices().mockReturnValue(true);
+
+        await pickWithPriceOption();
+
+        expect(cards()).toHaveLength(1);
+        expect(cards()[0].showPrice).toBe(true);
+      });
+    });
   });
 
   describe('lifecycle under interaction', () => {
@@ -1634,34 +1683,231 @@ describe('SwatchTool', () => {
 
       expect(getHairColors).not.toHaveBeenCalled();
     });
+  });
 
-    it('works with no drawer panel supplied', async () => {
-      tool = mount({ drawer: false });
-      tool.setConfig({ colorSheet: 'eyeColors' });
+  // ==========================================================================
+  // REFACTOR-005: the v3 left panel's MarketBoard was cleared off the page in
+  // the v4 shell, but it stayed subscribed to MarketBoardService and relayed
+  // each server change and Market Board toggle back to the tool. The tool now
+  // listens to the service itself. BUG-093's concern carries over: a language
+  // switch (update()) must not leave a second listener behind.
+  // ==========================================================================
+
+  describe('market changes reach the tool through MarketBoardService', () => {
+    const service = () => MarketBoardService.getInstance();
+    /** Stands in for the service's own EventTarget. */
+    let events: EventTarget;
+
+    beforeEach(() => {
+      events = new EventTarget();
+      vi.mocked(service().addEventListener).mockImplementation((type, listener) =>
+        events.addEventListener(type, listener)
+      );
+      vi.mocked(service().removeEventListener).mockImplementation((type, listener) =>
+        events.removeEventListener(type, listener)
+      );
+    });
+
+    afterEach(() => {
+      // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
+      vi.mocked(service().addEventListener).mockReset();
+      vi.mocked(service().removeEventListener).mockReset();
+      vi.mocked(service().getShowPrices).mockReturnValue(false);
+    });
+
+    const emit = (type: 'server-changed' | 'settings-changed'): void => {
+      events.dispatchEvent(new CustomEvent(type));
+    };
+    const fetches = () => vi.mocked(service().fetchPricesForDyes);
+
+    /** Mount, then pick a grid cell whose forward match is one dye. */
+    const mountWithPick = async (): Promise<void> => {
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[3].click();
+    };
+
+    it('re-matches the picked cell on a server change, once after two language switches', async () => {
+      await mountWithPick();
+      tool!.update();
+      tool!.update();
+      mockCharaFindClosestDyes.mockClear();
+
+      emit('server-changed');
+
+      expect(mockCharaFindClosestDyes).toHaveBeenCalledTimes(1);
+      expect(cards()).toHaveLength(1);
+    });
+
+    it('matches nothing on a server change with no cell picked', async () => {
+      tool = mount();
       await flush();
 
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      emit('server-changed');
+
+      expect(mockCharaFindClosestDyes).not.toHaveBeenCalled();
+    });
+
+    // The service's own 'market' subscriber emits, so this runs before the
+    // tool's setMarketConfig: the tool's copy of the toggle is still the old one.
+    it("redraws the cards on a toggle change while the tool's copy is still off", async () => {
+      await mountWithPick();
+      const [before] = cards();
+
+      emit('settings-changed');
+
+      expect(cards()).toHaveLength(1);
+      expect(cards()[0]).not.toBe(before);
+      expect(fetches()).not.toHaveBeenCalled();
+    });
+
+    it("fetches the matches' prices on a toggle change while the tool's copy is on", async () => {
+      vi.mocked(service().getShowPrices).mockReturnValue(true);
+      await mountWithPick();
+      fetches().mockClear();
+
+      emit('settings-changed');
+
+      expect(fetches()).toHaveBeenCalledTimes(1);
+      expect(fetches()).toHaveBeenLastCalledWith([mockDyes[0]]);
+    });
+
+    it('adds one listener per event, and removes exactly those on destroy', () => {
+      tool = mount();
+      tool.update();
+      const added = vi.mocked(service().addEventListener).mock.calls;
+      expect(added.map(([type]) => type)).toEqual(['server-changed', 'settings-changed']);
+
+      tool.destroy();
+
+      expect(vi.mocked(service().removeEventListener).mock.calls).toEqual(added);
     });
   });
-});
 
-describe('RACE_GROUPS (DEAD-024 adoption)', () => {
-  it('has one group per race in the shared RACE_SUBRACES table, in the same order', () => {
-    expect(RACE_GROUPS.map((g) => g.subraces)).toEqual(
-      Object.values(RACE_SUBRACES).map((subraces) => [...subraces])
-    );
+  describe('market prices come from the service', () => {
+    const service = () => MarketBoardService.getInstance();
+
+    afterEach(() => {
+      vi.mocked(service().getShowPrices).mockReturnValue(false);
+    });
+
+    // The left panel's MarketBoard used to seed the tool's toggle during the
+    // first render, before onMount opens a share link's cell.
+    it("prices a share link's cell at mount while the Market Board toggle is on", () => {
+      vi.mocked(service().getShowPrices).mockReturnValue(true);
+      window.history.replaceState(null, '', '/swatch/?slot=eyeColors&i=2&v=1');
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+
+      tool = mount();
+
+      expect(service().fetchPricesForDyes).toHaveBeenCalledWith([mockDyes[0]]);
+    });
+
+    // The left panel's MarketBoard was the fetch path, and destroy() dropped it.
+    it('never asks the service for prices that come due after destroy', async () => {
+      vi.mocked(service().getShowPrices).mockReturnValue(true);
+      let land!: (colors: unknown) => void;
+      vi.spyOn(CharacterColorService.prototype, 'getHairColors').mockReturnValue(
+        new Promise((resolve) => {
+          land = resolve;
+        }) as never
+      );
+      window.history.replaceState(null, '', '/swatch/?slot=hairColors&i=2&v=1');
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      tool = mount();
+      tool.destroy();
+
+      land(Array.from({ length: 8 }, (_, i) => ({ index: i, hex: '#101010', name: `Hair ${i}` })));
+      await flush();
+
+      // The link's cell was still matched once its sheet landed, but not priced
+      expect(mockCharaFindClosestDyes).toHaveBeenCalled();
+      expect(service().fetchPricesForDyes).not.toHaveBeenCalled();
+    });
   });
 
-  it('preserves the pre-adoption localization keys', () => {
-    expect(RACE_GROUPS.map((g) => g.raceKey)).toEqual([
-      'hyur',
-      'elezen',
-      'lalafell',
-      'miqote',
-      'roegadyn',
-      'auRa',
-      'hrothgar',
-      'viera',
-    ]);
+  // ==========================================================================
+  // BUG-103 (2026-10-04 deep-dive): the resize listener was added with
+  // this.on in onMount. update() unbinds every this.on listener and then
+  // re-runs only bindEvents, so after a language switch the grid stopped
+  // following the viewport.
+  // ==========================================================================
+
+  describe('the viewport listener survives update()', () => {
+    const setWidth = (value: number): void => {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value });
+    };
+
+    it('re-lays the grid out on a resize after update(), once per resize', () => {
+      const width = window.innerWidth;
+      // On the prototype before mount: the listener binds the method then
+      const layout = vi.spyOn(
+        SwatchTool.prototype as unknown as { updateSwatchLayout: () => void },
+        'updateSwatchLayout'
+      );
+      try {
+        setWidth(1024);
+        tool = mount();
+        tool.update();
+        tool.update();
+        const mainLayout = (tool as unknown as { mainLayout: HTMLElement }).mainLayout;
+        layout.mockClear();
+
+        setWidth(500);
+        window.dispatchEvent(new Event('resize'));
+
+        expect(layout).toHaveBeenCalledTimes(1);
+        expect(mainLayout.style.flexDirection).toBe('column');
+      } finally {
+        setWidth(width);
+      }
+    });
+  });
+
+  // ==========================================================================
+  // BUG-104 (2026-10-04 deep-dive): SEND TO was a full page load
+  // (window.location.assign), and the loaded .chara lives in memory only, so
+  // every hand-off dropped the character.
+  // ==========================================================================
+
+  describe('SEND TO stays in the app', () => {
+    /** Click a grid cell whose forward match is `dyes`, nearest first. */
+    const pickCellMatching = async (dyes: Dye[]): Promise<void> => {
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue(dyes.map((dye, i) => ({ dye, distance: i + 1 })));
+      cells()[3].click();
+    };
+
+    it("navigates in-app with each target's stainID params", async () => {
+      tool = mount();
+      await pickCellMatching([mockDyes[0], mockDyes[1]]);
+      const [a, b] = [String(mockDyes[0].stainID), String(mockDyes[1].stainID)];
+
+      for (const chip of handoffChips()) chip.click();
+
+      expect(vi.mocked(RouterService.navigateTo).mock.calls).toEqual([
+        ['harmony', { dye: a, harmony: 'complementary' }],
+        ['comparison', { dyes: `${a},${b}` }],
+        ['gradient', { start: a, end: b }],
+        ['accessibility', { dyes: `${a},${b}` }],
+      ]);
+    });
+
+    it('opens the gradient builder bare for a single match', async () => {
+      tool = mount();
+      await pickCellMatching([mockDyes[0]]);
+
+      handoffChips()[2].click();
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('gradient', {});
+    });
+
+    it('keeps every chip disabled with nothing to carry', () => {
+      tool = mount();
+
+      expect(handoffChips()).toHaveLength(4);
+      expect(handoffChips().every((c) => c.disabled)).toBe(true);
+    });
   });
 });

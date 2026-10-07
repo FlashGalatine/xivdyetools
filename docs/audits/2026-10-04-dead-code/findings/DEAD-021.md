@@ -17,4 +17,4 @@ Steps: Delete apps/web-app/src/services/__tests__/color-service.test.ts after po
 Correction from the final adversarial check: Also update apps/web-app/CLAUDE.md:283, whose Testing section uses this file as the single-file example command; docs:check-links cannot see it because it is inside a code block.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `7763d4e1` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

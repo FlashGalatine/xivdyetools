@@ -335,6 +335,12 @@ export class DyeService {
    * ```
    */
   searchByLocalizedName(query: string, locale?: LocaleCode): Dye[] {
+    // BUG-132 (2026-10-04 deep-dive): the same guard as the English fallback
+    // (DyeSearch.searchByName), ahead of the locale check, so both paths
+    // answer [] for a missing or non-string query (npm JS callers, `as any`)
+    // instead of the loaded-locale path throwing on `.trim()`.
+    if (!query || typeof query !== 'string') return [];
+
     // BUG-006 (2026-07-18 audit): pass an explicit locale in concurrent
     // multi-locale servers — reading the singleton's current locale races
     // across requests
@@ -348,6 +354,13 @@ export class DyeService {
     // German/French/Japanese query with accents, ß or half-width kana now
     // matches the localized name too.
     const lowerQuery = foldForSearch(query.trim());
+    // BUG-132 (2026-10-04 deep-dive): a whitespace-only query folds to '' and
+    // every `includes('')` is true, so without this the loaded-locale path
+    // returned all 125 dyes while the English fallback (searchByName)
+    // returned []. Match the fallback.
+    if (lowerQuery.length === 0) {
+      return [];
+    }
     const dyes = this.database.getDyesInternal();
 
     return dyes.filter((dye) => {

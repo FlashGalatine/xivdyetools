@@ -51,12 +51,14 @@ describe('tool-handoff', () => {
   describe('the param each receiver actually reads', () => {
     // Read off the consumers, not assumed. harmony-tool reads
     // `params.get('dye') ?? params.get('dyeId')`; comparison-tool and
-    // accessibility-tool read `params.dyes`; mixer-tool reads `params.dyeA`.
+    // accessibility-tool read `params.dyes`; mixer-tool reads `params.dyeA`;
+    // budget-tool's handleDeepLink reads `params.get('dye')` (BUG-013).
     const EXPECTED: Record<HandoffTarget, string> = {
       harmony: 'dye',
       comparison: 'dyes',
       accessibility: 'dyes',
       mixer: 'dyeA',
+      budget: 'dye',
     };
 
     it.each(Object.keys(EXPECTED) as HandoffTarget[])('%s', (tool) => {

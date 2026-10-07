@@ -2,14 +2,27 @@
  * /swatch business-logic tests — the character-file frame against core's own
  * fixture corpus (real parse rules, real palette sheets, real dye matching).
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { CharacterColorService, parseCharaFile, resolveCharaColors } from '@xivdyetools/core';
+import { generateSwatchCard } from '@xivdyetools/svg';
 import { executeSwatch, type SwatchInput } from './swatch.js';
 import { createTranslator } from '../i18n/index.js';
 import {
   DUSKWIGHT_HETEROCHROMIA,
   HROTHGAR_HELIONS,
 } from './__fixtures__/chara-fixtures.js';
+
+// BUG-125: a passthrough — every test renders the real card unless one asks
+// the generator to throw once.
+vi.mock('@xivdyetools/svg', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/svg')>();
+  return { ...actual, generateSwatchCard: vi.fn(actual.generateSwatchCard) };
+});
+// The same for the resolver, so a test can make the bot side of the read throw.
+vi.mock('@xivdyetools/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/core')>();
+  return { ...actual, resolveCharaColors: vi.fn(actual.resolveCharaColors) };
+});
 
 const FIXTURES: Record<string, string> = {
   'duskwight-heterochromia.chara': DUSKWIGHT_HETEROCHROMIA,
@@ -130,8 +143,28 @@ describe('executeSwatch', () => {
     expect(result.ok).toBe(false);
     if (result.ok) return;
     expect(result.error).toBe('SLOT_MISSING');
-    expect(result.errorMessage).toContain('highlights');
+    expect(result.errorMessage).toBe('Highlights is not a live slot in this file.');
   });
+
+  // The sentence used to carry the option's raw English value ("highlights",
+  // "limbal") into every language.
+  it.each(['ja', 'de', 'fr', 'ko', 'zh'] as const)(
+    'a missing slot is named in the reader’s language (%s)',
+    async (locale) => {
+      const result = await executeSwatch({
+        fileText: fixture('hrothgar-helions.chara'),
+        locale,
+        slot: 'highlights',
+      });
+      if (result.ok) throw new Error('expected SLOT_MISSING');
+      const t = createTranslator(locale);
+      const name = t.t('card.swatchSlotName.highlights');
+      expect(name).not.toBe('card.swatchSlotName.highlights');
+      expect(name).not.toBe('Highlights');
+      expect(result.errorMessage).toBe(t.t('card.swatchSlotMissing', { slot: name }));
+      expect(result.errorMessage).not.toContain('highlights');
+    },
+  );
 
   it('a file that fails to parse names the failure — never a frame', async () => {
     const result = await executeSwatch({ fileText: '{not valid json', locale: 'en' });
@@ -345,5 +378,139 @@ describe('the lip line', () => {
       `raw ${lip?.indexHex}, blended ${lip?.blendHex}`
     );
     expect(result.embed.description).not.toContain(`raw ${lip?.floatHex}`);
+  });
+
+  /**
+   * The other arm: once the file's own lip colour beats the creator swatch
+   * (off grid), the blend was made from that colour, so it is the raw one the
+   * line names. Pure blue at the fixture's 0.6 opacity is nowhere near any
+   * lip-sheet entry.
+   */
+  it('names the file’s own color as raw once it won the verdict', async () => {
+    const text = JSON.stringify({
+      ...parsedFixture('duskwight-heterochromia.chara'),
+      MouthColor: '0, 0, 1, 0.6',
+    });
+    const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
+    const lip = resolved.slots.find((s) => s.slot === 'lip');
+    expect(lip?.verdict).toBe('offGrid');
+    expect(lip?.floatHex).toBe('#0000FF');
+    expect(lip?.blendHex).toBeTruthy();
+
+    const result = await executeSwatch({ fileText: text, locale: 'en' });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.embed.description).toContain(
+      `Lip α 0.60 — raw #0000FF, blended ${lip?.blendHex}`,
+    );
+    expect(result.embed.description).not.toContain(`raw ${lip?.indexHex}`);
+  });
+});
+
+describe('slots the file leaves without an index', () => {
+  /**
+   * A live float with no index key behind it (`floatOnly`): the row is still
+   * drawn, off grid, and the embed's off-grid line says there is no index
+   * rather than printing `null` or borrowing the float for both values.
+   */
+  it('an eye with only a live float is an off-grid row whose index reads —', async () => {
+    const text = JSON.stringify({ IsExtendedAppearanceValid: true, LeftEyeColor: '0, 0, 1' });
+    const result = await executeSwatch({ fileText: text, locale: 'en' });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const leftEye = result.character.slots.find((s) => s.slot === 'leftEye');
+    expect(leftEye).toMatchObject({ verdict: 'floatOnly', indexHex: null, floatHex: '#0000FF' });
+    expect(result.svgString).toContain('OFF GRID<');
+    expect(result.embed.description).toMatch(/off grid — index —, live #0000FF/);
+    expect(result.embed.description).not.toContain('null');
+  });
+
+  /**
+   * A real character file whose only colour field is switched off (the
+   * highlights index with EnableHighlights false) parses fine but has nothing
+   * live to match. That is a sentence, not an empty card, and the reply names
+   * the problem in the reader's language. (A file with no colour field at all
+   * never gets this far: the parser refuses it as some other JSON document.)
+   */
+  it('a file with no live colour slot is refused with NO_LIVE_SLOTS', async () => {
+    const text = JSON.stringify({ EnableHighlights: false, Highlights: 36 });
+    const resolved = await resolveCharaColors(parseCharaFile(text), new CharacterColorService());
+    expect(resolved.slots.find((s) => s.slot === 'highlights')?.verdict).toBe('inert');
+
+    const en = await executeSwatch({ fileText: text, locale: 'en' });
+    expect(en).toEqual({
+      ok: false,
+      error: 'NO_LIVE_SLOTS',
+      errorMessage: 'No live color slots in this file.',
+    });
+
+    const de = await executeSwatch({ fileText: text, locale: 'de' });
+    expect(de).toMatchObject({ ok: false, error: 'NO_LIVE_SLOTS' });
+    if (de.ok) return;
+    expect(de.errorMessage).toBe(createTranslator('de').t('card.swatchNoSlots'));
+    expect(de.errorMessage).not.toBe(en.ok ? '' : en.errorMessage);
+  });
+});
+
+describe('executeSwatch — a generation failure is logged (BUG-125)', () => {
+  /** Every argument the logger received, one string per argument. */
+  const loggedLines = (warn: ReturnType<typeof vi.fn>): string[] =>
+    warn.mock.calls.flat().map(String);
+
+  /**
+   * The final catch used to be bare. The line names the error's class and
+   * never its message: core's parser and colour helpers quote what they were
+   * given, and here that is the player's file (PRIVACY_POLICY §3).
+   */
+  it('logs the error class, never the message, when the card generator throws', async () => {
+    vi.mocked(generateSwatchCard).mockImplementationOnce(() => {
+      throw new RangeError('Real Name');
+    });
+    const warn = vi.fn();
+    const result = await executeSwatch({ fileText: WITH_NICKNAME, locale: 'en', logger: { warn } });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('GENERATION_FAILED');
+
+    const lines = loggedLines(warn);
+    expect(lines).toContain('[swatch] generation failed: RangeError');
+    for (const line of lines) expect(line).not.toContain('Real Name');
+  });
+
+  /**
+   * The read's catch logs too: its try also runs the resolver and the
+   * nickname strip, so a bot-side bug there used to look like an unreadable
+   * file with nothing in the log. The line names the class and code only —
+   * the parser's reason quotes field values from the file.
+   */
+  it('logs the parse failure by class and code, never the file', async () => {
+    const warn = vi.fn();
+    const result = await executeSwatch({
+      fileText: JSON.stringify({ IsExtendedAppearanceValid: true, LeftEyeColor: 'Real Name' }),
+      locale: 'en',
+      logger: { warn },
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('PARSE_FAILED');
+    const lines = loggedLines(warn);
+    expect(lines).toContain('[swatch] parse failed: AppError INVALID_INPUT');
+    for (const line of lines) expect(line).not.toContain('Real Name');
+  });
+
+  it('logs a bot-side failure inside the read, so it is not mistaken for a bad file', async () => {
+    vi.mocked(resolveCharaColors).mockImplementationOnce(() => {
+      throw new TypeError('Real Name');
+    });
+    const warn = vi.fn();
+    const result = await executeSwatch({ fileText: WITH_NICKNAME, locale: 'en', logger: { warn } });
+
+    expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
+    const lines = loggedLines(warn);
+    expect(lines).toContain('[swatch] parse failed: TypeError');
+    for (const line of lines) expect(line).not.toContain('Real Name');
   });
 });

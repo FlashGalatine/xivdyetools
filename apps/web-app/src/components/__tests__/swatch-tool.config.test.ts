@@ -75,6 +75,9 @@ vi.mock('@services/index', async () => {
         getWorldNameForPrice: () => null,
         getShowPrices: () => false,
         subscribe: () => () => {},
+        // The tool follows server and toggle changes on the service itself.
+        addEventListener: () => {},
+        removeEventListener: () => {},
       }),
     },
     CollectionService: {
@@ -132,9 +135,6 @@ vi.mock('@xivdyetools/core', async (importOriginal) => ({
 vi.mock('@shared/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
-vi.mock('@services/pricing-mixin', () => ({
-  setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
-}));
 vi.mock('@services/chara-resolve-service', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@services/chara-resolve-service')>()),
   resolveCharaEquipment: vi.fn(() => new Promise(() => {})),
@@ -143,37 +143,6 @@ vi.mock('@services/chara-resolve-service', async (importOriginal) => ({
 // vi.resetModules() would define the same tag twice and throw.
 vi.mock('@components/v4/result-card', () => ({}));
 vi.mock('@components/v4/share-button', () => ({}));
-vi.mock('../collapsible-panel', () => ({
-  CollapsiblePanel: class {
-    private body: HTMLElement | null = null;
-    constructor(private container: HTMLElement) {}
-    init() {
-      this.body = document.createElement('div');
-      this.container.appendChild(this.body);
-    }
-    setContent(content: HTMLElement) {
-      if (!this.body) this.init();
-      this.body!.appendChild(content);
-    }
-    destroy() {
-      this.container.replaceChildren();
-    }
-  },
-}));
-vi.mock('../market-board', () => ({
-  MarketBoard: class {
-    init() {}
-    destroy() {}
-    getShowPrices() {
-      return false;
-    }
-    setShowPrices() {}
-    setSelectedServer() {}
-    async fetchPricesForDyes() {
-      return new Map();
-    }
-  },
-}));
 
 const MIGRATED_KEY = 'xivdyetools_swatch_v3_migrated';
 const CONFIG_KEY = 'xivdyetools_v4_config_swatch';
@@ -275,7 +244,8 @@ describe('SwatchTool with the real ConfigController', () => {
 
     expect(gridTitle()).toContain('tools.character.tattooColors');
     cells()[0].click();
-    expect(lastMatchRequest()).toEqual({ count: 15, matchingMethod: 'oklab' });
+    // The whole pool, because a filter is active (BUG-025), then trimmed to 5
+    expect(lastMatchRequest()).toEqual({ count: mockDyes.length, matchingMethod: 'oklab' });
     expect(cards().map((c) => c.data?.dye.id)).toEqual([mockDyes[0].id]);
     expect(cards()[0].showCmyk).toBe(true);
   });

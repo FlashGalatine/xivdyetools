@@ -330,6 +330,65 @@ export async function safeSendFollowUp(
 }
 
 /**
+ * Deletes the original (deferred) response. File-private: callers use the
+ * throw-safe {@link safeDeleteOriginalResponse}.
+ */
+async function deleteOriginalResponse(
+  applicationId: string,
+  interactionToken: string,
+): Promise<Response> {
+  const url = `${DISCORD_API_BASE}/webhooks/${applicationId}/${interactionToken}/messages/@original`;
+
+  return fetch(url, {
+    method: 'DELETE',
+    signal: AbortSignal.timeout(DISCORD_WEBHOOK_TIMEOUT),
+  });
+}
+
+/**
+ * Throw-safe, outcome-checked delete of the original response — the same
+ * contract as `safeEditOriginalResponse` (BUG-035).
+ *
+ * The visibility of a deferred response is fixed by the defer: a PUBLIC
+ * "thinking…" can only ever be edited into a public message. A handler that
+ * deferred publicly and then has to answer privately (a `/budget` world
+ * refusal, Sprint 9) deletes the original with this and sends the answer as
+ * an ephemeral follow-up — in that order, since a follow-up sent while the
+ * deferred original is still pending takes its place, and its visibility.
+ *
+ * @returns true when Discord accepted the delete (204)
+ */
+export async function safeDeleteOriginalResponse(
+  applicationId: string,
+  interactionToken: string,
+  logger?: SafeCallLogger,
+): Promise<boolean> {
+  try {
+    const res = await deleteOriginalResponse(applicationId, interactionToken);
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      if (logger) {
+        logger.error('Discord original-response delete failed', undefined, {
+          status: res.status,
+          body,
+        });
+      } else {
+        console.error('Discord original-response delete failed', res.status, body);
+      }
+      return false;
+    }
+    return true;
+  } catch (e) {
+    if (logger) {
+      logger.error('Discord original-response delete threw', e instanceof Error ? e : undefined);
+    } else {
+      console.error('Discord original-response delete threw', e);
+    }
+    return false;
+  }
+}
+
+/**
  * Options for sending a message to a channel
  */
 export interface SendMessageOptions {

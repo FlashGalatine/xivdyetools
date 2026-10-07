@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [4.6.1] - 2026-10-05
+## [4.8.3] - 2026-10-06
 
-The `.chara` help catches up with what `/glamour` and `/swatch` do: a follow-up to 4.6.0, in its own PR
-stacked on PR #246. Text only, no key added or removed.
+The `.chara` help catches up with what `/glamour` and `/swatch` do (PR #251, stacked on the
+remediation chain's tip). Text only, no key added or removed.
 
 ### Fixed
 
@@ -25,6 +25,107 @@ stacked on PR #246. Text only, no key added or removed.
   app's Glamour Reader, linked at the end of the reply, lets you choose another.
 - **The topic says the GPOSERS list's labels and Acquisition lines are English in every language**,
   and that a blank Acquisition line means no source is known.
+
+## [4.8.2] - 2026-10-06
+
+Sprint 13 of the 2026-10-04 remediation plan, in the same PR as core 5.10.0.
+
+### Fixed
+
+- **A grey `/gradient` endpoint keeps the other end's hue** (BUG-035's sibling). In hsv (the
+  default), oklch and lch, an exactly grey endpoint brought hue 0 (in lch, a noise value near
+  158) into the interpolation. Slate Grey → Royal Blue passed through purple, and white → blue
+  through pink. A grey endpoint now takes the other end's hue. Chromatic pairs and grey-to-grey
+  ramps are byte-identical.
+
+## [4.8.1] - 2026-10-06
+
+Sprints 14 and 28 of the 2026-10-04 remediation plan, in the same PR as svg 4.4.0, which this
+version requires (publish svg first).
+
+### Fixed
+
+- **One printed contrast ratio** (BUG-142). The `/contrast` embed and the `/compare` RATIO readout
+  print through svg's `formatContrastRatio`, as the contrast card does: floored, never rounded
+  across a band cut, with the locale's decimal separator. Both used to round, so the same pair
+  could read 3.00 there and 2.99 on the card. About half of all dye pairs now read one hundredth
+  lower than before.
+- **Every `/compare` readout uses the locale's decimal separator**, as the ΔE headline above it
+  already did. de and fr read `27,2 0,260 30,5`; en is unchanged.
+
+## [4.8.0] - 2026-10-06
+
+Sprint 15 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+with discord-worker 5.8.5 in the same PR. Minor: three result unions widen and two resolvers accept
+more input; nothing is removed. If 4.7.0 (Sprint 9) is still unpublished when this merges, publish
+4.8.0 directly and 4.7.0 is simply skipped.
+
+### Fixed
+
+- **Six bare digits are a colour** (BUG-034). `resolveColorInput('000000')`, `'333333'` and
+  `'123456'` returned null, read as a dye id, and `'013114'` resolved to Pure White (legacy item
+  id 13114). Now 1–5 bare digits are an id and six are always a hex colour, in
+  `resolveColorInput`, `resolveDyeInput`, `searchDyesByName` and `findDyeByName` alike. All four
+  ignore surrounding whitespace, so `' #FF0000 '` resolves too. 3-digit input is unchanged: `101`
+  is still a dye id.
+- **Filters apply before the nearest-dye search** (BUG-033). `executeGradient` and `executeMixer`
+  filtered a capped list of the 10 or 20 nearest dyes, so a step or stop could come back with no
+  dye although allowed dyes exist. They now search only the allowed dyes.
+- **The GPOSERS list never writes a placeholder as an item** (BUG-124).
+  - A worn piece with no item is its bare slot label, its dyes and an empty `Acquisition:` line.
+    Its "Model 361·5" label stays on the card and in the "No fix:" note, which now puts the slot
+    first ("RIGHT RING Model 50·1").
+  - Worn glasses the lookup could not name still get a `Facewear:` line.
+  - Two unresolved rings are no longer merged into `Rings:`, as in core's `gposersSameRings`.
+- **Every caught failure is logged** (BUG-125) through `input.logger`.
+  - Each `execute*` catch logs `[<command>] generation failed: <class>[ <code>]`.
+  - swatch and glamour also log a parse failure, and glamour a failed lookup, with its HTTP status.
+  - A line names the error's class and string `code` only, never its message: core's messages
+    quote the user's hex, and the parser's quote the file.
+- **`resolveUserLocale` can log a KV failure** (BUG-126) through a new optional fourth `logger`
+  argument. The messages are fixed and never name the user id; the KV's own error is passed
+  through as it is.
+
+### Changed
+
+- **`NOT_ENOUGH_DYES`** joins `ComparisonResult`, `ContrastResult` and `AccessibilityResult`.
+  - Too few dyes (2, 2 and 1), or a `dyes` that is not an array, is refused before rendering.
+  - It used to surface as `GENERATION_FAILED`, or, for `executeComparison` with a non-array, as a
+    thrown `TypeError`.
+  - A consumer with an exhaustive switch on `result.error` needs the new case.
+- **Coverage is enforced** (BUG-127). `vitest.config.ts` turns coverage on, so `test` fails
+  below 90% on any metric; branches are at 96.0% (88.4% at the audit). A single-file run needs
+  `--coverage.enabled=false`.
+- **README:** the real input resolution order, every command's error codes, and the logging rules.
+
+## [4.7.0] - 2026-10-06
+
+Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+in the same PR as discord-worker 5.8.4. Minor: new keys.
+
+### Added
+
+- **`preset.repeatedDye`** ×6: the bot's own refusal of a preset that names a dye twice, with
+  the dye in `{dye}`. discord-worker answers it before presets-api's generic 400 (deep-dive
+  BUG-010).
+- **`card.swatchSlotName.{skin,hair,highlights,eyes,lip,facepaint,limbal}`** ×6: the
+  `/swatch slot:` choices as words for a sentence. The non-English names are the web app's own
+  (`swatch.pal*`).
+
+### Fixed
+
+- **`/swatch slot:` names a missing slot in the reader's language.** `executeSwatch`'s
+  `SLOT_MISSING` reply carried the option's raw English value ("highlights", "limbal") into
+  every language; it now names the slot through `card.swatchSlotName.*`. de and fr quote the
+  name, as those files quote their other placeholders, so a plural name does not meet a singular
+  verb.
+
+### Changed
+
+- **`commands.preferences.options.set.options.{clan,gender}.description`** ×6 no longer say
+  `/swatch` uses the stored value (deep-dive BUG-049). Nothing reads it; `/swatch` takes both
+  from the `.chara` file. ja and ko say the character's clan and gender, as those files' existing
+  labels do.
 
 ## [4.6.0] - 2026-10-05
 

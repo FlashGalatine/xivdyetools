@@ -191,7 +191,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** the same PR and merge as Sprint 2 (`deploy-discord-worker.yml`, which runs `register-commands`)
 
-## Sprint 4 — web-app: presets and collections
+## Sprint 4 — web-app: presets and collections — PR #245 (open)
+
+**Done in PR #245** (web-app 5.14.2, stacked on #244). It also fixed the Glamour Reader's copies of BUG-016 and BUG-082, and tagged core's `PresetService.getCategoryMeta` `@public`. Details are in the re-verification file's *Sprint 4* section.
 
 **The anchor is deep-dive/BUG-029:** `reconcileTombstones` marks live saved presets "Removed by its author".
 
@@ -229,7 +231,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 5 — web-app: tool correctness
+## Sprint 5 — web-app: tool correctness — PR #247 (open)
+
+**Done in PR #247** (web-app 5.14.3, stacked on #245). It also removed dead-code/DEAD-004 (from Sprint 23) to keep the layout shell within budget. Details are in the re-verification file's *Sprint 5* section.
 
 **Language switch:** the switch empties four tools (deep-dive/BUG-021), and no test fires it (deep-dive/BUG-076).
 
@@ -261,7 +265,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 6 — web-app: translations and terminology (i18n)
+## Sprint 6 — web-app: translations and terminology (i18n) — PR #248 (open)
+
+**Done in PR #248** (web-app 5.14.4 and core 5.8.2, stacked on #247). All 18 rows, the fur-pattern note, and the core Brass names the maintainer asked for. **Deploy needs:** after merge, publish core 5.8.2 through the "Publish Packages to npm" workflow. Details are in the re-verification file's *Sprint 6* section.
 
 **Wrong English first:** the Glamour list privacy note claims a scope the code does not have (TERM-002), "tribe" names two things (TERM-009), and the list goes by two names (TERM-018).
 
@@ -303,7 +309,13 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`. The edited `en` values re-key the allow-lists: re-run `pnpm --filter xivdyetools-web-app exec vitest run scripts/i18n-parity-gate.test.js --coverage.enabled=false` and update a stale allow-list reason in the same commit.
 
-## Sprint 7 — Policy documents, both apps (docs only)
+## Sprint 7 — Policy documents, both apps (docs only) — PR #249 (open)
+
+**Done in PR #249** (web-app 5.14.5 and discord-worker 5.8.3, stacked on #248; merge #246 first, since it is 5.8.2). All six rows, plus I18N-001's full fix. **Deploy needs:**
+- If the PR merges after 2026-10-05, set *Last updated* to the merge date on all 24 variants.
+- The bot policy's §11 Discord announcement is the maintainer's call.
+
+Details are in the re-verification file's *Sprint 7* section.
 
 **What lands here:** the Terms of Service variants missing the Glamour Reader (I18N-002), the "About → Privacy" path (I18N-013), the Korean moderator word (TERM-001), French "préréglage" (TERM-010), tool names in the policy prose (TERM-019) and Japanese 自社 (TERM-020).
 
@@ -325,7 +337,14 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `python .agents/skills/audit-shared/scripts/policy-locale-parity.py` and `pnpm docs:check-links` → merge. The documents are served from GitHub `main` (`about-modal.ts` `POLICY_DOCS_BASE`), so they are live at merge. The web-app and discord-worker deploy workflows fire through their path filters but ship no code change. A user-visible policy change also gets a root `CHANGELOG-laymans.md` line, committed on its own.
 
-## Sprint 8 — presets-api: dye validation, null bodies, retention signal
+## Sprint 8 — presets-api: dye validation, null bodies, retention signal — PR #256 (open)
+
+**Done in PR #256** (presets-api 2.5.0), the first PR of the discord-worker stack. It is based on the join branch; see the re-verification file's *Execution notes* for the merge order. All seven fixes and the BUG-003 payload half are in, plus DEAD-031 to DEAD-034 and the BUG-063 cron line.
+
+**Deploy needs:**
+- Deploy together with Sprint 9.
+- Run two read-only D1 queries first: presets that repeat a dye, and existing `previous_values` snapshots.
+- After deploy, check Cron Events for a failed sweep.
 
 **deep-dive/BUG-010:** repeated dye ids bypass the 3-dye floor and the duplicate signature.
 
@@ -357,7 +376,13 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-presets-api` → merge → `deploy-presets-api.yml` (no D1 migration)
 
-## Sprint 9 — discord-worker: one moderation-notification path, KV failure handling
+## Sprint 9 — discord-worker: one moderation-notification path, KV failure handling — PR #257 (open)
+
+**Done in PR #257** (discord-worker 5.8.4, bot-logic 4.7.0, presets-api 2.6.0), stacked on #256. Everything below is fixed except OPT-003, which needs a presets-api `?ids=` batch endpoint first, and OPT-005, which is per-isolate only.
+- **presets-api grew one field.** The webhook only had `previous_values` to diff an edit against, and that is the Revert target, not the replaced text. 2.6.0 sends `edited_from`, the text the edit replaced; the bot diffs against it and labels Revert by what it restores.
+- **Command shapes changed after all:** free-text options gain `max_length` (BUG-044's schema half) and the clan/gender descriptions are reworded ×6 (BUG-049). The deploy workflow re-registers them.
+- **Also here:** the `/swatch slot:` refusal names the slot in the reader's language (from the Sprints 2+3 notes), and the moderation and submission-log embeds print the category's display name.
+- **Recorded, not fixed:** `refusePrivately` sends nothing when the delete succeeds and the follow-up fails (logged only); a favourite marked `gone` is never looked up again; `/preferences set`'s Universalis-outage reply is not marked `upstream_universalis`; a v1 favourites blob that will not parse still throws; `edited_from` carries name, description, tags and dyes only.
 
 **deep-dive/BUG-004:** the bot and the presets-api webhook both post for bot submissions.
 - Drop the bot-side posts.
@@ -395,7 +420,7 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 | [deep-dive/OPT-005](../2026-10-04-deep-dive/findings/OPT-005.md) | deep-dive | Opt LOW · MAIN | preferences legacy-key migration re-reads two dead KV keys on every call for users with no prefs blob |
 | [dead-code/DEAD-024](../2026-10-04-dead-code/findings/DEAD-024.md) | dead-code | Conf HIGH / Blast NONE · REMOVE | CommandRegistryEntry.deprecated in registry.ts is never set or read in production: 2 lines + 3-line test |
 
-**Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-discord-worker` → merge → `deploy-discord-worker.yml` (CI runs `register-commands`; no command shape changes)
+**Ends with:** `pnpm turbo run build type-check lint test --filter=...@xivdyetools/bot-logic --filter=...xivdyetools-presets-api` → merge → `deploy-discord-worker.yml` (CI runs `register-commands`; this sprint changes command shapes: `max_length` and the clan/gender descriptions) and `deploy-presets-api.yml` (presets-api 2.6.0)
 
 ## Sprint 10 — oauth: limiter keying, null bodies
 
@@ -448,7 +473,13 @@ deep-dive/BUG-140: context strings skip key=value redaction. deep-dive/BUG-141: 
 
 **Ends with:** bump `@xivdyetools/logger` (patch) → gate with `--filter=...@xivdyetools/logger` → merge → Actions publish
 
-## Sprint 13 — @xivdyetools/core: blending, palette extraction, parser bounds (publish)
+## Sprint 13 — @xivdyetools/core: blending, palette extraction, parser bounds (publish) — PR #260 (open)
+
+**Done in PR #260** (core 5.10.0, bot-logic 4.8.2, web-app 5.14.10, og-worker 2.11.3, discord-worker 5.8.7), stacked on #259. All fourteen and TERM-021 are fixed; both workers' CJK subsets were re-cut and compared by cmap.
+- **BUG-035 grew:** the same grey-hue defect sat on the DEFAULT path of `/gradient` and the web Gradient Builder (hsv, oklch, lch); fixed there too. Exact greys only, as CSS Color 4 has it — near-greys keep their hue.
+- **og-worker:** its de/fr swatch descriptions reworded so no gendered word precedes the new sheet names; its version moves to retire cached HSL mixer cards.
+- **docs/versions.md** gets the history rows Sprints 9, 15 and 14+28 left out.
+- **Recorded, not fixed:** the web app's private text-colour helpers keep a 0.45/0.5 luminance threshold (BUG-134's class, in budget-tool, gradient-tool, mixer-tool, preset-edit-form, v4-color-wheel, mixer-blending-engine); three Infinity policies across blendColors (clamp), findClosestDyes (no cap) and PaletteService (default); og-worker's English swatch description says "this {sheet}" with plural sheet names; the web app's English tattoo label and core's en `Tattoo/Limbal` keep the unspaced slash.
 
 **MEDIUM fixes:**
 - deep-dive/BUG-035: grey mixes get a hue neither input has.
@@ -478,7 +509,13 @@ deep-dive/BUG-140: context strings skip key=value redaction. deep-dive/BUG-141: 
 
 **Ends with:** bump `@xivdyetools/core` (minor) → `pnpm turbo run build type-check lint test --filter=...@xivdyetools/core` (all consumers) → merge (consumer deploy workflows fire on `packages/core/**`) → Actions publish. If TERM-021 lands, its CJK sheet names reach both workers' font gates, which read core's locales. Re-cut the discord-worker and og-worker subsets in the same PR (compare by cmap).
 
-## Sprint 14 — @xivdyetools/svg: card text fidelity (publish)
+## Sprint 14 — @xivdyetools/svg: card text fidelity (publish) — PR #259 (open, with Sprint 28)
+
+**Done in PR #259** together with Sprint 28 (svg 4.4.0, one publish; bot-logic 4.8.1, discord-worker 5.8.6), stacked on #258. All six are fixed.
+- **BUG-142 grew:** the /contrast embed and the /compare RATIO readout printed the same ratio rounded, so svg now exports `formatContrastRatio` and all three printers use it (bot-logic 4.8.1). Publish svg before bot-logic.
+- **The /compare readouts are localized** (de/fr decimal comma), as its ΔE headline already was.
+- **Also here:** the `+2 LOOKS` doc comment (Sprints 2+3 note); the discord-worker integration suite's stale `validateWorld` expectations (BUG-031).
+- **Recorded, not fixed:** the /compare embed still prints ΔE with `toFixed` (de reads 27,2 on the card, 27.2 in the embed); the web app has three ratio printers on other rules (comparison-tool, accessibility-tool pairValue, metric-help); og-worker's font gate still uses a hand-kept glyph list instead of `scanEmittedGlyphs`; the scanner's two documented limits.
 
 Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and the frame-budget gate's missing cards. The glamour card footer's line breaks (I18N-015) ride with them.
 
@@ -493,7 +530,13 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 
 **Ends with:** bump `@xivdyetools/svg` (patch) → `pnpm turbo run build type-check lint test --filter=...@xivdyetools/svg` → merge → Actions publish
 
-## Sprint 15 — @xivdyetools/bot-logic: input resolution and filtered matching (publish)
+## Sprint 15 — @xivdyetools/bot-logic: input resolution and filtered matching (publish) — PR #258 (open)
+
+**Done in PR #258** (bot-logic 4.8.0, discord-worker 5.8.5), stacked on #257. All six are fixed; BUG-126 waits only on moderation-worker's caller (Sprint 17).
+- **Coverage is enforced:** `coverage.enabled` in bot-logic's `vitest.config.ts`, as discord-worker, oauth and web-app do, so the gate and CI fail below 90%. Branches are at 96.0%.
+- **One log format:** every caught failure logs `[cmd] generation failed: <class[ code]>` through an internal `failureKind`; never the message, which can quote the user's hex or the file.
+- **Published API (minor):** `NOT_ENOUGH_DYES` joins the comparison, contrast and accessibility result unions; the resolvers trim and read six bare digits as a colour; `resolveUserLocale` takes an optional logger. 4.7.0 (Sprint 9) may be skipped on npm.
+- **Recorded, not fixed:** six handlers call `getUserPreferences` without the logger they hold (accessibility, contrast, extractor, glamour, gradient, swatch), so a KV failure there is still silent; harmony's unknown-wheel warning echoes the caller's value; stoat-worker's `info.ts` has no logger to pass.
 
 **Fixes:**
 - deep-dive/BUG-034: an all-digit hex without `#` is read as a dye id.
@@ -529,7 +572,13 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 
 **Ends with:** bump `@xivdyetools/worker-kit` (patch) → gate with `--filter=...@xivdyetools/worker-kit` → merge (oauth, presets-api, api-worker, image-worker and the bots redeploy) → Actions publish
 
-## Sprint 17 — moderation-worker: review edge cases, then cleanup
+## Sprint 17 — moderation-worker: review edge cases, then cleanup — PR #261 (open)
+
+**Done in PR #261** (moderation-worker 1.8.1), stacked on #260. All ten are fixed, with BUG-126's last call site and the Sprint 9 refresh-Revert note.
+- **Refresh Revert (maintainer's decision, 2026-10-06):** keep offering Revert when a snapshot exists, trusting presets-api 2.5.0's approved-only snapshots; the refreshed embed says "restores the saved version" (it cannot verify approval). **Hand-run step:** after presets-api 2.5.0 deploys and before this worker does, review the rows the read-only query in `apps/presets-api/CLAUDE.md` lists and clear any unapproved snapshot through `wrangler d1 execute --file`.
+- **BUG-052:** a channel post keeps the winner's embed and states the status in its message content; a private confirmation is rebuilt.
+- **Contract:** presets-api's own tests pin both 404 bodies moderation-worker tells apart, since a presets-api-only PR never runs moderation-worker's tests.
+- **Recorded, not fixed:** a narrow race where a loser's non-conflict failure (5xx) can still write an Error over a winner's embed.
 
 **From #225, after the merge:**
 - deep-dive/BUG-052: a losing concurrent click overwrites the winner's embed;
@@ -551,6 +600,10 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 | [dead-code/DEAD-026](../2026-10-04-dead-code/findings/DEAD-026.md) | dead-code | Conf HIGH / Blast LOW · REMOVE | getPreset in moderation-worker services/preset-api.ts is test-only: 13 src lines + 34 test lines |
 | [dead-code/DEAD-030](../2026-10-04-dead-code/findings/DEAD-030.md) | dead-code | Conf HIGH / Blast LOW · REMOVE | moderation-worker bot-i18n.ts: older orphan strings (preset.categories.*, three ban.* keys, the meta block, common.success) — 24 source + 12 test lines |
 | [dead-code/DEAD-029](../2026-10-04-dead-code/findings/DEAD-029.md) | dead-code | Conf MEDIUM / Blast LOW · REMOVE WITH CAUTION | Legacy base64-username suffix parsing in ban-reason.ts:57-92 and ban-confirmation.ts:70-78 is unreachable: no emitter has produced the suffix since the 2026-08-21 FINDING-007 fix, and those flows are ephemeral — about 16 source lines, with a test-fixture rewrite |
+
+**From Sprint 15 (PR #258):** pass the request logger to `resolveUserLocale` in `src/services/bot-i18n.ts` (BUG-126's last call site).
+
+**From Sprint 9 (PR #257): the refresh Revert.** `review-message.ts` `actionsFor` still offers Revert on any pending preset with a snapshot. Apply the three-part rule (`is_edit`, a well-formed `previous_values`, `edited_from_status === 'approved'`). A refresh cannot show the edit's diff: `edited_from` travels only on the webhook and is never stored, and `GET /moderation/:id` has no edit marker either. So either refresh without a diff and without Revert unless the rule can be checked, or grow presets-api to persist the edit base first; decide before scheduling.
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-moderation-worker` → merge → `deploy-moderation-worker.yml` (commands are registered by hand; shapes unchanged)
 
@@ -622,7 +675,9 @@ Config only; the bundle is unchanged.
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-image-worker` → merge → `deploy-image-worker.yml`
 
-## Sprint 22 — web-app: remaining LOW fixes
+## Sprint 22 — web-app: remaining LOW fixes — PR #252 (open)
+
+**Done in PR #252** (web-app 5.14.6, stacked on #249): 41 of 42 rows. BUG-086 covers the four sibling tools it names. **deep-dive/BUG-090 stays open:** it needs core to surface a batch failure, so it moves to Sprint 27. The layout shell is at 215.75 of 218 KB; Sprint 23 should trim it. Details are in the re-verification file's *Sprint 22* section.
 
 Tool, shell, service and glamour LOWs. Most are one-line guards or listener teardown.
 
@@ -673,7 +728,15 @@ Tool, shell, service and glamour LOWs. Most are one-line guards or listener tear
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 23 — web-app: dead-code cleanup
+## Sprint 23 — web-app: dead-code cleanup — PR #253 (open)
+
+**Done in PR #253** (web-app 5.14.7, stacked on #252): all fifteen rows, plus the code Sprint 22 made dead. The layout shell is at 215.02 KB. Details are in the re-verification file's *Sprint 23* section.
+
+**dead-code/DEAD-004 is already removed** by Sprint 5 (PR #247); skip it here.
+
+**From Sprint 22 (PR #252):**
+- The layout shell is at 215.75 of 218 KB. Trim it here; do not raise the budget.
+- Sprint 22 made more code dead. Its re-verification section lists it; confirm each item by hand, because the gate cannot see some of it.
 
 The rest of the dead-code catalog's web-app entries. Each cascade is the next commit after its trigger, because web-app's knip gate fails on the orphaned exports in between: dead-code/DEAD-009 and dead-code/DEAD-010 after dead-code/DEAD-008. dead-code/DEAD-003, the context-action vocabulary, goes last.
 
@@ -723,7 +786,11 @@ A comment-only fix. It rides with the next auth change; no publish is needed for
 
 **Ends with:** gate with `--filter=...@xivdyetools/auth` → merge
 
-## Sprint 26 — Structural: share the review custom_id grammar (terminal)
+## Sprint 26 — Structural: share the review custom_id grammar (terminal) — PR #262 (open)
+
+**Done in PR #262** (types 3.3.0; moderation-worker 1.8.2, discord-worker 5.8.8, presets-api 2.6.1), stacked on #261. The host is `@xivdyetools/types` — the one package all three apps already depend on (presets-api does not depend on bot-logic). The wire format is byte-identical, fuzzed in both directions.
+- **Deploy order:** none is required — each app bundles types through `workspace:*` and the bytes do not change. Merging does redeploy every app whose workflow filters on `packages/types/**` (10 workflows, oauth's production deploy included), with no code change for most.
+- **Also here:** `AuthSource` tagged `@public` (its last in-repo re-export went in Sprint 8); a moderation-worker test pins its routing prefixes to the shared grammar.
 
 deep-dive/REFACTOR-001: one module for the grammar and status list, consumed by presets-api, moderation-worker and discord-worker, or a parity test across them. One publish, then one deploy per consumer.
 
@@ -735,9 +802,15 @@ deep-dive/REFACTOR-001: one module for the grammar and status list, consumed by 
 
 **Ends with:** publish the host package → presets-api, moderation-worker and discord-worker each in their own deploy, in the documented order (presets-api first)
 
-## Sprint 27 — Structural: one dyeable-slot set (terminal)
+## Sprint 27 — Structural: one dyeable-slot set (terminal) — PR #254 (open)
+
+**Done in PR #254** (core 5.9.0 and web-app 5.14.8, stacked on #253): REFACTOR-004 and BUG-090. The review also found that Chinese and Korean data centers sanitised to an empty path, which is fixed in the same core release. **Deploy needs:** publish core 5.9.0. It carries Sprint 6's unpublished 5.8.2 as well. Details are in the re-verification file's *Sprint 27* section.
 
 deep-dive/REFACTOR-004: core exports the dyeable-slot set, and web-app imports it.
+
+**Moved here from Sprint 22: deep-dive/BUG-090**, so core is released once, not twice.
+- **What core does:** it surfaces a failed batch price fetch as an addition (a new method, or an outcome beside the result). It must not change `getPricesForDataCenter`'s `Map` return, which is published API. A failed chunk of a partial batch counts as a failure, and the result has to survive the in-flight coalescing.
+- **What web-app does:** `MarketBoardService` maps that outcome to `lastFetchOutcome = 'error'`. Then the Extractor's error badge and Harmony's market-failure strip can appear.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
@@ -745,7 +818,9 @@ deep-dive/REFACTOR-004: core exports the dyeable-slot set, and web-app imports i
 
 **Ends with:** core publish → web-app deploy
 
-## Sprint 28 — Structural: svg ledger constants (terminal)
+## Sprint 28 — Structural: svg ledger constants (terminal) — PR #259 (open, with Sprint 14)
+
+**Done in PR #259**, with Sprint 14 (one svg publish). The footer height also has one source now: the handler builds the key lines once and passes their count to the calculator.
 
 deep-dive/REFACTOR-003: svg exports the ledger geometry, and discord-worker's budget calculator imports it.
 
@@ -755,7 +830,9 @@ deep-dive/REFACTOR-003: svg exports the ledger geometry, and discord-worker's bu
 
 **Ends with:** svg publish → discord-worker deploy
 
-## Sprint 29 — Structural: split swatch-tool and gradient-tool (terminal)
+## Sprint 29 — Structural: split swatch-tool and gradient-tool (terminal) — PR #255 (open)
+
+**Done in PR #255** (web-app 5.14.9, stacked on #254). It is the last web-app sprint. Both tools keep one workspace; the v4-dead left panel and drawer are gone, and the duplication with them. Details are in the re-verification file's *Sprint 29* section.
 
 deep-dive/REFACTOR-005: the two largest files in the repo duplicate their desktop and mobile selector code. This goes after every other web-app sprint, because they all touch these files.
 
@@ -765,7 +842,9 @@ deep-dive/REFACTOR-005: the two largest files in the repo duplicate their deskto
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 30 — Fonts: item names on the /glamour card (terminal, last of all)
+## Sprint 30 — Fonts: item names on the /glamour card (terminal, last of all) — PR #263 (open)
+
+**Done in PR #263** (discord-worker 5.8.9), stacked on #262 — the last PR of the discord-worker stack. Option A fit, and on 2026-10-06 the maintainer added Japanese: a ja item-name table (`apps/api-worker/src/chara/data/item-names.ja.json`, build-time only) feeds the JP cut, and Japanese cards load JP first, because resvg falls back in load order, not font-family order. English fallback: ko 63.2 % → 2 items, zh 97.3 % → 0, ja 7.3 % → 0; zh / ko / en renders byte-identical; bundle 2,717.2 KiB (88.5 % of 3,072). **Recorded, not fixed:** the two Korean names with a stray U+200F (strip format characters in `build-item-names.mjs`); a pre-existing resvg limit where a fallback face that shapes a Latin ligature differently can leave the CJK part of user text as tofu even though `canDraw` passes.
 
 **FONT-001 is a decision first:**
 - **Option A:** widen discord-worker's CJK subsets with item names (about +363 Hangul and +1,171 hanzi).
@@ -826,8 +905,8 @@ These are not scheduled; the reasons and revisit triggers are in each finding. T
 | "Same look" twins | en twin / same look / swap; fr "+N ASPECT" vs "même apparence"; ko 동형 / 유일 vs 같은 외형 | an app glossary row |
 | A color slot | zh 栏位 (web) vs 部位 (bot) | an app glossary row |
 | Moderator, in the UI | zh `fieldPreviewImageHint` 版主 vs the policies' 审核员; ko UI 모더레이터 | a glossary row; TERM-001 settles the ko policies |
-| Dye channel (ja) | 染色枠 vs チャンネル (filed as TERM-016 for the split; the word is unpinned) | the client's dye UI text |
-| Facewear color tag (ja, ko) | ja フェイスウェアカラー, ko 페이스웨어 색상 transliterate "facewear" | follows TERM-007's choice |
+| Dye channel (ja) | 染色枠 vs チャンネル (filed as TERM-016 for the split; the word is unpinned) | the client's dye UI text — **pinned 2026-10-05** (dictionary *Dye channels*: 染色1 / 染色2, counted with ヵ所); fixed in PR #248 |
+| Facewear color tag (ja, ko) | ja フェイスウェアカラー, ko 페이스웨어 색상 transliterate "facewear" | follows TERM-007's choice — **pinned 2026-10-05** (dictionary, Addon 16050 + 16054); fixed in PR #248 |
 
 ## Standing guidance
 

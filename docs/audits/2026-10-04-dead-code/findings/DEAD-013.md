@@ -15,4 +15,4 @@
 Steps: Delete hybrid-preset-service.ts 331-352 and community-preset-service.ts 330-340. In community-preset-service.integration.test.ts delete the 'Featured Presets Tests' banner and describe at 158-182 (the method's only test). The msw handler and the e2e route that only served this method are DEAD-016, the next commit in the same pull request. Run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `e5a612b5` (branch `fix/remediation-2026-10-04-sprint4`, web-app 5.14.2; PR #245, open, stacked on #244).

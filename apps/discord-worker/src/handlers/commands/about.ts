@@ -10,6 +10,7 @@
  *   bot that can carry it
  */
 
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env, DiscordInteraction } from '../../types/env.js';
 import { dyeDatabase, PRODUCT_LINKS, SOCIAL_LINKS } from '@xivdyetools/core';
 import { BRAND_ACCENT } from '../../utils/brand.js';
@@ -88,10 +89,11 @@ function getTotalCommandCount(): number {
 export async function handleAboutCommand(
   interaction: DiscordInteraction,
   env: Env,
-  _ctx: ExecutionContext
+  _ctx: ExecutionContext,
+  logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
 
   // Get version from package.json (bundled at build time)
   const version = packageJson.version || '2.0.0';

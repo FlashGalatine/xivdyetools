@@ -49,6 +49,27 @@ export function tSwatch(key: string): string {
 }
 
 /**
+ * A count in the locale's plural form (I18N-007): the `one` key where
+ * `Intl.PluralRules` says so — en 1, fr 0 and 1, never in ja / ko / zh — and
+ * the `other` key otherwise. `{n}` is always filled in, since French reaches
+ * `one` with 0. Both keys are passed spelled out, never built from a stem, so
+ * the orphan scanner (`scripts/analyze-unused-keys.js`) sees each as a literal.
+ */
+export function tCount(n: number, one: string, other: string): string {
+  const form = new Intl.PluralRules(LanguageService.getCurrentLocale()).select(n);
+  return LanguageService.tInterpolate(form === 'one' ? one : other, { n: String(n) });
+}
+
+/**
+ * Two localized sentences as one line (I18N-012). Japanese and Chinese close a
+ * sentence with a full-width 。！？ that carries its own spacing, so nothing
+ * goes between; every other locale here writes one space after its stop.
+ */
+export function joinSentences(first: string, second: string): string {
+  return /[。！？]$/.test(first) ? `${first}${second}` : `${first} ${second}`;
+}
+
+/**
  * Localized text for a core slot-failure code.
  *
  * Core's `error.message` is an EN engineering sentence naming the field and

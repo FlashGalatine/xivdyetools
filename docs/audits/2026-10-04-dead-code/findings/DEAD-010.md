@@ -19,4 +19,4 @@ Sequencing: Lands in the same pull request as DEAD-008 and DEAD-009. Leaving the
 Correction from the final adversarial check: Five presets read these keys (noSearchResults, allFilteredOut, noPriceData, noImage, loading); the sixth test-only preset, `error`, reads errors.somethingWentWrong/tryAgain, which stay live.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `fcc0b76f` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

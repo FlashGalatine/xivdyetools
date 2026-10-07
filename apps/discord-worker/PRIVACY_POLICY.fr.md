@@ -16,8 +16,8 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 
 | Type de donnée | Finalité | Conservation |
 |-----------|---------|-----------|
-| Identifiant utilisateur Discord | Identifier les utilisateurs pour les préférences, les palettes prédéfinies favorites, le vote, la limitation de débit, et le repère de premier lancement ; sert aussi de clé à un repère d'activité quotidien par utilisateur et est compté (jamais listé) dans les statistiques d'utilisation — voir *Statistiques d'utilisation* ci-dessous | Jusqu'à la demande de suppression des données (statistiques d'utilisation : voir *Statistiques d'utilisation*) |
-| Nom d'auteur : votre nom d'affichage Discord (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Une palette prédéfinie que vous soumettez sur l'application web après vous être connecté avec XIVAuth affiche à la place le nom de votre personnage vérifié, ou « XIVAuth User » suivi des 8 premiers caractères de votre identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion | Affiché publiquement comme auteur des palettes prédéfinies communautaires que vous soumettez | Jusqu'à la demande de suppression des données |
+| Identifiant utilisateur Discord | Identifier les utilisateurs pour les préférences, les préréglages favoris, le vote, la limitation de débit, et le repère de premier lancement ; sert aussi de clé à un repère d'activité quotidien par utilisateur et est compté (jamais listé) dans les statistiques d'utilisation — voir *Statistiques d'utilisation* ci-dessous | Jusqu'à la demande de suppression des données (statistiques d'utilisation : voir *Statistiques d'utilisation*) |
+| Nom d'auteur : votre nom d'affichage Discord (votre nom d'utilisateur si vous n'avez pas de nom d'affichage). Un préréglage que vous soumettez sur l'application web après vous être connecté avec XIVAuth affiche à la place le nom de votre personnage vérifié, ou « XIVAuth User » suivi des 8 premiers caractères de votre identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion | Affiché publiquement comme auteur des préréglages communautaires que vous soumettez | Jusqu'à la demande de suppression des données |
 | Langue de l'utilisateur | Fournir des réponses du bot localisées ; la langue du client Discord (répartie dans l'une des six que le Bot prend en charge, ou « autre ») est aussi enregistrée dans les statistiques d'utilisation — voir *Statistiques d'utilisation* ci-dessous | Préférence stockée : jusqu'à effacement. Répartition des statistiques d'utilisation : voir *Statistiques d'utilisation* |
 | ID de serveur / ID de salon | Traiter les commandes dans leur contexte | Non stocké. Les statistiques d'utilisation n'enregistrent que le *fait* qu'une commande ait été exécutée sur un serveur ou en message privé (les valeurs `guild` / `dm`) — jamais l'ID du serveur ou du salon |
 
@@ -26,10 +26,10 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 | Type de donnée | Finalité | Conservation |
 |-----------|---------|-----------|
 | Préférences | Langue, mode de mélange, méthode de correspondance, nombre de résultats, clan, genre, Monde / centre de données par défaut, si les prix du tableau des ventes doivent être affichés par défaut, bascules d'affichage des couleurs, thème, et quelles catégories de teintures exclure des résultats de recherche (métallique, pastel, sombre, cosmique, ishgardienne, chère, de vendeur, artisanale), ainsi que le moment où vous les avez modifiées pour la dernière fois | Jusqu'à réinitialisation ou demande de suppression |
-| Palettes prédéfinies favorites | Jusqu'à 50 palettes prédéfinies communautaires que vous marquez avec `/preset favorite add` — l'id de la palette prédéfinie et le nom qu'elle portait quand vous l'avez enregistrée | Jusqu'à leur retrait ou demande de suppression |
+| Préréglages favoris | Jusqu'à 50 préréglages communautaires que vous marquez avec `/preset favorite add` — l'id du préréglage et le nom qu'il portait quand vous l'avez enregistré | Jusqu'à leur retrait ou demande de suppression |
 | Repère de premier lancement | Un repère par utilisateur indiquant que l'avis de bienvenue 5.0 vous a été montré ; ne porte aucun contenu | Expire automatiquement après 180 jours |
-| Soumissions de palettes prédéfinies | Nom, description, teintures, étiquettes, catégorie — et, si notre vérification automatique retient pour examen le nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que la palette prédéfinie soit supprimée | Jusqu'à ce que vous la supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
-| Votes | Vos votes sur les palettes prédéfinies communautaires. Soumettre une palette prédéfinie compte comme votre vote pour elle ; si une palette prédéfinie publiée a déjà les mêmes teintures, votre soumission devient un vote pour cette palette à la place | Jusqu'à leur retrait ou demande de suppression |
+| Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie — et, si notre vérification automatique retient pour examen le nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
+| Votes | Vos votes sur les préréglages communautaires. Soumettre un préréglage compte comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre soumission devient un vote pour ce préréglage à la place | Jusqu'à leur retrait ou demande de suppression |
 
 ### Données de limitation de débit
 
@@ -44,7 +44,7 @@ Pour maintenir le Bot en bonne santé et pour alimenter le tableau de bord `/sta
 
 | Donnée | Où | Conservation |
 |------|-------|-----------|
-| Le nom de la commande et de la sous-commande, si elle a reçu une réponse et — en cas de problème — une classe d'échec grossière (limité par débit, requête rejetée par le service de palettes prédéfinies ou de marché, données de marché indisponibles, service de palettes prédéfinies indisponible, l'image ou le fichier `.chara` téléversé n'a pas pu être lu, le rendu a échoué, inconnu ; jamais un message d'erreur), la durée qu'elle a prise, si elle a été exécutée sur un serveur ou en message privé (`guild` / `dm` — jamais l'ID du serveur), la langue de votre client Discord (l'une des six que le Bot prend en charge, ou « autre »), quel bouton de copie vous avez pressé (hex / RGB / HSV), et votre identifiant utilisateur Discord (utilisé uniquement pour compter les utilisateurs uniques) | Cloudflare Workers Analytics Engine | Fenêtre de conservation de l'Analytics Engine de Cloudflare (3 mois au moment de la rédaction) |
+| Le nom de la commande et de la sous-commande, si elle a reçu une réponse et — en cas de problème — une classe d'échec grossière (limité par débit, requête rejetée par le service de préréglages ou de marché, données de marché indisponibles, service de préréglages indisponible, l'image ou le fichier `.chara` téléversé n'a pas pu être lu, le rendu a échoué, inconnu ; jamais un message d'erreur), la durée qu'elle a prise, si elle a été exécutée sur un serveur ou en message privé (`guild` / `dm` — jamais l'ID du serveur), la langue de votre client Discord (l'une des six que le Bot prend en charge, ou « autre »), quel bouton de copie vous avez pressé (hex / RGB / HSV), et votre identifiant utilisateur Discord (utilisé uniquement pour compter les utilisateurs uniques) | Cloudflare Workers Analytics Engine | Fenêtre de conservation de l'Analytics Engine de Cloudflare (3 mois au moment de la rédaction) |
 | Compteurs agrégés — total des commandes, comptes par commande, succès/échecs (aucune donnée utilisateur) | Cloudflare KV | 30 jours (TTL automatique) |
 | Une clé par utilisateur et par jour (`usertrack:{date}:{userId}`, valeur `1`) afin de pouvoir compter les utilisateurs actifs quotidiens | Cloudflare KV | 30 jours (TTL automatique) |
 
@@ -52,10 +52,10 @@ Ces enregistrements n'incluent jamais le contenu des messages, les valeurs des o
 
 ### Enregistrements de modération
 
-Les palettes prédéfinies communautaires sont modérées. Pour faire respecter les bannissements et pour que la modération reste responsable de ses actes, nous conservons :
+Les préréglages communautaires sont modérés. Pour faire respecter les bannissements et pour que la modération reste responsable de ses actes, nous conservons :
 
-- **Les enregistrements de bannissement.** Si un modérateur vous bannit des palettes prédéfinies communautaires, l'enregistrement de bannissement contient votre identifiant utilisateur Discord ou, si vous vous êtes connecté sur l'application web avec un compte XIVAuth qui n'est pas lié à Discord, l'identifiant de compte que notre service de connexion vous a attribué à la place (un identifiant aléatoire, qui n'est pas votre identifiant XIVAuth), le nom d'auteur affiché sur vos palettes prédéfinies au moment du bannissement, les identifiants utilisateur Discord du modérateur qui a prononcé le bannissement et de celui qui l'a levé, le motif indiqué par le modérateur, ainsi que les dates du bannissement et de sa levée.
-- **Le journal de modération.** Chaque action de modération est consignée avec l'identifiant utilisateur Discord du modérateur, l'action, un motif facultatif et l'heure. Une action portant sur une palette prédéfinie (par exemple approuver, rejeter ou annuler une modification) désigne cette palette. Un bannissement, une levée de bannissement, un masquage ou une restauration désigne aussi l'utilisateur concerné.
+- **Les enregistrements de bannissement.** Si un modérateur vous bannit des préréglages communautaires, l'enregistrement de bannissement contient votre identifiant utilisateur Discord ou, si vous vous êtes connecté sur l'application web avec un compte XIVAuth qui n'est pas lié à Discord, l'identifiant de compte que notre service de connexion vous a attribué à la place (un identifiant aléatoire, qui n'est pas votre identifiant XIVAuth), le nom d'auteur affiché sur vos préréglages au moment du bannissement, les identifiants utilisateur Discord du modérateur qui a prononcé le bannissement et de celui qui l'a levé, le motif indiqué par le modérateur, ainsi que les dates du bannissement et de sa levée.
+- **Le journal de modération.** Chaque action de modération est consignée avec l'identifiant utilisateur Discord du modérateur, l'action, un motif facultatif et l'heure. Une action portant sur un préréglage (par exemple approuver, rejeter ou annuler une modification) désigne ce préréglage. Un bannissement, une levée de bannissement, un masquage ou une restauration désigne aussi l'utilisateur concerné.
 
 La durée de conservation de chaque enregistrement est indiquée à la section *Conservation des données*.
 
@@ -97,10 +97,10 @@ Pour nommer l'équipement, `/glamour` envoie les numéros de modèle de l'équip
 |---------|-----------|
 | Fournir les fonctionnalités du Bot | ID utilisateur, ID de serveur, ID de salon |
 | Enregistrer vos préférences | ID utilisateur et les valeurs de préférence que vous avez définies |
-| Gérer vos palettes prédéfinies favorites | ID utilisateur, ID de palette prédéfinie |
-| Palettes prédéfinies communautaires | ID utilisateur, nom d'auteur (affiché publiquement), Contenu de la palette prédéfinie |
+| Gérer vos préréglages favoris | ID utilisateur, ID de préréglage |
+| Préréglages communautaires | ID utilisateur, nom d'auteur (affiché publiquement), Contenu du préréglage |
 | Modération | Enregistrements de bannissement et entrées du journal de modération (voir *Enregistrements de modération*) |
-| Système de vote | ID utilisateur, ID de palette prédéfinie |
+| Système de vote | ID utilisateur, ID de préréglage |
 | Prévenir les abus | ID utilisateur, Compteurs de limitation de débit |
 | Statistiques d'utilisation (`/stats`) | Nom de la commande et de la sous-commande, classe de résultat, latence, indicateur serveur/message privé, répartition de langue du client, type de bouton de copie, ID utilisateur (compté, jamais listé) |
 
@@ -110,10 +110,10 @@ Pour nommer l'équipement, `/glamour` envoie les numéros de modèle de l'équip
 
 | Service | Données stockées | Emplacement |
 |---------|-------------|----------|
-| Cloudflare KV | Préférences, palettes prédéfinies favorites, le repère de premier lancement, les compteurs d'utilisation et les clés d'activité quotidienne (TTL de 30 jours), et les compteurs de limitation de débit uniquement sur un déploiement sans les liaisons natives de limitation de débit (TTL de 120 secondes) | Réseau de périphérie mondial |
-| Cloudflare D1 | Palettes prédéfinies communautaires, Votes, Enregistrements de modération (voir *Enregistrements de modération*), enregistrements d'échec de notification de modération, compteurs quotidiens de soumission / modification (voir *Conservation des données*) | Infrastructure de base de données de Cloudflare |
+| Cloudflare KV | Préférences, préréglages favoris, le repère de premier lancement, les compteurs d'utilisation et les clés d'activité quotidienne (TTL de 30 jours), et les compteurs de limitation de débit uniquement sur un déploiement sans les liaisons natives de limitation de débit (TTL de 120 secondes) | Réseau de périphérie mondial |
+| Cloudflare D1 | Préréglages communautaires, Votes, Enregistrements de modération (voir *Enregistrements de modération*), enregistrements d'échec de notification de modération, compteurs quotidiens de soumission / modification (voir *Conservation des données*) | Infrastructure de base de données de Cloudflare |
 | Cloudflare Workers Analytics Engine | Télémétrie d'utilisation des commandes (voir *Statistiques d'utilisation*) | Infrastructure analytique de Cloudflare |
-| Discord | Messages publiés dans deux salons privés de notre serveur Discord. Le salon de modération reçoit chaque palette prédéfinie, modification ou image d'aperçu qui nécessite une vérification : le message montre la palette prédéfinie (par exemple son nom, sa description, sa catégorie et ses teintures) et le nom de l'auteur ou, pour une image d'aperçu, le nom de la palette prédéfinie et l'image, et il est mis à jour lorsqu'un modérateur tranche. Si un modérateur vous bannit, le salon de modération reçoit aussi un message avec votre nom d'auteur, le motif et le nombre de vos palettes prédéfinies qui ont été masquées. Les modérateurs peuvent aussi publier dans le salon de modération la liste des palettes prédéfinies en attente de vérification, avec le nom de leurs auteurs. Le salon de journal des soumissions reçoit chaque palette prédéfinie publiée sans vérification, avec le nom de son auteur, et une note nommant la palette prédéfinie lorsqu'un modérateur en approuve ou en rejette une, ou en annule une modification, avec le motif d'un rejet ou d'une annulation. Les messages publiés depuis la date de « Dernière mise à jour » de cette politique ne montrent pas votre identifiant utilisateur Discord ; les plus anciens peuvent le montrer | Infrastructure de Discord |
+| Discord | Messages publiés dans deux salons privés de notre serveur Discord. Le salon de modération reçoit chaque préréglage, modification ou image d'aperçu qui nécessite une vérification : le message montre le préréglage (par exemple son nom, sa description, sa catégorie et ses teintures) et le nom de l'auteur ou, pour une image d'aperçu, le nom du préréglage et l'image, et il est mis à jour lorsqu'un modérateur tranche. Si un modérateur vous bannit, le salon de modération reçoit aussi un message avec votre nom d'auteur, le motif et le nombre de vos préréglages qui ont été masqués. Les modérateurs peuvent aussi publier dans le salon de modération la liste des préréglages en attente de vérification, avec le nom de leurs auteurs. Le salon de journal des soumissions reçoit chaque préréglage publié sans vérification, avec le nom de son auteur, et une note nommant le préréglage lorsqu'un modérateur en approuve ou en rejette un, ou en annule une modification, avec le motif d'un rejet ou d'une annulation. Les messages publiés après le 2026-10-05 ne montrent pas votre identifiant utilisateur Discord ; ceux publiés à cette date ou avant peuvent le montrer | Infrastructure de Discord |
 
 Tout, sauf ces messages Discord, est stocké sur l'infrastructure de Cloudflare. Voir la [politique de confidentialité de Cloudflare](https://www.cloudflare.com/privacypolicy/) pour plus d'informations. Les messages Discord restent dans ces salons, soumis à la [politique de confidentialité de Discord](https://discord.com/privacy), jusqu'à ce qu'un modérateur les supprime ou jusqu'à ce que vous demandiez la suppression (voir *Vos droits*).
 
@@ -150,12 +150,12 @@ Vous avez le droit de :
 
 ### Accéder à vos données
 - Utiliser `/preferences show` pour consulter vos préférences enregistrées
-- Utiliser `/preset favorite list` pour consulter vos palettes prédéfinies favorites
+- Utiliser `/preset favorite list` pour consulter vos préréglages favoris
 - Nous contacter pour demander un export complet de vos données
 
 ### Supprimer vos données
 - Utiliser `/preferences reset` pour réinitialiser toutes vos préférences, ou `/preferences reset key:<preference>` pour n'en réinitialiser qu'une seule
-- Utiliser `/preset favorite remove` pour retirer une palette prédéfinie favorite
+- Utiliser `/preset favorite remove` pour retirer un préréglage favori
 - Nous contacter pour demander la suppression complète de vos données
 
 Le repère de premier lancement n'est pas gérable par l'utilisateur — il expire de lui-même après 180 jours.
@@ -169,7 +169,7 @@ Pour demander la suppression de toutes vos données :
    - Indiquez votre identifiant utilisateur Discord
 2. **Discord** : Rejoignez https://discord.gg/rzxDHNr6Wv et envoyez un DM à « Flash Galatine »
 
-Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppression supprime aussi de notre serveur Discord les messages vous concernant et concernant vos palettes prédéfinies, à l'exception du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas supprimé sur demande ; une fois le bannissement levé, l'enregistrement suit la durée de conservation indiquée à la section *Conservation des données*.
+Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppression supprime aussi de notre serveur Discord les messages vous concernant et concernant vos préréglages, à l'exception du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas supprimé sur demande ; une fois le bannissement levé, l'enregistrement suit la durée de conservation indiquée à la section *Conservation des données*.
 
 ## 8. Conservation des données
 
@@ -180,15 +180,15 @@ Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppre
 | Clés d'activité quotidienne par utilisateur (Cloudflare KV) | 30 jours |
 | Télémétrie d'utilisation des commandes (Analytics Engine) | Fenêtre de conservation de l'Analytics Engine de Cloudflare (3 mois au moment de la rédaction) |
 | Préférences utilisateur | Jusqu'à suppression par l'utilisateur |
-| Palettes prédéfinies favorites | Jusqu'à leur retrait par vous |
+| Préréglages favoris | Jusqu'à leur retrait par vous |
 | Repère de premier lancement | 180 jours |
-| Palettes prédéfinies communautaires | Jusqu'à ce que vous les supprimiez (application web → Mes soumissions) ou demandiez la suppression |
-| Votes | Jusqu'à leur retrait ou suppression du compte ; également supprimés lorsque la palette prédéfinie est supprimée |
-| Enregistrements d'échec de notification de modération (id de la palette prédéfinie, erreur, horodatages) | 30 jours après résolution, 90 jours si non résolu — supprimés immédiatement si la palette prédéfinie est supprimée |
-| Compteurs quotidiens de soumission / modification (id utilisateur, type, id de la palette prédéfinie, horodatage) | 30 jours |
+| Préréglages communautaires | Jusqu'à ce que vous les supprimiez (application web → Mes soumissions) ou demandiez la suppression |
+| Votes | Jusqu'à leur retrait ou suppression du compte ; également supprimés lorsque le préréglage est supprimé |
+| Enregistrements d'échec de notification de modération (id du préréglage, erreur, horodatages) | 30 jours après résolution, 90 jours si non résolu — supprimés immédiatement si le préréglage est supprimé |
+| Compteurs quotidiens de soumission / modification (id utilisateur, type, id du préréglage, horodatage) | 30 jours |
 | Enregistrements de bannissement | Tant que le bannissement est actif. Lorsqu'il est levé, le nom d'auteur et le motif sont effacés immédiatement de l'enregistrement, et l'enregistrement est supprimé 90 jours plus tard |
-| Entrées du journal de modération pour un bannissement, une levée de bannissement, un masquage ou une restauration (elles conservent le motif du modérateur) | 12 mois, ou plus tôt pour un masquage ou une restauration si sa palette prédéfinie est supprimée |
-| Autres entrées du journal de modération concernant une palette prédéfinie (par exemple approuver, rejeter ou annuler une modification) | Tant que la palette prédéfinie existe |
+| Entrées du journal de modération pour un bannissement, une levée de bannissement, un masquage ou une restauration (elles conservent le motif du modérateur) | 12 mois, ou plus tôt pour un masquage ou une restauration si son préréglage est supprimé |
+| Autres entrées du journal de modération concernant un préréglage (par exemple approuver, rejeter ou annuler une modification) | Tant que le préréglage existe |
 | Messages des salons de modération et de journal des soumissions de notre serveur Discord | Jusqu'à ce qu'un modérateur les supprime, ou jusqu'à ce que vous demandiez la suppression (le message sur un bannissement toujours actif est conservé) |
 
 ## 9. Confidentialité des mineurs

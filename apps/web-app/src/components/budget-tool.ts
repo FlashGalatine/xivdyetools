@@ -29,7 +29,7 @@ import { ShareService } from '@services/share-service';
 import { CollectionService } from '@services/collection-service';
 import { BaseComponent } from '@components/base-component';
 import '@components/v4/result-card';
-import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import {
@@ -173,6 +173,12 @@ export class BudgetTool extends BaseComponent {
   private marketOnline: boolean = true;
   private isLoading: boolean = false;
   private fetchProgress: { current: number; total: number } = { current: 0, total: 0 };
+  /**
+   * BUG-015 (2026-10-04 deep-dive): the ledger run that may still write.
+   * findAlternatives() takes the next id (clearDyes() starts a targetless
+   * run); destroy() moves it on.
+   */
+  private runId = 0;
 
   // Display options (target Result Card), seeded from budget.displayOptions
   private showHex: boolean;
@@ -317,6 +323,22 @@ export class BudgetTool extends BaseComponent {
       })
     );
 
+    // BUG-080 (2026-10-04 deep-dive): the tier ramp, the verdict tones and the
+    // sort accent are inline hexes read from isDarkMode() at render, so a
+    // theme switch left them in the old palette until something else redrew
+    // them. These two are the theme-reading renders this listener redraws.
+    //
+    // Mid-fetch the verdict is left alone: the target is already the new pick
+    // but the rows are still the last run's (or none), so it would draw the new
+    // name over them. The run redraws it when it lands; the ledger meanwhile
+    // shows its spinner. The ledger redraw keeps a keyboard user's place.
+    this.subs.add(
+      ThemeService.subscribe(() => {
+        if (!this.isLoading) this.renderVerdict();
+        this.renderLedgerKeepingFocus();
+      })
+    );
+
     // Server changes come from the sidebar's Market Board section. The
     // showPrices toggle is not Budget's: fetchPrices ignores it (BUG-079).
     // Defer the refetch a tick so MarketBoardService applies the change first.
@@ -347,6 +369,8 @@ export class BudgetTool extends BaseComponent {
   }
 
   destroy(): void {
+    // BUG-015: a ledger run still awaiting prices must not write after this
+    ++this.runId;
     this.targetDye = null;
     this.rows = [];
     this.priceData.clear();
@@ -469,6 +493,13 @@ export class BudgetTool extends BaseComponent {
         this.targetDye = dye;
         this.updateTargetDyeDisplay();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
+        // BUG-013 (2026-10-04 deep-dive): consumed once stored. The result
+        // card's "Set as budget target" lands here as ?dye=, and left in the
+        // URL, PRESERVED_PARAMS carried it into the next tool, where Harmony
+        // took it as its base and replaced (and stored over) the user's own.
+        // Only `dye`: a `?hex=` target is never stored, so it stays for a
+        // reload. A dye that did not resolve stays too; a pick drops it.
+        this.releaseLinkedTarget(['dye']);
       }
     } else if (hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
       // ?hex= is a bare colour target — exclusive with `dye`, never persisted
@@ -489,6 +520,26 @@ export class BudgetTool extends BaseComponent {
         ConfigController.getInstance().setConfig('budget', { maxDeltaE: line });
       }
     }
+  }
+
+  /**
+   * Take a linked target out of the address bar once the user picks or clears
+   * one here, and a linked `dye` once handleDeepLink has stored it.
+   *
+   * BUG-013 (2026-10-04 deep-dive): RouterService carries `dye=` across every
+   * navigation, and handleDeepLink applies it on every mount, so a pick that
+   * reached storage only was replaced by the link's dye when the user came
+   * back. The param is deleted rather than rewritten to the pick: rewritten,
+   * it would follow the user into Harmony and replace that tool's own base.
+   * A pick takes `hex` too, because handleDeepLink falls back to it without a
+   * `dye`. history.replaceState, not RouterService.replaceRoute, which
+   * notifies the layout and would remount this tool.
+   */
+  private releaseLinkedTarget(keys: readonly string[] = ['dye', 'hex']): void {
+    const url = new URL(window.location.href);
+    if (!keys.some((key) => url.searchParams.has(key))) return;
+    for (const key of keys) url.searchParams.delete(key);
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
   // ============================================================================
@@ -587,6 +638,11 @@ export class BudgetTool extends BaseComponent {
    * Always fetches coffer prices too (quick picks are generated from the board).
    */
   private async findAlternatives(): Promise<void> {
+    // BUG-015 (2026-10-04 deep-dive): the target and line are read before the
+    // price fetch, and a newer run (a pick, a slider tick, a server change)
+    // can resolve first. This run then writes nothing, or it would draw the
+    // old target's rows under the new target's card.
+    const run = ++this.runId;
     const target = this.targetDye;
     const threshold = this.effectiveThreshold();
 
@@ -617,7 +673,8 @@ export class BudgetTool extends BaseComponent {
       if (target) toFetch.set(target.id, target);
       for (const d of candidates) toFetch.set(d.id, d);
       for (const d of this.cofferDyes()) toFetch.set(d.id, d);
-      await this.fetchPrices(Array.from(toFetch.values()));
+      await this.fetchPrices(Array.from(toFetch.values()), run);
+      if (run !== this.runId) return;
 
       if (target) {
         const targetGil = this.priceOf(target).gil;
@@ -644,16 +701,21 @@ export class BudgetTool extends BaseComponent {
       this.renderVerdict();
       this.renderLedger();
     } catch (error) {
+      // fetchPrices() never throws, so only the current run can land here.
       logger.error('[BudgetTool] Error building ledger:', error);
       ToastService.error(LanguageService.t('budget.errorFindingAlternatives'));
       this.isLoading = false;
       this.renderLedger();
     } finally {
-      this.renderTargetOverview();
-      this.updateTargetDyeDisplay();
-      this.updateMobileTargetDyeDisplay();
-      this.renderQuickPicks();
-      if (!this.targetDye) this.showEmptyState(true);
+      // Not a `return`: a superseded run reaches here from the guard above,
+      // and must not rebuild the target card under the user.
+      if (run === this.runId) {
+        this.renderTargetOverview();
+        this.updateTargetDyeDisplay();
+        this.updateMobileTargetDyeDisplay();
+        this.renderQuickPicks();
+        if (!this.targetDye) this.showEmptyState(true);
+      }
     }
   }
 
@@ -664,8 +726,13 @@ export class BudgetTool extends BaseComponent {
    * returned for three different reasons, only one of which is a failure -- a
    * superseded request (exactly what a rapid world change causes) reported the
    * market as offline. Ask the service which it was.
+   *
+   * BUG-015 (2026-10-04 deep-dive): `run` is the findAlternatives() run this
+   * fetch belongs to. Once a newer run has started, this one writes nothing:
+   * `lastFetchOutcome` is shared by every call, so by then it can describe a
+   * different request.
    */
-  private async fetchPrices(dyes: Dye[]): Promise<void> {
+  private async fetchPrices(dyes: Dye[], run: number): Promise<void> {
     this.fetchProgress = { current: 0, total: dyes.length };
     this.renderLedger();
 
@@ -682,6 +749,7 @@ export class BudgetTool extends BaseComponent {
         },
         { ignoreShowPrices: true }
       );
+      if (run !== this.runId) return;
       prices.forEach((data, itemId) => {
         this.priceData.set(itemId, data);
       });
@@ -694,6 +762,7 @@ export class BudgetTool extends BaseComponent {
       // 'superseded' and 'nothing-to-fetch' say nothing about the board, so
       // they leave the previous verdict alone.
     } catch (error) {
+      if (run !== this.runId) return;
       logger.warn('[BudgetTool] Error fetching prices:', error);
       this.marketOnline = false;
     }
@@ -1215,12 +1284,6 @@ export class BudgetTool extends BaseComponent {
 
     card.style.setProperty('--v4-result-card-width', '320px');
 
-    card.addEventListener('context-action', ((
-      e: CustomEvent<{ action: ContextAction; dye: Dye }>
-    ) => {
-      this.handleContextAction(e.detail.action, e.detail.dye);
-    }) as EventListener);
-
     cardWrapper.appendChild(card);
     this.targetOverviewContainer.appendChild(cardWrapper);
     this.targetOverviewContainer.appendChild(this.buildSendToRow(this.targetDye));
@@ -1295,6 +1358,10 @@ export class BudgetTool extends BaseComponent {
   /**
    * Save the target and its best-priced substitute as a device-local
    * `kind: 'swap'` record (the store's third collection kind).
+   *
+   * BUG-081 (2026-10-04 deep-dive): every Standard dye costs the same 216
+   * gil, so a tie on price is the rule, not the exception. It used to keep
+   * the first tied row in database order; the closer one is the better swap.
    */
   private saveSwapRecord(): void {
     const target = this.targetDye;
@@ -1312,7 +1379,9 @@ export class BudgetTool extends BaseComponent {
       (best, r) =>
         r.price.gil != null &&
         r.dye.stainID !== null &&
-        (best?.price.gil == null || r.price.gil < best.price.gil)
+        (best?.price.gil == null ||
+          r.price.gil < best.price.gil ||
+          (r.price.gil === best.price.gil && r.de < best.de))
           ? r
           : best,
       null
@@ -1469,6 +1538,38 @@ export class BudgetTool extends BaseComponent {
     block.appendChild(rightCol);
 
     this.verdictContainer.appendChild(block);
+  }
+
+  /** The ledger's keyboard stops in document order: sort headers and rows. */
+  private ledgerFocusables(): HTMLElement[] {
+    if (!this.ledgerContainer) return [];
+    return Array.from(
+      this.ledgerContainer.querySelectorAll<HTMLElement>('button, [role="button"][tabindex="0"]')
+    );
+  }
+
+  /**
+   * renderLedger() for a redraw that changes no row or column (a theme
+   * switch): every node is replaced, so a focused row or sort header would
+   * drop focus to <body>. The node at the same position takes it back — same
+   * row of the same group, same column of the same group's headers.
+   *
+   * In the v4 shell the ledger sits in a shadow root, where
+   * document.activeElement is only the host, so the root's own is read.
+   */
+  private renderLedgerKeepingFocus(): void {
+    const root = this.ledgerContainer?.getRootNode();
+    const active =
+      root instanceof Document || root instanceof ShadowRoot ? root.activeElement : null;
+    const index =
+      active instanceof HTMLElement && this.ledgerContainer?.contains(active)
+        ? this.ledgerFocusables().indexOf(active)
+        : -1;
+
+    this.renderLedger();
+
+    if (index < 0) return;
+    this.ledgerFocusables()[index]?.focus({ preventScroll: true });
   }
 
   /** The ledger: tier groups, price printed once per group, one row per candidate. */
@@ -1911,30 +2012,6 @@ export class BudgetTool extends BaseComponent {
   // Helpers
   // ============================================================================
 
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    switch (action) {
-      case 'add-comparison':
-        handoffTo('comparison', dye);
-        break;
-      case 'add-mixer':
-        handoffTo('mixer', dye);
-        break;
-      case 'add-accessibility':
-        handoffTo('accessibility', dye);
-        break;
-      case 'see-harmonies':
-        handoffTo('harmony', dye);
-        break;
-      case 'budget':
-        this.selectDye(dye);
-        break;
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex);
-        ToastService.success(LanguageService.t('success.copiedToClipboard'));
-        break;
-    }
-  }
-
   private isLightColor(hex: string): boolean {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -1952,6 +2029,7 @@ export class BudgetTool extends BaseComponent {
     this.rows = [];
 
     StorageService.removeItem(STORAGE_KEYS.targetDyeId);
+    this.releaseLinkedTarget();
     logger.info('[BudgetTool] All dyes cleared');
 
     if (this.ledgerContainer) clearContainer(this.ledgerContainer);
@@ -1961,6 +2039,14 @@ export class BudgetTool extends BaseComponent {
     this.updateTargetDyeDisplay();
     this.updateMobileTargetDyeDisplay();
     this.renderQuickPicks();
+
+    // BUG-015 (2026-10-04 deep-dive): a run still awaiting prices would refill
+    // the rows just cleared, so it must not write. This used to be a bare
+    // runId bump, which also threw that run's price fetch away: the quick
+    // picks stayed on their unpriced offline fallback although the board had
+    // answered. A targetless run supersedes it the same way and refetches the
+    // board for the quick picks, exactly as a mount with no target does.
+    void this.findAlternatives();
   }
 
   /**
@@ -1972,6 +2058,7 @@ export class BudgetTool extends BaseComponent {
     this.targetDye = dye;
 
     StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
+    this.releaseLinkedTarget();
     logger.info(`[BudgetTool] Target selected: ${dye.name}`);
 
     void this.findAlternatives();

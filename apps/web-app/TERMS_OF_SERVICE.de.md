@@ -14,9 +14,9 @@ nicht — dich davon zurückzuziehen kostet dich nichts.
 
 ## Was die Website tut
 
-Zehn Werkzeuge laufen in deinem Browser: Paletten-Extraktor, Harmonie-Explorer, Vergleich,
-Verlauf-Ersteller, Farbstoffmixer, Barrierefreiheitsprüfung, Budget-Finder, Farbmuster-Matcher und der
-Community-Presets-Browser. Daneben kann die Website Marktbrett-Preise anzeigen, eine
+Zehn Werkzeuge laufen in deinem Browser: Paletten-Extraktor, Harmonie-Explorer, Farbstoffvergleich,
+Verlauf-Ersteller, Farbstoffmixer, Barrierefreiheitsprüfung, Budget-Vorschläge, Farbmuster-Matcher,
+Projektionsleser und Community-Vorlagen. Daneben kann die Website Marktbrett-Preise anzeigen, eine
 `.chara`-Datei lesen, die du hineinziehst, um die Ausrüstung einer Projektion zu benennen, und dich
 Paletten und Sammlungen auf deinem eigenen Gerät speichern lassen.
 
@@ -26,7 +26,7 @@ Ausnahmen sind in [`PRIVACY.md`](PRIVACY.md) aufgeführt.
 ## Konten
 
 Du brauchst nie ein Konto, um die Farbwerkzeuge zu nutzen. Ein Konto benötigst du nur, um
-Community-Presets einzureichen, zu bearbeiten oder darüber abzustimmen.
+Community-Vorlagen einzureichen, zu bearbeiten oder darüber abzustimmen.
 
 - Die Anmeldung läuft über Discord oder XIVAuth. Wir sehen oder speichern niemals ein Passwort.
 - Die Anmeldung legt einen Kontodatensatz mit deiner Anbieter-ID und einem Namen an. Bei Discord
@@ -34,31 +34,31 @@ Community-Presets einzureichen, zu bearbeiten oder darüber abzustimmen.
   Charakters oder "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID, wenn bei
   deiner Anmeldung kein verifizierter Charakter verfügbar ist, wie in den Datenschutzhinweisen
   beschrieben. Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz
-  zusätzlich diese Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jedes
-  Presets angezeigt, das du veröffentlichst.
+  zusätzlich diese Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jeder
+  Vorlage angezeigt, die du veröffentlichst.
 - Deine Sitzung ist ein Token, das in deinem Browser gehalten wird. Das Löschen der Website-Daten
   deines Browsers meldet dich ab.
 - Du bist verantwortlich für das, was unter deinem Konto geschieht. Wenn du glaubst, dass jemand
   anderes Zugriff darauf hat, entziehe der App den Zugriff bei deinem Anbieter und teile es uns mit.
 - Wir können ein Konto sperren oder entfernen, das gegen diese Bedingungen verstößt.
 
-## Community-Presets
+## Community-Vorlagen
 
 ### Deine Inhalte bleiben deine
 
-Du behältst das Eigentum an jedem Preset, das du einreichst. Mit dem Einreichen eines Presets
+Du behältst das Eigentum an jeder Vorlage, die du einreichst. Mit dem Einreichen einer Vorlage
 gewährst du uns eine nicht-exklusive, gebührenfreie Lizenz, diesen Inhalt innerhalb des
 XIV-Dye-Tools-Ökosystems zu nutzen, anzuzeigen und zu verbreiten — der Website, dem Discord-Bot,
-der API und Link-Vorschauen. Diese Lizenz besteht, damit wir dein Preset anderen Spielern zeigen
-können; sie ist keine Eigentumsübertragung, und wir beanspruchen kein Recht, es zu verkaufen oder
-weiter zu lizenzieren.
+der API und Link-Vorschauen. Diese Lizenz besteht, damit wir deine Vorlage anderen Spielern zeigen
+können; sie ist keine Eigentumsübertragung, und wir beanspruchen kein Recht, deine Vorlage zu
+verkaufen oder weiter zu lizenzieren.
 
 Reiche nur Inhalte ein, zu deren Einreichung du berechtigt bist.
 
 ### Worum wir dich bitten
 
 Reiche nichts ein, das anstößig, belästigend, sexuell explizit, hasserfüllt, täuschend, werbend
-oder eine Verletzung der Rechte Dritter ist. Nutze den Preset-Namen oder die Beschreibung nicht als
+oder eine Verletzung der Rechte Dritter ist. Nutze den Vorlagennamen oder die Beschreibung nicht als
 Kanal für etwas, das nichts mit Farbstoffen zu tun hat.
 
 ### Moderation
@@ -80,7 +80,7 @@ eingereicht hast, entfernt wird:
 
 1. Tritt dem Discord bei: <https://discord.gg/rzxDHNr6Wv>
 2. Frag in **#dyetools-issues-and-suggestions**, oder schreibe "Flash Galatine" eine DM
-3. Gib deine Discord-Benutzer-ID und den Namen des Presets an
+3. Gib deine Discord-Benutzer-ID und den Namen der Vorlage an
 
 Widersprüche werden innerhalb von 7 Tagen geprüft. Um deinen Kontodatensatz und alles, was darunter
 eingereicht wurde, entfernen zu lassen, siehe [`PRIVACY.md`](PRIVACY.md).
@@ -111,7 +111,7 @@ Manche Funktionen leiten dich an Dienste weiter, die wir nicht selbst betreiben:
 - Die **Gegenstands-Links** bei einem Projektionsteil öffnen diesen Gegenstand bei Garland Tools,
   FFXIV Teamcraft, Gamer Escape, Mirapri oder dem Lodestone; die Links auf einer Farbstoffkarte
   öffnen Universalis, Garland Tools, FFXIV Teamcraft oder Saddlebag Exchange.
-- Der **Beispiel-Link** eines Community-Presets wird vom Autor des Presets gewählt, nicht von uns.
+- Der **Beispiel-Link** einer Community-Vorlage wird vom Autor der Vorlage gewählt, nicht von uns.
   Er führt zu einer Seite einer Drittanbieter-Website wie Eorzea Collection, Reddit oder pixiv.
 
 Sobald du einem dieser Links folgst, befindest du dich auf der Website einer anderen Partei, unter
@@ -176,7 +176,7 @@ akzeptierst.
 
 Du kannst die Nutzung der Website jederzeit beenden. Wir können deinen Zugang zu den
 Community-Funktionen sperren oder beenden, wenn du gegen diese Bedingungen verstößt oder den
-Dienst für andere Nutzer störst. Presets, die du veröffentlicht hast, können auch nach deinem
+Dienst für andere Nutzer störst. Vorlagen, die du veröffentlicht hast, können auch nach deinem
 Weggang unter der oben genannten Lizenz bestehen bleiben — frag uns, wenn du möchtest, dass sie
 entfernt werden.
 

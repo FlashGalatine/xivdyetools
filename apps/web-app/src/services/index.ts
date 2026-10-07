@@ -35,10 +35,9 @@ export { ConfigController } from './config-controller';
 export { MarketBoardService } from './market-board-service';
 
 // Extracted tool logic (WEB-REF-003)
-export { blendColors, findMatchingDyes, getContrastColor } from './mixer-blending-engine';
+export { findMatchingDyes, getContrastColor } from './mixer-blending-engine';
 export type { MixedColorResult } from './mixer-blending-engine';
 export { getHarmonyTypes } from './harmony-generator';
-export { buildMarketPanel } from './tool-panel-builders';
 export { applyDisplayOptions } from './display-options-helper';
 
 import { logger } from '@shared/logger';

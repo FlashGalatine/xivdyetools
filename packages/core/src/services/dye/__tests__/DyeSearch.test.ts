@@ -297,31 +297,45 @@ describe('DyeSearch', () => {
     });
   });
 
+  // BUG-138 (2026-10-04 deep-dive): `findClosestDye` returns `Dye | null`
+  // and vitest's `toBeDefined()` is `!== undefined`, so `expect(null)
+  // .toBeDefined()` passes — and the optional-chained follow-ups
+  // (`closest?.id).not.toBe(...)`, `?.category).not.toBe(...)`) pass on
+  // undefined too. Likewise `.every(...)`, `toBeLessThanOrEqual(n)` and
+  // `Array.isArray` all pass on `[]`. Every case below asserts a real
+  // result and pins the dye that must win (values from running the fixture;
+  // Facewear Red is an exact #FF0000 match, so it would win every red query
+  // below if the Facewear exclusion broke).
   describe('findClosestDye', () => {
     it('should find exact color match', () => {
       const closest = search.findClosestDye('#FFFFFF');
-      expect(closest).toBeDefined();
-      expect(closest?.hex).toBe('#FFFFFF');
+      expect(closest).not.toBeNull();
+      expect(closest!.name).toBe('Snow White');
+      expect(closest!.hex).toBe('#FFFFFF');
     });
 
     it('should find nearest color', () => {
       // Color close to wine red
       const closest = search.findClosestDye('#4D1919');
-      expect(closest).toBeDefined();
-      expect(closest?.name).toBe('Wine Red');
+      expect(closest).not.toBeNull();
+      expect(closest!.name).toBe('Wine Red');
     });
 
     it('should exclude specified IDs', () => {
+      // With Snow White excluded, the next-closest to white (dE2000 ≈ 22) wins.
       const closest = search.findClosestDye('#FFFFFF', { excludeIds: [5729] });
-      expect(closest).toBeDefined();
-      expect(closest?.id).not.toBe(5729);
+      expect(closest).not.toBeNull();
+      expect(closest!.id).not.toBe(5729);
+      expect(closest!.name).toBe('Sky Blue');
     });
 
     it('should exclude Facewear dyes', () => {
-      // Pure red should match Wine Red, not Facewear Red
+      // Facewear Red (#FF0000) would be an exact match; the closest real dye
+      // to pure red in this fixture is Rust Red (not Wine Red).
       const closest = search.findClosestDye('#FF0000');
-      expect(closest).toBeDefined();
-      expect(closest?.category).not.toBe('Facewear');
+      expect(closest).not.toBeNull();
+      expect(closest!.category).not.toBe('Facewear');
+      expect(closest!.name).toBe('Rust Red');
     });
 
     it('should return null for invalid hex', () => {
@@ -330,15 +344,27 @@ describe('DyeSearch', () => {
     });
 
     it('should handle 3-digit hex colors', () => {
+      // #FFF must expand to #FFFFFF and pick the same dye.
       const closest = search.findClosestDye('#FFF');
-      expect(closest).toBeDefined();
+      expect(closest).not.toBeNull();
+      expect(closest!.name).toBe('Snow White');
     });
   });
 
   describe('findDyesWithinDistance', () => {
     it('should find dyes within distance threshold', () => {
-      const results = search.findDyesWithinDistance('#FFFFFF', { maxDistance: 50 });
-      expect(results.length).toBeGreaterThan(0);
+      const results = search.findDyesWithinDistance('#FFFFFF', {
+        maxDistance: 50,
+        matchingMethod: 'ciede2000',
+      });
+      // dE2000 from white: Snow White 0, Sky Blue ≈22, Metallic Silver ≈29,
+      // Forest Green ≈45; Rust Red ≈66 and Wine Red ≈77 fall outside.
+      expect(results.map((d) => d.name)).toEqual([
+        'Snow White',
+        'Sky Blue',
+        'Metallic Silver',
+        'Forest Green',
+      ]);
     });
 
     it('should respect distance limit', () => {
@@ -348,7 +374,8 @@ describe('DyeSearch', () => {
         maxDistance: 10,
         matchingMethod: 'rgb',
       });
-      // Very tight distance should only find white or very close colors
+      // Very tight distance should only find white itself
+      expect(results.map((d) => d.name)).toEqual(['Snow White']);
       expect(
         results.every((d) => {
           const r = Math.abs(d.rgb.r - 255);
@@ -360,12 +387,32 @@ describe('DyeSearch', () => {
     });
 
     it('should apply limit parameter', () => {
-      const results = search.findDyesWithinDistance('#FFFFFF', { maxDistance: 200, limit: 2 });
-      expect(results.length).toBeLessThanOrEqual(2);
+      // Six dyes are within 200; the limit keeps the two closest.
+      const results = search.findDyesWithinDistance('#FFFFFF', {
+        maxDistance: 200,
+        limit: 2,
+        matchingMethod: 'ciede2000',
+      });
+      expect(results.map((d) => d.name)).toEqual(['Snow White', 'Sky Blue']);
+    });
+
+    it('should apply limit parameter on the rgb (k-d tree) path', () => {
+      const results = search.findDyesWithinDistance('#FFFFFF', {
+        maxDistance: 200,
+        limit: 2,
+        matchingMethod: 'rgb',
+      });
+      expect(results.map((d) => d.name)).toEqual(['Snow White', 'Sky Blue']);
     });
 
     it('should exclude Facewear dyes', () => {
-      const results = search.findDyesWithinDistance('#FF0000', { maxDistance: 100 });
+      const results = search.findDyesWithinDistance('#FF0000', {
+        maxDistance: 100,
+        matchingMethod: 'ciede2000',
+      });
+      // Facewear Red is distance 0 and would lead the list if not excluded.
+      expect(results.length).toBe(6);
+      expect(results[0].name).toBe('Rust Red');
       expect(results.every((d) => d.category !== 'Facewear')).toBe(true);
     });
 
@@ -409,14 +456,14 @@ describe('DyeSearch', () => {
     describe('findClosestDye fallback', () => {
       it('should find exact color match using linear search', () => {
         const closest = fallbackSearch.findClosestDye('#FFFFFF');
-        expect(closest).toBeDefined();
-        expect(closest?.hex).toBe('#FFFFFF');
+        expect(closest).not.toBeNull();
+        expect(closest!.name).toBe('Snow White');
       });
 
       it('should find nearest color using linear search', () => {
         const closest = fallbackSearch.findClosestDye('#4D1919');
-        expect(closest).toBeDefined();
-        expect(closest?.name).toBe('Wine Red');
+        expect(closest).not.toBeNull();
+        expect(closest!.name).toBe('Wine Red');
       });
 
       // core-data-14: `findClosestDye` returns `Dye | null`, and vitest's
@@ -429,12 +476,14 @@ describe('DyeSearch', () => {
         const closest = fallbackSearch.findClosestDye('#FFFFFF', { excludeIds: [5729] });
         expect(closest).not.toBeNull();
         expect(closest?.id).not.toBe(5729);
+        expect(closest!.name).toBe('Sky Blue');
       });
 
       it('should exclude Facewear dyes using linear search', () => {
         const closest = fallbackSearch.findClosestDye('#FF0000');
         expect(closest).not.toBeNull();
         expect(closest?.category).not.toBe('Facewear');
+        expect(closest!.name).toBe('Rust Red');
       });
 
       it('should return null for invalid hex in linear search', () => {
@@ -453,15 +502,23 @@ describe('DyeSearch', () => {
 
       it('should find closest to a mid-range color using linear search', () => {
         const closest = fallbackSearch.findClosestDye('#228B22');
-        expect(closest).toBeDefined();
-        expect(closest?.name).toBe('Forest Green');
+        expect(closest).not.toBeNull();
+        expect(closest!.name).toBe('Forest Green');
       });
     });
 
     describe('findDyesWithinDistance fallback', () => {
       it('should find dyes within distance threshold using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', { maxDistance: 50 });
-        expect(results.length).toBeGreaterThan(0);
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', {
+          maxDistance: 50,
+          matchingMethod: 'ciede2000',
+        });
+        expect(results.map((d) => d.name)).toEqual([
+          'Snow White',
+          'Sky Blue',
+          'Metallic Silver',
+          'Forest Green',
+        ]);
       });
 
       it('should respect distance limit using linear search', () => {
@@ -471,6 +528,7 @@ describe('DyeSearch', () => {
           maxDistance: 10,
           matchingMethod: 'rgb',
         });
+        expect(results.map((d) => d.name)).toEqual(['Snow White']);
         expect(
           results.every((d) => {
             const r = Math.abs(d.rgb.r - 255);
@@ -485,12 +543,18 @@ describe('DyeSearch', () => {
         const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', {
           maxDistance: 200,
           limit: 2,
+          matchingMethod: 'ciede2000',
         });
-        expect(results.length).toBeLessThanOrEqual(2);
+        expect(results.map((d) => d.name)).toEqual(['Snow White', 'Sky Blue']);
       });
 
       it('should exclude Facewear dyes using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FF0000', { maxDistance: 100 });
+        const results = fallbackSearch.findDyesWithinDistance('#FF0000', {
+          maxDistance: 100,
+          matchingMethod: 'ciede2000',
+        });
+        expect(results.length).toBe(6);
+        expect(results[0].name).toBe('Rust Red');
         expect(results.every((d) => d.category !== 'Facewear')).toBe(true);
       });
 
@@ -505,11 +569,21 @@ describe('DyeSearch', () => {
       });
 
       it('should sort results by distance using linear search', () => {
-        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', { maxDistance: 200 });
-        // Results should be sorted by distance - Snow White (exact match) should be first
-        if (results.length > 0) {
-          expect(results[0].hex).toBe('#FFFFFF');
-        }
+        const results = fallbackSearch.findDyesWithinDistance('#FFFFFF', {
+          maxDistance: 200,
+          matchingMethod: 'ciede2000',
+        });
+        // Full order, not just the head: the fixture's own order also starts
+        // with Snow White, so `results[0]` alone could not tell a sorted list
+        // from an unsorted one.
+        expect(results.map((d) => d.name)).toEqual([
+          'Snow White',
+          'Sky Blue',
+          'Metallic Silver',
+          'Forest Green',
+          'Rust Red',
+          'Wine Red',
+        ]);
       });
 
       it('should handle limit of 0 using linear search', () => {
@@ -527,91 +601,100 @@ describe('DyeSearch', () => {
   // Perceptual Matching Methods - Branch Coverage
   // ============================================================================
 
+  // BUG-138: every case below used to assert only `not.toBeNull()` or
+  // `Array.isArray(results)`, so a method that returned the wrong dye, or
+  // nothing at all, stayed green. Each now pins the answer.
   describe('perceptual matching methods', () => {
     describe('findClosestDye with perceptual methods', () => {
-      it('should find closest dye using rgb method', () => {
-        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'rgb' });
-        expect(closest).not.toBeNull();
-      });
-
-      it('should find closest dye using cie76 method', () => {
-        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'cie76' });
-        expect(closest).not.toBeNull();
-      });
-
-      it('should find closest dye using ciede2000 method', () => {
+      // Rust Red wins pure red under EVERY method, so a #FF0000 probe could
+      // not tell the methods apart: a dispatch that ignored `matchingMethod`,
+      // or a changed default, stayed green. With Rust Red excluded the
+      // methods split — ciede2000 alone ranks the grey Metallic Silver ahead
+      // of the dark Wine Red (the order its within-distance list below pins
+      // too). Facewear Red is still an exact match, so it must never win.
+      // Values from running the fixture.
+      const RUST_RED = 5741;
+      it.each([
+        ['ciede2000', 'Metallic Silver'],
+        ['rgb', 'Wine Red'],
+        ['cie76', 'Wine Red'],
+        ['oklab', 'Wine Red'],
+        ['redmean', 'Wine Red'],
+        ['distinguish', 'Wine Red'],
+      ] as const)('should find closest dye using %s method', (matchingMethod, expected) => {
         const closest = search.findClosestDye('#FF0000', {
+          excludeIds: [RUST_RED],
+          matchingMethod,
+        });
+        expect(closest).not.toBeNull();
+        expect(closest!.name).toBe(expected);
+      });
+
+      // A second split, between the two perceptual-space methods and the
+      // RGB/LAB-Euclidean ones, so oklab is told apart from ciede2000 too.
+      it.each([
+        ['ciede2000', 'Metallic Silver'],
+        ['oklab', 'Metallic Silver'],
+        ['rgb', 'Rust Red'],
+        ['cie76', 'Rust Red'],
+        ['redmean', 'Rust Red'],
+        ['distinguish', 'Rust Red'],
+      ] as const)('ranks #996633 by the %s method', (matchingMethod, expected) => {
+        expect(search.findClosestDye('#996633', { matchingMethod })?.name).toBe(expected);
+      });
+
+      it('uses the suite default (ciede2000) when no method is given', () => {
+        const options = { excludeIds: [RUST_RED] };
+        const byDefault = search.findClosestDye('#FF0000', options);
+        const ciede2000 = search.findClosestDye('#FF0000', {
+          ...options,
           matchingMethod: 'ciede2000',
         });
-        expect(closest).not.toBeNull();
-      });
+        const rgb = search.findClosestDye('#FF0000', { ...options, matchingMethod: 'rgb' });
 
-      it('should find closest dye using oklab method', () => {
-        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'oklab' });
-        expect(closest).not.toBeNull();
-      });
-
-      it('should find closest dye using redmean method', () => {
-        const closest = search.findClosestDye('#FF0000', { matchingMethod: 'redmean' });
-        expect(closest).not.toBeNull();
-      });
-
-      it('should find closest dye using distinguish method', () => {
-        const closest = search.findClosestDye('#FF0000', {
-          matchingMethod: 'distinguish',
-        });
-        expect(closest).not.toBeNull();
-      });
-
-      it('should find closest dye using the suite default explicitly', () => {
-        const closest = search.findClosestDye('#FF0000', {
-          matchingMethod: 'ciede2000',
-        });
-        expect(closest).not.toBeNull();
+        expect(byDefault).not.toBeNull();
+        expect(byDefault!.name).toBe('Metallic Silver');
+        expect(byDefault!.id).toBe(ciede2000!.id);
+        // The probe is one the methods disagree on, so this can fail
+        expect(byDefault!.id).not.toBe(rgb!.id);
       });
     });
 
     describe('findDyesWithinDistance with perceptual methods (k-d tree path)', () => {
-      it('should find dyes within distance using cie76 method', () => {
-        // Using k-d tree path (perceptual matching with candidates)
-        const results = search.findDyesWithinDistance('#FF0000', {
-          maxDistance: 100,
-          matchingMethod: 'cie76',
-        });
-        expect(Array.isArray(results)).toBe(true);
-      });
-
-      it('should find dyes within distance using ciede2000 method', () => {
-        const results = search.findDyesWithinDistance('#FF0000', {
-          maxDistance: 100,
-          matchingMethod: 'ciede2000',
-        });
-        expect(Array.isArray(results)).toBe(true);
-      });
-
-      it('should find dyes within distance using oklab method', () => {
-        const results = search.findDyesWithinDistance('#FF0000', {
-          maxDistance: 100,
-          matchingMethod: 'oklab',
-        });
-        expect(Array.isArray(results)).toBe(true);
-      });
-
-      it('should find dyes within distance using redmean method', () => {
-        const results = search.findDyesWithinDistance('#FF0000', {
-          maxDistance: 100,
-          matchingMethod: 'redmean',
-        });
-        expect(Array.isArray(results)).toBe(true);
-      });
-
-      it('should find dyes within distance using distinguish method', () => {
-        const results = search.findDyesWithinDistance('#FF0000', {
-          maxDistance: 100,
-          matchingMethod: 'distinguish',
-        });
-        expect(Array.isArray(results)).toBe(true);
-      });
+      // Ordered closest-first; the lists differ between methods because the
+      // metrics rank the mid-distance dyes differently.
+      it.each([
+        ['cie76', 100, ['Rust Red', 'Wine Red']],
+        [
+          'ciede2000',
+          100,
+          ['Rust Red', 'Metallic Silver', 'Wine Red', 'Snow White', 'Sky Blue', 'Forest Green'],
+        ],
+        [
+          'oklab',
+          100,
+          ['Rust Red', 'Wine Red', 'Metallic Silver', 'Snow White', 'Sky Blue', 'Forest Green'],
+        ],
+        // redmean is on a ~0-765 scale: Rust Red ≈264, Wine Red ≈296 from
+        // pure red, so a 100 radius (the old value) found nothing at all.
+        ['redmean', 300, ['Rust Red', 'Wine Red']],
+        [
+          'distinguish',
+          100,
+          ['Rust Red', 'Wine Red', 'Metallic Silver', 'Forest Green', 'Sky Blue', 'Snow White'],
+        ],
+        // rgb runs on the k-d tree: Rust Red ≈159, Wine Red ≈181.
+        ['rgb', 200, ['Rust Red', 'Wine Red']],
+      ] as const)(
+        'should find dyes within distance using %s method',
+        (matchingMethod, maxDistance, expected) => {
+          const results = search.findDyesWithinDistance('#FF0000', {
+            maxDistance,
+            matchingMethod,
+          });
+          expect(results.map((d) => d.name)).toEqual(expected);
+        },
+      );
 
       it('should apply limit with perceptual methods', () => {
         const results = search.findDyesWithinDistance('#FFFFFF', {
@@ -619,7 +702,7 @@ describe('DyeSearch', () => {
           matchingMethod: 'oklab',
           limit: 2,
         });
-        expect(results.length).toBeLessThanOrEqual(2);
+        expect(results.map((d) => d.name)).toEqual(['Snow White', 'Sky Blue']);
       });
 
       it('should sort results by perceptual distance', () => {
@@ -627,20 +710,26 @@ describe('DyeSearch', () => {
           maxDistance: 300,
           matchingMethod: 'oklab',
         });
-        // Results should be sorted (closest first)
-        if (results.length > 1) {
-          // First result should be Snow White (exact match)
-          expect(results[0].name).toBe('Snow White');
-        }
+        // The whole order, not just the head — the fixture's own order also
+        // starts with Snow White, so `results[0]` alone could not tell a
+        // sorted list from an unsorted one.
+        expect(results.map((d) => d.name)).toEqual([
+          'Snow White',
+          'Sky Blue',
+          'Metallic Silver',
+          'Forest Green',
+          'Rust Red',
+          'Wine Red',
+        ]);
       });
 
       it('should handle perceptual methods with small maxDistance', () => {
-        // Very small distance - may not find anything
+        // No fixture dye is within dE2000 1 of #123456.
         const results = search.findDyesWithinDistance('#123456', {
           maxDistance: 1,
           matchingMethod: 'ciede2000',
         });
-        expect(Array.isArray(results)).toBe(true);
+        expect(results).toEqual([]);
       });
     });
 
@@ -661,7 +750,7 @@ describe('DyeSearch', () => {
           maxDistance: 100,
           matchingMethod: 'cie76',
         });
-        expect(Array.isArray(results)).toBe(true);
+        expect(results.map((d) => d.name)).toEqual(['Rust Red', 'Wine Red']);
       });
 
       it('should find dyes using oklab method with linear search', () => {
@@ -669,7 +758,22 @@ describe('DyeSearch', () => {
           maxDistance: 100,
           matchingMethod: 'oklab',
         });
-        expect(Array.isArray(results)).toBe(true);
+        expect(results.map((d) => d.name)).toEqual([
+          'Rust Red',
+          'Wine Red',
+          'Metallic Silver',
+          'Snow White',
+          'Sky Blue',
+          'Forest Green',
+        ]);
+      });
+
+      it('should find dyes using rgb method with linear search', () => {
+        const results = fallbackSearch.findDyesWithinDistance('#FF0000', {
+          maxDistance: 200,
+          matchingMethod: 'rgb',
+        });
+        expect(results.map((d) => d.name)).toEqual(['Rust Red', 'Wine Red']);
       });
 
       it('should apply limit with linear search perceptual methods', () => {
@@ -678,7 +782,7 @@ describe('DyeSearch', () => {
           matchingMethod: 'oklab',
           limit: 2,
         });
-        expect(results.length).toBeLessThanOrEqual(2);
+        expect(results.map((d) => d.name)).toEqual(['Snow White', 'Sky Blue']);
       });
     });
   });

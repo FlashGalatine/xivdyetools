@@ -13,6 +13,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ExtractorTool } from '../extractor-tool';
+import { ImageZoomController } from '../image-zoom-controller';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
@@ -107,6 +108,15 @@ vi.mock('@services/dye-service-wrapper', () => ({
 vi.mock('@services/index', () => ({
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
+  /**
+   * Core's Universalis client. The tool never touches it; it is here for the
+   * BUG-090 test, which runs the REAL MarketBoardService (that module reaches
+   * core through this barrel) over a core answering the way it does during an
+   * outage.
+   */
+  APIService: {
+    getInstance: vi.fn(),
+  },
   ToastService: {
     show: vi.fn(),
     error: vi.fn(),
@@ -243,7 +253,6 @@ vi.mock('@services/index', () => ({
  */
 vi.mock('@services/indexeddb-service', () => ({
   indexedDBService: {
-    get: vi.fn().mockResolvedValue(null),
     set: vi.fn().mockResolvedValue(true),
     delete: vi.fn().mockResolvedValue(undefined),
   },
@@ -486,21 +495,9 @@ describe('ExtractorTool', () => {
       expect(dropZone()).not.toBeNull();
     });
 
-    it('applies several keys in one call', async () => {
-      tool = mount();
-
-      expect(() =>
-        tool!.setConfig({
-          vibrancyBoost: false,
-          maxColors: 6,
-          matchingMethod: 'oklab',
-          preventDuplicates: false,
-          dragThreshold: 8,
-          sampleAreaSize: 4,
-        })
-      ).not.toThrow();
-      await flush();
-    });
+    // Several keys in one call: see "several sidebar keys in one call" under
+    // "with a decoded image" — each key is read back off what it changes, and
+    // most of them only show once there is an image.
   });
 
   // ==========================================================================
@@ -1120,6 +1117,85 @@ describe('ExtractorTool', () => {
 
         const seg = extractedSegments()[0];
         expect(seg.title).toMatch(/^#[0-9A-F]{6} · \d+% · Dye-\d+$/);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // BUG-077 (2026-10-04 deep-dive): the multi-key setConfig test asserted
+    // only that the call did not throw, so any one key could stop applying
+    // unnoticed. Each key is read back off what it changes.
+    // ------------------------------------------------------------------------
+
+    describe('several sidebar keys in one call', () => {
+      const ALL_KEYS = {
+        vibrancyBoost: false,
+        maxColors: 6,
+        matchingMethod: 'oklab',
+        preventDuplicates: false,
+        dragThreshold: 8,
+        sampleAreaSize: 4,
+      } as const;
+
+      /**
+       * Vibrancy is read off the tool: K-means++ is seeded at random, so on
+       * four equal clusters the order it would restore is not fixed.
+       */
+      const vibrancyOf = (t: ExtractorTool): boolean =>
+        (t as unknown as { vibrancyBoost: boolean }).vibrancyBoost;
+
+      const expectEveryKeyApplied = (t: ExtractorTool): void => {
+        expect(countLabel().textContent).toBe(
+          `matcher.rollCountOf: ${extractedSegments().length}/6`
+        );
+        expect(shareButton().shareParams.algo).toBe('oklab');
+        const lastLookup = mockFindClosestDye.mock.calls.at(-1) as
+          [string, { matchingMethod?: string }?] | undefined;
+        expect(lastLookup?.[1]?.matchingMethod).toBe('oklab');
+        expect(vibrancyOf(t)).toBe(false);
+        // Deduplication off: a pick of pure red takes the dye the red slot
+        // already holds instead of being moved to a free one
+        const nearest = mockFindClosestDye('#FF0000') as unknown as { itemID: number };
+        commit('#FF0000');
+        expect(cardData(resultCards().length - 1).dye.itemID).toBe(nearest.itemID);
+      };
+
+      it('applies every key to a loaded image, re-extracting for the colour count', async () => {
+        const setDrag = vi.spyOn(ImageZoomController.prototype, 'setDragThreshold');
+        const setArea = vi.spyOn(ImageZoomController.prototype, 'setSampleAreaSize');
+        tool = mount();
+        await loadImage();
+        ctx.getImageData.mockClear();
+
+        tool.setConfig({ ...ALL_KEYS });
+        // Max Colors re-clusters, which takes the place of the re-resolve the
+        // method, dedupe and vibrancy keys ask for — so they must still land
+        await vi.waitFor(() => expect(ctx.getImageData).toHaveBeenCalled());
+        await waitForIdle();
+
+        // The live controller, not only the next one
+        expect(setDrag).toHaveBeenLastCalledWith(8);
+        expect(setArea).toHaveBeenLastCalledWith(4);
+        expectEveryKeyApplied(tool);
+      });
+
+      it('holds every key sent before an image, through a rebuild, for the image that follows', async () => {
+        const setDrag = vi.spyOn(ImageZoomController.prototype, 'setDragThreshold');
+        const setArea = vi.spyOn(ImageZoomController.prototype, 'setSampleAreaSize');
+        tool = mount();
+
+        tool.setConfig({ ...ALL_KEYS });
+        // A language switch rebuilds the workspace, and the zoom controller
+        // with it: the new one is seeded from what the tool stored, not from
+        // the call that has long since returned
+        setDrag.mockClear();
+        setArea.mockClear();
+        tool.update();
+        expect(setDrag).toHaveBeenLastCalledWith(8);
+        expect(setArea).toHaveBeenLastCalledWith(4);
+
+        await loadImage();
+
+        expectEveryKeyApplied(tool);
       });
     });
 
@@ -1939,13 +2015,15 @@ describe('ExtractorTool', () => {
      */
     describe('image privacy (FINDING-009)', () => {
       it('does not restore an image an earlier version left in IndexedDB', async () => {
+        // IndexedDBService has no single-key read any more (OPT-009 moved the
+        // price cache to entries()); the module's spies stay the sentinel.
         const { indexedDBService } = await import('@services/indexeddb-service');
-        vi.mocked(indexedDBService.get).mockResolvedValue('data:image/png;base64,AAAA');
 
         tool = mount();
         for (let i = 0; i < 8; i++) await flush();
 
-        expect(indexedDBService.get).not.toHaveBeenCalled();
+        expect(indexedDBService.set).not.toHaveBeenCalled();
+        expect(indexedDBService.delete).not.toHaveBeenCalled();
         expect(resultCards().length).toBe(0);
       });
 
@@ -1965,7 +2043,6 @@ describe('ExtractorTool', () => {
       it('drops a legacy localStorage image instead of restoring it', async () => {
         const { indexedDBService } = await import('@services/indexeddb-service');
         const { StorageService } = await import('@services/index');
-        vi.mocked(indexedDBService.get).mockResolvedValue(null);
         vi.mocked(StorageService.getItem).mockImplementation((key: string) =>
           key === 'v3_matcher_image' ? ('data:image/png;base64,AAAA' as never) : (null as never)
         );
@@ -2111,6 +2188,94 @@ describe('ExtractorTool', () => {
         };
         expect(first.data.price).toBe(1234);
         expect(first.data.marketServer).toBe('Jenova');
+      });
+
+      /**
+       * BUG-090 (2026-10-04 deep-dive): the failure codes above are reached by
+       * mocking the service to throw, which the real one never does -- on a
+       * Universalis proxy outage core resolves with an empty Map and the
+       * service records `lastFetchOutcome` 'error'. This drives the REAL
+       * MarketBoardService over a core that answers the way it does during an
+       * outage, so the badge has to come from the outcome.
+       */
+      it('shows its market error badge when the board is unreachable (BUG-090)', async () => {
+        const { MarketBoardService, APIService } = await import('@services/index');
+        const { ConfigController: RealConfigController } =
+          await import('@services/config-controller');
+        const actual = await vi.importActual<typeof import('@services/market-board-service')>(
+          '@services/market-board-service'
+        );
+        const coreDuringOutage = {
+          // The Map-only call is what core has always answered with: an empty Map
+          getPricesForDataCenter: vi.fn(async () => new Map()),
+          getPricesForDataCenterWithOutcome: vi.fn(async () => ({
+            prices: new Map(),
+            outcome: 'error' as const,
+          })),
+        };
+        const sharedMock = MarketBoardService.getInstance();
+        const priorMarket = { ...RealConfigController.getInstance().getConfig('market') };
+        vi.mocked(APIService.getInstance).mockReturnValue(coreDuringOutage as never);
+        RealConfigController.getInstance().setConfig('market', { showPrices: true });
+        actual.MarketBoardService.resetInstance();
+        vi.mocked(MarketBoardService.getInstance).mockReturnValue(
+          actual.MarketBoardService.getInstance() as never
+        );
+        try {
+          tool = mount();
+          await loadImage();
+          await marketChanged({ showPrices: true });
+          for (let i = 0; i < 4; i++) await flush();
+
+          const calls =
+            coreDuringOutage.getPricesForDataCenter.mock.calls.length +
+            coreDuringOutage.getPricesForDataCenterWithOutcome.mock.calls.length;
+          expect(calls, 'the fetch really reached core').toBeGreaterThan(0);
+          const errors = Array.from(resultCards()).map(
+            (c) => (c as unknown as { data: { marketError?: string } }).data.marketError
+          );
+          expect(errors.length).toBeGreaterThan(0);
+          // No status survives core's outcome, so the generic code -- not a
+          // guessed HTTP status or a claim about the connection
+          expect(new Set(errors)).toEqual(new Set(['EUNK']));
+        } finally {
+          tool?.destroy();
+          tool = null;
+          vi.mocked(MarketBoardService.getInstance).mockReturnValue(sharedMock);
+          actual.MarketBoardService.resetInstance();
+          RealConfigController.getInstance().setConfig('market', priorMarket);
+        }
+      });
+
+      /**
+       * Sprint 27 review: a new roll's cards were built with the PREVIOUS
+       * fetch's badge and kept it until their own fetch answered -- the
+       * badge is cleared only once that fetch starts, after the cards exist.
+       * A rebuild that fetches nothing keeps it (the test above that).
+       */
+      it("does not stamp the last fetch's error on a new roll's cards", async () => {
+        const svc = await withPricesOn();
+        // A priced card carries no badge; an earlier test leaves every dye priced
+        vi.mocked(svc.getPricesView).mockReturnValue(new Map());
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(new Error('kaboom'));
+        await marketChanged({ showPrices: true });
+        for (let i = 0; i < 4; i++) await flush();
+        const errors = () =>
+          Array.from(resultCards()).map(
+            (c) => (c as unknown as { data: { marketError?: string } }).data.marketError
+          );
+        expect(errors(), 'the outage badged the first roll').toContain('EUNK');
+
+        // The new roll's own fetch has not answered yet
+        vi.mocked(svc.fetchPricesForDyes).mockImplementationOnce(() => new Promise(() => {}));
+        const fetchesBefore = vi.mocked(svc.fetchPricesForDyes).mock.calls.length;
+        commit('#123456');
+
+        expect(vi.mocked(svc.fetchPricesForDyes).mock.calls.length).toBe(fetchesBefore + 1);
+        expect(errors().length).toBeGreaterThan(0);
+        expect(errors().every((code) => code === undefined)).toBe(true);
       });
     });
 

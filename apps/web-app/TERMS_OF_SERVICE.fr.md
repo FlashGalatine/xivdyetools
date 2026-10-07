@@ -15,8 +15,8 @@ vous coûte quoi que ce soit à abandonner.
 ## Ce que fait le site
 
 Dix outils fonctionnent dans votre navigateur : l'Extracteur de palette, l'Explorateur d'harmonies,
-la Comparaison, le Constructeur de Dégradé, le Mélangeur de Teintures, la Vérification
-d'accessibilité, les Suggestions Budget, le Nuancier, et le navigateur de Palettes Prédéfinies
+la Comparaison de Teintures, le Constructeur de Dégradé, le Mélangeur de Teintures, la Vérification
+d'accessibilité, les Suggestions Budget, le Nuancier, le Lecteur de mirages et les Préréglages
 communautaires. À leurs côtés, le site peut afficher les prix du tableau des ventes, lire un fichier
 `.chara` que vous déposez pour nommer l'équipement d'un mirage, et vous permettre d'enregistrer des
 palettes et des collections sur votre propre appareil.
@@ -27,7 +27,7 @@ exceptions sont listées dans [`PRIVACY.md`](PRIVACY.md).
 ## Comptes
 
 Vous n'avez jamais besoin de compte pour utiliser les outils de couleur. Vous n'en avez besoin que
-pour soumettre, modifier ou voter sur des palettes prédéfinies communautaires.
+pour soumettre, modifier ou voter sur des préréglages communautaires.
 
 - La connexion se fait via Discord ou XIVAuth. Nous ne voyons ni ne stockons jamais de mot de
   passe.
@@ -37,31 +37,31 @@ pour soumettre, modifier ou voter sur des palettes prédéfinies communautaires.
   identifiant XIVAuth si aucun personnage vérifié n'est disponible lors de votre connexion, comme
   décrit dans le Guide de confidentialité. Si votre compte XIVAuth est lié
   à Discord, l'enregistrement contient aussi cet identifiant utilisateur Discord. Le nom figurant
-  dans l'enregistrement est affiché comme auteur de chaque palette prédéfinie que vous publiez.
+  dans l'enregistrement est affiché comme auteur de chaque préréglage que vous publiez.
 - Votre session est un jeton conservé dans votre navigateur. Effacer les données de site de votre
   navigateur vous déconnecte.
 - Vous êtes responsable de ce qui se passe sous votre compte. Si vous pensez que quelqu'un d'autre
   y a accès, révoquez l'accès de l'application auprès de votre fournisseur et informez-nous.
 - Nous pouvons suspendre ou supprimer un compte qui enfreint ces conditions.
 
-## Palettes prédéfinies communautaires
+## Préréglages communautaires
 
 ### Votre contenu reste le vôtre
 
-Vous conservez la propriété de chaque palette prédéfinie que vous soumettez. En soumettant une
-palette prédéfinie, vous nous accordez une licence non exclusive et libre de redevances pour
+Vous conservez la propriété de chaque préréglage que vous soumettez. En soumettant un
+préréglage, vous nous accordez une licence non exclusive et libre de redevances pour
 utiliser, afficher et distribuer ce contenu au sein de l'écosystème XIV Dye Tools — le site, le bot
 Discord, l'API, et les aperçus de lien. Cette licence existe pour que nous puissions montrer votre
-palette prédéfinie à d'autres joueurs ; ce n'est pas un transfert de propriété et nous ne
-revendiquons aucun droit de la vendre ou de la concéder sous licence à un tiers.
+préréglage à d'autres joueurs ; ce n'est pas un transfert de propriété et nous ne
+revendiquons aucun droit de le vendre ou de le concéder sous licence à un tiers.
 
 Ne soumettez que du contenu que vous avez le droit de soumettre.
 
 ### Ce que nous vous demandons
 
 Ne soumettez rien d'offensant, de harcelant, de sexuellement explicite, de haineux, de trompeur, de
-publicitaire, ou qui porte atteinte aux droits d'autrui. N'utilisez pas le nom ou la description de
-la palette prédéfinie comme un canal pour quoi que ce soit sans rapport avec les teintures.
+publicitaire, ou qui porte atteinte aux droits d'autrui. N'utilisez pas le nom ou la description du
+préréglage comme un canal pour quoi que ce soit sans rapport avec les teintures.
 
 ### Modération
 
@@ -82,7 +82,7 @@ chose que vous avez soumis :
 
 1. Rejoignez le Discord : <https://discord.gg/rzxDHNr6Wv>
 2. Posez la question dans **#dyetools-issues-and-suggestions**, ou envoyez un DM à « Flash Galatine »
-3. Indiquez votre identifiant utilisateur Discord et le nom de la palette prédéfinie
+3. Indiquez votre identifiant utilisateur Discord et le nom du préréglage
 
 Les appels sont examinés sous 7 jours. Pour faire supprimer votre enregistrement de compte et tout
 ce qui a été soumis sous celui-ci, consultez [`PRIVACY.md`](PRIVACY.md).
@@ -111,7 +111,7 @@ Certaines fonctionnalités vous redirigent vers des services que nous n'exploito
 - Les **liens d'objet** sur une pièce de mirage ouvrent cet objet sur Garland Tools, FFXIV
   Teamcraft, Gamer Escape, Mirapri ou le Lodestone ; les liens sur une fiche de teinture ouvrent
   Universalis, Garland Tools, FFXIV Teamcraft ou Saddlebag Exchange.
-- Le **lien d'exemple** d'une palette prédéfinie communautaire est choisi par son auteur, pas par
+- Le **lien d'exemple** d'un préréglage communautaire est choisi par son auteur, pas par
   nous. Il mène à une page d'un site tiers tel qu'Eorzea Collection, Reddit ou pixiv.
 
 Une fois que vous suivez l'un de ces liens, vous êtes sur le site de quelqu'un d'autre, soumis à ses
@@ -173,9 +173,9 @@ Continuer à utiliser le site après un changement signifie que vous l'acceptez.
 
 Vous pouvez arrêter d'utiliser le site quand vous le souhaitez. Nous pouvons suspendre ou mettre fin
 à votre accès aux fonctionnalités communautaires si vous enfreignez ces conditions ou perturbez le
-service pour les autres. Les palettes prédéfinies que vous avez publiées peuvent rester en ligne
-après votre départ, sous la licence ci-dessus — demandez-nous si vous voulez qu'elles soient
-supprimées.
+service pour les autres. Les préréglages que vous avez publiés peuvent rester en ligne
+après votre départ, sous la licence ci-dessus — demandez-nous si vous voulez qu'ils soient
+supprimés.
 
 ## Droit applicable
 

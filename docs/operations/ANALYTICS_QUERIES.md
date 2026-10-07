@@ -167,7 +167,7 @@ Rows written before 2026-08-29 have `blob5 = ''`, `blob6..8 = ''` and `double2 =
 | `blob2` | Discord user id (pseudonymous; use only for `count(DISTINCT blob2)`) |
 | `blob3` | `guild` \| `dm` |
 | `blob4` | `1` \| `0` answered — the user got an answer to what they asked (see query 3: not the same bit as `blob5 = 'ok'`) |
-| `blob5` | outcome class — the most significant thing of ours that broke, or `ok`: `ok`, `rejected` (presets-api / Universalis answered with its own 4xx, relayed to the user), `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input` (the uploaded image or `.chara` file could not be read), `render`, `unknown` |
+| `blob5` | outcome class — the most significant thing of ours that broke, or `ok`: `ok`, `rejected` (presets-api / Universalis answered with its own 4xx — not 408 or 429 — relayed to the user), `rate_limited`, `upstream_universalis`, `upstream_presets`, `image_input` (the uploaded image or `.chara` file could not be read), `render`, `unknown` |
 | `blob6` | subcommand (`info`, `browse`, `find`, …) or button kind (`copy_hex`, `copy_rgb`, `copy_hsv`); subcommand groups are `<group>_<sub>` (`favorite_add`) |
 | `blob7` | locale bucket `en ja de fr ko zh other` |
 | `blob8` | `command` \| `button` |
@@ -217,10 +217,11 @@ while users are still getting answers. How a row gets its class (`services/comma
 
 - **Validation replies are `ok`** — "no matches", a missing option, a `.chara` slot that is not
   in the file: the handler answered from its own checks, nothing of ours failed.
-- **`rejected`, answered** — a **4xx other than 429 from presets-api / Universalis** (not the
-  owner, duplicate vote or preset, unknown item / world, validation) that the handler relayed as
-  the service's own reply. `429`, `5xx` and a network/binding failure are `upstream_*`, not
-  answered.
+- **`rejected`, answered** — a **4xx other than 408 and 429 from presets-api / Universalis** (not
+  the owner, duplicate vote or preset, unknown item / world, validation) that the handler relayed
+  as the service's own reply. `408` (a timeout — universalis-client raises one for its own 10 s
+  abort), `429`, `5xx` and a network/binding failure are `upstream_*`, not answered — so a
+  Universalis stall lowers the answered rate and the `/stats` success rate.
 - **A lost card is `render`**: bot-logic's `GENERATION_FAILED` and a resvg/PNG failure, not
   answered (an error embed) — except `/dye`, whose card commands degrade to a text embed: those
   rows are `render` **and answered** (`served`). This is how a renderer outage on the busiest

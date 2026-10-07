@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { CollectionService } from '../collection-service';
 import { LanguageService } from '../language-service';
+import { StorageService } from '../storage-service';
 
 // Mock localStorage
 const localStorageMock = (() => {
@@ -440,6 +441,34 @@ describe('CollectionService', () => {
       expect(CollectionService.getCollectionByName('Valid One')?.dyes).toEqual([10]);
       expect(CollectionService.getCollectionByName('Valid Two')?.dyes).toEqual([20]);
     });
+
+    // BUG-118: the BUG-024 guard read `collection.name` before the per-record
+    // try, so a JSON `null` element threw a TypeError to the outer catch —
+    // `parseFailed`, success:false, every record after it abandoned, and the
+    // ones before it already persisted.
+    it('skips a null collection element and keeps importing the rest (BUG-118)', () => {
+      const importData = JSON.stringify({
+        version: '2.0.0',
+        exportedAt: new Date().toISOString(),
+        type: 'xivdyetools-collection',
+        data: {
+          collections: [
+            { id: 'a-1', name: 'Before Null', dyes: [1] },
+            null,
+            { id: 'b-1', name: 'After Null', dyes: [2] },
+          ],
+        },
+      });
+
+      const result = CollectionService.importData(importData);
+
+      expect(result.errors.some((e) => e.code === 'parseFailed')).toBe(false);
+      expect(result.errors).toEqual([{ code: 'skippedInvalid', name: undefined }]);
+      expect(result.collectionsImported).toBe(2);
+      expect(result.success).toBe(true);
+      expect(CollectionService.getCollectionByName('Before Null')?.dyes).toEqual([1]);
+      expect(CollectionService.getCollectionByName('After Null')?.dyes).toEqual([2]);
+    });
   });
 
   // ==========================================================================
@@ -544,6 +573,57 @@ describe('CollectionService', () => {
       const collection = CollectionService.getCollectionByName('Old List');
       expect(collection?.kind).toBe('palette');
       expect(collection?.dyes).toEqual([1, 2]);
+    });
+
+    // BUG-117: `initialized` was set only after the loads, and a migration
+    // save always notifies — notify → getCollections() → initialize() →
+    // reload the still-unmigrated storage → migrate → save → notify … When
+    // the write did not stick (quota full), that recursion never ended and
+    // the first CollectionService call threw RangeError.
+    it('survives a failed migration save without re-entering initialize (BUG-117)', () => {
+      localStorageMock.setItem(
+        'xivdyetools_collections',
+        JSON.stringify({
+          version: '1.0.0',
+          collections: [
+            {
+              id: 'legacy-q',
+              name: 'Quota List',
+              dyes: [1, 2],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+          lastModified: new Date().toISOString(),
+        })
+      );
+      localStorageMock.setItem(
+        'xivdyetools_favorites',
+        JSON.stringify({
+          version: '1.0.0',
+          favorites: [5729, 3],
+          lastModified: new Date().toISOString(),
+        })
+      );
+      // Seeded above with the real write; from here every save is rejected
+      const setItem = vi.spyOn(StorageService, 'setItem').mockReturnValue(false);
+      try {
+        expect(() => CollectionService.__reloadForTesting()).not.toThrow();
+
+        // The session keeps the migrated in-memory copy…
+        const collection = CollectionService.getCollectionByName('Quota List');
+        expect(collection?.kind).toBe('palette');
+        expect(collection?.dyes).toEqual([1, 2]);
+        expect(CollectionService.getFavorites()).not.toContain(5729);
+        expect(CollectionService.getFavorites()).toContain(3);
+        // …having tried each migration save exactly once
+        expect(setItem.mock.calls.map(([key]) => key)).toEqual([
+          'xivdyetools_favorites',
+          'xivdyetools_collections',
+        ]);
+      } finally {
+        setItem.mockRestore();
+      }
     });
 
     // WEB-6 (2026-08-21 security audit): import/persistence paths validated

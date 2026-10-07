@@ -149,7 +149,7 @@ export type {
 } from './a11y-card.js';
 
 // Contrast card (13A/13B/13C·1 — the pair count routes the frame)
-export { generateContrastCard, contrastRatio } from './contrast-card.js';
+export { generateContrastCard, contrastRatio, formatContrastRatio } from './contrast-card.js';
 export type {
   ContrastPair,
   /** @public */ ContrastCardLabels,
@@ -203,14 +203,17 @@ export type {
 export { generatePresetSwatch, CATEGORY_DISPLAY } from './preset-swatch.js';
 export type { /** @public */ PresetSwatchOptions } from './preset-swatch.js';
 
-// Budget Ledger (13G — tier groups carry the single price)
+// Budget Ledger (13G — tier groups carry the single price). The six geometry
+// constants are the card's own heights; discord-worker's budget calculator
+// spends the 350 px wall with them, so its row packing follows the card
+// (REFACTOR-003).
 export {
   generateBudgetLedger,
   LEDGER_HEADER_H,
   LEDGER_COLHEAD_H,
-  /** @public */
+  LEDGER_GROUP_H,
+  LEDGER_ROW_H,
   LEDGER_FOOTER_H,
-  /** @public */
   LEDGER_FOOTER_2LINE_H,
 } from './budget-ledger.js';
 export type {

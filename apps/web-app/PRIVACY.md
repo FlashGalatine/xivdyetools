@@ -6,8 +6,8 @@
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
-Comparison, Gradient, Mixer, Accessibility checker, Budget finder, Swatch Matcher and Glamour
-Reader — do their work on your device. Nothing you upload, pick or type is sent anywhere unless
+Dye Comparison, Gradient Builder, Dye Mixer, Accessibility Checker, Budget Suggestions, Swatch
+Matcher and Glamour Reader — do their work on your device. Nothing you upload, pick or type is sent anywhere unless
 a section below says so,
 and the sections below are the complete list.
 
@@ -19,7 +19,8 @@ and the sections below are the complete list.
   tab or reload.
 - The Palette Extractor says the same thing where you pick a file — "Images are read in your
   browser and never uploaded", beside a padlock. That notice is plain text, not a link; this
-  document is reached from **About → Privacy**.
+  document is reached from **About XIV Dye Tools** (a button in the header) → **POLICIES** →
+  **Privacy**.
 - **One exception, and only if you choose it.** When you submit or edit a community preset, you
   can attach an optional **preview image** to it. That image is uploaded to `api.xivdyetools.app`,
   converted to WebP, stored with the preset, and shown publicly from `shots.xivdyetools.app` once a
@@ -58,7 +59,8 @@ site-data controls clear all of it. Inside the app, each of these clears one par
 - **Advanced Settings → Clear Saved Palettes** deletes your saved palettes.
 - **Manage Collections → Delete Collection** deletes one saved collection.
 - Signing out deletes the session token.
-- "Reset all" in the Glamour list deletes the rewritten lines for that outfit.
+- "Reset all" in the Glamour list deletes the rewritten line of every piece in that list. Each
+  line is kept per piece of gear, so another outfit that shares a piece loses that line too.
 
 `IndexedDB` holds one thing: a cache of market-board prices already fetched, so the same lookup is
 not repeated. It holds no images — an earlier version of the app kept your last extractor image
@@ -149,8 +151,8 @@ presets service (`api.xivdyetools.app`) — except the posts in our Discord serv
   waiting for review, with their author names, in the moderation channel. The submission-log
   channel gets each preset published without review, with its author name, and a note naming the
   preset when a moderator approves, rejects or reverts one, with the reason for a rejection or a
-  revert. Posts made since the *Last updated* date above do not show your Discord user ID; older
-  posts may. The posts
+  revert. Posts made after 2026-10-05 do not show your Discord user ID; posts made on or before
+  that date may. The posts
   stay in those channels, under [Discord's Privacy Policy](https://discord.com/privacy), until a
   moderator deletes them or until you request deletion.
 - **Failed notifications.** If a preset cannot be posted to our Discord server, we keep a record

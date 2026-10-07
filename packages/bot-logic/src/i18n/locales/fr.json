@@ -229,6 +229,7 @@
     "randomTitle": "Préréglage aléatoire",
     "notEnoughDyes": "Veuillez fournir au moins 3 teintures pour votre préréglage.",
     "invalidDye": "Une des teintures spécifiées n'a pas été trouvée.",
+    "repeatedDye": "**{dye}** figure plusieurs fois dans ce préréglage. Chaque teinture ne peut être utilisée qu'une seule fois.",
     "duplicateExists": "Préréglage similaire existant",
     "duplicateVoted": "Votre vote a été ajouté au préréglage existant.",
     "submitted": "Préréglage soumis !",
@@ -607,7 +608,16 @@
     },
     "swatchTitle": "Nuancier du personnage",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
-    "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier.",
+    "swatchSlotMissing": "\"{slot}\" n’est pas un emplacement actif dans ce fichier.",
+    "swatchSlotName": {
+      "skin": "Peau",
+      "hair": "Cheveux",
+      "highlights": "Reflets",
+      "eyes": "Yeux",
+      "lip": "Lèvres",
+      "facepaint": "Maquillage",
+      "limbal": "Tatouage / Contour de l’iris"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "Mirage",
     "glamourPieces_one": "{n} pièce teinte",
@@ -1143,10 +1153,10 @@
               "description": "Nombre de correspondances par défaut pour /extractor color (1-10)"
             },
             "clan": {
-              "description": "Clan par défaut pour /swatch (ex. Hyurois, Raen)"
+              "description": "Votre clan (enregistré avec vos préférences ; aucune commande ne l'utilise encore)"
             },
             "gender": {
-              "description": "Genre par défaut pour /swatch"
+              "description": "Votre genre (enregistré avec vos préférences ; aucune commande ne l'utilise encore)"
             },
             "world": {
               "description": "Monde/centre de données par défaut pour les prix"

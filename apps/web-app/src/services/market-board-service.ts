@@ -16,9 +16,8 @@
 
 import { APIService, WorldService } from '@services/index';
 import { ConfigController } from '@services/config-controller';
-import { formatGil } from '@shared/format';
 import { logger } from '@shared/logger';
-import { getMarketItemID, isConsolidationActive } from '@xivdyetools/core';
+import { getMarketItemID, isConsolidationActive, type PriceBatchOutcome } from '@xivdyetools/core';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type { MarketConfig } from '@shared/tool-config-types';
 
@@ -44,9 +43,24 @@ export type MarketBoardEventType =
 /**
  * Outcome of the most recent price fetch. `ok` means the returned Map is the
  * answer; `nothing-to-fetch` and `superseded` mean an empty Map says nothing
- * about the market's availability; only `error` means the board is unreachable.
+ * about the market's availability; only `error` means the board is unreachable
+ * (wholly, or for part of the lookup -- whatever prices did arrive are still
+ * in the Map).
  */
 export type PriceFetchOutcome = 'ok' | 'nothing-to-fetch' | 'superseded' | 'error';
+
+/**
+ * Core's batch outcome as this service reports it. BUG-090 (2026-10-04
+ * deep-dive): `partial` -- a request failed but the Map is not empty (cached
+ * prices, or another chunk's) -- is an `error` too, because some dyes the
+ * caller asked about have no price for a reason other than the board having
+ * no listings; the prices that did come back are still returned and cached.
+ * Budget's offline verdict and Harmony's strip therefore show beside the
+ * prices that are there; telling the two apart would need its own copy.
+ */
+function toFetchOutcome(outcome: PriceBatchOutcome): PriceFetchOutcome {
+  return outcome === 'ok' ? 'ok' : 'error';
+}
 
 /**
  * MarketBoardService - Centralized Market Board price data management
@@ -314,10 +328,12 @@ export class MarketBoardService extends EventTarget {
    *   Board toggle; the result is returned to the caller only. BUG-079
    *   (2026-10-04 deep-dive): Budget, whose ledger IS prices, used to switch
    *   the toggle on (and persist it) for every tool to get past the gate. The
-   *   shared cache and the 'prices-updated' event stay out of it because
-   *   Mixer and Comparison render cached prices gated only on their own
-   *   showPrice display flag. Request versioning and `lastFetchOutcome` stay
-   *   shared, so a server change still supersedes the call.
+   *   shared cache and the 'prices-updated' event stay out of it: they are
+   *   the toggle's opted-in path — tools read the cache at render time and
+   *   listeners copy the event's prices into their own maps — so a fetch made
+   *   with the toggle off must not land there. Request versioning and
+   *   `lastFetchOutcome` stay shared, so a server change still supersedes the
+   *   call.
    * @returns Map of itemID to PriceData
    */
   async fetchPricesForDyes(
@@ -366,11 +382,12 @@ export class MarketBoardService extends EventTarget {
       // Fetch deduplicated market item IDs
       const itemIDs = Array.from(marketIdToOriginals.keys());
 
-      // Use batch API to fetch all prices in a single request
-      const batchResults = await this.apiService.getPricesForDataCenter(
-        itemIDs,
-        this.selectedServer
-      );
+      // Use batch API to fetch all prices in a single request.
+      // BUG-090 (2026-10-04 deep-dive): core never rejects -- an unreachable
+      // board resolves with an empty (or short) Map, like a board with no
+      // listings -- so ask for the outcome alongside the prices.
+      const { prices: batchResults, outcome: batchOutcome } =
+        await this.apiService.getPricesForDataCenterWithOutcome(itemIDs, this.selectedServer);
 
       // Check if this response is still current (no newer request was made)
       if (requestVersion !== this.requestVersion) {
@@ -412,7 +429,7 @@ export class MarketBoardService extends EventTarget {
       this.emitEvent('fetch-completed', { dyeCount: result.size });
       logger.info(`[MarketBoardService] Fetched prices for ${result.size} dyes`);
 
-      this._lastFetchOutcome = 'ok';
+      this._lastFetchOutcome = toFetchOutcome(batchOutcome);
 
       return result;
     } catch (error) {
@@ -483,19 +500,4 @@ export class MarketBoardService extends EventTarget {
     this.priceData.clear();
     logger.info('[MarketBoardService] Destroyed');
   }
-}
-
-// ============================================================================
-// Convenience Exports
-// ============================================================================
-
-/**
- * Format a gil price for display.
- *
- * Routed through `formatGil` rather than core's `APIService.formatPrice`,
- * which hardcodes the English unit ("1,000 gil") and the browser's grouping
- * locale. `formatGil` takes both from the app language.
- */
-export function formatPrice(price: number): string {
-  return formatGil(price);
 }

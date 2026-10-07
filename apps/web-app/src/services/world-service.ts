@@ -24,7 +24,6 @@ class WorldServiceClass {
 
   // Indexed lookups for O(1) access
   private worldById: Map<number, World> = new Map();
-  private worldByName: Map<string, World> = new Map();
   private dataCenterByName: Map<string, DataCenter> = new Map();
 
   private initialized = false;
@@ -80,12 +79,10 @@ class WorldServiceClass {
    */
   private buildIndexes(): void {
     this.worldById.clear();
-    this.worldByName.clear();
     this.dataCenterByName.clear();
 
     for (const world of this.worlds) {
       this.worldById.set(world.id, world);
-      this.worldByName.set(world.name.toLowerCase(), world);
     }
 
     for (const dc of this.dataCenters) {
@@ -115,24 +112,6 @@ class WorldServiceClass {
   }
 
   /**
-   * Get world by ID
-   * @param worldId - Universalis world ID
-   * @returns World object or undefined if not found
-   */
-  getWorldById(worldId: number): World | undefined {
-    return this.worldById.get(worldId);
-  }
-
-  /**
-   * Get world by name (case-insensitive)
-   * @param name - World name (e.g., "Balmung")
-   * @returns World object or undefined if not found
-   */
-  getWorldByName(name: string): World | undefined {
-    return this.worldByName.get(name.toLowerCase());
-  }
-
-  /**
    * Get all worlds
    */
   getAllWorlds(): readonly World[] {
@@ -142,15 +121,6 @@ class WorldServiceClass {
   // ============================================================================
   // Data Center Lookups
   // ============================================================================
-
-  /**
-   * Get data center by name (case-insensitive)
-   * @param name - Data center name (e.g., "Crystal")
-   * @returns DataCenter object or undefined if not found
-   */
-  getDataCenter(name: string): DataCenter | undefined {
-    return this.dataCenterByName.get(name.toLowerCase());
-  }
 
   /**
    * Get all data centers
@@ -173,38 +143,6 @@ class WorldServiceClass {
       .filter((w): w is World => w !== undefined);
   }
 
-  /**
-   * Find which data center a world belongs to
-   * @param worldId - World ID
-   * @returns DataCenter object or undefined if not found
-   */
-  getDataCenterForWorld(worldId: number): DataCenter | undefined {
-    for (const dc of this.dataCenters) {
-      if (dc.worlds.includes(worldId)) {
-        return dc;
-      }
-    }
-    return undefined;
-  }
-
-  /**
-   * Check if a server name is a data center (vs a world)
-   * @param name - Server name to check
-   * @returns true if it's a data center name
-   */
-  isDataCenter(name: string): boolean {
-    return this.dataCenterByName.has(name.toLowerCase());
-  }
-
-  /**
-   * Check if a server name is a world
-   * @param name - Server name to check
-   * @returns true if it's a world name
-   */
-  isWorld(name: string): boolean {
-    return this.worldByName.has(name.toLowerCase());
-  }
-
   // ============================================================================
   // Reset (for testing)
   // ============================================================================
@@ -216,7 +154,6 @@ class WorldServiceClass {
     this.worlds = [];
     this.dataCenters = [];
     this.worldById.clear();
-    this.worldByName.clear();
     this.dataCenterByName.clear();
     this.initialized = false;
     this.initPromise = null;
