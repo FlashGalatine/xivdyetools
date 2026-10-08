@@ -1,6 +1,36 @@
 import { describe, expect, it } from 'vitest';
-import { acquisitionFor } from './acquisition.js';
+import { acquisitionFor, facewearAcquisitionFor } from './acquisition.js';
 import table from './data/acquisition.en.json';
+import facewearUnlocks from './data/facewear-unlocks.json';
+
+describe('facewear acquisitions from unlock items', () => {
+  it('maps 61 styles and all 732 variants to their own unlock source', () => {
+    const entries = Object.entries(facewearUnlocks);
+    expect(entries).toHaveLength(732);
+    expect(new Set(entries.map(([, itemId]) => itemId)).size).toBe(61);
+    let known = 0;
+    for (const [glassesId, itemId] of entries) {
+      expect(facewearAcquisitionFor(Number(glassesId))).toBe(acquisitionFor(itemId));
+      if (acquisitionFor(itemId)) known++;
+    }
+    expect(known).toBe(432);
+  });
+
+  it.each([157, 158, 168])('gives each under-rim variant %i the unlock item purchase source', (id) => {
+    expect(facewearAcquisitionFor(id)).toBe("Scrip Exchange - Old Gridania (500 Purple Crafters' Scrips)");
+  });
+
+  it.each([61, 62, 72])('resolves the Monocle variant %i through the Monocles unlock item', (id) => {
+    expect(facewearAcquisitionFor(id)).toBe('Maisenta - New Gridania (3,000 Gil)');
+  });
+
+  it('leaves unmapped rows and unknown unlock sources unset', () => {
+    expect(facewearAcquisitionFor(0)).toBeUndefined();
+    expect(facewearAcquisitionFor(409)).toBeUndefined();
+    expect(facewearAcquisitionFor(65535)).toBeUndefined();
+    expect(facewearAcquisitionFor(637)).toBeUndefined();
+  });
+});
 
 describe('acquisitionFor', () => {
   it.each(['Varsarudh - Old Sharlayan', 'Mewazunte - Tuliyollal'])(

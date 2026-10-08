@@ -87,6 +87,36 @@ afterEach(() => {
 });
 
 describe('glamour export sheet', () => {
+  it('prefills and exports the unlock source for a colored facewear variant, keeping manual edits', () => {
+    const base = source();
+    const facewear: GlamourListSource = {
+      ...base,
+      resolved: { ...base.resolved, glassesId: 2 },
+      equipment: {
+        ...base.equipment!,
+        glasses: {
+          id: 2,
+          names: names('Silver Oval Spectacles'),
+          iconId: 200053,
+          acquisition: 'Gold Saucer Attendant - The Gold Saucer (100,000 MGP)',
+        },
+      },
+    };
+    openGlamourSheet(facewear);
+    expect(field('Facewear').value).toBe('Gold Saucer Attendant - The Gold Saucer (100,000 MGP)');
+    expect(preview()).toContain(
+      'Facewear: Silver Oval Spectacles\nAcquisition: Gold Saucer Attendant - The Gold Saucer (100,000 MGP)'
+    );
+    sheet()!.querySelector<HTMLButtonElement>('[data-role="sheet-save"]')!.click();
+    expect(downloadMock.mock.calls[0][0]).toContain(
+      '**Facewear:** Silver Oval Spectacles\nAcquisition: Gold Saucer Attendant - The Gold Saucer (100,000 MGP)'
+    );
+    type('Facewear', 'My source note');
+    closeGlamourSheet();
+    openGlamourSheet(facewear);
+    expect(field('Facewear').value).toBe('My source note');
+  });
+
   it('lists every worn piece with its generated line, and counts them', () => {
     openGlamourSheet(source());
     expect(sheet()!.textContent).toContain('Glamour list');

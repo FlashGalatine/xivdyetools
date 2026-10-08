@@ -5,7 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.16.2] - 2026-10-07
+## [0.17.0] - 2026-10-08
+
+### Added
+
+- Optional `glasses.acquisition` on character equipment resolution now describes where to obtain
+  the facewear style's "The Faces We Wear" unlock Item, shared by its base and color variants.
+  The build follows `Item.AdditionalData` and `GlassesStyle.Glasses` links: 61 styles / 732 variants,
+  with known acquisition sources for 36 styles / 432 variants. Unknown sources remain omitted.
+  Regeneration stays pinned to the recorded Teamcraft commit and XIVAPI version.
 
 ### Fixed
 

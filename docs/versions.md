@@ -23,13 +23,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.15.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.4.0 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.16.2 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.17.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.11.2 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -114,6 +114,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.15.0 | Oct 2026 | Glamour Reader facewear Acquisition lines show where to obtain the style unlock item, shared by the base and all color variants |
 | v5.14.0 | Oct 2026 | Privacy Guide amended in all six languages (2026-10-03 security audit, Sprint 8): new "Community presets: what we keep" (daily-limit counts, Discord moderation posts, failed-notification records, ban records and moderation log, each with its retention) and "Deleting your data" (self-serve deletes, private requests within 30 days) sections (FINDING-005/-008/-009/-029) |
 | v5.13.4 | Oct 2026 | Privacy Guide and Terms corrected in all six languages (2026-10-03 security audit, Sprint 2): the optional preset preview image upload is disclosed, the sign-in record names the verified XIVAuth character and a linked Discord ID ("No character data" removed from the sign-in note), "Reset Settings" is described as it behaves, preset example links are listed; the Glamour Reader's file card says it sends gear model numbers; example links render normalized |
 | v5.13.3 | Oct 2026 | Security — beta.xivdyetools.app has its security headers back (CSP, X-Frame-Options, HSTS, Permissions-Policy; missing since 2026-08-09 — 2026-10-03 security audit, FINDING-001): the beta build adds its robots header inside the existing `/*` rule instead of a second `/*` rule, which Cloudflare Pages treats as a replacement. The beta build check and the post-deploy smoke test now assert the security headers. Production output is unchanged |
@@ -570,7 +571,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v0.16.2 | Oct 2026 | Glamour acquisition lines for all 55 fiend costume pieces list Enie in the Firmament and the 3,000 Skybuilders' Scrips cost; 127 Varsarudh and 127 Mewazunte equipment lines omit the currency amount; the acquisition generator preserves these corrections |
+| v0.17.0 | Oct 2026 | Facewear unlock sources on `glasses.acquisition`, mapped by client-sheet links for all 61 styles / 732 variants (36 styles / 432 variants have known acquisition lines). Glamour acquisition lines for all 55 fiend costume pieces list Enie in the Firmament and the 3,000 Skybuilders' Scrips cost; 127 Varsarudh and 127 Mewazunte equipment lines omit the currency amount; the acquisition generator preserves these corrections |
 | v0.16.1 | Oct 2026 | 2026-10-03 security audit Sprint 7 — the Universalis proxy's cache-miss limit counts through two native Workers Rate Limiting bindings (per IP 30 / 60 s, service-binding ceiling 600 / 60 s in production) with a KV fallback, replacing the per-isolate in-memory limiter, so it is enforced per colo (FINDING-011); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
 | v0.16.0 | Sep 2026 | `/v1/chara/resolve` rules carry the Grand Company lock instead of the job list (any job wears any piece for glamour since 7.4); cache shape 3; `glamour` joins the telemetry tool allowlist. Lands after 0.15.0 (acquisition lines) |
 | **v0.15.0** | **Sep 2026** | **`acquisition` on `POST /v1/chara/resolve` items and their alternates — one English GPOSERS line per item from a build-time table (`scripts/build-acquisition.ts`: Teamcraft data at a pinned commit + XIVAPI), 23,585 lines** |

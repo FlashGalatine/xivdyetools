@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.0] - 2026-10-08
+
+### Added
+
+- Glamour Reader facewear Acquisition fields now show where to obtain or purchase the style's "The Faces We Wear" unlock item. The base and all color variants share the source, and the export sheet preserves manual edits. Unknown sources remain blank.
+
 ## [5.14.0] - 2026-10-04
 
 Sprint 8 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). `PRIVACY.md` is

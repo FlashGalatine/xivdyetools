@@ -68,6 +68,7 @@ Resolve every worn piece of one character in a single call. The body is the twel
 | `items.OffHand.viaMainHand` | `true` when the off-hand key is the main-hand item's own `ModelSub` (quiver, focus, card holder, fist pair…) or the main-hand key itself — the row *is* the main weapon. Genuine off-hands (shields) resolve on their own and say `false`. |
 | `items.<slot>.acquisition` | Where the named item comes from, as one English line in the GPOSERS glamour-submission format — e.g. `Crafted (WVR Lvl. 92) / Independent Merchant - Urqopacha - Worlar's Echo (28,483 Gil)`. Omitted when unknown. Built after each patch from game data and Teamcraft's data files; describes `itemId` — each alternate carries its own. |
 | `glasses` | Present only when the request carried `glasses`; `null` when the row does not exist |
+| `glasses.acquisition` | Where to obtain or purchase the "The Faces We Wear" unlock item for the worn facewear style, in the same English format as equipment acquisition lines. Shared by the base and all color variants. Omitted when the unlock source is unknown. |
 
 Names are never "cleaned": Augmented / Replica / +1 prefixes stay, because the naming is inconsistent across languages.
 

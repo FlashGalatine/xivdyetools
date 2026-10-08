@@ -34,7 +34,7 @@ import type {
 } from './types.js';
 import { lookupKey } from './types.js';
 import { regionalNames } from './regional-names.js';
-import { acquisitionFor } from './acquisition.js';
+import { acquisitionFor, facewearAcquisitionFor } from './acquisition.js';
 
 /** Alternates carried per row — the badge says `+N`; the tooltip lists these. */
 export const MAX_ALTERNATES = 8;
@@ -123,7 +123,11 @@ export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
 
 export function pickGlasses(row: GlassesRow | null): ResolvedGlasses | null {
   if (!row) return null;
-  return { id: row.rowId, names: { ...row.names }, iconId: row.iconId };
+  const acquisition = facewearAcquisitionFor(row.rowId);
+  return {
+    id: row.rowId, names: { ...row.names }, iconId: row.iconId,
+    ...(acquisition ? { acquisition } : {}),
+  };
 }
 
 export type RowSource = (lookup: SlotLookup) => readonly ItemRow[];

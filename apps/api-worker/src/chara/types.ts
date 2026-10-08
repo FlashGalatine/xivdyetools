@@ -64,6 +64,8 @@ export interface ResolvedGlasses {
   id: number;
   names: ItemNames;
   iconId: number | null;
+  /** Acquisition of the "The Faces We Wear" Item that unlocks this style and all its colors. */
+  acquisition?: string;
 }
 
 export interface CharaResolveRequest {

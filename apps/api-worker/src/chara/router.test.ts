@@ -196,7 +196,7 @@ describe('POST /v1/chara/resolve', () => {
     const res = await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }], glasses: 40 });
     const body = (await res.json()) as any;
     expect(res.status).toBe(200);
-    expect(body.data.glasses).toEqual({ id: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018 });
+    expect(body.data.glasses).toEqual({ id: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018, acquisition: 'Mount Rokkon' });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 

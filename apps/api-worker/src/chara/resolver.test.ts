@@ -7,6 +7,7 @@ import {
   indexRows,
   lookupsFor,
   pickItem,
+  pickGlasses,
   resolveCharaEquipment,
   MAX_ALTERNATES,
 } from './resolver';
@@ -15,9 +16,23 @@ import { lookupKey } from './types';
 
 const TROPHY_LINE = "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)";
 vi.mock('./acquisition.js', () => ({
+  facewearAcquisitionFor: (glassesId: number) => glassesId >= 1 && glassesId <= 12 ? 'Vendor - Old Gridania (100 Gil)' : undefined,
   acquisitionFor: (itemId: number) =>
     itemId === 47252 ? "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)" : undefined,
 }));
+
+describe('facewear acquisition', () => {
+  it.each([1, 2, 12])('attaches the unlock source while retaining the worn variant %i', (id) => {
+    const names = { en: 'Oval Spectacles', ja: 'JP', de: 'DE', fr: 'FR' };
+    expect(pickGlasses({ rowId: id, names, iconId: 200049 })).toEqual({
+      id, names, iconId: 200049, acquisition: 'Vendor - Old Gridania (100 Gil)',
+    });
+  });
+  it('omits unknown sources and keeps unresolved facewear null', () => {
+    expect(pickGlasses({ rowId: 999, names: { en: 'Unknown', ja: '', de: '', fr: '' }, iconId: null })).not.toHaveProperty('acquisition');
+    expect(pickGlasses(null)).toBeNull();
+  });
+});
 
 const row = (
   rowId: number,

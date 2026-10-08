@@ -10,8 +10,9 @@
  *
  * Inputs: Teamcraft's data files at ONE pinned commit (MIT) and XIVAPI v2 at one
  * game version. Output: src/chara/data/acquisition.en.json
- * ({ "<itemId>": "<line>" } for equippable items that have a line) and
- * acquisition.meta.json. `--fixture` writes the normalized inputs for the given
+ * ({ "<itemId>": "<line>" } for equipment and facewear unlock items that have a line),
+ * facewear-unlocks.json (Glasses row → unlock Item), and acquisition.meta.json.
+ * `--fixture` writes the normalized inputs for the given
  * items to tests/acquisition/fixtures/inputs.json instead of the table.
  * `--pinned` reuses the Teamcraft commit and XIVAPI version the current
  * acquisition.meta.json records instead of pinning the newest ones — for a rule
@@ -23,6 +24,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatEntries } from './acquisition/format.js';
+import { facewearUnlocks, type FacewearStyle, type FacewearUnlock } from './acquisition/facewear.js';
 import { buildInputs, fateZoneLevels, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
 import { markerCoordinate, nearestSettlement, type MapLabel } from './acquisition/labels.js';
 import type { Inputs, Tables } from './acquisition/model.js';
@@ -397,6 +399,20 @@ async function main(): Promise<void> {
 
   const { categories: equippable, names: equippableNames } = await equippableItems();
   console.log(`XIVAPI ${gameVersion}: ${equippable.size} equippable items`);
+  const equippableCount = equippable.size;
+  const unlocks = await xivapi<{ results: FacewearUnlock[]; next?: string }>('search', {
+    sheets: 'Item', query: 'Name~"The Faces We Wear - "', fields: 'Name,AdditionalData.value', limit: '500',
+  });
+  const styles = await xivapi<{ rows: FacewearStyle[]; next?: unknown }>('sheet/GlassesStyle', {
+    fields: 'Name,Glasses[].value,Glasses[].Name', limit: '500',
+  });
+  if (unlocks.next || styles.next) throw new Error('Facewear sheet exceeded one page; add pagination before regenerating');
+  const facewear = facewearUnlocks(unlocks.results, styles.rows);
+  for (const unlock of unlocks.results) {
+    equippable.set(unlock.row_id, 'Miscellany');
+    equippableNames.set(unlock.row_id, unlock.fields.Name);
+  }
+  console.log(`${unlocks.results.length} facewear unlock items for ${Object.keys(facewear).length} Glasses rows`);
   const sellers = raw.shops.filter((s) => s.trades.some((t) => t.items.some((i) => equippable.has(i.id))));
   const npcIds = [...new Set(sellers.flatMap((s) => s.npcs))];
   const containerIds = [...equippable.keys()].flatMap((id) => raw.lootSources[id] ?? []);
@@ -511,7 +527,9 @@ async function main(): Promise<void> {
     generated: new Date().toISOString().slice(0, 10),
     teamcraftCommit: sha,
     xivapiVersion: gameVersion,
-    equippable: equippable.size,
+    equippable: equippableCount,
+    facewearUnlockItems: unlocks.results.length,
+    facewearVariants: Object.keys(facewear).length,
     lines: Object.keys(table).length,
     sourcesButNoLine,
     bytes: Buffer.byteLength(json),
@@ -523,6 +541,7 @@ async function main(): Promise<void> {
     unleveledVendorZones: [...new Set([...inputs.npcs.values()].map((n) => n.zone).filter((z): z is string => z !== null && !inputs.zoneLevels.has(z)))].sort(),
   };
   writeFileSync(join(DATA_DIR, 'acquisition.en.json'), json);
+  writeFileSync(join(DATA_DIR, 'facewear-unlocks.json'), `${JSON.stringify(facewear)}\n`);
   writeFileSync(join(DATA_DIR, 'acquisition.meta.json'), `${JSON.stringify(meta, null, 2)}\n`);
   console.log(`wrote ${meta.lines} lines (${meta.bytes} bytes) to src/chara/data/acquisition.en.json`);
   await printReview(inputs, tables, raw);

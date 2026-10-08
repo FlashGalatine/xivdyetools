@@ -58,6 +58,8 @@ export interface CharaResolvedGlasses {
   id: number;
   names: CharaItemNames;
   iconId: number | null;
+  /** Where to obtain the unlock Item for this facewear style, shared by all colors. */
+  acquisition?: string;
 }
 
 export interface CharaResolveResult {
