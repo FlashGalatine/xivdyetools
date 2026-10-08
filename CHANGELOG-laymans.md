@@ -31,8 +31,9 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
-## [0.16.2] - 2026-10-07
-### 📜 Glamour costume sources
+## [5.15.0] - 2026-10-08
+### 📜 Glamour acquisition sources
+- Web app: facewear Acquisition lines now show where to obtain or purchase the "The Faces We Wear" unlock item. All colors share that source. Sources that aren't known stay blank for you to fill in.
 - Web app: the Glamour Reader's Acquisition lines for equipment from Mewazunte now show only Mewazunte - Tuliyollal, without a currency amount.
 - Web app: the Glamour Reader's Acquisition lines for equipment from Varsarudh now show only Varsarudh - Old Sharlayan, without a currency amount.
 - Web app: the Glamour Reader's Acquisition lines for fiend costume pieces now show Enie in Ishgard's Firmament and the 3,000 Skybuilders' Scrips cost.
