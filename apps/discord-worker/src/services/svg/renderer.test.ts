@@ -123,13 +123,15 @@ describe('SVG renderer', () => {
 
   // Every render must release both of its wasm allocations deterministically:
   // the `Resvg` (the parsed tree) and the `RenderedImage` (the RGBA pixmap).
-  // In @resvg/resvg-wasm 2.6.2 the `Resvg`
-  // constructor glue never calls `ResvgFinalization.register`, so an unfreed
-  // `Resvg` leaks for the life of the isolate; only `RenderedImage` registers,
-  // so its pixmap is reclaimed only when GC runs the finalizer. Both are freed
-  // in a `finally`: on success after `asPng()` has copied the PNG bytes into a
-  // JS-owned buffer, and when the constructor, `render()` or `asPng()` throws,
-  // whichever of the two was allocated.
+  // Nothing else reclaims either in the deployed worker: in @resvg/resvg-wasm
+  // 2.6.2 the `Resvg` constructor glue never registers a finalizer, and at
+  // this worker's compatibility_date (2024-12-01) workerd has no
+  // `FinalizationRegistry`, so `RenderedImage`'s registration is a no-op stub
+  // too. (vitest runs on Node, where `FinalizationRegistry` exists, so no test
+  // here can show that.) Both are freed in a `finally`: on success after
+  // `asPng()` has copied the PNG bytes into a JS-owned buffer, and when the
+  // constructor, `render()` or `asPng()` throws, whichever of the two was
+  // allocated.
   describe('renderSvgToPng — wasm memory hygiene', () => {
     function mockLogger(): ExtendedLogger & { error: ReturnType<typeof vi.fn> } {
       return {
