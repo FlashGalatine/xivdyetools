@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.14.12 — October 9, 2026
+
+### Small fixes
+- **A custom color's card menu only offers what works.** Sending a custom color to Budget, Harmony or another tool, or opening it on a market site, used to do nothing. Those choices are hidden now; Gradient, which takes a custom color, is still there.
+- **Clicking the Swatch Matcher's active palette button keeps your character slot selected.** It used to clear the highlight but leave the slot's details on screen.
+- **Picking a hair or skin slot no longer flashes the wrong colors** while that palette is still loading.
+
 ## Web-App Version 5.14.11 — October 6, 2026
 
 ### Glamour Reader

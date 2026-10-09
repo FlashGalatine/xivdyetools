@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.11 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.14.12 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.11 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -117,6 +117,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.12 | Oct 2026 | Review follow-ups: a custom color's result-card menu offers only Transform → Gradient (every other hand-off and the market links could not carry it, and Budget did nothing at all); the Swatch Matcher's active palette chip or range button no longer drops a THIS CHARACTER slot pick; a slot pick on a hair or skin sheet still loading no longer ranks or draws the previous sheet's colors |
 | v5.14.11 | Oct 2026 | The Glamour Reader's drop zone describes the reader: every piece the character wears, with its dyes (`glamour.dropBody` in six languages, through the file card's new `dropBody` option). It no longer shows the Swatch Matcher's hair-and-skin line or "or pick a swatch from the grid below"; the Swatch Matcher's drop zone is unchanged |
 | v5.14.10 | Oct 2026 | Core 5.10.0 (2026-10-04 remediation, Sprint 13): the Gradient Builder keeps a grey endpoint's partner hue in HSV, OKLCH and LCH; Harmony keeps a swapped-in dye out of earlier slots; HSL mixes of a grey keep the other hue; unreadable `.chara` colours are refused; the ja/ko/zh tattoo label is spaced |
 | v5.14.9 | Oct 2026 | One workspace per tool (2026-10-04 remediation, Sprint 29, REFACTOR-005): the Gradient Builder and Swatch Matcher lose the left panel and mobile drawer the v4 shell never showed (gradient-tool 2,782 → 1,922 lines, swatch-tool 3,314 → 2,689); browser Find (Ctrl+F) is no longer swallowed on Gradient; MarketBoard members, `tool-panel-builders` and seven locale keys that lost their readers removed |

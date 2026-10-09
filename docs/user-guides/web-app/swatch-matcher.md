@@ -12,14 +12,14 @@ The Swatch Matcher finds the FFXIV dyes closest to your character's customizatio
 
 ### Pick a swatch from the grid
 
-The colour sheet on the left is the character creator's palette, eight swatches to a row. Click any cell and its closest dyes appear on the right. Nothing else is required — tribe and gender only matter for the two race-specific sheets (hair and skin).
+The colour sheet on the left is the character creator's palette, eight swatches to a row. Click any cell and its closest dyes appear on the right. Nothing else is required — clan and gender only matter for the two race-specific sheets (hair and skin).
 
 ### Drop a `.chara` file
 
 Above the grid is a **Drop a .chara file** zone (or press **Choose file**). It accepts character files exported by **Anamnesis, Ktisis or Brio**. The file is read entirely on your device — nothing is uploaded, and the screenshot some tools embed in the file is never opened. When it loads:
 
-- A **CHARACTER FILE** card shows which tool made it, your character's name, a **LOCAL ONLY** chip, and the tribe and gender it found. **SWAP** loads a different file.
-- The **TRIBE & GENDER** selectors in the settings column become a read-only readout, so hair and skin are looked up on the right sheet automatically.
+- A **CHARACTER FILE** card shows which tool made it, your character's name, a **LOCAL ONLY** chip, and the clan and gender it found. **SWAP** loads a different file.
+- The **CLAN & GENDER** selectors in the settings column become a read-only readout, so hair and skin are looked up on the right sheet automatically.
 - Any problems reading the file are listed on an amber warnings card rather than hidden.
 
 ---
@@ -35,16 +35,16 @@ Lips and Face paint have a **Dark / Light** toggle beside the chips — the same
 | Palette | What it covers |
 |---------|----------------|
 | **Eye** | Iris colours |
-| **Hair** | Hair colours for your tribe and gender |
+| **Hair** | Hair colours for your clan and gender |
 | **Highlights** | Hair highlight colours |
-| **Skin** | Skin tones for your tribe and gender |
+| **Skin** | Skin tones for your clan and gender |
 | **Tattoo / Limbal** | Limbal rings and racial tattoos |
 | **Lips** | Lip colours (Dark or Light range) |
 | **Face paint** | Face paint colours (Dark or Light range) |
 
 Every swatch has a grid address — **R3·C5** means row 3, column 5, counted the way the sheet is laid out in the creator — so you can find it again in-game.
 
-**Available tribes** (for hair and skin): Hyur (Midlander, Highlander), Elezen (Wildwood, Duskwight), Lalafell (Plainsfolk, Dunesfolk), Miqo'te (Seeker of the Sun, Keeper of the Moon), Roegadyn (Sea Wolf, Hellsguard), Au Ra (Raen, Xaela), Hrothgar (Helions, The Lost), Viera (Rava, Veena).
+**Available clans** (for hair and skin): Hyur (Midlander, Highlander), Elezen (Wildwood, Duskwight), Lalafell (Plainsfolk, Dunesfolk), Miqo'te (Seeker of the Sun, Keeper of the Moon), Roegadyn (Sea Wolf, Hellsguard), Au Ra (Raen, Xaela), Hrothgar (Helions, The Lost), Viera (Rava, Veena).
 
 ### Evercold notice
 
@@ -70,7 +70,7 @@ At the bottom of the flow a row of buttons sends the matched dyes on to **Harmon
 
 ### Share
 
-**Share** copies a link that reopens this exact cell — the link carries the sheet and the cell's position (plus tribe and gender for hair and skin), not just the colour, so it lands on the right swatch even when two cells share a shade.
+**Share** copies a link that reopens this exact cell — the link carries the sheet and the cell's position (plus clan and gender for hair and skin), not just the colour, so it lands on the right swatch even when two cells share a shade.
 
 ---
 
@@ -116,7 +116,7 @@ Build outfits that complement your character's features:
 
 ### Planning Before Character Creation
 If you're making a new character:
-1. Browse available colors per tribe
+1. Browse available colors per clan
 2. See what dyes would match each option
 3. Plan your glamour before committing
 

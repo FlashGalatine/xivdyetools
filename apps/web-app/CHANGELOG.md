@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.12] - 2026-10-09
+
+Follow-ups from the 2026-10-09 review of the open pull requests, which checked the merged result of
+every open PR before merge day.
+
+### Fixed
+
+- **A custom color's result-card menu offers only what can take a custom color.** Inspect → Budget
+  did nothing for a custom color: no toast, no navigation (the guard added in 5.14.3 stopped a hand-off
+  Budget could not resolve, but the menu still offered it). The same was true of Inspect → Harmony,
+  Accessibility, Comparison and Swatch, Transform → Mixer and the Open-in-browser links: each sends a
+  stainID or stores the per-session negative id, which no receiving tool or external site can
+  resolve. For a custom color the menu now shows only Transform → Gradient, which stores the hex. A
+  dye's menu is unchanged.
+- **Clicking the Swatch Matcher's palette chip or range button that is already active keeps a THIS
+  CHARACTER slot pick** (since 5.14.6). The click took the pick off the sheet but redrew nothing, so
+  the selection card, SEND TO and empty state kept describing a pick the tool had dropped. Asking for
+  the sheet already shown now changes nothing; moving to another sheet still drops the pick.
+- **Picking a slot whose hair or skin palette is still loading no longer shows the previous sheet's
+  colors** (already in 5.14.0). The reverse match and the selection card's IN THE CREATOR excerpt ranked
+  and drew `this.colors`, which still held the old sheet until the palette chunk arrived, naming the
+  old sheet's cells as the new sheet's rows. Both now wait for the right palette; a later pick whose
+  load lands first still wins, and a superseded load no longer repaints the grid.
+
 ## [5.14.11] - 2026-10-06
 
 ### Fixed
