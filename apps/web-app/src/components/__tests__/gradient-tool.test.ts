@@ -60,33 +60,6 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
-  /**
-   * The shared market-panel builder. Absent, renderMarketPanel throws and
-   * safeRender swallows it, leaving the whole panel empty.
-   */
-  buildMarketPanel: vi.fn(() => ({
-    panel: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      setContent: vi.fn(),
-      getContentContainer: vi.fn(() => document.createElement('div')),
-      open: vi.fn(),
-      close: vi.fn(),
-    },
-    // Mirrors the real MarketBoard component's public surface
-    marketBoard: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      getShowPrices: vi.fn().mockReturnValue(false),
-      setShowPrices: vi.fn(),
-      getSelectedServer: vi.fn().mockReturnValue(null),
-      setSelectedServer: vi.fn(),
-      loadServerData: vi.fn().mockResolvedValue(undefined),
-      refreshPrices: vi.fn().mockResolvedValue(undefined),
-      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
-      shouldFetchPrice: vi.fn().mockReturnValue(false),
-    },
-  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
   ToastService: {
@@ -199,6 +172,9 @@ vi.mock('@services/index', () => ({
       setWorldId: vi.fn(),
       getPriceForItem: vi.fn().mockReturnValue(null),
       fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
+      // Read for every displayed dye before a fetch; absent, the fetch throws
+      // inside a voided promise and the rejection fails the whole file.
+      shouldFetchPrice: vi.fn().mockReturnValue(false),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       getShowPrices: vi.fn().mockReturnValue(false),
@@ -234,176 +210,21 @@ vi.mock('@shared/logger', () => ({
   },
 }));
 
-vi.mock('@services/pricing-mixin', () => ({
-  setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
-}));
-
-vi.mock('../collapsible-panel', () => ({
-  /**
-   * Mirrors the real CollapsiblePanel's public API. `setContent` as a no-op
-   * silently swallowed every control the tools place in a panel, and a
-   * missing `getContentContainer` throws into BaseComponent.safeRender()'s
-   * catch — which converts it to an error state, so the panel renders
-   * nothing and the tests see an empty DOM instead of a failure.
-   */
-  CollapsiblePanel: class MockCollapsiblePanel {
-    container: HTMLElement;
-    options: Record<string, unknown>;
-    private body: HTMLElement | null = null;
-    constructor(container: HTMLElement, options: Record<string, unknown>) {
-      this.container = container;
-      this.options = options;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'collapsible-panel';
-      div.id = (this.options.id as string) || 'panel';
-      this.container.appendChild(div);
-      this.body = div;
-    }
-    getContentContainer(): HTMLElement {
-      if (!this.body) this.init();
-      return this.body!;
-    }
-    setContent(content: HTMLElement | string) {
-      if (!this.body) this.init();
-      if (typeof content === 'string') this.body!.innerHTML = content;
-      else if (content) this.body!.appendChild(content);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-      this.body = null;
-    }
-    open() {}
-    close() {}
-    expand() {}
-    collapse() {}
-    toggle() {}
-  },
-}));
-
-vi.mock('../market-board', () => ({
-  /**
-   * Mirrors the real MarketBoard component's public surface. Tools that build
-   * a second, mobile board construct it directly from here rather than through
-   * buildMarketPanel, so a gap shows up only on the mobile path.
-   */
-  MarketBoard: class MockMarketBoard {
-    container: HTMLElement;
-    private showPrices = false;
-    private selectedServer: string | null = null;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'market-board';
-      div.id = 'market-board';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getShowPrices() {
-      return this.showPrices;
-    }
-    setShowPrices(value: boolean) {
-      this.showPrices = value;
-    }
-    getSelectedServer() {
-      return this.selectedServer;
-    }
-    setSelectedServer(server: string | null) {
-      this.selectedServer = server;
-    }
-    async loadServerData() {}
-    async refreshPrices() {}
-    async fetchPricesForDyes() {
-      return new Map();
-    }
-    shouldFetchPrice() {
-      return false;
-    }
-  },
-}));
-
-vi.mock('../dye-selector', () => ({
-  DyeSelector: class MockDyeSelector {
-    container: HTMLElement;
-    options: Record<string, unknown>;
-    selectedDyes: unknown[] = [];
-    constructor(container: HTMLElement, options: Record<string, unknown> = {}) {
-      this.container = container;
-      this.options = options;
-    }
-    element: HTMLElement | null = null;
-    init() {
-      const div = document.createElement('div');
-      div.className = 'dye-selector';
-      div.id = 'dye-selector';
-      this.container.appendChild(div);
-      this.element = div;
-    }
-    // Inherited from BaseComponent on the real DyeSelector; the tools
-    // reach through it to bind selection-changed on its parent.
-    getElement() {
-      return this.element;
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getSelectedDyes() {
-      return this.selectedDyes;
-    }
-    setSelectedDyes(dyes: unknown[]) {
-      this.selectedDyes = dyes;
-    }
-    clearSelection() {
-      this.selectedDyes = [];
-    }
-  },
-}));
-
-vi.mock('../dye-filters', () => ({
-  DyeFilters: class MockDyeFilters {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'dye-filters';
-      div.id = 'dye-filters';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getExcludedCategories() {
-      return [];
-    }
-    setEnabled() {}
-  },
-}));
-
 describe('GradientTool', () => {
   let container: HTMLElement;
-  let leftPanel: HTMLElement;
-  let rightPanel: HTMLElement;
-  let drawerContent: HTMLElement;
+  /**
+   * The one panel v4-layout hands every tool, as both its left and right
+   * panel, with no drawer (v4-layout.ts loadToolContent). mount() uses the
+   * same shape, so the suite runs the tool the way production does.
+   */
+  let panel: HTMLElement;
   let tool: GradientTool | null;
 
   beforeEach(() => {
     container = createTestContainer();
-    leftPanel = document.createElement('div');
-    leftPanel.id = 'left-panel';
-    rightPanel = document.createElement('div');
-    rightPanel.id = 'right-panel';
-    drawerContent = document.createElement('div');
-    drawerContent.id = 'drawer-content';
-    container.appendChild(leftPanel);
-    container.appendChild(rightPanel);
-    container.appendChild(drawerContent);
+    panel = document.createElement('div');
+    panel.className = 'v4-tool-main';
+    container.appendChild(panel);
     tool = null;
     vi.clearAllMocks();
     mockGetAllDyes.mockReturnValue(mockDyes);
@@ -435,39 +256,37 @@ describe('GradientTool', () => {
   // ============================================================================
 
   describe('Basic Rendering', () => {
-    it('should render gradient tool', () => {
+    it('renders the 4C workspace into the one panel v4-layout hands it', () => {
+      tool = mount();
+
+      for (const testId of [
+        'gradient-endpoints-row',
+        'gradient-pin-rail',
+        'gradient-results-section',
+        'gradient-empty-state',
+        'gradient-matches-container',
+      ]) {
+        expect(panel.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
+      }
+      // Nothing to share until both endpoints are set
+      expect(shareParams()!.disabled).toBe(true);
+    });
+
+    // REFACTOR-005: the v3 left panel (dye selector, settings, market board)
+    // and the mobile drawer are gone. v4-layout passes the workspace panel as
+    // the left panel and no drawer, so neither was ever seen.
+    it('draws only into the right panel: no left panel, no drawer', () => {
+      const leftPanel = document.createElement('div');
+      const rightPanel = document.createElement('div');
+      const drawerContent = document.createElement('div');
+      container.append(leftPanel, rightPanel, drawerContent);
+
       tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(leftPanel.children.length).toBeGreaterThan(0);
-    });
-
-    it('should render left panel content', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(leftPanel.innerHTML.length).toBeGreaterThan(0);
-    });
-
-    it('should render right panel content', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(rightPanel).not.toBeNull();
-    });
-
-    it('should render drawer content when provided', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(drawerContent).not.toBeNull();
-    });
-
-    it('should work without drawer content', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      expect(leftPanel.childElementCount).toBe(0);
+      expect(drawerContent.childElementCount).toBe(0);
+      expect(rightPanel.querySelector('[data-testid="gradient-endpoints-row"]')).not.toBeNull();
     });
   });
 
@@ -477,20 +296,16 @@ describe('GradientTool', () => {
 
   describe('Configuration', () => {
     it('should have setConfig method', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       expect(typeof tool.setConfig).toBe('function');
     });
 
     it('should accept config via setConfig', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
-      // Should not throw
-      tool.setConfig({ stepCount: 10 });
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      expect(() => tool!.setConfig({ stepCount: 10 })).not.toThrow();
+      expect(panel.querySelector('[data-testid="gradient-endpoints-row"]')).not.toBeNull();
     });
   });
 
@@ -500,30 +315,26 @@ describe('GradientTool', () => {
 
   describe('Dye Selection', () => {
     it('should have selectDye method', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       expect(typeof tool.selectDye).toBe('function');
     });
 
     it('should have clearDyes method', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       expect(typeof tool.clearDyes).toBe('function');
     });
 
     it('should accept dye selection', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       // Should not throw
       expect(() => tool!.selectDye(mockDyes[0])).not.toThrow();
     });
 
     it('should clear dyes', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       tool.selectDye(mockDyes[0]);
 
@@ -532,28 +343,13 @@ describe('GradientTool', () => {
     });
 
     it('should support two dyes for gradient', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       // Should not throw when adding two dyes
       expect(() => {
         tool!.selectDye(mockDyes[0]);
         tool!.selectDye(mockDyes[1]);
       }).not.toThrow();
-    });
-  });
-
-  // ============================================================================
-  // Interpolation Tests
-  // ============================================================================
-
-  describe('Interpolation', () => {
-    it('should render interpolation controls', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      // Tool should render gradient-related content
-      expect(rightPanel).not.toBeNull();
     });
   });
 
@@ -591,16 +387,14 @@ describe('GradientTool', () => {
 
   describe('Lifecycle', () => {
     it('should clean up on destroy', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
+      tool = mount();
 
       // Should not throw
       expect(() => tool!.destroy()).not.toThrow();
     });
 
     it('should handle double destroy gracefully', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       tool.destroy();
 
@@ -620,11 +414,13 @@ describe('GradientTool', () => {
   // palette drawer.
   // ==========================================================================
 
-  const mount = (opts: { drawer?: boolean } = {}): GradientTool => {
-    const t = new GradientTool(
-      container,
-      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
-    );
+  /** Construct and init the tool the way v4-layout does: one panel, no drawer. */
+  const mount = (): GradientTool => {
+    const t = new GradientTool(container, {
+      leftPanel: panel,
+      rightPanel: panel,
+      drawerContent: null,
+    });
     t.init();
     return t;
   };
@@ -670,7 +466,7 @@ describe('GradientTool', () => {
   };
 
   type StepCard = HTMLElement & {
-    data: { dye: Dye; matchingMethod: string };
+    data: { dye: Dye; matchingMethod: string; marketServer?: string };
     showHex: boolean;
     showRgb: boolean;
     showCmyk: boolean;
@@ -1172,10 +968,12 @@ describe('GradientTool', () => {
     // read "Market —" forever on a fresh profile.
     describe('the price row needs the Market Board toggle too', () => {
       const serviceShowPrices = () => vi.mocked(MarketBoardService.getInstance().getShowPrices);
+      const serviceServer = () => vi.mocked(MarketBoardService.getInstance().getSelectedServer);
 
       afterEach(() => {
         // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
         serviceShowPrices().mockReturnValue(false);
+        serviceServer().mockReturnValue(null as never);
       });
 
       it('draws no price row while the Market Board toggle is off', async () => {
@@ -1196,6 +994,32 @@ describe('GradientTool', () => {
 
         expect(stepCards().length).toBeGreaterThan(0);
         expect(stepCards().map((card) => card.showPrice)).toEqual(stepCards().map(() => true));
+      });
+
+      // REFACTOR-005: a card whose price names no world shows the selected
+      // server. It came through the removed left-panel MarketBoard, which only
+      // delegated to the service, and only while prices were on.
+      it('names the selected server on each card while prices are on', async () => {
+        serviceShowPrices().mockReturnValue(true);
+        serviceServer().mockReturnValue('Crystal');
+
+        tool = await mountWithRamp();
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.data.marketServer)).toEqual(
+          stepCards().map(() => 'Crystal')
+        );
+      });
+
+      it('names no server while prices are off', async () => {
+        serviceServer().mockReturnValue('Crystal');
+
+        tool = await mountWithRamp();
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.data.marketServer)).toEqual(
+          stepCards().map(() => undefined)
+        );
       });
     });
   });
@@ -1223,99 +1047,12 @@ describe('GradientTool', () => {
       expect(retiredCalls(StorageService.getItem)).toEqual([]);
     });
 
-    it('never writes them — not from setConfig, the in-tool controls or a share link', async () => {
+    it('never writes them — not from setConfig or a share link', async () => {
       tool = mountAt('?start=1&end=2&steps=12&interpolation=oklch&v=1');
       tool.setConfig({ stepCount: 5, interpolation: 'lab' });
-      const pick = (
-        el: HTMLInputElement | HTMLSelectElement | null,
-        value: string,
-        type: string
-      ) => {
-        el!.value = value;
-        el!.dispatchEvent(new Event(type));
-      };
-      pick(leftPanel.querySelector('[data-testid="gradient-step-slider"]'), '6', 'input');
-      pick(leftPanel.querySelector('[data-testid="gradient-colorspace-select"]'), 'rgb', 'change');
-      pick(drawerContent.querySelector('input[type="range"]'), '10', 'input');
-      pick(
-        drawerContent.querySelector('[data-testid="gradient-mobile-colorspace-select"]'),
-        'lch',
-        'change'
-      );
       await flush();
 
       expect(retiredCalls(StorageService.setItem)).toEqual([]);
-    });
-  });
-
-  // ==========================================================================
-  // The left-panel and drawer controls are unreachable in V4 (v4-layout hands
-  // the tool one panel and no drawer; REFACTOR-005 / BUG-093 own them). Until
-  // they go, a pick there applies locally, then writes ConfigController, the
-  // same as a sidebar pick — never the tool's own storage.
-  // ==========================================================================
-
-  describe('in-tool settings controls', () => {
-    it('the steps slider applies the count, then writes it to the controller', async () => {
-      tool = await mountWithRamp();
-      const slider = leftPanel.querySelector<HTMLInputElement>(
-        '[data-testid="gradient-step-slider"]'
-      )!;
-
-      slider.value = '6';
-      slider.dispatchEvent(new Event('input'));
-      await flush();
-
-      expect(stepCards()).toHaveLength(6);
-      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
-        stepCount: 6,
-      });
-    });
-
-    it('the colour-space select applies the space, then writes it to the controller', async () => {
-      tool = await mountWithRamp();
-      const select = leftPanel.querySelector<HTMLSelectElement>(
-        '[data-testid="gradient-colorspace-select"]'
-      )!;
-
-      select.value = 'oklch';
-      select.dispatchEvent(new Event('change'));
-      await flush();
-
-      expect(settingsInEffect().interpolation).toBe('oklch');
-      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
-        interpolation: 'oklch',
-      });
-    });
-
-    it('the drawer steps slider writes the controller too', async () => {
-      tool = await mountWithRamp();
-      const slider = drawerContent.querySelector<HTMLInputElement>('input[type="range"]')!;
-
-      slider.value = '10';
-      slider.dispatchEvent(new Event('input'));
-      await flush();
-
-      expect(settingsInEffect().steps).toBe(10);
-      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
-        stepCount: 10,
-      });
-    });
-
-    it('the drawer colour-space select writes the controller too', async () => {
-      tool = await mountWithRamp();
-      const select = drawerContent.querySelector<HTMLSelectElement>(
-        '[data-testid="gradient-mobile-colorspace-select"]'
-      )!;
-
-      select.value = 'lch';
-      select.dispatchEvent(new Event('change'));
-      await flush();
-
-      expect(settingsInEffect().interpolation).toBe('lch');
-      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
-        interpolation: 'lch',
-      });
     });
   });
 
@@ -1484,22 +1221,98 @@ describe('GradientTool', () => {
       expect(settingsInEffect()).toEqual({ steps: 12, interpolation: 'hsv', algo: 'oklab' });
     });
 
-    it('an in-tool pick reaches the controller without re-running through the echo', async () => {
+    // REFACTOR-005: the in-tool steps sliders are gone, so the sidebar's
+    // broadcast is the one way a step count arrives — and it clears the pins.
+    // (The drawer's slider never did; that drift went with it.) Index 3 is
+    // still inside a 6-step ramp, so only that clear() empties the pins here.
+    it('a sidebar step change re-counts the ramp and clears its pins', async () => {
       tool = await mountWithRamp();
-      const rematch = vi.spyOn(
-        tool as unknown as { updateInterpolation: () => void },
-        'updateInterpolation'
-      );
-      const slider = leftPanel.querySelector<HTMLInputElement>(
-        '[data-testid="gradient-step-slider"]'
-      )!;
+      pinsOf(tool).set(3, mockDyes[1]);
 
-      slider.value = '6';
-      slider.dispatchEvent(new Event('input'));
+      controller().setConfig('gradient', { stepCount: 6 });
+      await flush();
 
-      expect(controller().getConfig('gradient').stepCount).toBe(6);
-      // Applied locally first, so the synchronous broadcast found nothing new
-      expect(rematch).toHaveBeenCalledTimes(1);
+      expect(stepCards()).toHaveLength(6);
+      expect(settingsInEffect().steps).toBe(6);
+      expect(pinsOf(tool).size).toBe(0);
+    });
+
+    // REFACTOR-005: a server or prices-toggle change reaches the tool through
+    // its 'market' subscription alone. The removed left-panel MarketBoard also
+    // relayed MarketBoardService's events back in — a duplicate, since the
+    // service emits them only from its own 'market' subscription.
+    describe("a market change, through the controller's 'market' broadcast", () => {
+      const service = () => MarketBoardService.getInstance();
+
+      beforeEach(() => {
+        // The service applies a change before the tool hears it (it subscribed first)
+        controller().setConfig('market', { showPrices: true });
+        vi.mocked(service().getShowPrices).mockReturnValue(true);
+        vi.mocked(service().shouldFetchPrice).mockReturnValue(true);
+      });
+
+      afterEach(() => {
+        // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
+        vi.mocked(service().getShowPrices).mockReturnValue(false);
+        vi.mocked(service().shouldFetchPrice).mockReturnValue(false);
+      });
+
+      it("refetches the ramp's prices on a server change while prices are on", async () => {
+        tool = await mountWithRamp();
+        vi.mocked(service().fetchPricesForDyes).mockClear();
+
+        controller().setConfig('market', { selectedServer: 'Aether' });
+        await flush();
+
+        expect(service().fetchPricesForDyes).toHaveBeenCalled();
+        const fetched = vi.mocked(service().fetchPricesForDyes).mock.calls.at(-1)![0];
+        expect(fetched.map((d) => d.id)).toEqual(expect.arrayContaining([1, 2]));
+        expect(stepCards()).toHaveLength(8);
+      });
+
+      it('redraws the step cards without a fetch when prices go off', async () => {
+        tool = await mountWithRamp();
+        const redraw = vi.spyOn(
+          tool as unknown as { renderIntermediateMatches: () => void },
+          'renderIntermediateMatches'
+        );
+        vi.mocked(service().fetchPricesForDyes).mockClear();
+        vi.mocked(service().getShowPrices).mockReturnValue(false);
+
+        controller().setConfig('market', { showPrices: false });
+        await flush();
+
+        expect(redraw).toHaveBeenCalled();
+        expect(service().fetchPricesForDyes).not.toHaveBeenCalled();
+      });
+
+      // The 'market' subscription is the tool's one way in for a market
+      // change, so destroy() must release it (this.subs) or a navigated-away
+      // Gradient keeps hearing every server and prices change.
+      it('stops hearing the broadcast once destroyed', async () => {
+        tool = await mountWithRamp();
+        const apply = vi.spyOn(tool, 'setConfig');
+        const redraw = vi.spyOn(
+          tool as unknown as { renderIntermediateMatches: () => void },
+          'renderIntermediateMatches'
+        );
+        tool.destroy();
+        vi.mocked(service().fetchPricesForDyes).mockClear();
+
+        // A different server than the one held, so the controller broadcasts
+        const { selectedServer } = controller().getConfig('market');
+        controller().setConfig('market', {
+          selectedServer: selectedServer === 'Crystal' ? 'Primal' : 'Crystal',
+          showPrices: true,
+        });
+        await flush();
+
+        // destroy() also empties the ramp, so a leaked subscriber would find
+        // nothing to fetch either: the setConfig spy is what tells them apart
+        expect(apply).not.toHaveBeenCalled();
+        expect(service().fetchPricesForDyes).not.toHaveBeenCalled();
+        expect(redraw).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -1520,14 +1333,6 @@ describe('GradientTool', () => {
 
       // The sidebar can emit one last config-change during teardown
       expect(() => tool!.setConfig({ stepCount: 4 })).not.toThrow();
-    });
-
-    it('works with no drawer panel supplied', async () => {
-      tool = mount({ drawer: false });
-
-      tool.selectDye(dye(1));
-
-      expect(await endpoints()).toEqual([1]);
     });
   });
 
@@ -1659,41 +1464,26 @@ describe('GradientTool', () => {
   });
 
   // ==========================================================================
-  // BUG-093 (2026-10-04 deep-dive): update() — every language switch —
-  // rebuilt the child components without destroying the ones it replaced,
-  // and each kept its service subscriptions alive.
+  // update() — every language switch — rebuilds the workspace. BUG-093's
+  // child teardown went with the left panel and drawer (REFACTOR-005): the
+  // workspace builds no child components, so the rebuild has nothing to
+  // destroy, and onUpdate() redraws it from the state the tool holds.
   // ==========================================================================
 
-  describe('update() releases the child components it rebuilds', () => {
-    const CHILDREN = [
-      'dyeSelector',
-      'marketBoard',
-      'dyeSelectionPanel',
-      'settingsPanel',
-      'marketPanel',
-      'mobileDyeSelector',
-      'mobileMarketBoard',
-      'mobileDyeSelectionPanel',
-      'mobileSettingsPanel',
-      'mobileMarketPanel',
-    ] as const;
-    type Child = { destroy: () => void };
-    const childrenOf = (t: GradientTool): Child[] =>
-      CHILDREN.map((key) => (t as unknown as Record<string, Child>)[key]);
-
-    it('destroys each previous child once and replaces it', () => {
-      tool = mount();
-      const previous = childrenOf(tool);
-      expect(previous.every(Boolean)).toBe(true);
-      const destroys = previous.map((child) => vi.spyOn(child, 'destroy'));
+  describe('update() rebuilds the workspace from the current state', () => {
+    it('keeps one workspace, the same endpoints and the pins', async () => {
+      tool = await mountWithRamp();
+      pinsOf(tool).set(3, mockDyes[1]);
 
       tool.update();
+      await flush();
 
-      for (const destroy of destroys) expect(destroy).toHaveBeenCalledTimes(1);
-      childrenOf(tool).forEach((child, i) => {
-        expect(child).toBeTruthy();
-        expect(child).not.toBe(previous[i]);
-      });
+      expect(panel.querySelectorAll('[data-testid="gradient-endpoints-row"]')).toHaveLength(1);
+      expect(panel.querySelectorAll('v4-share-button')).toHaveLength(1);
+      expect(stepCards()).toHaveLength(8);
+      expect(stepCards()[0].data.dye.id).toBe(1);
+      expect(stepCards().at(-1)!.data.dye.id).toBe(2);
+      expect(pinsOf(tool).size).toBe(1);
     });
   });
 

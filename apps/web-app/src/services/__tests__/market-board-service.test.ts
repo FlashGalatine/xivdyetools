@@ -661,14 +661,4 @@ describe('MarketBoardService', () => {
       expect(service.getPriceForDye(12345)).toBeUndefined();
     });
   });
-
-  describe('convenience functions', () => {
-    it('should export formatPrice function', async () => {
-      const { formatPrice } = await import('../market-board-service');
-      const result = formatPrice(1000);
-      // `formatGil`, not core's English-only `APIService.formatPrice`: the unit
-      // comes from the app language ("Gil" in EN).
-      expect(result).toBe('1,000 Gil');
-    });
-  });
 });

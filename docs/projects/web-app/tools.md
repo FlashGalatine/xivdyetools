@@ -68,7 +68,7 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 
 ## 3. Gradient Builder — 4C pin rail
 
-**Route:** `/gradient` (the v3 "Dye Mixer" — `/mixer` is **not** redirected, it is the new Dye Mixer) · **ToolId:** `gradient` · **Files:** `src/components/gradient-tool.ts` (`GradientTool`), `dye-selector.ts`, `export-sheet.ts`. Spec: `4c-pin-rail-port-spec.md`.
+**Route:** `/gradient` (the v3 "Dye Mixer" — `/mixer` is **not** redirected, it is the new Dye Mixer) · **ToolId:** `gradient` · **Files:** `src/components/gradient-tool.ts` (`GradientTool`), `export-sheet.ts`. Spec: `4c-pin-rail-port-spec.md`.
 
 **What 5.0 shipped.** FROM / swap / TO endpoint cards (`gradient.fromLabel` / `gradient.swap` / `gradient.toLabel`), ideal-over-achievable stacked bands above the rail, per-step drift in the active method, a summary with average + max drift and pinned count. **Pin** any middle step (`gradient.pinStep` "Pin this step") to make its matched dye a fixed waypoint — the ramp re-interpolates per segment between anchors, a pinned step reads ΔE 0.0, pins clear on endpoint or step-count change. Endpoints resolve to themselves at 0.0. `preventDuplicates` (default on) walks flat stretches to the next-closest unused dye. One 3–12 step range everywhere (`STEP_MIN`/`STEP_MAX`; older 2–10 stored values clamp). Export via the shared sheet (the tool had no export before). Custom colours accepted for either endpoint.
 

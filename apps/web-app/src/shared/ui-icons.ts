@@ -148,14 +148,6 @@ export const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentC
 </svg>`;
 
 /**
- * Stairs icon - Staircase/steps (for interpolation)
- */
-export const ICON_STAIRS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M4 20h4v-4h4v-4h4v-4h4"/>
-  <path d="M4 20v-4h4v-4h4v-4h4v-4h4"/>
-</svg>`;
-
-/**
  * Star pair (5.0): one geometry on the 32 grid, two states — outline for
  * not-voted/not-saved, filled (accent slot) for voted/saved. State comes from
  * the fill, never from fading. Geometry home: `@xivdyetools/svg`.

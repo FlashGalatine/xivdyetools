@@ -1,11 +1,13 @@
 ﻿/**
  * XIV Dye Tools v4.0.0 - Gradient Tool Component (Gradient Builder)
  *
- * V4 Renamed: mixer-tool.ts â†’ gradient-tool.ts
+ * V4 Renamed: mixer-tool.ts → gradient-tool.ts
  * Creates color gradients between two dyes with intermediate matches.
  *
- * Left Panel: Start/End dye selectors, steps slider, color space toggle, filters, market board
- * Right Panel: Gradient preview, intermediate dye matches, export options
+ * Renders one 4C workspace (endpoints row, pin rail, step results, export)
+ * into the panel v4-layout hands it. The endpoints come from the dye-palette
+ * drawer and the result cards; every setting comes from the ConfigSidebar
+ * through ConfigController.
  *
  * @module components/tools/gradient-tool
  */
@@ -19,9 +21,6 @@ import {
   normalizeMatchingMethod,
 } from '@xivdyetools/core';
 import { BaseComponent } from '@components/base-component';
-import { CollapsiblePanel } from '@components/collapsible-panel';
-import { DyeSelector } from '@components/dye-selector';
-import { MarketBoard } from '@components/market-board';
 import { openExportSheet } from '@components/export-sheet';
 import '@components/v4/result-card';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
@@ -38,14 +37,8 @@ import {
   ThemeService,
   ToastService,
   WorldService,
-  // WEB-REF-003 Phase 3: Shared panel builders
-  buildMarketPanel,
 } from '@services/index';
-// Note: setupMarketBoardListeners still used by drawer code until Phase 2 refactor
-import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import { ICON_TOOL_GRADIENT } from '@shared/tool-icons';
-// Note: ICON_MARKET still used by drawer code until Phase 2 refactor
-import { ICON_MARKET, ICON_STAIRS, ICON_PALETTE } from '@shared/ui-icons';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { isCustomDye, makeCustomDye } from '@shared/custom-dye';
@@ -69,6 +62,12 @@ import { isDyeExcluded, filterDyes } from '@shared/dye-filter-utils';
 // Types and Constants
 // ============================================================================
 
+/**
+ * The panels v4-layout constructs every tool with. Only `rightPanel` is drawn
+ * into: v4-layout passes the same element as `leftPanel` and a null
+ * `drawerContent`, so the v3 left panel and mobile drawer built there were
+ * cleared or skipped before anyone saw them (REFACTOR-005).
+ */
 export interface GradientToolOptions {
   leftPanel: HTMLElement;
   rightPanel: HTMLElement;
@@ -146,11 +145,11 @@ const ICON_END_ANCHOR =
   '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v4"></path><path d="M12 18v4"></path></svg>';
 
 // ============================================================================
-// MixerTool Component
+// GradientTool Component
 // ============================================================================
 
 /**
- * Mixer Tool - v3 Two-Panel Layout
+ * Gradient Builder - one-panel 4C workspace
  *
  * Creates smooth color transitions between two dyes with intermediate matches.
  */
@@ -165,9 +164,9 @@ export class GradientTool extends BaseComponent {
   private matchingMethod: MatchingMethod = 'ciede2000';
   private preventDuplicates = true;
   private currentSteps: InterpolationStep[] = [];
-  /** 4C: pinned step index â†’ the dye anchored there (captured at pin time) */
+  /** 4C: pinned step index → the dye anchored there (captured at pin time) */
   private pinnedSteps = new Map<number, Dye>();
-  /** Pins are meaningless across an endpoint change â€” track to invalidate */
+  /** Pins are meaningless across an endpoint change — track to invalidate */
   private lastEndpointsKey = '';
 
   // Market Board Service integration
@@ -178,7 +177,7 @@ export class GradientTool extends BaseComponent {
     return this.marketBoardService.getShowPrices();
   }
 
-  // OPT-027 (2026-07-18 audit): read-only view, no per-access map clone â€”
+  // OPT-027 (2026-07-18 audit): read-only view, no per-access map clone —
   // this getter is hit inside per-card render loops
   private get priceData(): ReadonlyMap<number, PriceData> {
     return this.marketBoardService.getPricesView();
@@ -193,26 +192,9 @@ export class GradientTool extends BaseComponent {
     return this.selectedDyes[1] || null;
   }
 
-  // Child components (desktop)
-  private dyeSelector: DyeSelector | null = null;
   private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
-  private marketBoard: MarketBoard | null = null;
-  private dyeSelectionPanel: CollapsiblePanel | null = null;
-  private settingsPanel: CollapsiblePanel | null = null;
-  private marketPanel: CollapsiblePanel | null = null;
-
-  // Child components (mobile drawer - separate instances for independent panel states)
-  private mobileDyeSelectionPanel: CollapsiblePanel | null = null;
-  private mobileSettingsPanel: CollapsiblePanel | null = null;
-  private mobileMarketPanel: CollapsiblePanel | null = null;
-  private mobileDyeSelector: DyeSelector | null = null;
-  private mobileMarketBoard: MarketBoard | null = null;
-  private mobileStepValueDisplay: HTMLElement | null = null;
 
   // DOM References
-  private selectedDyesContainer: HTMLElement | null = null;
-  private mobileSelectedDyesContainer: HTMLElement | null = null;
-  private stepValueDisplay: HTMLElement | null = null;
   private emptyStateContainer: HTMLElement | null = null;
   private matchesContainer: HTMLElement | null = null;
   private resultsHeader: HTMLElement | null = null;
@@ -241,9 +223,6 @@ export class GradientTool extends BaseComponent {
 
   // Display options (from ConfigController) - for future v4-result-card migration
   private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
-
-  // Guard flag to prevent selection-changed event from overwriting state during external selection
-  private isExternalSelection = false;
 
   constructor(container: HTMLElement, options: GradientToolOptions) {
     super(container);
@@ -447,10 +426,9 @@ export class GradientTool extends BaseComponent {
       ConfigController.getInstance().setConfig('gradient', settings);
     }
 
-    // If dyes were loaded, save and sync selectors
+    // If dyes were loaded, save them (onMount draws the ramp next)
     if (hasChanges) {
       this.saveSelectedDyes();
-      // Sync to selector UI (will be done after render in onMount)
     }
   }
 
@@ -459,54 +437,19 @@ export class GradientTool extends BaseComponent {
   // ============================================================================
 
   renderContent(): void {
-    // BUG-093 (2026-10-04 deep-dive): update() re-runs this on every language
-    // switch. A replaced child keeps its service subscriptions until it is
-    // destroyed, so each switch used to leave one more detached MarketBoard
-    // relaying server changes into this tool.
-    this.destroyChildComponents();
-
-    this.renderLeftPanel();
+    // REFACTOR-005: the workspace is the whole tool. The v3 left panel
+    // (dye selector, settings, market board) and the mobile drawer are gone:
+    // v4-layout hands one panel as both left and right, so this render
+    // cleared the left panel's UI at once, and it passes no drawer. That also
+    // retires BUG-093's child teardown — the workspace builds no
+    // BaseComponent children, so update() has none to destroy.
     this.renderRightPanel();
-
-    if (this.options.drawerContent) {
-      this.renderDrawerContent();
-    }
 
     this.element = this.container;
   }
 
-  /**
-   * Destroy the child components a render is about to rebuild — the same
-   * step HarmonyTool takes — and, from destroy(), the last set.
-   */
-  private destroyChildComponents(): void {
-    // Desktop components
-    this.dyeSelector?.destroy();
-    this.dyeSelector = null;
-    this.marketBoard?.destroy();
-    this.marketBoard = null;
-    this.dyeSelectionPanel?.destroy();
-    this.dyeSelectionPanel = null;
-    this.settingsPanel?.destroy();
-    this.settingsPanel = null;
-    this.marketPanel?.destroy();
-    this.marketPanel = null;
-
-    // Mobile drawer components
-    this.mobileDyeSelector?.destroy();
-    this.mobileDyeSelector = null;
-    this.mobileMarketBoard?.destroy();
-    this.mobileMarketBoard = null;
-    this.mobileDyeSelectionPanel?.destroy();
-    this.mobileDyeSelectionPanel = null;
-    this.mobileSettingsPanel?.destroy();
-    this.mobileSettingsPanel = null;
-    this.mobileMarketPanel?.destroy();
-    this.mobileMarketPanel = null;
-  }
-
   bindEvents(): void {
-    // Event bindings handled in child components
+    // The workspace binds its controls (this.on) as it builds them
   }
 
   onMount(): void {
@@ -514,14 +457,6 @@ export class GradientTool extends BaseComponent {
     // params present) — and before the config subscription below, so its
     // ConfigController write is not echoed back into setConfig
     this.loadFromShareUrl();
-
-    // Sync DyeSelector with loaded dyes (from URL or localStorage)
-    if (this.selectedDyes.length > 0) {
-      this.dyeSelector?.setSelectedDyes(this.selectedDyes);
-      this.mobileDyeSelector?.setSelectedDyes(this.selectedDyes);
-      this.updateSelectedDyesDisplay();
-      this.updateMobileSelectedDyesDisplay();
-    }
 
     // Subscribe to language changes (only in onMount, NOT bindEvents - avoids infinite loop)
     this.subs.add(
@@ -538,43 +473,37 @@ export class GradientTool extends BaseComponent {
       })
     );
 
-    // Subscribe to market config changes
+    // Subscribe to market config changes. REFACTOR-005: this is the one path a
+    // server or prices-toggle change takes into the tool (HarmonyTool's OPT-007
+    // rule). MarketBoardService subscribed to 'market' in its constructor,
+    // which this tool's constructor ran before this listener was added, and
+    // ConfigController notifies in subscription order — so the service has
+    // already applied the change (and cleared its cache on a server change)
+    // when setConfig() fetches or redraws here. The removed left-panel
+    // MarketBoard only relayed the service's own events back into this tool,
+    // a duplicate of this call.
     this.subs.add(
       configController.subscribe('market', (config) => {
         this.setConfig(config);
       })
     );
 
-    // Sync MarketBoard components with ConfigController on initial load
-    const marketConfig = configController.getConfig('market');
-    if (this.marketBoard) {
-      this.marketBoard.setSelectedServer(marketConfig.selectedServer);
-      this.marketBoard.setShowPrices(marketConfig.showPrices);
-    }
-    if (this.mobileMarketBoard) {
-      this.mobileMarketBoard.setSelectedServer(marketConfig.selectedServer);
-      this.mobileMarketBoard.setShowPrices(marketConfig.showPrices);
-    }
-
     // If dyes were loaded from storage or URL, calculate interpolation
     if (this.startDye && this.endDye) {
       this.updateInterpolation();
-      this.updateDrawerContent();
     }
 
     logger.info('[GradientTool] Mounted');
   }
 
   onUpdate(): void {
-    // update() rebuilds both panels (e.g. on language change) — repopulate
+    // update() rebuilds the workspace (e.g. on language change) — repopulate
     // the 4C workspace from the current state instead of leaving the fresh
     // shell in its empty default.
     this.updateInterpolation();
   }
 
   destroy(): void {
-    this.destroyChildComponents();
-
     this.selectedDyes = [];
     this.currentSteps = [];
 
@@ -616,15 +545,6 @@ export class GradientTool extends BaseComponent {
       this.pinnedSteps.clear();
       needsUpdate = true;
       logger.info(`[GradientTool] setConfig: stepCount -> ${stepCount}`);
-
-      // Update desktop display
-      if (this.stepValueDisplay) {
-        this.stepValueDisplay.textContent = String(stepCount);
-      }
-      // Update mobile display
-      if (this.mobileStepValueDisplay) {
-        this.mobileStepValueDisplay.textContent = String(stepCount);
-      }
     }
 
     // Handle interpolation (maps to colorSpace); an unknown mode is ignored
@@ -661,19 +581,12 @@ export class GradientTool extends BaseComponent {
       }
     }
 
-    // Handle market config changes (showPrices, selectedServer)
-    // Note: MarketBoardService manages state via ConfigController subscription
+    // Handle market config changes (showPrices, selectedServer). Apply-only:
+    // MarketBoardService already holds both values — it applies them from its
+    // own ConfigController subscription before this runs (see onMount).
     if ('showPrices' in config) {
       const showPrices = config.showPrices as boolean;
       logger.info(`[GradientTool] setConfig: showPrices -> ${showPrices}`);
-
-      // Update both MarketBoard UI instances
-      if (this.marketBoard) {
-        this.marketBoard.setShowPrices(showPrices);
-      }
-      if (this.mobileMarketBoard) {
-        this.mobileMarketBoard.setShowPrices(showPrices);
-      }
 
       // Fetch prices if enabled, or re-render to hide them
       if (showPrices) {
@@ -686,14 +599,6 @@ export class GradientTool extends BaseComponent {
     if ('selectedServer' in config) {
       const selectedServer = config.selectedServer as string;
       logger.info(`[GradientTool] setConfig: selectedServer -> ${selectedServer}`);
-
-      // Update both MarketBoard UI instances with the new server
-      if (this.marketBoard) {
-        this.marketBoard.setSelectedServer(selectedServer);
-      }
-      if (this.mobileMarketBoard) {
-        this.mobileMarketBoard.setSelectedServer(selectedServer);
-      }
 
       // Re-fetch prices with the new server (service clears cache automatically on server change)
       if (this.showPrices) {
@@ -715,350 +620,11 @@ export class GradientTool extends BaseComponent {
     // Re-interpolate if any config changed and we have data
     if (needsUpdate && this.startDye && this.endDye) {
       void this.updateInterpolation();
-      this.updateDrawerContent();
     }
   }
 
   // ============================================================================
-  // Left Panel Rendering
-  // ============================================================================
-
-  private renderLeftPanel(): void {
-    const left = this.options.leftPanel;
-    clearContainer(left);
-
-    // Section 1: Dye Selection (consolidated - select 2 dyes)
-    const dyeSelectionContainer = this.createElement('div');
-    left.appendChild(dyeSelectionContainer);
-    this.dyeSelectionPanel = new CollapsiblePanel(dyeSelectionContainer, {
-      title: LanguageService.t('mixer.dyeSelection'),
-      storageKey: 'v3_mixer_dye_selection_panel',
-      defaultOpen: true,
-      icon: ICON_PALETTE,
-    });
-    this.dyeSelectionPanel.init();
-    const dyeSelectionContent = this.createElement('div', { className: 'p-4' });
-    this.renderDyeSelector(dyeSelectionContent);
-    this.dyeSelectionPanel.setContent(dyeSelectionContent);
-
-    // Section 2: Interpolation Settings (collapsible)
-    const settingsContainer = this.createElement('div');
-    left.appendChild(settingsContainer);
-    this.settingsPanel = new CollapsiblePanel(settingsContainer, {
-      title: LanguageService.t('mixer.interpolationSettings'),
-      storageKey: 'v3_mixer_settings_panel',
-      defaultOpen: true,
-      icon: ICON_STAIRS,
-    });
-    this.settingsPanel.init();
-    const settingsContent = this.createElement('div', { className: 'p-4' });
-    this.renderSettings(settingsContent);
-    this.settingsPanel.setContent(settingsContent);
-
-    // Section 3: Market Board (collapsible)
-    // WEB-REF-003 Phase 3: Refactored to use shared builder
-    const marketContainer = this.createElement('div');
-    left.appendChild(marketContainer);
-    const marketRefs = buildMarketPanel(this, marketContainer, {
-      storageKey: 'v3_mixer_market',
-      getShowPrices: () => this.showPrices,
-      fetchPrices: () => this.fetchPricesForDisplayedDyes(),
-      onPricesToggled: () => {
-        if (this.showPrices) {
-          void this.fetchPricesForDisplayedDyes();
-        } else {
-          this.updateSelectedDyesDisplay();
-          this.renderIntermediateMatches();
-        }
-      },
-      onServerChanged: () => {
-        if (this.showPrices) {
-          void this.fetchPricesForDisplayedDyes();
-        }
-      },
-    });
-    this.marketPanel = marketRefs.panel;
-    this.marketBoard = marketRefs.marketBoard;
-  }
-
-  /**
-   * Render consolidated dye selector section (select 2 dyes: start and end)
-   */
-  private renderDyeSelector(container: HTMLElement): void {
-    const dyeContainer = this.createElement('div', { className: 'space-y-3' });
-
-    // Instruction text
-    const instruction = this.createElement('p', {
-      className: 'text-sm mb-2',
-      textContent: LanguageService.t('mixer.selectTwoDyes'),
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    dyeContainer.appendChild(instruction);
-
-    // Selected dyes display
-    const displayContainer = this.createElement('div', {
-      className: 'selected-dyes-display space-y-2',
-    });
-    dyeContainer.appendChild(displayContainer);
-    this.selectedDyesContainer = displayContainer;
-
-    this.updateSelectedDyesDisplay();
-
-    // Dye selector component
-    const selectorContainer = this.createElement('div', { className: 'mt-3' });
-    dyeContainer.appendChild(selectorContainer);
-
-    const selector = new DyeSelector(selectorContainer, {
-      maxSelections: 2,
-      allowMultiple: true,
-      allowDuplicates: false,
-      showCategories: true,
-      showPrices: true,
-      excludeFacewear: true,
-      showFavorites: true,
-      compactMode: true,
-      hideSelectedChips: true, // We show selections above with Start/End labels
-    });
-    selector.init();
-
-    // Store reference
-    this.dyeSelector = selector;
-
-    // Listen for selection changes
-    selectorContainer.addEventListener('selection-changed', () => {
-      // Skip if this change was triggered by external selection (e.g., from Color Palette drawer)
-      if (this.isExternalSelection) {
-        return;
-      }
-      this.selectedDyes = selector.getSelectedDyes();
-      this.saveSelectedDyes();
-      this.updateSelectedDyesDisplay();
-      this.updateInterpolation();
-      this.updateDrawerContent();
-    });
-
-    // Set initial selection if dyes were loaded from storage
-    if (this.selectedDyes.length > 0) {
-      selector.setSelectedDyes(this.selectedDyes);
-    }
-
-    container.appendChild(dyeContainer);
-  }
-
-  /**
-   * Update the selected dyes display with Start/End labels and remove buttons
-   */
-  private updateSelectedDyesDisplay(): void {
-    if (!this.selectedDyesContainer) return;
-    clearContainer(this.selectedDyesContainer);
-
-    if (this.selectedDyes.length === 0) {
-      // Empty state - dashed border placeholder
-      const placeholder = this.createElement('div', {
-        className: 'p-3 rounded-lg border-2 border-dashed text-center text-sm',
-        textContent: LanguageService.t('mixer.selectDyes'),
-        attributes: {
-          style: 'border-color: var(--theme-border); color: var(--theme-text-muted);',
-        },
-      });
-      this.selectedDyesContainer.appendChild(placeholder);
-      return;
-    }
-
-    // Display each selected dye with role label
-    const labels = [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')];
-
-    for (let i = 0; i < this.selectedDyes.length; i++) {
-      const dye = this.selectedDyes[i];
-      const label = labels[i];
-
-      const card = this.createElement('div', {
-        className: 'flex items-center gap-3 p-3 rounded-lg',
-        attributes: { style: 'background: var(--theme-background-secondary);' },
-      });
-
-      // Color swatch
-      const swatch = this.createElement('div', {
-        className: 'w-10 h-10 rounded border',
-        attributes: {
-          style: `background: ${dye.hex}; border-color: var(--theme-border);`,
-        },
-      });
-      card.appendChild(swatch);
-
-      // Info section
-      const info = this.createElement('div', { className: 'flex-1 min-w-0' });
-
-      // Role label
-      const roleLabel = this.createElement('p', {
-        className: 'text-xs font-semibold uppercase tracking-wider',
-        textContent: label,
-        attributes: { style: 'color: var(--theme-primary);' },
-      });
-      info.appendChild(roleLabel);
-
-      // Dye name
-      const name = this.createElement('p', {
-        className: 'font-medium truncate',
-        textContent: LanguageService.getDyeName(dye.itemID) || dye.name,
-        attributes: { style: 'color: var(--theme-text);' },
-      });
-      info.appendChild(name);
-
-      // Hex and price
-      const details = this.createElement('p', {
-        className: 'text-xs number',
-        attributes: { style: 'color: var(--theme-text-muted);' },
-      });
-      let detailText = dye.hex;
-      const priceText = this.formatPrice(dye);
-      if (priceText) {
-        detailText += ` â€¢ ${priceText}`;
-      }
-      details.textContent = detailText;
-      info.appendChild(details);
-
-      card.appendChild(info);
-
-      // Remove button
-      const removeBtn = this.createElement('button', {
-        className: 'w-8 h-8 flex items-center justify-center rounded-full transition-colors',
-        textContent: '\u00D7',
-        attributes: {
-          style:
-            'background: var(--theme-card-hover); color: var(--theme-text-muted); font-size: 1.25rem;',
-          title: LanguageService.t('common.remove'),
-        },
-      });
-
-      this.on(removeBtn, 'click', () => {
-        // Remove this dye from selection
-        const newSelection = this.selectedDyes.filter((d) => d.id !== dye.id);
-        this.selectedDyes = newSelection;
-        this.dyeSelector?.setSelectedDyes(newSelection);
-        this.saveSelectedDyes();
-        this.updateSelectedDyesDisplay();
-        this.updateInterpolation();
-        this.updateDrawerContent();
-      });
-
-      card.appendChild(removeBtn);
-      this.selectedDyesContainer.appendChild(card);
-    }
-  }
-
-  /**
-   * Render interpolation settings
-   */
-  private renderSettings(container: HTMLElement): void {
-    const settingsContainer = this.createElement('div', { className: 'space-y-4' });
-
-    // Steps slider
-    const stepsGroup = this.createElement('div');
-    const stepsLabel = this.createElement('label', {
-      className: 'flex items-center justify-between text-sm mb-2',
-    });
-    const stepsText = this.createElement('span', {
-      textContent: LanguageService.t('mixer.steps'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    this.stepValueDisplay = this.createElement('span', {
-      className: 'number',
-      textContent: String(this.stepCount),
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    stepsLabel.appendChild(stepsText);
-    stepsLabel.appendChild(this.stepValueDisplay);
-    stepsGroup.appendChild(stepsLabel);
-
-    const stepsInput = this.createElement('input', {
-      className: 'w-full',
-      attributes: {
-        'data-testid': 'gradient-step-slider',
-        type: 'range',
-        min: String(STEP_MIN),
-        max: String(STEP_MAX),
-        value: String(this.stepCount),
-        style: 'accent-color: var(--theme-primary);',
-      },
-    }) as HTMLInputElement;
-
-    this.on(stepsInput, 'input', () => {
-      this.stepCount = parseInt(stepsInput.value, 10);
-      if (this.stepValueDisplay) {
-        this.stepValueDisplay.textContent = String(this.stepCount);
-      }
-      // Applied above first, so the controller's synchronous echo is a no-op
-      ConfigController.getInstance().setConfig('gradient', { stepCount: this.stepCount });
-      // Pins are ramp indices — a new count re-anchors them somewhere the
-      // user never chose, so they clear with the count.
-      this.pinnedSteps.clear();
-      this.updateInterpolation();
-      this.updateDrawerContent();
-    });
-
-    stepsGroup.appendChild(stepsInput);
-    settingsContainer.appendChild(stepsGroup);
-
-    // Color space dropdown
-    const colorSpaceGroup = this.createElement('div');
-    const colorSpaceLabel = this.createElement('label', {
-      className: 'block text-sm mb-2',
-      textContent: LanguageService.t('mixer.colorSpace'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    colorSpaceGroup.appendChild(colorSpaceLabel);
-
-    // Dropdown select for interpolation mode
-    const colorSpaceSelect = this.createElement('select', {
-      className: 'w-full px-3 py-2 text-sm rounded-lg',
-      attributes: {
-        'data-testid': 'gradient-colorspace-select',
-        style: `
-          background: var(--theme-background-secondary);
-          color: var(--theme-text);
-          border: 1px solid var(--theme-border);
-          cursor: pointer;
-        `,
-      },
-    }) as HTMLSelectElement;
-
-    // Interpolation mode options with descriptive labels
-    const modeOptions: { value: InterpolationMode; label: string; description: string }[] = [
-      { value: 'rgb', label: 'RGB', description: LanguageService.t('gradient.mode.rgb') },
-      { value: 'hsv', label: 'HSV', description: LanguageService.t('gradient.mode.hsv') },
-      { value: 'lab', label: 'LAB', description: LanguageService.t('gradient.mode.lab') },
-      { value: 'oklch', label: 'OKLCH', description: LanguageService.t('gradient.mode.oklch') },
-      { value: 'lch', label: 'LCH', description: LanguageService.t('gradient.mode.lch') },
-    ];
-
-    for (const mode of modeOptions) {
-      const option = this.createElement('option', {
-        textContent: `${mode.label} - ${mode.description}`,
-        attributes: { value: mode.value },
-      }) as HTMLOptionElement;
-      if (mode.value === this.colorSpace) {
-        option.selected = true;
-      }
-      colorSpaceSelect.appendChild(option);
-    }
-
-    this.on(colorSpaceSelect, 'change', () => {
-      this.colorSpace = colorSpaceSelect.value as InterpolationMode;
-      // Applied above first, so the controller's synchronous echo is a no-op
-      ConfigController.getInstance().setConfig('gradient', { interpolation: this.colorSpace });
-      this.updateInterpolation();
-      this.updateDrawerContent();
-    });
-
-    colorSpaceGroup.appendChild(colorSpaceSelect);
-    settingsContainer.appendChild(colorSpaceGroup);
-
-    container.appendChild(settingsContainer);
-  }
-
-  // ============================================================================
-  // Right Panel Rendering
+  // Workspace Rendering (into options.rightPanel)
   // ============================================================================
 
   private renderRightPanel(): void {
@@ -1873,7 +1439,7 @@ export class GradientTool extends BaseComponent {
     const result: InterpolationStep[] = [];
     const steps = this.stepCount;
 
-    // 4C: changing an endpoint redraws a different ramp â€” old pins would
+    // 4C: changing an endpoint redraws a different ramp — old pins would
     // anchor a curve they were never part of.
     const endpointsKey = `${this.startDye.id}-${this.endDye.id}`;
     if (endpointsKey !== this.lastEndpointsKey) {
@@ -1881,7 +1447,7 @@ export class GradientTool extends BaseComponent {
       this.pinnedSteps.clear();
     }
 
-    // 4C: pins on endpoints or beyond the ramp are meaningless â€” drop them.
+    // 4C: pins on endpoints or beyond the ramp are meaningless — drop them.
     for (const index of [...this.pinnedSteps.keys()]) {
       if (index <= 0 || index >= steps - 1) this.pinnedSteps.delete(index);
     }
@@ -1933,7 +1499,7 @@ export class GradientTool extends BaseComponent {
       const t = span === 0 ? 0 : (i - lower.index) / span;
       const theoreticalColor = this.interpolateInSpace(lower.hex, upper.hex, t);
 
-      // 4C: a pinned step is no longer aiming at anything â€” its matched dye
+      // 4C: a pinned step is no longer aiming at anything — its matched dye
       // IS the anchor and its drift reads 0.0. Already in usedDyeIds (seeded
       // above), and never deduped itself, even against another pin.
       const pinnedDye = this.pinnedSteps.get(i);
@@ -1999,7 +1565,7 @@ export class GradientTool extends BaseComponent {
       if (matchedDye) usedDyeIds.add(matchedDye.id);
 
       // Drift in the suite vocabulary: step vs its matched dye, in the
-      // active matching method â€” not raw RGB distance.
+      // active matching method — not raw RGB distance.
       const distance = matchedDye
         ? ColorService.getDistanceForMethod(theoreticalColor, matchedDye.hex, this.matchingMethod)
         : Infinity;
@@ -2046,8 +1612,11 @@ export class GradientTool extends BaseComponent {
       if (priceInfo?.worldId) {
         marketServer = WorldService.getWorldName(priceInfo.worldId);
       }
-      if (!marketServer) {
-        marketServer = this.getActiveMarketBoard()?.getSelectedServer?.();
+      // ...else the selected server, while prices are on. REFACTOR-005: read
+      // from the service; the removed left-panel MarketBoard only delegated
+      // getShowPrices()/getSelectedServer() to it.
+      if (!marketServer && this.showPrices) {
+        marketServer = this.marketBoardService.getSelectedServer();
       }
 
       // Build ResultCardData
@@ -2081,7 +1650,7 @@ export class GradientTool extends BaseComponent {
       card.showPrice = this.displayOptions.showPrice && this.showPrices;
       card.showAcquisition = this.displayOptions.showAcquisition;
 
-      // Enable slot picker for gradient tool (Select Dye â†’ choose Start or End slot)
+      // Enable slot picker for gradient tool (Select Dye → choose Start or End slot)
       card.showSlotPicker = true;
       card.primaryActionLabel = LanguageService.t('common.selectDye');
 
@@ -2161,20 +1730,12 @@ export class GradientTool extends BaseComponent {
   }
 
   /**
-   * Update UI after a slot selection from v4-result-card
+   * Persist and redraw after an endpoint change: an armed endpoint's palette
+   * pick, a result card's slot picker, or the swap button.
    */
   private updateAfterSlotSelection(): void {
-    this.isExternalSelection = true;
-    try {
-      this.dyeSelector?.setSelectedDyes(this.selectedDyes);
-    } finally {
-      this.isExternalSelection = false;
-    }
     this.saveSelectedDyes();
-    this.updateSelectedDyesDisplay();
-    this.updateMobileSelectedDyesDisplay();
     this.updateInterpolation();
-    this.updateDrawerContent();
   }
 
   /**
@@ -2206,395 +1767,8 @@ export class GradientTool extends BaseComponent {
   }
 
   // ============================================================================
-  // Mobile Drawer Content
-  // ============================================================================
-
-  private renderDrawerContent(): void {
-    if (!this.options.drawerContent) return;
-
-    const drawer = this.options.drawerContent;
-    clearContainer(drawer);
-
-    // Section 1: Dye Selection (consolidated - select 2 dyes)
-    const dyeSelectionContainer = this.createElement('div');
-    drawer.appendChild(dyeSelectionContainer);
-    this.mobileDyeSelectionPanel = new CollapsiblePanel(dyeSelectionContainer, {
-      title: LanguageService.t('mixer.dyeSelection'),
-      storageKey: 'v3_mixer_mobile_dye_selection_panel',
-      defaultOpen: true,
-      icon: ICON_PALETTE,
-    });
-    this.mobileDyeSelectionPanel.init();
-    const mobileDyeSelectionContent = this.createElement('div', { className: 'p-4' });
-    this.renderMobileDyeSelector(mobileDyeSelectionContent);
-    this.mobileDyeSelectionPanel.setContent(mobileDyeSelectionContent);
-
-    // Section 2: Interpolation Settings (collapsible)
-    const settingsContainer = this.createElement('div');
-    drawer.appendChild(settingsContainer);
-    this.mobileSettingsPanel = new CollapsiblePanel(settingsContainer, {
-      title: LanguageService.t('mixer.interpolationSettings'),
-      storageKey: 'v3_mixer_mobile_settings_panel',
-      defaultOpen: true,
-      icon: ICON_STAIRS,
-    });
-    this.mobileSettingsPanel.init();
-    const mobileSettingsContent = this.createElement('div', { className: 'p-4' });
-    this.renderMobileSettings(mobileSettingsContent);
-    this.mobileSettingsPanel.setContent(mobileSettingsContent);
-
-    // Section 3: Market Board (collapsible)
-    const marketContainer = this.createElement('div');
-    drawer.appendChild(marketContainer);
-    this.mobileMarketPanel = new CollapsiblePanel(marketContainer, {
-      title: LanguageService.t('marketBoard.title'),
-      storageKey: 'v3_mixer_mobile_market',
-      defaultOpen: false,
-      icon: ICON_MARKET,
-    });
-    this.mobileMarketPanel.init();
-
-    const mobileMarketContent = this.createElement('div');
-    this.mobileMarketBoard = new MarketBoard(mobileMarketContent);
-    this.mobileMarketBoard.init();
-
-    // Set up market board event listeners using shared utility
-    setupMarketBoardListeners(
-      mobileMarketContent,
-      () => this.showPrices,
-      () => this.fetchPricesForDisplayedDyes(),
-      {
-        onPricesToggled: () => {
-          if (this.showPrices) {
-            void this.fetchPricesForDisplayedDyes();
-          } else {
-            this.updateSelectedDyesDisplay();
-            this.updateMobileSelectedDyesDisplay();
-            this.renderIntermediateMatches();
-          }
-        },
-        onServerChanged: () => {
-          if (this.showPrices) {
-            void this.fetchPricesForDisplayedDyes();
-          }
-        },
-      }
-    );
-
-    this.mobileMarketPanel.setContent(mobileMarketContent);
-  }
-
-  /**
-   * Render consolidated mobile dye selector section (select 2 dyes: start and end)
-   */
-  private renderMobileDyeSelector(container: HTMLElement): void {
-    const dyeContainer = this.createElement('div', { className: 'space-y-3' });
-
-    // Instruction text
-    const instruction = this.createElement('p', {
-      className: 'text-sm mb-2',
-      textContent: LanguageService.t('mixer.selectTwoDyes'),
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    dyeContainer.appendChild(instruction);
-
-    // Selected dyes display
-    const displayContainer = this.createElement('div', {
-      className: 'mobile-selected-dyes-display space-y-2',
-    });
-    dyeContainer.appendChild(displayContainer);
-    this.mobileSelectedDyesContainer = displayContainer;
-
-    this.updateMobileSelectedDyesDisplay();
-
-    // Dye selector component
-    const selectorContainer = this.createElement('div', { className: 'mt-3' });
-    dyeContainer.appendChild(selectorContainer);
-
-    const selector = new DyeSelector(selectorContainer, {
-      maxSelections: 2,
-      allowMultiple: true,
-      allowDuplicates: false,
-      showCategories: true,
-      showPrices: true,
-      excludeFacewear: true,
-      showFavorites: true,
-      compactMode: true,
-      hideSelectedChips: true, // We show selections above with Start/End labels
-    });
-    selector.init();
-
-    // Store reference
-    this.mobileDyeSelector = selector;
-
-    // Listen for selection changes
-    selectorContainer.addEventListener('selection-changed', () => {
-      // Skip if this change was triggered by external selection (e.g., from Color Palette drawer)
-      if (this.isExternalSelection) {
-        return;
-      }
-      this.selectedDyes = selector.getSelectedDyes();
-      this.saveSelectedDyes();
-      // Sync to desktop selector
-      this.dyeSelector?.setSelectedDyes(this.selectedDyes);
-      this.updateSelectedDyesDisplay();
-      this.updateMobileSelectedDyesDisplay();
-      this.updateInterpolation();
-    });
-
-    // Set initial selection if dyes were loaded from storage
-    if (this.selectedDyes.length > 0) {
-      selector.setSelectedDyes(this.selectedDyes);
-    }
-
-    container.appendChild(dyeContainer);
-  }
-
-  /**
-   * Update mobile selected dyes display with Start/End labels and remove buttons
-   */
-  private updateMobileSelectedDyesDisplay(): void {
-    if (!this.mobileSelectedDyesContainer) return;
-    clearContainer(this.mobileSelectedDyesContainer);
-
-    if (this.selectedDyes.length === 0) {
-      // Empty state - dashed border placeholder
-      const placeholder = this.createElement('div', {
-        className: 'p-2 rounded-lg border-2 border-dashed text-center text-sm',
-        textContent: LanguageService.t('mixer.selectDyes'),
-        attributes: {
-          style: 'border-color: var(--theme-border); color: var(--theme-text-muted);',
-        },
-      });
-      this.mobileSelectedDyesContainer.appendChild(placeholder);
-      return;
-    }
-
-    // Display each selected dye with role label
-    const labels = [LanguageService.t('mixer.startDye'), LanguageService.t('mixer.endDye')];
-
-    for (let i = 0; i < this.selectedDyes.length; i++) {
-      const dye = this.selectedDyes[i];
-      const label = labels[i];
-
-      const card = this.createElement('div', {
-        className: 'flex items-center gap-2 p-2 rounded-lg',
-        attributes: { style: 'background: var(--theme-background-secondary);' },
-      });
-
-      // Color swatch
-      const swatch = this.createElement('div', {
-        className: 'w-8 h-8 rounded border',
-        attributes: {
-          style: `background: ${dye.hex}; border-color: var(--theme-border);`,
-        },
-      });
-      card.appendChild(swatch);
-
-      // Info section
-      const info = this.createElement('div', { className: 'flex-1 min-w-0' });
-
-      // Role label and dye name on same line for mobile
-      const labelAndName = this.createElement('div', { className: 'flex items-center gap-2' });
-      const roleLabel = this.createElement('span', {
-        className: 'text-xs font-semibold uppercase',
-        textContent: label,
-        attributes: { style: 'color: var(--theme-primary);' },
-      });
-      const name = this.createElement('span', {
-        className: 'text-sm font-medium truncate',
-        textContent: LanguageService.getDyeName(dye.itemID) || dye.name,
-        attributes: { style: 'color: var(--theme-text);' },
-      });
-      labelAndName.appendChild(roleLabel);
-      labelAndName.appendChild(name);
-      info.appendChild(labelAndName);
-
-      card.appendChild(info);
-
-      // Remove button
-      const removeBtn = this.createElement('button', {
-        className: 'w-6 h-6 flex items-center justify-center rounded-full transition-colors',
-        textContent: '\u00D7',
-        attributes: {
-          style:
-            'background: var(--theme-card-hover); color: var(--theme-text-muted); font-size: 1rem;',
-          title: LanguageService.t('common.remove'),
-        },
-      });
-
-      this.on(removeBtn, 'click', () => {
-        // Remove this dye from selection
-        const newSelection = this.selectedDyes.filter((d) => d.id !== dye.id);
-        this.selectedDyes = newSelection;
-        this.mobileDyeSelector?.setSelectedDyes(newSelection);
-        this.dyeSelector?.setSelectedDyes(newSelection);
-        this.saveSelectedDyes();
-        this.updateSelectedDyesDisplay();
-        this.updateMobileSelectedDyesDisplay();
-        this.updateInterpolation();
-      });
-
-      card.appendChild(removeBtn);
-      this.mobileSelectedDyesContainer.appendChild(card);
-    }
-  }
-
-  /**
-   * Render mobile interpolation settings
-   */
-  private renderMobileSettings(container: HTMLElement): void {
-    const settingsContainer = this.createElement('div', { className: 'space-y-4' });
-
-    // Steps slider
-    const stepsGroup = this.createElement('div');
-    const stepsLabel = this.createElement('label', {
-      className: 'flex items-center justify-between text-sm mb-2',
-    });
-    const stepsText = this.createElement('span', {
-      textContent: LanguageService.t('mixer.steps'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    this.mobileStepValueDisplay = this.createElement('span', {
-      className: 'number',
-      textContent: String(this.stepCount),
-      attributes: { style: 'color: var(--theme-text-muted);' },
-    });
-    stepsLabel.appendChild(stepsText);
-    stepsLabel.appendChild(this.mobileStepValueDisplay);
-    stepsGroup.appendChild(stepsLabel);
-
-    const stepsInput = this.createElement('input', {
-      className: 'w-full',
-      attributes: {
-        type: 'range',
-        min: String(STEP_MIN),
-        max: String(STEP_MAX),
-        value: String(this.stepCount),
-        style: 'accent-color: var(--theme-primary);',
-      },
-    }) as HTMLInputElement;
-
-    this.on(stepsInput, 'input', () => {
-      this.stepCount = parseInt(stepsInput.value, 10);
-      // Update both displays
-      if (this.mobileStepValueDisplay) {
-        this.mobileStepValueDisplay.textContent = String(this.stepCount);
-      }
-      if (this.stepValueDisplay) {
-        this.stepValueDisplay.textContent = String(this.stepCount);
-      }
-      // Applied above first, so the controller's synchronous echo is a no-op
-      ConfigController.getInstance().setConfig('gradient', { stepCount: this.stepCount });
-      this.updateInterpolation();
-    });
-
-    stepsGroup.appendChild(stepsInput);
-    settingsContainer.appendChild(stepsGroup);
-
-    // Color space dropdown (matches desktop)
-    const colorSpaceGroup = this.createElement('div');
-    const colorSpaceLabel = this.createElement('label', {
-      className: 'block text-sm mb-2',
-      textContent: LanguageService.t('mixer.colorSpace'),
-      attributes: { style: 'color: var(--theme-text);' },
-    });
-    colorSpaceGroup.appendChild(colorSpaceLabel);
-
-    // Dropdown select for interpolation mode
-    const colorSpaceSelect = this.createElement('select', {
-      className: 'w-full px-3 py-2 text-sm rounded-lg',
-      attributes: {
-        'data-testid': 'gradient-mobile-colorspace-select',
-        style: `
-          background: var(--theme-background-secondary);
-          color: var(--theme-text);
-          border: 1px solid var(--theme-border);
-          cursor: pointer;
-        `,
-      },
-    }) as HTMLSelectElement;
-
-    // Interpolation mode options with descriptive labels
-    const modeOptions: { value: InterpolationMode; label: string; description: string }[] = [
-      { value: 'rgb', label: 'RGB', description: LanguageService.t('gradient.mode.rgb') },
-      { value: 'hsv', label: 'HSV', description: LanguageService.t('gradient.mode.hsv') },
-      { value: 'lab', label: 'LAB', description: LanguageService.t('gradient.mode.lab') },
-      { value: 'oklch', label: 'OKLCH', description: LanguageService.t('gradient.mode.oklch') },
-      { value: 'lch', label: 'LCH', description: LanguageService.t('gradient.mode.lch') },
-    ];
-
-    for (const mode of modeOptions) {
-      const option = this.createElement('option', {
-        textContent: `${mode.label} - ${mode.description}`,
-        attributes: { value: mode.value },
-      }) as HTMLOptionElement;
-      if (mode.value === this.colorSpace) {
-        option.selected = true;
-      }
-      colorSpaceSelect.appendChild(option);
-    }
-
-    this.on(colorSpaceSelect, 'change', () => {
-      this.colorSpace = colorSpaceSelect.value as InterpolationMode;
-      // Applied above first, so the controller's synchronous echo is a no-op
-      ConfigController.getInstance().setConfig('gradient', { interpolation: this.colorSpace });
-      this.updateInterpolation();
-    });
-
-    colorSpaceGroup.appendChild(colorSpaceSelect);
-    settingsContainer.appendChild(colorSpaceGroup);
-
-    container.appendChild(settingsContainer);
-  }
-
-  /**
-   * Update drawer content (called when state changes from desktop)
-   * Syncs mobile selector with current state
-   */
-  private updateDrawerContent(): void {
-    // Sync mobile selector with current state (if it exists)
-    // Use guard flag to prevent event handler from overwriting state
-    if (this.mobileDyeSelector && this.selectedDyes.length > 0) {
-      this.isExternalSelection = true;
-      try {
-        this.mobileDyeSelector.setSelectedDyes(this.selectedDyes);
-      } finally {
-        this.isExternalSelection = false;
-      }
-    }
-    // Update the mobile display
-    this.updateMobileSelectedDyesDisplay();
-  }
-
-  // ============================================================================
   // Market Board Integration
   // ============================================================================
-
-  /**
-   * Get an active MarketBoard instance that has showPrices enabled.
-   * This handles the case where prices are enabled on mobile vs desktop.
-   */
-  private getActiveMarketBoard(): MarketBoard | null {
-    // Check desktop MarketBoard first
-    if (this.marketBoard?.getShowPrices()) {
-      return this.marketBoard;
-    }
-    // Fall back to mobile MarketBoard
-    if (this.mobileMarketBoard?.getShowPrices()) {
-      return this.mobileMarketBoard;
-    }
-    // If showPrices is enabled but neither MarketBoard reports it,
-    // use desktop as fallback (this handles the case where the event
-    // was just fired and the MarketBoard state is in sync)
-    if (this.showPrices && this.marketBoard) {
-      return this.marketBoard;
-    }
-    if (this.showPrices && this.mobileMarketBoard) {
-      return this.mobileMarketBoard;
-    }
-    return null;
-  }
 
   /**
    * Fetch prices for all displayed dyes (start, end, and intermediate matches)
@@ -2637,22 +1811,8 @@ export class GradientTool extends BaseComponent {
       }
     }
 
-    // Always update displays (even if no prices were fetched)
-    this.updateSelectedDyesDisplay();
-    this.updateMobileSelectedDyesDisplay();
+    // Always update the step cards (even if no prices were fetched)
     this.renderIntermediateMatches();
-  }
-
-  /**
-   * Format price for display
-   */
-  private formatPrice(dye: Dye): string | null {
-    if (!this.showPrices) return null;
-
-    const price = this.priceData.get(dye.itemID);
-    if (!price) return null;
-
-    return MarketBoard.formatPrice(price.currentMinPrice);
   }
 
   /**
@@ -2669,10 +1829,6 @@ export class GradientTool extends BaseComponent {
     StorageService.removeItem(STORAGE_KEYS.selectedDyes);
     logger.info('[GradientTool] All dyes cleared');
 
-    // Update dye selectors
-    this.dyeSelector?.setSelectedDyes([]);
-    this.mobileDyeSelector?.setSelectedDyes([]);
-
     // Clear UI containers
     if (this.matchesContainer) {
       clearContainer(this.matchesContainer);
@@ -2682,9 +1838,6 @@ export class GradientTool extends BaseComponent {
     this.showEmptyState(true);
     this.updateEndpointCards();
     this.renderPinRail();
-    this.updateSelectedDyesDisplay();
-    this.updateMobileSelectedDyesDisplay();
-    this.updateDrawerContent();
   }
 
   /**
@@ -2723,7 +1876,7 @@ export class GradientTool extends BaseComponent {
       this.selectedDyes[1] = dye;
       logger.info(`[GradientTool] External dye set as end: ${dye.name}`);
     }
-    // If both are set: shift dyes (new dye â†’ Start, old Start â†’ End)
+    // If both are set: shift dyes (new dye → Start, old Start → End)
     else {
       // Check if shift would result in same dye in both slots
       // After shift: Start = new dye, End = old Start
@@ -2741,29 +1894,16 @@ export class GradientTool extends BaseComponent {
         this.selectedDyes[1] = temp;
         logger.info(`[GradientTool] Swapped: ${dye.name} is now start`);
       } else {
-        // Normal shift: old Start â†’ End, new dye â†’ Start
+        // Normal shift: old Start → End, new dye → Start
         this.selectedDyes[1] = this.selectedDyes[0];
         this.selectedDyes[0] = dye;
         logger.info(`[GradientTool] Shifted dyes: ${dye.name} is now start`);
       }
     }
 
-    // Update DyeSelector if it exists (with guard flag to prevent event handler loop)
-    if (this.dyeSelector) {
-      this.isExternalSelection = true;
-      try {
-        this.dyeSelector.setSelectedDyes(this.selectedDyes);
-      } finally {
-        this.isExternalSelection = false;
-      }
-    }
-
     // Persist and update UI
     this.saveSelectedDyes();
-    this.updateSelectedDyesDisplay();
-    this.updateMobileSelectedDyesDisplay();
     this.updateInterpolation();
-    this.updateDrawerContent();
   }
 
   /**
