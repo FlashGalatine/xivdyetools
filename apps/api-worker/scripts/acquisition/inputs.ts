@@ -123,6 +123,12 @@ const VOYAGE: Record<number, 'airship' | 'submarine'> = { 0: 'airship', 1: 'subm
 
 type RawShop = RawFiles['shops'][number];
 
+/** The pinned Commendation Crystal exchange omits its placed NPC attachment. */
+export function shopNpcIds(shop: Pick<RawShop, 'id' | 'npcs'>): number[] {
+  if (shop.npcs.length > 0) return shop.npcs;
+  return shop.id === 1770684 ? [1043099] : [];
+}
+
 /** Fixed quest rewards include coffers omitted by Teamcraft's quest-sources index. */
 export function cofferQuestSources(raw: RawFiles, cofferIds: Set<number>): Record<string, number[]> {
   const sources = Object.fromEntries(Object.entries(raw.questSources).map(([id, quests]) => [id, [...quests]]));
@@ -139,6 +145,7 @@ export function cofferQuestSources(raw: RawFiles, cofferIds: Set<number>): Recor
 
 /** Reviewed missing/abbreviated NPC positions; keyed by resident, never by shared name. */
 const NPC_LOCATIONS = new Map<number, { zone: string; outpost: string | null }>([
+  [1054944, { zone: 'Il Mheg', outpost: 'Wolekdorf' }],
   [1059408, { zone: 'Central Shroud', outpost: 'Bentbranch Meadows' }],
   [1059485, { zone: 'The Occult Crescent: North Horn', outpost: null }],
   [1053614, { zone: 'The Occult Crescent: South Horn', outpost: null }],
@@ -174,7 +181,7 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     const shop: Shop = {
       id: s.id,
       name: shopName(s),
-      npcIds: s.npcs,
+      npcIds: shopNpcIds(s),
       festival: extras.festivalShops.has(s.id),
     };
     const misreads = extras.unknownCostShops.has(s.id);
@@ -184,7 +191,7 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
         if (!extras.equippable.has(product.id) && !cofferIds.has(product.id)) continue;
         const unknownCosts = misreads && costs.some((c) => MISREAD_TOMESTONE.has(c.itemId));
         push(offers, product.id, { shop, costs, unknownCosts });
-        s.npcs.forEach((id) => npcIds.add(id));
+        shop.npcIds.forEach((id) => npcIds.add(id));
       }
     }
   }

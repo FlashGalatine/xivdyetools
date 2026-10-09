@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Glamour Reader fills 379 more Acquisition fields, including Anemos upgrades, Cosmic tool upgrades, Commendation Crystal gear, Fuath attire, Mica outfits, current store sets and 15 more facewear styles. Known facewear sources now cover 54 of 61 styles and all their color variants.
+
 - Glamour Reader Acquisition lines now replace coffer-only names with their quest, vendor or activity source, and identify retired PvP rewards as no longer obtainable. Kornago Merchant and both expedition antiquarians have complete locations, including the six level-1 glamour sets and three newly resolved facewear styles.
 
 - Glamour Reader names retired Dated gear (equipment level 50 or below), Aetherial gear and Deepmist gear using an eligible item with the identical slot and model, when available. Retired items are also removed from the twin picker and wear checks.

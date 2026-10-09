@@ -25,7 +25,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatEntries } from './acquisition/format.js';
 import { facewearUnlocks, type FacewearStyle, type FacewearUnlock } from './acquisition/facewear.js';
-import { buildInputs, cofferQuestSources, fateZoneLevels, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
+import { buildInputs, cofferQuestSources, fateZoneLevels, shopNpcIds, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
 import { markerCoordinate, nearestSettlement, type MapLabel } from './acquisition/labels.js';
 import type { Inputs, Tables } from './acquisition/model.js';
 import { overrideLine, selectEntries } from './acquisition/select.js';
@@ -391,6 +391,7 @@ async function main(): Promise<void> {
   const sha = pinned?.teamcraftCommit ?? (await pinTeamcraft());
   console.log(pinned ? `Teamcraft ${sha} and XIVAPI ${gameVersion}, as acquisition.meta.json records` : `Teamcraft staging pinned at ${sha}`);
   const raw = await loadTeamcraft(sha);
+  const reviewedSources = readTable<Record<string, { name: string; line: string; evidence: string[] }>>('reviewed-item-sources.json');
   const rules = readTable<RelicRule[]>('relic-sagas.json');
   const tableFiles: TableFiles = {
     cofferSources: readTable('coffer-sources.json'),
@@ -418,7 +419,7 @@ async function main(): Promise<void> {
   const containerIds = [...equippable.keys()].flatMap((id) => raw.lootSources[id] ?? []);
   const sourceIds = new Set([...equippable.keys(), ...containerIds]);
   const sellers = raw.shops.filter((s) => s.trades.some((t) => t.items.some((i) => sourceIds.has(i.id))));
-  const npcIds = [...new Set(sellers.flatMap((s) => s.npcs))];
+  const npcIds = [...new Set(sellers.flatMap(shopNpcIds))];
   const desynthIds = [...equippable.keys()].flatMap((id) => raw.desynth[id] ?? []);
   const costIds = sellers.flatMap((s) => s.trades.flatMap((t) => t.currencies.map((c) => c.id)));
 
@@ -498,7 +499,11 @@ async function main(): Promise<void> {
   const dropped: Record<string, number> = {};
   let sourcesButNoLine = 0;
   for (const itemId of [...equippable.keys()].sort((a, b) => a - b)) {
-    const fixed = overrideLine(equippableNames.get(itemId) ?? '', equippable.get(itemId));
+    const reviewed = reviewedSources[itemId];
+    if (reviewed && reviewed.name !== equippableNames.get(itemId)) {
+      throw new Error(`reviewed-item-sources.json: item ${itemId} no longer matches ${reviewed.name}`);
+    }
+    const fixed = reviewed?.line ?? overrideLine(equippableNames.get(itemId) ?? '', equippable.get(itemId));
     if (fixed) {
       table[itemId] = fixed;
       entryCounts['override'] = (entryCounts['override'] ?? 0) + 1;

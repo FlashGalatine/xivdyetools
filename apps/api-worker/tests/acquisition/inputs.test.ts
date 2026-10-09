@@ -148,6 +148,19 @@ const RULES: RelicRule[] = [
 describe('buildInputs', () => {
   const inputs = buildInputs(raw(), extras(), RULES);
 
+  it('attaches the placed Commendation Quartermaster to the unlinked crystal exchange', () => {
+    const r = raw();
+    const e = extras();
+    r.shops.push({ id: 1770684, type: 'SpecialShop', npcs: [], trades: [{ currencies: [{ id: 40479, amount: 2 }], items: [{ id: 52387, amount: 1 }] }] });
+    r.npcs[1043099] = { en: 'commendation quartermaster', position: { map: 51, x: 4.56, y: 6.29 } };
+    r.maps[51] = { placename_id: 358, territory_id: 250, dungeon: false, housing: false };
+    r.places[358] = { en: "Wolves' Den Pier" };
+    e.equippable.set(52387, 'Head');
+    const result = buildInputs(r, e, []);
+    expect(result.offers.get(52387)?.[0]).toMatchObject({ shop: { npcIds: [1043099] }, costs: [{ itemId: 40479, amount: 2 }] });
+    expect(result.npcs.get(1043099)).toMatchObject({ name: 'commendation quartermaster', zone: "Wolves' Den Pier", unreachable: false });
+  });
+
   it('recovers fixed coffer quest rewards without changing unrelated rewards or the raw index', () => {
     const r = raw();
     r.questSources = { 37493: [70061] };
