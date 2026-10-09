@@ -108,7 +108,11 @@ const BUNDLE_LIMITS = [
   // measured 281.43 KB (277.79 KB on 5.12.7). Splitting core's chara code out
   // by manualChunks was tried and does not help: the index and this chunk
   // import the split chunk statically, so it still loads on every visit.
-  { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 284 * KB },
+  // 2026-10-06 re-budgets it to 286 KB, again for measured growth: logger 2.3.0's
+  // redaction rules (context-string pass, toJSON handling, URL userinfo, the
+  // linear JWT scan) add 1.48 KB here. With every open PR merged it measured
+  // 285.15 KB (283.67 KB with logger 2.2.1).
+  { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 286 * KB },
 
   // Vendor chunks, code-split for caching
   // Despite the name this is purely `character_colors/race_specific/*.json`:
