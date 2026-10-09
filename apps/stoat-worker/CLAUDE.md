@@ -77,7 +77,7 @@ src/
 │   ├── about.ts                 # !xd about (links + links)
 │   └── info.ts                  # !xd info <dye> via bot-logic.executeDyeInfo
 ├── services/
-│   ├── dye-resolver.ts          # Multi-strategy resolution (name → ID → hex), disambiguation
+│   ├── dye-resolver.ts          # Multi-strategy resolution: exact name/ID → hex → partial name/category (English + locale) → CSS color name → none+suggestions; 2-4 partial hits show each dye, 5+ a capped (12) disambiguation list (BUG-073). `resolveDyeInputMulti` is async (awaits `initializeLocale`)
 │   ├── command-throttle.ts      # CommandThrottle: in-memory sliding window per user (default 5 / 10 s)
 │   ├── message-context.ts       # MessageContextStore (LRU+TTL, max 500, 1h) for reaction handlers
 │   ├── response-formatter.ts    # StoatEmbed shape, error/disambig/no-match formatters,
@@ -118,7 +118,7 @@ This is the most important section. `stoat-worker` and `discord-worker` look sup
 | **Interactive buttons** | Discord MessageComponent buttons + modals | Stoat reactions with `restrict_reactions: true`; `MessageContextStore` maps message IDs to dye context |
 | **Loading state** | Deferred response + follow-up edit | `⏳` react on the user's message via `withLoadingIndicator()`, removed when done |
 | **Per-message identity** | Bot-static avatar + name | Per-reply masquerade: bot adopts dye's color and name for that message |
-| **Localization** | Auto from `interaction.locale` | Currently hard-coded `'en'` in `info.ts` (TODO: per-user prefs) |
+| **Localization** | Auto from `interaction.locale` | `dye-resolver.ts` honors a `locale` argument (BUG-072), but `info.ts` still hard-codes `'en'` (no per-user locale source yet), so localized names are not reachable by a Revolt user. `!xd help` says names are matched in English and does not promise localized lookup |
 | **Authorization** | `MODERATOR_IDS` (Discord snowflakes) | `STATS_AUTHORIZED_USERS` (Stoat ULIDs, Crockford Base32) |
 
 ### Stoat-Specific Patterns
@@ -184,7 +184,7 @@ await withLoadingIndicator(message, async () => {
 
 `@xivdyetools/core`, `@xivdyetools/svg`, and `@xivdyetools/worker-kit` are **not** dependencies —
 dropped in the Monorepo 2.0 Task 6 work (this bot renders no cards, needs no direct database
-access, and needs no Workers-only middleware; `bot-logic`'s `executeDyeInfo`/`resolveDyeInput*`/
+access, and needs no Workers-only middleware; `bot-logic`'s `executeDyeInfo`/`findDyeByName`/`searchDyesByName`/`resolveColorInput`/
 `dyeService` cover everything it actually calls). `@xivdyetools/test-utils` was also dropped as a
 devDependency (2026-08-18 dead-code audit — zero imports from any test file); `src/test-utils/`
 is this app's own hand-written mock factories, not that package. Recorded here so this table isn't
@@ -198,7 +198,7 @@ wrong again the next time someone reads it (noticed stale during the FINDING-031
 | `!xd ping` | ✅ implemented | Connectivity + latency check |
 | `!xd help [command]` | ✅ implemented | Command reference |
 | `!xd about` | ✅ implemented | Bot info + project links |
-| `!xd info <dye>` | ✅ implemented | Look up dye HEX/RGB/HSV/LAB (no image yet) |
+| `!xd info <dye>` | ✅ implemented | Look up dye HEX/RGB/HSV/LAB (no image yet). A name that fits 2-4 dyes (e.g. `white`) sends one card each (up to 4 messages per command, bounded by `CommandThrottle`); 5+ (e.g. `Blue`) sends a "Found N dyes" list |
 | `!xd search <query>` | 🚧 planned | Search dyes by name |
 | `!xd list [category]` | 🚧 planned | List dyes in a category |
 | `!xd random` | 🚧 planned | Show 5 random dyes |

@@ -25,6 +25,7 @@ export {
   /** @public */
   normalizeHex,
   resolveColorInput,
+  /** @public */
   resolveDyeInput,
   searchDyesByName,
   findDyeByName,

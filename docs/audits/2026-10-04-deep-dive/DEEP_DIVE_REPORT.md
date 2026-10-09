@@ -404,10 +404,10 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-067 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
 | BUG-068 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
 | BUG-069 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
-| BUG-070 | OPEN | — |
-| BUG-071 | OPEN | — |
-| BUG-072 | OPEN | — |
-| BUG-073 | OPEN | — |
+| BUG-070 | FIX COMMITTED, NOT DEPLOYED (PR #277, open) | `64e1f212` |
+| BUG-071 | FIX COMMITTED, NOT DEPLOYED (PR #277, open) | `64e1f212` |
+| BUG-072 | FIX COMMITTED, NOT DEPLOYED (PR #277, open) | `64e1f212` |
+| BUG-073 | FIX COMMITTED, NOT DEPLOYED (PR #277, open) | `64e1f212` |
 | BUG-074 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `2023108b` |
 | BUG-075 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
 | BUG-076 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
