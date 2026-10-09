@@ -1030,4 +1030,41 @@ describe('AccessibilityTool', () => {
       expect(stored.get(LENS_KEY)).toBe('normal');
     });
   });
+
+  // ==========================================================================
+  // BUG-087 (2026-10-04 deep-dive): Share was enabled for any selection, but
+  // custom colours never enter a share link — an all-custom selection copied
+  // a link carrying dyes: [], which restores nothing.
+  // ==========================================================================
+
+  describe('Share with custom colours', () => {
+    useStorageFake();
+
+    const shareButton = () =>
+      rightPanel.querySelector('v4-share-button') as unknown as {
+        disabled: boolean;
+        shareParams: Record<string, unknown>;
+      };
+
+    it('is disabled when every colour is custom', () => {
+      tool = mount();
+
+      tool.selectCustomColor('#123456');
+      tool.selectCustomColor('#654321');
+
+      expect(shareButton().disabled).toBe(true);
+      expect(shareButton().shareParams).not.toHaveProperty('dyes');
+    });
+
+    it('shares only the dyes of a mixed selection, with the lens', () => {
+      tool = mount();
+
+      tool.selectCustomColor('#123456');
+      tool.selectDye(mockDyes[0]);
+
+      expect(shareButton().disabled).toBe(false);
+      expect(shareButton().shareParams.dyes).toEqual([mockDyes[0].stainID]);
+      expect(shareButton().shareParams).toHaveProperty('vision');
+    });
+  });
 });

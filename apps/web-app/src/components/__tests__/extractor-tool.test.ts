@@ -13,6 +13,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ExtractorTool } from '../extractor-tool';
+import { ImageZoomController } from '../image-zoom-controller';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
@@ -486,21 +487,9 @@ describe('ExtractorTool', () => {
       expect(dropZone()).not.toBeNull();
     });
 
-    it('applies several keys in one call', async () => {
-      tool = mount();
-
-      expect(() =>
-        tool!.setConfig({
-          vibrancyBoost: false,
-          maxColors: 6,
-          matchingMethod: 'oklab',
-          preventDuplicates: false,
-          dragThreshold: 8,
-          sampleAreaSize: 4,
-        })
-      ).not.toThrow();
-      await flush();
-    });
+    // Several keys in one call: see "several sidebar keys in one call" under
+    // "with a decoded image" — each key is read back off what it changes, and
+    // most of them only show once there is an image.
   });
 
   // ==========================================================================
@@ -1120,6 +1109,85 @@ describe('ExtractorTool', () => {
 
         const seg = extractedSegments()[0];
         expect(seg.title).toMatch(/^#[0-9A-F]{6} · \d+% · Dye-\d+$/);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // BUG-077 (2026-10-04 deep-dive): the multi-key setConfig test asserted
+    // only that the call did not throw, so any one key could stop applying
+    // unnoticed. Each key is read back off what it changes.
+    // ------------------------------------------------------------------------
+
+    describe('several sidebar keys in one call', () => {
+      const ALL_KEYS = {
+        vibrancyBoost: false,
+        maxColors: 6,
+        matchingMethod: 'oklab',
+        preventDuplicates: false,
+        dragThreshold: 8,
+        sampleAreaSize: 4,
+      } as const;
+
+      /**
+       * Vibrancy is read off the tool: K-means++ is seeded at random, so on
+       * four equal clusters the order it would restore is not fixed.
+       */
+      const vibrancyOf = (t: ExtractorTool): boolean =>
+        (t as unknown as { vibrancyBoost: boolean }).vibrancyBoost;
+
+      const expectEveryKeyApplied = (t: ExtractorTool): void => {
+        expect(countLabel().textContent).toBe(
+          `matcher.rollCountOf: ${extractedSegments().length}/6`
+        );
+        expect(shareButton().shareParams.algo).toBe('oklab');
+        const lastLookup = mockFindClosestDye.mock.calls.at(-1) as
+          [string, { matchingMethod?: string }?] | undefined;
+        expect(lastLookup?.[1]?.matchingMethod).toBe('oklab');
+        expect(vibrancyOf(t)).toBe(false);
+        // Deduplication off: a pick of pure red takes the dye the red slot
+        // already holds instead of being moved to a free one
+        const nearest = mockFindClosestDye('#FF0000') as unknown as { itemID: number };
+        commit('#FF0000');
+        expect(cardData(resultCards().length - 1).dye.itemID).toBe(nearest.itemID);
+      };
+
+      it('applies every key to a loaded image, re-extracting for the colour count', async () => {
+        const setDrag = vi.spyOn(ImageZoomController.prototype, 'setDragThreshold');
+        const setArea = vi.spyOn(ImageZoomController.prototype, 'setSampleAreaSize');
+        tool = mount();
+        await loadImage();
+        ctx.getImageData.mockClear();
+
+        tool.setConfig({ ...ALL_KEYS });
+        // Max Colors re-clusters, which takes the place of the re-resolve the
+        // method, dedupe and vibrancy keys ask for — so they must still land
+        await vi.waitFor(() => expect(ctx.getImageData).toHaveBeenCalled());
+        await waitForIdle();
+
+        // The live controller, not only the next one
+        expect(setDrag).toHaveBeenLastCalledWith(8);
+        expect(setArea).toHaveBeenLastCalledWith(4);
+        expectEveryKeyApplied(tool);
+      });
+
+      it('holds every key sent before an image, through a rebuild, for the image that follows', async () => {
+        const setDrag = vi.spyOn(ImageZoomController.prototype, 'setDragThreshold');
+        const setArea = vi.spyOn(ImageZoomController.prototype, 'setSampleAreaSize');
+        tool = mount();
+
+        tool.setConfig({ ...ALL_KEYS });
+        // A language switch rebuilds the workspace, and the zoom controller
+        // with it: the new one is seeded from what the tool stored, not from
+        // the call that has long since returned
+        setDrag.mockClear();
+        setArea.mockClear();
+        tool.update();
+        expect(setDrag).toHaveBeenLastCalledWith(8);
+        expect(setArea).toHaveBeenLastCalledWith(4);
+
+        await loadImage();
+
+        expectEveryKeyApplied(tool);
       });
     });
 

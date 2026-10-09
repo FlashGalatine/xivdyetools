@@ -287,3 +287,89 @@ describe('DyePaletteDrawer keyboard access (BUG-028)', () => {
     expect(css).toContain(`@media (hover: none) { .swatch-favorite-btn { ${shown} } }`);
   });
 });
+
+// BUG-107 (2026-10-04 deep-dive): the Metallic and Pastel chips matched the
+// English dye name, so Metallic showed the 14 "Metallic ..." dyes and dropped
+// Gunmetal Black and Pearl White, the two gloss dyes without the word in
+// their name -- while "Exclude metallic" (core DyeFilter) removed all 16.
+// Core derives `isMetallic` from the Stain sheet's gloss set and `isPastel`
+// at initialize(); the chips must read those flags, not re-derive them.
+describe('DyePaletteDrawer type chips (BUG-107)', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  type Drawer = HTMLElement & {
+    isOpen: boolean;
+    updateComplete: Promise<boolean>;
+    allDyes: Dye[];
+  };
+
+  // In the gloss set, but no "Metallic" in the name
+  const gunmetal = makeDye({
+    id: 8735,
+    itemID: 8735,
+    stainID: 92,
+    name: 'Gunmetal Black',
+    category: 'Neutral',
+    isMetallic: true,
+  });
+  const metallicSilver = makeDye({
+    id: 8736,
+    itemID: 8736,
+    stainID: 112,
+    name: 'Metallic Silver',
+    category: 'Neutral',
+    isMetallic: true,
+  });
+  // Synthetic: the flag says pastel and the name does not. Every real pastel
+  // dye's name starts with "Pastel", so only this pins the flag as the source.
+  const softPink = makeDye({
+    id: 8737,
+    itemID: 8737,
+    stainID: 103,
+    name: 'Soft Pink',
+    category: 'Reds',
+    isPastel: true,
+  });
+
+  /** Mount on the fixture, click the chip labelled `labelKey`, return the shown swatches. */
+  const shownAfter = async (labelKey: string): Promise<string[]> => {
+    await import('../../v4/dye-palette-drawer');
+    const drawer = document.createElement('dye-palette-drawer') as unknown as Drawer;
+    drawer.isOpen = true;
+    container.appendChild(drawer);
+    await drawer.updateComplete;
+    drawer.allDyes = [redDye, gunmetal, metallicSilver, softPink];
+
+    const chip = [
+      ...drawer.shadowRoot!.querySelectorAll<HTMLButtonElement>('.filter-bar .filter-chip'),
+    ].find((button) => button.textContent?.trim() === labelKey);
+    expect(chip).toBeDefined();
+    chip!.click();
+    await drawer.updateComplete;
+
+    return [...drawer.shadowRoot!.querySelectorAll('.category-section .swatch')]
+      .map((swatch) => swatch.getAttribute('title') ?? '')
+      .sort();
+  };
+
+  it('Metallic shows every dye in the gloss set, named "Metallic" or not', async () => {
+    expect(await shownAfter('colorPalette.metallic')).toEqual(
+      [`Dye-${gunmetal.itemID}`, `Dye-${metallicSilver.itemID}`].sort()
+    );
+  });
+
+  it('Pastel follows the isPastel flag, not the English name', async () => {
+    expect(await shownAfter('colorPalette.pastel')).toEqual([`Dye-${softPink.itemID}`]);
+  });
+});

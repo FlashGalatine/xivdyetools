@@ -25,6 +25,8 @@ import {
   ToastService,
 } from '@services/index';
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
+// Type-only: RouterService itself comes through the barrel above
+import type { ToolId } from '@services/router-service';
 import {
   CharacterColorService,
   isMatchingMethod,
@@ -472,6 +474,12 @@ export class SwatchTool extends BaseComponent {
   // ============================================================================
 
   renderContent(): void {
+    // BUG-093 (2026-10-04 deep-dive): update() re-runs this on every language
+    // switch. A replaced child keeps its service subscriptions until it is
+    // destroyed, so each switch used to leave one more detached MarketBoard
+    // relaying server changes into this tool.
+    this.destroyChildComponents();
+
     this.renderLeftPanel();
     this.renderRightPanel();
 
@@ -482,8 +490,36 @@ export class SwatchTool extends BaseComponent {
     this.element = this.container;
   }
 
+  /**
+   * Destroy the child components a render is about to rebuild — the same
+   * step HarmonyTool takes — and, from destroy(), the last set.
+   */
+  private destroyChildComponents(): void {
+    this.marketBoard?.destroy();
+    this.marketBoard = null;
+    this.marketPanel?.destroy();
+    this.marketPanel = null;
+    this.racePanel?.destroy();
+    this.racePanel = null;
+    this.categoryPanel?.destroy();
+    this.categoryPanel = null;
+
+    this.mobileMarketBoard?.destroy();
+    this.mobileMarketBoard = null;
+    this.mobileRacePanel?.destroy();
+    this.mobileRacePanel = null;
+    this.mobileCategoryPanel?.destroy();
+    this.mobileCategoryPanel = null;
+    this.mobileMarketPanel?.destroy();
+    this.mobileMarketPanel = null;
+  }
+
   bindEvents(): void {
-    // Event bindings handled in render methods
+    // Other event bindings are made in the render methods.
+    // BUG-103 (2026-10-04 deep-dive): the viewport listener belongs here, not
+    // in onMount. update() unbinds every this.on listener and then calls only
+    // this, so one added at mount was gone after the first language switch.
+    this.on(window, 'resize', this.updateSwatchLayout);
   }
 
   onMount(): void {
@@ -529,9 +565,8 @@ export class SwatchTool extends BaseComponent {
       this.mobileMarketBoard.setShowPrices(marketConfig.showPrices);
     }
 
-    // Set initial layout and listen for viewport changes
+    // Set initial layout (bindEvents follows viewport changes)
     this.updateSwatchLayout();
-    this.on(window, 'resize', this.updateSwatchLayout);
 
     logger.info('[SwatchTool] Mounted');
   }
@@ -541,15 +576,7 @@ export class SwatchTool extends BaseComponent {
 
     // Only the views go: the loaded file stays in CharaSessionService.
     this.destroyChara();
-    this.marketBoard?.destroy();
-    this.marketPanel?.destroy();
-    this.racePanel?.destroy();
-    this.categoryPanel?.destroy();
-
-    this.mobileMarketBoard?.destroy();
-    this.mobileRacePanel?.destroy();
-    this.mobileCategoryPanel?.destroy();
-    this.mobileMarketPanel?.destroy();
+    this.destroyChildComponents();
 
     this.selectedColor = null;
     this.matchedDyes = [];
@@ -1737,6 +1764,19 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
+   * The workspace stops showing a THIS CHARACTER slot (a palette chip or the
+   * range toggle moved it to another sheet). BUG-083 follow-up (2026-10-04
+   * Sprint 22 review): the sheet card's ring and aria-pressed go with it, or
+   * they keep announcing a pick that is no longer current. selectColor and
+   * clearSelection, which replace or drop the context outright, tell the
+   * sheet the same way.
+   */
+  private dropSlotPick(): void {
+    if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+    this.charaSheet?.setSelectedSlot(null);
+  }
+
+  /**
    * A file was loaded or cleared. The card and sheet redraw themselves; this
    * is what the tool derives from the file on top of them.
    */
@@ -1935,7 +1975,7 @@ export class SwatchTool extends BaseComponent {
         },
       }) as HTMLButtonElement;
       this.on(chip, 'click', () => {
-        if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+        this.dropSlotPick();
         const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
         this.commitConfig({ colorSheet: target });
       });
@@ -1965,7 +2005,7 @@ export class SwatchTool extends BaseComponent {
           },
         }) as HTMLButtonElement;
         this.on(btn, 'click', () => {
-          if (this.selectionContext?.source === 'slot') this.selectionContext = null;
+          this.dropSlotPick();
           this.commitConfig({ colorSheet: `${currentBase}${range}` });
         });
         toggle.appendChild(btn);
@@ -2415,34 +2455,39 @@ export class SwatchTool extends BaseComponent {
   /**
    * SEND TO targets on the 5.0 stainID share grammar — mirrors the handoff
    * row preset-detail builds (harmony ?dye=&harmony=, comparison and
-   * accessibility ?dyes=, gradient ?start=&end=).
+   * accessibility ?dyes=, gradient ?start=&end=). `params` is null while
+   * there is nothing to carry.
    */
-  private handoffTargets(ids: number[]): Array<{ icon: string; label: string; url: string }> {
+  private handoffTargets(
+    ids: number[]
+  ): Array<{ icon: string; label: string; tool: ToolId; params: Record<string, string> | null }> {
+    const first = ids.length > 0 ? String(ids[0]) : null;
+    const list = ids.slice(0, 4).join(',');
     return [
       {
         icon: ICON_TOOL_HARMONY,
         label: LanguageService.t('tools.harmony.title'),
-        url: ids.length > 0 ? `/harmony/?dye=${ids[0]}&harmony=complementary` : '',
+        tool: 'harmony',
+        params: first ? { dye: first, harmony: 'complementary' } : null,
       },
       {
         icon: ICON_TOOL_COMPARISON,
         label: LanguageService.t('tools.comparison.title'),
-        url: ids.length > 0 ? `/comparison/?dyes=${ids.slice(0, 4).join(',')}` : '',
+        tool: 'comparison',
+        params: first ? { dyes: list } : null,
       },
       {
         icon: ICON_TOOL_GRADIENT,
         label: LanguageService.t('tools.gradient.title'),
-        url:
-          ids.length >= 2
-            ? `/gradient/?start=${ids[0]}&end=${ids[1]}`
-            : ids.length > 0
-              ? '/gradient/'
-              : '',
+        tool: 'gradient',
+        params:
+          ids.length >= 2 ? { start: String(ids[0]), end: String(ids[1]) } : first ? {} : null,
       },
       {
         icon: ICON_TOOL_ACCESSIBILITY,
         label: LanguageService.t('tools.accessibility.title'),
-        url: ids.length > 0 ? `/accessibility/?dyes=${ids.slice(0, 4).join(',')}` : '',
+        tool: 'accessibility',
+        params: first ? { dyes: list } : null,
       },
     ];
   }
@@ -2480,7 +2525,8 @@ export class SwatchTool extends BaseComponent {
     }
 
     for (const target of this.handoffTargets(ids)) {
-      const enabled = target.url !== '';
+      const params = target.params;
+      const enabled = params !== null;
       const chip = this.createElement('button', {
         attributes: {
           type: 'button',
@@ -2499,8 +2545,10 @@ export class SwatchTool extends BaseComponent {
       glyph.innerHTML = target.icon || '';
       chip.appendChild(glyph);
       chip.appendChild(this.createElement('span', { textContent: target.label }));
-      if (enabled) {
-        this.on(chip, 'click', () => window.location.assign(target.url));
+      // BUG-104 (2026-10-04 deep-dive): in-app navigation. A full page load
+      // (location.assign) dropped the loaded .chara, which lives in memory only.
+      if (params) {
+        this.on(chip, 'click', () => RouterService.navigateTo(target.tool, params));
       }
       row.appendChild(chip);
     }
@@ -2562,7 +2610,11 @@ export class SwatchTool extends BaseComponent {
       (card as unknown as { showStain: boolean }).showStain = this.displayOptions.showStain ?? true;
       (card as unknown as { showConsolidation: boolean }).showConsolidation =
         this.displayOptions.showSpectrum ?? true;
-      (card as unknown as { showPrice: boolean }).showPrice = this.displayOptions.showPrice;
+      // BUG-086 sibling (2026-10-04 Sprint 22 review): the service fetches
+      // nothing while the global Market Board toggle is off (its default), so
+      // the tool's own Price option alone drew "Market —" forever.
+      (card as unknown as { showPrice: boolean }).showPrice =
+        this.displayOptions.showPrice && this.marketBoardService.getShowPrices();
       (card as unknown as { showAcquisition: boolean }).showAcquisition =
         this.displayOptions.showAcquisition;
 
@@ -2900,6 +2952,7 @@ export class SwatchTool extends BaseComponent {
   private selectColor(color: CharacterColor): void {
     this.selectedColor = color;
     this.selectionContext = { source: 'grid' };
+    this.charaSheet?.setSelectedSlot(null);
 
     // Highlight selected swatch
     this.updateSwatchSelection();
@@ -3000,6 +3053,7 @@ export class SwatchTool extends BaseComponent {
    */
   private clearSelection(): void {
     this.selectionContext = null;
+    this.charaSheet?.setSelectedSlot(null);
     this.clearForwardSelection();
   }
 

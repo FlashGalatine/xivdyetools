@@ -26,6 +26,9 @@ export const STORES = {
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
 
+/** Stores that wrap each value as `{ key, value }` — every one but PALETTES (keyPath 'id') */
+type KeyValueStoreName = Exclude<StoreName, typeof STORES.PALETTES>;
+
 /**
  * IndexedDB Service
  * Provides async key-value storage using IndexedDB
@@ -83,7 +86,21 @@ export class IndexedDBService {
         };
 
         request.onsuccess = () => {
-          this.db = request.result;
+          const db = request.result;
+          // BUG-119: another tab opening a newer DB_VERSION fires this on
+          // every open connection, and its upgrade stays `blocked` (that tab's
+          // initialize() resolving false, so its price cache never hydrates)
+          // until they close. Let go; the next call here re-opens and gets a
+          // VersionError, the honest answer for code older than the database.
+          db.onversionchange = () => {
+            db.close();
+            if (this.db === db) {
+              this.db = null;
+              this.initPromise = null;
+            }
+            logger.info('IndexedDB connection released for a newer version');
+          };
+          this.db = db;
           logger.info('📦 IndexedDB initialized successfully');
           resolve(true);
         };
@@ -303,6 +320,49 @@ export class IndexedDBService {
         };
       } catch (error) {
         logger.error(`IndexedDB getAll error:`, error);
+        resolve([]);
+      }
+    });
+  }
+
+  /**
+   * Get every key/value pair in a key-value store in ONE readonly transaction.
+   *
+   * OPT-009: what the price-cache hydration needs — `getAll()` returns the
+   * values without their keys, and `keys()` plus a `get()` per key costs one
+   * transaction per entry.
+   */
+  async entries<T>(storeName: KeyValueStoreName): Promise<Array<[string, T]>> {
+    if (!this.db) {
+      await this.initialize();
+    }
+
+    if (!this.db) {
+      return [];
+    }
+
+    return new Promise<Array<[string, T]>>((resolve) => {
+      try {
+        const transaction = this.db!.transaction(storeName, 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+
+        request.onsuccess = () => {
+          const pairs: Array<[string, T]> = [];
+          for (const record of request.result as Array<{ key?: unknown; value?: T } | null>) {
+            if (typeof record?.key === 'string' && record.value !== undefined) {
+              pairs.push([record.key, record.value]);
+            }
+          }
+          resolve(pairs);
+        };
+
+        request.onerror = () => {
+          logger.warn(`Failed to get entries from ${storeName}:`, request.error);
+          resolve([]);
+        };
+      } catch (error) {
+        logger.error(`IndexedDB entries error:`, error);
         resolve([]);
       }
     });

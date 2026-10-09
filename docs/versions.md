@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.5 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.14.6 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -115,6 +115,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.6 | Oct 2026 | Remaining LOW fixes (2026-10-04 remediation, Sprint 22): 41 of 42 — theme switches redraw Budget, Mixer and THIS CHARACTER without losing focus (BUG-080, BUG-083), every tool's price row follows the market switch (BUG-086), one market change is one Harmony regeneration (OPT-007), overlays own the keyboard and Escape (BUG-091, BUG-105), AZERTY tool shortcuts (BUG-120), print without chrome (BUG-112), SEND TO keeps the loaded `.chara` (BUG-104), sign-out no longer waits on the revoke (BUG-115), local-date exports (BUG-123), and `validate-i18n.js` reads wrapped calls and aliases (BUG-074). BUG-090 waits for a core change |
 | v5.14.5 | Oct 2026 | Documents only (2026-10-04 remediation, Sprint 7) — the Privacy Guide and Terms of Service in all six languages: the Discord-ID cutoff is the fixed date 2026-10-05, not *Last updated* (I18N-001); every variant of the Terms lists all ten tools, the Glamour Reader included (I18N-002); the tools carry their UI titles (TERM-019); the About path quotes the current labels (I18N-013); French says préréglage (TERM-010) and German Vorlage; Korean says 조정자 for moderators (TERM-001); Japanese セルフホスト (TERM-020). No web-app source changed |
 | v5.14.4 | Oct 2026 | Translations and terminology (2026-10-04 remediation, Sprint 6): the facewear color tag uses the client's word in five languages (TERM-007), character-creation sheet names follow the dictionary (TERM-003), Glamour Reader counts take singular forms (I18N-007), its facewear tooltip names the color in the reader's language (HC-003), "Save .md" and "Glamour list" everywhere (TERM-018), "clan" for the clan (TERM-009), German Vorlage for preset (TERM-006), with core 5.8.2's Brass names |
 | v5.14.3 | Oct 2026 | Tool correctness (2026-10-04 remediation, Sprint 5): a language switch keeps the results in four tools (BUG-021), a stale `?dye=` no longer overrides a choice (BUG-013), Budget runs are superseded safely (BUG-015), Comparison's tier matches its verdict (BUG-018), the palette drawer is keyboard-operable (BUG-028), boot no longer awaits a dev-only network probe (OPT-001); the shell's dead Accessibility CSS removed (DEAD-004) |

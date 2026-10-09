@@ -87,19 +87,26 @@ describe('config-sidebar follows the ConfigController (BUG-027)', () => {
     ConfigController.resetInstance();
   });
 
-  it('shows the market toggle on after another component turns prices on', async () => {
-    el = await mount('harmony');
-    const toggle = () =>
-      el!.shadowRoot!.querySelector<ToggleEl>('.market-config v4-toggle-switch')!;
-    expect(toggle().checked).toBe(false);
+  // The file's first mount pays for the sidebar's cold import and first render:
+  // 0.7 s alone, but 2.4-5.1 s inside the full parallel suite, which tipped it
+  // over vitest's 5 s default once (2026-10-05, Sprint 22's gate).
+  it(
+    'shows the market toggle on after another component turns prices on',
+    { timeout: 15_000 },
+    async () => {
+      el = await mount('harmony');
+      const toggle = () =>
+        el!.shadowRoot!.querySelector<ToggleEl>('.market-config v4-toggle-switch')!;
+      expect(toggle().checked).toBe(false);
 
-    // Driven straight through the controller, not through budget-tool's
-    // setShowPrices(true) on mount: BUG-079 may remove that write.
-    ConfigController.getInstance().setConfig('market', { showPrices: true });
-    await el.updateComplete;
+      // Driven straight through the controller, not through budget-tool's
+      // setShowPrices(true) on mount: BUG-079 may remove that write.
+      ConfigController.getInstance().setConfig('market', { showPrices: true });
+      await el.updateComplete;
 
-    expect(toggle().checked).toBe(true);
-  });
+      expect(toggle().checked).toBe(true);
+    }
+  );
 
   // BUG-079: Budget loads its own prices whatever the switch says, so on
   // Budget the switch would change nothing there. The server choice stays.

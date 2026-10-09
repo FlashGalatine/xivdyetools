@@ -308,6 +308,51 @@ describe('collection-manager-modal', () => {
       }
     });
 
+    // BUG-123's sibling: the date came from toISOString(), i.e. UTC, so an
+    // evening export anywhere west of UTC was stamped with tomorrow's date.
+    it('stamps the export-all filename with the local calendar date, not the UTC one', () => {
+      const originalTZ = process.env.TZ;
+      // A fixed UTC−5 with no DST; Node re-reads TZ when it is assigned
+      process.env.TZ = 'Etc/GMT+5';
+      vi.useFakeTimers({ toFake: ['Date'] });
+      // 00:30 UTC on 5 October is 19:30 on 4 October in UTC−5
+      vi.setSystemTime(new Date('2026-10-05T00:30:00Z'));
+
+      Object.defineProperty(URL, 'createObjectURL', {
+        configurable: true,
+        writable: true,
+        value: vi.fn().mockReturnValue('blob:collections'),
+      });
+      Object.defineProperty(URL, 'revokeObjectURL', {
+        configurable: true,
+        writable: true,
+        value: vi.fn(),
+      });
+      let filename = '';
+      const anchorClick = vi
+        .spyOn(HTMLAnchorElement.prototype, 'click')
+        .mockImplementation(function (this: HTMLAnchorElement) {
+          filename = this.download;
+        });
+
+      try {
+        // Precondition: the zone really is UTC−5 here, not whatever the machine runs
+        expect(new Date().getTimezoneOffset()).toBe(300);
+
+        CollectionService.createCollection('Exportable');
+        showCollectionManagerModal();
+        findButton(lastShowContent(), 'collections.exportAll').click();
+
+        expect(anchorClick).toHaveBeenCalledTimes(1);
+        expect(filename).toBe('xivdyetools-collections-2026-10-04.json');
+      } finally {
+        anchorClick.mockRestore();
+        vi.useRealTimers();
+        if (originalTZ === undefined) delete process.env.TZ;
+        else process.env.TZ = originalTZ;
+      }
+    });
+
     /** Export one collection from its list item; returns the download filename. */
     function exportSingle(name: string): { filename: string; id: string } {
       const collection = CollectionService.createCollection(name)!;

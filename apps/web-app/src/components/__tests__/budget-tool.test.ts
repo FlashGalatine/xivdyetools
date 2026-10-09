@@ -7,15 +7,20 @@
  * @module components/__tests__/budget-tool.test
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi, type MockInstance } from 'vitest';
 import { BudgetTool } from '../budget-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 import { formatGil } from '@shared/format';
 import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import type { ResultCard } from '@components/v4/result-card';
+import type { ThemeName } from '@shared/types';
+import type { PriceData } from '@xivdyetools/types';
 // The mocked barrel below: ConfigController is the real one, the other two are stubs.
 import { ConfigController, MarketBoardService, StorageService } from '@services/index';
+// The tool imports these two from their own modules, past the barrel stub: real services.
+import { ThemeService } from '@services/theme-service';
+import { CollectionService } from '@services/collection-service';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const {
@@ -502,30 +507,60 @@ describe('BudgetTool', () => {
   // ============================================================================
 
   describe('Basic Rendering', () => {
+    // BUG-075 (2026-10-04 deep-dive): the three panel tests asserted
+    // not.toBeNull() on the panels this file's beforeEach creates, so they
+    // passed on an empty render. They now look for what each panel draws.
+    const slider = (panel: HTMLElement): HTMLInputElement | null =>
+      panel.querySelector<HTMLInputElement>('input[type="range"]');
+
     it('should render budget tool', () => {
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       expect(() => tool!.init()).not.toThrow();
     });
 
-    it('should render left panel content', () => {
-      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+    it('should render the controls into the panel the shell shares', () => {
+      // v4-layout.ts hands the tool ONE element as both leftPanel and
+      // rightPanel; the controls open the flow drawn into it.
+      tool = new BudgetTool(container, { leftPanel: rightPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(leftPanel).not.toBeNull();
+      expect(rightPanel.textContent).toContain('budget.targetDye');
+      expect(rightPanel.textContent).toContain('budget.selectTargetDye');
+      expect(rightPanel.textContent).toContain('budget.priciestOff');
+      expect(rightPanel.textContent).toContain('budget.matchLineDesc');
+      expect(slider(rightPanel)?.value).toBe('8');
     });
 
-    it('should render right panel content', () => {
+    it('should render the empty state below the controls, all into the right panel', () => {
+      // A separate left panel is cleared, not drawn into: the flow is one
+      // column. The panel starts empty, so without a sentinel to clear the
+      // null check below would pass on a tool that never touched it.
+      const sentinel = document.createElement('input');
+      sentinel.type = 'range';
+      leftPanel.appendChild(sentinel);
+
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(rightPanel).not.toBeNull();
+      const empty = rightPanel.querySelector('.v5-empty-state');
+      expect(empty?.textContent).toContain('budget.selectTargetToStart');
+      expect(slider(rightPanel)).not.toBeNull();
+      expect(leftPanel.contains(sentinel)).toBe(false);
+      expect(slider(leftPanel)).toBeNull();
     });
 
     it('should render drawer content when provided', () => {
       tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(drawerContent).not.toBeNull();
+      expect(drawerContent.textContent).toContain('budget.targetDye');
+      expect(drawerContent.textContent).toContain('budget.selectTargetDye');
+      expect(drawerContent.textContent).toContain('budget.priciestOff');
+      // The drawer carries its own slider, and the main flow keeps its own.
+      // (The panels are siblings, so the two can never be one node: an
+      // identity check could not fail. Both existing is what is in question.)
+      expect(slider(drawerContent)?.value).toBe('8');
+      expect(slider(rightPanel)).not.toBeNull();
     });
 
     it('should work without drawer content', () => {
@@ -1385,6 +1420,317 @@ describe('BudgetTool', () => {
       act(tool!);
 
       expect(params().has('dye')).toBe(false);
+    });
+  });
+
+  // ============================================================================
+  // Theme switches (BUG-080, 2026-10-04 deep-dive)
+  //
+  // The tier ramp, the verdict tones and the sort accent are inline hexes read
+  // from ThemeService.isDarkMode() at render. Nothing redrew them on a switch,
+  // so a ledger drawn in one theme kept its palette on the other theme's cards.
+  // budget-tool.ts imports the REAL ThemeService (not the barrel stub above).
+  // ============================================================================
+
+  describe('Theme switches (BUG-080)', () => {
+    const TARGET = mockDyes[6]; // Blood Red: three coffer rows inside the line
+    /** TIER_RAMP_LIGHT and GLYPH_ACCENT_LIGHT, exactly as budget-tool.ts spells them. */
+    const LIGHT_ONLY = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C', '#CE2222'];
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const inlineStyles = (): string =>
+      Array.from(rightPanel.querySelectorAll('[style]'))
+        .map((el) => el.getAttribute('style') ?? '')
+        .join('\n');
+
+    let startTheme: ThemeName;
+
+    beforeEach(() => {
+      // setup.ts sets standard-light; whatever it is, put it back afterwards.
+      startTheme = ThemeService.getCurrentTheme();
+      ThemeService.setTheme('standard-light');
+    });
+
+    afterEach(() => {
+      ThemeService.setTheme(startTheme);
+    });
+
+    const mount = async (): Promise<BudgetTool> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      tool.selectDye(TARGET);
+      await settle();
+      return tool;
+    };
+
+    it('redraws the verdict and the ledger in the new palette', async () => {
+      await mount();
+      // Baseline: the light verdict badge and the light coffer-tier rule.
+      expect(inlineStyles()).toContain('background: #137A33');
+      expect(inlineStyles()).toContain('border-left: 3px solid #B91C1C');
+
+      ThemeService.setTheme('standard-dark');
+
+      const styles = inlineStyles();
+      for (const hex of LIGHT_ONLY) {
+        expect(styles).not.toContain(hex);
+      }
+      expect(styles).toContain('background: #5bbd68');
+      expect(styles).toContain('border-left: 3px solid #f4645a');
+      expect(styles).toContain('#EA4133');
+    });
+
+    it('stops listening once destroyed', async () => {
+      const mounted = await mount();
+      mounted.destroy();
+      const internals = mounted as unknown as { renderVerdict(): void; renderLedger(): void };
+      const renderVerdict = vi.spyOn(internals, 'renderVerdict');
+      const renderLedger = vi.spyOn(internals, 'renderLedger');
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(renderVerdict).not.toHaveBeenCalled();
+      expect(renderLedger).not.toHaveBeenCalled();
+    });
+
+    // ------------------------------------------------------------------------
+    // A switch during a price fetch (2026-10-04 Sprint 22 review). The verdict
+    // reads the target and the rows, and mid-fetch those disagree: the target
+    // is already the new pick, the rows are still the last run's (or none).
+    // The ledger shows its spinner then; the verdict waits for the run.
+    // ------------------------------------------------------------------------
+
+    describe('during a price fetch', () => {
+      const OTHER = mockDyes[0]; // Snow White: Sky Blue and Rose Pink inside the line
+      const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+      /** The tInterpolate mock prints `key: value`. */
+      const headline = (dye: (typeof mockDyes)[number]): string =>
+        `budget.ledgerHead: ${label(dye)}`;
+
+      type Prices = Awaited<ReturnType<MarketBoardService['fetchPricesForDyes']>>;
+      const fetchPrices = () => vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes);
+
+      /** The next price fetch, held until the test resolves it. */
+      const holdNextFetch = (): ((prices: Prices) => void) => {
+        let resolve!: (prices: Prices) => void;
+        fetchPrices().mockImplementationOnce(
+          () =>
+            new Promise<Prices>((res) => {
+              resolve = res;
+            })
+        );
+        return (prices) => resolve(prices);
+      };
+
+      const verdict = (): HTMLElement =>
+        (tool as unknown as { verdictContainer: HTMLElement }).verdictContainer;
+
+      afterEach(() => {
+        // mockReset drops an unconsumed Once; then restore the stub's default.
+        fetchPrices().mockReset();
+        fetchPrices().mockResolvedValue(new Map());
+      });
+
+      it("does not draw the new pick's name over the last run's rows", async () => {
+        await mount();
+        const block = verdict().firstElementChild;
+        expect(block?.textContent).toContain(headline(TARGET));
+        expect(block?.textContent).toContain('budget.inRange: 3');
+
+        const release = holdNextFetch();
+        tool!.selectDye(OTHER);
+        // The pick itself leaves the verdict alone until its run lands.
+        expect(verdict().firstElementChild).toBe(block);
+
+        ThemeService.setTheme('standard-dark');
+
+        expect(verdict().firstElementChild).toBe(block);
+        expect(verdict().textContent).not.toContain(headline(OTHER));
+
+        // The run lands and draws the new verdict, in the new palette.
+        release(new Map());
+        await settle();
+        expect(verdict().textContent).toContain(headline(OTHER));
+        expect(verdict().textContent).toContain('budget.inRange: 2');
+        expect(inlineStyles()).toContain('background: #5bbd68');
+      });
+
+      it("draws no '0 in range' verdict while the first pick's prices load", async () => {
+        tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+        tool.init();
+        await settle();
+
+        const release = holdNextFetch();
+        tool.selectDye(TARGET);
+        ThemeService.setTheme('standard-dark');
+
+        expect(verdict().textContent).toBe('');
+
+        release(new Map());
+        await settle();
+        expect(verdict().textContent).toContain(headline(TARGET));
+        expect(verdict().textContent).toContain('budget.inRange: 3');
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Focus (2026-10-04 Sprint 22 review). The redraw replaces every ledger
+    // node, so a keyboard user who pressed Shift+T on a row or a sort header
+    // was dropped to <body>. The equivalent node takes focus back.
+    // ------------------------------------------------------------------------
+
+    describe('keyboard focus in the ledger', () => {
+      const ledgerRows = (root: ParentNode = rightPanel): HTMLElement[] =>
+        Array.from(root.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]'));
+      const sortHeaders = (root: ParentNode = rightPanel): HTMLButtonElement[] =>
+        Array.from(root.querySelectorAll<HTMLButtonElement>('button')).filter(
+          (b) => b.textContent === 'budget.colDye'
+        );
+
+      it('keeps focus on the same ledger row', async () => {
+        await mount();
+        const before = ledgerRows()[1];
+        before.focus();
+        expect(document.activeElement).toBe(before);
+
+        ThemeService.setTheme('standard-dark');
+
+        const after = ledgerRows()[1];
+        expect(after).not.toBe(before); // redrawn, not left in place
+        expect(document.activeElement).toBe(after);
+      });
+
+      it("keeps focus on the same sort header, in the same tier's group", async () => {
+        // Two populated groups, so each draws its own row of sort headers.
+        mockGetAllDyes.mockReturnValue(
+          mockDyes.map((d) =>
+            d.id === mockDyes[4].id ? { ...d, consolidationType: 'A' as const } : d
+          )
+        );
+        await mount();
+        const headers = sortHeaders();
+        expect(headers).toHaveLength(2);
+        headers[1].focus();
+
+        ThemeService.setTheme('standard-dark');
+
+        const after = sortHeaders();
+        expect(after[1]).not.toBe(headers[1]);
+        expect(document.activeElement).toBe(after[1]);
+      });
+
+      it('keeps focus on the row inside a shadow root, as in the v4 shell', async () => {
+        // The shell renders tools into its shadow root, where document.activeElement
+        // is the host — the focused row is only visible through the root's own.
+        const host = document.createElement('div');
+        container.appendChild(host);
+        const shadow = host.attachShadow({ mode: 'open' });
+        const panel = document.createElement('div');
+        shadow.appendChild(panel);
+        tool = new BudgetTool(container, { leftPanel: panel, rightPanel: panel, drawerContent });
+        tool.init();
+        tool.selectDye(TARGET);
+        await settle();
+
+        const before = ledgerRows(panel)[2];
+        before.focus();
+        expect(shadow.activeElement).toBe(before);
+
+        ThemeService.setTheme('standard-dark');
+
+        const after = ledgerRows(panel)[2];
+        expect(after).not.toBe(before);
+        expect(shadow.activeElement).toBe(after);
+      });
+
+      // A guard, not a red-first test: focus outside the ledger is not the
+      // listener's to move.
+      it('leaves focus that was outside the ledger where it was', async () => {
+        await mount();
+        const slider = rightPanel.querySelector<HTMLInputElement>('input[type="range"]')!;
+        slider.focus();
+
+        ThemeService.setTheme('standard-dark');
+
+        expect(document.activeElement).toBe(slider);
+      });
+    });
+  });
+
+  // ============================================================================
+  // Save swap (BUG-081, 2026-10-04 deep-dive)
+  //
+  // Every Standard (tier A) dye costs the same 216 gil, and the pick kept the
+  // first row at the lowest price — database order, not the closest. Distances
+  // from Blood Red are the ledger table above.
+  // ============================================================================
+
+  describe('Save swap (BUG-081)', () => {
+    const TARGET = mockDyes[6]; // Blood Red, a coffer dye: not upgrade mode
+    const WINE = mockDyes[4]; // 2.8 away, first of the three in database order
+    const SUNSET = mockDyes[7]; // 5.7 away
+    const DALAMUD = mockDyes[8]; // 2.6 away, the closest
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const fetchPrices = () => vi.mocked(MarketBoardService.getInstance().fetchPricesForDyes);
+
+    /** The fixture with the given dyes moved into the Standard (216 gil) tier. */
+    const withStandard = (...standard: Array<(typeof mockDyes)[number]>) =>
+      mockDyes.map((d) =>
+        standard.some((s) => s.id === d.id) ? { ...d, consolidationType: 'A' as const } : d
+      );
+
+    const saveSwap = (): void => {
+      const button = Array.from(rightPanel.querySelectorAll('button')).find(
+        (b) => b.textContent === 'budget.saveSwap'
+      );
+      expect(button).toBeDefined();
+      button!.click();
+    };
+
+    let addDye: MockInstance<typeof CollectionService.addDyeToCollection>;
+
+    beforeEach(() => {
+      vi.spyOn(CollectionService, 'createCollection').mockReturnValue({
+        id: 'swap-1',
+      } as ReturnType<typeof CollectionService.createCollection>);
+      addDye = vi.spyOn(CollectionService, 'addDyeToCollection').mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      fetchPrices().mockReset();
+      fetchPrices().mockResolvedValue(new Map());
+    });
+
+    const mount = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      tool.selectDye(TARGET);
+      await settle();
+    };
+
+    it('saves the closest of the 216-gil Standard dyes, not the first in database order', async () => {
+      mockGetAllDyes.mockReturnValue(withStandard(WINE, SUNSET, DALAMUD));
+      await mount();
+
+      saveSwap();
+
+      expect(addDye).toHaveBeenCalledTimes(1);
+      expect(addDye).toHaveBeenCalledWith('swap-1', DALAMUD.stainID);
+    });
+
+    it('still saves a cheaper dye over a closer one', async () => {
+      // Sunset Red stays a coffer dye, on the board below the 216 floor: the
+      // furthest of the three and the last but one in database order.
+      mockGetAllDyes.mockReturnValue(withStandard(WINE, DALAMUD));
+      fetchPrices().mockResolvedValue(
+        new Map([[SUNSET.itemID, { itemID: SUNSET.itemID, currentMinPrice: 150 } as PriceData]])
+      );
+      await mount();
+
+      saveSwap();
+
+      expect(addDye).toHaveBeenCalledWith('swap-1', SUNSET.stainID);
     });
   });
 

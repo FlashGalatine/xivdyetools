@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.12] - 2026-10-05
+### ✨ Polish everywhere
+- Web app: switching themes keeps your place in Budget, Dye Mixer and your character sheet.
+- Web app: prices show only when the Market Board is on, in every tool.
+- Web app: shortcuts pause while a menu or picker is open, Escape closes just the top thing, and tool shortcuts work on French (AZERTY) keyboards.
+- Web app: sending colors from the Swatch Matcher keeps your loaded character file, and printing a tool prints just the results.
+
 ## [5.10.11] - 2026-10-05
 ### 📜 Clearer policies
 - Web app and Discord bot: the privacy policies now give a fixed date. Moderation posts made after 2026-10-05 never show your Discord user ID.

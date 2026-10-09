@@ -225,6 +225,20 @@ describe('ImageZoomController', () => {
       added.mockRestore();
       removed.mockRestore();
     });
+
+    /**
+     * Since BUG-097 a two-finger move no longer reaches touchmove's
+     * preventDefault (the drag is abandoned first), so blocking a page
+     * pinch-zoom / scroll over the image must not depend on the host's CSS.
+     * The container covers the letterbox area as well as the canvas.
+     */
+    it('blocks browser pinch and scroll on its own canvas container', () => {
+      mount();
+
+      controller.setImage(image);
+
+      expect(controller.getCanvasContainer()!.style.getPropertyValue('touch-action')).toBe('none');
+    });
   });
 
   describe('zoom controls', () => {
@@ -588,6 +602,215 @@ describe('ImageZoomController', () => {
     });
   });
 
+  describe('touch', () => {
+    /**
+     * jsdom has no Touch constructor, and the controller only reads
+     * `touches` / `changedTouches` as indexable lists of client points — so a
+     * plain Event carrying arrays is all it can tell apart from the real thing.
+     */
+    const touch = (
+      type: string,
+      touches: Array<[number, number]>,
+      changed: Array<[number, number]> = touches,
+      target: EventTarget = canvas()
+    ): boolean => {
+      const ev = new Event(type, { bubbles: true, cancelable: true });
+      const toPoints = (list: Array<[number, number]>) =>
+        list.map(([clientX, clientY]) => ({ clientX, clientY }));
+      Object.defineProperty(ev, 'touches', { value: toPoints(touches) });
+      Object.defineProperty(ev, 'changedTouches', { value: toPoints(changed) });
+      return target.dispatchEvent(ev);
+    };
+
+    beforeEach(() => {
+      mount();
+      controller.setImage(image);
+      sizeCanvas({ width: 100, height: 100, right: 100, bottom: 100 });
+    });
+
+    it('samples on a single-finger tap', () => {
+      const onSampled = vi.fn();
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[0, 0]]);
+      touch('touchend', [], [[0, 0]]);
+
+      // The positive control for the two-finger cases below: without it a
+      // "no sample" assertion could pass because the fake event never landed
+      expect(onSampled).toHaveBeenCalledTimes(1);
+    });
+
+    /**
+     * BUG-097: a second finger made touchstart return early with the first
+     * finger's drag still live, so lifting either finger passed touchend's
+     * guard and committed a sample at that finger's point — replacing the
+     * picked colour on what was meant as a pinch.
+     */
+    it('does not sample when a second finger joins and one lifts (BUG-097)', () => {
+      const onSampled = vi.fn();
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[10, 10]]);
+      touch(
+        'touchstart',
+        [
+          [10, 10],
+          [80, 80],
+        ],
+        [[80, 80]]
+      );
+      touch('touchend', [[10, 10]], [[80, 80]]);
+      touch('touchend', [], [[10, 10]]);
+
+      expect(onSampled).not.toHaveBeenCalled();
+    });
+
+    it('ends a live loupe exactly once when a second finger joins (BUG-097)', () => {
+      const onEnd = vi.fn();
+      const onSampled = vi.fn();
+      container.addEventListener('loupe-end', onEnd);
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[0, 0]]);
+      touch('touchmove', [[60, 60]]);
+      touch(
+        'touchstart',
+        [
+          [60, 60],
+          [90, 90],
+        ],
+        [[90, 90]]
+      );
+
+      expect(onEnd).toHaveBeenCalledTimes(1);
+
+      touch('touchend', [[60, 60]], [[90, 90]]);
+      touch('touchend', [], [[60, 60]]);
+
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(onSampled).not.toHaveBeenCalled();
+    });
+
+    /**
+     * BUG-097, off-canvas second finger: after autoFit the image is
+     * letterboxed, so a pinch that straddles its edge puts the second finger
+     * on the canvas CONTAINER. That touchstart is targeted at the container
+     * and never reaches the canvas listener; the canvas only learns of the
+     * second finger when its own finger moves with two touches down. Here the
+     * container finger also lifts first (its touchend never reaches the
+     * canvas either), so the canvas finger's release sees `touches: []` —
+     * only the multi-touch move can have cancelled the drag.
+     */
+    it('abandons a live loupe on a two-finger move when the second finger is off-canvas (BUG-097)', () => {
+      const onEnd = vi.fn();
+      const onSampled = vi.fn();
+      container.addEventListener('loupe-end', onEnd);
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[0, 0]]);
+      touch('touchmove', [[60, 60]]);
+      touch(
+        'touchstart',
+        [
+          [60, 60],
+          [150, 150],
+        ],
+        [[150, 150]],
+        controller.getCanvasContainer()!
+      );
+      // The canvas listener never saw that touchstart, so nothing ended yet
+      expect(onEnd).not.toHaveBeenCalled();
+
+      touch('touchmove', [
+        [60, 60],
+        [150, 150],
+      ]);
+      expect(onEnd).toHaveBeenCalledTimes(1);
+
+      touch('touchend', [], [[60, 60]]);
+
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(onSampled).not.toHaveBeenCalled();
+    });
+
+    /**
+     * BUG-097, off-canvas second finger with no movement at all: the canvas
+     * finger lifts while the container finger is still down, so its touchend
+     * still lists a touch. A release with another finger down is not a tap.
+     */
+    it('does not sample on a lift while an off-canvas finger is still down (BUG-097)', () => {
+      const onSampled = vi.fn();
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[10, 10]]);
+      touch(
+        'touchstart',
+        [
+          [10, 10],
+          [150, 150],
+        ],
+        [[150, 150]],
+        controller.getCanvasContainer()!
+      );
+      touch('touchend', [[150, 150]], [[10, 10]]);
+
+      expect(onSampled).not.toHaveBeenCalled();
+    });
+
+    it('ends a live loupe without sampling when the canvas finger lifts first (BUG-097)', () => {
+      const onEnd = vi.fn();
+      const onSampled = vi.fn();
+      container.addEventListener('loupe-end', onEnd);
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[0, 0]]);
+      touch('touchmove', [[60, 60]]);
+      // The second finger's touchstart is omitted entirely (it landed off the
+      // canvas); the canvas finger lifts while that finger is still down
+      touch('touchend', [[150, 150]], [[60, 60]]);
+
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(onSampled).not.toHaveBeenCalled();
+    });
+
+    it('settles a live loupe on touchcancel and does not sample afterwards', () => {
+      const onEnd = vi.fn();
+      const onSampled = vi.fn();
+      container.addEventListener('loupe-end', onEnd);
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[0, 0]]);
+      touch('touchmove', [[60, 60]]);
+      touch('touchcancel', [], [[60, 60]]);
+
+      expect(onEnd).toHaveBeenCalledTimes(1);
+
+      // The browser took the gesture; a stray end must not commit it
+      touch('touchend', [], [[60, 60]]);
+
+      expect(onEnd).toHaveBeenCalledTimes(1);
+      expect(onSampled).not.toHaveBeenCalled();
+    });
+
+    it('lets a fresh single touch sample again after an abandoned pinch', () => {
+      const onSampled = vi.fn();
+      container.addEventListener('image-sampled', onSampled);
+
+      touch('touchstart', [[10, 10]]);
+      touch('touchmove', [
+        [10, 10],
+        [150, 150],
+      ]);
+      touch('touchend', [], [[10, 10]]);
+      expect(onSampled).not.toHaveBeenCalled();
+
+      touch('touchstart', [[20, 20]]);
+      touch('touchend', [], [[20, 20]]);
+
+      expect(onSampled).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('ctrl-drag panning', () => {
     beforeEach(() => {
       mount();
@@ -718,6 +941,80 @@ describe('ImageZoomController', () => {
       await nextFrame();
 
       expect(canvas().style.marginLeft).not.toBe('');
+    });
+
+    /**
+     * BUG-096: a fitted image sits at centring margin + pan offset, but the
+     * Ctrl-drag move wrote pan offset + delta only — so the first 1px of a pan
+     * dropped the centring term and the image snapped toward the corner, and
+     * the release (which clears isCentered) kept it there.
+     */
+    it('starts a ctrl-drag pan from the centred position, not the corner (BUG-096)', async () => {
+      sizeContainer(200, 100);
+
+      controller.fitToScreen();
+      await nextFrame();
+      await nextFrame();
+
+      // 400% of a 2px image is 8px: (200 − 8) / 2 = 96, (100 − 8) / 2 = 46.
+      // Without this precondition the pan below could pass on an image that
+      // was never centred, and prove nothing
+      expect(canvas().style.marginLeft).toBe('96px');
+      expect(canvas().style.marginTop).toBe('46px');
+
+      mouse('mousedown', 50, 50, { ctrlKey: true });
+      mouse('mousemove', 51, 50, { ctrlKey: true });
+
+      expect(canvas().style.marginLeft).toBe('97px');
+      expect(canvas().style.marginTop).toBe('46px');
+    });
+
+    it('keeps a pan that began centred when the zoom changes afterwards (BUG-096)', async () => {
+      sizeContainer(200, 100);
+
+      controller.fitToScreen();
+      await nextFrame();
+      await nextFrame();
+
+      mouse('mousedown', 50, 50, { ctrlKey: true });
+      mouse('mousemove', 51, 50, { ctrlKey: true });
+      mouse('mouseup', 51, 50, { ctrlKey: true });
+      container.querySelector<HTMLButtonElement>('button[title="matcher.zoomOut"]')!.click();
+
+      // The release ends centring, so the zoom step re-applies the pan offset
+      // alone — which must already carry the centring it started from
+      expect(canvas().style.marginLeft).toBe('97px');
+      expect(canvas().style.marginTop).toBe('46px');
+    });
+
+    /**
+     * A new image arriving mid-pan (the extractor's document-level Ctrl+V
+     * paste while Ctrl+drag is held) rebuilt the canvas but left isPanning and
+     * the old pan start behind. The fit then re-centred, and the next move
+     * wrote reset offset + (pointer − stale start): the BUG-096 jump, on the
+     * new image. The pan belongs to the old canvas; it must end with it.
+     */
+    it('ends a pan in progress when a new image replaces the canvas', async () => {
+      sizeContainer(200, 100);
+      controller.fitToScreen();
+      await nextFrame();
+      await nextFrame();
+
+      mouse('mousedown', 50, 50, { ctrlKey: true });
+
+      controller.setImage(image);
+      controller.fitToScreen();
+      await nextFrame();
+      await nextFrame();
+
+      // Precondition: the new canvas is fitted and centred
+      expect(canvas().style.marginLeft).toBe('96px');
+      expect(canvas().style.marginTop).toBe('46px');
+
+      mouse('mousemove', 51, 50, { ctrlKey: true });
+
+      expect(canvas().style.marginLeft).toBe('96px');
+      expect(canvas().style.marginTop).toBe('46px');
     });
 
     it('autoFit picks fit-to-width for an image wider than the box', async () => {

@@ -87,6 +87,28 @@ export class TutorialSpotlight extends BaseComponent {
    */
   private currentTarget: HTMLElement | null = null;
 
+  /**
+   * BUG-106: the scrollable ancestors of `currentTarget` that carry
+   * `handleAncestorScroll`. Wired by hand rather than through `this.on()`,
+   * which would keep them until destroy; they have to go with the step.
+   */
+  private scrollAncestors: Element[] = [];
+
+  /**
+   * The ModalService registration held while a tour shows. The overlay is a
+   * full-screen dialog, so while it is up the page-wide shortcuts and "/"
+   * stand down (a digit used to switch tools under it, stranding the
+   * spotlight on a target that had gone) and the toast leaves Escape to it.
+   * One handle: show() runs on every step, hide() more than once per tour.
+   */
+  private releaseModal: (() => void) | null = null;
+
+  private readonly handleAncestorScroll = (): void => {
+    if (this.currentStep) {
+      this.updatePositions();
+    }
+  };
+
   renderContent(): void {
     // Create overlay container
     this.element = this.createElement('div', {
@@ -160,25 +182,26 @@ export class TutorialSpotlight extends BaseComponent {
     });
 
     // BUG-086: a ResizeObserver does NOT fire on scroll, and the spotlight and
-    // tooltip are positioned from viewport coordinates -- so scrolling the page
-    // (or any scrollable ancestor, hence the capture phase) left the highlight
-    // sitting where the target used to be.
-    // (Bubble phase on `window`, which covers page scroll -- the reported
-    // symptom. BaseComponent.on() removes listeners without options, so a
-    // capture-phase listener for scrollable ANCESTORS would leak on destroy;
-    // that case is left alone rather than bypassing the helper.)
+    // tooltip are positioned from viewport coordinates -- so scrolling left
+    // the highlight sitting where the target used to be. This covers page
+    // scroll only. The tools scroll inside containers in shadow roots, whose
+    // scroll events neither bubble nor cross the boundary to here, so each
+    // step also listens on its target's own scrollable ancestors
+    // (watchScrollAncestors, BUG-106).
     this.on(window as unknown as HTMLElement, 'scroll' as keyof HTMLElementEventMap, () => {
       if (this.currentStep) {
         this.updatePositions();
       }
     });
 
-    // Handle escape key
+    // Handle escape key. Marked handled: one Escape closes one layer, so a
+    // dismissible toast under the tour stays put (BUG-105).
     this.on(
       document as unknown as HTMLElement,
       'keydown' as keyof HTMLElementEventMap,
       ((event: KeyboardEvent) => {
         if (event.key === 'Escape' && TutorialService.getState().isActive) {
+          event.preventDefault();
           TutorialService.skip();
         }
       }) as EventListener
@@ -243,6 +266,8 @@ export class TutorialSpotlight extends BaseComponent {
 
   private showStep(step: TutorialStep, stepIndex: number, totalSteps: number): void {
     this.currentStep = step;
+    // The previous step's scrollers go first, before a missing target returns
+    this.unwatchScrollAncestors();
 
     // Find target element (supports Shadow DOM traversal)
     const target = querySelectorDeep(step.target);
@@ -252,6 +277,11 @@ export class TutorialSpotlight extends BaseComponent {
       setTimeout(() => TutorialService.next(), 100);
       return;
     }
+
+    // BUG-106: before the scroll below, so its smooth-scroll frames are heard.
+    // The one measurement at 100 ms lands mid-scroll; each later frame's
+    // scroll event re-measures, and the last one is where the target settled.
+    this.watchScrollAncestors(target);
 
     // Scroll target into view if needed
     this.scrollIntoViewIfNeeded(target);
@@ -538,6 +568,35 @@ export class TutorialSpotlight extends BaseComponent {
     }
   }
 
+  /**
+   * BUG-106: listen for scroll on every scrollable ancestor of the target,
+   * crossing each shadow root to its host -- the shell's content scroller,
+   * the tool's main panel, the palette drawer's list. `hidden` counts: such a
+   * box is still a scroll container, and scrollIntoView can move it.
+   */
+  private watchScrollAncestors(target: HTMLElement): void {
+    const parentOf = (node: Element): Element | null => {
+      if (node.parentElement) return node.parentElement;
+      const root = node.getRootNode();
+      return root instanceof ShadowRoot ? root.host : null;
+    };
+
+    for (let node = parentOf(target); node; node = parentOf(node)) {
+      const { overflowX, overflowY } = getComputedStyle(node);
+      if (/auto|scroll|overlay|hidden/.test(`${overflowX} ${overflowY}`)) {
+        node.addEventListener('scroll', this.handleAncestorScroll, { passive: true });
+        this.scrollAncestors.push(node);
+      }
+    }
+  }
+
+  private unwatchScrollAncestors(): void {
+    for (const node of this.scrollAncestors) {
+      node.removeEventListener('scroll', this.handleAncestorScroll);
+    }
+    this.scrollAncestors = [];
+  }
+
   private setupResizeObserver(target: HTMLElement): void {
     if (this.resizeObserver) {
       this.resizeObserver.disconnect();
@@ -560,6 +619,7 @@ export class TutorialSpotlight extends BaseComponent {
 
   override show(): void {
     if (this.element) {
+      this.releaseModal ??= ModalService.registerExternal();
       this.element.style.display = 'block';
       // Fade in
       requestAnimationFrame(() => {
@@ -571,6 +631,8 @@ export class TutorialSpotlight extends BaseComponent {
   }
 
   override hide(): void {
+    this.releaseModalRegistration();
+
     if (this.element) {
       // Fade out
       if (this.overlay) this.overlay.style.opacity = '0';
@@ -592,9 +654,16 @@ export class TutorialSpotlight extends BaseComponent {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
+    this.unwatchScrollAncestors();
 
     this.currentStep = null;
     this.currentTarget = null;
+  }
+
+  /** Hand the shortcuts back. Safe when nothing is held. */
+  private releaseModalRegistration(): void {
+    this.releaseModal?.();
+    this.releaseModal = null;
   }
 
   // ============================================================================
@@ -602,6 +671,9 @@ export class TutorialSpotlight extends BaseComponent {
   // ============================================================================
 
   override destroy(): void {
+    // First, so a throwing cleanup below cannot leave every shortcut off
+    this.releaseModalRegistration();
+
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
@@ -611,6 +683,7 @@ export class TutorialSpotlight extends BaseComponent {
       this.resizeObserver.disconnect();
       this.resizeObserver = null;
     }
+    this.unwatchScrollAncestors();
 
     super.destroy();
   }

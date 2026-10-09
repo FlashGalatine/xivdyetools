@@ -315,6 +315,14 @@ export class HarmonyTool extends BaseComponent {
       })
     );
 
+    // Re-lay the type rail across the breakpoint (scrolling row ↔ centred
+    // wrap). BUG-095 (2026-10-04 deep-dive): bound once per mount, not in
+    // renderRightPanel — that runs on every update(), and each run added the
+    // listener to a fresh list that destroy() never saw. renderTypeRail reads
+    // the current rail container, so one listener serves every re-render.
+    this.railMql = window.matchMedia('(max-width: 768px)');
+    this.railMql.addEventListener('change', this.onRailBreakpoint);
+
     // Subscribe to route changes to handle deep links when navigating to harmony
     this.subs.add(
       RouterService.subscribe((state) => {
@@ -404,24 +412,25 @@ export class HarmonyTool extends BaseComponent {
     // Note: MarketBoardService handles state updates and cache clearing.
     // We just need to regenerate UI when settings change.
     this.subs.add(
-      configController.subscribe('market', (config) => {
-        // Regenerate harmonies and fetch prices if needed
+      configController.subscribe('market', () => {
+        // OPT-007 (2026-10-04 deep-dive): the one path a market change takes
+        // into this tool; buildMarketPanel's relay callbacks are no-ops for
+        // that reason. generateHarmonies() fetches prices itself while they
+        // are on, so no fetch follows it here. Its `showPrices` is already
+        // current: MarketBoardService subscribed to 'market' in its
+        // constructor, which this tool's constructor ran before this listener
+        // was added, and ConfigController notifies in subscription order.
         if (this.selectedDye) {
           this.generateHarmonies();
-          if (config.showPrices) {
-            void this.fetchPricesForDisplayedDyes();
-          }
         }
       })
     );
 
-    // Generate initial harmonies if a dye is selected, otherwise show empty state
+    // Generate initial harmonies if a dye is selected, otherwise show empty
+    // state. generateHarmonies() fetches the prices itself while they are on;
+    // a second fetch here only superseded it (Sprint 22 review, as OPT-007).
     if (this.selectedDye) {
       this.generateHarmonies();
-      // Fetch prices on initial load if enabled
-      if (this.showPrices) {
-        void this.fetchPricesForDisplayedDyes();
-      }
     } else {
       // No dye selected - show empty state message
       this.showEmptyState(true);
@@ -621,13 +630,10 @@ export class HarmonyTool extends BaseComponent {
           this.swappedDyes.clear();
 
           // Re-render to update the current dye display elements; onUpdate
-          // generates the harmonies for the newly selected dye
+          // generates the harmonies for the newly selected dye, and that
+          // fetches the prices while they are on — no second fetch here
+          // (Sprint 22 review, as OPT-007).
           this.update();
-
-          // Fetch prices if enabled
-          if (this.showPrices) {
-            void this.fetchPricesForDisplayedDyes();
-          }
         }
       }
     } else if (harmonyParam && this.selectedDye) {
@@ -896,18 +902,23 @@ export class HarmonyTool extends BaseComponent {
     const marketBoard = new MarketBoard(marketContent);
     marketBoard.init();
 
-    // Set up market board event listeners using shared utility
+    // Set up market board event listeners using shared utility.
+    // OPT-007 (Sprint 22 review): a server or prices-toggle change is handled
+    // by the ConfigController 'market' subscription in onMount, and only
+    // there. Every MarketBoard change goes through ConfigController, and each
+    // live board (desktop and drawer, and in the v4 shell a detached one)
+    // also relays it here as a DOM event. Regenerating on the relay as well
+    // ran two or three full grid rebuilds and price passes per change, each
+    // superseding the last. The two callbacks are deliberate no-ops: leaving
+    // them out would make the mixin fall back to fetching on every relay.
+    // A Refresh click keeps the fallback, which refetches for the grid.
     setupMarketBoardListeners(
       marketContent,
       () => this.showPrices,
       () => this.fetchPricesForDisplayedDyes(),
       {
-        onPricesToggled: () => {
-          this.generateHarmonies();
-        },
-        onServerChanged: () => {
-          if (this.selectedDye) this.generateHarmonies();
-        },
+        onPricesToggled: () => {},
+        onServerChanged: () => {},
       }
     );
 
@@ -1116,10 +1127,6 @@ export class HarmonyTool extends BaseComponent {
     this.applyTypeRailLayout();
     contentWrapper.appendChild(this.typeRailContainer);
     this.renderTypeRail();
-
-    // Re-lay the rail across the breakpoint (scrolling row ↔ centred wrap)
-    this.railMql = window.matchMedia('(max-width: 768px)');
-    this.railMql.addEventListener('change', this.onRailBreakpoint);
 
     // Color Wheel Section - centered with inline styles for reliability
     this.colorWheelContainer = this.createElement('div', {
@@ -1671,7 +1678,12 @@ export class HarmonyTool extends BaseComponent {
     card.showHue = this.displayOptions.showHue ?? true;
     card.showStain = this.displayOptions.showStain ?? true;
     card.showConsolidation = this.displayOptions.showSpectrum ?? true;
-    card.showPrice = this.displayOptions.showPrice;
+    // BUG-086 (2026-10-04 deep-dive): the price row needs the Market Board
+    // toggle as well as the display flag, as extractor and comparison gate it.
+    // On the display flag alone, every card kept its price row with prices
+    // switched off. A toggle change regenerates the grid through the
+    // 'market' subscription, so the cards are rebuilt with the new value.
+    card.showPrice = this.displayOptions.showPrice && this.showPrices;
     card.showAcquisition = this.displayOptions.showAcquisition;
 
     // Handle card selection - set as new base dye and regenerate harmonies
@@ -1994,8 +2006,10 @@ export class HarmonyTool extends BaseComponent {
     }
 
     // Re-render if needed
-    if (needsRerender && this.selectedDye) {
-      this.generateHarmonies();
+    if (needsRerender) {
+      if (this.selectedDye) {
+        this.generateHarmonies();
+      }
 
       // Update harmony type buttons if they exist (shared method handles null containers)
       this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, this.selectedHarmonyType);
@@ -2003,6 +2017,11 @@ export class HarmonyTool extends BaseComponent {
         this.drawerHarmonyTypesContainer,
         this.selectedHarmonyType
       );
+      // The rail is the only visible type picker in the v4 shell (its
+      // renderRightPanel clears the shared panel, buttons and all). Without
+      // this a sidebar change left the old type pressed over the new cards,
+      // and with no base selected nothing showed the change at all.
+      this.renderTypeRail();
     }
   }
 

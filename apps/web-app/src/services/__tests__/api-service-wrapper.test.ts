@@ -163,26 +163,33 @@ describe('IndexedDBCacheBackend', () => {
     it('should load from storage after successful initialization', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');
-      const mockKeys = vi.spyOn(indexedDBServiceModule.indexedDBService, 'keys');
+      const mockEntries = vi.spyOn(indexedDBServiceModule.indexedDBService, 'entries');
 
+      const first = { data: { minPrice: 1 }, timestamp: Date.now() };
+      const second = { data: { minPrice: 2 }, timestamp: Date.now() };
       mockInitialize.mockResolvedValueOnce(true);
-      mockKeys.mockResolvedValueOnce(['key1', 'key2']);
+      mockEntries.mockResolvedValueOnce([
+        ['key1', first],
+        ['key2', second],
+      ]);
 
       await cacheBackend.initialize();
 
-      expect(mockKeys).toHaveBeenCalled();
+      expect(mockEntries).toHaveBeenCalledWith('price_cache');
+      expect(cacheBackend.get('key1')).toEqual(first);
+      expect(cacheBackend.get('key2')).toEqual(second);
     });
 
     it('should not load from storage if initialization returns false', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');
-      const mockKeys = vi.spyOn(indexedDBServiceModule.indexedDBService, 'keys');
+      const mockEntries = vi.spyOn(indexedDBServiceModule.indexedDBService, 'entries');
 
       mockInitialize.mockResolvedValueOnce(false);
 
       await cacheBackend.initialize();
 
-      expect(mockKeys).not.toHaveBeenCalled();
+      expect(mockEntries).not.toHaveBeenCalled();
     });
   });
 
@@ -429,14 +436,12 @@ describe('IndexedDBCacheBackend', () => {
     it('should load existing cache entries from IndexedDB', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');
-      const mockKeys = vi.spyOn(indexedDBServiceModule.indexedDBService, 'keys');
-      const mockGet = vi.spyOn(indexedDBServiceModule.indexedDBService, 'get');
+      const mockEntries = vi.spyOn(indexedDBServiceModule.indexedDBService, 'entries');
 
       const cachedData = { data: { minPrice: 999 }, timestamp: Date.now() };
 
       mockInitialize.mockResolvedValueOnce(true);
-      mockKeys.mockResolvedValueOnce(['cached-key']);
-      mockGet.mockResolvedValueOnce(cachedData);
+      mockEntries.mockResolvedValueOnce([['cached-key', cachedData]]);
 
       await cacheBackend.initialize();
 
@@ -447,12 +452,10 @@ describe('IndexedDBCacheBackend', () => {
     it('should skip entries that return null from IndexedDB', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');
-      const mockKeys = vi.spyOn(indexedDBServiceModule.indexedDBService, 'keys');
-      const mockGet = vi.spyOn(indexedDBServiceModule.indexedDBService, 'get');
+      const mockEntries = vi.spyOn(indexedDBServiceModule.indexedDBService, 'entries');
 
       mockInitialize.mockResolvedValueOnce(true);
-      mockKeys.mockResolvedValueOnce(['null-key']);
-      mockGet.mockResolvedValueOnce(null);
+      mockEntries.mockResolvedValueOnce([['null-key', null]]);
 
       await cacheBackend.initialize();
 
@@ -460,13 +463,196 @@ describe('IndexedDBCacheBackend', () => {
       expect(cacheBackend.get('null-key')).toBeNull();
     });
 
+    /**
+     * OPT-009 harness: points the real indexedDBService singleton at a fake
+     * open connection over `records`, so the tests below count the
+     * transactions the hydration actually opens rather than spying on which
+     * service methods it happens to call. `getAll` can be held back to model a
+     * slow read, and with `pendingOpen` the database open itself stays pending
+     * (no connection, `initPromise` unresolved) until `completeOpen()`.
+     * `getAll` snapshots the records when it is requested and `clear` empties
+     * them, so the order the two transactions are created in is what counts.
+     */
+    async function withFakeConnection(
+      records: Map<string, unknown>,
+      run: (fake: {
+        transaction: ReturnType<typeof vi.fn>;
+        getAllCalled: () => boolean;
+        releaseGetAll: () => void;
+        completeOpen: () => void;
+      }) => Promise<void>,
+      { holdGetAll = false, pendingOpen = false } = {}
+    ): Promise<void> {
+      const indexedDBServiceModule = await import('../indexeddb-service');
+      const service = indexedDBServiceModule.indexedDBService as unknown as {
+        db: unknown;
+        initPromise: Promise<boolean> | null;
+      };
+      const saved = { db: service.db, initPromise: service.initPromise };
+
+      interface FakeRequest {
+        result: unknown;
+        error: null;
+        onsuccess: (() => void) | null;
+        onerror: (() => void) | null;
+      }
+      const request = (result: unknown, hold = false): FakeRequest => {
+        const r: FakeRequest = { result, error: null, onsuccess: null, onerror: null };
+        if (!hold) queueMicrotask(() => r.onsuccess?.());
+        else releaseGetAll = () => r.onsuccess?.();
+        return r;
+      };
+      let releaseGetAll = (): void => {};
+      let getAllCalled = false;
+      const store = {
+        get: (key: string) =>
+          request(records.has(key) ? { key, value: records.get(key) } : undefined),
+        getAllKeys: () => request([...records.keys()]),
+        getAll: () => {
+          getAllCalled = true;
+          return request(
+            [...records.entries()].map(([key, value]) => ({ key, value })),
+            holdGetAll
+          );
+        },
+        put: () => request(undefined),
+        clear: () => {
+          records.clear();
+          return request(undefined);
+        },
+      };
+      const transaction = vi.fn(() => ({ objectStore: () => store }));
+      const db = { transaction };
+      let completeOpen = (): void => {};
+      if (pendingOpen) {
+        service.db = null;
+        service.initPromise = new Promise<boolean>((resolve) => {
+          completeOpen = () => {
+            service.db = db;
+            resolve(true);
+          };
+        });
+      } else {
+        service.db = db;
+        service.initPromise = Promise.resolve(true);
+      }
+      try {
+        await run({
+          transaction,
+          getAllCalled: () => getAllCalled,
+          releaseGetAll: () => releaseGetAll(),
+          completeOpen: () => completeOpen(),
+        });
+      } finally {
+        service.db = saved.db;
+        service.initPromise = saved.initPromise;
+      }
+    }
+
+    const priceEntry = (minPrice: number) => ({
+      data: { minPrice },
+      timestamp: Date.now(),
+      ttl: 60_000,
+    });
+
+    // OPT-009: hydration ran keys() and then one serial readonly `get`
+    // transaction per key, so the memory cache filled N transactions late.
+    it('hydrates every persisted price in one read transaction (OPT-009)', async () => {
+      const records = new Map<string, unknown>();
+      for (let i = 0; i < 200; i++) records.set(`price-${i}`, priceEntry(i));
+
+      await withFakeConnection(records, async ({ transaction }) => {
+        await cacheBackend.initialize();
+
+        expect(cacheBackend.keys().length).toBe(200);
+        expect(cacheBackend.get('price-0')).toEqual(records.get('price-0'));
+        expect(cacheBackend.get('price-199')).toEqual(records.get('price-199'));
+        expect(transaction).toHaveBeenCalledTimes(1);
+        expect(transaction).toHaveBeenCalledWith('price_cache', 'readonly');
+      });
+    });
+
+    it('keeps a price fetched while the hydration read was in flight (OPT-009)', async () => {
+      const stale = priceEntry(1);
+      const fresh = priceEntry(2);
+      await withFakeConnection(
+        new Map<string, unknown>([['price-1', stale]]),
+        async ({ getAllCalled, releaseGetAll }) => {
+          const init = cacheBackend.initialize();
+          await vi.waitFor(() => expect(getAllCalled()).toBe(true));
+
+          // A live fetch lands first; the stored copy is older
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cacheBackend.set('price-1', fresh as any);
+          releaseGetAll();
+          await init;
+
+          expect(cacheBackend.get('price-1')).toEqual(fresh);
+        },
+        { holdGetAll: true }
+      );
+    });
+
+    // FINDING-008 must hold for the bulk read too: one snapshot read would
+    // otherwise put back EVERY cleared price, not just one in-flight entry.
+    it('does not repopulate prices cleared while the hydration read was in flight (OPT-009)', async () => {
+      await withFakeConnection(
+        new Map<string, unknown>([
+          ['price-1', priceEntry(1)],
+          ['price-2', priceEntry(2)],
+        ]),
+        async ({ getAllCalled, releaseGetAll }) => {
+          const init = cacheBackend.initialize();
+          await vi.waitFor(() => expect(getAllCalled()).toBe(true));
+
+          cacheBackend.clear(); // logout
+          releaseGetAll();
+          await init;
+
+          expect(cacheBackend.keys()).toEqual([]);
+        },
+        { holdGetAll: true }
+      );
+    });
+
+    // The guard was captured inside the hydration, AFTER the database open.
+    // A clear() landing while the open is still pending queues behind the
+    // same open as the hydration, but the hydration's continuation was
+    // registered first: it read the already-bumped generation and took its
+    // snapshot before the clear's transaction emptied the store, so every
+    // cleared price came back.
+    it('does not repopulate prices cleared while the database open was pending (OPT-009)', async () => {
+      const records = new Map<string, unknown>([
+        ['price-1', priceEntry(1)],
+        ['price-2', priceEntry(2)],
+      ]);
+      await withFakeConnection(
+        records,
+        async ({ transaction, completeOpen }) => {
+          const init = cacheBackend.initialize();
+          await Promise.resolve();
+          expect(transaction).not.toHaveBeenCalled(); // the open is still pending
+
+          cacheBackend.clear(); // logout
+          completeOpen();
+          await init;
+          await vi.waitFor(() => expect(records.size).toBe(0));
+
+          // Precondition: the snapshot really was taken before the store was cleared
+          expect(transaction.mock.calls.map((call) => call[1])).toEqual(['readonly', 'readwrite']);
+          expect(cacheBackend.keys()).toEqual([]);
+        },
+        { pendingOpen: true }
+      );
+    });
+
     it('should handle loadFromStorage error gracefully', async () => {
       const indexedDBServiceModule = await import('../indexeddb-service');
       const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');
-      const mockKeys = vi.spyOn(indexedDBServiceModule.indexedDBService, 'keys');
+      const mockEntries = vi.spyOn(indexedDBServiceModule.indexedDBService, 'entries');
 
       mockInitialize.mockResolvedValueOnce(true);
-      mockKeys.mockRejectedValueOnce(new Error('Keys failed'));
+      mockEntries.mockRejectedValueOnce(new Error('Entries failed'));
 
       // Should not throw
       await expect(cacheBackend.initialize()).resolves.not.toThrow();

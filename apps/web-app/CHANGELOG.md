@@ -7,6 +7,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.6] - 2026-10-05
+
+Sprint 22 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the web app's remaining LOW findings. 41 of 42 are fixed, each verified against this branch first
+and each with a test that failed before its fix (or, for test-only findings, a mutation check).
+BUG-090 stays open: it needs a core API change (below).
+
+### Fixed
+
+- **Tools:**
+  - Budget and Dye Mixer redraw their theme-tinted readouts on a theme switch, keeping keyboard
+    focus where it was (BUG-080). Mixer recolours its spread chip in place rather than re-blending
+    the field.
+  - Budget's Save swap picks the closest of equally priced dyes (BUG-081).
+  - Mixer no longer restores a stale third slot (BUG-098) and shows "—", not ΔE 0.0, for a cell
+    with no match (BUG-099).
+  - Comparison keeps its active pair by dye, so removing a dye no longer swaps the survivor out
+    (BUG-085). Comparison, Harmony, Dye Mixer, Gradient and Swatch show a price row only while
+    the market switch is on, as the Extractor does (BUG-086). Comparison and Accessibility disable
+    Share for a selection of custom colours only (BUG-087).
+  - Gradient keeps custom-colour endpoints across a reload (BUG-092) and swaps rather than
+    duplicates when a result card sets an endpoint to the other end's dye (BUG-094).
+  - Gradient and Swatch destroy their child panels before rebuilding them (BUG-093).
+  - Swatch keeps its resize listener after a language switch (BUG-103). SEND TO navigates
+    inside the app, so the loaded `.chara` file survives the hand-off (BUG-104).
+  - Harmony adds one breakpoint listener per mount, not one per render (BUG-095), and its type
+    rail follows a harmony type chosen in the sidebar.
+  - The palette drawer's Metallic and Pastel chips use the dye flags, not the English name
+    (BUG-107).
+  - Opening a result card's menu closes the other cards' menus (BUG-111). A card no longer shows
+    its slot picker and its menu at once, and tapping inside its own menu on a touch screen no
+    longer collapses it.
+  - The Extractor's image no longer jumps toward the corner when a Ctrl/Cmd-drag pan starts on a
+    fitted image (BUG-096), and a second finger cancels a drag instead of sampling on lift, wherever
+    it lands (BUG-097).
+- **Keyboard and focus:**
+  - `/` in a tool's search works inside the layout shell (BUG-088), and the compact favourites
+    grid keeps three columns (BUG-089).
+  - The twin picker, the "Open in…" menu and the tutorial spotlight register as open overlays, so
+    the global shortcuts stand down while they are open; the twin picker closes when focus leaves
+    it (BUG-091).
+  - Toasts update in place instead of replaying their animations and re-announcing (BUG-105).
+    Escape closes the top-most layer only: modals, the registered overlays and the app's menus
+    (add to collection, the header tool menu, result-card menus) mark the Escape they consume,
+    so a toast stays.
+  - Tool shortcuts work from an AZERTY number row (BUG-120), and AltGr or a dead key on the number
+    row never switches tools.
+  - A slot card on THIS CHARACTER keeps focus when selected and carries `aria-pressed`, which
+    clears when the Swatch Matcher's selection moves elsewhere; the sheet repaints its colours on
+    a theme switch (BUG-083).
+- **Shell:**
+  - A mobile sheet no longer drags while its content is scrolled, and `touchcancel` settles it
+    (BUG-100).
+  - The tutorial spotlight follows a scrolled container (BUG-106).
+  - Printing shows the content without the app chrome (BUG-112).
+  - Shell events no longer reach `v4-layout` twice (BUG-113).
+  - A failed tutorial import no longer covers the app with the fatal-error screen, and no tour is
+    offered for the rest of the session (BUG-114).
+- **Services:**
+  - Signing out clears the session first and revokes in the background, with a 5 s timeout that
+    also works where `AbortSignal.timeout` is missing (BUG-115).
+  - Out-of-range `.chara` model numbers are answered locally instead of failing the whole gear
+    lookup (BUG-116).
+  - Collections no longer re-enter initialisation from a migration save (BUG-117), and an import
+    with a `null` collection reports it instead of throwing (BUG-118).
+  - IndexedDB closes on a version change so another tab can upgrade (BUG-119).
+  - Overlapping language switches commit only the latest (BUG-121), and `$` patterns in a
+    collection name are inserted literally (BUG-122).
+  - Palette, collection and settings exports are stamped with the local date (BUG-123).
+  - The price cache loads in one IndexedDB transaction, and a sign-out during that load cannot
+    restore the cleared prices (OPT-009).
+  - A market change runs one Harmony regeneration and price pass, not three; Mixer redraws its
+    field once per change (OPT-007).
+- **Tests and tooling:**
+  - Budget's rendering tests and the tools' `setConfig` tests assert behaviour instead of "does
+    not throw" (BUG-075, BUG-077).
+  - `validate-i18n.js` reads keys across wrapped calls, through local and imported aliases,
+    object maps and `??` fallbacks, and a fixture test proves it fails on a typo (BUG-074).
+
+### Not fixed
+
+- **BUG-090:** the Extractor's market error badge, and Harmony's market-failure strip, can never
+  appear. Core's batch price fetch reports an outage as an empty success, so nothing reaches
+  either error path. The fix surfaces the failure additively from `@xivdyetools/core` (not by
+  changing `getPricesForDataCenter`'s return, which is published API) and maps it in
+  `MarketBoardService`, so it needs a core release. It is proposed for Sprint 27, which already
+  publishes core.
+
 ## [5.14.5] - 2026-10-05
 
 Sprint 7 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

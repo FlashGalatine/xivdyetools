@@ -848,4 +848,267 @@ describe('ComparisonTool', () => {
       expect(rowTier('ciede2000')).toBe('comparison.tierSame');
     });
   });
+
+  /** The two dyes the duel is showing, by id, left then right. */
+  const duelDyeIds = (root: HTMLElement): number[] =>
+    [...root.querySelectorAll('v4-result-card')]
+      .filter((card) => !card.closest('.comparison-cards-container'))
+      .map((card) => (card as unknown as { data: { dye: { id: number } } }).data.dye.id);
+
+  // ==========================================================================
+  // BUG-085 (2026-10-04 deep-dive): the duel held its pair as list indices.
+  // Removing a dye shifts every later index, and a stored pair still in range
+  // then named two different dyes — the one the user kept left the duel.
+  // ==========================================================================
+
+  describe('the duel keeps its dyes when the list shrinks', () => {
+    beforeEach(resetStorageReads);
+
+    afterEach(async () => {
+      const { ColorService } = await import('@services/index');
+      vi.mocked(ColorService.getDistanceForMethod).mockImplementation(() => 15);
+    });
+
+    const [A, B, C, D] = mockDyes;
+
+    /**
+     * B×D is the closest pair, so a pair that is reset (or read by stale
+     * index) lands on it; B×C is closer than C×D, so C's nearest partner is B;
+     * A×B is A's only close pair, so A's nearest partner is B.
+     */
+    const setDistances = async () => {
+      const { ColorService } = await import('@services/index');
+      const table: Record<string, number> = {
+        [`${B.hex}|${D.hex}`]: 2,
+        [`${A.hex}|${B.hex}`]: 8,
+        [`${B.hex}|${C.hex}`]: 10,
+        [`${C.hex}|${D.hex}`]: 12,
+      };
+      vi.mocked(ColorService.getDistanceForMethod).mockImplementation(
+        (a: string, b: string) => table[`${a}|${b}`] ?? table[`${b}|${a}`] ?? 20
+      );
+    };
+
+    const pairChip = (a: (typeof mockDyes)[number], b: (typeof mockDyes)[number]) =>
+      [...rightPanel.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find((chip) =>
+        chip.textContent?.includes(`Dye-${a.itemID} × Dye-${b.itemID}`)
+      );
+
+    /** Fires Remove on the duel card showing `dye`. */
+    const removeFromDuel = (dye: (typeof mockDyes)[number]) => {
+      const card = [...rightPanel.querySelectorAll('v4-result-card')].find(
+        (el) =>
+          !el.closest('.comparison-cards-container') &&
+          (el as unknown as { data: { dye: { id: number } } }).data.dye.id === dye.id
+      )!;
+      card.dispatchEvent(new CustomEvent('card-select'));
+    };
+
+    /** The bench chip for `dye` (pair chips carry aria-pressed; bench chips do not). */
+    const benchChip = (dye: (typeof mockDyes)[number]) =>
+      rightPanel.querySelector<HTMLButtonElement>(
+        `button[title="Dye-${dye.itemID}"]:not([aria-pressed])`
+      );
+
+    it('keeps the surviving member when the other is removed from its card', async () => {
+      await setDistances();
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+      for (const dye of [A, B, C, D]) tool.selectDye(dye);
+      pairChip(A, C)!.click();
+      expect(duelDyeIds(rightPanel)).toEqual([A.id, C.id]);
+
+      removeFromDuel(A);
+
+      // C moves to the left side, beside its closest remaining dye
+      expect(duelDyeIds(rightPanel)).toEqual([C.id, B.id]);
+    });
+
+    it('keeps the left member on the left when the right one is removed', async () => {
+      await setDistances();
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+      for (const dye of [A, B, C, D]) tool.selectDye(dye);
+      pairChip(A, C)!.click();
+      expect(duelDyeIds(rightPanel)).toEqual([A.id, C.id]);
+
+      removeFromDuel(C);
+
+      // A stays left, beside its closest remaining dye — not the reset pair
+      // (B×D) nor the stale-index read (A, D)
+      expect(duelDyeIds(rightPanel)).toEqual([A.id, B.id]);
+    });
+
+    it('a bench swap after a re-pair replaces the auto-picked partner, not the kept dye', async () => {
+      await setDistances();
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+      for (const dye of [A, B, C, D]) tool.selectDye(dye);
+      pairChip(A, C)!.click();
+      removeFromDuel(A);
+      expect(duelDyeIds(rightPanel)).toEqual([C.id, B.id]);
+
+      // The bench chip replaces the pair's second member: B, the partner the
+      // tool picked, goes back to the bench and C — the dye the user kept — stays
+      benchChip(D)!.click();
+
+      expect(duelDyeIds(rightPanel)).toEqual([C.id, D.id]);
+    });
+
+    it('keeps both members when a dye outside the pair leaves the list', async () => {
+      await setDistances();
+      const selectorInit = vi.spyOn(DyeSelector.prototype, 'init');
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+      for (const dye of [A, B, C, D]) tool.selectDye(dye);
+      pairChip(C, D)!.click();
+      expect(duelDyeIds(rightPanel)).toEqual([C.id, D.id]);
+
+      // The selector deselects A: the list becomes B, C, D
+      const selector = selectorInit.mock.contexts[0] as unknown as {
+        container: HTMLElement;
+        selectedDyes: unknown[];
+      };
+      selector.selectedDyes = [B, C, D];
+      selector.container.dispatchEvent(new Event('selection-changed'));
+
+      expect(duelDyeIds(rightPanel)).toEqual([C.id, D.id]);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-086 (2026-10-04 deep-dive): the cards drew the market row from the
+  // tool's own Price option alone, but the service fetches nothing while the
+  // global Market Board toggle is off (its default) — so the row read "—"
+  // forever on a fresh profile.
+  // ==========================================================================
+
+  describe('the market row follows the Market Board toggle', () => {
+    beforeEach(resetStorageReads);
+
+    afterEach(async () => {
+      const { MarketBoardService } = await import('@services/index');
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(false);
+    });
+
+    const cardsShowPrice = (root: HTMLElement): boolean[] =>
+      [...root.querySelectorAll('v4-result-card')].map(
+        (card) => (card as unknown as { showPrice: boolean }).showPrice
+      );
+
+    it('hides the row on the single-dye card while the toggle is off', () => {
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      tool.selectDye(mockDyes[0]);
+
+      expect(cardsShowPrice(rightPanel)).toEqual([false]);
+    });
+
+    it('hides the row on the duel cards, then shows it once the toggle is on', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      const { setupMarketBoardListeners } = await import('@services/pricing-mixin');
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+      const duelShowPrice = () =>
+        [...rightPanel.querySelectorAll('v4-result-card')]
+          .filter((card) => !card.closest('.comparison-cards-container'))
+          .map((card) => (card as unknown as { showPrice: boolean }).showPrice);
+      expect(duelShowPrice()).toEqual([false, false]);
+
+      // The global toggle goes on: the market board relays it to the tool
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(true);
+      const listeners = vi.mocked(setupMarketBoardListeners).mock.calls[0][3]!;
+      listeners.onPricesToggled!();
+      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(duelShowPrice()).toEqual([true, true]);
+    });
+
+    // The tool adds no ConfigController 'market' subscription of its own: a
+    // toggle reaches it as the MarketBoard's bubbling showPricesChanged relay,
+    // heard on the market content. In v4 the left and right panels are one
+    // element, so renderRightPanel detaches that content — the listener must
+    // still hear the relay there. Runs the real setupMarketBoardListeners;
+    // the MarketBoard itself is still the stub, so the relay is dispatched by
+    // hand from inside the board's container.
+    it('hears the relayed toggle on the market content the shared v4 panel detached', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      const { setupMarketBoardListeners } = await import('@services/pricing-mixin');
+      const actual =
+        await vi.importActual<typeof import('@services/pricing-mixin')>('@services/pricing-mixin');
+      vi.mocked(setupMarketBoardListeners).mockImplementationOnce(actual.setupMarketBoardListeners);
+      const boardInit = vi.spyOn(MarketBoard.prototype, 'init');
+
+      const shared = leftPanel;
+      tool = new ComparisonTool(container, { leftPanel: shared, rightPanel: shared });
+      tool.init();
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+      const duelShowPrice = () =>
+        [...shared.querySelectorAll('v4-result-card')]
+          .filter((card) => !card.closest('.comparison-cards-container'))
+          .map((card) => (card as unknown as { showPrice: boolean }).showPrice);
+      expect(duelShowPrice()).toEqual([false, false]);
+
+      // The board the left panel built, and the market content holding it,
+      // are off the page once the right panel has cleared the shared element
+      const marketContent = (boardInit.mock.contexts[0] as unknown as { container: HTMLElement })
+        .container;
+      expect(marketContent.isConnected).toBe(false);
+
+      // The global toggle goes on; the board relays it as a bubbling event
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(true);
+      marketContent
+        .querySelector('.market-board')!
+        .dispatchEvent(
+          new CustomEvent('showPricesChanged', { bubbles: true, detail: { showPrices: true } })
+        );
+      await Promise.resolve();
+      await new Promise((r) => setTimeout(r, 0));
+
+      expect(duelShowPrice()).toEqual([true, true]);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-087 (2026-10-04 deep-dive): Share was enabled for any selection, but
+  // custom colours never enter a share link — an all-custom selection built
+  // dyes: [] and the button failed validation with an error on click.
+  // ==========================================================================
+
+  describe('Share with custom colours', () => {
+    beforeEach(resetStorageReads);
+
+    const shareButton = () =>
+      rightPanel.querySelector('v4-share-button') as unknown as {
+        disabled: boolean;
+        shareParams: Record<string, unknown>;
+      };
+
+    it('is disabled when every colour is custom', () => {
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      tool.selectCustomColor('#123456');
+      tool.selectCustomColor('#654321');
+
+      expect(shareButton().disabled).toBe(true);
+      expect(shareButton().shareParams).not.toHaveProperty('dyes');
+    });
+
+    it('shares only the dyes of a mixed selection', () => {
+      tool = new ComparisonTool(container, { leftPanel, rightPanel });
+      tool.init();
+
+      tool.selectCustomColor('#123456');
+      tool.selectDye(mockDyes[0]);
+
+      expect(shareButton().disabled).toBe(false);
+      expect(shareButton().shareParams.dyes).toEqual([mockDyes[0].stainID]);
+    });
+  });
 });

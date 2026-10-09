@@ -314,10 +314,12 @@ export class MarketBoardService extends EventTarget {
    *   Board toggle; the result is returned to the caller only. BUG-079
    *   (2026-10-04 deep-dive): Budget, whose ledger IS prices, used to switch
    *   the toggle on (and persist it) for every tool to get past the gate. The
-   *   shared cache and the 'prices-updated' event stay out of it because
-   *   Mixer and Comparison render cached prices gated only on their own
-   *   showPrice display flag. Request versioning and `lastFetchOutcome` stay
-   *   shared, so a server change still supersedes the call.
+   *   shared cache and the 'prices-updated' event stay out of it: they are
+   *   the toggle's opted-in path — tools read the cache at render time and
+   *   listeners copy the event's prices into their own maps — so a fetch made
+   *   with the toggle off must not land there. Request versioning and
+   *   `lastFetchOutcome` stay shared, so a server change still supersedes the
+   *   call.
    * @returns Map of itemID to PriceData
    */
   async fetchPricesForDyes(

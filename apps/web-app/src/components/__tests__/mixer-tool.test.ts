@@ -10,6 +10,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MixerTool } from '../mixer-tool';
 import { ConfigController } from '@services/config-controller';
+import { ThemeService } from '@services/theme-service';
 import type { ResultCardData } from '@components/v4/result-card';
 import {
   DEFAULT_DISPLAY_OPTIONS,
@@ -915,10 +916,19 @@ describe('MixerTool', () => {
       expect(mockGetAllDyes).not.toHaveBeenCalled();
     });
 
-    it('accepts a maxResults change', () => {
+    // BUG-077 (2026-10-04 deep-dive): this asserted only `not.toThrow()`, so
+    // deleting the maxResults branch of setConfig kept it green. With a pair
+    // mixed, a new count re-matches and the grid shows that many cards.
+    it('re-matches to the new count when maxResults changes', () => {
       tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      const cardCount = () => container.querySelectorAll('v4-result-card').length;
+      expect(cardCount()).not.toBe(7);
 
-      expect(() => tool!.setConfig({ maxResults: 7 } as never)).not.toThrow();
+      tool.setConfig({ maxResults: 7 } as never);
+
+      expect(cardCount()).toBe(7);
     });
 
     // webapp-tools-a-13: `not.toThrow()` only, on a test whose name promises a
@@ -936,13 +946,26 @@ describe('MixerTool', () => {
       expect(mockGetAllDyes).toHaveBeenCalled();
     });
 
-    it('accepts a displayOptions change and an identical repeat', () => {
+    // BUG-077: both calls asserted only `not.toThrow()`, so the equality guard
+    // could go and nothing failed. A display change rebuilds the cards (new
+    // nodes); an identical repeat must leave the same nodes in place. No
+    // re-match happens either way, so getAllDyes cannot tell the two apart.
+    it('re-renders the cards on a displayOptions change, and not on an identical repeat', () => {
       tool = mount();
-      const opts = { showHex: true, showRgb: false } as never;
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      const opts = { ...DEFAULT_DISPLAY_OPTIONS, showCmyk: true } as never;
+      const firstCard = () => container.querySelector('v4-result-card');
+      const before = firstCard();
+      expect(before).not.toBeNull();
 
-      expect(() => tool!.setConfig({ displayOptions: opts })).not.toThrow();
+      tool.setConfig({ displayOptions: opts });
+      const changed = firstCard();
+      expect(changed).not.toBe(before);
+
       // Second identical call hits the field-by-field equality guard
-      expect(() => tool!.setConfig({ displayOptions: opts })).not.toThrow();
+      tool.setConfig({ displayOptions: opts });
+      expect(firstCard()).toBe(changed);
     });
 
     it('re-renders result cards when only the CMYK toggle changes', async () => {
@@ -971,39 +994,210 @@ describe('MixerTool', () => {
     });
   });
 
+  // OPT-007 follow-up (2026-10-04 deep-dive): a sidebar mode change ran
+  // updateCraftingUI() -- which redraws the field -- and then the re-match
+  // block redrew it again. A count change redrew it too, although every field
+  // cell matches with maxResults 1 and the spread chip ignores the count.
+  describe('setConfig redraws the mixing field at most once', () => {
+    beforeEach(() => {
+      localStorage.clear();
+      ConfigController.resetInstance();
+    });
+
+    afterEach(() => {
+      tool?.destroy();
+      tool = null;
+      ConfigController.resetInstance();
+      localStorage.clear();
+    });
+
+    const mountWithPairAndSpies = () => {
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      const internals = tool as unknown as {
+        renderMixingField(): void;
+        renderCraftingUI(): void;
+      };
+      return {
+        field: vi.spyOn(internals, 'renderMixingField'),
+        crafting: vi.spyOn(internals, 'renderCraftingUI'),
+      };
+    };
+
+    it('redraws the field and the crafting slots once on a mode change', () => {
+      const { field, crafting } = mountWithPairAndSpies();
+
+      tool!.setConfig({ mixingMode: 'lab' } as never);
+
+      expect(field).toHaveBeenCalledTimes(1);
+      // The result slot shows the new blend, so the crafting row still repaints.
+      expect(crafting).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not redraw the field for a maxResults-only change', () => {
+      const { field, crafting } = mountWithPairAndSpies();
+
+      tool!.setConfig({ maxResults: 7 } as never);
+
+      expect(container.querySelectorAll('v4-result-card')).toHaveLength(7);
+      expect(field).not.toHaveBeenCalled();
+      expect(crafting).not.toHaveBeenCalled();
+    });
+
+    it('redraws the field once on a matching-method change (control)', () => {
+      const { field } = mountWithPairAndSpies();
+
+      tool!.setConfig({ matchingMethod: 'oklab' } as never);
+
+      expect(field).toHaveBeenCalledTimes(1);
+    });
+
+    it('redraws the field once on a filter change (control)', () => {
+      const { field } = mountWithPairAndSpies();
+
+      tool!.setConfig({ dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true } } as never);
+
+      expect(field).toHaveBeenCalledTimes(1);
+    });
+
+    it('redraws the field once when the mode and the count change together', () => {
+      const { field } = mountWithPairAndSpies();
+
+      tool!.setConfig({ mixingMode: 'hsl', maxResults: 6 } as never);
+
+      expect(field).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('setConfig — the market channel', () => {
-    it('routes a showPrices change through the _tool marker', () => {
-      tool = mount();
-
-      // Market config arrives on the same method, discriminated by _tool
-      expect(() => tool!.setConfig({ _tool: 'market', showPrices: true } as never)).not.toThrow();
-      expect(() => tool!.setConfig({ _tool: 'market', showPrices: false } as never)).not.toThrow();
+    // vi.restoreAllMocks() leaves a vi.fn's return value alone, and a stale
+    // `true` here would start price fetches in every later test.
+    afterEach(async () => {
+      const { MarketBoardService } = await import('@services/index');
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(false);
     });
 
-    it('routes a server change', () => {
-      tool = mount();
+    const firstCard = () => container.querySelector('v4-result-card');
 
-      expect(() =>
-        tool!.setConfig({ _tool: 'market', selectedServer: 'Gilgamesh' } as never)
-      ).not.toThrow();
-    });
-
-    it('ignores market fields when the _tool marker is absent', () => {
-      tool = mount();
-
-      // Without the discriminator these are not market config at all
-      expect(() => tool!.setConfig({ showPrices: true } as never)).not.toThrow();
-    });
-
-    it('handles a server change while results are on screen', async () => {
+    /** Mount with a pair mixed and its cards on screen; returns the service mock. */
+    const mountMixed = async () => {
+      const { MarketBoardService } = await import('@services/index');
       tool = mount();
       tool.selectDye(dye(1));
       tool.selectDye(dye(2));
       await flush();
+      expect(firstCard()).not.toBeNull();
+      return MarketBoardService.getInstance();
+    };
 
-      expect(() =>
-        tool!.setConfig({ _tool: 'market', selectedServer: 'Balmung' } as never)
-      ).not.toThrow();
+    // BUG-077 follow-up: this and the two server tests asserted only
+    // `not.toThrow()`, so deleting the showPrices:false re-render or the
+    // whole selectedServer branch of setConfig kept the suite green.
+    it('routes a showPrices change through the _tool marker', async () => {
+      const service = await mountMixed();
+
+      // On: the cards need prices, so the change fetches them
+      vi.mocked(service.getShowPrices).mockReturnValue(true);
+      vi.mocked(service.fetchPricesForDyes).mockClear();
+      tool!.setConfig({ _tool: 'market', showPrices: true } as never);
+      expect(service.fetchPricesForDyes).toHaveBeenCalledTimes(1);
+      await flush();
+
+      // Off: the cards are rebuilt without the market row, and nothing is fetched
+      vi.mocked(service.getShowPrices).mockReturnValue(false);
+      vi.mocked(service.fetchPricesForDyes).mockClear();
+      const before = firstCard();
+      tool!.setConfig({ _tool: 'market', showPrices: false } as never);
+
+      expect(firstCard()).not.toBe(before);
+      expect((firstCard() as unknown as { showPrice: boolean }).showPrice).toBe(false);
+      expect(service.fetchPricesForDyes).not.toHaveBeenCalled();
+    });
+
+    it('routes a server change', async () => {
+      const service = await mountMixed();
+      vi.mocked(service.fetchPricesForDyes).mockClear();
+      const before = firstCard();
+
+      // Prices off: the service dropped its cache, so the cards are rebuilt,
+      // but there is nothing to fetch
+      tool!.setConfig({ _tool: 'market', selectedServer: 'Gilgamesh' } as never);
+
+      expect(firstCard()).not.toBe(before);
+      expect(service.fetchPricesForDyes).not.toHaveBeenCalled();
+    });
+
+    // BUG-077: this asserted only `not.toThrow()`. Prices are on, so the one
+    // thing between the field and a fetch is the `_tool: 'market'` marker.
+    it('ignores market fields when the _tool marker is absent', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      const service = MarketBoardService.getInstance();
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+      vi.mocked(service.getShowPrices).mockReturnValue(true);
+      vi.mocked(service.fetchPricesForDyes).mockClear();
+
+      // Without the discriminator these are not market config at all
+      tool.setConfig({ showPrices: true } as never);
+      expect(service.fetchPricesForDyes).not.toHaveBeenCalled();
+
+      // Control: the same field WITH the marker does fetch
+      tool.setConfig({ _tool: 'market', showPrices: true } as never);
+      expect(service.fetchPricesForDyes).toHaveBeenCalled();
+      await flush();
+    });
+
+    it('handles a server change while results are on screen', async () => {
+      const service = await mountMixed();
+      vi.mocked(service.getShowPrices).mockReturnValue(true);
+      vi.mocked(service.fetchPricesForDyes).mockClear();
+      const before = firstCard();
+
+      tool!.setConfig({ _tool: 'market', selectedServer: 'Balmung' } as never);
+
+      // Rebuilt at once, before the new server's prices arrive...
+      expect(firstCard()).not.toBe(before);
+      // ...and those prices are fetched
+      expect(service.fetchPricesForDyes).toHaveBeenCalledTimes(1);
+      await flush();
+    });
+  });
+
+  // BUG-086 sibling (2026-10-04 deep-dive): the cards drew the market row
+  // from the tool's own Price option alone, but the service fetches nothing
+  // while the global Market Board toggle is off (its default) -- so the row
+  // read "—" forever on a fresh profile.
+  describe('the market row follows the Market Board toggle', () => {
+    afterEach(async () => {
+      const { MarketBoardService } = await import('@services/index');
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(false);
+    });
+
+    const cardsShowPrice = (): boolean[] =>
+      [...container.querySelectorAll('v4-result-card')].map(
+        (card) => (card as unknown as { showPrice: boolean }).showPrice
+      );
+
+    it('hides the row while the toggle is off, then shows it once it is on', async () => {
+      const { MarketBoardService } = await import('@services/index');
+      tool = mount();
+      tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true } } as never);
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(cardsShowPrice().length).toBeGreaterThan(0);
+      expect(new Set(cardsShowPrice())).toEqual(new Set([false]));
+
+      // Control: the same display flag with the toggle on draws the row
+      vi.mocked(MarketBoardService.getInstance().getShowPrices).mockReturnValue(true);
+      tool.setConfig({ _tool: 'market', showPrices: true } as never);
+      await flush();
+
+      expect(new Set(cardsShowPrice())).toEqual(new Set([true]));
     });
   });
 
@@ -1305,6 +1499,228 @@ describe('MixerTool', () => {
       expect(panel.querySelectorAll('v4-result-card')).toHaveLength(0);
       expect(isHidden(panel.querySelector('[data-testid="mixer-export"]')!)).toBe(true);
       expect(shareButton().disabled).toBe(true);
+    });
+  });
+
+  // ==========================================================================
+  // The 5C mixing field: six models x five ratios, each cell a real blend
+  // with its nearest dye's ΔE. A cell click writes the mode to the REAL
+  // ConfigController, so the singleton and jsdom localStorage are reset on
+  // the way in and out.
+  // ==========================================================================
+
+  describe('the mixing field', () => {
+    /** Every field cell: its title is `MODEL · A/B · #HEX`. */
+    const fieldCells = () =>
+      [...container.querySelectorAll<HTMLButtonElement>('button[title]')].filter((b) =>
+        / · \d+\/\d+ · #/.test(b.title)
+      );
+
+    /** A cell's ΔE badge text. */
+    const badges = () => fieldCells().map((c) => c.textContent);
+
+    const isPicked = (cell: Element) =>
+      (cell.getAttribute('style') ?? '').includes('var(--theme-primary)');
+
+    const mountWithPair = (): MixerTool => {
+      const t = mount();
+      t.selectDye(dye(1));
+      t.selectDye(dye(2));
+      return t;
+    };
+
+    // setup.ts starts the file on standard-light; resetToDefault() would leave
+    // every later test on standard-dark, so put back whatever was there.
+    let startTheme: ReturnType<typeof ThemeService.getCurrentTheme>;
+
+    beforeEach(() => {
+      startTheme = ThemeService.getCurrentTheme();
+      localStorage.clear();
+      ConfigController.resetInstance();
+    });
+
+    afterEach(() => {
+      tool?.destroy();
+      tool = null;
+      ThemeService.setTheme(startTheme);
+      ConfigController.resetInstance();
+      localStorage.clear();
+    });
+
+    // OPT-007 (2026-10-04 deep-dive): the click handler ran updateCraftingUI(),
+    // which already redraws the field, then redrew it again -- thirty blends
+    // and thirty full-pool scans, twice per click. One scan re-matches the
+    // results grid; the rest is one per field cell, once.
+    it('redraws the field once per cell click', () => {
+      tool = mountWithPair();
+      const cellCount = fieldCells().length;
+      expect(cellCount).toBe(30);
+      mockGetAllDyes.mockClear();
+
+      container.querySelector<HTMLButtonElement>('button[title^="LAB · 70/30"]')!.click();
+
+      expect(mockGetAllDyes).toHaveBeenCalledTimes(1 + cellCount);
+      // ...and that one redraw marks the picked cell
+      expect(isPicked(container.querySelector('button[title^="LAB · 70/30"]')!)).toBe(true);
+    });
+
+    // BUG-099 (2026-10-04 deep-dive): `?.distance ?? 0` turned an empty pool
+    // (the sidebar filters can exclude every dye) into 0.0 in all thirty
+    // cells -- an exact match, by the look of it, beside an empty grid.
+    it('prints a dash, not 0.0, in a cell with no eligible dye', () => {
+      mockGetAllDyes.mockReturnValue([]);
+
+      tool = mountWithPair();
+
+      expect(badges()).toHaveLength(30);
+      expect(new Set(badges())).toEqual(new Set(['—']));
+    });
+
+    it('prints the nearest ΔE when there is an eligible dye (control)', () => {
+      tool = mountWithPair();
+
+      expect(badges()).toHaveLength(30);
+      for (const badge of badges()) expect(badge).toMatch(/^\d+\.\d+$/);
+    });
+
+    // BUG-080 (2026-10-04 deep-dive): the spread chip's tone is read from
+    // ThemeService.isDarkMode() at render and nothing re-rendered the field
+    // on a switch, so a dark-ramp colour sat on the light theme's cards.
+    it('re-tones the spread chip when the theme switches', () => {
+      const chipColor = () =>
+        (container.querySelector('span[title="mixer.spreadDesc"]') as HTMLElement).style.color;
+
+      // Control: what a fresh render under Light gives this pair
+      ThemeService.setTheme('standard-light');
+      tool = mountWithPair();
+      const light = chipColor();
+      tool.destroy();
+      tool = null;
+
+      ThemeService.setTheme('standard-dark');
+      tool = mountWithPair();
+      expect(chipColor()).not.toBe(light);
+
+      ThemeService.setTheme('standard-light');
+
+      expect(chipColor()).toBe(light);
+    });
+
+    // BUG-080 follow-up: the listener redrew the whole field to recolour one
+    // chip, so a keyboard user on a cell who pressed Shift+T lost focus to
+    // <body> (and every switch re-ran thirty blends). Only the chip changes.
+    it('re-tones the chip in place, keeping a focused field cell', () => {
+      const chip = () => container.querySelector('span[title="mixer.spreadDesc"]') as HTMLElement;
+      ThemeService.setTheme('standard-light');
+      tool = mountWithPair();
+      const chipBefore = chip();
+      const lightColor = chipBefore.style.color;
+      const cell = container.querySelector<HTMLButtonElement>('button[title^="LAB · 70/30"]')!;
+      cell.focus();
+      expect(document.activeElement).toBe(cell);
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(cell.isConnected).toBe(true);
+      expect(document.activeElement).toBe(cell);
+      expect(chip()).toBe(chipBefore);
+      expect(chipBefore.style.color).not.toBe(lightColor);
+    });
+
+    it('does not run thirty blends on a theme switch', () => {
+      tool = mountWithPair();
+      mockGetAllDyes.mockClear();
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(mockGetAllDyes).not.toHaveBeenCalled();
+    });
+
+    it('stops listening to the theme once destroyed', () => {
+      tool = mountWithPair();
+      const mounted = tool;
+      mounted.destroy();
+      tool = null;
+      const internals = mounted as unknown as {
+        retoneSpreadChip(): void;
+        renderMixingField(): void;
+      };
+      const retone = vi.spyOn(internals, 'retoneSpreadChip');
+      const redraw = vi.spyOn(internals, 'renderMixingField');
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(retone).not.toHaveBeenCalled();
+      expect(redraw).not.toHaveBeenCalled();
+    });
+  });
+
+  // ==========================================================================
+  // BUG-098 (2026-10-04 deep-dive): the third input slot was cut on
+  // 2026-08-08, but a build from before then stored three ids under the same
+  // key. Restoring the third turned the pair into an equal-weight three-way
+  // blend that ignored the ratio and hid the field -- and a share link, which
+  // sets only A and B, kept the recipient's stale third dye under it.
+  // ==========================================================================
+
+  describe('a legacy third slot in storage', () => {
+    const stored = async (value: unknown) => {
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockImplementation(((key: string) =>
+        key === DYES_KEY ? value : null) as never);
+    };
+
+    const fieldCells = () =>
+      [...container.querySelectorAll<HTMLButtonElement>('button[title]')].filter((b) =>
+        / · \d+\/\d+ · #/.test(b.title)
+      );
+
+    beforeEach(() => {
+      localStorage.clear();
+      ConfigController.resetInstance();
+    });
+
+    // vi.restoreAllMocks() leaves a vi.fn's implementation in place.
+    afterEach(async () => {
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockReturnValue(null);
+      tool?.destroy();
+      tool = null;
+      window.history.replaceState({}, '', '/');
+      ConfigController.resetInstance();
+      localStorage.clear();
+    });
+
+    it('restores the pair only, shows the field, and saves the pair back', async () => {
+      await stored([mockDyes[0].id, mockDyes[1].id, mockDyes[2].id]);
+
+      tool = mount();
+
+      expect(fieldCells()).toHaveLength(30);
+      expect(await slots()).toEqual([mockDyes[0].id, mockDyes[1].id, null]);
+    });
+
+    it('does not rewrite a stored pair that has no third slot (control)', async () => {
+      await stored([mockDyes[0].id, mockDyes[1].id, null]);
+
+      tool = mount();
+
+      expect(fieldCells()).toHaveLength(30);
+      expect(await slots()).toBeUndefined();
+    });
+
+    it("blends a shared pair at the link's ratio over a stale third slot", async () => {
+      await stored([mockDyes[0].id, mockDyes[1].id, mockDyes[2].id]);
+      window.history.replaceState({}, '', '/mixer/?dyeA=1&dyeB=2&ratio=70&v=1');
+
+      tool = mount();
+
+      const picked = fieldCells().filter((c) =>
+        (c.getAttribute('style') ?? '').includes('var(--theme-primary)')
+      );
+      expect(picked).toHaveLength(1);
+      expect(picked[0].title).toContain(' · 70/30 · ');
+      expect(await slots()).toEqual([mockDyes[0].id, mockDyes[1].id, null]);
     });
   });
 });

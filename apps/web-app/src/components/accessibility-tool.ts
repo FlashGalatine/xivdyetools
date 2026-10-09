@@ -852,9 +852,8 @@ export class AccessibilityTool extends BaseComponent {
     // Share Button - v4-share-button custom element
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'accessibility';
-    this.shareButton.shareParams = this.getShareParams();
-    this.shareButton.disabled = this.selectedDyes.length === 0;
     shareControls.appendChild(this.shareButton);
+    this.updateShareButton();
 
     selectedDyesHeader.appendChild(shareControls);
 
@@ -1958,16 +1957,13 @@ export class AccessibilityTool extends BaseComponent {
    * Get parameters for generating a share URL
    */
   private getShareParams(): Record<string, unknown> {
-    if (this.selectedDyes.length === 0) {
-      return {};
-    }
-
     // Use the vision type selected in the share dropdown. Virtual custom
-    // colours carry no stainID and are excluded from the share URL.
-    return {
-      dyes: this.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null),
-      vision: this.shareVisionType,
-    };
+    // colours carry no stainID and are excluded from the share URL. BUG-087
+    // (2026-10-04 deep-dive): an all-custom selection has nothing to share,
+    // so it builds no params rather than a link carrying dyes: [] that
+    // restores nothing (the button then stays disabled).
+    const dyes = this.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null);
+    return dyes.length > 0 ? { dyes, vision: this.shareVisionType } : {};
   }
 
   /**
@@ -1975,8 +1971,9 @@ export class AccessibilityTool extends BaseComponent {
    */
   private updateShareButton(): void {
     if (this.shareButton) {
-      this.shareButton.shareParams = this.getShareParams();
-      this.shareButton.disabled = this.selectedDyes.length === 0;
+      const params = this.getShareParams();
+      this.shareButton.shareParams = params;
+      this.shareButton.disabled = !('dyes' in params);
     }
 
     // Sync dropdown value with state

@@ -2,6 +2,16 @@
 
 ---
 
+## Web-App Version 5.14.6 — October 5, 2026
+
+### Polish everywhere
+- **Switching themes keeps your place**: Budget, Dye Mixer and your character sheet repaint in the new colors without losing what you had selected.
+- **Prices show only when the Market Board is on**, in every tool.
+- **The keyboard behaves**: shortcuts pause while a menu or picker is open, Escape closes just the top thing, and tool shortcuts work on French (AZERTY) keyboards.
+- **Sending colors from the Swatch Matcher to another tool keeps your loaded character file.**
+- **Printing a tool prints the results**, without the app around them.
+- **Signing out is instant**, and exported files carry your local date.
+
 ## Web-App Version 5.14.4 — October 5, 2026
 
 ### Words that match the game

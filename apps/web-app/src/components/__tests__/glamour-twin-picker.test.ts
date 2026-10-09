@@ -7,6 +7,9 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { charaTwinsOf, defaultCharaTwin, type CharaTwinRules } from '@xivdyetools/core';
 import { closeTwinPicker, showTwinPicker } from '../glamour-twin-picker';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
+import { ModalService } from '@services/modal-service';
+import { KeyboardService } from '@services/keyboard-service';
+import { RouterService } from '@services/router-service';
 
 const names = (en: string) => ({ en, ja: en, de: en, fr: en });
 const group = (itemIds: number[], dyeCount: number): CharaTwinRules => ({
@@ -50,9 +53,20 @@ const picker = () => document.querySelector<HTMLElement>('[data-role="twin-picke
 const options = () =>
   Array.from(document.querySelectorAll<HTMLElement>('[data-role="twin-option"]'));
 
+let outside: HTMLButtonElement | null = null;
+/** Tab out of the picker: focus lands on a control in the page. */
+function focusOutside(): HTMLButtonElement {
+  outside = document.createElement('button');
+  document.body.appendChild(outside);
+  outside.focus();
+  return outside;
+}
+
 afterEach(() => {
   closeTwinPicker();
   cleanupTestContainer(anchor);
+  outside?.remove();
+  outside = null;
   vi.unstubAllGlobals();
 });
 
@@ -149,5 +163,151 @@ describe('twin picker', () => {
     open();
     expect(picker()!.dataset.variant).toBe('sheet');
     expect(picker()!.textContent).toContain('HEAD · SAME LOOK · 3 ITEMS');
+  });
+});
+
+/**
+ * BUG-091: the picker is a role=dialog over the reader, but it never told the
+ * page so. KeyboardService stands down only while `hasOpenModals()` is true,
+ * so with a radio focused, "2" navigated away (tearing the picker's block
+ * down) and Shift+T flipped the theme underneath it. A radio is not a text
+ * field, so the typing guard did not help.
+ */
+describe('twin picker and the page-wide shortcuts (BUG-091)', () => {
+  it('holds the global shortcuts off while open, a digit included', () => {
+    const navigate = vi.spyOn(RouterService, 'navigateTo').mockImplementation(() => {});
+    KeyboardService.initialize();
+    try {
+      open();
+      const radio = document.activeElement as HTMLElement;
+      expect(radio.dataset.role).toBe('twin-option');
+
+      radio.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true }));
+
+      expect(navigate).not.toHaveBeenCalled();
+      expect(picker()).not.toBeNull();
+      expect(ModalService.hasOpenModals()).toBe(true);
+    } finally {
+      KeyboardService.destroy();
+      navigate.mockRestore();
+    }
+  });
+
+  // A leaked registration would switch every shortcut off until a reload, so
+  // each way the picker closes must hand it back.
+  it.each([
+    ['Escape', () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))],
+    ['a pick', () => options()[2]!.click()],
+    ['closeTwinPicker (its block re-rendering or going away)', () => closeTwinPicker()],
+    [
+      'a click outside',
+      async () => {
+        // The outside-click listener is installed a tick after opening
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        document.body.click();
+      },
+    ],
+    ['focus leaving it (Tab out)', () => focusOutside()],
+  ])('lets the shortcuts back on when closed by %s', async (_how, close) => {
+    open();
+    expect(ModalService.hasOpenModals()).toBe(true);
+
+    await close();
+
+    expect(picker()).toBeNull();
+    expect(ModalService.hasOpenModals()).toBe(false);
+  });
+
+  it('does not keep the first registration when another piece opens it again', () => {
+    open();
+    cleanupTestContainer(anchor);
+    open();
+    expect(document.querySelectorAll('[data-role="twin-picker"]')).toHaveLength(1);
+
+    closeTwinPicker();
+
+    expect(ModalService.hasOpenModals()).toBe(false);
+  });
+
+  /*
+   * The picker has no focus trap, so Tab walks out of it into the page. Its
+   * registration must not outlive that: the shortcuts and the DyeSelector "/"
+   * would stay dead with the user's focus back on the page, until an Escape
+   * or a click. Focus leaving closes it, as it does the item-links menu.
+   */
+  it('closes when focus moves out of it, and lets a digit navigate again', () => {
+    const navigate = vi.spyOn(RouterService, 'navigateTo').mockImplementation(() => {});
+    KeyboardService.initialize();
+    try {
+      open();
+      const outside = focusOutside();
+
+      expect(picker()).toBeNull();
+      expect(ModalService.hasOpenModals()).toBe(false);
+      outside.dispatchEvent(new KeyboardEvent('keydown', { key: '2', bubbles: true }));
+      expect(navigate).toHaveBeenCalledWith('extractor');
+    } finally {
+      KeyboardService.destroy();
+      navigate.mockRestore();
+    }
+  });
+
+  it('stays open while focus moves between its own twins', () => {
+    open();
+    const [, , coif2] = options();
+
+    coif2!.focus();
+
+    expect(picker()).not.toBeNull();
+    expect(document.activeElement).toBe(coif2);
+  });
+
+  it('stays open when focus goes back to the chip that opened it', () => {
+    open();
+    anchor.tabIndex = 0;
+
+    anchor.focus();
+
+    expect(picker()).not.toBeNull();
+    expect(ModalService.hasOpenModals()).toBe(true);
+  });
+
+  // The real chip lives inside the layout shell's shadow root, where a
+  // document listener's `event.target` is the shell host, not the chip
+  it('stays open when focus goes back to a chip inside a shadow root', () => {
+    const host = createTestContainer('picker-shadow-host');
+    const shadowRoot = host.attachShadow({ mode: 'open' });
+    const chip = document.createElement('button');
+    shadowRoot.appendChild(chip);
+    try {
+      showTwinPicker({
+        anchor: chip,
+        slotLabel: 'Head',
+        twins: TWINS,
+        pickedId: BEST.itemId,
+        best: BEST,
+        lang: 'en',
+        onPick: vi.fn(),
+      });
+
+      chip.focus();
+
+      expect(picker()).not.toBeNull();
+    } finally {
+      closeTwinPicker();
+      cleanupTestContainer(host);
+    }
+  });
+
+  // One Escape closes one layer: the picker marks the key handled, so a
+  // listener that runs after it (the toast container) leaves its toast alone.
+  it('marks the Escape that closed it as handled', () => {
+    open();
+    const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+
+    document.dispatchEvent(event);
+
+    expect(picker()).toBeNull();
+    expect(event.defaultPrevented).toBe(true);
   });
 });

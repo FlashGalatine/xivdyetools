@@ -2,9 +2,30 @@
 /**
  * XIV Dye Tools - i18n Translation Key Validator
  *
- * Validates that all LanguageService.t() and LanguageService.tInterpolate() calls,
- * and every '…_one', '…_other' plural pair (tCount), reference keys that exist in
- * the locale files.
+ * Validates that every key literal the source names in these shapes exists in
+ * en.json (scripts/i18n-key-patterns.mjs holds the patterns and their tests):
+ *
+ *   - the first argument of LanguageService.t() / tInterpolate(), on the call's
+ *     line or wrapped onto the next, when it is a literal ('a.b'), a ternary of
+ *     two literals (n === 1 ? 'a.one' : 'a.many'), a `??` fallback
+ *     (key ?? 'a.fallback') or an object map of literals indexed in place
+ *     ({ x: 'a.x', y: flag ? 'a.y' : 'a.z' }[k]);
+ *   - the same through an alias of LanguageService.t, with the alias's prefix —
+ *     a local one (`const t = (key: string) => LanguageService.t(\`comparison.${key}\`)`
+ *     or the function-declaration form) or an exported one another file imports
+ *     by name (`tSwatch`);
+ *   - every '…_one', '…_other' plural pair (tCount and the helpers forwarding it).
+ *
+ * NOT checked, so a typo there ships as a raw key in the UI:
+ *
+ *   - a literal reached only through a helper's argument — a key passed to
+ *     docLink(), a chip or action builder, or an error-message helper's fallback
+ *     — or through a map assigned to a variable before the call;
+ *   - a key built at run time (a template literal, concatenation, a variable);
+ *   - a call through an alias the patterns do not recognise (a block body, a
+ *     parameter typed other than `string`, a second parameter). An alias also
+ *     stops at the next binding of its name, recognised or not, so a call after a
+ *     shadowing parameter or declaration is skipped rather than mis-prefixed.
  *
  * Also performs cross-locale structural comparison to detect keys missing in
  * non-English locale files, plus two file-shape gates added by the 2026-08-20
@@ -29,20 +50,23 @@
  *   node scripts/validate-i18n.js
  *   node scripts/validate-i18n.js --fix     # Shows suggested keys for typos
  *   node scripts/validate-i18n.js --strict  # Fail on cross-locale missing keys
+ *   node scripts/validate-i18n.js --src <dir>  # Scan <dir> and <dir>/locales instead of
+ *                                              # src/ (the parity gate's fixture tree)
  *
  * Exit codes:
  *   0 - All translation keys are valid
- *   1 - One or more missing keys found
+ *   1 - One or more missing keys found (also: en.json unreadable, or --src
+ *       given without a directory)
  *   2 - Cross-locale keys missing (only with --strict)
  *   3 - A locale file's key order or value whitespace is wrong
  */
 
 import { readFileSync, readdirSync, statSync } from 'fs';
-import { join, relative, extname } from 'path';
+import { join, relative, extname, basename, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
-import { extractKeysFromSource } from './i18n-key-patterns.mjs';
+import { extractKeysFromSource, findExportedAliases } from './i18n-key-patterns.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -51,7 +75,25 @@ const __dirname = dirname(__filename);
 // Configuration
 // ============================================================================
 
-const SRC_DIR = join(__dirname, '..', 'src');
+/**
+ * The source tree to scan: `--src <dir>` when given (the parity gate points it
+ * at a fixture tree), the app's own `src/` otherwise. A `--src` with no
+ * directory after it stops the run — falling back to `src/` would report a
+ * clean fixture that was never read.
+ * @returns {string}
+ */
+function sourceDir() {
+  const flag = process.argv.indexOf('--src');
+  if (flag === -1) return join(__dirname, '..', 'src');
+  const dir = process.argv[flag + 1];
+  if (!dir || dir.startsWith('--')) {
+    console.error('❌ --src needs a directory: node scripts/validate-i18n.js --src <dir>');
+    process.exit(1);
+  }
+  return resolve(dir);
+}
+
+const SRC_DIR = sourceDir();
 const LOCALES_DIR = join(SRC_DIR, 'locales');
 const PRIMARY_LOCALE = 'en.json';
 const ALL_LOCALES = ['en.json', 'ja.json', 'de.json', 'fr.json', 'ko.json', 'zh.json'];
@@ -128,12 +170,29 @@ function getFiles(dir, extensions) {
 }
 
 /**
+ * The aliases of LanguageService.t that source files export (`tSwatch` in
+ * chara-ui.ts), each tagged with its module name so an importer can be matched
+ * to it.
+ * @param {string[]} files - Paths to the source files
+ * @returns {Array<{module: string, name: string, prefix: string}>}
+ */
+function collectExportedAliases(files) {
+  return files.flatMap((filePath) =>
+    findExportedAliases(readFileSync(filePath, 'utf-8')).map((alias) => ({
+      module: basename(filePath, extname(filePath)),
+      ...alias,
+    }))
+  );
+}
+
+/**
  * Extract translation keys from a file
  * @param {string} filePath - Path to the file
+ * @param {Array<{module: string, name: string, prefix: string}>} exportedAliases
  * @returns {Array<{key: string, line: number}>} Array of keys with line numbers
  */
-function extractKeysFromFile(filePath) {
-  return extractKeysFromSource(readFileSync(filePath, 'utf-8'));
+function extractKeysFromFile(filePath, exportedAliases) {
+  return extractKeysFromSource(readFileSync(filePath, 'utf-8'), exportedAliases);
 }
 
 /**
@@ -391,9 +450,12 @@ function validateI18n() {
   let totalKeysChecked = 0;
   const keyUsage = new Map(); // Track which keys are used
 
+  // An exported alias is called from other files, so find them all first.
+  const exportedAliases = collectExportedAliases(files);
+
   // Process each file
   for (const file of files) {
-    const keys = extractKeysFromFile(file);
+    const keys = extractKeysFromFile(file, exportedAliases);
     const relativePath = relative(SRC_DIR, file);
 
     for (const { key, line } of keys) {

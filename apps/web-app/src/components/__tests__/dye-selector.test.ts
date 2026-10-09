@@ -17,6 +17,7 @@ import {
 } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 import { CollectionService } from '@services/index';
+import { ModalService } from '@services/modal-service';
 
 const { mockTrackDyePick } = vi.hoisted(() => ({ mockTrackDyePick: vi.fn() }));
 vi.mock('@services/telemetry-service', () => ({
@@ -534,6 +535,115 @@ describe('DyeSelector', () => {
 
       const emptyHint = query(container, '#favorites-content .text-center');
       expect(emptyHint).not.toBeNull();
+    });
+
+    // BUG-089: the in-place refresh hardcoded the full-width 8-column grid. It
+    // runs at mount (onMount loads the favourites after the first render), so
+    // the narrow panels' 3-column strip was never seen once a favourite existed.
+    it('keeps the compact 3-column favourites grid at mount', () => {
+      vi.mocked(CollectionService.getFavorites).mockReturnValueOnce([
+        mockDyes[0].stainID!,
+        mockDyes[1].stainID!,
+      ]);
+      selector = new DyeSelector(container, { showFavorites: true, compactMode: true });
+      selector.init();
+
+      const grid = query(container, '#favorites-grid');
+      expect(grid?.className).toContain('grid-cols-3');
+      expect(grid?.className).not.toContain('lg:grid-cols-8');
+    });
+
+    /** Notify every favourites subscriber, as CollectionService does (the grid subscribes too). */
+    const notifyFavorites = (ids: number[]): void => {
+      for (const [listener] of vi.mocked(CollectionService.subscribeFavorites).mock.calls) {
+        listener(ids);
+      }
+    };
+
+    it('keeps the compact grid when the favourites change later', () => {
+      selector = new DyeSelector(container, { showFavorites: true, compactMode: true });
+      selector.init();
+
+      notifyFavorites([mockDyes[0].stainID!]);
+
+      const grid = query(container, '#favorites-grid');
+      expect(grid?.className).toContain('grid-cols-3');
+      expect(grid?.className).not.toContain('lg:grid-cols-8');
+    });
+
+    it('still uses the responsive grid outside compact mode', () => {
+      selector = new DyeSelector(container, { showFavorites: true });
+      selector.init();
+
+      notifyFavorites([mockDyes[0].stainID!]);
+
+      expect(query(container, '#favorites-grid')?.className).toContain('lg:grid-cols-8');
+    });
+  });
+
+  // ============================================================================
+  // "/" Search Shortcut Tests
+  // ============================================================================
+
+  describe('"/" search shortcut', () => {
+    const slash = (): KeyboardEvent =>
+      new KeyboardEvent('keydown', { key: '/', bubbles: true, composed: true, cancelable: true });
+
+    it('focuses the search box from outside any field', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+
+      const event = slash();
+      document.body.dispatchEvent(event);
+
+      expect(event.defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(query(container, 'input'));
+    });
+
+    // BUG-088: every tool mounts inside the layout shell's shadow root, where
+    // `document.activeElement` is the shell host, never the <input>. The guard
+    // therefore never saw a field and swallowed every "/" typed into one —
+    // including the selector's own search box.
+    it('lets "/" be typed into a field inside a shadow root', () => {
+      const host = document.createElement('div');
+      document.body.appendChild(host);
+      const shadow = host.attachShadow({ mode: 'open' });
+      const inner = document.createElement('div');
+      shadow.appendChild(inner);
+      try {
+        selector = new DyeSelector(inner);
+        selector.init();
+        const input = inner.querySelector('input')!;
+        input.focus();
+
+        const event = slash();
+        input.dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(shadow.activeElement).toBe(input);
+      } finally {
+        selector?.destroy();
+        selector = null;
+        host.remove();
+      }
+    });
+
+    // Same rule as the other page-wide shortcuts (KeyboardService): while a
+    // dialog, sheet or popover is open, "/" must not pull focus out from under
+    // it into the search box behind.
+    it('stands down while a modal or popover is open', () => {
+      selector = new DyeSelector(container);
+      selector.init();
+      const release = ModalService.registerExternal();
+      try {
+        const event = slash();
+        document.body.dispatchEvent(event);
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(document.activeElement).not.toBe(query(container, 'input'));
+      } finally {
+        release();
+      }
     });
   });
 

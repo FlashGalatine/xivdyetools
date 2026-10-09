@@ -12,6 +12,7 @@ import {
 import type { Collection, ImportError } from '@services/collection-service';
 import { ICON_STATE_FOLDER as ICON_FOLDER } from '@shared/state-icons';
 import { formatDate } from '@shared/format';
+import { localDateStamp } from '@shared/palette-export';
 import type { Dye } from '@xivdyetools/types';
 
 /**
@@ -519,7 +520,8 @@ function downloadCollectionsExport(): void {
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = `xivdyetools-collections-${new Date().toISOString().split('T')[0]}.json`;
+  // The local date, not toISOString()'s UTC one (BUG-123)
+  a.download = `xivdyetools-collections-${localDateStamp()}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

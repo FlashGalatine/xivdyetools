@@ -261,6 +261,18 @@ describe('EmptyState', () => {
         expect(preset.title).toContain('test query');
       });
 
+      // BUG-122's class: a string replacement expands `$&`, `$'`, `` $` `` and
+      // `$$`, so searching for `$&` showed the literal `{query}`
+      it.each(['$&', "$'", '$`', '$$', 'a$1b'])(
+        'puts the query %s into the title verbatim',
+        (searched) => {
+          const preset = EMPTY_STATE_PRESETS.noSearchResults(searched);
+
+          expect(preset.title).toContain(searched);
+          expect(preset.title).not.toContain('{query}');
+        }
+      );
+
       it('should include clear action callback', () => {
         const onClear = vi.fn();
         const preset = EMPTY_STATE_PRESETS.noSearchResults('query', onClear);

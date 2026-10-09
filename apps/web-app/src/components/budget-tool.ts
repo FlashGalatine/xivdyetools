@@ -323,6 +323,22 @@ export class BudgetTool extends BaseComponent {
       })
     );
 
+    // BUG-080 (2026-10-04 deep-dive): the tier ramp, the verdict tones and the
+    // sort accent are inline hexes read from isDarkMode() at render, so a
+    // theme switch left them in the old palette until something else redrew
+    // them. These two are the theme-reading renders this listener redraws.
+    //
+    // Mid-fetch the verdict is left alone: the target is already the new pick
+    // but the rows are still the last run's (or none), so it would draw the new
+    // name over them. The run redraws it when it lands; the ledger meanwhile
+    // shows its spinner. The ledger redraw keeps a keyboard user's place.
+    this.subs.add(
+      ThemeService.subscribe(() => {
+        if (!this.isLoading) this.renderVerdict();
+        this.renderLedgerKeepingFocus();
+      })
+    );
+
     // Server changes come from the sidebar's Market Board section. The
     // showPrices toggle is not Budget's: fetchPrices ignores it (BUG-079).
     // Defer the refetch a tick so MarketBoardService applies the change first.
@@ -1348,6 +1364,10 @@ export class BudgetTool extends BaseComponent {
   /**
    * Save the target and its best-priced substitute as a device-local
    * `kind: 'swap'` record (the store's third collection kind).
+   *
+   * BUG-081 (2026-10-04 deep-dive): every Standard dye costs the same 216
+   * gil, so a tie on price is the rule, not the exception. It used to keep
+   * the first tied row in database order; the closer one is the better swap.
    */
   private saveSwapRecord(): void {
     const target = this.targetDye;
@@ -1365,7 +1385,9 @@ export class BudgetTool extends BaseComponent {
       (best, r) =>
         r.price.gil != null &&
         r.dye.stainID !== null &&
-        (best?.price.gil == null || r.price.gil < best.price.gil)
+        (best?.price.gil == null ||
+          r.price.gil < best.price.gil ||
+          (r.price.gil === best.price.gil && r.de < best.de))
           ? r
           : best,
       null
@@ -1522,6 +1544,38 @@ export class BudgetTool extends BaseComponent {
     block.appendChild(rightCol);
 
     this.verdictContainer.appendChild(block);
+  }
+
+  /** The ledger's keyboard stops in document order: sort headers and rows. */
+  private ledgerFocusables(): HTMLElement[] {
+    if (!this.ledgerContainer) return [];
+    return Array.from(
+      this.ledgerContainer.querySelectorAll<HTMLElement>('button, [role="button"][tabindex="0"]')
+    );
+  }
+
+  /**
+   * renderLedger() for a redraw that changes no row or column (a theme
+   * switch): every node is replaced, so a focused row or sort header would
+   * drop focus to <body>. The node at the same position takes it back — same
+   * row of the same group, same column of the same group's headers.
+   *
+   * In the v4 shell the ledger sits in a shadow root, where
+   * document.activeElement is only the host, so the root's own is read.
+   */
+  private renderLedgerKeepingFocus(): void {
+    const root = this.ledgerContainer?.getRootNode();
+    const active =
+      root instanceof Document || root instanceof ShadowRoot ? root.activeElement : null;
+    const index =
+      active instanceof HTMLElement && this.ledgerContainer?.contains(active)
+        ? this.ledgerFocusables().indexOf(active)
+        : -1;
+
+    this.renderLedger();
+
+    if (index < 0) return;
+    this.ledgerFocusables()[index]?.focus({ preventScroll: true });
   }
 
   /** The ledger: tier groups, price printed once per group, one row per candidate. */

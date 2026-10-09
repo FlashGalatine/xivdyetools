@@ -27,7 +27,7 @@ import { logger } from '@shared/logger';
 // Import components
 import { offlineBanner } from '@components/offline-banner';
 
-// Import TutorialService for dev mode console access
+// TutorialService: dev-mode console access, and told when its overlay is missing
 import { TutorialService } from '@services/index';
 
 import { ShareService } from '@services/share-service';
@@ -114,10 +114,22 @@ async function initializeApp(): Promise<void> {
     const { initializeV4Layout } = await import('@components/v4-layout');
     await initializeV4Layout(appContainer);
 
-    // Initialize tutorial spotlight component (listens for tutorial events)
+    // Initialize tutorial spotlight component (listens for tutorial events).
+    // BUG-114: not critical, so not inside the fatal path. It is its own lazy
+    // chunk, and a failed fetch of it (a transient network error, a deploy
+    // flipping mid-load) reached the catch below, whose fatal overlay replaced
+    // the shell that had just mounted with every tool working.
     logger.info('📚 Initializing tutorial spotlight...');
-    const { initializeTutorialSpotlight } = await import('@components/tutorial-spotlight');
-    initializeTutorialSpotlight();
+    try {
+      const { initializeTutorialSpotlight } = await import('@components/tutorial-spotlight');
+      initializeTutorialSpotlight();
+    } catch (error) {
+      logger.warn('⚠️ Tutorial spotlight unavailable, continuing without it:', error);
+      // The spotlight is the whole tour (its steps, buttons and Escape), so
+      // "Take tour" and the first-visit prompt stand down for this session
+      // instead of starting a tour that shows nothing and never ends.
+      TutorialService.markUnavailable();
+    }
 
     logger.info('✅ Application initialized successfully');
 

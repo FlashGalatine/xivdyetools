@@ -8,13 +8,13 @@
  * the session; Copy list and Save .md write it.
  *
  * Mounted on document.body (it must escape the block's overflow), one at a
- * time; Escape, a click outside, or a pick closes it.
+ * time; Escape, a click outside, focus moving out of it, or a pick closes it.
  *
  * @module components/glamour-twin-picker
  */
 
 import { charaTwinFacts, type CharaTwin, type CharaTwinFact } from '@xivdyetools/core';
-import { LanguageService } from '@services/index';
+import { LanguageService, ModalService } from '@services/index';
 import { itemNameFor, type CharaItemNames } from '@services/chara-resolve-service';
 import { MONO, SANS, amber, el, green } from '@components/chara-ui';
 
@@ -222,6 +222,8 @@ export function showTwinPicker(options: TwinPickerOptions): void {
 
   const onKey = (event: KeyboardEvent): void => {
     if (event.key !== 'Escape') return;
+    // Handled: one Escape closes one layer, so a toast under it stays put
+    event.preventDefault();
     closeTwinPicker();
     // Escape hands focus back to the +N chip it came from
     if (anchor.isConnected) anchor.focus();
@@ -231,15 +233,36 @@ export function showTwinPicker(options: TwinPickerOptions): void {
     if (target && (root.contains(target) || anchor.contains(target))) return;
     closeTwinPicker();
   };
+  // There is no focus trap, so Tab walks out into the page — and the
+  // registration below must not outlive that, or the shortcuts stay dead with
+  // the user's focus back on the page. Judged on the composed path: the chip
+  // sits in the layout shell's shadow root, where `event.target` at the
+  // document is the shell host, not the chip. Nothing is refocused; the user
+  // moved focus on purpose.
+  const onFocusOutside = (event: FocusEvent): void => {
+    const path = event.composedPath();
+    if (path.includes(root) || path.includes(anchor)) return;
+    closeTwinPicker();
+  };
   document.addEventListener('keydown', onKey);
+  // Capture, and at once: the opening click's focus change is already over,
+  // and focusing the pick below lands inside the picker.
+  document.addEventListener('focusin', onFocusOutside, true);
   // Registered after this click has finished bubbling, so it cannot close
   // the picker it just opened.
   const timer = window.setTimeout(() => document.addEventListener('click', onOutside), 0);
+  // BUG-091: while the dialog is up the page-wide shortcuts stand down — a
+  // digit on a focused radio used to navigate away, tearing the picker's own
+  // block down, and Shift+T flipped the theme behind it. Registration only
+  // raises `hasOpenModals()`; it draws nothing and traps nothing.
+  const releaseShortcuts = ModalService.registerExternal();
   current = {
     root,
     cleanup: () => {
+      releaseShortcuts();
       window.clearTimeout(timer);
       document.removeEventListener('keydown', onKey);
+      document.removeEventListener('focusin', onFocusOutside, true);
       document.removeEventListener('click', onOutside);
     },
   };

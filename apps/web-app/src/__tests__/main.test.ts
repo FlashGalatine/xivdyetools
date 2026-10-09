@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   initializeV4Layout: vi.fn(async () => {}),
   initializeTutorialSpotlight: vi.fn(),
   offlineBannerInitialize: vi.fn(),
+  markTutorialsUnavailable: vi.fn(),
 }));
 
 vi.mock('@services/index', () => ({
@@ -30,7 +31,7 @@ vi.mock('@services/index', () => ({
   getServicesStatus: mocks.getServicesStatus,
   LanguageService: { initialize: vi.fn(async () => {}) },
   StorageService: { removeItem: vi.fn() },
-  TutorialService: {},
+  TutorialService: { markUnavailable: mocks.markTutorialsUnavailable },
 }));
 vi.mock('@services/share-service', () => ({ ShareService: {} }));
 vi.mock('@services/telemetry-service', () => ({ TelemetryService: { initialize: vi.fn() } }));
@@ -89,6 +90,13 @@ describe('main.ts boot (OPT-001)', () => {
     expect(mocks.initializeV4Layout).toHaveBeenCalledWith(app);
   });
 
+  it('leaves tours on offer when the tutorial spotlight loads', async () => {
+    await boot();
+
+    expect(mocks.initializeTutorialSpotlight).toHaveBeenCalled();
+    expect(mocks.markTutorialsUnavailable).not.toHaveBeenCalled();
+  });
+
   it('never sends the probe from a production build', async () => {
     vi.stubEnv('DEV', false);
 
@@ -123,5 +131,70 @@ describe('main.ts boot (OPT-001)', () => {
     await boot();
 
     await vi.waitFor(() => expect(logger.warn).toHaveBeenCalledWith(expect.any(String), failure));
+  });
+});
+
+/*
+ * BUG-114 (2026-10-04 deep-dive): the tutorial spotlight is its own lazy
+ * chunk, imported inside the same try as the critical init. A failed fetch of
+ * that one chunk (a transient network error, a deploy flipping mid-load)
+ * reached the catch, and renderFatalError replaced the shell that had already
+ * mounted -- every tool working, and the user looking at "Application Error".
+ */
+describe('main.ts boot: the tutorial spotlight is not critical (BUG-114)', () => {
+  let app: HTMLElement;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getServicesStatus.mockResolvedValue(STATUS);
+    app = document.createElement('div');
+    app.id = 'app';
+    document.body.appendChild(app);
+    // Stand-in for the mounted shell, so a fatal overlay would be visible
+    mocks.initializeV4Layout.mockImplementationOnce(async () => {
+      app.appendChild(document.createElement('v4-layout-shell'));
+    });
+  });
+
+  afterEach(() => {
+    app.remove();
+    vi.unstubAllEnvs();
+    // vi.doUnmock would drop the hoisted mock as well; put the good one back
+    vi.doMock('@components/tutorial-spotlight', () => ({
+      initializeTutorialSpotlight: mocks.initializeTutorialSpotlight,
+    }));
+  });
+
+  async function expectShellKept(): Promise<void> {
+    const { logger } = await import('@shared/logger');
+    await boot();
+
+    expect(app.querySelector('v4-layout-shell')).not.toBeNull();
+    expect(app.textContent).not.toContain('Application Error');
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('spotlight'),
+      expect.anything()
+    );
+    // Nothing can draw a tour now, so "Take tour" and the first-visit prompt
+    // must not start one that shows nothing and leaves isActive stuck true
+    expect(mocks.markTutorialsUnavailable).toHaveBeenCalledTimes(1);
+  }
+
+  it('keeps the mounted shell when the spotlight chunk fails to load', async () => {
+    vi.doMock('@components/tutorial-spotlight', () => {
+      throw new TypeError('Failed to fetch dynamically imported module');
+    });
+
+    await expectShellKept();
+  });
+
+  it('keeps the mounted shell when the spotlight throws on init', async () => {
+    mocks.initializeTutorialSpotlight.mockImplementationOnce(() => {
+      throw new Error('spotlight init failed');
+    });
+
+    await expectShellKept();
+    expect(mocks.initializeTutorialSpotlight).toHaveBeenCalled();
   });
 });
