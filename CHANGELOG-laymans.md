@@ -31,17 +31,6 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
-## [5.11.0] - 2026-10-09
-### 📦 Where to get each glamour piece
-- Web app and Discord bot: 379 more pieces now have an Acquisition line, including Eureka and Cosmic upgrades, PvP vendor gear, Fuath and Mica outfits and current store sets.
-- Web app and Discord bot: gear that only came from a coffer now names the quest, vendor or activity where you get it, and retired PvP rewards are marked as no longer obtainable.
-- Web app and Discord bot: Acquisition lines now list Palazzo Diamond weapons under Dancing Mad (Ultimate), First Light and Sacramental weapons under Pilgrim's Traverse, level-44 Templar armor under Dzemael Darkhold, and Shin-Zantetsuken weapons under Baldesion Arsenal.
-- Web app and Discord bot: Kornago Merchant is listed in Central Shroud at Bentbranch Meadows, and the two expedition antiquarians have their own North Horn and South Horn locations.
-- Web app and Discord bot: pieces from Mewazunte and Varsarudh show the vendor and city without a currency amount, and fiend costume pieces name Enie in Ishgard's Firmament with the 3,000 Skybuilders' Scrips cost.
-- Web app and Discord bot: retired Dated gear up to level 50, Aetherial gear and Deepmist gear is replaced with a visually identical item you can still get, when one exists.
-- Web app: when no obtainable item shares a retired piece's look, the Glamour Reader keeps the piece's name and says it can no longer be obtained.
-- Web app: facewear Acquisition lines show where to get the "The Faces We Wear" unlock item, which covers every color of the style. Sources we don't know yet stay blank for you to fill in.
-
 ## [5.10.5] - 2026-10-05
 ### 🌏 Race and clan names in Korean and Chinese
 - Web app and link previews: Korean race and clan names now match the game's Korean client, for example 휴런 for Hyur and 중원 부족 for Midlander.
