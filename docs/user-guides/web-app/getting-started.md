@@ -88,7 +88,7 @@ Suggestions, `8` Swatch Matcher, `9` Dye Mixer — and `0` is the Glamour Reader
 **"Match my character's colors"** — the character creator's colour sheets, or a `.chara` file, matched to dyes.
 
 ### 10. Glamour Reader
-**"What is this character wearing, and can I wear it?"** — a `.chara` file read as a glamour: every piece with its dyes, whether the game lets it be worn, and a list for GPOSERS with where each piece comes from. It shares the loaded file with the Swatch Matcher.
+**"What is this character wearing, and can I wear it?"** — a `.chara` file read as a glamour: every piece with its dyes, whether the game lets it be worn, and a list for GPOSERS with where each piece comes from. It shares the loaded file with the Swatch Matcher. See the [Glamour Reader guide](glamour-reader.md).
 
 ---
 
@@ -195,6 +195,7 @@ Shortcuts are ignored while you are typing in a search box or hex field.
 - [Palette Extractor Guide](palette-extractor.md) - Deep dive into color matching
 - [Color Harmony Guide](color-harmony.md) - Master color combinations
 - [Gradient Builder Guide](gradient-builder.md) - Create color gradients
+- [Glamour Reader Guide](glamour-reader.md) - Read a character file as a glamour
 - [FAQ](faq.md) - Common questions answered
 
 ---

@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour** : 2026-10-05
+**Dernière mise à jour** : 2026-10-09
 
 > L'application web sur xivdyetools.app a ses propres conditions : [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Le traitement des données est couvert par la [Politique de confidentialité](PRIVACY_POLICY.md).
 
