@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](PRIVACY.md)
 
-**最后更新：** 2026-10-05 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。Discord 机器人有自己的政策：[`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md)。
+**最后更新：** 2026-10-09 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。Discord 机器人有自己的政策：[`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md)。
 
 XIV Dye Tools 在您的浏览器中运行。这些颜色工具——调色板提取、色彩和谐探索器、染剂比较、渐变生成器、染剂混合器、无障碍检查器、预算建议、色板匹配器和幻化查看器——都在您的设备本地完成工作。除非下方某一节另有说明，否则您上传、选择或输入的任何内容都不会被发送到任何地方，而下方的各节就是完整的清单。
 

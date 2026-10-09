@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour :** 2026-10-05 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
+**Dernière mise à jour :** 2026-10-09 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
 façon dont nous traitons vos données fait l'objet d'un document séparé : [`PRIVACY.md`](PRIVACY.md).
 Le bot Discord a ses propres conditions :
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
