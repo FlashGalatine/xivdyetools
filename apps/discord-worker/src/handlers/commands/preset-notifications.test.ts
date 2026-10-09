@@ -4,16 +4,37 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import {
+  parseReviewCustomId,
+  REVIEW_STATUSES,
+  type ReviewAction,
+  type ReviewBinding,
+} from '@xivdyetools/types';
 import type { Env } from '../../types/env.js';
 import { buildModerationNotification, type ModerationPresetInfo } from './preset-notifications.js';
 
 const PRESET_ID = '123e4567-e89b-42d3-a456-426614174000';
 
-// Copied from moderation-worker's utils/review-custom-id.ts (parseReviewCustomId,
-// 1.8.0): prefix + uuid + `:<revision>:<status>`, revision without leading zeros.
-const BOUND_ID_RE =
-  /^preset_(approve|reject|revert)_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}:(0|[1-9][0-9]*):(pending|approved|rejected|flagged|hidden)$/i;
-const LEGACY_ID_RE = /^preset_(approve|reject|revert)_[0-9a-f-]{36}$/i;
+/** The button order: approve, reject, then revert when it is offered. */
+const BUTTON_ACTIONS: readonly ReviewAction[] = ['approve', 'reject', 'revert'];
+
+/**
+ * REFACTOR-001 (2026-10-04 deep-dive): every id is read back with the parser
+ * moderation-worker answers the click with — the shared one in
+ * @xivdyetools/types, not a regex copied from it — so an id this builder emits
+ * that moderation-worker would refuse fails here. `binding: null` is a legacy
+ * id, which moderation-worker answers with a refresh instead of acting.
+ */
+function expectParsedIds(ids: string[], binding: ReviewBinding | null): void {
+  ids.forEach((id, i) => {
+    expect(parseReviewCustomId(id)).toEqual({
+      kind: BUTTON_ACTIONS[i],
+      presetId: PRESET_ID,
+      binding,
+    });
+    expect(id.length).toBeLessThanOrEqual(100);
+  });
+}
 
 const routableEnv = { MODERATION_BOT_TOKEN: 'mod-token', DISCORD_TOKEN: 'main' } as unknown as Env;
 const unroutableEnv = { DISCORD_TOKEN: 'main' } as unknown as Env;
@@ -61,9 +82,24 @@ describe('buildModerationNotification buttons (FINDING-017)', () => {
       `preset_approve_${PRESET_ID}:7:pending`,
       `preset_reject_${PRESET_ID}:7:pending`,
     ]);
-    for (const id of ids) {
-      expect(id).toMatch(BOUND_ID_RE);
-      expect(id.length).toBeLessThanOrEqual(100);
+    expectParsedIds(ids, { revision: 7, status: 'pending' });
+  });
+
+  it('binds every review status the shared parser accepts, and it reads each one back', () => {
+    for (const status of REVIEW_STATUSES) {
+      for (const contentRevision of [0, 1, 42, Number.MAX_SAFE_INTEGER]) {
+        const ids = customIds(
+          buildModerationNotification(routableEnv, {
+            kind: 'edit',
+            preset: preset({ status }),
+            original: preset({ name: 'Old' }),
+            contentRevision,
+            revertTo: snapshotOf(preset({ name: 'Old' })),
+          })
+        );
+        expect(ids).toHaveLength(3);
+        expectParsedIds(ids, { revision: contentRevision, status });
+      }
     }
   });
 
@@ -80,7 +116,7 @@ describe('buildModerationNotification buttons (FINDING-017)', () => {
 
     expect(ids).toHaveLength(3);
     expect(ids[2]).toBe(`preset_revert_${PRESET_ID}:0:pending`);
-    for (const id of ids) expect(id).toMatch(BOUND_ID_RE);
+    expectParsedIds(ids, { revision: 0, status: 'pending' });
   });
 
   // BUG-003 (2026-10-04 deep-dive): Revert restores the snapshot AND approves
@@ -97,6 +133,7 @@ describe('buildModerationNotification buttons (FINDING-017)', () => {
       `preset_approve_${PRESET_ID}:2:pending`,
       `preset_reject_${PRESET_ID}:2:pending`,
     ]);
+    expectParsedIds(customIds(result), { revision: 2, status: 'pending' });
     expect(result.embeds[0].description).not.toContain('Revert');
   });
 
@@ -131,6 +168,7 @@ describe('buildModerationNotification buttons (FINDING-017)', () => {
       })
     );
     expect(ids[0]).toBe(`preset_approve_${PRESET_ID}:3:flagged`);
+    expectParsedIds(ids, { revision: 3, status: 'flagged' });
   });
 
   it('falls back to legacy ids when the revision is absent', () => {
@@ -139,7 +177,7 @@ describe('buildModerationNotification buttons (FINDING-017)', () => {
         buildModerationNotification(routableEnv, { kind: 'new', preset: preset(), contentRevision })
       );
       expect(ids).toEqual([`preset_approve_${PRESET_ID}`, `preset_reject_${PRESET_ID}`]);
-      for (const id of ids) expect(id).toMatch(LEGACY_ID_RE);
+      expectParsedIds(ids, null);
     }
   });
 
@@ -149,11 +187,13 @@ describe('buildModerationNotification buttons (FINDING-017)', () => {
         buildModerationNotification(routableEnv, { kind: 'new', preset: preset(), contentRevision })
       );
       expect(ids[0]).toBe(`preset_approve_${PRESET_ID}`);
+      expectParsedIds(ids, null);
     }
   });
 
   it('falls back to legacy ids when the status is missing or not a known status', () => {
-    for (const status of [undefined, 'bogus']) {
+    // 'Pending': the status word is case-sensitive on both sides of the wire
+    for (const status of [undefined, 'bogus', 'Pending']) {
       const ids = customIds(
         buildModerationNotification(routableEnv, {
           kind: 'new',
@@ -162,6 +202,7 @@ describe('buildModerationNotification buttons (FINDING-017)', () => {
         })
       );
       expect(ids[0]).toBe(`preset_approve_${PRESET_ID}`);
+      expectParsedIds(ids, null);
     }
   });
 

@@ -206,7 +206,7 @@ catch (error) {
 
 ### Runtime Helpers
 
-Besides the branded-type constructors, the barrel ships three runtime helpers.
+Besides the branded-type constructors, the barrel ships a few runtime helpers.
 There is **no** `Result` / `isOk` / `isErr` / `Nullable` in this package — error
 handling goes through `AppError` (above).
 
@@ -229,6 +229,51 @@ MATCH_QUALITY_TIERS.map((t) => t.key);
 
 // Discord snowflake shape check (17-20 digits)
 isValidSnowflake('123456789012345678'); // true
+```
+
+#### Moderation review custom_ids
+
+The approve / reject / revert buttons and reject / revert reason modals on a
+preset's moderation message carry the revision and status the moderator
+reviewed (FINDING-017). discord-worker builds them, moderation-worker builds and
+parses them, and presets-api accepts the same status words as
+`expected_status` — this module is the one copy of that grammar and that list
+(REFACTOR-001). It is a wire format: ids already posted in Discord must keep
+parsing.
+
+```
+preset_<approve|reject|revert>_<uuid>:<revision>:<status>    button
+preset_<reject|revert>_modal_<uuid>:<revision>:<status>      reason modal
+preset_<kind>_<uuid>                                         legacy (no revision)
+```
+
+`<uuid>` is a UUID v4 (either case), `<revision>` a non-negative safe integer
+with no sign or leading zeros, `<status>` one of `REVIEW_STATUSES`; every id is
+at most 100 characters (Discord's cap). A legacy id parses with
+`binding: null`, and a handler must refresh rather than act on it.
+
+```typescript
+import {
+  REVIEW_STATUSES,
+  isReviewStatus,
+  parseReviewCustomId,
+  buildReviewCustomId,
+  buildReviewCustomIdOrLegacy,
+} from '@xivdyetools/types';
+
+REVIEW_STATUSES; // ['pending', 'approved', 'rejected', 'flagged', 'hidden'] — every PresetStatus
+isReviewStatus('flagged'); // true (case-sensitive; narrows unknown → PresetStatus)
+
+parseReviewCustomId('preset_reject_modal_<uuid>:7:pending');
+// { kind: 'reject_modal', presetId: '<uuid>', binding: { revision: 7, status: 'pending' } }
+parseReviewCustomId('preset_approve_<uuid>');
+// { kind: 'approve', presetId: '<uuid>', binding: null }
+parseReviewCustomId('preset_approve_<uuid>:01:pending'); // null — anything off-grammar is null
+
+// Caller-validated binding: formats exactly what it is given.
+buildReviewCustomId('approve', id, { revision: 7, status: 'pending' });
+// Untrusted revision / status: the legacy id unless both are valid and the result fits 100 chars.
+buildReviewCustomIdOrLegacy('approve', id, contentRevision, preset.status);
 ```
 
 ## Migration Guide
@@ -273,7 +318,7 @@ import { CommunityPreset, PresetFilters, ModerationResult } from '@xivdyetools/t
 | `@xivdyetools/types/color` | RGB, HSV, LAB, OKLAB, OKLCH, LCH, HSL, CMYK, HexColor, branded types, `VisionType` / `Matrix3x3` / `ColorblindMatrices`, match-quality tiers |
 | `@xivdyetools/types/dye` | Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters |
 | `@xivdyetools/types/character` | CharacterColor, SubRace, RACE_SUBRACES |
-| `@xivdyetools/types/preset` | `CommunityPreset`, `PresetPalette` / `PresetData`, filters, responses |
+| `@xivdyetools/types/preset` | `CommunityPreset`, `PresetPalette` / `PresetData`, filters, responses, moderation review custom_ids + `REVIEW_STATUSES` |
 | `@xivdyetools/types/auth` | OAuth, JWT, Discord, XIVAuth |
 | `@xivdyetools/types/api` | APIResponse, CachedData, moderation |
 | `@xivdyetools/types/error` | AppError, ErrorCode enum |
@@ -289,6 +334,10 @@ import { CommunityPreset, PresetFilters, ModerationResult } from '@xivdyetools/t
 | `createSaturation(sat)` | Clamp saturation to 0-100 |
 | `classifyMatchDistance(distance)` | Classify an RGB-space distance into a `MatchQualityKey` (inclusive bounds) |
 | `isValidSnowflake(id)` | Format check for a Discord snowflake (17-20 digits) |
+| `isReviewStatus(value)` | Type guard: `value` is exactly one of `REVIEW_STATUSES` (every `PresetStatus`) |
+| `parseReviewCustomId(customId)` | Strict parse of a moderation review button / modal custom_id → `ParsedReviewId` (`binding: null` for a legacy id), or `null` |
+| `buildReviewCustomId(kind, presetId, binding)` | Revision-bound review custom_id from an already-validated binding (no checks) |
+| `buildReviewCustomIdOrLegacy(kind, presetId, revision, status)` | Revision-bound review custom_id when the revision and status are valid and it fits 100 characters, else the legacy `preset_<kind>_<presetId>` |
 
 ## Connect With Me
 

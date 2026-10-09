@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2026-10-06
+
+Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor; nothing a
+moderator sees changes.
+
+### Changed
+
+- **The review custom_id grammar comes from `@xivdyetools/types`.** The parser, the builder and
+  the status list are now shared with discord-worker and presets-api. `utils/review-custom-id.ts`
+  and its tests were removed; the tests were ported into types.
+- `tests/review-prefix-parity.test.ts` pins the prefixes the dispatcher and handlers route on to
+  the shared ones, so a renamed or added kind cannot be dropped silently.
+
 ## [1.8.1] - 2026-10-06
 
 Sprint 17 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`).

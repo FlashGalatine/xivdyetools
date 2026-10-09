@@ -104,8 +104,7 @@ src/
 │   ├── env.ts               # Environment bindings
 │   ├── ban.ts               # Ban-related types
 │   └── preset.ts            # Preset types
-├── utils/
-│   ├── review-custom-id.ts  # Strict parser/builder for review custom_ids
+├── utils/                   # (review custom_id parsing/building lives in @xivdyetools/types since REFACTOR-001)
 │   ├── verify.ts            # Ed25519 verification
 │   ├── response.ts          # Discord response builders
 │   ├── discord-api.ts       # Discord API helpers

@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { REVIEW_STATUSES } from '@xivdyetools/types';
 import { moderationRouter } from '../../src/handlers/moderation';
 import { presetsRouter } from '../../src/handlers/presets';
 import { authMiddleware } from '../../src/middleware/auth';
@@ -112,6 +113,21 @@ describe('moderation review binding (FINDING-017)', () => {
       });
       expect(await row()).toEqual({ status: 'pending', content_revision: 0 });
       expect(await auditCount()).toBe(0);
+    });
+
+    // REFACTOR-001: discord-worker and moderation-worker bind a review button to
+    // a status from this same shared list, so every word in it must be one this
+    // route accepts as expected_status — including `hidden`, which is not a
+    // valid *target* status. (Binding a review to `hidden` is intended: the
+    // 2026-10-04 deep-dive rejected candidate presets-handlers-03.)
+    it.each(REVIEW_STATUSES)('accepts the shared review status %s as expected_status', async (reviewed) => {
+      await seed(reviewed);
+
+      const res = await patchStatus({ status: 'approved', expected_revision: 0, expected_status: reviewed });
+
+      expect(res.status).toBe(200);
+      expect((await row()).status).toBe('approved');
+      expect(await auditCount()).toBe(1);
     });
 
     it('still answers 400 for an invalid target status before the revision check', async () => {

@@ -786,7 +786,11 @@ A comment-only fix. It rides with the next auth change; no publish is needed for
 
 **Ends with:** gate with `--filter=...@xivdyetools/auth` → merge
 
-## Sprint 26 — Structural: share the review custom_id grammar (terminal)
+## Sprint 26 — Structural: share the review custom_id grammar (terminal) — PR #262 (open)
+
+**Done in PR #262** (types 3.3.0; moderation-worker 1.8.2, discord-worker 5.8.8, presets-api 2.6.1), stacked on #261. The host is `@xivdyetools/types` — the one package all three apps already depend on (presets-api does not depend on bot-logic). The wire format is byte-identical, fuzzed in both directions.
+- **Deploy order:** none is required — each app bundles types through `workspace:*` and the bytes do not change. Merging does redeploy every app whose workflow filters on `packages/types/**` (10 workflows, oauth's production deploy included), with no code change for most.
+- **Also here:** `AuthSource` tagged `@public` (its last in-repo re-export went in Sprint 8); a moderation-worker test pins its routing prefixes to the shared grammar.
 
 deep-dive/REFACTOR-001: one module for the grammar and status list, consumed by presets-api, moderation-worker and discord-worker, or a parity test across them. One publish, then one deploy per consumer.
 

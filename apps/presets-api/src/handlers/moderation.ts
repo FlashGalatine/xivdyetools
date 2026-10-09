@@ -5,6 +5,7 @@
 
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { REVIEW_STATUSES } from '@xivdyetools/types';
 import type { Env, AuthContext, PresetStatus, PresetRow } from '../types.js';
 import { requireModerator } from '../middleware/auth.js';
 import {
@@ -78,9 +79,6 @@ async function dyeSignatureConflictResponse(
   );
 }
 
-/** Every status a preset can be in — what a moderator may have been looking at. */
-const REVIEWED_STATUSES: readonly PresetStatus[] = ['pending', 'approved', 'rejected', 'flagged', 'hidden'];
-
 /**
  * FINDING-017 (2026-10-03 audit): the 409 for a status change that is not bound
  * to a review. `REVISION_REQUIRED` — the caller never said what it reviewed —
@@ -119,6 +117,14 @@ async function reviewConflictResponse(
  * request body. `null` means "not bound to a review" — the caller answers
  * REVISION_REQUIRED. Shared by the status and revert routes so the two cannot
  * drift apart.
+ *
+ * `expected_status` may be any status a preset can be in — what a moderator may
+ * have been looking at. REFACTOR-001 (2026-10-04 deep-dive): that list is
+ * `REVIEW_STATUSES` from `@xivdyetools/types`, the same one discord-worker and
+ * moderation-worker put in a review button's custom_id, so a status one side
+ * sends cannot be one the other refuses. It is deliberately NOT the four-status
+ * target list `validateModerationStatus` checks `status` against: a moderator
+ * may have reviewed a `hidden` preset, but may not set one.
  */
 function parseReviewBinding(body: {
   expected_revision?: unknown;
@@ -128,7 +134,7 @@ function parseReviewBinding(body: {
   const status = body.expected_status;
   if (
     typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0 ||
-    typeof status !== 'string' || !REVIEWED_STATUSES.includes(status as PresetStatus)
+    typeof status !== 'string' || !REVIEW_STATUSES.includes(status as PresetStatus)
   ) {
     return null;
   }

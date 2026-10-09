@@ -3,7 +3,8 @@
  *
  * Handles the modal submission when a moderator provides a rejection or revert reason.
  *
- * Modal custom_id patterns (FINDING-017 — full grammar in `utils/review-custom-id.ts`):
+ * Modal custom_id patterns (FINDING-017 — full grammar in `@xivdyetools/types`,
+ * `preset/review-custom-id.ts`):
  * - preset_reject_modal_{presetId}:{revision}:{status}
  * - preset_revert_modal_{presetId}:{revision}:{status}
  *
@@ -24,8 +25,8 @@ import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import { STATUS_DISPLAY, PresetReviewConflictError } from '../../types/preset.js';
 import { MIN_REJECTION_REASON_LENGTH } from '../commands/preset.js';
-import { parseReviewCustomId } from '../../utils/review-custom-id.js';
-import type { ParsedReviewId, ReviewBinding } from '../../utils/review-custom-id.js';
+import { parseReviewCustomId } from '@xivdyetools/types';
+import type { ParsedReviewId, ReviewBinding } from '@xivdyetools/types';
 import { editReviewMessage, refreshReview, withoutTransientFields } from '../review-message.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
