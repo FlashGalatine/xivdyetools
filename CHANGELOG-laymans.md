@@ -31,107 +31,33 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
-## [5.10.20] - 2026-10-06
-### 📖 Discord bot help for character files
-- Discord bot: `/manual` now explains every verdict a `/glamour` card can show, that the bot picks the twin for you, and that the list's Acquisition lines are in English.
-- Discord bot: the `/swatch` and `/glamour` help now says Brio character files work too, alongside Anamnesis and Ktisis.
-
-## [5.10.19] - 2026-10-06
-### 🔗 Link previews that match the page
-- Link previews: a shared Gradient Builder link previews the same dyes the page shows, in the color space you picked, numbered with the page's own steps.
-- Link previews: a Palette Extractor link previews dyes matched the way you chose, not always by ΔE2000.
-- Link previews: a gradient, mixer or harmony shared from your own color names that color and opens it again.
-- Link previews: French previews call Community Presets "Préréglages communautaires", and the German Glamour Reader description reads correctly.
-
-## [5.10.18] - 2026-10-06
-### 🌏 Item names in your language
-- Discord bot: `/glamour` cards now name items in Korean, Chinese and Japanese instead of falling back to English.
-- Discord bot: Japanese cards draw kanji in Japanese letterforms; some used to appear in their Chinese forms.
-
-## [5.10.17] - 2026-10-06
-### 🎨 Truer greys and cleaner palettes
-- Web app and Discord bot: gradients and HSL mixes from a grey dye (Slate Grey, Jet Black, Metallic Silver) or a grey hex code stay true to the other color instead of passing through purple or pink.
-- Discord bot: `/extractor` shows only the colours a picture really has, without empty rows.
-- Web app: in the Harmony Explorer, a dye you swap in with "no duplicates" on no longer shows up again in another slot.
-
-## [5.10.16] - 2026-10-06
-### 📏 Numbers that agree
-- Discord bot: `/contrast` and `/compare` show the same contrast ratio for the same two dyes, and never round a failing ratio up to a passing one.
-- Discord bot: German and French show a decimal comma in every `/contrast` and `/compare` number.
-- Discord bot: `/gradient` no longer cuts off step numbers like "10–12".
-- Discord bot: `/glamour` cards keep each count next to its word in the footer, and long German footers fit.
-
-## [5.10.15] - 2026-10-06
-### 🎨 Colours you type, and filters that keep their matches
-- Discord bot: colours typed as six digits, like `000000` or `333333`, work everywhere instead of being refused.
-- Discord bot: `/gradient` and `/mixer` find a dye for every step when you filter dyes out, instead of showing no match.
-- Discord bot: `/glamour`'s copy-ready list no longer shows placeholder names for pieces with no item, and it keeps your facewear.
-
-## [5.10.14] - 2026-10-06
-### 🤖 A steadier Discord bot
-- Discord bot: `/preset submit` and `/preset edit` name the dye you picked twice, instead of a vague error.
-- Discord bot: `/gradient` names its start and end dyes in your language.
-- Discord bot: when your character file doesn't have the `/swatch` slot you asked for, the bot names that slot in your language.
-- Discord bot: if `/budget` can't find the world you asked for, only you see the message.
-- Discord bot: a hiccup while saving no longer wipes your preferences or your favourite presets.
-- Discord bot: `/extractor color` says when it couldn't draw the card, instead of saying no match was found.
-
-## [5.10.13] - 2026-10-05
-### 🪙 Market prices you can trust
-- Web app: Chinese and Korean servers now get market prices.
-- Web app: when the market board can't be reached, the Palette Extractor, Harmony and Budget say so instead of quietly showing no prices.
-
-## [5.10.12] - 2026-10-05
-### ✨ Polish everywhere
-- Web app: switching themes keeps your place in Budget, Dye Mixer and your character sheet.
-- Web app: prices show only when the Market Board is on, in every tool.
-- Web app: shortcuts pause while a menu or picker is open, Escape closes just the top thing, and tool shortcuts work on French (AZERTY) keyboards.
-- Web app: sending colors from the Swatch Matcher keeps your loaded character file, and printing a tool prints just the results.
-
-## [5.10.11] - 2026-10-05
-### 📜 Clearer policies
-- Web app and Discord bot: the privacy policies now give a fixed date. Moderation posts made after 2026-10-05 never show your Discord user ID.
-- Web app: the Terms of Service list all ten tools in every language, the Glamour Reader included, and both documents name each tool as the app does.
-- Web app and Discord bot: French and German policies now use the same word for a preset as the app, and the Korean Terms use the same word for a moderator as the Privacy Policy.
-
-## [5.10.10] - 2026-10-05
-### 🗣️ Words that match the game
-- Web app: facewear and character-creation color names now match the game in every language.
-- Web app: the Glamour Reader's counts read naturally in the singular ("1 dye"), and its facewear tooltip names the color in your language.
-- Web app: the Glamour list's download button now says "Save .md", and German calls presets "Vorlage" throughout.
-
-## [5.10.9] - 2026-10-05
-### 🛠️ Smoother tools
-- Web app: changing the language keeps your results in Harmony, Dye Mixer, Comparison and Accessibility.
-- Web app: an old link no longer undoes your choice when you pick a new color in Harmony or send a dye to Budget.
-- Web app: Budget always shows your latest search, and the Swatch Matcher keeps a full list of matches with strong filters on.
-- Web app: the dye palette works from the keyboard, and the app starts a little faster.
-
-## [5.10.8] - 2026-10-05
-### 🌏 The Discord bot speaks your language
-- Discord bot: `/glamour` and `/swatch` cards name your character's clan in your language instead of in English.
-- Discord bot: when the bot can't read a character file, it says why in your language.
-- Discord bot: `/manual` now explains `/glamour` in its character-file topic, and character-creation color names in `/manual` and on the cards match the game.
-## [5.10.7] - 2026-10-05
-### 🎨 Community presets
-- Web app: a saved preset is no longer marked "Removed by its author" because the presets service hiccupped or a search was slow, and a wrong mark clears itself.
-- Web app: when the community feed is down, the gallery says so instead of showing an empty feed.
-- Web app: a failed vote or delete now says it failed, and the gallery shows your votes, deletes and edits right away.
-- Web app: tab counts match the presets shown, and search and sort work on the Saved and Mine tabs.
-### 📁 Collections
-- Web app: Manage Collections updates as soon as you create a collection, and exported file names keep Japanese, Korean and Chinese names.
-- Web app: saving the same character's colors twice no longer fails; the second copy is numbered.
-
-## [5.10.6] - 2026-10-05
-### ⚙️ Your settings stay put
-- Web app: the Swatch Matcher keeps the palette you picked. Changing another setting, in any tool, no longer switches it to Hair and the tribe to Seeker of the Sun.
-- Web app: saved dye filters, such as "exclude metallic", now work as soon as you open the Gradient Builder, Swatch Matcher, Dye Mixer or Budget Suggestions.
-- Web app: settings from a shared gradient or swatch link no longer snap back the first time you change something, and a broken link no longer changes your saved settings.
-- Web app: the Options sidebar always shows the current settings, including after Reset Settings or a change in another tab.
-### 💰 Budget Suggestions
-- Web app: the match line stays where you put it, and opening Budget no longer turns market prices on in every other tool.
-- Web app: Budget always loads market prices, because it compares dyes by price. The Privacy Guide now says so in all six languages.
-- Web app: the Budget target card now shows RGB, HSV and LAB, as the sidebar always said it did. Turn them off in Display Options.
+## [5.11.0] - 2026-10-09
+### ⚙️ Web app: settings and tools you can rely on
+- Web app: the Swatch Matcher keeps the palette you picked, saved dye filters work as soon as a tool opens, and settings from a shared link no longer snap back.
+- Web app: changing the language keeps your results, the Options sidebar always shows the current settings, and switching themes keeps your place.
+- Web app: shortcuts pause while a menu is open, Escape closes just the top thing, and tool shortcuts work on French (AZERTY) keyboards.
+- Web app: Budget always loads market prices (the Privacy Guide now says so), keeps your latest search, and shows RGB, HSV and LAB on its target card.
+- Web app: Chinese and Korean servers get market prices, and the tools say so when the market board can't be reached.
+- Web app: saved presets are no longer wrongly marked "Removed by its author", a failed vote or delete says so, and Manage Collections updates right away.
+- Web app: a custom color's card menu offers only what works with a custom color.
+### 👗 Glamour Reader and /glamour
+- Web app and Discord bot: 379 more pieces have an Acquisition line, and gear that only came from a coffer now names the quest, vendor or activity where you get it.
+- Web app and Discord bot: retired Dated, Aetherial and Deepmist gear is named by a look-alike you can still get. When none exists, the Glamour Reader keeps the piece's name and says it is retired.
+- Web app: facewear shows where to get its unlock item, which covers every color of the style.
+- Discord bot: `/glamour` cards name items and your character's clan in Korean, Chinese and Japanese, with Japanese letterforms for kanji.
+- Discord bot: `/manual` explains every verdict a `/glamour` card can show, and Brio character files work alongside Anamnesis and Ktisis.
+### 🤖 Discord bot
+- Discord bot: colors typed as six digits, like `000000`, work everywhere, and `/gradient` and `/mixer` find a dye for every step when you filter dyes out.
+- Discord bot: `/contrast` and `/compare` show the same ratio for the same two dyes and never round a failing ratio up; German and French use decimal commas.
+- Discord bot: `/preset submit` and `/preset edit` name the dye you picked twice, and a hiccup while saving no longer wipes your preferences or favorite presets.
+- Discord bot: more replies in your language, from `/gradient`'s start and end dyes to a `/swatch` slot your file doesn't have and a file the bot can't read.
+- Discord bot: `/extractor` shows only the colors a picture really has, and if `/budget` can't find your world, only you see the message.
+### 🎨 Colors, names and link previews
+- Web app and Discord bot: gradients and mixes from a grey dye or grey hex code stay true to the other color instead of passing through purple or pink.
+- Web app: facewear and character-creation color names match the game in every language.
+- Link previews: shared Gradient Builder and Palette Extractor links preview what the page shows, and a color you named yourself comes back by name.
+### 📜 Policies
+- Web app and Discord bot: the privacy policies give a fixed date: moderation posts made after 2026-10-05 never show your Discord user ID. The Terms list all ten tools in every language.
 
 ## [5.10.5] - 2026-10-05
 ### 🌏 Race and clan names in Korean and Chinese
