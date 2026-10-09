@@ -6,7 +6,6 @@
 import { describe, it, expect } from 'vitest';
 import type {
     PresetStatus,
-    PresetCategory,
     CategoryMeta,
     CommunityPreset,
     PresetSubmission,
@@ -18,7 +17,6 @@ import type {
     ModerationLogEntry,
     PresetRow,
     CategoryRow,
-    AuthSource,
     AuthContext,
     RateLimitResult,
 } from '../src/types';
@@ -35,37 +33,6 @@ describe('Types', () => {
             statuses.forEach((status) => {
                 expect(['pending', 'approved', 'rejected', 'flagged']).toContain(status);
             });
-        });
-    });
-
-    // ============================================
-    // PresetCategory
-    // ============================================
-
-    describe('PresetCategory', () => {
-        it('should allow valid category values', () => {
-            const categories: PresetCategory[] = [
-                'jobs',
-                'grand-companies',
-                'seasons',
-                'events',
-                'aesthetics',
-            ];
-
-            // 5.0: 'community' is dropped — community-ness is a source, not a category
-            expect(categories).toHaveLength(5);
-        });
-    });
-
-    // ============================================
-    // AuthSource
-    // ============================================
-
-    describe('AuthSource', () => {
-        it('should allow valid auth source values', () => {
-            const sources: AuthSource[] = ['none', 'bot', 'web'];
-
-            expect(sources).toHaveLength(3);
         });
     });
 

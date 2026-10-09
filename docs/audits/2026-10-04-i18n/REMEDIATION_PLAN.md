@@ -337,7 +337,14 @@ Details are in the re-verification file's *Sprint 7* section.
 
 **Ends with:** `python .agents/skills/audit-shared/scripts/policy-locale-parity.py` and `pnpm docs:check-links` → merge. The documents are served from GitHub `main` (`about-modal.ts` `POLICY_DOCS_BASE`), so they are live at merge. The web-app and discord-worker deploy workflows fire through their path filters but ship no code change. A user-visible policy change also gets a root `CHANGELOG-laymans.md` line, committed on its own.
 
-## Sprint 8 — presets-api: dye validation, null bodies, retention signal
+## Sprint 8 — presets-api: dye validation, null bodies, retention signal — PR #256 (open)
+
+**Done in PR #256** (presets-api 2.5.0), the first PR of the discord-worker stack. It is based on the join branch; see the re-verification file's *Execution notes* for the merge order. All seven fixes and the BUG-003 payload half are in, plus DEAD-031 to DEAD-034 and the BUG-063 cron line.
+
+**Deploy needs:**
+- Deploy together with Sprint 9.
+- Run two read-only D1 queries first: presets that repeat a dye, and existing `previous_values` snapshots.
+- After deploy, check Cron Events for a failed sweep.
 
 **deep-dive/BUG-010:** repeated dye ids bypass the 3-dye floor and the duplicate signature.
 

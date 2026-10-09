@@ -337,14 +337,14 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 |---|---|---|
 | BUG-001 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
 | BUG-002 | OPEN | — |
-| BUG-003 | OPEN | — |
+| BUG-003 | PARTIALLY FIXED (presets-api half in PR #256; discord-worker in Sprint 9) | `8c264798` |
 | BUG-004 | OPEN | — |
 | BUG-005 | OPEN | — |
 | BUG-006 | OPEN | — |
 | BUG-007 | OPEN | — |
 | BUG-008 | OPEN | — |
 | BUG-009 | OPEN | — |
-| BUG-010 | OPEN | — |
+| BUG-010 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
 | BUG-011 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
 | BUG-012 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
 | BUG-013 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
@@ -397,13 +397,13 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-060 | OPEN | — |
 | BUG-061 | OPEN | — |
 | BUG-062 | OPEN | — |
-| BUG-063 | PARTIALLY FIXED 2026-10-05 (PR #224; the cron line goes to Sprint 8) | `12e7f887` |
-| BUG-064 | OPEN | — |
-| BUG-065 | OPEN | — |
-| BUG-066 | OPEN | — |
-| BUG-067 | OPEN | — |
-| BUG-068 | OPEN | — |
-| BUG-069 | OPEN | — |
+| BUG-063 | FIX COMMITTED, NOT DEPLOYED (PR #224 + PR #256, open) | `12e7f887`, `b7b8500b` |
+| BUG-064 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
+| BUG-065 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
+| BUG-066 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
+| BUG-067 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
+| BUG-068 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
+| BUG-069 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
 | BUG-070 | OPEN | — |
 | BUG-071 | OPEN | — |
 | BUG-072 | OPEN | — |

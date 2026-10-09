@@ -14,6 +14,7 @@
 import { bodyGuards } from '@xivdyetools/worker-kit/body-guards';
 import type { Env } from '../types.js';
 import { MAX_PREVIEW_IMAGE_BYTES } from '../services/preview-image-service.js';
+import { ErrorCode } from '../utils/api-response.js';
 
 /** Maximum request body size in bytes (100KB) */
 const MAX_BODY_SIZE = 100 * 1024;
@@ -70,7 +71,7 @@ export const { bodySizeLimit, jsonDepthLimit } = bodyGuards<{ Bindings: Env }>({
       413
     ),
   onInvalidJson: (c, message) =>
-    c.json({ success: false, error: 'BAD_REQUEST', message }, 400),
+    c.json({ success: false, error: ErrorCode.BAD_REQUEST, message }, 400),
   exempt: {
     match: (c) => isPreviewImageUpload(c.req.method, c.req.path),
     maxSize: MAX_PREVIEW_IMAGE_BYTES,

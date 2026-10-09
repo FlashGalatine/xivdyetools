@@ -15,6 +15,7 @@ import {
     storeFailedNotification,
     listFailedNotifications,
     resolveFailedNotification,
+    pruneFailedNotifications,
     FAILED_NOTIFICATION_RESOLVED_RETENTION_DAYS,
     FAILED_NOTIFICATION_UNRESOLVED_RETENTION_DAYS,
     type PresetNotificationPayload,
@@ -185,6 +186,21 @@ describe('dead-letter queue (FINDING-017)', () => {
 
             expect(db._queries.some((q) => /DELETE FROM failed_notifications/i.test(q))).toBe(true);
             expect(db._queries.some((q) => /INSERT INTO failed_notifications/i.test(q))).toBe(true);
+        });
+
+        // BUG-066: the daily job needs to know whether the sweep ran.
+        it('the prune resolves true when the sweep ran and false when its DELETE failed', async () => {
+            const ok = createMockD1Database();
+            ok._setupMock(() => ({ meta: { changes: 0 } }));
+            await expect(pruneFailedNotifications(ok)).resolves.toBe(true);
+
+            const broken = createMockD1Database();
+            broken._setupMock(() => {
+                throw new Error('D1_ERROR: no such table: failed_notifications');
+            });
+            const warn = vi.fn();
+            await expect(pruneFailedNotifications(broken, { warn })).resolves.toBe(false);
+            expect(warn).toHaveBeenCalledWith('[FINDING-017] dead-letter prune failed', { pruned: 0 });
         });
     });
 

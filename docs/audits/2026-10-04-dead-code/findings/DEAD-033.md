@@ -15,4 +15,4 @@
 Steps: 1) apps/presets-api/src/types.ts: delete line 23 (PresetCategory in the export type list) and lines 34-38 (the AuthSource @deprecated docblock + export). 2) apps/presets-api/tests/types.test.ts: delete import lines 9 and 21, the PresetCategory block at lines 41-59, and the AuthSource block at lines 60-71. 3) pnpm turbo run build type-check lint test --filter=...xivdyetools-presets-api && pnpm dead-code:check
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `a33842cc` (branch `fix/remediation-2026-10-04-sprint8`, presets-api 2.5.0; PR #256, open, on the join branch).
