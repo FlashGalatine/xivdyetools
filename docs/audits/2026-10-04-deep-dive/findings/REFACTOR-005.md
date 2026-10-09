@@ -14,4 +14,4 @@
 - Build each selector/settings group from one shared builder, so state sync lives in one place. Drop the V4-dead left panel and drawer paths, and replace the mis-encoded literal with a real bullet (or the right escape).
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `51a058de` + `ccda155f` + `7c187084`: the v4-dead left panel and mobile drawer are removed from gradient-tool.ts and swatch-tool.ts, so one path remains (the drift goes with the duplicate); the mojibake literal went with the dead display. (branch `fix/remediation-2026-10-04-sprint29`, web-app 5.14.9; PR #255, open, stacked on #254).

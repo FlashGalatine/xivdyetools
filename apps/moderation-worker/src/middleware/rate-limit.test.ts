@@ -10,7 +10,6 @@ import { createMockKV } from '@xivdyetools/test-utils';
 import {
   checkRateLimit,
   incrementRateLimit,
-  rateLimitMiddleware,
   resetRateLimiterInstance,
   RATE_LIMIT_CONFIGS,
   type RateLimitConfig,
@@ -279,19 +278,6 @@ describe('rate-limit', () => {
       const result = await checkRateLimit(mockKV, 'user123', 'command', RATE_LIMIT_CONFIGS.command);
       // remaining = limit - count
       expect(result.remaining).toBe(22); // 25 - 3 = 22
-    });
-  });
-
-  describe('rateLimitMiddleware', () => {
-    it('should pass through to next middleware', async () => {
-      const mockContext = {
-        env: {},
-      } as unknown as Parameters<typeof rateLimitMiddleware>[0];
-      const next = vi.fn().mockResolvedValue(undefined);
-
-      await rateLimitMiddleware(mockContext, next);
-
-      expect(next).toHaveBeenCalledTimes(1);
     });
   });
 });

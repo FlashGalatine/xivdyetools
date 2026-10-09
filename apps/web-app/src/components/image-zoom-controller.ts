@@ -84,15 +84,30 @@ export class ImageZoomController extends BaseComponent {
     // everything is bound below, so clearing here is safe.
     this.unbindAllEvents();
 
+    // A pan belongs to the canvas it started on. A new image can arrive while
+    // Ctrl+drag is held (the extractor's document-level Ctrl+V paste), and the
+    // mouseup that would end the pan went to the canvas just discarded — so a
+    // live isPanning plus the old pan start made the next move on the new,
+    // re-fitted canvas write reset offset + (pointer − stale start): the
+    // BUG-096 jump again. Panning resumes only on a fresh Ctrl+mousedown.
+    this.isPanning = false;
+    this.panStartX = 0;
+    this.panStartY = 0;
+
     clearContainer(this.container);
 
     // Create canvas container for scrolling
-    // overflow: hidden ensures zoomed image is clipped within this container
+    // overflow: hidden ensures zoomed image is clipped within this container.
+    // touch-action: none is the controller's own, not left to the host: since
+    // BUG-097 a two-finger move abandons the drag before touchmove's
+    // preventDefault, and the container also covers the letterbox around a
+    // fitted canvas — so without it a pinch over the image zooms the page.
     this.canvasContainerRef = this.createElement('div', {
       className: 'w-full h-full overflow-hidden bg-gray-50 dark:bg-gray-900',
       attributes: {
         id: 'canvas-container',
-        style: 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden;',
+        style:
+          'position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; touch-action: none;',
       },
     });
 
@@ -584,6 +599,15 @@ export class ImageZoomController extends BaseComponent {
 
       // Ctrl/Cmd+Drag: begin panning
       if (mouseEvent.ctrlKey || mouseEvent.metaKey) {
+        // BUG-096: a fitted image sits at centring margin + pan offset, but
+        // the move below writes pan offset + delta only — so the first pixel
+        // of a pan dropped the centring term and the image snapped toward the
+        // corner, and the release (isCentered = false) kept it there. Fold the
+        // margin applied right now into the offset so the pan starts where
+        // the image is; when not centred this is the offset already.
+        this.panOffsetX = parseFloat(this.canvasRef.style.marginLeft) || 0;
+        this.panOffsetY = parseFloat(this.canvasRef.style.marginTop) || 0;
+        this.isCentered = false;
         this.isPanning = true;
         this.panStartX = mouseEvent.clientX;
         this.panStartY = mouseEvent.clientY;
@@ -707,11 +731,29 @@ export class ImageZoomController extends BaseComponent {
     });
 
     // === TOUCH EVENTS ===
+
+    // BUG-097: a second finger is not a tap. Every touch path that learns of
+    // one abandons the drag the way touchcancel does — the loupe settles if it
+    // was up, and nothing samples until a fresh single touch.
+    const abandonDrag = (): void => {
+      if (isDragging && hasDraggedPastThreshold) {
+        this.emit('loupe-end');
+      }
+      isDragging = false;
+      hasDraggedPastThreshold = false;
+    };
+
     this.on(this.canvasRef, 'touchstart', (e: Event) => {
       if (!this.canvasRef) return;
       e.stopPropagation();
       const touchEvent = e as TouchEvent;
-      if (touchEvent.touches.length !== 1) return;
+      if (touchEvent.touches.length !== 1) {
+        // BUG-097: returning with the first finger's drag still live let
+        // whichever finger lifted first pass touchend's guard and commit a
+        // sample at its point, replacing the picked colour on a pinch.
+        abandonDrag();
+        return;
+      }
       const touch = touchEvent.touches[0];
       startClientX = touch.clientX;
       startClientY = touch.clientY;
@@ -725,7 +767,15 @@ export class ImageZoomController extends BaseComponent {
       e.preventDefault(); // Prevent scrolling while dragging
 
       const touchEvent = e as TouchEvent;
-      if (touchEvent.touches.length !== 1) return;
+      if (touchEvent.touches.length !== 1) {
+        // BUG-097: the second finger's touchstart only reaches the listener
+        // above when it lands on the canvas. After a fit the image is
+        // letterboxed, so a pinch often puts it on the container instead, and
+        // this move is the first the canvas hears of it — a bare return here
+        // kept the drag live and the lift sampled.
+        abandonDrag();
+        return;
+      }
       const touch = touchEvent.touches[0];
       const distance = getDistance(startClientX, startClientY, touch.clientX, touch.clientY);
 
@@ -748,9 +798,16 @@ export class ImageZoomController extends BaseComponent {
     this.on(this.canvasRef, 'touchend', (e: Event) => {
       if (!isDragging || !this.canvasRef || !this.currentImage) return;
       e.stopPropagation();
+      const touchEvent = e as TouchEvent;
+      if (touchEvent.touches.length > 0) {
+        // BUG-097: another finger is still down — anywhere, including an
+        // off-canvas one whose touchstart this canvas never saw — so this
+        // lift ends a pinch, not a tap.
+        abandonDrag();
+        return;
+      }
       isDragging = false;
 
-      const touchEvent = e as TouchEvent;
       const touch = touchEvent.changedTouches[0];
       const coords = getCanvasCoords(touch.clientX, touch.clientY);
 
@@ -763,15 +820,7 @@ export class ImageZoomController extends BaseComponent {
       hasDraggedPastThreshold = false;
     });
 
-    this.on(this.canvasRef, 'touchcancel', () => {
-      if (isDragging && this.canvasRef && this.currentImage) {
-        isDragging = false;
-        if (hasDraggedPastThreshold) {
-          this.emit('loupe-end');
-        }
-        hasDraggedPastThreshold = false;
-      }
-    });
+    this.on(this.canvasRef, 'touchcancel', abandonDrag);
   }
 
   /**

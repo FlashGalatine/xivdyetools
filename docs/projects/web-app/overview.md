@@ -147,7 +147,7 @@ src/
 │   ├── share-service.ts  harmony-generator.ts  mixer-blending-engine.ts
 │   ├── chara-session-service.ts  chara-file-loader.ts  chara-resolve-service.ts
 │   ├── telemetry-service.ts
-│   └── display-options-helper.ts  tool-panel-builders.ts
+│   └── display-options-helper.ts
 ├── shared/                     # Pure helpers, types, icon constants
 │   ├── tool-config-types.ts  types.ts  i18n-types.ts  constants.ts
 │   ├── subscription-manager.ts  error-handler.ts  logger.ts  utils.ts

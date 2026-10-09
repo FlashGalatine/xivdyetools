@@ -83,8 +83,25 @@ async function renderSvgToPng(
 
   const { scale = 1, background } = options;
 
+  // OPT-006 (2026-10-04 deep-dive): both wasm allocations — the parsed tree
+  // and the RGBA pixmap (~5 MB at 1200×1050) — are released in the `finally`,
+  // on success and on every failure. Nothing else would free either: the
+  // `Resvg` constructor glue in @resvg/resvg-wasm 2.6.2 never calls
+  // `ResvgFinalization.register`, and this worker's compatibility_date
+  // (2024-12-01, no `enable_weak_ref`) predates the 2025-05-05 default that
+  // turns `FinalizationRegistry` on. Without it the glue's registries are
+  // no-op stubs, so before this fix BOTH the tree and the pixmap leaked for
+  // the life of the isolate and GC reclaimed neither. (`RenderedImage`
+  // would register on a runtime that has the registry.) Freeing is safe after
+  // `asPng()`: it returns a JS-owned copy (the Rust-side PNG Vec is already
+  // dropped when it returns), not a view over wasm memory.
+  // `RenderedImage` is not exported from resvg-wasm's typings, hence the
+  // derived type.
+  let resvg: InstanceType<typeof Resvg> | undefined;
+  let rendered: ReturnType<InstanceType<typeof Resvg>['render']> | undefined;
+
   try {
-    const resvg = new Resvg(svgString, {
+    resvg = new Resvg(svgString, {
       fitTo: {
         mode: 'zoom',
         value: scale,
@@ -98,7 +115,7 @@ async function renderSvgToPng(
       },
     });
 
-    const rendered = resvg.render();
+    rendered = resvg.render();
     const pngBuffer = rendered.asPng();
 
     return pngBuffer;
@@ -107,6 +124,9 @@ async function renderSvgToPng(
     throw new Error(
       `Failed to render SVG: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
+  } finally {
+    rendered?.free();
+    resvg?.free();
   }
 }
 

@@ -22,8 +22,6 @@ export type CommandCategory =
 export interface CommandRegistryEntry {
   name: string;
   category: CommandCategory;
-  /** Marked for removal — carried in /about's "Removed in v5" field */
-  deprecated?: true;
 }
 
 export const COMMAND_REGISTRY: readonly CommandRegistryEntry[] = [

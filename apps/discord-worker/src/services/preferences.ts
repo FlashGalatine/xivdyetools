@@ -108,10 +108,16 @@ function buildPrefsKey(userId: string): string {
 }
 
 /**
- * Get a user's complete preferences object
+ * Get a user's complete preferences object — for READING.
  *
  * If no unified preferences exist, attempts to migrate from legacy keys.
- * Returns an empty object if no preferences are set (defaults apply).
+ * Returns an empty object if no preferences are set (defaults apply) — and
+ * also when the read itself fails, so a KV hiccup degrades a command to its
+ * defaults rather than failing it.
+ *
+ * That leniency is wrong for a read-modify-write: an empty object written
+ * back is the user's whole blob gone (BUG-048). Anything that writes the blob
+ * reads it with {@link getUserPreferencesStrict} instead.
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
@@ -124,23 +130,79 @@ export async function getUserPreferences(
   logger?: ExtendedLogger,
 ): Promise<UserPreferences> {
   try {
-    const key = buildPrefsKey(userId);
-    const data = await kv.get(key);
-
-    if (data) {
-      const prefs = JSON.parse(data) as UserPreferences;
-      return prefs;
-    }
-
-    // No unified prefs - attempt migration from legacy keys
-    const migrated = await migrateLegacyPreferences(kv, userId, logger);
-    return migrated;
+    return await getUserPreferencesStrict(kv, userId, logger);
   } catch (error) {
     if (logger) {
       logger.error('Failed to get user preferences', error instanceof Error ? error : undefined);
     }
     return {};
   }
+}
+
+/**
+ * Get a user's complete preferences object — for a read-modify-write.
+ *
+ * Same result as {@link getUserPreferences} on a clean read, but a read that
+ * FAILED throws instead of answering `{}`: a KV error, or a failed read of a
+ * legacy key while migrating. BUG-048 (2026-10-04 deep dive): the lenient
+ * `{}` let `setPreferences` put a one-key object over the whole blob and
+ * `resetPreference(key)` delete it, both reporting success. Callers abort
+ * the write and report the failure — those failures are transient, so the
+ * user's next attempt can succeed.
+ *
+ * A blob that was READ but is unusable — it does not parse, or parses to
+ * something other than a plain object — is different: it holds nothing a
+ * writer could preserve, and it would fail the same way on every retry, so
+ * throwing would lock the user out of every write but a full reset. It is
+ * logged and answered as `{}`, and the caller's write replaces it.
+ *
+ * A failure to PERSIST a migration is not a read failure: the migrated
+ * object is still returned (and the migration retried on the next read).
+ */
+export async function getUserPreferencesStrict(
+  kv: KVNamespace,
+  userId: string,
+  logger?: ExtendedLogger,
+): Promise<UserPreferences> {
+  const data = await kv.get(buildPrefsKey(userId));
+
+  if (data) {
+    const prefs = parseStoredPreferences(data);
+    if (prefs.ok) return prefs.value;
+    if (logger) {
+      // Neither the blob nor the parser's message (which quotes the text it
+      // choked on) is logged: the blob is the user's home world, clan and
+      // language. No userId either (FINDING-018).
+      logger.error('Stored preferences are unreadable; treating them as empty', undefined, {
+        reason: prefs.reason,
+      });
+    }
+    // Not a cue to migrate: the legacy keys are read only while NO blob exists
+    return {};
+  }
+
+  // No unified prefs - attempt migration from legacy keys
+  return migrateLegacyPreferences(kv, userId, logger);
+}
+
+/**
+ * Parse a stored `prefs:v1` blob, or say why it is unusable. Only a plain
+ * object is a preferences blob: an array would take `prefs.theme = …`
+ * silently and then lose it to `JSON.stringify`.
+ */
+function parseStoredPreferences(
+  data: string,
+): { ok: true; value: UserPreferences } | { ok: false; reason: 'unparseable' | 'not_an_object' } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(data);
+  } catch {
+    return { ok: false, reason: 'unparseable' };
+  }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    return { ok: false, reason: 'not_an_object' };
+  }
+  return { ok: true, value: parsed };
 }
 
 /**
@@ -271,7 +333,8 @@ export async function setPreferences(
   if (applicable.length === 0) return results;
 
   try {
-    const prefs = await getUserPreferences(kv, userId, logger);
+    // BUG-048: strict — a failed read must abort the write, not become `{}`
+    const prefs = await getUserPreferencesStrict(kv, userId, logger);
 
     for (const i of applicable) {
       applyPreference(prefs, entries[i].key, entries[i].value);
@@ -329,8 +392,9 @@ export async function resetPreference(
       return true;
     }
 
-    // Get current preferences
-    const prefs = await getUserPreferences(kv, userId, logger);
+    // Get current preferences. BUG-048: strict — with the lenient `{}` a
+    // failed read made `hasPrefs` false below and deleted the whole blob.
+    const prefs = await getUserPreferencesStrict(kv, userId, logger);
 
     // Delete the specific key
     delete prefs[key];
@@ -514,6 +578,39 @@ export function validatePreferenceValue(
 // ============================================================================
 
 /**
+ * OPT-005 (2026-10-04 deep dive): users whose legacy keys were read and held
+ * nothing to migrate, per KV namespace.
+ *
+ * Without it, every read for a user with no `prefs:v1` blob — anyone who
+ * never ran `/preferences set` — paid two more KV reads for keys that are
+ * almost always absent. The legacy writers were removed in March 2026, so an
+ * absent (or unmigratable) legacy key can never come back: the answer stays
+ * true for the life of the isolate and needs no expiry. It is remembered
+ * only after BOTH reads succeeded and nothing was found; a failed read or a
+ * failed migration write leaves the user un-remembered, so it is retried.
+ *
+ * Kept in memory rather than as a KV tombstone on purpose: a tombstone is a
+ * whole-blob write on the READ path, which could land after a concurrent
+ * `/preferences set` and erase it (the BUG-036 race), and would store a row
+ * for every user who ever ran any command.
+ *
+ * Keyed by the namespace binding so two namespaces never share an answer;
+ * each set is capped and simply starts over when full.
+ */
+const legacyKeysEmpty = new WeakMap<KVNamespace, Set<string>>();
+const LEGACY_EMPTY_MEMO_MAX = 10_000;
+
+function rememberLegacyKeysEmpty(kv: KVNamespace, userId: string): void {
+  let users = legacyKeysEmpty.get(kv);
+  if (!users) {
+    users = new Set();
+    legacyKeysEmpty.set(kv, users);
+  }
+  if (users.size >= LEGACY_EMPTY_MEMO_MAX) users.clear();
+  users.add(userId);
+}
+
+/**
  * Migrate legacy preference keys to unified preferences
  *
  * This is called automatically when getUserPreferences finds no unified prefs.
@@ -522,6 +619,11 @@ export function validatePreferenceValue(
  * Once the unified write succeeds the legacy keys are deleted (FINDING-015);
  * they are never deleted before it, nor when it throws. The legacy writers
  * were removed in March 2026, so these keys only ever shrink.
+ *
+ * A failed legacy READ propagates (BUG-048): a writer must not go on to
+ * create the blob, or the migration — which runs only while there is none —
+ * would never carry that legacy value across. A failed migration WRITE is
+ * logged and swallowed: the migrated object is still the right answer.
  *
  * @param kv - KV namespace binding
  * @param userId - Discord user ID
@@ -533,47 +635,52 @@ async function migrateLegacyPreferences(
   userId: string,
   logger?: ExtendedLogger,
 ): Promise<UserPreferences> {
+  if (legacyKeysEmpty.get(kv)?.has(userId)) return {};
+
   const prefs: UserPreferences = {};
   let hasMigrated = false;
 
+  // Migrate language from i18n:user:{userId}
+  const legacyLanguage = await kv.get(buildLegacyI18nKey(userId));
+  if (legacyLanguage && isValidLocale(legacyLanguage)) {
+    prefs.language = legacyLanguage;
+    hasMigrated = true;
+  }
+
+  // Migrate world from budget:world:v1:{userId}
+  const legacyWorldData = await kv.get(buildLegacyWorldKey(userId));
+  if (legacyWorldData) {
+    try {
+      const worldPref = JSON.parse(legacyWorldData) as { world?: string };
+      if (worldPref.world) {
+        prefs.world = worldPref.world;
+        hasMigrated = true;
+      }
+    } catch {
+      // Invalid JSON in legacy key, skip
+    }
+  }
+
+  if (!hasMigrated) {
+    rememberLegacyKeysEmpty(kv, userId);
+    return prefs;
+  }
+
+  // We migrated something: save it to the unified key
   try {
-    // Migrate language from i18n:user:{userId}
-    const legacyLanguage = await kv.get(buildLegacyI18nKey(userId));
-    if (legacyLanguage && isValidLocale(legacyLanguage)) {
-      prefs.language = legacyLanguage;
-      hasMigrated = true;
-    }
+    prefs.updatedAt = new Date().toISOString();
+    prefs._version = SCHEMA_VERSION;
+    await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
 
-    // Migrate world from budget:world:v1:{userId}
-    const legacyWorldData = await kv.get(buildLegacyWorldKey(userId));
-    if (legacyWorldData) {
-      try {
-        const worldPref = JSON.parse(legacyWorldData) as { world?: string };
-        if (worldPref.world) {
-          prefs.world = worldPref.world;
-          hasMigrated = true;
-        }
-      } catch {
-        // Invalid JSON in legacy key, skip
-      }
-    }
+    // Unified write succeeded - the legacy keys have served their purpose.
+    await kv.delete(buildLegacyI18nKey(userId));
+    await kv.delete(buildLegacyWorldKey(userId));
 
-    // If we migrated anything, save to unified key
-    if (hasMigrated) {
-      prefs.updatedAt = new Date().toISOString();
-      prefs._version = SCHEMA_VERSION;
-      await kv.put(buildPrefsKey(userId), JSON.stringify(prefs));
-
-      // Unified write succeeded - the legacy keys have served their purpose.
-      await kv.delete(buildLegacyI18nKey(userId));
-      await kv.delete(buildLegacyWorldKey(userId));
-
-      if (logger) {
-        // FINDING-018: no userId (bot policy §5); `keys` is key NAMES only.
-        logger.info('Migrated legacy preferences to unified format', {
-          keys: Object.keys(prefs),
-        });
-      }
+    if (logger) {
+      // FINDING-018: no userId (bot policy §5); `keys` is key NAMES only.
+      logger.info('Migrated legacy preferences to unified format', {
+        keys: Object.keys(prefs),
+      });
     }
   } catch (error) {
     if (logger) {
@@ -629,22 +736,32 @@ export function getDefaultValue(key: PreferenceKey): string | number | boolean |
  * Entries are either a literal command token (`/mixer` — never localized) or
  * a `preferences.affects.*` locale key the caller renders with `t.t()`
  * (F-05, 2026-08-20 audit).
+ *
+ * BUG-049 (2026-10-04 deep dive): a `/command` token here is a promise in
+ * the `/preferences set` confirmation, so it must name only handlers that
+ * actually read the key. `/gradient` takes its own `color_space` option and
+ * never reads `blending`; `/swatch` reads only the theme (its clan and gender
+ * come from the `.chara` file); `/harmony` and `/manual` (the
+ * `spectrum_prices` topic) do read `matching` / `world` and were missing.
+ * Nothing reads `clan` or `gender` at all, so they name nothing.
+ * `preferences.exhaustive.test.ts` derives the table from the handler
+ * sources and fails when this list drifts from them.
  */
 export function getAffectedCommands(key: PreferenceKey): string[] {
   switch (key) {
     case 'language':
       return ['preferences.affects.allCommands'];
     case 'blending':
-      return ['/mixer', '/gradient'];
+      return ['/mixer'];
     case 'matching':
-      return ['/mixer', '/gradient', '/extractor', '/swatch', '/budget'];
+      return ['/mixer', '/gradient', '/extractor', '/harmony', '/budget'];
     case 'count':
       return ['/extractor'];
     case 'clan':
     case 'gender':
-      return ['/swatch'];
+      return [];
     case 'world':
-      return ['/budget', 'preferences.affects.marketData'];
+      return ['/budget', '/manual', 'preferences.affects.marketData'];
     case 'theme':
       return ['preferences.affects.everyCard'];
     case 'market':

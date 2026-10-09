@@ -228,6 +228,33 @@ describe('V4AppHeader', () => {
       await el.updateComplete;
       expect(el.shadowRoot!.querySelector('.tool-menu')).toBeNull();
     });
+
+    /*
+     * One Escape closes one layer (BUG-105): the toast container takes Escape
+     * only when nothing marked it handled, so the menu has to mark the one
+     * that closed it — or a dismissible toast went with it.
+     */
+    it('marks the Escape that closed the menu as handled', async () => {
+      const el = await mountHeader('harmony');
+      el.shadowRoot!.querySelector<HTMLButtonElement>('button.tool-menu-btn')!.click();
+      await el.updateComplete;
+
+      const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+      document.dispatchEvent(event);
+
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    // The listener lives as long as the header, so it must not swallow every
+    // Escape: with the menu shut, the key belongs to whoever else wants it
+    it('leaves Escape alone while the menu is closed', async () => {
+      await mountHeader('harmony');
+
+      const event = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+      document.dispatchEvent(event);
+
+      expect(event.defaultPrevented).toBe(false);
+    });
   });
 
   describe('chrome cluster', () => {

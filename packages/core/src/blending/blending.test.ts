@@ -9,8 +9,8 @@
 
 import { describe, it, expect } from 'vitest';
 import { blendColors } from './index.js';
-import { rgbToRyb } from './conversions.js';
-import type { BlendingMode } from './types.js';
+import { hexToRgb, rgbToHsl, rgbToRyb } from './conversions.js';
+import type { BlendingMode, HueMethod } from './types.js';
 
 const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
 
@@ -69,6 +69,56 @@ describe('blendColors', () => {
       const resultOne = blendColors('#FF0000', '#0000FF', 'rgb', 1);
 
       expect(resultOver.hex).toBe(resultOne.hex);
+    });
+
+    // BUG-129: Math.max/Math.min pass NaN straight through, so every channel
+    // came out NaN and the hex was the literal string '#NaNNaNNaN'. A NaN has
+    // no side of the range to clamp to, so it falls back to the documented
+    // default — the same mix as leaving the argument out.
+    for (const mode of ALL_MODES) {
+      it(`${mode}: a NaN ratio falls back to the default 0.5 mix`, () => {
+        const result = blendColors('#FF0000', '#0000FF', mode, NaN);
+
+        expect(result.hex).toMatch(HEX_PATTERN);
+        expect(result).toEqual(blendColors('#FF0000', '#0000FF', mode));
+      });
+    }
+
+    // The ratio is typed `number`, but an untyped JS caller or a value read
+    // back from JSON can hand over anything. `Number.isNaN` does not coerce, so
+    // the first BUG-129 guard let a string or an object through to Math.min,
+    // which coerced it to NaN ('#NaNNaNNaN' again), and turned null into 0 (all
+    // of hex1). Anything that is not a number now gets the default, like NaN.
+    describe.each([
+      ['a non-numeric string', 'abc'],
+      ['an object', {}],
+      ['null', null],
+    ])('a ratio that is %s', (_label, ratio) => {
+      for (const mode of ALL_MODES) {
+        it(`${mode}: falls back to the default 0.5 mix`, () => {
+          const result = blendColors('#FF0000', '#0000FF', mode, ratio as unknown as number);
+
+          expect(result.hex).toMatch(HEX_PATTERN);
+          expect(result).toEqual(blendColors('#FF0000', '#0000FF', mode));
+        });
+      }
+    });
+
+    it('does not parse a numeric string — it gets the default too', () => {
+      expect(blendColors('#FF0000', '#0000FF', 'rgb', '0.25' as unknown as number)).toEqual(
+        blendColors('#FF0000', '#0000FF', 'rgb'),
+      );
+    });
+
+    // ±Infinity is out of range in a known direction, so it clamps like any
+    // other out-of-range ratio instead of falling back to the default.
+    it('clamps +Infinity to 1 and -Infinity to 0', () => {
+      expect(blendColors('#FF0000', '#0000FF', 'rgb', Infinity).hex).toBe(
+        blendColors('#FF0000', '#0000FF', 'rgb', 1).hex,
+      );
+      expect(blendColors('#FF0000', '#0000FF', 'rgb', -Infinity).hex).toBe(
+        blendColors('#FF0000', '#0000FF', 'rgb', 0).hex,
+      );
     });
   });
 
@@ -201,6 +251,70 @@ describe('blendColors', () => {
       expect(result.rgb.r).toBe(64);
       expect(result.rgb.g).toBe(0);
       expect(result.rgb.b).toBe(0);
+    });
+  });
+
+  describe('HSL mode: a grey input has no hue to contribute (BUG-035)', () => {
+    // rgbToHsl reports h = 0 for every grey, white and black, but that 0 is a
+    // placeholder: with zero saturation the hue is "powerless" (CSS Color 4).
+    // Interpolating it as a real red pulled every grey mix toward red, so
+    // white + blue came out pink (#df9fdf) and black + green olive (#606020).
+    const HUE_METHODS: HueMethod[] = ['shorter', 'longer', 'increasing', 'decreasing'];
+    const hueOf = (hex: string): number => rgbToHsl(hexToRgb(hex)).h;
+
+    it('white + blue is a light blue, not pink', () => {
+      expect(blendColors('#FFFFFF', '#0000FF', 'hsl', 0.5).hex).toBe('#9f9fdf');
+    });
+
+    it('black + green is a dark green, not olive', () => {
+      expect(blendColors('#000000', '#00FF00', 'hsl', 0.5).hex).toBe('#206020');
+    });
+
+    it('the grey side may be either argument', () => {
+      expect(blendColors('#0000FF', '#FFFFFF', 'hsl', 0.5).hex).toBe('#9f9fdf');
+      expect(blendColors('#00FF00', '#000000', 'hsl', 0.5).hex).toBe('#206020');
+    });
+
+    // The three exactly-grey dyes, against a saturated colour, at every ratio
+    // and hue method: the mix keeps the chromatic input's hue. Before the fix,
+    // 'shorter' drifted through the reds and 'longer'/'increasing'/'decreasing'
+    // swept up to a full turn of the wheel.
+    describe.each([
+      ['Slate Grey', '#656565'],
+      ['Jet Black', '#1e1e1e'],
+      ['Metallic Silver', '#a7a7a7'],
+    ])('%s (%s) + Royal Blue keeps the blue hue', (_name, grey) => {
+      const chromatic = '#2a3fd0';
+      const target = hueOf(chromatic);
+
+      for (const hueMethod of HUE_METHODS) {
+        it(`hueMethod '${hueMethod}'`, () => {
+          for (const ratio of [0.1, 0.25, 0.5, 0.75, 0.9]) {
+            const forward = blendColors(grey, chromatic, 'hsl', ratio, { hueMethod }).hex;
+            const backward = blendColors(chromatic, grey, 'hsl', 1 - ratio, { hueMethod }).hex;
+
+            // Integer RGB rounding moves a low-saturation hue by a few degrees
+            // — 90% Jet Black is #25262a, a 5-count channel spread, and lands
+            // 4.4° off. The defect moved it by 13° to 210°.
+            expect(Math.abs(hueOf(forward) - target)).toBeLessThan(5);
+            expect(Math.abs(hueOf(backward) - target)).toBeLessThan(5);
+          }
+        });
+      }
+    });
+
+    it('two greys stay grey, whatever the hue method', () => {
+      for (const hueMethod of HUE_METHODS) {
+        const { rgb } = blendColors('#000000', '#FFFFFF', 'hsl', 0.3, { hueMethod });
+
+        expect(rgb.g).toBe(rgb.r);
+        expect(rgb.b).toBe(rgb.r);
+      }
+    });
+
+    it('two chromatic inputs still interpolate hue as before', () => {
+      // Red (0°) + green (120°) is the case the grey fix must not touch.
+      expect(hueOf(blendColors('#FF0000', '#00FF00', 'hsl', 0.5).hex)).toBeCloseTo(60, 0);
     });
   });
 

@@ -50,7 +50,11 @@ vi.mock('../../utils/discord-api.js', () => ({
   safeEditOriginalResponse: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-vi.mock('@xivdyetools/bot-logic', () => ({
+vi.mock('@xivdyetools/bot-logic', async () => ({
+  // The real sanitiser — a stub here would only test the stub (BUG-044).
+  sanitizeEmbedText: (
+    await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic')
+  ).sanitizeEmbedText,
   executeMixer: vi.fn().mockResolvedValue({
     ok: true,
     svgString: '<svg>mixer</svg>',
@@ -199,6 +203,39 @@ describe('handleMixerV4Command', () => {
       expect(body.data.embeds[0].description).toBe('invalid:nosuchdye');
       expect(ctx.waitUntil).not.toHaveBeenCalled();
     });
+
+    // BUG-044: the raw option was echoed unsanitised and uncapped — ~4000
+    // characters overflowed the 4096-character description and Discord
+    // rejected the reply ("The application did not respond").
+    const HOSTILE = `@everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+    const expectSafeEcho = (description: string) => {
+      expect(description.startsWith('invalid:')).toBe(true);
+      const echoed = description.slice('invalid:'.length);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+    };
+
+    it.each(['dye1', 'dye2'])(
+      'sanitizes and caps an unresolvable %s in the error (BUG-044)',
+      async (slot) => {
+        vi.mocked(resolveColorInput).mockImplementation((value: string) =>
+          value === HOSTILE
+            ? null
+            : ({ hex: '#FFFFFF', name: `Resolved ${value}`, id: 1, itemID: 5729, stainID: 1 } as never),
+        );
+        const response = await handleMixerV4Command(
+          interaction(dyeOptions([]).map((o) => (o.name === slot ? { ...o, value: HOSTILE } : o))),
+          env,
+          ctx,
+        );
+        const body = (await response.json()) as { data: { embeds: { description: string }[] } };
+
+        expectSafeEcho(body.data.embeds[0].description);
+        expect(ctx.waitUntil).not.toHaveBeenCalled();
+      },
+    );
   });
 
   describe('mode option -> bot-logic call args', () => {
@@ -245,6 +282,16 @@ describe('handleMixerV4Command', () => {
   });
 
   describe('failure paths', () => {
+    // Pins the plumbing only: whether executeMixer logs is bot-logic's test
+    it('passes its request logger to executeMixer — pins the logger plumbing only (BUG-125)', async () => {
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      await handleMixerV4Command(interaction(dyeOptions()), env, ctx, logger as never);
+      await settle();
+
+      expect(vi.mocked(executeMixer).mock.calls[0][0].logger).toBe(logger);
+    });
+
     it('does not mark a render outcome on NO_MATCHES (answers with the no-match message)', async () => {
       vi.mocked(executeMixer).mockResolvedValue({
         ok: false,
@@ -340,7 +387,7 @@ describe('handleMixerV4Command', () => {
       expect(body.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
       await settle();
 
-      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>mixer</svg>', { scale: 2 });
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>mixer</svg>', { scale: 2, locale: 'en' });
       expect(resolveColorInput).toHaveBeenCalledWith('Rolanberry Red', {
         excludeFacewear: true,
         locale: 'en',

@@ -13,4 +13,4 @@
 - First add a character-creation sheet table (nine sheets × six locales) to `ffxiv-terminology.md` from the client's own text, read raw (Sprint 0 decision). Then one label per sheet here; the bot and core follow (TERM-004, TERM-021).
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `31c8914f` + `c88d51c6` (review follow-ups) (branch `fix/remediation-2026-10-04-sprint6`, web-app 5.14.4, core 5.8.2; PR #248, open, stacked on #247).

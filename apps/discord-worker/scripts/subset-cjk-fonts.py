@@ -14,31 +14,49 @@ Usage:
 The script reads all locale JSON files from:
   - packages/core/src/data/locales/     (dye names, categories, labels, etc.)
   - packages/bot-logic/src/i18n/locales/ (bot UI strings, card vocabulary, etc.)
-and the one localized table that lives in TypeScript:
+the one localized table that lives in TypeScript:
   - packages/core/src/config/consolidated-ids.ts  (market-item names, F-10)
+and the equippable-item names /glamour draws (FONT-001):
+  - apps/api-worker/src/chara/data/item-names.{ko,zh}.json  -> SC and KR
+  - apps/api-worker/src/chara/data/item-names.ja.json       -> JP only (a
+    build-time copy of the names XIVAPI serves; api-worker never imports it)
 
 And produces:
-  - src/fonts/NotoSansSC-Subset.ttf  CJK for ALL languages — SC is the terminal
-                                     fallback in every chain, so it must carry
-                                     the Japanese kanji too, not just Chinese
-  - src/fonts/NotoSansJP-Subset.ttf  CJK in ja only — supplies Japanese
-                                     letterforms ahead of SC for ja locales
+  - src/fonts/NotoSansSC-Subset.ttf  CJK for ALL languages' locale text plus
+                                     the ko/zh item names — the catch-all, so
+                                     it carries the Japanese locale kanji and
+                                     kana too, not just Chinese
+  - src/fonts/NotoSansJP-Subset.ttf  CJK in ja text and ja item names only —
+                                     supplies Japanese letterforms
   - src/fonts/NotoSansKR-Subset.ttf  Hangul + ASCII only (see OPT-001 below)
+
+Which face draws a CJK glyph is decided at render time, not here: every card
+text stack is Latin-led, so the primary face (Onest / Space Grotesk / Fragment
+Mono) draws what it has, and resvg fills the rest from the loaded faces in the
+order src/services/fonts.ts getFontBuffers() returns them — JP, SC, KR for ja
+and SC, KR, JP for every other locale. The font-family list does not steer
+that fallback. So JP draws ja text (whatever it carries), SC draws zh text and
+anything JP lacks, and Hangul always comes from KR (SC and JP carry none).
 
 Source faces are looked up locally and downloaded on demand if absent; the
 downloads land in scripts/.font-sources/, deliberately outside src/fonts so
 wrangler never bundles a 10 MiB variable font into the Worker.
 
-SIZE BUDGET: the three subsets total ~1.6 MiB raw / ~1.0 MiB gzipped, which is
-roughly 38% of the Worker bundle. The binding constraint is Cloudflare's 3 MiB
-*gzipped* Worker limit, NOT the "~1.3 MiB" raw figure quoted before 5.0 — that
-predates NotoSansJP-Subset and was never revised when it was added. Measure
-real headroom with `wrangler deploy --dry-run`, which reports the gzipped total.
+SIZE BUDGET: since the item names joined (FONT-001: ko/zh 2026-10-06, then
+ja) the three subsets total ~1.48 MiB raw / ~0.9 MiB gzipped — SC 839 KiB,
+JP 470 KiB, KR 201 KiB raw — and the Worker measured 2,717.2 KiB gzipped of
+its 3,072 KiB limit (2,373.4 KiB before any item names; ko/zh cost ~250 KiB
+gzipped and ja another ~90 KiB). The binding constraint is Cloudflare's
+3 MiB *gzipped* Worker limit, not any raw figure. Measure real headroom with
+`pnpm run check-bundle-size` (it wraps `wrangler deploy --dry-run`, which
+reports the gzipped total).
 
-If new dyes are added or locale strings change, re-run this script and commit
-the updated subset files. Every locale edit invalidates these subsets: a
-codepoint absent from its subset renders as tofu, and no test in the repo
-catches it (the SVG suites assert structure, not glyph coverage).
+Re-run this script and commit the updated subset files whenever new dyes are
+added, locale strings change, or api-worker's build-item-names.mjs regenerates
+the item-name tables. A codepoint absent from its subset renders as tofu in
+locale text and sends a /glamour item name back to English; the
+font-coverage.test.ts and item-name-coverage.test.ts suites fail until the
+re-cut lands.
 """
 
 import os
@@ -60,6 +78,19 @@ MONOREPO_ROOT = os.path.dirname(APPS_DIR)                      # repo root
 
 CORE_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "core", "src", "data", "locales")
 CONSOLIDATED_IDS_TS = os.path.join(MONOREPO_ROOT, "packages", "core", "src", "config", "consolidated-ids.ts")
+# FONT-001 (2026-10-04 i18n audit): the equippable-item name tables api-worker's
+# /v1/chara/resolve merges into its answer — the names /glamour draws on its card.
+ITEM_NAMES_DIR = os.path.join(APPS_DIR, "api-worker", "src", "chara", "data")
+#: Item-name tables cut into SC and KR (the full-set cut). en/de/fr names come
+#: from XIVAPI at run time and have no table in the repo; nothing in them needs
+#: a CJK face anyway.
+ITEM_NAME_LANGUAGES = ("ko", "zh")
+#: Item-name tables cut into JP only. ja's /v1/chara/resolve names come from
+#: XIVAPI at run time too; item-names.ja.json is a build-time copy of the same
+#: game data, kept only for this cut and its gate. A ja card loads JP ahead of
+#: SC (getFontBuffers('ja')), so every ja name draws in Japanese letterforms
+#: without SC growing by a single glyph.
+JP_ITEM_NAME_LANGUAGES = ("ja",)
 # bot-i18n was absorbed into bot-logic (Monorepo 2.0 Tier 1)
 BOT_LOCALES_DIR = os.path.join(MONOREPO_ROOT, "packages", "bot-logic", "src", "i18n", "locales")
 FONTS_DIR = os.path.join(WORKER_ROOT, "src", "fonts")
@@ -100,8 +131,9 @@ LOCALE_LANGUAGES = ["ja", "ko", "zh", "de", "fr"]
 # Character collection
 # ============================================================================
 
-def collect_characters(languages):
-    """Collect all unique characters from core + bot locale files for languages."""
+def collect_characters(languages, item_name_languages):
+    """Collect all unique characters from core + bot locale files for languages,
+    plus the item-name tables named in item_name_languages (those also in languages)."""
     codepoints = set(range(0x20, 0x7F))  # Basic ASCII
 
     def add_strings(obj):
@@ -167,12 +199,34 @@ def collect_characters(languages):
             n += 1
     print(f"  consolidated-ids.ts: {n} names loaded")
 
+    # Equippable item names (FONT-001, 2026-10-04 i18n audit). /glamour draws
+    # each piece's localized name on its card only when the bundled fonts can
+    # draw every codepoint of it (bot-logic glamour.ts `canDraw`), else the
+    # English name. Cut from locale data alone, the subsets drew English for
+    # 63 % of ko items, 97 % of zh items and 7 % of ja items. These tables are
+    # regenerated by apps/api-worker/scripts/build-item-names.mjs after a
+    # patch — re-run this script whenever they change;
+    # item-name-coverage.test.ts fails until you do.
+    for lang in item_name_languages:
+        if lang not in wanted:
+            continue
+        path = os.path.join(ITEM_NAMES_DIR, f"item-names.{lang}.json")
+        if not os.path.exists(path):
+            raise FileNotFoundError(
+                f"Item-name table not found: {path}\n"
+                "Did api-worker's chara data move? Update ITEM_NAMES_DIR."
+            )
+        with open(path, "r", encoding="utf-8") as f:
+            names = json.load(f)
+        add_strings(names)
+        print(f"  item-names.{lang}.json: {len(names)} names loaded")
+
     return codepoints
 
 
 def collect_all_characters():
-    """Collect all unique characters from all locale sources."""
-    return collect_characters(LOCALE_LANGUAGES)
+    """Collect all unique characters from all locale sources (the SC + KR cut)."""
+    return collect_characters(LOCALE_LANGUAGES, ITEM_NAME_LANGUAGES)
 
 
 def download_font(url, dest):
@@ -233,9 +287,9 @@ def subset_font(input_path, output_path, codepoints, fix_names=None):
     # this for Space Grotesk / Onest but instanced only those two families;
     # subsetting preserves fvar, so the CJK faces stayed variable.
     #
-    # One weight, not three: the three subsets are already ~1.0 MiB gzipped of
-    # the Worker's 3 MiB budget, so a Regular/SemiBold/Bold set per family would
-    # not fit. STATIC_WEIGHT 400 is the readable, neutral choice — CJK in a bold
+    # One weight, not three: the three subsets are already ~0.9 MiB gzipped of
+    # the Worker's 3 MiB budget (see SIZE BUDGET above), so a
+    # Regular/SemiBold/Bold set per family would not fit. STATIC_WEIGHT 400 is the readable, neutral choice — CJK in a bold
     # heading renders Regular rather than Thin. Real bold CJK needs the fonts
     # moved out of the bundle first (see FONT-001 in
     # docs/audits/2026-09-03-i18n/).
@@ -332,10 +386,11 @@ def main():
     })
     print(f"Output: {kr_size / 1024:.1f} KiB ({kr_glyphs} glyphs)")
 
-    # Subset Noto Sans JP — Japanese letterforms for ja locales (5.0).
-    # Scoped to the characters ja text actually uses (+ASCII); SC remains the
-    # fallback, so the ja chain 'Noto Sans JP, Noto Sans SC' renders Japanese
-    # letterforms without growing the SC subset.
+    # Subset Noto Sans JP — Japanese letterforms for ja text (5.0).
+    # Scoped to the characters ja text and ja item names actually use (+ASCII).
+    # A ja card loads JP ahead of SC (getFontBuffers('ja') in fonts.ts — the
+    # load order, not the font-family list, picks the fallback face), so ja
+    # renders in Japanese letterforms without growing the SC subset.
     jp_candidates = [
         os.path.join(SOURCES_DIR, "NotoSansJP-Variable.ttf"),
         os.path.join(APPS_DIR, "og-worker", "scripts", ".font-sources", "NotoSansJP-Variable.ttf"),
@@ -345,8 +400,8 @@ def main():
         print("\nNoto Sans JP source not found. Downloading...")
         jp_input = download_font(NOTO_JP_URL, os.path.join(SOURCES_DIR, "NotoSansJP-Variable.ttf"))
 
-    print("\nCollecting Japanese characters (core + bot ja.json)...")
-    jp_codepoints = collect_characters(["ja"])
+    print("\nCollecting Japanese characters (core + bot ja.json + ja item names)...")
+    jp_codepoints = collect_characters(["ja"], JP_ITEM_NAME_LANGUAGES)
 
     print(f"\n--- Noto Sans JP ---")
     print(f"Input: {os.path.getsize(jp_input) / 1024:.1f} KiB")

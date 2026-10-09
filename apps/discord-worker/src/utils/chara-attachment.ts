@@ -16,6 +16,22 @@ import type { DiscordInteraction } from '../types/env.js';
 /** .chara files are small JSON — anything past 1 MiB is not one. */
 const MAX_FILE_BYTES = 1_048_576;
 
+/** The cap as the refusal states it ("larger than 1 MB"). */
+const MAX_FILE_MB = MAX_FILE_BYTES / 1_048_576;
+
+/**
+ * A refusal in the reader's language (HC-002, 2026-10-04 i18n audit): the
+ * frame and its reason are both bot-logic keys. The reasons used to be English
+ * text inside the translated frame, in every locale.
+ */
+function refusal(
+  t: Translator,
+  reasonKey: string,
+  vars?: Record<string, string | number>
+): { ok: false; message: string } {
+  return { ok: false, message: t.t('card.swatchParseError', { message: t.t(reasonKey, vars) }) };
+}
+
 /** Attachment download timeout (ms) — the Discord REST helpers use 5–10 s too. */
 const DOWNLOAD_TIMEOUT_MS = 10_000;
 
@@ -57,17 +73,11 @@ export function checkCharaAttachment(
     return { ok: false, message: t.t('errors.missingInput') };
   }
   if (attachment.size > MAX_FILE_BYTES) {
-    return {
-      ok: false,
-      message: t.t('card.swatchParseError', { message: `file too large (${attachment.size} bytes)` }),
-    };
+    return refusal(t, 'card.charaFileReason.tooLarge', { mb: MAX_FILE_MB });
   }
   // FINDING-033: only Discord's own CDN hosts are ever fetched
   if (!isAllowedAttachmentUrl(attachment.url)) {
-    return {
-      ok: false,
-      message: t.t('card.swatchParseError', { message: 'attachment must be uploaded to Discord' }),
-    };
+    return refusal(t, 'card.charaFileReason.notOnDiscord');
   }
   return { ok: true, url: attachment.url };
 }
@@ -90,17 +100,11 @@ export async function downloadCharaAttachment(
   });
   if (!response.ok) {
     // An expired / forbidden attachment URL or a redirect: the file could not be read.
-    return {
-      ok: false,
-      message: t.t('card.swatchParseError', { message: `download failed (${response.status})` }),
-    };
+    return refusal(t, 'card.charaFileReason.downloadFailed', { status: response.status });
   }
   const text = await readTextCapped(response, MAX_FILE_BYTES);
   if (text === null) {
-    return {
-      ok: false,
-      message: t.t('card.swatchParseError', { message: `file too large (over ${MAX_FILE_BYTES} bytes)` }),
-    };
+    return refusal(t, 'card.charaFileReason.tooLarge', { mb: MAX_FILE_MB });
   }
   return { ok: true, text };
 }

@@ -12,6 +12,7 @@
  */
 
 import type { Dye } from '@xivdyetools/types';
+import type { ExtendedLogger } from '@xivdyetools/logger';
 import {
   messageResponse,
   deferredResponse,
@@ -53,9 +54,12 @@ export async function handleDyeCommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
+  // BUG-125: handed to executeDyeInfo / executeRandom, whose catches log the
+  // error's class on it instead of discarding the exception.
+  logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale, logger);
   const theme = prefs.theme ?? 'dark';
   const locale = t.getLocale();
   await initializeLocale(locale);
@@ -74,11 +78,29 @@ export async function handleDyeCommand(
     case 'search':
       return handleSearchSubcommand(t, env.DISCORD_CLIENT_ID, subcommand.options);
     case 'info':
-      return handleInfoSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
+      return handleInfoSubcommand(
+        interaction,
+        env,
+        ctx,
+        t,
+        locale,
+        theme,
+        subcommand.options,
+        logger,
+      );
     case 'list':
       return handleListSubcommand(t, env.DISCORD_CLIENT_ID, subcommand.options);
     case 'random':
-      return handleRandomSubcommand(interaction, env, ctx, t, locale, theme, subcommand.options);
+      return handleRandomSubcommand(
+        interaction,
+        env,
+        ctx,
+        t,
+        locale,
+        theme,
+        subcommand.options,
+        logger,
+      );
     default:
       return messageResponse({
         embeds: [
@@ -162,6 +184,7 @@ function handleInfoSubcommand(
   locale: LocaleCode,
   theme: 'dark' | 'light',
   options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger,
 ): Response {
   const name = options?.find((opt) => opt.name === 'name')?.value as string | undefined;
   if (!name) {
@@ -175,14 +198,21 @@ function handleInfoSubcommand(
   const dye = findDyeByName(name, t.getLocale()) ?? results[0];
 
   if (!dye) {
+    // BUG-044: same treatment as the search query above — an uncapped
+    // ~4000-char name pushed the description past Discord's 4096 limit.
     return messageResponse({
-      embeds: [errorEmbed(t.t('common.error'), t.t('errors.dyeNotFound', { name }))],
+      embeds: [
+        errorEmbed(
+          t.t('common.error'),
+          t.t('errors.dyeNotFound', { name: sanitizeEmbedText(name, 100) }),
+        ),
+      ],
       flags: 64,
     });
   }
 
   const deferResponse = deferredResponse();
-  ctx.waitUntil(processInfoCard(interaction, env, dye, locale, theme));
+  ctx.waitUntil(processInfoCard(interaction, env, dye, locale, theme, logger));
   return deferResponse;
 }
 
@@ -192,9 +222,10 @@ async function processInfoCard(
   dye: Dye,
   locale: LocaleCode,
   theme: 'dark' | 'light',
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const t = createTranslator(locale);
-  const result = await executeDyeInfo({ dye, locale, theme });
+  const result = await executeDyeInfo({ dye, locale, theme, logger });
 
   if (!result.ok) {
     // GENERATION_FAILED: the card could not be generated — the text fallback
@@ -205,7 +236,7 @@ async function processInfoCard(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
     const emoji = getDyeEmoji(dye.stainID ?? 0, env.DISCORD_CLIENT_ID);
     const emojiPrefix = emoji ? `${emoji} ` : '';
 
@@ -357,10 +388,11 @@ function handleRandomSubcommand(
   locale: LocaleCode,
   theme: 'dark' | 'light',
   options?: Array<{ name: string; value?: string | number | boolean }>,
+  logger?: ExtendedLogger,
 ): Response {
   const uniqueCategories = options?.find((opt) => opt.name === 'unique_categories')?.value === true;
   const deferResponse = deferredResponse();
-  ctx.waitUntil(processRandomGrid(interaction, env, uniqueCategories, locale, theme));
+  ctx.waitUntil(processRandomGrid(interaction, env, uniqueCategories, locale, theme, logger));
   return deferResponse;
 }
 
@@ -370,9 +402,10 @@ async function processRandomGrid(
   uniqueCategories: boolean,
   locale: LocaleCode,
   theme: 'dark' | 'light',
+  logger?: ExtendedLogger,
 ): Promise<void> {
   const t = createTranslator(locale);
-  const result = await executeRandom({ locale, count: 5, uniqueCategories, theme });
+  const result = await executeRandom({ locale, count: 5, uniqueCategories, theme, logger });
 
   if (!result.ok) {
     if (result.error === 'NO_DYES') {
@@ -382,13 +415,13 @@ async function processRandomGrid(
     } else {
       // GENERATION_FAILED: the card generator threw; text fallback served.
       markCommandOutcome(interaction, 'render', { served: true });
-      await sendRandomFallback(interaction, env, t, locale);
+      await sendRandomFallback(interaction, env, t, locale, logger);
     }
     return;
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     // Build description with Discord emojis
     const dyeList = result.dyes
@@ -415,7 +448,7 @@ async function processRandomGrid(
   } catch {
     // The PNG render or the Discord edit failed; text fallback served.
     markCommandOutcome(interaction, 'render', { served: true });
-    await sendRandomFallback(interaction, env, t, locale);
+    await sendRandomFallback(interaction, env, t, locale, logger);
   }
 }
 
@@ -424,9 +457,10 @@ async function sendRandomFallback(
   env: Env,
   t: Translator,
   locale: LocaleCode,
+  logger?: ExtendedLogger,
 ): Promise<void> {
   // Re-run a text-only random selection on fallback
-  const result = await executeRandom({ locale, count: 5 });
+  const result = await executeRandom({ locale, count: 5, logger });
   if (!result.ok) {
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],

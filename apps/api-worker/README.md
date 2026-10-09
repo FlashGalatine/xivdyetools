@@ -153,7 +153,7 @@ src/
     router.ts              # /universalis + /api/v2 proxy routes
     config/                # cache TTLs, datacenter/world lists
     services/              # cached-fetch, cache-service, request-coalescer, rate-limiter selector
-scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables after a patch (manual; commit the output)
+scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables (+ the build-time-only ja table discord-worker's font cut reads) after a patch (manual; commit the output)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
 tests/
   test-utils.ts            # Mock env factory

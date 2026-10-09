@@ -5,13 +5,107 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-10-06
+
+Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor.
+
+### Changed
+
+- **`expected_status` is checked against `@xivdyetools/types`' `REVIEW_STATUSES`**, the list both
+  bots use. The accepted values are unchanged.
+- From Sprint 17: tests pin the two 404 bodies moderation-worker tells apart, "Preset not found"
+  and a missing route.
+
+## [2.6.0] - 2026-10-06
+
+Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+in the same PR as discord-worker 5.8.4. MINOR: one additive webhook field. No schema change and no
+D1 migration. Merge after 2.5.0 (Sprint 8, PR #256). The order against discord-worker does not
+matter: the field is optional, and discord-worker falls back to `previous_values` without it.
+
+### Added
+
+- **`edited_from` on every PATCH notification**: the name, description, tags and dyes that this
+  edit replaced, taken from the row the handler read before writing. POST notifications do not
+  carry it.
+  - It is the diff base. A moderator now sees what this edit changed, including on a pending
+    preset's edit and a rejected preset's resubmission, which have no `previous_values`.
+  - `preset.previous_values` keeps its meaning: what Revert restores. It can be older than the
+    text this edit replaced (approved A, flagged edit B, B approved, flagged edit C: Revert
+    restores A), so a consumer labels Revert by what it restores, not as "undo this edit".
+  - The dead-letter record still drops the preset text, the new field included (FINDING-017).
+  - Only those four fields are carried. A notifying edit that also changes the category,
+    secondary categories or example link does not show them in the diff.
+
+## [2.5.0] - 2026-10-05
+
+Sprint 8 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`).
+MINOR, because clients can see the new 400s. No schema change and no D1 migration.
+
+**Deploy with discord-worker Sprint 9.** The bot can send a repeated dye: `/preset submit`, and
+`/preset edit` rebuilding the dye list. Until Sprint 9 checks for that itself, users would see
+the generic "Invalid request". **Before deploy, the maintainer runs a read-only query on prod D1**
+for presets that already repeat a dye:
+`SELECT id, dyes FROM presets WHERE (SELECT COUNT(*) FROM json_each(presets.dyes)) <> (SELECT COUNT(DISTINCT value) FROM json_each(presets.dyes));`
+Hand-fix any it finds through `wrangler d1 execute --file`. Until they are fixed, an edit that
+keeps the repeat is refused, and a revert to such a snapshot is refused (below).
+
+### Fixed
+
+- **A preset may not repeat a dye** (BUG-010). `[7,7,7]` used to pass the 3-dye floor and dodge
+  the duplicate-palette check. POST and PATCH now answer 400 "Each dye may appear only once".
+- **A revert checks the snapshot it restores.** If its dyes fail validation — a repeat, the wrong
+  count, or a legacy ID — the revert answers 400 `VALIDATION_ERROR` and writes nothing.
+  moderation-worker and discord-worker should expect that 400.
+- **A `null`, array or scalar JSON body is a 400 `INVALID_JSON`** on POST/PATCH `/presets` and on
+  the moderation status and revert routes. It used to be an opaque 500 (BUG-064).
+- **Resending a preset's text unchanged does not re-moderate it** (BUG-065). It used to charge
+  a text edit and could re-queue an approved preset, or resubmit a rejected one.
+- **A failed retention sweep is visible** (BUG-066).
+  - `runRetentionJob` names the prunes that failed, and logs at error level.
+  - The scheduled invocation now rejects, so the cron run is no longer recorded as a success. Check
+    in Cloudflare's Cron Events after deploy that it actually appears as a failure.
+- **Re-keying an identity onto itself is a no-op** (BUG-067). It used to delete that user's votes.
+- **Name and description minimums count non-space characters** (BUG-068), and **an example link
+  with surrounding spaces is accepted**, as normalisation already allowed (BUG-069).
+
+### Added
+
+- **The moderation webhook says whether a notification is an edit**:
+  - `is_edit` is true on every PATCH notification and false on POST.
+  - `edited_from_status` gives the status the preset had before the edit. It is absent on POST.
+  - `preset.previous_values` was already on the wire and is now typed.
+  - Additive: current consumers are unaffected.
+  - discord-worker Sprint 9 uses these for BUG-003. A consumer may offer Revert only when
+    `is_edit` is true, `previous_values` is not null, and `edited_from_status` is `'approved'`.
+
+### Changed
+
+- **A revert snapshot only ever holds approved text.** An owner's edit snapshots `previous_values`
+  only when the stored status is `approved`; it stays write-once, and a revert clears it.
+  - Before, a flagged edit of a pending or rejected preset snapshotted that unapproved text. Once
+    the preset was approved, a Revert could restore it.
+  - **Deploy consideration:** every row that holds a snapshot at deploy time predates this rule,
+    and the row does not say which state it was taken from. `apps/presets-api/CLAUDE.md` has the
+    query that lists them.
+  - moderation-worker's review refresh offers Revert on any pending preset with a snapshot. That
+    becomes safe once those older rows are gone. It is noted for its Sprint 17.
+
+### Removed
+
+- Test-only `successResponse` / `ApiSuccessResponse` (DEAD-031), the unread
+  `ErrorCode.DATABASE_ERROR` (DEAD-032; `BAD_REQUEST` is now read by the body guard), the
+  test-only `PresetCategory` / `AuthSource` re-exports (DEAD-033), and a never-taken branch in
+  `scripts/migrate-presets.ts` (DEAD-034).
+
 ## [2.4.0] - 2026-10-04
 
 Sprint 3 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). **Deploy only
 together with moderation-worker Sprint 4, in one held-workflow window.** The status and revert
 endpoints now fail closed, so the current moderation-worker gets a 409 on every approve, reject
 and revert until its Sprint 4 build is live. No schema change; one hand-run data migration
-(`0015`) is **required** in the same window. See *Rollout*.
+(`0015`) is **required** in the same window. See *Rollout*. Production also gains a daily Cron
+Trigger (`23 4 * * *`, 04:23 UTC) that runs the retention sweep; the routeless dev worker runs none.
 
 ### Security
 

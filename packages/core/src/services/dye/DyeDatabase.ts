@@ -308,6 +308,14 @@ export class DyeDatabase {
           return dye as unknown as DyeInternal;
         });
 
+      // BUG-136 (2026-10-04 deep-dive): the input-length check above runs
+      // BEFORE the isValidDye filter, so a payload whose every entry was
+      // filtered out used to load as an empty database (isLoaded true, 0
+      // dyes, an empty k-d tree — every search quietly answering nothing).
+      if (this.dyes.length === 0) {
+        throw new Error(`no valid dyes: all ${loadedDyes.length} entries failed validation`);
+      }
+
       // Build ID map for fast lookups
       this.dyesByIdMap.clear();
       // Per Phase-1: Build stainID map for plugin interop
@@ -319,25 +327,36 @@ export class DyeDatabase {
       const kdTreePoints: Point3D[] = [];
 
       for (const dye of this.dyes) {
-        // REFACTOR-012 (2026-07-18 audit): the Facewear synthetic-ID hash is a
-        // plain char-code sum (collision-prone for future names); a silent
-        // map overwrite would make one dye unreachable by ID. Fail loudly.
-        if (this.dyesByIdMap.has(dye.id)) {
-          this.logger.error(
-            `Duplicate dye ID detected during initialization: ${dye.id} (${dye.name}) collides with ${this.dyesByIdMap.get(dye.id)?.name}`,
-          );
-        }
+        // REFACTOR-012 (2026-07-18 audit) said "fail loudly" here, but only
+        // logged — through the NoOp logger by default — and then let the
+        // later entry overwrite the earlier one, leaving a dye unreachable
+        // by ID. BUG-136 (2026-10-04 deep-dive): throw instead, so the catch
+        // below reports DATABASE_LOAD_FAILED. Covers the itemID alias key
+        // and the stainID map (the canonical key in schema v2) as well.
+        const claimId = (key: number): void => {
+          const holder = this.dyesByIdMap.get(key);
+          if (holder && holder !== dye) {
+            throw new Error(`duplicate dye ID ${key}: ${dye.name} collides with ${holder.name}`);
+          }
+          this.dyesByIdMap.set(key, dye);
+        };
         // Map by id (which equals itemID after normalization)
-        this.dyesByIdMap.set(dye.id, dye);
+        claimId(dye.id);
         // Per Issue #5: Only map itemID separately if it differs from id
         // This avoids storing the same dye twice with the same key
         if (dye.itemID && dye.itemID !== dye.id) {
-          this.dyesByIdMap.set(dye.itemID, dye);
+          claimId(dye.itemID);
         }
 
         // Per Phase-1: Map by stainID for plugin interop (Glamourer, Mare, etc.)
         // stainID is null for Facewear dyes
         if (typeof dye.stainID === 'number') {
+          const holder = this.dyesByStainIdMap.get(dye.stainID);
+          if (holder) {
+            throw new Error(
+              `duplicate stainID ${dye.stainID}: ${dye.name} collides with ${holder.name}`,
+            );
+          }
           this.dyesByStainIdMap.set(dye.stainID, dye);
         }
 

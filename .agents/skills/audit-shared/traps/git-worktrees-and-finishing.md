@@ -45,6 +45,7 @@ misses:
 | every worker | wrangler config invariants | a CI-only step in `ci.yml` — replicate by reading the diff of any `wrangler.toml` |
 | repo | gitleaks | `gitleaks git --no-banner --redact --log-opts="origin/main..HEAD"` before pushing |
 
+Delegated, running these gates is `collector` work (`../model-routing.md` § *Remediation sprints*).
 Single test file: `pnpm --filter <pkg-name> exec vitest run src/path/file.test.ts` (never `npm test
 path`). Package names are `@xivdyetools/<pkg>` for packages, `xivdyetools-<app>` for apps.
 Green-test traps (vacuous assertions, flush-count flakes, CI 5× slower) are in `tests-coverage.md`.

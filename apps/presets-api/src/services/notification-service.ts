@@ -9,7 +9,7 @@
  * has a single owner module.
  */
 
-import type { Env, RetentionLogger } from '../types.js';
+import type { Env, PresetPreviousValues, PresetStatus, RetentionLogger } from '../types.js';
 
 /**
  * FINDING-011 (2026-08-29 security audit): the slice of the logger
@@ -24,6 +24,73 @@ interface NotificationLogger {
 /** A new (or re-flagged) preset needing moderator eyes. */
 export interface PresetSubmissionNotification {
   type: 'submission';
+  /**
+   * BUG-003 (2026-10-04 deep-dive): where the notification came from — `true`
+   * when an owner edit (PATCH /presets/:id) sent it, `false` for a new
+   * submission. An origin marker, not a verdict: `preset.moderation_status`
+   * says whether the text tripped the filter, `edited_from` is what the edit
+   * changed, and `preset.previous_values` (sent with an edit whenever a revert
+   * snapshot exists) is what a Revert restores — but `is_edit` alone never
+   * licenses a Revert button; see `edited_from_status` for the rule. Optional
+   * on the wire: discord-worker read every submission as new before it learnt
+   * this field, and still must when it is absent.
+   */
+  is_edit?: boolean;
+  /**
+   * BUG-003 follow-up (2026-10-04 deep-dive): the status the preset had
+   * immediately BEFORE the edit that sent this notification — the same
+   * vocabulary as `preset.status`. Set on every PATCH /presets/:id
+   * notification and absent on a new submission (POST). `preset.status` cannot
+   * carry it: every edit that notifies leaves the preset `pending`. Only
+   * `approved`, `pending` and `rejected` can actually appear — an edit of a
+   * `flagged` preset notifies nobody and a `hidden` one cannot be edited (see
+   * `ownerEditOutcome` in handlers/presets.ts).
+   *
+   * **The Revert rule for consumers:** offer Revert ONLY when
+   * `is_edit === true` AND `preset.previous_values` is non-null AND
+   * `edited_from_status === 'approved'`. Revert (PATCH
+   * /moderation/:id/revert) restores `previous_values` AND approves the
+   * preset, so it is safe only when the snapshot is text that was live.
+   * presets-api now snapshots only an `approved` preset's text: an edit of a
+   * pending, rejected or flagged preset neither creates nor overwrites one,
+   * and the snapshot is write-once, so going forward it only ever holds text
+   * that was live as `approved` (moderator-approved, or auto-approved on
+   * submission). The `edited_from_status` check still matters: rows written
+   * before that rule may hold a snapshot taken from a pending or rejected
+   * state, and on a rejected resubmission or a pending edit it keeps such a
+   * snapshot from being offered. Once such a row has since been approved
+   * nothing in the payload can tell — the row does not record which state
+   * its snapshot came from (see the deploy note in apps/presets-api/CLAUDE.md).
+   * Treat an absent value (an older presets-api) as "not approved".
+   *
+   * Label the Revert button as restoring `previous_values`, not as undoing
+   * this edit: the snapshot is write-once, so it can be older than the text
+   * in `edited_from` (approved A → flagged edit B snapshots A → a moderator
+   * approves B → a flagged edit C still reverts to A, discarding B).
+   */
+  edited_from_status?: PresetStatus;
+  /**
+   * Sprint 9 (2026-10-04 remediation): the text THIS edit replaced — `name`,
+   * `description`, `tags` and `dyes` exactly as the row held them immediately
+   * before the write that sent this notification. Set on every PATCH
+   * /presets/:id notification and absent on a new submission (POST), like
+   * `edited_from_status`.
+   *
+   * **The diff base for consumers:** show an edit's changes as `edited_from`
+   * → `preset`. Do not diff against `preset.previous_values`: that is the
+   * revert target, which a pending preset's edit or a rejected preset's
+   * resubmission never creates (only an approved preset is snapshotted), so
+   * it is usually `null` there, and which, being write-once, can be older
+   * than the text this edit replaced. The two coincide on the first flagged
+   * edit of an approved preset that had no snapshot yet, and diverge after
+   * that. Revert stays governed by the three-part rule on
+   * `edited_from_status` and restores `previous_values`, never `edited_from`.
+   *
+   * Same shape as `PresetPreviousValues`, not the same meaning: nothing stores
+   * it, and no endpoint restores it. Treat an absent value (a new submission,
+   * or an older presets-api) as "no diff available".
+   */
+  edited_from?: PresetPreviousValues;
   preset: {
     id: string;
     name: string;
@@ -34,6 +101,19 @@ export interface PresetSubmissionNotification {
     author_name: string;
     author_discord_id: string;
     status: 'pending' | 'approved' | 'rejected';
+    /**
+     * The write-once revert snapshot (BUG-052) — what PATCH
+     * /moderation/:id/revert would restore. Already on the wire with every
+     * submission (the payload spreads the preset row), declared here because
+     * the Revert rule on `edited_from_status` reads it. Written by the first
+     * owner edit of an `approved` preset that trips moderation (an older row
+     * may hold one taken in another state) and cleared only by a Revert, so
+     * it can be older than the edit being notified; `null` on a new
+     * submission, and on an edit of a preset that was never snapshotted.
+     * The revert target only — an edit's diff base is the top-level
+     * `edited_from`.
+     */
+    previous_values?: PresetPreviousValues | null;
     /**
      * FINDING-017 (2026-10-03 audit): the revision of exactly the text this
      * notification carries — the row's value AFTER the write that produced it.
@@ -265,11 +345,14 @@ export async function notifyDiscordBot(
  * counts only: a D1 error can quote the statement that failed, and quoting a
  * statement over this table is how the content this finding removes would find
  * its way back into a log line.
+ *
+ * BUG-066: resolves `true` when the sweep ran and `false` when it failed, so
+ * the daily job can report a failed sweep; every other caller ignores it.
  */
 export async function pruneFailedNotifications(
   db: D1Database,
   logger?: RetentionLogger
-): Promise<void> {
+): Promise<boolean> {
   const now = Date.now();
   const resolvedCutoff = toSqliteDateTime(
     now - FAILED_NOTIFICATION_RESOLVED_RETENTION_DAYS * MS_PER_DAY
@@ -294,8 +377,10 @@ export async function pruneFailedNotifications(
     if (pruned > 0) {
       logger?.warn('[FINDING-017] pruned dead-letter rows', { pruned });
     }
+    return true;
   } catch {
     logger?.warn('[FINDING-017] dead-letter prune failed', { pruned: 0 });
+    return false;
   }
 }
 

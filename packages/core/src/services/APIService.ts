@@ -321,6 +321,55 @@ export interface APIServiceOptions {
 }
 
 /**
+ * How the upstream half of a batch price lookup went
+ * ({@link APIService.getPricesForDataCenterWithOutcome}).
+ *
+ * - `'ok'` — every upstream request it needed succeeded. That includes
+ *   needing none: an all-cached call, or an empty / all-invalid id list. A
+ *   successful response that prices none of the items is still `'ok'`: the
+ *   board answered, it just has no listings.
+ * - `'partial'` — at least one upstream request failed, and the returned Map
+ *   is still non-empty: some items came from the cache, or another request
+ *   returned prices (a call over 100 items is split into several requests).
+ *   The items missing from the Map are unknown, not unlisted.
+ * - `'error'` — at least one upstream request failed and the returned Map is
+ *   empty, e.g. the Universalis proxy is down and nothing asked for was
+ *   cached.
+ *
+ * A request counts as failed when it still ends in a thrown fetch, a timeout
+ * or a non-OK HTTP status after whatever retries apply (a 4xx other than 429
+ * is not retried), when its body does not parse into a batch response, or
+ * when the injected {@link RateLimiter} throws for it.
+ * BUG-090 (2026-10-04 deep-dive): before this, an outage was
+ * indistinguishable from "no listings".
+ */
+export type PriceBatchOutcome = 'ok' | 'partial' | 'error';
+
+/**
+ * Prices from a batch lookup together with how the lookup went
+ * ({@link APIService.getPricesForDataCenterWithOutcome}).
+ */
+export interface PriceBatchResult {
+  /** itemID → price, for every item that is cached or was fetched. */
+  prices: Map<number, PriceData>;
+  /**
+   * Whether the upstream requests behind `prices` succeeded: `'error'` only
+   * when one failed and `prices` is empty, `'partial'` when one failed beside
+   * prices that are present.
+   */
+  outcome: PriceBatchOutcome;
+}
+
+/**
+ * One batch fetch's prices plus whether any upstream request behind it failed.
+ * Internal to {@link APIService}: the chunked path ORs the flags.
+ */
+interface BatchFetchResult {
+  prices: Map<number, PriceData>;
+  failed: boolean;
+}
+
+/**
  * Service for Universalis API integration
  * Handles price data fetching with caching and debouncing
  *
@@ -362,9 +411,11 @@ export class APIService {
   /**
    * OPT-001 (2026-07-18 audit): in-flight batch coalescing — identical
    * concurrent batch fetches share one upstream request (cold-cache stampede
-   * protection, mirroring pendingRequests for the single-item path).
+   * protection, mirroring pendingRequests for the single-item path). The
+   * shared result carries the failure flag too, so every coalesced caller
+   * reports the same outcome (BUG-090).
    */
-  private pendingBatchRequests: Map<string, Promise<Map<number, PriceData>>> = new Map();
+  private pendingBatchRequests: Map<string, Promise<BatchFetchResult>> = new Map();
   private readonly logger: Logger;
   private readonly baseUrl: string;
 
@@ -603,16 +654,22 @@ export class APIService {
    * Fetch batch price data from API for multiple items in a single request
    * This is more efficient than making individual requests for each item
    *
+   * BUG-090 (2026-10-04 deep-dive): failures are still absorbed (callers
+   * get whatever prices did arrive), but no longer silently — `failed` says
+   * whether any upstream request behind the Map failed, so an outage is not
+   * mistaken for "no listings".
+   *
    * @param itemIDs - Array of item IDs to fetch prices for
    * @param dataCenterID - Optional data center ID (e.g., "Crystal")
-   * @returns Map of itemID -> PriceData for all successfully fetched items
+   * @returns The prices of every successfully fetched item, and whether any
+   *   request failed
    */
   private async fetchBatchPriceData(
     itemIDs: number[],
     dataCenterID?: string,
-  ): Promise<Map<number, PriceData>> {
+  ): Promise<BatchFetchResult> {
     if (itemIDs.length === 0) {
-      return new Map();
+      return { prices: new Map(), failed: false };
     }
 
     // BUG-001: Universalis caps batches at 100 items. buildBatchApiUrl throws for larger
@@ -621,14 +678,16 @@ export class APIService {
     const CHUNK_SIZE = 100;
     if (itemIDs.length > CHUNK_SIZE) {
       const merged = new Map<number, PriceData>();
+      let failed = false;
       for (let offset = 0; offset < itemIDs.length; offset += CHUNK_SIZE) {
         const chunk = itemIDs.slice(offset, offset + CHUNK_SIZE);
-        const chunkResults = await this.fetchBatchPriceData(chunk, dataCenterID);
-        for (const [id, data] of chunkResults) {
+        const chunkResult = await this.fetchBatchPriceData(chunk, dataCenterID);
+        for (const [id, data] of chunkResult.prices) {
           merged.set(id, data);
         }
+        failed = failed || chunkResult.failed;
       }
-      return merged;
+      return { prices: merged, failed };
     }
 
     // BUG-012 (2026-07-18 audit): buildBatchApiUrl throws for non-positive-
@@ -642,17 +701,19 @@ export class APIService {
       );
     }
     if (validItemIDs.length === 0) {
-      return new Map();
+      return { prices: new Map(), failed: false };
     }
-
-    // Rate limiting: single request for the batch
-    await this.rateLimiter.waitIfNeeded();
-    this.rateLimiter.recordRequest();
 
     // Build batch API URL — safe: length ≤ 100 and IDs validated above
     const url = this.buildBatchApiUrl(validItemIDs, dataCenterID);
 
     try {
+      // Rate limiting: single request for the batch. Inside the try (Sprint 27
+      // review): an injected limiter that fails is a failed request, not a
+      // rejection out of a method documented as never throwing.
+      await this.rateLimiter.waitIfNeeded();
+      this.rateLimiter.recordRequest();
+
       const data = await retry(
         () => this.fetchWithTimeout(url, UNIVERSALIS_API_TIMEOUT),
         UNIVERSALIS_API_RETRY_COUNT,
@@ -661,17 +722,15 @@ export class APIService {
         isRetryableHttpError, // OPT-014: 4xx (except 429) fails fast
       );
 
-      if (!data) {
-        return new Map();
-      }
-
-      // Parse batch response
-      return this.parseBatchApiResponse(data);
+      // Parse batch response. A body that is not a batch response at all (a
+      // JSON `null`, no results array) is a failed request, not "no listings".
+      const prices = this.parseBatchApiResponse(data);
+      return prices ? { prices, failed: false } : { prices: new Map(), failed: true };
     } catch (error) {
       this.logger.error(
         `Failed to fetch batch price data for ${itemIDs.length} items: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
-      return new Map();
+      return { prices: new Map(), failed: true };
     }
   }
 
@@ -790,25 +849,27 @@ export class APIService {
 
   /**
    * Parse batch API response containing multiple items
-   * Returns a Map of itemID -> PriceData for all successfully parsed items
+   * Returns a Map of itemID -> PriceData for all successfully parsed items,
+   * or null when the body is not a batch response at all (BUG-090: the
+   * caller reports that as a failed request rather than an empty board)
    * CORE-REF-002 FIX: Now uses shared extractPriceFromApiItem() helper
    */
   private parseBatchApiResponse(data: {
     results?: UniversalisItemResult[];
     failedItems?: number[];
-  }): Map<number, PriceData> {
+  }): Map<number, PriceData> | null {
     const results = new Map<number, PriceData>();
 
     try {
       // Validate response structure
       if (!data || typeof data !== 'object') {
         this.logger.warn('Invalid batch API response structure');
-        return results;
+        return null;
       }
 
       if (!data.results || !Array.isArray(data.results)) {
         this.logger.warn('No results array in batch API response');
-        return results;
+        return null;
       }
 
       // Parse each item in the results array
@@ -855,7 +916,7 @@ export class APIService {
     // Universalis API endpoint: /api/v2/aggregated/{dataCenter or worldName}/{itemIDs}
     // Note: worldID parameter reserved for future use (world-specific queries)
     // Sanitize dataCenterID to prevent URL path injection
-    const pathSegment = dataCenterID ? this.sanitizeDataCenterId(dataCenterID) : 'universal';
+    const pathSegment = dataCenterID ? this.dataCenterPathSegment(dataCenterID) : 'universal';
     return `${this.baseUrl}/aggregated/${pathSegment}/${itemID}`;
   }
 
@@ -892,18 +953,35 @@ export class APIService {
     }
 
     // Sanitize dataCenterID to prevent URL path injection
-    const pathSegment = dataCenterID ? this.sanitizeDataCenterId(dataCenterID) : 'universal';
+    const pathSegment = dataCenterID ? this.dataCenterPathSegment(dataCenterID) : 'universal';
     // Join item IDs with commas for batch request
     const itemsSegment = itemIDs.join(',');
     return `${this.baseUrl}/aggregated/${pathSegment}/${itemsSegment}`;
   }
 
   /**
-   * Sanitize datacenter ID to prevent cache key injection.
-   * Only allows alphanumeric characters (a-z, A-Z, 0-9).
+   * Sanitize a data center or world name for the URL path and the cache key.
+   * Keeps Unicode letters and digits only, so '/', '.', '%', '?', '#', '\'
+   * and whitespace are all stripped — no traversal, no extra path segment,
+   * no pre-encoded escape.
+   *
+   * Sprint 27 review: this used to keep ASCII letters and digits only, which
+   * reduced every Chinese and Korean data center and world (陆行鸟, 한국,
+   * 红玉海, …) to '' — an `/aggregated//<ids>` URL that the proxy 404s, and
+   * one shared `dc:` cache key for all of them.
    */
   private sanitizeDataCenterId(dataCenterID: string): string {
-    return dataCenterID.replace(/[^a-zA-Z0-9]/g, '');
+    return dataCenterID.replace(/[^\p{L}\p{N}]/gu, '');
+  }
+
+  /**
+   * The sanitized name, percent-encoded for the URL path (a CJK name is not
+   * a valid raw path segment). Sanitize first: encoding first would produce
+   * '%' escapes the sanitizer then strips. UTF-8 never encodes a non-ASCII
+   * character with an ASCII byte, so no encoded letter can become '%2F'.
+   */
+  private dataCenterPathSegment(dataCenterID: string): string {
+    return encodeURIComponent(this.sanitizeDataCenterId(dataCenterID));
   }
 
   /**
@@ -938,16 +1016,51 @@ export class APIService {
    * Fetch prices for dyes in a specific data center
    * PERFORMANCE: Uses batched API requests to minimize rate limiting
    *
-   * Strategy:
-   * 1. Check cache for each item
-   * 2. Collect uncached items
-   * 3. Fetch uncached items in a single batched request
-   * 4. Store fetched items in cache
+   * Upstream failures are absorbed: an unreachable board answers with the
+   * cached prices only (often an empty Map), exactly like a board with no
+   * listings. Call {@link APIService.getPricesForDataCenterWithOutcome} to
+   * tell the two apart.
+   *
+   * @public
+   * @param itemIDs - Market item IDs to price
+   * @param dataCenterID - Data center (or world) name, e.g. "Crystal"
+   * @returns Map of itemID -> PriceData for every cached or fetched item
    */
   async getPricesForDataCenter(
     itemIDs: number[],
     dataCenterID: string,
   ): Promise<Map<number, PriceData>> {
+    const { prices } = await this.getPricesForDataCenterWithOutcome(itemIDs, dataCenterID);
+    return prices;
+  }
+
+  /**
+   * Fetch prices for dyes in a specific data center, and report how the
+   * upstream half of the lookup went.
+   * PERFORMANCE: Uses batched API requests to minimize rate limiting
+   *
+   * Strategy:
+   * 1. Check cache for each item
+   * 2. Collect uncached items
+   * 3. Fetch uncached items in a single batched request (chunked past 100)
+   * 4. Store fetched items in cache
+   *
+   * BUG-090 (2026-10-04 deep-dive): `getPricesForDataCenter` returns the same
+   * prices but cannot say whether an empty Map means "no listings" or "the
+   * board is unreachable"; `outcome` does. A failed request is `'error'` when
+   * the returned Map is empty and `'partial'` when it holds any price, cached
+   * or fetched. Never throws — a failing upstream request, unparseable body
+   * or injected rate limiter is reported through `outcome`.
+   *
+   * @param itemIDs - Market item IDs to price
+   * @param dataCenterID - Data center (or world) name, e.g. "Crystal"
+   * @returns The prices (identical to `getPricesForDataCenter`'s Map) and the
+   *   {@link PriceBatchOutcome}
+   */
+  async getPricesForDataCenterWithOutcome(
+    itemIDs: number[],
+    dataCenterID: string,
+  ): Promise<PriceBatchResult> {
     const results = new Map<number, PriceData>();
     const uncachedItemIDs: number[] = [];
 
@@ -971,7 +1084,7 @@ export class APIService {
     // Step 2: If all items are cached, return immediately
     if (uncachedItemIDs.length === 0) {
       this.logger.debug(`All ${itemIDs.length} items found in cache for ${dataCenterID}`);
-      return results;
+      return { prices: results, outcome: 'ok' };
     }
 
     this.logger.debug(
@@ -987,27 +1100,33 @@ export class APIService {
     const batchKey = `${[...uncachedItemIDs].sort((a, b) => a - b).join(',')}:${dataCenterID}`;
     let batchPromise = this.pendingBatchRequests.get(batchKey);
     if (!batchPromise) {
-      batchPromise = (async (): Promise<Map<number, PriceData>> => {
-        const batchResults = await this.fetchBatchPriceData(uncachedItemIDs, dataCenterID);
+      batchPromise = (async (): Promise<BatchFetchResult> => {
+        const batchResult = await this.fetchBatchPriceData(uncachedItemIDs, dataCenterID);
         const cacheWrites: Promise<void>[] = [];
-        for (const [itemID, priceData] of batchResults) {
+        for (const [itemID, priceData] of batchResult.prices) {
           const cacheKey = this.buildCacheKey(itemID, undefined, dataCenterID);
           cacheWrites.push(this.trySetCachedPrice(cacheKey, priceData));
         }
         await Promise.all(cacheWrites);
-        return batchResults;
+        return batchResult;
       })().finally((): void => {
         this.pendingBatchRequests.delete(batchKey);
       });
       this.pendingBatchRequests.set(batchKey, batchPromise);
     }
 
-    const batchResults = await batchPromise;
-    for (const [itemID, priceData] of batchResults) {
+    const { prices: fetched, failed } = await batchPromise;
+    for (const [itemID, priceData] of fetched) {
       results.set(itemID, priceData);
     }
 
-    return results;
+    // BUG-090: a failed request is 'error' only when the caller gets no price
+    // at all. Any price in the returned Map -- cached, or fetched by another
+    // chunk of a >100-item call -- makes it 'partial' (Sprint 27 review: an
+    // 'error' beside cached prices had consumers call every price missing
+    // while they were showing some).
+    const outcome: PriceBatchOutcome = !failed ? 'ok' : results.size > 0 ? 'partial' : 'error';
+    return { prices: results, outcome };
   }
 
   // ============================================================================

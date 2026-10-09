@@ -103,7 +103,10 @@ is no standing exclusion.
 - `$TURBO_DEFAULT$` only covers the package a task runs in, so anything **cross-package** is
   still named explicitly: `lint` adds `$TURBO_ROOT$/knip.jsonc` (the root dead-code config
   fourteen workspaces run against) and `test` adds `$TURBO_ROOT$/apps/*/wrangler.toml` (four
-  workers have config tests that read a sibling's toml).
+  workers have config tests that read a sibling's toml), the root `CHANGELOG-laymans.md`
+  (discord-worker's changelog suites parse it) and api-worker's
+  `src/chara/data/item-names.*.json` (discord-worker's font-coverage suites cut and check the
+  CJK subsets against them).
 - `globalDependencies` covers the three shared files no package contains:
   `tsconfig.base.json`, `eslint.config.js`, `pnpm-workspace.yaml`.
 - `build` outputs `dist/**`; `dev` is `persistent: true` and uncached; `deploy` is uncached and

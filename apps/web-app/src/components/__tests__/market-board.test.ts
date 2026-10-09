@@ -16,7 +16,6 @@ import {
   query,
   queryAll,
 } from '../../__tests__/component-utils';
-import { mockDyes } from '../../__tests__/mocks/services';
 
 // Use vi.hoisted to create mock before vi.mock runs (hoisted to top)
 const { mockMarketBoardService } = vi.hoisted(() => ({
@@ -25,8 +24,6 @@ const { mockMarketBoardService } = vi.hoisted(() => ({
     getShowPrices: vi.fn().mockReturnValue(true),
     setServer: vi.fn(),
     setShowPrices: vi.fn(),
-    shouldFetchPrice: vi.fn().mockReturnValue(true),
-    fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
     refreshPrices: vi.fn().mockResolvedValue(undefined),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -37,7 +34,6 @@ vi.mock('@services/market-board-service', () => ({
   MarketBoardService: {
     getInstance: vi.fn().mockReturnValue(mockMarketBoardService),
   },
-  formatPrice: vi.fn((price: number) => `${price.toLocaleString()} Gil`),
 }));
 
 vi.mock('@services/index', () => ({
@@ -355,67 +351,6 @@ describe('MarketBoard', () => {
   });
 
   // ============================================================================
-  // Dye Filtering Tests
-  // ============================================================================
-
-  describe('Dye Filtering', () => {
-    it('should delegate shouldFetchPrice to service', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      marketBoard.shouldFetchPrice(mockDyes[0]);
-
-      expect(mockMarketBoardService.shouldFetchPrice).toHaveBeenCalledWith(mockDyes[0]);
-    });
-
-    it('should return false for null dye', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      // @ts-expect-error testing null case
-      const result = marketBoard.shouldFetchPrice(null);
-
-      expect(result).toBe(false);
-    });
-  });
-
-  // ============================================================================
-  // Price Fetching Tests
-  // ============================================================================
-
-  describe('Price Fetching', () => {
-    it('should delegate fetchPricesForDyes to service', async () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      await marketBoard.fetchPricesForDyes(mockDyes);
-
-      expect(mockMarketBoardService.fetchPricesForDyes).toHaveBeenCalledWith(mockDyes, undefined);
-    });
-
-    it('should pass progress callback to service', async () => {
-      const onProgress = vi.fn();
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      await marketBoard.fetchPricesForDyes(mockDyes, onProgress);
-
-      expect(mockMarketBoardService.fetchPricesForDyes).toHaveBeenCalledWith(mockDyes, onProgress);
-    });
-  });
-
-  // ============================================================================
-  // Static Methods Tests
-  // ============================================================================
-
-  describe('Static Methods', () => {
-    it('should format price correctly', () => {
-      const formatted = MarketBoard.formatPrice(10000);
-      expect(formatted).toContain('10,000');
-    });
-  });
-
-  // ============================================================================
   // State Management Tests
   // ============================================================================
 
@@ -425,31 +360,6 @@ describe('MarketBoard', () => {
       marketBoard.init();
 
       expect(marketBoard.getSelectedServer()).toBe('Aether');
-    });
-
-    it('should return showPrices setting', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      expect(marketBoard.getShowPrices()).toBe(true);
-    });
-
-    it('should set server programmatically', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      marketBoard.setSelectedServer('Crystal');
-
-      expect(mockMarketBoardService.setServer).toHaveBeenCalledWith('Crystal');
-    });
-
-    it('should set showPrices programmatically', () => {
-      marketBoard = new MarketBoard(container);
-      marketBoard.init();
-
-      marketBoard.setShowPrices(false);
-
-      expect(mockMarketBoardService.setShowPrices).toHaveBeenCalledWith(false);
     });
   });
 

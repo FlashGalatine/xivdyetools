@@ -1,0 +1,4494 @@
+[
+ {
+  "key": "dead-code/DEAD-001",
+  "cat": "dead-code",
+  "id": "DEAD-001",
+  "unit": "apps/moderation-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "preset.moderation.{approved,approvedDesc,missingReason,rejected,rejectedDesc} in moderation-worker bot-i18n.ts are orphaned by PR #225 — 5 lines, 0 test lines",
+  "status": "FIX COMMITTED, NOT MERGED 2026-10-04 `ea264d49` — the five strings deleted on `fix/security-2026-10-03-sprint4` (PR #225); the moderation-worker gate passes (763 tests).",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_primary": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_secondary": [
+   "apps/moderation-worker/src/handlers/commands/preset.test.ts"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-002",
+  "cat": "dead-code",
+  "id": "DEAD-002",
+  "unit": "apps/discord-worker",
+  "sev": "HIGH/NONE·REMOVE WITH CAUTION",
+  "title": "ModerationPresetInfo.author_discord_id in preset-notifications.ts is unread since #227: 2 lines; fixture must be reshaped, not deleted",
+  "status": "OPEN",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.ts"
+  ],
+  "touched_primary": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.ts"
+  ],
+  "touched_secondary": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.test.ts"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-003",
+  "cat": "dead-code",
+  "id": "DEAD-003",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE WITH CAUTION",
+  "title": "6 legacy ContextAction members in result-card.ts and their handler cases in 5 tools are never emitted (~102 src lines + 126-line guard test)",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/result-card.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-004",
+  "cat": "dead-code",
+  "id": "DEAD-004",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "v4-layout-shell.ts static styles: pre-5.0 Accessibility CSS block is unreachable (337 lines)",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/v4-layout-shell.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-005",
+  "cat": "dead-code",
+  "id": "DEAD-005",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "BaseLitComponent.baseStyles utility classes and two preset-detail selectors have no markup (~31 lines)",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/base-lit-component.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-006",
+  "cat": "dead-code",
+  "id": "DEAD-006",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "themes.css dead Tailwind-override selectors (lines 153-224) — 23 lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/styles/themes.css"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-007",
+  "cat": "dead-code",
+  "id": "DEAD-007",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "5 orphan accessibility.* locale keys x 6 locales hidden by the analyzer's dynamic-prefix rule (30 lines)",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": [
+   "apps/web-app/src/locales/zh.json"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-008",
+  "cat": "dead-code",
+  "id": "DEAD-008",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE WITH CAUTION",
+  "title": "empty-state.ts: 6 of the 7 EMPTY_STATE_PRESETS factories are test-only — 54 source + 53 test lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/components/empty-state.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-009",
+  "cat": "dead-code",
+  "id": "DEAD-009",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE WITH CAUTION",
+  "title": "4 state icons in state-icons.ts are reachable only from the 6 test-only EMPTY_STATE_PRESETS: 33 lines + 4 import lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/shared/state-icons.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-010",
+  "cat": "dead-code",
+  "id": "DEAD-010",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "14 web-app locale keys x 6 locales are read only by the test-only empty-state presets: 24 lines per locale, 144 total",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-011",
+  "cat": "dead-code",
+  "id": "DEAD-011",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "BaseLitComponent hasError/errorMessage @state is write-only (10 lines)",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/base-lit-component.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-012",
+  "cat": "dead-code",
+  "id": "DEAD-012",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "HybridPresetService: 5 public methods with no caller and no test, about 49 lines including blanks",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/services/hybrid-preset-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-013",
+  "cat": "dead-code",
+  "id": "DEAD-013",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "getFeaturedPresets: HybridPresetService's has no caller and CommunityPresetService's is test-only — 33 source + 31 test lines",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/services/hybrid-preset-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-014",
+  "cat": "dead-code",
+  "id": "DEAD-014",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "getPresets 'community' guard in hybrid-preset-service.ts is unreachable — 19 lines",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/services/hybrid-preset-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-015",
+  "cat": "dead-code",
+  "id": "DEAD-015",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "getRemainingSubmissions in preset-submission-service.ts has no caller or test — 41 lines",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/services/preset-submission-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-016",
+  "cat": "dead-code",
+  "id": "DEAD-016",
+  "unit": "apps/web-app",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "web-app: the msw mocks for /presets/featured and /presets/rate-limit and the e2e /featured route only serve removed methods — 34 test lines",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/e2e/preset-gallery-api.spec.ts",
+   "apps/web-app/src/__tests__/mocks/handlers.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-017",
+  "cat": "dead-code",
+  "id": "DEAD-017",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "WorldService: 6 test-only lookup methods + orphaned worldByName map — 57 src lines + ~100 test lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/services/world-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-018",
+  "cat": "dead-code",
+  "id": "DEAD-018",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "IndexedDBService.getAll/count/deleteDatabase are test-only — 100 src lines + ~200 test lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/services/indexeddb-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-019",
+  "cat": "dead-code",
+  "id": "DEAD-019",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "SubscriptionManager.addAll and getters count/hasSubscriptions have no caller or test — 21 lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/shared/subscription-manager.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-020",
+  "cat": "dead-code",
+  "id": "DEAD-020",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "APIService static formatPrice/getPriceData/isInitialized are test-only — 25 src lines + 72 test lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/services/api-service-wrapper.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-021",
+  "cat": "dead-code",
+  "id": "DEAD-021",
+  "unit": "apps/web-app",
+  "sev": "HIGH/NONE·REMOVE WITH CAUTION",
+  "title": "color-service.test.ts tests @xivdyetools/core ColorService, not web-app code — 280 test lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/services/__tests__/color-service.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-022",
+  "cat": "dead-code",
+  "id": "DEAD-022",
+  "unit": "apps/web-app",
+  "sev": "HIGH/NONE·REMOVE WITH CAUTION",
+  "title": "shared/__tests__/types.test.ts tests @xivdyetools/types, not web-app — 361 test lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/shared/__tests__/types.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-023",
+  "cat": "dead-code",
+  "id": "DEAD-023",
+  "unit": "apps/web-app",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "web-app LanguageService.getLabel and preloadLocales are test-only — 17 source + 43 test lines",
+  "status": "OPEN",
+  "sprint": "S23",
+  "loc_paths": [
+   "apps/web-app/src/services/language-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-024",
+  "cat": "dead-code",
+  "id": "DEAD-024",
+  "unit": "apps/discord-worker",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "CommandRegistryEntry.deprecated in registry.ts is never set or read in production: 2 lines + 3-line test",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/commands/registry.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-025",
+  "cat": "dead-code",
+  "id": "DEAD-025",
+  "unit": "apps/moderation-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "rateLimitMiddleware in moderation-worker rate-limit.ts is a never-mounted no-op reached only by its test — 25 source + 13 test lines",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/middleware/rate-limit.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-026",
+  "cat": "dead-code",
+  "id": "DEAD-026",
+  "unit": "apps/moderation-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "getPreset in moderation-worker services/preset-api.ts is test-only: 13 src lines + 34 test lines",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/services/preset-api.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-027",
+  "cat": "dead-code",
+  "id": "DEAD-027",
+  "unit": "apps/moderation-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "Translator.t() fallbackData branch in moderation-worker bot-i18n.ts is a no-op (data === fallbackData === strings): about 8 lines; getLocale is NOT included and stays as an observation hook",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_primary": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_secondary": [
+   "apps/moderation-worker/CLAUDE.md"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-028",
+  "cat": "dead-code",
+  "id": "DEAD-028",
+  "unit": "apps/moderation-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "Unused _maxRetries parameter of incrementRateLimit in rate-limit.ts; its @param falsely says it is passed to the shared package: 2 src lines + 4 call-site edits",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/middleware/rate-limit.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-029",
+  "cat": "dead-code",
+  "id": "DEAD-029",
+  "unit": "apps/moderation-worker",
+  "sev": "MEDIUM/LOW·REMOVE WITH CAUTION",
+  "title": "Legacy base64-username suffix parsing in ban-reason.ts:57-92 and ban-confirmation.ts:70-78 is unreachable: no emitter has produced the suffix since the 2026-08-21 FINDING-007 fix, and those flows are ephemeral — about 16 source lines, with a test-fixture rewrite",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/handlers/modals/ban-reason.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-030",
+  "cat": "dead-code",
+  "id": "DEAD-030",
+  "unit": "apps/moderation-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "moderation-worker bot-i18n.ts: older orphan strings (preset.categories.*, three ban.* keys, the meta block, common.success) — 24 source + 12 test lines",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_primary": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-031",
+  "cat": "dead-code",
+  "id": "DEAD-031",
+  "unit": "apps/presets-api",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "successResponse + ApiSuccessResponse in presets-api api-response.ts are test-only: 31 src lines + 31 test lines",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/utils/api-response.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-032",
+  "cat": "dead-code",
+  "id": "DEAD-032",
+  "unit": "apps/presets-api",
+  "sev": "HIGH/NONE·REFACTOR FIRST",
+  "title": "ErrorCode.BAD_REQUEST and ErrorCode.DATABASE_ERROR in presets-api api-response.ts are never read: 2 lines",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/utils/api-response.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-033",
+  "cat": "dead-code",
+  "id": "DEAD-033",
+  "unit": "apps/presets-api",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "PresetCategory/AuthSource re-exports in presets-api types.ts are test-only: 6 src lines + 33 test lines",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/types.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-034",
+  "cat": "dead-code",
+  "id": "DEAD-034",
+  "unit": "apps/presets-api",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "Stale 'community' ternary in presets-api scripts/migrate-presets.ts is a never-taken branch: 1 line",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/scripts/migrate-presets.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-035",
+  "cat": "dead-code",
+  "id": "DEAD-035",
+  "unit": "apps/api-worker",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "createMockKV re-export in api-worker tests/test-utils.ts has no importer — 1 line",
+  "status": "OPEN",
+  "sprint": "S18",
+  "loc_paths": [
+   "apps/api-worker/tests/test-utils.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-036",
+  "cat": "dead-code",
+  "id": "DEAD-036",
+  "unit": "apps/oauth",
+  "sev": "HIGH/LOW·REMOVE WITH CAUTION",
+  "title": "decodeJWT wrapper in apps/oauth jwt-service.ts is test-only: 8 src lines + 31-line describe block",
+  "status": "OPEN",
+  "sprint": "S10",
+  "loc_paths": [
+   "apps/oauth/src/services/jwt-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-037",
+  "cat": "dead-code",
+  "id": "DEAD-037",
+  "unit": "apps/oauth",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "apps/oauth vitest.config.ts coverage.exclude names nonexistent rate-limit-do.ts / durable-objects: 3 config lines",
+  "status": "OPEN",
+  "sprint": "S10",
+  "loc_paths": [
+   "apps/oauth/vitest.config.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-038",
+  "cat": "dead-code",
+  "id": "DEAD-038",
+  "unit": "apps/image-worker",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "apps/image-worker '@' path alias (vitest resolve.alias + tsconfig paths) has no importer: 10 config lines",
+  "status": "OPEN",
+  "sprint": "S21",
+  "loc_paths": [
+   "apps/image-worker/vitest.config.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-039",
+  "cat": "dead-code",
+  "id": "DEAD-039",
+  "unit": "apps/og-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "CrawlerInfo.userAgent in apps/og-worker/src/types.ts is written but never read since the crawler log was minimized: 4 src lines + 11 test lines",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/types.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-040",
+  "cat": "dead-code",
+  "id": "DEAD-040",
+  "unit": "apps/og-worker",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "Unused '@' path alias in apps/og-worker vitest.config.ts and tsconfig.json: 10 config lines",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/vitest.config.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-041",
+  "cat": "dead-code",
+  "id": "DEAD-041",
+  "unit": "packages/test-utils",
+  "sev": "HIGH/NONE·REMOVE WITH CAUTION",
+  "title": "test-utils integration/ suite only tests local re-implementations of presets-api auth: setup.ts 214 lines + 581 test lines",
+  "status": "OPEN",
+  "sprint": "S19",
+  "loc_paths": [
+   "packages/test-utils/integration/setup.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-042",
+  "cat": "dead-code",
+  "id": "DEAD-042",
+  "unit": "packages/test-utils",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "createMockD1 in test-utils cloudflare/d1.ts is reached only by its own unit test: 22 src lines + 18 test lines",
+  "status": "OPEN",
+  "sprint": "S19",
+  "loc_paths": [
+   "packages/test-utils/src/cloudflare/d1.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-043",
+  "cat": "dead-code",
+  "id": "DEAD-043",
+  "unit": "packages/test-utils",
+  "sev": "HIGH/NONE·REMOVE",
+  "title": "randomStainId in test-utils factories/dye.ts is test-only — 9 lines + 6-line test",
+  "status": "OPEN",
+  "sprint": "S19",
+  "loc_paths": [
+   "packages/test-utils/src/factories/dye.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-044",
+  "cat": "dead-code",
+  "id": "DEAD-044",
+  "unit": "packages/test-utils",
+  "sev": "HIGH/NONE·REMOVE WITH CAUTION",
+  "title": "test-utils './auth' exports-map subpath has zero importers — 4 config lines",
+  "status": "OPEN",
+  "sprint": "S19",
+  "loc_paths": [
+   "package.json",
+   "packages/test-utils/package.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-045",
+  "cat": "dead-code",
+  "id": "DEAD-045",
+  "unit": "root (CI/scripts)",
+  "sev": "HIGH/MEDIUM·REMOVE WITH CAUTION",
+  "title": "The qs override in pnpm-workspace.yaml:11 names a package nothing installs: 1 line, plus the comment on line 7 and lockfile line 10",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   "pnpm-workspace.yaml"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-046",
+  "cat": "dead-code",
+  "id": "DEAD-046",
+  "unit": "root (CI/scripts)",
+  "sev": "HIGH/LOW·REMOVE",
+  "title": "The turbo.json `deploy` task (lines 130-134) has no caller: 5 lines",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   "turbo.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-047",
+  "cat": "dead-code",
+  "id": "DEAD-047",
+  "unit": "packages/core",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "HarmonyGenerator find*Dyes family + 8 DyeService delegates + DyeDatabase hue-bucket index are test-only: ~660 src lines + ~1080 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/core/src/services/dye/HarmonyGenerator.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-048",
+  "cat": "dead-code",
+  "id": "DEAD-048",
+  "unit": "packages/core",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "ColorManipulator (whole class) + 6 ColorService delegates + 3 ColorAccessibility methods/delegates are test-only: ~170 src lines + ~600 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/core/src/services/color/ColorManipulator.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-049",
+  "cat": "dead-code",
+  "id": "DEAD-049",
+  "unit": "packages/core",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "core: getToolName and getLabel, with the `tools`/`labels` locale sections, have no consumer outside core's tests — about 257 source + 100 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/core/src/services/LocalizationService.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "packages/core/scripts/build-locales.ts"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-050",
+  "cat": "dead-code",
+  "id": "DEAD-050",
+  "unit": "packages/types",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "types: ToolKey and LocaleData.tools outlive core's getToolName — 13 source lines, for the types major after DEAD-049",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/types/src/localization/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-051",
+  "cat": "dead-code",
+  "id": "DEAD-051",
+  "unit": "packages/core",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "core LocalizationService.setLocaleFromPreference and preloadLocales are test-only published API — 52 source + 60 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/core/src/services/LocalizationService.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-052",
+  "cat": "dead-code",
+  "id": "DEAD-052",
+  "unit": "packages/core",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "PresetService.getPresetWithDyes in core is test-only published API — 34 lines + 145-line test",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/core/src/services/PresetService.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-053",
+  "cat": "dead-code",
+  "id": "DEAD-053",
+  "unit": "packages/bot-logic",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "HarmonyInput.harmonyOptions in bot-logic harmony.ts is ignored legacy published API — 2 lines + 11-line stale test",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/bot-logic/src/commands/harmony.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-054",
+  "cat": "dead-code",
+  "id": "DEAD-054",
+  "unit": "packages/worker-kit",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "UpstashRateLimiter in worker-kit has no in-repo constructor (only its own test) but is @public published API: ~206 src lines + 344-line test",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/worker-kit/src/rate-limiter/backends/upstash.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "DEPRECATIONS.md",
+   "README.md"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-055",
+  "cat": "dead-code",
+  "id": "DEAD-055",
+  "unit": "packages/worker-kit",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "getClientIp trustXForwardedFor opt-in path is test-only in-repo — 26 src lines + 60 test lines; stale comments",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/worker-kit/src/rate-limiter/ip.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-056",
+  "cat": "dead-code",
+  "id": "DEAD-056",
+  "unit": "packages/logger",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "logger BaseLogger.child() and the DelegatingLogger class have no non-test caller anywhere: 79 src lines + ~128 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/logger/src/core/base-logger.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-057",
+  "cat": "dead-code",
+  "id": "DEAD-057",
+  "unit": "packages/logger",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "logger createBrowserLogger's errorTracker branch never runs in-repo (published extension point): ~90 src lines + 207 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/logger/src/presets/browser.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-058",
+  "cat": "dead-code",
+  "id": "DEAD-058",
+  "unit": "packages/types",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "types createDyeId/createHue/createSaturation are untagged published exports reached only by tests: 68 src lines + ~200 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/types/src/color/branded.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-059",
+  "cat": "dead-code",
+  "id": "DEAD-059",
+  "unit": "packages/auth",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "auth verifier tuning options never passed by any app — ~27 src lines + 74 test lines (bot-signature knobs untested)",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/auth/src/discord.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-060",
+  "cat": "dead-code",
+  "id": "DEAD-060",
+  "unit": "packages/auth",
+  "sev": "HIGH/HIGH·KEEP",
+  "title": "auth barrel re-export of hmacSignHex is test-only in-repo and lacks @public — 1 line",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "packages/auth/src/encoding/index.ts",
+   "packages/auth/src/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-061",
+  "cat": "dead-code",
+  "id": "DEAD-061",
+  "unit": "apps/discord-worker",
+  "sev": "HIGH/NONE·KEEP",
+  "title": "registryCommandNames in registry.ts is test-only: 10 lines (62-71), 3 test lines to rewrite",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "apps/discord-worker/src/commands/registry.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-062",
+  "cat": "dead-code",
+  "id": "DEAD-062",
+  "unit": "apps/discord-worker",
+  "sev": "MEDIUM/MEDIUM·KEEP",
+  "title": "handleModal and the unsupportedComponent fallback in index.ts are unreachable defensive router branches: 24 lines + 12 locale lines + 59 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "apps/discord-worker/src/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "dead-code/DEAD-063",
+  "cat": "dead-code",
+  "id": "DEAD-063",
+  "unit": "apps/presets-api",
+  "sev": "MEDIUM/HIGH·KEEP",
+  "title": "presets-api GET /presets/featured and /presets/rate-limit have no in-repo client once the dead web-app methods go; documented public API, so KEEP (~35 route lines)",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "apps/presets-api/src/handlers/presets.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md",
+   "apps/presets-api/wrangler.toml"
+  ]
+ },
+ {
+  "key": "dead-code/DEAD-064",
+  "cat": "dead-code",
+  "id": "DEAD-064",
+  "unit": "apps/stoat-worker",
+  "sev": "HIGH/LOW·KEEP",
+  "title": "stoat-worker: five more parked-feature leftovers (MessageContextStore.get/delete/size, isAuthorized, the Upstash config fields, HELP_TOPICS, two StoatMessage fields) — 54 source + 106 test lines",
+  "status": "KEEP (register) — revisit on the trigger above",
+  "sprint": "KEEP",
+  "loc_paths": [
+   "apps/stoat-worker/src/commands/help.ts",
+   "apps/stoat-worker/src/config.ts",
+   "apps/stoat-worker/src/services/message-context.ts",
+   "apps/stoat-worker/src/services/response-formatter.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md",
+   "docs/research/discord-alternatives/07-2026-10-refresh.md"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-001",
+  "cat": "deep-dive",
+  "id": "BUG-001",
+  "unit": "apps/web-app",
+  "sev": "HIGH",
+  "title": "swatch-tool setConfig applies ConfigController's full swatch config (default hairColors/SeekerOfTheSun/Female) over tool-local eyeColors/Midlander/Male state",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/swatch-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-002",
+  "cat": "deep-dive",
+  "id": "BUG-002",
+  "unit": "apps/discord-worker",
+  "sev": "MEDIUM",
+  "title": "budget.ts/preferences.ts: validateWorld cold-cache service calls are awaited inside the 3 s ack window",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/budget.ts",
+   "apps/discord-worker/src/types/budget.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-003",
+  "cat": "deep-dive",
+  "id": "BUG-003",
+  "unit": "apps/discord-worker",
+  "sev": "MEDIUM",
+  "title": "discord-worker's preset webhook (index.ts:402-407) hard-codes kind 'new', so a flagged edit is posted as \"New preset pending\" with no diff and no Revert button",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.ts",
+   "apps/discord-worker/src/index.ts"
+  ],
+  "touched_primary": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.ts"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-004",
+  "cat": "deep-dive",
+  "id": "BUG-004",
+  "unit": "apps/discord-worker",
+  "sev": "MEDIUM",
+  "title": "A preset submitted or edited through the bot is posted twice: discord-worker's own moderation/submission-log post (legacy button ids) plus the presets-api webhook's revision-bound post",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preset.ts",
+   "apps/discord-worker/src/index.ts",
+   "apps/discord-worker/src/types/preset.ts",
+   "apps/presets-api/src/handlers/presets.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.ts"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-005",
+  "cat": "deep-dive",
+  "id": "BUG-005",
+  "unit": "apps/discord-worker",
+  "sev": "MEDIUM",
+  "title": "command-trace isUserCondition counts the Universalis client's synthetic 408 timeout as an answered 'rejected' outcome",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/services/command-trace.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-006",
+  "cat": "deep-dive",
+  "id": "BUG-006",
+  "unit": "apps/discord-worker",
+  "sev": "MEDIUM",
+  "title": "preset-favorites getPresetFavoriteEntries returns [] on read failure and addPresetFavorite overwrites the user's list",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/services/preset-favorites.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-007",
+  "cat": "deep-dive",
+  "id": "BUG-007",
+  "unit": "apps/oauth",
+  "sev": "MEDIUM",
+  "title": "apps/oauth/src/index.ts /auth/* limiter keys and tiers on the raw percent-encoded pathname, while Hono routes on the decoded path",
+  "status": "OPEN",
+  "sprint": "S10",
+  "loc_paths": [
+   "apps/oauth/src/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-008",
+  "cat": "deep-dive",
+  "id": "BUG-008",
+  "unit": "apps/og-worker",
+  "sev": "MEDIUM",
+  "title": "services/svg/gradient.ts interpolate(): the card ramps in a space derived from algo (Lab for the default ciede2000) and ignores the shared interpolation (page default hsv), so its middle dyes differ from the page",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/svg/gradient.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-009",
+  "cat": "deep-dive",
+  "id": "BUG-009",
+  "unit": "apps/og-worker",
+  "sev": "MEDIUM",
+  "title": "gradient.ts generateGradientOG ranks middle-band dyes by hardcoded 'ciede2000' while printing the delta and footer in the requested algo",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/svg/gradient.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-010",
+  "cat": "deep-dive",
+  "id": "BUG-010",
+  "unit": "apps/presets-api",
+  "sev": "MEDIUM",
+  "title": "validation-service validatePresetDyes accepts repeated dye ids, bypassing the 3-dye floor and dye_signature dedup",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/services/validation-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-011",
+  "cat": "deep-dive",
+  "id": "BUG-011",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "No tool test mounts against a non-default persisted config or asserts that dye filters reach matching (the swatch case is not.toThrow only)",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/__tests__/gradient-tool.test.ts",
+   "apps/web-app/src/components/__tests__/mixer-tool.test.ts",
+   "apps/web-app/src/components/__tests__/swatch-tool.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-012",
+  "cat": "deep-dive",
+  "id": "BUG-012",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "budget-tool.ts in-page match-line slider writes only local storage; next full budget-config broadcast resets it to ConfigController maxDeltaE",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-013",
+  "cat": "deep-dive",
+  "id": "BUG-013",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "A stale preserved ?dye= deep link overrides the user's later choice in Budget (Set as budget target) and Harmony (base-dye pick)",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts",
+   "apps/web-app/src/components/harmony-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-014",
+  "cat": "deep-dive",
+  "id": "BUG-014",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "budget-tool.ts handleDeepLink: ?maxDelta= changes matchLine after the slider and label were rendered",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-015",
+  "cat": "deep-dive",
+  "id": "BUG-015",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "budget-tool.ts findAlternatives has no run guard; a superseded run overwrites this.rows after a newer run",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-016",
+  "cat": "deep-dive",
+  "id": "BUG-016",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "chara-sheet.ts saveCharacterColors: a duplicate record name fails with a generic 'save failed' toast and has no suffix fallback",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/chara-sheet.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-017",
+  "cat": "deep-dive",
+  "id": "BUG-017",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "collection-manager-modal.ts: creating from the manager never refreshes the manager list, count or create-limit state",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/collection-manager-modal.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-018",
+  "cat": "deep-dive",
+  "id": "BUG-018",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "comparison-tool.ts buildSevenReadouts: the ΔE2000 tier skips tierFor's 0->1 bump, so it contradicts the verdict when matchThreshold < 5",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/comparison-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-019",
+  "cat": "deep-dive",
+  "id": "BUG-019",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "gradient/swatch loadFromShareUrl applies share settings to tool-local state only; the next ConfigController notification reverts them",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/gradient-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-020",
+  "cat": "deep-dive",
+  "id": "BUG-020",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "gradient-tool calculateInterpolation seeds usedDyeIds with endpoints only, so a free step before a pinned step can match the pinned dye undeduplicated",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/gradient-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-021",
+  "cat": "deep-dive",
+  "id": "BUG-021",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "A language switch empties or hides the results of the Harmony, Mixer, Comparison and Accessibility tools (update() rebuilds the panels without regenerating them)",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/accessibility-tool.ts",
+   "apps/web-app/src/components/comparison-tool.ts",
+   "apps/web-app/src/components/harmony-tool.ts",
+   "apps/web-app/src/components/mixer-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-022",
+  "cat": "deep-dive",
+  "id": "BUG-022",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "Gradient, Swatch, Mixer and Budget never seed dyeFiltersConfig from the persisted config at mount, so saved dye filters are ignored until the sidebar is touched",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/gradient-tool.ts",
+   "apps/web-app/src/components/mixer-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-023",
+  "cat": "deep-dive",
+  "id": "BUG-023",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "swatch-tool setConfig needsReload branch nulls selectedColor but leaves matchedDyes, result cards, SEND TO ids and an enabled share button",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/swatch-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-024",
+  "cat": "deep-dive",
+  "id": "BUG-024",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "swatch-tool pickCharaSlot sets a slot selectionContext but keeps the earlier grid selectedColor/matchedDyes, so CLOSEST DYES, share and SEND TO describe the old cell",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/swatch-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-025",
+  "cat": "deep-dive",
+  "id": "BUG-025",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "swatch-tool findMatchingDyes filters after a top-(maxResults*3) request, so strong dye filters return fewer than maxResults; closestDyeTo ignores filters",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/swatch-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-026",
+  "cat": "deep-dive",
+  "id": "BUG-026",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "preset-tool.test.ts: no coverage of reconcileTombstones, vote handling, tab pools/counts or savedFirst",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/__tests__/preset-tool.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-027",
+  "cat": "deep-dive",
+  "id": "BUG-027",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "config-sidebar.ts connectedCallback: local copies of 9 config keys never refresh after an external ConfigController write",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/config-sidebar.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-028",
+  "cat": "deep-dive",
+  "id": "BUG-028",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "dye-palette-drawer.ts renderSwatch: swatch is a click-only div, so keyboard users cannot pick a dye from the app-wide picker",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/dye-palette-drawer.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-029",
+  "cat": "deep-dive",
+  "id": "BUG-029",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "preset-tool reconcileTombstones marks saved community presets \"Removed by its author\" in three live cases: a swallowed API failure, a saved local- palette, and a stale filtered response",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/preset-tool.ts",
+   "apps/web-app/src/services/hybrid-preset-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-030",
+  "cat": "deep-dive",
+  "id": "BUG-030",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "preset-tool.ts handleCardVote: every failed vote is shown as 'already voted'; a failed removeVote is silent",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/preset-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-031",
+  "cat": "deep-dive",
+  "id": "BUG-031",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "community-preset-service response cache never invalidated after delete/edit/submit",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/services/community-preset-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-032",
+  "cat": "deep-dive",
+  "id": "BUG-032",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "preset-submission-service.deletePreset failure reported as success by both callers",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/services/preset-submission-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-033",
+  "cat": "deep-dive",
+  "id": "BUG-033",
+  "unit": "packages/bot-logic",
+  "sev": "MEDIUM",
+  "title": "gradient.ts/mixer.ts apply dyeFilters after a capped nearest-N search, so steps report no match although allowed dyes exist",
+  "status": "OPEN",
+  "sprint": "S15",
+  "loc_paths": [
+   "packages/bot-logic/src/commands/gradient.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-034",
+  "cat": "deep-dive",
+  "id": "BUG-034",
+  "unit": "packages/bot-logic",
+  "sev": "MEDIUM",
+  "title": "input-resolution.ts resolveColorInput: all-digit 6-char hex without '#' (000000, 333333, 123456) is read as a dye id and returns null",
+  "status": "OPEN",
+  "sprint": "S15",
+  "loc_paths": [
+   "packages/bot-logic/src/input-resolution.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-035",
+  "cat": "deep-dive",
+  "id": "BUG-035",
+  "unit": "packages/core",
+  "sev": "MEDIUM",
+  "title": "blending.ts blendHSL interpolates the hue of an achromatic input, which is meaningless (always 0), so grey/white/black mixes get a hue neither input has",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/blending/blending.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-036",
+  "cat": "deep-dive",
+  "id": "BUG-036",
+  "unit": "packages/core",
+  "sev": "MEDIUM",
+  "title": "PaletteService kMeansClustering caps k at pixel count, so images with fewer distinct colours than colorCount return duplicate 0-pixel clusters that discord /extractor renders as rows",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/PaletteService.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-037",
+  "cat": "deep-dive",
+  "id": "BUG-037",
+  "unit": "apps/api-worker",
+  "sev": "LOW",
+  "title": "index.ts telemetry limiter registered twice; each beacon is charged 2x against the 240/60s fail-closed bucket",
+  "status": "OPEN",
+  "sprint": "S18",
+  "loc_paths": [
+   "apps/api-worker/docs/.vitepress/theme/index.ts",
+   "apps/api-worker/src/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "apps/api-worker/wrangler.toml"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-038",
+  "cat": "deep-dive",
+  "id": "BUG-038",
+  "unit": "apps/api-worker",
+  "sev": "LOW",
+  "title": "parseIntParam/parseFloatParam accept trailing garbage and exponent forms in query params",
+  "status": "OPEN",
+  "sprint": "S18",
+  "loc_paths": [
+   "apps/api-worker/src/lib/validation.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-039",
+  "cat": "deep-dive",
+  "id": "BUG-039",
+  "unit": "apps/api-worker",
+  "sev": "LOW",
+  "title": "router.ts SERVICE_BINDING_BUDGET_MULTIPLIER can drift from the UNIVERSALIS_SERVICE_RATE_LIMITER binding with no failing test",
+  "status": "OPEN",
+  "sprint": "S18",
+  "loc_paths": [
+   "apps/api-worker/src/chara/router.ts",
+   "apps/api-worker/src/telemetry/router.ts",
+   "apps/api-worker/src/universalis/router.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "apps/api-worker/tests/wrangler-config.test.ts"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-040",
+  "cat": "deep-dive",
+  "id": "BUG-040",
+  "unit": "apps/api-worker",
+  "sev": "LOW",
+  "title": "XIVAPI_VERSION=\"latest\" makes the chara row-cache namespace constant, so a patch never cold-starts the cache",
+  "status": "OPEN",
+  "sprint": "S18",
+  "loc_paths": [
+   "apps/api-worker/wrangler.toml"
+  ],
+  "touched_primary": [
+   "apps/api-worker/wrangler.toml"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-041",
+  "cat": "deep-dive",
+  "id": "BUG-041",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "preview-image.ts puts a raw <@id> mention in the embed footer and drops the preset ID",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/buttons/preview-image.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-042",
+  "cat": "deep-dive",
+  "id": "BUG-042",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "extractor.ts renderColorSheet: render/edit failure is never logged and is reported to the user as 'no match found'",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/extractor.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-043",
+  "cat": "deep-dive",
+  "id": "BUG-043",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "gradient.ts processGradientCommand: Start/End lines print the English Dye.name while step rows are localized",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/gradient.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-044",
+  "cat": "deep-dive",
+  "id": "BUG-044",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "harmony.ts and sibling handlers echo the raw colour/dye option into errors.invalidColor embed descriptions with no sanitizeEmbedText or length cap",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/harmony.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-045",
+  "cat": "deep-dive",
+  "id": "BUG-045",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "stats.ts overview: Avg Cmds/User divides a lifetime total by today's users",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/stats.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-046",
+  "cat": "deep-dive",
+  "id": "BUG-046",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "Router autocomplete paths for subcommand-group walk (/preset favorite remove), favourites back-fill incl. earlier-audit BUG-028 fix, clan autocomplete and preferences world autocomplete have no index.test.ts coverage.",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-047",
+  "cat": "deep-dive",
+  "id": "BUG-047",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "Favourites name back-fill converts any getPreset failure (5xx/timeout/429, swallowed by .catch(()=>null)) into the preset UUID as the persisted name, which is never retried; names also never refresh on rename and the whole-list write can lose a concurrent favorite add.",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-048",
+  "cat": "deep-dive",
+  "id": "BUG-048",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "preferences getUserPreferences swallows read failure as {} and the set/reset writes then overwrite or delete the user's whole prefs blob",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preferences.ts",
+   "apps/discord-worker/src/services/preferences.ts",
+   "apps/discord-worker/src/types/preferences.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-049",
+  "cat": "deep-dive",
+  "id": "BUG-049",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "preferences.ts getAffectedCommands and the /preferences schema advertise consumers that never read the key (clan/gender, blending->/gradient, matching->/swatch, and /harmony is left out)",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preferences.ts",
+   "apps/discord-worker/src/services/preferences.ts",
+   "apps/discord-worker/src/types/preferences.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-050",
+  "cat": "deep-dive",
+  "id": "BUG-050",
+  "unit": "apps/moderation-worker",
+  "sev": "LOW",
+  "title": "preset-moderation.ts processApproval / preset-rejection.ts processRejection: success embed spreads a prior 'Error' field",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/handlers/buttons/preset-moderation.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-051",
+  "cat": "deep-dive",
+  "id": "BUG-051",
+  "unit": "apps/moderation-worker",
+  "sev": "LOW",
+  "title": "ban-reason.ts handleBanReasonModal: reason length check is untrimmed, so a whitespace-only reason is stored",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/handlers/modals/ban-reason.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-052",
+  "cat": "deep-dive",
+  "id": "BUG-052",
+  "unit": "apps/moderation-worker",
+  "sev": "LOW",
+  "title": "review-message.ts refreshReview: a losing concurrent click's 409 refresh overwrites the winner's 'Approved by'/'Reason' embed",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/handlers/review-message.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-053",
+  "cat": "deep-dive",
+  "id": "BUG-053",
+  "unit": "apps/moderation-worker",
+  "sev": "LOW",
+  "title": "bot-i18n.ts footerTextOnly advertises the removed `reject <id> <reason>` option; preset.test.ts:446 pins it",
+  "status": "OPEN",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_primary": [
+   "apps/moderation-worker/src/services/bot-i18n.ts"
+  ],
+  "touched_secondary": [
+   "apps/moderation-worker/src/handlers/commands/preset.test.ts"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-054",
+  "cat": "deep-dive",
+  "id": "BUG-054",
+  "unit": "apps/moderation-worker",
+  "sev": "LOW",
+  "title": "moderation-worker getModerationPreset treats a missing-route 404 as 'preset gone' and strips live review buttons",
+  "status": "OPEN",
+  "sprint": "S17",
+  "loc_paths": [
+   "apps/moderation-worker/src/services/preset-api.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-055",
+  "cat": "deep-dive",
+  "id": "BUG-055",
+  "unit": "apps/oauth",
+  "sev": "LOW",
+  "title": "oauth tests never send a percent-encoded /auth path through the app's limiter or a JSON `null` body to the POST callbacks",
+  "status": "OPEN",
+  "sprint": "S10",
+  "loc_paths": [
+   "apps/oauth/src/__tests__/rate-limit.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-056",
+  "cat": "deep-dive",
+  "id": "BUG-056",
+  "unit": "apps/oauth",
+  "sev": "LOW",
+  "title": "POST /auth/callback and /auth/xivauth/callback destructure a null JSON body outside the parse try, giving a 500 instead of a 400",
+  "status": "OPEN",
+  "sprint": "S10",
+  "loc_paths": [
+   "apps/oauth/src/handlers/callback.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-057",
+  "cat": "deep-dive",
+  "id": "BUG-057",
+  "unit": "apps/oauth",
+  "sev": "LOW",
+  "title": "xivauth.ts roster guard (earlier-audit BUG-051) validates only that the roster is an array; a null element gives a 500, and an empty verified name gives an empty username",
+  "status": "OPEN",
+  "sprint": "S10",
+  "loc_paths": [
+   "apps/oauth/src/handlers/xivauth.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-058",
+  "cat": "deep-dive",
+  "id": "BUG-058",
+  "unit": "apps/og-worker",
+  "sev": "LOW",
+  "title": "index.ts ogCacheKey keys algo and mode on every /og route although only 5 routes read algo and 2 read mode, contradicting its own docblock",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/index.ts",
+   "apps/og-worker/src/services/svg/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-059",
+  "cat": "deep-dive",
+  "id": "BUG-059",
+  "unit": "apps/og-worker",
+  "sev": "LOW",
+  "title": "og-data-generator.ts generateOGDataForTool: gradient/mixer/harmony crawler ignores hexStart/hexEnd/hexA/hexB/hex slots, so a custom-colour share unfurls the generic tool card",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/og-data-generator.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-060",
+  "cat": "deep-dive",
+  "id": "BUG-060",
+  "unit": "apps/og-worker",
+  "sev": "LOW",
+  "title": "extractor.ts matches by hardcoded ciede2000 and the crawler forwards algo only onto og:url, so the unfurl can name different dyes than the page",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/svg/extractor.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-061",
+  "cat": "deep-dive",
+  "id": "BUG-061",
+  "unit": "apps/og-worker",
+  "sev": "LOW",
+  "title": "gradient.test.ts has no algorithm case; harmony.test.ts:233 lists only the six 5.0 spellings and asserts only '<svg'",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/svg/gradient.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-062",
+  "cat": "deep-dive",
+  "id": "BUG-062",
+  "unit": "apps/og-worker",
+  "sev": "LOW",
+  "title": "harmony.ts passes a raw legacy ?algo= (hyab/euclidean/oklch-weighted) to core generateHarmonySlots; getDistanceForMethod returns undefined and the card shows dyes in table order",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/svg/harmony.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-063",
+  "cat": "deep-dive",
+  "id": "BUG-063",
+  "unit": "apps/presets-api",
+  "sev": "LOW",
+  "title": "presets-api 2.4.0 changelog intro denies a migration that its Rollout section requires (0015)",
+  "status": "OPEN",
+  "sprint": "S00",
+  "loc_paths": [
+   "CHANGELOG.md",
+   "apps/presets-api/CHANGELOG.md"
+  ],
+  "touched_primary": [
+   "apps/presets-api/CHANGELOG.md"
+  ],
+  "touched_secondary": [
+   "apps/presets-api/wrangler.toml"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-064",
+  "cat": "deep-dive",
+  "id": "BUG-064",
+  "unit": "apps/presets-api",
+  "sev": "LOW",
+  "title": "presets PATCH/POST and moderation status/revert: JSON body `null` -> TypeError -> opaque 500 instead of 400",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/handlers/presets.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-065",
+  "cat": "deep-dive",
+  "id": "BUG-065",
+  "unit": "apps/presets-api",
+  "sev": "LOW",
+  "title": "presets PATCH /:id re-moderates unchanged text; a failing/unscored verdict re-queues an approved (or resubmits a rejected) preset",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/handlers/presets.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-066",
+  "cat": "deep-dive",
+  "id": "BUG-066",
+  "unit": "apps/presets-api",
+  "sev": "LOW",
+  "title": "retention-job.ts runRetentionJob: prunes swallow D1 errors, so a failed sweep reports success with no durable signal",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/retention-job.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "apps/presets-api/wrangler.toml"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-067",
+  "cat": "deep-dive",
+  "id": "BUG-067",
+  "unit": "apps/presets-api",
+  "sev": "LOW",
+  "title": "identity-rekey-service rekeyIdentity(db,id,id) silently wipes the user's votes; no self-guard or test",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/services/identity-rekey-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-068",
+  "cat": "deep-dive",
+  "id": "BUG-068",
+  "unit": "apps/presets-api",
+  "sev": "LOW",
+  "title": "validation-service name/description min-length counts whitespace; whitespace-only values pass",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/services/validation-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-069",
+  "cat": "deep-dive",
+  "id": "BUG-069",
+  "unit": "apps/presets-api",
+  "sev": "LOW",
+  "title": "validation-service validateExampleLink rejects a leading-space link that normalizeExampleLink would accept",
+  "status": "OPEN",
+  "sprint": "S08",
+  "loc_paths": [
+   "apps/presets-api/src/services/validation-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-070",
+  "cat": "deep-dive",
+  "id": "BUG-070",
+  "unit": "apps/stoat-worker",
+  "sev": "LOW",
+  "title": "stoat about.ts Quick Start advertises unrouted !xd random and an unimplemented ❓-reaction help",
+  "status": "OPEN",
+  "sprint": "S24",
+  "loc_paths": [
+   "apps/stoat-worker/src/commands/about.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-071",
+  "cat": "deep-dive",
+  "id": "BUG-071",
+  "unit": "apps/stoat-worker",
+  "sev": "LOW",
+  "title": "stoat dye-resolver.test.ts multiple/disambiguation tests cannot fail (any-kind else / guarded if)",
+  "status": "OPEN",
+  "sprint": "S24",
+  "loc_paths": [
+   "apps/stoat-worker/src/services/dye-resolver.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-072",
+  "cat": "deep-dive",
+  "id": "BUG-072",
+  "unit": "apps/stoat-worker",
+  "sev": "LOW",
+  "title": "stoat dye-resolver.ts ignores locale and initializeLocale is never called, while help advertises localized names",
+  "status": "OPEN",
+  "sprint": "S24",
+  "loc_paths": [
+   "apps/stoat-worker/src/services/dye-resolver.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "docs/versions.md"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-073",
+  "cat": "deep-dive",
+  "id": "BUG-073",
+  "unit": "apps/stoat-worker",
+  "sev": "LOW",
+  "title": "stoat dye-resolver.ts resolveDyeInputMulti: step 1 resolveColorInput first-match makes multiple/disambiguation unreachable for name queries",
+  "status": "OPEN",
+  "sprint": "S24",
+  "loc_paths": [
+   "apps/stoat-worker/src/services/dye-resolver.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "docs/versions.md"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-074",
+  "cat": "deep-dive",
+  "id": "BUG-074",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "validate-i18n.js PATTERNS only see single-line literal LanguageService.t/tInterpolate calls, so wrapped calls and the local t() alias are never key-checked",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/scripts/validate-i18n.js"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "apps/web-app/src/locales/en.json"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-075",
+  "cat": "deep-dive",
+  "id": "BUG-075",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "budget-tool.test.ts Basic Rendering asserts non-null on test-created panels, so left-panel and drawer rendering is unverified",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/__tests__/budget-tool.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-076",
+  "cat": "deep-dive",
+  "id": "BUG-076",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "No tool test invokes the LanguageService.subscribe callback, so the language-switch rebuild that empties four tools (see the MEDIUM finding) is untested",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/components/__tests__/accessibility-tool.test.ts",
+   "apps/web-app/src/components/__tests__/harmony-tool.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-077",
+  "cat": "deep-dive",
+  "id": "BUG-077",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "tool setConfig tests (mixer maxResults/displayOptions guard/market marker, harmony type regeneration, extractor multi-key) assert only not.toThrow",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/__tests__/mixer-tool.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-078",
+  "cat": "deep-dive",
+  "id": "BUG-078",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "budget-tool.ts ignores persisted ConfigController displayOptions at mount; showHue/Stain/Spectrum always reset to true",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-079",
+  "cat": "deep-dive",
+  "id": "BUG-079",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "budget-tool.ts onMount: forces and persists the global market.showPrices=true and never restores it",
+  "status": "OPEN",
+  "sprint": "S01",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-080",
+  "cat": "deep-dive",
+  "id": "BUG-080",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "budget-tool.ts / mixer-tool.ts: theme-dependent inline colours are not refreshed on a theme change",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-081",
+  "cat": "deep-dive",
+  "id": "BUG-081",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "budget-tool.ts saveSwapRecord breaks 216-gil ties by database order, not by ΔE",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/budget-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-082",
+  "cat": "deep-dive",
+  "id": "BUG-082",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "chara-sheet.ts saveCharacterColors: ?? lets an empty or whitespace Nickname beat the file-name/default fallback, so the save always fails",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/chara-sheet.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-083",
+  "cat": "deep-dive",
+  "id": "BUG-083",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "chara-sheet.ts slot-card click re-renders the whole sheet and drops keyboard focus; selected state has no aria-pressed",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/chara-sheet.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-084",
+  "cat": "deep-dive",
+  "id": "BUG-084",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "collection-manager-modal downloadSingleCollection filename strips all non-ASCII (CJK names become dashes)",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/collection-manager-modal.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-085",
+  "cat": "deep-dive",
+  "id": "BUG-085",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "comparison-tool.ts ensureActivePair: the index-based pair survives a removal and swaps out the surviving member",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/comparison-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-086",
+  "cat": "deep-dive",
+  "id": "BUG-086",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "comparison-tool.ts renders the market price row from its own showMarketPrices flag, while the service's showPrices (default off) blocks fetching",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/comparison-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-087",
+  "cat": "deep-dive",
+  "id": "BUG-087",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "comparison/accessibility getShareParams: Share stays enabled for an all-custom-colour selection that yields dyes:[]",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/comparison-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-088",
+  "cat": "deep-dive",
+  "id": "BUG-088",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "dye-selector.ts handleGlobalKeydown: activeElement guard is blind inside the shell's shadow root, so '/' is swallowed in tool inputs",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/dye-selector.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-089",
+  "cat": "deep-dive",
+  "id": "BUG-089",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "dye-selector.ts updateFavoritesPanel hardcodes the 8-column grid and overrides compactMode's 3-column favourites layout at mount",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/dye-selector.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-090",
+  "cat": "deep-dive",
+  "id": "BUG-090",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "extractor-tool.ts fetchPricesForRoll: the catch, parseMarketError and lastMarketError are unreachable because every layer below swallows fetch failures",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/extractor-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-091",
+  "cat": "deep-dive",
+  "id": "BUG-091",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "glamour-twin-picker (role=dialog) and item-links-menu never register with ModalService, so global 1-9/Shift+T/L/S shortcuts fire while they hold focus",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/glamour-twin-picker.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-092",
+  "cat": "deep-dive",
+  "id": "BUG-092",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "gradient-tool.ts loadSelectedDyes drops persisted custom-colour endpoints and moves the remaining dye into the Start slot",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/gradient-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-093",
+  "cat": "deep-dive",
+  "id": "BUG-093",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "swatch/gradient renderLeftPanel rebuilds CollapsiblePanel/MarketBoard/DyeSelector on every update() into the element renderRightPanel clears, without destroying the previous instances",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/gradient-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-094",
+  "cat": "deep-dive",
+  "id": "BUG-094",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "gradient-tool.ts result-card slot picker (Set as End/Start) has no same-dye guard, and endpoint rows render cards",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/gradient-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-095",
+  "cat": "deep-dive",
+  "id": "BUG-095",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "harmony-tool.ts renderRightPanel: each render adds a new matchMedia listener; destroy removes only the last",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/harmony-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-096",
+  "cat": "deep-dive",
+  "id": "BUG-096",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "image-zoom-controller.ts Ctrl-drag pan ignores the centring margin, so a fitted image jumps on the first pan move",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/image-zoom-controller.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-097",
+  "cat": "deep-dive",
+  "id": "BUG-097",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "image-zoom-controller.ts touch handlers: a second finger does not cancel the drag, so a two-finger gesture commits a colour sample on lift",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/image-zoom-controller.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-098",
+  "cat": "deep-dive",
+  "id": "BUG-098",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "mixer-tool.ts loadSelectedDyes: a legacy third slot is restored, giving an equal-weight 3-way blend",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/mixer-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-099",
+  "cat": "deep-dive",
+  "id": "BUG-099",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "mixer-tool.ts renderMixingField: a cell with no eligible match prints ΔE 0.0",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/mixer-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-100",
+  "cat": "deep-dive",
+  "id": "BUG-100",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "modal-container.ts attachSheetDrag: ignores inner scrollers and touchcancel on mobile sheets",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/modal-container.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-101",
+  "cat": "deep-dive",
+  "id": "BUG-101",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "my-submissions-modal.ts: after a successful delete the modal keeps showing the deleted preset and stale stats",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/my-submissions-modal.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-102",
+  "cat": "deep-dive",
+  "id": "BUG-102",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "preset-submission-form.ts: dismissTop() after awaited submit/upload can close the wrong modal; unguarded sessionStorage write inside the submit try",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/preset-submission-form.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-103",
+  "cat": "deep-dive",
+  "id": "BUG-103",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "swatch-tool registers its window resize listener with this.on in onMount; BaseComponent.update() unbinds it on a language switch and never re-adds it",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/swatch-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-104",
+  "cat": "deep-dive",
+  "id": "BUG-104",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "swatch-tool.ts updateHandoffRow: SEND TO does a full reload with window.location.assign, so the in-memory .chara session is dropped",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/swatch-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-105",
+  "cat": "deep-dive",
+  "id": "BUG-105",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "toast-container.ts: full rebuild on each change replays animations and re-announces alerts; Escape closes toast and modal together",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/toast-container.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-106",
+  "cat": "deep-dive",
+  "id": "BUG-106",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "tutorial-spotlight.ts: window-only scroll listener and a fixed 100ms measurement leave the spotlight off-target after a container smooth-scroll",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/tutorial-spotlight.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-107",
+  "cat": "deep-dive",
+  "id": "BUG-107",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "dye-palette-drawer.ts filterByType: Metallic chip matches English name (14) instead of the gloss set isMetallic (16)",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/dye-palette-drawer.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-108",
+  "cat": "deep-dive",
+  "id": "BUG-108",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "preset-detail.ts checkVoteStatus: a failed hasVoted check overwrites the vote count with 0",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/preset-detail.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-109",
+  "cat": "deep-dive",
+  "id": "BUG-109",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "preset-tool.ts categoryCount/renderTabs: counts ignore feedBlend, feedHideUnbuyable, keepDeleted and the saved search, and the Saved badge omits local palettes",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/preset-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-110",
+  "cat": "deep-dive",
+  "id": "BUG-110",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "preset-tool.ts handleVoteUpdate: votedIds is not synced from the detail view, so card and detail vote state diverge",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/preset-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-111",
+  "cat": "deep-dive",
+  "id": "BUG-111",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "result-card.ts handleMenuClick/handleSelectClick: stopPropagation keeps other cards' open menus from closing",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/result-card.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-112",
+  "cat": "deep-dive",
+  "id": "BUG-112",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "v4-layout-shell.ts static styles have no @media print: browser print is one clipped page including chrome",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/v4-layout-shell.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-113",
+  "cat": "deep-dive",
+  "id": "BUG-113",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "v4-layout-shell.ts re-emits composed child events without stopPropagation, so v4-layout handlers run twice",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/v4-layout-shell.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-114",
+  "cat": "deep-dive",
+  "id": "BUG-114",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "main.ts:126 non-critical tutorial-spotlight import failure triggers renderFatalError over the already-rendered shell",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/main.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-115",
+  "cat": "deep-dive",
+  "id": "BUG-115",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "auth-service performLogout awaits /auth/revoke with no timeout before clearing local session",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/auth-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-116",
+  "cat": "deep-dive",
+  "id": "BUG-116",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "chara-resolve-service resolveCharaEquipment sends unbounded model lanes/glasses id; one lane >0xffff 400s the whole resolve and the Reader reports an outage",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/chara-resolve-service.ts",
+   "packages/core/src/services/chara/chara-parser.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "apps/web-app/src/locales/en.json"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-117",
+  "cat": "deep-dive",
+  "id": "BUG-117",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "CollectionService.initialize re-enters and overflows the stack when a migration save fails",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/collection-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-118",
+  "cat": "deep-dive",
+  "id": "BUG-118",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "collection-service importData: earlier-audit BUG-024 guard dereferences a null collections[] element outside the per-record try",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/collection-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-119",
+  "cat": "deep-dive",
+  "id": "BUG-119",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "indexeddb-service has no db.onversionchange handler, so an open tab blocks a future DB_VERSION upgrade and the other tab caches initialize()=false",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/indexeddb-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-120",
+  "cat": "deep-dive",
+  "id": "BUG-120",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "keyboard-service digit tool shortcuts unreachable from the AZERTY number row",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/keyboard-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-121",
+  "cat": "deep-dive",
+  "id": "BUG-121",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "LanguageService.setLocale has no sequencing; overlapping calls desync core and web locales",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/language-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-122",
+  "cat": "deep-dive",
+  "id": "BUG-122",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "LanguageService.tInterpolate expands $ patterns in user-supplied values",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/language-service.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-123",
+  "cat": "deep-dive",
+  "id": "BUG-123",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "palette-export.ts:136 today() stamps exports with the UTC date, not the local date",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/shared/palette-export.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-124",
+  "cat": "deep-dive",
+  "id": "BUG-124",
+  "unit": "packages/bot-logic",
+  "sev": "LOW",
+  "title": "glamour.ts gposersList writes the 'Model <key>' placeholder as an item name and drops Facewear when glasses are unresolved",
+  "status": "OPEN",
+  "sprint": "S15",
+  "loc_paths": [
+   "packages/bot-logic/src/commands/glamour.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-125",
+  "cat": "deep-dive",
+  "id": "BUG-125",
+  "unit": "packages/bot-logic",
+  "sev": "LOW",
+  "title": "execute* final 'catch {}' blocks discard the exception and return GENERATION_FAILED; adapters log only the code",
+  "status": "OPEN",
+  "sprint": "S15",
+  "loc_paths": [
+   "packages/bot-logic/src/commands/glamour.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-126",
+  "cat": "deep-dive",
+  "id": "BUG-126",
+  "unit": "packages/bot-logic",
+  "sev": "LOW",
+  "title": "locale-resolution.ts resolveUserLocale never passes a logger to getLegacyLanguagePreference, so the 'louder' KV-failure log never fires",
+  "status": "OPEN",
+  "sprint": "S15",
+  "loc_paths": [
+   "packages/bot-logic/src/i18n/locale-resolution.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-127",
+  "cat": "deep-dive",
+  "id": "BUG-127",
+  "unit": "packages/bot-logic",
+  "sev": "LOW",
+  "title": "bot-logic branch coverage 88.38% (502/568) is below its own 90% vitest threshold; glamour.ts has 25 uncovered branches; CI never enforces it",
+  "status": "OPEN",
+  "sprint": "S15",
+  "loc_paths": [
+   "packages/bot-logic/vitest.config.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-128",
+  "cat": "deep-dive",
+  "id": "BUG-128",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "build-locales.ts writes locale JSONs before exiting 1 on missing cells, and never checks dyes.json ids against dyenames.csv rows",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/scripts/build-locales.ts"
+  ],
+  "touched_primary": [
+   "packages/core/scripts/build-locales.ts"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-129",
+  "cat": "deep-dive",
+  "id": "BUG-129",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "blendColors lets a NaN ratio through Math.max/Math.min and returns the invalid hex '#NaNNaNNaN'",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/blending/blending.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-130",
+  "cat": "deep-dive",
+  "id": "BUG-130",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "dyes.json English name 'Opo-Opo Brown' disagrees with en.json/dyenames.csv 'Opo-opo Brown' (stainID 24, itemID 5752)",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/data/dyes.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-131",
+  "cat": "deep-dive",
+  "id": "BUG-131",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "CharacterColorService.findClosestDyes earlier-audit BUG-056 guard misses NaN/non-number count -> TypeError on best[-1]",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/CharacterColorService.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-132",
+  "cat": "deep-dive",
+  "id": "BUG-132",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "DyeService.searchByLocalizedName returns all 125 dyes for an empty or whitespace query when the locale is loaded",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/DyeService.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-133",
+  "cat": "deep-dive",
+  "id": "BUG-133",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "chara-parser parseFloatColor accepts empty segments as 0 (and Infinity), producing a silent wrong lip/colour",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/chara/chara-parser.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-134",
+  "cat": "deep-dive",
+  "id": "BUG-134",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "ColorAccessibility.isLightColor/getOptimalTextColor use a luminance threshold of 0.5, which picks the lower-contrast text for luminance between about 0.18 and 0.5",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/color/ColorAccessibility.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-135",
+  "cat": "deep-dive",
+  "id": "BUG-135",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "ColorConverter.hsvToRgb caches under a key rounded to 2 dp but stores the result computed from the unrounded inputs, so the output depends on call order",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/color/ColorConverter.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-136",
+  "cat": "deep-dive",
+  "id": "BUG-136",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "DyeDatabase.initialize accepts an all-invalid payload as a loaded empty DB, and duplicate ids only log through the NoOp logger",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/dye/DyeDatabase.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-137",
+  "cat": "deep-dive",
+  "id": "BUG-137",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "HarmonySelector.generateHarmonySlots reserves a pinned dye only for later slots under preventDuplicates, so an earlier slot can choose the same dye",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/dye/HarmonySelector.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-138",
+  "cat": "deep-dive",
+  "id": "BUG-138",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "DyeSearch.test.ts findClosestDye/findDyesWithinDistance tests pass on null or empty results",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/dye/__tests__/DyeSearch.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-139",
+  "cat": "deep-dive",
+  "id": "BUG-139",
+  "unit": "packages/core",
+  "sev": "LOW",
+  "title": "HarmonySelector.test.ts pin test pins Jet Black, a dye no earlier slot picks, so it cannot detect the earlier-slot duplicate",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/src/services/dye/__tests__/HarmonySelector.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-140",
+  "cat": "deep-dive",
+  "id": "BUG-140",
+  "unit": "packages/logger",
+  "sev": "LOW",
+  "title": "logger context string values skip sanitizeErrorMessage key=value/JSON-key redaction",
+  "status": "OPEN",
+  "sprint": "S12",
+  "loc_paths": [
+   "packages/logger/src/core/base-logger.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-141",
+  "cat": "deep-dive",
+  "id": "BUG-141",
+  "unit": "packages/logger",
+  "sev": "LOW",
+  "title": "logger redactSensitiveFields spread-copies toJSON objects (Date/URL), logging them as {}",
+  "status": "OPEN",
+  "sprint": "S12",
+  "loc_paths": [
+   "packages/logger/src/core/base-logger.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-142",
+  "cat": "deep-dive",
+  "id": "BUG-142",
+  "unit": "packages/svg",
+  "sev": "LOW",
+  "title": "contrast-card.ts tone/tier judged on the raw ratio while 13C·1 prints it rounded to 1 dp (2.96 shows '3.0' in failing red)",
+  "status": "OPEN",
+  "sprint": "S14",
+  "loc_paths": [
+   "packages/svg/src/contrast-card.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-143",
+  "cat": "deep-dive",
+  "id": "BUG-143",
+  "unit": "packages/svg",
+  "sev": "LOW",
+  "title": "emitted-glyphs.ts scanner fails open on \\u escapes in literals and on a keyword-preceded regex (return /'/)",
+  "status": "OPEN",
+  "sprint": "S14",
+  "loc_paths": [
+   "packages/svg/src/emitted-glyphs.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-144",
+  "cat": "deep-dive",
+  "id": "BUG-144",
+  "unit": "packages/svg",
+  "sev": "LOW",
+  "title": "frame-budget.test.ts type-floor/text-extent gate omits glamour, swatch, a11y, dye-info and budget-ledger cards",
+  "status": "OPEN",
+  "sprint": "S14",
+  "loc_paths": [
+   "packages/svg/src/frame-budget.test.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-145",
+  "cat": "deep-dive",
+  "id": "BUG-145",
+  "unit": "packages/svg",
+  "sev": "LOW",
+  "title": "glamour-card.ts look label drawn at 10.5 px, below the documented 11 px type floor",
+  "status": "OPEN",
+  "sprint": "S14",
+  "loc_paths": [
+   "packages/svg/src/glamour-card.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-146",
+  "cat": "deep-dive",
+  "id": "BUG-146",
+  "unit": "packages/svg",
+  "sev": "LOW",
+  "title": "gradient.ts ROW_WIDTHS.lead=28 ellipsises two-digit merged step ranges ('9–10' -> '9–…', '10–12' -> '10…')",
+  "status": "OPEN",
+  "sprint": "S14",
+  "loc_paths": [
+   "packages/svg/src/gradient.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-147",
+  "cat": "deep-dive",
+  "id": "BUG-147",
+  "unit": "packages/test-utils",
+  "sev": "LOW",
+  "title": "test-utils createMockD1Database first() returns undefined (real D1: null) when the mock fn returns undefined",
+  "status": "OPEN",
+  "sprint": "S19",
+  "loc_paths": [
+   "packages/test-utils/src/cloudflare/d1.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-148",
+  "cat": "deep-dive",
+  "id": "BUG-148",
+  "unit": "packages/test-utils",
+  "sev": "LOW",
+  "title": "test-utils KV/R2 mock list(): cursor resume never ends when the cursor's key was deleted; insertion order instead of lexicographic",
+  "status": "OPEN",
+  "sprint": "S19",
+  "loc_paths": [
+   "packages/test-utils/src/cloudflare/kv.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-149",
+  "cat": "deep-dive",
+  "id": "BUG-149",
+  "unit": "packages/worker-kit",
+  "sev": "LOW",
+  "title": "worker-kit jsonDepthLimit: case-sensitive Content-Type check lets oauth JSON bodies skip the depth/__proto__ guard",
+  "status": "OPEN",
+  "sprint": "S16",
+  "loc_paths": [
+   "packages/worker-kit/src/body-guards/body-guards.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": [
+   "README.md"
+  ]
+ },
+ {
+  "key": "deep-dive/BUG-150",
+  "cat": "deep-dive",
+  "id": "BUG-150",
+  "unit": "packages/worker-kit",
+  "sev": "LOW",
+  "title": "worker-kit rateLimitMiddleware deny paths drop Retry-After/X-RateLimit-* when formatError returns a raw Response",
+  "status": "OPEN",
+  "sprint": "S16",
+  "loc_paths": [
+   "packages/worker-kit/src/middleware/rate-limit.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-151",
+  "cat": "deep-dive",
+  "id": "BUG-151",
+  "unit": "packages/worker-kit",
+  "sev": "LOW",
+  "title": "worker-kit KVRateLimiter.reset/resetAll read a single kv.list page (no cursor loop)",
+  "status": "OPEN",
+  "sprint": "S16",
+  "loc_paths": [
+   "packages/worker-kit/src/rate-limiter/backends/kv.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-152",
+  "cat": "deep-dive",
+  "id": "BUG-152",
+  "unit": "root (CI/scripts)",
+  "sev": "LOW",
+  "title": "ci.yml workflow-level concurrency ci-${{ github.ref }} + cancel-in-progress: true cancels main-push and nightly-schedule runs against each other",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   ".github/workflows/ci.yml"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-153",
+  "cat": "deep-dive",
+  "id": "BUG-153",
+  "unit": "root (CI/scripts)",
+  "sev": "LOW",
+  "title": "Production deploy workflows' paths filters omit pnpm-lock.yaml / pnpm-workspace.yaml / turbo.json / tsconfig.base.json",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   ".github/workflows/deploy-oauth.yml"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-154",
+  "cat": "deep-dive",
+  "id": "BUG-154",
+  "unit": "root (CI/scripts)",
+  "sev": "LOW",
+  "title": "publish-packages.yml Publish loop records FAILED+= and keeps publishing dependents of a failed package",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   ".github/workflows/publish-packages.yml"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-155",
+  "cat": "deep-dive",
+  "id": "BUG-155",
+  "unit": "root (CI/scripts)",
+  "sev": "LOW",
+  "title": "check-dead-code.ts findOrphanModules / findTestOnlyMembers read EXCLUDED_REFERRERS raw instead of via referrerTexts",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   "scripts/check-dead-code.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/BUG-156",
+  "cat": "deep-dive",
+  "id": "BUG-156",
+  "unit": "root (CI/scripts)",
+  "sev": "LOW",
+  "title": "check-doc-versions.ts promises failure on a non-semver version claim but silently drops the row",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   "scripts/check-doc-versions.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-001",
+  "cat": "deep-dive",
+  "id": "OPT-001",
+  "unit": "apps/web-app",
+  "sev": "MEDIUM",
+  "title": "main.ts:111 boot awaits getServicesStatus() network probe used only by a dev-only log, delaying the v4 shell",
+  "status": "OPEN",
+  "sprint": "S05",
+  "loc_paths": [
+   "apps/web-app/src/main.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-002",
+  "cat": "deep-dive",
+  "id": "OPT-002",
+  "unit": "apps/api-worker",
+  "sev": "LOW",
+  "title": "chara acquisition/ko/zh JSON tables (3.4 MB raw) are evaluated at isolate start for every route",
+  "status": "OPEN",
+  "sprint": "S18",
+  "loc_paths": [
+   "apps/api-worker/src/chara/acquisition.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-003",
+  "cat": "deep-dive",
+  "id": "OPT-003",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "preset.ts favorite list fans out one getPreset per favourite (up to 50)",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preset.ts",
+   "apps/discord-worker/src/types/preset.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-004",
+  "cat": "deep-dive",
+  "id": "OPT-004",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "stats.ts summary pages all of today's user keys it never displays",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/stats.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-005",
+  "cat": "deep-dive",
+  "id": "OPT-005",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "preferences legacy-key migration re-reads two dead KV keys on every call for users with no prefs blob",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preferences.ts",
+   "apps/discord-worker/src/services/preferences.ts",
+   "apps/discord-worker/src/types/preferences.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-006",
+  "cat": "deep-dive",
+  "id": "OPT-006",
+  "unit": "apps/og-worker",
+  "sev": "LOW",
+  "title": "renderer.ts renderSvgToPng never .free()s Resvg or RenderedImage, leaving each render's wasm allocations to FinalizationRegistry timing",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/renderer.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-007",
+  "cat": "deep-dive",
+  "id": "OPT-007",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "mixer-tool.ts field-cell click renders the field twice; harmony-tool.ts market change runs a superseded price pass",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/components/harmony-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-008",
+  "cat": "deep-dive",
+  "id": "OPT-008",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "preset-tool.ts handleSearchInput/sort: refetches the API pool with a spinner on Saved/Mine tabs whose pools are local",
+  "status": "OPEN",
+  "sprint": "S04",
+  "loc_paths": [
+   "apps/web-app/src/components/v4/preset-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-009",
+  "cat": "deep-dive",
+  "id": "OPT-009",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "IndexedDBCacheBackend.loadFromStorage hydrates the price cache with one serial readonly transaction per key",
+  "status": "OPEN",
+  "sprint": "S22",
+  "loc_paths": [
+   "apps/web-app/src/services/api-service-wrapper.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/OPT-010",
+  "cat": "deep-dive",
+  "id": "OPT-010",
+  "unit": "packages/logger",
+  "sev": "LOW",
+  "title": "logger redactSensitiveFields rebuilds the normalized redact Set per node per call",
+  "status": "OPEN",
+  "sprint": "S12",
+  "loc_paths": [
+   "packages/logger/src/core/base-logger.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-001",
+  "cat": "deep-dive",
+  "id": "REFACTOR-001",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "Review custom_id grammar and status list duplicated across discord-worker, moderation-worker and presets-api with no parity check",
+  "status": "OPEN",
+  "sprint": "S26",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.ts"
+  ],
+  "touched_primary": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.ts"
+  ],
+  "touched_secondary": [
+   "apps/discord-worker/src/handlers/commands/preset-notifications.test.ts"
+  ]
+ },
+ {
+  "key": "deep-dive/REFACTOR-002",
+  "cat": "deep-dive",
+  "id": "REFACTOR-002",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "searchPresetsForAutocomplete is called without logger, so its catch returns [] silently while the user-presets path logs.",
+  "status": "OPEN",
+  "sprint": "S09",
+  "loc_paths": [
+   "apps/discord-worker/src/index.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-003",
+  "cat": "deep-dive",
+  "id": "REFACTOR-003",
+  "unit": "apps/discord-worker",
+  "sev": "LOW",
+  "title": "budget-calculator.ts mirrors the svg ledger geometry with literals (350-43-27, 24, 40, 32, 47) instead of the exported LEDGER_* constants",
+  "status": "OPEN",
+  "sprint": "S28",
+  "loc_paths": [
+   "apps/discord-worker/src/services/budget/budget-calculator.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-004",
+  "cat": "deep-dive",
+  "id": "REFACTOR-004",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "glamour-block DYEABLE_SLOTS duplicates core chara-gposers private DYEABLE with a 'change both' comment",
+  "status": "OPEN",
+  "sprint": "S27",
+  "loc_paths": [
+   "apps/web-app/src/components/glamour-block.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-005",
+  "cat": "deep-dive",
+  "id": "REFACTOR-005",
+  "unit": "apps/web-app",
+  "sev": "LOW",
+  "title": "swatch-tool.ts (3146 lines) and gradient-tool.ts (2755 lines): duplicated desktop/mobile selector code already drifts (mobile steps skip pinnedSteps.clear), a dead left panel and drawer, and a mojibake literal at gradient-tool.ts:825",
+  "status": "OPEN",
+  "sprint": "S29",
+  "loc_paths": [
+   "apps/web-app/src/components/swatch-tool.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-006",
+  "cat": "deep-dive",
+  "id": "REFACTOR-006",
+  "unit": "packages/auth",
+  "sev": "LOW",
+  "title": "auth JWTPayload doc falsely claims a re-export from types and mislabels sub",
+  "status": "OPEN",
+  "sprint": "S25",
+  "loc_paths": [
+   "packages/auth/src/jwt.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-007",
+  "cat": "deep-dive",
+  "id": "REFACTOR-007",
+  "unit": "packages/logger",
+  "sev": "LOW",
+  "title": "logger orphaned MAX_STRINGIFY_NODES JSDoc sits above AUTH_SCHEMES",
+  "status": "OPEN",
+  "sprint": "S12",
+  "loc_paths": [
+   "packages/logger/src/core/base-logger.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-008",
+  "cat": "deep-dive",
+  "id": "REFACTOR-008",
+  "unit": "root (CI/scripts)",
+  "sev": "LOW",
+  "title": "Stale comments: ci.yml check-bundle-size scope, web-app vitest coverage-report baseline, orphaned docblock above asReferrers",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   ".github/workflows/ci.yml"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "deep-dive/REFACTOR-009",
+  "cat": "deep-dive",
+  "id": "REFACTOR-009",
+  "unit": "root (CI/scripts)",
+  "sev": "LOW",
+  "title": "OPEN_ITEMS Phase 0 entry and DOMAIN_DEPRECATION inventory line numbers are stale",
+  "status": "OPEN",
+  "sprint": "S20",
+  "loc_paths": [
+   "docs/operations/OPEN_ITEMS.md"
+  ],
+  "touched_primary": [
+   "docs/operations/OPEN_ITEMS.md"
+  ],
+  "touched_secondary": [
+   "docs/operations/DEPLOY_ENVIRONMENTS.md",
+   "docs/operations/DOMAIN_DEPRECATION.md"
+  ]
+ },
+ {
+  "key": "i18n/FONT-001",
+  "cat": "i18n",
+  "id": "FONT-001",
+  "unit": "apps/discord-worker",
+  "sev": "P2",
+  "title": "`/glamour` cards draw English item names for 62.5 % of items in Korean and 97.3 % in Chinese: the CJK subsets hold no item names",
+  "status": "OPEN",
+  "sprint": "S30",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/glamour.ts",
+   "packages/bot-logic/src/commands/glamour.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/HC-001",
+  "cat": "i18n",
+  "id": "HC-001",
+  "unit": "packages/bot-logic",
+  "sev": "P1",
+  "title": "`tribeDisplay()` prints the clan in English on every `/glamour` and `/swatch` card",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/commands/chara-identity.ts",
+   "packages/bot-logic/src/commands/glamour.ts",
+   "packages/bot-logic/src/commands/swatch.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/HC-002",
+  "cat": "i18n",
+  "id": "HC-002",
+  "unit": "apps/discord-worker",
+  "sev": "P1",
+  "title": "The bot fills its translated file-error message with English reasons",
+  "status": "OPEN",
+  "sprint": "S03",
+  "loc_paths": [
+   "apps/discord-worker/src/handlers/commands/glamour.ts",
+   "apps/discord-worker/src/utils/chara-attachment.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/HC-003",
+  "cat": "i18n",
+  "id": "HC-003",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "The Glamour Reader's facewear chip tooltip names the color in English",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/components/glamour-block.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-001",
+  "cat": "i18n",
+  "id": "I18N-001",
+  "unit": "apps/web-app + apps/discord-worker",
+  "sev": "P2",
+  "title": "Both English privacy documents anchor \"posts no longer show your Discord user ID\" to the moving *Last updated* date",
+  "status": "OPEN — Sprint 0 decision: fix inside the open PR before merging, or later in the policy sprint.",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/discord-worker/PRIVACY_POLICY.md",
+   "apps/web-app/PRIVACY.md"
+  ],
+  "touched_primary": [
+   "apps/discord-worker/PRIVACY_POLICY.md",
+   "apps/web-app/PRIVACY.md"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-002",
+  "cat": "i18n",
+  "id": "I18N-002",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "The five web Terms of Service translations say \"ten tools\" and list nine: the Glamour Reader is missing",
+  "status": "OPEN",
+  "sprint": "S07",
+  "loc_paths": [
+   "apps/web-app/TERMS_OF_SERVICE.de.md",
+   "apps/web-app/TERMS_OF_SERVICE.md"
+  ],
+  "touched_primary": [
+   "apps/web-app/TERMS_OF_SERVICE.de.md",
+   "apps/web-app/TERMS_OF_SERVICE.md"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-003",
+  "cat": "i18n",
+  "id": "I18N-003",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "Korean ΔE explainer and budget note contain a non-word (낙은) and a broken verb form (뺌 값을)",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/ko.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/ko.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-004",
+  "cat": "i18n",
+  "id": "I18N-004",
+  "unit": "apps/discord-worker",
+  "sev": "P3",
+  "title": "Bot privacy policy retention row reads as \"kept until the preset is deleted\" for a hide or restore, and the translations took that reading",
+  "status": "OPEN — Sprint 0 decision: fix inside the open PR before merging, or later in the policy sprint.",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/discord-worker/PRIVACY_POLICY.ja.md",
+   "apps/discord-worker/PRIVACY_POLICY.md"
+  ],
+  "touched_primary": [
+   "apps/discord-worker/PRIVACY_POLICY.ja.md",
+   "apps/discord-worker/PRIVACY_POLICY.md"
+  ],
+  "touched_secondary": [
+   "apps/web-app/PRIVACY.md"
+  ]
+ },
+ {
+  "key": "i18n/I18N-005",
+  "cat": "i18n",
+  "id": "I18N-005",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "Web privacy guide gives two retention rules for a hide or restore log entry",
+  "status": "OPEN — Sprint 0 decision: fix inside the open PR before merging, or later in the policy sprint.",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/web-app/PRIVACY.de.md",
+   "apps/web-app/PRIVACY.md"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.de.md",
+   "apps/web-app/PRIVACY.md"
+  ],
+  "touched_secondary": [
+   "apps/discord-worker/PRIVACY_POLICY.md"
+  ]
+ },
+ {
+  "key": "i18n/I18N-006",
+  "cat": "i18n",
+  "id": "I18N-006",
+  "unit": "apps/web-app + apps/discord-worker",
+  "sev": "P3",
+  "title": "Korean privacy documents: \"숨겨진 사용자의 프리셋 수\" reads as \"the hidden user's preset count\"",
+  "status": "OPEN — Sprint 0 decision: fix inside the open PR before merging, or later in the policy sprint.",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/discord-worker/PRIVACY_POLICY.ko.md",
+   "apps/web-app/PRIVACY.ko.md"
+  ],
+  "touched_primary": [
+   "apps/discord-worker/PRIVACY_POLICY.ko.md",
+   "apps/web-app/PRIVACY.ko.md"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-007",
+  "cat": "i18n",
+  "id": "I18N-007",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "Glamour Reader counts have no singular form: \"1 dyes\", \"Same look as 1 other items\", \"1 pieces\"",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/components/glamour-block.ts",
+   "apps/web-app/src/components/glamour-sheet.ts",
+   "apps/web-app/src/locales/de.json",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/de.json",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-008",
+  "cat": "i18n",
+  "id": "I18N-008",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "German `glamour.row.fixed*` hardcodes neuter \"das\" after an item name of any gender",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-009",
+  "cat": "i18n",
+  "id": "I18N-009",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "German `glamour.verdict.countCompany` \"{n} BRAUCHT GESELLSCHAFT\" reads as \"needs company\"",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-010",
+  "cat": "i18n",
+  "id": "I18N-010",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "French `glamour.picker.foot` quotes the button as \"Exporter .md\"; the button says \"Exporter en .md\"",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-011",
+  "cat": "i18n",
+  "id": "I18N-011",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "French lip and face-paint sheet labels put \"(Foncé)\" / \"(Clair)\" on feminine nouns",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-012",
+  "cat": "i18n",
+  "id": "I18N-012",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "The character-file card joins two ja / zh sentences with an ASCII space after 。",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/components/chara-file-card.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-013",
+  "cat": "i18n",
+  "id": "I18N-013",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "The web privacy guide says it is reached from \"About → Privacy\"; the UI says \"About XIV Dye Tools\" and \"POLICIES\"",
+  "status": "OPEN",
+  "sprint": "S07",
+  "loc_paths": [
+   "apps/web-app/PRIVACY.md",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.md",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-014",
+  "cat": "i18n",
+  "id": "I18N-014",
+  "unit": "apps/og-worker",
+  "sev": "P3",
+  "title": "German Glamour Reader crawler description is ungrammatical: an ob-clause under \"mit\"",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/og-embed.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-015",
+  "cat": "i18n",
+  "id": "I18N-015",
+  "unit": "packages/svg",
+  "sev": "P3",
+  "title": "Glamour card footer wraps at any space: counts split from their nouns, and long German is cut off",
+  "status": "OPEN",
+  "sprint": "S14",
+  "loc_paths": [
+   "packages/svg/src/glamour-card.ts"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-016",
+  "cat": "i18n",
+  "id": "I18N-016",
+  "unit": "packages/bot-logic",
+  "sev": "P3",
+  "title": "Bot `card.glamourLooks` goes through `t()`, not `tc()`: the card reads \"+3 LOOK\" / \"+3 ASPECT\"",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/commands/glamour.ts",
+   "packages/bot-logic/src/i18n/locales/en.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-017",
+  "cat": "i18n",
+  "id": "I18N-017",
+  "unit": "packages/bot-logic",
+  "sev": "P3",
+  "title": "Korean `card.glamourPieces` \"염색 {n}개\" counts dye jobs, not dyed pieces",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/i18n/locales/ko.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-018",
+  "cat": "i18n",
+  "id": "I18N-018",
+  "unit": "packages/bot-logic",
+  "sev": "P3",
+  "title": "German bot `card.glamourFixed*` hardcodes neuter \"das\" after an item name of any gender",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/i18n/locales/de.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-019",
+  "cat": "i18n",
+  "id": "I18N-019",
+  "unit": "packages/bot-logic",
+  "sev": "P3",
+  "title": "`/glamour` sends users to the character-file manual topic, which only describes `/swatch`",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/commands/glamour.ts",
+   "packages/bot-logic/src/i18n/locales/en.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/I18N-020",
+  "cat": "i18n",
+  "id": "I18N-020",
+  "unit": "packages/bot-logic",
+  "sev": "P3",
+  "title": "Korean `/glamour` and `/swatch` file-option descriptions show literal backticks",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/i18n/locales/ko.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-001",
+  "cat": "i18n",
+  "id": "TERM-001",
+  "unit": "apps/web-app + apps/discord-worker",
+  "sev": "P2",
+  "title": "Korean policy documents call the moderator two things: 운영자 and 조정자",
+  "status": "OPEN",
+  "sprint": "S07",
+  "loc_paths": [
+   "apps/discord-worker/PRIVACY_POLICY.ko.md",
+   "apps/discord-worker/TERMS_OF_SERVICE.ko.md",
+   "apps/web-app/PRIVACY.ko.md",
+   "apps/web-app/TERMS_OF_SERVICE.ko.md"
+  ],
+  "touched_primary": [
+   "apps/discord-worker/PRIVACY_POLICY.ko.md",
+   "apps/web-app/PRIVACY.ko.md",
+   "apps/web-app/TERMS_OF_SERVICE.ko.md"
+  ],
+  "touched_secondary": [
+   "apps/web-app/src/locales/ko.json"
+  ]
+ },
+ {
+  "key": "i18n/TERM-002",
+  "cat": "i18n",
+  "id": "TERM-002",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "The Glamour list privacy note says edits are kept \"for this outfit\"; they are kept per piece of gear",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": [
+   "apps/web-app/PRIVACY.md"
+  ]
+ },
+ {
+  "key": "i18n/TERM-003",
+  "cat": "i18n",
+  "id": "TERM-003",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "web-app names character-creation sheets two ways within one file: highlights, tattoo, face paint, limbal ring",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [],
+  "touched_primary": [],
+  "touched_secondary": [
+   "docs/reference/ffxiv-terminology.md",
+   "packages/core/scripts/build-locales.ts"
+  ]
+ },
+ {
+  "key": "i18n/TERM-004",
+  "cat": "i18n",
+  "id": "TERM-004",
+  "unit": "packages/bot-logic",
+  "sev": "P2",
+  "title": "The bot names character-creation sheets differently from its own card labels and from web-app",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/i18n/locales/de.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-005",
+  "cat": "i18n",
+  "id": "TERM-005",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "German `glamour.fact.dye` \"FARBE ×{n}\" says color where it means dye",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-006",
+  "cat": "i18n",
+  "id": "TERM-006",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "German web-app names a preset three ways: Voreinstellung, Preset and Vorlage",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/de.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-007",
+  "cat": "i18n",
+  "id": "TERM-007",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "The facewear color tag says \"glasses\" in de, fr and zh, beside a slot that says facewear",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/de.json",
+   "apps/web-app/src/locales/fr.json",
+   "apps/web-app/src/locales/zh.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/de.json",
+   "apps/web-app/src/locales/fr.json",
+   "apps/web-app/src/locales/zh.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-008",
+  "cat": "i18n",
+  "id": "TERM-008",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "Chinese `glamour.fact.dated` \"旧版\"; the Chinese client prefixes Dated items 过期",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/zh.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/zh.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-009",
+  "cat": "i18n",
+  "id": "TERM-009",
+  "unit": "apps/web-app",
+  "sev": "P2",
+  "title": "English calls the clan \"tribe\" in Swatch Matcher, and calls the race lock \"ANY TRIBE\" in the Glamour Reader",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/en.json",
+   "packages/core/src/services/chara/chara-game-rules.ts",
+   "packages/core/src/services/chara/chara-twins.ts"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-010",
+  "cat": "i18n",
+  "id": "TERM-010",
+  "unit": "apps/web-app + apps/discord-worker",
+  "sev": "P2",
+  "title": "French policy documents call a preset \"palette prédéfinie\"; the UI says \"préréglage\"",
+  "status": "OPEN",
+  "sprint": "S07",
+  "loc_paths": [
+   "apps/discord-worker/TERMS_OF_SERVICE.fr.md",
+   "apps/web-app/PRIVACY.fr.md",
+   "apps/web-app/TERMS_OF_SERVICE.fr.md",
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.fr.md",
+   "apps/web-app/TERMS_OF_SERVICE.fr.md",
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-011",
+  "cat": "i18n",
+  "id": "TERM-011",
+  "unit": "apps/og-worker",
+  "sev": "P2",
+  "title": "og-worker's French deck still calls Community Presets \"Palettes Communautaires\"",
+  "status": "OPEN",
+  "sprint": "S11",
+  "loc_paths": [
+   "apps/og-worker/src/services/og-strings.ts",
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/fr.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-012",
+  "cat": "i18n",
+  "id": "TERM-012",
+  "unit": "packages/bot-logic",
+  "sev": "P2",
+  "title": "The bot's dye-problem chip says \"FARBEN\" (colors) in German and \"TEINTES\" (shades) in French",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/i18n/locales/de.json",
+   "packages/bot-logic/src/i18n/locales/fr.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-013",
+  "cat": "i18n",
+  "id": "TERM-013",
+  "unit": "packages/bot-logic",
+  "sev": "P2",
+  "title": "Chinese `/manual` tip calls the Facewear dye category 面部装备",
+  "status": "OPEN",
+  "sprint": "S02",
+  "loc_paths": [
+   "packages/bot-logic/src/i18n/locales/zh.json"
+  ],
+  "touched_primary": [],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-014",
+  "cat": "i18n",
+  "id": "TERM-014",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "Korean privacy guide says 복장 for \"outfit\" in a line #223 added",
+  "status": "OPEN — Sprint 0 decision: fix inside the open PR before merging, or later in the policy sprint.",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/web-app/PRIVACY.ko.md"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.ko.md"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-015",
+  "cat": "i18n",
+  "id": "TERM-015",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "Chinese privacy guide calls the moderator 版主 in a line #223 added, and 审核员 everywhere else",
+  "status": "OPEN — Sprint 0 decision: fix inside the open PR before merging, or later in the policy sprint.",
+  "sprint": "S00",
+  "loc_paths": [
+   "apps/web-app/PRIVACY.zh.md"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.zh.md"
+  ],
+  "touched_secondary": [
+   "apps/web-app/src/locales/zh.json"
+  ]
+ },
+ {
+  "key": "i18n/TERM-016",
+  "cat": "i18n",
+  "id": "TERM-016",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "Japanese names the dye channel two ways: 染色枠 and チャンネル",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/ja.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/ja.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-017",
+  "cat": "i18n",
+  "id": "TERM-017",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "Korean share errors say 염색약 (hair dye) where every other surface says 염료",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/src/locales/ko.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/src/locales/ko.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-018",
+  "cat": "i18n",
+  "id": "TERM-018",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "English calls the Glamour list \"Equipment list\" in its toasts, and its download \"Export .md\" then \"Save .md\"",
+  "status": "OPEN",
+  "sprint": "S06",
+  "loc_paths": [
+   "apps/web-app/PRIVACY.md",
+   "apps/web-app/src/components/glamour-block.ts",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.md",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-019",
+  "cat": "i18n",
+  "id": "TERM-019",
+  "unit": "apps/web-app + apps/discord-worker",
+  "sev": "P3",
+  "title": "Policy prose names four tools differently from their UI titles",
+  "status": "OPEN",
+  "sprint": "S07",
+  "loc_paths": [
+   "apps/discord-worker/TERMS_OF_SERVICE.md",
+   "apps/web-app/PRIVACY.md",
+   "apps/web-app/TERMS_OF_SERVICE.md",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.md",
+   "apps/web-app/TERMS_OF_SERVICE.md",
+   "apps/web-app/src/locales/en.json"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-020",
+  "cat": "i18n",
+  "id": "TERM-020",
+  "unit": "apps/web-app",
+  "sev": "P3",
+  "title": "Japanese privacy guide says the fonts are 自社ホスト (\"hosted by our company\")",
+  "status": "OPEN",
+  "sprint": "S07",
+  "loc_paths": [
+   "apps/web-app/PRIVACY.ja.md"
+  ],
+  "touched_primary": [
+   "apps/web-app/PRIVACY.ja.md"
+  ],
+  "touched_secondary": []
+ },
+ {
+  "key": "i18n/TERM-021",
+  "cat": "i18n",
+  "id": "TERM-021",
+  "unit": "packages/core",
+  "sev": "P3",
+  "title": "Core's character-creation sheet names are typed by hand, and its limbal is \"cornea\" / \"iris\" in ja, ko and zh",
+  "status": "OPEN",
+  "sprint": "S13",
+  "loc_paths": [
+   "packages/core/scripts/build-locales.ts"
+  ],
+  "touched_primary": [
+   "packages/core/scripts/build-locales.ts"
+  ],
+  "touched_secondary": []
+ }
+]

@@ -417,3 +417,85 @@ describe('rateLimitMiddleware', () => {
     });
   });
 });
+
+describe('rateLimitMiddleware formatError headers (BUG-150)', () => {
+  const resetAt = new Date(Date.now() + 30_000);
+  const denying = () =>
+    createMockBackend({
+      check: vi
+        .fn()
+        .mockResolvedValue({ allowed: false, remaining: 0, resetAt, limit: 100, retryAfter: 30 }),
+    });
+  const throwing = () => createMockBackend({ check: vi.fn().mockRejectedValue(new Error('boom')) });
+  const raw = () => new Response('slow down', { status: 429 });
+
+  it('copies rate-limit headers onto a raw Response from formatError (deny)', async () => {
+    const app = buildApp({
+      backend: denying(),
+      keyExtractor: () => 'k',
+      config: DEFAULT_CONFIG,
+      formatError: raw,
+    });
+    const res = await app.request('/test');
+    expect(res.status).toBe(429);
+    expect(await res.text()).toBe('slow down');
+    expect(res.headers.get('Retry-After')).toBe('30');
+    expect(res.headers.get('X-RateLimit-Limit')).toBe('100');
+    expect(res.headers.get('X-RateLimit-Remaining')).toBe('0');
+    expect(res.headers.get('X-RateLimit-Reset')).not.toBeNull();
+  });
+
+  it('copies Retry-After onto a raw Response from formatError (fail-closed)', async () => {
+    const app = buildApp({
+      backend: throwing(),
+      keyExtractor: () => 'k',
+      config: DEFAULT_CONFIG,
+      onError: 'fail-closed',
+      formatError: raw,
+    });
+    const res = await app.request('/test');
+    expect(res.status).toBe(429);
+    expect(res.headers.get('Retry-After')).toBe('60');
+    expect(res.headers.get('X-RateLimit-Limit')).toBeNull();
+  });
+
+  it('does not duplicate headers when formatError uses c.json', async () => {
+    const app = buildApp({
+      backend: denying(),
+      keyExtractor: () => 'k',
+      config: DEFAULT_CONFIG,
+      formatError: (c, retryAfter) => c.json({ retryAfter }, 429),
+    });
+    const res = await app.request('/test');
+    expect(res.headers.get('Retry-After')).toBe('30');
+    expect(res.headers.get('X-RateLimit-Limit')).toBe('100');
+    for (const name of ['Retry-After', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-RateLimit-Reset']) {
+      expect(res.headers.get(name)).not.toContain(',');
+    }
+  });
+
+  it('never overwrites a header formatError set itself', async () => {
+    const app = buildApp({
+      backend: denying(),
+      keyExtractor: () => 'k',
+      config: DEFAULT_CONFIG,
+      formatError: () => new Response('x', { status: 429, headers: { 'retry-after': '999' } }),
+    });
+    const res = await app.request('/test');
+    expect(res.headers.get('Retry-After')).toBe('999');
+    expect(res.headers.get('X-RateLimit-Limit')).toBe('100');
+  });
+
+  it('handles a Response with immutable headers', async () => {
+    const app = buildApp({
+      backend: denying(),
+      keyExtractor: () => 'k',
+      config: DEFAULT_CONFIG,
+      formatError: () => Response.redirect('https://example.com/limited', 302),
+    });
+    const res = await app.request('/test');
+    expect(res.status).toBe(302);
+    expect(res.headers.get('Location')).toBe('https://example.com/limited');
+    expect(res.headers.get('Retry-After')).toBe('30');
+  });
+});

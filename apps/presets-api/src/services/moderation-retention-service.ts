@@ -55,13 +55,16 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  * Deliberately called AFTER the request's own write has landed, so housekeeping
  * never outranks the action it follows.
  *
+ * BUG-066: resolves `true` when the sweep ran and `false` when it failed, so
+ * the daily job can report a failed sweep; the write paths ignore it.
+ *
  * @param now - Epoch ms; injectable so tests can pin the boundaries.
  */
 export async function pruneModerationRecords(
   db: D1Database,
   logger?: RetentionLogger,
   now: number = Date.now()
-): Promise<void> {
+): Promise<boolean> {
   const banCutoff = new Date(now - LIFTED_BAN_RETENTION_DAYS * MS_PER_DAY).toISOString();
 
   const logCutoffDate = new Date(now);
@@ -86,7 +89,9 @@ export async function pruneModerationRecords(
     if (pruned > 0) {
       logger?.warn('[FINDING-005] pruned moderation records', { pruned });
     }
+    return true;
   } catch {
     logger?.warn('[FINDING-005] moderation-record prune failed', { pruned: 0 });
+    return false;
   }
 }

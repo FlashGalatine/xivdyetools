@@ -13,6 +13,7 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env, DiscordInteraction } from './types/env.js';
 import { InteractionType, InteractionResponseType } from './types/env.js';
 import type { GitHubPushPayload } from './types/github.js';
+import type { PresetPreviousValues } from '@xivdyetools/types';
 import {
   verifyDiscordRequest,
   unauthorizedResponse,
@@ -67,6 +68,7 @@ import {
 } from './services/preset-favorites.js';
 import { handleButtonInteraction } from './handlers/buttons/index.js';
 import { dyeService, searchDyesByName, type LocaleCode } from '@xivdyetools/bot-logic';
+import { CATEGORY_DISPLAY } from '@xivdyetools/svg';
 import * as presetApi from './services/preset-api.js';
 import { sendMessage, sendFollowUp } from './utils/discord-api.js';
 import { STATUS_DISPLAY, isValidPreviewImageKey, type PresetNotificationPayload } from './types/preset.js';
@@ -123,6 +125,15 @@ const GITHUB_ANNOUNCE_REPO_URL = 'https://github.com/FlashGalatine/xivdyetools';
  */
 const ANNOUNCED_VERSION_TTL_SECONDS = 90 * 24 * 60 * 60;
 
+/**
+ * BUG-047: how long `/preset favorite remove` autocomplete waits for the
+ * favourites name back-fill before answering with what it has. Discord gives
+ * an autocomplete 3 s and each presets-api lookup may wait up to 10 s
+ * (PRESET_API_TIMEOUT_MS), so the lookups get half of Discord's window and
+ * the rest is left for the locale read, the KV write-back and the response.
+ */
+const FAVORITES_BACKFILL_DEADLINE_MS = 1_500;
+
 type PushCommit = import('./types/github.js').GitHubCommit;
 
 /**
@@ -147,6 +158,30 @@ function formatDyesForEmbed(dyeIds: number[]): string {
       return getLocalizedDyeName(dye.itemID, dye.name);
     })
     .join(', ');
+}
+
+/**
+ * BUG-003 / Sprint 9: a webhook text block — the payload's `edited_from` or
+ * `preset.previous_values` — or null unless it has the full four-field shape.
+ * It is runtime data from another service, and the moderation builder
+ * dereferences every field of the diff's original — a malformed block is
+ * dropped (no diff from it; no Revert, if it was the snapshot) rather than
+ * failing the post, which presets-api would retry and then dead-letter.
+ */
+function readPresetText(raw: unknown): PresetPreviousValues | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const { name, description, tags, dyes } = raw as Record<string, unknown>;
+  if (
+    typeof name !== 'string' ||
+    typeof description !== 'string' ||
+    !Array.isArray(tags) ||
+    !tags.every((tag) => typeof tag === 'string') ||
+    !Array.isArray(dyes) ||
+    !dyes.every((dye) => typeof dye === 'number')
+  ) {
+    return null;
+  }
+  return { name, description, tags, dyes };
 }
 
 // Define context variables type
@@ -389,24 +424,56 @@ app.post('/webhooks/preset-submission', async (c) => {
   }
 
   const { preset } = payload;
+  // BUG-003: presets-api 2.5.0 marks an owner edit; an older one sends no
+  // marker, and its payloads are all read as new submissions.
+  const isEdit = payload.is_edit === true;
   // FINDING-011 (2026-08-29 security audit): the preset's name is
   // user-authored free text about a submission that may never be published —
   // the id identifies it just as well for anything a log needs to answer.
   logger.info('Received preset webhook', {
     presetId: preset.id,
     source: preset.source,
+    isEdit,
   });
 
   // Pending presets go to the moderation channel via the shared sanitized
   // builder (REFACTOR-025/BUG-009/BUG-072); Discord outcome checked (BUG-074)
   if (preset.status === 'pending' && env.MODERATION_CHANNEL_ID) {
     const adminT = createTranslator('en');
+    // BUG-003 (2026-10-04 deep-dive): an edit is posted as one. Its diff base
+    // and its Revert target are two different texts, kept apart here:
+    //  - Diff base (Sprint 9): `edited_from`, the text THIS edit replaced. A
+    //    presets-api that predates it omits the field, and only then does the
+    //    diff fall back to the revert snapshot (headed as such). A present but
+    //    malformed `edited_from` gives no diff — on a presets-api that sends
+    //    it, the snapshot is never a diff base. Either block holds only name,
+    //    description, tags and dyes, so it is laid over the current preset.
+    //  - Revert target: `preset.previous_values`. Revert restores it AND
+    //    approves the preset, so it is offered only when the preset was live
+    //    before this edit; on a pending or rejected preset the snapshot may be
+    //    text no moderator ever approved. It is write-once, so it can be older
+    //    than `edited_from` — the embed names what Revert restores.
+    const diffFromSnapshot = isEdit && payload.edited_from === undefined;
+    const diffBase = !isEdit
+      ? null
+      : readPresetText(diffFromSnapshot ? preset.previous_values : payload.edited_from);
+    const revertTo =
+      isEdit && payload.edited_from_status === 'approved'
+        ? readPresetText(preset.previous_values)
+        : null;
     const sent = await sendModerationNotification(
       env,
       {
-        kind: 'new',
+        kind: isEdit ? 'edit' : 'new',
         preset,
+        ...(diffBase
+          ? { original: { ...preset, ...diffBase }, originalIsRevertSnapshot: diffFromSnapshot }
+          : {}),
+        ...(revertTo ? { revertTo } : {}),
         contentRevision: preset.content_revision,
+        // The builder prints the raw category_id without it; an id this table
+        // does not know still falls back to that.
+        categoryName: CATEGORY_DISPLAY[preset.category_id]?.name,
         extraFields: [
           {
             name: adminT.t('webhook.fields.source'),
@@ -460,7 +527,11 @@ app.post('/webhooks/preset-submission', async (c) => {
           description: `**${safeName}**\n\n${safeDescription}`,
           color: STATUS_DISPLAY.approved.color,
           fields: [
-            { name: adminT.t('webhook.fields.category'), value: preset.category_id, inline: true },
+            {
+              name: adminT.t('webhook.fields.category'),
+              value: CATEGORY_DISPLAY[preset.category_id]?.name ?? preset.category_id,
+              inline: true,
+            },
             {
               name: adminT.t('webhook.fields.author'),
               value: safeAuthor,
@@ -918,7 +989,7 @@ async function handleCommand(
     // Route to specific command handlers
     switch (commandName) {
       case 'about':
-        response = await handleAboutCommand(interaction, env, handlerCtx);
+        response = await handleAboutCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'harmony':
@@ -926,7 +997,9 @@ async function handleCommand(
         break;
 
       case 'dye':
-        response = await handleDyeCommand(interaction, env, handlerCtx);
+        // BUG-125: the request logger reaches executeDyeInfo / executeRandom,
+        // whose catches log the failure's class instead of discarding it.
+        response = await handleDyeCommand(interaction, env, handlerCtx, logger);
         break;
 
       // V4 Commands
@@ -974,7 +1047,7 @@ async function handleCommand(
         break;
 
       case 'changelog':
-        response = await handleChangelogCommand(interaction, env, handlerCtx);
+        response = await handleChangelogCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'comparison':
@@ -1104,7 +1177,9 @@ async function handleAutocomplete(
 
   // F-02 (2026-08-20 i18n audit): dye suggestions match and display the
   // user's locale (stored preference → Discord client locale → en).
-  const locale = await resolveUserLocale(env.KV, acUserId ?? '', interaction.locale);
+  // BUG-126: with the request logger, a KV failure here is logged rather than
+  // silently degrading the suggestions to the Discord locale.
+  const locale = await resolveUserLocale(env.KV, acUserId ?? '', interaction.locale, logger);
   await initializeLocale(locale);
 
   // Handle preset command autocomplete
@@ -1132,9 +1207,14 @@ async function handleAutocomplete(
           choices = await getFavoritedPresetsAutocompleteChoices(env, userId, query, logger);
         }
       }
-      // For other subcommands (show, vote, favorite add), search approved presets
+      // For other subcommands (show, vote, favorite add), search approved presets.
+      // REFACTOR-002: with the logger, a presets-api failure is logged like the
+      // edit and favourites branches' failures, not answered silently with [].
       else {
-        choices = await presetApi.searchPresetsForAutocomplete(env, query, { status: 'approved' });
+        choices = await presetApi.searchPresetsForAutocomplete(env, query, {
+          status: 'approved',
+          logger,
+        });
       }
     }
     // Dye autocomplete (for submit and edit subcommands)
@@ -1287,13 +1367,64 @@ async function getFavoritedPresetsAutocompleteChoices(
     // entries, so the former per-keystroke fan-out (up to 50 service-binding
     // fetches) is gone. Legacy v1 entries without names are resolved once and
     // written back (one-time lazy migration per user).
-    const missing = entries.filter((e) => !e.name);
+    //
+    // BUG-047 (2026-10-04 deep-dive): an entry needs a lookup when its name is
+    // blank, or when it is its own id — what older builds persisted for EVERY
+    // failed lookup (5xx, timeout, 429), and which nothing then looked up
+    // again. An entry marked `gone` (a 404) is never looked up.
+    const missing = entries.filter((e) => !e.gone && (!e.name || e.name === e.id));
     if (missing.length > 0) {
-      const resolved = await Promise.all(
-        missing.map((e) => presetApi.getPreset(env, e.id).catch(() => null)),
-      );
-      for (let i = 0; i < missing.length; i++) {
-        missing[i].name = resolved[i]?.name ?? missing[i].id;
+      // getPreset answers null only for a 404 and THROWS on a 5xx, timeout or
+      // 429. Only an answer is persisted: a name, or for a 404 the `gone`
+      // marker — never the id as a name, which would look exactly like the
+      // poisoned names above. A failed lookup leaves the entry as it was, so a
+      // later keystroke retries it.
+      //
+      // Each lookup can wait PRESET_API_TIMEOUT_MS (10 s) and Discord gives
+      // autocomplete 3 s, so the back-fill has its own deadline: a lookup that
+      // has not answered by then counts as failed for this keystroke (labelled
+      // by its id, nothing persisted), and it no longer holds up the answer.
+      const outcomes: Array<'failed' | { name: string } | null> = missing.map(() => 'failed');
+      let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+      const deadline = new Promise<void>((resolve) => {
+        deadlineTimer = setTimeout(resolve, FAVORITES_BACKFILL_DEADLINE_MS);
+      });
+      await Promise.race([
+        Promise.all(
+          missing.map((e, i) =>
+            presetApi.getPreset(env, e.id).then(
+              (preset) => {
+                // null is a 404; a preset with no name is no answer
+                if (preset === null) outcomes[i] = null;
+                else if (preset.name) outcomes[i] = { name: preset.name };
+              },
+              () => undefined,
+            ),
+          ),
+        ),
+        deadline,
+      ]);
+      clearTimeout(deadlineTimer);
+
+      let changed = false;
+      let failed = 0;
+      outcomes.forEach((outcome, i) => {
+        const entry = missing[i];
+        if (outcome === 'failed') {
+          failed++;
+        } else if (outcome === null) {
+          entry.name = '';
+          entry.gone = true;
+          changed = true;
+        } else if (outcome.name !== entry.name) {
+          entry.name = outcome.name;
+          changed = true;
+        }
+      });
+      if (failed > 0) {
+        logger.warn('Favourites name back-fill lookups failed or timed out; will retry', {
+          failed,
+        });
       }
 
       // BUG-028: the write-back used to be awaited inside the same `try` as
@@ -1302,22 +1433,29 @@ async function getFavoritedPresetsAutocompleteChoices(
       // a failed migration. Several keystrokes land inside a second and KV
       // allows one write per second per key, so hitting that is routine for a
       // legacy user typing at speed. The migration is an optimisation; it is
-      // never a precondition for answering.
-      try {
-        await savePresetFavoriteEntries(env.KV, userId, entries, logger);
-      } catch (error) {
-        logger.warn('Favourites name back-fill could not be persisted', {
-          errorName: error instanceof Error ? error.name : 'unknown',
-        });
+      // never a precondition for answering. Nothing changed, nothing to save.
+      if (changed) {
+        try {
+          await savePresetFavoriteEntries(env.KV, userId, entries, logger);
+        } catch (error) {
+          logger.warn('Favourites name back-fill could not be persisted', {
+            errorName: error instanceof Error ? error.name : 'unknown',
+          });
+        }
       }
     }
 
+    // An entry whose name is still unknown (or `gone`) is offered under its
+    // id: Discord rejects the whole response if any choice name is empty.
+    const labelled = entries.map((e) => ({ label: e.name || e.id, id: e.id }));
     const lowerQuery = query.toLowerCase();
     const filtered =
-      query.length > 0 ? entries.filter((e) => e.name.toLowerCase().includes(lowerQuery)) : entries;
+      query.length > 0
+        ? labelled.filter((e) => e.label.toLowerCase().includes(lowerQuery))
+        : labelled;
 
     // REFACTOR-003: Discord caps a choice name at 100 characters.
-    return filtered.slice(0, 25).map((e) => ({ name: e.name.slice(0, 100), value: e.id }));
+    return filtered.slice(0, 25).map((e) => ({ name: e.label.slice(0, 100), value: e.id }));
   } catch (error) {
     logger.error(
       'Failed to get favorited presets autocomplete',

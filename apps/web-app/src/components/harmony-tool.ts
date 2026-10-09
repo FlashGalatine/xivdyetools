@@ -37,7 +37,6 @@ import {
   // WEB-REF-003 FIX: Import from extracted harmony generator
   getHarmonyTypes,
 } from '@services/index';
-import { handoffTo } from '@shared/tool-handoff';
 import { ConfigController } from '@services/config-controller';
 import { ThemeService } from '@services/theme-service';
 import { applyDisplayOptions } from '@services/display-options-helper';
@@ -65,7 +64,7 @@ import '@components/v4/v4-color-wheel';
 import '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { V4ColorWheel } from '@components/v4/v4-color-wheel';
-import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import type { ShareButton } from '@components/v4/share-button';
 
 // ============================================================================
@@ -315,6 +314,14 @@ export class HarmonyTool extends BaseComponent {
       })
     );
 
+    // Re-lay the type rail across the breakpoint (scrolling row ↔ centred
+    // wrap). BUG-095 (2026-10-04 deep-dive): bound once per mount, not in
+    // renderRightPanel — that runs on every update(), and each run added the
+    // listener to a fresh list that destroy() never saw. renderTypeRail reads
+    // the current rail container, so one listener serves every re-render.
+    this.railMql = window.matchMedia('(max-width: 768px)');
+    this.railMql.addEventListener('change', this.onRailBreakpoint);
+
     // Subscribe to route changes to handle deep links when navigating to harmony
     this.subs.add(
       RouterService.subscribe((state) => {
@@ -404,30 +411,51 @@ export class HarmonyTool extends BaseComponent {
     // Note: MarketBoardService handles state updates and cache clearing.
     // We just need to regenerate UI when settings change.
     this.subs.add(
-      configController.subscribe('market', (config) => {
-        // Regenerate harmonies and fetch prices if needed
+      configController.subscribe('market', () => {
+        // OPT-007 (2026-10-04 deep-dive): the one path a market change takes
+        // into this tool; buildMarketPanel's relay callbacks are no-ops for
+        // that reason. generateHarmonies() fetches prices itself while they
+        // are on, so no fetch follows it here. Its `showPrices` is already
+        // current: MarketBoardService subscribed to 'market' in its
+        // constructor, which this tool's constructor ran before this listener
+        // was added, and ConfigController notifies in subscription order.
+        //
+        // Sprint 27 review: the market-failure strip is otherwise redrawn only
+        // after a fetch, and prices turned off fetch nothing -- so it outlived
+        // them. Forget the failure too: it described a fetch for prices the
+        // user has switched off, and must not reappear when they come back
+        // on before the next fetch has answered.
+        if (!this.showPrices) {
+          this.marketFailed = false;
+        }
+        this.renderMarketStrip();
         if (this.selectedDye) {
           this.generateHarmonies();
-          if (config.showPrices) {
-            void this.fetchPricesForDisplayedDyes();
-          }
         }
       })
     );
 
-    // Generate initial harmonies if a dye is selected, otherwise show empty state
+    // Generate initial harmonies if a dye is selected, otherwise show empty
+    // state. generateHarmonies() fetches the prices itself while they are on;
+    // a second fetch here only superseded it (Sprint 22 review, as OPT-007).
     if (this.selectedDye) {
       this.generateHarmonies();
-      // Fetch prices on initial load if enabled
-      if (this.showPrices) {
-        void this.fetchPricesForDisplayedDyes();
-      }
     } else {
       // No dye selected - show empty state message
       this.showEmptyState(true);
     }
 
     logger.info('[HarmonyTool] Mounted');
+  }
+
+  onUpdate(): void {
+    // BUG-021 (2026-10-04 deep-dive): update() — a language switch, or a deep
+    // link re-rendering the panels — rebuilds the right panel around an empty
+    // results grid, and nothing refilled it, so the cards vanished under an
+    // enabled Share button until the next pick. Regenerate from the current
+    // state, as gradient-tool does; with no base this shows the empty state,
+    // exactly as onMount does.
+    this.generateHarmonies();
   }
 
   destroy(): void {
@@ -542,11 +570,13 @@ export class HarmonyTool extends BaseComponent {
     // But the guard above admits more than share links — a BARE `?dye=` is an
     // ordinary in-app navigation, from two paths: `handoffTo('harmony', dye)`
     // ("send this dye to the Harmony Explorer") and `RouterService`'s
-    // `PRESERVED_PARAMS`, which keeps `dye` when the user leaves Harmony and
-    // comes back. Treating those as a link that says rgb reverted a Munsell
-    // user to RGB, cleared their pins, and PERSISTED it — the wheel would have
-    // been the only setting an in-app navigation could clobber, since `algo`
-    // and `perceptual` above are each guarded by `if (param)`.
+    // `PRESERVED_PARAMS`, which carries a `dye` still in the URL from tool to
+    // tool (since BUG-013, only a dye no tool could apply: both readers
+    // consume the ones they apply). Treating those as a link that says rgb
+    // reverted a Munsell user to RGB, cleared their pins, and PERSISTED it —
+    // the wheel would have been the only setting an in-app navigation could
+    // clobber, since `algo` and `perceptual` above are each guarded by
+    // `if (param)`.
     //
     // So: any share marker at all makes it a link (`v=1` alone included — that
     // is what `ShareService` stamps on every URL it generates); none of them
@@ -572,9 +602,10 @@ export class HarmonyTool extends BaseComponent {
 
     // A bare-colour base: `hex` is the declared slot for a custom base,
     // exclusive with `dye`. Wrapped in a virtual dye so the whole tool
-    // treats it like any other base.
+    // treats it like any other base. Applied without selectCustomColor's URL
+    // drop: a custom base is never stored, so the link is all a reload has.
     if (!dyeIdParam && hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
-      this.selectCustomColor(`#${hexParam.replace(/^#/, '')}`);
+      this.applyCustomBase(`#${hexParam.replace(/^#/, '')}`);
       logger.info(`[HarmonyTool] Share URL loaded custom base: #${hexParam}`);
     }
 
@@ -586,6 +617,12 @@ export class HarmonyTool extends BaseComponent {
         if (dye) {
           this.selectedDye = dye;
           StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
+          // BUG-013 (2026-10-04 deep-dive): consumed once stored. Left in the
+          // URL, PRESERVED_PARAMS carried it into every later tool: Budget
+          // took it as its target, and coming back here replaced whatever
+          // base the user had picked since. A dye that did not resolve stays;
+          // the next base change drops it.
+          this.dropDeepLinkedDye();
           logger.info(`[HarmonyTool] Share URL loaded dye: ${dye.name} (itemID=${dye.itemID})`);
 
           // Update the desktop dye selector if it exists
@@ -601,16 +638,11 @@ export class HarmonyTool extends BaseComponent {
           // Clear any previously swapped dyes since we're selecting a new base
           this.swappedDyes.clear();
 
-          // Re-render to update the current dye display elements
+          // Re-render to update the current dye display elements; onUpdate
+          // generates the harmonies for the newly selected dye, and that
+          // fetches the prices while they are on — no second fetch here
+          // (Sprint 22 review, as OPT-007).
           this.update();
-
-          // Generate harmonies for the newly selected dye
-          this.generateHarmonies();
-
-          // Fetch prices if enabled
-          if (this.showPrices) {
-            void this.fetchPricesForDisplayedDyes();
-          }
         }
       }
     } else if (harmonyParam && this.selectedDye) {
@@ -618,6 +650,41 @@ export class HarmonyTool extends BaseComponent {
       this.swappedDyes.clear();
       this.generateHarmonies();
     }
+  }
+
+  /**
+   * BUG-013 (2026-10-04 deep-dive): take the linked base out of the URL once
+   * handleDeepLink has applied and stored it, and when the user changes the
+   * base. RouterService's PRESERVED_PARAMS carries `dye` across every tool
+   * switch, and handleDeepLink applies it whenever Harmony is rebuilt — so a
+   * pick that reached storage only was overwritten (and the stale dye
+   * persisted) the next time the user came back, and Budget took a linked
+   * Harmony base as its own target. With the param gone, the rebuilt tool
+   * restores the base from storage. `dyeId`, the legacy alias handleDeepLink
+   * reads as the same slot, goes too.
+   *
+   * So does `hex`, the custom-base slot (2026-10-04 Sprint 5 review): it is
+   * not preserved across tools, but a reload applied it again over a later
+   * pick and deleted the stored one. handleDeepLink's own custom base does not
+   * come through here — a custom base is never stored, so the link is all a
+   * reload has (see applyCustomBase).
+   *
+   * Dropped rather than rewritten to the new pick: `dye` would then travel
+   * from every ordinary pick into every tool, and Budget's handleDeepLink
+   * takes it as its target. And history.replaceState rather than
+   * RouterService.replaceRoute, which notifies every route listener — so
+   * v4-layout would remount this tool on each pick and handleDeepLink would
+   * run again (the extractor's share-param cleanup avoids it the same way).
+   */
+  private dropDeepLinkedDye(): void {
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    if (!params.has('dye') && !params.has('dyeId') && !params.has('hex')) return;
+
+    params.delete('dye');
+    params.delete('dyeId');
+    params.delete('hex');
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
   // ============================================================================
@@ -844,18 +911,23 @@ export class HarmonyTool extends BaseComponent {
     const marketBoard = new MarketBoard(marketContent);
     marketBoard.init();
 
-    // Set up market board event listeners using shared utility
+    // Set up market board event listeners using shared utility.
+    // OPT-007 (Sprint 22 review): a server or prices-toggle change is handled
+    // by the ConfigController 'market' subscription in onMount, and only
+    // there. Every MarketBoard change goes through ConfigController, and each
+    // live board (desktop and drawer, and in the v4 shell a detached one)
+    // also relays it here as a DOM event. Regenerating on the relay as well
+    // ran two or three full grid rebuilds and price passes per change, each
+    // superseding the last. The two callbacks are deliberate no-ops: leaving
+    // them out would make the mixin fall back to fetching on every relay.
+    // A Refresh click keeps the fallback, which refetches for the grid.
     setupMarketBoardListeners(
       marketContent,
       () => this.showPrices,
       () => this.fetchPricesForDisplayedDyes(),
       {
-        onPricesToggled: () => {
-          this.generateHarmonies();
-        },
-        onServerChanged: () => {
-          if (this.selectedDye) this.generateHarmonies();
-        },
+        onPricesToggled: () => {},
+        onServerChanged: () => {},
       }
     );
 
@@ -965,6 +1037,8 @@ export class HarmonyTool extends BaseComponent {
         StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
         logger.info('[HarmonyTool] Cleared saved dye');
       }
+      // A stale ?dye= link would override that on the way back (BUG-013)
+      this.dropDeepLinkedDye();
 
       // Clear swapped dyes when base dye changes
       this.swappedDyes.clear();
@@ -1062,10 +1136,6 @@ export class HarmonyTool extends BaseComponent {
     this.applyTypeRailLayout();
     contentWrapper.appendChild(this.typeRailContainer);
     this.renderTypeRail();
-
-    // Re-lay the rail across the breakpoint (scrolling row ↔ centred wrap)
-    this.railMql = window.matchMedia('(max-width: 768px)');
-    this.railMql.addEventListener('change', this.onRailBreakpoint);
 
     // Color Wheel Section - centered with inline styles for reliability
     this.colorWheelContainer = this.createElement('div', {
@@ -1348,6 +1418,7 @@ export class HarmonyTool extends BaseComponent {
         } else {
           StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
         }
+        this.dropDeepLinkedDye();
 
         // Clear swapped dyes when base dye changes
         this.swappedDyes.clear();
@@ -1487,8 +1558,14 @@ export class HarmonyTool extends BaseComponent {
       selectionConfig,
       {
         excludeItemIDs: [this.selectedDye.itemID],
-        // A dye the user swapped in by hand wins its slot outright, and still
-        // consumes its place so a later slot cannot pick it again.
+        // A dye the user swapped in by hand wins its slot. With 'no
+        // duplicates' on, core reserves an honoured pin ahead of EVERY other
+        // slot and companion list, earlier ones included (BUG-137) -- except
+        // that a slot with no other eligible unused dye still falls back to
+        // repeating one (a repeated dye beats a blank slot), and that fallback
+        // can repeat a pin. When two slots pin the same dye, only the lower
+        // slot index is honoured; the other is chosen as if it had no pin.
+        // See HarmonySelectionOptions.pinned in core.
         pinned: this.swappedDyes,
       }
     );
@@ -1616,7 +1693,12 @@ export class HarmonyTool extends BaseComponent {
     card.showHue = this.displayOptions.showHue ?? true;
     card.showStain = this.displayOptions.showStain ?? true;
     card.showConsolidation = this.displayOptions.showSpectrum ?? true;
-    card.showPrice = this.displayOptions.showPrice;
+    // BUG-086 (2026-10-04 deep-dive): the price row needs the Market Board
+    // toggle as well as the display flag, as extractor and comparison gate it.
+    // On the display flag alone, every card kept its price row with prices
+    // switched off. A toggle change regenerates the grid through the
+    // 'market' subscription, so the cards are rebuilt with the new value.
+    card.showPrice = this.displayOptions.showPrice && this.showPrices;
     card.showAcquisition = this.displayOptions.showAcquisition;
 
     // Handle card selection - set as new base dye and regenerate harmonies
@@ -1634,52 +1716,10 @@ export class HarmonyTool extends BaseComponent {
       }) as EventListener);
     }
 
-    // Handle context menu actions
-    card.addEventListener('context-action', ((
-      e: CustomEvent<{ action: ContextAction; dye: Dye }>
-    ) => {
-      this.handleContextAction(e.detail.action, e.detail.dye);
-    }) as EventListener);
-
     // Store reference for later price updates
     this.v4ResultCards.push(card);
 
     this.harmonyGridContainer.appendChild(card);
-  }
-
-  /**
-   * Handle context menu action from v4-result-card
-   */
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    logger.info(`[HarmonyTool] Context action: ${action} for dye: ${dye.name}`);
-
-    switch (action) {
-      // These three passed `add=<itemID>`, and NO tool in this app reads an
-      // `add` param — the receivers read `dyes` (Comparison, Accessibility)
-      // and `dyeA` (Mixer). So all three sent a key nobody consumes carrying a
-      // value that would have been refused anyway, and did nothing at all.
-      case 'add-comparison':
-        handoffTo('comparison', dye);
-        break;
-      case 'add-mixer':
-        handoffTo('mixer', dye);
-        break;
-      case 'add-accessibility':
-        handoffTo('accessibility', dye);
-        break;
-      case 'see-harmonies':
-        // Select this dye as base and regenerate harmonies
-        this.selectDye(dye);
-        break;
-      case 'budget':
-        RouterService.navigateTo('budget', { base: dye.hex.replace('#', '') });
-        break;
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex).then(() => {
-          logger.info(`[HarmonyTool] Copied hex: ${dye.hex}`);
-        });
-        break;
-    }
   }
 
   /**
@@ -1939,8 +1979,10 @@ export class HarmonyTool extends BaseComponent {
     }
 
     // Re-render if needed
-    if (needsRerender && this.selectedDye) {
-      this.generateHarmonies();
+    if (needsRerender) {
+      if (this.selectedDye) {
+        this.generateHarmonies();
+      }
 
       // Update harmony type buttons if they exist (shared method handles null containers)
       this.updateHarmonyTypeButtonStyles(this.harmonyTypesContainer, this.selectedHarmonyType);
@@ -1948,6 +1990,11 @@ export class HarmonyTool extends BaseComponent {
         this.drawerHarmonyTypesContainer,
         this.selectedHarmonyType
       );
+      // The rail is the only visible type picker in the v4 shell (its
+      // renderRightPanel clears the shared panel, buttons and all). Without
+      // this a sidebar change left the old type pressed over the new cards,
+      // and with no base selected nothing showed the change at all.
+      this.renderTypeRail();
     }
   }
 
@@ -1958,8 +2005,9 @@ export class HarmonyTool extends BaseComponent {
   public clearDyes(): void {
     this.selectedDye = null;
 
-    // Clear from storage
+    // Clear from storage, and drop a deep-linked dye from the URL (BUG-013)
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
+    this.dropDeepLinkedDye();
     logger.info('[HarmonyTool] All dyes cleared');
 
     // Update dye selectors
@@ -1987,8 +2035,9 @@ export class HarmonyTool extends BaseComponent {
 
     this.selectedDye = dye;
 
-    // Persist to storage
+    // Persist to storage, and drop a deep-linked dye from the URL (BUG-013)
     StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
+    this.dropDeepLinkedDye();
     logger.info(`[HarmonyTool] External dye selected: ${dye.name} (itemID=${dye.itemID})`);
 
     // BUG-073: update BOTH selectors. clearDyes() already does; these two
@@ -2010,6 +2059,17 @@ export class HarmonyTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
+    this.applyCustomBase(hex);
+    // A user's choice: drop the linked base from the URL (BUG-013)
+    this.dropDeepLinkedDye();
+  }
+
+  /**
+   * Make a bare colour the base. selectCustomColor (the palette drawer) and
+   * handleDeepLink (a `?hex=` link) share it; only the user's choice drops the
+   * link from the URL.
+   */
+  private applyCustomBase(hex: string): void {
     // Create a virtual "dye" object for the custom color.
     // Harmony keeps its own id scheme: the single base slot is always -1, so
     // `usedDyeIds` and the (never-restored) persisted id stay stable.

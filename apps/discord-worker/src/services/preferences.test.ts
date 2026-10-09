@@ -468,10 +468,12 @@ describe('Preferences Service', () => {
   describe('getAffectedCommands', () => {
     it('returns correct commands for each key', () => {
       expect(getAffectedCommands('language')).toContain('preferences.affects.allCommands');
-      expect(getAffectedCommands('blending')).toContain('/mixer');
-      expect(getAffectedCommands('blending')).toContain('/gradient');
+      // BUG-049: /gradient never reads `blending`, and nothing reads `clan`
+      // (/swatch takes it from the .chara file) — the full key-to-handler
+      // table lives in preferences.exhaustive.test.ts.
+      expect(getAffectedCommands('blending')).toEqual(['/mixer']);
       expect(getAffectedCommands('matching')).toContain('/extractor');
-      expect(getAffectedCommands('clan')).toContain('/swatch');
+      expect(getAffectedCommands('clan')).toEqual([]);
       expect(getAffectedCommands('world')).toContain('/budget');
     });
   });

@@ -9,7 +9,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { editOriginalResponse, safeEditOriginalResponse, sendFollowUp } from './discord-api.js';
+import {
+  editOriginalResponse,
+  safeDeleteOriginalResponse,
+  safeEditOriginalResponse,
+  sendFollowUp,
+} from './discord-api.js';
 
 const silentLogger = () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() });
 
@@ -87,6 +92,78 @@ describe('discord-api safe wrappers', () => {
       });
     },
   );
+});
+
+/**
+ * Sprint 9 review: a refusal that must stay private, sent after a PUBLIC
+ * defer, has to remove the public "thinking…" first — an ephemeral follow-up
+ * alone would leave it there. Same contract as the edit wrapper: never
+ * throw, report whether Discord accepted.
+ */
+describe('safeDeleteOriginalResponse', () => {
+  let consoleError: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Discord answers a successful delete with 204 No Content
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('sends DELETE to the @original route, with a timeout', async () => {
+    expect(await safeDeleteOriginalResponse('app-id', 'token')).toBe(true);
+
+    const [url, init] = vi.mocked(fetch).mock.calls[0];
+    expect(url).toBe('https://discord.com/api/v10/webhooks/app-id/token/messages/@original');
+    expect((init as RequestInit).method).toBe('DELETE');
+    expect((init as RequestInit).signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('reports false and logs the status on a non-OK response', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response('Unknown Message', { status: 404 }));
+    const logger = silentLogger();
+
+    expect(await safeDeleteOriginalResponse('app-id', 'token', logger as never)).toBe(false);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('failed'),
+      undefined,
+      expect.objectContaining({ status: 404 }),
+    );
+  });
+
+  it('falls back to console on a non-OK response with no logger', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response('nope', { status: 500 }));
+
+    expect(await safeDeleteOriginalResponse('app-id', 'token')).toBe(false);
+    expect(consoleError).toHaveBeenCalled();
+  });
+
+  it('reports false and logs when the request throws', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('socket hang up'));
+    const logger = silentLogger();
+
+    expect(await safeDeleteOriginalResponse('app-id', 'token', logger as never)).toBe(false);
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('threw'), expect.any(Error));
+  });
+
+  it('falls back to console when the request throws with no logger', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('socket hang up'));
+
+    expect(await safeDeleteOriginalResponse('app-id', 'token')).toBe(false);
+    expect(consoleError).toHaveBeenCalled();
+  });
+
+  it('still reports false when reading the error body itself fails', async () => {
+    const unreadable = new Response('x', { status: 500 });
+    vi.spyOn(unreadable, 'text').mockRejectedValue(new Error('body already consumed'));
+    vi.mocked(fetch).mockResolvedValue(unreadable);
+
+    expect(await safeDeleteOriginalResponse('app-id', 'token')).toBe(false);
+  });
 });
 
 describe('follow-up payload construction', () => {

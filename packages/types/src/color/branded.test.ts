@@ -55,6 +55,8 @@ describe('createHexColor', () => {
       expect(() => createHexColor('#FFFF')).toThrow('Invalid hex color format');
       expect(() => createHexColor('#FFFFF')).toThrow('Invalid hex color format');
       expect(() => createHexColor('#FFFFFFF')).toThrow('Invalid hex color format');
+      // 8-digit #RRGGBBAA: no alpha (moved from the web app's copy, DEAD-022).
+      expect(() => createHexColor('#FF0000FF')).toThrow('Invalid hex color format');
     });
 
     it('should throw for invalid characters', () => {

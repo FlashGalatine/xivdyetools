@@ -7,6 +7,8 @@
  */
 
 import { CharacterColorService } from '@xivdyetools/core';
+import type { ClanKey, SubRace } from '@xivdyetools/types';
+import { getLocalizedClan, type LocaleCode } from '../localization.js';
 
 /**
  * Shared palette-sheet service (data is bundled — no I/O). Constructed on
@@ -20,10 +22,18 @@ export function getCharacterColors(): CharacterColorService {
   return characterColors;
 }
 
-/** "SeekerOfTheSun" → "SEEKER OF THE SUN". */
-export function tribeDisplay(tribe: string | null): string {
+/**
+ * The file's clan as the reader's client names it, upper-cased by the
+ * locale's own rules (HC-001): "SeekerOfTheSun" → en "SEEKER OF THE SUN",
+ * de "GOLDTATZE", ko "태양의 추종자". The SubRace enum maps to core's clan key
+ * by lower-casing its first letter, as og-worker's `clanOrRaceKey` does.
+ * The locale must already be initialized (both commands do it first);
+ * otherwise the line keeps its English words.
+ */
+export function tribeDisplay(tribe: SubRace | null, locale: LocaleCode): string {
   if (!tribe) return '';
-  return tribe.replace(/([a-z])([A-Z])/g, '$1 $2').toUpperCase();
+  const key = (tribe.charAt(0).toLowerCase() + tribe.slice(1)) as ClanKey;
+  return getLocalizedClan(key, locale).toLocaleUpperCase(locale);
 }
 
 /**

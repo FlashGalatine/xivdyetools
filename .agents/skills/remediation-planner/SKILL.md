@@ -117,6 +117,7 @@ orphan: every non-KEEP, non-superseded ID appears once.
 ## Standing guidance
 - Verify each finding's evidence against the code before fixing — findings are leads.
 - One commit per task (or per sprint when tiny); gate at every sprint boundary (release-mechanics.md → Standing verification gate); stage only your own paths.
+- Route each sprint's agents by role (`.agents/skills/audit-shared/model-routing.md` § *Remediation sprints*): collectors run the gates, workers implement and review, a verifier settles what ships.
 - A ROTATE finding stays open until the credential is rotated, whatever the code says.
 - Re-run the source audit's gates after each sprint; removals/fixes unlock new findings.
 - Annotate executed sprints in the heading: **✅ COMPLETED <date> <commits>** + **Deploy needs:** — the plan doubles as the tracker.
