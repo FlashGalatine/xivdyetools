@@ -81,9 +81,11 @@ site de votre navigateur l'effacent.
 L'application ne communique qu'avec ces hôtes de première partie (la Content-Security-Policy du site
 n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
 
-1. **Prix du tableau des ventes** (facultatif — le commutateur « Afficher les prix ») : les
-   identifiants d'objet et le Monde ou le centre de données que vous avez choisis sont envoyés à
-   notre proxy sur `data.xivdyetools.app`, qui les récupère depuis [Universalis](https://universalis.app).
+1. **Prix du tableau des ventes** (facultatif — le commutateur « Activer le tableau des ventes »
+   dans la colonne des réglages ; « Suggestions Budget » les charge toujours, car cet outil compare
+   les teintures selon leur prix) : les identifiants d'objet et le Monde ou le centre de données que
+   vous avez choisis sont envoyés à notre proxy sur `data.xivdyetools.app`, qui les récupère depuis
+   [Universalis](https://universalis.app).
 2. **Noms et icônes d'équipement pour les imports `.chara`** — `data.xivdyetools.app` (voir
    ci-dessus).
 3. **Palettes prédéfinies communautaires** (`api.xivdyetools.app`) : la navigation n'envoie rien

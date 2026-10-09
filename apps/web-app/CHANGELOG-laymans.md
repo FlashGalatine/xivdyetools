@@ -2,6 +2,24 @@
 
 ---
 
+## Web-App Version 5.14.1 — October 5, 2026
+
+### Your settings stay put
+- **Swatch Matcher keeps your palette.** Changing another setting, in any tool, no longer switches it to Hair and the tribe to Seeker of the Sun, and no longer drops the color you picked.
+- **Saved settings apply right away.** Saved dye filters, such as "exclude metallic", work as soon as you open Gradient, Swatch Matcher, Dye Mixer or Budget. Before, they only took effect after you touched the sidebar.
+- **Share links keep their settings.** A shared gradient or swatch link's settings no longer snap back the first time you change something. A broken link no longer changes your saved settings.
+- **The Options sidebar always shows the current setting,** including after Reset Settings, an import, or a change in another tab.
+
+### Budget Suggestions
+- **The match line stays where you put it.** Moving the slider no longer snaps back to 8 when you change another setting. A shared link with a match line now shows it on the slider too.
+- **Opening Budget no longer turns market prices on in every tool.** Budget loads its own prices. If an earlier visit already turned prices on, turn them off once in another tool's settings. Budget no longer shows that switch, since it always loads prices. The Privacy Guide now says that Budget always loads market prices, in all six languages.
+- **RGB, HSV and LAB now show on the target card,** as the sidebar always said they did. Turn them off in Display Options.
+
+### Swatch Matcher and Dye Mixer
+- **Changing the palette clears the old matches at once,** and picking a THIS CHARACTER slot replaces the cell you picked before, including what SEND TO passes on.
+- **Tribe & Gender appear only on the Hair and Skin palettes,** the two that depend on them.
+- **A blend you pick in the Dye Mixer's mixing field is remembered,** like the sidebar's mixing mode.
+
 ## Web-App Version 5.14.0 — October 4, 2026
 
 ### Privacy Guide: community presets and deleting your data

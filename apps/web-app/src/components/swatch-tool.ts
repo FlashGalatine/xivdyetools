@@ -27,6 +27,8 @@ import {
 import { setupMarketBoardListeners } from '@services/pricing-mixin';
 import {
   CharacterColorService,
+  isMatchingMethod,
+  LEGACY_MATCHING_METHOD_MAP,
   normalizeMatchingMethod,
   type CharaSlotId,
 } from '@xivdyetools/core';
@@ -96,17 +98,48 @@ type ColorCategory =
   | 'facePaintColorsDark'
   | 'facePaintColorsLight';
 
+const COLOR_CATEGORIES: readonly ColorCategory[] = [
+  'eyeColors',
+  'hairColors',
+  'skinColors',
+  'highlightColors',
+  'lipColorsDark',
+  'lipColorsLight',
+  'tattooColors',
+  'facePaintColorsDark',
+  'facePaintColorsLight',
+];
+
 /**
- * Storage keys for character tool
+ * Storage keys for character tool. The tool's settings live in
+ * ConfigController ('swatch'); this one is a cross-tool handoff, not a setting.
  */
 const STORAGE_KEYS = {
+  incomingDye: 'v4_swatch_target_dye',
+} as const;
+
+/**
+ * BUG-001 (2026-10-04 deep-dive): the v3 keys the tool used to keep its own
+ * copy of the swatch settings in. The migration below reads them once and
+ * removes them. color_index was written on every cell pick and never read.
+ */
+const LEGACY_SETTING_KEYS = {
   subrace: 'v3_character_subrace',
   gender: 'v3_character_gender',
   colorCategory: 'v3_character_category',
   selectedColorIndex: 'v3_character_color_index',
   maxResults: 'v3_character_max_results',
-  incomingDye: 'v4_swatch_target_dye',
 } as const;
+
+/**
+ * Set once the v3 keys have been moved into the controller. Deliberately
+ * outside the 'xivdyetools_v4_config_' prefix, so ConfigController's
+ * cross-tab storage listener ignores it.
+ */
+const LEGACY_MIGRATED_KEY = 'xivdyetools_swatch_v3_migrated';
+
+/** The sidebar's max-results slider range (SwatchConfig.maxResults: 1-6). */
+const MAX_RESULTS_LIMIT = 6;
 
 /**
  * Localization key for each race — a presentation concern local to this
@@ -153,7 +186,8 @@ const RACE_SPECIFIC_CATEGORIES: ColorCategory[] = ['hairColors', 'skinColors'];
 const EVERCOLD_DEPRECATED_CATEGORIES: ColorCategory[] = ['eyeColors', 'hairColors', 'skinColors'];
 
 /**
- * Default values
+ * Default values. Each one is also what the tool showed when no v3 key
+ * existed, which is why the migration below falls back to them.
  */
 const DEFAULTS = {
   subrace: 'Midlander' as SubRace,
@@ -161,6 +195,98 @@ const DEFAULTS = {
   colorCategory: 'eyeColors' as ColorCategory,
   matchCount: 3,
 };
+
+// ============================================================================
+// Settings validation
+// ============================================================================
+// Every value that reaches the tool's state is checked first: the persisted
+// config (a hand-edited localStorage), a share link, and the legacy v3 keys
+// all arrive as unknown.
+
+const SUBRACES: readonly SubRace[] = Object.values(RACE_SUBRACES).flat();
+
+function isColorCategory(value: unknown): value is ColorCategory {
+  return typeof value === 'string' && (COLOR_CATEGORIES as readonly string[]).includes(value);
+}
+
+/** A tribe, with the 5.0 rename applied: 'Helion' became 'Helions' (the game's plural). */
+function toSubRace(value: unknown): SubRace | null {
+  const tribe = value === 'Helion' ? 'Helions' : value;
+  return typeof tribe === 'string' && (SUBRACES as readonly string[]).includes(tribe)
+    ? (tribe as SubRace)
+    : null;
+}
+
+function isGender(value: unknown): value is Gender {
+  return value === 'Male' || value === 'Female';
+}
+
+/** A result count clamped to the sidebar's 1-6; null when it is not a count at all. */
+function toMaxResults(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 1) return null;
+  return Math.min(Math.floor(value), MAX_RESULTS_LIMIT);
+}
+
+/**
+ * A method this build knows, current or retired. Anything else would
+ * normalize to the default, and a bogus share link must not replace a saved
+ * method with that.
+ */
+function isKnownMatchingMethod(value: unknown): value is string {
+  return (
+    isMatchingMethod(value) ||
+    (typeof value === 'string' && Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, value))
+  );
+}
+
+function objectOrEmpty<T extends object>(value: T | undefined): Partial<T> {
+  return typeof value === 'object' && value !== null ? value : {};
+}
+
+/** Once per page; the marker key makes it once per browser. */
+let legacySettingsMigrated = false;
+
+/**
+ * BUG-001 (2026-10-04 deep-dive): the one-time move of the v3_character_* keys
+ * into ConfigController, which owns the swatch settings now.
+ *
+ * All four fields are written, from the v3 value or else the tool's default:
+ * that pair is what the tool showed. The persisted controller config is NOT
+ * evidence of a choice. The sidebar's display-option and dye-filter fan-outs
+ * stored a full swatch config carrying the controller's old defaults
+ * (hairColors / SeekerOfTheSun / Female) for anyone who toggled an option, and
+ * since 10A the sidebar has no colour-sheet control at all. So "not migrated"
+ * is never inferred from that config's absence.
+ *
+ * Guarded by a module flag as well as the marker, so a browser whose storage
+ * writes are dropped (a private window) cannot reset the settings on every
+ * remount.
+ */
+function migrateLegacySwatchSettings(): void {
+  if (legacySettingsMigrated) return;
+  legacySettingsMigrated = true;
+  if (StorageService.getItem<boolean>(LEGACY_MIGRATED_KEY)) return;
+
+  const category = StorageService.getItem<unknown>(LEGACY_SETTING_KEYS.colorCategory);
+  const gender = StorageService.getItem<unknown>(LEGACY_SETTING_KEYS.gender);
+  const controller = ConfigController.getInstance();
+  controller.setConfig('swatch', {
+    colorSheet: isColorCategory(category) ? category : DEFAULTS.colorCategory,
+    race: toSubRace(StorageService.getItem(LEGACY_SETTING_KEYS.subrace)) ?? DEFAULTS.subrace,
+    gender: isGender(gender) ? gender : DEFAULTS.gender,
+    maxResults:
+      toMaxResults(StorageService.getItem(LEGACY_SETTING_KEYS.maxResults)) ?? DEFAULTS.matchCount,
+  });
+  // setConfig stores nothing when these equal the defaults, and a 5.14.0 tab
+  // still open would then read its own old defaults (hairColors /
+  // SeekerOfTheSun / Female) and broadcast them back on its next fan-out.
+  controller.persistConfig('swatch');
+
+  for (const key of Object.values(LEGACY_SETTING_KEYS)) {
+    StorageService.removeItem(key);
+  }
+  StorageService.setItem(LEGACY_MIGRATED_KEY, true);
+}
 
 // ============================================================================
 // 10A Sheet vocabulary (drawn card metrics)
@@ -239,11 +365,12 @@ export class SwatchTool extends BaseComponent {
   private priceData: Map<number, PriceData> = new Map();
   private showPrices: boolean = false;
 
-  // Display options (from ConfigController) - for v4-result-card
-  private displayOptions: DisplayOptionsConfig = { ...DEFAULT_DISPLAY_OPTIONS };
-  // 5.0: one vocabulary across the suite — ΔE2000 default, same as 7C/9C.
-  private matchingMethod: MatchingMethod = 'ciede2000';
-  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
+  // From ConfigController, seeded in the constructor (BUG-022): display
+  // options for v4-result-card, the matching method (5.0: one vocabulary
+  // across the suite, ΔE2000 by default) and the dye filters.
+  private displayOptions: DisplayOptionsConfig;
+  private matchingMethod: MatchingMethod;
+  private dyeFiltersConfig: DyeFiltersConfig;
 
   // Reverse matching state (dye/hex → closest swatch)
   private reverseDyeHex: string | null = null;
@@ -305,30 +432,32 @@ export class SwatchTool extends BaseComponent {
     this.characterColorService = new CharacterColorService();
     this.marketBoardService = MarketBoardService.getInstance();
 
-    // Load persisted settings
-    {
-      // 5.0 stored-tribe migration: 'Helion' was renamed 'Helions' (the
-      // game's plural); migrate the persisted value on read.
-      const storedSubrace = StorageService.getItem<string>(STORAGE_KEYS.subrace);
-      this.subrace =
-        storedSubrace === 'Helion'
-          ? 'Helions'
-          : ((storedSubrace as SubRace | null) ?? DEFAULTS.subrace);
-    }
-    this.gender = StorageService.getItem<Gender>(STORAGE_KEYS.gender) ?? DEFAULTS.gender;
+    // BUG-001 / BUG-022 (2026-10-04 deep-dive): ConfigController owns the
+    // settings, and subscribe() never replays, so this read is the only
+    // mount-time source. Nested objects are copied: getConfig can hand back the
+    // controller's live object, or the default table itself.
+    migrateLegacySwatchSettings();
+    const config: Partial<SwatchConfig> = ConfigController.getInstance().getConfig('swatch') ?? {};
+    this.colorCategory = isColorCategory(config.colorSheet)
+      ? config.colorSheet
+      : DEFAULTS.colorCategory;
+    this.subrace = toSubRace(config.race) ?? DEFAULTS.subrace;
+    this.gender = isGender(config.gender) ? config.gender : DEFAULTS.gender;
+    this.maxResults = toMaxResults(config.maxResults) ?? DEFAULTS.matchCount;
+    this.matchingMethod = normalizeMatchingMethod(config.matchingMethod);
+    this.displayOptions = {
+      ...DEFAULT_DISPLAY_OPTIONS,
+      ...objectOrEmpty(config.displayOptions),
+    };
+    this.dyeFiltersConfig = { ...DEFAULT_DYE_FILTERS, ...objectOrEmpty(config.dyeFilters) };
     // A file that finished loading while this tool was closed still decides
-    // the hair and skin sheets; the swatch config already follows it.
+    // the hair and skin sheets. The controller pins the swatch config to the
+    // file as well, so this normally agrees with the seed above.
     const file = CharaSessionService.getTribeAndGender();
     if (file) {
       this.subrace = file.tribe;
       this.gender = file.gender;
-      StorageService.setItem(STORAGE_KEYS.subrace, file.tribe);
-      StorageService.setItem(STORAGE_KEYS.gender, file.gender);
     }
-    this.colorCategory =
-      StorageService.getItem<ColorCategory>(STORAGE_KEYS.colorCategory) ?? DEFAULTS.colorCategory;
-    this.maxResults =
-      StorageService.getItem<number>(STORAGE_KEYS.maxResults) ?? DEFAULTS.matchCount;
 
     // Load initial colors (async for race-specific categories like skin/hair)
     void this.loadColors().then(() => {
@@ -439,58 +568,70 @@ export class SwatchTool extends BaseComponent {
   // ============================================================================
 
   /**
-   * Update tool configuration from external source (V4 ConfigSidebar)
+   * Apply configuration from ConfigController (this is its 'swatch'
+   * subscriber) or the v4-layout config-change forward.
+   *
+   * Apply-only: it never writes the controller (the tool's own picks go
+   * through commitConfig), and every field is compared by value, so re-applying
+   * what the tool already has is a no-op. That matters: the controller
+   * broadcasts the WHOLE config on any change, and the layout forward delivers
+   * each sidebar change a second time.
    */
   public setConfig(config: Partial<SwatchConfig>): void {
-    let needsReload = false;
+    if (this.isDestroyed) return;
+    let sheetChanged = false;
+    let tribeChanged = false;
     let needsRematch = false;
     let needsRedraw = false;
 
     // Handle race (now receives SubRace values directly like 'Midlander')
-    if (config.race !== undefined && config.race !== this.subrace) {
-      this.subrace = config.race as SubRace;
-      StorageService.setItem(STORAGE_KEYS.subrace, config.race);
-      needsReload = true;
-      logger.info(`[SwatchTool] setConfig: race -> ${config.race}`);
+    const race = toSubRace(config.race);
+    if (race !== null && race !== this.subrace) {
+      this.subrace = race;
+      tribeChanged = true;
+      logger.info(`[SwatchTool] setConfig: race -> ${race}`);
     }
 
     // Handle gender
-    if (config.gender !== undefined && config.gender !== this.gender) {
-      this.gender = config.gender as Gender;
-      StorageService.setItem(STORAGE_KEYS.gender, config.gender);
-      needsReload = true;
+    if (isGender(config.gender) && config.gender !== this.gender) {
+      this.gender = config.gender;
+      tribeChanged = true;
       logger.info(`[SwatchTool] setConfig: gender -> ${config.gender}`);
     }
 
-    // Handle colorSheet (now receives category keys directly like 'eyeColors')
-    if (config.colorSheet !== undefined && config.colorSheet !== this.colorCategory) {
-      // ConfigSidebar now sends category keys directly (e.g., 'eyeColors', 'hairColors')
-      this.colorCategory = config.colorSheet as ColorCategory;
-      StorageService.setItem(STORAGE_KEYS.colorCategory, config.colorSheet);
-      needsReload = true;
+    // Handle colorSheet (category keys directly, like 'eyeColors')
+    if (isColorCategory(config.colorSheet) && config.colorSheet !== this.colorCategory) {
+      this.colorCategory = config.colorSheet;
+      sheetChanged = true;
       logger.info(`[SwatchTool] setConfig: colorSheet -> ${config.colorSheet}`);
     }
 
     // Handle maxResults
-    if (config.maxResults !== undefined && config.maxResults !== this.maxResults) {
-      this.maxResults = config.maxResults;
-      StorageService.setItem(STORAGE_KEYS.maxResults, config.maxResults);
+    const maxResults = toMaxResults(config.maxResults);
+    if (maxResults !== null && maxResults !== this.maxResults) {
+      this.maxResults = maxResults;
       needsRematch = true;
-      logger.info(`[SwatchTool] setConfig: maxResults -> ${config.maxResults}`);
+      logger.info(`[SwatchTool] setConfig: maxResults -> ${maxResults}`);
     }
 
     // Handle displayOptions (for v4-result-card display settings)
     if (config.displayOptions !== undefined) {
-      this.displayOptions = { ...this.displayOptions, ...config.displayOptions };
-      needsRedraw = true;
-      logger.info(`[SwatchTool] setConfig: displayOptions updated`);
+      const next = { ...this.displayOptions, ...config.displayOptions };
+      if (JSON.stringify(next) !== JSON.stringify(this.displayOptions)) {
+        this.displayOptions = next;
+        needsRedraw = true;
+        logger.info(`[SwatchTool] setConfig: displayOptions updated`);
+      }
     }
 
     // Handle matchingMethod - re-match colors when algorithm changes
-    if (config.matchingMethod !== undefined && config.matchingMethod !== this.matchingMethod) {
-      this.matchingMethod = config.matchingMethod;
-      needsRematch = true;
-      logger.info(`[SwatchTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+    if (config.matchingMethod !== undefined) {
+      const method = normalizeMatchingMethod(config.matchingMethod);
+      if (method !== this.matchingMethod) {
+        this.matchingMethod = method;
+        needsRematch = true;
+        logger.info(`[SwatchTool] setConfig: matchingMethod -> ${method}`);
+      }
     }
 
     // Handle dyeFilters changes
@@ -505,27 +646,26 @@ export class SwatchTool extends BaseComponent {
     }
 
     // Sync UI selectors (both desktop and mobile)
-    if (needsReload || needsRematch) {
-      // Update desktop selectors
-      if (this.subraceSelect) this.subraceSelect.value = this.subrace;
-      if (this.genderSelect) this.genderSelect.value = this.gender;
-      if (this.categorySelect) this.categorySelect.value = this.colorCategory;
-      // Update mobile selectors
-      if (this.mobileSubraceSelect) this.mobileSubraceSelect.value = this.subrace;
-      if (this.mobileGenderSelect) this.mobileGenderSelect.value = this.gender;
-      if (this.mobileCategorySelect) this.mobileCategorySelect.value = this.colorCategory;
+    if (sheetChanged || tribeChanged) {
+      this.syncDesktopSelectors();
+      this.syncMobileSelectors();
     }
 
-    // Reload colors if race/gender/category changed
+    // A tribe only decides the hair and skin sheets. Elsewhere (a .chara load
+    // pins it while you look at the eye sheet) it must not drop the selection.
+    const needsReload =
+      sheetChanged || (tribeChanged && RACE_SPECIFIC_CATEGORIES.includes(this.colorCategory));
+
     if (needsReload) {
-      this.selectedColor = null;
+      // BUG-023 (2026-10-04 deep-dive): clear the forward selection NOW, not
+      // after the load, so no stale card, share link or SEND TO dye survives
+      // the hair/skin chunk's import. A slot pick stays: pickCharaSlot sets it
+      // before committing the slot's palette, and the card follows it there.
+      if (this.selectionContext?.source !== 'slot') this.selectionContext = null;
+      this.clearForwardSelection();
+      // updateColorGrid re-runs the reverse match against the new palette.
       void this.loadColors().then(() => {
-        // Update the grid header title
-        this.updateColorGrid();
-        // Re-run reverse match against the new palette
-        if (this.reverseDyeHex) {
-          this.performReverseMatch();
-        }
+        if (!this.isDestroyed) this.updateColorGrid();
       });
     } else if (needsRematch) {
       // Re-match if maxResults or matchingMethod changed
@@ -535,6 +675,18 @@ export class SwatchTool extends BaseComponent {
       // Just redraw results if only display options changed
       this.updateMatchResults();
     }
+  }
+
+  /**
+   * BUG-001 (2026-10-04 deep-dive): a pick made in the tool (palette rail,
+   * range toggle, sheet slot). Applied here first, then written to the
+   * controller, whose synchronous broadcast then finds nothing to change.
+   * Before this, the rail never reached the controller, and the next
+   * broadcast put the controller's stale sheet back.
+   */
+  private commitConfig(partial: Partial<SwatchConfig>): void {
+    this.setConfig(partial);
+    ConfigController.getInstance().setConfig('swatch', partial);
   }
 
   /**
@@ -1080,14 +1232,9 @@ export class SwatchTool extends BaseComponent {
       this.subraceSelect.appendChild(optgroup);
     }
 
+    // setConfig syncs the other selects and does the reload and the clear.
     this.subraceSelect.addEventListener('change', () => {
-      this.subrace = this.subraceSelect!.value as SubRace;
-      StorageService.setItem(STORAGE_KEYS.subrace, this.subrace);
-      this.syncMobileSelectors();
-      void this.loadColors().then(() => {
-        this.updateColorGrid();
-        this.clearSelection();
-      });
+      this.commitConfig({ race: this.subraceSelect!.value });
     });
 
     subraceGroup.appendChild(this.subraceSelect);
@@ -1126,13 +1273,7 @@ export class SwatchTool extends BaseComponent {
     this.genderSelect.appendChild(femaleOption);
 
     this.genderSelect.addEventListener('change', () => {
-      this.gender = this.genderSelect!.value as Gender;
-      StorageService.setItem(STORAGE_KEYS.gender, this.gender);
-      this.syncMobileSelectors();
-      void this.loadColors().then(() => {
-        this.updateColorGrid();
-        this.clearSelection();
-      });
+      this.commitConfig({ gender: this.genderSelect!.value });
     });
 
     genderGroup.appendChild(this.genderSelect);
@@ -1206,13 +1347,7 @@ export class SwatchTool extends BaseComponent {
     }
 
     this.categorySelect.addEventListener('change', () => {
-      this.colorCategory = this.categorySelect!.value as ColorCategory;
-      StorageService.setItem(STORAGE_KEYS.colorCategory, this.colorCategory);
-      this.syncMobileSelectors();
-      void this.loadColors().then(() => {
-        this.updateColorGrid();
-        this.clearSelection();
-      });
+      this.commitConfig({ colorSheet: this.categorySelect!.value });
 
       // Update gender visibility
       const genderGroup = this.subraceSelect?.parentElement
@@ -1578,16 +1713,17 @@ export class SwatchTool extends BaseComponent {
   /** A THIS CHARACTER card was picked: its colour becomes the selection. */
   private pickCharaSlot(hex: string, gridRef: CharaSlotGridRef | null, slot: CharaSlotId): void {
     this.selectionContext = { source: 'slot', hex, gridRef, slotKey: slot };
-    if (gridRef) {
-      // The selection card's excerpt centres on the slot's cell.
-      const target = gridRef.variant
+    // BUG-024 (2026-10-04 deep-dive): the slot replaces a grid pick. Its
+    // matches, share link and SEND TO dyes used to stay on the old cell.
+    this.clearForwardSelection();
+    // The selection card's excerpt centres on the slot's cell.
+    const target = gridRef
+      ? gridRef.variant
         ? `${gridRef.paletteBase}${gridRef.variant === 'light' ? 'Light' : 'Dark'}`
-        : gridRef.paletteBase;
-      if (target !== (this.colorCategory as string)) {
-        this.setConfig({ colorSheet: target });
-      } else {
-        this.updateColorGrid();
-      }
+        : gridRef.paletteBase
+      : null;
+    if (isColorCategory(target) && target !== this.colorCategory) {
+      this.commitConfig({ colorSheet: target });
     } else {
       this.updateColorGrid();
     }
@@ -1751,7 +1887,9 @@ export class SwatchTool extends BaseComponent {
 
   /**
    * 10A palette rail: seven palettes with a Dark/Light range toggle for the
-   * two split ones. Chips drive the same colorSheet config as the sidebar.
+   * two split ones. Chips write the swatch colorSheet config (commitConfig);
+   * the sidebar has no sheet control since 10A, but shows TRIBE & GENDER only
+   * while that config names a hair or skin sheet.
    */
   private renderPaletteRail(): void {
     if (!this.paletteRailContainer) return;
@@ -1793,7 +1931,7 @@ export class SwatchTool extends BaseComponent {
       this.on(chip, 'click', () => {
         if (this.selectionContext?.source === 'slot') this.selectionContext = null;
         const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
-        this.setConfig({ colorSheet: target });
+        this.commitConfig({ colorSheet: target });
       });
       rail.appendChild(chip);
     }
@@ -1822,7 +1960,7 @@ export class SwatchTool extends BaseComponent {
         }) as HTMLButtonElement;
         this.on(btn, 'click', () => {
           if (this.selectionContext?.source === 'slot') this.selectionContext = null;
-          this.setConfig({ colorSheet: `${currentBase}${range}` });
+          this.commitConfig({ colorSheet: `${currentBase}${range}` });
         });
         toggle.appendChild(btn);
       }
@@ -1953,6 +2091,19 @@ export class SwatchTool extends BaseComponent {
       this.colorGridContainer.appendChild(swatch);
     }
 
+    // The cells are new, so re-apply the selected cell's outline. Without it
+    // a share link's cell lost its outline whenever the constructor's own
+    // palette load landed after the link had selected it. A cell picked from
+    // the previous sheet while this one loaded is not on this sheet: drop it
+    // rather than outline whichever cell shares its index.
+    const selected = this.selectedColor;
+    if (selected) {
+      if (this.colors.find((c) => c.index === selected.index)?.hex === selected.hex) {
+        this.updateSwatchSelection();
+      } else {
+        this.clearForwardSelection();
+      }
+    }
     // Apply responsive sizing to newly created swatches
     this.updateSwatchLayout();
     // Re-run reverse match against potentially new palette, then highlight
@@ -2554,14 +2705,9 @@ export class SwatchTool extends BaseComponent {
       this.mobileSubraceSelect.appendChild(optgroup);
     }
 
+    // setConfig syncs the other selects and does the reload and the clear.
     this.mobileSubraceSelect.addEventListener('change', () => {
-      this.subrace = this.mobileSubraceSelect!.value as SubRace;
-      StorageService.setItem(STORAGE_KEYS.subrace, this.subrace);
-      this.syncDesktopSelectors();
-      void this.loadColors().then(() => {
-        this.updateColorGrid();
-        this.clearSelection();
-      });
+      this.commitConfig({ race: this.mobileSubraceSelect!.value });
     });
 
     subraceGroup.appendChild(this.mobileSubraceSelect);
@@ -2600,13 +2746,7 @@ export class SwatchTool extends BaseComponent {
     this.mobileGenderSelect.appendChild(femaleOption);
 
     this.mobileGenderSelect.addEventListener('change', () => {
-      this.gender = this.mobileGenderSelect!.value as Gender;
-      StorageService.setItem(STORAGE_KEYS.gender, this.gender);
-      this.syncDesktopSelectors();
-      void this.loadColors().then(() => {
-        this.updateColorGrid();
-        this.clearSelection();
-      });
+      this.commitConfig({ gender: this.mobileGenderSelect!.value });
     });
 
     genderGroup.appendChild(this.mobileGenderSelect);
@@ -2678,13 +2818,7 @@ export class SwatchTool extends BaseComponent {
     }
 
     this.mobileCategorySelect.addEventListener('change', () => {
-      this.colorCategory = this.mobileCategorySelect!.value as ColorCategory;
-      StorageService.setItem(STORAGE_KEYS.colorCategory, this.colorCategory);
-      this.syncDesktopSelectors();
-      void this.loadColors().then(() => {
-        this.updateColorGrid();
-        this.clearSelection();
-      });
+      this.commitConfig({ colorSheet: this.mobileCategorySelect!.value });
     });
 
     section.appendChild(this.mobileCategorySelect);
@@ -2755,7 +2889,6 @@ export class SwatchTool extends BaseComponent {
   private selectColor(color: CharacterColor): void {
     this.selectedColor = color;
     this.selectionContext = { source: 'grid' };
-    StorageService.setItem(STORAGE_KEYS.selectedColorIndex, color.index);
 
     // Highlight selected swatch
     this.updateSwatchSelection();
@@ -2852,12 +2985,23 @@ export class SwatchTool extends BaseComponent {
    * Clear the current selection
    */
   private clearSelection(): void {
+    this.selectionContext = null;
+    this.clearForwardSelection();
+  }
+
+  /**
+   * Drop the grid cell and everything drawn from it: its outline, the
+   * CLOSEST DYES cards (updateMatchResults also redraws the empty state, the
+   * unit tag and SEND TO), the share link and the selection card. A slot
+   * context is left to the caller.
+   */
+  private clearForwardSelection(): void {
     this.selectedColor = null;
     this.matchedDyes = [];
-    this.selectionContext = null;
-    this.updateSelectionCard();
+    this.updateSwatchSelection();
     this.updateMatchResults();
     this.updateShareButton();
+    this.updateSelectionCard();
   }
 
   /**
@@ -2915,6 +3059,12 @@ export class SwatchTool extends BaseComponent {
   /**
    * Load tool state from share URL parameters
    * Handles: color, sheet, race, gender, algo, limit
+   *
+   * BUG-019 (2026-10-04 deep-dive): the link's settings used to reach only
+   * the tool, so the controller's next broadcast reverted them. Each one is
+   * now validated (a malformed link changes nothing), applied here, then
+   * written to the controller once, before the first await. This runs ahead
+   * of the tool's own subscription, so that write reaches only the sidebar.
    */
   private async loadFromShareUrl(): Promise<void> {
     const parsed = ShareService.getShareParamsFromCurrentUrl();
@@ -2924,80 +3074,72 @@ export class SwatchTool extends BaseComponent {
     const params = parsed.params as Record<string, string | number | boolean | string[] | number[]>;
     let hasChanges = false;
     let needsReload = false;
+    const shared: Partial<SwatchConfig> = {};
 
     // Load the slot (colour sheet) — FIRST, before the colours load.
     // `sheet` is the pre-5.0 alias for the same value; both are accepted.
     const slotParam = params.slot ?? params.sheet;
-    if (slotParam && typeof slotParam === 'string') {
-      const validSheets: ColorCategory[] = [
-        'eyeColors',
-        'hairColors',
-        'skinColors',
-        'highlightColors',
-        'lipColorsDark',
-        'lipColorsLight',
-        'tattooColors',
-        'facePaintColorsDark',
-        'facePaintColorsLight',
-      ];
-      if (validSheets.includes(slotParam as ColorCategory)) {
-        const newCategory = slotParam as ColorCategory;
-        if (newCategory !== this.colorCategory) {
-          this.colorCategory = newCategory;
-          StorageService.setItem(STORAGE_KEYS.colorCategory, newCategory);
+    if (isColorCategory(slotParam)) {
+      shared.colorSheet = slotParam;
+      if (slotParam !== this.colorCategory) {
+        this.colorCategory = slotParam;
+        needsReload = true;
+        hasChanges = true;
+        logger.info(`[SwatchTool] Switched to color sheet: ${slotParam}`);
+      }
+    }
+
+    // For race-specific sheets, load race and gender. A loaded .chara file
+    // owns them (the sidebar locks them, the controller pins them), so a
+    // link's tribe is neither applied nor persisted under one.
+    if (
+      RACE_SPECIFIC_CATEGORIES.includes(this.colorCategory) &&
+      !CharaSessionService.getTribeAndGender()
+    ) {
+      const race = toSubRace(params.race);
+      if (race) {
+        shared.race = race;
+        if (race !== this.subrace) {
+          this.subrace = race;
           needsReload = true;
           hasChanges = true;
-          logger.info(`[SwatchTool] Switched to color sheet: ${newCategory}`);
+        }
+      }
+
+      if (isGender(params.gender)) {
+        shared.gender = params.gender;
+        if (params.gender !== this.gender) {
+          this.gender = params.gender;
+          needsReload = true;
+          hasChanges = true;
         }
       }
     }
 
-    // For race-specific sheets, load race and gender
-    if (RACE_SPECIFIC_CATEGORIES.includes(this.colorCategory)) {
-      // Load race (subrace) if specified
-      if (params.race && typeof params.race === 'string') {
-        const validRaces: SubRace[] = [
-          'Midlander',
-          'Highlander',
-          'Wildwood',
-          'Duskwight',
-          'Plainsfolk',
-          'Dunesfolk',
-          'SeekerOfTheSun',
-          'KeeperOfTheMoon',
-          'SeaWolf',
-          'Hellsguard',
-          'Raen',
-          'Xaela',
-          'Helions',
-          'TheLost',
-          'Rava',
-          'Veena',
-        ];
-        if (validRaces.includes(params.race as SubRace)) {
-          const newRace = params.race as SubRace;
-          if (newRace !== this.subrace) {
-            this.subrace = newRace;
-            StorageService.setItem(STORAGE_KEYS.subrace, newRace);
-            needsReload = true;
-            hasChanges = true;
-          }
-        }
+    // Matching algorithm. One vocabulary, six methods — a legacy spelling
+    // migrates, but an unknown one is ignored rather than normalized to the
+    // default over the method the user saved.
+    if (isKnownMatchingMethod(params.algo)) {
+      const method = normalizeMatchingMethod(params.algo);
+      shared.matchingMethod = method;
+      if (method !== this.matchingMethod) {
+        this.matchingMethod = method;
+        hasChanges = true;
       }
+    }
 
-      // Load gender if specified
-      if (params.gender && typeof params.gender === 'string') {
-        const validGenders: Gender[] = ['Male', 'Female'];
-        if (validGenders.includes(params.gender as Gender)) {
-          const newGender = params.gender as Gender;
-          if (newGender !== this.gender) {
-            this.gender = newGender;
-            StorageService.setItem(STORAGE_KEYS.gender, newGender);
-            needsReload = true;
-            hasChanges = true;
-          }
-        }
+    // Max results, clamped to the sidebar's 1-6 (links once allowed up to 20)
+    const limit = toMaxResults(params.limit);
+    if (limit !== null) {
+      shared.maxResults = limit;
+      if (limit !== this.maxResults) {
+        this.maxResults = limit;
+        hasChanges = true;
       }
+    }
+
+    if (Object.keys(shared).length > 0) {
+      ConfigController.getInstance().setConfig('swatch', shared);
     }
 
     // Reload colors if sheet/race/gender changed
@@ -3006,21 +3148,6 @@ export class SwatchTool extends BaseComponent {
       // Sync UI selectors with new values
       this.syncMobileSelectors();
       this.syncDesktopSelectors();
-    }
-
-    // Load matching algorithm if specified. One vocabulary, six methods —
-    // normalize migrates legacy stored/shared spellings instead of dropping
-    // every link that isn't one of the three the old whitelist knew.
-    if (params.algo && typeof params.algo === 'string') {
-      this.matchingMethod = normalizeMatchingMethod(params.algo);
-      hasChanges = true;
-    }
-
-    // Load max results limit if specified
-    if (typeof params.limit === 'number' && params.limit > 0 && params.limit <= 20) {
-      this.maxResults = params.limit;
-      StorageService.setItem(STORAGE_KEYS.maxResults, params.limit);
-      hasChanges = true;
     }
 
     // Load the cell by index — the confirmed grammar's identity handle.
@@ -3039,7 +3166,6 @@ export class SwatchTool extends BaseComponent {
       if (cell) {
         this.selectedColor = cell;
         this.selectionContext = { source: 'grid' };
-        StorageService.setItem(STORAGE_KEYS.selectedColorIndex, cell.index);
         hasChanges = true;
         logger.info(`[SwatchTool] Loaded cell ${sharedIndex} from share URL`);
       } else {

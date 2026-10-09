@@ -78,9 +78,11 @@ diesem Update gelöscht. Die Website-Daten-Steuerung deines Browsers löscht es.
 Die App kommuniziert nur mit diesen First-Party-Hosts (die Content-Security-Policy der Website
 erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
 
-1. **Marktbrett-Preise** (optional — der Schalter "Preise anzeigen"): Gegenstands-IDs und die Welt
-   oder das Datenzentrum, die du gewählt hast, gehen an unseren Proxy unter `data.xivdyetools.app`,
-   der von [Universalis](https://universalis.app) abruft.
+1. **Marktbrett-Preise** (optional — der Schalter "Marktbrett aktivieren" in der
+   Einstellungsspalte; "Budget-Vorschläge" lädt sie immer, weil dort Farbstoffe nach Preis
+   verglichen werden): Gegenstands-IDs und die Welt oder das Datenzentrum, die du gewählt hast,
+   gehen an unseren Proxy unter `data.xivdyetools.app`, der von [Universalis](https://universalis.app)
+   abruft.
 2. **Ausrüstungsnamen und -symbole für `.chara`-Importe** — `data.xivdyetools.app` (siehe oben).
 3. **Community-Presets** (`api.xivdyetools.app`): Das Durchsuchen sendet nichts über dich. Die
    Anmeldung über `auth.xivdyetools.app` mit Discord oder XIVAuth legt sofort einen

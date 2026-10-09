@@ -9,7 +9,14 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MixerTool } from '../mixer-tool';
-import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
+import { ConfigController } from '@services/config-controller';
+import type { ResultCardData } from '@components/v4/result-card';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_DYE_FILTERS,
+  getDefaultConfig,
+} from '@shared/tool-config-types';
+import type { MixerConfig } from '@shared/tool-config-types';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 
@@ -201,12 +208,11 @@ vi.mock('@services/index', async () => ({
       setShowPrices: vi.fn(),
     }),
   },
-  ConfigController: {
-    getInstance: vi.fn().mockReturnValue({
-      getConfig: vi.fn().mockReturnValue({}),
-      subscribe: vi.fn().mockReturnValue(() => {}),
-    }),
-  },
+  // No ConfigController here: mixer-tool imports '@services/config-controller'
+  // directly, so the REAL controller (and its real StorageService, writing
+  // jsdom localStorage) is what every test in this file talks to. A barrel
+  // entry returning {} sat here unused; without it, a change that routed the
+  // tool through the barrel throws instead of silently reading {}.
   CollectionService: {
     getFavorites: vi.fn().mockReturnValue([]),
     subscribeFavorites: vi.fn().mockReturnValue(() => {}),
@@ -1026,6 +1032,191 @@ describe('MixerTool', () => {
       tool.selectDye(dye(1));
 
       expect(await slots()).toEqual([1, null, null]);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-022 / BUG-011 (2026-10-04 deep-dive): mount against a NON-default
+  // persisted config, through the REAL ConfigController. subscribe() never
+  // replays, so the constructor's getConfig('mixer') is the only mount-time
+  // source of the saved settings; nothing tested it, and the saved dye
+  // filters were never read. The singleton and jsdom localStorage outlive a
+  // test, so both are reset on the way in AND out.
+  // ==========================================================================
+
+  describe('mount seeds from the persisted mixer config', () => {
+    const metallicDye = mockDyes.find((d) => d.isMetallic)!; // Dalamud Red, id 5737
+    // Recoloured to the inputs' own hex. The matcher measures REAL distances
+    // here (the engine does not reach the barrel's constant ColorService
+    // stub), so a pair of #336699 inputs blends to #336699 in every model and
+    // this is the nearest dye -- card #1 unless a filter removes it.
+    const metallic = { ...metallicDye, hex: '#336699' };
+
+    /** The dye on each result card, in grid order. */
+    const cardDyeIds = () =>
+      [...container.querySelectorAll('v4-result-card')].map(
+        (c) => (c as unknown as { data: ResultCardData }).data.dye.id
+      );
+
+    const shareParams = () =>
+      (
+        container.querySelector('v4-share-button') as unknown as {
+          shareParams: Record<string, unknown>;
+        }
+      ).shareParams;
+
+    /**
+     * Save a partial as the sidebar would, then drop the in-memory singleton
+     * so the next mount reads it back from localStorage, as after a reload.
+     */
+    const persist = (partial: Partial<MixerConfig>) => {
+      ConfigController.getInstance().setConfig('mixer', partial);
+      ConfigController.resetInstance();
+    };
+
+    const mountWithPair = (): MixerTool => {
+      const t = mount();
+      t.selectDye(dye(1));
+      t.selectDye(dye(2));
+      return t;
+    };
+
+    /** The mixer-key writes a spied controller received. */
+    const mixerWrites = (write: { mock: { calls: unknown[][] } }) =>
+      write.mock.calls.filter(([key]) => key === 'mixer');
+
+    beforeEach(() => {
+      localStorage.clear();
+      ConfigController.resetInstance();
+      // First in the pool as well, so it leads even on a distance tie. (The
+      // inputs, ids 1 and 2, are not in the pool.)
+      mockGetAllDyes.mockReturnValue([metallic, ...mockDyes.filter((d) => d !== metallicDye)]);
+    });
+
+    afterEach(() => {
+      tool?.destroy();
+      tool = null;
+      window.history.replaceState({}, '', '/');
+      ConfigController.resetInstance();
+      localStorage.clear();
+    });
+
+    it('shows the metallic dye first with nothing persisted (control)', () => {
+      tool = mountWithPair();
+
+      expect(cardDyeIds()[0]).toBe(metallic.id);
+      expect(cardDyeIds()).toHaveLength(getDefaultConfig('mixer').maxResults);
+    });
+
+    it('applies persisted dye filters at mount (BUG-022)', () => {
+      persist({ dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true } });
+
+      tool = mountWithPair();
+
+      expect(cardDyeIds().length).toBeGreaterThan(0);
+      expect(cardDyeIds()).not.toContain(metallic.id);
+    });
+
+    it('applies a persisted maxResults at mount', () => {
+      persist({ maxResults: 6 });
+
+      tool = mountWithPair();
+
+      expect(cardDyeIds()).toHaveLength(6);
+    });
+
+    it('applies persisted display options at mount', () => {
+      persist({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showCmyk: true } });
+
+      tool = mountWithPair();
+
+      const card = container.querySelector('v4-result-card') as HTMLElement & {
+        showCmyk?: boolean;
+      };
+      expect(card.showCmyk).toBe(true);
+    });
+
+    // An imported settings file is type-checked only, so the controller can
+    // hold a count or a blend model the Mixer has no use for.
+    it('clamps a saved count and ignores an unknown blend model at mount', () => {
+      persist({ maxResults: 50, mixingMode: 'cmyk' as never });
+      tool = mountWithPair();
+      expect(cardDyeIds()).toHaveLength(8);
+      expect(shareParams().mode).toBe(getDefaultConfig('mixer').mixingMode);
+    });
+
+    it('ignores a count or a blend model it cannot use when one arrives later', () => {
+      tool = mountWithPair();
+      tool.setConfig({ maxResults: Number.NaN, mixingMode: 'cmyk' as never });
+      expect(cardDyeIds()).toHaveLength(getDefaultConfig('mixer').maxResults);
+      expect(shareParams().mode).toBe(getDefaultConfig('mixer').mixingMode);
+    });
+
+    it('falls back to the controller defaults for fields a config lacks', () => {
+      // The constructor is the first getConfig reader after the reset above
+      vi.spyOn(ConfigController.getInstance(), 'getConfig').mockImplementationOnce(
+        () => ({}) as never
+      );
+
+      tool = mountWithPair();
+
+      const defaults = getDefaultConfig('mixer');
+      expect(cardDyeIds()).toHaveLength(defaults.maxResults);
+      expect(shareParams()).toMatchObject({
+        mode: defaults.mixingMode,
+        algo: defaults.matchingMethod,
+      });
+    });
+
+    // A field-cell pick set the mode locally only, so the next full-config
+    // broadcast (a display toggle, a filter, another tab) put the persisted
+    // mode back: the blend silently returned to RYB at the picked ratio.
+    it('keeps a mixing-field pick through the next controller broadcast', () => {
+      tool = mountWithPair();
+      const cell = container.querySelector<HTMLButtonElement>('button[title^="LAB · 70/30"]');
+      expect(cell).not.toBeNull();
+
+      cell!.click();
+      expect(shareParams()).toMatchObject({ mode: 'lab', ratio: 70 });
+
+      // A real change, so the controller broadcasts the WHOLE mixer config
+      ConfigController.getInstance().setConfig('mixer', { maxResults: 5 });
+
+      expect(shareParams()).toMatchObject({ mode: 'lab', ratio: 70 });
+      expect(ConfigController.getInstance().getConfig('mixer').mixingMode).toBe('lab');
+    });
+
+    it('ignores a malformed algo in a share link instead of overwriting the saved method', () => {
+      persist({ matchingMethod: 'oklab' });
+      const write = vi.spyOn(ConfigController.getInstance(), 'setConfig');
+      window.history.replaceState({}, '', '/mixer/?dyeA=1&dyeB=2&algo=bogus&v=1');
+
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('mixer').matchingMethod).toBe('oklab');
+      expect(shareParams()).toMatchObject({ algo: 'oklab' });
+      expect(mixerWrites(write)).toEqual([]);
+    });
+
+    it("writes a share link's settings to the controller once, together", () => {
+      const write = vi.spyOn(ConfigController.getInstance(), 'setConfig');
+      window.history.replaceState({}, '', '/mixer/?dyeA=1&dyeB=2&mode=lab&algo=oklab&v=1');
+
+      tool = mount();
+
+      expect(mixerWrites(write)).toEqual([
+        ['mixer', { mixingMode: 'lab', matchingMethod: 'oklab' }],
+      ]);
+      expect(shareParams()).toMatchObject({ mode: 'lab', algo: 'oklab' });
+    });
+
+    it('still accepts a retired algo from an old link, migrated', () => {
+      window.history.replaceState({}, '', '/mixer/?dyeA=1&dyeB=2&algo=euclidean&v=1');
+
+      tool = mount();
+
+      expect(ConfigController.getInstance().getConfig('mixer').matchingMethod).toBe('rgb');
+      expect(shareParams()).toMatchObject({ algo: 'rgb' });
     });
   });
 });

@@ -294,7 +294,11 @@ export class MarketBoardService extends EventTarget {
    *   3 shared market IDs inside `fetchPricesForDyes`.
    */
   shouldFetchPrice(dye: Dye): boolean {
-    if (!this.showPrices) return false;
+    return this.showPrices && this.isTradeable(dye);
+  }
+
+  /** The market-board half of `shouldFetchPrice`, without the global toggle. */
+  private isTradeable(dye: Dye): boolean {
     if (dye.itemID <= 0) return false;
     if (dye.consolidationType !== null && !isConsolidationActive()) return false;
     return true;
@@ -306,19 +310,32 @@ export class MarketBoardService extends EventTarget {
    *
    * @param dyes - Array of dyes to fetch prices for
    * @param onProgress - Optional callback to report progress
+   * @param options.ignoreShowPrices - Fetch regardless of the global Market
+   *   Board toggle; the result is returned to the caller only. BUG-079
+   *   (2026-10-04 deep-dive): Budget, whose ledger IS prices, used to switch
+   *   the toggle on (and persist it) for every tool to get past the gate. The
+   *   shared cache and the 'prices-updated' event stay out of it because
+   *   Mixer and Comparison render cached prices gated only on their own
+   *   showPrice display flag. Request versioning and `lastFetchOutcome` stay
+   *   shared, so a server change still supersedes the call.
    * @returns Map of itemID to PriceData
    */
   async fetchPricesForDyes(
     dyes: Dye[],
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number) => void,
+    options: { ignoreShowPrices?: boolean } = {}
   ): Promise<Map<number, PriceData>> {
+    const callerOnly = options.ignoreShowPrices === true;
+
     // Increment version to invalidate any in-flight requests
     // This prevents race conditions when user rapidly changes servers
     this.requestVersion++;
     const requestVersion = this.requestVersion;
 
     // Filter dyes that should have prices fetched
-    const dyesToFetch = dyes.filter((dye) => this.shouldFetchPrice(dye));
+    const dyesToFetch = dyes.filter((dye) =>
+      callerOnly ? this.isTradeable(dye) : this.shouldFetchPrice(dye)
+    );
     const total = dyesToFetch.length;
 
     if (total === 0) {
@@ -374,7 +391,7 @@ export class MarketBoardService extends EventTarget {
       for (const [marketId, priceData] of batchResults) {
         const originalIds = marketIdToOriginals.get(marketId) ?? [marketId];
         for (const originalId of originalIds) {
-          this.priceData.set(originalId, priceData);
+          if (!callerOnly) this.priceData.set(originalId, priceData);
           result.set(originalId, priceData);
         }
       }
@@ -383,11 +400,14 @@ export class MarketBoardService extends EventTarget {
       onProgress?.(total, total);
       this.isFetching = false;
 
-      // Emit prices updated event (counts are per-dye, not per-market-item)
-      this.emitEvent('prices-updated', {
-        prices: new Map(this.priceData),
-        fetchedCount: result.size,
-      });
+      // Emit prices updated event (counts are per-dye, not per-market-item).
+      // A caller-only fetch changed nothing in the cache this event carries.
+      if (!callerOnly) {
+        this.emitEvent('prices-updated', {
+          prices: new Map(this.priceData),
+          fetchedCount: result.size,
+        });
+      }
 
       this.emitEvent('fetch-completed', { dyeCount: result.size });
       logger.info(`[MarketBoardService] Fetched prices for ${result.size} dyes`);

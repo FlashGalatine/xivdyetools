@@ -19,6 +19,8 @@
 import {
   BAND_METHOD_DP,
   classifyBandTier,
+  isMatchingMethod,
+  LEGACY_MATCHING_METHOD_MAP,
   normalizeMatchingMethod,
   roundToBandDisplay,
 } from '@xivdyetools/core';
@@ -59,7 +61,11 @@ import type {
   DyeFiltersConfig,
 } from '@shared/tool-config-types';
 // WEB-REF-003 FIX: ColorConverter usage moved to mixer-blending-engine.ts
-import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_DYE_FILTERS,
+  getDefaultConfig,
+} from '@shared/tool-config-types';
 import '@components/v4/result-card';
 import type { ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
@@ -112,6 +118,26 @@ const SLOT_SIZE = {
   result: 120, // 120x120px for result slot
 } as const;
 
+/** The six blend models, in the mixing field's row order. */
+const MIXING_MODES: readonly MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
+
+/** The result-count slider's range, in the sidebar and here. */
+const MAX_RESULTS_MIN = 3;
+const MAX_RESULTS_MAX = 8;
+
+// An imported settings file is type-checked only, so the controller can hold
+// a count or a model the Mixer cannot use: both are checked before applying.
+
+function isMixingMode(value: unknown): value is MixingMode {
+  return typeof value === 'string' && (MIXING_MODES as readonly string[]).includes(value);
+}
+
+/** A result count clamped to the slider's range; null when it is not a number. */
+function toMaxResults(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  return Math.min(MAX_RESULTS_MAX, Math.max(MAX_RESULTS_MIN, Math.round(value)));
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -129,9 +155,12 @@ export class MixerTool extends BaseComponent {
   private selectedDyes: [Dye | null, Dye | null, Dye | null] = [null, null, null];
   private blendedColor: string | null = null;
   private matchedResults: MixedColorResult[] = [];
-  private maxResults: number = 5;
-  private mixingMode: MixingMode = 'ryb';
-  private matchingMethod: MatchingMethod = 'ciede2000';
+  // The controller's default table, not a second copy of it: this field said
+  // 5 against the table's 4. The constructor seeds all three from
+  // getConfig('mixer') straight after.
+  private maxResults: number = getDefaultConfig('mixer').maxResults;
+  private mixingMode: MixingMode = getDefaultConfig('mixer').mixingMode;
+  private matchingMethod: MatchingMethod = getDefaultConfig('mixer').matchingMethod;
   /** 5C: A-share of the two-dye mix, selected in the field (0-1, A weight) */
   private mixRatio: number = 0.5;
   private fieldContainer: HTMLElement | null = null;
@@ -192,14 +221,21 @@ export class MixerTool extends BaseComponent {
     // Initialize MarketBoardService (shared price cache)
     this.marketBoardService = MarketBoardService.getInstance();
 
-    // Load config from ConfigController (v4 unified config)
+    // Load config from ConfigController (v4 unified config). subscribe() never
+    // replays, so this is the only mount-time read: seed EVERY field here.
+    // BUG-022 (2026-10-04 deep-dive): dyeFilters was the one left out, so
+    // saved filters were ignored until a sidebar toggle. Nested objects are
+    // copied -- getConfig can hand back the controller's own object, or the
+    // default table itself when nothing is stored.
+    const defaults = getDefaultConfig('mixer');
     const config = ConfigController.getInstance().getConfig('mixer');
-    this.maxResults = config.maxResults;
-    this.mixingMode = config.mixingMode ?? 'ryb';
-    this.displayOptions = config.displayOptions ?? { ...DEFAULT_DISPLAY_OPTIONS };
+    this.maxResults = toMaxResults(config.maxResults) ?? defaults.maxResults;
+    this.mixingMode = isMixingMode(config.mixingMode) ? config.mixingMode : defaults.mixingMode;
+    this.displayOptions = { ...DEFAULT_DISPLAY_OPTIONS, ...config.displayOptions };
+    this.dyeFiltersConfig = { ...DEFAULT_DYE_FILTERS, ...config.dyeFilters };
     // Seed the matching method from config (suite default ΔE2000) —
     // normalized so persisted 4.x values (hyab, oklch-weighted) migrate
-    this.matchingMethod = normalizeMatchingMethod(config.matchingMethod ?? 'ciede2000');
+    this.matchingMethod = normalizeMatchingMethod(config.matchingMethod ?? defaults.matchingMethod);
 
     // Load persisted dye selections
     this.loadSelectedDyes();
@@ -683,19 +719,30 @@ export class MixerTool extends BaseComponent {
       this.selectedDyes[1] = dyeB;
     }
 
+    // A link's settings are validated, applied locally, then written to the
+    // controller ONCE -- the local values first, so its synchronous echo into
+    // setConfig finds nothing to change. A malformed value is dropped rather
+    // than persisted: `?algo=bogus` used to normalize to the default method
+    // and overwrite the user's saved one.
+    const settings: Partial<MixerConfig> = {};
+
     // Load mixing mode (all six blend models round-trip)
-    if (
-      typeof params.mode === 'string' &&
-      ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'].includes(params.mode)
-    ) {
-      this.mixingMode = params.mode as MixingMode;
-      ConfigController.getInstance().setConfig('mixer', { mixingMode: this.mixingMode });
+    if (isMixingMode(params.mode)) {
+      this.mixingMode = params.mode;
+      settings.mixingMode = this.mixingMode;
     }
 
-    // Load matching algorithm
-    if (typeof params.algo === 'string') {
+    // Load matching algorithm: a 5.0 method, or a retired one that migrates
+    if (
+      typeof params.algo === 'string' &&
+      (isMatchingMethod(params.algo) || Object.hasOwn(LEGACY_MATCHING_METHOD_MAP, params.algo))
+    ) {
       this.matchingMethod = normalizeMatchingMethod(params.algo);
-      ConfigController.getInstance().setConfig('mixer', { matchingMethod: this.matchingMethod });
+      settings.matchingMethod = this.matchingMethod;
+    }
+
+    if (Object.keys(settings).length > 0) {
+      ConfigController.getInstance().setConfig('mixer', settings);
     }
 
     // Load the mix ratio (A's share, 0-100) — the blend below reads it
@@ -880,10 +927,11 @@ export class MixerTool extends BaseComponent {
     }
 
     // Handle tool-specific config
-    if (config.maxResults !== undefined && config.maxResults !== this.maxResults) {
-      this.maxResults = config.maxResults;
+    const maxResults = toMaxResults(config.maxResults);
+    if (maxResults !== null && maxResults !== this.maxResults) {
+      this.maxResults = maxResults;
       needsUpdate = true;
-      logger.info(`[MixerTool] setConfig: maxResults -> ${config.maxResults}`);
+      logger.info(`[MixerTool] setConfig: maxResults -> ${maxResults}`);
 
       // Update slider displays
       if (this.maxResultsValueDisplay) {
@@ -895,7 +943,7 @@ export class MixerTool extends BaseComponent {
     }
 
     // Handle mixing mode changes
-    if (config.mixingMode !== undefined && config.mixingMode !== this.mixingMode) {
+    if (isMixingMode(config.mixingMode) && config.mixingMode !== this.mixingMode) {
       this.mixingMode = config.mixingMode;
       needsUpdate = true;
       logger.info(`[MixerTool] setConfig: mixingMode -> ${config.mixingMode}`);
@@ -1164,7 +1212,7 @@ export class MixerTool extends BaseComponent {
     if (!dyeA || !dyeB || this.selectedDyes[2]) return;
 
     const MONO = 'var(--font-mono)';
-    const MODELS: MixingMode[] = ['ryb', 'spectral', 'oklab', 'lab', 'hsl', 'rgb'];
+    const MODELS = [...MIXING_MODES];
     // Row headers name the blending method: identifiers by decision
     // (2026-08-20 i18n audit), identical in every locale. The tooltip carries
     // the translated model name (`mixer.model*`).
@@ -1306,6 +1354,12 @@ export class MixerTool extends BaseComponent {
           this.mixingMode = model;
           this.mixRatio = r / 100;
           this.blendedColor = blendTwoColors(dyeA.hex, dyeB.hex, model, t);
+          // The model is a setting, so it goes to the controller too. Set
+          // only here, the next full-config broadcast (a display toggle, a
+          // filter, another tab) put the saved mode back under the picked
+          // ratio. Local state first, so the synchronous echo is a no-op;
+          // the ratio is session state and stays out of the config.
+          ConfigController.getInstance().setConfig('mixer', { mixingMode: model });
           this.findMatchingDyesInternal();
           this.updateCraftingUI();
           this.renderResultsGrid();

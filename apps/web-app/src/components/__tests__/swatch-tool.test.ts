@@ -9,11 +9,27 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { RACE_SUBRACES } from '@xivdyetools/types';
-import type { ResolvedCharaCharacter, ResolvedCharaSlot } from '@xivdyetools/core';
+import type { Dye } from '@xivdyetools/types';
+import {
+  CharacterColorService,
+  type ResolvedCharaCharacter,
+  type ResolvedCharaSlot,
+} from '@xivdyetools/core';
 import { SwatchTool, RACE_GROUPS } from '../swatch-tool';
 import { CharaSessionService, type CharaSession } from '@services/chara-session-service';
+import { ConfigController, StorageService } from '@services/index';
+import {
+  DEFAULT_DISPLAY_OPTIONS,
+  DEFAULT_DYE_FILTERS,
+  getDefaultConfig,
+  type SwatchConfig,
+} from '@shared/tool-config-types';
+import { METHOD_TAGS } from '@shared/method-tags';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
+
+/** Where jsdom starts; the share-link tests move it and put it back. */
+const INITIAL_URL = window.location.href;
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, mockCharaFindClosestDyes } =
@@ -103,8 +119,14 @@ vi.mock('@services/index', () => ({
     getCurrentLocale: () => 'en',
     subscribe: vi.fn().mockReturnValue(() => {}),
   },
+  /**
+   * This browser has already moved its v3 swatch keys into the controller, so
+   * the one-time migration stays out of every test here: it is a module-level
+   * once-per-page step, and left on it would fire in whichever test mounted
+   * first. swatch-tool.config.test.ts covers it against real storage.
+   */
   StorageService: {
-    getItem: vi.fn().mockReturnValue(null),
+    getItem: vi.fn((key: string) => (key === 'xivdyetools_swatch_v3_migrated' ? true : null)),
     setItem: vi.fn(),
     removeItem: vi.fn(),
   },
@@ -490,6 +512,11 @@ describe('SwatchTool', () => {
     CharaSessionService.setSession(null);
     cleanupTestContainer(container);
     vi.restoreAllMocks();
+    // Vitest 5's restoreAllMocks leaves vi.fn implementations in place, so the
+    // matcher's canned result and a seeded controller config are reset by hand.
+    mockCharaFindClosestDyes.mockReset();
+    vi.mocked(ConfigController.getInstance().getConfig).mockImplementation(() => ({}) as never);
+    window.history.replaceState(null, '', INITIAL_URL);
   });
 
   // ============================================================================
@@ -545,14 +572,20 @@ describe('SwatchTool', () => {
       expect(typeof tool.setConfig).toBe('function');
     });
 
-    it('should accept config via setConfig', () => {
+    // BUG-011: this only asserted that the left panel had children, which no
+    // change to maxResults could ever break.
+    it('applies a maxResults change to the live reverse match', async () => {
       tool = new SwatchTool(container, { leftPanel, rightPanel });
       tool.init();
+      await Promise.resolve();
+      tool.selectDye({ ...mockDyes[0], hex: '#AABBCC' } as never);
+      const reverse = () =>
+        (tool as unknown as { reverseMatchedSwatches: unknown[] }).reverseMatchedSwatches;
+      expect(reverse()).toHaveLength(3);
 
-      // Should not throw
       tool.setConfig({ maxResults: 5 });
 
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      expect(reverse()).toHaveLength(5);
     });
   });
 
@@ -634,39 +667,122 @@ describe('SwatchTool', () => {
     await new Promise((r) => setTimeout(r, 0));
   };
 
+  /** The one stable object the mocked ConfigController.getInstance() returns. */
+  const controller = () => ConfigController.getInstance();
+  /** Make the mocked controller hold `config` for 'swatch' (reset in afterEach). */
+  const seedController = (config: Partial<SwatchConfig>) =>
+    vi
+      .mocked(controller().getConfig)
+      .mockImplementation(((key: string) => (key === 'swatch' ? config : {})) as never);
+  /** The tool's 'swatch' subscriber, as the controller would call it. */
+  const swatchListener = (): ((config: SwatchConfig) => void) => {
+    const calls = vi.mocked(controller().subscribe).mock.calls.filter(([key]) => key === 'swatch');
+    return calls[calls.length - 1][1] as (config: SwatchConfig) => void;
+  };
+
+  /**
+   * The five retired v3 settings keys. Matched exactly: the collapsible
+   * panels' v3_character_*_panel / _market keys share the prefix and stay.
+   */
+  const RETIRED_KEYS = [
+    'v3_character_subrace',
+    'v3_character_gender',
+    'v3_character_category',
+    'v3_character_color_index',
+    'v3_character_max_results',
+  ];
+  const retiredWrites = () =>
+    vi
+      .mocked(StorageService.setItem)
+      .mock.calls.filter(([key]) => RETIRED_KEYS.includes(key as string));
+
+  /** Every colour cell currently in the grid. */
+  const cells = (): HTMLButtonElement[] =>
+    Array.from(rightPanel.querySelectorAll<HTMLButtonElement>('button[data-index]'));
+  const outlined = () => cells().filter((c) => c.style.outline.includes('var(--theme-primary)'));
+  const gridTitle = () => rightPanel.querySelector('.section-title')?.textContent ?? '';
+  type Card = HTMLElement & {
+    data?: { dye: Dye };
+    showCmyk?: boolean;
+    showHex?: boolean;
+    showRgb?: boolean;
+  };
+  const cards = (): Card[] => Array.from(rightPanel.querySelectorAll<Card>('v4-result-card'));
+  const share = () =>
+    rightPanel.querySelector('v4-share-button') as HTMLElement & {
+      disabled: boolean;
+      shareParams: Record<string, unknown>;
+    };
+  /** The SEND TO chips. */
+  const handoffChips = (): HTMLButtonElement[] =>
+    Array.from(
+      (tool as unknown as { handoffContainer: HTMLElement }).handoffContainer.querySelectorAll(
+        'button'
+      )
+    );
+  const railChip = (labelKey: string): HTMLButtonElement =>
+    Array.from(rightPanel.querySelectorAll<HTMLButtonElement>('button')).find(
+      (b) => b.textContent === labelKey
+    )!;
+  /** The matcher's request for the last match: (colour, dyeService, { count, matchingMethod }). */
+  const lastMatchRequest = () =>
+    mockCharaFindClosestDyes.mock.calls[mockCharaFindClosestDyes.mock.calls.length - 1][2] as {
+      count: number;
+      matchingMethod: string;
+    };
+  const metallicDye = mockDyes.find((d) => d.isMetallic)!;
+
   describe('setConfig — race, gender and colour sheet', () => {
     it.each([
-      ['race', { race: 'Highlander' }, 'v3_character_subrace', 'Highlander'],
-      ['gender', { gender: 'Female' }, 'v3_character_gender', 'Female'],
-      ['colorSheet', { colorSheet: 'hairColors' }, 'v3_character_category', 'hairColors'],
-    ])('persists a %s change to storage', async (_label, config, key, value) => {
-      const { StorageService } = await import('@services/index');
+      ['race', { race: 'Highlander' }, ['Highlander', 'Male']],
+      ['gender', { gender: 'Female' }, ['Midlander', 'Female']],
+    ] as const)(
+      'reloads the hair sheet for a %s change and keeps no copy of its own',
+      async (_label, config, args) => {
+        const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+        tool = mount();
+        tool.setConfig({ colorSheet: 'hairColors' });
+        await flush();
+        vi.mocked(StorageService.setItem).mockClear();
+
+        tool.setConfig(config);
+        await flush();
+
+        expect(getHairColors).toHaveBeenLastCalledWith(...args);
+        // The controller is the one owner: no v3_character_* mirror.
+        expect(retiredWrites()).toEqual([]);
+      }
+    );
+
+    it('switches the grid for a colour sheet change and keeps no copy of its own', async () => {
       tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
-
-      tool.setConfig(config as Parameters<SwatchTool['setConfig']>[0]);
-
-      expect(StorageService.setItem).toHaveBeenCalledWith(key, value);
-    });
-
-    it('ignores a no-op change rather than reloading the palette', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      tool.setConfig({ race: 'Highlander' });
       await flush();
       vi.mocked(StorageService.setItem).mockClear();
 
-      // Same value again — the guard is `config.race !== this.subrace`
-      tool.setConfig({ race: 'Highlander' });
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
 
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(
-        'v3_character_subrace',
-        expect.anything()
-      );
+      expect(gridTitle()).toContain('tools.character.hairColors');
+      expect(retiredWrites()).toEqual([]);
+    });
+
+    it('ignores a no-op change rather than reloading the palette', async () => {
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+      tool = mount();
+      tool.setConfig({ colorSheet: 'hairColors', race: 'Highlander' });
+      await flush();
+      getHairColors.mockClear();
+
+      // Same values again: the v4-layout forward delivers each change twice
+      tool.setConfig({ race: 'Highlander' });
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+
+      expect(getHairColors).not.toHaveBeenCalled();
     });
 
     it('applies several keys in one call', async () => {
-      const { StorageService } = await import('@services/index');
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
       tool = mount();
       vi.mocked(StorageService.setItem).mockClear();
 
@@ -674,62 +790,430 @@ describe('SwatchTool', () => {
       tool.setConfig({ race: 'Highlander', gender: 'Female', colorSheet: 'hairColors' });
       await flush();
 
-      const keys = vi.mocked(StorageService.setItem).mock.calls.map((c) => c[0]);
-      expect(keys).toEqual(
-        expect.arrayContaining([
-          'v3_character_subrace',
-          'v3_character_gender',
-          'v3_character_category',
-        ])
-      );
+      expect(gridTitle()).toContain('tools.character.hairColors');
+      expect(getHairColors).toHaveBeenLastCalledWith('Highlander', 'Female');
+      expect(retiredWrites()).toEqual([]);
     });
 
-    it('accepts an empty config without touching state', async () => {
-      const { StorageService } = await import('@services/index');
+    it('accepts an empty config without touching state', () => {
       tool = mount();
       vi.mocked(StorageService.setItem).mockClear();
 
       expect(() => tool!.setConfig({})).not.toThrow();
       expect(StorageService.setItem).not.toHaveBeenCalled();
     });
+
+    // BUG-001 (2026-10-04 deep-dive): a .chara load pins race and gender and
+    // the controller broadcasts the whole config. On a sheet with no tribe
+    // that must not reload, nor clear the cell being looked at.
+    it('keeps the selection through a tribe change on a sheet that has no tribe', async () => {
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[4].click();
+
+      tool.setConfig({ race: 'Raen', gender: 'Female' });
+      await flush();
+
+      expect(getHairColors).not.toHaveBeenCalled();
+      expect(outlined().map((c) => c.dataset.index)).toEqual(['4']);
+      expect(cards()).toHaveLength(1);
+      // ...and the hair sheet, when it is opened, is the new tribe's
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+      expect(getHairColors).toHaveBeenLastCalledWith('Raen', 'Female');
+    });
   });
 
   describe('setConfig — matching controls', () => {
-    it('persists a maxResults change', async () => {
-      const { StorageService } = await import('@services/index');
+    it("re-matches the selected cell with a new count, clamped to the sidebar's 1–6", async () => {
       tool = mount();
+      await flush();
+      cells()[2].click();
       vi.mocked(StorageService.setItem).mockClear();
 
+      tool.setConfig({ maxResults: 5 });
+      expect(lastMatchRequest().count).toBe(5);
+
       tool.setConfig({ maxResults: 8 });
-
-      expect(StorageService.setItem).toHaveBeenCalledWith('v3_character_max_results', 8);
+      expect(lastMatchRequest().count).toBe(6);
+      expect(retiredWrites()).toEqual([]);
     });
 
-    it('survives a matchingMethod change with nothing selected', () => {
+    // BUG-011: this asserted only that two setConfig calls did not throw.
+    it('carries a matchingMethod change made with nothing selected into the next match', async () => {
       tool = mount();
+      await flush();
 
-      expect(() => tool!.setConfig({ matchingMethod: 'ciede2000' })).not.toThrow();
-      expect(() => tool!.setConfig({ matchingMethod: 'oklab' })).not.toThrow();
+      tool.setConfig({ matchingMethod: 'oklab' });
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[0].click();
+
+      expect(lastMatchRequest().matchingMethod).toBe('oklab');
+      expect((tool as unknown as { unitTagEl: HTMLElement }).unitTagEl.textContent).toBe(
+        METHOD_TAGS.oklab
+      );
     });
 
-    it('merges displayOptions rather than replacing them', () => {
+    // BUG-011: this asserted only that the second partial update did not throw.
+    it('merges displayOptions rather than replacing them', async () => {
       tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[0].click();
 
-      tool.setConfig({ displayOptions: { showHex: true } as never });
+      tool.setConfig({ displayOptions: { showCmyk: true } as never });
       // A second partial update must not wipe the first
-      expect(() => tool!.setConfig({ displayOptions: { showRgb: true } as never })).not.toThrow();
+      tool.setConfig({ displayOptions: { showHex: false } as never });
+
+      const [card] = cards();
+      expect(card.showCmyk).toBe(true);
+      expect(card.showHex).toBe(false);
+      expect(card.showRgb).toBe(DEFAULT_DISPLAY_OPTIONS.showRgb);
     });
 
-    it('survives a dyeFilters change and an identical repeat', () => {
+    // A full controller broadcast carries displayOptions every time; the echo
+    // of an unchanged value must not rebuild the cards.
+    it('does not redraw the cards for display options equal to its own', async () => {
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[0].click();
+      const [before] = cards();
+
+      tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS } });
+
+      expect(cards()[0]).toBe(before);
+    });
+
+    // BUG-011: this asserted only that two setConfig calls did not throw.
+    it('drops an excluded dye from the cards, and skips an identical repeat', async () => {
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([
+        { dye: metallicDye, distance: 1 },
+        { dye: mockDyes[0], distance: 2 },
+      ]);
+      cells()[0].click();
+      expect(cards().map((c) => c.data?.dye.id)).toEqual([metallicDye.id, mockDyes[0].id]);
+
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+
+      expect(cards().map((c) => c.data?.dye.id)).toEqual([mockDyes[0].id]);
+      // Second identical call hits the JSON-equality guard: no new match
+      mockCharaFindClosestDyes.mockClear();
+      tool.setConfig({ dyeFilters: { excludeMetallic: true } as never });
+      expect(mockCharaFindClosestDyes).not.toHaveBeenCalled();
+    });
+  });
+
+  // ==========================================================================
+  // BUG-001 / BUG-022 (2026-10-04 deep-dive): ConfigController owns the
+  // settings. The tool reads them at construction (subscribe() never
+  // replays), writes its own picks through, and applies the controller's full
+  // broadcasts without being flipped by them.
+  // ==========================================================================
+
+  describe('mount — the controller owns the settings', () => {
+    const persisted = (): SwatchConfig => ({
+      colorSheet: 'tattooColors',
+      race: 'Raen',
+      gender: 'Female',
+      maxResults: 5,
+      matchingMethod: 'oklab',
+      displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showCmyk: true },
+      dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true },
+    });
+
+    it('opens on the persisted sheet, tribe, count, method, filters and display options', async () => {
+      const getTattooColors = vi.spyOn(CharacterColorService.prototype, 'getTattooColors');
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+      seedController(persisted());
+      // The matcher's top hit is metallic; the persisted filter must drop it.
+      mockCharaFindClosestDyes.mockReturnValue([
+        { dye: metallicDye, distance: 1 },
+        { dye: mockDyes[0], distance: 2 },
+        { dye: mockDyes[1], distance: 3 },
+      ]);
+      tool = mount();
+      await flush();
+
+      expect(gridTitle()).toContain('tools.character.tattooColors');
+      expect(getTattooColors).toHaveBeenCalled();
+
+      cells()[0].click();
+      // 5 results, tripled because a filter is active
+      expect(lastMatchRequest()).toEqual({ count: 15, matchingMethod: 'oklab' });
+      expect(cards().map((c) => c.data?.dye.id)).toEqual([mockDyes[0].id, mockDyes[1].id]);
+      expect(cards().every((c) => c.showCmyk === true)).toBe(true);
+
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+      expect(getHairColors).toHaveBeenLastCalledWith('Raen', 'Female');
+    });
+
+    it("copies the nested objects rather than holding the controller's own", () => {
+      const config = persisted();
+      seedController(config);
       tool = mount();
 
-      expect(() =>
-        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
-      ).not.toThrow();
-      // Second identical call hits the JSON-equality guard
-      expect(() =>
-        tool!.setConfig({ dyeFilters: { excludeMetallic: true } as never })
-      ).not.toThrow();
+      const internal = tool as unknown as { displayOptions: object; dyeFiltersConfig: object };
+      expect(internal.displayOptions).toEqual(config.displayOptions);
+      expect(internal.displayOptions).not.toBe(config.displayOptions);
+      expect(internal.dyeFiltersConfig).toEqual(config.dyeFilters);
+      expect(internal.dyeFiltersConfig).not.toBe(config.dyeFilters);
+    });
+
+    it('takes the valid persisted values and falls back for the ones it does not recognise', async () => {
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+      seedController({
+        colorSheet: 'tattooColors',
+        race: 'Nope',
+        gender: 'Other',
+        maxResults: -2,
+        matchingMethod: 'hyab' as never,
+      });
+      tool = mount();
+      await flush();
+
+      expect(gridTitle()).toContain('tools.character.tattooColors');
+      cells()[0].click();
+      // 'hyab' is a retired method: it migrates to the suite default
+      expect(lastMatchRequest()).toEqual({ count: 3, matchingMethod: 'ciede2000' });
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+      expect(getHairColors).toHaveBeenLastCalledWith('Midlander', 'Male');
+
+      // An unrecognised sheet falls back to the tool's own default
+      tool.destroy();
+      seedController({ colorSheet: 'bogusColors' });
+      tool = mount();
+      expect(gridTitle()).toContain('tools.character.eyeColors');
+    });
+
+    it('a rail pick writes the controller, and the next full broadcast keeps it', async () => {
+      tool = mount();
+      await flush();
+      vi.mocked(controller().setConfig).mockClear();
+
+      railChip('swatch.palTattoo').click();
+
+      expect(controller().setConfig).toHaveBeenCalledWith('swatch', { colorSheet: 'tattooColors' });
+      await flush();
+      expect(gridTitle()).toContain('tools.character.tattooColors');
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[5].click();
+
+      // The sidebar moves the count: the controller broadcasts the WHOLE
+      // swatch config, here with a loaded file's tribe pinned into it.
+      swatchListener()({
+        ...getDefaultConfig('swatch'),
+        colorSheet: 'tattooColors',
+        race: 'Raen',
+        gender: 'Female',
+        maxResults: 5,
+      });
+      await flush();
+
+      expect(gridTitle()).toContain('tools.character.tattooColors');
+      expect(outlined().map((c) => c.dataset.index)).toEqual(['5']);
+      expect(lastMatchRequest().count).toBe(5);
+      expect(cards()).toHaveLength(1);
+    });
+
+    it('the range toggle writes the controller too', async () => {
+      tool = mount();
+      tool.setConfig({ colorSheet: 'lipColorsDark' });
+      await flush();
+      vi.mocked(controller().setConfig).mockClear();
+
+      railChip('swatch.rangeLight').click();
+
+      expect(controller().setConfig).toHaveBeenCalledWith('swatch', {
+        colorSheet: 'lipColorsLight',
+      });
+    });
+  });
+
+  // ==========================================================================
+  // BUG-023 (2026-10-04 deep-dive): a reload used to null only selectedColor,
+  // leaving the cards, the share link and SEND TO on the previous cell.
+  // ==========================================================================
+
+  describe('a sheet change clears the forward selection', () => {
+    it('drops the cards, the outline, the share link and SEND TO in the same call', async () => {
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      cells()[3].click();
+      expect(cards()).toHaveLength(1);
+      expect(share().disabled).toBe(false);
+      expect(handoffChips().some((c) => !c.disabled)).toBe(true);
+
+      tool.setConfig({ colorSheet: 'tattooColors' });
+
+      // Synchronously: no flush, so nothing stale shows while a sheet loads
+      expect(cards()).toHaveLength(0);
+      expect(outlined()).toHaveLength(0);
+      expect(share().disabled).toBe(true);
+      expect(share().shareParams).toEqual({});
+      expect(handoffChips().every((c) => c.disabled)).toBe(true);
+    });
+
+    // BUG-011: this asserted only that setConfig did not throw.
+    it('re-runs the reverse match when the sheet changes underneath it', async () => {
+      const hair = Array.from({ length: 8 }, (_, i) => ({
+        index: i,
+        hex: `#1${i}1${i}1${i}`,
+        name: `Hair ${i}`,
+      }));
+      vi.spyOn(CharacterColorService.prototype, 'getHairColors').mockResolvedValue(hair as never);
+      tool = mount();
+      await flush();
+      tool.selectDye({ ...mockDyes[0], hex: '#AABBCC' } as never);
+      const reverseHexes = () =>
+        (
+          tool as unknown as { reverseMatchedSwatches: Array<{ color: { hex: string } }> }
+        ).reverseMatchedSwatches.map((m) => m.color.hex);
+      expect(reverseHexes()).not.toEqual(hair.slice(0, 3).map((c) => c.hex));
+
+      tool.setConfig({ colorSheet: 'hairColors' });
+      await flush();
+
+      expect(reverseHexes()).toEqual(hair.slice(0, 3).map((c) => c.hex));
+    });
+
+    // The previous sheet's cells stay on screen while the hair or skin sheet
+    // loads. A cell clicked there is not on the new sheet, so the pick is
+    // dropped rather than outlined on whichever new cell shares its index.
+    it('drops a cell picked from the old sheet while the new one loads', async () => {
+      const hair = Array.from({ length: 8 }, (_, i) => ({
+        index: i,
+        hex: `#1${i}1${i}1${i}`,
+        name: `Hair ${i}`,
+      }));
+      let land!: (colors: unknown) => void;
+      vi.spyOn(CharacterColorService.prototype, 'getHairColors').mockReturnValue(
+        new Promise((resolve) => {
+          land = resolve;
+        }) as never
+      );
+      tool = mount();
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+
+      railChip('swatch.palHair').click();
+      cells()[5].click(); // still the eye sheet's cell
+      expect(cards()).toHaveLength(1);
+
+      land(hair);
+      await flush();
+
+      expect(outlined()).toEqual([]);
+      expect(cards()).toHaveLength(0);
+      expect(share().shareParams).toEqual({});
+    });
+  });
+
+  // ==========================================================================
+  // BUG-019 (2026-10-04 deep-dive): a share link's settings reached only the
+  // tool, so the next controller broadcast reverted them.
+  // ==========================================================================
+
+  describe('share links', () => {
+    const openLink = (query: string) =>
+      window.history.replaceState(null, '', `/swatch/?${query}&v=1`);
+
+    it("applies a link's settings and writes them to the controller once", async () => {
+      openLink('slot=tattooColors&algo=euclidean&limit=9&i=2');
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      tool = mount();
+      await flush();
+
+      // limit is clamped to the sidebar's 1–6; 'euclidean' is the legacy RGB
+      expect(vi.mocked(controller().setConfig).mock.calls).toEqual([
+        ['swatch', { colorSheet: 'tattooColors', matchingMethod: 'rgb', maxResults: 6 }],
+      ]);
+      expect(gridTitle()).toContain('tools.character.tattooColors');
+      expect(outlined().map((c) => c.dataset.index)).toEqual(['2']);
+      expect(lastMatchRequest()).toEqual({ count: 6, matchingMethod: 'rgb' });
+    });
+
+    it('writes the tribe of a hair link when no file is loaded', async () => {
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+      openLink('slot=hairColors&race=Raen&gender=Female&i=2');
+      tool = mount();
+      await flush();
+
+      expect(controller().setConfig).toHaveBeenCalledWith('swatch', {
+        colorSheet: 'hairColors',
+        race: 'Raen',
+        gender: 'Female',
+      });
+      expect(getHairColors).toHaveBeenLastCalledWith('Raen', 'Female');
+    });
+
+    it('ignores what a malformed link carries rather than overwrite the saved settings', async () => {
+      seedController({ ...getDefaultConfig('swatch'), maxResults: 4, matchingMethod: 'oklab' });
+      openLink('slot=bogusColors&algo=bogus&limit=0&race=Nope&gender=X&i=2');
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      tool = mount();
+      await flush();
+
+      expect(controller().setConfig).not.toHaveBeenCalled();
+      expect(gridTitle()).toContain('tools.character.eyeColors');
+      // The cell still opens, under the saved count and method
+      expect(share().shareParams).toMatchObject({ slot: 'eyeColors', i: 2 });
+      expect(lastMatchRequest()).toEqual({ count: 4, matchingMethod: 'oklab' });
+    });
+
+    // The link's cell was selected synchronously at mount, then the
+    // constructor's own palette load rebuilt the grid without its outline.
+    it('keeps the shared cell outlined when the link is for the sheet it opens on', async () => {
+      openLink('slot=eyeColors&i=2');
+      tool = mount();
+      await flush();
+
+      expect(outlined().map((c) => c.dataset.index)).toEqual(['2']);
+    });
+
+    it('leaves tribe and gender to a loaded .chara file', async () => {
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
+      CharaSessionService.setSession(charaSession()); // Highlander, Female
+      openLink('slot=hairColors&race=Raen&gender=Male&i=2');
+      tool = mount();
+      await flush();
+
+      expect(vi.mocked(controller().setConfig).mock.calls).toEqual([
+        ['swatch', { colorSheet: 'hairColors' }],
+      ]);
+      expect(getHairColors).toHaveBeenLastCalledWith('Highlander', 'Female');
+    });
+  });
+
+  // The left-panel and drawer selects are unreachable in V4 (renderRightPanel
+  // clears the shared panel; the drawer is never passed), but they exist under
+  // these unit-test panels until REFACTOR-005 deletes them.
+  describe('the v3 selects', () => {
+    it.each([
+      ['subraceSelect', 'Raen', { race: 'Raen' }],
+      ['genderSelect', 'Female', { gender: 'Female' }],
+      ['categorySelect', 'tattooColors', { colorSheet: 'tattooColors' }],
+      ['mobileSubraceSelect', 'Raen', { race: 'Raen' }],
+      ['mobileGenderSelect', 'Female', { gender: 'Female' }],
+      ['mobileCategorySelect', 'tattooColors', { colorSheet: 'tattooColors' }],
+    ])('%s writes the controller, not a storage key of its own', (field, value, partial) => {
+      tool = mount();
+      const select = (tool as unknown as Record<string, HTMLSelectElement>)[field];
+      vi.mocked(StorageService.setItem).mockClear();
+      vi.mocked(controller().setConfig).mockClear();
+
+      select.value = value;
+      select.dispatchEvent(new Event('change'));
+
+      expect(controller().setConfig).toHaveBeenCalledWith('swatch', partial);
+      expect(retiredWrites()).toEqual([]);
     });
   });
 
@@ -785,15 +1269,6 @@ describe('SwatchTool', () => {
       tool = mount();
 
       expect(() => tool!.selectCustomColor('')).not.toThrow();
-    });
-
-    it('re-runs the reverse match when the sheet changes underneath it', async () => {
-      tool = mount();
-      tool.selectDye(dye as never);
-
-      // Changing the palette must re-match, not leave a stale highlight
-      expect(() => tool!.setConfig({ colorSheet: 'hairColors' })).not.toThrow();
-      await flush();
     });
   });
 
@@ -891,6 +1366,54 @@ describe('SwatchTool', () => {
       expect(card().textContent).toContain('fr:swatch.slotLeftEye');
     });
 
+    // BUG-024 (2026-10-04 deep-dive): the slot pick replaced the selection
+    // card but left the grid cell's matches, share link and SEND TO behind.
+    it('a slot pick clears the grid pick before it, and SEND TO carries the slot', async () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      await flush();
+      // Every distance is 15 in this suite, so the slot's closest dye is the
+      // pool's first; the grid cell matches a different one.
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[3], distance: 2 }]);
+      cells()[5].click();
+      expect(cards()).toHaveLength(1);
+      const handoffTargets = vi.spyOn(
+        tool as unknown as { handoffTargets: (ids: number[]) => unknown },
+        'handoffTargets'
+      );
+
+      // The left eye sits on cell 3 of the same (eye) palette
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+
+      expect(cards()).toHaveLength(0);
+      expect(outlined()).toHaveLength(0);
+      expect(share().disabled).toBe(true);
+      expect(handoffTargets).toHaveBeenLastCalledWith([mockDyes[0].stainID]);
+      expect(selection()?.source).toBe('slot');
+    });
+
+    it('a slot on another palette commits that palette and survives its reload', async () => {
+      CharaSessionService.setSession(charaSession());
+      tool = mount();
+      tool.setConfig({ colorSheet: 'tattooColors' });
+      await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[3], distance: 2 }]);
+      cells()[5].click();
+      vi.mocked(controller().setConfig).mockClear();
+
+      rightPanel.querySelector<HTMLButtonElement>('.chara-slots-grid > button')!.click();
+
+      expect(cards()).toHaveLength(0);
+      expect(controller().setConfig).toHaveBeenCalledWith('swatch', { colorSheet: 'eyeColors' });
+      await flush();
+      expect(gridTitle()).toContain('tools.character.eyeColors');
+      expect(selection()).toMatchObject({ source: 'slot', slotKey: 'leftEye' });
+      expect(
+        (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
+          .textContent
+      ).toContain('SWATCH.SLOTLEFTEYE');
+    });
+
     it('no longer draws DYES ON THIS GLAMOUR: it moved to the Glamour Reader', async () => {
       tool = mount();
       CharaSessionService.setSession(
@@ -976,7 +1499,6 @@ describe('SwatchTool', () => {
     });
 
     it('records the clicked cell as the selection', async () => {
-      const { StorageService } = await import('@services/index');
       tool = mount();
       await flush();
       vi.mocked(StorageService.setItem).mockClear();
@@ -985,7 +1507,9 @@ describe('SwatchTool', () => {
       await flush();
 
       // Cell address, not hex — the index is what the R·C address derives from
-      expect(StorageService.setItem).toHaveBeenCalledWith('v3_character_color_index', 3);
+      expect(share().shareParams).toMatchObject({ slot: 'eyeColors', i: 3 });
+      // v3_character_color_index was written here and never read: retired
+      expect(retiredWrites()).toEqual([]);
     });
 
     it('outlines the selected cell and only that cell', async () => {
@@ -1056,9 +1580,19 @@ describe('SwatchTool', () => {
     it('clearDyes resets both the forward and the reverse side', async () => {
       tool = mount();
       await flush();
+      mockCharaFindClosestDyes.mockReturnValue([{ dye: mockDyes[0], distance: 2 }]);
+      swatches()[5].click();
       tool.selectDye({ ...mockDyes[0], hex: '#AABBCC' } as never);
 
-      expect(() => tool!.clearDyes()).not.toThrow();
+      tool.clearDyes();
+
+      expect(cards()).toHaveLength(0);
+      // The outline went with the selection (it used to stay on the old cell)
+      expect(outlined()).toHaveLength(0);
+      expect(share().disabled).toBe(true);
+      expect(
+        (tool as unknown as { reverseMatchedSwatches: unknown[] }).reverseMatchedSwatches
+      ).toEqual([]);
       // Clearing twice is what a double-tap on Clear All does
       expect(() => tool!.clearDyes()).not.toThrow();
     });
@@ -1089,12 +1623,16 @@ describe('SwatchTool', () => {
       expect(() => tool!.destroy()).not.toThrow();
     });
 
-    it('ignores configuration arriving after destroy', () => {
+    it('ignores configuration arriving after destroy', async () => {
+      const getHairColors = vi.spyOn(CharacterColorService.prototype, 'getHairColors');
       tool = mount();
       tool.destroy();
 
       // The sidebar can emit one last config-change during teardown
-      expect(() => tool!.setConfig({ race: 'Midlander' })).not.toThrow();
+      expect(() => tool!.setConfig({ colorSheet: 'hairColors' })).not.toThrow();
+      await flush();
+
+      expect(getHairColors).not.toHaveBeenCalled();
     });
 
     it('works with no drawer panel supplied', async () => {

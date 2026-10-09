@@ -12,4 +12,4 @@
 - Pick one word, add it to the glossary, and use it in all four ko documents. Line 13 can be fixed inside #223 now (조정자, the word the rest of that file uses).
 
 ## Status
-OPEN
+PARTIALLY FIXED 2026-10-05 — `91de5f8d` (PR #223) fixed web `PRIVACY.ko.md:13`, so both privacy documents now say 조정자. Left: 운영자 in the two Korean Terms documents (five lines) and the glossary row, in Sprint 7. Re-verified on `main@50165ec6`: [reverify-2026-10-05.md](../evidence/reverify-2026-10-05.md).

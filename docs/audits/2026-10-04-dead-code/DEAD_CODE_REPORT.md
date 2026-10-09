@@ -282,8 +282,8 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 
 | ID | Status | Commit |
 |---|---|---|
-| DEAD-001 | FIX COMMITTED, NOT MERGED (PR #225) | `ea264d49` |
-| DEAD-002 | OPEN | — |
+| DEAD-001 | FIXED 2026-10-05 (PR #225) | `ea264d49` |
+| DEAD-002 | FIXED 2026-10-05 (PR #227) | `d3bf312a` |
 | DEAD-003 | OPEN | — |
 | DEAD-004 | OPEN | — |
 | DEAD-005 | OPEN | — |

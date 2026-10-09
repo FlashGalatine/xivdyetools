@@ -11,13 +11,31 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { GradientTool } from '../gradient-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
+// The barrel is mocked below; the tool reads ConfigController through it
+import { ConfigController, dyeService, StorageService } from '@services/index';
+// The module itself is NOT mocked — this is the real controller, backed by
+// the real StorageService and jsdom localStorage
+import { ConfigController as RealConfigController } from '@services/config-controller';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import type { Dye } from '@xivdyetools/types';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
-  mockGetAllDyes: vi.fn(),
-  mockGetDyeById: vi.fn(),
-  mockFindClosestDyes: vi.fn(),
-}));
+const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, fakeConfigController } = vi.hoisted(
+  () => ({
+    mockGetAllDyes: vi.fn(),
+    mockGetDyeById: vi.fn(),
+    mockFindClosestDyes: vi.fn(),
+    /**
+     * The barrel's ConfigController. setConfig must exist: the tool writes
+     * in-tool picks and validated share settings through it (BUG-019).
+     */
+    fakeConfigController: {
+      getConfig: vi.fn((): Record<string, unknown> => ({})),
+      setConfig: vi.fn(),
+      subscribe: vi.fn(() => () => {}),
+    },
+  })
+);
 
 // Icon modules are NOT mocked. They are compile-time string constants with
 // no dependencies, and a hand-written stub only has to miss one export for
@@ -188,10 +206,7 @@ vi.mock('@services/index', () => ({
     }),
   },
   ConfigController: {
-    getInstance: vi.fn().mockReturnValue({
-      getConfig: vi.fn().mockReturnValue({}),
-      subscribe: vi.fn().mockReturnValue(() => {}),
-    }),
+    getInstance: vi.fn(() => fakeConfigController),
   },
   CollectionService: {
     getFavorites: vi.fn().mockReturnValue([]),
@@ -394,6 +409,11 @@ describe('GradientTool', () => {
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
+    // vi.clearAllMocks() keeps implementations, and restoreAllMocks() does not
+    // reset vi.fn ones in Vitest 5, so a per-test override is undone here
+    vi.mocked(ConfigController.getInstance).mockImplementation(() => fakeConfigController as never);
+    fakeConfigController.getConfig.mockImplementation(() => ({}));
+    vi.mocked(dyeService.findClosestDye).mockReset().mockReturnValue(null);
     // Mock scrollIntoView
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -615,8 +635,9 @@ describe('GradientTool', () => {
   };
 
   const DYES_KEY = 'v3_mixer_selected_dyes';
-  const STEPS_KEY = 'v3_mixer_steps';
-  const SPACE_KEY = 'v3_mixer_color_space';
+  // The tool's own settings mirrors, retired by BUG-019: ConfigController owns
+  // the step count and colour space now
+  const RETIRED_SETTINGS_KEYS = ['v3_mixer_steps', 'v3_mixer_color_space'];
 
   const lastWrite = async (key: string): Promise<unknown> => {
     const { StorageService } = await import('@services/index');
@@ -629,6 +650,63 @@ describe('GradientTool', () => {
 
   const dye = (id: number, name = `Dye ${id}`) =>
     ({ ...mockDyes[0], id, itemID: 5000 + id, name, hex: '#123456' }) as never;
+
+  const shareParams = () =>
+    (container.querySelector('v4-share-button') as unknown as {
+      shareParams: Record<string, unknown>;
+      disabled: boolean;
+    }) ?? null;
+
+  /** The settings the tool is running with, as its share button reports them. */
+  const settingsInEffect = () => {
+    const { steps, interpolation, algo } = shareParams()!.shareParams;
+    return { steps, interpolation, algo };
+  };
+
+  /** Mount with a share URL in the address bar; each describe restores it. */
+  const mountAt = (search: string): GradientTool => {
+    window.history.replaceState({}, '', `/gradient/${search}`);
+    return mount();
+  };
+
+  type StepCard = HTMLElement & {
+    data: { dye: Dye; matchingMethod: string };
+    showHex: boolean;
+    showRgb: boolean;
+    showCmyk: boolean;
+  };
+
+  /** The rendered ramp, in step order: one card per step that matched a dye. */
+  const stepCards = () =>
+    [...container.querySelectorAll('v4-result-card[data-gradient-step]')] as StepCard[];
+
+  /** The dyes matched between the two endpoints (every step here matches one). */
+  const middleIds = () =>
+    stepCards()
+      .slice(1, -1)
+      .map((card) => card.data.dye.id);
+
+  /** Two endpoints and a dye for every middle step, so the whole ramp renders. */
+  const mountWithRamp = async (): Promise<GradientTool> => {
+    vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[0]);
+    const t = mount();
+    t.selectDye(dye(1));
+    t.selectDye(dye(2));
+    await flush();
+    return t;
+  };
+
+  const pinsOf = (t: GradientTool) =>
+    (t as unknown as { pinnedSteps: Map<number, Dye> }).pinnedSteps;
+
+  /** A matcher that honours excludeIds, so the dedupe fallback can find another dye. */
+  const matchFirstNotExcluded = () =>
+    vi
+      .mocked(dyeService.findClosestDye)
+      .mockImplementation(
+        (_hex: string, options?: { excludeIds?: number[] }) =>
+          mockDyes.find((d) => !options?.excludeIds?.includes(d.id)) ?? null
+      );
 
   describe('selectDye — the two endpoints', () => {
     it('fills the start endpoint first', async () => {
@@ -746,18 +824,6 @@ describe('GradientTool', () => {
   // ==========================================================================
 
   describe('share URL — custom endpoints', () => {
-    const shareParams = () =>
-      (container.querySelector('v4-share-button') as unknown as {
-        shareParams: Record<string, unknown>;
-        disabled: boolean;
-      }) ?? null;
-
-    /** Mount with a share URL in the address bar; restored afterwards. */
-    const mountAt = (search: string): GradientTool => {
-      window.history.replaceState({}, '', `/gradient/${search}`);
-      return mount();
-    };
-
     afterEach(() => {
       window.history.replaceState({}, '', '/');
     });
@@ -888,92 +954,487 @@ describe('GradientTool', () => {
     });
   });
 
+  // setConfig is the ConfigController subscriber (and the v4-layout forward's
+  // target), so it applies and never persists. BUG-011 (2026-10-04
+  // deep-dive): these used to assert v3 storage writes or not.toThrow(); each
+  // now asserts what the ramp does with the value.
   describe('setConfig', () => {
-    it('persists a step-count change', async () => {
-      tool = mount();
+    it('applies a step-count change to the ramp', async () => {
+      tool = await mountWithRamp();
+      expect(stepCards()).toHaveLength(8);
 
-      tool.setConfig({ stepCount: 12 });
+      tool.setConfig({ stepCount: 5 });
       await flush();
 
-      expect(await lastWrite(STEPS_KEY)).toBe(12);
+      expect(stepCards()).toHaveLength(5);
+      expect(settingsInEffect().steps).toBe(5);
     });
 
-    it('ignores a step count already in effect', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      tool.setConfig({ stepCount: 12 });
-      await flush();
-      vi.mocked(StorageService.setItem).mockClear();
+    it('clears the pins on a real step change and keeps them on a repeat', async () => {
+      tool = await mountWithRamp();
+      pinsOf(tool).set(3, mockDyes[1]);
+
+      // 8 is the count in effect; the v4-layout forward re-delivers every
+      // sidebar change, so a repeat must not cost the user their pins
+      tool.setConfig({ stepCount: 8 });
+      expect(pinsOf(tool).size).toBe(1);
 
       tool.setConfig({ stepCount: 12 });
-      await flush();
-
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(STEPS_KEY, expect.anything());
+      expect(pinsOf(tool).size).toBe(0);
     });
 
-    it('persists an interpolation change as the colour space', async () => {
-      tool = mount();
+    it.each([
+      [50, 12],
+      [1, 3],
+      [4.6, 5],
+    ])('clamps a step count of %s to %s', async (sent, applied) => {
+      tool = await mountWithRamp();
 
-      tool.setConfig({ interpolation: 'oklab' } as never);
+      // An imported config is type-checked only, so 50 can arrive here
+      tool.setConfig({ stepCount: sent });
       await flush();
 
-      // The sidebar calls it `interpolation`; storage calls it colorSpace
-      expect(await lastWrite(SPACE_KEY)).toBe('oklab');
+      expect(settingsInEffect().steps).toBe(applied);
+      expect(stepCards()).toHaveLength(applied);
     });
 
-    it.each(['rgb', 'lab', 'oklab', 'lch', 'hsl'])(
-      'accepts %s as an interpolation space',
+    // -Infinity rather than Infinity: an unguarded +Infinity loops the ramp
+    // builder until the worker dies, which reports nothing useful
+    it.each([NaN, -Infinity, '12'])('ignores a step count of %s', async (sent) => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({ stepCount: sent } as never);
+      await flush();
+
+      expect(settingsInEffect().steps).toBe(8);
+    });
+
+    it.each(['rgb', 'lab', 'oklch', 'lch'] as const)(
+      'applies %s as the interpolation space',
       async (space) => {
-        tool = mount();
+        tool = await mountWithRamp();
+
+        tool.setConfig({ interpolation: space });
+        await flush();
+
+        // The sidebar calls it `interpolation`; the tool calls it colorSpace
+        expect(settingsInEffect().interpolation).toBe(space);
+      }
+    );
+
+    it.each(['oklab', 'hsl', 'OKLCH', 42])(
+      'ignores %s, which is not one of the five interpolation modes',
+      async (space) => {
+        tool = await mountWithRamp();
 
         tool.setConfig({ interpolation: space } as never);
         await flush();
 
-        expect(await lastWrite(SPACE_KEY)).toBe(space);
+        // An unknown mode fell through interpolateInSpace to a flat grey ramp
+        expect(settingsInEffect().interpolation).toBe('hsv');
       }
     );
 
-    it('ignores the colour space already in effect', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
+    it('re-matches only when the colour space actually changes', async () => {
+      tool = await mountWithRamp();
+      const rematch = vi.spyOn(
+        tool as unknown as { updateInterpolation: () => void },
+        'updateInterpolation'
+      );
 
       // hsv is the default
-      tool.setConfig({ interpolation: 'hsv' } as never);
-      await flush();
+      tool.setConfig({ interpolation: 'hsv' });
+      expect(rematch).not.toHaveBeenCalled();
 
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(SPACE_KEY, expect.anything());
+      tool.setConfig({ interpolation: 'lab' });
+      expect(rematch).toHaveBeenCalledTimes(1);
     });
 
-    it.each([
-      ['preventDuplicates', { preventDuplicates: true }],
-      ['matchingMethod', { matchingMethod: 'oklab' }],
-      ['displayOptions', { displayOptions: { showHex: true } }],
-    ])('accepts a %s change with no endpoints set', (_label, config) => {
-      tool = mount();
-
-      expect(() => tool!.setConfig(config as never)).not.toThrow();
-    });
-
-    it('accepts an empty config without writing anything', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
-
-      tool.setConfig({});
-
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(STEPS_KEY, expect.anything());
-    });
-
-    it('recomputes against the new settings when endpoints are set', async () => {
+    it('dedupes consecutive steps only while preventDuplicates is on', async () => {
+      matchFirstNotExcluded();
       tool = mount();
       tool.selectDye(dye(1));
       tool.selectDye(dye(2));
+      await flush();
+      // On (the default): each middle step falls back to a dye not used yet
+      expect(new Set(middleIds()).size).toBe(6);
 
-      expect(() => tool!.setConfig({ stepCount: 5 })).not.toThrow();
+      tool.setConfig({ preventDuplicates: false });
       await flush();
 
-      expect(await lastWrite(STEPS_KEY)).toBe(5);
+      expect(new Set(middleIds()).size).toBe(1);
+    });
+
+    it('re-matches with a new matching method', async () => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({ matchingMethod: 'oklab' });
+      await flush();
+
+      expect(settingsInEffect().algo).toBe('oklab');
+      expect(stepCards().map((card) => card.data.matchingMethod)).toEqual(Array(8).fill('oklab'));
+    });
+
+    it('merges partial display options rather than replacing them', async () => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({ displayOptions: { showHex: false } } as never);
+      tool.setConfig({ displayOptions: { showCmyk: true } } as never);
+
+      const card = stepCards()[0];
+      expect(card.showHex).toBe(false);
+      expect(card.showCmyk).toBe(true);
+      // Untouched by either update
+      expect(card.showRgb).toBe(true);
+    });
+
+    it('keeps an excluded dye out of the middle steps once a filter arrives', async () => {
+      // Every middle step's nearest dye is Dalamud Red, the one metallic mock
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[8]);
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+      expect(middleIds()).toContain(mockDyes[8].id);
+
+      tool.setConfig({ dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true } });
+      await flush();
+
+      expect(middleIds().length).toBeGreaterThan(0);
+      expect(middleIds()).not.toContain(mockDyes[8].id);
+    });
+
+    it('applies without writing back to the controller it subscribes to', async () => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({
+        stepCount: 5,
+        interpolation: 'lab',
+        matchingMethod: 'oklab',
+        preventDuplicates: false,
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHex: false },
+        dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true },
+      });
+      await flush();
+
+      expect(settingsInEffect()).toEqual({ steps: 5, interpolation: 'lab', algo: 'oklab' });
+      expect(fakeConfigController.setConfig).not.toHaveBeenCalled();
+    });
+
+    it('does nothing with an empty config', async () => {
+      tool = await mountWithRamp();
+      const rematch = vi.spyOn(
+        tool as unknown as { updateInterpolation: () => void },
+        'updateInterpolation'
+      );
+
+      tool.setConfig({});
+
+      expect(rematch).not.toHaveBeenCalled();
+      expect(settingsInEffect()).toEqual({ steps: 8, interpolation: 'hsv', algo: 'ciede2000' });
+    });
+  });
+
+  // ==========================================================================
+  // BUG-019 (2026-10-04 deep-dive): ConfigController owns the step count and
+  // colour space. The tool's v3 mirrors made a second owner the sidebar never
+  // saw, so they are dropped at construction and never read or written.
+  // ==========================================================================
+
+  describe('retired settings keys', () => {
+    const retiredCalls = (fn: (key: string, ...rest: never[]) => unknown) =>
+      vi.mocked(fn).mock.calls.filter((call) => RETIRED_SETTINGS_KEYS.includes(call[0]));
+
+    afterEach(() => {
+      window.history.replaceState({}, '', '/');
+    });
+
+    it('drops both keys at construction and never reads them', () => {
+      tool = mount();
+
+      for (const key of RETIRED_SETTINGS_KEYS) {
+        expect(StorageService.removeItem).toHaveBeenCalledWith(key);
+      }
+      expect(retiredCalls(StorageService.getItem)).toEqual([]);
+    });
+
+    it('never writes them — not from setConfig, the in-tool controls or a share link', async () => {
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=oklch&v=1');
+      tool.setConfig({ stepCount: 5, interpolation: 'lab' });
+      const pick = (
+        el: HTMLInputElement | HTMLSelectElement | null,
+        value: string,
+        type: string
+      ) => {
+        el!.value = value;
+        el!.dispatchEvent(new Event(type));
+      };
+      pick(leftPanel.querySelector('[data-testid="gradient-step-slider"]'), '6', 'input');
+      pick(leftPanel.querySelector('[data-testid="gradient-colorspace-select"]'), 'rgb', 'change');
+      pick(drawerContent.querySelector('input[type="range"]'), '10', 'input');
+      pick(
+        drawerContent.querySelector('[data-testid="gradient-mobile-colorspace-select"]'),
+        'lch',
+        'change'
+      );
+      await flush();
+
+      expect(retiredCalls(StorageService.setItem)).toEqual([]);
+    });
+  });
+
+  // ==========================================================================
+  // The left-panel and drawer controls are unreachable in V4 (v4-layout hands
+  // the tool one panel and no drawer; REFACTOR-005 / BUG-093 own them). Until
+  // they go, a pick there applies locally, then writes ConfigController, the
+  // same as a sidebar pick — never the tool's own storage.
+  // ==========================================================================
+
+  describe('in-tool settings controls', () => {
+    it('the steps slider applies the count, then writes it to the controller', async () => {
+      tool = await mountWithRamp();
+      const slider = leftPanel.querySelector<HTMLInputElement>(
+        '[data-testid="gradient-step-slider"]'
+      )!;
+
+      slider.value = '6';
+      slider.dispatchEvent(new Event('input'));
+      await flush();
+
+      expect(stepCards()).toHaveLength(6);
+      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
+        stepCount: 6,
+      });
+    });
+
+    it('the colour-space select applies the space, then writes it to the controller', async () => {
+      tool = await mountWithRamp();
+      const select = leftPanel.querySelector<HTMLSelectElement>(
+        '[data-testid="gradient-colorspace-select"]'
+      )!;
+
+      select.value = 'oklch';
+      select.dispatchEvent(new Event('change'));
+      await flush();
+
+      expect(settingsInEffect().interpolation).toBe('oklch');
+      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
+        interpolation: 'oklch',
+      });
+    });
+
+    it('the drawer steps slider writes the controller too', async () => {
+      tool = await mountWithRamp();
+      const slider = drawerContent.querySelector<HTMLInputElement>('input[type="range"]')!;
+
+      slider.value = '10';
+      slider.dispatchEvent(new Event('input'));
+      await flush();
+
+      expect(settingsInEffect().steps).toBe(10);
+      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
+        stepCount: 10,
+      });
+    });
+
+    it('the drawer colour-space select writes the controller too', async () => {
+      tool = await mountWithRamp();
+      const select = drawerContent.querySelector<HTMLSelectElement>(
+        '[data-testid="gradient-mobile-colorspace-select"]'
+      )!;
+
+      select.value = 'lch';
+      select.dispatchEvent(new Event('change'));
+      await flush();
+
+      expect(settingsInEffect().interpolation).toBe('lch');
+      expect(fakeConfigController.setConfig).toHaveBeenCalledExactlyOnceWith('gradient', {
+        interpolation: 'lch',
+      });
+    });
+  });
+
+  // ==========================================================================
+  // BUG-019 / BUG-022 / BUG-011 (2026-10-04 deep-dive) against the REAL
+  // ConfigController: the barrel's getInstance is pointed at it, so the
+  // seed at construction, the share-link write and the subscriber broadcast
+  // all run end to end. subscribe() never replays, so the constructor's seed
+  // is the only mount-time source of a saved setting.
+  // ==========================================================================
+
+  describe('settings are owned by ConfigController', () => {
+    const controller = () => RealConfigController.getInstance();
+
+    beforeEach(() => {
+      localStorage.clear();
+      RealConfigController.resetInstance();
+      vi.mocked(ConfigController.getInstance).mockImplementation(
+        () => RealConfigController.getInstance() as never
+      );
+    });
+
+    afterEach(() => {
+      vi.mocked(ConfigController.getInstance).mockImplementation(
+        () => fakeConfigController as never
+      );
+      RealConfigController.resetInstance();
+      localStorage.clear();
+      window.history.replaceState({}, '', '/');
+    });
+
+    it('a dye filter saved before mount keeps that dye out of the middle steps', async () => {
+      controller().setConfig('gradient', {
+        dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true },
+      });
+      // Every middle step's nearest dye is Dalamud Red, the one metallic mock
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[8]);
+
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(middleIds().length).toBeGreaterThan(0);
+      expect(middleIds()).not.toContain(mockDyes[8].id);
+    });
+
+    it('seeds every saved setting at mount', async () => {
+      controller().setConfig('gradient', {
+        stepCount: 5,
+        interpolation: 'lab',
+        matchingMethod: 'oklab',
+        preventDuplicates: false,
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHex: false },
+      });
+      matchFirstNotExcluded();
+
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(settingsInEffect()).toEqual({ steps: 5, interpolation: 'lab', algo: 'oklab' });
+      expect(stepCards()).toHaveLength(5);
+      // preventDuplicates off: every middle step keeps the same nearest dye
+      expect(new Set(middleIds()).size).toBe(1);
+      expect(stepCards()[0].showHex).toBe(false);
+    });
+
+    it.each([
+      [50, 12],
+      [1, 3],
+      [4.6, 5],
+    ])(
+      'clamps a saved step count of %s to %s, and ignores an unknown space',
+      async (saved, seeded) => {
+        // importConfigs checks types only, so either can be in storage
+        controller().setConfig('gradient', { stepCount: saved, interpolation: 'oklab' as never });
+
+        tool = await mountWithRamp();
+
+        expect(settingsInEffect()).toMatchObject({ steps: seeded, interpolation: 'hsv' });
+      }
+    );
+
+    it('share-link settings survive a later sidebar change (the BUG-019 repro)', async () => {
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[0]);
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=oklch&algo=oklab&v=1');
+      await flush();
+      expect(controller().getConfig('gradient')).toMatchObject({
+        stepCount: 12,
+        interpolation: 'oklch',
+        matchingMethod: 'oklab',
+      });
+      pinsOf(tool).set(3, mockDyes[1]);
+
+      // A sidebar display toggle: the controller broadcasts the FULL config,
+      // which used to carry 8 / hsv / ΔE2000 back over the link's values
+      controller().setConfig('gradient', {
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHex: false },
+      });
+      await flush();
+
+      expect(settingsInEffect()).toEqual({ steps: 12, interpolation: 'oklch', algo: 'oklab' });
+      expect(pinsOf(tool).size).toBe(1);
+      expect(stepCards()).toHaveLength(12);
+      expect(stepCards()[0].showHex).toBe(false);
+    });
+
+    it('a share link writes its validated settings once, with no echo into the tool', () => {
+      const write = vi.spyOn(RealConfigController.prototype, 'setConfig');
+      const apply = vi.spyOn(GradientTool.prototype, 'setConfig');
+
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=oklch&algo=oklab&v=1');
+
+      expect(write.mock.calls.filter(([key]) => key === 'gradient')).toEqual([
+        ['gradient', { stepCount: 12, interpolation: 'oklch', matchingMethod: 'oklab' }],
+      ]);
+      // The load runs before the subscription, and the tool already holds the
+      // values, so nothing comes back through setConfig
+      expect(apply).not.toHaveBeenCalled();
+    });
+
+    it('a retired algo name in a link is migrated before it is saved', () => {
+      // Pre-5.0 links wrote `euclidean` for RGB distance
+      tool = mountAt('?start=1&end=2&algo=euclidean&v=1');
+
+      expect(controller().getConfig('gradient').matchingMethod).toBe('rgb');
+      expect(settingsInEffect().algo).toBe('rgb');
+    });
+
+    it.each([
+      [
+        'a fractional step count, a mis-cased space and an unknown algo',
+        '?start=1&end=2&steps=4.5&interpolation=OKLCH&algo=bogus&v=1',
+      ],
+      [
+        'an out-of-range step count, a non-mode space and a prototype key',
+        '?start=1&end=2&steps=50&interpolation=hsl&algo=constructor&v=1',
+      ],
+    ])('a link with %s changes no saved or applied setting', (_label, search) => {
+      controller().setConfig('gradient', { matchingMethod: 'oklab' });
+      const write = vi.spyOn(RealConfigController.prototype, 'setConfig');
+
+      tool = mountAt(search);
+
+      expect(write).not.toHaveBeenCalled();
+      expect(controller().getConfig('gradient')).toMatchObject({
+        stepCount: 8,
+        interpolation: 'hsv',
+        matchingMethod: 'oklab',
+      });
+      expect(settingsInEffect()).toEqual({ steps: 8, interpolation: 'hsv', algo: 'oklab' });
+    });
+
+    it('a link with one good setting saves only that one', () => {
+      controller().setConfig('gradient', { matchingMethod: 'oklab' });
+
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=nope&algo=bogus&v=1');
+
+      expect(controller().getConfig('gradient')).toMatchObject({
+        stepCount: 12,
+        interpolation: 'hsv',
+        matchingMethod: 'oklab',
+      });
+      expect(settingsInEffect()).toEqual({ steps: 12, interpolation: 'hsv', algo: 'oklab' });
+    });
+
+    it('an in-tool pick reaches the controller without re-running through the echo', async () => {
+      tool = await mountWithRamp();
+      const rematch = vi.spyOn(
+        tool as unknown as { updateInterpolation: () => void },
+        'updateInterpolation'
+      );
+      const slider = leftPanel.querySelector<HTMLInputElement>(
+        '[data-testid="gradient-step-slider"]'
+      )!;
+
+      slider.value = '6';
+      slider.dispatchEvent(new Event('input'));
+
+      expect(controller().getConfig('gradient').stepCount).toBe(6);
+      // Applied locally first, so the synchronous broadcast found nothing new
+      expect(rematch).toHaveBeenCalledTimes(1);
     });
   });
 

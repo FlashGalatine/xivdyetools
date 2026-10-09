@@ -70,8 +70,9 @@ site-data controls clear it.
 The app talks only to these first-party hosts (the site's Content-Security-Policy allows nothing
 else) plus the third parties named below:
 
-1. **Market-board prices** (optional — the "Show Prices" toggle): item ids and the world or data
-   centre you chose go to our proxy at `data.xivdyetools.app`, which fetches from
+1. **Market-board prices** (optional — the "Enable Market Board" switch in the settings column;
+   Budget Suggestions always loads them, because it compares dyes by price): item ids and the world
+   or data centre you chose go to our proxy at `data.xivdyetools.app`, which fetches from
    [Universalis](https://universalis.app).
 2. **Gear names and icons for `.chara` imports** — `data.xivdyetools.app` (see above).
 3. **Community presets** (`api.xivdyetools.app`): browsing sends nothing about you. Signing in
