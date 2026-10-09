@@ -25,6 +25,10 @@ import {
 } from '../../utils/discord-api.js';
 import { setPreference } from '../../services/preferences.js';
 import { getDyeByName, resolveTargetDye } from '../../services/budget/index.js';
+import { ledgerRowBudget, ledgerRowCost } from '../../services/budget/budget-calculator.js';
+import { renderSvgToPng } from '../../services/svg/renderer.js';
+import { CARD_MAX_HEIGHT, ROW_CAP } from '@xivdyetools/svg';
+import type { MatchingMethod } from '@xivdyetools/core';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -677,4 +681,133 @@ describe('/budget world override validation (FINDING-033)', () => {
       );
     });
   });
+});
+
+/**
+ * REFACTOR-003 (2026-10-04 deep dive): the ledger's footer height used to be
+ * decided twice — by the method, in the calculator's row budget, and by the
+ * key lines the handler handed the card — kept in step only because the
+ * handler added its method note on exactly the methods the calculator
+ * guessed. The handler now decides the key lines once, before the ledger is
+ * packed, and hands the packer their count alongside the list the card prints.
+ */
+describe('/budget find — one footer for the packer and the card (REFACTOR-003)', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+  let pending: Promise<unknown>[];
+
+  const settle = () => Promise.all(pending);
+  const heightOf = (svg: string): number => Number(/height="(\d+)"/.exec(svg)?.[1]);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pending = [];
+    for (const key of Object.keys(prefs)) delete prefs[key];
+    prefs.world = 'Balmung';
+    mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
+
+    env = {
+      DISCORD_PUBLIC_KEY: 'k',
+      DISCORD_TOKEN: 't',
+      DISCORD_CLIENT_ID: 'app-1',
+      KV: {} as KVNamespace,
+    } as unknown as Env;
+    ctx = {
+      waitUntil: vi.fn((p: Promise<unknown>) => {
+        pending.push(p.catch(() => undefined));
+      }),
+      passThroughOnException: vi.fn(),
+    } as unknown as ExecutionContext;
+  });
+
+  /**
+   * The tallest ledger a row budget allows — of every (groups, rows) split
+   * under the R1 cap, the one that spends the most — as a `method` result.
+   */
+  function maxPacked(method: MatchingMethod, budget: number): { result: object; spent: number } {
+    let best = { groups: 0, rows: 0, spent: -1 };
+    for (let groups = 1; groups <= ROW_CAP; groups++) {
+      for (let rows = groups; rows <= ROW_CAP; rows++) {
+        const spent = groups * ledgerRowCost(true) + (rows - groups) * ledgerRowCost(false);
+        if (spent <= budget && spent > best.spent) best = { groups, rows, spent };
+      }
+    }
+    const row = { dye: SOOT_BLACK, de: 2.1, de2000: 2.1, perDe: 23_700 };
+    const groups = Array.from({ length: best.groups }, (_, i) => ({
+      key: `x${i}`,
+      type: null,
+      label: `Group ${i + 1}`,
+      acquisition: null,
+      price: 216,
+      vendorCheaper: true,
+      rows: Array.from({ length: i === 0 ? best.rows - best.groups + 1 : 1 }, () => row),
+    }));
+    return { result: { ...LEDGER_RESULT, method, groups }, spent: best.spent };
+  }
+
+  async function find(matching: MatchingMethod): Promise<void> {
+    await handleBudgetCommand(
+      interaction('find', [
+        { name: 'target_dye', value: 'Jet Black' },
+        { name: 'matching', value: matching },
+      ]),
+      env,
+      ctx,
+    );
+    await settle();
+  }
+
+  /** The card the handler drew (the PNG step is mocked; the svg is real). */
+  function drawnCard(): string {
+    const calls = vi.mocked(renderSvgToPng).mock.calls;
+    expect(calls.length, 'no card was drawn').toBe(1);
+    return calls[0][0];
+  }
+
+  /** The options the handler packed the ledger with. */
+  const packedWith = (): { method?: string; keyLineCount?: number } =>
+    mockFindBudgetLedger.mock.calls[0][3] as never;
+
+  it.each([
+    ['ciede2000', 1],
+    ['rgb', 2],
+    ['oklab', 2],
+  ] as const)('%s: the packer is told the %i key line(s) the card prints', async (matching, lines) => {
+    mockFindBudgetLedger.mockResolvedValue({ ...LEDGER_RESULT, method: matching });
+
+    await find(matching);
+
+    expect(mockFindBudgetLedger).toHaveBeenCalledTimes(1);
+    expect(packedWith()).toMatchObject({ method: matching, keyLineCount: lines });
+    // …and the card prints exactly those: the method note only off ΔE2000
+    expect(drawnCard().includes('ratio stays'), 'the method note').toBe(lines > 1);
+  });
+
+  it.each(['ciede2000', 'rgb', 'distinguish'] as const)(
+    '%s: a ledger packed to the full row budget is drawn inside the 350 px wall',
+    async (matching) => {
+      let spent = -1;
+      mockFindBudgetLedger.mockImplementation(
+        async (_env: unknown, _id: unknown, _world: unknown, options: { keyLineCount?: number }) => {
+          const packed = maxPacked(matching, ledgerRowBudget(options.keyLineCount));
+          spent = packed.spent;
+          return packed.result;
+        },
+      );
+
+      await find(matching);
+
+      expect(spent, 'nothing was packed').toBeGreaterThan(0);
+      // cardShell clamps the declared height at 350, so an overlong card is
+      // cropped silently: measure where the footer is drawn. Its last line
+      // (and a one-line footer's mark) keeps 13 px under its baseline.
+      const svg = drawnCard();
+      const lastBaseline = Math.max(...[...svg.matchAll(/<text [^>]*\by="([\d.]+)"/g)].map((m) => Number(m[1])));
+      const drawnTo = lastBaseline + 13;
+      expect(drawnTo).toBeLessThanOrEqual(CARD_MAX_HEIGHT);
+      expect(drawnTo).toBe(heightOf(svg));
+      // What the packer left unspent is exactly what the card falls short of 350
+      expect(drawnTo).toBe(CARD_MAX_HEIGHT - (ledgerRowBudget(packedWith().keyLineCount) - spent));
+    },
+  );
 });

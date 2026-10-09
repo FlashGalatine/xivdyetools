@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.1] - 2026-10-06
+
+Sprints 14 and 28 of the 2026-10-04 remediation plan, in the same PR as svg 4.4.0, which this
+version requires (publish svg first).
+
+### Fixed
+
+- **One printed contrast ratio** (BUG-142). The `/contrast` embed and the `/compare` RATIO readout
+  print through svg's `formatContrastRatio`, as the contrast card does: floored, never rounded
+  across a band cut, with the locale's decimal separator. Both used to round, so the same pair
+  could read 3.00 there and 2.99 on the card. About half of all dye pairs now read one hundredth
+  lower than before.
+- **Every `/compare` readout uses the locale's decimal separator**, as the ΔE headline above it
+  already did. de and fr read `27,2 0,260 30,5`; en is unchanged.
+
 ## [4.8.0] - 2026-10-06
 
 Sprint 15 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

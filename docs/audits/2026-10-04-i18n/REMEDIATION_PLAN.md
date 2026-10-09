@@ -503,7 +503,13 @@ deep-dive/BUG-140: context strings skip key=value redaction. deep-dive/BUG-141: 
 
 **Ends with:** bump `@xivdyetools/core` (minor) → `pnpm turbo run build type-check lint test --filter=...@xivdyetools/core` (all consumers) → merge (consumer deploy workflows fire on `packages/core/**`) → Actions publish. If TERM-021 lands, its CJK sheet names reach both workers' font gates, which read core's locales. Re-cut the discord-worker and og-worker subsets in the same PR (compare by cmap).
 
-## Sprint 14 — @xivdyetools/svg: card text fidelity (publish)
+## Sprint 14 — @xivdyetools/svg: card text fidelity (publish) — PR #259 (open, with Sprint 28)
+
+**Done in PR #259** together with Sprint 28 (svg 4.4.0, one publish; bot-logic 4.8.1, discord-worker 5.8.6), stacked on #258. All six are fixed.
+- **BUG-142 grew:** the /contrast embed and the /compare RATIO readout printed the same ratio rounded, so svg now exports `formatContrastRatio` and all three printers use it (bot-logic 4.8.1). Publish svg before bot-logic.
+- **The /compare readouts are localized** (de/fr decimal comma), as its ΔE headline already was.
+- **Also here:** the `+2 LOOKS` doc comment (Sprints 2+3 note); the discord-worker integration suite's stale `validateWorld` expectations (BUG-031).
+- **Recorded, not fixed:** the /compare embed still prints ΔE with `toFixed` (de reads 27,2 on the card, 27.2 in the embed); the web app has three ratio printers on other rules (comparison-tool, accessibility-tool pairValue, metric-help); og-worker's font gate still uses a hand-kept glyph list instead of `scanEmittedGlyphs`; the scanner's two documented limits.
 
 Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and the frame-budget gate's missing cards. The glamour card footer's line breaks (I18N-015) ride with them.
 
@@ -796,7 +802,9 @@ deep-dive/REFACTOR-004: core exports the dyeable-slot set, and web-app imports i
 
 **Ends with:** core publish → web-app deploy
 
-## Sprint 28 — Structural: svg ledger constants (terminal)
+## Sprint 28 — Structural: svg ledger constants (terminal) — PR #259 (open, with Sprint 14)
+
+**Done in PR #259**, with Sprint 14 (one svg publish). The footer height also has one source now: the handler builds the key lines once and passes their count to the calculator.
 
 deep-dive/REFACTOR-003: svg exports the ledger geometry, and discord-worker's budget calculator imports it.
 

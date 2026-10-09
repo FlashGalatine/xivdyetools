@@ -18,7 +18,7 @@
 import type { Dye } from '@xivdyetools/types';
 import { abbreviateDyeName } from '@xivdyetools/core';
 import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18n/index.js';
-import { generateContrastCard, contrastRatio, type ContrastPair } from '@xivdyetools/svg';
+import { generateContrastCard, contrastRatio, formatContrastRatio, type ContrastPair } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
 import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
@@ -129,11 +129,14 @@ export async function executeContrast(input: ContrastInput): Promise<ContrastRes
       theme,
     });
 
-    // One line: the worst pair and its ratio
+    // One line: the worst pair and its ratio. The figure goes through the
+    // card's own printer (floored, the language's separator) — the card sits
+    // directly under this line, and a rounded 3.00:1 above a floored 2.99:1
+    // "under 3:1" is two answers to one question (BUG-142).
     const worst = pairs[0];
     const embed: EmbedData = {
       title: t.t('card.contrastTitle', { n: dyes.length }),
-      description: `${worst.nameA} ↔ ${worst.nameB} · ${worst.ratio.toFixed(2)}:1`,
+      description: `${worst.nameA} ↔ ${worst.nameB} · ${formatContrastRatio(worst.ratio, 2, locale)}:1`,
       color: parseInt(dyes[0].hex.replace('#', ''), 16),
     };
 

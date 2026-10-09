@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.6] - 2026-10-06
+
+Sprints 14 and 28 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+carrying `@xivdyetools/svg` 4.4.0 and `@xivdyetools/bot-logic` 4.8.1. Merge after Sprint 15
+(PR #258). No command shape changed and no font re-cut: nothing new is drawn.
+
+### Fixed
+
+- **`/contrast` and `/compare` print one contrast ratio** (BUG-142).
+  - The card, the embed and the `/compare` readout show the same figure for the same pair.
+  - A failing ratio never rounds up to a passing one.
+  - German and French use a decimal comma in every readout.
+  - About half of all dye pairs read one hundredth lower than before.
+- **`/gradient` prints two-digit step ranges whole** (BUG-146).
+- **`/glamour` cards** (I18N-015, BUG-145): the footer keeps counts with their nouns, long German
+  fits, and the look label is at the 11 px floor.
+
+### Changed
+
+- **`/budget` packs its ledger with svg's own geometry** (REFACTOR-003). The footer height comes
+  from the same key lines the card draws, so the calculator holds no copy of the card's layout.
+  No visible change.
+- The `/budget` integration suite expects `validateWorld`'s `WorldValidation` answer. BUG-031 had
+  changed it, and this suite is not in CI.
+
 ## [5.8.5] - 2026-10-06
 
 Sprint 15 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

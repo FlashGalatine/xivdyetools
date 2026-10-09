@@ -23,6 +23,7 @@
 
 import {
   CARD_WIDTH,
+  CARD_MAX_HEIGHT,
   CARD_TYPE,
   cardShell,
   cardTheme,
@@ -51,7 +52,7 @@ export type GlamourCardTone = 'fix' | 'block' | 'choice' | 'unique';
 export interface GlamourCardRow {
   /** The slot's name in the game's own words, localized (MAIN HAND / HEAD / 頭 …) */
   slotLabel: string;
-  /** "+2 LOOK" when the model has twins, "ONE LOOK" when it has none (localized) */
+  /** "+2 LOOKS" when the model has twins, "ONE LOOK" when it has none (localized) */
   lookLabel: string;
   /** Other items with the same look; 0 = one look, drawn quiet whatever the verdict */
   twins: number;
@@ -106,21 +107,106 @@ const STATUS_MAX = 72;
 const CHIP = 10;
 const CHIP_GAP = 6;
 
-/** The footer's line pitch: 11 px mono at the drawn 1.3 line height. */
-const FOOT_LINE_H = 14;
+/**
+ * The footer's line pitch: the budget ledger's 15 px, so a line run under the
+ * mark clears its 18 px icon.
+ */
+const FOOT_LINE_H = 15;
+/** The key's first baseline below the last row's hairline (the mark's too). */
+const FOOT_FIRST = 20;
+/** Room kept under the last footer baseline, as every single-line footer keeps. */
+const FOOT_BOTTOM = 13;
+/** How bot-logic joins the key's clauses: "5 of 7 dyed pieces · 3 named from a twin". */
+const CLAUSE = ' · ';
 
-/** Break the count key at spaces into two lines at most; the second ellipsises. */
-function wrapFoot(key: string, maxPx: number): string[] {
-  if (textWidth(key, CARD_TYPE.label, 'mono') <= maxPx) return [key];
-  const words = key.split(' ');
-  let first = words[0];
-  let i = 1;
-  while (i < words.length && textWidth(`${first} ${words[i]}`, CARD_TYPE.label, 'mono') <= maxPx) {
-    first += ` ${words[i]}`;
-    i++;
+/**
+ * A clause's words, for the rare clause that has to break — one too long for
+ * a line of its own, or one too wide for the mark's line on a card with no
+ * height left for the line under it (see wrapFoot). Each count is glued to
+ * the word beside it (the next one, or the one before when the count ends the
+ * clause — ja "解決不可 2"), and the clause's closing "·" to the word it
+ * follows, so no break lands between them.
+ */
+function wordUnits(clause: string): string[] {
+  const words = clause.split(' ');
+  const units: string[] = [];
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    const last = units.length - 1;
+    const nextWord = words[i + 1];
+    if (/\d/.test(w) && nextWord !== undefined && nextWord !== '·') {
+      units.push(`${w} ${nextWord}`);
+      i++;
+    } else if ((w === '·' || /\d/.test(w)) && last >= 0) {
+      units[last] += ` ${w}`;
+    } else {
+      units.push(w);
+    }
   }
-  const rest = words.slice(i).join(' ');
-  return rest ? [first, fitText(rest, maxPx, CARD_TYPE.label, 'mono')] : [first];
+  return units;
+}
+
+/**
+ * Wrap the count key at its " · " clauses, so a count never leaves its noun
+ * (I18N-015: wrapping at any space split "· 3" from "durch Zwilling benannt").
+ * The first line shares its row with the mark; the lines under it run the
+ * full width. Only a clause too long for a line of its own is broken — between
+ * words, a count kept with its word, and by code point as the last seam a
+ * spaceless run offers.
+ *
+ * The mark's line is the narrow one, so a first clause (or, in a clause too
+ * long for any line, a first word) that only a full-width line holds starts
+ * whole on the line under the mark, leaving the mark its line alone (`''`).
+ * That costs a line: when the frame has none to spare, the clause is broken
+ * between words beside the mark instead, so the key keeps its tail. A key
+ * longer than `maxLines` (all the height the frame has left) is cut at the
+ * last line it can hold, never pushed past 350. There is always at least one
+ * line, the mark's, even for an empty key: the card's height is measured from it.
+ */
+function wrapFoot(key: string, firstMax: number, restMax: number, maxLines: number): string[] {
+  const maxFor = (index: number): number => (index === 0 ? firstMax : restMax);
+  const fits = (s: string, index: number): boolean => textWidth(s, CARD_TYPE.label, 'mono') <= maxFor(index);
+
+  /** Lay the key out; `clearMark` lets a unit only a full-width line holds start under the mark. */
+  const layout = (clearMark: boolean): string[] => {
+    const lines: string[] = [];
+    let line = '';
+
+    /** depth 0: a clause · 1: a word unit · 2: a code point (placed whatever its width). */
+    const place = (unit: string, depth: 0 | 1 | 2): void => {
+      const joined = line ? `${line}${depth === 2 ? '' : ' '}${unit}` : unit;
+      if (fits(joined, lines.length)) {
+        line = joined;
+        return;
+      }
+      if (line) {
+        lines.push(line);
+      } else if (clearMark && depth < 2 && lines.length === 0 && fits(unit, 1)) {
+        lines.push('');
+      }
+      line = '';
+      if (depth === 2 || fits(unit, lines.length)) {
+        line = unit;
+      } else if (depth === 0) {
+        for (const word of wordUnits(unit)) place(word, 1);
+      } else {
+        for (const char of unit) place(char, 2);
+      }
+    };
+
+    // A clause that a break may follow carries the separator at its line's end
+    const clauses = key.split(CLAUSE);
+    clauses.forEach((clause, i) => place(i < clauses.length - 1 ? `${clause} ·` : clause, 0));
+    if (line || lines.length === 0) lines.push(line);
+    return lines;
+  };
+
+  let lines = layout(true);
+  if (lines.length > maxLines && lines[0] === '') lines = layout(false);
+  if (lines.length <= maxLines) return lines;
+  const lastIndex = Math.max(maxLines, 1) - 1;
+  const rest = lines.slice(lastIndex).join(' ');
+  return [...lines.slice(0, lastIndex), fitText(rest, maxFor(lastIndex), CARD_TYPE.label, 'mono')];
 }
 
 /** The look count's ink: it answers "was a twin picked, and why?" */
@@ -208,7 +294,7 @@ export function generateGlamourCard(options: GlamourCardOptions): string {
       LEAD_MIN,
       ...options.rows.map((r) => {
         const slot = tracked(r.slotLabel) <= LEAD_MAX ? tracked(r.slotLabel) : slotWidth(r.slotLabel);
-        return Math.ceil(Math.max(slot, textWidth(r.lookLabel, 10.5, 'mono')));
+        return Math.ceil(Math.max(slot, textWidth(r.lookLabel, CARD_TYPE.label, 'mono')));
       })
     )
   );
@@ -234,9 +320,9 @@ export function generateGlamourCard(options: GlamourCardOptions): string {
       })
     );
     parts.push(
-      cardText(PAD, y + 34, fitText(r.lookLabel, leadW, 10.5, 'mono'), {
+      cardText(PAD, y + 34, fitText(r.lookLabel, leadW, CARD_TYPE.label, 'mono'), {
         fill: lookInk(r.tone, r.twins, theme),
-        size: 10.5,
+        size: CARD_TYPE.label,
         font: 'mono',
       })
     );
@@ -287,20 +373,26 @@ export function generateGlamourCard(options: GlamourCardOptions): string {
   }
   parts.push(hairline(PAD, rightX, y, theme));
 
-  // Footer: the count key (two lines at most, as drawn) beside the mark
+  // Footer: the count key, wrapped at its clauses. Its first line shares the
+  // row with the mark and any line below runs the full width under it, as the
+  // budget ledger's method note does — five rows leave height for two lines.
   const markW = 18 + 7 + textWidth('xivdyetools.app', CARD_TYPE.label, 'mono');
-  const footLines = wrapFoot(options.footKey, CARD_WIDTH - PAD * 2 - markW - 10);
-  const height = Math.round(y + 19 + FOOT_LINE_H * footLines.length);
+  const footTop = y + FOOT_FIRST;
+  const maxLines = 1 + Math.floor((CARD_MAX_HEIGHT - FOOT_BOTTOM - footTop) / FOOT_LINE_H);
+  const footLines = wrapFoot(options.footKey, CARD_WIDTH - PAD * 2 - markW - 10, CARD_WIDTH - PAD * 2, maxLines);
   footLines.forEach((line, i) => {
+    // An empty line is the mark's alone: it keeps its height, and draws nothing
+    if (!line) return;
     parts.push(
-      cardText(PAD, y + 20 + FOOT_LINE_H * i, line, {
+      cardText(PAD, footTop + FOOT_LINE_H * i, line, {
         fill: theme.label,
         size: CARD_TYPE.label,
         font: 'mono',
       })
     );
   });
-  parts.push(markFooter(rightX, y + 20 + (FOOT_LINE_H * (footLines.length - 1)) / 2, theme));
+  parts.push(markFooter(rightX, footTop, theme));
+  const height = Math.round(footTop + FOOT_LINE_H * (footLines.length - 1) + FOOT_BOTTOM);
 
   return cardShell(height, theme, parts.join(''));
 }

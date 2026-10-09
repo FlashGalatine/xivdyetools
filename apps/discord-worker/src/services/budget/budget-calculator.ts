@@ -29,6 +29,16 @@ import {
   getLocalizedCategory,
   type LocaleCode,
 } from '@xivdyetools/bot-logic';
+import {
+  CARD_MAX_HEIGHT,
+  ROW_CAP,
+  LEDGER_HEADER_H,
+  LEDGER_COLHEAD_H,
+  LEDGER_GROUP_H,
+  LEDGER_ROW_H,
+  LEDGER_FOOTER_H,
+  LEDGER_FOOTER_2LINE_H,
+} from '@xivdyetools/svg';
 import type { Dye } from '@xivdyetools/types';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import type { Env } from '../../types/env.js';
@@ -42,24 +52,43 @@ import { fetchPricesBatched } from './universalis-client.js';
 import { fetchWithCache } from './price-cache.js';
 
 // ============================================================================
-// Constants (13G pixel budget — mirrors @xivdyetools/svg budget-ledger)
+// Constants
 // ============================================================================
 
 /** Default match line (ΔE2000) — the only method whose net the user moves. */
 const DEFAULT_MATCH_LINE = 8;
 
-/** Frame budget: 350 − header 43 − column header 27. */
-const LEDGER_CONTENT_BUDGET = 350 - 43 - 27;
-const GROUP_H = 24;
-const ROW_H = 40;
-const FOOTER_H = 32;
-const FOOTER_2LINE_H = 47;
-
-/** R1 Cap: five rows at full size, whatever the group arithmetic says. */
-const ROW_CAP = 5;
-
 /** Tier order for the unranked fallback: Standard first (2.6d user decision). */
 const TIER_ORDER: Record<ConsolidationType, number> = { A: 0, B: 1, C: 2 };
+
+// ============================================================================
+// 13G pixel budget — the card's own geometry, read from @xivdyetools/svg
+// ============================================================================
+//
+// The heights come from the ledger generator itself (REFACTOR-003), never a
+// literal copy: a copy drifts, the calculator packs a card taller than the
+// 350 px wall, and cardShell clamps the footer and the mark off the canvas.
+// The row cap is the frame's R1 cap — five rows at full size, whatever the
+// group arithmetic says.
+
+/**
+ * Pixels the rows may spend: the height wall less the header, the column
+ * header and the footer. The footer is sized as generateBudgetLedger sizes
+ * it — by the key lines it prints (`labels.keyLines.length`), one line or
+ * two, never by the method. The /budget handler decides those lines once and
+ * hands their count here (`keyLineCount`) along with the list it hands the
+ * card, so the two cannot disagree. Told nothing, the packer leaves room for
+ * the tallest footer the card draws, which no key can overflow.
+ */
+export function ledgerRowBudget(keyLineCount = 2): number {
+  const footer = keyLineCount > 1 ? LEDGER_FOOTER_2LINE_H : LEDGER_FOOTER_H;
+  return CARD_MAX_HEIGHT - LEDGER_HEADER_H - LEDGER_COLHEAD_H - footer;
+}
+
+/** What accepting a row costs: its own height, plus the group band it opens. */
+export function ledgerRowCost(opensGroup: boolean): number {
+  return (opensGroup ? LEDGER_GROUP_H : 0) + LEDGER_ROW_H;
+}
 
 // ============================================================================
 // Group pricing (the 9C rules)
@@ -114,12 +143,16 @@ function groupPricing(
  * and the rows fall back to tier-then-distance order — blanks, never
  * inventions. Exclusions remove whole pricing-path groups; the excluded
  * target itself stays allowed.
+ *
+ * `keyLineCount` is how many key lines the card drawn from this ledger
+ * prints under its rows (see ledgerRowBudget) — every one of them must be
+ * known before the rows are packed. Omitted, room is kept for two.
  */
 export async function findBudgetLedger(
   env: Env,
   targetDyeId: number,
   world: string,
-  options: LedgerSearchOptions = {},
+  options: LedgerSearchOptions & { keyLineCount?: number } = {},
   logger?: ExtendedLogger,
 ): Promise<BudgetLedgerFindResult> {
   const method: MatchingMethod = options.method ?? 'ciede2000';
@@ -232,7 +265,7 @@ export async function findBudgetLedger(
 
   // 7. Pixel cap: groups materialize as their first row is accepted; a row
   //    that cannot pay for its group header is omitted (named in the embed).
-  let budget = LEDGER_CONTENT_BUDGET - (method === 'ciede2000' ? FOOTER_H : FOOTER_2LINE_H);
+  let budget = ledgerRowBudget(options.keyLineCount);
   const grouped = new Map<string, LedgerGroupResult>();
   const order: string[] = [];
   const omitted: Array<{ itemID: number; name: string }> = [];
@@ -240,7 +273,7 @@ export async function findBudgetLedger(
   for (const r of rows) {
     const key = r.dye.consolidationType ?? `x${r.dye.itemID}`;
     const isNew = !grouped.has(key);
-    const cost = (isNew ? GROUP_H : 0) + ROW_H;
+    const cost = ledgerRowCost(isNew);
     if (accepted >= ROW_CAP || cost > budget) {
       omitted.push({ itemID: r.dye.itemID, name: r.dye.name });
       continue;

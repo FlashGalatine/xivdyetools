@@ -175,10 +175,16 @@ exports that no workspace imports must carry `/** @public */` on its specifier
 (`"tags": ["-public"]` in the root config excludes those). That covers the frame
 primitives (`cardShell`, `cardText`, `fitText`, `commandChip`, `markFooter`,
 `swatch`, `idealSwatch`, `dashedRule`, `hairline`, `textWidth`, `appIcon`,
-`CARD_TYPE`, `HARMONY_ROW_CAP`, `LEDGER_FOOTER_*`, `ACCENT`, `NUMFMT`) and every
+`CARD_TYPE`, `HARMONY_ROW_CAP`, `ACCENT`, `NUMFMT`) and every
 `*Options`/`*Labels` companion type — all documented in `README.md` for
 consumers knip cannot see. A new card generator or primitive with no caller and
 no tag fails `lint`.
+
+The six ledger heights (`LEDGER_HEADER_H`, `LEDGER_COLHEAD_H`, `LEDGER_GROUP_H`,
+`LEDGER_ROW_H`, `LEDGER_FOOTER_H`, `LEDGER_FOOTER_2LINE_H`) carry **no** tag:
+discord-worker's budget calculator imports all six to pack the ledger's rows
+against the 350 px wall with the card's own geometry (REFACTOR-003). Should
+that consumer go, knip reports them again.
 
 ## Publishing
 

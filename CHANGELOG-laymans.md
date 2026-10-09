@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.16] - 2026-10-06
+### 📏 Numbers that agree
+- Discord bot: `/contrast` and `/compare` show the same contrast ratio for the same two dyes, and never round a failing ratio up to a passing one.
+- Discord bot: German and French show a decimal comma in every `/contrast` and `/compare` number.
+- Discord bot: `/gradient` no longer cuts off step numbers like "10–12".
+- Discord bot: `/glamour` cards keep each count next to its word in the footer, and long German footers fit.
+
 ## [5.10.15] - 2026-10-06
 ### 🎨 Colours you type, and filters that keep their matches
 - Discord bot: colours typed as six digits, like `000000` or `333333`, work everywhere instead of being refused.
