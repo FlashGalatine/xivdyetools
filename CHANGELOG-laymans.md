@@ -31,6 +31,13 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.19] - 2026-10-06
+### 🔗 Link previews that match the page
+- Link previews: a shared Gradient Builder link previews the same dyes the page shows, in the color space you picked, numbered with the page's own steps.
+- Link previews: a Palette Extractor link previews dyes matched the way you chose, not always by ΔE2000.
+- Link previews: a gradient, mixer or harmony shared from your own color names that color and opens it again.
+- Link previews: French previews call Community Presets "Préréglages communautaires", and the German Glamour Reader description reads correctly.
+
 ## [5.10.18] - 2026-10-06
 ### 🌏 Item names in your language
 - Discord bot: `/glamour` cards now name items in Korean, Chinese and Japanese instead of falling back to English.

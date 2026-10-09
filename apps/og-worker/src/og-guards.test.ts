@@ -24,6 +24,8 @@ vi.mock('./services/renderer', () => ({
 
 const { default: app } = await import('./index');
 const { renderOGImage } = await import('./services/renderer');
+const { algoTag } = await import('./services/svg/band-shared');
+const { generateGradientOG } = await import('./services/svg/gradient');
 
 const TEST_ENV = {
   APP_BASE_URL: 'https://xivdyetools.app',
@@ -124,8 +126,8 @@ describe('/og/* query-key allowlist', () => {
   });
 
   // 2026-08-29 FINDING-024 (OG-4, ruling S7-R7): `algo` is an allowed KEY on
-  // every /og/* route, but comparison (like accessibility / extractor /
-  // presets / budget / both default-card routes) never reads it — without
+  // every /og/* route, but comparison (like accessibility / presets / budget /
+  // both default-card routes — and, until BUG-060, extractor) never reads it — without
   // this check, ?algo=1, ?algo=2, … on a route with no isAlgorithm check of
   // its own would each mint a fresh canonical cache key and force a fresh
   // render, the same amplification the allowlist otherwise closes.
@@ -142,9 +144,13 @@ describe('/og/* query-key allowlist', () => {
     expect(renderOGImage).toHaveBeenCalledTimes(1);
   });
 
-  it('a repeated allowed key is not an error', async () => {
+  // Reversed 2026-10-06: this used to pin a repeated allowed key as a 200. A
+  // repeat lets the guard/cache key and the routes read different occurrences,
+  // so it is a 400 (see 'a repeated allowlisted query key' below).
+  it('a repeated allowed key is a 400', async () => {
     const res = await app.request('/og/harmony/1/complementary?lang=ja&lang=de', {}, TEST_ENV, execCtx);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'Repeated query parameter' });
   });
 
   // The allowlist is scoped to /og/* only — the crawler-intercept tool
@@ -651,5 +657,376 @@ describe('/og/* cache key: card generation and the reserved default routes', () 
     await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
     expect(renderOGImage).toHaveBeenCalledTimes(3);
     expect(caches.store.size).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-058 (2026-10-04 deep dive): `ogCacheKey` keyed `algo` and `mode` on
+// EVERY /og/* route, although only the algo-aware routes read `algo` and only
+// the two mixer routes read `mode` — contradicting its own docblock ("an
+// allowed key must not multiply the cache entries of a card that ignores
+// it"). `/og/budget/5.png?algo=oklab`, `?algo=rgb` and `?mode=lab` each bought
+// a full resvg render of a byte-identical card.
+//
+// The two directions are not symmetric. Over-keying only wastes renders;
+// UNDER-keying a route that reads the parameter serves the wrong picture for
+// seven days. So both tables are exhaustive: every reader must still split,
+// every non-reader must share the bare entry.
+// ---------------------------------------------------------------------------
+describe('BUG-058: algo and mode key the cache only on the routes that read them', () => {
+  let caches: ReturnType<typeof fakeCacheStorage>;
+
+  beforeEach(() => {
+    vi.mocked(renderOGImage).mockClear();
+    rendered.length = 0;
+    caches = fakeCacheStorage();
+    vi.stubGlobal('caches', caches);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function entriesFor(path: string, queries: string[]): Promise<number> {
+    for (const q of queries) {
+      const res = await app.request(`${path}${q}`, {}, TEST_ENV, execCtx);
+      expect(res.status, `${path}${q}`).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    }
+    return caches.store.size;
+  }
+
+  /** Every route whose handler reads `?algo=` when it renders. */
+  const ALGO_READERS = [
+    '/og/harmony/1/complementary',
+    '/og/gradient/43/44/5',
+    '/og/mixer/1/2/50',
+    '/og/mixer/1/2/3/50',
+    '/og/swatch/AABBCC/5',
+    // BUG-060: the extractor card ranks by the shared algorithm too
+    '/og/extractor/8E5A3C,C9A96A',
+  ];
+
+  /** Every route whose card ignores `?algo=`. */
+  const ALGO_IGNORERS = [
+    '/og/budget/5',
+    '/og/comparison/1,2,3',
+    '/og/accessibility/1,2/protanopia',
+    '/og/presets/gc-maelstrom',
+    '/og/presets/default',
+    '/og/harmony/default.png',
+    '/og/gradient/default.png',
+    '/og/mixer/default.png',
+    '/og/swatch/default.png',
+    '/og/extractor/default.png',
+    '/og/budget/default.png',
+    '/og/default.png',
+  ];
+
+  for (const path of ALGO_READERS) {
+    it(`${path}: two algorithms are two entries`, async () => {
+      expect(await entriesFor(path, ['', '?algo=oklab', '?algo=cie76'])).toBe(3);
+    });
+  }
+
+  for (const path of ALGO_IGNORERS) {
+    it(`${path}: ?algo= shares the bare entry`, async () => {
+      expect(await entriesFor(path, ['', '?algo=oklab', '?algo=rgb'])).toBe(1);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+  }
+
+  /** The finding's own reproduction, verbatim. */
+  it('/og/budget/5.png: ?algo=oklab, ?algo=rgb and ?mode=lab are one render', async () => {
+    expect(await entriesFor('/og/budget/5.png', ['?algo=oklab', '?algo=rgb', '?mode=lab'])).toBe(1);
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  });
+
+  const MODE_READERS = ['/og/mixer/1/2/50', '/og/mixer/1/2/3/50'];
+  const MODE_IGNORERS = [
+    '/og/harmony/1/complementary',
+    '/og/gradient/43/44/5',
+    '/og/swatch/AABBCC/5',
+    '/og/extractor/8E5A3C,C9A96A',
+    '/og/budget/5',
+    '/og/comparison/1,2,3',
+    '/og/accessibility/1,2/protanopia',
+    '/og/presets/gc-maelstrom',
+    '/og/mixer/default.png',
+    '/og/default.png',
+  ];
+
+  for (const path of MODE_READERS) {
+    it(`${path}: two mixing modes are two entries`, async () => {
+      expect(await entriesFor(path, ['', '?mode=spectral', '?mode=lab'])).toBe(3);
+    });
+  }
+
+  for (const path of MODE_IGNORERS) {
+    it(`${path}: ?mode= shares the bare entry`, async () => {
+      expect(await entriesFor(path, ['', '?mode=spectral', '?mode=lab'])).toBe(1);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+  }
+
+  /**
+   * The keying is only right if the card really changes with the key: an
+   * extractor card rendered under `?algo=oklab` must not be the ΔE2000 card
+   * (BUG-060 — the route used to drop the parameter on the floor).
+   */
+  it('BUG-060: the extractor route hands ?algo= to its card', async () => {
+    // Compared by the footer's method tag, not by the whole string: every
+    // render mints a fresh clip-path id, so two SVGs never compare equal.
+    await entriesFor('/og/extractor/8E5A3C,C9A96A', ['', '?algo=oklab']);
+    expect(rendered).toHaveLength(2);
+    expect(rendered[0]).toContain(algoTag('ciede2000'));
+    expect(rendered[1]).toContain(algoTag('oklab'));
+    expect(rendered[1]).not.toContain(algoTag('ciede2000'));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-008 (2026-10-04 deep dive): the gradient card ramps in the share's own
+// `interpolation=` — the color space the Gradient Builder drew the page in.
+// The key must pass the allowlist, be validated like `mode` and `wheel`, reach
+// the card, and key the cache on that one route only (`hsv`, the default,
+// shares the bare entry). The crawler must never emit an image URL the route
+// would refuse: a 404 or 400 og:image unfurls with no picture at all.
+// ---------------------------------------------------------------------------
+describe('BUG-008: ?interpolation= on the gradient card', () => {
+  let caches: ReturnType<typeof fakeCacheStorage>;
+
+  beforeEach(() => {
+    vi.mocked(renderOGImage).mockClear();
+    rendered.length = 0;
+    caches = fakeCacheStorage();
+    vi.stubGlobal('caches', caches);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** Every render mints a fresh mark clip-path id, so compare without it. */
+  const stable = (svg: string): string => svg.replace(/ogm\d+/g, 'ogm');
+
+  async function entriesFor(path: string, queries: string[]): Promise<number> {
+    for (const q of queries) {
+      const res = await app.request(`${path}${q}`, {}, TEST_ENV, execCtx);
+      expect(res.status, `${path}${q}`).toBe(200);
+      await Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+    }
+    return caches.store.size;
+  }
+
+  it.each(['rgb', 'hsv', 'lab', 'oklch', 'lch'])('?interpolation=%s is an allowed key and value', async (mode) => {
+    const res = await app.request(`/og/gradient/68/1/5?interpolation=${mode}`, {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(200);
+  });
+
+  // The page's own test is a case-sensitive membership check, so `LAB` is as
+  // unknown there as `spectral` — a direct URL carrying either is malformed.
+  it.each(['spectral', 'LAB', 'Hsv', 'lab ', '1'])(
+    '?interpolation=%s is a 400 that never echoes the value, without rendering',
+    async (bad) => {
+      const res = await app.request(
+        `/og/gradient/68/1/5?interpolation=${encodeURIComponent(bad)}`,
+        {},
+        TEST_ENV,
+        execCtx,
+      );
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: 'Invalid interpolation' });
+      expect(renderOGImage).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rejects an invalid value even on a route that never reads it, like mode and wheel', async () => {
+    const res = await app.request('/og/budget/5.png?interpolation=junk', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(400);
+    expect(renderOGImage).not.toHaveBeenCalled();
+  });
+
+  it('treats an empty ?interpolation= as absent: 200, and the bare entry', async () => {
+    expect(await entriesFor('/og/gradient/68/1/5', ['', '?interpolation='])).toBe(1);
+    expect(renderOGImage).toHaveBeenCalledTimes(1);
+  });
+
+  it('the route hands the mode to the card: lab draws the lab ramp, not the hsv one', async () => {
+    // Ink Blue → Snow White, the audit's repro: green in hsv, gray in lab.
+    await entriesFor('/og/gradient/68/1/5', ['?interpolation=lab', '?interpolation=oklch', '']);
+    expect(rendered).toHaveLength(3);
+    const card = (interpolation?: 'lab' | 'oklch'): string =>
+      stable(generateGradientOG({ startDyeId: 68, endDyeId: 1, steps: 5, interpolation }));
+    expect(stable(rendered[0])).toBe(card('lab'));
+    expect(stable(rendered[1])).toBe(card('oklch'));
+    expect(stable(rendered[2])).toBe(card());
+    expect(card('lab')).not.toBe(card());
+  });
+
+  it('two modes on the gradient card are two entries; hsv shares the bare one', async () => {
+    expect(await entriesFor('/og/gradient/68/1/5', ['', '?interpolation=hsv'])).toBe(1);
+    expect(await entriesFor('/og/gradient/68/1/5', ['?interpolation=lab', '?interpolation=oklch'])).toBe(3);
+    expect(renderOGImage).toHaveBeenCalledTimes(3);
+  });
+
+  it('.png and no suffix still share one entry under a mode', async () => {
+    expect(
+      await entriesFor('/og/gradient/68/1/5', ['?interpolation=lab', '.png?interpolation=lab']),
+    ).toBe(1);
+  });
+
+  /** Every route whose card ignores `?interpolation=` — all but one. */
+  const INTERPOLATION_IGNORERS = [
+    '/og/gradient/default.png',
+    '/og/harmony/1/complementary',
+    '/og/mixer/1/2/50',
+    '/og/mixer/1/2/3/50',
+    '/og/swatch/AABBCC/5',
+    '/og/extractor/8E5A3C,C9A96A',
+    '/og/budget/5',
+    '/og/comparison/1,2,3',
+    '/og/accessibility/1,2/protanopia',
+    '/og/presets/gc-maelstrom',
+    '/og/harmony/default.png',
+    '/og/default.png',
+  ];
+
+  for (const path of INTERPOLATION_IGNORERS) {
+    it(`${path}: ?interpolation= shares the bare entry`, async () => {
+      expect(await entriesFor(path, ['', '?interpolation=lab', '?interpolation=rgb'])).toBe(1);
+      expect(renderOGImage).toHaveBeenCalledTimes(1);
+    });
+  }
+
+  /**
+   * The round trip the allowlist exists for: whatever og:image and X image
+   * the crawler writes for a gradient share, the image route serves — the
+   * five modes, absent and unknown, a custom endpoint, in two locales.
+   */
+  it.each([
+    'start=68&end=1&steps=7&interpolation=lab',
+    'start=68&end=1&steps=7&interpolation=rgb&algo=oklab',
+    'start=68&end=1&steps=12&interpolation=oklch',
+    'start=68&end=1&interpolation=lch',
+    'start=68&end=1&steps=5&interpolation=hsv',
+    'start=68&end=1&steps=5',
+    'start=68&end=1&steps=99&interpolation=SPECTRAL',
+    'hexStart=FF8800&end=1&steps=5&interpolation=lab',
+  ])('the og:image and twitter:image for ?%s are served (200), in en and ja', async (query) => {
+    for (const lang of ['', '&lang=ja']) {
+      const page = await app.request(
+        `/gradient/?${query}${lang}&v=1`,
+        { headers: { 'User-Agent': CRAWLER_UA } },
+        TEST_ENV,
+        execCtx,
+      );
+      const html = await page.text();
+      for (const tag of ['property="og:image"', 'name="twitter:image"']) {
+        const image = new RegExp(`<meta ${tag} content="([^"]+)">`).exec(html)?.[1];
+        expect(image, `${query} ${tag}`).toBeDefined();
+        const { pathname, search } = new URL(image!.replace(/&amp;/g, '&'));
+        const res = await app.request(`${pathname}${search}`, {}, TEST_ENV, execCtx);
+        expect(res.status, `${pathname}${search}`).toBe(200);
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// A repeated allowlisted query key (2026-10-06 routing review). The guard and
+// `ogCacheKey` read a query through URLSearchParams (decoded key names, FIRST
+// value); the routes read it through Hono's `c.req.query`, whose raw-key fast
+// path skips a percent-encoded first key and returns a later literal one. So
+// `?interpolatio%6E=rgb&interpolation=lab` was cached under the rgb key while
+// rendering lab, for the full 7-day s-maxage. The guard closes the class: an
+// allowlisted key that occurs more than once is a 400, however it is spelled.
+// Neither the web app nor the crawler's URL builders (`withAlgo`, `withMode`,
+// `withWheel`, `withInterpolation`, `withLang`, `withFrameX`) ever emit one.
+// ---------------------------------------------------------------------------
+describe('a repeated allowlisted query key is a 400, never a cache entry', () => {
+  let caches: ReturnType<typeof fakeCacheStorage>;
+
+  beforeEach(() => {
+    vi.mocked(renderOGImage).mockClear();
+    rendered.length = 0;
+    caches = fakeCacheStorage();
+    vi.stubGlobal('caches', caches);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const stable = (svg: string): string => svg.replace(/ogm\d+/g, 'ogm');
+  const settle = (): Promise<unknown[]> =>
+    Promise.all(vi.mocked(execCtx.waitUntil).mock.calls.map(([p]) => p));
+
+  // `encoded` spells the key with one percent-escaped letter, which URLSearchParams
+  // decodes to the key and Hono's literal match does not. `a` and `b` are two
+  // valid, non-default values, so only the repetition can be what is refused.
+  const CASES = [
+    { key: 'interpolation', path: '/og/gradient/68/1/8.png', encoded: 'interpolatio%6E', a: 'rgb', b: 'lab' },
+    { key: 'algo', path: '/og/harmony/1/complementary', encoded: 'alg%6F', a: 'rgb', b: 'oklab' },
+    { key: 'wheel', path: '/og/harmony/1/complementary', encoded: 'whee%6C', a: 'ryb', b: 'munsell' },
+    { key: 'mode', path: '/og/mixer/1/2/50', encoded: 'mod%65', a: 'lab', b: 'rgb' },
+  ] as const;
+
+  for (const { key, path, encoded, a, b } of CASES) {
+    describe(`?${key}=`, () => {
+      it.each([
+        [`${encoded}=${a}&${key}=${b}`, 'encoded then literal'],
+        [`${key}=${a}&${encoded}=${b}`, 'literal then encoded'],
+        [`${key}=${a}&${key}=${b}`, 'literal twice'],
+        [`${key}=${a}&${key}=${a}`, 'the same value twice'],
+      ])('%s (%s): 400, no echo, no render, nothing cached', async (query) => {
+        const res = await app.request(`${path}?${query}`, {}, TEST_ENV, execCtx);
+        expect(res.status).toBe(400);
+        const body = await res.text();
+        expect(JSON.parse(body)).toEqual({ error: 'Repeated query parameter' });
+        await settle();
+        expect(renderOGImage).not.toHaveBeenCalled();
+        expect(caches.store.size).toBe(0);
+      });
+
+      it('a plain request afterwards still gets its own card under its own key', async () => {
+        await app.request(`${path}?${encoded}=${a}&${key}=${b}`, {}, TEST_ENV, execCtx);
+        const res = await app.request(`${path}?${key}=${a}`, {}, TEST_ENV, execCtx);
+        expect(res.status).toBe(200);
+        await settle();
+        expect(renderOGImage).toHaveBeenCalledTimes(1);
+        const keys = [...caches.store.keys()];
+        expect(keys).toHaveLength(1);
+        expect(new URL(keys[0]).searchParams.get(key)).toBe(a);
+        if (key === 'interpolation') {
+          expect(stable(rendered[0])).toBe(
+            stable(generateGradientOG({ startDyeId: 68, endDyeId: 1, steps: 8, interpolation: 'rgb' })),
+          );
+        }
+      });
+
+      it('one percent-encoded key on its own still works, and route and cache key agree', async () => {
+        const encodedRes = await app.request(`${path}?${encoded}=${b}`, {}, TEST_ENV, execCtx);
+        expect(encodedRes.status).toBe(200);
+        await settle();
+        const plainRes = await app.request(`${path}?${key}=${b}`, {}, TEST_ENV, execCtx);
+        expect(plainRes.status).toBe(200);
+        await settle();
+        // One spelling decodes to the other: one entry, one render.
+        expect(caches.store.size).toBe(1);
+        expect(renderOGImage).toHaveBeenCalledTimes(1);
+        expect(new URL([...caches.store.keys()][0]).searchParams.get(key)).toBe(b);
+      });
+    });
+  }
+
+  it('a repeated key the guard does not allow is still the 404, not this 400', async () => {
+    const res = await app.request('/og/harmony/1/complementary?x=1&x=2', {}, TEST_ENV, execCtx);
+    expect(res.status).toBe(404);
+  });
+
+  it('lang and frame repeated are refused too (the whole allowlist, not four keys)', async () => {
+    for (const q of ['lang=ja&lang=en', 'frame=x&frame=y']) {
+      const res = await app.request(`/og/harmony/1/complementary?${q}`, {}, TEST_ENV, execCtx);
+      expect(res.status, q).toBe(400);
+    }
+    expect(renderOGImage).not.toHaveBeenCalled();
   });
 });
