@@ -257,9 +257,10 @@ The `.chara` equipment-resolution routes (web-app Swatch Matcher 11a/11c) talk t
 ```toml
 XIVAPI_BASE = "https://v2.xivapi.com"   # upstream origin
 XIVAPI_VERSION = "latest"               # game-version key: `latest` or a key from /api/version.
-                                        # ALSO the row-cache namespace. After a patch, search
-                                        # returns 503 on the new key until ingested — keep the
-                                        # old key until a probe answers 200, then roll forward.
+                                        # A pinned key is used as is and namespaces the row cache;
+                                        # `latest` is resolved through GET /api/version (memoized
+                                        # 10 min, last good key kept on failure), so a patch cools
+                                        # the row cache within about 10 minutes.
 # XIVAPI_SCHEMA = "exdschema@2:rev:<sha>"  # optional schema pin (field renames land unannounced)
 ```
 

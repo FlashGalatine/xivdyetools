@@ -13,4 +13,4 @@
 - Move the doc block down onto const MAX_STRINGIFY_NODES at :730. Doc-only, so no consumer deploy needed; it ships with the next logger publish.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `8d2649d7` (branch `fix/remediation-2026-10-04-sprint12`, logger 2.3.0; PR #270, open).

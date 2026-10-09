@@ -14,4 +14,4 @@
 - Export the DYEABLE set (typed over the shared slot ids) from core and import it in glamour-block — needs a @xivdyetools/core publish, then consumer deploys (web-app).
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `742a3061` (core exports CHARA_DYEABLE_SLOTS) + `647d8f9c` (glamour-block imports it) (branch `fix/remediation-2026-10-04-sprint27`, core 5.9.0 + web-app 5.14.8; PR #254, open, stacked on #253). Deploy needs the core publish.

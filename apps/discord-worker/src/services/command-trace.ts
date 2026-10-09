@@ -64,9 +64,9 @@ export interface CommandTrace {
 
 /**
  * Outcomes that always mean the user was answered: nothing of ours failed
- * (`ok`), or an upstream answered our request with its own 4xx that the
- * handler relayed (`rejected`). Every other class is a failure unless the
- * mark said `served`.
+ * (`ok`), or an upstream answered our request with its own 4xx (not a 408
+ * timeout or a 429) that the handler relayed (`rejected`). Every other class
+ * is a failure unless the mark said `served`.
  */
 const ANSWERED_OUTCOMES: ReadonlySet<OutcomeClass> = new Set<OutcomeClass>(['ok', 'rejected']);
 
@@ -277,14 +277,17 @@ function withDeadline(work: Promise<void>, ms: number): Promise<boolean> {
  * Map a thrown value onto an outcome class. `fallback` is what an
  * unrecognised Error means at the call site (a render catch passes 'render').
  *
- * Upstream errors: a 4xx other than 429 from presets-api or Universalis is
- * the service answering our request with its own reply (not the owner,
- * duplicate vote, unknown world, validation) that the handler relays as a
- * friendly message — `rejected`, which counts as answered (see
+ * Upstream errors: a 4xx other than 408 and 429 from presets-api or
+ * Universalis is the service answering our request with its own reply (not
+ * the owner, duplicate vote, unknown world, validation) that the handler
+ * relays as a friendly message — `rejected`, which counts as answered (see
  * `ANSWERED_OUTCOMES`) but stays visible as its own class so a systematic
  * 4xx caused by OUR payload (the 5.0-launch `/preset submit` 400s) is a
- * spike, not silence; 429, 5xx and status 0/undefined (network, binding)
- * are the upstream's fault → `upstream_*`.
+ * spike, not silence; 408, 429, 5xx and status 0/undefined (network,
+ * binding) are the upstream's fault → `upstream_*`. 408 is a timeout, never
+ * a verdict on our payload: universalis-client turns its own abort timer
+ * into `UniversalisError(408)` (BUG-005), and the user sees an API-error
+ * embed, not an answer.
  *
  * The message is inspected for image-worker's input rejections
  * (`isImageInputError`) only when `options.imageInput` is set — those markers
@@ -308,7 +311,13 @@ export function classifyError(
 }
 
 function isUserCondition(status: number | undefined): boolean {
-  return typeof status === 'number' && status >= 400 && status < 500 && status !== 429;
+  return (
+    typeof status === 'number' &&
+    status >= 400 &&
+    status < 500 &&
+    status !== 408 &&
+    status !== 429
+  );
 }
 
 /** Discord client locale → one of the six supported codes, else 'other'. */

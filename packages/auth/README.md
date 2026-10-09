@@ -199,7 +199,7 @@ Absorbed from the retired `@xivdyetools/crypto` — see [`DEPRECATIONS.md`](../.
 
 [`discord-worker`](../../apps/discord-worker/), [`presets-api`](../../apps/presets-api/), [`moderation-worker`](../../apps/moderation-worker/), and [`@xivdyetools/test-utils`](../test-utils/).
 
-The [`oauth`](../../apps/oauth/) worker **issues** tokens itself but still consumes `verifyJWTSignatureOnly`, `decodeJWT`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit adoption — replaced a hand-rolled HMAC pair), the revocation helpers, and `@xivdyetools/auth/encoding` from here. This package deliberately does not issue JWTs; keeping it verify-only holds the surface exposed to every consuming worker small and audit-friendly.
+The [`oauth`](../../apps/oauth/) worker **issues** tokens itself but still consumes `verifyJWTSignatureOnly`, `hmacSign`/`hmacVerify` (2026-08-18 dead-code audit adoption — replaced a hand-rolled HMAC pair), the revocation helpers, and `@xivdyetools/auth/encoding` from here. `decodeJWT` is no longer called by its runtime code (only its tests import it). This package deliberately does not issue JWTs; keeping it verify-only holds the surface exposed to every consuming worker small and audit-friendly.
 
 ## Connect With Me
 

@@ -211,6 +211,71 @@ describe('/extractor color — result count', () => {
   });
 });
 
+describe('/extractor color — failure answers', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    renderSvgToPngMock.mockResolvedValue(new Uint8Array([1]));
+    getUserPreferencesMock.mockResolvedValue({});
+  });
+
+  // BUG-042: a resvg / card failure after the defer was swallowed — no log
+  // line carried the error, and the user was told "no match found" although
+  // the ranking had already produced a match.
+  it('logs a render failure and answers generationFailed, not noMatchFound (BUG-042)', async () => {
+    const boom = new Error('resvg exploded');
+    renderSvgToPngMock.mockRejectedValueOnce(boom);
+    const logger = { error: vi.fn() };
+    const { ctx, flush } = makeCtx();
+
+    await handleExtractorCommand(
+      makeInteraction([{ name: 'color', value: '#4A6B8C' }]),
+      env,
+      ctx,
+      logger as never,
+    );
+    await flush();
+
+    expect(logger.error).toHaveBeenCalledWith('Extractor color render error', boom);
+    const payload = editOriginalResponseMock.mock.calls[0][2] as {
+      embeds: Array<{ description: string }>;
+    };
+    expect(payload.embeds[0].description).toBe('errors.generationFailed');
+    expect(payload.embeds[0].description).not.toBe('errors.noMatchFound');
+  });
+
+  it('still answers generationFailed when no logger is supplied', async () => {
+    renderSvgToPngMock.mockRejectedValueOnce('not an Error');
+    const { ctx, flush } = makeCtx();
+
+    await handleExtractorCommand(makeInteraction([{ name: 'color', value: '#4A6B8C' }]), env, ctx);
+    await flush();
+
+    const payload = editOriginalResponseMock.mock.calls[0][2] as {
+      embeds: Array<{ description: string }>;
+    };
+    expect(payload.embeds[0].description).toBe('errors.generationFailed');
+  });
+
+  // BUG-044: the raw colour option was echoed into errors.invalidColor
+  // unsanitised and uncapped — ~4000 characters overflowed the 4096-character
+  // description limit and Discord rejected the reply outright.
+  it('sanitizes and caps the echoed input in the invalid-colour error (BUG-044)', async () => {
+    const hostile = `notfound @everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+    const { ctx } = makeCtx();
+
+    await handleExtractorCommand(makeInteraction([{ name: 'color', value: hostile }]), env, ctx);
+
+    const calls = translatorStub.t.mock.calls as unknown as Array<[string, { input: string }?]>;
+    const call = calls.find(([key]) => key === 'errors.invalidColor');
+    expect(call).toBeDefined();
+    const echoed = call![1]!.input;
+    expect([...echoed].length).toBeLessThanOrEqual(100);
+    expect(echoed.endsWith('…')).toBe(true);
+    expect(echoed).not.toContain('@everyone');
+    expect(echoed).not.toContain('[x](');
+  });
+});
+
 describe('/extractor image — color count line (I18N-006)', () => {
   function makeImageInteraction(attachmentId: string, url: string): DiscordInteraction {
     return {

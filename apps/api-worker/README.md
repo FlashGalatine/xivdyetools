@@ -82,7 +82,7 @@ All `/v1` endpoints accept `?locale=en|ja|de|fr|ko|zh`. When a non-English local
 
 ### Rate Limiting
 
-60 requests per minute per IP, with a burst allowance of 5, enforced by the native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`); the `RATE_LIMIT` KV namespace is the fallback when the binding is absent. Counters are per-colo, not global. `POST /v1/telemetry` is carved out onto its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s). Rate limit headers are included on all `/v1/*` responses:
+60 requests per minute per IP, with a burst allowance of 5, enforced by the native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`); the `RATE_LIMIT` KV namespace is the fallback when the binding is absent. Counters are per-colo, not global. `POST /v1/telemetry` is carved out onto its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s, one charge per beacon). Numeric query parameters must be plain decimals (`limit=20`, not `2e1`, `20px` or `20.5` for an integer); anything else answers `400 VALIDATION_ERROR` rather than being truncated. Rate limit headers are included on all `/v1/*` responses:
 
 ```
 X-RateLimit-Limit: 65
@@ -153,7 +153,7 @@ src/
     router.ts              # /universalis + /api/v2 proxy routes
     config/                # cache TTLs, datacenter/world lists
     services/              # cached-fetch, cache-service, request-coalescer, rate-limiter selector
-scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables after a patch (manual; commit the output)
+scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables (+ the build-time-only ja table discord-worker's font cut reads) after a patch (manual; commit the output)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
 tests/
   test-utils.ts            # Mock env factory
@@ -191,7 +191,7 @@ tests/
 | `API_VERSION` | Variable | Currently `v1` |
 | `UNIVERSALIS_API_BASE` | Variable | `https://universalis.app/api/v2` |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Variable | Proxy limiter — `30`/`60` production, `60`/`60` dev |
-| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream (`https://v2.xivapi.com`) and the game-version pin, which also namespaces the row cache |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream (`https://v2.xivapi.com`) and the game-version pin; the row cache is namespaced by the real key (a pinned key as is, `latest` resolved through `/api/version`) |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin so an upstream field rename cannot break parsing |
 
 Production routes: `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app`. The retired `proxy.xivdyetools.projectgalatine.com` was removed on 2026-10-05.

@@ -17,4 +17,4 @@ Steps: In apps/web-app/src/services/api-service-wrapper.ts delete the initialize
 Correction from the final adversarial check: The test file is apps/web-app/src/services/__tests__/api-service-wrapper.test.ts; the cited line ranges (68-85, 93-124, 477-498) are correct for it.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `057cba2f` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

@@ -159,12 +159,6 @@ export const handlers = [
     });
   }),
 
-  // Get featured presets
-  http.get(`${API_URL}/api/v1/presets/featured`, () => {
-    const featured = [...mockPresets].sort((a, b) => b.vote_count - a.vote_count);
-    return HttpResponse.json({ presets: featured });
-  }),
-
   // Get single preset
   http.get(`${API_URL}/api/v1/presets/:id`, ({ params }) => {
     const { id } = params;
@@ -290,20 +284,6 @@ export const handlers = [
     return HttpResponse.json({
       presets: userPresets,
       total: userPresets.length,
-    });
-  }),
-
-  // Rate limit check
-  http.get(`${API_URL}/api/v1/presets/rate-limit`, ({ request }) => {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return HttpResponse.json({ remaining: 10, limit: 10, reset_at: null });
-    }
-
-    return HttpResponse.json({
-      remaining: 8,
-      limit: 10,
-      reset_at: new Date(Date.now() + 3600000).toISOString(),
     });
   }),
 

@@ -103,6 +103,8 @@ export class PresetService {
    * Get metadata for a specific category
    * @param category - Category identifier
    * @returns Category metadata or undefined if not found
+   *
+   * @public
    */
   getCategoryMeta(category: PresetCategory): CategoryMeta | undefined {
     return this.data.categories[category];

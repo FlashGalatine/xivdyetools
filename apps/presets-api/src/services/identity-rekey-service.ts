@@ -37,6 +37,13 @@ const NOT_BANNED = `NOT EXISTS (
  * rows are deleted. The statement order below is load-bearing.
  */
 export async function rekeyIdentity(db: D1Database, fromId: string, toId: string): Promise<boolean> {
+  // BUG-067: moving an id onto itself is a no-op — and must stay one. With
+  // fromId === toId the votes move matches nothing, so the collision cleanup
+  // below would treat every vote the user has as a double count: decrement
+  // each preset's vote_count and delete all their votes. The only caller
+  // already skips equal ids; this keeps the service safe on its own.
+  if (fromId === toId) return false;
+
   const ban = [fromId, toId, fromId, toId] as const;
   const results = await db.batch([
     db

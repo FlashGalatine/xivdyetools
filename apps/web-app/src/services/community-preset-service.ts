@@ -44,10 +44,11 @@ export type VoteErrorCode =
  * shared `VoteSuccessResponse` exactly (`already_voted` only exists on the
  * success variant). `voteForPreset()`/`removeVote()` below deliberately
  * report that case as `success: false` instead, so their callers
- * (`preset-detail.ts`, `preset-tool.ts`) can route it through their
+ * (`preset-detail.ts`, `preset-tool.ts`) route it through their
  * already-voted branch (an info toast, no vote-count update) rather than
- * the success branch (success toast + vote-count update) without those
- * components having to branch on `already_voted` themselves. The shared
+ * the success branch (success toast + vote-count update). Both callers must
+ * test `already_voted` inside their failure branch: every other failure is
+ * `success: false` too (2026-10-04 deep-dive BUG-030). The shared
  * discriminated union has no variant for "success:false with
  * already_voted/new_vote_count", so adopting it here would mean either
  * restructuring those two components' toast logic (out of scope for a
@@ -65,7 +66,12 @@ export interface VoteResponse {
 
 export interface VoteCheckResponse {
   has_voted: boolean;
-  vote_count: number;
+  /**
+   * Absent whenever there is no real count to report: signed out, a non-OK
+   * answer, or no answer at all. BUG-108 (2026-10-04 deep-dive): those paths
+   * used to answer 0, which preset-detail applied over the preset's real count.
+   */
+  vote_count?: number;
 }
 
 // ============================================
@@ -127,6 +133,12 @@ class SimpleCache<T> {
   delete(key: string): void {
     this.cache.delete(key);
   }
+
+  deleteByPrefix(prefix: string): void {
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(prefix)) this.cache.delete(key);
+    }
+  }
 }
 
 // ============================================
@@ -162,6 +174,14 @@ export class CommunityPresetService {
   private readonly cache: SimpleCache<unknown>;
   private initialized = false;
   private available = false;
+  /**
+   * Bumped by every invalidation. BUG-031 review follow-up (2026-10-04
+   * deep-dive): `deleteByPrefix` only clears what is already stored, so a
+   * list request in flight when the cache was invalidated used to write its
+   * pre-change answer back afterwards. `request()` caches an answer only when
+   * no invalidation ran while it was out.
+   */
+  private cacheGeneration = 0;
 
   private constructor() {
     // Build-time override only (same as auth-service / preset-submission-
@@ -269,6 +289,7 @@ export class CommunityPresetService {
     }
 
     const url = `${this.apiUrl}${path}`;
+    const generation = this.cacheGeneration;
 
     try {
       const response = await this.fetchWithTimeout(url);
@@ -288,8 +309,9 @@ export class CommunityPresetService {
 
       const data = (await response.json()) as T;
 
-      // Cache successful response
-      if (cacheKey) {
+      // Cache successful response, unless the cache was invalidated while
+      // this request was in flight: then the answer may predate the change.
+      if (cacheKey && generation === this.cacheGeneration) {
         this.cache.set(cacheKey, data);
       }
 
@@ -328,17 +350,6 @@ export class CommunityPresetService {
   }
 
   /**
-   * Get featured presets (top voted)
-   */
-  async getFeaturedPresets(): Promise<CommunityPreset[]> {
-    const response = await this.request<{ presets: CommunityPreset[] }>(
-      '/api/v1/presets/featured',
-      'presets:featured'
-    );
-    return response.presets;
-  }
-
-  /**
    * Get a single preset by ID
    */
   async getPreset(id: string): Promise<CommunityPreset | null> {
@@ -370,8 +381,26 @@ export class CommunityPresetService {
    * Clear all cached data
    */
   clearCache(): void {
+    this.cacheGeneration++;
     this.cache.clear();
     logger.info('CommunityPresetService: Cache cleared');
+  }
+
+  /**
+   * Drop every cached preset list, and the cached copy of `presetId` when
+   * given. Call after anything that changes what a list shows: a submit, an
+   * edit, a preview-image upload or removal, a delete or a vote. A request
+   * already in flight is not cached when it lands (see `cacheGeneration`).
+   *
+   * BUG-031 (2026-10-04 deep-dive): lists are cached per query for 5 minutes,
+   * and the only invalidation was per-id, after a vote. So preset-tool's
+   * reload after a delete (same search, same sort, same cache key) got the
+   * pre-delete list back, deleted preset included.
+   */
+  invalidatePresets(presetId?: string): void {
+    this.cacheGeneration++;
+    this.cache.deleteByPrefix('presets:');
+    if (presetId) this.cache.delete(`preset:${presetId}`);
   }
 
   // ============================================
@@ -424,8 +453,8 @@ export class CommunityPresetService {
         };
       }
 
-      // Invalidate cache for this preset
-      this.cache.delete(`preset:${presetId}`);
+      // The count changed in this preset and in every list that carries it
+      this.invalidatePresets(presetId);
       this.cache.delete(`vote:${presetId}`);
 
       logger.info(`Voted for preset ${presetId}`);
@@ -476,8 +505,8 @@ export class CommunityPresetService {
 
       const data = (await response.json()) as VoteResponse;
 
-      // Invalidate cache
-      this.cache.delete(`preset:${presetId}`);
+      // The count changed in this preset and in every list that carries it
+      this.invalidatePresets(presetId);
       this.cache.delete(`vote:${presetId}`);
 
       logger.info(`Removed vote from preset ${presetId}`);
@@ -497,8 +526,9 @@ export class CommunityPresetService {
    * Requires authentication
    */
   async hasVoted(presetId: string): Promise<VoteCheckResponse> {
+    // No path without an answer from the API reports a vote_count (BUG-108).
     if (!authService.isAuthenticated()) {
-      return { has_voted: false, vote_count: 0 };
+      return { has_voted: false };
     }
 
     // Check cache first
@@ -520,7 +550,7 @@ export class CommunityPresetService {
       );
 
       if (!response.ok) {
-        return { has_voted: false, vote_count: 0 };
+        return { has_voted: false };
       }
 
       const data = (await response.json()) as VoteCheckResponse;
@@ -531,7 +561,7 @@ export class CommunityPresetService {
       return data;
     } catch (error) {
       logger.error('Error checking vote status:', error);
-      return { has_voted: false, vote_count: 0 };
+      return { has_voted: false };
     }
   }
 }

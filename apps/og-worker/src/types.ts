@@ -8,6 +8,7 @@ import type { LocaleCode } from '@xivdyetools/types';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 import type { VisionType } from '@xivdyetools/types';
 import type { ColorWheelId } from '@xivdyetools/core';
+import type { GradientInterpolation } from './services/svg/gradient';
 
 // ============================================================================
 // Environment Bindings
@@ -90,7 +91,10 @@ export interface HarmonyParams {
 export interface GradientParams {
   start: number; // stainID
   end: number; // stainID
-  steps: number;
+  /** Only a count the page applies (3–12); absent → the page default, 8 */
+  steps?: number;
+  /** The ramp's color space — the share's `interpolation=`, only a mode the page applies (BUG-008) */
+  interpolation?: GradientInterpolation;
   algo?: MatchingAlgorithm;
 }
 
@@ -181,7 +185,6 @@ export type CrawlerType =
 export interface CrawlerInfo {
   isCrawler: boolean;
   type: CrawlerType;
-  userAgent: string;
 }
 
 // ============================================================================

@@ -10,6 +10,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { Hono } from 'hono';
 import { universalisRouter } from './router';
+import { SERVICE_BINDING_BUDGET_MULTIPLIER } from './config/service-budget';
 import { resetAllMocks, createMockExecutionContext } from './test-setup';
 import { createMockKV } from '@xivdyetools/test-utils';
 import type { Env } from '../types';
@@ -308,6 +309,22 @@ describe('universalis router', () => {
     expect(statuses.slice(0, 20).every((st) => st === 200)).toBe(true);
     expect(statuses[20]).toBe(429);
     expect(statuses[21]).toBe(429);
+  });
+
+  // BUG-039: on the binding path the multiplier only feeds the reported
+  // limit (and the KV fallback budget), so nothing else failed when it drifted.
+  it('reports the service-scope limit as RATE_LIMIT_REQUESTS x the shared multiplier on a 429', async () => {
+    const svcBinding = fakeBinding(0);
+    const e = {
+      ...env,
+      RATE_LIMIT_REQUESTS: '30',
+      UNIVERSALIS_SERVICE_RATE_LIMITER: svcBinding,
+    } as unknown as Env;
+    stubUpstream();
+
+    const res = await app.request('/universalis/aggregated/Crystal/9901', {}, e, ctxFor());
+    expect(res.status).toBe(429);
+    expect(res.headers.get('X-RateLimit-Limit')).toBe(String(30 * SERVICE_BINDING_BUDGET_MULTIPLIER));
   });
 
   it('falls back to KV (universalis:ip: prefix) when no binding is bound', async () => {

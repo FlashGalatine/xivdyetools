@@ -26,6 +26,7 @@ import {
   getLocalizedColorWheelName,
   getLocalizedHarmonyType as getLocalizedHarmonyTypeFromCore,
 } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -347,7 +348,8 @@ export async function executeHarmony(input: HarmonyInput): Promise<HarmonyResult
       harmonyDyes,
       embed,
     };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[harmony] generation failed: ${failureKind(error)}`);
     return {
       ok: false,
       error: 'GENERATION_FAILED',

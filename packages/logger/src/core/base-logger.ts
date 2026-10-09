@@ -22,6 +22,36 @@ const LOG_LEVELS: LogLevel[] = ['debug', 'info', 'warn', 'error'];
  * used to do — re-inserted an UNREDACTED subtree into the redacted copy.
  */
 const CIRCULAR_SENTINEL = '[Circular]';
+const UNSERIALIZABLE_SENTINEL = '[Unserializable]';
+
+/** Case-insensitive, separator-insensitive form of a key name (BUG-024). */
+function normalizeRedactKey(key: string): string {
+  return key.toLowerCase().replace(/[_-]/g, '');
+}
+
+/** Compound key names the explicit list cannot enumerate (BUG-024). */
+const SENSITIVE_SUFFIX = /(token|secret|password|apikey)$/;
+
+const NO_TO_JSON = Symbol('no-usable-toJSON');
+
+/**
+ * BUG-141: run a value's `toJSON` (own or inherited) with the key it hangs
+ * off, as `JSON.stringify` does. `NO_TO_JSON` when there is none, when it
+ * throws (a throwing getter included), or when it hands back the same
+ * object; the caller then redacts the value as a plain object.
+ */
+function callToJson(value: object, key: string): { result: unknown } | typeof NO_TO_JSON {
+  try {
+    const toJSON = (value as { toJSON?: unknown }).toJSON;
+    if (typeof toJSON !== 'function') {
+      return NO_TO_JSON;
+    }
+    const result: unknown = toJSON.call(value, key);
+    return result === value ? NO_TO_JSON : { result };
+  } catch {
+    return NO_TO_JSON;
+  }
+}
 
 /**
  * S10-R8 (2026-08-30 fix round 1): redaction recursion state for ONE
@@ -67,7 +97,62 @@ const CIRCULAR_SENTINEL = '[Circular]';
 interface RedactionGuard {
   ancestors: WeakSet<object>;
   memo: WeakMap<object, unknown>;
+  /**
+   * BUG-141: how many `toJSON` results are currently being walked on this
+   * path. A `toJSON` can hand back a fresh object at every level, which
+   * neither `ancestors` nor `memo` can ever match, so this bounds it.
+   */
+  jsonDepth: number;
+  /**
+   * BUG-141 review: `toJSON` calls made so far in this top-level log call
+   * that returned an object or array (see `MAX_TO_JSON_CALLS`). `jsonDepth`
+   * bounds depth, not fan-out: a `toJSON` returning two fresh instances per
+   * level is 2^depth calls, and `ancestors`/`memo` never match a fresh object.
+   */
+  jsonCalls: number;
 }
+
+/**
+ * BUG-141 review: cap on the `toJSON` calls one log call may make whose result
+ * is an object or array. Only those are counted, because only they can fan
+ * out into more `toJSON` values; a call that returns a string or other
+ * primitive (every `Date`, `URL`) is not, and neither is a plain object, an
+ * array or, with `sanitizeErrors` on, an `Error`, since no `toJSON` runs for
+ * them. Once the count reaches the cap, any further value that has a `toJSON`
+ * becomes `'[Truncated]'` without the call (fail closed, never throws). 4096
+ * is roughly 10 ms of worst-case fan-out, and a context of thousands of rows
+ * that each carry a Date never touches it.
+ */
+const MAX_TO_JSON_CALLS = 4096;
+
+/** True when `value.toJSON` is a function; a throwing getter counts as true (fail closed). */
+function hasToJson(value: object): boolean {
+  try {
+    return typeof (value as { toJSON?: unknown }).toJSON === 'function';
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * `value instanceof Error`, failing closed: a Proxy whose `getPrototypeOf` trap
+ * throws counts as an Error, so it takes the spread path instead of throwing
+ * out of a log call.
+ */
+function isErrorValue(value: object): boolean {
+  try {
+    return value instanceof Error;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * BUG-141: deepest chain of `toJSON` results one log call will walk. Past it
+ * the value becomes `'[Truncated]'` (fail closed): a log call must never throw
+ * or run away, and no real `toJSON` nests this deep.
+ */
+const MAX_TO_JSON_DEPTH = 32;
 
 /**
  * Abstract base logger with common functionality
@@ -83,6 +168,12 @@ interface RedactionGuard {
 export abstract class BaseLogger implements ExtendedLogger {
   protected config: LoggerConfig;
   protected globalContext: LogContext = {};
+  /**
+   * OPT-010: the normalized key-name list, built once from the merged
+   * `redactFields` (the Set also dedupes the worker preset's repeated core
+   * entries). It used to be rebuilt for every object node of every log call.
+   */
+  private readonly normalizedRedactFields: ReadonlySet<string>;
 
   constructor(config: Partial<LoggerConfig> = {}) {
     // FINDING-008: Merge custom redactFields with defaults instead of replacing
@@ -94,6 +185,9 @@ export abstract class BaseLogger implements ExtendedLogger {
       ...config,
       redactFields: [...CORE_REDACT_FIELDS, ...(config.redactFields ?? [])],
     };
+    this.normalizedRedactFields = new Set(
+      (this.config.redactFields || CORE_REDACT_FIELDS).map(normalizeRedactKey),
+    );
   }
 
   /**
@@ -201,7 +295,11 @@ export abstract class BaseLogger implements ExtendedLogger {
    */
   protected sanitizeErrorMessage(message: string): string {
     return SANITIZE_RULES.reduce<string>(
-      (text, [pattern, replacement]) => text.replace(pattern, replacement),
+      (text, [pattern, replacement]) =>
+        // Two calls so each matches one `String.prototype.replace` overload.
+        typeof replacement === 'string'
+          ? text.replace(pattern, replacement)
+          : text.replace(pattern, replacement),
       message,
     );
   }
@@ -235,6 +333,8 @@ export abstract class BaseLogger implements ExtendedLogger {
     const g: RedactionGuard = guard ?? {
       ancestors: new WeakSet<object>(),
       memo: new WeakMap<object, unknown>(),
+      jsonDepth: 0,
+      jsonCalls: 0,
     };
 
     if (g.ancestors.has(context)) {
@@ -264,28 +364,42 @@ export abstract class BaseLogger implements ExtendedLogger {
     g.ancestors.add(context);
     try {
       const redacted = { ...context };
-      const fieldsToRedact = this.config.redactFields || CORE_REDACT_FIELDS;
+
+      // BUG-141: the spread copies an OWN `toJSON` function, and
+      // `safeStringify` would call it AFTER redaction and emit its return
+      // value raw (or fail the whole line if it throws). `JSON.stringify`
+      // never re-applies `toJSON` to a `toJSON` result, so this copy must not
+      // carry one. Inherited ones are not copied.
+      //
+      // One hook still survives, unchanged from before BUG-141: a FUNCTION or
+      // class value is not an object to the loops below, so it is passed
+      // through as-is, and if it carries a `toJSON` (`Object.assign(fn,
+      // { toJSON })`, a class with a static `toJSON`), `safeStringify` calls
+      // it and emits the result unredacted.
+      if (typeof redacted.toJSON === 'function') {
+        delete redacted.toJSON;
+      }
 
       // BUG-024: match case-insensitively with separators collapsed, so
       // Token/TOKEN/Authorization/jwtSecret hit the same list entries as
       // token/authorization/jwt_secret; plus a suffix heuristic that catches
-      // compound keys like sessionToken/webhookSecret/userPassword.
-      const normalize = (k: string): string => k.toLowerCase().replace(/[_-]/g, '');
-      const redactSet = new Set(fieldsToRedact.map(normalize));
-      const SENSITIVE_SUFFIX = /(token|secret|password|apikey)$/;
-
+      // compound keys like sessionToken/webhookSecret/userPassword. The list
+      // itself is normalized once, in the constructor (OPT-010).
       for (const key of Object.keys(redacted)) {
-        const n = normalize(key);
-        if (redactSet.has(n) || SENSITIVE_SUFFIX.test(n)) {
+        const n = normalizeRedactKey(key);
+        if (this.normalizedRedactFields.has(n) || SENSITIVE_SUFFIX.test(n)) {
           redacted[key] = '[REDACTED]';
           continue;
         }
         // FINDING-026 (2026-08-21 audit): secret-SHAPED values under innocuous
         // keys (a Bearer header pasted into `note`, a JWT in `detail`, a Discord
         // bot token in `raw`) — the key-name list cannot anticipate those.
+        // BUG-140: and the free-text pass for a secret EMBEDDED in a longer
+        // string (`'upstream said password=hunter2'`), which the whole-value
+        // shape check cannot see.
         const value = redacted[key];
-        if (typeof value === 'string' && looksLikeSecretValue(value)) {
-          redacted[key] = '[REDACTED]';
+        if (typeof value === 'string') {
+          redacted[key] = this.scrubString(value);
         }
       }
 
@@ -297,11 +411,7 @@ export abstract class BaseLogger implements ExtendedLogger {
         if (redacted[key] === '[REDACTED]' || value === null || typeof value !== 'object') {
           continue;
         }
-        if (Array.isArray(value)) {
-          redacted[key] = this.redactArrayItems(value, g);
-        } else {
-          redacted[key] = this.redactSensitiveFields(value as LogContext, g);
-        }
+        redacted[key] = this.redactNested(value, key, g);
       }
 
       // S10-R12: memoize on the way OUT, after every child has been fully
@@ -316,6 +426,111 @@ export abstract class BaseLogger implements ExtendedLogger {
       // (not a descendant of it) sees it as unvisited — the ancestors
       // check fails, the memo check (now populated) succeeds instead.
       g.ancestors.delete(context);
+    }
+  }
+
+  /**
+   * BUG-140 (2026-10-04 deep dive): redact one string VALUE (never a key).
+   * The whole-value shape verdict runs first (a field that IS a Bearer header,
+   * a JWT, a Discord token or a 64+ hex run is replaced outright); otherwise,
+   * with `sanitizeErrors` on, the same free-text rules `message` and
+   * `error.message` get run over it, so a secret embedded in a longer string
+   * is redacted while the surrounding prose stays. A second pass is harmless
+   * for every value the rules fully consume (`password=[REDACTED]` re-matches
+   * to itself), so a value that is merged and redacted more than once is not
+   * mangled. (A value with mixed quote characters, `password="x'y"`, is only
+   * partly consumed on the first pass and settles on the second; that quirk
+   * is shared with the message path.)
+   */
+  private scrubString(value: string): string {
+    if (looksLikeSecretValue(value)) {
+      return '[REDACTED]';
+    }
+    return this.config.sanitizeErrors ? this.sanitizeErrorMessage(value) : value;
+  }
+
+  /**
+   * BUG-141 (2026-10-04 deep dive): redact one nested object or array value.
+   *
+   * The spread copy `redactSensitiveFields` makes turns anything with no own
+   * enumerable keys into `{}`, so a `Date` or `URL` was logged as `{}`. A
+   * value with a `toJSON` (own or inherited) is therefore serialized first,
+   * the way `JSON.stringify` would have, and the RESULT goes through the same
+   * redaction as any other value, so a `toJSON` cannot smuggle a secret past
+   * it. The one exception is an `Error` while `sanitizeErrors` is on: its
+   * `toJSON` is never called and it keeps the spread copy, so no stack can
+   * get out (Sprint 12, 2026-10-06). A `toJSON` that throws, or returns the object itself, falls back to
+   * the spread copy: a log call must never throw. The original stays in
+   * `ancestors` while its result is walked, so a result that points back at
+   * it meets the circular sentinel instead of recursing.
+   *
+   * Non-plain objects are deliberately not skipped: that would bypass key
+   * redaction. `memo` is keyed by object identity, so an object aliased under
+   * two keys gets `toJSON` called once, with the first key (`JSON.stringify`
+   * would call it per key); a `toJSON` that throws is called once and the
+   * object then falls back to the spread copy.
+   */
+  private redactNested(value: object, key: string, g: RedactionGuard): unknown {
+    if (Array.isArray(value)) {
+      return this.redactArrayItems(value as unknown[], g);
+    }
+    if (g.ancestors.has(value)) {
+      return CIRCULAR_SENTINEL;
+    }
+    const cached = g.memo.get(value);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    // With `sanitizeErrors` on, an `Error` never has its `toJSON` called: a
+    // `toJSON` can return the stack in any shape (`String(this.stack)`, or
+    // nested under another key), and no key-based strip can catch them all.
+    // It takes the spread path instead, as it did before BUG-141: own
+    // enumerable fields only (an AppError's `code`, `severity`, `name`), no
+    // stack and no message. With `sanitizeErrors` off its `toJSON` runs.
+    if ((this.config.sanitizeErrors && isErrorValue(value)) || !hasToJson(value)) {
+      return this.redactSensitiveFields(value as LogContext, g);
+    }
+    if (g.jsonCalls >= MAX_TO_JSON_CALLS) {
+      return '[Truncated]';
+    }
+    const serialized = callToJson(value, key);
+    if (serialized === NO_TO_JSON) {
+      return this.redactSensitiveFields(value as LogContext, g);
+    }
+    // Counted only when the result is an object or array: that is the only
+    // result that can hold further `toJSON` values (fan-out). A Date's string
+    // or a primitive ends the chain, so a context of many Dates never counts.
+    if (typeof serialized.result === 'object' && serialized.result !== null) {
+      g.jsonCalls++;
+    }
+
+    if (g.jsonDepth >= MAX_TO_JSON_DEPTH) {
+      return '[Truncated]';
+    }
+
+    g.ancestors.add(value);
+    g.jsonDepth++;
+    try {
+      let out: unknown = serialized.result;
+      try {
+        if (typeof out === 'string') {
+          out = this.scrubString(out);
+        } else if (Array.isArray(out)) {
+          out = this.redactArrayItems(out as unknown[], g);
+        } else if (typeof out === 'object' && out !== null) {
+          out = this.redactSensitiveFields(out as LogContext, g);
+        }
+      } catch {
+        // A result that throws while it is walked (a Proxy whose `ownKeys`
+        // trap throws, say) is logged as a sentinel: a log call must never throw.
+        out = UNSERIALIZABLE_SENTINEL;
+      }
+      g.memo.set(value, out);
+      return out;
+    } finally {
+      g.jsonDepth--;
+      g.ancestors.delete(value);
     }
   }
 
@@ -368,9 +583,9 @@ export abstract class BaseLogger implements ExtendedLogger {
 
     guard.ancestors.add(items);
     try {
-      const redacted = items.map((item: unknown) => {
+      const redacted = items.map((item: unknown, index: number) => {
         if (typeof item === 'string') {
-          return looksLikeSecretValue(item) ? '[REDACTED]' : item;
+          return this.scrubString(item);
         }
         if (Array.isArray(item)) {
           // `Array.isArray` narrows to `any[]` per the lib types; re-assert
@@ -380,7 +595,7 @@ export abstract class BaseLogger implements ExtendedLogger {
           return this.redactArrayItems(item as unknown[], guard);
         }
         if (typeof item === 'object' && item !== null) {
-          return this.redactSensitiveFields(item as LogContext, guard);
+          return this.redactNested(item, String(index), guard);
         }
         return item;
       });
@@ -559,17 +774,55 @@ class DelegatingLogger implements ExtendedLogger {
  */
 const BEARER_VALUE_PATTERN = /^\s*Bearer\s+\S+/i;
 /**
- * Three-part JWT (header.payload.signature). `\b`-delimited with no `^`/`$`
- * anchor, so it already behaves as a substring matcher: FINDING-025
- * (2026-08-29 audit) reuses its `.source` with a `g` flag in
- * `sanitizeErrorMessage` to redact a bare JWT inside free text while
- * leaving the surrounding prose intact.
+ * Three-part JWT (header.payload.signature), as a linear-time scan.
+ *
+ * The plain pattern, `\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b`,
+ * is quadratic: `-` is in the segment class but is not a word character, so
+ * `\b` holds before every `eyJ` that follows a `-`, and in a dotless run such
+ * as `eyJ-eyJ-eyJ-…` each of those starts scanned to the end of the run. A
+ * 100 KB message or context string took about 5 s.
+ *
+ * Every start inside one run of segment characters has the same tail (the
+ * header must end where the run ends, at a `.`), so if the first start in a
+ * run fails, the later ones fail too. This scan therefore always consumes the
+ * whole run from the first start: the first arm matches a header of 8 or more
+ * characters plus an OPTIONAL `.payload.signature` tail, the second arm eats
+ * a shorter run. Only a match whose tail (group 1) is present is a JWT; any
+ * other match is handed back unchanged. A differential fuzz of 300,000 inputs
+ * against the plain pattern gave identical output for both the free-text
+ * replace and the whole-value verdict.
+ *
+ * `g` is set here, so the free-text rule uses it directly; `containsJwt` uses
+ * `matchAll`, which clones the regex, so the shared `lastIndex` is never
+ * relied on.
  */
-const JWT_VALUE_PATTERN = /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/;
+const JWT_SCAN =
+  /\beyJ(?:[A-Za-z0-9_-]{8,}(\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b)?|[A-Za-z0-9_-]*)/g;
+
+/**
+ * True when `value` contains a JWT anywhere: the `looksLikeSecretValue`
+ * verdict, unanchored like the plain pattern's `.test` it replaces.
+ */
+function containsJwt(value: string): boolean {
+  for (const m of value.matchAll(JWT_SCAN)) {
+    if (m[1] !== undefined) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/** `JWT_SCAN` replacer: redact a real JWT, hand any other match back unchanged. */
+function redactJwtMatch(match: string, tail: string | undefined): string {
+  return tail === undefined ? match : '[REDACTED]';
+}
+
 /**
  * Discord bot token (base64 snowflake . 6-char timestamp . 27+ char HMAC).
- * Same `\b`-delimited, unanchored shape as the JWT pattern — FINDING-025
- * reuses it the same way for free text.
+ * `\b`-delimited and unanchored like the JWT scan; FINDING-025 reuses it for
+ * free text. Linear as written: its first class has no non-word character, so
+ * `\b` can never hold inside its own run (the 2026-10-06 sweep measured it
+ * under 25 ms on every adversarial 100 KB input).
  */
 const DISCORD_TOKEN_VALUE_PATTERN = /\b[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27,}\b/;
 /**
@@ -585,28 +838,15 @@ const HEX64_VALUE_PATTERN = /^[A-Fa-f0-9]{64,}$/;
 
 const SECRET_VALUE_PATTERNS: RegExp[] = [
   BEARER_VALUE_PATTERN,
-  JWT_VALUE_PATTERN,
   DISCORD_TOKEN_VALUE_PATTERN,
   HEX64_VALUE_PATTERN,
 ];
 
 /** @internal */
 export function looksLikeSecretValue(value: string): boolean {
-  return SECRET_VALUE_PATTERNS.some((re) => re.test(value));
+  return containsJwt(value) || SECRET_VALUE_PATTERNS.some((re) => re.test(value));
 }
 
-/**
- * S10-R18 (2026-08-30 fix round 4): total replacer-invocation budget for
- * one `safeStringify` call. See the long comment on `safeStringify` for
- * why this is a fail-CLOSED bound and why that makes it a different tool
- * from the fail-open redaction budget S10-R12 removed, not a reversal of
- * that decision. Sized to comfortably clear any legitimate log payload
- * (tens of thousands of distinct fields would already be an unusual log
- * line) while keeping a maximally-shared, deeply-aliased structure's worst
- * case bounded to a small, fast, constant amount of work — at ~2^17 paths
- * a heavily-aliased binary chain is already emitting hundreds of KB
- * unbounded; this stops well short of that.
- */
 /**
  * `Bearer` is the ONE auth scheme handled as a free-text pass, and the reason
  * it is alone there is worth recording.
@@ -633,6 +873,9 @@ export function looksLikeSecretValue(value: string): boolean {
 const AUTH_SCHEMES = ['Bearer'] as const;
 const AUTH_SCHEME_ALT = AUTH_SCHEMES.join('|');
 
+/** A pattern and its replacement: a string, or the JWT scan's replacer. */
+type SanitizeRule = readonly [RegExp, string | typeof redactJwtMatch];
+
 /**
  * Every `sanitizeErrorMessage` rule, compiled once (OPT-007).
  *
@@ -641,7 +884,7 @@ const AUTH_SCHEME_ALT = AUTH_SCHEMES.join('|');
  * that rule sees it — and the rule's lookahead skips every handled scheme so
  * the scheme word survives.
  */
-const SANITIZE_RULES: ReadonlyArray<readonly [RegExp, string]> = (() => {
+const SANITIZE_RULES: ReadonlyArray<SanitizeRule> = ((): ReadonlyArray<SanitizeRule> => {
   // Value: a quoted string, or an unquoted run up to the next delimiter.
   const V = `(?:["']([^"']*?)["']|[^\\s,;]+)`;
 
@@ -683,9 +926,26 @@ const SANITIZE_RULES: ReadonlyArray<readonly [RegExp, string]> = (() => {
     // Preserve each source pattern's own flags (both are flagless today)
     // instead of hardcoding 'g' — a future 'i'/'u' added to either pattern
     // would otherwise silently not apply here, defeating the "can't drift"
-    // guarantee above.
-    [withGlobalFlag(JWT_VALUE_PATTERN), '[REDACTED]'],
+    // guarantee above. The JWT scan carries its own `g` and a replacer that
+    // hands back every match that is not a JWT (see `JWT_SCAN`).
+    [JWT_SCAN, redactJwtMatch],
     [withGlobalFlag(DISCORD_TOKEN_VALUE_PATTERN), '[REDACTED]'],
+    // BUG-141 review: URL userinfo (`scheme://user:password@host`). A `URL`
+    // object in a context now logs as its href, so credentials in it must go.
+    // Only the password part is replaced; the user name stays diagnosable.
+    // The user name may be empty (`redis://:pass@host`).
+    //
+    // The scheme is capped at 32 characters on purpose. Unanchored and
+    // unbounded (`[a-z][a-z0-9+.-]*`), every start position in a long run of
+    // scheme characters (letters, hex, base64, `a.a.a.`) scanned to the end of
+    // the run and backtracked, so a 100 KB message or context string took
+    // 3-8 s instead of milliseconds. Capped, each start does at most 32 steps
+    // before it needs `://`. No `\b`: `foohttps://u:p@h` still matches from
+    // inside the word, as the unbounded rule did, so the output is unchanged
+    // for every scheme up to 32 characters (registered schemes are far
+    // shorter). A longer one keeps only its last 32 characters as the scheme
+    // and is still redacted.
+    [/([a-z][a-z0-9+.-]{0,31}:\/\/[^/\s:@]*:)[^@\s/]+@/gi, '$1[REDACTED]@'],
     // BUG-025: JSON-shaped pass — catches every "…token"/"…secret"/"…password"/
     // "…key"-suffixed quoted key in one sweep, including compound names
     // (sessionToken, webhook_secret) that the per-key patterns below miss.
@@ -727,6 +987,18 @@ const SANITIZE_RULES: ReadonlyArray<readonly [RegExp, string]> = (() => {
   ];
 })();
 
+/**
+ * S10-R18 (2026-08-30 fix round 4): total replacer-invocation budget for
+ * one `safeStringify` call. See the long comment on `safeStringify` for
+ * why this is a fail-CLOSED bound and why that makes it a different tool
+ * from the fail-open redaction budget S10-R12 removed, not a reversal of
+ * that decision. Sized to comfortably clear any legitimate log payload
+ * (tens of thousands of distinct fields would already be an unusual log
+ * line) while keeping a maximally-shared, deeply-aliased structure's worst
+ * case bounded to a small, fast, constant amount of work — at ~2^17 paths
+ * a heavily-aliased binary chain is already emitting hundreds of KB
+ * unbounded; this stops well short of that.
+ */
 const MAX_STRINGIFY_NODES = 50_000;
 
 /**

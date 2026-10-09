@@ -2,7 +2,7 @@
   "locale": "ja",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-05T13:38:20.759Z",
+    "generated": "2026-10-06T10:31:56.285Z",
     "dyeCount": 125
   },
   "labels": {
@@ -216,13 +216,13 @@
     "accessibility": "アクセシビリティチェッカー"
   },
   "sheets": {
-    "eyeColors": "目の色",
-    "highlightColors": "ハイライト",
-    "lipColorsDark": "唇の色（ダーク）",
-    "lipColorsLight": "唇の色（ライト）",
-    "tattooColors": "タトゥー／角膜",
-    "facePaintColorsDark": "フェイスペイント（ダーク）",
-    "facePaintColorsLight": "フェイスペイント（ライト）",
+    "eyeColors": "瞳の色",
+    "highlightColors": "メッシュの色",
+    "lipColorsDark": "唇の色（濃い）",
+    "lipColorsLight": "唇の色（薄い）",
+    "tattooColors": "刺青 / 瞳の輪郭",
+    "facePaintColorsDark": "フェイスペイント（濃い）",
+    "facePaintColorsLight": "フェイスペイント（薄い）",
     "hairColors": "髪の色",
     "skinColors": "肌の色"
   },

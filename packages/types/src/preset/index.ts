@@ -28,6 +28,22 @@ export type { PresetPreviousValues, CommunityPreset, PresetSubmission } from './
 // Request types
 export type { PresetFilters, PresetEditRequest, PresetSortOption } from './request.js';
 
+// Review custom_ids + status list (REFACTOR-001) — shared by discord-worker,
+// moderation-worker and presets-api
+export type {
+  ReviewAction,
+  ReviewKind,
+  ReviewBinding,
+  ParsedReviewId,
+} from './review-custom-id.js';
+export {
+  REVIEW_STATUSES,
+  isReviewStatus,
+  parseReviewCustomId,
+  buildReviewCustomId,
+  buildReviewCustomIdOrLegacy,
+} from './review-custom-id.js';
+
 // Response types
 export type {
   PresetListResponse,

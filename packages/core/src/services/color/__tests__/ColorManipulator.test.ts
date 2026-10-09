@@ -23,6 +23,11 @@ describe('ColorManipulator', () => {
       expect(ColorConverter.hexToHsv(result).v).toBe(100);
     });
 
+    it('should keep white white when raising its brightness (clamped at 100)', () => {
+      // Moved from the web app's copy of these tests (2026-10-04 dead-code DEAD-021).
+      expect(ColorManipulator.adjustBrightness('#FFFFFF', 50)).toBe('#FFFFFF');
+    });
+
     it('should return black when decreasing any color brightness by -100', () => {
       const result = ColorManipulator.adjustBrightness('#FF0000', -100);
       expect(result).toBe('#000000');

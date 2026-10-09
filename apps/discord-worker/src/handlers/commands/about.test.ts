@@ -342,11 +342,13 @@ describe('about.ts', () => {
         token: 'token-1',
       };
 
-      await handleAboutCommand(interaction, mockEnv, mockCtx);
+      const logger = { error: vi.fn(), warn: vi.fn() } as unknown as Parameters<typeof handleAboutCommand>[3];
+      await handleAboutCommand(interaction, mockEnv, mockCtx, logger);
 
-      // Verify createUserTranslator was called with the correct locale
+      // Verify createUserTranslator was called with the correct locale, and
+      // gets the request logger for a KV failure while reading it (BUG-126)
       const { createUserTranslator } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslator).toHaveBeenCalledWith(mockKV, 'user-123', 'ja');
+      expect(createUserTranslator).toHaveBeenCalledWith(mockKV, 'user-123', 'ja', logger);
     });
 
     it('should include category emojis', async () => {

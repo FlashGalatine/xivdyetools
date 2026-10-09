@@ -31,6 +31,11 @@ All four documents are to exist in **every supported locale** (`en ja de fr ko z
   five siblings in the same commit is a parity defect the moment it merges; so is a translation
   edited alone. `Last updated` is the same *date* in all six variants of a document (the format
   may be localized; the date may not differ).
+- **Never anchor a claim to `Last updated`.** "Posts made since the *Last updated* date…" moves
+  with the next edit to the document, and the claim moves with it (2026-10-04 i18n audit,
+  I18N-001). Name the fixed date the change went live, as ISO `YYYY-MM-DD` in every variant (the
+  parity script counts its digits), and word it so the go-live day itself is not overclaimed
+  ("after 2026-10-05 … on or before that date may").
 - Legal/defined terms, section numbering, retention numbers, command names (`/preferences`),
   hostnames, storage names (`localStorage`, `KV`, `D1`) and third-party names stay **verbatim**
   across variants. Game nouns follow `docs/reference/ffxiv-terminology.md`.

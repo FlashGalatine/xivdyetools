@@ -1,5 +1,4 @@
 import { defineConfig } from 'vitest/config';
-import path from 'path';
 
 export default defineConfig({
   test: {
@@ -26,11 +25,6 @@ export default defineConfig({
       deps: {
         inline: ['@xivdyetools/core', '@xivdyetools/types'],
       },
-    },
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
     },
   },
 });

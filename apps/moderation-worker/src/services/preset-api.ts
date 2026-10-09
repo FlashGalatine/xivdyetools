@@ -17,17 +17,17 @@ import {
 } from '@xivdyetools/auth';
 import type { Env } from '../types/env.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { isValidSnowflake } from '@xivdyetools/types';
+import { isReviewStatus, isValidSnowflake } from '@xivdyetools/types';
 import { clampChoiceName } from '../utils/embed-text.js';
 import type {
   CommunityPreset,
   PresetListResponse,
   ModerationStats,
   PresetFilters,
+  ReviewBinding,
 } from '@xivdyetools/types';
 import type { ModerationQueueEntry, ModerationPresetView } from '../types/preset.js';
 import { PresetAPIError, PresetReviewConflictError } from '../types/preset.js';
-import type { ReviewBinding } from '../utils/review-custom-id.js';
 
 // ============================================================================
 // Core Request Function
@@ -45,28 +45,23 @@ import type { ReviewBinding } from '../utils/review-custom-id.js';
  */
 const PRESETS_API_TIMEOUT_MS = 10_000;
 
-const REVIEW_STATUSES: ReadonlySet<string> = new Set([
-  'pending',
-  'approved',
-  'rejected',
-  'flagged',
-  'hidden',
-]);
-
-/** FINDING-017: trust the 409's `current` only when it has the documented shape. */
+/**
+ * FINDING-017: trust the 409's `current` only when it has the documented shape.
+ * The status words are the shared review list (`isReviewStatus`, REFACTOR-001):
+ * the same ones a review custom_id carries and presets-api accepts.
+ */
 function parseCurrent(value: unknown): PresetReviewConflictError['current'] {
   if (!value || typeof value !== 'object') return null;
   const { status, content_revision } = value as { status?: unknown; content_revision?: unknown };
   if (
-    typeof status !== 'string' ||
-    !REVIEW_STATUSES.has(status) ||
+    !isReviewStatus(status) ||
     typeof content_revision !== 'number' ||
     !Number.isSafeInteger(content_revision) ||
     content_revision < 0
   ) {
     return null;
   }
-  return { status: status as ModerationPresetView['status'], content_revision };
+  return { status, content_revision };
 }
 
 /**
@@ -347,20 +342,6 @@ function pathSegment(id: string): string {
   return encodeURIComponent(id);
 }
 
-/**
- * Get a single preset by ID
- */
-export async function getPreset(env: Env, id: string): Promise<CommunityPreset | null> {
-  try {
-    return await request<CommunityPreset>(env, 'GET', `/api/v1/presets/${pathSegment(id)}`);
-  } catch (error) {
-    if (error instanceof PresetAPIError && error.statusCode === 404) {
-      return null;
-    }
-    throw error;
-  }
-}
-
 // ============================================================================
 // Moderation Functions
 // ============================================================================
@@ -388,9 +369,31 @@ export async function getPendingPresets(
 }
 
 /**
+ * BUG-054 (2026-10-04 deep-dive): the 404 body presets-api sends when the
+ * preset itself is missing — `notFoundResponse(c, 'Preset')` in
+ * `GET /api/v1/moderation/:presetId` (`handlers/moderation.ts`), which
+ * `utils/api-response.ts` builds as `NOT_FOUND` + "`${resource} not found`".
+ * A route it does not have falls through to `app.notFound` (`index.ts`), which
+ * also says `NOT_FOUND` but "Route <METHOD> <path> not found". Only the first
+ * means the preset is gone.
+ */
+const PRESET_MISSING = { error: 'NOT_FOUND', message: 'Preset not found' } as const;
+
+function isPresetMissing(error: unknown): boolean {
+  if (!(error instanceof PresetAPIError) || error.statusCode !== 404) return false;
+  const body = error.details as { error?: unknown; message?: unknown } | null | undefined;
+  return body?.error === PRESET_MISSING.error && body.message === PRESET_MISSING.message;
+}
+
+/**
  * FINDING-017: the preset as a moderator reviews it, at any status, together
  * with the `content_revision` a status change must be bound to. `null` when the
  * preset does not exist.
+ *
+ * BUG-054: any other 404 throws. A presets-api older than 2.4.0 — a rollback,
+ * or a deploy made in the wrong order — has no such route, and treating its
+ * 404 as a deleted preset stripped live review buttons. Thrown, it reaches
+ * `refreshReview`'s catch, which leaves the message and its buttons alone.
  */
 export async function getModerationPreset(
   env: Env,
@@ -406,7 +409,7 @@ export async function getModerationPreset(
     });
     return { preset: response.preset, revision: response.content_revision };
   } catch (error) {
-    if (error instanceof PresetAPIError && error.statusCode === 404) {
+    if (isPresetMissing(error)) {
       return null;
     }
     throw error;

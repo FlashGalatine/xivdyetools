@@ -92,15 +92,24 @@ const VERDICT_SIZE = 12.5;
 const MARK_RESERVE = 130;
 
 /**
- * 12H slot widths from its own source (lead 28 holds a "2–3" range).
+ * 12H slot widths.
  *
  * pkg-svg-bot-logic-06: `lead + pair + name + bar + measure + 4 × 10 px gap`
  * has to equal the content width (`CARD_WIDTH − 2 × PAD` = 368) or the
  * right-anchored measure lands outside the margin every other element on the
  * card aligns to. This summed to 376, putting the ΔE column 8 px proud, so
- * `name` gives up those 8 px.
+ * `name` gave up those 8 px.
+ *
+ * BUG-146: the lead was 28 px, sized for the design's "2–3". /gradient runs to
+ * 12 steps, so the longest lead is a five-character merged range in the tail
+ * ("10–12" ≈ 40.3 px of 13 px mono), which rendered as "10…" — and a fully
+ * collapsed "1–12" as "1–…". The lead is now 42. Its 14 px come from the
+ * decorative slots, down to the widths the sibling rows already use (pair 52
+ * as in mixer/palette, bar 26 as in palette/nearest), plus 2 px of `name`:
+ * 176 still holds the widest localized dye name that fit before (fr
+ * "vert de cobalt métallique" ≈ 175.5 px at 13 px body).
  */
-const ROW_WIDTHS: MeasuredRowWidths = { lead: 28, pair: 56, name: 178, bar: 34, measure: 32 };
+const ROW_WIDTHS: MeasuredRowWidths = { lead: 42, pair: 52, name: 176, bar: 26, measure: 32 };
 
 /**
  * Generate the /gradient card (12H·2/·3/·4). Height grows with the rows and

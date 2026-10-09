@@ -34,7 +34,9 @@ vi.mock('./handlers/commands/index.js', () => ({
   handlePreferencesCommand: vi.fn(),
   handleMixerV4Command: vi.fn(),
   handleSwatchCommand: vi.fn(),
+  handleGlamourCommand: vi.fn(),
   handleAccessibilityCommand: vi.fn(),
+  handleContrastCommand: vi.fn(),
   handleManualCommand: vi.fn(),
   handleChangelogCommand: vi.fn(),
   handleComparisonCommand: vi.fn(),
@@ -64,6 +66,15 @@ vi.mock('./services/rate-limiter.js', async (importOriginal) => ({
 vi.mock('./services/preset-api.js', () => ({
   searchPresetsForAutocomplete: vi.fn(),
   getMyPresets: vi.fn(),
+  // the favourites name back-fill in /preset favorite remove autocomplete
+  getPreset: vi.fn(),
+}));
+
+// /preferences world autocomplete: the router's branch is what is under test,
+// not the Universalis-backed world list behind it.
+vi.mock('./services/budget/index.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./services/budget/index.js')>()),
+  getWorldAutocomplete: vi.fn(),
 }));
 
 vi.mock('./utils/discord-api.js', () => ({
@@ -532,6 +543,283 @@ describe('index.ts', () => {
       expect(call.embeds[0].description).not.toContain('<@');
     });
 
+    // BUG-003 (2026-10-04 deep-dive): the route hard-coded kind 'new', so a
+    // flagged owner edit reached moderators as "New Preset Awaiting Review",
+    // with no diff and no Revert — and Reject on it took a live preset down.
+    // presets-api 2.5.0 marks edits (`is_edit`), says what the preset was
+    // before (`edited_from_status`) and sends the revert snapshot
+    // (`preset.previous_values`). Revert restores that snapshot AND approves,
+    // so it is offered only when all three line up. Every fixture below
+    // differs from the Revert case in exactly one of those conditions, and
+    // each posts with MODERATION_BOT_TOKEN so the buttons are actually built.
+    describe('owner edits (BUG-003)', () => {
+      const EDIT_ID = '123e4567-e89b-42d3-a456-426614174001';
+      const snapshot = { name: 'Sunset', description: 'Old words', tags: ['warm'], dyes: [1, 2] };
+      const editedPreset = (overrides: Record<string, unknown> = {}) => ({
+        id: EDIT_ID,
+        name: 'Sunset Remix',
+        description: 'New words',
+        category_id: 'jobs',
+        author_name: 'Test Author',
+        author_discord_id: '123456789012345678',
+        source: 'web',
+        dyes: [1, 2, 3],
+        tags: ['warm'],
+        status: 'pending',
+        moderation_status: 'flagged',
+        content_revision: 9,
+        created_at: new Date().toISOString(),
+        previous_values: snapshot,
+        ...overrides,
+      });
+
+      async function post(body: Record<string, unknown>) {
+        const { timingSafeEqual } = await import('@xivdyetools/auth');
+        const { sendMessage } = await import('./utils/discord-api.js');
+        vi.mocked(timingSafeEqual).mockResolvedValue(true);
+        vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+        const res = await app.fetch(
+          new Request('http://localhost/webhooks/preset-submission', {
+            method: 'POST',
+            headers: { Authorization: 'Bearer test-webhook-secret' },
+            body: JSON.stringify({ type: 'submission', ...body }),
+          }),
+          { ...mockEnv, MODERATION_BOT_TOKEN: 'mod-token' },
+          mockCtx,
+        );
+        expect(res.status).toBe(200);
+        expect(sendMessage).toHaveBeenCalledTimes(1);
+        const [token, channel, message] = vi.mocked(sendMessage).mock.calls[0];
+        expect(token).toBe('mod-token');
+        expect(channel).toBe('test-moderation-channel');
+        const sent = message as {
+          embeds: Array<{ title?: string; description?: string }>;
+          components: Array<{ components: Array<{ custom_id: string }> }>;
+        };
+        return {
+          title: sent.embeds[0].title ?? '',
+          description: sent.embeds[0].description ?? '',
+          ids: sent.components[0].components.map((c) => c.custom_id),
+        };
+      }
+
+      const approveReject = [
+        `preset_approve_${EDIT_ID}:9:pending`,
+        `preset_reject_${EDIT_ID}:9:pending`,
+      ];
+
+      it('posts a new submission as new, with Approve and Reject only', async () => {
+        const sent = await post({ is_edit: false, preset: editedPreset({ previous_values: null }) });
+
+        expect(sent.title).toBe('🟡 New Preset Awaiting Review');
+        expect(sent.ids).toEqual(approveReject);
+      });
+
+      // A presets-api without `edited_from` (2.5.0 before Sprint 9): the diff
+      // falls back to the revert snapshot, headed as such — the snapshot is
+      // write-once and can be older than the text this edit replaced.
+      it('posts a flagged edit of an approved preset as an edit, with the diff and Revert', async () => {
+        const sent = await post({
+          is_edit: true,
+          edited_from_status: 'approved',
+          preset: editedPreset(),
+        });
+
+        expect(sent.title).toBe('✏️ Preset Edit Pending Review');
+        expect(sent.description).toContain('**Changes since the Revert snapshot:**');
+        expect(sent.description).toContain('"Sunset" → "Sunset Remix"');
+        expect(sent.description).toContain('**Description:** Changed');
+        expect(sent.description).toContain('2 → 3 colors');
+        expect(sent.description).toContain('may be older than the text this edit replaced');
+        expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
+      });
+
+      // Sprint 9: presets-api sends `edited_from`, the text THIS edit replaced,
+      // and that is the diff base. `previous_values` is only what Revert
+      // restores — usually null on a pending edit or a rejected resubmission,
+      // and, being write-once, possibly older than the text this edit replaced.
+      // Names chosen so none is a substring of another.
+      describe('the diff base is edited_from (Sprint 9)', () => {
+        const dawn = { name: 'Dawn', description: 'First words', tags: ['warm'], dyes: [1, 2, 3] };
+        const noon = { name: 'Noon', description: 'Second words', tags: ['warm'], dyes: [1, 2] };
+        const dusk = { name: 'Dusk', description: 'Third words', tags: ['warm'], dyes: [1, 2, 3] };
+
+        it('diffs a rejected preset resubmission against edited_from, with no Revert', async () => {
+          const sent = await post({
+            is_edit: true,
+            edited_from_status: 'rejected',
+            edited_from: noon,
+            preset: editedPreset({ ...dusk, previous_values: null }),
+          });
+
+          expect(sent.title).toBe('✏️ Preset Edit Pending Review');
+          expect(sent.description).toContain('**Changes:**');
+          expect(sent.description).toContain('"Noon" → "Dusk"');
+          expect(sent.description).toContain('2 → 3 colors');
+          expect(sent.description).not.toContain('Revert');
+          expect(sent.ids).toEqual(approveReject);
+        });
+
+        it('diffs a pending preset edit against edited_from, with no Revert', async () => {
+          const sent = await post({
+            is_edit: true,
+            edited_from_status: 'pending',
+            edited_from: noon,
+            preset: editedPreset({ ...dusk, previous_values: null }),
+          });
+
+          expect(sent.description).toContain('"Noon" → "Dusk"');
+          expect(sent.ids).toEqual(approveReject);
+        });
+
+        // approved Dawn → flagged edit Noon snapshots Dawn → a moderator
+        // approves Noon → this flagged edit, Dusk. The diff is Noon → Dusk; the
+        // Revert still restores Dawn, and the embed has to say so.
+        it('diffs B→C and still offers a Revert to A, labelled as older than this edit', async () => {
+          const sent = await post({
+            is_edit: true,
+            edited_from_status: 'approved',
+            edited_from: noon,
+            preset: editedPreset({ ...dusk, previous_values: dawn }),
+          });
+
+          expect(sent.description).toContain('**Changes:**');
+          expect(sent.description).toContain('"Noon" → "Dusk"');
+          expect(sent.description).not.toContain('"Dawn" → "Dusk"');
+          expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
+          expect(sent.description).toContain('**Revert:** restores the saved approved version "Dawn"');
+          expect(sent.description).toContain('older than the text this edit replaced');
+          expect(sent.description).toContain('differ in: name, description, dyes');
+        });
+
+        it('says Revert undoes this edit when the snapshot is the text it replaced', async () => {
+          const sent = await post({
+            is_edit: true,
+            edited_from_status: 'approved',
+            edited_from: noon,
+            preset: editedPreset({ ...dusk, previous_values: noon }),
+          });
+
+          expect(sent.description).toContain('"Noon" → "Dusk"');
+          expect(sent.description).toContain('**Revert:** restores "Noon", the text this edit replaced');
+          expect(sent.description).not.toContain('older than');
+          expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
+        });
+
+        // A present-but-malformed edited_from is not a reason to diff against
+        // the snapshot: on a presets-api that sends edited_from, previous_values
+        // is never a diff base. Revert follows its own rule regardless.
+        it('shows no diff for a malformed edited_from, but still applies the Revert rule', async () => {
+          const sent = await post({
+            is_edit: true,
+            edited_from_status: 'approved',
+            edited_from: { name: 'Noon', dyes: 'x' },
+            preset: editedPreset({ ...dusk, previous_values: dawn }),
+          });
+
+          expect(sent.title).toBe('✏️ Preset Edit Pending Review');
+          expect(sent.description).not.toContain('Changes');
+          expect(sent.description).not.toContain('"Dawn" → "Dusk"');
+          expect(sent.description).toContain('may be older than the text this edit replaced');
+          expect(sent.ids).toEqual([...approveReject, `preset_revert_${EDIT_ID}:9:pending`]);
+        });
+
+        it('ignores edited_from on a new submission', async () => {
+          const sent = await post({
+            is_edit: false,
+            edited_from: noon,
+            preset: editedPreset({ ...dusk, previous_values: null }),
+          });
+
+          expect(sent.title).toBe('🟡 New Preset Awaiting Review');
+          expect(sent.description).not.toContain('Changes');
+          expect(sent.ids).toEqual(approveReject);
+        });
+      });
+
+      it.each(['pending', 'rejected'])(
+        'posts an edit of a %s preset as an edit with the diff, but no Revert',
+        async (editedFromStatus) => {
+          const sent = await post({
+            is_edit: true,
+            edited_from_status: editedFromStatus,
+            preset: editedPreset(),
+          });
+
+          expect(sent.title).toBe('✏️ Preset Edit Pending Review');
+          expect(sent.description).toContain('"Sunset" → "Sunset Remix"');
+          expect(sent.ids).toEqual(approveReject);
+        },
+      );
+
+      it('offers no Revert for an approved edit that carries no snapshot', async () => {
+        const sent = await post({
+          is_edit: true,
+          edited_from_status: 'approved',
+          preset: editedPreset({ previous_values: null }),
+        });
+
+        expect(sent.title).toBe('✏️ Preset Edit Pending Review');
+        // nothing to diff against: the whole preset, under the edit title
+        expect(sent.description).not.toContain('Changes');
+        expect(sent.description).toContain('Sunset Remix');
+        expect(sent.ids).toEqual(approveReject);
+      });
+
+      it('offers no Revert when edited_from_status is absent', async () => {
+        const sent = await post({ is_edit: true, preset: editedPreset() });
+
+        expect(sent.title).toBe('✏️ Preset Edit Pending Review');
+        expect(sent.ids).toEqual(approveReject);
+      });
+
+      it('treats a payload without is_edit (presets-api before 2.5.0) as new, even with a snapshot', async () => {
+        const sent = await post({ edited_from_status: 'approved', preset: editedPreset() });
+
+        expect(sent.title).toBe('🟡 New Preset Awaiting Review');
+        expect(sent.ids).toEqual(approveReject);
+      });
+
+      // The deleted bot-side posts were the only callers that passed the
+      // builder a categoryName, so every webhook embed printed the raw
+      // category_id ("jobs") where moderators used to read its display name.
+      it('names the category by its display name, new submission and edit alike', async () => {
+        const { CATEGORY_DISPLAY } = await import('@xivdyetools/svg');
+        for (const body of [
+          { is_edit: false, preset: editedPreset({ previous_values: null }) },
+          { is_edit: true, edited_from_status: 'approved', preset: editedPreset() },
+        ]) {
+          vi.clearAllMocks();
+          const sent = await post(body);
+
+          expect(sent.description).toContain(`**Category:** ${CATEGORY_DISPLAY.jobs.name}`);
+          expect(sent.description).not.toContain('**Category:** jobs');
+        }
+      });
+
+      it('falls back to the raw category_id for a category it does not know', async () => {
+        const sent = await post({ is_edit: false, preset: editedPreset({ category_id: 'not-a-category' }) });
+
+        expect(sent.description).toContain('**Category:** not-a-category');
+      });
+
+      it('ignores a malformed snapshot instead of failing the post', async () => {
+        for (const previous_values of ['not an object', { name: 'Sunset', dyes: 'x' }]) {
+          vi.clearAllMocks();
+          const sent = await post({
+            is_edit: true,
+            edited_from_status: 'approved',
+            preset: editedPreset({ previous_values }),
+          });
+
+          expect(sent.title).toBe('✏️ Preset Edit Pending Review');
+          expect(sent.description).not.toContain('Changes');
+          expect(sent.ids).toEqual(approveReject);
+        }
+      });
+    });
+
     // discord-core-13: every webhook fixture in this file already carries the
     // correct stainID shape (`dyes: [1, 2, 3]`), but no assertion ever read the
     // rendered `Dyes` field -- only the title, the absence of components, and
@@ -664,6 +952,45 @@ describe('index.ts', () => {
           ]),
         }),
       );
+    });
+
+    it('names the category by its display name on the submission-log embed', async () => {
+      const { timingSafeEqual } = await import('@xivdyetools/auth');
+      const { sendMessage } = await import('./utils/discord-api.js');
+      const { CATEGORY_DISPLAY } = await import('@xivdyetools/svg');
+      vi.mocked(timingSafeEqual).mockResolvedValue(true);
+      vi.mocked(sendMessage).mockResolvedValue(new Response(null));
+
+      const categoryField = async (category_id: string) => {
+        vi.mocked(sendMessage).mockClear();
+        const req = new Request('http://localhost/webhooks/preset-submission', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer test-webhook-secret' },
+          body: JSON.stringify({
+            type: 'submission',
+            preset: {
+              id: 'preset-456',
+              name: 'Auto-Approved Preset',
+              description: 'An auto-approved preset',
+              category_id,
+              author_name: 'Test Author',
+              source: 'discord',
+              dyes: [4, 5, 6],
+              tags: [],
+              status: 'approved',
+              created_at: new Date().toISOString(),
+            },
+          }),
+        });
+        expect((await app.fetch(req, mockEnv, mockCtx)).status).toBe(200);
+        const body = vi.mocked(sendMessage).mock.calls[0][2] as {
+          embeds: { fields: { name: string; value: string }[] }[];
+        };
+        return body.embeds[0].fields.find((f) => f.name === 'Category')?.value;
+      };
+
+      expect(await categoryField('jobs')).toBe(CATEGORY_DISPLAY.jobs.name);
+      expect(await categoryField('not-a-category')).toBe('not-a-category');
     });
 
     it.each([
@@ -2046,8 +2373,12 @@ describe('index.ts', () => {
         const res = await app.fetch(req, mockEnv, mockCtx);
         expect(res.status).toBe(200);
         await res.json();
+        // REFACTOR-002 (2026-10-04 deep-dive): without the request logger the
+        // helper's catch answered a presets-api failure with [] and no log
+        // line, while the edit and favourites paths logged theirs.
         expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(mockEnv, 'test', {
           status: 'approved',
+          logger: expect.objectContaining({ error: expect.any(Function) }),
         });
       });
 
@@ -2192,6 +2523,7 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         expect(searchPresetsForAutocomplete).toHaveBeenCalledWith(mockEnv, 'test', {
           status: 'approved',
+          logger: expect.objectContaining({ error: expect.any(Function) }), // REFACTOR-002
         });
       });
 
@@ -2416,6 +2748,323 @@ describe('index.ts', () => {
         expect(res.status).toBe(200);
         const data = (await res.json()) as InteractionResponseBody;
         expect(data.data!.choices).toEqual([]);
+      });
+
+      // BUG-046 (2026-10-04 deep-dive): the router's subcommand-GROUP walk
+      // (/preset favorite remove), the favourites name back-fill with its
+      // earlier-audit BUG-028 guard, and the /preferences clan and world
+      // branches had no test through app.fetch — only service-level ones.
+      describe('favourites, clan and world branches (BUG-046)', () => {
+        const V2_KEY = 'xivdye:preset_favorites:v2:user-123';
+        const V1_KEY = 'xivdye:preset_favorites:v1:user-123';
+        type Choice = { name: string; value: string };
+
+        async function autocomplete(data: Record<string, unknown>): Promise<Choice[]> {
+          const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+          const body = JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data,
+            user: { id: 'user-123' },
+          });
+          vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body, error: '' });
+          const res = await app.fetch(
+            new Request('http://localhost/', { method: 'POST', body }),
+            mockEnv,
+            mockCtx,
+          );
+          expect(res.status).toBe(200);
+          return ((await res.json()) as InteractionResponseBody).data!.choices as Choice[];
+        }
+
+        /** `/preset favorite remove preset_name:<value>` — a SUB_COMMAND_GROUP payload */
+        const favoriteRemove = (value: string) => ({
+          name: 'preset',
+          options: [
+            {
+              name: 'favorite',
+              type: 2,
+              options: [
+                {
+                  name: 'remove',
+                  type: 1,
+                  options: [{ name: 'preset_name', type: 3, value, focused: true }],
+                },
+              ],
+            },
+          ],
+        });
+
+        /** Serve the favourites blobs from KV by key; every other key is empty. */
+        function seedFavorites(blobs: { v2?: unknown; v1?: unknown }): void {
+          (mockEnv.KV.get as unknown as MockInstance).mockImplementation((key: string) => {
+            if (key === V2_KEY && blobs.v2 !== undefined) return Promise.resolve(JSON.stringify(blobs.v2));
+            if (key === V1_KEY && blobs.v1 !== undefined) return Promise.resolve(JSON.stringify(blobs.v1));
+            return Promise.resolve(null);
+          });
+        }
+
+        const putsTo = (key: string): unknown[] =>
+          (mockEnv.KV.put as unknown as MockInstance).mock.calls
+            .filter(([k]) => k === key)
+            .map(([, value]) => JSON.parse(value as string) as unknown);
+
+        it('walks into the favorite group and answers from the stored favourites, not a preset search', async () => {
+          const { searchPresetsForAutocomplete, getPreset } = await import('./services/preset-api.js');
+          seedFavorites({
+            v2: [
+              { id: 'p-1', name: 'Sunset' },
+              { id: 'p-2', name: 'Moonrise' },
+            ],
+          });
+
+          const choices = await autocomplete(favoriteRemove('moon'));
+
+          expect(choices).toEqual([{ name: 'Moonrise', value: 'p-2' }]);
+          expect(searchPresetsForAutocomplete).not.toHaveBeenCalled();
+          // names are already stored (OPT-007): no lookups, no write
+          expect(getPreset).not.toHaveBeenCalled();
+          expect(mockEnv.KV.put).not.toHaveBeenCalled();
+        });
+
+        // BUG-047: getPreset answers null only for a 404 and THROWS on a 5xx,
+        // timeout or 429. The back-fill turned every failure into the preset
+        // id and persisted it as the name — and as `!e.name` is what selects
+        // an entry for back-fill, that UUID name was never retried.
+        // A 404 is persisted as a `gone` marker, never as `name = id`: an id
+        // in the name field is indistinguishable from what older builds wrote
+        // for every failure, which is what the heal below has to find.
+        it('persists only answers: a name, or a gone marker for a 404; a failed lookup stays blank for a retry', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          seedFavorites({ v1: ['p-1', 'p-2', 'p-3'] });
+          vi.mocked(getPreset).mockImplementation((_env, id) => {
+            if (id === 'p-1') return Promise.resolve({ id, name: 'Sunset' } as CommunityPreset);
+            if (id === 'p-2') return Promise.resolve(null); // a 404
+            return Promise.reject(new Error('presets-api 503'));
+          });
+
+          const choices = await autocomplete(favoriteRemove(''));
+
+          // every entry is still offered; an unresolved one is labelled by id
+          expect(choices).toEqual([
+            { name: 'Sunset', value: 'p-1' },
+            { name: 'p-2', value: 'p-2' },
+            { name: 'p-3', value: 'p-3' },
+          ]);
+          expect(putsTo(V2_KEY)).toEqual([
+            [
+              { id: 'p-1', name: 'Sunset' },
+              { id: 'p-2', name: '', gone: true },
+              { id: 'p-3', name: '' },
+            ],
+          ]);
+        });
+
+        it('looks up no entry already marked gone, and labels it by its id', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          seedFavorites({ v2: [{ id: 'p-1', name: 'Sunset' }, { id: 'p-2', name: '', gone: true }] });
+
+          expect(await autocomplete(favoriteRemove(''))).toEqual([
+            { name: 'Sunset', value: 'p-1' },
+            { name: 'p-2', value: 'p-2' },
+          ]);
+          expect(getPreset).not.toHaveBeenCalled();
+          expect(mockEnv.KV.put).not.toHaveBeenCalled();
+        });
+
+        // Older builds persisted `name = id` for every failed lookup (5xx,
+        // timeout, 429), and a non-blank name was never looked up again.
+        it('heals a name an older build poisoned with the id, with one lookup', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          const id = '123e4567-e89b-42d3-a456-426614174099';
+          seedFavorites({ v2: [{ id, name: id }] });
+          vi.mocked(getPreset).mockResolvedValue({ id, name: 'Moonrise' } as CommunityPreset);
+
+          expect(await autocomplete(favoriteRemove(''))).toEqual([{ name: 'Moonrise', value: id }]);
+          expect(getPreset).toHaveBeenCalledTimes(1);
+          expect(putsTo(V2_KEY)).toEqual([[{ id, name: 'Moonrise' }]]);
+        });
+
+        it('marks a poisoned name gone, not the id again, when its lookup answers 404', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          const id = '123e4567-e89b-42d3-a456-426614174098';
+          seedFavorites({ v2: [{ id, name: id }] });
+          vi.mocked(getPreset).mockResolvedValue(null);
+
+          expect(await autocomplete(favoriteRemove(''))).toEqual([{ name: id, value: id }]);
+          expect(putsTo(V2_KEY)).toEqual([[{ id, name: '', gone: true }]]);
+        });
+
+        // Each getPreset may wait out PRESET_API_TIMEOUT_MS (10 s); Discord
+        // gives autocomplete 3 s. The back-fill gets a deadline: whatever has
+        // not answered by then is labelled by id and left blank for later.
+        it('answers within the back-fill deadline when a lookup hangs, persisting only what answered', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          seedFavorites({ v1: ['p-1', 'p-2'] });
+          vi.mocked(getPreset).mockImplementation((_env, id) =>
+            id === 'p-1'
+              ? Promise.resolve({ id, name: 'Sunset' } as CommunityPreset)
+              : new Promise<CommunityPreset | null>(() => {}), // never settles
+          );
+
+          const started = Date.now();
+          const choices = await autocomplete(favoriteRemove(''));
+
+          expect(Date.now() - started).toBeLessThan(2_500);
+          expect(choices).toEqual([
+            { name: 'Sunset', value: 'p-1' },
+            { name: 'p-2', value: 'p-2' },
+          ]);
+          // the hanging entry is persisted as neither its id nor gone
+          expect(putsTo(V2_KEY)).toEqual([
+            [
+              { id: 'p-1', name: 'Sunset' },
+              { id: 'p-2', name: '' },
+            ],
+          ]);
+        }, 10_000);
+
+        it('writes nothing back when no lookup succeeded', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          seedFavorites({ v1: ['p-1', 'p-2'] });
+          vi.mocked(getPreset).mockRejectedValue(new Error('presets-api timeout'));
+
+          const choices = await autocomplete(favoriteRemove(''));
+
+          expect(choices).toEqual([
+            { name: 'p-1', value: 'p-1' },
+            { name: 'p-2', value: 'p-2' },
+          ]);
+          expect(mockEnv.KV.put).not.toHaveBeenCalled();
+        });
+
+        it('matches the typed text against the label shown, an id included', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          seedFavorites({ v1: ['p-1', 'p-2'] });
+          vi.mocked(getPreset).mockImplementation((_env, id) =>
+            id === 'p-1'
+              ? Promise.resolve({ id, name: 'Sunset' } as CommunityPreset)
+              : Promise.reject(new Error('presets-api 503')),
+          );
+
+          expect(await autocomplete(favoriteRemove('p-2'))).toEqual([{ name: 'p-2', value: 'p-2' }]);
+        });
+
+        // earlier-audit BUG-028: the write-back is an optimisation, never a
+        // precondition for answering — a rejected KV put still gets choices.
+        it('still answers when the back-fill cannot be saved', async () => {
+          const { getPreset } = await import('./services/preset-api.js');
+          seedFavorites({ v1: ['p-1'] });
+          vi.mocked(getPreset).mockResolvedValue({ id: 'p-1', name: 'Sunset' } as CommunityPreset);
+          vi.mocked(mockEnv.KV.put).mockRejectedValue(new Error('KV 429: one write per second'));
+
+          expect(await autocomplete(favoriteRemove('sun'))).toEqual([{ name: 'Sunset', value: 'p-1' }]);
+          expect(mockEnv.KV.put).toHaveBeenCalled();
+        });
+
+        it('offers clans for /preferences clan, matched by clan or race name', async () => {
+          const { getWorldAutocomplete } = await import('./services/budget/index.js');
+
+          const choices = await autocomplete({
+            name: 'preferences',
+            options: [
+              { name: 'set', type: 1, options: [{ name: 'clan', type: 3, value: 'moon', focused: true }] },
+            ],
+          });
+
+          expect(choices).toEqual([{ name: "Keeper of the Moon (Miqo'te)", value: 'Keeper of the Moon' }]);
+          expect(getWorldAutocomplete).not.toHaveBeenCalled();
+        });
+
+        it('hands /preferences world to the world autocomplete, with the logger and locale', async () => {
+          const { getWorldAutocomplete } = await import('./services/budget/index.js');
+          vi.mocked(getWorldAutocomplete).mockResolvedValue([{ name: 'Gilgamesh', value: 'Gilgamesh' }]);
+
+          const choices = await autocomplete({
+            name: 'preferences',
+            options: [
+              { name: 'set', type: 1, options: [{ name: 'world', type: 3, value: 'gil', focused: true }] },
+            ],
+          });
+
+          expect(choices).toEqual([{ name: 'Gilgamesh', value: 'Gilgamesh' }]);
+          expect(getWorldAutocomplete).toHaveBeenCalledWith(
+            mockEnv,
+            'gil',
+            expect.objectContaining({ error: expect.any(Function) }),
+            'en',
+          );
+        });
+      });
+
+      /**
+       * BUG-126 (2026-10-04 audit): autocomplete resolves the user's locale on
+       * every keystroke, and a KV failure there fell back to the Discord
+       * locale with no log line, because the resolver was never handed the
+       * request logger. This runs the REAL resolver and reads the JSON the
+       * request logger writes.
+       */
+      describe('locale resolution reaches the request logger (BUG-126)', () => {
+        let logLines: string[];
+        let logSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(async () => {
+          const actual =
+            await vi.importActual<typeof import('./services/i18n.js')>('./services/i18n.js');
+          const { resolveUserLocale } = await import('./services/i18n.js');
+          vi.mocked(resolveUserLocale).mockImplementation(actual.resolveUserLocale);
+
+          // @xivdyetools/logger's worker preset writes one JSON line per call
+          // through console.log.
+          logLines = [];
+          logSpy = vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+            logLines.push(String(line));
+          });
+        });
+
+        afterEach(async () => {
+          logSpy.mockRestore();
+          // clearAllMocks keeps implementations: put the module mock's default back
+          const { resolveUserLocale } = await import('./services/i18n.js');
+          vi.mocked(resolveUserLocale).mockResolvedValue('en');
+        });
+
+        it('logs a KV failure while resolving the locale, and still answers', async () => {
+          const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+          vi.mocked(mockEnv.KV.get).mockRejectedValue(new Error('KV unavailable'));
+          const body = JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preferences',
+              options: [
+                {
+                  name: 'set',
+                  type: 1,
+                  options: [{ name: 'clan', type: 3, value: 'moon', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+            locale: 'de',
+          });
+          vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body, error: '' });
+
+          const res = await app.fetch(
+            new Request('http://localhost/', { method: 'POST', body }),
+            mockEnv,
+            mockCtx,
+          );
+
+          expect(res.status).toBe(200);
+          expect(((await res.json()) as InteractionResponseBody).data!.choices).toEqual([
+            { name: "Keeper of the Moon (Miqo'te)", value: 'Keeper of the Moon' },
+          ]);
+          const line = logLines.find((l) =>
+            l.includes('Failed to read unified preferences for locale resolution'),
+          );
+          expect(line, 'the locale resolver logged nothing').toBeDefined();
+          // Written by the request-scoped logger, so it carries the request id
+          expect(line).toContain('"requestId"');
+        });
       });
     });
 
@@ -2924,6 +3573,87 @@ describe('index.ts', () => {
           await app.fetch(req, mockEnv, mockCtx);
           expect(handler).toHaveBeenCalled();
         }
+      });
+
+      /**
+       * BUG-125 (2026-10-04 audit): a handler's bot-logic catch can only say
+       * why a card failed if the dispatcher hands it the request logger. /dye
+       * was the one call site left without it, so /dye info and /dye random
+       * still logged nothing on failure after bot-logic learned to. "The
+       * request logger" is checked by identity: the same object the rate
+       * limiter is handed for this request, not merely some logger.
+       */
+      it.each([
+        'harmony',
+        'dye',
+        'extractor',
+        'gradient',
+        'preferences',
+        'mixer',
+        'swatch',
+        'glamour',
+        'accessibility',
+        'a11y',
+        'contrast',
+        'manual',
+        'comparison',
+        'preset',
+        'stats',
+        'budget',
+        'about',
+        'changelog',
+      ])('hands the /%s handler the request logger (BUG-125)', async (name) => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        const commands = await import('./handlers/commands/index.js');
+        const handlerFor: Record<string, (...args: never[]) => unknown> = {
+          harmony: commands.handleHarmonyCommand,
+          dye: commands.handleDyeCommand,
+          extractor: commands.handleExtractorCommand,
+          gradient: commands.handleGradientCommand,
+          preferences: commands.handlePreferencesCommand,
+          mixer: commands.handleMixerV4Command,
+          swatch: commands.handleSwatchCommand,
+          glamour: commands.handleGlamourCommand,
+          accessibility: commands.handleAccessibilityCommand,
+          a11y: commands.handleAccessibilityCommand,
+          contrast: commands.handleContrastCommand,
+          manual: commands.handleManualCommand,
+          comparison: commands.handleComparisonCommand,
+          preset: commands.handlePresetCommand,
+          stats: commands.handleStatsCommand,
+          budget: commands.handleBudgetCommand,
+          about: commands.handleAboutCommand,
+          changelog: commands.handleChangelogCommand,
+        };
+        const handler = vi.mocked(handlerFor[name]);
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name },
+          user: { id: 'user-123' },
+        };
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(body),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
+        handler.mockResolvedValue(new Response());
+
+        await app.fetch(
+          new Request('http://localhost/', { method: 'POST', body: JSON.stringify(body) }),
+          mockEnv,
+          mockCtx,
+        );
+
+        const requestLogger = vi.mocked(checkRateLimit).mock.calls[0][3];
+        expect(requestLogger).toEqual(expect.objectContaining({ warn: expect.any(Function) }));
+        expect(handler).toHaveBeenCalledTimes(1);
+        expect(handler.mock.calls[0][3]).toBe(requestLogger);
       });
 
       it('should route stats command handler', async () => {

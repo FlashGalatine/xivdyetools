@@ -97,7 +97,7 @@ always used for the exchange.
 
 | Status | Condition |
 |--------|-----------|
-| 400 | `Invalid request body` — the body is not JSON |
+| 400 | `Invalid request body` — the body is not JSON, or is JSON but not an object (`null`, `true`, `123`, `"str"`) |
 | 400 | `Missing code or code_verifier` |
 | 400 | `Invalid code_verifier format` — fails `[A-Za-z0-9-._~]{43,128}` |
 | 400 | `Missing state` — the field is absent, `null` or empty |
@@ -107,6 +107,7 @@ always used for the exchange.
 | 401 | Missing required scope (`identify`) |
 | 401 | Invalid user data from Discord |
 | 413 | `Payload too large` — the body exceeds the 10 KB `bodySizeLimit` |
+| 415 | `Unsupported Media Type` — a non-empty body whose `Content-Type` media type is not `application/json` (case-insensitive, parameters ignored) |
 | 429 | Rate limit exceeded (20/min per IP) |
 
 ---
@@ -134,7 +135,10 @@ with `auth_provider: "xivauth"` and `avatar` / `avatar_url` always `null` (XIVAu
 avatar).
 
 The `character` scope is used to find the caller's **verified** character, whose name becomes
-`username` and `global_name`. The rest of the roster is read in memory and discarded.
+`username` and `global_name`: the first verified character whose name is non-blank, trimmed. Roster
+elements that are not objects are ignored. If none qualifies, the user signs in as
+`XIVAuth User <first 8 characters of the id>` with `global_name: null`. The rest of the roster is
+read in memory and discarded. The 400 / 413 / 415 errors listed for `POST /auth/callback` apply here too.
 
 **`primary_character` was removed in 3.0.0** — from the response body and from the JWT
 (FINDING-001 / FINDING-002, `docs/audits/2026-08-29-security`). It carried a character name,
@@ -257,7 +261,7 @@ Every `/auth/*` route is limited; anything without a stricter entry above falls 
 default (`OAUTH_LIMITS` in `@xivdyetools/worker-kit/rate-limiter`). `POST /auth/refresh` had the
 same 30/min tier before it was removed in 3.0.0.
 
-Rate limits are keyed on **IP + path**. In production the backend is the native Workers Rate
+Rate limits are keyed on **IP + decoded path**: a percent-encoded spelling of a route (`/auth/%63allback`) shares that route's bucket and tier. Paths no route matches (404s) each get their own default-tier bucket. In production the backend is the native Workers Rate
 Limiting bindings (`RL_AUTH_10` / `RL_AUTH_20` / `RL_AUTH_30`, one per limit above), whose counters
 are **atomic but per-colo** rather than a globally consistent sliding window — a distributed client
 gets roughly `limit × colos`. KV (`TOKEN_BLACKLIST` under the `rl:` prefix) is the legacy fallback

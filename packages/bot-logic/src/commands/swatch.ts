@@ -39,6 +39,7 @@ import {
 } from '@xivdyetools/svg';
 import { dyeService } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 import { genderSymbol, getCharacterColors, producerToken, tribeDisplay } from './chara-identity.js';
 
@@ -123,6 +124,20 @@ const SLOT_OPTION_IDS: Record<SwatchSlotOption, CharaSlotId[]> = {
   limbal: ['limbal'],
 };
 
+/**
+ * The slot: option → its name in a sentence. The card labels above are short
+ * upper-case column heads ("HL", "TATT."), so the refusal has its own set.
+ */
+const SLOT_OPTION_NAME_KEYS: Record<SwatchSlotOption, string> = {
+  skin: 'card.swatchSlotName.skin',
+  hair: 'card.swatchSlotName.hair',
+  highlights: 'card.swatchSlotName.highlights',
+  eyes: 'card.swatchSlotName.eyes',
+  lip: 'card.swatchSlotName.lip',
+  facepaint: 'card.swatchSlotName.facepaint',
+  limbal: 'card.swatchSlotName.limbal',
+};
+
 /** The winning colour: float when off grid, the composited blend for lip. */
 function winningHex(slot: ResolvedCharaSlot): string | null {
   if (slot.slot === 'lip' && slot.blendHex) return slot.blendHex;
@@ -192,11 +207,15 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
       await resolveCharaColors(parsed, getCharacterColors(), dyeService)
     );
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    // The try runs the resolver and the nickname strip too, so a bot-side bug
+    // lands here as well: log the class and code (never the message — the
+    // parser's reason quotes the file's field values).
+    input.logger?.warn(`[swatch] parse failed: ${failureKind(error)}`);
+    // HC-002: the parser's reason is English, so the reply gives a localized one
     return {
       ok: false,
       error: 'PARSE_FAILED',
-      errorMessage: t.t('card.swatchParseError', { message }),
+      errorMessage: t.t('card.swatchParseError', { message: t.t('card.charaFileReason.unreadable') }),
     };
   }
 
@@ -244,7 +263,7 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     }
 
     const charSub = [
-      [tribeDisplay(character.tribe), genderSymbol(character.gender)].filter(Boolean).join(' '),
+      [tribeDisplay(character.tribe, locale), genderSymbol(character.gender)].filter(Boolean).join(' '),
       producerToken(character.producer),
     ]
       .filter(Boolean)
@@ -261,7 +280,9 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
         return {
           ok: false,
           error: 'SLOT_MISSING',
-          errorMessage: t.t('card.swatchSlotMissing', { slot: input.slot }),
+          errorMessage: t.t('card.swatchSlotMissing', {
+            slot: t.t(SLOT_OPTION_NAME_KEYS[input.slot]),
+          }),
         };
       }
       const nearest = dyeService
@@ -396,7 +417,9 @@ export async function executeSwatch(input: SwatchInput): Promise<SwatchResult> {
     };
 
     return { ok: true, svgString, embed, character };
-  } catch {
+  } catch (error) {
+    // Like the read's catch above, this names the error's class only.
+    input.logger?.warn(`[swatch] generation failed: ${failureKind(error)}`);
     return {
       ok: false,
       error: 'GENERATION_FAILED',

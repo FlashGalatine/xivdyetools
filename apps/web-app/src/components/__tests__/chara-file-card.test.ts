@@ -89,6 +89,18 @@ describe('CharaFileCard — localized surfaces', () => {
     expect(container.textContent).not.toContain('SeekerOfTheSun');
   });
 
+  // BUG-082 (2026-10-04 deep-dive): `??` let an empty or blank Nickname
+  // beat the file name, so the card's title was blank.
+  it('titles a file with a blank Nickname by its file name', async () => {
+    const blank = JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: '   ' });
+    const { container } = await mount(blank, 'Aria.chara');
+    const title = Array.from(container.querySelectorAll<HTMLElement>('span')).find((s) =>
+      s.style.fontSize.startsWith('16px')
+    );
+
+    expect(title?.textContent).toBe('Aria.chara');
+  });
+
   it('renders the keyed slot-error sentence instead of core message', async () => {
     const { container } = await mount(FIXTURE);
 
@@ -226,6 +238,24 @@ describe('CharaFileCard — the loaded file', () => {
       expect(container.querySelector(`[title="${glamourHint()}"]`)).toBeNull();
     });
 
+    // I18N-012: the hint and the host's clause were joined with an ASCII space,
+    // which Japanese and Chinese do not write after 。.
+    it('joins the hint and the host clause without a space after 。 (ja)', async () => {
+      await LanguageService.setLocale('ja');
+      try {
+        const note = '編集した入手方法はこの端末に保存されます。';
+        const { container } = await mount(FIXTURE, 'test.chara', {
+          sendsGearIds: true,
+          privacyNote: note,
+        });
+        expect(glamourHint().endsWith('。')).toBe(true);
+        expect(container.textContent).toContain(`${glamourHint()}${note}`);
+        expect(container.textContent).not.toContain(`${glamourHint()} ${note}`);
+      } finally {
+        await LanguageService.setLocale('en');
+      }
+    });
+
     it('default mode is unchanged: plain hint at every site and the LOCAL ONLY chip titled with it', async () => {
       const zone = mountCard();
       expect(zone.container.textContent).toContain(plainHint());
@@ -239,6 +269,38 @@ describe('CharaFileCard — the loaded file', () => {
         (e) => e.textContent === localOnly()
       );
       expect(chip?.title).toBe(plainHint());
+    });
+  });
+
+  // The Glamour Reader's drop zone used to pitch the Swatch Matcher: hair and
+  // skin colors, and a swatch grid the reader does not have.
+  describe('dropBody (a host that is not the Swatch Matcher)', () => {
+    const swatchBody = () => LanguageService.t('swatch.dropBody');
+    const orGrid = () => LanguageService.t('swatch.orGrid');
+    const hostBody = 'Every piece, with its dyes.';
+
+    it("pitches the host's body line and leaves out the swatch grid line", () => {
+      const { container } = mountCard({ dropBody: hostBody });
+      expect(container.textContent).toContain(hostBody);
+      expect(container.textContent).not.toContain(swatchBody());
+      expect(container.textContent).not.toContain(orGrid());
+      // The rest of the offer is the same.
+      expect(container.textContent).toContain(LanguageService.t('swatch.dropTitle'));
+      expect(container.querySelector('input[type="file"]')).not.toBeNull();
+    });
+
+    it('default mode is unchanged: the Swatch Matcher body line and its grid line', () => {
+      expect(swatchBody()).not.toBe('swatch.dropBody');
+      expect(orGrid()).not.toBe('swatch.orGrid');
+      const { container } = mountCard();
+      expect(container.textContent).toContain(swatchBody());
+      expect(container.textContent).toContain(orGrid());
+    });
+
+    it('changes only the drop zone, not the loaded file card', async () => {
+      const { container } = await mount(FIXTURE, 'test.chara', { dropBody: hostBody });
+      expect(container.textContent).toContain('Test Subject');
+      expect(container.textContent).not.toContain(hostBody);
     });
   });
 

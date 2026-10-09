@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert**: 2026-09-28
+**Zuletzt aktualisiert**: 2026-10-09
 
 > Die Web-App unter xivdyetools.app hat eigene Bedingungen:
 > [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Der Umgang mit Daten ist in
@@ -31,9 +31,9 @@ Der XIV Dye Tools Discord-Bot bietet:
   Bild extrahierten Farbe am nächsten kommen
 - **Farbharmonien**: Erzeugt komplementäre, triadische, analoge und andere Farbschemata
 - **Barrierefreiheits-Werkzeuge**: Simulation von Farbenblindheit für Farbstofffarben
-- **Community-Preset-Favoriten**: Markiere und liste Community-Presets, die dir gefallen
+- **Community-Vorlagen-Favoriten**: Markiere und liste Community-Vorlagen, die dir gefallen
   (`/preset favorite`)
-- **Community-Presets**: Durchsuche, reiche ein und stimme über von Nutzern erstellte Farbpaletten
+- **Community-Vorlagen**: Durchsuche, reiche ein und stimme über von Nutzern erstellte Farbpaletten
   ab
 - **Marktpreise**: Marktbrett-Preise in Echtzeit über die Universalis-API
 - **Farbstoffvergleich und Kontrast**: Vergleicht Farbstoffe nebeneinander und misst den Kontrast
@@ -66,9 +66,9 @@ führen.
 
 ## 5. Inhaltsmoderation
 
-### Community-Presets
+### Community-Vorlagen
 
-Von Nutzern eingereichte Presets unterliegen der Moderation:
+Von Nutzern eingereichte Vorlagen unterliegen der Moderation:
 
 - Einreichungen durchlaufen eine automatisierte Inhaltsprüfung. Solche, die sie bestehen, werden
   sofort veröffentlicht und zur Prüfung protokolliert; alles, was markiert wird oder das die
@@ -85,7 +85,7 @@ Wenn du glaubst, dass dein Inhalt fälschlicherweise moderiert wurde:
 1. Tritt unserem Discord-Server bei: https://discord.gg/rzxDHNr6Wv
 2. Kontaktiere einen Moderator oder pinge "Flash Galatine" in
    #dyetools-issues-and-suggestions an
-3. Gib deine Discord-Benutzer-ID und den Namen des abgelehnten Presets an
+3. Gib deine Discord-Benutzer-ID und den Namen der abgelehnten Vorlage an
 4. Widersprüche werden innerhalb von 7 Tagen geprüft
 
 ## 6. Geistiges Eigentum
@@ -112,7 +112,7 @@ ebenfalls ein unabhängiger Drittanbieter-Dienst, der nicht mit Square Enix verb
 
 ### Deine Inhalte
 
-Mit dem Einreichen von Presets oder anderen Inhalten an den Bot gewährst du uns eine
+Mit dem Einreichen von Vorlagen oder anderen Inhalten an den Bot gewährst du uns eine
 nicht-exklusive, gebührenfreie Lizenz, diesen Inhalt innerhalb des XIV-Dye-Tools-Ökosystems zu
 nutzen, anzuzeigen und zu verbreiten.
 
