@@ -1304,6 +1304,9 @@ export class GlamourBlock {
    * What a row says under its dyes (design 1a): why a twin was named, why
    * nothing fixes it, or which twin it could just as well be — plus the Grand
    * Company flag, which never fails a piece (a .chara records no company).
+   * A retired family (nothing obtainable shares the look) adds a neutral note
+   * last, whatever the rules say — it is still the item the file wears, so it
+   * never reads as "no item" (2026-10-09 merge-day review).
    */
   private pieceNote(
     slot: CharaGearSlotId,
@@ -1317,6 +1320,18 @@ export class GlamourBlock {
         ? { tag: 'blocked', text: LanguageService.t('glamour.row.blockedNoItem') }
         : { tag: null, text: null };
     }
+    const note = this.verdictNote(item, state, lang);
+    if (!item?.retired) return note;
+    const retired = LanguageService.t('glamour.row.retired');
+    return { tag: note.tag, text: note.text ? `${note.text} · ${retired}` : retired };
+  }
+
+  /** The rules half of a piece's note: what the verdict says about a named item. */
+  private verdictNote(
+    item: CharaResolvedItem | undefined,
+    state: TwinState | null,
+    lang: string
+  ): { tag: 'fixed' | 'blocked' | null; text: string | null } {
     if (!state || !item?.rules?.length) return { tag: null, text: null };
     const { twins, picked, tone } = state;
     const parts: string[] = [];

@@ -104,7 +104,10 @@ export function glamourMarkdownInput({
 
   if (resolved.glassesId !== null && resolved.glassesId > 0) {
     const glasses = equipment?.glasses ?? null;
-    input.Facewear = { name: glasses ? itemNameFor(glasses.names, lang) : null };
+    input.Facewear = {
+      name: glasses ? itemNameFor(glasses.names, lang) : null,
+      acquisition: glasses?.acquisition,
+    };
   }
   return input;
 }
@@ -145,11 +148,12 @@ export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece
     let family: number | null;
     let pickedItemId: number | null;
     let pickedName: string | null = null;
-    let generated: string | null = null;
+    let generated: string | null;
     if (slot === 'Facewear') {
       const glasses = equipment?.glasses ?? null;
       family = glasses?.id ?? null;
       pickedItemId = family;
+      generated = glasses?.acquisition ?? null;
     } else {
       const item = equipment?.items[slot as CharaGearSlotId] ?? null;
       const pick = picked?.[slot as CharaGearSlotId];

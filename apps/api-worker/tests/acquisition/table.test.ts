@@ -16,6 +16,51 @@ function offending(test: (line: string) => boolean): string[] {
 }
 
 describe('acquisition table invariants', () => {
+  it('fills the reviewed Anemos upgrade stages and Cosmic v1.1/v1.2 tools', () => {
+    const lookup = table as Record<string, string>;
+    for (let id = 21942; id <= 21989; id++) expect(lookup[id], `Anemos weapon stage ${id}`).toBe('Eureka Gear & Weapons');
+    for (let id = 22006; id <= 22230; id++) expect(lookup[id], `Anemos armor stage ${id}`).toBe('Eureka Gear & Weapons');
+    for (let id = 51756; id <= 51777; id++) expect(lookup[id], `Cosmic tool stage ${id}`).toBe('Cosmic Tools Saga');
+    expect(lookup[1661]).toBe('The Aurum Vale');
+  });
+
+  it('uses the confirmed crystal exchange and current store sets without assigning unreleased lookalikes', () => {
+    const lookup = table as Record<string, string>;
+    for (let id = 52387; id <= 52396; id++) expect(lookup[id]).toBe("Commendation Quartermaster - Wolves' Den Pier (2 Commendation Crystals)");
+    for (const id of [47270, 47271, 47272, 47273, 47274, 52409, 52410, 52411, 52412, 52433, 52434, 52435]) expect(lookup[id]).toBe('FFXIV Online Store');
+    for (const id of [52413, 52414, 52415, 52416, 52417, 52436, 52437, 52438]) expect(lookup[id]).toBeUndefined();
+    for (const id of [43469, 43470, 48998, 49003, 49008]) expect(lookup[id]).toContain("Uah'shepya - Solution Nine");
+    for (const id of [47207, 47208, 47209, 47210, 47211, 47297, 47298, 47299, 47300]) expect(lookup[id]).toContain('Ose Wyd - Il Mheg - Wolekdorf');
+  });
+  it('resolves every coffer-only line to its acquisition source', () => {
+    expect(offending((line) => /Coffer/.test(line) && !line.includes(' / '))).toEqual([]);
+    const lookup = table as Record<string, string>;
+    for (let id = 36844; id <= 36848; id++) expect(lookup[id]).toBe('A Gift from House Leveilleur (Sidequest)');
+    for (let id = 33667; id <= 33671; id++) expect(lookup[id]).toBe('Enie - Ishgard - The Firmament (50 Fête Tokens)');
+  });
+
+  it('places the six level-1 glamour sets at the correct expedition antiquarian', () => {
+    const lookup = table as Record<string, string>;
+    for (const id of [51952, 51953, 51954, 51955, 51957, 51958, 51960, 51961, 51962, 51963, 51964, 51965]) {
+      expect(lookup[id], `North Horn glamour ${id}`).toContain('Expedition Antiquarian - The Occult Crescent: North Horn');
+      expect(lookup[id]).not.toContain('South Horn');
+    }
+    for (let id = 47891; id <= 47905; id++) {
+      expect(lookup[id], `South Horn glamour ${id}`).toContain('Expedition Antiquarian - The Occult Crescent: South Horn');
+      expect(lookup[id]).not.toContain('North Horn');
+    }
+    expect(lookup[47758]).toContain('Expedition Antiquarian - The Occult Crescent: South Horn');
+  });
+  it('preserves the reviewed duty sources for complete weapon families and the Templar set', () => {
+    const lookup = table as Record<string, string>;
+    for (let id = 52299; id <= 52320; id++)
+      expect(lookup[id], `Palazzo Diamond ${id}`).toBe('Dancing Mad (Ultimate)');
+    for (let id = 47028; id <= 47071; id++)
+      expect(lookup[id], `Pilgrim weapon ${id}`).toBe("Pilgrim's Traverse");
+    for (const id of [2896, 3217, 3919, 31536, 31537]) expect(lookup[id]).toBe('Dzemael Darkhold');
+    for (const id of [24996, 24997]) expect(lookup[id]).toBe('Baldesion Arsenal');
+    expect(lookup[1661]).toBe('The Aurum Vale');
+  });
   it('has a line for most equippable items', () => {
     expect(lines.length).toBeGreaterThan(15000);
   });

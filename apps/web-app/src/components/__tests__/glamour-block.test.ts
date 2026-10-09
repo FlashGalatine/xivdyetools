@@ -1275,6 +1275,68 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN', '1 NO FIX']);
   });
 
+  // 2026-10-09 merge-day review: a family of only retired items (Dated,
+  // Aetherial, Deepmist) is a real item the character wears — api-worker names
+  // it with `retired: true`, never null, and the row says so without a verdict.
+  it('names a retired piece, notes it is no longer obtainable, and never counts it as no item', async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        HeadGear: COIF,
+        Body: item(1, 'Dated Robe', { retired: true, rules: [rules([1], 2)] }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'item-name')).toBe('Dated Robe');
+    expect(part(glamour, 'Body', 'model-key')).toBeNull();
+    expect(part(glamour, 'Body', 'piece-tag')).toBeNull();
+    expect(part(glamour, 'Body', 'piece-note')).toBe('A retired item, no longer obtainable');
+    expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN', '1 FINE AS IS']);
+    expect(verdict(glamour)!.querySelector('[data-role="verdict-head"]')?.textContent).toBe(
+      '1 piece named from a twin'
+    );
+  });
+
+  it("keeps a retired piece's own verdict and adds the retired note after it", async () => {
+    const resolved: CharaResolveResult = {
+      items: {
+        Body: item(1, 'Dated Coat', {
+          retired: true,
+          rules: [rules([1], 2, { grandCompany: 2 })],
+        }),
+      },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'piece-note')).toBe(
+      'Needs the right Grand Company · A retired item, no longer obtainable'
+    );
+    expect(counts(glamour)).toEqual(['1 NEEDS A GRAND COMPANY']);
+  });
+
+  it('notes a retired piece even when api-worker sent no rules', async () => {
+    const resolved: CharaResolveResult = {
+      items: { HeadGear: COIF, Body: item(1, 'Aetherial Robe', { retired: true }) },
+      glasses: null,
+      version: 'test',
+    };
+    const { container, glamour } = await mount(Promise.resolve(resolved), MIDLANDER);
+    hosts = [container, glamour];
+    await vi.waitFor(() => expect(verdict(glamour)).not.toBeNull());
+
+    expect(part(glamour, 'Body', 'item-name')).toBe('Aetherial Robe');
+    expect(part(glamour, 'Body', 'piece-note')).toBe('A retired item, no longer obtainable');
+    expect(counts(glamour)).toEqual(['1 FIXED BY A TWIN']);
+  });
+
   it('marks twins that are a free choice in grey and names the other one', async () => {
     const resolved: CharaResolveResult = {
       items: {

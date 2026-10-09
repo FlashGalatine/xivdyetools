@@ -24,8 +24,19 @@ const MAIN_CITIES = new Set([
 const EMPEROR_LINE = 'Goberin - Western Thanalan - Vesper Bay';
 
 /** A fixed line that replaces whatever the data says, or null. */
-export function overrideLine(itemName: string): string | null {
-  return /^(The )?Emperor's New /.test(itemName) ? EMPEROR_LINE : null;
+export function overrideLine(itemName: string, category?: string): string | null {
+  if (/^(The )?Emperor's New /.test(itemName)) return EMPEROR_LINE;
+  if (/^Templar's (Chain Coif|Haubergeon|Vambraces|Skirt|Sollerets)$/.test(itemName))
+    return 'Dzemael Darkhold';
+  if (/^(Great )?Shin-Zantetsuken$/.test(itemName)) return 'Baldesion Arsenal';
+  const weapon = category !== undefined && /(?:Arm|Grimoire|Shield)$/.test(category);
+  if (
+    weapon &&
+    (/First Light|Sacramental/.test(itemName) || /^Word of the (Blest|Radiant)$/.test(itemName))
+  ) {
+    return "Pilgrim's Traverse";
+  }
+  return null;
 }
 
 const SCRIP = / (Crafters'|Gatherers') Scrip$/;
@@ -74,6 +85,11 @@ export function selectEntries(sources: Source[], inputs: Inputs, tables: Tables)
       gacha.push({ kind: 'eurekaLockbox', line: eureka });
       return;
     }
+    const reviewed = tables.cofferSources.get(containerId);
+    if (reviewed) {
+      (reviewed.random ? gacha : rest).push({ kind: 'container', containerId });
+      return;
+    }
     if (tables.gachaContainers.has(containerId)) {
       gacha.push({ kind: 'container', containerId });
       return;
@@ -82,7 +98,11 @@ export function selectEntries(sources: Source[], inputs: Inputs, tables: Tables)
     const containerQuests = inputs.quests.get(containerId) ?? [];
     if (containerDuties.length > 0) containerDuties.forEach((d) => duties.add(d));
     else if (containerQuests.length > 0) containerQuests.forEach(addQuest);
-    else rest.push({ kind: 'container', containerId });
+    else {
+      const offers = inputs.offers.get(containerId) ?? [];
+      if (offers.length > 0) offers.forEach(addOffer);
+      else rest.push({ kind: 'container', containerId });
+    }
   }
 
   function addOffer(offer: Offer): void {

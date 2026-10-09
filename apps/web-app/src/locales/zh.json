@@ -1339,6 +1339,7 @@
       "blockedGlamour": "它无法用于幻化",
       "blockedWear": "这个角色无法穿戴它",
       "blockedNoItem": "没有对应物品的模型",
+      "retired": "已绝版的物品，无法再获取",
       "noFix": "外观相同的装备也无法解决",
       "otherWorks": "可以改穿{name}",
       "choice": "与{name}外观相同 · 哪个都可以",

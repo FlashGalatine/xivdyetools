@@ -10,13 +10,14 @@ import { tablesFrom } from '../../scripts/acquisition/inputs.js';
 import { selectEntries } from '../../scripts/acquisition/select.js';
 import { collectSources } from '../../scripts/acquisition/sources.js';
 import eurekaLockboxes from '../../scripts/acquisition/tables/eureka-lockboxes.json';
+import cofferSources from '../../scripts/acquisition/tables/coffer-sources.json';
 import gacha from '../../scripts/acquisition/tables/gacha-containers.json';
 import ishgardDistricts from '../../scripts/acquisition/tables/ishgard-districts.json';
 import fixture from './fixtures/inputs.json';
 import { reviveInputs } from './helpers.js';
 
 const inputs = reviveInputs(fixture as unknown as Record<string, unknown>);
-const tables = tablesFrom({ gacha, eurekaLockboxes, ishgardDistricts }, inputs);
+const tables = tablesFrom({ gacha, cofferSources, eurekaLockboxes, ishgardDistricts }, inputs);
 const lineFor = (itemId: number): string | null =>
   formatEntries(selectEntries(collectSources(itemId, inputs), inputs, tables).entries, inputs, tables);
 

@@ -94,6 +94,84 @@ describe('POST /v1/chara/resolve', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
+  it('replaces retired rows on fresh and cached imports using the exact model family', async () => {
+    const result = (row_id: number, Name: string, LevelEquip: number) => ({
+      row_id,
+      fields: {
+        Name,
+        LevelEquip,
+        ModelMain: 65540,
+        ModelSub: 0,
+        EquipSlotCategory: { fields: { Head: 1 } },
+      },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        okJson({
+          version: 'v',
+          results: [
+            result(372, 'Dated Hempen Coif', 1),
+            result(2629, 'Hempen Coif', 1),
+            result(2630, 'Hempen Coif of Gathering', 1),
+            result(10, 'Aetherial Test Coif', 50),
+            result(11, 'Deepmist Test Coif', 60),
+          ],
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
+    const ctx = createMockExecutionContext();
+    const fresh = await post(body, ctx);
+    expect(fresh.status).toBe(200);
+    await flush(ctx);
+    const cached = await post(body);
+    expect(cached.headers.get('X-Cache')).toBe('HIT');
+    for (const response of [fresh, cached]) {
+      const payload = (await response.json()) as any;
+      expect(payload.data.items.HeadGear).toMatchObject({
+        itemId: 2629,
+        names: { en: 'Hempen Coif' },
+        familySize: 2,
+        alternates: [{ itemId: 2630, names: { en: 'Hempen Coif of Gathering' } }],
+      });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('fields')).toContain('LevelEquip');
+    const again = (await (await post(body)).json()) as any;
+    expect(again.data.items.HeadGear).not.toHaveProperty('retired');
+  });
+
+  it('names an all-retired family flagged retired, fresh and cached, instead of null', async () => {
+    // 2026-10-09 merge-day review: the cache keeps raw rows, so the fallback
+    // is decided at resolve time and a replay answers the same as upstream.
+    const result = (row_id: number, Name: string, LevelEquip: number) => ({
+      row_id,
+      fields: { Name, LevelEquip, ModelMain: 65540, ModelSub: 0, EquipSlotCategory: { fields: { Head: 1 } } },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      okJson({ version: 'v', results: [result(372, 'Dated Hempen Coif', 1), result(10, 'Aetherial Test Coif', 50)] }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
+    const ctx = createMockExecutionContext();
+    const fresh = await post(body, ctx);
+    await flush(ctx);
+    const cached = await post(body);
+    expect(cached.headers.get('X-Cache')).toBe('HIT');
+    for (const response of [fresh, cached]) {
+      const payload = (await response.json()) as any;
+      expect(payload.data.items.HeadGear).toMatchObject({
+        itemId: 10,
+        names: { en: 'Aetherial Test Coif' },
+        familySize: 2,
+        alternates: [{ itemId: 372, names: { en: 'Dated Hempen Coif' } }],
+        retired: true,
+      });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('resolves a file in one upstream search, applies the off-hand rule, nulls unknown keys', async () => {
     const fetchMock = vi.fn().mockResolvedValue(okJson({ version: '284bb7f44b9c0976', results: [BEECH_MASK, RUNAWAY_BOW] }));
     vi.stubGlobal('fetch', fetchMock);
@@ -198,7 +276,7 @@ describe('POST /v1/chara/resolve', () => {
     const res = await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }], glasses: 40 });
     const body = (await res.json()) as any;
     expect(res.status).toBe(200);
-    expect(body.data.glasses).toEqual({ id: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018 });
+    expect(body.data.glasses).toEqual({ id: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018, acquisition: 'Mount Rokkon' });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 

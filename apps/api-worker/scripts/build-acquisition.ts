@@ -10,8 +10,9 @@
  *
  * Inputs: Teamcraft's data files at ONE pinned commit (MIT) and XIVAPI v2 at one
  * game version. Output: src/chara/data/acquisition.en.json
- * ({ "<itemId>": "<line>" } for equippable items that have a line) and
- * acquisition.meta.json. `--fixture` writes the normalized inputs for the given
+ * ({ "<itemId>": "<line>" } for equipment and facewear unlock items that have a line),
+ * facewear-unlocks.json (Glasses row → unlock Item), and acquisition.meta.json.
+ * `--fixture` writes the normalized inputs for the given
  * items to tests/acquisition/fixtures/inputs.json instead of the table.
  * `--pinned` reuses the Teamcraft commit and XIVAPI version the current
  * acquisition.meta.json records instead of pinning the newest ones — for a rule
@@ -23,7 +24,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatEntries } from './acquisition/format.js';
-import { buildInputs, fateZoneLevels, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
+import { facewearUnlocks, type FacewearStyle, type FacewearUnlock } from './acquisition/facewear.js';
+import { buildInputs, cofferQuestSources, fateZoneLevels, shopNpcIds, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
 import { markerCoordinate, nearestSettlement, type MapLabel } from './acquisition/labels.js';
 import type { Inputs, Tables } from './acquisition/model.js';
 import { overrideLine, selectEntries } from './acquisition/select.js';
@@ -299,7 +301,8 @@ function writeFixture(inputs: Inputs, itemIds: number[]): void {
     for (const o of inputs.offers.get(id) ?? []) for (const c of o.costs) keep.add(c.itemId);
     for (const d of inputs.desynth.get(id) ?? []) keep.add(d.sourceItemId);
   }
-  const npcIds = new Set(itemIds.flatMap((id) => (inputs.offers.get(id) ?? []).flatMap((o) => o.shop.npcIds)));
+  for (const id of [...keep]) for (const offer of inputs.offers.get(id) ?? []) for (const cost of offer.costs) keep.add(cost.itemId);
+  const npcIds = new Set([...keep].flatMap((id) => (inputs.offers.get(id) ?? []).flatMap((o) => o.shop.npcIds)));
   const dutyIds = new Set([...keep].flatMap((id) => inputs.duties.get(id) ?? []));
   const questIds = new Set([...keep].flatMap((id) => inputs.quests.get(id) ?? []));
   const pick = <V>(map: Map<number, V>, wanted: Set<number>): Array<[number, V]> => [...map].filter(([key]) => wanted.has(key));
@@ -388,8 +391,10 @@ async function main(): Promise<void> {
   const sha = pinned?.teamcraftCommit ?? (await pinTeamcraft());
   console.log(pinned ? `Teamcraft ${sha} and XIVAPI ${gameVersion}, as acquisition.meta.json records` : `Teamcraft staging pinned at ${sha}`);
   const raw = await loadTeamcraft(sha);
+  const reviewedSources = readTable<Record<string, { name: string; line: string; evidence: string[] }>>('reviewed-item-sources.json');
   const rules = readTable<RelicRule[]>('relic-sagas.json');
   const tableFiles: TableFiles = {
+    cofferSources: readTable('coffer-sources.json'),
     gacha: readTable('gacha-containers.json'),
     eurekaLockboxes: readTable('eureka-lockboxes.json'),
     ishgardDistricts: readTable('ishgard-districts.json'),
@@ -397,16 +402,33 @@ async function main(): Promise<void> {
 
   const { categories: equippable, names: equippableNames } = await equippableItems();
   console.log(`XIVAPI ${gameVersion}: ${equippable.size} equippable items`);
-  const sellers = raw.shops.filter((s) => s.trades.some((t) => t.items.some((i) => equippable.has(i.id))));
-  const npcIds = [...new Set(sellers.flatMap((s) => s.npcs))];
+  const equippableCount = equippable.size;
+  const unlocks = await xivapi<{ results: FacewearUnlock[]; next?: string }>('search', {
+    sheets: 'Item', query: 'Name~"The Faces We Wear - "', fields: 'Name,AdditionalData.value', limit: '500',
+  });
+  const styles = await xivapi<{ rows: FacewearStyle[]; next?: unknown }>('sheet/GlassesStyle', {
+    fields: 'Name,Glasses[].value,Glasses[].Name', limit: '500',
+  });
+  if (unlocks.next || styles.next) throw new Error('Facewear sheet exceeded one page; add pagination before regenerating');
+  const facewear = facewearUnlocks(unlocks.results, styles.rows);
+  for (const unlock of unlocks.results) {
+    equippable.set(unlock.row_id, 'Miscellany');
+    equippableNames.set(unlock.row_id, unlock.fields.Name);
+  }
+  console.log(`${unlocks.results.length} facewear unlock items for ${Object.keys(facewear).length} Glasses rows`);
   const containerIds = [...equippable.keys()].flatMap((id) => raw.lootSources[id] ?? []);
+  const sourceIds = new Set([...equippable.keys(), ...containerIds]);
+  const sellers = raw.shops.filter((s) => s.trades.some((t) => t.items.some((i) => sourceIds.has(i.id))));
+  const npcIds = [...new Set(sellers.flatMap(shopNpcIds))];
   const desynthIds = [...equippable.keys()].flatMap((id) => raw.desynth[id] ?? []);
   const costIds = sellers.flatMap((s) => s.trades.flatMap((t) => t.currencies.map((c) => c.id)));
 
   type ItemRow = { Name: string; Plural: string; ItemUICategory?: Link; ClassJobRepair?: Link };
   const itemRows = await rows<ItemRow>('Item', [...costIds, ...containerIds, ...desynthIds], 'Name,Plural,ItemUICategory.value,ClassJobRepair.value');
   type QuestRow = { JournalGenre?: { fields?: { JournalCategory?: { fields?: { Name?: string; JournalSection?: { fields?: { Name?: string } } } } } } };
-  const questIds = [...equippable.keys(), ...containerIds].flatMap((id) => raw.questSources[id] ?? []);
+  const cofferIds = new Set([...itemRows].filter(([, row]) => /\bCoffer\b/.test(row.Name)).map(([id]) => id));
+  const questSources = cofferQuestSources(raw, cofferIds);
+  const questIds = [...sourceIds].flatMap((id) => questSources[id] ?? []);
   const questRows = await rows<QuestRow>('Quest', questIds, 'JournalGenre.JournalCategory.Name,JournalGenre.JournalCategory.JournalSection.Name');
   const territoryIds = npcIds.flatMap((id) => {
     const map = raw.npcs[id]?.position?.map;
@@ -477,7 +499,11 @@ async function main(): Promise<void> {
   const dropped: Record<string, number> = {};
   let sourcesButNoLine = 0;
   for (const itemId of [...equippable.keys()].sort((a, b) => a - b)) {
-    const fixed = overrideLine(equippableNames.get(itemId) ?? '');
+    const reviewed = reviewedSources[itemId];
+    if (reviewed && reviewed.name !== equippableNames.get(itemId)) {
+      throw new Error(`reviewed-item-sources.json: item ${itemId} no longer matches ${reviewed.name}`);
+    }
+    const fixed = reviewed?.line ?? overrideLine(equippableNames.get(itemId) ?? '', equippable.get(itemId));
     if (fixed) {
       table[itemId] = fixed;
       entryCounts['override'] = (entryCounts['override'] ?? 0) + 1;
@@ -511,7 +537,9 @@ async function main(): Promise<void> {
     generated: new Date().toISOString().slice(0, 10),
     teamcraftCommit: sha,
     xivapiVersion: gameVersion,
-    equippable: equippable.size,
+    equippable: equippableCount,
+    facewearUnlockItems: unlocks.results.length,
+    facewearVariants: Object.keys(facewear).length,
     lines: Object.keys(table).length,
     sourcesButNoLine,
     bytes: Buffer.byteLength(json),
@@ -523,6 +551,7 @@ async function main(): Promise<void> {
     unleveledVendorZones: [...new Set([...inputs.npcs.values()].map((n) => n.zone).filter((z): z is string => z !== null && !inputs.zoneLevels.has(z)))].sort(),
   };
   writeFileSync(join(DATA_DIR, 'acquisition.en.json'), json);
+  writeFileSync(join(DATA_DIR, 'facewear-unlocks.json'), `${JSON.stringify(facewear)}\n`);
   writeFileSync(join(DATA_DIR, 'acquisition.meta.json'), `${JSON.stringify(meta, null, 2)}\n`);
   console.log(`wrote ${meta.lines} lines (${meta.bytes} bytes) to src/chara/data/acquisition.en.json`);
   await printReview(inputs, tables, raw);

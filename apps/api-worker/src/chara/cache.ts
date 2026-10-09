@@ -30,9 +30,10 @@ const CACHE_NAME = 'chara-resolve';
 /**
  * Bump when the cached row shape changes. 2: rows carry the in-game rules, so
  * a week-old v1 row must not replay without them. 3: the rules carry the
- * Grand Company lock and no longer the job list.
+ * Grand Company lock and no longer the job list. 4: equipment level permits
+ * filtering unobtainable Dated rows at level 50 and below.
  */
-const SHAPE_VERSION = 3;
+const SHAPE_VERSION = 4;
 
 export class CharaRowCache {
   private readonly service: CacheService;

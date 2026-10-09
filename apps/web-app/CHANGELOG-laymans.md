@@ -2,6 +2,14 @@
 
 ---
 
+## Web-App Version 5.15.0 — October 9, 2026
+
+### Glamour Reader: where to get each piece
+- **379 more pieces have an Acquisition line,** including Eureka and Cosmic upgrades, PvP vendor gear, Fuath and Mica outfits, current store sets and 15 more facewear styles.
+- **Facewear shows where to get its unlock item,** "The Faces We Wear", which covers every color of the style. Sources we don't know yet stay blank for you to fill in.
+- **Coffer-only gear names the quest, vendor or activity** where you get it, and retired PvP rewards say they can no longer be obtained.
+- **Retired gear is replaced with a look-alike you can still get.** Dated gear up to level 50, Aetherial gear and Deepmist gear is named by a visually identical item when one exists. When none does, the piece keeps its name and says it is a retired item, no longer obtainable.
+
 ## Web-App Version 5.14.12 — October 9, 2026
 
 ### Small fixes
