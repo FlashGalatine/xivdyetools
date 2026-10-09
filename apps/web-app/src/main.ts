@@ -3,6 +3,7 @@
  *
  * Initializes services and loads the v4 glassmorphism layout.
  *
+ * @entrypoint No importer by design — src/index.html loads this module with a script tag
  * @module main
  */
 
@@ -26,7 +27,7 @@ import { logger } from '@shared/logger';
 // Import components
 import { offlineBanner } from '@components/offline-banner';
 
-// Import TutorialService for dev mode console access
+// TutorialService: dev-mode console access, and told when its overlay is missing
 import { TutorialService } from '@services/index';
 
 import { ShareService } from '@services/share-service';
@@ -107,24 +108,28 @@ async function initializeApp(): Promise<void> {
     // Cleanup: pre-5.x ShareService localStorage buffer, retired by this change.
     StorageService.removeItem('xiv_share_analytics');
 
-    // Log service status
-    const status = await getServicesStatus();
-    logger.info({
-      'Theme Service': status.theme.current,
-      'Storage Service': status.storage.available ? 'Available' : 'Unavailable',
-      'API Service': status.api.available ? `Available (${status.api.latency}ms)` : 'Unavailable',
-    });
-
     // Initialize v4 glassmorphism layout directly on app container
     // (Removed v3 AppLayout wrapper to eliminate double-header issue)
     logger.info('🎨 Initializing v4 layout shell...');
     const { initializeV4Layout } = await import('@components/v4-layout');
     await initializeV4Layout(appContainer);
 
-    // Initialize tutorial spotlight component (listens for tutorial events)
+    // Initialize tutorial spotlight component (listens for tutorial events).
+    // BUG-114: not critical, so not inside the fatal path. It is its own lazy
+    // chunk, and a failed fetch of it (a transient network error, a deploy
+    // flipping mid-load) reached the catch below, whose fatal overlay replaced
+    // the shell that had just mounted with every tool working.
     logger.info('📚 Initializing tutorial spotlight...');
-    const { initializeTutorialSpotlight } = await import('@components/tutorial-spotlight');
-    initializeTutorialSpotlight();
+    try {
+      const { initializeTutorialSpotlight } = await import('@components/tutorial-spotlight');
+      initializeTutorialSpotlight();
+    } catch (error) {
+      logger.warn('⚠️ Tutorial spotlight unavailable, continuing without it:', error);
+      // The spotlight is the whole tour (its steps, buttons and Escape), so
+      // "Take tour" and the first-visit prompt stand down for this session
+      // instead of starting a tour that shows nothing and never ends.
+      TutorialService.markUnavailable();
+    }
 
     logger.info('✅ Application initialized successfully');
 
@@ -147,6 +152,24 @@ async function initializeApp(): Promise<void> {
       (window as unknown as Record<string, unknown>).ShareService = ShareService;
       logger.info('[DEV] TutorialService exposed on window for debugging');
       logger.info('[DEV] ShareService exposed on window for debugging');
+
+      // Log service status. OPT-001 (2026-10-04 deep-dive): this was awaited
+      // before the shell mounted on every load, though its API leg is a real
+      // network probe (up to 5 s when the proxy stalls) and the log it feeds
+      // only prints in dev, so it is dev-only now and never awaited.
+      void getServicesStatus()
+        .then((status) => {
+          logger.info({
+            'Theme Service': status.theme.current,
+            'Storage Service': status.storage.available ? 'Available' : 'Unavailable',
+            'API Service': status.api.available
+              ? `Available (${status.api.latency}ms)`
+              : 'Unavailable',
+          });
+        })
+        .catch((error: unknown) => {
+          logger.warn('[DEV] Service status probe failed', error);
+        });
     }
   } catch (error) {
     const appError = ErrorHandler.log(error);

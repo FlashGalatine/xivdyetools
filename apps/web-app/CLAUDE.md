@@ -280,7 +280,7 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 - **Mocks:** `msw` intercepts network in unit tests; shared component/service fakes live in `src/__tests__/mocks/`. (This app does **not** depend on `@xivdyetools/test-utils` — that is for the Workers.)
 
 ```bash
-npx vitest run src/services/__tests__/color-service.test.ts
+npx vitest run src/services/__tests__/storage-service.test.ts
 npx playwright test --project=mobile-chrome
 ```
 

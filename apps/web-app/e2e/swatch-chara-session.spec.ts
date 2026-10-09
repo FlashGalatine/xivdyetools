@@ -1,7 +1,7 @@
 /**
  * The loaded `.chara` file belongs to CharaSessionService (memory only), not
  * to the Swatch Matcher's components. It survives leaving the tool and a
- * language switch, and the sidebar's TRIBE & GENDER lock follows it exactly:
+ * language switch, and the sidebar's CLAN & GENDER lock follows it exactly:
  * locked while a file is loaded, editable again once it is gone.
  *
  * Before 5.12.7 the lock was persisted config and the file lived in a
@@ -28,9 +28,17 @@ const FIXTURE = JSON.stringify({
 });
 
 const fileInput = (page: Page) => page.locator('input[type="file"][accept*=".chara"]');
-/** The sidebar's two selectors under TRIBE & GENDER: the lock covers both. */
+/** The sidebar's two selectors under CLAN & GENDER: the lock covers both. */
 const tribeAndGender = (page: Page) =>
-  page.locator('.config-group').filter({ hasText: 'TRIBE & GENDER' }).locator('select');
+  page.locator('.config-group').filter({ hasText: 'CLAN & GENDER' }).locator('select');
+/**
+ * The palette rail's Hair chip. CLAN & GENDER shows only while the swatch
+ * config names a hair or skin sheet, and the tool opens on Eye. Before
+ * BUG-001's fix (2026-10-04 deep-dive) the rail never wrote that config, so
+ * the group showed on Eye only because the controller's stale default said
+ * hairColors.
+ */
+const hairPalette = (page: Page) => page.getByRole('button', { name: 'Hair', exact: true });
 
 async function expectSelectors(page: Page, state: 'locked' | 'unlocked'): Promise<void> {
   const selects = tribeAndGender(page);
@@ -58,6 +66,7 @@ test.beforeEach(async ({ page }) => {
     route.fulfill({ json: { success: true, data: { items: {}, glasses: null, version: 'test' } } })
   );
   await gotoTool(page, 'swatch');
+  await hairPalette(page).click();
 });
 
 test('locks tribe and gender while a file is loaded, and unlocks them on SWAP', async ({
@@ -103,6 +112,7 @@ test('a reload clears the file and the lock with it, since the file is never sto
   // A reload boots the app again. Asserting before it is ready raced the boot
   // and failed whenever that took longer than the assertion's five seconds.
   await waitForAppReady(page);
+  await hairPalette(page).click();
 
   await expect(fileInput(page)).toBeAttached();
   await expectSelectors(page, 'unlocked');
@@ -123,12 +133,15 @@ test('locks for a file that names no tribe or gender', async ({ page }) => {
 test('ignores a lock that a build before 5.12.7 left in storage', async ({ page }) => {
   // Up to 5.12.6 the lock was saved with the swatch config and outlived the
   // file, so the tool opened on the drop zone over two disabled selectors.
-  // This replays the original report (PR #204).
+  // This replays the original report (PR #204). The seeded hairColors is what
+  // shows CLAN & GENDER, so no Hair click after this reload; the migration
+  // marker keeps the one-time v3 move from replacing that sheet.
   await page.addInitScript(() => {
     localStorage.setItem(
       'xivdyetools_v4_config_swatch',
       JSON.stringify({ colorSheet: 'hairColors', fileProvided: true })
     );
+    localStorage.setItem('xivdyetools_swatch_v3_migrated', 'true');
   });
   await page.reload();
   await waitForAppReady(page);

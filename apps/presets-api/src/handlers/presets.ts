@@ -24,6 +24,7 @@ import {
   forbiddenResponse,
   notFoundResponse,
 } from '../utils/api-response.js';
+import { readJsonObject } from '../utils/request-body.js';
 import {
   getPresets,
   getFeaturedPresets,
@@ -493,7 +494,9 @@ presetsRouter.delete('/:id', async (c) => {
  *
  * The edit's fields are always applied; this decides only the `status` column
  * and the moderator notification. "New text" = the name or description
- * actually changed, or the text sent just tripped moderation.
+ * actually changed, or the text sent just tripped moderation. Since BUG-065
+ * only changed text is moderated, so the second implies the first; both are
+ * kept so this rule does not depend on the caller's gate.
  *
  * | stored     | new text                                     | anything else |
  * |------------|----------------------------------------------|---------------|
@@ -585,11 +588,9 @@ presetsRouter.patch('/:id', async (c) => {
     return forbiddenResponse(c, 'You can only edit your own presets');
   }
 
-  // Parse request body
-  let body: PresetEditRequest;
-  try {
-    body = await c.req.json<PresetEditRequest>();
-  } catch {
+  // Parse request body (BUG-064: `null` or a non-object is a 400, not a TypeError)
+  const body = await readJsonObject<PresetEditRequest>(c);
+  if (!body) {
     return invalidJsonResponse(c);
   }
 
@@ -653,7 +654,15 @@ presetsRouter.patch('/:id', async (c) => {
     (body.name !== undefined && body.name !== preset.name) ||
     (body.description !== undefined && body.description !== preset.description);
 
-  if (body.name || body.description) {
+  // BUG-065 (2026-10-04 deep-dive): moderate only text that changed. This used
+  // to run whenever the request merely carried a name or description, so
+  // stored text re-sent as-is was judged again — and text a moderator approved
+  // after a flag, or any text once no scorer answers (`unscored`), fails
+  // again: `/preset edit name:<same name> tags:x` pulled an approved preset
+  // out of public view (or resubmitted a rejected one) and pinged a moderator
+  // about nothing new. Unchanged text was already judged when it was stored,
+  // so it spends neither a Perspective call nor a text-edit slot.
+  if (textChanged) {
     // FINDING-005: the Perspective call is the scarce resource — its default
     // quota is ~1 QPS — so the per-user cap has to sit in front of it. The
     // flagged-edit cap below cannot do that job: it runs *after* the call, and
@@ -691,7 +700,8 @@ presetsRouter.patch('/:id', async (c) => {
       );
     }
 
-    // Run content moderation on new values
+    // Run content moderation on the text as it will read after this edit —
+    // the pair is judged together even when only one of them changed.
     const nameToCheck = body.name || preset.name;
     const descriptionToCheck = body.description || preset.description;
 
@@ -704,15 +714,27 @@ presetsRouter.patch('/:id', async (c) => {
 
     // FINDING-005: `passed: false` now covers a third outcome —
     // `method: 'perspective_unavailable'`, meaning nobody judged this text. It
-    // is handled here exactly like flagged content: the write-once revert
-    // snapshot is taken, an approved (or rejected) preset moves to `pending`,
-    // and a moderator is notified (subject to the flagged-edit cap below).
+    // is handled here exactly like flagged content: an approved preset's
+    // write-once revert snapshot is taken, an approved (or rejected) preset
+    // moves to `pending`, and a moderator is notified (subject to the
+    // flagged-edit cap below).
     if (!moderationResult.passed) {
       flaggedByThisEdit = true;
       // BUG-052 (2026-07-18 audit): write-once snapshot — only capture
       // previous_values when none exists yet, so successive flagged edits
       // can't overwrite the oldest known-good state (the revert target).
-      if (!preset.previous_values) {
+      //
+      // BUG-003 follow-up (2026-10-04 deep-dive): and only from an APPROVED
+      // preset, because a revert restores the snapshot AND approves it. A
+      // pending preset's text has not been approved, a rejected one's was
+      // refused, and a flagged one's is out of public view by a moderator's
+      // decision — snapshotting any of them armed a Revert that would publish
+      // that text. Nor does a later approval disarm it: only a revert clears
+      // previous_values, so a rejected preset resubmitted, approved and then
+      // edited again offered "Revert" to the rejected text. A non-approved
+      // preset neither creates nor overwrites a snapshot; one it already
+      // holds (a row written before this rule) is left as it is.
+      if (preset.status === 'approved' && !preset.previous_values) {
         previousValues = {
           name: preset.name,
           description: preset.description,
@@ -846,6 +868,31 @@ presetsRouter.patch('/:id', async (c) => {
   if (notifiesModerators && editedRow && editedRow.status === 'pending') {
     const editPayload: PresetNotificationPayload = {
       type: 'submission',
+      // BUG-003: lets discord-worker post this as an edit (diff + Revert) rather
+      // than as a new preset. The diff base is `edited_from` below; the revert
+      // target, previous_values, rides in the preset spread.
+      is_edit: true,
+      // BUG-003 follow-up: the status before this edit, since `preset.status`
+      // below is 'pending' for every notifying edit. Revert approves
+      // previous_values, which is only safe to offer when the preset was
+      // approved (see the field's TSDoc). `preset` is this request's first
+      // read, and it is still the pre-edit status: a status change bumps
+      // content_revision (migration 0014's trigger), so a status that moved
+      // after that read would have failed the revision-bound UPDATE above.
+      edited_from_status: preset.status,
+      // Sprint 9: the text this edit replaced — the moderator's diff base.
+      // previous_values cannot be one: a pending or rejected preset's edit
+      // never creates it (so there is usually none), and the write-once
+      // snapshot can be older than this text. Taken from
+      // the same first read for the same reason as the status above: a name,
+      // description, tags or dyes change also bumps content_revision, so the
+      // UPDATE succeeding proves this is exactly the text it overwrote.
+      edited_from: {
+        name: preset.name,
+        description: preset.description,
+        tags: preset.tags,
+        dyes: preset.dyes,
+      },
       preset: {
         // One read supplies both the text and the revision, so the buttons are
         // bound to exactly the text the embed shows.
@@ -962,11 +1009,9 @@ presetsRouter.post('/', async (c) => {
     );
   }
 
-  // Parse request body
-  let body: PresetSubmission;
-  try {
-    body = await c.req.json<PresetSubmission>();
-  } catch {
+  // Parse request body (BUG-064: `null` or a non-object is a 400, not a TypeError)
+  const body = await readJsonObject<PresetSubmission>(c);
+  if (!body) {
     return invalidJsonResponse(c);
   }
 
@@ -1076,6 +1121,7 @@ presetsRouter.post('/', async (c) => {
   // payload's status always matches the read it came from.
   const submissionPayload: PresetNotificationPayload | null = submittedRow && submittedRow.status === status ? {
     type: 'submission',
+    is_edit: false, // BUG-003: a brand-new preset, not an edit
     preset: {
       ...rowToPreset(submittedRow, c.get('logger')),
       content_revision: submittedRow.content_revision,

@@ -612,6 +612,118 @@ describe('Callback Handler', () => {
             expect(json.error).toBe('Invalid request body');
         });
 
+        // BUG-056 / BUG-055: JSON `null` parses fine and passed every guard,
+        // then the destructure threw and onError answered 500.
+        it.each(['null', 'true', '123', '"str"'])(
+            'should reject the non-object JSON body %s with 400',
+            async (raw) => {
+                const response = await SELF.fetch('http://localhost/auth/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: raw,
+                });
+
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status).toBe(400);
+                expect(json.success).toBe(false);
+                expect(json.error).toBe('Invalid request body');
+            }
+        );
+
+        // BUG-149 (oauth half): a text/plain body skipped worker-kit's
+        // depth / prototype-pollution guard because that only inspects JSON.
+        it.each(['text/plain', 'application/x-www-form-urlencoded'])(
+            'should reject a non-empty body sent as %j with 415',
+            async (contentType) => {
+                const response = await SELF.fetch('http://localhost/auth/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': contentType },
+                    body: JSON.stringify({ code: 'x', code_verifier: VALID_CODE_VERIFIER }),
+                });
+
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status).toBe(415);
+                expect(json.success).toBe(false);
+                expect(typeof json.error).toBe('string');
+            }
+        );
+
+        // Pins the exact media-type comparison: a substring or prefix test
+        // would let these through.
+        it.each(['text/json', 'application/jsonx', 'application/json-seq'])(
+            'should reject the near-miss media type %j with 415',
+            async (contentType) => {
+                const response = await SELF.fetch('http://localhost/auth/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': contentType },
+                    body: JSON.stringify({ code: 'x', code_verifier: VALID_CODE_VERIFIER }),
+                });
+
+                expect(response.status).toBe(415);
+            }
+        );
+
+        // A lying `Content-Length: 0` must not hide a real body from the gate.
+        it('should not trust Content-Length: 0 over a present body', async () => {
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain', 'Content-Length': '0' },
+                body: JSON.stringify({ code: 'x', code_verifier: VALID_CODE_VERIFIER }),
+            });
+
+            expect(response.status).toBe(415);
+        });
+
+        it('should not apply the 415 gate to other routes', async () => {
+            const response = await SELF.fetch('http://localhost/auth/revoke', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: 'x',
+            });
+
+            expect(response.status).not.toBe(415);
+        });
+
+        // The plan keeps arrays on the old message; only non-objects are
+        // "Invalid request body".
+        it.each(['[]', '[1]'])('should keep the array body %s on Missing code or code_verifier', async (raw) => {
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: raw,
+            });
+
+            expect(response.status).toBe(400);
+            expect(((await response.json()) as Record<string, any>).error).toBe(
+                'Missing code or code_verifier'
+            );
+        });
+
+        it('should accept application/json in any case and with parameters', async () => {
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'Application/JSON; charset=utf-8' },
+                body: JSON.stringify({ code_verifier: VALID_CODE_VERIFIER }),
+            });
+
+            expect(response.status).toBe(400);
+            expect(((await response.json()) as Record<string, any>).error).toBe(
+                'Missing code or code_verifier'
+            );
+        });
+
+        it('should not apply the 415 gate to an empty body', async () => {
+            const response = await SELF.fetch('http://localhost/auth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+            });
+
+            expect(response.status).toBe(400);
+            expect(((await response.json()) as Record<string, any>).error).toBe('Invalid request body');
+        });
+
         it('should require code in body', async () => {
             const response = await SELF.fetch('http://localhost/auth/callback', {
                 method: 'POST',

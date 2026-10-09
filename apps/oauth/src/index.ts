@@ -14,7 +14,7 @@ import { checkRateLimit, getClientIp, oauthRateLimitTiers } from './services/rat
 import { validateEnv, logValidationErrors } from './utils/env-validation.js';
 import { requestIdMiddleware, getRequestId, loggerMiddleware, getLogger } from '@xivdyetools/worker-kit';
 import type { MiddlewareVariables } from '@xivdyetools/worker-kit';
-import { bodySizeLimit, jsonDepthLimit } from './middleware/body-validation.js';
+import { bodySizeLimit, jsonDepthLimit, requireJsonContentType } from './middleware/body-validation.js';
 import { getAllowedRedirectOrigins } from './constants/oauth.js';
 
 // Define context variables type
@@ -181,7 +181,10 @@ app.use('*', async (c, next) => {
 // is bound, per-isolate memory otherwise.
 app.use('/auth/*', async (c, next) => {
   const clientIp = getClientIp(c.req.raw);
-  const path = new URL(c.req.url).pathname;
+  // BUG-007: key and tier on the decoded path Hono routes on, not the wire
+  // spelling — `/auth/%63allback` reaches the callback handler, so it must
+  // share the callback's bucket and limit.
+  const path = c.req.path;
 
   // FINDING-003: native rate-limit bindings first, KV (TOKEN_BLACKLIST) as fallback
   const result = await checkRateLimit(clientIp, path, {
@@ -232,6 +235,10 @@ app.use('/auth/*', async (c, next) => {
 
 // SEC-004: Reject oversized request bodies (10KB limit — OAuth payloads are small)
 app.use('/auth/*', bodySizeLimit);
+
+// BUG-149: a JSON-parsing callback must be sent as JSON, or the guard below
+// never looks at the body
+app.use('/auth/*', requireJsonContentType);
 
 // SEC-003: Validate JSON depth and structure on mutation requests
 app.use('/auth/*', jsonDepthLimit);

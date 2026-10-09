@@ -56,15 +56,6 @@ export const ICON_CRYSTAL = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 </svg>`;
 
 /**
- * Warning icon - Triangle with exclamation
- */
-export const ICON_WARNING = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M12 3L2 21h20L12 3Z" />
-  <line x1="12" y1="9" x2="12" y2="13" />
-  <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="none" />
-</svg>`;
-
-/**
  * Dice icon - Random selection
  */
 export const ICON_DICE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -154,14 +145,6 @@ export const ICON_SLIDERS = `<svg viewBox="0 0 24 24" fill="none" stroke="curren
 export const ICON_MUSIC = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
   <circle cx="8" cy="18" r="4"/>
   <path d="M12 18V2l7 4"/>
-</svg>`;
-
-/**
- * Stairs icon - Staircase/steps (for interpolation)
- */
-export const ICON_STAIRS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M4 20h4v-4h4v-4h4v-4h4"/>
-  <path d="M4 20v-4h4v-4h4v-4h4v-4h4"/>
 </svg>`;
 
 /**

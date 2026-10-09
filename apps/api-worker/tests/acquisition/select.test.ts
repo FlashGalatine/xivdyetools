@@ -3,6 +3,7 @@ import type { Cost, Entry, Inputs, Offer, Shop, Tables } from '../../scripts/acq
 import { overrideLine, selectEntries, type Selection } from '../../scripts/acquisition/select.js';
 import { collectSources } from '../../scripts/acquisition/sources.js';
 import { emptyInputs, emptyTables, npc } from './helpers.js';
+import { formatEntries } from '../../scripts/acquisition/format.js';
 
 const ITEM = 100;
 
@@ -17,6 +18,37 @@ function offer(s: Shop, costs: Cost[], unknownCosts = false): Offer {
 function select(inputs: Inputs, tables: Tables = emptyTables()): Selection {
   return selectEntries(collectSources(ITEM, inputs), inputs, tables);
 }
+
+describe('coffer acquisition', () => {
+  it('follows a coffer vendor, excluding repurchase and seasonal offers', () => {
+    const inputs = emptyInputs();
+    inputs.containers.set(1, [33838]);
+    inputs.npcs.set(10, npc(10, 'Enie', 'The Firmament'));
+    inputs.npcs.set(11, npc(11, 'Calamity salvager', 'Old Gridania'));
+    inputs.items.set(33870, { name: 'Fête Token', plural: 'Fête Tokens', uiCategory: 100 });
+    inputs.offers.set(33838, [
+      { shop: { id: 1, name: '', npcIds: [11], festival: false }, costs: [], unknownCosts: false },
+      { shop: { id: 2, name: '', npcIds: [10], festival: true }, costs: [], unknownCosts: false },
+      { shop: { id: 3, name: '', npcIds: [10], festival: false }, costs: [{ itemId: 33870, amount: 50 }], unknownCosts: false },
+    ]);
+    const tables = emptyTables();
+    const result = selectEntries(collectSources(1, inputs), inputs, tables);
+    expect(formatEntries(result.entries, inputs, tables)).toBe('Enie - Ishgard - The Firmament (50 Fête Tokens)');
+    expect(result.dropped).toEqual(['repurchaseShop', 'seasonalShop']);
+  });
+
+  it('keeps reviewed random coffer sources only when they are the only source', () => {
+    const inputs = emptyInputs();
+    const tables = emptyTables();
+    inputs.containers.set(1, [30271]);
+    tables.cofferSources.set(30271, { line: 'Lizbeth - Ishgard - The Firmament (Kupo of Fortune)', random: true });
+    expect(formatEntries(selectEntries(collectSources(1, inputs), inputs, tables).entries, inputs, tables)).toBe('Lizbeth - Ishgard - The Firmament (Kupo of Fortune)');
+    inputs.onlineStore.add(1);
+    const result = selectEntries(collectSources(1, inputs), inputs, tables);
+    expect(formatEntries(result.entries, inputs, tables)).toBe('FFXIV Online Store');
+    expect(result.dropped).toContain('gachaNotOnlySource');
+  });
+});
 
 const kinds = (entries: Entry[]): string[] => entries.map((e) => e.kind);
 
@@ -317,6 +349,35 @@ describe('vendor choice', () => {
 });
 
 describe('overrideLine', () => {
+  it.each([
+    'Sword of the First Light',
+    'The Book of First Light',
+    'Word of the Radiant',
+    'Sacramental Sword',
+    'The Book of Sacramental Light',
+    'Word of the Blest',
+  ])("maps %s weapons to Pilgrim's Traverse", (name) => {
+    expect(overrideLine(name, "Gladiator's Arm")).toBe("Pilgrim's Traverse");
+  });
+
+  it('keeps First Light accessories and other Templar weapons outside the requested overrides', () => {
+    expect(overrideLine('Earrings of the First Light', 'Earrings')).toBeNull();
+    expect(overrideLine("Templar's Falchion", "Gladiator's Arm")).toBeNull();
+  });
+
+  it.each(['Chain Coif', 'Haubergeon', 'Vambraces', 'Skirt', 'Sollerets'])(
+    "maps Templar's %s to Dzemael Darkhold",
+    (piece) => {
+      expect(overrideLine(`Templar's ${piece}`)).toBe('Dzemael Darkhold');
+    },
+  );
+
+  it.each(['Great Shin-Zantetsuken', 'Shin-Zantetsuken'])(
+    'maps %s to Baldesion Arsenal',
+    (name) => {
+      expect(overrideLine(name)).toBe('Baldesion Arsenal');
+    },
+  );
   it("writes every Emperor's New item as Goberin in Vesper Bay (Mar 2026 reminders)", () => {
     expect(overrideLine("Emperor's New Robe")).toBe('Goberin - Western Thanalan - Vesper Bay');
     expect(overrideLine("Emperor's New Gloves")).toBe('Goberin - Western Thanalan - Vesper Bay');

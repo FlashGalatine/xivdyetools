@@ -33,7 +33,7 @@ heading, it is given in brackets.
 | **Community Presets** (app title: *Preset Palettes*) | [Guide](web-app/community-presets.md) | Browse community dye palettes |
 | **Budget Suggestions** | [Guide](web-app/budget-suggestions.md) | Find affordable dye alternatives |
 | **Swatch Matcher** | [Guide](web-app/swatch-matcher.md) | Match character colors to dyes |
-| **Glamour Reader** | [Tools reference](../projects/web-app/tools.md#10-glamour-reader--design-1a1b--export-sheet-2c) | Read a character file as a glamour: verdict, twins, and the GPOSERS list with acquisition lines |
+| **Glamour Reader** | [Guide](web-app/glamour-reader.md) | Read a character file as a glamour: verdict, twins, and the GPOSERS list with acquisition lines |
 
 ### Features
 
@@ -67,7 +67,7 @@ heading, it is given in brackets.
 ### Saving Your Work
 
 - **Favorites**: Star individual dyes you love, straight from the Color Palette drawer
-- **Saved palettes**: Written by a tool's own Save action — **Save mix** in the Dye Mixer, **Save swap** in Budget Suggestions, **Save character colors** or **Make a palette** in the Swatch Matcher. They are records of something you built, not folders you file dyes into by hand
+- **Saved palettes**: Written by a tool's own Save action — **Save mix** in the Dye Mixer, **Save swap** in Budget Suggestions, **Save character colors** in the Swatch Matcher, **Make a palette** in the Glamour Reader. They are records of something you built, not folders you file dyes into by hand
 - **Presets**: Browse and save community-created palettes
 
 ### Getting Help

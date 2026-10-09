@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "将角色的颜色与 `.chara` 文件（Anamnesis 或 Ktisis）中的染剂进行匹配。\n• 读取皮肤、头发、挑染、眼睛、嘴唇、彩绘和纹身/角膜环\n• `slot`：显示其中一种颜色的 5 个最接近的染剂"
+      "description": "将角色的颜色与 `.chara` 文件（Anamnesis、Ktisis 或 Brio）中的染剂进行匹配。\n• 读取皮肤、头发、挑染、眼睛、嘴唇、面妆和刺青/瞳孔轮廓\n• `slot`：显示其中一种颜色的 5 个最接近的染剂"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "列出 `.chara` 文件（Anamnesis 或 Ktisis）所穿戴的幻化。\n• 每件已染色装备，以实际能穿戴的物品命名\n• GPOSERS 格式的完整列表，可直接复制"
+      "description": "列出 `.chara` 文件（Anamnesis、Ktisis 或 Brio）所穿戴的幻化。\n• 每件已染色装备，以实际能穿戴的物品命名\n• GPOSERS 格式的完整列表，可直接复制"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -143,7 +143,7 @@
       "autocomplete": "**自动补全：** 开始输入染剂名称，建议将自动显示！",
       "hexColors": "**十六进制颜色：** 使用标准网页格式如 `#FF0000`（红色）或 `#5865F2`（蓝紫色）",
       "dyeNames": "**染剂名称：** 输入部分名称 - 「达拉」可以找到「达拉加布红」",
-      "facewearExcluded": "**面部装备：** 面部装备颜色（如「红色」、「蓝色」）不是染剂，不会出现在结果中",
+      "facewearExcluded": "**面部配饰：** 面部配饰颜色（如「红色」、「蓝色」）不是染剂，不会出现在结果中",
       "links": "**链接：**"
     }
   },
@@ -229,6 +229,7 @@
     "randomTitle": "随机预设",
     "notEnoughDyes": "预设需要至少3种染剂。",
     "invalidDye": "找不到指定的染剂之一。",
+    "repeatedDye": "**{dye}** 在此预设中出现了多次。每种染剂只能使用一次。",
     "duplicateExists": "已存在类似预设",
     "duplicateVoted": "您的投票已添加到现有预设。",
     "submitted": "预设已提交！",
@@ -588,9 +589,9 @@
     "slotHl": "挑染",
     "slotEyes": "眼睛",
     "slotLip": "嘴唇",
-    "slotPaint": "彩绘",
-    "slotTattoo": "纹身",
-    "slotLimbal": "角膜环",
+    "slotPaint": "面妆",
+    "slotTattoo": "刺青",
+    "slotLimbal": "瞳孔轮廓",
     "offGridShort": "网格外",
     "swatchFootKey_one": "按ΔE2000最近 · 共{n}个部位中{s}个",
     "swatchFootKey_other": "按ΔE2000最近 · 共{n}个部位中{s}个",
@@ -599,9 +600,24 @@
     "swatchGear": "装备染剂：{list}",
     "swatchDropped": "已省略（最接近的匹配）：{slot} · ΔE {de}",
     "swatchParseError": "无法读取文件 — {message}",
+    "charaFileReason": {
+      "tooLarge": "大小超过 {mb} MB",
+      "notOnDiscord": "必须上传到 Discord",
+      "downloadFailed": "下载失败（HTTP {status}）",
+      "unreadable": "不是机器人可读取的 .chara 文件"
+    },
     "swatchTitle": "角色色板",
     "swatchNoSlots": "此文件中没有有效的颜色部位。",
     "swatchSlotMissing": "{slot}在此文件中不是有效部位。",
+    "swatchSlotName": {
+      "skin": "皮肤",
+      "hair": "头发",
+      "highlights": "挑染",
+      "eyes": "眼睛",
+      "lip": "嘴唇",
+      "facepaint": "面妆",
+      "limbal": "刺青 / 瞳孔轮廓"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "幻化",
     "glamourPieces_one": "已染色 {n} 件",
@@ -611,7 +627,8 @@
     "glamourDyes_one": "{n} 种染剂",
     "glamourDyes_other": "{n} 种染剂",
     "glamourNoDyes": "未染色",
-    "glamourLooks": "+{n} 同款",
+    "glamourLooks_one": "+{n} 同款",
+    "glamourLooks_other": "+{n} 同款",
     "glamourOneLook": "唯一",
     "glamourStatusTwin": "替代",
     "glamourStatusOk": "正常",
@@ -687,7 +704,7 @@
       },
       "characterFile": {
         "name": "角色文件",
-        "body": "/swatch 读取来自 Anamnesis 或 Ktisis 的 .chara 导出文件：颜色部位（皮肤、头发、挑染、眼睛、嘴唇、彩绘、纹身/角膜环）和穿戴装备的染色。文件仅为生成回复读取一次，不会保存。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。"
+        "body": "/swatch 和 /glamour 读取来自 Anamnesis、Ktisis 或 Brio 的 .chara 导出文件。文件仅为生成回复读取一次，不会保存。\n\n/swatch 将颜色部位（皮肤、头发、挑染、眼睛、嘴唇、面妆、刺青/瞳孔轮廓）与染剂匹配，并列出穿戴装备的染色。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。\n\n/glamour 列出每件穿戴的装备及其染剂。同一个模型可以对应多件物品，这些物品互为同外观装备（「+N 同款」）。每件装备都以这个角色能穿戴并能使用这些染剂的物品命名：如果保存的物品无法使用这些染剂、无法用于幻化或无法穿戴，就改用一件符合条件的同外观装备命名，并标为「替代」。无需修改的装备会显示「正常」。同外观装备由机器人自行选择，优先选能使用染剂的；回复末尾链接的网页版幻化查看器可以让你改选其他的。没有同外观装备可以解决的装备会显示原因：「无法染色」、「无法幻化」、「无法穿戴」（或唯一能穿戴它的种族名称），或用短横线（—）表示没有对应物品的模型。嵌入内容以 GPOSERS 格式列出每件装备，可直接复制。其标签和 Acquisition 行在所有语言中均为英文；Acquisition 行若为空白，表示来源未知，需要你自己补上。"
       }
     }
   },
@@ -816,7 +833,7 @@
       "description": "将角色文件的颜色匹配到最接近的染剂",
       "options": {
         "file": {
-          "description": ".chara 角色文件（Anamnesis 或 Ktisis 导出）"
+          "description": ".chara 角色文件（Anamnesis、Ktisis 或 Brio 导出）"
         },
         "order": {
           "description": "行的排列顺序——两种顺序显示的都是相同的五行"
@@ -830,7 +847,7 @@
       "description": "将角色文件作为幻化读取：每件装备、染剂，以及能否穿戴",
       "options": {
         "file": {
-          "description": ".chara 角色文件（Anamnesis 或 Ktisis 导出）"
+          "description": ".chara 角色文件（Anamnesis、Ktisis 或 Brio 导出）"
         }
       }
     },
@@ -1136,10 +1153,10 @@
               "description": "/extractor color 的默认匹配数量（1-10）"
             },
             "clan": {
-              "description": "/swatch 的默认部族（如中原之民、晨曦之民）"
+              "description": "您的部族（随偏好设置保存，目前尚无命令读取）"
             },
             "gender": {
-              "description": "/swatch 的默认性别"
+              "description": "您的性别（随偏好设置保存，目前尚无命令读取）"
             },
             "world": {
               "description": "市场价格所用的默认服务器/大区"

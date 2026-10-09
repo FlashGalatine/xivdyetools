@@ -8,14 +8,16 @@
  *   across head/body/hands/legs/feet, and rings carry both FingerL+FingerR.
  * - Ambiguity is a feature of the data: 35% of keys are families of visually
  *   identical items (Augmented / Replica / +1 / role variants). The lowest
- *   row_id names the row; the rest ride along as alternates. Never strip
- *   prefixes — the naming is inconsistent across languages.
+ *   eligible row_id names the row; the rest ride along as alternates.
+ *   Unobtainable English item families are filtered before naming or checks;
+ *   a family with nothing else is still named, from every row, as `retired`.
  * - Off-hands resolve THROUGH the main hand: if the off-hand key equals the
  *   main-hand item's `ModelSub` (quiver, focus, fist pair…) or the main-hand
  *   key itself (Anamnesis sometimes writes MainHand twice), it IS the main
  *   weapon. Only then is a genuine `OffHand` lookup used (shields). Never
  *   search ModelSub first — one aetherotransformer key matches 347 guns.
- * - No rows → `null` ("no item row"), never an error.
+ * - No rows → `null` ("no item row"), never an error. Retired rows alone are
+ *   not "no rows": they name the item, flagged `retired`.
  * - ko/zh merge from the build-time tables, EN fallback per item by omission.
  */
 
@@ -34,7 +36,7 @@ import type {
 } from './types.js';
 import { lookupKey } from './types.js';
 import { regionalNames } from './regional-names.js';
-import { acquisitionFor } from './acquisition.js';
+import { acquisitionFor, facewearAcquisitionFor } from './acquisition.js';
 
 /** Alternates carried per row — the badge says `+N`; the tooltip lists these. */
 export const MAX_ALTERNATES = 8;
@@ -81,8 +83,26 @@ function withAcquisition(rowId: number): { acquisition?: string } {
   return acquisition ? { acquisition } : {};
 }
 
+/** English client names identify retired families regardless of display language. */
+function selectableItem(row: ItemRow): boolean {
+  if (/^(Aetherial|Deepmist)\b/.test(row.names.en)) return false;
+  return !(/^Dated\b/.test(row.names.en) && row.levelEquip !== null && row.levelEquip <= 50);
+}
+
 /**
- * Lowest row_id names the item; the rest are alternates, row_id ascending.
+ * The rows that name a family: its eligible rows, or — when every row is
+ * retired — all of them, flagged. The player is wearing a real item either
+ * way, so a retired family is named rather than answered as "no item row"
+ * (2026-10-09 merge-day review). Off-hand pairing reads the same set.
+ */
+function namingRows(rows: readonly ItemRow[]): { rows: ItemRow[]; retired: boolean } {
+  const eligible = rows.filter(selectableItem);
+  if (eligible.length > 0 || rows.length === 0) return { rows: eligible, retired: false };
+  return { rows: [...rows], retired: true };
+}
+
+/**
+ * Lowest eligible row_id names the item; the rest are alternates, row_id ascending.
  * The in-game rules cover the WHOLE family, so the capped alternates name the
  * lowest row of every rule set first and fill the rest in row order: a twin
  * that passes the check is always one the reader can name, however many
@@ -91,10 +111,13 @@ function withAcquisition(rowId: number): { acquisition?: string } {
  * name it sits under.
  */
 export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
-  if (rows.length === 0) return null;
-  const sorted = [...rows].sort((a, b) => a.rowId - b.rowId);
+  const naming = namingRows(rows);
+  const sorted = naming.rows.sort((a, b) => a.rowId - b.rowId);
+  if (sorted.length === 0) return null;
   const primary = sorted[0];
-  const rules = groupCharaTwinRules(sorted.map((r) => ({ rowId: r.rowId, rules: r.rules ?? null })));
+  const rules = groupCharaTwinRules(
+    sorted.map((r) => ({ rowId: r.rowId, rules: r.rules ?? null })),
+  );
   const chosen = new Set<number>();
   for (const id of rules.map((g) => g.itemIds[0])) {
     if (id !== primary.rowId && chosen.size < MAX_ALTERNATES) chosen.add(id);
@@ -118,12 +141,19 @@ export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
     viaMainHand: false,
     rules,
     ...withAcquisition(primary.rowId),
+    ...(naming.retired ? { retired: true as const } : {}),
   };
 }
 
 export function pickGlasses(row: GlassesRow | null): ResolvedGlasses | null {
   if (!row) return null;
-  return { id: row.rowId, names: { ...row.names }, iconId: row.iconId };
+  const acquisition = facewearAcquisitionFor(row.rowId);
+  return {
+    id: row.rowId,
+    names: { ...row.names },
+    iconId: row.iconId,
+    ...(acquisition ? { acquisition } : {}),
+  };
 }
 
 export type RowSource = (lookup: SlotLookup) => readonly ItemRow[];
@@ -155,7 +185,7 @@ export function resolveCharaEquipment(
     if (slot === 'OffHand') {
       const pairedWithMain =
         mainItem !== null &&
-        (key === mainKey || mainRows.some((r) => r.modelSub === key));
+        (key === mainKey || namingRows(mainRows).rows.some((r) => r.modelSub === key));
       items.OffHand = pairedWithMain
         ? { ...mainItem, viaMainHand: true }
         : pickItem(rowsFor({ field: CHARA_SLOT_SEARCH_FIELD.OffHand, key }));

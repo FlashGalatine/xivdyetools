@@ -50,6 +50,15 @@ describe('Translator', () => {
       expect(t.tc('preset.cardVotes', 2)).toBe('2 votes');
     });
 
+    // CLDR French has a third category: `many` for exact millions. No locale
+    // file carries a `_many` form, so a million votes must borrow `_other`
+    // rather than drop to the bare key, which has no plural text at all.
+    it('fr: a million resolves through the missing _many form to _other', () => {
+      const t = createTranslator('fr');
+      expect(new Intl.PluralRules('fr').select(1_000_000)).toBe('many');
+      expect(t.tc('preset.cardVotes', 1_000_000)).toBe('1000000 votes');
+    });
+
     // CLDR German `one` = i = 1, exactly like English — 0 is `other`.
     it('de: count 0 resolves to the _other form ("0 Stimmen")', () => {
       const t = createTranslator('de');

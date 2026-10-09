@@ -226,6 +226,7 @@ describe('preview-image button handlers', () => {
           embeds: [
             {
               title: 'Preview image awaiting review',
+              description: '**My Preset**',
               image: { url: 'https://shots.xivdyetools.app/p1/abc.webp' },
               footer: { text: `ID: ${PRESET_ID}` },
             },
@@ -241,16 +242,123 @@ describe('preview-image button handlers', () => {
         'channel-mod',
         'msg-1',
         expect.objectContaining({
-          embeds: expect.arrayContaining([
+          embeds: [
             expect.objectContaining({
               title: 'Preview image awaiting review',
               image: { url: 'https://shots.xivdyetools.app/p1/abc.webp' },
-              footer: expect.objectContaining({ text: expect.stringContaining('<@mod-1>') }),
+              // BUG-041: the preset id survives the edit; the outcome moves to
+              // the description, where it is readable rather than a dead <@id>
+              description: '**My Preset**\n\nPreview image approved by Moderator',
+              footer: { text: `ID: ${PRESET_ID}` },
             }),
-          ]),
+          ],
           components: [],
         }),
       );
+    });
+
+    // BUG-041 / FINDING-008: a footer does not resolve mentions, so `<@id>`
+    // rendered as raw text; and the edit replaced `ID: <presetId>`.
+    it('never renders the moderator as a <@id> mention', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({
+        success: true,
+        preview_image_status: 'approved',
+      });
+      vi.mocked(discordApi.editMessage).mockResolvedValue(new Response(null, { status: 200 }));
+
+      await handlePreviewImageButton(
+        {
+          id: 'int-1',
+          token: 'token-1',
+          application_id: 'app-123',
+          channel_id: 'channel-mod',
+          data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
+          member: { user: { id: '123456789012345678', username: 'Moderator' } },
+          message: { id: 'msg-1', embeds: [{ title: 'Preview image awaiting review' }] },
+        },
+        env,
+        ctx,
+      );
+      await vi.mocked(ctx.waitUntil).mock.calls[0][0];
+
+      const body = vi.mocked(discordApi.editMessage).mock.calls[0][3];
+      expect(JSON.stringify(body)).not.toContain('<@');
+      expect(body.embeds![0]).toMatchObject({
+        description: 'Preview image approved by Moderator',
+        footer: { text: `ID: ${PRESET_ID}` },
+      });
+    });
+
+    // FINDING-019: the moderator's Discord name is user-controlled text
+    it('sanitises the moderator name (mentions defused, markdown escaped)', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({
+        success: true,
+        preview_image_status: 'none',
+      });
+      vi.mocked(discordApi.editMessage).mockResolvedValue(new Response(null, { status: 200 }));
+
+      await handlePreviewImageButton(
+        {
+          id: 'int-1',
+          token: 'token-1',
+          application_id: 'app-123',
+          channel_id: 'channel-mod',
+          data: { custom_id: `previewimg_reject_${PREVIEW_IMAGE_KEY}` },
+          member: { user: { id: 'mod-1', username: '@everyone <@999> **bold**' } },
+          message: { id: 'msg-1', embeds: [{ title: 'Preview image awaiting review' }] },
+        },
+        env,
+        ctx,
+      );
+      await vi.mocked(ctx.waitUntil).mock.calls[0][0];
+
+      const description = vi.mocked(discordApi.editMessage).mock.calls[0][3].embeds![0].description!;
+      expect(description).toContain('Preview image rejected by');
+      expect(description).not.toContain('@everyone');
+      expect(description).not.toContain('<@999>');
+      expect(description).toContain('\\*\\*bold\\*\\*');
+    });
+
+    // A refresh by an older build replaced the footer with its notice (a
+    // current one appends it to the id line, which is still not the plain
+    // line); the outcome edit must restore the id rather than carry the
+    // notice forward.
+    it('restores the preset id footer on a message whose footer a refresh replaced', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({
+        success: true,
+        preview_image_status: 'approved',
+      });
+      vi.mocked(discordApi.editMessage).mockResolvedValue(new Response(null, { status: 200 }));
+
+      await handlePreviewImageButton(
+        {
+          id: 'int-1',
+          token: 'token-1',
+          application_id: 'app-123',
+          channel_id: 'channel-mod',
+          data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
+          member: { user: { id: 'mod-1', username: 'Moderator' } },
+          message: {
+            id: 'msg-1',
+            embeds: [
+              {
+                title: 'Preview image awaiting review',
+                footer: { text: 'Review the refreshed image before choosing Approve or Reject.' },
+              },
+            ],
+          },
+        },
+        env,
+        ctx,
+      );
+      await vi.mocked(ctx.waitUntil).mock.calls[0][0];
+
+      expect(vi.mocked(discordApi.editMessage).mock.calls[0][3].embeds![0].footer).toEqual({
+        text: `ID: ${PRESET_ID}`,
+      });
     });
 
     it('non-moderator gets a refusal and presets-api is NEVER called', async () => {
@@ -344,7 +452,7 @@ describe('preview-image button handlers', () => {
       expect(discordApi.safeSendFollowUp).toHaveBeenCalled();
     });
 
-    it('falls back to the raw user id in the outcome footer when username is missing', async () => {
+    it('falls back to the raw user id (as plain text) in the outcome when username is missing', async () => {
       vi.mocked(presetApi.isModerator).mockReturnValue(true);
       vi.mocked(presetApi.setPreviewImageStatus).mockResolvedValue({
         success: true,
@@ -370,11 +478,12 @@ describe('preview-image button handlers', () => {
         'channel-mod',
         'msg-1',
         expect.objectContaining({
-          embeds: expect.arrayContaining([
+          embeds: [
             expect.objectContaining({
-              footer: expect.objectContaining({ text: expect.stringContaining('mod-1') }),
+              description: 'Preview image rejected by mod-1 — preset unaffected',
+              footer: { text: `ID: ${PRESET_ID}` },
             }),
-          ]),
+          ],
         }),
       );
     });
@@ -431,6 +540,43 @@ describe('preview-image button handlers', () => {
         { content: STALE_REVIEW_MESSAGE, ephemeral: true },
         undefined,
       );
+    });
+
+    // BUG-041 sibling: the retired message is final — no later edit restores
+    // the footer — so the stale notice joins the `ID: <presetId>` line instead
+    // of replacing it, at the moment the moderator is told to go find the
+    // matching newer notification.
+    it('keeps the preset id in the footer when it retires a stale 409 notification', async () => {
+      vi.mocked(presetApi.isModerator).mockReturnValue(true);
+      vi.mocked(presetApi.setPreviewImageStatus).mockRejectedValue(
+        new PresetAPIError(409, 'Preview image changed'),
+      );
+      vi.mocked(discordApi.editMessage).mockResolvedValue(new Response(null, { status: 200 }));
+      vi.mocked(discordApi.safeSendFollowUp).mockResolvedValue(true);
+      const interaction = {
+        id: 'int-1',
+        token: 'token-1',
+        application_id: 'app-123',
+        channel_id: 'channel-mod',
+        data: { custom_id: `previewimg_approve_${PREVIEW_IMAGE_KEY}` },
+        member: { user: { id: 'mod-1', username: 'Moderator' } },
+        message: {
+          id: 'msg-1',
+          embeds: [
+            { title: 'Preview image awaiting review', footer: { text: `ID: ${PRESET_ID}` } },
+          ],
+        },
+      };
+
+      await handlePreviewImageButton(interaction, env, ctx);
+      await vi.mocked(ctx.waitUntil).mock.calls[0][0];
+
+      const payload = vi.mocked(discordApi.editMessage).mock.calls[0][3];
+      expect(payload.embeds![0]).toEqual({
+        title: 'Preview image awaiting review',
+        footer: { text: `ID: ${PRESET_ID} • ${STALE_REVIEW_MESSAGE}` },
+      });
+      expect(payload.components).toEqual([]);
     });
   });
 });

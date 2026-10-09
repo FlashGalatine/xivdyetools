@@ -45,7 +45,7 @@ A saved palette is a named group of dyes (up to 20) that a tool wrote to your de
 | Tool | Action | What gets saved |
 |------|--------|-----------------|
 | **Dye Mixer** | **Save mix** under the mixing field | Dye A, Dye B and the dye your current blend resolves to, named "A × B" |
-| **Swatch Matcher** | **Make a palette** → **Save to this device** (after loading a `.chara` file) | The 3–6 dyes your character's glamour is wearing |
+| **Glamour Reader** | **Make a palette** → **Save to this device** (after loading a `.chara` file) | The 3–6 dyes your character's glamour is wearing |
 | **Swatch Matcher** | **Save character colors** on the character file card | The closest dye for each of your character's colours (hair, eyes, skin, lips…) |
 | **Budget Suggestions** | **Save swap** on a substitute row | The dye you priced and its cheapest substitute |
 
@@ -55,7 +55,7 @@ Palettes you saved in earlier versions (harmony palettes, older collections) are
 
 Open **Community Presets** and switch to the **Saved** tab. Your device-local palettes are listed there alongside the community presets you have saved, and the search box matches their names. Open one to see the full dye list, its **PALETTE COST**, and the **TAKE THIS PALETTE INTO** row that sends the whole set to Harmony, Comparison, Gradient or Accessibility.
 
-Palettes from the Mixer and Swatch Matcher appear there. Saved swaps and character-colour sets are kept in the same store but do not have their own screen yet.
+Palettes from the Mixer and the Glamour Reader appear there. Saved swaps and character-colour sets are kept in the same store but do not have their own screen yet.
 
 ### Managing Saved Palettes
 
@@ -97,7 +97,7 @@ Anything from a previous version that points at a dye the app can no longer iden
 
 | Habit | How |
 |-------|-----|
-| Outfit projects | Load your character's `.chara` file in the Swatch Matcher and **Save to this device** to keep the glamour's dyes as a palette |
+| Outfit projects | Load your character's `.chara` file in the Glamour Reader and use **Make a palette → Save to this device** to keep the glamour's dyes as a palette |
 | Custom colours | **Save mix** in the Dye Mixer whenever a blend lands on a dye you want to remember |
 | Budget planning | **Save swap** on the substitute you actually intend to buy |
 | Top picks | Star them — 40 favorites is plenty for the dyes you use week to week |
@@ -121,7 +121,8 @@ favourite community presets (`/preset favorite`).
 ## Related Tools
 
 - [Dye Mixer](dye-mixer.md) - Save a blend as a palette
-- [Swatch Matcher](swatch-matcher.md) - Save your character's colours and glamour dyes
+- [Swatch Matcher](swatch-matcher.md) - Save your character's colours
+- [Glamour Reader](glamour-reader.md) - Save your glamour's dyes
 - [Budget Suggestions](budget-suggestions.md) - Save a swap
 - [Community Presets](community-presets.md) - Where the Saved tab lives
 - [All Tools](getting-started.md) - Every tool with a palette drawer supports favorites

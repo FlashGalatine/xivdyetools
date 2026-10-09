@@ -422,6 +422,61 @@ describe('createMockKV', () => {
     });
   });
 
+  // BUG-148: real KV lists keys in lexicographic order and resumes after the
+  // cursor KEY, so a key deleted between pages must not stall the walk.
+  describe('list() ordering and cursor resume', () => {
+    it('returns keys in lexicographic order regardless of insertion order', async () => {
+      const kv = createMockKV();
+      for (const k of ['b', 'c', 'a', 'ab']) await kv.put(k, 'v');
+
+      const page = await kv.list();
+
+      expect(page.keys.map((k) => k.name)).toEqual(['a', 'ab', 'b', 'c']);
+    });
+
+    it('paginates in lexicographic order across pages', async () => {
+      const kv = createMockKV();
+      for (const k of ['d', 'b', 'a', 'c']) await kv.put(k, 'v');
+
+      const page1 = await kv.list({ limit: 2 });
+      const page2 = await kv.list({ limit: 2, cursor: page1.cursor });
+
+      expect(page1.keys.map((k) => k.name)).toEqual(['a', 'b']);
+      expect(page2.keys.map((k) => k.name)).toEqual(['c', 'd']);
+    });
+
+    it('still returns the remaining keys when the cursor key was deleted', async () => {
+      const kv = createMockKV();
+      for (let i = 0; i < 1500; i++) await kv.put(`k${String(i).padStart(4, '0')}`, 'v');
+
+      const page1 = await kv.list();
+      expect(page1.keys).toHaveLength(1000);
+      expect(page1.list_complete).toBe(false);
+      for (const { name } of page1.keys) await kv.delete(name);
+
+      const page2 = await kv.list({ cursor: page1.cursor });
+
+      expect(page2.keys).toHaveLength(500);
+      expect(page2.keys[0].name).toBe('k1000');
+      expect(page2.list_complete).toBe(true);
+    });
+
+    it('resumes past a cursor key that expired between pages', async () => {
+      const kv = createMockKV();
+      await kv.put('a', 'v');
+      await kv.put('b', 'v', { expirationTtl: 60 });
+      await kv.put('c', 'v');
+
+      const page1 = await kv.list({ limit: 2 });
+      expect(page1.keys.map((k) => k.name)).toEqual(['a', 'b']);
+      kv._ttls.set('b', Date.now() / 1000 - 1);
+
+      const page2 = await kv.list({ limit: 2, cursor: page1.cursor });
+
+      expect(page2.keys.map((k) => k.name)).toEqual(['c']);
+    });
+  });
+
   // pkg-worker-kit-test-utils-09: three ways the mock was more permissive than
   // real KV, each of which lets a consumer pass every test and fail in prod.
   describe('put()/get() fidelity', () => {

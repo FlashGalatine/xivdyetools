@@ -15,4 +15,4 @@
 Steps: (1) Delete packages/test-utils/package.json lines 22-25 (the "./auth" block). (2) Point README.md:49 at the root import, drop the README.md:95 table row, and reword CLAUDE.md:11 and the CLAUDE.md:110 heading. (3) Update the import at docs/projects/test-utils/overview.md:159. (4) Add a test-utils CHANGELOG entry. (5) Run pnpm turbo run build type-check lint test --filter=...@xivdyetools/test-utils, then pnpm dead-code:check and pnpm docs:check-links.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `c73b702f` (branch `fix/remediation-2026-10-04-sprint19`, test-utils 3.0.0; PR #274, open).

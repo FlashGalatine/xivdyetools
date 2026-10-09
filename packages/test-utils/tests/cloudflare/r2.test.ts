@@ -398,4 +398,32 @@ describe('createMockR2Bucket', () => {
       expect(new Set(seen).size).toBe(5);
     });
   });
+
+  // BUG-148: lexicographic order and a cursor that survives its key's deletion.
+  describe('list() ordering and cursor resume', () => {
+    it('returns objects in lexicographic key order regardless of insertion order', async () => {
+      const bucket = createMockR2Bucket();
+      for (const k of ['b', 'c', 'a', 'ab']) await bucket.put(k, 'x');
+
+      const page = await bucket.list();
+
+      expect(page.objects.map((o) => o.key)).toEqual(['a', 'ab', 'b', 'c']);
+    });
+
+    it('still returns the remaining objects when the cursor key was deleted', async () => {
+      const bucket = createMockR2Bucket();
+      for (let i = 0; i < 1500; i++) await bucket.put(`k${String(i).padStart(4, '0')}`, 'x');
+
+      const page1 = await bucket.list();
+      expect(page1.objects).toHaveLength(1000);
+      expect(page1.truncated).toBe(true);
+      await bucket.delete(page1.objects.map((o) => o.key));
+
+      const page2 = await bucket.list({ cursor: page1.cursor });
+
+      expect(page2.objects).toHaveLength(500);
+      expect(page2.objects[0].key).toBe('k1000');
+      expect(page2.truncated).toBe(false);
+    });
+  });
 });

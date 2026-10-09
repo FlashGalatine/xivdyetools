@@ -3,7 +3,13 @@
  * `/glamour` bot, so the two write the same lines.
  */
 import { describe, it, expect } from 'vitest';
-import { gposersGroups, gposersSameRings, gposersSlotLabel } from '../chara-gposers.js';
+import {
+  CHARA_DYEABLE_SLOTS,
+  GPOSERS_SLOTS,
+  gposersGroups,
+  gposersSameRings,
+  gposersSlotLabel,
+} from '../chara-gposers.js';
 
 const flat = (input: Parameters<typeof gposersGroups>[0]) =>
   gposersGroups(input).map((g) => g.map((l) => (l.value ? `${l.label} ${l.value}` : l.label)));
@@ -51,5 +57,36 @@ describe('gposersGroups', () => {
   it('names slots in the form’s own English', () => {
     expect(gposersSlotLabel('Wrists')).toBe('Bracelets');
     expect(gposersSlotLabel('HeadGear')).toBe('Head');
+  });
+});
+
+/**
+ * The one dyeable-slot set: the GPOSERS lines above and the web Glamour
+ * Reader's chips both read it, so a membership change here moves both.
+ */
+describe('CHARA_DYEABLE_SLOTS', () => {
+  it('is exactly the seven equipment slots that take dyes, in the form order', () => {
+    expect([...CHARA_DYEABLE_SLOTS]).toEqual([
+      'MainHand',
+      'OffHand',
+      'HeadGear',
+      'Body',
+      'Hands',
+      'Legs',
+      'Feet',
+    ]);
+  });
+
+  it('leaves out the five accessory slots, facewear and the fashion accessory', () => {
+    const undyeable = GPOSERS_SLOTS.filter((slot) => !CHARA_DYEABLE_SLOTS.has(slot));
+    expect(undyeable).toEqual([
+      'Ears',
+      'Neck',
+      'Wrists',
+      'RightRing',
+      'LeftRing',
+      'Facewear',
+      'FashionAccessory',
+    ]);
   });
 });

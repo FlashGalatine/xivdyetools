@@ -49,15 +49,6 @@ export class SubscriptionManager {
   }
 
   /**
-   * Add multiple unsubscribe functions at once.
-   *
-   * @param unsubscribes - Array of unsubscribe functions
-   */
-  addAll(...unsubscribes: Unsubscribe[]): void {
-    this.subscriptions.push(...unsubscribes);
-  }
-
-  /**
    * Call all unsubscribe functions and clear the list.
    * Safe to call multiple times.
    */
@@ -70,20 +61,5 @@ export class SubscriptionManager {
       }
     }
     this.subscriptions = [];
-  }
-
-  /**
-   * Get the current number of tracked subscriptions.
-   * Useful for debugging.
-   */
-  get count(): number {
-    return this.subscriptions.length;
-  }
-
-  /**
-   * Check if there are any active subscriptions.
-   */
-  get hasSubscriptions(): boolean {
-    return this.subscriptions.length > 0;
   }
 }

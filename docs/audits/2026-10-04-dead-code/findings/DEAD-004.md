@@ -15,4 +15,4 @@
 Steps: 1) v4-layout-shell.ts: delete lines 446-783 (the blank line plus .contrast-table-container through the .warning-callout strong rule), keeping the closing backtick at 784. 2) Update the comment header at 425-427 (line 424 closes the mobile @media block). 3) pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app && pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `07c8a22e` (branch `fix/remediation-2026-10-04-sprint5`, web-app 5.14.3; PR #247, open). Pulled forward from Sprint 23: Sprint 5's keyboard-accessible palette drawer (BUG-028) put the layout shell 665 B over its 218 KB budget. Re-verified dead on that tree.

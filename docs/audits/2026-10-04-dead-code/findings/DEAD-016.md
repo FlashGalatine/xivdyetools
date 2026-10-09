@@ -20,4 +20,4 @@ Steps: 1. apps/web-app/src/__tests__/mocks/handlers.ts: delete :162-167 (feature
 Sequencing: Lands in the same pull request as DEAD-013 and DEAD-015, as the commit after them: the handlers mock endpoints whose only callers those two findings remove.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `e5a612b5` (branch `fix/remediation-2026-10-04-sprint4`, web-app 5.14.2; PR #245, open, stacked on #244).

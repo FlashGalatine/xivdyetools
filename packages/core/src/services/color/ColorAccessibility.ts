@@ -65,15 +65,27 @@ export class ColorAccessibility {
   }
 
   /**
-   * Check if a color is light (for determining text color on background)
+   * Check if a color is light (for determining text color on background):
+   * true when black text has a higher WCAG contrast ratio against it than
+   * white text does.
+   *
+   * BUG-134 (2026-10-04 deep-dive): this was `luminance > 0.5`, which called
+   * every color with luminance in (~0.179, 0.5] "dark" and so put white text
+   * on it at the LOWER contrast — #FF8000 got white at 2.5:1 instead of
+   * black at 8.3:1. Comparing the two ratios directly puts the crossover
+   * where they are equal, L = √(1.05 × 0.05) − 0.05 ≈ 0.179 (the same cut
+   * `@xivdyetools/svg`'s getContrastTextColor uses).
    */
   static isLightColor(hex: string): boolean {
     const luminance = this.getPerceivedLuminance(hex);
-    return luminance > 0.5;
+    const contrastWithBlack = (luminance + 0.05) / 0.05;
+    const contrastWithWhite = 1.05 / (luminance + 0.05);
+    return contrastWithBlack > contrastWithWhite;
   }
 
   /**
-   * Get optimal text color for a background color
+   * Get optimal text color for a background color: whichever of black or
+   * white has the higher WCAG contrast ratio against it (see isLightColor).
    */
   static getOptimalTextColor(backgroundColor: string): HexColor {
     return this.isLightColor(backgroundColor)

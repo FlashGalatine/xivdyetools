@@ -3,7 +3,7 @@
  *
  * The request carries only model keys (twelve small integers plus the
  * facewear row) — nothing else from the `.chara` file. The response is one
- * entry per requested slot: the lowest-row_id item on that (slot, model key),
+ * entry per requested slot: the lowest eligible item on that (slot, model key),
  * its names in six languages, its icon id, and the family of visually
  * identical alternates that share the mesh.
  */
@@ -28,12 +28,15 @@ export interface ItemNames {
 }
 
 export interface ResolvedCharaItem {
-  /** Item sheet row_id — the lowest in the family */
+  /** Item sheet row_id — the lowest eligible row in the family (the lowest row when `retired`) */
   itemId: number;
   names: ItemNames;
   /** Icon sheet id for `GET /v1/chara/icon/:iconId`; null when the row has none */
   iconId: number | null;
-  /** Number of Item rows sharing this (slot, model key) — 1 = unique */
+  /**
+   * Item rows sharing this (slot, model key) — 1 = unique. Counts the eligible
+   * rows after retired-row filtering, or the whole family when `retired`.
+   */
   familySize: number;
   /** The other family members, row_id ascending (capped — see MAX_ALTERNATES) */
   alternates: Array<{ itemId: number; names: ItemNames; acquisition?: string }>;
@@ -57,6 +60,13 @@ export interface ResolvedCharaItem {
    * table has none. Describes `itemId` only; each alternate carries its own.
    */
   acquisition?: string;
+  /**
+   * Present (always `true`) only when every row of the family is retired —
+   * Aetherial, Deepmist, or Dated at level 50 or below — so nothing obtainable
+   * shares the look. The item is still named, from the whole family, because
+   * the player is wearing it. Absent whenever an eligible row named the item.
+   */
+  retired?: true;
 }
 
 export interface ResolvedGlasses {
@@ -64,6 +74,8 @@ export interface ResolvedGlasses {
   id: number;
   names: ItemNames;
   iconId: number | null;
+  /** Acquisition of the "The Faces We Wear" Item that unlocks this style and all its colors. */
+  acquisition?: string;
 }
 
 export interface CharaResolveRequest {
@@ -75,7 +87,10 @@ export interface CharaResolveRequest {
 export interface CharaResolveResponse {
   /** XIVAPI game-version key the upstream answered with (null when fully served from cache) */
   version: string | null;
-  /** Requested slots only. `null` = the key has no Item row (NPC / prop model). */
+  /**
+   * Requested slots only. `null` = the key has no Item row at all (NPC / prop
+   * model); a family of only retired rows is named with `retired: true` instead.
+   */
   items: Partial<Record<CharaGearSlotId, ResolvedCharaItem | null>>;
   /** Present only when the request carried a glasses row */
   glasses?: ResolvedGlasses | null;
@@ -94,6 +109,8 @@ export interface ItemRow {
   modelSub: string;
   /** EquipSlotCategory columns set to 1 on this row (rings carry FingerL + FingerR) */
   slots: string[];
+  /** Minimum equipment level; null when the upstream did not provide it. */
+  levelEquip: number | null;
   /** The in-game rules; null when the answer lacked any of their fields */
   rules: CharaItemRules | null;
 }

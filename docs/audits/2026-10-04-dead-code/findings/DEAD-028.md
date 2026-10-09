@@ -20,4 +20,4 @@ Steps: 1. In apps/moderation-worker/src/middleware/rate-limit.ts, delete line 23
 6. Run `pnpm turbo run build type-check lint test --filter=...xivdyetools-moderation-worker`, then `pnpm dead-code:check`.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `667f3ef9` (branch `fix/remediation-2026-10-04-sprint17`, moderation-worker 1.8.1; PR #261, open, on PR #260).

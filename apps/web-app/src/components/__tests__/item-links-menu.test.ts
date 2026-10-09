@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { closeItemLinksMenu, showItemLinksMenu } from '../item-links-menu';
 import type { CharaResolveResult } from '@services/chara-resolve-service';
+import { ModalService } from '@services/modal-service';
+import { KeyboardService } from '@services/keyboard-service';
+import { RouterService } from '@services/router-service';
 
 const { resolveMock } = vi.hoisted(() => ({ resolveMock: vi.fn() }));
 vi.mock('@services/chara-resolve-service', async (importOriginal) => ({
@@ -201,5 +204,88 @@ describe('item link menu focus and keyboard navigation', () => {
     expect(menu()).toBeNull();
     expect(host.shadowRoot?.activeElement).toBe(anchor);
     open.mockRestore();
+  });
+
+  /**
+   * BUG-091: the menu's capture handler consumes only arrows, Home/End and
+   * Escape. Everything else reached KeyboardService, which stands down only
+   * while `hasOpenModals()` is true — so "2" on a focused entry navigated to
+   * another tool and Shift+T flipped the theme behind the open menu.
+   */
+  describe('the page-wide shortcuts (BUG-091)', () => {
+    it('holds them off while the menu is open, a digit included', () => {
+      const navigate = vi.spyOn(RouterService, 'navigateTo').mockImplementation(() => {});
+      KeyboardService.initialize();
+      try {
+        openGear();
+        expect(document.activeElement).toBe(link('mirapri'));
+
+        press('2');
+
+        expect(navigate).not.toHaveBeenCalled();
+        expect(menu()).not.toBeNull();
+        expect(ModalService.hasOpenModals()).toBe(true);
+      } finally {
+        KeyboardService.destroy();
+        navigate.mockRestore();
+      }
+    });
+
+    // A leaked registration would switch every shortcut off until a reload, so
+    // each way the menu closes must hand it back.
+    it.each([
+      ['Escape', () => press('Escape')],
+      ['Tab', () => press('Tab')],
+      ['a click outside', () => outside.click()],
+      ['focus moving outside', () => outside.focus()],
+      ['a page scroll', () => window.dispatchEvent(new Event('scroll'))],
+      ['a resize', () => window.dispatchEvent(new Event('resize'))],
+      ['closeItemLinksMenu (its block re-rendering or going away)', () => closeItemLinksMenu()],
+      [
+        'opening a link',
+        () => {
+          const open = vi.spyOn(window, 'open').mockReturnValue(null);
+          link('teamcraft').click();
+          open.mockRestore();
+        },
+      ],
+    ])('lets them back on when closed by %s', (_how, close) => {
+      openGear();
+      expect(ModalService.hasOpenModals()).toBe(true);
+
+      close();
+
+      expect(menu()).toBeNull();
+      expect(ModalService.hasOpenModals()).toBe(false);
+    });
+
+    it('does not keep the first registration when another row opens it again', () => {
+      openGear();
+      openGear();
+      expect(document.querySelectorAll('[data-role="item-links-menu"]')).toHaveLength(1);
+
+      closeItemLinksMenu();
+
+      expect(ModalService.hasOpenModals()).toBe(false);
+    });
+
+    it('lets them back on even when the caller’s onClose throws', () => {
+      showItemLinksMenu({
+        anchorElement: anchor,
+        title: names.en,
+        target: { kind: 'gear', itemId: 18085, names },
+        onClose: () => {
+          throw new Error('caller bug');
+        },
+      });
+
+      try {
+        closeItemLinksMenu();
+      } catch {
+        // the caller's error is not this test's concern
+      }
+
+      expect(ModalService.hasOpenModals()).toBe(false);
+    });
   });
 });

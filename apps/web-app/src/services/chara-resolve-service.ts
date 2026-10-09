@@ -52,16 +52,27 @@ export interface CharaResolvedItem {
    * 92) / …"). Absent when the worker has none or predates 0.15.0.
    */
   acquisition?: string;
+  /**
+   * Every row of the family is retired (Aetherial, Deepmist, low-level Dated):
+   * nothing obtainable shares the look, but it is still the item the file
+   * wears, named as usual. Absent otherwise, and from a worker that predates it.
+   */
+  retired?: true;
 }
 
 export interface CharaResolvedGlasses {
   id: number;
   names: CharaItemNames;
   iconId: number | null;
+  /** Where to obtain the unlock Item for this facewear style, shared by all colors. */
+  acquisition?: string;
 }
 
 export interface CharaResolveResult {
-  /** Requested slots only. `null` = no Item row (NPC / prop model) — show the key, not an error. */
+  /**
+   * Requested slots only. `null` = no Item row (NPC / prop model) — show the
+   * key, not an error. A retired family is an item with `retired: true`, not null.
+   */
   items: Partial<Record<CharaGearSlotId, CharaResolvedItem | null>>;
   glasses: CharaResolvedGlasses | null;
   version: string | null;
@@ -79,6 +90,24 @@ export class CharaResolveUnavailableError extends Error {
 }
 
 const REQUEST_TIMEOUT_MS = 12_000;
+/**
+ * Model lanes and Glasses rows are uint16 in the game's own struct; api-worker
+ * refuses the whole batch past that (apps/api-worker/src/chara/router.ts LANE_MAX).
+ */
+const LANE_MAX = 0xffff;
+
+function inLane(value: number, min: number): boolean {
+  return Number.isInteger(value) && value >= min && value <= LANE_MAX;
+}
+
+/** Every lane the piece carries fits the game's uint16. */
+function isSendable(model: CharaGearModel): boolean {
+  return (
+    inLane(model.base, 0) &&
+    inLane(model.variant, 0) &&
+    (model.set === undefined || inLane(model.set, 0))
+  );
+}
 
 /** Icon PNG URL for a resolved item / glasses row (api-worker proxy, edge-cached). */
 export function charaIconUrl(iconId: number): string {
@@ -124,8 +153,22 @@ export async function resolveCharaEquipment(
   const cached = sessionCache.get(signature);
   if (cached) return cached;
 
-  const body: { gear: readonly CharaGearModel[]; glasses?: number } = { gear };
-  if (glassesId && glassesId > 0) body.glasses = glassesId;
+  // BUG-116 (2026-10-04 deep-dive): one lane past uint16 (only a hand-edited
+  // or corrupt file has one) made api-worker 400 the whole batch, so every
+  // piece lost its name and the note blamed availability. Such a piece is
+  // left out and answered here as `null`: no Item row can carry that model.
+  const sendable = gear.filter(isSendable);
+  const outOfRange: CharaResolveResult['items'] = {};
+  for (const model of gear) {
+    if (!sendable.includes(model)) outOfRange[model.slot] = null;
+  }
+  const glasses = glassesId !== null && inLane(glassesId, 1) ? glassesId : null;
+  if (sendable.length === 0 && glasses === null) {
+    return { items: outOfRange, glasses: null, version: null };
+  }
+
+  const body: { gear: readonly CharaGearModel[]; glasses?: number } = { gear: sendable };
+  if (glasses !== null) body.glasses = glasses;
 
   const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   const combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
@@ -170,7 +213,7 @@ export async function resolveCharaEquipment(
   }
 
   const result: CharaResolveResult = {
-    items: envelope.data.items,
+    items: { ...outOfRange, ...envelope.data.items },
     glasses: envelope.data.glasses ?? null,
     version: envelope.data.version ?? null,
   };

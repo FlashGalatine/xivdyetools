@@ -18,13 +18,17 @@ import { base64UrlDecode, base64UrlDecodeBytes } from './encoding/index.js';
 import { getOrCreateHmacKey } from './hmac.js';
 
 /**
- * JWT payload structure
+ * JWT payload structure (verifier side)
  *
- * Re-exported from @xivdyetools/types for convenience.
- * Consumers should import from here rather than directly from types.
+ * A deliberately narrower shape than the JWTPayload in @xivdyetools/types:
+ * auth is a Level 0 package and must not depend on types, so this is its own
+ * declaration, not a re-export. It is not derived from the types version
+ * (that would be a layer violation) and the two can differ: here iss,
+ * username, global_name and avatar are optional, and the types-only
+ * auth_provider and discord_id claims are absent.
  */
 export interface JWTPayload {
-  /** Subject - Discord user ID */
+  /** Subject - internal user ID (the oauth service's user.id, not the Discord snowflake) */
   sub: string;
   /** Issued at timestamp (seconds) */
   iat: number;
