@@ -63,6 +63,7 @@ vi.mock('@xivdyetools/bot-logic', async () => ({
 }));
 
 import { executeContrast, resolveColorInput } from '@xivdyetools/bot-logic';
+import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
 import { getUserPreferences } from '../../services/preferences.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
@@ -221,7 +222,7 @@ describe('handleContrastCommand', () => {
       expect(body.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
       await settle();
 
-      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>contrast</svg>', { scale: 2 });
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>contrast</svg>', { scale: 2, locale: 'en' });
       const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
         embeds: { title: string; image: { url: string } }[];
         file: { name: string; contentType: string };
@@ -230,6 +231,15 @@ describe('handleContrastCommand', () => {
       expect(payload.embeds[0].image.url).toBe('attachment://contrast.png');
       expect(payload.file.name).toBe('contrast.png');
       expect(payload.file.contentType).toBe('image/png');
+    });
+
+    it("renders with the user's locale, which picks the CJK font load order (JP first for ja)", async () => {
+      vi.mocked(createUserTranslator).mockResolvedValueOnce(createTranslator('ja') as never);
+
+      await handleContrastCommand(interaction(['Snow White', 'Soot Black']), env, ctx);
+      await settle();
+
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>contrast</svg>', { scale: 2, locale: 'ja' });
     });
 
     it('passes the stored card theme through to bot-logic', async () => {

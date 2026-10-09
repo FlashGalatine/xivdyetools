@@ -19,8 +19,12 @@
  *      since every stack lists all three CJK subsets;
  *   2. every CJK-script codepoint in a `ja` string is in the JP subset — the
  *      whole reason NotoSansJP-Subset exists (Japanese letterforms, not SC's).
- * Surplus CJK glyphs (in a subset, needed by nothing) are reported as a
- * warning with the count: the cue to re-run the subset script.
+ *      A ja card loads JP ahead of SC (`getFontBuffers('ja')`), and that load
+ *      order, not the stack's font-family list, picks the face for a glyph
+ *      Onest lacks — so a codepoint JP carries draws from JP.
+ * Surplus CJK glyphs (in a subset, needed by nothing that subset is cut
+ * from) are reported as a warning with the count: the cue to re-run the
+ * subset script.
  *
  * Compare fonts by cmap, never by md5 — fonttools rewrites `head.modified` on
  * every run, so bytes differ even when coverage is identical.
@@ -215,6 +219,22 @@ function stringsFor(locale: LocaleCode): string[] {
   return out;
 }
 
+/**
+ * FONT-001: the equippable-item names /glamour draws, which `subset-cjk-fonts.py`
+ * also cuts into the subsets — ko / zh (the names api-worker resolves) into SC
+ * and KR, ja (a build-time copy of the XIVAPI names) into JP. Their drawability
+ * is gated by `item-name-coverage.test.ts`; here they only count as NEEDED, so
+ * the surplus report below does not read ~2,000 item-name glyphs as bloat.
+ */
+function itemNameStrings(langs: readonly ('ko' | 'zh' | 'ja')[]): string[] {
+  const dir = join(REPO_ROOT, 'apps', 'api-worker', 'src', 'chara', 'data');
+  return langs.flatMap((lang) =>
+    Object.values(
+      JSON.parse(readFileSync(join(dir, `item-names.${lang}.json`), 'utf-8')) as Record<string, string>,
+    ),
+  );
+}
+
 const fontsDir = join(HERE, '..', 'fonts');
 const font = (name: string): Set<number> =>
   readCmapCodepoints(new Uint8Array(readFileSync(join(fontsDir, name))));
@@ -288,12 +308,18 @@ describe('bundled fonts cover every string the cards can render', () => {
   });
 
   it('reports surplus CJK glyphs in the subsets (bloat, not breakage — a warning)', () => {
-    const needed = new Set<number>();
-    for (const locale of LOCALES) for (const cp of codepointsOf(stringsFor(locale))) needed.add(cp);
-    for (const [name, set] of [
-      ['JP', cmaps.jp],
-      ['SC', cmaps.sc],
-      ['KR', cmaps.kr],
+    // NEEDED mirrors each face's cut in subset-cjk-fonts.py, so one face's
+    // inputs cannot mask another's dead glyphs: JP is cut from the ja strings
+    // and ja item names; SC from every locale's strings and the ko/zh item
+    // names; KR from that same full set, kept to Hangul + ASCII.
+    const scNeeded = new Set<number>();
+    for (const locale of LOCALES) for (const cp of codepointsOf(stringsFor(locale))) scNeeded.add(cp);
+    for (const cp of codepointsOf(itemNameStrings(['ko', 'zh']))) scNeeded.add(cp);
+    const jpNeeded = codepointsOf([...stringsFor('ja'), ...itemNameStrings(['ja'])]);
+    for (const [name, set, needed] of [
+      ['JP', cmaps.jp, jpNeeded],
+      ['SC', cmaps.sc, scNeeded],
+      ['KR', cmaps.kr, scNeeded],
     ] as const) {
       const surplus = [...set].filter((cp) => isCjkScript(cp) && !needed.has(cp));
       if (surplus.length > 0) {

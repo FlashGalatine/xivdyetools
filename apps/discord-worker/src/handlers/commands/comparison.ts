@@ -121,7 +121,7 @@ async function processComparisonCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     // Build Discord embed description with platform-specific emojis
     const dyeList = dyes

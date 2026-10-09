@@ -1053,7 +1053,7 @@ async function sendPresetEmbed(
   });
 
   // Render to PNG
-  const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+  const pngBuffer = await renderSvgToPng(svg, { scale: 2, locale });
 
   // Build dye list with emojis
   const dyeList = dyes

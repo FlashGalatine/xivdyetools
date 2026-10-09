@@ -387,7 +387,7 @@ describe('handleMixerV4Command', () => {
       expect(body.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
       await settle();
 
-      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>mixer</svg>', { scale: 2 });
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>mixer</svg>', { scale: 2, locale: 'en' });
       expect(resolveColorInput).toHaveBeenCalledWith('Rolanberry Red', {
         excludeFacewear: true,
         locale: 'en',

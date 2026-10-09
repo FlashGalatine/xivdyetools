@@ -842,7 +842,9 @@ deep-dive/REFACTOR-005: the two largest files in the repo duplicate their deskto
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 30 — Fonts: item names on the /glamour card (terminal, last of all)
+## Sprint 30 — Fonts: item names on the /glamour card (terminal, last of all) — PR #263 (open)
+
+**Done in PR #263** (discord-worker 5.8.9), stacked on #262 — the last PR of the discord-worker stack. Option A fit, and on 2026-10-06 the maintainer added Japanese: a ja item-name table (`apps/api-worker/src/chara/data/item-names.ja.json`, build-time only) feeds the JP cut, and Japanese cards load JP first, because resvg falls back in load order, not font-family order. English fallback: ko 63.2 % → 2 items, zh 97.3 % → 0, ja 7.3 % → 0; zh / ko / en renders byte-identical; bundle 2,717.2 KiB (88.5 % of 3,072). **Recorded, not fixed:** the two Korean names with a stray U+200F (strip format characters in `build-item-names.mjs`); a pre-existing resvg limit where a fallback face that shapes a Latin ligature differently can leave the CJK part of user text as tofu even though `canDraw` passes.
 
 **FONT-001 is a decision first:**
 - **Option A:** widen discord-worker's CJK subsets with item names (about +363 Hangul and +1,171 hanzi).

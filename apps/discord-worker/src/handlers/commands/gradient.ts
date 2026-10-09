@@ -171,7 +171,7 @@ async function processGradientCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     // Rebuild description with Discord emojis for each step's dye
     const dyeLines = result.gradientSteps

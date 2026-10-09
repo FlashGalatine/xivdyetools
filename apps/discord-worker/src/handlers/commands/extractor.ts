@@ -359,7 +359,7 @@ async function renderColorSheet(
       theme,
       method: matchingMethod,
     });
-    const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2, locale });
 
     // One-line embed; the tail (matches 6+) rides the message text
     const tail = matches.slice(5);
@@ -600,7 +600,7 @@ async function processImageExtraction(
       method: matchingMethod,
       theme,
     });
-    const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2, locale });
 
     // Step 7: One-line embed — count as description, manual pointer where a
     // context-dependent actionable line belongs (never the PNG); the accent

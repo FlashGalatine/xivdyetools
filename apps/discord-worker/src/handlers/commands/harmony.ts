@@ -173,7 +173,7 @@ async function processHarmonyCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     // Build description with Discord emojis
     const dyeList = result.harmonyDyes

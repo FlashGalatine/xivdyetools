@@ -31,6 +31,11 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.18] - 2026-10-06
+### 🌏 Item names in your language
+- Discord bot: `/glamour` cards now name items in Korean, Chinese and Japanese instead of falling back to English.
+- Discord bot: Japanese cards draw kanji in Japanese letterforms; some used to appear in their Chinese forms.
+
 ## [5.10.17] - 2026-10-06
 ### 🎨 Truer greys and cleaner palettes
 - Web app and Discord bot: gradients and HSL mixes from a grey dye (Slate Grey, Jet Black, Metallic Silver) or a grey hex code stay true to the other color instead of passing through purple or pink.

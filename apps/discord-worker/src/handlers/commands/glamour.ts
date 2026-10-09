@@ -177,7 +177,7 @@ async function processGlamourCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [
         {
