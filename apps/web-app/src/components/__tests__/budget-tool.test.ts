@@ -21,6 +21,7 @@ import { ConfigController, MarketBoardService, StorageService } from '@services/
 const {
   mockGetAllDyes,
   mockGetDyeById,
+  mockGetByStainId,
   mockFindClosestDyes,
   mockFindDyesWithinDistance,
   mockDistance,
@@ -33,6 +34,7 @@ const {
   return {
     mockGetAllDyes: vi.fn(),
     mockGetDyeById: vi.fn(),
+    mockGetByStainId: vi.fn(),
     mockFindClosestDyes: vi.fn(),
     mockFindDyesWithinDistance: vi.fn(),
     /**
@@ -74,6 +76,11 @@ vi.mock('@services/dye-service-wrapper', () => ({
       findDyesWithinDistance: mockFindDyesWithinDistance,
       getCategories: vi.fn().mockReturnValue(['Base', 'Craft']),
     }),
+  },
+  // ShareService.resolveSharedDye imports this module's singleton directly,
+  // so a `?dye=` deep link resolves its stainID here.
+  dyeService: {
+    getByStainId: mockGetByStainId,
   },
 }));
 
@@ -466,6 +473,9 @@ describe('BudgetTool', () => {
     });
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
+    mockGetByStainId.mockImplementation(
+      (stainID: number) => mockDyes.find((d) => d.stainID === stainID) ?? null
+    );
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
     mockFindDyesWithinDistance.mockReturnValue(mockDyes.slice(0, 20));
     // Mock scrollIntoView
@@ -1046,6 +1056,335 @@ describe('BudgetTool', () => {
         expect(controller().getConfig('budget').maxDeltaE).toBe(14);
         expect(lineLabel(rightPanel)).toMatch(/^≤ /);
       });
+    });
+  });
+
+  // ============================================================================
+  // Superseded runs (BUG-015, 2026-10-04 deep-dive)
+  //
+  // findAlternatives() reads the target and the line before it awaits prices,
+  // and wrote this.rows after it with nothing checking that a newer run had
+  // started meanwhile. Two fetches over different market IDs can resolve out
+  // of order; the later-resolving older run then drew its rows under the new
+  // target. Distances are the ledger table above.
+  // ============================================================================
+
+  describe('Superseded runs (BUG-015)', () => {
+    const TARGET = mockDyes[6]; // Blood Red: Dalamud, Wine, Sunset inside the line of 8
+    const OTHER = mockDyes[0]; // Snow White: Sky Blue and Rose Pink instead
+    const DALAMUD = mockDyes[8];
+    const WINE = mockDyes[4];
+    const SUNSET = mockDyes[7];
+
+    type Prices = Awaited<ReturnType<MarketBoardService['fetchPricesForDyes']>>;
+    type Outcome = MarketBoardService['lastFetchOutcome'];
+
+    /** A price fetch the test settles when it chooses. */
+    const deferred = (): {
+      promise: Promise<Prices>;
+      resolve: (prices: Prices) => void;
+      reject: (error: Error) => void;
+    } => {
+      let resolve!: (prices: Prices) => void;
+      let reject!: (error: Error) => void;
+      const promise = new Promise<Prices>((res, rej) => {
+        resolve = res;
+        reject = rej;
+      });
+      return { promise, resolve, reject };
+    };
+
+    const market = (): MarketBoardService => MarketBoardService.getInstance();
+    const fetchPrices = () => vi.mocked(market().fetchPricesForDyes);
+    /** The stub has no lastFetchOutcome; the real one is shared by every call. */
+    const setOutcome = (outcome: Outcome): void => {
+      (market() as unknown as { lastFetchOutcome: Outcome }).lastFetchOutcome = outcome;
+    };
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const ledgerRows = (): HTMLElement[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]'));
+    const rowNames = (): string[] =>
+      ledgerRows().map((row) => row.querySelectorAll('span')[1]?.textContent ?? '');
+    const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+    const rows = (): unknown[] => (tool as unknown as { rows: unknown[] }).rows;
+    const BLOOD_RED_ROWS = [label(DALAMUD), label(WINE), label(SUNSET)];
+
+    const mount = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      await settle();
+    };
+
+    afterEach(() => {
+      // mockReset drops any unconsumed Once queue, then restore the stub's default.
+      fetchPrices().mockReset();
+      fetchPrices().mockResolvedValue(new Map());
+      delete (market() as unknown as { lastFetchOutcome?: Outcome }).lastFetchOutcome;
+    });
+
+    it('a mount fetch that resolves after the first pick does not empty its ledger', async () => {
+      const mountFetch = deferred();
+      const pickFetch = deferred();
+      fetchPrices()
+        .mockImplementationOnce(() => mountFetch.promise)
+        .mockImplementationOnce(() => pickFetch.promise);
+
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init(); // the mount run, with no target yet
+      tool.selectDye(TARGET);
+
+      pickFetch.resolve(new Map());
+      await settle();
+      expect(rowNames()).toEqual(BLOOD_RED_ROWS);
+
+      // The mount run read `target = null` before its await.
+      mountFetch.resolve(new Map());
+      await settle();
+      expect(rowNames()).toEqual(BLOOD_RED_ROWS);
+    });
+
+    it("an earlier pick's late fetch does not draw its rows under the later pick", async () => {
+      await mount();
+      const first = deferred();
+      const second = deferred();
+      fetchPrices()
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => second.promise);
+
+      tool!.selectDye(OTHER);
+      tool!.selectDye(TARGET);
+
+      second.resolve(new Map());
+      await settle();
+      const card = rightPanel.querySelector('v4-result-card');
+      first.resolve(new Map());
+      await settle();
+
+      expect(rowNames()).toEqual(BLOOD_RED_ROWS);
+      // Nor does it rebuild the target card, whose menu the user may have open.
+      expect(rightPanel.querySelector('v4-result-card')).toBe(card);
+    });
+
+    /**
+     * The older request fails after the newer one finished. The real service
+     * reports a failure as an empty Map plus a shared `lastFetchOutcome`, which
+     * then describes that request, not the run on screen; a rejection is the
+     * other way fetchPrices() can hear of one.
+     */
+    const failures: Array<[string, (pending: ReturnType<typeof deferred>) => void]> = [
+      [
+        'reports an error outcome',
+        (pending) => {
+          setOutcome('error');
+          pending.resolve(new Map());
+        },
+      ],
+      ['rejects', (pending) => pending.reject(new Error('board down'))],
+    ];
+
+    it.each(failures)(
+      'a superseded fetch that %s does not mark the market offline over a newer success',
+      async (_how, fail) => {
+        await mount();
+        const first = deferred();
+        fetchPrices()
+          .mockImplementationOnce(() => first.promise)
+          .mockImplementationOnce(() => {
+            setOutcome('ok');
+            return Promise.resolve(new Map());
+          });
+
+        tool!.selectDye(OTHER);
+        tool!.selectDye(TARGET);
+        await settle();
+        expect(rightPanel.textContent).not.toContain('budget.offBadge');
+
+        fail(first);
+        await settle();
+        // Re-sorting redraws the ledger without a fetch: an offline market
+        // flags the unpriced coffer group with the offline badge.
+        Array.from(rightPanel.querySelectorAll('button'))
+          .find((b) => b.textContent === 'budget.colDye')!
+          .click();
+        expect(rightPanel.textContent).not.toContain('budget.offBadge');
+      }
+    );
+
+    it('a run in flight when the target is cleared leaves no rows behind', async () => {
+      await mount();
+      const pending = deferred();
+      fetchPrices().mockImplementationOnce(() => pending.promise);
+
+      tool!.selectDye(TARGET);
+      tool!.clearDyes();
+      pending.resolve(new Map());
+      await settle();
+
+      expect(rows()).toEqual([]);
+    });
+
+    // The 2026-10-04 Sprint 5 review: clearing moved the run on, so the price
+    // fetch it was awaiting was thrown away, and the quick picks stayed on
+    // their unpriced offline fallback although the board had answered.
+    it('a clear during a price fetch still prices the quick picks', async () => {
+      await mount();
+      const board: Prices = new Map(
+        mockDyes.map((d, i) => [
+          d.itemID,
+          {
+            itemID: d.itemID,
+            currentAverage: 1000 + i,
+            currentMinPrice: 1000 + i,
+            currentMaxPrice: 1000 + i,
+            lastUpdate: 0,
+          },
+        ])
+      );
+      const pending = deferred();
+      fetchPrices()
+        .mockImplementationOnce(() => pending.promise)
+        .mockResolvedValue(board);
+
+      tool!.selectDye(TARGET);
+      tool!.clearDyes();
+      pending.resolve(board);
+      await settle();
+
+      expect(container.textContent).toContain('budget.priciestNow');
+      expect(container.textContent).not.toContain('budget.priciestOff');
+      expect(rows()).toEqual([]);
+    });
+
+    it('a run in flight at destroy leaves no rows behind', async () => {
+      await mount();
+      const pending = deferred();
+      fetchPrices().mockImplementationOnce(() => pending.promise);
+
+      tool!.selectDye(TARGET);
+      tool!.destroy();
+      pending.resolve(new Map());
+      await settle();
+
+      expect(rows()).toEqual([]);
+    });
+  });
+
+  // ============================================================================
+  // The target in the address bar (BUG-013, 2026-10-04 deep-dive)
+  //
+  // RouterService carries `dye=` across every navigation, and the deep-link
+  // handler applies it on every mount. A pick made in Budget reached storage
+  // only, so leaving and coming back put the link's dye back over it.
+  // ============================================================================
+
+  describe('The target in the address bar (BUG-013)', () => {
+    const TARGET = mockDyes[6]; // Blood Red
+    const LINKED = mockDyes[0]; // Snow White, stainID 1
+    const DALAMUD = mockDyes[8];
+    const WINE = mockDyes[4];
+    const SUNSET = mockDyes[7];
+
+    const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+    const params = (): URLSearchParams => new URLSearchParams(window.location.search);
+    const label = (dye: (typeof mockDyes)[number]): string => `Dye-${dye.itemID}`;
+    const rowNames = (): string[] =>
+      Array.from(rightPanel.querySelectorAll<HTMLElement>('div[role="button"][tabindex="0"]')).map(
+        (row) => row.querySelectorAll('span')[1]?.textContent ?? ''
+      );
+    const shownTarget = (): number | undefined =>
+      (rightPanel.querySelector('v4-result-card') as ResultCard | null)?.data?.dye.id;
+
+    const mount = async (): Promise<void> => {
+      tool = new BudgetTool(container, { leftPanel, rightPanel, drawerContent });
+      tool.init();
+      await settle();
+    };
+
+    beforeEach(() => {
+      // A store that reads back what it was given, so a remount sees the pick.
+      const stored = new Map<string, unknown>();
+      vi.mocked(StorageService.setItem).mockImplementation((key: string, value: unknown) => {
+        stored.set(key, value);
+        return true;
+      });
+      vi.mocked(StorageService.getItem).mockImplementation(
+        (key: string) => (stored.get(key) ?? null) as never
+      );
+    });
+
+    afterEach(() => {
+      // The outer beforeEach resets getItem; setItem is this block's alone.
+      vi.mocked(StorageService.setItem).mockReset();
+    });
+
+    it('a linked ?dye= leaves the address bar once stored, so coming back keeps a later pick', async () => {
+      window.history.replaceState({ toolId: 'budget' }, '', '/budget?dye=1&dc=Aether');
+      await mount();
+
+      expect(shownTarget()).toBe(LINKED.id);
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_budget_target', LINKED.id);
+      expect(params().has('dye')).toBe(false);
+      expect(params().get('dc')).toBe('Aether');
+      // RouterService's popstate handler reads the entry's own state.
+      expect(window.history.state).toEqual({ toolId: 'budget' });
+
+      tool!.selectDye(TARGET);
+      await settle();
+
+      // Leaving and coming back builds a new tool at whatever the router kept.
+      tool!.destroy();
+      await mount();
+      expect(shownTarget()).toBe(TARGET.id);
+      expect(rowNames()).toEqual([label(DALAMUD), label(WINE), label(SUNSET)]);
+    });
+
+    // The 2026-10-04 Sprint 5 review's repro: the result card's "Set as budget
+    // target" lands on /budget?dye=…, and the next navigation carried that dye
+    // into Harmony, which replaced its own stored base with it.
+    it('a "Set as budget target" hand-off does not follow the user into the next tool', async () => {
+      // Not mocked: the barrel above is, this module is not.
+      const { RouterService: router } = await import('@services/router-service');
+      window.history.replaceState({ toolId: 'budget' }, '', `/budget?dye=${LINKED.stainID}`);
+      await mount();
+
+      router.navigateTo('harmony');
+
+      expect(window.location.pathname).toBe('/harmony');
+      expect(params().has('dye')).toBe(false);
+    });
+
+    it('leaves a ?hex= target in the address bar, which is never stored', async () => {
+      window.history.replaceState(null, '', '/budget?hex=123456');
+      await mount();
+
+      expect(params().get('hex')).toBe('123456');
+    });
+
+    it('takes a linked ?hex= out on a pick, which the deep link falls back to without a dye', async () => {
+      window.history.replaceState(null, '', '/budget?hex=123456');
+      await mount();
+
+      tool!.selectDye(TARGET);
+
+      expect(params().has('hex')).toBe(false);
+    });
+
+    /** A pre-5.0 itemID: refused with a toast, so the link stays unapplied. */
+    const UNAPPLIED = '5772';
+
+    it.each<[string, (t: BudgetTool) => void]>([
+      ['an in-tool pick', (t) => t.selectDye(TARGET)],
+      ['a custom colour from the palette drawer', (t) => t.selectCustomColor('#123456')],
+      ['Clear All', (t) => t.clearDyes()],
+    ])('%s takes out a ?dye= the tool could not apply', async (_label, act) => {
+      window.history.replaceState(null, '', `/budget?dye=${UNAPPLIED}`);
+      await mount();
+      expect(params().get('dye')).toBe(UNAPPLIED);
+
+      act(tool!);
+
+      expect(params().has('dye')).toBe(false);
     });
   });
 

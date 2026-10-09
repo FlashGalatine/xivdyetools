@@ -250,6 +250,16 @@ export class ComparisonTool extends BaseComponent {
     logger.info('[ComparisonTool] Mounted');
   }
 
+  onUpdate(): void {
+    // BUG-021 (2026-10-04 deep-dive): update() (a language switch) rebuilds
+    // the right panel with every section hidden and the empty state up. The
+    // selection and the active pair survive it, so redraw them rather than
+    // hiding the duel, Export and Share until the next add or remove.
+    if (this.selectedDyes.length > 0) {
+      this.updateResults();
+    }
+  }
+
   /**
 
 
@@ -451,6 +461,22 @@ export class ComparisonTool extends BaseComponent {
    */
   private renderLeftPanel(): void {
     const left = this.options.leftPanel;
+
+    // BUG-021 (2026-10-04 deep-dive): this runs again on every language
+    // change, and clearContainer only removes DOM. The previous selector,
+    // panels and market board kept their service subscriptions, one more
+    // live set per switch. Same teardown as accessibility-tool's BUG-070.
+    this.dyeSelector?.destroy();
+    this.dyeSelector = null;
+    this.dyeSelectorPanel?.destroy();
+    this.dyeSelectorPanel = null;
+    this.optionsPanel?.destroy();
+    this.optionsPanel = null;
+    this.marketBoard?.destroy();
+    this.marketBoard = null;
+    this.marketPanel?.destroy();
+    this.marketPanel = null;
+
     clearContainer(left);
 
     // Section 1: Dye Selection (Collapsible)
@@ -554,6 +580,12 @@ export class ComparisonTool extends BaseComponent {
       hideSelectedChips: true, // Selections shown above in dedicated display
     });
     this.dyeSelector.init();
+
+    // A rebuild gets a fresh selector: hand it the current selection, or its
+    // first pick (it reports only its own) replaces the whole comparison.
+    if (this.selectedDyes.length > 0) {
+      this.dyeSelector.setSelectedDyes(this.selectedDyes);
+    }
 
     // Listen for selection changes
     selectorContainer.addEventListener('selection-changed', () => {
@@ -1186,14 +1218,17 @@ export class ComparisonTool extends BaseComponent {
   }
 
   /** Band tier 0..3 in MATCH context; the ΔE2000 SAME cut follows the
-   *  user's threshold slider (other methods carry the calibrated cuts) */
-  private tierFor(value: number): 0 | 1 | 2 | 3 {
-    if (this.method === 'ciede2000') {
+   *  user's threshold slider (other methods carry the calibrated cuts).
+   *  BUG-018 (2026-10-04 deep-dive): the one owner of that cut. The readout
+   *  rows pass their own method; their copy dropped the 0 -> 1 bump, so with
+   *  the slider below 5 the ΔE2000 row said SAME beside a CLOSE verdict. */
+  private tierFor(value: number, method: MatchingMethod = this.method): 0 | 1 | 2 | 3 {
+    if (method === 'ciede2000') {
       if (value < this.matchThreshold) return 0;
-      const tier = classifyBandTier(value, this.method, 'match');
+      const tier = classifyBandTier(value, method, 'match');
       return tier === 0 ? 1 : tier;
     }
-    return classifyBandTier(value, this.method, 'match');
+    return classifyBandTier(value, method, 'match');
   }
 
   private tierColorFor(tier: 0 | 1 | 2 | 3): string {
@@ -1911,8 +1946,7 @@ export class ComparisonTool extends BaseComponent {
     for (const method of METHOD_ORDER) {
       const raw = ColorService.getDistanceForMethod(a.hex, b.hex, method);
       const value = roundToBandDisplay(raw, method);
-      let tier = classifyBandTier(value, method, 'match');
-      if (method === 'ciede2000' && value < this.matchThreshold) tier = 0;
+      const tier = this.tierFor(value, method);
       const active = method === this.method;
       addRow(
         methodShort(method),

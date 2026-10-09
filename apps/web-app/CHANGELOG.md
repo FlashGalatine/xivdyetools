@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.3] - 2026-10-05
+
+Sprint 5 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+tool correctness.
+
+### Fixed
+
+- **A language switch keeps the results** (BUG-021, BUG-076). Harmony, Mixer, Comparison and
+  Accessibility rebuilt their panels without regenerating them, so the results vanished.
+- **An old link no longer overrides your choice** (BUG-013). "Set as budget target" sends the dye
+  explicitly, so a `?dye=` carried over from an earlier link no longer wins; Harmony drops `dye` from
+  the address when you change its base. Harmony and Budget take `dye` out of the address once they
+  have applied it, so it no longer follows you into the next tool, and Harmony drops a linked `hex`
+  when you change its base. Gradient no longer repeats actions the result card performs itself (a
+  second toast, a second navigation, or a navigation under Comparison's slot picker);
+  `gradient.slotsFull` lost its last reader and is removed from all six locales.
+- **Budget shows the latest search** (BUG-015): an older, slower run can no longer overwrite it, and
+  Clear All during a price fetch still prices the quick picks.
+- **Comparison's ΔE2000 tier agrees with its verdict** for every match threshold (BUG-018).
+- **Gradient: a pinned dye is not repeated** by a free step before it (BUG-020).
+- **Swatch: strong dye filters still return a full list** (BUG-025), and the closest-dye pick honours
+  them, also on the selection card and SEND TO after a slot pick.
+- **The palette drawer works from the keyboard** (BUG-028): every swatch and both section headers
+  are buttons, and the favorite star shows on focus and on touch screens.
+- **Faster start** (OPT-001): the app no longer waits for a services-status network probe before it
+  draws; the probe is development-only.
+
+### Removed
+
+- The layout shell's dead Accessibility CSS block (dead-code DEAD-004, 337 lines), pulled forward
+  from Sprint 23: the keyboard-accessible drawer put the shell 665 B over its 218 KB budget. It is now
+  210.81 KB.
+
 ## [5.14.2] - 2026-10-05
 
 Sprint 4 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

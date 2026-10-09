@@ -229,7 +229,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 5 — web-app: tool correctness
+## Sprint 5 — web-app: tool correctness — PR #247 (open)
+
+**Done in PR #247** (web-app 5.14.3, stacked on #245). It also removed dead-code/DEAD-004 (from Sprint 23) to keep the layout shell within budget. Details are in the re-verification file's *Sprint 5* section.
 
 **Language switch:** the switch empties four tools (deep-dive/BUG-021), and no test fires it (deep-dive/BUG-076).
 
@@ -674,6 +676,8 @@ Tool, shell, service and glamour LOWs. Most are one-line guards or listener tear
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
 ## Sprint 23 — web-app: dead-code cleanup
+
+**dead-code/DEAD-004 is already removed** by Sprint 5 (PR #247); skip it here.
 
 The rest of the dead-code catalog's web-app entries. Each cascade is the next commit after its trigger, because web-app's knip gate fails on the orphaned exports in between: dead-code/DEAD-009 and dead-code/DEAD-010 after dead-code/DEAD-008. dead-code/DEAD-003, the context-action vocabulary, goes last.
 

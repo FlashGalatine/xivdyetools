@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.14.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -114,6 +114,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.3 | Oct 2026 | Tool correctness (2026-10-04 remediation, Sprint 5): a language switch keeps the results in four tools (BUG-021), a stale `?dye=` no longer overrides a choice (BUG-013), Budget runs are superseded safely (BUG-015), Comparison's tier matches its verdict (BUG-018), the palette drawer is keyboard-operable (BUG-028), boot no longer awaits a dev-only network probe (OPT-001); the shell's dead Accessibility CSS removed (DEAD-004) |
 | v5.14.2 | Oct 2026 | Community presets and collections (2026-10-04 remediation, Sprint 4): saved presets are no longer marked "Removed by its author" by a failed or partial feed (BUG-029), failed votes and deletes say so, the gallery updates at once after a change, tab counts match the cards, Manage Collections refreshes after a create, non-Latin collection names survive export, and Save character colors numbers a taken name. Dead preset-service code removed |
 | v5.14.1 | Oct 2026 | Tool settings have one owner (2026-10-04 remediation, Sprint 1): the Swatch palette no longer flips to Hair / Seeker of the Sun / Female on any settings change (BUG-001, HIGH); saved dye filters and display options apply when Gradient, Swatch, Mixer and Budget open; share-link settings stick; Budget's match line holds and Budget no longer switches market prices on for every tool; the Options sidebar follows every setting. The tools' own settings keys are retired (swatch and the Budget match line migrate once) |
 | v5.14.0 | Oct 2026 | Privacy Guide amended in all six languages (2026-10-03 security audit, Sprint 8): new "Community presets: what we keep" (daily-limit counts, Discord moderation posts, failed-notification records, ban records and moderation log, each with its retention) and "Deleting your data" (self-serve deletes, private requests within 30 days) sections (FINDING-005/-008/-009/-029) |

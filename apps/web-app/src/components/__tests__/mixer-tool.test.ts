@@ -1219,4 +1219,92 @@ describe('MixerTool', () => {
       expect(shareParams()).toMatchObject({ algo: 'rgb' });
     });
   });
+
+  // ==========================================================================
+  // BUG-021 / BUG-076 (2026-10-04 deep-dive): a language switch runs update(),
+  // which rebuilds the right panel with the results section hidden and its
+  // grid empty. Nothing regenerated the matches, so a mixed pair lost Matching
+  // Dyes, Export and Share until the next slot change -- and no test ever fired
+  // the LanguageService subscriber. Mounted as the v4 shell mounts it: one
+  // element as both panels. Uses the real ConfigController, so the singleton
+  // and jsdom localStorage are reset on the way in and out.
+  // ==========================================================================
+
+  describe('a language switch keeps the mix on screen', () => {
+    let panel: HTMLElement;
+
+    beforeEach(() => {
+      localStorage.clear();
+      ConfigController.resetInstance();
+      panel = document.createElement('div');
+      container.appendChild(panel);
+    });
+
+    afterEach(() => {
+      tool?.destroy();
+      tool = null;
+      ConfigController.resetInstance();
+      localStorage.clear();
+    });
+
+    const mountV4 = (): MixerTool => {
+      const t = new MixerTool(container, {
+        leftPanel: panel,
+        rightPanel: panel,
+        drawerContent: null,
+      });
+      t.init();
+      return t;
+    };
+
+    /** Every captured subscriber, as the extractor test does: not only `calls[0]`. */
+    const switchLanguage = async () => {
+      const { LanguageService } = await import('@services/index');
+      for (const [cb] of [...vi.mocked(LanguageService.subscribe).mock.calls]) {
+        (cb as () => void)();
+      }
+      await flush();
+    };
+
+    /** Whether `el` or any ancestor up to the panel is display:none. */
+    const isHidden = (el: Element): boolean => {
+      let node: HTMLElement | null = el as HTMLElement;
+      while (node && node !== panel) {
+        if (node.style.display === 'none') return true;
+        node = node.parentElement;
+      }
+      return false;
+    };
+
+    const shareButton = () =>
+      panel.querySelector('v4-share-button') as unknown as HTMLElement & { disabled: boolean };
+
+    it('still shows the matching dyes, Export and Share for a mixed pair', async () => {
+      tool = mountV4();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      const shown = getDefaultConfig('mixer').maxResults;
+      expect(panel.querySelectorAll('v4-result-card')).toHaveLength(shown);
+
+      await switchLanguage();
+
+      const cards = [...panel.querySelectorAll('v4-result-card')];
+      expect(cards).toHaveLength(shown);
+      expect(isHidden(cards[0])).toBe(false);
+      expect(isHidden(panel.querySelector('[data-testid="mixer-export"]')!)).toBe(false);
+      expect(isHidden(shareButton())).toBe(false);
+      expect(shareButton().disabled).toBe(false);
+    });
+
+    it('leaves a single-dye mixer without a results section', async () => {
+      tool = mountV4();
+      tool.selectDye(dye(1));
+
+      await switchLanguage();
+
+      expect(panel.querySelectorAll('v4-result-card')).toHaveLength(0);
+      expect(isHidden(panel.querySelector('[data-testid="mixer-export"]')!)).toBe(true);
+      expect(shareButton().disabled).toBe(true);
+    });
+  });
 });

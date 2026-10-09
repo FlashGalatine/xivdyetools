@@ -430,6 +430,16 @@ export class HarmonyTool extends BaseComponent {
     logger.info('[HarmonyTool] Mounted');
   }
 
+  onUpdate(): void {
+    // BUG-021 (2026-10-04 deep-dive): update() — a language switch, or a deep
+    // link re-rendering the panels — rebuilds the right panel around an empty
+    // results grid, and nothing refilled it, so the cards vanished under an
+    // enabled Share button until the next pick. Regenerate from the current
+    // state, as gradient-tool does; with no base this shows the empty state,
+    // exactly as onMount does.
+    this.generateHarmonies();
+  }
+
   destroy(): void {
     // Cleanup subscriptions
     this.railMql?.removeEventListener('change', this.onRailBreakpoint);
@@ -542,11 +552,13 @@ export class HarmonyTool extends BaseComponent {
     // But the guard above admits more than share links — a BARE `?dye=` is an
     // ordinary in-app navigation, from two paths: `handoffTo('harmony', dye)`
     // ("send this dye to the Harmony Explorer") and `RouterService`'s
-    // `PRESERVED_PARAMS`, which keeps `dye` when the user leaves Harmony and
-    // comes back. Treating those as a link that says rgb reverted a Munsell
-    // user to RGB, cleared their pins, and PERSISTED it — the wheel would have
-    // been the only setting an in-app navigation could clobber, since `algo`
-    // and `perceptual` above are each guarded by `if (param)`.
+    // `PRESERVED_PARAMS`, which carries a `dye` still in the URL from tool to
+    // tool (since BUG-013, only a dye no tool could apply: both readers
+    // consume the ones they apply). Treating those as a link that says rgb
+    // reverted a Munsell user to RGB, cleared their pins, and PERSISTED it —
+    // the wheel would have been the only setting an in-app navigation could
+    // clobber, since `algo` and `perceptual` above are each guarded by
+    // `if (param)`.
     //
     // So: any share marker at all makes it a link (`v=1` alone included — that
     // is what `ShareService` stamps on every URL it generates); none of them
@@ -572,9 +584,10 @@ export class HarmonyTool extends BaseComponent {
 
     // A bare-colour base: `hex` is the declared slot for a custom base,
     // exclusive with `dye`. Wrapped in a virtual dye so the whole tool
-    // treats it like any other base.
+    // treats it like any other base. Applied without selectCustomColor's URL
+    // drop: a custom base is never stored, so the link is all a reload has.
     if (!dyeIdParam && hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
-      this.selectCustomColor(`#${hexParam.replace(/^#/, '')}`);
+      this.applyCustomBase(`#${hexParam.replace(/^#/, '')}`);
       logger.info(`[HarmonyTool] Share URL loaded custom base: #${hexParam}`);
     }
 
@@ -586,6 +599,12 @@ export class HarmonyTool extends BaseComponent {
         if (dye) {
           this.selectedDye = dye;
           StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
+          // BUG-013 (2026-10-04 deep-dive): consumed once stored. Left in the
+          // URL, PRESERVED_PARAMS carried it into every later tool: Budget
+          // took it as its target, and coming back here replaced whatever
+          // base the user had picked since. A dye that did not resolve stays;
+          // the next base change drops it.
+          this.dropDeepLinkedDye();
           logger.info(`[HarmonyTool] Share URL loaded dye: ${dye.name} (itemID=${dye.itemID})`);
 
           // Update the desktop dye selector if it exists
@@ -601,11 +620,9 @@ export class HarmonyTool extends BaseComponent {
           // Clear any previously swapped dyes since we're selecting a new base
           this.swappedDyes.clear();
 
-          // Re-render to update the current dye display elements
+          // Re-render to update the current dye display elements; onUpdate
+          // generates the harmonies for the newly selected dye
           this.update();
-
-          // Generate harmonies for the newly selected dye
-          this.generateHarmonies();
 
           // Fetch prices if enabled
           if (this.showPrices) {
@@ -618,6 +635,41 @@ export class HarmonyTool extends BaseComponent {
       this.swappedDyes.clear();
       this.generateHarmonies();
     }
+  }
+
+  /**
+   * BUG-013 (2026-10-04 deep-dive): take the linked base out of the URL once
+   * handleDeepLink has applied and stored it, and when the user changes the
+   * base. RouterService's PRESERVED_PARAMS carries `dye` across every tool
+   * switch, and handleDeepLink applies it whenever Harmony is rebuilt — so a
+   * pick that reached storage only was overwritten (and the stale dye
+   * persisted) the next time the user came back, and Budget took a linked
+   * Harmony base as its own target. With the param gone, the rebuilt tool
+   * restores the base from storage. `dyeId`, the legacy alias handleDeepLink
+   * reads as the same slot, goes too.
+   *
+   * So does `hex`, the custom-base slot (2026-10-04 Sprint 5 review): it is
+   * not preserved across tools, but a reload applied it again over a later
+   * pick and deleted the stored one. handleDeepLink's own custom base does not
+   * come through here — a custom base is never stored, so the link is all a
+   * reload has (see applyCustomBase).
+   *
+   * Dropped rather than rewritten to the new pick: `dye` would then travel
+   * from every ordinary pick into every tool, and Budget's handleDeepLink
+   * takes it as its target. And history.replaceState rather than
+   * RouterService.replaceRoute, which notifies every route listener — so
+   * v4-layout would remount this tool on each pick and handleDeepLink would
+   * run again (the extractor's share-param cleanup avoids it the same way).
+   */
+  private dropDeepLinkedDye(): void {
+    const url = new URL(window.location.href);
+    const params = url.searchParams;
+    if (!params.has('dye') && !params.has('dyeId') && !params.has('hex')) return;
+
+    params.delete('dye');
+    params.delete('dyeId');
+    params.delete('hex');
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
   // ============================================================================
@@ -965,6 +1017,8 @@ export class HarmonyTool extends BaseComponent {
         StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
         logger.info('[HarmonyTool] Cleared saved dye');
       }
+      // A stale ?dye= link would override that on the way back (BUG-013)
+      this.dropDeepLinkedDye();
 
       // Clear swapped dyes when base dye changes
       this.swappedDyes.clear();
@@ -1348,6 +1402,7 @@ export class HarmonyTool extends BaseComponent {
         } else {
           StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
         }
+        this.dropDeepLinkedDye();
 
         // Clear swapped dyes when base dye changes
         this.swappedDyes.clear();
@@ -1958,8 +2013,9 @@ export class HarmonyTool extends BaseComponent {
   public clearDyes(): void {
     this.selectedDye = null;
 
-    // Clear from storage
+    // Clear from storage, and drop a deep-linked dye from the URL (BUG-013)
     StorageService.removeItem(STORAGE_KEYS.selectedDyeId);
+    this.dropDeepLinkedDye();
     logger.info('[HarmonyTool] All dyes cleared');
 
     // Update dye selectors
@@ -1987,8 +2043,9 @@ export class HarmonyTool extends BaseComponent {
 
     this.selectedDye = dye;
 
-    // Persist to storage
+    // Persist to storage, and drop a deep-linked dye from the URL (BUG-013)
     StorageService.setItem(STORAGE_KEYS.selectedDyeId, dye.itemID);
+    this.dropDeepLinkedDye();
     logger.info(`[HarmonyTool] External dye selected: ${dye.name} (itemID=${dye.itemID})`);
 
     // BUG-073: update BOTH selectors. clearDyes() already does; these two
@@ -2010,6 +2067,17 @@ export class HarmonyTool extends BaseComponent {
   public selectCustomColor(hex: string): void {
     if (!hex) return;
 
+    this.applyCustomBase(hex);
+    // A user's choice: drop the linked base from the URL (BUG-013)
+    this.dropDeepLinkedDye();
+  }
+
+  /**
+   * Make a bare colour the base. selectCustomColor (the palette drawer) and
+   * handleDeepLink (a `?hex=` link) share it; only the user's choice drops the
+   * link from the URL.
+   */
+  private applyCustomBase(hex: string): void {
     // Create a virtual "dye" object for the custom color.
     // Harmony keeps its own id scheme: the single base slot is always -1, so
     // `usedDyeIds` and the (never-restored) persisted id stay stable.

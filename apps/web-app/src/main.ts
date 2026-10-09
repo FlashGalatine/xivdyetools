@@ -3,6 +3,7 @@
  *
  * Initializes services and loads the v4 glassmorphism layout.
  *
+ * @entrypoint No importer by design — src/index.html loads this module with a script tag
  * @module main
  */
 
@@ -107,14 +108,6 @@ async function initializeApp(): Promise<void> {
     // Cleanup: pre-5.x ShareService localStorage buffer, retired by this change.
     StorageService.removeItem('xiv_share_analytics');
 
-    // Log service status
-    const status = await getServicesStatus();
-    logger.info({
-      'Theme Service': status.theme.current,
-      'Storage Service': status.storage.available ? 'Available' : 'Unavailable',
-      'API Service': status.api.available ? `Available (${status.api.latency}ms)` : 'Unavailable',
-    });
-
     // Initialize v4 glassmorphism layout directly on app container
     // (Removed v3 AppLayout wrapper to eliminate double-header issue)
     logger.info('🎨 Initializing v4 layout shell...');
@@ -147,6 +140,24 @@ async function initializeApp(): Promise<void> {
       (window as unknown as Record<string, unknown>).ShareService = ShareService;
       logger.info('[DEV] TutorialService exposed on window for debugging');
       logger.info('[DEV] ShareService exposed on window for debugging');
+
+      // Log service status. OPT-001 (2026-10-04 deep-dive): this was awaited
+      // before the shell mounted on every load, though its API leg is a real
+      // network probe (up to 5 s when the proxy stalls) and the log it feeds
+      // only prints in dev, so it is dev-only now and never awaited.
+      void getServicesStatus()
+        .then((status) => {
+          logger.info({
+            'Theme Service': status.theme.current,
+            'Storage Service': status.storage.available ? 'Available' : 'Unavailable',
+            'API Service': status.api.available
+              ? `Available (${status.api.latency}ms)`
+              : 'Unavailable',
+          });
+        })
+        .catch((error: unknown) => {
+          logger.warn('[DEV] Service status probe failed', error);
+        });
     }
   } catch (error) {
     const appError = ErrorHandler.log(error);

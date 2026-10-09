@@ -1212,11 +1212,21 @@ export class ResultCard extends BaseLitComponent {
   /**
    * Set dye as Budget Suggestions target
    * Overwrites any existing target
+   *
+   * BUG-013 (2026-10-04 deep-dive): this navigated with no params, so the
+   * `dye=` that RouterService preserves across navigation (from a share link
+   * or an earlier hand-off) reached Budget instead, and Budget's deep link
+   * replaced the dye just sent. `handoffTo` names the dye, which replaces the
+   * preserved one. The stored target stays: Budget's constructor reads it
+   * before the deep link is handled, so the first paint already shows this
+   * dye. A custom colour has no stainID, so, as with every hand-off, it is
+   * not sent.
    */
   private setAsBudgetTarget(dye: Dye): void {
+    if (dye.stainID === null) return;
     StorageService.setItem(STORAGE_KEYS.budget, dye.id);
     ToastService.success(LanguageService.t('resultCard.sentToBudget'));
-    RouterService.navigateTo('budget');
+    handoffTo('budget', dye);
   }
 
   /**

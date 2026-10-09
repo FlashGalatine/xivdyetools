@@ -507,7 +507,6 @@
     "gradientResults": "Verlaufsergebnisse",
     "noMatchesFound": "Keine passenden Farbstoffe gefunden",
     "sameDyeWarning": "Start- und Endfarbstoff sind identisch. Wähle verschiedene Farbstoffe für einen Verlauf.",
-    "slotsFull": "Alle Plätze sind belegt. Wähle einen zum Ersetzen:",
     "mode": {
       "rgb": "Linear (graue Mittelpunkte)",
       "hsv": "Farbtonbasiert (lebendig)",

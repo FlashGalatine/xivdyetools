@@ -2,6 +2,15 @@
 
 ---
 
+## Web-App Version 5.14.3 — October 5, 2026
+
+### Smoother tools
+- **Changing the language keeps your results** in Harmony, Dye Mixer, Comparison and Accessibility.
+- **An old link no longer undoes your choice.** Picking a new base color in Harmony, or sending a dye to Budget, sticks.
+- **Budget always shows your latest search**, Comparison's ΔE tier matches its verdict, Gradient doesn't repeat a pinned dye, and the Swatch Matcher keeps a full list of matches with strong filters on.
+- **The dye palette works from the keyboard,** and the favorite star shows on touch screens.
+- **The app starts a little faster.**
+
 ## Web-App Version 5.14.2 — October 5, 2026
 
 ### Community presets
