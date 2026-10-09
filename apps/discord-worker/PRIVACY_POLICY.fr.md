@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY_POLICY.md)
 
-**Dernière mise à jour** : 2026-10-05
+**Dernière mise à jour** : 2026-10-09
 
 ## 1. Introduction
 

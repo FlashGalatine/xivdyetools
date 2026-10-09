@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](PRIVACY.md)
 
-**최종 업데이트:** 2026-10-05 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. Discord 봇은 별도의 정책을 따릅니다: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
+**최종 업데이트:** 2026-10-09 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. Discord 봇은 별도의 정책을 따릅니다: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools는 브라우저에서 실행됩니다. 색상 도구 — 팔레트 추출, 조화 탐색기, 염료 비교, 그라데이션 빌더, 염료 믹서, 접근성 검사기, 예산 제안, 스와치 매처, 코디 리더 — 는 모두 사용자의 기기에서 작동합니다. 아래 항목에서 별도로 명시하지 않는 한 업로드하거나 선택하거나 입력한 어떤 것도 어디로도 전송되지 않으며, 아래 항목이 그 전체 목록입니다.
 
