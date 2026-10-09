@@ -32,12 +32,26 @@ const dyeService = new DyeService(dyeDatabase);
  * autocomplete sends since 2026-08-29), ≥ 5729 a legacy item id (what 4.x
  * clients and old habits still type). The two ranges are disjoint — the Stain
  * sheet is a byte, item ids start at 5729 — so the number itself picks the
- * lookup; the gap, zero and negatives resolve nothing. Digits only: a hex
- * shorthand must carry '#' or a hex letter (`'101'` is Pure White, `'#101'`
- * is a colour), and anything with letters falls through to the name search.
+ * lookup; the gap, zero and negatives resolve nothing.
+ *
+ * How an all-digit input is read (BUG-034, 2026-10-04 audit):
+ *
+ * | digits | read as                                                     |
+ * |--------|-------------------------------------------------------------|
+ * | 1–5    | an id — `'101'` is Pure White (stainID), `'13114'` too      |
+ * | 6      | a hex colour, never an id — `'000000'`, `'013114'`          |
+ * | 7+     | nothing                                                     |
+ *
+ * Every real id fits in five digits (the highest legacy item id is 48227, the
+ * consolidated market items 52254–52256), so six digits can only be a hex
+ * colour or a zero-padded id — and `'013114'` silently drawing Pure White
+ * instead of #013114 was the worse of those two readings. A 3-digit hex
+ * shorthand is the one remaining ambiguity and it stays the id's: a shorthand
+ * must carry '#' or a hex letter (`'#101'` is a colour). Anything with letters
+ * falls through to the name search.
  */
 export function parseDyeIdInput(input: string): Dye | null {
-  const m = /^\s*(\d{1,6})\s*$/.exec(input);
+  const m = /^\s*(\d{1,5})\s*$/.exec(input);
   if (!m) return null;
   const n = Number(m[1]);
   if (n >= 1 && n <= 254) return dyeService.getByStainId(n);
@@ -50,17 +64,32 @@ function isBareNumber(input: string): boolean {
   return /^\s*\d+\s*$/.test(input);
 }
 
+/**
+ * True for exactly six bare digits — a full hex colour that happens to contain
+ * no letters. BUG-034: it must reach the hex branch ahead of the id lookup
+ * (see {@link parseDyeIdInput} for the precedence).
+ *
+ * Expects TRIMMED input: each resolver below trims once at its top, so padding
+ * never changes how digits are read (`' 013114'` is the colour #013114, the
+ * same as `'013114'`). Before that, this anchored test met the id rules'
+ * whitespace-tolerant ones and a padded six-digit input was neither.
+ */
+function isAllDigitHex(input: string): boolean {
+  return /^\d{6}$/.test(input);
+}
+
 export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[] {
-  if (isBareNumber(query)) {
-    const byId = parseDyeIdInput(query);
+  const text = query.trim();
+  if (isBareNumber(text)) {
+    const byId = parseDyeIdInput(text);
     return byId ? [byId] : [];
   }
-  const english = dyeService.searchByName(query);
+  const english = dyeService.searchByName(text);
   if (locale === 'en') return english;
   // I18N-005 (2026-09-19 audit): fold both sides so an accented, ß-bearing or
   // half-width query matches a localized name that carries the same
   // diacritic/width difference (e.g. 'schneeweiss' → 'Schneeweißer').
-  const q = foldForSearch(query.trim());
+  const q = foldForSearch(text);
   if (q.length === 0) return english;
   const seen = new Set(english.map((d) => d.id));
   const localized = dyeService
@@ -77,8 +106,9 @@ export function searchDyesByName(query: string, locale: LocaleCode = 'en'): Dye[
  * behaviour should use `searchDyesByName`.
  */
 export function findDyeByName(name: string, locale: LocaleCode = 'en'): Dye | null {
-  if (isBareNumber(name)) return parseDyeIdInput(name);
-  const n = name.toLowerCase().trim();
+  const text = name.trim();
+  if (isBareNumber(text)) return parseDyeIdInput(text);
+  const n = text.toLowerCase();
   if (n.length === 0) return null;
   return (
     dyeService
@@ -187,13 +217,18 @@ export interface ResolveColorOptions {
  * Resolves a color input (hex code or dye name) to a color value
  *
  * Accepts:
- * - Hex codes: #FF0000, FF0000, #F00, F00
+ * - Hex codes: #FF0000, FF0000, 000000, #F00, F00
+ * - Dye ids: a bare 1–5 digit stainID or legacy item id ("101", "13114")
  * - Dye names: "Snow White", "soot black" (case-insensitive partial match)
  * - CSS named colors: "BlueViolet", "coral", "burlywood" (148 standard colors)
  *
- * Resolution order: hex → dye name → CSS color name
+ * Resolution order: six-digit hex → bare 1–5 digit id → hex → dye name →
+ * CSS color name. Six bare digits are always a colour (BUG-034); a bare 3-digit
+ * number is an id, so a shorthand without '#' must carry a hex letter — see
+ * {@link parseDyeIdInput}. Surrounding whitespace is ignored throughout:
+ * `' 013114'` and `' #FF0000 '` are colours.
  *
- * @param input - Hex code or dye name to resolve
+ * @param input - Hex code, dye id or dye name to resolve
  * @param options - Resolution options
  * @returns Resolved color info, or null if not found
  */
@@ -204,18 +239,21 @@ export function resolveColorInput(
   const excludeFacewear = options?.excludeFacewear ?? true;
   const findClosestForHex = options?.findClosestForHex ?? false;
   const locale = options?.locale ?? 'en';
+  // Trimmed once, so every branch below reads the same string (BUG-034).
+  const text = input.trim();
 
   // A bare number is an id (stainID / legacy item id) — checked ahead of hex
-  // so `'101'` is Pure White rather than the shorthand for #110011.
-  if (isBareNumber(input)) {
-    const dye = parseDyeIdInput(input);
+  // so `'101'` is Pure White rather than the shorthand for #110011. Six digits
+  // skip it: '000000' and '013114' are colours, not ids (BUG-034).
+  if (isBareNumber(text) && !isAllDigitHex(text)) {
+    const dye = parseDyeIdInput(text);
     if (!dye || (excludeFacewear && dye.category === 'Facewear')) return null;
     return { hex: dye.hex, name: dye.name, id: dye.id, itemID: dye.itemID, stainID: dye.stainID, dye };
   }
 
   // Check if it's a hex color
-  if (isValidHex(input)) {
-    const hex = normalizeHex(input);
+  if (isValidHex(text)) {
+    const hex = normalizeHex(text);
 
     if (findClosestForHex) {
       // Find the closest dye to this hex color
@@ -237,7 +275,7 @@ export function resolveColorInput(
   }
 
   // Try to find a dye by name (English + locale)
-  const dyes = searchDyesByName(input, locale);
+  const dyes = searchDyesByName(text, locale);
 
   if (dyes.length > 0) {
     // Filter based on options
@@ -261,7 +299,7 @@ export function resolveColorInput(
   }
 
   // Try CSS named colors as fallback (e.g., "BlueViolet" → #8A2BE2)
-  const cssHex = resolveCssColorName(input);
+  const cssHex = resolveCssColorName(text);
   if (cssHex) {
     if (findClosestForHex) {
       const closest = dyeService.findClosestDye(cssHex);
@@ -288,13 +326,16 @@ export function resolveColorInput(
  * Unlike resolveColorInput (which returns a ResolvedColor with optional dye),
  * this always returns the full Dye object or null.
  *
+ * Surrounding whitespace is ignored, as in resolveColorInput (BUG-034).
+ *
  * @param input - Dye name or hex color code
  * @param locale - Locale whose dye names should also match (default: English only)
  * @returns Matching Dye object, or null if not found
  */
 export function resolveDyeInput(input: string, locale: LocaleCode = 'en'): Dye | null {
+  const text = input.trim();
   // Try finding by name first (English + locale)
-  const dyes = searchDyesByName(input, locale);
+  const dyes = searchDyesByName(text, locale);
   if (dyes.length > 0) {
     // Filter out Facewear dyes (synthetic IDs, not tradeable)
     const nonFacewear = dyes.filter((d) => d.category !== 'Facewear');
@@ -303,8 +344,8 @@ export function resolveDyeInput(input: string, locale: LocaleCode = 'en'): Dye |
   }
 
   // Try as hex color — find closest dye
-  if (isValidHex(input, { allowShorthand: false })) {
-    const hex = normalizeHex(input);
+  if (isValidHex(text, { allowShorthand: false })) {
+    const hex = normalizeHex(text);
     return dyeService.findClosestDye(hex);
   }
 

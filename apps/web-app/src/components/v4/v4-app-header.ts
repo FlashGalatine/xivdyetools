@@ -492,8 +492,12 @@ export class V4AppHeader extends BaseLitComponent {
     `,
   ];
 
+  // Marked handled only when it closed the menu: one Escape closes one layer,
+  // so a dismissible toast stays put (BUG-105). This listener lives as long as
+  // the header, so with the menu shut it must leave Escape to everyone else.
   private handleKeydown = (e: KeyboardEvent): void => {
     if (e.key === 'Escape' && this.toolMenuOpen) {
+      e.preventDefault();
       this.toolMenuOpen = false;
     }
   };

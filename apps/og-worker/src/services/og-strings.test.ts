@@ -75,6 +75,29 @@ describe('OG_DECK', () => {
     expect(getOgDeck('glamour', 'zh').name).toBe('幻化查看器');
   });
 
+  /**
+   * TERM-011 (2026-10-04 i18n audit): the web app renamed the fr tool title to
+   * "Préréglages communautaires" (fr.json `tools.presets.title`; glossary:
+   * *préréglage*, never *palette prédéfinie*) and the deck kept the old
+   * "Palettes Communautaires" — the card and the embed title above it named
+   * the tool differently from the page they open. Pinned ×6 as literals copied
+   * from the web titles (`tools.presets.title` in each web locale file): a deck
+   * rename fails here, and a web rename must update this table by hand.
+   */
+  it('names Community Presets as the web app titles it, in every locale', () => {
+    const WEB_TITLE: Record<LocaleCode, string> = {
+      en: 'Community Presets',
+      de: 'Community-Vorlagen',
+      fr: 'Préréglages communautaires',
+      ja: 'コミュニティプリセット',
+      ko: '커뮤니티 프리셋',
+      zh: '社区预设',
+    };
+    for (const locale of LOCALES) {
+      expect(getOgDeck('presets', locale).name, locale).toBe(WEB_TITLE[locale]);
+    }
+  });
+
   it('the root name never localises', () => {
     for (const locale of LOCALES) {
       expect(getOgDeck('root', locale).name).toBe('XIV Dye Tools');
@@ -117,10 +140,21 @@ describe('OG_DECK_LINE', () => {
 // OG_EMBED — the crawler copy ×6 (2026-08-20 i18n audit, OG-I18N-002)
 // ---------------------------------------------------------------------------
 import { OG_EMBED, embed, type EmbedKey } from './og-embed';
+import { ogTranslator } from './translator';
 
 const placeholders = (s: string): string[] => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
 describe('OG_EMBED', () => {
+  it('I18N-014: de glamour.descriptionDefault keeps the repaired grammar', () => {
+    const de = OG_EMBED.de['glamour.descriptionDefault'];
+    // `mit Farbstoffen, ob ...` put a clause after a preposition; the repair
+    // is a noun phrase headed by the participle, as the de deck sub has it.
+    expect(de).not.toContain('mit Farbstoffen, ob');
+    // The comma closing the ob-clause is required: without it `und seine
+    // Bezugsquelle` reads as part of that clause.
+    expect(de).toContain('ob das Spiel es tragen lässt, und');
+  });
+
   const keys = Object.keys(OG_EMBED.en) as EmbedKey[];
 
   it('covers every embed string in all six locales', () => {
@@ -150,6 +184,51 @@ describe('OG_EMBED', () => {
 
   it('EN writes EN-US', () => {
     expect(JSON.stringify(OG_EMBED.en)).not.toMatch(/colour/i);
+  });
+
+  // The swatch sheet names come from core and differ in gender and number
+  // ('Maquillage (Opaque)' is masculine, 'Tattoo / Äußere Iris' neuter,
+  // 'Couleurs des yeux' / 'Augenfarben' plural), so a demonstrative or article
+  // directly before {sheet} cannot agree with all of them: 'cette Maquillage',
+  // 'dieser Tattoo', 'cette Couleurs des yeux'. A fixed noun (Palette /
+  // palette, feminine in both) takes the article, and the sheet name follows
+  // in quotes. The ja / ko / zh demonstratives (この / 이 / 这个) mark no gender.
+  describe('swatch sheet descriptions', () => {
+    const SHEET_KEYS = ['swatch.descriptionSheet', 'swatch.descriptionSheetRace'] as const;
+    const AGREEING_WORD_BEFORE_SHEET =
+      /(?:^|[\s(])(?:dieser|diese|diesem|diesen|dieses|der|die|das|dem|den|des|cette|cet|ce|ces|la|le|les)\s+\{sheet\}/i;
+
+    it.each(['de', 'fr'] as const)('%s: no gendered word sits directly before {sheet}', (lc) => {
+      for (const key of SHEET_KEYS) {
+        expect(OG_EMBED[lc][key], `${lc}.${key}`).not.toMatch(AGREEING_WORD_BEFORE_SHEET);
+      }
+    });
+
+    it('fr: reads correctly around a masculine sheet and a plural one', () => {
+      const facePaint = ogTranslator.getSheetName('facePaintColorsDark', 'fr');
+      const hair = ogTranslator.getSheetName('hairColors', 'fr');
+
+      expect(embed('swatch.descriptionSheet', 'fr', { sheet: facePaint, hex: '#AABBCC' })).toBe(
+        `Trouvez les teintures FFXIV correspondant à #AABBCC dans la palette « ${facePaint} ».`,
+      );
+      const vars = { sheet: hair, hex: '#AABBCC', race: 'Miqo’te', gender: 'femme' };
+      expect(embed('swatch.descriptionSheetRace', 'fr', vars)).toBe(
+        `Trouvez les teintures FFXIV correspondant à #AABBCC dans la palette « ${hair} » – Miqo’te femme.`,
+      );
+    });
+
+    it('de: reads correctly around a neuter sheet and a plural one', () => {
+      const tattoo = ogTranslator.getSheetName('tattooColors', 'de');
+      const skin = ogTranslator.getSheetName('skinColors', 'de');
+
+      expect(embed('swatch.descriptionSheet', 'de', { sheet: tattoo, hex: '#AABBCC' })).toBe(
+        `Finde FFXIV-Farbstoffe passend zu #AABBCC aus der Palette „${tattoo}“.`,
+      );
+      const vars = { sheet: skin, hex: '#AABBCC', race: 'Miqo’te', gender: 'weiblich' };
+      expect(embed('swatch.descriptionSheetRace', 'de', vars)).toBe(
+        `Finde FFXIV-Farbstoffe passend zu #AABBCC aus der Palette „${skin}“ – Miqo’te, weiblich.`,
+      );
+    });
   });
 });
 

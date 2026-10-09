@@ -5,6 +5,343 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.11] - 2026-10-06
+
+`/manual` catches up with `/glamour`, with `@xivdyetools/bot-logic` 4.8.3 in the same PR (#251,
+stacked on the remediation chain's tip, #266). The production deploy re-registers commands, because
+the `/swatch` and `/glamour` `file` option descriptions now name Brio in all six languages.
+
+### Fixed
+
+- **The `.chara` help names Brio** (`commands/schemas.ts` and bot-logic's localized option and
+  `/manual` text). The bot has always read Brio files.
+- **The 👤 Character File topic explains every `/glamour` verdict**: OK, the race name, the dash for a
+  model with no item, the automatic twin pick, and the English Acquisition lines (bot-logic 4.8.3).
+
+### Changed
+
+- **Fonts re-cut** for the new text (compared by cmap):
+  - `NotoSansSC-Subset.ttf` gains 1 glyph (让);
+  - `NotoSansJP-Subset.ttf` gains 3 (先 末 身);
+  - `NotoSansKR-Subset.ttf` gains 2 (넣 뜻).
+  The others the new text uses were already there, from Sprint 30's item-name tables.
+
+### Tests
+
+- `manual.test.ts`, "the character-file help": three guards over the real locale files.
+  - The `/manual topic:` emoji that bot-logic's `glamour.ts` prints lands on a topic that names
+    `/glamour`, in every locale. This would have failed on `main`, whose topic described `/swatch`
+    alone.
+  - Every `.chara` help and option string names each producer that bot-logic's
+    `chara-identity.ts` `PRODUCER_TOKENS` lists. The list is read from source, so a new producer
+    fails the guard until the help names it.
+  - The topic quotes each locale's own OK / TWIN / DYES / NO GLAM / LOCKED labels, each as a word.
+    The en "OK" also sits inside "+N LOOKS", and a plain substring check passed without the OK
+    sentence. It also quotes the dash as the card shows it (`(—)`, `（—）` or `「—」`) and
+    "Acquisition".
+  - Mutation-checked: before the translations landed, exactly the ten tests covering the five
+    untranslated locales failed.
+
+## [5.8.10] - 2026-10-06
+
+A follow-up to the 2026-10-04 deep-dive: the wasm memory fix its OPT-006 prescribes for
+og-worker's renderer, applied at a site the audit had dismissed. Merge after Sprint 30 (PR #263).
+No command shape changed, and no card changes.
+
+### Fixed
+
+- **Card renders no longer leak resvg-wasm memory.** `renderSvgToPng` now frees the `Resvg` and
+  the `RenderedImage` in a `finally`: on success after `asPng()` has returned the PNG bytes, and
+  on a failure whichever of the two was allocated.
+  - Before this, nothing reclaimed either allocation in the deployed bot, so both leaked for the
+    life of the isolate on every render, however often GC ran:
+    - in `@resvg/resvg-wasm` 2.6.2 the `Resvg` constructor never registers with a
+      `FinalizationRegistry`;
+    - `RenderedImage` registers only where one exists. At this worker's `compatibility_date`
+      (2024-12-01, no `enable_weak_ref` flag) workerd has none, since it is on by default only
+      from 2025-05-05, so the glue falls back to a no-op stub. Checked with the repo's workerd
+      (2026-09-23): `typeof FinalizationRegistry` is `undefined` at 2024-12-01 and 2025-05-04,
+      and `function` at 2025-05-05 or with the flag.
+  - The audit's evidence file had dismissed this site on the premise that wasm-bindgen
+    finalizers cover it. In this worker they cover neither allocation.
+  - `asPng()` returns a JS-owned copy, so freeing afterwards is safe.
+  - Measured in Node only, where `FinalizationRegistry` does exist, not in workerd. With
+    og-worker's fonts at ×3: no free grew wasm memory about 4.8 MB per render; freeing only the
+    `RenderedImage` still leaked about 120 KB per render; freeing both stayed flat. With this
+    worker's fonts at ×2, 40 renders of a synthetic 400×350 test SVG (not a real bot card, so the
+    per-tree figure is indicative): no free grew about 2.1 MB per render with no finalizer
+    running, which is the deployed bot's case; freeing only the `RenderedImage` leaked 64 KB per
+    render; freeing both stayed flat.
+  - `renderer.test.ts` mocks resvg-wasm. On success it checks that both `free()` calls run
+    exactly once, after `asPng()`; when `render()` or `asPng()` throws, that whatever was
+    allocated is freed exactly once. It also checks that a parse failure still surfaces the parse
+    error, which an unguarded `free()` in the `finally` would replace.
+
+## [5.8.9] - 2026-10-06
+
+Sprint 30 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+the last sprint: i18n FONT-001, Option A, decided 2026-10-05. Japanese was added on 2026-10-06.
+Merge after Sprint 26 (PR #262). No command shape changed.
+
+### Fixed
+
+- **`/glamour` cards name items in Korean, Chinese and Japanese** (FONT-001). The CJK subsets held
+  no item names, so a card fell back to the English name whenever the fonts could not draw the
+  localized one.
+  - Korean fell back for 18,326 of 28,986 items; now 2 (both carry a stray U+200F in the source
+    table).
+  - Chinese fell back for 28,217 of 28,992; now none.
+  - Japanese fell back for 2,110 of 29,057; now none.
+  - The embed always had the localized name; only the card changes.
+- **Japanese cards draw kanji in Japanese letterforms.**
+  - resvg fills a glyph the Latin face lacks from the CJK faces in the order they are loaded; the
+    `font-family` list does not decide it.
+  - The load order was SC, KR, JP for everyone, so a kanji that the SC subset also carries drew
+    in its Chinese form, even on a Japanese card.
+  - `getFontBuffers` now loads JP first for `ja`. `renderSvgToPng` takes the user's locale, now a
+    required, typed option, and all 14 card renders pass it.
+  - Measured with real resvg renders:
+    - every Japanese item name now renders identically to a Japanese-only render, which changes
+      1,951 that drew some kanji from SC;
+    - 521 lines of Japanese card text change the same way.
+  - Chinese, Korean and English renders are byte-identical to before.
+
+### Changed
+
+- **Fonts re-cut from api-worker's item-name tables**, compared by cmap:
+  - `NotoSansKR-Subset.ttf` gains 364 Hangul (595 → 959), from the ko table;
+  - `NotoSansSC-Subset.ttf` gains 1,167 (1,244 → 2,411), from the ko and zh tables;
+  - `NotoSansJP-Subset.ttf` gains 443 (651 → 1,094), from the new ja table.
+- **A Japanese item-name table**, `apps/api-worker/src/chara/data/item-names.ja.json`.
+  - It holds 29,057 names from the 7.56h1 datamining export, generated by `build-item-names.mjs ja`.
+  - It matches what XIVAPI serves at run time: 319 and 360 sampled ids, plus every row the
+    resolver's own query returned, with no mismatch.
+  - It is build-time data for the font cut and its gate. api-worker does not import it, and its
+    Japanese names still come from XIVAPI.
+- **The gzipped Worker grows 343.8 KiB**, to 2,717.2 KiB: 88.5% of the 3,072 KiB cap, with
+  354.8 KiB left.
+- **Re-cut trigger:** any locale edit or a `build-item-names.mjs` run.
+  - `item-name-coverage.test.ts` fails if a ko, zh or ja item name cannot be drawn, or if a
+    Japanese name needs a kanji the JP subset lacks.
+  - It runs in CI's always-on build-free step, because a table-only change selects only
+    api-worker.
+  - turbo's `test` inputs name the tables, so a cached run cannot replay a green result.
+
+## [5.8.8] - 2026-10-06
+
+Sprint 26 of the 2026-10-04 remediation plan: deep-dive REFACTOR-001. Internal refactor; the
+moderation buttons' ids are byte-identical.
+
+### Changed
+
+- **Moderation embeds build their button ids with `@xivdyetools/types`'
+  `buildReviewCustomIdOrLegacy`**, the grammar moderation-worker parses with. The private builder
+  and the "keep in step" status list are gone.
+- The test parses every id it builds back with the shared parser, replacing a hand-copied regex.
+
+## [5.8.7] - 2026-10-06
+
+Sprint 13 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+carrying `@xivdyetools/core` 5.10.0 and `@xivdyetools/bot-logic` 4.8.2. Merge after Sprints 14+28
+(PR #259). No command shape changed.
+
+### Fixed
+
+- **`/extractor` shows only the colours an image holds** (core BUG-036). A flat icon used to get
+  empty 0% rows with invented dye matches.
+- **`/gradient` and `/mixer` (HSL):** a grey endpoint keeps the other colour's hue, so grey →
+  blue no longer passes through purple or pink (BUG-035 and its `/gradient` sibling).
+- **`/swatch` and `/glamour`** refuse a `.chara` colour the parser cannot read instead of drawing
+  a wrong one (core BUG-133).
+
+### Changed
+
+- **Fonts re-cut for core 5.10.0's sheet names** (TERM-021). Compared by cmap:
+  - `NotoSansJP-Subset.ttf` gains 濃 薄 and drops 膜;
+  - `NotoSansSC-Subset.ttf` gains 浓 淡 濃 艳 薄 and drops 纹 绘 膜;
+  - the KR subset is unchanged.
+
+## [5.8.6] - 2026-10-06
+
+Sprints 14 and 28 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+carrying `@xivdyetools/svg` 4.4.0 and `@xivdyetools/bot-logic` 4.8.1. Merge after Sprint 15
+(PR #258). No command shape changed and no font re-cut: nothing new is drawn.
+
+### Fixed
+
+- **`/contrast` and `/compare` print one contrast ratio** (BUG-142).
+  - The card, the embed and the `/compare` readout show the same figure for the same pair.
+  - A failing ratio never rounds up to a passing one.
+  - German and French use a decimal comma in every readout.
+  - About half of all dye pairs read one hundredth lower than before.
+- **`/gradient` prints two-digit step ranges whole** (BUG-146).
+- **`/glamour` cards** (I18N-015, BUG-145): the footer keeps counts with their nouns, long German
+  fits, and the look label is at the 11 px floor.
+
+### Changed
+
+- **`/budget` packs its ledger with svg's own geometry** (REFACTOR-003). The footer height comes
+  from the same key lines the card draws, so the calculator holds no copy of the card's layout.
+  No visible change.
+- The `/budget` integration suite expects `validateWorld`'s `WorldValidation` answer. BUG-031 had
+  changed it, and this suite is not in CI.
+
+## [5.8.5] - 2026-10-06
+
+Sprint 15 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+carrying `@xivdyetools/bot-logic` 4.8.0. Merge after Sprint 9 (PR #257). No command shape changed
+and no font re-cut: no new text is drawn on a card.
+
+### Fixed
+
+- **A colour typed as six digits works** (BUG-034). `/harmony color:000000`, `333333` and the
+  like answered "invalid colour".
+  - `/budget` follows the same rule: six bare digits are never a dye id. `/budget find
+    target_dye:013114` now answers "Could not find dye", where it priced Pure White; 1–5 digits
+    still name a dye.
+- **Filtered `/gradient` and `/mixer` steps find their dye** (BUG-033). With a filter such as
+  hiding vendor dyes, a step could show no match although allowed dyes exist.
+- **The `/glamour` GPOSERS list** (BUG-124) writes no "Model 361·5" item names, lists Facewear
+  when the glasses are worn but unnamed, and its "No fix:" note names the slot.
+- **Failures are logged.**
+  - BUG-125: `/dye` hands its logger to bot-logic like every other command.
+  - The glamour transport's two plain errors carry codes (`BINDING_MISSING`,
+    `MALFORMED_ENVELOPE`), so the log tells a missing binding from a bad answer.
+  - BUG-126: every handler, `/about` and `/changelog` included, hands its logger to locale
+    resolution, so a KV failure while reading the user's language is logged.
+    `tests/translator-logger.test.ts` fails if a call site drops it.
+- **`/contrast` and `/accessibility` answer too few dyes with bot-logic's message**, not as a
+  render failure. Discord cannot reach this today: the options are required.
+
+## [5.8.4] - 2026-10-06
+
+Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+with `@xivdyetools/bot-logic` 4.7.0 and presets-api 2.6.0 in the same PR. **Merge after Sprint 8
+(presets-api 2.5.0, PR #256).** The production deploy re-registers commands, which it does on
+every deploy: free-text options gain `max_length`, and the `/preferences set clan` and `gender`
+descriptions change in all six languages. No font re-cut: no new text is drawn on a card.
+
+**Check after deploy, in the moderation channel:** a flagged `/preset submit` and a flagged
+`/preset edit` each produce exactly one post, and the edit is titled as an edit with a diff.
+
+**`/stats` success rate drops** after deploy on days when Universalis stalls (BUG-005, below).
+That is the old count being corrected, not a regression.
+
+### Fixed
+
+- **One moderation post per preset** (BUG-004). `/preset submit` and `/preset edit` no longer
+  post to the moderation channel or the submission log themselves. presets-api's webhook already
+  does, so every bot submission was posted twice.
+- **An owner's edit is posted as an edit** (BUG-003).
+  - The webhook reads presets-api's `is_edit` and posts kind `'edit'`. A payload without it is
+    still read as a new submission.
+  - The diff is against `edited_from` (presets-api 2.6.0), the text this edit replaced. Without
+    it (an older presets-api) the diff falls back to `previous_values`, headed *Changes since
+    the Revert snapshot*.
+  - Revert is offered only when `is_edit`, a well-formed `previous_values` and
+    `edited_from_status === 'approved'` all hold. The embed says which text Revert restores and,
+    when that differs from the replaced text, that it is older.
+  - Not fixed here: moderation-worker's refresh of a stale or legacy click still offers Revert on
+    any pending preset with a snapshot. That is its Sprint 17.
+- **A repeated dye is refused by name.** `/preset submit` and `/preset edit` answer
+  `preset.repeatedDye` ("**Snow White** is in this preset more than once…") instead of the generic
+  "Invalid request" from presets-api 2.5.0 (deep-dive BUG-010). On a cold start, `/preset submit`
+  may name the dye in English: it answers before deferring.
+- **World lookups no longer race Discord's 3-second ack** (BUG-002). `/budget find`,
+  `/budget quick`, `/budget set_world` and `/preferences set world:` defer first and look the
+  world up afterwards.
+  - A world `/budget find` or `quick` can't use is answered privately. The public deferred
+    message is deleted and the refusal is sent as an ephemeral follow-up; if the delete fails,
+    the refusal is edited over the message instead.
+- **A failed read no longer overwrites saved data.**
+  - Favourites (BUG-006): a failed KV read makes `/preset favorite add` and `remove` report an
+    error, not overwrite the list. A v2 list that will not parse falls back to the v1 list, and
+    the next save rewrites both.
+  - Preferences (BUG-048): a failed read aborts `/preferences set` and `reset`, including
+    `filters set` and `filters reset`. It used to write a one-key blob or delete the whole blob.
+    A stored blob that will not parse is logged and replaced on the next write, so it cannot
+    lock the user out. These failures now count as failed commands.
+- **Favourite names fill in without being replaced by the preset id** (BUG-047).
+  - A lookup that fails is retried on a later keystroke.
+  - A preset that answers 404 is marked `gone`.
+  - A name an older build saved as the id is looked up once more.
+  - The lookups share a 1.5-second deadline, so autocomplete answers inside Discord's 3 seconds.
+- **A Universalis timeout counts as an upstream failure** (BUG-005). The client's own 408 was
+  recorded as an answered `rejected` row; it is now `upstream_universalis` and unanswered.
+- **`/stats overview` drops "Avg Cmds/User"** (BUG-045), which divided a lifetime total by today's
+  users.
+- **Preview-image moderation keeps the preset ID in the footer**, and names the moderator as text,
+  never a mention (BUG-041). The stale-click and refresh edits keep the ID too.
+- **`/extractor color` reports a render failure as one** (BUG-042). It is logged and answered
+  "generation failed", not "no match found".
+- **`/gradient` names its Start and End dyes in your language** (BUG-043).
+- **`/swatch slot:` names a slot the file doesn't have in your language** (bot-logic 4.7.0). It
+  used to say "limbal" or "highlights" in every language.
+- **Echoed colour and dye input is sanitised and capped at 100 characters** (BUG-044, embed half)
+  in `/harmony`, `/extractor`, `/gradient`, `/mixer`, `/comparison`, `/contrast`,
+  `/accessibility` and `/dye info`.
+- **Registered free-text options declare `max_length`** (BUG-044, schema half), so Discord refuses
+  an over-long value in the client: 100 for colours, dyes and the other free text, 400 for preset
+  tags (ten 30-character tags), with the world, preset name and description caps unchanged.
+- **`/preferences` no longer claims commands read what they don't** (BUG-049).
+  - The `clan` and `gender` option descriptions no longer say `/swatch` uses them. Nothing reads
+    them; `/swatch` takes both from the `.chara` file.
+  - Each preference's "affects" list names the commands that really read it.
+- **Moderation embeds name the category** ("FFXIV Jobs", not `jobs`), in the moderation channel
+  and the submission log.
+- **Approved-preset autocomplete logs a presets-api failure** (REFACTOR-002), as the other preset
+  autocompletes do.
+
+### Changed
+
+- **`/stats summary` reads two counters** instead of listing every user key for the day (OPT-004).
+- **A user with no legacy preferences is remembered per isolate**, so later reads cost one KV get,
+  not three (OPT-005, partial: the first read in each isolate still pays).
+- The autocomplete router's favourites, clan and world branches are tested (BUG-046).
+
+### Removed
+
+- `CommandRegistryEntry.deprecated`, never set or read (DEAD-024).
+
+## [5.8.3] - 2026-10-05
+
+Sprint 7 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the policy documents. **Documents only** — no discord-worker source changed and no command schema,
+so no `register-commands`. 5.8.2 is Sprints 2 and 3, on a separate branch; merge that first.
+
+### Changed
+
+- **Privacy Policy, all six languages:** posts made after 2026-10-05 do not show your Discord User
+  ID; posts made on or before that date may. The sentence used to say "since this policy's Last
+  Updated date", which moves with every edit (I18N-001).
+- **Both documents:**
+  - fr says préréglage, as the bot does, never *palette prédéfinie* (TERM-010);
+  - de says Vorlage, as the bot does (TERM-006).
+- **Terms of Service:**
+  - ko says 조정자 for moderators, as the Privacy Policy does; 운영자 reads as "operator" (TERM-001);
+  - *Last Updated* is 2026-10-09, the merge date, in all six languages of both documents.
+
+## [5.8.2] - 2026-10-05
+
+Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+with `@xivdyetools/bot-logic` 4.6.0 in the same PR. The production deploy re-registers commands: three Korean option descriptions changed (the
+`/swatch` and `/glamour` file options and the `/preferences set clan` tooltip).
+
+### Fixed
+
+- **A file the bot can't read gets a translated reason** (HC-002). `utils/chara-attachment.ts`
+  fills the translated file-error message with `card.charaFileReason.*` (size, not on Discord's CDN,
+  download status) instead of an English reason.
+- **Cards print the clan in the user's language** (HC-001, bot-logic), and the other drawn-text
+  fixes of bot-logic 4.6.0.
+
+### Changed
+
+- **Fonts re-cut** for the new drawn text (compared by cmap):
+  - `NotoSansJP-Subset.ttf` gains 6 glyphs (原 因 埋 超 輪 郭);
+  - `NotoSansSC-Subset.ttf` gains 7 (埋 妆 就 嵌 廓 輪 郭);
+  - `NotoSansKR-Subset.ttf` gains 2 (떤 벨) and drops 1 (벌).
+
 ## [5.8.1] - 2026-10-05
 
 CJK font subsets re-cut for `@xivdyetools/core` 5.8.1, whose Korean race names and Korean / Chinese

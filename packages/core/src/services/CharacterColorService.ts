@@ -44,11 +44,18 @@ import { COLOR_DISTANCE_MAX } from '../constants/index.js';
  * Options for finding closest dye matches from character colors.
  */
 export interface CharacterMatchOptions {
-  /** Number of matches to return (default: 3) */
+  /**
+   * Number of matches to return (default: 3). Floored; below 1 returns no
+   * matches, and a value that is not a number (NaN, a string, null) falls
+   * back to the default.
+   */
   count?: number;
   /** Color matching algorithm (default: 'ciede2000') */
   matchingMethod?: MatchingMethod;
 }
+
+/** `CharacterMatchOptions.count` when it is omitted or not a number. */
+const DEFAULT_MATCH_COUNT = 3;
 
 // =============================================================================
 // Eager imports for shared colors (always needed, loaded at build time)
@@ -324,7 +331,7 @@ export class CharacterColorService {
     dyeService: DyeService,
     options: CharacterMatchOptions = {},
   ): CharacterColorMatch[] {
-    const { count = 3, matchingMethod = 'ciede2000' } = options;
+    const { count: requested, matchingMethod = 'ciede2000' } = options;
 
     // BUG-056: with `count <= 0` the bounded top-k loop below never takes its
     // `best.length < count` branch, so the else-branch dereferences
@@ -332,7 +339,16 @@ export class CharacterColorService {
     // honest answer to "give me at most zero matches" is an empty list; the
     // reachable route to it is a corrupted `maxResults` read out of
     // localStorage.
-    if (count <= 0) return [];
+    // BUG-131: `count <= 0` alone let NaN and non-numbers (a raw storage
+    // string like 'abc') through to that same dereference, since every
+    // comparison with them is false. Something that is not a count at all
+    // means what leaving it out means — the default — and a real count is
+    // floored, so 2.5 is "at most 2". Infinity stays "no cap".
+    const count =
+      typeof requested === 'number' && !Number.isNaN(requested)
+        ? Math.floor(requested)
+        : DEFAULT_MATCH_COUNT;
+    if (count < 1) return [];
 
     const allDyes = dyeService.getAllDyes();
 

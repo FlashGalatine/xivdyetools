@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "Ordne die Farben eines Charakters Farbstoffen aus einer `.chara`-Datei zu (Anamnesis oder Ktisis).\n• Liest Haut, Haar, Highlights, Augen, Lippe, Gesichtsbemalung und Tattoo/Limbalring\n• `slot`: die fünf nächsten Farbstoffe für eine Farbe"
+      "description": "Ordne die Farben eines Charakters Farbstoffen aus einer `.chara`-Datei zu (Anamnesis, Ktisis oder Brio).\n• Liest Haut, Haar, Strähnen, Augen, Lippe, Merkmale und Tattoo/äußere Iris\n• `slot`: die fünf nächsten Farbstoffe für eine Farbe"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "Listet die Projektion einer `.chara`-Datei auf (Anamnesis oder Ktisis).\n• Jedes gefärbte Teil, benannt als der Gegenstand, den du wirklich tragen kannst\n• Die ganze Liste im GPOSERS-Format, bereit zum Kopieren"
+      "description": "Listet die Projektion einer `.chara`-Datei auf (Anamnesis, Ktisis oder Brio).\n• Jedes gefärbte Teil, benannt als der Gegenstand, den du wirklich tragen kannst\n• Die ganze Liste im GPOSERS-Format, bereit zum Kopieren"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -143,7 +143,7 @@
       "autocomplete": "**Autovervollständigung:** Beginne einen Farbstoffnamen einzugeben und Vorschläge erscheinen!",
       "hexColors": "**Hex-Farben:** Verwende das Standard-Webformat wie `#FF0000` (Rot) oder `#5865F2` (Blurple)",
       "dyeNames": "**Farbstoffnamen:** Gib Teilnamen ein - 'Dala' findet 'Dalamud-Rot'",
-      "facewearExcluded": "**Gesichtszubehör:** Gesichtszubehör-Farben (wie 'Rot', 'Blau') sind keine Farbstoffe und erscheinen nie in den Ergebnissen",
+      "facewearExcluded": "**Gesichtsaccessoires:** Farben von Gesichtsaccessoires (wie 'Rot', 'Blau') sind keine Farbstoffe und erscheinen nie in den Ergebnissen",
       "links": "**Links:**"
     }
   },
@@ -229,6 +229,7 @@
     "randomTitle": "Zufällige Vorlage",
     "notEnoughDyes": "Bitte gib mindestens 3 Farbstoffe für deine Vorlage an.",
     "invalidDye": "Einer der angegebenen Farbstoffe wurde nicht gefunden.",
+    "repeatedDye": "**{dye}** ist mehr als einmal in dieser Vorlage enthalten. Jeder Farbstoff kann nur einmal verwendet werden.",
     "duplicateExists": "Ähnliche Vorlage existiert",
     "duplicateVoted": "Deine Stimme wurde der bestehenden Vorlage hinzugefügt.",
     "submitted": "Vorlage eingereicht!",
@@ -585,12 +586,12 @@
     "swatchNearest": "NÄCHSTER FARBSTOFF",
     "slotSkin": "HAUT",
     "slotHair": "HAAR",
-    "slotHl": "STRÄHN",
+    "slotHl": "STRÄHNEN",
     "slotEyes": "AUGEN",
     "slotLip": "LIPPE",
-    "slotPaint": "BEMAL",
-    "slotTattoo": "TÄTOW.",
-    "slotLimbal": "LIMBUS",
+    "slotPaint": "MERKMALE",
+    "slotTattoo": "TATTOO",
+    "slotLimbal": "ÄUẞ.IRIS",
     "offGridShort": "ABSEITS",
     "swatchFootKey_one": "nächste per ΔE2000 · {s} von {n} Slot",
     "swatchFootKey_other": "nächste per ΔE2000 · {s} von {n} Slots",
@@ -599,9 +600,24 @@
     "swatchGear": "Ausrüstungsfarben: {list}",
     "swatchDropped": "Entfernt (sicherster Treffer): {slot} · ΔE {de}",
     "swatchParseError": "Datei nicht lesbar — {message}",
+    "charaFileReason": {
+      "tooLarge": "sie ist größer als {mb} MB",
+      "notOnDiscord": "sie muss auf Discord hochgeladen werden",
+      "downloadFailed": "der Download ist fehlgeschlagen (HTTP {status})",
+      "unreadable": "sie ist keine .chara-Datei, die der Bot lesen kann"
+    },
     "swatchTitle": "Charakter-Farbmuster",
     "swatchNoSlots": "Keine aktiven Farb-Slots in dieser Datei.",
-    "swatchSlotMissing": "{slot} ist in dieser Datei kein aktiver Slot.",
+    "swatchSlotMissing": "\"{slot}\" ist in dieser Datei kein aktiver Slot.",
+    "swatchSlotName": {
+      "skin": "Haut",
+      "hair": "Haar",
+      "highlights": "Strähnen",
+      "eyes": "Augen",
+      "lip": "Lippen",
+      "facepaint": "Merkmale",
+      "limbal": "Tattoo / Äußere Iris"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "Projektion",
     "glamourPieces_one": "{n} gefärbtes Teil",
@@ -611,11 +627,12 @@
     "glamourDyes_one": "{n} Farbstoff",
     "glamourDyes_other": "{n} Farbstoffe",
     "glamourNoDyes": "keine Farbstoffe",
-    "glamourLooks": "+{n} OPTIK",
+    "glamourLooks_one": "+{n} OPTIK",
+    "glamourLooks_other": "+{n} OPTIKEN",
     "glamourOneLook": "EINZIG",
     "glamourStatusTwin": "ZWILLING",
     "glamourStatusOk": "OK",
-    "glamourStatusDye": "FARBEN",
+    "glamourStatusDye": "FARBSTOFFE",
     "glamourStatusGlamour": "KEINE PROJ",
     "glamourStatusWear": "GESPERRT",
     "glamourFootShown_one": "{s} von {n} gefärbten Teil",
@@ -627,13 +644,13 @@
     "glamourFootBlocked_one": "{n} ohne Lösung",
     "glamourFootBlocked_other": "{n} ohne Lösung",
     "glamourNamedLead": "Durch Zwilling benannt:",
-    "glamourFixedDye": "{name} (statt {other}, das diese Farbstoffe nicht annimmt)",
-    "glamourFixedGlamour": "{name} (statt {other}, das sich nicht projizieren lässt)",
-    "glamourFixedWear": "{name} (statt {other}, das dieser Charakter nicht tragen kann)",
+    "glamourFixedDye": "{name} (statt {other}: nimmt diese Farbstoffe nicht an)",
+    "glamourFixedGlamour": "{name} (statt {other}: lässt sich nicht projizieren)",
+    "glamourFixedWear": "{name} (statt {other}: für diesen Charakter nicht tragbar)",
     "glamourBlockedLead": "Keine Lösung:",
     "glamourBlockedDye": "{name} (nimmt die Farbstoffe der Datei nicht an)",
     "glamourBlockedGlamour": "{name} (lässt sich nicht projizieren)",
-    "glamourBlockedWear": "{name} (dieser Charakter kann es nicht tragen)",
+    "glamourBlockedWear": "{name} (für diesen Charakter nicht tragbar)",
     "glamourBlockedNoItem": "{name} (ein Modell ohne Gegenstand dahinter)",
     "glamourCompany": "Braucht die richtige Staatliche Gesellschaft: {list}",
     "glamourNoItemName": "Modell {key}",
@@ -687,7 +704,7 @@
       },
       "characterFile": {
         "name": "Charakterdatei",
-        "body": "/swatch liest einen .chara-Export aus Anamnesis oder Ktisis: Farb-Slots (Haut, Haar, Highlights, Augen, Lippe, Gesichtsbemalung, Tattoo/Limbalring) und getragene Ausrüstungsfarben. Die Datei wird einmal für die Antwort gelesen und nicht gespeichert. Farben abseits des Rasters werden nach ihrem Live-Wert gematcht und als ABSEITS markiert."
+        "body": "/swatch und /glamour lesen einen .chara-Export aus Anamnesis, Ktisis oder Brio. Die Datei wird einmal für die Antwort gelesen und nicht gespeichert.\n\n/swatch gleicht die Farb-Slots (Haut, Haar, Strähnen, Augen, Lippe, Merkmale, Tattoo/äußere Iris) mit Farbstoffen ab und listet die Farben der getragenen Ausrüstung auf. Farben abseits des Rasters (über die Palette des Spiels hinaus bearbeitet) werden nach ihrem Live-Wert gematcht und als ABSEITS markiert.\n\n/glamour listet jedes getragene Teil mit seinen Farbstoffen auf. Hinter einem Modell können mehrere Gegenstände stehen: seine Zwillinge (+N OPTIKEN). Jedes Teil wird als Gegenstand benannt, den dieser Charakter mit diesen Farbstoffen tragen kann: Wenn der gespeicherte Gegenstand die Farbstoffe nicht annimmt, sich nicht projizieren oder nicht tragen lässt, wird stattdessen ein Zwilling benannt, der das kann (ZWILLING). Ein Teil ohne Beanstandung zeigt OK. Den Zwilling wählt der Bot selbst und bevorzugt dabei einen, der Farbstoffe annimmt; im Projektionsleser der Web-App, der am Ende der Antwort verlinkt ist, kannst du einen anderen wählen. Hilft kein Zwilling, zeigt das Teil, woran es scheitert: FARBSTOFFE, KEINE PROJ, GESPERRT (oder das einzige Volk, das es tragen kann) oder ein Strich (—) für ein Modell ohne Gegenstand dahinter. Das Embed listet jedes Teil im GPOSERS-Format auf, bereit zum Kopieren. Seine Bezeichnungen und Acquisition-Zeilen sind in jeder Sprache auf Englisch; eine leere Acquisition-Zeile bedeutet, dass keine Quelle bekannt ist, also trag sie selbst ein."
       }
     }
   },
@@ -816,7 +833,7 @@
       "description": "Die Farben einer Charakterdatei den nächsten Farbstoffen zuordnen",
       "options": {
         "file": {
-          "description": ".chara-Charakterdatei (Export aus Anamnesis / Ktisis)"
+          "description": ".chara-Charakterdatei (Export aus Anamnesis / Ktisis / Brio)"
         },
         "order": {
           "description": "Zeilenreihenfolge — beide zeigen dieselben fünf Zeilen"
@@ -830,7 +847,7 @@
       "description": "Eine Charakterdatei als Projektion lesen: jedes Teil, seine Farbstoffe und ob es tragbar ist",
       "options": {
         "file": {
-          "description": ".chara-Charakterdatei (Export aus Anamnesis / Ktisis)"
+          "description": ".chara-Charakterdatei (Export aus Anamnesis / Ktisis / Brio)"
         }
       }
     },
@@ -1136,10 +1153,10 @@
               "description": "Standardanzahl Treffer für /extractor color (1-10)"
             },
             "clan": {
-              "description": "Standard-Stamm für /swatch (z.B. Wiesländer, Auri-Raen)"
+              "description": "Dein Stamm (wird mit deinen Einstellungen gespeichert; bisher verwendet ihn kein Befehl)"
             },
             "gender": {
-              "description": "Standard-Geschlecht für /swatch"
+              "description": "Dein Geschlecht (wird mit deinen Einstellungen gespeichert; bisher verwendet es kein Befehl)"
             },
             "world": {
               "description": "Standard-Welt/Datenzentrum für Marktpreise"

@@ -142,9 +142,9 @@ Submit a new preset.
 
 | Field | Type | Constraints |
 |-------|------|-------------|
-| `name` | string | 2-50 characters |
-| `description` | string | 10-200 characters |
-| `dyes` | number[] | 3-6 stainIDs (1-254); legacy itemIDs rejected |
+| `name` | string | 2-50 characters — the minimum counts the text after trimming surrounding whitespace, the maximum the value as sent (BUG-068) |
+| `description` | string | 10-200 characters — minimum after trimming, maximum as sent |
+| `dyes` | number[] | 3-6 stainIDs (1-254), each at most once (`Each dye may appear only once`, BUG-010); legacy itemIDs rejected |
 | `tags` | string[] | Max 10 tags, each max 30 characters |
 | `category_id` | string | One of `jobs`, `grand-companies`, `seasons`, `events`, `aesthetics`, `appearance`, `zones`, `raids-trials` |
 | `secondary_categories` | string[] | Optional, max 2, must not repeat `category_id` |
@@ -174,13 +174,18 @@ Get the authenticated user's own presets. Returns presets in all statuses, inclu
 Edit an owned preset. Validates that the authenticated user owns the preset.
 
 - If `dyes` are changed, runs duplicate detection.
-- If `name` or `description` are sent, the edit is charged to a per-user daily cap of 30
-  (`DAILY_TEXT_EDIT_LIMIT`, `submission_events` kind `text_edit`) **before** content moderation is
-  called, for every preset status; over the cap the edit is refused with `429 RATE_LIMITED`
-  ("You've reached your daily limit of name and description edits (30 per day). Try again
-  tomorrow.", plus `remaining: 0` and `reset_at`) and nothing is moderated or written.
-- If `name` or `description` are changed, runs content moderation.
-- If the edit is flagged by moderation, the previous values are stored in `previous_values`.
+- If `name` or `description` **differs from the stored value**, the edit is charged to a per-user
+  daily cap of 30 (`DAILY_TEXT_EDIT_LIMIT`, `submission_events` kind `text_edit`) **before** content
+  moderation is called, for every preset status; over the cap the edit is refused with
+  `429 RATE_LIMITED` ("You've reached your daily limit of name and description edits (30 per day).
+  Try again tomorrow.", plus `remaining: 0` and `reset_at`) and nothing is moderated or written.
+  Text re-sent unchanged is neither charged nor moderated again (BUG-065).
+- If `name` or `description` are changed, runs content moderation on the pair as it will read
+  after the edit.
+- If the edit is flagged by moderation **and the preset is `approved`**, the approved text is
+  stored in `previous_values` (write-once — an existing snapshot is kept). A pending, rejected or
+  flagged preset's edit never creates or overwrites a snapshot, because a revert approves it
+  (BUG-003 follow-up).
 - Status (FINDING-004): a `pending` preset stays pending; an `approved` one drops to `pending` only
   if the new text tripped moderation; a **`rejected`** one returns to `pending` when its text is
   edited — that edit *is* the resubmission the web app's "Resubmit" button performs; a `flagged` one
@@ -356,7 +361,11 @@ the status back to `approved`.
 | `expected_revision` | integer | **Required** (≥ 0) — the `content_revision` the moderator reviewed (FINDING-017) |
 | `expected_status` | string | **Required** — the status the moderator reviewed (any of `pending`, `approved`, `rejected`, `flagged`, `hidden`) |
 
-`400` if the preset has no `previous_values` to revert to.
+`400` if the preset has no `previous_values` to revert to. Also `400 VALIDATION_ERROR` ("The previous
+values cannot be restored: …") when the snapshot's dyes fail the rule a new palette meets — 3–6
+stainIDs, each at most once — e.g. a snapshot written before repeated dyes were refused; nothing is
+written and no log row is added (BUG-010 follow-up). Approve or reject through `PATCH …/status`
+instead.
 
 Like `PATCH …/status`, a revert fails closed. The update is conditional on the **caller's**
 `expected_revision`, `expected_status` and the exact `previous_values` snapshot (optimistic
@@ -462,7 +471,7 @@ Full detail in [rate-limiting.md](rate-limiting.md); the shape callers need is:
 | `submission` | 10 / day | `POST /api/v1/presets` |
 | `flagged_edit` | 10 / day | A `PATCH /api/v1/presets/:id` that notifies a moderator |
 | `preview_upload` | 20 / day | `POST /api/v1/presets/:id/preview-image` |
-| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` carrying `name` or `description` |
+| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` whose `name` or `description` differs from the stored value (text re-sent unchanged is free, BUG-065) |
 
 ### Response Headers
 

@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createMockFetcher } from '@xivdyetools/test-utils';
 import { verifyBotSignatureV2 } from '@xivdyetools/auth';
 import {
   isModerator,
   getPresets,
-  getPreset,
   getPendingPresets,
   approvePreset,
   rejectPreset,
@@ -325,35 +327,6 @@ describe('preset-api', () => {
     });
   });
 
-  describe('getPreset', () => {
-    it('should return preset when found', async () => {
-      const mockPreset = { id: 'preset-123', name: 'Test Preset', vote_count: 10 };
-      mockFetcher._setupHandler(() => Response.json(mockPreset));
-
-      const result = await getPreset(mockEnv, 'preset-123');
-
-      expect(result).toEqual(mockPreset);
-    });
-
-    it('should return null when preset not found (404)', async () => {
-      mockFetcher._setupHandler(
-        () => new Response(JSON.stringify({ error: 'Not found' }), { status: 404 }),
-      );
-
-      const result = await getPreset(mockEnv, 'nonexistent');
-
-      expect(result).toBeNull();
-    });
-
-    it('should throw PresetAPIError for other error statuses', async () => {
-      mockFetcher._setupHandler(
-        () => new Response(JSON.stringify({ error: 'Server error' }), { status: 500 }),
-      );
-
-      await expect(getPreset(mockEnv, 'preset-123')).rejects.toThrow(PresetAPIError);
-    });
-  });
-
   describe('getPendingPresets', () => {
     it('should return pending presets array', async () => {
       const mockPresets = [
@@ -552,6 +525,40 @@ describe('preset-api', () => {
       );
 
       expect(await getModerationPreset(mockEnv, 'gone', 'mod-1')).toBeNull();
+    });
+
+    // BUG-054 (2026-10-04 deep-dive): a presets-api older than 2.4.0 (a
+    // rollback, or a deploy made in the wrong order) has no GET
+    // /moderation/:id. Its catch-all 404 is not "the preset is gone", and
+    // reporting it as such stripped the live review buttons.
+    it('rethrows a 404 for a route presets-api does not have', async () => {
+      mockFetcher._setupHandler(() =>
+        Response.json(
+          {
+            success: false,
+            error: 'NOT_FOUND',
+            message: 'Route GET /api/v1/moderation/p-1 not found',
+          },
+          { status: 404 },
+        ),
+      );
+
+      const error = await getModerationPreset(mockEnv, 'p-1', 'mod-1').catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(PresetAPIError);
+      expect((error as PresetAPIError).statusCode).toBe(404);
+      expect((error as PresetAPIError).message).toBe('Route GET /api/v1/moderation/p-1 not found');
+    });
+
+    it.each([
+      ['a bare error body', { error: 'Not found' }],
+      ['another resource', { success: false, error: 'NOT_FOUND', message: 'Category not found' }],
+      ['a different code', { success: false, error: 'GONE', message: 'Preset not found' }],
+    ])('rethrows a 404 with %s', async (_name, body) => {
+      mockFetcher._setupHandler(() => Response.json(body, { status: 404 }));
+
+      await expect(getModerationPreset(mockEnv, 'p-1', 'mod-1')).rejects.toBeInstanceOf(
+        PresetAPIError,
+      );
     });
 
     it('rethrows any other failure', async () => {
@@ -891,10 +898,12 @@ describe('path-segment encoding (FINDING-020)', () => {
     expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}/revert`);
   });
 
-  it('getPreset encodes the preset id', async () => {
-    mockFetcher._setupHandler(() => Response.json({ id: 'p' }));
-    await getPreset(mockEnv, TRAVERSAL);
-    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/presets/${ENCODED}`);
+  it('getModerationPreset encodes the preset id', async () => {
+    mockFetcher._setupHandler(() =>
+      Response.json({ success: true, preset: { id: 'p' }, content_revision: 0 }),
+    );
+    await getModerationPreset(mockEnv, TRAVERSAL, '12345678901234567');
+    expect(mockFetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${ENCODED}`);
   });
 
   it('leaves a plain UUID untouched', async () => {
@@ -931,4 +940,45 @@ describe('moderator identity on list requests (MOD-13)', () => {
     expect(mockFetcher._calls[0].headers['x-user-discord-id']).toBe('12345678901234567');
   });
 });
+});
+
+/**
+ * BUG-054: getModerationPreset tells "the preset is gone" from "presets-api has
+ * no such route" by the 404 body alone, so pin both bodies to the server that
+ * sends them. Read from source, like tests/moderation-stats-contract.test.ts:
+ * the two workers are separate deploy units with no shared runtime.
+ */
+describe('the moderation-preset 404 contract (BUG-054)', () => {
+  const PRESETS_API_SRC = join(
+    dirname(fileURLToPath(import.meta.url)),
+    '..',
+    '..',
+    '..',
+    'presets-api',
+    'src',
+  );
+  const read = (...parts: string[]) => readFileSync(join(PRESETS_API_SRC, ...parts), 'utf8');
+
+  it("GET /moderation/:presetId answers a missing preset with notFoundResponse(c, 'Preset')", () => {
+    const route = /moderationRouter\.get\('\/:presetId'[\s\S]*?\n\}\);/.exec(
+      read('handlers', 'moderation.ts'),
+    );
+    expect(route, 'could not find GET /:presetId in presets-api').not.toBeNull();
+    expect(route![0]).toContain("return notFoundResponse(c, 'Preset');");
+  });
+
+  it("notFoundResponse sends NOT_FOUND and '<resource> not found'", () => {
+    const source = read('utils', 'api-response.ts');
+    expect(source).toContain("NOT_FOUND: 'NOT_FOUND'");
+    expect(source).toMatch(
+      /export function notFoundResponse\([^)]*\)[^{]*\{\s*return errorResponse\(c, ErrorCode\.NOT_FOUND, `\$\{resource\} not found`, 404\);/,
+    );
+  });
+
+  it("an unknown route's 404 carries a different message", () => {
+    const notFound = /app\.notFound\(\(c\) => \{[\s\S]*?\n\}\);/.exec(read('index.ts'));
+    expect(notFound, 'could not find app.notFound in presets-api').not.toBeNull();
+    expect(notFound![0]).toContain('error: ErrorCode.NOT_FOUND');
+    expect(notFound![0]).toContain('message: `Route ${c.req.method} ${c.req.path} not found`');
+  });
 });

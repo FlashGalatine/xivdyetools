@@ -2,13 +2,13 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](TERMS_OF_SERVICE.md)
 
-**最后更新：** 2026-10-05 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
+**最后更新：** 2026-10-09 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
 
 XIV Dye Tools 是一款为《最终幻想 XIV》制作的免费同人染剂工具集。它与 Square Enix 没有从属关系，也未获得其认可或赞助。使用本网站即表示您同意以下内容。如果您不同意，请不要使用它——离开这里对您没有任何代价。
 
 ## 本网站的功能
 
-十个工具在您的浏览器中运行：调色板提取、色彩和谐探索器、染剂比较、渐变生成器、染剂混合器、无障碍检查器、预算建议、色板匹配器，以及社区预设浏览器。除此之外，本网站还可以显示市场布告板价格、读取您拖入的 `.chara` 文件以命名幻化上的装备，并让您把调色板和收藏集保存到自己的设备上。
+十个工具在您的浏览器中运行：调色板提取、色彩和谐探索器、染剂比较、渐变生成器、染剂混合器、无障碍检查器、预算建议、色板匹配器、幻化查看器，以及社区预设。除此之外，本网站还可以显示市场布告板价格、读取您拖入的 `.chara` 文件以命名幻化上的装备，并让您把调色板和收藏集保存到自己的设备上。
 
 其中大部分功能无需账户，也不会向任何地方发送任何内容。例外情况列在 [`PRIVACY.md`](PRIVACY.md) 中。
 

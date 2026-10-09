@@ -621,3 +621,49 @@ describe('colour wheel', () => {
     });
   });
 });
+
+// ============================================================================
+// BUG-125 — the final catch logs what it caught
+// ============================================================================
+
+describe('executeHarmony — a generation failure is logged (BUG-125)', () => {
+  /**
+   * The catch used to be bare: GENERATION_FAILED came back and the exception
+   * was gone. core's hex parser quotes its input in its message ("Invalid hex
+   * color: …"), so the log line carries the error's class and code — never the
+   * message, and never the caller's base name.
+   */
+  it('logs the error class and leaves the input out of the line', async () => {
+    const warn = vi.fn();
+    const result = await executeHarmony({
+      baseHex: '#ZZZZZZ',
+      baseName: 'Sentinel Base Name',
+      harmonyType: 'triadic',
+      locale: 'en',
+      logger: { warn },
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('GENERATION_FAILED');
+
+    const lines = warn.mock.calls.flat().map(String);
+    expect(lines.some((l) => /^\[harmony\] generation failed: \w+/.test(l))).toBe(true);
+    for (const line of lines) {
+      expect(line).not.toContain('ZZZZZZ');
+      expect(line).not.toContain('Sentinel Base Name');
+    }
+  });
+
+  it('still answers GENERATION_FAILED with no logger at all', async () => {
+    const result = await executeHarmony({
+      baseHex: '#ZZZZZZ',
+      harmonyType: 'triadic',
+      locale: 'en',
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('GENERATION_FAILED');
+  });
+});

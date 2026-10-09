@@ -253,6 +253,7 @@ Extracts dominant colors from images using the K-means++ algorithm for better ce
 
 ```
 1. INITIALIZE CENTROIDS (K-means++)
+   K is colorCount, capped at the number of distinct colors in the sample
    a. Choose first centroid randomly from data points
    b. For each remaining centroid:
       - Calculate distance from each point to nearest existing centroid
@@ -264,7 +265,8 @@ Extracts dominant colors from images using the K-means++ algorithm for better ce
    c. Repeat until centroids stop moving (or max iterations)
 
 3. OUTPUT
-   - Return K centroids as ExtractedColor entries, sorted by dominance
+   - Drop any cluster left with no pixels
+   - Return the rest (at most K) as ExtractedColor entries, sorted by dominance
 ```
 
 ### Implementation
@@ -296,10 +298,10 @@ There is no `quality` setting. `PaletteExtractionOptions`:
 
 | Option | Default | Meaning |
 |--------|---------|---------|
-| `colorCount` | 4 | Colours to extract. Clamped to 1-10 (a clamp is logged). |
-| `maxIterations` | 25 | K-means iteration ceiling. |
+| `colorCount` | 4 | The **maximum** number of colors to extract. A fraction is floored (2.5 means at most 2), then clamped to 1-10; a value that is not a finite number (NaN, ±Infinity, an explicit `undefined`) uses the default. Either correction is logged. The result holds at most this many entries, each with `pixelCount > 0`, and fewer when the image holds fewer distinct colors or a cluster ends up empty. |
+| `maxIterations` | 25 | K-means iteration ceiling. Clamped to 1-100; a value that is not a finite number uses the default. Either correction is logged. |
 | `convergenceThreshold` | 1.0 | Stop once centroids move less than this in RGB distance. |
-| `maxSamples` | 10000 | Pixels sampled from the input. |
+| `maxSamples` | 10000 | Pixels sampled from the input. Floored, then at least 2; a value that is not a finite number uses the default. Either correction is logged. |
 | `matchingMethod` | `ciede2000` | `extractAndMatchPalette` only — how each centroid picks its dye. |
 
 ---

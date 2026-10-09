@@ -27,24 +27,18 @@ import {
   messageResponse,
   ephemeralResponse,
 } from '../../utils/response.js';
-import { sendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
+import { safeEditOriginalResponse } from '../../utils/discord-api.js';
 import { generatePresetSwatch, CATEGORY_DISPLAY } from '@xivdyetools/svg';
 import { filterToRenderable, filterToRenderableTitle } from '../../services/font-coverage.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
-import {
-  createUserTranslator,
-  createTranslator,
-  type Translator,
-} from '../../services/bot-i18n.js';
-import { sendModerationNotification } from './preset-notifications.js';
+import { createUserTranslator, type Translator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
 import type { Env } from '../../types/env.js';
 import { BRAND_ACCENT, STATE } from '../../utils/brand.js';
 import {
   type CommunityPreset,
   type PresetCategory,
-  STATUS_DISPLAY,
   PresetAPIError,
   isValidPresetId,
 } from '../../types/preset.js';
@@ -79,7 +73,7 @@ export async function handlePresetCommand(
     interaction.user?.global_name ||
     interaction.user?.username ||
     'Unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
 
   // Check if API is enabled
   if (!presetApi.isApiEnabled(env)) {
@@ -462,6 +456,21 @@ async function handleSubmitSubcommand(
     }
   }
 
+  // presets-api 2.5.0 refuses a repeated dye with a bare 400, which would
+  // reach the user as the generic "Invalid request" — say which dye instead.
+  // Checked on the resolved stainIDs: two spellings of one dye are one dye.
+  // This answer is synchronous, before the defer, so the user's locale is not
+  // loaded here: on a cold isolate the dye may be named in English (the same
+  // fallback searchDyesByName above already accepts). The edit path runs after
+  // its defer and loads the locale first.
+  const repeatedSubmitDye = firstRepeatedDye(dyeIds);
+  if (repeatedSubmitDye !== null) {
+    return messageResponse({
+      embeds: [errorEmbed(t.t('common.error'), repeatedDyeMessage(t, repeatedSubmitDye))],
+      flags: 64,
+    });
+  }
+
   // Parse tags
   const tags = tagsRaw
     ? tagsRaw
@@ -562,19 +571,14 @@ async function processSubmitCommand(
       footer: { text: t.t('common.footer') },
     };
 
+    // BUG-004 (2026-10-04 deep-dive): no channel post from here. presets-api's
+    // webhook announces every new preset whatever its source — a pending one
+    // to the moderation channel with buttons bound to its content_revision, an
+    // approved one to the submission log — so a post from this handler was a
+    // second copy, with legacy button ids that could only refresh.
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [embed],
     });
-
-    // Log to submission channel if approved
-    if (isApproved && env.SUBMISSION_LOG_CHANNEL_ID) {
-      await notifySubmissionChannel(env, preset, 'approved', logger);
-    }
-
-    // Notify moderation channel if pending
-    if (!isApproved && env.MODERATION_CHANNEL_ID) {
-      await notifyModerationChannel(env, preset, logger);
-    }
   } catch (error) {
     markCommandOutcome(interaction, classifyError(error));
     if (logger) {
@@ -809,6 +813,12 @@ async function processEditCommand(
     // Handle dyes - if any dye option is provided, we need to rebuild the full dye array
     const hasAnyDye = updates.dyeNames.some((d) => d !== undefined);
     if (hasAnyDye) {
+      // Load the user's locale before resolving and naming dyes:
+      // getLocalizedDyeName falls back to English while a locale's core
+      // instance is unloaded, so on a cold isolate the repeated-dye error
+      // named the dye in English for a ja/de/fr/ko/zh user.
+      await initializeLocale(t.getLocale());
+
       // Start with existing dyes
       const newDyeIds: number[] = [...existingPreset.dyes];
 
@@ -844,6 +854,16 @@ async function processEditCommand(
       if (newDyeIds.length < 3 || newDyeIds.length > 6) {
         await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
           embeds: [errorEmbed(t.t('common.error'), t.t('preset.edit.dyeCount'))],
+        });
+        return;
+      }
+
+      // Same rule as submit, on the REBUILT list: a new dye can collide with a
+      // position the user did not touch (presets-api 2.5.0 would answer 400)
+      const repeatedEditDye = firstRepeatedDye(newDyeIds);
+      if (repeatedEditDye !== null) {
+        await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+          embeds: [errorEmbed(t.t('common.error'), repeatedDyeMessage(t, repeatedEditDye))],
         });
         return;
       }
@@ -915,14 +935,14 @@ async function processEditCommand(
       },
     };
 
+    // BUG-004: no moderation post from here either. When an edit gives
+    // moderators something to judge, presets-api's webhook posts it as an edit
+    // (diff, and Revert when the preset was live — BUG-003). An edit it does
+    // not announce (FINDING-004: e.g. tags on a preset already in the queue)
+    // was never meant to ping the channel.
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [embed],
     });
-
-    // Notify moderation channel if pending
-    if (isPending && env.MODERATION_CHANNEL_ID) {
-      await notifyEditModerationChannel(env, updatedPreset, existingPreset, logger);
-    }
   } catch (error) {
     markCommandOutcome(interaction, classifyError(error));
     if (logger) {
@@ -955,6 +975,27 @@ async function lookupPreset(env: Env, input: string): Promise<CommunityPreset | 
     return presetApi.getPreset(env, input);
   }
   return presetApi.getPresetByName(env, input);
+}
+
+/** The first stainID that appears more than once in `stainIds`, or null. */
+function firstRepeatedDye(stainIds: readonly number[]): number | null {
+  const seen = new Set<number>();
+  for (const stainId of stainIds) {
+    if (seen.has(stainId)) return stainId;
+    seen.add(stainId);
+  }
+  return null;
+}
+
+/**
+ * The localized "this dye is in the preset twice" message. Names the dye from
+ * our own database (never the typed option value), so nothing user-written is
+ * echoed; a stainID the database does not know is shown as its number.
+ */
+function repeatedDyeMessage(t: Translator, stainId: number): string {
+  const dye = dyeService.getByStainId(stainId);
+  const dyeName = dye ? getLocalizedDyeName(dye.itemID, dye.name, t.getLocale()) : String(stainId);
+  return t.t('preset.repeatedDye', { dye: dyeName });
 }
 
 /**
@@ -1012,7 +1053,7 @@ async function sendPresetEmbed(
   });
 
   // Render to PNG
-  const pngBuffer = await renderSvgToPng(svg, { scale: 2 });
+  const pngBuffer = await renderSvgToPng(svg, { scale: 2, locale });
 
   // Build dye list with emojis
   const dyeList = dyes
@@ -1059,117 +1100,6 @@ async function sendPresetEmbed(
       contentType: 'image/png',
     },
   });
-}
-
-/**
- * Notify submission log channel about a new/approved preset
- */
-async function notifySubmissionChannel(
-  env: Env,
-  preset: CommunityPreset,
-  status: 'approved' | 'pending',
-  logger?: ExtendedLogger,
-): Promise<void> {
-  if (!env.SUBMISSION_LOG_CHANNEL_ID) return;
-
-  const categoryDisplay = CATEGORY_DISPLAY[preset.category_id];
-  const statusDisplay = STATUS_DISPLAY[status];
-  // Use English translator for admin notifications (no user context)
-  const adminT = createTranslator('en');
-  // FINDING-019 (DW-1): this path used to skip the sanitiser the moderation
-  // path applies — same treatment for name / description / author now
-  const safeName = sanitizePresetName(preset.name);
-  const safeDescription = sanitizePresetDescription(preset.description);
-  const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
-
-  try {
-    const res = await sendMessage(env.DISCORD_TOKEN, env.SUBMISSION_LOG_CHANNEL_ID, {
-      embeds: [
-        {
-          title: `${statusDisplay.icon} New Preset: ${safeName}`,
-          description: safeDescription,
-          color: statusDisplay.color,
-          fields: [
-            {
-              name: adminT.t('webhook.fields.category'),
-              value: categoryDisplay?.name || preset.category_id,
-              inline: true,
-            },
-            {
-              name: adminT.t('webhook.fields.author'),
-              value: safeAuthor,
-              inline: true,
-            },
-            {
-              name: adminT.t('webhook.fields.dyes'),
-              value: adminT.t('preset.colorCount', { n: preset.dyes.length }),
-              inline: true,
-            },
-          ],
-          footer: { text: `ID: ${preset.id}` },
-          timestamp: new Date().toISOString(),
-        },
-      ],
-    });
-    // REFACTOR-002: a non-2xx from Discord was previously swallowed — only a
-    // thrown fetch was logged. Mirror sendModerationNotification's ok check.
-    if (!res.ok) {
-      logger?.error('Submission channel notification rejected by Discord', undefined, {
-        status: res.status,
-        body: await res.text().catch(() => ''),
-        presetId: preset.id,
-      });
-    }
-  } catch (error) {
-    if (logger) {
-      logger.error(
-        'Failed to notify submission channel',
-        error instanceof Error ? error : undefined,
-      );
-    }
-  }
-}
-
-/**
- * Notify moderation channel about a pending preset.
- * REFACTOR-025/BUG-009/BUG-072: delegates to the shared sanitized builder.
- */
-async function notifyModerationChannel(
-  env: Env,
-  preset: CommunityPreset,
-  logger?: ExtendedLogger,
-): Promise<void> {
-  await sendModerationNotification(
-    env,
-    {
-      kind: 'new',
-      preset,
-      categoryName: CATEGORY_DISPLAY[preset.category_id]?.name,
-    },
-    logger,
-  );
-}
-
-/**
- * Notify moderation channel about a preset edit that needs review
- */
-async function notifyEditModerationChannel(
-  env: Env,
-  updatedPreset: CommunityPreset,
-  originalPreset: CommunityPreset,
-  logger?: ExtendedLogger,
-): Promise<void> {
-  // REFACTOR-025/BUG-009/BUG-072: shared sanitized builder
-  await sendModerationNotification(
-    env,
-    {
-      kind: 'edit',
-      preset: updatedPreset,
-      original: originalPreset,
-      categoryName: CATEGORY_DISPLAY[updatedPreset.category_id]?.name,
-    },
-    logger,
-  );
 }
 
 // ============================================================================

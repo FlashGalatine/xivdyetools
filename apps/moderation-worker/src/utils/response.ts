@@ -293,10 +293,13 @@ export function isXivAuthUuid(value: string): boolean {
   return BAN_TARGET_UUID_RE.test(value);
 }
 
-// Base64URL encode/decode used to live here as a hand-rolled pair. They are now
-// `base64UrlEncode` / `base64UrlDecode` from `@xivdyetools/auth/encoding`, which this
-// worker already depends on (2026-09-01 dead-code audit, DEAD-017). The local copy also
-// spread the whole byte array into String.fromCharCode, which the package avoids.
+// History: a hand-rolled Base64URL encode/decode pair used to live here. The
+// 2026-09-01 dead-code audit (DEAD-017) replaced it with `base64UrlEncode` /
+// `base64UrlDecode` from `@xivdyetools/auth/encoding` (the local copy also spread the
+// whole byte array into String.fromCharCode, which the package avoids). Its last
+// consumer here, the legacy base64-username decode in the ban-reason modal, was removed
+// in the 2026-10-04 deep-dive (DEAD-029), so no production code in this worker imports
+// `@xivdyetools/auth/encoding` any more.
 
 /**
  * The rate-limit refusal, as a Discord **interaction response**.

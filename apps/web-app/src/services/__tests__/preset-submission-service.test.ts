@@ -2,7 +2,10 @@
  * Tests for preset-submission-service pure functions
  * These functions can be tested without mocking API calls
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { http, HttpResponse } from 'msw';
+import { server } from '../../__tests__/mocks/server';
+import { mockPresets } from '../../__tests__/mocks/handlers';
 
 // The authenticated routes (delete / edit) gate on authService before they
 // build a request; the token itself is irrelevant to what is asserted here.
@@ -19,6 +22,7 @@ import {
   removePreviewImage,
   presetSubmissionService,
 } from '../preset-submission-service';
+import { communityPresetService } from '../community-preset-service';
 
 describe('PresetSubmissionService - validateSubmission', () => {
   // ============================================
@@ -563,5 +567,165 @@ describe('PresetSubmissionService - path encoding', () => {
     const paths = fetchSpy.mock.calls.map((call) => new URL(String(call[0])).pathname);
     expect(paths).toEqual(['/api/v1/presets/a%2Fb', '/api/v1/presets/a%2Fb']);
     fetchSpy.mockRestore();
+  });
+});
+
+// ============================================
+// Response-cache invalidation (2026-10-04 deep-dive BUG-031)
+// ============================================
+
+/**
+ * BUG-031: CommunityPresetService caches every `presets:<query>` list for five
+ * minutes, and nothing outside tests ever cleared it — so after a delete, edit
+ * or submit, preset-tool's reload with the same search and sort got the old
+ * list back. These go through the exported singleton, which is the same
+ * object this service writes through.
+ */
+describe('PresetSubmissionService - cache invalidation (BUG-031)', () => {
+  const API_URL = 'https://api.xivdyetools.app';
+
+  afterEach(() => {
+    communityPresetService.clearCache();
+  });
+
+  /** Fill the list cache, then make the API answer with a different list. */
+  async function cacheThenChangeList(): Promise<void> {
+    await communityPresetService.getPresets({ sort: 'popular', limit: 50 });
+    server.use(
+      http.get(`${API_URL}/api/v1/presets`, () =>
+        HttpResponse.json({
+          presets: [{ ...mockPresets[1], name: 'Fresh List' }],
+          total: 1,
+          page: 1,
+          limit: 50,
+          has_more: false,
+        })
+      )
+    );
+  }
+
+  async function listedNames(): Promise<string[]> {
+    const response = await communityPresetService.getPresets({ sort: 'popular', limit: 50 });
+    return response.presets.map((p) => p.name);
+  }
+
+  it('refetches the list after a successful delete', async () => {
+    await cacheThenChangeList();
+
+    const result = await presetSubmissionService.deletePreset('preset-1');
+
+    expect(result.success).toBe(true);
+    expect(await listedNames()).toEqual(['Fresh List']);
+  });
+
+  it('refetches the deleted preset itself rather than serving the cached copy', async () => {
+    await communityPresetService.getPreset('preset-1');
+    server.use(
+      http.get(`${API_URL}/api/v1/presets/:id`, () =>
+        HttpResponse.json(
+          { success: false, error: 'NOT_FOUND', message: 'Preset not found' },
+          { status: 404 }
+        )
+      )
+    );
+
+    await presetSubmissionService.deletePreset('preset-1');
+
+    await expect(communityPresetService.getPreset('preset-1')).resolves.toBeNull();
+  });
+
+  it('refetches the list after a successful edit', async () => {
+    await cacheThenChangeList();
+
+    const result = await presetSubmissionService.editPreset('preset-1', { tags: ['glam'] });
+
+    expect(result.success).toBe(true);
+    expect(await listedNames()).toEqual(['Fresh List']);
+  });
+
+  it('refetches the list after a successful submit', async () => {
+    await cacheThenChangeList();
+
+    const result = await presetSubmissionService.submitPreset({
+      name: 'New Preset',
+      description: 'A beautiful color palette for warriors',
+      category_id: 'jobs',
+      dyes: [1, 2, 3],
+      tags: [],
+    });
+
+    expect(result.success).toBe(true);
+    expect(await listedNames()).toEqual(['Fresh List']);
+  });
+
+  // An Edit-form save that changes only the picture skips editPreset and goes
+  // through these two alone, so they invalidate too (BUG-031 review follow-up).
+  it('refetches the list after the preview image is removed', async () => {
+    await cacheThenChangeList();
+    server.use(
+      http.delete(`${API_URL}/api/v1/presets/:presetId/preview-image`, () =>
+        HttpResponse.json({ success: true })
+      )
+    );
+
+    await removePreviewImage('preset-1');
+
+    expect(await listedNames()).toEqual(['Fresh List']);
+  });
+
+  it('refetches the list after a preview image is uploaded', async () => {
+    await cacheThenChangeList();
+    // Only the upload is stubbed; the list GETs still reach msw.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ success: true }), { status: 200 }));
+    const file = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], 'shot.png', {
+      type: 'image/png',
+    });
+
+    try {
+      await uploadPreviewImage('preset-1', file);
+
+      expect(await listedNames()).toEqual(['Fresh List']);
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
+  it('keeps the cached list when the preview-image removal fails', async () => {
+    const before = (await communityPresetService.getPresets({ sort: 'popular', limit: 50 }))
+      .presets;
+    server.use(
+      http.get(`${API_URL}/api/v1/presets`, () =>
+        HttpResponse.json({ presets: [], total: 0, page: 1, limit: 50, has_more: false })
+      ),
+      http.delete(`${API_URL}/api/v1/presets/:presetId/preview-image`, () =>
+        HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+      )
+    );
+
+    await expect(removePreviewImage('preset-1')).rejects.toThrow();
+
+    const after = (await communityPresetService.getPresets({ sort: 'popular', limit: 50 })).presets;
+    expect(after).toEqual(before);
+  });
+
+  it('keeps the cached list when the delete fails', async () => {
+    const before = (await communityPresetService.getPresets({ sort: 'popular', limit: 50 }))
+      .presets;
+    server.use(
+      http.get(`${API_URL}/api/v1/presets`, () =>
+        HttpResponse.json({ presets: [], total: 0, page: 1, limit: 50, has_more: false })
+      ),
+      http.delete(`${API_URL}/api/v1/presets/:presetId`, () =>
+        HttpResponse.json({ message: 'Forbidden' }, { status: 403 })
+      )
+    );
+
+    const result = await presetSubmissionService.deletePreset('preset-1');
+
+    expect(result.success).toBe(false);
+    const after = (await communityPresetService.getPresets({ sort: 'popular', limit: 50 })).presets;
+    expect(after).toEqual(before);
   });
 });

@@ -91,29 +91,6 @@ export function blendTwoColors(
   }
 }
 
-/**
- * Blend multiple hex colors (2 or more) using iterative mixing.
- * Each color contributes equally to the final result.
- *
- * @param hexColors Array of hex colors to blend
- * @param mixingMode The mixing algorithm to use
- * @returns Blended hex color
- */
-export function blendColors(hexColors: string[], mixingMode: MixingMode): string {
-  if (hexColors.length === 0) return '#000000';
-  if (hexColors.length === 1) return hexColors[0];
-
-  // Blend iteratively with weighted ratios for equal contribution
-  // Color 1 + Color 2 at 50/50, then result + Color 3 at 66/33
-  let result = hexColors[0];
-  for (let i = 1; i < hexColors.length; i++) {
-    // Each new color contributes 1/(i+1) so all colors end up equal weight
-    const ratio = 1 / (i + 1);
-    result = blendTwoColors(result, hexColors[i], mixingMode, ratio);
-  }
-  return result;
-}
-
 // ============================================================================
 // Color Distance Functions
 // ============================================================================

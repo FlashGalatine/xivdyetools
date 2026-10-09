@@ -42,33 +42,6 @@ vi.mock('@services/index', () => ({
     warning: vi.fn(),
     info: vi.fn(),
   },
-  /**
-   * The shared market-panel builder. Absent, renderMarketPanel throws and
-   * safeRender swallows it, leaving the whole panel empty.
-   */
-  buildMarketPanel: vi.fn(() => ({
-    panel: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      setContent: vi.fn(),
-      getContentContainer: vi.fn(() => document.createElement('div')),
-      open: vi.fn(),
-      close: vi.fn(),
-    },
-    // Mirrors the real MarketBoard component's public surface
-    marketBoard: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      getShowPrices: vi.fn().mockReturnValue(false),
-      setShowPrices: vi.fn(),
-      getSelectedServer: vi.fn().mockReturnValue(null),
-      setSelectedServer: vi.fn(),
-      loadServerData: vi.fn().mockResolvedValue(undefined),
-      refreshPrices: vi.fn().mockResolvedValue(undefined),
-      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
-      shouldFetchPrice: vi.fn().mockReturnValue(false),
-    },
-  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
   /**
@@ -275,13 +248,11 @@ vi.mock('../collapsible-panel', () => ({
 
 vi.mock('../market-board', () => ({
   /**
-   * Mirrors the real MarketBoard component's public surface. Tools that build
-   * a second, mobile board construct it directly from here rather than through
-   * buildMarketPanel, so a gap shows up only on the mobile path.
+   * Mirrors the real MarketBoard component's public surface. Every board a
+   * tool builds is constructed from here.
    */
   MarketBoard: class MockMarketBoard {
     container: HTMLElement;
-    private showPrices = false;
     private selectedServer: string | null = null;
     constructor(container: HTMLElement) {
       this.container = container;
@@ -295,26 +266,11 @@ vi.mock('../market-board', () => ({
     destroy() {
       this.container.innerHTML = '';
     }
-    getShowPrices() {
-      return this.showPrices;
-    }
-    setShowPrices(value: boolean) {
-      this.showPrices = value;
-    }
     getSelectedServer() {
       return this.selectedServer;
     }
-    setSelectedServer(server: string | null) {
-      this.selectedServer = server;
-    }
     async loadServerData() {}
     async refreshPrices() {}
-    async fetchPricesForDyes() {
-      return new Map();
-    }
-    shouldFetchPrice() {
-      return false;
-    }
   },
 }));
 
@@ -856,6 +812,215 @@ describe('AccessibilityTool', () => {
       tool.selectDye(dye(1));
 
       expect(await persistedDyeIds()).toEqual([1]);
+    });
+  });
+
+  // ==========================================================================
+  // Shared by the two describes below: StorageService answers with what was
+  // written, as localStorage would, so a re-read sees the tool's own writes.
+  // clearAllMocks keeps implementations, so both are put back afterwards.
+  // ==========================================================================
+
+  const LENS_KEY = 'v5_accessibility_lens';
+  let stored = new Map<string, unknown>();
+
+  const useStorageFake = () => {
+    beforeEach(async () => {
+      const { StorageService } = await import('@services/index');
+      stored = new Map();
+      vi.mocked(StorageService.getItem).mockImplementation(
+        (key: string) => (stored.get(key) ?? null) as never
+      );
+      vi.mocked(StorageService.setItem).mockImplementation((key: string, value: unknown) => {
+        stored.set(key, value);
+        return true;
+      });
+    });
+
+    afterEach(async () => {
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockReturnValue(null);
+      vi.mocked(StorageService.setItem).mockReturnValue(true);
+    });
+  };
+
+  /** Whether `el` or any ancestor up to `root` is display:none. */
+  const isHiddenWithin = (el: Element, root: HTMLElement): boolean => {
+    let node: HTMLElement | null = el as HTMLElement;
+    while (node && node !== root) {
+      if (node.style.display === 'none') return true;
+      node = node.parentElement;
+    }
+    return false;
+  };
+
+  /** The lens tab currently marked selected, by its vision label. */
+  const activeLensTab = (root: HTMLElement) =>
+    root.querySelector('[role="tab"][aria-selected="true"]')?.firstElementChild?.textContent;
+
+  const lensTab = (root: HTMLElement, vision: string) =>
+    [...root.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (tab) => tab.firstElementChild?.textContent === `vision:${vision}`
+    );
+
+  // ==========================================================================
+  // BUG-021 / BUG-076 (2026-10-04 deep-dive): a language switch runs update(),
+  // which rebuilt the right panel with the empty state up and the lens, pair
+  // and card sections hidden, and nothing called updateResults(). The rebuilt
+  // left panel also re-read the saved selection, which resolves database dyes
+  // only, so a custom colour fell out of a mixed selection. No test fired the
+  // LanguageService subscriber. Mounted as the v4 shell mounts it: one element
+  // as both panels.
+  // ==========================================================================
+
+  describe('a language switch keeps the analysis on screen', () => {
+    useStorageFake();
+
+    let panel: HTMLElement;
+
+    beforeEach(() => {
+      panel = document.createElement('div');
+      container.appendChild(panel);
+    });
+
+    const mountV4 = (): AccessibilityTool => {
+      const t = new AccessibilityTool(container, {
+        leftPanel: panel,
+        rightPanel: panel,
+        drawerContent: null,
+      });
+      t.init();
+      return t;
+    };
+
+    /** Every captured subscriber, as the extractor test does: not only `calls[0]`. */
+    const switchLanguage = async () => {
+      const { LanguageService } = await import('@services/index');
+      for (const [cb] of [...vi.mocked(LanguageService.subscribe).mock.calls]) {
+        (cb as () => void)();
+      }
+      await flush();
+    };
+
+    const cardHexes = () =>
+      [...panel.querySelectorAll('v4-result-card')].map(
+        (card) => (card as unknown as { data: { dye: { hex: string } } }).data.dye.hex
+      );
+
+    it('still shows the chosen lens, the pair readout and the cards for two dyes', async () => {
+      tool = mountV4();
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+      lensTab(panel, 'deuteranopia')!.click();
+
+      await switchLanguage();
+
+      const empty = [...panel.querySelectorAll('p')].find(
+        (p) => p.textContent === 'accessibility.selectDyesToSeeAnalysis'
+      )!;
+      expect(isHiddenWithin(empty, panel)).toBe(true);
+      expect(activeLensTab(panel)).toBe('vision:deuteranopia');
+      expect(isHiddenWithin(lensTab(panel, 'deuteranopia')!, panel)).toBe(false);
+      const readout = [...panel.querySelectorAll('span')].find(
+        (s) => s.textContent === 'accessibility.tellApart'
+      )!;
+      expect(isHiddenWithin(readout, panel)).toBe(false);
+      const cards = [...panel.querySelectorAll('v4-result-card')];
+      expect(cards).toHaveLength(2);
+      expect(isHiddenWithin(cards[0], panel)).toBe(false);
+      const share = panel.querySelector('v4-share-button') as unknown as HTMLElement & {
+        disabled: boolean;
+      };
+      expect(isHiddenWithin(share, panel)).toBe(false);
+      expect(share.disabled).toBe(false);
+    });
+
+    it('keeps a custom colour in a mixed selection', async () => {
+      tool = mountV4();
+      tool.selectDye(mockDyes[0]);
+      tool.selectCustomColor('#123456');
+
+      await switchLanguage();
+
+      expect(cardHexes()).toEqual([mockDyes[0].hex, '#123456']);
+    });
+
+    it('still restores the saved selection when the tool is built', () => {
+      stored.set(SELECTED_KEY, [mockDyes[0].id, mockDyes[1].id]);
+
+      tool = mountV4();
+
+      expect(cardHexes()).toEqual([mockDyes[0].hex, mockDyes[1].hex]);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-076 (2026-10-04 deep-dive): setConfig moves the active lens off a
+  // vision type the sidebar switches off (BUG-096), but the tool's own vision
+  // checkboxes -- the left panel's and the drawer's -- did not, so unchecking
+  // the lens being viewed left the grid painted through it with no tab
+  // selected. Nothing tested either handler.
+  // ==========================================================================
+
+  describe('unchecking the active lens in the tool', () => {
+    useStorageFake();
+
+    it.each([
+      ['left panel', () => leftPanel],
+      ['drawer', () => drawerContent],
+    ])('moves the lens to a visible one from the %s', (_where, host) => {
+      tool = mount();
+      tool.selectDye(mockDyes[0]);
+      tool.selectDye(mockDyes[1]);
+      lensTab(rightPanel, 'deuteranopia')!.click();
+      expect(activeLensTab(rightPanel)).toBe('vision:deuteranopia');
+
+      const checkbox = host().querySelector<HTMLInputElement>(
+        'input[data-vision-type="deuteranopia"]'
+      )!;
+      checkbox.checked = false;
+      checkbox.dispatchEvent(new Event('change'));
+
+      expect(lensTab(rightPanel, 'deuteranopia')).toBeUndefined();
+      expect(activeLensTab(rightPanel)).toBe('vision:normal');
+      expect(stored.get(LENS_KEY)).toBe('normal');
+    });
+  });
+
+  // ==========================================================================
+  // BUG-087 (2026-10-04 deep-dive): Share was enabled for any selection, but
+  // custom colours never enter a share link — an all-custom selection copied
+  // a link carrying dyes: [], which restores nothing.
+  // ==========================================================================
+
+  describe('Share with custom colours', () => {
+    useStorageFake();
+
+    const shareButton = () =>
+      rightPanel.querySelector('v4-share-button') as unknown as {
+        disabled: boolean;
+        shareParams: Record<string, unknown>;
+      };
+
+    it('is disabled when every colour is custom', () => {
+      tool = mount();
+
+      tool.selectCustomColor('#123456');
+      tool.selectCustomColor('#654321');
+
+      expect(shareButton().disabled).toBe(true);
+      expect(shareButton().shareParams).not.toHaveProperty('dyes');
+    });
+
+    it('shares only the dyes of a mixed selection, with the lens', () => {
+      tool = mount();
+
+      tool.selectCustomColor('#123456');
+      tool.selectDye(mockDyes[0]);
+
+      expect(shareButton().disabled).toBe(false);
+      expect(shareButton().shareParams.dyes).toEqual([mockDyes[0].stainID]);
+      expect(shareButton().shareParams).toHaveProperty('vision');
     });
   });
 });

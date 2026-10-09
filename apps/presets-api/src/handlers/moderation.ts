@@ -5,6 +5,7 @@
 
 import { Hono } from 'hono';
 import type { Context } from 'hono';
+import { REVIEW_STATUSES } from '@xivdyetools/types';
 import type { Env, AuthContext, PresetStatus, PresetRow } from '../types.js';
 import { requireModerator } from '../middleware/auth.js';
 import {
@@ -24,10 +25,12 @@ import {
   notFoundResponse,
   internalErrorResponse,
 } from '../utils/api-response.js';
+import { readJsonObject } from '../utils/request-body.js';
 // PRESETS-REF-001 FIX: Import from centralized validation service
 import {
   validateModerationStatus,
   validateModerationReason,
+  validatePresetDyes,
 } from '../services/validation-service.js';
 import {
   listFailedNotifications,
@@ -76,9 +79,6 @@ async function dyeSignatureConflictResponse(
   );
 }
 
-/** Every status a preset can be in — what a moderator may have been looking at. */
-const REVIEWED_STATUSES: readonly PresetStatus[] = ['pending', 'approved', 'rejected', 'flagged', 'hidden'];
-
 /**
  * FINDING-017 (2026-10-03 audit): the 409 for a status change that is not bound
  * to a review. `REVISION_REQUIRED` — the caller never said what it reviewed —
@@ -117,6 +117,14 @@ async function reviewConflictResponse(
  * request body. `null` means "not bound to a review" — the caller answers
  * REVISION_REQUIRED. Shared by the status and revert routes so the two cannot
  * drift apart.
+ *
+ * `expected_status` may be any status a preset can be in — what a moderator may
+ * have been looking at. REFACTOR-001 (2026-10-04 deep-dive): that list is
+ * `REVIEW_STATUSES` from `@xivdyetools/types`, the same one discord-worker and
+ * moderation-worker put in a review button's custom_id, so a status one side
+ * sends cannot be one the other refuses. It is deliberately NOT the four-status
+ * target list `validateModerationStatus` checks `status` against: a moderator
+ * may have reviewed a `hidden` preset, but may not set one.
  */
 function parseReviewBinding(body: {
   expected_revision?: unknown;
@@ -126,7 +134,7 @@ function parseReviewBinding(body: {
   const status = body.expected_status;
   if (
     typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0 ||
-    typeof status !== 'string' || !REVIEWED_STATUSES.includes(status as PresetStatus)
+    typeof status !== 'string' || !REVIEW_STATUSES.includes(status as PresetStatus)
   ) {
     return null;
   }
@@ -158,16 +166,14 @@ moderationRouter.patch('/:presetId/status', async (c) => {
   const auth = c.get('auth');
   const presetId = c.req.param('presetId');
 
-  // Parse request body
-  let body: {
+  // Parse request body (BUG-064: `null` or a non-object is a 400, not a TypeError)
+  const body = await readJsonObject<{
     status: PresetStatus;
     reason?: string;
     expected_revision?: unknown;
     expected_status?: unknown;
-  };
-  try {
-    body = await c.req.json();
-  } catch {
+  }>(c);
+  if (!body) {
     return invalidJsonResponse(c);
   }
 
@@ -257,11 +263,13 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   const auth = c.get('auth');
   const presetId = c.req.param('presetId');
 
-  // Parse request body for reason
-  let body: { reason: string; expected_revision?: unknown; expected_status?: unknown };
-  try {
-    body = await c.req.json();
-  } catch {
+  // Parse request body for reason (BUG-064: `null` or a non-object is a 400, not a TypeError)
+  const body = await readJsonObject<{
+    reason: string;
+    expected_revision?: unknown;
+    expected_status?: unknown;
+  }>(c);
+  if (!body) {
     return invalidJsonResponse(c);
   }
 
@@ -289,6 +297,22 @@ moderationRouter.patch('/:presetId/revert', async (c) => {
   // Check if there are previous values to revert to
   if (!preset.previous_values || !presetRow.previous_values) {
     return validationErrorResponse(c, 'This preset has no previous values to revert to');
+  }
+
+  // BUG-010 follow-up (2026-10-04 deep-dive): a revert approves the snapshot's
+  // dyes as-is, and that snapshot was written by an older edit — possibly
+  // before submit/edit refused a repeated dye (or a legacy item ID, or a
+  // count outside 3–6). Hold it to the same rule a new palette meets, so a
+  // revert cannot re-approve one. Same 400 as "nothing to revert to": either
+  // way the snapshot cannot be used, and the moderator's way forward is an
+  // approve or reject through /status instead. Checked before the batch, so a
+  // refused revert writes neither the preset nor the audit log.
+  const snapshotDyeError = validatePresetDyes(preset.previous_values.dyes);
+  if (snapshotDyeError) {
+    return validationErrorResponse(
+      c,
+      `The previous values cannot be restored: ${snapshotDyeError}`
+    );
   }
 
   // BUG-020 (2026-07-18 audit): revert + audit log in one atomic batch — the

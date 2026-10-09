@@ -14,4 +14,4 @@
 - In the PR that schedules Phase 2, tick or replace the OPEN_ITEMS entry with the next real step and drop or refresh the inventory line numbers (cite patterns instead). No package publish needed.
 
 ## Status
-OPEN
+PARTIALLY FIXED 2026-10-05 — `223b839f` (PR #228, merged in `fa25c0aa`) replaced the stale OPEN_ITEMS Phase 0 entry. Left: the DOMAIN_DEPRECATION inventory still cites route lines that no longer exist (strike them through rather than refresh them), in Sprint 20. Re-verified on `main@50165ec6`: [reverify-2026-10-05.md](../../2026-10-04-i18n/evidence/reverify-2026-10-05.md).

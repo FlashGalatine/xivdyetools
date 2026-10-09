@@ -15,4 +15,4 @@
 Steps: 1) apps/web-app/src/components/empty-state.ts: delete the factories at 53-76 and 87-108. From the import at 13-21 drop ICON_STATE_COINS, ICON_STATE_ALERT, ICON_STATE_WAIT_ANIMATED and ICON_DETAIL_EXTRACTOR, and also ICON_STATE_SEARCH and ICON_STATE_FUNNEL: the deleted factories were their only users in this file, and web-app's tsconfig sets noUnusedLocals. ICON_STATE_SEARCH/FUNNEL stay exported from state-icons.ts, since dye-grid.ts:7/89/96 and v4/preset-tool.ts:19/1145 use them. 2) empty-state.test.ts: trim the preset list at 117-123 to noHarmonyResults and delete the describes at 257-281 and 291-313. 3) In the same pull request, as separate commits: DEAD-009 (the four icons) and DEAD-010 (the locale strings). 4) pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app && pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `85a16dcf` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

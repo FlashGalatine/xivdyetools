@@ -7,23 +7,20 @@
  * - Database query flooding through autocomplete
  * - Rapid button clicks and command spam
  *
- * REFACTOR-002: Now uses @xivdyetools/rate-limiter shared package
+ * REFACTOR-002: built on the shared limiters in `@xivdyetools/worker-kit/rate-limiter`
+ * (the standalone `@xivdyetools/rate-limiter` package was folded into worker-kit).
  *
  * Rate limits are enforced per Discord user ID and interaction type:
  * - Commands: 20 requests/minute (with 5 burst allowance)
  * - Autocomplete: 60 requests/minute (with 10 burst allowance)
  *
+ * There is no Hono middleware here (DEAD-025, 2026-10-04 dead-code audit):
+ * `index.ts` calls `checkRateLimit` then `incrementRateLimit` on each command,
+ * button, modal and autocomplete path itself, after it knows the user id.
+ *
  * @see https://developers.cloudflare.com/workers/runtime-apis/kv/
- *
- * @example
- * ```typescript
- * import { rateLimitMiddleware } from './middleware/rate-limit.js';
- *
- * app.use('*', rateLimitMiddleware);
- * ```
  */
 
-import type { Context, Next } from 'hono';
 import type { Env } from '../types/env.js';
 import {
   KVRateLimiter,
@@ -218,19 +215,22 @@ export async function checkRateLimit(
 /**
  * Increment rate limit counter
  *
- * MOD-BUG-001 FIX: Now handled by shared package's KVRateLimiter
- * which uses optimistic concurrency with retries.
+ * Concurrency and retries belong to the backend: the native binding counts
+ * atomically (per colo), and worker-kit's KVRateLimiter is best-effort (KV has
+ * no atomic read-modify-write) and retries only thrown KV errors, under its own
+ * `maxRetries` option. DEAD-028 (2026-10-04 dead-code audit) removed this
+ * function's `maxRetries` parameter: nothing ever read it, and it never
+ * reached the shared package.
  *
  * @param kv - KV namespace for storing counters
  * @param userId - Discord user ID
  * @param type - Type of interaction
- * @param maxRetries - Maximum retry attempts (passed to shared package)
+ * @param bindings - Native rate-limit bindings (`moderationRateLimitBindings(env)`); KV when absent
  */
 export async function incrementRateLimit(
   kv: KVNamespace,
   userId: string,
   type: RateLimitType,
-  _maxRetries: number = 3,
   bindings?: ModerationRateLimitBindings,
 ): Promise<void> {
   const limiter = getLimiter(kv, bindings);
@@ -245,25 +245,6 @@ export async function incrementRateLimit(
   };
 
   await limiter.increment(key, sharedConfig);
-}
-
-/**
- * Rate limiting middleware for Hono
- *
- * Checks rate limits for Discord interactions and returns 429 if exceeded.
- * Does NOT block the request - just logs violations.
- * Actual rate limit enforcement happens in interaction handlers.
- *
- * @param c - Hono context
- * @param next - Next middleware
- */
-export async function rateLimitMiddleware(
-  _c: Context<{ Bindings: Env }>,
-  next: Next,
-): Promise<void> {
-  // Pass through - rate limiting is enforced at interaction handler level
-  // This middleware just provides the infrastructure
-  await next();
 }
 
 /**

@@ -337,6 +337,17 @@ export class ConfigController {
   }
 
   /**
+   * Store a config even when it equals what is in memory, which setConfig
+   * skips (OPT-008). A config that was never stored reads as the defaults of
+   * whichever build reads it, and those tables differ between builds: the
+   * swatch defaults changed in web-app 5.14.1 (BUG-001), so the Swatch tool's
+   * one-time migration stores what it settled on.
+   */
+  persistConfig<K extends ConfigKey>(key: K): void {
+    this.saveToStorage(key, this.getConfig(key));
+  }
+
+  /**
    * Subscribe to config changes for a specific tool
    *
    * @param key - Tool ID or 'global'

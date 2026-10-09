@@ -298,6 +298,22 @@ describe('Index/App', () => {
 
             expect(body.message).toContain('POST');
         });
+
+        // CONTRACT with moderation-worker (deep-dive BUG-054): a 404 whose body is
+        // NOT presets-api's "Preset not found" means "this deploy has no such
+        // route", and moderation-worker's isPresetMissing keeps the review
+        // buttons for it. The missing-preset body is pinned in
+        // tests/handlers/moderation-review-binding.test.ts. Change either body
+        // only together with isPresetMissing.
+        it('answers an unknown route with a body distinct from a missing preset', async () => {
+            const res = await app.request('/api/v1/moderation/abc/no-such-route', {}, env);
+
+            expect(res.status).toBe(404);
+            const body = await res.json() as { error: string; message: string };
+            expect(body.error).toBe('NOT_FOUND');
+            expect(body.message).toBe('Route GET /api/v1/moderation/abc/no-such-route not found');
+            expect(body.message).not.toBe('Preset not found');
+        });
     });
 
     // ============================================

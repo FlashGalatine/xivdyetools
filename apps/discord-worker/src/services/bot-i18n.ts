@@ -33,7 +33,9 @@ export async function createUserTranslator(
   discordLocale?: string,
   logger?: ExtendedLogger,
 ): Promise<Translator> {
-  const locale = await resolveUserLocale(kv, userId, discordLocale);
+  // BUG-126: with the logger, a KV failure during resolution is logged, not
+  // silently degraded to the Discord locale.
+  const locale = await resolveUserLocale(kv, userId, discordLocale, logger);
   // F-02 (2026-08-20 i18n audit): warm the per-locale dye-name cache here so
   // `resolveColorInput(..., { locale })` / `searchDyesByName` can match
   // localized names on the very first request of an isolate. Cached after
@@ -63,7 +65,7 @@ export async function createUserTranslatorWithPrefs(
     await initializeLocale(prefs.language);
     return { t: new Translator(prefs.language, logger), prefs };
   }
-  const locale = await resolveUserLocale(kv, userId, discordLocale);
+  const locale = await resolveUserLocale(kv, userId, discordLocale, logger); // BUG-126
   await initializeLocale(locale);
   return { t: new Translator(locale, logger), prefs };
 }

@@ -381,6 +381,115 @@ describe('AuthService', () => {
       await expect(authService.logout()).resolves.not.toThrow();
       expect(authService.isAuthenticated()).toBe(false);
     });
+
+    // BUG-115: the revoke was awaited, with no timeout, BEFORE the local
+    // session was cleared. An auth worker that accepted the connection and
+    // never answered left the token in localStorage and the UI signed in, and
+    // the memoised logout promise (BUG-025) made every retry share the hang.
+    it('signs out locally without waiting on a revoke that never answers (BUG-115)', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '123456789',
+        username: 'testuser',
+        global_name: 'Test User',
+        avatar: null,
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(futureTime);
+
+      // Connection accepted, response never sent
+      const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+      fetchMock.mockReturnValue(new Promise(() => {}));
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+      expect(authService.isAuthenticated()).toBe(true);
+
+      const listener = vi.fn();
+      authService.subscribe(listener);
+      listener.mockClear();
+
+      const outcome = await Promise.race([
+        authService.logout().then(() => 'settled'),
+        new Promise((resolve) => setTimeout(() => resolve('still pending'), 50)),
+      ]);
+
+      expect(outcome).toBe('settled');
+      expect(authService.isAuthenticated()).toBe(false);
+      expect(mockLocalStorage['xivdyetools_auth_token']).toBeUndefined();
+      expect(mockLocalStorage['xivdyetools_auth_expires']).toBeUndefined();
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({ isAuthenticated: false, user: null, token: null })
+      );
+
+      // The revoke still goes out, for the token being signed out — read
+      // before the local state was cleared, not `Bearer null` after it —
+      // and carries a timeout so a stalled connection cannot linger
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toMatch(/\/auth\/revoke$/);
+      expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${mockToken}`);
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+    });
+
+    // BUG-115 follow-up: `AbortSignal.timeout` needs Safari 16 / Chrome 103 /
+    // Firefox 100, and the build targets es2020. Called inside the revoke's
+    // try, its TypeError was swallowed and NO revoke went out at all — the
+    // old awaited revoke always sent one. Without it, the bound must come
+    // from an AbortController + setTimeout instead.
+    it('still sends a bounded revoke where AbortSignal.timeout is missing (BUG-115)', async () => {
+      const futureTime = Math.floor(Date.now() / 1000) + 3600;
+      const mockToken = createMockJWT({
+        sub: '123456789',
+        username: 'testuser',
+        global_name: 'Test User',
+        avatar: null,
+        exp: futureTime,
+        iat: Math.floor(Date.now() / 1000),
+        iss: 'xivdyetools',
+      });
+
+      mockLocalStorage['xivdyetools_auth_token'] = mockToken;
+      mockLocalStorage['xivdyetools_auth_expires'] = String(futureTime);
+
+      const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+      fetchMock.mockReturnValue(new Promise(() => {}));
+
+      const { authService } = await import('../auth-service');
+      await authService.initialize();
+      expect(authService.isAuthenticated()).toBe(true);
+
+      const signalStatics = AbortSignal as unknown as { timeout?: unknown };
+      const originalTimeout = signalStatics.timeout;
+      vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+      try {
+        signalStatics.timeout = undefined;
+
+        await authService.logout();
+
+        expect(authService.isAuthenticated()).toBe(false);
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        expect(url).toMatch(/\/auth\/revoke$/);
+        expect((init.headers as Record<string, string>).Authorization).toBe(`Bearer ${mockToken}`);
+
+        // Bounded all the same: aborts once the revoke timeout has elapsed
+        const signal = init.signal as AbortSignal;
+        expect(signal).toBeInstanceOf(AbortSignal);
+        vi.advanceTimersByTime(4999);
+        expect(signal.aborted).toBe(false);
+        vi.advanceTimersByTime(1);
+        expect(signal.aborted).toBe(true);
+      } finally {
+        signalStatics.timeout = originalTimeout;
+        vi.useRealTimers();
+      }
+    });
   });
 
   describe('getAuthHeaders', () => {

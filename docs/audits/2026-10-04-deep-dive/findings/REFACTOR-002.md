@@ -16,4 +16,4 @@
 - Pass { status: 'approved', logger } at index.ts:1137.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `a9dac980` (branch `fix/remediation-2026-10-04-sprint9`, discord-worker 5.8.4; PR #257, open, on PR #256).

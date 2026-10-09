@@ -72,10 +72,10 @@ export interface UserPreferences {
   /** Default number of results to show (1-10) */
   count?: number;
 
-  /** Default clan for /swatch skin and hair lookups */
+  /** Stored clan. No command reads it: /swatch takes the clan from the .chara file (BUG-049) */
   clan?: string;
 
-  /** Default gender for /swatch skin and hair lookups */
+  /** Stored gender. No command reads it: /swatch takes the gender from the .chara file (BUG-049) */
   gender?: Gender;
 
   /** Preferred FFXIV world for market data */

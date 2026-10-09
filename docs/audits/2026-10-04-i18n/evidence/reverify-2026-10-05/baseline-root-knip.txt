@@ -1,0 +1,19 @@
+Unused files (2)
+apps/web-app/scripts/analyze-unused-keys.d.ts
+apps/web-app/scripts/check-bundle-size.d.ts  
+Unused devDependencies (1)
+wrangler  apps/web-app/package.json:52:6
+Configuration hints (13)
+src/**/__tests__/**/*.ts   apps/stoat-worker  knip.jsonc  Refine entry pattern (no matches)                            
+tests/**/*.ts              apps/stoat-worker  knip.jsonc  Refine entry pattern (no matches)                            
+scripts/**/*.{ts,js,mjs}!  apps/stoat-worker  knip.jsonc  Refine entry pattern (no matches)                            
+src/**/__tests__/**/*.ts   apps/og-worker     knip.jsonc  Refine entry pattern (no matches)                            
+scripts/**/*.{ts,js,mjs}!  apps/og-worker     knip.jsonc  Refine entry pattern (no matches)                            
+tests/**/*.ts              apps/stoat-worker  knip.jsonc  Refine project pattern (no matches)                          
+scripts/**                 apps/stoat-worker  knip.jsonc  Refine project pattern (no matches)                          
+src/index.ts!              apps/stoat-worker  knip.jsonc  Remove redundant entry pattern                               
+src/index.ts!              apps/og-worker     knip.jsonc  Remove redundant entry pattern                               
+src/main.ts!               apps/web-app       knip.jsonc  Remove redundant entry pattern                               
+eslint.config.js           apps/web-app       knip.jsonc  Remove redundant entry pattern                               
+.vue                       apps/api-worker    knip.jsonc  Compiled extension excluded by project (imports not followed)
+.css                       apps/web-app       knip.jsonc  Compiled extension excluded by project (imports not followed)

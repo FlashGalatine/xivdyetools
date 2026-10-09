@@ -5,6 +5,132 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.10.0] - 2026-10-06
+
+Sprint 13 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+on the discord-worker stack with bot-logic 4.8.2, web-app 5.14.10, og-worker 2.11.3 and
+discord-worker 5.8.7. MINOR under the house rule that any observable change is minor. The release
+adds new throws, returns shorter arrays and changes some outputs, but no export changes shape.
+5.9.0 (Sprint 27, web stack) comes first. Every app takes core through `workspace:*`, so the
+changes reach players when this PR merges, not when it is published.
+
+### Fixed
+
+- **A grey input keeps the other colour's hue in an HSL mix** (BUG-035, CSS Color 4's
+  powerless-hue rule).
+  - It used to pull the mix toward red: white + blue gave pink `#df9fdf`, now light blue
+    `#9f9fdf`.
+  - The rule covers exact greys only (r = g = b): grey hex codes, Slate Grey, Jet Black and
+    Metallic Silver. Near-greys such as Pure White and Snow White keep their own faint hue.
+- **Palette extraction returns only colours the image holds** (BUG-036).
+  - `extractPalette` and `extractAndMatchPalette` cap k at the image's distinct colours and drop
+    empty clusters. They return at most `colorCount` entries, each with `pixelCount > 0`.
+  - A `colorCount`, `maxSamples` or `maxIterations` that is not a finite number uses the default,
+    with a warning.
+  - A fractional `colorCount` or `maxSamples` is floored. A fractional `maxSamples` used to read
+    past the end of the pixel array and throw.
+- **The locale build checks its sources before it writes** (BUG-128).
+  - It compares `dyes.json` with `dyenames.csv`: missing or extra rows, duplicate or colliding
+    keys, and English names.
+  - It compares `facewear_colors.json` with `facewear-names.csv` the same way.
+  - A failure writes nothing. `--allow-missing` waives only empty translation cells.
+- **Opo-opo Brown**: `dyes.json` now has the client's English name (BUG-130). It said
+  "Opo-Opo Brown".
+- **`blendColors` never returns `#NaNNaNNaN`** (BUG-129). A ratio that is not a number (NaN,
+  `null`, a string or an object) gets the 0.5 default; ±Infinity still clamps. A numeric string
+  is no longer parsed.
+- **`findClosestDyes` handles any count** (BUG-131). NaN or a non-number gets the default of 3,
+  a fraction is floored, and a count below 1 returns [].
+- **The `.chara` parser refuses a colour it cannot read** (BUG-133).
+  - An empty channel, a non-finite value or a JS-only literal such as `0x10` now throws
+    `INVALID_INPUT`. It used to import as a plausible but wrong colour.
+  - A 3-channel colour may end with one trailing separator, which Anamnesis and Brio both accept.
+  - Real exports still parse.
+- **`searchByLocalizedName` returns [] for an empty, whitespace or non-string query** (BUG-132).
+  It used to return all 125 dyes.
+- **`isLightColor` and `getOptimalTextColor` pick the text colour with more contrast** (BUG-134).
+  - The crossover is now luminance ≈ 0.179, where black and white text contrast equally. It was
+    0.5.
+  - `#FF8000` gets black text at 8.3:1 instead of white at 2.5:1.
+  - No in-repo production code calls these two functions.
+- **`hsvToRgb` no longer depends on call order** (BUG-135): its cache keys on the exact inputs.
+- **`generateHarmonySlots` keeps a pinned dye out of every other slot** when duplicates are off
+  (BUG-137). That includes earlier slots and companion lists. When two slots pin one dye, only the
+  lower slot is honoured.
+- **Tests that could not fail now pin real results** (BUG-138, BUG-139).
+
+### Changed
+
+- **`DyeDatabase.initialize()` and the `DyeService` constructor throw `DATABASE_LOAD_FAILED`**
+  (BUG-136):
+  - for a payload with no valid dye;
+  - for a duplicate id, itemID alias or stainID. The later entry used to overwrite the earlier
+    one without a word.
+- **The character-creation sheet names follow the game clients** (TERM-021). They come from the
+  terminology dictionary's table and are no longer typed by hand. English is unchanged. Examples:
+  - ja 刺青 / 瞳の輪郭, was タトゥー／角膜;
+  - ko 문신 / 눈동자 테두리;
+  - zh 刺青 / 瞳孔轮廓;
+  - de Tattoo / Äußere Iris;
+  - fr Tatouage / Contour de l'iris;
+  - the highlight, eye, lip and face-paint labels change with them.
+
+## [5.9.0] - 2026-10-05
+
+Sprint 27 of the 2026-10-04 remediation plan. MINOR: additions only. No existing export changes
+shape or return value.
+
+### Added
+
+- **`APIService.getPricesForDataCenterWithOutcome(itemIDs, dataCenterID)`** →
+  `Promise<PriceBatchResult>` (`{ prices, outcome }`, with `PriceBatchOutcome = 'ok' | 'partial' |
+  'error'`). It never throws.
+  - `'ok'`: no upstream request failed. All-cached and empty calls make no request.
+  - `'partial'`: a request failed, but prices came back (cached or fetched).
+  - `'error'`: a request failed, and the Map is empty.
+  - Counted as failures: a thrown or timed-out fetch, retry exhaustion, a non-OK status, an
+    unparseable or `results`-less body, or the rate limiter rejecting. A 200 that prices none of
+    the items is `'ok'`.
+  - The outcome survives the >100-item chunk merge and the in-flight coalescing (every coalesced
+    caller sees it).
+  - Before this, a Universalis or proxy outage looked like an empty success, so no consumer could
+    tell "no prices" from "no answer" (2026-10-04 deep-dive BUG-090).
+- **`CHARA_DYEABLE_SLOTS`**: the seven gear slots that take dyes (MainHand, OffHand, HeadGear,
+  Body, Hands, Legs, Feet), typed over `GposersSlot`. It was a private copy in `chara-gposers`, and
+  the web app's Glamour Reader kept a second one (REFACTOR-004).
+
+### Fixed
+
+- **Chinese and Korean data centers and worlds** (陆行鸟, 한국, 红玉海, …) were sanitised to an empty
+  path segment, so every price lookup for them failed (`/aggregated//<ids>`). The segment now keeps
+  Unicode letters and digits and is percent-encoded. Each name gets its own cache key, where all of
+  them used to collapse to one. Path characters (`/`, `.`, `%`) are still stripped.
+
+### Changed
+
+- `getPricesForDataCenter` delegates to the new method. Its signature and its `Map` return are
+  unchanged.
+
+## [5.8.2] - 2026-10-05
+
+The Brass facewear color's French, Korean and Chinese names now match the game clients. PATCH: a
+data correction only, no API change.
+
+### Fixed
+
+- **`facewearColors.brass`**: fr Laiton → **Bronze**, ko 황동색 → **구리색**, zh 黄铜色 → **铜色**.
+  These are the clients' own words: all 61 Brass rows of the `Glasses` sheet say *(bronze)* /
+  *de couleur bronze* (FR, via XIVAPI v2; capitalized here like the other ten French names),
+  구리색 (the KR client dump) and 铜色 (the CN client dump). en Brass, ja ブラス and de Messing were
+  already the client's, and the other ten colors already use the client's words in every language.
+- Corrected in the source (`facewear-names.csv`), from which `build:locales` rebuilds the locale
+  JSON. Only `fr.json`, `ko.json` and `zh.json` change. Sources: the *Facewear Colors* table in
+  `docs/reference/ffxiv-terminology.md`.
+
+The web app's Glamour Reader shows these names (its facewear chip). No worker draws them, but the
+discord-worker and og-worker font gates sweep every core locale string; their CJK subsets already
+carry 구, 리 and 铜, so they need no re-cut.
+
 ## [5.8.1] - 2026-10-05
 
 Korean and Chinese race and clan names now match the game clients. PATCH: data corrections only,

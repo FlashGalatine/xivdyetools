@@ -326,4 +326,101 @@ describe('PresetDetail', () => {
       expect(voteButtonAfter.textContent).toContain('5');
     });
   });
+
+  // --------------------------------------------------------------------
+  // 2026-10-04 deep-dive BUG-108
+  // --------------------------------------------------------------------
+
+  describe('BUG-108: a failed vote-status check keeps the vote count', () => {
+    // The fix is in community-preset-service: a failed check no longer answers
+    // `vote_count: 0` (see the integration suite). This pins the half that
+    // lives here — a check result without a count must leave the count alone.
+    it('keeps the preset vote count when the check comes back without one', async () => {
+      authServiceMock.isAuthenticated.mockReturnValue(true);
+      communityPresetServiceMock.hasVoted.mockResolvedValue({ has_voted: false });
+
+      const el = await mountDetail({ ...basePreset, dyes: [], voteCount: 12 });
+      await flush(el);
+
+      expect(el.shadowRoot!.querySelector('.vote-btn')!.textContent).toContain('12');
+    });
+  });
+
+  // --------------------------------------------------------------------
+  // 2026-10-04 deep-dive BUG-110
+  // --------------------------------------------------------------------
+
+  describe('BUG-110: vote-update says whether the user now has a vote on it', () => {
+    /** Mount signed in, with the given server answer to the vote-status check. */
+    async function mountSignedIn(hasVoted: boolean): Promise<PresetDetailEl> {
+      authServiceMock.isAuthenticated.mockReturnValue(true);
+      communityPresetServiceMock.hasVoted.mockResolvedValue({ has_voted: hasVoted });
+      const el = await mountDetail({ ...basePreset, dyes: [], voteCount: 4 });
+      await flush(el);
+      return el;
+    }
+
+    /** Click Vote and return the vote-update details it emitted. */
+    async function clickVote(el: PresetDetailEl): Promise<unknown[]> {
+      const details: unknown[] = [];
+      el.addEventListener('vote-update', (e) => details.push((e as CustomEvent).detail));
+      el.shadowRoot!.querySelector<HTMLButtonElement>('.vote-btn')!.click();
+      await flush(el);
+      return details;
+    }
+
+    it('emits voted: true after a vote is added', async () => {
+      communityPresetServiceMock.voteForPreset.mockResolvedValueOnce({
+        success: true,
+        new_vote_count: 5,
+      });
+      const el = await mountSignedIn(false);
+
+      const details = await clickVote(el);
+
+      expect(details).toEqual([{ preset: { ...basePreset, dyes: [], voteCount: 5 }, voted: true }]);
+    });
+
+    it('emits voted: false after a vote is removed', async () => {
+      communityPresetServiceMock.removeVote.mockResolvedValueOnce({
+        success: true,
+        new_vote_count: 3,
+      });
+      const el = await mountSignedIn(true);
+
+      const details = await clickVote(el);
+
+      expect(details).toEqual([
+        { preset: { ...basePreset, dyes: [], voteCount: 3 }, voted: false },
+      ]);
+    });
+
+    it('emits voted: true when the server says the vote was already cast', async () => {
+      communityPresetServiceMock.voteForPreset.mockResolvedValueOnce({
+        success: false,
+        new_vote_count: 4,
+        already_voted: true,
+        errorCode: 'alreadyVoted',
+      });
+      const el = await mountSignedIn(false);
+
+      const details = await clickVote(el);
+
+      expect(details).toEqual([{ preset: { ...basePreset, dyes: [], voteCount: 4 }, voted: true }]);
+    });
+
+    it('emits nothing when the vote fails', async () => {
+      communityPresetServiceMock.voteForPreset.mockResolvedValueOnce({
+        success: false,
+        new_vote_count: 0,
+        errorCode: 'voteFailed',
+      });
+      const el = await mountSignedIn(false);
+
+      const details = await clickVote(el);
+
+      expect(details).toEqual([]);
+      expect(toastServiceMock.error).toHaveBeenCalledWith('errors.voteFailed');
+    });
+  });
 });
