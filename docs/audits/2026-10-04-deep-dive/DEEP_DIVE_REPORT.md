@@ -371,10 +371,10 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-034 | FIX COMMITTED, NOT DEPLOYED (PR #258, open) | `b43e757a`, `c1f60ec8` |
 | BUG-035 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab`, `49e6f31a` |
 | BUG-036 | FIX COMMITTED, NOT DEPLOYED (PR #260, open) | `e48dd7ab` |
-| BUG-037 | OPEN | — |
-| BUG-038 | OPEN | — |
-| BUG-039 | OPEN | — |
-| BUG-040 | OPEN | — |
+| BUG-037 | FIX COMMITTED, NOT DEPLOYED (PR #273, open) | `6818070b` |
+| BUG-038 | FIX COMMITTED, NOT DEPLOYED (PR #273, open) | `6818070b` |
+| BUG-039 | FIX COMMITTED, NOT DEPLOYED (PR #273, open) | `6818070b` |
+| BUG-040 | FIX COMMITTED, NOT DEPLOYED (PR #273, open) | `6818070b` |
 | BUG-041 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-042 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-043 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
@@ -501,7 +501,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-008 | OPEN | — |
 | REFACTOR-009 | PARTIALLY FIXED 2026-10-05 (OPEN_ITEMS half; DOMAIN_DEPRECATION in Sprint 20) | `223b839f` |
 | OPT-001 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
-| OPT-002 | OPEN | — |
+| OPT-002 | FIX COMMITTED, NOT DEPLOYED (PR #273, open) | `6818070b` |
 | OPT-003 | OPEN (needs presets-api `?ids=`) | — |
 | OPT-004 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | OPT-005 | PARTIALLY FIXED (PR #257, open) | `a9dac980` |

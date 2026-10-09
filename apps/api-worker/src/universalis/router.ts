@@ -28,6 +28,7 @@ import { Hono } from 'hono';
 import { getLogger } from '@xivdyetools/worker-kit';
 import { getClientIp } from '@xivdyetools/worker-kit/rate-limiter';
 import type { Env } from '../types.js';
+import { SERVICE_BINDING_BUDGET_MULTIPLIER } from './config/service-budget.js';
 import { CACHE_CONFIGS } from './config/cache';
 import { isValidDatacenterOrWorld, isNameInUpstreamLists } from './config/datacenters';
 import {
@@ -122,7 +123,7 @@ function clampUpstreamStatus(status: number): 400 | 404 | 429 | 500 | 502 | 503 
  * primary control — but a ceiling that a bot bug cannot turn into an unbounded
  * fan-out at Universalis is worth keeping.
  */
-const SERVICE_BINDING_BUDGET_MULTIPLIER = 20;
+// The value lives in ./config/service-budget.ts so wrangler-config.test.ts can pin it (BUG-039).
 
 /**
  * The rate-limit identity and budget for this request.

@@ -53,7 +53,8 @@ export interface Env {
   XIVAPI_BASE?: string;
   /**
    * XIVAPI game-version key the chara resolver is pinned to — `latest` or a
-   * key from `/api/version`. Also namespaces the row cache. After a patch,
+   * key from `/api/version`. A real key is also the row-cache namespace; `latest`
+   * is resolved to the key it points at (BUG-040). After a patch,
    * search 503s on the new key until ingested: keep the old key until a
    * probe succeeds, then roll forward.
    */
