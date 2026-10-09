@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-10-06
+
+Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+in the same PR as discord-worker 5.8.4. Minor: new keys.
+
+### Added
+
+- **`preset.repeatedDye`** ×6: the bot's own refusal of a preset that names a dye twice, with
+  the dye in `{dye}`. discord-worker answers it before presets-api's generic 400 (deep-dive
+  BUG-010).
+- **`card.swatchSlotName.{skin,hair,highlights,eyes,lip,facepaint,limbal}`** ×6: the
+  `/swatch slot:` choices as words for a sentence. The non-English names are the web app's own
+  (`swatch.pal*`).
+
+### Fixed
+
+- **`/swatch slot:` names a missing slot in the reader's language.** `executeSwatch`'s
+  `SLOT_MISSING` reply carried the option's raw English value ("highlights", "limbal") into
+  every language; it now names the slot through `card.swatchSlotName.*`. de and fr quote the
+  name, as those files quote their other placeholders, so a plural name does not meet a singular
+  verb.
+
+### Changed
+
+- **`commands.preferences.options.set.options.{clan,gender}.description`** ×6 no longer say
+  `/swatch` uses the stored value (deep-dive BUG-049). Nothing reads it; `/swatch` takes both
+  from the `.chara` file. ja and ko say the character's clan and gender, as those files' existing
+  labels do.
+
 ## [4.6.0] - 2026-10-05
 
 Sprints 2 and 3 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-10-06
+
+Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+in the same PR as discord-worker 5.8.4. MINOR: one additive webhook field. No schema change and no
+D1 migration. Merge after 2.5.0 (Sprint 8, PR #256). The order against discord-worker does not
+matter: the field is optional, and discord-worker falls back to `previous_values` without it.
+
+### Added
+
+- **`edited_from` on every PATCH notification**: the name, description, tags and dyes that this
+  edit replaced, taken from the row the handler read before writing. POST notifications do not
+  carry it.
+  - It is the diff base. A moderator now sees what this edit changed, including on a pending
+    preset's edit and a rejected preset's resubmission, which have no `previous_values`.
+  - `preset.previous_values` keeps its meaning: what Revert restores. It can be older than the
+    text this edit replaced (approved A, flagged edit B, B approved, flagged edit C: Revert
+    restores A), so a consumer labels Revert by what it restores, not as "undo this edit".
+  - The dead-letter record still drops the preset text, the new field included (FINDING-017).
+  - Only those four fields are carried. A notifying edit that also changes the category,
+    secondary categories or example link does not show them in the diff.
+
 ## [2.5.0] - 2026-10-05
 
 Sprint 8 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`).

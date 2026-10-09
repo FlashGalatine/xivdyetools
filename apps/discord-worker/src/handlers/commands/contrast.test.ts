@@ -41,7 +41,11 @@ vi.mock('../../utils/discord-api.js', () => ({
   safeEditOriginalResponse: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-vi.mock('@xivdyetools/bot-logic', () => ({
+vi.mock('@xivdyetools/bot-logic', async () => ({
+  // The real sanitiser — a stub here would only test the stub (BUG-044).
+  sanitizeEmbedText: (
+    await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic')
+  ).sanitizeEmbedText,
   executeContrast: vi.fn().mockResolvedValue({
     ok: true,
     svgString: '<svg>contrast</svg>',
@@ -147,6 +151,34 @@ describe('handleContrastCommand', () => {
 
       expect(ctx.waitUntil).not.toHaveBeenCalled();
       expect(JSON.stringify(body)).toContain('invalid:nosuchdye');
+    });
+
+    // BUG-044: the raw option was echoed unsanitised and uncapped — ~4000
+    // characters overflowed the 4096-character description and Discord
+    // rejected the reply ("The application did not respond").
+    it('sanitizes and caps an unresolvable dye in the error (BUG-044)', async () => {
+      const hostile = `@everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+      vi.mocked(resolveColorInput).mockImplementation((value: string) =>
+        value === hostile
+          ? null
+          : ({
+              hex: '#FFFFFF',
+              name: `Resolved ${value}`,
+              itemID: 5729,
+              dye: { id: 1, name: `Resolved ${value}`, hex: '#FFFFFF' },
+            } as never),
+      );
+      const response = await handleContrastCommand(interaction(['Snow White', hostile]), env, ctx);
+      const body = (await response.json()) as { data: { embeds: { description: string }[] } };
+
+      const description = body.data.embeds[0].description;
+      expect(description.startsWith('invalid:')).toBe(true);
+      const echoed = description.slice('invalid:'.length);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
     });
 
     it('ignores options that are not dye slots', async () => {

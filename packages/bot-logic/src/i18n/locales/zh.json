@@ -229,6 +229,7 @@
     "randomTitle": "随机预设",
     "notEnoughDyes": "预设需要至少3种染剂。",
     "invalidDye": "找不到指定的染剂之一。",
+    "repeatedDye": "**{dye}** 在此预设中出现了多次。每种染剂只能使用一次。",
     "duplicateExists": "已存在类似预设",
     "duplicateVoted": "您的投票已添加到现有预设。",
     "submitted": "预设已提交！",
@@ -608,6 +609,15 @@
     "swatchTitle": "角色色板",
     "swatchNoSlots": "此文件中没有有效的颜色部位。",
     "swatchSlotMissing": "{slot}在此文件中不是有效部位。",
+    "swatchSlotName": {
+      "skin": "皮肤",
+      "hair": "头发",
+      "highlights": "挑染",
+      "eyes": "眼睛",
+      "lip": "嘴唇",
+      "facepaint": "面妆",
+      "limbal": "刺青 / 瞳孔轮廓"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "幻化",
     "glamourPieces_one": "已染色 {n} 件",
@@ -1143,10 +1153,10 @@
               "description": "/extractor color 的默认匹配数量（1-10）"
             },
             "clan": {
-              "description": "/swatch 的默认部族（如中原之民、晨曦之民）"
+              "description": "您的部族（随偏好设置保存，目前尚无命令读取）"
             },
             "gender": {
-              "description": "/swatch 的默认性别"
+              "description": "您的性别（随偏好设置保存，目前尚无命令读取）"
             },
             "world": {
               "description": "市场价格所用的默认服务器/大区"

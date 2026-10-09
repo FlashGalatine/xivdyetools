@@ -21,12 +21,20 @@ import {
 import {
   resolveColorInput,
   executeAccessibility,
+  sanitizeEmbedText,
   type VisionType,
   type AccessibilityDye,
 } from '@xivdyetools/bot-logic';
 import { getUserPreferences } from '../../services/preferences.js';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+
+// BUG-044: a user-typed option echoed into an error embed goes through the
+// shared sanitiser (markdown / masked links / mentions defused) with the
+// 100-character cap the other dye-name echoes use — an uncapped ~4000-char
+// value pushed the description past Discord's 4096 limit and the reply was
+// rejected outright.
+const MAX_ECHO_LENGTH = 100;
 
 export async function handleAccessibilityCommand(
   interaction: DiscordInteraction,
@@ -71,7 +79,12 @@ export async function handleAccessibilityCommand(
         type: 4,
         data: {
           embeds: [
-            errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: input.value })),
+            errorEmbed(
+              t.t('common.error'),
+              t.t('errors.invalidColor', {
+                input: sanitizeEmbedText(input.value, MAX_ECHO_LENGTH),
+              }),
+            ),
           ],
           flags: 64,
         },

@@ -17,12 +17,25 @@ import { createTranslator, createUserTranslator } from '../../services/bot-i18n.
 import {
   discordLocaleToLocaleCode,
   initializeLocale,
+  getLocalizedDyeName,
   type LocaleCode,
 } from '../../services/i18n.js';
-import { resolveColorInput, executeGradient, type InterpolationMode } from '@xivdyetools/bot-logic';
+import {
+  resolveColorInput,
+  executeGradient,
+  sanitizeEmbedText,
+  type InterpolationMode,
+} from '@xivdyetools/bot-logic';
 import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+
+// BUG-044: a user-typed option echoed into an error embed goes through the
+// shared sanitiser (markdown / masked links / mentions defused) with the
+// 100-character cap the other dye-name echoes use — an uncapped ~4000-char
+// value pushed the description past Discord's 4096 limit and the reply was
+// rejected outright.
+const MAX_ECHO_LENGTH = 100;
 
 export async function handleGradientCommand(
   interaction: DiscordInteraction,
@@ -58,7 +71,10 @@ export async function handleGradientCommand(
       type: 4,
       data: {
         embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: startInput })),
+          errorEmbed(
+            t.t('common.error'),
+            t.t('errors.invalidColor', { input: sanitizeEmbedText(startInput, MAX_ECHO_LENGTH) }),
+          ),
         ],
         flags: 64,
       },
@@ -70,7 +86,12 @@ export async function handleGradientCommand(
     return Response.json({
       type: 4,
       data: {
-        embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: endInput }))],
+        embeds: [
+          errorEmbed(
+            t.t('common.error'),
+            t.t('errors.invalidColor', { input: sanitizeEmbedText(endInput, MAX_ECHO_LENGTH) }),
+          ),
+        ],
         flags: 64,
       },
     });
@@ -182,11 +203,16 @@ async function processGradientCommand(
     const endEmoji = endColor.id
       ? getDyeEmoji(endColor.stainID ?? 0, env.DISCORD_CLIENT_ID)
       : undefined;
-    const startText = startColor.name
-      ? `${startEmoji ? `${startEmoji} ` : ''}**${startColor.name}** (\`${startColor.hex.toUpperCase()}\`)`
+    // BUG-043: resolveColorInput hands back the English `Dye.name` even when
+    // the user typed a localized one, while bot-logic localizes the step rows
+    // below — so the Start/End lines were the only English names in the embed.
+    const startName = localizedEndpointName(startColor, locale);
+    const endName = localizedEndpointName(endColor, locale);
+    const startText = startName
+      ? `${startEmoji ? `${startEmoji} ` : ''}**${startName}** (\`${startColor.hex.toUpperCase()}\`)`
       : `\`${startColor.hex.toUpperCase()}\``;
-    const endText = endColor.name
-      ? `${endEmoji ? `${endEmoji} ` : ''}**${endColor.name}** (\`${endColor.hex.toUpperCase()}\`)`
+    const endText = endName
+      ? `${endEmoji ? `${endEmoji} ` : ''}**${endName}** (\`${endColor.hex.toUpperCase()}\`)`
       : `\`${endColor.hex.toUpperCase()}\``;
 
     const colorSpaceLabel = colorSpace.toUpperCase();
@@ -223,6 +249,18 @@ async function processGradientCommand(
       embeds: [errorEmbed(t.t('common.error'), t.t('errors.generationFailed'))],
     });
   }
+}
+
+/**
+ * A resolved endpoint's dye name in the user's locale — the English name when
+ * the dye has no item id to look up, `undefined` for a bare hex/CSS colour.
+ */
+function localizedEndpointName(
+  color: { name?: string; itemID?: number | null },
+  locale: LocaleCode,
+): string | undefined {
+  if (!color.name) return undefined;
+  return color.itemID != null ? getLocalizedDyeName(color.itemID, color.name, locale) : color.name;
 }
 
 /** Maps `classifyMatchDistance`'s tier key onto the bot's `quality.*` locale keys. */

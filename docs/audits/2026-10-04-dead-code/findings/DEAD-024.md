@@ -15,4 +15,4 @@
 Steps: Delete registry.ts lines 25-26 (the JSDoc and `deprecated?: true;`). Delete registry.test.ts lines 23-25 (the 'carries no deprecated commands' it-block). In index.test.ts:63, change `COMMAND_REGISTRY.filter((entry) => !entry.deprecated).map(...)` to `COMMAND_REGISTRY.map(...)`. Then run pnpm turbo run build type-check lint test --filter=...xivdyetools-discord-worker && pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `d9fdb57c` (branch `fix/remediation-2026-10-04-sprint9`, discord-worker 5.8.4; PR #257, open, on PR #256).

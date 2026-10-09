@@ -28,12 +28,12 @@ export interface PresetSubmissionNotification {
    * BUG-003 (2026-10-04 deep-dive): where the notification came from — `true`
    * when an owner edit (PATCH /presets/:id) sent it, `false` for a new
    * submission. An origin marker, not a verdict: `preset.moderation_status`
-   * says whether the text tripped the filter, and `preset.previous_values`
-   * (sent with an edit whenever a revert snapshot exists) is what a Revert
-   * restores — but `is_edit` alone never licenses a Revert button; see
-   * `edited_from_status` for the rule. Optional on the wire: discord-worker
-   * read every submission as new before it learnt this field, and still must
-   * when it is absent.
+   * says whether the text tripped the filter, `edited_from` is what the edit
+   * changed, and `preset.previous_values` (sent with an edit whenever a revert
+   * snapshot exists) is what a Revert restores — but `is_edit` alone never
+   * licenses a Revert button; see `edited_from_status` for the rule. Optional
+   * on the wire: discord-worker read every submission as new before it learnt
+   * this field, and still must when it is absent.
    */
   is_edit?: boolean;
   /**
@@ -62,8 +62,35 @@ export interface PresetSubmissionNotification {
    * nothing in the payload can tell — the row does not record which state
    * its snapshot came from (see the deploy note in apps/presets-api/CLAUDE.md).
    * Treat an absent value (an older presets-api) as "not approved".
+   *
+   * Label the Revert button as restoring `previous_values`, not as undoing
+   * this edit: the snapshot is write-once, so it can be older than the text
+   * in `edited_from` (approved A → flagged edit B snapshots A → a moderator
+   * approves B → a flagged edit C still reverts to A, discarding B).
    */
   edited_from_status?: PresetStatus;
+  /**
+   * Sprint 9 (2026-10-04 remediation): the text THIS edit replaced — `name`,
+   * `description`, `tags` and `dyes` exactly as the row held them immediately
+   * before the write that sent this notification. Set on every PATCH
+   * /presets/:id notification and absent on a new submission (POST), like
+   * `edited_from_status`.
+   *
+   * **The diff base for consumers:** show an edit's changes as `edited_from`
+   * → `preset`. Do not diff against `preset.previous_values`: that is the
+   * revert target, which a pending preset's edit or a rejected preset's
+   * resubmission never creates (only an approved preset is snapshotted), so
+   * it is usually `null` there, and which, being write-once, can be older
+   * than the text this edit replaced. The two coincide on the first flagged
+   * edit of an approved preset that had no snapshot yet, and diverge after
+   * that. Revert stays governed by the three-part rule on
+   * `edited_from_status` and restores `previous_values`, never `edited_from`.
+   *
+   * Same shape as `PresetPreviousValues`, not the same meaning: nothing stores
+   * it, and no endpoint restores it. Treat an absent value (a new submission,
+   * or an older presets-api) as "no diff available".
+   */
+  edited_from?: PresetPreviousValues;
   preset: {
     id: string;
     name: string;
@@ -83,6 +110,8 @@ export interface PresetSubmissionNotification {
      * may hold one taken in another state) and cleared only by a Revert, so
      * it can be older than the edit being notified; `null` on a new
      * submission, and on an edit of a preset that was never snapshotted.
+     * The revert target only — an edit's diff base is the top-level
+     * `edited_from`.
      */
     previous_values?: PresetPreviousValues | null;
     /**

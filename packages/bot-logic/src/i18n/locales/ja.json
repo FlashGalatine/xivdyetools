@@ -229,6 +229,7 @@
     "randomTitle": "ランダムプリセット",
     "notEnoughDyes": "プリセットには少なくとも3つのカララントが必要です。",
     "invalidDye": "指定されたカララントが見つかりません。",
+    "repeatedDye": "**{dye}** がこのプリセットに複数回含まれています。各カララントは1回しか使用できません。",
     "duplicateExists": "類似のプリセットが存在します",
     "duplicateVoted": "既存のプリセットに投票が追加されました。",
     "submitted": "プリセットを投稿しました！",
@@ -608,6 +609,15 @@
     "swatchTitle": "キャラクターの色見本",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
     "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。",
+    "swatchSlotName": {
+      "skin": "肌",
+      "hair": "髪",
+      "highlights": "メッシュ",
+      "eyes": "瞳",
+      "lip": "唇",
+      "facepaint": "フェイスペイント",
+      "limbal": "刺青 / 瞳の輪郭"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "ミラプリ",
     "glamourPieces_one": "染色済み{n}部位",
@@ -1143,10 +1153,10 @@
               "description": "/extractor colorの既定のマッチ数（1〜10）"
             },
             "clan": {
-              "description": "/swatchの既定の部族（例：ミッドランダー、アウラ・レン）"
+              "description": "キャラクターの部族（設定に保存されますが、まだ使用するコマンドはありません）"
             },
             "gender": {
-              "description": "/swatchの既定の性別"
+              "description": "キャラクターの性別（設定に保存されますが、まだ使用するコマンドはありません）"
             },
             "world": {
               "description": "マーケット価格用の既定のワールド／データセンター"
