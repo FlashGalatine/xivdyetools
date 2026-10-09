@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.4] - 2026-10-05
+
+Sprint 6 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+translations and terminology, with `@xivdyetools/core` 5.8.2.
+
+### Fixed
+
+- **English:** the Glamour list's privacy note says edits are kept per piece of gear (TERM-002);
+  the Swatch Matcher calls the clan a clan (`CLAN & GENDER`, TERM-009) and the Glamour Reader's
+  race lock says ANY RACE; the list is the "Glamour list" in every toast, and its download button
+  is "Save .md", as in the export sheet (TERM-018).
+- **Singular forms** (I18N-007): "1 dye", "Same look as 1 other item", "1 piece" — the Glamour
+  Reader picks the form with `Intl.PluralRules` per locale (`tCount`, new `*_one` / `*_other` keys).
+- **The facewear chip's tooltip names the color in the reader's language** (HC-003).
+- **ja / zh sentences** on the character-file card no longer join with an ASCII space (I18N-012).
+- **Translations and terminology, from the dictionary:**
+  - the facewear color tag uses the client's slot and color words in ja, de, fr, ko and zh
+    (TERM-007; the research is in `docs/reference/ffxiv-terminology.md`);
+  - character-creation sheet names follow the client's labels (TERM-003, I18N-011), including the
+    lip and face-paint halves;
+  - de: FARBSTOFF for dye (TERM-005), Vorlage for preset (TERM-006), no neuter "das" after an item
+    name (I18N-008), STAATLICHE GESELLSCHAFT NÖTIG (I18N-009);
+  - zh 过期 for Dated (TERM-008); ja names the dye channels as the client does, 染色1 / 染色2, and
+    counts them with ヵ所, dropping チャンネル (a chat channel in the client) and 染色枠 (TERM-016;
+    the client data is in the dictionary); ko 염료 in the share errors (TERM-017), the two Korean typos (I18N-003), and the Hrothgar name in the fur-pattern note;
+  - ja: the Glamour list's privacy note says edits are kept 装備1点ごとに (per piece of gear);
+    この装備ごとに could be read as "for this one piece";
+  - ko / zh: IN THE GAME's explanation uses the gear hint's dye-channel noun, 염색 채널 / 染色通道,
+    where it said 염색 칸 / 染色栏;
+  - fr: the picker foot quotes both buttons (I18N-010);
+  - the fur-pattern note uses the client's word (lobby row 1013) in every language.
+- **Core 5.8.2:** the Brass facewear color is Bronze / 구리색 / 铜色 in fr / ko / zh.
+
+### Changed
+
+- `docs/reference/ffxiv-terminology.md`: the facewear rows are the client's (Addon 16050 / 16054),
+  the Brass row follows the client, lobby row 1014 (fur color) is the Hrothgar row of the palette
+  table and row 1013 (fur pattern) is in the feature table, and a new section pins the dye-channel
+  words. `docs/reference/glossary.md` gains a Preset entry (de Vorlage, TERM-006).
+- `scripts/validate-i18n.js` reads both keys of a `'…_one', '…_other'` pair, the shape every
+  `tCount` call passes, so a plural key the code asks for and `en.json` lacks now fails the i18n
+  gate; before, neither key was seen.
+
 ## [5.14.3] - 2026-10-05
 
 Sprint 5 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

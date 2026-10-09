@@ -31,7 +31,7 @@ export class GlamourTool extends BaseComponent {
   /** DYES ON THIS GLAMOUR — its own chunk, created once a file wears anything */
   private block: GlamourBlock | null = null;
   private blockContainer: HTMLElement | null = null;
-  /** Where the block draws Copy list / Export .md (the tool's header) */
+  /** Where the block draws Copy list / Save .md (the tool's header) */
   private actionsHost: HTMLElement | null = null;
   /** "This file wears no gear." — shown while the loaded file wears nothing */
   private emptyNote: HTMLElement | null = null;
@@ -54,7 +54,7 @@ export class GlamourTool extends BaseComponent {
     root.style.cssText =
       'display: flex; flex-direction: column; gap: 14px; max-width: 900px; margin: 0 auto; padding: 20px 16px 32px; box-sizing: border-box; width: 100%;';
 
-    // Title + lead left, Copy list / Export .md right (design 1a).
+    // Title + lead left, Copy list / Save .md right (design 1a).
     const head = this.createElement('div');
     head.style.cssText =
       'display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap;';

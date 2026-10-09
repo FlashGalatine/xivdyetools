@@ -29,6 +29,7 @@ import {
   amber,
   el,
   green,
+  joinSentences,
   monoChip,
   slotErrorText,
   slotLabel,
@@ -155,7 +156,7 @@ export class CharaFileCard {
       el(
         'div',
         'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-bottom: 11px;',
-        note ? `${this.privacyHint()} ${note}` : this.privacyHint()
+        note ? joinSentences(this.privacyHint(), note) : this.privacyHint()
       )
     );
   }

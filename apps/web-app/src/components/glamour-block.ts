@@ -2,7 +2,7 @@
  * XIV Dye Tools 5.0 — DYES ON THIS GLAMOUR (Turn 11 of the 10A sheet).
  *
  * What the loaded character is wearing: every piece with the dye on each
- * channel, where to look a piece up ("Open in…"), the Copy list / Export .md
+ * channel, where to look a piece up ("Open in…"), the Copy list / Save .md
  * submission template, and Make a palette — the 3–6 floor/cap enforced at the
  * action buttons, Save to this device creating a `kind: 'palette'`
  * CollectionService record, Submit to Community handing off to the host.
@@ -53,6 +53,7 @@ import {
   green,
   hasGlamour,
   monoChip,
+  tCount,
   tSwatch,
 } from '@components/chara-ui';
 import { ICON_TOOL_PRESETS } from '@shared/tool-icons';
@@ -118,7 +119,7 @@ function closeItemLinksMenuIfLoaded(): void {
 }
 
 /**
- * The export sheet, once Copy list or Export .md has loaded it. It lives in
+ * The export sheet, once Copy list or Save .md has loaded it. It lives in
  * document.body as a modal, so the block closes it on destroy — left open, it
  * sat over the next tool with its key handler still live.
  */
@@ -202,7 +203,7 @@ export interface GlamourBlockCallbacks {
   /** Make-a-palette submit: kept worn dyes + the panel's name draft */
   onSubmitPalette?: (dyes: Dye[], name?: string) => void;
   /**
-   * Where Copy list / Export .md go. The Glamour Reader puts them in its own
+   * Where Copy list / Save .md go. The Glamour Reader puts them in its own
    * header (design 1a); without a host they sit in the block's header.
    */
   actionsHost?: HTMLElement;
@@ -322,7 +323,7 @@ export class GlamourBlock {
     const glamour = this.resolved ? this.renderGlamour() : null;
     if (!glamour) {
       this.glamourBox = null;
-      // No file, no list: the host's Copy list / Export .md go with it.
+      // No file, no list: the host's Copy list / Save .md go with it.
       if (this.callbacks.actionsHost) clearContainer(this.callbacks.actionsHost);
       return;
     }
@@ -511,16 +512,17 @@ export class GlamourBlock {
         tSwatch('equipHead')
       )
     );
-    headerLeft.appendChild(
-      el(
-        'span',
-        `font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; color: var(--theme-text-muted);`,
-        LanguageService.tInterpolate('swatch.equipCount', {
-          channels: channelCount,
-          dyes: uniq.length,
-        })
-      )
+    // Each count takes its own plural form (I18N-007): "1 channel · 1 dye".
+    const counts = el(
+      'span',
+      `font-family: ${MONO}; font-size: 9px; letter-spacing: 0.5px; color: var(--theme-text-muted);`,
+      LanguageService.tInterpolate('swatch.equipSplit', {
+        channels: tCount(channelCount, 'swatch.equipChannels_one', 'swatch.equipChannels_other'),
+        dyes: tCount(uniq.length, 'swatch.equipDyes_one', 'swatch.equipDyes_other'),
+      })
     );
+    counts.dataset.role = 'equip-count';
+    headerLeft.appendChild(counts);
     header.appendChild(headerLeft);
 
     const headerRight = el(
@@ -683,7 +685,7 @@ export class GlamourBlock {
   }
 
   // --------------------------------------------------------------------------
-  // Copy list / Export .md — the GPOSERS submission template
+  // Copy list / Save .md — the GPOSERS submission template
   // --------------------------------------------------------------------------
 
   /**
@@ -742,7 +744,7 @@ export class GlamourBlock {
   }
 
   /**
-   * Copy list and Export .md open the export sheet (design 2c): a preview of
+   * Copy list and Save .md open the export sheet (design 2c): a preview of
    * the GPOSERS list with each piece's Acquisition line, editable before
    * anything is copied or saved. The sheet's own Copy list starts the
    * clipboard write inside its click, which WebKit requires. `opener` gets
@@ -961,7 +963,7 @@ export class GlamourBlock {
       badge.setAttribute('aria-haspopup', 'dialog');
       badge.setAttribute(
         'aria-label',
-        LanguageService.tInterpolate('glamour.row.twins', { n: String(item.familySize - 1) })
+        tCount(item.familySize - 1, 'glamour.row.twins_one', 'glamour.row.twins_other')
       );
       if (state) {
         badge.addEventListener('click', (event) => {
@@ -1155,8 +1157,11 @@ export class GlamourBlock {
     );
     chip.dataset.role = colour ? 'facewear-chip' : 'undyed-chip';
     if (colour) chip.dataset.facewearColor = colour.id;
+    // The locale's colour name, as on the line under the name (HC-003)
     chip.title = colour
-      ? LanguageService.tInterpolate('swatch.facewearColorTag', { color: colour.name })
+      ? LanguageService.tInterpolate('swatch.facewearColorTag', {
+          color: LanguageService.getFacewearColorName(colour.id),
+        })
       : tSwatch('facewearColorUnknown');
     chips.appendChild(chip);
     row.appendChild(chips);
@@ -1421,17 +1426,12 @@ export class GlamourBlock {
     );
     // The headline is built from the counts (spec §3): "3 pieces named from a
     // twin and 1 piece this character can't wear". Literal one/other key pairs
-    // (the app has no plural helper) chosen by the locale's plural rules, and
-    // the locale's own "and" from Intl.ListFormat.
+    // chosen by the locale's plural rules (tCount), and the locale's own "and"
+    // from Intl.ListFormat.
     const lang = LanguageService.getCurrentLocale();
-    const plural = new Intl.PluralRules(lang);
     const phrases: string[] = [];
     const phrase = (n: number, one: string, other: string): void => {
-      if (n > 0) {
-        phrases.push(
-          LanguageService.tInterpolate(plural.select(n) === 'one' ? one : other, { n: String(n) })
-        );
-      }
+      if (n > 0) phrases.push(tCount(n, one, other));
     };
     phrase(fixed, 'glamour.verdict.segFixed_one', 'glamour.verdict.segFixed_other');
     phrase(blockedBy.wear, 'glamour.verdict.segWear_one', 'glamour.verdict.segWear_other');
@@ -1491,15 +1491,10 @@ export class GlamourBlock {
     const split = el(
       'div',
       'font-size: 10px; line-height: 1.5; color: var(--theme-text-muted); overflow-wrap: anywhere;',
+      // By the locale's plural rule, not `=== 1`: French 0 is singular (I18N-007)
       LanguageService.tInterpolate('swatch.footSplit', {
-        undyed:
-          undyedWorn === 1
-            ? LanguageService.t('swatch.footWornUndyedOne')
-            : LanguageService.tInterpolate('swatch.footWornUndyedMany', { n: undyedWorn }),
-        empty:
-          empty === 1
-            ? LanguageService.t('swatch.footEmptyOne')
-            : LanguageService.tInterpolate('swatch.footEmptyMany', { n: empty }),
+        undyed: tCount(undyedWorn, 'swatch.footWornUndyed_one', 'swatch.footWornUndyed_other'),
+        empty: tCount(empty, 'swatch.footEmpty_one', 'swatch.footEmpty_other'),
       })
     );
     split.title = tSwatch('gearHint');

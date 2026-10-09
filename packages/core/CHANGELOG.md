@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.2] - 2026-10-05
+
+The Brass facewear color's French, Korean and Chinese names now match the game clients. PATCH: a
+data correction only, no API change.
+
+### Fixed
+
+- **`facewearColors.brass`**: fr Laiton → **Bronze**, ko 황동색 → **구리색**, zh 黄铜色 → **铜色**.
+  These are the clients' own words: all 61 Brass rows of the `Glasses` sheet say *(bronze)* /
+  *de couleur bronze* (FR, via XIVAPI v2; capitalized here like the other ten French names),
+  구리색 (the KR client dump) and 铜色 (the CN client dump). en Brass, ja ブラス and de Messing were
+  already the client's, and the other ten colors already use the client's words in every language.
+- Corrected in the source (`facewear-names.csv`), from which `build:locales` rebuilds the locale
+  JSON. Only `fr.json`, `ko.json` and `zh.json` change. Sources: the *Facewear Colors* table in
+  `docs/reference/ffxiv-terminology.md`.
+
+The web app's Glamour Reader shows these names (its facewear chip). No worker draws them, but the
+discord-worker and og-worker font gates sweep every core locale string; their CJK subsets already
+carry 구, 리 and 铜, so they need no re-cut.
+
 ## [5.8.1] - 2026-10-05
 
 Korean and Chinese race and clan names now match the game clients. PATCH: data corrections only,

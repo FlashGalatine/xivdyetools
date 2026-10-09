@@ -1,7 +1,7 @@
 /**
  * The loaded `.chara` file belongs to CharaSessionService (memory only), not
  * to the Swatch Matcher's components. It survives leaving the tool and a
- * language switch, and the sidebar's TRIBE & GENDER lock follows it exactly:
+ * language switch, and the sidebar's CLAN & GENDER lock follows it exactly:
  * locked while a file is loaded, editable again once it is gone.
  *
  * Before 5.12.7 the lock was persisted config and the file lived in a
@@ -28,11 +28,11 @@ const FIXTURE = JSON.stringify({
 });
 
 const fileInput = (page: Page) => page.locator('input[type="file"][accept*=".chara"]');
-/** The sidebar's two selectors under TRIBE & GENDER: the lock covers both. */
+/** The sidebar's two selectors under CLAN & GENDER: the lock covers both. */
 const tribeAndGender = (page: Page) =>
-  page.locator('.config-group').filter({ hasText: 'TRIBE & GENDER' }).locator('select');
+  page.locator('.config-group').filter({ hasText: 'CLAN & GENDER' }).locator('select');
 /**
- * The palette rail's Hair chip. TRIBE & GENDER shows only while the swatch
+ * The palette rail's Hair chip. CLAN & GENDER shows only while the swatch
  * config names a hair or skin sheet, and the tool opens on Eye. Before
  * BUG-001's fix (2026-10-04 deep-dive) the rail never wrote that config, so
  * the group showed on Eye only because the controller's stale default said
@@ -134,7 +134,7 @@ test('ignores a lock that a build before 5.12.7 left in storage', async ({ page 
   // Up to 5.12.6 the lock was saved with the swatch config and outlived the
   // file, so the tool opened on the drop zone over two disabled selectors.
   // This replays the original report (PR #204). The seeded hairColors is what
-  // shows TRIBE & GENDER, so no Hair click after this reload; the migration
+  // shows CLAN & GENDER, so no Hair click after this reload; the migration
   // marker keeps the one-time v3 move from replacing that sheet.
   await page.addInitScript(() => {
     localStorage.setItem(
