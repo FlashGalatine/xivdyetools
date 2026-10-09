@@ -43,16 +43,27 @@ import type { ToolId } from '@services/router-service';
  * | `comparison`    | `params.dyes` (array; see `LIST_PARAMS`)   | `comparison-tool.ts` |
  * | `accessibility` | `params.dyes` (array; see `LIST_PARAMS`)   | `accessibility-tool.ts` |
  * | `mixer`         | `params.dyeA`                              | `mixer-tool.ts` |
+ * | `budget`        | `params.get('dye')`                        | `budget-tool.ts` `handleDeepLink` |
  *
  * `comparison` and `accessibility` take a LIST. `ShareService`'s `LIST_PARAMS`
  * makes `dyes` array-valued even for a single id (BUG-015), so one dye is a
  * valid hand-off and arrives as `[id]` rather than a bare number.
+ *
+ * `dye` is also one of RouterService's preserved params, carried across every
+ * navigation. The hand-off always sends its own value, which replaces the
+ * preserved one. BUG-013 (2026-10-04 deep-dive): Result Card's "Set as budget
+ * target" sent no param, so a stale preserved `dye=` reached Budget instead.
+ * And the two `dye` receivers CONSUME it: once `handleDeepLink` has resolved
+ * and stored the dye, Harmony and Budget each drop `dye` from the URL
+ * (`history.replaceState`), so a hand-off to one cannot ride the preserved
+ * param into the other and replace that tool's own base or target.
  */
 export const HANDOFF_PARAM = {
   harmony: 'dye',
   comparison: 'dyes',
   accessibility: 'dyes',
   mixer: 'dyeA',
+  budget: 'dye',
 } as const;
 
 /** A tool that can receive a dye from another tool. */

@@ -18,4 +18,4 @@ Steps: 1. Delete d1.ts:458-479 (docblock + function).
 4. Run pnpm turbo run build type-check lint test --filter=...@xivdyetools/test-utils, then pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `c73b702f` (branch `fix/remediation-2026-10-04-sprint19`, test-utils 3.0.0; PR #274, open).

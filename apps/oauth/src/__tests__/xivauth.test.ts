@@ -514,6 +514,53 @@ describe('XIVAuth Handler', () => {
             expect(json.error).toBe('Invalid request body');
         });
 
+        // BUG-056 / BUG-055: JSON `null` parses fine and passed every guard,
+        // then the destructure threw and onError answered 500.
+        it.each(['null', 'true', '123', '"str"'])(
+            'should reject the non-object JSON body %s with 400',
+            async (raw) => {
+                const response = await SELF.fetch('http://localhost/auth/xivauth/callback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: raw,
+                });
+
+                const json = (await response.json()) as Record<string, any>;
+
+                expect(response.status).toBe(400);
+                expect(json.success).toBe(false);
+                expect(json.error).toBe('Invalid request body');
+            }
+        );
+
+        // BUG-149 (oauth half): see the matching test in callback.test.ts.
+        it('should reject a non-empty text/plain body with 415', async () => {
+            const response = await SELF.fetch('http://localhost/auth/xivauth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ code: 'x', code_verifier: VALID_CODE_VERIFIER }),
+            });
+
+            const json = (await response.json()) as Record<string, any>;
+
+            expect(response.status).toBe(415);
+            expect(json.success).toBe(false);
+            expect(typeof json.error).toBe('string');
+        });
+
+        it.each(['[]', '[1]'])('should keep the array body %s on Missing code or code_verifier', async (raw) => {
+            const response = await SELF.fetch('http://localhost/auth/xivauth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: raw,
+            });
+
+            expect(response.status).toBe(400);
+            expect(((await response.json()) as Record<string, any>).error).toBe(
+                'Missing code or code_verifier'
+            );
+        });
+
         it('should require code in body', async () => {
             const response = await SELF.fetch('http://localhost/auth/xivauth/callback', {
                 method: 'POST',
@@ -787,6 +834,103 @@ describe('XIVAuth Handler', () => {
             expect(response.status).toBe(200);
             expect(json.success).toBe(true);
             expect(json.user.username).toContain('XIVAuth User');
+        });
+
+        /**
+         * BUG-057: BUG-051 only checked that the roster is an array. An array
+         * holding `null` made `characters.filter((ch) => ch.verified)` throw
+         * (swallowed) and the later `.find` throw outside the try: 500. A
+         * verified character whose name is '' survived `?? null` and put an
+         * empty username and global_name into the JWT.
+         */
+        // A fresh XIVAuth id per sign-in: the stored username of an existing
+        // row is what the response echoes, so a shared id would pin the first
+        // test's name.
+        let rosterUserSeq = 0;
+        const signInWithRoster = async (roster: string) => {
+            const userId = `xivauth-malformed-roster-${++rosterUserSeq}`;
+            globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+                if (url.includes('xivauth.net/oauth/token')) {
+                    return Promise.resolve(new Response(JSON.stringify({
+                        access_token: 'xivauth_token',
+                        token_type: 'Bearer',
+                        expires_in: 604800,
+                        refresh_token: 'refresh',
+                        scope: 'user user:social character refresh',
+                    }), { status: 200 }));
+                }
+                if (url.includes('xivauth.net/api/v1/user')) {
+                    return Promise.resolve(new Response(JSON.stringify({
+                        id: userId,
+                        mfa_enabled: false,
+                        verified_characters: 1,
+                        social_identities: [],
+                    }), { status: 200 }));
+                }
+                if (url.includes('xivauth.net/api/v1/characters')) {
+                    return Promise.resolve(new Response(roster, { status: 200 }));
+                }
+                return originalFetch(url);
+            });
+
+            const response = await SELF.fetch('http://localhost/auth/xivauth/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    code: 'valid_code',
+                    code_verifier: VALID_CODE_VERIFIER,
+                    state: await boundState(),
+                }),
+            });
+            return { response, json: (await response.json()) as Record<string, any> };
+        };
+
+        const character = (name: unknown, extra: Record<string, unknown> = {}) => ({
+            lodestone_id: 1,
+            name,
+            home_world: 'X',
+            verified: true,
+            ...extra,
+        });
+
+        it.each([
+            ['an array holding only null', '[null]'],
+            ['a verified character with an empty name', JSON.stringify([character('')])],
+            ['a verified character with a blank name', JSON.stringify([character('   ')])],
+            ['a verified character with a non-string name', JSON.stringify([character(42)])],
+        ])('falls back to the opaque label when the roster is %s', async (_label, roster) => {
+            const { response, json } = await signInWithRoster(roster);
+
+            expect(response.status).toBe(200);
+            expect(json.success).toBe(true);
+            expect(json.user.username).toContain('XIVAuth User');
+            expect(json.user.global_name).toBeNull();
+        });
+
+        it('skips a null roster element and still picks the verified character', async () => {
+            const { response, json } = await signInWithRoster(
+                JSON.stringify([null, character('Mixed Roster')])
+            );
+
+            expect(response.status).toBe(200);
+            expect(json.user.username).toBe('Mixed Roster');
+            expect(json.user.global_name).toBe('Mixed Roster');
+        });
+
+        it('picks the first verified character with a usable name', async () => {
+            const { json } = await signInWithRoster(
+                JSON.stringify([character(''), character('Real Name')])
+            );
+
+            expect(json.user.username).toBe('Real Name');
+            expect(json.user.global_name).toBe('Real Name');
+        });
+
+        it('uses the trimmed name', async () => {
+            const { json } = await signInWithRoster(JSON.stringify([character('  Padded Name  ')]));
+
+            expect(json.user.username).toBe('Padded Name');
+            expect(json.user.global_name).toBe('Padded Name');
         });
 
         it('should handle characters fetch error gracefully', async () => {

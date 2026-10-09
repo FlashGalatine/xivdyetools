@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { UnifiedPreset } from '../hybrid-preset-service';
 
 const STORAGE_KEY = 'v5_saved_presets';
 
@@ -134,5 +135,85 @@ describe('SavedPresetsService legacy dye migration', () => {
     // on the store's key rather than on setItem being untouched.
     const wroteStore = localStorageMock.setItem.mock.calls.some(([key]) => key === STORAGE_KEY);
     expect(wroteStore).toBe(false);
+  });
+});
+
+/**
+ * The Saved shelf's Popular sort needs a count for a snapshot whose live copy
+ * is not in the fetched pool (2026-10-04 deep-dive OPT-008 review follow-up):
+ * sorting those as 0 flipped the shelf whenever the pool changed.
+ */
+describe('SavedPresetsService last-known vote count', () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+    vi.clearAllMocks();
+    vi.doUnmock('../dye-service-wrapper');
+  });
+
+  function unified(overrides: Partial<UnifiedPreset> = {}): UnifiedPreset {
+    return {
+      id: 'community-abc',
+      name: 'Live preset',
+      description: '',
+      category: 'aesthetics',
+      secondaryCategories: [],
+      dyes: [1, 2],
+      tags: [],
+      voteCount: 12,
+      isCurated: false,
+      isFromAPI: true,
+      apiPresetId: 'abc',
+      ...overrides,
+    };
+  }
+
+  function wroteStore(): boolean {
+    return localStorageMock.setItem.mock.calls.some(([key]) => key === STORAGE_KEY);
+  }
+
+  it('records the vote count a preset is saved with', async () => {
+    const store = await freshStore();
+
+    store.toggle(unified({ voteCount: 12 }));
+
+    expect(store.getAll()[0].voteCount).toBe(12);
+  });
+
+  it('still loads a snapshot saved before the count was recorded', async () => {
+    seed([1, 2]);
+
+    const store = await freshStore();
+
+    expect(store.getAll()[0]).toMatchObject({ id: 'community-abc', dyes: [1, 2] });
+    expect(store.getAll()[0].voteCount).toBeUndefined();
+  });
+
+  it('refreshes a snapshot from a live count, persists it and tells listeners', async () => {
+    seed([1, 2]);
+    const store = await freshStore();
+    const listener = vi.fn();
+    store.subscribe(listener);
+
+    store.recordVoteCounts([unified({ id: 'community-abc', voteCount: 7 })]);
+
+    expect(store.getAll()[0].voteCount).toBe(7);
+    expect(JSON.parse(localStorageMock.getItem(STORAGE_KEY) as string)[0].voteCount).toBe(7);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes nothing when no saved count changed', async () => {
+    const store = await freshStore();
+    store.toggle(unified({ voteCount: 12 }));
+    const listener = vi.fn();
+    store.subscribe(listener);
+    localStorageMock.setItem.mockClear();
+
+    store.recordVoteCounts([
+      unified({ id: 'community-abc', voteCount: 12 }),
+      unified({ id: 'community-not-saved', voteCount: 3 }),
+    ]);
+
+    expect(wroteStore()).toBe(false);
+    expect(listener).not.toHaveBeenCalled();
   });
 });

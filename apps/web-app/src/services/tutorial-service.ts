@@ -308,6 +308,9 @@ export class TutorialService {
 
   private static listeners: Set<(state: TutorialState) => void> = new Set();
 
+  /** Set by markUnavailable(): nothing can draw a tour this session. */
+  private static overlayUnavailable = false;
+
   // ============================================================================
   // State Management
   // ============================================================================
@@ -416,6 +419,13 @@ export class TutorialService {
    * Start a tutorial for a specific tool
    */
   static start(tool: TutorialTool): void {
+    if (this.overlayUnavailable) {
+      // Steps would be dispatched to no listener: nothing drawn, no way to
+      // skip, and isActive stuck true, which silences every later prompt
+      logger.warn(`Tutorial not started (${tool}): the tutorial overlay is unavailable`);
+      return;
+    }
+
     const tutorial = TUTORIALS[tool];
     if (!tutorial || tutorial.steps.length === 0) {
       logger.warn(`No tutorial found for tool: ${tool}`);
@@ -546,7 +556,20 @@ export class TutorialService {
    * Check if tutorials are available
    */
   static isAvailable(): boolean {
-    return Object.keys(TUTORIALS).length > 0;
+    return !this.overlayUnavailable && Object.keys(TUTORIALS).length > 0;
+  }
+
+  /**
+   * Nothing can draw a tour for the rest of this session.
+   *
+   * BUG-114: main.ts calls this when the tutorial spotlight's lazy chunk fails
+   * to load (or throws on init) and the app carries on without it. The tour
+   * lives entirely in that overlay — its steps, its Next/Skip buttons and its
+   * Escape — so from here on start() and promptStart() log and return rather
+   * than activate a tour nobody can see or leave. A reload tries again.
+   */
+  static markUnavailable(): void {
+    this.overlayUnavailable = true;
   }
 
   // ============================================================================
@@ -557,6 +580,12 @@ export class TutorialService {
    * Show prompt to start tutorial for a tool
    */
   static promptStart(tool: TutorialTool): void {
+    // Don't offer a tour start() would refuse (BUG-114, markUnavailable)
+    if (this.overlayUnavailable) {
+      logger.info(`Tutorial prompt skipped (${tool}): the tutorial overlay is unavailable`);
+      return;
+    }
+
     // Don't show prompt if tool is already completed or all prompts are disabled
     if (this.isCompleted(tool) || this.areAllPromptsDisabled()) return;
 

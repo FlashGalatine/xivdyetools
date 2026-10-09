@@ -15,4 +15,4 @@
 Steps: In apps/web-app/src/shared/subscription-manager.ts delete addAll (51-59), the count getter (75-82) and the hasSubscriptions getter (83-88). No tests. Run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `057cba2f` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

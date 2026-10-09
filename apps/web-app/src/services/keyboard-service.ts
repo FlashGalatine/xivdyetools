@@ -43,13 +43,83 @@ const TOOL_KEY_MAP: Record<string, string> = {
 };
 
 /**
+ * The digit a keystroke stands for on the number row, whatever the layout.
+ *
+ * BUG-120: the lookup used to be `TOOL_KEY_MAP[e.key]` behind a no-Shift
+ * guard. On AZERTY the unshifted number row types & é " ' ( - è _ ç à and the
+ * digits need Shift, so 1-9/0 were reachable only from a numpad there.
+ *
+ * - A key that TYPES a digit is that digit, Shift or not (AZERTY Shift+&,
+ *   QWERTY 1, a NumLock-on numpad).
+ * - Otherwise an unshifted number-row key counts by its physical position
+ *   (`code` Digit0-Digit9). Shift stays excluded there: QWERTY Shift+1 types
+ *   "!", which is not the digit shortcut.
+ * - AltGr stays excluded from that fallback too. Windows reports it as
+ *   Ctrl+Alt, which handleKeyDown() already turns away, but on Linux Chrome
+ *   and Firefox report ctrlKey and altKey both false and expose it only as
+ *   getModifierState('AltGraph') — and AltGr on the number row types symbols
+ *   (AZERTY AltGr+à "@", German AltGr+7 "{"). A dead key there ("Dead") is
+ *   composing an accent. Neither is a digit shortcut.
+ * - `Numpad*` codes are deliberately NOT mapped: with NumLock off they report
+ *   key "ArrowDown", "End", "Insert"... and must stay navigation keys.
+ */
+function toolDigit(e: KeyboardEvent): string | null {
+  if (/^[0-9]$/.test(e.key)) return e.key;
+  if (e.shiftKey || e.key === 'Dead' || e.getModifierState?.('AltGraph')) return null;
+  const match = /^Digit([0-9])$/.exec(e.code ?? '');
+  return match ? match[1] : null;
+}
+
+/** Is this element something the user types into? */
+function isTextEntry(node: EventTarget | null | undefined): boolean {
+  if (!(node instanceof HTMLElement)) return false;
+  if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) return true;
+  // Both checks are load-bearing: `isContentEditable` catches contenteditable=""
+  // and inherited editability that the attribute test misses, but jsdom does
+  // not implement contenteditable at all and always reports false — so the
+  // attribute test is what holds the unit tests honest.
+  if (node.isContentEditable) return true;
+  const attr = node.getAttribute('contenteditable');
+  return attr === '' || attr === 'true' || attr === 'plaintext-only';
+}
+
+/**
+ * Check if the user is currently typing in a text field.
+ *
+ * Must see THROUGH shadow DOM. Every tool renders inside V4LayoutShell's
+ * shadow root, so `document.activeElement` retargets to the host — it reports
+ * <v4-layout-shell>, never the <input> the user is actually typing in. The
+ * old guard therefore never fired in the real app, and typing a capital
+ * letter ran the Shift+<letter> shortcuts (naming a palette after a .chara
+ * import flipped the theme on Shift+T), while digits in any search box
+ * navigated away.
+ *
+ * `composedPath()[0]` is the authoritative answer: it is the true innermost
+ * target, before any retargeting. The activeElement walk is a fallback for
+ * synthetic events dispatched without a path.
+ *
+ * Exported for the other page-wide shortcut, DyeSelector's "/" (BUG-088),
+ * whose `document.activeElement.tagName` guard had the same blind spot.
+ */
+export function isUserTyping(e?: KeyboardEvent): boolean {
+  if (isTextEntry(e?.composedPath?.()[0])) return true;
+
+  let active: Element | null = document.activeElement;
+  while (active?.shadowRoot?.activeElement) {
+    active = active.shadowRoot.activeElement;
+  }
+  return isTextEntry(active);
+}
+
+/**
  * Shift held, and nothing else.
  *
  * BUG-084: the Shift+T / Shift+L / Shift+S branches tested `e.shiftKey` alone,
  * so browser and OS chords that merely include Shift matched them too —
- * Ctrl+Shift+T (reopen closed tab) flipped the theme on its way past. The 1-9
- * branch already excluded every modifier; this makes the letter chords agree
- * with it, and with how the shortcuts panel documents them.
+ * Ctrl+Shift+T (reopen closed tab) flipped the theme on its way past. The
+ * digit branch excludes Ctrl, Alt and Meta (Shift it leaves to toolDigit(),
+ * since AZERTY types its digits with Shift — BUG-120); this makes the letter
+ * chords exclude the same three, as the shortcuts panel documents them.
  */
 function isBareShift(e: KeyboardEvent): boolean {
   return e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey;
@@ -95,50 +165,12 @@ export class KeyboardService {
     }
   }
 
-  /** Is this element something the user types into? */
-  private static isTextEntry(node: EventTarget | null | undefined): boolean {
-    if (!(node instanceof HTMLElement)) return false;
-    if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) return true;
-    // Both checks are load-bearing: `isContentEditable` catches contenteditable=""
-    // and inherited editability that the attribute test misses, but jsdom does
-    // not implement contenteditable at all and always reports false — so the
-    // attribute test is what holds the unit tests honest.
-    if (node.isContentEditable) return true;
-    const attr = node.getAttribute('contenteditable');
-    return attr === '' || attr === 'true' || attr === 'plaintext-only';
-  }
-
-  /**
-   * Check if the user is currently typing in a text field.
-   *
-   * Must see THROUGH shadow DOM. Every tool renders inside V4LayoutShell's
-   * shadow root, so `document.activeElement` retargets to the host — it reports
-   * <v4-layout-shell>, never the <input> the user is actually typing in. The
-   * old guard therefore never fired in the real app, and typing a capital
-   * letter ran the Shift+<letter> shortcuts (naming a palette after a .chara
-   * import flipped the theme on Shift+T), while digits in any search box
-   * navigated away.
-   *
-   * `composedPath()[0]` is the authoritative answer: it is the true innermost
-   * target, before any retargeting. The activeElement walk is a fallback for
-   * synthetic events dispatched without a path.
-   */
-  private static isUserTyping(e?: KeyboardEvent): boolean {
-    if (this.isTextEntry(e?.composedPath?.()[0])) return true;
-
-    let active: Element | null = document.activeElement;
-    while (active?.shadowRoot?.activeElement) {
-      active = active.shadowRoot.activeElement;
-    }
-    return this.isTextEntry(active);
-  }
-
   /**
    * Main keyboard event handler
    */
   private static handleKeyDown(e: KeyboardEvent): void {
     // Skip if user is typing in an input
-    if (this.isUserTyping(e)) {
+    if (isUserTyping(e)) {
       return;
     }
 
@@ -180,9 +212,11 @@ export class KeyboardService {
       return;
     }
 
-    // Handle 1-5 keys (tool navigation)
-    if (!e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
-      const toolId = TOOL_KEY_MAP[e.key];
+    // Handle 0-9 keys (tool navigation). Shift is toolDigit()'s call: it is
+    // how AZERTY types a digit (BUG-120); the other modifiers never are.
+    if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+      const digit = toolDigit(e);
+      const toolId = digit === null ? undefined : TOOL_KEY_MAP[digit];
       if (toolId) {
         e.preventDefault();
         this.handleToolNavigation(toolId);

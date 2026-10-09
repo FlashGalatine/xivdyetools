@@ -83,7 +83,7 @@ Then check, recording commands next to results:
 - **Barrels vs subpaths** — an unused `index.ts` export can be live via a package subpath
   (`/encoding`, `/rate-limiter`, `/blending`, `/i18n`) → REDUNDANT-RE-EXPORT, not dead.
 - **Orphaned files** — zero importers; verify against entries outside `src/` (`scripts/`, `functions/`,
-  `e2e/`, `packages/test-utils/integration/`), dynamic imports, wrangler `main`, workflows.
+  `e2e/`, package test directories outside `src/`), dynamic imports, wrangler `main`, workflows.
 - **Dead paths** — unreachable after return/throw, always-true flags, `@deprecated`/`TODO remove`/
   `LEGACY` markers (`git ls-files '<scope>/**/*.ts' | xargs grep -n -E '@deprecated|TODO.*remov|LEGACY|OBSOLETE|HACK'`),
   routes defined but never emitted (og-worker image routes vs web-app share URLs), feature flags.

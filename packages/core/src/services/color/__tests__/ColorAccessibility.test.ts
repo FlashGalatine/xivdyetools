@@ -213,24 +213,36 @@ describe('ColorAccessibility', () => {
     });
 
     it('should return false for dark colors', () => {
-      const darkColors = ['#FF0000', '#0000FF', '#000080', '#333333', '#666666'];
+      const darkColors = ['#0000FF', '#000080', '#333333', '#666666'];
 
       darkColors.forEach((color) => {
         expect(ColorAccessibility.isLightColor(color)).toBe(false);
       });
     });
 
-    it('should use 0.5 luminance as threshold', () => {
-      // Test a color close to the threshold
-      const borderlineColor = '#808080';
-      const luminance = ColorAccessibility.getPerceivedLuminance(borderlineColor);
-      const isLight = ColorAccessibility.isLightColor(borderlineColor);
+    // BUG-134 (2026-10-04 deep-dive): the old `luminance > 0.5` cut called
+    // every colour with luminance in (~0.179, 0.5] "dark", so it got white
+    // text although black contrasts more. These were all "dark" before.
+    it('treats mid-tones that contrast more with black as light (BUG-134)', () => {
+      // #FF8000 L≈0.367: black 8.3:1 vs white 2.5:1
+      // #FF0000 L≈0.213: black 5.3:1 vs white 4.0:1
+      // #808080 L≈0.216: black 5.3:1 vs white 3.9:1
+      // #FF00FF L≈0.285: black 6.7:1 vs white 3.1:1
+      ['#FF8000', '#FF0000', '#808080', '#FF00FF'].forEach((color) => {
+        expect(ColorAccessibility.isLightColor(color)).toBe(true);
+      });
+    });
 
-      if (luminance > 0.5) {
-        expect(isLight).toBe(true);
-      } else {
-        expect(isLight).toBe(false);
-      }
+    it('crosses over where black and white text contrast equally (L≈0.179)', () => {
+      // Neighbouring greys straddle the crossover: #757575 (L≈0.178) still
+      // takes white text, #767676 (L≈0.181) takes black.
+      const below = '#757575';
+      const above = '#767676';
+      expect(ColorAccessibility.getPerceivedLuminance(below)).toBeLessThan(0.179);
+      expect(ColorAccessibility.getPerceivedLuminance(above)).toBeGreaterThan(0.179);
+
+      expect(ColorAccessibility.isLightColor(below)).toBe(false);
+      expect(ColorAccessibility.isLightColor(above)).toBe(true);
     });
   });
 
@@ -255,11 +267,49 @@ describe('ColorAccessibility', () => {
     });
 
     it('should return white for dark backgrounds', () => {
-      const darkBackgrounds = ['#FF0000', '#0000FF', '#000080', '#333333'];
+      const darkBackgrounds = ['#0000FF', '#000080', '#333333', '#666666'];
 
       darkBackgrounds.forEach((bg) => {
         const textColor = ColorAccessibility.getOptimalTextColor(bg);
         expect(textColor).toBe('#FFFFFF');
+      });
+    });
+
+    it('returns black on the orange from the BUG-134 report', () => {
+      // Was white at ~2.5:1; black gives ~8.3:1.
+      expect(ColorAccessibility.getOptimalTextColor('#FF8000')).toBe('#000000');
+    });
+
+    it('always picks whichever of black or white contrasts more (BUG-134)', () => {
+      // A spread of hues and luminances, incl. the old (0.179, 0.5] dead zone.
+      const backgrounds = [
+        '#FF8000',
+        '#FF0000',
+        '#FF00FF',
+        '#808080',
+        '#767676',
+        '#757575',
+        '#FF6B6B',
+        '#4D1818',
+        '#87CEEB',
+        '#228B22',
+        '#0000FF',
+        '#666666',
+        '#00FF00',
+        '#FFFF00',
+        '#8C8C8C',
+        '#B5651D',
+        '#20B2AA',
+        '#9370DB',
+      ];
+
+      backgrounds.forEach((bg) => {
+        const chosen = ColorAccessibility.getOptimalTextColor(bg);
+        const other = chosen === '#000000' ? '#FFFFFF' : '#000000';
+        expect(
+          ColorAccessibility.getContrastRatio(bg, chosen),
+          `${bg}: ${chosen} vs ${other}`,
+        ).toBeGreaterThanOrEqual(ColorAccessibility.getContrastRatio(bg, other));
       });
     });
 

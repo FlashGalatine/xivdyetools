@@ -5,6 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     coverage: {
+      // BUG-127: on, so `run test` (and turbo/CI) enforces the thresholds below instead of only recording them.
+      enabled: true,
       provider: 'v8',
       reporter: ['text', 'html', 'json', 'json-summary'],
       reportsDirectory: './coverage',

@@ -13,10 +13,11 @@
 import {
   COLOR_WHEEL_TAGS,
   DEFAULT_COLOR_WHEEL,
-  DEFAULT_MATCHING_METHOD,
   HARMONY_OFFSETS,
   generateHarmonySlots,
+  normalizeMatchingMethod,
   type ColorWheelId,
+  type MatchingMethod,
 } from '@xivdyetools/core';
 import type { Dye, LocaleCode } from '@xivdyetools/types';
 import { generateBandCard, type BandEntry, type BandFrame } from './band';
@@ -73,8 +74,8 @@ interface HarmonyMatch {
 function getHarmonyMatches(
   dye: Dye,
   harmonyType: HarmonyType,
-  algorithm: MatchingAlgorithm = DEFAULT_MATCHING_METHOD,
-  wheel: ColorWheelId = DEFAULT_COLOR_WHEEL
+  algorithm: MatchingMethod,
+  wheel: ColorWheelId
 ): HarmonyMatch[] {
   const offsets = idealOffsets(harmonyType);
   if (!offsets) {
@@ -99,18 +100,30 @@ function getHarmonyMatches(
     harmonyType,
     ALL_DYES,
     {
-      // Pinned, and the one place the card can still differ from the page.
-      // The Harmony Explorer puts BOTH `algo` and `perceptual` in every share
-      // URL, but `perceptual` is not in `OG_ALLOWED_QUERY_KEYS` — that
-      // allowlist bounds the cache-key space by a deliberate security ruling
-      // (S7-R7 / S7-R10), and admitting a second boolean doubles it. So the
-      // card follows the page's DEFAULT here; a link that turned perceptual
-      // off is the remaining divergence, written down rather than silent.
+      // Pinned to the page's DEFAULT. The Harmony Explorer puts BOTH `algo`
+      // and `perceptual` in every share URL, but `perceptual` is not in
+      // `OG_ALLOWED_QUERY_KEYS` — that allowlist bounds the cache-key space by
+      // a deliberate security ruling (S7-R7 / S7-R10), and admitting a second
+      // boolean doubles it. A link that turned perceptual off is therefore
+      // one known divergence, but not the only one: see `preventDuplicates`.
       usePerceptualMatching: true,
       // Was hardcoded `'ciede2000'` while `?algo=` fed only the printed delta,
       // so `?algo=oklab` drew the ΔE2000 dyes under ΔEOK figures — a different
       // set from the page the link opens, which ranks by the requested method.
+      // Already normalized (`generateHarmonyOG`): core's `getDistanceForMethod`
+      // has no case for a legacy spelling, so a raw `hyab` scored every dye NaN
+      // and the card drew the dye table's first rows (BUG-062).
       matchingMethod: algorithm,
+      // The page's default. Like the companion count, it is a viewer setting
+      // the share URL does not carry. The card passes no `companionCount`; the
+      // page passes the viewer's stored count, `COMPANION_DYES_DEFAULT` (1)
+      // when none is stored. Under `preventDuplicates` core marks each slot's
+      // companions used before the next slot chooses, so slot 0 is unaffected
+      // but a later slot can name a different dye from the page's: 83 of the
+      // 1,125 non-monochromatic default shares (7.4%) at the default ΔE2000,
+      // and up to about 18% under the other methods (rgb 17.8, distinguish
+      // 17.7, redmean 18.1, oklab 10.4, cie76 8.6). Known, and left for a
+      // follow-up.
       preventDuplicates: true,
       wheel,
     },
@@ -132,14 +145,17 @@ function getHarmonyMatches(
  * Generates the Harmony OG image SVG (400-grid — raster ×3 downstream).
  */
 export function generateHarmonyOG(options: HarmonyOGOptions): string {
-  const {
-    dyeId,
-    harmonyType,
-    algorithm = DEFAULT_MATCHING_METHOD,
-    wheel = DEFAULT_COLOR_WHEEL,
-    locale = 'en',
-    frame = 'discord',
-  } = options;
+  const { dyeId, harmonyType, wheel = DEFAULT_COLOR_WHEEL, locale = 'en', frame = 'discord' } = options;
+  // BUG-062 (deep dive 2026-10-04): normalize ONCE, before anything ranks. The
+  // route admits the three pre-5.0 spellings (`hyab`, `oklch-weighted`,
+  // `euclidean` — `isAlgorithm`), and `deltaForAlgorithm` / `algoTag` /
+  // `fmtDelta` each normalized for themselves, but the raw value went straight
+  // into core's `generateHarmonySlots` as `matchingMethod`. Core does not
+  // normalize there, its distance switch has no case for a legacy spelling and
+  // returned `undefined`, every candidate scored NaN, and the sort left them in
+  // table order: `?algo=hyab` drew grays under a correct `ΔE2000` footer. An
+  // absent algorithm normalizes to the suite default.
+  const algorithm = normalizeMatchingMethod(options.algorithm);
 
   const dye = getDyeByItemId(dyeId);
   if (!dye) {

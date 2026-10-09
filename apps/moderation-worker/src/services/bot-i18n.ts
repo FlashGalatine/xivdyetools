@@ -15,28 +15,22 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
  * Locale data structure
  */
 interface LocaleData {
-  meta: {
-    locale: string;
-    name: string;
-    nativeName: string;
-    flag: string;
-  };
   [key: string]: unknown;
 }
 
 /**
  * English locale data (moderation-focused)
+ *
+ * DEAD-030 (2026-10-04 dead-code audit): every key here has a literal
+ * `t.t('<key>')` reader in the handlers; the bot builds no key at runtime. The
+ * `meta` block, `common.success`, `preset.categories.*` (the review embed
+ * prints the raw `category_id`) and `ban.userBanned` / `presetsHidden` /
+ * `alreadyBanned` had none and were removed; add a key back only together
+ * with the handler that reads it.
  */
 const enLocale: LocaleData = {
-  meta: {
-    locale: 'en',
-    name: 'English',
-    nativeName: 'English',
-    flag: '\uD83C\uDDFA\uD83C\uDDF8',
-  },
   common: {
     error: 'Error',
-    success: 'Success',
   },
   errors: {
     userNotFound: 'Could not identify user.',
@@ -62,14 +56,6 @@ const enLocale: LocaleData = {
       footerMixedQueue:
         'approve/reject apply to the text entries only — 🖼 entries are reviewed on the moderation embed in Discord',
     },
-    categories: {
-      jobs: 'FFXIV Jobs',
-      'grand-companies': 'Grand Companies',
-      seasons: 'Seasons',
-      events: 'FFXIV Events',
-      aesthetics: 'Aesthetics',
-      community: 'Community',
-    },
   },
   ban: {
     confirmTitle: 'Confirm User Ban',
@@ -88,14 +74,11 @@ const enLocale: LocaleData = {
     confirmFooter: 'Click "Yes" to proceed with the ban, or "No" to cancel.',
     yesBan: 'Yes, Ban User',
     cancel: 'Cancel',
-    userBanned: 'User Banned',
     userUnbanned: 'User Unbanned',
-    presetsHidden: 'Presets Hidden',
     presetsRestored: 'Presets Restored',
     presetsStillHidden: 'Presets Still Hidden',
     presetsStillHiddenWhy:
       'another approved or pending preset already uses the same dye combination, so restoring it would duplicate that preset.',
-    alreadyBanned: 'User is already banned.',
     notBanned: 'User is not currently banned.',
     userNotFound: 'User not found or has no presets.',
     channelRestricted: 'This command can only be used in the moderation channel.',
@@ -153,16 +136,16 @@ function interpolate(template: string, variables: Record<string, string | number
 export class Translator {
   private locale: LocaleCode;
   private data: LocaleData;
-  private fallbackData: LocaleData;
   private logger?: ExtendedLogger;
 
   constructor(locale: LocaleCode, logger?: ExtendedLogger) {
     // `locale` is still resolved and recorded — analytics and log lines want to
     // know what the moderator's client asked for — but it selects nothing:
-    // this bot ships one English table on purpose (I18N-009).
+    // this bot ships one English table on purpose (I18N-009). There is no
+    // separate fallback table either (DEAD-027): it was the same English table,
+    // so re-reading a missing key from it could never find anything.
     this.locale = locale;
     this.data = strings;
-    this.fallbackData = strings;
     this.logger = logger;
   }
 
@@ -170,11 +153,7 @@ export class Translator {
    * Get a translated string
    */
   t(key: string, variables?: Record<string, string | number>): string {
-    let value = getNestedValue(this.data, key);
-
-    if (value === undefined && this.locale !== 'en') {
-      value = getNestedValue(this.fallbackData, key);
-    }
+    const value = getNestedValue(this.data, key);
 
     if (value === undefined || typeof value !== 'string') {
       if (this.logger) {
@@ -200,6 +179,10 @@ export class Translator {
 
 /**
  * Create a translator for a user, resolving their locale preference
+ *
+ * BUG-126 (2026-10-04 deep-dive): `logger` also goes to `resolveUserLocale`,
+ * which logs a KV failure (or a malformed preferences blob) on it and still
+ * falls through to the next step. Without it the degraded lookup was silent.
  */
 export async function createUserTranslator(
   kv: KVNamespace,
@@ -207,6 +190,6 @@ export async function createUserTranslator(
   discordLocale?: string,
   logger?: ExtendedLogger
 ): Promise<Translator> {
-  const locale = await resolveUserLocale(kv, userId, discordLocale);
+  const locale = await resolveUserLocale(kv, userId, discordLocale, logger);
   return new Translator(locale, logger);
 }

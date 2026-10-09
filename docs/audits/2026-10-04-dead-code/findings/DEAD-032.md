@@ -15,4 +15,4 @@
 Steps: 1) apps/presets-api/src/middleware/body-validation.ts: import { ErrorCode } from '../utils/api-response.js' and replace the literal 'BAD_REQUEST' at line 73 with ErrorCode.BAD_REQUEST. 2) apps/presets-api/src/utils/api-response.ts: delete line 47 (DATABASE_ERROR). 3) docs/architecture/api-contracts.md: delete the DATABASE_ERROR row at line 759. 4) pnpm turbo run build type-check lint test --filter=...xivdyetools-presets-api && pnpm dead-code:check && pnpm docs:check-links
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `a33842cc`: BAD_REQUEST is now read by the body guard; DATABASE_ERROR removed (branch `fix/remediation-2026-10-04-sprint8`, presets-api 2.5.0; PR #256, open, on the join branch).

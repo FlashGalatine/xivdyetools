@@ -423,7 +423,7 @@ export class V4LayoutShell extends BaseLitComponent {
         }
       }
       /* ==========================================================================
-         Accessibility Tool Styles & Global Helper Classes
+         Global Helper Classes
          ========================================================================== */
 
       .section-header {
@@ -443,343 +443,35 @@ export class V4LayoutShell extends BaseLitComponent {
         font-weight: 600;
         letter-spacing: 1px;
       }
-
-      .contrast-table-container {
-        border-radius: 12px;
-        overflow: hidden;
-        background: var(--theme-card-background);
-        border: 1px solid var(--theme-border);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        max-width: 800px;
-        margin: 0 auto;
-      }
-
-      .contrast-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-
-      .contrast-table thead {
-        background: var(--theme-background-secondary);
-      }
-
-      .contrast-table th {
-        padding: 14px 16px;
-        text-align: left;
-        font-weight: 600;
-        color: var(--theme-text-muted);
-        text-transform: uppercase;
-        font-size: 11px;
-        letter-spacing: 1px;
-        border-bottom: 1px solid var(--theme-border);
-      }
-
-      .contrast-table td {
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--theme-border);
-      }
-
-      .contrast-table tr:last-child td {
-        border-bottom: none;
-      }
-
-      .pairwise-container {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        max-width: 800px;
-        margin: 0 auto;
-        background: var(--theme-card-background);
-        border: 1px solid var(--theme-border);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      .pairwise-matrix {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-
-      /* Vision Simulation Cards */
-      .vision-card {
-        display: flex;
-        flex-direction: column;
-        background: var(--theme-card-background);
-        border: 1px solid var(--theme-border);
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition:
-          transform 0.2s,
-          box-shadow 0.2s;
-        flex: 1 1 200px;
-        min-width: 200px;
-        max-width: 280px;
-      }
-
-      .vision-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        border-color: var(--theme-text-muted);
-      }
-
-      .vision-card-header {
-        background: rgba(0, 0, 0, 0.4);
-        padding: 12px 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--theme-border);
-      }
-
-      .vision-type-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--theme-text);
-      }
-
-      .vision-prevalence {
-        font-size: 10px;
-        color: var(--theme-text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .vision-swatches {
-        display: flex;
-        gap: 10px;
-        padding: 16px;
-        justify-content: center;
-        flex-grow: 1;
-        align-items: flex-start;
-      }
-
-      .vision-swatch-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .vision-swatch {
-        width: 40px;
-        height: 40px;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      }
-
-      .vision-swatch-label {
-        font-size: 9px;
-        color: var(--theme-text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        max-width: 44px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        text-align: center;
-      }
-
-      .vision-swatch-hex {
-        font-size: 9px;
-        font-family: monospace;
-        color: var(--theme-text-muted);
-      }
-
-      /* WCAG Contrast Table Enhancements */
-      .dye-cell-content {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .dye-indicator {
-        width: 20px;
-        height: 20px;
-        border-radius: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        flex-shrink: 0;
-      }
-
-      .contrast-cell-content {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .contrast-ratio {
-        color: var(--theme-text);
-        font-family: monospace;
-        font-size: 13px;
-      }
-
-      .wcag-badge {
-        padding: 3px 10px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .wcag-badge.aaa {
-        background: rgba(34, 197, 94, 0.2);
-        color: #22c55e;
-        border: 1px solid rgba(34, 197, 94, 0.3);
-      }
-
-      .wcag-badge.aa {
-        background: rgba(234, 179, 8, 0.2);
-        color: #eab308;
-        border: 1px solid rgba(234, 179, 8, 0.3);
-      }
-
-      .wcag-badge.fail {
-        background: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
-      }
-
-      /* Pairwise Matrix Enhancements */
-      .matrix-header-cell {
-        padding: 10px 12px;
-        text-align: center;
-        vertical-align: bottom;
-        min-width: 90px;
-      }
-
-      .matrix-header-swatch {
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        margin: 0 auto 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
-
-      .matrix-header-cell span {
-        font-size: 11px;
-        font-weight: 500;
-        color: var(--theme-text-muted);
-        display: block;
-        max-width: 80px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin: 0 auto;
-      }
-
-      .matrix-row-header {
-        padding: 10px 14px;
-        background: var(--theme-card-background);
-        position: sticky;
-        left: 0;
-        z-index: 1;
-      }
-
-      .matrix-row-swatch {
-        width: 28px;
-        height: 28px;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        flex-shrink: 0;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      }
-
-      .matrix-corner {
-        padding: 10px;
-        min-width: 130px;
-      }
-
-      .matrix-cell {
-        padding: 10px 14px;
-        text-align: center;
-        font-family: monospace;
-        font-size: 13px;
-        font-weight: 600;
-        transition: all 0.15s ease;
-      }
-
-      .matrix-cell.diagonal {
-        color: var(--theme-text-muted);
-        background: var(--theme-background-secondary);
-      }
-
-      .matrix-cell.good {
-        color: #22c55e;
-        background: rgba(34, 197, 94, 0.15);
-      }
-
-      .matrix-cell.warning {
-        color: #eab308;
-        background: rgba(234, 179, 8, 0.15);
-      }
-
-      .matrix-cell.critical {
-        color: #ef4444;
-        background: rgba(239, 68, 68, 0.15);
-      }
-
-      .matrix-cell.ok {
-        color: #3b82f6;
-        background: rgba(59, 130, 246, 0.15);
-      }
-
-      /* Warning Callouts */
-      .pairwise-warnings {
-        padding: 16px;
-        border-top: 1px solid var(--theme-border);
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      .warning-callout {
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        padding: 12px 14px;
-        border-radius: 8px;
-      }
-
-      .warning-callout.warning {
-        background: rgba(234, 179, 8, 0.12);
-        border: 1px solid rgba(234, 179, 8, 0.25);
-      }
-
-      .warning-callout.critical {
-        background: rgba(239, 68, 68, 0.12);
-        border: 1px solid rgba(239, 68, 68, 0.25);
-      }
-
-      .warning-icon {
-        width: 18px;
-        height: 18px;
-        flex-shrink: 0;
-        fill: currentColor;
-      }
-
-      .warning-callout.warning .warning-icon {
-        color: #eab308;
-      }
-
-      .warning-callout.critical .warning-icon {
-        color: #ef4444;
-      }
-
-      .warning-callout span {
-        font-size: 12px;
-        color: var(--theme-text);
-        line-height: 1.5;
-      }
-
-      .warning-callout strong {
-        color: var(--theme-text);
-        font-weight: 600;
+    `,
+    // BUG-112 (2026-10-04 deep-dive): print the tool, not the console. The
+    // 100vh overflow-hidden host and the content scroller clipped a printout
+    // to one sheet, with the app bar, FABs and Options column printed on it
+    // (styles/v4-layout.css reaches only the host, not this shadow root).
+    // Last in the list so it beats the max-width: 768px block, which a narrow
+    // print page also matches; overflow is !important because v4-layout.ts
+    // gives .v4-tool-main an inline overflow-y: auto. The rationale lives out
+    // here because comments inside a css`` literal ship verbatim.
+    css`
+      @media print {
+        :host,
+        .v4-layout-main,
+        .v4-layout-content,
+        .v4-layout-content-scroll,
+        .v4-tool-main {
+          display: block;
+          height: auto;
+          overflow: visible !important;
+        }
+        v4-app-header,
+        v4-config-sidebar,
+        dye-palette-drawer,
+        .v4-drawer-overlay,
+        .v4-palette-hint,
+        .v4-options-toggle,
+        .v4-palette-toggle {
+          display: none !important;
+        }
       }
     `,
   ];
@@ -861,6 +553,10 @@ export class V4LayoutShell extends BaseLitComponent {
    * Re-emit config changes from the Simple-Settings column for v4-layout
    */
   private handleConfigChange(e: CustomEvent): void {
+    // BUG-113: emit() is bubbles + composed, so the original would reach
+    // v4-layout's host listener too and every handler there ran twice.
+    // Stop it, as handleDyeSelected does, and let only the re-emit through.
+    e.stopPropagation();
     this.emit('config-change', e.detail);
   }
 
@@ -916,7 +612,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle clear all dyes request from DyePaletteDrawer
    * Re-emits for parent to clear selections on active tool
    */
-  private handleClearAllDyes(): void {
+  private handleClearAllDyes(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('clear-all-dyes');
   }
 
@@ -933,7 +630,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle theme button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleThemeClick(): void {
+  private handleThemeClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('theme-click');
   }
 
@@ -941,7 +639,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle "What's New" (changelog) button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleChangelogClick(): void {
+  private handleChangelogClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('changelog-click');
   }
 
@@ -949,7 +648,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle about button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleAboutClick(): void {
+  private handleAboutClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('about-click');
   }
 
@@ -957,7 +657,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * Handle language button click from header
    * Bubbles up to v4-layout.ts
    */
-  private handleLanguageClick(): void {
+  private handleLanguageClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('language-click');
   }
 
@@ -993,7 +694,8 @@ export class V4LayoutShell extends BaseLitComponent {
    * else. The gear used to double as the Options-panel toggle, which on
    * mobile put both surfaces on screen at once.
    */
-  private handleAdvancedClick(): void {
+  private handleAdvancedClick(e: Event): void {
+    e.stopPropagation(); // BUG-113: see handleConfigChange
     this.emit('advanced-click');
   }
 

@@ -125,6 +125,33 @@ describe('createTestJWT', () => {
   });
 });
 
+describe('createTestJWT signature', () => {
+  // Kept in-unit when the integration/ suite was removed (DEAD-041): this was
+  // the only check in test-utils that the token is a genuine HS256 signature.
+  async function verifies(token: string, secret: string): Promise<boolean> {
+    const [h, p, sig] = token.split('.');
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    );
+    const b64 = sig.replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4)), (c) =>
+      c.charCodeAt(0),
+    );
+    return crypto.subtle.verify('HMAC', key, bytes, new TextEncoder().encode(`${h}.${p}`));
+  }
+
+  it('verifies as HS256 with the signing secret and fails with another', async () => {
+    const jwt = await createTestJWT('secret-a', { sub: 'u', username: 'U' });
+
+    expect(await verifies(jwt, 'secret-a')).toBe(true);
+    expect(await verifies(jwt, 'secret-b')).toBe(false);
+  });
+});
+
 describe('createExpiredJWT', () => {
   it('creates an expired token', async () => {
     const jwt = await createExpiredJWT('secret');

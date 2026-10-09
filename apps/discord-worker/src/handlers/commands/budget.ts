@@ -13,8 +13,18 @@
  */
 
 import type { ExtendedLogger } from '@xivdyetools/logger';
-import { deferredResponse, errorEmbed, ephemeralResponse } from '../../utils/response.js';
-import { safeEditOriginalResponse } from '../../utils/discord-api.js';
+import type { Dye } from '@xivdyetools/types';
+import {
+  deferredResponse,
+  errorEmbed,
+  ephemeralResponse,
+  type DiscordEmbed,
+} from '../../utils/response.js';
+import {
+  safeDeleteOriginalResponse,
+  safeEditOriginalResponse,
+  safeSendFollowUp,
+} from '../../utils/discord-api.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import {
   generateBudgetLedger,
@@ -100,7 +110,7 @@ export async function handleBudgetCommand(
       return handleFindSubcommand(interaction, env, ctx, subcommand.options || [], t, prefs, logger);
 
     case 'set_world':
-      return handleSetWorldSubcommand(env, subcommand.options || [], t, userId, logger);
+      return handleSetWorldSubcommand(interaction, env, ctx, subcommand.options || [], t, userId, logger);
 
     case 'quick':
       return handleQuickSubcommand(interaction, env, ctx, subcommand.options || [], t, prefs, logger);
@@ -115,7 +125,16 @@ export async function handleBudgetCommand(
 // ============================================================================
 
 /**
- * Resolve the world a ledger should be priced on.
+ * The world a ledger should be priced on, AS TYPED: the `world:` override,
+ * else the stored preference; `undefined` when neither is set. Checking that
+ * it exists is {@link resolveNamedWorld}'s job, after the ack.
+ */
+function namedWorld(worldOverride: string | undefined, prefs: UserPreferences): string | undefined {
+  return worldOverride || prefs.world || undefined;
+}
+
+/**
+ * Validate the named world, or answer the deferred interaction with why not.
  *
  * FINDING-033 (2026-08-21 security audit): a `world:` override used to be
  * forwarded verbatim (`worldOverride ?? prefs.world`) — only `set_world`
@@ -134,22 +153,78 @@ export async function handleBudgetCommand(
  * here as the same `null`, so an outage told the user their own valid world
  * did not exist. They are now distinct.
  *
- * @returns `{ ok: true }` with the canonical world; `'unset'` when nothing is
- *          set (no override, no preference); otherwise why it failed
+ * BUG-002 (2026-10-04 deep dive): on a cold isolate the lookup is up to two
+ * sequential service-binding fetches with a 10 s timeout each, and it used to
+ * be awaited BEFORE the defer — a slow Universalis became Discord's "The
+ * application did not respond". It now runs after the ack.
+ *
+ * Its refusals stay PRIVATE, as they were when they were answered in the ack
+ * itself: the defer is public (the ledger is for the channel), and a refusal
+ * edited over it would leave a red embed — echoing the typed world, or the
+ * user's STORED one — in the channel for good. See {@link refusePrivately}.
+ *
+ * @returns the canonical world name, or `null` once the refusal is sent
  */
-type ResolvedWorld =
-  | { ok: true; name: string }
-  | { ok: false; reason: 'unset' | 'unknown' | 'upstream' };
-
-async function resolveWorld(
+async function resolveNamedWorld(
+  interaction: DiscordInteraction,
   env: Env,
-  worldOverride: string | undefined,
-  prefs: UserPreferences,
+  named: string,
+  t: Translator,
   logger?: ExtendedLogger
-): Promise<ResolvedWorld> {
-  const named = worldOverride || prefs.world;
-  if (!named) return { ok: false, reason: 'unset' };
-  return validateWorld(env, named, logger);
+): Promise<string | null> {
+  const world = await validateWorld(env, named, logger);
+  if (world.ok) return world.name;
+
+  let message: string;
+  if (world.reason === 'upstream') {
+    // BUG-031: the world is probably fine — Universalis is not. Saying
+    // "could not find <their world>" during an outage sends the user off to
+    // check a spelling that was never wrong.
+    markCommandOutcome(interaction, 'upstream_universalis');
+    message = t.t('budget.errors.apiError');
+  } else {
+    // FINDING-019: typed / stored value echoed back — sanitise it
+    message = t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(named, 64) });
+  }
+  await refusePrivately(
+    interaction,
+    env,
+    { embeds: [errorEmbed(t.t('common.error'), message)] },
+    logger
+  );
+  return null;
+}
+
+/**
+ * Answer a PUBLICLY deferred interaction privately: delete the public
+ * "thinking…", then send the reply as an ephemeral follow-up.
+ *
+ * The order matters — a follow-up sent while the deferred original is still
+ * pending takes its place, and with it the defer's public visibility. When
+ * the delete fails the original is still there, so the reply is edited over
+ * it instead: a public refusal beats a "thinking…" that never resolves.
+ */
+async function refusePrivately(
+  interaction: DiscordInteraction,
+  env: Env,
+  reply: { embeds: DiscordEmbed[] },
+  logger?: ExtendedLogger
+): Promise<void> {
+  const deleted = await safeDeleteOriginalResponse(
+    env.DISCORD_CLIENT_ID,
+    interaction.token,
+    logger
+  );
+  if (!deleted) {
+    await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, reply, logger);
+    return;
+  }
+  await safeSendFollowUp(
+    env.DISCORD_CLIENT_ID,
+    interaction.token,
+    { ...reply, ephemeral: true },
+    logger
+  );
 }
 
 // ============================================================================
@@ -157,9 +232,29 @@ async function resolveWorld(
 // ============================================================================
 
 /**
+ * Resolve the typed `target_dye` — an id or a name.
+ *
+ * BUG-032 (2026-07-18 audit): the input is an id only when it is entirely
+ * numeric — parseInt('255 Brown') would otherwise parse as 255.
+ *
+ * BUG-034 (2026-10-04 audit): and only when it is 1–5 digits — the rule
+ * `@xivdyetools/bot-logic`'s `parseDyeIdInput` applies for every other
+ * command. Every real id fits in five digits, so six bare digits are a hex
+ * colour there ('013114' is #013114, not zero-padded Pure White). /budget
+ * prices dyes, not colours, so six or more bare digits name no dye here:
+ * the user is told no such dye was found, as its autocomplete already
+ * offered none.
+ */
+function resolveTargetDyeInput(input: string, locale: LocaleCode): Dye | null {
+  if (!/^\s*\d+\s*$/.test(input)) return getDyeByName(input, locale);
+  const digits = input.trim();
+  return digits.length <= 5 ? resolveTargetDye(Number(digits)) : null;
+}
+
+/**
  * Handles /budget find <target_dye>
  */
-async function handleFindSubcommand(
+function handleFindSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
@@ -167,7 +262,7 @@ async function handleFindSubcommand(
   t: Translator,
   prefs: UserPreferences,
   logger?: ExtendedLogger
-): Promise<Response> {
+): Response {
   // Check if Universalis is configured
   if (!isUniversalisEnabled(env)) {
     return ephemeralResponse(t.t('budget.errors.notConfigured'));
@@ -193,13 +288,7 @@ async function handleFindSubcommand(
     return ephemeralResponse(t.t('budget.errors.missingDye'));
   }
 
-  // Resolve target dye (could be ID or name).
-  // BUG-032 (2026-07-18 audit): only treat the input as an ID when it's
-  // entirely numeric — parseInt('255 Brown') would otherwise parse as 255.
-  const isNumericInput = /^\s*\d+\s*$/.test(targetDyeInput);
-  const targetDye = isNumericInput
-    ? resolveTargetDye(parseInt(targetDyeInput, 10))
-    : getDyeByName(targetDyeInput, t.getLocale());
+  const targetDye = resolveTargetDyeInput(targetDyeInput, t.getLocale());
 
   if (!targetDye || targetDye.itemID <= 0) {
     // FINDING-019: typed option value echoed back — sanitise it
@@ -211,25 +300,12 @@ async function handleFindSubcommand(
   // World: explicit option > stored preference. FINDING-033 / FINDING-019:
   // both are validated like `set_world` — only a known world or data centre
   // (canonical name) reaches the Universalis proxy and the shared
-  // price-cache key. The echo names whichever one the user must correct.
-  const world = await resolveWorld(env, worldOverride, prefs, logger);
-  if (!world.ok) {
-    if (world.reason === 'unset') {
-      return ephemeralResponse(
-        `**${t.t('budget.noWorldSet.title')}**\n\n${t.t('budget.noWorldSet.description')}`
-      );
-    }
-    if (world.reason === 'upstream') {
-      // BUG-031: the world is probably fine — Universalis is not. Saying
-      // "could not find <their world>" during an outage sends the user off to
-      // check a spelling that was never wrong.
-      markCommandOutcome(interaction, 'upstream_universalis');
-      return ephemeralResponse(t.t('budget.errors.apiError'));
-    }
+  // price-cache key. BUG-002: that lookup runs after the defer (in
+  // processFindCommand); only "nothing set" needs no I/O and is answered here.
+  const world = namedWorld(worldOverride, prefs);
+  if (!world) {
     return ephemeralResponse(
-      t.t('budget.errors.worldNotFound', {
-        world: sanitizeEmbedText(worldOverride || prefs.world || '', 64),
-      })
+      `**${t.t('budget.noWorldSet.title')}**\n\n${t.t('budget.noWorldSet.description')}`
     );
   }
 
@@ -239,7 +315,7 @@ async function handleFindSubcommand(
       interaction,
       env,
       targetDye.itemID,
-      world.name,
+      world,
       { method, matchLine: matchLineRaw, excludeCoffers, excludeWideSpectrum },
       t,
       prefs.theme,
@@ -254,28 +330,50 @@ async function handleFindSubcommand(
 // ============================================================================
 
 /**
- * Background processing: build the ledger, draw 13G, send the one-line embed.
+ * Background processing: validate the world, build the ledger, draw 13G,
+ * send the one-line embed.
+ *
+ * @param named - the world as typed or stored; validated here, after the ack
+ *                (BUG-002), and only its canonical name is priced
  */
 async function processFindCommand(
   interaction: DiscordInteraction,
   env: Env,
   targetDyeId: number,
-  world: string,
-  searchOptions: LedgerSearchOptions,
+  named: string,
+  searchOptions: LedgerSearchOptions & { method: MatchingMethod },
   t: Translator,
   theme?: 'dark' | 'light',
   logger?: ExtendedLogger
 ): Promise<void> {
   try {
+    const world = await resolveNamedWorld(interaction, env, named, t, logger);
+    if (world === null) return;
+
+    // The footer's key lines, decided once (REFACTOR-003): the card prints
+    // this list, and the calculator packs the rows above a footer of exactly
+    // this many lines — so every line has to be known here, before the ledger
+    // is built. Off ΔE2000 the method note follows the formula.
+    const method = searchOptions.method;
+    const keyLines = [t.t('card.budgetKey')];
+    if (method !== 'ciede2000') {
+      keyLines.push(t.t('card.budgetKeyMethod', { tag: methodTag(method) }));
+    }
+
     // FINDING-011: a player's home world is mildly identifying — the log
     // needs only to say that one was resolved, never which.
     if (logger) logger.info('Budget: building ledger', { hasWorld: Boolean(world) });
-    const result = await findBudgetLedger(env, targetDyeId, world, searchOptions, logger);
+    const result = await findBudgetLedger(
+      env,
+      targetDyeId,
+      world,
+      { ...searchOptions, keyLineCount: keyLines.length },
+      logger
+    );
 
     const locale = t.getLocale();
     await initializeLocale(locale);
 
-    const method = result.method;
     const localizedTargetName = getLocalizedDyeName(
       result.targetDye.itemID,
       result.targetDye.name,
@@ -340,11 +438,6 @@ async function processFindCommand(
       })),
     }));
 
-    const keyLines = [t.t('card.budgetKey')];
-    if (method !== 'ciede2000') {
-      keyLines.push(t.t('card.budgetKeyMethod', { tag: methodTag(method) }));
-    }
-
     const svg = generateBudgetLedger({
       target: {
         hex: result.targetDye.hex,
@@ -370,7 +463,7 @@ async function processFindCommand(
       wideDe: WIDE_DE.has(method),
     });
 
-    const pngBuffer = await renderSvgToPng(svg, { scale: 2 }, logger);
+    const pngBuffer = await renderSvgToPng(svg, { scale: 2, locale }, logger);
 
     // One line: the picture is self-contained; the verdict earns the embed
     let description =
@@ -432,41 +525,70 @@ async function processFindCommand(
 
 /**
  * Handles /budget set_world <world>
+ *
+ * BUG-002 (2026-10-04 deep dive): the Universalis lookup and the KV write
+ * used to be awaited before any reply — no defer at all — so a cold-cache
+ * lookup could outlast Discord's 3-second ack window. It now acks
+ * ephemerally first and answers in the deferred edit.
  */
-async function handleSetWorldSubcommand(
+function handleSetWorldSubcommand(
+  interaction: DiscordInteraction,
   env: Env,
+  ctx: ExecutionContext,
   options: Array<{ name: string; value?: string | number | boolean }>,
   t: Translator,
   userId: string,
   logger?: ExtendedLogger
-): Promise<Response> {
+): Response {
   const worldInput = options.find((opt) => opt.name === 'world')?.value as string | undefined;
 
   if (!worldInput) {
     return ephemeralResponse(t.t('budget.errors.missingWorld'));
   }
 
-  // Validate world exists
-  const validated = await validateWorld(env, worldInput, logger);
+  ctx.waitUntil(processSetWorld(interaction, env, worldInput, t, userId, logger));
+  return deferredResponse(true);
+}
 
-  if (!validated.ok) {
-    // BUG-031: refusing to save a valid world because the proxy is down is
-    // worth its own sentence — the user has nothing to correct.
-    return ephemeralResponse(
-      validated.reason === 'upstream'
-        ? t.t('budget.errors.apiError')
-        : t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldInput, 64) })
-    );
+/**
+ * Background half of /budget set_world: validate, save, edit the ack.
+ */
+async function processSetWorld(
+  interaction: DiscordInteraction,
+  env: Env,
+  worldInput: string,
+  t: Translator,
+  userId: string,
+  logger?: ExtendedLogger
+): Promise<void> {
+  let content: string;
+  try {
+    // Validate world exists
+    const validated = await validateWorld(env, worldInput, logger);
+
+    if (!validated.ok) {
+      // BUG-031: refusing to save a valid world because the proxy is down is
+      // worth its own sentence — the user has nothing to correct.
+      if (validated.reason === 'upstream') markCommandOutcome(interaction, 'upstream_universalis');
+      content =
+        validated.reason === 'upstream'
+          ? t.t('budget.errors.apiError')
+          : t.t('budget.errors.worldNotFound', { world: sanitizeEmbedText(worldInput, 64) });
+    } else {
+      // Save preference via unified preferences system
+      const result = await setPreference(env.KV, userId, 'world', validated.name, logger);
+      content = result.success
+        ? t.t('budget.worldSet', { world: validated.name })
+        : t.t('budget.errors.saveFailed');
+    }
+  } catch (error) {
+    // The ack is already sent: answer it rather than leave "thinking…"
+    markCommandOutcome(interaction, classifyError(error));
+    if (logger) logger.error('Budget set_world error', error instanceof Error ? error : undefined);
+    content = t.t('budget.errors.saveFailed');
   }
 
-  // Save preference via unified preferences system
-  const result = await setPreference(env.KV, userId, 'world', validated.name, logger);
-
-  if (!result.success) {
-    return ephemeralResponse(t.t('budget.errors.saveFailed'));
-  }
-
-  return ephemeralResponse(t.t('budget.worldSet', { world: validated.name }));
+  await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, { content });
 }
 
 // ============================================================================
@@ -476,7 +598,7 @@ async function handleSetWorldSubcommand(
 /**
  * Handles /budget quick <preset>
  */
-async function handleQuickSubcommand(
+function handleQuickSubcommand(
   interaction: DiscordInteraction,
   env: Env,
   ctx: ExecutionContext,
@@ -484,7 +606,7 @@ async function handleQuickSubcommand(
   t: Translator,
   prefs: UserPreferences,
   logger?: ExtendedLogger
-): Promise<Response> {
+): Response {
   const presetId = options.find((opt) => opt.name === 'preset')?.value as string | undefined;
   const worldOverride = options.find((opt) => opt.name === 'world')?.value as string | undefined;
 
@@ -500,21 +622,11 @@ async function handleQuickSubcommand(
     );
   }
 
-  // FINDING-033 / FINDING-019: same world validation as find / set_world
-  const world = await resolveWorld(env, worldOverride, prefs, logger);
-  if (!world.ok) {
-    if (world.reason === 'unset') {
-      return ephemeralResponse(t.t('budget.noWorldSet.description'));
-    }
-    if (world.reason === 'upstream') {
-      markCommandOutcome(interaction, 'upstream_universalis');
-      return ephemeralResponse(t.t('budget.errors.apiError'));
-    }
-    return ephemeralResponse(
-      t.t('budget.errors.worldNotFound', {
-        world: sanitizeEmbedText(worldOverride || prefs.world || '', 64),
-      })
-    );
+  // FINDING-033 / FINDING-019: same world validation as find / set_world —
+  // after the defer (BUG-002), inside processFindCommand.
+  const world = namedWorld(worldOverride, prefs);
+  if (!world) {
+    return ephemeralResponse(t.t('budget.noWorldSet.description'));
   }
 
   const deferResponse = deferredResponse();
@@ -523,7 +635,7 @@ async function handleQuickSubcommand(
       interaction,
       env,
       preset.targetDyeId,
-      world.name,
+      world,
       { method: prefs.matching ?? 'ciede2000' },
       t,
       prefs.theme,

@@ -7,7 +7,7 @@
 import { logger } from '@shared/logger';
 import { authService } from './auth-service';
 import type { PresetCategory, PresetSubmission, PresetEditRequest } from '@xivdyetools/types';
-import type { CommunityPreset } from './community-preset-service';
+import { communityPresetService, type CommunityPreset } from './community-preset-service';
 
 // ============================================
 // Types
@@ -251,6 +251,11 @@ export async function uploadPreviewImage(presetId: string, file: File): Promise<
   if (!response.ok) {
     throw new Error('Preview image upload failed');
   }
+
+  // BUG-031 (2026-10-04 deep-dive) review follow-up: an Edit-form save that
+  // changes only the picture never reaches editPreset, so the cached lists
+  // would serve the old picture to preset-tool's reload.
+  communityPresetService.invalidatePresets(presetId);
 }
 
 /**
@@ -273,6 +278,9 @@ export async function removePreviewImage(presetId: string): Promise<void> {
   if (!response.ok) {
     throw new Error('Preview image removal failed');
   }
+
+  // BUG-031 (2026-10-04 deep-dive) review follow-up: see uploadPreviewImage.
+  communityPresetService.invalidatePresets(presetId);
 }
 
 // ============================================
@@ -342,6 +350,9 @@ class PresetSubmissionServiceImpl {
       }
 
       logger.info('Preset submitted successfully:', result);
+      // BUG-031 (2026-10-04 deep-dive): the cached lists predate this preset
+      // (or, for a duplicate, the vote it just added to the existing one).
+      communityPresetService.invalidatePresets(result.duplicate?.id);
 
       // Handle duplicate detection
       if (result.duplicate) {
@@ -423,48 +434,6 @@ class PresetSubmissionServiceImpl {
   }
 
   /**
-   * Get remaining submissions for today
-   */
-  async getRemainingSubmissions(): Promise<{
-    remaining: number;
-    limit: number;
-    resetAt: Date | null;
-  }> {
-    if (!authService.isAuthenticated()) {
-      return { remaining: 10, limit: 10, resetAt: null };
-    }
-
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
-
-      const response = await fetch(`${PRESETS_API_URL}/api/v1/presets/rate-limit`, {
-        headers: {
-          ...authService.getAuthHeaders(),
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        logger.warn('Failed to fetch rate limit:', response.status);
-        return { remaining: 10, limit: 10, resetAt: null };
-      }
-
-      const result = await response.json();
-      return {
-        remaining: result.remaining,
-        limit: result.limit,
-        resetAt: result.reset_at ? new Date(result.reset_at) : null,
-      };
-    } catch (err) {
-      logger.error('Error fetching rate limit:', err);
-      return { remaining: 10, limit: 10, resetAt: null };
-    }
-  }
-
-  /**
    * Delete a preset by ID
    * Only the owner or a moderator can delete presets
    */
@@ -495,6 +464,8 @@ class PresetSubmissionServiceImpl {
         return { success: false, error: data.message || `Failed to delete (${response.status})` };
       }
 
+      // BUG-031 (2026-10-04 deep-dive): every cached list still carries it.
+      communityPresetService.invalidatePresets(presetId);
       return { success: true };
     } catch (err) {
       logger.error('Error deleting preset:', err);
@@ -626,6 +597,8 @@ class PresetSubmissionServiceImpl {
       }
 
       logger.info('Preset edited successfully:', result);
+      // BUG-031 (2026-10-04 deep-dive): every cached list carries the old copy.
+      communityPresetService.invalidatePresets(presetId);
 
       return {
         success: true,

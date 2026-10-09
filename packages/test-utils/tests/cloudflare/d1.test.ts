@@ -2,7 +2,7 @@
  * Tests for Mock D1 Database
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createMockD1Database, createMockD1 } from '../../src/cloudflare/d1.js';
+import { createMockD1Database } from '../../src/cloudflare/d1.js';
 
 describe('createMockD1Database', () => {
   it('creates a mock database', () => {
@@ -129,6 +129,17 @@ describe('createMockD1Database', () => {
         db._setupMock(() => []);
 
         const result = await db.prepare('SELECT * FROM users').first();
+
+        expect(result).toBeNull();
+      });
+
+      // BUG-147: real D1 first() resolves to null when no row matches, never
+      // undefined, so a production `row !== null` check must read it as a miss.
+      it('returns null (never undefined) when the mock function returns undefined', async () => {
+        const db = createMockD1Database();
+        db._setupMock(() => undefined);
+
+        const result = await db.prepare('SELECT x FROM t').first();
 
         expect(result).toBeNull();
       });
@@ -461,26 +472,7 @@ describe('createMockD1Database', () => {
   });
 });
 
-describe('createMockD1', () => {
-  it('returns a D1Database-typed mock', () => {
-    const db = createMockD1();
-
-    // Should have D1Database methods
-    expect(db.prepare).toBeDefined();
-    expect(db.batch).toBeDefined();
-    expect(db.exec).toBeDefined();
-  });
-
-  it('can be cast back to access test helpers', async () => {
-    const db = createMockD1();
-    const mockDb = db as unknown as ReturnType<typeof createMockD1Database>;
-
-    mockDb._setupMock(() => [{ id: 1 }]);
-    await db.prepare('SELECT 1').first();
-
-    expect(mockDb._queries).toContain('SELECT 1');
-  });
-
+describe('createMockD1Database fidelity', () => {
   // BUG-099: run() reported `changes: 1` unconditionally and batch() was a
   // plain loop, so neither `presets-api/handlers/votes.ts`'s `already_voted`
   // branch nor any all-or-nothing recovery path was reachable from a test.

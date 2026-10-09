@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ---
 
+## [2.3.1] - 2026-10-06
+
+Security patch: one transitive dependency floor. No package, worker or app source changes, and
+merging deploys nothing.
+
+### Security
+
+- **`pnpm-workspace.yaml`: the `seroval` floor rises from `>=1.5.3` to `>=1.6.3`**
+  (GHSA-jp82-f5mq-hwhp, high, published 2026-10-06). The advisory is memory exhaustion through an
+  unchecked TypedArray length during JSON deserialization.
+  - It reaches the repo only through stoat-worker › revolt.js › solid-js, and stoat-worker is
+    parked with no deploy workflow.
+  - The lockfile moves seroval 1.6.2 → 1.6.8, and nothing else changes.
+  - The CI security audit (`pnpm audit --prod --audit-level high`) was failing on every branch.
+  - solid-js 1.9.11 declares `seroval ~1.5.0`. The earlier floor had already taken it past that
+    range to 1.6.2, so this stays within 1.6.x. stoat-worker's suite passes, 206 tests.
+
 ## [2.3.0] - 2026-10-04
 
 Sprint 11 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`): CI and repository

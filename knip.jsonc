@@ -92,14 +92,15 @@
     // glob applied to none of them and the patterns it advertised had never
     // taken effect. It was removed rather than "fixed" because the defaults it
     // was shadowing are the better setting — knip's default project is `**/*`,
-    // where the glob's was `src/**, scripts/**, tests/**, *.ts`, which does not
-    // reach `packages/test-utils/integration/**`. Folding those patterns back
-    // into the literal keys would silently drop that directory from analysis.
+    // where the glob's was `src/**, scripts/**, tests/**, *.ts`, which did not
+    // reach a package's non-standard test directory (test-utils' `integration/`
+    // was one, until DEAD-041 deleted it on 2026-10-06). Folding those patterns
+    // back into the literal keys would silently drop such a directory again.
     //
     // So: every package below runs on knip's DEFAULTS plus
     // `includeEntryExports`. Test files still become entries through knip's
     // vitest plugin (it reads each `vitest.config.ts`'s `test.include`), which
-    // is how the integration suite is covered without any pattern naming it.
+    // covers any test directory a package adds without a pattern naming it.
     "packages/core": { "includeEntryExports": true },
     "packages/svg": { "includeEntryExports": true },
     "packages/bot-logic": { "includeEntryExports": true },

@@ -11,4 +11,4 @@
 - Replace both occurrences with 脸部配饰.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `f538b4f5` + `159a1dd5` (review follow-ups) (branch `fix/remediation-2026-10-04-sprint2`, bot-logic 4.6.0 + discord-worker 5.8.2; PR #246, open, stacked on #244). Uses the client's 面部配饰 (SDO patch notes, Addon 16050), not the finding's 脸部配饰; the ja/de/ko facewear tips follow the client's word too.

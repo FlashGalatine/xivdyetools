@@ -156,32 +156,6 @@ describe('CommunityPresetService Integration Tests', () => {
   });
 
   // ============================================
-  // Featured Presets Tests
-  // ============================================
-
-  describe('getFeaturedPresets', () => {
-    beforeEach(async () => {
-      await service.initialize();
-    });
-
-    it('should fetch featured presets', async () => {
-      const presets = await service.getFeaturedPresets();
-
-      expect(presets).toBeInstanceOf(Array);
-      expect(presets.length).toBeGreaterThan(0);
-    });
-
-    it('should return presets sorted by vote count', async () => {
-      const presets = await service.getFeaturedPresets();
-
-      // Verify sorted by vote_count descending
-      for (let i = 1; i < presets.length; i++) {
-        expect(presets[i - 1].vote_count).toBeGreaterThanOrEqual(presets[i].vote_count);
-      }
-    });
-  });
-
-  // ============================================
   // Single Preset Tests
   // ============================================
 
@@ -331,6 +305,167 @@ describe('CommunityPresetService Integration Tests', () => {
         expect(result).toHaveProperty('has_voted');
         expect(result).toHaveProperty('vote_count');
       });
+
+      // BUG-108 (2026-10-04 deep-dive): a failed check used to answer
+      // `vote_count: 0`, and preset-detail applies any vote_count that is not
+      // undefined — so a 429/500 on /check turned a 12-vote badge into "Vote · 0".
+      // A failure has no count to report, so it reports none.
+      it('reports no vote_count when the check fails (BUG-108)', async () => {
+        vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+        server.use(
+          http.get(`${API_URL}/api/v1/votes/:presetId/check`, () =>
+            HttpResponse.json({ message: 'Too many requests' }, { status: 429 })
+          )
+        );
+
+        const result = await service.hasVoted('preset-1');
+
+        expect(result.has_voted).toBe(false);
+        expect(result.vote_count).toBeUndefined();
+      });
+
+      it('reports no vote_count when the check cannot reach the API (BUG-108)', async () => {
+        vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+        server.use(http.get(`${API_URL}/api/v1/votes/:presetId/check`, () => HttpResponse.error()));
+
+        const result = await service.hasVoted('preset-1');
+
+        expect(result.vote_count).toBeUndefined();
+      });
+
+      it('reports no vote_count when signed out (BUG-108)', async () => {
+        vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+
+        const result = await service.hasVoted('preset-1');
+
+        expect(result.vote_count).toBeUndefined();
+      });
+    });
+  });
+
+  // BUG-031 (2026-10-04 deep-dive): a vote changes the count every cached list
+  // carries, but only the `preset:<id>` / `vote:<id>` keys were dropped — the
+  // next load with the same query got the pre-vote list back for 5 minutes.
+  describe('vote invalidates the cached preset lists (BUG-031)', () => {
+    beforeEach(async () => {
+      await service.initialize();
+      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+      vi.mocked(authService.getAuthHeaders).mockReturnValue({
+        Authorization: 'Bearer test-token',
+      });
+    });
+
+    function serveRenamedList(): void {
+      server.use(
+        http.get(`${API_URL}/api/v1/presets`, () =>
+          HttpResponse.json({
+            presets: [{ ...mockPresets[0], name: 'After The Vote' }],
+            total: 1,
+            page: 1,
+            limit: 20,
+            has_more: false,
+          })
+        )
+      );
+    }
+
+    it('refetches the list after a vote is added', async () => {
+      await service.getPresets({ sort: 'popular' });
+      serveRenamedList();
+
+      await service.voteForPreset('preset-1');
+
+      const after = await service.getPresets({ sort: 'popular' });
+      expect(after.presets[0].name).toBe('After The Vote');
+    });
+
+    it('refetches the list after a vote is removed', async () => {
+      await service.getPresets({ sort: 'popular' });
+      serveRenamedList();
+
+      await service.removeVote('preset-1');
+
+      const after = await service.getPresets({ sort: 'popular' });
+      expect(after.presets[0].name).toBe('After The Vote');
+    });
+
+    it('keeps the cached list when the vote fails', async () => {
+      const before = await service.getPresets({ sort: 'popular' });
+      serveRenamedList();
+      server.use(
+        http.post(`${API_URL}/api/v1/votes/:presetId`, () =>
+          HttpResponse.json({ message: 'Internal error' }, { status: 500 })
+        )
+      );
+
+      await service.voteForPreset('preset-1');
+
+      const after = await service.getPresets({ sort: 'popular' });
+      expect(after.presets).toEqual(before.presets);
+    });
+  });
+
+  // BUG-031 review follow-up: a list request already in flight when the cache
+  // is invalidated used to write its pre-change answer back into the cache,
+  // where the next load with the same query found it for up to 5 minutes.
+  describe('a list request in flight across an invalidation (BUG-031)', () => {
+    function listOf(name: string) {
+      return {
+        presets: [{ ...mockPresets[0], name }],
+        total: 1,
+        page: 1,
+        limit: 20,
+        has_more: false,
+      };
+    }
+
+    /** Serve one list behind a gate; `arrived` settles once the request is in. */
+    function holdList(name: string): { arrived: Promise<void>; release: () => void } {
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      let reached!: () => void;
+      const arrived = new Promise<void>((resolve) => (reached = resolve));
+      server.use(
+        http.get(`${API_URL}/api/v1/presets`, async () => {
+          reached();
+          await gate;
+          return HttpResponse.json(listOf(name));
+        })
+      );
+      return { arrived, release };
+    }
+
+    function serveList(name: string): void {
+      server.use(http.get(`${API_URL}/api/v1/presets`, () => HttpResponse.json(listOf(name))));
+    }
+
+    it.each([
+      ['invalidatePresets()', (s: CommunityPresetService) => s.invalidatePresets('preset-1')],
+      ['clearCache()', (s: CommunityPresetService) => s.clearCache()],
+    ])('does not cache an answer that straddles %s', async (_label, invalidate) => {
+      const held = holdList('Before The Change');
+      const inFlight = service.getPresets({ sort: 'popular' });
+      await held.arrived;
+
+      invalidate(service);
+      held.release();
+      await inFlight;
+
+      serveList('After The Change');
+      const next = await service.getPresets({ sort: 'popular' });
+      expect(next.presets[0].name).toBe('After The Change');
+    });
+
+    it('still caches an answer no invalidation overlapped', async () => {
+      const held = holdList('Cached');
+      const inFlight = service.getPresets({ sort: 'popular' });
+      await held.arrived;
+      held.release();
+      await inFlight;
+
+      serveList('Not Fetched');
+      const next = await service.getPresets({ sort: 'popular' });
+      expect(next.presets[0].name).toBe('Cached');
     });
   });
 

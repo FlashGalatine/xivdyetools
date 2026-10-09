@@ -4,7 +4,7 @@
  * Tests for executeDyeInfo and executeRandom.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { executeDyeInfo, executeRandom } from './dye-info.js';
 import { dyeService } from '../input-resolution.js';
 import { ColorService } from '@xivdyetools/core';
@@ -177,6 +177,64 @@ describe('executeRandom', () => {
 
     expect(result.embed.title).toBeDefined();
     expect(result.embed.description).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// BUG-125 — both final catches log what they caught
+// ============================================================================
+
+/** Every argument the logger received, one string per argument. */
+const loggedLines = (warn: ReturnType<typeof vi.fn>): string[] =>
+  warn.mock.calls.flat().map(String);
+
+describe('executeDyeInfo — a generation failure is logged (BUG-125)', () => {
+  /**
+   * The catch used to be bare. core's hex parser quotes its input in its
+   * message, so the line names the error's class — never the message.
+   */
+  it('logs the error class and leaves the dye out of the line', async () => {
+    const warn = vi.fn();
+    const broken = { ...snowWhite, hex: '#ZZZZZZ', name: 'Sentinel Dye Name', itemID: 0 };
+    const result = await executeDyeInfo({ dye: broken, locale: 'en', logger: { warn } });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('GENERATION_FAILED');
+
+    const lines = loggedLines(warn);
+    expect(lines.some((l) => /^\[dye info\] generation failed: \w+/.test(l))).toBe(true);
+    for (const line of lines) {
+      expect(line).not.toContain('ZZZZZZ');
+      expect(line).not.toContain('Sentinel Dye Name');
+    }
+  });
+});
+
+describe('executeRandom — a generation failure is logged (BUG-125)', () => {
+  it('logs the error class and never the error message', async () => {
+    // A dye whose name cannot be read: the throw lands inside the final try
+    // (the row build), with a message that must not reach the log.
+    const poisoned = Object.defineProperty({ ...snowWhite }, 'name', {
+      get(): string {
+        throw new RangeError('Sentinel Random Message');
+      },
+    });
+    const spy = vi.spyOn(dyeService, 'getAllDyes').mockReturnValueOnce([poisoned]);
+    const warn = vi.fn();
+    try {
+      const result = await executeRandom({ locale: 'en', count: 1, logger: { warn } });
+
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toBe('GENERATION_FAILED');
+
+      const lines = loggedLines(warn);
+      expect(lines).toContain('[dye random] generation failed: RangeError');
+      for (const line of lines) expect(line).not.toContain('Sentinel Random Message');
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
 

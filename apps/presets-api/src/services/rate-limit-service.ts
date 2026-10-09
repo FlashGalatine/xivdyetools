@@ -152,8 +152,12 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  * daily retention job (`retention-job.ts`), once a day whatever the traffic. Never throws, and deliberately not batched with the
  * INSERT that follows: a D1 batch is atomic, so a failed prune would discard
  * the append-only row the daily caps depend on. Logs counts only.
+ *
+ * BUG-066: resolves `true` when the sweep ran and `false` when its DELETE
+ * failed, so the daily job can report a failed sweep; write-path callers
+ * ignore it, exactly as before.
  */
-export async function pruneSubmissionEvents(db: D1Database, logger?: RetentionLogger): Promise<void> {
+export async function pruneSubmissionEvents(db: D1Database, logger?: RetentionLogger): Promise<boolean> {
   // `created_at` is strftime('%Y-%m-%dT%H:%M:%fZ', 'now') — the exact format
   // Date#toISOString produces, and the one getEventCountToday already binds.
   const cutoff = new Date(Date.now() - SUBMISSION_EVENT_RETENTION_DAYS * MS_PER_DAY).toISOString();
@@ -168,8 +172,10 @@ export async function pruneSubmissionEvents(db: D1Database, logger?: RetentionLo
     if (pruned > 0) {
       logger?.warn('[FINDING-017] pruned submission events', { pruned });
     }
+    return true;
   } catch {
     logger?.warn('[FINDING-017] submission-event prune failed', { pruned: 0 });
+    return false;
   }
 }
 

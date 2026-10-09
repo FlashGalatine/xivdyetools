@@ -12,4 +12,4 @@
 - "clan" in `dropBody` / `whoHead`; "race" in `anyTribe` / `tribeOk` / `tribeNo`. The translations follow (the de / fr clan nouns are in the pin register).
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `31c8914f` + `c88d51c6` (review follow-ups) (branch `fix/remediation-2026-10-04-sprint6`, web-app 5.14.4, core 5.8.2; PR #248, open, stacked on #247).

@@ -5,6 +5,16 @@ All notable changes to the XIV Dye Tools Image Worker will be documented in this
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2026-10-06
+
+Sprint 21 of the 2026-10-04 remediation plan (DEAD-038). Merging deploys production; the bundle is unchanged.
+
+### Removed
+
+- **The unused `@` path alias** (DEAD-038): the `@` -> `./src` alias in `vitest.config.ts` (and its now-unused
+  `import path`) and the matching `baseUrl` / `paths` in `tsconfig.json`. Nothing imported `@/...`, no source file
+  changed, and wrangler's bundle never read either file. Same shape as og-worker's DEAD-040.
+
 ## [1.3.3] - 2026-10-04
 
 Sprint 10 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`).

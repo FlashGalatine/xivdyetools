@@ -56,6 +56,18 @@ Names match official FFXIV Lodestone and in-game item names. The core library st
 | Special | 特殊 | Spezial | Spécial | 특수 | 特殊 |
 | Facewear | フェイスウェア | Gesichtsschmuck | Accessoires faciaux | 페이스웨어 | 脸部配饰 |
 
+- **The Facewear row is core's data, not the game's word.** フェイスウェア, Gesichtsschmuck,
+  Accessoires faciaux, 페이스웨어 and 脸部配饰 appear in no client's `Addon` sheet, and every
+  region's 7.0 patch notes use the slot word instead; even zh differs (the client writes 面部配饰).
+  The client has one word for facewear: the slot label, `Addon` row 16050, in
+  [Equipment Slots](#equipment-slots) (フェイスアクセサリー, Gesichtsaccessoires, Accessoires de visage,
+  얼굴 소품, 面部配饰). **That is the apps' facewear term.** Never copy this row into UI text.
+  - The row is typed by hand in `packages/core/scripts/build-locales.ts` (`buildCategories`), so a
+    correction goes there, never into the generated JSON. The same goes for *Facewear Collection*
+    under [Acquisition Methods](#acquisition-methods-7).
+  - No dye has carried the Facewear category since schema v2, so no shipped data makes the apps
+    render this row.
+
 ---
 
 ## Acquisition Methods (7)
@@ -75,6 +87,11 @@ Names match official FFXIV Lodestone and in-game item names. The core library st
 The Allied Society / Beast Tribe vendor rows (Ixali, Sylphic, Amalj'aa, Sahagin, Kobold) were
 retired by the Patch 7.5 dye consolidation — those vendors no longer carry dyes, and the keys
 are gone from the locale data.
+
+**Facewear Collection is not the client's wording either.** It is built on the same invented
+facewear words as the *Dye Categories* row (see the note there). The collection's own name in
+the client has not been researched, so this table pins no replacement. No dye has carried this
+acquisition since schema v2, so no shipped data makes the apps render the row.
 
 ---
 
@@ -117,9 +134,33 @@ The 11 Facewear colours are **not dyes** — they live in `facewear_colors.json`
 | `red` | Red | レッド | Rot | Rouge | 빨간색 | 红色 |
 | `blue` | Blue | ブルー | Blau | Bleu | 파란색 | 蓝色 |
 | `green` | Green | グリーン | Grün | Vert | 초록색 | 绿色 |
-| `brass` | Brass | ブラス | Messing | Laiton | 황동색 | 黄铜色 |
+| `brass` | Brass | ブラス | Messing | Bronze | 구리색 | 铜色 |
 | `purple` | Purple | パープル | Violett | Violet | 보라색 | 紫色 |
 | `brown` | Brown | ブラウン | Braun | Marron | 갈색 | 棕色 |
+
+- **Checked against the client's `Glasses` sheet** (all 745 rows, read 2026-10-05). Each facewear
+  item names its color in its description: *A piece of silver facewear.* / カラー：シルバーのフェイスアクセサリー
+  / *Silbernes Gesichtsaccessoire* / *Un accessoire de visage de couleur argent.* / 은색 얼굴 소품 /
+  银色的面部配饰。
+  - **Sources:** XIVAPI v2 (version `541c0c12e07da325`) for EN / JA / DE / FR; the KR client dump
+    [`Ra-Workspace/ffxiv-datamining-ko@6be5d8ca`](https://github.com/Ra-Workspace/ffxiv-datamining-ko/tree/6be5d8cafd3450b7bcf4676d7d55bc2d7a4d6569)
+    and the CN client dump
+    [`thewakingsands/ffxiv-datamining-cn@9ac8b57b`](https://github.com/thewakingsands/ffxiv-datamining-cn/tree/9ac8b57bd3f716262bd5c713e8678ee510b07fb8)
+    for KO / ZH. These are the versions the
+    [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md) read.
+- **Brass** is fr **bronze**, ko **구리색** and zh **铜色** in the client: all 61 Brass rows say so
+  (*Lunettes ovales (bronze)*, *de couleur bronze*; 구리색 얼굴 소품; 铜色的面部配饰, with item names
+  prefixed 铜框 on 34 rows and 铜色 on 27).
+  - Core 5.8.2 corrected Laiton, 황동색 and 黄铜色, which are not the client's. The clients do say
+    황동 / 黄铜 for the *material*: the Brass Goggles item is 황동 고글 / 黄铜护目镜 (its brass-colored
+    version: 구리색 황동 고글 / 铜框黄铜护目镜). The color is 구리색 / 铜色, so do not revert.
+  - French is capitalized here like the other ten French names; the client writes it in lower case
+    inside item names and descriptions.
+  - EN has one outlier: row 154, *Bronze Brass Goggles*, is "A piece of bronze facewear."; the other
+    60 say brass. The other five languages word it like every other Brass row.
+- **The other ten colors are the client's words** in every language. French uses the masculine
+  form (Noir, Blanc); the client agrees the adjective with *lunettes* or *couleur* (*noires*,
+  *de couleur noire*).
 
 ---
 
@@ -302,6 +343,27 @@ confidence:
 - The compounds do not follow one template (`Entprojizierungskristall`, *dissipateur **de**
   mirage*) — look each one up rather than deriving it.
 
+### Dye channels (two dyes per piece since 7.0)
+
+**No client has a noun for "dye channel".** Every language numbers the two channels instead: the
+Item Dyeing window's tabs are Addon 15970 / 15971, and the tooltip and Glamour Plate forms are
+12796 / 12797 (XIVAPI v2 for en/ja/de/fr, the KR and CN client dumps; researched 2026-10-05 for
+the 2026-10-04 i18n audit's TERM-016).
+
+| EN | JA | DE | FR | KO | ZH |
+|----|----|----|----|----|----|
+| Dye 1 / Dye 2 | 染色1 / 染色2 | Farbe 1 / Farbe 2 | Teinture 1 / Teinture 2 | 염색 1 / 염색 2 | 染色1 / 染色2 |
+| **counting them** (the 7.0 patch notes) | 2ヵ所 (「2ヵ所染色」) | an zwei Stellen | deux parties | 2부분 | 2处 |
+
+- **Name a single channel by its number**, as the client does: *Dye 1*, `染色1`.
+- **Japanese:** count with `ヵ所` (`染色{n}ヵ所`) and say `染色できる箇所` for the idea. Never
+  `チャンネル` (in the client it is only a chat channel) and never `染色枠` (no client text uses it).
+  `部位` is the client's word for an equipment slot (`装備枠` / `部位`), not for a dye channel.
+- The other languages' existing UI words (`channel`, `Kanal`, `canal`, `채널` / `염색 채널`,
+  `通道` / `染色通道`) are house words, not client words. Only the Japanese one was checked against
+  the client's other uses. Keep one per language: ko `염색 칸` and zh `染色栏` were unified onto
+  them in 5.14.4.
+
 ---
 
 ## Equipment Slots
@@ -339,14 +401,53 @@ client dumps for ZH/KO; rows, URLs and confidence:
 - The ring slot is a **finger** in the slot vocabulary of German (`Finger (rechts)`), Korean
   (`손가락`) and Chinese / Japanese (`右指`); French uses `Bague`. `Anneau`, `Ring links` and
   `반지` for a slot match neither vocabulary.
-- **Facewear** here is the slot's label (row 16050). It is not the dye category of the same English
-  name in [Dye Categories](#dye-categories-9-categories), which is core data (フェイスウェア,
-  Gesichtsschmuck, …) — two jobs, two words.
+- **Facewear is the slot's label (row 16050), and it is the client's only word for facewear.**
+  - **Sources:** the 7.0 patch notes of every region use it:
+    [EN](https://na.finalfantasyxiv.com/lodestone/topics/detail/d7db61f938f9cea65e4c5cd261918edb036b3004/),
+    [JA](https://jp.finalfantasyxiv.com/lodestone/topics/detail/1e6473f5a6210bc7f81a6f41507095e2b939fa5d/),
+    [DE](https://de.finalfantasyxiv.com/lodestone/topics/detail/9a1d2364c6f0fed72a164f3252a59073f7d0c4fc/),
+    [FR](https://fr.finalfantasyxiv.com/lodestone/topics/detail/dfacdc73285bfbeca1d9abf632440e46d1c9a99d/),
+    [KO](https://www.ff14.co.kr/news/notice/view/2603),
+    [ZH](https://ff.web.sdo.com/web8/index.html#/newstab/newscont/365381). The client's label for
+    a facewear piece's name uses it too (`Addon` 3645: facewear name, フェイスアクセサリー名,
+    Gesichtsaccessoire-Name, nom de l'accessoire de visage, 얼굴 소품 이름, 面部配饰名).
+  - **Use it wherever the apps say facewear:** the slot, the color tag (the table below) and help
+    text. Core's [Dye Categories](#dye-categories-9-categories) row (フェイスウェア, Gesichtsschmuck,
+    Accessoires faciaux, 페이스웨어, 脸部配饰) is not a client word in any language; see the note there.
+  - **Grammar:**
+    - ja always ends in ー;
+    - de **das** Gesichtsaccessoire is neuter (genitive *des Gesichtsaccessoires*); the slot label
+      is its plural;
+    - fr **l'**accessoire de visage is masculine (*un accessoire de visage*); the slot label is its
+      plural;
+    - ko writes the label with a space (얼굴 소품); the patch notes' text command, /얼굴소품, has none.
+  - **Not the client's word, so not used:**
+    - "glasses": de Brille, fr lunettes, zh 眼镜. They come from the Dawntrail special site's
+      marketing prose, and the slot also holds eyepatches, goggles and visors;
+    - the transliterations ja フェイスウェア and ko 페이스웨어.
 - **Not slots:** Waist (row 743, retired — no glamour uses it) and Fashion Accessory (the umbrella
   and fan prop system; a `.chara` never carries one).
 - **The GPOSERS export is not game UI.** It writes the English submission form's own labels (Main
   Hand, Earrings, Necklace, Bracelets, Right Ring, Rings, Facewear) in every language, like any
   document format.
+
+**The facewear color.** This table is for a label that names the color of a worn facewear piece:
+the Glamour Reader's facewear tag (`swatch.facewearColorTag` / `facewearColorUnknown`). The client
+strings were read on 2026-10-05 from the sources named under [Facewear Colors](#facewear-colors-11).
+
+| Label | Source | EN | JA | DE | FR | KO | ZH |
+|-------|--------|----|----|----|----|----|----|
+| Color (the facewear menu's color label) | `Addon` 16054 | Color | カラー | Farbe | Couleur | 색상 | 颜色 |
+| A colored piece (item description, silver shown) | `Glasses` | A piece of silver facewear. | カラー：シルバーのフェイスアクセサリー | Silbernes Gesichtsaccessoire | Un accessoire de visage de couleur argent. | 은색 얼굴 소품 | 银色的面部配饰。 |
+| **Facewear color**, the tag (house wording) | 16050 + 16054 | facewear color | フェイスアクセサリーカラー | Farbe des Gesichtsaccessoires | couleur de l'accessoire de visage | 얼굴 소품 색상 | 面部配饰颜色 |
+
+- **The client has no string for "facewear color".** The last row is ours, built from two client
+  words: the slot label (16050) and the color label (16054). The color name in front of it comes
+  from [Facewear Colors](#facewear-colors-11). Capitalize the first word where the tag starts a
+  label.
+- **Not used:** the "glasses" compounds (de Brillenfarbe, fr couleur de lunettes, zh 眼镜颜色) and the
+  transliterations (ja フェイスウェアカラー, ko 페이스웨어 색상), for the reasons in the Facewear bullet
+  above.
 
 ---
 
@@ -356,12 +457,16 @@ client dumps for ZH/KO; rows, URLs and confidence:
 `CharaMakeType` menus point to.
 - **Read on 2026-10-05:** XIVAPI v2 for EN / JA / DE / FR, and the CN and KR client dumps for ZH / KO.
 - **Checks:** a second extraction matched every value it covers. Rows, URLs, race variants and confidence: [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md).
-- **Core does not match.** Its `sheets` section is typed by hand in `packages/core/scripts/build-locales.ts` and disagrees with the client in five languages. This table is what pins the words; fix the generator from it, never the generated JSON.
+- **Core follows this table.** Its `sheets` section is generated from `buildSheets` in `packages/core/scripts/build-locales.ts`, which was rewritten from this table (TERM-021, 2026-10-04 remediation), and `packages/core/scripts/build-locales.test.ts` pins every locale's values plus the words ruled out below. This table is still what pins the words: change one here first, then in the generator, never in the generated JSON. Core's English stays house wording (*Tattoo/Limbal*, *Face Paint (Dark)*), not the client's. Three things in core are deliberate rather than a single row's label:
+  - `tattooColors` is the house form described under *One palette, three features* below.
+  - The face-paint keys take the **feature** name (row 249 in the second table: フェイスペイント, Maquillage, 얼굴 치장, 面妆) plus the Dark / Light label, everywhere except German. German takes the palette label (250, *Farbe des Merkmals*) because the client also calls facial features *Merkmale*.
+  - The plural *colors* nouns in de / fr (*Augenfarben*, *Couleurs des yeux*) are house style around the client's noun.
 
 | Palette | Core key | Row | EN | JA | DE | FR | KO | ZH |
 |---------|----------|-----|----|----|----|----|----|----|
 | Skin | `skinColors` | 202 | Skin Color | 肌の色 | Hautfarbe | Couleur de peau | 피부색 | 肤色 |
 | Hair | `hairColors` | 236 | Hair Color | 髪の色 | Haarfarbe | Couleur des cheveux | 머리 색 | 发色 |
+| Hair (Hrothgar) | `hairColors` | 1014 | Fur Color | 体毛色 | Fellfarbe | Couleur du pelage | 털 색깔 | 毛色 |
 | Highlights | `highlightColors` | 237 | Highlights | メッシュの色 | Strähnen | Reflets | 부분염색 색상 | 挑染 |
 | Eyes | `eyeColors` | 245 | Eye Color | 瞳の色 | Augenfarbe | Couleur des yeux | 눈동자 색 | 瞳色 |
 | Lips | `lipColorsDark` / `…Light` | 248 | Lip Color | 唇の色 | Lippenfarbe | Couleur des lèvres | 입술 색 | 唇色 |
@@ -378,6 +483,7 @@ client dumps for ZH/KO; rows, URLs and confidence:
 | Tattoos | 1742 | Tattoos | 刺青 | Tattoos | Tatouages | 문신 | 刺青 |
 | Limbal ring | 1746 | Limbal Ring | 瞳の輪郭 | Äußere Iris | Contour de l'iris | 눈동자 테두리 | 瞳孔轮廓 |
 | Face paint | 249 | Face Paint | フェイスペイント | Merkmale | Maquillage | 얼굴 치장 | 面妆 |
+| Fur pattern (Hrothgar) | 1013 | Fur Pattern | 体毛柄 | Fellzeichnung | Motif du pelage | 털 무늬 | 毛纹 |
 
 - **The limbal ring is the iris's outline** in the five non-English client languages (瞳の輪郭, Äußere Iris, Contour de l'iris, 눈동자 테두리, 瞳孔轮廓). Not the client's word, so not used:
   - transliterations: ja リンバル / リムバル, ko 림발 / 림벌, de Limbal-Ring;
@@ -398,13 +504,16 @@ client dumps for ZH/KO; rows, URLs and confidence:
   - That pairing comes from context (their neighbors and wording); no sheet links them.
   - French is **Opaque / Translucide**, never Foncé / Clair.
   - The other languages: ja 濃い / 薄い, ko 짙게 / 옅게, zh 浓艳 / 清淡.
-- **Eyes:** the palette is ja **瞳の色** and zh **瞳色**; core's 目の色 / 眼睛颜色 are not the client's. The picker tab for both eyes says 両目の色 / 双眼颜色 (row 2124), and its heterochromia toggle Odd Eyes says オッドアイにする / 虹膜异色 (row 2125).
+- **Eyes:** the palette is ja **瞳の色** and zh **瞳色**; 目の色 / 眼睛颜色, which core carried before TERM-021, are not the client's. The picker tab for both eyes says 両目の色 / 双眼颜色 (row 2124), and its heterochromia toggle Odd Eyes says オッドアイにする / 虹膜异色 (row 2125).
 - **One palette, three features.** Core's `tattooColors` is labeled by race:
   - Tattoo Color (most clans);
   - Limbal Ring Color (Au Ra);
   - Ear Clasp Color (Wildwood ♂ ♀ and Keeper of the Moon ♀: 耳飾りの色, Ohrschmuckfarbe, Couleur des boucles d'oreilles, 귀걸이 색, 耳饰颜色).
-  - The client has no name for the palette as a whole. Ours, *Tattoo / Limbal Ring*, is a house choice built from the first two labels; it leaves out the ear clasps. The research note has the Hrothgar and Viera variants ("tattoos and ornaments" in four languages).
-- **Hrothgar has no hair or lip palette:** Customize 10 is **Fur Color** and Customize 20 is **Fur Pattern** (rows 1014 / 1013).
+  - The client has no name for the palette as a whole. Ours, *Tattoo / Limbal Ring*, is a house choice built from the first two labels; it leaves out the ear clasps. Outside English the label joins the two halves with ` / ` (spaces, ASCII slash), never the fullwidth `／`: ja 刺青 / 瞳の輪郭, de Tattoo / Äußere Iris, fr Tatouage / Contour de l'iris, ko 문신 / 눈동자 테두리, zh 刺青 / 瞳孔轮廓. This rule is for the standalone label only; ／ inside Japanese running prose is ordinary punctuation and not covered by it. The research note has the Hrothgar and Viera variants ("tattoos and ornaments" in four languages).
+- **Hrothgar has no hair or lip palette:**
+  - Customize 10 is **Fur Color** (row 1014). It labels the palette core keys `hairColors` for Helions and The Lost.
+  - Customize 20 is **Fur Pattern** (row 1013). It takes the lip slot and is not a color, so a Hrothgar file's lip value names a pattern.
+  - Fur Color is in the palette table and Fur Pattern in the feature table above, both read from [`lobby-rows.json`](../research/2026-10-05-character-sheet-terms/lobby-rows.json) (`text`). Not the client's word, so not used for the pattern: 毛皮の模様, Fellmuster, motif de fourrure, 모피 무늬, 毛皮花纹.
 
 ---
 
@@ -418,7 +527,7 @@ Each locale file has a `locale` string plus fifteen sections. Those not tabled a
 | `labels` | 7 | Dye trait labels: `dye`, `dark`, `metallic`, `pastel`, `cosmic`, `cosmicExploration`, `cosmicFortunes` |
 | `visions` | 5 | Short vision-type labels (see above) |
 | `tools` | 6 | Tool display names: Harmony Explorer, Gradient Builder, Dye Mixer, Swatch Matcher, Dye Comparison, Accessibility Checker |
-| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Typed by hand and not yet the client's wording: see [Character-Creation Color Sheets](#character-creation-color-sheets) |
+| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Generated from `buildSheets`, which follows [Character-Creation Color Sheets](#character-creation-color-sheets) |
 
 There is **no** `jobNames` or `grandCompanyNames` section — job and Grand Company names are not
 part of this dataset, because nothing in the toolset renders them.
@@ -429,8 +538,12 @@ part of this dataset, because nothing in the toolset renders them.
 
 When Square Enix adds new dyes or changes terminology:
 
-1. Update `@xivdyetools/core` locale JSON files
-2. Run `pnpm turbo run build test --filter=@xivdyetools/core`
+1. Update the sources in `packages/core`, never the generated locale JSON: `dyenames.csv` or
+   `facewear-names.csv` for names, `localize.yaml` for labels, and the tables in
+   `scripts/build-locales.ts` for every other section. A new or renamed dye or Facewear color
+   also changes `src/data/dyes.json` or `src/data/facewear_colors.json`: the build exits 1 until
+   the CSV names exactly the same entries, with the same English names.
+2. Run `pnpm turbo run build test --filter=@xivdyetools/core` (`build` regenerates the locale JSON)
 3. Publish new core version
 4. Update consuming apps
 

@@ -78,8 +78,36 @@ export interface RateLimitMiddlewareOptions {
   /**
    * Custom 429 response body factory.
    * If not provided, a standard JSON error response is returned.
+   *
+   * BUG-150: any `X-RateLimit-*` or `Retry-After` header the middleware
+   * computed that the returned Response lacks is copied onto it, so a raw
+   * `new Response(...)` is as safe as `c.json(...)`. A header the factory
+   * sets itself is never overwritten.
    */
   formatError?: (c: Context, retryAfter: number) => Response;
+}
+
+/**
+ * BUG-150: add every computed header the Response lacks, never overwriting one
+ * `formatError` set. Hono merges `c.header()` values only into responses built
+ * by `c.json()`/`c.body()`; a raw `new Response` would drop them. Headers on a
+ * Response that came from `fetch()` or `Response.redirect()` are immutable, so
+ * on a failed write the Response is re-wrapped.
+ */
+function withMissingHeaders(res: Response, computed: Record<string, string>): Response {
+  const missing = Object.entries(computed).filter(([name]) => !res.headers.has(name));
+  if (missing.length === 0) return res;
+  const apply = (target: Response): void => {
+    for (const [name, value] of missing) target.headers.set(name, value);
+  };
+  try {
+    apply(res);
+    return res;
+  } catch {
+    const rewrapped = new Response(res.body, res);
+    apply(rewrapped);
+    return rewrapped;
+  }
 }
 
 /**
@@ -164,7 +192,9 @@ export function rateLimitMiddleware(
       const retryAfter = Math.ceil(config.windowMs / 1000);
       c.header('Retry-After', String(retryAfter));
       if (formatError) {
-        return formatError(c, retryAfter);
+        return withMissingHeaders(formatError(c, retryAfter), {
+          'Retry-After': String(retryAfter),
+        });
       }
       return c.json(
         {
@@ -207,7 +237,10 @@ export function rateLimitMiddleware(
       c.header('Retry-After', String(retryAfter));
 
       if (formatError) {
-        return formatError(c, retryAfter);
+        return withMissingHeaders(formatError(c, retryAfter), {
+          ...headers,
+          'Retry-After': String(retryAfter),
+        });
       }
 
       return c.json(

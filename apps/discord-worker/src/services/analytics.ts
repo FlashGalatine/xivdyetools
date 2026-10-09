@@ -19,8 +19,10 @@ import type { ExtendedLogger } from '@xivdyetools/logger';
  * when `/dye` served its text fallback). See `command-trace.ts`.
  *
  * `rejected`: presets-api / Universalis answered our request with a 4xx other
- * than 429 (not the owner, duplicate vote or preset, unknown item / world,
- * validation) and the handler relayed the service's own reply.
+ * than 408 and 429 (not the owner, duplicate vote or preset, unknown item /
+ * world, validation) and the handler relayed the service's own reply. A 408
+ * (a timeout — universalis-client raises one for its own 10 s abort), a 429,
+ * a 5xx and a network/binding failure are `upstream_*` instead (BUG-005).
  */
 export type OutcomeClass =
   | 'ok'

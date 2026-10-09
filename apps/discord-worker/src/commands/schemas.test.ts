@@ -13,11 +13,16 @@ import { WORLD_NAME_MAX_LENGTH } from '../services/preferences.js';
 type Choice = { name: string; value: string | number };
 type Option = {
   name: string;
+  description?: string;
+  type?: number;
   options?: Option[];
   choices?: Choice[];
   min_length?: number;
   max_length?: number;
 };
+
+/** Discord's STRING option type (schemas.ts `OptionType.STRING`). */
+const STRING = 3;
 
 function findOption(path: string[], options: Option[] | undefined): Option | undefined {
   const [head, ...rest] = path;
@@ -166,4 +171,173 @@ describe('/preset submit|edit length bounds', () => {
       expect(option!.max_length).toBe(max);
     },
   );
+});
+
+/**
+ * BUG-044 (2026-10-04 deep dive): a STRING option with no `max_length` accepts
+ * up to 6000 characters. The colour/dye options had none, so `/harmony
+ * color:<4000+ characters>` reached the handler, which echoed it into an
+ * `errors.invalidColor` description past Discord's 4096-character embed cap —
+ * the reply was rejected and the user saw "The application did not respond".
+ * The handlers now cap the echo; the schema caps the input itself, so Discord
+ * refuses an over-long value in the client before it is ever sent.
+ *
+ * The rule covers every free-text STRING option — one with no `choices` list —
+ * not only the colour/dye ones, so a new free-text option cannot be added
+ * uncapped. The default cap is 100: Discord caps an autocomplete choice's
+ * `value` at 100 characters, so no pick from an autocomplete list can be
+ * refused by it, and the longest dye name in any of the six locales is a
+ * fraction of it.
+ */
+describe('free-text STRING options carry a length cap', () => {
+  const FREE_TEXT_MAX_LENGTH = 100;
+
+  /**
+   * Free-text options whose cap is deliberately NOT the default, keyed by
+   * `/command path…`. Each one must still be a registered free-text STRING
+   * option whose cap differs from the default — a stale entry fails below.
+   */
+  const DELIBERATE_CAPS: Record<string, { max: number; reason: string }> = {
+    '/preferences set world': {
+      max: WORLD_NAME_MAX_LENGTH,
+      reason: 'FINDING-019: matches the WORLD_NAME_MAX_LENGTH guard in services/preferences.ts',
+    },
+    '/budget find world': {
+      max: WORLD_NAME_MAX_LENGTH,
+      reason: 'FINDING-019: the same world-name cap as /preferences set world',
+    },
+    '/budget set_world world': {
+      max: WORLD_NAME_MAX_LENGTH,
+      reason: 'FINDING-019: the same world-name cap as /preferences set world',
+    },
+    '/budget quick world': {
+      max: WORLD_NAME_MAX_LENGTH,
+      reason: 'FINDING-019: the same world-name cap as /preferences set world',
+    },
+    '/preset submit preset_name': {
+      max: 50,
+      reason: "REFACTOR-003: presets-api's name rule is 2-50 characters",
+    },
+    '/preset edit name': {
+      max: 50,
+      reason: "REFACTOR-003: presets-api's name rule is 2-50 characters",
+    },
+    '/preset submit description': {
+      max: 200,
+      reason: "REFACTOR-003: presets-api's description rule is 10-200 characters",
+    },
+    '/preset edit description': {
+      max: 200,
+      reason: "REFACTOR-003: presets-api's description rule is 10-200 characters",
+    },
+    '/preset submit tags': {
+      max: 400,
+      reason:
+        "presets-api accepts 10 tags of up to 30 characters; joined by ', ' that is 318 characters, so 100 would refuse a valid tag list",
+    },
+    '/preset edit tags': {
+      max: 400,
+      reason: 'the same tag list as /preset submit tags',
+    },
+  };
+
+  /** Every registered STRING option with no `choices`, by `/command path…`. */
+  function freeTextOptions(): Map<string, Option> {
+    const found = new Map<string, Option>();
+    const walk = (trail: string[], options?: Option[]): void => {
+      for (const option of options ?? []) {
+        const path = [...trail, option.name];
+        if (option.type === STRING && option.choices === undefined) {
+          found.set(`/${path.join(' ')}`, option);
+        }
+        walk(path, option.options);
+      }
+    };
+    for (const command of COMMAND_SCHEMAS as unknown as Option[]) {
+      walk([command.name], command.options);
+    }
+    return found;
+  }
+
+  it('finds the colour and dye options the finding names, nested ones included', () => {
+    const paths = [...freeTextOptions().keys()];
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        '/harmony color',
+        '/dye search query',
+        '/dye info name',
+        '/extractor color color',
+        '/gradient start_color',
+        '/gradient end_color',
+        '/mixer dye1',
+        '/mixer dye2',
+        '/comparison dye4',
+        '/contrast dye4',
+        '/accessibility dye2',
+        '/a11y dye2',
+        '/budget find target_dye',
+        '/preset edit dye6',
+      ]),
+    );
+  });
+
+  it('declares max_length on every one of them', () => {
+    const uncapped = [...freeTextOptions()]
+      .filter(([, option]) => option.max_length === undefined)
+      .map(([path]) => path);
+
+    expect(uncapped).toEqual([]);
+  });
+
+  it('caps each at the default unless the cap is a listed deliberate one', () => {
+    const wrong: string[] = [];
+    for (const [path, option] of freeTextOptions()) {
+      const expected = DELIBERATE_CAPS[path]?.max ?? FREE_TEXT_MAX_LENGTH;
+      if (option.max_length !== expected) {
+        wrong.push(`${path}: max_length ${String(option.max_length)}, expected ${expected}`);
+      }
+    }
+
+    expect(wrong).toEqual([]);
+  });
+
+  it('keeps every deliberate cap live: a registered free-text option, a non-default cap, a reason', () => {
+    const registered = freeTextOptions();
+    const stale: string[] = [];
+    for (const [path, { max, reason }] of Object.entries(DELIBERATE_CAPS)) {
+      if (!registered.has(path)) stale.push(`${path}: not a registered free-text STRING option`);
+      if (max === FREE_TEXT_MAX_LENGTH) stale.push(`${path}: the default cap needs no exception`);
+      if (reason.trim().length === 0) stale.push(`${path}: no reason`);
+    }
+
+    expect(stale).toEqual([]);
+  });
+
+  it("stays inside Discord's 1-6000 range for max_length", () => {
+    for (const [path, option] of freeTextOptions()) {
+      expect(option.max_length, path).toBeGreaterThanOrEqual(1);
+      expect(option.max_length, path).toBeLessThanOrEqual(6000);
+    }
+  });
+});
+
+/**
+ * BUG-049 (2026-10-04 deep dive): the clan and gender options said "Default
+ * clan/gender for /swatch", but /swatch reads both from the `.chara` file and
+ * nothing reads the stored values. The description must not name a command
+ * that does not read the setting.
+ */
+describe('/preferences set clan|gender descriptions', () => {
+  const preferences = COMMAND_SCHEMAS.find((c) => c.name === 'preferences') as unknown as Option;
+
+  it.each(['clan', 'gender'])('%s: names no consumer and says nothing reads it', (name) => {
+    const option = findOption(['set', name], preferences.options);
+
+    expect(option, `/preferences set ${name} option missing`).toBeDefined();
+    const description = option!.description ?? '';
+    expect(description).not.toMatch(/\/[a-z]/);
+    expect(description).toMatch(/no command reads it yet/);
+    // Discord's limit for an option description.
+    expect(description.length).toBeLessThanOrEqual(100);
+  });
 });

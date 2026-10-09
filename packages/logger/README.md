@@ -242,7 +242,7 @@ interface LoggerConfig {
   format: 'json' | 'pretty';                    // Output format
   timestamps: boolean;                          // Include timestamps
   prefix?: string;                              // Message prefix
-  sanitizeErrors: boolean;                      // Remove secrets from errors
+  sanitizeErrors: boolean;                      // Scrub secrets from messages, errors and context strings; drop stacks
   redactFields?: string[];                      // Fields to redact
 }
 ```

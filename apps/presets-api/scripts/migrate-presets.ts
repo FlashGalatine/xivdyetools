@@ -78,12 +78,11 @@ async function migrate(): Promise<void> {
   // Generate category updates (in case icons differ from schema.sql)
   console.log('-- Update category metadata from source');
   for (const [id, meta] of Object.entries(data.categories)) {
-    const isCurated = id !== 'community' ? 1 : 0;
     console.log(
       `UPDATE categories SET name = '${escapeSQL(meta.name)}', ` +
         `description = '${escapeSQL(meta.description)}', ` +
         `icon = '${escapeSQL(meta.icon)}', ` +
-        `is_curated = ${isCurated} ` +
+        `is_curated = 1 ` +
         `WHERE id = '${id}';`
     );
   }

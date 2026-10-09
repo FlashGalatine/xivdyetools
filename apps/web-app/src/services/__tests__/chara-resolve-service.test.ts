@@ -121,6 +121,78 @@ describe('chara-resolve-service', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  // BUG-116 (2026-10-04 deep-dive): api-worker refuses the WHOLE batch when any
+  // lane or the glasses row is past uint16, so one corrupt piece cost every
+  // name in the file and the note blamed availability.
+  describe('lanes past uint16 (hand-edited or corrupt files)', () => {
+    /** api-worker's own rule (router.ts lane() / glasses): 400 for the batch, else answer the slots sent. */
+    const workerLike = () =>
+      vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+        const body = JSON.parse(init.body as string) as {
+          gear: Array<{ slot: string; set?: number; base: number; variant: number }>;
+          glasses?: number;
+        };
+        const lanes = body.gear.flatMap((g) => [g.set ?? 0, g.base, g.variant]);
+        if (lanes.some((v) => v > 0xffff) || (body.glasses ?? 0) > 0xffff) {
+          return Promise.resolve(envelope({}, 400));
+        }
+        const items = Object.fromEntries(
+          body.gear.map((g) => [g.slot, { itemId: g.base, names: { en: g.slot } }])
+        );
+        return Promise.resolve(
+          envelope({ items, glasses: body.glasses ? { id: body.glasses } : null, version: 'v' })
+        );
+      });
+
+    it('leaves the out-of-range piece and glasses out of the request and names the rest', async () => {
+      const fetchMock = workerLike();
+      vi.stubGlobal('fetch', fetchMock);
+      const gear = [
+        { slot: 'HeadGear' as const, base: 361, variant: 5 },
+        { slot: 'Body' as const, base: 70000, variant: 1 },
+        { slot: 'MainHand' as const, set: 0x10000, base: 19, variant: 1 },
+      ];
+
+      const result = await resolveCharaEquipment(gear, 99999);
+
+      const sent = JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string);
+      expect(sent).toEqual({ gear: [gear[0]] });
+      expect(result.items.HeadGear).toMatchObject({ itemId: 361 });
+      // No Item row can carry a lane the game cannot store: say so, as for an NPC model.
+      expect(result.items.Body).toBeNull();
+      expect(result.items.MainHand).toBeNull();
+      expect(result.glasses).toBeNull();
+    });
+
+    it('does not call the worker when nothing in range is left to send', async () => {
+      const fetchMock = workerLike();
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await resolveCharaEquipment(
+        [{ slot: 'Body' as const, base: 70000, variant: 1 }],
+        0x10000
+      );
+
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(result).toEqual({ items: { Body: null }, glasses: null, version: null });
+    });
+
+    it('still sends an in-range facewear row on its own', async () => {
+      const fetchMock = workerLike();
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await resolveCharaEquipment(
+        [{ slot: 'Body' as const, base: 70000, variant: 1 }],
+        0xffff
+      );
+
+      const sent = JSON.parse((fetchMock.mock.calls[0] as [string, RequestInit])[1].body as string);
+      expect(sent).toEqual({ gear: [], glasses: 0xffff });
+      expect(result.items.Body).toBeNull();
+      expect(result.glasses).toMatchObject({ id: 0xffff });
+    });
+  });
+
   it('propagates the caller abort untouched', async () => {
     const controller = new AbortController();
     vi.stubGlobal(

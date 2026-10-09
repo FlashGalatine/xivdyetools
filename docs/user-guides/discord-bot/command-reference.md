@@ -104,7 +104,7 @@ Blend two dyes and see the closest real dyes at 25 / 40 / 50 / 65 / 80 %.
 ---
 
 ### /swatch
-Match your character's colours to the nearest dyes from a `.chara` file (Anamnesis / Ktisis export).
+Match your character's colors to the nearest dyes from a `.chara` file (Anamnesis / Ktisis / Brio export).
 
 **Usage**: `/swatch file:<attach .chara>`
 
@@ -114,18 +114,40 @@ Match your character's colours to the nearest dyes from a `.chara` file (Anamnes
 | `order` | `slots` (file order, default) or `hardest` (worst match first) | No |
 | `slot` | Show the five nearest dyes for one slot: skin, hair, highlights, eyes, lip, facepaint, limbal | No |
 
-See `/manual topic:character_file` for how to export the file.
+See `/manual topic:character_file` (👤 Character File) for what the bot reads from the file and what `/swatch` and `/glamour` show.
 
 ---
 
 ### /glamour
-Read a `.chara` file as a glamour: every dyed piece, its dyes, and whether the game lets your character wear it. Pieces that look identical to others are named as the one your character can actually wear and dye. The message holds the whole outfit in the GPOSERS submission format.
+Read a `.chara` file (Anamnesis / Ktisis / Brio export) as a glamour: every piece the character wears, its dyes, and whether the game lets the character wear it that way. The reply is a card and a message, and the character's name appears in neither.
 
 **Usage**: `/glamour file:<attach .chara>`
 
 | Parameter | Description | Required |
 |-----------|-------------|----------|
 | `file` | `.chara` character file (1 MiB max) | Yes |
+
+**The card** shows the dyed pieces in slot order (the worn pieces when nothing is dyed), five at most, and its footer says how many it shows out of how many. Each row has the slot, the piece's name, its dye chips, a look chip and a verdict.
+
+| Look chip | Meaning |
+|-----------|---------|
+| **ONE LOOK** | No other item looks like this piece |
+| **+N LOOK** / **+N LOOKS** | N other items look identical: its twins |
+
+| Verdict | Meaning |
+|---------|---------|
+| **OK** | No check fails: the piece can be worn the way the file shows it, as far as the game data says |
+| **TWIN** | The lowest-numbered item with this look can't be worn that way, so a twin that can is named instead |
+| **DYES** | The file puts more dyes on the piece than it takes, and no twin fixes it |
+| **NO GLAM** | The piece can't be a glamour, and no twin fixes it |
+| **LOCKED** | This character's race or gender can't wear the piece, and no twin fixes it. When exactly one race can wear it and it isn't this character's, the card names that race instead |
+| **—** | The model has no item behind it, such as an NPC outfit or a prop. Its name reads *Model* and the model number |
+
+**How the bot picks a twin.** One model can stand for several items the game draws identically. The bot names one that passes the check for this file and character, preferring one that takes dyes, then one that members of any Grand Company can wear, then one that isn't a Dated version, then the one with more dye channels, then the lowest item number. When none passes, it names the lowest item number. You can't choose in Discord: the web app's [Glamour Reader](https://xivdyetools.app/glamour), linked at the end of the reply, lets you pick a twin yourself.
+
+**The message** lists every worn piece in the GPOSERS submission form, ready to copy: a bold slot label, the piece, a Dye 1 / Dye 2 line for each dye it wears, and an Acquisition line. The labels and the Acquisition lines are in English in every language; item and dye names follow your language (an item the Korean or Chinese game data doesn't have yet stays in English). A blank Acquisition line means no source is known. Two identical rings are written once, as Rings, and facewear comes last. Under the list, notes say which pieces were named from a twin and why, which have no fix, and which need the right Grand Company. A `.chara` file doesn't record a Grand Company, so a piece locked to one is flagged, never failed. A very long list is cut short with "…".
+
+If the item lookup is busy or unavailable, the reply says so; try again in a minute. See `/manual topic:character_file` (👤 Character File) for the short version.
 
 ---
 

@@ -499,7 +499,9 @@ describe('ModerationHandler', () => {
                     name: 'Original',
                     description: 'Original description',
                     tags: ['original'],
-                    dyes: [1, 2],
+                    // A valid palette: a revert refuses a snapshot whose dyes
+                    // fail validation (BUG-010 follow-up) before it gets this far
+                    dyes: [1, 2, 3],
                 }),
             });
 
@@ -603,7 +605,8 @@ describe('ModerationHandler', () => {
                 name: 'Original',
                 description: 'Original desc',
                 tags: [],
-                dyes: [1, 2],
+                // A valid palette (BUG-010 follow-up: an invalid one is refused before the log)
+                dyes: [1, 2, 3],
             };
             const mockRow = createMockPresetRow({
                 id: 'preset-123',

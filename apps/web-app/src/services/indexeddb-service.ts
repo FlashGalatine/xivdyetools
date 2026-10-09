@@ -26,6 +26,9 @@ export const STORES = {
 
 export type StoreName = (typeof STORES)[keyof typeof STORES];
 
+/** Stores that wrap each value as `{ key, value }` — every one but PALETTES (keyPath 'id') */
+type KeyValueStoreName = Exclude<StoreName, typeof STORES.PALETTES>;
+
 /**
  * IndexedDB Service
  * Provides async key-value storage using IndexedDB
@@ -83,7 +86,21 @@ export class IndexedDBService {
         };
 
         request.onsuccess = () => {
-          this.db = request.result;
+          const db = request.result;
+          // BUG-119: another tab opening a newer DB_VERSION fires this on
+          // every open connection, and its upgrade stays `blocked` (that tab's
+          // initialize() resolving false, so its price cache never hydrates)
+          // until they close. Let go; the next call here re-opens and gets a
+          // VersionError, the honest answer for code older than the database.
+          db.onversionchange = () => {
+            db.close();
+            if (this.db === db) {
+              this.db = null;
+              this.initPromise = null;
+            }
+            logger.info('IndexedDB connection released for a newer version');
+          };
+          this.db = db;
           logger.info('📦 IndexedDB initialized successfully');
           resolve(true);
         };
@@ -135,40 +152,6 @@ export class IndexedDBService {
    */
   isReady(): boolean {
     return this.db !== null;
-  }
-
-  /**
-   * Get a value from a store
-   */
-  async get<T>(storeName: StoreName, key: string): Promise<T | null> {
-    if (!this.db) {
-      await this.initialize();
-    }
-
-    if (!this.db) {
-      return null;
-    }
-
-    return new Promise<T | null>((resolve) => {
-      try {
-        const transaction = this.db!.transaction(storeName, 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.get(key);
-
-        request.onsuccess = () => {
-          const result = request.result;
-          resolve(result ? (result.value ?? result) : null);
-        };
-
-        request.onerror = () => {
-          logger.warn(`Failed to get ${key} from ${storeName}:`, request.error);
-          resolve(null);
-        };
-      } catch (error) {
-        logger.error(`IndexedDB get error:`, error);
-        resolve(null);
-      }
-    });
   }
 
   /**
@@ -242,9 +225,13 @@ export class IndexedDBService {
   }
 
   /**
-   * Get all keys in a store
+   * Get every key/value pair in a key-value store in ONE readonly transaction.
+   *
+   * OPT-009: what the price-cache hydration needs — the keys stay with their
+   * values, and the former `keys()` plus a `get()` per key cost one
+   * transaction per entry.
    */
-  async keys(storeName: StoreName): Promise<string[]> {
+  async entries<T>(storeName: KeyValueStoreName): Promise<Array<[string, T]>> {
     if (!this.db) {
       await this.initialize();
     }
@@ -253,56 +240,28 @@ export class IndexedDBService {
       return [];
     }
 
-    return new Promise<string[]>((resolve) => {
-      try {
-        const transaction = this.db!.transaction(storeName, 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.getAllKeys();
-
-        request.onsuccess = () => {
-          resolve(request.result as string[]);
-        };
-
-        request.onerror = () => {
-          logger.warn(`Failed to get keys from ${storeName}:`, request.error);
-          resolve([]);
-        };
-      } catch (error) {
-        logger.error(`IndexedDB keys error:`, error);
-        resolve([]);
-      }
-    });
-  }
-
-  /**
-   * Get all entries in a store
-   */
-  async getAll<T>(storeName: StoreName): Promise<T[]> {
-    if (!this.db) {
-      await this.initialize();
-    }
-
-    if (!this.db) {
-      return [];
-    }
-
-    return new Promise<T[]>((resolve) => {
+    return new Promise<Array<[string, T]>>((resolve) => {
       try {
         const transaction = this.db!.transaction(storeName, 'readonly');
         const store = transaction.objectStore(storeName);
         const request = store.getAll();
 
         request.onsuccess = () => {
-          const results = request.result.map((item: { value?: T }) => item.value ?? item);
-          resolve(results as T[]);
+          const pairs: Array<[string, T]> = [];
+          for (const record of request.result as Array<{ key?: unknown; value?: T } | null>) {
+            if (typeof record?.key === 'string' && record.value !== undefined) {
+              pairs.push([record.key, record.value]);
+            }
+          }
+          resolve(pairs);
         };
 
         request.onerror = () => {
-          logger.warn(`Failed to get all from ${storeName}:`, request.error);
+          logger.warn(`Failed to get entries from ${storeName}:`, request.error);
           resolve([]);
         };
       } catch (error) {
-        logger.error(`IndexedDB getAll error:`, error);
+        logger.error(`IndexedDB entries error:`, error);
         resolve([]);
       }
     });
@@ -343,39 +302,6 @@ export class IndexedDBService {
   }
 
   /**
-   * Get count of entries in a store
-   */
-  async count(storeName: StoreName): Promise<number> {
-    if (!this.db) {
-      await this.initialize();
-    }
-
-    if (!this.db) {
-      return 0;
-    }
-
-    return new Promise<number>((resolve) => {
-      try {
-        const transaction = this.db!.transaction(storeName, 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.count();
-
-        request.onsuccess = () => {
-          resolve(request.result);
-        };
-
-        request.onerror = () => {
-          logger.warn(`Failed to count ${storeName}:`, request.error);
-          resolve(0);
-        };
-      } catch (error) {
-        logger.error(`IndexedDB count error:`, error);
-        resolve(0);
-      }
-    });
-  }
-
-  /**
    * Close the database connection
    */
   close(): void {
@@ -385,42 +311,6 @@ export class IndexedDBService {
       this.initPromise = null;
       logger.debug('IndexedDB connection closed');
     }
-  }
-
-  /**
-   * Delete the entire database
-   */
-  async deleteDatabase(): Promise<boolean> {
-    this.close();
-
-    return new Promise<boolean>((resolve) => {
-      if (!this.isSupported) {
-        resolve(false);
-        return;
-      }
-
-      try {
-        const request = indexedDB.deleteDatabase(DB_NAME);
-
-        request.onsuccess = () => {
-          logger.info('IndexedDB database deleted');
-          resolve(true);
-        };
-
-        request.onerror = () => {
-          logger.error('Failed to delete IndexedDB:', request.error);
-          resolve(false);
-        };
-
-        request.onblocked = () => {
-          logger.warn('IndexedDB deletion blocked - please close other tabs');
-          resolve(false);
-        };
-      } catch (error) {
-        logger.error('IndexedDB deleteDatabase error:', error);
-        resolve(false);
-      }
-    });
   }
 }
 

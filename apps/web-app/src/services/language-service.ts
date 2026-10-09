@@ -34,6 +34,8 @@ export class LanguageService {
   private static currentLocale: LocaleCode = DEFAULT_LOCALE;
   private static listeners: Set<LocaleChangeListener> = new Set();
   private static isInitialized: boolean = false;
+  /** BUG-121: numbers each setLocale() call; only the latest one commits */
+  private static localeRequest = 0;
 
   /**
    * Initialize language service
@@ -86,9 +88,16 @@ export class LanguageService {
       locale = DEFAULT_LOCALE;
     }
 
+    // BUG-121: overlapping calls used to commit in the order their loads
+    // finished, so a switch waiting on an uncached chunk landed after a later
+    // switch to a cached locale — UI strings back on the earlier choice, core
+    // (dye names) on the later one. Each call now loads without changing
+    // anything, and only the latest call commits, core included.
+    const request = ++this.localeRequest;
+
     try {
-      // Set locale in core library (handles dye names, categories, etc.)
-      await LocalizationService.setLocale(locale);
+      // Load core locale data (dye names, categories, etc.) without switching
+      await LocalizationService.ensureLocaleLoaded(locale);
 
       // Load web app translations if not cached
       if (!webAppTranslations.has(locale)) {
@@ -102,6 +111,13 @@ export class LanguageService {
       if (locale !== 'en' && !webAppTranslations.has('en')) {
         await this.loadWebAppTranslations('en');
       }
+
+      // Superseded while loading: the later call commits instead
+      if (request !== this.localeRequest) return;
+
+      // Switch core now that its data is in — immediate for a loaded locale
+      await LocalizationService.setLocale(locale);
+      if (request !== this.localeRequest) return;
 
       this.currentLocale = locale;
 
@@ -185,7 +201,10 @@ export class LanguageService {
     let translation = this.t(key);
 
     for (const [param, value] of Object.entries(params)) {
-      translation = translation.replace(new RegExp(`\\{${param}\\}`, 'g'), String(value));
+      // BUG-122: a replacer FUNCTION, not a replacement string — values are
+      // user text (collection names), and a string expands `$$`, `$&`, `` $` ``
+      // and `$'` instead of inserting them literally
+      translation = translation.replace(new RegExp(`\\{${param}\\}`, 'g'), () => String(value));
     }
 
     return translation;
@@ -255,13 +274,6 @@ export class LanguageService {
     return LocalizationService.getVisionType(
       key as Parameters<typeof LocalizationService.getVisionType>[0]
     );
-  }
-
-  /**
-   * Get localized label from core library
-   */
-  static getLabel(key: string): string {
-    return LocalizationService.getLabel(key as Parameters<typeof LocalizationService.getLabel>[0]);
   }
 
   /**
@@ -356,18 +368,6 @@ export class LanguageService {
     }
 
     return current;
-  }
-
-  /**
-   * Preload translations for multiple locales
-   * Useful for reducing latency when switching languages
-   */
-  static async preloadLocales(locales: LocaleCode[]): Promise<void> {
-    const loadPromises = locales
-      .filter((locale) => !webAppTranslations.has(locale))
-      .map((locale) => this.loadWebAppTranslations(locale));
-
-    await Promise.all(loadPromises);
   }
 
   /**

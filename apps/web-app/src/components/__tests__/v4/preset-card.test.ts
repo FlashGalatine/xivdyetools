@@ -200,4 +200,47 @@ describe('PresetCard', () => {
     expect(shot).not.toBeNull();
     expect(shot!.getAttribute('style')).toContain('linear-gradient');
   });
+
+  // 2026-10-04 deep-dive BUG-029: a local palette already sits on the Saved
+  // shelf. Saving it stored a second, snapshot copy — a duplicate card, and a
+  // `local-` id that tombstone reconciliation then read as "removed by its
+  // author" because the API never lists it.
+  describe('Save on a local palette (BUG-029)', () => {
+    const localData: PresetCardData = {
+      ...baseCardData,
+      preset: { ...basePreset, id: 'local-abc', isFromAPI: false },
+    };
+
+    /** Labels of the face buttons (vote / save), in order. */
+    function faceButtons(el: HTMLElement): string[] {
+      return [...el.shadowRoot!.querySelectorAll('.face-btn')].map((b) => b.textContent!.trim());
+    }
+
+    it('offers no Save on a local palette', async () => {
+      const el = await mountCard(localData);
+
+      expect(faceButtons(el)).toEqual([]);
+    });
+
+    it('still offers Save on a community preset', async () => {
+      const el = await mountCard({ ...baseCardData, preset: { ...basePreset, isFromAPI: true } });
+
+      expect(faceButtons(el).some((label) => label.includes('preset.save'))).toBe(true);
+    });
+
+    it('keeps the button on a local palette saved by an earlier version, so it can be unsaved', async () => {
+      await import('../../v4/preset-card');
+      const el = document.createElement('v4-preset-card') as HTMLElement & {
+        data: PresetCardData;
+        saved: boolean;
+        updateComplete: Promise<unknown>;
+      };
+      el.data = localData;
+      el.saved = true;
+      container.appendChild(el);
+      await el.updateComplete;
+
+      expect(faceButtons(el)).toEqual(['preset.savedBtn']);
+    });
+  });
 });

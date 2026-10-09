@@ -11,4 +11,4 @@
 - Fix the generator once the dictionary table exists (never the generated JSON); publish core.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `e48dd7ab`: buildSheets follows the dictionary's character-creation table; `290b1bb7` re-cuts the discord-worker and og-worker CJK subsets for the new names. (branch `fix/remediation-2026-10-04-sprint13`, core 5.10.0; PR #260, open, on PR #259).

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-10-06
+
+Sprint 19 of the 2026-10-04 remediation plan (BUG-147, BUG-148, DEAD-041, DEAD-042, DEAD-043, DEAD-044). Major: two
+exports and the `./auth` subpath are removed, and two mocks now behave more like real Cloudflare, which can change a
+consumer's test results. The package is private and never published, so the bump is bookkeeping.
+
+### Removed (breaking)
+
+- **`createMockD1()`** (DEAD-042): the pre-cast wrapper around `createMockD1Database()` had no consumers. Use
+  `createMockD1Database()` and cast it yourself.
+- **`randomStainId()`** (DEAD-043): only its own test used it. `createMockDye()` keeps its deterministic 1-254 default
+  sequence and `resetMockDyeSequence()`.
+- **The `./auth` subpath export** (DEAD-044): nothing imported `@xivdyetools/test-utils/auth`. The helpers
+  (`createTestJWT`, `createExpiredJWT`, `authHeaders`) are still exported from the root barrel.
+- **The `integration/` suite** (DEAD-041): it exercised local copies of worker logic, not the workers. Its one useful
+  check, that `createTestJWT` signs a verifiable HS256 token, moved to `tests/auth/jwt.test.ts`.
+
+### Fixed
+
+- **`createMockD1Database().first()` resolves `null` on a miss** (BUG-147), like real D1, instead of passing the
+  router's `undefined` through. A `row !== null` check, such as moderation-worker's ban service, now reads a miss
+  correctly.
+- **KV and R2 mock `list()` sort keys and resume with `key > cursorKey`** (BUG-148), as real KV and R2 do, so a cursor
+  whose key was deleted (or expired, for KV) between pages no longer returns an empty, complete page.
+
 ## [2.0.1] - 2026-09-16
 
 Deep-dive remediation, Sprint 0 (docs/audits/2026-09-16-deep-dive). Private package, never published —
