@@ -64,6 +64,13 @@ const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_TTL_BUFFER = 60;
 
 /**
+ * Concurrent deletes per await in reset()/resetAll(). Bounds concurrency only,
+ * not the total: a prefix larger than the per-invocation KV operation budget
+ * can still throw partway.
+ */
+const DELETE_CHUNK_SIZE = 50;
+
+/**
  * KV entry structure
  */
 interface KVEntry {
@@ -268,18 +275,40 @@ export class KVRateLimiter implements ExtendedRateLimiter {
    * Reset rate limit for a specific key
    */
   async reset(key: string): Promise<void> {
-    // List and delete all keys with this prefix
-    const prefix = `${this.keyPrefix}${key}|`;
-    const { keys } = await this.kv.list({ prefix });
-    await Promise.all(keys.map((k) => this.kv.delete(k.name)));
+    await this.deleteByPrefix(`${this.keyPrefix}${key}|`);
   }
 
   /**
    * Reset all rate limits
    */
   async resetAll(): Promise<void> {
-    const { keys } = await this.kv.list({ prefix: this.keyPrefix });
-    await Promise.all(keys.map((k) => this.kv.delete(k.name)));
+    await this.deleteByPrefix(this.keyPrefix);
+  }
+
+  /**
+   * Delete every key under a prefix.
+   *
+   * BUG-151 (2026-10-04 deep dive): `kv.list()` returns at most 1000 keys per
+   * call, so a single call silently left the rest of a large prefix in place.
+   * Pages through the cursor until `list_complete`, deleting sequentially in
+   * chunks of {@link DELETE_CHUNK_SIZE} to bound concurrency (the total is
+   * not capped, so a very large prefix can exhaust the per-invocation KV
+   * operation budget and throw partway; run it from a queue or cron). Stops (never spins) on a repeated cursor or a
+   * non-complete page that carries no cursor.
+   */
+  private async deleteByPrefix(prefix: string): Promise<void> {
+    let cursor: string | undefined;
+    const seen = new Set<string>();
+    for (;;) {
+      const page = await this.kv.list({ prefix, cursor });
+      for (let i = 0; i < page.keys.length; i += DELETE_CHUNK_SIZE) {
+        const chunk = page.keys.slice(i, i + DELETE_CHUNK_SIZE);
+        await Promise.all(chunk.map((k) => this.kv.delete(k.name)));
+      }
+      if (page.list_complete || !page.cursor || seen.has(page.cursor)) return;
+      seen.add(page.cursor);
+      cursor = page.cursor;
+    }
   }
 
   /**

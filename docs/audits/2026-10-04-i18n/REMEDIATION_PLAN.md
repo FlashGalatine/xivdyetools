@@ -561,7 +561,9 @@ Rounding in the contrast tier, ellipsised step ranges, a sub-floor label, and th
 
 **Ends with:** bump `@xivdyetools/bot-logic` (minor) → `pnpm turbo run build type-check lint test --filter=...@xivdyetools/bot-logic` → merge (redeploys discord-worker) → Actions "Publish Packages to npm"
 
-## Sprint 16 — @xivdyetools/worker-kit: body guard and limiter edges (publish)
+## Sprint 16 — @xivdyetools/worker-kit: body guard and limiter edges (publish) — PR #271 (open)
+
+**Done in PR #271** (worker-kit 1.5.0 — minor, as 1.2.0 / 1.3.0 were for behavior changes), stacked on #270. BUG-149's guard stays a superset of the old substring test, so presets-api's own 415 gate cannot be slipped past; the oauth half of BUG-149 is in #272.
 
 **Fixes:**
 - deep-dive/BUG-149: a case-sensitive Content-Type check lets JSON skip the depth guard.
