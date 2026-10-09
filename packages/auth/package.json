@@ -55,8 +55,8 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260925.1",
-    "@vitest/coverage-v8": "^5.0.2",
-    "vitest": "^5.0.2"
+    "@vitest/coverage-v8": "^5.0.3",
+    "vitest": "^5.0.3"
   },
   "peerDependencies": {
     "@cloudflare/workers-types": "^4.0.0"
