@@ -320,7 +320,8 @@ deliberately out of scope (see below).
 ## Continuous deployment of the beta bot
 
 `.github/workflows/deploy-discord-worker-beta.yml` deploys the beta bot on **any push to a
-non-main branch** that touches `apps/discord-worker/**` or one of its packages. It runs the same
+non-main branch** that touches `apps/discord-worker/**`, one of its packages, or one of the four
+root inputs (`pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`). It runs the same
 build / type-check / test gate as production, then `wrangler deploy` with **no `--env`** — which
 is the beta worker.
 
@@ -401,7 +402,7 @@ Cloudflare Pages project** rather than a preview branch of the production one.
 |---|---|---|
 | Pages project | `xivdyetools` | `xivdyetools-beta` |
 | Domain | `xivdyetools.app` | `beta.xivdyetools.app` |
-| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch that touches its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`) |
+| Workflow | `deploy-web-app.yml` (push to `main`) | `deploy-web-app-beta.yml` (push to any non-`main` branch that touches its `paths:` filter — `apps/web-app/**`, `packages/core/**`, `packages/types/**`, `packages/logger/**`, `packages/svg/**`, plus the four root inputs `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`) |
 | Deploy command | `pages deploy dist --project-name=xivdyetools` | `pages deploy dist --project-name=xivdyetools-beta --branch=beta` |
 | Backends | production `auth.` / `api.xivdyetools.app` | **the same production backends** |
 | Cloudflare credential | `environment: production` + `secrets.CLOUDFLARE_API_TOKEN` | `environment: beta` + `secrets.CLOUDFLARE_API_TOKEN_BETA` — separate credential since 2026-08-29 (FINDING-028) |

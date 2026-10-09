@@ -14,6 +14,15 @@ on:
       # MONO2: transitive via bot-logic (→ core, svg)
       - 'packages/core/**'
       - 'packages/svg/**'
+      # BUG-153: root inputs that change a bundle without touching apps/ or packages/
+      # (a lockfile or pnpm override bump of a bundled transitive, the shared tsconfig).
+      # Cost: a lockfile-only dependency bump redeploys this worker even when the
+      # bump was dev-only; accepted, because a redeploy of identical code is
+      # idempotent and cheap, whereas a runtime fix that never ships is not.
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - 'tsconfig.base.json'
   workflow_dispatch:
 
 # FINDING-009 (2026-08-21 security audit): least-privilege GITHUB_TOKEN —

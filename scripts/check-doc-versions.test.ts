@@ -116,6 +116,37 @@ test('a table without a Version column never claims', () => {
   assert.deepEqual(extractDocVersions(md, 'x.md', workspaces), []);
 });
 
+test('BUG-156: a non-semver Version cell on a workspace row is a failing claim, not a dropped row', () => {
+  const md = table(
+    '| Package | Version |',
+    '| [`@xivdyetools/core`](packages/core/) | 5.2.0 |',
+    '| `@xivdyetools/core` | 5.7 |',
+  );
+  const claims = extractDocVersions(md, 'README.md', workspaces);
+  assert.equal(claims.length, 2);
+  const mismatches = compareClaims(claims, workspaces);
+  assert.equal(mismatches.length, 1);
+  assert.match(mismatches[0] ?? '', /README\.md:4/);
+  assert.match(mismatches[0] ?? '', /"5\.7"/);
+  assert.match(mismatches[0] ?? '', /not a semver/);
+});
+
+test('BUG-156: an empty Version cell asserts nothing', () => {
+  const md = table('| Package | Version |', '| `@xivdyetools/core` |  |');
+  assert.deepEqual(extractDocVersions(md, 'x.md', workspaces), []);
+});
+
+test('BUG-156 policy: a placeholder dash or a prerelease string on a workspace row fails (package.json versions are strict semver)', () => {
+  for (const cell of ['—', 'n/a', 'TBD', '5.2.0-beta.1']) {
+    const md = table('| Package | Version |', `| \`@xivdyetools/core\` | ${cell} |`);
+    const claims = extractDocVersions(md, 'x.md', workspaces);
+    assert.equal(claims.length, 1, cell);
+    const mismatches = compareClaims(claims, workspaces);
+    assert.equal(mismatches.length, 1, cell);
+    assert.match(mismatches[0] ?? '', /not a semver/, cell);
+  }
+});
+
 test('compareClaims reports every mismatch with file and line, and nothing else', () => {
   const claims = [
     { file: 'a.md', line: 3, workspace: '@xivdyetools/core', version: '5.2.0' },

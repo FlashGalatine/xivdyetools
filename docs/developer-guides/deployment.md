@@ -42,6 +42,15 @@ on a shared package, **add that package to the workflow's `paths:` list** — ot
 keeps running the old bundled copy after the package changes, and nothing fails loudly. This has
 bitten the repo repeatedly (see the `ARCH-001` and `MONO2` comments in the workflow files).
 
+Every one of the 11 deploy workflows (the 8 production ones and the 3 beta ones) also lists four
+**root inputs** that change a bundle without touching `apps/` or `packages/`: `pnpm-lock.yaml`,
+`pnpm-workspace.yaml`, `turbo.json` and `tsconfig.base.json` (BUG-153). A lockfile or `overrides:`
+bump of a bundled transitive dependency therefore ships. The cost is deliberate: a lockfile-only
+bump, even a dev-only Dependabot one, redeploys every production worker with identical code
+(idempotent, serialized per workflow), and **merging such a change to `main` starts all 8
+production deploys, `oauth` included, whose bare deploy is production**. `scripts/check-workflows.test.ts`
+(run by `pnpm test:scripts`) fails when any `deploy-*.yml` loses one of the four.
+
 ### Required secrets
 
 `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` for the production workflows in the table above
