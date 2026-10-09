@@ -33,6 +33,7 @@ Rules:
 
 ## [5.15.0] - 2026-10-08
 ### 📦 Clearer glamour acquisition sources
+- Web app: the Glamour Reader now fills 379 more Acquisition fields, including Eureka and Cosmic upgrades, PvP vendor gear, Fuath and Mica outfits, current store sets and 15 more facewear styles.
 - Web app: the Glamour Reader now replaces coffer-only Acquisition names with the quest, vendor or activity where the gear is obtained, and marks retired PvP rewards as no longer obtainable.
 - Web app: Kornago Merchant now lists Central Shroud and Bentbranch Meadows. The two expedition antiquarians have distinct North Horn and South Horn locations, including Tule, Torna, Carwen, Lix, Tycoon and Scherwiz glamour pieces.
 ### 📜 Glamour acquisition sources
