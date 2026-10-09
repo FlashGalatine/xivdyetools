@@ -301,6 +301,68 @@ describe('OAuth Worker App', () => {
 
             expect(response.status).toBe(302); // Should redirect, not rate limited
         });
+
+        // BUG-007 (2026-10-04 deep-dive): the limiter used to key and tier on the
+        // raw wire pathname while Hono routes on the decoded one, so a
+        // percent-encoded spelling of a real route landed in its own bucket with
+        // the wrong tier. These go through the whole app on purpose:
+        // rate-limit.test.ts only calls checkRateLimit() with literal paths and
+        // cannot see the routing mismatch.
+        describe('percent-encoded spellings of a routed path (BUG-007)', () => {
+            const post = (ip: string, path: string) =>
+                fetchWithEnv(env, `http://localhost${path}`, {
+                    method: 'POST',
+                    headers: { 'CF-Connecting-IP': ip, 'Content-Type': 'application/json' },
+                    body: 'not-json',
+                });
+
+            it('applies the token-exchange tier to /auth/%63allback', async () => {
+                const ip = 'bug007-tier-callback';
+                const first = await post(ip, '/auth/%63allback');
+                expect(first.headers.get('X-RateLimit-Limit')).toBe('20');
+                for (let i = 1; i < 20; i++) await post(ip, '/auth/%63allback');
+                expect((await post(ip, '/auth/%63allback')).status).toBe(429);
+            });
+
+            it('shares one bucket between the literal and the encoded spelling', async () => {
+                const ip = 'bug007-shared-bucket';
+                for (let i = 0; i < 20; i++) await post(ip, '/auth/callback');
+                expect((await post(ip, '/auth/callba%63k')).status).toBe(429);
+            });
+
+            it('does not move /auth/xivauth/%63allback down to the login tier', async () => {
+                const res = await post('bug007-xivauth', '/auth/xivauth/%63allback');
+                expect(res.headers.get('X-RateLimit-Limit')).toBe('20');
+            });
+
+            it('tiers an encoded /auth prefix like the routed path', async () => {
+                const res = await post('bug007-prefix', '/%61uth/callback');
+                expect(res.headers.get('X-RateLimit-Limit')).toBe('20');
+            });
+
+            it('treats %6F and %6f as one spelling of the same route', async () => {
+                const ip = 'bug007-hex-case';
+                for (let i = 0; i < 15; i++) await post(ip, '/auth/rev%6Fke');
+                for (let i = 0; i < 15; i++) await post(ip, '/auth/rev%6fke');
+                expect((await post(ip, '/auth/rev%6Fke')).status).toBe(429);
+            });
+
+            it('keeps a double-encoded path an unrouted 404 on the default tier', async () => {
+                const res = await fetchWithEnv(env, 'http://localhost/auth/%2563allback', {
+                    headers: { 'CF-Connecting-IP': 'bug007-double' },
+                });
+                expect(res.status).toBe(404);
+                expect(res.headers.get('X-RateLimit-Limit')).toBe('30');
+            });
+
+            it('answers a malformed escape with a 404, not a 500, and still rate-limits it', async () => {
+                const res = await fetchWithEnv(env, 'http://localhost/auth/%E0%A4%A', {
+                    headers: { 'CF-Connecting-IP': 'bug007-malformed' },
+                });
+                expect(res.status).toBe(404);
+                expect(res.headers.get('X-RateLimit-Limit')).toBeTruthy();
+            });
+        });
     });
 
     /**

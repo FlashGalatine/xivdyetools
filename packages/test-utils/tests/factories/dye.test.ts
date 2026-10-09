@@ -2,7 +2,7 @@
  * Tests for dye factory functions
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { mockDyes, createMockDye, resetMockDyeSequence, randomStainId } from '../../src/factories/dye.js';
+import { mockDyes, createMockDye, resetMockDyeSequence } from '../../src/factories/dye.js';
 
 describe('mockDyes', () => {
   it('is an array of dyes', () => {
@@ -265,14 +265,6 @@ describe('createMockDye', () => {
     createMockDye({ stainID: null });
     const dye = createMockDye();
     expect(dye.stainID).toBe(1);
-  });
-
-  it('exposes an opt-in random draw, unused by the default path', () => {
-    for (let i = 0; i < 50; i++) {
-      const value = randomStainId();
-      expect(value).toBeGreaterThanOrEqual(1);
-      expect(value).toBeLessThanOrEqual(254);
-    }
   });
 
   it('puts default stainIDs inside the real 1-254 Stain range', () => {

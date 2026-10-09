@@ -36,7 +36,7 @@ export async function handleInfoCommand(ctx: CommandContext): Promise<void> {
   }
 
   const locale: LocaleCode = 'en'; // TODO: resolve from user preferences
-  const resolution = resolveDyeInputMulti(dyeName, locale);
+  const resolution = await resolveDyeInputMulti(dyeName, locale);
 
   // Handle resolution result
   switch (resolution.kind) {

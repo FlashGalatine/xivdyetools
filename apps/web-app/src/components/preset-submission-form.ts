@@ -16,6 +16,7 @@ import {
   validateSubmission,
 } from '@services/index';
 import type { Dye } from '@xivdyetools/types';
+import type { ModalId } from '@services/modal-service';
 import {
   MAX_PREVIEW_IMAGE_BYTES,
   uploadPreviewImage,
@@ -45,6 +46,8 @@ interface FormState {
   previewImage: File | null;
   /** Re-render the HOW IT WILL LOOK preview band (8S) */
   refreshPreview?: () => void;
+  /** This form's own modal, closed by id once the awaited submit settles */
+  modalId?: ModalId;
 }
 
 type OnSubmitCallback = (result: SubmissionResult) => void;
@@ -101,7 +104,7 @@ export function showPresetSubmissionForm(
 
   // 8S: one content column at 560 so the dye slots and preview band
   // are not squeezed.
-  ModalService.show({
+  state.modalId = ModalService.show({
     type: 'custom',
     title: LanguageService.t('preset.submitTitle'),
     subtitle: LanguageService.t('preset.submitSub'),
@@ -634,6 +637,17 @@ function createPreviewImageInput(state: FormState): HTMLElement {
   return wrapper;
 }
 
+/**
+ * Close this form after an awaited submit or upload. BUG-102 (2026-10-04
+ * deep-dive): the form is closable, so Esc may have closed it during the
+ * request and the user may have opened another modal since — `dismissTop()`
+ * would close THAT one. Dismiss by the form's own id, as my-submissions-modal
+ * does for its delete confirm (BUG-088).
+ */
+function closeForm(state: FormState): void {
+  if (state.modalId) ModalService.dismiss(state.modalId);
+}
+
 function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTMLElement {
   const wrapper = document.createElement('div');
   wrapper.className = 'flex justify-end gap-2 pt-4 border-t';
@@ -721,13 +735,18 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           ToastService.info(message);
 
           // Navigate to the duplicate preset after dismissing modal
-          logger.info('[PresetSubmissionForm] calling ModalService.dismissTop() for duplicate');
-          ModalService.dismissTop();
-          logger.info('[PresetSubmissionForm] dismissTop() returned for duplicate');
+          closeForm(state);
 
           // Store the duplicate preset ID for navigation
           if (result.duplicate.id) {
-            sessionStorage.setItem('pendingPresetId', result.duplicate.id);
+            // BUG-102 (2026-10-04 deep-dive): blocked storage throws here, and
+            // inside the outer try that read as a failed submission right
+            // after the duplicate toast. The event still goes out without it.
+            try {
+              sessionStorage.setItem('pendingPresetId', result.duplicate.id);
+            } catch {
+              logger.warn('[PresetSubmissionForm] sessionStorage unavailable for pendingPresetId');
+            }
             // Dispatch event to notify preset browser to switch and show the preset
             window.dispatchEvent(
               new CustomEvent('navigate-to-preset', { detail: { presetId: result.duplicate.id } })
@@ -754,9 +773,7 @@ function createSubmitButton(state: FormState, onSubmit?: OnSubmitCallback): HTML
           }
         }
 
-        logger.info('[PresetSubmissionForm] calling ModalService.dismissTop()');
-        ModalService.dismissTop();
-        logger.info('[PresetSubmissionForm] dismissTop() returned');
+        closeForm(state);
         onSubmit?.(result);
       } else if (result.validationErrors?.length) {
         // The service revalidates; one toast per rule, same as above.

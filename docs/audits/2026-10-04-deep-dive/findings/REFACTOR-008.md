@@ -14,4 +14,4 @@
 - Update the three comments (name both web-app and discord-worker; match 80/80/80/80 or the intended target; delete the orphaned one-liner). No package publish.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `26e43a64` (branch `fix/remediation-2026-10-04-sprint20`, root 2.3.2; PR #276, open, on PR #264).

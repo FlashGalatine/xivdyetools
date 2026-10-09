@@ -1976,3 +1976,74 @@ test('68. ...but PROSE in that same file still vouches for nothing', () => {
     ['helper'],
   );
 });
+
+// ============================================================================
+// BUG-155: the orphan-module and member scans read EXCLUDED_REFERRERS raw
+// ============================================================================
+
+test('69. findOrphanModules: a fixture import inside the excluded test file does not make a module test-only', () => {
+  const prodFile = 'packages/x/src/types.ts';
+  const excludedTest = 'scripts/check-dead-code.test.ts';
+  const texts = new Map([
+    [prodFile, 'export interface A { a: number }\n'],
+    // The checker's own self-test holds synthetic source in template literals;
+    // none of it is a real import.
+    [excludedTest, "const src = `\nimport type { A } from './types';\n`;\n"],
+  ]);
+  const r = findOrphanModules([prodFile], [excludedTest], texts);
+  assert.deepEqual(r.violations, []);
+});
+
+test('70. findOrphanModules: the same import in an ordinary test file still flags the module', () => {
+  const prodFile = 'packages/x/src/types.ts';
+  const testFile = 'packages/x/src/types.test.ts';
+  const texts = new Map([
+    [prodFile, 'export interface A { a: number }\n'],
+    [testFile, "import type { A } from './types';\n"],
+  ]);
+  const r = findOrphanModules([prodFile], [testFile], texts);
+  assert.equal(r.violations.length, 1);
+  assert.equal(r.violations[0].file, prodFile);
+});
+
+test("71. findTestOnlyMembers: a member named only in the excluded prod file's prose still counts as test-only", () => {
+  const prodFile = 'src/widget.ts';
+  const excludedProd = 'scripts/check-dead-code.ts';
+  const testFile = 'src/widget.test.ts';
+  const texts = new Map([
+    [prodFile, 'export class Widget {\n  doThing(): void {\n    // no-op\n  }\n}\n'],
+    // Prose naming `.doThing()` is not a production call.
+    [excludedProd, '// callers use widget.doThing() somewhere else\nexport const x = 1;\n'],
+    [testFile, "import { Widget } from './widget';\nnew Widget().doThing();\n"],
+  ]);
+  const r = findTestOnlyMembers([prodFile, excludedProd], [testFile], texts);
+  assert.deepEqual(
+    r.violations.map((v) => v.name),
+    ['Widget.doThing'],
+  );
+});
+
+test('72. findTestOnlyMembers: a fixture inside the excluded test file is neither an importer nor a reference', () => {
+  const prodFile = 'src/widget.ts';
+  const excludedTest = 'scripts/check-dead-code.test.ts';
+  const texts = new Map([
+    [prodFile, 'export class Widget {\n  doThing(): void {\n    // no-op\n  }\n}\n'],
+    [excludedTest, "const src = `\nimport { Widget } from './widget';\nnew Widget().doThing();\n`;\n"],
+  ]);
+  const r = findTestOnlyMembers([prodFile], [excludedTest], texts);
+  assert.deepEqual(r.violations, []);
+});
+
+test("73. maskSource: the checker's own source keeps its late declarations after masking", () => {
+  const text = readFileSync(fileURLToPath(new URL('./check-dead-code.ts', import.meta.url)), 'utf8');
+  const raw = text.split('\n');
+  const masked = maskSource(text).split('\n');
+  assert.equal(masked.length, raw.length);
+  // The pre-fix tail of this file (everything after one regex literal) masked
+  // to blank lines, so every declaration below it vanished from candidacy.
+  const at = raw.findIndex((l) => l.startsWith('export function maskSource'));
+  assert.ok(at > 600, 'maskSource sits past the old failure point');
+  assert.match(masked[at] ?? '', /export function maskSource/);
+  const last = raw.map((l, i) => (l.trim() ? i : -1)).filter((i) => i >= 0).pop() ?? 0;
+  assert.notEqual((masked[last] ?? '').trim(), '', 'the last code line survives masking');
+});

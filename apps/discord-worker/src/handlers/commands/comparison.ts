@@ -13,9 +13,20 @@ import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslatorWithPrefs, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import { resolveColorInput as resolveColor, executeComparison } from '@xivdyetools/bot-logic';
+import {
+  resolveColorInput as resolveColor,
+  executeComparison,
+  sanitizeEmbedText,
+} from '@xivdyetools/bot-logic';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+
+// BUG-044: a user-typed option echoed into an error embed goes through the
+// shared sanitiser (markdown / masked links / mentions defused) with the
+// 100-character cap the other dye-name echoes use — an uncapped ~4000-char
+// value pushed the description past Discord's 4096 limit and the reply was
+// rejected outright.
+const MAX_ECHO_LENGTH = 100;
 
 function resolveColorInput(input: string, locale: LocaleCode): Dye | null {
   const resolved = resolveColor(input, { excludeFacewear: true, findClosestForHex: true, locale });
@@ -29,7 +40,7 @@ export async function handleComparisonCommand(
   logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale);
+  const { t, prefs } = await createUserTranslatorWithPrefs(env.KV, userId, interaction.locale, logger);
 
   const options = interaction.data?.options || [];
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;
@@ -53,7 +64,11 @@ export async function handleComparisonCommand(
 
   const failures = resolvedDyes.filter((r) => r.dye === null);
   if (failures.length > 0) {
-    const failedInputs = failures.map((f) => `"${f.input}"`).join(', ');
+    // Each of up to four inputs is capped on its own, so the joined list stays
+    // well inside the description limit.
+    const failedInputs = failures
+      .map((f) => `"${sanitizeEmbedText(f.input, MAX_ECHO_LENGTH)}"`)
+      .join(', ');
     return Response.json({
       type: 4,
       data: {
@@ -86,7 +101,17 @@ async function processComparisonCommand(
   const result = await executeComparison({ dyes, locale, theme, logger });
 
   if (!result.ok) {
-    // GENERATION_FAILED: the card generator threw inside bot-logic.
+    if (result.error === 'NOT_ENOUGH_DYES') {
+      // A refusal, not a render failure (BUG-125): bot-logic names what is
+      // missing in the reader's language, and the trace stays `ok`. The two
+      // required options above make this unreachable from Discord today.
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), result.errorMessage)],
+      });
+      return;
+    }
+    // GENERATION_FAILED: the card generator threw inside bot-logic, which
+    // logged the error's class on `logger` before answering.
     markCommandOutcome(interaction, 'render');
     if (logger) logger.error('Comparison command failed');
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
@@ -96,7 +121,7 @@ async function processComparisonCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     // Build Discord embed description with platform-specific emojis
     const dyeList = dyes

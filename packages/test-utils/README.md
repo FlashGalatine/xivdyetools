@@ -28,8 +28,8 @@ import { createMockD1Database, createMockKV, createMockFetcher } from '@xivdyeto
 // D1 Database mock with query tracking
 const db = createMockD1Database();
 db._setupMock((query, bindings) => {
-  if (query.includes('SELECT')) return { id: 1, name: 'Test' };
-  return null;
+  if (/^\s*SELECT/i.test(query)) return { id: 1, name: 'Test' };
+  return null;   // .first() resolves null (like real D1) when nothing matches
 });
 
 // Use in your tests
@@ -46,7 +46,7 @@ db._reset();
 ### Auth Helpers
 
 ```typescript
-import { createTestJWT, authHeaders } from '@xivdyetools/test-utils/auth';
+import { createTestJWT, authHeaders } from '@xivdyetools/test-utils';
 
 // Create a valid JWT for testing
 const jwt = await createTestJWT('your-secret', {
@@ -90,9 +90,8 @@ const params = new URLSearchParams({
 
 | Import Path | Contents |
 |-------------|----------|
-| `@xivdyetools/test-utils` | All exports |
+| `@xivdyetools/test-utils` | All exports, including the auth helpers (`createTestJWT`, `authHeaders`); there is no `/auth` subpath since 2026-10-06 (DEAD-044) |
 | `@xivdyetools/test-utils/cloudflare` | Cloudflare Workers mocks |
-| `@xivdyetools/test-utils/auth` | Authentication helpers |
 | `@xivdyetools/test-utils/factories` | Domain object factories |
 | `@xivdyetools/test-utils/constants` | Test constants (PKCE, etc.) |
 

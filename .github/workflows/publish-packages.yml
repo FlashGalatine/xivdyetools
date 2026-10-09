@@ -152,20 +152,61 @@ jobs:
         run: |
           PACKAGES='${{ needs.detect.outputs.packages }}'
           FAILED=()
+          SKIPPED=()
+          # BUG-154: a package that failed, or was skipped because something it
+          # depends on failed, must not let its dependents publish. svg and
+          # bot-logic pin core with `workspace:*`, which pnpm rewrites to core's
+          # local version at publish time; if core is not on npm, the dependent
+          # lands on the registry uninstallable for external consumers (ETARGET).
+          # Not a blanket `break`: TIER_ORDER puts worker-kit before svg, and an
+          # unrelated package should still go out.
+          BLOCKED=" "
           for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
+            dir_name="${pkg#@xivdyetools/}"
+            manifest="packages/${dir_name}/package.json"
+            # Only dependencies that ship to consumers; devDependencies do not.
+            deps=$(jq -r '[.dependencies, .peerDependencies, .optionalDependencies] | map(select(. != null) | to_entries[] | select(.key | startswith("@xivdyetools/")) | .key) | .[]' "$manifest")
+
+            reason=""
+            for dep in $deps; do
+              if [[ "$BLOCKED" == *" $dep "* ]]; then
+                reason="$dep failed or was skipped"
+                break
+              fi
+              # A dependency outside this run (single-package mode) must already be
+              # on npm at the version this package will be published against.
+              if ! echo "$PACKAGES" | jq -e --arg d "$dep" 'index($d) != null' >/dev/null; then
+                dep_dir="${dep#@xivdyetools/}"
+                dep_version=$(jq -r .version "packages/${dep_dir}/package.json")
+                if [ -z "$(npm view "${dep}@${dep_version}" version 2>/dev/null)" ]; then
+                  reason="${dep}@${dep_version} is not on npm"
+                  break
+                fi
+              fi
+            done
+
+            if [ -n "$reason" ]; then
+              echo "::error::Skipping $pkg: $reason"
+              SKIPPED+=("$pkg")
+              BLOCKED="${BLOCKED}${pkg} "
+              continue
+            fi
+
             echo "::group::Publishing $pkg"
             if pnpm --filter "$pkg" publish --provenance --access public --no-git-checks; then
               echo "✓ Successfully published $pkg"
             else
               echo "::error::Failed to publish $pkg"
               FAILED+=("$pkg")
+              BLOCKED="${BLOCKED}${pkg} "
             fi
             echo "::endgroup::"
           done
 
-          if [ ${#FAILED[@]} -gt 0 ]; then
+          if [ ${#FAILED[@]} -gt 0 ] || [ ${#SKIPPED[@]} -gt 0 ]; then
             echo ""
-            echo "::error::Failed to publish ${#FAILED[@]} package(s): ${FAILED[*]}"
+            [ ${#FAILED[@]} -gt 0 ] && echo "::error::Failed to publish ${#FAILED[@]} package(s): ${FAILED[*]}"
+            [ ${#SKIPPED[@]} -gt 0 ] && echo "::error::Skipped ${#SKIPPED[@]} package(s) whose dependency failed or is not on npm: ${SKIPPED[*]} (fix it and rerun; packages already published are skipped by detect)"
             exit 1
           fi
 

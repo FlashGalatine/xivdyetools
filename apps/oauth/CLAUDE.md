@@ -90,7 +90,7 @@ Frontend                       OAuth Worker                       Discord
    │ ◄─ { jwt, user, expires_at } ──│                                │
 ```
 
-XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback`, plus pulls `/api/v1/characters` to pick the **verified** character whose name becomes `username` / `global_name`. The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
+XIVAuth follows the same shape under `/auth/xivauth` and `/auth/xivauth/callback`, plus pulls `/api/v1/characters` to pick the first **verified** character with a non-blank name (trimmed) — that name becomes `username` / `global_name`. Non-object roster elements are dropped; with no usable character the user gets `XIVAuth User <id8>` and `global_name: null` (BUG-057). The roster is read in memory and discarded — none of it is stored (FINDING-001, 2026-08-29 audit).
 
 ### Key Directories
 
@@ -107,7 +107,7 @@ src/
 │   ├── oauth-flow.ts                 # The shared authorize + GET-callback pipeline both providers are built from
 │   └── token.ts                      # POST /auth/revoke, GET /auth/me
 ├── middleware/
-│   └── body-validation.ts            # This app's cap + error bodies for @xivdyetools/worker-kit/body-guards (10KB)
+│   └── body-validation.ts            # This app's cap + error bodies for @xivdyetools/worker-kit/body-guards (10KB), plus requireJsonContentType (415 gate)
 ├── services/
 │   ├── jwt-service.ts                # HS256 sign/verify via Web Crypto, jti, revocation check
 │   ├── user-service.ts               # findOrCreateUser + find-by-id lookups (D1 upserts)
@@ -173,9 +173,9 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 | `/health` | GET | Liveness probe |
 | `/auth/discord` | GET | Initiates Discord OAuth (requires `code_challenge`) |
 | `/auth/callback` | GET | Discord redirect handler. Does **not** exchange the code: it verifies the signed state and bounces `code` + `csrf` + `state` (+ `return_path` when non-`/`) to the allowlisted SPA callback |
-| `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, state }` — `state` is the signed value echoed by the GET callback; required) |
+| `/auth/callback` | POST | SPA token exchange (`{ code, code_verifier, state }` — `state` is the signed value echoed by the GET callback; required). Body must be `application/json` (else 415) and a JSON object (else 400 `Invalid request body`) |
 | `/auth/xivauth` | GET | Initiates XIVAuth OAuth |
-| `/auth/xivauth/callback` | GET / POST | XIVAuth redirect handler — same two-leg shape as `/auth/callback` |
+| `/auth/xivauth/callback` | GET / POST | XIVAuth redirect handler — same two-leg shape as `/auth/callback`, including the 415 / non-object-body rules on the POST |
 | `/auth/revoke` | POST | Revoke a token (writes JTI to `TOKEN_BLACKLIST`) |
 | `/auth/me` | GET | User info for a valid Bearer JWT (revocation-checked via `TOKEN_BLACKLIST`) |
 
@@ -193,6 +193,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### JWT Service
 
+- `jwt-service.ts` has no `decodeJWT` wrapper any more (DEAD-036); the `mintToken` tests import `decodeJWT` from `@xivdyetools/auth` directly.
 - HS256 via Web Crypto (`crypto.subtle.sign('HMAC', ...)`).
 - Mints exactly `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider` and — whenever the account has one — `discord_id` (an XIVAuth-only account gets nine claims): what the clients read, and nothing else (FINDING-002). `orig_iat` (its only reader, `/auth/refresh`, is gone), `xivauth_id` (never had one) and `primary_character` (an FFXIV character name + home world the web app copies and never renders, unverified registrations included) are no longer minted. All three are optional in `@xivdyetools/types`.
 - `verifyJWT` rejects non-HS256 algorithms, validates signature, and checks `exp`.
@@ -207,7 +208,7 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### Cache-Control
 
-Every response the app dispatches carries `Cache-Control: no-store` and `Pragma: no-cache` (FINDING-022; RFC 6749 §5.1) — token bodies, callback bounces carrying an authorization code, `/auth/me`, and the health routes alike. Middleware order in `index.ts` is request-ID → logger → CORS → security headers → env validation → rate limiting → body guards; the security-headers middleware sits directly after CORS and before env validation (BUG-017, 2026-09-16 deep-dive audit) precisely so the "Service misconfigured" 500 a bad deploy produces still carries nosniff / `X-Frame-Options` / `Cache-Control` / `Pragma` / HSTS — it reads only `c.env.ENVIRONMENT`, nothing env validation produces. The one exception is a CORS preflight: Hono's `cors()` middleware answers an OPTIONS request with its own 204 before the security-headers middleware, registered after it, ever runs — a preflight response carries no `Cache-Control` (or `X-Content-Type-Options` / `X-Frame-Options` / HSTS) at all.
+Every response the app dispatches carries `Cache-Control: no-store` and `Pragma: no-cache` (FINDING-022; RFC 6749 §5.1) — token bodies, callback bounces carrying an authorization code, `/auth/me`, and the health routes alike. Middleware order in `index.ts` is request-ID → logger → CORS → security headers → env validation → rate limiting → body-size cap → JSON content-type gate → JSON depth guard; the security-headers middleware sits directly after CORS and before env validation (BUG-017, 2026-09-16 deep-dive audit) precisely so the "Service misconfigured" 500 a bad deploy produces still carries nosniff / `X-Frame-Options` / `Cache-Control` / `Pragma` / HSTS — it reads only `c.env.ENVIRONMENT`, nothing env validation produces. The one exception is a CORS preflight: Hono's `cors()` middleware answers an OPTIONS request with its own 204 before the security-headers middleware, registered after it, ever runs — a preflight response carries no `Cache-Control` (or `X-Content-Type-Options` / `X-Frame-Options` / HSTS) at all.
 
 ### Redirect URI Validation
 
@@ -215,7 +216,9 @@ Every response the app dispatches carries `Cache-Control: no-store` and `Pragma:
 
 ### Rate Limiting
 
-`/auth/*` is rate-limited **per IP and per path**, with the limit chosen by `OAUTH_LIMITS`:
+`/auth/*` is rate-limited **per IP and per path**, with the limit chosen by `OAUTH_LIMITS`. The path is `c.req.path` — the decoded path Hono routes on — not the wire spelling, so `/auth/%63allback` shares `/auth/callback`'s bucket and 20/min tier instead of getting its own (BUG-007). A path no route matches (a 404) still gets its own default-tier bucket per spelling, and the key is not length-bounded.
+
+The limit is chosen by `OAUTH_LIMITS`:
 10/min on the login-initiation paths, 20/min on the token-exchange callbacks, 30/min on everything
 else (`/auth/me`, `/auth/revoke`).
 
@@ -242,7 +245,9 @@ CORS and redirect URIs share **one** allowlist (2.6.0 fix): the origin callback 
 
 - `bodySizeLimit` (10KB — OAuth payloads are small).
 - `jsonDepthLimit` on mutations.
-- Both come from `@xivdyetools/worker-kit/body-guards`' `bodyGuards()` factory (REFACTOR-009, 2026-09-16 deep-dive audit) — `src/middleware/body-validation.ts` now only supplies the 10 KB cap and this app's two error bodies (`{ error: 'Payload too large', message }` 413, `{ success: false, error: 'Invalid request body', message }` 400); the size cap, the depth-10 / prototype-pollution check, and the streaming mechanism live in the shared package. `apps/presets-api` shares the same factory with its own cap and error bodies.
+- `requireJsonContentType` (BUG-149, oauth half): a POST to `/auth/callback` or `/auth/xivauth/callback` with a non-empty body must have a media type of `application/json` (compared case-insensitively, parameters ignored) or it gets `415 { success: false, error: 'Unsupported Media Type', message }`. Both handlers call `c.req.json()` whatever the header says, but the depth / prototype-pollution guard only inspects JSON-typed bodies, so a `text/plain` body used to skip it. Presence is read from the request stream (`c.req.raw.body !== null`), not `Content-Length`; a body-less POST falls through to the handler's own 400. The only client, `apps/web-app/src/services/auth-service.ts`, already sends `application/json`. A mixed-case `Application/JSON` passes this gate but is only depth-checked once worker-kit's guard matches the media type case-insensitively (worker-kit Sprint 16).
+- Both handlers also reject a JSON body that is not an object (`null`, `true`, `123`, `"str"`) with 400 `Invalid request body` (BUG-056); an array falls through to `Missing code or code_verifier`.
+- The size cap and depth guard come from `@xivdyetools/worker-kit/body-guards`' `bodyGuards()` factory (REFACTOR-009, 2026-09-16 deep-dive audit) — `src/middleware/body-validation.ts` now only supplies the 10 KB cap and this app's two error bodies (`{ error: 'Payload too large', message }` 413, `{ success: false, error: 'Invalid request body', message }` 400); the size cap, the depth-10 / prototype-pollution check, and the streaming mechanism live in the shared package. `apps/presets-api` shares the same factory with its own cap and error bodies.
 
 ## Security Patterns
 
@@ -288,14 +293,14 @@ JWT revocation is enforced on `/auth/me` by checking `TOKEN_BLACKLIST` for the `
 | `@xivdyetools/worker-kit` | Shared Hono middleware (request ID, logger) |
 | `@xivdyetools/logger` | Structured logging — **transitive** via `worker-kit`, not a direct dependency |
 
-Tests emulate KV/D1/DO with the hand-rolled `src/__tests__/mocks/cloudflare-test.ts` and
+Tests emulate KV and D1 with the hand-rolled `src/__tests__/mocks/cloudflare-test.ts` and
 `@xivdyetools/test-utils` — **not** `miniflare`. A direct `miniflare` devDependency was declared
 here but never imported; it was removed on 2026-08-10 because it pinned a second, older
 `miniflare` 4 (and with it `undici` 7.28.0) into the lockfile alongside the one `wrangler` resolves.
 
 ## Testing
 
-Vitest with tests under `src/__tests__/` (separate from source files) plus `mocks/cloudflare-test.ts` for KV/D1/DO emulation.
+Vitest with tests under `src/__tests__/` (separate from source files) plus `mocks/cloudflare-test.ts` for KV/D1 emulation.
 
 ```bash
 npm run test                                          # Full suite

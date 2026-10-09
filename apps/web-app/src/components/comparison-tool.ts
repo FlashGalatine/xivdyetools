@@ -130,7 +130,9 @@ export class ComparisonTool extends BaseComponent {
   // State
   private selectedDyes: Dye[] = [];
   private comparisonOptions: ComparisonOptions;
-  // 7C Duel state
+  // 7C Duel state. BUG-085 (2026-10-04 deep-dive): the pair is held by dye
+  // id, not list index — a removal shifts every later index, and a stored
+  // pair still in range then named two other dyes, dropping the one kept.
   private activePair: [number, number] | null = null;
   private method: MatchingMethod = 'ciede2000';
   private methodHelpOpen = false;
@@ -250,6 +252,16 @@ export class ComparisonTool extends BaseComponent {
     logger.info('[ComparisonTool] Mounted');
   }
 
+  onUpdate(): void {
+    // BUG-021 (2026-10-04 deep-dive): update() (a language switch) rebuilds
+    // the right panel with every section hidden and the empty state up. The
+    // selection and the active pair survive it, so redraw them rather than
+    // hiding the duel, Export and Share until the next add or remove.
+    if (this.selectedDyes.length > 0) {
+      this.updateResults();
+    }
+  }
+
   /**
 
 
@@ -273,6 +285,18 @@ export class ComparisonTool extends BaseComponent {
     // while the (hidden) grid behind it shows the real price. renderDuel()
     // no-ops when no pair is active.
     this.renderDuel();
+  }
+
+  /**
+   * Whether the cards draw the market row. BUG-086 (2026-10-04 deep-dive):
+   * the tool's own Price option alone drew it, but the service fetches
+   * nothing while the global Market Board toggle is off (its default), so a
+   * fresh profile read "Market —" forever. The extractor's gate.
+   */
+  private get showPrices(): boolean {
+    return (
+      this.comparisonOptions.showMarketPrices && MarketBoardService.getInstance().getShowPrices()
+    );
   }
 
   /**
@@ -451,6 +475,22 @@ export class ComparisonTool extends BaseComponent {
    */
   private renderLeftPanel(): void {
     const left = this.options.leftPanel;
+
+    // BUG-021 (2026-10-04 deep-dive): this runs again on every language
+    // change, and clearContainer only removes DOM. The previous selector,
+    // panels and market board kept their service subscriptions, one more
+    // live set per switch. Same teardown as accessibility-tool's BUG-070.
+    this.dyeSelector?.destroy();
+    this.dyeSelector = null;
+    this.dyeSelectorPanel?.destroy();
+    this.dyeSelectorPanel = null;
+    this.optionsPanel?.destroy();
+    this.optionsPanel = null;
+    this.marketBoard?.destroy();
+    this.marketBoard = null;
+    this.marketPanel?.destroy();
+    this.marketPanel = null;
+
     clearContainer(left);
 
     // Section 1: Dye Selection (Collapsible)
@@ -554,6 +594,12 @@ export class ComparisonTool extends BaseComponent {
       hideSelectedChips: true, // Selections shown above in dedicated display
     });
     this.dyeSelector.init();
+
+    // A rebuild gets a fresh selector: hand it the current selection, or its
+    // first pick (it reports only its own) replaces the whole comparison.
+    if (this.selectedDyes.length > 0) {
+      this.dyeSelector.setSelectedDyes(this.selectedDyes);
+    }
 
     // Listen for selection changes
     selectorContainer.addEventListener('selection-changed', () => {
@@ -890,9 +936,8 @@ export class ComparisonTool extends BaseComponent {
     // Share Button - v4-share-button custom element
     this.shareButton = document.createElement('v4-share-button') as ShareButton;
     this.shareButton.tool = 'comparison';
-    this.shareButton.shareParams = this.getShareParams();
-    this.shareButton.disabled = this.selectedDyes.length === 0;
     actionsRow.appendChild(this.shareButton);
+    this.updateShareButton();
     contentWrapper.appendChild(actionsRow);
 
     // Selected Dyes Cards Section (V4 result-cards in a horizontal row, centered)
@@ -1186,14 +1231,17 @@ export class ComparisonTool extends BaseComponent {
   }
 
   /** Band tier 0..3 in MATCH context; the ΔE2000 SAME cut follows the
-   *  user's threshold slider (other methods carry the calibrated cuts) */
-  private tierFor(value: number): 0 | 1 | 2 | 3 {
-    if (this.method === 'ciede2000') {
+   *  user's threshold slider (other methods carry the calibrated cuts).
+   *  BUG-018 (2026-10-04 deep-dive): the one owner of that cut. The readout
+   *  rows pass their own method; their copy dropped the 0 -> 1 bump, so with
+   *  the slider below 5 the ΔE2000 row said SAME beside a CLOSE verdict. */
+  private tierFor(value: number, method: MatchingMethod = this.method): 0 | 1 | 2 | 3 {
+    if (method === 'ciede2000') {
       if (value < this.matchThreshold) return 0;
-      const tier = classifyBandTier(value, this.method, 'match');
+      const tier = classifyBandTier(value, method, 'match');
       return tier === 0 ? 1 : tier;
     }
-    return classifyBandTier(value, this.method, 'match');
+    return classifyBandTier(value, method, 'match');
   }
 
   private tierColorFor(tier: 0 | 1 | 2 | 3): string {
@@ -1232,18 +1280,33 @@ export class ComparisonTool extends BaseComponent {
     return pairs.sort((a, b) => a.value - b.value || a.raw - b.raw);
   }
 
-  /** Keep the active pair valid; default to the closest pair */
+  /** The active pair as indices into the current selection, or null when
+   *  either member has left it */
+  private activePairIndices(): [number, number] | null {
+    if (!this.activePair) return null;
+    const [ia, ib] = this.activePair.map((id) => this.selectedDyes.findIndex((d) => d.id === id));
+    return ia >= 0 && ib >= 0 && ia !== ib ? [ia, ib] : null;
+  }
+
+  /** Keep the active pair valid; default to the closest pair. A pair that
+   *  lost one member keeps the other, beside its closest dye. The survivor
+   *  always moves to the left: a bench chip replaces the right member, so the
+   *  next swap evicts the partner the tool picked, not the dye the user kept. */
   private ensureActivePair(): void {
-    const count = this.selectedDyes.length;
-    const valid =
-      this.activePair &&
-      this.activePair[0] < count &&
-      this.activePair[1] < count &&
-      this.activePair[0] !== this.activePair[1];
-    if (!valid) {
-      const closest = this.sortedPairs()[0];
-      this.activePair = closest ? [closest.i, closest.j] : null;
+    if (this.activePairIndices()) return;
+    const idOf = (i: number): number => this.selectedDyes[i].id;
+    const pairs = this.sortedPairs();
+    const kept = this.activePair?.find((id) => this.selectedDyes.some((d) => d.id === id));
+    if (kept !== undefined) {
+      const near = pairs.find((p) => idOf(p.i) === kept || idOf(p.j) === kept);
+      if (near) {
+        const partner = idOf(near.i) === kept ? idOf(near.j) : idOf(near.i);
+        this.activePair = [kept, partner];
+        return;
+      }
     }
+    const closest = pairs[0];
+    this.activePair = closest ? [idOf(closest.i), idOf(closest.j)] : null;
   }
 
   private localizedName(dye: Dye): string {
@@ -1286,8 +1349,8 @@ export class ComparisonTool extends BaseComponent {
       const b = this.selectedDyes[pair.j];
       const active =
         this.activePair !== null &&
-        ((this.activePair[0] === pair.i && this.activePair[1] === pair.j) ||
-          (this.activePair[0] === pair.j && this.activePair[1] === pair.i));
+        ((this.activePair[0] === a.id && this.activePair[1] === b.id) ||
+          (this.activePair[0] === b.id && this.activePair[1] === a.id));
       const tier = this.tierFor(pair.value);
 
       const chip = this.createElement('button', {
@@ -1345,7 +1408,7 @@ export class ComparisonTool extends BaseComponent {
       }
 
       this.on(chip, 'click', () => {
-        this.activePair = [pair.i, pair.j];
+        this.activePair = [a.id, b.id];
         this.renderPairChips();
         this.renderDuel();
       });
@@ -1359,10 +1422,11 @@ export class ComparisonTool extends BaseComponent {
     const host = this.duelContainer;
     clearContainer(host);
 
-    const [ia, ib] = this.activePair;
+    const indices = this.activePairIndices();
+    if (!indices) return;
+    const [ia, ib] = indices;
     const a = this.selectedDyes[ia];
     const b = this.selectedDyes[ib];
-    if (!a || !b) return;
 
     const value = this.metricValue(a, b);
     const tier = this.tierFor(value);
@@ -1469,7 +1533,7 @@ export class ComparisonTool extends BaseComponent {
         deltaE: de2000,
         vendorCost: dye.cost,
       };
-      if (this.comparisonOptions.showMarketPrices) {
+      if (this.showPrices) {
         const marketBoardService = MarketBoardService.getInstance();
         const priceData = marketBoardService.getPriceForDye(dye.itemID);
         if (priceData) {
@@ -1487,7 +1551,7 @@ export class ComparisonTool extends BaseComponent {
       card.showHue = this.comparisonOptions.showHue ?? true;
       card.showStain = this.comparisonOptions.showStain ?? true;
       card.showConsolidation = this.comparisonOptions.showSpectrum ?? true;
-      card.showPrice = this.comparisonOptions.showMarketPrices;
+      card.showPrice = this.showPrices;
       card.showAcquisition = true; // once the colours tie, this is the decision
       card.primaryActionLabel = LanguageService.t('common.remove');
       card.addEventListener('card-select', () => this.removeDye(dye));
@@ -1509,7 +1573,6 @@ export class ComparisonTool extends BaseComponent {
         attributes: { style: 'display: flex; gap: 8px; flex-wrap: wrap;' },
       });
       for (const dye of benchDyes) {
-        const idx = this.selectedDyes.indexOf(dye);
         const chip = this.createElement('button', {
           attributes: {
             type: 'button',
@@ -1533,7 +1596,7 @@ export class ComparisonTool extends BaseComponent {
         );
         // Swapping a bench dye in replaces the pair's second member
         this.on(chip, 'click', () => {
-          this.activePair = [ia, idx];
+          this.activePair = [a.id, dye.id];
           this.renderPairChips();
           this.renderDuel();
         });
@@ -1911,8 +1974,7 @@ export class ComparisonTool extends BaseComponent {
     for (const method of METHOD_ORDER) {
       const raw = ColorService.getDistanceForMethod(a.hex, b.hex, method);
       const value = roundToBandDisplay(raw, method);
-      let tier = classifyBandTier(value, method, 'match');
-      if (method === 'ciede2000' && value < this.matchThreshold) tier = 0;
+      const tier = this.tierFor(value, method);
       const active = method === this.method;
       addRow(
         methodShort(method),
@@ -1966,7 +2028,7 @@ export class ComparisonTool extends BaseComponent {
       };
 
       // Try to get market price if Market Board is enabled
-      if (this.comparisonOptions.showMarketPrices) {
+      if (this.showPrices) {
         const marketBoardService = MarketBoardService.getInstance();
         const priceData = marketBoardService.getPriceForDye(dye.itemID);
         if (priceData) {
@@ -1991,7 +2053,7 @@ export class ComparisonTool extends BaseComponent {
       card.showHue = this.comparisonOptions.showHue ?? true;
       card.showStain = this.comparisonOptions.showStain ?? true;
       card.showConsolidation = this.comparisonOptions.showSpectrum ?? true;
-      card.showPrice = this.comparisonOptions.showMarketPrices;
+      card.showPrice = this.showPrices;
       card.showAcquisition = true;
       card.primaryActionLabel = LanguageService.t('common.remove');
 
@@ -2435,14 +2497,12 @@ export class ComparisonTool extends BaseComponent {
   }
 
   private getShareParams(): Record<string, unknown> {
-    if (this.selectedDyes.length === 0) {
-      return {};
-    }
-
-    // Virtual custom colours carry no stainID and are excluded
-    return {
-      dyes: this.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null),
-    };
+    // Virtual custom colours carry no stainID and are excluded. BUG-087
+    // (2026-10-04 deep-dive): an all-custom selection has nothing to share,
+    // so it builds no dyes at all rather than dyes: [] (the button then
+    // stays disabled instead of failing validation on click).
+    const dyes = this.selectedDyes.map((d) => d.stainID).filter((id): id is number => id !== null);
+    return dyes.length > 0 ? { dyes } : {};
   }
 
   /**
@@ -2450,8 +2510,9 @@ export class ComparisonTool extends BaseComponent {
    */
   private updateShareButton(): void {
     if (this.shareButton) {
-      this.shareButton.shareParams = this.getShareParams();
-      this.shareButton.disabled = this.selectedDyes.length === 0;
+      const params = this.getShareParams();
+      this.shareButton.shareParams = params;
+      this.shareButton.disabled = !('dyes' in params);
     }
   }
 

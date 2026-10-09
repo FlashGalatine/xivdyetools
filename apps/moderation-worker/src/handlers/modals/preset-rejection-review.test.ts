@@ -328,9 +328,9 @@ describe('FINDING-017 — rejection / revert modals', () => {
       );
       await flush();
 
-      // approved now: nothing left to review, and the old buttons are gone
-      expect(lastEdit()).toHaveProperty('components', []);
-      expect(JSON.stringify(lastEdit())).not.toContain('Failed to revert');
+      // approved now: nothing left to review, the old buttons are gone, and
+      // (BUG-052) the embed is left alone while the content states the status
+      expect(lastEdit()).toEqual({ content: 'This preset is now approved.', components: [] });
       expect(discordApi.safeSendMessage).not.toHaveBeenCalled();
     });
 
@@ -372,6 +372,184 @@ describe('FINDING-017 — rejection / revert modals', () => {
         'token-1',
         expect.objectContaining({ components: [] }),
       );
+    });
+  });
+
+  // BUG-050 (2026-10-04 deep-dive): a failed reject / revert leaves an 'Error'
+  // field and the buttons live. The next attempt must not carry it forward.
+  describe('a message that already shows an earlier Error', () => {
+    const afterFailure = (customId: string, field: 'rejection_reason' | 'revert_reason') =>
+      submit(customId, field, REASON, {
+        message: {
+          id: 'msg-1',
+          embeds: [
+            {
+              title: 'Old',
+              description: '**Name:** Old name',
+              fields: [
+                { name: 'Old field', value: 'old' },
+                { name: 'Error', value: 'Failed to reject: earlier outage', inline: false },
+              ],
+              footer: { text: `ID: ${ID}` },
+            },
+          ],
+        },
+      });
+    const fieldsOf = () => lastEdit().embeds[0].fields as Array<{ name: string; value: string }>;
+    const errorsOf = () => fieldsOf().filter((f) => f.name === 'Error');
+    const dyeClash = () =>
+      new PresetAPIError(409, 'Another visible preset already uses this dye combination');
+
+    it('reject: a successful submit drops the stale Error field and keeps the rest', async () => {
+      vi.mocked(presetApi.rejectPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+
+      await handlePresetRejectionModal(
+        afterFailure(`preset_reject_modal_${ID}${BOUND}`, 'rejection_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(lastEdit().embeds[0].title).toContain('Preset Rejected');
+      expect(errorsOf()).toEqual([]);
+      expect(fieldsOf().map((f) => f.name)).toEqual(['Old field', 'Action', 'Reason']);
+    });
+
+    it('revert: a successful submit shows no Error field', async () => {
+      vi.mocked(presetApi.revertPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+
+      await handlePresetRevertModal(
+        afterFailure(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(lastEdit().embeds[0].title).toContain('Reverted');
+      expect(errorsOf()).toEqual([]);
+    });
+
+    it('reject: a second failure replaces the Error field instead of adding another', async () => {
+      vi.mocked(presetApi.rejectPreset).mockRejectedValue(dyeClash());
+
+      await handlePresetRejectionModal(
+        afterFailure(`preset_reject_modal_${ID}${BOUND}`, 'rejection_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(errorsOf()).toEqual([
+        {
+          name: 'Error',
+          value: 'Failed to reject: Another visible preset already uses this dye combination',
+          inline: false,
+        },
+      ]);
+      expect(fieldsOf().map((f) => f.name)).toEqual(['Old field', 'Error']);
+    });
+
+    it('revert: a second failure replaces the Error field instead of adding another', async () => {
+      vi.mocked(presetApi.revertPreset).mockRejectedValue(dyeClash());
+
+      await handlePresetRevertModal(
+        afterFailure(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(errorsOf()).toHaveLength(1);
+      expect(errorsOf()[0].value).toMatch(/^Failed to revert: /);
+      expect(fieldsOf().map((f) => f.name)).toEqual(['Old field', 'Error']);
+    });
+
+    it('revert: the banned-author refusal also replaces the Error field', async () => {
+      vi.mocked(banService.isPresetAuthorBanned).mockResolvedValueOnce(true);
+
+      await handlePresetRevertModal(
+        afterFailure(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(presetApi.revertPreset).not.toHaveBeenCalled();
+      expect(errorsOf()).toHaveLength(1);
+      expect(errorsOf()[0].value).toMatch(/^Not reverted: /);
+      expect(fieldsOf().map((f) => f.name)).toEqual(['Old field', 'Error']);
+    });
+  });
+
+  // BUG-050's class (Sprint 17 review): the 'Review' instruction a confirmation
+  // or a refreshed message carries ("…click Reject to confirm") is wrong once
+  // the preset is decided, and still the next step after a failure.
+  describe("a message that carries the confirmation's Review instruction", () => {
+    const withReview = (customId: string, field: 'rejection_reason' | 'revert_reason') =>
+      submit(customId, field, REASON, {
+        message: {
+          id: 'msg-1',
+          embeds: [
+            {
+              title: 'Old',
+              description: '**Name:** Old name',
+              fields: [
+                { name: 'Review', value: 'Review this text, then click Reject to confirm.' },
+                { name: 'Error', value: 'Failed to reject: earlier outage', inline: false },
+              ],
+              footer: { text: `ID: ${ID}` },
+            },
+          ],
+        },
+      });
+    const fieldNames = () =>
+      (lastEdit().embeds[0].fields as Array<{ name: string }>).map((f) => f.name);
+
+    it('reject: a successful submit drops both the Review instruction and the stale Error', async () => {
+      vi.mocked(presetApi.rejectPreset).mockResolvedValue({ id: ID, name: 'N' } as any);
+
+      await handlePresetRejectionModal(
+        withReview(`preset_reject_modal_${ID}${BOUND}`, 'rejection_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(fieldNames()).toEqual(['Action', 'Reason']);
+    });
+
+    it('reject: a failed submit keeps the Review instruction for the retry', async () => {
+      vi.mocked(presetApi.rejectPreset).mockRejectedValue(new PresetAPIError(503, 'Service down'));
+
+      await handlePresetRejectionModal(
+        withReview(`preset_reject_modal_${ID}${BOUND}`, 'rejection_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(fieldNames()).toEqual(['Review', 'Error']);
+    });
+
+    it('revert: a failed submit and the banned-author refusal keep it too', async () => {
+      vi.mocked(presetApi.revertPreset).mockRejectedValue(new PresetAPIError(503, 'Service down'));
+
+      await handlePresetRevertModal(
+        withReview(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+      expect(fieldNames()).toEqual(['Review', 'Error']);
+
+      vi.mocked(banService.isPresetAuthorBanned).mockResolvedValueOnce(true);
+      await handlePresetRevertModal(
+        withReview(`preset_revert_modal_${ID}${BOUND}`, 'revert_reason'),
+        env,
+        ctx,
+      );
+      await flush();
+      expect(fieldNames()).toEqual(['Review', 'Error']);
     });
   });
 });

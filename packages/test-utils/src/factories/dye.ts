@@ -63,16 +63,6 @@ export function resetMockDyeSequence(): void {
   mockDyeSequence = 0;
 }
 
-/**
- * Opt-in random stainID draw over the real 1-254 Stain range. No longer used
- * by createMockDye()'s default path (BUG-007) — call it explicitly when a
- * test specifically wants non-deterministic stainIDs, e.g.
- * `createMockDye({ stainID: randomStainId() })`.
- */
-export function randomStainId(): number {
-  return Math.floor(Math.random() * MAX_STAIN_ID) + 1;
-}
-
 function legacyItemIdForStain(stainID: number | null): number {
   return LEGACY_ITEM_ID_BASE + (stainID ?? 1);
 }

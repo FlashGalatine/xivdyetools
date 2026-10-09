@@ -185,6 +185,11 @@ export function parseHex(value: string | undefined, paramName = 'hex'): string {
   return normalized;
 }
 
+/** BUG-038: digits with an optional leading minus — no `+`, exponent, hex, separators, whitespace or trailing text. */
+const DECIMAL_INTEGER = /^-?\d+$/;
+/** BUG-038: as above with an optional fractional part that must have digits (`1.`, `.5` are not canonical). */
+const DECIMAL_NUMBER = /^-?\d+(\.\d+)?$/;
+
 /** Parse an integer query param with optional min/max/default. */
 export function parseIntParam(
   value: string | undefined,
@@ -199,8 +204,10 @@ export function parseIntParam(
     });
   }
 
-  const num = parseInt(value, 10);
-  if (isNaN(num)) {
+  // BUG-038: parseInt reads a numeric prefix (`1e2` -> 1, `2abc` -> 2,
+  // `50.9` -> 50, ` 7` -> 7). Only a plain decimal spelling is an integer.
+  const num = DECIMAL_INTEGER.test(value) ? Number(value) : NaN;
+  if (!Number.isSafeInteger(num)) {
     throw new ApiError(ErrorCode.VALIDATION_ERROR, `Parameter "${name}" must be an integer.`, 400, {
       parameter: name,
       received: value,
@@ -241,7 +248,9 @@ export function parseFloatParam(
     });
   }
 
-  const num = parseFloat(value);
+  // BUG-038: parseFloat reads a numeric prefix (`10px` -> 10) and accepts the
+  // exponent form (`1e2`). Only a plain decimal spelling is a number here.
+  const num = DECIMAL_NUMBER.test(value) ? Number(value) : NaN;
   // FINDING-025 / API-13: parseFloat('Infinity') / '1e400' are not NaN but
   // are no more a usable distance than 'abc' is
   if (!Number.isFinite(num)) {

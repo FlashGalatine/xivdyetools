@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`@xivdyetools/test-utils` is the **shared testing toolbox** for the entire workspace: Cloudflare Workers binding mocks (D1, KV, R2, Service Bindings, Analytics Engine), authentication helpers (JWT, bearer-token headers), domain object factories (`createMockPresetRow`, `createMockCategoryRow`, `createMockDye`, `mockDyes`, etc.), and test constants (PKCE values). A 2026-08-18 dead-code audit (DEAD-026/027, Task 5) removed the `/dom` and `/assertions` subpaths and the `factories/user.ts` / `factories/vote.ts` / `auth/context.ts` / `constants/secrets.ts` modules — all had zero consumers anywhere in the workspace; see the package CHANGELOG's "Removed (2026-08-18 dead-code audit)" entry for the full list, including the two DEAD-026 candidates that turned out to have live consumers in this package's own `integration/` suite and were kept instead. One of those two was reversed 2026-08-31 (FINDING-015, Sprint 11 fix round): `auth/signature.ts`'s v1 bot-signature helpers lost their only remaining consumer when the v1-signature integration tests they backed were deleted, and are gone along with it — see "Removed (2026-08-31, FINDING-015)" in the CHANGELOG.
+`@xivdyetools/test-utils` is the **shared testing toolbox** for the entire workspace: Cloudflare Workers binding mocks (D1, KV, R2, Service Bindings, Analytics Engine), authentication helpers (JWT, bearer-token headers), domain object factories (`createMockPresetRow`, `createMockCategoryRow`, `createMockDye`, `mockDyes`, etc.), and test constants (PKCE values). A 2026-08-18 dead-code audit (DEAD-026/027, Task 5) removed the `/dom` and `/assertions` subpaths and the `factories/user.ts` / `factories/vote.ts` / `auth/context.ts` / `constants/secrets.ts` modules — all had zero consumers anywhere in the workspace; see the package CHANGELOG's "Removed (2026-08-18 dead-code audit)" entry for the full list, including the two DEAD-026 candidates that turned out to have live consumers in this package's own `integration/` suite and were kept instead (that suite was itself deleted 2026-10-06, DEAD-041: it tested local copies, not the real workers). One of those two was reversed 2026-08-31 (FINDING-015, Sprint 11 fix round): `auth/signature.ts`'s v1 bot-signature helpers lost their only remaining consumer when the v1-signature integration tests they backed were deleted, and are gone along with it — see "Removed (2026-08-31, FINDING-015)" in the CHANGELOG.
 
 Every worker app that declares it (`discord-worker`, `presets-api`, `oauth`, `moderation-worker`, `api-worker`) uses these mocks in their Vitest suites — see "Consumers" below for the actual per-app slice. `vitest >= 2.0.0` is a peer dependency; consumers bring their own `vitest`.
 
-The package ships **subpath exports** so consumers can import only the slice they need (`@xivdyetools/test-utils/cloudflare`, `/auth`, `/factories`, `/constants`) and avoid pulling Workers types into tests that don't need them.
+The package ships **subpath exports** so consumers can import only the slice they need (`@xivdyetools/test-utils/cloudflare`, `/factories`, `/constants`; the auth helpers come from the root barrel) and avoid pulling Workers types into tests that don't need them.
 
 ## Commands
 
@@ -26,7 +26,7 @@ pnpm --filter @xivdyetools/test-utils run clean
 ```bash
 pnpm turbo run build --filter=@xivdyetools/test-utils
 pnpm turbo run test --filter=@xivdyetools/test-utils
-pnpm --filter @xivdyetools/test-utils exec vitest run src/cloudflare/d1.test.ts
+pnpm --filter @xivdyetools/test-utils exec vitest run tests/cloudflare/d1.test.ts --coverage.enabled=false
 ```
 
 ## Architecture
@@ -39,9 +39,9 @@ The package is organized into **independent subpath-export modules**, each backi
 src/
 ├── index.ts                  # Aggregate re-export of every submodule
 ├── cloudflare/               # CF Workers binding mocks (D1, KV, R2, Fetcher, Analytics)
-│   ├── d1.ts                 # createMockD1Database with regex-pattern QueryMockFn
-│   ├── kv.ts                 # createMockKV (Map-backed, _store / _ttls inspectable)
-│   ├── r2.ts                 # createMockR2Bucket (ArrayBuffer storage)
+│   ├── d1.ts                 # createMockD1Database with a QueryMockFn router (first() resolves null on a miss)
+│   ├── kv.ts                 # createMockKV (Map-backed, _store / _ttls inspectable; list() sorted + cursor-paginated)
+│   ├── r2.ts                 # createMockR2Bucket (ArrayBuffer storage; list() sorted + cursor-paginated)
 │   ├── fetcher.ts            # createMockFetcher for service bindings
 │   └── analytics.ts          # createMockAnalyticsEngine (consumed by discord-worker's
 │                              #   src/test-utils.ts since Task 5's DEAD-005 consolidation)
@@ -51,14 +51,14 @@ src/
 ├── factories/                # Domain object factories
 │   ├── preset.ts              # createMockPresetRow, createMockSubmission
 │   ├── category.ts            # createMockCategoryRow
-│   └── dye.ts                 # createMockDye, mockDyes
+│   └── dye.ts                 # createMockDye, mockDyes, resetMockDyeSequence
 ├── constants/
 │   └── pkce.ts                # VALID_CODE_VERIFIER / VALID_CODE_CHALLENGE
 └── utils/
-    └── counters.ts            # randomId, randomStringId (parallel-safe; TEST-DESIGN-001)
+    └── counters.ts            # randomId, randomStringId, nextStringId (parallel-safe; TEST-DESIGN-001)
 ```
 
-`/dom`, `/assertions`, `factories/user.ts`, `factories/vote.ts`, `auth/context.ts`, `constants/secrets.ts`, and `utils/crypto.ts` were removed 2026-08-18 (dead-code audit, DEAD-026/027) — zero consumers anywhere in the workspace. Internal callers of the old `utils/crypto.ts` pass-through now import `@xivdyetools/auth/encoding` directly. `auth/signature.ts` (kept in that same 2026-08-18 pass because the integration suite still used it) was removed later, 2026-08-31 — its v1 bot-signature helpers lost their only consumer when the v1-signature test blocks in `integration/discord-presets/bot-authentication.test.ts` were deleted (FINDING-015, 2026-08-29 security audit, Sprint 11 fix round).
+`/dom`, `/assertions`, `factories/user.ts`, `factories/vote.ts`, `auth/context.ts`, `constants/secrets.ts`, and `utils/crypto.ts` were removed 2026-08-18 (dead-code audit, DEAD-026/027) — zero consumers anywhere in the workspace. Internal callers of the old `utils/crypto.ts` pass-through now import `@xivdyetools/auth/encoding` directly. `auth/signature.ts` (kept in that same 2026-08-18 pass because the integration suite still used it; that suite was deleted 2026-10-06, DEAD-041) was removed later, 2026-08-31 — its v1 bot-signature helpers lost their only consumer when the v1-signature test blocks in `integration/discord-presets/bot-authentication.test.ts` were deleted (FINDING-015, 2026-08-29 security audit, Sprint 11 fix round).
 
 ## Public API
 
@@ -73,8 +73,9 @@ interface D1Result<T>;
 interface MockD1PreparedStatement;
 interface MockD1DatabaseConfig { maxQueryHistory?: number }   // default 1000
 function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Database;
-//   .prepare(sql) → statement
-//   ._setupMock(fn)            // route via regex on query
+//   .prepare(sql) → statement  (.first() resolves null, never undefined, when the router returns nothing — BUG-147)
+//   ._setupMock(fn)            // route on the query text and bindings (anchor regexes, see below)
+//   ._setBanStatus(isBanned) / ._setBatchFailure(index, message?)
 //   ._queries: string[]        // observed queries
 //   ._bindings: unknown[][]    // observed bindings
 //   ._reset()
@@ -82,13 +83,16 @@ function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Database;
 // KV
 function createMockKV(): MockKVNamespace;
 //   .get / .put / .list / .delete (KVNamespace surface)
+//   .list() returns keys sorted lexicographically, pages of at most 1000, and resumes with key > cursorKey,
+//     so a cursor whose key was deleted or expired still continues (BUG-148)
+//   .put() rejects expirationTtl < 60 like real KV
 //   ._store: Map<string,string>
-//   ._ttls: Map<string,number>
+//   ._ttls: Map<string,number>      // expiry as epoch SECONDS (compare to Date.now() / 1000)
 //   ._reset()
 
 // R2
 function createMockR2Bucket(): MockR2Bucket;
-//   .put / .get / .head / .delete / .list
+//   .put / .get / .head / .delete / .list   (.list() sorted, resumes with key > cursorKey)
 //   ._store: Map<string, StoredR2Object>
 //   ._reset()
 
@@ -107,9 +111,10 @@ function createMockAnalyticsEngine(): MockAnalyticsEngine;
 //   ._reset()
 ```
 
-### `@xivdyetools/test-utils/auth`
+### Auth helpers (root barrel only; the `/auth` subpath export was removed 2026-10-06, DEAD-044)
 
 ```ts
+// import { createTestJWT, ... } from '@xivdyetools/test-utils';
 function createTestJWT(secret, payload, expiresInSeconds?, issuer?): Promise<string>;
 function createExpiredJWT(secret, payload?): Promise<string>;
 function authHeaders(token, userId?, userName?): Record<string, string>;
@@ -123,11 +128,12 @@ The v1 bot-signature helpers (`createBotSignature`, `createTimestampedSignature`
 function createMockPresetRow(overrides?): PresetRow;
 function createMockSubmission(overrides?): PresetSubmission;
 function createMockCategoryRow(overrides?): CategoryRow;
-function createMockDye(overrides?): Dye;
+function createMockDye(overrides?): Dye;   // default stainID: deterministic 1..254 sequence; throws after 254
+function resetMockDyeSequence(): void;     // restart the sequence (call in beforeEach)
 const mockDyes: Dye[];
 ```
 
-Factories accept a `Partial<T>` override object and fill in sensible defaults; row IDs default to `randomId()`/`randomStringId()` from `utils/counters.ts` so suites running in parallel don't collide. `randomId`/`randomStringId` themselves are exported from the root barrel (`utils/index.ts`), not from `/factories`.
+Factories accept a `Partial<T>` override object and fill in sensible defaults; row IDs default to `randomId()`/`randomStringId()` from `utils/counters.ts` so suites running in parallel don't collide. `randomId`/`randomStringId`/`nextStringId` themselves are exported from the root barrel (`utils/index.ts`), not from `/factories`.
 
 ### `@xivdyetools/test-utils/constants`
 
@@ -162,10 +168,10 @@ A test that only needs the PKCE constants should `import from '@xivdyetools/test
 
 - `apps/discord-worker` — KV / Analytics Engine mocks (`src/test-utils.ts`'s `createMockEnv`, since Task 5's DEAD-005 consolidation).
 - `apps/presets-api` — D1 mock, JWT helpers, preset / category factories (`tests/test-utils.ts` shim).
-- `apps/oauth` — D1 mock, JWT + PKCE helpers.
-- `apps/moderation-worker` — service-binding fetcher mock.
-- `apps/api-worker` — D1 + KV mocks for caching tests.
-- `@xivdyetools/svg` (devDependency) — fixtures for snapshot tests.
+- `apps/oauth` — D1 mock, JWT + PKCE helpers (`src/__tests__/mocks/cloudflare-test.ts`).
+- `apps/moderation-worker` — D1 (ban service), KV and service-binding fetcher mocks.
+- `apps/api-worker` — KV mocks for rate-limit, telemetry and Universalis tests.
+- `@xivdyetools/svg` (devDependency) — `createMockDye` fixtures.
 
 `apps/web-app` does **not** consume this package (it has its own local test mocks).
 

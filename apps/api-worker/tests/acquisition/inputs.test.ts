@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildInputs,
+  cofferQuestSources,
   fateZoneLevels,
   tablesFrom,
   type RawFiles,
@@ -147,6 +148,58 @@ const RULES: RelicRule[] = [
 describe('buildInputs', () => {
   const inputs = buildInputs(raw(), extras(), RULES);
 
+  it('attaches the placed Commendation Quartermaster to the unlinked crystal exchange', () => {
+    const r = raw();
+    const e = extras();
+    r.shops.push({ id: 1770684, type: 'SpecialShop', npcs: [], trades: [{ currencies: [{ id: 40479, amount: 2 }], items: [{ id: 52387, amount: 1 }] }] });
+    r.npcs[1043099] = { en: 'commendation quartermaster', position: { map: 51, x: 4.56, y: 6.29 } };
+    r.maps[51] = { placename_id: 358, territory_id: 250, dungeon: false, housing: false };
+    r.places[358] = { en: "Wolves' Den Pier" };
+    e.equippable.set(52387, 'Head');
+    const result = buildInputs(r, e, []);
+    expect(result.offers.get(52387)?.[0]).toMatchObject({ shop: { npcIds: [1043099] }, costs: [{ itemId: 40479, amount: 2 }] });
+    expect(result.npcs.get(1043099)).toMatchObject({ name: 'commendation quartermaster', zone: "Wolves' Den Pier", unreachable: false });
+  });
+
+  it('recovers fixed coffer quest rewards without changing unrelated rewards or the raw index', () => {
+    const r = raw();
+    r.questSources = { 37493: [70061] };
+    r.quests = {
+      70061: { name: { en: 'A Gift from House Leveilleur' }, rewards: [{ id: 37493, amount: 1 }] },
+      70062: { name: { en: 'Another Quest' }, rewards: [{ id: 37493, amount: 1 }, { id: 5, amount: 1 }, { id: 37494, amount: 0 }] },
+    };
+    expect(cofferQuestSources(r, new Set([37493, 37494]))).toEqual({ 37493: [70061, 70062] });
+    expect(r.questSources).toEqual({ 37493: [70061] });
+    const e = extras();
+    e.items.set(37493, { name: 'Appointed Attire Coffer', plural: '', uiCategory: 61, repairJob: 0 });
+    e.questJournal.set(70061, { category: 'Sidequests', section: 'Other Quests' });
+    expect(buildInputs(r, e, []).questInfo.get(70061)?.name).toBe('A Gift from House Leveilleur');
+  });
+
+  it('keeps a coffer purchase offer without adding unrelated miscellaneous products', () => {
+    const r = raw();
+    const e = extras();
+    e.items.set(5, { name: 'Peacelover\'s Attire Coffer', plural: '', uiCategory: 61, repairJob: 0 });
+    const result = buildInputs(r, e, []);
+    expect(result.offers.get(5)?.[0]).toMatchObject({ shop: { npcIds: [1048726] }, costs: [{ itemId: 1, amount: 10 }] });
+    expect(e.equippable.has(5)).toBe(false);
+  });
+
+  it('uses separate resident locations for Kornago and the two expedition antiquarians', () => {
+    const r = raw();
+    r.npcs[1059408] = { en: 'Kornago merchant' };
+    r.npcs[1059485] = { en: 'expedition antiquarian' };
+    r.npcs[1053614] = { en: 'expedition antiquarian', position: { map: 1002, x: 1, y: 1 } };
+    r.maps[1002]!.dungeon = false;
+    for (const [index, id] of [1059408, 1059485, 1053614].entries()) {
+      r.shops.push({ id: 9000 + index, type: 'GilShop', npcs: [id], trades: [{ currencies: [], items: [{ id: 42027, amount: 1 }] }] });
+    }
+    const result = buildInputs(r, extras(), []);
+    expect(result.npcs.get(1059408)).toMatchObject({ zone: 'Central Shroud', outpost: 'Bentbranch Meadows' });
+    expect(result.npcs.get(1059485)?.zone).toBe('The Occult Crescent: North Horn');
+    expect(result.npcs.get(1053614)?.zone).toBe('The Occult Crescent: South Horn');
+  });
+
   it('keeps offers for equippable items only, dropping zero-amount costs and naming shops by type', () => {
     expect(inputs.offers.get(42027)).toEqual([
       {
@@ -280,6 +333,7 @@ describe('tablesFrom', () => {
       {
         gacha: [{ id: 33441, name: 'Fête Present' }],
         eurekaLockboxes: { 'Anemos Lockbox': 'Eureka Anemos Lockboxes' },
+        cofferSources: {},
         ishgardDistricts: ['The Firmament'],
       },
       inputs

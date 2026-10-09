@@ -15,4 +15,4 @@
 Steps: Delete apps/web-app/src/services/preset-submission-service.ts lines 425-466 (docblock, method, trailing blank). No test changes. Run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `e5a612b5` (branch `fix/remediation-2026-10-04-sprint4`, web-app 5.14.2; PR #245, open, stacked on #244).

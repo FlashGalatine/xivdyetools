@@ -3,12 +3,22 @@
  */
 import { describe, it, expect } from 'vitest';
 import { generateHarmonyOG } from './harmony';
-import { dyeService } from './dye-helpers';
-import { HARMONY_OFFSETS } from '@xivdyetools/core';
+import { ALL_DYES, dyeService } from './dye-helpers';
+import {
+  HARMONY_OFFSETS,
+  LEGACY_MATCHING_METHOD_MAP,
+  MATCHING_METHODS,
+  MATCHING_METHOD_TAGS,
+  normalizeMatchingMethod,
+} from '@xivdyetools/core';
+import { isAlgorithm } from '../../og-params';
 import type { HarmonyType } from '../../types';
 
 const anyDye = dyeService.getAllDyes()[0];
 const stainId = anyDye.stainID ?? anyDye.id;
+
+/** The bucket mark's clipPath id is a per-render counter (band.ts) — mask it. */
+const normalizeMarkUid = (svg: string): string => svg.replace(/ogm\d+/g, 'ogmX');
 
 describe('generateHarmonyOG (15E band)', () => {
   it('renders the Discord band frame with base + matches', () => {
@@ -230,15 +240,62 @@ describe('BUG-022: the card draws the same hues the page does', () => {
       expect(byDeltaE).not.toEqual(byRgb);
     });
 
-    it('every accepted algorithm still renders a full card', () => {
-      for (const algorithm of ['ciede2000', 'oklab', 'cie76', 'redmean', 'rgb', 'distinguish']) {
+    /**
+     * BUG-061 / BUG-062 (deep dive 2026-10-04): this used to list only the six
+     * 5.0 spellings and assert only `<svg` — so the three legacy spellings the
+     * route still accepts (`isAlgorithm`) were never rendered, and a card that
+     * drew the wrong dyes passed as long as it drew SOMETHING. Every spelling
+     * the route admits must now choose exactly the dyes its normalized method
+     * chooses, and name that method in the footer.
+     */
+    const EVERY_ACCEPTED_SPELLING = [...MATCHING_METHODS, ...Object.keys(LEGACY_MATCHING_METHOD_MAP)];
+
+    it('every listed spelling is one the route accepts, legacy included', () => {
+      for (const algorithm of EVERY_ACCEPTED_SPELLING) {
+        expect(isAlgorithm(algorithm), algorithm).toBe(true);
+      }
+      // The three pre-5.0 spellings are what the old list left out.
+      expect(EVERY_ACCEPTED_SPELLING).toEqual(expect.arrayContaining(['hyab', 'oklch-weighted', 'euclidean']));
+    });
+
+    it('every accepted spelling chooses its normalized method’s dyes and names that method', () => {
+      const matchCount = HARMONY_OFFSETS.tetradic.slice(0, 4).length;
+      for (const algorithm of EVERY_ACCEPTED_SPELLING) {
+        const normalized = normalizeMatchingMethod(algorithm);
         const svg = generateHarmonyOG({
           dyeId: stainId,
           harmonyType: 'tetradic',
           algorithm: algorithm as never,
         });
-        expect(svg, algorithm).toContain('<svg');
         expect(svg, algorithm).not.toContain('NOT FOUND');
+        // The base plus one band per offset — no slot went missing.
+        expect(pickedHexes(algorithm), algorithm).toHaveLength(1 + matchCount);
+        expect(pickedHexes(algorithm), algorithm).toEqual(pickedHexes(normalized));
+        expect(svg, algorithm).toContain(MATCHING_METHOD_TAGS[normalized]);
+      }
+    });
+
+    /**
+     * BUG-062: core's `getDistanceForMethod` has no case for a legacy spelling,
+     * so it returned `undefined`, every candidate scored NaN, the sort left them
+     * in table order, and `/og/harmony/1/tetradic.png?algo=hyab` drew the first
+     * dyes of `ALL_DYES` — grays — in place of a tetrad.
+     */
+    it('a legacy spelling is not ranked in dye-table order', () => {
+      const base = dyeService.getAllDyes().find((d) => (d.stainID ?? d.id) === stainId)!;
+      const tableOrder = ALL_DYES.filter((d) => d.itemID !== base.itemID)
+        .slice(0, HARMONY_OFFSETS.tetradic.slice(0, 4).length)
+        .map((d) => d.hex.toUpperCase());
+      for (const legacy of Object.keys(LEGACY_MATCHING_METHOD_MAP)) {
+        expect(pickedHexes(legacy).slice(1), legacy).not.toEqual(tableOrder);
+      }
+    });
+
+    it('a legacy spelling renders the same card as the method it normalizes to', () => {
+      for (const [legacy, normalized] of Object.entries(LEGACY_MATCHING_METHOD_MAP)) {
+        const viaLegacy = generateHarmonyOG({ dyeId: stainId, harmonyType: 'tetradic', algorithm: legacy as never });
+        const viaNormalized = generateHarmonyOG({ dyeId: stainId, harmonyType: 'tetradic', algorithm: normalized });
+        expect(normalizeMarkUid(viaLegacy), legacy).toBe(normalizeMarkUid(viaNormalized));
       }
     });
   });

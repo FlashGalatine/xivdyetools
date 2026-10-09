@@ -105,28 +105,19 @@ describe('handleInfoCommand', () => {
     expect(ctx.messageContextStore.get('msg-01')).toBeUndefined();
   });
 
-  it('handles disambiguation for broad query like "Blue"', async () => {
-    const ctx = createInfoContext(['Blue']);
-    await handleInfoCommand(ctx);
-
-    expect(ctx.message.channel?.sendMessage).toHaveBeenCalled();
-    const call = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls[0][0];
-    // Could be disambiguation list or multiple embeds
-    expect(call.content ?? call.embeds).toBeDefined();
-  });
-
-  it('sends error for single result without dye object', async () => {
-    // A hex code resolves to single but may not have a .dye property
-    // The code checks resolution.dye.dye and sends an error if null
+  it('a hex code answers with exactly one dye card', async () => {
     const ctx = createInfoContext(['#ABCDEF']);
     await handleInfoCommand(ctx);
 
-    expect(ctx.message.channel?.sendMessage).toHaveBeenCalled();
+    const calls = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0].embeds).toHaveLength(1);
+    expect(calls[0][0].embeds[0].title).toBeTruthy();
   });
 
   it('handles disambiguation result by sending a list', async () => {
     const mock = vi.mocked(resolveDyeInputMulti);
-    mock.mockReturnValueOnce({
+    mock.mockResolvedValueOnce({
       kind: 'disambiguation',
       dyes: [
         { hex: '#aaa', name: 'Dye A', id: 1, itemID: 100, dye: null as any },
@@ -156,7 +147,7 @@ describe('handleInfoCommand', () => {
       sortOrder: 0,
       localizedNames: {},
     };
-    mock.mockReturnValueOnce({
+    mock.mockResolvedValueOnce({
       kind: 'multiple',
       dyes: [
         { hex: '#ffffff', name: 'Snow White', id: 1, itemID: 5729, dye: fakeDye as any },
@@ -172,20 +163,41 @@ describe('handleInfoCommand', () => {
     expect((ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 
+  // BUG-073, end to end through the real resolver: a name that fits several
+  // dyes now answers with all of them (or the list), not just the first hit.
+  it('"white" (real resolver) sends one card per White dye', async () => {
+    const ctx = createInfoContext(['white']);
+    await handleInfoCommand(ctx);
+
+    const calls = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls).toHaveLength(4);
+    const titles = calls.map((c) => JSON.stringify(c[0].embeds?.[0]));
+    for (const name of ['Snow White', 'Bone White', 'Pearl White', 'Pure White']) {
+      expect(titles.some((t) => t.includes(name)), name).toBe(true);
+    }
+  });
+
+  it('"Blue" (real resolver) sends the disambiguation list', async () => {
+    const ctx = createInfoContext(['Blue']);
+    await handleInfoCommand(ctx);
+
+    const calls = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0][0].content).toContain('Found 25 dyes');
+  });
+
   it('handles single result with a valid dye → sends embed', async () => {
     const ctx = createInfoContext(['Snow', 'White']);
     await handleInfoCommand(ctx);
 
     const calls = (ctx.message.channel?.sendMessage as ReturnType<typeof vi.fn>).mock.calls;
-    expect(calls.length).toBeGreaterThanOrEqual(1);
-    // The successful path sends an embed
-    const lastCall = calls[calls.length - 1][0];
-    expect(lastCall.embeds ?? lastCall.content).toBeDefined();
+    expect(calls).toHaveLength(1);
+    expect(JSON.stringify(calls[0][0].embeds)).toContain('Snow White');
   });
 
   it('handles single result without dye object → error message', async () => {
     const mock = vi.mocked(resolveDyeInputMulti);
-    mock.mockReturnValueOnce({
+    mock.mockResolvedValueOnce({
       kind: 'single',
       dye: { hex: '#abcdef', name: 'Custom', id: 0, itemID: 0, dye: undefined as any },
     });
@@ -199,7 +211,7 @@ describe('handleInfoCommand', () => {
 
   it('handles none result with suggestions', async () => {
     const mock = vi.mocked(resolveDyeInputMulti);
-    mock.mockReturnValueOnce({
+    mock.mockResolvedValueOnce({
       kind: 'none',
       query: 'whte',
       suggestions: ['Snow White', 'Pure White'],
@@ -217,8 +229,6 @@ describe('handleInfoCommand', () => {
     const ctx = createInfoContext(['Snow', 'White']);
     await handleInfoCommand(ctx);
 
-    // Should store context for the message
-    // contextStore.set is called with message.id
-    expect(ctx.messageContextStore.size).toBeGreaterThanOrEqual(1);
+    expect(ctx.messageContextStore.size).toBe(1);
   });
 });

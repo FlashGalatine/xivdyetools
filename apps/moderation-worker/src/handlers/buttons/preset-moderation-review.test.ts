@@ -183,7 +183,7 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       ]);
     });
 
-    it('shows category, sanitized tags and the previous-version note in the refreshed embed', async () => {
+    it('shows category, sanitized tags and what Revert restores in the refreshed embed', async () => {
       vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
         preset: preset({
           category_id: 'jobs',
@@ -200,7 +200,7 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       expect(description).toContain('**Category:** jobs');
       expect(description).toContain('**Tags:** red,');
       expect(description).not.toContain('@everyone');
-      expect(description).toContain('previous version');
+      expect(description).toContain('**Revert:** restores the saved version "Before"');
     });
 
     it('strips every button (components: []) when the preset is no longer pending', async () => {
@@ -212,11 +212,11 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       await handlePresetApproveButton(click(`preset_approve_${ID}`), env, ctx);
       await flush();
 
-      const edit = lastEdit();
-      // an edit WITHOUT components would leave the old live buttons in place
-      expect(edit).toHaveProperty('components');
-      expect(edit.components).toEqual([]);
-      expect(edit.embeds[0].description).toContain('**Status:** approved');
+      // an edit WITHOUT components would leave the old live buttons in place;
+      // BUG-052: one WITH embeds would overwrite a concurrent winner's
+      // "Approved by", so the embed is left as Discord now holds it and the
+      // status goes in the content, where every viewer sees it
+      expect(lastEdit()).toEqual({ content: 'This preset is now approved.', components: [] });
       expect(discordApi.safeSendFollowUp).toHaveBeenCalledWith(
         'app-123',
         'token-1',
@@ -524,6 +524,38 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
       );
     });
 
+    // The confirmation is private to this moderator, so no other moderator's
+    // "Approved by" can be on it: it is rebuilt from the current preset (the
+    // BUG-052 embed-preserving edit is for channel messages only).
+    it('rebuilds the confirmation when the preset was decided elsewhere first', async () => {
+      vi.mocked(presetApi.approvePreset).mockRejectedValue(
+        new PresetReviewConflictError('STALE_REVIEW', 'stale', {
+          status: 'approved',
+          content_revision: 5,
+        }),
+      );
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: preset({ status: 'approved' }),
+        revision: 5,
+      } as any);
+      const base = click(`preset_approve_${ID}:4:pending`);
+
+      await handlePresetApproveButton(
+        { ...base, message: { ...base.message, flags: 64 } },
+        env,
+        ctx,
+      );
+      await flush();
+
+      expect(discordApi.safeEditMessage).not.toHaveBeenCalled();
+      const edit = vi.mocked(discordApi.safeEditOriginalResponse).mock.calls[0][2] as any;
+      expect(edit.components).toEqual([]);
+      expect(edit).not.toHaveProperty('content');
+      expect(edit.embeds[0].title).toBe('🟢 Preset Review');
+      expect(edit.embeds[0].description).toContain('**Status:** approved');
+      expect(edit.embeds[0].footer.text).toBe(`ID: ${ID} • Revision 5`);
+    });
+
     it('refreshes through the interaction webhook too', async () => {
       vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
         preset: preset(),
@@ -544,6 +576,136 @@ describe('FINDING-017 — moderation buttons are bound to a reviewed revision', 
         'token-1',
         expect.objectContaining({ components: expect.any(Array) }),
       );
+    });
+  });
+
+  // BUG-050 (2026-10-04 deep-dive): a failed approve leaves an 'Error' field and
+  // the buttons live. The retry must not carry that field into its own edit.
+  describe('a message that already shows an earlier Error', () => {
+    const afterFailure = (customId: string) =>
+      click(customId, {
+        message: {
+          id: 'msg-1',
+          embeds: [
+            {
+              title: 'Old title',
+              description: '**Name:** Old name',
+              color: 0xfee75c,
+              fields: [
+                { name: 'Old field', value: 'old' },
+                { name: 'Error', value: 'Failed to approve: earlier outage', inline: false },
+              ],
+              footer: { text: `ID: ${ID}` },
+              timestamp: '2025-01-15T10:00:00Z',
+            },
+          ],
+        },
+      });
+    const fieldsOf = () => lastEdit().embeds[0].fields as Array<{ name: string; value: string }>;
+    const errorsOf = () => fieldsOf().filter((f) => f.name === 'Error');
+
+    it('a successful approve drops the stale Error field and keeps the rest', async () => {
+      vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'Approved name' } as any);
+
+      await handlePresetApproveButton(afterFailure(`preset_approve_${ID}:4:pending`), env, ctx);
+      await flush();
+
+      expect(lastEdit().embeds[0].title).toContain('Preset Approved');
+      expect(errorsOf()).toEqual([]);
+      expect(fieldsOf().map((f) => f.name)).toEqual(['Old field', 'Action']);
+    });
+
+    it('a second failure replaces the Error field instead of adding another', async () => {
+      vi.mocked(presetApi.approvePreset).mockRejectedValue(
+        new PresetAPIError(409, 'Another visible preset already uses this dye combination'),
+      );
+
+      await handlePresetApproveButton(afterFailure(`preset_approve_${ID}:4:pending`), env, ctx);
+      await flush();
+
+      expect(errorsOf()).toEqual([
+        {
+          name: 'Error',
+          value: 'Failed to approve: Another visible preset already uses this dye combination',
+          inline: false,
+        },
+      ]);
+      expect(fieldsOf().map((f) => f.name)).toEqual(['Old field', 'Error']);
+    });
+
+    it('the banned-author refusal also replaces the Error field', async () => {
+      vi.mocked(banService.isPresetAuthorBanned).mockResolvedValueOnce(true);
+
+      await handlePresetApproveButton(afterFailure(`preset_approve_${ID}:4:pending`), env, ctx);
+      await flush();
+
+      expect(errorsOf()).toHaveLength(1);
+      expect(errorsOf()[0].value).toMatch(/^Not approved: .*banned/);
+      expect(fieldsOf().map((f) => f.name)).toEqual(['Old field', 'Error']);
+    });
+  });
+
+  // BUG-050's class (Sprint 17 review): the /preset moderate confirmation (and
+  // any refreshed message) carries a 'Review' field telling the moderator to
+  // click Approve. Once the preset is approved that instruction is wrong; while
+  // it is still undecided (a failure) it is still the next step.
+  describe("a message that carries the confirmation's Review instruction", () => {
+    const REVIEW = {
+      name: 'Review',
+      value:
+        'Review this text, then click Approve to confirm. The decision applies to this exact version.',
+      inline: false,
+    };
+    const confirmation = () => {
+      const base = click(`preset_approve_${ID}:4:pending`);
+      return {
+        ...base,
+        message: {
+          id: 'msg-eph',
+          flags: 64,
+          embeds: [
+            {
+              title: '🟡 Preset Review',
+              description: '**Name:** Fresh Name',
+              color: 0xfee75c,
+              fields: [REVIEW, { name: 'Error', value: 'Failed to approve: earlier outage' }],
+              footer: { text: `ID: ${ID} • Revision 4` },
+            },
+          ],
+        },
+      };
+    };
+    const fieldNames = (): string[] => {
+      const calls = vi.mocked(discordApi.safeEditOriginalResponse).mock.calls;
+      const edit = calls[calls.length - 1][2] as any;
+      return edit.embeds[0].fields.map((f: { name: string }) => f.name);
+    };
+
+    it('a successful approve drops both the Review instruction and the stale Error', async () => {
+      vi.mocked(presetApi.approvePreset).mockResolvedValue({ id: ID, name: 'Approved name' } as any);
+
+      await handlePresetApproveButton(confirmation(), env, ctx);
+      await flush();
+
+      expect(fieldNames()).toEqual(['Action']);
+    });
+
+    it('a failed approve keeps the Review instruction for the retry', async () => {
+      vi.mocked(presetApi.approvePreset).mockRejectedValue(new PresetAPIError(503, 'Service down'));
+
+      await handlePresetApproveButton(confirmation(), env, ctx);
+      await flush();
+
+      expect(fieldNames()).toEqual(['Review', 'Error']);
+    });
+
+    it('the banned-author refusal keeps the Review instruction too', async () => {
+      vi.mocked(banService.isPresetAuthorBanned).mockResolvedValueOnce(true);
+
+      await handlePresetApproveButton(confirmation(), env, ctx);
+      await flush();
+
+      expect(fieldNames()).toEqual(['Review', 'Error']);
     });
   });
 });

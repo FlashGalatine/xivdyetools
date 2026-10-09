@@ -3,9 +3,11 @@
  * Phase 3.1: Target 60-80 tests covering all conversion methods, caching, and edge cases
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ColorConverter, normalizeDeltaEFormula } from '../ColorConverter.js';
 import { AppError } from '@xivdyetools/types';
+import type { RGB } from '@xivdyetools/types';
+import type { LRUCache } from '../../../utils/index.js';
 
 describe('ColorConverter', () => {
   // ============================================================================
@@ -430,6 +432,61 @@ describe('ColorConverter', () => {
 
         it('should throw AppError for negative value', () => {
           expect(() => converter.hsvToRgb(180, 50, -1)).toThrow(AppError);
+        });
+      });
+
+      // BUG-135 (2026-10-04 deep-dive): the cache key was rounded to 2 dp but
+      // the cached value was computed from the unrounded inputs, so whichever
+      // of two inputs sharing a rounded key ran first decided the answer for
+      // both. (0, 50.004, 100) is g=127 exactly and (0, 49.996, 100) is g=128,
+      // but both rounded to the key "0,50,100".
+      describe('cache is call-order independent (BUG-135)', () => {
+        const a = [0, 50.004, 100] as const;
+        const b = [0, 49.996, 100] as const;
+
+        const fresh = (h: number, s: number, v: number) => new ColorConverter().hsvToRgb(h, s, v);
+
+        it('fresh conversions differ by one unit on the green/blue channels', () => {
+          expect(fresh(...a)).toEqual({ r: 255, g: 127, b: 127 });
+          expect(fresh(...b)).toEqual({ r: 255, g: 128, b: 128 });
+        });
+
+        it('a warm cache returns the same result as a fresh one, in either order', () => {
+          const ab = new ColorConverter();
+          expect(ab.hsvToRgb(...a)).toEqual(fresh(...a));
+          expect(ab.hsvToRgb(...b)).toEqual(fresh(...b));
+
+          const ba = new ColorConverter();
+          expect(ba.hsvToRgb(...b)).toEqual(fresh(...b));
+          expect(ba.hsvToRgb(...a)).toEqual(fresh(...a));
+        });
+
+        it('still serves a repeated exact input from the cache', () => {
+          // A cache size of 1 alone cannot show a hit: a miss that recomputes
+          // and re-sets the same key leaves the size at 1 too. Watch the
+          // cache itself — one store across two identical calls, and the
+          // second lookup answers.
+          const c = new ColorConverter();
+          const cache = (c as unknown as { hsvToRgbCache: LRUCache<string, RGB> }).hsvToRgbCache;
+          const get = vi.spyOn(cache, 'get');
+          const set = vi.spyOn(cache, 'set');
+
+          const first = c.hsvToRgb(...a);
+          const second = c.hsvToRgb(...a);
+
+          expect(set).toHaveBeenCalledTimes(1);
+          expect(get).toHaveBeenCalledTimes(2);
+          expect(get.mock.results[1].value).toEqual(first);
+          // BUG-005's defensive copy: a hit is a fresh object, equal in value
+          expect(second).toEqual(first);
+          expect(second).not.toBe(first);
+        });
+
+        it('keys an out-of-range-equivalent hue (360) with its normalized form (0)', () => {
+          const c = new ColorConverter();
+          expect(c.hsvToRgb(360, 100, 100)).toEqual({ r: 255, g: 0, b: 0 });
+          expect(c.hsvToRgb(0, 100, 100)).toEqual({ r: 255, g: 0, b: 0 });
+          expect(c.getCacheStats().hsvToRgb).toBe(1);
         });
       });
     });

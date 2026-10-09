@@ -33,7 +33,6 @@ export default defineConfig({
         'src/shared/types.ts',
         // Large Lit shells still awaiting tests — tracked, not forgotten
         'src/components/v4/dye-palette-drawer.ts',
-        'src/components/v4/preset-tool.ts',
         'src/components/v4/preset-detail.ts',
         'src/components/v4/v4-layout-shell.ts',
         'src/components/v4/display-options-v4.ts',
@@ -54,8 +53,8 @@ export default defineConfig({
       //
       // RATCHET, not a target. These are set just under what the suite
       // actually achieves so the figure cannot regress; the goal remains
-      // 80/80/80/75, which is also what `scripts/coverage-report.ts` holds
-      // every app to.
+      // 80/80/80/80, which is also what `scripts/coverage-report.ts` holds
+      // every app to (its APP_BASELINE).
       //
       // 2026-09-03: raised from 71/55/65/72 after the coverage sweep. Five
       // components had no test file at all (advanced-options-panel,

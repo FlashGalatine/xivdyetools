@@ -84,6 +84,7 @@ export function readWorkspaceVersions(root = process.cwd()): WorkspaceVersion[] 
 }
 
 const VERSION_CELL = /^v?(\d+\.\d+\.\d+)$/;
+const SEMVER = /^\d+\.\d+\.\d+$/;
 const LINK_CELL = /^\[([^\]]*)\]\(([^)]*)\)$/;
 const NAME_COLUMNS = new Set(['package name', 'package', 'app', 'project']);
 
@@ -156,15 +157,19 @@ export function extractDocVersions(
     }
     if (!inTable || versionCol < 0) continue;
     const cells = cellsOf(line);
-    const m = VERSION_CELL.exec(bare(cells[versionCol] ?? ''));
-    if (!m) continue;
     let workspace: WorkspaceVersion | null = null;
     for (const idx of nameCols) {
       workspace = resolveWorkspaceCell(cells[idx] ?? '', workspaces);
       if (workspace) break;
     }
-    if (workspace)
-      claims.push({ file, line: i + 1, workspace: workspace.name, version: m[1] ?? '' });
+    if (!workspace) continue;
+    const rawVersion = bare(cells[versionCol] ?? '');
+    if (rawVersion === '') continue; // an empty cell asserts nothing
+    // A non-empty cell that is not semver is still a claim (BUG-156), carried
+    // verbatim so `compareClaims` reports it. Dropping it silently let a second
+    // row for the same workspace ('5.7') pass while the other row covered it.
+    const m = VERSION_CELL.exec(rawVersion);
+    claims.push({ file, line: i + 1, workspace: workspace.name, version: m ? (m[1] ?? '') : rawVersion });
   }
   return claims;
 }
@@ -179,7 +184,11 @@ export function compareClaims(
   for (const c of claims) {
     const ws = byName.get(c.workspace);
     if (!ws) continue;
-    if (ws.version !== c.version) {
+    if (!SEMVER.test(c.version)) {
+      out.push(
+        `${c.file}:${c.line} — ${c.workspace} claims version "${c.version}", which is not a semver version (${ws.dir}/package.json says ${ws.version})`,
+      );
+    } else if (ws.version !== c.version) {
       out.push(
         `${c.file}:${c.line} — ${c.workspace} says ${c.version}, ${ws.dir}/package.json says ${ws.version}`,
       );

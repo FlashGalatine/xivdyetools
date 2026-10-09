@@ -15,9 +15,11 @@ import {
     storeFailedNotification,
     listFailedNotifications,
     resolveFailedNotification,
+    pruneFailedNotifications,
     FAILED_NOTIFICATION_RESOLVED_RETENTION_DAYS,
     FAILED_NOTIFICATION_UNRESOLVED_RETENTION_DAYS,
     type PresetNotificationPayload,
+    type PresetSubmissionNotification,
 } from '../../src/services/notification-service';
 import { createMockD1Database } from '../test-utils';
 
@@ -122,6 +124,56 @@ describe('dead-letter queue (FINDING-017)', () => {
             expect(db._bindings[insertIndex][2]).toBe(4);
         });
 
+        it('keeps none of an edit\'s pre-edit text or revert snapshot either', async () => {
+            // Sprint 9: an edit notification carries the replaced text twice
+            // over — `edited_from` and `preset.previous_values` — and neither
+            // may outlive it in the dead-letter row.
+            const db = createMockD1Database();
+            db._setupMock(() => ({ meta: { changes: 0 } }));
+            const base = submissionPayload as PresetSubmissionNotification;
+            const editPayload: PresetSubmissionNotification = {
+                ...base,
+                is_edit: true,
+                edited_from_status: 'approved',
+                edited_from: {
+                    name: 'Dawn over Limsa Lominsa',
+                    description: 'The text this edit replaced',
+                    tags: ['replaced-tag'],
+                    dyes: [4, 5, 6],
+                },
+                preset: {
+                    ...base.preset,
+                    previous_values: {
+                        name: 'Dusk over Ul\'dah',
+                        description: 'The older revert snapshot',
+                        tags: ['snapshot-tag'],
+                        dyes: [7, 8, 9],
+                    },
+                },
+            };
+
+            await storeFailedNotification(db, editPayload, new Error('Discord worker returned 500'));
+
+            expect(storedPayload(db)).toEqual({
+                type: 'submission',
+                preset_id: 'preset-123',
+                moderation_status: 'flagged',
+                content_revision: 4,
+            });
+            const insertIndex = db._queries.findIndex((q) => /INSERT INTO failed_notifications/i.test(q));
+            const serialised = db._bindings[insertIndex][0] as string;
+            for (const text of [
+                'Dawn over Limsa Lominsa',
+                'The text this edit replaced',
+                'replaced-tag',
+                'Dusk over Ul\'dah',
+                'The older revert snapshot',
+                'snapshot-tag',
+            ]) {
+                expect(serialised).not.toContain(text);
+            }
+        });
+
         it('keeps the preset id and type for a preview-image notification', async () => {
             const db = createMockD1Database();
             db._setupMock(() => ({ meta: { changes: 0 } }));
@@ -185,6 +237,21 @@ describe('dead-letter queue (FINDING-017)', () => {
 
             expect(db._queries.some((q) => /DELETE FROM failed_notifications/i.test(q))).toBe(true);
             expect(db._queries.some((q) => /INSERT INTO failed_notifications/i.test(q))).toBe(true);
+        });
+
+        // BUG-066: the daily job needs to know whether the sweep ran.
+        it('the prune resolves true when the sweep ran and false when its DELETE failed', async () => {
+            const ok = createMockD1Database();
+            ok._setupMock(() => ({ meta: { changes: 0 } }));
+            await expect(pruneFailedNotifications(ok)).resolves.toBe(true);
+
+            const broken = createMockD1Database();
+            broken._setupMock(() => {
+                throw new Error('D1_ERROR: no such table: failed_notifications');
+            });
+            const warn = vi.fn();
+            await expect(pruneFailedNotifications(broken, { warn })).resolves.toBe(false);
+            expect(warn).toHaveBeenCalledWith('[FINDING-017] dead-letter prune failed', { pruned: 0 });
         });
     });
 

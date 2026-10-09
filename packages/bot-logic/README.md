@@ -34,10 +34,42 @@ npm install @xivdyetools/bot-logic
 | `executeContrast(input)` | WCAG 1.4.11 contrast ratios for 2–4 dyes (13A/13B/13C) — new in 2.0.0 |
 | `executeAccessibility(input)` | Colour-vision lens for one or two dyes, routed on `vision` (13D/13E/13H) |
 | `executeSwatch(input)` | `.chara` character-file colour matching — new in 2.0.0 |
+| `executeGlamour(input)` | `.chara` glamour reader — the gear, its dyes and what the file's character can wear; the caller injects `input.resolve` |
 
 `executeMatch` was **removed in 2.0.0** (the v4 `/match` command is gone; colour → dye matching lives in discord-worker's `/extractor color` sheet). All distances are ΔE2000 and every result carries a card rendered by `@xivdyetools/svg` 2.0.0's frame system; every input accepts an optional `theme: 'dark' | 'light'`.
 
-Each function returns a discriminated union (`{ ok: true; ... } | { ok: false; error: ...; errorMessage: string }`).
+### Results and error codes
+
+Each function returns a discriminated union (`{ ok: true; ... } | { ok: false; error: ...; errorMessage: string }`) and never throws across the boundary. On failure, `errorMessage` is already localized for the input's `locale`, and `error` is one of these codes:
+
+| Function | `error` codes |
+|----------|---------------|
+| `executeDyeInfo` | `GENERATION_FAILED` |
+| `executeRandom` | `NO_DYES`, `GENERATION_FAILED` |
+| `executeHarmony` | `NO_MATCHES`, `GENERATION_FAILED` |
+| `executeGradient` | `GENERATION_FAILED` |
+| `executeMixer` | `NO_MATCHES`, `GENERATION_FAILED` |
+| `executeComparison` | `NOT_ENOUGH_DYES`, `GENERATION_FAILED` |
+| `executeContrast` | `NOT_ENOUGH_DYES`, `GENERATION_FAILED` |
+| `executeAccessibility` | `NOT_ENOUGH_DYES`, `GENERATION_FAILED` |
+| `executeSwatch` | `PARSE_FAILED`, `NO_LIVE_SLOTS`, `SLOT_MISSING`, `GENERATION_FAILED` |
+| `executeGlamour` | `PARSE_FAILED`, `NO_GEAR`, `RESOLVE_FAILED`, `RESOLVE_BUSY`, `GENERATION_FAILED` |
+
+`NOT_ENOUGH_DYES` is the caller's mistake, refused before any rendering: `executeComparison` and `executeContrast` need at least two dyes, and `executeAccessibility` needs at least one. A missing or non-array `dyes` gets the same code. If your code switches exhaustively on `error`, give it a `NOT_ENOUGH_DYES` case.
+
+### Logging
+
+Every input takes an optional `logger: { warn(message: string): void }`. It receives the translator's missing-key warnings, `executeHarmony`'s `[harmony] unknown colour wheel "<wheel>" — using rgb` when `wheel` is not a known id, and one line for each failure the command catches:
+
+```
+[mixer] generation failed: TypeError
+[gradient] generation failed: AppError INVALID_HEX_COLOR
+[swatch] parse failed: AppError INVALID_INPUT
+[glamour] generation failed: string
+[glamour] resolve failed: Error (status 503)
+```
+
+Each command logs under its own tag (`[dye info]` and `[dye random]` for the two dye commands). The line gives the error's class, plus its `code` when it carries a string one (an `AppError`'s code, for example). A thrown non-Error is named by its `typeof`. The line never includes the error message, because a message can quote what the user typed or a value from their `.chara` file. `[glamour] resolve failed` is written only for `RESOLVE_FAILED`: a busy resolver (HTTP 429) and a refused file (400/413/422) are expected answers and are not logged.
 
 ## Usage
 
@@ -78,12 +110,26 @@ const color = resolveColorInput('#FF6B6B', { findClosestForHex: true });
 const dye = resolveDyeInput('jet black');
 // → Dye { name: 'Jet Black', hex: '#1e1e1e', ... }
 
-// CSS color names work too — but only when no dye name matches first.
-// Resolution order is hex → dye name → CSS name, so 'coral' resolves to the
-// DYE Coral Pink, not to CSS coral (#FF7F50).
+// A bare number of 1–5 digits is a dye id: a stainID (1–254) or a legacy
+// item id (5729 and up). Six bare digits are always a hex colour.
+resolveColorInput('101');      // → { name: 'Pure White', stainID: 101, dye, ... }
+resolveColorInput('13114');    // → Pure White again, by its legacy item id
+resolveColorInput('013114');   // → { hex: '#013114' }: a colour, never a padded id
+
+// CSS color names work too — but only when no dye name matches first, so
+// 'coral' resolves to the DYE Coral Pink, not to CSS coral (#FF7F50).
 const css = resolveColorInput('burlywood');
 // → { hex: '#DEB887' }
 ```
+
+`resolveColorInput` trims the input, then tries these in order. The first one that applies decides:
+
+1. **A bare number other than six digits** is a dye id. 1–5 digits look up a stainID (1–254) or a legacy item id (5729 and up). Any other number, including zero, the gap between the two ranges and seven or more digits, resolves to `null`. It never falls through to the hex or name steps, so `'101'` is Pure White rather than the shorthand for `#110011`.
+2. **Hex**: `#FF0000`, `FF0000`, `#F00`, `F00`, and six bare digits such as `'000000'`. A 3-character shorthand without `#` must contain a hex letter, since three bare digits are an id.
+3. **Dye name**: a case-insensitive partial match on the English name, and on the localized name when `options.locale` is set and `initializeLocale(locale)` has run.
+4. **CSS color name**: one of the 148 standard names.
+
+`resolveDyeInput` returns a `Dye` or `null`. It trims the input and tries 1–5 digit ids, then dye names (English plus `locale`), then a full six-character hex code (`#FF0000`, `FF0000`, or six bare digits), which it answers with the closest dye. It has no shorthand step and no CSS step, so anything else returns `null`.
 
 ### Multi-Dye Commands
 
@@ -111,8 +157,8 @@ const comparison = await executeComparison({
 
 ### Input Resolution
 
-- `resolveColorInput(input, options?)` — Resolves hex codes, dye names, or CSS color names to a `ResolvedColor`. Order is hex → dye name → CSS name, so a dye name always wins a collision.
-- `resolveDyeInput(input, locale = 'en')` — Resolves input directly to a `Dye` object (or `null`)
+- `resolveColorInput(input, options?)` — Resolves dye ids, hex codes, dye names, or CSS color names to a `ResolvedColor`. Order is 1–5 digit id → hex (six bare digits included) → dye name → CSS name, so a dye name always beats a CSS name. Surrounding whitespace is ignored. See [Input Resolution](#input-resolution) above.
+- `resolveDyeInput(input, locale = 'en')` — Resolves input directly to a `Dye` object (or `null`): 1–5 digit id → dye name → closest dye to a six-character hex
 - `isValidHex(input)` — Validates hex color strings
 - `normalizeHex(input)` — Normalizes to `#RRGGBB` format
 
@@ -150,6 +196,17 @@ import { createTranslator } from '@xivdyetools/bot-logic/i18n';
 const t = createTranslator('ja');
 t.t('about.title');
 ```
+
+The same subpath exports `resolveUserLocale`, which both Discord bots use to pick a user's language:
+
+```typescript
+import { resolveUserLocale } from '@xivdyetools/bot-logic/i18n';
+
+// kv: anything with get(key): Promise<string | null>, e.g. a Workers KVNamespace
+const locale = await resolveUserLocale(kv, userId, interaction.locale, logger);
+```
+
+It tries the unified preferences blob (`prefs:v1:<id>`), then the legacy key (`i18n:user:<id>`), then the Discord client locale, then English. A failed KV read or a malformed blob falls through to the next step and never throws. The fourth argument, `logger?: { error(message: string, error?: Error): void }`, is optional, and `@xivdyetools/logger`'s `ExtendedLogger` fits it. When it is passed, each degraded step gets one line. The messages are fixed and do not include the user id. A failed KV read passes the KV's own `Error` through unchanged, or no error object if the KV rejected with something that is not an `Error`. A malformed blob is logged without its contents. Without a logger, those failures are silent.
 
 ## Consumers
 

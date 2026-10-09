@@ -148,3 +148,132 @@ describe('resolveUserLocale', () => {
     expect(kv.get).toHaveBeenCalledWith('i18n:user:user-123');
   });
 });
+
+// BUG-126 (2026-10-04 audit): the legacy reader has logged a KV failure since
+// REFACTOR-001 kept moderation-worker's louder copy, but resolveUserLocale —
+// its only production caller — never handed it a logger, so the line never
+// fired. Locale resolution still never throws; it now says why it degraded.
+describe('resolveUserLocale logging (BUG-126)', () => {
+  const USER_ID = 'user-123';
+  // Short, and at the very start of the malformed blob: V8 quotes only about
+  // ten characters either side of the parse position, so a sentinel placed
+  // later in a longer blob would be elided ('"not json { "...') and the
+  // leak test could not see the leak it guards against.
+  const SENTINEL = 'blobsecret';
+
+  /**
+   * Every string a logger was handed: each message, and each Error's
+   * message, name and stack. `JSON.stringify(mock.calls)` would render an
+   * Error as `{}` and hide exactly the leak these tests look for.
+   */
+  function loggedText(error: ReturnType<typeof vi.fn>): string {
+    return error.mock.calls
+      .flat()
+      .map((arg: unknown) =>
+        arg instanceof Error ? `${arg.name} ${arg.message} ${arg.stack ?? ''}` : String(arg)
+      )
+      .join('\n');
+  }
+
+  it('logs a KV failure on both reads and still resolves', async () => {
+    const kv: LocalePreferenceStore = {
+      get: vi.fn().mockRejectedValue(new Error('KV unavailable')),
+    };
+    const logger = { error: vi.fn() };
+
+    await expect(resolveUserLocale(kv, USER_ID, 'ja', logger)).resolves.toBe('ja');
+
+    expect(logger.error).toHaveBeenCalledTimes(2);
+    for (const [message, error] of logger.error.mock.calls) {
+      expect(typeof message).toBe('string');
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toBe('KV unavailable');
+    }
+  });
+
+  // The promise is narrower than "the id is never logged". The fixed messages
+  // never name the user, but a failed KV read hands the logger the KV's own
+  // Error unchanged — its message is what tells a rate limit from an outage:
+  // the worker logger drops the stack, and the class alone would read just
+  // 'Error'. If the runtime's error quotes the key, the id travels with it,
+  // as it already does on each slash command's 'Handling command' line. The
+  // rejection here quotes the key so that choice is pinned, not assumed:
+  // hiding it would make this test fail and need a deliberate edit.
+  it('keeps the user id out of its own messages and passes the KV error through as-is', async () => {
+    const rejections: Error[] = [];
+    const kv: LocalePreferenceStore = {
+      get: vi.fn(async (key: string) => {
+        const error = new Error(`KV GET failed for ${key}`);
+        rejections.push(error);
+        throw error;
+      }),
+    };
+    const logger = { error: vi.fn() };
+
+    await resolveUserLocale(kv, USER_ID, undefined, logger);
+
+    expect(rejections.map((e) => e.message)).toEqual([
+      `KV GET failed for prefs:v1:${USER_ID}`,
+      `KV GET failed for i18n:user:${USER_ID}`,
+    ]);
+    expect(logger.error).toHaveBeenCalledTimes(2);
+    logger.error.mock.calls.forEach(([message, error], i) => {
+      expect(message).not.toContain(USER_ID);
+      expect(error).toBe(rejections[i]);
+    });
+  });
+
+  // JSON.parse's SyntaxError quotes the input ("… is not valid JSON"), so
+  // handing it to the logger would write the user's stored blob into the
+  // logs. A malformed blob is logged by a fixed message alone.
+  it('logs a malformed blob without the KV contents', async () => {
+    const kv = store({
+      [`prefs:v1:${USER_ID}`]: `${SENTINEL} {`,
+      [`i18n:user:${USER_ID}`]: 'ja',
+    });
+    const logger = { error: vi.fn() };
+
+    await expect(resolveUserLocale(kv, USER_ID, undefined, logger)).resolves.toBe('ja');
+
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    const text = loggedText(logger.error);
+    expect(text).not.toContain(SENTINEL);
+    expect(text).not.toContain(USER_ID);
+  });
+
+  // LocaleResolutionLogger takes `error?: Error`, and a JavaScript store can
+  // reject with anything. A thrown string is not an Error, so the line goes
+  // out with no error object rather than handing the logger whatever was
+  // thrown, which could be a quoted key or blob.
+  it('logs a non-Error KV rejection by its message alone, on both reads', async () => {
+    const kv: LocalePreferenceStore = {
+      get: vi.fn().mockRejectedValue(`KV GET failed for prefs:v1:${USER_ID}`),
+    };
+    const logger = { error: vi.fn() };
+
+    await expect(resolveUserLocale(kv, USER_ID, 'fr', logger)).resolves.toBe('fr');
+
+    expect(logger.error).toHaveBeenCalledTimes(2);
+    for (const [message, error] of logger.error.mock.calls) {
+      expect(typeof message).toBe('string');
+      expect(error).toBeUndefined();
+    }
+    expect(loggedText(logger.error)).not.toContain(USER_ID);
+  });
+
+  it('logs nothing when every read succeeds', async () => {
+    const logger = { error: vi.fn() };
+
+    await resolveUserLocale(store({ 'i18n:user:u1': 'de' }), 'u1', 'fr', logger);
+
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('still resolves without a logger', async () => {
+    const kv: LocalePreferenceStore = {
+      get: vi.fn().mockRejectedValue(new Error('KV unavailable')),
+    };
+
+    await expect(resolveUserLocale(kv, USER_ID, 'de')).resolves.toBe('de');
+  });
+});

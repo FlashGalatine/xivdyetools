@@ -19,7 +19,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { ICON_STATE_PRESETS_EMPTY, ICON_STATE_SEARCH } from '@shared/state-icons';
 import { BaseLitComponent } from './base-lit-component';
 import { ConfigController } from '@services/config-controller';
-import { hybridPresetService } from '@services/hybrid-preset-service';
+import { hybridPresetService, sortPresets } from '@services/hybrid-preset-service';
 import {
   resolvePresetDye,
   LanguageService,
@@ -35,7 +35,7 @@ import { CollectionService, type Collection } from '@services/collection-service
 import { logger } from '@shared/logger';
 import { presetCategoryLabel } from '@shared/preset-i18n';
 import { sanitizeExampleLink, sanitizePreviewImageUrl } from '@shared/example-link';
-import type { UnifiedPreset } from '@services/hybrid-preset-service';
+import type { UnifiedPreset, PresetPoolResult } from '@services/hybrid-preset-service';
 import type { CommunityPreset } from '@services/community-preset-service';
 import type { PresetsConfig, PresetCategoryFilter } from '@shared/tool-config-types';
 import type { PresetCategory } from '@xivdyetools/types';
@@ -43,7 +43,7 @@ import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 
 // Import child components
 import './preset-card';
-import './preset-detail';
+import { voteErrorMessage, type VoteUpdateDetail } from './preset-detail';
 import type { PresetCardData } from './preset-card';
 
 type PresetTab = 'community' | 'official' | 'saved' | 'mine';
@@ -72,6 +72,62 @@ const SORT_ORDER = ['popular', 'recent', 'name'] as const;
  * produced a 50-row pool that reconciliation then read as 50 deletions.
  */
 const PRESET_PAGE_LIMIT = 50;
+
+/** A local CollectionService palette's gallery id (see `localPaletteToUnified`). */
+function isLocalPaletteId(id: string): boolean {
+  return id.startsWith('local-');
+}
+
+/** Name, description or a tag contains the (lower-cased) query. */
+function matchesSearch(preset: UnifiedPreset, q: string): boolean {
+  return (
+    preset.name.toLowerCase().includes(q) ||
+    preset.description.toLowerCase().includes(q) ||
+    preset.tags.some((t) => t.toLowerCase().includes(q))
+  );
+}
+
+/** A Saved-shelf row, with the sort keys the shelf itself holds. */
+interface ShelfRow {
+  preset: UnifiedPreset;
+  /** When it joined the shelf: the snapshot's `savedAt`, a local palette's `createdAt`. */
+  addedAt: string;
+  /** The live count, else the snapshot's last-known one; undefined when neither exists. */
+  votes: number | undefined;
+}
+
+/**
+ * Order the Saved shelf. OPT-008 review follow-up (2026-10-04 deep-dive): it
+ * used to go through `sortPresets`, whose keys came from the live copy when
+ * the preset happened to be in the fetched pool and from placeholders (0
+ * votes, `savedAt` standing in for the creation date) when it was not — so
+ * the same shelf reordered whenever a search, the 50-row cut or a failed
+ * request changed the pool. These keys do not depend on the pool:
+ * - recent: when the row joined the shelf;
+ * - popular: the live count, else the snapshot's last-known count; rows with
+ *   neither (snapshots saved before counts were recorded, local palettes)
+ *   follow every known count;
+ * - name: the name.
+ * Ties keep shelf order: snapshots in save order, then local palettes.
+ */
+function sortShelf(rows: ShelfRow[], sort: PresetsConfig['sortBy']): UnifiedPreset[] {
+  const time = (iso: string): number => Date.parse(iso) || 0;
+  const ordered = [...rows].sort((a, b) => {
+    switch (sort) {
+      case 'recent':
+        return time(b.addedAt) - time(a.addedAt);
+      case 'popular':
+        if (a.votes === undefined || b.votes === undefined) {
+          return Number(a.votes === undefined) - Number(b.votes === undefined);
+        }
+        return b.votes - a.votes;
+      case 'name':
+      default:
+        return a.preset.name.localeCompare(b.preset.name);
+    }
+  });
+  return ordered.map((row) => row.preset);
+}
 
 /**
  * V4 Preset Tool — the 8A Gallery.
@@ -112,7 +168,11 @@ export class PresetTool extends BaseLitComponent {
   @state()
   private votedIds: Set<string> = new Set();
 
-  /** The presets worker is not answering */
+  /**
+   * The community feed did not answer the last load: unreachable at init, or
+   * that one request failed (BUG-029, 2026-10-04 deep-dive — a failed request
+   * used to leave this false and show an empty feed instead of the strip).
+   */
   @state()
   private offline: boolean = false;
 
@@ -134,6 +194,14 @@ export class PresetTool extends BaseLitComponent {
   @state()
   private userSubmissions: CommunityPreset[] = [];
 
+  /**
+   * The signed-in user's submissions have answered (or failed) at least once.
+   * Until then Mine shows the spinner: its empty state would say "You haven't
+   * submitted any presets yet" to a user who has (Sprint 4 review follow-up).
+   */
+  @state()
+  private userSubmissionsLoaded: boolean = false;
+
   @state()
   private isAuthenticated: boolean = false;
 
@@ -146,6 +214,16 @@ export class PresetTool extends BaseLitComponent {
   private _searchDebounce: number = 0;
   /** BUG-005 review: guards `restoreSelectedPresetFromHistory`'s API-fallback await against a stale result — see `handleWindowPopState`. */
   private _restoreSeq: number = 0;
+  /** BUG-029 (2026-10-04 deep-dive): guards `loadPresets` against a superseded answer — see there. */
+  private _loadSeq: number = 0;
+  /**
+   * The search and sort the API pool was last fetched with. OPT-008
+   * (2026-10-04 deep-dive): Saved and Mine search and sort locally, so a change
+   * made there leaves the pool behind until an API tab is chosen again —
+   * `handleTabSelect` refetches then.
+   */
+  private poolQuery: string = '';
+  private poolSort: PresetsConfig['sortBy'] | null = null;
 
   static override styles: CSSResultGroup = [
     BaseLitComponent.baseStyles,
@@ -391,10 +469,12 @@ export class PresetTool extends BaseLitComponent {
       // feedHideUnbuyable, savedFirst, keepDeleted, displayOptions)
       // spinner-flashed the grid and re-downloaded up to 100 presets for a
       // change that never leaves the client. `config` is @state(), so the
-      // assignment alone re-renders.
+      // assignment alone re-renders. OPT-008 (2026-10-04 deep-dive): nor does
+      // a sort change on Saved or Mine, which sort locally; `handleTabSelect`
+      // catches the pool up when an API tab is chosen.
       const needsRefetch = newConfig.sortBy !== this.config.sortBy;
       this.config = newConfig;
-      if (needsRefetch) {
+      if (needsRefetch && this.isApiTab()) {
         void this.loadPresets();
       }
     });
@@ -407,7 +487,11 @@ export class PresetTool extends BaseLitComponent {
         void this.loadUserSubmissions();
       } else if (!this.isAuthenticated) {
         this.userSubmissions = [];
-        if (this.tab === 'mine') this.tab = 'community';
+        this.userSubmissionsLoaded = false;
+        // OPT-008 review follow-up: through the same catch-up as a tab click,
+        // or Community would show a pool fetched before the search or sort
+        // was changed on Mine.
+        if (this.tab === 'mine') this.showTab('community');
       }
     });
 
@@ -427,12 +511,12 @@ export class PresetTool extends BaseLitComponent {
       this.localPalettes = collections.filter((c) => c.kind === 'palette');
     });
 
+    // Mine's own list does not wait for the presets pool (Sprint 4 review
+    // follow-up: it used to start only once the whole first load was in).
+    const submissions = this.isAuthenticated ? this.loadUserSubmissions() : Promise.resolve();
     await hybridPresetService.initialize();
     await this.loadPresets();
-
-    if (this.isAuthenticated) {
-      await this.loadUserSubmissions();
-    }
+    await submissions;
 
     await this.handleDeepLink();
   }
@@ -584,36 +668,38 @@ export class PresetTool extends BaseLitComponent {
    * design doc calls out.
    */
   private async loadPresets(): Promise<void> {
+    // BUG-029 (2026-10-04 deep-dive): with no supersede guard, a slow answer
+    // for an older search could land last — on screen under the new search,
+    // and into reconciliation, which then read the CURRENT (cleared) query
+    // rather than the one fetched. Capture both, drop a superseded answer.
+    const seq = ++this._loadSeq;
+    const query = this.searchQuery;
+    const sort = this.config.sortBy;
+    this.poolQuery = query;
+    this.poolSort = sort;
     this.isLoading = true;
     try {
       // The category is NOT passed down: the rail's counts are computed over
       // the unfiltered pool, so pre-filtering here made every other chip read
       // 0 and "All" equal the current category. Category slicing happens at
       // render time, like the tab slicing above it.
-      this.presets = await hybridPresetService.getPresets({
-        search: this.searchQuery || undefined,
-        sort: this.config.sortBy,
+      const result = await hybridPresetService.getPresets({
+        search: query || undefined,
+        sort,
         limit: PRESET_PAGE_LIMIT,
       });
-      this.offline = !hybridPresetService.isAPIAvailable();
-
-      // BUG-020: only reconcile against a page that demonstrably covers the
-      // whole collection. presets-api caps `limit` at 50 regardless of what we
-      // ask for, so a full page means "there may be more" — and every saved
-      // community preset beyond it would look deleted and be tombstoned.
-      const apiCount = this.presets.filter((p) => p.isFromAPI).length;
-      if (apiCount < PRESET_PAGE_LIMIT) {
-        this.reconcileTombstones();
-      } else {
-        logger.info(
-          '[v4-preset-tool] Skipping tombstone reconciliation: the page is full, so the pool may be incomplete'
-        );
-      }
+      if (seq !== this._loadSeq) return; // superseded by a newer load
+      this.presets = result.presets;
+      this.offline = !result.apiOk;
+      this.reconcileTombstones(result, query);
+      // The Saved shelf's Popular key for when a copy leaves the pool
+      SavedPresetsService.recordVoteCounts(result.presets);
     } catch (error) {
+      if (seq !== this._loadSeq) return; // superseded by a newer load
       logger.error('[v4-preset-tool] Failed to load presets:', error);
       this.offline = true;
     } finally {
-      this.isLoading = false;
+      if (seq === this._loadSeq) this.isLoading = false;
     }
   }
 
@@ -622,19 +708,46 @@ export class PresetTool extends BaseLitComponent {
    * that came back. This is the writer behind the "Removed by its author"
    * chip and the Keep-deleted toggle — without it both were dead paths.
    *
-   * Two guards, because a false tombstone is worse than a late one:
-   * - never run while offline (an unreachable API is not a deletion),
-   * - never run against a filtered pool (a search query would tombstone
-   *   everything that didn't match).
+   * A false tombstone is worse than a late one, so marking one needs proof of
+   * absence — all three of:
+   * - the community request answered (`apiOk`): an unreachable API, or one
+   *   failed request, is not a deletion (BUG-029, 2026-10-04 deep-dive — a
+   *   failed request was swallowed and read as "every preset is gone");
+   * - it was unfiltered: a search would tombstone everything it didn't match;
+   * - BUG-020: it returned less than a full page. presets-api caps `limit` at
+   *   50 regardless of what we ask for, so a full page means "there may be
+   *   more", and every saved community preset beyond it would look deleted.
+   *
+   * Each guard reads what was FETCHED — `fetchedQuery`, and the API ids from
+   * before the merged list's sort-and-cut — never the current state.
+   *
+   * Un-marking needs only an answer: a preset the API returned exists,
+   * whatever the query or page size. That is also what heals a false
+   * tombstone once the collection outgrows one page.
+   *
+   * Local palettes (`local-…`) never reach the API, so they are never marked,
+   * and a mark an earlier version left on one is cleared.
    */
-  private reconcileTombstones(): void {
-    if (this.offline || this.searchQuery) return;
+  private reconcileTombstones(fetch: PresetPoolResult, fetchedQuery: string): void {
+    const live = new Set(fetch.apiIds);
+    const canTombstone = fetch.apiOk && !fetchedQuery && live.size < PRESET_PAGE_LIMIT;
+    if (fetch.apiOk && !fetchedQuery && !canTombstone) {
+      logger.info(
+        '[v4-preset-tool] Not tombstoning: the page is full, so the pool may be incomplete'
+      );
+    }
 
-    const live = new Set(this.presets.filter((p) => p.isFromAPI).map((p) => p.id));
     for (const saved of this.savedList) {
       // Curated palettes ship with the app — they can't be author-deleted
       if (saved.isCurated) continue;
-      const gone = !live.has(saved.id);
+      let gone: boolean;
+      if (isLocalPaletteId(saved.id) || live.has(saved.id)) {
+        gone = false;
+      } else if (canTombstone) {
+        gone = true;
+      } else {
+        continue; // absent from a pool that cannot prove a deletion
+      }
       if (gone !== Boolean(saved.deletedByAuthor)) {
         SavedPresetsService.markDeleted(saved.id, gone);
         logger.info(
@@ -654,6 +767,9 @@ export class PresetTool extends BaseLitComponent {
       this.userSubmissions = response.presets;
     } catch (error) {
       logger.warn('[v4-preset-tool] Failed to load user submissions:', error);
+    } finally {
+      // A failure changes nothing else, so this is what stops Mine's spinner
+      this.userSubmissionsLoaded = true;
     }
   }
 
@@ -729,14 +845,17 @@ export class PresetTool extends BaseLitComponent {
     };
   }
 
-  /** Local palettes, newest first, filtered by the active search query. */
-  private localPalettePool(): UnifiedPreset[] {
+  /**
+   * Search and sort Mine, which is held in this browser. OPT-008 (2026-10-04
+   * deep-dive): Saved and Mine used to refetch the API pool on every search
+   * and sort — a spinner and a request for a list they never show — while
+   * their own lists ignored the sort, and Mine ignored the search too. (Saved
+   * sorts on its own keys: see `sortShelf`.)
+   */
+  private searchAndSortLocally(pool: UnifiedPreset[]): UnifiedPreset[] {
     const q = this.searchQuery.toLowerCase();
-    const pool = this.localPalettes.map((c) => this.localPaletteToUnified(c));
-    if (!q) return pool;
-    return pool.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
-    );
+    const found = q ? pool.filter((p) => matchesSearch(p, q)) : pool;
+    return sortPresets(found, this.config.sortBy);
   }
 
   private presetToCardData(preset: UnifiedPreset): PresetCardData {
@@ -783,40 +902,48 @@ export class PresetTool extends BaseLitComponent {
   }
 
   /**
-   * The active tab's pool, sliced from the one loaded list and then by the
-   * selected category (the rail's counts need the pool unfiltered, so the
-   * category cut happens here rather than in the service query).
+   * One tab's pool, sliced from the one loaded list (or, for Saved and Mine,
+   * from what this browser holds), before the category cut — the rail's
+   * counts need the pool uncut, so the category cut happens at render time
+   * rather than in the service query.
    */
-  private currentPool(): UnifiedPreset[] {
-    const pool = this.currentTabPool();
-    if (this.config.category === 'all') return pool;
-    return pool.filter((p) => this.matchesCategory(p, this.config.category));
-  }
-
-  private currentTabPool(): UnifiedPreset[] {
-    switch (this.tab) {
+  private tabPool(tab: PresetTab): UnifiedPreset[] {
+    switch (tab) {
       case 'official':
         return this.applySavedFirst(this.presets.filter((p) => p.isCurated));
       case 'saved': {
-        const q = this.searchQuery.toLowerCase();
-        let pool = this.savedList
-          .filter((s) => this.config.keepDeleted || !s.deletedByAuthor)
-          .map((s) => this.savedToUnified(s));
-        if (q) {
-          pool = pool.filter(
-            (p) =>
-              p.name.toLowerCase().includes(q) ||
-              p.description.toLowerCase().includes(q) ||
-              p.tags.some((t) => t.toLowerCase().includes(q))
-          );
-        }
         // The user's own palettes sit alongside their saved ones — this is the
         // only tab that survives the presets worker being unreachable, which
-        // is exactly where a purely local record belongs.
-        return [...pool, ...this.localPalettePool()];
+        // is exactly where a purely local record belongs. A palette saved as
+        // well (BUG-029: Save used to be offered on one) is listed once.
+        const locals = this.localPalettes.map((c): ShelfRow => ({
+          preset: this.localPaletteToUnified(c),
+          addedAt: c.createdAt,
+          votes: undefined,
+        }));
+        const localIds = new Set(locals.map((row) => row.preset.id));
+        const snapshots = this.savedList
+          .filter((s) => !localIds.has(s.id))
+          .filter((s) => this.config.keepDeleted || !s.deletedByAuthor)
+          .map((s): ShelfRow => {
+            const live = this.presets.find((p) => p.id === s.id);
+            return {
+              preset: this.savedToUnified(s),
+              addedAt: s.savedAt,
+              votes: live?.voteCount ?? s.voteCount,
+            };
+          });
+        const q = this.searchQuery.toLowerCase();
+        const rows = [...snapshots, ...locals];
+        return sortShelf(
+          q ? rows.filter((row) => matchesSearch(row.preset, q)) : rows,
+          this.config.sortBy
+        );
       }
       case 'mine':
-        return this.userSubmissions.map((p) => this.communityToUnified(p));
+        return this.searchAndSortLocally(
+          this.userSubmissions.map((p) => this.communityToUnified(p))
+        );
       case 'community':
       default: {
         let pool = this.config.feedBlend ? this.presets : this.presets.filter((p) => !p.isCurated);
@@ -828,17 +955,33 @@ export class PresetTool extends BaseLitComponent {
     }
   }
 
-  private categoryCount(category: PresetCategoryFilter): number {
-    const base =
-      this.tab === 'official'
-        ? this.presets.filter((p) => p.isCurated)
-        : this.tab === 'saved'
-          ? [...this.savedList.map((s) => this.savedToUnified(s)), ...this.localPalettePool()]
-          : this.tab === 'mine'
-            ? this.userSubmissions.map((p) => this.communityToUnified(p))
-            : this.presets.filter((p) => !p.isCurated);
-    if (category === 'all') return base.length;
-    return base.filter((p) => this.matchesCategory(p, category)).length;
+  /**
+   * Every tab's pool, built once per render. BUG-109 (2026-10-04 deep-dive):
+   * the tab badges and rail counts used to rebuild their own bases, which
+   * skipped Blend, Hide unbuyable, Keep deleted, the Saved search and (in the
+   * Saved badge) the local palettes, so a count could name more cards than
+   * the list showed. Now every number is read off the same pools — with one
+   * gap: OPT-008 leaves a search typed on Saved or Mine unfetched until an
+   * API tab is chosen, so until then the Community and Official pools answer
+   * another search, and `renderTabs` shows their badges as unknown.
+   */
+  private tabPools(): Record<PresetTab, UnifiedPreset[]> {
+    return {
+      community: this.tabPool('community'),
+      official: this.tabPool('official'),
+      saved: this.tabPool('saved'),
+      mine: this.tabPool('mine'),
+    };
+  }
+
+  private categoryCount(tabPool: UnifiedPreset[], category: PresetCategoryFilter): number {
+    if (category === 'all') return tabPool.length;
+    return tabPool.filter((p) => this.matchesCategory(p, category)).length;
+  }
+
+  /** Community and Official show the fetched API pool; Saved and Mine do not. */
+  private isApiTab(tab: PresetTab = this.tab): boolean {
+    return tab === 'community' || tab === 'official';
   }
 
   // ============================================
@@ -846,10 +989,28 @@ export class PresetTool extends BaseLitComponent {
   // ============================================
 
   private handleTabSelect(tab: PresetTab): void {
-    this.tab = tab;
     this.selectedPreset = null;
+    this.showTab(tab);
     if (tab === 'mine' && !this.isAuthenticated) {
       void import('../signin-modal').then(({ showSignInModal }) => showSignInModal());
+    }
+  }
+
+  /**
+   * Switch to `tab`: a tab click, or sign-out leaving Mine. OPT-008: the API
+   * pool follows the search and sort only on the tabs that show it, so
+   * choosing one catches the pool up. A search debounce still pending is
+   * dropped here: on Saved or Mine it would fetch for nothing, and on an API
+   * tab this load covers it.
+   */
+  private showTab(tab: PresetTab): void {
+    this.tab = tab;
+    clearTimeout(this._searchDebounce);
+    if (
+      this.isApiTab(tab) &&
+      (this.searchQuery !== this.poolQuery || this.config.sortBy !== this.poolSort)
+    ) {
+      void this.loadPresets();
     }
   }
 
@@ -896,6 +1057,9 @@ export class PresetTool extends BaseLitComponent {
           this.votedIds = new Set([...this.votedIds].filter((id) => id !== preset.id));
           this.applyVoteCount(preset.id, result.new_vote_count);
           ToastService.success(LanguageService.t('preset.voteRemoved'));
+        } else {
+          // BUG-030 (2026-10-04 deep-dive): this failure used to be silent.
+          ToastService.error(voteErrorMessage(result.errorCode, 'errors.removeVoteFailed'));
         }
       } else {
         const result = await communityPresetService.voteForPreset(preset.apiPresetId);
@@ -903,10 +1067,15 @@ export class PresetTool extends BaseLitComponent {
           this.votedIds = new Set([...this.votedIds, preset.id]);
           this.applyVoteCount(preset.id, result.new_vote_count);
           ToastService.success(LanguageService.t('preset.voteAdded'));
-        } else {
-          // Most common failure: already voted in an earlier session.
+        } else if (result.already_voted) {
+          // Cast in an earlier session: show it as cast.
           this.votedIds = new Set([...this.votedIds, preset.id]);
           ToastService.info(LanguageService.t('preset.alreadyVoted'));
+        } else {
+          // BUG-030 (2026-10-04 deep-dive): every failure used to land in the
+          // branch above, so a 500 or a dropped connection marked the card
+          // voted and said "already voted" with no vote recorded.
+          ToastService.error(voteErrorMessage(result.errorCode, 'errors.voteFailed'));
         }
       }
     } catch (error) {
@@ -917,6 +1086,7 @@ export class PresetTool extends BaseLitComponent {
 
   private applyVoteCount(presetId: string, voteCount: number): void {
     this.presets = this.presets.map((p) => (p.id === presetId ? { ...p, voteCount } : p));
+    SavedPresetsService.recordVoteCounts([{ id: presetId, voteCount }]);
   }
 
   private handleBack(): void {
@@ -928,9 +1098,20 @@ export class PresetTool extends BaseLitComponent {
     window.history.pushState({ toolId: 'presets' }, '', '/presets');
   }
 
-  private handleVoteUpdate(e: CustomEvent<{ preset: UnifiedPreset }>): void {
-    const updatedPreset = e.detail.preset;
+  private handleVoteUpdate(e: CustomEvent<VoteUpdateDetail>): void {
+    const { preset: updatedPreset, voted } = e.detail;
     this.presets = this.presets.map((p) => (p.id === updatedPreset.id ? updatedPreset : p));
+    SavedPresetsService.recordVoteCounts([updatedPreset]);
+    // BUG-110 (2026-10-04 deep-dive): without this the card kept its own
+    // voted state — a vote removed in the detail still read "Voted" on the
+    // card, and clicking it removed a vote that no longer existed.
+    const votedIds = new Set(this.votedIds);
+    if (voted) {
+      votedIds.add(updatedPreset.id);
+    } else {
+      votedIds.delete(updatedPreset.id);
+    }
+    this.votedIds = votedIds;
     if (this.selectedPreset?.id === updatedPreset.id) {
       this.selectedPreset = updatedPreset;
     }
@@ -979,18 +1160,21 @@ export class PresetTool extends BaseLitComponent {
       confirmText: LanguageService.t('common.delete'),
       cancelText: LanguageService.t('common.cancel'),
       onConfirm: async () => {
-        try {
-          ToastService.info(LanguageService.t('preset.deleting'));
-          await presetSubmissionService.deletePreset(preset.apiPresetId!);
-          ToastService.success(LanguageService.t('preset.deleteSuccess'));
-          void this.loadPresets();
-          void this.loadUserSubmissions();
-          this.selectedPreset = null;
-          window.history.pushState({ toolId: 'presets' }, '', '/presets');
-        } catch (error) {
-          logger.error('[v4-preset-tool] Failed to delete preset:', error);
+        ToastService.info(LanguageService.t('preset.deleting'));
+        // BUG-032 (2026-10-04 deep-dive): deletePreset answers a failure
+        // ({ success: false }) rather than throwing it, so this used to toast
+        // "deleted" and leave for a list that still held the preset.
+        const result = await presetSubmissionService.deletePreset(preset.apiPresetId!);
+        if (!result.success) {
+          logger.error('[v4-preset-tool] Failed to delete preset:', result.error);
           ToastService.error(LanguageService.t('errors.deletePresetFailed'));
+          return;
         }
+        ToastService.success(LanguageService.t('preset.deleteSuccess'));
+        void this.loadPresets();
+        void this.loadUserSubmissions();
+        this.selectedPreset = null;
+        window.history.pushState({ toolId: 'presets' }, '', '/presets');
       },
       onClose: () => {},
     });
@@ -1000,6 +1184,9 @@ export class PresetTool extends BaseLitComponent {
     const input = e.target as HTMLInputElement;
     this.searchQuery = input.value;
     clearTimeout(this._searchDebounce);
+    // OPT-008: Saved and Mine filter locally; `handleTabSelect` catches the
+    // API pool up when an API tab is chosen.
+    if (!this.isApiTab()) return;
     this._searchDebounce = window.setTimeout(() => {
       void this.loadPresets();
     }, 300);
@@ -1013,29 +1200,32 @@ export class PresetTool extends BaseLitComponent {
     return presetCategoryLabel(category);
   }
 
-  private renderTabs(): TemplateResult {
-    const curatedCount = this.presets.filter((p) => p.isCurated).length;
-    const communityCount = this.presets.filter((p) => !p.isCurated).length;
+  private renderTabs(pools: Record<PresetTab, UnifiedPreset[]>): TemplateResult {
+    // OPT-008 review follow-up: the API pool answers `poolQuery`. A search
+    // typed on Saved or Mine is fetched only when an API tab is chosen, and
+    // until then these two would count the previous search. (A sort changes
+    // no count.)
+    const poolStale = this.searchQuery !== this.poolQuery;
     const tabs: Array<{ id: PresetTab; label: string; count: string }> = [
       {
         id: 'community',
         label: LanguageService.t('preset.tabCommunity'),
-        count: this.offline ? '—' : String(communityCount),
+        count: this.offline || poolStale ? '—' : String(pools.community.length),
       },
       {
         id: 'official',
         label: LanguageService.t('preset.tabOfficial'),
-        count: String(curatedCount),
+        count: poolStale ? '—' : String(pools.official.length),
       },
       {
         id: 'saved',
         label: LanguageService.t('preset.tabSaved'),
-        count: String(this.savedList.length),
+        count: String(pools.saved.length),
       },
       {
         id: 'mine',
         label: LanguageService.t('preset.tabMine'),
-        count: this.isAuthenticated ? String(this.userSubmissions.length) : '—',
+        count: this.isAuthenticated ? String(pools.mine.length) : '—',
       },
     ];
     return html`
@@ -1054,7 +1244,7 @@ export class PresetTool extends BaseLitComponent {
     `;
   }
 
-  private renderFilters(pool: UnifiedPreset[]): TemplateResult {
+  private renderFilters(pool: UnifiedPreset[], tabPool: UnifiedPreset[]): TemplateResult {
     const sortKeys: Record<string, string> = {
       popular: 'preset.sort.popular',
       recent: 'preset.sort.recent',
@@ -1104,7 +1294,7 @@ export class PresetTool extends BaseLitComponent {
               @click=${() => this.handleCategorySelect(cat)}
             >
               ${this.categoryLabel(cat)}
-              <span class="cat-count">${this.categoryCount(cat)}</span>
+              <span class="cat-count">${this.categoryCount(tabPool, cat)}</span>
             </button>
           `
         )}
@@ -1156,7 +1346,12 @@ export class PresetTool extends BaseLitComponent {
   }
 
   private renderGrid(pool: UnifiedPreset[]): TemplateResult {
-    if (this.isLoading) {
+    // OPT-008: Saved and Mine are held in this browser; an API load in flight
+    // (a sort, an edit's reload) has nothing to show them. Mine waits only on
+    // its own first load.
+    const mineFirstLoad =
+      this.tab === 'mine' && this.isAuthenticated && !this.userSubmissionsLoaded;
+    if ((this.isLoading && this.isApiTab()) || mineFirstLoad) {
       return html`
         <div class="loading-container">
           <div class="spinner"></div>
@@ -1178,7 +1373,12 @@ export class PresetTool extends BaseLitComponent {
               .saved=${!!savedEntry}
               .voted=${this.votedIds.has(preset.id)}
               .showShot=${this.config.feedShots}
-              .tombstone=${this.tab === 'saved' && !!savedEntry?.deletedByAuthor}
+              .tombstone=${
+                // A local palette can't be removed by an author (BUG-029)
+                this.tab === 'saved' &&
+                !!savedEntry?.deletedByAuthor &&
+                !isLocalPaletteId(preset.id)
+              }
               @preset-select=${this.handlePresetSelect}
               @preset-vote=${this.handleCardVote}
               @preset-save=${this.handleCardSave}
@@ -1208,11 +1408,15 @@ export class PresetTool extends BaseLitComponent {
       `;
     }
 
-    const pool = this.currentPool();
+    const pools = this.tabPools();
+    const tabPool = pools[this.tab];
+    const category = this.config.category;
+    const pool =
+      category === 'all' ? tabPool : tabPool.filter((p) => this.matchesCategory(p, category));
 
     return html`
       <div class="preset-tool">
-        ${this.renderTabs()} ${this.renderFilters(pool)}
+        ${this.renderTabs(pools)} ${this.renderFilters(pool, tabPool)}
         ${this.tab === 'community' && this.offline ? this.renderOfflineStrip() : nothing}
         ${this.renderGrid(pool)}
       </div>

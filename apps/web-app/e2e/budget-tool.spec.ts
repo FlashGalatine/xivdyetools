@@ -1,5 +1,10 @@
 import { test, expect } from './fixtures/coverage';
-import { gotoTool, switchToolViaMenu, seedStartupStorage, dismissBlockingOverlays } from './fixtures/navigation';
+import {
+  gotoTool,
+  switchToolViaMenu,
+  seedStartupStorage,
+  dismissBlockingOverlays,
+} from './fixtures/navigation';
 
 /**
  * E2E Tests for Budget Tool
@@ -62,7 +67,9 @@ test.describe('Budget Tool', () => {
       // Quick picks section should have buttons for popular expensive dyes
       // Buttons show truncated names (first word only): "Pure", "Jet", "Metallic", etc.
       // Using looser regex to match button text content
-      const quickPickButtons = page.locator('button').filter({ hasText: /Pure|Jet|Metallic|Pastel/i });
+      const quickPickButtons = page
+        .locator('button')
+        .filter({ hasText: /Pure|Jet|Metallic|Pastel/i });
       const count = await quickPickButtons.count();
       expect(count).toBeGreaterThan(0);
     });
@@ -79,15 +86,15 @@ test.describe('Budget Tool', () => {
   test.describe('Quick Pick Selection', () => {
     test('should select dye when quick pick button is clicked', async ({ page }) => {
       // Find a quick pick button - buttons show truncated names (first word only)
-      const quickPickBtn = page.locator('button').filter({ hasText: /Pure|Jet/i }).first();
+      const quickPickBtn = page
+        .locator('button')
+        .filter({ hasText: /Pure|Jet/i })
+        .first();
 
       if ((await quickPickBtn.count()) > 0) {
         await quickPickBtn.click();
         await page.waitForTimeout(500);
 
-        // After clicking, the dye should be selected - alternatives section should appear
-        // or the empty state should hide
-        const alternativesSection = page.locator('[class*="alternatives"], #alternatives-section');
         // Check that something has changed in the UI
         expect(true).toBe(true); // Test completed without error
       }
@@ -95,7 +102,10 @@ test.describe('Budget Tool', () => {
 
     test('should highlight selected quick pick button', async ({ page }) => {
       // Buttons show truncated names (first word only): "Pure", "Jet", etc.
-      const quickPickBtn = page.locator('button').filter({ hasText: /Jet|Pure/i }).first();
+      const quickPickBtn = page
+        .locator('button')
+        .filter({ hasText: /Jet|Pure/i })
+        .first();
 
       if ((await quickPickBtn.count()) > 0) {
         await quickPickBtn.click();
@@ -108,7 +118,6 @@ test.describe('Budget Tool', () => {
     });
   });
 
-
   // 5.0: the gil "budget limit" slider is gone. 9C prices what a colour is
   // worth against a Match line (ΔE 2-20), so that is the slider to cover.
   test.describe('Match line slider', () => {
@@ -117,16 +126,23 @@ test.describe('Budget Tool', () => {
       await expect(slider).toBeAttached();
     });
 
+    // BUG-012 (2026-10-04 deep-dive): the in-page slider persists to the
+    // sidebar's store (ConfigController), not its retired v5_budget_match_line
+    // mirror. Scoped to the tool's main panel: the sidebar's v4-range-slider
+    // is also max=20 and `.first()` could resolve to it.
     test('should persist the match line', async ({ page }) => {
-      const slider = page.locator('input[type="range"][max="20"]').first();
+      const slider = page.locator('.v4-tool-main input[type="range"][max="20"]');
       if ((await slider.count()) > 0 && (await slider.isVisible())) {
+        // fill() sets the value and dispatches both 'input' and 'change'
         await slider.fill('12');
-        await slider.dispatchEvent('input');
         await page.waitForTimeout(300);
-        const saved = await page.evaluate(() =>
-          localStorage.getItem('v5_budget_match_line')
+        const saved = await page.evaluate(
+          () =>
+            JSON.parse(localStorage.getItem('xivdyetools_v4_config_budget') ?? '{}') as {
+              maxDeltaE?: number;
+            }
         );
-        expect(saved).toBeTruthy();
+        expect(saved.maxDeltaE).toBe(12);
       }
     });
   });
@@ -134,7 +150,9 @@ test.describe('Budget Tool', () => {
   test.describe('Sort Options', () => {
     test('should have sort option radio buttons', async ({ page }) => {
       // Look for radio buttons with sort-related labels
-      const sortRadios = page.locator('input[type="radio"][name*="sort"], input[type="radio"][name*="Sort"]');
+      const sortRadios = page.locator(
+        'input[type="radio"][name*="sort"], input[type="radio"][name*="Sort"]'
+      );
       const count = await sortRadios.count();
 
       // May have match, price, value options
@@ -143,7 +161,10 @@ test.describe('Budget Tool', () => {
 
     test('should change sort when option is selected', async ({ page }) => {
       // Find sort radio buttons by looking for labels
-      const priceSort = page.locator('label').filter({ hasText: /Price|Lowest/i }).locator('input[type="radio"]');
+      const priceSort = page
+        .locator('label')
+        .filter({ hasText: /Price|Lowest/i })
+        .locator('input[type="radio"]');
 
       if ((await priceSort.count()) > 0) {
         await priceSort.first().click();
@@ -165,7 +186,9 @@ test.describe('Budget Tool', () => {
 
     test('should show dye categories', async ({ page }) => {
       // Dye selector should show category tabs or buttons
-      const categoryButtons = page.locator('button').filter({ hasText: /White|Black|Red|Blue|Green/i });
+      const categoryButtons = page
+        .locator('button')
+        .filter({ hasText: /White|Black|Red|Blue|Green/i });
       const count = await categoryButtons.count();
       expect(count).toBeGreaterThanOrEqual(0);
     });
@@ -174,14 +197,19 @@ test.describe('Budget Tool', () => {
   test.describe('Alternatives Display', () => {
     test('should show alternatives after selecting a target dye', async ({ page }) => {
       // First select a target dye using quick pick
-      const quickPickBtn = page.locator('button').filter({ hasText: /Pure|Jet/i }).first();
+      const quickPickBtn = page
+        .locator('button')
+        .filter({ hasText: /Pure|Jet/i })
+        .first();
 
       if ((await quickPickBtn.count()) > 0) {
         await quickPickBtn.click();
         await page.waitForTimeout(1000); // Wait for alternatives to load
 
         // Look for result cards or alternatives list
-        const resultCards = page.locator('v4-result-card, [class*="result-card"], [class*="alternative"]');
+        const resultCards = page.locator(
+          'v4-result-card, [class*="result-card"], [class*="alternative"]'
+        );
         const count = await resultCards.count();
 
         // Should have at least rendered the section (may have 0 alternatives if none match)
@@ -191,7 +219,10 @@ test.describe('Budget Tool', () => {
 
     test('should display dye information in result cards', async ({ page }) => {
       // Select a target dye
-      const quickPickBtn = page.locator('button').filter({ hasText: /Jet|Pure/i }).first();
+      const quickPickBtn = page
+        .locator('button')
+        .filter({ hasText: /Jet|Pure/i })
+        .first();
 
       if ((await quickPickBtn.count()) > 0) {
         await quickPickBtn.click();
@@ -224,7 +255,10 @@ test.describe('Budget Tool', () => {
   test.describe('State Persistence', () => {
     test('should restore target dye on page reload', async ({ page }) => {
       // Select a target dye
-      const quickPickBtn = page.locator('button').filter({ hasText: /Pure|Jet/i }).first();
+      const quickPickBtn = page
+        .locator('button')
+        .filter({ hasText: /Pure|Jet/i })
+        .first();
 
       if ((await quickPickBtn.count()) > 0) {
         await quickPickBtn.click();
@@ -363,7 +397,10 @@ test.describe('Budget Tool - Cross-Tool Navigation', () => {
 
   test('should preserve dye selection when navigating between tools', async ({ page }) => {
     // Select a dye in budget tool
-    const quickPickBtn = page.locator('button').filter({ hasText: /Pure|Jet/i }).first();
+    const quickPickBtn = page
+      .locator('button')
+      .filter({ hasText: /Pure|Jet/i })
+      .first();
 
     if ((await quickPickBtn.count()) > 0) {
       await quickPickBtn.click();

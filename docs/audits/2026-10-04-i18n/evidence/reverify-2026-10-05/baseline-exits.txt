@@ -1,0 +1,10 @@
+gate exit 0
+test:scripts exit 0
+type-check:scripts exit 0
+dead-code:check exit 0
+docs:check-versions exit 0
+docs:check-links exit 0
+workers:check-logs exit 0
+root knip exit 1
+web-app build:check exit 0
+DONE

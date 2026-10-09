@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Rides with the next auth release (Sprint 25 of the 2026-10-04 remediation plan, carried in Sprint 10's PR); a
+comment-only change needs no publish of its own.
+
+### Changed
+
+- **The `JWTPayload` doc comment is accurate** (REFACTOR-006). It no longer claims a re-export from
+  `@xivdyetools/types` (auth is Level 0 and declares its own, narrower verifier-side shape: `iss`, `username`,
+  `global_name` and `avatar` are optional, and `auth_provider` and `discord_id` are absent), and `sub` is labeled as
+  the internal user ID (oauth's `user.id`), not the Discord user ID. No runtime or type change.
+
 ## [2.0.2] - 2026-09-15
 
 ### Fixed

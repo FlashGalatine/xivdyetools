@@ -17,8 +17,8 @@
  * // Check stored values
  * expect(kv._store.get('user:123:count')).toBe('5');
  *
- * // Check TTL tracking (if needed)
- * expect(kv._ttls.get('user:123:count')).toBeGreaterThan(Date.now());
+ * // Check TTL tracking (if needed; _ttls holds expiry in epoch SECONDS)
+ * expect(kv._ttls.get('user:123:count')).toBeGreaterThan(Date.now() / 1000);
  *
  * // Reset between tests
  * kv._reset();
@@ -217,22 +217,22 @@ export function createMockKV(): MockKVNamespace {
       // exactly full, a state real KV never returns, so a CORRECT cursor loop
       // would re-read page one forever against it.
       const resumeAfter = decodeListCursor(options?.cursor);
-      let skipping = resumeAfter !== null;
       let truncated = false;
 
-      for (const [key] of store.entries()) {
-        if (!key.startsWith(prefix)) continue;
+      // Real KV returns keys in lexicographic order and resumes AFTER the
+      // cursor key (BUG-148). Comparing against the cursor, rather than
+      // skipping until the cursor key reappears, keeps a walk alive when that
+      // key was deleted or expired between pages.
+      const matching = [...store.keys()].filter((key) => key.startsWith(prefix)).sort();
 
+      for (const key of matching) {
         if (isExpiredAt(key, nowSeconds)) {
           // Collect expired keys for cleanup after iteration
           expiredKeys.push(key);
           continue;
         }
 
-        if (skipping) {
-          if (key === resumeAfter) skipping = false;
-          continue;
-        }
+        if (resumeAfter !== null && key <= resumeAfter) continue;
 
         if (keys.length >= limit) {
           truncated = true;

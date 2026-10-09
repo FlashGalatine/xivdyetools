@@ -22,7 +22,7 @@
  * @module components/item-links-menu
  */
 
-import { LanguageService } from '@services/index';
+import { LanguageService, ModalService } from '@services/index';
 import { resolveCharaEquipment, type CharaItemNames } from '@services/chara-resolve-service';
 import { logger } from '@shared/logger';
 import {
@@ -207,7 +207,15 @@ export function showItemLinksMenu(options: ItemLinksMenuOptions): void {
   document.addEventListener('keydown', onMenuKeyDown, true);
   window.addEventListener('resize', onReflow);
   window.addEventListener('scroll', onReflow, true);
+  // BUG-091: the capture handler consumes only the menu's own keys, so while
+  // the menu is open the page-wide shortcuts must stand down — "2" on a
+  // focused entry used to switch tools and Shift+T flipped the theme behind
+  // it. Registration only raises `hasOpenModals()`; it draws nothing and
+  // traps nothing.
+  const releaseShortcuts = ModalService.registerExternal();
   cleanupListeners = () => {
+    // First, so a throwing onClose cannot leave every shortcut switched off
+    releaseShortcuts();
     document.removeEventListener('click', onOutside, true);
     document.removeEventListener('focusin', onOutside, true);
     document.removeEventListener('keydown', onMenuKeyDown, true);

@@ -97,6 +97,8 @@ vi.mock('@xivdyetools/core', () => ({
   classifyBandTier: vi.fn(() => 0),
   getConsolidatedDyeName: vi.fn(() => 'General-purpose Dye'),
   getMarketItemID: vi.fn((dye: { itemID: number }) => dye.itemID),
+  // Same accepted shapes as core's: #RGB or #RRGGBB.
+  isValidHexColor: (hex: string) => /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex),
   BAND_METHOD_DP: 2,
   DyeService: class MockDyeService {
     getAllDyes() {
@@ -342,6 +344,79 @@ describe('ResultCard', () => {
       const emitted = vi.mocked(RouterService.navigateTo).mock.calls[0]?.[1] as { dye: string };
       expect(Number(emitted.dye)).toBeLessThan(LEGACY_ITEM_ID_FLOOR);
     });
+
+    /**
+     * BUG-013 (2026-10-04 deep-dive): "Set as budget target" navigated with no
+     * params, so the `dye=` RouterService preserves across every navigation
+     * (from a share link or an earlier hand-off) reached Budget instead, and
+     * Budget's deep-link handler replaced the dye just sent. Named explicitly,
+     * the hand-off's `dye` replaces the preserved one.
+     */
+    const menuAction = (card: HTMLElement, action: string): void =>
+      (card as unknown as { handleMenuAction: (a: string) => void }).handleMenuAction(action);
+
+    const mountCard = (dye: Record<string, unknown>): HTMLElement => {
+      const card = document.createElement('v4-result-card') as HTMLElement & { data?: unknown };
+      card.data = { dye, originalColor: dye.hex, matchedColor: dye.hex };
+      container.appendChild(card);
+      return card;
+    };
+
+    const DALAMUD_RED = {
+      id: 30116,
+      itemID: 30116,
+      stainID: 45,
+      name: 'Dalamud Red',
+      hex: '#781A1A',
+      rgb: { r: 120, g: 26, b: 26 },
+      hsv: { h: 0, s: 78, v: 47 },
+      category: 'Red',
+      acquisition: 'Vendor',
+      cost: 216,
+      currency: 'Gil',
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
+      isIshgardian: false,
+      consolidationType: 'A',
+    };
+
+    /** The card imports ToastService from its own module, not the barrel. */
+    const spyOnToast = async () => {
+      const { ToastService } = await import('@services/toast-service');
+      return vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+    };
+
+    it('sends Budget the dye as an explicit stainID, so a preserved ?dye= cannot win (BUG-013)', async () => {
+      const { RouterService, StorageService } = await import('@services/index');
+      const toast = await spyOnToast();
+      await import('../../v4/result-card');
+
+      menuAction(mountCard(DALAMUD_RED), 'inspect-budget');
+
+      expect(RouterService.navigateTo).toHaveBeenCalledTimes(1);
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('budget', { dye: '45' });
+      // Budget's constructor reads the stored target before its deep link is
+      // handled, so the first paint already shows the dye just sent.
+      expect(StorageService.setItem).toHaveBeenCalledWith('v3_budget_target', 30116);
+      expect(toast).toHaveBeenCalledWith('resultCard.sentToBudget');
+    });
+
+    it('does not send a custom colour to Budget, as no hand-off does', async () => {
+      const { RouterService, StorageService } = await import('@services/index');
+      const toast = await spyOnToast();
+      await import('../../v4/result-card');
+
+      menuAction(
+        mountCard({ ...DALAMUD_RED, id: -1, itemID: -1, stainID: null }),
+        'inspect-budget'
+      );
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+      expect(toast).not.toHaveBeenCalled();
+    });
   });
 
   // ==========================================================================
@@ -415,6 +490,87 @@ describe('ResultCard', () => {
       ].map((el) => el.textContent!.trim());
 
       expect(labels).toEqual(EXPECTED_KEYS);
+    });
+  });
+
+  // ==========================================================================
+  // Context menu for a custom colour (2026-10-09 merge-day review)
+  //
+  // `handoffTo` drops a dye with no stainID, and the stored-id receivers
+  // (Accessibility, Comparison, Swatch, Mixer) cannot resolve a custom
+  // colour's per-session negative id, nor can an external site open one. Their
+  // items rendered anyway and did nothing, or navigated to an empty tool. Only
+  // Gradient (which stores the hex) can carry a custom colour.
+  // ==========================================================================
+
+  describe('context menu for a custom colour', () => {
+    const SNOW_WHITE = {
+      id: 5729,
+      itemID: 5729,
+      stainID: 1,
+      name: 'Snow White',
+      hex: '#E4E4E4',
+      rgb: { r: 228, g: 228, b: 228 },
+      hsv: { h: 0, s: 0, v: 89 },
+      category: 'White',
+      acquisition: 'Vendor',
+      cost: 216,
+      currency: 'Gil',
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
+      isIshgardian: false,
+      consolidationType: null,
+    };
+
+    const menuLabels = async (dye: unknown): Promise<{ submenus: number; items: string[] }> => {
+      await import('../../v4/result-card');
+      const card = document.createElement('v4-result-card') as HTMLElement & {
+        data?: unknown;
+        showActions?: boolean;
+        updateComplete?: Promise<unknown>;
+      };
+      card.data = { dye, originalColor: '#E4E4E4', matchedColor: '#E4E4E4' };
+      card.showActions = true;
+      container.appendChild(card);
+      await card.updateComplete;
+      const root = card.shadowRoot!;
+      return {
+        submenus: root.querySelectorAll('.context-menu .has-submenu').length,
+        items: [...root.querySelectorAll('.context-menu .submenu .menu-item')].map((el) =>
+          el.textContent!.trim()
+        ),
+      };
+    };
+
+    it('offers only the items that can carry a custom colour', async () => {
+      const { makeCustomDye } = await import('@shared/custom-dye');
+      const { submenus, items } = await menuLabels(makeCustomDye('#aabbcc'));
+
+      // Gradient stores the hex; every other item is dead for a custom colour.
+      expect(items).toEqual(['tools.gradient.title']);
+      // The Inspect and Open-in-browser submenus would be empty: not rendered.
+      expect(submenus).toBe(1);
+    });
+
+    it('still shows every item for a dye with a stainID', async () => {
+      const { submenus, items } = await menuLabels(SNOW_WHITE);
+
+      expect(submenus).toBe(3);
+      expect(items).toEqual([
+        'tools.harmony.title',
+        'tools.budget.title',
+        'tools.accessibility.title',
+        'tools.comparison.title',
+        'tools.character.title',
+        'tools.gradient.title',
+        'tools.mixer.title',
+        'Universalis',
+        'GarlandTools',
+        'TeamCraft',
+        'Saddlebag Exchange',
+      ]);
     });
   });
 
@@ -931,6 +1087,346 @@ describe('ResultCard', () => {
         expect(seen).toHaveLength(1);
         expect(seen[0].dye.name).toBe('Wine Red');
       });
+    });
+  });
+
+  // ==========================================================================
+  // Menu click-away (BUG-111)
+  //
+  // Each card closes its menus from a document click listener. The menu and
+  // primary buttons called stopPropagation, so their click never reached
+  // document: opening card B's menu left card A's open beside it. Removing the
+  // stop alone is not enough either — the card's own listener would then see
+  // the click that opened its menu and close it again, so the first two tests
+  // below guard the toggles themselves.
+  // ==========================================================================
+
+  describe('menu click-away (BUG-111)', () => {
+    const contextMenuOpen = (card: CardEl): boolean =>
+      sr(card).querySelector('.context-menu')!.classList.contains('open');
+    const slotMenuOpen = (card: CardEl): boolean =>
+      sr(card).querySelector('.slot-picker-menu')!.classList.contains('open');
+
+    /** Click a button in `card`, then let every mounted card re-render. */
+    async function clickIn(card: CardEl, selector: string, cards: CardEl[]): Promise<void> {
+      sr(card).querySelector<HTMLButtonElement>(selector)!.click();
+      await Promise.all(cards.map((c) => c.updateComplete));
+    }
+
+    it("opens the card's own menu, and a second click closes it", async () => {
+      const card = await mountCard({ showActions: true });
+
+      await clickIn(card, '.menu-btn', [card]);
+      expect(contextMenuOpen(card)).toBe(true);
+      expect(sr(card).querySelector('.menu-btn')!.getAttribute('aria-expanded')).toBe('true');
+
+      await clickIn(card, '.menu-btn', [card]);
+      expect(contextMenuOpen(card)).toBe(false);
+    });
+
+    it("opens the card's own slot picker from the primary button", async () => {
+      const card = await mountCard({ showActions: true, showSlotPicker: true });
+
+      await clickIn(card, '.primary-action-btn', [card]);
+
+      expect(slotMenuOpen(card)).toBe(true);
+    });
+
+    it("closes card A's menu when card B's menu button is clicked", async () => {
+      const a = await mountCard({ showActions: true });
+      const b = await mountCard({ showActions: true });
+
+      await clickIn(a, '.menu-btn', [a, b]);
+      await clickIn(b, '.menu-btn', [a, b]);
+
+      expect(contextMenuOpen(a)).toBe(false);
+      expect(contextMenuOpen(b)).toBe(true);
+    });
+
+    it("closes card A's slot picker when card B's slot picker opens", async () => {
+      const a = await mountCard({ showActions: true, showSlotPicker: true });
+      const b = await mountCard({ showActions: true, showSlotPicker: true });
+
+      await clickIn(a, '.primary-action-btn', [a, b]);
+      await clickIn(b, '.primary-action-btn', [a, b]);
+
+      expect(slotMenuOpen(a)).toBe(false);
+      expect(slotMenuOpen(b)).toBe(true);
+    });
+
+    it("closes card A's menu when card B's primary button selects its dye", async () => {
+      const a = await mountCard({ showActions: true });
+      const b = await mountCard({ showActions: true });
+      const selected: unknown[] = [];
+      b.addEventListener('card-select', (e) => selected.push((e as CustomEvent).detail));
+
+      await clickIn(a, '.menu-btn', [a, b]);
+      await clickIn(b, '.primary-action-btn', [a, b]);
+
+      expect(selected).toHaveLength(1);
+      expect(contextMenuOpen(a)).toBe(false);
+    });
+
+    it('still closes an open menu on a click anywhere else', async () => {
+      const card = await mountCard({ showActions: true });
+
+      await clickIn(card, '.menu-btn', [card]);
+      document.body.click();
+      await card.updateComplete;
+
+      expect(contextMenuOpen(card)).toBe(false);
+    });
+
+    /*
+     * The skip is for this card's toggles and menus only, not the whole card:
+     * a click on the card's own swatch is "outside the menu" and closes it.
+     * Widening the guard to `path.includes(this)` would pass every test above
+     * (they click a toggle, another card, or document.body) — this one pins it.
+     */
+    it("closes the card's own menu on a click elsewhere in the same card", async () => {
+      const card = await mountCard({ showActions: true });
+
+      await clickIn(card, '.menu-btn', [card]);
+      expect(contextMenuOpen(card)).toBe(true);
+
+      sr(card).querySelector<HTMLElement>('.swatch')!.click();
+      await card.updateComplete;
+
+      expect(contextMenuOpen(card)).toBe(false);
+    });
+
+    it("closes the card's own slot picker when its menu button opens the context menu", async () => {
+      const card = await mountCard({ showActions: true, showSlotPicker: true });
+
+      await clickIn(card, '.primary-action-btn', [card]);
+      expect(slotMenuOpen(card)).toBe(true);
+
+      await clickIn(card, '.menu-btn', [card]);
+
+      expect(contextMenuOpen(card)).toBe(true);
+      expect(slotMenuOpen(card)).toBe(false);
+    });
+
+    /*
+     * Touch: tapping a submenu parent row focuses it (`:focus-within` shows
+     * its submenu) and the click then reaches document. Closing the whole
+     * menu there left the submenu clickable but invisible.
+     */
+    it('keeps the menu open when a submenu parent row inside it is tapped', async () => {
+      const card = await mountCard({ showActions: true });
+
+      await clickIn(card, '.menu-btn', [card]);
+      await clickIn(card, '.context-menu .menu-item.has-submenu', [card]);
+
+      expect(contextMenuOpen(card)).toBe(true);
+    });
+
+    it('keeps the slot picker open when a click lands on the picker itself', async () => {
+      const card = await mountCard({ showActions: true, showSlotPicker: true });
+
+      await clickIn(card, '.primary-action-btn', [card]);
+      await clickIn(card, '.slot-picker-menu', [card]);
+
+      expect(slotMenuOpen(card)).toBe(true);
+    });
+
+    it('still closes the menu once one of its actions is chosen', async () => {
+      const card = await mountCard({ showActions: true });
+
+      await clickIn(card, '.menu-btn', [card]);
+      await clickIn(card, '.context-menu .submenu button.menu-item', [card]);
+
+      expect(contextMenuOpen(card)).toBe(false);
+    });
+
+    it("still closes another card's menu when a click lands inside this card's menu", async () => {
+      const a = await mountCard({ showActions: true });
+      const b = await mountCard({ showActions: true });
+
+      await clickIn(a, '.menu-btn', [a, b]);
+      await clickIn(b, '.menu-btn', [a, b]);
+      await clickIn(b, '.context-menu .menu-item.has-submenu', [a, b]);
+
+      expect(contextMenuOpen(a)).toBe(false);
+      expect(contextMenuOpen(b)).toBe(true);
+    });
+  });
+
+  // ==========================================================================
+  // Escape claims the key when it closes a menu
+  //
+  // The toast container dismisses a dismissible toast on an Escape nothing
+  // else handled. The card closed its menus on that same Escape without
+  // saying so, so one key press closed both the menu and the toast.
+  // ==========================================================================
+
+  describe('Escape', () => {
+    const escape = (): KeyboardEvent => {
+      const e = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      document.dispatchEvent(e);
+      return e;
+    };
+
+    it('closes an open context menu and marks the key handled', async () => {
+      const card = await mountCard({ showActions: true });
+      sr(card).querySelector<HTMLButtonElement>('.menu-btn')!.click();
+      await card.updateComplete;
+
+      const e = escape();
+      await card.updateComplete;
+
+      expect(sr(card).querySelector('.context-menu')!.classList.contains('open')).toBe(false);
+      expect(e.defaultPrevented).toBe(true);
+    });
+
+    it('closes an open slot picker and marks the key handled', async () => {
+      const card = await mountCard({ showActions: true, showSlotPicker: true });
+      sr(card).querySelector<HTMLButtonElement>('.primary-action-btn')!.click();
+      await card.updateComplete;
+
+      const e = escape();
+      await card.updateComplete;
+
+      expect(sr(card).querySelector('.slot-picker-menu')!.classList.contains('open')).toBe(false);
+      expect(e.defaultPrevented).toBe(true);
+    });
+
+    it('leaves the key alone when no menu is open', async () => {
+      await mountCard({ showActions: true, showSlotPicker: true });
+
+      expect(escape().defaultPrevented).toBe(false);
+    });
+  });
+
+  // ==========================================================================
+  // Gradient hand-off of a Custom Color (BUG-092 sibling)
+  //
+  // The Gradient Builder stores a Custom Color endpoint by its hex, because
+  // makeCustomDye mints a new synthetic id every session. The card writes the
+  // same key ('v3_mixer_selected_dyes'), so it must store the same form —
+  // otherwise "Transform → Gradient" leaves an id that resolves to nothing.
+  // ==========================================================================
+
+  describe('gradient hand-off of a custom colour (BUG-092)', () => {
+    const GRADIENT_KEY = 'v3_mixer_selected_dyes';
+
+    async function mountCustom(hex: string): Promise<CardEl> {
+      const { makeCustomDye } = await import('@shared/custom-dye');
+      const dye = makeCustomDye(hex);
+      return mountCard({ data: { dye, originalColor: hex, matchedColor: hex } });
+    }
+
+    const toGradient = (card: CardEl): void =>
+      (card as unknown as { handleMenuAction: (a: string) => void }).handleMenuAction(
+        'transform-gradient'
+      );
+
+    async function storedGradient(list: Array<number | string> | null): Promise<void> {
+      const { StorageService } = await import('@services/index');
+      vi.mocked(StorageService.getItem).mockReturnValueOnce(list);
+    }
+
+    async function toasts() {
+      const { ToastService } = await import('@services/toast-service');
+      return {
+        success: vi.spyOn(ToastService, 'success').mockImplementation(() => ''),
+        info: vi.spyOn(ToastService, 'info').mockImplementation(() => ''),
+      };
+    }
+
+    it('stores a custom colour by its hex, after the entries already there', async () => {
+      const { StorageService, RouterService } = await import('@services/index');
+      await toasts();
+      const card = await mountCustom('#12ab34');
+      await storedGradient([LOCALIZED_ITEM_ID]);
+
+      toGradient(card);
+
+      expect(StorageService.setItem).toHaveBeenCalledWith(GRADIENT_KEY, [
+        LOCALIZED_ITEM_ID,
+        '#12AB34',
+      ]);
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('gradient');
+    });
+
+    it('still stores a real dye by its id beside a stored hex', async () => {
+      const { StorageService } = await import('@services/index');
+      await toasts();
+      const card = await mountCard();
+      await storedGradient(['#12AB34']);
+
+      toGradient(card);
+
+      expect(StorageService.setItem).toHaveBeenCalledWith(GRADIENT_KEY, [
+        '#12AB34',
+        LOCALIZED_ITEM_ID,
+      ]);
+    });
+
+    it('recognises a custom colour already in the gradient by its hex', async () => {
+      const { StorageService } = await import('@services/index');
+      const toast = await toasts();
+      const card = await mountCustom('#12AB34');
+      await storedGradient(['#12AB34']);
+
+      toGradient(card);
+
+      expect(toast.info).toHaveBeenCalledWith('resultCard.dyeAlreadyIn');
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+    });
+
+    it('shows a stored hex in the slot-full modal and replaces a slot with the hex', async () => {
+      const { StorageService } = await import('@services/index');
+      const { ModalService } = await import('@services/modal-service');
+      const { DyeService } = await import('@services/dye-service-wrapper');
+      await toasts();
+      let content: HTMLElement | null = null;
+      vi.spyOn(ModalService, 'show').mockImplementation((config) => {
+        content = config.content as HTMLElement;
+        return 'modal-1' as ReturnType<typeof ModalService.show>;
+      });
+      vi.spyOn(ModalService, 'dismiss').mockImplementation(() => {});
+      vi.spyOn(DyeService.getInstance(), 'getDyeById').mockImplementation(
+        (id: number) => (id === LOCALIZED_ITEM_ID ? DYE : null) as never
+      );
+
+      const card = await mountCustom('#00FF00');
+      await storedGradient(['#FF0000', LOCALIZED_ITEM_ID]);
+
+      toGradient(card);
+
+      expect(content).not.toBeNull();
+      const slots = [...content!.querySelectorAll<HTMLButtonElement>('button')];
+      expect(slots).toHaveLength(2);
+      const [start, end] = slots;
+      // The hex entry: its own colour and the custom-colour name, not 'Unknown'.
+      expect(start.querySelectorAll('p')[1].textContent).toBe('Custom (#FF0000)');
+      expect((start.firstElementChild as HTMLElement).style.background).toBe('rgb(255, 0, 0)');
+      // The id entry still resolves through the dye database.
+      expect(end.querySelectorAll('p')[1].textContent).toBe(LOCALIZED_DYE_NAME);
+
+      end.click();
+
+      expect(StorageService.setItem).toHaveBeenCalledWith(GRADIENT_KEY, ['#FF0000', '#00FF00']);
+    });
+
+    it('still shows a stored string that is not a colour as unknown', async () => {
+      const { ModalService } = await import('@services/modal-service');
+      await toasts();
+      let content: HTMLElement | null = null;
+      vi.spyOn(ModalService, 'show').mockImplementation((config) => {
+        content = config.content as HTMLElement;
+        return 'modal-1' as ReturnType<typeof ModalService.show>;
+      });
+
+      const card = await mountCustom('#00FF00');
+      await storedGradient(['not-a-colour', '#FF0000']);
+
+      toGradient(card);
+
+      const start = content!.querySelector<HTMLButtonElement>('button')!;
+      expect(start.querySelectorAll('p')[1].textContent).toBe('common.unknown');
+      expect((start.firstElementChild as HTMLElement).style.background).toBe('rgb(136, 136, 136)');
     });
   });
 });

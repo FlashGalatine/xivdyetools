@@ -34,8 +34,8 @@
   claims need a mount-path check, not a grep. Tool-content CSS is loaded in BOTH scopes
   (`src/styles/tool-content.css`: page `@import` + `?inline` into the shell sheet).
 - **Type-position imports** (`import type { X }`) hide a never-constructed type from knip.
-- Scans that stop at `src/` miss `packages/test-utils/integration/` and `apps/*/scripts/`,
-  `functions/`, `e2e/` — entries live there too.
+- Scans that stop at `src/` miss `apps/*/scripts/`, `functions/`, `e2e/` and any package test
+  directory outside `src/` — entries live there too.
 - Static assets: `apps/web-app/public/og/<tool>/` cards were dead only because og-worker serves
   them; check the worker before deleting assets. Root `assets/` vs Vite `publicDir: ../public`.
 - Locale keys: web-app's `analyze-unused-keys.js` resolves dynamic prefixes (`t(\`swatch.${k}\`)`)

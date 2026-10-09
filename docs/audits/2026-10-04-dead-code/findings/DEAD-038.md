@@ -17,4 +17,4 @@ Steps: 1) apps/image-worker/vitest.config.ts: delete :2 (`import path from 'path
 3) Run pnpm turbo run build type-check lint test --filter=...xivdyetools-image-worker, then pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `cb32ab3a` (branch `fix/remediation-2026-10-04-sprint21`, image-worker 1.3.4; PR #275, open).

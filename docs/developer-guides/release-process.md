@@ -62,6 +62,19 @@ the monorepo via `workspace:*`:
 types, logger, auth  →  core, worker-kit  →  svg  →  bot-logic
 ```
 
+The workflow enforces this rather than trusting the order (BUG-154). Before each publish it
+checks the package's shipped `@xivdyetools/*` dependencies (`dependencies`, `peerDependencies`,
+`optionalDependencies`; not `devDependencies`):
+
+- If one of them failed or was skipped earlier in the same run, the package is **skipped** (logged
+  as an error), and so is everything that depends on it transitively. An unrelated package still
+  publishes: `worker-kit` goes out even when `core` fails.
+- If one is not in this run (single-package mode), it must already be on npm at its local
+  version (`npm view <dep>@<version>`), or the package is skipped.
+
+A skip makes the job exit 1. Fix the cause and rerun: packages already on npm are filtered out by
+`detect`.
+
 ---
 
 ## Trusted publishing setup

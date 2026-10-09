@@ -6,13 +6,14 @@
  * pairing must survive every format.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import type { Dye } from '@xivdyetools/types';
 import {
   EXPORT_FORMATS,
   exportFilename,
   exportMimeType,
   generateExport,
+  localDateStamp,
   type ExportLabels,
   type ExportPayload,
 } from '../palette-export';
@@ -179,5 +180,41 @@ describe('file metadata', () => {
     expect(exportMimeType('css')).toBe('text/css');
     expect(exportMimeType('json')).toBe('application/json');
     expect(exportMimeType('hex')).toBe('text/plain');
+  });
+});
+
+// BUG-123: the date came from toISOString(), i.e. UTC — an evening export
+// anywhere west of UTC was stamped with tomorrow's date.
+describe('export date', () => {
+  const originalTZ = process.env.TZ;
+
+  beforeEach(() => {
+    // A fixed UTC−5 with no DST; Node re-reads TZ when it is assigned
+    process.env.TZ = 'Etc/GMT+5';
+    vi.useFakeTimers();
+    // 00:30 UTC on 5 October is 19:30 on 4 October in UTC−5
+    vi.setSystemTime(new Date('2026-10-05T00:30:00Z'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    if (originalTZ === undefined) delete process.env.TZ;
+    else process.env.TZ = originalTZ;
+  });
+
+  it('stamps the local calendar date, not the UTC one (BUG-123)', () => {
+    const labels: ExportLabels = {
+      generatedLine: (date) => `Generated ${date}`,
+      sourceHeader: 'Source',
+      dyesHeader: 'Dyes',
+    };
+    // Precondition: the zone really is UTC−5 here, not whatever the machine runs
+    expect(new Date().getTimezoneOffset()).toBe(300);
+
+    // Also stamps the collections and settings export filenames
+    expect(localDateStamp()).toBe('2026-10-04');
+    expect(exportFilename(PAYLOAD, 'css')).toBe('xiv-extractor-2026-10-04.css');
+    expect(JSON.parse(generateExport(PAYLOAD, 'json')).generated).toBe('2026-10-04');
+    expect(generateExport({ ...PAYLOAD, labels }, 'css')).toContain('Generated 2026-10-04');
   });
 });

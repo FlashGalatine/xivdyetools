@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "Match a character's colors to dyes from a `.chara` file (Anamnesis or Ktisis).\n• Reads skin, hair, highlights, eyes, lip, face paint and tattoo/limbal ring\n• `slot`: the five nearest dyes for one color"
+      "description": "Match a character's colors to dyes from a `.chara` file (Anamnesis, Ktisis or Brio).\n• Reads skin, hair, highlights, eyes, lip, face paint and tattoo/limbal ring\n• `slot`: the five nearest dyes for one color"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "List the glamour a `.chara` file wears (Anamnesis or Ktisis).\n• Each dyed piece, named as the item you can actually wear\n• The full list in the GPOSERS form, ready to copy"
+      "description": "List the glamour a `.chara` file wears (Anamnesis, Ktisis or Brio).\n• Each dyed piece, named as the item you can actually wear\n• The full list in the GPOSERS form, ready to copy"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -229,6 +229,7 @@
     "randomTitle": "Random Preset",
     "notEnoughDyes": "Please provide at least 3 dyes for your preset.",
     "invalidDye": "Could not find one of the specified dyes.",
+    "repeatedDye": "**{dye}** is in this preset more than once. Each dye can be used only once.",
     "duplicateExists": "Similar Preset Exists",
     "duplicateVoted": "Your vote has been added to the existing preset.",
     "submitted": "Preset Submitted!",
@@ -599,9 +600,24 @@
     "swatchGear": "Gear dyes: {list}",
     "swatchDropped": "Dropped (safest): {slot} · ΔE {de}",
     "swatchParseError": "Could not read the file — {message}",
+    "charaFileReason": {
+      "tooLarge": "it is larger than {mb} MB",
+      "notOnDiscord": "it must be uploaded to Discord",
+      "downloadFailed": "the download failed (HTTP {status})",
+      "unreadable": "it is not a .chara file the bot can read"
+    },
     "swatchTitle": "Character swatch",
     "swatchNoSlots": "No live color slots in this file.",
     "swatchSlotMissing": "{slot} is not a live slot in this file.",
+    "swatchSlotName": {
+      "skin": "Skin",
+      "hair": "Hair",
+      "highlights": "Highlights",
+      "eyes": "Eyes",
+      "lip": "Lip",
+      "facepaint": "Face paint",
+      "limbal": "Tattoo / Limbal ring"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "Glamour",
     "glamourPieces_one": "{n} dyed piece",
@@ -611,7 +627,8 @@
     "glamourDyes_one": "{n} dye",
     "glamourDyes_other": "{n} dyes",
     "glamourNoDyes": "no dyes",
-    "glamourLooks": "+{n} LOOK",
+    "glamourLooks_one": "+{n} LOOK",
+    "glamourLooks_other": "+{n} LOOKS",
     "glamourOneLook": "ONE LOOK",
     "glamourStatusTwin": "TWIN",
     "glamourStatusOk": "OK",
@@ -687,7 +704,7 @@
       },
       "characterFile": {
         "name": "Character File",
-        "body": "/swatch reads a .chara export from Anamnesis or Ktisis: color slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) and worn gear dyes. The file is read once to build the reply and is not stored. Off-grid colors (edited past the game's palette) are matched by their live value and flagged OFF GRID."
+        "body": "/swatch and /glamour read a .chara export from Anamnesis, Ktisis or Brio. The file is read once to build the reply and is not stored.\n\n/swatch matches the color slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal ring) to dyes and lists the worn gear dyes. Off-grid colors (edited past the game's palette) are matched by their live value and flagged OFF GRID.\n\n/glamour lists each worn piece and its dyes. One model can be several items, its twins (+N LOOKS). Each piece is named as an item this character can wear with those dyes: if the saved item can't take the dyes, can't be a glamour or can't be worn, a twin that can is named instead (TWIN). A piece with nothing to fix shows OK. The bot picks the twin, preferring one that takes dyes; the web app's Glamour Reader, linked at the end of the reply, lets you choose another. A piece no twin fixes shows what blocks it: DYES, NO GLAM, LOCKED (or the one race that can wear it), or a dash (—) for a model with no item behind it. The embed lists every piece in the GPOSERS form, ready to copy. Its labels and Acquisition lines are in English in every language; a blank Acquisition line means no source is known, so fill it in yourself."
       }
     }
   },
@@ -816,7 +833,7 @@
       "description": "Match a character file's colors to the nearest dyes",
       "options": {
         "file": {
-          "description": ".chara character file (Anamnesis / Ktisis export)"
+          "description": ".chara character file (Anamnesis / Ktisis / Brio export)"
         },
         "order": {
           "description": "Row order — both orders show the same five rows"
@@ -830,7 +847,7 @@
       "description": "Read a character file as a glamour: every piece, its dyes, and whether it can be worn",
       "options": {
         "file": {
-          "description": ".chara character file (Anamnesis / Ktisis export)"
+          "description": ".chara character file (Anamnesis / Ktisis / Brio export)"
         }
       }
     },
@@ -1136,10 +1153,10 @@
               "description": "Default number of matches for /extractor color (1-10)"
             },
             "clan": {
-              "description": "Default clan for /swatch (e.g., Midlander, Raen)"
+              "description": "Your clan (saved with your preferences; no command reads it yet)"
             },
             "gender": {
-              "description": "Default gender for /swatch"
+              "description": "Your gender (saved with your preferences; no command reads it yet)"
             },
             "world": {
               "description": "Default world/datacenter for market prices"

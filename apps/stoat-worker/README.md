@@ -11,7 +11,7 @@
 🌈 **Color Tools** — Harmonies, gradients, blending, comparison, and accessibility (planned)
 🎭 **Masquerade** — Bot replies adopt the dye's color and name per-message
 ⏳ **Loading Indicators** — React/unreact pattern for visual processing feedback *(helper written, not yet wired — `withLoadingIndicator` has no production caller)*
-🌍 **6 Languages** — English, Japanese, German, French, Korean, Chinese *(available through `@xivdyetools/bot-logic`; the bot itself still hard-codes `locale = 'en'` in `commands/info.ts` — there is no user-preference resolution yet)*
+🌍 **6 Languages** — English, Japanese, German, French, Korean, Chinese *(available through `@xivdyetools/bot-logic`; the bot itself still hard-codes `locale = 'en'` in `commands/info.ts` — there is no user-preference resolution yet, so dye names are matched in English only)*
 📊 **Shared Logic** — Built on the same `@xivdyetools/bot-logic` package as the Discord bot
 
 ## Architecture
@@ -60,7 +60,7 @@
 | `!xd help [command]` | Command reference |
 | `!xd about` | Bot info and links |
 
-**Tip:** `!xd` is a shortcut for `!xivdye`. Dye names, ItemIDs, and hex codes are all accepted. Use `>` to separate multiple dyes.
+**Tip:** `!xd` is a shortcut for `!xivdye`. Dye names (English), ItemIDs, and hex codes are all accepted; a partial name that fits several dyes (e.g. `white`) shows each one, or a list when there are many. Use `>` to separate multiple dyes.
 
 ## Development
 

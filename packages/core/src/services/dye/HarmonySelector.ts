@@ -97,13 +97,24 @@ export interface HarmonySelectionOptions {
    * `itemID`s because that is the identity every surface already keys on.
    *
    * Honoured for slots and companions alike, independently of
-   * {@link HarmonySelectionConfig.preventDuplicates}. A pinned dye still wins
-   * its slot: an explicit hand-swap outranks this.
+   * {@link HarmonySelectionConfig.preventDuplicates}. An honoured pin still
+   * wins its slot (see `pinned`): an explicit hand-swap outranks this.
    */
   excludeItemIDs?: readonly number[];
   /**
    * Slot index → a dye the caller has fixed (a user's manual swap). A pinned
-   * dye is honoured and still consumes its place in de-duplication.
+   * dye wins its slot. Under {@link HarmonySelectionConfig.preventDuplicates}:
+   *
+   * - it is reserved ahead of every other slot and companion list, earlier
+   *   ones included, not just the slots after it — except that a slot with no
+   *   other eligible unused dye still falls back to repeating one (a repeated
+   *   dye beats a blank slot), and that fallback can repeat a pin;
+   * - when two slots pin the same dye, only the lower slot index is honoured;
+   *   the other slot is chosen as if it had no pin.
+   *
+   * With duplicates allowed, every pin stands and reserves nothing. A pin
+   * keyed to an index the harmony does not have is ignored: it is never
+   * drawn, so it must not hide a dye from the slots that are.
    */
   pinned?: ReadonlyMap<number, Dye>;
 }
@@ -222,6 +233,30 @@ export function generateHarmonySlots(
   // analogous` on a near-grey answered the base twice.
   const excluded = new Set<number>(options?.excludeItemIDs ?? []);
   const used = new Set<number>();
+  // BUG-137 (2026-10-04): a pin is on screen from the start, so it is "used"
+  // before ANY slot chooses. It used to enter `used` only when the loop reached
+  // its own slot, so an earlier slot could still pick it and the palette showed
+  // one dye twice. The web app reaches that by keeping a hand-swap across a
+  // strict-matching, ΔE-method or filter change that moves slot 0's natural
+  // pick onto the swapped-in dye. Walk the real slot indices rather than the
+  // map's keys, so a stale pin for a slot this harmony lacks reserves nothing.
+  //
+  // The same walk settles two pins naming ONE dye: under de-duplication only
+  // the first by slot index (not Map insertion order) is honoured. A later one
+  // is dropped here and its slot is chosen as if it were never pinned —
+  // otherwise both "won their slot outright" and the dye showed twice.
+  const pins = new Map<number, Dye>();
+  if (options?.pinned) {
+    for (let index = 0; index < offsets.length; index++) {
+      const pin = options.pinned.get(index);
+      if (!pin) continue;
+      if (preventDuplicates) {
+        if (used.has(pin.itemID)) continue;
+        used.add(pin.itemID);
+      }
+      pins.set(index, pin);
+    }
+  }
   const slots: HarmonySlot[] = [];
 
   offsets.forEach((offset, index) => {
@@ -234,7 +269,7 @@ export function generateHarmonySlots(
 
     const ranked = rankCandidates(candidates, targetHue, targetHex, effective);
 
-    const pin = options?.pinned?.get(index);
+    const pin = pins.get(index);
     // Every branch below assigns, so no initialiser: an unread `= null` here
     // would be one more place for a future edit to leave a slot silently empty.
     let chosen: ScoredCandidate | null;

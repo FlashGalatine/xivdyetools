@@ -11,13 +11,37 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { GradientTool } from '../gradient-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
+// The barrel is mocked below; the tool reads ConfigController through it
+import {
+  ColorService,
+  ConfigController,
+  dyeService,
+  MarketBoardService,
+  StorageService,
+} from '@services/index';
+// The module itself is NOT mocked — this is the real controller, backed by
+// the real StorageService and jsdom localStorage
+import { ConfigController as RealConfigController } from '@services/config-controller';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import type { Dye } from '@xivdyetools/types';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
-const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes } = vi.hoisted(() => ({
-  mockGetAllDyes: vi.fn(),
-  mockGetDyeById: vi.fn(),
-  mockFindClosestDyes: vi.fn(),
-}));
+const { mockGetAllDyes, mockGetDyeById, mockFindClosestDyes, fakeConfigController } = vi.hoisted(
+  () => ({
+    mockGetAllDyes: vi.fn(),
+    mockGetDyeById: vi.fn(),
+    mockFindClosestDyes: vi.fn(),
+    /**
+     * The barrel's ConfigController. setConfig must exist: the tool writes
+     * in-tool picks and validated share settings through it (BUG-019).
+     */
+    fakeConfigController: {
+      getConfig: vi.fn((): Record<string, unknown> => ({})),
+      setConfig: vi.fn(),
+      subscribe: vi.fn(() => () => {}),
+    },
+  })
+);
 
 // Icon modules are NOT mocked. They are compile-time string constants with
 // no dependencies, and a hand-written stub only has to miss one export for
@@ -42,33 +66,6 @@ vi.mock('@services/dye-service-wrapper', () => ({
 }));
 
 vi.mock('@services/index', () => ({
-  /**
-   * The shared market-panel builder. Absent, renderMarketPanel throws and
-   * safeRender swallows it, leaving the whole panel empty.
-   */
-  buildMarketPanel: vi.fn(() => ({
-    panel: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      setContent: vi.fn(),
-      getContentContainer: vi.fn(() => document.createElement('div')),
-      open: vi.fn(),
-      close: vi.fn(),
-    },
-    // Mirrors the real MarketBoard component's public surface
-    marketBoard: {
-      init: vi.fn(),
-      destroy: vi.fn(),
-      getShowPrices: vi.fn().mockReturnValue(false),
-      setShowPrices: vi.fn(),
-      getSelectedServer: vi.fn().mockReturnValue(null),
-      setSelectedServer: vi.fn(),
-      loadServerData: vi.fn().mockResolvedValue(undefined),
-      refreshPrices: vi.fn().mockResolvedValue(undefined),
-      fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
-      shouldFetchPrice: vi.fn().mockReturnValue(false),
-    },
-  })),
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
   ToastService: {
@@ -181,6 +178,9 @@ vi.mock('@services/index', () => ({
       setWorldId: vi.fn(),
       getPriceForItem: vi.fn().mockReturnValue(null),
       fetchPricesForDyes: vi.fn().mockResolvedValue(new Map()),
+      // Read for every displayed dye before a fetch; absent, the fetch throws
+      // inside a voided promise and the rejection fails the whole file.
+      shouldFetchPrice: vi.fn().mockReturnValue(false),
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
       getShowPrices: vi.fn().mockReturnValue(false),
@@ -188,10 +188,7 @@ vi.mock('@services/index', () => ({
     }),
   },
   ConfigController: {
-    getInstance: vi.fn().mockReturnValue({
-      getConfig: vi.fn().mockReturnValue({}),
-      subscribe: vi.fn().mockReturnValue(() => {}),
-    }),
+    getInstance: vi.fn(() => fakeConfigController),
   },
   CollectionService: {
     getFavorites: vi.fn().mockReturnValue([]),
@@ -219,181 +216,31 @@ vi.mock('@shared/logger', () => ({
   },
 }));
 
-vi.mock('@services/pricing-mixin', () => ({
-  setupMarketBoardListeners: vi.fn().mockReturnValue(() => {}),
-}));
-
-vi.mock('../collapsible-panel', () => ({
-  /**
-   * Mirrors the real CollapsiblePanel's public API. `setContent` as a no-op
-   * silently swallowed every control the tools place in a panel, and a
-   * missing `getContentContainer` throws into BaseComponent.safeRender()'s
-   * catch — which converts it to an error state, so the panel renders
-   * nothing and the tests see an empty DOM instead of a failure.
-   */
-  CollapsiblePanel: class MockCollapsiblePanel {
-    container: HTMLElement;
-    options: Record<string, unknown>;
-    private body: HTMLElement | null = null;
-    constructor(container: HTMLElement, options: Record<string, unknown>) {
-      this.container = container;
-      this.options = options;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'collapsible-panel';
-      div.id = (this.options.id as string) || 'panel';
-      this.container.appendChild(div);
-      this.body = div;
-    }
-    getContentContainer(): HTMLElement {
-      if (!this.body) this.init();
-      return this.body!;
-    }
-    setContent(content: HTMLElement | string) {
-      if (!this.body) this.init();
-      if (typeof content === 'string') this.body!.innerHTML = content;
-      else if (content) this.body!.appendChild(content);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-      this.body = null;
-    }
-    open() {}
-    close() {}
-    expand() {}
-    collapse() {}
-    toggle() {}
-  },
-}));
-
-vi.mock('../market-board', () => ({
-  /**
-   * Mirrors the real MarketBoard component's public surface. Tools that build
-   * a second, mobile board construct it directly from here rather than through
-   * buildMarketPanel, so a gap shows up only on the mobile path.
-   */
-  MarketBoard: class MockMarketBoard {
-    container: HTMLElement;
-    private showPrices = false;
-    private selectedServer: string | null = null;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'market-board';
-      div.id = 'market-board';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getShowPrices() {
-      return this.showPrices;
-    }
-    setShowPrices(value: boolean) {
-      this.showPrices = value;
-    }
-    getSelectedServer() {
-      return this.selectedServer;
-    }
-    setSelectedServer(server: string | null) {
-      this.selectedServer = server;
-    }
-    async loadServerData() {}
-    async refreshPrices() {}
-    async fetchPricesForDyes() {
-      return new Map();
-    }
-    shouldFetchPrice() {
-      return false;
-    }
-  },
-}));
-
-vi.mock('../dye-selector', () => ({
-  DyeSelector: class MockDyeSelector {
-    container: HTMLElement;
-    options: Record<string, unknown>;
-    selectedDyes: unknown[] = [];
-    constructor(container: HTMLElement, options: Record<string, unknown> = {}) {
-      this.container = container;
-      this.options = options;
-    }
-    element: HTMLElement | null = null;
-    init() {
-      const div = document.createElement('div');
-      div.className = 'dye-selector';
-      div.id = 'dye-selector';
-      this.container.appendChild(div);
-      this.element = div;
-    }
-    // Inherited from BaseComponent on the real DyeSelector; the tools
-    // reach through it to bind selection-changed on its parent.
-    getElement() {
-      return this.element;
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getSelectedDyes() {
-      return this.selectedDyes;
-    }
-    setSelectedDyes(dyes: unknown[]) {
-      this.selectedDyes = dyes;
-    }
-    clearSelection() {
-      this.selectedDyes = [];
-    }
-  },
-}));
-
-vi.mock('../dye-filters', () => ({
-  DyeFilters: class MockDyeFilters {
-    container: HTMLElement;
-    constructor(container: HTMLElement) {
-      this.container = container;
-    }
-    init() {
-      const div = document.createElement('div');
-      div.className = 'dye-filters';
-      div.id = 'dye-filters';
-      this.container.appendChild(div);
-    }
-    destroy() {
-      this.container.innerHTML = '';
-    }
-    getExcludedCategories() {
-      return [];
-    }
-    setEnabled() {}
-  },
-}));
-
 describe('GradientTool', () => {
   let container: HTMLElement;
-  let leftPanel: HTMLElement;
-  let rightPanel: HTMLElement;
-  let drawerContent: HTMLElement;
+  /**
+   * The one panel v4-layout hands every tool, as both its left and right
+   * panel, with no drawer (v4-layout.ts loadToolContent). mount() uses the
+   * same shape, so the suite runs the tool the way production does.
+   */
+  let panel: HTMLElement;
   let tool: GradientTool | null;
 
   beforeEach(() => {
     container = createTestContainer();
-    leftPanel = document.createElement('div');
-    leftPanel.id = 'left-panel';
-    rightPanel = document.createElement('div');
-    rightPanel.id = 'right-panel';
-    drawerContent = document.createElement('div');
-    drawerContent.id = 'drawer-content';
-    container.appendChild(leftPanel);
-    container.appendChild(rightPanel);
-    container.appendChild(drawerContent);
+    panel = document.createElement('div');
+    panel.className = 'v4-tool-main';
+    container.appendChild(panel);
     tool = null;
     vi.clearAllMocks();
     mockGetAllDyes.mockReturnValue(mockDyes);
     mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id));
     mockFindClosestDyes.mockReturnValue(mockDyes.slice(0, 5));
+    // vi.clearAllMocks() keeps implementations, and restoreAllMocks() does not
+    // reset vi.fn ones in Vitest 5, so a per-test override is undone here
+    vi.mocked(ConfigController.getInstance).mockImplementation(() => fakeConfigController as never);
+    fakeConfigController.getConfig.mockImplementation(() => ({}));
+    vi.mocked(dyeService.findClosestDye).mockReset().mockReturnValue(null);
     // Mock scrollIntoView
     Element.prototype.scrollIntoView = vi.fn();
   });
@@ -415,39 +262,37 @@ describe('GradientTool', () => {
   // ============================================================================
 
   describe('Basic Rendering', () => {
-    it('should render gradient tool', () => {
+    it('renders the 4C workspace into the one panel v4-layout hands it', () => {
+      tool = mount();
+
+      for (const testId of [
+        'gradient-endpoints-row',
+        'gradient-pin-rail',
+        'gradient-results-section',
+        'gradient-empty-state',
+        'gradient-matches-container',
+      ]) {
+        expect(panel.querySelector(`[data-testid="${testId}"]`)).not.toBeNull();
+      }
+      // Nothing to share until both endpoints are set
+      expect(shareParams()!.disabled).toBe(true);
+    });
+
+    // REFACTOR-005: the v3 left panel (dye selector, settings, market board)
+    // and the mobile drawer are gone. v4-layout passes the workspace panel as
+    // the left panel and no drawer, so neither was ever seen.
+    it('draws only into the right panel: no left panel, no drawer', () => {
+      const leftPanel = document.createElement('div');
+      const rightPanel = document.createElement('div');
+      const drawerContent = document.createElement('div');
+      container.append(leftPanel, rightPanel, drawerContent);
+
       tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
       tool.init();
 
-      expect(leftPanel.children.length).toBeGreaterThan(0);
-    });
-
-    it('should render left panel content', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(leftPanel.innerHTML.length).toBeGreaterThan(0);
-    });
-
-    it('should render right panel content', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(rightPanel).not.toBeNull();
-    });
-
-    it('should render drawer content when provided', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
-
-      expect(drawerContent).not.toBeNull();
-    });
-
-    it('should work without drawer content', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      expect(leftPanel.childElementCount).toBe(0);
+      expect(drawerContent.childElementCount).toBe(0);
+      expect(rightPanel.querySelector('[data-testid="gradient-endpoints-row"]')).not.toBeNull();
     });
   });
 
@@ -457,20 +302,16 @@ describe('GradientTool', () => {
 
   describe('Configuration', () => {
     it('should have setConfig method', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       expect(typeof tool.setConfig).toBe('function');
     });
 
     it('should accept config via setConfig', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
-      // Should not throw
-      tool.setConfig({ stepCount: 10 });
-
-      expect(leftPanel.children.length).toBeGreaterThan(0);
+      expect(() => tool!.setConfig({ stepCount: 10 })).not.toThrow();
+      expect(panel.querySelector('[data-testid="gradient-endpoints-row"]')).not.toBeNull();
     });
   });
 
@@ -480,30 +321,26 @@ describe('GradientTool', () => {
 
   describe('Dye Selection', () => {
     it('should have selectDye method', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       expect(typeof tool.selectDye).toBe('function');
     });
 
     it('should have clearDyes method', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       expect(typeof tool.clearDyes).toBe('function');
     });
 
     it('should accept dye selection', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       // Should not throw
       expect(() => tool!.selectDye(mockDyes[0])).not.toThrow();
     });
 
     it('should clear dyes', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       tool.selectDye(mockDyes[0]);
 
@@ -512,28 +349,13 @@ describe('GradientTool', () => {
     });
 
     it('should support two dyes for gradient', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       // Should not throw when adding two dyes
       expect(() => {
         tool!.selectDye(mockDyes[0]);
         tool!.selectDye(mockDyes[1]);
       }).not.toThrow();
-    });
-  });
-
-  // ============================================================================
-  // Interpolation Tests
-  // ============================================================================
-
-  describe('Interpolation', () => {
-    it('should render interpolation controls', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
-
-      // Tool should render gradient-related content
-      expect(rightPanel).not.toBeNull();
     });
   });
 
@@ -571,16 +393,14 @@ describe('GradientTool', () => {
 
   describe('Lifecycle', () => {
     it('should clean up on destroy', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel, drawerContent });
-      tool.init();
+      tool = mount();
 
       // Should not throw
       expect(() => tool!.destroy()).not.toThrow();
     });
 
     it('should handle double destroy gracefully', () => {
-      tool = new GradientTool(container, { leftPanel, rightPanel });
-      tool.init();
+      tool = mount();
 
       tool.destroy();
 
@@ -600,11 +420,13 @@ describe('GradientTool', () => {
   // palette drawer.
   // ==========================================================================
 
-  const mount = (opts: { drawer?: boolean } = {}): GradientTool => {
-    const t = new GradientTool(
-      container,
-      opts.drawer === false ? { leftPanel, rightPanel } : { leftPanel, rightPanel, drawerContent }
-    );
+  /** Construct and init the tool the way v4-layout does: one panel, no drawer. */
+  const mount = (): GradientTool => {
+    const t = new GradientTool(container, {
+      leftPanel: panel,
+      rightPanel: panel,
+      drawerContent: null,
+    });
     t.init();
     return t;
   };
@@ -615,8 +437,9 @@ describe('GradientTool', () => {
   };
 
   const DYES_KEY = 'v3_mixer_selected_dyes';
-  const STEPS_KEY = 'v3_mixer_steps';
-  const SPACE_KEY = 'v3_mixer_color_space';
+  // The tool's own settings mirrors, retired by BUG-019: ConfigController owns
+  // the step count and colour space now
+  const RETIRED_SETTINGS_KEYS = ['v3_mixer_steps', 'v3_mixer_color_space'];
 
   const lastWrite = async (key: string): Promise<unknown> => {
     const { StorageService } = await import('@services/index');
@@ -629,6 +452,64 @@ describe('GradientTool', () => {
 
   const dye = (id: number, name = `Dye ${id}`) =>
     ({ ...mockDyes[0], id, itemID: 5000 + id, name, hex: '#123456' }) as never;
+
+  const shareParams = () =>
+    (container.querySelector('v4-share-button') as unknown as {
+      shareParams: Record<string, unknown>;
+      disabled: boolean;
+    }) ?? null;
+
+  /** The settings the tool is running with, as its share button reports them. */
+  const settingsInEffect = () => {
+    const { steps, interpolation, algo } = shareParams()!.shareParams;
+    return { steps, interpolation, algo };
+  };
+
+  /** Mount with a share URL in the address bar; each describe restores it. */
+  const mountAt = (search: string): GradientTool => {
+    window.history.replaceState({}, '', `/gradient/${search}`);
+    return mount();
+  };
+
+  type StepCard = HTMLElement & {
+    data: { dye: Dye; matchingMethod: string; marketServer?: string };
+    showHex: boolean;
+    showRgb: boolean;
+    showCmyk: boolean;
+    showPrice: boolean;
+  };
+
+  /** The rendered ramp, in step order: one card per step that matched a dye. */
+  const stepCards = () =>
+    [...container.querySelectorAll('v4-result-card[data-gradient-step]')] as StepCard[];
+
+  /** The dyes matched between the two endpoints (every step here matches one). */
+  const middleIds = () =>
+    stepCards()
+      .slice(1, -1)
+      .map((card) => card.data.dye.id);
+
+  /** Two endpoints and a dye for every middle step, so the whole ramp renders. */
+  const mountWithRamp = async (): Promise<GradientTool> => {
+    vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[0]);
+    const t = mount();
+    t.selectDye(dye(1));
+    t.selectDye(dye(2));
+    await flush();
+    return t;
+  };
+
+  const pinsOf = (t: GradientTool) =>
+    (t as unknown as { pinnedSteps: Map<number, Dye> }).pinnedSteps;
+
+  /** A matcher that honours excludeIds, so the dedupe fallback can find another dye. */
+  const matchFirstNotExcluded = () =>
+    vi
+      .mocked(dyeService.findClosestDye)
+      .mockImplementation(
+        (_hex: string, options?: { excludeIds?: number[] }) =>
+          mockDyes.find((d) => !options?.excludeIds?.includes(d.id)) ?? null
+      );
 
   describe('selectDye — the two endpoints', () => {
     it('fills the start endpoint first', async () => {
@@ -746,18 +627,6 @@ describe('GradientTool', () => {
   // ==========================================================================
 
   describe('share URL — custom endpoints', () => {
-    const shareParams = () =>
-      (container.querySelector('v4-share-button') as unknown as {
-        shareParams: Record<string, unknown>;
-        disabled: boolean;
-      }) ?? null;
-
-    /** Mount with a share URL in the address bar; restored afterwards. */
-    const mountAt = (search: string): GradientTool => {
-      window.history.replaceState({}, '', `/gradient/${search}`);
-      return mount();
-    };
-
     afterEach(() => {
       window.history.replaceState({}, '', '/');
     });
@@ -888,92 +757,568 @@ describe('GradientTool', () => {
     });
   });
 
+  // setConfig is the ConfigController subscriber (and the v4-layout forward's
+  // target), so it applies and never persists. BUG-011 (2026-10-04
+  // deep-dive): these used to assert v3 storage writes or not.toThrow(); each
+  // now asserts what the ramp does with the value.
   describe('setConfig', () => {
-    it('persists a step-count change', async () => {
-      tool = mount();
+    it('applies a step-count change to the ramp', async () => {
+      tool = await mountWithRamp();
+      expect(stepCards()).toHaveLength(8);
 
-      tool.setConfig({ stepCount: 12 });
+      tool.setConfig({ stepCount: 5 });
       await flush();
 
-      expect(await lastWrite(STEPS_KEY)).toBe(12);
+      expect(stepCards()).toHaveLength(5);
+      expect(settingsInEffect().steps).toBe(5);
     });
 
-    it('ignores a step count already in effect', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      tool.setConfig({ stepCount: 12 });
-      await flush();
-      vi.mocked(StorageService.setItem).mockClear();
+    it('clears the pins on a real step change and keeps them on a repeat', async () => {
+      tool = await mountWithRamp();
+      pinsOf(tool).set(3, mockDyes[1]);
+
+      // 8 is the count in effect; the v4-layout forward re-delivers every
+      // sidebar change, so a repeat must not cost the user their pins
+      tool.setConfig({ stepCount: 8 });
+      expect(pinsOf(tool).size).toBe(1);
 
       tool.setConfig({ stepCount: 12 });
-      await flush();
-
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(STEPS_KEY, expect.anything());
+      expect(pinsOf(tool).size).toBe(0);
     });
 
-    it('persists an interpolation change as the colour space', async () => {
-      tool = mount();
+    it.each([
+      [50, 12],
+      [1, 3],
+      [4.6, 5],
+    ])('clamps a step count of %s to %s', async (sent, applied) => {
+      tool = await mountWithRamp();
 
-      tool.setConfig({ interpolation: 'oklab' } as never);
+      // An imported config is type-checked only, so 50 can arrive here
+      tool.setConfig({ stepCount: sent });
       await flush();
 
-      // The sidebar calls it `interpolation`; storage calls it colorSpace
-      expect(await lastWrite(SPACE_KEY)).toBe('oklab');
+      expect(settingsInEffect().steps).toBe(applied);
+      expect(stepCards()).toHaveLength(applied);
     });
 
-    it.each(['rgb', 'lab', 'oklab', 'lch', 'hsl'])(
-      'accepts %s as an interpolation space',
+    // -Infinity rather than Infinity: an unguarded +Infinity loops the ramp
+    // builder until the worker dies, which reports nothing useful
+    it.each([NaN, -Infinity, '12'])('ignores a step count of %s', async (sent) => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({ stepCount: sent } as never);
+      await flush();
+
+      expect(settingsInEffect().steps).toBe(8);
+    });
+
+    it.each(['rgb', 'lab', 'oklch', 'lch'] as const)(
+      'applies %s as the interpolation space',
       async (space) => {
-        tool = mount();
+        tool = await mountWithRamp();
+
+        tool.setConfig({ interpolation: space });
+        await flush();
+
+        // The sidebar calls it `interpolation`; the tool calls it colorSpace
+        expect(settingsInEffect().interpolation).toBe(space);
+      }
+    );
+
+    it.each(['oklab', 'hsl', 'OKLCH', 42])(
+      'ignores %s, which is not one of the five interpolation modes',
+      async (space) => {
+        tool = await mountWithRamp();
 
         tool.setConfig({ interpolation: space } as never);
         await flush();
 
-        expect(await lastWrite(SPACE_KEY)).toBe(space);
+        // An unknown mode fell through interpolateInSpace to a flat grey ramp
+        expect(settingsInEffect().interpolation).toBe('hsv');
       }
     );
 
-    it('ignores the colour space already in effect', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
+    it('re-matches only when the colour space actually changes', async () => {
+      tool = await mountWithRamp();
+      const rematch = vi.spyOn(
+        tool as unknown as { updateInterpolation: () => void },
+        'updateInterpolation'
+      );
 
       // hsv is the default
-      tool.setConfig({ interpolation: 'hsv' } as never);
-      await flush();
+      tool.setConfig({ interpolation: 'hsv' });
+      expect(rematch).not.toHaveBeenCalled();
 
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(SPACE_KEY, expect.anything());
+      tool.setConfig({ interpolation: 'lab' });
+      expect(rematch).toHaveBeenCalledTimes(1);
     });
 
-    it.each([
-      ['preventDuplicates', { preventDuplicates: true }],
-      ['matchingMethod', { matchingMethod: 'oklab' }],
-      ['displayOptions', { displayOptions: { showHex: true } }],
-    ])('accepts a %s change with no endpoints set', (_label, config) => {
-      tool = mount();
-
-      expect(() => tool!.setConfig(config as never)).not.toThrow();
-    });
-
-    it('accepts an empty config without writing anything', async () => {
-      const { StorageService } = await import('@services/index');
-      tool = mount();
-      vi.mocked(StorageService.setItem).mockClear();
-
-      tool.setConfig({});
-
-      expect(StorageService.setItem).not.toHaveBeenCalledWith(STEPS_KEY, expect.anything());
-    });
-
-    it('recomputes against the new settings when endpoints are set', async () => {
+    it('dedupes consecutive steps only while preventDuplicates is on', async () => {
+      matchFirstNotExcluded();
       tool = mount();
       tool.selectDye(dye(1));
       tool.selectDye(dye(2));
+      await flush();
+      // On (the default): each middle step falls back to a dye not used yet
+      expect(new Set(middleIds()).size).toBe(6);
 
-      expect(() => tool!.setConfig({ stepCount: 5 })).not.toThrow();
+      tool.setConfig({ preventDuplicates: false });
       await flush();
 
-      expect(await lastWrite(STEPS_KEY)).toBe(5);
+      expect(new Set(middleIds()).size).toBe(1);
+    });
+
+    // BUG-020 (2026-10-04 deep-dive): only the endpoints were spoken for
+    // before the loop, and a pin joined them when the loop reached it — so a
+    // free step BEFORE a pin could match the pinned dye. Re-anchoring makes
+    // that the likely case: the step before a pin interpolates toward it.
+    it('keeps a pinned dye out of every free step, before the pin as well as after', async () => {
+      matchFirstNotExcluded();
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      // Dedupe off, so every middle step matches the same dye and the pins
+      // below both hold it
+      tool.setConfig({ preventDuplicates: false });
+      await flush();
+      const pinned = mockDyes[0].id;
+      expect(middleIds()).toEqual(Array(6).fill(pinned));
+      // Re-queried after each click: a pin re-renders the rail
+      const pinButtons = () => [...container.querySelectorAll<HTMLButtonElement>('.v5-grad-pin')];
+      pinButtons()[1].click(); // step 2
+      pinButtons()[4].click(); // step 5
+
+      tool.setConfig({ preventDuplicates: true });
+      await flush();
+
+      const middle = middleIds();
+      // A pinned row is an explicit choice: never deduped, even against another pin
+      expect([middle[1], middle[4]]).toEqual([pinned, pinned]);
+      const free = [middle[0], middle[2], middle[3], middle[5]];
+      expect(free).not.toContain(pinned);
+      expect(new Set(free).size).toBe(4);
+    });
+
+    it('re-matches with a new matching method', async () => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({ matchingMethod: 'oklab' });
+      await flush();
+
+      expect(settingsInEffect().algo).toBe('oklab');
+      expect(stepCards().map((card) => card.data.matchingMethod)).toEqual(Array(8).fill('oklab'));
+    });
+
+    it('merges partial display options rather than replacing them', async () => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({ displayOptions: { showHex: false } } as never);
+      tool.setConfig({ displayOptions: { showCmyk: true } } as never);
+
+      const card = stepCards()[0];
+      expect(card.showHex).toBe(false);
+      expect(card.showCmyk).toBe(true);
+      // Untouched by either update
+      expect(card.showRgb).toBe(true);
+    });
+
+    it('keeps an excluded dye out of the middle steps once a filter arrives', async () => {
+      // Every middle step's nearest dye is Dalamud Red, the one metallic mock
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[8]);
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+      expect(middleIds()).toContain(mockDyes[8].id);
+
+      tool.setConfig({ dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true } });
+      await flush();
+
+      expect(middleIds().length).toBeGreaterThan(0);
+      expect(middleIds()).not.toContain(mockDyes[8].id);
+    });
+
+    it('applies without writing back to the controller it subscribes to', async () => {
+      tool = await mountWithRamp();
+
+      tool.setConfig({
+        stepCount: 5,
+        interpolation: 'lab',
+        matchingMethod: 'oklab',
+        preventDuplicates: false,
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHex: false },
+        dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true },
+      });
+      await flush();
+
+      expect(settingsInEffect()).toEqual({ steps: 5, interpolation: 'lab', algo: 'oklab' });
+      expect(fakeConfigController.setConfig).not.toHaveBeenCalled();
+    });
+
+    it('does nothing with an empty config', async () => {
+      tool = await mountWithRamp();
+      const rematch = vi.spyOn(
+        tool as unknown as { updateInterpolation: () => void },
+        'updateInterpolation'
+      );
+
+      tool.setConfig({});
+
+      expect(rematch).not.toHaveBeenCalled();
+      expect(settingsInEffect()).toEqual({ steps: 8, interpolation: 'hsv', algo: 'ciede2000' });
+    });
+
+    // BUG-086 sibling (2026-10-04 Sprint 22 review): the tool's own Price
+    // option alone drew the market row, but the service fetches nothing while
+    // the global Market Board toggle is off (its default), so the step cards
+    // read "Market —" forever on a fresh profile.
+    describe('the price row needs the Market Board toggle too', () => {
+      const serviceShowPrices = () => vi.mocked(MarketBoardService.getInstance().getShowPrices);
+      const serviceServer = () => vi.mocked(MarketBoardService.getInstance().getSelectedServer);
+
+      afterEach(() => {
+        // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
+        serviceShowPrices().mockReturnValue(false);
+        serviceServer().mockReturnValue(null as never);
+      });
+
+      it('draws no price row while the Market Board toggle is off', async () => {
+        serviceShowPrices().mockReturnValue(false);
+        tool = await mountWithRamp();
+
+        tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true } });
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.showPrice)).toEqual(stepCards().map(() => false));
+      });
+
+      it('draws it with both the option and the toggle on', async () => {
+        serviceShowPrices().mockReturnValue(true);
+        tool = await mountWithRamp();
+
+        tool.setConfig({ displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showPrice: true } });
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.showPrice)).toEqual(stepCards().map(() => true));
+      });
+
+      // REFACTOR-005: a card whose price names no world shows the selected
+      // server. It came through the removed left-panel MarketBoard, which only
+      // delegated to the service, and only while prices were on.
+      it('names the selected server on each card while prices are on', async () => {
+        serviceShowPrices().mockReturnValue(true);
+        serviceServer().mockReturnValue('Crystal');
+
+        tool = await mountWithRamp();
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.data.marketServer)).toEqual(
+          stepCards().map(() => 'Crystal')
+        );
+      });
+
+      it('names no server while prices are off', async () => {
+        serviceServer().mockReturnValue('Crystal');
+
+        tool = await mountWithRamp();
+
+        expect(stepCards().length).toBeGreaterThan(0);
+        expect(stepCards().map((card) => card.data.marketServer)).toEqual(
+          stepCards().map(() => undefined)
+        );
+      });
+    });
+  });
+
+  // ==========================================================================
+  // BUG-019 (2026-10-04 deep-dive): ConfigController owns the step count and
+  // colour space. The tool's v3 mirrors made a second owner the sidebar never
+  // saw, so they are dropped at construction and never read or written.
+  // ==========================================================================
+
+  describe('retired settings keys', () => {
+    const retiredCalls = (fn: (key: string, ...rest: never[]) => unknown) =>
+      vi.mocked(fn).mock.calls.filter((call) => RETIRED_SETTINGS_KEYS.includes(call[0]));
+
+    afterEach(() => {
+      window.history.replaceState({}, '', '/');
+    });
+
+    it('drops both keys at construction and never reads them', () => {
+      tool = mount();
+
+      for (const key of RETIRED_SETTINGS_KEYS) {
+        expect(StorageService.removeItem).toHaveBeenCalledWith(key);
+      }
+      expect(retiredCalls(StorageService.getItem)).toEqual([]);
+    });
+
+    it('never writes them — not from setConfig or a share link', async () => {
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=oklch&v=1');
+      tool.setConfig({ stepCount: 5, interpolation: 'lab' });
+      await flush();
+
+      expect(retiredCalls(StorageService.setItem)).toEqual([]);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-019 / BUG-022 / BUG-011 (2026-10-04 deep-dive) against the REAL
+  // ConfigController: the barrel's getInstance is pointed at it, so the
+  // seed at construction, the share-link write and the subscriber broadcast
+  // all run end to end. subscribe() never replays, so the constructor's seed
+  // is the only mount-time source of a saved setting.
+  // ==========================================================================
+
+  describe('settings are owned by ConfigController', () => {
+    const controller = () => RealConfigController.getInstance();
+
+    beforeEach(() => {
+      localStorage.clear();
+      RealConfigController.resetInstance();
+      vi.mocked(ConfigController.getInstance).mockImplementation(
+        () => RealConfigController.getInstance() as never
+      );
+    });
+
+    afterEach(() => {
+      vi.mocked(ConfigController.getInstance).mockImplementation(
+        () => fakeConfigController as never
+      );
+      RealConfigController.resetInstance();
+      localStorage.clear();
+      window.history.replaceState({}, '', '/');
+    });
+
+    it('a dye filter saved before mount keeps that dye out of the middle steps', async () => {
+      controller().setConfig('gradient', {
+        dyeFilters: { ...DEFAULT_DYE_FILTERS, excludeMetallic: true },
+      });
+      // Every middle step's nearest dye is Dalamud Red, the one metallic mock
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[8]);
+
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(middleIds().length).toBeGreaterThan(0);
+      expect(middleIds()).not.toContain(mockDyes[8].id);
+    });
+
+    it('seeds every saved setting at mount', async () => {
+      controller().setConfig('gradient', {
+        stepCount: 5,
+        interpolation: 'lab',
+        matchingMethod: 'oklab',
+        preventDuplicates: false,
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHex: false },
+      });
+      matchFirstNotExcluded();
+
+      tool = mount();
+      tool.selectDye(dye(1));
+      tool.selectDye(dye(2));
+      await flush();
+
+      expect(settingsInEffect()).toEqual({ steps: 5, interpolation: 'lab', algo: 'oklab' });
+      expect(stepCards()).toHaveLength(5);
+      // preventDuplicates off: every middle step keeps the same nearest dye
+      expect(new Set(middleIds()).size).toBe(1);
+      expect(stepCards()[0].showHex).toBe(false);
+    });
+
+    it.each([
+      [50, 12],
+      [1, 3],
+      [4.6, 5],
+    ])(
+      'clamps a saved step count of %s to %s, and ignores an unknown space',
+      async (saved, seeded) => {
+        // importConfigs checks types only, so either can be in storage
+        controller().setConfig('gradient', { stepCount: saved, interpolation: 'oklab' as never });
+
+        tool = await mountWithRamp();
+
+        expect(settingsInEffect()).toMatchObject({ steps: seeded, interpolation: 'hsv' });
+      }
+    );
+
+    it('share-link settings survive a later sidebar change (the BUG-019 repro)', async () => {
+      vi.mocked(dyeService.findClosestDye).mockReturnValue(mockDyes[0]);
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=oklch&algo=oklab&v=1');
+      await flush();
+      expect(controller().getConfig('gradient')).toMatchObject({
+        stepCount: 12,
+        interpolation: 'oklch',
+        matchingMethod: 'oklab',
+      });
+      pinsOf(tool).set(3, mockDyes[1]);
+
+      // A sidebar display toggle: the controller broadcasts the FULL config,
+      // which used to carry 8 / hsv / ΔE2000 back over the link's values
+      controller().setConfig('gradient', {
+        displayOptions: { ...DEFAULT_DISPLAY_OPTIONS, showHex: false },
+      });
+      await flush();
+
+      expect(settingsInEffect()).toEqual({ steps: 12, interpolation: 'oklch', algo: 'oklab' });
+      expect(pinsOf(tool).size).toBe(1);
+      expect(stepCards()).toHaveLength(12);
+      expect(stepCards()[0].showHex).toBe(false);
+    });
+
+    it('a share link writes its validated settings once, with no echo into the tool', () => {
+      const write = vi.spyOn(RealConfigController.prototype, 'setConfig');
+      const apply = vi.spyOn(GradientTool.prototype, 'setConfig');
+
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=oklch&algo=oklab&v=1');
+
+      expect(write.mock.calls.filter(([key]) => key === 'gradient')).toEqual([
+        ['gradient', { stepCount: 12, interpolation: 'oklch', matchingMethod: 'oklab' }],
+      ]);
+      // The load runs before the subscription, and the tool already holds the
+      // values, so nothing comes back through setConfig
+      expect(apply).not.toHaveBeenCalled();
+    });
+
+    it('a retired algo name in a link is migrated before it is saved', () => {
+      // Pre-5.0 links wrote `euclidean` for RGB distance
+      tool = mountAt('?start=1&end=2&algo=euclidean&v=1');
+
+      expect(controller().getConfig('gradient').matchingMethod).toBe('rgb');
+      expect(settingsInEffect().algo).toBe('rgb');
+    });
+
+    it.each([
+      [
+        'a fractional step count, a mis-cased space and an unknown algo',
+        '?start=1&end=2&steps=4.5&interpolation=OKLCH&algo=bogus&v=1',
+      ],
+      [
+        'an out-of-range step count, a non-mode space and a prototype key',
+        '?start=1&end=2&steps=50&interpolation=hsl&algo=constructor&v=1',
+      ],
+    ])('a link with %s changes no saved or applied setting', (_label, search) => {
+      controller().setConfig('gradient', { matchingMethod: 'oklab' });
+      const write = vi.spyOn(RealConfigController.prototype, 'setConfig');
+
+      tool = mountAt(search);
+
+      expect(write).not.toHaveBeenCalled();
+      expect(controller().getConfig('gradient')).toMatchObject({
+        stepCount: 8,
+        interpolation: 'hsv',
+        matchingMethod: 'oklab',
+      });
+      expect(settingsInEffect()).toEqual({ steps: 8, interpolation: 'hsv', algo: 'oklab' });
+    });
+
+    it('a link with one good setting saves only that one', () => {
+      controller().setConfig('gradient', { matchingMethod: 'oklab' });
+
+      tool = mountAt('?start=1&end=2&steps=12&interpolation=nope&algo=bogus&v=1');
+
+      expect(controller().getConfig('gradient')).toMatchObject({
+        stepCount: 12,
+        interpolation: 'hsv',
+        matchingMethod: 'oklab',
+      });
+      expect(settingsInEffect()).toEqual({ steps: 12, interpolation: 'hsv', algo: 'oklab' });
+    });
+
+    // REFACTOR-005: the in-tool steps sliders are gone, so the sidebar's
+    // broadcast is the one way a step count arrives — and it clears the pins.
+    // (The drawer's slider never did; that drift went with it.) Index 3 is
+    // still inside a 6-step ramp, so only that clear() empties the pins here.
+    it('a sidebar step change re-counts the ramp and clears its pins', async () => {
+      tool = await mountWithRamp();
+      pinsOf(tool).set(3, mockDyes[1]);
+
+      controller().setConfig('gradient', { stepCount: 6 });
+      await flush();
+
+      expect(stepCards()).toHaveLength(6);
+      expect(settingsInEffect().steps).toBe(6);
+      expect(pinsOf(tool).size).toBe(0);
+    });
+
+    // REFACTOR-005: a server or prices-toggle change reaches the tool through
+    // its 'market' subscription alone. The removed left-panel MarketBoard also
+    // relayed MarketBoardService's events back in — a duplicate, since the
+    // service emits them only from its own 'market' subscription.
+    describe("a market change, through the controller's 'market' broadcast", () => {
+      const service = () => MarketBoardService.getInstance();
+
+      beforeEach(() => {
+        // The service applies a change before the tool hears it (it subscribed first)
+        controller().setConfig('market', { showPrices: true });
+        vi.mocked(service().getShowPrices).mockReturnValue(true);
+        vi.mocked(service().shouldFetchPrice).mockReturnValue(true);
+      });
+
+      afterEach(() => {
+        // One shared mock object, and restoreAllMocks keeps vi.fn implementations.
+        vi.mocked(service().getShowPrices).mockReturnValue(false);
+        vi.mocked(service().shouldFetchPrice).mockReturnValue(false);
+      });
+
+      it("refetches the ramp's prices on a server change while prices are on", async () => {
+        tool = await mountWithRamp();
+        vi.mocked(service().fetchPricesForDyes).mockClear();
+
+        controller().setConfig('market', { selectedServer: 'Aether' });
+        await flush();
+
+        expect(service().fetchPricesForDyes).toHaveBeenCalled();
+        const fetched = vi.mocked(service().fetchPricesForDyes).mock.calls.at(-1)![0];
+        expect(fetched.map((d) => d.id)).toEqual(expect.arrayContaining([1, 2]));
+        expect(stepCards()).toHaveLength(8);
+      });
+
+      it('redraws the step cards without a fetch when prices go off', async () => {
+        tool = await mountWithRamp();
+        const redraw = vi.spyOn(
+          tool as unknown as { renderIntermediateMatches: () => void },
+          'renderIntermediateMatches'
+        );
+        vi.mocked(service().fetchPricesForDyes).mockClear();
+        vi.mocked(service().getShowPrices).mockReturnValue(false);
+
+        controller().setConfig('market', { showPrices: false });
+        await flush();
+
+        expect(redraw).toHaveBeenCalled();
+        expect(service().fetchPricesForDyes).not.toHaveBeenCalled();
+      });
+
+      // The 'market' subscription is the tool's one way in for a market
+      // change, so destroy() must release it (this.subs) or a navigated-away
+      // Gradient keeps hearing every server and prices change.
+      it('stops hearing the broadcast once destroyed', async () => {
+        tool = await mountWithRamp();
+        const apply = vi.spyOn(tool, 'setConfig');
+        const redraw = vi.spyOn(
+          tool as unknown as { renderIntermediateMatches: () => void },
+          'renderIntermediateMatches'
+        );
+        tool.destroy();
+        vi.mocked(service().fetchPricesForDyes).mockClear();
+
+        // A different server than the one held, so the controller broadcasts
+        const { selectedServer } = controller().getConfig('market');
+        controller().setConfig('market', {
+          selectedServer: selectedServer === 'Crystal' ? 'Primal' : 'Crystal',
+          showPrices: true,
+        });
+        await flush();
+
+        // destroy() also empties the ramp, so a leaked subscriber would find
+        // nothing to fetch either: the setConfig spy is what tells them apart
+        expect(apply).not.toHaveBeenCalled();
+        expect(service().fetchPricesForDyes).not.toHaveBeenCalled();
+        expect(redraw).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -995,34 +1340,372 @@ describe('GradientTool', () => {
       // The sidebar can emit one last config-change during teardown
       expect(() => tool!.setConfig({ stepCount: 4 })).not.toThrow();
     });
-
-    it('works with no drawer panel supplied', async () => {
-      tool = mount({ drawer: false });
-
-      tool.selectDye(dye(1));
-
-      expect(await endpoints()).toEqual([1]);
-    });
   });
 
   // ==========================================================================
-  // BUG-040: RouterService must be imported through the @services/index
-  // barrel this suite mocks (line 44), or the mock above is inert and this
-  // assertion would pass vacuously against the REAL RouterService.
+  // Every action the result card performs itself is a no-op in the tool.
+  // DEAD-003 removed the legacy actions the tool handled, and with them its
+  // only RouterService call; BUG-040's lint rule keeps any future import on
+  // the @services/index barrel this suite mocks, so the not-called
+  // assertions below cannot pass against the REAL RouterService.
   // ==========================================================================
 
   describe('context actions — hand off to another tool', () => {
-    it('inspect-budget navigates via the barrel-mocked RouterService', async () => {
-      tool = mount();
-      const { RouterService } = await import('@services/index');
-
+    const contextAction = (action: string): void =>
       (
         tool as unknown as {
           handleContextAction: (action: string, dye: unknown) => void;
         }
-      ).handleContextAction('inspect-budget', dye(1));
+      ).handleContextAction(action, dye(1));
 
-      expect(RouterService.navigateTo).toHaveBeenCalledWith('budget');
+    // The 2026-10-04 Sprint 5 review: the result card performs each of these
+    // before it emits the action, so the tool repeating it navigated twice and
+    // toasted twice — and with Comparison already holding four dyes, the card
+    // opened its slot-selection modal while the tool added the dye anyway and
+    // navigated away under it.
+    it.each([
+      'inspect-harmony',
+      'inspect-accessibility',
+      'inspect-comparison',
+      'transform-gradient',
+      'transform-mixer',
+    ])('leaves %s to the result card', async (action) => {
+      tool = mount();
+      const { RouterService, StorageService, ToastService } = await import('@services/index');
+      vi.mocked(RouterService.navigateTo).mockClear();
+      vi.mocked(StorageService.setItem).mockClear();
+
+      contextAction(action);
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+      expect(ToastService.success).not.toHaveBeenCalled();
+      expect(ToastService.info).not.toHaveBeenCalled();
+    });
+
+    // BUG-013 (2026-10-04 deep-dive): the result card hands the dye to Budget
+    // itself, by stainID, and then emits the action. The tool repeating it
+    // toasted twice and navigated again without the dye.
+    it('leaves inspect-budget to the result card', async () => {
+      tool = mount();
+      const { RouterService, StorageService } = await import('@services/index');
+
+      contextAction('inspect-budget');
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+      expect(StorageService.setItem).not.toHaveBeenCalledWith(
+        'v3_budget_target',
+        expect.anything()
+      );
+    });
+  });
+
+  // ==========================================================================
+  // BUG-092 (2026-10-04 deep-dive): a Custom Color endpoint was stored by its
+  // synthetic id, which resolves to nothing on the next load — and the
+  // missing slot was filtered out, so the End dye slid into Start.
+  // ==========================================================================
+
+  describe('stored endpoints survive a reload', () => {
+    beforeEach(() => {
+      // The real lookup misses with null, not the suite mock's undefined
+      mockGetDyeById.mockImplementation((id: number) => mockDyes.find((d) => d.id === id) ?? null);
+    });
+
+    afterEach(() => {
+      // restoreAllMocks keeps vi.fn implementations in Vitest 5
+      vi.mocked(StorageService.getItem).mockReset().mockReturnValue(null);
+    });
+
+    /** The tool's [start, end], as it holds them. */
+    const endpointsOf = (t: GradientTool): Dye[] =>
+      (t as unknown as { selectedDyes: Dye[] }).selectedDyes;
+
+    /** Hand the endpoints key `saved` on the next mount. */
+    const storeEndpoints = (saved: unknown): void => {
+      vi.mocked(StorageService.getItem).mockImplementation(((key: string) =>
+        key === DYES_KEY ? saved : null) as never);
+    };
+
+    /** Remount with whatever the current tool last persisted. */
+    const reload = async (): Promise<GradientTool> => {
+      const saved = await lastWrite(DYES_KEY);
+      tool!.destroy();
+      storeEndpoints(saved);
+      return mount();
+    };
+
+    it('keeps a custom-colour start and a dye end in their own slots', async () => {
+      tool = mount();
+      tool.selectCustomColor('#ff0000');
+      tool.selectDye(mockDyes[1]);
+
+      tool = await reload();
+
+      const [start, end] = endpointsOf(tool);
+      expect(start?.hex).toBe('#FF0000');
+      expect(end?.id).toBe(mockDyes[1].id);
+    });
+
+    it('keeps a dye start and a custom-colour end in their own slots', async () => {
+      tool = mount();
+      tool.selectDye(mockDyes[1]);
+      tool.selectCustomColor('#00ff00');
+
+      tool = await reload();
+
+      const [start, end] = endpointsOf(tool);
+      expect(start?.id).toBe(mockDyes[1].id);
+      expect(end?.hex).toBe('#00FF00');
+    });
+
+    it('never promotes the end dye into a start it cannot restore', () => {
+      // What the pre-fix code stored for a custom start: its synthetic id
+      storeEndpoints([-1700000000001, mockDyes[1].id]);
+
+      tool = mount();
+
+      expect(endpointsOf(tool)).toEqual([]);
+    });
+  });
+
+  // ==========================================================================
+  // update() — every language switch — rebuilds the workspace. BUG-093's
+  // child teardown went with the left panel and drawer (REFACTOR-005): the
+  // workspace builds no child components, so the rebuild has nothing to
+  // destroy, and onUpdate() redraws it from the state the tool holds.
+  // ==========================================================================
+
+  describe('update() rebuilds the workspace from the current state', () => {
+    it('keeps one workspace, the same endpoints and the pins', async () => {
+      tool = await mountWithRamp();
+      pinsOf(tool).set(3, mockDyes[1]);
+
+      tool.update();
+      await flush();
+
+      expect(panel.querySelectorAll('[data-testid="gradient-endpoints-row"]')).toHaveLength(1);
+      expect(panel.querySelectorAll('v4-share-button')).toHaveLength(1);
+      expect(stepCards()).toHaveLength(8);
+      expect(stepCards()[0].data.dye.id).toBe(1);
+      expect(stepCards().at(-1)!.data.dye.id).toBe(2);
+      expect(pinsOf(tool).size).toBe(1);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-094 (2026-10-04 deep-dive): the result card's Start/End slot picker
+  // wrote the slot directly, so the start row's own card set as End gave a
+  // flat start-to-start gradient.
+  // ==========================================================================
+
+  describe('result-card slot picker — the endpoint rules', () => {
+    const pickSlot = (card: StepCard, action: 'add-mixer-slot-1' | 'add-mixer-slot-2'): void => {
+      card.dispatchEvent(
+        new CustomEvent('context-action', { detail: { action, dye: card.data.dye } })
+      );
+    };
+
+    it("swaps the ends when the start row's dye is set as End", async () => {
+      tool = await mountWithRamp();
+      const startCard = stepCards()[0];
+      expect(startCard.data.dye.id).toBe(1);
+
+      pickSlot(startCard, 'add-mixer-slot-2');
+
+      expect(await endpoints()).toEqual([2, 1]);
+    });
+
+    it("swaps the ends when the end row's dye is set as Start", async () => {
+      tool = await mountWithRamp();
+      const endCard = stepCards().at(-1)!;
+      expect(endCard.data.dye.id).toBe(2);
+
+      pickSlot(endCard, 'add-mixer-slot-1');
+
+      expect(await endpoints()).toEqual([2, 1]);
+    });
+
+    it("leaves the ends alone when a row's dye is set into its own slot", async () => {
+      tool = await mountWithRamp();
+      const startCard = stepCards()[0];
+      vi.mocked(StorageService.setItem).mockClear();
+
+      pickSlot(startCard, 'add-mixer-slot-1');
+
+      expect(await endpoints()).toBeUndefined();
+    });
+
+    it("puts a middle step's dye into the chosen slot", async () => {
+      tool = await mountWithRamp();
+      const middleCard = stepCards()[1];
+
+      pickSlot(middleCard, 'add-mixer-slot-2');
+
+      expect(await endpoints()).toEqual([1, middleCard.data.dye.id]);
+    });
+  });
+
+  // ==========================================================================
+  // A grey endpoint's hue is powerless (BUG-035's sibling on the hue paths)
+  //
+  // A grey reports hue 0 in HSV and OKLCH and ~158 in LCH (float noise in a
+  // and b) — a placeholder, not a colour. Interpolating it drew a purple
+  // midpoint (#975D9B) for Slate Grey → #2A3FD0 in HSV, the default, sent the
+  // LCH ramp through teal, and turned white → blue pink. The bot's /gradient
+  // runs the same arithmetic; its tests (bot-logic commands/gradient.test.ts)
+  // pin the same hexes.
+  // ==========================================================================
+
+  describe('a grey endpoint has no hue of its own', () => {
+    /** Undoes this block's real-core conversions: clear/restoreAllMocks keep them. */
+    let undo: Array<() => void> = [];
+
+    beforeEach(async () => {
+      // The barrel mock's conversions return constants; this block needs the
+      // real arithmetic. Arrow wrappers keep the static methods' `this`.
+      const real = (await vi.importActual<typeof import('@xivdyetools/core')>('@xivdyetools/core'))
+        .ColorService;
+      const delegate = <A extends unknown[], R>(
+        mock: {
+          getMockImplementation(): ((...args: A) => R) | undefined;
+          mockImplementation(fn: (...args: A) => R): unknown;
+        },
+        fn: (...args: A) => R
+      ) => {
+        const original = mock.getMockImplementation();
+        mock.mockImplementation(fn);
+        undo.push(() => {
+          if (original) mock.mockImplementation(original);
+        });
+      };
+      delegate(vi.mocked(ColorService.hexToHsv), (hex) => real.hexToHsv(hex));
+      delegate(vi.mocked(ColorService.hsvToHex), (h, s, v) => real.hsvToHex(h, s, v));
+      delegate(vi.mocked(ColorService.hexToOklch), (hex) => real.hexToOklch(hex));
+      delegate(vi.mocked(ColorService.oklchToHex), (L, C, h) => real.oklchToHex(L, C, h));
+      delegate(vi.mocked(ColorService.hexToLch), (hex) => real.hexToLch(hex));
+      delegate(vi.mocked(ColorService.lchToHex), (L, C, h) => real.lchToHex(L, C, h));
+    });
+
+    afterEach(() => {
+      for (const restore of undo) restore();
+      undo = [];
+    });
+
+    const endpoint = (id: number, hex: string) =>
+      ({ ...mockDyes[0], id, itemID: 5000 + id, name: `Dye ${id}`, hex }) as never;
+
+    /**
+     * The five-step ramp's three middle colours, as the tool hands them to the
+     * matcher (it returns null here, so each middle step asks exactly once).
+     */
+    const middleOfRamp = async (
+      start: string,
+      end: string,
+      interpolation: 'hsv' | 'oklch' | 'lch'
+    ): Promise<string[]> => {
+      tool = mount();
+      tool.setConfig({ stepCount: 5, interpolation });
+      tool.selectDye(endpoint(1, start));
+      vi.mocked(dyeService.findClosestDye).mockClear();
+      tool.selectDye(endpoint(2, end));
+      await flush();
+      return vi
+        .mocked(dyeService.findClosestDye)
+        .mock.calls.map((call) => call[0])
+        .slice(-3);
+    };
+
+    /** A colour's hue in the space the mode interpolates in. */
+    const hueIn = (space: 'hsv' | 'oklch' | 'lch', hex: string): number => {
+      if (space === 'oklch') return ColorService.hexToOklch(hex).h;
+      if (space === 'lch') return ColorService.hexToLch(hex).h;
+      return ColorService.hexToHsv(hex).h;
+    };
+
+    /** The angle between two hues, the short way round. */
+    const hueGap = (a: number, b: number): number => {
+      const d = Math.abs(a - b) % 360;
+      return Math.min(d, 360 - d);
+    };
+
+    const SLATE_GREY = '#656565';
+    const BLUE = '#2A3FD0';
+
+    // Each pair runs both ways, so the grey side is tested as start and as end
+    describe.each(['hsv', 'oklch', 'lch'] as const)('in %s', (space) => {
+      it.each([
+        [SLATE_GREY, BLUE],
+        [BLUE, SLATE_GREY],
+        ['#FFFFFF', '#0000FF'],
+        ['#0000FF', '#FFFFFF'],
+      ])('the midpoint of %s → %s keeps the blue end’s hue', async (start, end) => {
+        const blue = start === SLATE_GREY || start === '#FFFFFF' ? end : start;
+
+        const midpoint = (await middleOfRamp(start, end, space))[1];
+
+        expect(hueGap(hueIn(space, midpoint), hueIn(space, blue))).toBeLessThan(3);
+      });
+    });
+
+    it.each([
+      // Before: '#806674', '#975D9B', '#7549B5'
+      ['hsv', ['#666980', '#5D659B', '#4956B5']],
+      // Before: '#77566D', '#754989', '#6042AF'
+      ['oklch', ['#556182', '#445A9D', '#364FB6']],
+      // Before: '#276A68', '#006A91', '#0061C3'
+      ['lch', ['#635C80', '#5B529A', '#4C49B5']],
+    ] as const)('pins the Slate Grey → blue ramp in %s', async (space, expected) => {
+      expect(await middleOfRamp(SLATE_GREY, BLUE, space)).toEqual(expected);
+    });
+
+    // Two chromatic ends are untouched — the middles drawn before the rule,
+    // byte for byte. Snow White (#E4DFD0) is a near-grey with a real, faint
+    // hue: only an exact grey (r = g = b) is powerless, as in core's
+    // blendHSL. White → black is grey at both ends and keeps its own hues.
+    it.each([
+      {
+        start: '#FF0000',
+        end: '#0000FF',
+        hsv: ['#FF0080', '#FF00FF', '#8000FF'],
+        oklch: ['#E8007B', '#BA00C2', '#7A00F4'],
+        lch: ['#FF0045', '#FA0080', '#C500C3'],
+      },
+      {
+        start: '#0000FF',
+        end: '#FF0000',
+        hsv: ['#8000FF', '#FF00FF', '#FF0080'],
+        oklch: ['#7A00F4', '#BA00C2', '#E8007B'],
+        lch: ['#C500C3', '#FA0080', '#FF0045'],
+      },
+      {
+        // Dalamud Red → Royal Blue
+        start: '#781A1A',
+        end: '#273067',
+        hsv: ['#741E4C', '#6A216F', '#40246B'],
+        oklch: ['#6D1A3F', '#5B2158', '#432966'],
+        lch: ['#761035', '#68184D', '#4E265E'],
+      },
+      {
+        // Snow White → Royal Blue
+        start: '#E4DFD0',
+        end: '#273067',
+        hsv: ['#C59A99', '#A56B94', '#6B4586'],
+        oklch: ['#C8AA9C', '#A47783', '#6F4E79'],
+        lch: ['#C9AB9A', '#AC777C', '#7C4B70'],
+      },
+      {
+        start: '#FFFFFF',
+        end: '#000000',
+        hsv: ['#BFBFBF', '#808080', '#404040'],
+        oklch: ['#AEAEAE', '#636363', '#222222'],
+        lch: ['#B9B9B9', '#777777', '#3B3B3B'],
+      },
+    ])('leaves $start → $end byte-identical in every hue mode', async (row) => {
+      for (const space of ['hsv', 'oklch', 'lch'] as const) {
+        tool?.destroy();
+        expect(await middleOfRamp(row.start, row.end, space), space).toEqual(row[space]);
+      }
     });
   });
 });

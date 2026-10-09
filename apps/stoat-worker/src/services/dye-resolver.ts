@@ -3,15 +3,19 @@
  *
  * Since Stoat has no autocomplete, users type dye identifiers as raw text.
  * This resolver accepts flexible input and finds the right dye(s) via
- * a multi-strategy approach: ItemID → exact name → localized name → partial match.
+ * a multi-strategy approach: ItemID / exact name (incl. locale) -> hex -> partial match -> CSS name.
  */
 
 import {
   resolveColorInput,
-  resolveDyeInput,
+  findDyeByName,
+  searchDyesByName,
+  isValidHex,
+  initializeLocale,
   dyeService,
   type ResolvedColor,
 } from '@xivdyetools/bot-logic';
+import type { Dye } from '@xivdyetools/types';
 import type { LocaleCode } from '@xivdyetools/bot-logic/i18n';
 
 /**
@@ -37,80 +41,65 @@ export type DyeResolutionResult =
 /**
  * Resolve a user-provided dye input string to one or more dyes.
  *
+ * Order (BUG-073): an EXACT hit wins immediately -- a bare id, an exact dye
+ * name (English or the user's locale), or a hex code (closest dye). Everything
+ * else is a substring search, so `white` (4 dyes) reaches `multiple` and
+ * `Blue` (many) reaches `disambiguation` instead of silently answering with
+ * whichever dye sorts first. A CSS color name is the last resort.
+ *
+ * BUG-072: `locale` is honored -- its dye names are loaded here (as
+ * discord-worker does before it localizes) and matched in addition to English.
+ *
  * @param input - Raw user input (dye name, ItemID, hex code, etc.)
  * @param locale - User's locale for localized name matching
- * @returns Resolution result indicating single match, multiple matches, or no match
  */
-export function resolveDyeInputMulti(
+export async function resolveDyeInputMulti(
   input: string,
-  _locale: LocaleCode = 'en',
-): DyeResolutionResult {
+  locale: LocaleCode = 'en',
+): Promise<DyeResolutionResult> {
   const trimmed = input.trim();
   if (!trimmed) {
     return { kind: 'none', query: '', suggestions: [] };
   }
 
-  // 1. Try exact resolution (ItemID, exact name, hex code)
-  const exact = resolveColorInput(trimmed, { findClosestForHex: true });
-  if (exact) {
-    return { kind: 'single', dye: exact };
+  await initializeLocale(locale);
+
+  // 1. Exact: bare id / exact name (English or locale)
+  const exactDye = findDyeByName(trimmed, locale);
+  if (exactDye && exactDye.category !== 'Facewear') {
+    return { kind: 'single', dye: toResolved(exactDye) };
   }
 
-  // 2. Try standalone dye name resolution (leverages bot-logic's resolveDyeInput)
-  const dyeResult = resolveDyeInput(trimmed);
-  if (dyeResult) {
-    return {
-      kind: 'single',
-      dye: {
-        hex: dyeResult.hex,
-        name: dyeResult.name,
-        id: dyeResult.id,
-        itemID: dyeResult.itemID,
-        dye: dyeResult,
-      },
-    };
+  // 2. Hex code -> closest dye
+  if (isValidHex(trimmed)) {
+    const hex = resolveColorInput(trimmed, { findClosestForHex: true });
+    if (hex) return { kind: 'single', dye: hex };
   }
 
-  // 3. Try partial / substring match across all dyes
+  // 3. Substring across English + locale names, plus category
   const allDyes = dyeService.getAllDyes();
   const lowerInput = trimmed.toLowerCase();
-
-  const partialMatches = allDyes.filter((dye) => {
-    // Match against English name
-    if (dye.name.toLowerCase().includes(lowerInput)) return true;
-    // Match against category
-    if (dye.category.toLowerCase().includes(lowerInput)) return true;
-    return false;
-  });
+  const byName = new Set(searchDyesByName(trimmed, locale).map((d) => d.id));
+  const partialMatches = allDyes.filter(
+    (dye) =>
+      dye.category !== 'Facewear' &&
+      (byName.has(dye.id) || dye.category.toLowerCase().includes(lowerInput)),
+  );
 
   if (partialMatches.length === 0) {
-    // No matches — generate "did you mean?" suggestions using simple distance
+    // 4. CSS color name (e.g. "BlueViolet") -> closest dye
+    const css = resolveColorInput(trimmed, { findClosestForHex: true, locale });
+    if (css) return { kind: 'single', dye: css };
+    // No matches -- generate "did you mean?" suggestions using simple distance
     const suggestions = getSuggestions(trimmed, allDyes.map((d) => d.name));
     return { kind: 'none', query: trimmed, suggestions };
   }
 
   if (partialMatches.length === 1) {
-    const dye = partialMatches[0];
-    return {
-      kind: 'single',
-      dye: {
-        hex: dye.hex,
-        name: dye.name,
-        id: dye.id,
-        itemID: dye.itemID,
-        dye,
-      },
-    };
+    return { kind: 'single', dye: toResolved(partialMatches[0]) };
   }
 
-  // Convert to ResolvedColor array
-  const resolved: ResolvedColor[] = partialMatches.map((dye) => ({
-    hex: dye.hex,
-    name: dye.name,
-    id: dye.id,
-    itemID: dye.itemID,
-    dye,
-  }));
+  const resolved = partialMatches.map(toResolved);
 
   if (partialMatches.length <= MULTI_MATCH_THRESHOLD) {
     return { kind: 'multiple', dyes: resolved, query: trimmed };
@@ -122,6 +111,10 @@ export function resolveDyeInputMulti(
     total: partialMatches.length,
     query: trimmed,
   };
+}
+
+function toResolved(dye: Dye): ResolvedColor {
+  return { hex: dye.hex, name: dye.name, id: dye.id, itemID: dye.itemID, dye };
 }
 
 /**

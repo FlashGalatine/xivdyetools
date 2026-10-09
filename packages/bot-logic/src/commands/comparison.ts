@@ -19,10 +19,13 @@ import { createTranslator, type LocaleCode, type TranslatorLogger } from '../i18
 import {
   generateComparisonCard,
   contrastRatio,
+  formatContrastRatio,
+  num,
   type ComparisonDyeEntry,
   type ComparisonReadout,
 } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -48,7 +51,16 @@ export type ComparisonResult =
       dyes: Dye[];
       embed: EmbedData;
     }
-  | { ok: false; error: 'GENERATION_FAILED'; errorMessage: string };
+  | {
+      ok: false;
+      /**
+       * NOT_ENOUGH_DYES: fewer than two dyes (or no list at all) — refused
+       * before anything is drawn (BUG-125). GENERATION_FAILED: the card
+       * generator threw.
+       */
+      error: 'NOT_ENOUGH_DYES' | 'GENERATION_FAILED';
+      errorMessage: string;
+    };
 
 // ============================================================================
 // Helpers
@@ -58,19 +70,27 @@ export type ComparisonResult =
  * The duel's seven readouts — one shared vocabulary, or the bot disagrees
  * with the app about what ΔE means. Labels are untranslated unit codes.
  * ΔEOK2 prints raw at three decimals (the band rules); the ratio is not a
- * colour distance and prints last.
+ * colour distance and prints last — through /contrast's own printer
+ * (floored, the language's separator), so one pair never reads 3.00:1 here
+ * and 2.99:1 "under 3:1" on /contrast (BUG-142).
+ *
+ * Every figure goes through the card's own `num`, as the ΔE headline above
+ * the strip does: the distances used to be bare `toFixed`, so a German card
+ * read 27,2 in the headline, 27.2 under it, and 2,99:1 at the end of the
+ * strip. The whole-number readouts carry no separator, but take the same
+ * path so precision travels with the formatter.
  */
-function buildReadouts(hexA: string, hexB: string): ComparisonReadout[] {
-  const d = (m: Parameters<typeof ColorService.getDistanceForMethod>[2]) =>
+function buildReadouts(hexA: string, hexB: string, locale: LocaleCode): ComparisonReadout[] {
+  const d = (m: Parameters<typeof ColorService.getDistanceForMethod>[2]): number =>
     ColorService.getDistanceForMethod(hexA, hexB, m);
   return [
-    { short: 'ΔE2000', value: d('ciede2000').toFixed(1) },
-    { short: 'ΔEOK2', value: d('oklab').toFixed(3) },
-    { short: 'ΔE76', value: d('cie76').toFixed(1) },
-    { short: 'REDMEAN', value: d('redmean').toFixed(0) },
-    { short: 'RGB', value: d('rgb').toFixed(0) },
-    { short: 'DIST%', value: `${Math.round(d('distinguish'))}%` },
-    { short: 'RATIO', value: `${contrastRatio(hexA, hexB).toFixed(2)}:1` },
+    { short: 'ΔE2000', value: num(d('ciede2000'), locale, 1) },
+    { short: 'ΔEOK2', value: num(d('oklab'), locale, 3) },
+    { short: 'ΔE76', value: num(d('cie76'), locale, 1) },
+    { short: 'REDMEAN', value: num(d('redmean'), locale, 0) },
+    { short: 'RGB', value: num(d('rgb'), locale, 0) },
+    { short: 'DIST%', value: `${num(d('distinguish'), locale, 0)}%` },
+    { short: 'RATIO', value: `${formatContrastRatio(contrastRatio(hexA, hexB), 2, locale)}:1` },
   ];
 }
 
@@ -87,6 +107,15 @@ export async function executeComparison(input: ComparisonInput): Promise<Compari
   const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
+
+  // BUG-125: a comparison needs a pair. One dye used to reach the duel
+  // renderer, whose `dyes[1].hex` read threw a TypeError that the catch below
+  // reported as GENERATION_FAILED — a caller's mistake dressed as a render bug.
+  // `Array.isArray` first: this runs outside the try, so a JavaScript caller's
+  // non-array must be refused here, never thrown across the boundary.
+  if (!Array.isArray(dyes) || dyes.length < 2) {
+    return { ok: false, error: 'NOT_ENOUGH_DYES', errorMessage: t.t('mixer.bothRequired') };
+  }
 
   try {
     const entries: ComparisonDyeEntry[] = dyes.map((dye) => {
@@ -106,7 +135,7 @@ export async function executeComparison(input: ComparisonInput): Promise<Compari
     const svgString = generateComparisonCard({
       dyes: entries,
       deltaE,
-      readouts: dyes.length === 2 ? buildReadouts(dyes[0].hex, dyes[1].hex) : undefined,
+      readouts: dyes.length === 2 ? buildReadouts(dyes[0].hex, dyes[1].hex, locale) : undefined,
       labels: {
         title: t.t('card.cmpTitle', { n: dyes.length }),
         tags: [t.t('card.cmpTag0'), t.t('card.cmpTag1'), t.t('card.cmpTag2'), t.t('card.cmpTag3')],
@@ -135,7 +164,8 @@ export async function executeComparison(input: ComparisonInput): Promise<Compari
     };
 
     return { ok: true, svgString, dyes, embed };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[comparison] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

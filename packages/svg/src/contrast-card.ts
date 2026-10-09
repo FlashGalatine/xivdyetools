@@ -119,9 +119,55 @@ function axisPos(ratio: number): number {
   return Math.min(Math.log(Math.max(ratio, 1)) / Math.log(21), 1);
 }
 
-/** Ratio with the language's decimal separator (F-08 — was a bare toFixed). */
+/**
+ * A WCAG contrast ratio as every surface prints it — the figure only, without
+ * the `:1` — FLOORED to `dp` decimals, never rounded, with the language's
+ * decimal separator (F-08). The /contrast card's four sites, the /contrast
+ * embed and the /compare duel's RATIO readout all print through this one
+ * function, so the same pair can never read 2.99 on one and 3.00 on another.
+ *
+ * BUG-142: the tier is judged on the raw ratio, because WCAG never rounds a
+ * threshold — but the figure beside it used to be rounded, so a failing 2.96
+ * printed "3.0" in the failing red and a 6.96 printed "7.0" one band short of
+ * 7:1. Every print starts from ONE integer, the ratio floored to whole
+ * hundredths, H = floor(r × 100); a coarser print truncates H (1 dp is
+ * floor(H / 10) tenths). Every cut (3 / 4.5 / 7) times 100 is an exact
+ * integer and a multiple of 10, and IEEE multiplication is monotone, so the
+ * printed figure is at or above a cut exactly when the raw ratio is: the
+ * figure always falls in the band its tone and band name say. Rounding the
+ * ratio before the tier instead would turn a fail into a false pass.
+ *
+ * The 1 dp figure is derived from H rather than floored on its own because
+ * `r × 10` and `r × 100` round independently: 3.5999999999999996 (the double
+ * just under 3.6) gives 36 tenths but 359 hundredths, so one pair read "3.6"
+ * at 1 dp (the plot column, the REST strip) and "3.59" at 2 dp (the headline,
+ * the /contrast embed). A truncation of one integer can never disagree with
+ * it.
+ *
+ * There is deliberately NO epsilon in the floor. A `+ 1e-9` once "fixed" the
+ * literal 4.35 printing as 4.34 — but that double is 4.34999…, genuinely below
+ * 4.35, and the epsilon made every ratio in [cut − 1e-11, cut) print the cut
+ * value in the lower band's tone (`#1C5F98` on `#190102` is 2.9999999999993983
+ * and printed "3.00:1" under "under 3:1").
+ *
+ * @param ratio - The raw WCAG ratio (1–21), as `contrastRatio` returns it
+ * @param dp - Decimal places (the card prints 2, its plot column and REST strip 1)
+ * @param lang - Language code for the decimal separator (`en` when omitted)
+ */
+export function formatContrastRatio(ratio: number, dp = 2, lang = 'en'): string {
+  // The finest print (2 dp, or `dp` if finer) is the one floor of the ratio;
+  // a coarser print truncates that integer. Its division floors exactly: a
+  // non-integer quotient by 10 ** k sits at least 10 ** -k below the next
+  // integer, far beyond the rounding error of dividing integers this small.
+  const finest = Math.max(dp, 2);
+  const units = Math.floor(ratio * 10 ** finest);
+  const kept = Math.floor(units / 10 ** (finest - dp));
+  return num(kept / 10 ** dp, lang, dp);
+}
+
+/** Ratio with the `:1` and the language's decimal separator (F-08 — was a bare toFixed). */
 function formatRatio(ratio: number, lang: string, decimals = 2): string {
-  return `${num(ratio, lang, decimals)}:1`;
+  return `${formatContrastRatio(ratio, decimals, lang)}:1`;
 }
 
 // ============================================================================
@@ -241,7 +287,7 @@ function render13A(o: ContrastCardOptions, theme: CardTheme): string {
         `<rect x="${x}" y="${stripY}" width="11" height="18" rx="3" fill="${escapeXml(p.hexA)}"/>` +
           `<rect x="${x + 11}" y="${stripY}" width="11" height="18" rx="3" fill="${escapeXml(p.hexB)}"/>`
       );
-      const rText = num(p.ratio, o.lang, 1);
+      const rText = formatContrastRatio(p.ratio, 1, o.lang);
       parts.push(
         cardText(x + 26, stripY + 13, rText, { fill: ratioTone(p.ratio, theme), size: CARD_TYPE.label, font: 'mono' })
       );
@@ -422,9 +468,10 @@ function render13C1(o: ContrastCardOptions, theme: CardTheme): string {
       `<line x1="${axisX}" y1="${cy}" x2="${mx.toFixed(1)}" y2="${cy}" stroke="${escapeXml(tone)}" stroke-opacity="0.35" stroke-width="2"/>` +
         `<circle cx="${mx.toFixed(1)}" cy="${cy}" r="4.5" fill="${escapeXml(tone)}"/>`
     );
-    // One decimal — nothing in this tool acts on the second digit
+    // One decimal — nothing in this tool acts on the second digit — floored,
+    // so a 2.96 never prints "3.0" in the failing tone (BUG-142)
     parts.push(
-      cardText(CARD_WIDTH - PAD, cy + 4, num(p.ratio, o.lang, 1), {
+      cardText(CARD_WIDTH - PAD, cy + 4, formatContrastRatio(p.ratio, 1, o.lang), {
         fill: tone,
         size: CARD_TYPE.value,
         font: 'mono',

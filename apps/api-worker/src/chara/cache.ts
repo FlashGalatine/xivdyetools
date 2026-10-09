@@ -3,8 +3,10 @@
  *
  * Model keys are tiny and immutable within a game version — twenty users
  * importing the same glamour is one upstream call. Entries are namespaced by
- * the XIVAPI version key the worker is pinned to (`XIVAPI_VERSION`), so
- * rolling the pin forward after a patch is a cold cache, not a stale one.
+ * the XIVAPI version key the requests are made against — a pinned
+ * `XIVAPI_VERSION` as is, or the key `latest` currently points at (BUG-040,
+ * `XivapiClient.cacheNamespace()`) — so a game patch is a cold cache, not a
+ * stale one.
  * An empty row list ("no item row") is cached too — NPC/prop models would
  * otherwise hit upstream on every import.
  *
@@ -28,9 +30,10 @@ const CACHE_NAME = 'chara-resolve';
 /**
  * Bump when the cached row shape changes. 2: rows carry the in-game rules, so
  * a week-old v1 row must not replay without them. 3: the rules carry the
- * Grand Company lock and no longer the job list.
+ * Grand Company lock and no longer the job list. 4: equipment level permits
+ * filtering unobtainable Dated rows at level 50 and below.
  */
-const SHAPE_VERSION = 3;
+const SHAPE_VERSION = 4;
 
 export class CharaRowCache {
   private readonly service: CacheService;

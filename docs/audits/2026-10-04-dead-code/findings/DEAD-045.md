@@ -15,4 +15,4 @@
 Steps: 1) pnpm-workspace.yaml: delete line 11 (`qs: '>=6.15.2'`) and change line 7 to 'rollup and seroval are security floors'. 2) Run `pnpm install` so pnpm-lock.yaml line 10 drops out of the overrides block, then confirm `pnpm install --frozen-lockfile` passes. 3) docs/developer-guides/monorepo-setup.md:78: drop `qs` from the overrides row. Leave CHANGELOG.md:532 alone (history). 4) `pnpm turbo run build type-check lint test && pnpm dead-code:check && pnpm docs:check-links`.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `26e43a64` (branch `fix/remediation-2026-10-04-sprint20`, root 2.3.2; PR #276, open, on PR #264).

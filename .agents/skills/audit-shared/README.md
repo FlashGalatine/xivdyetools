@@ -10,8 +10,8 @@ read at its Step 0, so a run loads only the slices it needs. `model-routing.md` 
 
 | File | Words | Read it when |
 |---|---|---|
-| `model-routing.md` | ~1,500 | **Before executing a skill** — `collector` / `worker` / `verifier` roles as capability tiers with an effort level each, mapped per runtime (Claude Code role agents, Codex spawn arguments, any other agent), native tools, coordinator rules, when delegation helps, and what stays with the coordinator |
-| `conventions.md` | ~1,040 | Starting any audit — output folder, IDs, finding/report/README skeletons, evidence rules, fan-out contract (+ §7a, the audit short form of model routing), confirmation gate, planner hand-off |
+| `model-routing.md` | ~2,900 | **Before executing a skill, authoring a workflow, or delegating an ad-hoc task or any step of a remediation sprint** — role/task tiers and efforts per runtime, difficult-worker and Fable/Astra escalation, Codex version resolution and custom-agent precedence, native tools, coordinator rules, when delegation helps, and the remediation-sprint steps (fix, review, gate, release) mapped to roles |
+| `conventions.md` | ~1,000 | Starting any audit — output folder, IDs, finding/report/README skeletons, evidence rules, fan-out contract (+ §7a, the audit short form of model routing), confirmation gate, planner hand-off |
 | `units.md` | ~430 | Tagging a finding's deploy unit / exposure class (17 units: filter names, kind, notes) |
 | `release-mechanics.md` | ~300 | Writing a sprint's "Ends with" line, deciding a version bump, the standing verification gate (planner, dead-code) |
 | `policy-documents.md` | ~650 | Auditing or editing a Privacy policy / Terms of Service: the four documents, the six-language `<STEM>.<locale>.md` convention, what parity means, who files what (security-audit, documentation-audit, i18n-manager) + `scripts/policy-locale-parity.py` |
@@ -36,8 +36,11 @@ repo-root `AGENTS.md` points non-Claude agents at the `CLAUDE.md` project contex
 versions that match its code — and a stale branch carries stale skills.
 
 The Claude Code agents that pin each role's model and effort (see `model-routing.md`) are tracked
-beside them in `xivdyetools/.claude/agents/`. Codex needs no agent files: its coordinator passes
-the model and effort on each spawn.
+beside them in `xivdyetools/.claude/agents/`. Codex resolves the task's model version and passes
+both model and effort on each native spawn. Optional custom roles can live in `.codex/agents/`
+or `~/.codex/agents/`; for dynamic version selection, keep those templates instruction-only,
+because a file's model/effort settings override the spawn request. Follow `model-routing.md`
+for compatible definitions, the verifier's read-only contract, and Astra escalation.
 
 - **Windows:** the symlink needs Developer Mode (or an elevated shell) plus `core.symlinks=true`.
   Without both, git checks it out as a one-line text file and Claude Code finds no skills —

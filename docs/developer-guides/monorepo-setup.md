@@ -75,7 +75,7 @@ Workspace-level policy lives in `pnpm-workspace.yaml`:
 
 | Setting | What it does |
 |---------|--------------|
-| `overrides` | Pins `typescript` so the workspace shares one compiler; `rollup`, `qs` and `seroval` are security floors; `vitepress>vite` and `tsup>esbuild` are scoped, dated overrides closing dev-only advisories (FINDING-036) |
+| `overrides` | Pins `typescript` so the workspace shares one compiler; `rollup` and `seroval` are security floors; `vitepress>vite` and `tsup>esbuild` are scoped, dated overrides closing dev-only advisories (FINDING-036) |
 | `allowBuilds` | Explicit install-script policy. **No dependency is approved to run install scripts.** `esbuild`, `msw`, and `workerd` are deliberately rejected — the workspace builds and tests green without their postinstalls |
 | `minimumReleaseAge: 1440` | Supply-chain window: a new release must be ≥ 24 h old before it can be installed, so compromised releases have time to be detected and yanked |
 
@@ -103,11 +103,17 @@ is no standing exclusion.
 - `$TURBO_DEFAULT$` only covers the package a task runs in, so anything **cross-package** is
   still named explicitly: `lint` adds `$TURBO_ROOT$/knip.jsonc` (the root dead-code config
   fourteen workspaces run against) and `test` adds `$TURBO_ROOT$/apps/*/wrangler.toml` (four
-  workers have config tests that read a sibling's toml).
+  workers have config tests that read a sibling's toml), the root `CHANGELOG-laymans.md`
+  (discord-worker's changelog suites parse it) and api-worker's
+  `src/chara/data/item-names.*.json` (discord-worker's font-coverage suites cut and check the
+  CJK subsets against them).
 - `globalDependencies` covers the three shared files no package contains:
   `tsconfig.base.json`, `eslint.config.js`, `pnpm-workspace.yaml`.
-- `build` outputs `dist/**`; `dev` is `persistent: true` and uncached; `deploy` is uncached and
-  depends on `build` and `type-check`.
+- `build` outputs `dist/**`; `dev` is `persistent: true` and uncached. There is **no `deploy` task**
+  (removed under DEAD-046): each app's own `deploy` script is run per workspace
+  (`pnpm --filter <app> run deploy`), never through turbo, so `pnpm turbo run deploy` errors with
+  "Could not find task" instead of fanning a bare `wrangler deploy` (production, for `oauth`) out
+  to every worker.
 
 ### Filter syntax you'll actually use
 

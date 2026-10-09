@@ -15,4 +15,4 @@
 Option B (no publish): add a discord-worker parity test that renders generateBudgetLedger at the calculator's maximum packing and asserts height <= 350.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `4d7df6c2` re-exports the ledger heights; `07c69bce` packs the ledger with them and takes the footer height from the key lines the card draws. (branch `fix/remediation-2026-10-04-sprint14`, svg 4.4.0 + bot-logic 4.8.1 + discord-worker 5.8.6; PR #259, open, on PR #258).

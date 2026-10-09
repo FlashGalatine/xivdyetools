@@ -220,12 +220,28 @@ interface ParsedFloat {
 }
 
 /**
+ * One channel as .NET writes and reads a float (`float.Parse(…,
+ * InvariantCulture)`): decimal digits, an optional point and exponent — "1E-05"
+ * included. `Number()` alone also takes '' (0), "Infinity" and JavaScript-only
+ * literals ('0x10' is 16, '0b1' is 1, '0o7' is 7) that no producer reads.
+ */
+const DOTNET_FLOAT = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?$/;
+
+/**
  * Parse an extended-appearance float string ("r, g, b" or "r, g, b, a",
  * each channel squared — see `squaredToSrgb255`). Throws loudly on a malformed
  * value — a wrong-but-plausible colour is worse than a failure that names the
  * field.
+ *
+ * `stored` is the producer's type for the field: Anamnesis `Color` (3 parts)
+ * for every float but `MouthColor`, which is a `Color4` (4 parts, the lip
+ * alpha). It decides only whether one trailing separator is tolerated.
  */
-function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
+function parseFloatColor(
+  field: string,
+  value: unknown,
+  stored: 'rgb' | 'rgba' = 'rgb',
+): ParsedFloat | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== 'string') {
     throw new AppError(
@@ -234,8 +250,32 @@ function parseFloatColor(field: string, value: unknown): ParsedFloat | null {
       'error',
     );
   }
-  const parts = value.split(',').map((p) => Number(p.trim()));
-  if ((parts.length !== 3 && parts.length !== 4) || parts.some((n) => Number.isNaN(n))) {
+  // BUG-133: `Number('')` is 0, so an empty channel ("r,, b", or a MouthColor
+  // "r, g, b, " whose alpha was deleted) used to read as a black channel or a
+  // zero lip alpha, and "Infinity" (what .NET writes for an infinite float)
+  // clamped to 255.
+  //
+  // Anamnesis (`Color.FromString` / `Color4.FromString`) and Brio
+  // (`Vector3Converter` / `Vector4Converter`) split on ", " dropping empty
+  // entries and demand exactly 3 or 4 parts, so they reject an empty channel
+  // only where it leaves the wrong count — and their `float.Parse` ACCEPTS
+  // "Infinity", "-Infinity" and an overflowing "1e999". We reject every
+  // non-finite channel on purpose: clamped, it is a wrong-but-plausible
+  // colour. The one producer-accepted shape we keep is a single stray
+  // separator after a 3-channel float ("r, g, b, "), which the pre-BUG-133
+  // parser also read correctly; on a `Color4` it is a deleted alpha instead,
+  // and stays an error.
+  const segments = value.split(',').map((p) => p.trim());
+  if (stored === 'rgb' && segments.length === 4 && segments[3] === '') {
+    segments.pop();
+  }
+  const parts = segments.map(Number);
+  if (
+    (parts.length !== 3 && parts.length !== 4) ||
+    !segments.every((s) => DOTNET_FLOAT.test(s)) ||
+    // The pattern admits an overflowing exponent ("1e999" is Infinity)
+    parts.some((n) => !Number.isFinite(n))
+  ) {
     throw new AppError(
       ErrorCode.INVALID_INPUT,
       `.chara field ${field}: unparseable float colour "${value}"`,
@@ -388,7 +428,7 @@ export function parseCharaFile(text: string): ParsedCharaFile {
     limbal: parseFloatColor('LimbalRingColor', record['LimbalRingColor']),
     hair: parseFloatColor('HairColor', record['HairColor']),
     highlight: parseFloatColor('HairHighlight', record['HairHighlight']),
-    mouth: parseFloatColor('MouthColor', record['MouthColor']),
+    mouth: parseFloatColor('MouthColor', record['MouthColor'], 'rgba'),
   };
   // A block that is zero in every channel of every float — alpha included —
   // was never read (22 of 1,142 corpus files), so it is absent, not a black
