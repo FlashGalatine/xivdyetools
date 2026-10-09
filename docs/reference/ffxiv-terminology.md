@@ -457,7 +457,10 @@ strings were read on 2026-10-05 from the sources named under [Facewear Colors](#
 `CharaMakeType` menus point to.
 - **Read on 2026-10-05:** XIVAPI v2 for EN / JA / DE / FR, and the CN and KR client dumps for ZH / KO.
 - **Checks:** a second extraction matched every value it covers. Rows, URLs, race variants and confidence: [character-sheet research](../research/2026-10-05-character-sheet-terms/README.md).
-- **Core does not match.** Its `sheets` section is typed by hand in `packages/core/scripts/build-locales.ts` and disagrees with the client in five languages. This table is what pins the words; fix the generator from it, never the generated JSON.
+- **Core follows this table.** Its `sheets` section is generated from `buildSheets` in `packages/core/scripts/build-locales.ts`, which was rewritten from this table (TERM-021, 2026-10-04 remediation), and `packages/core/scripts/build-locales.test.ts` pins every locale's values plus the words ruled out below. This table is still what pins the words: change one here first, then in the generator, never in the generated JSON. Core's English stays house wording (*Tattoo/Limbal*, *Face Paint (Dark)*), not the client's. Three things in core are deliberate rather than a single row's label:
+  - `tattooColors` is the house form described under *One palette, three features* below.
+  - The face-paint keys take the **feature** name (row 249 in the second table: フェイスペイント, Maquillage, 얼굴 치장, 面妆) plus the Dark / Light label, everywhere except German. German takes the palette label (250, *Farbe des Merkmals*) because the client also calls facial features *Merkmale*.
+  - The plural *colors* nouns in de / fr (*Augenfarben*, *Couleurs des yeux*) are house style around the client's noun.
 
 | Palette | Core key | Row | EN | JA | DE | FR | KO | ZH |
 |---------|----------|-----|----|----|----|----|----|----|
@@ -501,12 +504,12 @@ strings were read on 2026-10-05 from the sources named under [Facewear Colors](#
   - That pairing comes from context (their neighbors and wording); no sheet links them.
   - French is **Opaque / Translucide**, never Foncé / Clair.
   - The other languages: ja 濃い / 薄い, ko 짙게 / 옅게, zh 浓艳 / 清淡.
-- **Eyes:** the palette is ja **瞳の色** and zh **瞳色**; core's 目の色 / 眼睛颜色 are not the client's. The picker tab for both eyes says 両目の色 / 双眼颜色 (row 2124), and its heterochromia toggle Odd Eyes says オッドアイにする / 虹膜异色 (row 2125).
+- **Eyes:** the palette is ja **瞳の色** and zh **瞳色**; 目の色 / 眼睛颜色, which core carried before TERM-021, are not the client's. The picker tab for both eyes says 両目の色 / 双眼颜色 (row 2124), and its heterochromia toggle Odd Eyes says オッドアイにする / 虹膜异色 (row 2125).
 - **One palette, three features.** Core's `tattooColors` is labeled by race:
   - Tattoo Color (most clans);
   - Limbal Ring Color (Au Ra);
   - Ear Clasp Color (Wildwood ♂ ♀ and Keeper of the Moon ♀: 耳飾りの色, Ohrschmuckfarbe, Couleur des boucles d'oreilles, 귀걸이 색, 耳饰颜色).
-  - The client has no name for the palette as a whole. Ours, *Tattoo / Limbal Ring*, is a house choice built from the first two labels; it leaves out the ear clasps. The research note has the Hrothgar and Viera variants ("tattoos and ornaments" in four languages).
+  - The client has no name for the palette as a whole. Ours, *Tattoo / Limbal Ring*, is a house choice built from the first two labels; it leaves out the ear clasps. Outside English the label joins the two halves with ` / ` (spaces, ASCII slash), never the fullwidth `／`: ja 刺青 / 瞳の輪郭, de Tattoo / Äußere Iris, fr Tatouage / Contour de l'iris, ko 문신 / 눈동자 테두리, zh 刺青 / 瞳孔轮廓. This rule is for the standalone label only; ／ inside Japanese running prose is ordinary punctuation and not covered by it. The research note has the Hrothgar and Viera variants ("tattoos and ornaments" in four languages).
 - **Hrothgar has no hair or lip palette:**
   - Customize 10 is **Fur Color** (row 1014). It labels the palette core keys `hairColors` for Helions and The Lost.
   - Customize 20 is **Fur Pattern** (row 1013). It takes the lip slot and is not a color, so a Hrothgar file's lip value names a pattern.
@@ -524,7 +527,7 @@ Each locale file has a `locale` string plus fifteen sections. Those not tabled a
 | `labels` | 7 | Dye trait labels: `dye`, `dark`, `metallic`, `pastel`, `cosmic`, `cosmicExploration`, `cosmicFortunes` |
 | `visions` | 5 | Short vision-type labels (see above) |
 | `tools` | 6 | Tool display names: Harmony Explorer, Gradient Builder, Dye Mixer, Swatch Matcher, Dye Comparison, Accessibility Checker |
-| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Typed by hand and not yet the client's wording: see [Character-Creation Color Sheets](#character-creation-color-sheets) |
+| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Generated from `buildSheets`, which follows [Character-Creation Color Sheets](#character-creation-color-sheets) |
 
 There is **no** `jobNames` or `grandCompanyNames` section — job and Grand Company names are not
 part of this dataset, because nothing in the toolset renders them.
@@ -535,8 +538,12 @@ part of this dataset, because nothing in the toolset renders them.
 
 When Square Enix adds new dyes or changes terminology:
 
-1. Update `@xivdyetools/core` locale JSON files
-2. Run `pnpm turbo run build test --filter=@xivdyetools/core`
+1. Update the sources in `packages/core`, never the generated locale JSON: `dyenames.csv` or
+   `facewear-names.csv` for names, `localize.yaml` for labels, and the tables in
+   `scripts/build-locales.ts` for every other section. A new or renamed dye or Facewear color
+   also changes `src/data/dyes.json` or `src/data/facewear_colors.json`: the build exits 1 until
+   the CSV names exactly the same entries, with the same English names.
+2. Run `pnpm turbo run build test --filter=@xivdyetools/core` (`build` regenerates the locale JSON)
 3. Publish new core version
 4. Update consuming apps
 

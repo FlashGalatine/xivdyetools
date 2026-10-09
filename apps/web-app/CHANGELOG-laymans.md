@@ -2,6 +2,12 @@
 
 ---
 
+## Web-App Version 5.14.10 — October 6, 2026
+
+### Truer greys
+- **Gradients and HSL mixes from a grey stay true to the other color.** Slate Grey, Jet Black, Metallic Silver or a grey hex code going to blue stays blue instead of passing through purple or pink.
+- **Harmony Explorer keeps a swapped-in dye in its slot.** With "no duplicates" on, it no longer shows up again in an earlier slot.
+
 ## Web-App Version 5.14.8 — October 5, 2026
 
 ### Market prices you can trust

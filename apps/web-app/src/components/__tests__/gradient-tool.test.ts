@@ -12,7 +12,13 @@ import { GradientTool } from '../gradient-tool';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 // The barrel is mocked below; the tool reads ConfigController through it
-import { ConfigController, dyeService, MarketBoardService, StorageService } from '@services/index';
+import {
+  ColorService,
+  ConfigController,
+  dyeService,
+  MarketBoardService,
+  StorageService,
+} from '@services/index';
 // The module itself is NOT mocked — this is the real controller, backed by
 // the real StorageService and jsdom localStorage
 import { ConfigController as RealConfigController } from '@services/config-controller';
@@ -1537,6 +1543,169 @@ describe('GradientTool', () => {
       pickSlot(middleCard, 'add-mixer-slot-2');
 
       expect(await endpoints()).toEqual([1, middleCard.data.dye.id]);
+    });
+  });
+
+  // ==========================================================================
+  // A grey endpoint's hue is powerless (BUG-035's sibling on the hue paths)
+  //
+  // A grey reports hue 0 in HSV and OKLCH and ~158 in LCH (float noise in a
+  // and b) — a placeholder, not a colour. Interpolating it drew a purple
+  // midpoint (#975D9B) for Slate Grey → #2A3FD0 in HSV, the default, sent the
+  // LCH ramp through teal, and turned white → blue pink. The bot's /gradient
+  // runs the same arithmetic; its tests (bot-logic commands/gradient.test.ts)
+  // pin the same hexes.
+  // ==========================================================================
+
+  describe('a grey endpoint has no hue of its own', () => {
+    /** Undoes this block's real-core conversions: clear/restoreAllMocks keep them. */
+    let undo: Array<() => void> = [];
+
+    beforeEach(async () => {
+      // The barrel mock's conversions return constants; this block needs the
+      // real arithmetic. Arrow wrappers keep the static methods' `this`.
+      const real = (await vi.importActual<typeof import('@xivdyetools/core')>('@xivdyetools/core'))
+        .ColorService;
+      const delegate = <A extends unknown[], R>(
+        mock: {
+          getMockImplementation(): ((...args: A) => R) | undefined;
+          mockImplementation(fn: (...args: A) => R): unknown;
+        },
+        fn: (...args: A) => R
+      ) => {
+        const original = mock.getMockImplementation();
+        mock.mockImplementation(fn);
+        undo.push(() => {
+          if (original) mock.mockImplementation(original);
+        });
+      };
+      delegate(vi.mocked(ColorService.hexToHsv), (hex) => real.hexToHsv(hex));
+      delegate(vi.mocked(ColorService.hsvToHex), (h, s, v) => real.hsvToHex(h, s, v));
+      delegate(vi.mocked(ColorService.hexToOklch), (hex) => real.hexToOklch(hex));
+      delegate(vi.mocked(ColorService.oklchToHex), (L, C, h) => real.oklchToHex(L, C, h));
+      delegate(vi.mocked(ColorService.hexToLch), (hex) => real.hexToLch(hex));
+      delegate(vi.mocked(ColorService.lchToHex), (L, C, h) => real.lchToHex(L, C, h));
+    });
+
+    afterEach(() => {
+      for (const restore of undo) restore();
+      undo = [];
+    });
+
+    const endpoint = (id: number, hex: string) =>
+      ({ ...mockDyes[0], id, itemID: 5000 + id, name: `Dye ${id}`, hex }) as never;
+
+    /**
+     * The five-step ramp's three middle colours, as the tool hands them to the
+     * matcher (it returns null here, so each middle step asks exactly once).
+     */
+    const middleOfRamp = async (
+      start: string,
+      end: string,
+      interpolation: 'hsv' | 'oklch' | 'lch'
+    ): Promise<string[]> => {
+      tool = mount();
+      tool.setConfig({ stepCount: 5, interpolation });
+      tool.selectDye(endpoint(1, start));
+      vi.mocked(dyeService.findClosestDye).mockClear();
+      tool.selectDye(endpoint(2, end));
+      await flush();
+      return vi
+        .mocked(dyeService.findClosestDye)
+        .mock.calls.map((call) => call[0])
+        .slice(-3);
+    };
+
+    /** A colour's hue in the space the mode interpolates in. */
+    const hueIn = (space: 'hsv' | 'oklch' | 'lch', hex: string): number => {
+      if (space === 'oklch') return ColorService.hexToOklch(hex).h;
+      if (space === 'lch') return ColorService.hexToLch(hex).h;
+      return ColorService.hexToHsv(hex).h;
+    };
+
+    /** The angle between two hues, the short way round. */
+    const hueGap = (a: number, b: number): number => {
+      const d = Math.abs(a - b) % 360;
+      return Math.min(d, 360 - d);
+    };
+
+    const SLATE_GREY = '#656565';
+    const BLUE = '#2A3FD0';
+
+    // Each pair runs both ways, so the grey side is tested as start and as end
+    describe.each(['hsv', 'oklch', 'lch'] as const)('in %s', (space) => {
+      it.each([
+        [SLATE_GREY, BLUE],
+        [BLUE, SLATE_GREY],
+        ['#FFFFFF', '#0000FF'],
+        ['#0000FF', '#FFFFFF'],
+      ])('the midpoint of %s → %s keeps the blue end’s hue', async (start, end) => {
+        const blue = start === SLATE_GREY || start === '#FFFFFF' ? end : start;
+
+        const midpoint = (await middleOfRamp(start, end, space))[1];
+
+        expect(hueGap(hueIn(space, midpoint), hueIn(space, blue))).toBeLessThan(3);
+      });
+    });
+
+    it.each([
+      // Before: '#806674', '#975D9B', '#7549B5'
+      ['hsv', ['#666980', '#5D659B', '#4956B5']],
+      // Before: '#77566D', '#754989', '#6042AF'
+      ['oklch', ['#556182', '#445A9D', '#364FB6']],
+      // Before: '#276A68', '#006A91', '#0061C3'
+      ['lch', ['#635C80', '#5B529A', '#4C49B5']],
+    ] as const)('pins the Slate Grey → blue ramp in %s', async (space, expected) => {
+      expect(await middleOfRamp(SLATE_GREY, BLUE, space)).toEqual(expected);
+    });
+
+    // Two chromatic ends are untouched — the middles drawn before the rule,
+    // byte for byte. Snow White (#E4DFD0) is a near-grey with a real, faint
+    // hue: only an exact grey (r = g = b) is powerless, as in core's
+    // blendHSL. White → black is grey at both ends and keeps its own hues.
+    it.each([
+      {
+        start: '#FF0000',
+        end: '#0000FF',
+        hsv: ['#FF0080', '#FF00FF', '#8000FF'],
+        oklch: ['#E8007B', '#BA00C2', '#7A00F4'],
+        lch: ['#FF0045', '#FA0080', '#C500C3'],
+      },
+      {
+        start: '#0000FF',
+        end: '#FF0000',
+        hsv: ['#8000FF', '#FF00FF', '#FF0080'],
+        oklch: ['#7A00F4', '#BA00C2', '#E8007B'],
+        lch: ['#C500C3', '#FA0080', '#FF0045'],
+      },
+      {
+        // Dalamud Red → Royal Blue
+        start: '#781A1A',
+        end: '#273067',
+        hsv: ['#741E4C', '#6A216F', '#40246B'],
+        oklch: ['#6D1A3F', '#5B2158', '#432966'],
+        lch: ['#761035', '#68184D', '#4E265E'],
+      },
+      {
+        // Snow White → Royal Blue
+        start: '#E4DFD0',
+        end: '#273067',
+        hsv: ['#C59A99', '#A56B94', '#6B4586'],
+        oklch: ['#C8AA9C', '#A47783', '#6F4E79'],
+        lch: ['#C9AB9A', '#AC777C', '#7C4B70'],
+      },
+      {
+        start: '#FFFFFF',
+        end: '#000000',
+        hsv: ['#BFBFBF', '#808080', '#404040'],
+        oklch: ['#AEAEAE', '#636363', '#222222'],
+        lch: ['#B9B9B9', '#777777', '#3B3B3B'],
+      },
+    ])('leaves $start → $end byte-identical in every hue mode', async (row) => {
+      for (const space of ['hsv', 'oklch', 'lch'] as const) {
+        tool?.destroy();
+        expect(await middleOfRamp(row.start, row.end, space), space).toEqual(row[space]);
+      }
     });
   });
 });

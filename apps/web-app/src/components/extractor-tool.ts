@@ -2162,11 +2162,12 @@ export class ExtractorTool extends BaseComponent {
         return;
       }
 
-      // K-means hands back `colorCount` clusters whatever the image holds, so
-      // a flat logo asked for four colours returns two real clusters and two
-      // empty ones. An empty cluster has no pixels — it is not a colour the
-      // image contains and must not take a bar segment or a card. (A real
-      // cluster under half a percent keeps its pixels and stays.)
+      // Core returns at most `colorCount` clusters, each with pixels: an image
+      // with fewer distinct colours than asked for (a flat logo) gets fewer
+      // clusters, never empty ones. The pixelCount filter is defensive — an
+      // empty cluster is not a colour the image contains and must not take a
+      // bar segment or a card. (A real cluster under half a percent keeps its
+      // pixels and stays.)
       const clusters = this.paletteService
         .extractPalette(pixels, { colorCount: this.paletteColorCount })
         .filter((cluster) => cluster.pixelCount > 0);

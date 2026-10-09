@@ -197,20 +197,191 @@ describe('generateHarmonySlots', () => {
     });
   });
 
+  /**
+   * BUG-137 / BUG-139 (2026-10-04 deep dive). A pin used to enter the
+   * de-duplication set only when the loop REACHED its slot, so an earlier slot
+   * could still choose the pinned dye and the palette showed it twice. The old
+   * test pinned Jet Black, which no earlier slot ever picks, so it could not
+   * see that. Every pin below is a dye an earlier slot WOULD choose unpinned.
+   *
+   * The web app reaches this by keeping its hand-swaps across a strict-matching,
+   * ΔE-method or filter change: the swap stays put while slot 0's natural pick
+   * moves onto the swapped-in dye.
+   */
   describe('pinning', () => {
-    it('honours a caller-fixed dye for its slot', () => {
-      const pin = ALL.find((d) => d.name === 'Jet Black')!;
-      const slots = generateHarmonySlots(
-        RED.hex,
-        'triadic',
-        ALL,
-        { ...PERCEPTUAL, preventDuplicates: true },
-        { excludeItemIDs: [RED.itemID], pinned: new Map([[1, pin]]) }
-      );
+    const DEDUP = { ...PERCEPTUAL, preventDuplicates: true } as const;
+    const unpinned = (type: string, config: HarmonySelectionConfig = DEDUP) =>
+      generateHarmonySlots(RED.hex, type, ALL, config, { excludeItemIDs: [RED.itemID] });
+
+    it('honours a caller-fixed dye for its slot, and no earlier slot reuses it', () => {
+      const natural = unpinned('triadic');
+      const pin = natural[0].dye!;
+      // Precondition: the pin really is slot 0's own pick, not slot 1's.
+      expect(pin).not.toBeNull();
+      expect(natural[1].dye?.itemID).not.toBe(pin.itemID);
+
+      const slots = generateHarmonySlots(RED.hex, 'triadic', ALL, DEDUP, {
+        excludeItemIDs: [RED.itemID],
+        pinned: new Map([[1, pin]]),
+      });
 
       expect(slots[1].dye?.itemID).toBe(pin.itemID);
-      // ...and it still consumes its place, so a later slot cannot reuse it.
+      expect(slots[0].dye).not.toBeNull();
+      expect(slots[0].dye?.itemID).not.toBe(pin.itemID);
       expect(slots.filter((s) => s.dye?.itemID === pin.itemID)).toHaveLength(1);
+    });
+
+    it.each(Object.keys(HARMONY_OFFSETS).filter((t) => HARMONY_OFFSETS[t].length > 1))(
+      '%s: pinning the last slot to slot 0’s pick leaves every slot unique',
+      (type) => {
+        const natural = unpinned(type);
+        const pin = natural[0].dye!;
+        const last = natural.length - 1;
+
+        const slots = generateHarmonySlots(RED.hex, type, ALL, DEDUP, {
+          excludeItemIDs: [RED.itemID],
+          pinned: new Map([[last, pin]]),
+        });
+
+        expect(slots[last].dye?.itemID).toBe(pin.itemID);
+        const ids = slots.map((s) => s.dye?.itemID).filter((id): id is number => id != null);
+        expect(ids).toHaveLength(slots.length);
+        expect(new Set(ids).size).toBe(ids.length);
+      }
+    );
+
+    it('keeps a later pin out of an earlier slot’s companions', () => {
+      const config = { ...DEDUP, companionCount: 3 };
+      const natural = unpinned('triadic', config);
+      const pin = natural[0].companions[0];
+      expect(pin).toBeDefined();
+
+      const slots = generateHarmonySlots(RED.hex, 'triadic', ALL, config, {
+        excludeItemIDs: [RED.itemID],
+        pinned: new Map([[1, pin]]),
+      });
+
+      const shown = slots.flatMap((s) => [s.dye, ...s.companions]).filter((d): d is Dye => d != null);
+      expect(shown.filter((d) => d.itemID === pin.itemID)).toHaveLength(1);
+      expect(slots[1].dye?.itemID).toBe(pin.itemID);
+    });
+
+    it('reserves nothing when duplicates are allowed: earlier slots keep their picks', () => {
+      const config = { ...PERCEPTUAL, preventDuplicates: false };
+      const natural = unpinned('triadic', config);
+      const pin = natural[0].dye!;
+
+      const slots = generateHarmonySlots(RED.hex, 'triadic', ALL, config, {
+        excludeItemIDs: [RED.itemID],
+        pinned: new Map([[1, pin]]),
+      });
+
+      expect(slots[0].dye?.itemID).toBe(pin.itemID);
+      expect(slots[1].dye?.itemID).toBe(pin.itemID);
+    });
+
+    it('ignores a pin keyed to a slot the harmony does not have', () => {
+      const natural = unpinned('triadic');
+      // A stale pin is never drawn, so it must not hide a dye from the slots
+      // that are.
+      const slots = generateHarmonySlots(RED.hex, 'triadic', ALL, DEDUP, {
+        excludeItemIDs: [RED.itemID],
+        pinned: new Map([[natural.length, natural[0].dye!]]),
+      });
+
+      expect(slots.map((s) => s.dye?.itemID)).toEqual(natural.map((s) => s.dye?.itemID));
+    });
+
+    /**
+     * Two pins naming one dye (two hand-swaps to the same dye, then "no
+     * duplicates" switched on) used to both win their slots, so the palette
+     * showed that dye twice. Under de-duplication only the FIRST pin by slot
+     * index is honoured; a later one is ignored and its slot is chosen as if
+     * it had never been pinned.
+     */
+    describe('two pins of the same dye', () => {
+      const JET_BLACK = ALL.find((d) => d.name === 'Jet Black')!;
+
+      it.each(['tetradic', 'square', 'compound', 'inverted-tetradic'])(
+        '%s: only the first pin stands; the later slot is chosen normally',
+        (type) => {
+          const slots = generateHarmonySlots(RED.hex, type, ALL, DEDUP, {
+            excludeItemIDs: [RED.itemID],
+            // Map order deliberately reversed: "first" means the lowest slot
+            // index, not insertion order.
+            pinned: new Map([
+              [2, JET_BLACK],
+              [0, JET_BLACK],
+            ]),
+          });
+          // The answer when only the first pin exists
+          const firstOnly = generateHarmonySlots(RED.hex, type, ALL, DEDUP, {
+            excludeItemIDs: [RED.itemID],
+            pinned: new Map([[0, JET_BLACK]]),
+          });
+
+          expect(slots[0].dye?.itemID).toBe(JET_BLACK.itemID);
+          expect(slots[2].dye).not.toBeNull();
+          expect(slots[2].dye?.itemID).not.toBe(JET_BLACK.itemID);
+          expect(slots.map((s) => s.dye?.itemID)).toEqual(firstOnly.map((s) => s.dye?.itemID));
+          const ids = slots.map((s) => s.dye!.itemID);
+          expect(new Set(ids).size).toBe(ids.length);
+        }
+      );
+
+      it('scores the un-honoured slot against its own ideal, not as a pin', () => {
+        const slots = generateHarmonySlots(RED.hex, 'triadic', ALL, DEDUP, {
+          excludeItemIDs: [RED.itemID],
+          pinned: new Map([
+            [0, JET_BLACK],
+            [1, JET_BLACK],
+          ]),
+        });
+
+        expect(slots[1].dye?.itemID).not.toBe(JET_BLACK.itemID);
+        expect(slots[1].deviance).toBe(
+          ColorService.getDistanceForMethod(slots[1].targetHex, slots[1].dye!.hex, 'ciede2000')
+        );
+      });
+
+      it('lets both pins stand when duplicates are allowed', () => {
+        const config = { ...PERCEPTUAL, preventDuplicates: false };
+        const slots = generateHarmonySlots(RED.hex, 'triadic', ALL, config, {
+          excludeItemIDs: [RED.itemID],
+          pinned: new Map([
+            [0, JET_BLACK],
+            [1, JET_BLACK],
+          ]),
+        });
+
+        expect(slots.map((s) => s.dye?.itemID)).toEqual([JET_BLACK.itemID, JET_BLACK.itemID]);
+      });
+
+      it('still repeats a pin when nothing else is left (repeated beats blank)', () => {
+        // The one documented way a pin can appear twice under de-duplication:
+        // a slot with no other eligible dye falls back to repeating one rather
+        // than going empty — whether that slot was un-pinned or held the
+        // second, ignored pin.
+        const pool = [JET_BLACK];
+        const unpinnedEarlier = generateHarmonySlots(RED.hex, 'triadic', pool, DEDUP, {
+          pinned: new Map([[1, JET_BLACK]]),
+        });
+        const ignoredSecond = generateHarmonySlots(RED.hex, 'triadic', pool, DEDUP, {
+          pinned: new Map([
+            [0, JET_BLACK],
+            [1, JET_BLACK],
+          ]),
+        });
+
+        expect(unpinnedEarlier.map((s) => s.dye?.itemID)).toEqual([
+          JET_BLACK.itemID,
+          JET_BLACK.itemID,
+        ]);
+        expect(ignoredSecond.map((s) => s.dye?.itemID)).toEqual([
+          JET_BLACK.itemID,
+          JET_BLACK.itemID,
+        ]);
+      });
     });
 
     it('scores a pinned dye against its own slot ideal', () => {

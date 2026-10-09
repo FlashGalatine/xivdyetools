@@ -190,6 +190,13 @@ There is no `quality` option and no hex-string return. Options are `colorCount`
 (4), `maxIterations` (25), `convergenceThreshold` (1.0), `maxSamples` (10000) and
 `matchingMethod` — see [Algorithms](algorithms.md#extraction-options).
 
+`colorCount` is a maximum, not an exact length. `extractPalette` returns at most
+`colorCount` entries, each with `pixelCount > 0`, and fewer when the image holds
+fewer distinct colors or a cluster ends up empty. A flat two-color icon asked
+for 4 colors returns 2. `extractAndMatchPalette` returns one match per extracted
+color, so the same bound applies. Index either array by its own `length`, never
+by `colorCount`.
+
 ---
 
 ## APIService
