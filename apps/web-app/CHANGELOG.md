@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.7] - 2026-10-05
+
+Sprint 23 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the web app's dead code. No behaviour changes. Each removal was re-checked on this branch first
+(every symbol grepped over `src`, `e2e`, `scripts` and `functions`).
+
+### Removed
+
+- **Styles:** `BaseLitComponent.baseStyles`' unused utility classes and two preset-detail
+  selectors (DEAD-005); dead Tailwind-override selectors in `themes.css` (DEAD-006).
+- **`BaseLitComponent`:** the write-only `hasError` / `errorMessage` state (DEAD-011). The share
+  button's invalid-params path now logs a warning instead of calling a no-op `setError`.
+- **Services:**
+  - `WorldService`'s six test-only lookups and its `worldByName` map (DEAD-017);
+  - `IndexedDBService.getAll` / `count` / `deleteDatabase` (DEAD-018), and `get` / `keys`, which
+    lost their last caller when Sprint 22 moved the price cache to `entries()`;
+  - `SubscriptionManager.addAll` / `count` / `hasSubscriptions` (DEAD-019);
+  - `APIService`'s static `formatPrice` / `getPriceData` / `isInitialized` (DEAD-020);
+  - `LanguageService.getLabel` / `preloadLocales` (DEAD-023);
+  - the mixer engine's n-ary `blendColors` and its barrel re-export.
+- **Empty states:** six test-only `EMPTY_STATE_PRESETS` factories (DEAD-008), the four state icons
+  only they used (DEAD-009), and their 14 locale keys × 6 (DEAD-010). `ICON_WARNING` in
+  `ui-icons.ts` went too: only a comment on the removed alert icon had kept the dead-code gate
+  from seeing that nothing used it.
+- **Context actions:** the six legacy `ContextAction` members nothing emits, and their handlers
+  in Budget, Swatch, Harmony, Gradient and Mixer (DEAD-003). The vocabulary test was rewritten:
+  it still checks that every handled case is a real action, and that no tool uses the legacy
+  `navigate-to-tool` event. Also gone: Accessibility's re-dispatched
+  `tool-context-action`, Harmony's legacy `base=` budget hand-off, Mixer's unreachable third-slot
+  paths (the storage tuple keeps its shape), and Swatch's never-assigned cleanup field.
+- **Locale keys:** the five orphaned `accessibility.*` keys (DEAD-007), `common.copied` and
+  `mixer.dye3` — 21 keys in all six languages.
+- **Tests:** `color-service.test.ts` and `shared/__tests__/types.test.ts` tested
+  `@xivdyetools/core` and `@xivdyetools/types`, not the web app (DEAD-021, DEAD-022). Their two
+  cases the packages lacked moved there first (white stays white under `adjustBrightness`; an
+  8-digit hex is refused).
+
 ## [5.14.6] - 2026-10-05
 
 Sprint 22 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

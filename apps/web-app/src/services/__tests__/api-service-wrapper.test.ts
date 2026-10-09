@@ -65,61 +65,9 @@ describe('APIService Wrapper', () => {
   // Static Methods
   // ==========================================================================
 
-  describe('formatPrice', () => {
-    it('should format prices with G suffix', () => {
-      const result = APIService.formatPrice(1000);
-      expect(result).toContain('G');
-    });
-
-    it('should handle zero', () => {
-      const result = APIService.formatPrice(0);
-      expect(result).toBe('0G');
-    });
-
-    it('should handle large numbers with formatting', () => {
-      const result = APIService.formatPrice(1000000);
-      expect(result).toContain('G');
-      // Should have comma formatting
-      expect(result).toMatch(/\d.*G$/);
-    });
-  });
-
   describe('clearCache', () => {
     it('should clear cache without throwing', async () => {
       await expect(APIService.clearCache()).resolves.not.toThrow();
-    });
-  });
-
-  describe('getPriceData', () => {
-    // These used to call the live Universalis API with a 15 s timeout and
-    // flaked CI whenever the upstream was slow. A stubbed 404 answers at once
-    // and, being a deterministic 4xx, is never retried (OPT-014).
-    let fetchMock: ReturnType<typeof vi.fn>;
-
-    beforeEach(() => {
-      fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 404 }));
-      vi.stubGlobal('fetch', fetchMock);
-    });
-
-    afterEach(() => {
-      vi.unstubAllGlobals();
-    });
-
-    it('should accept itemID parameter', async () => {
-      const result = await APIService.getPriceData(99999999);
-      // Non-existent item resolves null (or price data) — never throws
-      expect(result === null || typeof result === 'object').toBe(true);
-      expect(fetchMock).toHaveBeenCalled();
-    });
-
-    it('should accept worldID parameter', async () => {
-      const result = await APIService.getPriceData(99999999, 67);
-      expect(result === null || typeof result === 'object').toBe(true);
-    });
-
-    it('should accept dataCenterID parameter', async () => {
-      const result = await APIService.getPriceData(99999999, undefined, 'Crystal');
-      expect(result === null || typeof result === 'object').toBe(true);
     });
   });
 });
@@ -657,28 +605,5 @@ describe('IndexedDBCacheBackend', () => {
       // Should not throw
       await expect(cacheBackend.initialize()).resolves.not.toThrow();
     });
-  });
-});
-
-// ==========================================================================
-// APIService.isInitialized() Test
-// ==========================================================================
-
-describe('APIService.isInitialized', () => {
-  beforeEach(() => {
-    APIService.resetInstance();
-  });
-
-  it('should eventually return true after getInstance and initialization completes', async () => {
-    const indexedDBServiceModule = await import('../indexeddb-service');
-    const mockInitialize = vi.spyOn(indexedDBServiceModule.indexedDBService, 'initialize');
-    mockInitialize.mockResolvedValueOnce(true);
-
-    APIService.getInstance();
-
-    // Wait for async initialization
-    await new Promise((r) => setTimeout(r, 100));
-
-    expect(APIService.isInitialized()).toBe(true);
   });
 });

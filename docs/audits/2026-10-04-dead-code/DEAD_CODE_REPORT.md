@@ -284,27 +284,27 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 |---|---|---|
 | DEAD-001 | FIXED 2026-10-05 (PR #225) | `ea264d49` |
 | DEAD-002 | FIXED 2026-10-05 (PR #227) | `d3bf312a` |
-| DEAD-003 | OPEN | — |
+| DEAD-003 | REMOVED, NOT DEPLOYED (PR #253, open) | `bf1611a0` |
 | DEAD-004 | REMOVED, NOT DEPLOYED (PR #247, open; pulled forward from Sprint 23) | `07c8a22e` |
-| DEAD-005 | OPEN | — |
-| DEAD-006 | OPEN | — |
-| DEAD-007 | OPEN | — |
-| DEAD-008 | OPEN | — |
-| DEAD-009 | OPEN | — |
-| DEAD-010 | OPEN | — |
-| DEAD-011 | OPEN | — |
+| DEAD-005 | REMOVED, NOT DEPLOYED (PR #253, open) | `9dc5f75d` |
+| DEAD-006 | REMOVED, NOT DEPLOYED (PR #253, open) | `9dc5f75d` |
+| DEAD-007 | REMOVED, NOT DEPLOYED (PR #253, open) | `fcc0b76f` |
+| DEAD-008 | REMOVED, NOT DEPLOYED (PR #253, open) | `85a16dcf` |
+| DEAD-009 | REMOVED, NOT DEPLOYED (PR #253, open) | `60e89446` |
+| DEAD-010 | REMOVED, NOT DEPLOYED (PR #253, open) | `fcc0b76f` |
+| DEAD-011 | REMOVED, NOT DEPLOYED (PR #253, open) | `9dc5f75d` |
 | DEAD-012 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
 | DEAD-013 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
 | DEAD-014 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
 | DEAD-015 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
 | DEAD-016 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
-| DEAD-017 | OPEN | — |
-| DEAD-018 | OPEN | — |
-| DEAD-019 | OPEN | — |
-| DEAD-020 | OPEN | — |
-| DEAD-021 | OPEN | — |
-| DEAD-022 | OPEN | — |
-| DEAD-023 | OPEN | — |
+| DEAD-017 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-018 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-019 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-020 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-021 | REMOVED, NOT DEPLOYED (PR #253, open) | `7763d4e1` |
+| DEAD-022 | REMOVED, NOT DEPLOYED (PR #253, open) | `7763d4e1` |
+| DEAD-023 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
 | DEAD-024 | OPEN | — |
 | DEAD-025 | OPEN | — |
 | DEAD-026 | OPEN | — |

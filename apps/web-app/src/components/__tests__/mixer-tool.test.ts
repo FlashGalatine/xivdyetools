@@ -57,7 +57,7 @@ vi.mock('@services/dye-service-wrapper', () => ({
 
 vi.mock('@services/index', async () => ({
   /**
-   * The blending engine's exports (blendColors, findMatchingDyes,
+   * The blending engine's exports (findMatchingDyes,
    * getContrastColor) are pure functions re-exported through the services
    * barrel, and they have their own test file. Use the REAL ones — a stub
    * here would silently change what the mixer computes while the tests still

@@ -124,7 +124,6 @@
     "cost": "Cost",
     "market": "Market",
     "spectrum": "Spectrum",
-    "copied": "Copied!",
     "dismiss": "Dismiss",
     "optional": "(optional)",
     "done": "Done",
@@ -343,11 +342,6 @@
     "inspectDyes": "Inspect Dyes",
     "visionTypes": "Vision Types",
     "selectDyesToSeeAnalysis": "Select dyes to see accessibility analysis",
-    "hardForDeuteranopia": "Hard to distinguish for deuteranopia (red-green)",
-    "hardForProtanopia": "Hard to distinguish for protanopia (red-green)",
-    "hardForTritanopia": "Hard to distinguish for tritanopia (blue-yellow)",
-    "verySimular": "Very similar - may be hard to distinguish",
-    "somewhatSimilar": "Similar - some users may have difficulty distinguishing",
     "redGreenWarning": "Red-green colorblind users may see this as a different color",
     "tritanopiaWarning": "May be hard to see for tritanopia (blue-yellow colorblindness)",
     "achromatopsiaWarning": "May be hard to see for total colorblindness",
@@ -483,7 +477,6 @@
     "replacedSlot2": "Replaced Slot 2",
     "replaceSlot": "Replace Slot",
     "selectDyesToBlend": "Select dyes to blend",
-    "dye3": "Dye 3",
     "fieldLabel": "Model × ratio",
     "fieldDesc": "Tap any cell to make it the mix. Rows are models, columns are ratios.",
     "fieldHint": "6 models × 5 ratios",
@@ -577,7 +570,6 @@
     "clearingCache": "Clearing cache and fetching new prices...",
     "pricesRefreshed": "Prices refreshed successfully!",
     "refreshError": "Error refreshing prices. Please try again.",
-    "priceUnavailable": "Price unavailable",
     "offlineWarning": "You are offline. Cannot refresh prices.",
     "region": {
       "japan": "Japan",
@@ -1110,33 +1102,10 @@
     "mineSummaryPresetsMany": "{n} presets"
   },
   "emptyStates": {
-    "noSearchResults": {
-      "title": "No dyes match \"{query}\"",
-      "description": "Try checking your spelling or search for a category like \"purple\" or \"red\".",
-      "action": "Clear search"
-    },
-    "filteredOut": {
-      "title": "All suggestions were filtered out",
-      "description": "Your current filters are hiding all matching dyes. Try adjusting your filter settings.",
-      "action": "Reset filters"
-    },
-    "noPrice": {
-      "description": "This dye may not be tradeable or Universalis doesn't have recent data for this server.",
-      "action": "Try different server"
-    },
     "noHarmony": {
       "title": "No harmony suggestions",
       "description": "Select a base dye to generate color harmony suggestions.",
       "action": "Select a dye"
-    },
-    "noImage": {
-      "title": "No image loaded",
-      "description": "Upload an image to start matching colors from it.",
-      "action": "Upload image"
-    },
-    "loading": {
-      "title": "Loading...",
-      "description": "Please wait while we fetch the data."
     }
   },
   "aria": {

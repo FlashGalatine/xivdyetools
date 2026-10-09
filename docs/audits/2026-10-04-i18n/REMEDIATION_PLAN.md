@@ -685,7 +685,9 @@ Tool, shell, service and glamour LOWs. Most are one-line guards or listener tear
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 23 — web-app: dead-code cleanup
+## Sprint 23 — web-app: dead-code cleanup — PR #253 (open)
+
+**Done in PR #253** (web-app 5.14.7, stacked on #252): all fifteen rows, plus the code Sprint 22 made dead. The layout shell is at 215.02 KB. Details are in the re-verification file's *Sprint 23* section.
 
 **dead-code/DEAD-004 is already removed** by Sprint 5 (PR #247); skip it here.
 

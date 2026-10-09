@@ -37,7 +37,6 @@ import {
   // WEB-REF-003 FIX: Import from extracted harmony generator
   getHarmonyTypes,
 } from '@services/index';
-import { handoffTo } from '@shared/tool-handoff';
 import { ConfigController } from '@services/config-controller';
 import { ThemeService } from '@services/theme-service';
 import { applyDisplayOptions } from '@services/display-options-helper';
@@ -65,7 +64,7 @@ import '@components/v4/v4-color-wheel';
 import '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { V4ColorWheel } from '@components/v4/v4-color-wheel';
-import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import type { ShareButton } from '@components/v4/share-button';
 
 // ============================================================================
@@ -1701,52 +1700,10 @@ export class HarmonyTool extends BaseComponent {
       }) as EventListener);
     }
 
-    // Handle context menu actions
-    card.addEventListener('context-action', ((
-      e: CustomEvent<{ action: ContextAction; dye: Dye }>
-    ) => {
-      this.handleContextAction(e.detail.action, e.detail.dye);
-    }) as EventListener);
-
     // Store reference for later price updates
     this.v4ResultCards.push(card);
 
     this.harmonyGridContainer.appendChild(card);
-  }
-
-  /**
-   * Handle context menu action from v4-result-card
-   */
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    logger.info(`[HarmonyTool] Context action: ${action} for dye: ${dye.name}`);
-
-    switch (action) {
-      // These three passed `add=<itemID>`, and NO tool in this app reads an
-      // `add` param — the receivers read `dyes` (Comparison, Accessibility)
-      // and `dyeA` (Mixer). So all three sent a key nobody consumes carrying a
-      // value that would have been refused anyway, and did nothing at all.
-      case 'add-comparison':
-        handoffTo('comparison', dye);
-        break;
-      case 'add-mixer':
-        handoffTo('mixer', dye);
-        break;
-      case 'add-accessibility':
-        handoffTo('accessibility', dye);
-        break;
-      case 'see-harmonies':
-        // Select this dye as base and regenerate harmonies
-        this.selectDye(dye);
-        break;
-      case 'budget':
-        RouterService.navigateTo('budget', { base: dye.hex.replace('#', '') });
-        break;
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex).then(() => {
-          logger.info(`[HarmonyTool] Copied hex: ${dye.hex}`);
-        });
-        break;
-    }
   }
 
   /**

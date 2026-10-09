@@ -248,11 +248,6 @@ export class PresetDetail extends BaseLitComponent {
         color: var(--theme-text, #e0e0e0);
       }
 
-      .badge-community {
-        background: rgba(139, 92, 246, 0.2);
-        color: #a78bfa;
-      }
-
       .badge-curated {
         background: rgba(99, 102, 241, 0.2);
         color: #818cf8;
@@ -297,12 +292,6 @@ export class PresetDetail extends BaseLitComponent {
         letter-spacing: 1px;
         color: var(--theme-text-muted, #888888);
         margin-bottom: 16px;
-      }
-
-      .dyes-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 16px;
       }
 
       /* Tags section */

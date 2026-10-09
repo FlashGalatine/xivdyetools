@@ -277,13 +277,6 @@ export class LanguageService {
   }
 
   /**
-   * Get localized label from core library
-   */
-  static getLabel(key: string): string {
-    return LocalizationService.getLabel(key as Parameters<typeof LocalizationService.getLabel>[0]);
-  }
-
-  /**
    * Get localized race name from core library
    */
   static getRace(key: string): string {
@@ -375,18 +368,6 @@ export class LanguageService {
     }
 
     return current;
-  }
-
-  /**
-   * Preload translations for multiple locales
-   * Useful for reducing latency when switching languages
-   */
-  static async preloadLocales(locales: LocaleCode[]): Promise<void> {
-    const loadPromises = locales
-      .filter((locale) => !webAppTranslations.has(locale))
-      .map((locale) => this.loadWebAppTranslations(locale));
-
-    await Promise.all(loadPromises);
   }
 
   /**

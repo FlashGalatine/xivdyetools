@@ -29,7 +29,7 @@ import { ShareService } from '@services/share-service';
 import { CollectionService } from '@services/collection-service';
 import { BaseComponent } from '@components/base-component';
 import '@components/v4/result-card';
-import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import {
@@ -1284,12 +1284,6 @@ export class BudgetTool extends BaseComponent {
 
     card.style.setProperty('--v4-result-card-width', '320px');
 
-    card.addEventListener('context-action', ((
-      e: CustomEvent<{ action: ContextAction; dye: Dye }>
-    ) => {
-      this.handleContextAction(e.detail.action, e.detail.dye);
-    }) as EventListener);
-
     cardWrapper.appendChild(card);
     this.targetOverviewContainer.appendChild(cardWrapper);
     this.targetOverviewContainer.appendChild(this.buildSendToRow(this.targetDye));
@@ -2017,30 +2011,6 @@ export class BudgetTool extends BaseComponent {
   // ============================================================================
   // Helpers
   // ============================================================================
-
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    switch (action) {
-      case 'add-comparison':
-        handoffTo('comparison', dye);
-        break;
-      case 'add-mixer':
-        handoffTo('mixer', dye);
-        break;
-      case 'add-accessibility':
-        handoffTo('accessibility', dye);
-        break;
-      case 'see-harmonies':
-        handoffTo('harmony', dye);
-        break;
-      case 'budget':
-        this.selectDye(dye);
-        break;
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex);
-        ToastService.success(LanguageService.t('success.copiedToClipboard'));
-        break;
-    }
-  }
 
   private isLightColor(hex: string): boolean {
     const r = parseInt(hex.slice(1, 3), 16);

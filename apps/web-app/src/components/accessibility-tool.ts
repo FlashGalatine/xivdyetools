@@ -17,7 +17,7 @@ import { CollapsiblePanel } from '@components/collapsible-panel';
 // type-only in this file and gets elided, leaving the element undefined on a
 // direct /accessibility load
 import '@components/v4/result-card';
-import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import {
   ColorService,
   ConfigController,
@@ -1169,13 +1169,6 @@ export class AccessibilityTool extends BaseComponent {
         this.removeDyeFromSelection(dyeToRemove);
       }) as EventListener);
 
-      // Handle context menu actions (cross-tool navigation)
-      card.addEventListener('context-action', ((
-        e: CustomEvent<{ action: ContextAction; dye: Dye }>
-      ) => {
-        this.handleContextAction(e.detail.action, e.detail.dye);
-      }) as EventListener);
-
       // No inline width: the card is a .v5-results-grid child and the shared
       // rule sizes it. An inline width beats that rule (inline styles win over
       // the stylesheet), which is why these cards drew narrower than every
@@ -1213,20 +1206,6 @@ export class AccessibilityTool extends BaseComponent {
     }
 
     logger.info(`[AccessibilityTool] Removed dye: ${dye.name}`);
-  }
-
-  /**
-   * Handle context menu actions for cross-tool navigation
-   */
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    logger.info(`[AccessibilityTool] Context action: ${action} for ${dye.name}`);
-
-    // Dispatch custom event for app-level handling
-    const event = new CustomEvent('tool-context-action', {
-      bubbles: true,
-      detail: { action, dye, sourceTool: 'accessibility' },
-    });
-    this.container.dispatchEvent(event);
   }
 
   /**

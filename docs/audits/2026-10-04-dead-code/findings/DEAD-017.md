@@ -15,4 +15,4 @@
 Steps: In apps/web-app/src/services/world-service.ts delete getWorldById (117-125), getWorldByName (126-134), getDataCenter (146-154), getDataCenterForWorld (176-189), isDataCenter (190-198) and isWorld (199-207). Also delete the worldByName field (27) and its uses at 83, 88 and 219. In world-service.test.ts delete the its at 130-139, 141-149, 167-175 and 197-210, the 'server type checks' describe at 213-247, and the 'edge cases' describe at 290-312. Run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `057cba2f` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

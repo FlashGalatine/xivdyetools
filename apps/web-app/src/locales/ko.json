@@ -124,7 +124,6 @@
     "cost": "비용",
     "market": "시장",
     "spectrum": "스펙트럼",
-    "copied": "복사됨!",
     "dismiss": "닫기",
     "optional": "(선택사항)",
     "done": "완료",
@@ -343,11 +342,6 @@
     "inspectDyes": "염료 검사",
     "visionTypes": "시각 유형",
     "selectDyesToSeeAnalysis": "염료를 선택하여 접근성 분석 보기",
-    "hardForDeuteranopia": "제2색맹(적녹)은 구별하기 어려움",
-    "hardForProtanopia": "제1색맹(적녹)은 구별하기 어려움",
-    "hardForTritanopia": "제3색맹(청황)은 구별하기 어려움",
-    "verySimular": "매우 비슷함 - 구별하기 어려울 수 있습니다",
-    "somewhatSimilar": "비슷함 - 일부 사용자는 구별하기 어려울 수 있습니다",
     "redGreenWarning": "적녹색맹 사용자는 이 색을 다르게 볼 수 있습니다",
     "tritanopiaWarning": "제3색맹(청황색맹)인 경우 보기 어려울 수 있습니다",
     "achromatopsiaWarning": "전색맹인 경우 보기 어려울 수 있습니다",
@@ -483,7 +477,6 @@
     "replacedSlot2": "슬롯 2 교체됨",
     "replaceSlot": "슬롯 교체",
     "selectDyesToBlend": "블렌딩할 염료 선택",
-    "dye3": "염료 3",
     "fieldLabel": "모델 × 비율",
     "fieldDesc": "셀을 누르면 그 배합이 선택됩니다. 행은 모델, 열은 비율입니다.",
     "fieldHint": "6개 모델 × 5개 비율",
@@ -577,7 +570,6 @@
     "clearingCache": "캐시를 지우고 새 가격을 가져오는 중...",
     "pricesRefreshed": "가격이 새로고침되었습니다!",
     "refreshError": "가격 새로고침 오류. 다시 시도해주세요.",
-    "priceUnavailable": "가격 정보 없음",
     "offlineWarning": "오프라인 상태입니다. 가격을 새로고침할 수 없습니다.",
     "region": {
       "japan": "일본",
@@ -1110,33 +1102,10 @@
     "mineSummaryPresetsMany": "{n}건"
   },
   "emptyStates": {
-    "noSearchResults": {
-      "title": "\"{query}\"와 일치하는 염료가 없습니다",
-      "description": "철자를 확인하거나 \"보라색\" 또는 \"빨간색\"과 같은 카테고리로 검색해 보세요.",
-      "action": "검색 지우기"
-    },
-    "filteredOut": {
-      "title": "모든 제안이 필터링되었습니다",
-      "description": "현재 필터가 모든 일치하는 염료를 숨기고 있습니다. 필터 설정을 조정해 보세요.",
-      "action": "필터 초기화"
-    },
-    "noPrice": {
-      "description": "이 염료는 거래 불가이거나 Universalis에 이 서버의 최근 데이터가 없습니다.",
-      "action": "다른 서버 시도"
-    },
     "noHarmony": {
       "title": "조화 제안 없음",
       "description": "기본 염료를 선택하여 색상 조화 제안을 생성하세요.",
       "action": "염료 선택"
-    },
-    "noImage": {
-      "title": "이미지가 로드되지 않음",
-      "description": "이미지를 업로드하여 색상 매칭을 시작하세요.",
-      "action": "이미지 업로드"
-    },
-    "loading": {
-      "title": "로딩 중...",
-      "description": "데이터를 가져오는 동안 잠시 기다려 주세요."
     }
   },
   "aria": {

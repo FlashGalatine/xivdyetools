@@ -124,7 +124,6 @@
     "cost": "Kosten",
     "market": "Markt",
     "spectrum": "Spektrum",
-    "copied": "Kopiert!",
     "dismiss": "Schließen",
     "optional": "(optional)",
     "done": "Fertig",
@@ -343,11 +342,6 @@
     "inspectDyes": "Farbstoffe prüfen",
     "visionTypes": "Sehtypen",
     "selectDyesToSeeAnalysis": "Wähle Farbstoffe, um die Barrierefreiheitsanalyse zu sehen",
-    "hardForDeuteranopia": "Schwer zu unterscheiden bei Deuteranopie (Rot-Grün)",
-    "hardForProtanopia": "Schwer zu unterscheiden bei Protanopie (Rot-Grün)",
-    "hardForTritanopia": "Schwer zu unterscheiden bei Tritanopie (Blau-Gelb)",
-    "verySimular": "Sehr ähnlich - möglicherweise schwer zu unterscheiden",
-    "somewhatSimilar": "Ähnlich - einige Benutzer könnten Schwierigkeiten beim Unterscheiden haben",
     "redGreenWarning": "Rot-Grün-Farbenblinde könnten diese als andere Farbe wahrnehmen",
     "tritanopiaWarning": "Für Tritanopie (Blau-Gelb-Farbenblindheit) möglicherweise schwer sichtbar",
     "achromatopsiaWarning": "Für vollständige Farbenblindheit möglicherweise schwer sichtbar",
@@ -483,7 +477,6 @@
     "replacedSlot2": "Slot 2 ersetzt",
     "replaceSlot": "Slot ersetzen",
     "selectDyesToBlend": "Farbstoffe zum Mischen auswählen",
-    "dye3": "Farbstoff 3",
     "fieldLabel": "Modell × Verhältnis",
     "fieldDesc": "Zelle antippen, um sie als Mischung zu übernehmen. Zeilen sind Modelle, Spalten Verhältnisse.",
     "fieldHint": "6 Modelle × 5 Verhältnisse",
@@ -577,7 +570,6 @@
     "clearingCache": "Cache wird geleert und neue Preise werden abgerufen...",
     "pricesRefreshed": "Preise erfolgreich aktualisiert!",
     "refreshError": "Fehler beim Aktualisieren der Preise. Bitte erneut versuchen.",
-    "priceUnavailable": "Preis nicht verfügbar",
     "offlineWarning": "Du bist offline. Preise können nicht aktualisiert werden.",
     "region": {
       "japan": "Japan",
@@ -1110,33 +1102,10 @@
     "mineSummaryPresetsMany": "{n} Paletten"
   },
   "emptyStates": {
-    "noSearchResults": {
-      "title": "Keine Farbstoffe für \"{query}\" gefunden",
-      "description": "Überprüfe die Schreibweise oder suche nach einer Kategorie wie \"lila\" oder \"rot\".",
-      "action": "Suche löschen"
-    },
-    "filteredOut": {
-      "title": "Alle Vorschläge wurden gefiltert",
-      "description": "Deine aktuellen Filter verbergen alle passenden Farbstoffe. Passe deine Filtereinstellungen an.",
-      "action": "Filter zurücksetzen"
-    },
-    "noPrice": {
-      "description": "Dieser Farbstoff ist möglicherweise nicht handelbar oder Universalis hat keine aktuellen Daten für diesen Server.",
-      "action": "Anderen Server versuchen"
-    },
     "noHarmony": {
       "title": "Keine Harmonievorschläge",
       "description": "Wähle einen Basisfarbstoff, um Harmonievorschläge zu generieren.",
       "action": "Farbstoff auswählen"
-    },
-    "noImage": {
-      "title": "Kein Bild geladen",
-      "description": "Lade ein Bild hoch, um mit dem Farbabgleich zu beginnen.",
-      "action": "Bild hochladen"
-    },
-    "loading": {
-      "title": "Wird geladen...",
-      "description": "Bitte warte, während wir die Daten abrufen."
     }
   },
   "aria": {

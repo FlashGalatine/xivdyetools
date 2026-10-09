@@ -113,15 +113,7 @@ describe('EmptyState', () => {
     // emoji fallback died with the empty-state-icons dissolution. Every
     // preset must hand out a real glyph from the shared icon system.
     it('should hand out SVG glyphs from every preset', () => {
-      const presets = [
-        EMPTY_STATE_PRESETS.noSearchResults('q'),
-        EMPTY_STATE_PRESETS.allFilteredOut(),
-        EMPTY_STATE_PRESETS.noPriceData(),
-        EMPTY_STATE_PRESETS.noHarmonyResults(),
-        EMPTY_STATE_PRESETS.noImage(),
-        EMPTY_STATE_PRESETS.error('boom'),
-        EMPTY_STATE_PRESETS.loading(),
-      ];
+      const presets = [EMPTY_STATE_PRESETS.noHarmonyResults()];
       for (const preset of presets) {
         expect(preset.icon).toContain('<svg');
       }
@@ -254,73 +246,12 @@ describe('EmptyState', () => {
   // ============================================================================
 
   describe('Presets', () => {
-    describe('noSearchResults', () => {
-      it('should create preset with query in title', () => {
-        const preset = EMPTY_STATE_PRESETS.noSearchResults('test query');
-
-        expect(preset.title).toContain('test query');
-      });
-
-      // BUG-122's class: a string replacement expands `$&`, `$'`, `` $` `` and
-      // `$$`, so searching for `$&` showed the literal `{query}`
-      it.each(['$&', "$'", '$`', '$$', 'a$1b'])(
-        'puts the query %s into the title verbatim',
-        (searched) => {
-          const preset = EMPTY_STATE_PRESETS.noSearchResults(searched);
-
-          expect(preset.title).toContain(searched);
-          expect(preset.title).not.toContain('{query}');
-        }
-      );
-
-      it('should include clear action callback', () => {
-        const onClear = vi.fn();
-        const preset = EMPTY_STATE_PRESETS.noSearchResults('query', onClear);
-
-        expect(preset.onAction).toBe(onClear);
-      });
-    });
-
-    describe('allFilteredOut', () => {
-      it('should create preset with reset action', () => {
-        const onReset = vi.fn();
-        const preset = EMPTY_STATE_PRESETS.allFilteredOut(onReset);
-
-        expect(preset.onAction).toBe(onReset);
-        expect(preset.actionLabel).toBeDefined();
-      });
-    });
-
     describe('noHarmonyResults', () => {
       it('should create preset with select dye action', () => {
         const onSelect = vi.fn();
         const preset = EMPTY_STATE_PRESETS.noHarmonyResults(onSelect);
 
         expect(preset.onAction).toBe(onSelect);
-      });
-    });
-
-    describe('error', () => {
-      it('should create error preset with message', () => {
-        const preset = EMPTY_STATE_PRESETS.error('Something broke');
-
-        expect(preset.description).toBe('Something broke');
-      });
-
-      it('should include retry action', () => {
-        const onRetry = vi.fn();
-        const preset = EMPTY_STATE_PRESETS.error('Error', onRetry);
-
-        expect(preset.onAction).toBe(onRetry);
-      });
-    });
-
-    describe('loading', () => {
-      it('should create loading preset without actions', () => {
-        const preset = EMPTY_STATE_PRESETS.loading();
-
-        expect(preset.onAction).toBeUndefined();
-        expect(preset.actionLabel).toBeUndefined();
       });
     });
   });

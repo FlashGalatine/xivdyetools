@@ -27,7 +27,6 @@ import '@components/v4/result-card';
 import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
-import { handoffTo } from '@shared/tool-handoff';
 import { ShareService } from '@services/share-service';
 import {
   ColorService,
@@ -35,7 +34,6 @@ import {
   dyeService,
   LanguageService,
   MarketBoardService,
-  RouterService,
   StorageService,
   ThemeService,
   ToastService,
@@ -2204,75 +2202,7 @@ export class GradientTool extends BaseComponent {
       case 'transform-gradient':
       case 'transform-mixer':
         break;
-
-      // Legacy actions (for backwards compatibility)
-      case 'add-comparison':
-        this.addDyeToTool('v3_comparison_selected_dyes', dye, 4);
-        break;
-      case 'add-mixer':
-        this.addDyeToTool('v3_mixer_selected_dyes', dye, 2);
-        break;
-      case 'add-accessibility':
-        this.addDyeToTool('v3_accessibility_selected_dyes', dye, 4);
-        break;
-      case 'see-harmonies':
-        handoffTo('harmony', dye);
-        break;
-      case 'budget':
-        StorageService.setItem('v3_budget_target', dye.id);
-        RouterService.navigateTo('budget');
-        break;
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex).then(() => {
-          ToastService.success(LanguageService.t('common.copied'));
-        });
-        break;
     }
-  }
-
-  /**
-   * Helper to add a dye to a tool's storage
-   */
-  private addDyeToTool(
-    storageKey: string,
-    dye: Dye,
-    maxSlots: number,
-    isTuple: boolean = false
-  ): void {
-    if (isTuple) {
-      // Handle tuple format [number | null, number | null] for v4 mixer
-      const current = StorageService.getItem<[number | null, number | null]>(storageKey) ?? [
-        null,
-        null,
-      ];
-      if (current[0] === dye.id || current[1] === dye.id) {
-        ToastService.info(LanguageService.t('resultCard.dyeAlreadyIn'));
-        return;
-      }
-      if (current[0] === null) {
-        current[0] = dye.id;
-      } else if (current[1] === null) {
-        current[1] = dye.id;
-      } else {
-        ToastService.info(LanguageService.t('resultCard.slotsFull'));
-        return;
-      }
-      StorageService.setItem(storageKey, current);
-    } else {
-      // Handle array format for other tools
-      const existing = StorageService.getItem<number[]>(storageKey) ?? [];
-      if (existing.includes(dye.id)) {
-        ToastService.info(LanguageService.t('resultCard.dyeAlreadyIn'));
-        return;
-      }
-      if (existing.length >= maxSlots) {
-        ToastService.info(LanguageService.t('resultCard.slotsFull'));
-        return;
-      }
-      existing.push(dye.id);
-      StorageService.setItem(storageKey, existing);
-    }
-    ToastService.success(LanguageService.t('resultCard.addedTo'));
   }
 
   // ============================================================================

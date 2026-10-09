@@ -124,7 +124,6 @@
     "cost": "コスト",
     "market": "マーケット",
     "spectrum": "スペクトル",
-    "copied": "コピーしました！",
     "dismiss": "閉じる",
     "optional": "(任意)",
     "done": "完了",
@@ -343,11 +342,6 @@
     "inspectDyes": "カララントを検査",
     "visionTypes": "色覚タイプ",
     "selectDyesToSeeAnalysis": "カララントを選択してアクセシビリティ分析を表示",
-    "hardForDeuteranopia": "2型色覚（赤緑）では区別しにくい",
-    "hardForProtanopia": "1型色覚（赤緑）では区別しにくい",
-    "hardForTritanopia": "3型色覚（青黄）では区別しにくい",
-    "verySimular": "非常に似ている - 区別が難しい可能性があります",
-    "somewhatSimilar": "似ている - 一部のユーザーには区別が難しい場合があります",
     "redGreenWarning": "赤緑色覚異常のユーザーには別の色に見える可能性があります",
     "tritanopiaWarning": "3型色覚（青黄色覚異常）の方には見えにくい可能性があります",
     "achromatopsiaWarning": "全色盲の方には見えにくい可能性があります",
@@ -483,7 +477,6 @@
     "replacedSlot2": "スロット2を置き換えました",
     "replaceSlot": "スロットを置き換え",
     "selectDyesToBlend": "ブレンドする染料を選択",
-    "dye3": "カララント3",
     "fieldLabel": "モデル × 比率",
     "fieldDesc": "セルをタップで採用。行がモデル、列が比率です。",
     "fieldHint": "6モデル × 5比率",
@@ -577,7 +570,6 @@
     "clearingCache": "キャッシュをクリアして新しい価格を取得中...",
     "pricesRefreshed": "価格を更新しました！",
     "refreshError": "価格の更新に失敗しました。もう一度お試しください。",
-    "priceUnavailable": "価格不明",
     "offlineWarning": "オフラインです。価格を更新できません。",
     "region": {
       "japan": "日本",
@@ -1110,33 +1102,10 @@
     "mineSummaryPresetsMany": "{n}件"
   },
   "emptyStates": {
-    "noSearchResults": {
-      "title": "「{query}」に一致する染料がありません",
-      "description": "スペルを確認するか、「紫」や「赤」などのカテゴリで検索してください。",
-      "action": "検索をクリア"
-    },
-    "filteredOut": {
-      "title": "すべての提案がフィルターされました",
-      "description": "現在のフィルター設定で全ての染料が非表示になっています。フィルター設定を調整してみてください。",
-      "action": "フィルターをリセット"
-    },
-    "noPrice": {
-      "description": "この染料は取引不可か、このサーバーのUniversalisデータがありません。",
-      "action": "別のサーバーを試す"
-    },
     "noHarmony": {
       "title": "ハーモニーの提案がありません",
       "description": "ベースのカララントを選択して色調和の提案を生成します。",
       "action": "カララントを選択"
-    },
-    "noImage": {
-      "title": "画像が読み込まれていません",
-      "description": "画像をアップロードして色のマッチングを開始します。",
-      "action": "画像をアップロード"
-    },
-    "loading": {
-      "title": "読み込み中...",
-      "description": "データを取得しています。"
     }
   },
   "aria": {
