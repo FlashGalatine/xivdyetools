@@ -32,6 +32,9 @@ Rules:
 -->
 
 ## [5.15.0] - 2026-10-08
+### 📦 Clearer glamour acquisition sources
+- Web app: the Glamour Reader now replaces coffer-only Acquisition names with the quest, vendor or activity where the gear is obtained, and marks retired PvP rewards as no longer obtainable.
+- Web app: Kornago Merchant now lists Central Shroud and Bentbranch Meadows. The two expedition antiquarians have distinct North Horn and South Horn locations, including Tule, Torna, Carwen, Lix, Tycoon and Scherwiz glamour pieces.
 ### 📜 Glamour acquisition sources
 - Web app: the Glamour Reader replaces retired Dated gear up to level 50, Aetherial gear and Deepmist gear with a visually identical eligible item when one is available. Retired items no longer appear in the twin picker.
 - Web app: Acquisition lines now list Palazzo Diamond weapons under Dancing Mad (Ultimate), First Light and Sacramental weapons under Pilgrim's Traverse, level-44 Templar armor under Dzemael Darkhold, and Shin-Zantetsuken weapons under Baldesion Arsenal.
