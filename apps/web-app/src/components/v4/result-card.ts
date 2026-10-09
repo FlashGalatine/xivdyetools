@@ -1576,6 +1576,12 @@ export class ResultCard extends BaseLitComponent {
     const hsv = dye.hsv;
     const deltaE2000 = this.getDeltaE2000();
     const stain = dye.stainID;
+    // 2026-10-09 merge-day review: a custom colour has no stainID and a
+    // per-session negative id, so the hand-offs that send a stainID or store
+    // the id (Harmony, Budget, Accessibility, Comparison, Swatch, Mixer) and
+    // the external item pages cannot carry it. Gradient stores the hex and
+    // is the one item that can. A submenu with nothing left is not rendered.
+    const canHandOff = !isCustomDye(dye);
     const marketLabel = marketServer
       ? `${LanguageService.t('common.market')} · ${marketServer}`
       : LanguageService.t('common.market');
@@ -1855,46 +1861,52 @@ export class ResultCard extends BaseLitComponent {
                       aria-hidden=${!this.menuOpen}
                     >
                       <!-- Inspect Dye in... -->
-                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                        ${LanguageService.t('resultCard.inspectDyeIn')}
-                        <div class="submenu" role="menu">
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-harmony')}
-                          >
-                            ${toolLabel('harmony')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-budget')}
-                          >
-                            ${toolLabel('budget')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-accessibility')}
-                          >
-                            ${toolLabel('accessibility')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-comparison')}
-                          >
-                            ${toolLabel('comparison')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-swatch')}
-                          >
-                            ${toolLabel('swatch')}
-                          </button>
-                        </div>
-                      </div>
+                      ${
+                        canHandOff
+                          ? html`
+                              <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                                ${LanguageService.t('resultCard.inspectDyeIn')}
+                                <div class="submenu" role="menu">
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-harmony')}
+                                  >
+                                    ${toolLabel('harmony')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-budget')}
+                                  >
+                                    ${toolLabel('budget')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-accessibility')}
+                                  >
+                                    ${toolLabel('accessibility')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-comparison')}
+                                  >
+                                    ${toolLabel('comparison')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-swatch')}
+                                  >
+                                    ${toolLabel('swatch')}
+                                  </button>
+                                </div>
+                              </div>
+                            `
+                          : nothing
+                      }
 
                       <!-- Transform Dye in... -->
                       <div class="menu-item has-submenu" role="menuitem" tabindex="0">
@@ -1907,52 +1919,64 @@ export class ResultCard extends BaseLitComponent {
                           >
                             ${toolLabel('gradient')}
                           </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('transform-mixer')}
-                          >
-                            ${toolLabel('mixer')}
-                          </button>
+                          ${
+                            canHandOff
+                              ? html`
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('transform-mixer')}
+                                  >
+                                    ${toolLabel('mixer')}
+                                  </button>
+                                `
+                              : nothing
+                          }
                         </div>
                       </div>
 
-                      <div class="menu-divider"></div>
+                      ${
+                        canHandOff
+                          ? html`
+                              <div class="menu-divider"></div>
 
-                      <!-- Open in browser... -->
-                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                        ${LanguageService.t('resultCard.openInBrowser')}
-                        <div class="submenu" role="menu">
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-universalis')}
-                          >
-                            Universalis
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-garlandtools')}
-                          >
-                            GarlandTools
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-teamcraft')}
-                          >
-                            TeamCraft
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${/* eslint-disable-next-line xivdyetools-i18n/no-hardcoded-ui-strings -- brand name */ () => this.handleMenuAction('external-saddlebag')}
-                          >
-                            Saddlebag Exchange
-                          </button>
-                        </div>
-                      </div>
+                              <!-- Open in browser... -->
+                              <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                                ${LanguageService.t('resultCard.openInBrowser')}
+                                <div class="submenu" role="menu">
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('external-universalis')}
+                                  >
+                                    Universalis
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('external-garlandtools')}
+                                  >
+                                    GarlandTools
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('external-teamcraft')}
+                                  >
+                                    TeamCraft
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${/* eslint-disable-next-line xivdyetools-i18n/no-hardcoded-ui-strings -- brand name */ () => this.handleMenuAction('external-saddlebag')}
+                                  >
+                                    Saddlebag Exchange
+                                  </button>
+                                </div>
+                              </div>
+                            `
+                          : nothing
+                      }
                     </div>
                   </div>
                 </div>

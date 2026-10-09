@@ -326,6 +326,14 @@ export class SwatchTool extends BaseComponent {
    * shape MarketBoardService uses.
    */
   private colorsRequestVersion = 0;
+  /** True from a loadColors call until its palette is published (or it throws). */
+  private colorsLoading = false;
+  /**
+   * Which sheet (and, for hair and skin, which tribe and gender) this.colors
+   * holds. setConfig moves colorCategory before the palette arrives, so the
+   * selection card compares the two before drawing an excerpt from it.
+   */
+  private colorsKey = '';
   private priceData: Map<number, PriceData> = new Map();
   /**
    * The Market Board toggle as this tool last applied it: seeded from
@@ -619,8 +627,12 @@ export class SwatchTool extends BaseComponent {
       if (this.selectionContext?.source !== 'slot') this.selectionContext = null;
       this.clearForwardSelection();
       // updateColorGrid re-runs the reverse match against the new palette.
+      // 2026-10-09 merge-day review: a superseded load still resolves here,
+      // and may do so first. Only the newest load clears colorsLoading, so
+      // paint when it has; otherwise the old palette is drawn under the new
+      // sheet's heading until the newest load lands.
       void this.loadColors().then(() => {
-        if (!this.isDestroyed) this.updateColorGrid();
+        if (!this.isDestroyed && !this.colorsLoading) this.updateColorGrid();
       });
     } else if (needsRematch) {
       // Re-match if maxResults or matchingMethod changed
@@ -744,7 +756,16 @@ export class SwatchTool extends BaseComponent {
    * Scans all colors in the current palette and ranks by distance.
    */
   private performReverseMatch(): void {
-    if (!this.reverseDyeHex || this.colors.length === 0) {
+    // 2026-10-09 merge-day review: setConfig moves colorCategory before a hair
+    // or skin palette arrives, so this.colors can still be the previous
+    // sheet's. Ranking it would name the old sheet's cells as the new sheet's
+    // rows; rank nothing until the right palette is in (the load's
+    // updateColorGrid runs the match again).
+    if (
+      !this.reverseDyeHex ||
+      this.colors.length === 0 ||
+      this.colorsKey !== this.currentColorsKey()
+    ) {
       this.reverseMatchedSwatches = [];
       this.updateReverseHighlights();
       this.updateReverseResults();
@@ -1411,6 +1432,19 @@ export class SwatchTool extends BaseComponent {
   }
 
   /**
+   * A palette chip or the range toggle asks for `target`. 2026-10-09
+   * merge-day review: asking for the sheet already shown changes nothing, so
+   * it must not drop the slot pick either. setConfig is a value no-op there,
+   * nothing redraws, and the card, SEND TO and empty state would keep
+   * describing a pick that dropSlotPick had already taken off the sheet.
+   */
+  private moveToSheet(target: string): void {
+    if (target === this.colorCategory) return;
+    this.dropSlotPick();
+    this.commitConfig({ colorSheet: target });
+  }
+
+  /**
    * The workspace stops showing a THIS CHARACTER slot (a palette chip or the
    * range toggle moved it to another sheet). BUG-083 follow-up (2026-10-04
    * Sprint 22 review): the sheet card's ring and aria-pressed go with it, or
@@ -1622,9 +1656,8 @@ export class SwatchTool extends BaseComponent {
         },
       }) as HTMLButtonElement;
       this.on(chip, 'click', () => {
-        this.dropSlotPick();
         const target = palette.split ? `${palette.base}${currentRange}` : palette.base;
-        this.commitConfig({ colorSheet: target });
+        this.moveToSheet(target);
       });
       rail.appendChild(chip);
     }
@@ -1651,10 +1684,7 @@ export class SwatchTool extends BaseComponent {
             }; color: ${on ? 'var(--theme-primary)' : 'var(--theme-text-muted)'};`,
           },
         }) as HTMLButtonElement;
-        this.on(btn, 'click', () => {
-          this.dropSlotPick();
-          this.commitConfig({ colorSheet: `${currentBase}${range}` });
-        });
+        this.on(btn, 'click', () => this.moveToSheet(`${currentBase}${range}`));
         toggle.appendChild(btn);
       }
       rail.appendChild(toggle);
@@ -2006,7 +2036,10 @@ export class SwatchTool extends BaseComponent {
     inner.appendChild(left);
 
     // Right column: IN THE CREATOR excerpt (only where an address exists).
-    if (anchor !== null && this.colors.length > 0) {
+    // 2026-10-09 merge-day review: not while this.colors is another sheet's
+    // palette (a hair or skin load pending); updateColorGrid redraws the card
+    // once the right one is in.
+    if (anchor !== null && this.colors.length > 0 && this.colorsKey === this.currentColorsKey()) {
       const right = this.createElement('div', {
         attributes: {
           style: 'flex-shrink: 0; display: flex; flex-direction: column; gap: 5px;',
@@ -2273,6 +2306,12 @@ export class SwatchTool extends BaseComponent {
   // Data Loading & Matching
   // ============================================================================
 
+  private currentColorsKey(): string {
+    return RACE_SPECIFIC_CATEGORIES.includes(this.colorCategory)
+      ? `${this.colorCategory}|${this.subrace}|${this.gender}`
+      : this.colorCategory;
+  }
+
   /**
    * Load colors based on current category/race/gender
    */
@@ -2280,12 +2319,20 @@ export class SwatchTool extends BaseComponent {
     const version = ++this.colorsRequestVersion;
     const category = this.colorCategory;
     let next: CharacterColor[] = [];
+    this.colorsLoading = true;
 
     if (RACE_SPECIFIC_CATEGORIES.includes(category)) {
-      if (category === 'hairColors') {
-        next = await this.characterColorService.getHairColors(this.subrace, this.gender);
-      } else if (category === 'skinColors') {
-        next = await this.characterColorService.getSkinColors(this.subrace, this.gender);
+      try {
+        if (category === 'hairColors') {
+          next = await this.characterColorService.getHairColors(this.subrace, this.gender);
+        } else if (category === 'skinColors') {
+          next = await this.characterColorService.getSkinColors(this.subrace, this.gender);
+        }
+      } catch (error) {
+        // A failed chunk import must not leave the tool waiting on a palette
+        // that is not coming (only the newest load owns the flag).
+        if (version === this.colorsRequestVersion) this.colorsLoading = false;
+        throw error;
       }
     } else {
       // Shared colors
@@ -2324,6 +2371,8 @@ export class SwatchTool extends BaseComponent {
     }
 
     this.colors = next;
+    this.colorsKey = this.currentColorsKey();
+    this.colorsLoading = false;
     logger.info(`[CharacterTool] Loaded ${this.colors.length} colors for ${category}`);
   }
 

@@ -1335,6 +1335,136 @@ describe('SwatchTool', () => {
       expect(sheetPressed().map((b) => b.dataset.slot)).toEqual(['leftEye']);
     });
 
+    // 2026-10-09 merge-day review: hair and skin palettes load asynchronously,
+    // and pickCharaSlot ran the reverse match over the PREVIOUS sheet's colours
+    // the moment it committed the new sheet, so the rows named cells of the
+    // wrong palette until the load landed.
+    describe('a slot pick on a sheet that loads asynchronously', () => {
+      const palette = (prefix: string, hexAt2: string) =>
+        Array.from({ length: 8 }, (_, i) => ({
+          index: i,
+          hex: i === 2 ? hexAt2 : `#${prefix}${i}${prefix}${i}${prefix}${i}`,
+          name: `${prefix} ${i}`,
+        }));
+      const slotOf = (slot: 'hair' | 'skin', indexHex: string): ResolvedCharaSlot =>
+        ({
+          slot,
+          kind: slot,
+          verdict: 'index',
+          index: 2,
+          sheetIndex: 2,
+          sheetVariant: null,
+          gridAddress: 'R1·C3',
+          indexHex,
+          floatHex: null,
+          deltaE: null,
+          alpha: null,
+          blendHex: null,
+        }) as ResolvedCharaSlot;
+      const reverseHexes = () =>
+        (
+          tool as unknown as { reverseMatchedSwatches: Array<{ color: { hex: string } }> }
+        ).reverseMatchedSwatches.map((m) => m.color.hex);
+      const hold = (method: 'getHairColors' | 'getSkinColors') => {
+        let land!: (colors: unknown) => void;
+        vi.spyOn(CharacterColorService.prototype, method).mockReturnValue(
+          new Promise((resolve) => {
+            land = resolve;
+          }) as never
+        );
+        return (colors: unknown) => land(colors);
+      };
+
+      const cardText = (): string =>
+        (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
+          .textContent!;
+
+      it('draws no reverse rows from the old palette before the new one loads', async () => {
+        CharaSessionService.setSession(
+          charaSession({ slots: [slotOf('hair', '#AA3344')], gearDyes: [], gearModels: [] })
+        );
+        tool = mount();
+        await flush();
+        const landHair = hold('getHairColors');
+
+        sheetCards()[0]!.click();
+
+        expect(gridTitle()).toContain('tools.character.eyeColors');
+        expect(reverseHexes()).toEqual([]);
+        expect(
+          (tool as unknown as { reverseSection: HTMLElement }).reverseSection.style.display
+        ).toBe('none');
+
+        // The card keeps its sentence but draws no excerpt of the eye palette.
+        expect(cardText()).not.toContain('swatch.inGrid');
+
+        const hairColors = palette('1', '#AA3344');
+        landHair(hairColors);
+        await flush();
+        expect(cardText()).toContain('swatch.inGrid');
+
+        // Every distance is equal in this suite, so the rows are the palette's first cells.
+        expect(reverseHexes()).toEqual(hairColors.slice(0, 3).map((c) => c.hex));
+        expect(selection()).toMatchObject({ source: 'slot', slotKey: 'hair' });
+      });
+
+      it('lets a later pick win when the superseded load resolves first', async () => {
+        CharaSessionService.setSession(
+          charaSession({
+            slots: [slotOf('hair', '#AA3344'), slotOf('skin', '#33AA44')],
+            gearDyes: [],
+            gearModels: [],
+          })
+        );
+        tool = mount();
+        await flush();
+        const landHair = hold('getHairColors');
+        const landSkin = hold('getSkinColors');
+
+        sheetCards()[0]!.click();
+        sheetCards()[1]!.click();
+        landHair(palette('1', '#AA3344'));
+        await flush();
+
+        expect(reverseHexes()).toEqual([]);
+        expect(cardText()).not.toContain('swatch.inGrid');
+
+        const skinColors = palette('2', '#33AA44');
+        landSkin(skinColors);
+        await flush();
+
+        expect(reverseHexes()).toEqual(skinColors.slice(0, 3).map((c) => c.hex));
+      });
+
+      it('lets a later pick win while an earlier one is still loading', async () => {
+        CharaSessionService.setSession(
+          charaSession({
+            slots: [slotOf('hair', '#AA3344'), slotOf('skin', '#33AA44')],
+            gearDyes: [],
+            gearModels: [],
+          })
+        );
+        tool = mount();
+        await flush();
+        const landHair = hold('getHairColors');
+        const landSkin = hold('getSkinColors');
+
+        sheetCards()[0]!.click(); // hair: load pending
+        sheetCards()[1]!.click(); // skin: supersedes it
+        expect(reverseHexes()).toEqual([]);
+
+        const skinColors = palette('2', '#33AA44');
+        landSkin(skinColors);
+        await flush();
+        landHair(palette('1', '#AA3344')); // the stale load lands last
+        await flush();
+
+        expect(gridTitle()).toContain('tools.character.skinColors');
+        expect(reverseHexes()).toEqual(skinColors.slice(0, 3).map((c) => c.hex));
+        expect(selection()).toMatchObject({ source: 'slot', slotKey: 'skin' });
+      });
+    });
+
     // BUG-083 follow-up (2026-10-04 Sprint 22 review): the sheet card's ring
     // and its new aria-pressed were told about a pick, never about its end, so
     // they kept announcing a slot the workspace no longer showed.
@@ -1421,6 +1551,53 @@ describe('SwatchTool', () => {
 
         expect(selection()).toBeNull();
         expectNoSlotShown();
+      });
+
+      // 2026-10-09 merge-day review: the chip and the range toggle dropped the
+      // pick BEFORE committing a sheet, and a commit to the sheet already shown
+      // is a value no-op, so nothing redrew. The card, SEND TO and empty state
+      // kept describing a pick the sheet's ring no longer showed.
+      const expectSlotStillShown = (cardText: string, chips: boolean[]): void => {
+        expect(selection()).toMatchObject({ source: 'slot' });
+        expect(sheetPressed()).toHaveLength(1);
+        expect(sheetRinged()).toHaveLength(1);
+        expect(
+          (tool as unknown as { selectionCardContainer: HTMLElement }).selectionCardContainer
+            .textContent
+        ).toBe(cardText);
+        expect(handoffChips().map((c) => c.disabled)).toEqual(chips);
+      };
+
+      it('keeps the slot pick when the chip of the sheet already shown is clicked', async () => {
+        CharaSessionService.setSession(charaSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+        const cardText = (tool as unknown as { selectionCardContainer: HTMLElement })
+          .selectionCardContainer.textContent!;
+        const chips = handoffChips().map((c) => c.disabled);
+        expect(gridTitle()).toContain('tools.character.eyeColors');
+
+        railChip('swatch.palEye').click();
+        await flush();
+
+        expectSlotStillShown(cardText, chips);
+      });
+
+      it('keeps the slot pick when the range button already active is clicked', async () => {
+        CharaSessionService.setSession(lipSession());
+        tool = mount();
+        await flush();
+        await pickFirstSlot();
+        const cardText = (tool as unknown as { selectionCardContainer: HTMLElement })
+          .selectionCardContainer.textContent!;
+        const chips = handoffChips().map((c) => c.disabled);
+        expect(gridTitle()).toContain('tools.character.lipColorsDark');
+
+        railChip('swatch.rangeDark').click();
+        await flush();
+
+        expectSlotStillShown(cardText, chips);
       });
     });
 

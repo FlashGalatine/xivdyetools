@@ -493,6 +493,87 @@ describe('ResultCard', () => {
     });
   });
 
+  // ==========================================================================
+  // Context menu for a custom colour (2026-10-09 merge-day review)
+  //
+  // `handoffTo` drops a dye with no stainID, and the stored-id receivers
+  // (Accessibility, Comparison, Swatch, Mixer) cannot resolve a custom
+  // colour's per-session negative id, nor can an external site open one. Their
+  // items rendered anyway and did nothing, or navigated to an empty tool. Only
+  // Gradient (which stores the hex) can carry a custom colour.
+  // ==========================================================================
+
+  describe('context menu for a custom colour', () => {
+    const SNOW_WHITE = {
+      id: 5729,
+      itemID: 5729,
+      stainID: 1,
+      name: 'Snow White',
+      hex: '#E4E4E4',
+      rgb: { r: 228, g: 228, b: 228 },
+      hsv: { h: 0, s: 0, v: 89 },
+      category: 'White',
+      acquisition: 'Vendor',
+      cost: 216,
+      currency: 'Gil',
+      isMetallic: false,
+      isPastel: false,
+      isDark: false,
+      isCosmic: false,
+      isIshgardian: false,
+      consolidationType: null,
+    };
+
+    const menuLabels = async (dye: unknown): Promise<{ submenus: number; items: string[] }> => {
+      await import('../../v4/result-card');
+      const card = document.createElement('v4-result-card') as HTMLElement & {
+        data?: unknown;
+        showActions?: boolean;
+        updateComplete?: Promise<unknown>;
+      };
+      card.data = { dye, originalColor: '#E4E4E4', matchedColor: '#E4E4E4' };
+      card.showActions = true;
+      container.appendChild(card);
+      await card.updateComplete;
+      const root = card.shadowRoot!;
+      return {
+        submenus: root.querySelectorAll('.context-menu .has-submenu').length,
+        items: [...root.querySelectorAll('.context-menu .submenu .menu-item')].map((el) =>
+          el.textContent!.trim()
+        ),
+      };
+    };
+
+    it('offers only the items that can carry a custom colour', async () => {
+      const { makeCustomDye } = await import('@shared/custom-dye');
+      const { submenus, items } = await menuLabels(makeCustomDye('#aabbcc'));
+
+      // Gradient stores the hex; every other item is dead for a custom colour.
+      expect(items).toEqual(['tools.gradient.title']);
+      // The Inspect and Open-in-browser submenus would be empty: not rendered.
+      expect(submenus).toBe(1);
+    });
+
+    it('still shows every item for a dye with a stainID', async () => {
+      const { submenus, items } = await menuLabels(SNOW_WHITE);
+
+      expect(submenus).toBe(3);
+      expect(items).toEqual([
+        'tools.harmony.title',
+        'tools.budget.title',
+        'tools.accessibility.title',
+        'tools.comparison.title',
+        'tools.character.title',
+        'tools.gradient.title',
+        'tools.mixer.title',
+        'Universalis',
+        'GarlandTools',
+        'TeamCraft',
+        'Saddlebag Exchange',
+      ]);
+    });
+  });
+
   // ============================================================================
   // Display options, formatters and card interaction
   // ============================================================================
