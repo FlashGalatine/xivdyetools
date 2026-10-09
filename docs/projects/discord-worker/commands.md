@@ -178,7 +178,7 @@ Blend two dyes across a ratio sweep (25/40/50/65/80 %, 12F card) using `@xivdyet
 
 ### /swatch
 
-Match a character file's colors to the nearest dyes. 5.0 replaced the v4 `color` / `grid` subcommands with a required `.chara` attachment (Anamnesis / Ktisis export, 1 MiB cap): core's `parseCharaFile` + `resolveCharaColors` resolve the live slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal), and the swatch card shows five rows. `slot:` routes to the 14J·2 colour sheet for one slot instead.
+Match a character file's colors to the nearest dyes. 5.0 replaced the v4 `color` / `grid` subcommands with a required `.chara` attachment (Anamnesis / Ktisis / Brio export, 1 MiB cap): core's `parseCharaFile` + `resolveCharaColors` resolve the live slots (skin, hair, highlights, eyes, lip, face paint, tattoo/limbal), and the swatch card shows five rows. `slot:` routes to the 14J·2 color sheet for one slot instead.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -198,7 +198,7 @@ Match a character file's colors to the nearest dyes. 5.0 replaced the v4 `color`
 
 ### /glamour
 
-The Glamour Reader in the bot (5.7.0, design 2a). It takes the same `.chara` attachment as `/swatch` (the guards are shared: `utils/chara-attachment.ts`). bot-logic's `executeGlamour` names every worn piece through api-worker's `POST /v1/chara/resolve`, which it reaches over the `UNIVERSALIS_PROXY` service binding. Each piece is named as the twin the character can actually wear (core `defaultCharaTwin`), with the in-game verdict: TWIN when a same-look item was named because the file's own pick can't be worn that way, the problem (a race, DYES, NO GLAM, LOCKED) when nothing fixes it, OK otherwise. The card shows the dyed pieces in slot order, five at most. The embed carries every piece in the GPOSERS form, the twin and no-fix notes, and a `/manual topic:👤` pointer. The character's name appears nowhere.
+The Glamour Reader in the bot (5.7.0, design 2a). It takes the same `.chara` attachment as `/swatch` (the guards are shared: `utils/chara-attachment.ts`). bot-logic's `executeGlamour` names every worn piece through api-worker's `POST /v1/chara/resolve`, which it reaches over the `UNIVERSALIS_PROXY` service binding. Each piece is named as the twin the character can actually wear (core `defaultCharaTwin`), with the in-game verdict: TWIN when a same-look item was named because the file's own pick can't be worn that way, the problem (a race, DYES, NO GLAM, LOCKED) when nothing fixes it, `—` for a model with no Item row, OK otherwise. The card shows the dyed pieces in slot order, five at most. The embed carries every piece in the GPOSERS form, the twin and no-fix notes, and a `/manual topic:👤` pointer. The character's name appears nowhere.
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|

@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "将角色的颜色与 `.chara` 文件（Anamnesis 或 Ktisis）中的染剂进行匹配。\n• 读取皮肤、头发、挑染、眼睛、嘴唇、面妆和刺青/瞳孔轮廓\n• `slot`：显示其中一种颜色的 5 个最接近的染剂"
+      "description": "将角色的颜色与 `.chara` 文件（Anamnesis、Ktisis 或 Brio）中的染剂进行匹配。\n• 读取皮肤、头发、挑染、眼睛、嘴唇、面妆和刺青/瞳孔轮廓\n• `slot`：显示其中一种颜色的 5 个最接近的染剂"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "列出 `.chara` 文件（Anamnesis 或 Ktisis）所穿戴的幻化。\n• 每件已染色装备，以实际能穿戴的物品命名\n• GPOSERS 格式的完整列表，可直接复制"
+      "description": "列出 `.chara` 文件（Anamnesis、Ktisis 或 Brio）所穿戴的幻化。\n• 每件已染色装备，以实际能穿戴的物品命名\n• GPOSERS 格式的完整列表，可直接复制"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -704,7 +704,7 @@
       },
       "characterFile": {
         "name": "角色文件",
-        "body": "/swatch 和 /glamour 读取来自 Anamnesis 或 Ktisis 的 .chara 导出文件。文件仅为生成回复读取一次，不会保存。\n\n/swatch 将颜色部位（皮肤、头发、挑染、眼睛、嘴唇、面妆、刺青/瞳孔轮廓）与染剂匹配，并列出穿戴装备的染色。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。\n\n/glamour 列出每件穿戴的装备及其染剂。同一个模型可以对应多件物品，这些物品互为同外观装备（「+N 同款」）。每件装备都以这个角色能穿戴并能使用这些染剂的物品命名：如果保存的物品无法使用这些染剂、无法用于幻化或无法穿戴，就改用一件符合条件的同外观装备命名，并标为「替代」。没有同外观装备可以解决的装备会显示原因：「无法染色」、「无法幻化」、「无法穿戴」或种族名称。嵌入内容以 GPOSERS 格式列出每件装备，所有语言均使用英文标签，可直接复制。"
+        "body": "/swatch 和 /glamour 读取来自 Anamnesis、Ktisis 或 Brio 的 .chara 导出文件。文件仅为生成回复读取一次，不会保存。\n\n/swatch 将颜色部位（皮肤、头发、挑染、眼睛、嘴唇、面妆、刺青/瞳孔轮廓）与染剂匹配，并列出穿戴装备的染色。超出游戏调色板的颜色按实际值匹配，并标记为「网格外」。\n\n/glamour 列出每件穿戴的装备及其染剂。同一个模型可以对应多件物品，这些物品互为同外观装备（「+N 同款」）。每件装备都以这个角色能穿戴并能使用这些染剂的物品命名：如果保存的物品无法使用这些染剂、无法用于幻化或无法穿戴，就改用一件符合条件的同外观装备命名，并标为「替代」。无需修改的装备会显示「正常」。同外观装备由机器人自行选择，优先选能使用染剂的；回复末尾链接的网页版幻化查看器可以让你改选其他的。没有同外观装备可以解决的装备会显示原因：「无法染色」、「无法幻化」、「无法穿戴」（或唯一能穿戴它的种族名称），或用短横线（—）表示没有对应物品的模型。嵌入内容以 GPOSERS 格式列出每件装备，可直接复制。其标签和 Acquisition 行在所有语言中均为英文；Acquisition 行若为空白，表示来源未知，需要你自己补上。"
       }
     }
   },
@@ -833,7 +833,7 @@
       "description": "将角色文件的颜色匹配到最接近的染剂",
       "options": {
         "file": {
-          "description": ".chara 角色文件（Anamnesis 或 Ktisis 导出）"
+          "description": ".chara 角色文件（Anamnesis、Ktisis 或 Brio 导出）"
         },
         "order": {
           "description": "行的排列顺序——两种顺序显示的都是相同的五行"
@@ -847,7 +847,7 @@
       "description": "将角色文件作为幻化读取：每件装备、染剂，以及能否穿戴",
       "options": {
         "file": {
-          "description": ".chara 角色文件（Anamnesis 或 Ktisis 导出）"
+          "description": ".chara 角色文件（Anamnesis、Ktisis 或 Brio 导出）"
         }
       }
     },

@@ -35,6 +35,13 @@ Rules:
   path filter.
 -->
 
+## [5.8.11] - 2026-10-06
+### 📖 /manual explains /glamour in full
+- `/manual`'s character-file topic now lists every verdict a `/glamour` card can show, including the race name and the dash for a model with no item behind it.
+- `/manual` says the bot picks the twin for you, and that the web app's Glamour Reader, linked at the end of every `/glamour` reply, lets you pick a different one.
+- `/manual` says the list's labels and Acquisition lines are in English in every language, and that a blank Acquisition line means no source is known.
+- The `/swatch` and `/glamour` help and file hints now say Brio character files work too, alongside Anamnesis and Ktisis.
+
 ## [5.8.9] - 2026-10-06
 ### 🌏 Item names in your language
 - `/glamour` cards now name items in Korean, Chinese and Japanese instead of falling back to English.

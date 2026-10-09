@@ -18,7 +18,7 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | [`@xivdyetools/worker-kit`](packages/worker-kit/) | 1.4.1 | Worker toolkit: Hono middleware (request ID, logger, rate limit) + sliding-window rate limiting backends (`/rate-limiter`) |
 | [`@xivdyetools/core`](packages/core/) | 5.10.0 | Color algorithms, dye database (schema v2), k-d tree matching, 6-language i18n, Universalis client, blending (`/blending`) |
 | [`@xivdyetools/svg`](packages/svg/) | 4.4.0 | Pure SVG card generators on the 5.0 frame system (data in → SVG string out) |
-| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 4.8.2 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
+| [`@xivdyetools/bot-logic`](packages/bot-logic/) | 4.8.3 | Platform-agnostic command business logic + bot UI translation engine (`/i18n`) |
 | [`@xivdyetools/test-utils`](packages/test-utils/) | 2.0.1 | Cloudflare Workers mocks (D1, KV, R2) and test factories — **not published** |
 
 ### Applications (`apps/`)
@@ -26,7 +26,7 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 | App | Version | Description |
 |-----|---------|-------------|
 | [`web-app`](apps/web-app/) | 5.14.11 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.8.10 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`discord-worker`](apps/discord-worker/) | 5.8.11 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
 | [`image-worker`](apps/image-worker/) | 1.3.3 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
 | [`moderation-worker`](apps/moderation-worker/) | 1.8.2 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 2.6.1 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |

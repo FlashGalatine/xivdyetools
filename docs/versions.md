@@ -24,7 +24,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.14.11 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.10 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.8.11 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -45,7 +45,7 @@
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.4.1 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.8.2 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.8.3 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v2.0.1 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -191,6 +191,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.11 | Oct 2026 | `/manual` catches up with `/glamour` (with bot-logic 4.8.3; PR #251, stacked on the remediation chain's tip): the `.chara` help and the `file` option text name Brio, and the 👤 Character File topic explains every verdict the card can show, the automatic twin pick and the English Acquisition lines; three guards in `manual.test.ts`; CJK subsets re-cut (SC +1, JP +3, KR +2). The deploy re-registers commands |
 | v5.8.10 | Oct 2026 | `renderSvgToPng` frees both resvg-wasm allocations of every render, the `Resvg` tree and the `RenderedImage` pixmap, in a `finally` — the fix the 2026-10-04 deep-dive's OPT-006 prescribes for og-worker. Both used to leak for the life of the isolate: resvg-wasm 2.6.2 never registers the `Resvg` with a finalizer, and at this worker's compatibility_date (2024-12-01) workerd has no `FinalizationRegistry` for the pixmap either. No visible change, no `register-commands` |
 | v5.8.9 | Oct 2026 | `/glamour` cards name items in Korean, Chinese and Japanese (2026-10-04 remediation, Sprint 30, FONT-001): CJK subsets widened with the ko / zh / ja item-name tables (KR +364, SC +1,167, JP +443); English fallback 63.2 % → 2 items (ko), 97.3 % → 0 (zh), 7.3 % → 0 (ja); Japanese cards load JP first, so kanji draw in Japanese letterforms (zh / ko / en unchanged); bundle 2,717.2 KiB (88.5 % of the cap) |
 | v5.8.8 | Oct 2026 | Moderation button ids built by `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); byte-identical. No visible change |
@@ -542,6 +543,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.8.3 | Oct 2026 | Text only: Brio named as a `.chara` producer ×6 (`manual.swatch` / `manual.glamour` descriptions, the character-file topic, the `file` option text); the character-file topic lists every `/glamour` verdict (OK, the race name, the dash for a model with no item), says the bot picks the twin, and says the GPOSERS labels and Acquisition lines are English |
 | v4.8.2 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a grey `/gradient` endpoint keeps the other end's hue in hsv, oklch and lch |
 | v4.8.1 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — the `/contrast` embed and `/compare` print svg's floored ratio; every `/compare` readout localized (requires svg 4.4.0) |
 | v4.8.0 | Oct 2026 | 2026-10-04 remediation, Sprint 15 — six bare digits are a colour (BUG-034); filters before the nearest-dye search (BUG-033); GPOSERS placeholders (BUG-124); failure logging by class and code (BUG-125); `resolveUserLocale` logger (BUG-126); `NOT_ENOUGH_DYES`; coverage enforced (BUG-127) |

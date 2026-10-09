@@ -31,6 +31,11 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.20] - 2026-10-06
+### 📖 Discord bot help for character files
+- Discord bot: `/manual` now explains every verdict a `/glamour` card can show, that the bot picks the twin for you, and that the list's Acquisition lines are in English.
+- Discord bot: the `/swatch` and `/glamour` help now says Brio character files work too, alongside Anamnesis and Ktisis.
+
 ## [5.10.19] - 2026-10-06
 ### 🔗 Link previews that match the page
 - Link previews: a shared Gradient Builder link previews the same dyes the page shows, in the color space you picked, numbered with the page's own steps.
