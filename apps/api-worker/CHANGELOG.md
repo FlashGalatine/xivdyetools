@@ -5,9 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.17.0] - 2026-10-08
+## [0.18.0] - 2026-10-09
+
+Stacked on 0.17.0 (remediation Sprint 18): `facewear-unlocks.json` and `facewearAcquisitionFor` sit
+beside 0.17.0's lazily loaded acquisition table, which the resolve route loads before it resolves.
 
 ### Added
+
+- `retired: true` on a resolved item whose whole model family is retired (Aetherial, Deepmist, or
+  Dated at level 50 or below): the slot is named from every row of the family instead of answering
+  `null`, because the character is wearing a real item. Absent whenever an eligible row names the
+  item; an off-hand pairs with such a main hand through the same rows. No cache shape change: the
+  row cache keeps raw rows.
 
 - Optional `glasses.acquisition` on character equipment resolution now describes where to obtain
   the facewear style's "The Faces We Wear" unlock Item, shared by its base and color variants.
@@ -22,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Coffer acquisition follows fixed quest rewards missing from the source index and includes coffer vendor offers. All 212 coffer-only equipment lines across 40 coffers now identify their acquisition source; reviewed Kupo of Fortune and retired PvP rewards have explicit sources. Existing quest/random-source exclusions still apply when another acquisition route exists.
 - Corrected Kornago Merchant's placement in Central Shroud near Bentbranch Meadows and the separate North/South Horn expedition antiquarians. These locations fill 50 previously blank equipment and facewear unlock lines, including Tule, Torna and Carwen vendor pieces in North Horn; Lix, Tycoon and Scherwiz remain in South Horn.
 
-- Character equipment resolution filters Aetherial and Deepmist items, and Dated items requiring level 50 or below, from the primary name, alternates and wear checks. It selects the lowest eligible row with the same slot and model, or leaves the slot unresolved when no alternative exists. Cached rows now include equipment level under a new cache namespace.
+- Character equipment resolution filters Aetherial and Deepmist items, and Dated items requiring level 50 or below, from the primary name, alternates and wear checks. It selects the lowest eligible row with the same slot and model; a family with no eligible row is named from all of its rows and flagged `retired` (above). Cached rows now include equipment level under a new cache namespace.
 - Acquisition sources now list all 22 Palazzo Diamond weapons under Dancing Mad (Ultimate), all 44 First Light / Sacramental weapons (including Word of the Radiant and Word of the Blest) under Pilgrim's Traverse, the level-44 Templar armor set under Dzemael Darkhold, and both Shin-Zantetsuken weapons under Baldesion Arsenal. The generator retains these mappings on refresh.
 - Glamour acquisition lines for all 127 pieces from Mewazunte in Tuliyollal now omit the currency amount. The acquisition generator preserves the vendor-only wording on future refreshes.
 - Glamour acquisition lines for all 127 pieces from Varsarudh in Old Sharlayan now omit the currency amount. The acquisition generator preserves the vendor-only wording on future refreshes.
