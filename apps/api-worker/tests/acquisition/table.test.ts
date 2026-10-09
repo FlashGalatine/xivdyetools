@@ -16,6 +16,16 @@ function offending(test: (line: string) => boolean): string[] {
 }
 
 describe('acquisition table invariants', () => {
+  it('preserves the reviewed duty sources for complete weapon families and the Templar set', () => {
+    const lookup = table as Record<string, string>;
+    for (let id = 52299; id <= 52320; id++)
+      expect(lookup[id], `Palazzo Diamond ${id}`).toBe('Dancing Mad (Ultimate)');
+    for (let id = 47028; id <= 47071; id++)
+      expect(lookup[id], `Pilgrim weapon ${id}`).toBe("Pilgrim's Traverse");
+    for (const id of [2896, 3217, 3919, 31536, 31537]) expect(lookup[id]).toBe('Dzemael Darkhold');
+    for (const id of [24996, 24997]) expect(lookup[id]).toBe('Baldesion Arsenal');
+    expect(lookup[1661]).toBe('The Aurum Vale');
+  });
   it('has a line for most equippable items', () => {
     expect(lines.length).toBeGreaterThan(15000);
   });

@@ -58,11 +58,11 @@ Resolve every worn piece of one character in a single call. The body is the twel
 | Field | Meaning |
 |---|---|
 | `version` | The XIVAPI game-version key the upstream answered with; `null` when the whole answer came from cache |
-| `items.<slot>` | Present for every requested slot. **`null` = the key has no Item row** (NPC-only / prop models) — show the raw key, it is not an error. |
-| `items.<slot>.itemId` | Item sheet row — the **lowest row_id** of the family |
+| `items.<slot>` | Present for every requested slot. **`null` = the key has no eligible Item row** (NPC-only / prop models or a retired family without an alternative) — show the raw key, it is not an error. |
+| `items.<slot>.itemId` | Item sheet row — the **lowest eligible row_id** of the family |
 | `items.<slot>.names` | `en` / `ja` / `de` / `fr` always (soft hyphens stripped); `ko` / `zh` when the regional tables know the item — fall back to `en` per item when absent |
 | `items.<slot>.iconId` | For [`GET /v1/chara/icon/:iconId`](#get-v1-chara-icon-iconid); `null` when the row has none |
-| `items.<slot>.familySize` | Rows sharing this (slot, key). `1` = unique. Every family member is visually identical — the file cannot tell them apart and neither can the game. |
+| `items.<slot>.familySize` | Eligible rows sharing this (slot, key), after retired-item filtering. `1` = unique. Every family member is visually identical — the file cannot tell them apart and neither can the game. |
 | `items.<slot>.alternates` | The other family members (row_id ascending, at most 8), each `{ itemId, names }` plus its own `acquisition` when known. The lowest row of every rule set in `rules` is always among them, so a twin that passes the in-game check can always be named |
 | `items.<slot>.rules` | What the game allows, as the family's distinct rule sets, lowest row first (so the first set holds `itemId`): each `{ itemIds, dyeCount, glamourable, wearMask, grandCompany }`. `dyeCount` is the dye channels (0–2); `glamourable` is `false` on relic weapons, whose Replicas carry the look; `wearMask` has bit `2i` for race `i` as a man and `2i + 1` as a woman, in `EquipRaceCategory` column order (Hyur, Elezen, Lalafell, Miqo'te, Roegadyn, Au Ra, Hrothgar, Viera), `null` when unknown; `grandCompany` is the company the piece is locked to, `0` for any. `[]` when the upstream answer lacked the fields. There is no job list: since patch 7.4 any job can wear any piece for glamour. |
 | `items.OffHand.viaMainHand` | `true` when the off-hand key is the main-hand item's own `ModelSub` (quiver, focus, card holder, fist pair…) or the main-hand key itself — the row *is* the main weapon. Genuine off-hands (shields) resolve on their own and say `false`. |
@@ -115,3 +115,7 @@ weapon              ModelMain = set  | base << 16 | variant << 32   (exceeds 2^3
 ## Languages
 
 `en` / `ja` / `de` / `fr` come from XIVAPI v2 in the same call. Korean and Chinese come from build-time tables generated from the community regional datamining exports (`scripts/build-item-names.mjs` — equippable rows only, same Item row IDs as global). The regional clients can lag a patch by weeks or months, so a brand-new item may have no `ko` / `zh` key for a while; fall back to `en`.
+
+### Retired item families
+
+The resolver excludes Aetherial and Deepmist items, plus Dated items with a known equipment level of 50 or below. It selects the lowest eligible row with the exact same slot and packed model, filters retired rows from alternates and `rules`, and uses the selected item's names, icon and acquisition line. A family with no eligible twin resolves to `null`. Dated rows with an unknown level or a level above 50 remain eligible. English client names identify these families regardless of the requested display language. Raw row caching includes `LevelEquip` in shape version 4 so older cached rows cannot bypass the level filter.

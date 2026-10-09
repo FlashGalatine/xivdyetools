@@ -317,6 +317,35 @@ describe('vendor choice', () => {
 });
 
 describe('overrideLine', () => {
+  it.each([
+    'Sword of the First Light',
+    'The Book of First Light',
+    'Word of the Radiant',
+    'Sacramental Sword',
+    'The Book of Sacramental Light',
+    'Word of the Blest',
+  ])("maps %s weapons to Pilgrim's Traverse", (name) => {
+    expect(overrideLine(name, "Gladiator's Arm")).toBe("Pilgrim's Traverse");
+  });
+
+  it('keeps First Light accessories and other Templar weapons outside the requested overrides', () => {
+    expect(overrideLine('Earrings of the First Light', 'Earrings')).toBeNull();
+    expect(overrideLine("Templar's Falchion", "Gladiator's Arm")).toBeNull();
+  });
+
+  it.each(['Chain Coif', 'Haubergeon', 'Vambraces', 'Skirt', 'Sollerets'])(
+    "maps Templar's %s to Dzemael Darkhold",
+    (piece) => {
+      expect(overrideLine(`Templar's ${piece}`)).toBe('Dzemael Darkhold');
+    },
+  );
+
+  it.each(['Great Shin-Zantetsuken', 'Shin-Zantetsuken'])(
+    'maps %s to Baldesion Arsenal',
+    (name) => {
+      expect(overrideLine(name)).toBe('Baldesion Arsenal');
+    },
+  );
   it("writes every Emperor's New item as Goberin in Vesper Bay (Mar 2026 reminders)", () => {
     expect(overrideLine("Emperor's New Robe")).toBe('Goberin - Western Thanalan - Vesper Bay');
     expect(overrideLine("Emperor's New Gloves")).toBe('Goberin - Western Thanalan - Vesper Bay');

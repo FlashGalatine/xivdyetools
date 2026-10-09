@@ -493,7 +493,7 @@ async function main(): Promise<void> {
   const dropped: Record<string, number> = {};
   let sourcesButNoLine = 0;
   for (const itemId of [...equippable.keys()].sort((a, b) => a - b)) {
-    const fixed = overrideLine(equippableNames.get(itemId) ?? '');
+    const fixed = overrideLine(equippableNames.get(itemId) ?? '', equippable.get(itemId));
     if (fixed) {
       table[itemId] = fixed;
       entryCounts['override'] = (entryCounts['override'] ?? 0) + 1;

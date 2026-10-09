@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Character equipment resolution filters Aetherial and Deepmist items, and Dated items requiring level 50 or below, from the primary name, alternates and wear checks. It selects the lowest eligible row with the same slot and model, or leaves the slot unresolved when no alternative exists. Cached rows now include equipment level under a new cache namespace.
+- Acquisition sources now list all 22 Palazzo Diamond weapons under Dancing Mad (Ultimate), all 44 First Light / Sacramental weapons (including Word of the Radiant and Word of the Blest) under Pilgrim's Traverse, the level-44 Templar armor set under Dzemael Darkhold, and both Shin-Zantetsuken weapons under Baldesion Arsenal. The generator retains these mappings on refresh.
 - Glamour acquisition lines for all 127 pieces from Mewazunte in Tuliyollal now omit the currency amount. The acquisition generator preserves the vendor-only wording on future refreshes.
 - Glamour acquisition lines for all 127 pieces from Varsarudh in Old Sharlayan now omit the currency amount. The acquisition generator preserves the vendor-only wording on future refreshes.
 - Glamour acquisition lines for all 55 pieces from fiend costume coffers now list Enie in Ishgard's Firmament and the 3,000 Skybuilders' Scrips cost. The acquisition generator preserves this wording when the table is refreshed.

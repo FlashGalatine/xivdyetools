@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Glamour Reader facewear Acquisition fields now show where to obtain or purchase the style's "The Faces We Wear" unlock item. The base and all color variants share the source, and the export sheet preserves manual edits. Unknown sources remain blank.
 
+### Fixed
+
+- Glamour Reader names retired Dated gear (equipment level 50 or below), Aetherial gear and Deepmist gear using an eligible item with the identical slot and model, when available. Retired items are also removed from the twin picker and wear checks.
+- Acquisition lines now identify Dancing Mad (Ultimate) for Palazzo Diamond weapons, Pilgrim's Traverse for First Light and Sacramental weapons, Dzemael Darkhold for the level-44 Templar armor, and Baldesion Arsenal for both Shin-Zantetsuken weapons.
+
 ## [5.14.0] - 2026-10-04
 
 Sprint 8 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). `PRIVACY.md` is

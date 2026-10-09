@@ -47,6 +47,7 @@ const row = (
   modelMain,
   modelSub: '0',
   slots,
+  levelEquip: null,
   rules: null,
   ...extra,
 });
@@ -92,6 +93,48 @@ describe('indexRows', () => {
 });
 
 describe('pickItem', () => {
+  it('replaces retired names with the lowest eligible same-model twin, excluding them from rules and alternates', () => {
+    const retired = [
+      row(1, 'Dated Hempen Coif', '65540', ['Head'], { levelEquip: 1 }),
+      row(2, 'Aetherial Hempen Coif', '65540', ['Head']),
+      row(3, 'Deepmist Coif', '65540', ['Head']),
+    ].map((r) => ({
+      ...r,
+      rules: { dyeCount: 0, glamourable: true, wearMask: ANYONE, grandCompany: 1 },
+    }));
+    const current = row(2629, 'Hempen Coif', '65540', ['Head'], {
+      levelEquip: 1,
+      rules: { dyeCount: 1, glamourable: true, wearMask: ANYONE, grandCompany: 0 },
+    });
+    const item = pickItem([
+      ...retired,
+      row(2630, 'Hempen Coif of Gathering', '65540', ['Head']),
+      current,
+    ])!;
+    expect(item.itemId).toBe(2629);
+    expect(item.familySize).toBe(2);
+    expect(item.alternates.map((r) => r.itemId)).toEqual([2630]);
+    expect(item.rules).toEqual([{ itemIds: [2629], ...current.rules }]);
+  });
+
+  it.each([1, 49, 50])('filters Dated gear at equipment level %i', (levelEquip) => {
+    expect(pickItem([row(1, 'Dated Coif', '1', ['Head'], { levelEquip })])).toBeNull();
+  });
+
+  it.each([51, null])(
+    'keeps Dated gear when its level is %s, outside the known <= 50 filter',
+    (levelEquip) => {
+      expect(pickItem([row(1, 'Dated Coif', '1', ['Head'], { levelEquip })])?.itemId).toBe(1);
+    },
+  );
+
+  it.each(['Aetherial Coif', 'Deepmist Coif'])(
+    'omits %s when no eligible visually identical row exists',
+    (name) => {
+      expect(pickItem([row(1, name, '1', ['Head'], { levelEquip: 90 })])).toBeNull();
+    },
+  );
+
   it('returns null for no rows — "no item row", never an error', () => {
     expect(pickItem([])).toBeNull();
   });
@@ -177,6 +220,18 @@ describe('resolveCharaEquipment — off-hand rules', () => {
     const index = indexRows(rows);
     return (l: { field: string; key: string }) => index.get(lookupKey(l)) ?? [];
   };
+
+  it('does not use a retired twin\'s ModelSub to misidentify a genuine shield', () => {
+    const retired = row(1, 'Dated Bow', RUNAWAY_BOW.modelMain, ['MainHand'], {
+      levelEquip: 50, modelSub: ASPHODELOS_SHIELD.modelMain,
+    });
+    const result = resolveCharaEquipment({ gear: [
+      { slot: 'MainHand', set: 634, base: 19, variant: 1 },
+      { slot: 'OffHand', set: 112, base: 1, variant: 1 },
+    ] }, source([retired, RUNAWAY_BOW, ASPHODELOS_SHIELD]), undefined, 'v');
+    expect(result.items.MainHand?.itemId).toBe(49486);
+    expect(result.items.OffHand).toMatchObject({ itemId: 35264, viaMainHand: false });
+  });
 
   it('an off-hand equal to the main hand ModelSub IS the main weapon (quiver)', () => {
     const res = resolveCharaEquipment(

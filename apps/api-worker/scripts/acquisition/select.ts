@@ -24,8 +24,19 @@ const MAIN_CITIES = new Set([
 const EMPEROR_LINE = 'Goberin - Western Thanalan - Vesper Bay';
 
 /** A fixed line that replaces whatever the data says, or null. */
-export function overrideLine(itemName: string): string | null {
-  return /^(The )?Emperor's New /.test(itemName) ? EMPEROR_LINE : null;
+export function overrideLine(itemName: string, category?: string): string | null {
+  if (/^(The )?Emperor's New /.test(itemName)) return EMPEROR_LINE;
+  if (/^Templar's (Chain Coif|Haubergeon|Vambraces|Skirt|Sollerets)$/.test(itemName))
+    return 'Dzemael Darkhold';
+  if (/^(Great )?Shin-Zantetsuken$/.test(itemName)) return 'Baldesion Arsenal';
+  const weapon = category !== undefined && /(?:Arm|Grimoire|Shield)$/.test(category);
+  if (
+    weapon &&
+    (/First Light|Sacramental/.test(itemName) || /^Word of the (Blest|Radiant)$/.test(itemName))
+  ) {
+    return "Pilgrim's Traverse";
+  }
+  return null;
 }
 
 const SCRIP = / (Crafters'|Gatherers') Scrip$/;

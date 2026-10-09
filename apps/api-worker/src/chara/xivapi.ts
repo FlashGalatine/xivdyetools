@@ -71,6 +71,7 @@ const ITEM_FIELDS = [
   'Icon.id',
   'ModelMain',
   'ModelSub',
+  'LevelEquip',
   ...SLOT_COLUMNS.map((col) => `EquipSlotCategory.${col}`),
   ...RULE_FIELDS,
 ].join(',');
@@ -202,6 +203,10 @@ export function parseItemRow(raw: RawSearchRow): ItemRow {
     modelMain: String(f['ModelMain'] ?? 0),
     modelSub: String(f['ModelSub'] ?? 0),
     slots: [...slots],
+    levelEquip:
+      typeof f['LevelEquip'] === 'number' && Number.isFinite(f['LevelEquip'])
+        ? f['LevelEquip']
+        : null,
     rules: rulesOf(f),
   };
 }
@@ -243,7 +248,10 @@ export class XivapiClient {
         redirect: 'manual',
       });
     } catch (error) {
-      throw new UpstreamUnavailableError(0, error instanceof Error ? error.message : 'fetch failed');
+      throw new UpstreamUnavailableError(
+        0,
+        error instanceof Error ? error.message : 'fetch failed',
+      );
     }
     if (response.status >= 300 && response.status < 400) {
       throw new UpstreamUnavailableError(response.status, 'redirect refused');
@@ -279,7 +287,8 @@ export class XivapiClient {
     }
     const body = await response.json<RawSearchResponse>();
     const results = body.results ?? [];
-    const truncated = (typeof body.next === 'string' && body.next.length > 0) || results.length >= SEARCH_LIMIT;
+    const truncated =
+      (typeof body.next === 'string' && body.next.length > 0) || results.length >= SEARCH_LIMIT;
     return { version: body.version ?? null, rows: results.map(parseItemRow), truncated };
   }
 

@@ -44,6 +44,15 @@ describe('iconAssetUrl', () => {
 });
 
 describe('cleanName / parseItemRow', () => {
+  it('reads equipment level independently of glamour rules and preserves an unknown level', () => {
+    expect(
+      parseItemRow({ row_id: 372, fields: { Name: 'Dated Hempen Coif', LevelEquip: 1 } })
+        .levelEquip,
+    ).toBe(1);
+    expect(parseItemRow({ row_id: 372, fields: { LevelEquip: 50 } }).levelEquip).toBe(50);
+    expect(parseItemRow({ row_id: 372, fields: {} }).levelEquip).toBeNull();
+    expect(parseItemRow({ row_id: 372, fields: { LevelEquip: '50' } }).levelEquip).toBeNull();
+  });
   it('strips U+00AD soft hyphens (German names) and trims', () => {
     expect(cleanName('Erzfeind-Pan­zer­hand­schu­he ')).toBe(
       'Erzfeind-Panzerhandschuhe',
@@ -80,6 +89,7 @@ describe('cleanName / parseItemRow', () => {
       modelMain: '65589',
       modelSub: '0',
       slots: ['FingerL', 'FingerR'],
+      levelEquip: null,
       rules: null,
     });
   });

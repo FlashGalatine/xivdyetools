@@ -3,7 +3,7 @@
  *
  * The request carries only model keys (twelve small integers plus the
  * facewear row) — nothing else from the `.chara` file. The response is one
- * entry per requested slot: the lowest-row_id item on that (slot, model key),
+ * entry per requested slot: the lowest eligible item on that (slot, model key),
  * its names in six languages, its icon id, and the family of visually
  * identical alternates that share the mesh.
  */
@@ -28,12 +28,12 @@ export interface ItemNames {
 }
 
 export interface ResolvedCharaItem {
-  /** Item sheet row_id — the lowest in the family */
+  /** Item sheet row_id — the lowest eligible row in the family */
   itemId: number;
   names: ItemNames;
   /** Icon sheet id for `GET /v1/chara/icon/:iconId`; null when the row has none */
   iconId: number | null;
-  /** Number of Item rows sharing this (slot, model key) — 1 = unique */
+  /** Eligible Item rows sharing this (slot, model key), after retired-row filtering — 1 = unique */
   familySize: number;
   /** The other family members, row_id ascending (capped — see MAX_ALTERNATES) */
   alternates: Array<{ itemId: number; names: ItemNames; acquisition?: string }>;
@@ -77,7 +77,7 @@ export interface CharaResolveRequest {
 export interface CharaResolveResponse {
   /** XIVAPI game-version key the upstream answered with (null when fully served from cache) */
   version: string | null;
-  /** Requested slots only. `null` = the key has no Item row (NPC / prop model). */
+  /** Requested slots only. `null` = the key has no eligible Item row (including NPC / prop models). */
   items: Partial<Record<CharaGearSlotId, ResolvedCharaItem | null>>;
   /** Present only when the request carried a glasses row */
   glasses?: ResolvedGlasses | null;
@@ -96,6 +96,8 @@ export interface ItemRow {
   modelSub: string;
   /** EquipSlotCategory columns set to 1 on this row (rings carry FingerL + FingerR) */
   slots: string[];
+  /** Minimum equipment level; null when the upstream did not provide it. */
+  levelEquip: number | null;
   /** The in-game rules; null when the answer lacked any of their fields */
   rules: CharaItemRules | null;
 }
