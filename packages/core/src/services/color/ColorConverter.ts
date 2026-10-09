@@ -354,8 +354,8 @@ export class ColorConverter {
   /**
    * Normalize hue to [0, 360) range.
    * CORE-BUG-001: Ensures consistent cache keys for equivalent hue values
-   * (e.g., h=359.9999 and h=0.0001 both produce similar cache keys after rounding)
-   * Also handles negative values and values >= 360.
+   * (e.g., h=360 and h=0 share one key). Also handles negative values and
+   * values >= 360.
    */
   private normalizeHue(h: number): number {
     return ((h % HUE_MAX) + HUE_MAX) % HUE_MAX;
@@ -375,14 +375,18 @@ export class ColorConverter {
       );
     }
 
-    // CORE-BUG-001: Normalize hue BEFORE creating cache key
-    // This ensures h=359.9999 and h=0.0001 produce consistent cache keys
-    // after rounding, preventing cache thrashing for equivalent colors
+    // CORE-BUG-001: Normalize hue BEFORE creating cache key, so h=360 shares
+    // the entry of h=0 (isValidHSV admits the closed range [0, 360]).
     const hNormalized = this.normalizeHue(h);
 
-    // Create cache key using consistent rounding (2 decimal places)
-    // Per Issue #17: Use same round() utility as rgbToHsv for consistency
-    const cacheKey = `${round(hNormalized, 2)},${round(s, 2)},${round(v, 2)}`;
+    // BUG-135 (2026-10-04 deep-dive): key on the EXACT inputs the result is
+    // computed from. The key used to be rounded to 2 dp while the value was
+    // computed from the unrounded inputs, so two inputs sharing a rounded
+    // key (s=50.004 → g=127, s=49.996 → g=128) got whichever answer was
+    // cached first — the output depended on call order. Exact keys leave
+    // every fresh-cache result unchanged; continuous inputs (gradient
+    // interpolation) were near-unique per step under rounding anyway.
+    const cacheKey = `${hNormalized},${s},${v}`;
 
     // Check cache
     const cached = this.hsvToRgbCache.get(cacheKey);

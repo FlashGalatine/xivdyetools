@@ -16,6 +16,7 @@ import { blendColors, type BlendingMode } from '@xivdyetools/core/blending';
 import { generateMixerCard, type MixerCardRow } from '@xivdyetools/svg';
 import { dyeService, type ResolvedColor } from '../input-resolution.js';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -71,21 +72,16 @@ export type MixerResult =
 // Helpers
 // ============================================================================
 
-function findClosestDyeExcludingFacewear(
-  targetHex: string,
-  excludeIds: number[] = [],
-  maxAttempts = 20,
-  dyeFilters?: DyeTypeFilters,
-  matchingMethod?: MatchingMethod,
-): Dye | null {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const candidate = dyeService.findClosestDye(targetHex, { excludeIds, matchingMethod });
-    if (!candidate) break;
-    if (candidate.category !== 'Facewear' && (!dyeFilters || !isDyeExcluded(dyeFilters, candidate)))
-      return candidate;
-    excludeIds.push(candidate.id);
-  }
-  return null;
+/**
+ * IDs of every dye the user's filters exclude — handed to core's
+ * `findClosestDye` as `excludeIds`, so its search runs over the allowed pool
+ * only (BUG-033).
+ */
+function filteredOutDyeIds(dyeFilters: DyeTypeFilters): number[] {
+  return dyeService
+    .getAllDyes()
+    .filter((dye) => isDyeExcluded(dyeFilters, dye))
+    .map((dye) => dye.id);
 }
 
 // ============================================================================
@@ -110,9 +106,17 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
     // 12F: the sweep replaces the hardcoded midpoint — five ratios, each
     // blended and matched, because "which ratio lands on a buyable dye" is
     // the question a mixer is for.
+    //
+    // BUG-033 (2026-10-04 deep dive): the filters narrow the POOL before the
+    // search, so each stop lands on "the nearest allowed dye". They used to
+    // be checked on the search's answer one dye at a time, giving up after
+    // twenty rejections — with `/preferences vendor` the Snow White + Soot
+    // Black sweep silently lost its 65% stop (first allowed dye: rank 31).
+    // Core's own search still does the ranking and skips Facewear.
+    const excludeIds = dyeFilters ? filteredOutDyeIds(dyeFilters) : [];
     const sweep: MixerSweepStop[] = MIXER_SWEEP_RATIOS.map((pct) => {
       const blend = blendColors(dye1.hex, dye2.hex, blendingMode, pct / 100);
-      const dye = findClosestDyeExcludingFacewear(blend.hex, [], 20, dyeFilters, matchingMethod);
+      const dye = dyeService.findClosestDye(blend.hex, { excludeIds, matchingMethod });
       const deltaE = dye ? ColorService.getDistanceForMethod(blend.hex, dye.hex, 'ciede2000') : 999;
       return { pct, blendHex: blend.hex, dye: dye as Dye, deltaE, best: false };
     }).filter((s) => s.dye != null);
@@ -167,7 +171,10 @@ export async function executeMixer(input: MixerInput): Promise<MixerResult> {
       sweep,
       embed,
     };
-  } catch {
+  } catch (error) {
+    // BUG-125: log the cause rather than discard it — its class, never its
+    // message, which quotes the hex the user typed ("Invalid hex color: …").
+    input.logger?.warn(`[mixer] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

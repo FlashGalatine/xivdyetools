@@ -150,10 +150,7 @@ a:hover {
 
 /* Gray backgrounds → secondary background */
 .bg-gray-50,
-.bg-gray-100,
-.bg-gray-900,
 .dark\:bg-gray-700,
-.dark\:bg-gray-700\/50,
 .dark\:bg-gray-900 {
   background-color: var(--theme-background-secondary) !important;
   color: var(--theme-text) !important;
@@ -191,36 +188,16 @@ a:hover {
   color: var(--theme-text-header) !important;
 }
 
-.text-blue-600,
-.text-blue-500 {
-  color: var(--theme-primary) !important;
-}
-
 .hover\:bg-gray-100:hover,
-.hover\:bg-gray-200:hover,
 .hover\:bg-gray-300:hover,
 .dark\:hover\:bg-gray-700:hover,
-.dark\:hover\:bg-gray-600:hover,
-.dark\:hover\:bg-gray-700\/50:hover {
+.dark\:hover\:bg-gray-600:hover {
   background-color: var(--theme-card-hover) !important;
   color: var(--theme-text) !important;
 }
 
-/* Deviance color indicators - ensure always visible */
-.text-yellow-600,
-.dark\:text-yellow-400 {
-  color: #ca8a04 !important;
-}
-
-.text-red-600,
-.dark\:text-red-400 {
+.text-red-600 {
   color: #dc2626 !important;
-}
-
-/* Blue deviance colors - ensure visibility */
-.text-blue-600,
-.dark\:text-blue-400 {
-  color: #2563eb !important;
 }
 
 .focus\:ring-blue-500 {

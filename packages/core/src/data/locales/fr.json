@@ -2,7 +2,7 @@
   "locale": "fr",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-09-05T13:38:20.761Z",
+    "generated": "2026-10-06T09:59:03.361Z",
     "dyeCount": 125
   },
   "labels": {
@@ -217,12 +217,12 @@
   },
   "sheets": {
     "eyeColors": "Couleurs des yeux",
-    "highlightColors": "Mèches",
-    "lipColorsDark": "Couleurs des lèvres (foncées)",
-    "lipColorsLight": "Couleurs des lèvres (claires)",
-    "tattooColors": "Tatouage/Limbe",
-    "facePaintColorsDark": "Peinture faciale (foncée)",
-    "facePaintColorsLight": "Peinture faciale (claire)",
+    "highlightColors": "Reflets",
+    "lipColorsDark": "Couleurs des lèvres (Opaque)",
+    "lipColorsLight": "Couleurs des lèvres (Translucide)",
+    "tattooColors": "Tatouage / Contour de l'iris",
+    "facePaintColorsDark": "Maquillage (Opaque)",
+    "facePaintColorsLight": "Maquillage (Translucide)",
     "hairColors": "Couleurs des cheveux",
     "skinColors": "Couleurs de peau"
   },
@@ -263,7 +263,7 @@
     "red": "Rouge",
     "blue": "Bleu",
     "green": "Vert",
-    "brass": "Laiton",
+    "brass": "Bronze",
     "purple": "Violet",
     "brown": "Marron"
   }

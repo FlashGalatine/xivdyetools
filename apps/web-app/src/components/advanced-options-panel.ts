@@ -21,6 +21,7 @@ import { TutorialService } from '@services/tutorial-service';
 import { CollectionService } from '@services/collection-service';
 import { ConfigController } from '@services/config-controller';
 import { logger } from '@shared/logger';
+import { localDateStamp } from '@shared/palette-export';
 
 // ============================================================================
 // Section/row builders (AdvancedOptions.dc.html geometry)
@@ -295,7 +296,8 @@ function createContent(host: HTMLElement): HTMLElement {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `xivdyetools-settings-${new Date().toISOString().split('T')[0]}.json`;
+      // The local date, not toISOString()'s UTC one (BUG-123)
+      a.download = `xivdyetools-settings-${localDateStamp()}.json`;
       a.click();
       URL.revokeObjectURL(url);
       logger.info('[AdvancedOptions] Settings exported');

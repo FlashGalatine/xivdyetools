@@ -16,6 +16,7 @@ import packageJson from '../../../package.json' with { type: 'json' };
 // Mock dependencies
 vi.mock('../../services/analytics.js', () => ({
   getStats: vi.fn(),
+  getCounter: vi.fn(),
 }));
 
 vi.mock('../../services/bot-i18n.js', async () => {
@@ -25,7 +26,7 @@ vi.mock('../../services/bot-i18n.js', async () => {
   return { createUserTranslator: vi.fn().mockResolvedValue(createTranslator('en')) };
 });
 
-import { getStats } from '../../services/analytics.js';
+import { getStats, getCounter } from '../../services/analytics.js';
 
 // Create mock KV namespace
 function createMockKV() {
@@ -115,6 +116,10 @@ describe('stats.ts', () => {
       },
       uniqueUsersToday: 42,
     });
+
+    // OPT-004: the public summary reads only the two counters it shows
+    const counters: Record<string, number> = { total: 1000, success: 950 };
+    vi.mocked(getCounter).mockImplementation(async (_kv, key) => counters[key] ?? 0);
   });
 
   afterEach(() => {
@@ -373,6 +378,32 @@ describe('stats.ts', () => {
       expect(statsField!.value).toContain('95.0%');
     });
 
+    // OPT-004: getStats always pages every usertrack:<today>: key (one KV list
+    // op per 1,000 DAU) to count unique users the summary never shows.
+    it('reads only the total and success counters, never the unique-user pages (OPT-004)', async () => {
+      await handleStatsCommand(makeInteraction('anyone', 'summary'), mockEnv, mockCtx);
+
+      expect(getStats).not.toHaveBeenCalled();
+      expect(mockKV.list).not.toHaveBeenCalled();
+      expect(vi.mocked(getCounter).mock.calls.map(([, key]) => key).sort()).toEqual([
+        'success',
+        'total',
+      ]);
+    });
+
+    it('shows a 0.0% success rate (not NaN) before any command has run', async () => {
+      vi.mocked(getCounter).mockResolvedValue(0);
+
+      const response = await handleStatsCommand(makeInteraction('anyone', 'summary'), mockEnv, mockCtx);
+      const data = (await response.json()) as InteractionResponseBody;
+
+      const statsField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
+        f.name.includes('Stats'),
+      );
+      expect(statsField!.value).toContain('0.0%');
+      expect(statsField!.value).not.toContain('NaN');
+    });
+
     it('should display links field', async () => {
       const interaction = makeInteraction('anyone', 'summary');
 
@@ -460,23 +491,33 @@ describe('stats.ts', () => {
       expect(usersField).toBeDefined();
       expect(usersField!.value).toContain('Unique Today');
       expect(usersField!.value).toContain('42');
-      expect(usersField!.value).toContain('Avg Cmds/User');
     });
 
-    it('should calculate average commands per user', async () => {
-      const interaction = makeInteraction('admin-123', 'overview');
+    // BUG-045: totalCommands is the stats:total counter, whose 30-day TTL is
+    // renewed on every put — a lifetime count. Dividing it by today's unique
+    // users printed 'Avg Cmds/User 1333.3' for 200,000 commands / 150 users.
+    it("does not divide the lifetime command total by today's users (BUG-045)", async () => {
+      vi.mocked(getStats).mockResolvedValue({
+        totalCommands: 200_000,
+        successCount: 199_000,
+        failureCount: 1_000,
+        successRate: 99.5,
+        commandBreakdown: {},
+        uniqueUsersToday: 150,
+      });
 
-      const response = await handleStatsCommand(interaction, mockEnv, mockCtx);
+      const response = await handleStatsCommand(makeInteraction('admin-123', 'overview'), mockEnv, mockCtx);
       const data = (await response.json()) as InteractionResponseBody;
 
       const usersField = data.data!.embeds![0].fields!.find((f: { name: string }) =>
         f.name.includes('Users'),
       );
-      // 1000 total / 42 unique = 23.8
-      expect(usersField!.value).toContain('23.8');
+      expect(usersField!.value).toContain('150');
+      expect(usersField!.value).not.toContain('Avg Cmds/User');
+      expect(usersField!.value).not.toContain('1333.3');
     });
 
-    it('should handle zero unique users without division by zero', async () => {
+    it('should show zero unique users', async () => {
       vi.mocked(getStats).mockResolvedValue({
         totalCommands: 0,
         successCount: 0,
@@ -896,8 +937,8 @@ describe('stats.ts', () => {
       );
     };
 
-    it('answers a getStats rejection from the summary subcommand with the fetch-failed embed', async () => {
-      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
+    it('answers a counter read rejection from the summary subcommand with the fetch-failed embed', async () => {
+      vi.mocked(getCounter).mockImplementationOnce(() => Promise.reject(new Error('KV unavailable')));
       await fetchFailed(handleStatsCommand(makeInteraction('anyone', 'summary'), mockEnv, mockCtx));
     });
 
@@ -935,7 +976,7 @@ describe('stats.ts', () => {
 
     it('answers a non-Error rejection value the same way', async () => {
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-      vi.mocked(getStats).mockImplementationOnce(() => Promise.reject('string error'));
+      vi.mocked(getCounter).mockImplementationOnce(() => Promise.reject('string error'));
       await fetchFailed(handleStatsCommand(makeInteraction('anyone', 'summary'), mockEnv, mockCtx));
     });
 

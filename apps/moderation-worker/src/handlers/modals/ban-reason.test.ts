@@ -3,7 +3,6 @@ import { handleBanReasonModal, isBanReasonModal } from './ban-reason.js';
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
 import { createMockD1Database } from '@xivdyetools/test-utils';
-import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import * as discordApi from '../../utils/discord-api.js';
@@ -78,7 +77,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -110,7 +109,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -172,7 +171,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal__TestUser',
+        custom_id: 'ban_reason_modal_',
         components: [
           {
             type: 1,
@@ -203,7 +202,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -234,7 +233,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [],
       },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
@@ -251,7 +250,7 @@ describe('handleBanReasonModal', () => {
 
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
     // Once — vi.clearAllMocks() keeps implementations, so a sticky value would
-    // leak into the legacy-suffix tests below
+    // leak into the later tests that expect no author name on record
     vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('ResolvedFromDb');
     vi.mocked(banService.banUser).mockResolvedValue({ success: true, presetsHidden: 2 });
 
@@ -380,14 +379,14 @@ describe('handleBanReasonModal', () => {
       success: true,
       presetsHidden: 5,
     });
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('BadUser');
 
-    const encodedUsername = base64UrlEncode('BadUser');
     const interaction = {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: `ban_reason_modal_123456789012345678_${encodedUsername}`,
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -427,14 +426,14 @@ describe('handleBanReasonModal', () => {
       success: true,
       presetsHidden: 7,
     });
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('SpamUser');
 
-    const encodedUsername = base64UrlEncode('SpamUser');
     const interaction = {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: `ban_reason_modal_123456789012345679_${encodedUsername}`,
+        custom_id: 'ban_reason_modal_123456789012345679',
         components: [
           {
             type: 1,
@@ -504,7 +503,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -546,7 +545,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -592,7 +591,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -630,50 +629,38 @@ describe('handleBanReasonModal', () => {
     );
   });
 
-  it('should parse custom_id with underscores in username', async () => {
+  // DEAD-029 (2026-10-04 dead-code audit): the pre-FINDING-007 shape
+  // ban_reason_modal_{id}_{base64url username} is no longer parsed. Nothing
+  // emits it; should an old modal be submitted anyway, it is refused before any
+  // D1 read and bans nobody.
+  it('refuses a legacy custom_id that carries a base64 username suffix', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 2,
-    });
 
-    const encodedUsername = base64UrlEncode('Test_User_Name');
     const interaction = {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: `ban_reason_modal_123456789012345680_${encodedUsername}`,
+        // 'VGVzdFVzZXI' is base64url('TestUser')
+        custom_id: 'ban_reason_modal_123456789012345680_VGVzdFVzZXI',
         components: [
           {
             type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason',
-              },
-            ],
+            components: [{ type: 4, custom_id: 'ban_reason', value: 'Valid ban reason' }],
           },
         ],
       },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
     };
 
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
+    const response = await handleBanReasonModal(interaction, env, ctx);
+    const json = (await response.json()) as any;
 
-    expect(banService.banUser).toHaveBeenCalledWith(
-      db,
-      '123456789012345680',
-      'Test_User_Name',
-      'mod-1',
-      'Valid ban reason',
-    );
+    expect(json.data.flags).toBe(64);
+    expect(json.data.embeds[0].description).toContain('Invalid modal data');
+    expect(banService.getPresetAuthorName).not.toHaveBeenCalled();
+    expect(banService.banUser).not.toHaveBeenCalled();
+    expect(ctx.waitUntil).not.toHaveBeenCalled();
   });
 
   it('should use fallback moderator name when username is missing', async () => {
@@ -688,7 +675,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -727,52 +714,6 @@ describe('handleBanReasonModal', () => {
     );
   });
 
-  it('should handle special characters in username', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    vi.mocked(banService.banUser).mockResolvedValue({
-      success: true,
-      presetsHidden: 0,
-    });
-
-    const encodedUsername = base64UrlEncode('User.Name-123');
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: {
-        custom_id: `ban_reason_modal_123456789012345678_${encodedUsername}`,
-        components: [
-          {
-            type: 1,
-            components: [
-              {
-                type: 4,
-                custom_id: 'ban_reason',
-                value: 'Valid ban reason here',
-              },
-            ],
-          },
-        ],
-      },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    await handleBanReasonModal(interaction, env, ctx);
-    // Wait for waitUntil callback
-    const waitUntilPromise = vi.mocked(ctx.waitUntil).mock.calls[
-      vi.mocked(ctx.waitUntil).mock.calls.length - 1
-    ]?.[0];
-    if (waitUntilPromise) await waitUntilPromise;
-
-    expect(banService.banUser).toHaveBeenCalledWith(
-      db,
-      '123456789012345678',
-      'User.Name-123',
-      'mod-1',
-      'Valid ban reason here',
-    );
-  });
-
   it('should display timestamp in success message', async () => {
     vi.setSystemTime(new Date('2025-01-15T12:00:00Z'));
 
@@ -787,7 +728,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -836,7 +777,7 @@ describe('handleBanReasonModal', () => {
       token: 'token-1',
       application_id: 'app-123',
       data: {
-        custom_id: 'ban_reason_modal_123456789012345678_TestUser',
+        custom_id: 'ban_reason_modal_123456789012345678',
         components: [
           {
             type: 1,
@@ -878,8 +819,8 @@ describe('handleBanReasonModal', () => {
 
 describe('isBanReasonModal', () => {
   it('should return true for ban reason modals', () => {
-    expect(isBanReasonModal('ban_reason_modal_123456789012345678_TestUser')).toBe(true);
-    expect(isBanReasonModal('ban_reason_modal_456_AnotherUser')).toBe(true);
+    expect(isBanReasonModal('ban_reason_modal_123456789012345678')).toBe(true);
+    expect(isBanReasonModal('ban_reason_modal_456')).toBe(true);
   });
 
   it('should return false for other modals', () => {
@@ -1043,5 +984,45 @@ describe('ban reason modal — security audit remediations', () => {
     expect(Object.keys(context)).not.toContain('reason');
     expect(JSON.stringify(context)).not.toContain('DistinctiveBannedName');
     expect(JSON.stringify(context)).not.toContain('harassing');
+  });
+
+  // BUG-051 (2026-10-04 deep-dive): Discord's min_length counts spaces, so the
+  // ten-character floor has to be checked on the trimmed text.
+  it.each([
+    ['ten spaces', ' '.repeat(10)],
+    ['tabs and newlines', '\t\n \t\n \t\n \t\n'],
+    ['a short reason padded past ten characters', '   short    '],
+  ])('BUG-051: refuses %s as a ban reason and bans nobody', async (_label, reason) => {
+    const response = await handleBanReasonModal(modal(reason), env, ctx);
+    const json = (await response.json()) as any;
+
+    expect(json.data.flags).toBe(64);
+    expect(json.data.embeds[0].description).toContain('at least 10 characters');
+    expect(ctx.waitUntil).not.toHaveBeenCalled();
+    expect(banService.banUser).not.toHaveBeenCalled();
+  });
+
+  it('BUG-051: stores, posts and logs a padded reason without its surrounding whitespace', async () => {
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as never;
+    vi.mocked(banService.getPresetAuthorName).mockResolvedValueOnce('Someone');
+    vi.mocked(banService.banUser).mockResolvedValueOnce({ success: true, presetsHidden: 1 });
+
+    await handleBanReasonModal(modal('  \n Repeated spam submissions \t\n'), env, ctx, logger);
+    await flushWaitUntil();
+
+    expect(banService.banUser).toHaveBeenCalledWith(
+      env.DB,
+      TARGET,
+      'Someone',
+      'mod-1',
+      'Repeated spam submissions',
+    );
+    const post = vi.mocked(discordApi.sendMessage).mock.calls.at(-1)?.[2] as any;
+    const fields: Array<{ name: string; value: string }> = post.embeds[0].fields;
+    expect(fields.find((f) => f.name === 'Reason')!.value).toBe('Repeated spam submissions');
+    expect((logger as any).info).toHaveBeenCalledWith(
+      'User banned',
+      expect.objectContaining({ reasonLength: 'Repeated spam submissions'.length }),
+    );
   });
 });

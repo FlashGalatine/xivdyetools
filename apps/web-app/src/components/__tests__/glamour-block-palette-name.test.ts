@@ -11,7 +11,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GlamourBlock } from '../glamour-block';
-import { CollectionService, LanguageService } from '@services/index';
+import { CollectionService, LanguageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile } from '@services/chara-file-loader';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
@@ -57,8 +57,12 @@ describe('GlamourBlock — palette naming never leaks the character name', () =>
     resolveMock.mockReturnValue(new Promise(() => {}));
     onSubmitPalette.mockReset();
     localStorage.clear();
+    // CollectionService keeps its records in memory; clearing storage alone
+    // would leak one test's saves into the next one's name and cap checks.
+    CollectionService.reset();
   });
   afterEach(() => {
+    vi.restoreAllMocks();
     // The session is app-wide: leave nothing loaded or subscribed behind.
     block?.destroy();
     block = null;
@@ -67,15 +71,18 @@ describe('GlamourBlock — palette naming never leaks the character name', () =>
     hosts = [];
   });
 
-  /** Load the fixture as "Real Name.chara" and open the make-a-palette panel. */
-  async function mountWithPanelOpen(): Promise<HTMLElement> {
+  /** Load the fixture (by default as "Real Name.chara") and open the make-a-palette panel. */
+  async function mountWithPanelOpen(
+    text: string = FIXTURE,
+    fileName = 'Real Name.chara'
+  ): Promise<HTMLElement> {
     const glamour = createTestContainer('chara-glamour');
     hosts = [glamour];
     block = new GlamourBlock(glamour, { onSubmitPalette });
     block.init();
-    const file = new File([FIXTURE], 'Real Name.chara', { type: 'application/json' });
+    const file = new File([text], fileName, { type: 'application/json' });
     if (typeof (file as Blob).text !== 'function') {
-      (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(FIXTURE);
+      (file as unknown as { text: () => Promise<string> }).text = () => Promise.resolve(text);
     }
     await loadCharaFile(file);
     buttonByText(glamour, LanguageService.t('swatch.makePalette')).click();
@@ -116,5 +123,41 @@ describe('GlamourBlock — palette naming never leaks the character name', () =>
     expect(saved?.name).toBe('Real Name');
     expect(saved?.dyes).toHaveLength(4);
     expect(onSubmitPalette).not.toHaveBeenCalled();
+  });
+
+  // BUG-082 sibling (2026-10-04 deep-dive, Sprint 4 review): a whitespace
+  // Nickname is truthy, so it beat the file-name fallback and createCollection
+  // rejected the blank name — "save failed" where the Swatch save succeeds.
+  it.each(['', '   '])(
+    'names the on-device record after the file when the Nickname is %j',
+    async (nickname) => {
+      const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+      const glamour = await mountWithPanelOpen(
+        JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: nickname }),
+        'blank.chara'
+      );
+      buttonByText(glamour, LanguageService.t('swatch.saveLocal')).click();
+
+      expect(error).not.toHaveBeenCalled();
+      const saved = CollectionService.getCollections().find((c) => c.name === 'blank');
+      expect(saved?.kind).toBe('palette');
+      expect(saved?.dyes).toHaveLength(4);
+    }
+  );
+
+  // BUG-016 sibling (2026-10-04 deep-dive, Sprint 4 review): a full store made
+  // createCollection return null, shown as the generic save failure.
+  it('says the collection limit is reached instead of "save failed" when there is no room', async () => {
+    const warning = vi.spyOn(ToastService, 'warning').mockImplementation(() => '');
+    const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    for (let i = 0; i < 50; i++) CollectionService.createCollection(`Seed ${i}`);
+    const glamour = await mountWithPanelOpen();
+    buttonByText(glamour, LanguageService.t('swatch.saveLocal')).click();
+
+    // The seeds are palette records too, so look for the save by name.
+    expect(CollectionService.getCollections()).toHaveLength(50);
+    expect(CollectionService.getCollectionByName('Real Name')).toBeUndefined();
+    expect(error).not.toHaveBeenCalledWith(LanguageService.t('errors.saveChangesFailed'));
+    expect(warning).toHaveBeenCalledWith(LanguageService.t('collections.collectionsLimitReached'));
   });
 });

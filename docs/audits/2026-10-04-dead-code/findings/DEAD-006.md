@@ -15,4 +15,4 @@
 Steps: apps/web-app/src/styles/themes.css: delete lines 153, 154 and 156 (155 keeps its comma). Delete rule 194-198. Delete line 200. Delete line 204 and remove the trailing comma from 203. Delete 209-214 (comment and yellow rule). Delete line 216 and make 215 `.text-red-600 {`. Delete 220-225 (comment and blue rule). Add a web-app CHANGELOG entry. Run `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app` (font-contract.test.ts reads themes.css), then `pnpm --filter xivdyetools-web-app run build:check && pnpm dead-code:check`.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `9dc5f75d` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

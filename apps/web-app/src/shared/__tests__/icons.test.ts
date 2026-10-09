@@ -30,7 +30,7 @@ import {
 } from '../tool-icons';
 
 // Import from ui-icons.ts
-import { ICON_CAMERA, ICON_CRYSTAL, ICON_WARNING, ICON_DICE } from '../ui-icons';
+import { ICON_CAMERA, ICON_CRYSTAL, ICON_DICE } from '../ui-icons';
 
 // ==========================================================================
 // Social Icons Tests
@@ -150,12 +150,6 @@ describe('UI Icons', () => {
     it('ICON_CRYSTAL should be a valid SVG with path', () => {
       expect(ICON_CRYSTAL).toContain('<svg');
       expect(ICON_CRYSTAL).toContain('path');
-    });
-
-    it('ICON_WARNING should be a valid SVG with path and line', () => {
-      expect(ICON_WARNING).toContain('<svg');
-      expect(ICON_WARNING).toContain('path');
-      expect(ICON_WARNING).toContain('line');
     });
 
     it('ICON_DICE should be a valid SVG with rect and circles', () => {

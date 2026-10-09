@@ -6,9 +6,11 @@
  * ones a player's file would produce.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { CharaSlotId } from '@xivdyetools/core';
 import { CharaSheet, saveCharacterColors, type CharaSheetOptions } from '../chara-sheet';
 import { CollectionService, LanguageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
+import { ThemeService } from '@services/theme-service';
 import { loadCharaFile } from '@services/chara-file-loader';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 
@@ -54,10 +56,16 @@ const ringed = (container: HTMLElement) =>
   slotButtons(container).filter((b) =>
     b.getAttribute('style')?.includes('box-shadow: 0 0 0 1px var(--theme-primary)')
   );
+/** Cards announced as the current pick. */
+const pressed = (container: HTMLElement) =>
+  slotButtons(container).filter((b) => b.getAttribute('aria-pressed') === 'true');
 
 beforeEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
+  // CollectionService keeps its records in memory; clearing storage alone
+  // would leak one test's saves into the next one's duplicate-name check.
+  CollectionService.reset();
   CharaSessionService.setSession(null);
 });
 
@@ -112,6 +120,7 @@ describe('CharaSheet — THIS CHARACTER', () => {
     const { container } = mountSheet({ selectedSlot: firstSlot });
 
     expect(ringed(container)).toHaveLength(1);
+    expect(pressed(container)).toEqual([ringed(container)[0]]);
   });
 
   it('drops the ring when a different file replaces the character', async () => {
@@ -125,6 +134,165 @@ describe('CharaSheet — THIS CHARACTER', () => {
 
     expect(slotButtons(container).length).toBeGreaterThan(0);
     expect(ringed(container)).toHaveLength(0);
+    expect(pressed(container)).toHaveLength(0);
+  });
+
+  // BUG-083 (2026-10-04 deep-dive): a pick re-rendered the whole sheet, so the
+  // focused card was detached and keyboard focus fell to <body>; no card said
+  // which one was picked to a screen reader.
+  it('moves the ring in place, keeping keyboard focus on the picked card', async () => {
+    const { container, onSlotPick } = mountSheet();
+    await load();
+    const [first, second] = slotButtons(container);
+    expect(second).toBeDefined();
+    expect(slotButtons(container).map((b) => b.getAttribute('aria-pressed'))).toEqual(
+      slotButtons(container).map(() => 'false')
+    );
+
+    first!.focus();
+    first!.click();
+    second!.focus();
+    second!.click();
+
+    expect(onSlotPick).toHaveBeenCalledTimes(2);
+    // The same nodes, still mounted: nothing was rebuilt under the keyboard.
+    expect(slotButtons(container)[0]).toBe(first);
+    expect(slotButtons(container)[1]).toBe(second);
+    expect(second!.isConnected).toBe(true);
+    expect(document.activeElement).toBe(second);
+    expect(first!.getAttribute('aria-pressed')).toBe('false');
+    expect(second!.getAttribute('aria-pressed')).toBe('true');
+    expect(ringed(container)).toEqual([second]);
+  });
+
+  // BUG-083 follow-up (2026-10-04 Sprint 22 review): the host drops a slot pick
+  // in several places (a grid cell, a palette chip, Clear) without remounting
+  // the sheet, so the ring and aria-pressed have to be movable from outside.
+  describe('setSelectedSlot', () => {
+    it('moves the ring to the named slot in place', async () => {
+      const { container, onSlotPick } = mountSheet();
+      await load();
+      const [first, second] = slotButtons(container);
+      first!.click();
+
+      sheets[0]!.setSelectedSlot(second!.dataset.slot as CharaSlotId);
+
+      expect(slotButtons(container)[0]).toBe(first);
+      expect(pressed(container)).toEqual([second]);
+      expect(ringed(container)).toEqual([second]);
+      // Only a click is a pick: the host already knows what it asked for.
+      expect(onSlotPick).toHaveBeenCalledTimes(1);
+    });
+
+    it('with null, leaves no card ringed or pressed', async () => {
+      const { container } = mountSheet();
+      await load();
+      slotButtons(container)[0]!.click();
+
+      sheets[0]!.setSelectedSlot(null);
+
+      expect(ringed(container)).toHaveLength(0);
+      expect(pressed(container)).toHaveLength(0);
+    });
+  });
+
+  // BUG-083 follow-up (2026-10-04 Sprint 22 review): the ΔE tier colours and
+  // the error red are hexes read from the theme at render. A slot click used
+  // to re-render the whole sheet and so repainted them; once the pick moved in
+  // place, nothing repainted them after a theme switch.
+  describe('theme switches', () => {
+    const TIER_RAMP_LIGHT = ['#137A33', '#1C7D3A', '#B45309', '#B91C1C'];
+    const TIER_RAMP_DARK = ['#5bbd68', '#8bc34a', '#ffc107', '#f4645a'];
+    const inlineStyles = (container: HTMLElement): string =>
+      Array.from(container.querySelectorAll('[style]'))
+        .map((node) => node.getAttribute('style') ?? '')
+        .join('\n');
+    /** The tier-coloured ΔE number on each live card. */
+    const deltaColours = (container: HTMLElement): string[] =>
+      slotButtons(container).map((card) => {
+        const spans = Array.from(card.querySelectorAll<HTMLElement>('span'));
+        return spans[spans.length - 1]!.style.color;
+      });
+
+    let startTheme: ReturnType<typeof ThemeService.getCurrentTheme>;
+
+    beforeEach(() => {
+      startTheme = ThemeService.getCurrentTheme();
+      ThemeService.setTheme('standard-light');
+    });
+
+    afterEach(() => {
+      ThemeService.setTheme(startTheme);
+    });
+
+    it('repaints the tier colours and the error red in the new palette', async () => {
+      const { container } = mountSheet();
+      await load();
+      const light = inlineStyles(container);
+      expect(TIER_RAMP_LIGHT.some((hex) => light.includes(hex))).toBe(true);
+      const lightDeltas = deltaColours(container);
+
+      ThemeService.setTheme('standard-dark');
+
+      const dark = inlineStyles(container);
+      for (const hex of TIER_RAMP_LIGHT) {
+        expect(dark).not.toContain(hex);
+      }
+      // The unreadable lip's sentence, in the dark theme's red
+      expect(dark).toContain('color: #f4645a');
+      expect(deltaColours(container)).not.toEqual(lightDeltas);
+      expect(TIER_RAMP_DARK.some((hex) => dark.includes(hex))).toBe(true);
+    });
+
+    it('keeps the picked slot ringed and pressed', async () => {
+      const { container } = mountSheet();
+      await load();
+      const picked = slotButtons(container)[1]!;
+      picked.click();
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(pressed(container).map((b) => b.dataset.slot)).toEqual([picked.dataset.slot]);
+      expect(ringed(container).map((b) => b.dataset.slot)).toEqual([picked.dataset.slot]);
+    });
+
+    it('draws the slot the host last set, not the last one clicked', async () => {
+      const { container } = mountSheet();
+      await load();
+      const [first, second] = slotButtons(container);
+      first!.click();
+      sheets[0]!.setSelectedSlot(second!.dataset.slot as CharaSlotId);
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(pressed(container).map((b) => b.dataset.slot)).toEqual([second!.dataset.slot]);
+    });
+
+    it('keeps keyboard focus on the same slot card', async () => {
+      const { container } = mountSheet();
+      await load();
+      const focused = slotButtons(container)[1]!;
+      focused.focus();
+      expect(document.activeElement).toBe(focused);
+
+      ThemeService.setTheme('standard-dark');
+
+      const active = document.activeElement as HTMLElement | null;
+      expect(active?.isConnected).toBe(true);
+      expect(container.contains(active)).toBe(true);
+      expect(active?.dataset.slot).toBe(focused.dataset.slot);
+    });
+
+    it('stops listening once destroyed', async () => {
+      const { container } = mountSheet();
+      await load();
+      sheets[0]!.destroy();
+      expect(container.childElementCount).toBe(0);
+
+      ThemeService.setTheme('standard-dark');
+
+      expect(container.childElementCount).toBe(0);
+    });
   });
 });
 
@@ -141,4 +309,67 @@ describe('saveCharacterColors', () => {
     expect(saved?.dyes).toHaveLength(1);
     expect(success).toHaveBeenCalledWith(LanguageService.t('swatch.characterSavedOne'));
   });
+
+  const characterRecords = () =>
+    CollectionService.getCollections().filter((c) => c.kind === 'character');
+
+  // BUG-016 (2026-10-04 deep-dive): a second save under the same name hit
+  // createCollection's duplicate check and showed the generic failure toast.
+  it('saves a second copy under a numbered name instead of failing on the duplicate', async () => {
+    const success = vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+    const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    await load();
+    const session = CharaSessionService.getSession()!;
+
+    saveCharacterColors(session);
+    saveCharacterColors(session);
+
+    expect(error).not.toHaveBeenCalled();
+    expect(characterRecords().map((c) => c.name)).toEqual(['Test Subject', 'Test Subject (1)']);
+    expect(success).toHaveBeenCalledTimes(2);
+  });
+
+  it('numbers a 50-character name by trimming the name, never the suffix', async () => {
+    vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+    const long = 'N'.repeat(60);
+    await load(JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: long }));
+    const session = CharaSessionService.getSession()!;
+
+    saveCharacterColors(session);
+    saveCharacterColors(session);
+
+    expect(characterRecords().map((c) => c.name)).toEqual([
+      'N'.repeat(50),
+      `${'N'.repeat(46)} (1)`,
+    ]);
+  });
+
+  it('says the collection limit is reached instead of "save failed" when there is no room', async () => {
+    const warning = vi.spyOn(ToastService, 'warning').mockImplementation(() => '');
+    const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+    for (let i = 0; i < 50; i++) CollectionService.createCollection(`Seed ${i}`);
+    await load();
+
+    saveCharacterColors(CharaSessionService.getSession()!);
+
+    expect(characterRecords()).toHaveLength(0);
+    expect(error).not.toHaveBeenCalledWith(LanguageService.t('errors.saveChangesFailed'));
+    expect(warning).toHaveBeenCalledWith(LanguageService.t('collections.collectionsLimitReached'));
+  });
+
+  // BUG-082 (2026-10-04 deep-dive): `??` kept an empty or whitespace Nickname,
+  // which trims to nothing, so createCollection rejected every save.
+  it.each(['', '   '])(
+    'names the record after the file when the Nickname is %j',
+    async (nickname) => {
+      vi.spyOn(ToastService, 'success').mockImplementation(() => '');
+      const error = vi.spyOn(ToastService, 'error').mockImplementation(() => '');
+      await load(JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: nickname }), 'blank.chara');
+
+      saveCharacterColors(CharaSessionService.getSession()!);
+
+      expect(error).not.toHaveBeenCalled();
+      expect(characterRecords().map((c) => c.name)).toEqual(['blank.chara']);
+    }
+  );
 });

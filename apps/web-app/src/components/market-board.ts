@@ -15,12 +15,8 @@
 
 import { BaseComponent } from './base-component';
 import { LanguageService, WorldService } from '@services/index';
-import {
-  MarketBoardService,
-  formatPrice as serviceFormatPrice,
-} from '@services/market-board-service';
+import { MarketBoardService } from '@services/market-board-service';
 import { ToastService } from '@services/toast-service';
-import type { Dye, PriceData } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
 import { regionLabel } from '@shared/region-name';
@@ -393,37 +389,6 @@ export class MarketBoard extends BaseComponent {
   }
 
   /**
-   * Check if a dye should have its price fetched based on current filter settings
-   * Delegates to MarketBoardService
-   */
-  shouldFetchPrice(dye: Dye): boolean {
-    if (!dye || !dye.itemID) return false;
-    return this.service.shouldFetchPrice(dye);
-  }
-
-  /**
-   * Fetch prices for multiple dyes using batch API
-   * Delegates to MarketBoardService with request versioning for race condition protection
-   *
-   * @param dyes - Array of dyes to fetch prices for
-   * @param onProgress - Optional callback to report progress (current, total)
-   */
-  async fetchPricesForDyes(
-    dyes: Dye[],
-    onProgress?: (current: number, total: number) => void
-  ): Promise<Map<number, PriceData>> {
-    return this.service.fetchPricesForDyes(dyes, onProgress);
-  }
-
-  /**
-   * Format price for display
-   * Delegates to formatPrice from market-board-service
-   */
-  static formatPrice(price: number): string {
-    return serviceFormatPrice(price);
-  }
-
-  /**
    * Initialize the component
    */
   onMount(): void {
@@ -526,51 +491,5 @@ export class MarketBoard extends BaseComponent {
    */
   getSelectedServer(): string {
     return this.service.getSelectedServer();
-  }
-
-  /**
-   * Set selected server (for external config synchronization)
-   */
-  setSelectedServer(server: string): void {
-    if (this.service.getSelectedServer() !== server) {
-      // Update service (persists and notifies)
-      this.service.setServer(server);
-      // Update the dropdown UI if it exists
-      const serverSelect = this.querySelector<HTMLSelectElement>('#mb-server-select');
-      if (serverSelect) {
-        serverSelect.value = server;
-      }
-      // Emit for backward compatibility
-      this.emit('server-changed', { server });
-    }
-  }
-
-  /**
-   * Set show prices (for external config synchronization)
-   */
-  setShowPrices(show: boolean): void {
-    if (this.service.getShowPrices() !== show) {
-      // Update service (persists and notifies)
-      this.service.setShowPrices(show);
-      // Update the toggle UI if it exists
-      const toggleInput = this.querySelector<HTMLInputElement>('#show-mb-prices-toggle');
-      if (toggleInput) {
-        toggleInput.checked = show;
-      }
-      // Show/hide price settings
-      const priceSettings = this.querySelector('#mb-price-settings');
-      if (priceSettings) {
-        priceSettings.classList.toggle('hidden', !show);
-      }
-      // Emit for backward compatibility
-      this.emit('showPricesChanged', { showPrices: show });
-    }
-  }
-
-  /**
-   * Get show prices setting
-   */
-  getShowPrices(): boolean {
-    return this.service.getShowPrices();
   }
 }

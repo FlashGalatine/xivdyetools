@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "`.chara`ファイル（Anamnesis / Ktisis）からキャラクターの色をカララントにマッチング。\n• 肌、髪、メッシュ、瞳、唇、フェイスペイント、刺青／リムバルを読み取ります\n• `slot`：いずれかの色に最も近い5つのカララントを表示"
+      "description": "`.chara`ファイル（Anamnesis / Ktisis / Brio）からキャラクターの色をカララントにマッチング。\n• 肌、髪、メッシュ、瞳、唇、フェイスペイント、刺青／瞳の輪郭を読み取ります\n• `slot`：いずれかの色に最も近い5つのカララントを表示"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "`.chara`ファイル（Anamnesis / Ktisis）のミラプリを一覧表示。\n• 染色した各装備を、実際に装備できるアイテム名で表示\n• GPOSERS形式の全リストをそのままコピー可能"
+      "description": "`.chara`ファイル（Anamnesis / Ktisis / Brio）のミラプリを一覧表示。\n• 染色した各装備を、実際に装備できるアイテム名で表示\n• GPOSERS形式の全リストをそのままコピー可能"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -143,7 +143,7 @@
       "autocomplete": "**オートコンプリート：** カララント名を入力し始めると候補が表示されます！",
       "hexColors": "**16進数カラー：** `#FF0000`（赤）や`#5865F2`（ブラープル）などの標準的なWeb形式を使用します",
       "dyeNames": "**カララント名：** 部分的な名前を入力してください -「ダラ」で「ダラガブレッド」が見つかります",
-      "facewearExcluded": "**フェイスウェア：** フェイスウェアの色（「レッド」「ブルー」など）はカララントではないため、結果には表示されません",
+      "facewearExcluded": "**フェイスアクセサリー：** フェイスアクセサリーの色（「レッド」「ブルー」など）はカララントではないため、結果には表示されません",
       "links": "**リンク：**"
     }
   },
@@ -229,6 +229,7 @@
     "randomTitle": "ランダムプリセット",
     "notEnoughDyes": "プリセットには少なくとも3つのカララントが必要です。",
     "invalidDye": "指定されたカララントが見つかりません。",
+    "repeatedDye": "**{dye}** がこのプリセットに複数回含まれています。各カララントは1回しか使用できません。",
     "duplicateExists": "類似のプリセットが存在します",
     "duplicateVoted": "既存のプリセットに投票が追加されました。",
     "submitted": "プリセットを投稿しました！",
@@ -590,7 +591,7 @@
     "slotLip": "唇",
     "slotPaint": "ペイント",
     "slotTattoo": "刺青",
-    "slotLimbal": "リムバル",
+    "slotLimbal": "瞳の輪郭",
     "offGridShort": "グリッド外",
     "swatchFootKey_one": "ΔE2000 による最近傍 · 全{n}部位中{s}部位",
     "swatchFootKey_other": "ΔE2000 による最近傍 · 全{n}部位中{s}部位",
@@ -599,9 +600,24 @@
     "swatchGear": "装備のカララント：{list}",
     "swatchDropped": "省略（最も近い一致）：{slot} · ΔE {de}",
     "swatchParseError": "ファイルを読み取れません — {message}",
+    "charaFileReason": {
+      "tooLarge": "サイズが{mb} MBを超えています",
+      "notOnDiscord": "Discordに直接アップロードされたファイルのみ対応しています",
+      "downloadFailed": "ダウンロードに失敗しました（HTTP {status}）",
+      "unreadable": "ボットが読み込める .chara ファイルではありません"
+    },
     "swatchTitle": "キャラクターの色見本",
     "swatchNoSlots": "このファイルに有効なカラー部位がありません。",
     "swatchSlotMissing": "{slot}はこのファイルでは有効な部位ではありません。",
+    "swatchSlotName": {
+      "skin": "肌",
+      "hair": "髪",
+      "highlights": "メッシュ",
+      "eyes": "瞳",
+      "lip": "唇",
+      "facepaint": "フェイスペイント",
+      "limbal": "刺青 / 瞳の輪郭"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "ミラプリ",
     "glamourPieces_one": "染色済み{n}部位",
@@ -611,7 +627,8 @@
     "glamourDyes_one": "{n}色",
     "glamourDyes_other": "{n}色",
     "glamourNoDyes": "染色なし",
-    "glamourLooks": "+{n} 同型",
+    "glamourLooks_one": "+{n} 同型",
+    "glamourLooks_other": "+{n} 同型",
     "glamourOneLook": "唯一",
     "glamourStatusTwin": "代替",
     "glamourStatusOk": "問題なし",
@@ -687,7 +704,7 @@
       },
       "characterFile": {
         "name": "キャラクターファイル",
-        "body": "/swatch は Anamnesis / Ktisis の .chara エクスポートを読み取ります：カラー部位（肌・髪・メッシュ・瞳・唇・フェイスペイント・刺青／リムバル）と装備の染色です。ファイルは返信の生成に一度だけ読み取られ、保存されません。パレット外に編集された色は実際の値でマッチされ、「グリッド外」と表示されます。"
+        "body": "/swatch と /glamour は Anamnesis / Ktisis / Brio の .chara エクスポートを読み取ります。ファイルは返信の生成に一度だけ読み取られ、保存されません。\n\n/swatch はカラー部位（肌・髪・メッシュ・瞳・唇・フェイスペイント・刺青／瞳の輪郭）をカララントとマッチングし、装備の染色も表示します。パレット外に編集された色は実際の値でマッチされ、「グリッド外」と表示されます。\n\n/glamour はキャラクターの各装備とその染色を一覧表示します。1つのモデルを複数のアイテムが共有することがあり、それらを同型と呼びます（+N 同型）。各装備は、このキャラクターがその染色で装備できるアイテム名で表示されます。ファイルのアイテムがその染色ができない・投影できない・装備できない場合は、条件を満たす同型が代わりに表示され、「代替」と示されます。問題のない装備には「問題なし」と表示されます。同型はボットが選び、染色できるものを優先します。返信の末尾にリンクされたWebアプリのミラプリリーダーで、別の同型を選ぶこともできます。どの同型でも解決できない装備には、原因として「染色不可」「投影不可」「装備不可」（または装備できる唯一の種族名）が表示され、対応するアイテムのないモデルには「—」が表示されます。埋め込みには全装備がGPOSERS形式で一覧表示され、そのままコピーできます。ラベルとAcquisition行はどの言語でも英語です。Acquisition行が空欄の場合は入手元が不明なので、ご自身で記入してください。"
       }
     }
   },
@@ -816,7 +833,7 @@
       "description": "キャラクターファイルの色を最も近いカララントに照合",
       "options": {
         "file": {
-          "description": ".charaキャラクターファイル（AnamnesisまたはKtisisの書き出し）"
+          "description": ".charaキャラクターファイル（Anamnesis / Ktisis / Brioの書き出し）"
         },
         "order": {
           "description": "行の並び順 — どちらも同じ5行を表示"
@@ -830,7 +847,7 @@
       "description": "キャラクターファイルをミラプリとして表示：各装備、染色、装備できるかどうか",
       "options": {
         "file": {
-          "description": ".charaキャラクターファイル（AnamnesisまたはKtisisの書き出し）"
+          "description": ".charaキャラクターファイル（Anamnesis / Ktisis / Brioの書き出し）"
         }
       }
     },
@@ -1136,10 +1153,10 @@
               "description": "/extractor colorの既定のマッチ数（1〜10）"
             },
             "clan": {
-              "description": "/swatchの既定の部族（例：ミッドランダー、アウラ・レン）"
+              "description": "キャラクターの部族（設定に保存されますが、まだ使用するコマンドはありません）"
             },
             "gender": {
-              "description": "/swatchの既定の性別"
+              "description": "キャラクターの性別（設定に保存されますが、まだ使用するコマンドはありません）"
             },
             "world": {
               "description": "マーケット価格用の既定のワールド／データセンター"

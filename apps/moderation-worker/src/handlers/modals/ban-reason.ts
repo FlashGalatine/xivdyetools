@@ -3,7 +3,8 @@
  *
  * Handles the modal submission when a moderator provides a ban reason.
  *
- * Modal custom_id pattern: ban_reason_modal_{discordId}_{username}
+ * Modal custom_id pattern: ban_reason_modal_{targetId} — a Discord snowflake or
+ * an XIVAuth UUID (`isBanTargetId`); the username is resolved from D1.
  */
 
 import type { Env } from '../../types/env.js';
@@ -15,12 +16,12 @@ import {
   isBanTargetId,
   type DiscordEmbed,
 } from '../../utils/response.js';
-import { base64UrlDecode } from '@xivdyetools/auth/encoding';
 import { sanitizeUserName, sanitizeReason } from '../../utils/embed-text.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 import { safeSendMessage, safeEditOriginalResponse } from '../../utils/discord-api.js';
 import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
+import { MIN_REJECTION_REASON_LENGTH } from '../commands/preset.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
 import { extractTextInputValue, getModalUserId, getModalUsername } from '../../types/modal.js';
@@ -53,15 +54,12 @@ export async function handleBanReasonModal(
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'You do not have permission to ban users.')] });
   }
 
-  // Parse custom_id: ban_reason_modal_{discordId}
+  // Parse custom_id: ban_reason_modal_{targetId}
   // FINDING-007 (2026-08-21 audit): the id is all the modal carries; the
-  // username is resolved from D1 here. Older modals
-  // (ban_reason_modal_{discordId}_{base64username}) still work — their
-  // suffix is used only as a fallback when D1 has no name.
-  const idPart = customId.replace('ban_reason_modal_', '');
-  const separator = idPart.indexOf('_');
-  const targetUserId = separator === -1 ? idPart : idPart.substring(0, separator);
-  const legacyEncodedUsername = separator === -1 ? '' : idPart.substring(separator + 1);
+  // username is resolved from D1 here. The pre-FINDING-007 base64-username
+  // suffix is no longer parsed (DEAD-029, 2026-10-04): nothing has emitted it
+  // since, and a suffixed id fails `isBanTargetId` below, so it bans nobody.
+  const targetUserId = customId.replace('ban_reason_modal_', '');
 
   if (!targetUserId) {
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'Invalid target user.')] });
@@ -83,13 +81,6 @@ export async function handleBanReasonModal(
   } catch (error) {
     logger?.error('Failed to resolve target username', error instanceof Error ? error : undefined);
   }
-  if (!targetUsername && legacyEncodedUsername) {
-    try {
-      targetUsername = base64UrlDecode(legacyEncodedUsername);
-    } catch {
-      // ignore — fall through to the id
-    }
-  }
   // FINDING-008: no post shows an account id. With no author name to find, the
   // STORED name still falls back to the id (banned_users.username is NOT NULL
   // and moderators search it), but everything rendered uses a neutral label.
@@ -98,9 +89,12 @@ export async function handleBanReasonModal(
     targetUsername = targetUserId;
   }
 
-  const reason = extractTextInputValue(interaction.data?.components, 'ban_reason');
+  // BUG-051 (2026-10-04 deep-dive): the modal's min_length counts spaces, so
+  // the floor is checked on the trimmed text — and the trimmed text is what is
+  // stored, posted and logged, as the reject / revert modals already measure it
+  const reason = extractTextInputValue(interaction.data?.components, 'ban_reason')?.trim();
 
-  if (!reason || reason.length < 10) {
+  if (!reason || reason.length < MIN_REJECTION_REASON_LENGTH) {
     return ephemeralResponse({ embeds: [errorEmbed('Error', 'Please provide a valid ban reason (at least 10 characters).')] });
   }
 

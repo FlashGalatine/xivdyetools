@@ -38,6 +38,9 @@ import {
 // Public API
 // ============================================================================
 
+/** The equal mix `blendColors` uses when no usable ratio is given. */
+const DEFAULT_RATIO = 0.5;
+
 /**
  * Blend two colors using the specified blending mode.
  *
@@ -49,19 +52,33 @@ import {
  * @param hex1    - First color hex code (with or without #)
  * @param hex2    - Second color hex code (with or without #)
  * @param mode    - Blending algorithm to use
- * @param ratio   - 0.0 = all hex1, 0.5 = equal mix, 1.0 = all hex2
+ * @param ratio   - 0.0 = all hex1, 0.5 = equal mix, 1.0 = all hex2. Never
+ *                  throws: a ratio outside [0, 1] — `±Infinity` included —
+ *                  clamps to the nearer end, and `NaN`, which has no nearer
+ *                  end, falls back to the 0.5 default exactly as an omitted
+ *                  ratio does (BUG-129: it used to slip through `Math.max`/
+ *                  `Math.min` and come back as the hex `'#NaNNaNNaN'`). So
+ *                  does any value an untyped caller passes that is not a
+ *                  number — `null`, an object, a string. A numeric string
+ *                  such as `'0.25'` is not parsed; it gets the default too.
  * @param options - Per-mode tuning; only `'hsl'` reads anything from it today
  */
 export function blendColors(
   hex1: string,
   hex2: string,
   mode: BlendingMode,
-  ratio: number = 0.5,
+  ratio: number = DEFAULT_RATIO,
   options: BlendOptions = {},
 ): BlendResult {
   const h1 = hex1.startsWith('#') ? hex1 : `#${hex1}`;
   const h2 = hex2.startsWith('#') ? hex2 : `#${hex2}`;
-  const t = Math.max(0, Math.min(1, ratio));
+  // `typeof` first: `Number.isNaN` does not coerce, so on its own it let a
+  // string or object through to Math.min (→ NaN again) and null through as 0.
+  // Same guard as BUG-131's in CharacterColorService.
+  const t =
+    typeof ratio === 'number' && !Number.isNaN(ratio)
+      ? Math.max(0, Math.min(1, ratio))
+      : DEFAULT_RATIO;
 
   // REFACTOR-005: local parser — no more dependency on all of core
   const rgb1 = hexToRgb(h1);
@@ -179,12 +196,41 @@ function blendRYB(rgb1: RGB, rgb2: RGB, t: number): RGB {
   });
 }
 
+/**
+ * HSL mixing with CSS Color 4's "powerless hue" rule.
+ *
+ * An exact grey — r = g = b, which takes in `#ffffff` and `#000000` — has zero
+ * HSL saturation, and `rgbToHsl` reports its hue as 0: a placeholder, not a
+ * red. Interpolating that 0 as a real hue dragged every such mix toward red:
+ * `#ffffff` + blue came out pink and `#000000` + green olive (BUG-035). So a
+ * side with `s === 0` has no hue of its own and takes the other side's,
+ * leaving the chromatic input's hue unchanged along the whole ramp while
+ * saturation and lightness still interpolate. When both sides are grey the
+ * hue is irrelevant — the blend has zero saturation, and `hslToRgb` returns a
+ * grey whatever the hue says.
+ *
+ * The rule covers EXACT greys only: from integer RGB, `s === 0` exactly when
+ * r = g = b. That is raw grey hex plus the dyes Slate Grey, Jet Black and
+ * Metallic Silver — not the near-greys players usually reach for as white or
+ * black. Pure White `#f9f8f4`, Snow White and Soot Black keep their own hue
+ * (about 45°), and that hue is not faint: HSL saturation is chroma relative to
+ * how far lightness allows, so a near-white or near-black carries a high one
+ * for very little chroma (Pure White's is 0.29). A 50% mix of Pure White and
+ * `#0000ff` therefore still takes the shorter arc from 48° to 240° — through
+ * magenta — and comes out pink, `#e78fc4`. That is CSS Color 4's rule, which
+ * keys on `s === 0` alone, and this follows it on purpose. Treating a
+ * near-grey's hue as powerless too (a saturation or chroma threshold) would
+ * diverge from the spec, and is a separate decision rather than part of this
+ * fix.
+ */
 function blendHSL(rgb1: RGB, rgb2: RGB, t: number, hueMethod: HueMethod): RGB {
   const hsl1 = rgbToHsl(rgb1);
   const hsl2 = rgbToHsl(rgb2);
+  const hue1 = hsl1.s === 0 ? hsl2.h : hsl1.h;
+  const hue2 = hsl2.s === 0 ? hsl1.h : hsl2.h;
 
   const blended: HSL = {
-    h: interpolateHue(hsl1.h, hsl2.h, t, hueMethod),
+    h: interpolateHue(hue1, hue2, t, hueMethod),
     s: hsl1.s * (1 - t) + hsl2.s * t,
     l: hsl1.l * (1 - t) + hsl2.l * t,
   };

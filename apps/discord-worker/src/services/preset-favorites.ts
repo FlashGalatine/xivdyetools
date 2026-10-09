@@ -46,6 +46,14 @@ export interface PresetFavoriteResult {
 export interface PresetFavoriteEntry {
   id: string;
   name: string;
+  /**
+   * BUG-047: presets-api answered 404 for this id when autocomplete tried to
+   * back-fill its name, so it is not looked up again on every keystroke and
+   * is offered under its id. Kept out of `name` on purpose: older builds wrote
+   * the id there for every failed lookup, and those names still need healing.
+   * Present only when true.
+   */
+  gone?: boolean;
 }
 
 // ============================================================================
@@ -61,8 +69,63 @@ function buildV2Key(userId: string): string {
 }
 
 /**
- * OPT-007: get denormalized favorite entries. Reads v2; falls back to the
+ * OPT-007: read the denormalized favorite entries. Reads v2; falls back to the
  * legacy v1 bare-ID blob (entries get name '' until saveEntries migrates).
+ *
+ * BUG-006 (2026-10-04 deep-dive): this reader THROWS when a KV read fails.
+ * The write paths (add/remove) use it directly, so a failed read fails the
+ * write instead of being mistaken for an empty list and saved over the real
+ * one. Only the read-only callers go through the lenient wrapper below.
+ *
+ * A v2 blob that is not JSON is the exception: unlike a failed `kv.get`, it
+ * never fixes itself, so throwing on it failed every add and remove for good.
+ * It is read like a v2 blob of the wrong shape — logged, then answered from
+ * the v1 blob, which every save keeps in sync for exactly this — and the next
+ * add or remove rewrites a valid v2. (A v1 blob that is not JSON still throws.)
+ */
+async function readPresetFavoriteEntries(
+  kv: KVNamespace,
+  userId: string,
+  logger?: ExtendedLogger,
+): Promise<PresetFavoriteEntry[]> {
+  const v2 = await kv.get(buildV2Key(userId));
+  if (v2) {
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(v2);
+    } catch {
+      logger?.warn('Preset favourites v2 blob is not JSON; reading the v1 blob instead');
+    }
+    if (
+      Array.isArray(parsed) &&
+      parsed.every(
+        (x): x is PresetFavoriteEntry =>
+          typeof x === 'object' &&
+          x !== null &&
+          typeof (x as PresetFavoriteEntry).id === 'string',
+      )
+    ) {
+      return parsed.map((e) => ({
+        id: e.id,
+        name: typeof e.name === 'string' ? e.name : '',
+        // BUG-047: dropping the marker would bring a lookup per keystroke back
+        ...(e.gone === true ? { gone: true } : {}),
+      }));
+    }
+  }
+  // Legacy v1 fallback: bare ID array
+  const v1 = await kv.get(buildKey(userId));
+  if (!v1) return [];
+  const parsedV1: unknown = JSON.parse(v1);
+  return Array.isArray(parsedV1)
+    ? parsedV1.filter((x): x is string => typeof x === 'string').map((id) => ({ id, name: '' }))
+    : [];
+}
+
+/**
+ * OPT-007: get denormalized favorite entries for display (autocomplete,
+ * `/preset favorite list`). Lenient: a failed read is logged and answered as
+ * an empty list, which is safe only because nothing here writes it back.
  */
 export async function getPresetFavoriteEntries(
   kv: KVNamespace,
@@ -70,28 +133,7 @@ export async function getPresetFavoriteEntries(
   logger?: ExtendedLogger,
 ): Promise<PresetFavoriteEntry[]> {
   try {
-    const v2 = await kv.get(buildV2Key(userId));
-    if (v2) {
-      const parsed: unknown = JSON.parse(v2);
-      if (
-        Array.isArray(parsed) &&
-        parsed.every(
-          (x): x is PresetFavoriteEntry =>
-            typeof x === 'object' &&
-            x !== null &&
-            typeof (x as PresetFavoriteEntry).id === 'string',
-        )
-      ) {
-        return parsed.map((e) => ({ id: e.id, name: typeof e.name === 'string' ? e.name : '' }));
-      }
-    }
-    // Legacy v1 fallback: bare ID array
-    const v1 = await kv.get(buildKey(userId));
-    if (!v1) return [];
-    const parsedV1: unknown = JSON.parse(v1);
-    return Array.isArray(parsedV1)
-      ? parsedV1.filter((x): x is string => typeof x === 'string').map((id) => ({ id, name: '' }))
-      : [];
+    return await readPresetFavoriteEntries(kv, userId, logger);
   } catch (error) {
     logger?.error(
       'Failed to get preset favorite entries',
@@ -142,7 +184,8 @@ export async function addPresetFavorite(
   logger?: ExtendedLogger,
 ): Promise<PresetFavoriteResult> {
   try {
-    const entries = await getPresetFavoriteEntries(kv, userId, logger);
+    // BUG-006: strict read — a failed read must not become `[]` and be saved
+    const entries = await readPresetFavoriteEntries(kv, userId, logger);
     if (entries.some((e) => e.id === presetId)) {
       return { success: false, reason: 'alreadyExists' };
     }
@@ -174,7 +217,8 @@ export async function removePresetFavorite(
   logger?: ExtendedLogger,
 ): Promise<PresetFavoriteResult> {
   try {
-    const entries = await getPresetFavoriteEntries(kv, userId, logger);
+    // BUG-006: strict read — a failed read is an error, not "not in the list"
+    const entries = await readPresetFavoriteEntries(kv, userId, logger);
     const index = entries.findIndex((e) => e.id === presetId);
     if (index === -1) {
       return { success: false, reason: 'notFound' };

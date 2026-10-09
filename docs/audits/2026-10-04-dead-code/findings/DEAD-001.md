@@ -15,4 +15,4 @@
 Steps: Delete bot-i18n.ts:53-57 (approved, approvedDesc, missingReason, rejected, rejectedDesc), keeping accessDenied through missingId and stats onward. No test change. The older orphans in the same file (DEAD-030) are scheduled separately, after the batch merge. Then run pnpm turbo run build type-check lint test --filter=...xivdyetools-moderation-worker and pnpm dead-code:check.
 
 ## Status
-FIX COMMITTED, NOT MERGED 2026-10-04 `ea264d49` — the five strings deleted on `fix/security-2026-10-03-sprint4` (PR #225); the moderation-worker gate passes (763 tests).
+FIXED 2026-10-05 — `ea264d49` (PR #225, merged to `main` in `0241867e`): the five strings deleted; the moderation-worker gate passed (763 tests). Re-verified on `main@50165ec6`: [reverify-2026-10-05.md](../../2026-10-04-i18n/evidence/reverify-2026-10-05.md).

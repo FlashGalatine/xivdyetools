@@ -33,6 +33,12 @@ import { generateNearestSheet } from './nearest-sheet.js';
 import { generateRandomDyesGrid } from './random-dyes-grid.js';
 import { generateContrastCard } from './contrast-card.js';
 import { generateComparisonCard } from './comparison-card.js';
+import { generateGlamourCard } from './glamour-card.js';
+import { generateSwatchCard } from './swatch-card.js';
+import { generateA11yCard, type A11yCardLabels, type A11yLensRow } from './a11y-card.js';
+import { generateDyeInfoCard } from './dye-info-card.js';
+import { generateBudgetLedger } from './budget-ledger.js';
+import { createMockDye } from '@xivdyetools/test-utils/factories';
 
 // German runs long; the real names come from core's locale data rather than
 // being hand-written (an invented one eventually gets reasoned from).
@@ -40,7 +46,41 @@ const LONG_NAME = 'Johannisbeerenvioletter';
 const LONG_NAME_2 = 'Metallic kobaltgrüner';
 const HEXES = ['#781A1A', '#658241', '#000B9D', '#28847F', '#E4DFD0', '#2B2923'];
 
-const cards: Array<{ name: string; svg: () => string }> = [
+/** bot-logic's de `card.*` a11y labels, verbatim. */
+const A11Y_LABELS_DE: A11yCardLabels = {
+  designed: 'WIE ENTWORFEN',
+  perceived: 'WIE GESEHEN',
+  separation: 'ABSTAND',
+  normalShort: 'NORM',
+  lens: 'SEHFILTER',
+  shift: 'VERSCHIEBUNG',
+  sepBandKey: 'Bänder: ≥30 / ≥15 / ≥8 — größer ist sicherer',
+  soloKey: 'Balken = relative Verschiebung · kein Urteil',
+  worstNote: '',
+};
+
+/** Normal + the four lenses, named from core's short de `visions` block. */
+const A11Y_LENSES_DE: A11yLensRow[] = [
+  ['Normales Sehen', 'NORM'],
+  ['Protanopie', 'PROT'],
+  ['Deuteranopie', 'DEUT'],
+  ['Tritanopie', 'TRIT'],
+  ['Achromatopsie', 'ACHR'],
+].map(([label, short], i) => ({
+  label,
+  short,
+  deltaE: 41.7 - i * 9.3,
+  isNormal: i === 0,
+  hexA: HEXES[i],
+  hexB: HEXES[i + 1],
+}));
+
+/**
+ * Each card's own outer margin. Most of the suite sets 16; glamour, swatch,
+ * dye-info and the budget ledger were drawn at 15, and the right-anchored
+ * gate holds each card to the margin it draws its own header and mark to.
+ */
+const cards: Array<{ name: string; pad?: number; svg: () => string }> = [
   {
     name: '/harmony · 4 slots · off-default method',
     svg: () =>
@@ -277,6 +317,162 @@ const cards: Array<{ name: string; svg: () => string }> = [
         lang: 'de',
       }),
   },
+  {
+    // Five rows and a three-clause count key with two-digit counts: the footer
+    // has to wrap here, and at five rows it has no height left for a third line.
+    name: '/glamour · 5 pieces, three-clause count key',
+    pad: 15,
+    svg: () =>
+      generateGlamourCard({
+        stripHexes: HEXES,
+        charSub: 'WALDLÄUFER ♀ · ANAMNESIS',
+        title: '12 gefärbte Teile',
+        titleExtra: '7 Farbstoffe',
+        rows: [
+          ['HAUPTHAND', '+12 OPTIKEN', 12, 'fix', 'ZWILLING'],
+          ['FINGER (RECHTS)', '+3 OPTIKEN', 3, 'choice', 'OK'],
+          ['HANDGELENKE', 'EINZIG', 0, 'block', 'FARBSTOFFE'],
+          ['NEBENHAND', '+1 OPTIK', 1, 'block', 'KEINE PROJ'],
+          ['KOPF', '+2 OPTIKEN', 2, 'block', 'GESPERRT'],
+        ].map(([slotLabel, lookLabel, twins, tone, status], i) => ({
+          slotLabel: slotLabel as string,
+          lookLabel: lookLabel as string,
+          twins: twins as number,
+          tone: tone as 'fix' | 'block' | 'choice',
+          name: 'Augmentierte Schattenhandschuhe des Schlagens',
+          dyes: [
+            { hex: HEXES[i], name: LONG_NAME },
+            { hex: HEXES[i + 1], name: LONG_NAME_2 },
+          ],
+          status: status as string,
+        })),
+        footKey: '5 von 12 gefärbten Teilen · 10 durch Zwilling benannt · 2 ohne Lösung',
+        lang: 'de',
+      }),
+  },
+  {
+    name: '/swatch · 5 slots, one off grid',
+    pad: 15,
+    svg: () =>
+      generateSwatchCard({
+        stripHexes: HEXES,
+        charSub: 'MIDLANDER ♀ · ANAMNESIS',
+        title: 'Charakter-Farbmuster',
+        rows: ['HAUT', 'HAAR', 'STRÄHNEN', 'AUGEN·LR', 'ÄUẞ.IRIS'].map((slotLabel, i) => ({
+          slotLabel,
+          addr: i === 4 ? 'ABSEITS' : `R1${i}·C${i + 1}`,
+          addrWarn: i === 4,
+          sourceHex: HEXES[i],
+          dyeHex: HEXES[i + 1],
+          name: LONG_NAME,
+          deltaE: 12.4 + i,
+        })),
+        labels: {
+          lSlot: 'SLOT',
+          lNearest: 'NÄCHSTER FARBSTOFF',
+          footKey: 'nächste per ΔE2000 · 5 von 12 Slots',
+        },
+        lang: 'de',
+      }),
+  },
+  {
+    name: '/accessibility · one lens (13D)',
+    svg: () =>
+      generateA11yCard({
+        mode: 'lens',
+        titleText: `${LONG_NAME} ↔ ${LONG_NAME_2}`,
+        subject: A11Y_LENSES_DE[2],
+        normalDeltaE: A11Y_LENSES_DE[0].deltaE,
+        rows: A11Y_LENSES_DE.filter((_, i) => i !== 2),
+        labels: A11Y_LABELS_DE,
+        lang: 'de',
+      }),
+  },
+  {
+    name: '/accessibility · every lens (13E)',
+    svg: () =>
+      generateA11yCard({
+        mode: 'all',
+        titleText: `${LONG_NAME} ↔ ${LONG_NAME_2}`,
+        rows: A11Y_LENSES_DE,
+        labels: { ...A11Y_LABELS_DE, worstNote: 'am schwächsten: Achromatopsie' },
+        lang: 'de',
+      }),
+  },
+  {
+    name: '/accessibility · one dye (13H)',
+    svg: () =>
+      generateA11yCard({
+        mode: 'solo',
+        titleText: LONG_NAME,
+        rows: A11Y_LENSES_DE.map(({ hexB: _hexB, ...l }) => l),
+        labels: A11Y_LABELS_DE,
+        lang: 'de',
+      }),
+  },
+  {
+    name: '/dye info · sheet with "+n more"',
+    pad: 15,
+    svg: () =>
+      generateDyeInfoCard({
+        dye: createMockDye({
+          stainID: 125,
+          name: 'Metallic Cobalt Green',
+          hex: HEXES[1],
+          rgb: { r: 101, g: 130, b: 65 },
+          hsv: { h: 87, s: 50, v: 51 },
+          category: 'Greens',
+        }),
+        localizedName: LONG_NAME,
+        localizedCategory: 'Grün',
+        stainID: 125,
+        srcValue: 'Gehilfen-Schatzkiste · 1.000 Rote Farbpigmente',
+        mktValue: 'Zusatzfarbstoff 2 · 52256',
+        nearest: [0, 2, 3].map((i) => ({ hex: HEXES[i], name: LONG_NAME_2, deltaE: 8.7 + i })),
+        labels: {
+          stain: 'FARBNR.',
+          src: 'QUELLE',
+          mkt: 'MARKT',
+          nearest: 'NÄCHSTE FARBSTOFFE',
+          nearestMore: '+12 weitere',
+        },
+        lang: 'de',
+      }),
+  },
+  {
+    // Inside the calculator's cap: 43 + 27 header, 3 × 24 groups, 4 × 40 rows,
+    // and the off-default method's two-line footer (47) — 349 of 350.
+    name: '/budget · 3 groups, 4 rows, off-default method',
+    pad: 15,
+    svg: () =>
+      generateBudgetLedger({
+        target: { hex: HEXES[0], name: LONG_NAME, price: '123.456', subLabel: 'nur Markt' },
+        groups: [
+          { tier: 'Einfacher Farbstoff', price: '1.234', flag: 'HÄNDLER GÜNSTIGER', rows: [0, 1] },
+          { tier: 'Zusatzfarbstoff 2', price: null, rows: [2] },
+          { tier: 'Gehilfen-Schatzkiste', price: '98.765', rows: [3] },
+        ].map((g) => ({
+          ...g,
+          rows: g.rows.map((i) => ({
+            hex: HEXES[i + 1],
+            name: LONG_NAME,
+            de: '188',
+            tier: i % 4,
+            tie: i === 3,
+            perDe: i === 2 ? null : '13,6k',
+          })),
+        })),
+        labels: {
+          lTarget: 'ZIEL',
+          lCandidate: 'KANDIDAT',
+          deLabel: 'RM',
+          perDeLabel: 'GIL/ΔE',
+          keyLines: ['GIL/ΔE = (ZIEL − ZEILE) ÷ ΔE2000', 'ΔE-Spalte: Redmean · Verhältnis bleibt ΔE2000'],
+        },
+        lang: 'de',
+        wideDe: true,
+      }),
+  },
 ];
 
 /**
@@ -355,7 +551,45 @@ const wideCards: Array<{ name: string; pad: number; svg: () => string }> = [
         lang: 'ja',
       }),
   },
+  {
+    // The count key has no space inside a clause to wrap at, and every glyph
+    // in it is double width.
+    name: '/glamour · 5 pieces, three-clause count key · ja',
+    pad: 15,
+    svg: () =>
+      generateGlamourCard({
+        stripHexes: HEXES,
+        charSub: 'ミッドランダー ♀ · ANAMNESIS',
+        title: '染色済み12部位',
+        titleExtra: '7色',
+        rows: ['メインアーム', 'サブアーム', '頭', '胴', '手'].map((slotLabel, i) => ({
+          slotLabel,
+          lookLabel: i === 2 ? '唯一' : `+${i + 10} 同型`,
+          twins: i === 2 ? 0 : i + 10,
+          tone: i === 0 ? 'fix' : 'block',
+          name: 'メタリックコバルトグリーン・ジャケット',
+          dyes: [{ hex: HEXES[i], name: 'メタリックコバルトグリーン' }],
+          status: i === 0 ? '代替' : '投影不可',
+        })),
+        footKey: '染色済み12部位中5部位 · 別アイテムで表示 10 · 解決不可 2',
+        lang: 'ja',
+      }),
+  },
 ];
+
+/**
+ * Right-anchored runs that sit past their card's margin today and are
+ * reported rather than fixed here, keyed by case name. Each entry is as
+ * narrow as the defect: one text, one x.
+ *
+ * - /dye info: the band's stain readout is anchored at `CARD_WIDTH - 14`
+ *   (dye-info-card.ts, the `${labels.stain} ${stainID}` cardText) — mirroring
+ *   the chip's 14 px inset, 1 px proud of the 15 px PAD the name, grid, SRC/MKT
+ *   values and mark all use. Found when BUG-144 brought the card into this gate.
+ */
+const KNOWN_PROUD: Record<string, RegExp> = {
+  '/dye info · sheet with "+n more"': /^"FARBNR\. \d+" anchored at 386 \(margin 385\)$/,
+};
 
 /** Every `font-size="N"` in the document. */
 function fontSizes(svg: string): number[] {
@@ -479,13 +713,20 @@ describe('frame extent — content stays inside the card it is drawn on', () => 
     expect(proud, `right-anchored past the margin:\n${proud.join('\n')}`).toEqual([]);
   });
 
-  it.each(cards)('$name aligns every right-anchored run to the 16 px margin', ({ svg }) => {
-    const margin = CARD_WIDTH - 16;
+  it.each(cards)('$name aligns every right-anchored run to its own margin', ({ name, svg, pad = 16 }) => {
+    const margin = CARD_WIDTH - pad;
+    const known = KNOWN_PROUD[name];
     const proud = textSpans(svg())
       .filter((t) => t.anchor === 'end' && t.x > margin)
       .map((t) => `"${t.content}" anchored at ${t.x} (margin ${margin})`);
 
-    expect(proud, `right-anchored past the margin:\n${proud.join('\n')}`).toEqual([]);
+    if (known) {
+      // A stale exception fails: once the run moves inside the margin, delete
+      // the entry rather than leave a hole in the gate.
+      expect(proud.filter((p) => known.test(p)), 'KNOWN_PROUD entry no longer matches — delete it').not.toEqual([]);
+    }
+    const unexplained = proud.filter((p) => !known?.test(p));
+    expect(unexplained, `right-anchored past the margin:\n${unexplained.join('\n')}`).toEqual([]);
   });
 
   /**

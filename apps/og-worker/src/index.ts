@@ -47,6 +47,7 @@ import {
   DEFAULT_DECK,
 } from './services/svg';
 import {
+  DEFAULT_GRADIENT_INTERPOLATION,
   OG_MAX_COMPARISON_DYES,
   OG_MAX_GRADIENT_STEPS,
   OG_MAX_MIXER_RATIO,
@@ -56,6 +57,7 @@ import {
   isAlgorithm,
   isHarmonyType,
   isVisionType,
+  parseInterpolation,
   parseWheel,
 } from './og-params';
 import type { Env, ToolId, AnalyticsEvent, HarmonyType, MatchingAlgorithm, VisionType } from './types';
@@ -192,28 +194,34 @@ app.use('/og/*', async (c, next) => {
 });
 
 /**
- * The only five query keys any /og/* request may legitimately carry —
- * `lang`, `frame`, `algo`, `mode`, `wheel`.
+ * The only six query keys any /og/* request may legitimately carry —
+ * `lang`, `frame`, `algo`, `mode`, `wheel`, `interpolation`.
  *
  * The allowlist is GLOBAL, but what reads each key is not: `resolveLocale`
  * (below) reads `lang` and `frameFromQuery` reads `frame` on every route;
- * `algo` is read by the five algo-aware image routes; `mode` only by the two
- * mixer routes; `wheel` only by the parameterised harmony dye card (`/og/harmony/:dye/:type`), never the default card (BUG-018). A present-but-invalid value
- * is rejected here on every route regardless (rulings S7-R7 / S7-R10), while
- * `ogCacheKey` below keys a route-specific parameter only on the routes that
- * render with it — an allowed key must not multiply the cache entries of a
- * card that ignores it.
+ * `algo` is read by the six algo-aware image routes (`readsAlgo`); `mode` only
+ * by the two mixer routes (`readsMode`); `wheel` only by the parameterized
+ * harmony dye card (`/og/harmony/:dye/:type`), never the default card
+ * (BUG-018, `readsWheel`); `interpolation` only by the parameterized gradient
+ * card (BUG-008, `readsInterpolation`). A present-but-invalid value is
+ * rejected here on every route regardless (rulings S7-R7 / S7-R10), while
+ * `ogCacheKey` below keys each of the four only on the routes that render
+ * with it (BUG-018, BUG-058, BUG-008) — an allowed key must not multiply the
+ * cache entries of a card that ignores it.
  *
  * og-data-generator.ts emits exactly these onto an image URL (withLang /
- * withAlgo / withMode / withWheel / the ?frame=x twitter branch), so no URL
- * this worker itself produces ever carries a sixth key.
+ * withAlgo / withMode / withWheel / withInterpolation / the ?frame=x twitter
+ * branch), so no URL this worker itself produces ever carries a seventh key.
  *
  * `mode` joined the set on 2026-09-03: the web mixer's share URL had always
  * carried it and this worker had always ignored it, so a shared mix rendered
  * in CIELAB no matter which of the six algorithms the sharer had picked.
- * `wheel` joined it on 2026-09-04 for the Harmony Explorer's colour wheels.
+ * `wheel` joined it on 2026-09-04 for the Harmony Explorer's color wheels,
+ * and `interpolation` on 2026-10-06 for the same reason as `mode` (BUG-008):
+ * the Gradient Builder's share always carried its color space, and the card
+ * ramped in another.
  */
-const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo', 'mode', 'wheel']);
+const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo', 'mode', 'wheel', 'interpolation']);
 
 /**
  * 2026-08-29 FINDING-024 (OG-4): reject any /og/* request carrying a query
@@ -243,7 +251,10 @@ const OG_ALLOWED_QUERY_KEYS = new Set(['lang', 'frame', 'algo', 'mode', 'wheel']
  * guard's own 404-for-unknown-key convention just above: an unknown key
  * means no such resource variant exists, but a known key with a bad value
  * is the malformed-request shape the rest of the codebase already answers
- * with 400.
+ * with 400. (Two later changes narrowed what this paragraph describes without
+ * touching the guard: since BUG-060 the extractor is the sixth algo-aware
+ * route, and since BUG-058 `ogCacheKey` no longer keys `algo` on the routes
+ * that ignore it, so a valid value no longer splits their entries either.)
  *
  * Ruling S7-R10 (fix round 2, same finding): an EMPTY `algo` (`?algo=` or
  * bare `?algo`) is treated as absent, not invalid — verified
@@ -263,14 +274,32 @@ app.use('/og/*', async (c, next) => {
       return c.json({ error: 'Unknown query parameter' }, 404);
     }
   }
+  // An allowlisted key that occurs more than once is refused, however each
+  // occurrence is spelled (2026-10-06 routing review). This guard and
+  // `ogCacheKey` read through URLSearchParams — decoded key names, FIRST
+  // value — while the routes read through `c.req.query`, whose raw-key fast
+  // path skips a percent-encoded first key (`interpolatio%6E=rgb`) and returns
+  // a later literal one. The two readers then disagree about which value the
+  // request carries, and the card rendered from one was cached under the key
+  // built from the other for the full 7-day s-maxage. Refusing the repetition
+  // closes that for every key at once. Neither the web app nor the crawler's
+  // URL builders ever emit a repeated key, so no real link is affected. Like
+  // the other guard errors, the body names no key and echoes no value.
+  for (const key of OG_ALLOWED_QUERY_KEYS) {
+    if (searchParams.getAll(key).length > 1) {
+      return c.json({ error: 'Repeated query parameter' }, 400);
+    }
+  }
   const algo = searchParams.get('algo');
   if (algo && !isAlgorithm(algo)) {
     return c.json({ error: 'Invalid algorithm' }, 400);
   }
   // Same reasoning as `algo` one line up (ruling S7-R7): `mode` is an allowed
   // KEY on every /og/* route but only the two mixer routes read it, so an
-  // unchecked value would mint a fresh cache key on the other nine. Empty is
-  // absent, not invalid (ruling S7-R10) — `''` is falsy, same as `null`.
+  // unchecked value would mint a fresh cache key on the other nine. (Since
+  // BUG-058 `ogCacheKey` keeps it out of their keys anyway; the check stays so
+  // a bad spelling is the same 400 on every route.) Empty is absent, not
+  // invalid (ruling S7-R10) — `''` is falsy, same as `null`.
   const mode = searchParams.get('mode');
   if (mode && !isValidBlendingMode(mode)) {
     return c.json({ error: 'Invalid mixing mode' }, 400);
@@ -284,13 +313,84 @@ app.use('/og/*', async (c, next) => {
   if (wheel && !parseColorWheelId(wheel)) {
     return c.json({ error: 'Invalid color wheel' }, 400);
   }
+  // `interpolation` picks the gradient card's color space (BUG-008) — five
+  // ids, the same class as `wheel`, but matched exactly: the page's own
+  // `isInterpolationMode` folds no case, so `LAB` is no mode there either.
+  // Empty is absent (ruling S7-R10).
+  const interpolation = searchParams.get('interpolation');
+  if (interpolation && !parseInterpolation(interpolation)) {
+    return c.json({ error: 'Invalid interpolation' }, 400);
+  }
   return next();
 });
 
 /**
+ * True only for the parameterized harmony card,
+ * `/og/harmony/:dyeId/:harmonyType[.png]` — the one route whose handler
+ * reads `wheel` when it renders (BUG-018). `/og/harmony/default.png` (the
+ * per-tool 2a fallback, matched by `/og/:tool/default.png`) shares the
+ * `/og/harmony/` prefix but takes no dye and no wheel, so a plain
+ * `startsWith('/og/harmony/')` check wrongly keyed it too. The parameterized
+ * route always has exactly two more segments after the prefix (dyeId,
+ * harmonyType[.png]); the default card has exactly one (`default.png`).
+ */
+function readsWheel(path: string): boolean {
+  return /^\/og\/harmony\/[^/]+\/[^/]+/.test(path);
+}
+
+/**
+ * The six algo-aware routes — the handlers that read `?algo=` when they
+ * render: harmony, gradient, both mixer routes, swatch, and (BUG-060) the
+ * extractor. `readsWheel`'s rule, applied to `algo` (BUG-058): each pattern
+ * is the route's own Hono pattern with every `:param` as one non-empty
+ * segment, anchored at both ends, tested against the decoded `c.req.path`
+ * the router routed on (ruling S7-R9).
+ *
+ * Each tool's per-tool fallback `/og/<tool>/default.png` shares the prefix
+ * but reads no `algo`, and segment count tells them apart — harmony and
+ * swatch cards have two segments after the tool, gradient three, mixer three
+ * or four, the fallback one. The extractor is the exception: its `:colors` is
+ * ALSO one segment, so `default.png` is excluded by name
+ * (`/og/:tool/default.png` is registered first and wins that path).
+ */
+const ALGO_ROUTE =
+  /^\/og\/(?:harmony\/[^/]+\/[^/]+|gradient\/[^/]+\/[^/]+\/[^/]+|mixer\/[^/]+\/[^/]+\/[^/]+(?:\/[^/]+)?|swatch\/[^/]+\/[^/]+|extractor\/(?!default\.png$)[^/]+)$/;
+
+/** The two mixer routes, the only readers of `?mode=` (BUG-058) — see `ALGO_ROUTE`. */
+const MODE_ROUTE = /^\/og\/mixer\/[^/]+\/[^/]+\/[^/]+(?:\/[^/]+)?$/;
+
+/**
+ * The parameterized gradient card, the only reader of `?interpolation=`
+ * (BUG-008) — `ALGO_ROUTE`'s gradient branch; three segments, so
+ * `/og/gradient/default.png` (one) never matches.
+ */
+const INTERPOLATION_ROUTE = /^\/og\/gradient\/[^/]+\/[^/]+\/[^/]+$/;
+
+function readsAlgo(path: string): boolean {
+  return ALGO_ROUTE.test(path);
+}
+
+function readsMode(path: string): boolean {
+  return MODE_ROUTE.test(path);
+}
+
+function readsInterpolation(path: string): boolean {
+  return INTERPOLATION_ROUTE.test(path);
+}
+
+/**
  * Canonical cache key for a /og/* request (2026-08-29 FINDING-024, OG-4):
  * pathname + the allowed query axes, RESOLVED, in a fixed order — bounds the
- * key space to (pathname × lang × frame × algo) instead of the full URL.
+ * key space to (pathname × lang × frame × version × algo × mode × wheel ×
+ * interpolation) instead of the full URL, where each of the last four widens
+ * it ONLY on the routes that render with it (`readsAlgo` / `readsMode` /
+ * `readsWheel` / `readsInterpolation` — BUG-058, BUG-018, BUG-008). An
+ * allowed key must not multiply the entries of a card
+ * that ignores it: `/og/budget/5.png?algo=oklab`, `?algo=rgb` and `?mode=lab`
+ * each used to buy a full resvg render of one byte-identical card. The
+ * opposite mistake is worse — a route that reads a key the cache does not
+ * carry serves whichever variant rendered first for seven days — so
+ * `og-guards.test.ts` walks every route both ways.
  * `lang` is the *resolved* locale (resolveLocale already collapses
  * ?lang=EN / ?lang=en-US / a missing lang onto the same rendered card) and
  * `frame` is the *resolved* 'discord' | 'x' (an unrecognised ?frame= renders
@@ -318,20 +418,6 @@ app.use('/og/*', async (c, next) => {
  * guard above this still measures the raw pathname on purpose — capping
  * the undecoded string is the conservative side of that check.)
  */
-/**
- * True only for the parameterised harmony card,
- * `/og/harmony/:dyeId/:harmonyType[.png]` — the one route whose handler
- * reads `wheel` when it renders (BUG-018). `/og/harmony/default.png` (the
- * per-tool 2a fallback, matched by `/og/:tool/default.png`) shares the
- * `/og/harmony/` prefix but takes no dye and no wheel, so a plain
- * `startsWith('/og/harmony/')` check wrongly keyed it too. The parameterised
- * route always has exactly two more segments after the prefix (dyeId,
- * harmonyType[.png]); the default card has exactly one (`default.png`).
- */
-function readsWheel(path: string): boolean {
-  return /^\/og\/harmony\/[^/]+\/[^/]+/.test(path);
-}
-
 function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const url = new URL(c.req.url);
   const params = new URLSearchParams();
@@ -344,16 +430,18 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   // workflow. `CARD_VERSION` is this worker's own package version, so bumping
   // it (deploy checklist step 4) is what retires the old cards.
   params.set('v', CARD_VERSION);
+  // Only where a route reads it (BUG-058) — see `readsAlgo`.
   const algo = url.searchParams.get('algo');
-  if (algo) {
+  if (algo && readsAlgo(c.req.path)) {
     params.set('algo', algo);
   }
   // `mode` picks the mixer card's mixing ALGORITHM — two modes are two
-  // different pictures of one path, so it must key. Raw and omitted-when-
-  // absent for the same reason `algo` is; the guard above has already
-  // rejected any present-and-invalid spelling.
+  // different pictures of one path, so it must key there. Raw and omitted-
+  // when-absent for the same reason `algo` is; the guard above has already
+  // rejected any present-and-invalid spelling. Only on the two mixer routes
+  // (BUG-058): every other card ignores it.
   const mode = url.searchParams.get('mode');
-  if (mode) {
+  if (mode && readsMode(c.req.path)) {
     params.set('mode', mode);
   }
   // The default is elided so `wheel=rgb` and absent share one cache entry —
@@ -365,7 +453,7 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   //
   // And only on the route that READS it. `wheel` is an allowed key everywhere
   // because the allowlist is global, but only the parameterised harmony card
-  // (`readsWheel`, below) renders with it — `/og/harmony/default.png` shares
+  // (`readsWheel`, above) renders with it — `/og/harmony/default.png` shares
   // the `/og/harmony/` prefix but is the per-tool 2a fallback card, which
   // never reads `wheel` at render time. A bare prefix check (BUG-018)
   // therefore let up to five validated wheel ids each mint their own
@@ -374,6 +462,18 @@ function ogCacheKey(c: Context<{ Bindings: Env }>): Request {
   const wheel = parseColorWheelId(url.searchParams.get('wheel'));
   if (wheel && wheel !== DEFAULT_COLOR_WHEEL && readsWheel(c.req.path)) {
     params.set('wheel', wheel);
+  }
+  // `interpolation` (BUG-008): the gradient card's color space, keyed only on
+  // that card, with `hsv` — the page's default and the card's — elided so
+  // `?interpolation=hsv` and absent share one entry, as `wheel=rgb` does. The
+  // guard admits only the five exact spellings, so the raw value is canonical.
+  const interpolation = parseInterpolation(url.searchParams.get('interpolation'));
+  if (
+    interpolation &&
+    interpolation !== DEFAULT_GRADIENT_INTERPOLATION &&
+    readsInterpolation(c.req.path)
+  ) {
+    params.set('interpolation', interpolation);
   }
   // Ruling S7-R13 (og-7 refined): strip a trailing `.png` from the path too — it stays
   // optional at every route (below), so the two spellings must share one
@@ -824,7 +924,7 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
   // the shared /og/* guard above already validates `algo` before any route
   // handler runs. Left in place as this route's own invariant rather than
   // deleted as dead code — the same reasoning covers the identical check on
-  // the other four algo-aware routes below, unremarked there.
+  // the other five algo-aware routes below, unremarked there.
   if (!isAlgorithm(algorithm)) {
     return c.json({ error: 'Invalid algorithm' }, 400);
   }
@@ -852,6 +952,10 @@ app.get('/og/harmony/:dyeId/:harmonyType', async (c) => {
 /**
  * Gradient tool OG image
  * Pattern: /og/gradient/:startId/:endId/:steps.png
+ * `?interpolation=` is the color space the ramp runs in — the share's own,
+ * so the middle dyes are the page's (BUG-008); absent is `hsv`, the page's
+ * default. `steps` keeps its 2–20 bound for direct URLs; the crawler only
+ * ever emits the page's 3–12.
  */
 app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
   // Ruling S7-R12: canonical spellings only (see parseCanonicalInt above).
@@ -859,6 +963,10 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
   const endDyeId = parseCanonicalInt(c.req.param('endId'));
   const steps = parseCanonicalInt(stripPngSuffix(c.req.param('steps')));
   const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
+  // A bad spelling never reaches here (the /og/* guard 400s it first), and
+  // neither does a repeated key, so `c.req.query` and the guard's
+  // URLSearchParams read the one value the request carries.
+  const interpolation = parseInterpolation(c.req.query('interpolation'));
   const locale = resolveLocale(new URL(c.req.url).searchParams);
 
   // FINDING-011: Validate dye IDs to prevent NaN propagation
@@ -886,6 +994,7 @@ app.get('/og/gradient/:startId/:endId/:steps', async (c) => {
     startDyeId,
     endDyeId,
     steps,
+    interpolation,
     algorithm,
     locale,
     frame: frameFromQuery(c),
@@ -1116,10 +1225,19 @@ app.get('/og/accessibility/:dyes/:visionType', async (c) => {
  * Pattern: /og/extractor/:colors.png — colors = `RRGGBB` or `RRGGBB-share`
  * entries, comma-separated (e.g. 8E5A3C-31,C9A96A-24 or 8E5A3C,C9A96A), max 5.
  * The web app's share URL carries no shares; bare entries draw equal bands.
+ * `?algo=` picks the method each color's dye is matched by (BUG-060) — the
+ * page resolves them by the shared method, so the card must too.
  */
 app.get('/og/extractor/:colors', async (c) => {
   const colorsParam = stripPngSuffix(c.req.param('colors'));
+  const algorithm = (c.req.query('algo') || DEFAULT_MATCHING_METHOD) as MatchingAlgorithm;
   const locale = resolveLocale(new URL(c.req.url).searchParams);
+
+  // BUG-002: Validate algorithm param (the /og/* guard already has — this
+  // route's own invariant, as on the other five algo-aware routes)
+  if (!isAlgorithm(algorithm)) {
+    return c.json({ error: 'Invalid algorithm' }, 400);
+  }
 
   // Ruling S7-R12: the whole list must be canonical — the old `.filter()`
   // silently dropped any entry that didn't parse, so "1,2,x,3"-shaped
@@ -1152,7 +1270,7 @@ app.get('/og/extractor/:colors', async (c) => {
     timestamp: Date.now(),
   });
 
-  return renderOGImage(generateExtractorOG({ entries, locale, frame: frameFromQuery(c) }));
+  return renderOGImage(generateExtractorOG({ entries, algorithm, locale, frame: frameFromQuery(c) }));
 });
 
 /**

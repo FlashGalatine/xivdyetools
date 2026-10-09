@@ -13,4 +13,4 @@
 - Decide: widen discord-worker's subset inputs with the item names (about +363 Hangul and +1,171 hanzi; measure the gzip bundle against the 3,072 KiB limit first, as nobody has), or record the English card as accepted with these numbers.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `00390333` (ko/zh) and `6cc934c3` + `fa56ae8a` (ja, maintainer's request 2026-10-06). The CJK subsets are cut from api-worker's ko / zh / ja item-name tables (KR +364, SC +1,167, JP +443); English fallback 18,326 → 2 (ko, a stray U+200F in the source table), 28,217 → 0 (zh), 2,110 → 0 (ja). Japanese cards load JP first (resvg falls back in load order, not font-family order), so every ja item name renders in Japanese letterforms; zh / ko / en renders are byte-identical. Bundle 2,717.2 KiB, 88.5 % of the cap. `item-name-coverage.test.ts` gates a missing re-cut. (branch `fix/remediation-2026-10-04-sprint30`, discord-worker 5.8.9; PR #263, open, on PR #262).

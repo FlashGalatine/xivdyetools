@@ -1,8 +1,14 @@
 /**
  * Tests for Bot I18n Service
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Translator, createTranslator, createUserTranslator } from './bot-i18n.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { ExtendedLogger } from '@xivdyetools/logger';
+import {
+  Translator,
+  createTranslator,
+  createUserTranslator,
+  createUserTranslatorWithPrefs,
+} from './bot-i18n.js';
 import { createMockKV } from '@xivdyetools/test-utils/cloudflare';
 
 // Mock the i18n.js module for resolveUserLocale
@@ -204,10 +210,17 @@ describe('bot-i18n.ts', () => {
     it('should create a translator based on user preferences', async () => {
       const mockKV = createMockKV() as unknown as KVNamespace;
       vi.mocked(resolveUserLocale).mockResolvedValue('ja');
+      const logger = {
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      } as unknown as ExtendedLogger;
 
-      const translator = await createUserTranslator(mockKV, 'user-123', 'en-US');
+      const translator = await createUserTranslator(mockKV, 'user-123', 'en-US', logger);
 
-      expect(resolveUserLocale).toHaveBeenCalledWith(mockKV, 'user-123', 'en-US');
+      // BUG-126: the caller's logger is forwarded as resolveUserLocale's 4th argument
+      expect(resolveUserLocale).toHaveBeenCalledWith(mockKV, 'user-123', 'en-US', logger);
       expect(translator.getLocale()).toBe('ja');
     });
 
@@ -218,6 +231,63 @@ describe('bot-i18n.ts', () => {
       const translator = await createUserTranslator(mockKV, 'user-456', 'de');
 
       expect(translator.getLocale()).toBe('de');
+    });
+  });
+
+  /**
+   * BUG-126 (2026-10-04 audit): bot-logic's resolveUserLocale logs a KV
+   * failure only when its caller passes a logger, and neither translator
+   * factory did — so a KV outage during locale resolution degraded every
+   * reply to the Discord locale without a line in the logs. These run the
+   * REAL resolver over a KV whose reads fail.
+   */
+  describe('a KV failure during locale resolution is logged (BUG-126)', () => {
+    const LOCALE_KV_FAILURE = 'Failed to read unified preferences for locale resolution';
+
+    const failingKV = () =>
+      ({ get: vi.fn().mockRejectedValue(new Error('KV unavailable')) }) as unknown as KVNamespace;
+    const makeLogger = () =>
+      ({
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+      }) as unknown as ExtendedLogger;
+
+    beforeEach(async () => {
+      const actual = await vi.importActual<typeof import('./i18n.js')>('./i18n.js');
+      vi.mocked(resolveUserLocale).mockImplementation(actual.resolveUserLocale);
+    });
+
+    afterEach(() => {
+      // clearAllMocks keeps implementations: put the module mock's default back
+      vi.mocked(resolveUserLocale).mockResolvedValue('en');
+    });
+
+    it('createUserTranslator logs it on the caller logger and still answers', async () => {
+      const logger = makeLogger();
+
+      const translator = await createUserTranslator(failingKV(), 'user-123', 'de', logger);
+
+      expect(translator.getLocale()).toBe('de');
+      expect(logger.error).toHaveBeenCalledWith(LOCALE_KV_FAILURE, expect.any(Error));
+    });
+
+    it('createUserTranslatorWithPrefs logs the locale read too, not only the preferences read', async () => {
+      const logger = makeLogger();
+
+      const { t, prefs } = await createUserTranslatorWithPrefs(
+        failingKV(),
+        'user-123',
+        'fr',
+        logger,
+      );
+
+      expect(t.getLocale()).toBe('fr');
+      expect(prefs).toEqual({});
+      // getUserPreferences logs its own failure on the same KV; the locale
+      // resolver's line is the one that was missing
+      expect(logger.error).toHaveBeenCalledWith(LOCALE_KV_FAILURE, expect.any(Error));
     });
   });
 });

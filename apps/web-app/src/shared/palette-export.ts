@@ -131,9 +131,17 @@ function normalizeHex(hex: string): string {
   return hex.startsWith('#') ? hex.toUpperCase() : `#${hex.toUpperCase()}`;
 }
 
-/** ISO date (yyyy-mm-dd) used in headers and filenames. */
-function today(): string {
-  return new Date().toISOString().split('T')[0];
+/**
+ * The user's local calendar date (yyyy-mm-dd), used in headers and filenames —
+ * here and in the collections and settings JSON export filenames.
+ * BUG-123: not `toISOString()`, which is UTC — evening exports west of UTC
+ * were stamped with tomorrow's date.
+ */
+export function localDateStamp(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
 /**
@@ -166,7 +174,7 @@ function headerLines(payload: ExportPayload): string[] {
   const labels = payload.labels ?? DEFAULT_LABELS;
   const lines = [
     `XIV Dye Tools — ${payload.title}`,
-    labels.generatedLine(today(), payload.entries.length),
+    labels.generatedLine(localDateStamp(), payload.entries.length),
   ];
   if (payload.meta?.length) lines.push(...payload.meta);
   return lines;
@@ -251,7 +259,7 @@ function generateJson(payload: ExportPayload): string {
     {
       tool: payload.tool,
       title: payload.title,
-      generated: today(),
+      generated: localDateStamp(),
       ...(payload.meta?.length ? { meta: payload.meta } : {}),
       entries: payload.entries.map((entry) => ({
         key: entry.key,
@@ -314,7 +322,7 @@ export function generateExport(payload: ExportPayload, format: ExportFormat): st
 
 /** Filename for a downloaded export. */
 export function exportFilename(payload: ExportPayload, format: ExportFormat): string {
-  return `xiv-${payload.tool}-${today()}.${EXTENSIONS[format]}`;
+  return `xiv-${payload.tool}-${localDateStamp()}.${EXTENSIONS[format]}`;
 }
 
 /** MIME type for a downloaded export. */

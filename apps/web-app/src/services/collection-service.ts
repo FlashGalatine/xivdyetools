@@ -190,11 +190,15 @@ export class CollectionService {
   static initialize(): void {
     if (this.initialized) return;
 
+    // Flag first: a load-time migration saves, every save notifies, and the
+    // notify reads back through getFavorites()/getCollections() — which
+    // re-enter initialize(). BUG-117: with the flag set only after the loads,
+    // that re-entry reloaded the unmigrated storage; when the migration write
+    // did not stick (quota full) the loop never ended (RangeError). The
+    // palette migration below re-enters the same way via createCollection etc.
+    this.initialized = true;
     this.loadFavorites();
     this.loadCollections();
-    // Flag first: the palette migration goes through the public APIs
-    // (createCollection etc.), which re-enter initialize()
-    this.initialized = true;
     this.migrateLegacyPalettes();
     logger.info('📚 CollectionService initialized');
   }
@@ -935,14 +939,18 @@ export class CollectionService {
           // had already been persisted. Reject non-strings here, and (in case
           // something else in the per-record work below throws) wrap each
           // iteration so one bad record is skipped, not fatal to the import.
+          // BUG-118: the object check comes first — a JSON `null` element
+          // threw here, outside the per-record try, on its `.name` read.
+          const isObject = !!collection && typeof collection === 'object';
           if (
+            !isObject ||
             typeof collection.name !== 'string' ||
             !collection.name ||
             !Array.isArray(collection.dyes)
           ) {
             result.errors.push({
               code: 'skippedInvalid',
-              name: typeof collection.name === 'string' ? collection.name : undefined,
+              name: isObject && typeof collection.name === 'string' ? collection.name : undefined,
             });
             continue;
           }

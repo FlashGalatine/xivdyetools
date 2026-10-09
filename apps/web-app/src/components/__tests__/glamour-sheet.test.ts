@@ -1,5 +1,5 @@
 /**
- * The export sheet (design 2c): Copy list and Export .md open a preview of
+ * The export sheet (design 2c): Copy list and Save .md open a preview of
  * the GPOSERS list with one editable Acquisition field per piece. Edits are
  * kept on this device, keyed by the gear; a twin pick never overwrites one.
  */
@@ -104,6 +104,21 @@ describe('glamour export sheet', () => {
     expect(preview()).toContain('Head: Hempen Coif\nDye 1: #1\nAcquisition: Crafted (WVR Lvl. 3)');
     expect(preview()).toContain('Legs: Viera Gaskins\nAcquisition:\n');
     expect(sheet()!.textContent).not.toContain('Galatine');
+  });
+
+  // I18N-007: the count rode in one plural string ("1 pieces").
+  it('counts the pieces in the locale plural form', () => {
+    openGlamourSheet(source());
+    expect(sheet()!.textContent).toContain('GPOSERS format · 3 pieces · edit anything');
+    closeGlamourSheet();
+
+    const one = source();
+    one.resolved = {
+      ...one.resolved,
+      gearModels: one.resolved.gearModels.slice(0, 1),
+    } as ResolvedCharaCharacter;
+    openGlamourSheet(one);
+    expect(sheet()!.textContent).toContain('GPOSERS format · 1 piece · edit anything');
   });
 
   it('keeps an edit on this device, keyed by the gear, and shows it everywhere', () => {
@@ -321,7 +336,7 @@ describe('glamour export sheet', () => {
   it('says what it keeps, and closes on Escape', () => {
     openGlamourSheet(source());
     expect(sheet()!.textContent).toContain(
-      "Edits are kept on this device for this outfit. The character's name is never in the list, and the file itself is never saved."
+      "Edits are kept on this device for each piece of gear. The character's name is never in the list, and the file itself is never saved."
     );
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(sheet()).toBeNull();
