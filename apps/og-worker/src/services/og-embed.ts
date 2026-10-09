@@ -137,7 +137,7 @@ export const OG_EMBED: Record<LocaleCode, Record<EmbedKey, string>> = {
     'swatch.descriptionSheet': 'Finde FFXIV-Farbstoffe passend zu {hex} aus der Palette „{sheet}“.',
     'swatch.descriptionSheetRace': 'Finde FFXIV-Farbstoffe passend zu {hex} aus der Palette „{sheet}“ – {race}, {gender}.',
     'swatch.descriptionDefault': 'Finde die FFXIV-Farbstoffe, die jeder Farbe am nächsten kommen – aus einer Charakterdatei oder einem Hexcode.',
-    'glamour.descriptionDefault': 'Jedes Teil, das eine Charakterdatei trägt – mit Farbstoffen, ob das Spiel es tragen lässt, und Bezugsquelle.',
+    'glamour.descriptionDefault': 'Jedes getragene Teil einer Charakterdatei – seine Farbstoffe, ob das Spiel es tragen lässt, und seine Bezugsquelle.',
     'comparison.title': 'Vergleich: {names}',
     'comparison.description': '{n} FFXIV-Farbstoffe nebeneinander: {names}. Sieh, wie sie zusammen wirken!',
     'comparison.descriptionDefault': 'Vergleiche bis zu 4 FFXIV-Farbstoffe nebeneinander.',

@@ -30,7 +30,7 @@
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
 | **Public REST API** | v0.16.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
-| **OpenGraph Worker** | v2.11.3 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
+| **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.2 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
 | **API Documentation** | — | merged into `xivdyetools-api-worker` (`docs/`, Workers Static Assets) | Cloudflare Workers | Merged 2026-07-31 |
@@ -193,7 +193,7 @@
 | Version | Date | Highlights |
 |---------|------|------------|
 | v5.8.11 | Oct 2026 | `/manual` catches up with `/glamour` (with bot-logic 4.8.3; PR #251, stacked on the remediation chain's tip): the `.chara` help and the `file` option text name Brio, and the 👤 Character File topic explains every verdict the card can show, the automatic twin pick and the English Acquisition lines; three guards in `manual.test.ts`; CJK subsets re-cut (SC +1, JP +3, KR +2). The deploy re-registers commands |
-| v5.8.10 | Oct 2026 | `renderSvgToPng` frees both resvg-wasm allocations of every render in a `finally` — the `Resvg` (never registered with a finalizer in resvg-wasm 2.6.2, so it leaked for the life of the isolate) and the `RenderedImage` pixmap — the fix the 2026-10-04 deep-dive's OPT-006 prescribes for og-worker. No visible change, no `register-commands` |
+| v5.8.10 | Oct 2026 | `renderSvgToPng` frees both resvg-wasm allocations of every render, the `Resvg` tree and the `RenderedImage` pixmap, in a `finally` — the fix the 2026-10-04 deep-dive's OPT-006 prescribes for og-worker. Both used to leak for the life of the isolate: resvg-wasm 2.6.2 never registers the `Resvg` with a finalizer, and at this worker's compatibility_date (2024-12-01) workerd has no `FinalizationRegistry` for the pixmap either. No visible change, no `register-commands` |
 | v5.8.9 | Oct 2026 | `/glamour` cards name items in Korean, Chinese and Japanese (2026-10-04 remediation, Sprint 30, FONT-001): CJK subsets widened with the ko / zh / ja item-name tables (KR +364, SC +1,167, JP +443); English fallback 63.2 % → 2 items (ko), 97.3 % → 0 (zh), 7.3 % → 0 (ja); Japanese cards load JP first, so kanji draw in Japanese letterforms (zh / ko / en unchanged); bundle 2,717.2 KiB (88.5 % of the cap) |
 | v5.8.8 | Oct 2026 | Moderation button ids built by `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); byte-identical. No visible change |
 | v5.8.7 | Oct 2026 | Core 5.10.0 and bot-logic 4.8.2 (2026-10-04 remediation, Sprint 13): `/extractor` shows only real colours (BUG-036); grey `/gradient` and HSL `/mixer` endpoints keep the other hue (BUG-035); unreadable `.chara` colours refused (BUG-133); CJK subsets re-cut for the new sheet names (JP +2/−1, SC +5/−3) |
@@ -402,6 +402,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.12.0 | Oct 2026 | 2026-10-04 remediation, Sprint 11: gradient previews follow the shared `interpolation` (new query key) and draw the page's own steps (6,682 / 6,682 share links match the page end to end); the extractor card follows `?algo=`; legacy `?algo=` spellings fixed on harmony; custom-color shares unfurl named; cache key splits only where a route reads the key; a repeated query key gets a 400; fr presets name and de Glamour Reader description fixed; resvg allocations freed |
 | v2.11.3 | Oct 2026 | Core 5.10.0 (2026-10-04 remediation, Sprint 13): CJK subsets re-cut for the new sheet names; de/fr swatch link descriptions reworded so no gendered word precedes the sheet name; the version retires cached HSL mixer cards with a grey input (BUG-035) |
 | v2.11.2 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients); cached cards retire with the version |
 | **v2.11.0** | **Sep 2026** | **The Glamour Reader's card (design turn 4): `/glamour` routed in both environments, `glamour/default.png` on the 2a shape with glyph 1a and no method tag (the reader measures no color distance), strings ×6, CJK subsets re-cut. The default card's one-liner now wraps (up to three lines, the deck grows) instead of running off the card's edge, which is what the live EN Mixer and DE Gradient cards did** |

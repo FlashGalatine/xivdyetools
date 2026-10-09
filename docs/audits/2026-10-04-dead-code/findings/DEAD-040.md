@@ -15,4 +15,4 @@
 Steps: 1) apps/og-worker/vitest.config.ts: delete line 2 ('import path from 'path';') and lines 31-35 (the resolve/alias block); line 30 '  },' then closes the config. 2) apps/og-worker/tsconfig.json: delete lines 8-11 (baseUrl and paths) and remove the trailing comma from line 7 ('types'). 3) pnpm turbo run build type-check lint test --filter=...xivdyetools-og-worker && pnpm dead-code:check
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `261f1a13` (branch `fix/remediation-2026-10-04-sprint11`, og-worker 2.12.0; PR #268, open, on PR #263).

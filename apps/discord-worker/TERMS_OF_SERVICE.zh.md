@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](TERMS_OF_SERVICE.md)
 
-**最后更新**：2026-10-05
+**最后更新**：2026-10-09
 
 > 网站 xivdyetools.app 有自己的条款：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。数据处理方式见[隐私政策](PRIVACY_POLICY.md)。
 

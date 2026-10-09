@@ -101,12 +101,15 @@ export async function renderSvgToPng(
   // Both wasm allocations of a render, the parsed tree and the RGBA pixmap,
   // are released in the `finally`: on success after `asPng()` has returned,
   // and on a failure whichever of the two was allocated. Nothing else frees
-  // the tree: in @resvg/resvg-wasm 2.6.2 the `Resvg` constructor glue never
-  // calls `ResvgFinalization.register`, so before this fix every `Resvg`
-  // leaked for the life of the isolate, however often GC ran. Only
-  // `RenderedImage` registers, so the pixmap was reclaimed late, whenever GC
-  // ran its finalizer. Freeing is safe after `asPng()`: it returns a JS-owned
-  // copy, not a view over wasm memory. This is the fix the 2026-10-04
+  // either of them in this worker. In @resvg/resvg-wasm 2.6.2 the `Resvg`
+  // constructor glue never calls `ResvgFinalization.register`, and
+  // `RenderedImage` registers only where a `FinalizationRegistry` exists:
+  // this worker's compatibility_date (2024-12-01, no `enable_weak_ref` flag)
+  // predates the 2025-05-05 default, so workerd has none and the glue falls
+  // back to a no-op stub. Before this fix both allocations leaked for the life
+  // of the isolate on every render, and GC reclaimed neither. Freeing is safe
+  // after `asPng()`: it returns a JS-owned copy, not a view over wasm memory.
+  // This is the fix the 2026-10-04
   // deep-dive's OPT-006 prescribes for og-worker's renderer. `RenderedImage`
   // is not exported from resvg-wasm's typings, hence the derived type.
   let resvg: InstanceType<typeof Resvg> | undefined;

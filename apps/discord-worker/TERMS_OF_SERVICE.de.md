@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert**: 2026-10-05
+**Zuletzt aktualisiert**: 2026-10-09
 
 > Die Web-App unter xivdyetools.app hat eigene Bedingungen:
 > [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Der Umgang mit Daten ist in

@@ -11,9 +11,12 @@ overrides:
   qs: '>=6.15.2'
   # GHSA-mv8w-475r-vwqw (critical): seroval.fromJSON() Promise resolver type
   # confusion invokes attacker-controlled methods during deserialization.
-  # Reaches us only transitively, via stoat-worker > revolt.js > solid-js, and
-  # seroval-plugins peers on `^1.0` so the floor satisfies it unchanged.
-  seroval: '>=1.5.3'
+  # GHSA-jp82-f5mq-hwhp (high, 2026-10-06): memory exhaustion via an unchecked
+  # TypedArray length in JSON deserialization, fixed in 1.6.3 — raises the
+  # floor from 1.5.3. Reaches us only transitively, via stoat-worker >
+  # revolt.js > solid-js, and seroval-plugins peers on `^1.0` so the floor
+  # satisfies it unchanged.
+  seroval: '>=1.6.3'
   # FINDING-036 (2026-08-21 security audit) — dev-only advisories, none
   # reachable at runtime, closed by scoped overrides rather than waiting on
   # upstream majors:
