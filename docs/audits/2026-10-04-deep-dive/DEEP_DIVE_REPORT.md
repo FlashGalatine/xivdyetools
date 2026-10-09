@@ -341,7 +341,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-004 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-005 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-006 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
-| BUG-007 | OPEN | — |
+| BUG-007 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | BUG-008 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | BUG-009 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | BUG-010 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
@@ -389,9 +389,9 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-052 | FIX COMMITTED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
 | BUG-053 | FIXED 2026-10-05 (PR #225) | `6f2bb05c` |
 | BUG-054 | FIX COMMITTED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
-| BUG-055 | OPEN | — |
-| BUG-056 | OPEN | — |
-| BUG-057 | OPEN | — |
+| BUG-055 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
+| BUG-056 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
+| BUG-057 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | BUG-058 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | BUG-059 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | BUG-060 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
@@ -496,7 +496,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-003 | FIX COMMITTED, NOT DEPLOYED (PR #259, open) | `4d7df6c2`, `07c69bce` |
 | REFACTOR-004 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
 | REFACTOR-005 | FIX COMMITTED, NOT DEPLOYED (PR #255, open) | `51a058de` + `ccda155f` + `7c187084` |
-| REFACTOR-006 | OPEN | — |
+| REFACTOR-006 | FIX COMMITTED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | REFACTOR-007 | FIX COMMITTED, NOT DEPLOYED (PR #270, open) | `8d2649d7` |
 | REFACTOR-008 | OPEN | — |
 | REFACTOR-009 | PARTIALLY FIXED 2026-10-05 (OPEN_ITEMS half; DOMAIN_DEPRECATION in Sprint 20) | `223b839f` |

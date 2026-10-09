@@ -14,9 +14,6 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.d.ts',
         'src/__tests__/mocks/**',
-        // Durable Objects — not testable via vitest (requires workerd runtime)
-        'src/services/rate-limit-do.ts',
-        'src/durable-objects/**',
       ],
       thresholds: {
         statements: 90,
