@@ -11,4 +11,4 @@
 - "审核员": inside #223 before merging, or in the policy sprint.
 
 ## Status
-OPEN — Sprint 0 decision: fix inside the open PR before merging, or later in the policy sprint.
+FIXED 2026-10-05 — `91de5f8d` (PR #223, merged in `5e3b000d`). The UI string `zh.json:1051` stays a *Pin first* row. Re-verified on `main@50165ec6`: [reverify-2026-10-05.md](../evidence/reverify-2026-10-05.md).

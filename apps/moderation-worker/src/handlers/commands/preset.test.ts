@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { createMockD1Database, createMockKV } from '@xivdyetools/test-utils';
+import { createMockD1Database, createMockFetcher, createMockKV } from '@xivdyetools/test-utils';
 import { handlePresetCommand } from './preset.js';
 import { Translator } from '../../services/bot-i18n.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
@@ -2279,5 +2279,145 @@ describe('handlePresetCommand — security audit remediations', () => {
       expect(lastEdit().embeds[0].description).toBe('Failed to unban user.');
       expect((logger as any).error).toHaveBeenCalledWith(expect.stringContaining('Unban failed'), cause);
     });
+  });
+});
+
+// ============================================================================
+// 2026-10-04 deep-dive, Sprint 17 follow-ups — the /preset moderate confirmation
+// ============================================================================
+describe('/preset moderate approve|reject — the confirmation (Sprint 17)', () => {
+  let env: Env;
+  let ctx: ExecutionContext;
+  let t: Translator;
+
+  const PRESET_ID = 'a0000000-0000-4000-8000-000000000001';
+  const MOD = '111111111111111111';
+
+  const moderate = (action: 'approve' | 'reject'): DiscordInteraction => ({
+    id: 'int-1',
+    token: 'token-1',
+    application_id: 'app-123',
+    type: 2,
+    channel_id: 'channel-moderation',
+    member: { user: { id: MOD, username: 'Moderator' } },
+    data: {
+      name: 'preset',
+      options: [
+        {
+          name: 'moderate',
+          type: 1,
+          options: [
+            { name: 'action', type: 3, value: action },
+            { name: 'preset_id', type: 3, value: PRESET_ID },
+          ],
+        },
+      ],
+    },
+  });
+
+  const run = async (action: 'approve' | 'reject'): Promise<any> => {
+    vi.mocked(discordApi.editOriginalResponse).mockClear();
+    await handlePresetCommand(moderate(action), env, ctx, t);
+    const calls = vi.mocked(ctx.waitUntil).mock.calls;
+    await calls[calls.length - 1]?.[0];
+    return vi.mocked(discordApi.editOriginalResponse).mock.calls.at(-1)?.[2];
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(presetApi.isModerator).mockReturnValue(true);
+    vi.mocked(banService.isPresetAuthorBanned).mockResolvedValue(false);
+    env = {
+      DISCORD_PUBLIC_KEY: 'test-public-key',
+      DISCORD_TOKEN: 'test-bot-token',
+      DISCORD_CLIENT_ID: 'app-123',
+      MODERATOR_IDS: MOD,
+      MODERATION_CHANNEL_ID: 'channel-moderation',
+      BOT_API_SECRET: 'test-api-secret',
+      BOT_SIGNING_SECRET: 'test-signing-secret-padding-1234',
+      DB: createMockD1Database() as unknown as D1Database,
+      KV: createMockKV() as unknown as KVNamespace,
+      PRESETS_API: undefined,
+      PRESETS_API_URL: 'https://presets-api.example.com',
+    };
+    ctx = {
+      waitUntil: vi.fn((promise: Promise<any>) => promise),
+      passThroughOnException: vi.fn(),
+    } as unknown as ExecutionContext;
+    t = new Translator('en');
+  });
+
+  // BUG-054: the REAL getModerationPreset against a presets-api that answers
+  // the catch-all route 404 (one older than 2.4.0: a rollback or a misordered
+  // deploy). That 404 is not "the preset is gone".
+  it.each(['approve', 'reject'] as const)(
+    '%s: a presets-api route 404 is an error, not "Preset not found."',
+    async (action) => {
+      const actual = await vi.importActual<typeof presetApi>('../../services/preset-api.js');
+      vi.mocked(presetApi.getModerationPreset).mockImplementationOnce(actual.getModerationPreset);
+      const fetcher = createMockFetcher();
+      fetcher._setupHandler(() =>
+        Response.json(
+          {
+            success: false,
+            error: 'NOT_FOUND',
+            message: `Route GET /api/v1/moderation/${PRESET_ID} not found`,
+          },
+          { status: 404 },
+        ),
+      );
+      env.PRESETS_API = fetcher as unknown as Fetcher;
+
+      const edit = await run(action);
+
+      // the request really reached the fake presets-api (not a config 503)
+      expect(fetcher._calls).toHaveLength(1);
+      expect(fetcher._calls[0].url).toBe(`https://internal/api/v1/moderation/${PRESET_ID}`);
+      expect(edit.embeds[0].title).toContain('Error');
+      expect(edit.embeds[0].description).not.toBe('Preset not found.');
+      expect(edit.embeds[0].description).toBe(
+        `Route GET /api/v1/moderation/${PRESET_ID} not found`,
+      );
+      expect(edit).not.toHaveProperty('components');
+    },
+  );
+
+  // Sprint 17 review: the confirmation offers one Approve or Reject button and
+  // no Revert, so it does not describe Revert. It still says the text is an
+  // edit with a saved earlier version, which the moderation message can revert to.
+  it.each(['approve', 'reject'] as const)(
+    '%s: notes a saved earlier version without describing a Revert it does not offer',
+    async (action) => {
+      vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+        preset: {
+          ...CURRENT_PRESET,
+          category_id: 'jobs',
+          tags: [],
+          previous_values: { name: 'Before', description: 'x', tags: [], dyes: [1] },
+        },
+        revision: 3,
+      } as never);
+
+      const edit = await run(action);
+      const description: string = edit.embeds[0].description;
+
+      expect(description).toContain(
+        '**Edit:** a saved earlier version exists (Revert is on the moderation message)',
+      );
+      expect(description).not.toContain('**Revert:**');
+      expect(edit.components[0].components).toHaveLength(1);
+    },
+  );
+
+  it('says nothing about a saved version when there is none', async () => {
+    vi.mocked(presetApi.getModerationPreset).mockResolvedValue({
+      preset: { ...CURRENT_PRESET, category_id: 'jobs', tags: [], previous_values: null },
+      revision: 3,
+    } as never);
+
+    const edit = await run('approve');
+
+    expect(edit.embeds[0].description).not.toContain('**Edit:**');
+    expect(edit.embeds[0].description).not.toContain('Revert');
   });
 });

@@ -7,7 +7,6 @@ import {
 } from './ban-confirmation.js';
 import type { Env } from '../../types/env.js';
 import { InteractionResponseType } from '../../types/env.js';
-import { base64UrlEncode } from '@xivdyetools/auth/encoding';
 import * as presetApi from '../../services/preset-api.js';
 
 // Mock modules
@@ -52,7 +51,7 @@ describe('handleBanConfirmButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_123456789012345678_TestUser' },
+      data: { custom_id: 'ban_confirm_123456789012345678' },
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
@@ -69,7 +68,7 @@ describe('handleBanConfirmButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: 'ban_confirm_123456789012345678_TestUser' },
+      data: { custom_id: 'ban_confirm_123456789012345678' },
       member: { user: { id: '123456789012345678', username: 'NormalUser' } },
     };
 
@@ -103,7 +102,7 @@ describe('handleBanConfirmButton', () => {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: 'ban_confirm__TestUser' },
+      data: { custom_id: 'ban_confirm_' },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
     };
 
@@ -115,13 +114,12 @@ describe('handleBanConfirmButton', () => {
 
   it('should open ban reason modal with correct data', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = base64UrlEncode('TestUser');
 
     const interaction = {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `ban_confirm_123456789012345678_${encodedUsername}` },
+      data: { custom_id: 'ban_confirm_123456789012345678' },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
     };
 
@@ -145,34 +143,14 @@ describe('handleBanConfirmButton', () => {
     );
   });
 
-  it('should parse custom_id with underscore in username', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = base64UrlEncode('Test_User_Name');
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: `ban_confirm_123456789012345679_${encodedUsername}` },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.type).toBe(InteractionResponseType.MODAL);
-    expect(json.data.custom_id).toBe('ban_reason_modal_123456789012345679');
-  });
-
   it('should handle user object instead of member', async () => {
     vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = base64UrlEncode('TestUser');
 
     const interaction = {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `ban_confirm_123456789012345678_${encodedUsername}` },
+      data: { custom_id: 'ban_confirm_123456789012345678' },
       user: { id: 'mod-1', username: 'Moderator' },
     };
 
@@ -180,42 +158,6 @@ describe('handleBanConfirmButton', () => {
     const json = (await response.json()) as any;
 
     expect(json.type).toBe(InteractionResponseType.MODAL);
-  });
-
-  it('should extract user ID correctly from beginning of custom_id', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = base64UrlEncode('Username');
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: `ban_confirm_123456789012345678_${encodedUsername}` },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.custom_id).toBe('ban_reason_modal_123456789012345678');
-  });
-
-  it('should handle special characters in username', async () => {
-    vi.mocked(presetApi.isModerator).mockReturnValue(true);
-    const encodedUsername = base64UrlEncode('User.Name-123');
-
-    const interaction = {
-      id: 'int-1',
-      token: 'token-1',
-      application_id: 'app-123',
-      data: { custom_id: `ban_confirm_123456789012345678_${encodedUsername}` },
-      member: { user: { id: 'mod-1', username: 'Moderator' } },
-    };
-
-    const response = await handleBanConfirmButton(interaction, env, ctx);
-    const json = (await response.json()) as any;
-
-    expect(json.data.custom_id).toBe('ban_reason_modal_123456789012345678');
   });
 });
 
@@ -296,21 +238,26 @@ describe('handleBanConfirmButton — FINDING-007 (custom_id carries only the id)
     expect(json.data.content).toContain('Invalid button data');
   });
 
-  it('still accepts a legacy custom_id that carries a username but never echoes it into the modal id', async () => {
-    const encodedUsername = base64UrlEncode('彩'.repeat(32));
+  // DEAD-029 (2026-10-04 dead-code audit): the pre-FINDING-007 shape
+  // ban_confirm_{id}_{base64url username} is no longer parsed. Nothing emits it,
+  // and should an old ephemeral button survive, it is refused — it never opens
+  // a modal, so it can never lead to a ban.
+  it('refuses a legacy custom_id that carries a base64 username suffix', async () => {
     const interaction = {
       id: 'int-1',
       token: 'token-1',
       application_id: 'app-123',
-      data: { custom_id: `ban_confirm_123456789012345678_${encodedUsername}` },
+      // 'VGVzdFVzZXI' is base64url('TestUser')
+      data: { custom_id: 'ban_confirm_123456789012345678_VGVzdFVzZXI' },
       member: { user: { id: 'mod-1', username: 'Moderator' } },
     };
 
     const response = await handleBanConfirmButton(interaction, env, ctx);
     const json = (await response.json()) as any;
 
-    expect(json.type).toBe(InteractionResponseType.MODAL);
-    expect(json.data.custom_id).toBe('ban_reason_modal_123456789012345678');
+    expect(json.type).toBe(InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE);
+    expect(json.data.flags).toBe(64);
+    expect(json.data.content).toContain('Invalid button data');
   });
 });
 
@@ -386,8 +333,8 @@ describe('handleBanCancelButton', () => {
 
 describe('isBanConfirmButton', () => {
   it('should return true for ban confirm buttons', () => {
-    expect(isBanConfirmButton('ban_confirm_123456789012345678_TestUser')).toBe(true);
-    expect(isBanConfirmButton('ban_confirm_456_AnotherUser')).toBe(true);
+    expect(isBanConfirmButton('ban_confirm_123456789012345678')).toBe(true);
+    expect(isBanConfirmButton('ban_confirm_456')).toBe(true);
   });
 
   it('should return false for other buttons', () => {
@@ -412,7 +359,7 @@ describe('isBanCancelButton', () => {
   });
 
   it('should return false for other buttons', () => {
-    expect(isBanCancelButton('ban_confirm_123456789012345678_TestUser')).toBe(false);
+    expect(isBanCancelButton('ban_confirm_123456789012345678')).toBe(false);
     expect(isBanCancelButton('preset_reject_123')).toBe(false);
     expect(isBanCancelButton('other_button')).toBe(false);
   });

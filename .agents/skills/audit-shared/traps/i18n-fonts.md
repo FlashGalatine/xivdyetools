@@ -1,8 +1,15 @@
 ## 5. i18n / fonts
 
 - `packages/core/src/data/locales/*.json` is **generated** (`fetch_dye_names.py` → `dyenames.csv`
-  + `localize.yaml` → `build-locales.ts`, run by core `build`). Hand edits are overwritten — fix
-  the generator or the CSV. bot-logic and web-app locale JSONs are hand-edited.
+  + `facewear-names.csv` + `localize.yaml` → `build-locales.ts`, run by core `build`). Hand edits
+  are overwritten — fix the generator or the CSV. bot-logic and web-app locale JSONs are hand-edited.
+  - The generator cross-checks before it writes anything: `dyenames.csv` against `dyes.json` and
+    `facewear-names.csv` against `facewear_colors.json` — one row per entry, no orphan or duplicate
+    key, and an English cell equal to the data file's `name`, case included. A mismatch exits 1
+    with every locale untouched, and `--allow-missing` (empty translation cells only) never waives
+    it. `scripts/build-locales.test.ts` also regenerates from the committed sources and compares
+    the committed JSON, so on a green tree no en name disagrees with `dyes.json` or
+    `facewear_colors.json`; look for a wrong name in the CSVs, not the generated JSON.
 - Locale files are all LF (`git ls-files --eol`) — several reviewers mis-reported CRLF from checkout.
 - Re-run `scripts/subset-cjk-fonts.py` (og-worker, discord-worker) after **any** locale text
   change; `font-coverage.test.ts` goes red otherwise (by design). Compare subsets **by cmap, not
@@ -67,7 +74,7 @@
   not `색조`.
 - **Character-creation palette names are pinned** (2026-10-05) in `ffxiv-terminology.md` →
   *Character-Creation Color Sheets*, from the client's `Lobby` rows.
-  - **Core's `sheets` section is NOT a source:** it is typed by hand in `build-locales.ts` and wrong in five languages.
+  - **Core's `sheets` section follows the glossary** (TERM-021, fixed in the 2026-10-04 remediation): `buildSheets` in `build-locales.ts` was rewritten from that table, and `scripts/build-locales.test.ts` pins all six locales plus each locale's ruled-out words. The glossary is still the source: change a word there first, then in `buildSheets`, never in the generated JSON. Deliberate, so not findings: English keeps its house wording (`Tattoo/Limbal`, `Face Paint (Dark)`); the face-paint keys use the feature name (row 249) in ja / fr / ko / zh and the palette label (250) only in de; and the tattoo / limbal house-form *label* uses ` / ` in every other locale, never the fullwidth `／` (a rule for the standalone label, not for ／ in ja running prose).
   - **Limbal ring = the iris's outline:** 瞳の輪郭 / Äußere Iris / Contour de l'iris / 눈동자 테두리 / 瞳孔轮廓. Never Limbus / Limbe / リムバル / 림벌 / 角膜 / 홍채 / 虹膜 / 角膜环.
   - **Face paint:** de Merkmale and fr Maquillage.
   - **Dark / Light:** fr Opaque / Translucide.

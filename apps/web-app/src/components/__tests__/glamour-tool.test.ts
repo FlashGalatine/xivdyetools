@@ -79,6 +79,27 @@ describe('GlamourTool', () => {
     expect(container.textContent).not.toContain(LanguageService.t('swatch.charaHint'));
   });
 
+  it("pitches the reader on the drop zone, not the Swatch Matcher's grid or hair and skin", () => {
+    mount();
+    expect(container.textContent).toContain(
+      'Anamnesis, Ktisis or Brio. Every piece the character wears, with its dyes.'
+    );
+    expect(container.textContent).not.toContain(LanguageService.t('swatch.dropBody'));
+    expect(container.textContent).not.toContain(LanguageService.t('swatch.orGrid'));
+  });
+
+  it('pitches the drop zone in the new language after a language switch', async () => {
+    mount();
+    await LanguageService.setLocale('ja');
+    try {
+      const body = LanguageService.t('glamour.dropBody');
+      expect(body).not.toContain('Every piece');
+      await vi.waitFor(() => expect(container.textContent).toContain(body));
+    } finally {
+      await LanguageService.setLocale('en');
+    }
+  });
+
   it('shows no LOCAL ONLY chip once a file is loaded, and keeps the glamour hint', async () => {
     await loadCharaFile(charaFile(FIXTURE));
     mount();
@@ -94,7 +115,7 @@ describe('GlamourTool', () => {
     await vi.waitFor(() =>
       expect(container.querySelector('[data-role="glamour-block"]')).not.toBeNull()
     );
-    // Copy list / Export .md sit in the reader's header, not the block's (design 1a).
+    // Copy list / Save .md sit in the reader's header, not the block's (design 1a).
     const actions = container.querySelector('[data-role="reader-actions"]')!;
     expect(actions.querySelector('[data-role="copy-list"]')).not.toBeNull();
     expect(actions.querySelector('[data-role="export-markdown"]')).not.toBeNull();

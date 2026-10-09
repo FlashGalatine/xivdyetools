@@ -124,8 +124,8 @@ candidates carry their reason into *Rejected suspicions*.
 Before any code change: present the catalog **and** the plan; call out Sprint 0 by ID; for
 security confirm the rotation checklist with whoever holds the credentials; get an explicit
 yes. Fixes then follow the plan sprint by sprint (one commit per task or sprint, verification
-gate at every sprint boundary), and each fix updates the finding's `## Status` + the report's
-status table.
+gate at every sprint boundary, agents routed per `model-routing.md` § *Remediation sprints*),
+and each fix updates the finding's `## Status` + the report's status table.
 
 ## 9. Hand-off to the planner
 

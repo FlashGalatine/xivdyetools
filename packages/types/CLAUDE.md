@@ -38,10 +38,10 @@ src/
 ├── color/         # RGB/HSV/LAB/OKLAB/OKLCH/LCH/HSL/CMYK + branded HexColor/DyeId/Hue/Saturation + MATCH_QUALITY_TIERS
 ├── dye/           # Dye, LocalizedDye, DyeWithDistance, DyeTypeFilters, FacewearColor
 ├── character/     # CharacterColor, CharacterColorMatch, SubRace, RACE_SUBRACES
-├── preset/        # Community preset shapes + every API request/response variant
+├── preset/        # Community preset shapes + every API request/response variant + review custom_id grammar / REVIEW_STATUSES
 ├── auth/          # JWT payload, Discord/XIVAuth user shapes, isValidSnowflake validator
 ├── api/           # CachedData, ModerationResult/Stats, PriceData, RateLimitResult
-├── error/         # ErrorCode enum + AppError runtime class (only runtime export)
+├── error/         # ErrorCode enum + AppError runtime class
 └── localization/  # LocaleCode, TranslationKey, RaceKey, ClanKey, etc.
 ```
 
@@ -90,6 +90,32 @@ const RACE_SUBRACES; const SUBRACE_TO_RACE;
 ### Preset types
 
 24 types covering `CommunityPreset`, `PresetSubmission`, `PresetFilters`, plus full request/response shapes for the presets API (`PresetListResponse`, `PresetSubmitResponse`, `PresetEditResponse`, `VoteResponse`).
+
+### Moderation review custom_ids (runtime exports, `src/preset/review-custom-id.ts`)
+
+The single copy of the revision-bound review button / modal grammar (FINDING-017) and the status list presets-api accepts as `expected_status`, shared by discord-worker, moderation-worker and presets-api so they cannot drift apart (REFACTOR-001).
+
+```typescript
+const REVIEW_STATUSES: readonly ['pending', 'approved', 'rejected', 'flagged', 'hidden']; // === PresetStatus, pinned both ways by the test
+function isReviewStatus(value: unknown): value is PresetStatus;     // case-sensitive
+type ReviewAction = 'approve' | 'reject' | 'revert';
+type ReviewKind = ReviewAction | 'reject_modal' | 'revert_modal';
+interface ReviewBinding { revision: number; status: PresetStatus }
+interface ParsedReviewId { kind: ReviewKind; presetId: string; binding: ReviewBinding | null }
+
+function parseReviewCustomId(customId: string): ParsedReviewId | null;
+function buildReviewCustomId(kind: ReviewKind, presetId: string, binding: ReviewBinding): string;
+function buildReviewCustomIdOrLegacy(kind: ReviewKind, presetId: string,
+  revision: number | null | undefined, status: string | null | undefined): string;
+```
+
+**This is a wire format** — ids already posted in Discord channels must keep parsing, so the grammar does not change without a migration story:
+
+- `preset_<approve|reject|revert>_<uuid>:<revision>:<status>` (buttons) and `preset_<reject|revert>_modal_<uuid>:<revision>:<status>` (modals); prefixes are matched longest-first so a modal id is never read as a button.
+- `<uuid>` is a strict UUID v4, either case, returned as received. `<revision>` matches `^(0|[1-9][0-9]*)$` and must be a safe integer. `<status>` is a full, lower-case `REVIEW_STATUSES` word.
+- Anything over 100 characters (Discord's cap) is `null`. The longest id a real UUID can produce is 82 characters (`reject_modal`, `MAX_SAFE_INTEGER`, `approved`).
+- A legacy id with no `:<revision>:<status>` suffix parses with `binding: null`; handlers refresh instead of acting.
+- `buildReviewCustomId` checks nothing (moderation-worker passes a binding it already validated). `buildReviewCustomIdOrLegacy` is discord-worker's builder: it falls back to the legacy id when the revision is not a non-negative safe integer, the status is not a review status, or the bound id would exceed 100 characters. `presetId` is never validated by either builder.
 
 ### Auth types
 

@@ -502,7 +502,7 @@ export abstract class BaseComponent implements ComponentLifecycle {
    * See ui-icons.ts for detailed security rationale.
    */
   /**
-   * Public createElement for use by external utilities (e.g., tool-panel-builders).
+   * Public createElement for use by external utilities.
    * Subclasses continue to use this method directly.
    */
   public createElement<K extends keyof HTMLElementTagNameMap>(

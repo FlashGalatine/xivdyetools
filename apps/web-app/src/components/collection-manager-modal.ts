@@ -12,6 +12,7 @@ import {
 import type { Collection, ImportError } from '@services/collection-service';
 import { ICON_STATE_FOLDER as ICON_FOLDER } from '@shared/state-icons';
 import { formatDate } from '@shared/format';
+import { localDateStamp } from '@shared/palette-export';
 import type { Dye } from '@xivdyetools/types';
 
 /**
@@ -66,7 +67,13 @@ export function showCollectionManagerModal(): void {
   createBtn.textContent = LanguageService.t('collections.newCollection');
   createBtn.disabled = !CollectionService.canCreateCollection();
   createBtn.addEventListener('click', () => {
-    showCreateCollectionDialog();
+    // BUG-017 (2026-10-04 deep-dive): this content is built once, so without a
+    // refresh the list, the count and this button's limit state stayed stale.
+    // The dialog has already dismissed itself, so the top modal is this one.
+    showCreateCollectionDialog(() => {
+      ModalService.dismissTop();
+      showCollectionManagerModal();
+    });
   });
   actionsDiv.appendChild(createBtn);
 
@@ -513,7 +520,8 @@ function downloadCollectionsExport(): void {
 
   const a = document.createElement('a');
   a.href = url;
-  a.download = `xivdyetools-collections-${new Date().toISOString().split('T')[0]}.json`;
+  // The local date, not toISOString()'s UTC one (BUG-123)
+  a.download = `xivdyetools-collections-${localDateStamp()}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -530,9 +538,14 @@ function downloadSingleCollection(collection: Collection): void {
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
 
+  // BUG-084 (2026-10-04 deep-dive): `[^a-z0-9]` turned a ja/ko/zh name into a
+  // row of dashes. Keep letters, marks and digits in any script; a name with
+  // none of them falls back to the id.
+  const slug = collection.name.replace(/[^\p{L}\p{M}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+
   const a = document.createElement('a');
   a.href = url;
-  a.download = `xivdyetools-${collection.name.replace(/[^a-z0-9]/gi, '-')}.json`;
+  a.download = `xivdyetools-${slug || collection.id}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

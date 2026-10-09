@@ -18,6 +18,7 @@
 
 import { isValidBlendingMode, type BlendingMode } from '@xivdyetools/core/blending';
 import { parseColorWheelId, type ColorWheelId } from '@xivdyetools/core';
+import type { GradientInterpolation } from './services/svg/gradient';
 import type { CharacterGender, ColorSheetCategory, HarmonyType, MatchingAlgorithm, VisionType } from './types';
 
 // ============================================================================
@@ -26,6 +27,15 @@ import type { CharacterGender, ColorSheetCategory, HarmonyType, MatchingAlgorith
 
 export const OG_MIN_GRADIENT_STEPS = 2;
 export const OG_MAX_GRADIENT_STEPS = 20;
+/**
+ * The Gradient Builder's own step range and default (gradient-tool
+ * `STEP_MIN` / `STEP_MAX`, `DEFAULT_CONFIGS.gradient.stepCount`) — what the
+ * crawler reads a share by (BUG-008). Inside the image route's 2–20 above,
+ * which stays the bound for direct URLs.
+ */
+const PAGE_MIN_GRADIENT_STEPS = 3;
+const PAGE_MAX_GRADIENT_STEPS = 12;
+export const OG_DEFAULT_GRADIENT_STEPS = 8;
 export const OG_MIN_MIXER_RATIO = 1;
 export const OG_MAX_MIXER_RATIO = 99;
 export const OG_MAX_SWATCH_LIMIT = 20;
@@ -82,6 +92,18 @@ const VALID_SHEETS: readonly string[] = [
   'skinColors',
 ] satisfies readonly ColorSheetCategory[];
 
+/** The Gradient Builder's five interpolation modes (web-app `InterpolationMode`). */
+const VALID_INTERPOLATIONS: readonly string[] = [
+  'rgb',
+  'hsv',
+  'lab',
+  'oklch',
+  'lch',
+] satisfies readonly GradientInterpolation[];
+
+/** The page's default mode (`DEFAULT_CONFIGS.gradient`) — and `generateGradientOG`'s. */
+export const DEFAULT_GRADIENT_INTERPOLATION: GradientInterpolation = 'hsv';
+
 export function isHarmonyType(value: string): value is HarmonyType {
   return VALID_HARMONY_TYPES.includes(value);
 }
@@ -126,6 +148,34 @@ export function parseWheel(raw: string | null): ColorWheelId | undefined {
  */
 export function parseMode(raw: string | null): BlendingMode | undefined {
   return raw && isValidBlendingMode(raw) ? raw : undefined;
+}
+
+/**
+ * The Gradient Builder's `?interpolation=` (BUG-008): one of its five modes,
+ * spelled exactly. The page's `isInterpolationMode` is a case-sensitive
+ * membership test — unlike `wheel`, nothing folds — so `LAB` keeps the
+ * reader's own setting there and is dropped here, never echoed.
+ */
+export function parseInterpolation(raw: string | null | undefined): GradientInterpolation | undefined {
+  return raw && VALID_INTERPOLATIONS.includes(raw) ? (raw as GradientInterpolation) : undefined;
+}
+
+/**
+ * A gradient share's `?steps=` exactly as the page applies it (BUG-008):
+ * ShareService.parseUrl makes a number only of a canonical decimal spelling
+ * (`String(parseFloat(v)) === v`, so `05`, `5.0`, `+5`, `1e1` stay strings),
+ * and gradient-tool then takes a whole number in 3–12. Anything else is
+ * undefined — the page keeps the reader's saved count, by default 8.
+ */
+export function parseShareSteps(raw: string | null): number | undefined {
+  if (raw === null) return undefined;
+  const n = parseFloat(raw);
+  return String(n) === raw &&
+    Number.isInteger(n) &&
+    n >= PAGE_MIN_GRADIENT_STEPS &&
+    n <= PAGE_MAX_GRADIENT_STEPS
+    ? n
+    : undefined;
 }
 
 /** `Male` / `Female`, case-insensitively; anything else is dropped. */

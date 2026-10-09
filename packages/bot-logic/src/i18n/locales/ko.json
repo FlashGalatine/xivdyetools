@@ -69,11 +69,11 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "캐릭터의 색상을 `.chara` 파일(Anamnesis 또는 Ktisis)에서 염료에 매칭합니다.\n• 피부, 머리, 브릿지, 눈, 입술, 페인트, 문신/림벌 링을 읽습니다\n• `slot`: 하나의 색상에 대해 가장 가까운 염료 5개"
+      "description": "캐릭터의 색상을 `.chara` 파일(Anamnesis, Ktisis, Brio)에서 염료에 매칭합니다.\n• 피부, 머리, 부분염색, 눈동자, 입술, 얼굴 치장, 문신/눈동자 테두리를 읽습니다\n• `slot`: 하나의 색상에 대해 가장 가까운 염료 5개"
     },
     "glamour": {
       "name": "`/glamour <file>`",
-      "description": "`.chara` 파일(Anamnesis 또는 Ktisis)의 코디를 목록으로 보여줍니다.\n• 염색한 각 장비를 실제로 착용할 수 있는 아이템 이름으로 표시\n• GPOSERS 형식의 전체 목록, 바로 복사 가능"
+      "description": "`.chara` 파일(Anamnesis, Ktisis, Brio)의 코디를 목록으로 보여줍니다.\n• 염색한 각 장비를 실제로 착용할 수 있는 아이템 이름으로 표시\n• GPOSERS 형식의 전체 목록, 바로 복사 가능"
     },
     "preferences": {
       "name": "`/preferences show` | `/preferences set [option] …` | `/preferences reset [key]` | `/preferences filters set|show|reset`",
@@ -143,7 +143,7 @@
       "autocomplete": "**자동완성:** 염료 이름을 입력하기 시작하면 제안이 나타납니다!",
       "hexColors": "**16진수 색상:** `#FF0000`(빨강)이나 `#5865F2`(블러플) 같은 표준 웹 형식을 사용하세요",
       "dyeNames": "**염료 이름:** 부분 이름을 입력하세요 - \"달라\"로 \"달라가브 레드\"를 찾을 수 있습니다",
-      "facewearExcluded": "**얼굴장식:** 얼굴장식 색상(\"빨강\", \"파랑\" 등)은 염료가 아니며 결과에 나타나지 않습니다",
+      "facewearExcluded": "**얼굴 소품:** 얼굴 소품 색상(\"빨강\", \"파랑\" 등)은 염료가 아니며 결과에 나타나지 않습니다",
       "links": "**링크:**"
     }
   },
@@ -229,6 +229,7 @@
     "randomTitle": "랜덤 프리셋",
     "notEnoughDyes": "프리셋에 최소 3개의 염료가 필요합니다.",
     "invalidDye": "지정된 염료 중 하나를 찾을 수 없습니다.",
+    "repeatedDye": "**{dye}**이(가) 이 프리셋에 두 번 이상 들어 있습니다. 각 염료는 한 번만 사용할 수 있습니다.",
     "duplicateExists": "유사한 프리셋이 존재합니다",
     "duplicateVoted": "기존 프리셋에 투표가 추가되었습니다.",
     "submitted": "프리셋이 제출되었습니다!",
@@ -585,12 +586,12 @@
     "swatchNearest": "가까운 염료",
     "slotSkin": "피부",
     "slotHair": "머리",
-    "slotHl": "브릿지",
+    "slotHl": "부분염색",
     "slotEyes": "눈",
     "slotLip": "입술",
-    "slotPaint": "페인트",
+    "slotPaint": "얼굴치장",
     "slotTattoo": "문신",
-    "slotLimbal": "림벌",
+    "slotLimbal": "테두리",
     "offGridShort": "그리드 외",
     "swatchFootKey_one": "ΔE2000 기준 최근접 · 전체 {n}개 중 {s}개 부위",
     "swatchFootKey_other": "ΔE2000 기준 최근접 · 전체 {n}개 중 {s}개 부위",
@@ -599,19 +600,35 @@
     "swatchGear": "장비 염료: {list}",
     "swatchDropped": "제외(가장 근접한 일치): {slot} · ΔE {de}",
     "swatchParseError": "파일을 읽을 수 없습니다 — {message}",
+    "charaFileReason": {
+      "tooLarge": "크기가 {mb} MB를 초과합니다",
+      "notOnDiscord": "Discord에 업로드된 파일이어야 합니다",
+      "downloadFailed": "다운로드에 실패했습니다 (HTTP {status})",
+      "unreadable": "봇이 읽을 수 있는 .chara 파일이 아닙니다"
+    },
     "swatchTitle": "캐릭터 색상 견본",
     "swatchNoSlots": "이 파일에 활성 색상 부위가 없습니다.",
     "swatchSlotMissing": "{slot}은(는) 이 파일에서 활성 부위가 아닙니다.",
+    "swatchSlotName": {
+      "skin": "피부",
+      "hair": "머리카락",
+      "highlights": "부분염색",
+      "eyes": "눈",
+      "lip": "입술",
+      "facepaint": "얼굴 치장",
+      "limbal": "문신 / 눈동자 테두리"
+    },
     "perDe": "GIL/ΔE",
     "glamourTitle": "코디",
-    "glamourPieces_one": "염색 {n}개",
-    "glamourPieces_other": "염색 {n}개",
+    "glamourPieces_one": "염색한 장비 {n}개",
+    "glamourPieces_other": "염색한 장비 {n}개",
     "glamourWorn_one": "장비 {n}개",
     "glamourWorn_other": "장비 {n}개",
     "glamourDyes_one": "염료 {n}종",
     "glamourDyes_other": "염료 {n}종",
     "glamourNoDyes": "염색 없음",
-    "glamourLooks": "+{n} 동형",
+    "glamourLooks_one": "+{n} 동형",
+    "glamourLooks_other": "+{n} 동형",
     "glamourOneLook": "유일",
     "glamourStatusTwin": "대체",
     "glamourStatusOk": "문제 없음",
@@ -687,7 +704,7 @@
       },
       "characterFile": {
         "name": "캐릭터 파일",
-        "body": "/swatch는 Anamnesis 또는 Ktisis의 .chara 내보내기를 읽습니다: 색상 부위(피부, 머리, 브릿지, 눈, 입술, 페인트, 문신/림벌 링)와 착용 장비 염색. 파일은 응답 생성을 위해 한 번만 읽히며 저장되지 않습니다. 게임 팔레트를 벗어나게 편집된 색상은 실제 값으로 매칭되고 '그리드 외'로 표시됩니다."
+        "body": "/swatch와 /glamour는 Anamnesis, Ktisis 또는 Brio의 .chara 내보내기를 읽습니다. 파일은 응답 생성을 위해 한 번만 읽히며 저장되지 않습니다.\n\n/swatch는 색상 부위(피부, 머리, 부분염색, 눈동자, 입술, 얼굴 치장, 문신/눈동자 테두리)를 염료에 매칭하고, 착용 장비의 염색도 보여줍니다. 게임 팔레트를 벗어나게 편집된 색상은 실제 값으로 매칭되고 '그리드 외'로 표시됩니다.\n\n/glamour는 착용한 각 장비와 그 염색을 목록으로 보여줍니다. 하나의 모델을 여러 아이템이 공유할 수 있으며, 이들을 동형 아이템이라 합니다('+N 동형'). 각 장비는 이 캐릭터가 그 염색 그대로 착용할 수 있는 아이템의 이름으로 표시됩니다. 저장된 아이템이 그 염색을 할 수 없거나, 투영할 수 없거나, 이 캐릭터가 착용할 수 없으면 가능한 동형 아이템의 이름을 대신 표시합니다('대체'). 고칠 부분이 없는 장비에는 '문제 없음'이 표시됩니다. 동형 아이템은 봇이 직접 고르며, 염색이 되는 아이템을 우선합니다. 다른 동형 아이템을 고르려면 응답 끝에 링크된 웹 앱의 코디 리더를 이용하세요. 어떤 동형 아이템으로도 해결되지 않는 장비에는 원인이 표시됩니다: '염색 불가', '투영 불가', '착용 불가'(또는 그 장비를 착용할 수 있는 유일한 종족 이름), 또는 대응하는 아이템이 없는 모델에는 대시(—). 임베드에는 모든 장비가 GPOSERS 형식으로 나열되어 바로 복사할 수 있습니다. 임베드의 라벨과 Acquisition 줄은 어느 언어에서나 영어이며, Acquisition 줄이 비어 있으면 알려진 획득처가 없다는 뜻이니 직접 채워 넣으세요."
       }
     }
   },
@@ -816,7 +833,7 @@
       "description": "캐릭터 파일의 색상을 가장 가까운 염료와 매칭",
       "options": {
         "file": {
-          "description": "`.chara` 캐릭터 파일 (Anamnesis / Ktisis 내보내기)"
+          "description": ".chara 캐릭터 파일 (Anamnesis / Ktisis / Brio 내보내기)"
         },
         "order": {
           "description": "행 순서 — 어느 순서든 같은 5개 행을 표시"
@@ -830,7 +847,7 @@
       "description": "캐릭터 파일을 코디로 읽기: 각 장비, 염색, 착용 가능 여부",
       "options": {
         "file": {
-          "description": "`.chara` 캐릭터 파일 (Anamnesis / Ktisis 내보내기)"
+          "description": ".chara 캐릭터 파일 (Anamnesis / Ktisis / Brio 내보내기)"
         }
       }
     },
@@ -1136,10 +1153,10 @@
               "description": "/extractor color의 기본 매치 수 (1-10)"
             },
             "clan": {
-              "description": "/swatch의 기본 부족 (예: 미드랜더, 렌)"
+              "description": "캐릭터 부족 (설정에 저장되지만 아직 이 값을 사용하는 명령어는 없음)"
             },
             "gender": {
-              "description": "/swatch의 기본 성별"
+              "description": "캐릭터 성별 (설정에 저장되지만 아직 이 값을 사용하는 명령어는 없음)"
             },
             "world": {
               "description": "장터 가격용 기본 서버/데이터 센터"

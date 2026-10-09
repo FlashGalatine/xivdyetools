@@ -98,7 +98,10 @@ export interface BudgetLedgerOptions {
 }
 
 // ============================================================================
-// Layout constants (shared with the calculator's row cap)
+// Layout constants — exported through the barrel because discord-worker's
+// budget calculator packs rows against CARD_MAX_HEIGHT with exactly these
+// heights (REFACTOR-003). Draw with them, never with a literal copy:
+// budget-ledger.test.ts pins the rendered height to their sum.
 // ============================================================================
 
 const PAD = 15;

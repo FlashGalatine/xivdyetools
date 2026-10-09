@@ -15,4 +15,4 @@
 Steps: Delete hybrid-preset-service.ts lines 259-277 (the comment plus the if ((category as string) === 'community') block). No test covers it, because the file is istanbul-ignored. Run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `e5a612b5` (branch `fix/remediation-2026-10-04-sprint4`, web-app 5.14.2; PR #245, open, stacked on #244).

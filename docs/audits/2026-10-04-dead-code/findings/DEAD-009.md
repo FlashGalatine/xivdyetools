@@ -15,4 +15,4 @@
 Steps: 1) apps/web-app/src/shared/state-icons.ts: delete lines 28-29 (COINS), 31-32 (ALERT), 43-44 (EXTRACTOR) and 46-72 (the WAIT_ANIMATED doc block and template), with their blank separators. Keep the panelGlyph, toolGlyph and themedAccent imports, which SEARCH, FUNNEL, FOLDER, PRESETS_EMPTY and HARMONY still use. The matching names in empty-state.ts's import go with DEAD-008. 2) Update the icon list in docs/projects/web-app/components.md:92. 3) pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app, then pnpm dead-code:check and pnpm docs:check-links.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `60e89446` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
  * Build-time locale generator
- * Converts YAML + CSV → JSON locale files
+ * Converts YAML + CSV → JSON locale files, checked against src/data/dyes.json
+ * (dyenames.csv) and src/data/facewear_colors.json (facewear-names.csv)
  *
- * Usage: npm run build:locales
+ * Every source is read, cross-checked and built in memory before anything is
+ * written: a run that exits 1 leaves src/data/locales/ exactly as it found it
+ * (BUG-128, 2026-10-04 deep-dive).
+ *
+ * Usage: npm run build:locales [-- --allow-missing]
  */
 
 import * as fs from 'fs';
@@ -40,6 +45,19 @@ interface FacewearCsvRow {
   'French Name': string;
   'Korean Name': string;
   'Chinese Name': string;
+}
+
+/** The `dyes.json` fields the cross-check reads (schema v2). */
+interface DyeSourceEntry {
+  stainID: number;
+  name: string;
+  legacyItemID: number | null;
+}
+
+/** The `facewear_colors.json` fields the cross-check reads (a `FacewearColor`). */
+interface FacewearSourceEntry {
+  id: string;
+  name: string;
 }
 
 type LocaleCode = 'en' | 'ja' | 'de' | 'fr' | 'ko' | 'zh';
@@ -101,20 +119,84 @@ async function main() {
     trim: true,
   });
 
-  // Build each locale
-  const locales: LocaleCode[] = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
-  const outputDir = path.join(workingDir, 'src', 'data', 'locales');
+  // BUG-128: the dye database is what every consumer looks names up from, so
+  // the CSV must name exactly its dyes — a dye with no row would otherwise
+  // build green and resolve to no name at runtime.
+  const dyesPath = path.join(workingDir, 'src', 'data', 'dyes.json');
+  const dyes = JSON.parse(fs.readFileSync(dyesPath, 'utf-8')) as unknown;
+  if (!Array.isArray(dyes)) {
+    throw new Error(`${dyesPath} is not an array of dyes`);
+  }
 
-  // Ensure output directory exists
+  // The Facewear colours get the same cross-check: facewear-names.csv must
+  // name exactly the FacewearColors that getFacewearColor() serves.
+  const facewearPath = path.join(workingDir, 'src', 'data', 'facewear_colors.json');
+  const facewearColors = JSON.parse(fs.readFileSync(facewearPath, 'utf-8')) as unknown;
+  if (!Array.isArray(facewearColors)) {
+    throw new Error(`${facewearPath} is not an array of facewear colors`);
+  }
+
+  // Integrity errors that no flag waives (BUG-128 / BUG-130), per source pair.
+  const sourceChecks = [
+    {
+      csv: 'dyenames.csv',
+      against: dyesPath,
+      errors: checkDyeSources(dyes as DyeSourceEntry[], csvRows),
+    },
+    {
+      csv: 'facewear-names.csv',
+      against: facewearPath,
+      errors: checkFacewearSources(facewearColors as FacewearSourceEntry[], facewearRows),
+    },
+  ].filter((check) => check.errors.length > 0);
+
+  // Build every locale in memory before anything touches disk (BUG-128):
+  // each file used to be written as it was built, so a run that then exited 1
+  // had already replaced the locales with its English-fallback output.
+  const locales: LocaleCode[] = ['en', 'ja', 'de', 'fr', 'ko', 'zh'];
+  const missingCells: MissingCell[] = [];
+  const built = locales.map((locale) => {
+    console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
+    return { locale, data: buildLocaleData(locale, yamlData, csvRows, facewearRows, missingCells) };
+  });
+  console.log('');
+
+  // I18N-007: report every empty cell that fell back to English, across all
+  // locales, in one place — rather than each locale silently shipping
+  // English under a translated heading.
+  if (missingCells.length > 0) {
+    console.error(
+      `⚠️  ${missingCells.length} missing translation cell(s) fell back to English:`,
+    );
+    for (const cell of missingCells) {
+      console.error(`  - ${cell.source} ${cell.id} (${cell.locale})`);
+    }
+    console.log('');
+  }
+
+  if (sourceChecks.length > 0) {
+    for (const check of sourceChecks) {
+      console.error(`❌ ${check.csv} does not match ${check.against}:`);
+      for (const error of check.errors) {
+        console.error(`  - ${error}`);
+      }
+    }
+    console.error('\nNothing was written. --allow-missing does not waive these.');
+    process.exit(1);
+  }
+
+  if (missingCells.length > 0 && !allowMissing) {
+    console.error(
+      '❌ Missing translations — pass --allow-missing to build anyway (keeps the English fallback). Nothing was written.',
+    );
+    process.exit(1);
+  }
+
+  const outputDir = path.join(workingDir, 'src', 'data', 'locales');
   fs.mkdirSync(outputDir, { recursive: true });
 
   let updatedCount = 0;
-  const missingCells: MissingCell[] = [];
-
-  for (const locale of locales) {
-    console.log(`Building ${LOCALE_NAMES[locale]} (${locale})...`);
-
-    const localeData = buildLocaleData(locale, yamlData, csvRows, facewearRows, missingCells);
+  for (const { locale, data: localeData } of built) {
     const outputPath = path.join(outputDir, `${locale}.json`);
     const existing = readExistingLocale(outputPath);
 
@@ -123,37 +205,16 @@ async function main() {
     // it is. Otherwise every build dirties all six locale JSONs and buries real
     // changes in timestamp churn.
     if (existing && isContentEqual(existing, localeData)) {
-      console.log(`  = Unchanged, kept ${outputPath} (${localeData.meta.dyeCount} dyes)\n`);
+      console.log(`  = Unchanged, kept ${outputPath} (${localeData.meta.dyeCount} dyes)`);
       continue;
     }
 
     fs.writeFileSync(outputPath, JSON.stringify(localeData, null, 2), 'utf-8');
     updatedCount++;
-    console.log(`  ✓ Wrote ${outputPath} (${localeData.meta.dyeCount} dyes)\n`);
+    console.log(`  ✓ Wrote ${outputPath} (${localeData.meta.dyeCount} dyes)`);
   }
 
-  // I18N-007: report every empty cell that fell back to English, across all
-  // locales, in one place — rather than each locale silently shipping
-  // English under a translated heading.
-  if (missingCells.length > 0) {
-    console.log('');
-    console.error(
-      `⚠️  ${missingCells.length} missing translation cell(s) fell back to English:`,
-    );
-    for (const cell of missingCells) {
-      console.error(`  - ${cell.source} ${cell.id} (${cell.locale})`);
-    }
-
-    if (!allowMissing) {
-      console.error(
-        '\n❌ Missing translations — pass --allow-missing to build anyway (keeps the English fallback).',
-      );
-      process.exit(1);
-    }
-
-    console.log('');
-  }
-
+  console.log('');
   console.log(
     updatedCount === 0
       ? '✅ Locale files already up to date (nothing written).'
@@ -161,17 +222,145 @@ async function main() {
   );
 }
 
+/**
+ * Cross-checks `dyenames.csv` against `dyes.json` and returns every problem
+ * found (empty when the two agree). These are integrity errors, not missing
+ * translations, so `--allow-missing` never waives them:
+ *
+ * - BUG-128: each dye needs exactly one CSV row, and each row must belong to a
+ *   dye. A dye is keyed the way `DyeDatabase.initialize()` derives
+ *   `Dye.itemID` — `legacyItemID`, falling back to `stainID` — because that
+ *   is the key `getDyeName()` looks up.
+ * - BUG-130: the CSV's English name (fetched from XIVAPI, so the game
+ *   client's) must equal `dyes.json`'s `name`, case included: consumers show
+ *   `dye.name` in some places and the en locale's name in others, and the
+ *   two once disagreed for stainID 24 ("Opo-Opo Brown" / "Opo-opo Brown").
+ */
+function checkDyeSources(dyes: DyeSourceEntry[], csvRows: CsvRow[]): string[] {
+  const errors: string[] = [];
+
+  const rowsById = new Map<string, CsvRow>();
+  csvRows.forEach((row, index) => {
+    const id = row.itemID?.trim() ?? '';
+    // +2: the header is line 1 and rows are 1-based.
+    if (!id) {
+      errors.push(`dyenames.csv line ${index + 2} has no itemID`);
+    } else if (rowsById.has(id)) {
+      errors.push(`dyenames.csv itemID ${id} appears on more than one row`);
+    } else {
+      rowsById.set(id, row);
+    }
+  });
+
+  const dyeKeys = new Set<string>();
+  for (const dye of dyes) {
+    const key = String(dye.legacyItemID ?? dye.stainID);
+    const label = `stainID ${dye.stainID} "${dye.name}" (itemID ${key})`;
+
+    if (dyeKeys.has(key)) {
+      errors.push(`${label} shares its itemID with another dye in dyes.json`);
+      continue;
+    }
+    dyeKeys.add(key);
+
+    const row = rowsById.get(key);
+    if (!row) {
+      errors.push(`${label} has no dyenames.csv row`);
+      continue;
+    }
+
+    const english = row['English Name']?.trim() ?? '';
+    if (english !== dye.name) {
+      errors.push(
+        english
+          ? `${label}: dyes.json name "${dye.name}" differs from dyenames.csv "${english}"`
+          : `${label}: dyenames.csv has no English name`,
+      );
+    }
+  }
+
+  for (const id of rowsById.keys()) {
+    if (!dyeKeys.has(id)) {
+      errors.push(`dyenames.csv itemID ${id} matches no dye in dyes.json`);
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Cross-checks `facewear-names.csv` against `facewear_colors.json`, the same
+ * way `checkDyeSources` checks dyes, and returns every problem found (empty
+ * when the two agree). `--allow-missing` never waives these either:
+ *
+ * - each FacewearColor needs exactly one CSV row, keyed by its slug `id`
+ *   (the key `getFacewearColor()` and the locale's `facewearColors` section
+ *   share), and each row must belong to a FacewearColor. A duplicated slug
+ *   would otherwise let the later row win silently.
+ * - the CSV's English cell must equal the FacewearColor's `name`, case
+ *   included, so the en locale and the data file never name a tint two ways.
+ */
+function checkFacewearSources(colors: FacewearSourceEntry[], rows: FacewearCsvRow[]): string[] {
+  const errors: string[] = [];
+
+  const rowsById = new Map<string, FacewearCsvRow>();
+  rows.forEach((row, index) => {
+    const id = row.id?.trim() ?? '';
+    // +2: the header is line 1 and rows are 1-based.
+    if (!id) {
+      errors.push(`facewear-names.csv line ${index + 2} has no id`);
+    } else if (rowsById.has(id)) {
+      errors.push(`facewear-names.csv id ${id} appears on more than one row`);
+    } else {
+      rowsById.set(id, row);
+    }
+  });
+
+  const colorIds = new Set<string>();
+  for (const color of colors) {
+    colorIds.add(color.id);
+    const label = `FacewearColor ${color.id} "${color.name}"`;
+
+    const row = rowsById.get(color.id);
+    if (!row) {
+      errors.push(`${label} has no facewear-names.csv row`);
+      continue;
+    }
+
+    const english = row['English Name']?.trim() ?? '';
+    if (english !== color.name) {
+      errors.push(
+        english
+          ? `${label}: facewear_colors.json name "${color.name}" differs from facewear-names.csv "${english}"`
+          : `${label}: facewear-names.csv has no English name`,
+      );
+    }
+  }
+
+  for (const id of rowsById.keys()) {
+    if (!colorIds.has(id)) {
+      errors.push(`facewear-names.csv id ${id} matches no FacewearColor in facewear_colors.json`);
+    }
+  }
+
+  return errors;
+}
+
 type LocaleFile = ReturnType<typeof buildLocaleData>;
 
 /**
- * Reads a previously generated locale file, or null if it is absent or
- * unparseable — either way the caller should regenerate it.
+ * Reads a previously generated locale file, or null if it is absent,
+ * unparseable, or not shaped like a locale (no `meta` object) — either way
+ * the caller should regenerate it rather than compare against it.
  */
 function readExistingLocale(outputPath: string): LocaleFile | null {
   if (!fs.existsSync(outputPath)) return null;
 
   try {
-    return JSON.parse(fs.readFileSync(outputPath, 'utf-8')) as LocaleFile;
+    const parsed = JSON.parse(fs.readFileSync(outputPath, 'utf-8')) as unknown;
+    const meta = (parsed as { meta?: unknown } | null)?.meta;
+    if (typeof meta !== 'object' || meta === null) return null;
+    return parsed as LocaleFile;
   } catch {
     return null;
   }
@@ -872,7 +1061,28 @@ function buildTools(locale: LocaleCode): Record<string, string> {
 function buildSheets(locale: LocaleCode): Record<string, string> {
   // Color-sheet category labels — FFXIV character-creator color groups
   // exposed by the Swatch Matcher tool. The "(Dark)" / "(Light)" suffixes
-  // are the dye lightness bands.
+  // name the two halves of the lip and face-paint palettes.
+  //
+  // TERM-021 (2026-10-04 i18n audit): the ja / de / fr / ko / zh values are
+  // the game client's own words, taken from the glossary,
+  // docs/reference/ffxiv-terminology.md § Character-Creation Color Sheets.
+  // That table reads the `Lobby` rows the creator's `CharaMakeType` menus
+  // point to (research: docs/research/2026-10-05-character-sheet-terms/).
+  // Change a word there first, then here, and never in the generated JSON.
+  //   eyeColors 245 · hairColors 236 · skinColors 202
+  //   highlightColors 237, the palette label (not the 2129 on/off toggle)
+  //   lipColors* 248 and facePaintColors* 249 / 250, each with the picker's
+  //     2122 / 2123 Dark / Light labels in the parentheses
+  //   tattooColors 1744 / 1748 (the features: 1742 / 1746): one palette the
+  //     client labels Tattoo Color (most clans) or Limbal Ring Color (Au Ra)
+  //     and never names as a whole, so this is the glossary's house form,
+  //     "Tattoo / Limbal Ring", built from the two labels. Never "cornea" /
+  //     "iris" (角膜, 홍채, 虹膜) or Limbus / Limbe. The separator is " / " in
+  //     all five, ja included (never the fullwidth ／), as in web-app
+  //     swatch.palTattoo and bot-logic card.swatchSlotName.limbal.
+  // The plural "colors" nouns in en / de / fr are house style around the
+  // client's own noun. English keeps its house wording: og-worker quotes these
+  // names inside its share-card descriptions.
   const translations: Record<LocaleCode, Record<string, string>> = {
     en: {
       eyeColors: 'Eye Colors',
@@ -886,57 +1096,60 @@ function buildSheets(locale: LocaleCode): Record<string, string> {
       skinColors: 'Skin Colors',
     },
     ja: {
-      eyeColors: '目の色',
-      highlightColors: 'ハイライト',
-      lipColorsDark: '唇の色（ダーク）',
-      lipColorsLight: '唇の色（ライト）',
-      tattooColors: 'タトゥー／角膜',
-      facePaintColorsDark: 'フェイスペイント（ダーク）',
-      facePaintColorsLight: 'フェイスペイント（ライト）',
+      eyeColors: '瞳の色',
+      highlightColors: 'メッシュの色',
+      lipColorsDark: '唇の色（濃い）',
+      lipColorsLight: '唇の色（薄い）',
+      tattooColors: '刺青 / 瞳の輪郭',
+      facePaintColorsDark: 'フェイスペイント（濃い）',
+      facePaintColorsLight: 'フェイスペイント（薄い）',
       hairColors: '髪の色',
       skinColors: '肌の色',
     },
     de: {
       eyeColors: 'Augenfarben',
-      highlightColors: 'Strähnchen',
-      lipColorsDark: 'Lippenfarben (dunkel)',
-      lipColorsLight: 'Lippenfarben (hell)',
-      tattooColors: 'Tätowierung/Limbus',
-      facePaintColorsDark: 'Gesichtsbemalung (dunkel)',
-      facePaintColorsLight: 'Gesichtsbemalung (hell)',
+      highlightColors: 'Strähnen',
+      lipColorsDark: 'Lippenfarben (Dunkel)',
+      lipColorsLight: 'Lippenfarben (Hell)',
+      tattooColors: 'Tattoo / Äußere Iris',
+      // Palette label (250), not the bare Merkmale: the German client also
+      // calls facial features Merkmale, so keep the color context.
+      facePaintColorsDark: 'Farbe des Merkmals (Dunkel)',
+      facePaintColorsLight: 'Farbe des Merkmals (Hell)',
       hairColors: 'Haarfarben',
       skinColors: 'Hautfarben',
     },
     fr: {
       eyeColors: 'Couleurs des yeux',
-      highlightColors: 'Mèches',
-      lipColorsDark: 'Couleurs des lèvres (foncées)',
-      lipColorsLight: 'Couleurs des lèvres (claires)',
-      tattooColors: 'Tatouage/Limbe',
-      facePaintColorsDark: 'Peinture faciale (foncée)',
-      facePaintColorsLight: 'Peinture faciale (claire)',
+      highlightColors: 'Reflets',
+      // Opaque / Translucide are the picker's own labels, never foncé / clair.
+      lipColorsDark: 'Couleurs des lèvres (Opaque)',
+      lipColorsLight: 'Couleurs des lèvres (Translucide)',
+      tattooColors: "Tatouage / Contour de l'iris",
+      facePaintColorsDark: 'Maquillage (Opaque)',
+      facePaintColorsLight: 'Maquillage (Translucide)',
       hairColors: 'Couleurs des cheveux',
       skinColors: 'Couleurs de peau',
     },
     ko: {
       eyeColors: '눈동자 색',
-      highlightColors: '하이라이트',
-      lipColorsDark: '입술 색 (어두운)',
-      lipColorsLight: '입술 색 (밝은)',
-      tattooColors: '문신/홍채',
-      facePaintColorsDark: '얼굴 페인트 (어두운)',
-      facePaintColorsLight: '얼굴 페인트 (밝은)',
+      highlightColors: '부분염색 색상',
+      lipColorsDark: '입술 색 (짙게)',
+      lipColorsLight: '입술 색 (옅게)',
+      tattooColors: '문신 / 눈동자 테두리',
+      facePaintColorsDark: '얼굴 치장 (짙게)',
+      facePaintColorsLight: '얼굴 치장 (옅게)',
       hairColors: '머리 색',
-      skinColors: '피부 색',
+      skinColors: '피부색',
     },
     zh: {
-      eyeColors: '眼睛颜色',
+      eyeColors: '瞳色',
       highlightColors: '挑染',
-      lipColorsDark: '唇色（深）',
-      lipColorsLight: '唇色（浅）',
-      tattooColors: '纹身/虹膜',
-      facePaintColorsDark: '面部彩绘（深）',
-      facePaintColorsLight: '面部彩绘（浅）',
+      lipColorsDark: '唇色（浓艳）',
+      lipColorsLight: '唇色（清淡）',
+      tattooColors: '刺青 / 瞳孔轮廓',
+      facePaintColorsDark: '面妆（浓艳）',
+      facePaintColorsLight: '面妆（清淡）',
       hairColors: '发色',
       skinColors: '肤色',
     },

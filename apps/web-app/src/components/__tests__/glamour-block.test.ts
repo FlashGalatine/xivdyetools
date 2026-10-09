@@ -8,7 +8,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GlamourBlock } from '../glamour-block';
 import { closeGlamourSheet } from '../glamour-sheet';
 import { CharaFileCard } from '../chara-file-card';
-import { ModalService, StorageService, ToastService } from '@services/index';
+import { LanguageService, ModalService, StorageService, ToastService } from '@services/index';
 import { CharaSessionService } from '@services/chara-session-service';
 import { loadCharaFile } from '@services/chara-file-loader';
 import {
@@ -59,6 +59,18 @@ const FIXTURE_ACC = JSON.stringify({
   Glasses: { GlassesId: 0 },
 });
 
+/**
+ * Earrings the file says carry a channel-2 dye. No FFXIV accessory takes a
+ * dye, but the block shows what a file states rather than dropping it.
+ */
+const FIXTURE_DYED_ACC = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+  Ears: { ModelBase: 12, ModelVariant: 1, DyeId: 0, DyeId2: 33 },
+  Glasses: { GlassesId: 0 },
+});
+
 /** Body dyed on both channels plus facewear — drives the Glasses row. */
 const FIXTURE_GLASSES = JSON.stringify({
   TypeName: 'Anamnesis Character File',
@@ -91,6 +103,14 @@ const FIXTURE_NO_DYE = JSON.stringify({
   REyeColor: 42,
   Body: { ModelBase: 200, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
   Ears: { ModelBase: 12, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+  Glasses: { GlassesId: 0 },
+});
+
+/** One piece dyed on one channel: every count in the header is 1 (I18N-007). */
+const FIXTURE_ONE_DYE = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
   Glasses: { GlassesId: 0 },
 });
 
@@ -245,7 +265,14 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
     const badge = row('HeadGear').querySelector<HTMLElement>('[data-role="twin-chip"]')!;
     expect(badge.textContent).toBe('+2');
     expect(badge.title).toBe('Same model: Beech Mask of Casting Replica …');
+    expect(badge.getAttribute('aria-label')).toBe(
+      'Same look as 2 other items: pick the one the list names'
+    );
     expect(row('MainHand').querySelector('[data-role="twin-chip"]')).toBeNull();
+    // Five dyed channels carrying four unique dyes
+    expect(block(glamour).querySelector('[data-role="equip-count"]')?.textContent).toBe(
+      '5 channels · 4 dyes'
+    );
 
     // NPC model: the packed key is the honest label — never an error
     expect(row('Body').querySelector('[data-role="item-name"]')).toBeNull();
@@ -263,6 +290,60 @@ describe('GlamourBlock — DYES ON THIS GLAMOUR (Turn 11)', () => {
       '1 worn piece is undyed (DyeId 0) · 7 slots are empty.'
     );
     expect(block(glamour).querySelector('[data-role="names-unavailable"]')).toBeNull();
+  });
+
+  /**
+   * I18N-007: these counts were passed into one plural string, so a single
+   * channel read "1 channels · 1 dyes" and a pair of twins "Same look as 1
+   * other items". Each count now picks its key by the locale's plural rule.
+   */
+  it('takes the singular at one: 1 channel · 1 dye', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ONE_DYE);
+    hosts = [container, glamour];
+
+    expect(block(glamour).querySelector('[data-role="equip-count"]')?.textContent).toBe(
+      '1 channel · 1 dye'
+    );
+    expect(block(glamour).querySelector('[data-role="glamour-foot"]')?.textContent).toBe(
+      '0 worn pieces are undyed (DyeId 0) · 11 slots are empty.'
+    );
+  });
+
+  it('names a pair of twins in the singular: "Same look as 1 other item"', async () => {
+    const pair: CharaResolveResult = {
+      ...RESOLVED,
+      items: { ...RESOLVED.items, HeadGear: { ...RESOLVED.items.HeadGear!, familySize: 2 } },
+    };
+    const { container, glamour } = await mount(Promise.resolve(pair));
+    hosts = [container, glamour];
+    const chip = () =>
+      block(glamour).querySelector<HTMLElement>('[data-slot="HeadGear"] [data-role="twin-chip"]');
+    await vi.waitFor(() => expect(chip()).not.toBeNull());
+
+    expect(chip()!.textContent).toBe('+1');
+    expect(chip()!.getAttribute('aria-label')).toBe(
+      'Same look as 1 other item: pick the one the list names'
+    );
+  });
+
+  it("picks the footnote's form by the locale plural rule, so French 0 takes the singular", async () => {
+    await LanguageService.setLocale('fr');
+    const spy = vi.spyOn(LanguageService, 'tInterpolate');
+    try {
+      const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ONE_DYE);
+      hosts = [container, glamour];
+      await vi.waitFor(() => {
+        expect(block(glamour).querySelector('[data-role="glamour-foot"]')).not.toBeNull();
+      });
+      // fr: 0 and 1 are both `one`; the count is filled in, never a literal 1
+      expect(spy).toHaveBeenCalledWith('swatch.footWornUndyed_one', { n: '0' });
+      expect(spy).toHaveBeenCalledWith('swatch.footEmpty_other', { n: '11' });
+      expect(spy).toHaveBeenCalledWith('swatch.equipChannels_one', { n: '1' });
+      expect(spy).toHaveBeenCalledWith('swatch.equipDyes_one', { n: '1' });
+    } finally {
+      spy.mockRestore();
+      await LanguageService.setLocale('en');
+    }
   });
 
   it('NAMES UNAVAILABLE: falls back to the shipped row plus one quiet line — dyes untouched', async () => {
@@ -458,6 +539,21 @@ describe('GlamourBlock — Show all pieces', () => {
     expect(hands.querySelector('[data-role="dye-line"]')?.textContent).toBe('Undyed');
   });
 
+  it('an accessory the file says is dyed shows what the file says, with no positional stand-in', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_DYED_ACC);
+    hosts = [container, glamour];
+
+    // A dyeable slot dyed on channel 2 only would draw a neutral chip in
+    // channel 1's place; an accessory draws just the channel the file states.
+    const ears = block(glamour).querySelector<HTMLElement>('[data-slot="Ears"]')!;
+    expect(chipsOf(ears).map((c) => [c.dataset.role, c.dataset.channel])).toEqual([
+      ['dye-chip', '2'],
+    ]);
+    const line = ears.querySelector('[data-role="dye-line"]')!.textContent!;
+    expect(line).not.toBe('');
+    expect(line).not.toContain('Undyed');
+  });
+
   it('a half-dyed piece names the empty channel rather than hiding it', async () => {
     const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_ACC);
     hosts = [container, glamour];
@@ -511,6 +607,33 @@ describe('GlamourBlock — Show all pieces', () => {
     expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe('Silver');
     // It is facewear, not a dye channel — never a dye chip.
     expect(row.querySelector('[data-role="dye-chip"]')).toBeNull();
+  });
+
+  // HC-003: the tooltip passed core's English name ("Silver") into the
+  // localized tag, while the line under the name already used the locale's.
+  it("names the facewear colour in the chip tooltip in the reader's language", async () => {
+    await LanguageService.setLocale('de');
+    try {
+      const { container, glamour } = await mount(
+        Promise.resolve(glassesResolved('Silver Spectacles')),
+        FIXTURE_GLASSES
+      );
+      hosts = [container, glamour];
+      await vi.waitFor(() => {
+        expect(block(glamour).querySelector('[data-role="model-key"]')).not.toBeNull();
+      });
+      switchOf(glamour).click();
+
+      const row = block(glamour).querySelector<HTMLElement>('[data-slot="Facewear"]')!;
+      const chip = row.querySelector<HTMLElement>('[data-role="facewear-chip"]')!;
+      expect(LanguageService.getFacewearColorName('silver')).toBe('Silber');
+      expect(chip.title).toContain('Silber');
+      expect(chip.title).not.toContain('Silver');
+      // The line under the name and the tooltip name the colour alike
+      expect(row.querySelector('[data-role="dye-line"]')?.textContent).toBe('Silber');
+    } finally {
+      await LanguageService.setLocale('en');
+    }
   });
 
   /**
@@ -583,13 +706,13 @@ describe('GlamourBlock — Show all pieces', () => {
 });
 
 /**
- * The GPOSERS list — Copy list and Export .md in the block head. Both write
+ * The GPOSERS list — Copy list and Save .md in the block head. Both write
  * the worn glamour in the template's fixed order, whatever lens or switch is
  * showing, and wait for names to land before they go live. Copy puts real
  * bold on the clipboard (HTML) with a plain flavour beside it; the .md
  * download keeps Markdown.
  */
-describe('GlamourBlock — Copy list / Export .md', () => {
+describe('GlamourBlock — Copy list / Save .md', () => {
   let hosts: HTMLElement[] = [];
   let write: ReturnType<typeof vi.fn>;
   let createObjectURL: ReturnType<typeof vi.fn>;
@@ -632,7 +755,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
     sheetEl()!.querySelector<HTMLButtonElement>('[data-role="sheet-copy"]')!.click();
   };
-  /** Export .md opens the export sheet; its Save .md downloads. */
+  /** The block's Save .md opens the export sheet; the sheet's Save .md downloads. */
   const exportVia = async (glamour: HTMLElement): Promise<void> => {
     exportBtn(glamour).click();
     await vi.waitFor(() => expect(sheetEl()).not.toBeNull());
@@ -706,7 +829,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     hosts = [container, glamour];
 
     expect(copyBtn(glamour).textContent).toBe('Copy list');
-    expect(exportBtn(glamour).textContent).toBe('Export .md');
+    expect(exportBtn(glamour).textContent).toBe('Save .md');
     expect(copyBtn(glamour).disabled).toBe(true);
     expect(exportBtn(glamour).disabled).toBe(true);
 
@@ -715,7 +838,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(exportBtn(glamour).disabled).toBe(false);
   });
 
-  it('Copy list and Export .md open the export sheet before anything is copied or saved (design 2c)', async () => {
+  it('Copy list and Save .md open the export sheet before anything is copied or saved (design 2c)', async () => {
     const { container, glamour } = await mount(Promise.resolve(RESOLVED));
     hosts = [container, glamour];
     await vi.waitFor(() => expect(copyBtn(glamour).disabled).toBe(false));
@@ -812,7 +935,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     expect(text).not.toContain('Galatine');
     expect(html).not.toContain('Galatine');
     await vi.waitFor(() =>
-      expect(ToastService.success).toHaveBeenCalledWith('Equipment list copied to clipboard')
+      expect(ToastService.success).toHaveBeenCalledWith('Glamour list copied to clipboard')
     );
     expect(clicked).toHaveLength(0);
   });
@@ -833,7 +956,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
 
     expect((await copied()).text).toBe(EXPECTED_TEXT);
     await vi.waitFor(() =>
-      expect(ToastService.success).toHaveBeenCalledWith('Equipment list copied to clipboard')
+      expect(ToastService.success).toHaveBeenCalledWith('Glamour list copied to clipboard')
     );
   });
 
@@ -882,7 +1005,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
     await exportVia(glamour);
 
     await vi.waitFor(() =>
-      expect(ToastService.error).toHaveBeenCalledWith("Couldn't save the equipment list")
+      expect(ToastService.error).toHaveBeenCalledWith("Couldn't save the Glamour list")
     );
     expect(clicked).toHaveLength(0);
     expect(document.querySelector('a[download]')).toBeNull();
@@ -955,7 +1078,7 @@ describe('GlamourBlock — Copy list / Export .md', () => {
 
     await copyVia(glamour);
     await vi.waitFor(() =>
-      expect(ToastService.error).toHaveBeenCalledWith("Couldn't copy the equipment list")
+      expect(ToastService.error).toHaveBeenCalledWith("Couldn't copy the Glamour list")
     );
     expect(ToastService.success).not.toHaveBeenCalled();
   });
@@ -1324,7 +1447,7 @@ describe('GlamourBlock — IN THE GAME (the reader verdict) and twins', () => {
     open.mockRestore();
   });
 
-  it('writes the twin it names into Copy list and Export .md', async () => {
+  it('writes the twin it names into Copy list and Save .md', async () => {
     const resolved: CharaResolveResult = {
       items: { HeadGear: COIF },
       glasses: null,

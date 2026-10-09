@@ -20,7 +20,6 @@ import type {
  */
 export type {
   PresetStatus,
-  PresetCategory,
   CategoryMeta,
   CommunityPreset,
   PresetPreviousValues,
@@ -30,12 +29,6 @@ export type {
   PresetListResponse,
   VoteResponse,
 } from '@xivdyetools/types';
-
-/**
- * @deprecated Import directly from '@xivdyetools/types' instead.
- * These re-exports will be removed in the next major version.
- */
-export type { AuthSource } from '@xivdyetools/types';
 
 /**
  * The shared AuthContext plus the raw identity claims of a web (JWT) session.

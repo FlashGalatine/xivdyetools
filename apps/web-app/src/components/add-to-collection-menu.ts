@@ -153,9 +153,11 @@ export function showAddToCollectionMenu(options: AddToCollectionMenuOptions): vo
     }
   };
 
-  // Close on escape
+  // Close on escape. Marked handled: one Escape closes one layer, so a
+  // dismissible toast under the menu stays put (BUG-105).
   const handleKeydown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
+      event.preventDefault();
       closeAddToCollectionMenu();
       if (onClose) {
         onClose();

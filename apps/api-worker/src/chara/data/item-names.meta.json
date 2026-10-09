@@ -4,7 +4,8 @@
   "sources": {
     "itemCsv": "local ffxiv-datamining clone",
     "ko": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/ko/ko-items.json",
-    "zh": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/zh/zh-items.json"
+    "zh": "https://raw.githubusercontent.com/ffxiv-teamcraft/ffxiv-teamcraft/staging/libs/data/src/lib/json/zh/zh-items.json",
+    "ja": "https://raw.githubusercontent.com/xivapi/ffxiv-datamining/d9582a624eaec69d45649366dee801c2f3a6e9b3/csv/ja/Item.csv"
   },
   "counts": {
     "ko": {
@@ -16,6 +17,16 @@
       "named": 28992,
       "missing": 1,
       "bytes": 899454
+    },
+    "ja": {
+      "named": 29057,
+      "missing": 1,
+      "bytes": 1508629,
+      "equippable": 29058,
+      "generated": "2026-10-06"
     }
+  },
+  "notes": {
+    "ja": "Build-time data only: discord-worker cuts its JP font subset from item-names.ja.json (scripts/subset-cjk-fonts.py) and gates it (item-name-coverage.test.ts). api-worker does not import it; /v1/chara/resolve takes ja names from XIVAPI v2 (Name@ja) at request time."
   }
 }

@@ -79,6 +79,29 @@ describe('validateExampleLink', () => {
   it('accepts a space (stored percent-encoded by normalizeExampleLink)', () => {
     expect(validateExampleLink('https://x.com/a b')).toBeNull();
   });
+
+  // BUG-069 (2026-10-04 deep-dive): normalizeExampleLink trims, validate did
+  // not — a leading space failed the scheme test, got `https://` prefixed onto
+  // a full URL and 400'd as "not a valid URL", for a link normalize would have
+  // stored without complaint.
+  it.each([
+    ['a leading space', ' https://x.com/a'],
+    ['surrounding spaces', '  https://x.com/a  '],
+    ['a leading space before a bare host', ' eorzeacollection.com/glamour/1'],
+  ])('accepts a link with %s, as normalizeExampleLink does', (_name, link) => {
+    expect(validateExampleLink(link)).toBeNull();
+    expect(normalizeExampleLink(link)).not.toBeNull();
+  });
+
+  it('treats a whitespace-only link as empty (clears the field), as normalizeExampleLink does', () => {
+    expect(validateExampleLink('   ')).toBeNull();
+    expect(normalizeExampleLink('   ')).toBeNull();
+  });
+
+  it('still applies the character rule to the raw string, edges included', () => {
+    expect(validateExampleLink('https://x.com/a\n')).toMatch(/unsupported characters/);
+    expect(validateExampleLink('\thttps://x.com/a')).toMatch(/unsupported characters/);
+  });
 });
 
 describe('normalizeExampleLink', () => {

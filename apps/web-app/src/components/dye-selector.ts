@@ -10,6 +10,8 @@
 import { BaseComponent } from './base-component';
 import { DyeService, LanguageService, CollectionService } from '@services/index';
 import { TelemetryService } from '@services/telemetry-service';
+import { isUserTyping } from '@services/keyboard-service';
+import { ModalService } from '@services/modal-service';
 import type { Dye } from '@xivdyetools/types';
 import { logger } from '@shared/logger';
 import { clearContainer } from '@shared/utils';
@@ -285,12 +287,22 @@ export class DyeSelector extends BaseComponent {
     this.emit('selection-changed', { selectedDyes: this.selectedDyes });
   }
 
+  /**
+   * "/" (and Ctrl+F) jump to the dye search.
+   *
+   * BUG-088: the guard read `document.activeElement.tagName`, but every tool
+   * mounts inside the layout shell's shadow root, where activeElement is the
+   * shell host — never the <input>. Every "/" typed into a field, this
+   * selector's own search box included, was swallowed. `isUserTyping` sees
+   * through the shadow boundary (it is KeyboardService's guard), and an open
+   * dialog, sheet or popover owns the keyboard exactly as it does for the
+   * other page-wide shortcuts.
+   */
   private handleGlobalKeydown(event: KeyboardEvent): void {
     if (event.key === '/' || (event.ctrlKey && event.key === 'f')) {
-      if (document.activeElement?.tagName !== 'INPUT') {
-        event.preventDefault();
-        this.searchBox?.focusSearch();
-      }
+      if (isUserTyping(event) || ModalService.hasOpenModals()) return;
+      event.preventDefault();
+      this.searchBox?.focusSearch();
     }
   }
 
@@ -584,13 +596,9 @@ export class DyeSelector extends BaseComponent {
       emptyState.appendChild(emptyText);
       content.appendChild(emptyState);
     } else {
-      // Grid of favorite dyes - use compact 3-column layout when compactMode is enabled
-      const gridClasses = this.options.compactMode
-        ? 'grid grid-cols-3 gap-2'
-        : 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2';
       const grid = this.createElement('div', {
         id: 'favorites-grid',
-        className: gridClasses,
+        className: this.favoritesGridClass(),
       });
 
       this.favoriteDyes.forEach((dye) => {
@@ -604,6 +612,21 @@ export class DyeSelector extends BaseComponent {
     panel.appendChild(content);
 
     return panel;
+  }
+
+  /**
+   * The favourites grid's columns: a fixed 3 in compactMode (the narrow tool
+   * panels), responsive up to 8 otherwise.
+   *
+   * BUG-089: the in-place refresh below hardcoded the responsive grid, and it
+   * runs at mount (onMount loads the favourites after the first render), so
+   * compactMode's 3-column strip was replaced before anyone saw it. Both
+   * builders read the layout from here.
+   */
+  private favoritesGridClass(): string {
+    return this.options.compactMode
+      ? 'grid grid-cols-3 gap-2'
+      : 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2';
   }
 
   /**
@@ -679,7 +702,7 @@ export class DyeSelector extends BaseComponent {
         // Grid of favorite dyes
         const grid = this.createElement('div', {
           id: 'favorites-grid',
-          className: 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2',
+          className: this.favoritesGridClass(),
         });
 
         this.favoriteDyes.forEach((dye) => {
