@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { blendTwoColors, blendColors, calculateColorDistance } from '../mixer-blending-engine';
+import { blendTwoColors, calculateColorDistance } from '../mixer-blending-engine';
 import type { MixingMode, MatchingMethod } from '@shared/tool-config-types';
 
 // Mock the services
@@ -138,64 +138,6 @@ describe('mixer-blending-engine', () => {
       blendTwoColors(hex1, hex2, 'rgb', 0.75);
 
       expect(ColorService.mixColorsRgb).toHaveBeenCalledWith(hex1, hex2, 0.75);
-    });
-  });
-
-  // ============================================================================
-  // blendColors Tests
-  // ============================================================================
-
-  describe('blendColors', () => {
-    it('should return black for empty array', () => {
-      const result = blendColors([], 'rgb');
-
-      expect(result).toBe('#000000');
-    });
-
-    it('should return the same color for single color array', () => {
-      const result = blendColors(['#FF0000'], 'rgb');
-
-      expect(result).toBe('#FF0000');
-    });
-
-    it('should blend two colors with equal weight', async () => {
-      const { ColorService } = await import('@services/index');
-
-      blendColors(['#FF0000', '#0000FF'], 'rgb');
-
-      // First blend at 50/50 (ratio 0.5)
-      expect(ColorService.mixColorsRgb).toHaveBeenCalledWith('#FF0000', '#0000FF', 0.5);
-    });
-
-    it('should blend multiple colors with correct ratios', async () => {
-      const { ColorService } = await import('@services/index');
-
-      blendColors(['#FF0000', '#00FF00', '#0000FF'], 'rgb');
-
-      // First: Red + Green at 0.5 (each 50%)
-      expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(1, '#FF0000', '#00FF00', 0.5);
-      // Second: Result + Blue at 0.333 (each color ends up at 33%)
-      expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(
-        2,
-        expect.any(String),
-        '#0000FF',
-        1 / 3
-      );
-    });
-
-    it('should blend four colors with correct ratios', async () => {
-      const { ColorService } = await import('@services/index');
-
-      blendColors(['#FF0000', '#00FF00', '#0000FF', '#FFFF00'], 'rgb');
-
-      expect(ColorService.mixColorsRgb).toHaveBeenCalledTimes(3);
-      // Last call should have ratio 1/4 = 0.25
-      expect(ColorService.mixColorsRgb).toHaveBeenNthCalledWith(
-        3,
-        expect.any(String),
-        '#FFFF00',
-        0.25
-      );
     });
   });
 

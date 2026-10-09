@@ -68,6 +68,10 @@ describe('@xivdyetools/svg index exports', () => {
 
     expect(svg.contrastRatio).toBeDefined();
     expect(svg.contrastRatio('#FFFFFF', '#000000')).toBeCloseTo(21, 0);
+
+    // BUG-142: the one ratio printer bot-logic's embed and /compare share
+    expect(typeof svg.formatContrastRatio).toBe('function');
+    expect(svg.formatContrastRatio(2.996)).toBe('2.99');
   });
 
   it('exports random dyes grid generator', async () => {
@@ -109,5 +113,11 @@ describe('@xivdyetools/svg index exports', () => {
 
     expect(svg.LEDGER_HEADER_H).toBeDefined();
     expect(svg.LEDGER_COLHEAD_H).toBeDefined();
+    // REFACTOR-003: discord-worker's calculator packs rows with the card's own
+    // group/row/footer heights, so the barrel carries all six.
+    expect(typeof svg.LEDGER_GROUP_H).toBe('number');
+    expect(typeof svg.LEDGER_ROW_H).toBe('number');
+    expect(typeof svg.LEDGER_FOOTER_H).toBe('number');
+    expect(typeof svg.LEDGER_FOOTER_2LINE_H).toBe('number');
   });
 });

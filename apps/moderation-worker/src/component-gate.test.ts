@@ -131,7 +131,7 @@ describe('MOD-12: buttons and modals share the command rate limit', () => {
     expect((await res.json()) as unknown).toEqual({ ok: 'button' });
     expect(buttons.handleButtonInteraction).toHaveBeenCalledTimes(1);
     expect(ctx.waitUntil).toHaveBeenCalled();
-    expect(rateLimit.incrementRateLimit).toHaveBeenCalledWith(env.KV, MOD, 'command', 3, expect.anything());
+    expect(rateLimit.incrementRateLimit).toHaveBeenCalledWith(env.KV, MOD, 'command', expect.anything());
   });
 
   it('a rate-limited modal submit gets the rate-limit reply and never reaches the handler', async () => {

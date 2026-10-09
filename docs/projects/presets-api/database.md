@@ -47,7 +47,7 @@ Core table storing community dye presets.
 | is_curated | INTEGER | DEFAULT 0 (1 = official preset) |
 | status | TEXT | DEFAULT 'pending' -- pending / approved / rejected / flagged / hidden |
 | vote_count | INTEGER | DEFAULT 0 (denormalized) |
-| previous_values | TEXT | JSON, populated when edit is flagged |
+| previous_values | TEXT | JSON, the approved text an owner's edit replaced — taken only when the stored status was `approved` (write-once; cleared by a revert) |
 | created_at | TEXT | ISO timestamp |
 | updated_at | TEXT | ISO timestamp |
 | content_revision | INTEGER | NOT NULL DEFAULT 0 — internal optimistic-concurrency token, incremented by a trigger whenever content, ownership or status changes; a write conditioned on a stale value matches no row and is rejected with a 409 (migration 0014). Omitted from public preset responses |

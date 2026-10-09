@@ -3,8 +3,10 @@
  *
  * Model keys are tiny and immutable within a game version — twenty users
  * importing the same glamour is one upstream call. Entries are namespaced by
- * the XIVAPI version key the worker is pinned to (`XIVAPI_VERSION`), so
- * rolling the pin forward after a patch is a cold cache, not a stale one.
+ * the XIVAPI version key the requests are made against — a pinned
+ * `XIVAPI_VERSION` as is, or the key `latest` currently points at (BUG-040,
+ * `XivapiClient.cacheNamespace()`) — so a game patch is a cold cache, not a
+ * stale one.
  * An empty row list ("no item row") is cached too — NPC/prop models would
  * otherwise hit upstream on every import.
  *

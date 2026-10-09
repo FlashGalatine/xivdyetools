@@ -365,12 +365,20 @@ export class DyePaletteDrawer extends BaseLitComponent {
         overflow: hidden;
       }
 
+      /* A <button> since BUG-028 (2026-10-04 deep-dive); the resets keep it
+         looking like the full-width row it was as a <div>. */
       .section-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        width: 100%;
+        margin: 0;
         padding: 10px 12px;
+        border: none;
         background: rgba(255, 255, 255, 0.03);
+        font: inherit;
+        color: inherit;
+        text-align: left;
         cursor: pointer;
         user-select: none;
       }
@@ -476,6 +484,20 @@ export class DyePaletteDrawer extends BaseLitComponent {
         opacity: 1;
       }
 
+      /* The pick control (BUG-028): transparent, and over the swatch's border
+         as well, since the whole swatch was the click target as a <div>. */
+      .swatch-pick {
+        position: absolute;
+        inset: -2px;
+        margin: 0;
+        padding: 0;
+        border: none;
+        border-radius: inherit;
+        background: transparent;
+        font: inherit;
+        cursor: pointer;
+      }
+
       /* Favorite Star Button */
       .swatch-favorite-btn {
         position: absolute;
@@ -524,6 +546,24 @@ export class DyePaletteDrawer extends BaseLitComponent {
       .swatch-favorite-btn svg {
         width: 12px;
         height: 12px;
+      }
+
+      /* BUG-028: keyboard focus shows the star as hover does — on the pick
+         button (the star follows it) or on the star itself, which was a focus
+         ring on an invisible button. Keyboard focus only: a mouse click
+         focuses the pick button too, and must not leave the star lit. */
+      .swatch-pick:focus-visible ~ .swatch-favorite-btn,
+      .swatch-favorite-btn:focus-visible {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      /* A touch screen never hovers, so there the star is always shown */
+      @media (hover: none) {
+        .swatch-favorite-btn {
+          opacity: 1;
+          transform: scale(1);
+        }
       }
 
       /* Always show star in favorites section for easy removal */
@@ -779,10 +819,13 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
   private filterByType(dyes: Dye[], filter: DyeFilter): Dye[] {
     switch (filter) {
+      // BUG-107: read core's derived flags, as "Exclude metallic" does. The
+      // English name missed Gunmetal Black and Pearl White, two of the 16
+      // dyes in the gloss set that have no "Metallic" in their name.
       case 'metallic':
-        return dyes.filter((d) => d.name.toLowerCase().includes('metallic'));
+        return dyes.filter((d) => d.isMetallic);
       case 'pastel':
-        return dyes.filter((d) => d.name.toLowerCase().includes('pastel'));
+        return dyes.filter((d) => d.isPastel);
       case 'dark':
         return dyes.filter((d) => d.hsv.v < 40);
       case 'vibrant':
@@ -1122,7 +1165,12 @@ export class DyePaletteDrawer extends BaseLitComponent {
 
     return html`
       <div class="custom-color-section">
-        <div class="section-header" @click=${this.handleToggleCustomColor}>
+        <button
+          type="button"
+          class="section-header"
+          aria-expanded=${this.customColorExpanded ? 'true' : 'false'}
+          @click=${this.handleToggleCustomColor}
+        >
           <span class="section-title">
             <svg class="favorites-icon" viewBox="0 0 24 24" fill="currentColor">
               <path
@@ -1140,7 +1188,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
           >
             <path d="M19 9l-7 7-7-7" />
           </svg>
-        </div>
+        </button>
         <div class="custom-color-content ${this.customColorExpanded ? 'expanded' : ''}">
           <div class="custom-color-row">
             <div
@@ -1190,13 +1238,18 @@ export class DyePaletteDrawer extends BaseLitComponent {
     const isFav = this.isFavorite(dye.stainID ?? 0);
     const localizedName = this.getLocalizedDyeName(dye);
 
+    // BUG-028 (2026-10-04 deep-dive): the swatch was a click-only <div>, so
+    // Tab skipped every dye. The pick is a native button (Enter and Space for
+    // free) beside the star rather than around it: a button inside a button
+    // is invalid HTML, and the parser would split them apart.
     return html`
-      <div
-        class="swatch"
-        style="background-color: ${dye.hex}"
-        title="${localizedName}"
-        @click=${() => this.handleDyeClick(dye)}
-      >
+      <div class="swatch" style="background-color: ${dye.hex}" title="${localizedName}">
+        <button
+          class="swatch-pick"
+          type="button"
+          aria-label="${localizedName}"
+          @click=${() => this.handleDyeClick(dye)}
+        ></button>
         <button
           class="swatch-favorite-btn ${isFav ? 'is-favorite' : ''}"
           type="button"
@@ -1235,7 +1288,12 @@ export class DyePaletteDrawer extends BaseLitComponent {
   private renderFavorites(): TemplateResult {
     return html`
       <div class="favorites-section">
-        <div class="section-header" @click=${this.handleToggleFavorites}>
+        <button
+          type="button"
+          class="section-header"
+          aria-expanded=${this.favoritesExpanded ? 'true' : 'false'}
+          @click=${this.handleToggleFavorites}
+        >
           <span class="section-title">
             <svg class="favorites-icon" viewBox="0 0 24 24" fill="currentColor">
               <path
@@ -1255,7 +1313,7 @@ export class DyePaletteDrawer extends BaseLitComponent {
           >
             <path d="M19 9l-7 7-7-7" />
           </svg>
-        </div>
+        </button>
         <div class="favorites-content ${this.favoritesExpanded ? 'expanded' : ''}">
           ${
             this.favoriteDyes.length > 0

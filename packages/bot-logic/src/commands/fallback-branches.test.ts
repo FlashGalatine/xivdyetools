@@ -53,15 +53,17 @@ describe('executeComparison — optional metadata', () => {
     expect(result.svgString).toContain(String(snowWhite.stainID));
   });
 
-  it('fails cleanly on a single dye rather than drawing a pairless card', async () => {
-    // The `best ? … : undefined` arm in the embed is therefore unreachable
-    // through this entry point — the card generator rejects one dye first.
+  it('refuses a single dye up front rather than drawing a pairless card', async () => {
+    // BUG-125: this used to reach the duel renderer, whose `dyes[1].hex` read
+    // threw a TypeError that came back as GENERATION_FAILED. The guard refuses
+    // it before anything is drawn, so the `best ? … : undefined` arm in the
+    // embed stays unreachable through this entry point.
     const result = await executeComparison({ dyes: [snowWhite], locale: 'en' });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.error).toBe('GENERATION_FAILED');
-    expect(result.errorMessage).toBeTruthy();
+    expect(result.error).toBe('NOT_ENOUGH_DYES');
+    expect(result.errorMessage).toBe('Both dye1 and dye2 are required.');
   });
 
   it('names the closest pair once there are two dyes', async () => {

@@ -7,6 +7,12 @@
  * inconsistent sanitization (BUG-072) and triplicated button rows (BUG-009).
  * This module is now the only place that builds and posts them.
  *
+ * BUG-004 (2026-10-04 deep-dive): its only caller is the presets-api webhook
+ * (`/webhooks/preset-submission` in index.ts). `/preset submit` and `edit`
+ * used to post here too, duplicating the webhook's post for every bot
+ * submission; they now only answer the user. BUG-003: the webhook posts an
+ * owner edit as kind 'edit' and decides whether Revert is safe to offer.
+ *
  * BUG-009 (2026-07-18 audit): Discord routes component interactions to the
  * application that OWNS the message. The approve/reject handlers live in
  * moderation-worker — a separate Discord application — so buttons on
@@ -28,6 +34,7 @@ import { sendMessage } from '../../utils/discord-api.js';
 import { sanitizePresetName, sanitizePresetDescription } from '../../utils/sanitize.js';
 import { createTranslator } from '../../services/bot-i18n.js';
 import type { ExtendedLogger } from '@xivdyetools/logger';
+import { buildReviewCustomIdOrLegacy, type PresetPreviousValues } from '@xivdyetools/types';
 
 /** Subset of preset fields the notifications need (CommunityPreset satisfies it) */
 export interface ModerationPresetInfo {
@@ -49,13 +56,32 @@ export interface ModerationNotificationOptions {
    * The preset's `content_revision` from presets-api (FINDING-017). When it is
    * a valid non-negative integer, the buttons carry it (with `preset.status`) so
    * moderation-worker can refuse a click on text that has since changed. When
-   * absent (an older presets-api, or a path that only holds a CommunityPreset
-   * response) the legacy ids are emitted, which moderation-worker turns into a
-   * refresh instead of acting.
+   * absent (a presets-api older than 2.4.0) the legacy ids are emitted, which
+   * moderation-worker turns into a refresh instead of acting.
    */
   contentRevision?: number | null;
-  /** For kind 'edit': the pre-edit preset used to build the diff summary */
+  /**
+   * For kind 'edit': the text the diff is measured against — presets-api's
+   * `edited_from`, the text this edit replaced. Without it the embed shows the
+   * whole preset under the edit title.
+   */
   original?: ModerationPresetInfo;
+  /**
+   * `original` is the Revert snapshot rather than the text this edit replaced:
+   * the fallback for a presets-api that sends no `edited_from`. The snapshot is
+   * write-once and can be older than that text, so the diff is headed as
+   * changes since the snapshot, and nothing claims Revert just undoes the edit.
+   */
+  originalIsRevertSnapshot?: boolean;
+  /**
+   * BUG-003: add the Revert button (kind 'edit' only), which restores this
+   * text — `preset.previous_values` — AND approves the preset, so the caller
+   * passes it only when the snapshot is text that was live, never because the
+   * post is an edit. The embed names it: the snapshot is write-once, so it can
+   * be older than the text this edit replaced (approved A → flagged edit B
+   * snapshots A → B approved → a flagged edit C still reverts to A).
+   */
+  revertTo?: PresetPreviousValues;
   /** Optional display name for the category (falls back to category_id) */
   categoryName?: string;
   /** Extra fields appended to the embed (e.g. the webhook path's source field) */
@@ -73,42 +99,45 @@ function moderationToken(env: Env): { token: string; buttonsRoutable: boolean } 
   return { token: env.DISCORD_TOKEN, buttonsRoutable: false };
 }
 
-const CUSTOM_ID_MAX = 100;
+// FINDING-017: the buttons carry `preset_<kind>_<uuid>:<revision>:<status>`
+// when a valid revision and status are known, otherwise the legacy
+// `preset_<kind>_<uuid>`. REFACTOR-001 (2026-10-04 deep-dive): this builder,
+// the status list and the parser moderation-worker reads the ids back with are
+// one module in @xivdyetools/types (preset/review-custom-id.ts), no longer a
+// hand-copied set kept "in step" here.
 
-// Copied from moderation-worker's review-custom-id.ts (parseReviewCustomId):
-// the revision is a non-negative decimal integer with no leading zeros, and the
-// status is one of the full words below. Keep in step with that parser.
-const REVISION_RE = /^(0|[1-9][0-9]*)$/;
-const REVIEW_STATUSES: ReadonlySet<string> = new Set([
-  'pending',
-  'approved',
-  'rejected',
-  'flagged',
-  'hidden',
-]);
+/** The four text fields an edit's diff and a Revert snapshot cover. */
+type PresetText = Pick<ModerationPresetInfo, 'name' | 'description' | 'dyes' | 'tags'>;
+
+/** Which of the four text fields differ between `a` and `b`, in display order. */
+function differingFields(a: PresetText, b: PresetText): string[] {
+  const fields: string[] = [];
+  if (a.name !== b.name) fields.push('name');
+  if (a.description !== b.description) fields.push('description');
+  if (JSON.stringify(a.tags ?? []) !== JSON.stringify(b.tags ?? [])) fields.push('tags');
+  if (JSON.stringify(a.dyes) !== JSON.stringify(b.dyes)) fields.push('dyes');
+  return fields;
+}
 
 /**
- * FINDING-017: `preset_<kind>_<uuid>:<revision>:<status>` when both a valid
- * revision and status are known, otherwise the legacy `preset_<kind>_<uuid>`.
+ * Sprint 9: what Revert does, in words. Revert restores the write-once
+ * snapshot and approves it; it undoes exactly this edit only when the snapshot
+ * IS the text this edit replaced, which needs a real diff base to tell.
  */
-function reviewCustomId(
-  kind: 'approve' | 'reject' | 'revert',
-  presetId: string,
-  revision: number | null | undefined,
-  status: string | undefined
+function revertLine(
+  revertTo: PresetPreviousValues,
+  original: ModerationPresetInfo | undefined,
+  originalIsRevertSnapshot: boolean
 ): string {
-  const legacy = `preset_${kind}_${presetId}`;
-  if (
-    typeof revision !== 'number' ||
-    !Number.isSafeInteger(revision) ||
-    !REVISION_RE.test(String(revision)) ||
-    typeof status !== 'string' ||
-    !REVIEW_STATUSES.has(status)
-  ) {
-    return legacy;
+  const safeName = sanitizePresetName(revertTo.name);
+  if (!original || originalIsRevertSnapshot) {
+    return `**Revert:** restores the saved approved version "${safeName}" and approves it. It may be older than the text this edit replaced.`;
   }
-  const bound = `${legacy}:${revision}:${status}`;
-  return bound.length <= CUSTOM_ID_MAX ? bound : legacy;
+  const differing = differingFields(revertTo, original);
+  if (differing.length === 0) {
+    return `**Revert:** restores "${safeName}", the text this edit replaced, and approves it.`;
+  }
+  return `**Revert:** restores the saved approved version "${safeName}" and approves it. It is older than the text this edit replaced (they differ in: ${differing.join(', ')}), so Revert does not just undo this edit.`;
 }
 
 /**
@@ -126,6 +155,9 @@ export function buildModerationNotification(
   const safeDescription = sanitizePresetDescription(preset.description);
   const safeAuthor = sanitizePresetName(preset.author_name || 'Unknown');
   const { buttonsRoutable } = moderationToken(env);
+  // BUG-003: Revert is an explicit opt-in on an edit — being an edit alone
+  // never shows it — and it is described whenever it is offered.
+  const revertTo = opts.kind === 'edit' ? opts.revertTo : undefined;
 
   const lines: string[] = [];
   if (opts.kind === 'edit' && original) {
@@ -151,7 +183,7 @@ export function buildModerationNotification(
       `**${adminT.t('webhook.fields.author')}:** ${safeAuthor}`,
       `**${adminT.t('webhook.fields.category')}:** ${opts.categoryName || preset.category_id}`,
       '',
-      '**Changes:**',
+      opts.originalIsRevertSnapshot === true ? '**Changes since the Revert snapshot:**' : '**Changes:**',
       changes.join('\n') || 'No visible changes',
       '',
       `**New Description:** ${safeDescription}`
@@ -164,6 +196,10 @@ export function buildModerationNotification(
       `**${adminT.t('webhook.fields.category')}:** ${opts.categoryName || preset.category_id}`,
       `**${adminT.t('webhook.fields.dyes')}:** ${preset.dyes.length} colors`
     );
+  }
+
+  if (revertTo && buttonsRoutable) {
+    lines.push('', revertLine(revertTo, original, opts.originalIsRevertSnapshot === true));
   }
 
   if (!buttonsRoutable) {
@@ -199,23 +235,39 @@ export function buildModerationNotification(
         type: 2, // Button
         style: 3, // Success (green)
         label: adminT.t('webhook.buttons.approve'),
-        custom_id: reviewCustomId('approve', preset.id, opts.contentRevision, preset.status),
+        custom_id: buildReviewCustomIdOrLegacy(
+          'approve',
+          preset.id,
+          opts.contentRevision,
+          preset.status
+        ),
         emoji: { name: '✅' },
       },
       {
         type: 2, // Button
         style: 4, // Danger (red)
         label: adminT.t('webhook.buttons.reject'),
-        custom_id: reviewCustomId('reject', preset.id, opts.contentRevision, preset.status),
+        custom_id: buildReviewCustomIdOrLegacy(
+          'reject',
+          preset.id,
+          opts.contentRevision,
+          preset.status
+        ),
         emoji: { name: '❌' },
       },
-      ...(opts.kind === 'edit'
+      // BUG-003: an explicit opt-in, so being an edit alone never shows Revert
+      ...(revertTo
         ? [
             {
               type: 2 as const, // Button
               style: 4 as const, // Danger (red)
               label: adminT.t('webhook.buttons.revert'),
-              custom_id: reviewCustomId('revert', preset.id, opts.contentRevision, preset.status),
+              custom_id: buildReviewCustomIdOrLegacy(
+                'revert',
+                preset.id,
+                opts.contentRevision,
+                preset.status
+              ),
               emoji: { name: '↩️' },
             },
           ]

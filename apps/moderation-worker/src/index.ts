@@ -321,7 +321,7 @@ async function enforceCommandRateLimit(
 
   // Increment rate limit counter (kept alive past the response)
   ctx.waitUntil(
-    incrementRateLimit(env.KV, userId, 'command', 3, moderationRateLimitBindings(env)).catch((err) => {
+    incrementRateLimit(env.KV, userId, 'command', moderationRateLimitBindings(env)).catch((err) => {
       logger.error('Failed to increment command rate limit', err instanceof Error ? err : undefined);
     })
   );
@@ -397,7 +397,7 @@ export async function handleAutocomplete(
   // response — MOD-3: a fire-and-forget promise could be cancelled with the
   // isolate, silently dropping the increment)
   ctx.waitUntil(
-    incrementRateLimit(env.KV, userId, 'autocomplete', 3, moderationRateLimitBindings(env)).catch(
+    incrementRateLimit(env.KV, userId, 'autocomplete', moderationRateLimitBindings(env)).catch(
       (err) => {
         logger.error(
           'Failed to increment autocomplete rate limit',

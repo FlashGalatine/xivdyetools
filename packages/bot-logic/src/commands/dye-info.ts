@@ -32,6 +32,7 @@ import {
   getLocalizedAcquisition,
   getLocalizedCurrency,
 } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -182,7 +183,8 @@ export async function executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult
     };
 
     return { ok: true, svgString, dye, localizedName, localizedCategory, embed };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[dye info] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }
@@ -293,7 +295,8 @@ export async function executeRandom(input: RandomInput): Promise<RandomResult> {
     };
 
     return { ok: true, svgString, dyes: selectedDyes, title, embed };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[dye random] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

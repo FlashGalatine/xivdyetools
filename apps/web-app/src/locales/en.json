@@ -82,9 +82,6 @@
       "title": "Swatch Matcher",
       "shortName": "Swatch",
       "description": "Match dyes to character colors",
-      "selectSubrace": "Select Subrace",
-      "selectGender": "Select Gender",
-      "colorCategory": "Color Category",
       "eyeColors": "Eye Colors",
       "hairColors": "Hair Colors",
       "skinColors": "Skin Colors",
@@ -124,7 +121,6 @@
     "cost": "Cost",
     "market": "Market",
     "spectrum": "Spectrum",
-    "copied": "Copied!",
     "dismiss": "Dismiss",
     "optional": "(optional)",
     "done": "Done",
@@ -343,11 +339,6 @@
     "inspectDyes": "Inspect Dyes",
     "visionTypes": "Vision Types",
     "selectDyesToSeeAnalysis": "Select dyes to see accessibility analysis",
-    "hardForDeuteranopia": "Hard to distinguish for deuteranopia (red-green)",
-    "hardForProtanopia": "Hard to distinguish for protanopia (red-green)",
-    "hardForTritanopia": "Hard to distinguish for tritanopia (blue-yellow)",
-    "verySimular": "Very similar - may be hard to distinguish",
-    "somewhatSimilar": "Similar - some users may have difficulty distinguishing",
     "redGreenWarning": "Red-green colorblind users may see this as a different color",
     "tritanopiaWarning": "May be hard to see for tritanopia (blue-yellow colorblindness)",
     "achromatopsiaWarning": "May be hard to see for total colorblindness",
@@ -466,12 +457,8 @@
   "mixer": {
     "dyeSelection": "Dye Selection",
     "selectDyes": "Select dyes below",
-    "selectTwoDyes": "Select 2 dyes to see interpolation",
-    "interpolationSettings": "Interpolation Settings",
-    "colorSpace": "Color Space",
     "startDye": "Start Dye",
     "endDye": "End Dye",
-    "steps": "Steps",
     "selectTwoDyesToMix": "Select two dyes to blend and find matching colors",
     "dye1": "Dye 1",
     "dye2": "Dye 2",
@@ -483,7 +470,6 @@
     "replacedSlot2": "Replaced Slot 2",
     "replaceSlot": "Replace Slot",
     "selectDyesToBlend": "Select dyes to blend",
-    "dye3": "Dye 3",
     "fieldLabel": "Model × ratio",
     "fieldDesc": "Tap any cell to make it the mix. Rows are models, columns are ratios.",
     "fieldHint": "6 models × 5 ratios",
@@ -507,7 +493,6 @@
     "gradientResults": "Gradient Results",
     "noMatchesFound": "No matching dyes found",
     "sameDyeWarning": "Start and end dyes are the same. Select different dyes for a gradient.",
-    "slotsFull": "All slots are full. Select one to replace:",
     "mode": {
       "rgb": "Linear (gray midpoints)",
       "hsv": "Hue-based (vibrant)",
@@ -578,7 +563,6 @@
     "clearingCache": "Clearing cache and fetching new prices...",
     "pricesRefreshed": "Prices refreshed successfully!",
     "refreshError": "Error refreshing prices. Please try again.",
-    "priceUnavailable": "Price unavailable",
     "offlineWarning": "You are offline. Cannot refresh prices.",
     "region": {
       "japan": "Japan",
@@ -753,6 +737,7 @@
     "addedToCollection": "Added to {name}",
     "removedFromCollection": "Removed from {name}",
     "collectionFull": "Collection is full ({max} dyes max)",
+    "collectionsLimitReached": "You've reached the collection limit. Delete a collection to save another.",
     "export": "Export",
     "exportAll": "Export All",
     "import": "Import",
@@ -1110,33 +1095,10 @@
     "mineSummaryPresetsMany": "{n} presets"
   },
   "emptyStates": {
-    "noSearchResults": {
-      "title": "No dyes match \"{query}\"",
-      "description": "Try checking your spelling or search for a category like \"purple\" or \"red\".",
-      "action": "Clear search"
-    },
-    "filteredOut": {
-      "title": "All suggestions were filtered out",
-      "description": "Your current filters are hiding all matching dyes. Try adjusting your filter settings.",
-      "action": "Reset filters"
-    },
-    "noPrice": {
-      "description": "This dye may not be tradeable or Universalis doesn't have recent data for this server.",
-      "action": "Try different server"
-    },
     "noHarmony": {
       "title": "No harmony suggestions",
       "description": "Select a base dye to generate color harmony suggestions.",
       "action": "Select a dye"
-    },
-    "noImage": {
-      "title": "No image loaded",
-      "description": "Upload an image to start matching colors from it.",
-      "action": "Upload image"
-    },
-    "loading": {
-      "title": "Loading...",
-      "description": "Please wait while we fetch the data."
     }
   },
   "aria": {
@@ -1206,10 +1168,10 @@
     "localOnly": "LOCAL ONLY",
     "replaceFile": "Load a different file",
     "dropTitle": "Drop a .chara file",
-    "dropBody": "Anamnesis, Ktisis or Brio. Every color on the character arrives at once, with the tribe and gender needed to look hair and skin up.",
+    "dropBody": "Anamnesis, Ktisis or Brio. Every color on the character arrives at once, with the clan and gender needed to look hair and skin up.",
     "chooseFile": "Choose file",
     "orGrid": "OR PICK A SWATCH FROM THE GRID BELOW",
-    "whoHead": "TRIBE & GENDER",
+    "whoHead": "CLAN & GENDER",
     "whoHint": "Only hair and skin need these. A character file sets them for you and turns this into a readout.",
     "slotsHead": "THIS CHARACTER",
     "matchesHead": "CLOSEST DYES",
@@ -1252,7 +1214,11 @@
     "swap": "SWAP",
     "warnErrorTag": "ERROR",
     "unnamedCharacter": "Unnamed character",
-    "equipCount": "{channels} channels · {dyes} dyes",
+    "equipSplit": "{channels} · {dyes}",
+    "equipChannels_one": "{n} channel",
+    "equipChannels_other": "{n} channels",
+    "equipDyes_one": "{n} dye",
+    "equipDyes_other": "{n} dyes",
     "glamourViewPieces": "Pieces",
     "glamourViewDyes": "Dyes",
     "glamourShowAll": "Show all",
@@ -1262,16 +1228,16 @@
     "facewearColorTag": "{color} · facewear color",
     "facewearColorUnknown": "Facewear color unknown",
     "copyList": "Copy list",
-    "exportMarkdown": "Export .md",
-    "listCopied": "Equipment list copied to clipboard",
-    "listCopyFailed": "Couldn't copy the equipment list",
-    "listExportFailed": "Couldn't save the equipment list",
+    "exportMarkdown": "Save .md",
+    "listCopied": "Glamour list copied to clipboard",
+    "listCopyFailed": "Couldn't copy the Glamour list",
+    "listExportFailed": "Couldn't save the Glamour list",
     "namesUnavailable": "Item names unavailable — showing slots only. Dyes are read locally from the file and are unaffected.",
     "footSplit": "{undyed} · {empty}.",
-    "footWornUndyedOne": "1 worn piece is undyed (DyeId 0)",
-    "footWornUndyedMany": "{n} worn pieces are undyed (DyeId 0)",
-    "footEmptyOne": "1 slot is empty",
-    "footEmptyMany": "{n} slots are empty",
+    "footWornUndyed_one": "{n} worn piece is undyed (DyeId 0)",
+    "footWornUndyed_other": "{n} worn pieces are undyed (DyeId 0)",
+    "footEmpty_one": "{n} slot is empty",
+    "footEmpty_other": "{n} slots are empty",
     "modelKeyTag": "MODEL {key}",
     "itemLinks": {
       "openIn": "Open in…",
@@ -1377,18 +1343,19 @@
       "otherWorks": "{name} can be worn instead",
       "choice": "Same look as {name} · either is fine",
       "company": "Needs the right Grand Company",
-      "twins": "Same look as {n} other items: pick the one the list names"
+      "twins_one": "Same look as {n} other item: pick the one the list names",
+      "twins_other": "Same look as {n} other items: pick the one the list names"
     },
     "picker": {
       "head": "SAME LOOK · {n} ITEMS",
       "sub": "The game draws these identically. Pick the one your list names.",
-      "foot": "Copy list and Export .md write the one you pick.",
+      "foot": "Copy list and Save .md write the one you pick.",
       "itemId": "ITEM {id}"
     },
     "fact": {
       "best": "BEST FIT",
       "dye": "DYE ×{n}",
-      "anyTribe": "ANY TRIBE",
+      "anyTribe": "ANY RACE",
       "tribeOk": "FITS THIS CHARACTER",
       "tribeNo": "NOT FOR THIS CHARACTER",
       "dated": "DATED",
@@ -1397,7 +1364,8 @@
     },
     "sheet": {
       "title": "Glamour list",
-      "sub": "GPOSERS format · {n} pieces · edit anything before you copy it",
+      "sub_one": "GPOSERS format · {n} piece · edit anything before you copy it",
+      "sub_other": "GPOSERS format · {n} pieces · edit anything before you copy it",
       "countFilled": "{n} FILLED",
       "countEdited": "{n} EDITED",
       "countBlank": "{n} BLANK",
@@ -1409,11 +1377,12 @@
       "warn": "You picked {name}, which has its own source. Your edited line is still here.",
       "keep": "Keep mine",
       "useNew": "Use new source",
-      "privacy": "Edits are kept on this device for this outfit. The character's name is never in the list, and the file itself is never saved.",
+      "privacy": "Edits are kept on this device for each piece of gear. The character's name is never in the list, and the file itself is never saved.",
       "reset": "Reset all",
       "save": "Save .md",
       "cardNote": "Your edited acquisition notes are kept on this device."
     },
-    "empty": "This file wears no gear."
+    "empty": "This file wears no gear.",
+    "dropBody": "Anamnesis, Ktisis or Brio. Every piece the character wears, with its dyes."
   }
 }

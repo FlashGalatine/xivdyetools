@@ -16,4 +16,4 @@ Steps: 1) apps/oauth/vitest.config.ts: delete :17-19 (the '// Durable Objects' c
 2) Run pnpm turbo run build type-check lint test --filter=...xivdyetools-oauth-worker.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `35f502db`, `1fbff533` (branch `fix/remediation-2026-10-04-sprint10`, oauth 3.1.3; PR #272, open).

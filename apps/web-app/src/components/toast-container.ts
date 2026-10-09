@@ -10,6 +10,7 @@
 import { BaseComponent } from './base-component';
 import { LanguageService } from '@services/language-service';
 import { ToastService, Toast, ToastType } from '@services/toast-service';
+import { ModalService } from '@services/modal-service';
 import { clearContainer } from '@shared/utils';
 
 // ============================================================================
@@ -38,6 +39,12 @@ const TOAST_ICONS: Record<ToastType, string> = {
 export class ToastContainer extends BaseComponent {
   private toasts: Toast[] = [];
   private unsubscribe: (() => void) | null = null;
+  /** The #toast-container wrapper, kept across renders (BUG-105). */
+  private wrapper: HTMLElement | null = null;
+  /** Each showing toast's node, kept for as long as the toast is (BUG-105). */
+  private toastElements: Map<string, HTMLElement> = new Map();
+  /** Was a modal, sheet or popover open when the current Escape went down? */
+  private escapeOwnedByOverlay = false;
 
   constructor(container: HTMLElement) {
     super(container);
@@ -52,7 +59,10 @@ export class ToastContainer extends BaseComponent {
       this.toasts = toasts;
       this.update();
     });
-    // Note: Document keydown listener is now in bindEvents() to survive updates
+    // Escape is judged on `window`, around everyone else's document-level
+    // handlers, and outside bindEvents() so update() never re-registers it.
+    window.addEventListener('keydown', this.noteEscapeOwner, true);
+    window.addEventListener('keydown', this.handleKeyDown);
   }
 
   /**
@@ -63,19 +73,42 @@ export class ToastContainer extends BaseComponent {
       this.unsubscribe();
       this.unsubscribe = null;
     }
+    window.removeEventListener('keydown', this.noteEscapeOwner, true);
+    window.removeEventListener('keydown', this.handleKeyDown);
+    this.toastElements.clear();
   }
 
   /**
-   * Handle keyboard events
+   * Capture phase, before any other handler runs: does an overlay own this
+   * Escape? It has to be asked now — an overlay that closes on Escape releases
+   * its registration as it goes, and the export sheet does so without marking
+   * the key handled, so afterwards the page looks as if nothing was open.
    */
-  private handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Escape') {
-      const dismissibleToast = this.toasts.find((t) => t.dismissible);
-      if (dismissibleToast) {
-        ToastService.dismiss(dismissibleToast.id);
-      }
+  private noteEscapeOwner = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') this.escapeOwnedByOverlay = ModalService.hasOpenModals();
+  };
+
+  /**
+   * Escape dismisses a toast only when nothing else wanted the key.
+   *
+   * BUG-105: the toast and the overlays each listened on the document and
+   * neither stood aside, so one press closed the toast AND the modal, sheet or
+   * popover the user was working in. The overlay holding focus owns Escape; a
+   * toast is a passive notice — it times out and has its own dismiss button —
+   * so it yields, even though it is drawn above the modal layer. This runs in
+   * `window`'s bubble phase, after every document-level handler, so a nearer
+   * handler that consumed the key (`defaultPrevented`) wins too.
+   */
+  private handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== 'Escape') return;
+    const ownedByOverlay = this.escapeOwnedByOverlay;
+    this.escapeOwnedByOverlay = false;
+    if (ownedByOverlay || event.defaultPrevented || ModalService.hasOpenModals()) return;
+    const dismissibleToast = this.toasts.find((t) => t.dismissible);
+    if (dismissibleToast) {
+      ToastService.dismiss(dismissibleToast.id);
     }
-  }
+  };
 
   /**
    * Get ARIA attributes for toast type
@@ -163,55 +196,80 @@ export class ToastContainer extends BaseComponent {
   }
 
   /**
-   * Render the toast container
+   * Render the toast container.
+   *
+   * Keyed, not rebuilt (BUG-105). Clearing and redrawing every toast on each
+   * change gave a toast already on screen a fresh `toast-animate-in` (it slid
+   * in again) and a brand-new role=alert / aria-live node (screen readers
+   * announced it again) whenever another toast came or went. Now only the
+   * toasts that arrived are created and only the ones that went are removed.
    */
   renderContent(): void {
-    clearContainer(this.container);
+    // First render — or the content was replaced: the error boundary makes
+    // its own panel `this.element`, so a retry must not draw into that
+    let wrapper = this.wrapper;
+    if (!wrapper || this.element !== wrapper || wrapper.parentNode !== this.container) {
+      clearContainer(this.container);
+      this.toastElements.clear();
+      wrapper = this.createElement('div', {
+        id: 'toast-container',
+        className: `
+          fixed pointer-events-none
+          bottom-4 left-0 right-0
+          flex flex-col gap-2
+          items-center
+        `
+          .replace(/\s+/g, ' ')
+          .trim(),
+        attributes: {
+          // Toasts sit at the bottom centre — the same band as the Options and
+          // palette FABs, which are z-index 100. Tailwind's `z-50` put every
+          // toast underneath them; the token puts toasts above the modal layer,
+          // where a toast confirming a modal action belongs.
+          style: `z-index: var(--v4-z-toast, 1100)`,
+        },
+      });
+      this.container.appendChild(wrapper);
+      this.wrapper = wrapper;
+      this.element = wrapper;
+    }
+    wrapper.setAttribute('aria-label', LanguageService.t('aria.notifications'));
 
-    // Create container wrapper
-    this.element = this.createElement('div', {
-      id: 'toast-container',
-      className: `
-        fixed pointer-events-none
-        bottom-4 left-0 right-0
-        flex flex-col gap-2
-        items-center
-      `
-        .replace(/\s+/g, ' ')
-        .trim(),
-      attributes: {
-        'aria-label': LanguageService.t('aria.notifications'),
-        // Toasts sit at the bottom centre — the same band as the Options and
-        // palette FABs, which are z-index 100. Tailwind's `z-50` put every
-        // toast underneath them; the token puts toasts above the modal layer,
-        // where a toast confirming a modal action belongs.
-        style: `z-index: var(--v4-z-toast, 1100)`,
-      },
-    });
-
-    // Render each toast
-    this.toasts.forEach((toast) => {
-      const toastEl = this.createToastElement(toast);
-      toastEl.classList.add('pointer-events-auto');
-
-      // Add animation class based on motion preference
-      if (!ToastService.prefersReducedMotion()) {
-        toastEl.classList.add('toast-animate-in');
+    // Drop the toasts that went
+    const showing = new Set(this.toasts.map((toast) => toast.id));
+    for (const [id, toastEl] of this.toastElements) {
+      if (!showing.has(id)) {
+        toastEl.remove();
+        this.toastElements.delete(id);
       }
+    }
 
-      this.element!.appendChild(toastEl);
+    // Create the toasts that arrived; a survivor is never re-inserted (moving
+    // a node restarts its animation), and the service only ever appends, so
+    // the in-place check below leaves every survivor where it is.
+    this.toasts.forEach((toast, index) => {
+      let toastEl = this.toastElements.get(toast.id);
+      if (!toastEl) {
+        toastEl = this.createToastElement(toast);
+        toastEl.classList.add('pointer-events-auto');
+
+        // Add animation class based on motion preference
+        if (!ToastService.prefersReducedMotion()) {
+          toastEl.classList.add('toast-animate-in');
+        }
+        this.toastElements.set(toast.id, toastEl);
+      }
+      if (wrapper.children[index] !== toastEl) {
+        wrapper.insertBefore(toastEl, wrapper.children[index] ?? null);
+      }
     });
-
-    this.container.appendChild(this.element);
   }
 
   /**
    * Bind event listeners
    */
   bindEvents(): void {
-    // Document-level keyboard listener for Escape key
-    // Must be re-added here since unbindAllEvents() is called during update()
-    this.on(document, 'keydown', this.handleKeyDown);
+    // Escape is handled on `window`, registered once in onMount()
 
     // Touch swipe to dismiss on mobile
     if ('ontouchstart' in window) {

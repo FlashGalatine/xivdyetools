@@ -267,6 +267,56 @@ describe('CharacterColorService', () => {
       expect(service.findClosestDyes(testColor, mockDyeService, { count })).toEqual([]);
     });
 
+    /**
+     * BUG-131: the BUG-056 guard was `count <= 0`, which NaN and a string
+     * both slip past (`'abc' <= 0` and `best.length < 'abc'` are false), so
+     * the loop still read `best[-1].distance` and threw. A value that is not
+     * a count at all now means what omitting it means — the default of 3 —
+     * while a real count is floored and anything below 1 is still "none".
+     */
+    describe('count validation (BUG-131)', () => {
+      const fiveDyes = [
+        { id: 1, name: 'Dalamud Red', hex: '#FF0000', rgb: { r: 255, g: 0, b: 0 } },
+        { id: 2, name: 'Rust Red', hex: '#EE1111', rgb: { r: 238, g: 17, b: 17 } },
+        { id: 3, name: 'Wine Red', hex: '#CC2222', rgb: { r: 204, g: 34, b: 34 } },
+        { id: 4, name: 'Celeste Green', hex: '#00FF00', rgb: { r: 0, g: 255, b: 0 } },
+        { id: 5, name: 'Royal Blue', hex: '#0000FF', rgb: { r: 0, g: 0, b: 255 } },
+      ];
+      const dyeService = {
+        getAllDyes: vi.fn().mockReturnValue(fiveDyes),
+      } as unknown as DyeService;
+      const red: CharacterColor = { index: 0, hex: '#FF0000', rgb: { r: 255, g: 0, b: 0 } };
+      const names = (count: unknown): string[] =>
+        service
+          .findClosestDyes(red, dyeService, { count: count as number })
+          .map((m) => m.dye.name);
+
+      it.each([
+        ['NaN', NaN],
+        ['a corrupted storage string', 'abc'],
+        ['a numeric string', '2'],
+        ['null', null],
+        ['a boolean', true],
+      ])('treats %s as no count and returns the default 3', (_label, count) => {
+        expect(() => names(count)).not.toThrow();
+        expect(names(count)).toEqual(['Dalamud Red', 'Rust Red', 'Wine Red']);
+      });
+
+      it('floors a fractional count (2.5 is at most 2)', () => {
+        expect(names(2.5)).toEqual(['Dalamud Red', 'Rust Red']);
+      });
+
+      it.each([0.5, -Infinity])('returns nothing for a count below 1 (%s)', (count) => {
+        expect(names(count)).toEqual([]);
+      });
+
+      it('keeps Infinity as "no cap": every dye, closest first', () => {
+        const all = names(Infinity);
+        expect(all).toHaveLength(fiveDyes.length);
+        expect(all.slice(0, 3)).toEqual(['Dalamud Red', 'Rust Red', 'Wine Red']);
+      });
+    });
+
     it('should skip Facewear dyes in findClosestDyes', () => {
       const mockDyeService = {
         getAllDyes: vi.fn().mockReturnValue([

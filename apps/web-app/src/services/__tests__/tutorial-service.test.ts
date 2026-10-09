@@ -656,3 +656,76 @@ describe('TutorialService', () => {
     });
   });
 });
+
+/*
+ * BUG-114's degraded path: when the spotlight chunk fails to load, main.ts now
+ * logs and keeps the shell. But the welcome modal's "Take tour" and the
+ * first-visit prompt still offered a tour, and start() then set isActive and
+ * dispatched steps nothing listened to: no overlay, no Escape-to-skip, and
+ * isActive stuck true for the session, which suppresses every later prompt.
+ *
+ * The flag lives for the session (the module), so each test boots a fresh
+ * copy of the service and of its mocks.
+ */
+describe('TutorialService without its overlay (BUG-114)', () => {
+  async function freshSession() {
+    vi.resetModules();
+    const { TutorialService: Service } = await import('../tutorial-service');
+    const { ModalService: Modals } = await import('../modal-service');
+    const { StorageService: Storage } = await import('../storage-service');
+    const { logger } = await import('@shared/logger');
+    vi.mocked(Storage.getItem).mockReturnValue(null);
+    return { Service, Modals, logger };
+  }
+
+  it('does not start a tour it has nothing to show it with', async () => {
+    const { Service, logger } = await freshSession();
+    const listener = vi.fn();
+    const showStep = vi.fn();
+    const unsubscribe = Service.subscribe(listener);
+    listener.mockClear();
+    document.addEventListener('tutorial:show-step', showStep);
+    try {
+      Service.markUnavailable();
+      Service.start('harmony');
+
+      expect(Service.getState().isActive).toBe(false);
+      expect(listener).not.toHaveBeenCalled();
+      expect(showStep).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('harmony'));
+    } finally {
+      document.removeEventListener('tutorial:show-step', showStep);
+      unsubscribe();
+    }
+  });
+
+  it('does not offer a tour it cannot show', async () => {
+    const { Service, Modals } = await freshSession();
+
+    Service.markUnavailable();
+    Service.promptStart('harmony');
+
+    expect(Modals.show).not.toHaveBeenCalled();
+  });
+
+  it('reports tutorials unavailable', async () => {
+    const { Service } = await freshSession();
+    expect(Service.isAvailable()).toBe(true);
+
+    Service.markUnavailable();
+
+    expect(Service.isAvailable()).toBe(false);
+  });
+
+  // The control: the same fresh copy, never marked, still runs its tours
+  it('still starts and offers tours in a session whose overlay loaded', async () => {
+    const { Service, Modals } = await freshSession();
+
+    Service.promptStart('harmony');
+    Service.start('harmony');
+
+    expect(Modals.show).toHaveBeenCalledTimes(1);
+    expect(Service.getState().isActive).toBe(true);
+    Service.skip();
+  });
+});

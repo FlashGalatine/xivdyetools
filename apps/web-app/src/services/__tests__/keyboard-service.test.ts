@@ -136,14 +136,91 @@ describe('KeyboardService', () => {
     });
 
     it.each([
-      ['Shift', { shiftKey: true }],
       ['Ctrl', { ctrlKey: true }],
       ['Alt', { altKey: true }],
       ['Meta', { metaKey: true }],
+      // AltGr arrives as Ctrl+Alt on Windows (AZERTY AltGr+à is "@")
+      ['AltGr', { ctrlKey: true, altKey: true }],
     ])('does not navigate when %s is held', (_name, modifier) => {
-      document.dispatchEvent(new KeyboardEvent('keydown', { key: '1', ...modifier }));
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '1', code: 'Digit1', ...modifier })
+      );
 
       expect(RouterService.navigateTo).not.toHaveBeenCalled();
+    });
+
+    // QWERTY Shift+1 is "!": a different character, not the digit shortcut.
+    it('does not navigate on Shift+1 when it types "!" (QWERTY)', () => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '!', code: 'Digit1', shiftKey: true })
+      );
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+    });
+
+    // BUG-120: on AZERTY the unshifted number row types & é " ' ( - è _ ç à
+    // and the digits need Shift, so a lookup by `e.key` behind a no-Shift
+    // guard left 1-9/0 reachable only from a numpad.
+    it.each([
+      ['&', 'Digit1', 'harmony'],
+      ['é', 'Digit2', 'extractor'],
+      ['ç', 'Digit9', 'mixer'],
+      ['à', 'Digit0', 'glamour'],
+    ])('navigates from the AZERTY number row unshifted (key %s, %s)', (key, code, toolId) => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key, code }));
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith(toolId);
+    });
+
+    // On Linux, Chrome and Firefox report AltGr with ctrlKey and altKey both
+    // false; only getModifierState('AltGraph') says it is down. AltGr on the
+    // number row types a symbol (AZERTY AltGr+à "@", German AltGr+7 "{"), and
+    // the physical-position fallback must not read it as a digit.
+    it.each([
+      ['@', 'Digit0'],
+      ['{', 'Digit7'],
+      ['~', 'Digit2'],
+    ])('does not navigate on Linux AltGr+number row (key %s, %s)', (key, code) => {
+      const event = new KeyboardEvent('keydown', { key, code, modifierAltGraph: true });
+      expect(event.getModifierState('AltGraph')).toBe(true);
+      expect(event.ctrlKey || event.altKey).toBe(false);
+
+      document.dispatchEvent(event);
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+    });
+
+    // A dead key on the number row is composing an accent, not a shortcut
+    it('does not navigate on an unshifted dead key on the number row', () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Dead', code: 'Digit2' }));
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+    });
+
+    it('navigates on AZERTY Shift+number row, which types the digit itself', () => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: '2', code: 'Digit2', shiftKey: true })
+      );
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('extractor');
+    });
+
+    // NumLock off: the numpad reports Numpad2 with key "ArrowDown", "End"...
+    // Those are navigation keys, not digits, and must stay that way.
+    it.each([
+      ['ArrowDown', 'Numpad2'],
+      ['End', 'Numpad1'],
+      ['Insert', 'Numpad0'],
+    ])('does not navigate on a NumLock-off numpad key (%s, %s)', (key, code) => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key, code }));
+
+      expect(RouterService.navigateTo).not.toHaveBeenCalled();
+    });
+
+    it('navigates on a NumLock-on numpad digit', () => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '3', code: 'Numpad3' }));
+
+      expect(RouterService.navigateTo).toHaveBeenCalledWith('accessibility');
     });
   });
 

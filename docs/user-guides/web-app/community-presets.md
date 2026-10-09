@@ -90,7 +90,7 @@ The **Account** section of the settings column offers the same two buttons (**Lo
 
 ## Submitting Presets
 
-Press **+ Submit Preset** in the settings column (or **Make a palette → Submit to Community** in the Swatch Matcher, which arrives with the dyes filled in). The sheet is titled **Submit a preset** — *Reviewed before it appears* — and starts with a **HOW IT WILL LOOK** preview band, marked **DRAFT**, that redraws as you type.
+Press **+ Submit Preset** in the settings column (or **Make a palette → Submit to Community** in the [Glamour Reader](glamour-reader.md#make-a-palette), which arrives with the dyes filled in). The sheet is titled **Submit a preset** — *Reviewed before it appears* — and starts with a **HOW IT WILL LOOK** preview band, marked **DRAFT**, that redraws as you type.
 
 | Field | Rules |
 |-------|-------|
@@ -150,5 +150,5 @@ the one thing only the web app can do — sign in, open **My Submissions**, and 
 
 - [Harmony Explorer](color-harmony.md) - Build around a preset's dye
 - [Dye Comparison](dye-comparison.md) - Measure a preset's dyes against each other
-- [Swatch Matcher](swatch-matcher.md) - Turn your character's glamour into a preset
+- [Glamour Reader](glamour-reader.md) - Turn your character's glamour into a preset
 - [Favorites & Collections](favorites-collections.md) - Where saved presets and local palettes live

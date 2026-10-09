@@ -244,7 +244,10 @@ export const THEME = {
  * - mono: Fragment Mono - hex codes, numeric columns, mono labels
  *   (the previous 'Habibi' was a proportional serif — numbers never aligned)
  * - cjk: Noto Sans JP + SC + KR - Japanese (JP letterforms first), Chinese, Korean text
- *   (JP added 2026-08-20 — F-17: preset-swatch was the one card rendering ja in SC letterforms)
+ *   (JP added 2026-08-20, F-17). In the Latin-led stacks below, the CJK names do NOT pick
+ *   the face for a glyph the Latin face lacks: resvg fills it from the loaded faces in the
+ *   order the renderer loads them (discord-worker's getFontBuffers: JP first for ja, SC
+ *   first otherwise), so Japanese letterforms there are the renderer's job, not this list's
  * - primaryCjk: Onest with CJK/KR fallback - for localized text that may contain CJK
  * - monoCjk: Fragment Mono has no CJK — mono labels containing CJK fall back
  *   to the body sans (letter-spacing 0.04em at the call site; no case in CJK)

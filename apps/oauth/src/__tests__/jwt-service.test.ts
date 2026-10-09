@@ -7,7 +7,6 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   createJWTForUser,
   verifyJWT,
-  decodeJWT,
   getAvatarUrl,
   isTokenRevoked,
   revokeToken,
@@ -16,6 +15,7 @@ import {
   signJwtData,
   verifyJwtData,
 } from '../services/jwt-service.js';
+import { decodeJWT } from '@xivdyetools/auth';
 import { createMockKV, createMockDB } from './mocks/cloudflare-test.js';
 import type { DiscordUser, Env, UserRow } from '../types.js';
 
@@ -253,38 +253,6 @@ describe('JWT Service', () => {
         mockEnv.JWT_SECRET,
       );
       await expect(verifyJWT(token, mockEnv.JWT_SECRET)).rejects.toThrow('Invalid JWT');
-    });
-  });
-
-  describe('decodeJWT', () => {
-    it('should decode a valid JWT payload', async () => {
-      const { token } = await mintToken(mockEnv);
-      const decoded = decodeJWT(token);
-
-      expect(decoded).not.toBeNull();
-      expect(decoded!.sub).toBe(mockUser.id);
-      expect(decoded!.username).toBe(mockUser.username);
-    });
-
-    it('should return null for invalid token format', () => {
-      expect(decodeJWT('invalid')).toBeNull();
-      expect(decodeJWT('only.two')).toBeNull();
-      expect(decodeJWT('a.b.c.d')).toBeNull();
-    });
-
-    it('should return null for invalid base64 payload', () => {
-      expect(decodeJWT('header.!!!invalid-base64!!!.signature')).toBeNull();
-    });
-
-    it('should decode expired token without error', async () => {
-      const { token } = await mintToken(mockEnv);
-
-      // Advance time beyond expiry
-      vi.advanceTimersByTime(3601 * 1000);
-
-      const decoded = decodeJWT(token);
-      expect(decoded).not.toBeNull();
-      expect(decoded!.sub).toBe(mockUser.id);
     });
   });
 

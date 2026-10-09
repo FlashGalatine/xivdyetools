@@ -27,7 +27,7 @@ Mounted on the app's own domain so crawlers resolve real previews:
 |------|-------------|
 | `GET /og/:tool/default.png` | Fallback card for a tool with no parameters |
 | `GET /og/harmony/:dyeId/:harmonyType` | Harmony palette preview |
-| `GET /og/gradient/:startId/:endId/:steps` | Gradient preview |
+| `GET /og/gradient/:startId/:endId/:steps` | Gradient preview: the Gradient Builder's ramp at `steps`, up to five of its steps drawn |
 | `GET /og/mixer/:dyeAId/:dyeBId/:ratio` | Two-dye blend preview |
 | `GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio` | Three-dye blend preview |
 | `GET /og/swatch/:color/:limit` | Nearest-dye swatch preview |
@@ -45,18 +45,24 @@ cache entry), with one deliberate exception: `/og/:tool/default.png`, where it i
 
 ### Query parameters
 
-Exactly five keys are allowed on `/og/*`: **`lang`**, **`frame`**, **`algo`**, **`mode`** and
-**`wheel`** (`OG_ALLOWED_QUERY_KEYS`). Any other key gets a `404` before the cache lookup and before
-any render, and the response never echoes the offending key (2026-08-29 FINDING-024). A
-present-but-invalid `algo`, `mode` or `wheel` value gets a `400`; an empty value counts as absent.
+Exactly six keys are allowed on `/og/*`: **`lang`**, **`frame`**, **`algo`**, **`mode`**,
+**`wheel`** and **`interpolation`** (`OG_ALLOWED_QUERY_KEYS`). Any other key gets a `404` before
+the cache lookup and before any render, and the response never echoes the offending key
+(2026-08-29 FINDING-024). A present-but-invalid `algo`, `mode`, `wheel` or `interpolation` value
+gets a `400`; an empty value counts as absent. Any allowed key given more than once (including a
+percent-encoded spelling of its name, such as `interpolatio%6E`) also gets a `400`
+(`Repeated query parameter`), because the cache key and the route would otherwise read different
+occurrences. Each of those four joins the edge-cache key only on
+the routes that read it.
 
 | Key | Meaning |
 |-----|---------|
 | `lang` | `en` (default) / `ja` / `de` / `fr` / `ko` / `zh` — localizes the crawler HTML (`og:title` / `og:description` / `og:locale`) **and** the picture (dye names, role labels, tags, deck) |
 | `frame` | `x` for the 1200×630 X/Twitter frame; anything else renders the 1200×1050 Discord frame |
-| `algo` | The matching method the card's Δ figures use |
+| `algo` | The matching method the card's dyes and Δ figures use — read by the six algo-aware routes (harmony, gradient, both mixer routes, swatch, extractor), validated everywhere |
 | `mode` | The mixing mode — read only by the two mixer routes, validated everywhere |
-| `wheel` | The harmony card's wheel geometry — read only by `/og/harmony/*`, validated everywhere |
+| `wheel` | The harmony card's wheel geometry — read only by the parameterized harmony card, validated everywhere |
+| `interpolation` | The color space the gradient card's ramp runs in: `rgb` / `hsv` (default) / `lab` / `oklch` / `lch`, spelled exactly — read only by the parameterized gradient card, validated everywhere |
 
 Dye path segments are stainIDs, and every path parameter must be **canonical** (no leading zeros,
 no sign, no trailing junk, no `%2F` spelling).

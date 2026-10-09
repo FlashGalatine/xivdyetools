@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { presetsRouter } from '../../src/handlers/presets';
 import { authMiddleware } from '../../src/middleware/auth';
 import { requireNotBanned } from '../../src/middleware/ban-check';
+import { rekeyIdentity } from '../../src/services/identity-rekey-service';
 import type { AuthContext, Env } from '../../src/types';
 import { createMockEnv, createTestJWT } from '../test-utils';
 import { SqliteD1 } from '../sqlite-d1';
@@ -304,6 +305,24 @@ describe('identity re-key and cross-identity ban (FINDING-014)', () => {
       expect(after.presets.find((p) => p.id === 'mine')?.author_name).toBe('Tester');
       expect(after.votes).toEqual([{ preset_id: 'mine', user_discord_id: UUID }]);
       expect(after.events).toEqual([{ user_discord_id: UUID }]);
+    });
+
+    // BUG-067 (2026-10-04 deep-dive): with fromId === toId the votes move
+    // matches nothing, so the "collisions" left behind were every vote the
+    // user had: vote_count was decremented on each and every vote deleted.
+    // The only caller guards against it today; the service now does too.
+    it('rekeyIdentity(db, id, id) is a no-op: votes, vote_count, presets and events stay', async () => {
+      await seedPreset('mine', UUID, 1);
+      await seedPreset('theirs', 'other', 2);
+      await seedVote('mine', UUID);
+      await seedVote('theirs', UUID);
+      await seedEvent(UUID);
+      const before = await snapshot();
+
+      const moved = await rekeyIdentity(d1 as unknown as D1Database, UUID, UUID);
+
+      expect(moved).toBe(false);
+      expect(await snapshot()).toEqual(before);
     });
 
     it('does not re-key an XIVAuth-only token (no discord_id)', async () => {

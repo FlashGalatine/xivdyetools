@@ -11,7 +11,7 @@
  * @module components/my-submissions-modal
  */
 
-import { ModalService } from '@services/modal-service';
+import { ModalService, type ModalId } from '@services/modal-service';
 import { LanguageService } from '@services/language-service';
 import { ToastService } from '@services/toast-service';
 import { presetSubmissionService } from '@services/preset-submission-service';
@@ -64,6 +64,33 @@ function bandFor(preset: CommunityPreset): string {
   return `<span style="display: flex; width: 56px; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid var(--theme-border); flex: 0 0 auto;">${segs}</span>`;
 }
 
+// BUG-101 (2026-10-04 deep-dive): the rows, tiles and subtitle are built once,
+// so after a delete the list is closed and reopened from a fresh fetch. That
+// state lives here, not in one modal's closure, because the reopen makes a new
+// modal: a DELETE still in flight from the old list must refresh the new one.
+// The refresh waits until every DELETE has answered (overlapping deletes
+// refresh once, after the last, so no fetch races a DELETE still running) and
+// until the list is the top modal — reopening it while the next row's confirm
+// dialog is open would push the list ON TOP of that confirm and bury it.
+
+/** DELETEs sent from My Submissions that have not answered yet. */
+let deletesInFlight = 0;
+/** A delete has succeeded since the open list's rows were fetched. */
+let listStale = false;
+/** The My Submissions modal on screen, if any. */
+let openList: { id: ModalId; onChanged?: () => void } | null = null;
+
+/** Reopen the open list from a fresh fetch, if a delete left it stale and nothing blocks it. */
+function refreshIfStale(): void {
+  if (!listStale || deletesInFlight > 0 || !openList) return;
+  // Not on top: the stack listener retries once the modals above it close.
+  if (ModalService.getTopModal()?.id !== openList.id) return;
+  const { id, onChanged } = openList;
+  openList = null;
+  ModalService.dismiss(id);
+  void showMySubmissionsModal(onChanged);
+}
+
 /**
  * Show the 8S My Submissions modal. Fetches fresh; each row carries its
  * status chip, note, and per-status actions.
@@ -71,6 +98,8 @@ function bandFor(preset: CommunityPreset): string {
 export async function showMySubmissionsModal(onChanged?: () => void): Promise<void> {
   const t = (key: string) => LanguageService.t(key);
 
+  // This fetch is the fresh list; a delete that lands from here on marks it stale again.
+  listStale = false;
   let presets: CommunityPreset[] = [];
   try {
     const response = await presetSubmissionService.getMySubmissions();
@@ -199,32 +228,55 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
     if (action === 'delete') {
       const confirmEl = document.createElement('p');
       confirmEl.textContent = t('preset.confirmDelete');
-      // BUG-088: `onConfirm` is async and nothing awaits it, so the DELETE
-      // resolves at an arbitrary later moment -- by which time the user may
-      // have opened another modal. `dismissTop()` would then close THAT one.
-      // Dismiss the confirm dialog by its own id.
-      const confirmId = ModalService.showConfirm({
+      // modal-container closes the confirm dialog itself as soon as Confirm is
+      // clicked, so nothing here dismisses it. BUG-088: `onConfirm` is async
+      // and nothing awaits it, so the DELETE resolves at an arbitrary later
+      // moment -- by which time the user may have opened another modal, and
+      // `dismissTop()` would close THAT one. Hence refreshIfStale dismisses
+      // the list by id, and only while the list is the top modal.
+      ModalService.showConfirm({
         title: t('preset.deleteTitle'),
         content: confirmEl,
         destructive: true,
         confirmText: t('common.delete'),
         cancelText: t('common.cancel'),
         onConfirm: async () => {
+          // Counted before the first await: modal-container dismisses the
+          // confirm right after calling this, and that stack change must not
+          // refresh the list while this DELETE is still running.
+          deletesInFlight++;
+          let result: Awaited<ReturnType<typeof presetSubmissionService.deletePreset>>;
           try {
-            await presetSubmissionService.deletePreset(preset.id);
+            // BUG-032 (2026-10-04 deep-dive): deletePreset answers a failure
+            // ({ success: false }) rather than throwing it.
+            result = await presetSubmissionService.deletePreset(preset.id);
+          } finally {
+            deletesInFlight--;
+          }
+          if (result.success) {
             ToastService.success(t('preset.deleteSuccess'));
-            ModalService.dismiss(confirmId);
             onChanged?.();
-          } catch {
+            listStale = true;
+          } else {
             ToastService.error(t('errors.deletePresetFailed'));
           }
+          // On failure too: an earlier delete's refresh may be waiting on this one.
+          refreshIfStale();
         },
       });
     }
   });
 
-  ModalService.show({
+  // Runs on every route that closes the modal (✕, Esc, backdrop, an action
+  // that leaves it, the refresh's own dismiss) — ModalService calls onClose
+  // on each — so a DELETE landing after the user closed it reopens nothing.
+  let unsubscribe: (() => void) | null = null;
+  const modalId = ModalService.show({
     type: 'custom',
+    onClose: () => {
+      unsubscribe?.();
+      if (openList?.id === modalId) openList = null;
+    },
     title: t('preset.mySubmissions'),
     subtitle: `${LanguageService.tInterpolate(
       presets.length === 1 ? 'preset.mineSummaryPresetsOne' : 'preset.mineSummaryPresetsMany',
@@ -236,4 +288,13 @@ export async function showMySubmissionsModal(onChanged?: () => void): Promise<vo
     content,
     panelWidth: 620,
   });
+  openList = { id: modalId, onChanged };
+  // A refresh deferred while a confirm sat on top runs once the list is top
+  // again. Queued, not run inside the notification: dismissing from within
+  // it would hand the listeners after this one a stack that no longer exists.
+  unsubscribe = ModalService.subscribe(() => queueMicrotask(refreshIfStale), {
+    immediate: false,
+  });
+  // A DELETE that landed while this list was being fetched may be in it.
+  refreshIfStale();
 }

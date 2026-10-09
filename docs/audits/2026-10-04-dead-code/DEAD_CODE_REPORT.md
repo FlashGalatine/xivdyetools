@@ -282,50 +282,50 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 
 | ID | Status | Commit |
 |---|---|---|
-| DEAD-001 | FIX COMMITTED, NOT MERGED (PR #225) | `ea264d49` |
-| DEAD-002 | OPEN | — |
-| DEAD-003 | OPEN | — |
-| DEAD-004 | OPEN | — |
-| DEAD-005 | OPEN | — |
-| DEAD-006 | OPEN | — |
-| DEAD-007 | OPEN | — |
-| DEAD-008 | OPEN | — |
-| DEAD-009 | OPEN | — |
-| DEAD-010 | OPEN | — |
-| DEAD-011 | OPEN | — |
-| DEAD-012 | OPEN | — |
-| DEAD-013 | OPEN | — |
-| DEAD-014 | OPEN | — |
-| DEAD-015 | OPEN | — |
-| DEAD-016 | OPEN | — |
-| DEAD-017 | OPEN | — |
-| DEAD-018 | OPEN | — |
-| DEAD-019 | OPEN | — |
-| DEAD-020 | OPEN | — |
-| DEAD-021 | OPEN | — |
-| DEAD-022 | OPEN | — |
-| DEAD-023 | OPEN | — |
-| DEAD-024 | OPEN | — |
-| DEAD-025 | OPEN | — |
-| DEAD-026 | OPEN | — |
-| DEAD-027 | OPEN | — |
-| DEAD-028 | OPEN | — |
-| DEAD-029 | OPEN | — |
-| DEAD-030 | OPEN | — |
-| DEAD-031 | OPEN | — |
-| DEAD-032 | OPEN | — |
-| DEAD-033 | OPEN | — |
-| DEAD-034 | OPEN | — |
-| DEAD-035 | OPEN | — |
-| DEAD-036 | OPEN | — |
-| DEAD-037 | OPEN | — |
+| DEAD-001 | FIXED 2026-10-05 (PR #225) | `ea264d49` |
+| DEAD-002 | FIXED 2026-10-05 (PR #227) | `d3bf312a` |
+| DEAD-003 | REMOVED, NOT DEPLOYED (PR #253, open) | `bf1611a0` |
+| DEAD-004 | REMOVED, NOT DEPLOYED (PR #247, open; pulled forward from Sprint 23) | `07c8a22e` |
+| DEAD-005 | REMOVED, NOT DEPLOYED (PR #253, open) | `9dc5f75d` |
+| DEAD-006 | REMOVED, NOT DEPLOYED (PR #253, open) | `9dc5f75d` |
+| DEAD-007 | REMOVED, NOT DEPLOYED (PR #253, open) | `fcc0b76f` |
+| DEAD-008 | REMOVED, NOT DEPLOYED (PR #253, open) | `85a16dcf` |
+| DEAD-009 | REMOVED, NOT DEPLOYED (PR #253, open) | `60e89446` |
+| DEAD-010 | REMOVED, NOT DEPLOYED (PR #253, open) | `fcc0b76f` |
+| DEAD-011 | REMOVED, NOT DEPLOYED (PR #253, open) | `9dc5f75d` |
+| DEAD-012 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
+| DEAD-013 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
+| DEAD-014 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
+| DEAD-015 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
+| DEAD-016 | REMOVED, NOT DEPLOYED (PR #245, open) | `e5a612b5` |
+| DEAD-017 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-018 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-019 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-020 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-021 | REMOVED, NOT DEPLOYED (PR #253, open) | `7763d4e1` |
+| DEAD-022 | REMOVED, NOT DEPLOYED (PR #253, open) | `7763d4e1` |
+| DEAD-023 | REMOVED, NOT DEPLOYED (PR #253, open) | `057cba2f` |
+| DEAD-024 | REMOVED, NOT DEPLOYED (PR #257, open) | `d9fdb57c` |
+| DEAD-025 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-026 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-027 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-028 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-029 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-030 | REMOVED, NOT DEPLOYED (PR #261, open) | `667f3ef9` |
+| DEAD-031 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
+| DEAD-032 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
+| DEAD-033 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
+| DEAD-034 | REMOVED, NOT DEPLOYED (PR #256, open) | `a33842cc` |
+| DEAD-035 | REMOVED, NOT DEPLOYED (PR #273, open) | `6818070b` |
+| DEAD-036 | REMOVED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
+| DEAD-037 | REMOVED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | DEAD-038 | REMOVED, NOT DEPLOYED (PR #275, open) | `cb32ab3a` |
-| DEAD-039 | OPEN | — |
-| DEAD-040 | OPEN | — |
-| DEAD-041 | OPEN | — |
-| DEAD-042 | OPEN | — |
-| DEAD-043 | OPEN | — |
-| DEAD-044 | OPEN | — |
+| DEAD-039 | REMOVED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| DEAD-040 | REMOVED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| DEAD-041 | REMOVED, NOT DEPLOYED (PR #274, open) | `c73b702f` |
+| DEAD-042 | REMOVED, NOT DEPLOYED (PR #274, open) | `c73b702f` |
+| DEAD-043 | REMOVED, NOT DEPLOYED (PR #274, open) | `c73b702f` |
+| DEAD-044 | REMOVED, NOT DEPLOYED (PR #274, open) | `c73b702f` |
 | DEAD-045 | OPEN | — |
 | DEAD-046 | OPEN | — |
 | DEAD-047 | KEEP | — |

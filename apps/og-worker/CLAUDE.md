@@ -30,7 +30,7 @@ pnpm lint                   # knip && knip --production (dead-code gate; runs in
 pnpm type-check && pnpm lint && pnpm test
 ```
 
-`tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns`, so unused imports fail `type-check`. `lint` is knip in both modes (`knip.jsonc` explains why the `--production` project glob needs its `!`). Three guards in the test suite exist because each caught a real 2026-08-18 audit finding: `og-data-generator.test.ts` route ↔ emitter parity (every tool's crawler HTML points at `/og/<tool>/…`), `index.test.ts` "every image route honours `?frame=x`", and `services/font-coverage.test.ts` (the bundled fonts' `cmap`s cover every runtime string — a dye rename that needs a new glyph goes red instead of rendering tofu). Two more from the 2026-08-20 i18n audit: `og-data-generator.test.ts` "ja: no English word survives" renders every tool's share under `?lang=ja` and fails on any four-letter Latin run outside the brand / `FFXIV` / hex codes (the mixed-language embed that audit found), and `services/svg/roles-i18n.test.ts` pins the band role words per card per locale.
+`tsconfig.json` inherits the base `noUnusedLocals` / `noUnusedParameters` / `noImplicitReturns`, so unused imports fail `type-check`. `lint` is knip in both modes (`knip.jsonc` explains why the `--production` project glob needs its `!`). Three guards in the test suite exist because each caught a real 2026-08-18 audit finding: `og-data-generator.test.ts` route ↔ emitter parity (every tool's crawler HTML points at `/og/<tool>/…`), `index.test.ts` "every image route honours `?frame=x`", and `services/font-coverage.test.ts` (the bundled fonts' `cmap`s cover every runtime string — a dye rename that needs a new glyph goes red instead of rendering tofu). Two more from the 2026-08-20 i18n audit: `og-data-generator.test.ts` "ja: no English word survives" renders every tool's share under `?lang=ja` and fails on any four-letter Latin run outside the brand / `FFXIV` / hex codes (the mixed-language embed that audit found), and `services/svg/roles-i18n.test.ts` pins the band role words per card per locale. One from the 2026-10-04 deep dive: `gradient-share-parity.test.ts` drives gradient share URLs through the whole worker (crawler HTML → `og:image` / `twitter:image` → image route → the bands handed to the card) against the Gradient Builder's own steps, pinned as literals generated from the web app's source. It exists because `gradient.test.ts`'s `PAGE_GOLDEN`, which calls the card directly, stayed green while no unfurl carried the share's color space (BUG-008).
 
 ## Architecture
 
@@ -53,7 +53,7 @@ src/
 ├── types.ts                    # Env, ToolId, HarmonyType, VisionType, OGData, AnalyticsEvent
 ├── crawler-detector.ts         # User-Agent regex table (Discord, Twitter, FB, LinkedIn, Slack, Telegram, WhatsApp, Applebot…)
 ├── og-data-generator.ts        # Builds locale-aware {title, description, imageUrl} + final HTML
-├── og-params.ts                # The shared share-URL parameter vocabulary + parsers (parseAlgo/parseMode/parseWheel, isSheet, isHarmonyType…)
+├── og-params.ts                # The shared share-URL parameter vocabulary + parsers (parseAlgo/parseMode/parseWheel/parseInterpolation, parseShareSteps, isSheet, isHarmonyType…)
 ├── fonts/                      # 10 TTFs, all bundled as Data imports — STATIC INSTANCES, never variable files
 │   ├── Onest-{Regular,SemiBold,Bold}.ttf        # Body / names (400 / 600 / 700)
 │   ├── SpaceGrotesk-{Regular,SemiBold,Bold}.ttf # The wordmark (400 / 600 / 700)
@@ -73,7 +73,7 @@ src/
         ├── tokens.ts           # GROUND, font STACKS, MARK_STRIPES, COMPACT_GLYPH — one source
         ├── dye-helpers.ts      # Shared DyeService, stainID map, deltaForAlgorithm
         ├── harmony.ts          # generateHarmonyOG()
-        ├── gradient.ts         # generateGradientOG()
+        ├── gradient.ts         # generateGradientOG() — resolves the page's whole ramp, draws ≤ BAND_CAP of its steps
         ├── mixer.ts            # generateMixerOG() (2- or 3-dye overload)
         ├── swatch.ts           # generateSwatchOG()
         ├── comparison.ts       # generateComparisonOG()
@@ -115,39 +115,77 @@ for.
 - `GET /:tool` and `GET /:tool/` for all ten tools in `SUPPORTED_TOOLS`
 - `GET /presets/:presetId` — the one tool whose share form is a **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card
 
-`generateOGDataForTool` has a case for every tool. Harmony / gradient / mixer / swatch forward a non-default `?algo=` onto the emitted image URL (normalised; the suite default and unknown values stay off it for stable cache keys), so the card computes the Δ the page showed. A share URL that resolves to nothing emits `/og/<tool>/default.png` — never the root card. `og-data-generator.test.ts` has a route ↔ emitter parity test over all ten.
+`generateOGDataForTool` has a case for every tool. Harmony / gradient / mixer / swatch / extractor forward a non-default `?algo=` onto the emitted image URL (normalized; the suite default and unknown values stay off it for stable cache keys), so the card computes the Δ the page showed. The extractor joined them with BUG-060; before that its `algo` reached only `og:url`. Gradient forwards a non-`hsv` `?interpolation=` the same way (BUG-008), mixer a non-`ryb` `?mode=`, and harmony a non-`rgb` `?wheel=`. A share URL that resolves to nothing emits `/og/<tool>/default.png` — never the root card. `og-data-generator.test.ts` has a route ↔ emitter parity test over all ten.
+
+**A gradient share is read the way the page reads it** (BUG-008, `parseShareSteps` / `parseInterpolation` in `og-params.ts`). `steps` counts only as a whole number from 3 to 12 in canonical decimal spelling: `ShareService.parseUrl` makes a number only when `String(parseFloat(v)) === v`, and `gradient-tool` then accepts 3–12. So `05`, `5.0`, `2`, `13`, junk, or no `steps` at all preview the page's default 8 (`OG_DEFAULT_GRADIENT_STEPS`). The image URL always carries the resolved count, while `og:url` leaves the count out: the page reads a missing count exactly as it reads one it ignores, keeping the reader's saved count. `interpolation` counts only as one of the five modes spelled exactly (`LAB` is no mode on the page either); anything else is dropped, never echoed, and the preview assumes `hsv`. `og:url` carries any mode that parses, `hsv` included, because an explicit `hsv` overrides a saved mode; the image URL elides `hsv`.
+
+**Custom colors (BUG-059).** A gradient, mixer or harmony share whose endpoint is a Custom Color (`hexStart`/`hexEnd`, `hexA`/`hexB`, harmony's `hex`, read only when that endpoint's dye slot is absent) has no card of its own, because the image routes are stainID-keyed. Like budget's bare `?hex=` target, it gets the per-tool default card (`lang` only). Unlike budget, it keeps the rest of the embed: a title naming the color by its hex, the first endpoint's color (start / `dyeA` / the base) as `theme-color`, and an `og:url` that reopens the custom share.
 
 **OG image routes** (return `image/png`). Every route takes `?lang=` (the picture
 localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
-carries it). `lang`, `frame`, `algo`, `mode` and `wheel` are the *only* query keys any
-`/og/*` request may carry (2026-08-29 FINDING-024, OG-4) — any other key gets a
-`404` before the cache lookup or a render, without echoing the key back. The
-allowlist is global but the readers are not: `lang` and `frame` are read on
-every route, `algo` by the five algo-aware routes below, `mode` only by the two
-mixer routes, `wheel` only by `/og/harmony/*`. A *present* `algo`, `mode` or
-`wheel` is validated by that same guard on every route — not just the ones that
-read it — so `400 {"error":"Invalid algorithm"}` / `"Invalid mixing mode"` /
-`"Invalid color wheel"` for a bad spelling no longer depends on a route reading
-the param at all (ruling S7-R7). Conversely `ogCacheKey` keys `wheel` **only on
-`/og/harmony/*`**: an allowed key must not multiply the cache entries of a card
-that ignores it, which is the FINDING-024 key-space rule read the other way
-round:
+carries it). `lang`, `frame`, `algo`, `mode`, `wheel` and `interpolation` are the *only*
+query keys any `/og/*` request may carry (2026-08-29 FINDING-024, OG-4; `interpolation`
+joined on 2026-10-06 for BUG-008) — any other key gets a `404` before the cache lookup or
+a render, without echoing the key back. The allowlist is global but the readers are not:
+`lang` and `frame` are read on every route, `algo` by the six algo-aware routes below
+(harmony, gradient, both mixer routes, swatch, extractor), `mode` only by the two mixer
+routes, `wheel` only by the parameterized harmony card, and `interpolation` only by the
+parameterized gradient card. A *present* `algo`, `mode`, `wheel` or `interpolation` is
+validated by that same guard on every route — not just the ones that read it — so
+`400 {"error":"Invalid algorithm"}` / `"Invalid mixing mode"` / `"Invalid color wheel"` /
+`"Invalid interpolation"` for a bad spelling no longer depends on a route reading the param
+at all (ruling S7-R7); an empty value counts as absent (S7-R10). An allowlisted key that
+occurs **more than once** gets `400 {"error":"Repeated query parameter"}`, counted after
+decoding the key name (`interpolatio%6E=rgb&interpolation=lab` is two): the guard and the
+cache key read the first value while the routes' `c.req.query` skips an encoded first key and
+reads the later literal one, so the card rendered in one mode was stored under the other's
+key for 7 days. Neither the web app nor the crawler's URL builders emit a repeated key.
+`interpolation` must be
+one of `rgb` / `hsv` / `lab` / `oklch` / `lch` spelled exactly: unlike `wheel` it folds no
+case, because the page does not either. Conversely `ogCacheKey` keys each of those four
+**only on the routes that read it** (BUG-058, BUG-018, BUG-008): an allowed key must not
+multiply the cache entries of a card that ignores it, which is the FINDING-024 key-space
+rule read the other way round:
 
 | Pattern | Notes |
 |---|---|
-| `GET /og/harmony/:dyeId/:harmonyType[.png]` | `?algo=` — the 6 live `MatchingMethod`s plus 3 legacy spellings (`euclidean`/`hyab`/`oklch-weighted`, normalised on use) in `VALID_ALGORITHMS`; default `ciede2000` (`DEFAULT_MATCHING_METHOD`, the suite default) |
-| `GET /og/gradient/:startId/:endId/:steps[.png]` | `steps` 2–20 (`OG_MAX_GRADIENT_STEPS`), then capped to `BAND_CAP` |
-| `GET /og/mixer/:dyeAId/:dyeBId/:ratio[.png]` | 2-dye mix; ratio 1–99 |
-| `GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio[.png]` | 3-dye mix; ratio 1–99 |
+| `GET /og/harmony/:dyeId/:harmonyType[.png]` | `?algo=` — the 6 live `MatchingMethod`s plus 3 legacy spellings (`euclidean`/`hyab`/`oklch-weighted`, normalized on use) in `VALID_ALGORITHMS`; default `ciede2000` (`DEFAULT_MATCHING_METHOD`, the suite default). `?wheel=` |
+| `GET /og/gradient/:startId/:endId/:steps[.png]` | `?algo=`; `?interpolation=`, the color space the ramp runs in (default `hsv`, the page's). `steps` 2–20 (`OG_MAX_GRADIENT_STEPS`): the card resolves the page's whole ramp at that count and draws up to `BAND_CAP` of its steps (below) |
+| `GET /og/mixer/:dyeAId/:dyeBId/:ratio[.png]` | 2-dye mix; ratio 1–99; `?algo=`, `?mode=` |
+| `GET /og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio[.png]` | 3-dye mix; ratio 1–99; `?algo=`, `?mode=` |
 | `GET /og/swatch/:color/:limit[.png]` | `?algo=`; `limit` 1–20, capped to 4. (Sheet context — `?slot=` (alias `?sheet=`) / `?race=`/`?gender=` — shapes the crawler *description* only and is deliberately kept off the image URL: one cache key per card) |
 | `GET /og/comparison/:dyes[.png]` | `:dyes` is comma-separated stainIDs, max 16, sliced to 4 |
 | `GET /og/accessibility/:dyes/:visionType[.png]` | vision: normal, protanopia, deuteranopia, tritanopia, achromatopsia |
-| `GET /og/extractor/:colors[.png]` | `RRGGBB` or `RRGGBB-share` entries, comma-separated, max 5. Bare entries (the web-app share grammar carries no shares) draw **equal, ranked** bands — proportion is only claimed where it was measured |
+| `GET /og/extractor/:colors[.png]` | `?algo=` (BUG-060), the method each color's dye is matched by. `RRGGBB` or `RRGGBB-share` entries, comma-separated, max 5. Bare entries (the web-app share grammar carries no shares) draw **equal, ranked** bands — proportion is only claimed where it was measured |
 | `GET /og/presets/:presetId[.png]` | slug `^[a-z0-9-]{1,64}$`. **`default` is reserved** — it renders the presets default card (ruling S7-R16), so no curated preset may be given that id; the emitted `/og/presets/default.png` URL already shadows it |
 | `GET /og/budget/:dyeId[.png]` | stainID |
 | `GET /og/:tool/default.png` | Per-tool 2a fallback card |
 | `GET /og/default.png` | Root fallback card; cached 7 days |
 | `GET *` | Fallthrough — crawlers get a minimal **404** (`no-store`) page. Humans are passed through to the SPA only on the `APP_BASE_URL` host; on the og-image host (`OG_IMAGE_BASE_URL`'s hostname) they get a bare `404` (never `fetch()` our own custom domain — CF blocks worker self-fetch with error 1042, BUG-069); on any *other* host (workers.dev, `wrangler dev`) they get a `302` to the app — FINDING-024 |
+
+**How the gradient card samples the page's ramp** (BUG-008). `generateGradientOG` first
+resolves the Gradient Builder's whole ramp at the requested count n: step i sits at the
+page's exact t = i / (n − 1) in the requested color space, the requested algorithm ranks its
+candidates, and the page's duplicate-prevention chain runs over every middle step in order,
+because a step the card leaves out can still decide which dye a later drawn step lands on.
+Only then does it choose what to draw: every step up to `BAND_CAP` (5); above that, the
+endpoints plus page indices `round(k · (n − 1) / 4)` for k = 1…3. Each middle band is
+labeled with the page's own step number, counting from 1 at START, so an 8-step share
+(the page's default) draws the page's steps 1, 3, 5, 6 and 8. It assumes the page's
+defaults for what a share does not carry: duplicate prevention on, no dye filters.
+
+Known card/page divergences, measured end to end in Sprint 11 (2026-10-06) and left for a follow-up:
+
+- **Harmony companions:** the card passes no companion count, the page the viewer's (default 1), and core reserves each slot's companions under duplicate prevention, so a later slot can differ (83 of 1,125 default shares at ΔE2000, up to ~18 % under other methods).
+- **Harmony `perceptual=false`:** the card always ranks perceptually (documented in `harmony.ts`).
+- **Extractor dedupe:** the page avoids repeating a dye and drops repeated entries before its five-color cap; the card picks each band on its own, so a repeat can also push a later color off the card.
+- **`algo` case:** the harmony and extractor pages lowercase `?algo=` (`OKLAB` → oklab); the crawler and `isAlgorithm` are case-sensitive, so those cards fall back to ΔE2000. The gradient page is case-sensitive too, so it agrees.
+- **Legacy `?dyeId=`** on harmony links: the page loads the dye; the crawler reads only `dye`, so the unfurl is the no-dye card.
+- **og:url** drops the mixer's `mode` and harmony's `perceptual`, so a reopened page uses the reader's saved setting.
+- **Crawler parsing of hand-built links:** a non-canonical dye slot (`068`, `68.0`) and a repeated key (the crawler reads the first value, the page the last) — see `bareColorSlot`'s docblock.
+- **One-color extractor shares:** the en / de / fr deck lines and the de / fr crawler titles pluralize "1 colors"; a singular form needs new strings.
+- **`algo` in the cache key** is the raw spelling, so a legacy spelling and its normalized method render one card under two keys.
+- **Swatch and mixer** rank like the old extractor (table order on an exact `rgb` tie), unverified against their pages.
 
 Every path parameter above must be **canonical**, not merely well-formed — the same
 amplification the query-key allowlist closes, one axis over (2026-08-29 FINDING-024, OG-4,
@@ -170,14 +208,20 @@ rate-limiting rule's job (deployed 2026-09-01; record in `docs/historical/202608
 Second, a *canonically-formed* request naming more ids/entries or a wider count than a
 card actually draws: comparison/accessibility accept up to 16 dye ids but the card draws
 4 (`COMPARISON_MAX_DYES` / `ACCESSIBILITY_MAX_DYES` in `services/svg/{comparison,
-accessibility}.ts`), extractor accepts more colour entries than the 5 it draws, and
-gradient's `steps` / swatch's `limit` accept a wider range than the card's own band cap
-uses — this worker deliberately does **not** reject that tail at the route (ruling
+accessibility}.ts`), extractor accepts more color entries than the 5 it draws, and
+swatch's `limit` accepts a wider range than the card's own band cap uses (gradient's
+`steps` no longer belongs on this list: since BUG-008 each count from 2 to 20 resolves a
+different ramp, so each draws a different card) — this worker deliberately does **not** reject that tail at the route (ruling
 S7-R17: it would `404` image URLs already embedded in links shared before a given
 deploy), so a hand-built or already-shared URL naming ids past what the card draws can
 still spell one card several ways, bounded by the same WAF rule. What this release *does*
 do is stop `og-data-generator.ts`'s own crawler embed from **emitting** that tail — new
 share links only ever carry as many ids as the card draws.
+
+A third, smaller tail, accepted the same way: a degenerate gradient card (`steps` 2, an unknown
+dye, or start == end) is byte-identical across the five interpolation modes, yet `ogCacheKey`
+keys each non-`hsv` mode separately, so it can fill up to five entries. The crawler never
+emits one of these, and keying a real ramp less finely would be the worse trade.
 
 All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
 
@@ -190,21 +234,25 @@ spellings that decode alike already route alike, so keying on the raw pathname l
 spelling buy its own entry for the same card), with a trailing `.png` stripped from that
 path the same way the routes strip it (ruling S7-R13 — `.png` is optional everywhere, so
 the suffixed and suffix-less spellings of one card must share one entry, not two) + the
-*resolved* `lang` + the *resolved* `frame` + the *raw* `algo` + the *raw* `mode` (mixer
-routes) + the *normalised* `wheel`, and that last one **only on the parameterised harmony dye card (`/og/harmony/:dye/:type`), never the shared `/og/harmony/default` card, which does not read it (BUG-018)** — the
-route that reads it (2026-08-29 FINDING-024, OG-4) — not the full URL. `wheel` is the one
-key that IS normalised before it keys, because the five ids are the whole vocabulary and
+*resolved* `lang` + the *resolved* `frame`, then each optional key **only on the routes that
+read it** (2026-08-29 FINDING-024, OG-4) — not the full URL: the *raw* `algo` only on the six
+algo-aware routes (BUG-058, `readsAlgo`); the *raw* `mode` only on the two mixer routes
+(`readsMode`); the *normalized* `wheel` **only on the parameterized harmony dye card (`/og/harmony/:dye/:type`), never the shared `/og/harmony/default` card, which does not read it (BUG-018)**;
+and `interpolation` only on the parameterized gradient card (`/og/gradient/:start/:end/:steps`,
+BUG-008, `readsInterpolation`), with `hsv` (the default) elided so it shares the bare entry. `wheel` is the one
+key that IS normalized before it keys, because the five ids are the whole vocabulary and
 `parseColorWheelId` folds case exactly as the card's own reader does, so `?wheel=RYB` and
 `?wheel=ryb` cannot buy two entries for one picture; `rgb` (the default) elides, sharing
-the absent-wheel entry. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognised `?frame=` shares the `discord` entry. `algo` is never normalised (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary, even on a route that never reads `algo` itself — and an EMPTY `algo` (`?algo=` or bare `?algo`,
+the absent-wheel entry. `interpolation` needs no normalizing: the guard admits only its five
+exact spellings. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognized `?frame=` shares the `discord` entry. `algo` is never normalized (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary — and an EMPTY `algo` (`?algo=` or bare `?algo`,
 both of which `URLSearchParams.get` reports as `''`) counts as absent there and here, not a
-validation failure, matching what the five algo-aware routes already did with
+validation failure, matching what the algo-aware routes already did with
 `c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). The key also carries `CARD_VERSION` — this worker'''s own `package.json` version
 (BUG-025) — because nothing else in it changes when the CARD does, and the stored response says
 `s-maxage=604800` while neither deploy workflow purges: a band-layout revision or a renamed dye
 kept serving the pre-deploy PNG from every colo that already had it. Combined with the query-key
-allowlist above, the key space is bounded to (pathname × lang × frame × algo × mode × wheel ×
-version), and `mode`/`wheel` only widen it on the routes that read them — a client can no longer
+allowlist above, the key space is bounded to (pathname × lang × frame × version × algo × mode ×
+wheel × interpolation), and the last four each widen it only on the routes that read them — a client can no longer
 defeat the cache by appending an arbitrary throwaway param, nor multiply one card's entries with a
 parameter it ignores.
 

@@ -180,3 +180,196 @@ describe('DyePaletteDrawer category headings (HC-SYS-001 / TERM-002)', () => {
     expect(detail[1].random).toBe(true);
   });
 });
+
+// BUG-028 (2026-10-04 deep-dive): each swatch was a click-only <div>, so Tab
+// skipped every dye and landed only on the invisible star buttons, and both
+// section headers were click-only <div>s too. The palette drawer is the app's
+// only dye picker in the v4 shell, so a keyboard user could not pick a dye.
+describe('DyePaletteDrawer keyboard access (BUG-028)', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  type Drawer = HTMLElement & { isOpen: boolean; updateComplete: Promise<boolean> };
+
+  const mountDrawer = async (): Promise<Drawer> => {
+    await import('../../v4/dye-palette-drawer');
+    const drawer = document.createElement('dye-palette-drawer') as Drawer;
+    drawer.isOpen = true;
+    container.appendChild(drawer);
+    await drawer.updateComplete;
+    return drawer;
+  };
+
+  const picks = (drawer: Drawer): Dye[] => {
+    const picked: Dye[] = [];
+    drawer.addEventListener('dye-selected', ((e: CustomEvent<{ dye: Dye }>) => {
+      picked.push(e.detail.dye);
+    }) as EventListener);
+    return picked;
+  };
+
+  /** A swatch's own pick control: any button in it that is not the star. */
+  const pickButton = (swatch: Element) =>
+    swatch.querySelector<HTMLButtonElement>('button:not(.swatch-favorite-btn)');
+
+  it('picks each dye from a native button named for it', async () => {
+    const drawer = await mountDrawer();
+    const picked = picks(drawer);
+    const swatches = [...drawer.shadowRoot!.querySelectorAll('.swatch-grid .swatch')];
+    expect(swatches).toHaveLength(2);
+
+    for (const swatch of swatches) {
+      const pick = pickButton(swatch);
+      // A native <button> is in the tab order and fires click on Enter and Space
+      expect(pick?.type).toBe('button');
+      expect(pick!.getAttribute('aria-label')).toBe(swatch.getAttribute('title'));
+      pick!.click();
+    }
+
+    expect(picked.map((dye) => dye.id).sort()).toEqual([redDye.id, blueDye.id]);
+  });
+
+  it('keeps the star a sibling of the pick button, and starring picks nothing', async () => {
+    const drawer = await mountDrawer();
+    const picked = picks(drawer);
+    const swatch = drawer.shadowRoot!.querySelector('.swatch-grid .swatch')!;
+    const star = swatch.querySelector<HTMLButtonElement>('.swatch-favorite-btn')!;
+
+    // A button inside a button is invalid HTML: the parser splits them apart
+    expect(pickButton(swatch)?.contains(star)).toBe(false);
+    star.click();
+
+    expect(picked).toEqual([]);
+  });
+
+  it('makes both section headers disclosure buttons', async () => {
+    const drawer = await mountDrawer();
+    // Custom colour (shown for the default tool, harmony) and Favorites
+    const headers = [...drawer.shadowRoot!.querySelectorAll<HTMLElement>('.section-header')];
+    expect(headers).toHaveLength(2);
+
+    for (const header of headers) {
+      expect((header as HTMLButtonElement).type).toBe('button');
+      expect(header.getAttribute('aria-expanded')).toBe('true');
+      header.click();
+      await drawer.updateComplete;
+      expect(header.getAttribute('aria-expanded')).toBe('false');
+    }
+  });
+
+  it('shows the star to keyboard focus and on devices with no hover', async () => {
+    const { DyePaletteDrawer } = await import('../../v4/dye-palette-drawer');
+    const css = [DyePaletteDrawer.styles]
+      .flat(Infinity as 1)
+      .map((sheet) => (sheet as { cssText: string }).cssText)
+      .join('\n')
+      .replace(/\s+/g, ' ');
+    const shown = 'opacity: 1; transform: scale(1);';
+
+    // Focus on the swatch's pick button shows its star, and so does the
+    // star's own focus (it was opacity 0 then: a focus ring on nothing)
+    const starOnFocus = [...css.matchAll(/([^{}]*:focus-(?:visible|within)[^{}]*)\{([^}]*)\}/g)]
+      .filter(([, selector]) => selector.includes('.swatch-favorite-btn'))
+      .map(([, , body]) => body);
+    expect(starOnFocus.length).toBeGreaterThan(0);
+    expect(starOnFocus.every((body) => body.includes(shown))).toBe(true);
+    // Touch screens never hover, so the star was unreachable there
+    expect(css).toContain(`@media (hover: none) { .swatch-favorite-btn { ${shown} } }`);
+  });
+});
+
+// BUG-107 (2026-10-04 deep-dive): the Metallic and Pastel chips matched the
+// English dye name, so Metallic showed the 14 "Metallic ..." dyes and dropped
+// Gunmetal Black and Pearl White, the two gloss dyes without the word in
+// their name -- while "Exclude metallic" (core DyeFilter) removed all 16.
+// Core derives `isMetallic` from the Stain sheet's gloss set and `isPastel`
+// at initialize(); the chips must read those flags, not re-derive them.
+describe('DyePaletteDrawer type chips (BUG-107)', () => {
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  type Drawer = HTMLElement & {
+    isOpen: boolean;
+    updateComplete: Promise<boolean>;
+    allDyes: Dye[];
+  };
+
+  // In the gloss set, but no "Metallic" in the name
+  const gunmetal = makeDye({
+    id: 8735,
+    itemID: 8735,
+    stainID: 92,
+    name: 'Gunmetal Black',
+    category: 'Neutral',
+    isMetallic: true,
+  });
+  const metallicSilver = makeDye({
+    id: 8736,
+    itemID: 8736,
+    stainID: 112,
+    name: 'Metallic Silver',
+    category: 'Neutral',
+    isMetallic: true,
+  });
+  // Synthetic: the flag says pastel and the name does not. Every real pastel
+  // dye's name starts with "Pastel", so only this pins the flag as the source.
+  const softPink = makeDye({
+    id: 8737,
+    itemID: 8737,
+    stainID: 103,
+    name: 'Soft Pink',
+    category: 'Reds',
+    isPastel: true,
+  });
+
+  /** Mount on the fixture, click the chip labelled `labelKey`, return the shown swatches. */
+  const shownAfter = async (labelKey: string): Promise<string[]> => {
+    await import('../../v4/dye-palette-drawer');
+    const drawer = document.createElement('dye-palette-drawer') as unknown as Drawer;
+    drawer.isOpen = true;
+    container.appendChild(drawer);
+    await drawer.updateComplete;
+    drawer.allDyes = [redDye, gunmetal, metallicSilver, softPink];
+
+    const chip = [
+      ...drawer.shadowRoot!.querySelectorAll<HTMLButtonElement>('.filter-bar .filter-chip'),
+    ].find((button) => button.textContent?.trim() === labelKey);
+    expect(chip).toBeDefined();
+    chip!.click();
+    await drawer.updateComplete;
+
+    return [...drawer.shadowRoot!.querySelectorAll('.category-section .swatch')]
+      .map((swatch) => swatch.getAttribute('title') ?? '')
+      .sort();
+  };
+
+  it('Metallic shows every dye in the gloss set, named "Metallic" or not', async () => {
+    expect(await shownAfter('colorPalette.metallic')).toEqual(
+      [`Dye-${gunmetal.itemID}`, `Dye-${metallicSilver.itemID}`].sort()
+    );
+  });
+
+  it('Pastel follows the isPastel flag, not the English name', async () => {
+    expect(await shownAfter('colorPalette.pastel')).toEqual([`Dye-${softPink.itemID}`]);
+  });
+});

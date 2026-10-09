@@ -19,7 +19,7 @@ All `/v1` errors use the same envelope. The `error` field is a stable machine-re
 
 | Code | HTTP | Description |
 |---|---|---|
-| `VALIDATION_ERROR` | 400 | Invalid parameter value or format |
+| `VALIDATION_ERROR` | 400 | Invalid parameter value or format — numeric parameters must be plain decimals (`20`, `-3`, `12.5` where a fraction is allowed), so `1e2`, `20px`, ` 7`, `+5` or `50.9` for an integer are rejected |
 | `MISSING_PARAMETER` | 400 | Required parameter not provided |
 | `INVALID_HEX` | 400 | Hex color format invalid |
 | `INVALID_MATCHING_METHOD` | 400 | Unknown color distance algorithm |

@@ -86,7 +86,7 @@ src/
 │   ├── xivauth.ts           # GET /auth/xivauth, GET/POST /auth/xivauth/callback
 │   └── token.ts             # GET /auth/me, POST /auth/revoke
 ├── middleware/
-│   └── body-validation.ts   # bodySizeLimit (10 KB), jsonDepthLimit
+│   └── body-validation.ts   # bodySizeLimit (10 KB), requireJsonContentType (415), jsonDepthLimit
 ├── services/
 │   ├── jwt-service.ts       # JWT creation/verification, revocation check
 │   ├── user-service.ts      # findOrCreateUser + identity attachment rules (D1)

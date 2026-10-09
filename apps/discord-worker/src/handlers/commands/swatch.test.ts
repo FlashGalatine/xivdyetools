@@ -197,7 +197,7 @@ describe('/swatch attachment handling', () => {
       await settle();
 
       expect(mockExecuteSwatch).not.toHaveBeenCalled();
-      expect(lastEditEmbed().description).toContain('too large');
+      expect(lastEditEmbed().description).toContain('it is larger than 1 MB');
     });
 
     it('rejects a body that turns out larger than the cap even when Discord reported a small size', async () => {
@@ -207,7 +207,7 @@ describe('/swatch attachment handling', () => {
       await settle();
 
       expect(mockExecuteSwatch).not.toHaveBeenCalled();
-      expect(lastEditEmbed().description).toContain('too large');
+      expect(lastEditEmbed().description).toContain('it is larger than 1 MB');
     });
 
     it('hands the downloaded text to executeSwatch when it is within the cap', async () => {

@@ -397,3 +397,112 @@ describe('KVRateLimiter', () => {
     });
   });
 });
+
+/**
+ * A KV mock that pages `list()` like the real one: `pageSize` keys per call,
+ * a cursor to continue, `list_complete` only on the last page.
+ */
+function createPagingKV(names: string[], pageSize: number) {
+  const store = new Set(names);
+  const listCalls: Array<{ prefix?: string; cursor?: string }> = [];
+  const kv = {
+    list: vi.fn(async (options?: { prefix?: string; cursor?: string }) => {
+      listCalls.push({ prefix: options?.prefix, cursor: options?.cursor });
+      const matching = [...store]
+        .filter((k) => !options?.prefix || k.startsWith(options.prefix))
+        .sort();
+      // Like real KV, the cursor is key-based, so deleting while paging is safe.
+      const after = options?.cursor ? matching.filter((k) => k > options.cursor!) : matching;
+      const keys = after.slice(0, pageSize).map((name) => ({ name }));
+      return after.length <= pageSize
+        ? { keys, list_complete: true, cacheStatus: null }
+        : { keys, list_complete: false, cursor: keys[keys.length - 1].name, cacheStatus: null };
+    }),
+    delete: vi.fn(async (key: string) => {
+      store.delete(key);
+    }),
+  } as unknown as KVNamespace;
+  return { kv, store, listCalls };
+}
+
+describe('KVRateLimiter reset paging (BUG-151)', () => {
+  const names = Array.from({ length: 5 }, (_, i) => `ratelimit:a|${i}`);
+
+  it('resetAll deletes every key across list pages', async () => {
+    const { kv, store, listCalls } = createPagingKV([...names, 'other:x|1'], 2);
+    await new KVRateLimiter({ kv }).resetAll();
+    expect([...store]).toEqual(['other:x|1']);
+    expect(listCalls.length).toBeGreaterThan(1);
+    expect(listCalls[1].cursor).toBe('ratelimit:a|1');
+  });
+
+  it("reset(key) deletes all of that client's keys and none of another client's", async () => {
+    const { kv, store } = createPagingKV([...names, 'ratelimit:b|1', 'ratelimit:b|2'], 2);
+    await new KVRateLimiter({ kv }).reset('a');
+    expect([...store].sort()).toEqual(['ratelimit:b|1', 'ratelimit:b|2']);
+  });
+
+  it('deletes in chunks of at most 50 concurrent calls', async () => {
+    const many = Array.from({ length: 120 }, (_, i) => `ratelimit:c|${String(i).padStart(3, '0')}`);
+    const { kv, store } = createPagingKV(many, 1000);
+    let inFlight = 0;
+    let peak = 0;
+    (kv.delete as unknown as ReturnType<typeof vi.fn>).mockImplementation(async (key: string) => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await Promise.resolve();
+      store.delete(key);
+      inFlight--;
+    });
+    await new KVRateLimiter({ kv }).resetAll();
+    expect(store.size).toBe(0);
+    expect(peak).toBeLessThanOrEqual(50);
+    expect(peak).toBeGreaterThan(1);
+  });
+
+  it('stops on a non-complete page with no cursor', async () => {
+    const kv = {
+      list: vi.fn(async () => ({ keys: [], list_complete: false })),
+      delete: vi.fn(),
+    } as unknown as KVNamespace;
+    await new KVRateLimiter({ kv }).resetAll();
+    expect(kv.list).toHaveBeenCalledTimes(1);
+  });
+
+  it('stops when the cursor repeats', async () => {
+    const kv = {
+      list: vi.fn(async () => ({
+        keys: [{ name: 'ratelimit:z|1' }],
+        list_complete: false,
+        cursor: 'same',
+      })),
+      delete: vi.fn(async () => {}),
+    } as unknown as KVNamespace;
+    await new KVRateLimiter({ kv }).resetAll();
+    expect((kv.list as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBeLessThanOrEqual(2);
+  });
+
+  it('stops on a cursor cycle longer than one (A, B, A)', async () => {
+    const cursors = ['A', 'B', 'A', 'B', 'A'];
+    let i = 0;
+    const kv = {
+      list: vi.fn(async () => ({
+        keys: [{ name: `ratelimit:z|${i}` }],
+        list_complete: false,
+        cursor: cursors[i++] ?? 'A',
+      })),
+      delete: vi.fn(async () => {}),
+    } as unknown as KVNamespace;
+    await new KVRateLimiter({ kv }).resetAll();
+    expect((kv.list as unknown as ReturnType<typeof vi.fn>).mock.calls.length).toBeLessThanOrEqual(3);
+  }, 2000);
+
+  it('still propagates a KV error', async () => {
+    const kv = {
+      list: vi.fn(async () => {
+        throw new Error('kv down');
+      }),
+    } as unknown as KVNamespace;
+    await expect(new KVRateLimiter({ kv }).reset('a')).rejects.toThrow('kv down');
+  });
+});
