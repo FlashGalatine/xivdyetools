@@ -89,6 +89,18 @@ describe('CharaFileCard — localized surfaces', () => {
     expect(container.textContent).not.toContain('SeekerOfTheSun');
   });
 
+  // BUG-082 (2026-10-04 deep-dive): `??` let an empty or blank Nickname
+  // beat the file name, so the card's title was blank.
+  it('titles a file with a blank Nickname by its file name', async () => {
+    const blank = JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: '   ' });
+    const { container } = await mount(blank, 'Aria.chara');
+    const title = Array.from(container.querySelectorAll<HTMLElement>('span')).find((s) =>
+      s.style.fontSize.startsWith('16px')
+    );
+
+    expect(title?.textContent).toBe('Aria.chara');
+  });
+
   it('renders the keyed slot-error sentence instead of core message', async () => {
     const { container } = await mount(FIXTURE);
 

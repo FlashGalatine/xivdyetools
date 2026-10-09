@@ -2,6 +2,21 @@
 
 ---
 
+## Web-App Version 5.14.2 — October 5, 2026
+
+### Community presets
+- **Saved presets stay saved.** A preset is no longer marked "Removed by its author" because the service hiccupped or a search was slow. A wrong mark clears itself, and your own palettes are never marked.
+- **When the community feed is down, the gallery says so** instead of showing an empty feed.
+- **Votes tell the truth.** A failed vote says it failed instead of "already voted", and a vote on a preset's page shows on its card.
+- **Changes show at once.** After you vote, delete, edit or submit, the gallery updates right away.
+- **Deleting works as it says.** A failed delete says it failed, and My Submissions refreshes after a delete.
+- **Tab counts match what you see,** and search and sort work on the Saved and Mine tabs.
+
+### Collections and character colors
+- **Manage Collections updates right away** when you create a collection there.
+- **Exported file names keep Japanese, Korean and Chinese collection names.**
+- **Saving the same character twice works:** the second becomes "Name (1)". A full collection store and a blank nickname are handled too.
+
 ## Web-App Version 5.14.1 — October 5, 2026
 
 ### Your settings stay put

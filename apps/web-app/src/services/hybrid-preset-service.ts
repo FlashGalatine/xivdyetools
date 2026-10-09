@@ -9,11 +9,9 @@ import type {
   PresetPalette,
   PresetCategory,
   PresetData,
-  CategoryMeta,
-  Dye,
   PresetSortOption,
 } from '@xivdyetools/types';
-import { dyeService as sharedDyeService, resolvePresetDye } from './dye-service-wrapper';
+import { dyeService as sharedDyeService } from './dye-service-wrapper';
 import {
   CommunityPresetService,
   communityPresetService,
@@ -82,6 +80,57 @@ export interface GetPresetsOptions {
   sort?: PresetSortOption;
   includeAPI?: boolean;
   limit?: number;
+}
+
+/**
+ * What one `getPresets()` call fetched.
+ *
+ * BUG-029 (2026-10-04 deep-dive): the bare list could not tell preset-tool
+ * whether the community leg answered. A failed leg was logged and swallowed,
+ * so a transient 5xx came back as the curated list alone, and tombstone
+ * reconciliation read that as "every saved community preset was deleted".
+ */
+export interface PresetPoolResult {
+  /** Curated + community presets, sorted, cut to `limit`. */
+  presets: UnifiedPreset[];
+  /**
+   * The community leg was asked and answered. False when the API was
+   * unavailable at init, `includeAPI` was off, or the request failed: in each
+   * case `presets` says nothing about which community presets exist.
+   */
+  apiOk: boolean;
+  /**
+   * The id of every community row the API returned, taken BEFORE the merged
+   * sort and `limit` cut. Up to 15 curated + `limit` API rows are cut to
+   * `limit`, and a row cut for space has not been deleted.
+   */
+  apiIds: string[];
+}
+
+// ============================================
+// Sorting
+// ============================================
+
+/**
+ * Order presets by one of the gallery's three sorts. Never mutates `presets`.
+ * Exported so preset-tool can sort its local shelves (Saved, Mine) the same
+ * way this service sorts the fetched pool (2026-10-04 deep-dive OPT-008).
+ */
+export function sortPresets(presets: UnifiedPreset[], sort: PresetSortOption): UnifiedPreset[] {
+  switch (sort) {
+    case 'popular':
+      return [...presets].sort((a, b) => b.voteCount - a.voteCount);
+    case 'recent':
+      return [...presets].sort((a, b) => {
+        if (!a.createdAt && !b.createdAt) return 0;
+        if (!a.createdAt) return 1;
+        if (!b.createdAt) return -1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+    case 'name':
+    default:
+      return [...presets].sort((a, b) => a.name.localeCompare(b.name));
+  }
 }
 
 // ============================================
@@ -236,13 +285,6 @@ class HybridPresetService {
     return Array.from(categoryMap.values());
   }
 
-  /**
-   * Get category metadata
-   */
-  getCategoryMeta(category: PresetCategory): CategoryMeta | null {
-    return this.localPresetService.getCategoryMeta(category) ?? null;
-  }
-
   // ============================================
   // Preset Methods
   // ============================================
@@ -251,30 +293,11 @@ class HybridPresetService {
    * Get presets with optional filtering
    * Combines local and community presets
    */
-  async getPresets(options: GetPresetsOptions = {}): Promise<UnifiedPreset[]> {
+  async getPresets(options: GetPresetsOptions = {}): Promise<PresetPoolResult> {
     const { category, search, sort = 'name', includeAPI = true, limit } = options;
 
-    let presets: UnifiedPreset[] = [];
-
-    // 5.0: 'community' is no longer a category — kept only as an
-    // unreachable guard while callers migrate.
-    if ((category as string) === 'community') {
-      if (this.apiAvailable && includeAPI) {
-        try {
-          const response = await this.communityService.getPresets({
-            status: 'approved',
-            is_curated: false,
-            search,
-            sort,
-            limit: limit || 50,
-          });
-          presets = response.presets.map((p) => this.communityToUnified(p));
-        } catch (error) {
-          logger.warn('HybridPresetService: Failed to fetch community presets', error);
-        }
-      }
-      return presets;
-    }
+    let apiOk = false;
+    let apiIds: string[] = [];
 
     // Get local presets
     let localPresets: PresetPalette[];
@@ -287,7 +310,7 @@ class HybridPresetService {
       localPresets = this.localPresetService.getAllPresets();
     }
 
-    presets = localPresets.map((p) => this.localToUnified(p));
+    let presets = localPresets.map((p) => this.localToUnified(p));
 
     // Add community presets if API is available
     if (this.apiAvailable && includeAPI) {
@@ -304,6 +327,8 @@ class HybridPresetService {
 
         const response = await this.communityService.getPresets(filters);
         const communityPresets = response.presets.map((p) => this.communityToUnified(p));
+        apiOk = true;
+        apiIds = communityPresets.map((p) => p.id);
 
         // Merge and deduplicate (prefer community version if same name)
         const existingIds = new Set(presets.map((p) => p.id));
@@ -318,36 +343,14 @@ class HybridPresetService {
     }
 
     // Apply sorting
-    presets = this.sortPresets(presets, sort);
+    presets = sortPresets(presets, sort);
 
     // Apply limit
     if (limit && presets.length > limit) {
       presets = presets.slice(0, limit);
     }
 
-    return presets;
-  }
-
-  /**
-   * Get featured presets (top voted community presets)
-   */
-  async getFeaturedPresets(limit: number = 10): Promise<UnifiedPreset[]> {
-    if (!this.apiAvailable) {
-      // Fall back to random curated presets
-      const allPresets = this.localPresetService.getAllPresets();
-      const shuffled = [...allPresets].sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, limit).map((p) => this.localToUnified(p));
-    }
-
-    try {
-      const featured = await this.communityService.getFeaturedPresets();
-      return featured.slice(0, limit).map((p) => this.communityToUnified(p));
-    } catch (error) {
-      logger.warn('HybridPresetService: Failed to fetch featured presets', error);
-      // Fall back to curated
-      const allPresets = this.localPresetService.getAllPresets();
-      return allPresets.slice(0, limit).map((p) => this.localToUnified(p));
-    }
+    return { presets, apiOk, apiIds };
   }
 
   /**
@@ -387,71 +390,9 @@ class HybridPresetService {
     return null;
   }
 
-  /**
-   * Get random preset
-   */
-  async getRandomPreset(category?: PresetCategory): Promise<UnifiedPreset | null> {
-    const presets = await this.getPresets({ category, includeAPI: true });
-    if (presets.length === 0) return null;
-
-    const randomIndex = Math.floor(Math.random() * presets.length);
-    return presets[randomIndex];
-  }
-
-  /**
-   * Search presets
-   */
-  async searchPresets(query: string): Promise<UnifiedPreset[]> {
-    return this.getPresets({ search: query });
-  }
-
-  // ============================================
-  // Dye Resolution
-  // ============================================
-
-  /**
-   * Resolve dye IDs to Dye objects
-   */
-  resolveDyes(dyeIds: number[]): (Dye | null)[] {
-    return dyeIds.map((id) => resolvePresetDye(id) ?? null);
-  }
-
-  /**
-   * Get preset with resolved dyes
-   */
-  async getPresetWithDyes(
-    id: string
-  ): Promise<{ preset: UnifiedPreset; dyes: (Dye | null)[] } | null> {
-    const preset = await this.getPreset(id);
-    if (!preset) return null;
-
-    const dyes = this.resolveDyes(preset.dyes);
-    return { preset, dyes };
-  }
-
   // ============================================
   // Utility Methods
   // ============================================
-
-  /**
-   * Sort presets
-   */
-  private sortPresets(presets: UnifiedPreset[], sort: PresetSortOption): UnifiedPreset[] {
-    switch (sort) {
-      case 'popular':
-        return [...presets].sort((a, b) => b.voteCount - a.voteCount);
-      case 'recent':
-        return [...presets].sort((a, b) => {
-          if (!a.createdAt && !b.createdAt) return 0;
-          if (!a.createdAt) return 1;
-          if (!b.createdAt) return -1;
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        });
-      case 'name':
-      default:
-        return [...presets].sort((a, b) => a.name.localeCompare(b.name));
-    }
-  }
 
   /**
    * Clear API cache

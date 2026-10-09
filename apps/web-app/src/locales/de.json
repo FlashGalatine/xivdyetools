@@ -753,6 +753,7 @@
     "addedToCollection": "Zu {name} hinzugefügt",
     "removedFromCollection": "Aus {name} entfernt",
     "collectionFull": "Sammlung voll (max. {max} Farbstoffe)",
+    "collectionsLimitReached": "Du hast die Höchstzahl an Sammlungen erreicht. Lösche eine Sammlung, um eine neue zu speichern.",
     "export": "Exportieren",
     "exportAll": "Alle exportieren",
     "import": "Importieren",

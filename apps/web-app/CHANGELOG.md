@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.2] - 2026-10-05
+
+Sprint 4 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+community presets and collections.
+
+### Fixed
+
+- **Saved presets are no longer marked "Removed by its author" by mistake** (BUG-029). A failed
+  community request, a saved local palette, a late answer to an old search, or a preset that fell
+  outside the page shown could all mark a live preset. `HybridPresetService.getPresets` now reports
+  `{ presets, apiOk, apiIds }` (ids counted before the merged list is cut), and the gallery marks a
+  preset only on a complete, unfiltered, successful answer. A wrong mark heals the next time the
+  preset appears, and local palettes are never marked. When the feed fails, the Community tab says
+  "Community feed unavailable" instead of showing nothing.
+- **Votes** (BUG-030, BUG-108, BUG-110): a failed vote or un-vote says so instead of "already voted";
+  a failed vote check no longer shows 0 votes; a vote made on a preset's page shows on its card.
+- **The gallery shows changes at once** (BUG-031): votes, deletes, edits and submissions clear the
+  cached preset lists instead of waiting up to 5 minutes.
+- **Deletes** (BUG-032, BUG-101): a failed delete is reported as a failure, in the gallery and in My
+  Submissions, which refreshes after a successful delete.
+- **Tab counts match the cards** (BUG-109), including Blend, Hide unbuyable, Keep deleted, the search
+  and your own palettes. Search and sort on the Saved and Mine tabs work on those tabs' own lists,
+  with no refetch or spinner (OPT-008).
+- **Collections** (BUG-017, BUG-084): the manager refreshes its list, count and limit after you create
+  a collection, and a single-collection export keeps a non-Latin name in the file name.
+- **Save character colors** (BUG-016, BUG-082): a name already in use becomes "Name (1)"; a full
+  collection store says so (new `collections.collectionsLimitReached`, six locales); a blank Nickname
+  falls back to the file name, on the file card's title too.
+- **Preset submission** (BUG-102): after the server answers, the form closes only itself, and blocked
+  browser storage no longer turns a found duplicate into a failure.
+- **The Saved shelf sorts on its own keys.** Recent is when you saved it; Popular uses the live vote
+  count, or the count a saved preset last had (now remembered in the snapshot), so the shelf no
+  longer reorders when a preset drops out of the current feed. Saved presets from older versions,
+  and your own palettes, follow the known counts.
+- **While a search typed on Saved or Mine has not been fetched**, the Community and Official badges
+  read "—" instead of an out-of-date count. Signing out on Mine catches the Community list up.
+- **Mine shows a spinner until your submissions load,** instead of "You haven't submitted any presets
+  yet" during the first load.
+- **Preview-image edits and overlapping deletes refresh the lists** (BUG-031 follow-ups): replacing or
+  removing a picture clears the cached lists, and a list request that was in flight when the cache
+  was cleared is not cached. My Submissions refreshes only when it is the top dialog, so it never
+  covers a pending delete confirmation, and the last of two overlapping deletes leaves it fresh.
+- **Glamour Reader "Save to this device"** gets the same two fixes as Save character colors: a blank
+  Nickname falls back to the file name, and a full collection store says so.
+- **Tests** (BUG-026): preset-tool's suite covers reconcile, votes, tab pools and counts, and
+  `preset-tool.ts` now counts toward coverage.
+
+### Removed
+
+- Dead preset-service code (dead-code DEAD-012 to DEAD-016): five unused `HybridPresetService`
+  methods, `getFeaturedPresets`, the unreachable `'community'` guard, `getRemainingSubmissions`, and
+  the msw and e2e mocks that served only them. Core's published `PresetService.getCategoryMeta` lost
+  its only in-repo caller and is tagged `@public` (comment only, no core release).
+
 ## [5.14.1] - 2026-10-05
 
 Sprint 1 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):

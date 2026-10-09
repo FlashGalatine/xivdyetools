@@ -753,6 +753,7 @@
     "addedToCollection": "已添加到 {name}",
     "removedFromCollection": "已从 {name} 移除",
     "collectionFull": "集合已满（最多 {max} 种染剂）",
+    "collectionsLimitReached": "集合数量已达上限。请删除一个集合后再保存。",
     "export": "导出",
     "exportAll": "全部导出",
     "import": "导入",
