@@ -25,7 +25,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatEntries } from './acquisition/format.js';
 import { facewearUnlocks, type FacewearStyle, type FacewearUnlock } from './acquisition/facewear.js';
-import { buildInputs, fateZoneLevels, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
+import { buildInputs, cofferQuestSources, fateZoneLevels, tablesFrom, type RawFiles, type RelicRule, type TableFiles, type XivapiExtras } from './acquisition/inputs.js';
 import { markerCoordinate, nearestSettlement, type MapLabel } from './acquisition/labels.js';
 import type { Inputs, Tables } from './acquisition/model.js';
 import { overrideLine, selectEntries } from './acquisition/select.js';
@@ -301,7 +301,8 @@ function writeFixture(inputs: Inputs, itemIds: number[]): void {
     for (const o of inputs.offers.get(id) ?? []) for (const c of o.costs) keep.add(c.itemId);
     for (const d of inputs.desynth.get(id) ?? []) keep.add(d.sourceItemId);
   }
-  const npcIds = new Set(itemIds.flatMap((id) => (inputs.offers.get(id) ?? []).flatMap((o) => o.shop.npcIds)));
+  for (const id of [...keep]) for (const offer of inputs.offers.get(id) ?? []) for (const cost of offer.costs) keep.add(cost.itemId);
+  const npcIds = new Set([...keep].flatMap((id) => (inputs.offers.get(id) ?? []).flatMap((o) => o.shop.npcIds)));
   const dutyIds = new Set([...keep].flatMap((id) => inputs.duties.get(id) ?? []));
   const questIds = new Set([...keep].flatMap((id) => inputs.quests.get(id) ?? []));
   const pick = <V>(map: Map<number, V>, wanted: Set<number>): Array<[number, V]> => [...map].filter(([key]) => wanted.has(key));
@@ -392,6 +393,7 @@ async function main(): Promise<void> {
   const raw = await loadTeamcraft(sha);
   const rules = readTable<RelicRule[]>('relic-sagas.json');
   const tableFiles: TableFiles = {
+    cofferSources: readTable('coffer-sources.json'),
     gacha: readTable('gacha-containers.json'),
     eurekaLockboxes: readTable('eureka-lockboxes.json'),
     ishgardDistricts: readTable('ishgard-districts.json'),
@@ -413,16 +415,19 @@ async function main(): Promise<void> {
     equippableNames.set(unlock.row_id, unlock.fields.Name);
   }
   console.log(`${unlocks.results.length} facewear unlock items for ${Object.keys(facewear).length} Glasses rows`);
-  const sellers = raw.shops.filter((s) => s.trades.some((t) => t.items.some((i) => equippable.has(i.id))));
-  const npcIds = [...new Set(sellers.flatMap((s) => s.npcs))];
   const containerIds = [...equippable.keys()].flatMap((id) => raw.lootSources[id] ?? []);
+  const sourceIds = new Set([...equippable.keys(), ...containerIds]);
+  const sellers = raw.shops.filter((s) => s.trades.some((t) => t.items.some((i) => sourceIds.has(i.id))));
+  const npcIds = [...new Set(sellers.flatMap((s) => s.npcs))];
   const desynthIds = [...equippable.keys()].flatMap((id) => raw.desynth[id] ?? []);
   const costIds = sellers.flatMap((s) => s.trades.flatMap((t) => t.currencies.map((c) => c.id)));
 
   type ItemRow = { Name: string; Plural: string; ItemUICategory?: Link; ClassJobRepair?: Link };
   const itemRows = await rows<ItemRow>('Item', [...costIds, ...containerIds, ...desynthIds], 'Name,Plural,ItemUICategory.value,ClassJobRepair.value');
   type QuestRow = { JournalGenre?: { fields?: { JournalCategory?: { fields?: { Name?: string; JournalSection?: { fields?: { Name?: string } } } } } } };
-  const questIds = [...equippable.keys(), ...containerIds].flatMap((id) => raw.questSources[id] ?? []);
+  const cofferIds = new Set([...itemRows].filter(([, row]) => /\bCoffer\b/.test(row.Name)).map(([id]) => id));
+  const questSources = cofferQuestSources(raw, cofferIds);
+  const questIds = [...sourceIds].flatMap((id) => questSources[id] ?? []);
   const questRows = await rows<QuestRow>('Quest', questIds, 'JournalGenre.JournalCategory.Name,JournalGenre.JournalCategory.JournalSection.Name');
   const territoryIds = npcIds.flatMap((id) => {
     const map = raw.npcs[id]?.position?.map;

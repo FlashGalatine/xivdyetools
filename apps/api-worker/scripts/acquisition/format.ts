@@ -93,6 +93,8 @@ function formatEntry(entry: Entry, inputs: Inputs, tables: Tables): string | nul
     case 'eurekaLockbox':
       return entry.line;
     case 'container': {
+      const reviewed = tables.cofferSources.get(entry.containerId);
+      if (reviewed) return reviewed.line;
       const name = inputs.items.get(entry.containerId)?.name;
       // These costume sets list the coffer's purchase source in the glamour export.
       if (name && /^\w+fiend's Costume Coffer$/.test(name)) {

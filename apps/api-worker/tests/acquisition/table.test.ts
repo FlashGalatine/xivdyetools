@@ -16,6 +16,25 @@ function offending(test: (line: string) => boolean): string[] {
 }
 
 describe('acquisition table invariants', () => {
+  it('resolves every coffer-only line to its acquisition source', () => {
+    expect(offending((line) => /Coffer/.test(line) && !line.includes(' / '))).toEqual([]);
+    const lookup = table as Record<string, string>;
+    for (let id = 36844; id <= 36848; id++) expect(lookup[id]).toBe('A Gift from House Leveilleur (Sidequest)');
+    for (let id = 33667; id <= 33671; id++) expect(lookup[id]).toBe('Enie - Ishgard - The Firmament (50 Fête Tokens)');
+  });
+
+  it('places the six level-1 glamour sets at the correct expedition antiquarian', () => {
+    const lookup = table as Record<string, string>;
+    for (const id of [51952, 51953, 51954, 51955, 51957, 51958, 51960, 51961, 51962, 51963, 51964, 51965]) {
+      expect(lookup[id], `North Horn glamour ${id}`).toContain('Expedition Antiquarian - The Occult Crescent: North Horn');
+      expect(lookup[id]).not.toContain('South Horn');
+    }
+    for (let id = 47891; id <= 47905; id++) {
+      expect(lookup[id], `South Horn glamour ${id}`).toContain('Expedition Antiquarian - The Occult Crescent: South Horn');
+      expect(lookup[id]).not.toContain('North Horn');
+    }
+    expect(lookup[47758]).toContain('Expedition Antiquarian - The Occult Crescent: South Horn');
+  });
   it('preserves the reviewed duty sources for complete weapon families and the Templar set', () => {
     const lookup = table as Record<string, string>;
     for (let id = 52299; id <= 52320; id++)

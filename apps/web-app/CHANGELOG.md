@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Glamour Reader Acquisition lines now replace coffer-only names with their quest, vendor or activity source, and identify retired PvP rewards as no longer obtainable. Kornago Merchant and both expedition antiquarians have complete locations, including the six level-1 glamour sets and three newly resolved facewear styles.
+
 - Glamour Reader names retired Dated gear (equipment level 50 or below), Aetherial gear and Deepmist gear using an eligible item with the identical slot and model, when available. Retired items are also removed from the twin picker and wear checks.
 - Acquisition lines now identify Dancing Mad (Ultimate) for Palazzo Diamond weapons, Pilgrim's Traverse for First Light and Sacramental weapons, Dzemael Darkhold for the level-44 Templar armor, and Baldesion Arsenal for both Shin-Zantetsuken weapons.
 

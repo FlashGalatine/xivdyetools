@@ -31,6 +31,7 @@ export function emptyInputs(): Inputs {
 export function emptyTables(): Tables {
   return {
     gachaContainers: new Set(),
+    cofferSources: new Map(),
     eurekaLockboxes: new Map(),
     ishgardDistricts: new Set(['Foundation', 'The Pillars', 'The Firmament']),
   };

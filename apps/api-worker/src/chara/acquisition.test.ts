@@ -13,7 +13,7 @@ describe('facewear acquisitions from unlock items', () => {
       expect(facewearAcquisitionFor(Number(glassesId))).toBe(acquisitionFor(itemId));
       if (acquisitionFor(itemId)) known++;
     }
-    expect(known).toBe(432);
+    expect(known).toBe(468);
   });
 
   it.each([157, 158, 168])('gives each under-rim variant %i the unlock item purchase source', (id) => {
@@ -28,7 +28,11 @@ describe('facewear acquisitions from unlock items', () => {
     expect(facewearAcquisitionFor(0)).toBeUndefined();
     expect(facewearAcquisitionFor(409)).toBeUndefined();
     expect(facewearAcquisitionFor(65535)).toBeUndefined();
-    expect(facewearAcquisitionFor(637)).toBeUndefined();
+    expect(facewearAcquisitionFor(217)).toBeUndefined();
+  });
+
+  it.each([637, 638, 648])('lists Kornago in Bentbranch for Teardrop Glasses variant %i', (id) => {
+    expect(facewearAcquisitionFor(id)).toBe('Kornago Merchant - Central Shroud - Bentbranch Meadows (100 Faded Remnants of Resilience)');
   });
 });
 

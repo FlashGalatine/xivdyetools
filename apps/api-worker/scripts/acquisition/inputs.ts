@@ -26,7 +26,7 @@ export interface RawFiles {
   mogstationSources: Record<string, unknown>;
   recipesPerItem: Record<string, Array<{ job: number; lvl: number }>>;
   questSources: Record<string, number[]>;
-  quests: Record<string, { name: { en: string } }>;
+  quests: Record<string, { name: { en: string }; rewards?: Array<{ id: number; amount: number }> }>;
   achievements: Record<string, { en: string; itemReward?: number }>;
   fateSources: Record<string, number[]>;
   fates: Record<string, { name: { en: string }; level: number; location: number }>;
@@ -100,6 +100,7 @@ export interface RelicRule {
 /** The hand-kept table files, parsed. */
 export interface TableFiles {
   gacha: Array<{ id: number; name: string }>;
+  cofferSources: Record<string, { name: string; line: string; random?: boolean }>;
   /** Container name → the guide's line */
   eurekaLockboxes: Record<string, string>;
   ishgardDistricts: string[];
@@ -122,6 +123,27 @@ const VOYAGE: Record<number, 'airship' | 'submarine'> = { 0: 'airship', 1: 'subm
 
 type RawShop = RawFiles['shops'][number];
 
+/** Fixed quest rewards include coffers omitted by Teamcraft's quest-sources index. */
+export function cofferQuestSources(raw: RawFiles, cofferIds: Set<number>): Record<string, number[]> {
+  const sources = Object.fromEntries(Object.entries(raw.questSources).map(([id, quests]) => [id, [...quests]]));
+  for (const [questId, quest] of Object.entries(raw.quests)) {
+    for (const reward of quest.rewards ?? []) {
+      if (!cofferIds.has(reward.id) || reward.amount <= 0) continue;
+      const list = sources[reward.id] ?? [];
+      if (!list.includes(Number(questId))) list.push(Number(questId));
+      sources[reward.id] = list;
+    }
+  }
+  return sources;
+}
+
+/** Reviewed missing/abbreviated NPC positions; keyed by resident, never by shared name. */
+const NPC_LOCATIONS = new Map<number, { zone: string; outpost: string | null }>([
+  [1059408, { zone: 'Central Shroud', outpost: 'Bentbranch Meadows' }],
+  [1059485, { zone: 'The Occult Crescent: North Horn', outpost: null }],
+  [1053614, { zone: 'The Occult Crescent: South Horn', outpost: null }],
+]);
+
 /** Overworld zone → its lowest FATE level. The zones listed are the wilderness (spec D10). */
 export function fateZoneLevels(raw: RawFiles, levelZones: Map<number, string>, overworld: Set<string>): Map<string, number> {
   const out = new Map<string, number>();
@@ -134,6 +156,7 @@ export function fateZoneLevels(raw: RawFiles, levelZones: Map<number, string>, o
 }
 
 export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRule[]): Inputs {
+  const cofferIds = new Set([...extras.items].filter(([, item]) => /\bCoffer\b/.test(item.name)).map(([id]) => id));
   const shopName = (s: RawShop): string =>
     (s.type === 'GilShop' ? raw.gilShopNames[s.id]?.en : raw.specialShopNames[s.id]?.en) ?? '';
   const zoneOfMap = (mapId: number): string | null => {
@@ -158,7 +181,7 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     for (const trade of s.trades) {
       const costs = trade.currencies.filter((c) => c.amount > 0).map((c) => ({ itemId: c.id, amount: c.amount }));
       for (const product of trade.items) {
-        if (!extras.equippable.has(product.id)) continue;
+        if (!extras.equippable.has(product.id) && !cofferIds.has(product.id)) continue;
         const unknownCosts = misreads && costs.some((c) => MISREAD_TOMESTONE.has(c.itemId));
         push(offers, product.id, { shop, costs, unknownCosts });
         s.npcs.forEach((id) => npcIds.add(id));
@@ -174,8 +197,8 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     npcs.set(id, {
       id,
       name: record.en,
-      zone: zoneOfNpc(id),
-      outpost: extras.outposts.get(id) ?? null,
+      zone: NPC_LOCATIONS.get(id)?.zone ?? zoneOfNpc(id),
+      outpost: NPC_LOCATIONS.has(id) ? NPC_LOCATIONS.get(id)!.outpost : extras.outposts.get(id) ?? null,
       unreachable: map ? map.dungeon || map.housing : false,
     });
   }
@@ -231,7 +254,7 @@ export function buildInputs(raw: RawFiles, extras: XivapiExtras, rules: RelicRul
     }
   }
 
-  const quests = numberLists(raw.questSources);
+  const quests = numberLists(cofferQuestSources(raw, cofferIds));
   const questInfo = new Map<number, { name: string; kind: QuestKind }>();
   for (const list of quests.values()) {
     for (const id of list) {
@@ -318,6 +341,7 @@ export function tablesFrom(files: TableFiles, inputs: Inputs): Tables {
   }
   return {
     gachaContainers: new Set(files.gacha.map((g) => g.id)),
+    cofferSources: new Map(Object.entries(files.cofferSources).map(([id, source]) => [Number(id), source])),
     eurekaLockboxes,
     ishgardDistricts: new Set(files.ishgardDistricts),
   };

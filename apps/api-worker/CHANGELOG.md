@@ -12,10 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional `glasses.acquisition` on character equipment resolution now describes where to obtain
   the facewear style's "The Faces We Wear" unlock Item, shared by its base and color variants.
   The build follows `Item.AdditionalData` and `GlassesStyle.Glasses` links: 61 styles / 732 variants,
-  with known acquisition sources for 36 styles / 432 variants. Unknown sources remain omitted.
+  with known acquisition sources for 39 styles / 468 variants. Unknown sources remain omitted.
   Regeneration stays pinned to the recorded Teamcraft commit and XIVAPI version.
 
 ### Fixed
+
+- Coffer acquisition follows fixed quest rewards missing from the source index and includes coffer vendor offers. All 212 coffer-only equipment lines across 40 coffers now identify their acquisition source; reviewed Kupo of Fortune and retired PvP rewards have explicit sources. Existing quest/random-source exclusions still apply when another acquisition route exists.
+- Corrected Kornago Merchant's placement in Central Shroud near Bentbranch Meadows and the separate North/South Horn expedition antiquarians. These locations fill 50 previously blank equipment and facewear unlock lines, including Tule, Torna and Carwen vendor pieces in North Horn; Lix, Tycoon and Scherwiz remain in South Horn.
 
 - Character equipment resolution filters Aetherial and Deepmist items, and Dated items requiring level 50 or below, from the primary name, alternates and wear checks. It selects the lowest eligible row with the same slot and model, or leaves the slot unresolved when no alternative exists. Cached rows now include equipment level under a new cache namespace.
 - Acquisition sources now list all 22 Palazzo Diamond weapons under Dancing Mad (Ultimate), all 44 First Light / Sacramental weapons (including Word of the Radiant and Word of the Blest) under Pilgrim's Traverse, the level-44 Templar armor set under Dzemael Darkhold, and both Shin-Zantetsuken weapons under Baldesion Arsenal. The generator retains these mappings on refresh.

@@ -85,6 +85,11 @@ export function selectEntries(sources: Source[], inputs: Inputs, tables: Tables)
       gacha.push({ kind: 'eurekaLockbox', line: eureka });
       return;
     }
+    const reviewed = tables.cofferSources.get(containerId);
+    if (reviewed) {
+      (reviewed.random ? gacha : rest).push({ kind: 'container', containerId });
+      return;
+    }
     if (tables.gachaContainers.has(containerId)) {
       gacha.push({ kind: 'container', containerId });
       return;
@@ -93,7 +98,11 @@ export function selectEntries(sources: Source[], inputs: Inputs, tables: Tables)
     const containerQuests = inputs.quests.get(containerId) ?? [];
     if (containerDuties.length > 0) containerDuties.forEach((d) => duties.add(d));
     else if (containerQuests.length > 0) containerQuests.forEach(addQuest);
-    else rest.push({ kind: 'container', containerId });
+    else {
+      const offers = inputs.offers.get(containerId) ?? [];
+      if (offers.length > 0) offers.forEach(addOffer);
+      else rest.push({ kind: 'container', containerId });
+    }
   }
 
   function addOffer(offer: Offer): void {

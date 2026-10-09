@@ -5,20 +5,20 @@
   "equippable": 29058,
   "facewearUnlockItems": 61,
   "facewearVariants": 732,
-  "lines": 23690,
-  "sourcesButNoLine": 1130,
-  "bytes": 1367437,
+  "lines": 23740,
+  "sourcesButNoLine": 1080,
+  "bytes": 1347092,
   "itemsPerRoute": {
-    "vendor": 9984,
+    "vendor": 10094,
     "craft": 6702,
-    "container": 1280,
     "duty": 6833,
     "relic": 2122,
     "achievement": 95,
     "scrip": 673,
+    "container": 224,
     "override": 62,
     "onlineStore": 396,
-    "quest": 19,
+    "quest": 160,
     "desynth": 11,
     "voyage": 5,
     "fate": 10,
@@ -26,10 +26,11 @@
     "eurekaLockbox": 11
   },
   "dropped": {
+    "questNotOnlySource": 851,
     "desynthNotOnlySource": 25,
     "repurchaseShop": 1303,
     "seasonalShop": 1044,
-    "vendorWithoutPosition": 944,
+    "vendorWithoutPosition": 886,
     "gachaNotOnlySource": 353,
     "unknownCost": 755,
     "deepDungeonNotOnlySource": 1,
@@ -47,7 +48,7 @@
     "Cosmic Tools Saga": 242
   },
   "topCostCurrencies": {
-    "Gil": 3912,
+    "Gil": 3917,
     "Allagan Tomestone of Poetics": 1793,
     "Purple Crafters' Scrip": 962,
     "Wolf Mark": 660,
@@ -100,5 +101,8 @@
     "serpent quartermaster": 167,
     "storm quartermaster": 167
   },
-  "unleveledVendorZones": []
+  "unleveledVendorZones": [
+    "The Occult Crescent: North Horn",
+    "The Occult Crescent: South Horn"
+  ]
 }
