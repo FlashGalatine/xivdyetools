@@ -75,6 +75,29 @@ describe('OG_DECK', () => {
     expect(getOgDeck('glamour', 'zh').name).toBe('幻化查看器');
   });
 
+  /**
+   * TERM-011 (2026-10-04 i18n audit): the web app renamed the fr tool title to
+   * "Préréglages communautaires" (fr.json `tools.presets.title`; glossary:
+   * *préréglage*, never *palette prédéfinie*) and the deck kept the old
+   * "Palettes Communautaires" — the card and the embed title above it named
+   * the tool differently from the page they open. Pinned ×6 as literals copied
+   * from the web titles (`tools.presets.title` in each web locale file): a deck
+   * rename fails here, and a web rename must update this table by hand.
+   */
+  it('names Community Presets as the web app titles it, in every locale', () => {
+    const WEB_TITLE: Record<LocaleCode, string> = {
+      en: 'Community Presets',
+      de: 'Community-Vorlagen',
+      fr: 'Préréglages communautaires',
+      ja: 'コミュニティプリセット',
+      ko: '커뮤니티 프리셋',
+      zh: '社区预设',
+    };
+    for (const locale of LOCALES) {
+      expect(getOgDeck('presets', locale).name, locale).toBe(WEB_TITLE[locale]);
+    }
+  });
+
   it('the root name never localises', () => {
     for (const locale of LOCALES) {
       expect(getOgDeck('root', locale).name).toBe('XIV Dye Tools');
@@ -122,6 +145,16 @@ import { ogTranslator } from './translator';
 const placeholders = (s: string): string[] => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
 
 describe('OG_EMBED', () => {
+  it('I18N-014: de glamour.descriptionDefault keeps the repaired grammar', () => {
+    const de = OG_EMBED.de['glamour.descriptionDefault'];
+    // `mit Farbstoffen, ob ...` put a clause after a preposition; the repair
+    // is a noun phrase headed by the participle, as the de deck sub has it.
+    expect(de).not.toContain('mit Farbstoffen, ob');
+    // The comma closing the ob-clause is required: without it `und seine
+    // Bezugsquelle` reads as part of that clause.
+    expect(de).toContain('ob das Spiel es tragen lässt, und');
+  });
+
   const keys = Object.keys(OG_EMBED.en) as EmbedKey[];
 
   it('covers every embed string in all six locales', () => {

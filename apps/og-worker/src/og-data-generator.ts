@@ -33,22 +33,25 @@ import {
   isKnownClanOrRace,
 } from './services/translator';
 import {
-  OG_MAX_GRADIENT_STEPS,
+  DEFAULT_GRADIENT_INTERPOLATION,
+  OG_DEFAULT_GRADIENT_STEPS,
   OG_MAX_MIXER_RATIO,
   OG_MAX_SWATCH_LIMIT,
-  OG_MIN_GRADIENT_STEPS,
   OG_MIN_MIXER_RATIO,
   clampInt,
   isHarmonyType,
   isSheet,
   isVisionType,
   parseAlgo,
+  parseInterpolation,
   parseMode,
+  parseShareSteps,
   parseWheel,
   parseDyeIdList,
   parseGender,
   parseHexColor,
 } from './og-params';
+import type { GradientInterpolation } from './services/svg/gradient';
 import type { LocaleCode, SheetKey } from '@xivdyetools/types';
 import type {
   OGData,
@@ -77,7 +80,7 @@ import type {
 // the same preloaded instance — and the harmony / lens / dye names below come
 // from the same helpers the cards use, so the embed text and the picture
 // inside it cannot disagree. The sentences themselves are `OG_EMBED` ×6 in
-// services/og-strings.ts; this module only fills them.
+// services/og-embed.ts; this module only fills them.
 
 /**
  * Append the locale to an emitted image URL — the picture never localises
@@ -124,6 +127,18 @@ function withMode(url: string, mode: BlendingMode | undefined): string {
   // S7-R13 (`.png` stripping) and `withAlgo`'s default elision exist to stop.
   if (mode === DEFAULT_MIX_MODE) return url;
   return `${url}${url.includes('?') ? '&' : '?'}mode=${mode}`;
+}
+
+/**
+ * Append the gradient's interpolation mode to an emitted IMAGE URL (BUG-008),
+ * so the card ramps in the color space the page drew. `undefined` and the
+ * default `hsv` stay off it — `withMode`'s rule — so the default keeps one
+ * cache key. Not for og:url: there an absent mode means "keep the reader's
+ * saved one", so the page needs an explicit `hsv` spelled out.
+ */
+function withInterpolation(url: string, interpolation: GradientInterpolation | undefined): string {
+  if (!interpolation || interpolation === DEFAULT_GRADIENT_INTERPOLATION) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}interpolation=${interpolation}`;
 }
 
 /** Append a non-default colour wheel to an emitted URL; absent and `rgb` stay off it. */
@@ -242,6 +257,84 @@ function formatHex(hex: string): string {
 }
 
 // ============================================================================
+// Custom-color endpoints (BUG-059)
+// ============================================================================
+
+/**
+ * A Custom Color has no stainID, so the web app shares it in a declared
+ * bare-color slot instead of the dye slot: gradient `hexStart`/`hexEnd`,
+ * mixer `hexA`/`hexB`, harmony `hex` (each tool's `getShareParams`). Each
+ * field below holds that slot's RAW query value and is set only when the
+ * matching dye slot is absent — see `bareColorSlot`, which applies the web's
+ * precedence. The generators validate it (`parseHexColor`) before anything
+ * is echoed.
+ */
+type GradientShare = GradientParams & { hexStart?: string; hexEnd?: string };
+type MixerShare = MixerParams & { hexA?: string; hexB?: string };
+type HarmonyShare = HarmonyParams & { hex?: string };
+
+/**
+ * One endpoint of a share as the embed shows it: a dye, or a custom color
+ * whose name IS its hex (the web app's `Custom (#hex)` names nothing more,
+ * and the embed claims no dye for it).
+ */
+interface ShareEndpoint {
+  name: string;
+  hex: string;
+  /** The `key=value` that carries it on og:url — `start=1` or `hexStart=FF8800`. */
+  slot: string;
+  custom: boolean;
+}
+
+/**
+ * Resolve one share endpoint from its dye slot or, when the share URL carried
+ * no dye slot, its bare-color slot. Null when neither resolves — a stainID
+ * the database does not know, or a hex that is not `RRGGBB` — so the caller
+ * degrades to the tool default and never echoes the raw value.
+ */
+function shareEndpoint(
+  stainID: number,
+  dyeSlot: string,
+  rawHex: string | undefined,
+  hexSlot: string,
+  locale: LocaleCode,
+): ShareEndpoint | null {
+  if (rawHex !== undefined) {
+    const hex = parseHexColor(rawHex);
+    return hex ? { name: `#${hex}`, hex: `#${hex}`, slot: `${hexSlot}=${hex}`, custom: true } : null;
+  }
+  const dye = getDyeInfo(stainID, locale);
+  return dye ? { name: dye.name, hex: dye.hex, slot: `${dyeSlot}=${stainID}`, custom: false } : null;
+}
+
+/**
+ * A bare-color slot's raw value — or undefined when the share URL also
+ * carries a dye slot for the same endpoint. For every URL the web app emits
+ * this matches its precedence (gradient-tool `resolveSharedEndpoint`, mixer-tool
+ * `resolveSharedInput`, harmony-tool `handleDeepLink`): the dye slot wins when
+ * both are present, and a dye slot that does not resolve is NOT rescued by the
+ * hex, so for those links the embed does not name a color the page will not
+ * show.
+ *
+ * Hand-built links can still diverge, and then the embed can name what the
+ * page does not show: a non-numeric dye slot (gradient and mixer then take
+ * the hex); a dye slot in a non-canonical spelling (`068`, `68.0`, `68abc`):
+ * the crawler parses it as that stainID, while the page reads it as text and
+ * restores no endpoint; an untrimmed or 3-digit hex (gradient and mixer:
+ * ShareService trims and expands it; harmony's own regex rejects it, as the
+ * crawler does); and harmony's empty `dye=` beside a `dyeId` (the page's `??`
+ * keeps the empty slot, so the hex applies).
+ */
+function bareColorSlot(
+  searchParams: URLSearchParams,
+  dyeSlots: readonly string[],
+  hexSlot: string,
+): string | undefined {
+  if (dyeSlots.some((slot) => searchParams.get(slot))) return undefined;
+  return searchParams.get(hexSlot) || undefined;
+}
+
+// ============================================================================
 // Tool-Specific OG Data Generators
 // ============================================================================
 
@@ -249,14 +342,14 @@ function formatHex(hex: string): string {
  * Generate OG data for Harmony Explorer
  */
 export function generateHarmonyOGData(
-  params: HarmonyParams,
+  params: HarmonyShare,
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const dyeInfo = getDyeInfo(params.dye, locale);
+  const base = shareEndpoint(params.dye, 'dye', params.hex, 'hex', locale);
   const harmonyName = getLocalizedHarmonyName(params.harmony, locale);
 
-  if (!dyeInfo) {
+  if (!base) {
     return {
       title: site(embed('harmony.titleNoDye', locale, { harmony: harmonyName })),
       description: embed('harmony.descriptionNoDye', locale, { harmony: lc(harmonyName, locale) }),
@@ -268,21 +361,30 @@ export function generateHarmonyOGData(
   }
 
   return {
-    title: site(embed('harmony.title', locale, { dye: dyeInfo.name, harmony: harmonyName })),
-    description: embed('harmony.description', locale, {
-      harmony: lc(harmonyName, locale),
-      dye: dyeInfo.name,
-      hex: dyeInfo.hex,
-    }),
+    title: site(embed('harmony.title', locale, { dye: base.name, harmony: harmonyName })),
+    // BUG-059: a custom base's name IS its hex, so the name-and-hex sentence
+    // would read "#FF8800 (#FF8800)" — the dye-less sentence stands in.
+    description: base.custom
+      ? embed('harmony.descriptionNoDye', locale, { harmony: lc(harmonyName, locale) })
+      : embed('harmony.description', locale, {
+          harmony: lc(harmonyName, locale),
+          dye: base.name,
+          hex: base.hex,
+        }),
     // OG-6: the harmony is enum-validated upstream; encoding is belt-and-braces
     url: appUrl(
-      withWheel(`${env.APP_BASE_URL}/harmony/?dye=${params.dye}&harmony=${encodeURIComponent(params.harmony)}`, params.wheel) + '&v=1',
+      withWheel(`${env.APP_BASE_URL}/harmony/?${base.slot}&harmony=${encodeURIComponent(params.harmony)}`, params.wheel) + '&v=1',
       locale,
       params.algo
     ),
-    imageUrl: withLang(withWheel(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${encodeURIComponent(params.harmony)}.png`, params.algo), params.wheel), locale),
+    // The image route is stainID-keyed: a custom base has no card of its own,
+    // so it takes the tool default — lang only, since that card reads no
+    // algo or wheel (BUG-058).
+    imageUrl: base.custom
+      ? withLang(`${env.OG_IMAGE_BASE_URL}/harmony/default.png`, locale)
+      : withLang(withWheel(withAlgo(`${env.OG_IMAGE_BASE_URL}/harmony/${params.dye}/${encodeURIComponent(params.harmony)}.png`, params.algo), params.wheel), locale),
     siteName: SITE_NAME,
-    themeColor: dyeInfo.hex,
+    themeColor: base.hex,
     locale,
   };
 }
@@ -291,30 +393,54 @@ export function generateHarmonyOGData(
  * Generate OG data for Gradient Builder
  */
 export function generateGradientOGData(
-  params: GradientParams,
+  params: GradientShare,
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const startDye = getDyeInfo(params.start, locale);
-  const endDye = getDyeInfo(params.end, locale);
+  const start = shareEndpoint(params.start, 'start', params.hexStart, 'hexStart', locale);
+  const end = shareEndpoint(params.end, 'end', params.hexEnd, 'hexEnd', locale);
 
-  if (!startDye || !endDye) {
+  if (!start || !end) {
     return toolDefault('gradient', env, locale, embed('gradient.descriptionDefault', locale));
   }
 
+  // BUG-059: see generateHarmonyOGData — a custom endpoint is named by its hex
+  // (no "#FF8800 (#FF8800)" sentence) and takes the tool default card.
+  const custom = start.custom || end.custom;
+  // BUG-008: a share without a count the page applies opens at the reader's
+  // saved count — on a first visit 8 — so the preview draws and names 8, and
+  // og:url leaves the count out: the page reads a missing count exactly as it
+  // reads one it ignores, keeping the reader's saved count. The mode rides og:url
+  // whenever the page would apply it, `hsv` included.
+  const steps = params.steps ?? OG_DEFAULT_GRADIENT_STEPS;
+  const settings = [
+    params.steps !== undefined ? `&steps=${params.steps}` : '',
+    params.interpolation ? `&interpolation=${params.interpolation}` : '',
+  ].join('');
   return {
-    title: site(embed('gradient.title', locale, { start: startDye.name, end: endDye.name })),
-    description: embed('gradient.description', locale, {
-      n: params.steps,
-      start: startDye.name,
-      startHex: startDye.hex,
-      end: endDye.name,
-      endHex: endDye.hex,
-    }),
-    url: appUrl(`${env.APP_BASE_URL}/gradient/?start=${params.start}&end=${params.end}&steps=${params.steps}&v=1`, locale, params.algo),
-    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${params.steps}.png`, params.algo), locale),
+    title: site(embed('gradient.title', locale, { start: start.name, end: end.name })),
+    description: custom
+      ? embed('gradient.descriptionDefault', locale)
+      : embed('gradient.description', locale, {
+          n: steps,
+          start: start.name,
+          startHex: start.hex,
+          end: end.name,
+          endHex: end.hex,
+        }),
+    url: appUrl(`${env.APP_BASE_URL}/gradient/?${start.slot}&${end.slot}${settings}&v=1`, locale, params.algo),
+    // The default card reads no mode, so a custom share's carries lang only
+    imageUrl: custom
+      ? withLang(`${env.OG_IMAGE_BASE_URL}/gradient/default.png`, locale)
+      : withLang(
+          withInterpolation(
+            withAlgo(`${env.OG_IMAGE_BASE_URL}/gradient/${params.start}/${params.end}/${steps}.png`, params.algo),
+            params.interpolation,
+          ),
+          locale,
+        ),
     siteName: SITE_NAME,
-    themeColor: startDye.hex,
+    themeColor: start.hex,
     locale,
   };
 }
@@ -323,17 +449,24 @@ export function generateGradientOGData(
  * Generate OG data for Dye Mixer
  */
 export function generateMixerOGData(
-  params: MixerParams,
+  params: MixerShare,
   env: Env,
   locale: LocaleCode = 'en',
 ): OGData {
-  const dyeA = getDyeInfo(params.dyeA, locale);
-  const dyeB = getDyeInfo(params.dyeB, locale);
+  const dyeA = shareEndpoint(params.dyeA, 'dyeA', params.hexA, 'hexA', locale);
+  const dyeB = shareEndpoint(params.dyeB, 'dyeB', params.hexB, 'hexB', locale);
   const dyeC = params.dyeC ? getDyeInfo(params.dyeC, locale) : null;
 
   if (!dyeA || !dyeB) {
     return toolDefault('mixer', env, locale, embed('mixer.descriptionDefault', locale));
   }
+
+  // BUG-059: a custom input is named by its hex — the mixer sentences carry no
+  // name-and-hex pair, so they read cleanly — and, the image routes being
+  // stainID-keyed, takes the tool default card (lang only: it reads no algo
+  // or mode, BUG-058).
+  const custom = dyeA.custom || dyeB.custom;
+  const defaultCard = withLang(`${env.OG_IMAGE_BASE_URL}/mixer/default.png`, locale);
 
   // 3-dye mix
   if (dyeC) {
@@ -341,8 +474,10 @@ export function generateMixerOGData(
     return {
       title: site(embed('mixer.title3', locale, names)),
       description: embed('mixer.description3', locale, names),
-      url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&dyeC=${params.dyeC}&ratio=${params.ratio}&v=1`, locale, params.algo),
-      imageUrl: withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), params.mode), locale),
+      url: appUrl(`${env.APP_BASE_URL}/mixer/?${dyeA.slot}&${dyeB.slot}&dyeC=${params.dyeC}&ratio=${params.ratio}&v=1`, locale, params.algo),
+      imageUrl: custom
+        ? defaultCard
+        : withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.dyeC}/${params.ratio}.png`, params.algo), params.mode), locale),
       siteName: SITE_NAME,
       themeColor: dyeA.hex,
       locale,
@@ -354,8 +489,10 @@ export function generateMixerOGData(
   return {
     title: site(embed('mixer.title2', locale, vars)),
     description: embed('mixer.description2', locale, vars),
-    url: appUrl(`${env.APP_BASE_URL}/mixer/?dyeA=${params.dyeA}&dyeB=${params.dyeB}&ratio=${params.ratio}&v=1`, locale, params.algo),
-    imageUrl: withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), params.mode), locale),
+    url: appUrl(`${env.APP_BASE_URL}/mixer/?${dyeA.slot}&${dyeB.slot}&ratio=${params.ratio}&v=1`, locale, params.algo),
+    imageUrl: custom
+      ? defaultCard
+      : withLang(withMode(withAlgo(`${env.OG_IMAGE_BASE_URL}/mixer/${params.dyeA}/${params.dyeB}/${params.ratio}.png`, params.algo), params.mode), locale),
     siteName: SITE_NAME,
     themeColor: dyeA.hex,
     locale,
@@ -530,7 +667,10 @@ export function generateExtractorOGData(
     description: embed('extractor.description', locale, { list }),
     // Commas stay literal (like comparison's dyes=) — the SPA reads them either way
     url: appUrl(`${env.APP_BASE_URL}/extractor/?colors=${colors.join(',')}&v=1`, locale, params.algo),
-    imageUrl: withLang(`${env.OG_IMAGE_BASE_URL}/extractor/${colors.join(',')}.png`, locale),
+    // BUG-060: the algorithm rides the CARD URL too — it only reached og:url,
+    // so an `?algo=oklab` share unfurled ΔE2000-nearest dyes over a page that
+    // names the ΔEOK-nearest ones. `withAlgo` elides the default, as everywhere.
+    imageUrl: withLang(withAlgo(`${env.OG_IMAGE_BASE_URL}/extractor/${colors.join(',')}.png`, params.algo), locale),
     siteName: SITE_NAME,
     themeColor: `#${colors[0]}`,
     locale,
@@ -811,8 +951,13 @@ export async function generateOGDataForTool(
     // domain nor emit an image URL the image route would 400.
     case 'harmony': {
       const harmonyRaw = (searchParams.get('harmony') || 'complementary').toLowerCase();
-      const params: HarmonyParams = {
+      // BUG-059: the bare-color slots (gradient `hexStart`/`hexEnd`, mixer
+      // `hexA`/`hexB`, harmony `hex`) are read wherever a dye slot is — a
+      // Custom Color share used to parse to stainID 0 and unfurl the generic
+      // tool card. Harmony's page reads the legacy `dyeId` as its dye slot too.
+      const params: HarmonyShare = {
         dye: parseInt(searchParams.get('dye') || '0', 10),
+        hex: bareColorSlot(searchParams, ['dye', 'dyeId'], 'hex'),
         harmony: isHarmonyType(harmonyRaw) ? harmonyRaw : 'complementary',
         algo: parseAlgo(searchParams.get('algo')),
         wheel: parseWheel(searchParams.get('wheel')),
@@ -821,10 +966,18 @@ export async function generateOGDataForTool(
     }
 
     case 'gradient': {
-      const params: GradientParams = {
+      const params: GradientShare = {
         start: parseInt(searchParams.get('start') || '0', 10),
         end: parseInt(searchParams.get('end') || '0', 10),
-        steps: clampInt(searchParams.get('steps'), OG_MIN_GRADIENT_STEPS, OG_MAX_GRADIENT_STEPS, 5),
+        hexStart: bareColorSlot(searchParams, ['start'], 'hexStart'),
+        hexEnd: bareColorSlot(searchParams, ['end'], 'hexEnd'),
+        // BUG-008: read as gradient-tool `loadFromShareUrl` reads them — a
+        // whole 3–12 count and one of five exact mode spellings; anything
+        // else is undefined, and the page keeps the reader's saved setting.
+        // Both always fit the image route, so a hand-built link can never
+        // make the crawler emit an og:image that 400s.
+        steps: parseShareSteps(searchParams.get('steps')),
+        interpolation: parseInterpolation(searchParams.get('interpolation')),
         algo: parseAlgo(searchParams.get('algo')),
       };
       return generateGradientOGData(params, env, locale);
@@ -832,9 +985,11 @@ export async function generateOGDataForTool(
 
     case 'mixer': {
       const dyeCRaw = searchParams.get('dyeC');
-      const params: MixerParams = {
+      const params: MixerShare = {
         dyeA: parseInt(searchParams.get('dyeA') || '0', 10),
         dyeB: parseInt(searchParams.get('dyeB') || '0', 10),
+        hexA: bareColorSlot(searchParams, ['dyeA'], 'hexA'),
+        hexB: bareColorSlot(searchParams, ['dyeB'], 'hexB'),
         dyeC: dyeCRaw ? parseInt(dyeCRaw, 10) : undefined,
         ratio: clampInt(searchParams.get('ratio'), OG_MIN_MIXER_RATIO, OG_MAX_MIXER_RATIO, 50),
         mode: parseMode(searchParams.get('mode')),

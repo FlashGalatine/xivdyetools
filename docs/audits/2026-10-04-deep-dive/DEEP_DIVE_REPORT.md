@@ -342,8 +342,8 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-005 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-006 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | BUG-007 | OPEN | — |
-| BUG-008 | OPEN | — |
-| BUG-009 | OPEN | — |
+| BUG-008 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| BUG-009 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | BUG-010 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
 | BUG-011 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
 | BUG-012 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
@@ -392,11 +392,11 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-055 | OPEN | — |
 | BUG-056 | OPEN | — |
 | BUG-057 | OPEN | — |
-| BUG-058 | OPEN | — |
-| BUG-059 | OPEN | — |
-| BUG-060 | OPEN | — |
-| BUG-061 | OPEN | — |
-| BUG-062 | OPEN | — |
+| BUG-058 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| BUG-059 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| BUG-060 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| BUG-061 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| BUG-062 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | BUG-063 | FIX COMMITTED, NOT DEPLOYED (PR #224 + PR #256, open) | `12e7f887`, `b7b8500b` |
 | BUG-064 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
 | BUG-065 | FIX COMMITTED, NOT DEPLOYED (PR #256, open) | `8c264798` |
@@ -505,7 +505,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | OPT-003 | OPEN (needs presets-api `?ids=`) | — |
 | OPT-004 | FIX COMMITTED, NOT DEPLOYED (PR #257, open) | `a9dac980` |
 | OPT-005 | PARTIALLY FIXED (PR #257, open) | `a9dac980` |
-| OPT-006 | OPEN | — |
+| OPT-006 | FIX COMMITTED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | OPT-007 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
 | OPT-008 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
 | OPT-009 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |

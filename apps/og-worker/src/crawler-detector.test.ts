@@ -14,7 +14,6 @@ describe('crawler-detector', () => {
       expect(result).toEqual({
         isCrawler: false,
         type: 'none',
-        userAgent: '',
       });
     });
 
@@ -23,7 +22,6 @@ describe('crawler-detector', () => {
       expect(result).toEqual({
         isCrawler: false,
         type: 'none',
-        userAgent: '',
       });
     });
 
@@ -33,7 +31,6 @@ describe('crawler-detector', () => {
       expect(result).toEqual({
         isCrawler: false,
         type: 'none',
-        userAgent,
       });
     });
 
@@ -44,7 +41,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'discord',
-          userAgent,
         });
       });
 
@@ -63,7 +59,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'twitter',
-          userAgent,
         });
       });
 
@@ -82,7 +77,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'facebook',
-          userAgent,
         });
       });
 
@@ -101,7 +95,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'linkedin',
-          userAgent,
         });
       });
     });
@@ -113,7 +106,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'slack',
-          userAgent,
         });
       });
     });
@@ -125,7 +117,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'telegram',
-          userAgent,
         });
       });
     });
@@ -137,7 +128,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'whatsapp',
-          userAgent,
         });
       });
     });
@@ -149,7 +139,6 @@ describe('crawler-detector', () => {
         expect(result).toEqual({
           isCrawler: true,
           type: 'other',
-          userAgent,
         });
       });
 

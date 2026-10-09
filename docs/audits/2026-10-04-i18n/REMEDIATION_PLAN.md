@@ -437,7 +437,9 @@ deep-dive/BUG-007: decode the path before the `/auth/*` limiter keys it, then ad
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-oauth-worker` → merge → `deploy-oauth.yml` (never a bare `wrangler deploy` by hand: it is production)
 
-## Sprint 11 — og-worker: gradient card follows the requested algorithm
+## Sprint 11 — og-worker: gradient card follows the requested algorithm — PR #268 (open)
+
+**Done in PR #268** (og-worker 2.12.0), stacked on #263. All twelve are fixed. Gradient previews now draw the page's own steps in the share's interpolation mode: 6,682 of 6,682 share links match the mounted Gradient Builder end to end. Minor rather than patch: a new query key (`interpolation`), `?algo=` on the extractor card, and a repeated query key now 400s (it closed a cache-poisoning path found in review). OPT-006 grew: at og-worker's compatibility date `FinalizationRegistry` does not exist, so both allocations leaked; the same leak in discord-worker is PR #265 (5.8.10, on #263). **Recorded, not fixed** (listed with sizes in og-worker `CLAUDE.md`): harmony companions and `perceptual=false`; extractor cross-band dedupe and repeats; `?algo=` case folding on harmony / extractor; the legacy `?dyeId=` alias; og:url dropping `mode` / `perceptual`; non-canonical dye slots and repeated keys in hand-built crawler links; "1 colors" on one-color extractor shares; `algo` keyed by its raw spelling; a possible rgb tie gap on the swatch and mixer cards; a wasm trap can leave a borrow flag set so `free()` throws (both workers, see #265).
 
 deep-dive/BUG-009 and deep-dive/BUG-008: the gradient card ranks by a hard-coded ΔE and ramps in the wrong space. Also here: crawler parameters, the extractor algorithm, legacy `?algo=` spellings, cache-key fragmentation and resvg frees.
 

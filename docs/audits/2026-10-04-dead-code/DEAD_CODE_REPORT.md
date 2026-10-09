@@ -320,8 +320,8 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 | DEAD-036 | OPEN | — |
 | DEAD-037 | OPEN | — |
 | DEAD-038 | OPEN | — |
-| DEAD-039 | OPEN | — |
-| DEAD-040 | OPEN | — |
+| DEAD-039 | REMOVED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
+| DEAD-040 | REMOVED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | DEAD-041 | OPEN | — |
 | DEAD-042 | OPEN | — |
 | DEAD-043 | OPEN | — |
