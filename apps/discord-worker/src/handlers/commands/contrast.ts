@@ -52,7 +52,7 @@ export async function handleContrastCommand(
   }
 
   const t = userId
-    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    ? await createUserTranslator(env.KV, userId, interaction.locale, logger)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
   const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 
@@ -108,6 +108,15 @@ async function processContrastCommand(
   const result = await executeContrast({ dyes, locale, theme, logger });
 
   if (!result.ok) {
+    if (result.error === 'NOT_ENOUGH_DYES') {
+      // A refusal, not a render failure (BUG-125): bot-logic names what is
+      // missing in the reader's language, and the trace stays `ok`. The
+      // two-dye check before the defer makes this unreachable from Discord today.
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), result.errorMessage)],
+      });
+      return;
+    }
     // GENERATION_FAILED: the card generator threw inside bot-logic.
     markCommandOutcome(interaction, 'render');
     if (logger) logger.error('Contrast command failed');

@@ -282,6 +282,16 @@ describe('handleMixerV4Command', () => {
   });
 
   describe('failure paths', () => {
+    // Pins the plumbing only: whether executeMixer logs is bot-logic's test
+    it('passes its request logger to executeMixer — pins the logger plumbing only (BUG-125)', async () => {
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      await handleMixerV4Command(interaction(dyeOptions()), env, ctx, logger as never);
+      await settle();
+
+      expect(vi.mocked(executeMixer).mock.calls[0][0].logger).toBe(logger);
+    });
+
     it('does not mark a render outcome on NO_MATCHES (answers with the no-match message)', async () => {
       vi.mocked(executeMixer).mockResolvedValue({
         ok: false,

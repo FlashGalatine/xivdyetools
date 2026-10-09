@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.8.5] - 2026-10-06
+### 🎨 Colours you type, and filters that keep their matches
+- Colours typed as six digits, like `000000` or `333333`, work everywhere instead of being refused.
+- `/gradient` and `/mixer` find a dye for every step when you filter dyes out, instead of showing no match.
+- `/glamour`'s copy-ready list no longer shows placeholder names for pieces with no item, and it keeps your facewear.
+
 ## [5.8.4] - 2026-10-06
 ### 🧹 Fewer surprises
 - `/preset submit` and `/preset edit` name the dye you picked twice, instead of a vague error.

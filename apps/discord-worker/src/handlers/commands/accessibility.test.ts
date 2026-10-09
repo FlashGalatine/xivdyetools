@@ -177,9 +177,17 @@ vi.mock('../../utils/discord-api.js', () => {
   return { editOriginalResponse, safeEditOriginalResponse: editOriginalResponse };
 });
 
+// A passthrough — the real executor runs (on the mocks above) unless a test
+// asks it for one answer, such as a refusal the adapter cannot provoke itself.
+vi.mock('@xivdyetools/bot-logic', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/bot-logic')>();
+  return { ...actual, executeAccessibility: vi.fn(actual.executeAccessibility) };
+});
+
 import { editOriginalResponse } from '../../utils/discord-api.js';
 import { generateA11yCard } from '@xivdyetools/svg';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
+import { executeAccessibility } from '@xivdyetools/bot-logic';
 
 describe('accessibility.ts', () => {
   let mockEnv: Env;
@@ -540,6 +548,46 @@ describe('accessibility.ts', () => {
       expect(trace.outcome).toBe('render');
     });
 
+    it('answers NOT_ENOUGH_DYES with its message, not as a render failure (BUG-125)', async () => {
+      // The adapter refuses an empty dye list before the defer, so bot-logic's
+      // own refusal is only reachable through the executor.
+      vi.mocked(executeAccessibility).mockResolvedValueOnce({
+        ok: false,
+        error: 'NOT_ENOUGH_DYES',
+        errorMessage: 'Please provide at least one dye or color',
+      });
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      const interaction: DiscordInteraction = {
+        type: 2,
+        data: {
+          name: 'accessibility',
+          options: [{ name: 'dye1', value: 'snow white', type: 3 }],
+        },
+        user: { id: 'user-123' },
+        id: 'int-1',
+        application_id: 'app-1',
+        token: 'token-1',
+      };
+
+      const { startCommandTrace } = await import('../../services/command-trace.js');
+      const trace = startCommandTrace(interaction, { command: 'accessibility', subcommand: '', userId: 'u1', locale: 'en' });
+
+      await handleAccessibilityCommand(interaction, mockEnv, mockCtx, logger as never);
+      await Promise.all(waitUntilPromises);
+
+      expect(editOriginalResponse).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({
+          embeds: [expect.objectContaining({ description: 'Please provide at least one dye or color' })],
+        }),
+      );
+      expect(renderSvgToPng).not.toHaveBeenCalled();
+      expect(trace.outcome).toBeNull();
+      expect(logger.error).not.toHaveBeenCalled();
+    });
+
     it('should filter out Facewear dyes', async () => {
       const interaction: DiscordInteraction = {
         type: 2,
@@ -625,10 +673,13 @@ describe('accessibility.ts', () => {
         token: 'token-1',
       };
 
-      await handleAccessibilityCommand(interaction, mockEnv, mockCtx);
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+      await handleAccessibilityCommand(interaction, mockEnv, mockCtx, logger as never);
 
+      // BUG-126: the request logger reaches locale resolution, so a KV
+      // failure there is logged rather than silently falling back.
       const { createUserTranslator } = await import('../../services/bot-i18n.js');
-      expect(createUserTranslator).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 'ja');
+      expect(createUserTranslator).toHaveBeenCalledWith(mockEnv.KV, 'user-123', 'ja', logger);
     });
   });
 });

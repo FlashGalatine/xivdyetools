@@ -16,7 +16,7 @@
  * was a private reply before BUG-002, deletes the public original and is
  * sent as an ephemeral follow-up instead (Sprint 9 review).
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { handleBudgetCommand } from './budget.js';
 import {
   safeDeleteOriginalResponse,
@@ -24,6 +24,7 @@ import {
   safeSendFollowUp,
 } from '../../utils/discord-api.js';
 import { setPreference } from '../../services/preferences.js';
+import { getDyeByName, resolveTargetDye } from '../../services/budget/index.js';
 import type { Env, DiscordInteraction, InteractionResponseBody } from '../../types/env.js';
 
 vi.mock('../../services/svg/renderer.js', () => ({
@@ -77,6 +78,8 @@ vi.mock('../../services/budget/index.js', () => ({
   findBudgetLedger: (...args: unknown[]) => mockFindBudgetLedger(...args),
   getDyeById: vi.fn(() => JET_BLACK),
   getDyeByName: vi.fn(() => JET_BLACK),
+  // the bare-number path; the BUG-034 block runs the real one
+  resolveTargetDye: vi.fn(() => null),
   getDyeAutocomplete: vi.fn(() => []),
   isUniversalisEnabled: vi.fn(() => true),
   validateWorld: (...args: unknown[]) => mockValidateWorld(...args),
@@ -602,6 +605,76 @@ describe('/budget world override validation (FINDING-033)', () => {
       // FINDING-002: target_dye is an option value, so it is not logged either.
       expect(call![1]).toEqual({ hasWorld: true });
       expect(JSON.stringify(logger.info.mock.calls)).not.toContain('Balmung');
+    });
+  });
+
+  /**
+   * BUG-034 (2026-10-04 audit): every other command reads 1–5 bare digits as
+   * a dye id and six or more never (bot-logic `parseDyeIdInput`), so
+   * '013114' is the colour #013114 there. /budget kept its own numeric path,
+   * which parsed any digit run, and priced zero-padded Pure White for the
+   * same text its own autocomplete offered nothing for. /budget prices dyes,
+   * not colours, so six or more bare digits now name no dye at all. The real
+   * resolvers run here; only the ledger and the world lookup are mocked.
+   */
+  describe('/budget find — a bare-number target (BUG-034)', () => {
+    /** Pure White's legacy item id — what the ledger is priced on. */
+    const PURE_WHITE_ITEM_ID = 13114;
+
+    beforeEach(async () => {
+      const actual = await vi.importActual<
+        typeof import('../../services/budget/budget-calculator.js')
+      >('../../services/budget/budget-calculator.js');
+      vi.mocked(resolveTargetDye).mockImplementation(actual.resolveTargetDye);
+      vi.mocked(getDyeByName).mockImplementation(actual.getDyeByName);
+      mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
+    });
+
+    afterEach(() => {
+      // clearAllMocks keeps implementations: put the file's defaults back
+      vi.mocked(resolveTargetDye).mockImplementation(() => null);
+      vi.mocked(getDyeByName).mockImplementation(() => JET_BLACK as never);
+    });
+
+    it.each(['013114', '000101', ' 013114 ', '0013114'])(
+      'answers %j privately as no such dye, and prices nothing',
+      async (value) => {
+        const res = await handleBudgetCommand(
+          interaction('find', [{ name: 'target_dye', value }]),
+          env,
+          ctx,
+        );
+        const body = (await res.json()) as InteractionResponseBody;
+
+        expect(body.type).toBe(4);
+        expect(body.data?.flags).toBe(64);
+        expect(body.data?.content).toContain(`Could not find dye "${value.trim()}`);
+        expect(ctx.waitUntil).not.toHaveBeenCalled();
+        expect(mockValidateWorld).not.toHaveBeenCalled();
+        expect(mockFindBudgetLedger).not.toHaveBeenCalled();
+      },
+    );
+
+    it.each([
+      ['101', 'a stainID'],
+      ['13114', 'a legacy item id'],
+      ['00101', 'a zero-padded stainID that still fits in five digits'],
+    ])('still prices Pure White for %j (%s)', async (value) => {
+      const res = await handleBudgetCommand(
+        interaction('find', [{ name: 'target_dye', value }]),
+        env,
+        ctx,
+      );
+
+      expect(((await res.json()) as InteractionResponseBody).type).toBe(5);
+      await settle();
+      expect(mockFindBudgetLedger).toHaveBeenCalledWith(
+        env,
+        PURE_WHITE_ITEM_ID,
+        'Balmung',
+        expect.anything(),
+        undefined,
+      );
     });
   });
 });

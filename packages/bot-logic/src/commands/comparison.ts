@@ -23,6 +23,7 @@ import {
   type ComparisonReadout,
 } from '@xivdyetools/svg';
 import { initializeLocale, getLocalizedDyeName } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -48,7 +49,16 @@ export type ComparisonResult =
       dyes: Dye[];
       embed: EmbedData;
     }
-  | { ok: false; error: 'GENERATION_FAILED'; errorMessage: string };
+  | {
+      ok: false;
+      /**
+       * NOT_ENOUGH_DYES: fewer than two dyes (or no list at all) — refused
+       * before anything is drawn (BUG-125). GENERATION_FAILED: the card
+       * generator threw.
+       */
+      error: 'NOT_ENOUGH_DYES' | 'GENERATION_FAILED';
+      errorMessage: string;
+    };
 
 // ============================================================================
 // Helpers
@@ -87,6 +97,15 @@ export async function executeComparison(input: ComparisonInput): Promise<Compari
   const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
+
+  // BUG-125: a comparison needs a pair. One dye used to reach the duel
+  // renderer, whose `dyes[1].hex` read threw a TypeError that the catch below
+  // reported as GENERATION_FAILED — a caller's mistake dressed as a render bug.
+  // `Array.isArray` first: this runs outside the try, so a JavaScript caller's
+  // non-array must be refused here, never thrown across the boundary.
+  if (!Array.isArray(dyes) || dyes.length < 2) {
+    return { ok: false, error: 'NOT_ENOUGH_DYES', errorMessage: t.t('mixer.bothRequired') };
+  }
 
   try {
     const entries: ComparisonDyeEntry[] = dyes.map((dye) => {
@@ -135,7 +154,8 @@ export async function executeComparison(input: ComparisonInput): Promise<Compari
     };
 
     return { ok: true, svgString, dyes, embed };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[comparison] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

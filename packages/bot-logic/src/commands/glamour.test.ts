@@ -7,9 +7,23 @@
  * bow's own off-hand model.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { CHARA_WEAR_RACE_COLUMNS, type CharaGearModel } from '@xivdyetools/core';
+import {
+  CHARA_WEAR_RACE_COLUMNS,
+  formatCharaModelLabel,
+  resolveCharaColors,
+  type CharaGearModel,
+} from '@xivdyetools/core';
+import { AppError } from '@xivdyetools/types';
 import { executeGlamour, type GlamourInput, type GlamourResolveAnswer } from './glamour.js';
 import { createTranslator } from '../i18n/index.js';
+import { dyeService } from '../input-resolution.js';
+
+// A passthrough — every test reads with the real resolver unless one asks it
+// to throw once, so the bot side of the read can fail (as in swatch.test.ts).
+vi.mock('@xivdyetools/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/core')>();
+  return { ...actual, resolveCharaColors: vi.fn(actual.resolveCharaColors) };
+});
 
 /** Stain IDs: Snow White 1, Wine Red 12, Dalamud Red 10, Coral Pink 13, Jet Black 102, Metallic Gold 113. */
 const STRESS = JSON.stringify({
@@ -239,6 +253,393 @@ describe('executeGlamour', () => {
     expect(d).not.toContain('Left Ring');
   });
 
+  describe('a piece with no item behind it (BUG-124)', () => {
+    /** The stress file's head model, as the card labels it (the note puts the slot first). */
+    const HEAD_LABEL = `Model ${formatCharaModelLabel({ slot: 'HeadGear', base: 361, variant: 5 })}`;
+    const noHead: GlamourResolveAnswer = { items: { ...ANSWER.items, HeadGear: null } };
+
+    it('keeps its slot label bare in the list, as a prompt to fill in — never the model placeholder', async () => {
+      const result = await executeGlamour(input({ resolve: async () => noHead }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const d = result.embed.description ?? '';
+      const list = d.slice(0, d.indexOf('\n\n'));
+
+      // The GPOSERS form: the bare label, the dyes the file puts on it, an empty Acquisition line
+      expect(list).toContain('**Head:**\nDye 1: Snow White\nAcquisition:\n');
+      expect(list).not.toContain('Model');
+      // The card row and the note still say which model it is — the note by slot too
+      expect(svgTexts(result.svgString)).toContain(HEAD_LABEL);
+      expect(d).toContain(`No fix: HEAD ${HEAD_LABEL} (a model with no item behind it)`);
+    });
+
+    /**
+     * The list line is the bare slot now, and the card draws dyed pieces only
+     * (five at most), so for an undyed model the note is the one place it is
+     * named: without the slot, two identical ring models read the same.
+     */
+    describe('names the slot in the no-fix note', () => {
+      const ringed = JSON.stringify({
+        ...(JSON.parse(STRESS) as Record<string, unknown>),
+        RightRing: { ModelBase: 50, ModelVariant: 1 },
+        LeftRing: { ModelBase: 50, ModelVariant: 1 },
+      });
+      const answer: GlamourResolveAnswer = { items: { ...ANSWER.items, RightRing: null, LeftRing: null } };
+      const right = formatCharaModelLabel({ slot: 'RightRing', base: 50, variant: 1 });
+      const left = formatCharaModelLabel({ slot: 'LeftRing', base: 50, variant: 1 });
+
+      it('for undyed unresolved rings beside the dyed pieces', async () => {
+        const result = await executeGlamour(input({ fileText: ringed, resolve: async () => answer }));
+        if (!result.ok) throw new Error(result.errorMessage);
+        const d = result.embed.description ?? '';
+
+        // Undyed: neither ring is a card row, so the note is all that names them
+        expect(svgTexts(result.svgString)).not.toContain('RIGHT RING');
+        expect(svgTexts(result.svgString)).not.toContain('LEFT RING');
+        expect(d).toContain(
+          `No fix: Viera Gaskins (this character can't wear it) · RIGHT RING Model ${right} (a model with no item behind it) · LEFT RING Model ${left} (a model with no item behind it)`
+        );
+      });
+
+      it('in the reader’s language', async () => {
+        const result = await executeGlamour(input({ locale: 'de', fileText: ringed, resolve: async () => answer }));
+        if (!result.ok) throw new Error(result.errorMessage);
+        const d = result.embed.description ?? '';
+
+        expect(d).toContain(`FINGER (RECHTS) Modell ${right} (ein Modell ohne Gegenstand dahinter)`);
+        expect(d).toContain(`FINGER (LINKS) Modell ${left} (ein Modell ohne Gegenstand dahinter)`);
+      });
+    });
+
+    it('treats a slot the answer leaves out the same way', async () => {
+      const { HeadGear: _omitted, ...rest } = ANSWER.items;
+      const result = await executeGlamour(input({ resolve: async () => ({ items: rest }) }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const d = result.embed.description ?? '';
+
+      expect(d).toContain('**Head:**\nDye 1: Snow White\nAcquisition:\n');
+      expect(d).not.toContain(`**Head:** ${HEAD_LABEL}`);
+    });
+
+    it('writes two unresolved rings as two bare slots, not one merged "Rings: Model …"', async () => {
+      const ringed = JSON.stringify({
+        ...(JSON.parse(STRESS) as Record<string, unknown>),
+        RightRing: { ModelBase: 50, ModelVariant: 1 },
+        LeftRing: { ModelBase: 50, ModelVariant: 1 },
+      });
+      const answer: GlamourResolveAnswer = { items: { ...ANSWER.items, RightRing: null, LeftRing: null } };
+      const result = await executeGlamour(input({ fileText: ringed, resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const d = result.embed.description ?? '';
+
+      // An unknown name is not known to match, so the rings stay apart (core gposersSameRings)
+      expect(d).toContain('**Right Ring:**\nAcquisition:\n**Left Ring:**\nAcquisition:');
+      expect(d).not.toContain('**Rings:**');
+    });
+  });
+
+  describe('facewear (BUG-124)', () => {
+    const withGlasses = JSON.stringify({ ...(JSON.parse(STRESS) as Record<string, unknown>), Glasses: { GlassesId: 5 } });
+
+    it('asks the resolver for the glasses the file wears', async () => {
+      const i = input({ fileText: withGlasses });
+      await executeGlamour(i);
+      expect((i.resolve as ReturnType<typeof vi.fn>).mock.calls[0][1]).toBe(5);
+    });
+
+    it('names the facewear last in the list when it resolves', async () => {
+      const answer: GlamourResolveAnswer = { ...ANSWER, glasses: { names: names('Round Glasses', '丸眼鏡') } };
+      const result = await executeGlamour(input({ fileText: withGlasses, resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const d = result.embed.description ?? '';
+
+      expect(d).toContain('**Feet:** Hempen Boots\nAcquisition:\n**Facewear:** Round Glasses\nAcquisition:\n\n');
+    });
+
+    it('names it in the reader’s language', async () => {
+      const answer: GlamourResolveAnswer = { ...ANSWER, glasses: { names: names('Round Glasses', '丸眼鏡') } };
+      const result = await executeGlamour(input({ locale: 'ja', fileText: withGlasses, resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      expect(result.embed.description).toContain('**Facewear:** 丸眼鏡\n');
+    });
+
+    it.each([
+      ['null', null],
+      ['absent', undefined],
+    ])('keeps the worn facewear as a bare slot when the glasses do not resolve (%s)', async (_label, glasses) => {
+      const answer: GlamourResolveAnswer = { items: ANSWER.items, ...(glasses === undefined ? {} : { glasses }) };
+      const result = await executeGlamour(input({ fileText: withGlasses, resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const d = result.embed.description ?? '';
+
+      expect(d).toContain('**Feet:** Hempen Boots\nAcquisition:\n**Facewear:**\nAcquisition:\n\n');
+    });
+
+    it('writes no facewear for a file that wears none, even if the answer names some', async () => {
+      const answer: GlamourResolveAnswer = { ...ANSWER, glasses: { names: names('Round Glasses') } };
+      const result = await executeGlamour(input({ resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      expect(result.embed.description).not.toContain('Facewear');
+    });
+  });
+
+  describe('what blocks a piece nothing fixes (BUG-127)', () => {
+    it('says the dyes or the glamour rule, on the card and in the notes', async () => {
+      const answer: GlamourResolveAnswer = {
+        items: {
+          ...ANSWER.items,
+          // One twin, relic-style: no glamourable Replica in the family
+          MainHand: { itemId: 7863, names: names('Curtana Zenith'), alternates: [], rules: [rules([7863], { glamourable: false })] },
+          // The file dyes both channels; the only twin takes none
+          Hands: { itemId: 9001, names: names('Leather Gloves'), alternates: [], rules: [rules([9001], { dyeCount: 0 })] },
+        },
+      };
+      const result = await executeGlamour(input({ resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const t = svgTexts(result.svgString);
+      const d = result.embed.description ?? '';
+
+      expect(t).toContain('NO GLAM');
+      expect(t).toContain('DYES');
+      expect(t.join(' ')).toContain('5 of 5 dyed pieces · 2 named from a twin · 3 with no fix');
+      expect(d).toContain(
+        "No fix: Curtana Zenith (it can't be a glamour) · Leather Gloves (it can't take the dyes the file puts on it) · Viera Gaskins (this character can't wear it)"
+      );
+    });
+
+    it('reads an item the worker gave no rules for as wearable, not as a problem', async () => {
+      const answer: GlamourResolveAnswer = {
+        items: { ...ANSWER.items, HeadGear: { itemId: 2629, names: names('Hempen Coif'), alternates: [] } },
+      };
+      const result = await executeGlamour(input({ resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const t = svgTexts(result.svgString);
+      const d = result.embed.description ?? '';
+
+      expect(t).toContain('Hempen Coif');
+      // Head was one of three twins; with no rules it is simply OK
+      expect(t.filter((s) => s === 'TWIN')).toHaveLength(2);
+      expect(t.filter((s) => s === 'OK')).toHaveLength(2);
+      expect(d).not.toMatch(/Hempen Coif \(/);
+      expect(d).not.toContain('Grand Company');
+    });
+  });
+
+  it('names the pieces locked to a Grand Company (BUG-127)', async () => {
+    const answer: GlamourResolveAnswer = {
+      items: {
+        ...ANSWER.items,
+        Body: {
+          ...ANSWER.items.Body!,
+          rules: [rules([8001], { dyeCount: 2, wearMask: MALE_ONLY }), rules([8002], { dyeCount: 2, wearMask: FEMALE_ONLY, grandCompany: 1 })],
+        },
+        Feet: { itemId: 3000, names: names('Serpent *Boots*'), alternates: [], rules: [rules([3000], { grandCompany: 2 })] },
+      },
+    };
+    const result = await executeGlamour(input({ resolve: async () => answer }));
+    if (!result.ok) throw new Error(result.errorMessage);
+
+    expect(result.embed.description).toContain('Needs the right Grand Company: Lady’s Yukata · Serpent \\*Boots\\*');
+  });
+
+  it('writes no Grand Company line when nothing is locked to one', async () => {
+    const result = await executeGlamour(input());
+    if (!result.ok) throw new Error(result.errorMessage);
+    expect(result.embed.description).not.toContain('Grand Company');
+  });
+
+  it('names an item in English when the regional tables do not know it (ko / zh)', async () => {
+    const answer: GlamourResolveAnswer = {
+      items: { ...ANSWER.items, Feet: { ...ANSWER.items.Feet!, names: { ...names('Hempen Boots'), ko: '마 장화' } } },
+    };
+    const result = await executeGlamour(input({ locale: 'ko', resolve: async () => answer }));
+    if (!result.ok) throw new Error(result.errorMessage);
+    const d = result.embed.description ?? '';
+
+    expect(d).toContain('**Feet:** 마 장화\n');
+    expect(d).toContain('**Head:** Hempen Coif\n');
+    expect(svgTexts(result.svgString)).toContain('Hempen Coif');
+  });
+
+  it('writes a stain the dye table does not know as its number, and draws no chip for it', async () => {
+    const fileText = JSON.stringify({
+      TypeName: 'Anamnesis Character File',
+      Tribe: 'Midlander',
+      Gender: 'Feminine',
+      REyeColor: 42,
+      Feet: { ModelBase: 99, ModelVariant: 1, DyeId: 240, DyeId2: 0 },
+    });
+    const result = await executeGlamour(input({ fileText, resolve: async () => ({ items: { Feet: ANSWER.items.Feet } }) }));
+    if (!result.ok) throw new Error(result.errorMessage);
+
+    expect(result.embed.description).toContain('**Feet:** Hempen Boots\nDye 1: #240\nAcquisition:');
+    expect(svgTexts(result.svgString)).toContain('FEET');
+    expect(svgTexts(result.svgString)).not.toContain('#240');
+    // No colour is known, so the embed takes the brand red
+    expect(result.embed.color).toBe(0xea4133);
+  });
+
+  it('colours the embed with the first dye on the card', async () => {
+    const result = await executeGlamour(input());
+    if (!result.ok) throw new Error(result.errorMessage);
+    const gold = dyeService.getByStainId(113)!;
+    expect(result.embed.color).toBe(parseInt(gold.hex.slice(1), 16));
+  });
+
+  describe('a file with no dyes on it (BUG-127)', () => {
+    const PLAIN = JSON.stringify({
+      TypeName: 'Some Other Tool',
+      Tribe: 'Midlander',
+      Gender: 'Feminine',
+      REyeColor: 42,
+      Body: { ModelBase: 812, ModelVariant: 2, DyeId: 0, DyeId2: 0 },
+      Feet: { ModelBase: 99, ModelVariant: 1, DyeId: 0, DyeId2: 0 },
+    });
+    const PLAIN_ANSWER: GlamourResolveAnswer = {
+      items: {
+        Body: { itemId: 8002, names: names('Lady’s Yukata'), alternates: [], rules: [rules([8002], { dyeCount: 2 })] },
+        Feet: ANSWER.items.Feet,
+      },
+    };
+
+    it('draws every worn piece and counts pieces, not dyed pieces', async () => {
+      const result = await executeGlamour(input({ fileText: PLAIN, resolve: async () => PLAIN_ANSWER }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const t = svgTexts(result.svgString);
+
+      expect(result.embed.title).toBe('Glamour · 2 pieces');
+      expect(t).toContain('2 pieces · no dyes');
+      expect(t.filter((s) => ['BODY', 'FEET'].includes(s))).toEqual(['BODY', 'FEET']);
+      const foot = t.join(' ');
+      expect(foot).toContain('2 of 2 pieces');
+      expect(foot).not.toContain('named from a twin');
+      expect(foot).not.toContain('with no fix');
+      // An unknown producer is left out of the header rather than printed
+      expect(t).toContain('MIDLANDER ♀');
+      expect(result.svgString).not.toContain('Some Other Tool');
+    });
+
+    it('writes no twin or no-fix notes and takes the brand red', async () => {
+      const result = await executeGlamour(input({ fileText: PLAIN, resolve: async () => PLAIN_ANSWER }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const d = result.embed.description ?? '';
+
+      expect(d).toContain('**Body:** Lady’s Yukata\nAcquisition:\n**Feet:** Hempen Boots\nAcquisition:\n\n');
+      expect(d).not.toContain('Named from a twin:');
+      expect(d).not.toContain('No fix:');
+      expect(result.embed.color).toBe(0xea4133);
+    });
+
+    it('counts a single piece in the singular', async () => {
+      const one = JSON.stringify({ ...(JSON.parse(PLAIN) as Record<string, unknown>), Body: undefined });
+      const result = await executeGlamour(input({ fileText: one, resolve: async () => PLAIN_ANSWER }));
+      if (!result.ok) throw new Error(result.errorMessage);
+
+      expect(result.embed.title).toBe('Glamour · 1 piece');
+      expect(svgTexts(result.svgString).join(' ')).toContain('1 of 1 piece');
+    });
+  });
+
+  describe('a list longer than an embed (BUG-127)', () => {
+    const LONG = `Purchased from ${'a very patient vendor '.repeat(40).trim()}`;
+    const plainItem = (itemId: number, name: string) => ({
+      itemId,
+      names: names(name),
+      alternates: [],
+      rules: [rules([itemId], { dyeCount: 2 })],
+      acquisition: LONG,
+    });
+    const LONG_ANSWER: GlamourResolveAnswer = {
+      items: {
+        MainHand: plainItem(7001, 'Long Sword'),
+        OffHand: ANSWER.items.OffHand,
+        HeadGear: plainItem(7002, 'Long Hat'),
+        Body: plainItem(7003, 'Long Coat'),
+        Hands: plainItem(7004, 'Long Gloves'),
+        Legs: plainItem(7005, 'Long Trousers'),
+        Feet: plainItem(7006, 'Long Boots'),
+      },
+    };
+
+    it('cuts the list at a whole line and keeps the closing lines', async () => {
+      const result = await executeGlamour(input({ resolve: async () => LONG_ANSWER }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      const d = result.embed.description ?? '';
+      const tail = '\n\nMore on character files: `/manual topic:👤`\nhttps://xivdyetools.app/glamour';
+
+      // The uncut list would be six acquisition lines of ~900 characters each
+      expect(LONG.length * 6).toBeGreaterThan(4096);
+      expect(d.length).toBeLessThanOrEqual(4096);
+      expect(d.endsWith(`\n…${tail}`)).toBe(true);
+      const kept = d.slice(0, -(`\n…${tail}`).length).split('\n');
+      expect(kept[0]).toBe('**Glamour Items:**');
+      expect(kept.length).toBeGreaterThan(4);
+      // Every line kept is whole: no Acquisition line is cut mid-sentence
+      for (const line of kept.filter((l) => l.startsWith('Acquisition:'))) expect(line).toBe(`Acquisition: ${LONG}`);
+      expect(d).not.toContain('Long Boots');
+    });
+
+    it('leaves a list that fits alone', async () => {
+      const result = await executeGlamour(input());
+      if (!result.ok) throw new Error(result.errorMessage);
+      expect(result.embed.description).not.toContain('…');
+    });
+  });
+
+  describe('a card that fails to draw (BUG-125)', () => {
+    /** A canDraw that throws `thrown` — the first call inside the drawing try. */
+    const throwing =
+      (thrown: unknown) =>
+      (): boolean => {
+        throw thrown;
+      };
+    /** Every argument the logger received, one string per argument. */
+    const loggedLines = (warn: ReturnType<typeof vi.fn>): string[] => warn.mock.calls.flat().map(String);
+
+    it('answers GENERATION_FAILED in the reader’s language and logs the error class', async () => {
+      const warn = vi.fn();
+      const result = await executeGlamour(
+        input({ locale: 'de', canDraw: throwing(new TypeError("Cannot read properties of undefined (reading 'hex')")), logger: { warn } })
+      );
+
+      expect(result).toMatchObject({ ok: false, error: 'GENERATION_FAILED' });
+      if (result.ok) return;
+      expect(result.errorMessage).toBe(createTranslator('de').t('errors.generationFailed'));
+      expect(loggedLines(warn)).toContain('[glamour] generation failed: TypeError');
+    });
+
+    it('never logs the message — it can quote what it was given', async () => {
+      const warn = vi.fn();
+      await executeGlamour(input({ canDraw: throwing(new RangeError('Real Name')), logger: { warn } }));
+      const lines = loggedLines(warn);
+
+      expect(lines).toContain('[glamour] generation failed: RangeError');
+      for (const line of lines) expect(line).not.toContain('Real Name');
+    });
+
+    it('names an AppError by its code', async () => {
+      const warn = vi.fn();
+      await executeGlamour(input({ canDraw: throwing(new AppError('INVALID_INPUT', 'Real Name')), logger: { warn } }));
+      const lines = loggedLines(warn);
+
+      expect(lines).toContain('[glamour] generation failed: AppError INVALID_INPUT');
+      for (const line of lines) expect(line).not.toContain('Real Name');
+    });
+
+    it('names a thrown non-error by its type only', async () => {
+      const warn = vi.fn();
+      await executeGlamour(input({ canDraw: throwing('Real Name'), logger: { warn } }));
+      const lines = loggedLines(warn);
+
+      expect(lines).toContain('[glamour] generation failed: string');
+      for (const line of lines) expect(line).not.toContain('Real Name');
+    });
+
+    it('still answers without a logger', async () => {
+      const result = await executeGlamour(input({ canDraw: throwing(new TypeError('x')) }));
+      expect(result).toMatchObject({ ok: false, error: 'GENERATION_FAILED' });
+    });
+  });
+
   it('speaks the requested locale on the card', async () => {
     const result = await executeGlamour(input({ locale: 'ja' }));
     if (!result.ok) throw new Error(result.errorMessage);
@@ -432,11 +833,117 @@ describe('executeGlamour', () => {
     expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
   });
 
+  /**
+   * The read's catch was bare, and its try also runs the resolver — so a
+   * bot-side bug there answered PARSE_FAILED with nothing in the log, looking
+   * exactly like a bad file. The line names the class and code only: the
+   * parser's reason quotes field values from the player's file.
+   */
+  describe('a read that fails is logged', () => {
+    const loggedLines = (warn: ReturnType<typeof vi.fn>): string[] => warn.mock.calls.flat().map(String);
+
+    it('logs a bot-side failure inside the read, so it is not mistaken for a bad file', async () => {
+      vi.mocked(resolveCharaColors).mockImplementationOnce(() => {
+        throw new TypeError('Real Name');
+      });
+      const warn = vi.fn();
+      const result = await executeGlamour(input({ logger: { warn } }));
+
+      expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
+      const lines = loggedLines(warn);
+      expect(lines).toContain('[glamour] parse failed: TypeError');
+      for (const line of lines) expect(line).not.toContain('Real Name');
+    });
+
+    it('logs the parser refusing the file by class and code, never the file', async () => {
+      const warn = vi.fn();
+      const i = input({
+        fileText: JSON.stringify({ IsExtendedAppearanceValid: true, LeftEyeColor: 'Real Name' }),
+        logger: { warn },
+      });
+      const result = await executeGlamour(i);
+
+      expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
+      expect(i.resolve).not.toHaveBeenCalled();
+      const lines = loggedLines(warn);
+      expect(lines).toContain('[glamour] parse failed: AppError INVALID_INPUT');
+      for (const line of lines) expect(line).not.toContain('Real Name');
+    });
+
+    it('still answers without a logger', async () => {
+      vi.mocked(resolveCharaColors).mockImplementationOnce(() => {
+        throw new TypeError('Real Name');
+      });
+      const result = await executeGlamour(input());
+      expect(result).toMatchObject({ ok: false, error: 'PARSE_FAILED' });
+    });
+  });
+
   it('answers a file that wears nothing without calling the resolver', async () => {
     const i = input({ fileText: JSON.stringify({ Race: 'Hyur', Tribe: 'Midlander', Gender: 'Feminine', REyeColor: 42 }) });
     const result = await executeGlamour(i);
     expect(result).toMatchObject({ ok: false, error: 'NO_GEAR' });
     expect(i.resolve).not.toHaveBeenCalled();
+  });
+
+  /**
+   * RESOLVE_FAILED used to be answered with nothing logged, so a missing
+   * binding, a malformed envelope and an api-worker outage all looked alike.
+   * The line names the error's class and the HTTP status — never the message:
+   * an api-worker 4xx reason can echo the file's gear values.
+   */
+  describe('a lookup that fails is logged (BUG-125)', () => {
+    const loggedLines = (warn: ReturnType<typeof vi.fn>): string[] => warn.mock.calls.flat().map(String);
+    const SENTINEL = 'gear[0].base Sentinel 361';
+    const failing = (thrown: unknown) => async (): Promise<GlamourResolveAnswer> => {
+      throw thrown;
+    };
+
+    it.each([401, 403, 404, 500, 503])('names the class and the status of a %i', async (status) => {
+      const warn = vi.fn();
+      const result = await executeGlamour(
+        input({ resolve: failing(Object.assign(new Error(SENTINEL), { status })), logger: { warn } })
+      );
+
+      expect(result).toMatchObject({ ok: false, error: 'RESOLVE_FAILED' });
+      const lines = loggedLines(warn);
+      expect(lines).toContain(`[glamour] resolve failed: Error (status ${status})`);
+      for (const line of lines) expect(line).not.toContain('Sentinel');
+    });
+
+    it('names the class alone when there is no status', async () => {
+      const warn = vi.fn();
+      await executeGlamour(input({ resolve: failing(new TypeError(SENTINEL)), logger: { warn } }));
+      const lines = loggedLines(warn);
+
+      expect(lines).toContain('[glamour] resolve failed: TypeError');
+      for (const line of lines) expect(line).not.toContain('Sentinel');
+    });
+
+    it('names an AppError by its code', async () => {
+      const warn = vi.fn();
+      await executeGlamour(input({ resolve: failing(new AppError('API_CALL_FAILED', SENTINEL)), logger: { warn } }));
+
+      expect(loggedLines(warn)).toContain('[glamour] resolve failed: AppError API_CALL_FAILED');
+    });
+
+    it.each([
+      ['a string', SENTINEL, 'string'],
+      ['null', null, 'object'],
+    ])('names %s thrown by its type only', async (_label, thrown, kind) => {
+      const warn = vi.fn();
+      const result = await executeGlamour(input({ resolve: failing(thrown), logger: { warn } }));
+
+      expect(result).toMatchObject({ ok: false, error: 'RESOLVE_FAILED' });
+      const lines = loggedLines(warn);
+      expect(lines).toContain(`[glamour] resolve failed: ${kind}`);
+      for (const line of lines) expect(line).not.toContain('Sentinel');
+    });
+
+    it('still answers without a logger', async () => {
+      const result = await executeGlamour(input({ resolve: failing(new Error(SENTINEL)) }));
+      expect(result).toMatchObject({ ok: false, error: 'RESOLVE_FAILED' });
+    });
   });
 
   it('answers a resolver failure as RESOLVE_FAILED, never a half-drawn card', async () => {

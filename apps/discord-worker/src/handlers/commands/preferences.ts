@@ -171,7 +171,7 @@ export async function handlePreferencesCommand(
   logger?: ExtendedLogger
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
 
   // Get subcommand from options
   const options = interaction.data?.options || [];

@@ -45,6 +45,7 @@ import { createTranslator, type LocaleCode, type Translator, type TranslatorLogg
 import { dyeService } from '../input-resolution.js';
 import { getLocalizedDyeName, getLocalizedRace, initializeLocale } from '../localization.js';
 import { genderSymbol, getCharacterColors, producerToken, tribeDisplay } from './chara-identity.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -103,7 +104,11 @@ export interface GlamourInput {
    * Absent = everything is drawable.
    */
   canDraw?: (text: string) => boolean;
-  /** Surfaces Translator missing-key warnings. Any `{ warn(msg) }`. */
+  /**
+   * Surfaces Translator missing-key warnings, why the lookup failed
+   * (RESOLVE_FAILED) and why a card failed to draw (GENERATION_FAILED) —
+   * BUG-125. Any `{ warn(msg) }`.
+   */
   logger?: TranslatorLogger;
 }
 
@@ -189,10 +194,19 @@ interface PieceDye {
 interface Piece {
   slot: CharaGearSlotId;
   dyes: PieceDye[];
-  /** The twin the list names (localized), or the model label when there is no item */
+  /**
+   * The twin the card and the notes name (localized), or the model label when
+   * there is no item — the no-fix note then puts the slot's label before it
+   */
   name: string;
   /** The same twin's English name — the card's fallback when the fonts can't draw `name` */
   nameEn: string;
+  /**
+   * The name the GPOSERS list writes: the twin's, or null when there is no
+   * item. A model label means nothing on a submission form, so the list keeps
+   * the slot's label bare as a prompt to fill in, as the web list does (BUG-124).
+   */
+  listName: string | null;
   /** Other items with the same look */
   twins: number;
   tone: CharaPieceTone;
@@ -251,6 +265,7 @@ function readPiece(
       dyes,
       name: t.t('card.glamourNoItemName', { key: formatCharaModelLabel(model) }),
       nameEn: t.t('card.glamourNoItemName', { key: formatCharaModelLabel(model) }),
+      listName: null,
       twins: 0,
       tone: 'block',
       status: '—',
@@ -271,11 +286,13 @@ function readPiece(
       : tone === 'block'
         ? blockedStatus(picked, character.race, t, locale)
         : t.t('card.glamourStatusOk');
+  const name = localName(picked.names, locale);
   return {
     slot,
     dyes,
-    name: localName(picked.names, locale),
+    name,
     nameEn: picked.names.en,
+    listName: name,
     // The whole family, as the web counts it — not just the named alternates
     twins: (item.familySize ?? twins.length) - 1,
     tone,
@@ -318,14 +335,16 @@ function plain(text: string): string {
 /**
  * Every piece in the GPOSERS form — core's model (`chara-gposers`), the one
  * the web reader renders too — with Discord-bold labels and no blank lines.
+ * A worn piece with no name (no item behind the model, glasses the resolve
+ * didn't name) keeps its label bare; `facewear` null = the file wears none.
  */
-function gposersList(pieces: Piece[], glasses: string | null): string[] {
+function gposersList(pieces: Piece[], facewear: { name: string | null } | null): string[] {
   const input: GposersInput = {};
   for (const piece of pieces) {
     const dye = (channel: 1 | 2): string | null => piece.dyes.find((d) => d.channel === channel)?.name ?? null;
-    input[piece.slot] = { name: piece.name, dye1: dye(1), dye2: dye(2), acquisition: piece.acquisition };
+    input[piece.slot] = { name: piece.listName, dye1: dye(1), dye2: dye(2), acquisition: piece.acquisition };
   }
-  if (glasses) input.Facewear = { name: glasses };
+  if (facewear) input.Facewear = facewear;
   const lines = [`**${GPOSERS_HEADER}**`];
   for (const group of gposersGroups(input)) {
     for (const line of group) {
@@ -353,7 +372,11 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
   let character: ResolvedCharaCharacter;
   try {
     character = await resolveCharaColors(parseCharaFile(input.fileText), getCharacterColors(), dyeService);
-  } catch {
+  } catch (error) {
+    // The try runs the resolver too, so a bot-side bug lands here as well:
+    // log the class and code (never the message — the parser's reason quotes
+    // the file's field values), as /swatch's read does.
+    input.logger?.warn(`[glamour] parse failed: ${failureKind(error)}`);
     return { ok: false, error: 'PARSE_FAILED', errorMessage: unreadable };
   }
   // The nickname never leaves this function (PRIVACY_POLICY §3)
@@ -381,6 +404,12 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     if (typeof status === 'number' && REFUSED_BODY_STATUSES.has(status)) {
       return { ok: false, error: 'PARSE_FAILED', errorMessage: unreadable };
     }
+    // BUG-125: a missing binding, a malformed envelope and an outage all land
+    // here, so say which — the class and the status, never the message (an
+    // api-worker reason can echo the file's gear values).
+    input.logger?.warn(
+      `[glamour] resolve failed: ${failureKind(error)}${typeof status === 'number' ? ` (status ${status})` : ''}`
+    );
     return { ok: false, error: 'RESOLVE_FAILED', errorMessage: t.t('card.glamourResolveFailed') };
   }
 
@@ -453,9 +482,11 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
       theme: input.theme,
     });
 
-    // The embed carries the whole list and what the picture can't say
-    const glasses = glassesId && answer.glasses ? localName(answer.glasses.names, locale) : null;
-    const list = gposersList(pieces, glasses);
+    // The embed carries the whole list and what the picture can't say. The
+    // file wearing glasses puts Facewear in the list whether or not the resolve
+    // named them (the parser answers null for none — row 0 is "none").
+    const facewear = glassesId ? { name: answer.glasses ? localName(answer.glasses.names, locale) : null } : null;
+    const list = gposersList(pieces, facewear);
     const notes: string[] = [];
     const fixed = pieces.filter((p) => p.fixed);
     if (fixed.length > 0) {
@@ -467,8 +498,13 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     }
     const blocked = pieces.filter((p) => p.blocked);
     if (blocked.length > 0) {
+      // A model label carries no slot, and the list writes a no-item piece as
+      // its bare slot, so the note names the slot: for an undyed piece (no card
+      // row) or one past row five, nothing else ties the model to its slot.
+      const blockedName = (p: Piece): string =>
+        plain(p.blocked === 'noItem' ? `${t.t(SLOT_KEYS[p.slot])} ${p.name}` : p.name);
       notes.push(
-        `${t.t('card.glamourBlockedLead')} ${blocked.map((p) => t.t(BLOCKED_KEYS[p.blocked!], { name: plain(p.name) })).join(' · ')}`
+        `${t.t('card.glamourBlockedLead')} ${blocked.map((p) => t.t(BLOCKED_KEYS[p.blocked!], { name: blockedName(p) })).join(' · ')}`
       );
     }
     const company = pieces.filter((p) => p.company);
@@ -491,7 +527,8 @@ export async function executeGlamour(input: GlamourInput): Promise<GlamourResult
     };
 
     return { ok: true, svgString, embed };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[glamour] generation failed: ${failureKind(error)}`);
     return { ok: false, error: 'GENERATION_FAILED', errorMessage: t.t('errors.generationFailed') };
   }
 }

@@ -73,7 +73,7 @@ export async function handlePresetCommand(
     interaction.user?.global_name ||
     interaction.user?.username ||
     'Unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
 
   // Check if API is enabled
   if (!presetApi.isApiEnabled(env)) {

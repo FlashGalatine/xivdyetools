@@ -24,6 +24,7 @@ import {
   getLocalizedDyeName,
   getLocalizedVisionType as getLocalizedVisionTypeFromCore,
 } from '../localization.js';
+import { failureKind } from './failure-kind.js';
 import type { EmbedData } from './types.js';
 
 // ============================================================================
@@ -96,7 +97,15 @@ export type AccessibilityResult =
       mode: 'lens' | 'all' | 'solo';
       embed: EmbedData;
     }
-  | { ok: false; error: 'GENERATION_FAILED'; errorMessage: string };
+  | {
+      ok: false;
+      /**
+       * NOT_ENOUGH_DYES: no dye at all (or no list) — refused before anything
+       * is drawn. GENERATION_FAILED: the card generator threw.
+       */
+      error: 'NOT_ENOUGH_DYES' | 'GENERATION_FAILED';
+      errorMessage: string;
+    };
 
 // ============================================================================
 // Helpers
@@ -144,6 +153,15 @@ export async function executeAccessibility(
   const t = createTranslator(locale, input.logger);
 
   await initializeLocale(locale);
+
+  // One dye is enough (13H); none is not. No dye used to fall through to the
+  // pair frames and throw on `a.hex`, which the catch reported as
+  // GENERATION_FAILED — a caller's mistake dressed as a render bug.
+  // `Array.isArray` first: this runs outside the try, so a non-array is
+  // refused, never thrown across the boundary.
+  if (!Array.isArray(dyes) || dyes.length === 0) {
+    return { ok: false, error: 'NOT_ENOUGH_DYES', errorMessage: t.t('errors.missingInput') };
+  }
 
   try {
     const localized = dyes.map((d) =>
@@ -249,7 +267,8 @@ export async function executeAccessibility(
       color: parseInt(a.hex.replace('#', ''), 16),
     };
     return { ok: true, svgString, mode: 'all', embed };
-  } catch {
+  } catch (error) {
+    input.logger?.warn(`[accessibility] generation failed: ${failureKind(error)}`);
     return {
       ok: false,
       error: 'GENERATION_FAILED',

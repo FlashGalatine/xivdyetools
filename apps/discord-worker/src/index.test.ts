@@ -34,7 +34,9 @@ vi.mock('./handlers/commands/index.js', () => ({
   handlePreferencesCommand: vi.fn(),
   handleMixerV4Command: vi.fn(),
   handleSwatchCommand: vi.fn(),
+  handleGlamourCommand: vi.fn(),
   handleAccessibilityCommand: vi.fn(),
+  handleContrastCommand: vi.fn(),
   handleManualCommand: vi.fn(),
   handleChangelogCommand: vi.fn(),
   handleComparisonCommand: vi.fn(),
@@ -2993,6 +2995,77 @@ describe('index.ts', () => {
           );
         });
       });
+
+      /**
+       * BUG-126 (2026-10-04 audit): autocomplete resolves the user's locale on
+       * every keystroke, and a KV failure there fell back to the Discord
+       * locale with no log line, because the resolver was never handed the
+       * request logger. This runs the REAL resolver and reads the JSON the
+       * request logger writes.
+       */
+      describe('locale resolution reaches the request logger (BUG-126)', () => {
+        let logLines: string[];
+        let logSpy: ReturnType<typeof vi.spyOn>;
+
+        beforeEach(async () => {
+          const actual =
+            await vi.importActual<typeof import('./services/i18n.js')>('./services/i18n.js');
+          const { resolveUserLocale } = await import('./services/i18n.js');
+          vi.mocked(resolveUserLocale).mockImplementation(actual.resolveUserLocale);
+
+          // @xivdyetools/logger's worker preset writes one JSON line per call
+          // through console.log.
+          logLines = [];
+          logSpy = vi.spyOn(console, 'log').mockImplementation((line: unknown) => {
+            logLines.push(String(line));
+          });
+        });
+
+        afterEach(async () => {
+          logSpy.mockRestore();
+          // clearAllMocks keeps implementations: put the module mock's default back
+          const { resolveUserLocale } = await import('./services/i18n.js');
+          vi.mocked(resolveUserLocale).mockResolvedValue('en');
+        });
+
+        it('logs a KV failure while resolving the locale, and still answers', async () => {
+          const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+          vi.mocked(mockEnv.KV.get).mockRejectedValue(new Error('KV unavailable'));
+          const body = JSON.stringify({
+            type: InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE,
+            data: {
+              name: 'preferences',
+              options: [
+                {
+                  name: 'set',
+                  type: 1,
+                  options: [{ name: 'clan', type: 3, value: 'moon', focused: true }],
+                },
+              ],
+            },
+            user: { id: 'user-123' },
+            locale: 'de',
+          });
+          vi.mocked(verifyDiscordRequest).mockResolvedValue({ isValid: true, body, error: '' });
+
+          const res = await app.fetch(
+            new Request('http://localhost/', { method: 'POST', body }),
+            mockEnv,
+            mockCtx,
+          );
+
+          expect(res.status).toBe(200);
+          expect(((await res.json()) as InteractionResponseBody).data!.choices).toEqual([
+            { name: "Keeper of the Moon (Miqo'te)", value: 'Keeper of the Moon' },
+          ]);
+          const line = logLines.find((l) =>
+            l.includes('Failed to read unified preferences for locale resolution'),
+          );
+          expect(line, 'the locale resolver logged nothing').toBeDefined();
+          // Written by the request-scoped logger, so it carries the request id
+          expect(line).toContain('"requestId"');
+        });
+      });
     });
 
     describe('MESSAGE_COMPONENT interactions', () => {
@@ -3500,6 +3573,87 @@ describe('index.ts', () => {
           await app.fetch(req, mockEnv, mockCtx);
           expect(handler).toHaveBeenCalled();
         }
+      });
+
+      /**
+       * BUG-125 (2026-10-04 audit): a handler's bot-logic catch can only say
+       * why a card failed if the dispatcher hands it the request logger. /dye
+       * was the one call site left without it, so /dye info and /dye random
+       * still logged nothing on failure after bot-logic learned to. "The
+       * request logger" is checked by identity: the same object the rate
+       * limiter is handed for this request, not merely some logger.
+       */
+      it.each([
+        'harmony',
+        'dye',
+        'extractor',
+        'gradient',
+        'preferences',
+        'mixer',
+        'swatch',
+        'glamour',
+        'accessibility',
+        'a11y',
+        'contrast',
+        'manual',
+        'comparison',
+        'preset',
+        'stats',
+        'budget',
+        'about',
+        'changelog',
+      ])('hands the /%s handler the request logger (BUG-125)', async (name) => {
+        const { verifyDiscordRequest } = await import('@xivdyetools/auth');
+        const { checkRateLimit } = await import('./services/rate-limiter.js');
+        const commands = await import('./handlers/commands/index.js');
+        const handlerFor: Record<string, (...args: never[]) => unknown> = {
+          harmony: commands.handleHarmonyCommand,
+          dye: commands.handleDyeCommand,
+          extractor: commands.handleExtractorCommand,
+          gradient: commands.handleGradientCommand,
+          preferences: commands.handlePreferencesCommand,
+          mixer: commands.handleMixerV4Command,
+          swatch: commands.handleSwatchCommand,
+          glamour: commands.handleGlamourCommand,
+          accessibility: commands.handleAccessibilityCommand,
+          a11y: commands.handleAccessibilityCommand,
+          contrast: commands.handleContrastCommand,
+          manual: commands.handleManualCommand,
+          comparison: commands.handleComparisonCommand,
+          preset: commands.handlePresetCommand,
+          stats: commands.handleStatsCommand,
+          budget: commands.handleBudgetCommand,
+          about: commands.handleAboutCommand,
+          changelog: commands.handleChangelogCommand,
+        };
+        const handler = vi.mocked(handlerFor[name]);
+        const body = {
+          type: InteractionType.APPLICATION_COMMAND,
+          data: { name },
+          user: { id: 'user-123' },
+        };
+        vi.mocked(verifyDiscordRequest).mockResolvedValue({
+          isValid: true,
+          body: JSON.stringify(body),
+          error: '',
+        });
+        vi.mocked(checkRateLimit).mockResolvedValue({
+          allowed: true,
+          remaining: 14,
+          resetAt: Date.now() + 60000,
+        });
+        handler.mockResolvedValue(new Response());
+
+        await app.fetch(
+          new Request('http://localhost/', { method: 'POST', body: JSON.stringify(body) }),
+          mockEnv,
+          mockCtx,
+        );
+
+        const requestLogger = vi.mocked(checkRateLimit).mock.calls[0][3];
+        expect(requestLogger).toEqual(expect.objectContaining({ warn: expect.any(Function) }));
+        expect(handler).toHaveBeenCalledTimes(1);
+        expect(handler.mock.calls[0][3]).toBe(requestLogger);
       });
 
       it('should route stats command handler', async () => {

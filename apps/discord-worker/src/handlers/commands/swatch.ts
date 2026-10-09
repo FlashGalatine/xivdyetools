@@ -57,7 +57,7 @@ export async function handleSwatchCommand(
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id;
   const t = userId
-    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    ? await createUserTranslator(env.KV, userId, interaction.locale, logger)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
   const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 

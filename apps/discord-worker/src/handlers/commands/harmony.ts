@@ -39,7 +39,7 @@ export async function handleHarmonyCommand(
   logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
 
   const options = interaction.data?.options || [];
   const colorOption = options.find((opt) => opt.name === 'color');

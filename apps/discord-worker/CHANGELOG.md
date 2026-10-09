@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.5] - 2026-10-06
+
+Sprint 15 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
+carrying `@xivdyetools/bot-logic` 4.8.0. Merge after Sprint 9 (PR #257). No command shape changed
+and no font re-cut: no new text is drawn on a card.
+
+### Fixed
+
+- **A colour typed as six digits works** (BUG-034). `/harmony color:000000`, `333333` and the
+  like answered "invalid colour".
+  - `/budget` follows the same rule: six bare digits are never a dye id. `/budget find
+    target_dye:013114` now answers "Could not find dye", where it priced Pure White; 1–5 digits
+    still name a dye.
+- **Filtered `/gradient` and `/mixer` steps find their dye** (BUG-033). With a filter such as
+  hiding vendor dyes, a step could show no match although allowed dyes exist.
+- **The `/glamour` GPOSERS list** (BUG-124) writes no "Model 361·5" item names, lists Facewear
+  when the glasses are worn but unnamed, and its "No fix:" note names the slot.
+- **Failures are logged.**
+  - BUG-125: `/dye` hands its logger to bot-logic like every other command.
+  - The glamour transport's two plain errors carry codes (`BINDING_MISSING`,
+    `MALFORMED_ENVELOPE`), so the log tells a missing binding from a bad answer.
+  - BUG-126: every handler, `/about` and `/changelog` included, hands its logger to locale
+    resolution, so a KV failure while reading the user's language is logged.
+    `tests/translator-logger.test.ts` fails if a call site drops it.
+- **`/contrast` and `/accessibility` answer too few dyes with bot-logic's message**, not as a
+  render failure. Discord cannot reach this today: the options are required.
+
 ## [5.8.4] - 2026-10-06
 
 Sprint 9 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

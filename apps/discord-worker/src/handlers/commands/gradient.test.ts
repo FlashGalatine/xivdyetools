@@ -471,6 +471,16 @@ describe('handleGradientCommand', () => {
   });
 
   describe('render failure -> render outcome', () => {
+    // Pins the plumbing only: whether executeGradient logs is bot-logic's test
+    it('passes its request logger to executeGradient — pins the logger plumbing only (BUG-125)', async () => {
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      await handleGradientCommand(interaction(colorOptions()), env, ctx, logger as never);
+      await settle();
+
+      expect(vi.mocked(executeGradient).mock.calls[0][0].logger).toBe(logger);
+    });
+
     it('marks a render outcome on GENERATION_FAILED', async () => {
       vi.mocked(executeGradient).mockResolvedValue({
         ok: false,

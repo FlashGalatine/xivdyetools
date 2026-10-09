@@ -989,7 +989,7 @@ async function handleCommand(
     // Route to specific command handlers
     switch (commandName) {
       case 'about':
-        response = await handleAboutCommand(interaction, env, handlerCtx);
+        response = await handleAboutCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'harmony':
@@ -997,7 +997,9 @@ async function handleCommand(
         break;
 
       case 'dye':
-        response = await handleDyeCommand(interaction, env, handlerCtx);
+        // BUG-125: the request logger reaches executeDyeInfo / executeRandom,
+        // whose catches log the failure's class instead of discarding it.
+        response = await handleDyeCommand(interaction, env, handlerCtx, logger);
         break;
 
       // V4 Commands
@@ -1045,7 +1047,7 @@ async function handleCommand(
         break;
 
       case 'changelog':
-        response = await handleChangelogCommand(interaction, env, handlerCtx);
+        response = await handleChangelogCommand(interaction, env, handlerCtx, logger);
         break;
 
       case 'comparison':
@@ -1175,7 +1177,9 @@ async function handleAutocomplete(
 
   // F-02 (2026-08-20 i18n audit): dye suggestions match and display the
   // user's locale (stored preference → Discord client locale → en).
-  const locale = await resolveUserLocale(env.KV, acUserId ?? '', interaction.locale);
+  // BUG-126: with the request logger, a KV failure here is logged rather than
+  // silently degrading the suggestions to the Discord locale.
+  const locale = await resolveUserLocale(env.KV, acUserId ?? '', interaction.locale, logger);
   await initializeLocale(locale);
 
   // Handle preset command autocomplete

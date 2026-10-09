@@ -24,15 +24,17 @@ pnpm --filter @xivdyetools/bot-logic run clean
 ```bash
 pnpm turbo run build --filter=@xivdyetools/bot-logic
 pnpm turbo run test --filter=@xivdyetools/bot-logic
-pnpm --filter @xivdyetools/bot-logic exec vitest run src/commands/harmony.test.ts
+pnpm --filter @xivdyetools/bot-logic exec vitest run src/commands/harmony.test.ts --coverage.enabled=false
 ```
+
+Coverage is **enforced** (BUG-127): `vitest.config.ts` sets `coverage.enabled: true`, so `run test` (and `turbo run test`, and CI) fails when any of lines / functions / branches / statements drops below 90%. `run test:coverage` is now the same run. A single-file run needs `--coverage.enabled=false`, because a green subset otherwise exits 1 on the global thresholds. Add tests that pin behaviour, not ones that only execute lines, and list a branch that cannot be reached without a source change instead of contorting a test to hit it.
 
 ## Architecture
 
 Each `commands/<name>.ts` exports an `execute<Name>` function plus its `<Name>Input` and `<Name>Result` types. The result is always a discriminated union: `{ ok: true, svgString, embed, ... }` on success, or `{ ok: false, error: <string-literal-code>, errorMessage }` on failure. Adapters never throw across the boundary — they read the discriminator and render accordingly.
 
 A small set of shared utilities lives at the top level of `src/`:
-- `input-resolution.ts` — turns hex codes, dye names, or CSS color names into a single `ResolvedColor` shape. Owns a process-singleton `DyeService` (loaded from `dyeDatabase` JSON).
+- `input-resolution.ts` — turns dye ids, hex codes, dye names, or CSS color names into a single `ResolvedColor` shape (order under *Input resolution order* below). Owns a process-singleton `DyeService` (loaded from `dyeDatabase` JSON).
 - `localization.ts` — wraps `LocalizationService` with a per-locale instance cache to avoid singleton race conditions in concurrent CF Worker requests.
 - `css-colors.ts` — 148 standard CSS color name → hex lookup.
 
@@ -83,7 +85,16 @@ async function initializeLocale(locale: LocaleCode): Promise<void>;
 function getLocalizedDyeName(itemID: number, fallbackName: string, locale?: LocaleCode): string;
 function getLocalizedCategory(category: string, locale?: LocaleCode): string;
 type LocaleCode;  // re-exported from ./i18n (formerly @xivdyetools/bot-i18n): 'en'|'ja'|'de'|'fr'|'ko'|'zh'
+
+// @xivdyetools/bot-logic/i18n — the locale layer both Discord bots share (REFACTOR-001)
+async function resolveUserLocale(kv: LocalePreferenceStore, userId: string,
+                                 discordLocale?: string, logger?: LocaleResolutionLogger): Promise<LocaleCode>;
+  // order: prefs:v1:<id> blob → i18n:user:<id> legacy key → Discord client locale → 'en'; never throws
+  type LocalePreferenceStore = { get(key: string): Promise<string | null> };   // a KVNamespace fits
+  type LocaleResolutionLogger = { error(message: string, error?: Error): void }; // ExtendedLogger fits
 ```
+
+`logger` is optional (BUG-126). Existing three-argument callers still compile, but they stay silent on a KV outage. When it is passed, each degraded step logs one fixed-message line that never names the user id. A failed KV read passes the KV's own `Error` through unchanged, or `undefined` for a non-Error rejection. A malformed blob is logged with no error object at all, because `JSON.parse`'s `SyntaxError` quotes the stored blob. Callers that hold a logger should pass it.
 
 ### Shared types & helpers
 
@@ -109,19 +120,28 @@ executeHarmony(input: HarmonyInput): Promise<HarmonyResult>
   function getHarmonyTypeChoices(): {name; value}[];
 
 executeDyeInfo(input: DyeInfoInput): Promise<DyeInfoResult>
+  // errors: GENERATION_FAILED
 executeRandom(input: RandomInput): Promise<RandomResult>      // exported from same module
+  // errors: NO_DYES | GENERATION_FAILED
 
 executeMixer(input: MixerInput): Promise<MixerResult>
-  // MixerResult = { ok: true; svgString; blendingMode; sweep: MixerSweepStop[]; embed } | { ok: false; ... }
+  // MixerResult = { ok: true; svgString; blendingMode; sweep: MixerSweepStop[]; embed }
+  //             | { ok: false; error: 'NO_MATCHES'|'GENERATION_FAILED'; errorMessage }
 
 executeGradient(input: GradientInput): Promise<GradientResult>
   type GradientStepResult, InterpolationMode;
+  // errors: GENERATION_FAILED
 
 executeComparison(input: ComparisonInput): Promise<ComparisonResult>
+  // errors: NOT_ENOUGH_DYES | GENERATION_FAILED
+  // NOT_ENOUGH_DYES: fewer than 2 dyes, or `dyes` not an array → errorMessage mixer.bothRequired
 
 executeContrast(input: ContrastInput): Promise<ContrastResult>
+  // errors: NOT_ENOUGH_DYES | GENERATION_FAILED
+  // NOT_ENOUGH_DYES: fewer than 2 dyes, or `dyes` not an array → errorMessage mixer.bothRequired
 
 executeSwatch(input: SwatchInput): Promise<SwatchResult>
+  // errors: PARSE_FAILED | NO_LIVE_SLOTS | SLOT_MISSING | GENERATION_FAILED
 
 executeGlamour(input: GlamourInput): Promise<GlamourResult>
   // input.resolve(gear, glassesId) → GlamourResolveAnswer — the adapter's transport to api-worker
@@ -132,12 +152,27 @@ executeGlamour(input: GlamourInput): Promise<GlamourResult>
 executeAccessibility(input: AccessibilityInput): Promise<AccessibilityResult>
   const VISION_TYPES;
   type AccessibilityDye, VisionType;
+  // errors: NOT_ENOUGH_DYES | GENERATION_FAILED
+  // NOT_ENOUGH_DYES: no dye at all, or `dyes` not an array → errorMessage errors.missingInput (one dye is enough)
 ```
+
+`NOT_ENOUGH_DYES` (comparison, contrast, accessibility) is the caller's mistake, checked **before** the `try`. Before it existed, a short list threw a `TypeError` inside the renderer, and the catch reported it as `GENERATION_FAILED`, a render bug. Each guard tests `Array.isArray` first because it runs outside the `try`, so a JavaScript caller's `undefined` is refused rather than thrown across the boundary. Widening a published `error` union is semver-minor: a consumer with an exhaustive `never` switch needs the new case.
 
 ## Key Patterns / Algorithms
 
 ### Discriminated-union result contract
 `{ ok: true, ... } | { ok: false, error: <code>, errorMessage }`. Adapters branch on `result.ok` — on the failure path `errorMessage` is already localized and ready to render, and `error` is a short string literal that adapters can use to set embed colors or log levels (e.g., `'NO_MATCHES' → yellow warn`, `'GENERATION_FAILED' → red error`).
+
+### Failure logging (BUG-125)
+Every `*Input` takes an optional `logger?: TranslatorLogger` (`{ warn(msg) }`). It hears the Translator's missing-key warnings, harmony's `[harmony] unknown colour wheel "<wheel>" — using rgb` (which echoes the caller's value, the one line that does), and one line per caught failure, written by `failureKind(error)` in `commands/failure-kind.ts` (internal, not exported):
+
+```
+[<cmd>] generation failed: <Name>[ <code>]     every execute*'s final catch; [dye info] / [dye random] for dye-info.ts
+[swatch] parse failed: <Name>[ <code>]         the .chara read (parse + resolve + nickname strip)
+[glamour] resolve failed: <Name>[ (status N)]  RESOLVE_FAILED only; 429 and 400/413/422 are answers, not logged
+```
+
+`<Name>` is the error's class, plus its `code` when it carries a string one: an `AppError`'s (`AppError INVALID_HEX_COLOR`), but also a runtime error's (`Error ECONNREFUSED`). A thrown non-Error is named by its `typeof` (`string`). The error's **message is never logged**: core's colour helpers quote the hex they were given, which can be what the user typed, and the `.chara` parser quotes field values from the player's file (PRIVACY_POLICY §3). New catches use `failureKind`, never `` `${error.name}: ${error.message}` ``. Glamour's parse catch is still bare, so a `PARSE_FAILED` from `/glamour` is not logged yet.
 
 ### `EmbedData` is platform-neutral
 Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → number`, `fields → fields[]`, etc.). Revolt's adapter maps it onto its own message structure. **Never** put Discord-specific types like `APIEmbed`, `Snowflake`, or interaction objects in this package.
@@ -149,7 +184,16 @@ Discord adapters map `EmbedData` onto `APIEmbed` (`title → title`, `color → 
 `input-resolution.ts` constructs one `DyeService(dyeDatabase)` at module load. Re-importing won't rebuild the database. If a command needs a custom dye filter view, **filter the result** rather than constructing a second `DyeService`.
 
 ### Input resolution order
-`resolveColorInput` tries inputs in this order: hex (`#FF0000` / `FF0000` / `#F00`) → dye name (case-insensitive partial match) → CSS named color (`BlueViolet`). `excludeFacewear` (default `true`) filters `category === 'Facewear'` and is effectively a no-op since schema v2 — Facewear colours are no longer in the dye database at all. Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
+Every resolver trims its input once at the top, so surrounding whitespace never changes how it is read (BUG-034: `' 013114'` is the colour #013114, and `' #FF0000 '` is red).
+
+`resolveColorInput` takes the first step that applies:
+
+1. **A bare number that is not six digits** is a dye id, through `parseDyeIdInput`. 1–5 digits look up a stainID (1–254, the value every autocomplete sends) or a legacy item id (≥ 5729). Zero, the gap between the ranges, and seven or more digits resolve to `null`, with no fallthrough. That is why `'101'` is Pure White and not shorthand for #110011.
+2. **Hex**: `#FF0000` / `FF0000` / `#F00` / `F00`, plus **six bare digits, which are always a colour** (`'000000'`, `'013114'`). No real id needs six digits: the highest legacy item id is 48227 and the consolidated market items are 52254–52256. A shorthand without `#` must carry a hex letter.
+3. **Dye name**: a case-insensitive partial match on the English name, plus the localized name when `options.locale` is set and `initializeLocale` has run (`searchDyesByName`).
+4. **CSS named color** (`BlueViolet`).
+
+`resolveDyeInput` runs in a different order: name search, which reads 1–5 digits as an id; then a six-character hex (no shorthand), answered with the closest dye; then `null`. It has no CSS step. `findDyeByName` is exact-match only, with the same id rule. `excludeFacewear` (default `true`) filters `category === 'Facewear'` and is effectively a no-op since schema v2, because Facewear colours are no longer in the dye database at all. Pass `findClosestForHex: true` when the command needs a dye attached to an arbitrary hex code.
 
 ## Consumers
 

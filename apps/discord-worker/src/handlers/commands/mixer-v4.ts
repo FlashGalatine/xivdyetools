@@ -39,7 +39,7 @@ export async function handleMixerV4Command(
   logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
 
   const options = interaction.data?.options || [];
   const dye1Input = options.find((opt) => opt.name === 'dye1')?.value as string | undefined;

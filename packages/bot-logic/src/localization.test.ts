@@ -4,9 +4,21 @@
  * Tests for initializeLocale, getLocalizedDyeName, and getLocalizedCategory.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { LocalizationService } from '@xivdyetools/core';
 import type { LocaleCode } from './i18n/index.js';
-import { initializeLocale, getLocalizedDyeName, getLocalizedCategory, getLocalizedClan } from './localization.js';
+import {
+  initializeLocale,
+  getLocalizedAcquisition,
+  getLocalizedCategory,
+  getLocalizedClan,
+  getLocalizedColorWheelName,
+  getLocalizedCurrency,
+  getLocalizedDyeName,
+  getLocalizedHarmonyType,
+  getLocalizedRace,
+  getLocalizedVisionType,
+} from './localization.js';
 
 describe('localization', () => {
   describe('initializeLocale', () => {
@@ -115,6 +127,90 @@ describe('localization', () => {
       expect(jaName.length).toBeGreaterThan(0);
       // They may or may not differ depending on the locale data,
       // but both should resolve successfully
+    });
+  });
+
+  /**
+   * The never-throws arm: a loaded locale whose core lookup throws must still
+   * hand the command its fallback. These run on every card and embed label, so
+   * a throw here would turn one bad lookup into GENERATION_FAILED for the whole
+   * command. The spy assertion proves the locale really was loaded, so this is
+   * the catch arm and not the "no instance yet" arm the uninitialized file covers.
+   */
+  describe('a core lookup that throws degrades to the fallback', () => {
+    beforeEach(async () => {
+      await initializeLocale('de');
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    type Getter =
+      | 'getDyeName'
+      | 'getCategory'
+      | 'getHarmonyType'
+      | 'getColorWheelName'
+      | 'getVisionShort'
+      | 'getRace'
+      | 'getClan'
+      | 'getAcquisition'
+      | 'getCurrency';
+    /** The prototype seen as just the getters, so one spy call fits every case. */
+    const getters = LocalizationService.prototype as unknown as Record<Getter, () => string>;
+
+    const cases: Array<{
+      method: Getter;
+      call: () => string;
+      fallback: string;
+    }> = [
+      {
+        method: 'getDyeName',
+        call: () => getLocalizedDyeName(5729, 'Snow White', 'de'),
+        fallback: 'Snow White',
+      },
+      {
+        method: 'getCategory',
+        call: () => getLocalizedCategory('Whites', 'de'),
+        fallback: 'Whites',
+      },
+      {
+        method: 'getHarmonyType',
+        call: () => getLocalizedHarmonyType('splitComplementary', 'de'),
+        fallback: 'splitComplementary',
+      },
+      {
+        method: 'getColorWheelName',
+        call: () => getLocalizedColorWheelName('ryb', 'de'),
+        fallback: 'ryb',
+      },
+      {
+        method: 'getVisionShort',
+        call: () => getLocalizedVisionType('protanopia', 'de'),
+        fallback: 'protanopia',
+      },
+      { method: 'getRace', call: () => getLocalizedRace('viera', 'de'), fallback: 'viera' },
+      // The clan never falls back to its camelCase key: the card prints it.
+      {
+        method: 'getClan',
+        call: () => getLocalizedClan('seekerOfTheSun', 'de'),
+        fallback: 'Seeker Of The Sun',
+      },
+      {
+        method: 'getAcquisition',
+        call: () => getLocalizedAcquisition('Dye Vendor', 'de'),
+        fallback: 'Dye Vendor',
+      },
+      { method: 'getCurrency', call: () => getLocalizedCurrency('Gil', 'de'), fallback: 'Gil' },
+    ];
+
+    it.each(cases)('$method throwing returns "$fallback"', ({ method, call, fallback }) => {
+      const spy = vi.spyOn(getters, method).mockImplementation(() => {
+        throw new Error('locale table corrupt');
+      });
+
+      expect(call()).toBe(fallback);
+      expect(spy).toHaveBeenCalled();
     });
   });
 });
