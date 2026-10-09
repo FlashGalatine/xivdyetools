@@ -31,6 +31,58 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.13] - 2026-10-05
+### 🪙 Market prices you can trust
+- Web app: Chinese and Korean servers now get market prices.
+- Web app: when the market board can't be reached, the Palette Extractor, Harmony and Budget say so instead of quietly showing no prices.
+
+## [5.10.12] - 2026-10-05
+### ✨ Polish everywhere
+- Web app: switching themes keeps your place in Budget, Dye Mixer and your character sheet.
+- Web app: prices show only when the Market Board is on, in every tool.
+- Web app: shortcuts pause while a menu or picker is open, Escape closes just the top thing, and tool shortcuts work on French (AZERTY) keyboards.
+- Web app: sending colors from the Swatch Matcher keeps your loaded character file, and printing a tool prints just the results.
+
+## [5.10.11] - 2026-10-05
+### 📜 Clearer policies
+- Web app and Discord bot: the privacy policies now give a fixed date. Moderation posts made after 2026-10-05 never show your Discord user ID.
+- Web app: the Terms of Service list all ten tools in every language, the Glamour Reader included, and both documents name each tool as the app does.
+- Web app and Discord bot: French and German policies now use the same word for a preset as the app, and the Korean Terms use the same word for a moderator as the Privacy Policy.
+
+## [5.10.10] - 2026-10-05
+### 🗣️ Words that match the game
+- Web app: facewear and character-creation color names now match the game in every language.
+- Web app: the Glamour Reader's counts read naturally in the singular ("1 dye"), and its facewear tooltip names the color in your language.
+- Web app: the Glamour list's download button now says "Save .md", and German calls presets "Vorlage" throughout.
+
+## [5.10.9] - 2026-10-05
+### 🛠️ Smoother tools
+- Web app: changing the language keeps your results in Harmony, Dye Mixer, Comparison and Accessibility.
+- Web app: an old link no longer undoes your choice when you pick a new color in Harmony or send a dye to Budget.
+- Web app: Budget always shows your latest search, and the Swatch Matcher keeps a full list of matches with strong filters on.
+- Web app: the dye palette works from the keyboard, and the app starts a little faster.
+
+## [5.10.7] - 2026-10-05
+### 🎨 Community presets
+- Web app: a saved preset is no longer marked "Removed by its author" because the presets service hiccupped or a search was slow, and a wrong mark clears itself.
+- Web app: when the community feed is down, the gallery says so instead of showing an empty feed.
+- Web app: a failed vote or delete now says it failed, and the gallery shows your votes, deletes and edits right away.
+- Web app: tab counts match the presets shown, and search and sort work on the Saved and Mine tabs.
+### 📁 Collections
+- Web app: Manage Collections updates as soon as you create a collection, and exported file names keep Japanese, Korean and Chinese names.
+- Web app: saving the same character's colors twice no longer fails; the second copy is numbered.
+
+## [5.10.6] - 2026-10-05
+### ⚙️ Your settings stay put
+- Web app: the Swatch Matcher keeps the palette you picked. Changing another setting, in any tool, no longer switches it to Hair and the tribe to Seeker of the Sun.
+- Web app: saved dye filters, such as "exclude metallic", now work as soon as you open the Gradient Builder, Swatch Matcher, Dye Mixer or Budget Suggestions.
+- Web app: settings from a shared gradient or swatch link no longer snap back the first time you change something, and a broken link no longer changes your saved settings.
+- Web app: the Options sidebar always shows the current settings, including after Reset Settings or a change in another tab.
+### 💰 Budget Suggestions
+- Web app: the match line stays where you put it, and opening Budget no longer turns market prices on in every other tool.
+- Web app: Budget always loads market prices, because it compares dyes by price. The Privacy Guide now says so in all six languages.
+- Web app: the Budget target card now shows RGB, HSV and LAB, as the sidebar always said it did. Turn them off in Display Options.
+
 ## [5.10.5] - 2026-10-05
 ### 🌏 Race and clan names in Korean and Chinese
 - Web app and link previews: Korean race and clan names now match the game's Korean client, for example 휴런 for Hyur and 중원 부족 for Midlander.

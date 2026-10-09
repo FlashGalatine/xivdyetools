@@ -155,6 +155,13 @@ const SHELL_STYLES = `
 // Modal Container Component
 // ============================================================================
 
+/** A mobile sheet's drag-to-close gesture in progress. */
+interface SheetDrag {
+  startY: number;
+  delta: number;
+  engaged: boolean;
+}
+
 export class ModalContainer extends BaseComponent {
   private modals: Modal[] = [];
   private unsubscribe: (() => void) | null = null;
@@ -165,6 +172,8 @@ export class ModalContainer extends BaseComponent {
   /** Register fix: restore body overflow to its PRIOR value, never blank it */
   private priorBodyOverflow: string | null = null;
   private stylesInjected = false;
+  /** BUG-100: each sheet's drag gesture, kept across re-renders (see attachSheetDrag) */
+  private sheetDrags = new WeakMap<HTMLElement, SheetDrag>();
 
   constructor(container: HTMLElement) {
     super(container);
@@ -253,42 +262,86 @@ export class ModalContainer extends BaseComponent {
   }
 
   /**
+   * BUG-100: is the touch starting inside content that is scrolled down?
+   * Checking only the body missed scrollers INSIDE it (the collection
+   * manager's list), so pulling down to scroll that list back up slid the
+   * sheet instead, and a long enough pull dismissed the modal. The composed
+   * path, not `target`: modal content can be a Lit element whose scrollers
+   * sit in its shadow root, where `target` is retargeted to the host.
+   */
+  private startsInScrolledContent(e: Event, dialog: HTMLElement): boolean {
+    for (const node of e.composedPath()) {
+      if (node === dialog) return false;
+      if (node instanceof Element && node.scrollTop > 0) return true;
+    }
+    return false;
+  }
+
+  /** Slide a dragged sheet back into place and end its gesture. */
+  private settleSheet(dialog: HTMLElement, drag: SheetDrag): void {
+    drag.engaged = false;
+    dialog.style.transition = 'transform 0.2s ease';
+    dialog.style.transform = '';
+  }
+
+  /**
    * Sheet drag-to-close (mobile): engages only when the body is scrolled to
    * the top, tracks touchmove, dismisses past the threshold — extends the
    * toast's gesture per the register.
+   *
+   * BUG-100: the gesture's state is kept per dialog in `sheetDrags`, not in
+   * these listeners' closures. Every ModalService notify re-renders the
+   * container, and `bindModalListeners` binds each surviving sheet again with
+   * new listeners. Closure state started over with `engaged` false, so a
+   * notify mid-drag left touchend and touchcancel returning early and the
+   * sheet stranded at its last translateY. Rebound, the sheet now carries its
+   * gesture on. A sheet that a new modal covered mid-drag is settled
+   * instead: the gesture belongs to a sheet no longer on top, so it must not
+   * go on to dismiss it.
    */
   private attachSheetDrag(dialog: HTMLElement, body: HTMLElement, modal: Modal): void {
-    let startY = 0;
-    let delta = 0;
-    let engaged = false;
+    const state = this.sheetDrags.get(dialog) ?? { startY: 0, delta: 0, engaged: false };
+    this.sheetDrags.set(dialog, state);
+    if (state.engaged && this.modals[this.modals.length - 1]?.id !== modal.id) {
+      this.settleSheet(dialog, state);
+    }
 
     this.on(dialog, 'touchstart', ((e: TouchEvent) => {
       if (!window.matchMedia(MOBILE_QUERY).matches) return;
       if (body.scrollTop > 0) return; // engage only at scrollTop === 0
-      startY = e.touches[0].clientY;
-      delta = 0;
-      engaged = true;
+      if (this.startsInScrolledContent(e, dialog)) return; // ...inner scrollers too
+      state.startY = e.touches[0].clientY;
+      state.delta = 0;
+      state.engaged = true;
       dialog.style.transition = 'none';
     }) as EventListener);
 
     this.on(dialog, 'touchmove', ((e: TouchEvent) => {
-      if (!engaged) return;
-      delta = Math.max(0, e.touches[0].clientY - startY);
-      if (delta > 0 && body.scrollTop === 0) {
-        dialog.style.transform = `translateY(${delta}px)`;
+      if (!state.engaged) return;
+      state.delta = Math.max(0, e.touches[0].clientY - state.startY);
+      if (state.delta > 0 && body.scrollTop === 0) {
+        dialog.style.transform = `translateY(${state.delta}px)`;
       }
     }) as EventListener);
 
     this.on(dialog, 'touchend', (() => {
-      if (!engaged) return;
-      engaged = false;
-      dialog.style.transition = 'transform 0.2s ease';
-      if (delta > 90 && modal.closable) {
+      if (!state.engaged) return;
+      if (state.delta > 90 && modal.closable) {
+        state.engaged = false;
+        dialog.style.transition = 'transform 0.2s ease';
         dialog.style.transform = 'translateY(100%)';
         this.safeTimeout(() => ModalService.dismiss(modal.id), 180);
       } else {
-        dialog.style.transform = '';
+        this.settleSheet(dialog, state);
       }
+    }) as EventListener);
+
+    // BUG-100: a gesture the browser cancels gets no touchend, which left the
+    // sheet stranded at its last translateY with transitions off. Settle back
+    // the way a short pull does.
+    this.on(dialog, 'touchcancel', (() => {
+      if (!state.engaged) return;
+      this.settleSheet(dialog, state);
     }) as EventListener);
   }
 

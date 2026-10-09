@@ -1,5 +1,5 @@
 /**
- * The Glamour Reader's export sheet (design 2c): Copy list and Export .md
+ * The Glamour Reader's export sheet (design 2c): Copy list and Save .md
  * open a preview of the GPOSERS list you can edit before anything is copied
  * or saved.
  *
@@ -18,7 +18,7 @@
  */
 
 import { LanguageService, ModalService, ToastService } from '@services/index';
-import { MONO, SANS, amber, el, green, monoChip } from '@components/chara-ui';
+import { MONO, SANS, amber, el, green, monoChip, tCount } from '@components/chara-ui';
 import { AcquisitionEdits } from '@shared/acquisition-edits';
 import { copyRichTextToClipboard } from '@shared/clipboard';
 import { downloadTextFile } from '@shared/download-file';
@@ -140,7 +140,7 @@ export function openGlamourSheet(
     el(
       'span',
       'font-size: 12px; color: var(--theme-text-muted);',
-      LanguageService.tInterpolate('glamour.sheet.sub', { n: String(pieces.length) })
+      tCount(pieces.length, 'glamour.sheet.sub_one', 'glamour.sheet.sub_other')
     )
   );
   head.appendChild(titles);

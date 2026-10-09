@@ -89,6 +89,18 @@ describe('CharaFileCard — localized surfaces', () => {
     expect(container.textContent).not.toContain('SeekerOfTheSun');
   });
 
+  // BUG-082 (2026-10-04 deep-dive): `??` let an empty or blank Nickname
+  // beat the file name, so the card's title was blank.
+  it('titles a file with a blank Nickname by its file name', async () => {
+    const blank = JSON.stringify({ ...JSON.parse(FIXTURE), Nickname: '   ' });
+    const { container } = await mount(blank, 'Aria.chara');
+    const title = Array.from(container.querySelectorAll<HTMLElement>('span')).find((s) =>
+      s.style.fontSize.startsWith('16px')
+    );
+
+    expect(title?.textContent).toBe('Aria.chara');
+  });
+
   it('renders the keyed slot-error sentence instead of core message', async () => {
     const { container } = await mount(FIXTURE);
 
@@ -224,6 +236,24 @@ describe('CharaFileCard — the loaded file', () => {
       expect(container.textContent).not.toContain(localOnly());
       expect(container.querySelector(`[title="${plainHint()}"]`)).toBeNull();
       expect(container.querySelector(`[title="${glamourHint()}"]`)).toBeNull();
+    });
+
+    // I18N-012: the hint and the host's clause were joined with an ASCII space,
+    // which Japanese and Chinese do not write after 。.
+    it('joins the hint and the host clause without a space after 。 (ja)', async () => {
+      await LanguageService.setLocale('ja');
+      try {
+        const note = '編集した入手方法はこの端末に保存されます。';
+        const { container } = await mount(FIXTURE, 'test.chara', {
+          sendsGearIds: true,
+          privacyNote: note,
+        });
+        expect(glamourHint().endsWith('。')).toBe(true);
+        expect(container.textContent).toContain(`${glamourHint()}${note}`);
+        expect(container.textContent).not.toContain(`${glamourHint()} ${note}`);
+      } finally {
+        await LanguageService.setLocale('en');
+      }
     });
 
     it('default mode is unchanged: plain hint at every site and the LOCAL ONLY chip titled with it', async () => {

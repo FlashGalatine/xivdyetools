@@ -394,4 +394,158 @@ describe('V4LayoutShell — palette drawer default + first-run hint', () => {
       expect(visibleScrims()).toBe(0);
     });
   });
+
+  /*
+   * BUG-113 (2026-10-04 deep-dive): every child event the shell re-emits is
+   * fired by emit(), which is bubbles + composed. Re-emitting without
+   * stopping the original let BOTH events reach v4-layout's listeners on the
+   * host, so each handler ran twice. The earlier tests dispatched plain,
+   * non-bubbling events, which is why the double fire never showed.
+   */
+  describe('re-emitted child events reach the host exactly once (BUG-113)', () => {
+    const fromChild = (el: ShellEl, selector: string, name: string, detail?: unknown): void => {
+      el.shadowRoot!.querySelector(selector)!.dispatchEvent(
+        new CustomEvent(name, { detail, bubbles: true, composed: true })
+      );
+    };
+
+    it.each([
+      ['v4-app-header', 'changelog-click'],
+      ['v4-app-header', 'theme-click'],
+      ['v4-app-header', 'about-click'],
+      ['v4-app-header', 'language-click'],
+      ['v4-app-header', 'advanced-click'],
+      ['v4-config-sidebar', 'clear-all-dyes'],
+      ['dye-palette-drawer', 'clear-all-dyes'],
+    ])('%s %s', async (selector, name) => {
+      stubViewport(false);
+      const el = await mountShell();
+      const heard = vi.fn();
+      el.addEventListener(name, heard);
+
+      fromChild(el, selector, name);
+
+      expect(heard).toHaveBeenCalledTimes(1);
+    });
+
+    it('v4-config-sidebar config-change, detail intact', async () => {
+      stubViewport(false);
+      const el = await mountShell();
+      const heard = vi.fn();
+      el.addEventListener('config-change', heard);
+      const detail = { tool: 'harmony', key: 'showHex', value: true };
+
+      fromChild(el, 'v4-config-sidebar', 'config-change', detail);
+
+      expect(heard).toHaveBeenCalledTimes(1);
+      expect((heard.mock.calls[0][0] as CustomEvent).detail).toEqual(detail);
+    });
+  });
+
+  /*
+   * BUG-112 (2026-10-04 deep-dive): the shell had no print rules, so Ctrl+P
+   * gave one clipped sheet — the 100vh, overflow-hidden host and the
+   * content scroller cut the tool off, with the app bar, FABs and Options
+   * column printed over it. styles/v4-layout.css can only reach the host;
+   * the chrome lives in the shadow root, so the rules have to be here.
+   */
+  describe('print styles (BUG-112)', () => {
+    async function printRules(): Promise<CSSStyleRule[]> {
+      const { V4LayoutShell } = await import('../../v4/v4-layout-shell');
+      const styles = V4LayoutShell.styles as unknown as Array<{ cssText: string }>;
+      // Parsed through a throwaway <style> (jsdom gives a detached document's
+      // sheet no CSSOM); its :host rules match nothing in the light DOM.
+      const style = document.createElement('style');
+      style.textContent = styles.map((s) => s.cssText).join('\n');
+      document.head.appendChild(style);
+      const media = [...style.sheet!.cssRules].filter((r) => 'media' in r) as CSSMediaRule[];
+      style.remove();
+      const print = media.find((r) => r.media.mediaText.trim() === 'print');
+      expect(print, 'an @media print block in the shell styles').toBeDefined();
+      return [...print!.cssRules] as CSSStyleRule[];
+    }
+
+    const selectorsOf = (rule: CSSStyleRule): string[] =>
+      rule.selectorText.split(',').map((s) => s.trim());
+
+    it('hides every piece of chrome', async () => {
+      const rules = await printRules();
+      const hidden = rules
+        .filter((r) => r.style.getPropertyValue('display') === 'none')
+        .flatMap(selectorsOf);
+
+      for (const chrome of [
+        'v4-app-header',
+        'v4-config-sidebar',
+        'dye-palette-drawer',
+        '.v4-drawer-overlay',
+        '.v4-palette-hint',
+        '.v4-options-toggle',
+        '.v4-palette-toggle',
+      ]) {
+        expect(hidden, chrome).toContain(chrome);
+      }
+      // The mobile block sets display:flex on the FAB and hint, and a print
+      // page is narrower than its 768px breakpoint — so the hide must win.
+      for (const r of rules.filter((x) => x.style.getPropertyValue('display') === 'none')) {
+        expect(r.style.getPropertyPriority('display')).toBe('important');
+      }
+    });
+
+    it('lets the host and every scroller grow with the content', async () => {
+      const rules = await printRules();
+      const flowing = rules.filter(
+        (r) =>
+          r.style.getPropertyValue('height') === 'auto' &&
+          r.style.getPropertyValue('overflow') === 'visible'
+      );
+      const selectors = flowing.flatMap(selectorsOf);
+
+      for (const box of [
+        ':host',
+        '.v4-layout-main',
+        '.v4-layout-content',
+        '.v4-layout-content-scroll',
+        // v4-layout.ts gives the tool's main panel an INLINE overflow-y:auto,
+        // which only an !important rule can override
+        '.v4-tool-main',
+      ]) {
+        expect(selectors, box).toContain(box);
+      }
+      for (const r of flowing) {
+        expect(r.style.getPropertyPriority('overflow')).toBe('important');
+      }
+    });
+
+    /*
+     * The two tests above check the CSS against a list typed out here, so a
+     * class renamed in the shell's template or in v4-layout.ts would leave
+     * them green while print clipped again. This one ties every print
+     * selector to a node the shell really renders.
+     */
+    it('names only boxes and chrome the shell really renders', async () => {
+      // Mobile, first run, a tool with both panels: every piece of chrome is up
+      stubViewport(true);
+      const el = await mountShell('harmony');
+      const root = el.shadowRoot!;
+
+      // The tool's panels as v4-layout.ts builds them: they replace the
+      // scroller's children inside this shadow root, not the slotted light DOM
+      const toolContainer = document.createElement('div');
+      toolContainer.className = 'v4-tool-container';
+      const mainPanel = document.createElement('div');
+      mainPanel.className = 'v4-tool-main';
+      toolContainer.appendChild(mainPanel);
+      root.querySelector('.v4-layout-content-scroll')!.replaceChildren(toolContainer);
+
+      const selectors = (await printRules()).flatMap(selectorsOf);
+      expect(selectors.length).toBeGreaterThan(0);
+      for (const selector of selectors) {
+        // :host is the shell element itself, which a query of its own shadow
+        // root can never return
+        const matched = selector === ':host' ? [root.host] : [...root.querySelectorAll(selector)];
+        expect(matched.length, `${selector} matches nothing in the shadow root`).toBeGreaterThan(0);
+      }
+    });
+  });
 });

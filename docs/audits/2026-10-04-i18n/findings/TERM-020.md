@@ -11,4 +11,4 @@
 - "フォントはセルフホストです".
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `bf332ddd` (branch `fix/remediation-2026-10-04-sprint7`, web-app 5.14.5, discord-worker 5.8.3; PR #249, open, stacked on #248). Documents only: live when merged (served from `main`).

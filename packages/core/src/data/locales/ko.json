@@ -2,7 +2,7 @@
   "locale": "ko",
   "meta": {
     "version": "1.0.0",
-    "generated": "2026-10-05T05:21:29.101Z",
+    "generated": "2026-10-05T21:29:18.442Z",
     "dyeCount": 125
   },
   "labels": {
@@ -263,7 +263,7 @@
     "red": "빨간색",
     "blue": "파란색",
     "green": "초록색",
-    "brass": "황동색",
+    "brass": "구리색",
     "purple": "보라색",
     "brown": "갈색"
   }

@@ -17,4 +17,4 @@ Steps: 1) base-lit-component.ts: delete 30-37 (docblock, two @state fields) and 
 3) pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app && pnpm dead-code:check
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `9dc5f75d` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

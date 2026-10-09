@@ -348,6 +348,10 @@ export class PresetCard extends BaseLitComponent {
     const saveLabel = this.saved
       ? LanguageService.t('preset.savedBtn')
       : LanguageService.t('preset.save');
+    // BUG-029 (2026-10-04 deep-dive): a local palette already sits on the Saved
+    // shelf, so Save only stored a duplicate snapshot. The button stays on one
+    // an earlier version saved, so that copy can still be removed.
+    const showSave = this.saved || !preset.id.startsWith('local-');
 
     return html`
       <article
@@ -425,12 +429,16 @@ export class PresetCard extends BaseLitComponent {
                     </button>`
                   : nothing
               }
-              <button
-                class="face-btn ${this.saved ? 'face-btn--on' : ''}"
-                @click=${this.handleSave}
-              >
-                ${unsafeHTML(this.saved ? ICON_STAR_FILLED : ICON_STAR)}${saveLabel}
-              </button>
+              ${
+                showSave
+                  ? html`<button
+                      class="face-btn ${this.saved ? 'face-btn--on' : ''}"
+                      @click=${this.handleSave}
+                    >
+                      ${unsafeHTML(this.saved ? ICON_STAR_FILLED : ICON_STAR)}${saveLabel}
+                    </button>`
+                  : nothing
+              }
             </span>
           </div>
         </div>

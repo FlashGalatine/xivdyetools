@@ -7,6 +7,412 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.9] - 2026-10-05
+
+Sprint 29 of the 2026-10-04 remediation plan: deep-dive REFACTOR-005, the last web-app sprint.
+The Gradient Builder and the Swatch Matcher each draw one workspace. Before, each also built a
+left panel that the right panel cleared at once, and a mobile drawer that the v4 shell never asks
+for (`drawerContent: null`).
+
+### Changed
+
+- **`gradient-tool.ts`** went from 2,782 lines to 1,922, and **`swatch-tool.ts`** from 3,314 to
+  2,689.
+  - Removed: their detached CollapsiblePanels, DyeSelectors, settings panels, MarketBoards, and
+    every mobile-drawer copy.
+  - The desktop and mobile copies had already drifted: the mobile steps slider skipped
+    `pinnedSteps.clear()`. The surviving path keeps the clear, and an end-to-end test pins it.
+- **The live jobs those detached pieces did now live on the path that remains.**
+  - Gradient's result cards read their server from `MarketBoardService`.
+  - Swatch keeps the market relay that its detached MarketBoard provided, now as its own service
+    listener, in the same order.
+  - A market change reaches each tool through its ConfigController subscription only.
+- **One user-visible difference:** on the Gradient Builder, the browser's Find (Ctrl+F) and `/`
+  quick-find are no longer swallowed. The detached DyeSelector used to catch them and focus a
+  search box that was not on the page.
+- The mis-encoded bullet in Gradient (` â€¢ `) went with the dead code that held it. The file's
+  mis-encoded comments (`â€”`, `â†’`) are fixed.
+- **Also removed, because they lost their last reader:**
+  - MarketBoard's `setSelectedServer`, `setShowPrices`, `getShowPrices`, `fetchPricesForDyes`,
+    `shouldFetchPrice` and static `formatPrice`, and `market-board-service`'s `formatPrice`
+    export. `getSelectedServer` stays, because Harmony reads it.
+  - The `tool-panel-builders` helper and `ICON_STAIRS`.
+  - Seven locale keys × 6 (`mixer.selectTwoDyes`, `mixer.interpolationSettings`,
+    `mixer.colorSpace`, `mixer.steps`, `tools.character.selectSubrace` / `selectGender` /
+    `colorCategory`).
+
+## [5.14.8] - 2026-10-05
+
+Sprint 27 of the 2026-10-04 remediation plan, with `@xivdyetools/core` 5.9.0.
+
+### Fixed
+
+- **A market-board outage is reported (BUG-090).**
+  - Core's batch fetch used to answer an outage as an empty success, so every market error path
+    was dead. Now `MarketBoardService` reads core's outcome, and a failed lookup records
+    `lastFetchOutcome = 'error'`, even when some prices did come back.
+  - The Extractor's cards show their market error badge (EUNK, or NOFF when the browser is
+    offline). A new roll no longer carries the previous fetch's badge.
+  - Harmony shows its "Prices unavailable" strip, and hides it when Market Board prices are
+    turned off.
+  - Budget shows its offline block.
+- **Chinese and Korean servers get prices.** Core sanitised their names to an empty path, so
+  every lookup for 陆行鸟, 한국, 红玉海 and the rest failed. They had silently priced nothing, and
+  after the fix above they would have looked permanently offline.
+- **The Glamour Reader takes its dyeable slots from core** (`CHARA_DYEABLE_SLOTS`). It no longer
+  keeps a second copy that could drift from the GPOSERS export (REFACTOR-004).
+
+## [5.14.7] - 2026-10-05
+
+Sprint 23 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the web app's dead code. No behaviour changes. Each removal was re-checked on this branch first
+(every symbol grepped over `src`, `e2e`, `scripts` and `functions`).
+
+### Removed
+
+- **Styles:** `BaseLitComponent.baseStyles`' unused utility classes and two preset-detail
+  selectors (DEAD-005); dead Tailwind-override selectors in `themes.css` (DEAD-006).
+- **`BaseLitComponent`:** the write-only `hasError` / `errorMessage` state (DEAD-011). The share
+  button's invalid-params path now logs a warning instead of calling a no-op `setError`.
+- **Services:**
+  - `WorldService`'s six test-only lookups and its `worldByName` map (DEAD-017);
+  - `IndexedDBService.getAll` / `count` / `deleteDatabase` (DEAD-018), and `get` / `keys`, which
+    lost their last caller when Sprint 22 moved the price cache to `entries()`;
+  - `SubscriptionManager.addAll` / `count` / `hasSubscriptions` (DEAD-019);
+  - `APIService`'s static `formatPrice` / `getPriceData` / `isInitialized` (DEAD-020);
+  - `LanguageService.getLabel` / `preloadLocales` (DEAD-023);
+  - the mixer engine's n-ary `blendColors` and its barrel re-export.
+- **Empty states:** six test-only `EMPTY_STATE_PRESETS` factories (DEAD-008), the four state icons
+  only they used (DEAD-009), and their 14 locale keys × 6 (DEAD-010). `ICON_WARNING` in
+  `ui-icons.ts` went too: only a comment on the removed alert icon had kept the dead-code gate
+  from seeing that nothing used it.
+- **Context actions:** the six legacy `ContextAction` members nothing emits, and their handlers
+  in Budget, Swatch, Harmony, Gradient and Mixer (DEAD-003). The vocabulary test was rewritten:
+  it still checks that every handled case is a real action, and that no tool uses the legacy
+  `navigate-to-tool` event. Also gone: Accessibility's re-dispatched
+  `tool-context-action`, Harmony's legacy `base=` budget hand-off, Mixer's unreachable third-slot
+  paths (the storage tuple keeps its shape), and Swatch's never-assigned cleanup field.
+- **Locale keys:** the five orphaned `accessibility.*` keys (DEAD-007), `common.copied` and
+  `mixer.dye3` — 21 keys in all six languages.
+- **Tests:** `color-service.test.ts` and `shared/__tests__/types.test.ts` tested
+  `@xivdyetools/core` and `@xivdyetools/types`, not the web app (DEAD-021, DEAD-022). Their two
+  cases the packages lacked moved there first (white stays white under `adjustBrightness`; an
+  8-digit hex is refused).
+
+## [5.14.6] - 2026-10-05
+
+Sprint 22 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the web app's remaining LOW findings. 41 of 42 are fixed, each verified against this branch first
+and each with a test that failed before its fix (or, for test-only findings, a mutation check).
+BUG-090 stays open: it needs a core API change (below).
+
+### Fixed
+
+- **Tools:**
+  - Budget and Dye Mixer redraw their theme-tinted readouts on a theme switch, keeping keyboard
+    focus where it was (BUG-080). Mixer recolours its spread chip in place rather than re-blending
+    the field.
+  - Budget's Save swap picks the closest of equally priced dyes (BUG-081).
+  - Mixer no longer restores a stale third slot (BUG-098) and shows "—", not ΔE 0.0, for a cell
+    with no match (BUG-099).
+  - Comparison keeps its active pair by dye, so removing a dye no longer swaps the survivor out
+    (BUG-085). Comparison, Harmony, Dye Mixer, Gradient and Swatch show a price row only while
+    the market switch is on, as the Extractor does (BUG-086). Comparison and Accessibility disable
+    Share for a selection of custom colours only (BUG-087).
+  - Gradient keeps custom-colour endpoints across a reload (BUG-092) and swaps rather than
+    duplicates when a result card sets an endpoint to the other end's dye (BUG-094).
+  - Gradient and Swatch destroy their child panels before rebuilding them (BUG-093).
+  - Swatch keeps its resize listener after a language switch (BUG-103). SEND TO navigates
+    inside the app, so the loaded `.chara` file survives the hand-off (BUG-104).
+  - Harmony adds one breakpoint listener per mount, not one per render (BUG-095), and its type
+    rail follows a harmony type chosen in the sidebar.
+  - The palette drawer's Metallic and Pastel chips use the dye flags, not the English name
+    (BUG-107).
+  - Opening a result card's menu closes the other cards' menus (BUG-111). A card no longer shows
+    its slot picker and its menu at once, and tapping inside its own menu on a touch screen no
+    longer collapses it.
+  - The Extractor's image no longer jumps toward the corner when a Ctrl/Cmd-drag pan starts on a
+    fitted image (BUG-096), and a second finger cancels a drag instead of sampling on lift, wherever
+    it lands (BUG-097).
+- **Keyboard and focus:**
+  - `/` in a tool's search works inside the layout shell (BUG-088), and the compact favourites
+    grid keeps three columns (BUG-089).
+  - The twin picker, the "Open in…" menu and the tutorial spotlight register as open overlays, so
+    the global shortcuts stand down while they are open; the twin picker closes when focus leaves
+    it (BUG-091).
+  - Toasts update in place instead of replaying their animations and re-announcing (BUG-105).
+    Escape closes the top-most layer only: modals, the registered overlays and the app's menus
+    (add to collection, the header tool menu, result-card menus) mark the Escape they consume,
+    so a toast stays.
+  - Tool shortcuts work from an AZERTY number row (BUG-120), and AltGr or a dead key on the number
+    row never switches tools.
+  - A slot card on THIS CHARACTER keeps focus when selected and carries `aria-pressed`, which
+    clears when the Swatch Matcher's selection moves elsewhere; the sheet repaints its colours on
+    a theme switch (BUG-083).
+- **Shell:**
+  - A mobile sheet no longer drags while its content is scrolled, and `touchcancel` settles it
+    (BUG-100).
+  - The tutorial spotlight follows a scrolled container (BUG-106).
+  - Printing shows the content without the app chrome (BUG-112).
+  - Shell events no longer reach `v4-layout` twice (BUG-113).
+  - A failed tutorial import no longer covers the app with the fatal-error screen, and no tour is
+    offered for the rest of the session (BUG-114).
+- **Services:**
+  - Signing out clears the session first and revokes in the background, with a 5 s timeout that
+    also works where `AbortSignal.timeout` is missing (BUG-115).
+  - Out-of-range `.chara` model numbers are answered locally instead of failing the whole gear
+    lookup (BUG-116).
+  - Collections no longer re-enter initialisation from a migration save (BUG-117), and an import
+    with a `null` collection reports it instead of throwing (BUG-118).
+  - IndexedDB closes on a version change so another tab can upgrade (BUG-119).
+  - Overlapping language switches commit only the latest (BUG-121), and `$` patterns in a
+    collection name are inserted literally (BUG-122).
+  - Palette, collection and settings exports are stamped with the local date (BUG-123).
+  - The price cache loads in one IndexedDB transaction, and a sign-out during that load cannot
+    restore the cleared prices (OPT-009).
+  - A market change runs one Harmony regeneration and price pass, not three; Mixer redraws its
+    field once per change (OPT-007).
+- **Tests and tooling:**
+  - Budget's rendering tests and the tools' `setConfig` tests assert behaviour instead of "does
+    not throw" (BUG-075, BUG-077).
+  - `validate-i18n.js` reads keys across wrapped calls, through local and imported aliases,
+    object maps and `??` fallbacks, and a fixture test proves it fails on a typo (BUG-074).
+
+### Not fixed
+
+- **BUG-090:** the Extractor's market error badge, and Harmony's market-failure strip, can never
+  appear. Core's batch price fetch reports an outage as an empty success, so nothing reaches
+  either error path. The fix surfaces the failure additively from `@xivdyetools/core` (not by
+  changing `getPricesForDataCenter`'s return, which is published API) and maps it in
+  `MarketBoardService`, so it needs a core release. It is proposed for Sprint 27, which already
+  publishes core.
+
+## [5.14.5] - 2026-10-05
+
+Sprint 7 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+the policy documents. **Documents only** — no web-app source changed. `PRIVACY*.md` and
+`TERMS_OF_SERVICE*.md` are served from `main` (`about-modal.ts` `POLICY_DOCS_BASE`), so they are
+live at merge.
+
+### Changed
+
+- **Privacy Guide, all six languages:**
+  - The Discord-ID sentence names the date the change went live: posts made after 2026-10-05 do
+    not show your Discord user ID; posts made on or before that date may. It used to say "since
+    the *Last updated* date", which moves with every edit (I18N-001).
+  - The colour tools are named by their UI titles: Dye Comparison, Gradient Builder, Dye Mixer,
+    Accessibility Checker, Budget Suggestions (TERM-019).
+  - The way to this document quotes the current labels: About XIV Dye Tools → POLICIES → Privacy,
+    in each language's own words (I18N-013).
+  - "Reset all" deletes the rewritten line of every piece in the list. A line is kept per piece of
+    gear, so another outfit that shares a piece loses it too.
+  - ja: the fonts are セルフホスト, not 自社ホスト ("hosted by our company"; TERM-020).
+- **Terms of Service, all six languages:** the five translations listed nine of the "ten tools";
+  the Glamour Reader is back (I18N-002), and every tool carries its UI title (TERM-019).
+- **Both documents:**
+  - fr says préréglage, as the app does, never *palette prédéfinie* (TERM-010);
+  - de says Vorlage, following the app since 5.14.4 (TERM-006);
+  - ko says 조정자 for moderators in the Terms too (TERM-001).
+
+## [5.14.4] - 2026-10-05
+
+Sprint 6 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+translations and terminology, with `@xivdyetools/core` 5.8.2.
+
+### Fixed
+
+- **English:** the Glamour list's privacy note says edits are kept per piece of gear (TERM-002);
+  the Swatch Matcher calls the clan a clan (`CLAN & GENDER`, TERM-009) and the Glamour Reader's
+  race lock says ANY RACE; the list is the "Glamour list" in every toast, and its download button
+  is "Save .md", as in the export sheet (TERM-018).
+- **Singular forms** (I18N-007): "1 dye", "Same look as 1 other item", "1 piece" — the Glamour
+  Reader picks the form with `Intl.PluralRules` per locale (`tCount`, new `*_one` / `*_other` keys).
+- **The facewear chip's tooltip names the color in the reader's language** (HC-003).
+- **ja / zh sentences** on the character-file card no longer join with an ASCII space (I18N-012).
+- **Translations and terminology, from the dictionary:**
+  - the facewear color tag uses the client's slot and color words in ja, de, fr, ko and zh
+    (TERM-007; the research is in `docs/reference/ffxiv-terminology.md`);
+  - character-creation sheet names follow the client's labels (TERM-003, I18N-011), including the
+    lip and face-paint halves;
+  - de: FARBSTOFF for dye (TERM-005), Vorlage for preset (TERM-006), no neuter "das" after an item
+    name (I18N-008), STAATLICHE GESELLSCHAFT NÖTIG (I18N-009);
+  - zh 过期 for Dated (TERM-008); ja names the dye channels as the client does, 染色1 / 染色2, and
+    counts them with ヵ所, dropping チャンネル (a chat channel in the client) and 染色枠 (TERM-016;
+    the client data is in the dictionary); ko 염료 in the share errors (TERM-017), the two Korean typos (I18N-003), and the Hrothgar name in the fur-pattern note;
+  - ja: the Glamour list's privacy note says edits are kept 装備1点ごとに (per piece of gear);
+    この装備ごとに could be read as "for this one piece";
+  - ko / zh: IN THE GAME's explanation uses the gear hint's dye-channel noun, 염색 채널 / 染色通道,
+    where it said 염색 칸 / 染色栏;
+  - fr: the picker foot quotes both buttons (I18N-010);
+  - the fur-pattern note uses the client's word (lobby row 1013) in every language.
+- **Core 5.8.2:** the Brass facewear color is Bronze / 구리색 / 铜色 in fr / ko / zh.
+
+### Changed
+
+- `docs/reference/ffxiv-terminology.md`: the facewear rows are the client's (Addon 16050 / 16054),
+  the Brass row follows the client, lobby row 1014 (fur color) is the Hrothgar row of the palette
+  table and row 1013 (fur pattern) is in the feature table, and a new section pins the dye-channel
+  words. `docs/reference/glossary.md` gains a Preset entry (de Vorlage, TERM-006).
+- `scripts/validate-i18n.js` reads both keys of a `'…_one', '…_other'` pair, the shape every
+  `tCount` call passes, so a plural key the code asks for and `en.json` lacks now fails the i18n
+  gate; before, neither key was seen.
+
+## [5.14.3] - 2026-10-05
+
+Sprint 5 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+tool correctness.
+
+### Fixed
+
+- **A language switch keeps the results** (BUG-021, BUG-076). Harmony, Mixer, Comparison and
+  Accessibility rebuilt their panels without regenerating them, so the results vanished.
+- **An old link no longer overrides your choice** (BUG-013). "Set as budget target" sends the dye
+  explicitly, so a `?dye=` carried over from an earlier link no longer wins; Harmony drops `dye` from
+  the address when you change its base. Harmony and Budget take `dye` out of the address once they
+  have applied it, so it no longer follows you into the next tool, and Harmony drops a linked `hex`
+  when you change its base. Gradient no longer repeats actions the result card performs itself (a
+  second toast, a second navigation, or a navigation under Comparison's slot picker);
+  `gradient.slotsFull` lost its last reader and is removed from all six locales.
+- **Budget shows the latest search** (BUG-015): an older, slower run can no longer overwrite it, and
+  Clear All during a price fetch still prices the quick picks.
+- **Comparison's ΔE2000 tier agrees with its verdict** for every match threshold (BUG-018).
+- **Gradient: a pinned dye is not repeated** by a free step before it (BUG-020).
+- **Swatch: strong dye filters still return a full list** (BUG-025), and the closest-dye pick honours
+  them, also on the selection card and SEND TO after a slot pick.
+- **The palette drawer works from the keyboard** (BUG-028): every swatch and both section headers
+  are buttons, and the favorite star shows on focus and on touch screens.
+- **Faster start** (OPT-001): the app no longer waits for a services-status network probe before it
+  draws; the probe is development-only.
+
+### Removed
+
+- The layout shell's dead Accessibility CSS block (dead-code DEAD-004, 337 lines), pulled forward
+  from Sprint 23: the keyboard-accessible drawer put the shell 665 B over its 218 KB budget. It is now
+  210.81 KB.
+
+## [5.14.2] - 2026-10-05
+
+Sprint 4 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+community presets and collections.
+
+### Fixed
+
+- **Saved presets are no longer marked "Removed by its author" by mistake** (BUG-029). A failed
+  community request, a saved local palette, a late answer to an old search, or a preset that fell
+  outside the page shown could all mark a live preset. `HybridPresetService.getPresets` now reports
+  `{ presets, apiOk, apiIds }` (ids counted before the merged list is cut), and the gallery marks a
+  preset only on a complete, unfiltered, successful answer. A wrong mark heals the next time the
+  preset appears, and local palettes are never marked. When the feed fails, the Community tab says
+  "Community feed unavailable" instead of showing nothing.
+- **Votes** (BUG-030, BUG-108, BUG-110): a failed vote or un-vote says so instead of "already voted";
+  a failed vote check no longer shows 0 votes; a vote made on a preset's page shows on its card.
+- **The gallery shows changes at once** (BUG-031): votes, deletes, edits and submissions clear the
+  cached preset lists instead of waiting up to 5 minutes.
+- **Deletes** (BUG-032, BUG-101): a failed delete is reported as a failure, in the gallery and in My
+  Submissions, which refreshes after a successful delete.
+- **Tab counts match the cards** (BUG-109), including Blend, Hide unbuyable, Keep deleted, the search
+  and your own palettes. Search and sort on the Saved and Mine tabs work on those tabs' own lists,
+  with no refetch or spinner (OPT-008).
+- **Collections** (BUG-017, BUG-084): the manager refreshes its list, count and limit after you create
+  a collection, and a single-collection export keeps a non-Latin name in the file name.
+- **Save character colors** (BUG-016, BUG-082): a name already in use becomes "Name (1)"; a full
+  collection store says so (new `collections.collectionsLimitReached`, six locales); a blank Nickname
+  falls back to the file name, on the file card's title too.
+- **Preset submission** (BUG-102): after the server answers, the form closes only itself, and blocked
+  browser storage no longer turns a found duplicate into a failure.
+- **The Saved shelf sorts on its own keys.** Recent is when you saved it; Popular uses the live vote
+  count, or the count a saved preset last had (now remembered in the snapshot), so the shelf no
+  longer reorders when a preset drops out of the current feed. Saved presets from older versions,
+  and your own palettes, follow the known counts.
+- **While a search typed on Saved or Mine has not been fetched**, the Community and Official badges
+  read "—" instead of an out-of-date count. Signing out on Mine catches the Community list up.
+- **Mine shows a spinner until your submissions load,** instead of "You haven't submitted any presets
+  yet" during the first load.
+- **Preview-image edits and overlapping deletes refresh the lists** (BUG-031 follow-ups): replacing or
+  removing a picture clears the cached lists, and a list request that was in flight when the cache
+  was cleared is not cached. My Submissions refreshes only when it is the top dialog, so it never
+  covers a pending delete confirmation, and the last of two overlapping deletes leaves it fresh.
+- **Glamour Reader "Save to this device"** gets the same two fixes as Save character colors: a blank
+  Nickname falls back to the file name, and a full collection store says so.
+- **Tests** (BUG-026): preset-tool's suite covers reconcile, votes, tab pools and counts, and
+  `preset-tool.ts` now counts toward coverage.
+
+### Removed
+
+- Dead preset-service code (dead-code DEAD-012 to DEAD-016): five unused `HybridPresetService`
+  methods, `getFeaturedPresets`, the unreachable `'community'` guard, `getRemainingSubmissions`, and
+  the msw and e2e mocks that served only them. Core's published `PresetService.getCategoryMeta` lost
+  its only in-repo caller and is tagged `@public` (comment only, no core release).
+
+## [5.14.1] - 2026-10-05
+
+Sprint 1 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`):
+tool settings have one owner. Each tool kept its own copies of its settings, `ConfigController`
+broadcast its whole config over them on every partial write, and several tools never read it at
+mount. Now every tool reads every setting from `ConfigController.getConfig()` when it is built, its
+`setConfig` only applies what changed, and in-tool picks, share links and the Budget match-line
+slider apply locally and then write the controller.
+
+### Fixed
+
+- **Swatch Matcher: the palette no longer flips** (BUG-001). Changing max results, a display
+  option, the matching method or a dye filter, from any tool, broadcast the controller's swatch
+  defaults (Hair, Seeker of the Sun, Female) over the tool's Eye / Midlander / Male, and dropped the
+  selected cell. The palette rail, the Dark/Light toggle and the THIS CHARACTER slots now write the
+  controller, and its swatch defaults match the tool.
+- **Saved settings apply when a tool opens** (BUG-022, BUG-078). Gradient, Swatch, Mixer and Budget
+  ignored saved dye filters (and Swatch and Budget the other saved settings) until a sidebar
+  control was touched.
+- **Share-link settings stick** (BUG-019). A Gradient or Swatch link's steps, colour space, palette,
+  tribe, result count and matching method were applied to the tool only, and the next sidebar change
+  reverted them (and cleared pinned gradient steps). They are now validated and saved like a sidebar
+  choice; a malformed value in a link is ignored instead of overwriting a saved setting. Mixer links
+  get the same validation, and a Mixer count or blend model from an imported settings file is checked
+  before it is applied.
+- **Swatch Matcher: no stale matches** (BUG-023, BUG-024). Changing the palette, or picking a THIS
+  CHARACTER slot after a grid cell, left the previous cell's cards, share link and SEND TO dyes in
+  place. They clear at once, and SEND TO carries the slot's closest dye. A cell clicked on the old
+  sheet while the Hair or Skin sheet is still loading is dropped when it lands.
+- **Budget: the match line holds** (BUG-012, BUG-014). The in-page slider saved to its own key, so
+  the next sidebar change snapped it back to 8. It now saves to the same setting as the sidebar
+  slider; sidebar changes and `?maxDelta=` links move both thumbs and the label.
+- **Budget no longer turns prices on everywhere** (BUG-079). Opening Budget switched the global
+  Market Board setting on and saved it. Budget now fetches its own prices whatever that setting says,
+  and they stay out of the shared price cache. A setting an earlier visit already switched on stays
+  on until you turn it off once. `PRIVACY.md` says so in all six languages (see *Changed*).
+- **The Options sidebar follows every setting** (BUG-027). It read most settings once, so it showed
+  stale values after a tool, a reset, an import or another tab changed them, and the next display or
+  filter toggle after a reset wrote the old values back.
+- **Dye Mixer: a mixing-field pick sticks.** Picking a cell in the mixing field changed the blend
+  model for the tool only, and the next settings change reverted it. It is now saved like the
+  sidebar's mixing-mode choice. (Not in the audit's catalog.)
+- **Tests** (BUG-011): the tool suites mount against a non-default saved config and assert outcomes;
+  every fix has a test that failed on the unfixed code. The other new tests pin behaviour that did
+  not change, and each was confirmed by a mutation that turns it red.
+
+### Changed
+
+- **Budget's target card shows RGB, HSV and LAB by default,** as the sidebar always said it did.
+- **On Budget, the sidebar's Market Board section shows only the server.** Budget loads its prices
+  whatever "Enable Market Board" says, so the switch is hidden there; it still appears on every
+  other tool that shows prices.
+- **The sidebar's TRIBE & GENDER group shows only on the Hair and Skin palettes.** It showed on Eye
+  for a fresh profile only because the controller still said Hair.
+- **A Swatch share link's result count is capped at 6**, the slider's maximum (links accepted 20).
+- **Retired storage keys.** The tools' own copies are removed from `localStorage`:
+  `v3_character_{subrace,gender,category,color_index,max_results}` (migrated once into the swatch
+  config, marked by `xivdyetools_swatch_v3_migrated` and stored even when it equals the new defaults,
+  so a 5.14.0 tab left open cannot broadcast the old ones back), `v3_mixer_steps`, `v3_mixer_color_space`,
+  `v5_budget_match_line` (migrated once), `v3_budget_matching_method` and `v3_budget_show_*`.
+- **`PRIVACY.md`, all six languages,** item 1 of *Network access*: market prices are turned on by the
+  "Enable Market Board" switch in the settings column (it quoted a stale "Show Prices" label), and
+  Budget Suggestions always loads them, because it compares dyes by price. One translator and one
+  verifier per language. `Last updated` stays 2026-10-05; if this merges later, bump all six.
+- `ConfigController.persistConfig(key)` stores a config even when `setConfig` would skip it as
+  unchanged.
+- `MarketBoardService.fetchPricesForDyes` takes an `{ ignoreShowPrices }` option. The result goes to
+  the caller only: no shared-cache write, no `prices-updated` event.
+
 ## [5.14.0] - 2026-10-04
 
 Sprint 8 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). `PRIVACY.md` is

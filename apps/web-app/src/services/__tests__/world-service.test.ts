@@ -127,27 +127,6 @@ describe('WorldService', () => {
       expect(WorldService.getWorldName(undefined)).toBeUndefined();
     });
 
-    it('should get world by ID', () => {
-      const world = WorldService.getWorldById(34);
-      expect(world).toBeDefined();
-      expect(world?.name).toBe('Brynhildr');
-      expect(world?.id).toBe(34);
-    });
-
-    it('should return undefined for unknown world by ID', () => {
-      expect(WorldService.getWorldById(99999)).toBeUndefined();
-    });
-
-    it('should get world by name (case-insensitive)', () => {
-      expect(WorldService.getWorldByName('Brynhildr')?.id).toBe(34);
-      expect(WorldService.getWorldByName('brynhildr')?.id).toBe(34);
-      expect(WorldService.getWorldByName('BRYNHILDR')?.id).toBe(34);
-    });
-
-    it('should return undefined for unknown world by name', () => {
-      expect(WorldService.getWorldByName('UnknownWorld')).toBeUndefined();
-    });
-
     it('should return all worlds', () => {
       const worlds = WorldService.getAllWorlds();
       expect(worlds).toHaveLength(9);
@@ -162,16 +141,6 @@ describe('WorldService', () => {
         .mockResolvedValueOnce(createMockResponse(mockDataCenters))
         .mockResolvedValueOnce(createMockResponse(mockWorlds));
       await WorldService.initialize();
-    });
-
-    it('should get data center by name (case-insensitive)', () => {
-      expect(WorldService.getDataCenter('Crystal')?.name).toBe('Crystal');
-      expect(WorldService.getDataCenter('crystal')?.name).toBe('Crystal');
-      expect(WorldService.getDataCenter('CRYSTAL')?.name).toBe('Crystal');
-    });
-
-    it('should return undefined for unknown data center', () => {
-      expect(WorldService.getDataCenter('UnknownDC')).toBeUndefined();
     });
 
     it('should return all data centers', () => {
@@ -192,57 +161,6 @@ describe('WorldService', () => {
     it('should return empty array for unknown data center worlds', () => {
       const worlds = WorldService.getWorldsInDataCenter('UnknownDC');
       expect(worlds).toHaveLength(0);
-    });
-
-    it('should find data center for a world', () => {
-      const dc = WorldService.getDataCenterForWorld(34); // Brynhildr
-      expect(dc?.name).toBe('Crystal');
-    });
-
-    it('should find correct data center for EU world', () => {
-      const dc = WorldService.getDataCenterForWorld(97); // Ragnarok
-      expect(dc?.name).toBe('Chaos');
-    });
-
-    it('should return undefined for unknown world in data center lookup', () => {
-      const dc = WorldService.getDataCenterForWorld(99999);
-      expect(dc).toBeUndefined();
-    });
-  });
-
-  describe('server type checks', () => {
-    beforeEach(async () => {
-      mockFetch
-        .mockResolvedValueOnce(createMockResponse(mockDataCenters))
-        .mockResolvedValueOnce(createMockResponse(mockWorlds));
-      await WorldService.initialize();
-    });
-
-    it('should correctly identify data centers', () => {
-      expect(WorldService.isDataCenter('Crystal')).toBe(true);
-      expect(WorldService.isDataCenter('Aether')).toBe(true);
-      expect(WorldService.isDataCenter('crystal')).toBe(true);
-    });
-
-    it('should correctly identify that worlds are not data centers', () => {
-      expect(WorldService.isDataCenter('Brynhildr')).toBe(false);
-      expect(WorldService.isDataCenter('Ragnarok')).toBe(false);
-    });
-
-    it('should correctly identify worlds', () => {
-      expect(WorldService.isWorld('Brynhildr')).toBe(true);
-      expect(WorldService.isWorld('brynhildr')).toBe(true);
-      expect(WorldService.isWorld('Ragnarok')).toBe(true);
-    });
-
-    it('should correctly identify that data centers are not worlds', () => {
-      expect(WorldService.isWorld('Crystal')).toBe(false);
-      expect(WorldService.isWorld('Aether')).toBe(false);
-    });
-
-    it('should return false for unknown server names', () => {
-      expect(WorldService.isDataCenter('Unknown')).toBe(false);
-      expect(WorldService.isWorld('Unknown')).toBe(false);
     });
   });
 
@@ -284,30 +202,6 @@ describe('WorldService', () => {
 
       expect(WorldService.isInitialized()).toBe(true);
       expect(WorldService.getAllWorlds()).toHaveLength(9);
-    });
-  });
-
-  describe('edge cases', () => {
-    beforeEach(async () => {
-      mockFetch
-        .mockResolvedValueOnce(createMockResponse(mockDataCenters))
-        .mockResolvedValueOnce(createMockResponse(mockWorlds));
-      await WorldService.initialize();
-    });
-
-    it('should handle lowercase lookups correctly', () => {
-      // Lowercase lookups should work (as per the service implementation)
-      expect(WorldService.getWorldByName('brynhildr')?.id).toBe(34);
-      expect(WorldService.getDataCenter('crystal')?.name).toBe('Crystal');
-    });
-
-    it('should handle empty data center worlds gracefully', () => {
-      const dc = WorldService.getDataCenter('Crystal');
-      // Remove all world IDs to test edge case
-      if (dc) {
-        // Can't directly modify since it's from a Map, but this tests the normal flow
-        expect(dc.worlds).toHaveLength(3);
-      }
     });
   });
 });

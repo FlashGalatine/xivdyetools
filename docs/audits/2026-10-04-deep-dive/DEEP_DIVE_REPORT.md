@@ -335,7 +335,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 
 | ID | Status | Commit |
 |---|---|---|
-| BUG-001 | OPEN | — |
+| BUG-001 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
 | BUG-002 | OPEN | — |
 | BUG-003 | OPEN | — |
 | BUG-004 | OPEN | — |
@@ -345,28 +345,28 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-008 | OPEN | — |
 | BUG-009 | OPEN | — |
 | BUG-010 | OPEN | — |
-| BUG-011 | OPEN | — |
-| BUG-012 | OPEN | — |
-| BUG-013 | OPEN | — |
-| BUG-014 | OPEN | — |
-| BUG-015 | OPEN | — |
-| BUG-016 | OPEN | — |
-| BUG-017 | OPEN | — |
-| BUG-018 | OPEN | — |
-| BUG-019 | OPEN | — |
-| BUG-020 | OPEN | — |
-| BUG-021 | OPEN | — |
-| BUG-022 | OPEN | — |
-| BUG-023 | OPEN | — |
-| BUG-024 | OPEN | — |
-| BUG-025 | OPEN | — |
-| BUG-026 | OPEN | — |
-| BUG-027 | OPEN | — |
-| BUG-028 | OPEN | — |
-| BUG-029 | OPEN | — |
-| BUG-030 | OPEN | — |
-| BUG-031 | OPEN | — |
-| BUG-032 | OPEN | — |
+| BUG-011 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-012 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-013 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-014 | FIX COMMITTED, NOT DEPLOYED (PR #244, open, Sprint 1 not 5) | `f20683f8` + `68599b74` |
+| BUG-015 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-016 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-017 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-018 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-019 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-020 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-021 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-022 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-023 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-024 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-025 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-026 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-027 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-028 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-029 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-030 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-031 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-032 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
 | BUG-033 | OPEN | — |
 | BUG-034 | OPEN | — |
 | BUG-035 | OPEN | — |
@@ -387,7 +387,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-050 | OPEN | — |
 | BUG-051 | OPEN | — |
 | BUG-052 | OPEN | — |
-| BUG-053 | OPEN | — |
+| BUG-053 | FIXED 2026-10-05 (PR #225) | `6f2bb05c` |
 | BUG-054 | OPEN | — |
 | BUG-055 | OPEN | — |
 | BUG-056 | OPEN | — |
@@ -397,7 +397,7 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-060 | OPEN | — |
 | BUG-061 | OPEN | — |
 | BUG-062 | OPEN | — |
-| BUG-063 | OPEN | — |
+| BUG-063 | PARTIALLY FIXED 2026-10-05 (PR #224; the cron line goes to Sprint 8) | `12e7f887` |
 | BUG-064 | OPEN | — |
 | BUG-065 | OPEN | — |
 | BUG-066 | OPEN | — |
@@ -408,56 +408,56 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | BUG-071 | OPEN | — |
 | BUG-072 | OPEN | — |
 | BUG-073 | OPEN | — |
-| BUG-074 | OPEN | — |
-| BUG-075 | OPEN | — |
-| BUG-076 | OPEN | — |
-| BUG-077 | OPEN | — |
-| BUG-078 | OPEN | — |
-| BUG-079 | OPEN | — |
-| BUG-080 | OPEN | — |
-| BUG-081 | OPEN | — |
-| BUG-082 | OPEN | — |
-| BUG-083 | OPEN | — |
-| BUG-084 | OPEN | — |
-| BUG-085 | OPEN | — |
-| BUG-086 | OPEN | — |
-| BUG-087 | OPEN | — |
-| BUG-088 | OPEN | — |
-| BUG-089 | OPEN | — |
-| BUG-090 | OPEN | — |
-| BUG-091 | OPEN | — |
-| BUG-092 | OPEN | — |
-| BUG-093 | OPEN | — |
-| BUG-094 | OPEN | — |
-| BUG-095 | OPEN | — |
-| BUG-096 | OPEN | — |
-| BUG-097 | OPEN | — |
-| BUG-098 | OPEN | — |
-| BUG-099 | OPEN | — |
-| BUG-100 | OPEN | — |
-| BUG-101 | OPEN | — |
-| BUG-102 | OPEN | — |
-| BUG-103 | OPEN | — |
-| BUG-104 | OPEN | — |
-| BUG-105 | OPEN | — |
-| BUG-106 | OPEN | — |
-| BUG-107 | OPEN | — |
-| BUG-108 | OPEN | — |
-| BUG-109 | OPEN | — |
-| BUG-110 | OPEN | — |
-| BUG-111 | OPEN | — |
-| BUG-112 | OPEN | — |
-| BUG-113 | OPEN | — |
-| BUG-114 | OPEN | — |
-| BUG-115 | OPEN | — |
-| BUG-116 | OPEN | — |
-| BUG-117 | OPEN | — |
-| BUG-118 | OPEN | — |
-| BUG-119 | OPEN | — |
-| BUG-120 | OPEN | — |
-| BUG-121 | OPEN | — |
-| BUG-122 | OPEN | — |
-| BUG-123 | OPEN | — |
+| BUG-074 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `2023108b` |
+| BUG-075 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-076 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
+| BUG-077 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-078 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-079 | FIX COMMITTED, NOT DEPLOYED (PR #244, open) | `f20683f8` + `68599b74` |
+| BUG-080 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-081 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-082 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-083 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-084 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-085 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-086 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-087 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-088 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-089 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-090 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
+| BUG-091 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-092 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-093 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-094 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-095 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-096 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-097 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-098 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-099 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-100 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-101 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-102 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-103 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-104 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-105 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-106 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-107 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-108 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-109 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-110 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| BUG-111 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| BUG-112 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-113 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-114 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-115 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
+| BUG-116 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
+| BUG-117 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
+| BUG-118 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
+| BUG-119 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
+| BUG-120 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `3d5b84bd` |
+| BUG-121 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
+| BUG-122 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
+| BUG-123 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
 | BUG-124 | OPEN | — |
 | BUG-125 | OPEN | — |
 | BUG-126 | OPEN | — |
@@ -494,21 +494,21 @@ All 63 rejections are in [evidence/verdicts.tsv](evidence/verdicts.tsv), each wi
 | REFACTOR-001 | OPEN | — |
 | REFACTOR-002 | OPEN | — |
 | REFACTOR-003 | OPEN | — |
-| REFACTOR-004 | OPEN | — |
-| REFACTOR-005 | OPEN | — |
+| REFACTOR-004 | FIX COMMITTED, NOT DEPLOYED (PR #254, open) | `742a3061` + `647d8f9c` |
+| REFACTOR-005 | FIX COMMITTED, NOT DEPLOYED (PR #255, open) | `51a058de` + `ccda155f` + `7c187084` |
 | REFACTOR-006 | OPEN | — |
 | REFACTOR-007 | OPEN | — |
 | REFACTOR-008 | OPEN | — |
-| REFACTOR-009 | OPEN | — |
-| OPT-001 | OPEN | — |
+| REFACTOR-009 | PARTIALLY FIXED 2026-10-05 (OPEN_ITEMS half; DOMAIN_DEPRECATION in Sprint 20) | `223b839f` |
+| OPT-001 | FIX COMMITTED, NOT DEPLOYED (PR #247, open) | `665bf564` + `ad87be42` |
 | OPT-002 | OPEN | — |
 | OPT-003 | OPEN | — |
 | OPT-004 | OPEN | — |
 | OPT-005 | OPEN | — |
 | OPT-006 | OPEN | — |
-| OPT-007 | OPEN | — |
-| OPT-008 | OPEN | — |
-| OPT-009 | OPEN | — |
+| OPT-007 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `ccfc0d81` |
+| OPT-008 | FIX COMMITTED, NOT DEPLOYED (PR #245, open) | `ce5d71cf` + `b667d98d` |
+| OPT-009 | FIX COMMITTED, NOT DEPLOYED (PR #252, open) | `8a826c40` |
 | OPT-010 | OPEN | — |
 
 ## Next steps

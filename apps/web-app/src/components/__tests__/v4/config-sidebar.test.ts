@@ -127,11 +127,17 @@ vi.mock('@shared/tool-config-types', () => {
       maxDeltaE: 50,
       displayOptions: DEFAULT_DISPLAY_OPTIONS,
     },
+    // The sidebar clones this at construction, and renderSwatchConfig binds
+    // maxResults into a range slider that throws on undefined. A race-specific
+    // sheet keeps the tribe/gender selects visible for the lock tests below.
     swatch: {
       colorSheet: 'hairColors',
       race: 'SeekerOfTheSun',
       gender: 'Female',
+      maxResults: 3,
+      matchingMethod: 'ciede2000',
       displayOptions: DEFAULT_DISPLAY_OPTIONS,
+      dyeFilters: DEFAULT_DYE_FILTERS,
     },
   };
   return {

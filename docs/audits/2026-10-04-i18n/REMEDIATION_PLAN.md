@@ -13,9 +13,16 @@
 - The i18n rows are added to the units they belong to (11, 13, 14).
 - So every deep-dive sprint number from 2 on has moved.
 
-**Status basis:** 284 total.
-- 1 fixed: dead-code/DEAD-001, in #225, not merged.
-- 265 outstanding.
+> [!IMPORTANT]
+> **Re-verified on 2026-10-05 against `main@50165ec6`** (after the batch merge, #239 and #240): [evidence/reverify-2026-10-05.md](evidence/reverify-2026-10-05.md).
+> - It records what was fixed inside the PRs, the corrected anchors for findings whose files moved, and the fix steps that #239's dictionary table changes (TERM-003, TERM-004, TERM-021).
+> - **Read it before starting any sprint.** The finding files keep their as-audited line numbers.
+> - The whole-graph gate on that `main` is green (62/62).
+> - The maintainer's answers to the open questions (Sprints 6, 7, 9, 15, 18, 24, 26, 30) are in its *Decisions* section. Sprint 24 is **not** skipped.
+
+**Status basis:** 284 total (as of 2026-10-05).
+- 8 fixed, all inside their PRs before the batch merge: dead-code/DEAD-001 and DEAD-002, deep-dive/BUG-053, I18N-004, I18N-005, I18N-006, TERM-014 and TERM-015.
+- 258 outstanding. Four of them are partly fixed: deep-dive/BUG-063 (rest in Sprint 8), I18N-001 (optional rest in Sprint 7), TERM-001 (Sprint 7) and deep-dive/REFACTOR-009 (Sprint 20).
 - 2 deep-dive candidates superseded by dead-code removals, and 1 i18n candidate that duplicates deep-dive/BUG-145 (listed below).
 - 18 KEEP.
 - 0 need rotation.
@@ -45,7 +52,23 @@
 - Sprint 6 (i18n) and Sprint 22 (deep-dive LOWs) both touch `glamour-block.ts`; Sprint 6 lands first.
 - No i18n finding sits in code a dead-code entry removes.
 
-## Sprint 0 — Before the batch merge (your decision)
+## Sprint 0 — Before the batch merge (your decision) — ✅ APPLIED 2026-10-05 (inside the PRs; batch merged 2026-10-05)
+
+**Outcome** (re-verified; details in [evidence/reverify-2026-10-05.md](evidence/reverify-2026-10-05.md)):
+- **Fixed inside their PRs:**
+  - dead-code/DEAD-001 (`ea264d49`, #225) and dead-code/DEAD-002 (`d3bf312a`, #227);
+  - deep-dive/BUG-053 (`6f2bb05c`, #225);
+  - I18N-004 (`5805bf8a`, #227) and I18N-005 (`3f662657`, #230);
+  - I18N-006 (`3f662657` and `5805bf8a`);
+  - TERM-014 and TERM-015 (`91de5f8d`, #223).
+- **Partly fixed:**
+  - deep-dive/BUG-063 (`12e7f887`, #224): the intro names 0015 but not the new daily cron, which moves to Sprint 8.
+  - I18N-001: the lighter fix, *Last updated* 2026-10-05 on all twelve variants. The optional fixed-date rewording moves to Sprint 7.
+- **TERM-001's #223 line** is fixed (`91de5f8d`); the Terms documents remain, in Sprint 7.
+- **The domain question is settled.** The three route lines were deleted inside #224, #225 and #229 (`12e7f887`, `6f2bb05c`, `d1f9e5c5`). The custom domains were removed in the dashboard on 2026-10-05.
+- **Prerequisites done:** #239 and #240 are merged, and core 5.8.1 is on npm.
+
+The text below is the plan as written before the merge.
 
 **Merging tomorrow is safe from all three audits' point of view:**
 - no finding in the batch is CRITICAL or HIGH;
@@ -102,7 +125,9 @@ HC-001 (Sprint 2) prints core's clan names on the bot cards, so you chose to fix
 - **Merge order:** #240 is stacked on #239. Merge it after the batch and after #239, before Sprint 2.
 - **No ID:** it came from the research, not from a catalog.
 
-## Sprint 1 — web-app: tool settings have one owner (the HIGH)
+## Sprint 1 — web-app: tool settings have one owner (the HIGH) — PR #244 (open)
+
+**Done in PR #244** (web-app 5.14.1, `f20683f8` + `68599b74`). It also fixed deep-dive/BUG-014 (Sprint 5) and the Mixer's mixing-field mode (unnumbered), and changed one `PRIVACY.md` clause in all six languages. Details are in the re-verification file's *Sprint 1* section.
 
 deep-dive/BUG-001 is the anchor. Each tool keeps local copies of its settings, and `ConfigController` broadcasts a full config over them, or never seeds them at mount. Fix it once:
 - seed every tool from `getConfig()`;
@@ -164,7 +189,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** the same PR and merge as Sprint 2 (`deploy-discord-worker.yml`, which runs `register-commands`)
 
-## Sprint 4 — web-app: presets and collections
+## Sprint 4 — web-app: presets and collections — PR #245 (open)
+
+**Done in PR #245** (web-app 5.14.2, stacked on #244). It also fixed the Glamour Reader's copies of BUG-016 and BUG-082, and tagged core's `PresetService.getCategoryMeta` `@public`. Details are in the re-verification file's *Sprint 4* section.
 
 **The anchor is deep-dive/BUG-029:** `reconcileTombstones` marks live saved presets "Removed by its author".
 
@@ -202,11 +229,14 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 5 — web-app: tool correctness
+## Sprint 5 — web-app: tool correctness — PR #247 (open)
+
+**Done in PR #247** (web-app 5.14.3, stacked on #245). It also removed dead-code/DEAD-004 (from Sprint 23) to keep the layout shell within budget. Details are in the re-verification file's *Sprint 5* section.
 
 **Language switch:** the switch empties four tools (deep-dive/BUG-021), and no test fires it (deep-dive/BUG-076).
 
 **Stale deep links:** a stale deep link overrides the user's choice (deep-dive/BUG-013, deep-dive/BUG-014).
+- **deep-dive/BUG-014 is already fixed by Sprint 1 (PR #244);** skip it here. `?maxDelta=` now goes through `ConfigController`, and Budget's `setConfig` moves both thumbs and the label.
 
 **Matching and runs:**
 - budget runs without a supersede guard;
@@ -233,7 +263,9 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 6 — web-app: translations and terminology (i18n)
+## Sprint 6 — web-app: translations and terminology (i18n) — PR #248 (open)
+
+**Done in PR #248** (web-app 5.14.4 and core 5.8.2, stacked on #247). All 18 rows, the fur-pattern note, and the core Brass names the maintainer asked for. **Deploy needs:** after merge, publish core 5.8.2 through the "Publish Packages to npm" workflow. Details are in the re-verification file's *Sprint 6* section.
 
 **Wrong English first:** the Glamour list privacy note claims a scope the code does not have (TERM-002), "tribe" names two things (TERM-009), and the list goes by two names (TERM-018).
 
@@ -245,6 +277,8 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 - the smaller wording rows.
 
 **TERM-003:** the sheet names are pinned in the dictionary (#239, *Character-Creation Color Sheets*).
+
+**TERM-007, decided 2026-10-05:** a web-research agent first finds the client's own word for "facewear" in each language and records it in `docs/reference/ffxiv-terminology.md`. The fix and the facewear *Pin first* row then follow the dictionary.
 
 **Also here (no ID):** `swatch.absentFurPattern` still calls Hrothgar 로스갈 in Korean (core says 로스가르 since #240). All five translations also name the fur pattern differently from the client (体毛柄 / Fellzeichnung / Motif du pelage / 털 무늬 / 毛纹).
 
@@ -273,11 +307,20 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`. The edited `en` values re-key the allow-lists: re-run `pnpm --filter xivdyetools-web-app exec vitest run scripts/i18n-parity-gate.test.js --coverage.enabled=false` and update a stale allow-list reason in the same commit.
 
-## Sprint 7 — Policy documents, both apps (docs only)
+## Sprint 7 — Policy documents, both apps (docs only) — PR #249 (open)
+
+**Done in PR #249** (web-app 5.14.5 and discord-worker 5.8.3, stacked on #248; merge #246 first, since it is 5.8.2). All six rows, plus I18N-001's full fix. **Deploy needs:**
+- If the PR merges after 2026-10-05, set *Last updated* to the merge date on all 24 variants.
+- The bot policy's §11 Discord announcement is the maintainer's call.
+
+Details are in the re-verification file's *Sprint 7* section.
 
 **What lands here:** the Terms of Service variants missing the Glamour Reader (I18N-002), the "About → Privacy" path (I18N-013), the Korean moderator word (TERM-001), French "préréglage" (TERM-010), tool names in the policy prose (TERM-019) and Japanese 自社 (TERM-020).
 
 **Sprint 0 fallback:** any Sprint 0 policy item not fixed inside its PR lands here too.
+- **Carried from Sprint 0 (2026-10-05): I18N-001's full fix — decided: do it.** The lighter fix shipped. Replace "since the *Last updated* date" with the go-live date (2026-10-05) in all twelve variants; the anchors are in the re-verification file.
+- **TERM-001 shrank to the two Korean Terms documents (five lines).** Both privacy documents now say 조정자.
+- **Do I18N-002 and TERM-019 in one pass:** they rewrite the same tools sentence in each variant.
 
 **How to edit:** one translator per language plus a verifier, as in the 2026-09-20 pass. Each document's six variants change in one commit, with `Last updated` on all six. The checklist is `.agents/skills/audit-shared/policy-documents.md`.
 
@@ -305,6 +348,8 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 - The change is additive, so it ships here, before discord-worker reads it.
 
 **Dead code:** the presets-api cleanups follow the fixes.
+
+**Carried from Sprint 0 (2026-10-05): deep-dive/BUG-063's remainder.** The 2.4.0 intro (`CHANGELOG.md:13-14`) should also name the new production-only daily Cron Trigger (`23 4 * * *`). Text only.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
@@ -559,6 +604,10 @@ The mock fixes come first. Then the dead-code removals, ending with the self-ref
 
 **Then:** stale docs and two root config lines.
 
+**Since 2026-10-05:**
+- **deep-dive/REFACTOR-009 is half done.** `223b839f` (#228) fixed its OPEN_ITEMS entry. The DOMAIN_DEPRECATION inventory still cites route lines that were deleted, so strike them through; refreshing them is no longer possible.
+- **deep-dive/BUG-152 was seen live:** 11 of the batch's CI runs on `main` were cancelled.
+
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
 | [deep-dive/BUG-152](../2026-10-04-deep-dive/findings/BUG-152.md) | deep-dive | LOW · MAIN | ci.yml workflow-level concurrency ci-${{ github.ref }} + cancel-in-progress: true cancels main-push and nightly-schedule runs against each other |
@@ -583,7 +632,9 @@ Config only; the bundle is unchanged.
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-image-worker` → merge → `deploy-image-worker.yml`
 
-## Sprint 22 — web-app: remaining LOW fixes
+## Sprint 22 — web-app: remaining LOW fixes — PR #252 (open)
+
+**Done in PR #252** (web-app 5.14.6, stacked on #249): 41 of 42 rows. BUG-086 covers the four sibling tools it names. **deep-dive/BUG-090 stays open:** it needs core to surface a batch failure, so it moves to Sprint 27. The layout shell is at 215.75 of 218 KB; Sprint 23 should trim it. Details are in the re-verification file's *Sprint 22* section.
 
 Tool, shell, service and glamour LOWs. Most are one-line guards or listener teardown.
 
@@ -634,7 +685,15 @@ Tool, shell, service and glamour LOWs. Most are one-line guards or listener tear
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`.
 
-## Sprint 23 — web-app: dead-code cleanup
+## Sprint 23 — web-app: dead-code cleanup — PR #253 (open)
+
+**Done in PR #253** (web-app 5.14.7, stacked on #252): all fifteen rows, plus the code Sprint 22 made dead. The layout shell is at 215.02 KB. Details are in the re-verification file's *Sprint 23* section.
+
+**dead-code/DEAD-004 is already removed** by Sprint 5 (PR #247); skip it here.
+
+**From Sprint 22 (PR #252):**
+- The layout shell is at 215.75 of 218 KB. Trim it here; do not raise the budget.
+- Sprint 22 made more code dead. Its re-verification section lists it; confirm each item by hand, because the gate cannot see some of it.
 
 The rest of the dead-code catalog's web-app entries. Each cascade is the next commit after its trigger, because web-app's knip gate fails on the orphaned exports in between: dead-code/DEAD-009 and dead-code/DEAD-010 after dead-code/DEAD-008. dead-code/DEAD-003, the context-action vocabulary, goes last.
 
@@ -663,6 +722,8 @@ The rest of the dead-code catalog's web-app entries. Each cascade is the next co
 
 P3. Fix only if Stoat is resumed; otherwise these go with the app if it is archived (see `docs/research/discord-alternatives/07-2026-10-refresh.md`).
 
+**Decided 2026-10-05: not skipped.** Stoat may be unparked within 30 days, so this sprint runs in order.
+
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
 | [deep-dive/BUG-070](../2026-10-04-deep-dive/findings/BUG-070.md) | deep-dive | LOW · MAIN | stoat about.ts Quick Start advertises unrouted !xd random and an unimplemented ❓-reaction help |
@@ -686,15 +747,23 @@ A comment-only fix. It rides with the next auth change; no publish is needed for
 
 deep-dive/REFACTOR-001: one module for the grammar and status list, consumed by presets-api, moderation-worker and discord-worker, or a parity test across them. One publish, then one deploy per consumer.
 
+**Decided 2026-10-05: the shared module**, in a published package.
+
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
 | [deep-dive/REFACTOR-001](../2026-10-04-deep-dive/findings/REFACTOR-001.md) | deep-dive | Refactor LOW · PR-#227 + PR-#225 + PR-#224 | Review custom_id grammar and status list duplicated across discord-worker, moderation-worker and presets-api with no parity check |
 
 **Ends with:** publish the host package → presets-api, moderation-worker and discord-worker each in their own deploy, in the documented order (presets-api first)
 
-## Sprint 27 — Structural: one dyeable-slot set (terminal)
+## Sprint 27 — Structural: one dyeable-slot set (terminal) — PR #254 (open)
+
+**Done in PR #254** (core 5.9.0 and web-app 5.14.8, stacked on #253): REFACTOR-004 and BUG-090. The review also found that Chinese and Korean data centers sanitised to an empty path, which is fixed in the same core release. **Deploy needs:** publish core 5.9.0. It carries Sprint 6's unpublished 5.8.2 as well. Details are in the re-verification file's *Sprint 27* section.
 
 deep-dive/REFACTOR-004: core exports the dyeable-slot set, and web-app imports it.
+
+**Moved here from Sprint 22: deep-dive/BUG-090**, so core is released once, not twice.
+- **What core does:** it surfaces a failed batch price fetch as an addition (a new method, or an outcome beside the result). It must not change `getPricesForDataCenter`'s `Map` return, which is published API. A failed chunk of a partial batch counts as a failure, and the result has to survive the in-flight coalescing.
+- **What web-app does:** `MarketBoardService` maps that outcome to `lastFetchOutcome = 'error'`. Then the Extractor's error badge and Harmony's market-failure strip can appear.
 
 | ID | Source | Tier or Sev · Origin, or Conf / Blast · Rec (dead-code) | Item |
 |---|---|---|---|
@@ -712,7 +781,9 @@ deep-dive/REFACTOR-003: svg exports the ledger geometry, and discord-worker's bu
 
 **Ends with:** svg publish → discord-worker deploy
 
-## Sprint 29 — Structural: split swatch-tool and gradient-tool (terminal)
+## Sprint 29 — Structural: split swatch-tool and gradient-tool (terminal) — PR #255 (open)
+
+**Done in PR #255** (web-app 5.14.9, stacked on #254). It is the last web-app sprint. Both tools keep one workspace; the v4-dead left panel and drawer are gone, and the duplication with them. Details are in the re-verification file's *Sprint 29* section.
 
 deep-dive/REFACTOR-005: the two largest files in the repo duplicate their desktop and mobile selector code. This goes after every other web-app sprint, because they all touch these files.
 
@@ -727,6 +798,7 @@ deep-dive/REFACTOR-005: the two largest files in the repo duplicate their deskto
 **FONT-001 is a decision first:**
 - **Option A:** widen discord-worker's CJK subsets with item names (about +363 Hangul and +1,171 hanzi).
 - **Option B:** record the English-name card as accepted, with the measured rates.
+- **Decided 2026-10-05: Option A**, widen the subsets.
 
 **Why it is last:** any text change before it would invalidate the subsets again.
 
@@ -782,8 +854,8 @@ These are not scheduled; the reasons and revisit triggers are in each finding. T
 | "Same look" twins | en twin / same look / swap; fr "+N ASPECT" vs "même apparence"; ko 동형 / 유일 vs 같은 외형 | an app glossary row |
 | A color slot | zh 栏位 (web) vs 部位 (bot) | an app glossary row |
 | Moderator, in the UI | zh `fieldPreviewImageHint` 版主 vs the policies' 审核员; ko UI 모더레이터 | a glossary row; TERM-001 settles the ko policies |
-| Dye channel (ja) | 染色枠 vs チャンネル (filed as TERM-016 for the split; the word is unpinned) | the client's dye UI text |
-| Facewear color tag (ja, ko) | ja フェイスウェアカラー, ko 페이스웨어 색상 transliterate "facewear" | follows TERM-007's choice |
+| Dye channel (ja) | 染色枠 vs チャンネル (filed as TERM-016 for the split; the word is unpinned) | the client's dye UI text — **pinned 2026-10-05** (dictionary *Dye channels*: 染色1 / 染色2, counted with ヵ所); fixed in PR #248 |
+| Facewear color tag (ja, ko) | ja フェイスウェアカラー, ko 페이스웨어 색상 transliterate "facewear" | follows TERM-007's choice — **pinned 2026-10-05** (dictionary, Addon 16050 + 16054); fixed in PR #248 |
 
 ## Standing guidance
 

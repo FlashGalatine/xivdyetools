@@ -89,6 +89,17 @@ function ramp(): readonly string[] {
   return ThemeService.isDarkMode() ? TIER_RAMP_DARK : TIER_RAMP_LIGHT;
 }
 
+/** A live slot card's frame — accent tint and ring when it is the picked slot. */
+function slotCardStyle(selected: boolean): string {
+  return `display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 11px; cursor: pointer; text-align: left; font-family: inherit; box-sizing: border-box; width: 100%; background: ${
+    selected
+      ? 'color-mix(in srgb, var(--theme-primary) 12%, transparent)'
+      : 'var(--theme-card-background)'
+  }; border: 1px solid ${selected ? 'var(--theme-primary)' : 'var(--theme-border)'}; box-shadow: ${
+    selected ? '0 0 0 1px var(--theme-primary)' : 'none'
+  };`;
+}
+
 function absentReason(slot: ResolvedCharaSlot): string {
   switch (slot.inertReason) {
     case 'highlightsDisabled':
@@ -138,6 +149,21 @@ function bestDye(hex: string): { dye: Dye; deltaE: number } | null {
 }
 
 /**
+ * `base`, or `base (1)`, `base (2)`… — the first name no record holds yet.
+ * Trims the base, never the suffix: a 50-character base would otherwise
+ * truncate back to itself and never terminate.
+ */
+function uniqueCollectionName(base: string): string {
+  let name = base;
+  let suffix = 1;
+  while (CollectionService.getCollectionByName(name)) {
+    const tag = ` (${suffix++})`;
+    name = `${base.slice(0, 50 - tag.length)}${tag}`;
+  }
+  return name;
+}
+
+/**
  * Save the character's resolved slot colours as a `kind: 'character'`
  * CollectionService record — each slot contributes the dye closest to the
  * colour it actually wears (the lip contributes its blend).
@@ -159,10 +185,21 @@ export function saveCharacterColors(session: CharaSession): void {
     return;
   }
 
-  const name = (
-    resolved.nickname ??
-    (fileName || LanguageService.t('swatch.characterDefaultName'))
+  // BUG-082 (2026-10-04 deep-dive): `??` kept an empty or whitespace Nickname,
+  // which createCollection then rejected as blank on every save.
+  const base = (
+    resolved.nickname?.trim() ||
+    fileName ||
+    LanguageService.t('swatch.characterDefaultName')
   ).slice(0, 50);
+  // BUG-016 (2026-10-04 deep-dive): a full store and a taken name both made
+  // createCollection return null, shown as the generic save failure. Say which
+  // one it is, and number a taken name the way the glamour palette save does.
+  if (!CollectionService.canCreateCollection()) {
+    ToastService.warning(LanguageService.t('collections.collectionsLimitReached'));
+    return;
+  }
+  const name = uniqueCollectionName(base);
   const record = CollectionService.createCollection(name, undefined, { kind: 'character' });
   if (!record) {
     ToastService.error(LanguageService.t('errors.saveChangesFailed'));
@@ -186,6 +223,7 @@ export class CharaSheet {
   /** Slot card carrying the accent selection ring */
   private selectedSlotKey: CharaSlotId | null;
   private unsubscribe: (() => void) | null = null;
+  private unsubscribeTheme: (() => void) | null = null;
 
   constructor(container: HTMLElement, options: CharaSheetOptions) {
     this.container = container;
@@ -199,13 +237,57 @@ export class CharaSheet {
       this.selectedSlotKey = null;
       this.render();
     });
+    // BUG-083 follow-up (2026-10-04 Sprint 22 review): the ΔE tier colours,
+    // OFF GRID's amber and the error red are hexes read from the theme at
+    // render. Every slot click used to re-render the sheet and so repainted
+    // them; with the pick moved in place, nothing did after a theme switch.
+    this.unsubscribeTheme = ThemeService.subscribe(() => this.repaint());
     this.render();
   }
 
   destroy(): void {
     this.unsubscribe?.();
     this.unsubscribe = null;
+    this.unsubscribeTheme?.();
+    this.unsubscribeTheme = null;
     clearContainer(this.container);
+  }
+
+  /**
+   * Ring the named slot card (null: none) in place. The host calls this when
+   * its workspace stops showing the slot it picked — a grid cell, a palette
+   * chip, Clear — so the ring and aria-pressed never announce a stale pick.
+   *
+   * BUG-083 (2026-10-04 deep-dive): in place, not render(). A full render
+   * detached the card being pressed, so keyboard focus fell to <body> and the
+   * next Tab restarted at the top of the page.
+   */
+  setSelectedSlot(key: CharaSlotId | null): void {
+    this.selectedSlotKey = key;
+    for (const card of this.container.querySelectorAll<HTMLElement>('button[data-slot]')) {
+      const selected = card.dataset.slot === key;
+      card.setAttribute('style', slotCardStyle(selected));
+      card.setAttribute('aria-pressed', String(selected));
+    }
+  }
+
+  /**
+   * A full render that keeps keyboard focus on the slot card that had it —
+   * a theme switch (Shift+T) can arrive while a card is focused.
+   */
+  private repaint(): void {
+    const root = this.container.getRootNode() as Document | ShadowRoot;
+    const active = root.activeElement;
+    const focusedSlot =
+      active instanceof HTMLElement && this.container.contains(active)
+        ? active.dataset.slot
+        : undefined;
+    this.render();
+    if (focusedSlot) {
+      for (const card of this.container.querySelectorAll<HTMLElement>('button[data-slot]')) {
+        if (card.dataset.slot === focusedSlot) card.focus();
+      }
+    }
   }
 
   private render(): void {
@@ -292,17 +374,10 @@ export class CharaSheet {
 
     const offGrid = slot.verdict === 'offGrid' || slot.verdict === 'floatOnly';
     const selected = this.selectedSlotKey === slot.slot;
-    const card = el(
-      'button',
-      `display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 11px; cursor: pointer; text-align: left; font-family: inherit; box-sizing: border-box; width: 100%; background: ${
-        selected
-          ? 'color-mix(in srgb, var(--theme-primary) 12%, transparent)'
-          : 'var(--theme-card-background)'
-      }; border: 1px solid ${selected ? 'var(--theme-primary)' : 'var(--theme-border)'}; box-shadow: ${
-        selected ? '0 0 0 1px var(--theme-primary)' : 'none'
-      };`
-    );
+    const card = el('button', slotCardStyle(selected));
     (card as HTMLButtonElement).type = 'button';
+    card.dataset.slot = slot.slot;
+    card.setAttribute('aria-pressed', String(selected));
 
     // Top row: 26px swatch + label over address.
     const head = el('span', 'display: flex; align-items: center; gap: 6px; min-width: 0;');
@@ -413,8 +488,7 @@ export class CharaSheet {
     }
 
     card.addEventListener('click', () => {
-      this.selectedSlotKey = slot.slot;
-      this.render();
+      this.setSelectedSlot(slot.slot);
       this.options.onSlotPick(effective, label, offGrid ? null : gridRefOf(slot), slot.slot);
     });
 

@@ -15,4 +15,4 @@
 Steps: Delete preset-notifications.ts lines 41-42 (the comment and the field). In preset-notifications.test.ts, line 29 then becomes an excess-property error inside the `preset()` literal. Keep the snowflake at runtime: build the base object as a separate variable carrying author_discord_id, or type it as a CommunityPreset-shaped object, and spread it, so the :140 assertion still proves the id is not rendered. Then run pnpm turbo run build type-check lint test --filter=...xivdyetools-discord-worker && pnpm dead-code:check.
 
 ## Status
-OPEN
+FIXED 2026-10-05 — `d3bf312a` (PR #227, merged in `ecbdafea`): the field and its comment removed; the fixture was reshaped, so the FINDING-008 "never rendered" assertion keeps its meaning. Re-verified on `main@50165ec6`: [reverify-2026-10-05.md](../../2026-10-04-i18n/evidence/reverify-2026-10-05.md).

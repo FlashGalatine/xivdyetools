@@ -15,4 +15,4 @@
 Steps: In apps/web-app/src/services/hybrid-preset-service.ts delete getCategoryMeta (239-245), getRandomPreset (390-400), searchPresets (401-407), and the 'Dye Resolution' section with resolveDyes + getPresetWithDyes (408-431). Drop the now-unused imports CategoryMeta and Dye (lines 12-13) and resolvePresetDye from line 16, which stays live elsewhere via services/index.ts and components. No test changes. Then run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `e5a612b5` (branch `fix/remediation-2026-10-04-sprint4`, web-app 5.14.2; PR #245, open, stacked on #244). Removing it left core's published `PresetService.getCategoryMeta` without an in-repo caller; it is tagged `@public`.

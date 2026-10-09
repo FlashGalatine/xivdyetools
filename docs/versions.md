@@ -23,8 +23,8 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.1 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.14.9 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.8.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -39,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.8.1 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.9.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
@@ -69,6 +69,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.0 | Oct 2026 | `APIService.getPricesForDataCenterWithOutcome` (`ok` / `partial` / `error`) so consumers can tell an outage from "no listings" (BUG-090); `CHARA_DYEABLE_SLOTS` exported (REFACTOR-004); Chinese and Korean data centers and worlds no longer sanitise to an empty path |
+| v5.8.2 | Oct 2026 | The Brass facewear color's fr / ko / zh names match the clients (Bronze, 구리색, 铜色); no font re-cut |
 | v5.8.1 | Oct 2026 | Korean race names and Korean / Chinese clan names match the game clients (2 + 13 + 4 corrections in `build-locales.ts`); CJK subsets re-cut in discord-worker and og-worker |
 | **v5.8.0** | **Sep 2026** | **Glamour Reader: `chara-twins` (`charaTwinsOf`, `defaultCharaTwin`, `charaPieceTone`, `charaTwinFacts`) — which of a model's identical items a list names (passes the in-game check → dyeable → any Grand Company → not Dated → more dye channels → lowest row), shared by the web reader and the bot; `chara-gposers`, the GPOSERS form as data both render. The in-game rules drop jobs (any job wears any piece for glamour since 7.4) and carry the Grand Company lock as a flag** |
 | v5.7.0 | Sep 2026 | Character color sheets regenerated from the game's `human.cmp` (`build:character-colors`) — the creator's interface palette for every sheet (lips / face paint had been the shader palette, the tattoo sheet a copy of the eyes), and the shader palette in `shader/` for judging `.chara` floats, exactly; skin and hair are judged again and the 5.6.0 limbal scale / entry-7 rule are gone |
@@ -114,6 +116,15 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.9 | Oct 2026 | One workspace per tool (2026-10-04 remediation, Sprint 29, REFACTOR-005): the Gradient Builder and Swatch Matcher lose the left panel and mobile drawer the v4 shell never showed (gradient-tool 2,782 → 1,922 lines, swatch-tool 3,314 → 2,689); browser Find (Ctrl+F) is no longer swallowed on Gradient; MarketBoard members, `tool-panel-builders` and seven locale keys that lost their readers removed |
+| v5.14.8 | Oct 2026 | Market failures show (core 5.9.0, 2026-10-04 remediation, Sprint 27): the Extractor's error badge, Harmony's strip and Budget's offline block appear on an outage (BUG-090); Chinese and Korean servers get prices; the Glamour Reader takes its dyeable slots from core (REFACTOR-004) |
+| v5.14.7 | Oct 2026 | Dead code (2026-10-04 remediation, Sprint 23): unused styles, test-only service methods, six test-only empty-state presets with their icons and keys, the six legacy context actions and their handlers, Mixer's unreachable third slot, 21 orphaned locale keys, and two test files that tested core and types instead of the web app. No behaviour change |
+| v5.14.6 | Oct 2026 | Remaining LOW fixes (2026-10-04 remediation, Sprint 22): 41 of 42 — theme switches redraw Budget, Mixer and THIS CHARACTER without losing focus (BUG-080, BUG-083), every tool's price row follows the market switch (BUG-086), one market change is one Harmony regeneration (OPT-007), overlays own the keyboard and Escape (BUG-091, BUG-105), AZERTY tool shortcuts (BUG-120), print without chrome (BUG-112), SEND TO keeps the loaded `.chara` (BUG-104), sign-out no longer waits on the revoke (BUG-115), local-date exports (BUG-123), and `validate-i18n.js` reads wrapped calls and aliases (BUG-074). BUG-090 waits for a core change |
+| v5.14.5 | Oct 2026 | Documents only (2026-10-04 remediation, Sprint 7) — the Privacy Guide and Terms of Service in all six languages: the Discord-ID cutoff is the fixed date 2026-10-05, not *Last updated* (I18N-001); every variant of the Terms lists all ten tools, the Glamour Reader included (I18N-002); the tools carry their UI titles (TERM-019); the About path quotes the current labels (I18N-013); French says préréglage (TERM-010) and German Vorlage; Korean says 조정자 for moderators (TERM-001); Japanese セルフホスト (TERM-020). No web-app source changed |
+| v5.14.4 | Oct 2026 | Translations and terminology (2026-10-04 remediation, Sprint 6): the facewear color tag uses the client's word in five languages (TERM-007), character-creation sheet names follow the dictionary (TERM-003), Glamour Reader counts take singular forms (I18N-007), its facewear tooltip names the color in the reader's language (HC-003), "Save .md" and "Glamour list" everywhere (TERM-018), "clan" for the clan (TERM-009), German Vorlage for preset (TERM-006), with core 5.8.2's Brass names |
+| v5.14.3 | Oct 2026 | Tool correctness (2026-10-04 remediation, Sprint 5): a language switch keeps the results in four tools (BUG-021), a stale `?dye=` no longer overrides a choice (BUG-013), Budget runs are superseded safely (BUG-015), Comparison's tier matches its verdict (BUG-018), the palette drawer is keyboard-operable (BUG-028), boot no longer awaits a dev-only network probe (OPT-001); the shell's dead Accessibility CSS removed (DEAD-004) |
+| v5.14.2 | Oct 2026 | Community presets and collections (2026-10-04 remediation, Sprint 4): saved presets are no longer marked "Removed by its author" by a failed or partial feed (BUG-029), failed votes and deletes say so, the gallery updates at once after a change, tab counts match the cards, Manage Collections refreshes after a create, non-Latin collection names survive export, and Save character colors numbers a taken name. Dead preset-service code removed |
+| v5.14.1 | Oct 2026 | Tool settings have one owner (2026-10-04 remediation, Sprint 1): the Swatch palette no longer flips to Hair / Seeker of the Sun / Female on any settings change (BUG-001, HIGH); saved dye filters and display options apply when Gradient, Swatch, Mixer and Budget open; share-link settings stick; Budget's match line holds and Budget no longer switches market prices on for every tool; the Options sidebar follows every setting. The tools' own settings keys are retired (swatch and the Budget match line migrate once) |
 | v5.14.0 | Oct 2026 | Privacy Guide amended in all six languages (2026-10-03 security audit, Sprint 8): new "Community presets: what we keep" (daily-limit counts, Discord moderation posts, failed-notification records, ban records and moderation log, each with its retention) and "Deleting your data" (self-serve deletes, private requests within 30 days) sections (FINDING-005/-008/-009/-029) |
 | v5.13.4 | Oct 2026 | Privacy Guide and Terms corrected in all six languages (2026-10-03 security audit, Sprint 2): the optional preset preview image upload is disclosed, the sign-in record names the verified XIVAuth character and a linked Discord ID ("No character data" removed from the sign-in note), "Reset Settings" is described as it behaves, preset example links are listed; the Glamour Reader's file card says it sends gear model numbers; example links render normalized |
 | v5.13.3 | Oct 2026 | Security — beta.xivdyetools.app has its security headers back (CSP, X-Frame-Options, HSTS, Permissions-Policy; missing since 2026-08-09 — 2026-10-03 security audit, FINDING-001): the beta build adds its robots header inside the existing `/*` rule instead of a second `/*` rule, which Cloudflare Pages treats as a replacement. The beta build check and the post-deploy smoke test now assert the security headers. Production output is unchanged |
@@ -177,6 +188,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.3 | Oct 2026 | Documents only (2026-10-04 remediation, Sprint 7) — the Privacy Policy and Terms of Service in all six languages: the Discord-ID cutoff is the fixed date 2026-10-05, not *Last Updated* (I18N-001); French says préréglage (TERM-010) and German Vorlage; Korean says 조정자 for moderators (TERM-001). 5.8.2 is Sprints 2 and 3, on a separate branch. No discord-worker source changed, no `register-commands` |
 | v5.8.1 | Oct 2026 | CJK font subsets re-cut for core 5.8.1 (Korean / Chinese race and clan names from the game clients) |
 | v5.7.2 | Oct 2026 | Security (2026-10-03 audit, Sprint 1) — `/budget` and preset-favorite log lines no longer carry command option values or the Discord user id, so the bot policy's "two log lines" promise holds (FINDING-002, FINDING-018); `/preferences reset` and the v4 migration delete the legacy `i18n:user:` / `budget:world:v1:` keys (FINDING-015); production refuses a webhook secret under 32 characters on the preset webhook only (FINDING-027); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
 | v5.7.1 | Sep 2026 | Documents only — the Privacy Policy and Terms of Service catch up with `/swatch` and `/glamour` in all six languages: how an uploaded `.chara` file is handled, what `/glamour` sends to api-worker, XIVAPI as a third-party service, and the commands the Terms had not listed. No discord-worker source changed, no `register-commands` |
