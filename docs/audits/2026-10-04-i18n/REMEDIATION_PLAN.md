@@ -632,7 +632,9 @@ deep-dive/BUG-037: each telemetry beacon is charged twice. deep-dive/BUG-039 is 
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-api-worker` → merge → `deploy-api-worker.yml`
 
-## Sprint 19 — test-utils: D1/KV mock fidelity, then cleanup
+## Sprint 19 — test-utils: D1/KV mock fidelity, then cleanup — PR #274 (open)
+
+**Done in PR #274** (test-utils 3.0.0, private — bookkeeping). Every consumer passes against the built mocks. `./constants` (zero importers) is left in place: DEAD-044 names `./auth` only.
 
 The mock fixes come first. Then the dead-code removals, ending with the self-referential integration suite (`dead-code/DEAD-041`).
 

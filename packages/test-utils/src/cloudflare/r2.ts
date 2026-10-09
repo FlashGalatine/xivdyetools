@@ -231,23 +231,21 @@ export function createMockR2Bucket(): MockR2Bucket {
       // state real R2 never returns, so a correct cursor loop would spin on
       // page one forever.
       const resumeAfter = decodeListCursor(options?.cursor);
-      let skipping = resumeAfter !== null;
       let truncated = false;
 
-      for (const [key, { meta }] of store.entries()) {
-        if (!key.startsWith(prefix)) continue;
+      // Lexicographic order, resuming after the cursor key (BUG-148): a cursor
+      // whose key was deleted between pages must not end the listing early.
+      const matching = [...store.keys()].filter((key) => key.startsWith(prefix)).sort();
 
-        if (skipping) {
-          if (key === resumeAfter) skipping = false;
-          continue;
-        }
+      for (const key of matching) {
+        if (resumeAfter !== null && key <= resumeAfter) continue;
 
         if (objects.length >= limit) {
           truncated = true;
           break;
         }
 
-        objects.push(meta);
+        objects.push(store.get(key)!.meta);
       }
 
       if (truncated && objects.length > 0) {
