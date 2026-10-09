@@ -23,7 +23,7 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.14.7 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.14.8 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.3 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.0 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
@@ -39,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.8.2 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.9.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.2.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.2.1 | `@xivdyetools/logger` | npm | Active |
@@ -69,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.9.0 | Oct 2026 | `APIService.getPricesForDataCenterWithOutcome` (`ok` / `partial` / `error`) so consumers can tell an outage from "no listings" (BUG-090); `CHARA_DYEABLE_SLOTS` exported (REFACTOR-004); Chinese and Korean data centers and worlds no longer sanitise to an empty path |
 | v5.8.2 | Oct 2026 | The Brass facewear color's fr / ko / zh names match the clients (Bronze, 구리색, 铜色); no font re-cut |
 | v5.8.1 | Oct 2026 | Korean race names and Korean / Chinese clan names match the game clients (2 + 13 + 4 corrections in `build-locales.ts`); CJK subsets re-cut in discord-worker and og-worker |
 | **v5.8.0** | **Sep 2026** | **Glamour Reader: `chara-twins` (`charaTwinsOf`, `defaultCharaTwin`, `charaPieceTone`, `charaTwinFacts`) — which of a model's identical items a list names (passes the in-game check → dyeable → any Grand Company → not Dated → more dye channels → lowest row), shared by the web reader and the bot; `chara-gposers`, the GPOSERS form as data both render. The in-game rules drop jobs (any job wears any piece for glamour since 7.4) and carry the Grand Company lock as a flag** |
@@ -115,6 +116,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.14.8 | Oct 2026 | Market failures show (core 5.9.0, 2026-10-04 remediation, Sprint 27): the Extractor's error badge, Harmony's strip and Budget's offline block appear on an outage (BUG-090); Chinese and Korean servers get prices; the Glamour Reader takes its dyeable slots from core (REFACTOR-004) |
 | v5.14.7 | Oct 2026 | Dead code (2026-10-04 remediation, Sprint 23): unused styles, test-only service methods, six test-only empty-state presets with their icons and keys, the six legacy context actions and their handlers, Mixer's unreachable third slot, 21 orphaned locale keys, and two test files that tested core and types instead of the web app. No behaviour change |
 | v5.14.6 | Oct 2026 | Remaining LOW fixes (2026-10-04 remediation, Sprint 22): 41 of 42 — theme switches redraw Budget, Mixer and THIS CHARACTER without losing focus (BUG-080, BUG-083), every tool's price row follows the market switch (BUG-086), one market change is one Harmony regeneration (OPT-007), overlays own the keyboard and Escape (BUG-091, BUG-105), AZERTY tool shortcuts (BUG-120), print without chrome (BUG-112), SEND TO keeps the loaded `.chara` (BUG-104), sign-out no longer waits on the revoke (BUG-115), local-date exports (BUG-123), and `validate-i18n.js` reads wrapped calls and aliases (BUG-074). BUG-090 waits for a core change |
 | v5.14.5 | Oct 2026 | Documents only (2026-10-04 remediation, Sprint 7) — the Privacy Guide and Terms of Service in all six languages: the Discord-ID cutoff is the fixed date 2026-10-05, not *Last updated* (I18N-001); every variant of the Terms lists all ten tools, the Glamour Reader included (I18N-002); the tools carry their UI titles (TERM-019); the About path quotes the current labels (I18N-013); French says préréglage (TERM-010) and German Vorlage; Korean says 조정자 for moderators (TERM-001); Japanese セルフホスト (TERM-020). No web-app source changed |

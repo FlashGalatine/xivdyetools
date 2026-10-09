@@ -31,6 +31,11 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.13] - 2026-10-05
+### 🪙 Market prices you can trust
+- Web app: Chinese and Korean servers now get market prices.
+- Web app: when the market board can't be reached, the Palette Extractor, Harmony and Budget say so instead of quietly showing no prices.
+
 ## [5.10.12] - 2026-10-05
 ### ✨ Polish everywhere
 - Web app: switching themes keeps your place in Budget, Dye Mixer and your character sheet.

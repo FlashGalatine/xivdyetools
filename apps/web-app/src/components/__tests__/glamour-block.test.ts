@@ -59,6 +59,18 @@ const FIXTURE_ACC = JSON.stringify({
   Glasses: { GlassesId: 0 },
 });
 
+/**
+ * Earrings the file says carry a channel-2 dye. No FFXIV accessory takes a
+ * dye, but the block shows what a file states rather than dropping it.
+ */
+const FIXTURE_DYED_ACC = JSON.stringify({
+  TypeName: 'Anamnesis Character File',
+  REyeColor: 42,
+  Body: { ModelBase: 200, ModelVariant: 1, DyeId: 56, DyeId2: 0 },
+  Ears: { ModelBase: 12, ModelVariant: 1, DyeId: 0, DyeId2: 33 },
+  Glasses: { GlassesId: 0 },
+});
+
 /** Body dyed on both channels plus facewear — drives the Glasses row. */
 const FIXTURE_GLASSES = JSON.stringify({
   TypeName: 'Anamnesis Character File',
@@ -525,6 +537,21 @@ describe('GlamourBlock — Show all pieces', () => {
     const hands = block(glamour).querySelector<HTMLElement>('[data-slot="Hands"]')!;
     expect(chipsOf(hands).map((c) => c.dataset.role)).toEqual(['undyed-chip', 'undyed-chip']);
     expect(hands.querySelector('[data-role="dye-line"]')?.textContent).toBe('Undyed');
+  });
+
+  it('an accessory the file says is dyed shows what the file says, with no positional stand-in', async () => {
+    const { container, glamour } = await mount(Promise.resolve(RESOLVED), FIXTURE_DYED_ACC);
+    hosts = [container, glamour];
+
+    // A dyeable slot dyed on channel 2 only would draw a neutral chip in
+    // channel 1's place; an accessory draws just the channel the file states.
+    const ears = block(glamour).querySelector<HTMLElement>('[data-slot="Ears"]')!;
+    expect(chipsOf(ears).map((c) => [c.dataset.role, c.dataset.channel])).toEqual([
+      ['dye-chip', '2'],
+    ]);
+    const line = ears.querySelector('[data-role="dye-line"]')!.textContent!;
+    expect(line).not.toBe('');
+    expect(line).not.toContain('Undyed');
   });
 
   it('a half-dyed piece names the empty channel rather than hiding it', async () => {

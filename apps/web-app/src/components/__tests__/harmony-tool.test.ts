@@ -13,6 +13,7 @@ import { DEFAULT_DISPLAY_OPTIONS } from '@shared/tool-config-types';
 import { createTestContainer, cleanupTestContainer } from '../../__tests__/component-utils';
 import { mockDyes } from '../../__tests__/mocks/services';
 import { HARMONY_OFFSETS, ColorConverter, getColorWheel } from '@xivdyetools/core';
+import type { PriceData } from '@xivdyetools/types';
 
 // Use vi.hoisted() to ensure mock functions are available before vi.mock() hoisting
 const { mockGetAllDyes, mockGetDyeById, mockGetByStainId, mockFindClosestDyes } = vi.hoisted(
@@ -803,6 +804,149 @@ describe('HarmonyTool', () => {
       const flags = cardPriceFlags();
       expect(flags.length).toBeGreaterThan(1);
       expect(flags.every((f) => f === true)).toBe(true);
+    });
+  });
+
+  // ==========================================================================
+  // BUG-090 (2026-10-04 deep-dive): the market-failure strip appears only on
+  // `lastFetchOutcome` 'error', and on a Universalis proxy outage the service
+  // used to record 'ok' -- core resolves an outage with an empty Map, exactly
+  // like a board with no listings. These run the REAL MarketBoardService over
+  // a core that answers the way it does during an outage.
+  // ==========================================================================
+
+  describe('BUG-090: an unreachable market board', () => {
+    const strip = (): HTMLElement | null =>
+      Array.from(container.querySelectorAll<HTMLElement>('[role="status"]')).find((el) =>
+        el.textContent?.includes('harmony.marketFailTitle')
+      ) ?? null;
+
+    /** Mount over the real service, with core answering `outcome`. */
+    const withRealService = async (
+      outcome: 'ok' | 'partial' | 'error',
+      run: (core: Record<string, ReturnType<typeof vi.fn>>) => Promise<void>
+    ): Promise<void> => {
+      const { MarketBoardService } = await import('@services/index');
+      const { ConfigController } = await import('@services/config-controller');
+      const actual = await vi.importActual<typeof import('@services/market-board-service')>(
+        '@services/market-board-service'
+      );
+      // What core can answer with `outcome`: 'error' only with an empty Map,
+      // 'partial' only beside at least one price (Sprint 27 review)
+      const pricesFor = (ids: number[]): Map<number, PriceData> =>
+        outcome === 'partial'
+          ? new Map([
+              [
+                ids[0],
+                {
+                  itemID: ids[0],
+                  currentAverage: 100,
+                  currentMinPrice: 100,
+                  currentMaxPrice: 100,
+                  lastUpdate: 0,
+                },
+              ],
+            ])
+          : new Map();
+      const core = {
+        // The Map-only call answers the same prices -- empty during an outage
+        getPricesForDataCenter: vi.fn(async (ids: number[]) => pricesFor(ids)),
+        getPricesForDataCenterWithOutcome: vi.fn(async (ids: number[]) => ({
+          prices: pricesFor(ids),
+          outcome,
+        })),
+      };
+      const sharedMock = MarketBoardService.getInstance();
+      const priorMarket = { ...ConfigController.getInstance().getConfig('market') };
+      ConfigController.getInstance().setConfig('market', { showPrices: true });
+      actual.MarketBoardService.resetInstance();
+      const real = actual.MarketBoardService.getInstance();
+      // This file's '@services/index' factory imports the real
+      // harmony-generator, which imports the real barrel -- so the real
+      // service is bound to the real core client, not to a barrel mock.
+      // Swap the outage-answering one in directly.
+      real['apiService'] = core as never;
+      vi.mocked(MarketBoardService.getInstance).mockReturnValue(real as never);
+      try {
+        await run(core);
+      } finally {
+        tool?.destroy();
+        tool = null;
+        vi.mocked(MarketBoardService.getInstance).mockReturnValue(sharedMock);
+        actual.MarketBoardService.resetInstance();
+        ConfigController.getInstance().setConfig('market', priorMarket);
+      }
+    };
+
+    it('shows the market-failure strip on an outage', async () => {
+      await withRealService('error', async (core) => {
+        tool = mount();
+        tool.selectDye(dye(1));
+        for (let i = 0; i < 4; i++) await flush();
+
+        const calls =
+          core.getPricesForDataCenter.mock.calls.length +
+          core.getPricesForDataCenterWithOutcome.mock.calls.length;
+        expect(calls, 'the fetch really reached core').toBeGreaterThan(0);
+        expect(strip()).not.toBeNull();
+      });
+    });
+
+    it('shows it when only part of the lookup failed', async () => {
+      await withRealService('partial', async () => {
+        tool = mount();
+        tool.selectDye(dye(1));
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(strip()).not.toBeNull();
+      });
+    });
+
+    it('stays hidden when the board answered', async () => {
+      await withRealService('ok', async (core) => {
+        tool = mount();
+        tool.selectDye(dye(1));
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(core.getPricesForDataCenterWithOutcome).toHaveBeenCalled();
+        expect(strip()).toBeNull();
+      });
+    });
+
+    // Sprint 27 review: the strip was only ever redrawn after a fetch, and
+    // turning prices off fetches nothing -- so the outage notice outlived the
+    // prices it was about.
+    it('goes away when Market Board prices are turned off', async () => {
+      await withRealService('error', async () => {
+        const { ConfigController } = await import('@services/config-controller');
+        tool = mount();
+        tool.selectDye(dye(1));
+        for (let i = 0; i < 4; i++) await flush();
+        expect(strip(), 'the outage showed the strip first').not.toBeNull();
+
+        ConfigController.getInstance().setConfig('market', { showPrices: false });
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(strip()).toBeNull();
+      });
+    });
+
+    it('does not come back from the old outage when prices are turned on again', async () => {
+      await withRealService('error', async (core) => {
+        const { ConfigController } = await import('@services/config-controller');
+        tool = mount();
+        tool.selectDye(dye(1));
+        for (let i = 0; i < 4; i++) await flush();
+        ConfigController.getInstance().setConfig('market', { showPrices: false });
+        for (let i = 0; i < 4; i++) await flush();
+
+        // The board has recovered, but its answer has not arrived yet
+        core.getPricesForDataCenterWithOutcome.mockImplementation(() => new Promise(() => {}));
+        ConfigController.getInstance().setConfig('market', { showPrices: true });
+        for (let i = 0; i < 4; i++) await flush();
+
+        expect(strip()).toBeNull();
+      });
     });
   });
 

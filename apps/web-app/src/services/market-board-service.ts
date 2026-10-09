@@ -18,7 +18,7 @@ import { APIService, WorldService } from '@services/index';
 import { ConfigController } from '@services/config-controller';
 import { formatGil } from '@shared/format';
 import { logger } from '@shared/logger';
-import { getMarketItemID, isConsolidationActive } from '@xivdyetools/core';
+import { getMarketItemID, isConsolidationActive, type PriceBatchOutcome } from '@xivdyetools/core';
 import type { Dye, PriceData } from '@xivdyetools/types';
 import type { MarketConfig } from '@shared/tool-config-types';
 
@@ -44,9 +44,24 @@ export type MarketBoardEventType =
 /**
  * Outcome of the most recent price fetch. `ok` means the returned Map is the
  * answer; `nothing-to-fetch` and `superseded` mean an empty Map says nothing
- * about the market's availability; only `error` means the board is unreachable.
+ * about the market's availability; only `error` means the board is unreachable
+ * (wholly, or for part of the lookup -- whatever prices did arrive are still
+ * in the Map).
  */
 export type PriceFetchOutcome = 'ok' | 'nothing-to-fetch' | 'superseded' | 'error';
+
+/**
+ * Core's batch outcome as this service reports it. BUG-090 (2026-10-04
+ * deep-dive): `partial` -- a request failed but the Map is not empty (cached
+ * prices, or another chunk's) -- is an `error` too, because some dyes the
+ * caller asked about have no price for a reason other than the board having
+ * no listings; the prices that did come back are still returned and cached.
+ * Budget's offline verdict and Harmony's strip therefore show beside the
+ * prices that are there; telling the two apart would need its own copy.
+ */
+function toFetchOutcome(outcome: PriceBatchOutcome): PriceFetchOutcome {
+  return outcome === 'ok' ? 'ok' : 'error';
+}
 
 /**
  * MarketBoardService - Centralized Market Board price data management
@@ -368,11 +383,12 @@ export class MarketBoardService extends EventTarget {
       // Fetch deduplicated market item IDs
       const itemIDs = Array.from(marketIdToOriginals.keys());
 
-      // Use batch API to fetch all prices in a single request
-      const batchResults = await this.apiService.getPricesForDataCenter(
-        itemIDs,
-        this.selectedServer
-      );
+      // Use batch API to fetch all prices in a single request.
+      // BUG-090 (2026-10-04 deep-dive): core never rejects -- an unreachable
+      // board resolves with an empty (or short) Map, like a board with no
+      // listings -- so ask for the outcome alongside the prices.
+      const { prices: batchResults, outcome: batchOutcome } =
+        await this.apiService.getPricesForDataCenterWithOutcome(itemIDs, this.selectedServer);
 
       // Check if this response is still current (no newer request was made)
       if (requestVersion !== this.requestVersion) {
@@ -414,7 +430,7 @@ export class MarketBoardService extends EventTarget {
       this.emitEvent('fetch-completed', { dyeCount: result.size });
       logger.info(`[MarketBoardService] Fetched prices for ${result.size} dyes`);
 
-      this._lastFetchOutcome = 'ok';
+      this._lastFetchOutcome = toFetchOutcome(batchOutcome);
 
       return result;
     } catch (error) {

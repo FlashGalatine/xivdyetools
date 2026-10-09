@@ -108,6 +108,15 @@ vi.mock('@services/dye-service-wrapper', () => ({
 vi.mock('@services/index', () => ({
   /** Picks readable text ink for a swatch background. */
   getContrastColor: vi.fn(() => '#FFFFFF'),
+  /**
+   * Core's Universalis client. The tool never touches it; it is here for the
+   * BUG-090 test, which runs the REAL MarketBoardService (that module reaches
+   * core through this barrel) over a core answering the way it does during an
+   * outage.
+   */
+  APIService: {
+    getInstance: vi.fn(),
+  },
   ToastService: {
     show: vi.fn(),
     error: vi.fn(),
@@ -2179,6 +2188,94 @@ describe('ExtractorTool', () => {
         };
         expect(first.data.price).toBe(1234);
         expect(first.data.marketServer).toBe('Jenova');
+      });
+
+      /**
+       * BUG-090 (2026-10-04 deep-dive): the failure codes above are reached by
+       * mocking the service to throw, which the real one never does -- on a
+       * Universalis proxy outage core resolves with an empty Map and the
+       * service records `lastFetchOutcome` 'error'. This drives the REAL
+       * MarketBoardService over a core that answers the way it does during an
+       * outage, so the badge has to come from the outcome.
+       */
+      it('shows its market error badge when the board is unreachable (BUG-090)', async () => {
+        const { MarketBoardService, APIService } = await import('@services/index');
+        const { ConfigController: RealConfigController } =
+          await import('@services/config-controller');
+        const actual = await vi.importActual<typeof import('@services/market-board-service')>(
+          '@services/market-board-service'
+        );
+        const coreDuringOutage = {
+          // The Map-only call is what core has always answered with: an empty Map
+          getPricesForDataCenter: vi.fn(async () => new Map()),
+          getPricesForDataCenterWithOutcome: vi.fn(async () => ({
+            prices: new Map(),
+            outcome: 'error' as const,
+          })),
+        };
+        const sharedMock = MarketBoardService.getInstance();
+        const priorMarket = { ...RealConfigController.getInstance().getConfig('market') };
+        vi.mocked(APIService.getInstance).mockReturnValue(coreDuringOutage as never);
+        RealConfigController.getInstance().setConfig('market', { showPrices: true });
+        actual.MarketBoardService.resetInstance();
+        vi.mocked(MarketBoardService.getInstance).mockReturnValue(
+          actual.MarketBoardService.getInstance() as never
+        );
+        try {
+          tool = mount();
+          await loadImage();
+          await marketChanged({ showPrices: true });
+          for (let i = 0; i < 4; i++) await flush();
+
+          const calls =
+            coreDuringOutage.getPricesForDataCenter.mock.calls.length +
+            coreDuringOutage.getPricesForDataCenterWithOutcome.mock.calls.length;
+          expect(calls, 'the fetch really reached core').toBeGreaterThan(0);
+          const errors = Array.from(resultCards()).map(
+            (c) => (c as unknown as { data: { marketError?: string } }).data.marketError
+          );
+          expect(errors.length).toBeGreaterThan(0);
+          // No status survives core's outcome, so the generic code -- not a
+          // guessed HTTP status or a claim about the connection
+          expect(new Set(errors)).toEqual(new Set(['EUNK']));
+        } finally {
+          tool?.destroy();
+          tool = null;
+          vi.mocked(MarketBoardService.getInstance).mockReturnValue(sharedMock);
+          actual.MarketBoardService.resetInstance();
+          RealConfigController.getInstance().setConfig('market', priorMarket);
+        }
+      });
+
+      /**
+       * Sprint 27 review: a new roll's cards were built with the PREVIOUS
+       * fetch's badge and kept it until their own fetch answered -- the
+       * badge is cleared only once that fetch starts, after the cards exist.
+       * A rebuild that fetches nothing keeps it (the test above that).
+       */
+      it("does not stamp the last fetch's error on a new roll's cards", async () => {
+        const svc = await withPricesOn();
+        // A priced card carries no badge; an earlier test leaves every dye priced
+        vi.mocked(svc.getPricesView).mockReturnValue(new Map());
+        tool = mount();
+        await loadImage();
+        vi.mocked(svc.fetchPricesForDyes).mockRejectedValueOnce(new Error('kaboom'));
+        await marketChanged({ showPrices: true });
+        for (let i = 0; i < 4; i++) await flush();
+        const errors = () =>
+          Array.from(resultCards()).map(
+            (c) => (c as unknown as { data: { marketError?: string } }).data.marketError
+          );
+        expect(errors(), 'the outage badged the first roll').toContain('EUNK');
+
+        // The new roll's own fetch has not answered yet
+        vi.mocked(svc.fetchPricesForDyes).mockImplementationOnce(() => new Promise(() => {}));
+        const fetchesBefore = vi.mocked(svc.fetchPricesForDyes).mock.calls.length;
+        commit('#123456');
+
+        expect(vi.mocked(svc.fetchPricesForDyes).mock.calls.length).toBe(fetchesBefore + 1);
+        expect(errors().length).toBeGreaterThan(0);
+        expect(errors().every((code) => code === undefined)).toBe(true);
       });
     });
 
