@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-10-06
+
+Sprint 17 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`).
+No command shape changed, so no `register-commands`. Merge after Sprint 15 (PR #258): the
+locale logger needs bot-logic 4.8.0's `resolveUserLocale`.
+
+**Hand-run step before this deploys** (the maintainer's decision for refreshed messages): a
+refreshed review keeps offering Revert whenever a snapshot exists.
+- presets-api 2.5.0 (Sprint 8, PR #256) only ever snapshots approved text. Rows written before it
+  deployed may hold text nobody approved.
+- **After presets-api 2.5.0 is live and before this worker deploys**, run the read-only query in
+  `apps/presets-api/CLAUDE.md` that lists every row holding `previous_values`.
+- Review each row, and clear any snapshot of unapproved text with a reviewed statement through
+  `wrangler d1 execute --file`, never `d1 migrations apply`.
+
+### Fixed
+
+- **A losing concurrent click no longer overwrites the winner's decision** (BUG-052).
+  - **Channel post:** the refresh leaves the embed alone and removes the buttons. It states the
+    outcome in the message text: "This preset is now approved."
+  - **Private `/preset moderate` confirmation:** it is rebuilt as before.
+- **A stale deploy no longer strips live buttons** (BUG-054).
+  - presets-api answers a missing route and a missing preset with different 404 bodies.
+    `getModerationPreset` now treats only "Preset not found" as gone.
+  - Any other failure leaves the message and its buttons alone and tells the moderator that
+    nothing changed.
+  - presets-api's own tests now pin both bodies, with a note to change `isPresetMissing` alongside.
+    A presets-api-only PR never runs this worker's tests.
+- **A success embed no longer carries a stale Error or Review field** (BUG-050). This covers
+  approve and reject, and a refresh of a deleted preset.
+- **A ban reason is trimmed before its 10-character minimum** (BUG-051). A whitespace-only or
+  padded-short reason is refused, and a padded valid one is stored trimmed.
+- **A KV failure while resolving the moderator's locale is logged** (BUG-126's last call site).
+
+### Changed
+
+- **A refreshed review says what Revert restores**: "restores the saved version "<name>" and
+  approves it. It may be older than the text the latest edit replaced." The refresh has no
+  `edited_from`, so it shows no diff.
+- **The `/preset moderate` confirmation keeps a hint for an edit with a saved earlier version**,
+  pointing at the moderation message, which carries Revert.
+
+### Removed
+
+- The never-mounted `rateLimitMiddleware` (DEAD-025).
+- The test-only `getPreset` (DEAD-026).
+- The no-op `fallbackData` branch in `Translator.t()` (DEAD-027).
+- `incrementRateLimit`'s unused `_maxRetries` parameter (DEAD-028).
+- The unreachable legacy base64-username ban suffix (DEAD-029). No emitter has produced it since
+  2026-08-21, and a surviving pre-fix button or modal is refused.
+- The orphan i18n strings (DEAD-030).
+
 ## [1.8.0] - 2026-10-04
 
 Sprint 4 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security`). **Deploy right

@@ -175,7 +175,7 @@ Both fail open (allow on backend error) and use `ctx.waitUntil()` for the increm
 
 ### Revision-Bound Review Buttons (FINDING-017)
 
-Approve / reject / revert buttons and the reject / revert modals carry what the moderator reviewed in their `custom_id`: `preset_approve_<uuid>:<revision>:<status>` (likewise `preset_reject_`, `preset_revert_`, `preset_reject_modal_`, `preset_revert_modal_`). `utils/review-custom-id.ts` is the one strict parser (≤ 100 chars; revision = non-negative integer, no leading zeros; status = full status word) and the only builder. The values go to presets-api as `expected_revision` / `expected_status`, and a `409` means the text or status changed. A legacy bare id (`preset_approve_<uuid>`) or a `409` never acts: `handlers/review-message.ts` fetches the current preset, edits the message to show its current text with fresh revision-bound buttons, and tells the moderator to review and click again. Every message edit there passes `components` (empty list when nothing is actionable) — omitting them leaves the old live buttons in place.
+Approve / reject / revert buttons and the reject / revert modals carry what the moderator reviewed in their `custom_id`: `preset_approve_<uuid>:<revision>:<status>` (likewise `preset_reject_`, `preset_revert_`, `preset_reject_modal_`, `preset_revert_modal_`). `utils/review-custom-id.ts` is the one strict parser (≤ 100 chars; revision = non-negative integer, no leading zeros; status = full status word) and the only builder. The values go to presets-api as `expected_revision` / `expected_status`, and a `409` means the text or status changed. A legacy bare id (`preset_approve_<uuid>`) or a `409` never acts: `handlers/review-message.ts` fetches the current preset, edits the message to show its current text with fresh revision-bound buttons, and tells the moderator to review and click again. Every message edit there passes `components` (empty list when nothing is actionable) — omitting them leaves the old live buttons in place. A preset that is no longer pending is the exception to "show its current text" (BUG-052): a channel message gets no `embeds` — so a concurrent winner's "Approved by" / "Reason" survives whichever edit lands last — only `components: []` and a `content` line stating the status; the ephemeral `/preset moderate` confirmation (`flags & 64`), which no other moderator can have edited, is rebuilt from the current preset. A presets-api load failure (including a route 404, BUG-054) edits nothing and keeps the buttons.
 
 ### Ban Storage and Unban Restore
 
@@ -269,7 +269,7 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 `enLocale` table — `const strings: LocaleData = enLocale` — with no locale map and no `locales/`
 directory. `createUserTranslator(env.KV, userId, interaction.locale)` still resolves the moderator's
 locale (log lines and analytics want to know what their client asked for), but the resolved code
-**selects nothing**: `Translator` points `data` and `fallbackData` at the one English table.
+**selects nothing**: `Translator` reads the one English table; there is no separate fallback table (DEAD-027).
 
 The reasoning: every moderator is an English speaker and this bot talks to nobody else. Its commands
 are restricted to the moderation channel, and the messages a preset **author** receives come from

@@ -56,7 +56,7 @@ describe('moderation-worker rate limiter backend selection', () => {
     const bindings = { command, autocomplete };
 
     const first = await checkRateLimit(mockKV, 'user-1', 'command', RATE_LIMIT_CONFIGS.command, bindings);
-    await incrementRateLimit(mockKV, 'user-1', 'command', 3, bindings);
+    await incrementRateLimit(mockKV, 'user-1', 'command', bindings);
     const second = await checkRateLimit(mockKV, 'user-1', 'command', RATE_LIMIT_CONFIGS.command, bindings);
 
     expect(first.allowed).toBe(true);

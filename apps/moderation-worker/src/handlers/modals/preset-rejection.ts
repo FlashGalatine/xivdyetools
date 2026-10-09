@@ -26,7 +26,7 @@ import { STATUS_DISPLAY, PresetReviewConflictError } from '../../types/preset.js
 import { MIN_REJECTION_REASON_LENGTH } from '../commands/preset.js';
 import { parseReviewCustomId } from '../../utils/review-custom-id.js';
 import type { ParsedReviewId, ReviewBinding } from '../../utils/review-custom-id.js';
-import { editReviewMessage, refreshReview } from '../review-message.js';
+import { editReviewMessage, refreshReview, withoutTransientFields } from '../review-message.js';
 // MOD-REF-002 FIX: Use shared modal types and helpers
 import type { ModalInteraction } from '../../types/modal.js';
 import { extractTextInputValue, getModalUserId, getModalUsername } from '../../types/modal.js';
@@ -154,8 +154,10 @@ async function processRejection(
           title: `❌ Preset Rejected`,
           description: originalEmbed.description,
           color: STATUS_DISPLAY.rejected.color,
+          // BUG-050: neither a stale Error nor the "click Reject" instruction
+          // belongs under "Preset Rejected"
           fields: [
-            ...(originalEmbed.fields || []),
+            ...withoutTransientFields(originalEmbed.fields),
             { name: 'Action', value: `Rejected by ${safeModerator}`, inline: true },
             { name: 'Reason', value: safeReason, inline: false },
           ],
@@ -199,8 +201,9 @@ async function processRejection(
           title: originalEmbed.title,
           description: originalEmbed.description,
           color: originalEmbed.color,
+          // the buttons stay live, so the Review instruction is still the next step
           fields: [
-            ...(originalEmbed.fields || []),
+            ...withoutTransientFields(originalEmbed.fields, { keepReview: true }),
             {
               name: 'Error',
               value: `Failed to reject: ${sanitizeErrorMessage(error, 'Unable to reject preset.')}`,
@@ -270,7 +273,7 @@ async function processRevert(
             description: original.description,
             color: original.color,
             fields: [
-              ...(original.fields || []),
+              ...withoutTransientFields(original.fields, { keepReview: true }),
               {
                 name: 'Error',
                 value:
@@ -344,7 +347,7 @@ async function processRevert(
           description: originalEmbed.description,
           color: originalEmbed.color,
           fields: [
-            ...(originalEmbed.fields || []),
+            ...withoutTransientFields(originalEmbed.fields, { keepReview: true }),
             {
               name: 'Error',
               value: `Failed to revert: ${sanitizeErrorMessage(error, 'Unable to revert preset.')}`,

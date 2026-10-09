@@ -4,8 +4,10 @@
  * Handles Yes/No buttons on the ban confirmation message.
  *
  * Button custom_id patterns:
- * - ban_confirm_{discordId}_{username} - Confirm ban (opens reason modal)
- * - ban_cancel_{discordId} - Cancel ban
+ * - ban_confirm_{targetId} - Confirm ban (opens reason modal)
+ * - ban_cancel_{targetId} - Cancel ban
+ *
+ * {targetId} is a Discord snowflake or an XIVAuth UUID (`isBanTargetId`).
  */
 
 import type { Env } from '../../types/env.js';
@@ -67,15 +69,13 @@ export async function handleBanConfirmButton(
     return ephemeralResponse('You do not have permission to ban users.');
   }
 
-  // Parse custom_id: ban_confirm_{discordId}
-  // FINDING-007 (2026-08-21 audit): the id is all we carry. Older buttons
-  // (ban_confirm_{discordId}_{base64username}) are still accepted — the
-  // username suffix is simply ignored; the reason modal resolves the name
-  // from D1 at submit time, so nothing user-controlled can push a custom_id
-  // past Discord's 100-char cap.
-  const idPart = customId.replace('ban_confirm_', '');
-  const separator = idPart.indexOf('_');
-  const targetUserId = separator === -1 ? idPart : idPart.substring(0, separator);
+  // Parse custom_id: ban_confirm_{targetId}
+  // FINDING-007 (2026-08-21 audit): the id is all we carry; the reason modal
+  // resolves the name from D1 at submit time, so nothing user-controlled can
+  // push a custom_id past Discord's 100-char cap. The pre-FINDING-007
+  // base64-username suffix is no longer parsed (DEAD-029, 2026-10-04): nothing
+  // has emitted it since, and a suffixed id fails `isBanTargetId` below.
+  const targetUserId = customId.replace('ban_confirm_', '');
 
   if (!targetUserId) {
     return ephemeralResponse('Invalid target user.');
