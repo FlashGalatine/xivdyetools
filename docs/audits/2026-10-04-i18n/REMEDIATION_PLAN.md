@@ -307,7 +307,13 @@ Then add the test deep-dive/BUG-011 asks for: mount against a non-default persis
 
 **Ends with:** `pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app`, then `pnpm --filter xivdyetools-web-app run build:check` (bundle budget) and `pnpm dead-code:check`. Recount coverage after any removal; never lower web-app's ratchet. Merge → `deploy-web-app.yml`. The edited `en` values re-key the allow-lists: re-run `pnpm --filter xivdyetools-web-app exec vitest run scripts/i18n-parity-gate.test.js --coverage.enabled=false` and update a stale allow-list reason in the same commit.
 
-## Sprint 7 — Policy documents, both apps (docs only)
+## Sprint 7 — Policy documents, both apps (docs only) — PR #249 (open)
+
+**Done in PR #249** (web-app 5.14.5 and discord-worker 5.8.3, stacked on #248; merge #246 first, since it is 5.8.2). All six rows, plus I18N-001's full fix. **Deploy needs:**
+- If the PR merges after 2026-10-05, set *Last updated* to the merge date on all 24 variants.
+- The bot policy's §11 Discord announcement is the maintainer's call.
+
+Details are in the re-verification file's *Sprint 7* section.
 
 **What lands here:** the Terms of Service variants missing the Glamour Reader (I18N-002), the "About → Privacy" path (I18N-013), the Korean moderator word (TERM-001), French "préréglage" (TERM-010), tool names in the policy prose (TERM-019) and Japanese 自社 (TERM-020).
 

@@ -12,4 +12,4 @@
 - "préréglage(s)" in all four fr documents; add a glossary row for Preset.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — préréglage in all four French documents (`bf332ddd`, `e7ad0bc8`, `4e891868`, `ea041c74`); the glossary *Preset* entry names it. (branch `fix/remediation-2026-10-04-sprint7`, web-app 5.14.5, discord-worker 5.8.3; PR #249, open, stacked on #248). Documents only: live when merged (served from `main`).

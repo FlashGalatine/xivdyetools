@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.10.11] - 2026-10-05
+### 📜 Clearer policies
+- Web app and Discord bot: the privacy policies now give a fixed date. Moderation posts made after 2026-10-05 never show your Discord user ID.
+- Web app: the Terms of Service list all ten tools in every language, the Glamour Reader included, and both documents name each tool as the app does.
+- Web app and Discord bot: French and German policies now use the same word for a preset as the app, and the Korean Terms use the same word for a moderator as the Privacy Policy.
+
 ## [5.10.10] - 2026-10-05
 ### 🗣️ Words that match the game
 - Web app: facewear and character-creation color names now match the game in every language.

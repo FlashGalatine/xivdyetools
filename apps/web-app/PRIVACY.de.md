@@ -2,12 +2,12 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-05 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-10-09 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
-Vergleich, Verlauf, Mixer, Barrierefreiheitsprüfung, Budget-Finder, Farbmuster-Matcher und
-Projektionsleser — erledigen
+Farbstoffvergleich, Verlauf-Ersteller, Farbstoffmixer, Barrierefreiheitsprüfung, Budget-Vorschläge,
+Farbmuster-Matcher und Projektionsleser — erledigen
 ihre Arbeit auf deinem Gerät. Nichts, was du hochlädst, auswählst oder eingibst, wird irgendwohin
 gesendet, sofern nicht ein Abschnitt unten das Gegenteil sagt — und die Abschnitte unten sind die
 vollständige Liste.
@@ -21,19 +21,19 @@ vollständige Liste.
   lädst.
 - Der Paletten-Extraktor sagt an der Stelle, an der du eine Datei auswählst, dasselbe — "Bilder
   werden im Browser gelesen und nie hochgeladen", neben einem Vorhängeschloss. Dieser
-  Hinweis ist reiner Text, kein Link; dieses Dokument erreichst du über **Über XIV Farbwerkzeuge →
-  Datenschutz**.
-- **Eine Ausnahme, und nur, wenn du sie wählst.** Wenn du ein Community-Preset einreichst oder
-  bearbeitest, kannst du ihm ein optionales **Vorschaubild** anfügen. Dieses Bild wird zu
-  `api.xivdyetools.app` hochgeladen, in WebP umgewandelt, zusammen mit dem Preset gespeichert und
+  Hinweis ist reiner Text, kein Link; dieses Dokument erreichst du über **Über XIV Farbwerkzeuge**
+  (eine Schaltfläche in der Kopfzeile) → **RICHTLINIEN** → **Datenschutz**.
+- **Eine Ausnahme, und nur, wenn du sie wählst.** Wenn du eine Community-Vorlage einreichst oder
+  bearbeitest, kannst du ihr ein optionales **Vorschaubild** anfügen. Dieses Bild wird zu
+  `api.xivdyetools.app` hochgeladen, in WebP umgewandelt, zusammen mit der Vorlage gespeichert und
   von `shots.xivdyetools.app` öffentlich angezeigt, sobald ein Moderator es freigibt. Punkt 3 unter
   Netzwerkzugriff unten sagt, wie du es entfernst.
 
 ## Charakterdateien (`.chara`)
 
 - Eine `.chara`-Datei (Anamnesis, Ktisis, Brio) wird auf deinem Gerät ausgelesen. Ihr Charaktername
-  wird niemals irgendwohin gesendet und niemals als Preset-Name, Autorenname oder irgendetwas
-  anderes verwendet, das andere Spieler sehen können. Um eine Projektion bei den Community-Presets
+  wird niemals irgendwohin gesendet und niemals als Vorlagenname, Autorenname oder irgendetwas
+  anderes verwendet, das andere Spieler sehen können. Um eine Projektion bei den Community-Vorlagen
   einzureichen, musst du selbst einen Namen eingeben — das Feld ist absichtlich leer, denn sowohl
   der Charaktername als auch der Dateiname sind Orte, an denen Spieler ihren echten Namen ablegen.
 - **Eine Ausnahme, und die bleibt auf deinem Gerät.** Wenn du eine Projektion oder ihre Palette in
@@ -56,7 +56,7 @@ vollständige Liste.
 Sprache, Einstellungen pro Werkzeug (einschließlich des Analyse-Schalters unten), favorisierte
 Farbstoffe, gespeicherte Paletten und Sammlungen, Bezugsquellen, die du in der "Ausrüstungsliste"
 des Projektionslesers umgeschrieben hast, sowie — wenn du dich anmeldest — dein
-Sitzungs-Token für die Community-Presets. Nichts davon ist ein Tracking-Identifikator. Die
+Sitzungs-Token für die Community-Vorlagen. Nichts davon ist ein Tracking-Identifikator. Die
 Website-Daten-Steuerung deines Browsers löscht alles davon. In der App löscht jeder dieser Punkte
 einen Teil:
 
@@ -66,7 +66,9 @@ einen Teil:
 - **Erweiterte Einstellungen → Gespeicherte Paletten löschen** löscht deine gespeicherten Paletten.
 - **Sammlungen verwalten → Sammlung löschen** löscht eine gespeicherte Sammlung.
 - Das Abmelden löscht das Sitzungs-Token.
-- "Alles zurücksetzen" in der Ausrüstungsliste löscht die umgeschriebenen Zeilen dieses Outfits.
+- "Alles zurücksetzen" in der Ausrüstungsliste löscht die umgeschriebene Zeile jedes Teils in dieser
+  Liste. Jede Zeile wird pro Ausrüstungsteil gespeichert, sodass auch ein anderes Outfit mit
+  demselben Teil diese Zeile verliert.
 
 `IndexedDB` enthält genau eine Sache: einen Cache bereits abgerufener Marktbrett-Preise, damit
 dieselbe Abfrage nicht wiederholt wird. Es enthält keine Bilder — eine frühere Version der App
@@ -84,7 +86,7 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    gehen an unseren Proxy unter `data.xivdyetools.app`, der von [Universalis](https://universalis.app)
    abruft.
 2. **Ausrüstungsnamen und -symbole für `.chara`-Importe** — `data.xivdyetools.app` (siehe oben).
-3. **Community-Presets** (`api.xivdyetools.app`): Das Durchsuchen sendet nichts über dich. Die
+3. **Community-Vorlagen** (`api.xivdyetools.app`): Das Durchsuchen sendet nichts über dich. Die
    Anmeldung über `auth.xivdyetools.app` mit Discord oder XIVAuth legt sofort einen
    Kontodatensatz an, unabhängig davon, ob du anschließend etwas einreichst oder abstimmst. Bei
    Discord enthält der Datensatz deine Discord-Benutzer-ID und deinen Anzeigenamen (deinen
@@ -92,27 +94,27 @@ erlaubt nichts anderes) sowie den unten genannten Drittanbietern:
    XIVAuth-ID und den Namen deines verifizierten Charakters. Ist keiner verfügbar, wenn du dich
    anmeldest, lautet der Name "XIVAuth User", gefolgt von den ersten 8 Zeichen deiner XIVAuth-ID.
    Ist dein XIVAuth-Konto mit Discord verknüpft, enthält der Datensatz zusätzlich diese
-   Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jedes Presets angezeigt, das du
+   Discord-Benutzer-ID. Der Name im Datensatz wird als Autor jeder Vorlage angezeigt, die du
    veröffentlichst, und wird bei jeder Anmeldung bei allen davon aktualisiert (nicht, solange eine
    Sperre aktiv ist). Verknüpfst du später Discord mit deinem XIVAuth-Konto, wechseln deine
-   Presets, Stimmen und Tageslimit-Zähler bei deiner nächsten Anmeldung zu dieser
-   Discord-Benutzer-ID (auch hier nicht, solange eine Sperre aktiv ist). Presets und Stimmen, die
-   du einreichst, werden unter diesem Konto gespeichert. Das Einreichen eines Presets zählt als
-   deine Stimme dafür; hat ein veröffentlichtes Preset bereits dieselben Farbstoffe, wird deine
-   Einreichung stattdessen zu einer Stimme für dieses Preset. Ein Preset enthält, was du im
+   Vorlagen, Stimmen und Tageslimit-Zähler bei deiner nächsten Anmeldung zu dieser
+   Discord-Benutzer-ID (auch hier nicht, solange eine Sperre aktiv ist). Vorlagen und Stimmen, die
+   du einreichst, werden unter diesem Konto gespeichert. Das Einreichen einer Vorlage zählt als
+   deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine
+   Einreichung stattdessen zu einer Stimme für diese Vorlage. Eine Vorlage enthält, was du im
    Formular eingibst — und, falls unsere automatische Kontrolle den neuen Namen oder die neue
    Beschreibung einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen
-   Bearbeitung, aufbewahrt, bis ein Moderator sie wiederherstellt oder das Preset gelöscht wird —
+   Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird —
    plus das optionale Vorschaubild, das oben unter Bilder beschrieben ist. Um ein Vorschaubild zu
-   entfernen, nutze das Bearbeitungsformular des
-   Presets; wenn du ein Preset unter **Meine Einreichungen** löschst, wird auch sein Vorschaubild
-   gelöscht. Wenn du ein Preset einreichst oder bearbeitest, können sein Name und seine Beschreibung
+   entfernen, nutze das Bearbeitungsformular der
+   Vorlage; wenn du eine Vorlage unter **Meine Einreichungen** löschst, wird auch ihr Vorschaubild
+   gelöscht. Wenn du eine Vorlage einreichst oder bearbeitest, können ihr Name und ihre Beschreibung
    zusätzlich an Googles [Perspective API](https://perspectiveapi.com/) für eine
    Moderationsbewertung gesendet werden (optional — nur zur Inhaltsmoderation); die Anfrage weist
    Google an, sie nicht zu speichern (`doNotStore`), und sonst wird nichts — auch keine
-   Kontoidentität — dorthin gesendet. Was sonst noch zu deinen Presets aufbewahrt wird und wie
-   lange, steht unten unter *Community-Presets: was wir aufbewahren*; wie du es löschst,
-   unter *Deine Daten löschen*. Vorschaubilder von Presets werden von `shots.xivdyetools.app`
+   Kontoidentität — dorthin gesendet. Was sonst noch zu deinen Vorlagen aufbewahrt wird und wie
+   lange, steht unten unter *Community-Vorlagen: was wir aufbewahren*; wie du es löschst,
+   unter *Deine Daten löschen*. Vorschaubilder von Vorlagen werden von `shots.xivdyetools.app`
    ausgeliefert; Avatare laden vom CDN von Discord.
 4. **Share-Links**: Ein Share-Link kodiert die von dir gewählten Farbstoffe oder Farben in seiner
    URL. Das Öffnen eines solchen Links lädt diese URL wie jede andere Seite; Link-Vorschauen bei
@@ -139,52 +141,52 @@ einem neuen Tab mit unterdrücktem Referrer, sodass die Website, auf der du land
 von welcher Seite du kamst. Sobald du dort bist, befindest du dich auf der Website einer anderen
 Partei, unter deren Datenschutzrichtlinie.
 
-Ein Community-Preset kann außerdem einen **Beispiel-Link** tragen, den der Autor des Presets
+Eine Community-Vorlage kann außerdem einen **Beispiel-Link** tragen, den der Autor der Vorlage
 gewählt hat. Er verweist auf eine Seite einer dieser Websites: Eorzea Collection, Mirapri, Reddit,
 X, Bluesky, Instagram, pixiv, Misskey oder die offizielle Final-Fantasy-XIV-Website, zu der auch
 das Lodestone gehört. Die App zeigt keinen Beispiel-Link zu einer anderen Website an. Der Link
 stammt vom Autor und enthält nichts über dich. Er öffnet sich auf dieselbe Weise: in einem neuen
 Tab, mit unterdrücktem Referrer.
 
-## Community-Presets: was wir aufbewahren
+## Community-Vorlagen: was wir aufbewahren
 
-Dieser Abschnitt gilt nur, wenn du dich bei den Community-Presets anmeldest. Alles hier wird bei
+Dieser Abschnitt gilt nur, wenn du dich bei den Community-Vorlagen anmeldest. Alles hier wird bei
 Cloudflare gespeichert — der Kontodatensatz von unserem Anmeldedienst (`auth.xivdyetools.app`), der
-Rest von unserem Preset-Dienst (`api.xivdyetools.app`) — mit Ausnahme der Beiträge auf unserem
+Rest von unserem Vorlagendienst (`api.xivdyetools.app`) — mit Ausnahme der Beiträge auf unserem
 Discord-Server.
 
-- **Dein Kontodatensatz, deine Presets und Stimmen** (Punkt 3 oben) werden aufbewahrt, bis du sie
+- **Dein Kontodatensatz, deine Vorlagen und Stimmen** (Punkt 3 oben) werden aufbewahrt, bis du sie
   löschst oder uns um ihre Löschung bittest (siehe *Deine Daten löschen*).
-- **Tageslimits.** Jedes Preset, das du einreichst, jede Bearbeitung von Name oder Beschreibung
-  eines Presets, die du absendest, und jedes Vorschaubild, das du hochlädst, wird gezählt, damit
+- **Tageslimits.** Jede Vorlage, die du einreichst, jede von dir abgesendete Bearbeitung von Name
+  oder Beschreibung einer Vorlage und jedes Vorschaubild, das du hochlädst, wird gezählt, damit
   die Tageslimits durchgesetzt werden können. Der Zähler enthält deine Konto-ID, die Art der
-  Aktion, das Preset und den Zeitpunkt und wird nach **30 Tagen** gelöscht; das Löschen des
-  Presets löscht ihn nicht früher.
+  Aktion, die Vorlage und den Zeitpunkt und wird nach **30 Tagen** gelöscht; das Löschen der
+  Vorlage löscht ihn nicht früher.
 - **Beiträge auf unserem Discord-Server.** Unsere Moderatoren arbeiten in zwei privaten Kanälen
-  unseres Discord-Servers. Der Moderationskanal erhält jedes Preset, jede Bearbeitung und jedes
-  Vorschaubild, die geprüft werden müssen: Der Beitrag zeigt das Preset (etwa Name, Beschreibung,
-  Kategorie und Farbstoffe) und den Autorennamen oder, bei einem Vorschaubild, den Namen des
-  Presets und das Bild, und er wird aktualisiert, wenn ein Moderator entscheidet. Sperrt dich ein
+  unseres Discord-Servers. Der Moderationskanal erhält jede Vorlage, jede Bearbeitung und jedes
+  Vorschaubild, die geprüft werden müssen: Der Beitrag zeigt die Vorlage (etwa Name, Beschreibung,
+  Kategorie und Farbstoffe) und den Autorennamen oder, bei einem Vorschaubild, den Namen der
+  Vorlage und das Bild, und er wird aktualisiert, wenn ein Moderator entscheidet. Sperrt dich ein
   Moderator, erhält der Moderationskanal außerdem einen Beitrag mit deinem Autorennamen, dem Grund
-  und der Anzahl deiner ausgeblendeten Presets. Moderatoren können im Moderationskanal auch die
-  Liste der Presets, die auf Prüfung warten, mit ihren Autorennamen posten. Der
-  Einreichungsprotokoll-Kanal erhält jedes ohne Prüfung veröffentlichte Preset mit seinem
-  Autorennamen sowie einen Hinweis, der das Preset nennt, wenn ein Moderator eines genehmigt,
+  und der Anzahl deiner ausgeblendeten Vorlagen. Moderatoren können im Moderationskanal auch die
+  Liste der Vorlagen, die auf Prüfung warten, mit ihren Autorennamen posten. Der
+  Einreichungsprotokoll-Kanal erhält jede ohne Prüfung veröffentlichte Vorlage mit ihrem
+  Autorennamen sowie einen Hinweis, der die Vorlage nennt, wenn ein Moderator eine genehmigt,
   ablehnt oder zurücksetzt, mit dem Grund bei einer Ablehnung oder einem Zurücksetzen. Beiträge,
-  die seit dem Datum *Zuletzt aktualisiert* oben entstanden sind, zeigen nicht deine
-  Discord-Benutzer-ID; ältere Beiträge können sie zeigen. Die Beiträge bleiben in diesen Kanälen,
+  die nach dem 2026-10-05 entstanden sind, zeigen nicht deine Discord-Benutzer-ID; Beiträge, die
+  an diesem Tag oder davor entstanden sind, können sie zeigen. Die Beiträge bleiben in diesen Kanälen,
   unter der [Datenschutzrichtlinie von Discord](https://discord.com/privacy), bis ein Moderator
   sie löscht oder bis du eine Löschung beantragst.
-- **Fehlgeschlagene Benachrichtigungen.** Lässt sich ein Preset nicht auf unserem Discord-Server
-  posten, bewahren wir einen Datensatz auf, der das Preset und den Fehler nennt, damit ein
+- **Fehlgeschlagene Benachrichtigungen.** Lässt sich eine Vorlage nicht auf unserem Discord-Server
+  posten, bewahren wir einen Datensatz auf, der die Vorlage und den Fehler nennt, damit ein
   Moderator es nachholen kann. Er enthält nichts über dein Konto. Er wird **30 Tage** nach der
   Lösung durch einen Moderator gelöscht, nach **90 Tagen**, wenn das niemand tut, und sofort, wenn
-  das Preset gelöscht wird.
-- **Sperrdatensätze.** Wenn dich ein Moderator für Community-Presets sperrt, enthält der
+  die Vorlage gelöscht wird.
+- **Sperrdatensätze.** Wenn dich ein Moderator für Community-Vorlagen sperrt, enthält der
   Sperrdatensatz deine Discord-Benutzer-ID oder, wenn du dich mit einem XIVAuth-Konto angemeldet
   hast, das nicht mit Discord verknüpft ist, stattdessen die Konto-ID, die dir unser Anmeldedienst
   gegeben hat (eine zufällige Kennung, nicht deine XIVAuth-ID). Er enthält außerdem den
-  Autorennamen, der zum Zeitpunkt der Sperre bei deinen Presets angezeigt wurde, die
+  Autorennamen, der zum Zeitpunkt der Sperre bei deinen Vorlagen angezeigt wurde, die
   Discord-Benutzer-IDs des Moderators, der die Sperre verhängt hat, und des Moderators, der sie
   aufgehoben hat, den Grund, den der Moderator angegeben hat, sowie das Datum der Sperre und das
   Datum ihrer Aufhebung. Der Datensatz wird aufbewahrt, solange die Sperre aktiv ist. Wird die
@@ -195,11 +197,11 @@ Discord-Server.
   Moderators, der Maßnahme, einem optionalen Grund und dem Zeitpunkt protokolliert. Eine Sperre,
   eine Aufhebung einer Sperre, ein Ausblenden oder ein Wiederherstellen nennt außerdem das Konto,
   auf das sich die Maßnahme bezog, und wird nach **12 Monaten** gelöscht oder, bei einem Ausblenden
-  oder Wiederherstellen, früher, wenn das Preset gelöscht wird. Jeder andere Eintrag zu einem
-  Preset (etwa Genehmigen, Ablehnen oder Zurücksetzen) nennt das Preset und wird aufbewahrt,
-  solange das Preset existiert.
+  oder Wiederherstellen, früher, wenn die Vorlage gelöscht wird. Jeder andere Eintrag zu einer
+  Vorlage (etwa Genehmigen, Ablehnen oder Zurücksetzen) nennt die Vorlage und wird aufbewahrt,
+  solange die Vorlage existiert.
 
-Der Discord-Bot bewahrt dieselben Datensätze für Presets auf, die über ihn eingereicht werden;
+Der Discord-Bot bewahrt dieselben Datensätze für Vorlagen auf, die über ihn eingereicht werden;
 siehe [seine Richtlinie](../discord-worker/PRIVACY_POLICY.md).
 
 ## Nutzungsanalyse (Opt-in)
@@ -232,7 +234,7 @@ UI-Sprache, aktuelles Design und einen Viewport-Bereich (Handy / Tablet / Deskto
 
 Was **niemals** zusammen mit deinen Ereignissen gespeichert wird: deine IP-Adresse, dein
 User-Agent oder Geräteangaben, irgendein Konto-, Sitzungs- oder Client-Identifikator, Cookies,
-Seiten-URLs, Farben oder Bilder, mit denen du arbeitest, Suchtext, Preset-Text, Charakter- oder
+Seiten-URLs, Farben oder Bilder, mit denen du arbeitest, Suchtext, Vorlagentext, Charakter- oder
 Weltnamen, oder irgendetwas, das zwei Besuche verknüpfen ließe. Der Server verwirft alles zur
 Anfrage außer den validierten Ereignissen, und die Ereignisliste ist eine Positivliste — alles
 andere wird verworfen. (Deine IP-Adresse erreicht unseren Server so, wie sie jede Website erreicht,
@@ -257,7 +259,7 @@ Unsere wird von Cloudflare verwaltet, und hier ist alles, was wir damit tun.
   der die Adresse enthält, für **120 Sekunden**. Keiner der beiden Pfade schreibt deine Adresse in
   eine Datenbank, und keiner ist mit deinen Analyse-Ereignissen verbunden.
 - **Deine IP-Adresse wird niemals zusammen mit irgendetwas gespeichert, das du getan hast** — nicht
-  mit deinen Ereignissen, nicht mit deinen Presets, nicht mit deinen Stimmen. Sie wird nicht
+  mit deinen Ereignissen, nicht mit deinen Vorlagen, nicht mit deinen Stimmen. Sie wird nicht
   verwendet, um Besuche zu verknüpfen, ein Profil zu erstellen oder dich zu identifizieren.
 - **Betriebsprotokolle.** Unsere Worker können beim Bearbeiten einer Anfrage kurze
   Diagnosezeilen ausgeben. Die dauerhafte Protokollerfassung (Cloudflare Workers Logs) ist bei
@@ -273,19 +275,19 @@ Unsere wird von Cloudflare verwaltet, und hier ist alles, was wir damit tun.
 2. Verwende ein beliebiges Werkzeug mit einem Bild oder einer `.chara`-Datei.
 3. Du wirst keinen Bild-Upload sehen — nur die oben aufgeführten Anfragen, und `/v1/telemetry`-
    Beacons nur, wenn du Analysen eingeschaltet hast. Der einzige Bild-Upload, den die App je
-   vornimmt, ist ein Preset-Vorschaubild, das du selbst anfügst (siehe Bilder oben).
+   vornimmt, ist das Vorschaubild einer Vorlage, das du selbst anfügst (siehe Bilder oben).
 
 ## Deine Daten löschen
 
 Einiges kannst du jederzeit selbst löschen, es sei denn, ein Moderator hat dich für
-Community-Presets gesperrt (solange eine Sperre aktiv ist, wende dich stattdessen an uns):
+Community-Vorlagen gesperrt (solange eine Sperre aktiv ist, wende dich stattdessen an uns):
 
-- **Ein Preset:** Lösche es unter **Meine Einreichungen**. Sein Vorschaubild, die Stimmen dazu,
+- **Eine Vorlage:** Lösche sie unter **Meine Einreichungen**. Ihr Vorschaubild, die Stimmen dazu,
   die Einträge im Moderationsprotokoll dazu und ein etwaiger Fehldatensatz zu fehlgeschlagenen
-  Benachrichtigungen für dieses Preset werden mit gelöscht. Seine Tageslimit-Zähler laufen nach
+  Benachrichtigungen für diese Vorlage werden mit gelöscht. Ihre Tageslimit-Zähler laufen nach
   30 Tagen von selbst ab, und die Beiträge dazu auf unserem Discord-Server bleiben bestehen, es sei
   denn, du bittest uns darum (siehe unten).
-- **Eine Stimme:** Wähle bei diesem Preset erneut die Schaltfläche "Abstimmen" ("Abgestimmt", sobald
+- **Eine Stimme:** Wähle bei dieser Vorlage erneut die Schaltfläche "Abstimmen" ("Abgestimmt", sobald
   du abgestimmt hast).
 - **Deine Sitzung:** Das Abmelden löscht das Sitzungs-Token aus diesem Browser und fordert unseren
   Anmeldedienst auf, es zu widerrufen.
@@ -297,14 +299,14 @@ privat an uns:
 2. **Discord:** Tritt https://discord.gg/rzxDHNr6Wv bei und schreibe "Flash Galatine" eine DM.
 
 Gib an, ob du dich mit Discord oder mit XIVAuth anmeldest, und nenne deine Discord-Benutzer-ID
-oder den Autorennamen, der bei deinen Presets angezeigt wird. Bitte frage nicht in einem
+oder den Autorennamen, der bei deinen Vorlagen angezeigt wird. Bitte frage nicht in einem
 öffentlichen GitHub-Issue: Damit würdest du genau die Angaben veröffentlichen, die du entfernt
 haben möchtest.
 
 Wir bearbeiten Löschanfragen innerhalb von **30 Tagen**. Eine Löschanfrage entfernt außerdem die
-Beiträge über dich und deine Presets von unserem Discord-Server, außer dem Beitrag zu einer noch
+Beiträge über dich und deine Vorlagen von unserem Discord-Server, außer dem Beitrag zu einer noch
 aktiven Sperre. Ein aktiver Sperrdatensatz wird auf Anfrage nicht gelöscht; sobald die Sperre
-aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Community-Presets: was wir
+aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Community-Vorlagen: was wir
 aufbewahren*.
 
 ## Fragen?

@@ -108,7 +108,10 @@ Community-maintained API providing real-time FFXIV marketboard prices across all
 Web app tool (v4) for browsing and sharing community dye palettes. Formerly called "Preset Browser" in v3. Discord bot uses `/preset` commands.
 
 ### Preset
-A named dye palette, curated or shared by a player through Community Presets. An app noun, not a game one, so the tool's own title sets the word in each language: ja プリセット, de **Vorlage** (feminine: *die Vorlage*, so *sie* in a following sentence), fr préréglage, ko 프리셋, zh 预设. German uses Vorlage everywhere — the web app, the bot and the OG card — never Voreinstellung or Preset (2026-10-04 i18n audit, TERM-006).
+A named dye palette, curated or shared by a player through Community Presets. An app noun, not a game one, so the tool's own title sets the word in each language: ja プリセット, de **Vorlage** (feminine: *die Vorlage*, so *sie* in a following sentence), fr préréglage, ko 프리셋, zh 预设. German uses Vorlage everywhere — the web app, the bot, the OG card and the policy documents — never Voreinstellung or Preset (2026-10-04 i18n audit, TERM-006). French uses préréglage (masculine) everywhere, the policy documents included — never *palette prédéfinie* (TERM-010).
+
+### Moderator
+A person who reviews community presets (approve, reject, revert, ban). Not the operator: the site is run by one person, and the policy documents keep the two roles apart. In the policy documents: ko **조정자**, never 운영자, which reads as "operator" (TERM-001); zh **审核员**. The UI is not aligned yet: the web app's preview-image hint says ko 모더레이터 and zh 版主 (a *Pin first* row in the 2026-10-04 i18n plan), so this entry pins the policy word only.
 
 ### Dye Mixer (v4)
 Web app tool (v4) for blending two dyes together to create custom color combinations. Supports six blending modes (`BLENDING_MODES` in `@xivdyetools/core/blending`): RGB (additive channel averaging, the default), LAB (perceptual CIELAB), OKLAB (modern perceptual — fixes LAB's blue→purple drift), RYB (traditional artist's wheel), HSL (hue/saturation/lightness interpolation) and Spectral (Kubelka-Munk physics simulation). This is a **new tool in v4.0.0**, distinct from the renamed "Gradient Builder."
