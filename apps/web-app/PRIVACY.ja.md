@@ -2,7 +2,7 @@
 
 > これは利便性のために提供される翻訳版です。英文が正式な文書であり、内容に相違がある場合は英文が優先します。[English](PRIVACY.md)
 
-**最終更新日:** 2026-10-05 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。Discord Botには専用のポリシーがあります：[`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md)。
+**最終更新日:** 2026-10-09 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。Discord Botには専用のポリシーがあります：[`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md)。
 
 XIV Dye Toolsはブラウザ上で動作します。カラーツール——パレット抽出、ハーモニーエクスプローラー、カララント比較、グラデーションビルダー、カララントミキサー、アクセシビリティチェッカー、予算提案、スウォッチマッチャー、ミラプリリーダー——はすべてお使いの端末上で処理されます。アップロード・選択・入力した内容は、以下のいずれかの項目に明記されていない限りどこにも送信されません。そして以下の項目がその完全な一覧です。
 

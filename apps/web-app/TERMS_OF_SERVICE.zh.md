@@ -2,7 +2,7 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](TERMS_OF_SERVICE.md)
 
-**最后更新：** 2026-10-05 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
+**最后更新：** 2026-10-09 · 涵盖 **xivdyetools.app** 和 **beta.xivdyetools.app**。我们如何处理您的数据是另一份文档：[`PRIVACY.md`](PRIVACY.md)。Discord 机器人有自己的条款： [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
 
 XIV Dye Tools 是一款为《最终幻想 XIV》制作的免费同人染剂工具集。它与 Square Enix 没有从属关系，也未获得其认可或赞助。使用本网站即表示您同意以下内容。如果您不同意，请不要使用它——离开这里对您没有任何代价。
 
