@@ -185,7 +185,7 @@ so no `register-commands`. 5.8.2 is Sprints 2 and 3, on a separate branch; merge
   - de says Vorlage, as the bot does (TERM-006).
 - **Terms of Service:**
   - ko says 조정자 for moderators, as the Privacy Policy does; 운영자 reads as "operator" (TERM-001);
-  - *Last Updated* is 2026-10-05 in all six languages.
+  - *Last Updated* is 2026-10-09, the merge date, in all six languages of both documents.
 
 ## [5.8.2] - 2026-10-05
 
