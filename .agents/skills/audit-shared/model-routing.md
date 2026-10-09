@@ -1,10 +1,12 @@
 # Runtime and model routing
 
-Read this before executing a skill, authoring a workflow, or delegating an ad-hoc task in
-xivdyetools. It supplies the runtime details for the shared policy in `AGENTS.md` and `CLAUDE.md`
-for Claude Code, Codex, and other coding agents. The `collector`, `worker`, and `verifier` names
-describe tasks, not tool arguments or model names. Difficult worker tasks and escalated verifier
-tasks retain their role's permissions and return contract; they do not require new agent names.
+Read this before executing a skill, authoring a workflow, or delegating an ad-hoc task or any step
+of a remediation sprint in xivdyetools. It supplies the runtime details for the shared policy in
+`AGENTS.md` and `CLAUDE.md` for Claude Code, Codex, and other coding agents. No skill executes the
+sprinting stage (the planner only schedules it), so [*Remediation sprints*](#remediation-sprints)
+below maps its steps to the same roles. The `collector`, `worker`, and `verifier` names describe
+tasks, not tool arguments or model names. Difficult worker tasks and escalated verifier tasks
+retain their role's permissions and return contract; they do not require new agent names.
 
 | Role | Tier | Effort | Give it / return contract |
 |---|---|---|---|
@@ -57,6 +59,45 @@ goal, paths, relevant checklist, constraints, and return schema. Do not copy the
 or every shared reference. Assign disjoint output/test files; keep dependent steps sequential.
 Launch independent tasks up to the runtime's available capacity, then reuse agents or work in
 waves. Never assume the whole monorepo fits into one concurrent batch.
+
+## Remediation sprints
+
+The roles cover the sprinting stage as well as the audits: executing the sprints a
+`REMEDIATION_PLAN.md` schedules — fixing, testing, reviewing, gating and releasing. No skill loads
+this file for that work, so `AGENTS.md` and `conventions.md` §8 point here and the coordinator
+follows this table itself; the runtime sections below say how each runtime launches the role. A row names the role that does the step when it is
+delegated; *Delegate when it helps* still decides whether a small step runs inline, and a Fable
+coordinator delegates every role. *Red-first* means a new test fails before the fix; a *mutation
+check* means undoing the fix turns that test red again.
+
+| Sprint step | Role | Give it / return contract |
+|---|---|---|
+| Re-check each finding against the sprint's base branch before fixing (audits age; earlier sprints move code) | `worker`, one per sprint | The finding files and the unit. Return per ID: still present (yes / no / partly, at `file:line`), the fix, red-first tests, risk to consumers; plus a proposed file allowlist and the release work |
+| Facts: local and published versions, dependents, CHANGELOG heads, `git status` / diff stats, CI check states | `collector` | A fixed command list. Return the values |
+| Implement one finding group | `worker` | A file allowlist the coordinator assigns, disjoint from every other writer's; red-first tests and a mutation check. Return per ID: outcome, what a user now sees differently, the tests, changed files |
+| First review lens on a group: regressions, a test that stays green when the fix is reverted, comment and doc drift | `worker` | Read-only; the group's report verbatim. Return findings with `file:line` and a fix |
+| Parity harnesses (run the page's or package's own source against the fix); translation checks against the glossary | `worker` | Scratch-only writes. Return counts and mismatches |
+| Docs drift after the fix (the unit's `CLAUDE.md`, living docs); a draft of the unit's technical `CHANGELOG.md` entry and version-table rows | `worker` | Docs edits in allowlisted files only; the changelog entry and version rows come back as exact text for the coordinator to apply. Return the edits made and the draft text |
+| Gates: the unit gate, the root gates, bundle size, integration and e2e suites, font cmap comparisons | `collector` | Per command: exit status, pass/total, failing test names, saved log path |
+| Verdict: is each finding FIXED and safe to ship; the semver bump and publish / merge order; a review finding the implementer disputes | `verifier` | Read-only; every group report and review finding. Return a verdict per ID and the evidence that settles it |
+
+**Escalate to the `verifier`** wherever a wrong answer ships a defect that users or attackers reach:
+authentication, sessions and tokens, signature and HMAC checks, secret redaction, rate limiting and
+request guards, D1 migrations, a published package's exported API, and a unit whose merge is a
+production deploy with no beta (`oauth`). There the verifier reviews the implementation as one of
+the review lenses, not only the final verdict. Elsewhere one verifier pass per sprint, over every
+group at once, is enough.
+
+**One writer per file.** A sprint implementation with a coordinator-assigned allowlist is an
+explicitly assigned, disjoint-files assignment (*Never delegate* names the test-writing case; this is
+the same shape). When review or verifier findings come back, each allowlist still has exactly one
+writer: a fix too large to hand back as replacement text goes to one new assignment on that same
+allowlist, with the findings verbatim, never to a second agent on the same file; a small fix comes
+back as exact replacement text for the coordinator to apply. Reviewers, verifiers and collectors
+write nothing in the repo. The coordinator keeps the sprint's scope and order, the allowlists, the
+finding `## Status` lines and the plan's and report's status entries, the version bumps and
+changelog text, every git write and the PR, and outward prose (the root `CHANGELOG-laymans.md`
+entry, PR bodies).
 
 ## Runtime tools and coordinator rules
 
@@ -171,7 +212,8 @@ Resolve relative references from the file containing them. A bare shared filenam
   another session can share this checkout.
 - **Applying edits inside an iterative fix loop.** One writer: agents diagnose and return
   exact replacement text; the coordinator applies it. Independent test-writing assignments
-  can write their explicitly assigned, disjoint files.
+  and sprint implementations can write their explicitly assigned, disjoint files (see
+  *Remediation sprints* for how review rounds keep one writer per file).
 - **Prose that ships outward**, including the root `CHANGELOG-laymans.md` entry whose merge
   fires the announcement webhook. Agents may collect facts or critique it.
 

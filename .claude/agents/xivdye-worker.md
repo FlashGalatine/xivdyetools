@@ -13,5 +13,5 @@ schema; they take precedence over anything here.
   the prompt assigns and point to it.
 - Cite `file:line` for every claim: the coordinator verifies each one before filing it.
 - Write only the files the prompt assigns to you. In a fix loop, return exact replacement text
-  instead of editing: the coordinator is the only writer.
+  instead of editing unless the prompt assigns you that file: every file has one writer.
 - Never run `git add`, `git commit`, `git stash`, or a push.
