@@ -2,7 +2,7 @@
  * The resolution rules from docs/research/chara-equipment-resolution §5/§8.2,
  * pinned as tests. Row fixtures mirror real XIVAPI answers (2026-08-19 probe).
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import {
   indexRows,
   lookupsFor,
@@ -11,6 +11,7 @@ import {
   resolveCharaEquipment,
   MAX_ALTERNATES,
 } from './resolver';
+import { loadRegionalNames } from './regional-names';
 import type { ItemRow } from './types';
 import { lookupKey } from './types';
 
@@ -53,6 +54,9 @@ const row = (
 });
 
 const ANYONE = 0xffff;
+
+// OPT-002: the ko/zh tables load on first use; the route awaits this before resolving.
+beforeAll(() => loadRegionalNames());
 
 // Runaway Bow #49486 — ModelMain 634/19/1, ModelSub 698/149/1 (the quiver)
 const RUNAWAY_BOW = row(49486, 'Runaway Bow', '4296213114', ['MainHand'], {

@@ -28,6 +28,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Glamour acquisition lines for all 127 pieces from Varsarudh in Old Sharlayan now omit the currency amount. The acquisition generator preserves the vendor-only wording on future refreshes.
 - Glamour acquisition lines for all 55 pieces from fiend costume coffers now list Enie in Ishgard's Firmament and the 3,000 Skybuilders' Scrips cost. The acquisition generator preserves this wording when the table is refreshed.
 
+## [0.17.0] - 2026-10-06
+
+Sprint 18 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive/`, `docs/audits/2026-10-04-dead-code/`): BUG-037,
+BUG-038, BUG-039, BUG-040, OPT-002, DEAD-035. Minor rather than patch, as 0.15.0 and 0.16.0 were: clients can now get a
+400 for numeric spellings that used to be silently truncated. Merging deploys production.
+
+### Fixed
+
+- **A telemetry beacon is charged once** (BUG-037). `POST /v1/telemetry` was registered on both the exact path and
+  `/v1/telemetry/*`; Hono's `/*` also matches the bare path, so every beacon drew two tokens and the effective cap was
+  120 per 60 s instead of the intended 240. Only the `/*` registration remains, so `/v1/telemetry/x` stays limited
+  (api-worker-05) and is charged once.
+- **Malformed numeric query parameters answer `400 VALIDATION_ERROR`** (BUG-038). `parseIntParam` / `parseFloatParam`
+  read a numeric prefix (`1e2` became 1, `2abc` 2, `50.9` 50, ` 7` 7). They now accept only `^-?\d+$` for integers
+  (which must also be safe integers) and `^-?\d+(\.\d+)?$` for numbers. Rejected: `1e2`, `2abc`, `50.9` for an
+  integer, `10px`, ` 7`, `+5`, `0x10`, `1.`, `.5`, `1,5` and integers beyond 2^53. Still accepted: `007`, `-12`,
+  `12.50`. Affects `limit` and `maxDistance` on `/v1/match/within-distance`, `page`, `perPage`, `minPrice` and
+  `maxPrice` on `/v1/dyes`, `companions` on `/v1/harmony` and `stops` on `/v1/wheels/:id`; documented in
+  `docs/guide/errors.md`.
+- **A game patch no longer leaves the `.chara` row cache stale for a week** (BUG-040). With `XIVAPI_VERSION = "latest"`
+  the literal alias was the cache namespace, so pre-patch rows lived 7 days plus 1 day of stale-while-revalidate.
+  `XivapiClient.cacheNamespace()` now resolves `latest` through `GET /api/version` (memoized per isolate for 10 minutes,
+  retried after 60 s on failure, 3 s timeout) and keeps the last resolved key while the lookup fails; searches send that
+  same key. A pinned key is used as is, with no request. Each patch therefore invalidates every cached row once.
+
+### Changed
+
+- **The chara JSON tables load lazily** (OPT-002). `acquisition.ts` and `regional-names.ts` load their JSON through a
+  memoized `import()`; `POST /v1/chara/resolve` starts both loads and awaits them before resolving. Module evaluation,
+  measured in Node, dropped from about 1,000 ms to about 87 ms with the bundle size unchanged, so every other route,
+  `/health` included, starts cheaper. The first resolve in each isolate pays the table load instead (about 0.9 s in
+  Node; not measured in workerd).
+- **The Universalis service-binding multiplier is one tested constant** (BUG-039). `SERVICE_BINDING_BUDGET_MULTIPLIER`
+  moved to `src/universalis/config/service-budget.ts`, and `tests/wrangler-config.test.ts` imports it, so a drift from
+  the `UNIVERSALIS_SERVICE_RATE_LIMITER` limit fails a test. No runtime change.
+
+### Removed
+
+- The unused `createMockKV` re-export from `tests/test-utils.ts` (DEAD-035).
+
+### Tests
+
+- 604 tests. Each fix was written red first and mutation-checked.
+
 ## [0.16.1] - 2026-10-04
 
 Sprint 7 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`).

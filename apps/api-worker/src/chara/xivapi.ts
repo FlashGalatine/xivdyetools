@@ -129,6 +129,31 @@ interface RawSearchResponse {
   next?: string;
 }
 
+/** `GET /api/version`: `{ versions: [{ key, names: ['7.55x2', 'latest'] }, …] }`. */
+interface RawVersionList {
+  versions?: Array<{ key?: string; names?: string[] }>;
+}
+
+/**
+ * How long a resolved `latest` key is trusted (BUG-040). XIVAPI re-points
+ * `latest` from an hourly Thaliak poll, so ten minutes of lag adds nothing
+ * noticeable to a patch-day cold start and keeps the lookup to roughly one
+ * extra tiny request per isolate per ten minutes.
+ */
+const VERSION_KEY_TTL_MS = 10 * 60_000;
+/** After a failed lookup (literal-alias fallback) retry sooner. */
+const VERSION_KEY_FAILURE_TTL_MS = 60_000;
+/** Short: this sits in front of every cold-cache /resolve. */
+const VERSION_LOOKUP_TIMEOUT_MS = 3_000;
+/** Per isolate, keyed by `${base}|${alias}`. */
+const versionKeyMemo = new Map<string, { expires: number; key: Promise<string> }>();
+/**
+ * The last key a lookup actually resolved, per the same memo key. A failed
+ * refresh keeps answering with it (stale-if-error), so rows cached under it
+ * stay reachable through an XIVAPI blip instead of every import going cold.
+ */
+const lastResolvedKey = new Map<string, string>();
+
 interface RawSheetRow {
   row_id: number;
   version?: string;
@@ -222,24 +247,74 @@ export class XivapiClient {
     this.schema = env.XIVAPI_SCHEMA;
   }
 
-  /** The version key cache entries are namespaced under. */
-  get versionKey(): string {
-    return this.version;
+  /**
+   * The key cache entries are namespaced under (BUG-040).
+   *
+   * A real key (`XIVAPI_VERSION = "284bb7f44b9c0976"`) is its own namespace.
+   * The moving alias `latest` is not: it re-points on patch day, so using the
+   * literal string kept the namespace constant across patches and a cached
+   * pre-patch row family outlived the patch by up to TTL + SWR (8 days). It is
+   * therefore resolved to the key it currently points at through
+   * `GET /api/version`, memoized per isolate for VERSION_KEY_TTL_MS — the
+   * cache is read before any search, so the answer's own `version` field
+   * arrives too late to key the read.
+   *
+   * Never throws. If the lookup fails, or `latest` is not listed, the last key
+   * this isolate resolved is kept (stale-if-error); only an isolate that has
+   * never resolved one falls back to the literal alias (the pre-fix
+   * behavior). The lookup is retried after VERSION_KEY_FAILURE_TTL_MS, so an
+   * XIVAPI hiccup cannot take /resolve down.
+   *
+   * Searches and Glasses fetches send this same key as their `version`, so the
+   * namespace a row is stored under and the game version it was read from
+   * always agree, even in the window before the memo notices a re-point.
+   */
+  cacheNamespace(): Promise<string> {
+    if (this.version !== DEFAULT_XIVAPI_VERSION) return Promise.resolve(this.version);
+    const memoKey = `${this.base}|${this.version}`;
+    const now = Date.now();
+    const hit = versionKeyMemo.get(memoKey);
+    if (hit && hit.expires > now) return hit.key;
+    const entry = { expires: now + VERSION_KEY_TTL_MS, key: Promise.resolve('') };
+    entry.key = this.lookupVersionKey().then((found) => {
+      if (found !== null) {
+        lastResolvedKey.set(memoKey, found);
+        return found;
+      }
+      // A fallback answer is trusted for a minute only, so recovery is quick.
+      entry.expires = Date.now() + VERSION_KEY_FAILURE_TTL_MS;
+      return lastResolvedKey.get(memoKey) ?? this.version;
+    });
+    versionKeyMemo.set(memoKey, entry);
+    return entry.key;
   }
 
-  private params(extra: Record<string, string>): URLSearchParams {
-    const p = new URLSearchParams({ ...extra, version: this.version });
+  /** The key `latest` points at, or null when it cannot be determined. */
+  private async lookupVersionKey(): Promise<string | null> {
+    try {
+      const response = await this.get(`${this.base}/api/version`, VERSION_LOOKUP_TIMEOUT_MS);
+      if (!response.ok) return null;
+      const body = await response.json<RawVersionList>();
+      const match = body.versions?.find((v) => v.names?.includes(this.version));
+      return typeof match?.key === 'string' && match.key.length > 0 ? match.key : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async params(extra: Record<string, string>): Promise<URLSearchParams> {
+    const p = new URLSearchParams({ ...extra, version: await this.cacheNamespace() });
     if (this.schema) p.set('schema', this.schema);
     return p;
   }
 
-  private async get(url: string): Promise<Response> {
+  private async get(url: string, timeoutMs: number = UPSTREAM_TIMEOUT_MS): Promise<Response> {
     let response: Response;
     try {
       response = await fetch(url, {
         method: 'GET',
         headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
-        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs),
         // FINDING-025 / API-9: never follow a redirect to a third host and
         // then cache (or proxy) whatever it serves — XIVAPI answers directly.
         // `manual`, NOT `error`: workerd implements only follow/manual and
@@ -275,12 +350,12 @@ export class XivapiClient {
     lookups: readonly SlotLookup[],
   ): Promise<{ version: string | null; rows: ItemRow[]; truncated: boolean }> {
     if (lookups.length === 0) return { version: null, rows: [], truncated: false };
-    const url = `${this.base}/api/search?${this.params({
+    const url = `${this.base}/api/search?${(await this.params({
       sheets: 'Item',
       query: buildResolveQuery(lookups),
       fields: ITEM_FIELDS,
       limit: String(SEARCH_LIMIT),
-    }).toString()}`;
+    })).toString()}`;
     const response = await this.get(url);
     if (!response.ok) {
       throw new UpstreamUnavailableError(response.status, response.statusText || 'search failed');
@@ -294,7 +369,7 @@ export class XivapiClient {
 
   /** Facewear: `GlassesId` IS the Glasses sheet row_id. 404 → null (row 0 / unknown). */
   async getGlasses(id: number): Promise<{ version: string | null; row: GlassesRow | null }> {
-    const url = `${this.base}/api/sheet/Glasses/${id}?${this.params({ fields: GLASSES_FIELDS }).toString()}`;
+    const url = `${this.base}/api/sheet/Glasses/${id}?${(await this.params({ fields: GLASSES_FIELDS })).toString()}`;
     const response = await this.get(url);
     if (response.status === 404) return { version: null, row: null };
     if (!response.ok) {

@@ -1,9 +1,32 @@
-import { describe, expect, it } from 'vitest';
-import { acquisitionFor, facewearAcquisitionFor } from './acquisition.js';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { acquisitionFor, facewearAcquisitionFor, loadAcquisition } from './acquisition.js';
 import table from './data/acquisition.en.json';
 import facewearUnlocks from './data/facewear-unlocks.json';
 
+describe('acquisitionFor', () => {
+  // OPT-002: read before the first load is a programming error, never a silent "no line".
+  it('refuses to answer before the table is loaded', () => {
+    expect(() => acquisitionFor(47252)).toThrow(/loadAcquisition/);
+  });
+
+  it('reads the build-time table once loaded', async () => {
+    await loadAcquisition();
+    expect(acquisitionFor(47252)).toBe("Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)");
+  });
+
+  it('is undefined for an item the table does not know', async () => {
+    await loadAcquisition();
+    expect(acquisitionFor(-1)).toBeUndefined();
+  });
+
+  it('shares one load between callers', async () => {
+    expect(loadAcquisition()).toBe(loadAcquisition());
+  });
+});
+
 describe('facewear acquisitions from unlock items', () => {
+  beforeAll(() => loadAcquisition());
+
   it('maps 61 styles and all 732 variants to their own unlock source', () => {
     const entries = Object.entries(facewearUnlocks);
     expect(entries).toHaveLength(732);
@@ -40,7 +63,9 @@ describe('facewear acquisitions from unlock items', () => {
   });
 });
 
-describe('acquisitionFor', () => {
+describe('acquisitionFor — researched sources', () => {
+  beforeAll(() => loadAcquisition());
+
   it.each(['Varsarudh - Old Sharlayan', 'Mewazunte - Tuliyollal'])(
     'omits the price for all 127 equipment entries from %s',
     (vendor) => {
@@ -62,12 +87,4 @@ describe('acquisitionFor', () => {
       );
     }
   );
-
-  it('reads the build-time table', () => {
-    expect(acquisitionFor(47252)).toBe("Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)");
-  });
-
-  it('is undefined for an item the table does not know', () => {
-    expect(acquisitionFor(-1)).toBeUndefined();
-  });
 });

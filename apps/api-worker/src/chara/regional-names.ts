@@ -13,11 +13,32 @@
  * pipeline does.
  */
 
-import koTable from './data/item-names.ko.json';
-import zhTable from './data/item-names.zh.json';
+/*
+ * OPT-002: 2.0 MB of JSON, read only by POST /v1/chara/resolve — loaded on
+ * first use instead of at isolate start for every route. The route awaits
+ * `loadRegionalNames()` before resolving; `regionalNames` stays synchronous so
+ * the resolver stays pure.
+ */
+let ko: Record<string, string> | undefined;
+let zh: Record<string, string> | undefined;
+let loading: Promise<void> | undefined;
 
-const ko = koTable as Record<string, string>;
-const zh = zhTable as Record<string, string>;
+export function loadRegionalNames(): Promise<void> {
+  loading ??= Promise.all([
+    import('./data/item-names.ko.json'),
+    import('./data/item-names.zh.json'),
+  ]).then(
+    ([k, z]) => {
+      ko = k.default;
+      zh = z.default;
+    },
+    (error: unknown) => {
+      loading = undefined; // a failed import is retried, not remembered
+      throw error;
+    },
+  );
+  return loading;
+}
 
 export interface RegionalNames {
   ko?: string;
@@ -25,6 +46,7 @@ export interface RegionalNames {
 }
 
 export function regionalNames(itemId: number): RegionalNames {
+  if (!ko || !zh) throw new Error('regional name tables not loaded: await loadRegionalNames() first');
   const id = String(itemId);
   const out: RegionalNames = {};
   const k = ko[id];

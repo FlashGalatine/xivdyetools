@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import {
   buildResolveQuery,
   cleanName,
@@ -153,6 +153,100 @@ describe('cleanName / parseItemRow', () => {
   });
 });
 
+describe('XivapiClient.cacheNamespace (BUG-040)', () => {
+  let now = 5_000_000;
+  beforeEach(() => {
+    now = 5_000_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+  const versions = (key: string) => okJson({ versions: [{ key: 'older', names: ['7.0'] }, { key, names: ['7.6', 'latest'] }] });
+
+  it('a pinned key is its own namespace and costs no request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new XivapiClient({ XIVAPI_BASE: 'https://ns-pinned.test', XIVAPI_VERSION: 'abc123' });
+    expect(await client.cacheNamespace()).toBe('abc123');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('resolves "latest" to its key, memoizes it, and re-resolves after the TTL', async () => {
+    let key = 'k1';
+    const fetchMock = vi.fn(async () => versions(key));
+    vi.stubGlobal('fetch', fetchMock);
+    const env = { XIVAPI_BASE: 'https://ns-latest.test', XIVAPI_VERSION: 'latest' };
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('k1');
+    key = 'k2';
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('k1'); // memo, no second request
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = new URL((fetchMock.mock.calls[0] as unknown as [string])[0]);
+    expect(url.origin + url.pathname).toBe('https://ns-latest.test/api/version');
+    now += 11 * 60_000;
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('k2');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('falls back to the literal alias on a failed or malformed lookup, retrying only after a minute', async () => {
+    const fetchMock = vi.fn(async () => okJson({ versions: [{ key: 'x', names: ['7.0'] }] }));
+    vi.stubGlobal('fetch', fetchMock);
+    const env = { XIVAPI_BASE: 'https://ns-bad.test', XIVAPI_VERSION: 'latest' };
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('latest');
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('latest');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    now += 61_000;
+    fetchMock.mockImplementation(async () => { throw new Error('boom'); });
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('latest');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('XivapiClient.cacheNamespace after a prior success (review: stale-if-error)', () => {
+  let now = 1_000_000;
+  beforeEach(() => {
+    now = 1_000_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('keeps the last resolved key while the lookup fails, so cached rows stay reachable', async () => {
+    const fetchMock = vi.fn(async () => okJson({ versions: [{ key: 'k1', names: ['latest'] }] }));
+    vi.stubGlobal('fetch', fetchMock);
+    const env = { XIVAPI_BASE: 'https://ns-stale.test', XIVAPI_VERSION: 'latest' };
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('k1');
+    now += 11 * 60_000;
+    fetchMock.mockImplementation(async () => { throw new Error('outage'); });
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('k1');
+    now += 61_000;
+    fetchMock.mockImplementation(async () => new Response('nope', { status: 500 }));
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('k1');
+    now += 61_000;
+    fetchMock.mockImplementation(async () => okJson({ versions: [{ key: 'k2', names: ['latest'] }] }));
+    expect(await new XivapiClient(env).cacheNamespace()).toBe('k2');
+  });
+
+  it('searches and fetches Glasses under the same key the cache is namespaced by', async () => {
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+      calls.push(url);
+      if (url.includes('/api/version')) return okJson({ versions: [{ key: 'k9', names: ['latest'] }] });
+      if (url.includes('/api/sheet/Glasses')) return okJson({ version: 'k9', row_id: 3, fields: { Name: 'G' } });
+      return okJson({ version: 'k9', results: [] });
+    }));
+    const client = new XivapiClient({ XIVAPI_BASE: 'https://ns-agree.test', XIVAPI_VERSION: 'latest' });
+    expect(await client.cacheNamespace()).toBe('k9');
+    await client.searchItems([{ field: 'Head', key: '1' }]);
+    await client.getGlasses(3);
+    const versions = calls.filter((u) => !u.includes('/api/version')).map((u) => new URL(u).searchParams.get('version'));
+    expect(versions).toEqual(['k9', 'k9']);
+  });
+});
+
 describe('XivapiClient', () => {
   afterEach(() => vi.unstubAllGlobals());
 
@@ -182,7 +276,7 @@ describe('XivapiClient', () => {
     // FINDING-025 / API-9: a redirecting upstream must not be followed to a third
     // host — `manual` (workerd has no `error` mode; it throws on it)
     expect(init.redirect).toBe('manual');
-    expect(client.versionKey).toBe('vkey');
+    expect(await client.cacheNamespace()).toBe('vkey');
     expect(res.truncated).toBe(false);
   });
 
@@ -191,7 +285,7 @@ describe('XivapiClient', () => {
       new Response(null, { status: 302, headers: { Location: 'https://elsewhere.test/' } })
     );
     vi.stubGlobal('fetch', fetchMock);
-    const client = new XivapiClient({ XIVAPI_BASE: 'https://xivapi.test/' });
+    const client = new XivapiClient({ XIVAPI_BASE: 'https://xivapi.test/', XIVAPI_VERSION: 'pinned' });
     await expect(client.searchItems([{ field: 'Head', key: '1' }])).rejects.toThrow(
       UpstreamUnavailableError
     );
@@ -209,7 +303,7 @@ describe('XivapiClient', () => {
   // FINDING-025 / API-3: the caller must know when the single 500-row page
   // could not have held every family it asked for.
   it('flags a truncated page — a next cursor, or a page filled to the 500 cap', async () => {
-    const client = new XivapiClient({});
+    const client = new XivapiClient({ XIVAPI_VERSION: 'pinned' });
     const lookups = [{ field: 'Head' as const, key: '1' }];
 
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okJson({ version: 'v', results: [], next: 'cursor' })));
@@ -245,7 +339,7 @@ describe('XivapiClient', () => {
       )
       .mockResolvedValueOnce(new Response('not found', { status: 404 }));
     vi.stubGlobal('fetch', fetchMock);
-    const client = new XivapiClient({ XIVAPI_BASE: 'https://xivapi.test' });
+    const client = new XivapiClient({ XIVAPI_BASE: 'https://xivapi.test', XIVAPI_VERSION: 'pinned' });
     const found = await client.getGlasses(40);
     expect(found.row).toEqual({ rowId: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018 });
     expect(new URL(fetchMock.mock.calls[0][0] as string).pathname).toBe('/api/sheet/Glasses/40');

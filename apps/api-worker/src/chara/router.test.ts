@@ -9,7 +9,9 @@ import { createMockEnv } from '../../tests/test-utils';
 import { resetAllMocks, createMockExecutionContext } from '../universalis/test-setup';
 import { parseResolveBody } from './router';
 
-const env = createMockEnv({ XIVAPI_BASE: 'https://xivapi.test', XIVAPI_VERSION: 'latest' });
+// A real version key is its own cache namespace, so these tests stay about
+// resolution. The moving `latest` alias has its own block at the bottom (BUG-040).
+const env = createMockEnv({ XIVAPI_BASE: 'https://xivapi.test', XIVAPI_VERSION: 'pinned-test-key' });
 
 const okJson = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -480,6 +482,84 @@ describe('GET /v1/chara/icon/:iconId', () => {
     const down = await app.request('/v1/chara/icon/999997', {}, env, createMockExecutionContext());
     expect(down.status).toBe(503);
     expect(((await down.json()) as any).error).toBe('UPSTREAM_UNAVAILABLE');
+  });
+});
+
+/**
+ * BUG-040: with XIVAPI_VERSION = "latest" the row-cache namespace used to be
+ * the literal string, constant across patches, so a patch that added an Item
+ * row to a cached ModelMain kept serving the pre-patch family for up to
+ * 7 d + 1 d SWR. The namespace is now the key `latest` currently points at.
+ */
+describe('POST /v1/chara/resolve — row cache follows the game version behind "latest" (BUG-040)', () => {
+  const BODY = { gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] };
+  const NEW_TWIN = { ...BEECH_MASK, row_id: 99999 };
+  const versions = (key: string) =>
+    okJson({ versions: [{ key: 'old0000000000000', names: ['7.5'] }, { key, names: ['7.6', 'latest'] }] });
+  let now = 1_000_000;
+
+  beforeEach(() => {
+    resetAllMocks();
+    vi.restoreAllMocks();
+    now = 1_000_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const resolve = (base: string, ctx: ExecutionContext) =>
+    app.request(
+      '/v1/chara/resolve',
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(BODY) },
+      createMockEnv({ XIVAPI_BASE: base, XIVAPI_VERSION: 'latest' }),
+      ctx,
+    );
+
+  it('serves a repeat from the cache within a patch, then goes upstream again once the version moves', async () => {
+    const base = 'https://xivapi-latest.test';
+    let current = 'aaaaaaaaaaaaaaaa';
+    let searches = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (new URL(url).pathname === '/api/version') return versions(current);
+        searches++;
+        return okJson({ version: current, results: searches === 1 ? [BEECH_MASK] : [BEECH_MASK, NEW_TWIN] });
+      }),
+    );
+
+    const ctx1 = createMockExecutionContext() as unknown as ExecutionContext;
+    const first = await resolve(base, ctx1);
+    expect(first.headers.get('X-Cache')).toBe('MISS');
+    await flush(ctx1);
+
+    const second = await resolve(base, createMockExecutionContext() as unknown as ExecutionContext);
+    expect(second.headers.get('X-Cache')).toBe('HIT');
+    expect(searches).toBe(1);
+
+    // Patch day: `latest` re-points. Past the version-lookup TTL the namespace
+    // changes, so the cached pre-patch family is no longer read.
+    current = 'bbbbbbbbbbbbbbbb';
+    now += 11 * 60_000;
+    const third = await resolve(base, createMockExecutionContext() as unknown as ExecutionContext);
+    expect(third.headers.get('X-Cache')).toBe('MISS');
+    expect(searches).toBe(2);
+    const body = (await third.json()) as any;
+    expect(body.data.items.HeadGear.familySize).toBe(2);
+  });
+
+  it('degrades to the literal "latest" namespace, and still answers, when /api/version is unavailable', async () => {
+    let searches = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (new URL(url).pathname === '/api/version') return new Response('down', { status: 502 });
+        searches++;
+        return okJson({ version: 'k', results: [BEECH_MASK] });
+      }),
+    );
+    const res = await resolve('https://xivapi-versiondown.test', createMockExecutionContext() as unknown as ExecutionContext);
+    expect(res.status).toBe(200);
+    expect(searches).toBe(1);
   });
 });
 

@@ -120,12 +120,14 @@ app.use(
 //    API bucket (rateLimitMiddleware skips it) and limited on its own bucket:
 //    beacons from many tabs behind one NAT address must never 429 /v1/chara/*.
 app.use('/v1/*', rateLimitMiddleware);
-// api-worker-05: registered on the exact path only. Hono's `use()` does NOT
-// append `/*`, but `isTelemetryPath` exempts the whole `/v1/telemetry/`
-// subtree from the API bucket — so `/v1/telemetry/x` traversed BOTH limiters
+// api-worker-05: `isTelemetryPath` exempts the whole `/v1/telemetry/` subtree
+// from the API bucket, and Hono's `use()` does NOT append `/*` to a bare path
+// — so with the exact path alone, `/v1/telemetry/x` traversed BOTH limiters
 // untouched and reached notFound(): unlimited anonymous 404s on a `/v1/*`
 // path the docs promise is limited.
-app.use(TELEMETRY_PATH, telemetryRateLimitMiddleware);
+// BUG-037: ONE registration, on the `/*` pattern. Hono's `/v1/telemetry/*`
+// also matches the bare `/v1/telemetry`, so registering the exact path as well
+// charged every beacon twice (effective cap 120 / 60 s instead of 240).
 app.use(`${TELEMETRY_PATH}/*`, telemetryRateLimitMiddleware);
 
 // 6. Locale resolution on API routes (OPT-001 — 2026-04-28 audit)

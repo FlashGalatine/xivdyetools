@@ -7,6 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { SERVICE_BINDING_BUDGET_MULTIPLIER } from '../src/universalis/config/service-budget.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 // Normalise CRLF so `$` anchors line ends on a Windows checkout too.
@@ -94,7 +95,8 @@ describe('wrangler.toml', () => {
    * table under [env.production], which an anchored `^RATE_LIMIT_REQUESTS`
    * regex would never see (it would find the dev value in both slices).
    */
-  const SERVICE_BINDING_BUDGET_MULTIPLIER = 20;
+  // BUG-039: the router's own constant, not a copy — the binding's limit in
+  // wrangler.toml and the number the code multiplies by can no longer drift.
 
   describe.each([
     ['development (top level)', topLevel, '[[ratelimits]]'],

@@ -9,12 +9,32 @@
  * for the player (spec: docs/superpowers/specs/2026-09-27-glamour-acquisition-design.md).
  */
 
-import table from './data/acquisition.en.json';
 import facewearUnlocks from './data/facewear-unlocks.json';
 
-const lines = table as Record<string, string>;
+/*
+ * OPT-002: 1.4 MB of JSON, read only by POST /v1/chara/resolve — loaded on
+ * first use instead of at isolate start for every route. The route awaits
+ * `loadAcquisition()` before resolving; `acquisitionFor` stays synchronous so
+ * the resolver stays pure.
+ */
+let lines: Record<string, string> | undefined;
+let loading: Promise<void> | undefined;
+
+export function loadAcquisition(): Promise<void> {
+  loading ??= import('./data/acquisition.en.json').then(
+    (m) => {
+      lines = m.default;
+    },
+    (error: unknown) => {
+      loading = undefined; // a failed import is retried, not remembered
+      throw error;
+    },
+  );
+  return loading;
+}
 
 export function acquisitionFor(itemId: number): string | undefined {
+  if (!lines) throw new Error('acquisition table not loaded: await loadAcquisition() first');
   return lines[String(itemId)];
 }
 
