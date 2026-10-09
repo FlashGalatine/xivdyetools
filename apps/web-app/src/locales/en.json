@@ -1382,6 +1382,7 @@
       "save": "Save .md",
       "cardNote": "Your edited acquisition notes are kept on this device."
     },
-    "empty": "This file wears no gear."
+    "empty": "This file wears no gear.",
+    "dropBody": "Anamnesis, Ktisis or Brio. Every piece the character wears, with its dyes."
   }
 }

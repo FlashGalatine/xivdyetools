@@ -1382,6 +1382,7 @@
       "save": ".md speichern",
       "cardNote": "Deine bearbeiteten Bezugsquellen werden auf diesem Gerät gespeichert."
     },
-    "empty": "Diese Datei trägt keine Ausrüstung."
+    "empty": "Diese Datei trägt keine Ausrüstung.",
+    "dropBody": "Anamnesis, Ktisis oder Brio. Jedes Teil, das der Charakter trägt, samt seinen Farbstoffen."
   }
 }

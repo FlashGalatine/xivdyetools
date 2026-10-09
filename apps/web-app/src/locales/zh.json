@@ -1382,6 +1382,7 @@
       "save": "保存 .md",
       "cardNote": "你编辑过的获取方式备注保存在本设备上。"
     },
-    "empty": "这个文件没有穿戴装备。"
+    "empty": "这个文件没有穿戴装备。",
+    "dropBody": "支持 Anamnesis、Ktisis 或 Brio。角色穿戴的每件装备及其染剂。"
   }
 }

@@ -88,6 +88,8 @@ export class GlamourTool extends BaseComponent {
       },
       privacyNote: LanguageService.t('glamour.sheet.cardNote'),
       sendsGearIds: true,
+      // The pieces and their dyes: no swatch grid here, no hair or skin
+      dropBody: LanguageService.t('glamour.dropBody'),
     });
     this.fileCard.init();
 

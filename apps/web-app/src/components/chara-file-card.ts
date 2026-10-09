@@ -62,6 +62,14 @@ export interface CharaFileCardOptions {
    * LOCAL ONLY chip. The Swatch Matcher never calls resolve and leaves this off.
    */
   sendsGearIds?: boolean;
+  /**
+   * The drop zone's body line, from a host that is not the Swatch Matcher.
+   * Without it the zone pitches the Swatch Matcher: every color on the
+   * character, the clan and gender for hair and skin, and "or pick a swatch
+   * from the grid below". A host with its own line has no swatch grid, so the
+   * grid line goes too. The Glamour Reader passes `glamour.dropBody`.
+   */
+  dropBody?: string;
 }
 
 interface CharaWarning {
@@ -163,6 +171,8 @@ export class CharaFileCard {
 
   /** The offer above the workspace — nothing below it is disabled. */
   private renderDropZone(): HTMLElement {
+    // The host's own pitch, or the Swatch Matcher's with its grid line.
+    const hostBody = this.options.dropBody;
     const zone = el(
       'div',
       'border: 1px dashed var(--theme-border); border-radius: 14px; padding: 22px 20px; text-align: center; cursor: pointer; background: var(--theme-card-background); margin-bottom: 11px;'
@@ -179,7 +189,7 @@ export class CharaFileCard {
       el(
         'div',
         'font-size: 12.5px; line-height: 1.55; color: var(--theme-text-muted); max-width: 560px; margin: 0 auto 12px;',
-        tSwatch('dropBody')
+        hostBody ?? tSwatch('dropBody')
       )
     );
 
@@ -192,17 +202,20 @@ export class CharaFileCard {
     (chooseBtn as HTMLButtonElement).type = 'button';
     zone.appendChild(chooseBtn);
 
+    if (hostBody === undefined) {
+      zone.appendChild(
+        el(
+          'div',
+          `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-top: 12px;`,
+          tSwatch('orGrid')
+        )
+      );
+    }
+    // Without the grid line, the privacy line keeps that line's 12px from the button.
     zone.appendChild(
       el(
         'div',
-        `font-family: ${MONO}; font-size: 8.5px; letter-spacing: 1px; color: var(--theme-text-muted); margin-top: 12px;`,
-        tSwatch('orGrid')
-      )
-    );
-    zone.appendChild(
-      el(
-        'div',
-        'font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-top: 8px;',
+        `font-size: 10px; line-height: 1.45; color: var(--theme-text-muted); margin-top: ${hostBody === undefined ? 8 : 12}px;`,
         this.privacyHint()
       )
     );

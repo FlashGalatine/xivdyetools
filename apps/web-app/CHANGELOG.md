@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.11] - 2026-10-06
+
+### Fixed
+
+- **The Glamour Reader's drop zone describes the Glamour Reader.** With no file loaded, the file
+  card it shares with the Swatch Matcher always printed two Swatch Matcher lines. One promised every
+  color on the character, with the clan and gender to look hair and skin up. The other said "or
+  pick a swatch from the grid below". The reader has no swatch grid and matches no hair or skin, so
+  a player arriving on it was told two things that were false.
+  - `CharaFileCard` takes a `dropBody` option: a host's own body line. A host that passes one has
+    no swatch grid, so the grid line goes too.
+  - The Glamour Reader passes the new `glamour.dropBody`, in all six languages: "Anamnesis, Ktisis
+    or Brio. Every piece the character wears, with its dyes."
+  - The Swatch Matcher passes nothing, so its drop zone is unchanged. Tests pin both drop zones, and
+    that the reader's line follows a language switch.
+
 ## [5.14.10] - 2026-10-06
 
 Sprint 13 of the 2026-10-04 remediation plan, carrying `@xivdyetools/core` 5.10.0. The web-app deploy

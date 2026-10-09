@@ -2,6 +2,11 @@
 
 ---
 
+## Web-App Version 5.14.11 — October 6, 2026
+
+### Glamour Reader
+- **The Glamour Reader's file drop area describes the Glamour Reader.** Before you load a file, it says the reader shows every piece your character wears, with its dyes. It used to promise hair and skin colors and a swatch grid, and the Glamour Reader has neither.
+
 ## Web-App Version 5.14.10 — October 6, 2026
 
 ### Truer greys
