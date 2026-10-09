@@ -53,18 +53,25 @@ No command shape changed, and no card changes.
 - **Card renders no longer leak resvg-wasm memory.** `renderSvgToPng` now frees the `Resvg` and
   the `RenderedImage` in a `finally`: on success after `asPng()` has returned the PNG bytes, and
   on a failure whichever of the two was allocated.
-  - In `@resvg/resvg-wasm` 2.6.2 the `Resvg` constructor never registers with a
-    `FinalizationRegistry`, so every parsed tree leaked for the life of the isolate, however often
-    GC ran. Only `RenderedImage` registers, so its pixmap was reclaimed only when GC got to it.
+  - Before this, nothing reclaimed either allocation in the deployed bot, so both leaked for the
+    life of the isolate on every render, however often GC ran:
+    - in `@resvg/resvg-wasm` 2.6.2 the `Resvg` constructor never registers with a
+      `FinalizationRegistry`;
+    - `RenderedImage` registers only where one exists. At this worker's `compatibility_date`
+      (2024-12-01, no `enable_weak_ref` flag) workerd has none, since it is on by default only
+      from 2025-05-05, so the glue falls back to a no-op stub. Checked with the repo's workerd
+      (2026-09-23): `typeof FinalizationRegistry` is `undefined` at 2024-12-01 and 2025-05-04,
+      and `function` at 2025-05-05 or with the flag.
   - The audit's evidence file had dismissed this site on the premise that wasm-bindgen
-    finalizers cover it; for `Resvg` they do not.
+    finalizers cover it. In this worker they cover neither allocation.
   - `asPng()` returns a JS-owned copy, so freeing afterwards is safe.
-  - Measured in Node only, not in workerd. With og-worker's fonts at ×3: no free grew wasm memory
-    about 4.8 MB per render; freeing only the `RenderedImage` still leaked about 120 KB per render;
-    freeing both stayed flat. With this worker's fonts at ×2, 40 renders of a synthetic 400×350
-    test SVG (not a real bot card, so the per-tree figure is indicative): no free grew about
-    2.1 MB per render (64 KB per render once GC ran the pixmap finalizers); freeing only the
-    `RenderedImage` leaked 64 KB per render; freeing both stayed flat.
+  - Measured in Node only, where `FinalizationRegistry` does exist, not in workerd. With
+    og-worker's fonts at ×3: no free grew wasm memory about 4.8 MB per render; freeing only the
+    `RenderedImage` still leaked about 120 KB per render; freeing both stayed flat. With this
+    worker's fonts at ×2, 40 renders of a synthetic 400×350 test SVG (not a real bot card, so the
+    per-tree figure is indicative): no free grew about 2.1 MB per render with no finalizer
+    running, which is the deployed bot's case; freeing only the `RenderedImage` leaked 64 KB per
+    render; freeing both stayed flat.
   - `renderer.test.ts` mocks resvg-wasm. On success it checks that both `free()` calls run
     exactly once, after `asPng()`; when `render()` or `asPng()` throws, that whatever was
     allocated is freed exactly once. It also checks that a parse failure still surfaces the parse
@@ -312,7 +319,7 @@ so no `register-commands`. 5.8.2 is Sprints 2 and 3, on a separate branch; merge
   - de says Vorlage, as the bot does (TERM-006).
 - **Terms of Service:**
   - ko says 조정자 for moderators, as the Privacy Policy does; 운영자 reads as "operator" (TERM-001);
-  - *Last Updated* is 2026-10-05 in all six languages.
+  - *Last Updated* is 2026-10-09, the merge date, in all six languages of both documents.
 
 ## [5.8.2] - 2026-10-05
 
