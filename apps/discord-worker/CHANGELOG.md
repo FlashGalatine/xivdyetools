@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.10] - 2026-10-06
+
+A follow-up to the 2026-10-04 deep-dive: the wasm memory fix its OPT-006 prescribes for
+og-worker's renderer, applied at a site the audit had dismissed. Merge after Sprint 30 (PR #263).
+No command shape changed, and no card changes.
+
+### Fixed
+
+- **Card renders no longer leak resvg-wasm memory.** `renderSvgToPng` now frees the `Resvg` and
+  the `RenderedImage` in a `finally`: on success after `asPng()` has returned the PNG bytes, and
+  on a failure whichever of the two was allocated.
+  - Before this, nothing reclaimed either allocation in the deployed bot, so both leaked for the
+    life of the isolate on every render, however often GC ran:
+    - in `@resvg/resvg-wasm` 2.6.2 the `Resvg` constructor never registers with a
+      `FinalizationRegistry`;
+    - `RenderedImage` registers only where one exists. At this worker's `compatibility_date`
+      (2024-12-01, no `enable_weak_ref` flag) workerd has none, since it is on by default only
+      from 2025-05-05, so the glue falls back to a no-op stub. Checked with the repo's workerd
+      (2026-09-23): `typeof FinalizationRegistry` is `undefined` at 2024-12-01 and 2025-05-04,
+      and `function` at 2025-05-05 or with the flag.
+  - The audit's evidence file had dismissed this site on the premise that wasm-bindgen
+    finalizers cover it. In this worker they cover neither allocation.
+  - `asPng()` returns a JS-owned copy, so freeing afterwards is safe.
+  - Measured in Node only, where `FinalizationRegistry` does exist, not in workerd. With
+    og-worker's fonts at ×3: no free grew wasm memory about 4.8 MB per render; freeing only the
+    `RenderedImage` still leaked about 120 KB per render; freeing both stayed flat. With this
+    worker's fonts at ×2, 40 renders of a synthetic 400×350 test SVG (not a real bot card, so the
+    per-tree figure is indicative): no free grew about 2.1 MB per render with no finalizer
+    running, which is the deployed bot's case; freeing only the `RenderedImage` leaked 64 KB per
+    render; freeing both stayed flat.
+  - `renderer.test.ts` mocks resvg-wasm. On success it checks that both `free()` calls run
+    exactly once, after `asPng()`; when `render()` or `asPng()` throws, that whatever was
+    allocated is freed exactly once. It also checks that a parse failure still surfaces the parse
+    error, which an unguarded `free()` in the `finally` would replace.
+
 ## [5.8.9] - 2026-10-06
 
 Sprint 30 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),

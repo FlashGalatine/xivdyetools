@@ -24,7 +24,7 @@
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.14.10 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.9 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Discord Bot** | v5.8.10 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.2 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -190,6 +190,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.10 | Oct 2026 | `renderSvgToPng` frees both resvg-wasm allocations of every render, the `Resvg` tree and the `RenderedImage` pixmap, in a `finally` — the fix the 2026-10-04 deep-dive's OPT-006 prescribes for og-worker. Both used to leak for the life of the isolate: resvg-wasm 2.6.2 never registers the `Resvg` with a finalizer, and at this worker's compatibility_date (2024-12-01) workerd has no `FinalizationRegistry` for the pixmap either. No visible change, no `register-commands` |
 | v5.8.9 | Oct 2026 | `/glamour` cards name items in Korean, Chinese and Japanese (2026-10-04 remediation, Sprint 30, FONT-001): CJK subsets widened with the ko / zh / ja item-name tables (KR +364, SC +1,167, JP +443); English fallback 63.2 % → 2 items (ko), 97.3 % → 0 (zh), 7.3 % → 0 (ja); Japanese cards load JP first, so kanji draw in Japanese letterforms (zh / ko / en unchanged); bundle 2,717.2 KiB (88.5 % of the cap) |
 | v5.8.8 | Oct 2026 | Moderation button ids built by `@xivdyetools/types` (2026-10-04 remediation, Sprint 26, REFACTOR-001); byte-identical. No visible change |
 | v5.8.7 | Oct 2026 | Core 5.10.0 and bot-logic 4.8.2 (2026-10-04 remediation, Sprint 13): `/extractor` shows only real colours (BUG-036); grey `/gradient` and HSL `/mixer` endpoints keep the other hue (BUG-035); unreadable `.chara` colours refused (BUG-133); CJK subsets re-cut for the new sheet names (JP +2/−1, SC +5/−3) |
