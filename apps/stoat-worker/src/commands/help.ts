@@ -25,7 +25,8 @@ const HELP_OVERVIEW = `**XIV Dye Tools — Command Reference**
   \`!xd help [command]\`          This message, or detail for one command
 
 Tip: Use \`!xd\` as a shortcut for \`!xivdye\`.
-     Dye names, ItemIDs (e.g., 5729), and localized names are all accepted.
+     Dye names, ItemIDs (e.g., 5729), and hex codes are accepted.
+     Dye names are matched in English.
 
 More commands (harmony, gradient, mixer, comparison, match, extract, a11y,
 search, list, random, prefs) exist in the Discord bot; this Revolt bot does not
@@ -41,12 +42,13 @@ export const HELP_TOPICS = ['info', 'ping', 'help', 'about'] as const;
 const COMMAND_HELP: Record<string, string> = {
   info: `**!xd info <dye>**
 Look up a dye's color values (HEX, RGB, HSV, LAB).
-Accepts dye names, ItemIDs, or localized names.
+Accepts English dye names, ItemIDs, or hex codes.
+A partial name that fits several dyes shows each one, or a list when there are many.
 
 Examples:
   \`!xd info Snow White\`
   \`!xd info 5729\`
-  \`!xd info スノウホワイト\``,
+  \`!xd info #FFFFFF\``,
 
   ping: `**!xd ping**
 Check bot connectivity and response latency.`,

@@ -57,6 +57,26 @@ function presetsIdentity(payload: JWTPayload): string {
 const OAUTH_WORKER_URL = import.meta.env.VITE_OAUTH_WORKER_URL || 'https://auth.xivdyetools.app';
 
 /**
+ * Upper bound on the best-effort `/auth/revoke` request sent on logout (BUG-115)
+ */
+const REVOKE_TIMEOUT_MS = 5000;
+
+/**
+ * A signal that aborts after `ms`. `AbortSignal.timeout` needs Safari 16 /
+ * Chrome 103 / Firefox 100 and the build targets es2020; where it is missing,
+ * calling it threw inside the revoke's try and NO revoke was sent at all, so
+ * fall back to an AbortController aborted by a timer
+ */
+function timeoutSignal(ms: number): AbortSignal {
+  if (typeof AbortSignal.timeout === 'function') {
+    return AbortSignal.timeout(ms);
+  }
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), ms);
+  return controller.signal;
+}
+
+/**
  * Presets API URL - handles preset operations
  */
 const PRESETS_API_URL = import.meta.env.VITE_PRESETS_API_URL || 'https://api.xivdyetools.app';
@@ -740,29 +760,26 @@ class AuthServiceImpl {
       return this.logoutPromise;
     }
 
-    const promise = this.performLogout().finally(() => {
-      this.logoutPromise = null;
-    });
+    // Deferred one microtask: performLogout() notifies listeners synchronously,
+    // and the memo must already be in place by then so a re-entrant logout()
+    // shares this pass instead of starting another
+    const promise = Promise.resolve()
+      .then(() => this.performLogout())
+      .finally(() => {
+        this.logoutPromise = null;
+      });
     this.logoutPromise = promise;
     return promise;
   }
 
-  private async performLogout(): Promise<void> {
+  private performLogout(): void {
     logger.info('Logging out...');
 
-    // Try to revoke token on server (non-blocking)
-    if (this.state.token) {
-      try {
-        await fetch(`${OAUTH_WORKER_URL}/auth/revoke`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${this.state.token}`,
-          },
-        });
-      } catch {
-        // Ignore revoke errors
-      }
-    }
+    // BUG-115: the local session is cleared FIRST. The revoke used to be
+    // awaited before any of this, with no timeout, so an auth worker that
+    // accepted the connection and never answered left the token stored and
+    // the UI signed in. Read the token for the revoke before clearing it.
+    const token = this.state.token;
 
     this.clearStorage();
     this.clearState();
@@ -771,6 +788,24 @@ class AuthServiceImpl {
     // FINDING-008: Clear cached market prices so they don't persist across sessions
     void APIService.clearCache().catch(() => {});
     this.notifyListeners();
+
+    // Revoke on the server: best effort, never awaited, and bounded so a
+    // stalled connection cannot linger
+    if (token) {
+      try {
+        void fetch(`${OAUTH_WORKER_URL}/auth/revoke`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          signal: timeoutSignal(REVOKE_TIMEOUT_MS),
+        }).catch(() => {
+          // Ignore revoke errors, the timeout included
+        });
+      } catch {
+        // Ignore revoke errors
+      }
+    }
 
     logger.info('Logged out successfully');
   }

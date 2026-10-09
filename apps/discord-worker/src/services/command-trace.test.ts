@@ -231,6 +231,20 @@ describe('lifecycle', () => {
     expect(trackMock.mock.calls[0][1]).toMatchObject({ success: true, outcome: 'rejected' });
   });
 
+  // BUG-005: universalis-client turns its own 10 s abort into UniversalisError(408);
+  // /budget marks classifyError(error) and shows the user an API-error embed. That
+  // stall must be a failure, not an answered `rejected` row that lifts /stats.
+  it('a Universalis client timeout (synthetic 408) is an unanswered upstream failure', async () => {
+    const env = createMockEnv();
+    const ix = interaction();
+    const ctx = realCtx();
+    startCommandTrace(ix, fields);
+    markCommandOutcome(ix, classifyError(new UniversalisError(408, 'Request timeout')));
+    finishCommandTrace(env, ix, ctx, logger);
+    await ctx._all();
+    expect(trackMock.mock.calls[0][1]).toMatchObject({ success: false, outcome: 'upstream_universalis' });
+  });
+
   it('a served failure (/dye text fallback) is answered but keeps its outcome; unserved render is a failure', async () => {
     const env = createMockEnv();
     const ix = interaction({ data: { name: 'dye' } });
@@ -362,13 +376,17 @@ describe('helpers', () => {
   });
 
   it.each([
-    // upstream: 5xx, 429 and network (status 0) are the upstream's fault
+    // upstream: 5xx, 408, 429 and network (status 0) are the upstream's fault
     [new UniversalisError(503, 'x'), undefined, {}, 'upstream_universalis'],
     [new UniversalisError(429, 'x'), undefined, {}, 'upstream_universalis'],
     [new UniversalisError(0, 'network'), undefined, {}, 'upstream_universalis'],
+    // BUG-005: 408 is a timeout (universalis-client turns its own 10 s abort
+    // into UniversalisError(408)), never the service's verdict on our payload
+    [new UniversalisError(408, 'Request timeout'), undefined, {}, 'upstream_universalis'],
+    [new PresetAPIError(408, 'Request timeout'), undefined, {}, 'upstream_presets'],
     [new PresetAPIError(500, 'x'), undefined, {}, 'upstream_presets'],
     [new PresetAPIError(502, 'x'), 'render', {}, 'upstream_presets'],
-    // upstream: a 4xx other than 429 is the service's own reply, relayed by the handler → rejected
+    // upstream: a 4xx other than 408 and 429 is the service's own reply, relayed by the handler → rejected
     [new UniversalisError(400, 'unknown world'), undefined, {}, 'rejected'],
     [new UniversalisError(404, 'no such item'), undefined, {}, 'rejected'],
     [new PresetAPIError(400, 'validation'), undefined, {}, 'rejected'],

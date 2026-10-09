@@ -21,6 +21,12 @@ const dyeGreen = {
   itemID: 1003,
   stainID: 13,
 };
+// Three more distinct stains, so a six-dye submission need not repeat one —
+// presets-api 2.5.0 refuses a repeated dye (BUG-010), and so does the bot now.
+const dyeWhite = { id: 4, name: 'Snow White', hex: '#FFFFFF', category: 'General', itemID: 1004, stainID: 14 };
+const dyeBlack = { id: 5, name: 'Soot Black', hex: '#000000', category: 'General', itemID: 1005, stainID: 15 };
+const dyeYellow = { id: 6, name: 'Canary Yellow', hex: '#FFFF00', category: 'General', itemID: 1006, stainID: 16 };
+const ALL_MOCK_DYES = [dyeRed, dyeBlue, dyeGreen, dyeWhite, dyeBlack, dyeYellow];
 
 // ---------------------------------------------------------------------------
 // Mock Presets
@@ -54,6 +60,9 @@ vi.mock('@xivdyetools/core', () => {
       if (lowerQuery.includes('red')) return [dyeRed];
       if (lowerQuery.includes('blue')) return [dyeBlue];
       if (lowerQuery.includes('green')) return [dyeGreen];
+      if (lowerQuery.includes('white')) return [dyeWhite];
+      if (lowerQuery.includes('black')) return [dyeBlack];
+      if (lowerQuery.includes('yellow')) return [dyeYellow];
       return [];
     }
     getDyeById(id: number) {
@@ -62,9 +71,11 @@ vi.mock('@xivdyetools/core', () => {
       if (id === 3) return dyeGreen;
       return null;
     }
-    // 5.0 presets are stainID-keyed; sendPresetEmbed resolves through this
+    // 5.0 presets are stainID-keyed; sendPresetEmbed resolves through this.
+    // The 1–3 shortcut keeps the older fixtures (`dyes: [1, 2, 3]`) drawing;
+    // the stainID lookup is what the repeated-dye message names a dye by.
     getByStainId(id: number) {
-      return this.getDyeById(id);
+      return this.getDyeById(id) ?? ALL_MOCK_DYES.find((d) => d.stainID === id) ?? null;
     }
   }
 
@@ -164,6 +175,7 @@ const translator = {
       'preset.notFound': 'Preset not found',
       'preset.notEnoughDyes': 'At least 3 dyes required',
       'preset.invalidDye': 'Invalid dye name',
+      'preset.repeatedDye': 'Repeated dye: {dye}',
       'preset.submitted': 'Preset Submitted',
       'preset.submittedApproved': 'Your preset has been approved!',
       'preset.submittedPending': 'Your preset is pending review',
@@ -245,6 +257,17 @@ const ctx: ExecutionContext = {
   }),
   passThroughOnException: vi.fn(),
 } as unknown as ExecutionContext;
+
+/**
+ * Wait until every promise the handler handed to `ctx.waitUntil` has settled.
+ * An absence assertion ("nothing was posted") made before the deferred work
+ * finishes passes without checking anything.
+ */
+async function settleBackgroundWork(): Promise<void> {
+  await Promise.allSettled(
+    vi.mocked(ctx.waitUntil).mock.calls.map(([p]) => p as Promise<unknown>),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -574,9 +597,9 @@ describe('/preset command', () => {
                 { name: 'dye1', value: 'Rolanberry Red' },
                 { name: 'dye2', value: 'Ceruleum Blue' },
                 { name: 'dye3', value: 'Celeste Green' },
-                { name: 'dye4', value: 'Rolanberry Red' },
-                { name: 'dye5', value: 'Ceruleum Blue' },
-                { name: 'dye6', value: 'Celeste Green' },
+                { name: 'dye4', value: 'Snow White' },
+                { name: 'dye5', value: 'Soot Black' },
+                { name: 'dye6', value: 'Canary Yellow' },
               ],
             },
           ],
@@ -588,10 +611,45 @@ describe('/preset command', () => {
 
       expect(mockSubmitPreset).toHaveBeenCalledWith(
         expect.anything(),
-        expect.objectContaining({ dyes: [11, 12, 13, 11, 12, 13] }),
+        expect.objectContaining({ dyes: [11, 12, 13, 14, 15, 16] }),
         expect.anything(),
         expect.anything(),
       );
+    });
+
+    // Sprint 8 follow-up: presets-api 2.5.0 answers a repeated dye with a 400,
+    // which the bot could only show as the generic "Invalid request". The
+    // check runs on the RESOLVED stainIDs — two different spellings of one dye
+    // are still one dye — and refuses before the API is called.
+    it('refuses a repeated dye before calling the API, naming the dye', async () => {
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            {
+              type: 1,
+              name: 'submit',
+              options: [
+                { name: 'preset_name', value: 'Test Preset' },
+                { name: 'description', value: 'A test' },
+                { name: 'category', value: 'glamour' },
+                { name: 'dye1', value: 'Rolanberry Red' },
+                { name: 'dye2', value: 'Ceruleum Blue' },
+                { name: 'dye3', value: 'red' },
+              ],
+            },
+          ],
+        },
+      };
+
+      const res = await handlePresetCommand(interaction, env, ctx);
+      const body = (await res.json()) as InteractionResponseBody;
+
+      expect(body.data!.flags).toBe(64);
+      expect(body.data!.embeds![0].description).toBe('Repeated dye: Rolanberry Red-localized');
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+      expect(mockSubmitPreset).not.toHaveBeenCalled();
     });
 
     it('returns error for invalid dye name', async () => {
@@ -1087,6 +1145,74 @@ describe('/preset command', () => {
       );
     });
 
+    // Sprint 8 follow-up: the check runs on the list AFTER position
+    // replacement, so a new dye that collides with a position the user did not
+    // touch is caught too — presets-api would answer it with a bare 400.
+    it('refuses an edit whose rebuilt dye list repeats a dye, before calling the API', async () => {
+      mockGetPreset.mockResolvedValueOnce({ ...mockPreset, dyes: [11, 12, 13] });
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            {
+              type: 1,
+              name: 'edit',
+              options: [
+                { name: 'preset', value: PRESET_ID },
+                // position 1 becomes green, which position 3 already holds
+                { name: 'dye1', value: 'Celeste Green' },
+              ],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await settleBackgroundWork();
+
+      expect(mockEditPreset).not.toHaveBeenCalled();
+      const last = mockEditOriginalResponse.mock.calls.at(-1) as unknown[];
+      const embed = (last[2] as { embeds: Array<{ description?: string }> }).embeds[0];
+      expect(embed.description).toBe('Repeated dye: Celeste Green-localized');
+    });
+
+    // getLocalizedDyeName falls back to the English name when the locale's
+    // core instance is not loaded yet, so on a cold isolate a ja/de/fr/ko/zh
+    // user's repeated-dye error named the dye in English. The edit path runs
+    // after the defer, so it loads the user's locale before naming any dye.
+    it("loads the user's locale before resolving and naming the edit's dyes", async () => {
+      const { initializeLocale } = await import('../../services/i18n.js');
+      mockGetPreset.mockResolvedValueOnce({ ...mockPreset, dyes: [11, 12, 13] });
+
+      const interaction: DiscordInteraction = {
+        ...baseInteraction,
+        data: {
+          ...baseInteraction.data,
+          options: [
+            {
+              type: 1,
+              name: 'edit',
+              options: [
+                { name: 'preset', value: PRESET_ID },
+                { name: 'dye1', value: 'Celeste Green' },
+              ],
+            },
+          ],
+        },
+      };
+
+      await handlePresetCommand(interaction, env, ctx);
+      await settleBackgroundWork();
+
+      expect(initializeLocale).toHaveBeenCalledWith('en');
+      // loaded before the answer that names the dye was sent
+      expect(vi.mocked(initializeLocale).mock.invocationCallOrder[0]).toBeLessThan(
+        mockEditOriginalResponse.mock.invocationCallOrder.at(-1)!,
+      );
+    });
+
     it('handles duplicate_dyes error from API', async () => {
       mockEditPreset.mockResolvedValueOnce({
         success: false,
@@ -1157,7 +1283,7 @@ describe('/preset command', () => {
 
       const envWithMod = { ...env, MODERATION_CHANNEL_ID: 'mod-channel' } as Env;
       await handlePresetCommand(interaction, envWithMod, ctx);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await settleBackgroundWork();
 
       expect(mockEditOriginalResponse).toHaveBeenCalledWith(
         expect.anything(),
@@ -1170,7 +1296,8 @@ describe('/preset command', () => {
           ]),
         }),
       );
-      expect(mockSendMessage).toHaveBeenCalled();
+      // BUG-004: the moderation post is presets-api's webhook's job
+      expect(mockSendMessage).not.toHaveBeenCalled();
     });
 
     it('shows approved status for immediate edit approval', async () => {
@@ -1423,194 +1550,71 @@ describe('/preset command', () => {
   });
 
   describe('/preset submit notifications', () => {
-    it('notifies submission log channel when approved and SUBMISSION_LOG_CHANNEL_ID is set', async () => {
+    // BUG-004 (2026-10-04 deep-dive): presets-api's webhook posts every
+    // submission — pending ones to the moderation channel with revision-bound
+    // buttons, approved ones to the submission log — whatever its source. The
+    // bot used to post its own copy on top (legacy button ids that only
+    // refresh), so a /preset submit appeared twice. The bot now only answers
+    // the user.
+    const submitInteraction = (): DiscordInteraction => ({
+      ...baseInteraction,
+      data: {
+        ...baseInteraction.data,
+        options: [
+          {
+            type: 1,
+            name: 'submit',
+            options: [
+              { name: 'preset_name', value: 'Test Preset' },
+              { name: 'description', value: 'A test' },
+              { name: 'category', value: 'glamour' },
+              { name: 'dye1', value: 'Rolanberry Red' },
+              { name: 'dye2', value: 'Ceruleum Blue' },
+              { name: 'dye3', value: 'Celeste Green' },
+            ],
+          },
+        ],
+      },
+    });
+    const bothChannels = {
+      ...env,
+      SUBMISSION_LOG_CHANNEL_ID: 'submission-channel',
+      MODERATION_CHANNEL_ID: 'moderation-channel',
+      MODERATION_BOT_TOKEN: 'mod-token',
+    } as Env;
+    const lastUserEmbed = () => {
+      const call = mockEditOriginalResponse.mock.calls.at(-1) as unknown[];
+      return (call[2] as { embeds: Array<{ description?: string }> }).embeds[0];
+    };
+
+    it('posts nothing to the submission log for an auto-approved submit, and tells the user it is live', async () => {
       mockSubmitPreset.mockResolvedValueOnce({
         success: true,
         preset: mockPreset,
         moderation_status: 'approved',
       });
 
-      const interaction: DiscordInteraction = {
-        ...baseInteraction,
-        data: {
-          ...baseInteraction.data,
-          options: [
-            {
-              type: 1,
-              name: 'submit',
-              options: [
-                { name: 'preset_name', value: 'Test Preset' },
-                { name: 'description', value: 'A test' },
-                { name: 'category', value: 'glamour' },
-                { name: 'dye1', value: 'Rolanberry Red' },
-                { name: 'dye2', value: 'Ceruleum Blue' },
-                { name: 'dye3', value: 'Celeste Green' },
-              ],
-            },
-          ],
-        },
-      };
+      await handlePresetCommand(submitInteraction(), bothChannels, ctx);
+      await settleBackgroundWork();
 
-      const envWithSubmissionChannel = {
-        ...env,
-        SUBMISSION_LOG_CHANNEL_ID: 'submission-channel',
-      } as Env;
-
-      await handlePresetCommand(interaction, envWithSubmissionChannel, ctx);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      expect(mockSendMessage).toHaveBeenCalledWith(
-        expect.anything(),
-        'submission-channel',
-        expect.anything(),
-      );
+      expect(mockEditOriginalResponse).toHaveBeenCalled();
+      expect(lastUserEmbed().description).toBe('Your preset has been approved!');
+      expect(mockSendMessage).not.toHaveBeenCalled();
     });
 
-    it('notifies moderation channel when pending and MODERATION_CHANNEL_ID is set', async () => {
+    it('posts nothing to the moderation channel for a pending submit, and tells the user it awaits review', async () => {
       mockSubmitPreset.mockResolvedValueOnce({
         success: true,
         preset: mockPreset,
         moderation_status: 'pending',
       });
 
-      const interaction: DiscordInteraction = {
-        ...baseInteraction,
-        data: {
-          ...baseInteraction.data,
-          options: [
-            {
-              type: 1,
-              name: 'submit',
-              options: [
-                { name: 'preset_name', value: 'Test Preset' },
-                { name: 'description', value: 'A test' },
-                { name: 'category', value: 'glamour' },
-                { name: 'dye1', value: 'Rolanberry Red' },
-                { name: 'dye2', value: 'Ceruleum Blue' },
-                { name: 'dye3', value: 'Celeste Green' },
-              ],
-            },
-          ],
-        },
-      };
+      await handlePresetCommand(submitInteraction(), bothChannels, ctx);
+      await settleBackgroundWork();
 
-      const envWithModerationChannel = {
-        ...env,
-        MODERATION_CHANNEL_ID: 'moderation-channel',
-      } as Env;
-
-      await handlePresetCommand(interaction, envWithModerationChannel, ctx);
-      await new Promise((resolve) => setTimeout(resolve, 100));
-
-      expect(mockSendMessage).toHaveBeenCalledWith(
-        expect.anything(),
-        'moderation-channel',
-        expect.anything(),
-      );
-    });
-
-    // REFACTOR-002: notifyModerationChannel used to be called without the
-    // request logger, so a failed moderation-channel send was silently
-    // swallowed inside sendModerationNotification's own catch/non-ok branch.
-    it('logs when the moderation notification send fails, proving the request logger reaches it', async () => {
-      mockSubmitPreset.mockResolvedValueOnce({
-        success: true,
-        preset: mockPreset,
-        moderation_status: 'pending',
-      });
-      mockSendMessage.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        text: async () => 'internal error',
-      });
-      const mockLogger = { error: vi.fn() };
-
-      const interaction: DiscordInteraction = {
-        ...baseInteraction,
-        data: {
-          ...baseInteraction.data,
-          options: [
-            {
-              type: 1,
-              name: 'submit',
-              options: [
-                { name: 'preset_name', value: 'Test Preset' },
-                { name: 'description', value: 'A test' },
-                { name: 'category', value: 'glamour' },
-                { name: 'dye1', value: 'Rolanberry Red' },
-                { name: 'dye2', value: 'Ceruleum Blue' },
-                { name: 'dye3', value: 'Celeste Green' },
-              ],
-            },
-          ],
-        },
-      };
-
-      const envWithModerationChannel = {
-        ...env,
-        MODERATION_CHANNEL_ID: 'moderation-channel',
-      } as Env;
-
-      await handlePresetCommand(interaction, envWithModerationChannel, ctx, mockLogger as any);
-      await vi.waitFor(() => expect(mockLogger.error).toHaveBeenCalled());
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Moderation notification rejected by Discord',
-        undefined,
-        expect.objectContaining({ status: 500 }),
-      );
-    });
-
-    // REFACTOR-002: notifySubmissionChannel logged only a throw — a non-2xx
-    // from Discord was swallowed silently. Mirrors the moderation-channel
-    // case above for the auto-approved (submission log channel) path.
-    it('logs when the submission channel notification is rejected by Discord, proving res.ok is checked', async () => {
-      mockSubmitPreset.mockResolvedValueOnce({
-        success: true,
-        preset: mockPreset,
-        moderation_status: 'approved',
-      });
-      mockSendMessage.mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        text: async () => 'internal error',
-      });
-      const mockLogger = { error: vi.fn() };
-
-      const interaction: DiscordInteraction = {
-        ...baseInteraction,
-        data: {
-          ...baseInteraction.data,
-          options: [
-            {
-              type: 1,
-              name: 'submit',
-              options: [
-                { name: 'preset_name', value: 'Test Preset' },
-                { name: 'description', value: 'A test' },
-                { name: 'category', value: 'glamour' },
-                { name: 'dye1', value: 'Rolanberry Red' },
-                { name: 'dye2', value: 'Ceruleum Blue' },
-                { name: 'dye3', value: 'Celeste Green' },
-              ],
-            },
-          ],
-        },
-      };
-
-      const envWithSubmissionChannel = {
-        ...env,
-        SUBMISSION_LOG_CHANNEL_ID: 'submission-channel',
-      } as Env;
-
-      await handlePresetCommand(interaction, envWithSubmissionChannel, ctx, mockLogger as any);
-      await vi.waitFor(() => expect(mockLogger.error).toHaveBeenCalled());
-
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        'Submission channel notification rejected by Discord',
-        undefined,
-        expect.objectContaining({ status: 500, presetId: mockPreset.id }),
-      );
+      expect(mockEditOriginalResponse).toHaveBeenCalled();
+      expect(lastUserEmbed().description).toBe('Your preset is pending review');
+      expect(mockSendMessage).not.toHaveBeenCalled();
     });
 
     it('handles PresetAPIError in submit command', async () => {
@@ -1768,7 +1772,11 @@ describe('/preset command', () => {
   });
 
   describe('/preset edit notifications', () => {
-    it('notifies moderation channel with all change types (name, description, dyes, tags)', async () => {
+    // BUG-004: a pending edit's moderation post (diff, and Revert when the
+    // preset was live) comes from presets-api's webhook, which knows the new
+    // content_revision and the revert snapshot. The bot's own copy carried
+    // neither, so it is gone; the user still gets the pending confirmation.
+    it('posts nothing to the moderation channel for a pending edit', async () => {
       mockGetPreset.mockResolvedValueOnce({
         ...mockPreset,
         name: 'Original Name',
@@ -1808,21 +1816,22 @@ describe('/preset command', () => {
         },
       };
 
-      const envWithMod = { ...env, MODERATION_CHANNEL_ID: 'mod-channel' } as Env;
+      const envWithMod = {
+        ...env,
+        MODERATION_CHANNEL_ID: 'mod-channel',
+        MODERATION_BOT_TOKEN: 'mod-token',
+      } as Env;
       await handlePresetCommand(interaction, envWithMod, ctx);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await settleBackgroundWork();
 
-      expect(mockSendMessage).toHaveBeenCalledWith(
+      expect(mockEditOriginalResponse).toHaveBeenCalledWith(
         expect.anything(),
-        'mod-channel',
+        expect.anything(),
         expect.objectContaining({
-          embeds: expect.arrayContaining([
-            expect.objectContaining({
-              description: expect.stringContaining('Changes:'),
-            }),
-          ]),
+          embeds: [expect.objectContaining({ title: expect.stringContaining('Pending Review') })],
         }),
       );
+      expect(mockSendMessage).not.toHaveBeenCalled();
     });
 
     it('handles PresetAPIError in edit command', async () => {
@@ -2041,7 +2050,10 @@ describe('/preset command', () => {
       expect(description).toContain('\\_Mallory\\_');
     });
 
-    it('the auto-approved submission-log embed is sanitised like the moderation path', async () => {
+    // The submission-log embed this test used to inspect is presets-api's
+    // webhook's post now (BUG-004; its sanitisation is pinned in
+    // index.test.ts). What the bot still renders is the user's confirmation.
+    it('the submit confirmation embed is sanitised', async () => {
       mockSubmitPreset.mockResolvedValueOnce({
         success: true,
         preset: hostilePreset,
@@ -2070,24 +2082,15 @@ describe('/preset command', () => {
       const envWithLog = { ...env, SUBMISSION_LOG_CHANNEL_ID: 'submission-channel' } as Env;
 
       await handlePresetCommand(interaction, envWithLog, ctx);
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await settleBackgroundWork();
 
-      const logCall = mockSendMessage.mock.calls.find((c) => c[1] === 'submission-channel');
-      expect(logCall).toBeDefined();
-      const embed = (logCall![2] as { embeds: Array<Record<string, unknown>> }).embeds[0];
-      expect(embed.title as string).not.toContain('[here](https://phish.example)');
-      expect(embed.title as string).not.toContain('@everyone');
-      expect(embed.description as string).not.toContain('**Bold**');
-      const fields = embed.fields as Array<{ name: string; value: string }>;
-      const authorField = fields.find((f) => f.value.includes('Mallory'));
-      expect(authorField).toBeDefined();
-      expect(authorField!.value).not.toContain('<@999>');
-
-      // The user-facing confirmation also carries the name
+      expect(mockSendMessage).not.toHaveBeenCalled();
       const confirm = mockEditOriginalResponse.mock.calls.at(-1) as unknown[];
       const confirmEmbed = (confirm[2] as { embeds: Array<Record<string, unknown>> }).embeds[0];
       const nameField = (confirmEmbed.fields as Array<{ name: string; value: string }>)[0];
       expect(nameField.value).not.toContain('[here](https://phish.example)');
+      expect(nameField.value).toContain('\\[here\\]\\(https://phish.example\\)');
+      expect(nameField.value).not.toContain('@everyone');
     });
   });
 

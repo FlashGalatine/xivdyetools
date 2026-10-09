@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-10-06
+
+Sprint 12 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive`): BUG-140, BUG-141, OPT-010,
+REFACTOR-007. Minor rather than patch, by the rule 2.2.0 set: log output a consumer could assert on changes. A `Date`
+or `URL` in a context is now a string where it was `{}`, and a context string holding a secret-looking `key=value` is
+now partly redacted.
+
+### Security
+
+- **A secret embedded in a longer context string is redacted** (BUG-140). Context string values (object values, nested
+  values, array items) only got the whole-value shape check, so `'upstream said password=hunter2 and gave up'` was
+  emitted verbatim. With `sanitizeErrors` on (the default) they now also take the free-text rules `message` and
+  `error.message` get, after the shape check: that line logs `'upstream said password=[REDACTED] and gave up'`. Keys are
+  never rewritten; `sanitizeErrors: false` keeps the old output. **Consumer-visible**, as on the message path today: a
+  diagnostic such as `'password: required'` or `'token: expired'` becomes `'password=[REDACTED]'` /
+  `'token=[REDACTED]'`.
+- **URL credentials are redacted.** A new rule rewrites `scheme://user:PASSWORD@host` (the user name may be empty) to
+  `scheme://user:[REDACTED]@host` in messages, error messages and context strings.
+- **No free-text rule is super-linear any more.** Every rule was swept with adversarial 100 KB inputs. The JWT shape
+  pattern, unchanged since 2.2.1, took about 5 s on a run like `eyJ-eyJ-…`; it is now a linear scan with identical
+  output (a 300,000-input differential fuzz). Every adversarial input now logs in under 25 ms, and a test holds each
+  one under 250 ms.
+
+### Fixed
+
+- **A `Date`, `URL` or other object with `toJSON` in a log context is no longer logged as `{}`** (BUG-141). It is
+  serialized the way `JSON.stringify` does and the result is redacted like any other value: `Date` becomes its ISO
+  string (`null` when invalid), `URL` its href, a class with `toJSON` its redacted shape. Dashboards that parsed such a
+  field as an object now see a string. `Map`, `Set` and `Error` have no `toJSON` and stay `{}`. Guards: a `toJSON` that
+  throws or returns itself falls back to the old output; a result pointing back at its source logs `[Circular]`; a
+  result that throws while walked logs `[Unserializable]`; results nest at most 32 deep and at most 4,096 `toJSON`
+  calls that return an object or array run per log call, past which the value logs `[Truncated]`. A log call never
+  throws. With `sanitizeErrors` on, an `Error`'s `toJSON` is never called: it logs its own enumerable fields only, as
+  in 2.2.1 (`{}` for a plain `Error`, `{ name, code, severity }` for an `AppError`), so no stack gets out.
+
+### Changed
+
+- **Cost per log line rises with the number of context strings.** The BUG-140 pass runs the 18 rules over every
+  context string: about 2-3 µs per string. A typical small context goes from about 14 to 24 µs; a 5,000-row result
+  set from about 40 to 70-80 ms (100 ms with a `Date` per row); 20,000 short strings from about 6 to 55-60 ms. Workers
+  that log large result sets spend noticeably more CPU.
+- The normalized redact-field set is built once per logger instead of per nested object (OPT-010); output is
+  identical. A subclass that reassigns `config.redactFields` after construction would see a stale set; none in this
+  repository does.
+- The orphaned `MAX_STRINGIFY_NODES` doc block now sits on its constant (REFACTOR-007).
+
+### Known gaps (pre-existing or by design)
+
+- A function or class value that carries a `toJSON` is passed through, and its raw `toJSON` result is emitted
+  unredacted (as in 2.2.1).
+- An own getter that throws, or a revoked Proxy, in a context still throws out of the log call (as in 2.2.1).
+- Only the URL password is covered: a token in the user-name position (`https://TOKEN@host`) is not redacted, nor are
+  other secret query parameters (OAuth `code=`, `X-Amz-Signature=`). In a raw string, a password containing `@` leaks
+  its tail and one containing `/` is not redacted (a `URL` object percent-encodes both). A URL with a port, no path and
+  an `@` in its query or fragment has the port redacted as if it were a password (fail closed).
+- With `sanitizeErrors: false`, a `URL` object now logs its href including the password, where 2.2.1 logged `{}`.
+- A `Buffer` now logs as `{ type: 'Buffer', data: [...] }` (its `toJSON`).
+- The quoted-value arm of the key rules leaks the tail of a value with mixed quotes (`password="x'y"`).
+
+### Tests
+
+- 300 tests. Every fix was written red first and mutation-checked, including timing tests for each adversarial input,
+  a 5,000-row `Date` context that must log in full, and the hostile-Proxy guards.
+
 ## [2.2.1] - 2026-09-17
 
 Sprint 9 of the 2026-09-16 deep-dive remediation (`docs/audits/2026-09-16-deep-dive`).

@@ -33,7 +33,6 @@ setup files.
 
 ### Cloudflare Worker Mocks
 - `createMockD1Database(config?)` — D1 mock with prepared statement support, query history tracking, `_bindings` inspection
-- `createMockD1()` — a bare `D1Database`-typed mock for cases that need no inspection
 - `createMockKV()` — KV namespace mock (in-memory); `KV_MIN_EXPIRATION_TTL` and `KV_MAX_LIST_PAGE` are exported alongside it
 - `createMockR2Bucket()` — R2 bucket mock
 - `createMockFetcher(config?)` — Service binding Fetcher mock
@@ -47,7 +46,6 @@ setup files.
 ### Factories
 - `createMockDye(overrides)` — Dye objects with sensible defaults; `mockDyes` is a ready-made array. The default `stainID` advances a deterministic 1-254 sequence and throws once a suite builds more than 254 default-stainID dyes — call `resetMockDyeSequence()` (e.g. in `beforeEach`) between tests
 - `resetMockDyeSequence()` — restarts `createMockDye()`'s default stainID sequence at 1
-- `randomStainId()` — opt-in non-deterministic stainID draw over the real 1-254 range, e.g. `createMockDye({ stainID: randomStainId() })`
 - `createMockPresetRow(overrides)` — a raw D1 `presets` row
 - `createMockSubmission(overrides)` — a `PresetSubmission` request body
 - `createMockCategoryRow(overrides)` — a raw D1 `categories` row

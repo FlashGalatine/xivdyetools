@@ -9,7 +9,9 @@ import { createMockEnv } from '../../tests/test-utils';
 import { resetAllMocks, createMockExecutionContext } from '../universalis/test-setup';
 import { parseResolveBody } from './router';
 
-const env = createMockEnv({ XIVAPI_BASE: 'https://xivapi.test', XIVAPI_VERSION: 'latest' });
+// A real version key is its own cache namespace, so these tests stay about
+// resolution. The moving `latest` alias has its own block at the bottom (BUG-040).
+const env = createMockEnv({ XIVAPI_BASE: 'https://xivapi.test', XIVAPI_VERSION: 'pinned-test-key' });
 
 const okJson = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -91,6 +93,84 @@ describe('POST /v1/chara/resolve', () => {
     vi.restoreAllMocks();
   });
   afterEach(() => vi.unstubAllGlobals());
+
+  it('replaces retired rows on fresh and cached imports using the exact model family', async () => {
+    const result = (row_id: number, Name: string, LevelEquip: number) => ({
+      row_id,
+      fields: {
+        Name,
+        LevelEquip,
+        ModelMain: 65540,
+        ModelSub: 0,
+        EquipSlotCategory: { fields: { Head: 1 } },
+      },
+    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        okJson({
+          version: 'v',
+          results: [
+            result(372, 'Dated Hempen Coif', 1),
+            result(2629, 'Hempen Coif', 1),
+            result(2630, 'Hempen Coif of Gathering', 1),
+            result(10, 'Aetherial Test Coif', 50),
+            result(11, 'Deepmist Test Coif', 60),
+          ],
+        }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
+    const ctx = createMockExecutionContext();
+    const fresh = await post(body, ctx);
+    expect(fresh.status).toBe(200);
+    await flush(ctx);
+    const cached = await post(body);
+    expect(cached.headers.get('X-Cache')).toBe('HIT');
+    for (const response of [fresh, cached]) {
+      const payload = (await response.json()) as any;
+      expect(payload.data.items.HeadGear).toMatchObject({
+        itemId: 2629,
+        names: { en: 'Hempen Coif' },
+        familySize: 2,
+        alternates: [{ itemId: 2630, names: { en: 'Hempen Coif of Gathering' } }],
+      });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('fields')).toContain('LevelEquip');
+    const again = (await (await post(body)).json()) as any;
+    expect(again.data.items.HeadGear).not.toHaveProperty('retired');
+  });
+
+  it('names an all-retired family flagged retired, fresh and cached, instead of null', async () => {
+    // 2026-10-09 merge-day review: the cache keeps raw rows, so the fallback
+    // is decided at resolve time and a replay answers the same as upstream.
+    const result = (row_id: number, Name: string, LevelEquip: number) => ({
+      row_id,
+      fields: { Name, LevelEquip, ModelMain: 65540, ModelSub: 0, EquipSlotCategory: { fields: { Head: 1 } } },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      okJson({ version: 'v', results: [result(372, 'Dated Hempen Coif', 1), result(10, 'Aetherial Test Coif', 50)] }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
+    const ctx = createMockExecutionContext();
+    const fresh = await post(body, ctx);
+    await flush(ctx);
+    const cached = await post(body);
+    expect(cached.headers.get('X-Cache')).toBe('HIT');
+    for (const response of [fresh, cached]) {
+      const payload = (await response.json()) as any;
+      expect(payload.data.items.HeadGear).toMatchObject({
+        itemId: 10,
+        names: { en: 'Aetherial Test Coif' },
+        familySize: 2,
+        alternates: [{ itemId: 372, names: { en: 'Dated Hempen Coif' } }],
+        retired: true,
+      });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 
   it('resolves a file in one upstream search, applies the off-hand rule, nulls unknown keys', async () => {
     const fetchMock = vi.fn().mockResolvedValue(okJson({ version: '284bb7f44b9c0976', results: [BEECH_MASK, RUNAWAY_BOW] }));
@@ -196,7 +276,7 @@ describe('POST /v1/chara/resolve', () => {
     const res = await post({ gear: [{ slot: 'HeadGear', base: 361, variant: 5 }], glasses: 40 });
     const body = (await res.json()) as any;
     expect(res.status).toBe(200);
-    expect(body.data.glasses).toEqual({ id: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018 });
+    expect(body.data.glasses).toEqual({ id: 40, names: { en: 'Black Rose-colored Spectacles', ja: 'ローズ', de: 'Brille', fr: 'Lunettes' }, iconId: 200018, acquisition: 'Mount Rokkon' });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -434,6 +514,84 @@ describe('GET /v1/chara/icon/:iconId', () => {
     const down = await app.request('/v1/chara/icon/999997', {}, env, createMockExecutionContext());
     expect(down.status).toBe(503);
     expect(((await down.json()) as any).error).toBe('UPSTREAM_UNAVAILABLE');
+  });
+});
+
+/**
+ * BUG-040: with XIVAPI_VERSION = "latest" the row-cache namespace used to be
+ * the literal string, constant across patches, so a patch that added an Item
+ * row to a cached ModelMain kept serving the pre-patch family for up to
+ * 7 d + 1 d SWR. The namespace is now the key `latest` currently points at.
+ */
+describe('POST /v1/chara/resolve — row cache follows the game version behind "latest" (BUG-040)', () => {
+  const BODY = { gear: [{ slot: 'HeadGear', base: 361, variant: 5 }] };
+  const NEW_TWIN = { ...BEECH_MASK, row_id: 99999 };
+  const versions = (key: string) =>
+    okJson({ versions: [{ key: 'old0000000000000', names: ['7.5'] }, { key, names: ['7.6', 'latest'] }] });
+  let now = 1_000_000;
+
+  beforeEach(() => {
+    resetAllMocks();
+    vi.restoreAllMocks();
+    now = 1_000_000;
+    vi.spyOn(Date, 'now').mockImplementation(() => now);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  const resolve = (base: string, ctx: ExecutionContext) =>
+    app.request(
+      '/v1/chara/resolve',
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(BODY) },
+      createMockEnv({ XIVAPI_BASE: base, XIVAPI_VERSION: 'latest' }),
+      ctx,
+    );
+
+  it('serves a repeat from the cache within a patch, then goes upstream again once the version moves', async () => {
+    const base = 'https://xivapi-latest.test';
+    let current = 'aaaaaaaaaaaaaaaa';
+    let searches = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (new URL(url).pathname === '/api/version') return versions(current);
+        searches++;
+        return okJson({ version: current, results: searches === 1 ? [BEECH_MASK] : [BEECH_MASK, NEW_TWIN] });
+      }),
+    );
+
+    const ctx1 = createMockExecutionContext() as unknown as ExecutionContext;
+    const first = await resolve(base, ctx1);
+    expect(first.headers.get('X-Cache')).toBe('MISS');
+    await flush(ctx1);
+
+    const second = await resolve(base, createMockExecutionContext() as unknown as ExecutionContext);
+    expect(second.headers.get('X-Cache')).toBe('HIT');
+    expect(searches).toBe(1);
+
+    // Patch day: `latest` re-points. Past the version-lookup TTL the namespace
+    // changes, so the cached pre-patch family is no longer read.
+    current = 'bbbbbbbbbbbbbbbb';
+    now += 11 * 60_000;
+    const third = await resolve(base, createMockExecutionContext() as unknown as ExecutionContext);
+    expect(third.headers.get('X-Cache')).toBe('MISS');
+    expect(searches).toBe(2);
+    const body = (await third.json()) as any;
+    expect(body.data.items.HeadGear.familySize).toBe(2);
+  });
+
+  it('degrades to the literal "latest" namespace, and still answers, when /api/version is unavailable', async () => {
+    let searches = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (new URL(url).pathname === '/api/version') return new Response('down', { status: 502 });
+        searches++;
+        return okJson({ version: 'k', results: [BEECH_MASK] });
+      }),
+    );
+    const res = await resolve('https://xivapi-versiondown.test', createMockExecutionContext() as unknown as ExecutionContext);
+    expect(res.status).toBe(200);
+    expect(searches).toBe(1);
   });
 });
 

@@ -116,6 +116,51 @@ describe('parseFloatParam', () => {
   });
 });
 
+/**
+ * BUG-038: parseInt / parseFloat read a numeric prefix, so `1e2` was 1, `2abc`
+ * was 2, `50.9` was 50 and `10px` was 10 — each spelling a distinct shared-cache
+ * key (s-maxage=86400) serving a quietly different answer. Only a canonical
+ * decimal spelling is accepted now.
+ */
+describe('parseIntParam / parseFloatParam canonical spelling (BUG-038)', () => {
+  const badInts = ['1e2', '2abc', '50.9', ' 7', '7 ', '+5', '0x10', '1_000', '--1', '-', '1.', '.5', 'Infinity', 'NaN'];
+  const badFloats = ['10px', '1e2', '1e-2', ' 7', '7 ', '+5', '0x10', '1,5', '--1', '-', '1.', '.5', 'Infinity', 'NaN', '1.5.2'];
+
+  it.each(badInts)('parseIntParam rejects %j as VALIDATION_ERROR', (raw) => {
+    expect(() => parseIntParam(raw, 'limit')).toThrow(ApiError);
+    try {
+      parseIntParam(raw, 'limit');
+    } catch (e) {
+      expect((e as ApiError).statusCode).toBe(400);
+      expect((e as ApiError).code).toBe('VALIDATION_ERROR');
+    }
+  });
+
+  it.each(badFloats)('parseFloatParam rejects %j as VALIDATION_ERROR', (raw) => {
+    expect(() => parseFloatParam(raw, 'maxDistance')).toThrow(ApiError);
+    try {
+      parseFloatParam(raw, 'maxDistance');
+    } catch (e) {
+      expect((e as ApiError).statusCode).toBe(400);
+      expect((e as ApiError).code).toBe('VALIDATION_ERROR');
+    }
+  });
+
+  it('rejects an integer beyond the safe range rather than rounding it', () => {
+    expect(() => parseIntParam('9007199254740993', 'minPrice')).toThrow(ApiError);
+  });
+
+  it('still accepts plain decimals', () => {
+    expect(parseIntParam('0', 'p')).toBe(0);
+    expect(parseIntParam('-12', 'p')).toBe(-12);
+    expect(parseIntParam('007', 'p')).toBe(7);
+    expect(parseFloatParam('0', 'p')).toBe(0);
+    expect(parseFloatParam('10', 'p')).toBe(10);
+    expect(parseFloatParam('-0.25', 'p')).toBe(-0.25);
+    expect(parseFloatParam('12.50', 'p')).toBe(12.5);
+  });
+});
+
 describe('parseEnumParam', () => {
   const values = ['a', 'b', 'c'] as const;
 

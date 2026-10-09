@@ -7,6 +7,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { REVIEW_STATUSES } from '@xivdyetools/types';
 import { moderationRouter } from '../../src/handlers/moderation';
 import { presetsRouter } from '../../src/handlers/presets';
 import { authMiddleware } from '../../src/middleware/auth';
@@ -112,6 +113,21 @@ describe('moderation review binding (FINDING-017)', () => {
       });
       expect(await row()).toEqual({ status: 'pending', content_revision: 0 });
       expect(await auditCount()).toBe(0);
+    });
+
+    // REFACTOR-001: discord-worker and moderation-worker bind a review button to
+    // a status from this same shared list, so every word in it must be one this
+    // route accepts as expected_status — including `hidden`, which is not a
+    // valid *target* status. (Binding a review to `hidden` is intended: the
+    // 2026-10-04 deep-dive rejected candidate presets-handlers-03.)
+    it.each(REVIEW_STATUSES)('accepts the shared review status %s as expected_status', async (reviewed) => {
+      await seed(reviewed);
+
+      const res = await patchStatus({ status: 'approved', expected_revision: 0, expected_status: reviewed });
+
+      expect(res.status).toBe(200);
+      expect((await row()).status).toBe('approved');
+      expect(await auditCount()).toBe(1);
     });
 
     it('still answers 400 for an invalid target status before the revision check', async () => {
@@ -236,6 +252,19 @@ describe('moderation review binding (FINDING-017)', () => {
       await seed();
       const res = await app.request(`/api/v1/moderation/${presetId}`, { headers: headers(ownerId) }, env);
       expect(res.status).toBe(403);
+    });
+
+    // CONTRACT with moderation-worker (deep-dive BUG-054): its getModerationPreset
+    // (apps/moderation-worker/src/services/preset-api.ts, isPresetMissing) reads
+    // ONLY this exact body as "the preset is gone" and strips the review
+    // buttons; any other 404 — a route this deploy does not have yet, pinned in
+    // tests/index.test.ts — keeps them. The two apps share no package edge, so
+    // a presets-api change never runs moderation-worker's tests: changing this
+    // body means changing isPresetMissing in the same PR.
+    it('answers a missing preset with the exact body moderation-worker reads as gone', async () => {
+      const gone = await app.request('/api/v1/moderation/00000000-0000-4000-8000-000000000000', { headers: headers() }, env);
+      expect(gone.status).toBe(404);
+      expect(await gone.json()).toMatchObject({ error: 'NOT_FOUND', message: 'Preset not found' });
     });
 
     it('answers 404 for a missing preset', async () => {

@@ -95,6 +95,8 @@ export interface Inputs {
 }
 
 export interface Tables {
+  /** Reviewed coffer rewards whose server-driven sources are absent from the client indexes. */
+  cofferSources: Map<number, { line: string; random?: boolean }>;
   /** Reviewed random containers: listed only when they are an item's only source. */
   gachaContainers: Set<number>;
   /** Eureka lockbox item → "Eureka <Zone> Lockboxes" (always treated as random). */

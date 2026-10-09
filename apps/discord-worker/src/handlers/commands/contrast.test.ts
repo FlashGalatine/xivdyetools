@@ -41,7 +41,11 @@ vi.mock('../../utils/discord-api.js', () => ({
   safeEditOriginalResponse: vi.fn().mockResolvedValue({ ok: true }),
 }));
 
-vi.mock('@xivdyetools/bot-logic', () => ({
+vi.mock('@xivdyetools/bot-logic', async () => ({
+  // The real sanitiser — a stub here would only test the stub (BUG-044).
+  sanitizeEmbedText: (
+    await vi.importActual<typeof import('@xivdyetools/bot-logic')>('@xivdyetools/bot-logic')
+  ).sanitizeEmbedText,
   executeContrast: vi.fn().mockResolvedValue({
     ok: true,
     svgString: '<svg>contrast</svg>',
@@ -59,6 +63,7 @@ vi.mock('@xivdyetools/bot-logic', () => ({
 }));
 
 import { executeContrast, resolveColorInput } from '@xivdyetools/bot-logic';
+import { createTranslator, createUserTranslator } from '../../services/bot-i18n.js';
 import { getUserPreferences } from '../../services/preferences.js';
 import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { safeEditOriginalResponse } from '../../utils/discord-api.js';
@@ -149,6 +154,34 @@ describe('handleContrastCommand', () => {
       expect(JSON.stringify(body)).toContain('invalid:nosuchdye');
     });
 
+    // BUG-044: the raw option was echoed unsanitised and uncapped — ~4000
+    // characters overflowed the 4096-character description and Discord
+    // rejected the reply ("The application did not respond").
+    it('sanitizes and caps an unresolvable dye in the error (BUG-044)', async () => {
+      const hostile = `@everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+      vi.mocked(resolveColorInput).mockImplementation((value: string) =>
+        value === hostile
+          ? null
+          : ({
+              hex: '#FFFFFF',
+              name: `Resolved ${value}`,
+              itemID: 5729,
+              dye: { id: 1, name: `Resolved ${value}`, hex: '#FFFFFF' },
+            } as never),
+      );
+      const response = await handleContrastCommand(interaction(['Snow White', hostile]), env, ctx);
+      const body = (await response.json()) as { data: { embeds: { description: string }[] } };
+
+      const description = body.data.embeds[0].description;
+      expect(description.startsWith('invalid:')).toBe(true);
+      const echoed = description.slice('invalid:'.length);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+      expect(ctx.waitUntil).not.toHaveBeenCalled();
+    });
+
     it('ignores options that are not dye slots', async () => {
       const withExtras = interaction(['Snow White', 'Soot Black']);
       withExtras.data!.options!.push({ name: 'theme', value: 'light' } as never);
@@ -189,7 +222,7 @@ describe('handleContrastCommand', () => {
       expect(body.type).toBe(5); // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
       await settle();
 
-      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>contrast</svg>', { scale: 2 });
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>contrast</svg>', { scale: 2, locale: 'en' });
       const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
         embeds: { title: string; image: { url: string } }[];
         file: { name: string; contentType: string };
@@ -198,6 +231,15 @@ describe('handleContrastCommand', () => {
       expect(payload.embeds[0].image.url).toBe('attachment://contrast.png');
       expect(payload.file.name).toBe('contrast.png');
       expect(payload.file.contentType).toBe('image/png');
+    });
+
+    it("renders with the user's locale, which picks the CJK font load order (JP first for ja)", async () => {
+      vi.mocked(createUserTranslator).mockResolvedValueOnce(createTranslator('ja') as never);
+
+      await handleContrastCommand(interaction(['Snow White', 'Soot Black']), env, ctx);
+      await settle();
+
+      expect(renderSvgToPng).toHaveBeenCalledWith('<svg>contrast</svg>', { scale: 2, locale: 'ja' });
     });
 
     it('passes the stored card theme through to bot-logic', async () => {
@@ -290,6 +332,31 @@ describe('handleContrastCommand', () => {
       expect(JSON.stringify(vi.mocked(safeEditOriginalResponse).mock.calls[0][2])).toContain(
         'errors.generationFailed',
       );
+    });
+
+    it('answers NOT_ENOUGH_DYES with its message, not as a render failure (BUG-125)', async () => {
+      vi.mocked(executeContrast).mockResolvedValue({
+        ok: false,
+        error: 'NOT_ENOUGH_DYES',
+        errorMessage: 'Both dye1 and dye2 are required.',
+      } as never);
+      const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+      const { startCommandTrace } = await import('../../services/command-trace.js');
+      const int = interaction(['Snow White', 'Soot Black']);
+      const trace = startCommandTrace(int, { command: 'contrast', subcommand: '', userId: 'u1', locale: 'en' });
+
+      await handleContrastCommand(int, env, ctx, logger as never);
+      await settle();
+
+      const payload = vi.mocked(safeEditOriginalResponse).mock.calls[0][2] as {
+        embeds: Array<{ description?: string }>;
+      };
+      expect(payload.embeds[0].description).toBe('Both dye1 and dye2 are required.');
+      expect(JSON.stringify(payload)).not.toContain('errors.generationFailed');
+      expect(renderSvgToPng).not.toHaveBeenCalled();
+      expect(trace.outcome).toBeNull();
+      expect(logger.error).not.toHaveBeenCalled();
     });
 
     it('edits in an error embed when rasterization throws', async () => {

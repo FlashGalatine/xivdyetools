@@ -448,6 +448,26 @@ describe('ConfigController', () => {
       unsubscribe();
     });
 
+    // A never-stored config reads as the defaults of whichever build reads it,
+    // so persistConfig stores the unchanged value that setConfig skips.
+    it('persistConfig stores an unchanged config without notifying', () => {
+      const controller = ConfigController.getInstance();
+      const listener = vi.fn();
+      const unsubscribe = controller.subscribe('swatch', listener);
+
+      controller.setConfig('swatch', getDefaultConfig('swatch'));
+      expect(StorageService.setItem).not.toHaveBeenCalled();
+
+      controller.persistConfig('swatch');
+      expect(StorageService.setItem).toHaveBeenCalledWith(
+        'xivdyetools_v4_config_swatch',
+        getDefaultConfig('swatch')
+      );
+      expect(listener).not.toHaveBeenCalled();
+
+      unsubscribe();
+    });
+
     it('should notify all listeners', () => {
       const controller = ConfigController.getInstance();
       const harmonyListener = vi.fn();

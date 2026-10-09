@@ -23,6 +23,25 @@ function inputs(): Inputs {
 const line = (entries: Entry[]): string | null => formatEntries(entries, inputs(), emptyTables());
 
 describe('formatEntries', () => {
+  it('keeps other costume coffers named as coffers', () => {
+    const i = inputs();
+    i.items.set(60000, { name: "Peacelover's Attire Coffer", plural: '', uiCategory: 61 });
+    expect(formatEntries([{ kind: 'container', containerId: 60000 }], i, emptyTables())).toBe(
+      "Peacelover's Attire Coffer"
+    );
+  });
+
+  it.each([
+    'Mill', 'Forge', 'Hammer', 'Gem', 'Hide', 'Bolt', 'Cauldron', 'Galley',
+    'Mine', 'Field', 'Tackle',
+  ])('lists Enie for the %sfiend costume coffer', (prefix) => {
+    const i = inputs();
+    i.items.set(60000, { name: `${prefix}fiend's Costume Coffer`, plural: '', uiCategory: 61 });
+    expect(formatEntries([{ kind: 'container', containerId: 60000 }], i, emptyTables())).toBe(
+      "Enie - Ishgard - The Firmament (3,000 Skybuilders' Scrips)"
+    );
+  });
+
   it('writes the guide string for each kind of route', () => {
     expect(line([{ kind: 'duty', dutyId: 30100 }])).toBe("Eden's Promise: Litany (Savage)");
     expect(line([{ kind: 'quest', questId: 1 }])).toBe('Close to Home (Main Story Quest)');
@@ -63,6 +82,41 @@ describe('formatEntries', () => {
   it('prefixes Ishgard districts', () => {
     expect(line([{ kind: 'vendor', npc: npc(3, 'Enie', 'The Firmament'), costs: [{ itemId: 28063, amount: 1200 }] }])).toBe(
       "Enie - Ishgard - The Firmament (1,200 Skybuilders' Scrips)"
+    );
+  });
+
+  it.each([
+    { costs: [{ itemId: 1, amount: 2 }] },
+    { costs: [{ itemId: 25, amount: 500 }] },
+    { costs: [] },
+  ])('omits Varsarudh costs in Old Sharlayan: %j', ({ costs }) => {
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Varsarudh', 'Old Sharlayan'), costs }])).toBe(
+      'Varsarudh - Old Sharlayan'
+    );
+  });
+
+  it.each([
+    { costs: [{ itemId: 1, amount: 2 }] },
+    { costs: [{ itemId: 25, amount: 500 }] },
+    { costs: [] },
+  ])('omits Mewazunte costs in Tuliyollal: %j', ({ costs }) => {
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Mewazunte', 'Tuliyollal'), costs }])).toBe(
+      'Mewazunte - Tuliyollal'
+    );
+  });
+
+  it('keeps costs for other vendors and locations', () => {
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Merchant', 'Tuliyollal'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Merchant - Tuliyollal (2 Gil)'
+    );
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Mewazunte', 'Old Gridania'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Mewazunte - Old Gridania (2 Gil)'
+    );
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Merchant', 'Old Sharlayan'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Merchant - Old Sharlayan (2 Gil)'
+    );
+    expect(line([{ kind: 'vendor', npc: npc(4, 'Varsarudh', 'Old Gridania'), costs: [{ itemId: 1, amount: 2 }] }])).toBe(
+      'Varsarudh - Old Gridania (2 Gil)'
     );
   });
 

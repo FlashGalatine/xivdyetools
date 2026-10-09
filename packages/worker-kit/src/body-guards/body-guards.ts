@@ -31,6 +31,30 @@ const DEFAULT_MAX_DEPTH = 10;
 const MUTATION_METHODS = ['POST', 'PATCH', 'PUT'];
 
 /**
+ * BUG-149 (2026-10-04 deep dive): whether a `Content-Type` header names a JSON
+ * media type. The old test was a case-sensitive substring match, so
+ * `Application/JSON` and `application/vnd.api+json` slipped past the guard
+ * while still matching `application/jsonp` and parameter text. Media types are
+ * case-insensitive (RFC 9110 section 8.3.1), so compare the type/subtype
+ * alone: `application/json` or any `type/subtype+json`. A header that merely
+ * contains `application/json` anywhere is still guarded (fail-safe superset of
+ * the old test), because consumer 415 gates use that substring test.
+ */
+function isJsonMediaType(header: string | undefined): boolean {
+  if (!header) return false;
+  const lower = header.toLowerCase();
+  const mediaType = (lower.split(';')[0] ?? '').trim();
+  if (mediaType === 'application/json' || /^[^/\s]+\/[^/\s]+\+json$/.test(mediaType)) {
+    return true;
+  }
+  // Fail safe: never narrower than the old substring test. Consumer 415 gates
+  // (presets-api) still use `includes('application/json')`, so a header that
+  // gate lets through (`application/jsonp`, `text/plain; x=application/json`)
+  // must still be depth/__proto__-checked here.
+  return lower.includes('application/json');
+}
+
+/**
  * Build the size-limit middleware for one cap.
  *
  * Hono's `bodyLimit` is the engine on purpose: with a `Content-Length` header
@@ -102,8 +126,7 @@ export function bodyGuards<E extends Env = Env>(
       return next();
     }
 
-    const contentType = c.req.header('content-type');
-    if (!contentType?.includes('application/json')) {
+    if (!isJsonMediaType(c.req.header('content-type'))) {
       return next();
     }
 

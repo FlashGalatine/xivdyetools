@@ -37,6 +37,14 @@ export interface SavedPreset {
   isCurated: boolean;
   exampleLink?: string;
   savedAt: string;
+  /**
+   * Last-known vote count: written at save time and refreshed whenever the
+   * live copy is seen (`recordVoteCounts`). The Saved shelf's Popular sort
+   * reads it for a snapshot whose live copy is not in the fetched pool
+   * (2026-10-04 deep-dive OPT-008 review follow-up). Absent on snapshots
+   * saved before it existed; those sort after every known count.
+   */
+  voteCount?: number;
   /** The author removed the live preset; the local copy stays, marked. */
   deletedByAuthor?: boolean;
 }
@@ -131,6 +139,7 @@ export class SavedPresetsService {
       isCurated: preset.isCurated,
       exampleLink: preset.exampleLink ?? undefined,
       savedAt: new Date().toISOString(),
+      voteCount: preset.voteCount,
     };
   }
 
@@ -149,6 +158,25 @@ export class SavedPresetsService {
     this.saved.push(this.snapshotOf(preset));
     this.persist();
     return true;
+  }
+
+  /**
+   * Copy the live vote counts onto the matching snapshots. Writes (and
+   * notifies) only when a count actually changed, so a load that sees the
+   * same numbers costs nothing.
+   */
+  static recordVoteCounts(live: ReadonlyArray<Pick<UnifiedPreset, 'id' | 'voteCount'>>): void {
+    this.load();
+    const counts = new Map(live.map((p) => [p.id, p.voteCount]));
+    let changed = false;
+    for (const entry of this.saved) {
+      const count = counts.get(entry.id);
+      if (count !== undefined && entry.voteCount !== count) {
+        entry.voteCount = count;
+        changed = true;
+      }
+    }
+    if (changed) this.persist();
   }
 
   /** Mark a saved community preset whose live copy no longer exists. */

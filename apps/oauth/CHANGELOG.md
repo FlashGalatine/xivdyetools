@@ -5,6 +5,50 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.3] - 2026-10-06
+
+Sprint 10 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive/`, `docs/audits/2026-10-04-dead-code/`),
+with the oauth half of deep-dive BUG-149. No route, token claim, schema or D1 change. Merging deploys production.
+
+### Fixed
+
+- **A percent-encoded spelling of an auth route no longer escapes its rate limit** (BUG-007). The `/auth/*` limiter
+  keyed and tiered on the raw wire path, so `/auth/%63allback` reached the callback handler but got its own bucket and
+  often the wrong tier (30 or 10 per minute instead of 20). It now keys on the decoded path Hono routes on, so every
+  spelling shares the real route's bucket and tier. Plain-path clients see no change, and plain-path keys are the same
+  as before. Paths no route matches still get their own default-tier bucket.
+- **A JSON body that is not an object no longer breaks the token-exchange callbacks** (BUG-056). `POST /auth/callback`
+  and `POST /auth/xivauth/callback` answered a body of `null` with a 500, and `true`, `123` or `"str"` with a
+  misleading `Missing code or code_verifier`. All four now return 400 `{ success: false, error: 'Invalid request body' }`.
+  An array keeps `Missing code or code_verifier`.
+- **A malformed XIVAuth character roster no longer causes a 500 or an empty username** (BUG-057). Non-object roster
+  elements are dropped, and the first verified character whose name is non-blank after trimming supplies `username` /
+  `global_name`, using the trimmed name. With no usable character the user gets the existing `XIVAuth User <id8>`
+  login with `global_name: null`. Well-formed rosters behave as before.
+
+### Security
+
+- **A non-JSON Content-Type can no longer skip the body guard** (BUG-149, oauth half). Both callbacks parse JSON
+  whatever the header says, but the depth and prototype-pollution guard only inspects JSON-typed bodies, so a
+  `text/plain` body bypassed it. A non-empty body whose media type is not `application/json` (case-insensitive,
+  parameters ignored) now gets 415 `{ success: false, error: 'Unsupported Media Type', message }` on both callbacks.
+  Body presence is read from the request stream, so `Content-Length: 0` cannot hide a body; an empty body still gets
+  the handler's own 400. The only client, the web app's auth service, already sends `application/json`. A mixed-case
+  `Application/JSON` passes this gate and is depth-checked once `@xivdyetools/worker-kit` 1.5.0 (Sprint 16) is deployed.
+
+### Removed
+
+- The `decodeJWT` wrapper in `services/jwt-service.ts` and its `sharedDecodeJWT` import (DEAD-036); the `mintToken`
+  tests import `decodeJWT` from `@xivdyetools/auth` directly. No runtime change.
+- The two dead `coverage.exclude` entries for the deleted Durable Object limiter in `vitest.config.ts` (DEAD-037).
+
+### Tests
+
+- 384 tests: percent-encoded route spellings and their controls (BUG-007), non-object and array bodies on
+  both callbacks (BUG-056), roster fallbacks and name trimming (BUG-057), and the 415 gate with near-miss media types,
+  a non-gated route and `Content-Length: 0` with a present body (BUG-149). Each fix was written red first and
+  mutation-checked. Coverage: 95.76 / 92.27 / 93.75 / 96.21 (statements / branches / functions / lines).
+
 ## [3.1.2] - 2026-10-04
 
 Sprint 6 of the 2026-10-03 security audit (`docs/audits/2026-10-03-security/`). No token, schema or D1 change.

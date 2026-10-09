@@ -13,4 +13,4 @@
 - Comment-only: say it is a deliberately narrower verifier-side shape (auth must not depend on types) and that sub is the internal user id. Do not derive one from the other (layer violation). Doc-only, so no consumer deploy needed; it ships with the next auth publish.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `35f502db`, `1fbff533` (branch `fix/remediation-2026-10-04-sprint10`, oauth 3.1.3; PR #272, open). Comment only (Sprint 25, folded into Sprint 10's PR); no publish needed.

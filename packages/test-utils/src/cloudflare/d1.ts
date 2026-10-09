@@ -258,7 +258,8 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
           if (Array.isArray(result)) {
             return (result[0] ?? null) as T | null;
           }
-          return result as T | null;
+          // Real D1 resolves first() to null for no row, never undefined (BUG-147).
+          return (result ?? null) as T | null;
         }
         return null;
       },
@@ -453,27 +454,4 @@ export function createMockD1Database(config?: MockD1DatabaseConfig): MockD1Datab
   };
 
   return mockDb;
-}
-
-/**
- * Creates a mock D1 database pre-cast as D1Database
- *
- * Use this when you need to pass the mock to code expecting D1Database.
- * The mock still supports all testing helpers via type assertion:
- *
- * @example
- * ```typescript
- * const db = createMockD1();
- * // Use as D1Database
- * someFunction(db);
- *
- * // Access testing helpers via assertion
- * (db as unknown as MockD1Database)._queries;
- * (db as unknown as MockD1Database)._setupMock(...);
- * ```
- *
- * @returns A D1Database-typed mock
- */
-export function createMockD1(): D1Database {
-  return createMockD1Database() as unknown as D1Database;
 }

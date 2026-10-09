@@ -93,6 +93,17 @@ export type {
   /** @public */
   VoteErrorResponse,
   VoteResponse,
+  ReviewAction,
+  ReviewKind,
+  ReviewBinding,
+  ParsedReviewId,
+} from './preset/index.js';
+export {
+  REVIEW_STATUSES,
+  isReviewStatus,
+  parseReviewCustomId,
+  buildReviewCustomId,
+  buildReviewCustomIdOrLegacy,
 } from './preset/index.js';
 
 // ============================================================================
@@ -100,6 +111,7 @@ export type {
 // ============================================================================
 export type {
   AuthProvider,
+  /** @public */
   AuthSource,
   AuthContext,
   /** @public */

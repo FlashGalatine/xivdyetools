@@ -277,6 +277,16 @@ export class ModalService {
    * shortcuts and first-visit prompts stand down exactly as they do for a
    * container modal; subscribers are not notified, since there is nothing for
    * the container to draw. Returns the release, which is safe to call twice.
+   *
+   * That is ALL registration does — no backdrop, focus trap, stacking limit,
+   * Escape handling or close-on-navigate; the surface keeps its own. So it is
+   * also how a popover that holds focus tells the page "an overlay is open"
+   * (BUG-091: the twin picker and the item-links menu). Besides the
+   * first-visit tutorial prompt, the readers are all keyboard ones:
+   * KeyboardService's shortcuts, DyeSelector's "/", and the toast container,
+   * which leaves Escape to the overlay (BUG-105). Release on every
+   * close path — a leaked registration switches the shortcuts off until a
+   * reload.
    */
   static registerExternal(): () => void {
     const token = Symbol('external-modal');

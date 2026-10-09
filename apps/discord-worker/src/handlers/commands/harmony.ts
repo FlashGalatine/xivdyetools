@@ -14,10 +14,23 @@ import { renderSvgToPng } from '../../services/svg/renderer.js';
 import { getDyeEmoji } from '../../services/emoji.js';
 import { createUserTranslator, createTranslator } from '../../services/bot-i18n.js';
 import { initializeLocale, getLocalizedDyeName, type LocaleCode } from '../../services/i18n.js';
-import { resolveColorInput, executeHarmony, dyeService, type HarmonyType } from '@xivdyetools/bot-logic';
+import {
+  resolveColorInput,
+  executeHarmony,
+  dyeService,
+  sanitizeEmbedText,
+  type HarmonyType,
+} from '@xivdyetools/bot-logic';
 import { getUserPreferences, resolveMatchingMethod } from '../../services/preferences.js';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+
+// BUG-044: a user-typed option echoed into an error embed goes through the
+// shared sanitiser (markdown / masked links / mentions defused) with the
+// 100-character cap the other dye-name echoes use — an uncapped ~4000-char
+// value pushed the description past Discord's 4096 limit and the reply was
+// rejected outright.
+const MAX_ECHO_LENGTH = 100;
 
 export async function handleHarmonyCommand(
   interaction: DiscordInteraction,
@@ -26,7 +39,7 @@ export async function handleHarmonyCommand(
   logger?: ExtendedLogger,
 ): Promise<Response> {
   const userId = interaction.member?.user?.id ?? interaction.user?.id ?? 'unknown';
-  const t = await createUserTranslator(env.KV, userId, interaction.locale);
+  const t = await createUserTranslator(env.KV, userId, interaction.locale, logger);
 
   const options = interaction.data?.options || [];
   const colorOption = options.find((opt) => opt.name === 'color');
@@ -63,7 +76,10 @@ export async function handleHarmonyCommand(
       type: 4,
       data: {
         embeds: [
-          errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: colorInput })),
+          errorEmbed(
+            t.t('common.error'),
+            t.t('errors.invalidColor', { input: sanitizeEmbedText(colorInput, MAX_ECHO_LENGTH) }),
+          ),
         ],
         flags: 64,
       },
@@ -157,7 +173,7 @@ async function processHarmonyCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     // Build description with Discord emojis
     const dyeList = result.harmonyDyes

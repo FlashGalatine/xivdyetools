@@ -59,7 +59,7 @@ Unlike the presets-api (authenticated, restricted CORS), this API is fully anony
 | Subdomain | `data.xivdyetools.app` | Separate from `api.xivdyetools.app` (presets-api) due to opposite security postures |
 | Auth | Anonymous | Public read-only data, no user state |
 | CORS | `origin: *` | Must be callable from any browser, plugin, or bot |
-| Rate Limiting | 60 req/min per IP + 5 burst on `/v1/*` | The native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`, per-colo counters), fail-open; `RATE_LIMIT` KV is the fallback when the binding is absent. `POST /v1/telemetry` has its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s) that fails **closed**. The proxy's `/aggregated` route has its own cache-miss limiter on the native `UNIVERSALIS_RATE_LIMITER` binding (30 / 60 s per IP in production, KV fallback) and `UNIVERSALIS_SERVICE_RATE_LIMITER` (600 / 60 s) for the service-binding key (FINDING-011) |
+| Rate Limiting | 60 req/min per IP + 5 burst on `/v1/*` | The native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple = { limit = 65, period = 60 }`, per-colo counters), fail-open; `RATE_LIMIT` KV is the fallback when the binding is absent. `POST /v1/telemetry` has its own `TELEMETRY_RATE_LIMITER` bucket (240 / 60 s, one charge per beacon) that fails **closed**. The proxy's `/aggregated` route has its own cache-miss limiter on the native `UNIVERSALIS_RATE_LIMITER` binding (30 / 60 s per IP in production, KV fallback) and `UNIVERSALIS_SERVICE_RATE_LIMITER` (600 / 60 s) for the service-binding key (FINDING-011) |
 | Caching | `max-age=3600, s-maxage=86400` | Deterministic data, changes only with game patches |
 | Database | Bundled JSON | No D1 — the 125-dye database is part of the bundle via `@xivdyetools/core` |
 
@@ -91,7 +91,7 @@ src/
     router.ts              # /aggregated/:dc/:itemIds, /data-centers, /worlds
     config/                # cache TTLs, datacenter/world lists
     services/              # cached-fetch, cache-service, request-coalescer, memory rate-limiter
-scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables after a patch (manual)
+scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables (+ the build-time-only ja table discord-worker's font cut reads) after a patch (manual)
 scripts/build-acquisition.ts  # Regenerates the GPOSERS acquisition table after a patch (manual; run from the repo root with tsx)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
 ```
@@ -119,7 +119,7 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 | `API_VERSION` | Variable | Currently `v1` |
 | `UNIVERSALIS_API_BASE` | Variable | `https://universalis.app/api/v2` |
 | `RATE_LIMIT_REQUESTS` / `RATE_LIMIT_WINDOW_SECONDS` | Variable | Proxy limiter — `30`/`60` production, `60`/`60` dev |
-| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (which also namespaces the row cache) |
+| `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (the row cache is namespaced by the real key: a pinned key as is, `latest` resolved through `GET /api/version` and memoized for 10 min) |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin against upstream field renames |
 
 No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...`).

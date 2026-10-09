@@ -26,13 +26,16 @@ export interface LocalePreferenceStore {
 }
 
 /**
- * Minimal logger accepted by the legacy reader. Compatible with
- * `@xivdyetools/logger`'s `ExtendedLogger`.
+ * Minimal logger accepted by `resolveUserLocale` and the legacy reader.
+ * Compatible with `@xivdyetools/logger`'s `ExtendedLogger`.
  *
  * moderation-worker's private copy logged a KV failure here and
  * discord-worker's swallowed it silently. Unifying kept the louder of the two:
  * a KV error during locale resolution is worth a line, and the call still
- * resolves rather than throwing.
+ * resolves rather than throwing. Until BUG-126 (2026-10-04 audit) nothing
+ * passed one in — `resolveUserLocale` called the reader without it — so the
+ * louder copy was silent too; a caller can now pass its logger as
+ * `resolveUserLocale`'s fourth argument.
  */
 export interface LocaleResolutionLogger {
   error: (message: string, error?: Error) => void;
@@ -138,25 +141,54 @@ export async function getLegacyLanguagePreference(
  *
  * Every step swallows its own failure and falls through — a malformed blob or a
  * KV hiccup must degrade the language, never the interaction.
+ *
+ * BUG-126 (2026-10-04 audit): `logger`, when given, hears about each degraded
+ * step — a failed KV read or a malformed blob. Its messages are fixed strings
+ * that never name the user id or quote what KV stored, and a malformed blob is
+ * reported by its message alone, because `JSON.parse`'s `SyntaxError` quotes
+ * its input.
+ *
+ * A failed KV read does pass the KV's own `Error` through unchanged, as
+ * discord-worker's `getUserPreferences` does. Its message is what tells a rate
+ * limit from an outage: the worker logger drops the stack, and the class alone
+ * would read `Error`. If that message quotes the key, the user id goes with
+ * it. The id is not something these logs withhold: `userId` is a reserved
+ * `LogContext` field, and both bots log it on every slash command. Withholding
+ * it here would cost the diagnosis and protect little.
  */
 export async function resolveUserLocale(
   kv: LocalePreferenceStore,
   userId: string,
-  discordLocale?: string
+  discordLocale?: string,
+  logger?: LocaleResolutionLogger
 ): Promise<LocaleCode> {
+  let unifiedData: string | null = null;
   try {
-    const unifiedData = await kv.get(`${UNIFIED_PREFS_PREFIX}${userId}`);
-    if (unifiedData) {
-      const prefs = JSON.parse(unifiedData) as { language?: string };
-      if (prefs.language && isValidLocale(prefs.language)) {
-        return prefs.language;
-      }
-    }
-  } catch {
-    // Malformed blob or KV failure: fall through to the legacy key.
+    unifiedData = await kv.get(`${UNIFIED_PREFS_PREFIX}${userId}`);
+  } catch (error) {
+    // KV failure: fall through to the legacy key.
+    logger?.error(
+      'Failed to read unified preferences for locale resolution',
+      error instanceof Error ? error : undefined
+    );
   }
 
-  const legacy = await getLegacyLanguagePreference(kv, userId);
+  if (unifiedData) {
+    let prefs: { language?: string } | null = null;
+    try {
+      prefs = JSON.parse(unifiedData) as { language?: string } | null;
+    } catch {
+      // Malformed blob: fall through to the legacy key. The parse error is
+      // deliberately not logged — its message quotes the stored blob.
+      logger?.error('Malformed unified preferences blob; ignoring it for locale resolution');
+    }
+    const language = prefs?.language;
+    if (typeof language === 'string' && isValidLocale(language)) {
+      return language;
+    }
+  }
+
+  const legacy = await getLegacyLanguagePreference(kv, userId, logger);
   if (legacy) {
     return legacy;
   }

@@ -178,7 +178,15 @@ describe('moderation record retention (FINDING-005)', () => {
       expect(warnings).toEqual([['[FINDING-005] pruned moderation records', { pruned: 1 }]]);
     });
 
-    it('swallows a database failure and reports a zero count', async () => {
+    // BUG-066: the outcome is what lets the daily job tell a sweep that ran
+    // from one that failed — the warning alone has no durable channel.
+    it('resolves true when the sweep ran, whether or not anything aged out', async () => {
+      await expect(pruneModerationRecords(d1 as unknown as D1Database, undefined, now)).resolves.toBe(
+        true
+      );
+    });
+
+    it('swallows a database failure, reports a zero count and resolves false', async () => {
       const warnings: string[] = [];
       d1.setBeforeStatement(() => {
         throw new Error('D1 exploded while quoting: ban-secret-id');
@@ -186,7 +194,7 @@ describe('moderation record retention (FINDING-005)', () => {
 
       await expect(
         pruneModerationRecords(d1 as unknown as D1Database, { warn: (m) => warnings.push(m) }, now)
-      ).resolves.toBeUndefined();
+      ).resolves.toBe(false);
 
       expect(warnings).toEqual(['[FINDING-005] moderation-record prune failed']);
       expect(warnings.join('')).not.toContain('ban-secret-id');

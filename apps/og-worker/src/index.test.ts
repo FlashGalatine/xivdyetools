@@ -570,7 +570,25 @@ describe('extractor/presets/budget crawler routes (DEAD-001)', () => {
       TEST_ENV
     );
     const html = await res.text();
-    expect(html).toContain('https://og.xivdyetools.app/og/extractor/8E5A3C,C9A96A.png');
+    // BUG-060: the shared method rides the card URL, not just og:url
+    expect(html).toContain(
+      '<meta property="og:image" content="https://og.xivdyetools.app/og/extractor/8E5A3C,C9A96A.png?algo=oklab">'
+    );
+  });
+
+  it('BUG-059: a custom-color gradient share unfurls named, with a link that reopens it', async () => {
+    const res = await app.request(
+      '/gradient/?hexStart=ff8800&end=43&steps=5',
+      { headers: { 'User-Agent': CRAWLER_UA } },
+      TEST_ENV
+    );
+    const html = await res.text();
+    expect(html).toContain('<meta property="og:title" content="#FF8800 to ');
+    expect(html).toContain(
+      '<meta property="og:url" content="https://xivdyetools.app/gradient/?hexStart=FF8800&amp;end=43&amp;steps=5&amp;v=1">'
+    );
+    // no stainID → no card of its own: the tool default, honestly
+    expect(html).toContain('<meta property="og:image" content="https://og.xivdyetools.app/og/gradient/default.png">');
   });
 
   it('a curated preset PATH (/presets/:id — the web app share form) emits its card', async () => {
@@ -759,6 +777,7 @@ describe('FINDING-024: 400 bodies do not echo the offending parameter (OG-8)', (
     ['/og/harmony/1/junkvalue', 'Invalid harmony type'],
     ['/og/harmony/1/complementary?algo=junkvalue', 'Invalid algorithm'],
     ['/og/gradient/1/2/5?algo=junkvalue', 'Invalid algorithm'],
+    ['/og/gradient/1/2/5?interpolation=junkvalue', 'Invalid interpolation'],
     ['/og/accessibility/1/junkvalue', 'Invalid vision type'],
   ])('%s → "%s"', async (path, error) => {
     const res = await app.request(path, {}, TEST_ENV);

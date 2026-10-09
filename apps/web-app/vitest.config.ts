@@ -33,7 +33,6 @@ export default defineConfig({
         'src/shared/types.ts',
         // Large Lit shells still awaiting tests — tracked, not forgotten
         'src/components/v4/dye-palette-drawer.ts',
-        'src/components/v4/preset-tool.ts',
         'src/components/v4/preset-detail.ts',
         'src/components/v4/v4-layout-shell.ts',
         'src/components/v4/display-options-v4.ts',

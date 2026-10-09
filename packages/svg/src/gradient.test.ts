@@ -97,6 +97,60 @@ describe('generateGradientCard', () => {
     expect(hv).toBeLessThan(h5);
   });
 
+  // BUG-146: the lead column was 28 px — enough for "2–3", but /gradient runs
+  // to 12 steps, and a merged range in the tail is five characters ("10–12"
+  // ≈ 40.3 px of 13 px mono). Those rendered as "9–…" / "10…", losing the
+  // span the row exists to state.
+  describe('two-digit merged step ranges (BUG-146)', () => {
+    const twelve = Array.from({ length: 12 }, () => ({ idealHex: '#C67A71', dyeHex: '#C98A81' }));
+    const row = (stepText: string, name = 'Coral Pink', deltaE = 4.2) => ({
+      stepText,
+      idealHex: '#A65951',
+      dyeHex: '#C98A81',
+      name,
+      deltaE,
+    });
+    const twelveStep = (stepTexts: string[], name?: string): string =>
+      generateGradientCard({
+        ...defaultOptions,
+        headerText: 'HSV · 12',
+        strip: twelve,
+        rows: stepTexts.map((s, i) => row(s, name, 1 + i)),
+      });
+
+    it.each([
+      [['1–8', '9–10', '11', '12']],
+      [['1–3', '4–6', '7–9', '10–12']],
+      [['1–9', '10–11', '12']],
+      // the fully collapsed ramp (the 12H·4 verdict case)
+      [['1–12']],
+    ])('prints every range of %j whole, never ellipsised', (stepTexts) => {
+      const svg = twelveStep(stepTexts);
+
+      for (const s of stepTexts) expect(svg).toContain(`>${s}</text>`);
+      expect(svg).not.toContain('…');
+    });
+
+    it('keeps the widest localized dye name whole beside the wider lead', () => {
+      // fr's longest name measures ≈175.5 px at 13 px body — the lead's room
+      // must not come out of the name column.
+      const svg = twelveStep(['10–12'], 'vert de cobalt métallique');
+
+      expect(svg).toContain('>vert de cobalt métallique</text>');
+      expect(svg).toContain('>10–12</text>');
+    });
+
+    it('keeps the ΔE column right-aligned to the content margin (x = 384)', () => {
+      const svg = twelveStep(['1–8', '9–10', '11', '12']);
+      for (const deltaE of ['1.0', '2.0', '3.0', '4.0']) {
+        const node = new RegExp(
+          `<text x="([\\d.]+)"[^>]*text-anchor="end">${deltaE.replace('.', '\\.')}</text>`,
+        ).exec(svg);
+        expect(node?.[1]).toBe('384');
+      }
+    });
+  });
+
   it('renders the light theme surface', () => {
     const svg = generateGradientCard({ ...defaultOptions, theme: 'light' });
     expect(svg).toContain('#FFFFFF');

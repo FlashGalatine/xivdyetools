@@ -2,6 +2,49 @@
 
 All notable changes to `@xivdyetools/worker-kit` (formerly `@xivdyetools/worker-middleware`) will be documented in this file.
 
+## [1.5.0] - 2026-10-06
+
+Sprint 16 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-deep-dive`). Minor rather than
+patch, as 1.2.0 and 1.3.0 were for behavior changes: bodies that used to skip the JSON guard are now
+checked, a `formatError` response gains headers, and `reset()` / `resetAll()` delete more keys. No export
+is added or removed and no signature changes. The `@xivdyetools/logger` dependency is published as an
+exact pin, so this release also carries logger 2.3.0's log-output changes to npm consumers.
+
+### Fixed
+
+- **`jsonDepthLimit` recognizes JSON by media type, not by a case-sensitive substring (BUG-149).**
+  `Application/JSON`, `APPLICATION/JSON; charset=utf-8` and `+json` types such as
+  `application/vnd.api+json` or `application/problem+json` used to skip the `__proto__` / depth check;
+  they now get the consumer's `onInvalidJson` response (for oauth `/auth/*`, a 400). Parameters and
+  whitespace around the type are ignored. A header that merely contains `application/json` after
+  lowercasing (`application/jsonp`, `application/json-seq`, `text/plain; x=application/json`, a
+  comma-joined list) is still guarded as before, so the guard is never narrower than the substring test
+  consumers' own 415 gates use (presets-api's still does). `text/plain`, form and header-less bodies
+  still pass through untouched.
+- **A `formatError` response now carries the rate-limit headers (BUG-150).** `X-RateLimit-Limit` /
+  `-Remaining` / `-Reset` and `Retry-After` were set with `c.header()`, which Hono merges only into
+  responses built by `c.json()` / `c.body()`, so a raw `new Response(...)` from `formatError` lost them.
+  Every computed header the returned response lacks is now copied onto it (the fail-closed 429 gets
+  `Retry-After`). A header `formatError` sets itself is never overwritten, and a response with immutable
+  headers, such as `Response.redirect()`, is re-wrapped. Handlers that already return `c.json(...)`
+  (api-worker's three) see no change and no duplicated values.
+- **`KVRateLimiter.reset()` and `resetAll()` delete the whole prefix (BUG-151).** `kv.list()` returns at
+  most 1,000 keys per call and both methods listed once, so a larger prefix kept every key past the first
+  page. They now follow the list cursor until `list_complete`, delete in chunks of 50 concurrent calls,
+  stop on a repeated cursor or an incomplete page without one, and still throw on KV errors. Chunking
+  bounds concurrency, not the total: a very large prefix can exhaust the per-invocation KV operation
+  budget and throw partway, so run it from a queue or cron. No in-repo caller uses either method.
+
+### Tests
+
+- body-guards: Content-Type recognition (case variants, parameters, whitespace, `+json`, substring-only
+  headers, pass-through types).
+- rate-limit: `formatError` headers (raw `Response` on deny and on fail-closed, `c.json` without
+  duplicated values, the factory's own `Retry-After` kept, immutable headers).
+- kv: reset paging (multi-page `resetAll`, `reset(key)` isolation, at most 50 concurrent deletes,
+  missing-cursor stop, repeated cursors and longer cursor cycles, error propagation).
+- Each fix was written red first and mutation-checked; 289 tests pass.
+
 ## [1.4.1] - 2026-09-24
 
 Patch release closing the worker-kit half of `pkg-foundation-13`
