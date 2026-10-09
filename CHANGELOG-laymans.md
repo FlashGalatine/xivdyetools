@@ -33,6 +33,8 @@ Rules:
 
 ## [5.15.0] - 2026-10-08
 ### 📜 Glamour acquisition sources
+- Web app: the Glamour Reader replaces retired Dated gear up to level 50, Aetherial gear and Deepmist gear with a visually identical eligible item when one is available. Retired items no longer appear in the twin picker.
+- Web app: Acquisition lines now list Palazzo Diamond weapons under Dancing Mad (Ultimate), First Light and Sacramental weapons under Pilgrim's Traverse, level-44 Templar armor under Dzemael Darkhold, and Shin-Zantetsuken weapons under Baldesion Arsenal.
 - Web app: facewear Acquisition lines now show where to obtain or purchase the "The Faces We Wear" unlock item. All colors share that source. Sources that aren't known stay blank for you to fill in.
 - Web app: the Glamour Reader's Acquisition lines for equipment from Mewazunte now show only Mewazunte - Tuliyollal, without a currency amount.
 - Web app: the Glamour Reader's Acquisition lines for equipment from Varsarudh now show only Varsarudh - Old Sharlayan, without a currency amount.
