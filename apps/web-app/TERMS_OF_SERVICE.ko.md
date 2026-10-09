@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트:** 2026-10-05 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
+**최종 업데이트:** 2026-10-09 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
 XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 모음입니다. Square Enix와 제휴, 승인 또는 후원 관계가 없습니다. 이 사이트를 이용함으로써 사용자는 아래 내용에 동의하게 됩니다. 동의하지 않으신다면 이용하지 말아 주세요 — 이 사이트를 그만두는 데는 어떤 비용도 들지 않습니다.
 
