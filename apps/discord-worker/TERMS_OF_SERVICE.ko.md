@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트**: 2026-10-05
+**최종 업데이트**: 2026-10-09
 
 > 웹 앱(xivdyetools.app)에는 자체 약관이 있습니다: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). 데이터 처리 방식은 [개인정보처리방침](PRIVACY_POLICY.md)에서 다룹니다.
 
