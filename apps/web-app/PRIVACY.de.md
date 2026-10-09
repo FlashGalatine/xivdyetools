@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-05 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+**Zuletzt aktualisiert:** 2026-10-09 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
 Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,

@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
 
-**Last Updated**: October 5, 2026
+**Last Updated**: October 9, 2026
 
 ## 1. Introduction
 
