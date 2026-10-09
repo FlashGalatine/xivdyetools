@@ -213,6 +213,37 @@ describe('glamour export sheet', () => {
     expect(file).toBe('glamour-equipment.md');
   });
 
+  it('lists a retired piece by its name and files its edit under the family row', () => {
+    // 2026-10-09 merge-day review: an all-retired family is named, not null,
+    // so the sheet writes it like any piece — never as a bare model.
+    const base = source();
+    const retired: GlamourListSource = {
+      ...base,
+      equipment: {
+        ...base.equipment!,
+        items: {
+          ...base.equipment!.items,
+          Legs: {
+            itemId: 4000,
+            names: names('Dated Hempen Breeches'),
+            iconId: null,
+            familySize: 1,
+            alternates: [],
+            viaMainHand: false,
+            retired: true,
+          },
+        },
+      },
+    };
+    openGlamourSheet(retired);
+    expect(preview()).toContain('Legs: Dated Hempen Breeches\nAcquisition:\n');
+    type('Legs', 'Retired before 2.0');
+    expect(AcquisitionEdits.get(gearHash('Legs', 4000, []))).toEqual({
+      text: 'Retired before 2.0',
+      baseItemId: 4000,
+    });
+  });
+
   it('keeps an edit on a piece with no item behind it (the resolve failed)', () => {
     openGlamourSheet({ ...source(), equipment: null, picked: {} });
     type('Legs', 'Found it: Moogle Treasure Trove');

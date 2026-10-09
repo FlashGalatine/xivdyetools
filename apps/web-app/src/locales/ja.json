@@ -1373,6 +1373,7 @@
       "blockedGlamour": "この装備は投影できません",
       "blockedWear": "このキャラクターは装備できません",
       "blockedNoItem": "対応するアイテムのないモデルです",
+      "retired": "入手できなくなった旧アイテムです",
       "noFix": "同じ見た目のアイテムでも解決できません",
       "otherWorks": "{name}なら着用できます",
       "choice": "{name}と同じ見た目 · どちらでも可",

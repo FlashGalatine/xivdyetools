@@ -28,12 +28,15 @@ export interface ItemNames {
 }
 
 export interface ResolvedCharaItem {
-  /** Item sheet row_id — the lowest eligible row in the family */
+  /** Item sheet row_id — the lowest eligible row in the family (the lowest row when `retired`) */
   itemId: number;
   names: ItemNames;
   /** Icon sheet id for `GET /v1/chara/icon/:iconId`; null when the row has none */
   iconId: number | null;
-  /** Eligible Item rows sharing this (slot, model key), after retired-row filtering — 1 = unique */
+  /**
+   * Item rows sharing this (slot, model key) — 1 = unique. Counts the eligible
+   * rows after retired-row filtering, or the whole family when `retired`.
+   */
   familySize: number;
   /** The other family members, row_id ascending (capped — see MAX_ALTERNATES) */
   alternates: Array<{ itemId: number; names: ItemNames; acquisition?: string }>;
@@ -57,6 +60,13 @@ export interface ResolvedCharaItem {
    * table has none. Describes `itemId` only; each alternate carries its own.
    */
   acquisition?: string;
+  /**
+   * Present (always `true`) only when every row of the family is retired —
+   * Aetherial, Deepmist, or Dated at level 50 or below — so nothing obtainable
+   * shares the look. The item is still named, from the whole family, because
+   * the player is wearing it. Absent whenever an eligible row named the item.
+   */
+  retired?: true;
 }
 
 export interface ResolvedGlasses {
@@ -77,7 +87,10 @@ export interface CharaResolveRequest {
 export interface CharaResolveResponse {
   /** XIVAPI game-version key the upstream answered with (null when fully served from cache) */
   version: string | null;
-  /** Requested slots only. `null` = the key has no eligible Item row (including NPC / prop models). */
+  /**
+   * Requested slots only. `null` = the key has no Item row at all (NPC / prop
+   * model); a family of only retired rows is named with `retired: true` instead.
+   */
   items: Partial<Record<CharaGearSlotId, ResolvedCharaItem | null>>;
   /** Present only when the request carried a glasses row */
   glasses?: ResolvedGlasses | null;

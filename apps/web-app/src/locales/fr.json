@@ -1373,6 +1373,7 @@
       "blockedGlamour": "Cette pièce ne peut pas servir de mirage",
       "blockedWear": "Ce personnage ne peut pas la porter",
       "blockedNoItem": "Un modèle sans objet derrière",
+      "retired": "Un objet retiré, qu'on ne peut plus obtenir",
       "noFix": "Aucune pièce d'apparence identique ne règle le problème",
       "otherWorks": "{name} peut être porté à la place",
       "choice": "Même apparence que {name} · l'un ou l'autre convient",

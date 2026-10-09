@@ -1373,6 +1373,7 @@
       "blockedGlamour": "Es lässt sich nicht projizieren",
       "blockedWear": "Dieser Charakter kann es nicht tragen",
       "blockedNoItem": "Ein Modell ohne Gegenstand dahinter",
+      "retired": "Ein ausgemusterter Gegenstand, nicht mehr erhältlich",
       "noFix": "Nichts mit demselben Aussehen löst das",
       "otherWorks": "{name} lässt sich stattdessen tragen",
       "choice": "Sieht aus wie {name} · beides geht",

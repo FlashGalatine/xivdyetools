@@ -52,6 +52,12 @@ export interface CharaResolvedItem {
    * 92) / …"). Absent when the worker has none or predates 0.15.0.
    */
   acquisition?: string;
+  /**
+   * Every row of the family is retired (Aetherial, Deepmist, low-level Dated):
+   * nothing obtainable shares the look, but it is still the item the file
+   * wears, named as usual. Absent otherwise, and from a worker that predates it.
+   */
+  retired?: true;
 }
 
 export interface CharaResolvedGlasses {
@@ -63,7 +69,10 @@ export interface CharaResolvedGlasses {
 }
 
 export interface CharaResolveResult {
-  /** Requested slots only. `null` = no Item row (NPC / prop model) — show the key, not an error. */
+  /**
+   * Requested slots only. `null` = no Item row (NPC / prop model) — show the
+   * key, not an error. A retired family is an item with `retired: true`, not null.
+   */
   items: Partial<Record<CharaGearSlotId, CharaResolvedItem | null>>;
   glasses: CharaResolvedGlasses | null;
   version: string | null;

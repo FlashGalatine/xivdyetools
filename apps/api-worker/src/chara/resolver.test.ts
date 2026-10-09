@@ -119,23 +119,52 @@ describe('pickItem', () => {
     expect(item.familySize).toBe(2);
     expect(item.alternates.map((r) => r.itemId)).toEqual([2630]);
     expect(item.rules).toEqual([{ itemIds: [2629], ...current.rules }]);
+    expect(item).not.toHaveProperty('retired');
   });
 
-  it.each([1, 49, 50])('filters Dated gear at equipment level %i', (levelEquip) => {
-    expect(pickItem([row(1, 'Dated Coif', '1', ['Head'], { levelEquip })])).toBeNull();
+  // 2026-10-09 merge-day review: a family with nothing but retired rows is
+  // still the item the player wears — name it from the whole family, flagged
+  // retired, rather than answering "no item row".
+  it.each([1, 49, 50])('names an all-Dated family at equipment level %i, flagged retired', (levelEquip) => {
+    expect(pickItem([row(1, 'Dated Coif', '1', ['Head'], { levelEquip })])).toMatchObject({
+      itemId: 1,
+      names: { en: 'Dated Coif' },
+      familySize: 1,
+      retired: true,
+    });
+  });
+
+  it('names an all-retired family by its lowest row, with every row as alternates and rules', () => {
+    const rules = { dyeCount: 0, glamourable: true, wearMask: ANYONE, grandCompany: 0 };
+    const item = pickItem([
+      row(3, 'Deepmist Coif', '1', ['Head'], { rules: { ...rules, dyeCount: 1 } }),
+      row(1, 'Dated Coif', '1', ['Head'], { levelEquip: 1, rules }),
+      row(2, 'Aetherial Coif', '1', ['Head'], { rules }),
+    ])!;
+    expect(item.itemId).toBe(1);
+    expect(item.retired).toBe(true);
+    expect(item.familySize).toBe(3);
+    expect(item.alternates.map((a) => a.itemId)).toEqual([2, 3]);
+    expect(item.rules.map((r) => r.itemIds)).toEqual([[1, 2], [3]]);
   });
 
   it.each([51, null])(
     'keeps Dated gear when its level is %s, outside the known <= 50 filter',
     (levelEquip) => {
-      expect(pickItem([row(1, 'Dated Coif', '1', ['Head'], { levelEquip })])?.itemId).toBe(1);
+      const item = pickItem([row(1, 'Dated Coif', '1', ['Head'], { levelEquip })]);
+      expect(item?.itemId).toBe(1);
+      expect(item).not.toHaveProperty('retired');
     },
   );
 
   it.each(['Aetherial Coif', 'Deepmist Coif'])(
-    'omits %s when no eligible visually identical row exists',
+    'names %s, flagged retired, when no eligible visually identical row exists',
     (name) => {
-      expect(pickItem([row(1, name, '1', ['Head'], { levelEquip: 90 })])).toBeNull();
+      expect(pickItem([row(1, name, '1', ['Head'], { levelEquip: 90 })])).toMatchObject({
+        itemId: 1,
+        names: { en: name },
+        retired: true,
+      });
     },
   );
 
@@ -235,6 +264,19 @@ describe('resolveCharaEquipment — off-hand rules', () => {
     ] }, source([retired, RUNAWAY_BOW, ASPHODELOS_SHIELD]), undefined, 'v');
     expect(result.items.MainHand?.itemId).toBe(49486);
     expect(result.items.OffHand).toMatchObject({ itemId: 35264, viaMainHand: false });
+    expect(result.items.MainHand).not.toHaveProperty('retired');
+  });
+
+  it('a retired main hand still carries its own off-hand (the quiver resolves through it)', () => {
+    const datedBow = row(1, 'Dated Bow', RUNAWAY_BOW.modelMain, ['MainHand'], {
+      levelEquip: 50, modelSub: RUNAWAY_BOW.modelSub,
+    });
+    const result = resolveCharaEquipment({ gear: [
+      { slot: 'MainHand', set: 634, base: 19, variant: 1 },
+      { slot: 'OffHand', set: 698, base: 149, variant: 1 },
+    ] }, source([datedBow]), undefined, 'v');
+    expect(result.items.MainHand).toMatchObject({ itemId: 1, retired: true, viaMainHand: false });
+    expect(result.items.OffHand).toMatchObject({ itemId: 1, retired: true, viaMainHand: true });
   });
 
   it('an off-hand equal to the main hand ModelSub IS the main weapon (quiver)', () => {

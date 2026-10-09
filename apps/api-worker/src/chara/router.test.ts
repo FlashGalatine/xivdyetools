@@ -138,6 +138,38 @@ describe('POST /v1/chara/resolve', () => {
     }
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(new URL(fetchMock.mock.calls[0][0]).searchParams.get('fields')).toContain('LevelEquip');
+    const again = (await (await post(body)).json()) as any;
+    expect(again.data.items.HeadGear).not.toHaveProperty('retired');
+  });
+
+  it('names an all-retired family flagged retired, fresh and cached, instead of null', async () => {
+    // 2026-10-09 merge-day review: the cache keeps raw rows, so the fallback
+    // is decided at resolve time and a replay answers the same as upstream.
+    const result = (row_id: number, Name: string, LevelEquip: number) => ({
+      row_id,
+      fields: { Name, LevelEquip, ModelMain: 65540, ModelSub: 0, EquipSlotCategory: { fields: { Head: 1 } } },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      okJson({ version: 'v', results: [result(372, 'Dated Hempen Coif', 1), result(10, 'Aetherial Test Coif', 50)] }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const body = { gear: [{ slot: 'HeadGear', base: 4, variant: 1 }] };
+    const ctx = createMockExecutionContext();
+    const fresh = await post(body, ctx);
+    await flush(ctx);
+    const cached = await post(body);
+    expect(cached.headers.get('X-Cache')).toBe('HIT');
+    for (const response of [fresh, cached]) {
+      const payload = (await response.json()) as any;
+      expect(payload.data.items.HeadGear).toMatchObject({
+        itemId: 10,
+        names: { en: 'Aetherial Test Coif' },
+        familySize: 2,
+        alternates: [{ itemId: 372, names: { en: 'Dated Hempen Coif' } }],
+        retired: true,
+      });
+    }
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('resolves a file in one upstream search, applies the off-hand rule, nulls unknown keys', async () => {

@@ -1373,6 +1373,7 @@
       "blockedGlamour": "It can't be a glamour",
       "blockedWear": "This character can't wear it",
       "blockedNoItem": "A model with no item behind it",
+      "retired": "A retired item, no longer obtainable",
       "noFix": "Nothing with the same look fixes it",
       "otherWorks": "{name} can be worn instead",
       "choice": "Same look as {name} · either is fine",
