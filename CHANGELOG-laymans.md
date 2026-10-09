@@ -62,6 +62,11 @@ Rules:
 - Web app: Budget always shows your latest search, and the Swatch Matcher keeps a full list of matches with strong filters on.
 - Web app: the dye palette works from the keyboard, and the app starts a little faster.
 
+## [5.10.8] - 2026-10-05
+### 🌏 The Discord bot speaks your language
+- Discord bot: `/glamour` and `/swatch` cards name your character's clan in your language instead of in English.
+- Discord bot: when the bot can't read a character file, it says why in your language.
+- Discord bot: `/manual` now explains `/glamour` in its character-file topic, and character-creation color names in `/manual` and on the cards match the game.
 ## [5.10.7] - 2026-10-05
 ### 🎨 Community presets
 - Web app: a saved preset is no longer marked "Removed by its author" because the presets service hiccupped or a search was slow, and a wrong mark clears itself.

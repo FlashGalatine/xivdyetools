@@ -69,7 +69,7 @@
     },
     "swatch": {
       "name": "`/swatch <file> [order] [slot]`",
-      "description": "Associe les couleurs d'un personnage aux teintures d'un fichier `.chara` (Anamnesis ou Ktisis).\n• Lit peau, cheveux, mèches, yeux, lèvre, peinture faciale et tatouage/anneau limbal\n• `slot` : les cinq teintures les plus proches pour une couleur"
+      "description": "Associe les couleurs d'un personnage aux teintures d'un fichier `.chara` (Anamnesis ou Ktisis).\n• Lit peau, cheveux, mèches, yeux, lèvre, maquillage et tatouage/contour de l'iris\n• `slot` : les cinq teintures les plus proches pour une couleur"
     },
     "glamour": {
       "name": "`/glamour <file>`",
@@ -588,9 +588,9 @@
     "slotHl": "MÈCHE",
     "slotEyes": "YEUX",
     "slotLip": "LÈVRE",
-    "slotPaint": "PEINT.",
+    "slotPaint": "MAQUIL.",
     "slotTattoo": "TATOU.",
-    "slotLimbal": "LIMBE",
+    "slotLimbal": "CONTOUR",
     "offGridShort": "HORS G.",
     "swatchFootKey_one": "plus proches par ΔE2000 · {s} empl. sur {n}",
     "swatchFootKey_other": "plus proches par ΔE2000 · {s} empl. sur {n}",
@@ -599,6 +599,12 @@
     "swatchGear": "Teintures d'équipement : {list}",
     "swatchDropped": "Retiré (le plus sûr) : {slot} · ΔE {de}",
     "swatchParseError": "Fichier illisible — {message}",
+    "charaFileReason": {
+      "tooLarge": "il dépasse {mb} Mo",
+      "notOnDiscord": "il doit être envoyé sur Discord",
+      "downloadFailed": "le téléchargement a échoué (HTTP {status})",
+      "unreadable": "ce n’est pas un fichier .chara que le bot sait lire"
+    },
     "swatchTitle": "Nuancier du personnage",
     "swatchNoSlots": "Aucun emplacement de couleur actif dans ce fichier.",
     "swatchSlotMissing": "{slot} n’est pas un emplacement actif dans ce fichier.",
@@ -611,11 +617,12 @@
     "glamourDyes_one": "{n} teinture",
     "glamourDyes_other": "{n} teintures",
     "glamourNoDyes": "aucune teinture",
-    "glamourLooks": "+{n} ASPECT",
+    "glamourLooks_one": "+{n} ASPECT",
+    "glamourLooks_other": "+{n} ASPECTS",
     "glamourOneLook": "UNIQUE",
     "glamourStatusTwin": "JUMEAU",
     "glamourStatusOk": "OK",
-    "glamourStatusDye": "TEINTES",
+    "glamourStatusDye": "TEINTURES",
     "glamourStatusGlamour": "NON MIRAGE",
     "glamourStatusWear": "RÉSERVÉ",
     "glamourFootShown_one": "{s} sur {n} pièce teinte",
@@ -687,7 +694,7 @@
       },
       "characterFile": {
         "name": "Fichier de personnage",
-        "body": "/swatch lit un export .chara d'Anamnesis ou de Ktisis : les emplacements de couleur (peau, cheveux, mèches, yeux, lèvres, peinture faciale, tatouage/anneau limbal) et les teintures d'équipement portées. Le fichier est lu une fois pour construire la réponse et n'est pas conservé. Les couleurs hors grille sont associées par leur valeur réelle et marquées HORS G."
+        "body": "/swatch et /glamour lisent un export .chara d'Anamnesis ou de Ktisis. Le fichier est lu une fois pour construire la réponse et n'est pas conservé.\n\n/swatch associe aux teintures les emplacements de couleur (peau, cheveux, mèches, yeux, lèvres, maquillage, tatouage/contour de l'iris) et indique les teintures de l'équipement porté. Les couleurs hors grille (retouchées au-delà de la palette du jeu) sont associées par leur valeur réelle et marquées HORS G.\n\n/glamour liste chaque pièce portée et ses teintures. Un modèle peut servir à plusieurs objets : ses jumeaux (+N ASPECTS). Chaque pièce est nommée d'après un objet que ce personnage peut porter avec ces teintures : si l'objet enregistré ne les prend pas, ne peut pas servir de mirage ou ne peut pas être porté, un jumeau compatible est nommé à sa place (JUMEAU). Si aucun jumeau ne convient, la pièce affiche ce qui la bloque : TEINTURES, NON MIRAGE, RÉSERVÉ ou une race. La réponse inclut la liste complète au format GPOSERS, prête à copier, avec ses libellés en anglais, quelle que soit la langue."
       }
     }
   },

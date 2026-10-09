@@ -126,7 +126,7 @@ describe('/glamour', () => {
   it('refuses a file past 1 MiB before deferring', async () => {
     const res = await handleGlamourCommand(makeInteraction(CDN_URL, 2 * 1_048_576), env, ctx);
     const body = (await res.json()) as InteractionResponseBody;
-    expect(body.data?.content).toContain('file too large');
+    expect(body.data?.content).toBe('Could not read the file — it is larger than 1 MB');
   });
 
   it('defers, reads the file and posts the card with the list in the embed', async () => {
@@ -187,7 +187,7 @@ describe('/glamour', () => {
     await expect(resolve([{ slot: 'HeadGear', base: 361, variant: 5 }], null)).rejects.toMatchObject({ status: 429 });
   });
 
-  it("carries api-worker's own reason on a refused file, so the reply can say what is wrong with it", async () => {
+  it("carries api-worker's own reason on a refused file's error, beside its status", async () => {
     const reason = 'gear[0].base must be an integer between 0 and 65535';
     binding.fetch.mockResolvedValue(Response.json({ success: false, error: 'VALIDATION_ERROR', message: reason }, { status: 400 }));
     await handleGlamourCommand(makeInteraction(CDN_URL), env, ctx);
@@ -232,8 +232,9 @@ describe('/glamour', () => {
     expect(markMock).toHaveBeenCalledWith(interaction, 'image_input');
     const edit = lastEdit();
     expect(edit.file).toBeUndefined();
-    expect(edit.embeds[0].description).toContain('Could not read the file');
-    expect(edit.embeds[0].description).toContain('65535');
+    // HC-002: a localized reason, not api-worker's English one
+    expect(edit.embeds[0].description).toContain('Could not read the file — it is not a .chara file the bot can read');
+    expect(edit.embeds[0].description).not.toContain('65535');
     expect(edit.embeds[0].description).not.toMatch(/try again/i);
   });
 
@@ -305,7 +306,7 @@ describe('/glamour', () => {
       await settle();
 
       expect(mockExecuteGlamour).not.toHaveBeenCalled();
-      expect(lastEdit().embeds[0].description).toContain('download failed (403)');
+      expect(lastEdit().embeds[0].description).toContain('the download failed (HTTP 403)');
     });
 
     it('a download that never arrives', async () => {

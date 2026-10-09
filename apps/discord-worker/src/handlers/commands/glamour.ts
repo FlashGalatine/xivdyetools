@@ -72,7 +72,8 @@ function resolveThroughApiWorker(env: Env): GlamourInput['resolve'] {
       // The status rides on the error: bot-logic reads a 429 as "busy", a
       // refused body (400, 413, 422) as a problem with the file, and the rest
       // as "broken". A 4xx carries api-worker's own reason ("gear[0].base must be an integer
-      // between 0 and 65535") as the message, for the reply to name.
+      // between 0 and 65535") as the message; it is English, so since HC-002
+      // the reply gives the reader a localized reason instead of quoting it.
       const reason =
         response.status >= 400 && response.status < 500 && response.status !== 429
           ? await response
@@ -164,7 +165,8 @@ async function processGlamourCommand(
     if (result.error === 'RESOLVE_BUSY') markCommandOutcome(interaction, 'rate_limited');
     if (result.error === 'GENERATION_FAILED') markCommandOutcome(interaction, 'render');
     if (logger) logger.warn('Glamour command failed', { error: result.error });
-    // FINDING-019: the parser can echo .chara field VALUES; this edit is public
+    // FINDING-019: the parser can echo .chara field VALUES; this edit is public.
+    // bot-logic stopped relaying parser text in HC-002 — kept as defense in depth
     await fail(sanitizeEmbedText(result.errorMessage, MAX_ERROR_TEXT));
     return;
   }
