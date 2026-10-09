@@ -273,14 +273,24 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
     });
 
     it('HSL blending moves on dark saturated pairs', () => {
-      expect(blendColors('#644216', '#000000', 'hsl', 0.75).hex).toBe('#120e0d');
-      const a = rgbToHsl(hexToRgb('#644216'));
-      const b = rgbToHsl(hexToRgb('#000000'));
+      // Rust Red + Dark Red. This row used Orchard Brown (#644216) + #000000
+      // until BUG-035 (2026-10-04): black's placeholder hue of 0 is powerless,
+      // so blendHSL now keeps the brown's hue, the result moved #120e0d ->
+      // #12100d, and on that pair both hslToRgb helpers round to the same
+      // colour — the delta lived only in the hue the fix removed. On this pair,
+      // two chromatic dyes the fix does not touch, the helpers still disagree.
+      expect(blendColors('#622207', '#321919', 'hsl', 0.75).hex).toBe('#3d1916');
+      const a = rgbToHsl(hexToRgb('#622207'));
+      const b = rgbToHsl(hexToRgb('#321919'));
       const t = 0.75;
-      let hueDiff = b.h - a.h;
+      // The same pipeline as blendHSL (powerless grey hue included), with
+      // core's hslToRgb swapped in.
+      const hueA = a.s === 0 ? b.h : a.h;
+      const hueB = b.s === 0 ? a.h : b.h;
+      let hueDiff = hueB - hueA;
       if (hueDiff > 180) hueDiff -= 360;
       if (hueDiff < -180) hueDiff += 360;
-      let h = a.h + hueDiff * t;
+      let h = hueA + hueDiff * t;
       if (h < 0) h += 360;
       if (h >= 360) h -= 360;
       const viaCore = ColorConverter.hslToRgb(
@@ -288,7 +298,7 @@ describe('conversions.ts ↔ ColorConverter equivalence (DEAD-037)', () => {
         (a.s * (1 - t) + b.s * t) * 100,
         (a.l * (1 - t) + b.l * t) * 100,
       );
-      expect(rgbToHex(viaCore)).toBe('#120d0d');
+      expect(rgbToHex(viaCore)).toBe('#3c1916');
     });
 
     it('RYB blending no longer has a second implementation to move to', () => {

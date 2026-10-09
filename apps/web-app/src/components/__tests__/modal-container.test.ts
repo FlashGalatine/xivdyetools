@@ -9,15 +9,6 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-// Mock tool-panel-builders to prevent circular dependency when running with other tests
-vi.mock('@services/tool-panel-builders', () => ({
-  buildMarketPanel: vi.fn(),
-  buildPanelSection: vi.fn(),
-  buildCheckboxPanelSection: vi.fn(),
-  buildSelectPanelSection: vi.fn(),
-  buildRadioPanelSection: vi.fn(),
-}));
-
 import { ModalContainer } from '../modal-container';
 import {
   createTestContainer,
@@ -671,6 +662,217 @@ describe('ModalContainer', () => {
 
       // A live subscription would have rendered the modal into the container.
       expect(queryAll(container, '[data-modal-id]')).toHaveLength(0);
+    });
+  });
+
+  // ============================================================================
+  // Sheet drag-to-close (mobile)
+  // ============================================================================
+
+  /*
+   * BUG-100 (2026-10-04 deep-dive): the drag engaged whenever the modal body
+   * itself sat at scrollTop 0, without looking at scrollers INSIDE it. On the
+   * collection manager, pulling down to scroll its list back up slid the whole
+   * sheet instead, and a pull past 90px dismissed the modal. And with no
+   * touchcancel handler, a gesture the browser cancelled left the sheet
+   * stranded at its last translateY.
+   */
+  describe('Sheet drag-to-close (BUG-100)', () => {
+    const realMatchMedia = window.matchMedia;
+
+    beforeEach(() => {
+      // Every handler returns early off-mobile, so without this each test
+      // below would pass without exercising the drag at all.
+      window.matchMedia = ((query: string) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addListener: () => {},
+        removeListener: () => {},
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        dispatchEvent: () => false,
+      })) as unknown as typeof window.matchMedia;
+    });
+
+    afterEach(() => {
+      window.matchMedia = realMatchMedia;
+    });
+
+    /** A touch event the way the handlers read it: only `touches[0].clientY`. */
+    function touch(target: EventTarget, type: string, clientY?: number): void {
+      const event = new Event(type, { bubbles: true, composed: true });
+      Object.defineProperty(event, 'touches', {
+        value: clientY === undefined ? [] : [{ clientY }],
+      });
+      target.dispatchEvent(event);
+    }
+
+    function scrolledTo(el: HTMLElement, top: number): void {
+      Object.defineProperty(el, 'scrollTop', { value: top, configurable: true });
+    }
+
+    /** Show a sheet whose content is `content`; return its dialog. */
+    function showSheet(content: HTMLElement): HTMLElement {
+      modalContainer = new ModalContainer(container);
+      modalContainer.init();
+      ModalService.show({ type: 'custom', title: 'Collections', content });
+      return query(container, '.m16-dialog') as HTMLElement;
+    }
+
+    /** Content with an inner list scroller, like collection-manager-modal's. */
+    function listContent(): { content: HTMLElement; list: HTMLElement; row: HTMLElement } {
+      const content = document.createElement('div');
+      const list = document.createElement('div');
+      list.style.overflowY = 'auto';
+      const row = document.createElement('div');
+      row.textContent = 'Collection';
+      list.appendChild(row);
+      content.appendChild(list);
+      return { content, list, row };
+    }
+
+    it('drags the sheet and dismisses past the threshold when nothing is scrolled', () => {
+      vi.useFakeTimers();
+      try {
+        const { content, row } = listContent();
+        const dialog = showSheet(content);
+
+        touch(row, 'touchstart', 100);
+        touch(row, 'touchmove', 200);
+        expect(dialog.style.transform).toBe('translateY(100px)');
+
+        touch(row, 'touchend');
+        vi.advanceTimersByTime(200);
+        expect(ModalService.hasOpenModals()).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('scrolls a scrolled inner list instead of sliding the sheet', () => {
+      vi.useFakeTimers();
+      try {
+        const { content, list, row } = listContent();
+        const dialog = showSheet(content);
+        scrolledTo(list, 120);
+
+        touch(row, 'touchstart', 100);
+        touch(row, 'touchmove', 250);
+        expect(dialog.style.transform).toBe('');
+
+        touch(row, 'touchend');
+        vi.advanceTimersByTime(200);
+        expect(ModalService.hasOpenModals()).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('sees a scrolled list inside a shadow root (Lit modal content)', () => {
+      const host = document.createElement('div');
+      const root = host.attachShadow({ mode: 'open' });
+      const { content: inner, list, row } = listContent();
+      root.appendChild(inner);
+      const dialog = showSheet(host);
+      scrolledTo(list, 120);
+
+      // composed: the listener on the dialog sees `target` retargeted to the
+      // host, so only the composed path reaches the list
+      touch(row, 'touchstart', 100);
+      touch(row, 'touchmove', 250);
+
+      expect(dialog.style.transform).toBe('');
+    });
+
+    it('settles back on touchcancel and does not dismiss afterwards', () => {
+      vi.useFakeTimers();
+      try {
+        const { content, row } = listContent();
+        const dialog = showSheet(content);
+
+        touch(row, 'touchstart', 100);
+        touch(row, 'touchmove', 220);
+        expect(dialog.style.transform).toBe('translateY(120px)');
+
+        touch(row, 'touchcancel');
+        expect(dialog.style.transform).toBe('');
+        expect(dialog.style.transition).toBe('transform 0.2s ease');
+
+        // The cancelled gesture is over: a stray end must not act on its delta
+        touch(row, 'touchend');
+        vi.advanceTimersByTime(200);
+        expect(ModalService.hasOpenModals()).toBe(true);
+        expect(dialog.style.transform).toBe('');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    /*
+     * Every ModalService notify re-renders the container, which clears every
+     * listener and binds the surviving sheets again. The drag state used to
+     * live in those listeners' closures, so a notify mid-drag rebound the
+     * sheet with `engaged` false: touchend and touchcancel then returned
+     * early, leaving the sheet displaced with transitions off.
+     */
+    it('settles a sheet that another modal covers mid-drag, and does not dismiss it', () => {
+      vi.useFakeTimers();
+      try {
+        const { content, row } = listContent();
+        const dialog = showSheet(content);
+
+        // Past the dismiss threshold, so a gesture that carried on would close it
+        touch(row, 'touchstart', 100);
+        touch(row, 'touchmove', 220);
+        expect(dialog.style.transform).toBe('translateY(120px)');
+
+        ModalService.show({ type: 'custom', title: 'On top' });
+        expect(dialog.style.transform).toBe('');
+        expect(dialog.style.transition).toBe('transform 0.2s ease');
+
+        // The covered sheet's gesture is over: the rest of it moves nothing...
+        touch(row, 'touchmove', 260);
+        expect(dialog.style.transform).toBe('');
+
+        // ...and its end dismisses nothing, least of all the sheet underneath
+        touch(row, 'touchend');
+        vi.advanceTimersByTime(200);
+        expect(ModalService.getModals()).toHaveLength(2);
+        expect(dialog.style.transform).toBe('');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('keeps the gesture of a sheet still on top through a re-render', () => {
+      vi.useFakeTimers();
+      try {
+        modalContainer = new ModalContainer(container);
+        modalContainer.init();
+        const underId = ModalService.show({ type: 'custom', title: 'Underneath' });
+        const { content, row } = listContent();
+        const topId = ModalService.show({ type: 'custom', title: 'Collections', content });
+        const dialog = query(container, `[data-modal-id="${topId}"] .m16-dialog`) as HTMLElement;
+
+        touch(row, 'touchstart', 100);
+        touch(row, 'touchmove', 150);
+        expect(dialog.style.transform).toBe('translateY(50px)');
+
+        // A notify that leaves this sheet on top: the container re-renders
+        ModalService.dismiss(underId);
+
+        // Still measured from the original start point
+        touch(row, 'touchmove', 230);
+        expect(dialog.style.transform).toBe('translateY(130px)');
+
+        touch(row, 'touchend');
+        expect(dialog.style.transform).toBe('translateY(100%)');
+        vi.advanceTimersByTime(200);
+        expect(ModalService.hasOpenModals()).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 

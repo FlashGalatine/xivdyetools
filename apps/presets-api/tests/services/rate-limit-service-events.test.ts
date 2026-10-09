@@ -11,6 +11,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
     checkSubmissionRateLimit,
     recordSubmissionEvent,
+    pruneSubmissionEvents,
     DAILY_SUBMISSION_LIMIT,
     DAILY_FLAGGED_EDIT_LIMIT,
     DAILY_PREVIEW_UPLOAD_LIMIT,
@@ -130,5 +131,20 @@ describe('submission_events retention (FINDING-017)', () => {
 
         expect(db._queries.some((q) => /DELETE FROM submission_events/i.test(q))).toBe(true);
         expect(db._queries.some((q) => /INSERT INTO submission_events/i.test(q))).toBe(true);
+    });
+
+    // BUG-066: the daily job needs to know whether the sweep ran.
+    it('resolves true when the sweep ran and false when its DELETE failed', async () => {
+        const ok = createMockD1Database();
+        ok._setupMock(() => ({ meta: { changes: 0 } }));
+        await expect(pruneSubmissionEvents(ok)).resolves.toBe(true);
+
+        const broken = createMockD1Database();
+        broken._setupMock(() => {
+            throw new Error('D1_ERROR: no such column: created_at');
+        });
+        const warn = vi.fn();
+        await expect(pruneSubmissionEvents(broken, { warn })).resolves.toBe(false);
+        expect(warn).toHaveBeenCalledWith('[FINDING-017] submission-event prune failed', { pruned: 0 });
     });
 });

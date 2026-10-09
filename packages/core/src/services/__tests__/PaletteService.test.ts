@@ -67,14 +67,82 @@ describe('PaletteService', () => {
       expect(result[1].dominance).toBeGreaterThanOrEqual(result[2].dominance);
     });
 
-    it('should handle single-color images', () => {
+    it('returns one cluster for a single-color image, not colorCount copies of it (BUG-036)', () => {
       const pixels: RGB[] = Array(100).fill({ r: 128, g: 128, b: 128 });
 
       const result = service.extractPalette(pixels, { colorCount: 3 });
 
-      // Should still return requested colors (though they'll be similar)
-      expect(result.length).toBeGreaterThan(0);
-      expect(result.length).toBeLessThanOrEqual(3);
+      expect(result).toEqual([
+        { color: { r: 128, g: 128, b: 128 }, dominance: 100, pixelCount: 100 },
+      ]);
+    });
+
+    it('returns only the colors an image holds when it has fewer than colorCount (BUG-036)', () => {
+      // A flat two-colour icon asked for five colours. k used to be capped at
+      // the PIXEL count, so k-means++ cloned an existing centroid for each of
+      // the three surplus slots and they came back as 0-pixel clusters. The
+      // counts are unequal so the dominance order does not depend on the
+      // random first seed.
+      const pixels: RGB[] = [
+        ...Array(60).fill({ r: 255, g: 0, b: 0 }),
+        ...Array(40).fill({ r: 0, g: 0, b: 255 }),
+      ];
+
+      const result = service.extractPalette(pixels, { colorCount: 5 });
+
+      expect(result).toEqual([
+        { color: { r: 255, g: 0, b: 0 }, dominance: 60, pixelCount: 60 },
+        { color: { r: 0, g: 0, b: 255 }, dominance: 40, pixelCount: 40 },
+      ]);
+    });
+
+    it('seeds no more centroids than the image has distinct colors (BUG-036)', () => {
+      // The cap itself. k-means++ draws one Math.random() per seed, so a
+      // two-colour image asked for five colours must draw two — not five, three
+      // of which could only clone an existing centroid. The empty-cluster
+      // filter would hide such clones from the result; this pins that they are
+      // never seeded at all.
+      const random = vi.spyOn(Math, 'random');
+      try {
+        const pixels: RGB[] = [
+          ...Array(60).fill({ r: 255, g: 0, b: 0 }),
+          ...Array(40).fill({ r: 0, g: 0, b: 255 }),
+        ];
+
+        service.extractPalette(pixels, { colorCount: 5 });
+
+        expect(random).toHaveBeenCalledTimes(2);
+      } finally {
+        random.mockRestore();
+      }
+    });
+
+    it('never returns an empty cluster, even when k-means strands a centroid (BUG-036)', () => {
+      // Three distinct colours and colorCount 3, so the distinct-colour cap
+      // does not apply. Math.random() → 0 seeds every centroid on pixel 0
+      // (red); the strict `<` tie-break then hands every tie to the lowest
+      // index, so the third centroid never wins a pixel. Lloyd's algorithm can
+      // strand a centroid like this on real input too — the result must still
+      // carry only clusters that hold pixels.
+      const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+      try {
+        const pixels: RGB[] = [
+          ...Array(10).fill({ r: 255, g: 0, b: 0 }),
+          ...Array(45).fill({ r: 0, g: 0, b: 255 }),
+          ...Array(45).fill({ r: 0, g: 255, b: 0 }),
+        ];
+
+        const result = service.extractPalette(pixels, { colorCount: 3 });
+
+        expect(result.length).toBeGreaterThan(0);
+        for (const cluster of result) {
+          expect(cluster.pixelCount).toBeGreaterThan(0);
+          expect(cluster.dominance).toBeGreaterThan(0);
+        }
+        expect(result.reduce((sum, c) => sum + c.pixelCount, 0)).toBe(pixels.length);
+      } finally {
+        random.mockRestore();
+      }
     });
 
     it('should calculate dominance percentages correctly', () => {
@@ -131,13 +199,186 @@ describe('PaletteService', () => {
     it('should clamp colorCount to valid range', () => {
       const pixels: RGB[] = Array(50).fill({ r: 100, g: 100, b: 100 });
 
-      // Too high - should clamp to 10
-      const resultHigh = service.extractPalette(pixels, { colorCount: 100 });
-      expect(resultHigh.length).toBeLessThanOrEqual(10);
+      // Too high - should clamp to 10. The input needs MORE than 10 distinct
+      // colours: k is also capped at the distinct-colour count (BUG-036), so a
+      // flat image returns one cluster with or without this clamp.
+      const manyColors: RGB[] = Array.from({ length: 50 }, (_, i) => ({ r: i * 5, g: 0, b: 0 }));
+      const resultHigh = service.extractPalette(manyColors, { colorCount: 100 });
+      expect(resultHigh).toHaveLength(10);
 
       // Too low - should clamp to 1
       const resultLow = service.extractPalette(pixels, { colorCount: -5 });
       expect(resultLow.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Twelve well-separated colours keep the BUG-036 distinct-colour cap above
+    // every k the colorCount tests below ask for, and k-means++ draws one
+    // Math.random() per seed, so the call count is k.
+    const twelveColors: RGB[] = Array.from({ length: 12 }, (_, i) => ({
+      r: i * 20,
+      g: 255 - i * 20,
+      b: (i * 67) % 256,
+    }));
+
+    describe('a colorCount that is not a finite number uses the default 4', () => {
+      // The BUG-036 cap counts distinct colours only until it reaches k, and
+      // `seen.size >= NaN` is never true — so a NaN k (or an explicit
+      // `colorCount: undefined`, which the clamp turned into NaN) made k EVERY
+      // distinct colour in the sample. Before that cap the same NaN gave one
+      // cluster; neither is the documented default.
+      it.each([
+        ['NaN', { colorCount: NaN }],
+        ['an explicit undefined', { colorCount: undefined }],
+        ['+Infinity', { colorCount: Infinity }],
+        ['-Infinity', { colorCount: -Infinity }],
+      ])('%s seeds 4 centroids and logs one warning', (_label, options) => {
+        const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+        const random = vi.spyOn(Math, 'random');
+        try {
+          const result = new PaletteService({ logger }).extractPalette(twelveColors, options);
+
+          expect(random).toHaveBeenCalledTimes(4);
+          expect(result.length).toBeGreaterThan(0);
+          expect(result.length).toBeLessThanOrEqual(4);
+          expect(logger.warn).toHaveBeenCalledTimes(1);
+          expect(logger.warn).toHaveBeenCalledWith(
+            expect.stringContaining('is not a finite number'),
+          );
+        } finally {
+          random.mockRestore();
+        }
+      });
+
+      it('leaves a finite colorCount alone, with no warning', () => {
+        const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+        const random = vi.spyOn(Math, 'random');
+        try {
+          new PaletteService({ logger }).extractPalette(twelveColors, { colorCount: 6 });
+
+          expect(random).toHaveBeenCalledTimes(6);
+          expect(logger.warn).not.toHaveBeenCalled();
+        } finally {
+          random.mockRestore();
+        }
+      });
+    });
+
+    describe('a fractional colorCount is floored, never rounded up', () => {
+      // colorCount is a MAXIMUM, so 2.5 means "at most 2". The distinct-colour
+      // cap counts until `seen.size >= limit`, which for 2.5 only stops at 3 —
+      // so a fractional count seeded one centroid more than it allows and the
+      // result could hold 3 entries.
+      it.each([
+        [2.5, 2],
+        [1.2, 1],
+      ])('colorCount %s seeds %i centroid(s) and returns at most that many', (colorCount, k) => {
+        const random = vi.spyOn(Math, 'random');
+        try {
+          const result = service.extractPalette(twelveColors, { colorCount });
+
+          expect(random).toHaveBeenCalledTimes(k);
+          expect(result.length).toBeGreaterThan(0);
+          expect(result.length).toBeLessThanOrEqual(k);
+        } finally {
+          random.mockRestore();
+        }
+      });
+    });
+
+    describe('a maxSamples that is not a finite number uses the default 10000', () => {
+      // An explicit `{ maxSamples: undefined }` survives the options spread,
+      // and neither it nor NaN trips the `< 2` guard, so Math.max(2, NaN)
+      // handed samplePixels a NaN bound: `length <= NaN` is false and
+      // `i < NaN` never runs, so every pixel was dropped and the call returned
+      // [] without a word. 20000 pixels exceed the default, so the summed
+      // pixelCount is the sample size.
+      const pixels: RGB[] = [
+        ...Array(12000).fill({ r: 255, g: 0, b: 0 }),
+        ...Array(8000).fill({ r: 0, g: 0, b: 255 }),
+      ];
+
+      it.each([
+        ['NaN', { maxSamples: NaN }],
+        ['an explicit undefined', { maxSamples: undefined }],
+        ['+Infinity', { maxSamples: Infinity }],
+        ['-Infinity', { maxSamples: -Infinity }],
+      ])('%s samples 10000 pixels and logs one warning', (_label, options) => {
+        const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+        const result = new PaletteService({ logger }).extractPalette(pixels, {
+          colorCount: 2,
+          ...options,
+        });
+
+        expect(result.reduce((sum, c) => sum + c.pixelCount, 0)).toBe(10000);
+        expect(logger.warn).toHaveBeenCalledTimes(1);
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.stringMatching(/maxSamples .* is not a finite number/),
+        );
+      });
+
+      // A fractional bound ran samplePixels' loop ceil(n) times with the
+      // spacing computed from the fraction, so the last index ran past the
+      // array: 2.5 on 100 pixels read pixels[132] and threw a TypeError.
+      it('floors a fractional maxSamples instead of reading past the array', () => {
+        const hundred: RGB[] = Array.from({ length: 100 }, (_, i) => ({ r: i, g: 0, b: 0 }));
+
+        const result = new PaletteService().extractPalette(hundred, {
+          colorCount: 2,
+          maxSamples: 2.5,
+        });
+
+        expect(result.reduce((sum, c) => sum + c.pixelCount, 0)).toBe(2);
+      });
+
+      it('leaves a finite maxSamples alone, with no warning', () => {
+        const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+        const result = new PaletteService({ logger }).extractPalette(pixels, {
+          colorCount: 2,
+          maxSamples: 1000,
+        });
+
+        expect(result.reduce((sum, c) => sum + c.pixelCount, 0)).toBe(1000);
+        expect(logger.warn).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('a maxIterations that is not a finite number uses the default 25', () => {
+      // `{ maxIterations: undefined }` and NaN slipped past both sides of the
+      // [1, 100] clamp, so `iter < NaN` skipped every Lloyd iteration and the
+      // palette was just the k-means++ seeds. Math.random() → 0 seeds the one
+      // centroid on pixel 0 (black); any iteration moves it to the mean.
+      const pixels: RGB[] = [
+        ...Array(50).fill({ r: 0, g: 0, b: 0 }),
+        ...Array(50).fill({ r: 200, g: 200, b: 200 }),
+      ];
+
+      it.each([
+        ['NaN', { maxIterations: NaN }],
+        ['an explicit undefined', { maxIterations: undefined }],
+        ['+Infinity', { maxIterations: Infinity }],
+        ['-Infinity', { maxIterations: -Infinity }],
+      ])('%s runs the k-means iterations and logs one warning', (_label, options) => {
+        const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+        const random = vi.spyOn(Math, 'random').mockReturnValue(0);
+        try {
+          const result = new PaletteService({ logger }).extractPalette(pixels, {
+            colorCount: 1,
+            ...options,
+          });
+
+          expect(result).toEqual([
+            { color: { r: 100, g: 100, b: 100 }, dominance: 100, pixelCount: 100 },
+          ]);
+          expect(logger.warn).toHaveBeenCalledTimes(1);
+          expect(logger.warn).toHaveBeenCalledWith(
+            expect.stringMatching(/maxIterations .* is not a finite number/),
+          );
+        } finally {
+          random.mockRestore();
+        }
+      });
     });
   });
 
@@ -163,6 +404,26 @@ describe('PaletteService', () => {
         expect(typeof match.distance).toBe('number');
         expect(typeof match.dominance).toBe('number');
       });
+    });
+
+    it('matches a dye only for colors the image holds when it has fewer than colorCount (BUG-036)', () => {
+      // The Discord /extractor path: a surplus 0-pixel cluster used to get its
+      // own (fabricated) dye recommendation and a 0% row on the card.
+      const mockDyeService = createMockDyeService();
+      const pixels: RGB[] = [
+        ...Array(60).fill({ r: 255, g: 0, b: 0 }),
+        ...Array(40).fill({ r: 0, g: 0, b: 255 }),
+      ];
+
+      const result = service.extractAndMatchPalette(pixels, mockDyeService as any, {
+        colorCount: 5,
+      });
+
+      expect(mockDyeService.findClosestDye).toHaveBeenCalledTimes(2);
+      expect(result.map((m) => [m.extracted, m.dominance])).toEqual([
+        [{ r: 255, g: 0, b: 0 }, 60],
+        [{ r: 0, g: 0, b: 255 }, 40],
+      ]);
     });
 
     it('forwards matchingMethod to DyeService.findClosestDye (default: none → DyeService default)', () => {

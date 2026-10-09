@@ -369,6 +369,34 @@ describe('showAdvancedOptionsPanel', () => {
       expect(parsed.configs).toEqual({ harmony: { count: 5 } });
       expect(typeof parsed.exportedAt).toBe('string');
     });
+
+    // BUG-123's sibling: the date came from toISOString(), i.e. UTC, so an
+    // evening export anywhere west of UTC was stamped with tomorrow's date.
+    it('stamps the filename with the local calendar date, not the UTC one', () => {
+      const originalTZ = process.env.TZ;
+      // A fixed UTC−5 with no DST; Node re-reads TZ when it is assigned
+      process.env.TZ = 'Etc/GMT+5';
+      vi.useFakeTimers({ toFake: ['Date'] });
+      // 00:30 UTC on 5 October is 19:30 on 4 October in UTC−5
+      vi.setSystemTime(new Date('2026-10-05T00:30:00Z'));
+
+      try {
+        // Precondition: the zone really is UTC−5 here, not whatever the machine runs
+        expect(new Date().getTimezoneOffset()).toBe(300);
+
+        mockExportAllConfigs.mockReturnValue({});
+        showAdvancedOptionsPanel(host);
+        rows(1)[0].click();
+
+        expect(clickSpy).toHaveBeenCalledTimes(1);
+        const anchor = clickSpy.mock.instances[0] as HTMLAnchorElement;
+        expect(anchor.download).toBe('xivdyetools-settings-2026-10-04.json');
+      } finally {
+        vi.useRealTimers();
+        if (originalTZ === undefined) delete process.env.TZ;
+        else process.env.TZ = originalTZ;
+      }
+    });
   });
 
   describe('import', () => {

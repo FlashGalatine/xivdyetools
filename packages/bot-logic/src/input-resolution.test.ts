@@ -294,6 +294,17 @@ describe('localized dye-name matching', () => {
     expect(searchDyesByName('スノウ')).toEqual([]);
   });
 
+  // An empty folded query is a substring of every localized name, so without
+  // its guard the localized pass would hand back all 125 dyes for a blank
+  // autocomplete under any non-English locale.
+  it('a blank query matches nothing under a non-English locale, not every dye', async () => {
+    await initializeLocale('de');
+    expect(searchDyesByName('', 'de')).toEqual([]);
+    expect(searchDyesByName('   ', 'de')).toEqual([]);
+    expect(findDyeByName('', 'de')).toBeNull();
+    expect(findDyeByName('  ', 'de')).toBeNull();
+  });
+
   it('findDyeByName matches the exact localized name and the exact English name', async () => {
     await initializeLocale('ja');
     expect(findDyeByName('スノウホワイト', 'ja')?.name).toBe('Snow White');
@@ -429,5 +440,116 @@ describe('legacy item id input', () => {
   it('a number in the gap between the ranges resolves nothing', () => {
     expect(searchDyesByName('3000')).toEqual([]);
     expect(findDyeByName('3000')).toBeNull();
+  });
+});
+
+// ============================================================================
+// Six bare digits are a hex colour, never an id (BUG-034, 2026-10-04 audit)
+// ============================================================================
+// The id branch ran ahead of hex for every bare number, so '000000', '123456'
+// and '333333' — valid hex colours the docblock promises to accept without '#'
+// — came back null and /gradient, /mixer, /harmony, /contrast and
+// /accessibility replied "invalid colour". Worse, '013114' parsed as 13114,
+// Pure White's legacy item id, and silently drew Pure White instead of #013114.
+
+describe('six-digit all-numeric input (BUG-034)', () => {
+  it.each(['000000', '123456', '333333'])('resolveColorInput reads %s as a hex colour', (input) => {
+    expect(resolveColorInput(input)).toEqual({ hex: `#${input}` });
+  });
+
+  it('a leading-zero hex that spells a real legacy item id is still the colour', () => {
+    // 13114 is Pure White's legacy item id; '013114' is the colour #013114.
+    expect(resolveColorInput('013114')).toEqual({ hex: '#013114' });
+  });
+
+  it('findClosestForHex attaches the closest dye to an all-digit hex', () => {
+    const result = resolveColorInput('000000', { findClosestForHex: true });
+    expect(result?.hex).toBe('#000000');
+    expect(result?.dye).toBeDefined();
+    const padded = resolveColorInput('013114', { findClosestForHex: true });
+    expect(padded?.hex).toBe('#013114');
+    expect(padded?.name).not.toBe('Pure White');
+  });
+
+  it('resolveDyeInput finds the closest dye to the colour, not the id', () => {
+    const dye = resolveDyeInput('013114');
+    expect(dye).not.toBeNull();
+    expect(dye?.name).not.toBe('Pure White');
+    expect(dye).toEqual(dyeService.findClosestDye('#013114'));
+  });
+
+  it('searchDyesByName and findDyeByName never read six digits as an id', () => {
+    expect(searchDyesByName('013114')).toEqual([]);
+    expect(findDyeByName('013114')).toBeNull();
+  });
+
+  it('one to five digits are still ids', () => {
+    expect(resolveColorInput('13114')?.name).toBe('Pure White');
+    expect(resolveColorInput('101')?.name).toBe('Pure White');
+    expect(resolveColorInput('5763')?.name).toBe('Ul Brown');
+    expect(resolveColorInput('#101')).toEqual({ hex: '#110011' });
+    // A 3-digit non-id is still an id miss, not a shorthand colour.
+    expect(resolveColorInput('255')).toBeNull();
+    expect(resolveColorInput('000')).toBeNull();
+  });
+
+  // The first pass's six-digit rule matched the bare string while the id
+  // rules tolerated surrounding whitespace, so a padded six-digit input was
+  // neither a colour nor an id and resolved to nothing anywhere. Each resolver
+  // now trims once at the top, so padding never changes how digits are read.
+  describe('surrounding whitespace', () => {
+    it.each([
+      [' 013114', '#013114'],
+      ['013114 ', '#013114'],
+      [' 123456', '#123456'],
+      ['013114\n', '#013114'],
+      ['\t000000', '#000000'],
+    ])('resolveColorInput reads %j as the colour %s', (input, hex) => {
+      expect(resolveColorInput(input)).toEqual({ hex });
+    });
+
+    it('findClosestForHex attaches the closest dye to a padded all-digit hex', () => {
+      const result = resolveColorInput(' 013114 ', { findClosestForHex: true });
+      expect(result?.hex).toBe('#013114');
+      expect(result?.dye).toEqual(dyeService.findClosestDye('#013114'));
+    });
+
+    it('resolveDyeInput finds the closest dye to a padded all-digit hex', () => {
+      expect(resolveDyeInput(' 013114')).toEqual(dyeService.findClosestDye('#013114'));
+      expect(resolveDyeInput('013114 ')).toEqual(dyeService.findClosestDye('#013114'));
+    });
+
+    // Trimming once covers every hex, not only the all-digit ones: a padded
+    // hex with letters used to fall through to the name search and come back
+    // null as well.
+    it('a padded hex with letters is a colour too', () => {
+      expect(resolveColorInput(' #FF0000 ')).toEqual({ hex: '#FF0000' });
+      expect(resolveColorInput('ff0000 ')).toEqual({ hex: '#FF0000' });
+      expect(resolveDyeInput(' #FF0000')).toEqual(dyeService.findClosestDye('#FF0000'));
+    });
+
+    // Pins, green before the trim as well: the id and name paths already
+    // tolerated padding, and six digits must stay out of them either way.
+    it('padded six digits are still never an id', () => {
+      expect(searchDyesByName(' 013114')).toEqual([]);
+      expect(findDyeByName('013114 ')).toBeNull();
+    });
+
+    it('padded one to five digits are still ids', () => {
+      expect(resolveColorInput(' 101 ')?.name).toBe('Pure White');
+      expect(resolveDyeInput(' 13114')?.name).toBe('Pure White');
+      expect(searchDyesByName('95 ').map((d) => d.name)).toEqual(['Carmine Red']);
+      expect(findDyeByName('\t102')?.name).toBe('Jet Black');
+    });
+  });
+
+  // The precedence rests on this: every id a dye can be looked up by fits in
+  // five digits, so no real id is ever shadowed by the six-digit hex rule.
+  it('every stainID, id and itemID in the database is at most five digits', () => {
+    for (const dye of dyeService.getAllDyes()) {
+      expect(dye.stainID ?? 0).toBeLessThan(100_000);
+      expect(dye.id).toBeLessThan(100_000);
+      expect(dye.itemID).toBeLessThan(100_000);
+    }
   });
 });

@@ -15,4 +15,4 @@
 Steps: 1) apps/og-worker/src/types.ts:184: delete 'userAgent: string;'. 2) apps/og-worker/src/crawler-detector.ts: delete the userAgent property lines 69, 78 and 86, and change the JSDoc example at line 62 to '{ isCrawler: true, type: 'discord' }'. 3) apps/og-worker/src/crawler-detector.test.ts: delete the userAgent: expectation lines 17, 26, 36, 47, 66, 85, 104, 116, 128, 140 and 152 (keep the local userAgent variables, which are inputs). 4) Leave index.privacy.test.ts:47 as it is. 5) pnpm turbo run build type-check lint test --filter=...xivdyetools-og-worker && pnpm dead-code:check
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `261f1a13` (branch `fix/remediation-2026-10-04-sprint11`, og-worker 2.12.0; PR #268, open, on PR #263).

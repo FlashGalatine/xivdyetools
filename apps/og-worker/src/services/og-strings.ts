@@ -8,8 +8,11 @@
  * community title — with one deliberate card-shortening ×6 (budget drops
  * Suggestions). Harmony carried a second one, "Color Harmony", cut from the old
  * three-word title; the tool was renamed Harmony Explorer on 2026-09-20 and the
- * card now quotes that title in full, like the other seven. The root name
- * `XIV Dye Tools` never localises; EN writes EN-US (Color, not Colour —
+ * card now quotes that title in full, like the other seven. The presets title
+ * follows the web app when it is renamed: FR became *Préréglages
+ * communautaires* (TERM-011, 2026-10-04 i18n audit — glossary *préréglage*),
+ * and `og-strings.test.ts` pins the six presets names to the web titles.
+ * The root name `XIV Dye Tools` never localizes; EN writes EN-US (Color, not Colour —
  * superseding the 2a mock drafts). The deck renders on the Discord frame
  * only (the X degrade drops it), and the picture never localises without
  * `?lang=`.
@@ -72,7 +75,7 @@ export const OG_DECK: Record<LocaleCode, Record<DeckKey, OgDeckStrings>> = {
     budget: { name: 'Budget', sub: 'La teinture la moins chère proche de celle que vous voulez — prix du tableau des ventes.' },
     swatch: { name: 'Nuancier', sub: 'Chargez un fichier de personnage et associez chacune de ses couleurs à une teinture.' },
     glamour: { name: 'Lecteur de mirages', sub: 'Chargez un fichier de personnage et listez chaque pièce qu’il porte, avec ses teintures et où l’obtenir.' },
-    presets: { name: 'Palettes Communautaires', sub: 'Palettes sélectionnées et communautaires — parcourir, voter, proposer les vôtres.' },
+    presets: { name: 'Préréglages communautaires', sub: 'Palettes sélectionnées et communautaires — parcourir, voter, proposer les vôtres.' },
     root: { name: 'XIV Dye Tools', sub: 'Outils couleur pour les teintures FFXIV — harmonie, correspondance, prix, accessibilité.' },
   },
   ja: {

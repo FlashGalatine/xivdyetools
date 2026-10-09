@@ -11,7 +11,12 @@ export { ColorService } from './services/ColorService.js';
 export { /** @public */ ColorConverter } from './services/color/ColorConverter.js';
 export { DyeService } from './services/DyeService.js';
 export { APIService, /** @public */ MemoryCacheBackend } from './services/APIService.js';
-export type { ICacheBackend, /** @public */ APIServiceOptions } from './services/APIService.js';
+export type {
+  ICacheBackend,
+  /** @public */ APIServiceOptions,
+  PriceBatchOutcome,
+  /** @public */ PriceBatchResult,
+} from './services/APIService.js';
 export {
   LocalizationService,
   SUPPORTED_LOCALES,
@@ -235,6 +240,7 @@ export type {
 // The GPOSERS submission form as data — the web reader and the bot render it
 export {
   GPOSERS_SLOTS,
+  CHARA_DYEABLE_SLOTS,
   GPOSERS_HEADER,
   GPOSERS_ACQUISITION_LABEL,
   gposersSlotLabel,

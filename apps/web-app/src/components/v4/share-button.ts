@@ -13,6 +13,7 @@ import { BaseLitComponent } from './base-lit-component';
 import { ShareService, type ShareParams } from '@services/share-service';
 import type { ToolId } from '@services/router-service';
 import { LanguageService } from '@services/index';
+import { logger } from '@shared/logger';
 
 /**
  * Share icon SVG (Material Design share icon)
@@ -291,7 +292,7 @@ export class ShareButton extends BaseLitComponent {
       // Validate params
       const errors = ShareService.validateShareParams(shareData);
       if (errors.length > 0) {
-        this.setError(`Invalid share params: ${errors.join(', ')}`);
+        logger.warn(`[share-button] Invalid share params: ${errors.join(', ')}`);
         this.isLoading = false;
         return;
       }

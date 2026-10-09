@@ -80,8 +80,21 @@ const SLOT_LABELS: Record<GposersSlot, string> = {
   FashionAccessory: 'Fashion Accessory',
 };
 
-/** Slots whose items carry dye channels; accessories and facewear have none. */
-const DYEABLE: ReadonlySet<GposersSlot> = new Set<GposersSlot>([
+/**
+ * The dyeable slots: the seven equipment slots (both weapons and the five armour
+ * slots) whose items carry the two dye channels, `DyeId` and `DyeId2`. The five
+ * accessory slots are absent because no FFXIV earring, necklace, bracelet or
+ * ring takes a dye; facewear and the fashion accessory have no channels either.
+ *
+ * The one copy of this game fact: the GPOSERS form writes `Dye 1:` / `Dye 2:`
+ * lines only for these slots, and the web Glamour Reader draws its two
+ * positional channel chips only for these slots.
+ *
+ * Typed over {@link GposersSlot}, the wider of the two slot unions (the parser's
+ * twelve `CharaGearSlotId` gear slots plus facewear and the fashion accessory),
+ * so either kind of slot id can be passed to `has()` without a cast.
+ */
+export const CHARA_DYEABLE_SLOTS: ReadonlySet<GposersSlot> = new Set<GposersSlot>([
   'MainHand',
   'OffHand',
   'HeadGear',
@@ -117,7 +130,7 @@ export function gposersGroups(input: GposersInput): GposersLine[][] {
     if (rings && slot === 'LeftRing') continue;
     const label = rings && slot === 'RightRing' ? 'Rings' : SLOT_LABELS[slot];
     const group: GposersLine[] = [{ label: `${label}:`, value: text(piece.name), bold: true }];
-    if (DYEABLE.has(slot)) {
+    if (CHARA_DYEABLE_SLOTS.has(slot)) {
       const dye1 = text(piece.dye1);
       const dye2 = text(piece.dye2);
       if (dye1) group.push({ label: 'Dye 1:', value: dye1, bold: false });

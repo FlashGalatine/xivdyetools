@@ -29,7 +29,7 @@ import { ShareService } from '@services/share-service';
 import { CollectionService } from '@services/collection-service';
 import { BaseComponent } from '@components/base-component';
 import '@components/v4/result-card';
-import type { ResultCard, ResultCardData, ContextAction } from '@components/v4/result-card';
+import type { ResultCard, ResultCardData } from '@components/v4/result-card';
 import '@components/v4/share-button';
 import type { ShareButton } from '@components/v4/share-button';
 import {
@@ -53,7 +53,7 @@ import { formatGil, formatNumber } from '@shared/format';
 import type { Dye, DyeId, PriceData } from '@xivdyetools/types';
 import { GLYPH_ACCENT_LIGHT, GLYPH_ACCENT_DARK } from '@xivdyetools/svg';
 import type { BudgetConfig, MatchingMethod } from '@shared/tool-config-types';
-import { DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
+import { DEFAULT_DISPLAY_OPTIONS, DEFAULT_DYE_FILTERS } from '@shared/tool-config-types';
 import { filterDyes } from '@shared/dye-filter-utils';
 import { methodShort } from '@components/metric-help';
 import { compareDyeNames } from '@shared/dye-name';
@@ -94,21 +94,34 @@ interface LedgerRow {
 
 type SortCol = 'perPoint' | 'de' | 'name' | 'board';
 
+/** Tool state outside BudgetConfig: the target and the ledger sort. */
 const STORAGE_KEYS = {
   targetDyeId: 'v3_budget_target',
-  matchLine: 'v5_budget_match_line',
-  matchingMethod: 'v3_budget_matching_method',
   sortCol: 'v5_budget_sort_col',
   sortDir: 'v5_budget_sort_dir',
-  showHex: 'v3_budget_show_hex',
-  showRgb: 'v3_budget_show_rgb',
-  showHsv: 'v3_budget_show_hsv',
-  showLab: 'v3_budget_show_lab',
-  showCmyk: 'v3_budget_show_cmyk',
-  showPrice: 'v3_budget_show_price',
-  showDeltaE: 'v3_budget_show_delta_e',
-  showAcquisition: 'v3_budget_show_acquisition',
 } as const;
+
+/**
+ * Settings mirrors earlier builds wrote beside ConfigController (BUG-012/078,
+ * 2026-10-04 deep-dive). The constructor read them instead of the controller,
+ * so the sidebar's store and the tool disagreed. The match line is migrated
+ * into the controller once (the in-page slider only ever wrote its mirror);
+ * the rest only copied controller values, so they are just deleted. The
+ * cleanup runs on every mount and is idempotent.
+ */
+const LEGACY_MATCH_LINE_KEY = 'v5_budget_match_line';
+const LEGACY_STORAGE_KEYS = [
+  LEGACY_MATCH_LINE_KEY,
+  'v3_budget_matching_method',
+  'v3_budget_show_hex',
+  'v3_budget_show_rgb',
+  'v3_budget_show_hsv',
+  'v3_budget_show_lab',
+  'v3_budget_show_cmyk',
+  'v3_budget_show_price',
+  'v3_budget_show_delta_e',
+  'v3_budget_show_acquisition',
+] as const;
 
 const MATCH_LINE_MIN = 2;
 const MATCH_LINE_MAX = 20;
@@ -160,28 +173,36 @@ export class BudgetTool extends BaseComponent {
   private marketOnline: boolean = true;
   private isLoading: boolean = false;
   private fetchProgress: { current: number; total: number } = { current: 0, total: 0 };
+  /**
+   * BUG-015 (2026-10-04 deep-dive): the ledger run that may still write.
+   * findAlternatives() takes the next id (clearDyes() starts a targetless
+   * run); destroy() moves it on.
+   */
+  private runId = 0;
 
-  // Display options (target Result Card)
-  private showHex: boolean = true;
-  private showRgb: boolean = false;
-  private showHsv: boolean = false;
-  private showLab: boolean = false;
-  private showCmyk: boolean = false;
-  private showPrice: boolean = true;
-  private showDeltaE: boolean = true;
-  private showAcquisition: boolean = true;
-  // 5.0 card rows — no budget-local storage key; ConfigController replays them
-  private showHue: boolean = true;
-  private showStain: boolean = true;
-  private showSpectrum: boolean = true;
+  // Display options (target Result Card), seeded from budget.displayOptions
+  private showHex: boolean;
+  private showRgb: boolean;
+  private showHsv: boolean;
+  private showLab: boolean;
+  private showCmyk: boolean;
+  private showPrice: boolean;
+  private showDeltaE: boolean;
+  private showAcquisition: boolean;
+  private showHue: boolean;
+  private showStain: boolean;
+  private showSpectrum: boolean;
 
   // Child components
-  private dyeFiltersConfig: DyeFiltersConfig = { ...DEFAULT_DYE_FILTERS };
+  private dyeFiltersConfig: DyeFiltersConfig;
   private marketBoardService: MarketBoardService;
+  /** The world the price data belongs to — the 'market' listener's only trigger. */
+  private marketServer: string | undefined;
 
   // DOM References
   private targetDyeContainer: HTMLElement | null = null;
   private matchLineValueDisplay: HTMLElement | null = null;
+  private matchLineSlider: HTMLInputElement | null = null;
   private quickPicksContent: HTMLElement | null = null;
   private emptyStateContainer: HTMLElement | null = null;
   private targetOverviewContainer: HTMLElement | null = null;
@@ -196,6 +217,7 @@ export class BudgetTool extends BaseComponent {
   // Mobile drawer components
   private mobileTargetDyeContainer: HTMLElement | null = null;
   private mobileMatchLineValueDisplay: HTMLElement | null = null;
+  private mobileMatchLineSlider: HTMLInputElement | null = null;
   private mobileQuickPicksContent: HTMLElement | null = null;
 
   constructor(container: HTMLElement, options: BudgetToolOptions) {
@@ -204,11 +226,41 @@ export class BudgetTool extends BaseComponent {
 
     this.marketBoardService = MarketBoardService.getInstance();
 
-    const storedLine = StorageService.getItem<number>(STORAGE_KEYS.matchLine);
-    this.matchLine = this.clampMatchLine(storedLine);
-    this.matchingMethod = normalizeMatchingMethod(
-      StorageService.getItem<string>(STORAGE_KEYS.matchingMethod)
-    );
+    const controller = ConfigController.getInstance();
+
+    // One-time migration, then the idempotent cleanup (see LEGACY_STORAGE_KEYS)
+    const legacyLine = this.parseMatchLine(StorageService.getItem<number>(LEGACY_MATCH_LINE_KEY));
+    if (legacyLine !== null) {
+      controller.setConfig('budget', { maxDeltaE: legacyLine });
+    }
+    for (const key of LEGACY_STORAGE_KEYS) {
+      StorageService.removeItem(key);
+    }
+
+    // BUG-022/BUG-078 (2026-10-04 deep-dive): subscribe() never replays, so
+    // this is the only mount-time read of the sidebar's settings. getConfig
+    // can hand back the controller's live object (or the defaults table), so
+    // nested objects are copied, and every field tolerates a missing value.
+    const config = controller.getConfig('budget');
+    this.matchLine = this.clampMatchLine(config.maxDeltaE);
+    this.matchingMethod = normalizeMatchingMethod(config.matchingMethod);
+    const display: DisplayOptionsConfig = {
+      ...DEFAULT_DISPLAY_OPTIONS,
+      ...config.displayOptions,
+    };
+    this.showHex = display.showHex;
+    this.showRgb = display.showRgb;
+    this.showHsv = display.showHsv;
+    this.showLab = display.showLab;
+    this.showCmyk = display.showCmyk;
+    this.showPrice = display.showPrice;
+    this.showDeltaE = display.showDeltaE;
+    this.showAcquisition = display.showAcquisition;
+    this.showHue = display.showHue ?? true;
+    this.showStain = display.showStain ?? true;
+    this.showSpectrum = display.showSpectrum ?? true;
+    this.dyeFiltersConfig = { ...DEFAULT_DYE_FILTERS, ...config.dyeFilters };
+
     const storedCol = StorageService.getItem<string>(STORAGE_KEYS.sortCol);
     this.sortCol =
       storedCol === 'de' ||
@@ -219,26 +271,22 @@ export class BudgetTool extends BaseComponent {
         : 'perPoint';
     this.sortDir = StorageService.getItem<number>(STORAGE_KEYS.sortDir) === -1 ? -1 : 1;
 
-    this.showHex = StorageService.getItem<boolean>(STORAGE_KEYS.showHex) ?? true;
-    this.showRgb = StorageService.getItem<boolean>(STORAGE_KEYS.showRgb) ?? false;
-    this.showHsv = StorageService.getItem<boolean>(STORAGE_KEYS.showHsv) ?? false;
-    this.showLab = StorageService.getItem<boolean>(STORAGE_KEYS.showLab) ?? false;
-    this.showCmyk = StorageService.getItem<boolean>(STORAGE_KEYS.showCmyk) ?? false;
-    this.showPrice = StorageService.getItem<boolean>(STORAGE_KEYS.showPrice) ?? true;
-    this.showDeltaE = StorageService.getItem<boolean>(STORAGE_KEYS.showDeltaE) ?? true;
-    this.showAcquisition = StorageService.getItem<boolean>(STORAGE_KEYS.showAcquisition) ?? true;
-
     const savedDyeId = StorageService.getItem<number>(STORAGE_KEYS.targetDyeId);
     if (savedDyeId) {
       this.targetDye = dyeService.getDyeById(savedDyeId) || null;
     }
   }
 
+  /** A match line in the 2–20 range, rounded; null for anything else. */
+  private parseMatchLine(value: unknown): number | null {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+    if (value < MATCH_LINE_MIN || value > MATCH_LINE_MAX) return null;
+    return Math.round(value);
+  }
+
   /** Legacy v3 distance values (25–100) are out of the 2–20 line range → default. */
   private clampMatchLine(value: number | null | undefined): number {
-    if (typeof value !== 'number' || !Number.isFinite(value)) return DEFAULT_MATCH_LINE;
-    if (value < MATCH_LINE_MIN || value > MATCH_LINE_MAX) return DEFAULT_MATCH_LINE;
-    return Math.round(value);
+    return this.parseMatchLine(value) ?? DEFAULT_MATCH_LINE;
   }
 
   // ============================================================================
@@ -275,10 +323,30 @@ export class BudgetTool extends BaseComponent {
       })
     );
 
-    // Server/showPrices changes come from the sidebar's Market Board section.
-    // Defer the refetch a tick so MarketBoardService applies the change first.
+    // BUG-080 (2026-10-04 deep-dive): the tier ramp, the verdict tones and the
+    // sort accent are inline hexes read from isDarkMode() at render, so a
+    // theme switch left them in the old palette until something else redrew
+    // them. These two are the theme-reading renders this listener redraws.
+    //
+    // Mid-fetch the verdict is left alone: the target is already the new pick
+    // but the rows are still the last run's (or none), so it would draw the new
+    // name over them. The run redraws it when it lands; the ledger meanwhile
+    // shows its spinner. The ledger redraw keeps a keyboard user's place.
     this.subs.add(
-      ConfigController.getInstance().subscribe('market', () => {
+      ThemeService.subscribe(() => {
+        if (!this.isLoading) this.renderVerdict();
+        this.renderLedgerKeepingFocus();
+      })
+    );
+
+    // Server changes come from the sidebar's Market Board section. The
+    // showPrices toggle is not Budget's: fetchPrices ignores it (BUG-079).
+    // Defer the refetch a tick so MarketBoardService applies the change first.
+    this.marketServer = ConfigController.getInstance().getConfig('market').selectedServer;
+    this.subs.add(
+      ConfigController.getInstance().subscribe('market', (config) => {
+        if (config.selectedServer === this.marketServer) return;
+        this.marketServer = config.selectedServer;
         // BUG-074: `priceData` is MERGED on every fetch and was only ever
         // cleared in destroy(), so after a world change any dye the new world
         // has no listing for kept the OLD world's price -- displayed under the
@@ -287,9 +355,6 @@ export class BudgetTool extends BaseComponent {
         setTimeout(() => void this.findAlternatives(), 0);
       })
     );
-
-    // Prices are core to this tool
-    this.marketBoardService.setShowPrices(true);
 
     // Re-render the ledger across the narrow breakpoint (BOARD column drop)
     this.narrowMql = window.matchMedia('(max-width: 480px)');
@@ -304,6 +369,8 @@ export class BudgetTool extends BaseComponent {
   }
 
   destroy(): void {
+    // BUG-015: a ledger run still awaiting prices must not write after this
+    ++this.runId;
     this.targetDye = null;
     this.rows = [];
     this.priceData.clear();
@@ -319,7 +386,10 @@ export class BudgetTool extends BaseComponent {
   // ============================================================================
 
   /**
-   * Update tool configuration from external source (V4 ConfigSidebar)
+   * Apply configuration from ConfigController (the 'budget' subscription) or
+   * the V4 layout's forward of a sidebar change. Apply-only: it never writes
+   * the controller, and re-applying a value the tool already has is a no-op —
+   * a sidebar change arrives here twice, and an in-tool write echoes back.
    */
   public setConfig(config: Partial<BudgetConfig>): void {
     let needsRefind = false;
@@ -329,23 +399,20 @@ export class BudgetTool extends BaseComponent {
       const line = this.clampMatchLine(config.maxDeltaE);
       if (line !== this.matchLine) {
         this.matchLine = line;
-        StorageService.setItem(STORAGE_KEYS.matchLine, line);
         needsRefind = true;
         logger.info(`[BudgetTool] setConfig: matchLine -> ${line}`);
-        if (this.matchLineValueDisplay) {
-          this.matchLineValueDisplay.textContent = String(line);
-        }
-        if (this.mobileMatchLineValueDisplay) {
-          this.mobileMatchLineValueDisplay.textContent = String(line);
-        }
+        this.syncMatchLineControls();
       }
     }
 
-    if (config.matchingMethod !== undefined && config.matchingMethod !== this.matchingMethod) {
-      this.matchingMethod = config.matchingMethod;
-      StorageService.setItem(STORAGE_KEYS.matchingMethod, config.matchingMethod);
+    const method =
+      config.matchingMethod !== undefined
+        ? normalizeMatchingMethod(config.matchingMethod)
+        : undefined;
+    if (method !== undefined && method !== this.matchingMethod) {
+      this.matchingMethod = method;
       needsRefind = true;
-      logger.info(`[BudgetTool] setConfig: matchingMethod -> ${config.matchingMethod}`);
+      logger.info(`[BudgetTool] setConfig: matchingMethod -> ${method}`);
       // The line is only calibrated against ΔE2000 — other methods pin to their
       // MATCH middle cut, so the slider section needs a rerender.
       this.renderMain();
@@ -372,12 +439,6 @@ export class BudgetTool extends BaseComponent {
         current: currentOptions,
         incoming: config.displayOptions,
         toolName: 'BudgetTool',
-        onChange: (key, value) => {
-          // 5.0 fields (showHue/showStain/showSpectrum) have no budget-local
-          // storage key — they ride the card defaults.
-          const storageKey = (STORAGE_KEYS as Partial<Record<typeof key, string>>)[key];
-          if (storageKey) StorageService.setItem(storageKey, value);
-        },
       });
 
       if (result.hasChanges) {
@@ -432,6 +493,13 @@ export class BudgetTool extends BaseComponent {
         this.targetDye = dye;
         this.updateTargetDyeDisplay();
         StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
+        // BUG-013 (2026-10-04 deep-dive): consumed once stored. The result
+        // card's "Set as budget target" lands here as ?dye=, and left in the
+        // URL, PRESERVED_PARAMS carried it into the next tool, where Harmony
+        // took it as its base and replaced (and stored over) the user's own.
+        // Only `dye`: a `?hex=` target is never stored, so it stays for a
+        // reload. A dye that did not resolve stays too; a pick drops it.
+        this.releaseLinkedTarget(['dye']);
       }
     } else if (hexParam && /^#?[0-9a-fA-F]{6}$/.test(hexParam)) {
       // ?hex= is a bare colour target — exclusive with `dye`, never persisted
@@ -440,12 +508,38 @@ export class BudgetTool extends BaseComponent {
     }
 
     if (maxDeltaParam !== null) {
-      const n = Number(maxDeltaParam);
-      if (Number.isFinite(n)) {
-        this.matchLine = this.clampMatchLine(n);
-        StorageService.setItem(STORAGE_KEYS.matchLine, this.matchLine);
+      // BUG-014 (2026-10-04 deep-dive): this set matchLine after the slider
+      // and its label were rendered, so the ledger filtered at the link's line
+      // while both showed the stored one. Write the controller instead, and
+      // let the 'budget' subscription (registered before this runs) apply it
+      // through setConfig, which updates labels and thumbs. An out-of-range
+      // or malformed value is ignored rather than reset to the default, so a
+      // bad link cannot overwrite the saved line.
+      const line = this.parseMatchLine(Number(maxDeltaParam));
+      if (line !== null) {
+        ConfigController.getInstance().setConfig('budget', { maxDeltaE: line });
       }
     }
+  }
+
+  /**
+   * Take a linked target out of the address bar once the user picks or clears
+   * one here, and a linked `dye` once handleDeepLink has stored it.
+   *
+   * BUG-013 (2026-10-04 deep-dive): RouterService carries `dye=` across every
+   * navigation, and handleDeepLink applies it on every mount, so a pick that
+   * reached storage only was replaced by the link's dye when the user came
+   * back. The param is deleted rather than rewritten to the pick: rewritten,
+   * it would follow the user into Harmony and replace that tool's own base.
+   * A pick takes `hex` too, because handleDeepLink falls back to it without a
+   * `dye`. history.replaceState, not RouterService.replaceRoute, which
+   * notifies the layout and would remount this tool.
+   */
+  private releaseLinkedTarget(keys: readonly string[] = ['dye', 'hex']): void {
+    const url = new URL(window.location.href);
+    if (!keys.some((key) => url.searchParams.has(key))) return;
+    for (const key of keys) url.searchParams.delete(key);
+    history.replaceState(history.state, '', `${url.pathname}${url.search}${url.hash}`);
   }
 
   // ============================================================================
@@ -544,6 +638,11 @@ export class BudgetTool extends BaseComponent {
    * Always fetches coffer prices too (quick picks are generated from the board).
    */
   private async findAlternatives(): Promise<void> {
+    // BUG-015 (2026-10-04 deep-dive): the target and line are read before the
+    // price fetch, and a newer run (a pick, a slider tick, a server change)
+    // can resolve first. This run then writes nothing, or it would draw the
+    // old target's rows under the new target's card.
+    const run = ++this.runId;
     const target = this.targetDye;
     const threshold = this.effectiveThreshold();
 
@@ -574,7 +673,8 @@ export class BudgetTool extends BaseComponent {
       if (target) toFetch.set(target.id, target);
       for (const d of candidates) toFetch.set(d.id, d);
       for (const d of this.cofferDyes()) toFetch.set(d.id, d);
-      await this.fetchPrices(Array.from(toFetch.values()));
+      await this.fetchPrices(Array.from(toFetch.values()), run);
+      if (run !== this.runId) return;
 
       if (target) {
         const targetGil = this.priceOf(target).gil;
@@ -601,16 +701,21 @@ export class BudgetTool extends BaseComponent {
       this.renderVerdict();
       this.renderLedger();
     } catch (error) {
+      // fetchPrices() never throws, so only the current run can land here.
       logger.error('[BudgetTool] Error building ledger:', error);
       ToastService.error(LanguageService.t('budget.errorFindingAlternatives'));
       this.isLoading = false;
       this.renderLedger();
     } finally {
-      this.renderTargetOverview();
-      this.updateTargetDyeDisplay();
-      this.updateMobileTargetDyeDisplay();
-      this.renderQuickPicks();
-      if (!this.targetDye) this.showEmptyState(true);
+      // Not a `return`: a superseded run reaches here from the guard above,
+      // and must not rebuild the target card under the user.
+      if (run === this.runId) {
+        this.renderTargetOverview();
+        this.updateTargetDyeDisplay();
+        this.updateMobileTargetDyeDisplay();
+        this.renderQuickPicks();
+        if (!this.targetDye) this.showEmptyState(true);
+      }
     }
   }
 
@@ -621,16 +726,30 @@ export class BudgetTool extends BaseComponent {
    * returned for three different reasons, only one of which is a failure -- a
    * superseded request (exactly what a rapid world change causes) reported the
    * market as offline. Ask the service which it was.
+   *
+   * BUG-015 (2026-10-04 deep-dive): `run` is the findAlternatives() run this
+   * fetch belongs to. Once a newer run has started, this one writes nothing:
+   * `lastFetchOutcome` is shared by every call, so by then it can describe a
+   * different request.
    */
-  private async fetchPrices(dyes: Dye[]): Promise<void> {
+  private async fetchPrices(dyes: Dye[], run: number): Promise<void> {
     this.fetchProgress = { current: 0, total: dyes.length };
     this.renderLedger();
 
     try {
-      const prices = await this.marketBoardService.fetchPricesForDyes(dyes, (current, total) => {
-        this.fetchProgress = { current, total };
-        this.renderLedger();
-      });
+      // BUG-079 (2026-10-04 deep-dive): the ledger IS prices, but mounting
+      // used to switch the global Market Board toggle on, and persist it, for
+      // every tool. Fetch regardless of the toggle instead; the service
+      // returns these prices to this call only.
+      const prices = await this.marketBoardService.fetchPricesForDyes(
+        dyes,
+        (current, total) => {
+          this.fetchProgress = { current, total };
+          this.renderLedger();
+        },
+        { ignoreShowPrices: true }
+      );
+      if (run !== this.runId) return;
       prices.forEach((data, itemId) => {
         this.priceData.set(itemId, data);
       });
@@ -643,6 +762,7 @@ export class BudgetTool extends BaseComponent {
       // 'superseded' and 'nothing-to-fetch' say nothing about the board, so
       // they leave the previous verdict alone.
     } catch (error) {
+      if (run !== this.runId) return;
       logger.warn('[BudgetTool] Error fetching prices:', error);
       this.marketOnline = false;
     }
@@ -935,7 +1055,6 @@ export class BudgetTool extends BaseComponent {
    */
   private renderMatchLineSection(container: HTMLElement, mobile: boolean): void {
     const isDe2000 = this.matchingMethod === 'ciede2000';
-    const threshold = this.effectiveThreshold();
 
     const valueDisplay = this.createElement('div', {
       attributes: {
@@ -954,7 +1073,7 @@ export class BudgetTool extends BaseComponent {
     );
 
     const valueSpan = this.createElement('span', {
-      textContent: isDe2000 ? String(this.matchLine) : `≤ ${this.fmtValue(threshold)}`,
+      textContent: this.matchLineText(),
       attributes: {
         style: `font-family: ${MONO}; font-weight: 600; color: var(--theme-text);`,
       },
@@ -988,13 +1107,24 @@ export class BudgetTool extends BaseComponent {
       },
     }) as HTMLInputElement;
 
+    if (mobile) {
+      this.mobileMatchLineSlider = slider;
+    } else {
+      this.matchLineSlider = slider;
+    }
+
+    // BUG-012 (2026-10-04 deep-dive): the slider wrote only its own storage
+    // mirror, so the controller kept the old line and its next full-config
+    // broadcast (any display-option or filter toggle) snapped it back. 'input'
+    // previews; 'change' commits once per gesture, and the echo through the
+    // subscription finds every value already applied.
     this.on(slider, 'input', () => {
       this.matchLine = parseInt(slider.value, 10);
-      const text = String(this.matchLine);
-      if (this.matchLineValueDisplay) this.matchLineValueDisplay.textContent = text;
-      if (this.mobileMatchLineValueDisplay) this.mobileMatchLineValueDisplay.textContent = text;
-      StorageService.setItem(STORAGE_KEYS.matchLine, this.matchLine);
+      this.syncMatchLineControls();
       void this.findAlternatives();
+    });
+    this.on(slider, 'change', () => {
+      ConfigController.getInstance().setConfig('budget', { maxDeltaE: this.matchLine });
     });
 
     container.appendChild(slider);
@@ -1015,6 +1145,27 @@ export class BudgetTool extends BaseComponent {
       );
     });
     container.appendChild(ticksContainer);
+  }
+
+  /** The value label: the line under ΔE2000, the pinned MATCH cut otherwise. */
+  private matchLineText(): string {
+    return this.matchingMethod === 'ciede2000'
+      ? String(this.matchLine)
+      : `≤ ${this.fmtValue(this.effectiveThreshold())}`;
+  }
+
+  /**
+   * Point both labels and both thumbs at matchLine. It changes from either
+   * slider, the sidebar's slider and share links; before BUG-012's fix only
+   * the labels followed, so the next drag jumped from a stale thumb.
+   */
+  private syncMatchLineControls(): void {
+    const text = this.matchLineText();
+    const value = String(this.matchLine);
+    if (this.matchLineValueDisplay) this.matchLineValueDisplay.textContent = text;
+    if (this.mobileMatchLineValueDisplay) this.mobileMatchLineValueDisplay.textContent = text;
+    if (this.matchLineSlider) this.matchLineSlider.value = value;
+    if (this.mobileMatchLineSlider) this.mobileMatchLineSlider.value = value;
   }
 
   // ============================================================================
@@ -1133,12 +1284,6 @@ export class BudgetTool extends BaseComponent {
 
     card.style.setProperty('--v4-result-card-width', '320px');
 
-    card.addEventListener('context-action', ((
-      e: CustomEvent<{ action: ContextAction; dye: Dye }>
-    ) => {
-      this.handleContextAction(e.detail.action, e.detail.dye);
-    }) as EventListener);
-
     cardWrapper.appendChild(card);
     this.targetOverviewContainer.appendChild(cardWrapper);
     this.targetOverviewContainer.appendChild(this.buildSendToRow(this.targetDye));
@@ -1213,6 +1358,10 @@ export class BudgetTool extends BaseComponent {
   /**
    * Save the target and its best-priced substitute as a device-local
    * `kind: 'swap'` record (the store's third collection kind).
+   *
+   * BUG-081 (2026-10-04 deep-dive): every Standard dye costs the same 216
+   * gil, so a tie on price is the rule, not the exception. It used to keep
+   * the first tied row in database order; the closer one is the better swap.
    */
   private saveSwapRecord(): void {
     const target = this.targetDye;
@@ -1230,7 +1379,9 @@ export class BudgetTool extends BaseComponent {
       (best, r) =>
         r.price.gil != null &&
         r.dye.stainID !== null &&
-        (best?.price.gil == null || r.price.gil < best.price.gil)
+        (best?.price.gil == null ||
+          r.price.gil < best.price.gil ||
+          (r.price.gil === best.price.gil && r.de < best.de))
           ? r
           : best,
       null
@@ -1387,6 +1538,38 @@ export class BudgetTool extends BaseComponent {
     block.appendChild(rightCol);
 
     this.verdictContainer.appendChild(block);
+  }
+
+  /** The ledger's keyboard stops in document order: sort headers and rows. */
+  private ledgerFocusables(): HTMLElement[] {
+    if (!this.ledgerContainer) return [];
+    return Array.from(
+      this.ledgerContainer.querySelectorAll<HTMLElement>('button, [role="button"][tabindex="0"]')
+    );
+  }
+
+  /**
+   * renderLedger() for a redraw that changes no row or column (a theme
+   * switch): every node is replaced, so a focused row or sort header would
+   * drop focus to <body>. The node at the same position takes it back — same
+   * row of the same group, same column of the same group's headers.
+   *
+   * In the v4 shell the ledger sits in a shadow root, where
+   * document.activeElement is only the host, so the root's own is read.
+   */
+  private renderLedgerKeepingFocus(): void {
+    const root = this.ledgerContainer?.getRootNode();
+    const active =
+      root instanceof Document || root instanceof ShadowRoot ? root.activeElement : null;
+    const index =
+      active instanceof HTMLElement && this.ledgerContainer?.contains(active)
+        ? this.ledgerFocusables().indexOf(active)
+        : -1;
+
+    this.renderLedger();
+
+    if (index < 0) return;
+    this.ledgerFocusables()[index]?.focus({ preventScroll: true });
   }
 
   /** The ledger: tier groups, price printed once per group, one row per candidate. */
@@ -1829,30 +2012,6 @@ export class BudgetTool extends BaseComponent {
   // Helpers
   // ============================================================================
 
-  private handleContextAction(action: ContextAction, dye: Dye): void {
-    switch (action) {
-      case 'add-comparison':
-        handoffTo('comparison', dye);
-        break;
-      case 'add-mixer':
-        handoffTo('mixer', dye);
-        break;
-      case 'add-accessibility':
-        handoffTo('accessibility', dye);
-        break;
-      case 'see-harmonies':
-        handoffTo('harmony', dye);
-        break;
-      case 'budget':
-        this.selectDye(dye);
-        break;
-      case 'copy-hex':
-        void navigator.clipboard.writeText(dye.hex);
-        ToastService.success(LanguageService.t('success.copiedToClipboard'));
-        break;
-    }
-  }
-
   private isLightColor(hex: string): boolean {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -1870,6 +2029,7 @@ export class BudgetTool extends BaseComponent {
     this.rows = [];
 
     StorageService.removeItem(STORAGE_KEYS.targetDyeId);
+    this.releaseLinkedTarget();
     logger.info('[BudgetTool] All dyes cleared');
 
     if (this.ledgerContainer) clearContainer(this.ledgerContainer);
@@ -1879,6 +2039,14 @@ export class BudgetTool extends BaseComponent {
     this.updateTargetDyeDisplay();
     this.updateMobileTargetDyeDisplay();
     this.renderQuickPicks();
+
+    // BUG-015 (2026-10-04 deep-dive): a run still awaiting prices would refill
+    // the rows just cleared, so it must not write. This used to be a bare
+    // runId bump, which also threw that run's price fetch away: the quick
+    // picks stayed on their unpriced offline fallback although the board had
+    // answered. A targetless run supersedes it the same way and refetches the
+    // board for the quick picks, exactly as a mount with no target does.
+    void this.findAlternatives();
   }
 
   /**
@@ -1890,6 +2058,7 @@ export class BudgetTool extends BaseComponent {
     this.targetDye = dye;
 
     StorageService.setItem(STORAGE_KEYS.targetDyeId, dye.id);
+    this.releaseLinkedTarget();
     logger.info(`[BudgetTool] Target selected: ${dye.name}`);
 
     void this.findAlternatives();

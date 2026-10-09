@@ -147,6 +147,105 @@ describe('DyeDatabase', () => {
       expect(() => database.initialize('invalid')).toThrow(AppError);
     });
 
+    // BUG-136 (2026-10-04 deep-dive): the empty check ran BEFORE the
+    // isValidDye filter, so a payload whose every entry was filtered out
+    // loaded as an empty database (isLoaded true, 0 dyes, empty k-d tree),
+    // and a duplicate ID only reached logger.error — the NoOp logger by
+    // default — while the later entry silently overwrote the earlier one.
+    describe('fails loudly on unusable payloads (BUG-136)', () => {
+      const expectLoadFailure = (payload: unknown, message: RegExp): void => {
+        let caught: unknown;
+        try {
+          database.initialize(payload);
+        } catch (error) {
+          caught = error;
+        }
+        expect(caught).toBeInstanceOf(AppError);
+        expect((caught as AppError).code).toBe(ErrorCode.DATABASE_LOAD_FAILED);
+        expect((caught as AppError).severity).toBe('critical');
+        expect((caught as AppError).message).toMatch(message);
+        expect(database.isLoadedStatus()).toBe(false);
+      };
+
+      it('rejects a payload whose every entry fails validation', () => {
+        const hexless = mockDyes.map(({ hex: _hex, rgb: _rgb, hsv: _hsv, ...rest }) => rest);
+        expectLoadFailure(hexless, /no valid dyes/i);
+      });
+
+      it('rejects a schema-v2 payload whose every entry lacks hex', () => {
+        const v2NoHex = [
+          {
+            stainID: 1,
+            name: 'Snow White',
+            category: 'Neutral',
+            acquisition: 'Dye Vendor',
+            legacyItemID: 5729,
+          },
+          {
+            stainID: 2,
+            name: 'Ash Grey',
+            category: 'Neutral',
+            acquisition: 'Dye Vendor',
+            legacyItemID: 5730,
+          },
+        ];
+        expectLoadFailure(v2NoHex, /no valid dyes/i);
+      });
+
+      it('rejects two dyes sharing an id instead of silently overwriting', () => {
+        const clash = { ...mockDyes[1], stainID: 99, name: 'Impostor Red' };
+        expectLoadFailure([...mockDyes, clash], /duplicate dye id.*5740/i);
+      });
+
+      it('rejects two schema-v2 entries sharing a legacyItemID', () => {
+        const v2 = [
+          {
+            stainID: 1,
+            name: 'Snow White',
+            hex: '#E4DFD0',
+            category: 'Neutral',
+            acquisition: 'Dye Vendor',
+            legacyItemID: 5729,
+          },
+          {
+            stainID: 2,
+            name: 'Ash Grey',
+            hex: '#ACA8A2',
+            category: 'Neutral',
+            acquisition: 'Dye Vendor',
+            legacyItemID: 5729,
+          },
+        ];
+        expectLoadFailure(v2, /duplicate dye id.*5729/i);
+      });
+
+      it("rejects an itemID alias that collides with another dye's id", () => {
+        // id 7001 / itemID 5740 would re-point id 5740 (Wine Red) at this dye.
+        const alias = { ...mockDyes[0], id: 7001, itemID: 5740, stainID: 98, name: 'Alias Dye' };
+        expectLoadFailure([...mockDyes, alias], /duplicate dye id.*5740/i);
+      });
+
+      it('rejects two dyes sharing a stainID', () => {
+        const clash = { ...mockDyes[0], id: 7002, itemID: 7002, name: 'Stain Clash' }; // stainID 1
+        expectLoadFailure([...mockDyes, clash], /duplicate stainID.*\b1\b/i);
+      });
+
+      it('still loads a payload where only SOME entries are invalid', () => {
+        const hexless = { ...mockDyes[0], id: 7003, itemID: 7003, stainID: 97, hex: undefined };
+        database.initialize([...mockDyes, hexless]);
+        expect(database.isLoadedStatus()).toBe(true);
+        expect(database.getDyeCount()).toBe(5);
+      });
+
+      it('a failed re-initialize leaves the database unloaded, so guarded accessors refuse', () => {
+        database.initialize(mockDyes);
+        expect(database.isLoadedStatus()).toBe(true);
+
+        expectLoadFailure([...mockDyes, { ...mockDyes[1], stainID: 99 }], /duplicate dye id/i);
+        expect(() => database.getAllDyes()).toThrow('Dye database is not loaded');
+      });
+    });
+
     it('should normalize dyes with itemID but no id', () => {
       const dyeWithoutId = {
         itemID: 9999,
@@ -1005,7 +1104,12 @@ describe('DyeDatabase', () => {
       expect(() => database.initialize(true)).toThrow('expected array or object');
     });
 
-    it('should accept dyes with null hex value', () => {
+    // Schema v2 made hex required, so these two entries are filtered out.
+    // Both tests used to load the entry ALONE and assert `toBeDefined()` —
+    // which `null` satisfies — over what was then an empty database; BUG-136
+    // makes an all-invalid payload throw, so load them beside valid dyes and
+    // assert the rejection itself.
+    it('should reject dyes with null hex value', () => {
       const dyeWithNullHex = {
         itemID: 8000,
         name: 'Null Hex',
@@ -1017,12 +1121,12 @@ describe('DyeDatabase', () => {
         cost: 0,
       };
 
-      database.initialize([dyeWithNullHex]);
-      const dye = database.getDyeById(8000);
-      expect(dye).toBeDefined();
+      database.initialize([...mockDyes, dyeWithNullHex]);
+      expect(database.getDyeById(8000)).toBeNull();
+      expect(database.getDyeCount()).toBe(5);
     });
 
-    it('should accept dyes with undefined hex value', () => {
+    it('should reject dyes with undefined hex value', () => {
       const dyeWithoutHex = {
         itemID: 8001,
         name: 'No Hex',
@@ -1033,9 +1137,9 @@ describe('DyeDatabase', () => {
         cost: 0,
       };
 
-      database.initialize([dyeWithoutHex]);
-      const dye = database.getDyeById(8001);
-      expect(dye).toBeDefined();
+      database.initialize([...mockDyes, dyeWithoutHex]);
+      expect(database.getDyeById(8001)).toBeNull();
+      expect(database.getDyeCount()).toBe(5);
     });
 
     it('recovers dyes with null stored RGB/HSV by deriving from hex (schema v2)', () => {

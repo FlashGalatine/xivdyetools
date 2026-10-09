@@ -11,4 +11,4 @@
 - Set the fr `OG_DECK` presets name. Latin only (no CJK re-cut); bump `CARD_VERSION` with the og-worker sprint.
 
 ## Status
-OPEN
+FIX COMMITTED, NOT DEPLOYED — `261f1a13`: the fr presets deck reads "Préréglages communautaires"; og-strings.test.ts pins all six presets names to the web titles. Latin-only: a re-cut of og-worker's CJK subsets left every cmap unchanged. (branch `fix/remediation-2026-10-04-sprint11`, og-worker 2.12.0; PR #268, open, on PR #263).

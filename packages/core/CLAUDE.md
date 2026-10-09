@@ -75,7 +75,8 @@ src/
 └── __tests__/integration/         # End-to-end workflow + perf benchmarks
 scripts/
 ├── fetch_dye_names.py             # Pulls XIVAPI v2 names → dyenames.csv (en/ja/de/fr only)
-├── build-locales.ts               # YAML + CSV + dyes.json → src/data/locales/*.json
+├── build-locales.ts               # localize.yaml + dyenames.csv + facewear-names.csv → src/data/locales/*.json, checked against dyes.json + facewear_colors.json
+├── build-locales.test.ts          # Runs the real script on fixtures; pins the committed JSON and the sheet names
 ├── copy-locales.ts                # Copies generated locales into dist/
 ├── calibrate-bands.ts             # Recomputes the band vocabulary from dyes.json (manual recalibration path)
 ├── build-munsell-hues.ts          # real.dat → src/data/munsell-hues.json + munsell-anchors.json
@@ -229,9 +230,17 @@ There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, '
 
 ### Locale build pipeline
 1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.
-2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language dye names) and `facewear-names.csv` (the 11 Facewear tints, keyed by slug — they have no itemID, I18N-008) → emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`. It does **not** read `dyes.json`: the category translations are a hardcoded table inside the script (`buildCategories`), so a new dye category needs an edit there.
+2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language dye names, keyed by itemID) and `facewear-names.csv` (the 11 Facewear tints, keyed by slug — they have no itemID, I18N-008), cross-checks the two CSVs against `src/data/dyes.json` and `src/data/facewear_colors.json`, builds all six locales in memory, and only then emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`. Every other section (categories, acquisitions, currencies, harmony types, color wheels, vision types, tools, sheets, races, clans) is a hardcoded table inside the script, so a new dye category needs an edit to `buildCategories`. `buildSheets` follows the glossary's *Character-Creation Color Sheets* table in [`docs/reference/ffxiv-terminology.md`](../../docs/reference/ffxiv-terminology.md) (TERM-021): change a word there first, then in the script.
 3. `tsc -p tsconfig.build.json` compiles to `dist/`.
 4. `scripts/copy-locales.ts` copies the generated JSON into `dist/`.
+
+**Nothing is written unless every source checks out** (BUG-128 / BUG-130, 2026-10-04 deep-dive). The script exits 1 before touching disk, leaving `src/data/locales/` exactly as it found it, when:
+- a dye has no `dyenames.csv` row, a row has no itemID or matches no dye, an itemID appears on two rows, or two dyes share one key. A dye is keyed the way `DyeDatabase.initialize()` derives `Dye.itemID` (`legacyItemID`, falling back to `stainID`), so a future consolidated-only dye whose stainID equals another dye's legacyItemID is caught here;
+- a FacewearColor has no `facewear-names.csv` row, or a row's slug is empty, appears twice, or matches no FacewearColor;
+- a CSV's English cell differs from the data file's `name`, case included, so the en locale and `dye.name` / `FacewearColor.name` never disagree;
+- a translation cell is empty. This is the only one `--allow-missing` (`pnpm run build:locales -- --allow-missing`) waives, keeping the English fallback for work in progress.
+
+`scripts/build-locales.test.ts` runs the real script as a subprocess against fixtures for each of these, regenerates from the committed sources to check that the committed JSON matches, and pins all six locales' `sheets`. Core's `tsc` and `eslint src` do not cover `scripts/`, so that test is the gate on the script.
 
 `build-locales.ts` is **idempotent**: before writing, it compares the freshly built payload against the file already on disk, ignoring `meta.generated`. If nothing else differs it keeps the existing file untouched — same bytes, same mtime. Rebuilding from unchanged sources therefore leaves a clean working tree, and `meta.generated` marks when the locale data last *changed* rather than when the build last ran.
 

@@ -35,6 +35,7 @@ import {
   classifyBandTier,
   getConsolidatedDyeName,
   getMarketItemID,
+  isValidHexColor,
 } from '@xivdyetools/core';
 import { LanguageService, StorageService, RouterService, ThemeService } from '@services/index';
 import { ToastService } from '@services/toast-service';
@@ -98,16 +99,12 @@ export interface ResultCardData {
  * - Transform: gradient, mixer
  * - External: universalis, garlandtools, teamcraft, saddlebag
  *
- * Also includes legacy action names for backwards compatibility with
- * existing tool components that listen for context-action events. This
- * file's own emitters (`handleSlotAction`, `handleMenuAction` below) only
- * ever produce `inspect-*` / `transform-*` / `external-*` /
- * `add-mixer-slot-*` — the five `add-comparison` / `add-mixer` /
- * `add-accessibility` / `see-harmonies` / `budget` legacy members are dead
- * from ResultCard's own emitters and were removed from swatch-tool.ts and
- * mixer-tool.ts's handlers as unreachable (REFACTOR-001); they stay in this
- * vocabulary because budget-tool.ts, gradient-tool.ts and harmony-tool.ts
- * still handle them.
+ * Beyond those three groups, only the slot picker's pair remains:
+ * `add-mixer-slot-1` / `add-mixer-slot-2` (`handleSlotAction` below). This
+ * file's emitters produce nothing else, and the six legacy members that no
+ * emitter produced (`add-comparison`, `add-mixer`, `add-accessibility`,
+ * `see-harmonies`, `budget`, `copy-hex`) were removed with their handler
+ * cases in the tools (DEAD-003).
  */
 export const CONTEXT_ACTIONS = [
   // Inspect Dye in...
@@ -124,13 +121,7 @@ export const CONTEXT_ACTIONS = [
   'external-garlandtools',
   'external-teamcraft',
   'external-saddlebag',
-  // Legacy actions (for backwards compatibility with existing tool components)
-  'add-comparison', // → use 'inspect-comparison'
-  'add-mixer', // → use 'transform-mixer'
-  'add-accessibility', // → use 'inspect-accessibility'
-  'see-harmonies', // → use 'inspect-harmony'
-  'budget', // → use 'inspect-budget'
-  'copy-hex', // kept for clipboard functionality
+  // Slot picker (Select Dye → choose a slot)
   'add-mixer-slot-1',
   'add-mixer-slot-2',
 ] as const;
@@ -142,11 +133,14 @@ export type ContextAction = (typeof CONTEXT_ACTIONS)[number];
  *
  * Note: The Dye Mixer (v4) uses a different format than other tools:
  * - Mixer v4: [number | null, number | null] tuple
- * - Other tools: number[] array
+ * - Comparison, Accessibility: number[] array of dye ids
+ * - Gradient: Array<number | string> — a dye id, or the hex of a Custom Color
+ *   endpoint (see {@link storedEntry})
  */
 const STORAGE_KEYS = {
   comparison: 'v3_comparison_selected_dyes',
-  // Gradient Builder uses the legacy v3 mixer key (stores as number[])
+  // Gradient Builder uses the legacy v3 mixer key: positional [Start, End],
+  // each a dye id or a Custom Color's hex (BUG-092)
   gradient: 'v3_mixer_selected_dyes',
   accessibility: 'v3_accessibility_selected_dyes',
   budget: 'v3_budget_target',
@@ -166,6 +160,18 @@ const MAX_SLOTS = {
   gradient: 2,
   accessibility: 4,
 } as const;
+
+/**
+ * The form `dye` takes in a slot tool's stored list. The Gradient Builder
+ * stores a Custom Color by its hex, because makeCustomDye mints a new
+ * synthetic id every session and a stored id would resolve to nothing on
+ * the next load (BUG-092). The gradient tool reads and writes the same key,
+ * so the card must write the same form. Comparison and Accessibility store
+ * the id.
+ */
+function storedEntry(tool: 'comparison' | 'accessibility' | 'gradient', dye: Dye): number | string {
+  return tool === 'gradient' && isCustomDye(dye) ? dye.hex : dye.id;
+}
 
 /**
  * External URL templates (use itemID)
@@ -1090,9 +1096,11 @@ export class ResultCard extends BaseLitComponent {
    * - If showSlotPicker is true, opens slot picker menu
    * - Else if primaryOpensMenu is true, opens context menu
    * - Otherwise emits card-select event
+   *
+   * The click is left to reach document so other cards close their menus
+   * (BUG-111); handleDocumentClick skips it for this card.
    */
-  private handleSelectClick(e: Event): void {
-    e.stopPropagation();
+  private handleSelectClick(): void {
     if (this.showSlotPicker) {
       // Open slot picker menu
       this.slotMenuOpen = !this.slotMenuOpen;
@@ -1120,11 +1128,15 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
-   * Toggle context menu
+   * Toggle context menu. Like the primary button, the click reaches document
+   * so another card's open menu closes (BUG-111). It also closes this card's
+   * own slot picker, as handleSelectClick closes the context menu: both pop
+   * up from the same action bar, and handleDocumentClick skips this card's
+   * toggles, so nothing else would close it.
    */
-  private handleMenuClick(e: Event): void {
-    e.stopPropagation();
+  private handleMenuClick(): void {
     this.menuOpen = !this.menuOpen;
+    this.slotMenuOpen = false;
   }
 
   /**
@@ -1212,11 +1224,21 @@ export class ResultCard extends BaseLitComponent {
   /**
    * Set dye as Budget Suggestions target
    * Overwrites any existing target
+   *
+   * BUG-013 (2026-10-04 deep-dive): this navigated with no params, so the
+   * `dye=` that RouterService preserves across navigation (from a share link
+   * or an earlier hand-off) reached Budget instead, and Budget's deep link
+   * replaced the dye just sent. `handoffTo` names the dye, which replaces the
+   * preserved one. The stored target stays: Budget's constructor reads it
+   * before the deep link is handled, so the first paint already shows this
+   * dye. A custom colour has no stainID, so, as with every hand-off, it is
+   * not sent.
    */
   private setAsBudgetTarget(dye: Dye): void {
+    if (dye.stainID === null) return;
     StorageService.setItem(STORAGE_KEYS.budget, dye.id);
     ToastService.success(LanguageService.t('resultCard.sentToBudget'));
-    RouterService.navigateTo('budget');
+    handoffTo('budget', dye);
   }
 
   /**
@@ -1237,17 +1259,18 @@ export class ResultCard extends BaseLitComponent {
   private addToTool(tool: 'comparison' | 'accessibility' | 'gradient', dye: Dye): void {
     const storageKey = STORAGE_KEYS[tool];
     const maxSlots = MAX_SLOTS[tool];
-    const currentDyes = StorageService.getItem<number[]>(storageKey) ?? [];
+    const currentDyes = StorageService.getItem<Array<number | string>>(storageKey) ?? [];
+    const entry = storedEntry(tool, dye);
 
-    // Check if dye already exists
-    if (currentDyes.includes(dye.id)) {
+    // Check if dye already exists (in its stored form)
+    if (currentDyes.includes(entry)) {
       ToastService.info(LanguageService.t('resultCard.dyeAlreadyIn'));
       return;
     }
 
     // Has space - add directly
     if (currentDyes.length < maxSlots) {
-      currentDyes.push(dye.id);
+      currentDyes.push(entry);
       StorageService.setItem(storageKey, currentDyes);
       ToastService.success(LanguageService.t('resultCard.addedTo'));
       // Navigate to the appropriate tool
@@ -1298,12 +1321,14 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
-   * Show modal for selecting which slot to replace when tool is full
+   * Show modal for selecting which slot to replace when tool is full.
+   * `currentDyeIds` is the tool's stored list: dye ids, plus the hex of a
+   * Gradient Custom Color (see storedEntry).
    */
   private showSlotSelectionModal(
     tool: 'comparison' | 'accessibility' | 'gradient' | 'mixer',
     newDye: Dye,
-    currentDyeIds: number[]
+    currentDyeIds: Array<number | string>
   ): void {
     const dyeService = DyeService.getInstance();
 
@@ -1330,11 +1355,22 @@ export class ResultCard extends BaseLitComponent {
     let modalId: ReturnType<typeof ModalService.show>;
 
     currentDyeIds.forEach((dyeId, index) => {
-      const existingDye = dyeService.getDyeById(dyeId);
-      const dyeName = existingDye
-        ? LanguageService.getDyeName(existingDye.itemID) || existingDye.name
-        : LanguageService.t('common.unknown');
-      const dyeHex = existingDye?.hex ?? '#888888';
+      let dyeName = LanguageService.t('common.unknown');
+      let dyeHex = '#888888';
+      if (typeof dyeId === 'string') {
+        // A Gradient Custom Color, stored by its hex (BUG-092): show its
+        // colour under the name the Gradient Builder gives it on restore.
+        if (isValidHexColor(dyeId)) {
+          dyeHex = dyeId.toUpperCase();
+          dyeName = LanguageService.tInterpolate('common.customColorName', { hex: dyeHex });
+        }
+      } else {
+        const existingDye = dyeService.getDyeById(dyeId);
+        if (existingDye) {
+          dyeName = LanguageService.getDyeName(existingDye.itemID) || existingDye.name;
+          dyeHex = existingDye.hex;
+        }
+      }
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -1372,16 +1408,18 @@ export class ResultCard extends BaseLitComponent {
       btn.addEventListener('click', () => {
         // Handle mixer specially (uses tuple format)
         if (tool === 'mixer') {
+          // The mixer's list holds ids only (addToMixer)
+          const [first, second] = currentDyeIds;
           const mixerDyes: [number | null, number | null] = [
-            currentDyeIds[0] ?? null,
-            currentDyeIds[1] ?? null,
+            typeof first === 'number' ? first : null,
+            typeof second === 'number' ? second : null,
           ];
           mixerDyes[index as 0 | 1] = newDye.id;
           StorageService.setItem(STORAGE_KEYS.mixerV4, mixerDyes);
         } else {
-          // Other tools use array format
+          // Other tools use array format, each in its own stored form
           const storageKey = STORAGE_KEYS[tool];
-          currentDyeIds[index] = newDye.id;
+          currentDyeIds[index] = storedEntry(tool, newDye);
           StorageService.setItem(storageKey, currentDyeIds);
         }
 
@@ -1454,9 +1492,30 @@ export class ResultCard extends BaseLitComponent {
   }
 
   /**
-   * Close menus on click outside
+   * Close menus on click outside.
+   *
+   * BUG-111: the toggle buttons used to stopPropagation, so opening card B's
+   * menu never reached this listener and card A's menu stayed open beside it.
+   * Their clicks now arrive here; this card's own toggles are skipped, since
+   * their handler has already set the state and closing it again would undo
+   * the click that opened it.
+   *
+   * A click inside this card's own open context menu or slot picker is
+   * skipped too. On touch, tapping a submenu parent row focuses it to show
+   * its submenu; closing the menu here hid that submenu while it stayed
+   * clickable. The menu items close the menu themselves once an action is
+   * chosen (handleMenuAction, handleSlotAction). Anywhere else in the card,
+   * such as its swatch, still counts as outside and closes the menus. Only
+   * an open menu is skipped: a focused submenu can stay hit-testable inside
+   * a closed one, and a tap there must not keep the other menu open.
    */
-  private handleDocumentClick = (): void => {
+  private handleDocumentClick = (e: Event): void => {
+    const path = e.composedPath();
+    const own = this.renderRoot.querySelectorAll(
+      '.menu-btn, .primary-action-btn, .context-menu.open, .slot-picker-menu.open'
+    );
+    if (Array.from(own).some((el) => path.includes(el))) return;
+
     if (this.menuOpen) {
       this.menuOpen = false;
     }
@@ -1466,17 +1525,15 @@ export class ResultCard extends BaseLitComponent {
   };
 
   /**
-   * Close menus on Escape
+   * Close menus on Escape. When that closes something, the key is marked
+   * handled (preventDefault), so the toast container does not also dismiss
+   * a toast on the same press: one Escape closes only the top-most layer.
    */
   private handleKeyDown = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape') {
-      if (this.menuOpen) {
-        this.menuOpen = false;
-      }
-      if (this.slotMenuOpen) {
-        this.slotMenuOpen = false;
-      }
-    }
+    if (e.key !== 'Escape' || (!this.menuOpen && !this.slotMenuOpen)) return;
+    this.menuOpen = false;
+    this.slotMenuOpen = false;
+    e.preventDefault();
   };
 
   private languageUnsubscribe: (() => void) | null = null;
@@ -1519,6 +1576,12 @@ export class ResultCard extends BaseLitComponent {
     const hsv = dye.hsv;
     const deltaE2000 = this.getDeltaE2000();
     const stain = dye.stainID;
+    // 2026-10-09 merge-day review: a custom colour has no stainID and a
+    // per-session negative id, so the hand-offs that send a stainID or store
+    // the id (Harmony, Budget, Accessibility, Comparison, Swatch, Mixer) and
+    // the external item pages cannot carry it. Gradient stores the hex and
+    // is the one item that can. A submenu with nothing left is not rendered.
+    const canHandOff = !isCustomDye(dye);
     const marketLabel = marketServer
       ? `${LanguageService.t('common.market')} · ${marketServer}`
       : LanguageService.t('common.market');
@@ -1798,46 +1861,52 @@ export class ResultCard extends BaseLitComponent {
                       aria-hidden=${!this.menuOpen}
                     >
                       <!-- Inspect Dye in... -->
-                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                        ${LanguageService.t('resultCard.inspectDyeIn')}
-                        <div class="submenu" role="menu">
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-harmony')}
-                          >
-                            ${toolLabel('harmony')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-budget')}
-                          >
-                            ${toolLabel('budget')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-accessibility')}
-                          >
-                            ${toolLabel('accessibility')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-comparison')}
-                          >
-                            ${toolLabel('comparison')}
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('inspect-swatch')}
-                          >
-                            ${toolLabel('swatch')}
-                          </button>
-                        </div>
-                      </div>
+                      ${
+                        canHandOff
+                          ? html`
+                              <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                                ${LanguageService.t('resultCard.inspectDyeIn')}
+                                <div class="submenu" role="menu">
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-harmony')}
+                                  >
+                                    ${toolLabel('harmony')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-budget')}
+                                  >
+                                    ${toolLabel('budget')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-accessibility')}
+                                  >
+                                    ${toolLabel('accessibility')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-comparison')}
+                                  >
+                                    ${toolLabel('comparison')}
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('inspect-swatch')}
+                                  >
+                                    ${toolLabel('swatch')}
+                                  </button>
+                                </div>
+                              </div>
+                            `
+                          : nothing
+                      }
 
                       <!-- Transform Dye in... -->
                       <div class="menu-item has-submenu" role="menuitem" tabindex="0">
@@ -1850,52 +1919,64 @@ export class ResultCard extends BaseLitComponent {
                           >
                             ${toolLabel('gradient')}
                           </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('transform-mixer')}
-                          >
-                            ${toolLabel('mixer')}
-                          </button>
+                          ${
+                            canHandOff
+                              ? html`
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('transform-mixer')}
+                                  >
+                                    ${toolLabel('mixer')}
+                                  </button>
+                                `
+                              : nothing
+                          }
                         </div>
                       </div>
 
-                      <div class="menu-divider"></div>
+                      ${
+                        canHandOff
+                          ? html`
+                              <div class="menu-divider"></div>
 
-                      <!-- Open in browser... -->
-                      <div class="menu-item has-submenu" role="menuitem" tabindex="0">
-                        ${LanguageService.t('resultCard.openInBrowser')}
-                        <div class="submenu" role="menu">
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-universalis')}
-                          >
-                            Universalis
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-garlandtools')}
-                          >
-                            GarlandTools
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${() => this.handleMenuAction('external-teamcraft')}
-                          >
-                            TeamCraft
-                          </button>
-                          <button
-                            class="menu-item"
-                            role="menuitem"
-                            @click=${/* eslint-disable-next-line xivdyetools-i18n/no-hardcoded-ui-strings -- brand name */ () => this.handleMenuAction('external-saddlebag')}
-                          >
-                            Saddlebag Exchange
-                          </button>
-                        </div>
-                      </div>
+                              <!-- Open in browser... -->
+                              <div class="menu-item has-submenu" role="menuitem" tabindex="0">
+                                ${LanguageService.t('resultCard.openInBrowser')}
+                                <div class="submenu" role="menu">
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('external-universalis')}
+                                  >
+                                    Universalis
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('external-garlandtools')}
+                                  >
+                                    GarlandTools
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${() => this.handleMenuAction('external-teamcraft')}
+                                  >
+                                    TeamCraft
+                                  </button>
+                                  <button
+                                    class="menu-item"
+                                    role="menuitem"
+                                    @click=${/* eslint-disable-next-line xivdyetools-i18n/no-hardcoded-ui-strings -- brand name */ () => this.handleMenuAction('external-saddlebag')}
+                                  >
+                                    Saddlebag Exchange
+                                  </button>
+                                </div>
+                              </div>
+                            `
+                          : nothing
+                      }
                     </div>
                   </div>
                 </div>

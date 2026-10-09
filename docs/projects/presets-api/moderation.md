@@ -39,7 +39,9 @@ followed by an optional external toxicity check. On `PATCH`, a per-user daily ca
 
 `PATCH /api/v1/presets/:id` charges a `text_edit` slot (`DAILY_TEXT_EDIT_LIMIT` = 30 per UTC day,
 recorded in `submission_events`) **before** calling `moderateContent`, whenever `name` or
-`description` is present in the body — for every preset status. Over the cap the edit is refused
+`description` differs from the stored value — for every preset status. Text re-sent unchanged is
+neither moderated again nor charged (BUG-065): it was judged when it was stored, and re-judging it
+pulled moderator-approved text back into the queue. Over the cap the edit is refused
 with `429 RATE_LIMITED` and nothing is moderated or written. The older `flagged_edit` cap (10/day)
 is charged *after* the call and only to edits that actually reach a moderator, so it cannot bound
 the Perspective call itself (FINDING-005). Full table in [rate-limiting.md](rate-limiting.md).
@@ -75,10 +77,20 @@ Presets progress through the following states:
 ### Edit of an Approved Preset
 
 1. User edits the name or description.
-2. Content moderation re-runs.
-3. If flagged: stores `previous_values`, sets status to `pending`.
+2. Content moderation re-runs — only when the text actually changed (BUG-065).
+3. If flagged: stores the approved text in `previous_values` (write-once — an existing snapshot is
+   kept), sets status to `pending`.
 4. If clean: stays `approved`.
 5. `PRESETS-CRITICAL-004`: `previous_values` are **not** cleared on a successful moderation pass. This preserves the audit trail.
+
+**Only an approved preset is ever snapshotted** (BUG-003 follow-up). A revert restores the snapshot
+*and approves it*, so a flagged edit of a `pending`, `rejected` or `flagged` preset neither creates
+nor overwrites `previous_values`: snapshotting a rejected preset's resubmission armed a Revert to the
+rejected text, and since a moderator's approve never clears a snapshot, that Revert survived the
+approval. Going forward a snapshot only ever holds text that was live as `approved`. Rows written
+before this rule may still hold one taken from a pending or rejected state; nothing in the row says
+which, so at deploy the rows with a non-null `previous_values` are the ones to review — afterwards
+they can be told apart only by date.
 
 ### Revert
 
@@ -86,6 +98,8 @@ Presets progress through the following states:
 - Restores all fields from `previous_values`.
 - Clears the `previous_values` column.
 - Sets status back to `approved`.
+- Refuses with `400 VALIDATION_ERROR` a snapshot whose dyes fail `validatePresetDyes` (a repeated
+  dye, a legacy itemID, a count outside 3–6), writing nothing (BUG-010 follow-up).
 
 ---
 
@@ -166,10 +180,10 @@ Nothing is sanitized — `src/services/validation-service.ts` **validates** and 
 
 | Field | Rules |
 |---------------|---------------------------------------------------------------|
-| Name | 2–50 characters. No C0 / DEL / C1 control characters, no zero-width, bidi-mark, bidi-override, bidi-isolate, BOM or line/paragraph-separator characters (FINDING-028) |
-| Description | 10–200 characters. Same character rule, except TAB / LF / CR stay legal — a description is multi-line |
+| Name | 2–50 characters — the minimum counts the text after trimming surrounding whitespace (so `"  "` fails), the maximum the value as sent (BUG-068). No C0 / DEL / C1 control characters, no zero-width, bidi-mark, bidi-override, bidi-isolate, BOM or line/paragraph-separator characters (FINDING-028) |
+| Description | 10–200 characters, minimum after trimming like the name. Same character rule, except TAB / LF / CR stay legal — a description is multi-line |
 | Tags | Max 10 tags, each max 30 characters, each matching `TAG_PATTERN`: starts and ends with a letter or digit, with letters / marks / digits / spaces / hyphens / underscores / apostrophes between (Unicode-aware, so CJK tags work). Markdown, brackets, URLs and other punctuation are out — a tag is rendered verbatim in Discord embeds and never passes content moderation (FINDING-019) |
-| Dyes | 3–6 stainIDs, integers 1–254 |
+| Dyes | 3–6 stainIDs, integers 1–254, each at most once — a repeat is a `400` (`Each dye may appear only once`, BUG-010), not de-duplicated |
 
 The one nuance in the invisible-character rule is U+200D (zero-width joiner): it is the glue inside
 emoji sequences, so it is allowed **only** between two emoji code points and rejected between

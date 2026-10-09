@@ -10,15 +10,7 @@
 import { BaseComponent } from './base-component';
 import { clearContainer, escapeHtml } from '@shared/utils';
 import { LanguageService } from '@services/index';
-import {
-  ICON_STATE_SEARCH,
-  ICON_STATE_FUNNEL,
-  ICON_STATE_COINS,
-  ICON_STATE_ALERT,
-  ICON_STATE_WAIT_ANIMATED,
-  ICON_DETAIL_HARMONY,
-  ICON_DETAIL_EXTRACTOR,
-} from '@shared/state-icons';
+import { ICON_DETAIL_HARMONY } from '@shared/state-icons';
 
 // ============================================================================
 // Types
@@ -50,31 +42,6 @@ export interface EmptyStateOptions {
 // ============================================================================
 
 export const EMPTY_STATE_PRESETS = {
-  noSearchResults: (query: string, onClear?: () => void): EmptyStateOptions => ({
-    icon: ICON_STATE_SEARCH,
-    title: LanguageService.t('emptyStates.noSearchResults.title').replace('{query}', query),
-    description: LanguageService.t('emptyStates.noSearchResults.description'),
-    actionLabel: LanguageService.t('emptyStates.noSearchResults.action'),
-    onAction: onClear,
-  }),
-
-  allFilteredOut: (onReset?: () => void): EmptyStateOptions => ({
-    // The state is caused by filters, so the icon is the filter
-    icon: ICON_STATE_FUNNEL,
-    title: LanguageService.t('emptyStates.filteredOut.title'),
-    description: LanguageService.t('emptyStates.filteredOut.description'),
-    actionLabel: LanguageService.t('emptyStates.filteredOut.action'),
-    onAction: onReset,
-  }),
-
-  noPriceData: (onTryAnother?: () => void): EmptyStateOptions => ({
-    icon: ICON_STATE_COINS,
-    title: LanguageService.t('marketBoard.priceUnavailable'),
-    description: LanguageService.t('emptyStates.noPrice.description'),
-    actionLabel: LanguageService.t('emptyStates.noPrice.action'),
-    onAction: onTryAnother,
-  }),
-
   noHarmonyResults: (onSelectDye?: () => void): EmptyStateOptions => ({
     // The tool's own detail glyph — the wheel, not music notes
     icon: ICON_DETAIL_HARMONY,
@@ -82,29 +49,6 @@ export const EMPTY_STATE_PRESETS = {
     description: LanguageService.t('emptyStates.noHarmony.description'),
     actionLabel: LanguageService.t('emptyStates.noHarmony.action'),
     onAction: onSelectDye,
-  }),
-
-  noImage: (onUpload?: () => void): EmptyStateOptions => ({
-    icon: ICON_DETAIL_EXTRACTOR,
-    title: LanguageService.t('emptyStates.noImage.title'),
-    description: LanguageService.t('emptyStates.noImage.description'),
-    actionLabel: LanguageService.t('emptyStates.noImage.action'),
-    onAction: onUpload,
-  }),
-
-  error: (message: string, onRetry?: () => void): EmptyStateOptions => ({
-    icon: ICON_STATE_ALERT,
-    title: LanguageService.t('errors.somethingWentWrong'),
-    description: message,
-    actionLabel: LanguageService.t('errors.tryAgain'),
-    onAction: onRetry,
-  }),
-
-  loading: (): EmptyStateOptions => ({
-    // 2a: the hourglass runs on the web; reduced motion pauses to the static glyph
-    icon: ICON_STATE_WAIT_ANIMATED,
-    title: LanguageService.t('emptyStates.loading.title'),
-    description: LanguageService.t('emptyStates.loading.description'),
   }),
 } as const;
 

@@ -154,7 +154,7 @@ const ratio = contrastRatio('#FFFFFF', '#000000');   // → 21
 
 ### Font stacks
 
-`Fragment Mono` (mono), `Onest` (body), `Space Grotesk` (display), each falling back through `Noto Sans JP → SC → KR`. **Order matters:** JP must precede SC or Japanese renders in Chinese letterforms, and SC has zero Hangul glyphs so KR must come last.
+`Fragment Mono` (mono), `Onest` (body), `Space Grotesk` (display), each falling back through `Noto Sans JP → SC → KR`. In these Latin-led stacks the CJK names do **not** choose the face for a glyph the Latin face lacks: resvg fills it from the loaded faces in the order the renderer loads them. discord-worker's `getFontBuffers` loads JP first for `ja` and SC first otherwise, so Japanese letterforms are the renderer's job, not this list's. The JP → SC → KR order is kept because it is what a CJK-led stack needs (og-worker's cards are CJK-led), and SC carries no Hangul, so KR comes last either way.
 
 ### Rendering boundary (consumer's responsibility)
 

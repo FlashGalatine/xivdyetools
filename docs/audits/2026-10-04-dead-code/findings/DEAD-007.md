@@ -17,4 +17,4 @@ Steps: 1) Delete the 5 key lines (en.json:346-350 and the matching lines) in en/
 3) pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app && pnpm dead-code:check
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `fcc0b76f` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

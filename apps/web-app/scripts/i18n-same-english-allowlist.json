@@ -28,10 +28,10 @@
     "de": "nav-chip noun Vergleich vs hand-off menu infinitive Vergleichen"
   },
   "Dark": {
-    "ko": "theme / palette label 다크 vs the swatch lightness band 어두움"
+    "*": "theme / dye-palette label (ダーク, Sombre, 다크, 深色) vs the character creator's darker lip / face-paint half, Lobby row 2122 (濃い, Opaque, 짙게, 浓艳)"
   },
   "Light": {
-    "*": "the additive-light mixing model vs the Light theme name vs the swatch lightness band"
+    "*": "the additive-light mixing model vs the Light theme name vs the character creator's lighter lip / face-paint half, Lobby row 2123 (薄い, Translucide, 옅게, 清淡)"
   },
   "Remove": {
     "ko": "삭제 deletes the uploaded preview image; 제거 removes an item from a list"

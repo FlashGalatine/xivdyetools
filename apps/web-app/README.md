@@ -61,7 +61,7 @@ pnpm --filter xivdyetools-web-app run build:check          # Build + all checks,
 - **State:** Per-tool component state; user preferences persist to `localStorage`
 - **Deploy target:** Cloudflare Pages
 
-All color math runs **client-side** through `@xivdyetools/core` — the dye database is bundled, so no tool needs a network round-trip to compute a result. The network is used for four things: market prices (any tool with Show Prices on — Budget, Harmony, Gradient, Mixer, Comparison, Extractor, Swatch and the preset detail), community presets and sign-in, `.chara` gear names in the Glamour Reader, and opt-in telemetry.
+All color math runs **client-side** through `@xivdyetools/core` — the dye database is bundled, so no tool needs a network round-trip to compute a result. The network is used for four things: market prices (always in Budget; in Harmony, Gradient, Mixer, Comparison, Extractor, Swatch and the preset detail while Enable Market Board is on), community presets and sign-in, `.chara` gear names in the Glamour Reader, and opt-in telemetry.
 
 ## API Consumption
 

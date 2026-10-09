@@ -23,8 +23,9 @@
  *   exactly two: `standard-light` and `standard-dark`.
  * - The palette drawer renders inside `dye-palette-drawer`'s shadow root.
  *   Playwright's CSS engine pierces open shadow roots, so its classes are
- *   addressable directly. Swatches are `div.swatch` (NOT buttons), carrying
- *   the dye name in `title`.
+ *   addressable directly. Swatches are `div.swatch` carrying the dye name in
+ *   `title`; the pick is the native `button.swatch-pick` inside it (BUG-028),
+ *   beside the favorite star.
  */
 
 import { test, expect, type Page } from './fixtures/coverage';

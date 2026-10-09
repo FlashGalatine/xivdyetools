@@ -8,7 +8,6 @@ import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
 import {
   errorResponse,
-  successResponse,
   invalidJsonResponse,
   validationErrorResponse,
   unauthorizedResponse,
@@ -44,37 +43,6 @@ describe('API Response Utilities', () => {
       const app = createApp((c) => errorResponse(c, 'SERVER_ERR', 'Failure', 503));
       const res = await app.request('/test');
       expect(res.status).toBe(503);
-    });
-  });
-
-  describe('successResponse', () => {
-    it('should return success JSON without message', async () => {
-      const app = createApp((c) => successResponse(c, { count: 5 }));
-      const res = await app.request('/test');
-
-      expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toEqual({ success: true, count: 5 });
-      expect(body.message).toBeUndefined();
-    });
-
-    it('should include message when provided', async () => {
-      const app = createApp((c) => successResponse(c, { deleted: true }, 'Preset deleted'));
-      const res = await app.request('/test');
-
-      expect(res.status).toBe(200);
-      const body = (await res.json()) as Record<string, unknown>;
-      expect(body).toEqual({
-        success: true,
-        deleted: true,
-        message: 'Preset deleted',
-      });
-    });
-
-    it('should accept custom status code', async () => {
-      const app = createApp((c) => successResponse(c, { id: 'abc' }, undefined, 201));
-      const res = await app.request('/test');
-      expect(res.status).toBe(201);
     });
   });
 
