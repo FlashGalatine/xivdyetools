@@ -68,7 +68,7 @@ Four separate daily caps, all keyed on the acting Discord user and all reset at 
 | `submission` | 10 / day | `POST /api/v1/presets` |
 | `flagged_edit` | 10 / day | An edit that actually notifies a moderator |
 | `preview_upload` | 20 / day | `POST /api/v1/presets/:id/preview-image` |
-| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` when `name` or `description` is sent — checked **before** `moderateContent`, for every preset status (FINDING-005) |
+| `text_edit` | 30 / day | `PATCH /api/v1/presets/:id` when the `name` or `description` sent differs from what is stored (BUG-065) — checked **before** `moderateContent`, for every preset status (FINDING-005) |
 
 ### Storage
 

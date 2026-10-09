@@ -143,7 +143,7 @@ applies the viewer rules for `author_discord_id` / `is_owner` below). The exampl
 | `is_owner` | Added for a signed-in **web (JWT)** caller: `true` when the preset is theirs. Absent from anonymous responses (they are told nothing about ownership) and from bot responses (unchanged for the bots). |
 | `vote_count` | Single toggleable upvote count. There are no downvotes. |
 | `dye_signature` | Sorted `dyes` as JSON (`"[23,40,57]"`); UNIQUE in D1 and the basis of duplicate detection. Omitted when null. |
-| `previous_values` | `{ name, description, tags, dyes }` snapshot taken the first time an edit is flagged (revert target). **Stripped from every public response** — present only for the owner (`GET /presets/:id`, `/mine`) and moderators. |
+| `previous_values` | `{ name, description, tags, dyes }` snapshot taken the first time an edit of an **approved** preset is flagged (revert target; write-once, cleared only by a revert). An edit of a pending, rejected or flagged preset never creates or overwrites one, so new snapshots only ever hold text that was live as `approved` — rows written before that rule may hold one taken from a pending or rejected state. **Stripped from every public response** — present only for the owner (`GET /presets/:id`, `/mine`) and moderators. |
 | `example_link` | `https` page URL on an allowlisted host, or `null`. Stored, never fetched. |
 | `preview_image_url` | Public R2 URL — present **only** while `preview_image_status` is `approved`; `null` otherwise. That condition is the moderation gate. |
 | `preview_image_status` | `none` \| `pending` \| `approved`. Safe to show everywhere. |
@@ -234,13 +234,13 @@ Submit a new preset. Requires auth + user context; banned users get 403 `USER_BA
 
 | Field | Rule (error message on failure) |
 |-------|--------------------------------|
-| `name` | required, 2–50 chars — `Name must be 2-50 characters` |
-| `description` | required, 10–200 chars — `Description must be 10-200 characters` |
+| `name` | required, 2–50 chars — `Name must be 2-50 characters`. The minimum is measured after trimming surrounding whitespace (so `"  "` fails), the maximum on the value as sent (BUG-068) |
+| `description` | required, 10–200 chars — `Description must be 10-200 characters`. Minimum after trimming, maximum as sent, like `name` |
 | `category_id` | required, one of the eight slugs (checked against D1) — `Invalid category` |
 | `secondary_categories` | optional, ≤ 2 valid slugs, no duplicates, must not repeat the primary — `at most 2 secondary categories allowed` / `A secondary category cannot repeat the primary category` |
-| `dyes` | 3–6 positive integers ≤ 254 — `Must include 3-6 dyes`; a value ≥ 5000 → `Dye 5729 looks like a legacy item ID; expected a stainID (1-254)`; 255–4999 → `Dye IDs must be stainIDs (1-254)` |
+| `dyes` | 3–6 positive integers ≤ 254, each dye may appear only once — `Must include 3-6 dyes`; a value ≥ 5000 → `Dye 5729 looks like a legacy item ID; expected a stainID (1-254)`; 255–4999 → `Dye IDs must be stainIDs (1-254)`; a repeated dye (`[7, 7, 7]`, `[1, 2, 3, 3]`) → `Each dye may appear only once` (BUG-010 — rejected, not de-duplicated) |
 | `tags` | required array (may be `[]`), ≤ 10 strings of ≤ 30 chars — `Maximum 10 tags allowed` |
-| `example_link` | optional; `https`, ≤ 300 chars, host on the allowlist (`eorzeacollection.com`, `mirapri.com`, `reddit.com`, `redd.it`, `x.com`, `twitter.com`, `bsky.app`, `instagram.com`, `pixiv.net`, `finalfantasyxiv.com`, `misskey.io`, plus subdomains). A bare host is normalised to `https://…` before storage. `Example link host must be one of: …` |
+| `example_link` | optional; `https`, ≤ 300 chars, host on the allowlist (`eorzeacollection.com`, `mirapri.com`, `reddit.com`, `redd.it`, `x.com`, `twitter.com`, `bsky.app`, `instagram.com`, `pixiv.net`, `finalfantasyxiv.com`, `misskey.io`, plus subdomains). Surrounding whitespace is trimmed before the URL is judged, and a whitespace-only value clears the link like `""` (BUG-069). A bare host is normalised to `https://…` before storage. `Example link host must be one of: …` |
 
 Flow: rate limit (10/UTC day) → validate → duplicate check on `dye_signature` → profanity/Perspective
 moderation → insert → auto-vote → Discord notification (`type: "submission"`, see below).
@@ -285,14 +285,20 @@ Every field is optional; at least one must be present (`No updates provided`).
 
 - `secondary_categories: []` clears the list; `example_link: null` clears the link.
 - Changing `dyes` re-runs duplicate detection (excluding this preset).
-- Sending `name` or `description` at all is charged to `DAILY_TEXT_EDIT_LIMIT` (30 / UTC day)
-  **before** content moderation runs, for every preset status — see the first 429 below — and then
-  re-runs content moderation. If moderation fails, or cannot answer at all (FINDING-005), a
-  write-once `previous_values` snapshot is taken: the moderator revert target.
+- A `name` or `description` that **differs from the stored value** is charged to
+  `DAILY_TEXT_EDIT_LIMIT` (30 / UTC day) **before** content moderation runs, for every preset
+  status — see the first 429 below — and then re-runs content moderation on the name and
+  description as they will read after the edit. Text re-sent unchanged is neither moderated nor
+  charged (BUG-065): it was judged when it was stored. If moderation fails, or cannot answer at all
+  (FINDING-005), **and the stored status is `approved`**, a write-once `previous_values` snapshot of
+  the approved text is taken: the moderator revert target. A pending, rejected or flagged preset's
+  edit takes no snapshot and leaves any it already holds untouched, because a revert approves the
+  snapshot (BUG-003 follow-up).
 - **What the edit does to the status** (FINDING-004). "New text" below means the submitted `name` or
-  `description` differs from the stored value, or the text sent tripped moderation; everything else
-  — tags, dyes, category, example link, or text re-sent unchanged — is applied and changes no status
-  and notifies nobody, however often it is repeated.
+  `description` differs from the stored value (only such text is moderated, so text that tripped
+  moderation is always new text); everything else — tags, dyes, category, example link, or text
+  re-sent unchanged — is applied and changes no status and notifies nobody, however often it is
+  repeated.
 
   | Stored status | New text | Any other edit |
   |---------------|----------|----------------|
@@ -306,7 +312,9 @@ Every field is optional; at least one must be present (`No updates provided`).
   **Resubmit** button on a rejected preset is exactly this PATCH (it reopens the edit form).
 - Every notification counts against `DAILY_FLAGGED_EDIT_LIMIT` (10 / UTC day — see the second 429
   below) and carries `moderation_status: "flagged"` when this edit tripped moderation, `"clean"`
-  otherwise.
+  otherwise, plus `is_edit: true`, `edited_from_status` — the status the preset had before this
+  edit (BUG-003) — and `edited_from`, the `{ name, description, tags, dyes }` this edit replaced
+  (the moderator's diff base; see [POST /webhooks/preset-submission](#post-webhookspreset-submission)).
 - Vote counts are preserved across edits.
 
 **Response** — `moderation_status` is the status the preset is in after the edit, and is
@@ -497,8 +505,12 @@ are what `PATCH …/status` and `PATCH …/revert` expect back as `expected_stat
 { "reason": "Reverting flagged edit (10-200 chars)", "expected_revision": 3, "expected_status": "flagged" }
 ```
 
-Restores `previous_values`; 400 `This preset has no previous values to revert to` when there is no
-snapshot. `expected_revision` / `expected_status` are **required** and bound exactly as on `/status`
+Restores `previous_values` and sets the preset `approved`; 400 `This preset has no previous values
+to revert to` when there is no snapshot. The snapshot's dyes must pass the same rule a new palette
+meets (3–6 stainIDs, each at most once): a snapshot written before that rule — a repeated dye, say —
+is refused with 400 `VALIDATION_ERROR` `The previous values cannot be restored: <rule message>`,
+writing neither the preset nor a log row (BUG-010 follow-up); approve or reject through `/status`
+instead. `expected_revision` / `expected_status` are **required** and bound exactly as on `/status`
 (FINDING-017): missing or invalid → 409 `REVISION_REQUIRED`, stale or concurrent → 409 `STALE_REVIEW`,
 both with `current: { status, content_revision }`. Response: `{ "success": true, "preset": { … }, "message": "Preset reverted to previous values" }`.
 
@@ -670,10 +682,23 @@ Content-Type: application/json
 
 **Request Body** — a discriminated union on `type`.
 
-`submission` (new preset, or an edit that failed content moderation):
+`submission` — a new preset (`POST /presets`, `is_edit: false`), or an owner edit
+(`PATCH /presets/:id`, `is_edit: true`) that brings a moderator new text to judge. That is **not only
+a flagged edit**: every PATCH that notifies sends one — an approved preset whose new text tripped
+moderation, a clean *or* flagged text edit of a preset still `pending`, and a `rejected` preset's
+resubmission (clean or flagged). An edit (here, the first flagged edit of an approved preset, so
+`edited_from` and `previous_values` hold the same text — after that they diverge, see the table):
 ```json
 {
   "type": "submission",
+  "is_edit": true,
+  "edited_from_status": "approved",
+  "edited_from": {
+    "name": "Forest Warden",
+    "description": "Earthy tones for a Paladin glamour",
+    "tags": ["tank"],
+    "dyes": [23, 40, 57]
+  },
   "preset": {
     "id": "6f1c1c9e-…",
     "name": "Forest Guardian",
@@ -685,6 +710,12 @@ Content-Type: application/json
     "author_discord_id": "123456789012345678",
     "status": "pending",
     "moderation_status": "flagged",
+    "previous_values": {
+      "name": "Forest Warden",
+      "description": "Earthy tones for a Paladin glamour",
+      "tags": ["tank"],
+      "dyes": [23, 40, 57]
+    },
     "content_revision": 2,
     "source": "web",
     "created_at": "2026-08-01T12:00:00.000Z"
@@ -703,11 +734,33 @@ Content-Type: application/json
 
 | Field | Values |
 |-------|--------|
+| `is_edit` | `true` when an owner edit (`PATCH /presets/:id`) sent the notification, `false` for a new preset (BUG-003). Optional: treat absent as `false` |
+| `edited_from_status` | The preset's status **before** this edit — same vocabulary as `preset.status`; in practice `approved`, `pending` or `rejected` (an edit of a `flagged` preset notifies nobody, a `hidden` one cannot be edited). Present on every edit, **absent** on a new preset. Needed because `preset.status` is `pending` on every edit notification |
+| `edited_from` | `{ name, description, tags, dyes }` exactly as the row held them immediately **before this edit's write** — **the diff base**: show the edit's changes as `edited_from` → `preset`. Present on every edit (including a pending edit and a rejected resubmission, which never create a snapshot and so usually have none), **absent** on a new preset; treat absent as "no diff available". Never stored and never restored by any endpoint — it is not the revert target. It coincides with `preset.previous_values` on the first flagged edit of an approved preset that had no snapshot yet, and diverges after that |
+| `preset.previous_values` | `{ name, description, tags, dyes }` — the write-once revert snapshot that `PATCH /moderation/:id/revert` restores (and approves), or `null`. Written by the first owner edit of an `approved` preset that trips moderation and cleared only by a revert, so it can be older than this edit; `null` after a rejected resubmission or a pending edit of a preset that was never snapshotted. **Not a diff base** — use `edited_from` |
 | `preset.status` | `pending` → moderation-channel embed; `approved` → submission-log embed ("new preset published"); other statuses post nothing |
 | `preset.moderation_status` | `clean` \| `flagged` \| `auto_approved` |
 | `preset.content_revision` | The preset's revision counter when the notification was sent (FINDING-017); the embed's buttons bind the moderator's decision to it as `expected_revision` |
 | `preset.source` | `bot` \| `web` \| `none` (the presets-api `authSource`) |
 | `preview_image_key` | R2 key; the embed's image URL is `https://shots.xivdyetools.app/<key>` |
+
+**When a consumer may offer Revert:** only when `is_edit === true` **and** `preset.previous_values` is
+non-null **and** `edited_from_status === "approved"`. A revert restores the snapshot *and approves it*,
+so it is safe only when the snapshot is text that was live. presets-api snapshots only an
+`approved` preset's text (an edit of a pending, rejected or flagged preset neither creates nor
+overwrites a snapshot), and the snapshot is write-once, so going forward it only ever holds text that
+was live as `approved` — moderator-approved, or auto-approved on submission. Rows written before that
+rule may still hold a snapshot taken from a pending or rejected state; the `edited_from_status` check
+keeps those from being offered on a rejected resubmission or a pending edit, but once such a preset
+has since been approved, nothing in the payload can tell (the row does not record which state its
+snapshot came from — a deploy consideration, see `apps/presets-api/CLAUDE.md`). An absent
+`edited_from_status` (an older presets-api) counts as "not approved".
+
+**What the embed shows:** the edit's changes as `edited_from` → `preset`, never against
+`previous_values`, which a pending edit or a rejected resubmission never creates (so there is
+usually none) and which can be older than the text being replaced. When Revert is offered, label it as restoring `previous_values`
+(and show that text), not as undoing this edit: approved A → a flagged edit B snapshots A → a
+moderator approves B → a flagged edit C reverts to **A**, discarding the approved B.
 
 **Behaviour:** the `submission` moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its
 approve/reject buttons route to moderation-worker); `preview_image` embeds are posted with this bot's
@@ -752,7 +805,7 @@ per-IP limiter answers `{ "error": "Too Many Requests", "message": "…", "retry
 |------|-------------|-------------|
 | `BAD_REQUEST` | 400 | Malformed request |
 | `VALIDATION_ERROR` | 400 | A field failed a validation rule (message names the rule) |
-| `INVALID_JSON` | 400 | Body is not valid JSON |
+| `INVALID_JSON` | 400 | Body is not valid JSON — or, on `POST /presets`, `PATCH /presets/:id`, `PATCH /moderation/:id/status` and `PATCH /moderation/:id/revert`, valid JSON that is not an object: `null`, an array, a string, a number or a boolean (BUG-064 — these used to surface as a 500) |
 | `UNAUTHORIZED` | 401 | Missing or invalid authentication |
 | `FORBIDDEN` | 403 | Not the owner / not a moderator / status filter not allowed |
 | `USER_BANNED` | 403 | Caller is in `banned_users` |
@@ -762,7 +815,6 @@ per-IP limiter answers `{ "error": "Too Many Requests", "message": "…", "retry
 | `RATE_LIMITED` | 429 | Daily submission limit reached |
 | `INTERNAL_ERROR` | 500 | Unhandled error (carries `requestId`) |
 | `SERVICE_UNAVAILABLE` | 500 | Worker misconfigured (env validation failed in production) |
-| `DATABASE_ERROR` | 500 | Reserved |
 
 ---
 

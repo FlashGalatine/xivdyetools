@@ -4,6 +4,7 @@ import {
   SECONDARY_CATEGORY_MAX,
   validatePresetName,
   validatePresetDescription,
+  validatePresetDyes,
   validatePresetTags,
 } from '../../src/services/validation-service';
 
@@ -73,6 +74,19 @@ describe('validatePresetName — character rules (FINDING-028)', () => {
     expect(validatePresetName('A'.repeat(51))).toBe('Name must be 2-50 characters');
     expect(validatePresetName(42)).toBe('Name is required');
   });
+
+  // BUG-068 (2026-10-04 deep-dive): the minimum counted whitespace, so a name
+  // of two spaces passed and was stored (and could auto-approve) blank.
+  it('does not count leading or trailing whitespace toward the minimum', () => {
+    expect(validatePresetName('  ')).toBe('Name must be 2-50 characters');
+    expect(validatePresetName(' A ')).toBe('Name must be 2-50 characters');
+    expect(validatePresetName('　　')).toBe('Name must be 2-50 characters');
+  });
+
+  it('still accepts a short name with surrounding whitespace once it meets the minimum', () => {
+    expect(validatePresetName(' Ab ')).toBeNull();
+    expect(validatePresetName('A b')).toBeNull();
+  });
 });
 
 describe('validatePresetDescription — character rules (FINDING-028)', () => {
@@ -122,6 +136,46 @@ describe('validatePresetDescription — character rules (FINDING-028)', () => {
     expect(validatePresetDescription('short')).toBe('Description must be 10-200 characters');
     expect(validatePresetDescription('x'.repeat(201))).toBe('Description must be 10-200 characters');
     expect(validatePresetDescription(null)).toBe('Description is required');
+  });
+
+  // BUG-068: a description of ten spaces (or a line break and padding) passed.
+  it('rejects a whitespace-only description, and one that is short once trimmed', () => {
+    expect(validatePresetDescription(' '.repeat(10))).toBe('Description must be 10-200 characters');
+    expect(validatePresetDescription('\n\n\t      \r\n')).toBe('Description must be 10-200 characters');
+    expect(validatePresetDescription('   short    ')).toBe('Description must be 10-200 characters');
+  });
+
+  it('measures the maximum on the value as sent — that is what is stored', () => {
+    expect(validatePresetDescription(`${'x'.repeat(195)}      `)).toBe(
+      'Description must be 10-200 characters'
+    );
+    expect(validatePresetDescription('  A calm palette.  ')).toBeNull();
+  });
+});
+
+// BUG-010 (2026-10-04 deep-dive): ids were checked for count, integer-ness and
+// range but never for distinctness, so [7,7,7] passed as a "3-dye" palette and
+// [1,2,3,3] got a dye_signature different from [1,2,3], slipping past the
+// duplicate-combination check.
+describe('validatePresetDyes', () => {
+  it('accepts 3-6 distinct stainIDs', () => {
+    expect(validatePresetDyes([1, 2, 3])).toBeNull();
+    expect(validatePresetDyes([1, 2, 3, 4, 5, 254])).toBeNull();
+  });
+
+  it('rejects a repeated dye', () => {
+    expect(validatePresetDyes([7, 7, 7])).toBe('Each dye may appear only once');
+    expect(validatePresetDyes([1, 2, 3, 3])).toBe('Each dye may appear only once');
+    expect(validatePresetDyes([5, 9, 12, 40, 9])).toBe('Each dye may appear only once');
+  });
+
+  it('keeps the count, type and range rules and their messages ahead of the repeat rule', () => {
+    expect(validatePresetDyes([1, 1])).toBe('Must include 3-6 dyes');
+    expect(validatePresetDyes([1, 1, 1.5])).toBe('Invalid dye IDs');
+    expect(validatePresetDyes([5729, 5729, 5729])).toBe(
+      'Dye 5729 looks like a legacy item ID; expected a stainID (1-254)'
+    );
+    expect(validatePresetDyes([300, 300, 300])).toBe('Dye IDs must be stainIDs (1-254)');
   });
 });
 

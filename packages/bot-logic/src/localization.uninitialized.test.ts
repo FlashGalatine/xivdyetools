@@ -14,9 +14,15 @@ import { describe, it, expect } from 'vitest';
 import {
   getLocalizedAcquisition,
   getLocalizedCategory,
+  getLocalizedClan,
+  getLocalizedColorWheelName,
   getLocalizedCurrency,
   getLocalizedDyeName,
+  getLocalizedHarmonyType,
+  getLocalizedRace,
+  getLocalizedVisionType,
 } from './localization.js';
+import { tribeDisplay } from './commands/chara-identity.js';
 
 describe('localization getters before any locale is initialized', () => {
   it('getLocalizedDyeName returns the fallback name', () => {
@@ -37,6 +43,40 @@ describe('localization getters before any locale is initialized', () => {
   it('getLocalizedCurrency returns the raw currency key', () => {
     expect(getLocalizedCurrency('Gil')).toBe('Gil');
     expect(getLocalizedCurrency('Gil', 'ko')).toBe('Gil');
+  });
+
+  it('getLocalizedClan spells the key out as words, never the raw camelCase key', () => {
+    expect(getLocalizedClan('seekerOfTheSun')).toBe('Seeker Of The Sun');
+    expect(getLocalizedClan('theLost', 'de')).toBe('The Lost');
+    expect(getLocalizedClan('raen', 'ja')).toBe('Raen');
+  });
+
+  // The core-vocabulary getters (TERM-001) answer with core's own key: the
+  // harmony title, the wheel tag, the vision lens and the /glamour race word
+  // still print something a reader can place, never an empty string or a throw.
+  it('getLocalizedHarmonyType returns the core harmony key', () => {
+    expect(getLocalizedHarmonyType('splitComplementary')).toBe('splitComplementary');
+    expect(getLocalizedHarmonyType('triadic', 'ja')).toBe('triadic');
+  });
+
+  it('getLocalizedColorWheelName returns the wheel id', () => {
+    expect(getLocalizedColorWheelName('ryb')).toBe('ryb');
+    expect(getLocalizedColorWheelName('oklch-hue', 'de')).toBe('oklch-hue');
+  });
+
+  it('getLocalizedVisionType returns the vision key', () => {
+    expect(getLocalizedVisionType('protanopia')).toBe('protanopia');
+    expect(getLocalizedVisionType('normal', 'ko')).toBe('normal');
+  });
+
+  it('getLocalizedRace returns the race key', () => {
+    expect(getLocalizedRace('viera')).toBe('viera');
+    expect(getLocalizedRace('auRa', 'zh')).toBe('auRa');
+  });
+
+  it("tribeDisplay keeps the pre-HC-001 line — SEEKER OF THE SUN, not SEEKEROFTHESUN", () => {
+    expect(tribeDisplay('SeekerOfTheSun', 'de')).toBe('SEEKER OF THE SUN');
+    expect(tribeDisplay('Midlander', 'zh')).toBe('MIDLANDER');
   });
 
   it('never throws for any supported locale', () => {

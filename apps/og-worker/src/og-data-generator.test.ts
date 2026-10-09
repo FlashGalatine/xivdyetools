@@ -676,7 +676,9 @@ describe('og-data-generator', () => {
 describe('5.0 tools: extractor / presets / budget OG data', () => {
   it('extractor: colors= → the extractor card; no colors → the tool default', async () => {
     const hit = await generateOGDataForTool('extractor', new URLSearchParams('colors=8E5A3C,c9a96a,zzz&algo=oklab'), mockEnv);
-    expect(hit.imageUrl).toBe('https://og.xivdyetools.app/og/extractor/8E5A3C,C9A96A.png');
+    // BUG-060: the algorithm rides the card URL too, not just og:url — the
+    // card names the dyes the page shows
+    expect(hit.imageUrl).toBe('https://og.xivdyetools.app/og/extractor/8E5A3C,C9A96A.png?algo=oklab');
     expect(hit.url).toContain('/extractor/?colors=8E5A3C,C9A96A');
     expect(hit.url).toContain('algo=oklab');
     expect(hit.title).toContain('XIV Dye Tools');
@@ -750,11 +752,22 @@ describe('DEAD-022: the requested algorithm rides the image URL for every tool t
       ['mixer', 'dyeA=1&dyeB=102&ratio=50&algo=oklab'],
       ['mixer', 'dyeA=1&dyeB=102&dyeC=50&ratio=50&algo=oklab'],
       ['swatch', 'hex=ABCDEF&limit=5&algo=oklab'],
+      // BUG-060: the extractor card ranks by the shared method too
+      ['extractor', 'colors=8E5A3C,C9A96A&algo=oklab'],
     ];
     for (const [tool, q] of cases) {
       const r = await generateOGDataForTool(tool as never, new URLSearchParams(q), mockEnv);
       expect(r.imageUrl, `${tool} ${q}`).toMatch(/\.png\?algo=oklab$/);
     }
+  });
+
+  it('BUG-060: the extractor keeps the default and unknown algorithms off its card URL', async () => {
+    for (const q of ['colors=8E5A3C', 'colors=8E5A3C&algo=ciede2000', 'colors=8E5A3C&algo=nonsense']) {
+      const r = await generateOGDataForTool('extractor', new URLSearchParams(q), mockEnv);
+      expect(r.imageUrl, q).toBe('https://og.xivdyetools.app/og/extractor/8E5A3C.png');
+    }
+    const legacy = await generateOGDataForTool('extractor', new URLSearchParams('colors=8E5A3C&algo=euclidean'), mockEnv, 'ja');
+    expect(legacy.imageUrl).toBe('https://og.xivdyetools.app/og/extractor/8E5A3C.png?algo=rgb&lang=ja');
   });
 
   it('the suite default (ciede2000) and unknown values stay OFF the URL — one cache key for the same card', async () => {
@@ -786,10 +799,14 @@ describe('localized embed copy', () => {
   const SHARES: Array<[string, string, string | null]> = [
     ['harmony', 'dye=1&harmony=split-complementary', null],
     ['harmony', 'dye=9999&harmony=triadic', null],
+    // BUG-059: the bare-color slots
+    ['harmony', 'hex=FF8800&harmony=triadic', null],
     ['gradient', 'start=1&end=102&steps=5', null],
+    ['gradient', 'hexStart=FF8800&end=102&steps=5', null],
     ['gradient', '', null],
     ['mixer', 'dyeA=1&dyeB=102&ratio=30', null],
     ['mixer', 'dyeA=1&dyeB=102&dyeC=5&ratio=30', null],
+    ['mixer', 'hexA=FF8800&hexB=0055AA&ratio=30', null],
     ['mixer', '', null],
     ['swatch', 'hex=AABBCC&limit=3', null],
     ['swatch', 'hex=AABBCC&sheet=hairColors&race=SeekerOfTheSun&gender=Female', null],
@@ -840,7 +857,8 @@ describe('localized embed copy', () => {
     expect((await generateOGDataForTool('presets', new URLSearchParams(), mockEnv, 'ja', 'community-abc')).title).toContain('コミュニティプリセット');
     expect((await generateOGDataForTool('extractor', new URLSearchParams(), mockEnv, 'de')).title).toContain('Paletten-Extraktor');
     expect((await generateOGDataForTool('budget', new URLSearchParams(), mockEnv, 'fr')).title).toContain('Budget');
-    expect((await generateOGDataForTool('presets', new URLSearchParams(), mockEnv, 'fr', 'gc-maelstrom')).title).toContain('Palettes Communautaires');
+    // TERM-011: the web app's fr title (fr.json tools.presets.title)
+    expect((await generateOGDataForTool('presets', new URLSearchParams(), mockEnv, 'fr', 'gc-maelstrom')).title).toContain('Préréglages communautaires');
   });
 
   it('tool names in the title match the card deck, not core tools.* (OG-I18N-005)', async () => {
@@ -964,11 +982,13 @@ describe('FINDING-024: echoed parameters are validated (OG-2 / OG-6)', () => {
     expect(r.themeColor).toBe('#FF5733');
   });
 
-  it("gradient / mixer / swatch numeric params are clamped to the image routes' bounds (no NaN, no 400ing image URL)", async () => {
-    expect((await gen('gradient', 'start=1&end=102&steps=999')).imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/20.png');
-    expect((await gen('gradient', 'start=1&end=102&steps=-3')).imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/2.png');
+  it("gradient / mixer / swatch numeric params stay inside the image routes' bounds (no NaN, no 400ing image URL)", async () => {
+    // BUG-008: gradient steps are no longer clamped — a count the page would
+    // not apply takes the page's default, 8 (the BUG-008 block at the end)
+    expect((await gen('gradient', 'start=1&end=102&steps=999')).imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/8.png');
+    expect((await gen('gradient', 'start=1&end=102&steps=-3')).imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/8.png');
     const nanSteps = await gen('gradient', 'start=1&end=102&steps=abc');
-    expect(nanSteps.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/5.png');
+    expect(nanSteps.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/102/8.png');
     expect(nanSteps.description).not.toContain('NaN');
 
     expect((await gen('mixer', 'dyeA=1&dyeB=102&ratio=500')).imageUrl).toBe('https://og.xivdyetools.app/og/mixer/1/102/99.png');
@@ -1175,6 +1195,8 @@ describe('og-6: og:url carries the params the page reads back', () => {
       ['gradient', 'start=1&end=102&steps=5&algo=oklab'],
       ['mixer', 'dyeA=1&dyeB=102&ratio=50&algo=oklab'],
       ['swatch', 'slot=eyeColors&i=12&algo=oklab'],
+      // BUG-060: the extractor forwarded algo onto og:url only
+      ['extractor', 'colors=8E5A3C,C9A96A&algo=oklab'],
     ]) {
       const r = await generateOGDataForTool(tool as never, new URLSearchParams(q), mockEnv);
       expect(r.url, q).toContain('algo=oklab');
@@ -1191,4 +1213,232 @@ describe('og-6: og:url carries the params the page reads back', () => {
     );
     expect(r.url).toContain('ratio=30');
   });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-059 (deep dive 2026-10-04): a Custom Color endpoint has no stainID, so
+// the web app shares it in a declared bare-color slot — gradient
+// `hexStart`/`hexEnd` (gradient-tool getShareParams), mixer `hexA`/`hexB`
+// (mixer-tool), harmony `hex` (harmony-tool). The crawler read only the dye
+// slots, so a missing slot parsed to stainID 0 and every custom-color share
+// unfurled the generic tool card with a bare og:url that reopened an empty
+// tool.
+//
+// The image routes are stainID-keyed, so the PICTURE stays the per-tool
+// default card (it claims no dyes); the embed now names the color, carries
+// it as the theme color, and its og:url reopens the shared state. The web's
+// precedence holds: the dye slot wins when both are present, and a dye slot
+// that does not resolve is not rescued by the hex.
+// ---------------------------------------------------------------------------
+import { embed } from './services/og-embed';
+import { getDyeByItemId } from './services/svg/dye-helpers';
+
+describe('BUG-059: a custom-color share names its color and reopens it', () => {
+  const gen = (tool: ToolId, q: string, locale: 'en' | 'ja' | 'de' = 'en') =>
+    generateOGDataForTool(tool, new URLSearchParams(q), mockEnv, locale);
+  const MUD_GREEN = getDyeByItemId(43)!.name;
+
+  describe('gradient (hexStart / hexEnd)', () => {
+    it('the finding repro: ?hexStart=ff8800&end=43&steps=5', async () => {
+      const r = await gen('gradient', 'hexStart=ff8800&end=43&steps=5');
+      expect(r.title).toBe(`#FF8800 to ${MUD_GREEN} Gradient | XIV Dye Tools`);
+      // the name/hex sentence would read "#FF8800 (#FF8800)" — the tool's own
+      // description stands in instead
+      expect(r.description).toBe(embed('gradient.descriptionDefault', 'en'));
+      expect(r.url).toBe('https://xivdyetools.app/gradient/?hexStart=FF8800&end=43&steps=5&v=1');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/default.png');
+      expect(r.themeColor).toBe('#FF8800');
+    });
+
+    it('both endpoints custom', async () => {
+      const r = await gen('gradient', 'hexStart=FF8800&hexEnd=%230055aa&steps=7');
+      expect(r.title).toBe('#FF8800 to #0055AA Gradient | XIV Dye Tools');
+      expect(r.url).toBe('https://xivdyetools.app/gradient/?hexStart=FF8800&hexEnd=0055AA&steps=7&v=1');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/default.png');
+    });
+
+    it('algo and lang ride og:url; the default card takes lang only', async () => {
+      const r = await gen('gradient', 'start=1&hexEnd=FF8800&steps=5&algo=oklab', 'ja');
+      expect(r.title).toContain('#FF8800');
+      expect(r.url).toBe('https://xivdyetools.app/gradient/?start=1&hexEnd=FF8800&steps=5&v=1&algo=oklab&lang=ja');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/default.png?lang=ja');
+    });
+
+    it('the dye slot wins when both are present', async () => {
+      const r = await gen('gradient', 'start=1&hexStart=FF8800&end=43&steps=5');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/1/43/5.png');
+      expect(r.url).not.toContain('hexStart');
+      expect(r.title).not.toContain('#FF8800');
+    });
+
+    it('a dye slot that does not resolve is not rescued by the hex', async () => {
+      const r = await gen('gradient', 'start=9999&hexStart=FF8800&end=43&steps=5');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/gradient/default.png');
+      expect(r.url).toBe('https://xivdyetools.app/gradient/');
+      expect(r.title).not.toContain('#FF8800');
+    });
+
+    it('a malformed hex degrades to the tool default and is never echoed', async () => {
+      for (const bad of ['zzzzzz', 'FF880', 'FF88001', '<b>x</b>', '']) {
+        const r = await gen('gradient', `hexStart=${encodeURIComponent(bad)}&end=43&steps=5`);
+        expect(r.imageUrl, bad).toBe('https://og.xivdyetools.app/og/gradient/default.png');
+        expect(r.url, bad).toBe('https://xivdyetools.app/gradient/');
+        if (bad) expect(`${r.title}${r.description}${r.url}`, bad).not.toContain(bad);
+      }
+    });
+  });
+
+  describe('mixer (hexA / hexB)', () => {
+    it('one custom input', async () => {
+      const r = await gen('mixer', 'hexA=ff8800&dyeB=1&ratio=50&mode=ryb&algo=oklab');
+      expect(r.title).toBe('50% #FF8800 + 50% Snow White | XIV Dye Tools');
+      expect(r.description).toBe(embed('mixer.description2', 'en', { ratio: 50, a: '#FF8800', ratioB: 50, b: 'Snow White' }));
+      expect(r.url).toBe('https://xivdyetools.app/mixer/?hexA=FF8800&dyeB=1&ratio=50&v=1&algo=oklab');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/mixer/default.png');
+      expect(r.themeColor).toBe('#FF8800');
+    });
+
+    it('both inputs custom, under a non-default mode (the default card carries neither mode nor algo)', async () => {
+      const r = await gen('mixer', 'hexA=FF8800&hexB=0055AA&ratio=30&mode=spectral&algo=oklab', 'de');
+      expect(r.title).toContain('#FF8800');
+      expect(r.title).toContain('#0055AA');
+      expect(r.url).toBe('https://xivdyetools.app/mixer/?hexA=FF8800&hexB=0055AA&ratio=30&v=1&algo=oklab&lang=de');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/mixer/default.png?lang=de');
+    });
+
+    it('the dye slot wins when both are present', async () => {
+      const r = await gen('mixer', 'dyeA=1&hexA=FF8800&dyeB=102&ratio=50');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/mixer/1/102/50.png');
+      expect(r.url).not.toContain('hexA');
+    });
+
+    it('a malformed hex degrades to the tool default and is never echoed', async () => {
+      const r = await gen('mixer', 'hexA=nothex&dyeB=1&ratio=50');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/mixer/default.png');
+      expect(r.url).toBe('https://xivdyetools.app/mixer/');
+      expect(`${r.title}${r.description}`).not.toContain('nothex');
+    });
+  });
+
+  describe('harmony (hex)', () => {
+    it('a custom base', async () => {
+      const r = await gen('harmony', 'hex=ff8800&harmony=triadic&algo=oklab&wheel=ryb');
+      expect(r.title).toBe('#FF8800 - Triadic Harmony | XIV Dye Tools');
+      expect(r.description).toBe(embed('harmony.descriptionNoDye', 'en', { harmony: 'triadic' }));
+      expect(r.url).toBe('https://xivdyetools.app/harmony/?hex=FF8800&harmony=triadic&wheel=ryb&v=1&algo=oklab');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/default.png');
+      expect(r.themeColor).toBe('#FF8800');
+    });
+
+    it('the dye slot wins when both are present — `dyeId`, the legacy alias, included', async () => {
+      const dye = await gen('harmony', 'dye=102&hex=FF8800&harmony=triadic');
+      expect(dye.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/102/triadic.png');
+      expect(dye.url).not.toContain('hex=');
+      // the page reads `dyeId` as the same slot and ignores the hex
+      const legacy = await gen('harmony', 'dyeId=5&hex=FF8800&harmony=triadic');
+      expect(legacy.title).not.toContain('#FF8800');
+      expect(legacy.url).not.toContain('hex=');
+    });
+
+    it('a malformed hex keeps the no-dye card and is never echoed', async () => {
+      const r = await gen('harmony', 'hex=12345g&harmony=triadic');
+      expect(r.imageUrl).toBe('https://og.xivdyetools.app/og/harmony/default.png');
+      expect(`${r.title}${r.description}${r.url}`).not.toContain('12345g');
+    });
+  });
+
+  it('the HTML a crawler reads carries the color and the reopening link', async () => {
+    const html = generateOGHTML(await gen('gradient', 'hexStart=FF8800&end=43&steps=5'));
+    expect(html).toContain('<meta property="og:title" content="#FF8800 to');
+    expect(html).toContain('hexStart=FF8800&amp;end=43&amp;steps=5');
+    expect(html).toContain('<meta name="theme-color" content="#FF8800">');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// BUG-008 (2026-10-04 deep dive): a gradient share's `interpolation=` and
+// `steps=` are read exactly as the Gradient Builder reads them (gradient-tool
+// `loadFromShareUrl`, through ShareService.parseUrl). The page applies a mode
+// only as one of five exact spellings, and a step count only as a whole 3–12
+// written canonically; anything else keeps the reader's saved setting, which
+// on a first visit is hsv and 8 steps — what the preview then assumes.
+// ---------------------------------------------------------------------------
+describe('BUG-008: gradient interpolation and steps, read as the page reads them', () => {
+  const gen = (q: string, locale: 'en' | 'ja' = 'en') =>
+    generateOGDataForTool('gradient', new URLSearchParams(q), mockEnv, locale);
+  const IMG = 'https://og.xivdyetools.app/og/gradient';
+  const APP = 'https://xivdyetools.app/gradient/';
+
+  it('the finding repro: lab rides the card URL and the reopening link', async () => {
+    const r = await gen('start=68&end=1&steps=5&interpolation=lab&algo=ciede2000');
+    expect(r.imageUrl).toBe(`${IMG}/68/1/5.png?interpolation=lab`);
+    expect(r.url).toBe(`${APP}?start=68&end=1&steps=5&interpolation=lab&v=1`);
+  });
+
+  it.each(['rgb', 'lab', 'oklch', 'lch'])('%s: on the card URL and og:url', async (mode) => {
+    const r = await gen(`start=68&end=1&steps=5&interpolation=${mode}`);
+    expect(r.imageUrl).toBe(`${IMG}/68/1/5.png?interpolation=${mode}`);
+    expect(r.url).toBe(`${APP}?start=68&end=1&steps=5&interpolation=${mode}&v=1`);
+  });
+
+  it('hsv, the default, stays off the card URL (one cache entry) but rides og:url', async () => {
+    // An explicit hsv on the link overrides a reader's saved mode on the page,
+    // so the reopening link has to say it too.
+    const r = await gen('start=68&end=1&steps=5&interpolation=hsv');
+    expect(r.imageUrl).toBe(`${IMG}/68/1/5.png`);
+    expect(r.url).toBe(`${APP}?start=68&end=1&steps=5&interpolation=hsv&v=1`);
+  });
+
+  it.each(['LAB', 'Lab', 'spectral', '', 'lab ', ' lab', '1', 'true', 'lab,rgb'])(
+    'interpolation=%j is a value the page ignores: dropped from both URLs, never echoed',
+    async (bad) => {
+      const r = await gen(`start=68&end=1&steps=5&interpolation=${encodeURIComponent(bad)}`);
+      expect(r.imageUrl).toBe(`${IMG}/68/1/5.png`);
+      expect(r.url).toBe(`${APP}?start=68&end=1&steps=5&v=1`);
+    },
+  );
+
+  it('rides beside algo and lang', async () => {
+    const r = await gen('start=68&end=1&steps=7&interpolation=oklch&algo=oklab', 'ja');
+    expect(r.imageUrl).toBe(`${IMG}/68/1/7.png?algo=oklab&interpolation=oklch&lang=ja`);
+    expect(r.url).toBe(`${APP}?start=68&end=1&steps=7&interpolation=oklch&v=1&algo=oklab&lang=ja`);
+  });
+
+  it('a custom endpoint keeps the default card (it reads no mode); og:url still carries the mode', async () => {
+    const r = await gen('hexStart=FF8800&end=43&steps=5&interpolation=lab');
+    expect(r.imageUrl).toBe(`${IMG}/default.png`);
+    expect(r.url).toBe(`${APP}?hexStart=FF8800&end=43&steps=5&interpolation=lab&v=1`);
+  });
+
+  it('an unresolvable share takes the bare tool default, mode and all', async () => {
+    const r = await gen('start=9999&end=1&steps=5&interpolation=lab');
+    expect(r.imageUrl).toBe(`${IMG}/default.png`);
+    expect(r.url).toBe(APP);
+  });
+
+  it('a link with no steps previews the page default, 8, and its og:url leaves the count to the page', async () => {
+    const r = await gen('start=68&end=1&interpolation=lab');
+    expect(r.imageUrl).toBe(`${IMG}/68/1/8.png?interpolation=lab`);
+    expect(r.description).toContain('8-step gradient');
+    expect(r.url).toBe(`${APP}?start=68&end=1&interpolation=lab&v=1`);
+  });
+
+  it.each(['3', '8', '12'])('steps=%s, a count the page applies, is used everywhere', async (n) => {
+    const r = await gen(`start=68&end=1&steps=${n}`);
+    expect(r.imageUrl).toBe(`${IMG}/68/1/${n}.png`);
+    expect(r.description).toContain(`${n}-step gradient`);
+    expect(r.url).toBe(`${APP}?start=68&end=1&steps=${n}&v=1`);
+  });
+
+  // ShareService.parseUrl makes a number only of a canonical decimal spelling
+  // (`String(parseFloat(v)) === v`); the page then wants a whole 3–12.
+  it.each(['2', '13', '20', '999', '-3', '0', 'abc', '', '05', '5.0', '+5', ' 5', '1e1', '5.5', 'NaN', 'Infinity'])(
+    'steps=%j is a count the page ignores: the preview shows 8 and og:url omits it',
+    async (bad) => {
+      const r = await gen(`start=68&end=1&steps=${encodeURIComponent(bad)}`);
+      expect(r.imageUrl).toBe(`${IMG}/68/1/8.png`);
+      expect(r.description).toContain('8-step gradient');
+      expect(r.url).toBe(`${APP}?start=68&end=1&v=1`);
+    },
+  );
 });

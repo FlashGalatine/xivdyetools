@@ -42,14 +42,36 @@ vi.mock('../../services/budget/index.js', () => ({
     validateWorld: (...args: unknown[]) => mockValidateWorld(...args),
 }));
 
+vi.mock('../../utils/discord-api.js', () => ({
+    safeEditOriginalResponse: vi.fn(() => Promise.resolve(true)),
+}));
+
 describe('handlers/commands/preferences.ts', () => {
     // The filters subcommands write to KV directly rather than through the
     // preferences service, so the KV double needs delete() as well.
     const mockEnv = {
+        DISCORD_CLIENT_ID: 'app',
         KV: { get: vi.fn(), put: vi.fn(), delete: vi.fn() },
     } as unknown as Parameters<typeof handlePreferencesCommand>[1];
 
-    const mockCtx = { waitUntil: vi.fn() } as unknown as ExecutionContext;
+    let pending: Promise<unknown>[] = [];
+    const mockCtx = {
+        waitUntil: vi.fn((p: Promise<unknown>) => {
+            pending.push(p);
+        }),
+    } as unknown as ExecutionContext;
+    const settle = () => Promise.all(pending);
+
+    /** The embed the handler last wrote over its deferred ack. */
+    async function editedEmbed(): Promise<{ title?: string; description?: string }> {
+        const { safeEditOriginalResponse } = await import('../../utils/discord-api.js');
+        const calls = vi.mocked(safeEditOriginalResponse).mock.calls;
+        expect(calls.length, 'the deferred ack was never edited').toBeGreaterThan(0);
+        const options = calls[calls.length - 1][2] as {
+            embeds?: Array<{ title?: string; description?: string }>;
+        };
+        return options.embeds?.[0] ?? {};
+    }
 
     function interactionFor(options: unknown[]) {
         return {
@@ -64,6 +86,8 @@ describe('handlers/commands/preferences.ts', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        pending = [];
+        mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
     });
 
     describe('every response is ephemeral', () => {
@@ -79,6 +103,17 @@ describe('handlers/commands/preferences.ts', () => {
                         name: 'set',
                         type: 1,
                         options: [{ name: 'language', type: 3, value: 'ja' }],
+                    },
+                ],
+            },
+            {
+                // BUG-002: deferred for the world lookup — and still private
+                name: 'set world',
+                options: [
+                    {
+                        name: 'set',
+                        type: 1,
+                        options: [{ name: 'world', type: 3, value: 'balmung' }],
                     },
                 ],
             },
@@ -175,7 +210,8 @@ describe('handlers/commands/preferences.ts', () => {
             const { setPreferences } = await import('../../services/preferences.js');
             mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
-            const response = await handlePreferencesCommand(setWorld('balmung'), mockEnv, mockCtx);
+            await handlePreferencesCommand(setWorld('balmung'), mockEnv, mockCtx);
+            await settle();
 
             expect(mockValidateWorld).toHaveBeenCalledWith(mockEnv, 'balmung', undefined);
             // BUG-029: every option in one `/preferences set` is now written
@@ -187,13 +223,14 @@ describe('handlers/commands/preferences.ts', () => {
                 [{ key: 'world', value: 'Balmung' }],
                 undefined
             );
-            expect(await description(response)).toContain('Balmung');
+            expect((await editedEmbed()).description).toContain('Balmung');
         });
 
         it('trims the typed value before looking it up', async () => {
             mockValidateWorld.mockResolvedValue({ ok: true, name: 'Balmung' });
 
             await handlePreferencesCommand(setWorld('  balmung  '), mockEnv, mockCtx);
+            await settle();
 
             expect(mockValidateWorld).toHaveBeenCalledWith(mockEnv, 'balmung', undefined);
         });
@@ -202,13 +239,89 @@ describe('handlers/commands/preferences.ts', () => {
             const { setPreferences } = await import('../../services/preferences.js');
             mockValidateWorld.mockResolvedValue({ ok: false, reason: 'unknown' });
 
-            const response = await handlePreferencesCommand(setWorld('Nowhere'), mockEnv, mockCtx);
+            await handlePreferencesCommand(setWorld('Nowhere'), mockEnv, mockCtx);
+            await settle();
 
             expect(setPreferences).not.toHaveBeenCalled();
-            expect(await description(response)).toContain('preferences.validation.invalidWorld');
+            expect((await editedEmbed()).description).toContain(
+                'preferences.validation.invalidWorld'
+            );
         });
 
-        it('refuses an over-long value without spending a lookup', async () => {
+        /**
+         * BUG-002 (2026-10-04 deep dive): the lookup is up to two sequential
+         * service-binding fetches on a cold cache. It used to be awaited
+         * before the handler answered at all, so a slow Universalis became
+         * Discord's "The application did not respond".
+         */
+        it('acks privately before the world lookup settles (BUG-002)', async () => {
+            const { setPreferences } = await import('../../services/preferences.js');
+            let release!: (value: unknown) => void;
+            mockValidateWorld.mockReturnValue(new Promise((resolve) => (release = resolve)));
+
+            const response = await Promise.race([
+                handlePreferencesCommand(setWorld('balmung'), mockEnv, mockCtx),
+                new Promise<'no ack'>((resolve) => setTimeout(() => resolve('no ack'), 100)),
+            ]);
+
+            expect(response, 'the handler waited on the world lookup before acking').not.toBe(
+                'no ack'
+            );
+            const body = (await (response as Response).json()) as {
+                type: number;
+                data?: { flags?: number };
+            };
+            expect(body.type).toBe(5);
+            expect(body.data?.flags).toBe(MessageFlags.EPHEMERAL);
+            expect(setPreferences).not.toHaveBeenCalled();
+
+            release({ ok: true, name: 'Balmung' });
+            await settle();
+            expect(setPreferences).toHaveBeenCalledTimes(1);
+            expect((await editedEmbed()).description).toContain('Balmung');
+        });
+
+        it('writes a world and the other options together after the defer', async () => {
+            const { setPreferences } = await import('../../services/preferences.js');
+
+            await handlePreferencesCommand(
+                interactionFor([
+                    {
+                        name: 'set',
+                        type: 1,
+                        options: [
+                            { name: 'language', type: 3, value: 'ja' },
+                            { name: 'world', type: 3, value: 'balmung' },
+                        ],
+                    },
+                ]),
+                mockEnv,
+                mockCtx
+            );
+            await settle();
+
+            expect(setPreferences).toHaveBeenCalledTimes(1);
+            expect(setPreferences).toHaveBeenCalledWith(
+                mockEnv.KV,
+                'user123',
+                [
+                    { key: 'language', value: 'ja' },
+                    { key: 'world', value: 'Balmung' },
+                ],
+                undefined
+            );
+        });
+
+        it('still edits the ack when the background work throws', async () => {
+            mockValidateWorld.mockRejectedValue(new Error('binding exploded'));
+
+            await handlePreferencesCommand(setWorld('balmung'), mockEnv, mockCtx);
+            await settle();
+
+            expect((await editedEmbed()).description).toBe('preferences.validation.error');
+        });
+
+        it('refuses an over-long value without spending a lookup — or a defer', async () => {
             const { setPreferences } = await import('../../services/preferences.js');
 
             const response = await handlePreferencesCommand(
@@ -219,6 +332,7 @@ describe('handlers/commands/preferences.ts', () => {
 
             expect(mockValidateWorld).not.toHaveBeenCalled();
             expect(setPreferences).not.toHaveBeenCalled();
+            expect(mockCtx.waitUntil).not.toHaveBeenCalled();
             expect(await description(response)).toContain('preferences.validation.invalidWorld');
         });
 
@@ -240,6 +354,8 @@ describe('handlers/commands/preferences.ts', () => {
                 [{ key: 'language', value: 'ja' }],
                 undefined
             );
+            // No lookup, so no reason to defer: answered in the ack itself
+            expect(mockCtx.waitUntil).not.toHaveBeenCalled();
         });
 
         /**
@@ -286,6 +402,259 @@ describe('handlers/commands/preferences.ts', () => {
                 ],
                 undefined
             );
+        });
+    });
+
+    /**
+     * BUG-048 (2026-10-04 deep dive): the filters writers read the blob with
+     * the lenient `getUserPreferences`, which answers a failed read with
+     * `{}` — so `filters set` then put `{ dyeFilters }` over every other
+     * preference, and `filters reset` deleted the whole blob, both reporting
+     * success.
+     */
+    describe('a failed read never becomes a write (BUG-048)', () => {
+        const filtersSet = interactionFor([
+            {
+                name: 'filters',
+                type: 2,
+                options: [
+                    {
+                        name: 'set',
+                        type: 1,
+                        options: [{ name: 'metallic', type: 5, value: true }],
+                    },
+                ],
+            },
+        ]);
+        const filtersReset = interactionFor([
+            { name: 'filters', type: 2, options: [{ name: 'reset', type: 1, options: [] }] },
+        ]);
+        const resetFiltersKey = interactionFor([
+            { name: 'reset', type: 1, options: [{ name: 'key', type: 3, value: 'filters' }] },
+        ]);
+
+        async function body(response: Response) {
+            return (await response.json()) as {
+                data?: { flags?: number; embeds?: Array<{ title?: string; description?: string }> };
+            };
+        }
+
+        it('filters set writes nothing when the read fails', async () => {
+            vi.mocked(mockEnv.KV.get).mockRejectedValueOnce(new Error('KV down'));
+
+            const reply = await body(await handlePreferencesCommand(filtersSet, mockEnv, mockCtx));
+
+            expect(mockEnv.KV.put).not.toHaveBeenCalled();
+            expect(mockEnv.KV.delete).not.toHaveBeenCalled();
+            expect(reply.data?.embeds?.[0]?.description).toBe('preferences.validation.error');
+            expect((reply.data?.flags ?? 0) & MessageFlags.EPHEMERAL).toBe(MessageFlags.EPHEMERAL);
+        });
+
+        it('filters reset deletes nothing when the read fails', async () => {
+            vi.mocked(mockEnv.KV.get).mockRejectedValueOnce(new Error('KV down'));
+
+            const reply = await body(await handlePreferencesCommand(filtersReset, mockEnv, mockCtx));
+
+            expect(mockEnv.KV.put).not.toHaveBeenCalled();
+            expect(mockEnv.KV.delete).not.toHaveBeenCalled();
+            expect(reply.data?.embeds?.[0]?.description).toBe('preferences.reset.failed');
+        });
+
+        it('reset key:filters takes the same guarded path', async () => {
+            vi.mocked(mockEnv.KV.get).mockRejectedValueOnce(new Error('KV down'));
+
+            await handlePreferencesCommand(resetFiltersKey, mockEnv, mockCtx);
+
+            expect(mockEnv.KV.delete).not.toHaveBeenCalled();
+        });
+
+        it('filters set keeps the other preferences on a clean read', async () => {
+            vi.mocked(mockEnv.KV.get).mockResolvedValueOnce(
+                JSON.stringify({ theme: 'light', world: 'Balmung' }) as never
+            );
+
+            await handlePreferencesCommand(filtersSet, mockEnv, mockCtx);
+
+            const written = JSON.parse(vi.mocked(mockEnv.KV.put).mock.calls[0][1] as string);
+            expect(written).toMatchObject({
+                theme: 'light',
+                world: 'Balmung',
+                dyeFilters: { excludeMetallic: true },
+            });
+        });
+
+        it('filters set reports a failed write instead of throwing', async () => {
+            vi.mocked(mockEnv.KV.get).mockResolvedValueOnce(JSON.stringify({ theme: 'light' }) as never);
+            vi.mocked(mockEnv.KV.put).mockRejectedValueOnce(new Error('KV down'));
+
+            const reply = await body(await handlePreferencesCommand(filtersSet, mockEnv, mockCtx));
+
+            expect(reply.data?.embeds?.[0]?.description).toBe('preferences.validation.error');
+        });
+
+        // The other kind of failed read: a blob that does not parse is
+        // nothing to preserve, and refusing to write over it would refuse
+        // forever. The write replaces it.
+        it('filters set replaces an unreadable blob instead of refusing forever', async () => {
+            vi.mocked(mockEnv.KV.get).mockResolvedValueOnce('{not json' as never);
+
+            const reply = await body(await handlePreferencesCommand(filtersSet, mockEnv, mockCtx));
+
+            const written = JSON.parse(vi.mocked(mockEnv.KV.put).mock.calls[0][1] as string);
+            expect(written).toMatchObject({ dyeFilters: { excludeMetallic: true } });
+            expect(reply.data?.embeds?.[0]?.description).not.toBe('preferences.validation.error');
+        });
+    });
+
+    /**
+     * Sprint 9 review: the BUG-048 guards answer a failed read or write with
+     * an error embed — and, unmarked, the trace then recorded it as `ok`.
+     * Before them the KV rejection reached the dispatcher's catch, which
+     * marked it; catching it here took that mark away. Every error embed for
+     * something of ours that broke now marks the outcome itself.
+     */
+    describe('a failed read or write is recorded as a failure', () => {
+        const filtersSet = interactionFor([
+            {
+                name: 'filters',
+                type: 2,
+                options: [
+                    {
+                        name: 'set',
+                        type: 1,
+                        options: [{ name: 'metallic', type: 5, value: true }],
+                    },
+                ],
+            },
+        ]);
+        const filtersReset = interactionFor([
+            { name: 'filters', type: 2, options: [{ name: 'reset', type: 1, options: [] }] },
+        ]);
+        const resetFiltersKey = interactionFor([
+            { name: 'reset', type: 1, options: [{ name: 'key', type: 3, value: 'filters' }] },
+        ]);
+
+        async function traced(interaction: Parameters<typeof handlePreferencesCommand>[0]) {
+            const { startCommandTrace } = await import('../../services/command-trace.js');
+            return startCommandTrace(interaction, {
+                command: 'preferences',
+                subcommand: 'filters',
+                userId: 'user123',
+                locale: 'en',
+            });
+        }
+
+        it.each([
+            ['filters set', filtersSet],
+            ['filters reset', filtersReset],
+            ['reset key:filters', resetFiltersKey],
+        ])('%s: a failed read', async (_name, interaction) => {
+            const trace = await traced(interaction);
+            vi.mocked(mockEnv.KV.get).mockRejectedValueOnce(new Error('KV down'));
+
+            await handlePreferencesCommand(interaction, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBe('unknown');
+        });
+
+        it('filters set: a failed write', async () => {
+            const trace = await traced(filtersSet);
+            vi.mocked(mockEnv.KV.get).mockResolvedValueOnce(JSON.stringify({ theme: 'light' }) as never);
+            vi.mocked(mockEnv.KV.put).mockRejectedValueOnce(new Error('KV down'));
+
+            await handlePreferencesCommand(filtersSet, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBe('unknown');
+        });
+
+        it('filters reset: a failed write over other preferences', async () => {
+            const trace = await traced(filtersReset);
+            vi.mocked(mockEnv.KV.get).mockResolvedValueOnce(
+                JSON.stringify({ theme: 'light', dyeFilters: { excludeMetallic: true } }) as never
+            );
+            vi.mocked(mockEnv.KV.put).mockRejectedValueOnce(new Error('KV down'));
+
+            await handlePreferencesCommand(filtersReset, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBe('unknown');
+        });
+
+        it('filters reset: a failed delete of the last preference', async () => {
+            const trace = await traced(filtersReset);
+            vi.mocked(mockEnv.KV.get).mockResolvedValueOnce(
+                JSON.stringify({ dyeFilters: { excludeMetallic: true } }) as never
+            );
+            vi.mocked(mockEnv.KV.delete).mockRejectedValueOnce(new Error('KV down'));
+
+            await handlePreferencesCommand(filtersReset, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBe('unknown');
+        });
+
+        it('a clean filters set leaves the outcome unmarked (ok)', async () => {
+            const trace = await traced(filtersSet);
+            vi.mocked(mockEnv.KV.get).mockResolvedValueOnce(JSON.stringify({ theme: 'light' }) as never);
+
+            await handlePreferencesCommand(filtersSet, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBeNull();
+        });
+
+        // The same guards made these two report failure where they used to
+        // overwrite the blob and report success — so they are marked too.
+        it('reset key: a failed reset', async () => {
+            const { resetPreference } = await import('../../services/preferences.js');
+            vi.mocked(resetPreference).mockResolvedValueOnce(false);
+            const resetTheme = interactionFor([
+                { name: 'reset', type: 1, options: [{ name: 'key', type: 3, value: 'theme' }] },
+            ]);
+            const trace = await traced(resetTheme);
+
+            await handlePreferencesCommand(resetTheme, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBe('unknown');
+        });
+
+        it('set: a failed write', async () => {
+            const { setPreferences } = await import('../../services/preferences.js');
+            vi.mocked(setPreferences).mockResolvedValueOnce([{ success: false, reason: 'error' }]);
+            const setTheme = interactionFor([
+                { name: 'set', type: 1, options: [{ name: 'theme', type: 3, value: 'light' }] },
+            ]);
+            const trace = await traced(setTheme);
+
+            await handlePreferencesCommand(setTheme, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBe('unknown');
+        });
+
+        it('set: a failed write after the world defer', async () => {
+            const { setPreferences } = await import('../../services/preferences.js');
+            vi.mocked(setPreferences).mockResolvedValueOnce([{ success: false, reason: 'error' }]);
+            const setWorld = interactionFor([
+                { name: 'set', type: 1, options: [{ name: 'world', type: 3, value: 'balmung' }] },
+            ]);
+            const trace = await traced(setWorld);
+
+            await handlePreferencesCommand(setWorld, mockEnv, mockCtx);
+            await settle();
+
+            expect(trace.outcome).toBe('unknown');
+        });
+
+        it('set: a value the user got wrong is answered, not a failure', async () => {
+            const { setPreferences } = await import('../../services/preferences.js');
+            vi.mocked(setPreferences).mockResolvedValueOnce([
+                { success: false, reason: 'invalidTheme' },
+            ]);
+            const setTheme = interactionFor([
+                { name: 'set', type: 1, options: [{ name: 'theme', type: 3, value: 'neon' }] },
+            ]);
+            const trace = await traced(setTheme);
+
+            await handlePreferencesCommand(setTheme, mockEnv, mockCtx);
+
+            expect(trace.outcome).toBeNull();
         });
     });
 });

@@ -101,7 +101,11 @@ describe('legacy preview review refresh', () => {
       'message-1',
       expect.objectContaining({
         embeds: [
-          expect.objectContaining({ image: { url: `https://shots.xivdyetools.app/${FRESH_KEY}` } }),
+          expect.objectContaining({
+            image: { url: `https://shots.xivdyetools.app/${FRESH_KEY}` },
+            // BUG-041 sibling: the notice joins the `ID: <presetId>` line, never replaces it.
+            footer: { text: `ID: ${PRESET_ID} • ${REFRESH_NOTICE}` },
+          }),
         ],
         components: [
           expect.objectContaining({
@@ -139,7 +143,10 @@ describe('legacy preview review refresh', () => {
       'channel-mod',
       'message-1',
       expect.objectContaining({
-        embeds: [expect.objectContaining({ footer: { text: STALE_REVIEW_MESSAGE } })],
+        // BUG-041 sibling: retired for good, so the id must survive in the footer.
+        embeds: [
+          expect.objectContaining({ footer: { text: `ID: ${PRESET_ID} • ${STALE_REVIEW_MESSAGE}` } }),
+        ],
         components: [],
       }),
     );

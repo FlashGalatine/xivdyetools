@@ -78,9 +78,12 @@ const createMockPriceData = (overrides: Partial<PriceData> = {}): PriceData => (
   ...overrides,
 });
 
+/** Core's answer when every upstream request succeeded (BUG-090). */
+const ok = (prices: Map<number, PriceData>) => ({ prices, outcome: 'ok' as const });
+
 describe('MarketBoardService', () => {
   let service: MarketBoardService;
-  let mockApiService: { getPricesForDataCenter: Mock };
+  let mockApiService: { getPricesForDataCenter: Mock; getPricesForDataCenterWithOutcome: Mock };
   let mockConfigController: {
     getConfig: Mock;
     setConfig: Mock;
@@ -111,6 +114,9 @@ describe('MarketBoardService', () => {
     // Set up API service mock
     mockApiService = {
       getPricesForDataCenter: vi.fn(() => Promise.resolve(new Map())),
+      getPricesForDataCenterWithOutcome: vi.fn(() =>
+        Promise.resolve({ prices: new Map(), outcome: 'ok' })
+      ),
     };
     (APIService.getInstance as Mock).mockReturnValue(mockApiService);
 
@@ -336,7 +342,7 @@ describe('MarketBoardService', () => {
     it('should fetch prices and emit events', async () => {
       const dyes = [createMockDye({ itemID: 12345 })];
       const priceData = new Map([[12345, createMockPriceData()]]);
-      mockApiService.getPricesForDataCenter.mockResolvedValue(priceData);
+      mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValue(ok(priceData));
 
       const fetchStarted = vi.fn();
       const pricesUpdated = vi.fn();
@@ -356,7 +362,7 @@ describe('MarketBoardService', () => {
     it('should call progress callback', async () => {
       const dyes = [createMockDye({ itemID: 12345 })];
       const priceData = new Map([[12345, createMockPriceData()]]);
-      mockApiService.getPricesForDataCenter.mockResolvedValue(priceData);
+      mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValue(ok(priceData));
 
       const onProgress = vi.fn();
       await service.fetchPricesForDyes(dyes, onProgress);
@@ -368,7 +374,7 @@ describe('MarketBoardService', () => {
     it('should cache fetched prices', async () => {
       const dyes = [createMockDye({ itemID: 12345 })];
       const priceData = new Map([[12345, createMockPriceData()]]);
-      mockApiService.getPricesForDataCenter.mockResolvedValue(priceData);
+      mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValue(ok(priceData));
 
       await service.fetchPricesForDyes(dyes);
 
@@ -377,7 +383,7 @@ describe('MarketBoardService', () => {
 
     it('should handle fetch errors gracefully', async () => {
       const dyes = [createMockDye({ itemID: 12345 })];
-      mockApiService.getPricesForDataCenter.mockRejectedValue(new Error('API Error'));
+      mockApiService.getPricesForDataCenterWithOutcome.mockRejectedValue(new Error('API Error'));
 
       const fetchError = vi.fn();
       service.addEventListener('fetch-error', fetchError);
@@ -400,12 +406,75 @@ describe('MarketBoardService', () => {
         const dyes = [createMockDye({ consolidationType: 'A', itemID: 5729 })];
         await service.fetchPricesForDyes(dyes);
 
-        expect(mockApiService.getPricesForDataCenter).not.toHaveBeenCalled();
+        expect(mockApiService.getPricesForDataCenterWithOutcome).not.toHaveBeenCalled();
       } finally {
         CONSOLIDATED_IDS.A = saved.A;
         CONSOLIDATED_IDS.B = saved.B;
         CONSOLIDATED_IDS.C = saved.C;
       }
+    });
+
+    /**
+     * BUG-090 (2026-10-04 deep-dive): core absorbs upstream failures, so a
+     * Universalis proxy outage resolves -- it never rejects -- with an empty
+     * Map, exactly like a board with no listings. Only core's outcome tells
+     * the two apart. Each test models core as it really answers: the Map-only
+     * call returns the same prices the outcome-bearing one does.
+     */
+    describe('an unreachable market board (BUG-090)', () => {
+      const coreAnswers = (outcome: 'ok' | 'partial' | 'error', prices = new Map()): void => {
+        mockApiService.getPricesForDataCenter.mockResolvedValue(prices);
+        mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValue({ prices, outcome });
+      };
+
+      it('records an outage as outcome error', async () => {
+        coreAnswers('error');
+
+        const result = await service.fetchPricesForDyes([createMockDye({ itemID: 12345 })]);
+
+        expect(result.size).toBe(0);
+        expect(service.lastFetchOutcome).toBe('error');
+      });
+
+      it('records a partial fetch as error, but still returns and caches what arrived', async () => {
+        const dyes = [createMockDye({ itemID: 12345 }), createMockDye({ itemID: 13114 })];
+        coreAnswers('partial', new Map([[12345, createMockPriceData()]]));
+
+        const result = await service.fetchPricesForDyes(dyes);
+
+        expect(service.lastFetchOutcome).toBe('error');
+        expect(result.get(12345)?.currentMinPrice).toBe(1000);
+        expect(result.has(13114)).toBe(false);
+        expect(service.getPriceForDye(12345)).toBeDefined();
+      });
+
+      it('records ok when every upstream request succeeded', async () => {
+        coreAnswers('ok', new Map([[12345, createMockPriceData()]]));
+
+        await service.fetchPricesForDyes([createMockDye({ itemID: 12345 })]);
+
+        expect(service.lastFetchOutcome).toBe('ok');
+      });
+
+      it('reports a superseded outage as superseded, not error', async () => {
+        const dyes = [createMockDye({ itemID: 12345 })];
+        let releaseOutage!: () => void;
+        const outage = new Promise<void>((resolve) => {
+          releaseOutage = resolve;
+        });
+        mockApiService.getPricesForDataCenter.mockReturnValueOnce(outage.then(() => new Map()));
+        mockApiService.getPricesForDataCenterWithOutcome.mockReturnValueOnce(
+          outage.then(() => ({ prices: new Map(), outcome: 'error' }))
+        );
+        const stale = service.fetchPricesForDyes(dyes);
+
+        coreAnswers('ok', new Map([[12345, createMockPriceData()]]));
+        await service.fetchPricesForDyes(dyes);
+        releaseOutage();
+
+        expect((await stale).size).toBe(0);
+        expect(service.lastFetchOutcome).toBe('superseded');
+      });
     });
 
     it('should return empty Map when showPrices is false', async () => {
@@ -421,6 +490,110 @@ describe('MarketBoardService', () => {
     });
   });
 
+  // BUG-079 (2026-10-04 deep-dive): Budget used to force the global Market
+  // Board toggle on (and persist it) because this gate was its only way to get
+  // prices. The per-call override fetches regardless of the toggle and hands
+  // the result to that caller ONLY: tools that render from the shared cache
+  // gate on their own display flag, not on market.showPrices, so a Budget
+  // fetch landing there would leak prices into them with the board off.
+  describe('fetchPricesForDyes with ignoreShowPrices', () => {
+    // beforeEach leaves showPrices false (the getConfig mock), which is the
+    // state every test here is about.
+
+    it('fetches and returns prices while the Market Board toggle is off', async () => {
+      expect(service.getShowPrices()).toBe(false);
+      const dyes = [createMockDye({ itemID: 12345 })];
+      mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValue(
+        ok(new Map([[12345, createMockPriceData({ currentMinPrice: 4321 })]]))
+      );
+
+      const result = await service.fetchPricesForDyes(dyes, undefined, { ignoreShowPrices: true });
+
+      expect(mockApiService.getPricesForDataCenterWithOutcome).toHaveBeenCalledWith(
+        [12345],
+        'Crystal'
+      );
+      expect(result.get(12345)?.currentMinPrice).toBe(4321);
+      expect(service.lastFetchOutcome).toBe('ok');
+    });
+
+    it('leaves the shared price cache untouched and emits no prices-updated', async () => {
+      const dyes = [createMockDye({ itemID: 12345 })];
+      mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValue(
+        ok(new Map([[12345, createMockPriceData()]]))
+      );
+      const pricesUpdated = vi.fn();
+      service.addEventListener('prices-updated', pricesUpdated);
+
+      const result = await service.fetchPricesForDyes(dyes, undefined, { ignoreShowPrices: true });
+
+      expect(result.size).toBe(1);
+      expect(service.getPriceForDye(12345)).toBeUndefined();
+      expect(service.getPricesView().size).toBe(0);
+      expect(pricesUpdated).not.toHaveBeenCalled();
+    });
+
+    it('still skips dyes that are not on the market board', async () => {
+      const saved = { A: CONSOLIDATED_IDS.A, B: CONSOLIDATED_IDS.B, C: CONSOLIDATED_IDS.C };
+      CONSOLIDATED_IDS.A = null;
+      CONSOLIDATED_IDS.B = null;
+      CONSOLIDATED_IDS.C = null;
+      try {
+        const facewear = createMockDye({ itemID: -1 });
+        const preDatamine = createMockDye({ consolidationType: 'A', itemID: 5729 });
+        const tradeable = createMockDye({ itemID: 13114 });
+
+        await service.fetchPricesForDyes([facewear, preDatamine, tradeable], undefined, {
+          ignoreShowPrices: true,
+        });
+
+        expect(mockApiService.getPricesForDataCenterWithOutcome).toHaveBeenCalledTimes(1);
+        expect(mockApiService.getPricesForDataCenterWithOutcome).toHaveBeenCalledWith(
+          [13114],
+          'Crystal'
+        );
+      } finally {
+        CONSOLIDATED_IDS.A = saved.A;
+        CONSOLIDATED_IDS.B = saved.B;
+        CONSOLIDATED_IDS.C = saved.C;
+      }
+    });
+
+    it('still discards a response a newer request superseded', async () => {
+      const dyes = [createMockDye({ itemID: 12345 })];
+      let resolveSlowRequest: (value: ReturnType<typeof ok>) => void;
+      mockApiService.getPricesForDataCenterWithOutcome.mockReturnValueOnce(
+        new Promise<ReturnType<typeof ok>>((resolve) => {
+          resolveSlowRequest = resolve;
+        })
+      );
+      const firstRequest = service.fetchPricesForDyes(dyes, undefined, { ignoreShowPrices: true });
+
+      mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValueOnce(
+        ok(new Map([[12345, createMockPriceData({ currentMinPrice: 2000 })]]))
+      );
+      const second = await service.fetchPricesForDyes(dyes, undefined, {
+        ignoreShowPrices: true,
+      });
+      resolveSlowRequest!(ok(new Map([[12345, createMockPriceData({ currentMinPrice: 1000 })]])));
+      const first = await firstRequest;
+
+      expect(mockApiService.getPricesForDataCenterWithOutcome).toHaveBeenCalledTimes(2);
+      expect(second.get(12345)?.currentMinPrice).toBe(2000);
+      expect(first.size).toBe(0);
+      expect(service.lastFetchOutcome).toBe('superseded');
+    });
+
+    it('keeps the default call gated on the toggle', async () => {
+      const dyes = [createMockDye({ itemID: 12345 })];
+
+      const result = await service.fetchPricesForDyes(dyes);
+
+      expect(result.size).toBe(0);
+      expect(mockApiService.getPricesForDataCenterWithOutcome).not.toHaveBeenCalled();
+    });
+  });
+
   describe('request versioning (race condition protection)', () => {
     beforeEach(() => {
       if (configSubscriber) {
@@ -432,24 +605,24 @@ describe('MarketBoardService', () => {
       const dyes = [createMockDye({ itemID: 12345 })];
 
       // Create a slow response that will be superseded
-      let resolveSlowRequest: (value: Map<number, PriceData>) => void;
-      const slowPromise = new Promise<Map<number, PriceData>>((resolve) => {
+      let resolveSlowRequest: (value: ReturnType<typeof ok>) => void;
+      const slowPromise = new Promise<ReturnType<typeof ok>>((resolve) => {
         resolveSlowRequest = resolve;
       });
-      mockApiService.getPricesForDataCenter.mockReturnValueOnce(slowPromise);
+      mockApiService.getPricesForDataCenterWithOutcome.mockReturnValueOnce(slowPromise);
 
       // Start first request
       const firstRequest = service.fetchPricesForDyes(dyes);
 
       // Start second request immediately (simulating rapid server switch)
-      mockApiService.getPricesForDataCenter.mockResolvedValueOnce(
-        new Map([[12345, createMockPriceData({ currentMinPrice: 2000 })]])
+      mockApiService.getPricesForDataCenterWithOutcome.mockResolvedValueOnce(
+        ok(new Map([[12345, createMockPriceData({ currentMinPrice: 2000 })]]))
       );
       const secondRequest = service.fetchPricesForDyes(dyes);
 
       // Resolve slow request after fast one completes
       await secondRequest;
-      resolveSlowRequest!(new Map([[12345, createMockPriceData({ currentMinPrice: 1000 })]]));
+      resolveSlowRequest!(ok(new Map([[12345, createMockPriceData({ currentMinPrice: 1000 })]])));
 
       await firstRequest;
 
@@ -486,16 +659,6 @@ describe('MarketBoardService', () => {
       service.destroy();
 
       expect(service.getPriceForDye(12345)).toBeUndefined();
-    });
-  });
-
-  describe('convenience functions', () => {
-    it('should export formatPrice function', async () => {
-      const { formatPrice } = await import('../market-board-service');
-      const result = formatPrice(1000);
-      // `formatGil`, not core's English-only `APIService.formatPrice`: the unit
-      // comes from the app language ("Gil" in EN).
-      expect(result).toBe('1,000 Gil');
     });
   });
 });

@@ -60,9 +60,9 @@ describe('commands/index exports', () => {
       [...source.matchAll(/^\s*case '([a-z0-9_-]+)':/gm)].map((m) => m[1])
     );
 
-    const missing = COMMAND_REGISTRY.filter((entry) => !entry.deprecated)
-      .map((entry) => entry.name)
-      .filter((name) => !dispatched.has(name));
+    const missing = COMMAND_REGISTRY.map((entry) => entry.name).filter(
+      (name) => !dispatched.has(name),
+    );
 
     expect(missing, 'registered commands with no dispatch branch').toEqual([]);
   });

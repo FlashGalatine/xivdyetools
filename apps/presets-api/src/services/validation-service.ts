@@ -179,7 +179,9 @@ export function validatePresetName(name: unknown): string | null {
     return 'Name is required';
   }
 
-  if (name.length < rules.minLength || name.length > rules.maxLength) {
+  // BUG-068: the minimum ignores surrounding whitespace, or '  ' passes and is
+  // stored blank. The maximum stays on the value as sent, which is what is stored.
+  if (name.trim().length < rules.minLength || name.length > rules.maxLength) {
     return `Name must be ${rules.minLength}-${rules.maxLength} characters`;
   }
 
@@ -205,7 +207,9 @@ export function validatePresetDescription(description: unknown): string | null {
     return 'Description is required';
   }
 
-  if (description.length < rules.minLength || description.length > rules.maxLength) {
+  // BUG-068: same split as the name — minimum on the trimmed text, maximum on
+  // the stored value.
+  if (description.trim().length < rules.minLength || description.length > rules.maxLength) {
     return `Description must be ${rules.minLength}-${rules.maxLength} characters`;
   }
 
@@ -247,6 +251,17 @@ export function validatePresetDyes(dyes: unknown): string | null {
   }
   if (!dyes.every((id: number) => id <= 254)) {
     return 'Dye IDs must be stainIDs (1-254)';
+  }
+
+  // BUG-010: every dye at most once. [7,7,7] is one colour posing as a 3-dye
+  // palette, and [1,2,3,3] gets a dye_signature different from [1,2,3], so it
+  // slips past the duplicate-combination check. Rejected rather than de-duped:
+  // the web app never sends a repeat (its pickers toggle a dye off, and the
+  // glamour palette is deduped by stainID), so a repeat comes from the bot's
+  // dye1..dye6 options, where silently dropping one would turn [1,2,3,3] into
+  // a vote on someone else's [1,2,3] preset instead of telling the author.
+  if (new Set(dyes).size !== dyes.length) {
+    return 'Each dye may appear only once';
   }
 
   return null;
@@ -409,7 +424,8 @@ const EXAMPLE_LINK_MAX_LENGTH = 300;
 
 /**
  * Validate an 8A example link: https, allowlisted host, bounded length.
- * `null`/`undefined`/`''` are valid (the field is optional; empty clears it).
+ * `null`/`undefined`/`''` are valid (the field is optional; empty clears it),
+ * and so is a whitespace-only string, which normalizeExampleLink also clears.
  *
  * @param link - The link to validate
  * @returns Error message or null if valid
@@ -432,10 +448,20 @@ export function validateExampleLink(link: unknown): string | null {
     return `Example link ${UNSUPPORTED_CHARACTERS_SUFFIX}`;
   }
 
+  // BUG-069: judge exactly what normalizeExampleLink will store — it trims. A
+  // leading space used to fail the scheme test below, get `https://` prefixed
+  // onto a full URL and 400 as "not a valid URL"; whitespace alone is empty
+  // there, so it clears the field here too. The two checks above stay on the
+  // raw string on purpose (FINDING-016).
+  const trimmed = link.trim();
+  if (trimmed === '') {
+    return null;
+  }
+
   let url: URL;
   try {
     // Accept links pasted without a scheme ("eorzeacollection.com/…")
-    url = new URL(/^https?:\/\//i.test(link) ? link : `https://${link}`);
+    url = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
   } catch {
     return 'Example link is not a valid URL';
   }

@@ -167,20 +167,22 @@ describe('Universalis Client: Service Binding Integration', () => {
     });
   });
 
+  // BUG-031: validateWorld answers a WorldValidation, so an unknown name and an
+  // upstream outage stay apart (this suite still expected the old string | null)
   describe('validateWorld', () => {
     it('validates a known world name (case-insensitive)', async () => {
       const result = await validateWorld(env, 'cactuar');
-      expect(result).toBe('Cactuar');
+      expect(result).toEqual({ ok: true, name: 'Cactuar' });
     });
 
     it('validates a known datacenter name', async () => {
       const result = await validateWorld(env, 'aether');
-      expect(result).toBe('Aether');
+      expect(result).toEqual({ ok: true, name: 'Aether' });
     });
 
-    it('returns null for unknown world', async () => {
+    it('answers unknown for a world that does not exist', async () => {
       const result = await validateWorld(env, 'FakeWorld');
-      expect(result).toBeNull();
+      expect(result).toEqual({ ok: false, reason: 'unknown' });
     });
   });
 

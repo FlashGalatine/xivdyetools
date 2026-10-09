@@ -25,4 +25,4 @@ Steps (ban.userBanned, ban.presetsHidden, ban.alreadyBanned): Delete bot-i18n.ts
 Steps (meta block + LocaleData.meta; common.success): In bot-i18n.ts, delete the interface field at :18-23 (leaving `interface LocaleData { [key: string]: unknown; }`), the meta object at :31-36 and common.success at :39. In bot-i18n.test.ts, delete :64, and at :317-320 change the comment and the key to an object-valued key ('common') and the expectation to 'common'. DEAD-001 will already have landed in PR #225; apply this with the other DEAD-030 keys as one edit. Then run pnpm turbo run build type-check lint test --filter=...xivdyetools-moderation-worker and pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `667f3ef9` (branch `fix/remediation-2026-10-04-sprint17`, moderation-worker 1.8.1; PR #261, open, on PR #260).

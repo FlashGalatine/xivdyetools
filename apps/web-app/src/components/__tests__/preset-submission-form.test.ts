@@ -6,7 +6,10 @@
  *    the input before submit ever runs;
  *  - the post-submit upload only fires when a file was actually chosen;
  *  - a failed upload warns and lets the (already-successful) submission
- *    flow complete — it must never read as a failed submission.
+ *    flow complete — it must never read as a failed submission;
+ *  - BUG-102: after the awaited request the form closes its own modal, not
+ *    whichever one is on top by then, and blocked session storage does not
+ *    turn a found duplicate into a failed submission.
  *
  * Follows the house mocking style used by camera-preview-modal.test.ts:
  * a static `vi.mock('@services/index', ...)` with plain `vi.fn()` stand-ins,
@@ -23,6 +26,7 @@ import type { Dye } from '@xivdyetools/types';
 // not just the vi.fn() stand-ins.
 const {
   mockShow,
+  mockDismiss,
   mockDismissTop,
   mockToastSuccess,
   mockToastError,
@@ -57,6 +61,7 @@ const {
 
   return {
     mockShow: vi.fn().mockReturnValue('modal-id-preset-submit'),
+    mockDismiss: vi.fn(),
     mockDismissTop: vi.fn(),
     mockToastSuccess: vi.fn(),
     mockToastError: vi.fn(),
@@ -87,6 +92,7 @@ vi.mock('@services/index', async () => {
   return {
     ModalService: {
       show: mockShow,
+      dismiss: mockDismiss,
       dismissTop: mockDismissTop,
     },
     LanguageService: {
@@ -121,6 +127,9 @@ vi.mock('@services/preset-submission-service', async (importOriginal) => {
 });
 
 import { showPresetSubmissionForm } from '../preset-submission-form';
+// Not mocked: only the `@services/index` barrel is. The race tests below route
+// the barrel's ModalService through this real stack.
+import { ModalService as RealModalService, type ModalConfig } from '@services/modal-service';
 
 /** The modal content is a detached DOM tree — grab it off the ModalService.show call. */
 function getFormContent(): HTMLElement {
@@ -281,6 +290,88 @@ describe('showPresetSubmissionForm — preview image', () => {
 
     // The flow still completes as a success: the modal closes and the
     // caller's onSubmit still fires with a successful result.
-    expect(mockDismissTop).toHaveBeenCalled();
+    expect(mockDismiss).toHaveBeenCalledWith('modal-id-preset-submit');
+  });
+});
+
+describe('showPresetSubmissionForm — after the awaited request (BUG-102)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUploadPreviewImage.mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    // Neither clearAllMocks nor restoreAllMocks drops a vi.fn implementation,
+    // so undo the real-stack wiring by hand before any later test runs.
+    mockShow.mockReset().mockReturnValue('modal-id-preset-submit');
+    mockDismiss.mockReset();
+    mockDismissTop.mockReset();
+    RealModalService.dismissAll();
+    sessionStorage.clear();
+  });
+
+  // BUG-102 (2026-10-04 deep-dive): the form is closable, so Esc can close it
+  // while the request is in flight and the user can open another modal; a
+  // dismissTop() after the await then closed THAT modal.
+  it.each([
+    ['created', { success: true, preset: { id: 'preset-123' }, moderation_status: 'pending' }],
+    ['duplicate', { success: true, duplicate: { id: 'dup-1', name: 'Dup' }, vote_added: false }],
+  ])('leaves a modal opened during the request alone (%s)', async (_label, result) => {
+    mockShow.mockImplementation((config: ModalConfig) => RealModalService.show(config));
+    mockDismiss.mockImplementation((id: string) => RealModalService.dismiss(id));
+    mockDismissTop.mockImplementation(() => RealModalService.dismissTop());
+    let resolveSubmit!: (value: unknown) => void;
+    mockSubmitPreset.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSubmit = resolve;
+      })
+    );
+    const onSubmit = vi.fn();
+
+    showPresetSubmissionForm(onSubmit);
+    const content = getFormContent();
+    fillValidForm(content);
+    clickSubmit(content);
+    await flush();
+
+    // Esc closes the form mid-request, then the user opens something else.
+    RealModalService.dismissTop();
+    const otherId = RealModalService.show({ type: 'custom', title: 'Other' });
+
+    resolveSubmit(result);
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());
+
+    expect(RealModalService.getModals().map((m) => m.id)).toEqual([otherId]);
+  });
+
+  it('still opens a found duplicate when session storage is blocked', async () => {
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('blocked', 'SecurityError');
+    });
+    mockSubmitPreset.mockResolvedValueOnce({
+      success: true,
+      duplicate: { id: 'dup-1', name: 'Dup' },
+      vote_added: false,
+    });
+    const navigate = vi.fn();
+    window.addEventListener('navigate-to-preset', navigate);
+    const onSubmit = vi.fn();
+
+    try {
+      showPresetSubmissionForm(onSubmit);
+      const content = getFormContent();
+      fillValidForm(content);
+      clickSubmit(content);
+      await flush();
+
+      expect(setItem).toHaveBeenCalledWith('pendingPresetId', 'dup-1');
+      expect(mockToastInfo).toHaveBeenCalledTimes(1);
+      expect(mockToastError).not.toHaveBeenCalled();
+      expect(navigate).toHaveBeenCalledTimes(1);
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
+    } finally {
+      window.removeEventListener('navigate-to-preset', navigate);
+    }
   });
 });

@@ -59,14 +59,13 @@ const CRAWLER_PATTERNS: Array<{ pattern: RegExp; type: CrawlerType }> = [
  *
  * @example
  * const info = detectCrawler('Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)');
- * // { isCrawler: true, type: 'discord', userAgent: '...' }
+ * // { isCrawler: true, type: 'discord' }
  */
 export function detectCrawler(userAgent: string | null): CrawlerInfo {
   if (!userAgent) {
     return {
       isCrawler: false,
       type: 'none',
-      userAgent: '',
     };
   }
 
@@ -75,7 +74,6 @@ export function detectCrawler(userAgent: string | null): CrawlerInfo {
       return {
         isCrawler: true,
         type,
-        userAgent,
       };
     }
   }
@@ -83,7 +81,6 @@ export function detectCrawler(userAgent: string | null): CrawlerInfo {
   return {
     isCrawler: false,
     type: 'none',
-    userAgent,
   };
 }
 

@@ -20,4 +20,4 @@ Steps: 1. Delete apps/web-app/src/services/language-service.ts:260-265 (JSDoc + 
 Steps (LanguageService.preloadLocales): 1. Delete apps/web-app/src/services/language-service.ts:361-371 (JSDoc + static preloadLocales). 2. In apps/web-app/src/services/__tests__/language-service.test.ts, delete describe('preloadLocales') at :261-270 and the inner describe('preloadLocales behavior') at :430-457, keeping the parent describe. 3. Run pnpm turbo run build type-check lint test --filter=...xivdyetools-web-app, then pnpm dead-code:check.
 
 ## Status
-OPEN
+REMOVED, NOT DEPLOYED — `057cba2f` (branch `fix/remediation-2026-10-04-sprint23`, web-app 5.14.7; PR #253, open, stacked on #252).

@@ -3,8 +3,8 @@
  *
  * Handles approve/reject/revert buttons on moderation messages.
  *
- * Button custom_id patterns (FINDING-017 — full grammar in
- * `utils/review-custom-id.ts`):
+ * Button custom_id patterns (FINDING-017 — full grammar in `@xivdyetools/types`,
+ * `preset/review-custom-id.ts`, shared with discord-worker since REFACTOR-001):
  * - preset_approve_{presetId}:{revision}:{status} - Approve the reviewed revision
  * - preset_reject_{presetId}:{revision}:{status}  - Opens the rejection reason modal
  * - preset_revert_{presetId}:{revision}:{status}  - Opens the revert reason modal
@@ -24,9 +24,9 @@ import * as presetApi from '../../services/preset-api.js';
 import * as banService from '../../services/ban-service.js';
 import { STATUS_DISPLAY, PresetReviewConflictError } from '../../types/preset.js';
 import { sanitizeName, sanitizeUserName } from '../../utils/embed-text.js';
-import { buildReviewCustomId, parseReviewCustomId } from '../../utils/review-custom-id.js';
-import type { ParsedReviewId, ReviewBinding, ReviewKind } from '../../utils/review-custom-id.js';
-import { editReviewMessage, refreshReview } from '../review-message.js';
+import { buildReviewCustomId, parseReviewCustomId } from '@xivdyetools/types';
+import type { ParsedReviewId, ReviewBinding, ReviewKind } from '@xivdyetools/types';
+import { editReviewMessage, refreshReview, withoutTransientFields } from '../review-message.js';
 
 /** MOD-4: shown when the approve button targets a banned author's preset. */
 const AUTHOR_BANNED_MESSAGE =
@@ -192,7 +192,7 @@ async function processApproval(
             description: originalEmbed.description,
             color: originalEmbed.color,
             fields: [
-              ...(originalEmbed.fields || []),
+              ...withoutTransientFields(originalEmbed.fields, { keepReview: true }),
               { name: 'Error', value: `Not approved: ${AUTHOR_BANNED_MESSAGE}`, inline: false },
             ],
             footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
@@ -213,8 +213,10 @@ async function processApproval(
           title: `✅ Preset Approved`,
           description: originalEmbed.description,
           color: STATUS_DISPLAY.approved.color,
+          // BUG-050: neither a stale Error nor the "click Approve" instruction
+          // belongs under "Preset Approved"
           fields: [
-            ...(originalEmbed.fields || []),
+            ...withoutTransientFields(originalEmbed.fields),
             { name: 'Action', value: `Approved by ${safeModerator}`, inline: false },
           ],
           footer: originalEmbed.footer?.text ? { text: originalEmbed.footer.text } : undefined,
@@ -256,8 +258,9 @@ async function processApproval(
           title: originalEmbed.title,
           description: originalEmbed.description,
           color: originalEmbed.color,
+          // the buttons stay live, so the Review instruction is still the next step
           fields: [
-            ...(originalEmbed.fields || []),
+            ...withoutTransientFields(originalEmbed.fields, { keepReview: true }),
             {
               name: 'Error',
               value: `Failed to approve: ${sanitizeErrorMessage(error, 'Unable to approve preset.')}`,

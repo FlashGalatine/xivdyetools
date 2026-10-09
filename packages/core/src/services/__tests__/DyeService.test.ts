@@ -379,6 +379,51 @@ describe('DyeService', () => {
         const englishResults = dyeService.searchByLocalizedName('snow');
         expect(englishResults).toHaveLength(1);
       });
+
+      // BUG-132 (2026-10-04 deep-dive): an empty or whitespace query folded
+      // to '' and every `includes('')` matched, so a loaded locale returned
+      // the whole database while the unlocalized fallback returned [].
+      it.each([
+        ['empty', ''],
+        ['whitespace', '   '],
+        ['tab/newline', '\t\n'],
+      ])('returns [] for an %s query when the locale is loaded', (_label, query) => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue('Schneeweiß');
+
+        expect(dyeService.searchByLocalizedName(query, 'de')).toEqual([]);
+        expect(dyeService.searchByLocalizedName(query)).toEqual([]);
+      });
+
+      it('returns [] for an empty query on the unlocalized fallback too', () => {
+        expect(LocalizationService.isLocaleLoaded('de')).toBe(false);
+        expect(dyeService.searchByLocalizedName('   ', 'de')).toEqual([]);
+      });
+
+      // The parameter is typed `string`, but npm JS callers and `as any`
+      // casts can pass anything. The English fallback (searchByName) already
+      // answers [] for a non-string; the loaded-locale path used to call
+      // `.trim()` on it and throw a TypeError.
+      it.each([
+        ['null', null],
+        ['undefined', undefined],
+        ['a number', 42],
+        ['an object', { toString: () => 'snow' }],
+      ])('returns [] for %s as the query when the locale is loaded', (_label, query) => {
+        vi.spyOn(LocalizationService, 'isLocaleLoaded').mockReturnValue(true);
+        vi.spyOn(LocalizationService, 'getDyeName').mockReturnValue('Schneeweiß');
+
+        expect(dyeService.searchByLocalizedName(query as unknown as string, 'de')).toEqual([]);
+      });
+
+      it.each([
+        ['null', null],
+        ['undefined', undefined],
+        ['a number', 42],
+      ])('returns [] for %s as the query on the unlocalized fallback too', (_label, query) => {
+        expect(LocalizationService.isLocaleLoaded('de')).toBe(false);
+        expect(dyeService.searchByLocalizedName(query as unknown as string, 'de')).toEqual([]);
+      });
     });
 
     describe('searchByLocalizedName — accent/case/width folding (I18N-005)', () => {

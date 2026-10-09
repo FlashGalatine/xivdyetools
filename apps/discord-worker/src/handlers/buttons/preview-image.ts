@@ -29,6 +29,7 @@ import * as presetApi from '../../services/preset-api.js';
 import { isValidPresetId, isValidPreviewImageKey, PresetAPIError } from '../../types/preset.js';
 import { createTranslator } from '../../services/bot-i18n.js';
 import { STATE } from '../../utils/brand.js';
+import { sanitizeEmbedText } from '@xivdyetools/bot-logic';
 import type { ExtendedLogger } from '@xivdyetools/logger';
 
 // ============================================================================
@@ -76,6 +77,8 @@ const REJECT_PREFIX = 'previewimg_reject_';
 // Moderator controls are English-only, matching createTranslator('en') below.
 const STALE_REVIEW_MESSAGE =
   'This preview image changed or was already moderated. Review the latest image notification.';
+/** Discord usernames / display names: 32 code points before escaping (moderation-worker's USER_MAX). */
+const MODERATOR_NAME_MAX = 64;
 
 // ============================================================================
 // Routing helpers
@@ -84,6 +87,17 @@ const STALE_REVIEW_MESSAGE =
 /** Check if a custom_id is a preview-image moderation button */
 export function isPreviewImageButton(customId: string): boolean {
   return customId.startsWith(APPROVE_PREFIX) || customId.startsWith(REJECT_PREFIX);
+}
+
+/**
+ * BUG-041 (siblings): the footer the notification was posted with is
+ * `ID: <presetId>` (index.ts). A notice joins that line in index.ts's
+ * `ID: … • …` style rather than replacing it — a retired (stale) message is
+ * never edited again, so a replaced id would be gone for good. Rebuilt from
+ * the validated id, not copied, since an earlier refresh may have rewritten it.
+ */
+function footerWithNotice(presetId: string, notice: string): string {
+  return `ID: ${presetId} • ${notice}`;
 }
 
 function parseCustomId(customId: string): {
@@ -196,7 +210,7 @@ async function refreshPreviewImageReview(
           {
             ...interaction.message?.embeds?.[0],
             ...(key ? { image: { url: `https://shots.xivdyetools.app/${key}` } } : {}),
-            footer: { text: message },
+            footer: { text: footerWithNotice(presetId, message) },
           },
         ],
         components: key
@@ -258,7 +272,11 @@ async function processPreviewImageAction(
   logger?: ExtendedLogger,
 ): Promise<void> {
   const adminT = createTranslator('en');
-  const displayName = moderatorName ? `<@${moderatorId}>` : moderatorId;
+  // BUG-041 / FINDING-008: never a `<@id>` mention — a footer renders it as
+  // raw text, and anywhere else it resolves. FINDING-019: the name is
+  // user-controlled, so it goes through the shared sanitiser; the plain id is
+  // the fallback when Discord sent no (or an all-invisible) username.
+  const displayName = sanitizeEmbedText(moderatorName, MODERATOR_NAME_MAX) || moderatorId;
 
   try {
     await presetApi.setPreviewImageStatus(
@@ -272,13 +290,17 @@ async function processPreviewImageAction(
 
     if (interaction.channel_id && interaction.message?.id) {
       const originalEmbed = interaction.message.embeds?.[0] || {};
-      const footerText =
+      // The keys say "Footer" for history; the line now goes in the description.
+      const outcomeLine =
         action === 'approve'
           ? adminT.t('previewImage.approvedFooter', { moderator: displayName })
           : adminT.t('previewImage.rejectedFooter', { moderator: displayName });
 
       // On success the outcome is visible and the buttons cannot be clicked
-      // twice: the embed is edited (colour + footer) and components dropped.
+      // twice: the embed is edited (colour + outcome line) and components
+      // dropped. BUG-041: the footer is rebuilt as the `ID: <presetId>` line
+      // the notification was posted with (index.ts), from the validated id —
+      // not copied, since a legacy refresh appended its notice to it.
       const res = await editMessage(
         env.DISCORD_TOKEN,
         interaction.channel_id,
@@ -287,8 +309,9 @@ async function processPreviewImageAction(
           embeds: [
             {
               ...originalEmbed,
+              description: [originalEmbed.description, outcomeLine].filter(Boolean).join('\n\n'),
               color: action === 'approve' ? STATE.success : STATE.error,
-              footer: { text: footerText },
+              footer: { text: `ID: ${presetId}` },
             },
           ],
           components: [],
@@ -319,7 +342,10 @@ async function processPreviewImageAction(
           interaction.message.id,
           {
             embeds: [
-              { ...interaction.message.embeds?.[0], footer: { text: STALE_REVIEW_MESSAGE } },
+              {
+                ...interaction.message.embeds?.[0],
+                footer: { text: footerWithNotice(presetId, STALE_REVIEW_MESSAGE) },
+              },
             ],
             components: [],
           },

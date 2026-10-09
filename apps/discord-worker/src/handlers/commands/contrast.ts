@@ -18,10 +18,22 @@ import {
   initializeLocale,
   type LocaleCode,
 } from '../../services/i18n.js';
-import { resolveColorInput, executeContrast, type ContrastDyeInput } from '@xivdyetools/bot-logic';
+import {
+  resolveColorInput,
+  executeContrast,
+  sanitizeEmbedText,
+  type ContrastDyeInput,
+} from '@xivdyetools/bot-logic';
 import { getUserPreferences } from '../../services/preferences.js';
 import { markCommandOutcome, classifyError } from '../../services/command-trace.js';
 import type { Env, DiscordInteraction } from '../../types/env.js';
+
+// BUG-044: a user-typed option echoed into an error embed goes through the
+// shared sanitiser (markdown / masked links / mentions defused) with the
+// 100-character cap the other dye-name echoes use — an uncapped ~4000-char
+// value pushed the description past Discord's 4096 limit and the reply was
+// rejected outright.
+const MAX_ECHO_LENGTH = 100;
 
 export async function handleContrastCommand(
   interaction: DiscordInteraction,
@@ -40,7 +52,7 @@ export async function handleContrastCommand(
   }
 
   const t = userId
-    ? await createUserTranslator(env.KV, userId, interaction.locale)
+    ? await createUserTranslator(env.KV, userId, interaction.locale, logger)
     : createTranslator(discordLocaleToLocaleCode(interaction.locale ?? 'en') ?? 'en');
   const theme = userId ? (await getUserPreferences(env.KV, userId)).theme : undefined;
 
@@ -58,7 +70,12 @@ export async function handleContrastCommand(
       return Response.json({
         type: 4,
         data: {
-          embeds: [errorEmbed(t.t('common.error'), t.t('errors.invalidColor', { input: value }))],
+          embeds: [
+            errorEmbed(
+              t.t('common.error'),
+              t.t('errors.invalidColor', { input: sanitizeEmbedText(value, MAX_ECHO_LENGTH) }),
+            ),
+          ],
           flags: 64,
         },
       });
@@ -91,6 +108,15 @@ async function processContrastCommand(
   const result = await executeContrast({ dyes, locale, theme, logger });
 
   if (!result.ok) {
+    if (result.error === 'NOT_ENOUGH_DYES') {
+      // A refusal, not a render failure (BUG-125): bot-logic names what is
+      // missing in the reader's language, and the trace stays `ok`. The
+      // two-dye check before the defer makes this unreachable from Discord today.
+      await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
+        embeds: [errorEmbed(t.t('common.error'), result.errorMessage)],
+      });
+      return;
+    }
     // GENERATION_FAILED: the card generator threw inside bot-logic.
     markCommandOutcome(interaction, 'render');
     if (logger) logger.error('Contrast command failed');
@@ -101,7 +127,7 @@ async function processContrastCommand(
   }
 
   try {
-    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2 });
+    const pngBuffer = await renderSvgToPng(result.svgString, { scale: 2, locale });
 
     await safeEditOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
       embeds: [

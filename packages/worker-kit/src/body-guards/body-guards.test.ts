@@ -604,3 +604,65 @@ describe('bodyGuards — options that neither consumer uses yet', () => {
     expect(del.status).toBe(200);
   });
 });
+
+describe('bodyGuards — Content-Type recognition (BUG-149)', () => {
+  const POLLUTED = '{"__proto__":{"admin":true}}';
+
+  async function post(
+    contentType: string | undefined,
+    body: string
+  ): Promise<{ status: number; reached: boolean }> {
+    const h = harness(oauthGuards(), '/auth');
+    const headers: Record<string, string> = {};
+    if (contentType !== undefined) headers['Content-Type'] = contentType;
+    const res = await h.app.request('/auth/test', { method: 'POST', headers, body });
+    return { status: res.status, reached: h.reached() };
+  }
+
+  it.each([
+    'Application/JSON',
+    'APPLICATION/JSON',
+    'application/json; charset=UTF-8',
+    '  application/json ;charset=utf-8',
+    'application/vnd.api+json',
+    'Application/Problem+JSON; charset=utf-8',
+  ])('guards a %s body', async (contentType) => {
+    const result = await post(contentType, POLLUTED);
+    expect(result.status).toBe(400);
+    expect(result.reached).toBe(false);
+  });
+
+  it('rejects over-deep nesting under a +json type', async () => {
+    const result = await post('application/vnd.api+json', JSON.stringify(nestToDepth(50)));
+    expect(result.status).toBe(400);
+  });
+
+  it.each([
+    'text/plain',
+    'application/x-www-form-urlencoded',
+  ])('passes a %s body through untouched (not a JSON media type)', async (contentType) => {
+    const result = await post(contentType, POLLUTED);
+    expect(result.status).toBe(200);
+    expect(result.reached).toBe(true);
+  });
+
+  it('passes a request with no Content-Type through', async () => {
+    const result = await post(undefined, 'a=b');
+    expect(result.reached).toBe(true);
+  });
+
+  // Consumer 415 gates still use a substring test, so anything that test lets
+  // through must still be guarded here (never narrower than the old check).
+  it.each([
+    'application/jsonp',
+    'application/json-seq',
+    'text/plain; note=application/json',
+    'text/plain, application/json',
+    'application/json, text/plain',
+    'Text/Plain; X=Application/JSON',
+  ])('still guards %s (fail-safe superset of the old substring test)', async (contentType) => {
+    const result = await post(contentType, POLLUTED);
+    expect(result.status).toBe(400);
+    expect(result.reached).toBe(false);
+  });
+});

@@ -184,6 +184,18 @@ vi.mock('../../services/i18n.js', () => ({
   getLocalizedCategory: vi.fn((category: string) => category),
 }));
 
+// BUG-125: a passthrough, so the calls can be read without changing them.
+vi.mock('@xivdyetools/bot-logic', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@xivdyetools/bot-logic')>();
+  return {
+    ...actual,
+    executeDyeInfo: vi.fn(actual.executeDyeInfo),
+    executeRandom: vi.fn(actual.executeRandom),
+  };
+});
+
+import { executeDyeInfo, executeRandom } from '@xivdyetools/bot-logic';
+
 describe('dye.ts', () => {
   let mockEnv: Env;
   let mockCtx: ExecutionContext;
@@ -759,6 +771,96 @@ describe('dye.ts', () => {
       const title = data.data!.embeds![0].title!;
       expect(title.length).toBeLessThan(200);
       expect(title.endsWith('…')).toBe(true);
+    });
+  });
+
+  // BUG-044: `/dye info name:` was echoed into errors.dyeNotFound unsanitised
+  // and uncapped — ~4000 characters overflowed the 4096-character description
+  // and Discord rejected the reply ("The application did not respond").
+  describe('info name sanitisation (BUG-044)', () => {
+    it('sanitizes and caps the echoed name in the not-found error', async () => {
+      const hostile = `notfound @everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+      const response = await handleDyeCommand(
+        {
+          type: 2,
+          data: {
+            name: 'dye',
+            options: [{ name: 'info', type: 1, options: [{ name: 'name', value: hostile }] }],
+          },
+          user: { id: 'user-123' },
+          id: 'int-1',
+          application_id: 'app-1',
+          token: 'token-1',
+        },
+        mockEnv,
+        mockCtx,
+      );
+      const data = (await response.json()) as InteractionResponseBody;
+
+      const description = data.data!.embeds![0].description!;
+      expect(description.startsWith('Dye not found: notfound ')).toBe(true);
+      const echoed = description.slice('Dye not found: '.length);
+      expect([...echoed].length).toBeLessThanOrEqual(100);
+      expect(echoed.endsWith('…')).toBe(true);
+      expect(echoed).not.toContain('@everyone');
+      expect(echoed).not.toContain('[x](');
+      expect(data.data!.flags).toBe(64);
+    });
+  });
+
+  // BUG-125: bot-logic's final catches log the error's class on the logger
+  // they are handed — so the handler has to hand its request logger over, on
+  // every path that reaches executeDyeInfo / executeRandom.
+  describe('request logger reaches bot-logic (BUG-125)', () => {
+    const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+
+    const runDeferred = async (subcommand: {
+      name: string;
+      options?: Array<{ name: string; value?: unknown }>;
+    }): Promise<void> => {
+      const pending: Promise<unknown>[] = [];
+      const ctx = {
+        waitUntil: vi.fn((p: Promise<unknown>) => pending.push(p)),
+        passThroughOnException: vi.fn(),
+        props: {},
+      } as unknown as ExecutionContext;
+      await handleDyeCommand(
+        {
+          type: 2,
+          data: { name: 'dye', options: [{ ...subcommand, type: 1 }] },
+          user: { id: 'user-123' },
+          id: 'int-1',
+          application_id: 'app-1',
+          token: 'token-1',
+        } as unknown as DiscordInteraction,
+        mockEnv,
+        ctx,
+        logger as never,
+      );
+      expect(pending).toHaveLength(1);
+      await Promise.all(pending);
+    };
+
+    it('passes it to executeDyeInfo for /dye info', async () => {
+      await runDeferred({ name: 'info', options: [{ name: 'name', value: 'snow' }] });
+
+      expect(executeDyeInfo).toHaveBeenCalledWith(expect.objectContaining({ logger }));
+    });
+
+    it('passes it to executeRandom for /dye random, fallback included', async () => {
+      vi.mocked(executeRandom).mockResolvedValueOnce({
+        ok: false,
+        error: 'GENERATION_FAILED',
+        errorMessage: 'An error occurred while generating the visualization.',
+      });
+
+      await runDeferred({ name: 'random', options: [] });
+
+      // The card attempt, then the text fallback's own selection
+      expect(executeRandom).toHaveBeenCalledTimes(2);
+      for (const [input] of vi.mocked(executeRandom).mock.calls) {
+        expect(input).toEqual(expect.objectContaining({ logger }));
+      }
     });
   });
 });

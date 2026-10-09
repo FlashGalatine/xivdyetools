@@ -62,6 +62,23 @@ describe('ColorService.mixColors* delegates to blendColors', () => {
   }
 });
 
+describe('a NaN ratio gives the same mix on both surfaces (BUG-129)', () => {
+  /**
+   * The two surfaces used to disagree on NaN in a way the grid above could
+   * not see, since RATIOS holds only finite values: `blendColors` returned the
+   * hex '#NaNNaNNaN', while `mixColors*` threw AppError INVALID_RGB_VALUE from
+   * `fromBlend`. Both now fall back to the default 0.5 mix. NaN is kept out of
+   * RATIOS on purpose — that array also drives the RYB identity law below.
+   */
+  it.each(MODE_METHODS)('%s', (mode, method) => {
+    for (const [, hex1, hex2] of PAIRS) {
+      expect(method(hex1, hex2, NaN).toLowerCase()).toBe(
+        blendColors(hex1, hex2, mode, NaN).hex.toLowerCase(),
+      );
+    }
+  });
+});
+
 describe('each surface keeps its own hex case', () => {
   /**
    * The two surfaces have always disagreed on CASE — `blendColors` emits

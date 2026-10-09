@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-10-05 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+**Dernière mise à jour :** 2026-10-09 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
 Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
@@ -22,10 +22,12 @@ en forment la liste complète.
   rechargez la page.
 - L'Extracteur de palette affiche la même chose à l'endroit où vous choisissez un fichier —
   « Les images sont lues dans votre navigateur et jamais envoyées », à côté d'un cadenas. Cet avis
-  est un texte simple, pas un lien ; ce document est accessible depuis **À propos → Confidentialité**.
-- **Une exception, et seulement si vous le choisissez.** Lorsque vous soumettez ou modifiez une
-  palette prédéfinie communautaire, vous pouvez y joindre une **image d'aperçu** facultative. Cette
-  image est envoyée à `api.xivdyetools.app`, convertie en WebP, stockée avec la palette prédéfinie,
+  est un texte simple, pas un lien ; ce document est accessible depuis
+  **À propos de Outils de Teinture XIV** (un bouton dans l'en-tête) → **POLITIQUES** →
+  **Confidentialité**.
+- **Une exception, et seulement si vous le choisissez.** Lorsque vous soumettez ou modifiez un
+  préréglage communautaire, vous pouvez y joindre une **image d'aperçu** facultative. Cette
+  image est envoyée à `api.xivdyetools.app`, convertie en WebP, stockée avec le préréglage,
   et affichée publiquement depuis `shots.xivdyetools.app` une fois qu'un modérateur l'a approuvée.
   L'élément 3 de la section Accès réseau ci-dessous explique comment la supprimer.
 
@@ -33,8 +35,8 @@ en forment la liste complète.
 
 - Un fichier `.chara` (Anamnesis, Ktisis, Brio) est analysé sur votre appareil. Le nom du
   personnage qu'il contient n'est jamais envoyé où que ce soit, et n'est jamais utilisé comme nom
-  de palette prédéfinie, nom d'auteur, ou toute autre chose visible par d'autres joueurs. Soumettre
-  un mirage aux palettes prédéfinies communautaires exige que vous saisissiez vous-même un nom —
+  de préréglage, nom d'auteur, ou toute autre chose visible par d'autres joueurs. Soumettre
+  un mirage aux préréglages communautaires exige que vous saisissiez vous-même un nom —
   le champ commence vide exprès, car le nom du personnage et le nom du fichier sont tous deux des
   endroits où les joueurs mettent leur vrai nom.
 - **Une exception, qui reste sur votre appareil.** Si vous enregistrez un mirage ou sa palette
@@ -58,7 +60,7 @@ en forment la liste complète.
 réglages par outil (y compris le commutateur d'analyses ci-dessous), teintures favorites, palettes
 et collections enregistrées, les lignes d'obtention que vous avez réécrites dans la « Liste
 d'équipement » du Lecteur de mirages, et — si vous vous connectez — le jeton de session de vos
-palettes prédéfinies communautaires. Rien ici n'est un identifiant de suivi. Les contrôles de
+préréglages communautaires. Rien ici n'est un identifiant de suivi. Les contrôles de
 données de site de votre navigateur effacent tout cela. Dans l'application, chacune de ces actions
 en efface une partie :
 
@@ -68,7 +70,9 @@ en efface une partie :
 - **Paramètres avancés → Effacer les palettes sauvegardées** supprime vos palettes enregistrées.
 - **Gérer les collections → Supprimer la collection** supprime une collection enregistrée.
 - Se déconnecter supprime le jeton de session.
-- « Tout réinitialiser » dans la Liste d'équipement supprime les lignes réécrites de cette tenue.
+- « Tout réinitialiser » dans la Liste d'équipement supprime la ligne réécrite de chaque pièce de
+  cette liste. Chaque ligne est conservée par pièce d'équipement, de sorte qu'une autre tenue qui
+  partage une pièce perd aussi cette ligne.
 
 `IndexedDB` conserve une seule chose : un cache des prix du tableau des ventes déjà récupérés, afin
 de ne pas répéter la même recherche. Il ne contient aucune image — une version antérieure de
@@ -81,12 +85,14 @@ site de votre navigateur l'effacent.
 L'application ne communique qu'avec ces hôtes de première partie (la Content-Security-Policy du site
 n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
 
-1. **Prix du tableau des ventes** (facultatif — le commutateur « Afficher les prix ») : les
-   identifiants d'objet et le Monde ou le centre de données que vous avez choisis sont envoyés à
-   notre proxy sur `data.xivdyetools.app`, qui les récupère depuis [Universalis](https://universalis.app).
+1. **Prix du tableau des ventes** (facultatif — le commutateur « Activer le tableau des ventes »
+   dans la colonne des réglages ; « Suggestions Budget » les charge toujours, car cet outil compare
+   les teintures selon leur prix) : les identifiants d'objet et le Monde ou le centre de données que
+   vous avez choisis sont envoyés à notre proxy sur `data.xivdyetools.app`, qui les récupère depuis
+   [Universalis](https://universalis.app).
 2. **Noms et icônes d'équipement pour les imports `.chara`** — `data.xivdyetools.app` (voir
    ci-dessus).
-3. **Palettes prédéfinies communautaires** (`api.xivdyetools.app`) : la navigation n'envoie rien
+3. **Préréglages communautaires** (`api.xivdyetools.app`) : la navigation n'envoie rien
    vous concernant. Se connecter via `auth.xivdyetools.app` avec Discord ou XIVAuth crée
    immédiatement un enregistrement de compte, que vous alliez ou non ensuite soumettre ou voter.
    Avec Discord, l'enregistrement contient votre identifiant utilisateur Discord et votre nom
@@ -96,27 +102,27 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    des 8 premiers caractères de votre identifiant XIVAuth.
    Si votre compte XIVAuth est lié à Discord, l'enregistrement
    contient aussi cet identifiant utilisateur Discord. Le nom figurant dans l'enregistrement est
-   affiché comme auteur de chaque palette prédéfinie que vous publiez, et il est mis à jour sur
-   chacune d'elles à chaque fois que vous vous connectez (pas tant qu'un bannissement est actif). Si
-   vous liez ensuite Discord à votre compte XIVAuth, vos palettes prédéfinies, vos votes et vos
+   affiché comme auteur de chaque préréglage que vous publiez, et il est mis à jour sur
+   chacun d'eux à chaque fois que vous vous connectez (pas tant qu'un bannissement est actif). Si
+   vous liez ensuite Discord à votre compte XIVAuth, vos préréglages, vos votes et vos
    compteurs de limite quotidienne passent à cet identifiant utilisateur Discord à votre prochaine
-   connexion (là encore, pas tant qu'un bannissement est actif). Les palettes prédéfinies et les
-   votes que vous soumettez sont stockés sous ce compte. Soumettre une palette prédéfinie compte
-   comme votre vote pour elle ; si une palette prédéfinie publiée a déjà les mêmes teintures, votre
-   soumission devient un vote pour cette palette à la place. Une palette prédéfinie contient ce que
+   connexion (là encore, pas tant qu'un bannissement est actif). Les préréglages et les
+   votes que vous soumettez sont stockés sous ce compte. Soumettre un préréglage compte
+   comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre
+   soumission devient un vote pour ce préréglage à la place. Un préréglage contient ce que
    vous saisissez dans le formulaire — et, si notre vérification automatique retient pour examen le
    nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première
-   modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que la palette
-   prédéfinie soit supprimée — plus l'image d'aperçu facultative décrite sous Images ci-dessus. Pour
-   supprimer une image d'aperçu, utilisez le formulaire de modification de la palette prédéfinie ;
-   supprimer une palette prédéfinie depuis **Mes soumissions** supprime aussi son image d'aperçu.
-   Lorsque vous soumettez ou modifiez une palette prédéfinie, son nom et sa description peuvent
+   modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le
+   préréglage soit supprimé — plus l'image d'aperçu facultative décrite sous Images ci-dessus. Pour
+   supprimer une image d'aperçu, utilisez le formulaire de modification du préréglage ;
+   supprimer un préréglage depuis **Mes soumissions** supprime aussi son image d'aperçu.
+   Lorsque vous soumettez ou modifiez un préréglage, son nom et sa description peuvent
    aussi être envoyés à la [Perspective API](https://perspectiveapi.com/) de Google pour un score de
    modération (facultatif — modération de contenu uniquement) ; la requête indique à Google de ne
    pas les stocker (`doNotStore`), et rien d'autre — aucune identité de compte — n'y est envoyé. Ce
-   que nous conservons d'autre sur vos palettes prédéfinies, et pour combien de temps, figure sous
-   *Palettes prédéfinies communautaires : ce que nous conservons* ci-dessous ; la façon de le
-   supprimer figure sous *Supprimer vos données*. Les images d'aperçu des palettes prédéfinies sont
+   que nous conservons d'autre sur vos préréglages, et pour combien de temps, figure sous
+   *Préréglages communautaires : ce que nous conservons* ci-dessous ; la façon de le
+   supprimer figure sous *Supprimer vos données*. Les images d'aperçu des préréglages sont
    servies depuis `shots.xivdyetools.app` ; les avatars se chargent depuis le CDN de Discord.
 4. **Liens de partage** : un lien de partage encode dans son URL les teintures ou les couleurs que
    vous avez choisies. Ouvrir un tel lien charge cette URL comme n'importe quelle page ; les
@@ -143,55 +149,55 @@ référent supprimé, de sorte que le site sur lequel vous arrivez n'est pas inf
 vous venez. Une fois là-bas, vous êtes sur le site de quelqu'un d'autre, soumis à sa propre
 politique de confidentialité.
 
-Une palette prédéfinie communautaire peut aussi porter un **lien d'exemple**, choisi par son auteur.
+Un préréglage communautaire peut aussi porter un **lien d'exemple**, choisi par son auteur.
 Il pointe vers une page de l'un de ces sites : Eorzea Collection, Mirapri, Reddit, X, Bluesky,
 Instagram, pixiv, Misskey, ou le site officiel de Final Fantasy XIV, qui inclut le Lodestone.
 L'application n'affiche aucun lien d'exemple vers un autre site. Le lien est celui de l'auteur, et
 il ne transporte rien vous concernant. Il s'ouvre de la même façon : dans un nouvel onglet, avec le
 référent supprimé.
 
-## Palettes prédéfinies communautaires : ce que nous conservons
+## Préréglages communautaires : ce que nous conservons
 
-Cette section ne s'applique que si vous vous connectez aux palettes prédéfinies communautaires.
+Cette section ne s'applique que si vous vous connectez aux préréglages communautaires.
 Tout ce qui suit est stocké sur Cloudflare — l'enregistrement de compte par notre service de
-connexion (`auth.xivdyetools.app`), le reste par notre service de palettes prédéfinies
+connexion (`auth.xivdyetools.app`), le reste par notre service de préréglages
 (`api.xivdyetools.app`) — à l'exception des messages publiés sur notre serveur Discord.
 
-- **Votre enregistrement de compte, vos palettes prédéfinies et vos votes** (élément 3 ci-dessus)
+- **Votre enregistrement de compte, vos préréglages et vos votes** (élément 3 ci-dessus)
   sont conservés jusqu'à ce que vous les supprimiez ou nous demandiez de les supprimer (voir
   *Supprimer vos données*).
-- **Limites quotidiennes.** Chaque palette prédéfinie que vous soumettez, chaque modification du nom
-  ou de la description d'une palette prédéfinie que vous envoyez, et chaque image d'aperçu que vous
-  téléversez est comptée afin que les limites quotidiennes puissent être appliquées. Le compteur
-  consigne l'identifiant de votre compte, le type d'action, la palette prédéfinie et l'heure, et il
-  est supprimé après **30 jours** ; supprimer la palette prédéfinie ne le supprime pas plus tôt.
+- **Limites quotidiennes.** Chaque préréglage que vous soumettez, chaque modification du nom
+  ou de la description d'un préréglage que vous envoyez, et chaque image d'aperçu que vous
+  téléversez est compté afin que les limites quotidiennes puissent être appliquées. Le compteur
+  consigne l'identifiant de votre compte, le type d'action, le préréglage et l'heure, et il
+  est supprimé après **30 jours** ; supprimer le préréglage ne supprime pas le compteur plus tôt.
 - **Messages sur notre serveur Discord.** Nos modérateurs travaillent dans deux salons privés de
-  notre serveur Discord. Le salon de modération reçoit chaque palette prédéfinie, modification ou
-  image d'aperçu qui nécessite une vérification : le message montre la palette prédéfinie (par
+  notre serveur Discord. Le salon de modération reçoit chaque préréglage, modification ou
+  image d'aperçu qui nécessite une vérification : le message montre le préréglage (par
   exemple son nom, sa description, sa catégorie et ses teintures) et le nom de l'auteur ou, pour une
-  image d'aperçu, le nom de la palette prédéfinie et l'image, et il est mis à jour lorsqu'un
+  image d'aperçu, le nom du préréglage et l'image, et il est mis à jour lorsqu'un
   modérateur tranche. Si un modérateur vous bannit, le salon de modération reçoit aussi un message
-  avec votre nom d'auteur, le motif et le nombre de vos palettes prédéfinies qui ont été masquées.
-  Les modérateurs peuvent aussi publier dans le salon de modération la liste des palettes
-  prédéfinies en attente de vérification, avec le nom de leurs auteurs. Le salon de journal des
-  soumissions reçoit chaque palette prédéfinie publiée sans vérification, avec le nom de son auteur,
-  et une note nommant la palette prédéfinie lorsqu'un modérateur en approuve ou en rejette une, ou
+  avec votre nom d'auteur, le motif et le nombre de vos préréglages qui ont été masqués.
+  Les modérateurs peuvent aussi publier dans le salon de modération la liste des
+  préréglages en attente de vérification, avec le nom de leurs auteurs. Le salon de journal des
+  soumissions reçoit chaque préréglage publié sans vérification, avec le nom de son auteur,
+  et une note nommant le préréglage lorsqu'un modérateur en approuve ou en rejette un, ou
   en annule une modification, avec le motif d'un rejet ou d'une annulation. Les messages publiés
-  depuis la date de *Dernière mise à jour* ci-dessus ne montrent pas votre identifiant utilisateur
-  Discord ; les plus anciens peuvent le montrer. Les messages restent dans ces salons, soumis à la
+  après le 2026-10-05 ne montrent pas votre identifiant utilisateur Discord ; ceux publiés à cette
+  date ou avant peuvent le montrer. Les messages restent dans ces salons, soumis à la
   [politique de confidentialité de Discord](https://discord.com/privacy), jusqu'à ce qu'un
   modérateur les supprime ou jusqu'à ce que vous demandiez la suppression.
-- **Notifications en échec.** Si une palette prédéfinie ne peut pas être publiée sur notre serveur
-  Discord, nous conservons un enregistrement qui nomme la palette prédéfinie et l'erreur, afin
+- **Notifications en échec.** Si un préréglage ne peut pas être publié sur notre serveur
+  Discord, nous conservons un enregistrement qui nomme le préréglage et l'erreur, afin
   qu'un modérateur puisse rattraper le retard. Il ne contient rien sur votre compte. Il est supprimé
   **30 jours** après qu'un modérateur l'a résolu, après **90 jours** si personne ne le fait, et
-  immédiatement si la palette prédéfinie est supprimée.
-- **Enregistrements de bannissement.** Si un modérateur vous bannit des palettes prédéfinies
+  immédiatement si le préréglage est supprimé.
+- **Enregistrements de bannissement.** Si un modérateur vous bannit des préréglages
   communautaires, l'enregistrement de bannissement contient votre identifiant utilisateur Discord
   ou, si vous vous êtes connecté avec un compte XIVAuth qui n'est pas lié à Discord, l'identifiant
   de compte que notre service de connexion vous a attribué à la place (un identifiant aléatoire, qui
-  n'est pas votre identifiant XIVAuth). Il contient aussi le nom d'auteur affiché sur vos palettes
-  prédéfinies au moment du bannissement, les identifiants utilisateur Discord du modérateur qui a
+  n'est pas votre identifiant XIVAuth). Il contient aussi le nom d'auteur affiché sur vos
+  préréglages au moment du bannissement, les identifiants utilisateur Discord du modérateur qui a
   prononcé le bannissement et de celui qui l'a levé, le motif indiqué par le modérateur, ainsi que
   les dates du bannissement et de sa levée. L'enregistrement est conservé tant que le bannissement
   est actif. Lorsque le bannissement est levé, le nom d'auteur et le motif sont effacés
@@ -201,12 +207,12 @@ connexion (`auth.xivdyetools.app`), le reste par notre service de palettes préd
 - **Le journal de modération.** Chaque action de modération est consignée avec l'identifiant
   utilisateur Discord du modérateur, l'action, un motif facultatif et l'heure. Un bannissement,
   une levée de bannissement, un masquage ou une restauration désigne aussi le compte concerné, et
-  est supprimé après **12 mois**, ou plus tôt pour un masquage ou une restauration si sa palette
-  prédéfinie est supprimée. Toute autre entrée concernant une palette prédéfinie (par exemple
-  approuver, rejeter ou annuler une modification) désigne cette palette, et est conservée tant
-  que la palette prédéfinie existe.
+  est supprimé après **12 mois**, ou plus tôt pour un masquage ou une restauration si son
+  préréglage est supprimé. Toute autre entrée concernant un préréglage (par exemple
+  approuver, rejeter ou annuler une modification) désigne ce préréglage, et est conservée tant
+  que le préréglage existe.
 
-Le bot Discord conserve les mêmes enregistrements pour les palettes prédéfinies soumises par son
+Le bot Discord conserve les mêmes enregistrements pour les préréglages soumis par son
 intermédiaire ; voir [sa politique](../discord-worker/PRIVACY_POLICY.md).
 
 ## Analyses d'utilisation (avec consentement)
@@ -241,7 +247,7 @@ de fenêtre d'affichage (téléphone / tablette / ordinateur).
 Ce qui n'est **jamais stocké avec vos événements** : votre adresse IP, votre agent utilisateur ou
 les détails de votre appareil, tout compte, session ou identifiant client, les cookies, les URL de
 page, les couleurs ou images avec lesquelles vous travaillez, le texte de recherche, le texte des
-palettes prédéfinies, les noms de personnage ou de Monde, ou tout ce qui permettrait de relier deux
+préréglages, les noms de personnage ou de Monde, ou tout ce qui permettrait de relier deux
 visites. Le serveur rejette tout ce qui concerne la requête, à l'exception des événements validés,
 et la liste des événements est une liste blanche — tout le reste est abandonné. (Votre IP atteint
 notre serveur de la même façon qu'elle atteint chaque site que vous visitez ; ce qui lui arrive
@@ -266,7 +272,7 @@ nôtre est gérée par Cloudflare, et voici l'intégralité de ce que nous en fa
   l'adresse, pendant **120 secondes**. Aucun des deux chemins n'écrit votre adresse dans une base de
   données, et aucun n'est relié à vos événements d'analyse.
 - **Votre IP n'est jamais stockée aux côtés de quoi que ce soit que vous avez fait** — ni vos
-  événements, ni vos palettes prédéfinies, ni vos votes. Elle n'est pas utilisée pour relier des
+  événements, ni vos préréglages, ni vos votes. Elle n'est pas utilisée pour relier des
   visites, construire un profil, ou vous identifier.
 - **Journaux opérationnels.** Nos workers peuvent afficher de courtes lignes de diagnostic pendant
   le traitement d'une requête. La collecte persistante de journaux (Cloudflare Workers Logs) est
@@ -281,22 +287,21 @@ nôtre est gérée par Cloudflare, et voici l'intégralité de ce que nous en fa
 2. Utilisez n'importe quel outil avec une image ou un fichier `.chara`.
 3. Vous ne verrez aucun téléversement d'image — seulement les requêtes listées ci-dessus, et des
    signaux `/v1/telemetry` uniquement si vous avez activé les analyses. Le seul téléversement
-   d'image que l'application effectue jamais est une image d'aperçu de palette prédéfinie que vous
+   d'image que l'application effectue jamais est une image d'aperçu de préréglage que vous
    joignez vous-même (voir Images ci-dessus).
 
 ## Supprimer vos données
 
 Vous pouvez en supprimer une partie vous-même, à tout moment, sauf si un modérateur vous a banni des
-palettes prédéfinies communautaires (tant qu'un bannissement est actif, adressez-vous plutôt à
+préréglages communautaires (tant qu'un bannissement est actif, adressez-vous plutôt à
 nous) :
 
-- **Une palette prédéfinie :** supprimez-la depuis **Mes soumissions**. Son image d'aperçu, les
-  votes qui la concernent, les entrées du journal de modération à son sujet et tout enregistrement
-  de notification en échec qui la concerne sont supprimés avec elle. Ses compteurs de limite
+- **Un préréglage :** supprimez-le depuis **Mes soumissions**. Son image d'aperçu, les
+  votes qui le concernent, les entrées du journal de modération à son sujet et tout enregistrement
+  de notification en échec qui le concerne sont supprimés avec lui. Ses compteurs de limite
   quotidienne expirent d'eux-mêmes après 30 jours, et les messages à son sujet sur notre serveur
   Discord restent, sauf si vous nous le demandez (ci-dessous).
-- **Un vote :** sélectionnez de nouveau le bouton de vote (**Voter** / **Voté**) de cette palette
-  prédéfinie.
+- **Un vote :** sélectionnez de nouveau le bouton de vote (**Voter** / **Voté**) de ce préréglage.
 - **Votre session :** vous déconnecter (**Déconnexion**) supprime le jeton de session de ce
   navigateur et demande à notre service de connexion de le révoquer.
 
@@ -308,15 +313,15 @@ une seule fois — demandez-nous en privé :
    Galatine ».
 
 Précisez si vous vous connectez avec Discord ou avec XIVAuth, et indiquez votre identifiant
-utilisateur Discord ou le nom d'auteur affiché sur vos palettes prédéfinies. Merci de ne pas faire
+utilisateur Discord ou le nom d'auteur affiché sur vos préréglages. Merci de ne pas faire
 cette demande dans un ticket GitHub public : cela publierait justement les informations que vous voulez
 faire supprimer.
 
 Nous traitons les demandes de suppression sous **30 jours**. Une demande supprime aussi de notre
-serveur Discord les messages vous concernant et concernant vos palettes prédéfinies, à l'exception
+serveur Discord les messages vous concernant et concernant vos préréglages, à l'exception
 du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas
 supprimé sur demande ; une fois le bannissement levé, il suit la durée de conservation indiquée
-sous *Palettes prédéfinies communautaires : ce que nous conservons*.
+sous *Préréglages communautaires : ce que nous conservons*.
 
 ## Des questions ?
 

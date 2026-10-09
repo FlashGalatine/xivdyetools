@@ -19,6 +19,7 @@
 | [I18N_AUDIT_2026-10-04.md](I18N_AUDIT_2026-10-04.md) | Decide-before-merge list, locale + font status, the catalog, positive controls, rejected suspicions, recommendations, status |
 | [REMEDIATION_PLAN.md](REMEDIATION_PLAN.md) | Sprint 0, then 30 sprints for all three catalogs: the i18n ones inserted, the deep-dive's kept; superseded items; KEEP register; *Pin first* terminology register |
 | [findings/](findings/) | 45 finding records |
+| [evidence/reverify-2026-10-05.md](evidence/reverify-2026-10-05.md) | **Read before any sprint:** all three catalogs re-checked against `main@50165ec6` after the batch merge. Covers fixed items, moved anchors, amended fix steps, the baseline gate and the branch and version order. Inputs and raw verdicts are in `evidence/reverify-2026-10-05/`. |
 | `evidence/reviewer-brief.md` | The rules and return format every reviewer worked from |
 | `evidence/delta/` | Every key added / changed / removed since `5c80fcba`, with origin and all six values; per-document diffs split main / PR |
 | `evidence/review-*.md` | The 17 reviewer files (15 slices + 2 gap sweeps) |

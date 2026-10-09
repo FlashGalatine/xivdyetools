@@ -263,6 +263,32 @@ describe('handleHarmonyCommand', () => {
     expect(response.status).toBe(200);
   });
 
+  // BUG-044: the raw option used to be interpolated into errors.invalidColor
+  // as-is — ~4000 characters pushed the embed description past Discord's 4096
+  // limit, the type-4 reply was rejected, and the user saw "The application did
+  // not respond". It also let markdown / masked links / mass mentions through.
+  it('sanitizes and caps the echoed input in the invalid-colour error (BUG-044)', async () => {
+    const { ctx } = createContext();
+    const hostile = `notfound @everyone **[x](https://phish.example)** ${'a'.repeat(5000)}`;
+
+    const interaction = {
+      ...baseInteraction,
+      data: { options: [{ name: 'color', value: hostile }] },
+    } as unknown as DiscordInteraction;
+
+    await handleHarmonyCommand(interaction, env, ctx);
+
+    const calls = translatorStub.t.mock.calls as unknown as Array<[string, { input: string }?]>;
+    const call = calls.find(([key]) => key === 'errors.invalidColor');
+    expect(call).toBeDefined();
+    const echoed = call![1]!.input;
+    expect([...echoed].length).toBeLessThanOrEqual(100);
+    expect(echoed.endsWith('…')).toBe(true);
+    expect(echoed).not.toContain('@everyone');
+    expect(echoed).not.toContain('[x](');
+    expect(echoed).toContain('\\[x\\]');
+  });
+
   it('processes triadic harmony type', async () => {
     const { ctx, waitUntilCalls } = createContext();
 

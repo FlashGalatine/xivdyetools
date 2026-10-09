@@ -14,7 +14,7 @@
 // knip bullet and this repo's root `knip.jsonc`.
 
 // Provider types
-export type { AuthProvider, AuthSource, AuthContext } from './provider.js';
+export type { AuthProvider, /** @public */ AuthSource, AuthContext } from './provider.js';
 
 // JWT types
 export type { /** @public */ PrimaryCharacter, JWTPayload } from './jwt.js';

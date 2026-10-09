@@ -1701,11 +1701,17 @@ export class ExtractorTool extends BaseComponent {
   /** Resolve the roll and repaint every stage that shows it. */
   private renderRoll(): void {
     this.rebuildRoll();
+    const fetching = this.showPrices && this.roll.length > 0;
+    // Sprint 27 review: the cards below are about to be priced by a fresh
+    // fetch, so the previous fetch's error code says nothing about them --
+    // drop it before they are built, not when that fetch starts. A rebuild
+    // that fetches nothing keeps the badge (see applyMarketState).
+    if (fetching) this.lastMarketError = undefined;
     this.renderBar();
     this.renderLegend();
     this.renderHeader();
     this.renderCards();
-    if (this.showPrices && this.roll.length > 0) {
+    if (fetching) {
       void this.fetchPricesForRoll();
     }
   }
@@ -2037,6 +2043,14 @@ export class ExtractorTool extends BaseComponent {
     this.lastMarketError = undefined;
     try {
       const prices = await this.marketBoardService.fetchPricesForDyes(dyesToFetch);
+      // BUG-090 (2026-10-04 deep-dive): the service never rejects -- an
+      // unreachable board resolves with an empty (or short) Map -- so the
+      // failure is read from its outcome rather than caught. The outcome
+      // carries no HTTP status or cause, so the code is the offline one or the
+      // generic one. 'superseded' and 'nothing-to-fetch' are not failures.
+      if (this.marketBoardService.lastFetchOutcome === 'error') {
+        this.lastMarketError = this.parseMarketError(undefined);
+      }
       logger.info(`[ExtractorTool] Fetched prices for ${prices.size} dyes`);
     } catch (error) {
       this.lastMarketError = this.parseMarketError(error);
@@ -2148,11 +2162,12 @@ export class ExtractorTool extends BaseComponent {
         return;
       }
 
-      // K-means hands back `colorCount` clusters whatever the image holds, so
-      // a flat logo asked for four colours returns two real clusters and two
-      // empty ones. An empty cluster has no pixels — it is not a colour the
-      // image contains and must not take a bar segment or a card. (A real
-      // cluster under half a percent keeps its pixels and stays.)
+      // Core returns at most `colorCount` clusters, each with pixels: an image
+      // with fewer distinct colours than asked for (a flat logo) gets fewer
+      // clusters, never empty ones. The pixelCount filter is defensive — an
+      // empty cluster is not a colour the image contains and must not take a
+      // bar segment or a card. (A real cluster under half a percent keeps its
+      // pixels and stays.)
       const clusters = this.paletteService
         .extractPalette(pixels, { colorCount: this.paletteColorCount })
         .filter((cluster) => cluster.pixelCount > 0);

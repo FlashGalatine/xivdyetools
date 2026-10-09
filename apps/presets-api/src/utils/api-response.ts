@@ -44,7 +44,6 @@ export const ErrorCode = {
   // Server errors (5xx)
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
-  DATABASE_ERROR: 'DATABASE_ERROR',
 } as const;
 
 // ============================================
@@ -58,14 +57,6 @@ export interface ApiErrorResponse {
   success: false;
   error: string;
   message: string;
-}
-
-/**
- * Standard success response shape
- */
-export interface ApiSuccessResponse {
-  success: true;
-  message?: string;
 }
 
 // Use a generic context type that works with any Hono app configuration
@@ -96,31 +87,6 @@ export function errorResponse(
     },
     status as 400
   );
-}
-
-/**
- * Create a standardized success response
- *
- * @example
- * return successResponse(c, { preset, vote_count: 10 });
- * return successResponse(c, { deleted: true }, 'Preset deleted');
- */
-export function successResponse<T extends Record<string, unknown>>(
-  c: AnyContext,
-  data: T,
-  message?: string,
-  status: number = 200
-): Response {
-  const response: ApiSuccessResponse & T = {
-    success: true,
-    ...data,
-  };
-
-  if (message) {
-    response.message = message;
-  }
-
-  return c.json(response, status as 200);
 }
 
 // ============================================

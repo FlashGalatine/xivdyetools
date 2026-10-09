@@ -39,7 +39,7 @@ export type {
 // ============================================================================
 
 // Import types needed for project-specific types
-import type { PresetStatus, PresetCategory } from '@xivdyetools/types';
+import type { PresetStatus, PresetCategory, PresetPreviousValues } from '@xivdyetools/types';
 
 /**
  * A new or re-flagged preset arriving from presets-api. Carries the whole
@@ -47,6 +47,33 @@ import type { PresetStatus, PresetCategory } from '@xivdyetools/types';
  */
 export interface PresetSubmissionNotification {
   type: 'submission';
+  /**
+   * BUG-003 (presets-api 2.5.0+): `true` when an owner edit sent this, `false`
+   * for a new submission. Optional — an older presets-api omits it, and an
+   * absent value means a new submission.
+   */
+  is_edit?: boolean;
+  /**
+   * BUG-003 (presets-api 2.5.0+): the preset's status immediately BEFORE the
+   * edit (`preset.status` is 'pending' for every edit that notifies). Revert
+   * is offered only when `is_edit === true`, `preset.previous_values` is
+   * present and this is 'approved'; an absent value counts as not approved.
+   * Revert restores `previous_values`, which can be older than `edited_from`,
+   * so the embed labels it as such rather than as "undo this edit".
+   */
+  edited_from_status?: PresetStatus;
+  /**
+   * Sprint 9 (presets-api, 2026-10-04 remediation): the text THIS edit
+   * replaced — `name`, `description`, `tags` and `dyes` exactly as the row held
+   * them before the write that sent this notification. Set on every owner
+   * edit, absent on a new submission. It is the edit's diff base (shown as
+   * `edited_from` → `preset`); it is never restored by anything — Revert
+   * restores `preset.previous_values`. Absent from a presets-api older than
+   * this field, when the diff falls back to `previous_values`, headed as
+   * changes since that snapshot. Runtime data from another service — check its
+   * shape before use.
+   */
+  edited_from?: PresetPreviousValues;
   /** Preset data */
   preset: {
     id: string;
@@ -69,6 +96,15 @@ export interface PresetSubmissionNotification {
      * fall back to the legacy ids.
      */
     content_revision?: number;
+    /**
+     * The write-once revert snapshot: the text PATCH /moderation/:id/revert
+     * would restore (and approve). Already on the wire with every submission
+     * (presets-api spreads the whole row); `null` or absent when there is
+     * none. The revert target only — not a diff base (see `edited_from`)
+     * except on a presets-api that sends no `edited_from`. Runtime data from
+     * another service — check its shape before use.
+     */
+    previous_values?: PresetPreviousValues | null;
   };
 }
 
