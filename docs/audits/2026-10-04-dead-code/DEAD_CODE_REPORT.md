@@ -319,7 +319,7 @@ Every rejection is listed with its reason in [evidence/verdicts.tsv](evidence/ve
 | DEAD-035 | REMOVED, NOT DEPLOYED (PR #273, open) | `6818070b` |
 | DEAD-036 | REMOVED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
 | DEAD-037 | REMOVED, NOT DEPLOYED (PR #272, open) | `35f502db`, `1fbff533` |
-| DEAD-038 | OPEN | — |
+| DEAD-038 | REMOVED, NOT DEPLOYED (PR #275, open) | `cb32ab3a` |
 | DEAD-039 | REMOVED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | DEAD-040 | REMOVED, NOT DEPLOYED (PR #268, open) | `261f1a13` |
 | DEAD-041 | REMOVED, NOT DEPLOYED (PR #274, open) | `c73b702f` |

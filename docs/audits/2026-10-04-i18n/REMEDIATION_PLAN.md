@@ -677,7 +677,9 @@ The mock fixes come first. Then the dead-code removals, ending with the self-ref
 
 **Ends with:** `pnpm install --frozen-lockfile`, the whole-graph gate, `pnpm test:scripts`, `pnpm dead-code:check`, `pnpm docs:check-links` → merge (deploys nothing)
 
-## Sprint 21 — image-worker: stale path alias
+## Sprint 21 — image-worker: stale path alias — PR #275 (open)
+
+**Done in PR #275** (image-worker 1.3.4); config only, bundle unchanged.
 
 Config only; the bundle is unchanged.
 

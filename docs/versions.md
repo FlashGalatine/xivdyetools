@@ -25,7 +25,7 @@
 |---------|---------|--------------|----------|--------|
 | **Web Application** | v5.14.12 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.11 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
-| **Image Worker** | v1.3.3 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
+| **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
@@ -439,6 +439,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v1.3.4 | Oct 2026 | 2026-10-04 remediation Sprint 21 — the unused `@` path alias removed from `vitest.config.ts` and `tsconfig.json` (DEAD-038); bundle unchanged |
 | v1.3.3 | Oct 2026 | 2026-10-03 security audit (FINDING-022, Sprint 10) — Workers Logs pinned off in both `wrangler.toml` blocks, asserted by `src/wrangler-config.test.ts`; no behaviour change |
 | v1.3.2 | Sep 2026 | 2026-09-16 deep-dive Sprint 15 — the magic-byte table and `detectImageFormat` come from `@xivdyetools/worker-kit/image-sniff` (REFACTOR-008); the local byte-table test exercises the import unchanged |
 | v1.3.1 | Sep 2026 | 2026-09-15 dead-code audit (DEAD-017) — `Env` is now an explicit empty binding contract (`Record<string, never>`) instead of carrying an `ENVIRONMENT` member nothing sets or reads |
