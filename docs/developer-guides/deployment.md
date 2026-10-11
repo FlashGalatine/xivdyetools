@@ -158,7 +158,8 @@ would replay every one of them and fail on the first duplicate column.
 Some newer files state their order in the header: `presets-api`'s `0014` is applied before the
 revision-aware deploy, while its `0015` and `oauth`'s `0001` are applied after the deploy they
 depend on. Follow the header. When a header says nothing, apply the migration **before** the code
-that depends on it reaches production.
+that depends on it reaches production. A merge to `main` is what deploys that code, so a
+before-deploy migration is applied before the merge, not after it.
 
 ---
 

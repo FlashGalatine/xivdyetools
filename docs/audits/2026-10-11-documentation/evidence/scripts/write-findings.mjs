@@ -37,9 +37,9 @@ for (const d of draft) {
   ];
   if (d.supersedes) lines.push(`Supersedes \`${d.supersedes}\`.`);
   lines.push('', '## Location', bullets(v.location));
-  if (v.also && v.also.trim()) lines.push('', `Also: ${v.also.trim()}`.slice(0, 600));
+  if (v.also && v.also.trim()) lines.push('', `Also: ${v.also.trim()}`);
   lines.push('', '## Evidence', bullets(o.evidence ?? v.evidence));
-  if (v.dropped && v.dropped.trim()) lines.push('', `*Narrowed at verification:* ${v.dropped.trim()}`.slice(0, 520));
+  if (v.dropped && v.dropped.trim()) lines.push('', `*Narrowed at verification:* ${v.dropped.trim()}`);
   lines.push('', '## Fix', `- ${(o.fix ?? v.fix ?? d.fix).replace(/\n+/g, ' ')}`, '', '## Status', 'OPEN', '');
   writeFileSync(join(AUD, 'findings', `${d.id}.md`), lines.join('\n'));
   catalog.push({ id: d.id, title, sev, unit: o.unit ?? d.unit, supersedes: d.supersedes ?? '', verdict: v.verdict });
