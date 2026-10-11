@@ -73,6 +73,11 @@ This is the single most dangerous thing in the repo. Two different conventions c
 The top-level `wrangler.toml` block declares a `…-dev` name and **no routes**. Production lives
 in `[env.production]`.
 
+**Caveat — `og-worker`:** its top-level `…-dev` block is the routed public beta (the
+`beta.xivdyetools.app/<tool>/*` routes plus `og-beta.xivdyetools.app`), so a bare `deploy` there
+is live. Production is still `--env production`. See
+[Deploy Environments](../operations/DEPLOY_ENVIRONMENTS.md).
+
 ```bash
 pnpm --filter xivdyetools-discord-worker run deploy              # → …-dev worker
 pnpm --filter xivdyetools-discord-worker run deploy:production   # → production
