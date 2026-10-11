@@ -92,7 +92,7 @@ FFXIV's transmog/appearance system allowing players to change equipment appearan
 In-game auction house where players buy/sell items, including dyes.
 
 ### Special Dye
-Rare dyes obtained from crafting, dungeons, or events. Often more expensive.
+The 27 dyes in the database's `Special` category: the Metallic series (including Gunmetal Black and Pearl White), the Pastel and Dark series, and Pure White and Jet Black. They come from Venture Coffers, Cosmic Exploration or The Firmament, not from vendors.
 
 ### stainID
 The row ID of the game's own `Stain` sheet, and the **canonical identifier** for a dye since schema v2. Preferred over `itemID` because future dyes may ship without an individual itemID, resolving instead to a consolidated "Spectrum" item via `consolidationType`. `itemID` is now a market-board resolution concern rather than an identity.
