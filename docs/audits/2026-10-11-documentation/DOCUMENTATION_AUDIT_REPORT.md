@@ -248,5 +248,7 @@ stale og-worker comment, and "Preset Palettes" still emitted by two workers.
 
 ## Next steps
 
-No `REMEDIATION_PLAN.md` — scheduling was not requested. Run `remediation-planner` with this folder (and, if wanted,
-the hand-offs in `evidence/handoffs.md` for security-audit and i18n-manager) to get one.
+[`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) schedules all 79 findings: a decisions-first Sprint 0, then 13 sprints.
+The only sprint whose merge deploys is Sprint 1 (the policy documents, which live under `apps/*/`); every other
+sprint is `docs/`-only. The hand-offs in `evidence/handoffs.md` stay with security-audit and i18n-manager; Sprint 0
+says where two of them must land.

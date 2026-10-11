@@ -9,6 +9,7 @@ modified by this audit**; every finding is OPEN and carries its own fix directio
 | File | Purpose |
 |---|---|
 | `DOCUMENTATION_AUDIT_REPORT.md` | The catalog: baseline, coverage, gates, findings, prior-audit status, positive controls, rejected suspicions, hand-offs, gaps, prioritized corrections |
+| `REMEDIATION_PLAN.md` | Every finding scheduled: Sprint 0 decisions, then 13 sprints (one deploys; the rest are `docs/`-only) |
 | `findings/DOC-0NN.md` | One file per confirmed finding (79) |
 | `evidence/baseline.md`, `evidence/baseline-live.txt` | What is served, per unit, with evidence and limits; read-only live probes (maintainer email redacted) |
 | `evidence/docs-gates.txt`, `manual-check-*.txt`, `policy-locale-parity.txt` | Gate output |
