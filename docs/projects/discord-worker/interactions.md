@@ -78,12 +78,13 @@ Long-running operations (such as image rendering) use a deferred response to avo
 
 ## Webhook Endpoints
 
-In addition to Discord interactions, the worker exposes webhook endpoints for external services:
+In addition to Discord interactions, the worker exposes webhook endpoints for external services and a health probe:
 
 | Endpoint                            | Source       | Description                                            |
 |-------------------------------------|-------------|--------------------------------------------------------|
 | `POST /webhooks/preset-submission`  | presets-api  | Receives new preset notifications via Service Binding; the moderation embed's buttons carry `preset_<kind>_<uuid>:<revision>:<status>` when the payload has `content_revision` (legacy `preset_<kind>_<uuid>` otherwise), and the embed names the author without a `<@id>` mention |
 | `POST /webhooks/github`            | GitHub       | Receives push events, posts changelog to announcement channel |
+| `GET /health`                       | Anyone       | Unauthenticated liveness probe; returns `{ status: 'healthy', service, timestamp }` (a fatal env misconfiguration answers 500 `Service misconfigured` here, as on every route) |
 
 Only `push` events from `FlashGalatine/xivdyetools` are announced, and each version is announced once (the repository is pinned to a constant and the version is memoised in KV for 90 days), so redelivering a qualifying delivery is safe. The memo key is versioned (`announced:v:<version>`), not delivery-specific, so a corrected changelog re-pushed under an already-announced version is not re-announced automatically — clear that KV key to force a re-announcement.
 

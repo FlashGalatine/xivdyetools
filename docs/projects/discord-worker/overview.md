@@ -10,6 +10,7 @@ A Cloudflare Worker that brings XIV Dye Tools to Discord via slash commands. Use
 
 ### Recent Features
 
+- **v5.7.0** - `/glamour`, the Glamour Reader card for a `.chara` file; every release after 5.0 is in the [discord-worker CHANGELOG](../../../apps/discord-worker/CHANGELOG.md)
 - **v5.0.0** - The 5.0 command set: v4 commands `/match`, `/match_image`, `/favorites`, `/collection`, `/language` deleted; `/contrast`, `/a11y`, `/changelog` added; every card redrawn on the `@xivdyetools/svg` frame system; matching vocabulary `ciede2000` (default) / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; `/swatch` takes a `.chara` file; Photon image decoding moved out to `xivdyetools-image-worker` (`IMAGE_WORKER` binding); `/preferences set theme` (dark/light cards); beta bot on the routeless `-dev` env
 - **v4.1.x** - Budget quick picks updated with 20 Cosmic dyes, prevent duplicate results for extractor, type imports migrated from core to `@xivdyetools/types`
 - **v4.0.x** - Command renaming (`match` to `extractor`, `mixer` to `gradient`), new `mixer` and `swatch` commands
