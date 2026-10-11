@@ -35,6 +35,12 @@ Rules:
   path filter.
 -->
 
+## [5.8.13] - 2026-10-11
+### 📜 Privacy Policy and Terms
+- Contacting us works again: the Privacy Policy and Terms of Service pointed to a Discord invite that had expired, and every language now links the current one.
+- The Privacy Policy describes the first-run flag as it works: the bot sets it the first time you run a command, whether or not you see the welcome notice.
+- Each translated document links to the same language's version of the other document.
+
 ## [5.8.11] - 2026-10-06
 ### 📖 /manual explains /glamour in full
 - `/manual`'s character-file topic now lists every verdict a `/glamour` card can show, including the race name and the dash for a model with no item behind it.

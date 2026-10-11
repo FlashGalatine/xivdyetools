@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.15.3 — October 11, 2026
+
+### Privacy Guide and Terms
+- **Contacting us works again.** The Privacy Guide and Terms pointed to a Discord invite that had expired, so deletion and appeal requests had nowhere to go. Every language now links the current invite.
+- **The Privacy Guide says how saved work can be deleted today.** Clear Saved Palettes in Advanced Settings removes all saved palettes at once; saved Budget swaps and Swatch Matcher character colors can only be cleared from your browser's site data.
+- **Each translation links to the same language.** A link from the Japanese Terms to the Privacy Guide opens the Japanese Privacy Guide, and so on.
+
 ## Web-App Version 5.15.0 — October 9, 2026
 
 ### Glamour Reader: where to get each piece

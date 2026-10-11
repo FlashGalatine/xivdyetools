@@ -25,8 +25,8 @@ Published to npm under the `@xivdyetools` scope (except `test-utils`, which is w
 
 | App | Version | Description |
 |-----|---------|-------------|
-| [`web-app`](apps/web-app/) | 5.15.0 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
-| [`discord-worker`](apps/discord-worker/) | 5.8.11 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
+| [`web-app`](apps/web-app/) | 5.15.3 | Main web app at [xivdyetools.app](https://xivdyetools.app) (Vite + Lit + Tailwind) |
+| [`discord-worker`](apps/discord-worker/) | 5.8.13 | Primary Discord bot — 18 slash commands (CF Worker + Hono, HTTP Interactions) |
 | [`image-worker`](apps/image-worker/) | 1.3.4 | Photon host — `POST /extract` (raw pixels for the bot) and `POST /thumbnail` (WebP previews for presets-api), service-binding-only (CF Worker) |
 | [`moderation-worker`](apps/moderation-worker/) | 1.8.2 | Moderation bot for community presets (CF Worker) |
 | [`presets-api`](apps/presets-api/) | 2.6.1 | Community presets REST API + preview-image storage (CF Worker + D1 + R2) |
