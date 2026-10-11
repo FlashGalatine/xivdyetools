@@ -34,14 +34,15 @@ The 1,093-file `.chara` corpus weighted the work. Before this round, 2,045 of 10
 | Verified duty and Ceremony attire (Lodestone database / official pages) | 196 |
 | Verified fixed programs (Veteran Rewards, Hall of the Novice, editions, Treasure Trove, Cosmic Fortune, PvP Series, Feast rankings, a Wolf Marks vendor) | 107 |
 | Verified seasonal and collaboration events | 60 |
-| **Total new lines** | **788** |
+| Maintainer decisions (off-sale FANTASIAN store sets, Mad Bird Ring) | 15 |
+| **Total new lines** | **803** |
 
-[round2-resolutions.csv](round2-resolutions.csv) lists every filled Item ID with its line, basis and primary evidence. The same pins now produce **24,907 lines** (was 24,119); 788 were added, 11 PvP lines reworded, none removed. Facewear covers **60 of 61 styles** (720 of 732 variants); only Thick-rimmed Goggles remains unknown.
+[round2-resolutions.csv](round2-resolutions.csv) lists every filled Item ID with its line, basis and primary evidence. The same pins now produce **24,922 lines** (was 24,119); 803 were added, 11 PvP lines reworded, none removed. Facewear covers **60 of 61 styles** (720 of 732 variants); only Thick-rimmed Goggles remains unknown.
 
 Effect on what players see:
 
-- Visible blanks with no filled twin: **914 → 146**. The rest are 61 Weathered starter pieces (by design) and 85 researched items without an acceptable source (below).
-- Corpus wears with a blank primary and no filled twin: **809 → 33**. All blank-primary wears: 2,045 → 1,269. The remaining 1,232 are the twin-naming cases below.
+- Visible blanks with no filled twin: **914 → 131**. The rest are 61 Weathered starter pieces (by design) and 70 researched items without an acceptable source (below).
+- Corpus wears with a blank primary and no filled twin: **809 → 23**. All blank-primary wears: 2,045 → 1,259. The remaining 1,232 are the twin-naming cases below.
 
 ## Judgment calls
 
@@ -52,12 +53,16 @@ Effect on what players see:
 - **`The Will to Live (Main Story Quest)`** for the #55 disguise set: the pieces are issued during that quest, and the Calamity Salvager sells them back under quest rewards.
 - **Zero's Luminary Sollerets** (52659): the client name carries a trailing space. The reviewed entry pins that exact name; the store lists it in product 1165.
 
-## Left blank (86 researched items, one of them the Thick-rimmed Goggles unlock)
+## Maintainer decisions after review (2026-10-11)
 
-[round2-left-blank.csv](round2-left-blank.csv) gives the reason for each. Open questions for the maintainer:
+- **Off-sale collaboration store sets** (14): Realm-roamer's, En Fortune-teller's and Vibran Princess's left the store on 2026-06-01. They read `FFXIV Online Store`, matching their set-mate 50262, which Teamcraft's Mog Station data already marks.
+- **Mad Bird Ring** (Jumbo Cactpot grand prize, a current route the guide has no format for) reads `Jumbo Cactpot`.
 
-- **Off-sale collaboration store sets** (14): Realm-roamer's, En Fortune-teller's and Vibran Princess's left the store on 2026-06-01. Their set-mate 50262 already reads `FFXIV Online Store` from Teamcraft's Mog Station data.
-- **No guide format:** the Mad Bird Ring (Jumbo Cactpot grand prize, still current), retainer-venture items (the Onion set and others), the Neophyte's Ring (Hall of the Novice, no role), and the Inferno and Crag Masks (2016 purchase promotions run in several regions).
+## Left blank (71 researched items, one of them the Thick-rimmed Goggles unlock)
+
+[round2-left-blank.csv](round2-left-blank.csv) gives the reason for each:
+
+- **No guide format:** retainer-venture items (the Onion set and others), the Neophyte's Ring (Hall of the Novice, no role), and the Inferno and Crag Masks (2016 purchase promotions run in several regions).
 - **Single-source or no source:** Archaeodemon Horns (Silver Happy Bunny coffers, one wiki), the Judge's set, contest prizes, and client rows the wikis call unreleased (Avalanche, Festival Neotunic, Botanist's and Fisher's Earrings).
 
 ## Found in passing: twin naming

@@ -54,8 +54,11 @@ describe('acquisition table invariants', () => {
     for (let id = 15273; id <= 15282; id++) {
       expect(lookup[id], `Feast ranking ${id}`).toBe("Seasonal Quartermaster - Wolves' Den Pier (The Feast Ranking Reward; No Longer Obtainable)");
     }
-    // Off-sale collaboration store sets and unconfirmed sources stay blank
-    for (const id of [50257, 50263, 50267, 10125, 24339, 14839]) expect(lookup[id], `blank ${id}`).toBeUndefined();
+    // Maintainer decisions: the off-sale FANTASIAN store sets match their set-mate 50262; the Mad Bird Ring names the Jumbo Cactpot
+    for (const id of [50257, 50262, 50263, 50267, 50271]) expect(lookup[id], `FANTASIAN ${id}`).toBe('FFXIV Online Store');
+    expect(lookup[10125]).toBe('Jumbo Cactpot');
+    // Unconfirmed sources stay blank
+    for (const id of [24339, 14839]) expect(lookup[id], `blank ${id}`).toBeUndefined();
   });
 
   it('writes every PvP Series reward as the guide string, never a series or level', () => {

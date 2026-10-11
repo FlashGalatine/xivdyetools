@@ -13,16 +13,18 @@ plus the PvP wording; no existing line was removed.
 
 ### Fixed
 
-- Web research fills 788 more Acquisition blanks, recorded as name-pinned entries with evidence URLs
+- Web research fills 803 more Acquisition blanks, recorded as name-pinned entries with evidence URLs
   in `reviewed-item-sources.json`. A researched line was kept only when it passed one of: an exact
   match in the official Online Store catalog (314 store lines, including pieces sold inside an attire
   coffer), the pinned quest data listing the piece among the quest's rewards (111 quest lines), or an
-  independent verification pass, mostly against the Lodestone (363 lines). Covered: current store
+  independent verification pass, mostly against the Lodestone (363 lines). Fifteen more follow
+  maintainer decisions: the 14 FANTASIAN collaboration pieces read `FFXIV Online Store` like their
+  set-mate although the sale has ended, and the Mad Bird Ring reads `Jumbo Cactpot`. Covered: current store
   sets, quest rewards behind the Calamity Salvager's repurchase lists, seasonal and collaboration
   events, Feast ranking rewards, Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure
   Trove, Cosmic Fortune prizes, Ceremony of Eternal Bonding attire and five Dawntrail duty families
   (The Underkeep, The Meso Terminal, Mistwake, Windurst: The Third Walk, The Clyteum). The table now
-  has 24,907 lines; facewear sources cover 60 of 61 styles (720 of 732 variants).
+  has 24,922 lines; facewear sources cover 60 of 61 styles (720 of 732 variants).
 - Seasonal and collaboration event gear that is not on the Online Store now reads `Event Name (YYYY)`,
   the event's own title and the year the piece was first offered (for example
   `Valentione's Day (2026)`, `Yo-kai Watch: Gather One, Gather All! (2016)`), as the GPOSERS guide

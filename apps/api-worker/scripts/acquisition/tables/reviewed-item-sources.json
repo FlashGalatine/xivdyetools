@@ -1322,6 +1322,14 @@
       "https://garlandtools.org/db/doc/item/en/3/10111.json"
     ]
   },
+  "10125": {
+    "name": "Mad Bird Ring",
+    "line": "Jumbo Cactpot",
+    "evidence": [
+      "https://ffxiv.gamerescape.com/wiki/Mad_Bird_Ring",
+      "https://garlandtools.org/db/doc/item/en/3/10125.json"
+    ]
+  },
   "10143": {
     "name": "Manderville Coatee",
     "line": "Her Last Vow (Sidequest)",
@@ -5966,6 +5974,118 @@
       "https://na.finalfantasyxiv.com/lodestone/topics/detail/06944d892fd98cc00b2a28ff77edbafa4f7eef54/",
       "https://ffxiv.consolegameswiki.com/wiki/Occult_Earrings_of_Blood",
       "https://ffxiv.consolegameswiki.com/wiki/Occult_Accessories"
+    ]
+  },
+  "50257": {
+    "name": "Realm-roamer's Jacket",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Realm-roamer%27s_Jacket",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50258": {
+    "name": "Realm-roamer's Gauntlets",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Realm-roamer%27s_Jacket",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50259": {
+    "name": "Realm-roamer's Slops",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Realm-roamer%27s_Jacket",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50260": {
+    "name": "Realm-roamer's Greaves",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Realm-roamer%27s_Jacket",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50261": {
+    "name": "Realm-roamer's Earrings",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Realm-roamer%27s_Jacket",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50263": {
+    "name": "En Fortune-teller's Wrist Torque",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/En_Fortune-teller%27s_Skirt",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50264": {
+    "name": "En Fortune-teller's Skirt",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/En_Fortune-teller%27s_Skirt",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50265": {
+    "name": "En Fortune-teller's Boots",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/En_Fortune-teller%27s_Skirt",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50266": {
+    "name": "En Fortune-teller's Earrings",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/En_Fortune-teller%27s_Skirt",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50267": {
+    "name": "Vibran Princess's Tiara",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Vibran_Princess%27s_Dress",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50268": {
+    "name": "Vibran Princess's Dress",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Vibran_Princess%27s_Dress",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50269": {
+    "name": "Vibran Princess's Dress Gloves",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Vibran_Princess%27s_Dress",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50270": {
+    "name": "Vibran Princess's Bottoms",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Vibran_Princess%27s_Dress",
+      "https://www.siliconera.com/?p=1109000"
+    ]
+  },
+  "50271": {
+    "name": "Vibran Princess's Bootlets",
+    "line": "FFXIV Online Store",
+    "evidence": [
+      "https://ffxiv.consolegameswiki.com/wiki/Vibran_Princess%27s_Dress",
+      "https://www.siliconera.com/?p=1109000"
     ]
   },
   "50272": {
