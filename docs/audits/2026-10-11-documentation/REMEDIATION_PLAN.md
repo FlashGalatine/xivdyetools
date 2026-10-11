@@ -176,7 +176,7 @@ files>` (no hits) → merge (no deploy fires).
 
 **Ends with:** `pnpm docs:check-links` → merge (no deploy fires).
 
-## Sprint 9 — oauth docs (P2, `docs/` only)
+## Sprint 9 — oauth docs (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `a4643338` `585630f7` `9928a431` `c0cabee8` — PR [#295](https://github.com/FlashGalatine/xivdyetools/pull/295)**
 
 | ID | Tier · Sev | Unit | Item |
 |---|---|---|---|
