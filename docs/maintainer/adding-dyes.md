@@ -358,7 +358,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production
 
 - [ ] Item ID obtained (from Universalis or XIVAPI)
 - [ ] `stainID` taken from the game's `Stain` sheet
-- [ ] `hex` sampled and written lowercase — it is the single colour source of truth
+- [ ] `hex` taken from the `Stain` sheet's `Color` (sampled only if the sheet has no row yet) and written lowercase — it is the single colour source of truth
 - [ ] `category` and `acquisition` are members of the closed vocabularies
 - [ ] `consolidationType` set from `StainTransient` (`'A' | 'B' | 'C' | null`)
 - [ ] `legacyItemID` set, or `null` for a consolidated-only dye
@@ -374,7 +374,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production
 
 | Resource | URL | Use |
 |----------|-----|-----|
-| XIVAPI v2 | https://v2.xivapi.com | Item IDs, names |
+| XIVAPI v2 | https://v2.xivapi.com | Item IDs, names, `Stain` sheet colors |
 | Universalis | https://universalis.app | Market data, item lists |
 | Garland Tools | https://www.garlandtools.org/db/ | Acquisition data |
 | FFXIV Lodestone | https://na.finalfantasyxiv.com/lodestone/ | Color sampling (fallback only) |
