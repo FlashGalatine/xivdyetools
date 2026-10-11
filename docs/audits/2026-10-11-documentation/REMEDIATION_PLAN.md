@@ -155,7 +155,7 @@ files>` (no hits) → merge (no deploy fires).
 
 **Ends with:** `pnpm docs:check-links` → merge (no deploy fires).
 
-## Sprint 7 — og-worker and api-worker docs (P2, `docs/` only)
+## Sprint 7 — og-worker and api-worker docs (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `ba6c0946` `b5d963a3` `43b64a76` `d12544d7` — PR [#293](https://github.com/FlashGalatine/xivdyetools/pull/293)**
 
 | ID | Tier · Sev | Unit | Item |
 |---|---|---|---|
