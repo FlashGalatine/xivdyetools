@@ -2,9 +2,9 @@
 
 > 本文档是为方便用户提供的翻译版本。英文版为具有法律效力的正式文本；如两者存在差异，以英文版为准。[English](TERMS_OF_SERVICE.md)
 
-**最后更新**：2026-10-09
+**最后更新**：2026-10-11
 
-> 网站 xivdyetools.app 有自己的条款：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。数据处理方式见[隐私政策](PRIVACY_POLICY.md)。
+> 网站 xivdyetools.app 有自己的条款：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.zh.md)。数据处理方式见[隐私政策](PRIVACY_POLICY.zh.md)。
 
 ## 1. 引言
 
@@ -63,7 +63,7 @@ XIV Dye Tools Discord 机器人提供：
 
 如果您认为自己的内容被错误审核：
 
-1. 加入我们的 Discord 服务器：https://discord.gg/rzxDHNr6Wv
+1. 加入我们的 Discord 服务器：https://discord.gg/5VUSKTZCe5
 2. 联系审核员，或在 #dyetools-issues-and-suggestions 中 ping "Flash Galatine"
 3. 提供您的 Discord 用户 ID 和被拒绝的预设名称
 4. 申诉会在 7 天内得到审核
@@ -140,7 +140,7 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
 如对这些条款或本机器人有任何疑问：
 
 - **电子邮件**：FlashGalatineFGC@gmail.com（主题："XIV Dye Tools Terms"）
-- **Discord**：https://discord.gg/rzxDHNr6Wv
+- **Discord**：https://discord.gg/5VUSKTZCe5
 - **支持频道**：#dyetools-issues-and-suggestions
 
 ---

@@ -2,7 +2,7 @@
 
 > これは利便性のために提供される翻訳版です。英文が正式な文書であり、内容に相違がある場合は英文が優先します。[English](TERMS_OF_SERVICE.md)
 
-**最終更新日:** 2026-10-09 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。データの取り扱いについては別の文書をご覧ください：[`PRIVACY.md`](PRIVACY.md)。Discord Botには専用の利用規約があります：[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md)。
+**最終更新日:** 2026-10-11 ・ 対象は **xivdyetools.app** と **beta.xivdyetools.app** です。データの取り扱いについては別の文書をご覧ください：[`PRIVACY.md`](PRIVACY.ja.md)。Discord Botには専用の利用規約があります：[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.ja.md)。
 
 XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカラーツールキットです。スクウェア・エニックスとは提携・承認・後援関係にありません。本サイトを利用することで、以下の内容に同意したものとみなされます。同意されない場合はご利用をお控えください——離れることに何の代償もありません。
 
@@ -10,7 +10,7 @@ XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカ�
 
 本サイトはブラウザ上で動作する十のツールから成ります：パレット抽出、ハーモニーエクスプローラー、カララント比較、グラデーションビルダー、カララントミキサー、アクセシビリティチェッカー、予算提案、スウォッチマッチャー、ミラプリリーダー、そしてコミュニティプリセットです。これらに加えて、本サイトはマーケットボード価格の表示、コーディネートの装備名を表示するための `.chara` ファイルの読み込み、そしてお使いの端末へのパレットやコレクションの保存に対応しています。
 
-このほとんどは、アカウントなしで、どこにも何も送信せずに利用できます。例外については [`PRIVACY.md`](PRIVACY.md) に記載しています。
+このほとんどは、アカウントなしで、どこにも何も送信せずに利用できます。例外については [`PRIVACY.md`](PRIVACY.ja.md) に記載しています。
 
 ## アカウント
 
@@ -36,7 +36,7 @@ XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカ�
 
 ### モデレーション
 
-投稿は公開される前に自動コンテンツチェックを通過する必要があります。チェックを通過した投稿はただちに公開され、監査のために記録されます。フラグが立てられた投稿は人間のモデレーターの確認待ちとなり、チェックが実行されたものの判定に至らなかった投稿（サービス障害などの場合）も同様です。判断がつかない場合は、いずれも公開されません。
+投稿は、公開される前に自動コンテンツチェックにかけられます。チェックを通過した投稿はただちに公開され、監査のために記録されます。フラグが立てられた投稿は人間のモデレーターの確認待ちとなり、チェックが実行されたものの判定に至らなかった投稿（サービス障害などの場合）も同様です。判断がつかない場合は、いずれも公開されません。
 
 モデレーターはいかなる投稿も削除または編集できます。違反を繰り返すと投稿する権限を失うことがあります。また、法的な要請や本サイトが扱うコンテンツの方針変更など、ユーザー自身とは無関係の理由でコンテンツが削除されることもあります。
 
@@ -44,11 +44,11 @@ XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカ�
 
 投稿したコンテンツが不当にモデレーションされたと思われる場合、または投稿した内容の削除を希望する場合は、次の手順に従ってください：
 
-1. Discordに参加する：<https://discord.gg/rzxDHNr6Wv>
+1. Discordに参加する：<https://discord.gg/5VUSKTZCe5>
 2. **#dyetools-issues-and-suggestions** で質問するか、「Flash Galatine」にDMを送る
 3. DiscordのユーザーIDとプリセット名を記載する
 
-異議申し立ては7日以内に確認されます。アカウント記録およびそのアカウントの下で投稿したすべての内容の削除については、[`PRIVACY.md`](PRIVACY.md) をご覧ください。
+異議申し立ては7日以内に確認されます。アカウント記録およびそのアカウントの下で投稿したすべての内容の削除については、[`PRIVACY.md`](PRIVACY.ja.md) をご覧ください。
 
 ## サイトを公正に利用する
 
@@ -57,7 +57,7 @@ XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカ�
 - レート制限を回避すること、または他のユーザーの利用を妨げるような形でサイトを自動化すること
 - [開発者ドキュメント](https://developers.xivdyetools.app) が許可する範囲を超えて、サイトやAPIをスクレイピングすること
 - サービスのいずれかの部分を破壊・調査、または不正にアクセスしようとすること
-- サイトを使って誰かを嫌がらせすること、またはマルウェアを配布すること
+- サイトを使って誰かに嫌がらせをすること、またはマルウェアを配布すること
 
 セキュリティ上の問題を発見した場合は、本番サイトに対して実際に実演するのではなく、メールで非公開にご報告ください。
 
@@ -75,7 +75,7 @@ XIV Dye Toolsは、Final Fantasy XIV向けの無料でファンメイドのカ�
 
 ## スクウェア・エニックスの資産について
 
-FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
+FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASYはスクウェア・エニックス・ホールディングス株式会社の登録商標です。
 
 本サイトはファンプロジェクトであり、**スクウェア・エニックス株式会社とは提携・承認・後援関係にありません。** カララント名、色、入手方法、アイテム名、アイコンなどのゲームデータはスクウェア・エニックスに帰属し、本サイトでは情報提供目的でのみ使用しています。サイト自体のコード、デザイン、記述されたコンテンツは運営者に帰属します。
 
@@ -114,6 +114,6 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY is
 ## お問い合わせ
 
 - **メール**：FlashGalatineFGC@gmail.com（件名：「XIV Dye Tools Terms」）
-- **Discord**：<https://discord.gg/rzxDHNr6Wv>
+- **Discord**：<https://discord.gg/5VUSKTZCe5>
 - **サポートチャンネル**：#dyetools-issues-and-suggestions
 - **Issues**：<https://github.com/FlashGalatine/xivdyetools/issues>

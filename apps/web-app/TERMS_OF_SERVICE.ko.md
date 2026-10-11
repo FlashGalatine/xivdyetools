@@ -2,7 +2,7 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트:** 2026-10-09 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
+**최종 업데이트:** 2026-10-11 · **xivdyetools.app**과 **beta.xivdyetools.app**에 적용됩니다. 사용자 데이터를 어떻게 다루는지는 별도의 문서에 있습니다: [`PRIVACY.md`](PRIVACY.ko.md). Discord 봇은 별도의 약관을 따릅니다: [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.ko.md).
 
 XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 모음입니다. Square Enix와 제휴, 승인 또는 후원 관계가 없습니다. 이 사이트를 이용함으로써 사용자는 아래 내용에 동의하게 됩니다. 동의하지 않으신다면 이용하지 말아 주세요 — 이 사이트를 그만두는 데는 어떤 비용도 들지 않습니다.
 
@@ -10,7 +10,7 @@ XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 �
 
 열 가지 도구가 브라우저에서 실행됩니다: 팔레트 추출, 조화 탐색기, 염료 비교, 그라데이션 빌더, 염료 믹서, 접근성 검사기, 예산 제안, 스와치 매처, 코디 리더, 그리고 커뮤니티 프리셋입니다. 이와 함께 사이트는 장터 가격을 표시하고, 사용자가 끌어다 놓은 `.chara` 파일을 읽어 의상의 장비 이름을 표시하며, 팔레트와 컬렉션을 사용자 자신의 기기에 저장할 수 있게 해 줍니다.
 
-이 대부분은 계정 없이, 그리고 아무것도 어디로도 전송하지 않고 작동합니다. 예외 사항은 [`PRIVACY.md`](PRIVACY.md)에 나열되어 있습니다.
+이 대부분은 계정 없이, 그리고 아무것도 어디로도 전송하지 않고 작동합니다. 예외 사항은 [`PRIVACY.md`](PRIVACY.ko.md)에 나열되어 있습니다.
 
 ## 계정
 
@@ -44,11 +44,11 @@ XIV Dye Tools는 Final Fantasy XIV를 위한 무료 팬메이드 색상 도구 �
 
 콘텐츠가 잘못 조정되었다고 생각하시거나, 제출한 것을 내려 달라고 요청하고 싶으시다면:
 
-1. Discord에 참여하세요: <https://discord.gg/rzxDHNr6Wv>
+1. Discord에 참여하세요: <https://discord.gg/5VUSKTZCe5>
 2. **#dyetools-issues-and-suggestions**에서 문의하시거나 "Flash Galatine"에게 DM을 보내세요
 3. Discord 사용자 ID와 프리셋 이름을 포함해 주세요
 
-이의 제기는 7일 이내에 검토됩니다. 계정 기록과 그 아래 제출된 모든 것의 삭제를 원하시면 [`PRIVACY.md`](PRIVACY.md)를 참고하세요.
+이의 제기는 7일 이내에 검토됩니다. 계정 기록과 그 아래 제출된 모든 것의 삭제를 원하시면 [`PRIVACY.md`](PRIVACY.ko.md)를 참고하세요.
 
 ## 이 사이트를 공정하게 이용하기
 
@@ -114,6 +114,6 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY는
 ## 연락처
 
 - **이메일**: FlashGalatineFGC@gmail.com (제목: "XIV Dye Tools Terms")
-- **Discord**: <https://discord.gg/rzxDHNr6Wv>
+- **Discord**: <https://discord.gg/5VUSKTZCe5>
 - **지원 채널**: #dyetools-issues-and-suggestions
 - **이슈**: <https://github.com/FlashGalatine/xivdyetools/issues>

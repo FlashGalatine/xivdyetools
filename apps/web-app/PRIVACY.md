@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-09 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-10-11 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
 XIV Dye Tools runs in your browser. The color tools — the Palette Extractor, Harmony Explorer,
@@ -56,8 +56,10 @@ site-data controls clear all of it. Inside the app, each of these clears one par
 - **Advanced Settings → Reset Settings** puts every tool's settings back to their defaults. It
   does not delete your saved work.
 - **Advanced Settings → Clear Favorites** deletes your favorite dyes.
-- **Advanced Settings → Clear Saved Palettes** deletes your saved palettes.
-- **Manage Collections → Delete Collection** deletes one saved collection.
+- **Advanced Settings → Clear Saved Palettes** deletes all your saved palettes at once. The app has
+  no control that deletes a single palette.
+- Swaps you save in Budget Suggestions and character colors you save in the Swatch Matcher have no
+  delete control in the app; your browser's site-data controls clear them.
 - Signing out deletes the session token.
 - "Reset all" in the Glamour list deletes the rewritten line of every piece in that list. Each
   line is kept per piece of gear, so another outfit that shares a piece loses that line too.
@@ -259,7 +261,7 @@ For anything else — your account record, or everything under your account at o
 privately:
 
 1. **Email:** FlashGalatineFGC@gmail.com, with the subject "XIV Dye Tools Privacy".
-2. **Discord:** join https://discord.gg/rzxDHNr6Wv and send a direct message to "Flash Galatine".
+2. **Discord:** join https://discord.gg/5VUSKTZCe5 and send a direct message to "Flash Galatine".
 
 Say whether you sign in with Discord or with XIVAuth, and include your Discord user ID or the
 author name shown on your presets. Please don't ask in a public GitHub issue: that would publish

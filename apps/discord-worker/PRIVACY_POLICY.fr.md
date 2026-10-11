@@ -2,7 +2,7 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY_POLICY.md)
 
-**Dernière mise à jour** : 2026-10-09
+**Dernière mise à jour** : 2026-10-11
 
 ## 1. Introduction
 
@@ -25,9 +25,9 @@ Nous nous engageons à protéger votre vie privée et à être transparents sur 
 
 | Type de donnée | Finalité | Conservation |
 |-----------|---------|-----------|
-| Préférences | Langue, mode de mélange, méthode de correspondance, nombre de résultats, clan, genre, Monde / centre de données par défaut, si les prix du tableau des ventes doivent être affichés par défaut, bascules d'affichage des couleurs, thème, et quelles catégories de teintures exclure des résultats de recherche (métallique, pastel, sombre, cosmique, ishgardienne, chère, de vendeur, artisanale), ainsi que le moment où vous les avez modifiées pour la dernière fois | Jusqu'à réinitialisation ou demande de suppression |
+| Préférences | Langue, mode de mélange, méthode de correspondance, nombre de résultats, clan, genre, Monde / centre de données par défaut, si les prix du tableau des ventes doivent être affichés par défaut, bascules d'affichage des couleurs, thème, et quelles catégories de teintures exclure des résultats de recherche (teintures métalliques, pastel, sombres, cosmiques, ishgardaises, coûteuses, vendues par un marchand, artisanales), ainsi que le moment où vous les avez modifiées pour la dernière fois | Jusqu'à réinitialisation ou demande de suppression |
 | Préréglages favoris | Jusqu'à 50 préréglages communautaires que vous marquez avec `/preset favorite add` — l'id du préréglage et le nom qu'il portait quand vous l'avez enregistré | Jusqu'à leur retrait ou demande de suppression |
-| Repère de premier lancement | Un repère par utilisateur indiquant que l'avis de bienvenue 5.0 vous a été montré ; ne porte aucun contenu | Expire automatiquement après 180 jours |
+| Repère de premier lancement | Un repère par utilisateur indiquant que le Bot a effectué sa vérification unique de l'avis de bienvenue 5.0. Il est posé la première fois que vous exécutez une commande, que l'avis soit envoyé ou non (il n'est pas envoyé si vous avez déjà des préférences enregistrées) ; ne porte aucun contenu | Expire automatiquement après 180 jours |
 | Soumissions de préréglages | Nom, description, teintures, étiquettes, catégorie — et, si notre vérification automatique retient pour examen le nouveau nom ou la nouvelle description d'une modification, la version antérieure à la première modification de ce type, conservée jusqu'à ce qu'un modérateur la restaure ou que le préréglage soit supprimé | Jusqu'à ce que vous le supprimiez (dans Mes soumissions de l'application web, connecté avec le même compte Discord) ou demandiez la suppression |
 | Votes | Vos votes sur les préréglages communautaires. Soumettre un préréglage compte comme votre vote pour lui ; si un préréglage publié a déjà les mêmes teintures, votre soumission devient un vote pour ce préréglage à la place | Jusqu'à leur retrait ou demande de suppression |
 
@@ -44,7 +44,7 @@ Pour maintenir le Bot en bonne santé et pour alimenter le tableau de bord `/sta
 
 | Donnée | Où | Conservation |
 |------|-------|-----------|
-| Le nom de la commande et de la sous-commande, si elle a reçu une réponse et — en cas de problème — une classe d'échec grossière (limité par débit, requête rejetée par le service de préréglages ou de marché, données de marché indisponibles, service de préréglages indisponible, l'image ou le fichier `.chara` téléversé n'a pas pu être lu, le rendu a échoué, inconnu ; jamais un message d'erreur), la durée qu'elle a prise, si elle a été exécutée sur un serveur ou en message privé (`guild` / `dm` — jamais l'ID du serveur), la langue de votre client Discord (l'une des six que le Bot prend en charge, ou « autre »), quel bouton de copie vous avez pressé (hex / RGB / HSV), et votre identifiant utilisateur Discord (utilisé uniquement pour compter les utilisateurs uniques) | Cloudflare Workers Analytics Engine | Fenêtre de conservation de l'Analytics Engine de Cloudflare (3 mois au moment de la rédaction) |
+| Le nom de la commande et de la sous-commande, si elle a reçu une réponse et — en cas de problème — une classe d'échec grossière (soumis à la limitation de débit, requête rejetée par le service de préréglages ou de marché, données de marché indisponibles, service de préréglages indisponible, l'image ou le fichier `.chara` téléversé n'a pas pu être lu, le rendu a échoué, inconnu ; jamais un message d'erreur), la durée qu'elle a prise, si elle a été exécutée sur un serveur ou en message privé (`guild` / `dm` — jamais l'ID du serveur), la langue de votre client Discord (l'une des six que le Bot prend en charge, ou « autre »), quel bouton de copie vous avez pressé (hex / RGB / HSV), et votre identifiant utilisateur Discord (utilisé uniquement pour compter les utilisateurs uniques) | Cloudflare Workers Analytics Engine | Fenêtre de conservation de l'Analytics Engine de Cloudflare (3 mois au moment de la rédaction) |
 | Compteurs agrégés — total des commandes, comptes par commande, succès/échecs (aucune donnée utilisateur) | Cloudflare KV | 30 jours (TTL automatique) |
 | Une clé par utilisateur et par jour (`usertrack:{date}:{userId}`, valeur `1`) afin de pouvoir compter les utilisateurs actifs quotidiens | Cloudflare KV | 30 jours (TTL automatique) |
 
@@ -126,7 +126,7 @@ Tout, sauf ces messages Discord, est stocké sur l'infrastructure de Cloudflare.
 
 ### Journaux opérationnels
 
-Pendant le traitement d'une commande, le Bot peut afficher de courtes lignes de diagnostic. Deux d'entre elles incluent **votre identifiant utilisateur Discord** — l'une quand une commande démarre, l'autre quand une commande est limitée par débit — aux côtés du nom de la commande. Elles n'incluent jamais les valeurs des options de commande, le contenu des messages, les noms de serveur, les ID de salon, ni quoi que ce soit provenant d'une image téléversée ou d'un fichier `.chara`.
+Pendant le traitement d'une commande, le Bot peut afficher de courtes lignes de diagnostic. Deux d'entre elles incluent **votre identifiant utilisateur Discord** — l'une quand une commande démarre, l'autre quand une commande est soumise à la limitation de débit — aux côtés du nom de la commande. Elles n'incluent jamais les valeurs des options de commande, le contenu des messages, les noms de serveur, les ID de salon, ni quoi que ce soit provenant d'une image téléversée ou d'un fichier `.chara`.
 
 La collecte persistante de journaux (Cloudflare Workers Logs) est désactivée pour le Bot, de sorte que ces lignes n'existent que dans un flux de débogage en direct qu'un mainteneur observe à cet instant précis, et ne sont pas conservées ensuite. Elles ne constituent pas un entrepôt de données, ne sont pas interrogeables, et sont distinctes des statistiques d'utilisation décrites ci-dessus. Si nous activons un jour la journalisation persistante, cette politique sera mise à jour en premier.
 
@@ -167,7 +167,7 @@ Pour demander la suppression de toutes vos données :
 1. **E-mail** : FlashGalatineFGC@gmail.com
    - Objet : « XIV Dye Tools Privacy »
    - Indiquez votre identifiant utilisateur Discord
-2. **Discord** : Rejoignez https://discord.gg/rzxDHNr6Wv et envoyez un DM à « Flash Galatine »
+2. **Discord** : Rejoignez https://discord.gg/5VUSKTZCe5 et envoyez un DM à « Flash Galatine »
 
 Nous traiterons les demandes de suppression sous 30 jours. Une demande de suppression supprime aussi de notre serveur Discord les messages vous concernant et concernant vos préréglages, à l'exception du message sur un bannissement toujours actif. Un enregistrement de bannissement actif n'est pas supprimé sur demande ; une fois le bannissement levé, l'enregistrement suit la durée de conservation indiquée à la section *Conservation des données*.
 
@@ -215,7 +215,7 @@ Continuer à utiliser le Bot après des changements vaut acceptation de la polit
 Pour toute question relative à la confidentialité ou toute demande concernant vos données :
 
 - **E-mail** : FlashGalatineFGC@gmail.com (Objet : « XIV Dye Tools Privacy »)
-- **Discord** : https://discord.gg/rzxDHNr6Wv
+- **Discord** : https://discord.gg/5VUSKTZCe5
 - **Canal d'assistance** : #dyetools-issues-and-suggestions
 
 ---

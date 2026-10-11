@@ -2,10 +2,10 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](TERMS_OF_SERVICE.md)
 
-**Dernière mise à jour :** 2026-10-09 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
-façon dont nous traitons vos données fait l'objet d'un document séparé : [`PRIVACY.md`](PRIVACY.md).
+**Dernière mise à jour :** 2026-10-11 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. La
+façon dont nous traitons vos données fait l'objet d'un document séparé : [`PRIVACY.md`](PRIVACY.fr.md).
 Le bot Discord a ses propres conditions :
-[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
+[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.fr.md).
 
 XIV Dye Tools est une boîte à outils de couleurs gratuite et créée par des fans pour Final Fantasy
 XIV. Elle n'est ni affiliée à, ni approuvée par, ni parrainée par Square Enix. En utilisant le site,
@@ -22,7 +22,7 @@ communautaires. À leurs côtés, le site peut afficher les prix du tableau des 
 palettes et des collections sur votre propre appareil.
 
 La majeure partie de tout cela fonctionne sans compte et sans rien envoyer nulle part. Les
-exceptions sont listées dans [`PRIVACY.md`](PRIVACY.md).
+exceptions sont listées dans [`PRIVACY.md`](PRIVACY.fr.md).
 
 ## Comptes
 
@@ -75,17 +75,17 @@ Les modérateurs peuvent supprimer ou modifier toute soumission, et des violatio
 vous coûter la possibilité de soumettre. Nous pouvons aussi supprimer du contenu pour des raisons
 qui n'ont rien à voir avec vous — une demande légale, ou un changement de ce que le site héberge.
 
-### Appels et retrait
+### Recours et retrait
 
 Si vous pensez que votre contenu a été modéré à tort, ou si vous souhaitez faire retirer quelque
 chose que vous avez soumis :
 
-1. Rejoignez le Discord : <https://discord.gg/rzxDHNr6Wv>
+1. Rejoignez le Discord : <https://discord.gg/5VUSKTZCe5>
 2. Posez la question dans **#dyetools-issues-and-suggestions**, ou envoyez un DM à « Flash Galatine »
 3. Indiquez votre identifiant utilisateur Discord et le nom du préréglage
 
-Les appels sont examinés sous 7 jours. Pour faire supprimer votre enregistrement de compte et tout
-ce qui a été soumis sous celui-ci, consultez [`PRIVACY.md`](PRIVACY.md).
+Les recours sont examinés sous 7 jours. Pour faire supprimer votre enregistrement de compte et tout
+ce qui a été soumis sous celui-ci, consultez [`PRIVACY.md`](PRIVACY.fr.md).
 
 ## Utiliser le site équitablement
 
@@ -101,7 +101,7 @@ Merci de ne pas :
 Si vous trouvez un problème de sécurité, merci de le signaler en privé par e-mail plutôt que de le
 démontrer contre le site en production.
 
-## Services d'autres personnes
+## Services tiers
 
 Certaines fonctionnalités vous redirigent vers des services que nous n'exploitons pas :
 
@@ -169,7 +169,7 @@ Nous pouvons mettre à jour ces conditions. Les changements sont publiés ici av
 de « Dernière mise à jour », et les changements importants sont annoncés sur le serveur Discord.
 Continuer à utiliser le site après un changement signifie que vous l'acceptez.
 
-## Fin des choses
+## Fin de l'utilisation
 
 Vous pouvez arrêter d'utiliser le site quand vous le souhaitez. Nous pouvons suspendre ou mettre fin
 à votre accès aux fonctionnalités communautaires si vous enfreignez ces conditions ou perturbez le
@@ -188,6 +188,6 @@ votre lieu de résidence vous accorde et auquel ce même droit ne vous permet pa
 ## Contact
 
 - **E-mail** : FlashGalatineFGC@gmail.com (Objet : "XIV Dye Tools Terms")
-- **Discord** : <https://discord.gg/rzxDHNr6Wv>
+- **Discord** : <https://discord.gg/5VUSKTZCe5>
 - **Canal d'assistance** : #dyetools-issues-and-suggestions
 - **Tickets** : <https://github.com/FlashGalatine/xivdyetools/issues>

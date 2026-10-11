@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-10-09
+**Zuletzt aktualisiert**: 2026-10-11
 
 ## 1. Einführung
 
@@ -30,7 +30,7 @@ Verbindung zu Square Enix.
 |-----------|---------|-----------|
 | Einstellungen | Sprache, Mischmodus, Matching-Algorithmus, Ergebnisanzahl, Stamm, Geschlecht, Standard-Welt / -Datenzentrum, ob Marktbrett-Preise standardmäßig angezeigt werden, Farbanzeige-Umschalter und Design sowie welche Farbstoffkategorien von den Suchergebnissen ausgeschlossen werden sollen (metallisch, pastellfarben, dunkel, kosmisch, ishgardisch, teuer, vom Händler verkauft, hergestellt), dazu der Zeitpunkt, zu dem du sie zuletzt geändert hast | Bis du sie zurücksetzt oder eine Löschung beantragst |
 | Favorisierte Vorlagen | Bis zu 50 Community-Vorlagen, die du mit `/preset favorite add` markierst — die ID der Vorlage und der Name, den sie bei der Speicherung hatte | Bis du sie entfernst oder eine Löschung beantragst |
-| Erstlauf-Hinweis-Markierung | Eine Markierung pro Nutzer, dass dir der 5.0-Willkommenshinweis gezeigt wurde; enthält keinen Inhalt | Läuft automatisch nach 180 Tagen ab |
+| Erstlauf-Hinweis-Markierung | Eine Markierung pro Nutzer, dass der Bot seine einmalige Prüfung auf den 5.0-Willkommenshinweis durchgeführt hat. Sie wird gesetzt, wenn du zum ersten Mal einen Befehl ausführst, unabhängig davon, ob der Hinweis gesendet wird (er wird nicht gesendet, wenn du bereits gespeicherte Einstellungen hast); enthält keinen Inhalt | Läuft automatisch nach 180 Tagen ab |
 | Vorlagen-Einreichungen | Name, Beschreibung, Farbstoffe, Tags, Kategorie — und, falls unsere automatische Prüfung den neuen Namen oder die neue Beschreibung einer Bearbeitung zur Prüfung zurückhält, die Fassung vor der ersten solchen Bearbeitung, aufbewahrt, bis ein Moderator diese Fassung wiederherstellt oder die Vorlage gelöscht wird | Bis du sie löschst (unter "Meine Einreichungen" in der Web-App, angemeldet mit demselben Discord-Konto) oder eine Löschung beantragst |
 | Stimmen | Deine Stimmen zu Community-Vorlagen. Das Einreichen einer Vorlage zählt als deine Stimme dafür; hat eine veröffentlichte Vorlage bereits dieselben Farbstoffe, wird deine Einreichung stattdessen zu einer Stimme für diese Vorlage | Bis du die Stimme entfernst oder eine Löschung beantragst |
 
@@ -170,7 +170,7 @@ Protokollierung einschalten, wird diese Richtlinie zuerst aktualisiert.
 
 Der Bot ist mit diesen Drittanbieter-Diensten verbunden:
 
-| Dienst | Zweck | Ihre Datenschutzrichtlinie |
+| Dienst | Zweck | Datenschutzrichtlinie des Anbieters |
 |---------|---------|---------------------|
 | Discord | Bot-Plattform, Authentifizierung | [Discord-Datenschutzrichtlinie](https://discord.com/privacy) |
 | Cloudflare | Hosting, Datenspeicherung (KV, D1), Ratenbegrenzung, Analyse | [Cloudflare-Datenschutzrichtlinie](https://www.cloudflare.com/privacypolicy/) |
@@ -206,7 +206,7 @@ Um die Löschung aller deiner Daten zu beantragen:
 1. **E-Mail**: FlashGalatineFGC@gmail.com
    - Betreff: "XIV Dye Tools Privacy"
    - Gib deine Discord-Benutzer-ID an
-2. **Discord**: Tritt https://discord.gg/rzxDHNr6Wv bei und schreibe "Flash Galatine" eine DM
+2. **Discord**: Tritt https://discord.gg/5VUSKTZCe5 bei und schreibe "Flash Galatine" eine DM
 
 Wir bearbeiten Löschanfragen innerhalb von 30 Tagen. Eine Löschanfrage entfernt außerdem die Beiträge über dich und deine Vorlagen von unserem Discord-Server, außer dem Beitrag zu einer noch aktiven Sperre. Ein aktiver Sperrdatensatz wird auf Anfrage nicht gelöscht; sobald die Sperre aufgehoben ist, richtet sich der Datensatz nach der Aufbewahrung unter *Datenaufbewahrung*.
 
@@ -260,7 +260,7 @@ dar.
 Für datenschutzbezogene Fragen oder Datenanfragen:
 
 - **E-Mail**: FlashGalatineFGC@gmail.com (Betreff: "XIV Dye Tools Privacy")
-- **Discord**: https://discord.gg/rzxDHNr6Wv
+- **Discord**: https://discord.gg/5VUSKTZCe5
 - **Support-Kanal**: #dyetools-issues-and-suggestions
 
 ---

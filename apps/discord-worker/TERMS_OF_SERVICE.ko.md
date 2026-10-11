@@ -2,9 +2,9 @@
 
 > 이 문서는 편의를 위해 제공되는 번역본입니다. 영어 버전이 원본이며, 두 버전이 다를 경우 영어 버전이 우선합니다. [English](TERMS_OF_SERVICE.md)
 
-**최종 업데이트**: 2026-10-09
+**최종 업데이트**: 2026-10-11
 
-> 웹 앱(xivdyetools.app)에는 자체 약관이 있습니다: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). 데이터 처리 방식은 [개인정보처리방침](PRIVACY_POLICY.md)에서 다룹니다.
+> 웹 앱(xivdyetools.app)에는 자체 약관이 있습니다: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.ko.md). 데이터 처리 방식은 [개인정보처리방침](PRIVACY_POLICY.ko.md)에서 다룹니다.
 
 ## 1. 소개
 
@@ -63,7 +63,7 @@ XIV Dye Tools Discord 봇은 다음을 제공합니다:
 
 콘텐츠가 잘못 조정되었다고 생각되신다면:
 
-1. 저희 Discord 서버에 참여하세요: https://discord.gg/rzxDHNr6Wv
+1. 저희 Discord 서버에 참여하세요: https://discord.gg/5VUSKTZCe5
 2. #dyetools-issues-and-suggestions에서 조정자에게 문의하시거나 "Flash Galatine"을 멘션하세요
 3. Discord 사용자 ID와 거부된 프리셋의 이름을 알려 주세요
 4. 이의 제기는 7일 이내에 검토됩니다
@@ -140,7 +140,7 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
 이 약관이나 봇에 대한 문의가 있으시면:
 
 - **이메일**: FlashGalatineFGC@gmail.com (제목: "XIV Dye Tools Terms")
-- **Discord**: https://discord.gg/rzxDHNr6Wv
+- **Discord**: https://discord.gg/5VUSKTZCe5
 - **지원 채널**: #dyetools-issues-and-suggestions
 
 ---

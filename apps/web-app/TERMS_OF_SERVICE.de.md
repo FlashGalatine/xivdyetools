@@ -2,10 +2,10 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert:** 2026-10-09 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
-wir mit deinen Daten umgehen, ist ein eigenes Dokument: [`PRIVACY.md`](PRIVACY.md). Der
+**Zuletzt aktualisiert:** 2026-10-11 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Wie
+wir mit deinen Daten umgehen, ist ein eigenes Dokument: [`PRIVACY.md`](PRIVACY.de.md). Der
 Discord-Bot hat eigene Bedingungen:
-[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
+[`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.de.md).
 
 XIV Dye Tools ist ein kostenloses, von Fans gemachtes Farb-Werkzeugset für Final Fantasy XIV. Es
 steht in keiner Verbindung zu Square Enix und wird von diesem weder unterstützt noch gesponsert.
@@ -21,7 +21,7 @@ Projektionsleser und Community-Vorlagen. Daneben kann die Website Marktbrett-Pre
 Paletten und Sammlungen auf deinem eigenen Gerät speichern lassen.
 
 Das meiste davon funktioniert ohne Konto und ohne irgendetwas irgendwohin zu senden. Die
-Ausnahmen sind in [`PRIVACY.md`](PRIVACY.md) aufgeführt.
+Ausnahmen sind in [`PRIVACY.md`](PRIVACY.de.md) aufgeführt.
 
 ## Konten
 
@@ -78,12 +78,12 @@ hostet.
 Wenn du glaubst, dass dein Inhalt zu Unrecht moderiert wurde, oder du möchtest, dass etwas, das du
 eingereicht hast, entfernt wird:
 
-1. Tritt dem Discord bei: <https://discord.gg/rzxDHNr6Wv>
+1. Tritt dem Discord bei: <https://discord.gg/5VUSKTZCe5>
 2. Frag in **#dyetools-issues-and-suggestions**, oder schreibe "Flash Galatine" eine DM
 3. Gib deine Discord-Benutzer-ID und den Namen der Vorlage an
 
 Widersprüche werden innerhalb von 7 Tagen geprüft. Um deinen Kontodatensatz und alles, was darunter
-eingereicht wurde, entfernen zu lassen, siehe [`PRIVACY.md`](PRIVACY.md).
+eingereicht wurde, entfernen zu lassen, siehe [`PRIVACY.md`](PRIVACY.de.md).
 
 ## Faire Nutzung der Website
 
@@ -191,6 +191,6 @@ deinem Wohnort geltende Recht gewährt und auf das du nach diesem Recht nicht ve
 ## Kontakt
 
 - **E-Mail**: FlashGalatineFGC@gmail.com (Betreff: "XIV Dye Tools Terms")
-- **Discord**: <https://discord.gg/rzxDHNr6Wv>
+- **Discord**: <https://discord.gg/5VUSKTZCe5>
 - **Support-Kanal**: #dyetools-issues-and-suggestions
 - **Issues**: <https://github.com/FlashGalatine/xivdyetools/issues>
