@@ -31,3 +31,9 @@ modified by this audit**; every finding is OPEN and carries its own fix directio
 6. **DOC-074…079 (LOW)** — 473 British spellings across 62 documents, up from 417; filed per cluster.
 
 **Totals:** 79 findings — 0 HIGH, 30 MEDIUM, 49 LOW. Nothing needs out-of-band action; DOC-001 should be the first correction merged.
+
+**Remediation (2026-10-11):** all 13 sprints of [`REMEDIATION_PLAN.md`](REMEDIATION_PLAN.md) ran the same day as
+stacked PRs #287 (Sprint 1, the only one that deploys) through #299, on top of this audit's #283. 76 findings are
+FIXED and 3 are PARTIAL. DOC-010, DOC-016 and DOC-019 each have one line outside `docs/` that rides its unit's next
+release. The report's *Remediation status* table and each finding's `## Status` give the PR and commits. The
+default-surface spelling sweep now finds only the 4 standing rejections (473 at audit time).
