@@ -150,6 +150,14 @@ These return the actual preview images:
 
 Image responses are cached `max-age=86400, s-maxage=604800` (24 h browser / 7 d edge); crawler HTML `max-age=3600, s-maxage=86400`.
 
+### Other Routes
+
+| Route | Behavior |
+|-------|----------|
+| `GET /health` | JSON `{ status: 'ok', service, timestamp }` |
+| `GET /` | Crawlers get the root embed (`public, max-age=86400`); everyone else is redirected (302) to `APP_BASE_URL` |
+| anything else | Crawlers get the minimal fallback embed as a `404` with `no-store`; everyone else is passed through to the origin on the app host (a JSON `404` on the `og.` image host, a 302 to `APP_BASE_URL` on any other host) |
+
 ### Query Parameters
 
 `lang`, `frame`, `algo`, `mode`, `wheel` and `interpolation` (`OG_ALLOWED_QUERY_KEYS`) are the
@@ -300,12 +308,19 @@ worker holds no state of its own.
 
 ## Analytics
 
-One datapoint per **crawler** hit — human page views produce nothing here (they were only a cost;
-FINDING-024). The shape written to the `ANALYTICS` dataset is fixed:
+Two kinds of datapoint, both written only for crawler-facing work — human page views produce
+nothing here (they were only a cost; FINDING-024):
+
+- `og_request` — one per crawler page hit on a tool route.
+- `og_image_request` — one per uncached, parameterized image render, with the crawler type
+  `none`. Cache hits (the `/og/*` cache middleware answers before the handler runs) and the
+  default cards (`/og/default.png`, `/og/:tool/default.png`) write nothing.
+
+The shape written to the `ANALYTICS` dataset is fixed:
 
 | Field | Contents |
 |-------|----------|
-| `blobs` | `[event, tool, crawler]` — the event name (`og_request` / `og_image_request`), the tool id, and the detected crawler type |
+| `blobs` | `[event, tool, crawler]` — the event name (`og_request` / `og_image_request`), the tool id, and the detected crawler type (`none` for `og_image_request`) |
 | `doubles` | `[timestamp]` |
 | `indexes` | `[tool]` |
 
