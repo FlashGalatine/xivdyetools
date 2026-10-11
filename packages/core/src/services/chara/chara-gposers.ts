@@ -11,12 +11,18 @@
  * written once, as `Rings:` (GPOSERS reminders, March 2026). Values are always
  * one line.
  *
+ * {@link gposersGroups} writes every slot it is given. Callers first drop the
+ * worn slots {@link gposersOmittedSlots} names, which the guide wants erased
+ * (invisible pieces, and an Off Hand the main hand cannot carry).
+ *
  * The labels are the form's own English wording, deliberately not localised:
  * this is a document format for an English-language submission flow. Item and
  * dye NAMES are the caller's, in whatever language it shows.
  *
  * @module services/chara/chara-gposers
  */
+
+import type { Gender } from '@xivdyetools/types';
 
 /** The form's slots, in the order it lists them. */
 export const GPOSERS_SLOTS = [
@@ -138,6 +144,76 @@ export function gposersGroups(input: GposersInput): GposersLine[][] {
     }
     group.push({ label: GPOSERS_ACQUISITION_LABEL, value: text(piece.acquisition), bold: false });
     out.push(group);
+  }
+  return out;
+}
+
+/**
+ * ItemUICategory rows whose main hand can carry a real Off Hand line: 2 Gladiator's
+ * Arm (Paladin), 6 One-handed Thaumaturge's Arm, 8 One-handed Conjurer's Arm, the
+ * eleven Primary Tools 12-32 (CRP BSM ARM GSM LTW WVR ALC CUL MIN BTN FSH, every
+ * second id) and 113 Beastmaster's Arm. Any other main hand either is the whole
+ * weapon (fist pairs, quivers, foci) or has no off hand. Ids checked against XIVAPI
+ * game version 541c0c12e07da325 on 2026-10-11.
+ */
+export const CHARA_OFF_HAND_MAIN_CATEGORIES: ReadonlySet<number> = new Set([
+  2, 6, 8, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 113,
+]);
+
+/** What is known about one worn slot, for {@link gposersOmittedSlots}. */
+export interface GposersSlotFacts {
+  /** English names of every twin the answer names for this slot (named item + alternates); absent or empty = unknown */
+  familyEn?: readonly string[];
+}
+
+/** What the omission rules need beyond the slots themselves. */
+export interface GposersOmitContext {
+  /** The file's gender; null = unknown */
+  gender: Gender | null;
+  /** ItemUICategory row of the main hand's named item; null or absent = unknown */
+  mainHandUiCategory?: number | null;
+}
+
+const INVISIBLE_PIECE = /^The Emperor's New (.+)$/;
+
+/**
+ * The worn slots the GPOSERS list leaves out (the guide: unused/invisible slots
+ * are erased, except The Emperor's New Robe on males and The Emperor's New
+ * Gloves). Keys of `slots` are the worn slots.
+ *
+ * 1. Invisible: the slot's model family holds a twin named "The Emperor's New
+ *    <X>". The family, not the named item, is checked because the Promise
+ *    bracelets and the Heroic Spirit / Divine Beast Shields share the invisible
+ *    piece's model. Gloves are always kept; the Robe is kept unless the character
+ *    is known to be female.
+ * 2. Off Hand: omitted when the main hand's category is known and is not in
+ *    {@link CHARA_OFF_HAND_MAIN_CATEGORIES}.
+ *
+ * Anything unknown (no family, no category) keeps the slot: nothing is dropped
+ * on a guess. Facewear and the fashion accessory are never omitted.
+ */
+export function gposersOmittedSlots(
+  slots: Partial<Record<GposersSlot, GposersSlotFacts>>,
+  context: GposersOmitContext,
+): Set<GposersSlot> {
+  const out = new Set<GposersSlot>();
+  for (const slot of GPOSERS_SLOTS) {
+    const facts = slots[slot];
+    if (!facts || slot === 'Facewear' || slot === 'FashionAccessory') continue;
+    const piece = facts.familyEn
+      ?.map((name) => INVISIBLE_PIECE.exec(name)?.[1])
+      .find((p) => p !== undefined);
+    if (piece === undefined || piece === 'Gloves') continue;
+    if (piece === 'Robe' && context.gender !== 'Female') continue;
+    out.add(slot);
+  }
+  const category = context.mainHandUiCategory;
+  if (
+    'OffHand' in slots &&
+    typeof category === 'number' &&
+    !CHARA_OFF_HAND_MAIN_CATEGORIES.has(category)
+  ) {
+    out.add('OffHand');
   }
   return out;
 }
