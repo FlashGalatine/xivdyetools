@@ -169,11 +169,15 @@ When a change spans packages and apps — an audit remediation sweep, or a major
 1. Land every change on a working branch and get CI green.
 2. Bump versions across all affected projects, with changelog entries and the two version
    tables (root `README.md`, `docs/versions.md`) — `pnpm docs:check-versions` blocks the PR otherwise.
-3. Merge to `main`. Deploy workflows fire automatically for the affected apps.
-4. Run the publish workflow for each package, in dependency order.
-5. Run `register-commands` if any slash-command shape changed.
-6. Apply D1 migrations if the schema changed — by hand, one file at a time; see
-   [Applying D1 migrations](deployment.md#applying-d1-migrations).
+3. Apply any D1 migration that must land before the deploy — one whose header says so (as
+   `presets-api`'s `0014` does) or says nothing — by hand, one file at a time; see
+   [Applying D1 migrations](deployment.md#applying-d1-migrations). Do this before the merge:
+   the merge is what deploys the code that depends on it.
+4. Merge to `main`. Deploy workflows fire automatically for the affected apps.
+5. Run the publish workflow for each package, in dependency order.
+6. Run `register-commands` if any slash-command shape changed.
+7. Apply the D1 migrations whose header says to run after the deploy (as `presets-api`'s
+   `0015` and `oauth`'s `0001` do), the same way.
 
 The root `CHANGELOG.md` carries a monorepo-level rollup for sweeps that touch many projects at
 once.
