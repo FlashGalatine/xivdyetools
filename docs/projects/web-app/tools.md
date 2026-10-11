@@ -88,7 +88,7 @@ On read, the restored colours replace the roll with equal synthetic shares (the 
 
 ## 4. Dye Mixer — 5C mixing field
 
-**Route:** `/mixer` · **ToolId:** `mixer` · **Files:** `src/components/mixer-tool.ts` (`MixerTool`), `services/mixer-blending-engine.ts` (`blendColors`, `findMatchingDyes` over `@xivdyetools/core/blending`), `dye-selector.ts`, `export-sheet.ts`. Spec: `5c-mixing-field-port-spec.md`.
+**Route:** `/mixer` · **ToolId:** `mixer` · **Files:** `src/components/mixer-tool.ts` (`MixerTool`), `services/mixer-blending-engine.ts` (`blendTwoColors`, `findMatchingDyes`), `dye-selector.ts`, `export-sheet.ts`. Spec: `5c-mixing-field-port-spec.md`.
 
 **What 5.0 shipped.** A **two-dye** tool (the third slot and `dyeC` were cut). The mixing field (`mixer.fieldLabel` "Model × ratio", `mixer.fieldHint` "6 models × 5 ratios") renders six blend models × five ratios (10/30/50/70/90) as thirty real blends with nearest-dye ΔE; tapping a cell sets model + ratio and the match list follows; the tapped ratio survives re-blends and rides in the share URL. **Model spread** (`mixer.spread`) in the field header reads how far the six models land apart. **Save mix** (`mixer.saveMix`) stores dye A + dye B + the resolved dye as a device-local `kind: 'palette'` collection. Field cells and results draw from one filtered pool; result cards carry `vendorCost` (coffer dyes read "1 Venture Coffer", never gil). Export via the shared sheet.
 

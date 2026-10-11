@@ -32,9 +32,9 @@ The XIV Dye Tools web app is built with **Lit 3** web components plus a family o
 | `emit(name, detail)`, `on()`/`onCustom()` | Event helpers; `unbindAllEvents()` on update/destroy. |
 | `subs: SubscriptionManager` | Every service subscription goes through `this.subs.add(Service.subscribe(...))`; cleanup is guaranteed by the base class. |
 
-**`shared/subscription-manager.ts`** — `add(unsub)`, `addAll(...unsubs)`, `unsubscribeAll()`. Lit components use it the same way in `disconnectedCallback`.
+**`shared/subscription-manager.ts`** — `add(unsub)`, `unsubscribeAll()`. Lit components use it the same way in `disconnectedCallback`.
 
-**`components/v4/base-lit-component.ts`** — abstract `LitElement` base for the `v4/` components: shared `baseStyles`, `emit()` (bubbles + composed), `isReady` after `firstUpdated`, `setError()` / `clearError()`.
+**`components/v4/base-lit-component.ts`** — abstract `LitElement` base for the `v4/` components: shared `baseStyles`, `emit()` (bubbles + composed), `isReady` after `firstUpdated`, `setError()`.
 
 ---
 
@@ -133,11 +133,11 @@ Keyboard (`services/keyboard-service.ts`, initialised in `initializeServices()`)
 
 ## Service Layer
 
-Two shapes coexist. **Static-class services** are used directly (`ThemeService.subscribe(...)`, `LanguageService.t(key)`, `RouterService.navigateTo(id)`, `ModalService.show()`, `ToastService.success()`, `CollectionService.createCollection()`, `ShareService.generateUrl()`, `StorageService`, `TutorialService`, `KeyboardService`, `SavedPresetsService`, `WorldService`, `TelemetryService`). **Instance singletons** expose `getInstance()` / `resetInstance()` or a pre-built export (`ConfigController.getInstance()`, `MarketBoardService.getInstance()` / `getMarketBoardService()`, `dyeService`, `apiService`, `indexedDBService`, `communityPresetService`, `hybridPresetService`, `authService`, `presetSubmissionService`). Most of them are re-exported from `services/index.ts` — but not all: `TelemetryService`, `theme-switch`, `chara-resolve-service`, `api-worker-origin`, `share-service`, `saved-presets-service`, `hybrid-preset-service`, `indexeddb-service`, `keyboard-service`, `storage-service`'s `SecureStorage` and `pricing-mixin` are imported from their own modules. Import a service through the **barrel** when it is exported there — a component that reaches past `@services/index` cannot be intercepted by a test's module mock. `initializeServices()` in the barrel runs the boot order: LanguageService → (Dye/Storage/API/Toast/Modal/Tooltip ready) → `KeyboardService.initialize()` → `WorldService.initialize()` → `hybridPresetService.initialize()` → `authService.initialize()`. `ThemeService` self-initialises on module load (and migrates retired 4.x theme names to Light/Dark).
+Two shapes coexist. **Static-class services** are used directly (`ThemeService.subscribe(...)`, `LanguageService.t(key)`, `RouterService.navigateTo(id)`, `ModalService.show()`, `ToastService.success()`, `CollectionService.createCollection()`, `ShareService.generateUrl()`, `StorageService`, `TutorialService`, `KeyboardService`, `SavedPresetsService`, `WorldService`, `TelemetryService`). **Instance singletons** expose `getInstance()` / `resetInstance()` or a pre-built export (`ConfigController.getInstance()`, `MarketBoardService.getInstance()`, `dyeService`, `apiService`, `indexedDBService`, `communityPresetService`, `hybridPresetService`, `authService`, `presetSubmissionService`). Most of them are re-exported from `services/index.ts` — but not all: `TelemetryService`, `theme-switch`, `chara-resolve-service`, `api-worker-origin`, `share-service`, `saved-presets-service`, `hybrid-preset-service`, `indexeddb-service`, `keyboard-service`, `storage-service`'s `appStorage` and `pricing-mixin` are imported from their own modules. Import a service through the **barrel** when it is exported there — a component that reaches past `@services/index` cannot be intercepted by a test's module mock. `initializeServices()` in the barrel runs the boot order: LanguageService → (Dye/Storage/API/Toast/Modal/Tooltip ready) → `KeyboardService.initialize()` → `WorldService.initialize()` → `hybridPresetService.initialize()` → `authService.initialize()`. `ThemeService` self-initialises on module load (and migrates retired 4.x theme names to Light/Dark).
 
 | Service | File | Responsibility |
 |---------|------|----------------|
-| `StorageService` | `storage-service.ts` | localStorage with JSON, `appStorage` namespaces, `SecureStorage` |
+| `StorageService` | `storage-service.ts` | localStorage with JSON, `NamespacedStorage` namespaces, the `appStorage` export |
 | `IndexedDBService` | `indexeddb-service.ts` | IDB wrapper. DB v3 `STORES` are `price_cache`, `palettes`, `settings`; `image_cache` was dropped in v3 (FINDING-009) and is deleted on first open, so nothing persists images — the Extractor holds its image in memory only |
 | `LanguageService` | `language-service.ts` | Wraps core `LocalizationService`; `t`, `tInterpolate`, `setLocale`, `subscribe`, `getDyeName` / `getCurrency` / `getRace`…; loads exactly one locale chunk (`en ja de fr ko zh`) |
 | `ThemeService` | `theme-service.ts` | `standard-light | standard-dark` (`ThemeName`), `setTheme`, `toggledVariant`, `isDarkMode`, `subscribe`, `--glyph-accent` |
@@ -155,13 +155,13 @@ Two shapes coexist. **Static-class services** are used directly (`ThemeService.s
 | `CollectionService` | `collection-service.ts` | The one saved-things store (schema 2.0.0): favorites + collections with `kind: 'palette' | 'swap' | 'character'`, stainID refs, tombstones, `exportAll` / `importData`, migrates the retired PaletteService store on init |
 | `SavedPresetsService` | `saved-presets-service.ts` | 8A saved shelf: local snapshots, tombstones for author-removed presets, capped 200 |
 | `HybridPresetService` / `CommunityPresetService` / `PresetSubmissionService` | `hybrid-preset-service.ts` / `community-preset-service.ts` / `preset-submission-service.ts` | Curated + API presets, votes, submissions (presets-api worker) |
-| `AuthService` | `auth-service.ts` | Discord OAuth via the oauth worker; `consumeReturnTool` |
+| `AuthService` | `auth-service.ts` | Discord OAuth via the oauth worker; keeps the return path and tool in `sessionStorage` across the login round trip |
 | `TelemetryService` | `telemetry-service.ts` | Opt-in, identifier-free usage telemetry batched to api-worker `POST /v1/telemetry`. Default off, `navigator.globalPrivacyControl` honoured, allowlisted event names/dimensions only |
-| `resolveCharaGear` | `chara-resolve-service.ts` | `POST /v1/chara/resolve` on api-worker — turns a `.chara` file's model keys into item names/icons for the Glamour Reader's DYES ON THIS GLAMOUR block (the Swatch Matcher's until 5.13.0). Session-cached; any failure raises `CharaResolveUnavailableError` and the block degrades to slot-only rows |
+| `resolveCharaEquipment` | `chara-resolve-service.ts` | `POST /v1/chara/resolve` on api-worker — turns a `.chara` file's model keys into item names/icons for the Glamour Reader's DYES ON THIS GLAMOUR block (the Swatch Matcher's until 5.13.0). Session-cached; any failure raises `CharaResolveUnavailableError` and the block degrades to slot-only rows |
 | `getApiWorkerBase()` | `api-worker-origin.ts` | The one place the api-worker origin is decided: `VITE_API_WORKER_URL` → `data.xivdyetools.app` in prod → `http://localhost:8790` in dev |
 | harmony vocabulary | `harmony-generator.ts` | `HarmonyTypeInfo`, `HARMONY_TYPE_IDS`, `getHarmonyTypes()` — the types the picker offers, their icons and localized names. The **selection algorithm** is core's `generateHarmonySlots`, and `HARMONY_OFFSETS` is imported from core; three surfaces used to each roll their own and disagree |
-| `MixerBlendingEngine` | `mixer-blending-engine.ts` | `blendColors`, `findMatchingDyes` over `@xivdyetools/core/blending` |
-| helpers | `display-options-helper.ts`, `pricing-mixin.ts` | `applyDisplayOptions` / `getCardDisplayOptions`; `setupMarketBoardListeners()` wires a tool to server / show-prices changes |
+| `blendTwoColors` / `findMatchingDyes` | `mixer-blending-engine.ts` | Plain functions (not a class) behind the Dye Mixer's blend models and nearest-dye matching |
+| helpers | `display-options-helper.ts`, `pricing-mixin.ts` | `applyDisplayOptions`; `setupMarketBoardListeners()` wires a tool to server / show-prices changes |
 
 ---
 
@@ -182,7 +182,7 @@ const unsub = config.subscribe('harmony', (cfg) => this.update());
 this.subs.add(unsub);                                     // BaseComponent cleans up on destroy
 ```
 
-The flow for a tool: `init()` reads its config (normalising `matchingMethod`), subscribes to its own key and to `market`, applies share-URL params over the top (which may write back to config), then renders. `DisplayOptionsConfig` is applied to result cards through `applyDisplayOptions` / `getCardDisplayOptions` (`services/display-options-helper.ts`).
+The flow for a tool: `init()` reads its config (normalising `matchingMethod`), subscribes to its own key and to `market`, applies share-URL params over the top (which may write back to config), then renders. `DisplayOptionsConfig` is applied to result cards through `applyDisplayOptions` (`services/display-options-helper.ts`).
 
 ---
 
