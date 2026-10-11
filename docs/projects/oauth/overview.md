@@ -207,6 +207,24 @@ wrangler secret put XIVAUTH_CLIENT_SECRET  # optional, confidential-client mode
 
 ---
 
+## Database
+
+The worker owns one D1 database, `xivdyetools-users`, with a single `users` table (schema in
+`apps/oauth/schema/users.sql`). On a fresh database, load it from `apps/oauth/` with:
+
+```bash
+wrangler d1 execute xivdyetools-users --remote --file=./schema/users.sql
+```
+
+An existing database is brought into line by
+`apps/oauth/migrations/0001_drop_xivauth_characters.sql`, which is **hand-run** after the deploy
+that stops writing the dropped table and column (oauth 3.0.0); it is not part of any deploy. Run
+it with `wrangler d1 execute … --file=`, never `d1 migrations apply`. See
+[`apps/oauth/CLAUDE.md`](../../../apps/oauth/CLAUDE.md#database) for the table layout and the
+full procedure.
+
+---
+
 ## No Token Refresh (removed in 3.0.0)
 
 A session ends when the JWT expires (1 h by default); the client then runs the PKCE sign-in flow
