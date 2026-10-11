@@ -82,7 +82,7 @@ the policies' own deletion sections, which Sprint 1 has just corrected.
 
 **Ends with:** `pnpm docs:check-links && pnpm docs:check-versions` → merge (no deploy fires).
 
-## Sprint 3 — Developer and maintainer guides: instructions that misfire (P2, `docs/` only)
+## Sprint 3 — Developer and maintainer guides: instructions that misfire (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `0cbbd858` `0e63a056` `01dc7cd5` `a9dfd9d3` `6a5db29e` `c2c56672` `d3df795e` `15ed5315` `a0ef4b80` `3af15721` `a4e04bb2` — PR [#289](https://github.com/FlashGalatine/xivdyetools/pull/289)**
 
 Anchored on DOC-002, DOC-018 and DOC-019: a migration that would never be applied, and two deploys described as
 safe that go live. Every other finding in these files rides along so each file is edited once.
