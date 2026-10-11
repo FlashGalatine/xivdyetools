@@ -223,7 +223,7 @@ harmony:    ciede2000 [6, 12, 20]   oklab [0.041, 0.101, 0.174]   cie76 [6.7, 14
 separation: ciede2000 [8, 15, 30]   oklab [0.08, 0.144, 0.281]    cie76 [10.4, 19.3, 38.4] …
 ```
 
-`classifyBandTier(distance, context, method)` returns the `BandTier`;
+`classifyBandTier(distance, method, context)` returns the `BandTier`;
 `roundToBandDisplay` applies the per-method decimal places (`BAND_METHOD_DP`).
 `RATIO_BANDS` covers WCAG contrast, which is a ratio rather than a distance and
 prints last.
