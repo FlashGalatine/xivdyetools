@@ -129,35 +129,35 @@ different feature with its own store.
 // src/services/CollectionService.ts
 
 export class CollectionService {
-  private storage: StorageService;
+  // All members are static; StorageService is also called statically.
 
   // Favorites
-  getFavorites(): DyeId[];
-  addFavorite(dyeId: DyeId): boolean;
-  removeFavorite(dyeId: DyeId): boolean;
-  isFavorite(dyeId: DyeId): boolean;
-  clearFavorites(): void;
+  static getFavorites(): DyeId[];
+  static addFavorite(dyeId: DyeId): boolean;
+  static removeFavorite(dyeId: DyeId): boolean;
+  static isFavorite(dyeId: DyeId): boolean;
+  static clearFavorites(): void;
 
   // Collections
-  getCollections(): Collection[];
-  getCollection(id: string): Collection | undefined;
-  createCollection(name: string, description?: string): Collection;
-  updateCollection(id: string, updates: Partial<Collection>): boolean;
-  deleteCollection(id: string): boolean;
-  addDyeToCollection(collectionId: string, dyeId: DyeId): boolean;
-  removeDyeFromCollection(collectionId: string, dyeId: DyeId): boolean;
+  static getCollections(): Collection[];
+  static getCollection(id: string): Collection | undefined;
+  static createCollection(name: string, description?: string): Collection | null;
+  static updateCollection(id: string, updates: { name?: string; description?: string }): boolean;
+  static deleteCollection(id: string): boolean;
+  static addDyeToCollection(collectionId: string, dyeId: DyeId): boolean;
+  static removeDyeFromCollection(collectionId: string, dyeId: DyeId): boolean;
 
   // Import/Export
-  exportAll(): string;  // JSON string
-  exportCollection(id: string): string;
-  importData(json: string): ImportResult;
+  static exportAll(): string;  // JSON string
+  static exportCollection(id: string): string | null;
+  static importData(json: string): ImportResult;
 }
 
 interface ImportResult {
   success: boolean;
   favoritesImported: number;
   collectionsImported: number;
-  errors: string[];
+  errors: ImportError[];
 }
 ```
 
@@ -317,7 +317,6 @@ store — can still be favourited from Discord with `/preset favorite add|remove
 | Maximum dyes per collection | 20 |
 | Collection name length | 1-50 characters |
 | Description length | 0-200 characters |
-| Allowed name characters | Alphanumeric, spaces, hyphens, underscores |
 | Duplicate names | Not allowed |
 | Duplicate dyes in collection | Not allowed |
 
@@ -329,7 +328,7 @@ store — can still be favourited from Discord with `/preset favorite add|remove
 | Wrong version | Attempt migration or reject |
 | Invalid dye IDs | Skip with warning |
 | Exceeds limits | Truncate with warning |
-| Name conflicts | Rename with suffix (_imported_1) |
+| Name conflicts | Rename with suffix (`{name} (imported {n})`) |
 
 ---
 
@@ -339,7 +338,7 @@ store — can still be favourited from Discord with `/preset favorite add|remove
 |----------|--------|
 | `F` | Toggle favorite on selected dye |
 | `C` | Open add-to-collection menu |
-| `Ctrl+Shift+C` | Open collection manager |
+| `Ctrl+Shift+C` | Open collection manager (not implemented) |
 
 ---
 
