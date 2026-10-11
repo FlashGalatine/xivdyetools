@@ -62,8 +62,11 @@ Enforced by tooling, so let the tools decide:
 
 ```bash
 pnpm turbo run lint          # ESLint 10 flat config + typescript-eslint
-pnpm --filter <project> run lint:fix
+pnpm --filter <project> exec eslint src --fix   # `lint:fix` exists only in web-app and core
 ```
+
+`lint` (which also runs knip dead-code checks everywhere but the parked `stoat-worker`) is the gate;
+`eslint --fix` only saves you hand edits.
 
 Prettier 3 handles formatting. TypeScript is strict, ES2022, bundler resolution, from the shared
 `tsconfig.base.json`.
