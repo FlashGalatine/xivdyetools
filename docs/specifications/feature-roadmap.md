@@ -180,7 +180,9 @@ Save favorite dyes and organize into named collections.
 - ✅ Create collection dialog with name and description
 - ✅ Edit collection dialog with removable dye tags
 - ✅ Import/Export collections as JSON
-- ✅ "Manage Collections" button in favorites panel header — the only route to the export/import UI
+- ✅ "Manage Collections" button in favorites panel header — the only route to the export/import UI;
+  the V4 shell no longer renders it, so the collection manager is unreachable (no export/import or
+  per-collection delete in this release)
 - ❌ Keyboard shortcut `C` to open the add-to-collection menu — never shipped
 
 **Web App Files created/modified:**
