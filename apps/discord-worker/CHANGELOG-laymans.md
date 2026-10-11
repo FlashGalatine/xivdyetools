@@ -35,6 +35,11 @@ Rules:
   path filter.
 -->
 
+## [5.8.14] - 2026-10-11
+### 👗 A tidier /glamour list
+- `/glamour`'s copy-ready list leaves out pieces that show nothing, like The Emperor's New items, but keeps The Emperor's New Gloves, and the Robe unless your character is female.
+- The Off Hand line appears only for a shield or a secondary tool, so a Monk's fists, a Bard's quiver or a Red Mage's focus is no longer listed twice. The card still shows every piece.
+
 ## [5.8.12] - 2026-10-11
 ### 👗 /glamour names gear you can still get
 - `/glamour` names a look-alike you can still get when the lowest-numbered item with that look has no known source, so more pieces in the list have an Acquisition line. For example, it names the Augmented Crystarium Ring of Fending instead of the retired original.

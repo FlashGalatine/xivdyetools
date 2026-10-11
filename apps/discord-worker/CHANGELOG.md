@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.14] - 2026-10-11
+
+No source change here: `/glamour`'s GPOSERS list comes from bot-logic 4.9.0, which applies core
+5.12.0's `gposersOmittedSlots`, and api-worker 0.20.0 sends the main hand's `uiCategory`. No command
+shapes change, so nothing is re-registered.
+
+### Changed
+
+- **`/glamour`'s list leaves out invisible pieces** (anything that looks like one of The Emperor's
+  New items, the Promise bracelets included), except The Emperor's New Gloves, and the Robe unless
+  the character is known female. The card still shows every piece.
+- **The Off Hand line is written only under a weapon that takes one:** a Paladin, Beastmaster or
+  one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. A fist pair, quiver or
+  focus that is the main weapon itself is no longer listed twice.
+
 ## [5.8.12] - 2026-10-11
 
 No source change in this app: `/glamour`'s pick comes from `@xivdyetools/core` 5.11.0 through
