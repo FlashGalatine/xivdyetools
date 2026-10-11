@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1] - 2026-10-11
+
+Data only: no route, schema or cache-shape change. Regenerated with `--pinned` (Teamcraft
+`acc77d40`, XIVAPI `541c0c12e07da325`), so the table diff is exactly the reviewed additions below
+plus the PvP wording; no existing line was removed.
+
+### Fixed
+
+- Web research fills 788 more Acquisition blanks, recorded as name-pinned entries with evidence URLs
+  in `reviewed-item-sources.json`. A researched line was kept only when it passed one of: an exact
+  match in the official Online Store catalog (314 store lines, including pieces sold inside an attire
+  coffer), the pinned quest data listing the piece among the quest's rewards (111 quest lines), or an
+  independent verification pass, mostly against the Lodestone (363 lines). Covered: current store
+  sets, quest rewards behind the Calamity Salvager's repurchase lists, seasonal and collaboration
+  events, Feast ranking rewards, Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure
+  Trove, Cosmic Fortune prizes, Ceremony of Eternal Bonding attire and five Dawntrail duty families
+  (The Underkeep, The Meso Terminal, Mistwake, Windurst: The Third Walk, The Clyteum). The table now
+  has 24,907 lines; facewear sources cover 60 of 61 styles (720 of 732 variants).
+- Seasonal and collaboration event gear that is not on the Online Store now reads `Event Name (YYYY)`,
+  the event's own title and the year the piece was first offered (for example
+  `Valentione's Day (2026)`, `Yo-kai Watch: Gather One, Gather All! (2016)`), as the GPOSERS guide
+  specifies. The research supplies the event title and year that design decision D12 had no source
+  for; the generator itself still drops seasonal-shop sources, so these lines live only in the
+  reviewed table.
+- Every PvP Series reward line reads `PvP Series Rewards`, the guide's fixed string, including the
+  three earlier `PvP Series N - Level N` lines (11 items).
+
 ## [0.18.0] - 2026-10-09
 
 Stacked on 0.17.0 (remediation Sprint 18): `facewear-unlocks.json` and `facewearAcquisitionFor` sit
