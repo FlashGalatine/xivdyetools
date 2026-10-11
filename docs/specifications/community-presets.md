@@ -324,7 +324,8 @@ Production: https://api.xivdyetools.app
 | Endpoint Type | Auth Method | Header |
 |---------------|-------------|--------|
 | Public (GET) | None | — |
-| Bot (POST/PATCH/DELETE) | Bearer Token | `Authorization: Bearer <BOT_API_SECRET>` |
+| Bot (POST/PATCH/DELETE) | Bearer secret + v2 HMAC signature | `Authorization: Bearer <BOT_API_SECRET>`, plus a v2 signature, timestamp and single-use nonce (required outside development and test) |
+| Web (POST/PATCH/DELETE) | Bearer JWT | `Authorization: Bearer <jwt>`, issued by `apps/oauth` |
 | Moderator | Bearer Token + User ID | `Authorization: Bearer <secret>` + `X-User-Discord-ID: <id>` |
 
 ### Endpoints
@@ -443,6 +444,9 @@ Submit a new preset. **Requires authentication.** A bot request carries the v2 H
 Authorization: Bearer <BOT_API_SECRET>
 X-User-Discord-ID: 123456789
 X-User-Discord-Name: ExampleUser
+X-Request-Timestamp: <unix seconds>
+X-Request-Signature-V2: <hex HMAC-SHA256 with BOT_SIGNING_SECRET>
+X-Request-Nonce: <uuid>
 ```
 
 **Response (New Preset):** HTTP 201, with `remaining_submissions` (the caller's submissions left today) alongside `moderation_status`.
@@ -1241,7 +1245,7 @@ async function migrate(db: D1Database) {
 
 | Concern | Mitigation |
 |---------|------------|
-| Unauthorized submissions | Bot-only authentication via shared secret |
+| Unauthorized submissions | Authenticated callers only: the bot shared secret plus a single-use-nonce v2 HMAC signature, or an oauth-issued web JWT |
 | Vote manipulation | One vote per Discord user per preset |
 | Spam submissions | Rate limiting (daily per-user caps; see Rate Limits below) |
 | SQL injection | D1 parameterized queries |
@@ -1266,6 +1270,9 @@ async function migrate(db: D1Database) {
 
 # Required
 wrangler secret put BOT_API_SECRET       # Shared secret for bot authentication
+wrangler secret put BOT_SIGNING_SECRET   # HMAC key for v2 bot request signatures (required outside dev/test)
+wrangler secret put JWT_SECRET           # Verifies web JWTs issued by apps/oauth
+wrangler secret put INTERNAL_WEBHOOK_SECRET  # Authenticates the notification call to discord-worker
 
 # Moderation
 wrangler secret put MODERATOR_IDS        # Comma-separated Discord IDs who can moderate
@@ -1275,6 +1282,9 @@ wrangler secret put MODERATOR_IDS        # Comma-separated Discord IDs who can m
 
 # Multi-language moderation (optional)
 wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxicity detection)
+
+# Optional: edge-cache purge of removed preview images (pairs with the CACHE_PURGE_ZONE_ID var)
+wrangler secret put CACHE_PURGE_API_TOKEN
 ```
 
 ---
