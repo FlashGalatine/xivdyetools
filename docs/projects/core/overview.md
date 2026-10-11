@@ -90,7 +90,7 @@ import { Dye, RGB, HexColor, DyeId, PresetCategory } from '@xivdyetools/core';
 
 ```typescript
 // Types come from @xivdyetools/types
-import { Dye, RGB, HexColor, DyeId, PresetCategory } from '@xivdyetools/types';
+import type { Dye, RGB, HexColor, DyeId, PresetCategory } from '@xivdyetools/types';
 
 // Services still come from @xivdyetools/core
 import { ColorService, DyeService, dyeDatabase } from '@xivdyetools/core';
@@ -321,7 +321,7 @@ See [Algorithms](algorithms.md) for implementation details.
 The library uses TypeScript branded types for compile-time safety:
 
 ```typescript
-import { createHexColor, createDyeId, HexColor, DyeId } from '@xivdyetools/types';
+import { createHexColor, createDyeId, type HexColor, type DyeId } from '@xivdyetools/types';
 
 // Validated at runtime, typed at compile time
 const hex: HexColor = createHexColor('#FF6B6B');  // ✅ throws on an invalid format

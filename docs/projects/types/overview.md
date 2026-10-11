@@ -31,7 +31,7 @@ npm install @xivdyetools/types
 ### Color Types
 
 ```typescript
-import { RGB, HSV, HSL, LAB, HexColor } from '@xivdyetools/types';
+import type { RGB, HSV, HSL, LAB, HexColor } from '@xivdyetools/types';
 
 interface RGB {
   r: number;  // 0-255
@@ -52,7 +52,7 @@ type HexColor = string & { __brand: 'HexColor' };
 ### Dye Types
 
 ```typescript
-import { Dye, DyeId, DyeWithDistance, FacewearColor } from '@xivdyetools/types';
+import type { Dye, DyeId, DyeWithDistance, FacewearColor } from '@xivdyetools/types';
 
 // Simplified — see packages/types/src/dye/dye.ts for the full runtime shape
 interface Dye {
@@ -88,7 +88,7 @@ palette: `PresetPalette` (the curated `presets.json` row) and `CommunityPreset`
 (the presets-API row, with voting and moderation).
 
 ```typescript
-import { PresetPalette, CommunityPreset, PresetStatus, PresetCategory } from '@xivdyetools/types';
+import type { PresetPalette, CommunityPreset, PresetStatus, PresetCategory } from '@xivdyetools/types';
 
 // Curated palette — packages/types/src/preset/core.ts
 interface PresetPalette {
@@ -128,7 +128,7 @@ type PresetCategory =
 ### Auth Types
 
 ```typescript
-import { JWTPayload, AuthProvider } from '@xivdyetools/types';
+import type { JWTPayload, AuthProvider } from '@xivdyetools/types';
 
 interface JWTPayload {
   sub: string;
@@ -161,10 +161,10 @@ The package provides branded types for compile-time safety:
 
 ```typescript
 import {
-  HexColor,
-  DyeId,
-  Hue,
-  Saturation,
+  type HexColor,
+  type DyeId,
+  type Hue,
+  type Saturation,
   createHexColor,
   createDyeId
 } from '@xivdyetools/types';
