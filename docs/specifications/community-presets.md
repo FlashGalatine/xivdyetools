@@ -624,6 +624,13 @@ When a duplicate is detected:
 
 #### Multi-Language Profanity Filter
 
+> **As shipped:** the flow below is the original design (a `bad-words` English base, `franc` language detection,
+> a `locale` argument to `moderateContent`). None of that shipped. Submissions go through one merged local list
+> (one or two anti-AI-slop terms per language, no profanity lists and no locale selection), then Google Perspective
+> scores TOXICITY, SEVERE_TOXICITY, IDENTITY_ATTACK, INSULT and PROFANITY. With no API key a submission is queued
+> as `unscored`, and a Perspective outage queues it too, so nothing auto-approves without a scorer. Google sunsets
+> Perspective on 2026-12-31. See [Content Moderation Pipeline](../projects/presets-api/moderation.md).
+
 Since the app supports 6 languages (en, ja, de, fr, ko, zh), the profanity filter must handle multiple languages.
 
 **Approach: Hybrid Local + Optional API**
@@ -823,7 +830,7 @@ The user's language can be determined from:
 **Auto-Approve Criteria:**
 - Name passes local profanity filter (all languages)
 - Description passes local profanity filter (all languages)
-- Passes Perspective API check (if enabled)
+- Passes Perspective API check (required as shipped: without a key the submission queues as `unscored`)
 - Valid dye IDs (exist in database)
 
 **Manual Review Queue:**
@@ -1280,7 +1287,7 @@ wrangler secret put MODERATOR_IDS        # Comma-separated Discord IDs who can m
 # (The three notification secrets specified here — MODERATION_WEBHOOK_URL, OWNER_DISCORD_ID,
 #  DISCORD_BOT_TOKEN — were removed with that code path on 2026-09-01; see "Not shipped" above.)
 
-# Multi-language moderation (optional)
+# Toxicity scoring (Perspective sunsets 2026-12-31; without a key, submissions queue as `unscored`)
 wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxicity detection)
 
 # Optional: edge-cache purge of removed preview images (pairs with the CACHE_PURGE_ZONE_ID var)
