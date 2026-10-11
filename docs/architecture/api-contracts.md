@@ -565,7 +565,7 @@ Initiate Discord OAuth flow.
 |-----------|----------|-------------|
 | `code_challenge` | Yes | SHA256 hash of code_verifier (base64url) |
 | `code_challenge_method` | No | Validated only when supplied, and then only `S256` is accepted |
-| `redirect_uri` | Yes | Frontend callback URL (must be on the origin allowlist) |
+| `redirect_uri` | No | Frontend callback URL (must be on the origin allowlist; defaults to `${FRONTEND_URL}/auth/callback`) |
 | `state` | No | CSRF protection token |
 
 **Response:** Redirects to Discord OAuth consent page.
