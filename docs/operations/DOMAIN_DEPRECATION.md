@@ -48,8 +48,8 @@ Line numbers below are current as of 2026-09-05; the routes now live under each 
 
 | File | Entry |
 |---|---|
-| ~~`apps/oauth/src/constants/oauth.ts:17`~~ | `ALLOWED_REDIRECT_ORIGINS` — **removed in oauth 3.1.2** (2026-10-03 security audit, FINDING-006) |
-| `apps/presets-api/wrangler.toml:64` | `ADDITIONAL_CORS_ORIGINS` — retire only the `xivdyetools.projectgalatine.com` entry; leave `xiv-colorexplorer.pages.dev` and `beta.xivdyetools.app` |
+| ~~`apps/oauth/src/constants/oauth.ts`~~ | `ALLOWED_REDIRECT_ORIGINS` — **removed in oauth 3.1.2** (2026-10-03 security audit, FINDING-006) |
+| ~~`apps/presets-api/wrangler.toml`~~ | `ADDITIONAL_CORS_ORIGINS` — the `xivdyetools.projectgalatine.com` entry was **retired in presets-api 2.4.0**; `xiv-colorexplorer.pages.dev` and `beta.xivdyetools.app` stay |
 
 ### Migration mechanism (retire last)
 
@@ -60,7 +60,7 @@ what makes every other removal graceful; it is Phase 4, not Phase 1.
 
 The "Custom domains:" lines in `apps/discord-worker/CLAUDE.md`, `apps/oauth/CLAUDE.md`,
 `apps/presets-api/CLAUDE.md` and `apps/moderation-worker/CLAUDE.md` (each inside that file's
-wrangler/config section), and `apps/web-app/functions/README.md:11,26`.
+wrangler/config section), and `apps/web-app/functions/README.md` (the domain-redirect bullet and the *Testing* `curl`).
 
 ---
 
@@ -143,8 +143,8 @@ presence of the `200`, never by sequence.
 |---|---|
 | one `200` PONG + one `401` | healthy |
 | two `401`s, no `200` | the valid PING arrived and failed — key mismatch or altered body |
-| `Missing signature headers` (`packages/auth/src/discord.ts:95`) | headers stripped before the Worker — suspect edge/WAF |
-| `Invalid signature` (`discord.ts:134`) | headers arrived; key or body wrong |
+| `Missing signature headers` (`packages/auth/src/discord.ts`) | headers stripped before the Worker — suspect edge/WAF |
+| `Invalid signature` (`discord.ts`) | headers arrived; key or body wrong |
 | no request logged at all | blocked upstream; never reached the Worker |
 
 Note the discrimination that matters: **two `401`s is not the same as a blocked request.** It
@@ -172,7 +172,7 @@ load-bearing for anyone still using the path it permits.
 
 **Which application to check for #3.** The `oauth` Worker authenticates as
 `DISCORD_CLIENT_ID = "1447108133020369048"` — the *production* application — in both of its
-environments (`apps/oauth/wrangler.toml:17, 50`). That application therefore serves two roles:
+environments (`apps/oauth/wrangler.toml`). That application therefore serves two roles:
 Discord bot interactions **and** web-app login. Check its OAuth2 redirect URIs, not the
 moderation app's and not the beta bot's.
 
@@ -181,7 +181,7 @@ moderation app's and not the beta bot's.
 | Layer | Configured where | Example |
 |---|---|---|
 | Discord → `oauth` Worker (registered at Discord) | Developer Portal → OAuth2 | `https://auth.xivdyetools.app/auth/callback` |
-| `oauth` Worker → front-end (this project's allowlist) | `ALLOWED_REDIRECT_ORIGINS`, `apps/oauth/src/constants/oauth.ts:14` | `https://xivdyetools.app/auth/callback` |
+| `oauth` Worker → front-end (this project's allowlist) | `ALLOWED_REDIRECT_ORIGINS` (`apps/oauth/src/constants/oauth.ts`) | `https://xivdyetools.app/auth/callback` |
 
 Only the first is registered at Discord and gates Phase 2. The second is the allowlist Phase 1
 edits. `BUG-018` (2026-07-18 audit) was caused by exactly this blur — three divergent copies of
@@ -191,10 +191,10 @@ the second list let a login begin on the transition domain and fail at the callb
 
 Landable immediately; nothing reachable changes.
 
-1. Remove the `xivdyetools.projectgalatine.com` entry from
-   `apps/oauth/src/constants/oauth.ts:17`, closing the stale "transition period" TODO.
+1. Remove the `xivdyetools.projectgalatine.com` entry from the `ALLOWED_REDIRECT_ORIGINS` list in
+   `apps/oauth/src/constants/oauth.ts`, closing the stale "transition period" TODO.
    **Done in oauth 3.1.2.**
-2. Remove it from `ADDITIONAL_CORS_ORIGINS` in `apps/presets-api/wrangler.toml:64`.
+2. Remove it from `ADDITIONAL_CORS_ORIGINS` in `apps/presets-api/wrangler.toml`.
    **In presets-api 2.4.0 (PR #224).**
 3. Update the five documentation references listed above.
 4. Add the `DEPRECATIONS.md` entry.
@@ -281,10 +281,10 @@ redirect — irreversible for anyone who never updated.
 
 ## Sequencing against the 5.0 release
 
-Phases 2–4 each require a **production deploy** of the affected Worker. Production deploys are
-deliberately paused until the `monorepo-2.0-prep` branch merges to `main`. **Phase 1 is
-therefore the only phase that can land before that merge** — and it is the phase with no
-runtime risk, which is a convenient alignment rather than a constraint.
+Phases 2–4 each required a **production deploy** of the affected Worker. Production deploys were
+paused until the `monorepo-2.0-prep` branch merged to `main`, which it did on 2026-08-28
+(PR #123). **Phase 1 was therefore the only phase that could land before that merge** — the
+phase with no runtime risk, a convenient alignment rather than a constraint.
 
 ## Related
 
