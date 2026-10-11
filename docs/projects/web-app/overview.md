@@ -226,7 +226,7 @@ The shared mechanics are in [Deployment](../../developer-guides/deployment.md) a
 
 | Environment | Details |
 |---|---|
-| **Production** | Pages project `xivdyetools` → `xivdyetools.app`. `deploy-web-app.yml`, on push to `main`/`master` under the `apps/web-app/**` + `packages/{core,types,logger,svg}/**` path filter |
+| **Production** | Pages project `xivdyetools` → `xivdyetools.app`. `deploy-web-app.yml`, on push to `main`/`master` under the `apps/web-app/**` + `packages/{core,types,logger,svg}/**` path filter (plus four root inputs: `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`) |
 | **Beta** | A *second* Pages project, `xivdyetools-beta` → `beta.xivdyetools.app`. `deploy-web-app-beta.yml`, on push to any branch except `main`, `master` and `dependabot/**`. `--branch=beta` is load-bearing (the project's production branch) and fails **silently** without it. Beta reads and writes **production** preset data |
 | **Development** | `pnpm --filter xivdyetools-web-app run dev` (localhost:5173) |
 

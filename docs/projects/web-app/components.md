@@ -189,13 +189,13 @@ The flow for a tool: `init()` reads its config (normalising `matchingMethod`), s
 
 ## Code Splitting
 
-`vite.config.ts` `manualChunks`: `vendor-core` (`@xivdyetools/core` — in practice the two lazily-loaded race colour tables), `vendor-lit`, `vendor-spectral` (spectral.js), `vendor` (other `node_modules`), `modals` (welcome + changelog modals; note the label — the shared colour engine lands here too). Each tool is a natural dynamic-import boundary from `v4-layout.ts` (`harmony-tool-<hash>.js` etc.), and `language-service` dynamically imports exactly one locale chunk. `scripts/check-bundle-size.js` reports **JS payload (one locale)** against a 2,200 KB total with per-chunk limits (60 KB default); `src/__tests__/bundle-budget.test.ts` locks the arithmetic.
+`vite.config.ts` `manualChunks`: `vendor-core` (`@xivdyetools/core` — in practice the two lazily-loaded race colour tables), `vendor-lit`, `vendor-spectral` (spectral.js), `vendor` (other `node_modules`), `modals` (welcome + changelog modals; note the label — the shared colour engine lands here too). Each tool is a natural dynamic-import boundary from `v4-layout.ts` (`harmony-tool-<hash>.js` etc.), and `language-service` dynamically imports exactly one locale chunk. `scripts/check-bundle-size.js` reports **JS payload (one locale)** against a 2,250 KB total with per-chunk limits (60 KB default); `src/__tests__/bundle-budget.test.ts` locks the arithmetic.
 
 ---
 
 ## Localization
 
-`LanguageService` wraps `@xivdyetools/core`'s `LocalizationService`. `t(key)` looks up a dot-notation key in `src/locales/<lang>.json` (1,152 keys per language, parity-validated across `en ja de fr ko zh`) with English fallback; `tInterpolate(key, params)` replaces `{placeholder}` tokens. `setLocale()` swaps the locale chunk, sets `document.documentElement.lang`, and notifies subscribers; components re-render on the callback. Domain helpers (`getDyeName`, `getCategory`, `getAcquisition`, `getCurrency`, `getHarmonyType`, `getVisionType`, `getRace`, `getClan`) read core's localized tables. Curated preset text is localized through `shared/preset-i18n.ts` (`preset.<id>.*`).
+`LanguageService` wraps `@xivdyetools/core`'s `LocalizationService`. `t(key)` looks up a dot-notation key in `src/locales/<lang>.json` (parity-validated across `en ja de fr ko zh`) with English fallback; `tInterpolate(key, params)` replaces `{placeholder}` tokens. `setLocale()` swaps the locale chunk, sets `document.documentElement.lang`, and notifies subscribers; components re-render on the callback. Domain helpers (`getDyeName`, `getCategory`, `getAcquisition`, `getCurrency`, `getHarmonyType`, `getVisionType`, `getRace`, `getClan`) read core's localized tables. Curated preset text is localized through `shared/preset-i18n.ts` (`preset.<id>.*`).
 
 ---
 
