@@ -1,7 +1,7 @@
 # Secret Rotation Procedures
 
 **Project:** xivdyetools monorepo
-**Last updated:** August 21, 2026 (2026-08-21 security audit, FINDING-010 — full rewrite)
+**Last updated:** October 4, 2026 (2026-10-03 security audit, Sprint 11, FINDING-023; last full rewrite 2026-08-21, FINDING-010)
 **Classification:** Internal Operations
 **Next review:** November 21, 2026 (quarterly)
 
@@ -167,7 +167,7 @@ Set on the listed consumers with `--env production`; no ordering constraints. Fo
 2. `pnpm --filter <app> exec wrangler tail --env production --format=json | grep -i error` for unusual activity.
 3. If `JWT_SECRET` leaked: rotating it ends every session at once (all tokens stop verifying). The `TOKEN_BLACKLIST` KV needs no clearing.
 4. If `CLOUDFLARE_API_TOKEN` leaked: roll it **first** (it can redeploy every worker), then audit the account's deployment history. If `CLOUDFLARE_API_TOKEN_BETA` leaked instead: the same account-wide Workers/Pages grants and the same `xivdyetools.app` zone apply, so roll it and audit the account's deployment history exactly as above — **do not** assume a narrower blast radius; Cloudflare's permission model can't scope either token below Account/Zone. What FINDING-028's split buys here is knowing *which* workflow's credential leaked, not a smaller set of reachable resources.
-5. Write the incident up in `docs/incidents/`.
+5. Record the incident and every rotation it forced in the [Rotation log](#rotation-log) below.
 
 ---
 
