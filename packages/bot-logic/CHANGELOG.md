@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0] - 2026-10-11
+
+`/glamour`'s GPOSERS list now leaves out the worn slots the submission guide wants erased. Needs
+`@xivdyetools/core` 5.12.0 (`gposersOmittedSlots`).
+
+### Changed
+
+- **The embed's list omits invisible pieces.** A slot whose model family holds a twin named "The
+  Emperor's New ..." is left out, so the Promise bracelets and the Heroic Spirit / Divine Beast Shields
+  (which share an invisible model) go too. The Emperor's New Gloves are always kept, and The Emperor's
+  New Robe is kept unless the character is known to be female.
+- **The Off Hand line is written only when the main hand can carry one** (Paladin, one-handed Thaumaturge
+  and Conjurer arms, the Primary Tools, Beastmaster's arm), judged by the new optional
+  `GlamourResolvedItem.uiCategory` (api-worker 0.20.0). With no category in the answer, nothing is dropped.
+- The card, each piece's status, and the twin / no-fix / Grand Company notes are unchanged.
+
 ## [4.8.3] - 2026-10-06
 
 The `.chara` help catches up with what `/glamour` and `/swatch` do (PR #251, stacked on the
