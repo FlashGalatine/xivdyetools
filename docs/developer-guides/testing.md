@@ -3,8 +3,8 @@
 ## Framework
 - **Vitest 5** across every workspace — no package is pinned to an older major, and
   `@cloudflare/vitest-pool-workers` is not a dependency anywhere
-- **V8 coverage** provider with per-package thresholds (typically 80%+)
-- ~480 test files across the monorepo
+- **V8 coverage** provider with per-package thresholds (packages 90% on all four metrics, apps 65-90%)
+- ~570 test files across the monorepo
 
 ## Running Tests
 ```bash
