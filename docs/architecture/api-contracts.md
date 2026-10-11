@@ -383,6 +383,7 @@ approves it. A `type: "preview_image"` notification is sent to the Discord worke
 | 400 `VALIDATION_ERROR` | `No image data provided` / `Image must be at most 5 MB` / `Image must be a PNG, JPEG or WebP` / `Image could not be processed` |
 | 403 `FORBIDDEN` | `Only the author can set a preview image` |
 | 415 | `Content-Type must be one of: image/png, image/jpeg, image/webp` |
+| 429 `RATE_LIMITED` | `You've reached your daily preview-image upload limit (20 per day). Try again tomorrow.` — the cap is 20 uploads per UTC day; the body also carries `remaining: 0` and `reset_at` |
 
 ### DELETE /presets/:id/preview-image
 

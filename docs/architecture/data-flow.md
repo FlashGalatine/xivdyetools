@@ -106,7 +106,11 @@ sequenceDiagram
     Note over Presets: 5. Duplicate detection
     Presets->>Presets: Generate dye_signature (sorted IDs)
     Presets->>Presets: Check existing presets
-    alt Duplicate found
+    alt Approved duplicate
+        Presets->>Client: 200 OK (duplicate + vote added)
+    else Pending duplicate, owner or moderator
+        Presets->>Client: 200 OK (duplicate, no vote)
+    else Pending duplicate, anyone else
         Presets->>Client: 409 Conflict
     end
 
