@@ -28,6 +28,7 @@ const LINES = vi.hoisted((): Record<number, string> => ({
   7002: 'Vendor 7002',
   8002: 'Vendor 8002',
   9005: 'Vendor 9005',
+  8102: 'Vendor 8102',
 }));
 const TROPHY_LINE = LINES[47252];
 vi.mock('./acquisition.js', () => ({
@@ -62,6 +63,7 @@ const row = (
   modelSub: '0',
   slots,
   levelEquip: null,
+  uiCategory: null,
   rules: null,
   ...extra,
 });
@@ -402,6 +404,28 @@ describe('resolveCharaEquipment — off-hand rules', () => {
     ] }, source([datedBow]), undefined, 'v');
     expect(result.items.MainHand).toMatchObject({ itemId: 1, retired: true, viaMainHand: false });
     expect(result.items.OffHand).toMatchObject({ itemId: 1, retired: true, viaMainHand: true });
+  });
+
+  it("answers the named twin's ItemUICategory, omitted when unknown", () => {
+    const plain = row(8101, 'Plain Bow', RUNAWAY_BOW.modelMain, ['MainHand'], { uiCategory: 5 });
+    const lined = row(8102, 'Augmented Bow', RUNAWAY_BOW.modelMain, ['MainHand'], { uiCategory: 6 });
+    const request = { gear: [{ slot: 'MainHand' as const, set: 634, base: 19, variant: 1 }] };
+    // The higher twin has the line, so it names the family and its category answers, not the
+    // lowest row's: the Off Hand rule must judge the weapon the list names.
+    expect(resolveCharaEquipment(request, source([plain, lined]), undefined, null).items.MainHand)
+      .toMatchObject({ itemId: 8102, uiCategory: 6 });
+    const unknown = resolveCharaEquipment(request, source([row(8103, 'Bare Bow', RUNAWAY_BOW.modelMain, ['MainHand'])]), undefined, null);
+    expect(unknown.items.MainHand).not.toBeNull();
+    expect(unknown.items.MainHand).not.toHaveProperty('uiCategory');
+  });
+
+  it("gives the via-main-hand off-hand the main hand's ItemUICategory", () => {
+    const bow = row(8104, 'Plain Bow', RUNAWAY_BOW.modelMain, ['MainHand'], { modelSub: RUNAWAY_BOW.modelSub, uiCategory: 2 });
+    const res = resolveCharaEquipment({ gear: [
+      { slot: 'MainHand', set: 634, base: 19, variant: 1 },
+      { slot: 'OffHand', set: 698, base: 149, variant: 1 },
+    ] }, source([bow]), undefined, null);
+    expect(res.items.OffHand).toMatchObject({ viaMainHand: true, uiCategory: 2 });
   });
 
   it("pairs an off-hand through a blank lower twin's ModelSub, naming the main hand's lined twin", () => {

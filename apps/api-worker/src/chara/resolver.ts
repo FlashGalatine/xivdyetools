@@ -152,6 +152,9 @@ export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
     viaMainHand: false,
     rules,
     ...withAcquisition(primary.rowId),
+    ...(primary.uiCategory !== null && primary.uiCategory > 0
+      ? { uiCategory: primary.uiCategory }
+      : {}),
     ...(naming.retired ? { retired: true as const } : {}),
   };
 }

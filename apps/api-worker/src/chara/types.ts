@@ -73,6 +73,12 @@ export interface ResolvedCharaItem {
    */
   acquisition?: string;
   /**
+   * The named item's ItemUICategory row. For a main hand it says which class
+   * the weapon or tool is, which decides whether the GPOSERS list writes an Off
+   * Hand line (core's CHARA_OFF_HAND_MAIN_CATEGORIES). Omitted when unknown.
+   */
+  uiCategory?: number;
+  /**
    * Present (always `true`) only when every row of the family is retired —
    * Aetherial, Deepmist, or Dated at level 50 or below — so nothing obtainable
    * shares the look. The item is still named, from the whole family, because
@@ -123,6 +129,8 @@ export interface ItemRow {
   slots: string[];
   /** Minimum equipment level; null when the upstream did not provide it. */
   levelEquip: number | null;
+  /** ItemUICategory row; null when the answer lacked it. */
+  uiCategory: number | null;
   /** The in-game rules; null when the answer lacked any of their fields */
   rules: CharaItemRules | null;
 }
