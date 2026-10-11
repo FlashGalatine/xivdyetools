@@ -10,7 +10,7 @@ Commands that produce images follow a three-stage pipeline: build an SVG from a 
 
 ```typescript
 const svg = generateComparisonCard({ dyes, theme, labels, lang });
-const png = await renderSvgToPng(svg);
+const png = await renderSvgToPng(svg, { locale: lang });
 await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
   embeds: [...],
   file: { name: 'comparison.png', data: png, contentType: 'image/png' },

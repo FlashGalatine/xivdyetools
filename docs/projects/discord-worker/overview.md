@@ -164,15 +164,15 @@ Commands that need images generate SVG and render to PNG:
 
 ```typescript
 // 1. Build SVG
-const svg = buildComparisonSvg(dyes);
+const svg = generateComparisonCard({ dyes, theme, labels, lang });
 
 // 2. Render to PNG via resvg-wasm
-const png = await renderSvgToPng(svg);
+const png = await renderSvgToPng(svg, { locale: lang }); // locale is required
 
 // 3. Send as Discord attachment
-await sendFollowup(interaction, env, {
+await sendFollowUp(env.DISCORD_CLIENT_ID, interaction.token, {
   embeds: [...],
-  files: [{ name: 'comparison.png', data: png }]
+  file: { name: 'comparison.png', data: png, contentType: 'image/png' },
 });
 ```
 
