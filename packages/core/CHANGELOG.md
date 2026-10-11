@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.11.0] - 2026-10-11
+
+### Changed
+
+- **`defaultCharaTwin` prefers a twin with a known acquisition line.**
+  - The order is now passes, dyeable, any Grand Company, not Dated, has an acquisition line, more
+    dye channels, lowest row. When no twin passes it names the lowest row that has a line among the
+    twins the check judged (every twin when no rules arrived), else the lowest row, so a twin with
+    unknown rules never reads as a fix.
+  - The lowest row of a family often had no known source while an identical twin did: old
+    non-Augmented tomestone gear is no longer sold (Crystarium Ring of Fending vs the Augmented
+    one), Housemaid's vs Loyal Housemaid's, Far Eastern Journey vs Exclusive Far Eastern Journey.
+    A GPOSERS submission is better served by the twin a player can still obtain.
+  - Dyeable, any Grand Company and not Dated still come first, so none of those picks change: a
+    dyeable Makai piece is still named over its undyeable Common Makai twin.
+  - Over the 1,093-file `.chara` corpus (with api-worker 0.18.1's acquisition table), the default
+    names a piece with no Acquisition line on 103 of 10,875 named slots, down from 469. In 76 of
+    those an identical twin has a line but loses on an earlier rule, almost all a dyeable Makai or
+    Eternal Passion/Devotion piece over its undyeable twin.
+
 ## [5.10.0] - 2026-10-06
 
 Sprint 13 of the 2026-10-04 remediation plan (`docs/audits/2026-10-04-i18n/REMEDIATION_PLAN.md`),
