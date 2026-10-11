@@ -53,14 +53,14 @@ In the settings column (the gear icon on phones):
 
 ## Blending Models Explained
 
-The row headers use each model's technical name; the settings dropdown and the cell hints use plain ones.
+The row headers use each model's technical name; the cell hints use the plain names in the Name column. The settings dropdown differs for two models: Spectral is **Realistic Paint** and HSL is **Hue-based**; the others match the hints.
 
 | Row | Name | What it does | Blue + Yellow = |
 |-----|------|--------------|-----------------|
-| **RYB** | Paint | The traditional red-yellow-blue colour wheel — mixing like paint in art class | Olive |
+| **RYB** | Paint | The traditional red-yellow-blue colour wheel — mixing like paint in art class | Green |
 | **Spectral** | Pigment | Kubelka-Munk physics — how real pigment behaves | Green |
-| **OKLAB** | Perceptual | A modern, even perceptual space; no muddiness | Cyan |
-| **LAB** | LAB | The older perceptual space, with a warmer bias | Pink |
+| **OKLAB** | Modern Perceptual | A modern, even perceptual space; no muddiness | Cyan |
+| **LAB** | Perceptual | The older perceptual space, with a warmer bias | Pink |
 | **HSL** | Hue | Sweeps around the hue wheel while keeping saturation | — |
 | **RGB** | Light | Additive light mixing, the way screens blend | Grey |
 
