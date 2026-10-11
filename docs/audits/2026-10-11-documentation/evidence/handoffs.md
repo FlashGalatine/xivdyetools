@@ -2,6 +2,8 @@
 
 These were confirmed by a verifier but belong to another skill per `.agents/skills/audit-shared/policy-documents.md` § *Who files what*. They carry no DOC- ID.
 
+**Status (2026-10-11, remediation Sprint 1, PR #287):** both security-audit items were ruled CORRECT by a verifier and corrected in all six variants. Of the i18n-manager rows, the 16 policy rows other than `policy-ko-02` were applied in the same commit; `policy-ko-02` and `manual-04` remain open. The web-app / product-owner notes remain open.
+
 ## security-audit (a policy claim that is false against the code)
 
 | Item | Policy location | What the code does |
