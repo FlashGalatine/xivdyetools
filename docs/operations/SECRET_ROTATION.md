@@ -42,7 +42,7 @@ Names come from `env.X` reads in `apps/*/src` that are **not** in any `[vars]` b
 | `JWT_SECRET` | oauth, presets-api | shared HMAC key (≥ 32 bytes) | Quarterly / on compromise |
 | `BOT_API_SECRET` | discord-worker, moderation-worker, presets-api | shared bearer | Quarterly / on compromise |
 | `BOT_SIGNING_SECRET` | discord-worker, moderation-worker, presets-api | shared HMAC key (≥ 32 chars; required in prod) | Quarterly / on compromise |
-| `INTERNAL_WEBHOOK_SECRET` | presets-api → discord-worker (`/webhooks/preset-submission`) | shared HMAC key | Quarterly / on compromise |
+| `INTERNAL_WEBHOOK_SECRET` | presets-api → discord-worker (`/webhooks/preset-submission`) | shared bearer secret (≥ 32 chars in prod) | Quarterly / on compromise |
 | `DISCORD_TOKEN` | discord-worker (main bot) | Discord bot token | On compromise |
 | `DISCORD_TOKEN` | moderation-worker (moderation bot); the same value is the `production` environment secret `MODERATION_DISCORD_TOKEN` (register-commands step) | Discord bot token | On compromise — **three holders move together** (this, `MODERATION_BOT_TOKEN`, the environment secret); reset 2026-08-29 |
 | `MODERATION_BOT_TOKEN` | discord-worker (same token as moderation-worker's `DISCORD_TOKEN`) | Discord bot token | Together with the moderation bot token |
