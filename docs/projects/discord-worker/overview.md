@@ -114,7 +114,7 @@ The roster of record is `src/commands/registry.ts` — 18 registrations, 17 dist
 | `/extractor color` / `/extractor image` | Match a color / extract image colors and match to dyes |
 | `/gradient` | Create color gradient between two colors |
 | `/mixer` | Blend two dyes (rgb/lab/oklab/ryb/hsl/spectral ratio sweep) |
-| `/swatch` | Match a `.chara` character file's colours to dyes |
+| `/swatch` | Match a `.chara` character file's colors to dyes |
 | `/glamour` | Read a `.chara` character file as a glamour: every piece, its dyes, and whether it can be worn |
 
 ### Dye Database
@@ -134,7 +134,7 @@ The roster of record is `src/commands/registry.ts` — 18 registrations, 17 dist
 | `/budget` | Find affordable dye alternatives via market board |
 
 ### User Data — removed in 5.0
-`/favorites` and `/collection` are gone (saved palettes live in the web app); preset favourites are `/preset favorite add|remove|list`.
+`/favorites` and `/collection` are gone (saved palettes live in the web app); preset favorites are `/preset favorite add|remove|list`.
 
 ### Community
 | Command | Description |
@@ -144,7 +144,7 @@ The roster of record is `src/commands/registry.ts` — 18 registrations, 17 dist
 | `/preset random` | Get a random approved preset |
 | `/preset submit` / `/preset edit` | Submit / edit a preset (3–6 stainID-keyed dyes — see [Commands](commands.md#preset-submit)) |
 | `/preset vote` | Toggle a vote on a preset |
-| `/preset favorite` | Add / remove / list favourite presets |
+| `/preset favorite` | Add / remove / list favorite presets |
 
 ### Utility
 | Command | Description |
@@ -181,13 +181,13 @@ await sendFollowUp(env.DISCORD_CLIENT_ID, interaction.token, {
 
 Per-user, per-command limits via `@xivdyetools/worker-kit/rate-limiter` (`DISCORD_COMMAND_LIMITS`, keyed by top-level command name):
 - `/dye`, `/preferences`: 20/minute; `/accessibility` (and its alias `/a11y`), `/budget`, `/preset`: 10/minute; `/about`, `/manual`, `/changelog`: 30/minute; `/extractor image`: 5/minute; everything else, `/stats` included: 15/minute
-- `/a11y` is canonicalised to `accessibility` before lookup, so the alias shares one bucket; `/extractor image` is tiered apart from `/extractor color` by an `extractor:image` key; `/changelog`'s 30/minute comes from this worker's own `LOCAL_COMMAND_LIMITS`
+- `/a11y` is canonicalized to `accessibility` before lookup, so the alias shares one bucket; `/extractor image` is tiered apart from `/extractor color` by an `extractor:image` key; `/changelog`'s 30/minute comes from this worker's own `LOCAL_COMMAND_LIMITS`
 - No command is exempt (`/stats` since FINDING-033, the three utility commands since FINDING-020)
 - Backend: the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit), with Cloudflare KV as the fallback only when no tier is bound
 
 ### User Storage
 
-KV holds per-user preferences (`prefs:v1:*`), preset favourites, analytics counters, the announced-version memo (`announced:v:<version>`) and the rate-limit fallback counters. Button state travels in the component's own `custom_id`; the KV-backed button-context store was removed in 2026-08-18 (nothing consumed it). The v4 favorites/collections store is gone and its orphaned keys were swept once against production on 2026-08-29.
+KV holds per-user preferences (`prefs:v1:*`), preset favorites, analytics counters, the announced-version memo (`announced:v:<version>`) and the rate-limit fallback counters. Button state travels in the component's own `custom_id`; the KV-backed button-context store was removed in 2026-08-18 (nothing consumed it). The v4 favorites/collections store is gone and its orphaned keys were swept once against production on 2026-08-29.
 
 ---
 
@@ -195,7 +195,7 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, analytics count
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate-limit fallback, preferences, preset favourites, stats counters, announced-version memo |
+| `KV` | KV Namespace | Rate-limit fallback, preferences, preset favorites, stats counters, announced-version memo |
 | `ANALYTICS` | Analytics Engine | Command tracking |
 | `PRESETS_API` | Service Binding | `xivdyetools-presets-api` |
 | `UNIVERSALIS_PROXY` | Service Binding | `xivdyetools-api-worker` (absorbed the universalis-proxy) — market prices |

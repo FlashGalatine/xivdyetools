@@ -29,7 +29,7 @@ Buttons use `custom_id` patterns for routing. The router parses the custom ID st
 
 | Pattern                                    | Description                   |
 |--------------------------------------------|-------------------------------|
-| `copy_hex_*` / `copy_rgb_*` / `copy_hsv_*` | Copy a colour value (ephemeral reply) |
+| `copy_hex_*` / `copy_rgb_*` / `copy_hsv_*` | Copy a color value (ephemeral reply) |
 | `previewimg_approve_{previewImageKey}` / `previewimg_reject_{previewImageKey}` | Preview-image moderation — handled by **this** worker (Discord routes clicks to the application that posted the message); calls presets-api `PATCH /api/v1/moderation/:id/preview-image` |
 
 The v4 `favorites_*` / `collection_*` buttons are gone with the removed commands. Preset approve/reject buttons posted by the moderation bot are handled by `xivdyetools-moderation-worker`. `services/component-context.ts` (KV-backed button context, `ctx:v2:{hash}`) was removed 2026-08-18 — pagination context never shipped and nothing consumed it.
@@ -40,7 +40,7 @@ No modals are handled by the main worker in 5.0 — `/preset submit` takes its f
 
 ## Autocomplete Handlers
 
-Dye name autocomplete runs for every dye/colour option (`dye`, `dye1`…`dye6`, `color`, `start_color`, `end_color`, `target_dye`, …), plus preset names, worlds and clans. Autocomplete has its own generous rate limit (60/min + 10 burst, fail-soft — a limited request returns empty choices).
+Dye name autocomplete runs for every dye/color option (`dye`, `dye1`…`dye6`, `color`, `start_color`, `end_color`, `target_dye`, …), plus preset names, worlds and clans. Autocomplete has its own generous rate limit (60/min + 10 burst, fail-soft — a limited request returns empty choices).
 
 - Searches by localized dye name using the user's language preference
 - Returns up to 25 suggestions (Discord's maximum)
@@ -86,7 +86,7 @@ In addition to Discord interactions, the worker exposes webhook endpoints for ex
 | `POST /webhooks/github`            | GitHub       | Receives push events, posts changelog to announcement channel |
 | `GET /health`                       | Anyone       | Unauthenticated liveness probe; returns `{ status: 'healthy', service, timestamp }` (a fatal env misconfiguration answers 500 `Service misconfigured` here, as on every route) |
 
-Only `push` events from `FlashGalatine/xivdyetools` are announced, and each version is announced once (the repository is pinned to a constant and the version is memoised in KV for 90 days), so redelivering a qualifying delivery is safe. The memo key is versioned (`announced:v:<version>`), not delivery-specific, so a corrected changelog re-pushed under an already-announced version is not re-announced automatically — clear that KV key to force a re-announcement.
+Only `push` events from `FlashGalatine/xivdyetools` are announced, and each version is announced once (the repository is pinned to a constant and the version is memoized in KV for 90 days), so redelivering a qualifying delivery is safe. The memo key is versioned (`announced:v:<version>`), not delivery-specific, so a corrected changelog re-pushed under an already-announced version is not re-announced automatically — clear that KV key to force a re-announcement.
 
 ## Security
 

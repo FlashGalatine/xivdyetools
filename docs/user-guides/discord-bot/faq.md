@@ -79,13 +79,13 @@ Yes! Use `/extractor image` and upload your screenshot. Note that in-game lighti
 ### Where did `/favorites` and `/collection` go?
 
 They were removed in 5.0. Saved dyes and palettes live in the web app (stored in your browser); the
-bot's share links open the same result there. In Discord you can still favourite community
+bot's share links open the same result there. In Discord you can still favorite community
 *presets* with `/preset favorite add|remove|list`.
 
 ### Do favorites sync with the web app?
 
-No — the bot never synced dye favourites with the web app, and the v4 bot-side lists were retired
-with 5.0. Your preferences (`/preferences`) and preset favourites are stored per Discord account and
+No — the bot never synced dye favorites with the web app, and the v4 bot-side lists were retired
+with 5.0. Your preferences (`/preferences`) and preset favorites are stored per Discord account and
 follow you across servers.
 
 ---
@@ -176,7 +176,7 @@ Moderation is by invite only for trusted community members.
 ### What data do you collect?
 
 - Your Discord ID
-- Your preferences and favourite presets
+- Your preferences and favorite presets
 - Preset submissions and votes
 - Usage statistics keyed to your Discord ID, used only to count unique users
 - A per-user marker, set the first time you run a command (whether or not the "what changed in 5.0"

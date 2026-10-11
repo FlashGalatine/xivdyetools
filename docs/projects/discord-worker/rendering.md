@@ -27,7 +27,7 @@ Shared SVG template library (`@xivdyetools/svg`) used by both `discord-worker` a
 | `generateRandomDyesGrid` | `/dye random` — 11B table |
 | `generateHarmonyCard` | `/harmony` — 11A ideal-vs-found |
 | `generatePaletteGrid` | `/extractor image` — 14K ramp |
-| `generateNearestSheet` | `/extractor color`, `/swatch slot:` — 14J·2 colour sheet |
+| `generateNearestSheet` | `/extractor color`, `/swatch slot:` — 14J·2 color sheet |
 | `generateGradientCard` | `/gradient` — 12H strip |
 | `generateMixerCard` | `/mixer` — 12F ratio sweep |
 | `generateA11yCard` | `/accessibility`, `/a11y` — 13D / 13E / 13H |

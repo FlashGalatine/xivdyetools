@@ -14,7 +14,7 @@ disagree, the registry is right.**
 
 | Category | Commands |
 |----------|----------|
-| Colour tools | `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`, `/glamour` |
+| Color tools | `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`, `/glamour` |
 | Dye database | `/dye` |
 | Analysis | `/comparison`, `/contrast`, `/accessibility`, `/a11y`, `/budget` |
 | Community | `/preset` |
@@ -27,7 +27,7 @@ mechanism, so an alias costs a registration slot.
 
 - **`/contrast` added** — WCAG 1.4.11 contrast pairs, split out of `/accessibility`
 - **`/changelog` added** — release notes in Discord
-- **`/favorites` and `/collection` removed** as top-level commands. Preset favourites now live
+- **`/favorites` and `/collection` removed** as top-level commands. Preset favorites now live
   under **`/preset favorite`** (`add` / `remove` / `list`)
 - **`/language` removed** as a top-level command — it is now `/preferences set language:`
 - **`/match` and `/match_image` removed** — dye matching lives in `/extractor color` and
@@ -38,7 +38,7 @@ mechanism, so an alias costs a registration slot.
   contrast inputs moved to `/contrast`
 - **Matching vocabulary** on every `matching` option: `ciede2000` (default) / `oklab` / `cie76` /
   `redmean` / `rgb` / `distinguish` — `hyab` and `oklch-weighted` are retired (stored preferences
-  normalise on read)
+  normalize on read)
 - **`/preset` categories**: `community` dropped; `appearance`, `zones`, `raids-trials` added
 
 Any of these changes require re-running `register-commands`; deploying the worker alone does not
@@ -56,7 +56,7 @@ and `src/index.ts` calls it before dispatch for **every** command — nothing is
 since FINDING-033; `/about`, `/manual` and `/changelog` since FINDING-020). Tiers come from
 `@xivdyetools/worker-kit/rate-limiter` — `DISCORD_COMMAND_LIMITS`, keyed by the **top-level**
 command name; unlisted commands fall through to `default`. Two wrinkles: `resolveRateLimitScope`
-canonicalises aliases, so `/a11y` draws from `/accessibility`'s bucket, and a `command:subcommand`
+canonicalizes aliases, so `/a11y` draws from `/accessibility`'s bucket, and a `command:subcommand`
 key tiers one subcommand apart from its siblings (`extractor:image`). `/changelog` is tiered by
 this worker's own `LOCAL_COMMAND_LIMITS` rather than by the shared preset.
 
@@ -86,7 +86,7 @@ Generate harmonious dye combinations based on color theory. Renders the 11A idea
 |--------|------|----------|-------------|
 | `color` | String (autocomplete) | Yes | Base color — hex code (`#FF5733`) or dye name |
 | `type` | String (choice) | No | `triadic` (default), `complementary`, `analogous`, `split-complementary`, `tetradic`, `inverted-tetradic`, `square`, `monochromatic`, `compound`, `shades` |
-| `wheel` | String (choice) | No | Colour wheel the harmony angles are measured on: `rgb` (default), `ryb`, `munsell`, `oklch-hue`, `oklch-lightness` |
+| `wheel` | String (choice) | No | Color wheel the harmony angles are measured on: `rgb` (default), `ryb`, `munsell`, `oklch-hue`, `oklch-lightness` |
 | `companions` | Integer (1-3) | No | Companion dyes per harmony slot |
 | `matching` | String (choice) | No | `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` |
 | `strict_matching` | Boolean | No | Tighten the distance threshold |
@@ -106,7 +106,7 @@ Generate harmonious dye combinations based on color theory. Renders the 11A idea
 
 Extract colors from an image or a single color value and match them to FFXIV dyes. Image pixels are fetched through the `IMAGE_WORKER` service binding (`POST /extract` on `xivdyetools-image-worker`) and clustered with K-means++; `color` ranks by ΔE2000 over the whole non-Facewear pool.
 
-#### Subcommand: `color` (14J·2 colour sheet)
+#### Subcommand: `color` (14J·2 color sheet)
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -241,7 +241,7 @@ Find affordable dye alternatives via the Universalis market board (through the `
 | `preset` | String (choice) | Yes | One of 22 choices generated from `QUICK_PICKS` (`services/budget/quick-picks.ts`) — `jet_black` and `pure_white` plus 16 Cosmic Exploration and 4 Cosmic Fortunes dyes |
 | `world` | String (autocomplete) | No | World or datacenter (uses the saved preference if not set) |
 
-Uses `fetchPricesBatched` to handle all 125 dyes (Universalis caps a request at 100 items). Facewear colours are not dyes and never enter the price path. Post-Patch 7.5 the budget calculator uses `getMarketItemID()` so the 105 consolidated dyes share three real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256).
+Uses `fetchPricesBatched` to handle all 125 dyes (Universalis caps a request at 100 items). Facewear colors are not dyes and never enter the price path. Post-Patch 7.5 the budget calculator uses `getMarketItemID()` so the 105 consolidated dyes share three real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256).
 
 **Example usage:**
 ```
@@ -275,7 +275,7 @@ Search for dyes by name. Supports autocomplete with localized dye names (en, ja,
 
 ### /dye info
 
-Get detailed information about a specific dye (11B sheet: dye-coloured band, numeric grid, source / market rows including the consolidated Spectrum item, nearest-dyes strip).
+Get detailed information about a specific dye (11B sheet: dye-colored band, numeric grid, source / market rows including the consolidated Spectrum item, nearest-dyes strip).
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -355,7 +355,7 @@ WCAG 1.4.11 non-text contrast between dye pairs (floor 3:1). New in 5.0 — spli
 
 ### /accessibility (alias `/a11y`)
 
-How a dye or a pair of dyes survives each kind of color vision (Brettel simulation, ΔE2000 separation between the simulated colours). One dye renders 13H (a shift is not a risk — no verdict); a pair renders 13D (one named lens) or 13E (`vision:all`, worst lens named).
+How a dye or a pair of dyes survives each kind of color vision (Brettel simulation, ΔE2000 separation between the simulated colors). One dye renders 13H (a shift is not a risk — no verdict); a pair renders 13D (one named lens) or 13E (`vision:all`, worst lens named).
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
@@ -371,13 +371,13 @@ How a dye or a pair of dyes survives each kind of color vision (Brettel simulati
 /a11y dye:Metallic Green dye2:Metallic Red vision:deuteranopia
 ```
 
-**Rate limit:** 10/min, shared — `resolveRateLimitScope` canonicalises `/a11y` to `accessibility`, so the alias cannot double a user's allowance
+**Rate limit:** 10/min, shared — `resolveRateLimitScope` canonicalizes `/a11y` to `accessibility`, so the alias cannot double a user's allowance
 
 ---
 
 ## User Data — ❌ REMOVED in v5.0
 
-`/favorites` and `/collection` are **no longer registered commands**, and `src/services/user-storage.ts` (their KV store) is deleted. Saved dyes/palettes live in the web app; preset favourites moved under `/preset favorite` (`add` / `remove` / `list`). `/about` names where each removed command went for one release. The orphaned `xivdye:favorites:v1:*` / `xivdye:collections:v1:*` / `i18n:user:*` KV keys were swept once against production on 2026-08-29; the one-shot script that listed them has since been removed.
+`/favorites` and `/collection` are **no longer registered commands**, and `src/services/user-storage.ts` (their KV store) is deleted. Saved dyes/palettes live in the web app; preset favorites moved under `/preset favorite` (`add` / `remove` / `list`). `/about` names where each removed command went for one release. The orphaned `xivdye:favorites:v1:*` / `xivdye:collections:v1:*` / `i18n:user:*` KV keys were swept once against production on 2026-08-29; the one-shot script that listed them has since been removed.
 
 ---
 
@@ -449,9 +449,9 @@ Edit one of your own presets. All fields optional; only provided values change.
 
 | Subcommand | Option | Description |
 |------------|--------|-------------|
-| `add` | `preset_name` (autocomplete, required) | Add a preset to your favourites |
-| `remove` | `preset_name` (autocomplete, required) | Remove a preset from your favourites |
-| `list` | — | List your favourited presets |
+| `add` | `preset_name` (autocomplete, required) | Add a preset to your favorites |
+| `remove` | `preset_name` (autocomplete, required) | Remove a preset from your favorites |
+| `list` | — | List your favorited presets |
 
 **Rate limit (all `/preset`):** 10/min
 
