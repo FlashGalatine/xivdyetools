@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.2] - 2026-10-11
+
+### Fixed
+
+- Glamour Reader names a piece by a visually identical twin you can still get when the lowest-numbered one has no known source (core 5.11.0 `defaultCharaTwin`, api-worker 0.19.0). Examples: Augmented Crystarium Ring of Fending instead of the retired Crystarium Ring of Fending, Loyal Housemaid's instead of Housemaid's, Exclusive Far Eastern Journey instead of Far Eastern Journey. The export sheet's Acquisition line follows. Dyeable, any-Grand-Company and non-Dated twins still win first. Over the 1,093-file `.chara` corpus (with api-worker 0.18.1's acquisition table), pieces named with no Acquisition line drop from 469 to 103 of 10,875.
+- Saved Acquisition edits are keyed by the family's lowest row (the smaller of `itemId` and the alternates), not by the named row, so edits saved before this change keep applying and a later source change cannot orphan them. Such an edit was made against the old default twin, so where the default moved to a twin with a source, the sheet shows Keep mine / Use new source once (its copy still reads "You picked …").
+- The `+N` tooltip lists every family member except the twin the row shows. It listed `alternates`, so whenever the shown twin was not the API-named row it named the shown item as its own twin and left out the named one.
+
 ## [5.15.1] - 2026-10-11
 
 ### Fixed

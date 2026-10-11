@@ -2,6 +2,14 @@
 
 ---
 
+## Web-App Version 5.15.2 — October 11, 2026
+
+### Glamour Reader: named by gear you can still get
+- **Pieces are named by a look-alike you can still get.** When the lowest-numbered item with a look has no known source, an identical twin that has one is named, so its Acquisition line fills in.
+- **Retired tomestone accessories show their Augmented versions,** and Housemaid's gear shows Loyal Housemaid's. A dyeable twin still comes first, and you can pick any twin yourself.
+- **Lines you rewrote keep applying.** If the piece now has a known source, the export sheet offers it once: Keep mine or Use new source.
+- **The +N tooltip lists the other items** with the same look, never the one the row already names.
+
 ## Web-App Version 5.15.1 — October 11, 2026
 
 ### Glamour Reader: 803 more Acquisition lines
