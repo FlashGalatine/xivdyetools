@@ -2,7 +2,7 @@
 
 > Feature Status: ✅ Implemented (December 2025)
 > Platforms: Web App + Discord Bot + Cloudflare Worker
-> Core Library Changes: Types defined locally in each consumer (bot & web app)
+> Core Library Changes: The community types live in `@xivdyetools/types` (the original design defined them locally in each consumer)
 > Extends: [PRESET_PALETTES.md](./preset-palettes.md)
 
 ## Overview
@@ -77,7 +77,7 @@ images, and notifies `discord-worker` of moderation outcomes over its own bindin
 ### Database Schema (D1/SQLite)
 
 ```sql
--- As shipped: apps/presets-api/schema.sql plus migrations 0002-0013.
+-- As shipped: apps/presets-api/schema.sql plus migrations 0002-0015.
 -- Abridged here to the shape of the data; see the SQL files for the full
 -- index list and the comments explaining each migration.
 
@@ -135,6 +135,9 @@ CREATE TABLE IF NOT EXISTS presets (
   preview_image_status TEXT NOT NULL DEFAULT 'none',
   -- Migration 0010: up to two extra categories; category_id stays primary
   secondary_categories TEXT NOT NULL DEFAULT '[]',
+  -- Migration 0014: optimistic-concurrency token; the trigger
+  -- presets_content_revision_after_update bumps it on every content or status change
+  content_revision INTEGER NOT NULL DEFAULT 0,
 
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );
@@ -172,6 +175,7 @@ CREATE TABLE IF NOT EXISTS moderation_log (
   moderator_discord_id TEXT NOT NULL,
   action TEXT NOT NULL,                   -- approve | reject | flag | unflag | requeue
                                           -- | revert | ban | unban | hide | restore
+                                          -- | image_approve | image_reject
   reason TEXT,
   target_discord_id TEXT,                 -- the moderated user (ban | unban | hide | restore)
   created_at TEXT DEFAULT (datetime('now')),
@@ -232,7 +236,7 @@ CREATE TABLE IF NOT EXISTS submission_events (
 
 ```typescript
 // ============================================
-// SHARED TYPES (xivdyetools-core)
+// SHARED TYPES (@xivdyetools/types)
 // ============================================
 
 export type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'hidden';
@@ -1129,6 +1133,9 @@ Moderate pending submissions.
 
 ### UI Changes to Preset Browser
 
+> **Design-era mock.** The preset browser no longer has a `Community` category (migration 0007 dropped it), and the
+> web app now submits presets itself. The mock below is kept as the original design.
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Preset Palettes                               [Search] │
@@ -1325,7 +1332,7 @@ wrangler secret put CACHE_PURGE_API_TOKEN
 - [x] Implement `/preset submit` subcommand
 - [x] Implement `/preset vote` subcommand
 - [x] Implement `/preset list` with community presets
-- [x] Add autocomplete for dye selection (5 slots)
+- [x] Add autocomplete for dye selection (6 slots)
 - [x] Update config and environment
 
 ### Phase 3: Web App Integration (Week 3) ✅ COMPLETE
@@ -1343,7 +1350,7 @@ wrangler secret put CACHE_PURGE_API_TOKEN
 - [x] Create `/preset moderate` subcommand (pending/approve/reject/stats)
 - [x] Add moderation logging (moderation_log table + audit trail)
 - [x] Add webhook notifications to moderation channel
-- [x] Add DM notifications to bot owner
+- [ ] ~~Add DM notifications to bot owner~~ (removed 2026-09-01; see "Not shipped" above)
 - [ ] End-to-end testing across all platforms
 - [x] Documentation updates (this file)
 
@@ -1381,7 +1388,7 @@ wrangler secret put CACHE_PURGE_API_TOKEN
 | `xivdyetools-discord-bot/src/index.ts` | Register commands |
 | `xivdyetools-discord-bot/.env` | Add new env vars |
 | `xivdyetools-web-app/src/components/preset-browser-tool.ts` | UI updates |
-| `xivdyetools-core/src/types/index.ts` | Add community types |
+| `packages/types/src/preset/community.ts` | Community types (`CommunityPreset`, `PresetSubmission`) |
 
 ---
 
@@ -1389,7 +1396,7 @@ wrangler secret put CACHE_PURGE_API_TOKEN
 
 ### Post-MVP Features
 
-- **Web App Submissions** - Add Discord OAuth to enable web-based submissions
+- **Web App Submissions** - Add Discord OAuth to enable web-based submissions (shipped: the web app submits, edits and deletes presets with an oauth JWT)
 - **Palette Collections** - Allow users to create curated lists of favorite community palettes
 - **Weekly Featured** - Algorithmically highlight rising palettes
 - **Seasonal Promotions** - Boost visibility of event-themed palettes during events
