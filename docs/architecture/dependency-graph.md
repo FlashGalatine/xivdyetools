@@ -132,13 +132,13 @@ graph TD
 |---------|----------------------|-------------------|
 | **web-app** | core, types, logger, svg, lit | vitest, playwright, jsdom, msw, vite, tailwindcss |
 | **discord-worker** | core, types, logger, auth, worker-kit, svg, bot-logic, hono, @resvg/resvg-wasm | test-utils, vitest |
-| **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono | test-utils, vitest |
+| **moderation-worker** | types, logger, auth, worker-kit, bot-logic, hono, @cloudflare/workers-types | test-utils, vitest |
 | **oauth** | types, auth, worker-kit, hono | test-utils, vitest |
 | **presets-api** | types, auth, worker-kit, hono | test-utils, vitest |
-| **og-worker** | core, types, svg, worker-kit, hono, @resvg/resvg-wasm | vitest |
+| **og-worker** | core, types, svg, worker-kit, hono, @resvg/resvg-wasm, @cloudflare/workers-types | vitest |
 | **api-worker** | core, types, worker-kit, hono | test-utils, svg, vitest, vitepress, vue |
 | **stoat-worker** | types, logger, bot-logic, revolt.js | vitest |
-| **image-worker** | worker-kit, hono, @cf-wasm/photon | vitest |
+| **image-worker** | worker-kit, hono, @cf-wasm/photon, @cloudflare/workers-types | vitest |
 
 ---
 
@@ -186,14 +186,14 @@ Notes:
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `lit` | ^3.3.3 | Web components framework |
-| `vite` | ^8.2.2 | Build tool and dev server (devDependency) |
+| `vite` | ^8.3.1 | Build tool and dev server (devDependency) |
 | `tailwindcss` | ^4.3.3 | Utility-first CSS (devDependency) |
 
 ### xivdyetools-discord-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.13.5 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
+| `hono` | ^4.13.9 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 | `@resvg/resvg-wasm` | ^2.6.2 | SVG to PNG rendering |
 
 Ed25519 interaction-signature verification comes from `@xivdyetools/auth`, which is the
@@ -206,14 +206,14 @@ package that declares `discord-interactions` (`^4.4.0`) — the bot never depend
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.13.5 | HTTP framework for Workers |
+| `hono` | ^4.13.9 | HTTP framework for Workers |
 | `@cf-wasm/photon` | ^0.4.0 | Image decode/resize/pixel-extraction (WASM) — the sole reason this Worker exists |
 
 ### xivdyetools-oauth / presets-api / moderation-worker / og-worker / api-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.13.5 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
+| `hono` | ^4.13.9 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 
 ### xivdyetools-stoat-worker
 
