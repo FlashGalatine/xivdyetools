@@ -160,9 +160,9 @@ graph TD
 └── data/
     ├── dyes.json            ← 125 standard dyes (schema v2: 7 fields, stainID-keyed; rgb/hsv/cost/flags derived at initialize())
     ├── facewear_colors.json ← 11 Facewear colors (NOT dyes — facewearColors export)
-    ├── munsell-*.json / oklch-hue-table.json ← colour-wheel anchor tables
+    ├── munsell-*.json / oklch-hue-table.json ← color-wheel anchor tables
     ├── presets.json         ← curated preset palettes
-    ├── character_colors/    ← character-creation colour sheets
+    ├── character_colors/    ← character-creation color sheets
     └── locales/{en,ja,de,fr,ko,zh}.json
 
 Notes:
@@ -174,7 +174,7 @@ Notes:
 - As of v2.6.0, ALLIED_SOCIETY_ACQUISITIONS is removed. Patch 7.5 collapsed those
   vendor categories out of the dye database.
 - As of v3.0.0 (schema v2), the data file is dyes.json (125 entries, stainID-keyed).
-  The 11 Facewear colours moved to facewear_colors.json / the facewearColors export.
+  The 11 Facewear colors moved to facewear_colors.json / the facewearColors export.
 ```
 
 ---

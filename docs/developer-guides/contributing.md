@@ -36,7 +36,7 @@ registration, D1 migrations) identified. See [Release Process](release-process.m
 |------|---------|
 | `feat` | New capability |
 | `fix` | Bug fix |
-| `refactor` | Restructuring with no behaviour change |
+| `refactor` | Restructuring with no behavior change |
 | `test` | Adding or repairing tests |
 | `docs` | Documentation only |
 | `chore` | Tooling, dependencies, config |
@@ -45,7 +45,7 @@ registration, D1 migrations) identified. See [Release Process](release-process.m
 The scope is the package or app directory name — `web-app`, `presets-api`, `discord-worker`,
 `core`, `types`, `svg`, `test-utils`. Omit it for changes that genuinely span the workspace.
 
-Write the summary as a claim about behaviour, not a description of the diff:
+Write the summary as a claim about behavior, not a description of the diff:
 
 ```
 ✅ fix(presets-api): pending preview images now reach the moderator queue
@@ -100,7 +100,7 @@ pnpm --filter @xivdyetools/core exec vitest run src/path/to/file.test.ts   # one
 pnpm --filter xivdyetools-web-app run test:e2e         # Playwright
 ```
 
-New behaviour needs a test. Bug fixes need a test that fails before the fix — a regression guard
+New behavior needs a test. Bug fixes need a test that fails before the fix — a regression guard
 that never went red is not a guard. See [Testing](testing.md) for the fuller strategy.
 
 ---
@@ -150,7 +150,7 @@ may be committed); worker secrets are set with `wrangler secret put` — see
 ## Pull request checklist
 
 - [ ] `pnpm turbo run build type-check lint test` passes for the affected projects, and the repo-wide gates pass: `pnpm test:scripts && pnpm dead-code:check && pnpm docs:check-versions && pnpm docs:check-links && pnpm workers:check-logs`
-- [ ] New behaviour is covered by a test; bug fixes have a regression guard
+- [ ] New behavior is covered by a test; bug fixes have a regression guard
 - [ ] Type-only imports use `import type`
 - [ ] Version bumped and `CHANGELOG.md` updated for every project you changed
 - [ ] User-visible web-app changes are in `CHANGELOG-laymans.md`

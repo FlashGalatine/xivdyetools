@@ -66,7 +66,7 @@ interface Env {
   IMAGE_WORKER?: Fetcher;         // Photon-backed pixel extraction for /extractor
 
   // KV Namespaces
-  KV: KVNamespace;                // Analytics counters, user prefs, favourites
+  KV: KVNamespace;                // Analytics counters, user prefs, favorites
 
   // Analytics
   ANALYTICS?: AnalyticsEngineDataset;
@@ -207,7 +207,7 @@ xivdyetools-discord-worker
 │       no public surface, see docs/operations/IMAGE_WORKER_SPLIT.md)
 │
 ├── KV (Namespace Binding)
-│   └── Used for: User preferences, preset favourites, analytics counters,
+│   └── Used for: User preferences, preset favorites, analytics counters,
 │       announced-version memo, and the rate-limit fallback when RL_* is unbound
 │
 ├── RL_5 … RL_70 (native rate-limit bindings)

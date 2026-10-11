@@ -104,7 +104,7 @@ POST/PATCH bodies (415 otherwise). Field-level rules come from
 ### The preset object
 
 Every route that returns a preset returns this shape (`CommunityPreset` in `@xivdyetools/types`,
-serialised by `rowToPreset()` and then by `toPublicPreset()` in `services/preset-service.ts`, which
+serialized by `rowToPreset()` and then by `toPublicPreset()` in `services/preset-service.ts`, which
 applies the viewer rules for `author_discord_id` / `is_owner` below). The example is what an
 **anonymous** caller receives:
 
@@ -240,7 +240,7 @@ Submit a new preset. Requires auth + user context; banned users get 403 `USER_BA
 | `secondary_categories` | optional, ≤ 2 valid slugs, no duplicates, must not repeat the primary — `at most 2 secondary categories allowed` / `A secondary category cannot repeat the primary category` |
 | `dyes` | 3–6 positive integers ≤ 254, each dye may appear only once — `Must include 3-6 dyes`; a value ≥ 5000 → `Dye 5729 looks like a legacy item ID; expected a stainID (1-254)`; 255–4999 → `Dye IDs must be stainIDs (1-254)`; a repeated dye (`[7, 7, 7]`, `[1, 2, 3, 3]`) → `Each dye may appear only once` (BUG-010 — rejected, not de-duplicated) |
 | `tags` | required array (may be `[]`), ≤ 10 strings of ≤ 30 chars — `Maximum 10 tags allowed` |
-| `example_link` | optional; `https`, ≤ 300 chars, host on the allowlist (`eorzeacollection.com`, `mirapri.com`, `reddit.com`, `redd.it`, `x.com`, `twitter.com`, `bsky.app`, `instagram.com`, `pixiv.net`, `finalfantasyxiv.com`, `misskey.io`, plus subdomains). Surrounding whitespace is trimmed before the URL is judged, and a whitespace-only value clears the link like `""` (BUG-069). A bare host is normalised to `https://…` before storage. `Example link host must be one of: …` |
+| `example_link` | optional; `https`, ≤ 300 chars, host on the allowlist (`eorzeacollection.com`, `mirapri.com`, `reddit.com`, `redd.it`, `x.com`, `twitter.com`, `bsky.app`, `instagram.com`, `pixiv.net`, `finalfantasyxiv.com`, `misskey.io`, plus subdomains). Surrounding whitespace is trimmed before the URL is judged, and a whitespace-only value clears the link like `""` (BUG-069). A bare host is normalized to `https://…` before storage. `Example link host must be one of: …` |
 
 Flow: rate limit (10/UTC day) → validate → duplicate check on `dye_signature` → profanity/Perspective
 moderation → insert → auto-vote → Discord notification (`type: "submission"`, see below).
@@ -805,7 +805,7 @@ usually none) and which can be older than the text being replaced. When Revert i
 (and show that text), not as undoing this edit: approved A → a flagged edit B snapshots A → a
 moderator approves B → a flagged edit C reverts to **A**, discarding the approved B.
 
-**Behaviour:** the `submission` moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its
+**Behavior:** the `submission` moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its
 approve/reject buttons route to moderation-worker); `preview_image` embeds are posted with this bot's
 own token, and their `previewimg_approve_<id>` / `previewimg_reject_<id>` buttons are handled here.
 `type: "preview_image"` with no `MODERATION_CHANNEL_ID` configured is a silent no-op.
