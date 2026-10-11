@@ -1,0 +1,20 @@
+# default sweep (16)
+| apps/web-app/PRIVACY.md:8 | prose | colour | color | — |
+| apps/web-app/PRIVACY.md:16 | prose | colour | color | — |
+| apps/web-app/PRIVACY.md:43 | prose | colours | colors | — |
+| apps/web-app/PRIVACY.md:51 | prose | favourite | favorite | — |
+| apps/web-app/PRIVACY.md:58 | prose | favourite | favorite | — |
+| apps/web-app/PRIVACY.md:77 | prose | centre | center | — |
+| apps/web-app/PRIVACY.md:105 | prose | colours | colors | — |
+| apps/web-app/PRIVACY.md:205 | prose | colours | colors | — |
+| apps/web-app/TERMS_OF_SERVICE.md:9 | prose | colour | color | — |
+| apps/web-app/TERMS_OF_SERVICE.md:25 | prose | colour | color | — |
+| apps/web-app/TERMS_OF_SERVICE.md:45 | prose | licence | license | — |
+| apps/web-app/TERMS_OF_SERVICE.md:46 | prose | licence | license | — |
+| apps/web-app/TERMS_OF_SERVICE.md:115 | prose | colours | colors | — |
+| apps/web-app/TERMS_OF_SERVICE.md:139 | prose | colour | color | — |
+| apps/web-app/TERMS_OF_SERVICE.md:140 | prose | colours | colors | — |
+| apps/web-app/TERMS_OF_SERVICE.md:162 | prose | licence | license | — |
+
+# --all extras: code/link zones, triage by hand (0)
+

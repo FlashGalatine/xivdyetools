@@ -1,0 +1,144 @@
+BASELINE LIVE PROBE RESULTS
+Audit Date: 2026-10-11
+Overall Timestamp: 2026-10-11T04:33:46Z - 2026-10-11T04:33:49Z
+
+=== HTTP/HTTPS ENDPOINT PROBES ===
+
+1. api-worker @ https://data.xivdyetools.app/v1
+Status: 404 Not Found (expected; /v1 is not a valid route)
+HTTP Version: HTTP/1.1
+X-API-Version: v1
+X-RateLimit-Limit: 65
+X-RateLimit-Remaining: 64
+X-Request-ID: 1bbf66c3-7094-49af-9e69-4ff2da6627f0
+Content-Type: application/json
+Timestamp: 2026-10-11T04:33:46Z
+Note: API responds with version stamp in X-API-Version header. Service reachable.
+
+2. discord-worker @ https://bot.xivdyetools.app/health
+Status: 200 OK
+HTTP Version: HTTP/1.1
+Content-Type: application/json
+Payload: {"status":"healthy","service":"xivdyetools-discord-worker","timestamp":"2026-10-11T04:33:47.229Z"}
+X-Request-ID: 7bd1921f-3f6c-45d7-a81d-7cc16529f28e
+Timestamp: 2026-10-11T04:33:47Z
+
+3. presets-api @ https://api.xivdyetools.app/health
+Status: 200 OK
+HTTP Version: HTTP/1.1
+Content-Type: application/json
+Payload: {"status":"ok","timestamp":"2026-10-11T04:33:47.545Z"}
+X-Request-ID: 7c9bcfff-4da0-4076-a44a-248dfb7a688a
+Timestamp: 2026-10-11T04:33:47Z
+
+4. moderation-worker @ https://moderation-bot.xivdyetools.app/health
+Status: 200 OK
+HTTP Version: HTTP/1.1
+Content-Type: application/json
+Payload: {"status":"ok"}
+X-Request-ID: 0a25956e-95aa-4ae1-87ed-83875940f87b
+Timestamp: 2026-10-11T04:33:47Z
+
+5. og-worker @ https://og.xivdyetools.app/og
+Status: 404 Not Found
+HTTP Version: HTTP/1.1
+Content-Type: application/json
+Payload: {"error":"Not found"}
+X-Request-ID: 7035a688-bad0-4921-aef6-b0291db02875
+Timestamp: 2026-10-11T04:33:48Z
+Note: Expected 404. og-worker routes are pattern-matched (e.g., /harmony/*, /gradient/*).
+
+6. API docs @ https://developers.xivdyetools.app/
+Status: 200 OK
+HTTP Version: HTTP/1.1
+Content-Type: text/html
+Document: VitePress 1.6.4 (XIV Dye Tools API)
+Title: "XIV Dye Tools API"
+Timestamp: 2026-10-11T04:33:48Z
+Note: Static assets served (CSS, JS modules present). Docs site live.
+
+7. web-app @ https://xivdyetools.app/
+Status: 200 OK
+HTTP Version: HTTP/1.1
+Content-Type: text/html; charset=utf-8
+Document: SPA index.html
+Title: "XIV Dye Tools - FFXIV Dye Color Matcher, Harmony Generator & Accessibility Checker"
+Meta Description: "Free tools for FFXIV players: Color Matcher, Harmony Generator, Accessibility Checker, Dye Comparison, and Dye Mixer."
+CSP: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; ...
+Timestamp: 2026-10-11T04:33:49Z
+Deployed on: Cloudflare Pages
+
+=== WRANGLER DEPLOYMENTS (discord-worker --env production) ===
+
+Checked: 2026-10-11T04:33:50Z
+Latest Deployment:
+  Created: 2026-10-09T14:08:58.999Z
+  Author: <maintainer, redacted>
+  Version ID: 12d8d99a-230e-441c-aeaf-4773fecc3ed8
+  Version Created: 2026-10-09T14:08:57.479Z
+  Rollout: 100%
+
+Prior Deployments (last 9):
+  - 2026-10-09T14:07:28.687Z (Version b78be604-df11-4556-ae34-49b157b1d97a)
+  - 2026-10-09T14:05:52.622Z (Version 32ae6b5e-dbd1-4954-830f-15c918afd1f0)
+  - 2026-10-09T14:03:35.215Z (Version a8d5597e-baeb-4133-8069-5cc60c97bbc7)
+  - 2026-10-09T14:02:15.653Z (Version 20d1636e-3123-4723-8c1e-b136e065f695)
+  - 2026-10-09T13:47:02.815Z (Version 83bfcb8f-073e-4302-9807-231a03dfa7e7)
+  - 2026-10-09T13:45:31.018Z (Version 51d7f7ca-dbd2-4305-987a-8bd102719783)
+  - 2026-10-09T13:44:22.074Z (Version 15c1a5b8-ec6d-42d0-a5e1-2c3bdcd35140)
+  - 2026-10-09T13:42:48.848Z (Version 901b526e-7baa-4736-a438-b41f38f3e9a5)
+  - 2026-10-09T13:16:52.635Z (Version 2b70d966-b57a-4d3d-b2c7-c2e6ee4239ba)
+
+=== npm REGISTRY: PUBLISHED PACKAGES ===
+
+Package: @xivdyetools/types
+  Version: 3.3.0
+  Last Modified: 2026-10-09T14:28:14.000Z
+  Status: Published
+
+Package: @xivdyetools/logger
+  Version: 2.3.0
+  Last Modified: 2026-10-09T14:29:52.529Z
+  Status: Published
+
+Package: @xivdyetools/auth
+  Version: 2.0.2
+  Last Modified: 2026-09-15T17:27:25.633Z
+  Status: Published
+
+Package: @xivdyetools/worker-kit
+  Version: 1.5.0
+  Last Modified: 2026-10-09T14:28:06.736Z
+  Status: Published
+
+Package: @xivdyetools/core
+  Version: 5.10.0
+  Last Modified: 2026-10-09T14:32:04.195Z
+  Status: Published
+
+Package: @xivdyetools/svg
+  Version: 4.4.0
+  Last Modified: 2026-10-09T14:28:15.321Z
+  Status: Published
+
+Package: @xivdyetools/bot-logic
+  Version: 4.8.3
+  Last Modified: 2026-10-09T14:28:26.042Z
+  Status: Published
+
+=== SUMMARY ===
+
+All Endpoints Reachable: YES
+  - 7/7 worker/web hosts respond (discord, presets-api, moderation, og, api-worker respond; developers.xivdyetools.app and xivdyetools.app both operational)
+
+Latest Deployment Age: 2 days, 15 hours
+  - Last discord-worker production deploy: 2026-10-09T14:08:57.479Z
+
+Package Versions Match Baseline: YES
+  - All 7 packages at expected versions in npm latest
+  - All packages published between 2026-09-15 and 2026-10-09
+
+Production Baseline Status: NOMINAL
+  - Served deployment (16a6123f, 2026-10-09T14:07Z) is current
+  - No rollbacks or stale workers detected
+  - All health checks pass
