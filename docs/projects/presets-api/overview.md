@@ -61,6 +61,7 @@ Request → Auth Middleware → Handler → D1 Database
 src/
 ├── index.ts                 # Hono app, CORS, routes
 ├── types.ts                 # Env bindings, domain types
+├── retention-job.ts         # Daily Cron prune (production only, 23 4 * * *)
 ├── middleware/
 │   └── auth.ts              # Bot API + JWT authentication
 ├── handlers/
@@ -155,6 +156,7 @@ CREATE TABLE moderation_log (
   preset_id TEXT,                -- NULL for the user-level ban / unban (migration 0013)
   moderator_discord_id TEXT NOT NULL,
   action TEXT NOT NULL,          -- approve | reject | flag | unflag | requeue | revert
+                                 -- | image_approve | image_reject
                                  -- | ban | unban | hide | restore (moderation-worker)
   reason TEXT,
   target_discord_id TEXT,        -- the moderated user (migration 0013)

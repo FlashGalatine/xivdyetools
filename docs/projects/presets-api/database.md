@@ -85,7 +85,7 @@ Append-only audit trail of moderation actions. presets-api writes the preset-lev
 
 Indexes: `idx_moderation_log_preset(preset_id)`, `idx_moderation_log_moderator(moderator_discord_id)`, `idx_moderation_log_created(created_at DESC)`.
 
-**Retention (FINDING-005; the Sprint 5 privacy-policy amendment will publish these periods):** `ban` / `unban` / `hide` / `restore` rows are deleted 12 months after `created_at`; every other row lives as long as its preset (`DELETE /presets/:id` removes them explicitly as well as through the FK cascade). See [moderation.md](moderation.md) "Retention".
+**Retention (FINDING-005; the Sprint 5 privacy-policy amendment published these periods):** `ban` / `unban` / `hide` / `restore` rows are deleted 12 months after `created_at`; every other row lives as long as its preset (`DELETE /presets/:id` removes them explicitly as well as through the FK cascade). See [moderation.md](moderation.md) "Retention".
 
 Nothing enforces the `action` vocabulary in SQL (no CHECK constraint), and `GET /api/v1/moderation/:presetId/history` returns rows as stored — a `hide` / `restore` row therefore shows up in a preset's history, and `/moderation/stats` counts every row in its 7-day `actions_last_week` figure.
 
@@ -134,7 +134,7 @@ Users banned from the presets system (migration 0003). Written by `xivdyetools-m
 | unban_moderator_discord_id | TEXT | Moderator who lifted the ban |
 | | | CHECK (discord_id IS NOT NULL OR xivauth_id IS NOT NULL) |
 
-An unban closes the row (`unbanned_at`) rather than deleting it at once — a lifted ban is deleted **90 days** after `unbanned_at` by the presets-api retention prune (FINDING-005; an active ban is never pruned). Two **partial unique** indexes — `idx_banned_users_discord_active` on `discord_id` and `idx_banned_users_xivauth_active` on `xivauth_id`, both `WHERE … IS NOT NULL AND unbanned_at IS NULL` — allow only one *active* ban per identity while keeping the history. Also `idx_banned_users_active(banned_at DESC) WHERE unbanned_at IS NULL` and `idx_banned_users_moderator(moderator_discord_id)`.
+An unban closes the row (`unbanned_at`, and blanks `username` and `reason`) rather than deleting it at once — a lifted ban is deleted **90 days** after `unbanned_at` by the presets-api retention prune (FINDING-005; an active ban is never pruned). Two **partial unique** indexes — `idx_banned_users_discord_active` on `discord_id` and `idx_banned_users_xivauth_active` on `xivauth_id`, both `WHERE … IS NOT NULL AND unbanned_at IS NULL` — allow only one *active* ban per identity while keeping the history. Also `idx_banned_users_active(banned_at DESC) WHERE unbanned_at IS NULL` and `idx_banned_users_moderator(moderator_discord_id)`.
 
 ---
 
@@ -195,6 +195,7 @@ rejected or hidden preset's dye combination stops blocking resubmission.
 | `0012_submission_events_text_edit.sql` | Rebuilds `submission_events` to allow the `text_edit` kind in its CHECK constraint, and adds `idx_submission_events_created` (FINDING-005) |
 | `0013_moderation_log_user_actions.sql` | Rebuilds `moderation_log` to make `preset_id` nullable and add `target_discord_id`, so moderation-worker's `ban` / `unban` / `hide` / `restore` rows can land here (FINDING-018) |
 | `0014_add_content_revision.sql` | Adds the `content_revision` column and the trigger that increments it on content/ownership/status changes — optimistic concurrency for edit, moderation status and revert |
+| `0015_rewrite_legacy_dead_letters.sql` | Data-only: rewrites pre-2026-08-30 `failed_notifications.payload` rows to the reduced `{ type, preset_id, moderation_status? }` shape (idempotent). **Hand-run after the presets-api 2.4.0 deploy** with `wrangler d1 execute --file` |
 | `002_add_composite_indexes.sql` | Performance indexes for common query patterns (the odd name is historical — it predates the four-digit series and is the only file `db:migrate:indexes` applies) |
 
 `0012` and `0013` each **rebuild** a table (SQLite cannot alter a CHECK or a NOT NULL constraint in
