@@ -70,7 +70,7 @@ pnpm turbo run test
 pnpm turbo run test --filter=@xivdyetools/core
 
 # Run a single test file
-pnpm --filter @xivdyetools/core exec vitest run src/services/DyeService.test.ts
+pnpm --filter @xivdyetools/core exec vitest run src/services/__tests__/DyeService.test.ts --coverage.enabled=false
 
 # Test with coverage
 pnpm --filter @xivdyetools/core run test:coverage
