@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.1] - 2026-10-11
+
+### Fixed
+
+- Glamour Reader fills 803 more Acquisition fields from api-worker 0.18.1's researched table: current store sets, quest rewards, seasonal and collaboration events (`Event Name (YYYY)`, the year first offered), five Dawntrail duty sets, Feast ranking rewards, Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure Trove, Cosmic Fortune and Ceremony of Eternal Bonding attire. Every PvP Series reward reads `PvP Series Rewards`. Facewear sources cover 60 of 61 styles. No web-app source changed; this release carries the What's New note.
+
 ## [5.15.0] - 2026-10-09
 
 ### Added
