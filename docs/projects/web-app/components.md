@@ -115,7 +115,7 @@ Initial focus falls back to the dialog; body overflow is restored to its prior v
 |-------|------|-------|
 | Welcome (W2) | `components/welcome-modal.ts` | Four colour-in/colour-out leads (Harmony, Extractor, Mixer, Gradient) + mono row for the other five; "Get started" lands on `RouterService.getDefaultTool()`; no `dontShowAgain` checkbox. |
 | Changelog (C2) | `components/changelog-modal.ts` | One layout for the auto-popup and the header button: current release open, earlier releases as collapsible rows. |
-| About | `components/about-modal.ts` | VERSION / BUILD / DYES mono cells (`__BUILD_DATE__` define), seven 44 px icon links from core `SOCIAL_LINKS`, dev-API disclosure, boxed attribution. |
+| About | `components/about-modal.ts` | VERSION / BUILD / DYES mono cells (`__BUILD_DATE__` define), seven 44 px icon links from core `SOCIAL_LINKS`, dev-API disclosure, a POLICIES row (Privacy · Terms of Service, each linking the copy in the viewer's locale chosen by `policyDocFile()`, with English fallback), boxed attribution. |
 | Theme picker | `components/v4/theme-modal.ts` | Three-band swatch cards for `standard-dark` / `standard-light`, live-apply, `lightScrim: true`, "Done" footer. |
 | Language | `components/v4/language-modal.ts` | Six locales, "Done" footer; `LanguageService.setLocale` also sets `document.documentElement.lang`. |
 | Tour prompt | `services/tutorial-service.ts` + `components/tutorial-spotlight.ts` | First-visit prompt per tool (start / skip / disable all), then the coach-mark overlay. |
