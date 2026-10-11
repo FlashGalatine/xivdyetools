@@ -216,10 +216,13 @@ The worker owns one D1 database, `xivdyetools-users`, with a single `users` tabl
 wrangler d1 execute xivdyetools-users --remote --file=./schema/users.sql
 ```
 
-An existing database is brought into line by
-`apps/oauth/migrations/0001_drop_xivauth_characters.sql`, which is **hand-run** after the deploy
-that stops writing the dropped table and column (oauth 3.0.0); it is not part of any deploy. Run
-it with `wrangler d1 execute … --file=`, never `d1 migrations apply`. See
+An existing database that still has the pre-3.0 schema (a `users.avatar_url` column) is brought
+into line by `apps/oauth/migrations/0001_drop_xivauth_characters.sql`, which is **hand-run** once,
+after the deploy that stops writing the dropped table and column (oauth 3.0.0); it is not part of
+any deploy. Its `ALTER TABLE` is not idempotent, so never rerun it on a database that already ran
+it or was created from the current schema; check `PRAGMA table_info(users)` first, as the
+migration header describes. Run it with `wrangler d1 execute … --file=`, never
+`d1 migrations apply`. See
 [`apps/oauth/CLAUDE.md`](../../../apps/oauth/CLAUDE.md#database) for the table layout and the
 full procedure.
 
