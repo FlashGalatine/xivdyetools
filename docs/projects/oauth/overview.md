@@ -22,6 +22,7 @@ pnpm install
 # Set secrets (one time, from apps/oauth/)
 wrangler secret put DISCORD_CLIENT_SECRET
 wrangler secret put JWT_SECRET
+wrangler secret put XIVAUTH_CLIENT_SECRET  # optional, confidential-client mode
 
 # Start local dev server (port 8788)
 pnpm --filter xivdyetools-oauth-worker run dev
@@ -29,7 +30,7 @@ pnpm --filter xivdyetools-oauth-worker run dev
 # Deploy — NOTE: on this worker a bare `wrangler deploy` IS production
 # (no [env.production]; the top-level block is `xivdyetools-oauth` on auth.xivdyetools.app;
 # `[env.development]` is the only non-production env — `[env.preview]` was deleted 2026-08-21, FINDING-029)
-npm run deploy
+pnpm --filter xivdyetools-oauth-worker run deploy   # = wrangler deploy, i.e. production
 ```
 
 See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONMENTS.md).
@@ -201,6 +202,7 @@ Redirect / CORS origins are `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app
 ```bash
 wrangler secret put DISCORD_CLIENT_SECRET
 wrangler secret put JWT_SECRET
+wrangler secret put XIVAUTH_CLIENT_SECRET  # optional, confidential-client mode
 ```
 
 ---
