@@ -127,16 +127,33 @@ The registration script asserts parity against `COMMAND_REGISTRY`
 (`apps/discord-worker/src/commands/registry.ts`) before publishing, so a command missing from the
 registry fails the run rather than silently shipping a mismatched roster.
 
-### D1 migrations
+### Applying D1 migrations
 
-`presets-api` and `oauth` persist to D1. Migrations are applied explicitly:
+`presets-api` and `oauth` persist to D1. Numbered files under each app's `migrations/` are
+applied **by hand, one file at a time**, with `wrangler d1 execute`:
 
 ```bash
-pnpm --filter xivdyetools-presets-api run db:migrate:local   # local dev DB
-pnpm --filter xivdyetools-presets-api run db:migrate         # remote
+# presets-api (database xivdyetools-presets)
+pnpm --filter xivdyetools-presets-api exec wrangler d1 execute xivdyetools-presets \
+  --remote --env production --file=./migrations/NNNN_name.sql
+
+# oauth (database xivdyetools-users) — no --env: oauth has no [env.production]
+# and its top-level block is already production
+pnpm --filter xivdyetools-oauth-worker exec wrangler d1 execute xivdyetools-users \
+  --remote --file=./migrations/NNNN_name.sql
 ```
 
-Apply the migration **before** the code that depends on it reaches production.
+Never run `wrangler d1 migrations apply`: no `d1_migrations` table records these files, so it
+would replay every one of them and fail on the first duplicate column.
+
+`db:migrate` does **not** apply migrations. In `presets-api` it only re-runs `schema.sql`
+(`CREATE … IF NOT EXISTS`, useful for a fresh database) and cannot alter a live schema;
+`db:migrate:local` does the same against the local dev DB. `oauth` has no `db:migrate` script.
+
+Some newer files state their order in the header: `presets-api`'s `0014` is applied before the
+revision-aware deploy, while its `0015` and `oauth`'s `0001` are applied after the deploy they
+depend on. Follow the header. When a header says nothing, apply the migration **before** the code
+that depends on it reaches production.
 
 ---
 
@@ -179,7 +196,7 @@ subsets and WASM modules are the usual offenders.
 - [ ] `pnpm turbo run lint type-check test build --filter=<target>...` passes locally
 - [ ] If a new shared-package dependency was added, the deploy workflow's `paths:` filter includes it
 - [ ] If slash-command shape changed, `register-commands` is scheduled to run
-- [ ] If the D1 schema changed, the migration is applied first
+- [ ] If the D1 schema changed, the migration is applied by hand, before or after the deploy as its header says ([Applying D1 migrations](#applying-d1-migrations))
 - [ ] If deploying by hand, you have confirmed which convention this worker uses
 - [ ] For `discord-worker`, the gzip bundle is comfortably under 3,072 KiB
 

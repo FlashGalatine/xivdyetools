@@ -148,7 +148,7 @@ may be committed); worker secrets are set with `wrangler secret put` — see
 - [ ] User-visible web-app changes are in `CHANGELOG-laymans.md`
 - [ ] If a new shared-package dependency was added, the relevant deploy workflow's `paths:` filter includes it
 - [ ] Slash-command shape changes are flagged so `register-commands` gets run
-- [ ] D1 schema changes ship a migration, applied before the dependent code
+- [ ] D1 schema changes ship a migration, applied before the dependent code — by hand, per file, with `wrangler d1 execute --file`, never `d1 migrations apply` (see [deployment.md § Applying D1 migrations](deployment.md#applying-d1-migrations))
 - [ ] Documentation in `docs/` reflects the change — especially [versions.md](../versions.md)
 
 ---

@@ -172,7 +172,8 @@ When a change spans packages and apps — an audit remediation sweep, or a major
 3. Merge to `main`. Deploy workflows fire automatically for the affected apps.
 4. Run the publish workflow for each package, in dependency order.
 5. Run `register-commands` if any slash-command shape changed.
-6. Apply D1 migrations if the schema changed.
+6. Apply D1 migrations if the schema changed — by hand, one file at a time; see
+   [Applying D1 migrations](deployment.md#applying-d1-migrations).
 
 The root `CHANGELOG.md` carries a monorepo-level rollup for sweeps that touch many projects at
 once.
