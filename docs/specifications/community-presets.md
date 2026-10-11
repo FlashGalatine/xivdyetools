@@ -308,8 +308,16 @@ export interface VoteResponse {
 ### Base URL
 
 ```
-Production: https://presets-api.xivdyetools.workers.dev
+Production: https://api.xivdyetools.app
 ```
+
+> **As shipped:** this section is the original API design. The running API is documented in
+> [Presets API endpoints](../projects/presets-api/endpoints.md) and its
+> [rate limits](../projects/presets-api/rate-limiting.md). The corrections below track it, but that
+> reference wins on any difference. It also covers routes this design never listed: `/categories/:id`,
+> `/presets/mine`, `/presets/rate-limit`, `/presets/refresh-author`, edit and delete of a preset, the
+> preview-image routes (author upload and removal, moderator review), `/votes/:presetId/check`, and the
+> moderation single-preset, revert, history, stats and failed-notification routes.
 
 ### Authentication
 
@@ -334,7 +342,7 @@ List presets with filtering and pagination.
 | `status` | string | `approved` | Filter by status |
 | `sort` | string | `popular` | `popular` \| `recent` \| `name` |
 | `page` | number | `1` | Page number |
-| `limit` | number | `20` | Results per page (max 100) |
+| `limit` | number | `20` | Results per page (max 50) |
 | `is_curated` | boolean | — | Filter curated/community |
 
 **Response:**
@@ -415,7 +423,7 @@ List all categories with preset counts.
 
 #### POST /api/v1/presets
 
-Submit a new preset. **Requires bot authentication.**
+Submit a new preset. **Requires authentication.** A bot request carries the v2 HMAC signature, timestamp and single-use nonce described under Authentication, and a web user may submit with their JWT.
 
 **Request Body:**
 
@@ -437,7 +445,7 @@ X-User-Discord-ID: 123456789
 X-User-Discord-Name: ExampleUser
 ```
 
-**Response (New Preset):**
+**Response (New Preset):** HTTP 201, with `remaining_submissions` (the caller's submissions left today) alongside `moderation_status`.
 
 ```json
 {
@@ -447,7 +455,7 @@ X-User-Discord-Name: ExampleUser
 }
 ```
 
-**Response (Duplicate Detected):**
+**Response (Duplicate Detected, approved preset):**
 
 ```json
 {
@@ -469,7 +477,7 @@ X-User-Discord-Name: ExampleUser
 
 ---
 
-#### POST /api/v1/presets/:id/vote
+#### POST /api/v1/votes/:presetId
 
 Add a vote to a preset. **Requires bot authentication.**
 
@@ -501,7 +509,7 @@ X-User-Discord-ID: 123456789
 
 ---
 
-#### DELETE /api/v1/presets/:id/vote
+#### DELETE /api/v1/votes/:presetId
 
 Remove a vote from a preset. **Requires bot authentication.**
 
@@ -516,7 +524,7 @@ Remove a vote from a preset. **Requires bot authentication.**
 
 ---
 
-#### PATCH /api/v1/presets/:id/status
+#### PATCH /api/v1/moderation/:presetId/status
 
 Moderate a preset. **Requires moderator authentication.**
 
@@ -540,7 +548,7 @@ Moderate a preset. **Requires moderator authentication.**
 
 ---
 
-#### GET /api/v1/presets/pending
+#### GET /api/v1/moderation/pending
 
 List presets pending moderation. **Requires moderator authentication.**
 
@@ -605,7 +613,7 @@ palette2.dyes = [1, 40, 12];     // Signature: "[1,12,40]"
 
 When a duplicate is detected:
 1. Return the existing preset to the user
-2. Automatically add their vote to it
+2. Automatically add their vote to it, if the existing preset is approved (the owner or a moderator gets a pending duplicate back without a vote; anyone else gets a bare 409)
 3. Show message: "This palette already exists! Your vote has been added."
 
 ### Content Moderation
@@ -1235,7 +1243,7 @@ async function migrate(db: D1Database) {
 |---------|------------|
 | Unauthorized submissions | Bot-only authentication via shared secret |
 | Vote manipulation | One vote per Discord user per preset |
-| Spam submissions | Rate limiting (10/day per user) |
+| Spam submissions | Rate limiting (daily per-user caps; see Rate Limits below) |
 | SQL injection | D1 parameterized queries |
 | Content abuse | Profanity filter + manual review queue |
 
@@ -1244,6 +1252,9 @@ async function migrate(db: D1Database) {
 | Action | Limit |
 |--------|-------|
 | Submit preset | 10 per day per user |
+| Edit that is flagged for moderation | 10 per day per user |
+| Preview-image upload or replacement | 20 per day per user |
+| Name or description edit (counted before moderation) | 30 per day per user |
 | Any `/api/*` request | 100 per minute per acting Discord user, and 100 per minute per client IP (the IP layer is skipped for Service-Binding callers, which send no `CF-Connecting-IP`) |
 | Vote | No vote-specific limit — only the two layers above |
 
