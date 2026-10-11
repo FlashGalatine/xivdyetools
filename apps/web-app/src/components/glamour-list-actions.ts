@@ -11,7 +11,9 @@
 
 import {
   charaModelKey,
+  gposersOmittedSlots,
   gposersSameRings,
+  type GposersSlotFacts,
   type ResolvedCharaCharacter,
   type CharaGearSlotId,
 } from '@xivdyetools/core';
@@ -74,6 +76,13 @@ export interface GlamourSheetPiece {
  * builder writes no dye line for it anyway.
  *
  * Only worn slots get an entry — the builder writes nothing for the rest.
+ * Two kinds of worn slot are left out on purpose (core's
+ * `gposersOmittedSlots`): invisible pieces, which a submission has nothing to
+ * say about, and an Off Hand under a main hand that does not take one. Both
+ * are decided from the resolve's answer, so nothing is dropped on a guess:
+ * before it lands nothing is omitted, a slot it could not name is never taken
+ * for invisible, and an Off Hand stays when the main hand's category is
+ * unknown. The reader's own rows are built elsewhere and keep every piece.
  */
 export function glamourMarkdownInput({
   resolved,
@@ -109,6 +118,21 @@ export function glamourMarkdownInput({
       acquisition: glasses?.acquisition,
     };
   }
+
+  // Every name in a slot's family decides invisibility; a slot with no item has
+  // no facts and so is never dropped for it
+  const facts: Partial<Record<CharaGearSlotId, GposersSlotFacts>> = {};
+  for (const model of resolved.gearModels) {
+    const item = equipment?.items[model.slot];
+    facts[model.slot] = item
+      ? { familyEn: [item.names.en, ...item.alternates.map((a) => a.names.en)] }
+      : {};
+  }
+  const omitted = gposersOmittedSlots(facts, {
+    gender: resolved.gender,
+    mainHandUiCategory: equipment?.items.MainHand?.uiCategory ?? null,
+  });
+  for (const slot of omitted) delete input[slot as CharaGearSlotId];
   return input;
 }
 

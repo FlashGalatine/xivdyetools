@@ -63,6 +63,12 @@ export interface CharaResolvedItem {
    * wears, named as usual. Absent otherwise, and from a worker that predates it.
    */
   retired?: true;
+  /**
+   * The named item's ItemUICategory row (api-worker ≥ 0.20.0). The list writes
+   * an Off Hand only under a main hand whose category takes one. Absent from an
+   * older worker, in which case the Off Hand is kept.
+   */
+  uiCategory?: number;
 }
 
 export interface CharaResolvedGlasses {

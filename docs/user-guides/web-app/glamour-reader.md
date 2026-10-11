@@ -194,7 +194,10 @@ Acquisition:
 - **The labels are the form's own English words in every language:** Main Hand, Off Hand, Head, Body, Hands, Legs, Feet, Earrings, Necklace, Bracelets, Right Ring, Left Ring and Facewear, with Right Ring before Left Ring and Facewear last. Item and dye names are in the app's language, as on screen.
 - **Two identical rings are written once**, as **Rings:**.
 - **Each piece is the twin the reader names**, or the one you picked.
-- **The whole glamour is written.** The **Pieces / Dyes** view and **Show all** change what is on screen, not what is in the list.
+- **Every worn piece is written, except the two cases below.** The **Pieces / Dyes** view and **Show all** change what is on screen, not what is in the list.
+- **Invisible pieces are left out.** A piece whose look is one of The Emperor's New items (the Promise of Innocence, Passion and Devotion bracelets share The Emperor's New Bracelet's look) has nothing to show off, so it gets no entry. The exceptions are The Emperor's New Gloves, which are always listed, and The Emperor's New Robe, which is listed for a male character or one whose gender the file doesn't record.
+- **Off Hand is written only under a weapon that really takes one:** a Paladin weapon, a Beastmaster weapon, a one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. A fist pair, a quiver or a focus is the main weapon itself, so it isn't listed a second time. Any case the reader can't tell yet keeps its line.
+- **Only the list changes.** The list and its export sheet leave these pieces out; the reader itself is unchanged, and **Show all** still lists every worn piece.
 - **A piece whose name never arrived** keeps its slot label with nothing after it, for you to fill in after copying.
 - **Your character's name is never in the list**, and the download is always called `glamour-equipment.md`.
 

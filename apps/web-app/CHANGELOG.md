@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.4] - 2026-10-11
+
+### Changed
+
+- The GPOSERS list (Copy list, Save .md and the export sheet) leaves out invisible pieces: any worn slot whose look family includes a "The Emperor's New …" item, which also covers the Promise bracelets and the Heroic Spirit / Divine Beast shields. The Emperor's New Gloves are always kept, and The Emperor's New Robe is kept unless the character is known to be female. The reader's rows and the twin picker still show every piece.
+- The list writes the Off Hand only when the main hand is a Paladin weapon, a one-handed Thaumaturge or Conjurer weapon, a crafting or gathering tool, or a Beastmaster weapon (ItemUICategory 2, 6, 8, 12–32 even, 113); the second weapon of a pair, a quiver or a focus is part of the main hand. An unknown main hand, or an api-worker older than 0.20.0, keeps the Off Hand.
+- Over the 1,093-file `.chara` corpus, 911 lists get shorter: 2,765 invisible slots and 354 more Off Hands are left out, while 71 Emperor's New Gloves and 40 of 524 worn Off Hands stay.
+
 ## [5.15.2] - 2026-10-11
 
 ### Fixed

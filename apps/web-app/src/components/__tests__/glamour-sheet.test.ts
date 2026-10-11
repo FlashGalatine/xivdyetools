@@ -8,7 +8,16 @@ import type { ResolvedCharaCharacter } from '@xivdyetools/core';
 import { LanguageService, ModalService, RouterService, ToastService } from '@services/index';
 import { KeyboardService } from '@services/keyboard-service';
 import { AcquisitionEdits, gearHash } from '@shared/acquisition-edits';
-import type { GlamourListSource } from '../glamour-list-actions';
+import {
+  glamourMarkdownInput,
+  glamourSheetPieces,
+  type GlamourListSource,
+} from '../glamour-list-actions';
+import {
+  buildGlamourHtml,
+  buildGlamourMarkdown,
+  buildGlamourPlainText,
+} from '@shared/glamour-markdown';
 import { closeGlamourSheet, openGlamourSheet } from '../glamour-sheet';
 
 const { downloadMock, copyMock } = vi.hoisted(() => ({
@@ -463,5 +472,84 @@ describe('glamour export sheet', () => {
     );
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(sheet()).toBeNull();
+  });
+});
+
+// The list leaves out what a submission form has no use for: pieces the
+// character cannot be seen wearing, and an Off Hand under a main hand that
+// does not take one. The reader's rows are untouched; only the list changes.
+describe('glamour list omissions', () => {
+  type Slot = 'MainHand' | 'OffHand' | 'Body' | 'Hands' | 'Wrists';
+  const slotModel = (slot: Slot) => ({ slot, base: 100, variant: 1 });
+  const entry = (itemId: number, en: string, alternates: string[] = [], uiCategory?: number) => ({
+    itemId,
+    names: names(en),
+    iconId: null,
+    familySize: 1 + alternates.length,
+    alternates: alternates.map((alt, i) => ({ itemId: itemId + i + 1, names: names(alt) })),
+    viaMainHand: false,
+    ...(uiCategory === undefined ? {} : { uiCategory }),
+  });
+  const wearing = (
+    items: Partial<Record<Slot, ReturnType<typeof entry> | null>>,
+    gender: 'Male' | 'Female' | null = 'Male',
+    equipment = true
+  ): GlamourListSource =>
+    ({
+      resolved: {
+        gearModels: (Object.keys(items) as Slot[]).map(slotModel),
+        gearDyes: [],
+        glassesId: null,
+        gender,
+      } as unknown as ResolvedCharaCharacter,
+      equipment: equipment ? { items, glasses: null, version: 'test' } : null,
+    }) as GlamourListSource;
+  const everyRendering = (source: GlamourListSource) => {
+    const input = glamourMarkdownInput(source);
+    return [buildGlamourMarkdown(input), buildGlamourPlainText(input), buildGlamourHtml(input)];
+  };
+
+  it('leaves an invisible bracelet family out of every rendering and out of the sheet rows', () => {
+    const source = wearing({
+      Body: entry(5000, 'Plain Robe'),
+      Wrists: entry(8693, 'Promise of Innocence', ["The Emperor's New Bracelet"]),
+    });
+    for (const text of everyRendering(source)) {
+      expect(text).not.toContain('Bracelets:');
+      expect(text).toContain('Plain Robe');
+    }
+    expect(glamourSheetPieces(source).map((p) => p.slot)).toEqual(['Body']);
+  });
+
+  it("keeps The Emperor's New Gloves", () => {
+    const source = wearing({ Hands: entry(6000, "The Emperor's New Gloves") });
+    for (const text of everyRendering(source)) expect(text).toContain('Hands:');
+    expect(glamourSheetPieces(source).map((p) => p.slot)).toEqual(['Hands']);
+  });
+
+  it("keeps The Emperor's New Robe for a male or unknown character, drops it for a female one", () => {
+    const robe = { Body: entry(7000, "The Emperor's New Robe") };
+    for (const gender of ['Male', null] as const)
+      for (const text of everyRendering(wearing(robe, gender))) expect(text).toContain('Body:');
+    for (const text of everyRendering(wearing(robe, 'Female'))) expect(text).not.toContain('Body:');
+  });
+
+  it('drops an Off Hand under a main hand that takes none, keeps it under one that does', () => {
+    const hands = (mainCategory?: number) =>
+      wearing({
+        MainHand: entry(1000, 'Main Weapon', [], mainCategory),
+        OffHand: entry(1100, 'Shield'),
+      });
+    // 1 = Pugilist's Arm: a fist pair, so the second weapon is the same one
+    for (const text of everyRendering(hands(1))) expect(text).not.toContain('Off Hand:');
+    for (const text of everyRendering(hands(2))) expect(text).toContain('Off Hand:');
+    // No category known (an older api-worker): nothing is dropped on a guess
+    for (const text of everyRendering(hands())) expect(text).toContain('Off Hand:');
+    expect(glamourSheetPieces(hands(1)).map((p) => p.slot)).toEqual(['MainHand']);
+  });
+
+  it('omits nothing before the equipment answer lands', () => {
+    const source = wearing({ Wrists: entry(8693, 'Promise of Innocence') }, 'Female', false);
+    for (const text of everyRendering(source)) expect(text).toContain('Bracelets:');
   });
 });

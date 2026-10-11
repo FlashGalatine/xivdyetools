@@ -28,7 +28,9 @@
  * Left Ring, Facewear last); a `.chara` never carries a fashion accessory, so
  * that slot never appears. A worn piece with no known name keeps its label,
  * bare, as a prompt to fill in. A dye channel the player left empty gets no
- * line at all — the form lists what is there, not what is not.
+ * line at all — the form lists what is there, not what is not. The caller
+ * leaves out, before it gets here, the worn slots a submission has no use for:
+ * invisible pieces and an Off Hand the main hand does not take.
  *
  * The form itself (slots, order, lines, rings, one-line values) is core's
  * `chara-gposers` model, which the `/glamour` bot renders too; this module
