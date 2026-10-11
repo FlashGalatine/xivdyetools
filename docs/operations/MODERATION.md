@@ -12,7 +12,7 @@ The Community Presets feature allows users to share color palettes with the comm
 
 - **Banning users** who submit inappropriate content
 - **Unbanning users** to restore access
-- **Reviewing flagged presets** (via the web moderation queue)
+- **Reviewing flagged presets** with `/preset moderate` (pending, approve, reject, stats) and the Approve / Reject / Revert buttons on each preset's review embed
 
 ---
 
@@ -34,12 +34,14 @@ Ban a user from the Preset Palettes feature.
 
 **Usage:**
 ```
-/preset ban_user user:<discord_user>
+/preset ban_user user:<username search>
 ```
+
+The `user` option is a text field with autocomplete, not a Discord user picker. Type part of a username, then pick one of the suggestions, each labeled `Username (discord:<id>) - N presets` (or `xivauth:<id>` for an author known only by their XIVAuth ID). Typing an @mention does not work; the bot replies "Invalid user ID. Pick a user from the suggestions."
 
 **What it does:**
 1. Shows a confirmation embed with:
-   - Username and Discord ID
+   - Username and ID (the field is labeled **Discord ID** or **XIVAuth ID**, depending on the target)
    - Total number of presets they've submitted
    - Links to their 3 most recent presets
 2. Presents **Yes/No buttons** to confirm
@@ -51,7 +53,7 @@ Ban a user from the Preset Palettes feature.
 
 **Example Flow:**
 ```
-You: /preset ban_user user:@SomeUser
+You: /preset ban_user user:Some  [pick "SomeUser (discord:123456789) - 5 presets"]
 
 Bot: [Confirmation Embed]
      ⚠️ Confirm User Ban
@@ -97,8 +99,10 @@ Restore a banned user's access to Preset Palettes.
 
 **Usage:**
 ```
-/preset unban_user user:<discord_user>
+/preset unban_user user:<username search>
 ```
+
+Like `ban_user`, `user` is an autocomplete text field: pick a currently banned user from the suggestions rather than typing an @mention.
 
 **What it does:**
 1. Immediately processes the unban (no confirmation needed)
@@ -108,7 +112,7 @@ Restore a banned user's access to Preset Palettes.
 
 **Example:**
 ```
-You: /preset unban_user user:@SomeUser
+You: /preset unban_user user:Some  [pick "SomeUser (discord:123456789)"]
 
 Bot: [Success Embed]
      ✅ User Unbanned
@@ -127,7 +131,7 @@ Both commands feature smart autocomplete:
 
 ### `ban_user` Autocomplete
 - Searches users who have **submitted presets**
-- Shows username and preset count
+- Shows username, ID kind and ID, and preset count (for example `SomeUser (discord:123456789) - 5 presets`)
 - **Excludes already-banned users**
 
 ### `unban_user` Autocomplete
