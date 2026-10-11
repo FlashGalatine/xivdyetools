@@ -218,6 +218,21 @@ await api.getPricesForDataCenter([52254, 52255], 'Aether');
 Also: `isAPIAvailable()`, `getAPIStatus()` → `{ available, latency }`,
 `clearCache()`, and the static `APIService.formatPrice(price)`.
 
+`getPricesForDataCenterWithOutcome(itemIDs, dataCenterID)` returns the same
+prices as `getPricesForDataCenter` together with how the lookup went, and never
+throws:
+
+```typescript
+const { prices, outcome } = await api.getPricesForDataCenterWithOutcome([52254], 'Aether');
+// prices:  Map<number, PriceData>, the same Map getPricesForDataCenter returns
+// outcome: PriceBatchOutcome = 'ok' | 'partial' | 'error'
+//   'ok'      every upstream request it needed succeeded (or none was needed)
+//   'partial' a request failed, but prices still holds cached or fetched entries
+//   'error'   a request failed and prices is empty
+```
+
+`PriceBatchOutcome` and `PriceBatchResult` are exported types.
+
 `ICacheBackend` has **five** members and each may be sync or async:
 
 ```typescript
@@ -281,6 +296,21 @@ a static on the singleton facade.
 
 For stateless, explicit-locale callers (og-worker), `LocaleLoader` /
 `LocaleRegistry` / `TranslationProvider` are exported directly.
+
+---
+
+## Other exports
+
+Barrel exports the sections above do not cover:
+
+- Consolidation: `CONSOLIDATED_DYES` (the Type A/B/C items with localized
+  names, acquisition and price) and `getMarketItemID(dye)` (legacy item ID →
+  consolidated market ID).
+- `.chara` import: `parseCharaFile(text)`, the async
+  `resolveCharaColors(parsed, characterColors, dyeLookup?)`, and
+  `CHARA_DYEABLE_SLOTS` (the seven gear slots that carry dye channels).
+- Facewear colors: `facewearColors`, `getFacewearColor(slug)` and
+  `getFacewearColorByLegacyItemID(legacyId)`.
 
 ---
 

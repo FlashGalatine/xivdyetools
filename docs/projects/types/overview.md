@@ -153,6 +153,31 @@ type AuthProvider = 'discord' | 'xivauth';
 > with `type?`, `nbf?` and `aud?` and without the `auth_provider` / character
 > claims. Import from the package whose shape you actually mean.
 
+### Errors
+
+`ErrorCode` (an enum) and `AppError` (`new AppError(code, message, severity?)`)
+are runtime values, so they use a plain `import`:
+
+```typescript
+import { AppError, ErrorCode } from '@xivdyetools/types';
+
+throw new AppError(ErrorCode.DYE_NOT_FOUND, 'Dye with ID 999 not found', 'error');
+```
+
+### Review custom IDs
+
+The moderation-review button and modal `custom_id` grammar
+(`preset_<kind>_<uuid>:<revision>:<status>`) has one shared copy, used by
+discord-worker and moderation-worker; presets-api checks the same status list.
+Values: `REVIEW_STATUSES`, `isReviewStatus`, `parseReviewCustomId`,
+`buildReviewCustomId` and `buildReviewCustomIdOrLegacy`. Types: `ReviewAction`,
+`ReviewKind`, `ReviewBinding` and `ParsedReviewId`.
+
+### Subpath exports
+
+Besides the root entry, the package exposes `/color`, `/dye`, `/character`,
+`/preset`, `/auth`, `/api`, `/error` and `/localization`.
+
 ---
 
 ## Branded Types
@@ -202,3 +227,4 @@ import type { JWTPayload, AuthProvider } from '@xivdyetools/types';
 
 - [Core Library Types](../core/types.md) - Detailed type documentation
 - [API Contracts](../../architecture/api-contracts.md) - API type usage
+- [Package README](../../../packages/types/README.md) - Install and usage reference
