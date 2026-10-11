@@ -89,8 +89,8 @@ There is no in-app report button yet. If a preset needs attention, contact a mod
 
 ### Where is my data stored?
 
-In your browser (localStorage), whether or not you are logged in. Clearing site data clears them, so
-export what you want to keep.
+In your browser (localStorage), whether or not you are logged in. Clearing site data clears them,
+and this release has no way to export them.
 
 ### How many favorites can I have?
 
@@ -98,10 +98,9 @@ Maximum 40 favorites, and 50 saved palettes of up to 20 dyes each.
 
 ### Can I export my saved palettes?
 
-Yes. Open any tool with a dye picker (Color Harmony, Dye Mixer, Gradient Builder, Dye Comparison or
-the Accessibility Checker), expand the **Favorites** panel above the dye list, and press **Manage
-Collections**. That window has **Export All** and **Import** buttons, plus a download button on each
-individual palette. The file is plain JSON.
+Not in this release. Saved palettes and collections cannot be exported or imported. The **Backup**
+card in Advanced Settings (the gear icon) exports your tool settings only, not favorites or saved
+palettes.
 
 ---
 
