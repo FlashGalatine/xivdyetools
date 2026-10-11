@@ -31,8 +31,9 @@ changed in the 5.0 redesign. It is a one-off:
 - Only you can see it, and it appears **once**.
 - If you already had bot preferences saved before 5.0, you never see it at all — the notice is for
   people meeting the bot fresh.
-- To remember that it has shown you the notice, the bot stores a single flag against your Discord
-  user ID. That flag expires by itself after 180 days.
+- The first time you run a command, the bot sets a small per-user marker so it does not check
+  again, whether or not the notice is sent. The marker carries no content and expires by itself
+  after 180 days.
 
 Nothing else happens, and there is nothing to dismiss.
 
