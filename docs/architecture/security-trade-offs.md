@@ -40,9 +40,9 @@ Result: Count should be 7, is 6 (lost increment)
 
 | Factor | Assessment |
 |--------|------------|
-| **Race window** | ~10ms (very small) |
-| **Impact** | Allows ~2x burst occasionally |
-| **Frequency** | Rare (requires exact timing) |
+| **Race window** | One KV read-to-write round trip (`checkOnly()` and `increment()` are separate operations) |
+| **Impact** | Under N concurrent requests the effective limit can be exceeded by roughly a factor of N |
+| **Frequency** | Only under concurrent bursts on the same key; sequential traffic is counted correctly |
 | **Consequence** | Minor over-allowance, not security bypass |
 
 ### Alternative Considered

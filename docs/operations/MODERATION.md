@@ -150,7 +150,7 @@ Both commands feature smart autocomplete:
 | **Edit Access** | Cannot edit existing presets |
 | **View Access** | Can still browse community presets |
 
-The user is **not notified** of the ban via Discord DM. They will see "You have been banned from using Preset Palettes." if they try to use preset features.
+The user is **not notified** of the ban via Discord DM. The API rejects their writes with the `USER_BANNED` error code and the message "You have been banned from using Preset Palettes.", but neither client shows that sentence. The web app maps the code to its localized `preset.bannedFromPresets` string (in English, "You have been banned from submitting community presets.") on submit and edit, and shows its generic vote-failure message on a vote. The Discord bot shows its generic `preset.api.permissionDenied` message ("Permission denied.") on `/preset submit` and `/preset edit`, and `preset.voteFailed` ("Failed to process vote.") on `/preset vote`.
 
 ---
 
