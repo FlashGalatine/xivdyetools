@@ -46,8 +46,8 @@ The **Color Palette** on the right is the dye picker for every tool that takes d
 
 - **Search dyes...** by name, and filter chips **All · Metallic · Pastel · Dark · Vibrant**.
 - **Spectrum** chips — **Standard Spectrum**, **Wide Spectrum #1**, **Wide Spectrum #2**, **Unconsolidated** — for the Patch 7.5 dye groups. Budget Suggestions starts on Unconsolidated only, since consolidated dyes share a market listing.
-- Colour groups (**Whites … Pinks**) with every dye as a swatch. Hover or tap a swatch to reveal a **★**; click it to add the dye to **Favorites** at the top of the drawer (up to 40 — see [Favorites & Collections](favorites-collections.md)).
-- **Custom Color** — type a hex code (or use the little colour well) and press **Apply** to send an arbitrary colour into the tool instead of a dye. Shown in Harmony, Gradient, Mixer, Swatch, Accessibility, Comparison and Budget.
+- Color groups (**Whites … Pinks**) with every dye as a swatch. Hover or tap a swatch to reveal a **★**; click it to add the dye to **Favorites** at the top of the drawer (up to 40 — see [Favorites & Collections](favorites-collections.md)).
+- **Custom Color** — type a hex code (or use the little color well) and press **Apply** to send an arbitrary color into the tool instead of a dye. Shown in Harmony, Gradient, Mixer, Swatch, Accessibility, Comparison and Budget.
 - A **dice** (pick a random dye) and a **broom** (clear the tool's dyes) in the drawer header.
 
 On desktop the drawer is open from the start. On phones it starts **closed** and slides over the tool when you tap the round palette button near the bottom-right corner; the first time, a small callout — *"New here? Tap the palette button to pick dyes."* — points at that button until you open the drawer or dismiss it.
@@ -61,10 +61,10 @@ they agree with the rail for the first five tools, then run `6` Community Preset
 Suggestions, `8` Swatch Matcher, `9` Dye Mixer — and `0` is the Glamour Reader:
 
 ### 1. Harmony Explorer
-**"Show me dyes that look good together"** — pick a base dye and get complementary, triadic, analogous, tetradic and other companions on a tappable colour wheel.
+**"Show me dyes that look good together"** — pick a base dye and get complementary, triadic, analogous, tetradic and other companions on a tappable color wheel.
 
 ### 2. Palette Extractor
-**"I have a picture, find me its dyes"** — drop in a screenshot and its dominant colours appear as a bar under it, each matched to the closest dye; click any spot to read it with the loupe and tap **+** to add it as a pick.
+**"I have a picture, find me its dyes"** — drop in a screenshot and its dominant colors appear as a bar under it, each matched to the closest dye; click any spot to read it with the loupe and tap **+** to add it as a pick.
 
 ### 3. Accessibility Checker
 **"How will this look to colorblind players?"** — see up to four dyes through five vision lenses with a per-pair readout.
@@ -85,7 +85,7 @@ Suggestions, `8` Swatch Matcher, `9` Dye Mixer — and `0` is the Glamour Reader
 **"Find affordable alternatives"** — a price ledger of look-alike dyes on your world, from Universalis.
 
 ### 9. Swatch Matcher
-**"Match my character's colors"** — the character creator's colour sheets, or a `.chara` file, matched to dyes.
+**"Match my character's colors"** — the character creator's color sheets, or a `.chara` file, matched to dyes.
 
 ### 10. Glamour Reader
 **"What is this character wearing, and can I wear it?"** — a `.chara` file read as a glamour: every piece with its dyes, whether the game lets it be worn, and a list for GPOSERS with where each piece comes from. It shares the loaded file with the Swatch Matcher. See the [Glamour Reader guide](glamour-reader.md).
@@ -99,7 +99,7 @@ Let's find dyes that go with one you already own:
 1. Open the app — you are in the **Harmony Explorer**.
 2. Open the **Color Palette** (on a phone, tap the palette button) and click a dye. It becomes the hub of the wheel.
 3. Pick a harmony from the icon row above the wheel — **Complementary**, **Triadic**, and so on.
-4. The cards under the wheel are the dyes for each slot, with a distance number showing how far each is from the ideal colour. Tap a small swatch dot on a card to swap in an alternate.
+4. The cards under the wheel are the dyes for each slot, with a distance number showing how far each is from the ideal color. Tap a small swatch dot on a card to swap in an alternate.
 5. Press **Share** to copy a link that reopens the same dye and harmony for anyone.
 
 Or start from a picture: switch to **Palette Extractor** (press `2`), drop in a screenshot, and click the pixel you care about.
@@ -110,7 +110,7 @@ Or start from a picture: switch to **Palette Extractor** (press `2`), drop in a 
 
 - **Favorites** — the **★** on any drawer swatch. Up to 40, shown at the top of the drawer.
 - **Saved palettes** — several tools save what you built (**Save mix**, **Save swap**, **Save character colors**, **Make a palette**). They appear under **Community Presets → Saved**.
-- **Share links** — eight of the ten tools have a **Share** button (or press `Shift+S`) that copies a link. Seven carry the exact dyes and settings: Harmony Explorer, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. The eighth, Palette Extractor, carries its extracted colours and matching method instead of dyes — never the picture itself. Community Presets and the Glamour Reader have no Share button: a browsable list has nothing to put in a link, and the reader shows a file that stays on your device.
+- **Share links** — eight of the ten tools have a **Share** button (or press `Shift+S`) that copies a link. Seven carry the exact dyes and settings: Harmony Explorer, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. The eighth, Palette Extractor, carries its extracted colors and matching method instead of dyes — never the picture itself. Community Presets and the Glamour Reader have no Share button: a browsable list has nothing to put in a link, and the reader shows a file that stays on your device.
 
 Everything is stored in your browser on this device; nothing needs an account. See [Favorites & Collections](favorites-collections.md).
 
@@ -149,7 +149,7 @@ On phones the current tool's settings sit above these cards, since there is no r
 
 ## First Visit
 
-- A **Welcome to XIV Dye Tools** card introduces the four colour-in / colour-out tools and lists the other five. **Get started** drops you into the Harmony Explorer; **Take the tour** does the same and starts a short guided tour of it.
+- A **Welcome to XIV Dye Tools** card introduces the four color-in / color-out tools and lists the other five. **Get started** drops you into the Harmony Explorer; **Take the tour** does the same and starts a short guided tour of it.
 - The first time you open some tools you are offered a **Quick Tour** — *"Would you like a quick tour of this tool?"* — with **Start Tour**, **Skip** or **Disable All Tours**. **Reset Tutorial** in the gear brings the offers back.
 
 ---
@@ -164,7 +164,7 @@ On phones the current tool's settings sit above these cards, since there is no r
 ### Market Prices
 - Some dyes are cheap (vendor)
 - Others are expensive (rare drops, crafted)
-- Turn on **Market Board** in the settings column and pick your data centre and world to see prices on result cards
+- Turn on **Market Board** in the settings column and pick your data center and world to see prices on result cards
 
 ### Colorblindness
 - ~8% of men have some form of color vision deficiency

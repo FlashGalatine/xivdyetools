@@ -41,14 +41,14 @@ Several factors affect in-game appearance:
 ### What does Delta E mean?
 
 Delta E measures perceptual color difference. Lower is better. On the default method (ΔE2000), match
-results are labelled with four bands:
+results are labeled with four bands:
 
 | ΔE2000 | Band | Meaning |
 |--------|------|---------|
 | under 5 | SAME | You would not tell them apart |
 | 5 to 10 | CLOSE | A very good stand-in |
 | 10 to 20 | NEAR | In the same family, but visibly different |
-| 20 and up | FAR | A different colour |
+| 20 and up | FAR | A different color |
 
 Every other matching method has its own calibrated cut-offs on its own scale, so compare the band,
 never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.

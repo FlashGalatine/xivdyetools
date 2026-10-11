@@ -1,6 +1,6 @@
 # Web App Component Architecture
 
-The XIV Dye Tools web app is built with **Lit 3** web components plus a family of imperative `BaseComponent` tools, organised as: a console shell (`v4-layout-shell`), tool components mounted into it, shared UI primitives, a modal set on the 16A shell, and a service layer of static-class and instance singletons. Everything lives under `apps/web-app/src/` — `components/` (imperative + Lit), `components/v4/` (Lit shell and primitives), `services/`, `shared/`.
+The XIV Dye Tools web app is built with **Lit 3** web components plus a family of imperative `BaseComponent` tools, organized as: a console shell (`v4-layout-shell`), tool components mounted into it, shared UI primitives, a modal set on the 16A shell, and a service layer of static-class and instance singletons. Everything lives under `apps/web-app/src/` — `components/` (imperative + Lit), `components/v4/` (Lit shell and primitives), `services/`, `shared/`.
 
 `git ls-files apps/web-app/src` is the roster of record: when this page and the tree disagree, the tree is right. Names that this page used to carry and that no longer exist anywhere: `tool-banner`, `palette-exporter`, `PaletteService`, `settings-modal`, `auth-modal`, `auth-button`, `dye-card`, `dye-card-renderer`, `dye-search`, `sidebar-panel`, `harmony-result-panel`, `harmony-type`, `color-wheel-display`, `recent-colors-panel`, `info-tooltip`, `dye-selection-context`, `price-utilities`, `glass-panel`.
 
@@ -11,7 +11,7 @@ The XIV Dye Tools web app is built with **Lit 3** web components plus a family o
 `v4-layout-shell` is a Lit element with a shadow root. `src/components/v4-layout.ts` `loadToolContent()` mounts every tool by querying `layoutElement.shadowRoot.querySelector('.v4-layout-content-scroll')` and appending the tool container **inside that shadow root** — the shell's `<slot>` is not used for tools. Consequences (verified in `v4-layout.ts` and `v4-layout-shell.ts`):
 
 - Nothing in `styles/globals.css`, `styles/v4-layout.css` or the document-level Tailwind build reaches tool content. Tailwind utility class names still appear in tool markup but only take effect where a rule happens to be injected; **inline styles are load-bearing** in the tool components (their headers say so — `budget-tool.ts`: "Tool content renders inside v4-layout-shell's shadow DOM — inline styles only").
-- The two shared tool rules — the centred `.v5-results-grid` (3-up desktop / 2-up mobile) and the empty-state sizing — are injected once by `v4-layout.ts` as a `<style id="v5-results-grid-style">` into the shell's shadow root. A rule that must apply to tool content belongs there or inline; putting it in a page stylesheet is a silent no-op (that is how the Harmony empty state once drew its 62 px glyph at 437 px).
+- The two shared tool rules — the centered `.v5-results-grid` (3-up desktop / 2-up mobile) and the empty-state sizing — are injected once by `v4-layout.ts` as a `<style id="v5-results-grid-style">` into the shell's shadow root. A rule that must apply to tool content belongs there or inline; putting it in a page stylesheet is a silent no-op (that is how the Harmony empty state once drew its 62 px glyph at 437 px).
 - Lit children (`<v4-result-card>`, `<v4-preset-tool>`, `<v4-share-button>`…) carry their own `static styles`, so they are unaffected. Empty-state glyphs embed their CSS inside the SVG for the same reason.
 - Modals are the opposite: `ModalContainer` renders into `#modal-container` in light DOM and injects the 16A stylesheet into `document.head` (it used to inject into the container, which is cleared when the last modal closes — every modal after the first rendered unstyled).
 - The keyboard typing guard uses `composedPath()[0]` so digits typed into a shadow-DOM search box do not switch tools.
@@ -28,7 +28,7 @@ The XIV Dye Tools web app is built with **Lit 3** web components plus a family o
 | `safeRender()` | Try/catch around `renderContent()`; failures go to `handleRenderError()`. |
 | `renderError()` | Fallback UI with retry (`MAX_RETRY_COUNT = 3`) and reset. |
 | `safeAsync(op)` | Async wrapper routing errors through the same boundary; returns `null` on failure. |
-| `safeTimeout()` / `clearSafeTimeout()` | Timers that are cancelled on destroy. |
+| `safeTimeout()` / `clearSafeTimeout()` | Timers that are canceled on destroy. |
 | `emit(name, detail)`, `on()`/`onCustom()` | Event helpers; `unbindAllEvents()` on update/destroy. |
 | `subs: SubscriptionManager` | Every service subscription goes through `this.subs.add(Service.subscribe(...))`; cleanup is guaranteed by the base class. |
 
@@ -80,7 +80,7 @@ Every BaseComponent tool but `glamour` (no drawer, no config slot, no panels) ex
 
 | Tag | File | Purpose |
 |-----|------|---------|
-| `v4-result-card` | `result-card.ts` | The **5B ticket**: verdict stub (swatch pair, hyphenating name, structural ΔE2000 in tier colour via core `classifyBandTier`, HUE OFF + STAIN readouts) over a perforation; two-column HEX / RGB / HSV / LAB (+ CMYK opt-in) matrix; SPEC / SOURCE / COST text zone with MARKET after a dashed rule; `alternates` swatch-dot row; `compact` variant for the `.v5-results-grid`. Props: `data: ResultCardData` (`dye`, `originalColor`, `matchedColor`, `deltaE`, `hueDeviance`, `matchingMethod`, `marketServer`, `price`, `vendorCost`, `marketError`, `alternates`), `show*` flags mirroring `DisplayOptionsConfig`, `primaryActionLabel` (default `common.selectDye`), `primaryOpensMenu`, `showSlotPicker`, `selected`, `compact`. Fires `card-select` and `context-action` (`ContextAction`: `inspect-*`, `transform-*`, `external-*` — external links resolve consolidated dyes through `getMarketItemID()`). Verdict is always ΔE2000; the card carries `lang` and `overflow-wrap: anywhere` so German never truncates. |
+| `v4-result-card` | `result-card.ts` | The **5B ticket**: verdict stub (swatch pair, hyphenating name, structural ΔE2000 in tier color via core `classifyBandTier`, HUE OFF + STAIN readouts) over a perforation; two-column HEX / RGB / HSV / LAB (+ CMYK opt-in) matrix; SPEC / SOURCE / COST text zone with MARKET after a dashed rule; `alternates` swatch-dot row; `compact` variant for the `.v5-results-grid`. Props: `data: ResultCardData` (`dye`, `originalColor`, `matchedColor`, `deltaE`, `hueDeviance`, `matchingMethod`, `marketServer`, `price`, `vendorCost`, `marketError`, `alternates`), `show*` flags mirroring `DisplayOptionsConfig`, `primaryActionLabel` (default `common.selectDye`), `primaryOpensMenu`, `showSlotPicker`, `selected`, `compact`. Fires `card-select` and `context-action` (`ContextAction`: `inspect-*`, `transform-*`, `external-*` — external links resolve consolidated dyes through `getMarketItemID()`). Verdict is always ΔE2000; the card carries `lang` and `overflow-wrap: anywhere` so German never truncates. |
 | `v4-share-button` | `share-button.ts` | Generates + copies the deep link from `shareParams`; public `share()` used by Shift+S. |
 | `v4-color-wheel` | `v4-color-wheel.ts` | The 1A dial: conic-gradient ring with tappable slot pucks and the hub button. |
 | `v4-display-options` | `display-options-v4.ts` | Toggle set bound to `DisplayOptionsConfig`. |
@@ -102,18 +102,18 @@ Every BaseComponent tool but `glamour` (no drawer, no config slot, no panels) ex
 |-------|---------|
 | `type`, `title`, `content`, `size`, `closable`, `closeOnBackdrop`, `closeOnEscape`, `onClose`, `onConfirm`, `confirmText`, `cancelText` | 4.x fields, unchanged |
 | `onCancel` | footer secondary does real work before dismiss (Welcome's "Take the tour") |
-| `variant` | `sheet` (default: bottom sheet with grab handle + drag-to-close on mobile, centred 560 px on desktop) · `panel` (right slide-over, default 480 px, pinned below the app bar) · `card` (centred, 600 px) · `alert` (compact; `type: 'confirm'` defaults here) |
+| `variant` | `sheet` (default: bottom sheet with grab handle + drag-to-close on mobile, centered 560 px on desktop) · `panel` (right slide-over, default 480 px, pinned below the app bar) · `card` (centered, 600 px) · `alert` (compact; `type: 'confirm'` defaults here) |
 | `eyebrow`, `subtitle` | mono eyebrow above / subtitle under the title |
 | `sheetHeight` | `content` · `tall` (≈ 60 %) · `full` (88 %) — the old 60vh cap is gone. `full` was drawn for 16A's camera sheet, which left with `camera-service` in 5.8; the size stays available |
 | `destructive` | destructive convention: OUTLINED accent confirm, wide Cancel |
 | `lightScrim` | reduced backdrop for live-preview modals (theme picker) |
 | `panelWidth` | panel variant width in px |
 
-Initial focus falls back to the dialog; body overflow is restored to its prior value; theme tokens replace hardcoded greys.
+Initial focus falls back to the dialog; body overflow is restored to its prior value; theme tokens replace hardcoded grays.
 
 | Modal | File | Notes |
 |-------|------|-------|
-| Welcome (W2) | `components/welcome-modal.ts` | Four colour-in/colour-out leads (Harmony, Extractor, Mixer, Gradient) + mono row for the other five; "Get started" lands on `RouterService.getDefaultTool()`; no `dontShowAgain` checkbox. |
+| Welcome (W2) | `components/welcome-modal.ts` | Four color-in/color-out leads (Harmony, Extractor, Mixer, Gradient) + mono row for the other five; "Get started" lands on `RouterService.getDefaultTool()`; no `dontShowAgain` checkbox. |
 | Changelog (C2) | `components/changelog-modal.ts` | One layout for the auto-popup and the header button: current release open, earlier releases as collapsible rows. |
 | About | `components/about-modal.ts` | VERSION / BUILD / DYES mono cells (`__BUILD_DATE__` define), seven 44 px icon links from core `SOCIAL_LINKS`, dev-API disclosure, a POLICIES row (Privacy · Terms of Service, each linking the copy in the viewer's locale chosen by `policyDocFile()`, with English fallback), boxed attribution. |
 | Theme picker | `components/v4/theme-modal.ts` | Three-band swatch cards for `standard-dark` / `standard-light`, live-apply, `lightScrim: true`, "Done" footer. |
@@ -128,13 +128,13 @@ Initial focus falls back to the dialog; body overflow is restored to its prior v
 | Export sheet | `components/export-sheet.ts` | Shared palette export (see primitives). |
 | Keyboard shortcuts | `components/shortcuts-panel.ts` | `?`. |
 
-Keyboard (`services/keyboard-service.ts`, initialised in `initializeServices()`): `1`–`9` the first nine tools in `ROUTES` order and `0` the tenth, `Shift+T` theme, `Shift+L` language, `Shift+S` share, `?` help.
+Keyboard (`services/keyboard-service.ts`, initialized in `initializeServices()`): `1`–`9` the first nine tools in `ROUTES` order and `0` the tenth, `Shift+T` theme, `Shift+L` language, `Shift+S` share, `?` help.
 
 ---
 
 ## Service Layer
 
-Two shapes coexist. **Static-class services** are used directly (`ThemeService.subscribe(...)`, `LanguageService.t(key)`, `RouterService.navigateTo(id)`, `ModalService.show()`, `ToastService.success()`, `CollectionService.createCollection()`, `ShareService.generateUrl()`, `StorageService`, `TutorialService`, `KeyboardService`, `SavedPresetsService`, `WorldService`, `TelemetryService`). **Instance singletons** expose `getInstance()` / `resetInstance()` or a pre-built export (`ConfigController.getInstance()`, `MarketBoardService.getInstance()`, `dyeService`, `apiService`, `indexedDBService`, `communityPresetService`, `hybridPresetService`, `authService`, `presetSubmissionService`). Most of them are re-exported from `services/index.ts` — but not all: `TelemetryService`, `theme-switch`, `chara-resolve-service`, `api-worker-origin`, `share-service`, `saved-presets-service`, `hybrid-preset-service`, `indexeddb-service`, `keyboard-service`, `storage-service`'s `appStorage` and `pricing-mixin` are imported from their own modules. Import a service through the **barrel** when it is exported there — a component that reaches past `@services/index` cannot be intercepted by a test's module mock. `initializeServices()` in the barrel runs the boot order: LanguageService → (Dye/Storage/API/Toast/Modal/Tooltip ready) → `KeyboardService.initialize()` → `WorldService.initialize()` → `hybridPresetService.initialize()` → `authService.initialize()`. `ThemeService` self-initialises on module load (and migrates retired 4.x theme names to Light/Dark).
+Two shapes coexist. **Static-class services** are used directly (`ThemeService.subscribe(...)`, `LanguageService.t(key)`, `RouterService.navigateTo(id)`, `ModalService.show()`, `ToastService.success()`, `CollectionService.createCollection()`, `ShareService.generateUrl()`, `StorageService`, `TutorialService`, `KeyboardService`, `SavedPresetsService`, `WorldService`, `TelemetryService`). **Instance singletons** expose `getInstance()` / `resetInstance()` or a pre-built export (`ConfigController.getInstance()`, `MarketBoardService.getInstance()`, `dyeService`, `apiService`, `indexedDBService`, `communityPresetService`, `hybridPresetService`, `authService`, `presetSubmissionService`). Most of them are re-exported from `services/index.ts` — but not all: `TelemetryService`, `theme-switch`, `chara-resolve-service`, `api-worker-origin`, `share-service`, `saved-presets-service`, `hybrid-preset-service`, `indexeddb-service`, `keyboard-service`, `storage-service`'s `appStorage` and `pricing-mixin` are imported from their own modules. Import a service through the **barrel** when it is exported there — a component that reaches past `@services/index` cannot be intercepted by a test's module mock. `initializeServices()` in the barrel runs the boot order: LanguageService → (Dye/Storage/API/Toast/Modal/Tooltip ready) → `KeyboardService.initialize()` → `WorldService.initialize()` → `hybridPresetService.initialize()` → `authService.initialize()`. `ThemeService` self-initializes on module load (and migrates retired 4.x theme names to Light/Dark).
 
 | Service | File | Responsibility |
 |---------|------|----------------|
@@ -147,7 +147,7 @@ Two shapes coexist. **Static-class services** are used directly (`ThemeService.s
 | `ConfigController` | `config-controller.ts` | Per-tool config (below) |
 | `DyeService` / `dyeService` | `dye-service-wrapper.ts` | Core `DyeDatabase` wrapper; `getByStainId`, `resolvePresetDye()` |
 | `MarketBoardService` | `market-board-service.ts` | Universalis prices via api-worker `/universalis`; reads `market` config |
-| `WorldService` | `world-service.ts` | Data centres / worlds (a **static** class — `WorldService.initialize()` in the boot order, not a `getInstance()` singleton) |
+| `WorldService` | `world-service.ts` | Data centers / worlds (a **static** class — `WorldService.initialize()` in the boot order, not a `getInstance()` singleton) |
 | `APIService` | `api-service-wrapper.ts` | HTTP wrapper |
 | `ToastService` / `ModalService` | `toast-service.ts` / `modal-service.ts` | Ephemeral UI |
 | `KeyboardService` | `keyboard-service.ts` | Global shortcuts |
@@ -157,7 +157,7 @@ Two shapes coexist. **Static-class services** are used directly (`ThemeService.s
 | `SavedPresetsService` | `saved-presets-service.ts` | 8A saved shelf: local snapshots, tombstones for author-removed presets, capped 200 |
 | `HybridPresetService` / `CommunityPresetService` / `PresetSubmissionService` | `hybrid-preset-service.ts` / `community-preset-service.ts` / `preset-submission-service.ts` | Curated + API presets, votes, submissions (presets-api worker) |
 | `AuthService` | `auth-service.ts` | Discord OAuth via the oauth worker; keeps the return path and tool in `sessionStorage` across the login round trip |
-| `TelemetryService` | `telemetry-service.ts` | Opt-in, identifier-free usage telemetry batched to api-worker `POST /v1/telemetry`. Default off, `navigator.globalPrivacyControl` honoured, allowlisted event names/dimensions only |
+| `TelemetryService` | `telemetry-service.ts` | Opt-in, identifier-free usage telemetry batched to api-worker `POST /v1/telemetry`. Default off, `navigator.globalPrivacyControl` honored, allowlisted event names/dimensions only |
 | `resolveCharaEquipment` | `chara-resolve-service.ts` | `POST /v1/chara/resolve` on api-worker — turns a `.chara` file's model keys into item names/icons for the Glamour Reader's DYES ON THIS GLAMOUR block (the Swatch Matcher's until 5.13.0). Session-cached; any failure raises `CharaResolveUnavailableError` and the block degrades to slot-only rows |
 | `getApiWorkerBase()` | `api-worker-origin.ts` | The one place the api-worker origin is decided: `VITE_API_WORKER_URL` → `data.xivdyetools.app` in prod → `http://localhost:8790` in dev |
 | harmony vocabulary | `harmony-generator.ts` | `HarmonyTypeInfo`, `HARMONY_TYPE_IDS`, `getHarmonyTypes()` — the types the picker offers, their icons and localized names. The **selection algorithm** is core's `generateHarmonySlots`, and `HARMONY_OFFSETS` is imported from core; three surfaces used to each roll their own and disagree |
@@ -171,7 +171,7 @@ Two shapes coexist. **Static-class services** are used directly (`ThemeService.s
 `services/config-controller.ts` is the reactive per-tool configuration store; the shapes live in `shared/tool-config-types.ts`.
 
 - **Type-safe by key:** `ToolConfigMap` maps each `ToolId` plus `global`, `market`, `advanced` to its interface (`ConfigKey`). `getConfig('harmony')` returns `HarmonyConfig`.
-- **Lazy load + merge:** on first access `loadFromStorage()` reads `xivdyetools_v4_config_<key>`, spreads it over `DEFAULT_CONFIGS[key]` (so new fields such as `showHue` / `showStain` / `showSpectrum` default on and unknown keys are ignored) and normalises any `matchingMethod` through core's `normalizeMatchingMethod` (retired `hyab` / `oklch-weighted` / `euclidean` → `ciede2000`). A stored `swatch.fileProvided` (retired in 5.12.7, when the Swatch tribe/gender lock moved to `CharaSessionService`) is dropped.
+- **Lazy load + merge:** on first access `loadFromStorage()` reads `xivdyetools_v4_config_<key>`, spreads it over `DEFAULT_CONFIGS[key]` (so new fields such as `showHue` / `showStain` / `showSpectrum` default on and unknown keys are ignored) and normalizes any `matchingMethod` through core's `normalizeMatchingMethod` (retired `hyab` / `oklch-weighted` / `euclidean` → `ciede2000`). A stored `swatch.fileProvided` (retired in 5.12.7, when the Swatch tribe/gender lock moved to `CharaSessionService`) is dropped.
 - **Two-way:** tools push (`setConfig('harmony', { matchingMethod })` from a share link, `setConfig('swatch', { race, gender })` from a `.chara` load) and the sidebar subscribes; the sidebar pushes and tools subscribe.
 - **Persistence:** every `setConfig` writes back immediately; `resetConfig` / `resetAllConfigs` / `exportAllConfigs` / `importConfigs` back the Advanced Settings Data + Backup sections.
 
@@ -183,13 +183,13 @@ const unsub = config.subscribe('harmony', (cfg) => this.update());
 this.subs.add(unsub);                                     // BaseComponent cleans up on destroy
 ```
 
-The flow for a tool: `init()` reads its config (normalising `matchingMethod`), subscribes to its own key and to `market`, applies share-URL params over the top (which may write back to config), then renders. `DisplayOptionsConfig` is applied to result cards through `applyDisplayOptions` (`services/display-options-helper.ts`).
+The flow for a tool: `init()` reads its config (normalizing `matchingMethod`), subscribes to its own key and to `market`, applies share-URL params over the top (which may write back to config), then renders. `DisplayOptionsConfig` is applied to result cards through `applyDisplayOptions` (`services/display-options-helper.ts`).
 
 ---
 
 ## Code Splitting
 
-`vite.config.ts` `manualChunks`: `vendor-core` (`@xivdyetools/core` — in practice the two lazily-loaded race colour tables), `vendor-lit`, `vendor-spectral` (spectral.js), `vendor` (other `node_modules`), `modals` (welcome + changelog modals; note the label — the shared colour engine lands here too). Each tool is a natural dynamic-import boundary from `v4-layout.ts` (`harmony-tool-<hash>.js` etc.), and `language-service` dynamically imports exactly one locale chunk. `scripts/check-bundle-size.js` reports **JS payload (one locale)** against a 2,250 KB total with per-chunk limits (60 KB default); `src/__tests__/bundle-budget.test.ts` locks the arithmetic.
+`vite.config.ts` `manualChunks`: `vendor-core` (`@xivdyetools/core` — in practice the two lazily-loaded race color tables), `vendor-lit`, `vendor-spectral` (spectral.js), `vendor` (other `node_modules`), `modals` (welcome + changelog modals; note the label — the shared color engine lands here too). Each tool is a natural dynamic-import boundary from `v4-layout.ts` (`harmony-tool-<hash>.js` etc.), and `language-service` dynamically imports exactly one locale chunk. `scripts/check-bundle-size.js` reports **JS payload (one locale)** against a 2,250 KB total with per-chunk limits (60 KB default); `src/__tests__/bundle-budget.test.ts` locks the arithmetic.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **xivdyetools-web-app** — interactive browser-based toolkit for FFXIV dye colors. Current version: see [versions.md](../../versions.md).
 
-The dye database backing the app is **125 standard dyes** (`dyes.json`, schema v2, keyed by `stainID`). The 11 Facewear colours are a separate `facewearColors` collection, not dyes.
+The dye database backing the app is **125 standard dyes** (`dyes.json`, schema v2, keyed by `stainID`). The 11 Facewear colors are a separate `facewearColors` collection, not dyes.
 
 ---
 
@@ -25,7 +25,7 @@ A fully-featured web application built with Lit and Vite, offering 10 interactiv
 
 ### New in v5.0.0
 
-- **The 5.0 redesign** — every tool re-ported onto the console bar + tool rail shell with an Advanced Settings panel and result cards; themes reduced to Light + Dark ([theming](theming.md)); one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`); share URLs key on stainID (`?dye=<stainID>`, `?hex=` bare colours; legacy itemID links rejected loudly); `CollectionService` 5.0 is the single saved-things store (stainID-keyed, 4.x data migrated on load); `.chara` character-file import in the Swatch Matcher; self-hosted fonts; root OG cards; beta build (`VITE_APP_ENV=beta`); the UI locale files grew to 1,152 keys × 6. The v4.x notes below are historical.
+- **The 5.0 redesign** — every tool re-ported onto the console bar + tool rail shell with an Advanced Settings panel and result cards; themes reduced to Light + Dark ([theming](theming.md)); one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`); share URLs key on stainID (`?dye=<stainID>`, `?hex=` bare colors; legacy itemID links rejected loudly); `CollectionService` 5.0 is the single saved-things store (stainID-keyed, 4.x data migrated on load); `.chara` character-file import in the Swatch Matcher; self-hosted fonts; root OG cards; beta build (`VITE_APP_ENV=beta`); the UI locale files grew to 1,152 keys × 6. The v4.x notes below are historical.
 
 ### New in v4.10.0
 

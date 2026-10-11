@@ -14,7 +14,7 @@ The Gradient Builder draws a ramp from one dye to another and finds the real FFX
 
 The **FROM** and **TO** cards sit at the top of the flow with a swap button between them. Open the **Color Palette** drawer (the paint-palette button; on phones it starts closed) and click a dye — the first fills **FROM**, the second fills **TO**. Picking a third shifts things along: the new dye becomes FROM and the old FROM moves to TO; picking the current TO dye swaps the two ends. Click a card first to aim at it: the next dye you pick lands in that endpoint instead. The dice picks a random dye, the broom clears both.
 
-The drawer's **Custom Color** field lets you use a hex colour as either endpoint. Result cards elsewhere can also send a dye here — **Transform Dye in… → Gradient Builder**, choosing which end it goes into. Picking the same dye for both ends is refused: *"Start and end dyes are the same. Select different dyes for a gradient."*
+The drawer's **Custom Color** field lets you use a hex color as either endpoint. Result cards elsewhere can also send a dye here — **Transform Dye in… → Gradient Builder**, choosing which end it goes into. Picking the same dye for both ends is refused: *"Start and end dyes are the same. Select different dyes for a gradient."*
 
 **Swap** (the arrows between the cards) reverses the direction. That matters: interpolation runs FROM → TO, and the reverse route through the dye database can pick different intermediate dyes.
 
@@ -23,7 +23,7 @@ The drawer's **Custom Color** field lets you use a hex colour as either endpoint
 As soon as both ends are set, the **Pinned steps** rail appears:
 
 - **Two bands** across the top — **IDEAL** over **ACHIEVABLE**. The upper band is the smooth ramp you asked for; the lower one is the same ramp built out of the closest real dyes. Where the two diverge is where the palette runs out.
-- **One row per step**, showing the ideal colour on the left, then the matched dye's name and its distance from the ideal, painted in that dye. Click a row to focus it — the header switches to **STEP n** and that step's card is ringed below.
+- **One row per step**, showing the ideal color on the left, then the matched dye's name and its distance from the ideal, painted in that dye. Click a row to focus it — the header switches to **STEP n** and that step's card is ringed below.
 - **A pin column** down the left. The first and last rows carry a dashed anchor (*Endpoint — already an anchor*); every middle row has a pin button — **Pin this step** / **Unpin**.
 
 ### 3. Pin a Step
@@ -45,17 +45,17 @@ The unit follows your **Matching Algorithm** choice; ΔE2000 by default.
 
 ### 5. Result Cards
 
-Under the header, one card per step in a grid — the endpoints included, each resolving to itself at 0.0. Each card shows the matched dye beside the ideal colour, its distance, hue and stain readouts, the dye's colour values, source and cost. **Select Dye** on a card opens a small menu — **Replace Slot 1** (FROM) or **Replace Slot 2** (TO) — to make that dye a new endpoint. The **⋮** menu offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…**.
+Under the header, one card per step in a grid — the endpoints included, each resolving to itself at 0.0. Each card shows the matched dye beside the ideal color, its distance, hue and stain readouts, the dye's color values, source and cost. **Select Dye** on a card opens a small menu — **Replace Slot 1** (FROM) or **Replace Slot 2** (TO) — to make that dye a new endpoint. The **⋮** menu offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…**.
 
 ### 6. Settings
 
 In the settings column (the gear icon on phones):
 
 - **Gradient Steps → Count** — 3 to 12 steps, endpoints included
-- **Prevent Duplicates** — on by default; where the ramp is flat enough that neighbouring steps would resolve to the same dye, the later step walks on to the next-closest unused dye
+- **Prevent Duplicates** — on by default; where the ramp is flat enough that neighboring steps would resolve to the same dye, the later step walks on to the next-closest unused dye
 - **Color Space** — how the ramp is drawn between the two ends (see below)
 - **Matching Algorithm** — ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
-- **Display Options** — which colour values and readouts the cards show
+- **Display Options** — which color values and readouts the cards show
 - **Dye Filters** — exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes
 - **Market Board** — show current prices on the cards
 
@@ -67,18 +67,18 @@ The same two dyes give a different ramp depending on the space the ramp is drawn
 
 | Option | What it does |
 |--------|--------------|
-| **HSV** — Hue-based (vibrant) | Follows the colour wheel. Vibrant transitions, may shift hue. The default |
+| **HSV** — Hue-based (vibrant) | Follows the color wheel. Vibrant transitions, may shift hue. The default |
 | **OKLCH** — Modern perceptual (best) | Even lightness all the way along; the best overall gradient quality |
 | **LAB** — Perceptual (natural) | Natural-looking, but can go muddy in the middle |
 | **LCH** — Cylindrical LAB | Keeps chroma up with perceptual lightness |
-| **RGB** — Linear (gray midpoints) | Straight-line mixing; the middle of a red → blue ramp is grey |
+| **RGB** — Linear (gray midpoints) | Straight-line mixing; the middle of a red → blue ramp is gray |
 
 ---
 
 ## Save, Share and Export
 
-- **Share** copies a link that reopens the same two dyes at the same step count, colour space and matching algorithm. Sharing needs two real dyes in the endpoints.
-- **Export** opens the export sheet: every step as an ideal colour paired with the dye it resolved to (name, stain ID and distance), as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, to copy or download.
+- **Share** copies a link that reopens the same two dyes at the same step count, color space and matching algorithm. Sharing needs two real dyes in the endpoints.
+- **Export** opens the export sheet: every step as an ideal color paired with the dye it resolved to (name, stain ID and distance), as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, to copy or download.
 
 ---
 
@@ -99,8 +99,8 @@ When two dyes are too different:
 ### Bending the Ramp Through a Dye You Own
 When one step lands on a dye you already have and the rest wander off:
 1. Pin that step — its dye is now fixed
-2. Watch the neighbouring steps re-settle around it
-3. Check **max ΔE** — if it jumped, the dye is fighting the ramp; unpin and try a different step count or colour space
+2. Watch the neighboring steps re-settle around it
+3. Check **max ΔE** — if it jumped, the dye is fighting the ramp; unpin and try a different step count or color space
 
 ### Color Exploration
 Discover dyes you might not have considered:
@@ -122,7 +122,7 @@ Discover dyes you might not have considered:
 
 ## Related Tools
 
-- [Dye Mixer](dye-mixer.md) - Blend two dyes into one colour instead of a ramp
+- [Dye Mixer](dye-mixer.md) - Blend two dyes into one color instead of a ramp
 - [Palette Extractor](palette-extractor.md) - Find specific dyes first
 - [Dye Comparison](dye-comparison.md) - Compare gradient dyes
 - [Budget Suggestions](budget-suggestions.md) - Find affordable options

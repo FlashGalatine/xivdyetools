@@ -2,7 +2,7 @@
 
 **Discover harmonious dye combinations for your glamours**
 
-The Harmony Explorer uses color theory to suggest dyes that work beautifully together. In 5.0 it is built around a **dial**: a colour wheel whose hub is your base dye and whose pucks are the dyes for each slot — everything on it can be tapped.
+The Harmony Explorer uses color theory to suggest dyes that work beautifully together. In 5.0 it is built around a **dial**: a color wheel whose hub is your base dye and whose pucks are the dyes for each slot — everything on it can be tapped.
 
 > **Note**: In the 5.0 tool rail this is the **Harmony** chip; the tool menu lists it as **Harmony Explorer**. It is also the tool the app opens on.
 
@@ -12,13 +12,13 @@ The Harmony Explorer uses color theory to suggest dyes that work beautifully tog
 
 ### 1. Select a Base Color
 
-Open the **Color Palette** drawer (on phones, the round palette button) and click a dye — or tap the **?** hub in the middle of the empty wheel, which opens the same drawer. The wheel and the results appear at once. To start from a colour that isn't a dye, use the drawer's **Custom Color** field and press **Apply**.
+Open the **Color Palette** drawer (on phones, the round palette button) and click a dye — or tap the **?** hub in the middle of the empty wheel, which opens the same drawer. The wheel and the results appear at once. To start from a color that isn't a dye, use the drawer's **Custom Color** field and press **Apply**.
 
 Other tools can send a dye here too: **Inspect Dye in… → Harmony Explorer** on any result card.
 
 ### 2. Choose Harmony Type
 
-A row of icon chips sits centred above the wheel — one per harmony type, the active one outlined. Click a chip and the wheel and cards redraw. On phones the row scrolls sideways (a one-time *SWIPE FOR MORE* tag reminds you there are more past the edge). The same choice is mirrored by the **Harmony Type** dropdown in the settings column, so either control works.
+A row of icon chips sits centered above the wheel — one per harmony type, the active one outlined. Click a chip and the wheel and cards redraw. On phones the row scrolls sideways (a one-time *SWIPE FOR MORE* tag reminds you there are more past the edge). The same choice is mirrored by the **Harmony Type** dropdown in the settings column, so either control works.
 
 Directly beneath that dropdown is **Color wheel**, which decides *which* wheel those angles are measured on — RGB, RYB, Munsell (JIS), OKLCH hue or OKLCH lightness. The same harmony type gives you a different set of partners on each. See **Settings** below.
 
@@ -37,14 +37,14 @@ Directly beneath that dropdown is **Color wheel**, which decides *which* wheel t
 
 ### 3. Read the Wheel
 
-- The **hub** in the centre carries the base dye's colour and name (labelled **Base Color**). Tap it to open the picker and change the base.
+- The **hub** in the center carries the base dye's color and name (labeled **Base Color**). Tap it to open the picker and change the base.
 - Each **puck** on the rim is one harmony slot, numbered, painted with the dye that slot resolved to; hover for *"Harmony 2 · Dye Name"*. **Tap a puck and the base jumps to that dye** — the quickest way to walk around a palette.
 - The label under the wheel names the current harmony type.
 - The wheel mirrors the cards: if you swap a slot's dye (below), the puck moves with it. Monochromatic, Compound and Shades stagger their coincident pucks inward so two dyes on one spoke still read as two.
 
 ### 4. Explore Results
 
-Under **Results**, one card per slot in a grid — the base first, then each harmony position. Each card shows the dye beside the ideal target colour, the distance between them, hue and stain readouts, the dye's colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…** (Universalis, GarlandTools, TeamCraft, Saddlebag). Clicking a card's **Select Dye** makes that dye the new base.
+Under **Results**, one card per slot in a grid — the base first, then each harmony position. Each card shows the dye beside the ideal target color, the distance between them, hue and stain readouts, the dye's color values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…** (Universalis, GarlandTools, TeamCraft, Saddlebag). Clicking a card's **Select Dye** makes that dye the new base.
 
 **Companion alternates.** Along the bottom of each harmony card is a row of small swatch dots — the next-closest dyes for that slot. Tap one and it swaps into the slot (card and puck both change); the rest of the grid stays put. How many dots you get is the **Additional Dyes per Harmony Color** slider in the settings column (1–5).
 
@@ -52,7 +52,7 @@ If prices are on and the market board doesn't answer, one strip appears above th
 
 ### 5. Share
 
-**Share** (or `Shift+S`) copies a link that reopens the same base dye, harmony type and colour wheel, plus your matching settings. A custom-colour base is carried as its hex value instead of a dye.
+**Share** (or `Shift+S`) copies a link that reopens the same base dye, harmony type and color wheel, plus your matching settings. A custom-color base is carried as its hex value instead of a dye.
 
 ---
 
@@ -61,14 +61,14 @@ If prices are on and the market board doesn't answer, one strip appears above th
 In the settings column (the gear icon on phones):
 
 - **Harmony Type** — the same ten as the chip row
-- **Color wheel** — which wheel the harmony angles are measured on. **RGB** (the default) is the screen wheel; **RYB** is the painter's wheel the classic harmony rules were written for, where red's complement is green; **Munsell (JIS)** is the evenly spaced perceptual hue circle behind Japan's colour standard, where red's complement is blue-green; **OKLCH hue** re-spaces the screen wheel so equal angles are equal perceived hue steps; **OKLCH lightness** rotates hue while holding perceived brightness, so the partners match the base's brightness. The picked wheel explains itself in a line under the dropdown, and it rides along in the **Share** link
-- **Matching Mode → Perceptual Matching** — on by default: each slot's dye is chosen by colour distance to the ideal colour, using the **Matching Algorithm** below. Off: dyes are ranked purely by hue angle, which is closer to a painter's wheel but can land on very different lightness
+- **Color wheel** — which wheel the harmony angles are measured on. **RGB** (the default) is the screen wheel; **RYB** is the painter's wheel the classic harmony rules were written for, where red's complement is green; **Munsell (JIS)** is the evenly spaced perceptual hue circle behind Japan's color standard, where red's complement is blue-green; **OKLCH hue** re-spaces the screen wheel so equal angles are equal perceived hue steps; **OKLCH lightness** rotates hue while holding perceived brightness, so the partners match the base's brightness. The picked wheel explains itself in a line under the dropdown, and it rides along in the **Share** link
+- **Matching Mode → Perceptual Matching** — on by default: each slot's dye is chosen by color distance to the ideal color, using the **Matching Algorithm** below. Off: dyes are ranked purely by hue angle, which is closer to a painter's wheel but can land on very different lightness
 - **Matching Algorithm** — ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
 - **Prevent Duplicates** — on by default; stops the same dye filling two slots (or appearing as an alternate where it is already used)
 - **Additional Dyes per Harmony Color** — 1–5 alternates per card
-- **Display Options** — which colour values and readouts the cards show
+- **Display Options** — which color values and readouts the cards show
 - **Dye Filters** — exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes; excluded dyes are replaced by the next-best candidate for the slot
-- **Market Board** — turn on prices and pick your data centre and world
+- **Market Board** — turn on prices and pick your data center and world
 
 ---
 
@@ -99,7 +99,7 @@ Four colors forming a rectangle. Rich possibilities but harder to balance.
 The same two-complementary-pairs structure as Tetradic, mirrored to the opposite side of the wheel (0°, 120°, 180°, 300°). Try it when Tetradic's palette leans the wrong way for your base color.
 
 ### Square, Monochromatic, Compound, Shades
-Square spaces four colours 90° apart. Monochromatic, Compound and Shades stay close to the base hue — good when you want one colour family with a little movement rather than contrast.
+Square spaces four colors 90° apart. Monochromatic, Compound and Shades stay close to the base hue — good when you want one color family with a little movement rather than contrast.
 
 ---
 
