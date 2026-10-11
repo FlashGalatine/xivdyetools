@@ -152,7 +152,8 @@ web app instead.
 
 ### What data do you collect?
 
-- Discord ID (if logged in)
+- Your Discord or XIVAuth ID and a display name (your verified character's name with XIVAuth), if
+  you sign in
 - Preset submissions and votes
 - Anonymous usage analytics — **only if you turn them on**. The **Enable Analytics** switch under
   **Behaviour** in Advanced Settings (the gear icon) is off by default, and nothing is sent while
@@ -160,7 +161,12 @@ web app instead.
 
 ### Can I delete my data?
 
-Yes, contact us via GitHub issues or Discord to request data deletion.
+Yes. Delete a preset from **My Submissions**, select a vote again to remove it, and sign out to end
+your session. For anything else, such as your account record or everything under your account at
+once, ask privately by email (FlashGalatineFGC@gmail.com, subject "XIV Dye Tools Privacy") or by
+Discord DM to "Flash Galatine" in the [community Discord](https://discord.gg/5VUSKTZCe5). Please
+don't ask in a public GitHub issue: that would publish the very details you want removed. The web
+app's [Privacy Guide](../../../apps/web-app/PRIVACY.md#deleting-your-data) has the full steps.
 
 ### Do you sell data?
 
