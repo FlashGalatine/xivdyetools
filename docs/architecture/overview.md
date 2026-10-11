@@ -470,7 +470,6 @@ xivdyetools-og-worker
 | Web App | OAuth Worker | N/A (initiates OAuth flow) |
 | Web App | Presets API | JWT Bearer token |
 | Discord Worker | Presets API | `BOT_API_SECRET` + user headers |
-| Presets API | OAuth Worker | JWT verification (shared secret) |
 
 ---
 

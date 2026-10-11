@@ -253,7 +253,7 @@ xivdyetools-oauth-worker
 ├── TOKEN_BLACKLIST (Namespace Binding, shared with presets-api)
 ├── RL_AUTH_10 / _20 / _30 (native rate-limit bindings)
 └── (No outbound service bindings - receives calls only)
-    └── Called by: Web app, Presets API (for JWT verification)
+    └── Called by: Web app (Presets API shares JWT_SECRET and TOKEN_BLACKLIST but makes no call to it)
 ```
 
 ---
