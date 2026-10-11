@@ -203,7 +203,7 @@ Runs after Sprints 3, 7 and 9, which also edit these trees (`api-contracts.md` i
 
 **Ends with:** `pnpm docs:check-links` → merge (no deploy fires).
 
-## Sprint 11 — Package docs: core and types (P2, `docs/` only)
+## Sprint 11 — Package docs: core and types (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `13f9bd51` `ad304f93` `4af27409` `f2adca39` `fa0c75c5` — PR [#297](https://github.com/FlashGalatine/xivdyetools/pull/297)**
 
 Runs after Sprints 7–10 (`projects/index.md` is edited in 10), so the cross-tree spelling pass (DOC-076) sees
 their final text.
