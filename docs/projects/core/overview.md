@@ -143,7 +143,7 @@ Complete database of **125 official FFXIV dyes** (`dyes.json`, schema v2). Each 
 seven fields — `stainID`, `name`, `hex`, `category`, `acquisition`, `consolidationType`,
 `legacyItemID` — and everything else is **derived at `DyeDatabase.initialize()`**:
 
-- `rgb` / `hsv` / `lab` computed from `hex` (the single colour source of truth)
+- `rgb` / `hsv` / `lab` computed from `hex` (the single color source of truth)
 - `cost` / `currency` resolved through `ACQUISITION_META`
 - The five `is*` flags — `isMetallic` from `METALLIC_STAIN_IDS` (the Stain sheet's 16-dye gloss
   set), `isCosmic ≡ consolidationType 'C'`, `isIshgardian ≡ 'B'`
@@ -153,7 +153,7 @@ The runtime `Dye` object therefore keeps its full 17-field shape; consumers of d
 unaffected by the schema migration. `Dye.itemID` remains a `number` (= `legacyItemID`, falling
 back to `stainID` for future consolidated-only dyes).
 
-The **11 Facewear colours are separate** — `facewearColors` / `facewear_colors.json`, typed as
+The **11 Facewear colors are separate** — `facewearColors` / `facewear_colors.json`, typed as
 `FacewearColor`. They are excluded from the k-d tree because they are not market-tradeable.
 
 `dyeDatabase` is the raw JSON array. Build a `DyeService` from it to query:
@@ -206,7 +206,7 @@ const tetradic = dyeService.findTetradicDyes('#FF6B6B');
 ```
 
 The one implementation every surface shares is `generateHarmonySlots` — it takes
-a colour wheel and returns `HarmonySlot[]` (found dye plus the computed ideal).
+a color wheel and returns `HarmonySlot[]` (found dye plus the computed ideal).
 See [Algorithms](algorithms.md#harmony-generation).
 
 ### 4. Accessibility Features

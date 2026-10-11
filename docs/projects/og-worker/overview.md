@@ -121,7 +121,7 @@ These routes intercept normal web app URLs when accessed by crawlers:
 | `/accessibility` | `?dyes=<stainID>[,…]&vision=…` |
 | `/extractor` | `?colors=RRGGBB[,RRGGBB…]&algo=…` (max 5; the share URL carries no shares, so the card draws equal ranked bands) |
 | `/presets`, `/presets/:id` | the preset id is the **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card |
-| `/budget` | `?dye=<stainID>`; a bare-colour `?hex=` target has no card and degrades to the budget default |
+| `/budget` | `?dye=<stainID>`; a bare-color `?hex=` target has no card and degrades to the budget default |
 | `/glamour` | no share parameters (a glamour lives in a `.chara` file that never leaves the browser); always the default card (`/og/glamour/default.png`) |
 
 A bare color has no stainID, so it has no card on the stainID-keyed image routes (BUG-059). A
@@ -137,7 +137,7 @@ These return the actual preview images:
 | Route | Description |
 |-------|-------------|
 | `/og/default.png` | Root default card |
-| `/og/:tool/default.png` | Per-tool default card (registered before the parameterised routes) |
+| `/og/:tool/default.png` | Per-tool default card (registered before the parameterized routes) |
 | `/og/harmony/:dyeId/:harmonyType[.png]` | Harmony card |
 | `/og/gradient/:startId/:endId/:steps[.png]` | Gradient card |
 | `/og/mixer/:dyeAId/:dyeBId/:ratio[.png]`, `/og/mixer/:dyeAId/:dyeBId/:dyeCId/:ratio[.png]` | Mixer card (2 or 3 dyes) |
@@ -174,7 +174,7 @@ occurrences and store one mode's card under another's key.
 | Parameter | Description |
 |-----------|-------------|
 | `algo` | Matching method: `ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` (legacy `euclidean` / `hyab` / `oklch-weighted` accepted and normalized). Read by the six algo-aware routes: harmony, gradient, both mixer routes, swatch and (since BUG-060) the extractor. Direct image routes fall back to **`ciede2000`** (`DEFAULT_MATCHING_METHOD`) when the parameter is absent — not `oklab` |
-| `lang` | `en` (default, unparameterised) / `ja` / `de` / `fr` / `ko` / `zh` — localizes the metadata **and** the picture |
+| `lang` | `en` (default, unparameterized) / `ja` / `de` / `fr` / `ko` / `zh` — localizes the metadata **and** the picture |
 | `frame` | `x` for the 1200×630 X/Twitter frame; otherwise the 1200×1050 Discord frame |
 | `mode` | The mixing mode. Read only by the two mixer routes — added 2026-09-03, after which a shared mix stopped rendering in CIELAB regardless of which algorithm the sharer picked |
 | `wheel` | The harmony card's wheel geometry (`parseColorWheelId`'s five ids). Read only by the parameterized harmony card (`/og/harmony/:dyeId/:harmonyType`); added 2026-09-04 for the Harmony Explorer |
@@ -278,7 +278,7 @@ suffix is optional at every route except `/og/:tool/default.png` — plus, in a 
 | Axis | Form |
 |------|------|
 | `lang` | The **resolved** locale (`?lang=EN`, `?lang=en-US` and no `lang` collapse onto one entry) |
-| `frame` | The **resolved** `discord` \| `x` (an unrecognised `?frame=` renders `discord` and shares its entry) |
+| `frame` | The **resolved** `discord` \| `x` (an unrecognized `?frame=` renders `discord` and shares its entry) |
 | `v` | `CARD_VERSION` — this worker's own package version. Because the stored response says `s-maxage=604800`, a card-design change would otherwise keep serving the pre-deploy PNG from every warm colo for up to seven days; bumping the version is what retires the old cards (BUG-025, deploy-checklist step 4) |
 | `algo` | The **raw** query value, omitted when absent, and only on the six algo-aware routes (BUG-058) — a card that ignores it must not split its entries on it |
 | `mode` | The **raw** query value, omitted when absent, and only on the two mixer routes — two mixing modes are two different pictures |

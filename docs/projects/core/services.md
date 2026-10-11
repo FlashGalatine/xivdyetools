@@ -22,7 +22,7 @@ DyeService (instance)
 └── HarmonyGenerator        - the legacy per-type find*Dyes() methods
 ```
 
-Colour *mixing* is not a class: it lives in `src/blending/` and is reached
+Color *mixing* is not a class: it lives in `src/blending/` and is reached
 through `ColorService.mixColors*` or the `@xivdyetools/core/blending` subpath.
 
 ---
@@ -44,7 +44,7 @@ ColorService.labToRgb(65.2, 48.1, 20.4);
 ColorService.normalizeHex('#f6b');           // expands shorthand, upper-cases
 ```
 
-Nine colour spaces are covered — RGB, HSV, HSL, LAB, OKLAB, OKLCH, LCH, CMYK and
+Nine color spaces are covered — RGB, HSV, HSL, LAB, OKLAB, OKLCH, LCH, CMYK and
 RYB — each with the full `rgbTo*` / `*ToRgb` / `hexTo*` / `*ToHex` set, all
 taking scalars. See [`packages/core/README.md`](../../../packages/core/README.md)
 for the exhaustive list.
@@ -98,7 +98,7 @@ ColorService.getOptimalTextColor('#FF6B6B');
 
 There is no `evaluateWCAG` and no `getRelativeLuminance`.
 
-### Colourblindness
+### Colorblindness
 
 `simulateColorblindness` takes an **RGB**; the hex convenience form has its own
 name.

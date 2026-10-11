@@ -169,7 +169,7 @@ anyone's dye-filter shape, and pre-filtering is what makes the answer "the
 nearest *allowed* dye to the ideal" rather than "the nearest allowed dye to a
 dye that was thrown away". Facewear entries are skipped unconditionally.
 
-### Colour wheels
+### Color wheels
 
 `config.wheel` selects which wheel the offsets are measured on. The registry
 (`src/services/dye/wheels/`) is the one list every surface reads:
@@ -187,14 +187,14 @@ import {
 
 | Wheel | What it preserves |
 |-------|-------------------|
-| `rgb` | HSV hue directly — byte-identical to pre-5.2.0 behaviour, and the default |
+| `rgb` | HSV hue directly — byte-identical to pre-5.2.0 behavior, and the default |
 | `ryb` | Artist's red-yellow-blue wheel (the 25-pair NodeBox/Paletton/Adobe hue-warp table) |
 | `munsell` | Munsell renotation hues, from the committed `munsell-hues.json` |
 | `oklch-hue` | Perceptual OKLCH hue, from the committed `oklch-hue-table.json` |
 | `oklch-lightness` | The base's OKLab **L and C** instead of its HSV S/V |
 
-Each `ColorWheel` exposes `hueOf(hex)` (where a colour sits on the wheel, 0-360),
-`target(baseHex, wheelHue)` (`{ targetHex, targetHue }` — the ideal colour for a
+Each `ColorWheel` exposes `hueOf(hex)` (where a color sits on the wheel, 0-360),
+`target(baseHex, wheelHue)` (`{ targetHex, targetHue }` — the ideal color for a
 slot), `ringStops(count)` (ring paint at evenly spaced angles) and the
 `carriesBaseHsv` flag.
 
@@ -337,7 +337,7 @@ Delta E (CIE76) = √[(L₁-L₂)² + (a₁-a₂)² + (b₁-b₂)²]
 
 ### Implementation
 
-CIE76 in the shape core computes it. Note `LAB.L` is **capitalised**, and the
+CIE76 in the shape core computes it. Note `LAB.L` is **capitalized**, and the
 conversions take scalars:
 
 ```typescript

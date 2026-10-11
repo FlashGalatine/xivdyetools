@@ -7,7 +7,7 @@
 ## Where a type actually lives
 
 Since core 2.0.0 the **shared** types live in `@xivdyetools/types`; core exports
-only the types that describe its own behaviour. Getting this wrong is the single
+only the types that describe its own behavior. Getting this wrong is the single
 most common import error in this repo.
 
 | Type | Package |
@@ -40,7 +40,7 @@ import { isValidHexColor } from '@xivdyetools/core';
 
 const hex: HexColor = createHexColor('#FF6B6B');   // throws on an invalid format
 const id: DyeId | null = createDyeId(102);         // null outside the 1-254 stainID window
-const hue: Hue = createHue(370);                   // normalised to 0-360
+const hue: Hue = createHue(370);                   // normalized to 0-360
 const sat: Saturation = createSaturation(120);     // clamped to 0-100
 
 isValidHexColor('#FF6B6B');                        // boolean — no throw, no branding
@@ -51,7 +51,7 @@ There is no `Value` / `createValue`.
 
 ---
 
-## Colour Types
+## Color Types
 
 ```typescript
 interface RGB { r: number; g: number; b: number }      // 0-255
@@ -60,7 +60,7 @@ interface LAB { L: number; a: number; b: number }      // NOTE: capital L
 interface OKLCH { L: number; C: number; h: number }
 ```
 
-`LAB.L` is capitalised — a lower-case `l` is a compile error.
+`LAB.L` is capitalized — a lower-case `l` is a compile error.
 
 ---
 
@@ -74,7 +74,7 @@ The runtime `Dye` has 17 fields. Only seven are stored in `dyes.json`
 interface Dye {
   itemID: number;              // always a number — use `itemID > 0` for market checks
   stainID: number | null;      // the canonical key since schema v2
-  id: number;                  // equals itemID after normalisation
+  id: number;                  // equals itemID after normalization
   name: string;
   hex: string;
   rgb: RGB;
@@ -125,7 +125,7 @@ interface HarmonySlot {
   offset: number;        // ideal hue offset, 0-359
   targetHue: number;     // absolute ideal hue, 0-359
   wheelHue: number;      // the slot's angle on the SELECTED wheel's ring
-  targetHex: string;     // the ideal colour (base S/V on the target hue)
+  targetHex: string;     // the ideal color (base S/V on the target hue)
   dye: Dye | null;       // the dye chosen, or null when no candidate fit
   deviance: number;      // distance from `dye` to the ideal, in the config's units
   companions: Dye[];     // runners-up, nearest first

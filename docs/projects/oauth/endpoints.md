@@ -74,7 +74,7 @@ SPA token exchange — receives authorization code + PKCE verifier, returns JWT.
 ```
 
 `state` is **required**: the worker verifies `base64url(SHA-256(code_verifier))` against the
-`code_challenge` inside it *before* calling Discord, so PKCE holds regardless of provider behaviour
+`code_challenge` inside it *before* calling Discord, so PKCE holds regardless of provider behavior
 (FINDING-012). A `redirect_uri` field is accepted but ignored — the canonical worker callback URL is
 always used for the exchange.
 

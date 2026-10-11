@@ -142,9 +142,9 @@ A core concept in this API. FFXIV dyes have three disjoint numeric ID ranges:
 | `255–5728` | Invalid (unassigned gap) | Returns 404 |
 | `< 0` | Legacy Facewear synthetic ID | Returns **404 with guidance** |
 
-Since **schema v2** (2026-07-31) Facewear colours are not dyes and are no longer served by this
+Since **schema v2** (2026-07-31) Facewear colors are not dyes and are no longer served by this
 endpoint. A negative ID still routes, but only so the API can return an informative 404 naming
-the colour it used to refer to (via `getFacewearColorByLegacyItemID()`) and its `facewearId` and
+the color it used to refer to (via `getFacewearColorByLegacyItemID()`) and its `facewearId` and
 `hex`, rather than a bare "not found".
 
 The `/:id` and `/batch` endpoints auto-detect which type of ID was provided and route to the correct lookup. The `/stain/:stainId` endpoint bypasses auto-detection for explicit stainID lookups.
@@ -159,7 +159,7 @@ Sixteen routes — 14 `GET`, 2 `POST` — all anonymous. See the [Endpoint Refer
 |-------|--------|-------------|
 | Dyes | `/v1/dyes`, `/dyes/:id`, `/dyes/stain/:stainId`, `/dyes/search`, `/dyes/categories`, `/dyes/batch`, `/dyes/consolidation-groups` | Bundled `@xivdyetools/core` |
 | Matching | `/v1/match/closest`, `/v1/match/within-distance` | Bundled |
-| Colour wheels | `/v1/wheels`, `/v1/wheels/:id` | Bundled (core's `ColorWheel` registry) |
+| Color wheels | `/v1/wheels`, `/v1/wheels/:id` | Bundled (core's `ColorWheel` registry) |
 | Harmony | `/v1/harmony/types`, `/v1/harmony` | Bundled (core's `generateHarmonySlots`) |
 | `.chara` resolution | `POST /v1/chara/resolve`, `GET /v1/chara/icon/:iconId` | **XIVAPI v2** upstream, edge-cached |
 | Telemetry | `POST /v1/telemetry` | Internal and undocumented — web-app opt-in analytics; not part of the public contract |

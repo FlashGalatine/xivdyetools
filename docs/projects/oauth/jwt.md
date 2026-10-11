@@ -59,7 +59,7 @@ That is the complete claim set. `presets-api` reads `sub` / `discord_id` / `user
 
 ### Claims removed in 3.0.0
 
-FINDING-002 (`docs/audits/2026-08-29-security`) — data minimisation. `@xivdyetools/types`
+FINDING-002 (`docs/audits/2026-08-29-security`) — data minimization. `@xivdyetools/types`
 still declares all three as **optional**, so nothing type-breaks; they are simply never minted.
 
 | Claim | Why it went |

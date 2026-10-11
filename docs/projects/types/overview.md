@@ -4,7 +4,7 @@
 
 > Current version: see [versions.md](../../versions.md).
 
-> **2.0.0 (5.0 wave):** `FacewearColor` (string slug `id`, `name`, `hex` — the 11 Facewear colours are
+> **2.0.0 (5.0 wave):** `FacewearColor` (string slug `id`, `name`, `hex` — the 11 Facewear colors are
 > not dyes), `CMYK`, `invertedTetradic`, `SubRace 'Helions'` (was `'Helion'`), the widened
 > `CommunityPreset` (`secondary_categories`, `preview_image_*`, `example_link`, `rejection_reason`),
 > and `PresetCategory` without `community` (+ `appearance`, `zones`, `raids-trials`). The snippets
@@ -71,7 +71,7 @@ interface Dye {
   consolidationType: 'A' | 'B' | 'C' | null;
 }
 
-// A search result: the dye plus its distance from the query colour
+// A search result: the dye plus its distance from the query color
 interface DyeWithDistance extends Dye { distance: number }
 
 interface FacewearColor { id: string; name: string; hex: string; }  // not a Dye
