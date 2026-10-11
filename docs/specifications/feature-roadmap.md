@@ -286,14 +286,13 @@ Extract multiple dominant colors from an image instead of just one.
 - ✅ `PaletteService` - K-means++ clustering algorithm for dominant color extraction
 - ✅ `extractPalette()` - Extract N dominant colors with dominance percentages
 - ✅ `extractAndMatchPalette()` - Extract and match to closest FFXIV dyes
-- ✅ `pixelDataToRGB()` / `pixelDataToRGBFiltered()` - Canvas data conversion helpers
+- ✅ `pixelDataToRGBFiltered()` - Canvas data conversion helper
 - ✅ Configurable: colorCount (clamped to 1-10, default 4), maxIterations, convergenceThreshold, maxSamples
 
 **Web App Implementation (Complete):**
-- ✅ Extraction mode toggle (Single Color / Palette Mode) in Color Matcher
+- ✅ Extraction runs automatically on image load and again when Max Colors changes (no mode toggle)
 - ✅ Color count control (**Max Colors**, 3-10 as shipped)
-- ✅ "Extract Palette" button with loading state
-- ✅ Visual sampling indicators - circles on image showing where colors were sampled
+- ✅ Persistent draggable loupe that reads the pixel under the pointer, with a dominance bar under the image
 - ✅ Palette results with color bar visualization
 - ✅ Individual color entries showing extracted → matched dye with dominance %
 - ✅ Copy hex buttons for each matched dye
@@ -302,7 +301,6 @@ Extract multiple dominant colors from an image instead of just one.
 **Discord Bot Implementation (Complete):**
 - ✅ Multi-color extraction — shipped as `/extractor image colors:[3-10]` (`/match_image` was renamed in 5.0)
 - ✅ Palette grid renderer with extracted colors and matched dyes
-- ✅ Visual sampling indicators on source image preview
 - ✅ Canvas-rendered output showing image + palette grid
 - ✅ 6-language localization
 
@@ -310,7 +308,7 @@ Extract multiple dominant colors from an image instead of just one.
 - Core: `xivdyetools-core/src/services/PaletteService.ts` (new)
 - Web: `xivdyetools-web-app/src/components/color-matcher-tool.ts` - Added palette mode
 - Web: `xivdyetools-web-app/src/locales/*.json` - Added 14 translation keys (6 files)
-- Bot: `xivdyetools-discord-bot/src/renderers/palette-grid.ts` - Added sampling indicators
+- Bot: `xivdyetools-discord-bot/src/renderers/palette-grid.ts` - Palette grid renderer (now `packages/svg/src/palette-grid.ts`)
 - Bot: `xivdyetools-discord-bot/src/commands/match-image.ts` - Added multi-color extraction
 
 See [MULTI_COLOR_EXTRACTION.md](./multi-color-extraction.md) for detailed specification.
