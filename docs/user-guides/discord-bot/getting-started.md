@@ -7,8 +7,9 @@
 > dye matching is `/extractor color` / `/extractor image`, language is `/preferences set language:`,
 > and saved dyes/palettes live in the web app (only community *presets* can be favourited, via
 > `/preset favorite`). `/contrast`, `/a11y` and `/changelog` are new; `/swatch` now reads a `.chara`
-> file. Every result is a redrawn image card with a one-line embed and a share link into the web
-> app. `/about` shows the live command roster.
+> file. Every result is a redrawn image card with a one-line embed; `/harmony`, `/dye info`,
+> `/swatch`, `/glamour` and `/budget` also add a share link into the web app. `/about` shows the
+> live command roster.
 
 ---
 
@@ -50,7 +51,6 @@ Try the `/extractor color` command:
 The bot will respond with:
 - The **closest FFXIV dyes** to that color, ranked by ΔE2000
 - A **colour sheet** image showing each match and its distance
-- A **share link** that opens the same result in the web app
 
 ---
 

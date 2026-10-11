@@ -72,7 +72,7 @@ this worker's own `LOCAL_COMMAND_LIMITS` rather than by the shared preset.
 
 ## Deferred Response Pattern
 
-All image-generating commands use Discord's deferred response (interaction response type 5). The bot acknowledges the interaction immediately, renders the card as a PNG via resvg-wasm, then edits the original response with the final embed and attached image. Since 5.0 the embed is one line plus a share URL — the PNG carries the content.
+All image-generating commands use Discord's deferred response (interaction response type 5). The bot acknowledges the interaction immediately, renders the card as a PNG via resvg-wasm, then edits the original response with the final embed and attached image. Since 5.0 the embed is kept short — the PNG carries the content. Only `/harmony`, `/dye info`, `/swatch`, `/glamour` and `/budget` add a link into the web app.
 
 ---
 

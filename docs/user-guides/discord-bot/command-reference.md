@@ -8,8 +8,9 @@
 > `/collection` and `/language` are gone — dye matching is `/extractor color` / `/extractor image`,
 > language is `/preferences set language:`, and saved dyes/palettes live in the web app (favourite
 > *presets* are `/preset favorite`). `/contrast`, `/a11y` and `/changelog` are new, and `/swatch` now
-> reads a `.chara` character file. Every card is a redrawn image; the text embed is a one-liner plus
-> a share link. Type `/about` in Discord for the live roster.
+> reads a `.chara` character file. Every card is a redrawn image; the text embed is a one-liner, and
+> `/harmony`, `/dye info`, `/swatch`, `/glamour` and `/budget` add a share link into the web app.
+> Type `/about` in Discord for the live roster.
 >
 > | Discord Command | Web App Tool |
 > |-----------------|--------------|
@@ -370,7 +371,7 @@ Bot information, version, dye count, links, and (for one release) where each rem
 - **Autocomplete** - Start typing and the bot suggests options
 - **Dye names** - Use exact names or close matches
 - **Colors** - Use standard hex format (#RRGGBB) or a dye name
-- **Results** - Image commands include a card attachment and a share link into the web app
+- **Results** - Image commands include a card attachment; `/harmony`, `/dye info`, `/swatch`, `/glamour` and `/budget` also add a share link into the web app
 - **Card theme** - `/preferences set theme:light` if you prefer light cards
 
 ---
