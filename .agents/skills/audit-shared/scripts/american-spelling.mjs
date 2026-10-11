@@ -94,7 +94,8 @@ expand(
 // `ation` covers organisation. The look-alikes that are -ise in both
 // (advise, comprise, exercise, supervise, surprise, …) are simply not listed.
 expand(
-  ['amortis', 'apologis', 'authoris', 'canonis', 'categoris', 'centralis', 'characteris',
+  ['amortis', 'apologis', 'authoris', 'canonicalis', 'canonis', 'capitalis', 'categoris',
+   'centralis', 'characteris', 'memois', 'unauthoris', 'unparameteris', 'unrecognis',
    'colouris', 'computeris', 'criticis', 'customis', 'decentralis', 'digitis', 'dramatis',
    'economis', 'emphasis', 'energis', 'equalis', 'familiaris', 'finalis', 'formalis', 'generalis',
    'globalis', 'harmonis', 'humanis', 'idealis', 'immunis', 'initialis', 'itemis', 'jeopardis',
@@ -171,6 +172,9 @@ for (const [br, am] of [
   ['specialities', 'specialties'], ['spelt', 'spelled'], ['storey', 'story'],
   ['storeys', 'stories'], ['sulphate', 'sulfate'], ['sulphur', 'sulfur'], ['tyre', 'tire'],
   ['tyres', 'tires'], ['whilst', 'while'],
+  // Dictionary misses the 2026-10-11 documentation audit found by hand
+  ['favourited', 'favorited'], ['favouriting', 'favoriting'], ['mislabelled', 'mislabeled'],
+  ['mislabelling', 'mislabeling'],
 ]) add(br, am);
 
 if (LIST) {
