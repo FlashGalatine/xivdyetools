@@ -109,7 +109,7 @@ bounce every real visitor away from the tool pages. `tests/wrangler-env.test.ts`
 
 These routes intercept normal web app URLs when accessed by crawlers:
 
-`SUPPORTED_TOOLS` = `harmony`, `gradient`, `mixer`, `swatch`, `comparison`, `accessibility`, `extractor`, `presets`, `budget` — one `GET /<tool>` handler each, reading the web app's share-URL query grammar. Every dye parameter is a **stainID (1–254)**; legacy itemIDs (≥ 5729) render the tool's default card instead of a wrong dye.
+`SUPPORTED_TOOLS` = `harmony`, `gradient`, `mixer`, `swatch`, `comparison`, `accessibility`, `extractor`, `presets`, `budget`, `glamour` — one `GET /<tool>` handler each, reading the web app's share-URL query grammar. Every dye parameter is a **stainID (1–254)**; legacy itemIDs (≥ 5729) render the tool's default card instead of a wrong dye.
 
 | Route (crawler intercept) | Share-URL parameters read |
 |-------|-------------|
@@ -122,6 +122,7 @@ These routes intercept normal web app URLs when accessed by crawlers:
 | `/extractor` | `?colors=RRGGBB[,RRGGBB…]&algo=…` (max 5; the share URL carries no shares, so the card draws equal ranked bands) |
 | `/presets`, `/presets/:id` | the preset id is the **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card |
 | `/budget` | `?dye=<stainID>`; a bare-colour `?hex=` target has no card and degrades to the budget default |
+| `/glamour` | no share parameters (a glamour lives in a `.chara` file that never leaves the browser); always the default card (`/og/glamour/default.png`) |
 
 A bare color has no stainID, so it has no card on the stainID-keyed image routes (BUG-059). A
 custom harmony, gradient or mixer share takes the tool's default card, like budget's `?hex=`
