@@ -735,8 +735,10 @@ This is a **pnpm monorepo** with Turborepo. When releasing a new version:
    # Build and test
    pnpm turbo run build test --filter=xivdyetools-discord-worker
 
-   # Deploy — note that a BARE `deploy` targets the DEV/BETA worker.
-   # Production always needs the explicit :production script.
+   # Deploy — note that a BARE `deploy` usually targets the DEV/BETA worker, so
+   # production needs the explicit :production script. Exceptions: oauth has no
+   # [env.production], so its bare deploy IS production; og-worker's bare deploy
+   # is the routed, live beta.
    pnpm --filter xivdyetools-discord-worker run deploy:production
    ```
    See [Deploy Environments](operations/DEPLOY_ENVIRONMENTS.md) before running either.
