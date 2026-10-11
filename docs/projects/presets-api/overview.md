@@ -185,7 +185,8 @@ CREATE TABLE submission_events (
 2. **Perspective API** (optional, ML-based)
    - `TOXICITY`, `SEVERE_TOXICITY`, `IDENTITY_ATTACK`, `INSULT`, `PROFANITY`; flags at ≥ 0.7
    - Requires `PERSPECTIVE_API_KEY`; **fail-closed** — with a key set, an error or timeout also
-     queues the preset for a moderator (FINDING-005)
+     queues the preset for a moderator (FINDING-005). With no key, locally clean text is reported
+     as `unscored` and queued the same way (FINDING-019)
 
 3. **Manual Review** (for anything not cleared above)
    - Moderators approve/reject
@@ -198,13 +199,16 @@ Submission → Local Filter ─[hit]──────────────�
                   │                                     │
                [clean]                                  │
                   ▼                                     │
-           Perspective API ─[≥ 0.7 or unavailable]──────┤
+           Perspective API ─[≥ 0.7 or no verdict]───────┤
                   │                                     │
                [clean]                                  ▼
                   ▼                            status = 'pending'
         status = 'approved'                  → moderation channel
          (auto-approved)                      → moderator decides
 ```
+
+"No verdict" covers a timeout or error with a key set (`perspective_unavailable`) and a missing
+`PERSPECTIVE_API_KEY` (`unscored`); only a scored, clean result is auto-approved.
 
 Nothing on this path rejects a submission outright: the preset is always created, and the only
 question the pipeline answers is `approved` vs `pending`.

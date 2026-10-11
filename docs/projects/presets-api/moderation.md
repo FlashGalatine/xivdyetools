@@ -28,10 +28,12 @@ followed by an optional external toxicity check. On `PATCH`, a per-user daily ca
 - **Fail-closed** (FINDING-005). With a key configured, a timeout, a non-2xx response or a
   malformed body resolves to `moderationUnavailable()` — `passed: false`,
   `method: 'perspective_unavailable'` — which callers treat exactly as they treat flagged content:
-  the preset lands in the moderator queue rather than publishing unjudged. The *only* thing that
-  skips this tier is an **absent** `PERSPECTIVE_API_KEY`, in which case the local word list alone
-  decides. That is the intended degradation, and it is the reason the key must be deleted before
-  Perspective shuts down on 2026-12-31 (see `DEPRECATIONS.md`).
+  the preset lands in the moderator queue rather than publishing unjudged. An **absent**
+  `PERSPECTIVE_API_KEY` is not a pass either (FINDING-019): text the local word list does not match
+  is reported as `method: 'unscored'` with `passed: false` and queued for a moderator, so deleting
+  the key sends every submission to manual review rather than turning moderation off. The key stays
+  while Perspective still answers and must be deleted before it shuts down on 2026-12-31 (see
+  `DEPRECATIONS.md`).
 
 ---
 
