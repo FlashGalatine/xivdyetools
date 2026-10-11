@@ -62,7 +62,7 @@ Picking a swatch (or a character slot) writes one plain sentence — which palet
 
 The best matches, one card each, ranked by colour distance. Each card shows the dye swatch beside your colour, the distance in the current unit (ΔE2000 by default — see below), the hue and stain readouts, and the dye's colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…** (Universalis, GarlandTools, TeamCraft, Saddlebag).
 
-Settings for the list live in the settings column (the gear icon on phones): **Max Results** (1–6), **Matching Algorithm**, display options, and the dye filters (exclude metallic, pastel, dark, cosmic, coffer, vendor, crafted…).
+Settings for the list live in the settings column (the gear icon on phones): **Max Results** (1–6), **Matching Algorithm**, display options, and the dye filters (exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes).
 
 ### SEND TO
 

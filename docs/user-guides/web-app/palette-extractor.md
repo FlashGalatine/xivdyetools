@@ -71,7 +71,7 @@ In the settings column (the gear icon on phones):
 - **Prevent Duplicates** — on by default; when two extracted colours resolve to the same dye, the second takes the next-closest instead
 - **Matching Algorithm** — ΔE2000 is the suite default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
 - **Display Options** — which colour values and readouts the cards show
-- **Dye Filters** — exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes
+- **Dye Filters** — exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes
 - **Market Board** — show current prices on the cards for your data centre and world
 
 ---

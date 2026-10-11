@@ -46,7 +46,7 @@ In the settings column (the gear icon on phones):
 - **Max Results** - 3–8 matched dyes
 - **Matching Algorithm** - ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a percentage
 - **Display options** - Which colour values and readouts the cards show
-- **Dye Filters** - Exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes; the field cells and the results list use the same filtered pool, so a cell never quotes a distance to a dye the list can't show
+- **Dye Filters** - Exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes; the field cells and the results list use the same filtered pool, so a cell never quotes a distance to a dye the list can't show
 - **Market Board** - Show current prices on the cards
 
 ---

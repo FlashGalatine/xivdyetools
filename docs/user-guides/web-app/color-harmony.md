@@ -67,7 +67,7 @@ In the settings column (the gear icon on phones):
 - **Prevent Duplicates** — on by default; stops the same dye filling two slots (or appearing as an alternate where it is already used)
 - **Additional Dyes per Harmony Color** — 1–5 alternates per card
 - **Display Options** — which colour values and readouts the cards show
-- **Dye Filters** — exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes; excluded dyes are replaced by the next-best candidate for the slot
+- **Dye Filters** — exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes; excluded dyes are replaced by the next-best candidate for the slot
 - **Market Board** — turn on prices and pick your data centre and world
 
 ---

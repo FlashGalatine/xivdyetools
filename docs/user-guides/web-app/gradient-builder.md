@@ -56,7 +56,7 @@ In the settings column (the gear icon on phones):
 - **Color Space** — how the ramp is drawn between the two ends (see below)
 - **Matching Algorithm** — ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a 0–100 percentage
 - **Display Options** — which colour values and readouts the cards show
-- **Dye Filters** — exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes
+- **Dye Filters** — exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes
 - **Market Board** — show current prices on the cards
 
 ---
