@@ -70,7 +70,7 @@ protection are on.
       `wrangler tail` a production worker, trigger a rate-limiter fail-open, confirm the line
       carries `keyScope` (e.g. `public:ip`) and no raw IP or Discord snowflake, and only then
       decide whether to enable log retention at all.
-- [ ] `presets-api` R2 preview bucket: lifecycle / cache behaviour as set by FINDING-018.
+- [ ] `presets-api` R2 preview bucket: lifecycle / cache behavior as set by FINDING-018.
 - [ ] api-worker's and og-worker's dev workers are not reachable over `*.workers.dev`
       (`workers_dev = false`, FINDING-025) — confirm once in the dashboard.
 - [ ] `xivdyetools-oauth-preview` / `auth-preview.xivdyetools.app` — no such worker exists in the

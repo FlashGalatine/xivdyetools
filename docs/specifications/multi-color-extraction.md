@@ -100,7 +100,7 @@ interface PaletteExtractionOptions {
 ```
 
 **Why K-Means:**
-- Most flexible for a variable colour count
+- Most flexible for a variable color count
 - Well-supported in both JavaScript (web) and Node.js (bot)
 - Existing libraries available, or straightforward to implement
 

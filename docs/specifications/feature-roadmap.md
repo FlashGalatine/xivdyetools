@@ -197,7 +197,7 @@ Save favorite dyes and organize into named collections.
 **Discord Bot Implementation — REMOVED IN 5.0.** The commands below shipped in v4 and were deleted
 with the 5.0 command roster; neither `/favorites` nor `/collection` appears in the command registry
 any more. Saved dyes and palettes live only in the web app, reachable from any bot card's share
-link. Community *presets* can still be favourited with `/preset favorite`.
+link. Community *presets* can still be favorited with `/preset favorite`.
 
 *Favorites Commands (removed):*
 - ✅ `/favorites add <dye>` - Add a dye to favorites
@@ -328,11 +328,11 @@ Find cheaper look-alikes for an expensive dye using live market-board prices.
 that starts from a *target dye* and returns a ranked ledger of substitutes.
 
 **Web App (Complete):** the **Budget Suggestions** tool — the eighth chip in the tool rail.
-- ✅ Pick a target dye, pick a data centre and world, get a price ledger of look-alike dyes
+- ✅ Pick a target dye, pick a data center and world, get a price ledger of look-alike dyes
 - ✅ A **match line** (max ΔE) decides how far a substitute may stray
 - ✅ **Save swap** stores the substitute you intend to buy as a typed `swap` record
 - ✅ Share button carries the target and settings
-- ✅ Amber **MARKET DATA UNAVAILABLE** state when Universalis does not answer — colour matching is
+- ✅ Amber **MARKET DATA UNAVAILABLE** state when Universalis does not answer — color matching is
   unaffected, only the price lines are missing
 - ✅ 6-language localization
 
@@ -340,7 +340,7 @@ that starts from a *target dye* and returns a ranked ledger of substitutes.
 - ✅ `/budget find target_dye: world:` — the ledger, with `matching`, `max_distance` (2-20 ΔE2000,
   default 8), `exclude_coffers` and `exclude_wide_spectrum`
 - ✅ `/budget quick preset:` — one-click check across 22 popular expensive dyes
-- ✅ `/budget set_world world:` — save a world or data centre so it can be omitted
+- ✅ `/budget set_world world:` — save a world or data center so it can be omitted
 - ❌ `/match max_price:` — never built; `/match` itself was deleted in 5.0 (dye lookup is
   `/extractor color`)
 - ❌ `/dye alternatives` — never built; `/budget find` covers it
@@ -350,7 +350,7 @@ that starts from a *target dye* and returns a ranked ledger of substitutes.
   Cloudflare **Cache API** (the earlier "Redis" note was never accurate)
 - Prices are keyed on the Patch 7.5 *consolidated* item IDs, since 105 of the 125 dyes share three
   market listings
-- Value ranking combines colour distance and price
+- Value ranking combines color distance and price
 - No core library changes were required
 
 See [BUDGET_AWARE_SUGGESTIONS.md](./budget-aware-suggestions.md) for detailed specification.

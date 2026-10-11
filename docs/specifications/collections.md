@@ -93,7 +93,7 @@ were deleted with the 5.0 command roster and are not in the registry. Saved dyes
 only in the web app; every bot card carries a share link that opens the same result there, where the
 dye can be starred or the palette saved.
 
-Only community *presets* can be favourited from Discord, via `/preset favorite`, which is a
+Only community *presets* can be favorited from Discord, via `/preset favorite`, which is a
 different feature with its own store.
 
 ### Export Format (JSON)
@@ -295,7 +295,7 @@ Two things in the original draft were never true even while the commands existed
 
 What replaced it: saved dyes and palettes live in the web app, and every bot card carries a share
 link that reopens the same result there. Community *presets* — a different feature with its own
-store — can still be favourited from Discord with `/preset favorite add|remove|list`.
+store — can still be favorited from Discord with `/preset favorite add|remove|list`.
 
 ---
 

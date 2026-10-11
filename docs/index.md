@@ -43,7 +43,7 @@ live in one place, the [Version Matrix](versions.md).
    ┌────────────────────────────┬─────────────────────────┬───────────────────────┐
    │ @xivdyetools/core          │ @xivdyetools/worker-kit │ @xivdyetools/test-utils│
    │ 125 dyes (schema v2),      │ Hono middleware +       │ D1/KV/R2 mocks,        │
-   │ colour algorithms, k-d     │ /rate-limiter backends  │ factories (private)    │
+   │ color algorithms, k-d      │ /rate-limiter backends  │ factories (private)    │
    │ tree, harmony wheels,      │ (Memory, KV, Upstash,   │                        │
    │ Universalis, 6 langs,      │ Cloudflare native)      │                        │
    │ incl. /blending            │                         │                        │
@@ -93,7 +93,7 @@ live in one place, the [Version Matrix](versions.md).
 ```
 
 The dye database is **125 standard dyes** (`dyes.json`, schema v2 — stainID-keyed). The 11
-Facewear colours are **not dyes**; they live separately in `facewear_colors.json`. See
+Facewear colors are **not dyes**; they live separately in `facewear_colors.json`. See
 [Dye Database Composition](#dye-database-composition) below.
 
 ---
@@ -146,7 +146,7 @@ their `README.md` in the monorepo.
 
 | Project | Type | Purpose |
 |---------|------|---------|
-| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | Interactive web toolkit with 10 colour tools |
+| [xivdyetools-web-app](projects/web-app/overview.md) | Vite + Lit | Interactive web toolkit with 10 color tools |
 | [xivdyetools-discord-worker](projects/discord-worker/overview.md) | CF Worker | Discord bot, 18 registered slash commands |
 | [xivdyetools-image-worker](../apps/image-worker/README.md) | CF Worker | Photon host — `POST /extract` (pixels) + `POST /thumbnail` (WebP); reachable only via service bindings (discord-worker, presets-api) |
 | [xivdyetools-moderation-worker](projects/moderation-worker/overview.md) | CF Worker | Community preset moderation bot |
@@ -160,7 +160,7 @@ their `README.md` in the monorepo.
 
 | Project | Type | Purpose |
 |---------|------|---------|
-| [@xivdyetools/core](projects/core/overview.md) | npm | Colour algorithms, 125-dye database (schema v2), harmony colour wheels, Universalis, blending (`/blending`) |
+| [@xivdyetools/core](projects/core/overview.md) | npm | Color algorithms, 125-dye database (schema v2), harmony color wheels, Universalis, blending (`/blending`) |
 | [@xivdyetools/types](projects/types/overview.md) | npm | Branded types (HexColor, DyeId, StainId) and shared interfaces |
 | [@xivdyetools/logger](projects/logger/overview.md) | npm | Multi-runtime logging with secret redaction |
 | [@xivdyetools/auth](../packages/auth/README.md) | npm | JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (`/encoding`) |
@@ -181,7 +181,7 @@ Everything else is **derived at `DyeDatabase.initialize()`** — `rgb`/`hsv`/`la
 `cost`/`currency` from `ACQUISITION_META`, and the five `is*` flags. The runtime `Dye` object
 still has its full 16-field shape, so consumers of dye objects were unaffected by the migration.
 
-The **11 Facewear colours are not dyes.** They live in `facewear_colors.json` and the
+The **11 Facewear colors are not dyes.** They live in `facewear_colors.json` and the
 `facewearColors` export as `FacewearColor` (string slug `id`, `name`, `hex`). The pre-v2
 synthetic negative itemIDs survive only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` compatibility
 map, read via `getFacewearColorByLegacyItemID()`.
@@ -208,7 +208,7 @@ filter category was retired by this consolidation.
 
 ### September 2026 Highlights
 
-- **Selectable harmony colour wheels** (PR #167, 2026-09-05) — the Harmony Explorer, `/harmony`
+- **Selectable harmony color wheels** (PR #167, 2026-09-05) — the Harmony Explorer, `/harmony`
   and the OG harmony card can measure harmony angles on `rgb` (unchanged default), `ryb`,
   `munsell`, `oklch-hue` or `oklch-lightness`; core 5.2.0 owns the wheels, share URLs carry
   `?wheel=`, and api-worker 0.14.0 exposes them at `GET /v1/wheels` / `GET /v1/harmony`
@@ -257,7 +257,7 @@ filter category was retired by this consolidation.
   Swatch Matcher's glamour block.
 - **One matching vocabulary** — `ciede2000` (default) / `oklab` / `cie76` / `redmean` / `rgb` /
   `distinguish` across core, web-app, bot, og-worker and api-worker; `hyab` and `oklch-weighted`
-  retired (normalised on read). Share URLs and og-worker paths key on stainID.
+  retired (normalized on read). Share URLs and og-worker paths key on stainID.
 - **Themes reduced to Light + Dark** — the 12-theme system is retired. `ThemeName` is now
   `'standard-light' | 'standard-dark'`, with legacy stored names migrated on load
   ([theming](projects/web-app/theming.md)).
@@ -276,7 +276,7 @@ filter category was retired by this consolidation.
   `discord-worker`, `moderation-worker`, and `presets-api`. All three now default to `-dev`
   workers; production requires an explicit `--env production`
   ([DEPLOY_ENVIRONMENTS](operations/DEPLOY_ENVIRONMENTS.md)).
-- **`*.xivdyetools.projectgalatine.com` domains deprecated** in favour of `xivdyetools.app`
+- **`*.xivdyetools.projectgalatine.com` domains deprecated** in favor of `xivdyetools.app`
   ([DOMAIN_DEPRECATION](operations/DOMAIN_DEPRECATION.md)).
 
 ### July 2026 Highlights
@@ -286,7 +286,7 @@ filter category was retired by this consolidation.
   `rate-limiter` + `worker-middleware` → the new `worker-kit`. See `DEPRECATIONS.md` for
   migration paths.
 - **Dye data schema v2** (core v3.0.0) — `colors_xiv.json` (136 × 16 fields) became `dyes.json`
-  (125 × 7 fields, stainID-keyed) with Facewear colours split into their own collection. Also
+  (125 × 7 fields, stainID-keyed) with Facewear colors split into their own collection. Also
   fixed `isMetallic` (now the Stain sheet's 16-dye gloss set) and `isCosmic` (11, no longer
   polluted by the 9 Firmament dyes).
 - **universalis-proxy and api-docs absorbed into api-worker** — the proxy became
