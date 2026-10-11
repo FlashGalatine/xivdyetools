@@ -118,7 +118,7 @@ production only.
 Adding, removing, or changing the *shape* of a Discord command (name, options, choices) requires
 re-registering with Discord. **Both production deploy workflows already do this** — a
 "Register Discord commands" step runs `pnpm run register-commands` after every successful
-deploy (`deploy-discord-worker.yml:81-83`, `deploy-moderation-worker.yml:74-76`).
+deploy (in both `deploy-discord-worker.yml` and `deploy-moderation-worker.yml`).
 
 Run it by hand only out of band: a guild-scoped registration against the beta application, or
 after a deploy you performed locally rather than through the workflow.
