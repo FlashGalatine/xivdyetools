@@ -6,7 +6,7 @@
 your data is a separate document: [`PRIVACY.md`](PRIVACY.md). The Discord bot has its own terms:
 [`apps/discord-worker/TERMS_OF_SERVICE.md`](../discord-worker/TERMS_OF_SERVICE.md).
 
-XIV Dye Tools is a free, fan-made colour toolkit for Final Fantasy XIV. It is not affiliated with,
+XIV Dye Tools is a free, fan-made color toolkit for Final Fantasy XIV. It is not affiliated with,
 endorsed by, or sponsored by Square Enix. By using the site you agree to what follows. If you do not
 agree, please don't use it — nothing here costs you anything to walk away from.
 
@@ -22,7 +22,7 @@ listed in [`PRIVACY.md`](PRIVACY.md).
 
 ## Accounts
 
-You never need an account to use the colour tools. You need one only to submit, edit or vote on
+You never need an account to use the color tools. You need one only to submit, edit or vote on
 community presets.
 
 - Signing in goes through Discord or XIVAuth. We never see or store a password.
@@ -42,8 +42,8 @@ community presets.
 ### Your content stays yours
 
 You keep ownership of every preset you submit. By submitting a preset you grant us a non-exclusive,
-royalty-free licence to use, display, and distribute that content within the XIV Dye Tools
-ecosystem — the site, the Discord bot, the API, and link previews. That licence exists so we can
+royalty-free license to use, display, and distribute that content within the XIV Dye Tools
+ecosystem — the site, the Discord bot, the API, and link previews. That license exists so we can
 show your preset to other players; it is not a transfer of ownership and we claim no right to sell
 it or license it onward.
 
@@ -84,7 +84,7 @@ Please don't:
 - work around rate limits, or automate the site in a way that degrades it for other people
 - scrape the site or the API beyond what the [developer documentation](https://developers.xivdyetools.app)
   permits
-- attempt to break, probe, or gain unauthorised access to any part of the service
+- attempt to break, probe, or gain unauthorized access to any part of the service
 - use the site to harass anyone, or to distribute malware
 
 If you find a security problem, please report it privately by email rather than demonstrating it
@@ -112,7 +112,7 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved. FINAL FANTASY is
 trademark of Square Enix Holdings Co., Ltd.
 
 This is a fan project and is **not affiliated with, endorsed by, or sponsored by Square Enix Co.,
-Ltd.** Game data — dye names, colours, acquisition methods, item names and icons — belongs to
+Ltd.** Game data — dye names, colors, acquisition methods, item names and icons — belongs to
 Square Enix and is used here for informational purposes. The site's own code, design and written
 content are ours.
 
@@ -136,8 +136,8 @@ THE SITE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND,
 IMPLIED, INCLUDING ANY IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
 NON-INFRINGEMENT.
 
-In plainer terms: we do not promise the site will stay up, that colour matches or market prices
-will be accurate, or that it will work in every browser. Dye colours are approximations of how a
+In plainer terms: we do not promise the site will stay up, that color matches or market prices
+will be accurate, or that it will work in every browser. Dye colors are approximations of how a
 dye renders in game, and market prices come from a third party and go stale.
 
 ## Limits on liability
@@ -159,7 +159,7 @@ accept it.
 
 You can stop using the site whenever you like. We may suspend or end your access to the community
 features if you break these terms or disrupt the service for other people. Presets you published
-may stay up after you leave, under the licence above — ask us if you want them removed.
+may stay up after you leave, under the license above — ask us if you want them removed.
 
 ## Governing law
 
