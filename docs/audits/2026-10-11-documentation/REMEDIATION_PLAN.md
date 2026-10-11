@@ -231,7 +231,7 @@ report exists by then, run it here too.
 
 **Ends with:** `pnpm docs:check-versions && pnpm docs:check-links` → merge (no deploy fires).
 
-## Sprint 13 — Specifications and frozen-tier status lines (terminal, `docs/` only)
+## Sprint 13 — Specifications and frozen-tier status lines (terminal, `docs/` only) **✅ COMPLETED 2026-10-11 `294e05c5` `8aa26db3` `5e45fb98` `9c2d6f1a` `1ab9f5a8` `6151a712` `430cf444` `d630b971` `2cd2f194` `0ac823e9` `6c1ce2c8` `9b04489f` `a8b4aa40` — PR [#299](https://github.com/FlashGalatine/xivdyetools/pull/299)**
 
 Lowest reader impact: specs are design records and the frozen tier's bodies never change. The cross-tree spelling
 pass (DOC-078) goes last of all, after Sprints 4 and 12 have edited the same trees.
