@@ -107,13 +107,18 @@ that never went red is not a guard. See [Testing](testing.md) for the fuller str
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` (lint, type-check, test, build, production-dependency audit, E2E) runs
-on **every pull request, whatever its base branch**, and on pushes to `main` and the long-lived
+`.github/workflows/ci.yml` (lint, type-check, test, build, production-dependency audit, E2E, plus
+the repo-wide gates below) runs on **every pull request, whatever its base branch**, and on pushes to `main` and the long-lived
 integration branches (`*-prep`, e.g. `monorepo-2.0-prep` for the 5.0 wave — that branch no longer
 exists). Feature branches get CI through their PR, not through pushes. `main` is protected with
 three required checks ("Lint, Type-check, Test, Build", "Security audit (production
 dependencies)", "E2E (Playwright, chromium)"), so a red PR cannot be merged without an explicit
 admin bypass — see [Open Items](../operations/OPEN_ITEMS.md) for the dated, live-checked state.
+Besides the per-project steps, the "Lint, Type-check, Test, Build" job runs gates that ignore the
+affected filter: Wrangler config invariants, `pnpm type-check:scripts`, `pnpm test:scripts`,
+`pnpm dead-code:check`, `pnpm docs:check-versions`, `pnpm docs:check-links`, and
+`pnpm workers:check-logs` (every `apps/*/wrangler.toml` pins `[observability] enabled = false` and
+declares no Logpush or tail consumers).
 The `deploy-*-beta.yml` workflows are **not** CI: they build and test only the app they deploy,
 fire on every non-main push touching it, and deploy to the beta worker as a side effect.
 
@@ -144,7 +149,7 @@ may be committed); worker secrets are set with `wrangler secret put` — see
 
 ## Pull request checklist
 
-- [ ] `pnpm turbo run lint type-check test build` passes for the affected projects
+- [ ] `pnpm turbo run build type-check lint test` passes for the affected projects, and the repo-wide gates pass: `pnpm test:scripts && pnpm dead-code:check && pnpm docs:check-versions && pnpm docs:check-links && pnpm workers:check-logs`
 - [ ] New behaviour is covered by a test; bug fixes have a regression guard
 - [ ] Type-only imports use `import type`
 - [ ] Version bumped and `CHANGELOG.md` updated for every project you changed
