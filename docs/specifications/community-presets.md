@@ -5,6 +5,10 @@
 > Core Library Changes: The community types live in `@xivdyetools/types` (the original design defined them locally in each consumer)
 > Extends: [PRESET_PALETTES.md](./preset-palettes.md)
 
+> **The file paths are pre-monorepo.** Where this spec names `xivdyetools-worker/...`, `xivdyetools-discord-bot/...`,
+> `xivdyetools-web-app/...` or `xivdyetools-core/...`, read `apps/presets-api/...`, `apps/discord-worker/...`,
+> `apps/web-app/...` and `packages/core/...`. Many of the named files no longer exist.
+
 ## Overview
 
 An automated community submission system for preset palettes with centralized storage, duplicate detection, voting, and content moderation. This extends the existing Preset Palettes feature to allow community contributions while maintaining quality through smart automation.

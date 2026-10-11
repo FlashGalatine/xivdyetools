@@ -8,6 +8,9 @@
 > categories — grand-companies (3), seasons (4) and events (8). The job and aesthetic palettes
 > sketched below were not built. For user-submitted palettes and the moderation pipeline, see
 > [Community Presets](community-presets.md); this document covers the curated set only.
+>
+> **File paths are pre-monorepo:** `xivdyetools-core/` is `packages/core/`, so the `src/...` paths below
+> are under `packages/core/src/`. The shipped types are in `packages/types/src/preset/core.ts`.
 
 ## Overview
 

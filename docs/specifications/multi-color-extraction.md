@@ -3,6 +3,10 @@
 > Feature Status: ✅ Implemented
 > Platforms: Web App + Discord Bot
 > Core Library Changes: Yes (clustering algorithm — shipped as `PaletteService` in `@xivdyetools/core`)
+>
+> **File paths are pre-monorepo:** `xivdyetools-core` is `packages/core`, so the
+> `src/services/PaletteService.ts` below is `packages/core/src/services/PaletteService.ts`. Many of the
+> other named files no longer exist after the 5.0 rewrite.
 
 ## Overview
 
