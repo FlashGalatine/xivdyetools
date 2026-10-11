@@ -90,7 +90,7 @@ src/
   universalis/             # Market-board proxy (moved verbatim from apps/universalis-proxy)
     router.ts              # /aggregated/:dc/:itemIds, /data-centers, /worlds
     config/                # cache TTLs, datacenter/world lists
-    services/              # cached-fetch, cache-service, request-coalescer, memory rate-limiter
+    services/              # cached-fetch, cache-service, request-coalescer, rate-limiter (native binding, KV fallback)
 scripts/build-item-names.mjs  # Regenerates the ko/zh item-name tables (+ the build-time-only ja table discord-worker's font cut reads) after a patch (manual)
 scripts/build-acquisition.ts  # Regenerates the GPOSERS acquisition table after a patch (manual; run from the repo root with tsx)
 docs/                      # VitePress developer docs → developers.xivdyetools.app
@@ -112,7 +112,10 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 |---------|------|---------|
 | `API_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 65 / 60 s) | The `/v1/*` per-IP limiter |
 | `TELEMETRY_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 240 / 60 s) | `POST /v1/telemetry`'s own bucket — fails closed |
-| `RATE_LIMIT` | KV Namespace | Fallback rate-limit counters when a binding is absent (`api:ip:` / `telemetry:ip:`) |
+| `SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 1300 / 60 s) | `/v1/*` limiter for our own workers (service-binding calls carry no client IP, so they share one key) |
+| `UNIVERSALIS_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 60 / 60 s dev, 30 / 60 s production) | The Universalis proxy's per-IP cache-miss limiter |
+| `UNIVERSALIS_SERVICE_RATE_LIMITER` | Rate Limiting binding (`[[ratelimits]]`, 1200 / 60 s dev, 600 / 60 s production) | The proxy's service-binding key (discord-worker `/budget`) |
+| `RATE_LIMIT` | KV Namespace | Fallback rate-limit counters when a binding is absent, under five prefixes: `api:ip:`, `api:svc:`, `telemetry:ip:`, `universalis:ip:` and `universalis:svc:` |
 | `ANALYTICS` | Analytics Engine dataset | `xivdyetools_web_analytics` (prod) / `_dev`; absent → telemetry accepts and discards |
 | `ASSETS` | Static Assets (production env only) | `docs/.vitepress/dist`, served when the request host is `developers.xivdyetools.app` |
 | `ENVIRONMENT` | Variable | `development` or `production` |
@@ -122,7 +125,7 @@ docs/                      # VitePress developer docs → developers.xivdyetools
 | `XIVAPI_BASE` / `XIVAPI_VERSION` | Variable | `/v1/chara/*` upstream and the game-version pin (the row cache is namespaced by the real key: a pinned key as is, `latest` resolved through `GET /api/version` and memoized for 10 min) |
 | `XIVAPI_SCHEMA` | Variable (optional) | `exdschema@2:rev:<sha>` pin against upstream field renames |
 
-No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...`).
+No secrets required. No D1 database. api-worker calls no other worker; discord-worker's `UNIVERSALIS_PROXY` service binding targets it (`/api/v2/aggregated/...` for `/budget`, and `POST /v1/chara/resolve` for `/glamour`).
 
 Production routes (all custom domains): `data.xivdyetools.app`, `proxy.xivdyetools.app`, `developers.xivdyetools.app` (the retired `proxy.xivdyetools.projectgalatine.com` was removed in 0.16.1 — [DOMAIN_DEPRECATION.md](../../operations/DOMAIN_DEPRECATION.md)). The top-level (bare `wrangler deploy`) env is the routeless `xivdyetools-api-worker-dev` worker — see [DEPLOY_ENVIRONMENTS.md](../../operations/DEPLOY_ENVIRONMENTS.md).
 

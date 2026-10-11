@@ -451,6 +451,8 @@ xivdyetools-api-worker
 ├── API_RATE_LIMITER  → Native rate-limit binding for /v1/*
 ├── TELEMETRY_RATE_LIMITER → Native rate-limit binding for POST /v1/telemetry
 ├── SERVICE_RATE_LIMITER → Native rate-limit binding for our own workers on /v1/* (service binding, no client IP)
+├── UNIVERSALIS_RATE_LIMITER → Native rate-limit binding for the Universalis proxy's per-IP cache misses
+├── UNIVERSALIS_SERVICE_RATE_LIMITER → Native rate-limit binding for the proxy's service-binding key
 ├── ANALYTICS         → Analytics Engine dataset (web analytics)
 └── ASSETS            → Workers Static Assets (VitePress developer docs, production only)
 
