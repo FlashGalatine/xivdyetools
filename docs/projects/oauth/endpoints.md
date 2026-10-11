@@ -27,8 +27,8 @@ Initiate Discord OAuth flow with PKCE.
 | 400 | Missing or invalid `code_challenge` |
 | 400 | Invalid `code_challenge_method` |
 | 400 | `redirect_uri` not in whitelist |
-| 400 | `Invalid return_path` — not a relative path of at most 256 printable ASCII characters |
-| 400 | `Invalid state` — longer than 256 characters or not printable ASCII |
+| 400 | `Invalid return_path` — not a relative path starting with a single `/`, of at most 256 visible ASCII characters (no whitespace, no backslash) |
+| 400 | `Invalid state` — longer than 256 characters or not visible ASCII (no whitespace) |
 | 429 | Rate limit exceeded (10/min per IP) |
 
 ---
