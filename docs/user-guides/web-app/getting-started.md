@@ -42,7 +42,7 @@ On desktop a column on the left of the tool holds that tool's settings: things l
 
 ### The Color Palette drawer
 
-The **Color Palette** on the right is the dye picker for every tool that takes dyes (all but Palette Extractor and Community Presets). Click a swatch and it lands in the active tool — as the base dye in Harmony, an endpoint in Gradient, a slot in Mixer, and so on. Inside it you have:
+The **Color Palette** on the right is the dye picker for every tool that takes dyes (all but Palette Extractor, Community Presets and the Glamour Reader). Click a swatch and it lands in the active tool — as the base dye in Harmony, an endpoint in Gradient, a slot in Mixer, and so on. Inside it you have:
 
 - **Search dyes...** by name, and filter chips **All · Metallic · Pastel · Dark · Vibrant**.
 - **Spectrum** chips — **Standard Spectrum**, **Wide Spectrum #1**, **Wide Spectrum #2**, **Unconsolidated** — for the Patch 7.5 dye groups. Budget Suggestions starts on Unconsolidated only, since consolidated dyes share a market listing.

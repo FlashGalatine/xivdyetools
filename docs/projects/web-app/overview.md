@@ -121,7 +121,8 @@ src/
 │   ├── budget-tool.ts  swatch-tool.ts  glamour-tool.ts  # nine of the ten tools
 │   ├── dye-selector.ts  dye-grid.ts  dye-search-box.ts  market-board.ts
 │   ├── metric-help.ts  export-sheet.ts  empty-state.ts
-│   ├── chara-file-card.ts  chara-sheet.ts  chara-ui.ts  glamour-block.ts   # the Swatch Matcher's .chara views
+│   ├── chara-file-card.ts  chara-sheet.ts  chara-ui.ts  # the Swatch Matcher's .chara views
+│   ├── glamour-block.ts                                 # the Glamour Reader's IN THE GAME + DYES ON THIS GLAMOUR block
 │   ├── image-zoom-controller.ts                         # the Extractor's canvas + loupe events
 │   ├── modal-container.ts  toast-container.ts  offline-banner.ts
 │   ├── welcome-modal.ts  changelog-modal.ts  about-modal.ts  signin-modal.ts
@@ -133,7 +134,7 @@ src/
 │       ├── v4-color-wheel.ts  display-options-v4.ts  dye-filters-v4.ts
 │       ├── range-slider-v4.ts  toggle-switch-v4.ts  base-lit-component.ts
 │       ├── theme-modal.ts  language-modal.ts
-│       └── preset-tool.ts  preset-card.ts  preset-detail.ts   # the ninth tool, Lit
+│       └── preset-tool.ts  preset-card.ts  preset-detail.ts   # the one Lit tool
 ├── services/                   # Business logic layer (kebab-case files)
 │   ├── index.ts                # initializeServices() + the re-export barrel
 │   ├── theme-service.ts  theme-switch.ts  language-service.ts  storage-service.ts

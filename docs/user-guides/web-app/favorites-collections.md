@@ -31,7 +31,7 @@ The star is the only place favorites are set; the ⋮ menu on result cards is fo
 ### Limits
 
 - Maximum 40 favorites — at the limit you will see *"Maximum 40 favorites allowed"*; remove one to add another.
-- Not available in Palette Extractor or Community Presets, which do not use the drawer.
+- Not available in Palette Extractor, Community Presets or the Glamour Reader, which do not use the drawer.
 - Stored in your browser.
 
 ---
