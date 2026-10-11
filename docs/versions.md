@@ -2,14 +2,13 @@
 
 **Single source of truth for all XIV Dye Tools project versions**
 
-*Last Updated: October 6, 2026*
+*Last Updated: October 11, 2026*
 
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-10-06 (checked against the registry API), `@xivdyetools/logger` 2.3.0
-> and `@xivdyetools/worker-kit` 1.5.0 on this branch are ahead of npm (2.2.1, 1.4.1) and await
-> publication after their merge; the other packages here are at parity;
+> (PR #123). As of 2026-10-11 (checked against the registry API), every published
+> package here is at parity with npm;
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
@@ -678,22 +677,31 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
-| Web App v5.12.6+ | @xivdyetools/core v5.7.0+ | Creator palettes from `human.cmp` — below this lip / face-paint / tattoo swatches are not the creator's |
+| Web App v5.14.10+ | @xivdyetools/core v5.10.0+ | 2026-10-04 remediation Sprint 13 — below this an HSL mix of an exactly gray dye loses the other dye's hue (BUG-035), Harmony's "no duplicates" can repeat a swapped-in dye in an earlier slot (BUG-137), and an unreadable `.chara` color is drawn instead of refused (BUG-133) |
+| Web App v5.14.8–5.14.9 | @xivdyetools/core v5.9.0+ | `APIService.getPricesForDataCenterWithOutcome` (market failures shown, BUG-090) and `CHARA_DYEABLE_SLOTS` (the Glamour Reader's dyeable slots) |
+| Web App v5.13.0–5.14.7 | @xivdyetools/core v5.8.0+ | The Glamour Reader's twin picker (`charaTwinFacts`); 5.14.4+ needs core v5.8.2+ (the Brass facewear color's fr / ko / zh names) |
+| Web App v5.12.6–5.12.7 | @xivdyetools/core v5.7.0+ | Creator palettes from `human.cmp` — below this lip / face-paint / tattoo swatches are not the creator's |
 | Web App v5.12.5 | @xivdyetools/core v5.6.0+ | By-name eye pairing — below this a heterochromia character's eyes show on the wrong sides |
 | Web App v5.12.2–5.12.4 | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this the Swatch Matcher refuses every Lalafell file |
 | Web App v5.7–5.12.1 | @xivdyetools/core v5.2.0+ | Colour-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
-| Discord Worker v5.6.5+ | @xivdyetools/core v5.7.0+ | Creator palettes from `human.cmp` — below this `/swatch` matches lip / face-paint / tattoo rows against the wrong colors |
+| Discord Worker v5.8.7+ | @xivdyetools/core v5.10.0+ | CJK subsets cut for core 5.10.0's character-creation sheet names (TERM-021); `/mixer` (HSL) keeps a gray dye's partner hue (BUG-035), `/extractor` shows only the colors an image holds (BUG-036), and `/swatch` / `/glamour` refuse an unreadable `.chara` color (BUG-133) |
+| Discord Worker v5.8.1–5.8.6 | @xivdyetools/core v5.8.1+ | CJK subsets cut for core 5.8.1's Korean race names (the `/glamour` card's wear chip) |
+| Discord Worker v5.7–5.8.0 | @xivdyetools/core v5.8.0+ | `/glamour` — core's `chara-twins`, reached through `@xivdyetools/bot-logic` |
+| Discord Worker v5.6.5 | @xivdyetools/core v5.7.0+ | Creator palettes from `human.cmp` — below this `/swatch` matches lip / face-paint / tattoo rows against the wrong colors |
 | Discord Worker v5.6.4 | @xivdyetools/core v5.6.0+ | By-name eye pairing — below this `/swatch` swaps a heterochromia character's `EYES·L` / `EYES·R` rows |
 | Discord Worker v5.6.2–5.6.3 | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this `/swatch` refuses every Lalafell attachment |
 | Discord Worker v5.6–5.6.1 | @xivdyetools/core v5.4.0+ | `@xivdyetools/bot-logic` v4.4.0+ — the `commands.*.options` description keys `localize.ts` reads, `about.builtOnBody`, `card.colours_one/_other`, and core's `foldForSearch` behind dye-name input |
 | Discord Worker v5.5 | @xivdyetools/core v5.2.0+ | `@xivdyetools/bot-logic` v4.2.0+ (`HarmonyInput.wheel`) and `@xivdyetools/svg` v4.1.0+ (`wheelLabel`) |
 | Discord Worker v5.2–5.4 | @xivdyetools/core v4.2.0+ | `@xivdyetools/bot-logic` v3.2.0+ (shared `generateHarmonySlots`); 5.3+ needs bot-logic v4.0.0+ and therefore `@xivdyetools/svg` v4.0.0+ (`generatePresetSwatch` signature) |
 | Moderation Worker v1.6.2+ | — | `@xivdyetools/types` v3.0.0+ (`ModerationStats` field names); `@xivdyetools/bot-logic` v3.1.0+ (shared locale layer) |
-| OG Worker v2.10.4+ | @xivdyetools/core v5.7.0+ | Creator palettes on the Swatch Matcher card |
+| OG Worker v2.11.3+ | @xivdyetools/core v5.10.0+ | CJK subsets cut for core 5.10.0's character-creation sheet names (TERM-021); an `/og/mixer` HSL card with an exactly gray input keeps the other color's hue (BUG-035) |
+| OG Worker v2.11.2 | @xivdyetools/core v5.8.1+ | CJK subsets cut for core 5.8.1's Korean race names and Korean / Chinese clan names |
+| OG Worker v2.10.4–2.11.1 | @xivdyetools/core v5.7.0+ | Creator palettes on the Swatch Matcher card |
 | OG Worker v2.10–2.10.3 | @xivdyetools/core v5.2.0+ | `?wheel=` validated against `COLOR_WHEEL_IDS`; `@xivdyetools/svg` v4.1.0+ |
 | OG Worker v2.5–2.9 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` (2.6.0+); `@xivdyetools/svg` v3.1.0+ (`bandInk` export) |
-| API Worker v0.14+ | @xivdyetools/core v5.2.0+ | `/v1/wheels`, `/v1/harmony` |
+| API Worker v0.16+ | @xivdyetools/core v5.8.0+ | `items.<slot>.rules` on `POST /v1/chara/resolve` (`groupCharaTwinRules`, `charaWearMask`) |
+| API Worker v0.14–0.15 | @xivdyetools/core v5.2.0+ | `/v1/wheels`, `/v1/harmony` |
 | API Worker v0.12–0.13 | @xivdyetools/core v5.1.0+ | `?method=oklab` is ΔEOK2 |
 | Web App v5.0+ | @xivdyetools/core v4.0.0+ | Schema v2, 5.0 matching vocabulary + band tiers, `.chara` parser; `@xivdyetools/types` v2.0.0+ |
 | Discord Worker v5.0.1+ | @xivdyetools/core v4.0.0+ | `@xivdyetools/svg` v3.0.0+ and `@xivdyetools/bot-logic` v3.0.0+ (neutral `/swatch` title — chara-name privacy); publish svg before bot-logic |
