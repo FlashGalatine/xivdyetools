@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-10-11
+
+### Changed
+
+- **`POST /v1/chara/resolve` names a model family by its lowest eligible row that has an
+  acquisition line**, else its lowest eligible row, as before (a retired family by the same rule
+  over all of its rows). The lowest row often had no known source while an identical twin did:
+  old non-Augmented tomestone gear is no longer sold (Crystarium Ring of Fending vs Augmented
+  Crystarium Ring of Fending), Housemaid's vs Loyal Housemaid's, Makai vs Common Makai, a relic
+  vs its Replica. The invisible bracelet model now answers The Emperor's New Bracelet instead of
+  Promise of Innocence.
+  - `rules` lists the rule set holding `itemId` first, so "the first set holds `itemId`" stays
+    true when a higher row is named.
+  - `alternates` always carries the family's lowest row when it is not `itemId`, so
+    `min(itemId, alternates)` is a stable family key. `itemId` itself can move when a patch adds
+    or removes an acquisition source.
+  - No cache shape change: the row cache keeps raw rows, and the rule is applied at resolve time.
+  - Over the 1,093-file `.chara` corpus (with 0.18.1's table), a named slot's top-level
+    `acquisition` is absent on 27 of 10,875 slots instead of 1,304; none of the 27 has a lined twin. The web Glamour Reader
+    and `/glamour` choose their default through core 5.11.0's `defaultCharaTwin`, which gains the
+    same preference.
+
 ## [0.18.1] - 2026-10-11
 
 Data only: no route, schema or cache-shape change. Regenerated with `--pinned` (Teamcraft

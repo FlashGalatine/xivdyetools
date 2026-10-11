@@ -15,11 +15,24 @@ import { loadRegionalNames } from './regional-names';
 import type { ItemRow } from './types';
 import { lookupKey } from './types';
 
-const TROPHY_LINE = "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)";
+// The build-time table, cut down to the rows these tests name. Everything
+// else has no line, as most old gear does once its vendor stops selling it.
+const LINES = vi.hoisted((): Record<number, string> => ({
+  47252: "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)",
+  29334: 'Aymark - Eulmore (280 Allagan Tomestones of Poetics)',
+  3002: 'Vendor 3002',
+  3003: 'Vendor 3003',
+  4003: 'Vendor 4003',
+  5010: 'Vendor 5010',
+  6002: 'Vendor 6002',
+  7002: 'Vendor 7002',
+  8002: 'Vendor 8002',
+  9005: 'Vendor 9005',
+}));
+const TROPHY_LINE = LINES[47252];
 vi.mock('./acquisition.js', () => ({
   facewearAcquisitionFor: (glassesId: number) => glassesId >= 1 && glassesId <= 12 ? 'Vendor - Old Gridania (100 Gil)' : undefined,
-  acquisitionFor: (itemId: number) =>
-    itemId === 47252 ? "Crystal Quartermaster - Wolves' Den Pier (1,500 Trophy Crystals)" : undefined,
+  acquisitionFor: (itemId: number) => LINES[itemId],
 }));
 
 describe('facewear acquisition', () => {
@@ -178,13 +191,125 @@ describe('pickItem', () => {
   });
 
   it("gives each twin its own line, never a sibling's", () => {
+    // 47252 is named because it has the line; the blank row 5 rides along
+    // without borrowing it.
     const item = pickItem([row(47252, 'Trophy Legs', '1', ['Legs']), row(5, 'Plain Legs', '1', ['Legs'])]);
-    expect(item?.itemId).toBe(5);
-    expect(item).not.toHaveProperty('acquisition');
-    expect(item?.alternates[0]).toEqual({ itemId: 47252, names: expect.any(Object), acquisition: TROPHY_LINE });
+    expect(item?.itemId).toBe(47252);
+    expect(item?.acquisition).toBe(TROPHY_LINE);
+    expect(item?.alternates).toEqual([{ itemId: 5, names: expect.any(Object) }]);
   });
 
-  it('names the family by its lowest row_id and carries the rest as alternates', () => {
+  // 2026-10-11: a blank line means no current route is known (old
+  // non-Augmented tomestone gear is no longer sold), so the family is named
+  // by the lowest eligible twin a player can still get.
+  it('names the lowest twin with an acquisition line over a blank lower row', () => {
+    const blank = row(29254, 'Crystarium Ring of Fending', '1', ['FingerL', 'FingerR']);
+    const lined = row(29334, 'Augmented Crystarium Ring of Fending', '1', ['FingerL', 'FingerR']);
+    const item = pickItem([blank, lined])!;
+    expect(item.itemId).toBe(29334);
+    expect(item.names.en).toBe('Augmented Crystarium Ring of Fending');
+    expect(item.acquisition).toBe(LINES[29334]);
+    expect(item.familySize).toBe(2);
+    expect(item.alternates).toEqual([{ itemId: 29254, names: expect.objectContaining({ en: 'Crystarium Ring of Fending' }) }]);
+  });
+
+  it('names the LOWEST of several lined twins', () => {
+    const item = pickItem([
+      row(3003, 'Lined Later', '1', ['Body']),
+      row(3001, 'Blank', '1', ['Body']),
+      row(3002, 'Lined First', '1', ['Body']),
+    ])!;
+    expect(item.itemId).toBe(3002);
+    expect(item.acquisition).toBe(LINES[3002]);
+    expect(item.alternates.map((a) => [a.itemId, a.acquisition])).toEqual([
+      [3001, undefined],
+      [3003, LINES[3003]],
+    ]);
+  });
+
+  it('moves the rule set holding the named twin to the front, the others keeping their order', () => {
+    const rules = (dyeCount: number, grandCompany = 0) => ({
+      rules: { dyeCount, glamourable: true, wearMask: ANYONE, grandCompany },
+    });
+    const item = pickItem([
+      row(4001, 'A low', '1', ['Head'], rules(0)),
+      row(4002, 'B', '1', ['Head'], rules(1)),
+      row(4003, 'C lined', '1', ['Head'], rules(2)),
+      row(4004, 'A high', '1', ['Head'], rules(0)),
+    ])!;
+    expect(item.itemId).toBe(4003);
+    expect(item.rules.map((r) => r.itemIds)).toEqual([[4003], [4001, 4004], [4002]]);
+    expect(item.rules[0].itemIds).toContain(item.itemId);
+  });
+
+  it("keeps the family's lowest row and every rule set among capped alternates when a higher twin is named", () => {
+    // 13 rows; the lined primary #5010 is neither the lowest row nor in the
+    // largest rule set, and the cap cannot hold everything else.
+    const ruled = (rowId: number, dyeCount: number) =>
+      row(rowId, `Twin ${rowId}`, '1', ['Neck'], {
+        rules: { dyeCount, glamourable: true, wearMask: ANYONE, grandCompany: 0 },
+      });
+    const family = Array.from({ length: MAX_ALTERNATES + 5 }, (_, i) => {
+      const rowId = 5000 + i;
+      if (rowId === 5008) return ruled(rowId, 1);
+      if (rowId === 5009) return ruled(rowId, 2);
+      if (rowId === 5010) return ruled(rowId, 3);
+      return ruled(rowId, 0);
+    });
+    const item = pickItem(family.reverse())!;
+    expect(item.itemId).toBe(5010);
+    expect(item.familySize).toBe(MAX_ALTERNATES + 5);
+    const alternates = item.alternates.map((a) => a.itemId);
+    expect(alternates).toHaveLength(MAX_ALTERNATES);
+    expect(alternates).toEqual([...alternates].sort((x, y) => x - y));
+    expect(alternates).not.toContain(5010);
+    // The family's lowest row: min(itemId, alternates) stays a stable key
+    expect(Math.min(item.itemId, ...alternates)).toBe(5000);
+    for (const set of item.rules) {
+      if (set.itemIds[0] !== item.itemId) expect(alternates).toContain(set.itemIds[0]);
+    }
+    expect(alternates).toEqual([5000, 5001, 5002, 5003, 5004, 5005, 5008, 5009]);
+  });
+
+  it("keeps the family's lowest row ahead of rule-set heads when the cap cannot hold both", () => {
+    // #9000 carries no rules, so no rule set brings it in, and nine other
+    // rule sets compete for the eight places. The stable family key wins: the
+    // web app files saved edits under min(itemId, alternates). (The corpus's
+    // largest family has four rule sets, so real answers never reach this.)
+    const ruled = (rowId: number, grandCompany: number) =>
+      row(rowId, `Twin ${rowId}`, '1', ['Neck'], {
+        rules: { dyeCount: 0, glamourable: true, wearMask: ANYONE, grandCompany },
+      });
+    const family = [
+      row(9000, 'Twin 9000', '1', ['Neck']),
+      ...Array.from({ length: 10 }, (_, i) => ruled(9001 + i, i)),
+    ];
+    const item = pickItem(family)!;
+    expect(item.itemId).toBe(9005);
+    const alternates = item.alternates.map((a) => a.itemId);
+    expect(alternates).toHaveLength(MAX_ALTERNATES);
+    expect(alternates[0]).toBe(9000);
+    expect(Math.min(item.itemId, ...alternates)).toBe(9000);
+  });
+
+  it('names the lined row of an all-retired family, still flagged retired', () => {
+    const item = pickItem([row(6001, 'Aetherial Blank', '1', ['Head']), row(6002, 'Aetherial Lined', '1', ['Head'])])!;
+    expect(item.itemId).toBe(6002);
+    expect(item.acquisition).toBe(LINES[6002]);
+    expect(item.retired).toBe(true);
+    expect(item.alternates.map((a) => a.itemId)).toEqual([6001]);
+  });
+
+  it("never lets a retired row's line name a family that has an eligible row", () => {
+    const item = pickItem([row(7001, 'Plain Hat', '1', ['Head']), row(7002, 'Aetherial Hat', '1', ['Head'])])!;
+    expect(item.itemId).toBe(7001);
+    expect(item).not.toHaveProperty('acquisition');
+    expect(item.familySize).toBe(1);
+    expect(item.alternates).toEqual([]);
+    expect(item).not.toHaveProperty('retired');
+  });
+
+  it('names the family by its lowest row_id when no twin has a line, carrying the rest as alternates', () => {
     // Antiquated Constellation Armlets family (Gloves:65866) — 5 visually identical rows
     const family = [
       row(22143, 'Constellation Armlets +1', '65866', ['Gloves']),
@@ -277,6 +402,20 @@ describe('resolveCharaEquipment — off-hand rules', () => {
     ] }, source([datedBow]), undefined, 'v');
     expect(result.items.MainHand).toMatchObject({ itemId: 1, retired: true, viaMainHand: false });
     expect(result.items.OffHand).toMatchObject({ itemId: 1, retired: true, viaMainHand: true });
+  });
+
+  it("pairs an off-hand through a blank lower twin's ModelSub, naming the main hand's lined twin", () => {
+    // Only the blank #8001 carries the quiver's ModelSub; the pairing reads the
+    // whole eligible family, the name comes from the lined #8002.
+    const blankBow = row(8001, 'Plain Bow', RUNAWAY_BOW.modelMain, ['MainHand'], { modelSub: RUNAWAY_BOW.modelSub });
+    const linedBow = row(8002, 'Augmented Bow', RUNAWAY_BOW.modelMain, ['MainHand'], { modelSub: '1' });
+    const res = resolveCharaEquipment({ gear: [
+      { slot: 'MainHand', set: 634, base: 19, variant: 1 },
+      { slot: 'OffHand', set: 698, base: 149, variant: 1 },
+    ] }, source([blankBow, linedBow]), undefined, null);
+    expect(res.items.MainHand).toMatchObject({ itemId: 8002, viaMainHand: false, acquisition: LINES[8002] });
+    expect(res.items.OffHand).toMatchObject({ itemId: 8002, viaMainHand: true, acquisition: LINES[8002] });
+    expect(res.items.OffHand?.alternates.map((a) => a.itemId)).toEqual([8001]);
   });
 
   it('an off-hand equal to the main hand ModelSub IS the main weapon (quiver)', () => {
