@@ -210,7 +210,7 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, analytics count
 
 | Var | Purpose |
 |-----|---------|
-| `ENVIRONMENT` | `"development"` on the beta bot, `"production"` on the live one. Only `validateEnv` reads it — in production it makes the six `RL_*` bindings mandatory (FINDING-013) |
+| `ENVIRONMENT` | `"development"` on the beta bot, `"production"` on the live one. `validateEnv` reads it — in production it makes the six `RL_*` bindings mandatory (FINDING-013); `/webhooks/preset-submission` also reads it, answering 503 while a production `INTERNAL_WEBHOOK_SECRET` is shorter than 32 characters (FINDING-027), and `/stats health` prints it as a label |
 | `DISCORD_CLIENT_ID` | The application ID. Beta and production are **different Discord applications**, because an application has exactly one Interactions Endpoint URL |
 | `PRESETS_API_URL` | HTTP fallback for local dev when the `PRESETS_API` service binding is absent |
 | `ANNOUNCEMENT_CHANNEL_ID` | Release-announcement channel for the GitHub webhook — deliberately different per environment |

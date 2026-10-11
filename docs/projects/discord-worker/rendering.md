@@ -59,7 +59,7 @@ Rust-based SVG renderer compiled to WebAssembly.
 
 ## Bundle Size Constraints
 
-Cloudflare enforces a 3,072 KiB **gzip** limit on the deployed script. Photon had pushed the bot to 3,209 KiB; after the split it sits at ~2,632 KiB (~14 % headroom).
+Cloudflare enforces a 3,072 KiB **gzip** limit on the deployed script. Photon had pushed the bot to 3,209 KiB; after the split it sat at ~2,632 KiB; at 5.8.9 it measured 2,717.2 KiB (88.5 % of the cap).
 
 | Dependency | Notes |
 |------------|-------|

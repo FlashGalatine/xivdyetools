@@ -30,7 +30,7 @@ Buttons use `custom_id` patterns for routing. The router parses the custom ID st
 | Pattern                                    | Description                   |
 |--------------------------------------------|-------------------------------|
 | `copy_hex_*` / `copy_rgb_*` / `copy_hsv_*` | Copy a colour value (ephemeral reply) |
-| `previewimg_approve_{presetId}` / `previewimg_reject_{presetId}` | Preview-image moderation — handled by **this** worker (Discord routes clicks to the application that posted the message); calls presets-api `PATCH /api/v1/moderation/:id/preview-image` |
+| `previewimg_approve_{previewImageKey}` / `previewimg_reject_{previewImageKey}` | Preview-image moderation — handled by **this** worker (Discord routes clicks to the application that posted the message); calls presets-api `PATCH /api/v1/moderation/:id/preview-image` |
 
 The v4 `favorites_*` / `collection_*` buttons are gone with the removed commands. Preset approve/reject buttons posted by the moderation bot are handled by `xivdyetools-moderation-worker`. `services/component-context.ts` (KV-backed button context, `ctx:v2:{hash}`) was removed 2026-08-18 — pagination context never shipped and nothing consumed it.
 
@@ -45,7 +45,7 @@ Dye name autocomplete runs for every dye/colour option (`dye`, `dye1`…`dye6`, 
 - Searches by localized dye name using the user's language preference
 - Returns up to 25 suggestions (Discord's maximum)
 - Filters by partial match against the query string
-- Uses `DyeService.searchByName()` from `@xivdyetools/core`
+- Uses `searchDyesByName()` from `@xivdyetools/bot-logic`
 
 ## Response Types
 

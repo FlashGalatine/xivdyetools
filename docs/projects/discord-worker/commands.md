@@ -238,7 +238,7 @@ Find affordable dye alternatives via the Universalis market board (through the `
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `preset` | String (choice) | Yes | One of 22 choices generated from `QUICK_PICKS` (`services/budget/quick-picks.ts`) — `jet_black` and `pure_white` plus the 20 Cosmic Exploration dyes |
+| `preset` | String (choice) | Yes | One of 22 choices generated from `QUICK_PICKS` (`services/budget/quick-picks.ts`) — `jet_black` and `pure_white` plus 16 Cosmic Exploration and 4 Cosmic Fortunes dyes |
 | `world` | String (autocomplete) | No | World or datacenter (uses the saved preference if not set) |
 
 Uses `fetchPricesBatched` to handle all 125 dyes (Universalis caps a request at 100 items). Facewear colours are not dyes and never enter the price path. Post-Patch 7.5 the budget calculator uses `getMarketItemID()` so the 105 consolidated dyes share three real itemIDs (Type-A=52254, Type-B=52255, Type-C=52256).
@@ -486,8 +486,8 @@ Display your current preferences.
 | `blending` | String (choice) | Default `/mixer` mode: `rgb`, `lab`, `oklab`, `ryb`, `hsl`, `spectral` |
 | `matching` | String (choice) | Default matching method: `ciede2000`, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish` |
 | `count` | Integer (1-10) | Default number of results |
-| `clan` | String (autocomplete) | Default clan for `/swatch` |
-| `gender` | String (choice) | `male`, `female` |
+| `clan` | String (autocomplete) | Saved with your preferences; no command reads it yet |
+| `gender` | String (choice) | `male`, `female` — saved with your preferences; no command reads it yet |
 | `world` | String (autocomplete) | Default world/datacenter for market prices |
 | `market` | Boolean | Show Market Board prices by default |
 | `show_hex`, `show_rgb`, `show_hsv`, `show_lab`, `show_deltae`, `show_acquisition` | Boolean | Result-card readouts |
