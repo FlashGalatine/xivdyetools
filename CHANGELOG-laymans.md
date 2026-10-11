@@ -31,6 +31,12 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
+## [5.11.2] - 2026-10-11
+### 👗 A tidier glamour list
+- Web app and Discord bot: the copy-ready glamour list leaves out pieces that show nothing, like The Emperor's New items, but keeps the Gloves, and the Robe unless your character is female.
+- Web app and Discord bot: the list writes an Off Hand line only for a shield or a secondary tool, so a Monk's fists, a Bard's quiver or a Red Mage's focus is no longer listed twice.
+- Web app and Discord bot: the Glamour Reader and the /glamour card still show every piece you wear; only the copy-ready list is shorter.
+
 ## [5.11.1] - 2026-10-11
 ### 👗 Glamour Reader and /glamour
 - Web app and Discord bot: 803 more pieces have an Acquisition line, each checked against the official Online Store, the quest's own rewards or an official Lodestone page, and seasonal gear names its event and the year it was first offered, such as "Valentione's Day (2026)".
