@@ -312,8 +312,10 @@ Two kinds of datapoint, both written only for crawler-facing work — human page
 nothing here (they were only a cost; FINDING-024):
 
 - `og_request` — one per crawler page hit on a tool route.
-- `og_image_request` — one per uncached, parameterized image render, with the crawler type
-  `none`. Cache hits (the `/og/*` cache middleware answers before the handler runs) and the
+- `og_image_request` — one per uncached, parameterized image request, with the crawler type
+  `none`. It is written once the path IDs, colors and algorithm validate, but before the gradient
+  `steps`, mixer `ratio` and swatch `limit` range checks, so a request that then fails one of
+  those with a 400 still counts although nothing is rendered. Cache hits (the `/og/*` cache middleware answers before the handler runs) and the
   default cards (`/og/default.png`, `/og/:tool/default.png`) write nothing.
 
 The shape written to the `ANALYTICS` dataset is fixed:

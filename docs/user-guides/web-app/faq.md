@@ -151,8 +151,8 @@ web app instead.
 
 ### What data do you collect?
 
-- Your Discord or XIVAuth ID and a display name (your verified character's name with XIVAuth), if
-  you sign in
+- Your Discord or XIVAuth ID (plus the Discord ID linked to your XIVAuth account, if any) and a
+  display name (your verified character's name with XIVAuth), if you sign in
 - Preset submissions and votes
 - Anonymous usage analytics — **only if you turn them on**. The **Enable Analytics** switch under
   **Behavior** in Advanced Settings (the gear icon) is off by default, and nothing is sent while
