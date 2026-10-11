@@ -382,13 +382,9 @@ The library implements the Brettel algorithm for accurate colorblindness simulat
 The Brettel algorithm projects colors onto a reduced color space:
 
 ```
-1. Convert RGB to LMS (Long, Medium, Short cone response)
-2. Apply confusion matrix based on colorblindness type
-3. Convert back to RGB
-
-For protanopia:
-L_simulated = 2.02344 × M - 2.52581 × S
-(L cone response estimated from M and S)
+1. Take the gamma-encoded sRGB channels, scaled to 0-1
+2. Multiply by the 3×3 BRETTEL_MATRICES entry for the vision type
+3. Scale back by 255, clamp to 0-255 and round
 ```
 
 ### Confusion Matrices
@@ -470,8 +466,9 @@ ColorConverter maintains LRU (Least Recently Used) caches for repeated conversio
 hexToRgb, rgbToHex, rgbToHsv, hsvToRgb, hexToHsv, rgbToLab, rgbToOklab
 ```
 
-There is no `labToRgb` cache. `ColorService.clearCaches()` empties all seven and
-`ColorService.getCacheStats()` reports on them.
+There is no `labToRgb` cache. `ColorService.clearCaches()` empties all seven plus the colorblindness
+simulator's cache (eight in total), and `ColorService.getCacheStats()` reports
+on them, including a `colorblind` entry.
 
 ### How LRU Works
 

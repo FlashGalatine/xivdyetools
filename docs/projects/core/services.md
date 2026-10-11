@@ -116,7 +116,8 @@ ColorService.simulateColorblindnessMachadoHex('#FF6B6B', 'tritanopia');
 ### Caches
 
 `ColorService.clearCaches()` and `ColorService.getCacheStats()` cover the seven
-LRU caches (see [Algorithms](algorithms.md)).
+converter LRU caches plus the colorblindness cache, eight in all (see
+[Algorithms](algorithms.md)).
 
 ---
 
@@ -135,7 +136,7 @@ dyeService.getByStainId(102);       // by stainID (canonical key) → Dye | null
 dyeService.getDyeCount();
 dyeService.isLoadedStatus();
 dyeService.getCategories();
-// ['Neutral', 'Reds', 'Browns', 'Yellows', 'Greens', 'Blues', 'Purples', 'Special']
+// ['Blues', 'Browns', 'Greens', 'Neutral', 'Purples', 'Reds', 'Special', 'Yellows']  (sorted)
 ```
 
 `dyeDatabase` is the raw JSON array, **not** a service — call the methods on the
@@ -267,7 +268,7 @@ SUPPORTED_LOCALES;                              // ['en','ja','de','fr','ko','zh
 await LocalizationService.setLocale('ja');
 LocalizationService.getCurrentLocale();         // 'ja'
 LocalizationService.getDyeName(5729);           // string | null
-LocalizationService.getLabel('metallic');       // TranslationKey
+LocalizationService.getLabel('metallic');       // string
 ```
 
 There is no `translate()` and no `getLocale()`. Lookups are per-vocabulary:
