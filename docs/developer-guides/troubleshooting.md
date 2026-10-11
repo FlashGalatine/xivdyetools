@@ -195,5 +195,5 @@ card strings — if you add card strings elsewhere, they will be covered by luck
 
 - [Environment Variables](environment-variables.md) — the full var/secret inventory per project
 - [Deploy Environments](../operations/DEPLOY_ENVIRONMENTS.md) — the deploy-target evidence table
-- [Logging Standards](logging-standards.md) — how to get useful structured logs out of a worker
+- [Logging Standards](logging-standards.md) — the logging conventions, and why worker logs are only visible in a live `wrangler tail`
 - `docs/audits/` — dated audit archives; many failure modes here were first documented there
