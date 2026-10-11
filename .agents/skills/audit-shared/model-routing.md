@@ -39,13 +39,15 @@ of its family without an edit per release (maintainer decision, 2026-10-11, afte
 found still pinned to Haiku 4.5 while Haiku 5.5 existed). An alias resolves to whatever the client
 maps it to, which is normally but not always the newest: a standalone Claude Code CLI once mapped
 `sonnet` to Sonnet 5 rather than 5.5. When a role's model matters to a result, have the agent report
-its model ID (*Routing checked* below). Every agent file names an effort as well, because a level
-suits a model and an agent file without one inherits the session's effort wherever the model honors
-it: on 2026-10-11 the collector on Haiku 5.5 with no `effort` ran at the session's `xhigh`. Haiku
-4.5 had no effort control (Claude Code dropped the field), which is why the collector once had none.
-Why these levels: Anthropic starts Sonnet at `medium` for agentic coding and asks for at least
-`high` on intelligence-sensitive work; Opus defaults to `medium`, and `xhigh` / `max` are for
-measured gains; the collector's work is mechanical, so it runs at the lowest level. OpenAI's model-selection guide pairs Luna at low with simple extraction, Sol at medium with
+its model ID; when a family ships a new model, re-run the *Routing checked* probe below and re-tune
+that role's level, since the alias moves to it with no other signal. Every agent file names an
+effort as well, because a level suits a model and an agent file without one inherits the session's
+effort wherever the model honors it: on 2026-10-11 the collector on Haiku 5.5 with no `effort` ran
+at the session's `xhigh`. Haiku 4.5 had no effort control (Claude Code dropped the field), which is
+why the collector once had none. Why these levels: Anthropic starts Sonnet at `medium` for agentic
+coding and asks for at least `high` on intelligence-sensitive work; Opus defaults to `medium`, and
+`xhigh` / `max` are for measured gains; the collector's work is mechanical, so it runs at the lowest
+level. OpenAI's model-selection guide pairs Luna at low with simple extraction, Sol at medium with
 complex technical work, Sol at extra high with decisions built from conflicting evidence, and
 Astra with demanding analysis. These project effort defaults preserve routine work on Luna/Sol
 and reserve Astra for escalation; adjust effort when evidence shows it is needed.
@@ -115,23 +117,26 @@ environment variable overrides it. Do not use `general-purpose` or `fork` for ro
 at the session's effort (a fork also at its model). If a role agent is missing (a session opened
 above the repo root without the junction in `README.md` § *Discovery*), use `general-purpose` with
 the role's model alias (`haiku` / `sonnet` / `opus`) and report that it ran at the session's
-effort. Send independent calls together where supported. An Opus or Sonnet coordinator may do
-verifier work inline only while its session runs at `high` or above (current builds set
-`CLAUDE_EFFORT` in Bash's environment); otherwise, or when unsure, delegate it. **Fable
-coordinates:** delegate every role to its agent, worker work even for one unit. Fable retains
-prompts, collation, coordinator edits, final writing, and the responsibilities below.
+effort. For collector work, prefer a Workflow `agent()` with `model: 'haiku', effort: 'low'`
+instead: Haiku 5.5 honors effort, so a general-purpose Haiku spawned through `Agent` runs at the
+session's level (`xhigh` from an `xhigh` session). Send independent calls together where
+supported. An Opus or Sonnet coordinator may do verifier work inline only while its session runs at
+`high` or above (current builds set `CLAUDE_EFFORT` in Bash's environment); otherwise, or when
+unsure, delegate it. **Fable coordinates:** delegate every role to its agent, worker work even for
+one unit. Fable retains prompts, collation, coordinator edits, final writing, and the
+responsibilities below.
 
 **Claude Code Workflow scripts (Ultracode):** every `agent()` call passes its role's agent as
 `agentType`, for skill work and for any other task; this overrides the workflow reference's default
 of omitting `model`, because a bare call runs at the session's model **and** effort. If a role
-agent is missing, pass the role's `model` alias **and** its `effort` instead (`haiku` + `low`, `sonnet` +
-`medium`, `opus` + `high`), never neither. `agent()` also takes `model` and `effort`, which the
-`Agent` tool lacks: `model` swaps the model and keeps the agent file's prompt and effort, `effort`
-replaces the file's effort (Haiku 5.5 honors it; Haiku 4.5 ignored it). Two overrides are standing. A worker task
-too hard for Sonnet (a cross-unit refactor, an unfamiliar subsystem) runs as
+agent is missing, pass the role's `model` alias **and** its `effort` instead (`haiku` + `low`,
+`sonnet` + `medium`, `opus` + `high`), never neither. `agent()` also takes `model` and `effort`,
+which the `Agent` tool lacks: `model` swaps the model and keeps the agent file's prompt and effort,
+`effort` replaces the file's effort (Haiku 5.5 honors it; Haiku 4.5 ignored it). Two overrides are
+standing. A worker task too hard for Sonnet (a cross-unit refactor, an unfamiliar subsystem) runs as
 `agentType: 'xivdye-worker', model: 'opus', effort: 'high'`. An escalated verdict (verifier votes
 with no clear majority, a security-critical final call, a root cause the verifier missed) runs as
-`agentType: 'xivdye-verifier', model: 'fable'`, Fable 5.1 at `high`, which is 2.5× Opus per token,
+`agentType: 'xivdye-verifier', model: 'fable'`, Fable at `high`, about 2.5× Opus per token as of Fable 5.1,
 so use a handful per run at most; a Fable coordinator makes that call itself. With the `Agent` tool, the
 same `model` override also keeps the file's effort, so the Opus worker runs at `medium` there and
 the Fable verifier at `high`. The 2026-10-06 Claude setup observed about 75k tokens of system prompt
@@ -236,10 +241,13 @@ app's client (0.158), each spawned child's model and effort in its session recor
 2026-10-06 in Claude Code 2.1.286 from an `xhigh` Opus 5.5 session: each Workflow `agent()`
 combination of `agentType`, `model` and `effort` above, plus both `Agent` tool `model` overrides,
 by model ID and `printenv CLAUDE_EFFORT` inside the agent. Rechecked 2026-10-11 in the Claude
-desktop app from an `xhigh` Opus 5.5 session, when the agent files moved to aliases: `haiku`,
+desktop app from an `xhigh` Opus 5.5 session through Workflow `model` / `effort` options: `haiku`,
 `sonnet` and `opus` resolved to `claude-haiku-5-5`, `claude-sonnet-5-5` and `claude-opus-5-5`; the
 collector with no effort ran at `xhigh` and with `effort: 'low'` at `low`; the worker ran at
-`medium` and the verifier at `high`. Sources: the
+`medium` and the verifier at `high`. Agent files load when a session starts, so that session could
+not exercise the new alias files themselves (a bare collector spawned there still reported the old
+file's `claude-haiku-4-5` with no effort): after an agent-file change, spawn each role bare
+(`agentType` only) in a fresh session and record its model ID and effort here. Sources: the
 [Claude Code subagent docs](https://code.claude.com/docs/en/sub-agents), Anthropic's per-model
 effort guidance, and OpenAI's
 [subagent guidance](https://learn.chatgpt.com/docs/agent-configuration/subagents),
