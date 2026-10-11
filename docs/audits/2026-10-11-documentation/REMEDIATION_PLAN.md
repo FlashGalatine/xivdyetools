@@ -142,7 +142,7 @@ Anchored on DOC-003 (follows the Sprint 0 decision) and the Glamour Reader guide
 **Ends with:** `pnpm docs:check-links` + `node .agents/skills/audit-shared/scripts/american-spelling.mjs . <the 14
 files>` (no hits) → merge (no deploy fires).
 
-## Sprint 6 — discord-worker docs (P2, `docs/` only)
+## Sprint 6 — discord-worker docs (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `292386bd` `df67d7d6` `6fdcaded` `fee4b004` `9156d8bb` `b7755036` `f9d1afd0` — PR [#292](https://github.com/FlashGalatine/xivdyetools/pull/292)**
 
 | ID | Tier · Sev | Unit | Item |
 |---|---|---|---|
