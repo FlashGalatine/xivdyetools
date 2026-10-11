@@ -48,7 +48,7 @@ Under **Results**, one card per slot in a grid — the base first, then each har
 
 **Companion alternates.** Along the bottom of each harmony card is a row of small swatch dots — the next-closest dyes for that slot. Tap one and it swaps into the slot (card and puck both change); the rest of the grid stays put. How many dots you get is the **Additional Dyes per Harmony Color** slider in the settings column (1–5).
 
-If prices are on and the market board doesn't answer, one strip appears above the grid — *Prices unavailable — the market board did not answer. Colour matching is unaffected — only the price lines are missing.* — instead of a dash on every card. It goes away when prices come back.
+If prices are on and the market board doesn't answer, one strip appears above the grid — *Prices unavailable — The market board did not answer. Color matching is unaffected — only the price lines are missing.* — instead of a dash on every card. It goes away when prices come back.
 
 ### 5. Share
 

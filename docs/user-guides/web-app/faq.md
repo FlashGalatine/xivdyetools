@@ -155,7 +155,7 @@ web app instead.
   you sign in
 - Preset submissions and votes
 - Anonymous usage analytics — **only if you turn them on**. The **Enable Analytics** switch under
-  **Behaviour** in Advanced Settings (the gear icon) is off by default, and nothing is sent while
+  **Behavior** in Advanced Settings (the gear icon) is off by default, and nothing is sent while
   it is off.
 
 ### Can I delete my data?

@@ -32,7 +32,7 @@ If you change **Matching Algorithm** in the settings column to something other t
 Above the ledger sits a verdict block:
 
 - A badge — **{n} IN RANGE** when prices are loaded, **MARKET DATA UNAVAILABLE** when Universalis didn't answer, **ALREADY THE FLOOR** when the target is already the cheapest thing there is
-- A headline: *"What {target}'s colour is worth, line by line."*
+- A headline: *"What {target}'s color is worth, line by line."*
 - A money figure on the right — **PER ΔE POINT, BEST ROW** (see below) or **CHEAPEST KNOWN · VENDOR**
 
 ### 4. Read the ledger

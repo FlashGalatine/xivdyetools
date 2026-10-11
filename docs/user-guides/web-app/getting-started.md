@@ -110,7 +110,7 @@ Or start from a picture: switch to **Palette Extractor** (press `2`), drop in a 
 
 - **Favorites** — the **★** on any drawer swatch. Up to 40, shown at the top of the drawer.
 - **Saved palettes** — several tools save what you built (**Save mix**, **Save swap**, **Save character colors**, **Make a palette**). They appear under **Community Presets → Saved**.
-- **Share links** — eight of the ten tools have a **Share** button (or press `Shift+S`) that copies a link. Seven carry the exact dyes and settings: Color Harmony, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. The eighth, Palette Extractor, carries its extracted colours and matching method instead of dyes — never the picture itself. Community Presets and the Glamour Reader have no Share button: a browsable list has nothing to put in a link, and the reader shows a file that stays on your device.
+- **Share links** — eight of the ten tools have a **Share** button (or press `Shift+S`) that copies a link. Seven carry the exact dyes and settings: Harmony Explorer, Accessibility Checker, Dye Comparison, Gradient Builder, Dye Mixer, Budget Suggestions and Swatch Matcher. The eighth, Palette Extractor, carries its extracted colours and matching method instead of dyes — never the picture itself. Community Presets and the Glamour Reader have no Share button: a browsable list has nothing to put in a link, and the reader shows a file that stays on your device.
 
 Everything is stored in your browser on this device; nothing needs an account. See [Favorites & Collections](favorites-collections.md).
 
@@ -141,7 +141,7 @@ The gear opens a slide-over with three collapsible cards:
 
 - **Data** — *reset · clear saved dyes, favorites, palettes*: **Reset Settings**, **Clear Dyes**, **Clear Favorites**, **Clear Saved Palettes** (each asks you to confirm and cannot be undone) and **Reset Tutorial**.
 - **Backup** — **Export** your settings as a JSON file, or **Import** one.
-- **Behaviour** — **Performance Mode** (fewer animations for slower devices) and **Enable Analytics** (anonymous usage data, off by default).
+- **Behavior** — **Performance Mode** (fewer animations for slower devices) and **Enable Analytics** (anonymous usage data, off by default).
 
 On phones the current tool's settings sit above these cards, since there is no room for the settings column.
 
