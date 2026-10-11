@@ -1,5 +1,7 @@
 # Security remediation — 2026-09-15 rollout
 
+**Status:** executed 2026-09-15, kept as the rollout record.
+
 Local fixes and commits do not change deployed workers. The [audit plan](../audits/2026-09-15-security/REMEDIATION_PLAN.md) defines six findings and independent release steps. PR #183's review and merge were authorized on 2026-09-15. The procedure below supersedes the earlier partial-merge procedure: a full PR merge is safe only while deployment workflows are held and the database/API prerequisites are enforced.
 
 ## Revision migration before presets-api deployment

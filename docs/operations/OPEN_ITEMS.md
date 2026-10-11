@@ -130,6 +130,12 @@ proven under load.
 - [ ] moderation bot: autocomplete only for moderators; ban flow on a long CJK name
       (FINDING-006/007).
 - [ ] Discord / X link-preview validators for `/`, each tool path, a preset, and the beta host.
+- [ ] **Confirm presets-api migration 0015 ran in production → prod** (read-only). The
+      `0015_rewrite_legacy_dead_letters.sql` rewrite is hand-run after the 2.4.0 deploy, and no
+      operations page records that it ran.
+  - From `apps/presets-api`: `wrangler d1 execute xivdyetools-presets --env production --remote --command "SELECT COUNT(*) FROM failed_notifications WHERE CASE WHEN json_valid(payload) THEN json_extract(payload, '$.preset.id') IS NOT NULL ELSE 0 END"`
+  - `0` means no legacy-shape dead-letter rows remain. Anything else: run the `--file` command in
+    the *Rollout* section of the [presets-api 2.4.0 changelog entry](../../apps/presets-api/CHANGELOG.md).
 
 ## 5. Code removals gated on the above
 
