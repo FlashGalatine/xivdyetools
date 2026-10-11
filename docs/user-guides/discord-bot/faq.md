@@ -34,7 +34,7 @@ Use `/manual` for a help overview, or type `/` and look for "XIV Dye Tools" in t
 Autocomplete requires:
 - The bot to be online
 - You to wait a moment for suggestions
-- Typing at least 2 characters
+- Typing at least 1 character to search (an empty dye field lists the first 25 dyes)
 
 ### Commands are slow. Why?
 
@@ -123,7 +123,7 @@ Every command has a per-user limit over a rolling minute — nothing is unlimite
 |------------|----------|
 | 5 | `/extractor image` |
 | 10 | `/accessibility` (and `/a11y`), `/budget`, `/preset` |
-| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/stats` |
+| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/glamour`, `/stats` |
 | 20 | `/dye`, `/preferences` |
 | 30 | `/about`, `/manual`, `/changelog` |
 

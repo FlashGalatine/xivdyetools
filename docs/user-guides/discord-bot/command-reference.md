@@ -287,7 +287,7 @@ Get a random approved preset, optionally within a category.
 ---
 
 ### /preset submit
-Submit a new community preset (goes to moderation first).
+Submit a new community preset (clean submissions go live immediately; flagged ones wait for a moderator).
 
 **Usage**: `/preset submit preset_name:My Outfit description:... category:jobs dye1:Dalamud Red dye2:Jet Black dye3:Soot Black`
 
