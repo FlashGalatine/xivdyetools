@@ -171,8 +171,8 @@ Save favorite dyes and organize into named collections.
 - ✅ Collapsible favorites panel at top of dye selector
 - ✅ Toast notifications for add/remove actions
 - ✅ Maximum 40 favorites with warning toast (the roadmap originally said 20)
-- ❌ Keyboard shortcut `F` to toggle favorite — never shipped; the app's number keys `1`-`9` and the
-  `Shift+T` / `Shift+L` / `Shift+S` chords are the whole shortcut set
+- ✅ Keyboard shortcut `F` to toggle favorite on the focused dye card in the dye grid — the V4 shell
+  no longer renders that grid, so the shortcut has no effect in this release
 
 *Phase 2 - Collections:*
 - ✅ Collection Manager Modal - view, create, edit, delete collections
@@ -183,7 +183,8 @@ Save favorite dyes and organize into named collections.
 - ✅ "Manage Collections" button in favorites panel header — the only route to the export/import UI;
   the V4 shell no longer renders it, so the collection manager is unreachable (no export/import or
   per-collection delete in this release)
-- ❌ Keyboard shortcut `C` to open the add-to-collection menu — never shipped
+- ✅ Keyboard shortcut `C` to open the add-to-collection menu on the focused dye card in the dye
+  grid — likewise no effect in the V4 shell, which no longer renders that grid
 
 **Web App Files created/modified:**
 - `xivdyetools-web-app/src/services/collection-service.ts` - Core service
@@ -367,7 +368,7 @@ See [BUDGET_AWARE_SUGGESTIONS.md](./budget-aware-suggestions.md) for detailed sp
 | `/match max_price:` budget filter | Superseded — budget became its own tool and `/budget` command |
 | `/dye alternatives` | Superseded by `/budget find` |
 | Bot-side `/favorites` and `/collection` | Removed in 5.0; saved dyes and palettes live in the web app |
-| `F` / `C` keyboard shortcuts (web app) | Never shipped; the shortcut set is `1`-`9` plus `Shift+T` / `Shift+L` / `Shift+S` |
+| `Ctrl+Shift+C` keyboard shortcut to open the collection manager (web app) | Never shipped |
 
 ---
 
