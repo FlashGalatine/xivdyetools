@@ -319,6 +319,68 @@ describe('glamour export sheet', () => {
     expect(AcquisitionEdits.get(gearHash('HeadGear', 372, [1]))).toBeNull();
   });
 
+  describe('when the named row is not the family’s lowest', () => {
+    // api-worker names the lowest row WITH a line (#29334); the blank #29254 is an alternate
+    const named = (): GlamourListSource => {
+      const base = source();
+      return {
+        ...base,
+        picked: {},
+        equipment: {
+          ...base.equipment!,
+          items: {
+            ...base.equipment!.items,
+            Legs: {
+              itemId: 29334,
+              names: names('Augmented Crystarium Slacks'),
+              iconId: null,
+              familySize: 2,
+              alternates: [{ itemId: 29254, names: names('Crystarium Slacks') }],
+              viaMainHand: false,
+              acquisition: 'Aymark - Eulmore (280 Allagan Tomestones of Poetics)',
+            },
+          },
+        },
+      };
+    };
+
+    it('files an edit under the lowest row, so a later patch does not orphan it', () => {
+      openGlamourSheet(named());
+      type('Legs', 'My note');
+
+      expect(AcquisitionEdits.get(gearHash('Legs', 29254, []))).toEqual({
+        text: 'My note',
+        baseItemId: 29334,
+      });
+      expect(AcquisitionEdits.get(gearHash('Legs', 29334, []))).toBeNull();
+    });
+
+    it('shows an edit already stored under the lowest row', () => {
+      AcquisitionEdits.set(gearHash('Legs', 29254, []), {
+        text: 'Saved earlier',
+        baseItemId: 29254,
+      });
+      openGlamourSheet(named());
+
+      expect(field('Legs').value).toBe('Saved earlier');
+      // The edit replaced the old default's blank line; the named twin now has
+      // a source, so the sheet offers it once instead of overwriting the edit
+      const warn = rowOf('Legs').querySelector('[data-role="sheet-warn"]');
+      expect(warn).not.toBeNull();
+      expect(warn!.querySelector('[data-role="sheet-use-new"]')).not.toBeNull();
+    });
+  });
+
+  it('keeps a family with no alternates keyed on its own row', () => {
+    openGlamourSheet(source());
+    type('Body', 'Mine');
+
+    expect(AcquisitionEdits.get(gearHash('Body', 5000, []))).toEqual({
+      text: 'Mine',
+      baseItemId: 5000,
+    });
+  });
+
   it('keeps Tab inside the sheet, and gives focus back to what opened it', () => {
     const opener = document.createElement('button');
     document.body.appendChild(opener);
