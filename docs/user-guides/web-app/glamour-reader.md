@@ -76,10 +76,11 @@ A `.chara` file stores the model a piece draws, not the item. One model often st
 2. preferring one that takes dyes (GPOSERS asks for an identical dyeable version over an undyeable one),
 3. then one that members of any Grand Company can wear,
 4. then one that isn't a **Dated** version,
-5. then the one with more dye channels,
-6. then the lowest item number.
+5. then one with a known Acquisition line, so the list says where to get it,
+6. then the one with more dye channels,
+7. then the lowest item number.
 
-When no twin passes, the reader names the one with the lowest item number.
+When no twin passes, the reader names the lowest-numbered twin with a known Acquisition line, or else the one with the lowest item number, counting only twins whose rules it could check.
 
 The reader never offers Aetherial or Deepmist gear, or **Dated** gear of level 50 or lower, as a twin while any other kind of item has the same look. A piece whose look only those items carry is still named, and its row ends with the note *"A retired item, no longer obtainable"*.
 

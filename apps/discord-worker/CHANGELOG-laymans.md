@@ -41,6 +41,11 @@ Rules:
 - The Privacy Policy describes the first-run flag as it works: the bot sets it the first time you run a command, whether or not you see the welcome notice.
 - Each translated document links to the same language's version of the other document.
 
+## [5.8.12] - 2026-10-11
+### 👗 /glamour names gear you can still get
+- `/glamour` names a look-alike you can still get when the lowest-numbered item with that look has no known source, so more pieces in the list have an Acquisition line. For example, it names the Augmented Crystarium Ring of Fending instead of the retired original.
+- A twin that takes dyes still comes first, so a dyed piece keeps its dyes.
+
 ## [5.8.11] - 2026-10-06
 ### 📖 /manual explains /glamour in full
 - `/manual`'s character-file topic now lists every verdict a `/glamour` card can show, including the race name and the dash for a model with no item behind it.

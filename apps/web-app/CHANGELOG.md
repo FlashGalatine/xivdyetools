@@ -45,6 +45,20 @@ only in its version string. `Last updated` is 2026-10-12 (the merge date) on all
   (收藏 is favorites), the 已投票 label for removing a vote, localized DevTools labels, and stray
   spaces after full-width punctuation. No translation changes a claim; English governs.
 
+## [5.15.2] - 2026-10-11
+
+### Fixed
+
+- Glamour Reader names a piece by a visually identical twin you can still get when the lowest-numbered one has no known source (core 5.11.0 `defaultCharaTwin`, api-worker 0.19.0). Examples: Augmented Crystarium Ring of Fending instead of the retired Crystarium Ring of Fending, Loyal Housemaid's instead of Housemaid's, Exclusive Far Eastern Journey instead of Far Eastern Journey. The export sheet's Acquisition line follows. Dyeable, any-Grand-Company and non-Dated twins still win first. Over the 1,093-file `.chara` corpus (with api-worker 0.18.1's acquisition table), pieces named with no Acquisition line drop from 469 to 103 of 10,875.
+- Saved Acquisition edits are keyed by the family's lowest row (the smaller of `itemId` and the alternates), not by the named row, so edits saved before this change keep applying and a later source change cannot orphan them. Such an edit was made against the old default twin, so where the default moved to a twin with a source, the sheet shows Keep mine / Use new source once (its copy still reads "You picked …").
+- The `+N` tooltip lists every family member except the twin the row shows. It listed `alternates`, so whenever the shown twin was not the API-named row it named the shown item as its own twin and left out the named one.
+
+## [5.15.1] - 2026-10-11
+
+### Fixed
+
+- Glamour Reader fills 803 more Acquisition fields from api-worker 0.18.1's researched table: current store sets, quest rewards, seasonal and collaboration events (`Event Name (YYYY)`, the year first offered), five Dawntrail duty sets, Feast ranking rewards, Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure Trove, Cosmic Fortune and Ceremony of Eternal Bonding attire. Every PvP Series reward reads `PvP Series Rewards`. Facewear sources cover 60 of 61 styles. No web-app source changed; this release carries the What's New note.
+
 ## [5.15.0] - 2026-10-09
 
 ### Added

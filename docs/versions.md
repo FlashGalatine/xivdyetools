@@ -29,7 +29,7 @@
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.18.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.19.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -39,7 +39,7 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.10.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.11.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
@@ -69,6 +69,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.11.0 | Oct 2026 | `defaultCharaTwin` prefers a twin with a known acquisition line: passes → dyeable → any Grand Company → not Dated → has a line → more dye channels → lowest row; when nothing passes, the lowest judged twin with a line, else the lowest row. Over the 1,093-file `.chara` corpus (api-worker 0.18.1's table) the default names an unsourced piece on 103 of 10,875 slots, down from 469 |
 | v5.10.0 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a grey input keeps the other colour's hue in an HSL mix (BUG-035); palette extraction returns only colours the image holds (BUG-036); the locale build checks dyes and facewear against their CSVs before writing (BUG-128, BUG-130); character-creation sheet names follow the game clients (TERM-021); `DyeDatabase.initialize` throws on an empty or colliding payload (BUG-136); text colour by real contrast (BUG-134); parser, search, cache and harmony-pin fixes (BUG-129, BUG-131 to BUG-133, BUG-135, BUG-137) |
 | v5.9.0 | Oct 2026 | `APIService.getPricesForDataCenterWithOutcome` (`ok` / `partial` / `error`) so consumers can tell an outage from "no listings" (BUG-090); `CHARA_DYEABLE_SLOTS` exported (REFACTOR-004); Chinese and Korean data centers and worlds no longer sanitise to an empty path |
 | v5.8.2 | Oct 2026 | The Brass facewear color's fr / ko / zh names match the clients (Bronze, 구리색, 铜色); no font re-cut |
@@ -118,6 +119,8 @@
 | Version | Date | Highlights |
 |---------|------|------------|
 | v5.15.3 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the Privacy Guide no longer names the unreachable Manage Collections → Delete Collection route and says which saved records only the browser can clear; translations link their own language's sibling documents; American spelling in the English text |
+| v5.15.2 | Oct 2026 | Core 5.11.0 + api-worker 0.19.0: the Glamour Reader names a look-alike you can still get when the lowest-numbered twin has no known source (Augmented Crystarium over Crystarium, Loyal Housemaid's over Housemaid's); saved Acquisition edits key on the family's lowest row, so they keep applying |
+| v5.15.1 | Oct 2026 | What's New note only: the Glamour Reader picks up 803 more Acquisition lines from api-worker 0.18.1 (store sets, quest rewards, seasonal events with their first year, Dawntrail duty sets, Feast and other reward programs; facewear 60 of 61 styles). No web-app source changed |
 | v5.15.0 | Oct 2026 | Glamour Reader facewear Acquisition lines show where to obtain the style unlock item, shared by the base and all color variants. A piece whose whole family is retired keeps its name, with a "no longer obtainable" note |
 | v5.14.12 | Oct 2026 | Review follow-ups: a custom color's result-card menu offers only Transform → Gradient (every other hand-off and the market links could not carry it, and Budget did nothing at all); the Swatch Matcher's active palette chip or range button no longer drops a THIS CHARACTER slot pick; a slot pick on a hair or skin sheet still loading no longer ranks or draws the previous sheet's colors |
 | v5.14.11 | Oct 2026 | The Glamour Reader's drop zone describes the reader: every piece the character wears, with its dyes (`glamour.dropBody` in six languages, through the file card's new `dropBody` option). It no longer shows the Swatch Matcher's hair-and-skin line or "or pick a swatch from the grid below"; the Swatch Matcher's drop zone is unchanged |
@@ -195,6 +198,7 @@
 | Version | Date | Highlights |
 |---------|------|------------|
 | v5.8.13 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the first-run notice flag is described as what it is, a marker set on your first command whether or not the notice is sent; translations link their own language's sibling documents |
+| v5.8.12 | Oct 2026 | Core 5.11.0 (no source change here): `/glamour` names a look-alike with a known source when the lowest-numbered twin has none, so more GPOSERS Acquisition lines are filled. No command shape changes |
 | v5.8.11 | Oct 2026 | `/manual` catches up with `/glamour` (with bot-logic 4.8.3; PR #251, stacked on the remediation chain's tip): the `.chara` help and the `file` option text name Brio, and the 👤 Character File topic explains every verdict the card can show, the automatic twin pick and the English Acquisition lines; three guards in `manual.test.ts`; CJK subsets re-cut (SC +1, JP +3, KR +2). The deploy re-registers commands |
 | v5.8.10 | Oct 2026 | `renderSvgToPng` frees both resvg-wasm allocations of every render, the `Resvg` tree and the `RenderedImage` pixmap, in a `finally` — the fix the 2026-10-04 deep-dive's OPT-006 prescribes for og-worker. Both used to leak for the life of the isolate: resvg-wasm 2.6.2 never registers the `Resvg` with a finalizer, and at this worker's compatibility_date (2024-12-01) workerd has no `FinalizationRegistry` for the pixmap either. No visible change, no `register-commands` |
 | v5.8.9 | Oct 2026 | `/glamour` cards name items in Korean, Chinese and Japanese (2026-10-04 remediation, Sprint 30, FONT-001): CJK subsets widened with the ko / zh / ja item-name tables (KR +364, SC +1,167, JP +443); English fallback 63.2 % → 2 items (ko), 97.3 % → 0 (zh), 7.3 % → 0 (ja); Japanese cards load JP first, so kanji draw in Japanese letterforms (zh / ko / en unchanged); bundle 2,717.2 KiB (88.5 % of the cap) |
@@ -619,6 +623,8 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.19.0 | Oct 2026 | `/v1/chara/resolve` names a family by its lowest eligible row with an acquisition line, else its lowest eligible row; the rule set holding `itemId` comes first in `rules`, and `alternates` always carries the family's lowest row (`min(itemId, alternates)` is the stable key). No cache shape change. Corpus (0.18.1's table): a named slot without a top-level line drops from 1,304 to 27 of 10,875, none with a lined twin |
+| v0.18.1 | Oct 2026 | Data only: 803 more glamour acquisition lines from web research, each kept only after it matched the official Online Store catalog, the pinned quest data, an independent verification pass, or a maintainer decision (store sets, quest rewards, seasonal events written `Event Name (YYYY)` with the first year offered, Feast ranking rewards, Veteran Rewards, Hall of the Novice, Dawntrail duty sets, Ceremony attire). Every PvP Series reward now reads `PvP Series Rewards`. 24,922 lines; facewear 60 of 61 styles / 720 of 732 variants |
 | v0.18.0 | Oct 2026 | Facewear unlock sources on `glasses.acquisition`, mapped by client-sheet links for all 61 styles / 732 variants (54 styles / 648 variants have known acquisition lines). Glamour acquisition lines for all 55 fiend costume pieces list Enie in the Firmament and the 3,000 Skybuilders' Scrips cost; 127 Varsarudh and 127 Mewazunte equipment lines omit the currency amount; the acquisition generator preserves these corrections. A family with only retired rows (Aetherial, Deepmist, Dated ≤ 50) is named from all of them with `retired: true` instead of `null` |
 | v0.17.0 | Oct 2026 | 2026-10-04 remediation Sprint 18 — a telemetry beacon is charged once, so 240 / 60 s applies instead of 120 (BUG-037); malformed numeric query parameters answer 400 instead of being truncated (BUG-038); the service-binding multiplier is one constant a test pins to `wrangler.toml` (BUG-039); `latest` resolves through `/api/version`, so a patch cools the `.chara` row cache within about 10 minutes (BUG-040); the chara tables load lazily (OPT-002); dead `createMockKV` re-export removed (DEAD-035) |
 | v0.16.1 | Oct 2026 | 2026-10-03 security audit Sprint 7 — the Universalis proxy's cache-miss limit counts through two native Workers Rate Limiting bindings (per IP 30 / 60 s, service-binding ceiling 600 / 60 s in production) with a KV fallback, replacing the per-isolate in-memory limiter, so it is enforced per colo (FINDING-011); Workers Logs pinned off in both wrangler blocks (FINDING-022) |
