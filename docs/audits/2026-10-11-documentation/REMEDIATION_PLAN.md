@@ -25,7 +25,20 @@ spelling included.
 | security-audit's two hand-offs | Sprint 1 | the bot's first-run flag (`PRIVACY_POLICY.md:30`) and the web Privacy Guide's "Manage Collections → Delete Collection" route (`PRIVACY.md:60`). If security-audit rules either a policy CORRECT, land it **inside Sprint 1's commit 2** so each document takes one date bump, not two |
 | i18n-manager's policy-translation hand-offs (policy-ja/de/fr/ko/zh in `evidence/handoffs.md`) | Sprint 1 | they edit 15 of the 24 policy files; a later translation-only commit breaks "one commit changes all six" and forces a second date bump. Land them in Sprint 1's commit 2, or defer them to i18n-manager's next six-variant policy commit |
 
-## Sprint 1 — Policy documents, web-app + discord-worker: the dead contact route (P1)
+**As decided 2026-10-11** (the maintainer chose the invite and asked for every sprint to run; the coordinator took
+the rest as defaults, each reversible):
+- **Invite:** `discord.gg/5VUSKTZCe5` (maintainer).
+- **Cross-links:** translations link their own locale's sibling documents; only the line-3 notice links English.
+  Backticked link labels stay verbatim for the parity script. Recorded in `policy-documents.md`.
+- **Collection manager:** document what ships. There is no export, import or per-palette delete in this release
+  (Sprints 1, 5 and 13 follow this). Restoring a route stays the web-app owner's hand-off.
+- **security-audit hand-offs:** a verifier ruled both CORRECT, and both landed in Sprint 1's commit 2. The
+  first-run flag is deliberate per its code comments, so the policy text changed, not the code. Sprint 2 brings
+  the two user guides that repeat the old claim into line.
+- **i18n-manager hand-offs:** 16 of the 17 policy rows landed in Sprint 1's commit 2. `policy-ko-02` (서버
+  wording, the owner's call) and `manual-04` (bot-logic text) stay with i18n-manager.
+
+## Sprint 1 — Policy documents, web-app + discord-worker: the dead contact route (P1) **✅ COMPLETED 2026-10-11 `d6eb816d` `133c677f` — PR [#287](https://github.com/FlashGalatine/xivdyetools/pull/287)**
 
 The one deliberate two-unit sprint, following the 2026-10-04 i18n plan's Sprint 7 (PR #249). DOC-001 is one fact
 spread over 24 files: splitting it by app would leave half the policies pointing at a dead invite. The spelling
@@ -54,6 +67,8 @@ announcement; whether to send it is the maintainer's call, as it was in PR #249 
 `deploy-discord-worker-beta.yml`, which take the single shared beta site and beta bot from whoever is testing on them.
 **Deploy needs:** if the PR merges after the date written in commit 2, re-date all 24 variants to the merge date in
 one commit, then re-run the parity script.
+
+**Deploy needs (as executed):** merge #284 and #285 first (they hold web-app 5.15.1/5.15.2 and discord-worker 5.8.12); this PR is web-app 5.15.3 / discord-worker 5.8.13. The merge fires deploy-web-app.yml and deploy-discord-worker.yml on unchanged code (register-commands on an unchanged roster). If it merges after 2026-10-11, re-date all 24 variants in one commit and re-run the parity script. The root CHANGELOG-laymans.md announcement (5.11.1) is the maintainer's call; its text is in the PR body. Sprint 0 as executed: invite 5VUSKTZCe5; translations cross-link their own locale (rule in policy-documents.md); collection manager documented as unreachable (no export/import), code restore stays a hand-off; both security-audit hand-offs ruled CORRECT and landed in commit 2; 16 of 17 policy i18n hand-offs landed in commit 2 (policy-ko-02 left to i18n-manager).
 
 ## Sprint 2 — User guides: the privacy answers (P1, `docs/` only)
 

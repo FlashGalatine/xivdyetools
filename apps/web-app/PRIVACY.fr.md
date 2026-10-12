@@ -2,8 +2,8 @@
 
 > Ceci est une traduction fournie à titre pratique. La version anglaise fait foi ; en cas de divergence, c'est elle qui prévaut. [Anglais](PRIVACY.md)
 
-**Dernière mise à jour :** 2026-10-09 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
-Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
+**Dernière mise à jour :** 2026-10-12 · Couvre **xivdyetools.app** et **beta.xivdyetools.app**. Le bot
+Discord a sa propre politique : [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.fr.md).
 
 XIV Dye Tools fonctionne dans votre navigateur. Les outils de couleur — l'Extracteur de palette,
 l'Explorateur d'harmonies, la Comparaison de Teintures, le Constructeur de Dégradé, le
@@ -67,8 +67,11 @@ en efface une partie :
 - **Paramètres avancés → Réinitialiser les paramètres** remet les réglages de chaque outil à leurs
   valeurs par défaut. Cela ne supprime pas votre travail enregistré.
 - **Paramètres avancés → Effacer les favoris** supprime vos teintures favorites.
-- **Paramètres avancés → Effacer les palettes sauvegardées** supprime vos palettes enregistrées.
-- **Gérer les collections → Supprimer la collection** supprime une collection enregistrée.
+- **Paramètres avancés → Effacer les palettes sauvegardées** supprime d'un seul coup toutes vos palettes
+  enregistrées. L'application n'a aucun contrôle qui supprime une seule palette.
+- Les échanges que vous enregistrez dans Suggestions Budget et les couleurs de personnage que vous
+  enregistrez dans le Nuancier n'ont aucun contrôle de suppression dans l'application ; les contrôles
+  de données de site de votre navigateur les effacent.
 - Se déconnecter supprime le jeton de session.
 - « Tout réinitialiser » dans la Liste d'équipement supprime la ligne réécrite de chaque pièce de
   cette liste. Chaque ligne est conservée par pièce d'équipement, de sorte qu'une autre tenue qui
@@ -130,7 +133,7 @@ n'autorise rien d'autre) ainsi qu'avec les tiers nommés ci-dessous :
    que l'URL.
 5. **Analyses d'utilisation** (avec consentement — voir la section suivante) : `data.xivdyetools.app`.
 
-Les polices sont hébergées par nous-mêmes. Il n'y a aucun script d'analyse tiers, aucun traqueur
+Les polices sont auto-hébergées. Il n'y a aucun script d'analyse tiers, aucun traqueur
 publicitaire ou social, et aucun cookie.
 
 ### Liens qui vous emmènent vers d'autres sites
@@ -213,7 +216,7 @@ connexion (`auth.xivdyetools.app`), le reste par notre service de préréglages
   que le préréglage existe.
 
 Le bot Discord conserve les mêmes enregistrements pour les préréglages soumis par son
-intermédiaire ; voir [sa politique](../discord-worker/PRIVACY_POLICY.md).
+intermédiaire ; voir [sa politique](../discord-worker/PRIVACY_POLICY.fr.md).
 
 ## Analyses d'utilisation (avec consentement)
 
@@ -279,7 +282,7 @@ nôtre est gérée par Cloudflare, et voici l'intégralité de ce que nous en fa
   désactivée sur chacun de nos workers, de sorte que ces lignes ne sont visibles que par un
   mainteneur observant un flux en direct pendant le débogage, et ne sont pas conservées ensuite. Si
   nous activons un jour la journalisation persistante, nous le préciserons ici en premier. Les
-  journaux du bot Discord relèvent de [sa propre politique](../discord-worker/PRIVACY_POLICY.md).
+  journaux du bot Discord relèvent de [sa propre politique](../discord-worker/PRIVACY_POLICY.fr.md).
 
 ## Comment vérifier
 
@@ -309,7 +312,7 @@ Pour tout le reste — votre enregistrement de compte, ou tout ce qui se trouve 
 une seule fois — demandez-nous en privé :
 
 1. **E-mail :** FlashGalatineFGC@gmail.com, avec l'objet « XIV Dye Tools Privacy ».
-2. **Discord :** rejoignez https://discord.gg/rzxDHNr6Wv et envoyez un message privé à « Flash
+2. **Discord :** rejoignez https://discord.gg/5VUSKTZCe5 et envoyez un message privé à « Flash
    Galatine ».
 
 Précisez si vous vous connectez avec Discord ou avec XIVAuth, et indiquez votre identifiant

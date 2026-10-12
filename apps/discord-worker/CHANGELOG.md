@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.8.13] - 2026-10-11
+
+Sprint 1 of the 2026-10-11 documentation remediation
+(`docs/audits/2026-10-11-documentation/REMEDIATION_PLAN.md`). **Documents only** — no
+discord-worker source changed and no command schema; the production deploy re-runs
+`register-commands` on an unchanged roster. `Last Updated` is October 12, 2026 (the merge date) on all six
+variants of both documents. 5.8.12 is #285, open at the time of writing; merge it first.
+
+### Fixed
+
+- **The contact route works again** (DOC-001). `PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md`, in
+  all six languages, sent deletion, appeal and contact requests to the Discord invite
+  `rzxDHNr6Wv`, which has expired. They now use `5VUSKTZCe5`, the invite `product-links.ts`
+  and `/about` already use.
+- **Privacy Policy, "First-run notice flag", all six languages:** the row said the flag records
+  that the 5.0 welcome notice was shown. `maybeSendFirstRunNotice` sets it on the user's first
+  command, before it checks for stored preferences, and never sends the notice to a user who has
+  them, so the row now says exactly that (security-audit hand-off, ruled CORRECT; the behavior is
+  deliberate per the code's comments, so the text changed, not the code).
+- **Translations link their own language** (DOC-073): the five translated Terms of Service link
+  the same language's Privacy Policy and web-app terms. The English-prevails notice still links
+  English.
+
+### Changed
+
+- **Translation fixes from the audit's i18n hand-offs**, in the same commit as the date bump: ja
+  defined terms (本Bot / 運営者) and spacing; de "Datenschutzrichtlinie des Anbieters" for the
+  third-party column, which read as the formal "your"; fr dye-category adjectives as the bot shows
+  them, "soumis à la limitation de débit", "Procédure de recours" and a translated copyright line;
+  zh stray spaces after full-width punctuation. No translation changes a claim; English governs.
+
 ## [5.8.12] - 2026-10-11
 
 No source change in this app: `/glamour`'s pick comes from `@xivdyetools/core` 5.11.0 through

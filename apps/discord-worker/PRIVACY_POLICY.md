@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](PRIVACY_POLICY.ja.md) · [Deutsch](PRIVACY_POLICY.de.md) · [Français](PRIVACY_POLICY.fr.md) · [한국어](PRIVACY_POLICY.ko.md) · [中文](PRIVACY_POLICY.zh.md). This English version is the authoritative text.
 
-**Last Updated**: October 9, 2026
+**Last Updated**: October 12, 2026
 
 ## 1. Introduction
 
@@ -27,7 +27,7 @@ We are committed to protecting your privacy and being transparent about our data
 |-----------|---------|-----------|
 | Preferences | Language, blending mode, matching algorithm, result count, clan, gender, default world / data center, whether to show Market Board prices by default, color-display toggles, theme, and which dye categories to exclude from search results (metallic, pastel, dark, cosmic, Ishgardian, expensive, vendor-sold, crafted), plus the time you last changed them | Until you reset them or request deletion |
 | Preset favorites | Up to 50 community presets you mark with `/preset favorite add` — the preset's id and the name it had when you saved it | Until you remove them or request deletion |
-| First-run notice flag | A per-user marker that the 5.0 welcome notice was shown to you; carries no content | Expires automatically after 180 days |
+| First-run notice flag | A per-user marker that the Bot has made its one-time check for the 5.0 welcome notice. It is set the first time you run a command, whether or not the notice is sent (it is not sent if you already have stored preferences); carries no content | Expires automatically after 180 days |
 | Preset Submissions | Name, description, dyes, tags, category — and, if our automatic check holds an edit's new name or description for review, the version from before the first such edit, kept until a moderator restores it or the preset is deleted | Until you delete it (in the web app's My Submissions, signed in with the same Discord account) or request deletion |
 | Votes | Your votes on community presets. Submitting a preset counts as your vote for it; if a published preset already has the same dyes, your submission becomes a vote for that preset instead | Until you remove vote or request deletion |
 
@@ -167,7 +167,7 @@ To request deletion of all your data:
 1. **Email**: FlashGalatineFGC@gmail.com
    - Subject: "XIV Dye Tools Privacy"
    - Include your Discord User ID
-2. **Discord**: Join https://discord.gg/rzxDHNr6Wv and DM "Flash Galatine"
+2. **Discord**: Join https://discord.gg/5VUSKTZCe5 and DM "Flash Galatine"
 
 We will process deletion requests within 30 days. A deletion request also removes the posts about you and your presets from our Discord server, except the post about a ban that is still active. An active ban record is not deleted on request; once the ban is lifted, the record follows the retention under *Data Retention*.
 
@@ -215,7 +215,7 @@ Continued use of the Bot after changes constitutes acceptance of the updated pol
 For privacy-related questions or data requests:
 
 - **Email**: FlashGalatineFGC@gmail.com (Subject: "XIV Dye Tools Privacy")
-- **Discord**: https://discord.gg/rzxDHNr6Wv
+- **Discord**: https://discord.gg/5VUSKTZCe5
 - **Support Channel**: #dyetools-issues-and-suggestions
 
 ---

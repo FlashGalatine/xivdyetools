@@ -23,8 +23,8 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.15.2 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.12 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.15.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.8.13 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
@@ -118,6 +118,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.15.3 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the Privacy Guide no longer names the unreachable Manage Collections → Delete Collection route and says which saved records only the browser can clear; translations link their own language's sibling documents; American spelling in the English text |
 | v5.15.2 | Oct 2026 | Core 5.11.0 + api-worker 0.19.0: the Glamour Reader names a look-alike you can still get when the lowest-numbered twin has no known source (Augmented Crystarium over Crystarium, Loyal Housemaid's over Housemaid's); saved Acquisition edits key on the family's lowest row, so they keep applying |
 | v5.15.1 | Oct 2026 | What's New note only: the Glamour Reader picks up 803 more Acquisition lines from api-worker 0.18.1 (store sets, quest rewards, seasonal events with their first year, Dawntrail duty sets, Feast and other reward programs; facewear 60 of 61 styles). No web-app source changed |
 | v5.15.0 | Oct 2026 | Glamour Reader facewear Acquisition lines show where to obtain the style unlock item, shared by the base and all color variants. A piece whose whole family is retired keeps its name, with a "no longer obtainable" note |
@@ -196,6 +197,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.13 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the first-run notice flag is described as what it is, a marker set on your first command whether or not the notice is sent; translations link their own language's sibling documents |
 | v5.8.12 | Oct 2026 | Core 5.11.0 (no source change here): `/glamour` names a look-alike with a known source when the lowest-numbered twin has none, so more GPOSERS Acquisition lines are filled. No command shape changes |
 | v5.8.11 | Oct 2026 | `/manual` catches up with `/glamour` (with bot-logic 4.8.3; PR #251, stacked on the remediation chain's tip): the `.chara` help and the `file` option text name Brio, and the 👤 Character File topic explains every verdict the card can show, the automatic twin pick and the English Acquisition lines; three guards in `manual.test.ts`; CJK subsets re-cut (SC +1, JP +3, KR +2). The deploy re-registers commands |
 | v5.8.10 | Oct 2026 | `renderSvgToPng` frees both resvg-wasm allocations of every render, the `Resvg` tree and the `RenderedImage` pixmap, in a `finally` — the fix the 2026-10-04 deep-dive's OPT-006 prescribes for og-worker. Both used to leak for the life of the isolate: resvg-wasm 2.6.2 never registers the `Resvg` with a finalizer, and at this worker's compatibility_date (2024-12-01) workerd has no `FinalizationRegistry` for the pixmap either. No visible change, no `register-commands` |
