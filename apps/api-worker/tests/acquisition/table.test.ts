@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import table from '../../src/chara/data/acquisition.en.json';
+import meta from '../../src/chara/data/acquisition.meta.json';
 
 const lines = Object.entries(table as Record<string, string>);
 
@@ -67,8 +68,10 @@ describe('acquisition table invariants', () => {
   });
 
   it('dates every event line with a plausible first year', () => {
+    // FFXIV launched in 2010; no event can be first offered after the year the table was built.
+    const builtIn = Number(meta.generated.slice(0, 4));
     const years = (l: string): number[] => l.split(' / ').flatMap((s) => [...s.matchAll(/ \((\d{4})\)$/g)].map((m) => Number(m[1])));
-    expect(offending((l) => years(l).some((y) => y < 2010 || y > 2026))).toEqual([]);
+    expect(offending((l) => years(l).some((y) => y < 2010 || y > builtIn))).toEqual([]);
   });
 
   it('resolves every coffer-only line to its acquisition source', () => {
