@@ -31,13 +31,6 @@ Rules:
   entry is ever rendered, so the file's own size never enters into it.)
 -->
 
-## [5.11.1] - 2026-10-11
-### 👗 Glamour Reader and /glamour
-- Web app and Discord bot: 803 more pieces have an Acquisition line, each checked against the official Online Store, the quest's own rewards or an official Lodestone page, and seasonal gear names its event and the year it was first offered, such as "Valentione's Day (2026)".
-- Web app and Discord bot: a piece is named by a look-alike you can still get when the lowest-numbered item with that look has no known source, so more Acquisition lines are filled.
-- Web app and Discord bot: retired tomestone accessories are now named by their Augmented versions, and Housemaid's gear by Loyal Housemaid's. A twin that takes dyes still comes first.
-- Web app: Acquisition lines you rewrote in the export sheet keep applying. If the piece now has a known source, the sheet offers it once.
-
 ## [5.11.0] - 2026-10-09
 ### ⚙️ Web app: settings and tools you can rely on
 - Web app: the Swatch Matcher keeps the palette you picked, saved dye filters work as soon as a tool opens, and settings from a shared link no longer snap back.

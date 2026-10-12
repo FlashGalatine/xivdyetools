@@ -16,7 +16,7 @@
  * Company can wear, then one that is not Dated, then one with a known
  * acquisition line, then more dye channels, then the lowest row. When none
  * passes, the lowest judged row that has an acquisition line, else the lowest
- * row.
+ * judged row (every row when the worker sent no rules).
  * Only twins the answer NAMES are candidates: a list can't print an item it
  * has no name for.
  *
@@ -97,7 +97,7 @@ export function charaTwinsOf<N extends { en: string }>(
  * passes → dyeable → any Grand Company → not Dated → has an acquisition line
  * → more dye channels → lowest row; none passes → the lowest row with an
  * acquisition line among the twins the check judged (all of them when no
- * rules arrived), else the lowest row. Among twins that already pass, a
+ * rules arrived), else the lowest of those judged twins. Among twins that already pass, a
  * twin every player can wear beats an extra channel the file doesn't use,
  * while a dyeable twin still beats an undyeable one (GPOSERS: "use a
  * perfectly identical dyeable version"). A known source is worth more to a
@@ -128,11 +128,12 @@ export function defaultCharaTwin<N extends { en: string }>(
       a.itemId - b.itemId,
   );
   // A twin with unknown rules was never checked; named here it would read as
-  // a fix. Fall back among the twins the check judged, unless it judged none.
+  // a fix (or, as the lowest row, hide the others' failures). Fall back among
+  // the twins the check judged, unless it judged none.
   const judged = twins.some((t) => t.rules !== null)
     ? twins.filter((t) => t.rules !== null)
     : twins;
-  return best[0] ?? judged.find(hasLine) ?? lowest;
+  return best[0] ?? judged.find(hasLine) ?? judged[0] ?? lowest;
 }
 
 /**

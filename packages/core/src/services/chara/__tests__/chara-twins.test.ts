@@ -269,6 +269,17 @@ describe('defaultTwin', () => {
       expect(pick.itemId).toBe(10);
       expect(pieceTone(twins, pick)).toBe('block');
     });
+
+    it('when nothing passes and no judged twin has a line, names the lowest judged twin, not an unjudged lowest row', () => {
+      // Row 10 carries no rules, row 11 fails the dye check: the old last
+      // fallback named row 10, which has no problems only because it was never
+      // checked, and the row read as a free choice instead of a block
+      const ring = family([10, 'Ring'], [[11, 'Ring']], [group([11], 1)]);
+      const twins = twinsOf(ring, 2, MIDLANDER_WOMAN);
+      const pick = defaultTwin(twins);
+      expect(pick.itemId).toBe(11);
+      expect(pieceTone(twins, pick)).toBe('block');
+    });
   });
 
   it('refuses an empty list rather than return a twin that is not there', () => {
