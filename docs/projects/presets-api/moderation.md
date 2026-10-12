@@ -28,10 +28,12 @@ followed by an optional external toxicity check. On `PATCH`, a per-user daily ca
 - **Fail-closed** (FINDING-005). With a key configured, a timeout, a non-2xx response or a
   malformed body resolves to `moderationUnavailable()` — `passed: false`,
   `method: 'perspective_unavailable'` — which callers treat exactly as they treat flagged content:
-  the preset lands in the moderator queue rather than publishing unjudged. The *only* thing that
-  skips this tier is an **absent** `PERSPECTIVE_API_KEY`, in which case the local word list alone
-  decides. That is the intended degradation, and it is the reason the key must be deleted before
-  Perspective shuts down on 2026-12-31 (see `DEPRECATIONS.md`).
+  the preset lands in the moderator queue rather than publishing unjudged. An **absent**
+  `PERSPECTIVE_API_KEY` is not a pass either (FINDING-019): text the local word list does not match
+  is reported as `method: 'unscored'` with `passed: false` and queued for a moderator, so deleting
+  the key sends every submission to manual review rather than turning moderation off. The key stays
+  while Perspective still answers and must be deleted before it shuts down on 2026-12-31 (see
+  `DEPRECATIONS.md`).
 
 ---
 
@@ -124,7 +126,7 @@ they can be told apart only by date.
 written by `xivdyetools-moderation-worker` (`/preset ban_user`, `/preset unban_user`) directly on the
 shared `xivdyetools-presets` D1, in one atomic `db.batch()`:
 
-- a `banned_users` row (closed with `unbanned_at` on unban; deleted 90 days later by the retention prune below);
+- a `banned_users` row (closed with `unbanned_at` on unban, which also blanks its `username` and `reason`; deleted 90 days later by the retention prune below);
 - the author's `approved` presets flipped to `hidden`, and back to `approved` on unban;
 - since moderation-worker 1.6.0 (2026-08-29 audit, FINDING-018) the matching `moderation_log` rows —
   one `ban` / `unban` per user action, plus one `hide` / `restore` per preset actually flipped.
@@ -138,7 +140,7 @@ Ban and moderation-log records hold Discord ids, a username copy and moderator r
 out. `services/moderation-retention-service.ts` runs once a day from the Cron Trigger
 (`src/retention-job.ts`, production only, together with the `submission_events` and `failed_notifications`
 prunes) and, best-effort, on the moderation write paths (status, revert, preview-image). It never fails a request. **These are the periods the
-FINDING-005 privacy-policy amendment (Sprint 5) will publish; the code constants are the commitment, so
+FINDING-005 privacy-policy amendment (Sprint 5) published; the code constants are the commitment, so
 change them only together with those policies.**
 
 | Records | Deleted |
@@ -146,6 +148,8 @@ change them only together with those policies.**
 | Lifted bans (`banned_users.unbanned_at` set) | 90 days after `unbanned_at`; an active ban is never pruned |
 | `moderation_log` rows with action `ban`, `unban`, `hide` or `restore` | 12 months after `created_at` |
 | Every other `moderation_log` row | With its preset (FK cascade, plus an explicit delete in `DELETE /presets/:id`) |
+| `submission_events` rows | 30 days after `created_at` (`SUBMISSION_EVENT_RETENTION_DAYS`) |
+| `failed_notifications` rows | Resolved: 30 days after `resolved_at`; unresolved: 90 days after `created_at`; either way with its preset (`DELETE /presets/:id`) |
 
 The 12-month rule keys on the action value: `hide` / `restore` rows carry a `preset_id` but still age
 out on their own clock, and, like every row carrying a `preset_id`, are also removed when the preset is deleted. `image_approve` / `image_reject` rows (preview-image moderation) follow their preset.
@@ -162,7 +166,7 @@ Every moderation action creates an entry in the `moderation_log` table (full sch
 | `id` | UUID v4 |
 | `preset_id` | The preset acted upon — NULL for the user-level `ban` / `unban` |
 | `moderator_discord_id` | Discord ID of the moderator |
-| `action` | `approve` \| `reject` \| `flag` \| `unflag` \| `requeue` \| `revert` (this API) · `ban` \| `unban` \| `hide` \| `restore` (moderation-worker). `requeue` records a move back to `pending` |
+| `action` | `approve` \| `reject` \| `flag` \| `unflag` \| `requeue` \| `revert` \| `image_approve` \| `image_reject` (this API; the two image actions come from the preview-image moderation route) · `ban` \| `unban` \| `hide` \| `restore` (moderation-worker). `requeue` records a move back to `pending` |
 | `reason` | Optional reason text |
 | `target_discord_id` | The moderated user — set for `ban` \| `unban` \| `hide` \| `restore` |
 | `created_at` | Timestamp |

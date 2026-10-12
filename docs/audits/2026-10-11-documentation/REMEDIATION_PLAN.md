@@ -166,7 +166,7 @@ files>` (no hits) → merge (no deploy fires).
 
 **Ends with:** `pnpm docs:check-links` → merge (no deploy fires).
 
-## Sprint 8 — presets-api and moderation-worker docs (P2, `docs/` only)
+## Sprint 8 — presets-api and moderation-worker docs (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `cbd1d6c3` `096a4d42` `7c90800b` — PR [#294](https://github.com/FlashGalatine/xivdyetools/pull/294)**
 
 | ID | Tier · Sev | Unit | Item |
 |---|---|---|---|

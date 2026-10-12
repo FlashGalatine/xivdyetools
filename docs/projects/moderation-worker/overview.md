@@ -38,11 +38,19 @@ By separating these into distinct Discord applications, we ensure that:
 # From the monorepo root (xivdyetools/)
 pnpm install
 
-# Set secrets (one time, from apps/moderation-worker/)
+# Set secrets (one time, from apps/moderation-worker/). A bare `put` targets the -dev worker;
+# repeat each with `--env production` for the production worker before deploy:production
 wrangler secret put DISCORD_TOKEN
 wrangler secret put DISCORD_PUBLIC_KEY
 wrangler secret put MODERATOR_IDS
 wrangler secret put MODERATION_CHANNEL_ID
+# Bot auth for presets-api calls: both must match presets-api's own values. presets-api accepts
+# the bot only with this Bearer secret, and outside development also requires a request signature
+# made with BOT_SIGNING_SECRET (at least 32 characters)
+wrangler secret put BOT_API_SECRET
+wrangler secret put BOT_SIGNING_SECRET
+# Optional: a channel that logs every new submission
+wrangler secret put SUBMISSION_LOG_CHANNEL_ID
 
 # Start local dev server
 pnpm --filter xivdyetools-moderation-worker run dev
@@ -52,7 +60,8 @@ pnpm --filter xivdyetools-moderation-worker run register-commands
 
 # Deploy — bare `deploy` targets the routeless dev worker (xivdyetools-moderation-worker-dev)
 pnpm --filter xivdyetools-moderation-worker run deploy
-# Production (xivdyetools-moderation-worker, moderation-bot.xivdyetools.app)
+# Production (xivdyetools-moderation-worker, moderation-bot.xivdyetools.app); needs its own
+# `wrangler secret put <NAME> --env production` for each secret above
 pnpm --filter xivdyetools-moderation-worker run deploy:production
 ```
 
@@ -103,6 +112,7 @@ src/
 ├── types/
 │   ├── env.ts               # Environment bindings
 │   ├── ban.ts               # Ban-related types
+│   ├── modal.ts             # Modal interaction types and helpers
 │   └── preset.ts            # Preset types
 ├── utils/                   # (review custom_id parsing/building lives in @xivdyetools/types since REFACTOR-001)
 │   ├── verify.ts            # Ed25519 verification
@@ -271,7 +281,7 @@ Uses the same `BOT_API_SECRET` as the main discord-worker to authenticate with t
 | **Installation** | Any server | Admin servers only |
 | **Channel** | Any channel | Designated moderation channel |
 | **Image rendering** | SVG/PNG via resvg-wasm | None (text only) |
-| **User storage** | Favorites, collections | N/A |
+| **User storage** | Preferences, preset favorites | N/A |
 | **Rate limiting** | Per-user limits | Per-user limits too — 20 commands/min (+5 burst) and 60 autocompletes/min (+10 burst), on the native `RL_COMMAND` / `RL_AUTOCOMPLETE` bindings |
 
 ---
