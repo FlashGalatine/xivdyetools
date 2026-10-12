@@ -70,7 +70,7 @@ one commit, then re-run the parity script.
 
 **Deploy needs (as executed):** merge #284 and #285 first (they hold web-app 5.15.1/5.15.2 and discord-worker 5.8.12); this PR is web-app 5.15.3 / discord-worker 5.8.13. The merge fires deploy-web-app.yml and deploy-discord-worker.yml on unchanged code (register-commands on an unchanged roster). If it merges after 2026-10-11, re-date all 24 variants in one commit and re-run the parity script. The root CHANGELOG-laymans.md announcement (5.11.1) is the maintainer's call; its text is in the PR body. Sprint 0 as executed: invite 5VUSKTZCe5; translations cross-link their own locale (rule in policy-documents.md); collection manager documented as unreachable (no export/import), code restore stays a hand-off; both security-audit hand-offs ruled CORRECT and landed in commit 2; 16 of 17 policy i18n hand-offs landed in commit 2 (policy-ko-02 left to i18n-manager).
 
-## Sprint 2 — User guides: the privacy answers (P1, `docs/` only)
+## Sprint 2 — User guides: the privacy answers (P1, `docs/` only) **✅ COMPLETED 2026-10-11 `67591833` `39b50bdc` — PR [#288](https://github.com/FlashGalatine/xivdyetools/pull/288)**
 
 Both FAQs send deletion requests to public GitHub issues, which the policies forbid. The answers should point at
 the policies' own deletion sections, which Sprint 1 has just corrected.

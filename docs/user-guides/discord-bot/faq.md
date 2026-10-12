@@ -178,15 +178,19 @@ Moderation is by invite only for trusted community members.
 - Your Discord ID
 - Your preferences and favourite presets
 - Preset submissions and votes
-- Anonymous usage statistics
-- A one-off flag recording that you have already been shown the "what changed in 5.0" notice, so it
-  is not sent twice. It is stored against your Discord ID and expires by itself after 180 days.
+- Usage statistics keyed to your Discord ID, used only to count unique users
+- A per-user marker, set the first time you run a command (whether or not the "what changed in 5.0"
+  notice is sent), so the bot does not check again. It carries no content and expires by itself
+  after 180 days.
 
 Character names from `.chara` files are never displayed or stored.
 
 ### Can I delete my data?
 
-Yes, contact us via GitHub issues to request deletion.
+Yes. Email FlashGalatineFGC@gmail.com with the subject "XIV Dye Tools Privacy" and your Discord
+User ID, or send a Discord DM to "Flash Galatine" in the
+[community Discord](https://discord.gg/5VUSKTZCe5). Please don't use a public GitHub issue, which
+would publish the details you want removed. Requests are handled within 30 days.
 
 ---
 
