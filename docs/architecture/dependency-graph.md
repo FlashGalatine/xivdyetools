@@ -186,14 +186,14 @@ Notes:
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `lit` | ^3.3.3 | Web components framework |
-| `vite` | ^8.3.1 | Build tool and dev server (devDependency) |
+| `vite` | ^8.3.3 | Build tool and dev server (devDependency) |
 | `tailwindcss` | ^4.3.3 | Utility-first CSS (devDependency) |
 
 ### xivdyetools-discord-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.13.9 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
+| `hono` | ^4.13.12 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 | `@resvg/resvg-wasm` | ^2.6.2 | SVG to PNG rendering |
 
 Ed25519 interaction-signature verification comes from `@xivdyetools/auth`, which is the
@@ -206,14 +206,14 @@ package that declares `discord-interactions` (`^4.4.0`) — the bot never depend
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.13.9 | HTTP framework for Workers |
+| `hono` | ^4.13.12 | HTTP framework for Workers |
 | `@cf-wasm/photon` | ^0.4.0 | Image decode/resize/pixel-extraction (WASM) — the sole reason this Worker exists |
 
 ### xivdyetools-oauth / presets-api / moderation-worker / og-worker / api-worker
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hono` | ^4.13.9 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
+| `hono` | ^4.13.12 | HTTP framework for Workers (floor set by FINDING-001: CORS ReDoS) |
 
 ### xivdyetools-stoat-worker
 

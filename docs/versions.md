@@ -7,8 +7,10 @@
 > **Versions below match each project's `package.json` in this checkout** and are checked
 > against it by `pnpm docs:check-versions` (`scripts/check-doc-versions.ts`, run in CI), so
 > this table cannot silently drift again. The 5.0 wave merged to `main` on 2026-08-28
-> (PR #123). As of 2026-10-11 (checked against the registry API), every published
-> package here is at parity with npm;
+> (PR #123). As of 2026-10-12 (checked against the registry API), every published
+> package here is at parity with npm except the two the 2026-10-12 batch bumped, which are
+> published right after it: `@xivdyetools/core` 5.12.0 (npm 5.10.0; 5.11.0 is not published on
+> its own) and `@xivdyetools/bot-logic` 4.9.0 (npm 4.8.3);
 > Actions → **"Publish Packages to npm"** publishes whatever differs from the registry, so check
 > there rather than trusting this sentence to stay current. Merging to
 > `main` is the release — see [Release Process](developer-guides/release-process.md) and the
@@ -688,7 +690,9 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 
 | Consumer | Minimum Core Version | Notes |
 |----------|---------------------|-------|
-| Web App v5.14.10+ | @xivdyetools/core v5.10.0+ | 2026-10-04 remediation Sprint 13 — below this an HSL mix of an exactly gray dye loses the other dye's hue (BUG-035), Harmony's "no duplicates" can repeat a swapped-in dye in an earlier slot (BUG-137), and an unreadable `.chara` color is drawn instead of refused (BUG-133) |
+| Web App v5.15.4+ | @xivdyetools/core v5.12.0+ | `gposersOmittedSlots` — the GPOSERS list leaves out invisible pieces and an Off Hand the main hand doesn't take |
+| Web App v5.15.2–5.15.3 | @xivdyetools/core v5.11.0+ | `defaultCharaTwin` prefers a twin with a known acquisition line |
+| Web App v5.14.10–5.15.1 | @xivdyetools/core v5.10.0+ | 2026-10-04 remediation Sprint 13 — below this an HSL mix of an exactly gray dye loses the other dye's hue (BUG-035), Harmony's "no duplicates" can repeat a swapped-in dye in an earlier slot (BUG-137), and an unreadable `.chara` color is drawn instead of refused (BUG-133) |
 | Web App v5.14.8–5.14.9 | @xivdyetools/core v5.9.0+ | `APIService.getPricesForDataCenterWithOutcome` (market failures shown, BUG-090) and `CHARA_DYEABLE_SLOTS` (the Glamour Reader's dyeable slots) |
 | Web App v5.13.0–5.14.7 | @xivdyetools/core v5.8.0+ | The Glamour Reader's twin picker (`charaTwinFacts`); 5.14.4+ needs core v5.8.2+ (the Brass facewear color's fr / ko / zh names) |
 | Web App v5.12.6–5.12.7 | @xivdyetools/core v5.7.0+ | Creator palettes from `human.cmp` — below this lip / face-paint / tattoo swatches are not the creator's |
@@ -696,7 +700,9 @@ and the [rollout runbook](operations/security-remediation-2026-09-15.md) for the
 | Web App v5.12.2–5.12.4 | @xivdyetools/core v5.5.0+ | Tribe-derived `.chara` race — below this the Swatch Matcher refuses every Lalafell file |
 | Web App v5.7–5.12.1 | @xivdyetools/core v5.2.0+ | Color-wheel selector (`getColorWheel`, `HarmonySelectionConfig.wheel`); `@xivdyetools/types` v3.2.0+ (`ColorWheelId`) |
 | Web App v5.1–5.6 | @xivdyetools/core v4.2.0+ | `generateHarmonySlots` + `HARMONY_OFFSETS` (harmony convergence); 5.4+ needs core v5.0.0+ (one RYB mixer), 5.5+ core v5.1.0+ (ΔEOK2 labels) |
-| Discord Worker v5.8.7+ | @xivdyetools/core v5.10.0+ | CJK subsets cut for core 5.10.0's character-creation sheet names (TERM-021); `/mixer` (HSL) keeps a gray dye's partner hue (BUG-035), `/extractor` shows only the colors an image holds (BUG-036), and `/swatch` / `/glamour` refuse an unreadable `.chara` color (BUG-133) |
+| Discord Worker v5.8.14+ | @xivdyetools/core v5.12.0+ | `@xivdyetools/bot-logic` v4.9.0+ — `/glamour`'s list applies `gposersOmittedSlots` |
+| Discord Worker v5.8.12–5.8.13 | @xivdyetools/core v5.11.0+ | `/glamour` names pieces through core's `defaultCharaTwin`, which prefers a twin with a known acquisition line |
+| Discord Worker v5.8.7–5.8.11 | @xivdyetools/core v5.10.0+ | CJK subsets cut for core 5.10.0's character-creation sheet names (TERM-021); `/mixer` (HSL) keeps a gray dye's partner hue (BUG-035), `/extractor` shows only the colors an image holds (BUG-036), and `/swatch` / `/glamour` refuse an unreadable `.chara` color (BUG-133) |
 | Discord Worker v5.8.1–5.8.6 | @xivdyetools/core v5.8.1+ | CJK subsets cut for core 5.8.1's Korean race names (the `/glamour` card's wear chip) |
 | Discord Worker v5.7–5.8.0 | @xivdyetools/core v5.8.0+ | `/glamour` — core's `chara-twins`, reached through `@xivdyetools/bot-logic` |
 | Discord Worker v5.6.5 | @xivdyetools/core v5.7.0+ | Creator palettes from `human.cmp` — below this `/swatch` matches lip / face-paint / tattoo rows against the wrong colors |

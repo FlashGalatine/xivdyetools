@@ -8,7 +8,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, Agent
 
 Before delegating or running command blocks, read `../audit-shared/model-routing.md`. It defines the Claude/Codex runtime mapping, coordinator rules, and shell/tool conventions for this workflow.
 
-Every workspace is **Vitest 4** (web-app: jsdom; workers/packages: node); web-app also has
+Every workspace is **Vitest 5** (web-app: jsdom; workers/packages: node); web-app also has
 Playwright e2e. Several suites are *gates that go red on purpose* — the fix is upstream of the
 test, never in it. Runs from the monorepo root `xivdyetools/`.
 
