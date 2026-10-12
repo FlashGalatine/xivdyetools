@@ -27,6 +27,8 @@ Initiate Discord OAuth flow with PKCE.
 | 400 | Missing or invalid `code_challenge` |
 | 400 | Invalid `code_challenge_method` |
 | 400 | `redirect_uri` not in whitelist |
+| 400 | `Invalid return_path` — not a relative path starting with a single `/`, of at most 256 visible ASCII characters (no whitespace, no backslash) |
+| 400 | `Invalid state` — longer than 256 characters or not visible ASCII (no whitespace) |
 | 429 | Rate limit exceeded (10/min per IP) |
 
 ---
@@ -103,12 +105,14 @@ always used for the exchange.
 | 400 | `Missing state` — the field is absent, `null` or empty |
 | 400 | `Invalid state` — bad signature, expired, or minted for the other provider |
 | 400 | `PKCE verification failed` — `S256(code_verifier)` does not match the signed `code_challenge` |
-| 401 | Token exchange failed |
-| 401 | Missing required scope (`identify`) |
-| 401 | Invalid user data from Discord |
+| 401 | `Failed to exchange authorization code` |
+| 401 | `Token missing required permissions` — the `identify` scope was not granted |
+| 401 | `Failed to fetch user information` |
+| 401 | `Invalid user data received` |
 | 413 | `Payload too large` — the body exceeds the 10 KB `bodySizeLimit` |
 | 415 | `Unsupported Media Type` — a non-empty body whose `Content-Type` media type is not `application/json` (case-insensitive, parameters ignored) |
 | 429 | Rate limit exceeded (20/min per IP) |
+| 500 | `Authentication failed` — unexpected error during the exchange |
 
 ---
 
@@ -254,6 +258,8 @@ Two different outcomes when the write does not happen:
 | `GET /auth/xivauth` | 10/min | 60s |
 | `GET /auth/callback` | 20/min | 60s |
 | `POST /auth/callback` | 20/min | 60s |
+| `GET /auth/xivauth/callback` | 20/min | 60s |
+| `POST /auth/xivauth/callback` | 20/min | 60s |
 | `GET /auth/me` | 30/min | 60s |
 | `POST /auth/revoke` | 30/min | 60s |
 

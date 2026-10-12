@@ -565,7 +565,7 @@ Initiate Discord OAuth flow.
 |-----------|----------|-------------|
 | `code_challenge` | Yes | SHA256 hash of code_verifier (base64url) |
 | `code_challenge_method` | No | Validated only when supplied, and then only `S256` is accepted |
-| `redirect_uri` | Yes | Frontend callback URL (must be on the origin allowlist) |
+| `redirect_uri` | No | Frontend callback URL (must be on the origin allowlist; defaults to `${FRONTEND_URL}/auth/callback`) |
 | `state` | No | CSRF protection token |
 
 **Response:** Redirects to Discord OAuth consent page.
@@ -626,6 +626,22 @@ with no verified character whose name is non-blank falls back to the `XIVAuth Us
 }
 ```
 
+### GET /auth/xivauth
+
+Initiate the XIVAuth OAuth flow. Takes the same query parameters as `GET /auth/discord` and
+redirects to the XIVAuth authorization page.
+
+### GET /auth/xivauth/callback
+
+Handle the XIVAuth callback. Same behavior as `GET /auth/callback`: it never returns a token and
+bounces `code`, `csrf` and the signed `state` (plus `provider=xivauth`) to the allowlisted
+`redirect_uri`.
+
+### POST /auth/xivauth/callback
+
+XIVAuth token exchange. Same request body and response shape as `POST /auth/callback`, with
+`auth_provider: "xivauth"` and `avatar` / `avatar_url` always `null`.
+
 ### ~~POST /auth/refresh~~ — removed in oauth 3.0.0
 
 Removed by FINDING-003 (`docs/audits/2026-08-29-security`); the route now 404s. No client
@@ -658,6 +674,32 @@ Authorization: Bearer <JWT>
 
 `id` is the **internal** user UUID (the JWT's `sub`), not a Discord snowflake. `avatar_url` is
 `null` for accounts with no linked Discord identity.
+
+### POST /auth/revoke
+
+Invalidate a token (logout).
+
+**Headers:**
+```http
+Authorization: Bearer <JWT>
+```
+
+**Response (revoked):**
+```json
+{
+  "success": true,
+  "message": "Token revoked successfully",
+  "revoked": true
+}
+```
+
+| Status | Condition |
+|--------|-----------|
+| 200 | `revoked: true` — the token's `jti` is now blacklisted |
+| 200 | `revoked: false` plus a `note` — no `TOKEN_BLACKLIST` is bound, or the token carries no `jti`, so there was nothing to write |
+| 401 | Missing or invalid `Authorization` header, or an invalid token |
+| 503 | `revoked: false` — the blacklist write failed; the session may stay live until `exp` |
+| 500 | Unexpected error |
 
 ---
 
