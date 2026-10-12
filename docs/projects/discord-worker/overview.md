@@ -165,7 +165,7 @@ Commands that need images generate SVG and render to PNG:
 
 ```typescript
 // 1. Build SVG
-const svg = generateComparisonCard({ dyes, theme, labels, lang });
+const svg = generateComparisonCard({ dyes, deltaE, labels, theme, lang });
 
 // 2. Render to PNG via resvg-wasm
 const png = await renderSvgToPng(svg, { locale: lang }); // locale is required

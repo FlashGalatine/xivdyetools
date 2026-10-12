@@ -2,7 +2,7 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY_POLICY.md)
 
-**Zuletzt aktualisiert**: 2026-10-11
+**Zuletzt aktualisiert**: 2026-10-12
 
 ## 1. Einführung
 
