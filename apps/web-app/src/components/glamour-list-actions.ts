@@ -78,8 +78,10 @@ export interface GlamourSheetPiece {
  * Only worn slots get an entry — the builder writes nothing for the rest.
  * Two kinds of worn slot are left out on purpose (core's
  * `gposersOmittedSlots`): invisible pieces, which a submission has nothing to
- * say about, and an Off Hand under a main hand that does not take one. Both
- * are decided from the resolve's answer, so nothing is dropped on a guess:
+ * say about, and an Off Hand under a main hand that does not take one. An Off
+ * Hand the resolve answers as the main hand's own model (`viaMainHand`) is
+ * left out too, as the bot does. All of it is decided from the resolve's
+ * answer, so nothing is dropped on a guess:
  * before it lands nothing is omitted, a slot it could not name is never taken
  * for invisible, and an Off Hand stays when the main hand's category is
  * unknown. The reader's own rows are built elsewhere and keep every piece.
@@ -133,6 +135,9 @@ export function glamourMarkdownInput({
     mainHandUiCategory: equipment?.items.MainHand?.uiCategory ?? null,
   });
   for (const slot of omitted) delete input[slot as CharaGearSlotId];
+  // An Off Hand answered as the main hand's own model (a tool's sub-model, a
+  // quiver, a focus) is the same weapon twice; the bot skips it the same way
+  if (equipment?.items.OffHand?.viaMainHand === true) delete input.OffHand;
   return input;
 }
 

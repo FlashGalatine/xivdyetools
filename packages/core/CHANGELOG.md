@@ -22,9 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     accessory are never omitted. `gposersGroups` is unchanged: callers drop the named slots first.
   - New exports: `gposersOmittedSlots`, `CHARA_OFF_HAND_MAIN_CATEGORIES`, `GposersSlotFacts`,
     `GposersOmitContext`.
-  - Over the 1,093-file `.chara` corpus (10,901 worn slots), the list leaves out 2,765 invisible
-    slots, keeps 71 Emperor's New Gloves, and keeps 40 of 524 worn Off Hands; 911 files get a
-    shorter list.
+  - Over the 1,093-file `.chara` corpus (10,901 worn slots), this rule leaves out 2,765 invisible
+    slots, keeps 71 Emperor's New Gloves, and keeps 40 of 524 worn Off Hands. Both callers also
+    drop an Off Hand that resolves as the main hand's own model (api-worker's `viaMainHand`, 3 of
+    those 40, all crafting tools), so the lists keep 37, and 913 files get a shorter list.
 
 ## [5.11.0] - 2026-10-11
 

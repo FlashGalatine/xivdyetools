@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 No source change here: `/glamour`'s GPOSERS list comes from bot-logic 4.9.0, which applies core
 5.12.0's `gposersOmittedSlots`, and api-worker 0.20.0 sends the main hand's `uiCategory`. No command
-shapes change, so nothing is re-registered.
+shapes change; the production deploy's `register-commands` run re-registers an unchanged roster.
 
 ### Changed
 
@@ -17,8 +17,10 @@ shapes change, so nothing is re-registered.
   New items, the Promise bracelets included), except The Emperor's New Gloves, and the Robe unless
   the character is known female. The card still shows every piece.
 - **The Off Hand line is written only under a weapon that takes one:** a Paladin, Beastmaster or
-  one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. A fist pair, quiver or
-  focus that is the main weapon itself is no longer listed twice.
+  one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool with a separate
+  secondary tool. A fist pair, quiver or focus that is the main weapon itself is no longer listed
+  twice (a tool's own second model never was: the bot skips any Off Hand that is the main hand's own
+  model).
 
 ## [5.8.12] - 2026-10-11
 

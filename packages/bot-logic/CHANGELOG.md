@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The Off Hand line is written only when the main hand can carry one** (Paladin, one-handed Thaumaturge
   and Conjurer arms, the Primary Tools, Beastmaster's arm), judged by the new optional
   `GlamourResolvedItem.uiCategory` (api-worker 0.20.0). With no category in the answer, nothing is dropped.
+- **The `/manual` Character File topic and the `/glamour` description now say what the list leaves out**
+  (most invisible pieces, an Off Hand the main hand doesn't use) instead of promising every piece, in all
+  six languages.
 - The card, each piece's status, and the twin / no-fix / Grand Company notes are unchanged.
 
 ## [4.8.3] - 2026-10-06

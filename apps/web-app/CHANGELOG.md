@@ -12,8 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The GPOSERS list (Copy list, Save .md and the export sheet) leaves out invisible pieces: any worn slot whose look family includes a "The Emperor's New …" item, which also covers the Promise bracelets and the Heroic Spirit / Divine Beast shields. The Emperor's New Gloves are always kept, and The Emperor's New Robe is kept unless the character is known to be female. The reader's rows and the twin picker still show every piece.
-- The list writes the Off Hand only when the main hand is a Paladin weapon, a one-handed Thaumaturge or Conjurer weapon, a crafting or gathering tool, or a Beastmaster weapon (ItemUICategory 2, 6, 8, 12–32 even, 113); the second weapon of a pair, a quiver or a focus is part of the main hand. An unknown main hand, or an api-worker older than 0.20.0, keeps the Off Hand.
-- Over the 1,093-file `.chara` corpus, 911 lists get shorter: 2,765 invisible slots and 354 more Off Hands are left out, while 71 Emperor's New Gloves and 40 of 524 worn Off Hands stay.
+- The list writes the Off Hand only when the main hand is a Paladin weapon, a one-handed Thaumaturge or Conjurer weapon, a crafting or gathering tool, or a Beastmaster weapon (ItemUICategory 2, 6, 8, 12–32 even, 113); the second weapon of a pair, a quiver or a focus is part of the main hand. An Off Hand that is the main hand's own model (api-worker's `viaMainHand`, e.g. a crafting tool's second model) is left out under any main hand, as `/glamour` already did. An unknown main hand, or an api-worker older than 0.20.0, keeps the Off Hand.
+- Over the 1,093-file `.chara` corpus, 913 lists get shorter: 2,765 invisible slots and 357 more Off Hands are left out (354 by the main-hand rule, 3 a crafting tool's own second model), while 71 Emperor's New Gloves and 37 of 524 worn Off Hands stay.
+- Build: the core runtime chunk (`modals`) is re-budgeted from 286 to 287 KB for measured growth. Core 5.11.0 and 5.12.0 add 575 B (285.71 KB), and the pending vite 8.3.3 bump adds about 170 B more, which left no headroom.
 
 ## [5.15.2] - 2026-10-11
 

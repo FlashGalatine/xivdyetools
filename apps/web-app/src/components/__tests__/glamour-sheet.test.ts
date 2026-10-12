@@ -548,6 +548,19 @@ describe('glamour list omissions', () => {
     expect(glamourSheetPieces(hands(1)).map((p) => p.slot)).toEqual(['MainHand']);
   });
 
+  it("leaves out an Off Hand that is the main hand's own model, keeps a genuine second tool", () => {
+    // 12 = Carpenter's primary tool; its sub-model comes back as the Off Hand
+    const tools = (viaMainHand: boolean) =>
+      wearing({
+        MainHand: entry(38890, "Indagator's Saw", [], 12),
+        OffHand: { ...entry(38890, "Indagator's Saw"), viaMainHand },
+      });
+    for (const text of everyRendering(tools(true))) expect(text).not.toContain('Off Hand:');
+    expect(glamourSheetPieces(tools(true)).map((p) => p.slot)).toEqual(['MainHand']);
+    for (const text of everyRendering(tools(false))) expect(text).toContain('Off Hand:');
+    expect(glamourSheetPieces(tools(false)).map((p) => p.slot)).toEqual(['MainHand', 'OffHand']);
+  });
+
   it('omits nothing before the equipment answer lands', () => {
     const source = wearing({ Wrists: entry(8693, 'Promise of Innocence') }, 'Female', false);
     for (const text of everyRendering(source)) expect(text).toContain('Bracelets:');

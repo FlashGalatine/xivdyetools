@@ -112,7 +112,11 @@ const BUNDLE_LIMITS = [
   // redaction rules (context-string pass, toJSON handling, URL userinfo, the
   // linear JWT scan) add 1.48 KB here. With every open PR merged it measured
   // 285.15 KB (283.67 KB with logger 2.2.1).
-  { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 286 * KB },
+  // 2026-10-12 re-budgets it to 287 KB, for measured growth once more: core
+  // 5.11.0's twin rule and 5.12.0's gposersOmittedSlots add 575 B here
+  // (285.71 KB on web-app 5.15.4), and the open dev-deps bump's vite 8.3.3
+  // adds ~170 B more (8.3.4, ~310 B) — 11 B over 286 KB in the worst case.
+  { label: 'core runtime (named "modals")', pattern: /^modals-/, limit: 287 * KB },
 
   // Vendor chunks, code-split for caching
   // Despite the name this is purely `character_colors/race_specific/*.json`:
