@@ -17,10 +17,11 @@ shapes change; the production deploy's `register-commands` run re-registers an u
   New items, the Promise bracelets included), except The Emperor's New Gloves, and the Robe unless
   the character is known female. The card still shows every piece.
 - **The Off Hand line is written only under a weapon that takes one:** a Paladin, Beastmaster or
-  one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool with a separate
-  secondary tool. A fist pair, quiver or focus that is the main weapon itself is no longer listed
-  twice (a tool's own second model never was: the bot skips any Off Hand that is the main hand's own
-  model).
+  one-handed Thaumaturge or Conjurer weapon, or a crafting or gathering tool. Under any other main
+  hand the Off Hand is left out. For the bot that only changes an Off Hand that is not the main
+  weapon's own model (a quiver or focus from a different weapon): `/glamour` has always skipped the
+  main weapon's own second model (`viaMainHand`), so fist pairs, quivers, foci and a tool's own
+  second model were never listed twice here.
 
 ## [5.8.12] - 2026-10-11
 

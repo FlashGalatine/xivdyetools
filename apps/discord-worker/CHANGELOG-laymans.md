@@ -38,7 +38,7 @@ Rules:
 ## [5.8.14] - 2026-10-11
 ### 👗 A tidier /glamour list
 - `/glamour`'s copy-ready list leaves out pieces that show nothing, like The Emperor's New items, but keeps The Emperor's New Gloves, and the Robe unless your character is female.
-- The Off Hand line appears only for a shield or a secondary tool, so a Monk's fists, a Bard's quiver or a Red Mage's focus is no longer listed twice. The card still shows every piece.
+- The Off Hand line appears only for a shield or a secondary tool, so an Off Hand under a weapon that takes none, such as a quiver or focus from a different weapon, is left out. The card still shows every piece.
 
 ## [5.8.12] - 2026-10-11
 ### 👗 /glamour names gear you can still get
