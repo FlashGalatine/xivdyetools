@@ -44,7 +44,7 @@ with IDs persisted before schema v2.
 
 ### Game-data sources (preferred over scraping)
 
-- **`Stain` sheet** (XIVAPI v2 `sheet/Stain`, or a Dalamud/Lumina export): new rows give stainID, name (no "Dye" prefix — no stripping needed), packed **BGR** color, and the gloss/metallic flag.
+- **`Stain` sheet** (XIVAPI v2 `sheet/Stain`, or a Dalamud/Lumina export): new rows give stainID, name (no "Dye" prefix — no stripping needed), packed color (XIVAPI v2's integer reads as `0xRRGGBB`), and the gloss/metallic flag.
 - **`StainTransient` sheet**: stainID → purchasable item(s) — determines `itemID` and whether the dye resolves to a consolidated Spectrum item (`consolidationType`).
 - **Item sheet fallback:** if you must fetch Item names (en/ja/de/fr), strip the localized "Dye" prefix — try `prefix + ":"`, then `prefix + "："` (full-width colon U+FF1A), then the bare prefix, longest first (this was BUG-081's fix in the old GUI).
 - ko/zh names remain manually sourced into `dyenames.csv`.
@@ -63,7 +63,7 @@ When Square Enix releases a new FFXIV patch that includes new dyes, the `@xivdye
 
 1. **Item ID** - The unique identifier for the dye item
 2. **Localized Names** - Names in all 6 supported languages
-3. **Color Values** - RGB/HSV values for the actual dye color
+3. **Color Value** - The `#rrggbb` hex of the actual dye color
 4. **Acquisition Data** - How to obtain the dye (vendor, crafting, etc.)
 
 ---
@@ -153,11 +153,21 @@ curl 'https://v2.xivapi.com/api/search?query=Name%3D%22Noir%20de%20suie%22&sheet
 
 ---
 
-## Step 2: Get Color Values (RGB/HSV)
+## Step 2: Get the Color Value (hex)
 
-**This is the trickiest part** - FFXIV doesn't expose dye RGB values in its data files.
+The dye's color is in the game data, so no sampling is needed.
 
-### Method: Visual Color Picking from Lodestone
+### Method: Stain sheet color
+
+1. Read the new row from the `Stain` sheet (see [Game-data sources](#game-data-sources-preferred-over-scraping))
+2. Take its `Color` integer as XIVAPI v2 serves it and write it as six lowercase, zero-padded hex
+   digits, with no channel swap (Soot Black's `2828579` is `#2b2923`)
+3. Record that **hex code** as the `hex` field — HSV, Lab and the other color formats are derived
+   from it at `DyeDatabase.initialize()`, so never compute or store them by hand
+
+### Fallback: Visual color picking from Lodestone
+
+Only if the Stain sheet is not yet available for the patch:
 
 1. Go to [FFXIV Lodestone](https://na.finalfantasyxiv.com/lodestone/)
 2. Search for characters using the new dye on their public profiles
@@ -166,41 +176,7 @@ curl 'https://v2.xivapi.com/api/search?query=Name%3D%22Noir%20de%20suie%22&sheet
    - **Windows**: [PowerToys Color Picker](https://learn.microsoft.com/en-us/windows/powertoys/color-picker) (Win+Shift+C)
    - **macOS**: Digital Color Meter (built-in)
    - **Browser**: Any eyedropper extension
-5. Record the **hex code** (e.g., `#2B2B2B`)
-
-### Converting to HSV
-
-Once you have RGB, calculate HSV:
-
-```javascript
-function rgbToHsv(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b);
-  const d = max - min;
-
-  let h = 0;
-  if (d !== 0) {
-    switch (max) {
-      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-      case g: h = ((b - r) / d + 2) / 6; break;
-      case b: h = ((r - g) / d + 4) / 6; break;
-    }
-  }
-
-  return {
-    h: Math.round(h * 360),
-    s: Math.round((max === 0 ? 0 : d / max) * 100),
-    v: Math.round(max * 100)
-  };
-}
-```
-
-Or use the core library:
-
-```typescript
-import { ColorService } from '@xivdyetools/core';
-const hsv = ColorService.hexToHsv('#2B2B2B');
-```
+5. Record the **hex code** in lowercase (e.g., `#2b2923`) and replace it with the Stain sheet value once available
 
 ---
 
@@ -230,7 +206,7 @@ A schema-v2 entry, in full:
 
 ```json
 {
-  "stainID": 38,
+  "stainID": 6,
   "name": "Soot Black",
   "hex": "#2b2923",
   "category": "Neutral",
@@ -382,7 +358,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production
 
 - [ ] Item ID obtained (from Universalis or XIVAPI)
 - [ ] `stainID` taken from the game's `Stain` sheet
-- [ ] `hex` sampled and written lowercase — it is the single colour source of truth
+- [ ] `hex` taken from the `Stain` sheet's `Color` (sampled only if the sheet has no row yet) and written lowercase — it is the single colour source of truth
 - [ ] `category` and `acquisition` are members of the closed vocabularies
 - [ ] `consolidationType` set from `StainTransient` (`'A' | 'B' | 'C' | null`)
 - [ ] `legacyItemID` set, or `null` for a consolidated-only dye
@@ -398,10 +374,10 @@ pnpm --filter xivdyetools-discord-worker run deploy:production
 
 | Resource | URL | Use |
 |----------|-----|-----|
-| XIVAPI v2 | https://v2.xivapi.com | Item IDs, names |
+| XIVAPI v2 | https://v2.xivapi.com | Item IDs, names, `Stain` sheet colors |
 | Universalis | https://universalis.app | Market data, item lists |
 | Garland Tools | https://www.garlandtools.org/db/ | Acquisition data |
-| FFXIV Lodestone | https://na.finalfantasyxiv.com/lodestone/ | Color sampling |
+| FFXIV Lodestone | https://na.finalfantasyxiv.com/lodestone/ | Color sampling (fallback only) |
 | Teamcraft | https://ffxivteamcraft.com | Recipe data |
 
 ---
