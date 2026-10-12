@@ -32,6 +32,12 @@ overrides:
   # runs the local dev/test emulator, never in a deployed worker. Drop this
   # once wrangler pulls a miniflare that ships a patched undici.
   'miniflare>undici': '>=7.29.1 <8'
+  # GHSA-68fv-2mgg-jv7q (high, Dependabot alert #11, 2026-10-12): event-loop
+  # denial of service through indexed source-map section offsets, fixed in
+  # source-map-js 1.2.2. Build-time only — tailwindcss, the Vue SFC compiler
+  # (vitepress), postcss, css-tree and magicast pin ^1.2.x, and the lockfile
+  # kept 1.2.1 for them. Drop this once a fresh resolve no longer lists 1.2.1.
+  source-map-js: '>=1.2.2'
 
 # Explicit build-script policy (pnpm 11 `allowBuilds` map — replaces the
 # pnpm 10 onlyBuiltDependencies/ignoredBuiltDependencies pair): no dependency

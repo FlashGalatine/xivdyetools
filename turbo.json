@@ -1,6 +1,11 @@
 {
   "$schema": "https://turbo.build/schema.json",
 
+  // turbo 2.11.7 otherwise writes a managed "agent rules" block into the
+  // tracked AGENTS.md whenever an AI agent runs it. AGENTS.md is hand-kept.
+  // turbo 2.11.4 rejects this key, so it must land with the 2.11.7 bump.
+  "agentGuidance": false,
+
   // Shared files that every workspace's tasks depend on but none of them
   // contains, so no per-package `inputs` glob can reach them. A change here
   // busts every task in every workspace, which is the correct blast radius:
