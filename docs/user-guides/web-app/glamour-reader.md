@@ -80,7 +80,7 @@ A `.chara` file stores the model a piece draws, not the item. One model often st
 6. then the one with more dye channels,
 7. then the lowest item number.
 
-When no twin passes, the reader names the lowest-numbered twin with a known Acquisition line, or the one with the lowest item number when none has one.
+When no twin passes, the reader names the lowest-numbered twin with a known Acquisition line, or else the one with the lowest item number, counting only twins whose rules it could check.
 
 ### The +N chip
 
