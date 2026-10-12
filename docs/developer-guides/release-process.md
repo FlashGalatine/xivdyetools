@@ -204,7 +204,7 @@ Standard semver. In practice:
 
 Note that schema v2 shipped as `core` **3.0.0 (major)** even though the runtime `Dye` object kept
 its full 16-field shape — because the data file, the Facewear export, and the `isMetallic` /
-`isCosmic` memberships all changed. The test is whether a consumer's *behaviour* changes, not
+`isCosmic` memberships all changed. The test is whether a consumer's *behavior* changes, not
 whether their types still compile.
 
 ---

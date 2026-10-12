@@ -23,7 +23,7 @@ This document explains security-related design decisions where we've consciously
 
 ### The Trade-Off
 
-Cloudflare KV doesn't support atomic increment operations. Our rate limiting implementation uses optimistic concurrency with retries, which can allow lost increments under high concurrency.
+Cloudflare KV doesn't support atomic increment operations. Our KV rate limiter is a plain read-modify-write and therefore best-effort, which can allow lost increments under high concurrency.
 
 ```
 Scenario: Two concurrent requests
@@ -40,9 +40,9 @@ Result: Count should be 7, is 6 (lost increment)
 
 | Factor | Assessment |
 |--------|------------|
-| **Race window** | ~10ms (very small) |
-| **Impact** | Allows ~2x burst occasionally |
-| **Frequency** | Rare (requires exact timing) |
+| **Race window** | One KV read-to-write round trip (`checkOnly()` and `increment()` are separate operations) |
+| **Impact** | Under N concurrent requests the effective limit can be exceeded by roughly a factor of N |
+| **Frequency** | Only under concurrent bursts on the same key; sequential traffic is counted correctly |
 | **Consequence** | Minor over-allowance, not security bypass |
 
 ### Alternative Considered
@@ -67,16 +67,16 @@ export class RateLimiter implements DurableObject {
 
 ### Mitigations
 
-1. **Version metadata**: Track writes with version numbers to detect conflicts
-2. **Retry logic**: 3 retries with exponential backoff (10ms, 20ms, 30ms)
-3. **Write verification**: Read-after-write to confirm success
-4. **Conservative limits**: Set limits with small buffer for occasional over-allowance
+1. **No conflict detection**: the KV backend is honestly best-effort. Under concurrency the effective limit can be exceeded by roughly the concurrency factor
+2. **Retry logic**: up to 3 attempts (the `maxRetries` default), with no backoff, cover thrown KV errors only, not lost updates
+3. **Conservative limits**: Set limits with small buffer for occasional over-allowance
+4. **Strict limits**: Use the Upstash backend (Redis INCR) or a Durable Object counter where an atomic limit is required
 
 ### Code References
 
 ```typescript
 // @xivdyetools/worker-kit/src/rate-limiter/backends/kv.ts
-// MOD-BUG-001 FIX: Optimistic concurrency with retries
+// BUG-022/OPT-002: best-effort read-modify-write; retries cover thrown KV errors only
 
 // Labels in codebase:
 // - DISCORD-BUG-001: Rate limiter race condition

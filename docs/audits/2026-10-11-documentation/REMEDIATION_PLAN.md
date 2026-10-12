@@ -187,7 +187,7 @@ files>` (no hits) → merge (no deploy fires).
 
 **Ends with:** `pnpm docs:check-links` → merge (no deploy fires).
 
-## Sprint 10 — Architecture docs (P2, `docs/` only)
+## Sprint 10 — Architecture docs (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `e80a9598` `b16d134c` `351e01b5` `b1e6e7b2` `d43b0014` `0081b549` — PR [#296](https://github.com/FlashGalatine/xivdyetools/pull/296)**
 
 Runs after Sprints 3, 7 and 9, which also edit these trees (`api-contracts.md` in 9), so the spelling pass
 (DOC-077) sees their final text.

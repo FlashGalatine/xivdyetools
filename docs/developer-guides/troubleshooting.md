@@ -180,7 +180,7 @@ the roster of record precisely so a command cannot exist in the dispatch switch,
 
 Discord routes component clicks to the application that **owns the message**. Embeds posted with
 the main bot's token can never reach moderation-worker's handlers. The `MODERATION_BOT_TOKEN`
-secret must be set; when it isn't, the buttons are deliberately omitted in favour of a
+secret must be set; when it isn't, the buttons are deliberately omitted in favor of a
 `/preset moderate` hint rather than shipping dead UI.
 
 ### CJK text renders as tofu boxes in generated images

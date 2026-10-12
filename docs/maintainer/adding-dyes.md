@@ -21,23 +21,23 @@ Since **schema v2** (the Monorepo 2.0 consolidation, 2026-07-31) the data file s
 |-------|-------|
 | `stainID` | The game's Stain sheet row ID. **Canonical identifier** — this is the key |
 | `name` | English name, no "Dye" prefix |
-| `hex` | Lowercase 6-digit `#rrggbb`. **The single colour source of truth** |
+| `hex` | Lowercase 6-digit `#rrggbb`. **The single color source of truth** |
 | `category` | One of the 8 in `DYE_CATEGORIES` (`Facewear` is no longer one of them) |
 | `acquisition` | One of the 4 in `DYE_ACQUISITIONS` |
 | `consolidationType` | `'A' \| 'B' \| 'C' \| null` — drives Patch 7.5 market resolution |
 | `legacyItemID` | The pre-consolidation itemID, or `null` for consolidated-only dyes |
 
 **Do not hand-write `rgb`, `hsv`, `lab`, `cost`, `currency`, or any `is*` flag.** They are all
-**derived at `DyeDatabase.initialize()`** — colour formats from `hex`, cost/currency from
+**derived at `DyeDatabase.initialize()`** — color formats from `hex`, cost/currency from
 `ACQUISITION_META`, `isMetallic` from `METALLIC_STAIN_IDS`, `isCosmic ≡ consolidationType 'C'`,
 `isIshgardian ≡ 'B'`. Deriving them by construction is what fixed the long-standing Brass
 stored-HSV drift bug; re-introducing stored copies would re-introduce that class of bug.
 
 The runtime `Dye` object still exposes all 16 fields, so nothing downstream changes.
 
-### Adding a Facewear colour instead
+### Adding a Facewear color instead
 
-Facewear colours are **not dyes** and do not go in `dyes.json`. They live in
+Facewear colors are **not dyes** and do not go in `dyes.json`. They live in
 `packages/core/src/data/facewear_colors.json` as `FacewearColor` — a string slug `id`, `name`,
 and `hex`. Do not add entries to `LEGACY_FACEWEAR_ITEM_IDS`; that map is frozen for compatibility
 with IDs persisted before schema v2.
@@ -245,7 +245,7 @@ That is the entire record. `rgb`, `hsv`, `lab`, `cost`, `currency`, and the five
 
 | Category | Description |
 |----------|-------------|
-| `Neutral` | White, grey, black dyes |
+| `Neutral` | White, gray, black dyes |
 | `Reds` | Red, pink, wine dyes |
 | `Browns` | Brown, orange, tan dyes |
 | `Yellows` | Yellow, gold dyes |
@@ -254,7 +254,7 @@ That is the entire record. `rgb`, `hsv`, `lab`, `cost`, `currency`, and the five
 | `Purples` | Purple, violet dyes |
 | `Special` | Metallic, pastel, dark series |
 
-Those eight are the whole closed vocabulary (`DYE_CATEGORIES`). **`Facewear` is not a category** — the 11 Facewear colours are not dyes at all: since schema v2 they live in `facewear_colors.json` / the `facewearColors` export, with a string slug `id`, a name and a hex, and no stainID or market presence.
+Those eight are the whole closed vocabulary (`DYE_CATEGORIES`). **`Facewear` is not a category** — the 11 Facewear colors are not dyes at all: since schema v2 they live in `facewear_colors.json` / the `facewearColors` export, with a string slug `id`, a name and a hex, and no stainID or market presence.
 
 ### File: `packages/core/src/data/locales/{lang}.json`
 
@@ -358,7 +358,7 @@ pnpm --filter xivdyetools-discord-worker run deploy:production
 
 - [ ] Item ID obtained (from Universalis or XIVAPI)
 - [ ] `stainID` taken from the game's `Stain` sheet
-- [ ] `hex` taken from the `Stain` sheet's `Color` (sampled only if the sheet has no row yet) and written lowercase — it is the single colour source of truth
+- [ ] `hex` taken from the `Stain` sheet's `Color` (sampled only if the sheet has no row yet) and written lowercase — it is the single color source of truth
 - [ ] `category` and `acquisition` are members of the closed vocabularies
 - [ ] `consolidationType` set from `StainTransient` (`'A' | 'B' | 'C' | null`)
 - [ ] `legacyItemID` set, or `null` for a consolidated-only dye

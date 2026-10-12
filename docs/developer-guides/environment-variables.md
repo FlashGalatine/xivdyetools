@@ -226,7 +226,7 @@ MODERATOR_IDS=123456789,987654321
 ## xivdyetools-api-worker
 
 > The standalone `xivdyetools-universalis-proxy` worker was **merged into `api-worker` on
-> 2026-07-31**; its behaviour lives on behind the `/universalis` and `/api/v2` compatibility
+> 2026-07-31**; its behavior lives on behind the `/universalis` and `/api/v2` compatibility
 > routes, and the `api-docs` VitePress site became this worker's static assets. Anywhere older
 > notes say `cd xivdyetools-universalis-proxy` or `cd xivdyetools-api-docs`, use
 > `apps/api-worker`.
