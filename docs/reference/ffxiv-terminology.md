@@ -32,7 +32,7 @@ LanguageService (web-app proxy) / Bot commands (Discord worker)
 |-----------|----|----|----|----|----|----|
 | 5729 | Snow White | スノウホワイト | Schneeweißer | blanc neige | 하얀 눈색 | 素雪白 |
 | 5742 | Blood Red | ブラッドレッド | Blutroter | rouge sang | 선홍색 | 鲜血红 |
-| 13116 | Metallic Silver | メタリックシルバー | Metallic silberner | argent brillant | 반짝이는 은색 | 闪耀银 |
+| 13116 | Metallic Silver | シャインシルバー | Metallic silberner | argent brillant | 반짝이는 은색 | 闪耀银 |
 | 30116 | Ruby Red | ルビーレッド | Rubinroter | rouge rubis | 홍옥색 | 宝石红 |
 | 48163 | Neon Pink | ネオンピンク | Neonpinker | rose néon | 형광 분홍색 | 霓虹粉 |
 

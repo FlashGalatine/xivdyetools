@@ -219,7 +219,7 @@ their final text.
 **Ends with:** `pnpm docs:check-links` → merge (no deploy fires). If the code-block type-check recommended in the
 report exists by then, run it here too.
 
-## Sprint 12 — Entry and reference pages (P2, `docs/` only)
+## Sprint 12 — Entry and reference pages (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `fbdceb83` `9f736f64` `745abf56` `aa190128` `8e7c019b` — PR [#298](https://github.com/FlashGalatine/xivdyetools/pull/298)**
 
 | ID | Tier · Sev | Unit | Item |
 |---|---|---|---|

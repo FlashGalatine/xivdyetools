@@ -195,7 +195,16 @@ filter category was retired by this consolidation.
 
 ## Recent Updates
 
-*Last updated: September 5, 2026*
+*Last updated: October 11, 2026*
+
+### October 2026 Highlights
+
+- **The Glamour Reader** (web app 5.13.0, 2026-09-28) — the tenth web-app tool (`/glamour`, key 0):
+  every piece a loaded character wears, its dyes and where to get it. Later 5.14.x releases and
+  5.15.0 refined it (facewear acquisition lines, a drop zone that describes the reader).
+- **2026-10-04 remediation** — web app 5.14.1–5.14.10 and core 5.9.0–5.10.0 (market failures now
+  show, gray endpoints keep their partner hue, one workspace per tool). Per-release detail is in
+  [versions.md](versions.md) and the per-workspace changelogs.
 
 ### September 2026 Highlights
 
