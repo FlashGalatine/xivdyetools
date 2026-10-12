@@ -103,7 +103,7 @@ safe that go live. Every other finding in these files rides along so each file i
 
 **Ends with:** `pnpm docs:check-links && pnpm docs:check-versions` → merge (no deploy fires).
 
-## Sprint 4 — Operations runbooks (P2, `docs/` only)
+## Sprint 4 — Operations runbooks (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `2fa2a691` `6eb0f153` `16a6e769` `73618156` `7ea6ca86` `76ccefda` `aeaf56fb` — PR [#290](https://github.com/FlashGalatine/xivdyetools/pull/290)**
 
 Anchored on the moderation runbook (DOC-022, DOC-023): a review queue that does not exist, a ban syntax that is
 rejected, and records described as kept that are deleted.
