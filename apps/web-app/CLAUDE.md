@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The main XIV Dye Tools web application — a static SPA that runs entirely in the browser. It is the primary consumer of `@xivdyetools/core` and exposes ten standalone tools backed by the 125-dye database.
 
-**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 4 (jsdom) + Playwright 1.62 with multi-project E2E. Deployed as a static bundle on Cloudflare Pages (production `xivdyetools.app` + a second Pages project for `beta.xivdyetools.app`). There is no service worker — see Offline Behaviour below.
+**Stack:** Vite 8 + Lit 3 (web components) + Tailwind CSS 4 + TypeScript (strict). Test stack is Vitest 5 (jsdom) + Playwright 1.63 with multi-project E2E. Deployed as a static bundle on Cloudflare Pages (production `xivdyetools.app` + a second Pages project for `beta.xivdyetools.app`). There is no service worker — see Offline Behavior below.
 
 ### The Ten Tools (`ToolId` from `services/router-service.ts`)
 
 | ID | Title | What it does |
 |----|-------|--------------|
-| `harmony` | Harmony Explorer | Generates color-theory palettes (complementary, triadic, analogous, etc.) from a base dye, with the harmony angles measured on a choice of five colour wheels (`HarmonyConfig.wheel`: `rgb` default, `ryb`, `munsell`, `oklch-hue`, `oklch-lightness`) |
+| `harmony` | Harmony Explorer | Generates color-theory palettes (complementary, triadic, analogous, etc.) from a base dye, with the harmony angles measured on a choice of five color wheels (`HarmonyConfig.wheel`: `rgb` default, `ryb`, `munsell`, `oklch-hue`, `oklch-lightness`) |
 | `extractor` | Palette Extractor | Uploads an image and pulls a palette via K-means++; matches each swatch to the closest FFXIV dye |
 | `accessibility` | Accessibility Checker | Colorblindness simulation (5 vision types) + WCAG contrast |
 | `comparison` | Dye Comparison | Side-by-side compare for up to 4 dyes with hex/RGB/HSV/LAB readouts |
@@ -75,20 +75,20 @@ The app boots from `src/main.ts`, which initializes services, then dynamically i
 ```
 src/main.ts
    │
-   ├─ initializeServices() ── theme, storage, language, api, dye, palette, ...
+   ├─ initializeServices() ── theme, language, dye, storage, api, toast, modal, keyboard, world, ...
    ├─ import('@components/v4-layout')
    │     └─ V4LayoutShell ── header + tool-banner + sidebar + content slot
    │           └─ RouterService routes ToolId → dynamic import('@components/<tool>-tool')
    │                 └─ activeTool.init(container)   ◄── BaseComponent contract
    │
-   └─ Lazy modals: welcome-modal, changelog-modal, theme-modal, language-modal, about-modal
+   └─ import() welcome-modal + changelog-modal ── first-visit welcome or What's New
 ```
 
 ### Key Directories
 
 ```
 src/
-├── main.ts                          # Bootstrap, error handling, dev-only mockup loader
+├── main.ts                          # Bootstrap, error handling, dev-only service exposure on window
 ├── components/
 │   ├── base-component.ts            # BaseComponent abstract class (init/render/destroy)
 │   ├── v4-layout.ts                 # Layout entry point, RouterService glue, tool lazy-load
@@ -113,7 +113,7 @@ src/
 │   ├── toast-container.ts           # ToastService host
 │   ├── tutorial-spotlight.ts        # First-run tutorial overlay
 │   ├── welcome-modal.ts             # First-visit welcome
-│   ├── changelog-modal.ts           # "What's New" modal (parses CHANGELOG.md at build time)
+│   ├── changelog-modal.ts           # "What's New" modal (import()s virtual:changelog, built from CHANGELOG-laymans.md)
 │   ├── chara-file-card.ts / chara-sheet.ts / chara-ui.ts # .chara views: drop zone + file card (both tools), THIS CHARACTER (Swatch), shared helpers
 │   ├── glamour-tool.ts              # Glamour Reader (tenth tool): header + file card + the glamour block
 │   ├── glamour-block.ts             # DYES ON THIS GLAMOUR + IN THE GAME verdict — its own chunk, imported by the reader once a loaded file wears anything
@@ -153,14 +153,14 @@ src/
 │   ├── constants.ts                 # APP_VERSION, STORAGE_PREFIX, etc.
 │   ├── error-handler.ts             # Centralized error mapping + user-friendly messages
 │   ├── logger.ts                    # Wraps @xivdyetools/logger for browser
-│   ├── utils.ts                     # escapeHtml, clearContainer, debounce, etc.
+│   ├── utils.ts                     # escapeHtml, clearContainer
 │   ├── ui-icons.ts                  # SVG icon constants (innerHTML-safe, all static)
 │   ├── tool-icons.ts / harmony-icons.ts / category-icons.ts / state-icons.ts
 │   ├── i18n-types.ts / tool-config-types.ts / browser-api-types.ts / types.ts
 │   └── subscription-manager.ts      # Pub/sub helpers for service events
 ├── styles/                          # themes.css, globals.css (font contract), tool-content.css (+error-boundary.css; loaded page-side AND into the shell's shadow root), v4-layout.css (host/print only), tailwind.css
 ├── locales/                         # Per-language UI strings (en, ja, de, fr, ko, zh)
-└── public/                          # manifest.json, _headers (CSP), _redirects, fonts/, og/, json/, assets/icons/
+└── ../public/                       # sibling of src/: manifest.json, _headers (CSP), _redirects, fonts/, og/, json/, assets/icons/
 # (dev-only mockups relocated 2026-05-31 → docs/historical/web-app/20260531-Mockups/ — see docs/audits/2026-05-31/findings/DEAD-112.md)
 ```
 
@@ -194,13 +194,13 @@ export class MyTool extends BaseComponent {
 
 ### Service Initialization
 
-`initializeServices()` runs in a fixed order (theme → storage → api → dye → palette → ...). Services are singletons — there is no DI container; every consumer imports the same module. Mutating a service in one tool affects all tools.
+`initializeServices()` runs in a fixed order (theme → language → dye → storage → api → toast → modal → keyboard → world → hybrid presets → auth). Services are singletons — there is no DI container; every consumer imports the same module. Mutating a service in one tool affects all tools.
 
 ### Theme Tokens (Never Hardcode Colors)
 
 5.0 ships **two** themes — `standard-light` and `standard-dark` — defined as `THEME_PALETTES` in `services/theme-service.ts` on the confirmed 16A token sets. The ten other pre-5.0 themes were retired (the old `THEME_NAMES` list had twelve entries, `standard-light`/`standard-dark` among them); `migrateLegacyThemeName()` maps any stored legacy name onto Light or Dark by family (`*-light`, `cotton-candy` and `parchment-light` → light, everything else → dark) so an old localStorage value never throws.
 
-Components must use the `--theme-*` CSS variables; hardcoded colors break theme switching. Tailwind sees the variables via the `@apply`-friendly setup in `tailwind.config.js`.
+Components must use the `--theme-*` CSS variables; hardcoded colors break theme switching. Tailwind has no color tokens of its own; `tailwind.config.js` only points its `sans`/`mono` families at the font variables.
 
 ```css
 color: var(--theme-text);
@@ -212,11 +212,11 @@ border-color: var(--theme-border);
 
 `vite.config.ts` declares manual chunks so the initial bundle stays small:
 
-- `vendor-core` — `@xivdyetools/core` (~1.2 MB raw, dye DB + locales)
+- `vendor-core` — `@xivdyetools/core` by name, but in practice only the race-specific character-color JSON (~1.8 MB raw) that `CharacterColorService` `import()`s on demand
 - `vendor-lit` — Lit framework
 - `vendor-spectral` — `spectral.js` (reached only through `@xivdyetools/core/blending`; core declares the dependency)
 - `vendor` — everything else from `node_modules`
-- `modals` — welcome + changelog modals (loaded once)
+- `modals` — named for the welcome + changelog modals, but Rolldown merges the shared color engine (ColorService, APIService, core utils) into it, so it is the app's core runtime and loads on every visit (budget 286 KB)
 
 Each tool component is its own dynamic import.
 
@@ -228,7 +228,7 @@ All `StorageService` keys are prefixed with `xivdyetools_`. Tutorial-offered fla
 
 `MarketBoardService` calls Universalis through `data.xivdyetools.app/universalis` (api-worker's absorbed proxy routes — formerly the standalone universalis-proxy worker), never the upstream directly — this is the only way the browser gets reliable CORS. Market calls filter on `dye.itemID > 0` (see `budget-tool.ts`) rather than null-checking; `Dye.itemID` is always a number.
 
-### Offline Behaviour
+### Offline Behavior
 
 There is **no service worker** — the app has no offline cache. (The v3 `service-worker.js` was never shipped by the Vite build and was deleted in the 2026-08-16 dead-code cleanup.) The `OfflineBanner` component listens to `online`/`offline` events and shows a banner; `manifest.json` still makes the site installable.
 
@@ -258,8 +258,8 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 
 ## Build & Bundle Notes
 
-- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 215 KB). CI fails if a chunk grows past its budget.
-- **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`mono` families at the same variables; the `.number` rule (Fragment Mono + tabular figures) lives in `src/styles/tool-content.css`, which is loaded both page-side and inside the layout shell's shadow root. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterisation live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
+- `npm run build:check` runs `vite build` then `scripts/check-bundle-size.js`, which enforces per-bundle byte ceilings (e.g. CSS ≤ 105 KB, main entry ≤ 150 KB raw, layout shell ≤ 218 KB). CI fails if a chunk grows past its budget.
+- **Fonts are a contract, not a per-file choice.** All three faces are self-hosted woff2 in `public/fonts/` (Space Grotesk display, Onest body, Fragment Mono numeric/mono — matching `FONTS` in `packages/svg`). The `@font-face` blocks and the `--font-display` / `--font-body` / `--font-mono` / `--font-cjk` variables in `src/styles/globals.css` are the **single** declaration site; `tailwind.config.js` points its `sans`/`mono` families at the same variables; the `.number` rule (Fragment Mono + tabular figures) lives in `src/styles/tool-content.css`, which is loaded both page-side and inside the layout shell's shadow root. Nothing else should name a family — that is how four sources ended up disagreeing before `REFACTOR-002`. There is no runtime Google Fonts request, and the CSP's `font-src` is `'self'` only. `--font-cjk` names locally-installed CJK families (nothing is downloaded) so ja/ko/zh rendering is a decision rather than an OS accident. The web app renders no SVG-to-PNG of its own; the Noto Sans JP/SC/KR subsets used for card rasterization live in `apps/discord-worker/src/fonts/` and `apps/og-worker/src/fonts/` (`@xivdyetools/svg` ships no font files — it only names the stacks in `FONTS`).
 - `src/index.html` is the Vite entry; `vite.config.ts` sets `root: 'src'` and `outDir: '../dist'`.
 - Tailwind v4 is compiled inside Vite by `@tailwindcss/postcss` (`postcss.config.js`) from `src/styles/tailwind.css` (`@import "tailwindcss"` + `@config "../../tailwind.config.js"`); there is no separate CSS build step and no committed CSS output.
 - `public/_headers` (Cloudflare Pages) is the **single** source of truth for the production CSP: `script-src 'self'`, `style-src 'self' 'unsafe-inline'`, `frame-ancestors 'none'`. Do not add a second copy — a `<meta http-equiv>` tag cannot express `frame-ancestors` and will silently diverge.
@@ -271,11 +271,11 @@ There is **no service worker** — the app has no offline cache. (The v3 `servic
 - **innerHTML for static SVG only** — icons in `shared/*-icons.ts` are compile-time constants. User content always goes through `textContent` or `escapeHtml`.
 - **Tokens in localStorage** — `auth-service.ts` documents the rationale: strict CSP prevents XSS exfil, expiry is checked on every `isAuthenticated()` call, server revokes on logout.
 - **CSP** — production headers prevent inline scripts, frame embedding, and form hijacking.
-- **No PII in telemetry** — `telemetry-service.ts` sends only allowlisted event names/dimensions (tool id, stainID, entry, producer bucket, theme) plus version/env/locale/theme/viewport bucket; no ids, nothing persisted. Default off; `navigator.globalPrivacyControl` honoured. Spec: `docs/superpowers/specs/2026-08-29-web-analytics-design.md`.
+- **No PII in telemetry** — `telemetry-service.ts` sends only allowlisted event names/dimensions (tool id, stainID, entry, producer bucket, theme) plus version/env/locale/theme/viewport bucket; no ids, nothing persisted. Default off; `navigator.globalPrivacyControl` honored. Spec: `docs/superpowers/specs/2026-08-29-web-analytics-design.md`.
 
 ## Testing
 
-- **Unit (Vitest, jsdom):** Co-located `*.test.ts` next to source, plus `src/__tests__/`. Coverage thresholds (`vitest.config.ts`) are statements 78 / branches 63 / functions 74 / lines 79 — a ratchet: raise them as the tool-component suites deepen, never lower them.
+- **Unit (Vitest, jsdom):** Co-located `*.test.ts` next to source, plus `src/__tests__/`. Coverage thresholds (`vitest.config.ts`) are statements 79 / branches 65 / functions 76 / lines 80 — a ratchet: raise them as the tool-component suites deepen, never lower them.
 - **E2E (Playwright):** `e2e/` directory. Three projects: `chromium` (default), `chromium-coverage` (V8 coverage via CDP, merged in `global-teardown.ts`), `mobile-chrome`.
 - **Mocks:** `msw` intercepts network in unit tests; shared component/service fakes live in `src/__tests__/mocks/`. (This app does **not** depend on `@xivdyetools/test-utils` — that is for the Workers.)
 
@@ -292,7 +292,7 @@ npx playwright test --project=mobile-chrome
 **Sibling apps it talks to:**
 - `xivdyetools-presets-api` — community presets (HTTPS)
 - `xivdyetools-oauth` — Discord login + JWT issuance
-- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Swatch Matcher's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
+- `xivdyetools-api-worker` — market-board pricing via its `/universalis` routes (absorbed CORS proxy), and `.chara` equipment identity via `POST /v1/chara/resolve` + `GET /v1/chara/icon/:id` (the Glamour Reader's DYES ON THIS GLAMOUR names/icons; the SPA never talks to XIVAPI — CSP `img-src` allows `data.xivdyetools.app` for the proxied icons, `connect-src` already covers `*.xivdyetools.app`). Local dev: `VITE_API_WORKER_URL` (default `http://localhost:8790`); when the worker is down the block degrades to slot-only rows by design; opt-in telemetry via `POST /v1/telemetry`
 - `xivdyetools-og-worker` — dynamic OpenGraph images for share links
 
 ## Documentation

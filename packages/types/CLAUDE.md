@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Package Overview
 
-`@xivdyetools/types` is the foundational type-only package for the entire xivdyetools ecosystem. It consolidates branded types (`HexColor`, `DyeId`, `Hue`, `Saturation`), domain interfaces (dyes, presets, character colors, auth payloads, API responses), and the shared `AppError`/`ErrorCode` runtime classes.
+`@xivdyetools/types` is the foundational type-only package for the entire xivdyetools ecosystem. It consolidates branded types (`HexColor`, `DyeId`, `Hue`, `Saturation`), domain interfaces (dyes, presets, character colors, auth payloads, API responses), and the shared runtime `AppError` class and `ErrorCode` enum.
 
 Splitting these out keeps every other package and app aligned on a single source of truth for cross-package data shapes and lets every consumer share branded-type guarantees without runtime cost. The package has zero internal dependencies and ships with `sideEffects: false` so unused subpaths are tree-shaken.
 
@@ -150,8 +150,8 @@ type LocaleData; type LocalePreference;
 ### Error types (runtime exports)
 
 ```typescript
-enum ErrorCode { /* validation, network, auth, rate-limit, etc. */ }
-class AppError extends Error { /* code, severity, context */ }
+enum ErrorCode { /* validation, dye lookup, database/locale/image loading, API calls, etc. */ }
+class AppError extends Error { /* code, severity */ }
 type ErrorSeverity;
 ```
 
@@ -187,7 +187,7 @@ Every subdirectory under `src/` has its own export entry in `package.json`. Pref
 Grepped from `package.json` files in the monorepo:
 
 - Packages: `@xivdyetools/core`, `@xivdyetools/svg`, `@xivdyetools/bot-logic`, `@xivdyetools/test-utils`
-- Apps: `xivdyetools-web-app`, `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-oauth`, `xivdyetools-moderation-worker`, `xivdyetools-og-worker`, `xivdyetools-api-worker`, `xivdyetools-stoat-worker`
+- Apps: `xivdyetools-web-app`, `xivdyetools-discord-worker`, `xivdyetools-presets-api`, `xivdyetools-oauth-worker`, `xivdyetools-moderation-worker`, `xivdyetools-og-worker`, `xivdyetools-api-worker`, `xivdyetools-stoat-worker`
 
 Effectively every package and app consumes this — it sits at the bottom of the dependency graph.
 

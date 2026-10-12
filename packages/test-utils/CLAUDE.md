@@ -167,10 +167,10 @@ A test that only needs the PKCE constants should `import from '@xivdyetools/test
 ## Consumers
 
 - `apps/discord-worker` — KV / Analytics Engine mocks (`src/test-utils.ts`'s `createMockEnv`, since Task 5's DEAD-005 consolidation).
-- `apps/presets-api` — D1 mock, JWT helpers, preset / category factories (`tests/test-utils.ts` shim).
-- `apps/oauth` — D1 mock, JWT + PKCE helpers (`src/__tests__/mocks/cloudflare-test.ts`).
+- `apps/presets-api` — D1, KV and R2 mocks, JWT helpers, preset / category factories (mostly via the `tests/test-utils.ts` shim; `createMockKV` is imported directly).
+- `apps/oauth` — KV mock, PKCE constants (`src/__tests__/mocks/cloudflare-test.ts`).
 - `apps/moderation-worker` — D1 (ban service), KV and service-binding fetcher mocks.
-- `apps/api-worker` — KV mocks for rate-limit, telemetry and Universalis tests.
+- `apps/api-worker` — KV mocks for rate-limit, telemetry and Universalis tests, plus `createMockDye` fixtures.
 - `@xivdyetools/svg` (devDependency) — `createMockDye` fixtures.
 
 `apps/web-app` does **not** consume this package (it has its own local test mocks).
@@ -178,7 +178,7 @@ A test that only needs the PKCE constants should `import from '@xivdyetools/test
 ## Internal Dependencies
 
 - `@xivdyetools/types` — `Dye` and `PresetSubmission` for factory return types (both re-exported from `/factories`). `PresetRow` and `CategoryRow` are this package's own D1-row shapes; there is no user factory.
-- `@xivdyetools/auth` — Base64URL helpers for JWT/PKCE (imported via `@xivdyetools/auth/encoding`).
+- `@xivdyetools/auth` — Base64URL helpers for the JWT helpers (imported via `@xivdyetools/auth/encoding`).
 
 Peer: `vitest >= 2.0.0`.
 

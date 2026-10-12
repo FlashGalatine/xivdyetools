@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A separate Discord bot dedicated to moderation actions on Community Presets. Runs on Cloudflare Workers via Discord HTTP Interactions and shares D1 + KV with `xivdyetools-discord-worker`, but has its own Discord application (different `DISCORD_CLIENT_ID`) so moderators can interact with a dedicated UI without polluting the main bot's command surface.
+A separate Discord bot dedicated to moderation actions on Community Presets. Runs on Cloudflare Workers via Discord HTTP Interactions and shares KV with `xivdyetools-discord-worker` and D1 with `xivdyetools-presets-api`, but has its own Discord application (different `DISCORD_CLIENT_ID`) so moderators can interact with a dedicated UI without polluting the main bot's command surface.
 
 This split keeps the privileged moderation surface (ban/unban, approve/reject, revert edits) isolated from the user-facing bot. The only slash command exposed is `/preset` with moderation subcommands; everything else returns "not supported".
 
@@ -63,8 +63,9 @@ Discord ──POST /──► Ed25519 verify ──► safeParseJSON (depth ≤ 
        PING            COMMAND     AUTOCOMPLETE   COMPONENT       MODAL_SUBMIT
        PONG               │            │              │               │
                           ▼            ▼              ▼               ▼
-                    rate-limit  rate-limit    handleButton   handlePresetRejection /
-                    handlePreset preset autocomplete         handlePresetRevert /
+                    rate-limit  rate-limit    rate-limit     rate-limit
+                    handlePreset preset       handleButton   handlePresetRejection /
+                                 autocomplete                handlePresetRevert /
                                                               handleBanReason
 ```
 
@@ -93,10 +94,10 @@ src/
 ├── services/
 │   ├── ban-service.ts                  # Ban/unban + searchPresetAuthors / searchBannedUsers
 │   ├── preset-api.ts                   # Service Binding client + validateSecurityConfig
-│   ├── i18n.ts                         # Locale resolution (KV → discord locale → 'en')
-│   └── bot-i18n.ts                     # createUserTranslator wrapper
+│   ├── i18n.ts                         # Re-exports bot-logic's locale resolution (KV prefs → discord locale → 'en')
+│   └── bot-i18n.ts                     # English-only Translator + enLocale table + createUserTranslator
 ├── utils/
-│   ├── verify.ts                       # Ed25519 + Content-Length guard (100KB)
+│   ├── verify.ts                       # Re-exports @xivdyetools/auth's Ed25519 verify + Content-Length guard (100KB)
 │   ├── safe-json.ts                    # safeParseJSON with depth/freeze checks
 │   ├── url-sanitizer.ts                # Strip sensitive query params from logs
 │   ├── response.ts                     # pong/ephemeral/deferred/rateLimited
@@ -106,7 +107,7 @@ src/
 │   └── env-validation.ts               # validateEnv — required secrets, bindings, production-only bindings
 └── types/
     ├── env.ts                          # Env interface + Interaction enums
-    ├── preset.ts                       # Local preset shape for D1 reads
+    ├── preset.ts                       # PresetAPIError classes, moderation view/queue types, STATUS_DISPLAY
     ├── ban.ts                          # Ban service types
     └── modal.ts                        # Modal payload types
 ```
@@ -154,7 +155,7 @@ Vars: `ENVIRONMENT` (`development` / `production`), `DISCORD_CLIENT_ID = 1453806
 - Max depth 10 (Discord interactions are shallow).
 - Structural validation.
 - `Object.freeze()` on the result so handlers can't accidentally mutate the request payload.
-- Returns parse warnings (e.g., trailing whitespace) for logging without rejecting the request.
+- Returns parse warnings (e.g., an array of more than 100 elements) for logging without rejecting the request.
 
 ### Rate Limiting
 
@@ -187,7 +188,7 @@ Ban writes go straight to D1 through `ban-service.ts`, each in one `db.batch` wi
 
 ### Moderator Authorization
 
-`MODERATOR_IDS` is parsed by splitting on `[\s,]+` and filtering empties — accepts comma-separated, whitespace-separated, or newline-separated lists. Every moderation action verifies the invoking user is in this list before mutating D1 or calling presets-api.
+`MODERATOR_IDS` is parsed (shared `parseModeratorIds` from `@xivdyetools/bot-logic`) by splitting on `[\s,]+` and keeping only valid snowflakes — accepts comma-separated, whitespace-separated, or newline-separated lists. Every moderation action verifies the invoking user is in this list before mutating D1 or calling presets-api.
 
 ### Modal Routing
 
@@ -195,7 +196,7 @@ Ban writes go straight to D1 through `ban-service.ts`, each in one `db.batch` wi
 
 ### URL Sanitization in Logs
 
-`sanitizeUrl()` is passed to `loggerMiddleware` so query parameters that might contain user IDs or tokens never end up in structured logs.
+`sanitizeUrl()` is passed to `loggerMiddleware` so webhook tokens in paths and secret-bearing query parameters (`token`, `key`, `secret`, ...) never end up in structured logs.
 
 ## Security Patterns
 
@@ -261,6 +262,7 @@ Without `BOT_SIGNING_SECRET` in production, bot auth is rejected on the API side
 | `@xivdyetools/types` | Shared interfaces; the review custom_id parser/builder and status list |
 | `@xivdyetools/logger` | Structured logging |
 | `@xivdyetools/worker-kit` | Shared Hono middleware |
+| `@xivdyetools/bot-logic` | `sanitizeEmbedText`, `parseModeratorIds`, `ALLOWED_MENTIONS_NONE`; locale resolution (`/i18n`) |
 
 ## Localization
 
@@ -291,11 +293,11 @@ npx vitest run -t "ban"                                   # Pattern match
 
 ## Related Projects
 
-**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`
+**Dependencies:** `@xivdyetools/auth`, `@xivdyetools/worker-kit/rate-limiter`, `@xivdyetools/types`, `@xivdyetools/logger`, `@xivdyetools/worker-kit`, `@xivdyetools/bot-logic`
 
 **Service Bindings (outbound):** `xivdyetools-presets-api`
 
-**Sibling:** `xivdyetools-discord-worker` (main bot — same KV/D1, different Discord app)
+**Sibling:** `xivdyetools-discord-worker` (main bot — same KV, different Discord app)
 
 ## Deployment Checklist
 

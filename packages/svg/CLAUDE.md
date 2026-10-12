@@ -33,10 +33,10 @@ CARD_DARK, CARD_LIGHT, cardTheme(mode)          // light ships via /preferences
 cardShell(height, theme, content)               // rounded surface + inset hairline
 cardText(x, y, content, opts)                   // font stacks incl. CJK fallback
 textWidth(content, size, font)                  // CJK counts 2× (estimateTextWidth)
-fitText(content, maxPx, size, font)             // ellipsise to PIXELS, never a char count
+fitText(content, maxPx, size, font)             // ellipsize to PIXELS, never a char count
 commandChip(x, y, label, theme, { glyph, onDye })  // the pill; the tool glyph rides INSIDE it
-appIcon(x, y, size) / markFooter(rightX, y, theme) // bottom-right, never centred
-swatch(...) / idealSwatch(...)                  // solid = buyable · outlined = the maths' ideal
+appIcon(x, y, size) / markFooter(rightX, y, theme) // bottom-right, never centered
+swatch(...) / idealSwatch(...)                  // solid = buyable · outlined = the math's ideal
 measuredRow(x, y, rowH, opts)                   // the suite's five-slot list row
 dashedRule / hairline
 ```
@@ -46,9 +46,9 @@ dashedRule / hairline
 ### Rules that are not stylistic preferences
 
 - **The PNG must be self-contained.** These get saved and reposted into servers that never ran the command. Never burn an instruction into an image (`"Run again for new results"`, a `/manual` pointer) — that outlives the message. Actionable, context-dependent lines belong in the embed.
-- **Never ellipsise to a character count.** Use `fitText` / `estimateTextWidth`. CJK is 2× wide, and German compounds run ~3× English (`Farbstoffverkäufer` vs `Dye Vendor`).
+- **Never ellipsize to a character count.** Use `fitText` / `estimateTextWidth`. CJK is 2× wide, and German compounds run ~3× English (`Farbstoffverkäufer` vs `Dye Vendor`).
 - **Blanks, never inventions.** A missing price is an em dash; a ratio with no numerator is an empty cell.
-- **The outlined swatch means *unbuyable*.** It is the vocabulary's marker for "the hue the maths asked for" — an ideal gradient step, a blend, a harmony's target hue.
+- **The outlined swatch means *unbuyable*.** It is the vocabulary's marker for "the hue the math asked for" — an ideal gradient step, a blend, a harmony's target hue.
 - **A tier is a property of the matching method, not of the pair.** Print the method wherever a tier or a verdict appears; never compare a tier across methods. Only ΔE2000's bands follow the user's threshold.
 
 ### Band vocabulary
@@ -57,7 +57,7 @@ Three calibrations of the same four tiers live in `@xivdyetools/core` (`classify
 
 | Context | Cuts | Question |
 |---|---|---|
-| `match` | 5 / 10 / 20 | is this the same colour? (smaller is better) |
+| `match` | 5 / 10 / 20 | is this the same color? (smaller is better) |
 | `harmony` | 6 / 12 / 20 | is this hue reachable in the palette? |
 | `separation` | 8 / 15 / 30 ascending | can these two be told apart under a lens? (**larger** is safer — the UI reads it 30/15/8) |
 
@@ -65,7 +65,7 @@ Polarity is per-tool and deliberately inconsistent between them: green means *cl
 
 **The ramp is `#5bbd68 · #8bc34a · #ffc107 · #f4645a` (dark) — settled 2026-08-09.** The design set disagreed with itself: Turns 13/14 draw those middle bands, the 2026-08-07 Swatch doc draws `#9ecf5e / #F4BF4F`. Turns 13/14 win, because that ramp is already shipped in eight web-app components as well as here — it is what a player has learned to read, and a two-frame revision does not outrank a suite-wide convention.
 
-`#F4BF4F` is **not** a retired tier colour. It is the separate **state** amber — OFF GRID on the swatch card, the vendor-cheaper flag, a destructive confirm. A tier answers *"how close is this?"*; a state answers *"something here needs your attention."* They are allowed to look similar; they are not allowed to be the same token. `frame-budget.test.ts` pins both ramps.
+`#F4BF4F` is **not** a retired tier color. It is the separate **state** amber — OFF GRID on the swatch card, the vendor-cheaper flag, a destructive confirm. A tier answers *"how close is this?"*; a state answers *"something here needs your attention."* They are allowed to look similar; they are not allowed to be the same token. `frame-budget.test.ts` pins both ramps.
 
 ## Commands
 
@@ -94,6 +94,7 @@ src/
 ├── index.ts                  # Public API re-exports
 ├── frame.ts                  # THE FRAME SYSTEM — read before touching a generator
 ├── base.ts                   # XML escape, hex/RGB helpers, primitives, THEME, FONTS
+├── emitted-glyphs.ts         # scanEmittedGlyphs — the non-ASCII characters card code emits (font-coverage gate input)
 ├── icons/tool-icons.ts       # Single geometry home: 11 compact glyphs (10 tools + `tools`) and 10 detail glyphs (`tools` has no detail form)
 │
 │  # 5.0 cards — each names its confirmed frame in its module docblock
@@ -107,13 +108,13 @@ src/
 ├── budget-ledger.ts          # /budget             13G ledger
 ├── comparison-card.ts        # /compare            14A / 14C·2 / 14C (routes on dye count)
 ├── palette-grid.ts           # /extractor image    14K ramp
-├── nearest-sheet.ts          # /extractor color    14J·2 colour sheet
+├── nearest-sheet.ts          # /extractor color    14J·2 color sheet
 ├── swatch-card.ts            # /swatch             1a / 1b (order: option)
 ├── glamour-card.ts           # /glamour            2a pieces in slot order (a second row kind, not measuredRow)
 └── preset-swatch.ts          # /preset             DEFERRED — pre-frame, see its docblock
 ```
 
-**Several commands route rather than scale.** `/contrast`, `/compare` and `/accessibility` each pick a different frame from their input (pair count, dye count, `vision:`) — the input decides, nothing picks it for the user, and the routers are total. Do not "generalise" a router into one frame that scales; the shapes are genuinely different layouts.
+**Several commands route rather than scale.** `/contrast`, `/compare` and `/accessibility` each pick a different frame from their input (pair count, dye count, `vision:`) — the input decides, nothing picks it for the user, and the routers are total. Do not "generalize" a router into one frame that scales; the shapes are genuinely different layouts.
 
 `preset-swatch.ts` is the one generator not on the frame system. `/preset`'s redesign is deferred on whether the command survives 5.0 at all — its defects were fixed in place, its layout was not. See its module docblock.
 
@@ -147,8 +148,8 @@ Cards (the frame system):
 
 Glyph set only (`toolGlyph` / `harmonyGlyph` / `categoryGlyph` / `chromeGlyph` / `panelGlyph`, `GLYPH_ACCENT_*`):
 
-- `apps/web-app` — `shared/tool-icons.ts`, `harmony-icons.ts`, `category-icons.ts`, `state-icons.ts`, `ui-icons.ts`, `services/theme-service.ts`.
-- `apps/og-worker` — `services/svg/band.ts`, `band-shared.ts`, `default-card.ts` (also `bandInk`, `escapeXml`, `estimateTextWidth`).
+- `apps/web-app` — `shared/tool-icons.ts`, `harmony-icons.ts`, `category-icons.ts`, `state-icons.ts`, `ui-icons.ts`, `services/theme-service.ts`, `shared/glyph-accent.ts`, `components/budget-tool.ts`.
+- `apps/og-worker` — `services/svg/band.ts`, `band-shared.ts`, `default-card.ts` (also `bandInk`, `escapeXml`, `estimateTextWidth`, `fitText`, `textWidth`).
 - `apps/api-worker` — the VitePress docs' `Glyph.vue` component.
 
 The og-worker caveat is about **cards**: it keeps its own local `THEME` and card
@@ -157,8 +158,7 @@ read this package's glyphs and text primitives.
 
 ## Internal Dependencies
 
-- `@xivdyetools/core` — colour algorithms, `classifyBandTier`, `MATCHING_METHOD_TAGS`, `abbreviateDyeName`, dye database (read-only).
-- `@xivdyetools/core/blending` — in-card colour mixing.
+- `@xivdyetools/core` — color algorithms (`ColorService`), `classifyBandTier`, `MATCHING_METHOD_TAGS` (with the `MatchingMethod` type).
 - `@xivdyetools/types` — shared `Dye`, `HexColor`, etc.
 - `@xivdyetools/test-utils` (dev) — fixtures for snapshot tests.
 
@@ -172,7 +172,7 @@ discord-worker calls counts as used. Resolution needs no built `dist/`.
 
 `includeEntryExports` is on, so `src/index.ts` is in scope. Anything the barrel
 exports that no workspace imports must carry `/** @public */` on its specifier
-(`"tags": ["-public"]` in the root config excludes those). That covers the frame
+(knip's built-in always-ignore of `@public` exempts those; the root config's `"tags": ["-public"]` line is inert). That covers the frame
 primitives (`cardShell`, `cardText`, `fitText`, `commandChip`, `markFooter`,
 `swatch`, `idealSwatch`, `dashedRule`, `hairline`, `textWidth`, `appIcon`,
 `CARD_TYPE`, `HARMONY_ROW_CAP`, `ACCENT`, `NUMFMT`) and every

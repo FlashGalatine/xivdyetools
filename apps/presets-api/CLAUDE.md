@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 REST API for Final Fantasy XIV community color palette presets. Serves the web app, the Discord bot, and the moderation bot from a single Cloudflare Worker. Persistence is Cloudflare D1 (SQLite); business logic uses Hono routers split by resource. Both bots authenticate via signed Bearer tokens (HMAC-SHA256 over a request fingerprint) and the web app authenticates via JWTs minted by the OAuth worker — both code paths converge on a single `AuthContext` populated by `authMiddleware`.
 
-This is the only D1 owner for `xivdyetools-presets`; sibling workers (`discord-worker`, `moderation-worker`) read/write through Service Bindings rather than directly.
+This is the only D1 owner for `xivdyetools-presets`; `discord-worker` reaches it only through the `presets-api` Service Binding; `moderation-worker` also holds a direct read/write D1 binding to the same database.
 
 ## Commands
 
@@ -101,22 +101,29 @@ src/
 │   ├── auth.ts                         # Dual auth: BOT_API_SECRET (HMAC-signed) or JWT
 │   ├── ban-check.ts                    # requireNotBanned (router-level on every mutating method; fails closed outside development)
 │   ├── body-validation.ts              # bodySizeLimit (100KB), jsonDepthLimit
-│   └── rate-limit.ts                   # IP rate limit (100/min) using shared rate-limiter package
+│   └── rate-limit.ts                   # IP + per-user rate limits (100/min) via worker-kit's rate limiter
 ├── handlers/
-│   ├── presets.ts                      # GET / POST / PATCH presets, /mine, /featured, /rate-limit
+│   ├── presets.ts                      # GET / POST / PATCH / DELETE presets, /mine, /featured, /rate-limit, /refresh-author, /:id/preview-image
 │   ├── votes.ts                        # POST/DELETE votes (atomic INSERT … ON CONFLICT)
-│   ├── categories.ts                   # Categories with denormalized counts
+│   ├── categories.ts                   # Categories with computed approved-preset counts (primary + secondary)
 │   └── moderation.ts                   # Pending queue, status updates, revert, audit log
 ├── services/
 │   ├── preset-service.ts               # D1 queries, dye_signature duplicate detection
 │   ├── moderation-service.ts           # Local profanity + Perspective API pipeline
 │   ├── validation-service.ts           # Centralized validators (name/description/dyes/tags/status/reason)
-│   └── rate-limit-service.ts           # 10 submissions / user / day enforcement
+│   ├── rate-limit-service.ts           # Daily per-user quotas: 10 submissions, 10 flagged edits, 30 text edits, 20 preview uploads
+│   ├── notification-service.ts         # Discord-worker notification fan-out + failed_notifications dead letters
+│   ├── preview-image-service.ts        # Preview image sniff → image-worker → R2, edge-cache purge
+│   ├── category-service.ts             # Cached valid category IDs
+│   ├── identity-rekey-service.ts       # Re-keys XIVAuth UUID rows to the Discord snowflake (FINDING-014)
+│   └── moderation-retention-service.ts # Prunes lifted bans and old moderation_log rows (FINDING-005)
 ├── data/profanity/                     # 6-language profanity word lists
 ├── utils/
 │   ├── api-response.ts                 # ErrorCode enum + response helpers
-│   └── env-validation.ts               # Env validation, run on EVERY request
-└── (no entry-level scripts beyond `migrations/` and `scripts/migrate-presets.ts`)
+│   ├── env-validation.ts               # Env validation, run on EVERY request
+│   └── request-body.ts                 # readJsonObject: body must parse to a JSON object (BUG-064)
+├── retention-job.ts                    # Daily Cron Trigger `scheduled` handler (production only)
+└── (outside src/: `migrations/` and `scripts/migrate-presets.ts`)
 ```
 
 ### Environment Bindings (wrangler.toml)
@@ -224,7 +231,7 @@ Route order is load-bearing in `presets.ts` and `moderation.ts`: literal paths (
 - `GET /presets` — `category`, `search`, `status`, `sort`, `page`, `limit` (capped at 50), `is_curated`.
 - `GET /presets/featured` — top 10 by `vote_count` among `approved` presets. There is **no** `is_curated` filter (`getFeaturedPresets`); a community preset with enough votes appears here.
 - `GET /presets/:id` — single preset.
-- `GET /categories`, `GET /categories/:id` — categories with denormalized counts (a preset counts toward its primary **and** its `secondary_categories`).
+- `GET /categories`, `GET /categories/:id` — categories with computed approved-preset counts (a preset counts toward its primary **and** its `secondary_categories`).
 - `GET /` and `GET /health` — service info / liveness.
 
 ### Authenticated (Bot or Web)
@@ -348,9 +355,9 @@ The acting user ID comes from the `discord_id` claim (Discord snowflake — the 
 
 ### Body & JSON Hardening
 
-- `bodySizeLimit` rejects requests > 100KB.
-- `jsonDepthLimit` rejects deeply nested payloads (configured per-route, applied to all mutations under `/api/*`).
-- Content-Type must be `application/json` for POST/PATCH/PUT with a body.
+- `bodySizeLimit` rejects requests > 100KB (the preview-image upload is exempt and capped at 5 MB instead).
+- `jsonDepthLimit` rejects mutation payloads nested deeper than 10 levels under `/api/*` (mounted once, not per route; the preview-image upload skips it).
+- Content-Type must be `application/json` for POST/PATCH/PUT with a body, except the preview-image upload, which takes `image/png`, `image/jpeg` or `image/webp` (or no Content-Type).
 
 ### Security Headers
 
@@ -373,7 +380,7 @@ Production hides `err.message` and stack — only the request ID is returned. De
 | `@xivdyetools/types` | Shared interfaces (preset shapes, AuthContext, etc.) |
 | `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `MemoryRateLimiter`, `getClientIp`, `PUBLIC_API_LIMITS` |
 | `@xivdyetools/logger` | Structured logging with secret redaction — **transitive** via `worker-kit`, not in this app's `package.json` |
-| `@xivdyetools/worker-kit` | Request ID, logger, rate-limit middleware factories |
+| `@xivdyetools/worker-kit` | Request ID, logger, rate-limit middleware factories; `/body-guards` (body-size and JSON-depth guards) and `/image-sniff` (preview-image magic-byte sniff) |
 
 ## Development Notes
 

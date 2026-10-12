@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — it surfaces the dye database (125 standard dyes, schema v2), color matching, the colour wheels and harmony selection, and `.chara` equipment resolution over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**. Since Monorepo 2.0 (Tier 2) the same worker also owns the **Universalis market-board proxy** (`/universalis/*`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` and discord-worker's `UNIVERSALIS_PROXY` service binding — absorbed from the retired `apps/universalis-proxy`) and serves the **VitePress developer docs** on `developers.xivdyetools.app` as Workers Static Assets (absorbed from the retired `apps/api-docs`).
+`xivdyetools-api-worker` is the **public REST API** for the XIV Dye Tools ecosystem — it surfaces the dye database (125 standard dyes, schema v2), color matching, the color wheels and harmony selection, and `.chara` equipment resolution over a Cloudflare Worker on Hono. Deployed to **`data.xivdyetools.app`**. Since Monorepo 2.0 (Tier 2) the same worker also owns the **Universalis market-board proxy** (`/universalis/*`, plus the `/api/v2/*` compatibility mount that backs `proxy.xivdyetools.app` and discord-worker's `UNIVERSALIS_PROXY` service binding — absorbed from the retired `apps/universalis-proxy`) and serves the **VitePress developer docs** on `developers.xivdyetools.app` as Workers Static Assets (absorbed from the retired `apps/api-docs`).
 
 The API is anonymous (no auth, no API key) with permissive CORS so it can be called from browsers, Dalamud plugins, Discord bots, and mobile apps. Rate limiting on `/v1/*` is 60 req/min/IP + 5 burst, enforced by the native `API_RATE_LIMITER` Workers Rate Limiting binding (`simple.limit = 65`), with the `RATE_LIMIT` KV namespace as the fallback when the binding is absent. Locale resolution is handled once per request by middleware (`ensureLocaleLoaded` — never `setLocale`, which would race across concurrent requests) and handlers pass `c.get('locale')` explicitly to every localization call.
 
@@ -20,7 +20,7 @@ pnpm build:docs             # Build docs/.vitepress/dist (required before a by-h
 pnpm test                   # vitest run
 pnpm test:watch             # vitest in watch mode
 pnpm test:coverage          # vitest run --coverage
-pnpm type-check             # tsc --noEmit (src + tests) && tsc -p tsconfig.docs.json (docs/.vitepress/**/*.ts, DOM lib; .vue script blocks are NOT type-checked — the build compiles them)
+pnpm type-check             # tsc --noEmit (src + tests + scripts) && tsc -p tsconfig.docs.json (docs/.vitepress/**/*.ts, DOM lib; .vue script blocks are NOT type-checked — the build compiles them)
 pnpm lint                   # eslint src/ + knip (lint:dead)
 ```
 
@@ -38,7 +38,7 @@ Request
   ├─► requestIdMiddleware           (every route — adds X-Request-Id)
   ├─► loggerMiddleware              (structured logger via @xivdyetools/worker-kit)
   ├─► Security headers              (X-Content-Type-Options, X-Frame-Options, HSTS in prod)
-  ├─► CORS (origin: *, GET/OPTIONS) (exposes RateLimit + Request-Id headers)
+  ├─► CORS                          (origin: *, GET/POST/OPTIONS; exposes RateLimit + Request-Id headers)
   ├─► rateLimitMiddleware           (only on /v1/*, native binding API_RATE_LIMITER, fail-open;
   │                                    POST /v1/telemetry is carved out onto its own TELEMETRY_RATE_LIMITER
   │                                    bucket, which fails CLOSED — FINDING-014; a request with no client
@@ -58,7 +58,7 @@ src/
 ├── routes/
 │   ├── dyes.ts           # 7 dye endpoints (search, categories, batch, consolidation, stain, :id, list)
 │   ├── match.ts          # 2 color-matching endpoints (closest, within-distance)
-│   ├── wheels.ts         # 2 colour-wheel endpoints (list, :id with ringStops + every dye's wheelHue) — core 5.2.0's ColorWheel registry
+│   ├── wheels.ts         # 2 color-wheel endpoints (list, :id with ringStops + every dye's wheelHue) — core 5.2.0's ColorWheel registry
 │   └── harmony.ts        # 2 harmony endpoints (/types, / = core's generateHarmonySlots with a `wheel`)
 ├── middleware/
 │   ├── rate-limit.ts     # Backend selection (native API_RATE_LIMITER / TELEMETRY_RATE_LIMITER / SERVICE_RATE_LIMITER, KV fallback) + the shared rateLimitMiddleware factory
@@ -77,15 +77,16 @@ src/
 scripts/build-item-names.mjs  # Regenerates the ko/zh tables after a patch (local ffxiv-datamining clone or GitHub raw + Teamcraft JSON), plus data/item-names.ja.json from the global ja Item.csv — BUILD-TIME ONLY: discord-worker's JP font subset and its item-name-coverage gate read it, nothing in this worker imports it (ja stays XIVAPI's at request time); `node scripts/build-item-names.mjs ja` rebuilds only the named languages and their meta entries; manual, commit the output and re-cut discord-worker's CJK subsets
 scripts/build-acquisition.ts  # Regenerates the GPOSERS acquisition table after a patch (Teamcraft at a pinned commit + XIVAPI); run from the repo root: pnpm exec tsx apps/api-worker/scripts/build-acquisition.ts — review the printed relic and random-container lists, commit the output
 docs/                     # VitePress site → developers.xivdyetools.app (built by `pnpm build:docs`, shipped as Workers Static Assets)
-├── .vitepress/config.ts      # nav / sidebar (counts from the endpoint registry) / force-dark / two-colour Shiki theme / search `_render`
+├── .vitepress/config.ts      # nav / sidebar (counts from the endpoint registry) / force-dark / two-color Shiki theme / search `_render`
 ├── .vitepress/search-index.ts # expands each <EndpointCard> into Markdown at INDEX time so local search sees params + fields
 ├── .vitepress/env.d.ts       # `*.vue` shim for tsconfig.docs.json (excluded from knip's project)
 ├── .vitepress/theme/         # Layout.vue (bar slots, `/` → search), custom.css (tokens + chrome restyle), components/
 │   ├── lib/endpoints.ts      # THE endpoint registry: sidebar counts, live index rows + their preview queries, section sheet
+│   ├── lib/shiki-theme.ts    # xdtShikiTheme: the two-color code theme config.ts hands to Shiki, so Markdown fences match the card's JSON view
 │   ├── lib/fields.ts         # Dye Object field table as data (folds under the card)
 │   ├── lib/live.ts           # fetch/strip/JSON-line helpers shared by the card and the index
 │   └── components/           # EndpointCard (the console card — its params form IS the parameter table),
-│                             # EndpointIndex (+LiveStrip), DocsHome, BaseUrl, SectionSheet (mobile), Glyph (@xivdyetools/svg)
+│                             # EndpointIndex (+LiveStrip), DocsHome, BaseUrl, SectionSheet (mobile), JsonView, Glyph (@xivdyetools/svg)
 ├── public/fonts/             # Space Grotesk / Onest / Fragment Mono woff2, copied from web-app/public/fonts
 ├── public/icons/             # The docs' own app icon, "6B · Socketed". docs-icon.svg is the SOURCE (→ apple-touch 180);
 │                             # favicon.svg + favicon-16/32 are the board-free small variant DERIVED from it by
@@ -95,7 +96,7 @@ docs/                     # VitePress site → developers.xivdyetools.app (built
 
 ### API Endpoints (16 under `/v1` — 14 `GET`, 2 `POST` — plus health + the Universalis proxy)
 
-All `GET` `/v1` routes cache `Cache-Control: public, max-age=3600, s-maxage=86400`.
+All `GET` `/v1` routes except `/v1/chara/icon/:iconId` cache `Cache-Control: public, max-age=3600, s-maxage=86400`.
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -108,9 +109,9 @@ All `GET` `/v1` routes cache `Cache-Control: public, max-age=3600, s-maxage=8640
 | GET | `/v1/dyes/consolidation-groups` | Patch 7.5 consolidation metadata (groups A/B/C + unconsolidated) |
 | GET | `/v1/dyes/stain/:stainId` | Explicit stainID lookup (positive integer; 404 if unassigned) |
 | GET | `/v1/dyes/:id` | Auto-detect ID type by range: `1–254` stainID, `≥5729` itemID, `255–5728` invalid, `<0` legacy Facewear → 404 (see below); consolidated market IDs 52254–52256 → explanatory 404 |
-| GET | `/v1/match/closest?hex=` | Single closest dye (methods: `ciede2000` default, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`; retired `hyab`/`oklch-weighted` accepted → normalised to `ciede2000`, `euclidean` → `rgb`; `kL`/`kC`/`kH` ignored) |
+| GET | `/v1/match/closest?hex=` | Single closest dye (methods: `ciede2000` default, `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`; retired `hyab`/`oklch-weighted` accepted → normalized to `ciede2000`, `euclidean` → `rgb`; `kL`/`kC`/`kH` ignored) |
 | GET | `/v1/match/within-distance?hex=&maxDistance=` | All dyes within a distance threshold in the method's unit (`maxDistance` ≥ 0.01, `limit` 1–125 default 20, applied after excludes/filters) |
-| GET | `/v1/wheels` | The five colour wheels (core `COLOR_WHEEL_IDS`, display order) as `{ id, tag, name, isDefault }`; `name` localized |
+| GET | `/v1/wheels` | The five color wheels (core `COLOR_WHEEL_IDS`, display order) as `{ id, tag, name, isDefault }`; `name` localized |
 | GET | `/v1/wheels/:id` | One wheel's `ringStops` (`?stops=` 3–360, default 72) + `dyes[]` with each dye's `wheelHue`; unknown id → 400 `INVALID_COLOR_WHEEL` |
 | GET | `/v1/harmony/types` | The ten harmony types (`HARMONY_OFFSETS` rows, kebab-case wire ids) with `offsets` + localized `name` |
 | GET | `/v1/harmony?dye=\|hex=&type=&wheel=&method=&strict=&companions=&preventDuplicates=` | core's `generateHarmonySlots` over the filtered database; base dye always excluded; `distanceUnit` = method when strict else `degrees`; slot `dye`/`distance` are `null` when no candidate survives the filters. Unknown `wheel` → 400 `INVALID_COLOR_WHEEL` (refused, never mapped to rgb), unknown `type` → 400 `INVALID_HARMONY_TYPE` |
@@ -177,7 +178,7 @@ Use `lookupDyeByResolvedId()` to dispatch to the correct `DyeService` method.
 
 ### Rate Limiting
 
-Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`. `selectApiRateLimiter(env)` picks the backend: the native `API_RATE_LIMITER` binding through `CloudflareRateLimiter` when bound (key prefix `api:ip:`, effective limit 65 = 60 + 5 burst, fail-open), and `KVRateLimiter` over the `RATE_LIMIT` namespace otherwise. There is deliberately no module-scope backend singleton (BUG-004: `KVRateLimiter` construction is cheap and only stores the binding reference); the middleware factory memoises whatever the selector returns **per isolate** (BUG-061), so a stateful backend survives across requests.
+Composes the shared `rateLimitMiddleware` factory from `@xivdyetools/worker-kit`. `selectApiRateLimiter(env)` picks the backend: the native `API_RATE_LIMITER` binding through `CloudflareRateLimiter` when bound (key prefix `api:ip:`, effective limit 65 = 60 + 5 burst, fail-open), and `KVRateLimiter` over the `RATE_LIMIT` namespace otherwise. There is deliberately no module-scope backend singleton (BUG-004: `KVRateLimiter` construction is cheap and only stores the binding reference); the middleware factory memoizes whatever the selector returns **per isolate** (BUG-061), so a stateful backend survives across requests.
 
 With the native binding, `X-RateLimit-Limit` reads `65` and `X-RateLimit-Remaining` is synthetic — `limit - 1` while allowed, `0` when denied — because the Workers Rate Limiting API exposes no live count. Counters are per-colo, not global.
 
@@ -212,9 +213,9 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 | `@xivdyetools/logger` | Structured logger (wired up by `worker-kit`'s `loggerMiddleware`) — arrives **transitively** through `worker-kit`; not in this app's `package.json` |
 | `@xivdyetools/worker-kit/rate-limiter` | `CloudflareRateLimiter`, `KVRateLimiter`, `getClientIp` |
 | `@xivdyetools/worker-kit` | Shared `requestIdMiddleware`, `loggerMiddleware`, `rateLimitMiddleware` factory |
-| `@xivdyetools/test-utils` (dev) | KV mock for vitest |
+| `@xivdyetools/test-utils` (dev) | KV mock (`createMockKV`) and `createMockDye` for vitest |
 | `vitepress` + `vue` (dev) | The developer docs site in `docs/` |
-| `@xivdyetools/svg` (dev) | The tool / chrome / panel glyphs the docs site renders (`docs/.vitepress/theme/components/Glyph.vue`) — the docs only, never the worker |
+| `@xivdyetools/svg` (dev) | The tool / chrome glyphs the docs site renders (`docs/.vitepress/theme/components/Glyph.vue`) — the docs only, never the worker |
 
 ## Related Projects
 
@@ -224,13 +225,13 @@ Moved verbatim from `apps/universalis-proxy`. Mounted twice in `index.ts` — `/
 
 **Documentation:** `docs/` (in this app) is the VitePress site documenting this worker's public API surface — built by `pnpm run build:docs` and served as Workers Static Assets on developers.xivdyetools.app (absorbed from apps/api-docs). Hub copies live at `docs/projects/api-worker/` and `docs/user-guides/public-api.md` in the monorepo — keep them consistent.
 
-The site is on the **API Docs Directions 1d** design (confirmed 2026-09-04; `notes/api-docs-handoff.md` in the design project is the build-side companion). Rules that are not stylistic preferences: every endpoint is one `<EndpointCard>` and **its params form is the parameter table** — do not add a Markdown `### Parameters` table beside it; the Dye Object is `lib/fields.ts` data, not Markdown (`tests/docs-fields-parity.test.ts` pins it to `serializeDye()`'s keys and order — add a serializer field and the test tells you to document it); a new endpoint is a row in `lib/endpoints.ts` (that is where the sidebar counts, the live index and the mobile sheet read from) plus a `## METHOD /path` heading whose slug matches the row's `link`; live strips print the API's error text verbatim, never a stand-in, and a sample on the home page is labelled a sample. **The Universalis proxy is deliberately undocumented on the public site** (decided 2026-09-04 — third parties gained only our edge cache while spending the shared upstream 429 budget); the routes stay for our own clients, so do not re-add a reference page for them. Dark is the only theme drawn (`appearance: 'force-dark'`). Overriding the default theme: its rules are *scoped* (`[data-v-…]`), so an unscoped override of equal shape loses — add `!important` or specificity; `vitepress preview` caches the asset list at startup, so restart it after every rebuild; the mobile section sheet replaces the hamburger, nav screen and the local nav's sidebar opener, but the local nav's "On this page" dropdown stays (it is the only outline below 1280 px).
+The site is on the **API Docs Directions 1d** design (confirmed 2026-09-04; `notes/api-docs-handoff.md` in the design project is the build-side companion). Rules that are not stylistic preferences: every endpoint is one `<EndpointCard>` and **its params form is the parameter table** — do not add a Markdown `### Parameters` table beside it; the Dye Object is `lib/fields.ts` data, not Markdown (`tests/docs-fields-parity.test.ts` pins it to `serializeDye()`'s keys and order — add a serializer field and the test tells you to document it); a new endpoint is a row in `lib/endpoints.ts` (that is where the sidebar counts, the live index and the mobile sheet read from) plus a `## METHOD /path` heading whose slug matches the row's `link`; live strips print the API's error text verbatim, never a stand-in, and a sample on the home page is labeled a sample. **The Universalis proxy is deliberately undocumented on the public site** (decided 2026-09-04 — third parties gained only our edge cache while spending the shared upstream 429 budget); the routes stay for our own clients, so do not re-add a reference page for them. Dark is the only theme drawn (`appearance: 'force-dark'`). Overriding the default theme: its rules are *scoped* (`[data-v-…]`), so an unscoped override of equal shape loses — add `!important` or specificity; `vitepress preview` caches the asset list at startup, so restart it after every rebuild; the mobile section sheet replaces the hamburger, nav screen and the local nav's sidebar opener, but the local nav's "On this page" dropdown stays (it is the only outline below 1280 px).
 
 ## Deployment Checklist
 
 1. `pnpm lint && pnpm type-check && pnpm test` — must be green.
 2. Bump `version` in `package.json` if behavior changed (the current number lives in `package.json` and `docs/versions.md` — not here).
-3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker, which has `workers_dev = false` (FINDING-025) and is therefore not reachable over `*.workers.dev`; ad-hoc testing is `pnpm dev`.
+3. Merging to `main` **is** the production deploy: `.github/workflows/deploy-api-worker.yml` builds deps, type-checks, tests, runs `build:docs`, runs `wrangler deploy --env production`, then smoke-tests `data.xivdyetools.app/health` and `developers.xivdyetools.app/`. There is no staging worker — `pnpm run deploy` only pushes the routeless `xivdyetools-api-worker-dev` worker, which has `workers_dev = false` (FINDING-025) and is therefore not reachable over `*.workers.dev`; ad-hoc testing is `pnpm dev`.
 4. Deploying by hand: `pnpm build:docs && pnpm deploy:production` (the assets directory must exist or the production deploy fails). See `docs/operations/DEPLOY_ENVIRONMENTS.md`.
 5. If any new endpoints/parameters were added, update the endpoint's `<EndpointCard>` in `docs/reference/dyes.md` (or `matching.md` / `chara.md` / `harmony.md`) **and** its row in `docs/.vitepress/theme/lib/endpoints.ts` — the docs site is the public contract, and the registry is what the live index, sidebar counts and section sheet render. Internal routes (`/v1/telemetry`) and the Universalis proxy stay off the docs site on purpose; record them in this file's route table instead.
 6. Verify `X-RateLimit-*` headers appear on a `/v1/*` response and `X-Request-Id` is unique per call.
