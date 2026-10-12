@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.12.0] - 2026-10-11
+
+### Added
+
+- **`gposersOmittedSlots(slots, context)` names the worn slots the GPOSERS list leaves out.**
+  - Invisible pieces: a slot whose model family (the named item plus its alternates, by English
+    name) holds a twin called "The Emperor's New <X>" is omitted. Gloves are always kept, and the
+    Robe is kept unless the character is known to be female. The Promise bracelets and the Heroic
+    Spirit / Divine Beast Shields are caught through the family they share with the invisible piece.
+  - Off Hand: omitted when the main hand's ItemUICategory is known and is not one of the categories
+    in the new `CHARA_OFF_HAND_MAIN_CATEGORIES` (Paladin's, One-handed Thaumaturge's and
+    Conjurer's arms, the eleven Primary Tools, Beastmaster's arm). Fist pairs, quivers and foci are
+    the whole weapon, so they carry no Off Hand line.
+  - Anything unknown (no family, no category) keeps the slot, and facewear and the fashion
+    accessory are never omitted. `gposersGroups` is unchanged: callers drop the named slots first.
+  - New exports: `gposersOmittedSlots`, `CHARA_OFF_HAND_MAIN_CATEGORIES`, `GposersSlotFacts`,
+    `GposersOmitContext`.
+  - Over the 1,093-file `.chara` corpus (10,901 worn slots), this rule leaves out 2,765 invisible
+    slots, keeps 71 Emperor's New Gloves, and keeps 40 of 524 worn Off Hands. Both callers also
+    drop an Off Hand that resolves as the main hand's own model (api-worker's `viaMainHand`, 3 of
+    those 40, all crafting tools), so the lists keep 37, and 913 files get a shorter list.
+
 ## [5.11.0] - 2026-10-11
 
 ### Changed

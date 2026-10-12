@@ -72,6 +72,8 @@ const ITEM_FIELDS = [
   'ModelMain',
   'ModelSub',
   'LevelEquip',
+  // Which class the weapon or tool is; the GPOSERS list's Off Hand rule reads it.
+  'ItemUICategory.row_id',
   ...SLOT_COLUMNS.map((col) => `EquipSlotCategory.${col}`),
   ...RULE_FIELDS,
 ].join(',');
@@ -195,6 +197,12 @@ function relationId(value: unknown): number | null {
   return typeof id === 'number' ? id : null;
 }
 
+/** ItemUICategory row id; null when absent (0 is the sheet's blank row, not a category). */
+function uiCategoryOf(value: unknown): number | null {
+  const id = relationId(value);
+  return id !== null && id > 0 ? id : null;
+}
+
 /**
  * The in-game rules, or null when any field is missing: a partial answer
  * must not read as "takes no dye" or "any company can wear it".
@@ -232,6 +240,7 @@ export function parseItemRow(raw: RawSearchRow): ItemRow {
       typeof f['LevelEquip'] === 'number' && Number.isFinite(f['LevelEquip'])
         ? f['LevelEquip']
         : null,
+    uiCategory: uiCategoryOf(f['ItemUICategory']),
     rules: rulesOf(f),
   };
 }

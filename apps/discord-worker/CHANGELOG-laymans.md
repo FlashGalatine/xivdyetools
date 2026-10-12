@@ -35,6 +35,11 @@ Rules:
   path filter.
 -->
 
+## [5.8.14] - 2026-10-11
+### 👗 A tidier /glamour list
+- `/glamour`'s copy-ready list leaves out pieces that show nothing, like The Emperor's New items, but keeps The Emperor's New Gloves, and the Robe unless your character is female.
+- The Off Hand line appears only for a shield or a secondary tool, so an Off Hand under a weapon that takes none, such as a quiver or focus from a different weapon, is left out. The card still shows every piece.
+
 ## [5.8.13] - 2026-10-11
 ### 📜 Privacy Policy and Terms
 - Contacting us works again: the Privacy Policy and Terms of Service pointed to a Discord invite that had expired, and every language now links the current one.

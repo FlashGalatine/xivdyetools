@@ -253,6 +253,87 @@ describe('executeGlamour', () => {
     expect(d).not.toContain('Left Ring');
   });
 
+  describe('what the GPOSERS list leaves out', () => {
+    const file = (over: Record<string, unknown>, gender = 'Feminine'): string =>
+      JSON.stringify({ ...(JSON.parse(STRESS) as Record<string, unknown>), Gender: gender, ...over });
+    const item = (itemId: number, name: string, extra: Record<string, unknown> = {}) => ({
+      itemId,
+      names: names(name),
+      alternates: [],
+      rules: [rules([itemId])],
+      ...extra,
+    });
+    const answerWith = (items: GlamourResolveAnswer['items']): GlamourResolveAnswer => ({
+      items: { ...ANSWER.items, ...items },
+    });
+    const run = async (fileText: string, answer: GlamourResolveAnswer) => {
+      const result = await executeGlamour(input({ fileText, resolve: async () => answer }));
+      if (!result.ok) throw new Error(result.errorMessage);
+      return result;
+    };
+    const WRISTS = { Wrists: { ModelBase: 70, ModelVariant: 1, DyeId: 1, DyeId2: 0 } };
+
+    it('leaves out a bracelet whose family holds the invisible one, but keeps it on the card', async () => {
+      const answer = answerWith({
+        Wrists: item(5000, 'Promise of Passion', {
+          alternates: [{ itemId: 5001, names: names("The Emperor's New Bracelet") }],
+        }),
+      });
+      const result = await run(file(WRISTS), answer);
+      const d = result.embed.description ?? '';
+
+      expect(d).not.toContain('Bracelets:');
+      expect(d).not.toContain('Promise of Passion');
+      expect(d).toContain('**Head:**');
+      // The card counts it as a worn, dyed piece even though the list leaves it out
+      expect(result.embed.title).toBe('Glamour · 6 dyed pieces');
+    });
+
+    it('keeps The Emperor’s New Gloves', async () => {
+      const answer = answerWith({ Hands: item(9001, "The Emperor's New Gloves") });
+      const d = (await run(file({}), answer)).embed.description ?? '';
+      expect(d).toContain("**Hands:** The Emperor's New Gloves");
+    });
+
+    it('leaves out The Emperor’s New Robe for a woman and keeps it for a man or an unknown gender', async () => {
+      const answer = answerWith({ Body: item(8100, "The Emperor's New Robe", { rules: [rules([8100])] }) });
+
+      expect((await run(file({}, 'Feminine'), answer)).embed.description).not.toContain('**Body:**');
+      expect((await run(file({}, 'Masculine'), answer)).embed.description).toContain("**Body:** The Emperor's New Robe");
+      const unknown = JSON.parse(file({})) as Record<string, unknown>;
+      delete unknown.Gender;
+      expect((await run(JSON.stringify(unknown), answer)).embed.description).toContain("**Body:** The Emperor's New Robe");
+    });
+
+    describe('the Off Hand', () => {
+      const SHIELD_FILE = file({ MainHand: { ModelSet: 301, ModelBase: 5, ModelVariant: 1, DyeId: 0, DyeId2: 0 } });
+      const offHand = item(6100, 'Aegis Shield');
+
+      it('is left out under a main hand outside the list, such as a Pugilist weapon', async () => {
+        const answer = answerWith({ MainHand: item(6000, 'Cesti', { uiCategory: 1 }), OffHand: offHand });
+        const d = (await run(SHIELD_FILE, answer)).embed.description ?? '';
+        expect(d).toContain('**Main Hand:** Cesti');
+        expect(d).not.toContain('Off Hand');
+        expect(d).not.toContain('Aegis Shield');
+      });
+
+      it('is left out when it has no item behind it', async () => {
+        const answer = answerWith({ MainHand: item(6000, 'Cesti', { uiCategory: 1 }), OffHand: null });
+        expect((await run(SHIELD_FILE, answer)).embed.description).not.toContain('Off Hand');
+      });
+
+      it('stays under a Gladiator’s arm', async () => {
+        const answer = answerWith({ MainHand: item(6000, 'Fast Blade', { uiCategory: 2 }), OffHand: offHand });
+        expect((await run(SHIELD_FILE, answer)).embed.description).toContain('**Off Hand:** Aegis Shield');
+      });
+
+      it('stays when the answer carries no category', async () => {
+        const answer = answerWith({ MainHand: item(6000, 'Cesti'), OffHand: offHand });
+        expect((await run(SHIELD_FILE, answer)).embed.description).toContain('**Off Hand:** Aegis Shield');
+      });
+    });
+  });
+
   describe('a piece with no item behind it (BUG-124)', () => {
     /** The stress file's head model, as the card labels it (the note puts the slot first). */
     const HEAD_LABEL = `Model ${formatCharaModelLabel({ slot: 'HeadGear', base: 361, variant: 5 })}`;

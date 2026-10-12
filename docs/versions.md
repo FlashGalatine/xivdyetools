@@ -22,13 +22,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.15.3 | `xivdyetools-web-app` | Cloudflare Pages | Active |
-| **Discord Bot** | v5.8.13 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
+| **Web Application** | v5.15.4 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Discord Bot** | v5.8.14 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.19.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.20.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -38,13 +38,13 @@
 
 | Package | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Core** (incl. `/blending` + schema-v2 data) | v5.11.0 | `@xivdyetools/core` | npm | Active |
+| **Core** (incl. `/blending` + schema-v2 data) | v5.12.0 | `@xivdyetools/core` | npm | Active |
 | **Types** | v3.3.0 | `@xivdyetools/types` | npm | Active |
 | **Auth** (incl. `/encoding`) | v2.0.2 | `@xivdyetools/auth` | npm | Active |
 | **Logger** | v2.3.0 | `@xivdyetools/logger` | npm | Active |
 | **Worker Kit** (middleware + `/rate-limiter`) | v1.5.0 | `@xivdyetools/worker-kit` | npm | Active |
 | **SVG** | v4.4.0 | `@xivdyetools/svg` | npm | Active |
-| **Bot Logic** (incl. `/i18n`) | v4.8.3 | `@xivdyetools/bot-logic` | npm | Active |
+| **Bot Logic** (incl. `/i18n`) | v4.9.0 | `@xivdyetools/bot-logic` | npm | Active |
 | **Test Utils** | v3.0.0 | `@xivdyetools/test-utils` | workspace-private | Active (never published) |
 
 ### Deprecated
@@ -68,6 +68,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.12.0 | Oct 2026 | `gposersOmittedSlots` + `CHARA_OFF_HAND_MAIN_CATEGORIES`: the GPOSERS list leaves out invisible pieces (an Emperor's New twin in the family; the Gloves and, unless the character is known female, the Robe are kept) and an Off Hand under a main hand outside ItemUICategory 2/6/8/12–32 even/113; unknown keeps the slot. Corpus, with the callers' `viaMainHand` skip: 2,765 invisible slots and 357 more off-hands (354 by this rule, 3 a crafting tool's own model) leave the list across 913 of 1,093 files |
 | v5.11.0 | Oct 2026 | `defaultCharaTwin` prefers a twin with a known acquisition line: passes → dyeable → any Grand Company → not Dated → has a line → more dye channels → lowest row; when nothing passes, the lowest judged twin with a line, else the lowest row. Over the 1,093-file `.chara` corpus (api-worker 0.18.1's table) the default names an unsourced piece on 103 of 10,875 slots, down from 469 |
 | v5.10.0 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a gray input keeps the other color's hue in an HSL mix (BUG-035); palette extraction returns only colors the image holds (BUG-036); the locale build checks dyes and facewear against their CSVs before writing (BUG-128, BUG-130); character-creation sheet names follow the game clients (TERM-021); `DyeDatabase.initialize` throws on an empty or colliding payload (BUG-136); text color by real contrast (BUG-134); parser, search, cache and harmony-pin fixes (BUG-129, BUG-131 to BUG-133, BUG-135, BUG-137) |
 | v5.9.0 | Oct 2026 | `APIService.getPricesForDataCenterWithOutcome` (`ok` / `partial` / `error`) so consumers can tell an outage from "no listings" (BUG-090); `CHARA_DYEABLE_SLOTS` exported (REFACTOR-004); Chinese and Korean data centers and worlds no longer sanitize to an empty path |
@@ -117,6 +118,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.15.4 | Oct 2026 | Core 5.12.0 + api-worker 0.20.0: the GPOSERS list and its export sheet leave out invisible pieces and an Off Hand the main hand doesn't take; the reader's rows are unchanged |
 | v5.15.3 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the Privacy Guide no longer names the unreachable Manage Collections → Delete Collection route and says which saved records only the browser can clear; translations link their own language's sibling documents; American spelling in the English text |
 | v5.15.2 | Oct 2026 | Core 5.11.0 + api-worker 0.19.0: the Glamour Reader names a look-alike you can still get when the lowest-numbered twin has no known source (Augmented Crystarium over Crystarium, Loyal Housemaid's over Housemaid's); saved Acquisition edits key on the family's lowest row, so they keep applying |
 | v5.15.1 | Oct 2026 | What's New note only: the Glamour Reader picks up 803 more Acquisition lines from api-worker 0.18.1 (store sets, quest rewards, seasonal events with their first year, Dawntrail duty sets, Feast and other reward programs; facewear 60 of 61 styles). No web-app source changed |
@@ -196,6 +198,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.8.14 | Oct 2026 | bot-logic 4.9.0 (no source change here): `/glamour`'s list leaves out invisible pieces and an Off Hand the main hand doesn't take; the card is unchanged; no command shape changes |
 | v5.8.13 | Oct 2026 | Documents only (2026-10-11 documentation remediation, Sprint 1): `PRIVACY_POLICY.md` and `TERMS_OF_SERVICE.md` in all six languages send deletion, appeal and contact requests to the live Discord invite (the old one had expired); the first-run notice flag is described as what it is, a marker set on your first command whether or not the notice is sent; translations link their own language's sibling documents |
 | v5.8.12 | Oct 2026 | Core 5.11.0 (no source change here): `/glamour` names a look-alike with a known source when the lowest-numbered twin has none, so more GPOSERS Acquisition lines are filled. No command shape changes |
 | v5.8.11 | Oct 2026 | `/manual` catches up with `/glamour` (with bot-logic 4.8.3; PR #251, stacked on the remediation chain's tip): the `.chara` help and the `file` option text name Brio, and the 👤 Character File topic explains every verdict the card can show, the automatic twin pick and the English Acquisition lines; three guards in `manual.test.ts`; CJK subsets re-cut (SC +1, JP +3, KR +2). The deploy re-registers commands |
@@ -555,6 +558,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v4.9.0 | Oct 2026 | `/glamour`'s GPOSERS list applies core 5.12.0's `gposersOmittedSlots` (invisible pieces, unsupported Off Hand); `GlamourResolvedItem.uiCategory`; the card is unchanged |
 | v4.8.3 | Oct 2026 | Text only: Brio named as a `.chara` producer ×6 (`manual.swatch` / `manual.glamour` descriptions, the character-file topic, the `file` option text); the character-file topic lists every `/glamour` verdict (OK, the race name, the dash for a model with no item), says the bot picks the twin, and says the GPOSERS labels and Acquisition lines are English |
 | v4.8.2 | Oct 2026 | 2026-10-04 remediation, Sprint 13 — a gray `/gradient` endpoint keeps the other end's hue in hsv, oklch and lch |
 | v4.8.1 | Oct 2026 | 2026-10-04 remediation, Sprints 14+28 — the `/contrast` embed and `/compare` print svg's floored ratio; every `/compare` readout localized (requires svg 4.4.0) |
@@ -622,6 +626,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.20.0 | Oct 2026 | `uiCategory` (the named item's ItemUICategory row) on each resolved item, so the GPOSERS list can tell which main hands take an Off Hand; row cache shape 5 (every cached row refetches once) |
 | v0.19.0 | Oct 2026 | `/v1/chara/resolve` names a family by its lowest eligible row with an acquisition line, else its lowest eligible row; the rule set holding `itemId` comes first in `rules`, and `alternates` always carries the family's lowest row (`min(itemId, alternates)` is the stable key). No cache shape change. Corpus (0.18.1's table): a named slot without a top-level line drops from 1,304 to 27 of 10,875, none with a lined twin |
 | v0.18.1 | Oct 2026 | Data only: 803 more glamour acquisition lines from web research, each kept only after it matched the official Online Store catalog, the pinned quest data, an independent verification pass, or a maintainer decision (store sets, quest rewards, seasonal events written `Event Name (YYYY)` with the first year offered, Feast ranking rewards, Veteran Rewards, Hall of the Novice, Dawntrail duty sets, Ceremony attire). Every PvP Series reward now reads `PvP Series Rewards`. 24,922 lines; facewear 60 of 61 styles / 720 of 732 variants |
 | v0.18.0 | Oct 2026 | Facewear unlock sources on `glasses.acquisition`, mapped by client-sheet links for all 61 styles / 732 variants (54 styles / 648 variants have known acquisition lines). Glamour acquisition lines for all 55 fiend costume pieces list Enie in the Firmament and the 3,000 Skybuilders' Scrips cost; 127 Varsarudh and 127 Mewazunte equipment lines omit the currency amount; the acquisition generator preserves these corrections. A family with only retired rows (Aetherial, Deepmist, Dated ≤ 50) is named from all of them with `retired: true` instead of `null` |

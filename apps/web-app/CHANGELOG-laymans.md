@@ -2,6 +2,13 @@
 
 ---
 
+## Web-App Version 5.15.4 — October 11, 2026
+
+### Glamour Reader: a tidier list
+- **Invisible gear stays off the list.** Pieces that show nothing, such as The Emperor's New items, aren't written, except the gloves, and the robe on a character who isn't female.
+- **The Off Hand line is written only when it matters.** Paired weapons, quivers and foci are part of the main hand, so only shields and secondary tools get one.
+- **The reader itself is unchanged.** Every piece still shows there; only the list and its export sheet are shorter.
+
 ## Web-App Version 5.15.3 — October 11, 2026
 
 ### Privacy Guide and Terms

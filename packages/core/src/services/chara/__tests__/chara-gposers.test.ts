@@ -5,10 +5,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   CHARA_DYEABLE_SLOTS,
+  CHARA_OFF_HAND_MAIN_CATEGORIES,
   GPOSERS_SLOTS,
   gposersGroups,
+  gposersOmittedSlots,
   gposersSameRings,
   gposersSlotLabel,
+  type GposersSlot,
 } from '../chara-gposers.js';
 
 const flat = (input: Parameters<typeof gposersGroups>[0]) =>
@@ -87,6 +90,97 @@ describe('CHARA_DYEABLE_SLOTS', () => {
       'LeftRing',
       'Facewear',
       'FashionAccessory',
+    ]);
+  });
+});
+
+/**
+ * The slots the GPOSERS list leaves out: invisible pieces (a twin named
+ * "The Emperor's New <X>") and an Off Hand under a main hand outside the list.
+ */
+describe('gposersOmittedSlots', () => {
+  const emperor = (piece: string, ...others: string[]) => ({ familyEn: [...others, `The Emperor's New ${piece}`] });
+  const omitted = (
+    slots: Parameters<typeof gposersOmittedSlots>[0],
+    context: Parameters<typeof gposersOmittedSlots>[1] = { gender: null }
+  ) => [...gposersOmittedSlots(slots, context)];
+
+  it.each<[string, GposersSlot, boolean]>([
+    ['Hat', 'HeadGear', true],
+    ['Breeches', 'Legs', true],
+    ['Boots', 'Feet', true],
+    ['Earrings', 'Ears', true],
+    ['Necklace', 'Neck', true],
+    ['Bracelet', 'Wrists', true],
+    ['Ring', 'RightRing', true],
+    ['Fists', 'MainHand', true],
+    ['Shield', 'OffHand', true],
+    ['Gloves', 'Hands', false],
+  ])("The Emperor's New %s on %s is omitted: %s", (piece, slot, expected) => {
+    expect(omitted({ [slot]: emperor(piece) }, { gender: 'Female', mainHandUiCategory: 2 })).toEqual(
+      expected ? [slot] : []
+    );
+  });
+
+  it("omits the Emperor's New Robe unless the character is known to be female", () => {
+    const body = { Body: emperor('Robe') };
+    expect(omitted(body, { gender: 'Male' })).toEqual([]);
+    expect(omitted(body, { gender: null })).toEqual([]);
+    expect(omitted(body, { gender: 'Female' })).toEqual(['Body']);
+  });
+
+  it('catches the Promise bracelets through the family they share with the invisible one', () => {
+    expect(
+      omitted({
+        Wrists: { familyEn: ['Promise of Innocence', 'Promise of Passion', "The Emperor's New Bracelet"] },
+      })
+    ).toEqual(['Wrists']);
+  });
+
+  it('keeps a family with no Emperor’s New twin, and an unknown or empty one', () => {
+    expect(
+      omitted({
+        HeadGear: { familyEn: ['Hempen Coif', 'Linen Coif'] },
+        Body: { familyEn: [] },
+        Legs: {},
+      })
+    ).toEqual([]);
+  });
+
+  it('omits invisible fists in both hands', () => {
+    expect(
+      omitted({ MainHand: emperor('Fists'), OffHand: emperor('Fists') }, { gender: null, mainHandUiCategory: null })
+    ).toEqual(['MainHand', 'OffHand']);
+  });
+
+  it.each([2, 6, 8, 12, 32, 113])('keeps the Off Hand under main-hand category %i', (category) => {
+    expect(omitted({ MainHand: {}, OffHand: {} }, { gender: null, mainHandUiCategory: category })).toEqual([]);
+  });
+
+  it.each([1, 4, 7, 9])('omits the Off Hand under main-hand category %i', (category) => {
+    expect(omitted({ MainHand: {}, OffHand: {} }, { gender: null, mainHandUiCategory: category })).toEqual([
+      'OffHand',
+    ]);
+  });
+
+  it('keeps the Off Hand when the main hand’s category is unknown', () => {
+    expect(omitted({ OffHand: {} }, { gender: null, mainHandUiCategory: null })).toEqual([]);
+    expect(omitted({ OffHand: {} }, { gender: null })).toEqual([]);
+  });
+
+  it('omits nothing about an Off Hand that is not worn', () => {
+    expect(omitted({ MainHand: {} }, { gender: null, mainHandUiCategory: 1 })).toEqual([]);
+  });
+
+  it('never omits facewear or the fashion accessory', () => {
+    expect(
+      omitted({ Facewear: emperor('Hat'), FashionAccessory: emperor('Hat') }, { gender: 'Female' })
+    ).toEqual([]);
+  });
+
+  it('lists the fifteen off-hand main categories the guide allows', () => {
+    expect([...CHARA_OFF_HAND_MAIN_CATEGORIES].sort((a, b) => a - b)).toEqual([
+      2, 6, 8, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 113,
     ]);
   });
 });
