@@ -1,0 +1,46 @@
+# default sweep (42)
+| docs/projects/discord-worker/commands.md:17 | prose | Colour | Color | — |
+| docs/projects/discord-worker/commands.md:30 | prose | favourites | favorites | — |
+| docs/projects/discord-worker/commands.md:41 | prose | normalise | normalize | — |
+| docs/projects/discord-worker/commands.md:89 | prose | Colour | Color | — |
+| docs/projects/discord-worker/commands.md:109 | prose | colour | color | — |
+| docs/projects/discord-worker/commands.md:244 | prose | colours | colors | — |
+| docs/projects/discord-worker/commands.md:278 | prose | coloured | colored | — |
+| docs/projects/discord-worker/commands.md:358 | prose | colours | colors | — |
+| docs/projects/discord-worker/commands.md:380 | prose | favourites | favorites | — |
+| docs/projects/discord-worker/commands.md:452 | prose | favourites | favorites | — |
+| docs/projects/discord-worker/commands.md:453 | prose | favourites | favorites | — |
+| docs/projects/discord-worker/interactions.md:32 | prose | colour | color | — |
+| docs/projects/discord-worker/interactions.md:43 | prose | colour | color | — |
+| docs/projects/discord-worker/overview.md:116 | prose | colours | colors | — |
+| docs/projects/discord-worker/overview.md:136 | prose | favourites | favorites | — |
+| docs/projects/discord-worker/overview.md:146 | prose | favourite | favorite | — |
+| docs/projects/discord-worker/overview.md:189 | prose | favourites | favorites | — |
+| docs/projects/discord-worker/overview.md:197 | prose | favourites | favorites | — |
+| docs/projects/discord-worker/rendering.md:30 | prose | colour | color | — |
+| docs/user-guides/discord-bot/command-reference.md:9 | prose | favourite | favorite | — |
+| docs/user-guides/discord-bot/command-reference.md:25 | prose | colour | color | — |
+| docs/user-guides/discord-bot/command-reference.md:43 | prose | Colour | Color | — |
+| docs/user-guides/discord-bot/command-reference.md:52 | prose | colour | color | — |
+| docs/user-guides/discord-bot/command-reference.md:79 | prose | colours | colors | — |
+| docs/user-guides/discord-bot/command-reference.md:168 | prose | colour | color | — |
+| docs/user-guides/discord-bot/command-reference.md:248 | prose | colours | colors | — |
+| docs/user-guides/discord-bot/command-reference.md:364 | prose | authorised | authorized | — |
+| docs/user-guides/discord-bot/faq.md:82 | prose | favourite | favorite | — |
+| docs/user-guides/discord-bot/faq.md:87 | prose | favourites | favorites | — |
+| docs/user-guides/discord-bot/faq.md:88 | prose | favourites | favorites | — |
+| docs/user-guides/discord-bot/faq.md:179 | prose | favourite | favorite | — |
+| docs/user-guides/discord-bot/favorites-collections.md:85 | prose | centre | center | — |
+| docs/user-guides/discord-bot/getting-started.md:28 | prose | summarising | summarizing | — |
+| docs/user-guides/discord-bot/getting-started.md:51 | prose | colour | color | — |
+| docs/user-guides/discord-bot/getting-started.md:65 | prose | colours | colors | — |
+| docs/user-guides/discord-bot/getting-started.md:67 | prose | colours | colors | — |
+| docs/user-guides/discord-bot/getting-started.md:107 | prose | Favourite | Favorite | — |
+| docs/user-guides/discord-bot/getting-started.md:122 | prose | colour | color | — |
+| docs/user-guides/discord-bot/getting-started.md:146 | prose | labelled | labeled | — |
+| docs/user-guides/discord-bot/getting-started.md:153 | prose | colour | color | — |
+| docs/user-guides/discord-bot/getting-started.md:164 | prose | favourite | favorite | — |
+| docs/user-guides/discord-bot/getting-started.md:224 | prose | Colour | Color | — |
+
+# --all extras: code/link zones, triage by hand (0)
+

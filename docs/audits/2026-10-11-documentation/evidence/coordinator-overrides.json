@@ -1,0 +1,9 @@
+{
+  "DOC-002": { "sev": "MEDIUM" },
+  "DOC-008": { "title": "components.md and tools.md name nine symbols the web app does not have" },
+  "DOC-016": { "title": "eight code examples import type-only names with a plain `import`, a compile error under verbatimModuleSyntax" },
+  "DOC-045": { "title": "the oauth project docs never describe the users database or its hand-run migration (only apps/oauth/CLAUDE.md does)" },
+  "DOC-068": { "title": "community-presets spec: a ticked owner-DM item that was deleted, a stale schema description and unlabelled design-era sections" },
+  "DOC-069": { "title": "three Implemented specs cite pre-monorepo repo paths without the caveat feature-roadmap.md carries" },
+  "DOC-073": { "title": "localized policy variants cross-link the English sibling policies, except one Korean link that points at its locale" }
+}
