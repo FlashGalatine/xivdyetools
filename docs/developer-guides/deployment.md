@@ -70,8 +70,8 @@ This is the single most dangerous thing in the repo. Two different conventions c
 
 `discord-worker`, `moderation-worker`, `presets-api`, `api-worker`, `og-worker`, `image-worker`.
 
-The top-level `wrangler.toml` block declares a `…-dev` name and **no routes**. Production lives
-in `[env.production]`.
+The top-level `wrangler.toml` block declares a `…-dev` name and **no routes** (except `og-worker`,
+below). Production lives in `[env.production]`.
 
 **Caveat — `og-worker`:** its top-level `…-dev` block is the routed public beta (the
 `beta.xivdyetools.app/<tool>/*` routes plus `og-beta.xivdyetools.app`), so a bare `deploy` there

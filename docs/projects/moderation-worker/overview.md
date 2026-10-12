@@ -44,6 +44,13 @@ wrangler secret put DISCORD_TOKEN
 wrangler secret put DISCORD_PUBLIC_KEY
 wrangler secret put MODERATOR_IDS
 wrangler secret put MODERATION_CHANNEL_ID
+# Bot auth for presets-api calls: both must match presets-api's own values. presets-api accepts
+# the bot only with this Bearer secret, and outside development also requires a request signature
+# made with BOT_SIGNING_SECRET (at least 32 characters)
+wrangler secret put BOT_API_SECRET
+wrangler secret put BOT_SIGNING_SECRET
+# Optional: a channel that logs every new submission
+wrangler secret put SUBMISSION_LOG_CHANNEL_ID
 
 # Start local dev server
 pnpm --filter xivdyetools-moderation-worker run dev
