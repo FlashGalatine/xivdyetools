@@ -7,6 +7,7 @@
 //   node bsky-ffxiv-census.mjs feeds               # FFXIV feed generators with like counts
 //   node bsky-ffxiv-census.mjs tags [days=7]       # posts per day per hashtag (searchPosts)
 //   node bsky-ffxiv-census.mjs stream [minutes=60] # live Jetstream sample: FFXIV share of all posts
+//   node bsky-ffxiv-census.mjs focus [items=200]   # how much of each handle's recent feed is FFXIV
 //
 // searchPosts may refuse unauthenticated calls. If it does, set BSKY_HANDLE and
 // BSKY_APP_PASSWORD (an app password, never the account password) and the script
@@ -29,6 +30,8 @@ const HANDLES = [
   'zepla.bsky.social',
   'ffxivteamcraft.com',
   'gamerescape.com',
+  // In README §2.2's follower-ratio table (from B1a) with its FFXIV focus unconfirmed.
+  'mrhappy1227.bsky.social',
 ];
 const SEARCH_TERMS = ['ffxiv', 'ff14', 'final fantasy xiv', 'gpose', 'eorzea', 'ＦＦ14', 'ファイナルファンタジー14'];
 const TAGS = ['ffxiv', 'ff14', 'gpose', 'gposers', 'ffxivsnaps', 'ffxivgpose', 'ffxivrp', 'ffxivart', 'eorzeaphotos', 'ffxivscreenshots'];
@@ -228,6 +231,115 @@ async function feeds() {
   };
 }
 
+// focus() asks how much of an account's own feed is about FFXIV, so it needs more recall
+// than the stream's terms: creators say "Dawntrail" or "my Viera" without saying "FFXIV".
+// Short or ambiguous words only count as whole words; the rest are substrings, so
+// compound hashtags like #ffxivsnaps still match. Every match records its term for audit.
+const FOCUS_SUBSTRINGS = [...new Set([
+  ...STREAM_TERMS, 'finalfantasyxiv', 'a realm reborn', 'heavensward', 'stormblood', 'shadowbringers',
+  'endwalker', 'dawntrail', 'warrior of light', 'fashion report', 'pictomancer', 'lalafell', 'miqote',
+  "miqo'te", 'miqo’te', 'hroth', 'roegadyn', 'elezen', 'ララフェル', 'ミコッテ', '黄金のレガシー', '暁月',
+  '光の戦士', 'グルポ',
+].map(fold))];
+const FOCUS_WORDS = ['xiv', 'msq', 'au ra', 'hyur', 'viera'].map((w) => [w, new RegExp(`(?<![\\p{L}\\p{N}])${w}(?![\\p{L}\\p{N}])`, 'u')]);
+const focusTerms = (text) => {
+  const hay = fold(text);
+  return [...FOCUS_SUBSTRINGS.filter((t) => hay.includes(t)), ...FOCUS_WORDS.filter(([, re]) => re.test(hay)).map(([w]) => w)];
+};
+// Everything a post says in words: text, extra tags, image and video alt text, link cards,
+// and the text of a quoted post.
+function postText(post) {
+  const r = post.record ?? {};
+  const parts = [r.text, ...(r.tags ?? [])];
+  const addEmbed = (e) => {
+    if (!e) return;
+    for (const img of e.images ?? []) parts.push(img.alt);
+    if (e.alt) parts.push(e.alt);
+    if (e.external) parts.push(e.external.title, e.external.description, e.external.uri);
+    addEmbed(e.media);
+  };
+  addEmbed(r.embed);
+  const quoted = post.embed?.record?.value ?? post.embed?.record?.record?.value;
+  if (quoted?.text) parts.push(quoted.text);
+  return parts.filter(Boolean).join(' ');
+}
+const hasImages = (post) => Boolean(post.record?.embed?.images?.length || post.record?.embed?.media?.images?.length);
+const FOCUS_NOTE = 'Shares are FFXIV posts over classifiable posts in the sampled feed. A post is FFXIV when its text, tags, alt text, link card or quoted post contains a focus term (termHits). Unclassified = fewer than 3 letters of text (image-only or emoji-only); they are left out of the share. nonFfxivWithImages counts non-FFXIV posts that carry images, which may still be FFXIV screenshots. The sample covers the newest items only, so an old account\'s history beyond it is not measured.';
+
+async function focus(maxItems = 200) {
+  const out = [];
+  for (const handle of HANDLES) {
+    try {
+      const p = await xrpc('app.bsky.actor.getProfile', { actor: handle });
+      const items = [];
+      let cursor, pages = 0;
+      do {
+        const r = await xrpc('app.bsky.feed.getAuthorFeed', { actor: handle, filter: 'posts_with_replies', limit: 100, cursor });
+        items.push(...r.feed);
+        cursor = r.cursor;
+        pages++;
+      } while (cursor && items.length < maxItems);
+      const kinds = {};
+      const termHits = {}, tagCounts = {}, domains = {}, byMonth = {};
+      const samplesNonFfxiv = [], samplesFfxiv = [];
+      let newest = null, oldest = null;
+      for (const it of items.slice(0, maxItems)) {
+        const repost = it.reason?.$type?.includes('reasonRepost');
+        const kind = repost ? 'reposts' : it.post.record?.reply ? 'replies' : 'originals';
+        const at = repost ? it.reason.indexedAt : (it.post.record?.createdAt ?? it.post.indexedAt);
+        if (!newest || at > newest) newest = at;
+        if (!oldest || at < oldest) oldest = at;
+        byMonth[at.slice(0, 7)] = (byMonth[at.slice(0, 7)] ?? 0) + 1;
+        const k = (kinds[kind] ??= { n: 0, ffxiv: 0, unclassified: 0, nonFfxivWithImages: 0 });
+        k.n++;
+        const text = postText(it.post);
+        const terms = focusTerms(text);
+        for (const t of terms) termHits[t] = (termHits[t] ?? 0) + 1;
+        if (!repost) {
+          for (const f of it.post.record?.facets ?? []) for (const ft of f.features ?? []) {
+            if (ft.tag) tagCounts[fold(ft.tag)] = (tagCounts[fold(ft.tag)] ?? 0) + 1;
+            if (ft.uri) { try { const d = new URL(ft.uri).hostname.replace(/^www\./, ''); domains[d] = (domains[d] ?? 0) + 1; } catch {} }
+          }
+          const ext = it.post.record?.embed?.external?.uri ?? it.post.record?.embed?.media?.external?.uri;
+          if (ext) { try { const d = new URL(ext).hostname.replace(/^www\./, ''); domains[d] = (domains[d] ?? 0) + 1; } catch {} }
+        }
+        const snippet = { at, text: (it.post.record?.text ?? '').replace(/\s+/g, ' ').slice(0, 160), images: hasImages(it.post) };
+        if (terms.length) {
+          k.ffxiv++;
+          if (kind === 'originals' && samplesFfxiv.length < 5) samplesFfxiv.push({ ...snippet, terms });
+        } else if ((text.match(/\p{L}/gu) ?? []).length < 3) {
+          k.unclassified++;
+        } else {
+          if (hasImages(it.post)) k.nonFfxivWithImages++;
+          if (kind === 'originals' && samplesNonFfxiv.length < 15) samplesNonFfxiv.push(snippet);
+        }
+      }
+      for (const k of Object.values(kinds)) {
+        const classifiable = k.n - k.unclassified;
+        k.sharePct = classifiable ? +((100 * k.ffxiv) / classifiable).toFixed(1) : null;
+      }
+      const top = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n);
+      out.push({
+        // Bios can carry contact addresses the research has no use for.
+        handle, displayName: p.displayName, description: p.description?.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email redacted]'),
+        bioTerms: focusTerms(`${p.displayName ?? ''} ${p.description ?? ''}`),
+        followers: p.followersCount, follows: p.followsCount, postsCount: p.postsCount,
+        sample: { items: Math.min(items.length, maxItems), pages, exhausted: !cursor, newest, oldest,
+          daysSinceNewest: newest ? Math.floor((Date.now() - Date.parse(newest)) / 86400000) : null },
+        originals: kinds.originals ?? null, replies: kinds.replies ?? null, reposts: kinds.reposts ?? null,
+        byMonth: Object.fromEntries(Object.entries(byMonth).sort()),
+        termHits: Object.fromEntries(top(termHits, 30)), topTags: top(tagCounts, 15), linkDomains: top(domains, 10),
+        samplesFfxiv, samplesNonFfxiv,
+      });
+      log(`${handle}: ${items.length} items`);
+    } catch (e) {
+      out.push({ handle, error: String(e.message ?? e) });
+      log(`${handle}: ${e.message ?? e}`);
+    }
+  }
+  return { asOf: new Date().toISOString(), maxItems, note: FOCUS_NOTE, accounts: out };
+}
+
 async function tags(days = 7) {
   const until = new Date();
   until.setUTCHours(0, 0, 0, 0);
@@ -336,9 +448,9 @@ async function stream(minutes = 60) {
 }
 
 const [cmd, arg] = process.argv.slice(2);
-const run = { profiles, actors, starterpacks, feeds, tags: () => tags(Number(arg ?? 7)), stream: () => stream(Number(arg ?? 60)) }[cmd];
+const run = { profiles, actors, starterpacks, feeds, tags: () => tags(Number(arg ?? 7)), stream: () => stream(Number(arg ?? 60)), focus: () => focus(Number(arg ?? 200)) }[cmd];
 if (!run) {
-  log('usage: node bsky-ffxiv-census.mjs <profiles|actors|starterpacks|feeds|tags [days]|stream [minutes]>');
+  log('usage: node bsky-ffxiv-census.mjs <profiles|actors|starterpacks|feeds|tags [days]|stream [minutes]|focus [items]>');
   process.exit(2);
 }
 console.log(JSON.stringify(await run(), null, 2));

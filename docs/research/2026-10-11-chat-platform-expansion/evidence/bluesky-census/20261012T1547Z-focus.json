@@ -1,0 +1,2293 @@
+{
+  "asOf": "2026-10-12T15:47:41.846Z",
+  "maxItems": 200,
+  "note": "Shares are FFXIV posts over classifiable posts in the sampled feed. A post is FFXIV when its text, tags, alt text, link card or quoted post contains a focus term (termHits). Unclassified = fewer than 3 letters of text (image-only or emoji-only); they are left out of the share. nonFfxivWithImages counts non-FFXIV posts that carry images, which may still be FFXIV screenshots. The sample covers the newest items only, so an old account's history beyond it is not measured.",
+  "accounts": [
+    {
+      "handle": "en.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV",
+      "description": "The official English FFXIV Bluesky account.\n\nThe critically acclaimed MMORPG with a Free Trial up to level 80! ✨ freetrial.finalfantasyxiv.com",
+      "bioTerms": [
+        "ffxiv",
+        "final fantasy xiv",
+        "finalfantasyxiv",
+        "xiv"
+      ],
+      "followers": 100602,
+      "follows": 4,
+      "postsCount": 1074,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10-12T15:30:27.098Z",
+        "oldest": "2026-07-21T18:23:28.965Z",
+        "daysSinceNewest": 0
+      },
+      "originals": {
+        "n": 189,
+        "ffxiv": 152,
+        "unclassified": 0,
+        "nonFfxivWithImages": 21,
+        "sharePct": 80.4
+      },
+      "replies": {
+        "n": 8,
+        "ffxiv": 5,
+        "unclassified": 1,
+        "nonFfxivWithImages": 0,
+        "sharePct": 71.4
+      },
+      "reposts": {
+        "n": 3,
+        "ffxiv": 3,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "byMonth": {
+        "2026-07": 70,
+        "2026-08": 45,
+        "2026-09": 53,
+        "2026-10": 32
+      },
+      "termHits": {
+        "final fantasy 14": 124,
+        "ffxiv": 95,
+        "warrior of light": 13,
+        "xiv": 12,
+        "miqo'te": 10,
+        "final fantasy xiv": 10,
+        "dawntrail": 8,
+        "eorzea": 7,
+        "au ra": 6,
+        "hroth": 4,
+        "lalafell": 4,
+        "hyur": 2,
+        "viera": 2,
+        "finalfantasyxiv": 2,
+        "elezen": 1,
+        "roegadyn": 1
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          22
+        ],
+        [
+          "ffxiv's",
+          2
+        ],
+        [
+          "ffxivpaxaus",
+          1
+        ],
+        [
+          "ffxiv_rotw",
+          1
+        ],
+        [
+          "ffxivgamescom",
+          1
+        ],
+        [
+          "ffxivfanfest",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "sqex.to",
+          117
+        ],
+        [
+          "youtu.be",
+          4
+        ],
+        [
+          "youtube.com",
+          3
+        ],
+        [
+          "sqex.lnk.to",
+          2
+        ],
+        [
+          "discord.com",
+          1
+        ],
+        [
+          "bsky.app",
+          1
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-10-12T13:15:06.343Z",
+          "text": "We'll be giving away commemorative caps to attendees who participate in our Evercold-themed photo opportunity at MCM London Comic Con, so be sure to swing by!",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-10T23:42:05.896Z",
+          "text": "It's Day 3 of PAX Aus! If you haven't visited the FFXIV booth yet, now is the time. Stop by our Evercold-themed booth and share your special moments or photos w",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-10T01:59:01.819Z",
+          "text": "The challenge is on! 💪 Join Koji Fox and Foxclon live at PAX Australia 2026 for the ultimate hot sauce challenge! 🔥 sqex.to/htj",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-09T23:00:22.546Z",
+          "text": "Come on down for Day 2 of PAX Aus, we've got crafting ✨ Visit the FFXIV booth and make your own role-themed bracelet! 🔴🔵🟢",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-10-09T19:00:44.978Z",
+          "text": "A new Official Blog article has been published showcasing all of the music-related merch currently available for pre-order! 🎼 Check it out here ✨ sqex.to/feY2F",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "final fantasy 14"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2026-10-12T15:30:27.098Z",
+          "text": "There is still time to participate in the Moogle Treasure Trove! 🎁 sqex.to/1fsZu Participate in the activities and earn irregular tomestones through Monday, Oc",
+          "images": true
+        },
+        {
+          "at": "2026-10-11T07:00:07.962Z",
+          "text": "Thank you all for joining us at PAX Australia 2026, it was FIRE! 🔥 See you next time. Y.O.U.!",
+          "images": true
+        },
+        {
+          "at": "2026-10-11T04:40:51.238Z",
+          "text": "K.O.!!! 💥",
+          "images": true
+        },
+        {
+          "at": "2026-10-10T07:00:34.484Z",
+          "text": "Signed with love. 🫶",
+          "images": false
+        },
+        {
+          "at": "2026-10-10T03:05:46.544Z",
+          "text": "That's a wrap for the development panel at PAX Aus! As it turns out, everything did indeed burn. Would you try any of these hot sauces yourself? 👀",
+          "images": true
+        },
+        {
+          "at": "2026-10-09T08:00:32.015Z",
+          "text": "The bottles are ready. Less than a day until our development panel at PAX Aus! 👇",
+          "images": true
+        },
+        {
+          "at": "2026-10-09T02:07:27.219Z",
+          "text": "Thank you for the warm welcome! 🤗✨",
+          "images": true
+        },
+        {
+          "at": "2026-10-08T17:17:24.916Z",
+          "text": "📣 PSA for Warriors of Light playing on Nintendo Switch™2",
+          "images": false
+        },
+        {
+          "at": "2026-09-30T11:01:17.497Z",
+          "text": "Ready or not, here we goooo! 🗣️ Blunderville will open its doors once again to adventurers across the realm starting Wednesday, October 7! 👑 sqex.to/WfFzX",
+          "images": false
+        },
+        {
+          "at": "2026-09-23T15:56:04.177Z",
+          "text": "The Unending Journey is now LIVE! 🔴 Twitch 📺 sqex.to/htj YouTube 📺 sqex.to/GPruX Join us in-game on Ragnarok (Chaos DC) at the Bentbranch Meadows aetheryte!",
+          "images": false
+        },
+        {
+          "at": "2026-09-17T11:00:16.235Z",
+          "text": "We have an important announcement regarding Season 1 of the Crucible Rankings. 📝 sqex.to/JZyAL",
+          "images": true
+        },
+        {
+          "at": "2026-09-14T18:00:57.598Z",
+          "text": "PvP hungry? ⚔️ sqex.to/7G4Qz Join us for the very first episode of Rise of the Wolves, the NA Community team's brand-new PvP dedicated stream this Wednesday, Se",
+          "images": false
+        },
+        {
+          "at": "2026-09-10T15:01:41.882Z",
+          "text": "Thank you to everyone who visited us at gamescom 2026! Here's a recap of what went down at the Square Enix booth!",
+          "images": false
+        },
+        {
+          "at": "2026-09-09T11:01:02.638Z",
+          "text": "The Moogle Treasure Trove is here! 🎁 sqex.to/1fsZu From now through October 19, hunt for irregular tomestones and exchange them for special rewards, including ",
+          "images": true
+        },
+        {
+          "at": "2026-09-08T09:54:19.229Z",
+          "text": "Beastmaster is here! Pick up your weapons and seek out new companions to fight by your side! 🪓🛡️ Patch 7.56 notes 📜 sqex.to/0fEHM",
+          "images": false
+        }
+      ]
+    },
+    {
+      "handle": "fr.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV",
+      "description": "Compte Bluesky officiel #FFXIV FR. \n\nLe MMORPG avec un essai gratuit jusqu'au niveau 80 ! ✨\nfreetrial.finalfantasyxiv.com/fr/",
+      "bioTerms": [
+        "ffxiv",
+        "final fantasy xiv",
+        "finalfantasyxiv",
+        "xiv"
+      ],
+      "followers": 3751,
+      "follows": 3,
+      "postsCount": 1442,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10-12T11:00:10.686Z",
+        "oldest": "2026-07-25T12:31:30.176Z",
+        "daysSinceNewest": 0
+      },
+      "originals": {
+        "n": 114,
+        "ffxiv": 106,
+        "unclassified": 0,
+        "nonFfxivWithImages": 6,
+        "sharePct": 93
+      },
+      "replies": {
+        "n": 85,
+        "ffxiv": 0,
+        "unclassified": 2,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "reposts": {
+        "n": 1,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "byMonth": {
+        "2026-07": 38,
+        "2026-08": 46,
+        "2026-09": 93,
+        "2026-10": 23
+      },
+      "termHits": {
+        "final fantasy 14": 93,
+        "ffxiv": 47,
+        "final fantasy xiv": 7,
+        "xiv": 7,
+        "dawntrail": 6,
+        "warrior of light": 2,
+        "finalfantasyxiv": 2,
+        "a realm reborn": 1,
+        "miqote": 1,
+        "eorzea": 1
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          7
+        ],
+        [
+          "ffxivgamescom",
+          1
+        ],
+        [
+          "ff7r",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "sqex.to",
+          77
+        ],
+        [
+          "sqex.lnk.to",
+          2
+        ],
+        [
+          "bsky.app",
+          2
+        ],
+        [
+          "support.eu.square-enix.com",
+          2
+        ],
+        [
+          "youtube.com",
+          1
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-10-12T11:00:10.686Z",
+          "text": "Il ne vous reste qu'une semaine pour participer à la Collection Mog Mog ! ⏰ sqex.to/06zdX Vous avez jusqu'au 19 octobre pour en accomplir les challenges et mett",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-09T15:01:10.811Z",
+          "text": "Si vous n'avez pas encore terminé la quête de la collaboration FFXIV x FFXV, ne tardez pas trop ! ⏱️ C'est le 13 octobre que Noctis fera les valises, et rentrer",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-08T11:00:12.325Z",
+          "text": "La Veillée des saints fait son grand retours à partir du 15 octobre ! 👻 sqex.to/TRohI Pour en profiter au mieux, n'oubliez pas : il ne faut pas vendre le costu",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-07T11:00:06.156Z",
+          "text": "Visez la couronne et ne laissez dans votre sillage que des gens qui sont tombés ! 👑 sqex.to/AFgsq Les portes du Blunderville viennent de rouvrir jusqu'au 27 oc",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-06T11:00:21.208Z",
+          "text": "On se ferait pas un big fat tacos aujourd'hui ? 🌮",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2026-09-10T15:02:01.110Z",
+          "text": "Un grand merci à tous les Guerriers de la Lumière qui sont venus nous voir à gamescom 2026 sur le stand Square Enix ! 🤗 On vous a préparé une petite vidéo en s",
+          "images": false
+        },
+        {
+          "at": "2026-08-27T08:00:49.571Z",
+          "text": "Yan chauffe la piste de danse pour nos visiteurs à gamescom 2026 ! 🐏🔥 Laissez le rythme guider vos pas devant Dancing Green sur le stand Square Enix dans le H",
+          "images": true
+        },
+        {
+          "at": "2026-08-20T11:06:24.704Z",
+          "text": "Un grand merci à tous nos Guerriers de la Lumière qui étaient au Fan Festival 2026 de Berlin ! 🤗 sqex.to/BKt89 Voici un petit résumé des événements sur scène e",
+          "images": false
+        },
+        {
+          "at": "2026-07-26T17:00:18.315Z",
+          "text": "Pour conclure ce Fan Festival 2026 de Berlin, THE PRIMALS font enflammer la scène ! 🎸 sqex.to/BTHPI Assistez au show depuis chez vous en vous procurant un bill",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T13:30:15.420Z",
+          "text": "Un immense bravo à FISH qui sont nos champions du Crystalline Conflict Regional Championship 2026 Europe & Océanie ! 🏆 Et un grand merci à nos commentateurs d'",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T06:00:29.990Z",
+          "text": "Bonjour chers Guerriers de la Lumière ! 🤗 On remet le couvert pour le second jour du Fan Festival 2026 de Berlin et comme votre mascotte préférée, trouvez un s",
+          "images": true
+        },
+        {
+          "at": "2026-07-25T20:00:09.316Z",
+          "text": "C'est ici que se termine le premier jour du Fan Festival 2026 de Berlin ! Y en a un qui a bien profité des activités, on espère que vous aussi, et on se retrouv",
+          "images": true
+        },
+        {
+          "at": "2026-07-25T17:03:28.346Z",
+          "text": "Le dernier événement de la journée est bientôt prêt, c'est bien sûr le concert de piano ! 🎹 sqex.to/BTHPI Il ne vous reste plus beaucoup de temps pour vous pro",
+          "images": true
+        }
+      ]
+    },
+    {
+      "handle": "de.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV",
+      "description": "Der offizielle deutsche Account für #FFXIV.\nSpielt das preisgekrönte MMORPG kostenlos bis Stufe 80! ✨ freetrial.finalfantasyxiv.com/de",
+      "bioTerms": [
+        "ffxiv",
+        "final fantasy xiv",
+        "finalfantasyxiv",
+        "xiv"
+      ],
+      "followers": 3119,
+      "follows": 3,
+      "postsCount": 825,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10-12T11:00:09.968Z",
+        "oldest": "2026-06-24T07:57:40.852Z",
+        "daysSinceNewest": 0
+      },
+      "originals": {
+        "n": 178,
+        "ffxiv": 154,
+        "unclassified": 0,
+        "nonFfxivWithImages": 17,
+        "sharePct": 86.5
+      },
+      "replies": {
+        "n": 15,
+        "ffxiv": 5,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 33.3
+      },
+      "reposts": {
+        "n": 7,
+        "ffxiv": 7,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "byMonth": {
+        "2026-06": 7,
+        "2026-07": 103,
+        "2026-08": 39,
+        "2026-09": 41,
+        "2026-10": 10
+      },
+      "termHits": {
+        "final fantasy 14": 133,
+        "ffxiv": 89,
+        "dawntrail": 13,
+        "miqo’te": 10,
+        "final fantasy xiv": 10,
+        "xiv": 10,
+        "lalafell": 9,
+        "au ra": 7,
+        "eorzea": 7,
+        "miqo'te": 6,
+        "elezen": 5,
+        "roegadyn": 4,
+        "viera": 4,
+        "warrior of light": 3,
+        "hroth": 3,
+        "finalfantasyxiv": 2,
+        "a realm reborn": 1,
+        "stormblood": 1,
+        "endwalker": 1
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          62
+        ],
+        [
+          "fxiv",
+          2
+        ],
+        [
+          "ff7r",
+          2
+        ],
+        [
+          "ffxivgamescom",
+          1
+        ],
+        [
+          "ffxivfanfest",
+          1
+        ],
+        [
+          "ffxi",
+          1
+        ],
+        [
+          "foxclonhousing",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "sqex.to",
+          109
+        ],
+        [
+          "youtube.com",
+          4
+        ],
+        [
+          "youtu.be",
+          3
+        ],
+        [
+          "sqex.lnk.to",
+          2
+        ],
+        [
+          "bsky.app",
+          2
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-10-12T11:00:09.968Z",
+          "text": "Achtung: Teil 1 der Mog Mog-Kollektion - Astronomische Abenteuer läuft noch bis Montag, den 19. Oktober um 16:59 Uhr! 🎁 sqex.to/l2orw",
+          "images": true,
+          "terms": [
+            "final fantasy 14",
+            "lalafell"
+          ]
+        },
+        {
+          "at": "2026-10-09T15:00:53.467Z",
+          "text": "Fuß aufs Gas! ⏰ Schließt noch bis 13. Oktober das FFXIV x FFXV Kollaborations-Event „Nocturne an einen Helden“ ab, um euch eure Regalia Typ-G und viele weitere ",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-08T11:01:09.353Z",
+          "text": "Gruselzeit ist Grizzlyzeit! 🐻 In #FFXIV steht erneut Allerschutzheiligen vor der Tür, also stellt euch ab 15. Oktober dem Spuk und sichert euch bärenstarke Bel",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-07T11:01:27.349Z",
+          "text": "Auf die Plätze, fertig, LOSGESTOLPERT!!! 🏃‍➡️ Stellt bis zum 27. Oktober euer Können bei der Fall Guys-Kollaboration unter Beweis und scheffelt Ruhm, Ehre und ",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        },
+        {
+          "at": "2026-10-05T11:00:11.565Z",
+          "text": "📣 Nicht vergessen! Nach dem Ende der bei der Registrierung der Starter Edition und Complete Edition gewährten 30-tägigen Gratisspielzeit fallen Abonnementgebüh",
+          "images": true,
+          "terms": [
+            "final fantasy 14"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2026-10-04T11:00:55.416Z",
+          "text": "Für Frühaufsteher, die es scharf mögen, läuft am Samstag, den 10. Oktober 2026, ab 4:00 Uhr das Entwicklerpanel „A Realm Reburned“ live auf Twitch! 🌶️ sqex.to/",
+          "images": true
+        },
+        {
+          "at": "2026-09-30T11:00:53.757Z",
+          "text": "Die #FXIV x Fall Guys-Kollaboration kehrt am 7. Oktober zurück! Bis zum 27. Oktober erwarten euch kunterbunte Action und exklusive Belohnungen in Stolperville! ",
+          "images": false
+        },
+        {
+          "at": "2026-09-10T15:02:30.402Z",
+          "text": "Auf der gamescom 2026 durften wir am Square Enix-Stand eine unvergessliche Woche mit unseren Kriegern des Lichts erleben! 🎮 Vielen lieben Dank an alle, die vor",
+          "images": false
+        },
+        {
+          "at": "2026-08-30T07:00:35.806Z",
+          "text": "Heute ist eure letzte Chance, dem Square Enix-Stand auf der gamescom 2026 einen Besuch abzustatten! Ihr findet uns in Halle 8! 🤗 Dort könnt ihr abtanzen, euch ",
+          "images": true
+        },
+        {
+          "at": "2026-07-31T12:00:13.173Z",
+          "text": "Ihr habt die Gartenschau-Sonderausgabe von „Herr Foxclons Nachbarschaft\" verpasst? Wir haben die Zusammenfassung für euch! 🏡 sqex.to/6eQlc Außerdem findet ihr ",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T21:02:45.287Z",
+          "text": "Damit schließt sich der Vorhang unseres Fan Festivals 2026 in Berlin, aber die Erinnerungen werden uns noch lange erhalten bleiben! 😊 Vielen Dank, dass ihr eue",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T17:53:52.891Z",
+          "text": "Unsere Cosplayer des Lichts haben sich mal wieder selbst übertroffen! 🤩👏 Hier könnt ihr eine kleine Auswahl der phänomenalen Kunstwerke unserer Community bewu",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T17:00:27.352Z",
+          "text": "Zum Abschluss unseres Fan Festivals 2026 in Berlin bringen THE PRIMALS die Halle zum Beben! Sichert euch ein kostenpflichtiges Streamticket und rockt auch von d",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T13:40:04.165Z",
+          "text": "👁️🌵👁️ Putschi hat Anspruch auf alle nicht abgeholten Goodybags angemeldet, also vergesst nicht, euch eure in Halle 1.2 zu schnappen!",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T11:09:59.403Z",
+          "text": "Wir bedanken uns bei den Sponsoren des Fan Festivals 2026 in Berlin: Secretlab, AMD, and Logitech G! Hier sehr ihr ihre Produkte, die bei unserer Crystalline Co",
+          "images": true
+        },
+        {
+          "at": "2026-07-26T06:00:23.104Z",
+          "text": "Guten Morgen, Krieger des Lichts! Tag 2 ist angebrochen und Putschi überprüft schon mal, von wo aus man die beste Sicht hat. So ein Fan Festival-Besuch will sch",
+          "images": true
+        },
+        {
+          "at": "2026-07-25T17:00:07.866Z",
+          "text": "Wir lassen den Abend mit unserem wunderschönen Klavierkonzert ausklingen! Schnappt euch ein kostenpflichtiges Streamticket, um auch von zu Hause aus hautnah dab",
+          "images": true
+        },
+        {
+          "at": "2026-07-25T10:47:59.127Z",
+          "text": "Die Musik und Soundeffekte im Trailer des Allianz-Raids unterliegen dem Urheberrecht anderer Rechtsinhaber als Square Enix und sind nur bis Ende Oktober 2026 zu",
+          "images": false
+        },
+        {
+          "at": "2026-07-25T10:42:34.595Z",
+          "text": "Donnert auf dem Rücken des Collector's Edition-Reittiers „Valhallar Odin“ durch Evercold! 🐎",
+          "images": false
+        },
+        {
+          "at": "2026-07-25T09:44:56.877Z",
+          "text": "Per Matching innerhalb derselben Region werdet ihr mit Spielenden aller Welten innerhalb desselben physischen Datenzentrums Spieler- und Gruppensuchen bilden kö",
+          "images": true
+        }
+      ]
+    },
+    {
+      "handle": "jp.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV／FF14",
+      "description": "ファイナルファンタジーXIVに関する情報をお知らせする公式アカウントです。\n最新ニュースは https://sqex.to/STZ をご覧ください。\n\n今すぐ無料の冒険へ！「ファイナルファンタジーXIV　フリートライアル」配信中\nhttps://sqex.to/ff14ft",
+      "bioTerms": [
+        "ff14",
+        "final fantasy xiv",
+        "xiv"
+      ],
+      "followers": 20851,
+      "follows": 3,
+      "postsCount": 1145,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-10-09T04:14:10.912Z",
+        "oldest": "2026-07-25T08:08:19.376Z",
+        "daysSinceNewest": 3
+      },
+      "originals": {
+        "n": 192,
+        "ffxiv": 192,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "replies": {
+        "n": 7,
+        "ffxiv": 6,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 85.7
+      },
+      "reposts": {
+        "n": 1,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 100
+      },
+      "byMonth": {
+        "2026-07": 57,
+        "2026-08": 77,
+        "2026-09": 55,
+        "2026-10": 11
+      },
+      "termHits": {
+        "ff14": 198,
+        "ffxiv": 79,
+        "final fantasy xiv": 19,
+        "xiv": 19,
+        "エオルゼア": 5,
+        "黄金のレガシー": 3,
+        "光の戦士": 1,
+        "dawntrail": 1,
+        "finalfantasyxiv": 1
+      },
+      "topTags": [
+        [
+          "ff14",
+          199
+        ],
+        [
+          "ffxivfanfest",
+          67
+        ],
+        [
+          "白銀のワンダラー",
+          28
+        ],
+        [
+          "ccrc2026",
+          27
+        ],
+        [
+          "xivlive",
+          17
+        ],
+        [
+          "彼方に至る路",
+          16
+        ],
+        [
+          "コミュニティ放送",
+          10
+        ],
+        [
+          "公式ブログ更新",
+          7
+        ],
+        [
+          "ff7r",
+          7
+        ],
+        [
+          "ミラプリコレクション",
+          7
+        ],
+        [
+          "diesel",
+          6
+        ],
+        [
+          "光の納涼祭2026",
+          6
+        ],
+        [
+          "theprimals",
+          5
+        ],
+        [
+          "新生祭",
+          5
+        ],
+        [
+          "エオカフェ",
+          4
+        ]
+      ],
+      "linkDomains": [
+        [
+          "sqex.to",
+          174
+        ],
+        [
+          "youtu.be",
+          19
+        ],
+        [
+          "youtube.com",
+          6
+        ],
+        [
+          "lin.ee",
+          4
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-10-09T04:14:10.912Z",
+          "text": "【 #エオカフェ 】 ＼\\ 新イベント＆スタンプカード情報更新 /／ 🎃 守護天節 イベント開催 期間限定メニュー＆ランチョンマット登場🍴 🗓️ 10/27（火）～ 12/14（月） ✅ スタンプカードリニューアル 新しいノベルティも追加されます🎁 🗓️ 11/4（水）～ 🌐 sqex.to/pauZI #",
+          "images": true,
+          "terms": [
+            "ff14"
+          ]
+        },
+        {
+          "at": "2026-10-09T02:07:57.263Z",
+          "text": "#FF14 LINE公式アカウント 10月分のスマホ壁紙＆カレンダー、復刻壁紙はもう手に入れましたか？ LINE公式アカウントを友だち追加➡️SQEXアカウントとID連携してGETしよう！",
+          "images": false,
+          "terms": [
+            "ff14"
+          ]
+        },
+        {
+          "at": "2026-10-08T10:32:48.240Z",
+          "text": "メンテナンス : 全ワールド メンテナンス作業のお知らせ(10/12-13) sqex.to/h59de #FF14",
+          "images": false,
+          "terms": [
+            "ff14",
+            "final fantasy xiv",
+            "xiv"
+          ]
+        },
+        {
+          "at": "2026-10-08T08:07:25.131Z",
+          "text": "†—┈——— ⁺˖🎃˖⁺ ———┈—† ꒷꒦🦇 #守護天節 🦇꒦꒷ 🗓 10月15日（木）17:00～ †—┈——— ⁺˖🎃˖⁺ —┈———† 楽しく不思議なイベントが今年も開催✨マモノもつられてやってくる…？👻💨 🌐 sqex.to/LQSYU #FF14",
+          "images": true,
+          "terms": [
+            "ff14"
+          ]
+        },
+        {
+          "at": "2026-10-07T08:13:14.597Z",
+          "text": "🟥🟧🟨 #FF14 × #FallGuys 🟩🟦🟪 ✨ コラボイベント開催中 ✨ ✧︿﹀︿＼ Wooo!!! ／︿﹀︿✧ クエスト開始はゴールドソーサーから🌵 勝利のクラウンをつかみとろう！ 🗓️10月7日（水）～10月27日（火）23:59頃まで 🌐 sqex.to/dsNHH",
+          "images": true,
+          "terms": [
+            "ff14"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": []
+    },
+    {
+      "handle": "gposers.org",
+      "displayName": "GPOSERS",
+      "description": "#GPOSERS is a #FFXIV community dedicated to connecting with and inspiring others while producing creative works!\n\nFollow the #GPOSERS feed to keep up with the latest and greatest FFXIV screenshots.",
+      "bioTerms": [
+        "ffxiv",
+        "gpose"
+      ],
+      "followers": 2048,
+      "follows": 268,
+      "postsCount": 565,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": false,
+        "newest": "2026-10-11T19:06:18.819Z",
+        "oldest": "2025-11-18T12:56:50.360Z",
+        "daysSinceNewest": 0
+      },
+      "originals": {
+        "n": 99,
+        "ffxiv": 97,
+        "unclassified": 0,
+        "nonFfxivWithImages": 2,
+        "sharePct": 98
+      },
+      "replies": {
+        "n": 41,
+        "ffxiv": 19,
+        "unclassified": 0,
+        "nonFfxivWithImages": 1,
+        "sharePct": 46.3
+      },
+      "reposts": {
+        "n": 60,
+        "ffxiv": 49,
+        "unclassified": 2,
+        "nonFfxivWithImages": 9,
+        "sharePct": 84.5
+      },
+      "byMonth": {
+        "2025-11": 31,
+        "2025-12": 19,
+        "2026-01": 10,
+        "2026-02": 24,
+        "2026-03": 11,
+        "2026-04": 15,
+        "2026-05": 13,
+        "2026-06": 18,
+        "2026-07": 39,
+        "2026-08": 9,
+        "2026-09": 5,
+        "2026-10": 6
+      },
+      "termHits": {
+        "gpose": 163,
+        "ffxiv": 110,
+        "finalfantasyxiv": 87,
+        "eorzea": 2,
+        "ff14": 2,
+        "xiv": 2,
+        "viera": 2,
+        "hyur": 2,
+        "elezen": 1,
+        "miqo'te": 1,
+        "miqote": 1,
+        "hroth": 1
+      },
+      "topTags": [
+        [
+          "gposers",
+          79
+        ],
+        [
+          "ffxiv",
+          79
+        ],
+        [
+          "finalfantasyxiv",
+          70
+        ],
+        [
+          "gpose",
+          64
+        ],
+        [
+          "springintostylesaturdays",
+          11
+        ],
+        [
+          "fallfashionfridays",
+          10
+        ],
+        [
+          "gposersbeachbash",
+          9
+        ],
+        [
+          "ffxivglamour",
+          3
+        ],
+        [
+          "thatsmylifeguard",
+          1
+        ],
+        [
+          "gposersbeachparty",
+          1
+        ],
+        [
+          "vposers",
+          1
+        ],
+        [
+          "gpweeklyfeature",
+          1
+        ],
+        [
+          "gposersqanda",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "x.com",
+          17
+        ],
+        [
+          "gposers.org",
+          16
+        ],
+        [
+          "discord.com",
+          13
+        ],
+        [
+          "discord.gg",
+          11
+        ],
+        [
+          "drive.google.com",
+          8
+        ],
+        [
+          "instagram.com",
+          7
+        ],
+        [
+          "twitter.com",
+          6
+        ],
+        [
+          "bsky.app",
+          3
+        ],
+        [
+          "media.tenor.com",
+          3
+        ],
+        [
+          "tumblr.com",
+          2
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-10-11T19:06:18.818Z",
+          "text": "GPOSERS is currently looking to strengthen our talented Photography team! If you’re interested in becoming a Photographer, join our Discord and fill out an appl",
+          "images": true,
+          "terms": [
+            "gpose"
+          ]
+        },
+        {
+          "at": "2026-10-10T17:45:41.379Z",
+          "text": "CONGRATULATIONS TO OUR WEEKLY FEATURE WINNER!! Name: August Mercer World: Balmung Social: tumblr.com/furys-mercy #gposers #gpose #ffxiv #finalfantasyxiv",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "gpose",
+            "finalfantasyxiv"
+          ]
+        },
+        {
+          "at": "2026-10-09T16:17:17.483Z",
+          "text": "FALL FASHION FRIDAYS HAVE ARRIVED! Our favorite season is finally here, so we’re celebrating by sharing some fall-tastic glams with you all! 🍂🎃🍂🎃🍂🎃🍂🎃🍂\ud83c",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "gpose",
+            "finalfantasyxiv"
+          ]
+        },
+        {
+          "at": "2026-10-03T15:52:11.795Z",
+          "text": "CONGRATULATIONS TO OUR WEEKLY FEATURE WINNER!! Name: @sevalsevffxiv.bsky.social World: Cerberus Caption: Blooming Lavender Social: ffxiv.eorzeacollection.com/cr",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "gpose",
+            "eorzea",
+            "finalfantasyxiv"
+          ]
+        },
+        {
+          "at": "2026-10-02T15:45:16.838Z",
+          "text": "FALL FASHION FRIDAYS HAVE ARRIVED! Our favorite season is finally here, so we’re celebrating by sharing from fall-tastic glams with you all! 🍂🎃🍂🎃🍂🎃🍂🎃🍂\ud83c",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "gpose",
+            "finalfantasyxiv"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2026-03-02T21:47:18.807Z",
+          "text": "We recently held a contest to refresh our social media banner and the winners are @escherstrange.bsky.social, @harumegami.bsky.social & Sunchip—congratulations ",
+          "images": true
+        },
+        {
+          "at": "2026-02-01T19:00:35.720Z",
+          "text": "NEW YEAR, NEW BANNER SCREENSHOT CONTEST Another year has passed, and that means it’s time for a social media refresh! Starting February 1, 2026 through February",
+          "images": true
+        }
+      ]
+    },
+    {
+      "handle": "kaiyoko.bsky.social",
+      "displayName": "Kaiyoko💫",
+      "description": "💫 KaiyokoStar | Cat VTuber \n📺 https://www.twitch.tv/kaiyokostar | Twitch Partner\n🔗: https://kaiyokostar.carrd.co/\n🎨: #kaillust\n⭐️ ママ: @starbottle パパ: @asagiriyua",
+      "bioTerms": [],
+      "followers": 2616,
+      "follows": 73,
+      "postsCount": 83,
+      "sample": {
+        "items": 89,
+        "pages": 1,
+        "exhausted": true,
+        "newest": "2024-12-20T10:11:48.001Z",
+        "oldest": "2023-07-25T19:10:50.271Z",
+        "daysSinceNewest": 661
+      },
+      "originals": {
+        "n": 56,
+        "ffxiv": 25,
+        "unclassified": 2,
+        "nonFfxivWithImages": 22,
+        "sharePct": 46.3
+      },
+      "replies": {
+        "n": 27,
+        "ffxiv": 1,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 3.7
+      },
+      "reposts": {
+        "n": 6,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 4,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2023-07": 1,
+        "2024-10": 41,
+        "2024-11": 40,
+        "2024-12": 7
+      },
+      "termHits": {
+        "ffxiv": 20,
+        "fashion report": 16,
+        "ff14": 10,
+        "msq": 2
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          10
+        ],
+        [
+          "ff14",
+          10
+        ],
+        [
+          "ファッションチェック",
+          10
+        ],
+        [
+          "vtuber",
+          4
+        ],
+        [
+          "kaillust",
+          4
+        ],
+        [
+          "envtuber",
+          3
+        ]
+      ],
+      "linkDomains": [
+        [
+          "twitch.tv",
+          20
+        ],
+        [
+          "youtu.be",
+          8
+        ],
+        [
+          "kaiyoko.bigcartel.com",
+          1
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2024-12-20T10:11:48.001Z",
+          "text": "Fashion Report Week 360 - Full Details #ffxiv #ff14 #ファッションチェック",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "ff14",
+            "fashion report"
+          ]
+        },
+        {
+          "at": "2024-12-20T02:51:28.314Z",
+          "text": "With FRU done, back to EX3 mount farm until Chaotic's release! Discussing FFXIV mobile beta tonight and then later Fashion Report~ 💫 twitch.tv/kaiyokostar",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "fashion report"
+          ]
+        },
+        {
+          "at": "2024-12-13T14:37:41.087Z",
+          "text": "Fashion Report Week 359 - Full Details #ffxiv #ff14 #ファッションチェック",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "ff14",
+            "fashion report"
+          ]
+        },
+        {
+          "at": "2024-12-06T11:46:25.274Z",
+          "text": "Fashion Report Week 358 - Full Details #ffxiv #ff14 #ファッションチェック",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "ff14",
+            "fashion report"
+          ]
+        },
+        {
+          "at": "2024-11-29T16:44:06.467Z",
+          "text": "Fashion Report Week 357 - Full Details #ffxiv #ff14 #ファッションチェック",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "ff14",
+            "fashion report"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2024-12-15T00:47:01.207Z",
+          "text": "Holiday Glamour Contest for Wish Upon a Realm starting now! 💫 twitch.tv/kaiyokostar",
+          "images": true
+        },
+        {
+          "at": "2024-12-03T02:48:44.375Z",
+          "text": "Back to the FRU grind tonight with P3 prog, hopefully :) 💫 twitch.tv/kaiyokostar",
+          "images": true
+        },
+        {
+          "at": "2024-11-28T19:22:22.335Z",
+          "text": "Made Mushroom Stuffing for Thanksgiving 🤤",
+          "images": true
+        },
+        {
+          "at": "2024-11-27T03:30:12.274Z",
+          "text": "EX3 Mount Farm begins tonight! Doing the alliance raid 1st then some EX3. Might touch FRU a little bit tonight but we'll see how mount farming goes 1st 👍 💫 tw",
+          "images": true
+        },
+        {
+          "at": "2024-11-19T02:52:09.296Z",
+          "text": "Back from my break! Catching up on the 7.1 stuff that I didn't get to finish. Bless SE for this new afk spot too 🙏 💫 www.twitch.tv/kaiyokostar",
+          "images": false
+        },
+        {
+          "at": "2024-11-12T09:20:10.786Z",
+          "text": "IT'S NOSTALGIA TIME Heading straight to the 24-man alliance raid 💫https://www.twitch.tv/kaiyokostar",
+          "images": true
+        },
+        {
+          "at": "2024-11-10T18:21:39.618Z",
+          "text": "I’m so happy with how this turned out. The board and keycaps are exactly what I wanted for my desk 🙏 It was my first time building a keyboard but it went a lot",
+          "images": true
+        },
+        {
+          "at": "2024-11-10T02:53:39.032Z",
+          "text": "Finishing building my custom cat girl keyboard tonight~ 💫 www.twitch.tv/kaiyokostar",
+          "images": true
+        },
+        {
+          "at": "2024-11-09T17:37:11.329Z",
+          "text": "I'll be out of town part of next week, so I'm going to be extending the preorder window for merch until November 23rd ⭐️",
+          "images": false
+        },
+        {
+          "at": "2024-11-05T02:55:21.071Z",
+          "text": "With the alliance raid coming out next week, giving a \"World Tour\" of sorts in FFXI including the areas being used for Echos of Vana'diel tonight. First, going ",
+          "images": true
+        },
+        {
+          "at": "2024-11-03T01:54:21.335Z",
+          "text": "Almost missed the Monster Hunter Wilds beta with one day left! Charged axe time!? 💫 www.twitch.tv/kaiyokostar",
+          "images": true
+        },
+        {
+          "at": "2024-10-28T15:01:17.608Z",
+          "text": "🍬🎃 It's Halloween week! #Vtuber #envtuber #kaillust",
+          "images": true
+        },
+        {
+          "at": "2024-10-28T02:05:12.748Z",
+          "text": "The Yugioh Card Shop is real! Hopefully, no one breaks into the shop and steals my Blue Eyes. 💫 www.twitch.tv/kaiyokostar",
+          "images": true
+        },
+        {
+          "at": "2024-10-27T01:50:33.561Z",
+          "text": "Spooky 3D stream tonight 🎃 Checking out some spooky worlds in VRC. Later playing Beat Saber with viewer requests~ 💫 www.twitch.tv/kaiyokostar",
+          "images": true
+        },
+        {
+          "at": "2024-10-26T18:19:31.683Z",
+          "text": "I have an addiction to anime figures… 🫠 It’s a funko free zone though 🤗",
+          "images": true
+        }
+      ]
+    },
+    {
+      "handle": "zepla.bsky.social",
+      "displayName": "Zepla",
+      "description": "Bun enthusiast & mmo degenerate twitch streamer",
+      "bioTerms": [],
+      "followers": 977,
+      "follows": 27,
+      "postsCount": 162,
+      "sample": {
+        "items": 163,
+        "pages": 2,
+        "exhausted": true,
+        "newest": "2026-10-07T04:26:03.545Z",
+        "oldest": "2024-12-02T17:52:15.476Z",
+        "daysSinceNewest": 5
+      },
+      "originals": {
+        "n": 118,
+        "ffxiv": 27,
+        "unclassified": 2,
+        "nonFfxivWithImages": 41,
+        "sharePct": 23.3
+      },
+      "replies": {
+        "n": 44,
+        "ffxiv": 7,
+        "unclassified": 0,
+        "nonFfxivWithImages": 22,
+        "sharePct": 15.9
+      },
+      "reposts": {
+        "n": 1,
+        "ffxiv": 0,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 0
+      },
+      "byMonth": {
+        "2024-12": 2,
+        "2025-02": 7,
+        "2025-03": 9,
+        "2025-04": 13,
+        "2025-05": 3,
+        "2025-06": 6,
+        "2025-07": 5,
+        "2025-08": 7,
+        "2025-09": 9,
+        "2025-10": 18,
+        "2025-11": 11,
+        "2025-12": 3,
+        "2026-01": 9,
+        "2026-02": 6,
+        "2026-03": 8,
+        "2026-04": 14,
+        "2026-06": 1,
+        "2026-07": 18,
+        "2026-08": 5,
+        "2026-09": 4,
+        "2026-10": 5
+      },
+      "termHits": {
+        "ffxiv": 26,
+        "msq": 8,
+        "ff14": 6,
+        "final fantasy xiv": 6,
+        "xiv": 6,
+        "miqo'te": 2,
+        "finalfantasyxiv": 2,
+        "dawntrail": 2,
+        "lalafell": 1
+      },
+      "topTags": [
+        [
+          "worldofwarcraft",
+          11
+        ],
+        [
+          "ffxiv",
+          9
+        ],
+        [
+          "warcraft",
+          4
+        ],
+        [
+          "ad",
+          4
+        ],
+        [
+          "ff14",
+          3
+        ],
+        [
+          "wowmidnight",
+          2
+        ],
+        [
+          "midnight",
+          2
+        ],
+        [
+          "wowhousing",
+          2
+        ],
+        [
+          "guildwars2",
+          2
+        ],
+        [
+          "alsvid",
+          1
+        ],
+        [
+          "supportastreamer",
+          1
+        ],
+        [
+          "ffxivfanfest",
+          1
+        ],
+        [
+          "dawntrail",
+          1
+        ],
+        [
+          "evercold",
+          1
+        ],
+        [
+          "artemisii",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "youtu.be",
+          46
+        ],
+        [
+          "twitch.tv",
+          40
+        ],
+        [
+          "youtube.com",
+          11
+        ],
+        [
+          "media.tenor.com",
+          6
+        ],
+        [
+          "discord.gg",
+          4
+        ],
+        [
+          "forms.gle",
+          4
+        ],
+        [
+          "m.youtube.com",
+          4
+        ],
+        [
+          "us.forums.blizzard.com",
+          3
+        ],
+        [
+          "worldofwarcraft.blizzard.com",
+          3
+        ],
+        [
+          "static.klipy.com",
+          2
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-09-07T05:26:27.716Z",
+          "text": "its COLLECTIN’ CUTE ANIMALS WEEK aka Beastmaster launch week in FFXIV!! killer bunny pet?? lets find out 🐇 also: Uolon mount! how many weeks of mogtomes will i",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-09-01T02:25:20.762Z",
+          "text": "🍂 Cozy stream schedule for the week! (Streams start ~11am PT) Tues: FFXIV Hangout ☕ Wed: FFXIV ➡️ WoW (Story & Housing) 🏡 Thurs: Big FFXIV Hangout 🍁 Fri: Sho",
+          "images": false,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-08-24T18:30:26.895Z",
+          "text": "🚨 FINAL DAY for the Alsvid mount drop! Campaign ends at 2AM PT Aug 25 ~ my birthday! 🎂 Long stream today for the final campaign push! 🐰 💜 Subs are discounte",
+          "images": false,
+          "terms": [
+            "ffxiv",
+            "ff14",
+            "final fantasy xiv",
+            "xiv"
+          ]
+        },
+        {
+          "at": "2026-08-09T22:19:40.569Z",
+          "text": "FF14 famously crashed & burned on launch before being reborn.. ☄️ at 3:30 PM PT, Im FINALLY watching the Noclip documentary about the death & rebirth of FFXIV! ",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "ff14"
+          ]
+        },
+        {
+          "at": "2026-07-29T18:01:56.158Z",
+          "text": "🔴 LIVE NOW for a long FFXIV stream! 🦄 To get the new Alsvid unicorn mount: Buy or gift 3 Twitch subs while I’m live in the FFXIV category 💜 Limited-time sub ",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "ff14"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2026-10-07T04:26:03.545Z",
+          "text": "I played 50+ hours of WoW Forever Beta and came out of it with a frog, a faction identity crisis, a loss of innocence about \"cider,\" and a new MMO obsession 😭 ",
+          "images": false
+        },
+        {
+          "at": "2026-10-02T20:13:11.846Z",
+          "text": "WE SURVIVED TELCO HELL! 🔥 The internet is fixed!💃🙌 I'm going live at ABOUT ~1:30 PT to finallyyyy play WoW Forever again, back on my lvl 20 Skyborne Shaman a",
+          "images": false
+        },
+        {
+          "at": "2026-10-02T01:57:03.290Z",
+          "text": "Internet update: Ive entered the deepest circle of ISP customer service hell 😭🔥 ISP: “We escalated your case. Advanced Systems Team will call you within 24hrs",
+          "images": true
+        },
+        {
+          "at": "2026-09-11T20:15:01.454Z",
+          "text": "BLIZZCON TOMORROW! 🥳 I’ll be streaming it all on Twitch Sat+Sun & Twitch Drops will be active too 🩷 Get a mount for 8 hours watchtime+ other prizes @ 2,4 & 12",
+          "images": true
+        },
+        {
+          "at": "2026-08-27T19:12:14.269Z",
+          "text": "Dolly Parton's been one of my biggest role models for as long as i can remember.💔She reminded me a lot of my mom, who was also a 'rhinestones & glam' country l",
+          "images": true
+        },
+        {
+          "at": "2026-08-26T18:50:30.185Z",
+          "text": "oh yea! I almost forgot to post about this! managed it at about 2am monday on 289ilvl Resto shaman 🙌🌊 lvl 47 DPS Valeera did her best tanking (better than on ",
+          "images": true
+        },
+        {
+          "at": "2026-08-26T04:08:40.303Z",
+          "text": "Thank yall so much for the birthday wishes! 🥹💗🎂 We brought it in live at midnight, finished the relic journey (!!), and I got an AMAZING Orchid chord synth \ud83c",
+          "images": true
+        },
+        {
+          "at": "2026-07-25T07:17:27.089Z",
+          "text": "WE ARE LIVE! 📢✨ Gathering in chat before the EU FanFest Keynote at 1am! ⏰🐇 Surviving tonight on night coffee, my garden zucchinis, and the unholy bitterness o",
+          "images": true
+        },
+        {
+          "at": "2026-07-24T21:53:50.082Z",
+          "text": "The fact that a GW2 dev's spouse was the one who originally photographed & named Jimothy is the wholesome lore I needed today!🥺 I love that they're putting him",
+          "images": false
+        },
+        {
+          "at": "2026-07-24T08:39:55.299Z",
+          "text": "Okay buns, reexamining the schedule and I've decided to not stream Friday. Didnt sleep last night & need to recover before the craziness this weekend! I'll be r",
+          "images": false
+        },
+        {
+          "at": "2026-07-24T01:53:12.019Z",
+          "text": "Hi everybun! We're trialing some new thumbnail artists right now, but I'm still taking apps to find the right person. 🎨 Looking for someone with: 🔸 YouTube ex",
+          "images": false
+        },
+        {
+          "at": "2026-04-11T00:06:31.368Z",
+          "text": "we've spent the week marveling at the Artemis II crew's kindness, curiosity, and commitment to science.. But today, we admire the other beautiful side of the hu",
+          "images": true
+        },
+        {
+          "at": "2026-04-06T23:42:25.085Z",
+          "text": "\"But ultimately we will always choose Earth. We will always choose each other.\" --Christina Koch, returning from the dark side of the moon The Artemis II crew h",
+          "images": false
+        },
+        {
+          "at": "2026-04-06T22:40:41.814Z",
+          "text": "i know im spamming BUT THIS INSANE!!!! THAT'S US!!! YOU AND ME LOL RIGHt noW 🌙 \"And to all of you down there on earth and around earth, we love you from the mo",
+          "images": true
+        },
+        {
+          "at": "2026-04-06T22:23:26.529Z",
+          "text": "SOBBING. The crew shared a space hug as they ask to name a lunar crater after Reid's wife who lost her life to cancer😭 \"It's a bright spot on the moon,\" Missio",
+          "images": false
+        }
+      ]
+    },
+    {
+      "handle": "ffxivteamcraft.com",
+      "displayName": "FFXIV Teamcraft",
+      "description": "A #FFXIV database with tooling to handle collaborative crafts easily. Powered by open source and community! https://ffxivteamcraft.com/\nMade by @supamiu.bsky.social, with skeets by Miu and Venili!",
+      "bioTerms": [
+        "ffxiv"
+      ],
+      "followers": 152,
+      "follows": 16,
+      "postsCount": 23,
+      "sample": {
+        "items": 50,
+        "pages": 1,
+        "exhausted": true,
+        "newest": "2026-07-30T11:25:14.693Z",
+        "oldest": "2025-01-28T15:03:43.869Z",
+        "daysSinceNewest": 74
+      },
+      "originals": {
+        "n": 15,
+        "ffxiv": 14,
+        "unclassified": 0,
+        "nonFfxivWithImages": 0,
+        "sharePct": 93.3
+      },
+      "replies": {
+        "n": 8,
+        "ffxiv": 5,
+        "unclassified": 0,
+        "nonFfxivWithImages": 1,
+        "sharePct": 62.5
+      },
+      "reposts": {
+        "n": 27,
+        "ffxiv": 15,
+        "unclassified": 0,
+        "nonFfxivWithImages": 4,
+        "sharePct": 55.6
+      },
+      "byMonth": {
+        "2025-01": 8,
+        "2025-02": 5,
+        "2025-03": 4,
+        "2025-04": 1,
+        "2025-05": 2,
+        "2025-06": 1,
+        "2025-07": 6,
+        "2025-08": 5,
+        "2025-09": 3,
+        "2025-10": 1,
+        "2025-12": 4,
+        "2026-01": 5,
+        "2026-03": 1,
+        "2026-04": 1,
+        "2026-05": 1,
+        "2026-07": 2
+      },
+      "termHits": {
+        "ffxiv": 32,
+        "ff14": 12,
+        "final fantasy 14": 1
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          13
+        ],
+        [
+          "ff14",
+          12
+        ],
+        [
+          "teamcrafter",
+          1
+        ],
+        [
+          "teamcrafttips",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "ffxivteamcraft.com",
+          3
+        ],
+        [
+          "tipeee.com",
+          2
+        ],
+        [
+          "guides.ffxivteamcraft.com",
+          2
+        ],
+        [
+          "patreon.com",
+          1
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-07-30T11:25:14.693Z",
+          "text": "#FFXIV Teamcraft has been updated with data from 7.55 and working inventory tracking/packet capture! Also, community member Toxix recently helped us create an A",
+          "images": false,
+          "terms": [
+            "ffxiv",
+            "ff14"
+          ]
+        },
+        {
+          "at": "2026-05-07T18:40:23.303Z",
+          "text": "#FFXIV Teamcraft is up to date for 7.5, even after today's hotfix! Reminder that with this major patch, Korean and Chinese FFXIV are now synced with the Global ",
+          "images": false,
+          "terms": [
+            "ffxiv",
+            "ff14"
+          ]
+        },
+        {
+          "at": "2026-03-24T13:51:31.732Z",
+          "text": "There sure have been a lot of #FF14 hotfixes lately! But it's okay, because Teamcraft has been managing to keep up with them. Packet capture is all good for glo",
+          "images": false,
+          "terms": [
+            "ffxiv",
+            "ff14"
+          ]
+        },
+        {
+          "at": "2025-12-16T15:44:28.310Z",
+          "text": "#FFXIV Teamcraft's website and desktop app have now been updated for global 7.4 and Chinese 7.35... And! Support has already been added for the NEW Traditional ",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "ff14"
+          ]
+        },
+        {
+          "at": "2025-10-31T21:03:14.061Z",
+          "text": "#FFXIV Teamcraft is now updated for Korean 7.3! Go enjoy making our last crafted crafting and gathering sets of this expansion. Hope the Global folks are still ",
+          "images": false,
+          "terms": [
+            "ffxiv",
+            "ff14"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2025-07-03T18:39:27.988Z",
+          "text": "And now for something completely different! Well, not completely. It should be right up your alley as DoH/DoL! Miu has been working on a game, and our Kickstart",
+          "images": false
+        }
+      ]
+    },
+    {
+      "handle": "gamerescape.com",
+      "displayName": "Gamer Escape",
+      "description": "A website that loves to talk about video games.\n\n🌎 https://gamerescape.com/\n📺 http://twitch.tv/gamerescape\n🔊 http://discord.gg/gamerescape\n\nFollow our Final Fantasy XIV Podcast: @aetheryteradio.gamerescape.com",
+      "bioTerms": [
+        "final fantasy xiv",
+        "xiv"
+      ],
+      "followers": 321,
+      "follows": 4,
+      "postsCount": 91,
+      "sample": {
+        "items": 200,
+        "pages": 3,
+        "exhausted": true,
+        "newest": "2026-10-12T03:10:57.459Z",
+        "oldest": "2024-01-07T17:52:29.169Z",
+        "daysSinceNewest": 0
+      },
+      "originals": {
+        "n": 78,
+        "ffxiv": 27,
+        "unclassified": 0,
+        "nonFfxivWithImages": 44,
+        "sharePct": 34.6
+      },
+      "replies": {
+        "n": 6,
+        "ffxiv": 2,
+        "unclassified": 0,
+        "nonFfxivWithImages": 3,
+        "sharePct": 33.3
+      },
+      "reposts": {
+        "n": 116,
+        "ffxiv": 103,
+        "unclassified": 1,
+        "nonFfxivWithImages": 9,
+        "sharePct": 89.6
+      },
+      "byMonth": {
+        "2024-01": 3,
+        "2024-02": 2,
+        "2024-03": 7,
+        "2024-05": 6,
+        "2024-06": 4,
+        "2024-07": 6,
+        "2024-08": 4,
+        "2024-09": 10,
+        "2024-10": 2,
+        "2024-11": 14,
+        "2024-12": 7,
+        "2025-01": 2,
+        "2025-02": 13,
+        "2025-03": 6,
+        "2025-04": 7,
+        "2025-05": 8,
+        "2025-06": 11,
+        "2025-07": 8,
+        "2025-08": 8,
+        "2025-09": 10,
+        "2025-10": 2,
+        "2025-12": 4,
+        "2026-01": 3,
+        "2026-02": 3,
+        "2026-03": 5,
+        "2026-04": 6,
+        "2026-05": 7,
+        "2026-06": 8,
+        "2026-07": 12,
+        "2026-08": 9,
+        "2026-09": 2,
+        "2026-10": 1
+      },
+      "termHits": {
+        "ffxiv": 131,
+        "dawntrail": 16,
+        "final fantasy xiv": 13,
+        "xiv": 13,
+        "finalfantasyxiv": 2,
+        "warrior of light": 1,
+        "msq": 1,
+        "shadowbringers": 1,
+        "a realm reborn": 1
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          25
+        ],
+        [
+          "ffxi",
+          7
+        ],
+        [
+          "ffxivfanfest",
+          5
+        ],
+        [
+          "paxwest",
+          4
+        ],
+        [
+          "paxwest2024",
+          4
+        ],
+        [
+          "dawntrail",
+          2
+        ],
+        [
+          "evercold",
+          1
+        ],
+        [
+          "monsterhunter",
+          1
+        ],
+        [
+          "ttrpg",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "gamerescape.com",
+          74
+        ],
+        [
+          "youtube.com",
+          4
+        ],
+        [
+          "goodsmileus.com",
+          2
+        ],
+        [
+          "amzn.to",
+          2
+        ],
+        [
+          "gleam.io",
+          1
+        ],
+        [
+          "ffxiv.gamerescape.com",
+          1
+        ],
+        [
+          "media.tenor.com",
+          1
+        ],
+        [
+          "jp.square-enix.com",
+          1
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-08-05T23:55:34.107Z",
+          "text": "New to #FFXIV? Make sure to check out our guide for progression and level locked content! ffxiv.gamerescape.com/wiki/Guide:P...",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-07-26T13:15:55.141Z",
+          "text": "#FFXIV's Naoki Yoshida answers questions from the media at the Berlin #FFXIVFanFest gamerescape.com/2026/07/26/f...",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-07-25T22:07:03.830Z",
+          "text": "Catch up on the latest #FFXIV Evercold news with our Keynote summary from the #FFXIVFanFest in Berlin! gamerescape.com/2026/07/25/f...",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-07-21T22:10:01.083Z",
+          "text": "\"it ultimately feels incredibly gross\" @rofldrg.bsky.social talks about the taco shirt that broke his Warrior of Light's back in #FFXIV gamerescape.com/2026/07/",
+          "images": true,
+          "terms": [
+            "ffxiv",
+            "warrior of light"
+          ]
+        },
+        {
+          "at": "2026-07-20T17:23:29.125Z",
+          "text": "After being dark for weeks, the website for #FFXIV mobile finally opened back up, announcing the game would be shut down in China, and the global version was no",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2026-09-10T16:37:46.509Z",
+          "text": "We had a chance to sit down with Final Fantasy VII Revelation at PAX West!...and frankly, 45 minutes simply wasn't enough time to scratch the surface of all the",
+          "images": true
+        },
+        {
+          "at": "2026-07-31T19:00:12.967Z",
+          "text": "Make sure to get your entries in! Only a couple of days left!",
+          "images": false
+        },
+        {
+          "at": "2026-07-28T23:39:42.930Z",
+          "text": "We're teaming up with @officialpax.bsky.social to give four lucky winners a four-day badge to PAX West 2026! gamerescape.com/2026/07/28/g...",
+          "images": true
+        },
+        {
+          "at": "2026-06-05T19:40:56.464Z",
+          "text": "Pet Food Alpha was a large part of the foundation for what would eventually become Gamer Escape. Thank you to everyone for your support over the years!",
+          "images": false
+        },
+        {
+          "at": "2026-05-15T18:50:00.295Z",
+          "text": "SE has teamed up with animator Waboku for this short video celebrating #FFXI's 24th anniversary! www.youtube.com/watch?v=pSIY...",
+          "images": false
+        },
+        {
+          "at": "2026-03-27T23:09:23.764Z",
+          "text": "\"I loved everything about Requiem, and I hope that those who decide to take the plunge will feel the same way.\" gamerescape.com/2026/03/27/r... Our review of Re",
+          "images": true
+        },
+        {
+          "at": "2026-02-24T16:05:28.797Z",
+          "text": "We recently had a chance to check out Life is Strange: Reunion from @square-enix-games.com and saw how the narrative will reunite Max and Chloe. gamerescape.com",
+          "images": true
+        },
+        {
+          "at": "2025-09-02T22:38:32.760Z",
+          "text": "We had a chance to check out all three of the demos that @capcomusa.com had at their booth during #PAXWest over the weekend! Check out this thread for all our h",
+          "images": true
+        },
+        {
+          "at": "2025-09-02T17:54:46.241Z",
+          "text": "We sat down with Kazutoyo Maehiro and Hiroshi Minagawa to talk about Final Fantasy Tactics: The Ivalice Chronicles. gamerescape.com/2025/09/02/p...",
+          "images": true
+        },
+        {
+          "at": "2025-08-09T18:22:35.493Z",
+          "text": "Is it Patch 7.3 content time? Heck YES it is! Check out our guide the latest dungeon! (Beware, spoilers!) gamerescape.com/2025/08/09/f...",
+          "images": false
+        },
+        {
+          "at": "2025-07-30T16:14:29.253Z",
+          "text": "\"This one is worth your time. Just be aware ahead of time that it is a bit lightweight, because otherwise you might be a touch disappointed.\" Our review of the ",
+          "images": true
+        },
+        {
+          "at": "2025-07-30T16:03:34.748Z",
+          "text": ".@thegamekitchen.com \"...shows once again that they’re a very skilled studio, and their efforts in handling a franchise like this is a testament to their own sk",
+          "images": true
+        },
+        {
+          "at": "2025-07-17T23:46:24.937Z",
+          "text": "\"If you’re a fan of the AI series, picking this one up is a no-brainer. Even with a few issues, it’s still more AI, and that’s enough for me.\" Our review of No ",
+          "images": true
+        },
+        {
+          "at": "2025-07-09T16:01:19.327Z",
+          "text": "\"I can’t decisively say it sticks the landing yet because it’s still up in the air, but it sure looks like a knockout.\" Our preview look at Ra Ra Boom, coming s",
+          "images": true
+        },
+        {
+          "at": "2025-07-04T17:42:13.239Z",
+          "text": "We asked #FFXI Producer Yoji Fujito 11 questions about topics including Sel Phiner, Echoes of Vana'diel, in-person events, and what he'd pick with his Bonanza K",
+          "images": true
+        }
+      ]
+    },
+    {
+      "handle": "mrhappy1227.bsky.social",
+      "displayName": "Mrhappy1227",
+      "description": "Twitch, YouTube, Final Fantasy. My life in three phrases \n\nBusiness email: [email redacted]",
+      "bioTerms": [],
+      "followers": 5042,
+      "follows": 85,
+      "postsCount": 235,
+      "sample": {
+        "items": 200,
+        "pages": 2,
+        "exhausted": false,
+        "newest": "2026-06-15T21:03:31.037Z",
+        "oldest": "2024-10-22T00:18:10.192Z",
+        "daysSinceNewest": 118
+      },
+      "originals": {
+        "n": 166,
+        "ffxiv": 22,
+        "unclassified": 0,
+        "nonFfxivWithImages": 111,
+        "sharePct": 13.3
+      },
+      "replies": {
+        "n": 26,
+        "ffxiv": 5,
+        "unclassified": 1,
+        "nonFfxivWithImages": 0,
+        "sharePct": 20
+      },
+      "reposts": {
+        "n": 8,
+        "ffxiv": 4,
+        "unclassified": 0,
+        "nonFfxivWithImages": 2,
+        "sharePct": 50
+      },
+      "byMonth": {
+        "2024-10": 13,
+        "2024-11": 47,
+        "2024-12": 25,
+        "2025-01": 27,
+        "2025-02": 51,
+        "2025-03": 6,
+        "2025-04": 2,
+        "2025-05": 2,
+        "2025-06": 1,
+        "2025-07": 3,
+        "2025-08": 2,
+        "2026-05": 17,
+        "2026-06": 4
+      },
+      "termHits": {
+        "ffxiv": 22,
+        "xiv": 7,
+        "final fantasy xiv": 6,
+        "ff14": 2,
+        "eorzea": 2,
+        "dawntrail": 2,
+        "lalafell": 1,
+        "finalfantasyxiv": 1
+      },
+      "topTags": [
+        [
+          "ffxiv",
+          4
+        ],
+        [
+          "ad",
+          3
+        ],
+        [
+          "pathofexile2",
+          2
+        ],
+        [
+          "sponsored",
+          2
+        ],
+        [
+          "poe2",
+          1
+        ],
+        [
+          "ffxivmobile",
+          1
+        ],
+        [
+          "finalfantasyxivmobile",
+          1
+        ],
+        [
+          "ffxivmobilefirstreveal",
+          1
+        ]
+      ],
+      "linkDomains": [
+        [
+          "twitch.tv",
+          23
+        ],
+        [
+          "youtu.be",
+          12
+        ],
+        [
+          "store.steampowered.com",
+          2
+        ],
+        [
+          "form.jotform.com",
+          2
+        ],
+        [
+          "steelseries.pbj2.net",
+          2
+        ],
+        [
+          "gleam.io",
+          2
+        ],
+        [
+          "flibustierparis.com",
+          2
+        ],
+        [
+          "ffxivmobile.com",
+          2
+        ],
+        [
+          "makeship.com",
+          1
+        ],
+        [
+          "esccoffee.co",
+          1
+        ]
+      ],
+      "samplesFfxiv": [
+        {
+          "at": "2026-05-17T18:30:41.260Z",
+          "text": "I am a Globe-trotting Fisher #ffxiv",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-05-15T11:50:35.462Z",
+          "text": "Hey all, State of the Realm will be pushed back to TOMORROW at Noon EST instead of today. We'll have Cider Spider joining us to talk about FFXIV's achievement s",
+          "images": false,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-05-13T02:03:56.412Z",
+          "text": "Many of you may remember Ethys, a member of the XIV community who was would deep-dive into the game's lore? Well, he's working on a new roguelite called Hawker ",
+          "images": false,
+          "terms": [
+            "xiv"
+          ]
+        },
+        {
+          "at": "2026-05-09T16:40:30.556Z",
+          "text": "Just three more Ocean Fishing blue fish 👍#ffxiv",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        },
+        {
+          "at": "2026-05-09T00:33:37.783Z",
+          "text": "Caught my little ronkan friend during State of the Realm, followed by this little guy a few minutes ago 👍 #ffxiv",
+          "images": true,
+          "terms": [
+            "ffxiv"
+          ]
+        }
+      ],
+      "samplesNonFfxiv": [
+        {
+          "at": "2026-06-15T20:57:41.529Z",
+          "text": "I am actually almost done with fishing altogether this is crazy",
+          "images": true
+        },
+        {
+          "at": "2026-06-12T21:35:14.952Z",
+          "text": "And then there were 3",
+          "images": true
+        },
+        {
+          "at": "2026-06-01T14:46:40.124Z",
+          "text": "On the eve of Ultimate, I have indeed caught every fabled fish in Ocean Fishing. Achievement log for Ocean Fishing almost completely filled out 👍 Now I'm truly",
+          "images": true
+        },
+        {
+          "at": "2026-05-16T11:23:55.789Z",
+          "text": "I did indeed get up at 4AM to attempt a fish catch today. It did indeed, slip. See you in 7 days fish",
+          "images": false
+        },
+        {
+          "at": "2026-05-10T10:46:19.332Z",
+          "text": "Was doing Saigaskin Maps (EW Solo 90 Maps) for the Complete 20 Achievement and suddenly I found myself 10m richer 👍",
+          "images": true
+        },
+        {
+          "at": "2026-05-08T00:49:56.273Z",
+          "text": "Someone in my chat told me one of the new fish is up tonight and said, \"but it's probably a bit too late for you\". It's at 11PM. I mean they're right but that's",
+          "images": false
+        },
+        {
+          "at": "2026-05-07T20:57:38.081Z",
+          "text": "The amount of Chort related puns in my chat the last couple of days have been nothing chort of amazing.",
+          "images": false
+        },
+        {
+          "at": "2026-05-07T11:03:35.047Z",
+          "text": "237th channel to ever be partnered is pretty cool ngl 👍 12 years this month!",
+          "images": true
+        },
+        {
+          "at": "2026-05-07T02:37:41.956Z",
+          "text": "Me: I shouldn't ask my raid team to wait while I attempt this rare fish window. Woops: WHY DIDNT YOU ASK?",
+          "images": false
+        },
+        {
+          "at": "2026-05-07T02:20:13.148Z",
+          "text": "Hey all, I'm not super active here because all the multipost apps I tried sucked and I'm lazy when it comes to cross posting. Any decent multiposter apps? 🫠",
+          "images": false
+        },
+        {
+          "at": "2025-06-10T13:47:43.563Z",
+          "text": "GATEway FATE is doing a survey with a chance to win a two day pass, with a potential upgrade to include a Scion merch bundle. Fill out the survey below for your",
+          "images": false
+        },
+        {
+          "at": "2025-05-09T00:55:11.652Z",
+          "text": "Hey all, Last year my cat Aloha passed away rather abruptly, and to honor his memory I wanted to get a plush made of him for myself and all of my community to e",
+          "images": true
+        },
+        {
+          "at": "2025-04-09T21:38:01.642Z",
+          "text": "Bet you didn't have that on your 2025 Bingo cards. Don't worry neither did we.",
+          "images": false
+        },
+        {
+          "at": "2025-03-11T00:03:39.181Z",
+          "text": "Took buying a new HDMI splitter cause the old one was broken but I can finally get to working on my final main line FF platinums tomorrow 👍",
+          "images": true
+        },
+        {
+          "at": "2025-03-10T04:17:25.671Z",
+          "text": "Ivy: Where are the treats human?",
+          "images": true
+        }
+      ]
+    }
+  ]
+}
