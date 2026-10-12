@@ -278,7 +278,7 @@ Guards:
 ### Moderation Pipeline
 
 1. **Local profanity filter** (multi-language word lists in `data/profanity/`) — fast, runs first.
-2. **Perspective API** (optional) — ML toxicity scoring when `PERSPECTIVE_API_KEY` is set. **Sunsets 2026-12-31** (`DEPRECATIONS.md`); unset the key before then and this tier is skipped cleanly.
+2. **Perspective API** (optional) — ML toxicity scoring when `PERSPECTIVE_API_KEY` is set. **Sunsets 2026-12-31** (`DEPRECATIONS.md`). Unsetting the key does not skip the tier quietly: with no scorer, every new or text-edited preset the local list passes is reported `unscored` and queued for manual review (`moderation-service.ts`, FINDING-019).
 3. **Manual review** — moderators approve/reject via `PATCH /moderation/:id/status`; `moderation_log` records the action.
 
 ### Preview Images (R2 + image-worker)

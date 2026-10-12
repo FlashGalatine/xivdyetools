@@ -216,7 +216,7 @@ border-color: var(--theme-border);
 - `vendor-lit` — Lit framework
 - `vendor-spectral` — `spectral.js` (reached only through `@xivdyetools/core/blending`; core declares the dependency)
 - `vendor` — everything else from `node_modules`
-- `modals` — named for the welcome + changelog modals, but Rolldown merges the shared color engine (ColorService, APIService, core utils) into it, so it is the app's core runtime and loads on every visit (budget 286 KB)
+- `modals` — named for the welcome + changelog modals, but Rolldown merges the shared color engine (ColorService, APIService, core utils) into it, so it is the app's core runtime and loads on every visit (budget 287 KB since web-app 5.15.4)
 
 Each tool component is its own dynamic import.
 
