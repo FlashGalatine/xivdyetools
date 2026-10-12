@@ -33,8 +33,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`defaultCharaTwin` prefers a twin with a known acquisition line.**
   - The order is now passes, dyeable, any Grand Company, not Dated, has an acquisition line, more
     dye channels, lowest row. When no twin passes it names the lowest row that has a line among the
-    twins the check judged (every twin when no rules arrived), else the lowest row, so a twin with
-    unknown rules never reads as a fix.
+    twins the check judged (every twin when no rules arrived), else the lowest judged row, so a twin
+    with unknown rules never reads as a fix. Before, that last fallback was the lowest row even when
+    the check had not judged it, so a family whose lowest row came back without rules read as a free
+    choice instead of a block.
   - The lowest row of a family often had no known source while an identical twin did: old
     non-Augmented tomestone gear is no longer sold (Crystarium Ring of Fending vs the Augmented
     one), Housemaid's vs Loyal Housemaid's, Far Eastern Journey vs Exclusive Far Eastern Journey.
