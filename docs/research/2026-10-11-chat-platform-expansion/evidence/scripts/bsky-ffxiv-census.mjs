@@ -6,13 +6,20 @@
 //   node bsky-ffxiv-census.mjs starterpacks        # FFXIV starter packs with joined counts
 //   node bsky-ffxiv-census.mjs feeds               # FFXIV feed generators with like counts
 //   node bsky-ffxiv-census.mjs tags [days=7]       # posts per day per hashtag (searchPosts)
-//   node bsky-ffxiv-census.mjs stream [minutes=60] # live Jetstream sample: FFXIV share of all posts
-//   node bsky-ffxiv-census.mjs focus [items=200]   # how much of each handle's recent feed is FFXIV
+//   node bsky-ffxiv-census.mjs stream [minutes=60] [fromIso]
+//                                                  # Jetstream count: FFXIV share of all posts, live,
+//                                                  # or replayed from fromIso while Jetstream still holds it
+//   node bsky-ffxiv-census.mjs focus [items=200] [actors.json]
+//                                                  # how much of each handle's recent feed is FFXIV
+//                                                  # (with an actors output file: its top 50)
 //
 // searchPosts may refuse unauthenticated calls. If it does, set BSKY_HANDLE and
 // BSKY_APP_PASSWORD (an app password, never the account password) and the script
 // logs in to bsky.social and sends the same query through the PDS.
 // Output is JSON on stdout; progress goes to stderr.
+
+import { readFileSync } from 'node:fs';
+import { basename } from 'node:path';
 
 const PUBLIC = 'https://public.api.bsky.app/xrpc';
 const PDS = 'https://bsky.social/xrpc';
@@ -266,9 +273,11 @@ function postText(post) {
 const hasImages = (post) => Boolean(post.record?.embed?.images?.length || post.record?.embed?.media?.images?.length);
 const FOCUS_NOTE = 'Shares are FFXIV posts over classifiable posts in the sampled feed. A post is FFXIV when its text, tags, alt text, link card or quoted post contains a focus term (termHits). Unclassified = fewer than 3 letters of text (image-only or emoji-only); they are left out of the share. nonFfxivWithImages counts non-FFXIV posts that carry images, which may still be FFXIV screenshots. The sample covers the newest items only, so an old account\'s history beyond it is not measured.';
 
-async function focus(maxItems = 200) {
+// With an `actors` output file, focus() checks that run's top 50 instead of HANDLES.
+async function focus(maxItems = 200, actorsFile) {
+  const handles = actorsFile ? JSON.parse(readFileSync(actorsFile, 'utf8')).top50.map((a) => a.handle) : HANDLES;
   const out = [];
-  for (const handle of HANDLES) {
+  for (const handle of handles) {
     try {
       const p = await xrpc('app.bsky.actor.getProfile', { actor: handle });
       const items = [];
@@ -337,7 +346,7 @@ async function focus(maxItems = 200) {
       log(`${handle}: ${e.message ?? e}`);
     }
   }
-  return { asOf: new Date().toISOString(), maxItems, note: FOCUS_NOTE, accounts: out };
+  return { asOf: new Date().toISOString(), maxItems, source: actorsFile ? `top50 of ${basename(actorsFile)}` : 'HANDLES', note: FOCUS_NOTE, accounts: out };
 }
 
 async function tags(days = 7) {
@@ -388,17 +397,29 @@ async function tags(days = 7) {
   };
 }
 
-async function stream(minutes = 60) {
+async function stream(minutes = 60, fromIso) {
   const base = 'wss://jetstream2.us-east.bsky.network/subscribe?wantedCollections=app.bsky.feed.post';
-  let total = 0, matched = 0, firstUs = 0, lastUs = 0, reconnects = 0;
+  // Replay: start from a past cursor and stop at the window's end, judged by event time.
+  const fromUs = fromIso ? Date.parse(fromIso) * 1000 : 0;
+  const endUs = fromUs ? fromUs + minutes * 6e7 : 0;
+  let total = 0, matched = 0, firstUs = 0, lastUs = 0, reconnects = 0, duplicates = 0, done = false;
   const byLang = {}, byTerm = {}, samples = [];
+  // Jetstream's log itself carries the same post twice under a later time_us (2026-10-12:
+  // 452 of 7,600 creates in three minutes came back about 3 minutes later), so the time_us
+  // check below cannot catch them. Key each post by repo and record key instead.
+  const seen = new Set();
   const started = Date.now();
-  const deadline = started + minutes * 60000;
+  // Live: `minutes` of wall time. Replay: until the window's end, with an hour's slack for a stalled socket.
+  const deadline = started + minutes * 60000 + (endUs ? 3600000 : 0);
   const onEvent = (m) => {
     if (!m.time_us || m.time_us <= lastUs) return; // replayed after a reconnect
+    if (endUs && m.time_us >= endUs) { done = true; return; }
     lastUs = m.time_us;
     if (!firstUs) firstUs = m.time_us;
     if (m.kind !== 'commit' || m.commit?.operation !== 'create') return;
+    const key = `${m.did}/${m.commit.rkey}`;
+    if (seen.has(key)) { duplicates++; return; }
+    seen.add(key);
     total++;
     const rec = m.commit.record ?? {};
     const hay = `${rec.text ?? ''} ${(rec.tags ?? []).join(' ')} ${(rec.facets ?? []).flatMap((f) => f.features ?? []).map((x) => x.tag ?? '').join(' ')}`.toLowerCase();
@@ -412,23 +433,25 @@ async function stream(minutes = 60) {
   };
   const coveredMinutes = () => (lastUs - firstUs) / 6e7;
   // Results print only at the end, so checkpoint to stderr: a killed run still leaves its counts.
-  const tick = setInterval(() => log(JSON.stringify({ checkpoint: new Date().toISOString(), coveredMinutes: +coveredMinutes().toFixed(1), reconnects, allPosts: total, ffxivPosts: matched, byLang, byTerm })), 5 * 60000);
+  const tick = setInterval(() => log(JSON.stringify({ checkpoint: new Date().toISOString(), coveredMinutes: +coveredMinutes().toFixed(1), reconnects, allPosts: total, duplicatesSkipped: duplicates, ffxivPosts: matched, byLang, byTerm })), 5 * 60000);
   // Jetstream drops long-lived sockets (one closed after 15 minutes on 2026-10-12), so
   // reconnect from the last event's cursor: Jetstream replays from there, leaving no gap.
-  while (Date.now() < deadline) {
+  while (!done && Date.now() < deadline) {
     await new Promise((resolve) => {
-      const ws = new WebSocket(lastUs ? `${base}&cursor=${lastUs}` : base);
+      const cursor = lastUs || fromUs;
+      const ws = new WebSocket(cursor ? `${base}&cursor=${cursor}` : base);
       const stop = setTimeout(() => ws.close(), Math.max(deadline - Date.now(), 0));
-      ws.onopen = () => log(lastUs ? `reconnected from cursor ${lastUs}` : `connected; sampling for ${minutes} min`);
+      ws.onopen = () => log(lastUs ? `reconnected from cursor ${lastUs}` : fromUs ? `replaying ${minutes} min from ${fromIso}` : `connected; sampling for ${minutes} min`);
       ws.onmessage = (ev) => {
         let m;
         try { m = JSON.parse(ev.data); } catch { return; }
         onEvent(m);
+        if (done) ws.close();
       };
       ws.onerror = (e) => log(`jetstream: ${e.message ?? 'socket error'}`);
       ws.onclose = () => { clearTimeout(stop); resolve(); };
     });
-    if (Date.now() < deadline) {
+    if (!done && Date.now() < deadline) {
       reconnects++;
       log(`socket closed at ${new Date().toISOString()}; reconnecting`);
       await sleep(2000);
@@ -437,20 +460,21 @@ async function stream(minutes = 60) {
   clearInterval(tick);
   const hours = coveredMinutes() / 60;
   return {
-    window: { start: new Date(started).toISOString(), minutes, coveredMinutes: +coveredMinutes().toFixed(1), reconnects },
-    allPosts: total, ffxivPosts: matched,
+    window: { mode: endUs ? 'replay' : 'live', start: new Date(endUs ? fromUs / 1000 : started).toISOString(), minutes, coveredMinutes: +coveredMinutes().toFixed(1), reconnects,
+      firstEvent: firstUs ? new Date(firstUs / 1000).toISOString() : null },
+    allPosts: total, duplicatesSkipped: duplicates, ffxivPosts: matched,
     ffxivPerHour: hours ? +(matched / hours).toFixed(1) : 0, allPerHour: hours ? Math.round(total / hours) : 0,
     ffxivSharePct: total ? +((100 * matched) / total).toFixed(4) : 0,
     byLang, byTerm,
-    note: 'Substring match; "gpose"/"eorzea" also catch non-FFXIV uses rarely, and trending-hashtag bots that list #ff14 are counted. Rates are per hour of event time covered (coveredMinutes), not wall time. Run at several times of day; one hour is not a daily rate.',
+    note: 'Substring match; "gpose"/"eorzea" also catch non-FFXIV uses rarely, and trending-hashtag bots that list #ff14 are counted. Each post counts once (by repo and record key); duplicatesSkipped are copies Jetstream sent again. Rates are per hour of event time covered (coveredMinutes), not wall time. Run at several times of day; one hour is not a daily rate.',
     samples,
   };
 }
 
-const [cmd, arg] = process.argv.slice(2);
-const run = { profiles, actors, starterpacks, feeds, tags: () => tags(Number(arg ?? 7)), stream: () => stream(Number(arg ?? 60)), focus: () => focus(Number(arg ?? 200)) }[cmd];
+const [cmd, arg, arg2] = process.argv.slice(2);
+const run = { profiles, actors, starterpacks, feeds, tags: () => tags(Number(arg ?? 7)), stream: () => stream(Number(arg ?? 60), arg2), focus: () => focus(Number(arg ?? 200), arg2) }[cmd];
 if (!run) {
-  log('usage: node bsky-ffxiv-census.mjs <profiles|actors|starterpacks|feeds|tags [days]|stream [minutes]|focus [items]>');
+  log('usage: node bsky-ffxiv-census.mjs <profiles|actors|starterpacks|feeds|tags [days]|stream [minutes] [fromIso]|focus [items] [actors.json]>');
   process.exit(2);
 }
 console.log(JSON.stringify(await run(), null, 2));

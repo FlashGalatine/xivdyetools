@@ -1,0 +1,1078 @@
+{
+ "asOf": "2026-10-12T16:05:06.245Z",
+ "source": "top50 of 20261012T0259Z-actors.json",
+ "method": "Grade = FFXIV share of classifiable original posts: 80%+ focused, 50-80% mostly, 20-50% partly, under 20% not. Accounts under 80% on the keyword count were graded by a Sonnet worker from the samples (one step of adjustment allowed); flagged and low-confidence ones were hand-counted by an Opus verifier, and the one it could not settle went to Fable.",
+ "tally": {
+  "focused": 6,
+  "not": 30,
+  "partly": 10,
+  "mostly": 4
+ },
+ "accounts": [
+  {
+   "rank": 1,
+   "handle": "en.finalfantasyxiv.com",
+   "followers": 100605,
+   "keywordSharePct": 80.4,
+   "keywordGrade": "focused",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "grade": "focused",
+   "gradedBy": "official FFXIV account",
+   "mainContent": "official FFXIV news"
+  },
+  {
+   "rank": 2,
+   "handle": "stachional.bsky.social",
+   "followers": 29473,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "personal chatter, adult content promo, Twitch streaming of video games",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 54 originals name FFXIV; the samples are personal chatter, health talk and Twitch promo (the bio only says 'ffxiv on brynhildr').",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 3,
+   "handle": "glacierunreal.bsky.social",
+   "followers": 25178,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "adult furry art, some possibly FFXIV",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 49 originals name FFXIV, though the bio says 'furry and ffxiv art' and the short-caption image posts may be unnamed FFXIV or OC art, so the keyword count may undercount.",
+    "confidence": "low",
+    "needsHandCount": true
+   },
+   "handCount": {
+    "window": "2025-08-17T18:57:19.047Z..2026-10-12T10:41:05.345Z",
+    "counts": {
+     "ffxiv": 0,
+     "other": 32,
+     "unclear": 17
+    },
+    "sharePct": 0,
+    "extendedWindow": null,
+    "basis": "No original names FFXIV or its vocabulary; 'for aether!' follows the account's commission-credit pattern, and the named characters are from other franchises or unknown. If all 17 unclear captions were FFXIV the ceiling would be 35%, but no text points that way.",
+    "confidence": "medium"
+   },
+   "grade": "not",
+   "gradedBy": "Opus verifier hand count"
+  },
+  {
+   "rank": 4,
+   "handle": "jp.finalfantasyxiv.com",
+   "followers": 20851,
+   "keywordSharePct": 100,
+   "keywordGrade": "focused",
+   "activity": "active",
+   "lastPost": "2026-10-09",
+   "grade": "focused",
+   "gradedBy": "official FFXIV account",
+   "mainContent": "official FFXIV news"
+  },
+  {
+   "rank": 5,
+   "handle": "stilldancing.bsky.social",
+   "followers": 20109,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-08",
+   "mainContent": "politics, TV/sci-fi fandom, reposts of news and quotes",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 49 originals and 3 of 101 reposts mention FFXIV; the samples are US politics, TV fandoms (Trek, Who, Supergirl) and music.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 6,
+   "handle": "bulkingcanuck.bsky.social",
+   "followers": 17933,
+   "keywordSharePct": 0.9,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-10",
+   "mainContent": "personal posts, fitness, furry/bara themes, selfies",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "1 of 113 originals mentions FFXIV; the samples are lifting, furry and gay-community chatter and selfies, with FFXIV only a bio line.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 7,
+   "handle": "accelldraws.bsky.social",
+   "followers": 16801,
+   "keywordSharePct": 4.5,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "cute animal art (foxes, bunnies, cats)",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "1 of 22 originals mentions FFXIV; the other samples are cute foxes, bunnies and cats, though only 22 originals were sampled.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 8,
+   "handle": "baydews.com",
+   "followers": 13597,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "character art and commissions, mostly World of Warcraft",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 46 originals name FFXIV; the samples and tags (worldofwarcraft 13, oc, commission) show World of Warcraft character art and commission business, and FFXIV is only one hashtag in the bio.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 9,
+   "handle": "ffxivxd.bsky.social",
+   "followers": 12604,
+   "keywordSharePct": 8.7,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "FFXIV lore fun-facts posts with art, plus reposts of FFXIV content",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "up",
+    "reason": "Keyword share is 8.7% but nearly all non-FFXIV samples are plainly FFXIV lore (Haukke Manor, Shadowkeeper, Crystal Exarch, Doma) and the bio is a FFXIV fun-facts account, so the true share is near 100%; capped at one step.",
+    "confidence": "high",
+    "needsHandCount": true
+   },
+   "handCount": {
+    "window": "2026-08-27T22:52:00.775Z..2026-10-12T15:17:25.808Z",
+    "counts": {
+     "ffxiv": 45,
+     "other": 0,
+     "unclear": 1
+    },
+    "sharePct": 100,
+    "extendedWindow": null,
+    "basis": "All 46 originals read; every one is an Eorzea Encyclopaedia-style lore entry (places, characters, bestiary). The one without an FFXIV-specific name is a damselfly bestiary post, left unclear; counted as other it would give 97.8%, still focused.",
+    "confidence": "high"
+   },
+   "grade": "focused",
+   "gradedBy": "Opus verifier hand count"
+  },
+  {
+   "rank": 10,
+   "handle": "snow-fredel.bsky.social",
+   "followers": 11944,
+   "keywordSharePct": 25.7,
+   "keywordGrade": "partly",
+   "activity": "active",
+   "lastPost": "2026-10-10",
+   "mainContent": "freelance commission art across several fandoms (FFXIV, HSR, Genshin, D&D, Arknights)",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "none",
+    "reason": "Samples show a freelance commission artist mixing FFXIV YCH/OC art with Arknights, Honkai, D&D and generic artist-community posts, consistent with 25.7%.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 11,
+   "handle": "aliceinwonderworld.bsky.social",
+   "followers": 10743,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "dormant",
+   "lastPost": "2026-03-04",
+   "mainContent": "cat photos and greetings, general chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "All originals are pet-cat photos and holiday greetings with zero FFXIV hits; FFXIV appears only as one item in a long hobby list in the bio.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 12,
+   "handle": "yuyaowl.bsky.social",
+   "followers": 10602,
+   "keywordSharePct": 6.3,
+   "keywordGrade": "not",
+   "activity": "lapsed",
+   "lastPost": "2026-09-02",
+   "mainContent": "adult art, many fandoms, occasional FFXIV",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "Mostly untitled commission or other-fandom adult art with a few FFXIV pieces, so the true share is probably somewhat higher but still well under 20%.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 13,
+   "handle": "nemgraphics.bsky.social",
+   "followers": 10492,
+   "keywordSharePct": 25,
+   "keywordGrade": "partly",
+   "activity": "active",
+   "lastPost": "2026-10-01",
+   "mainContent": "commission art across many video-game fandoms, some FFXIV",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "none",
+    "reason": "About a quarter of originals are tagged #ffxivart; the rest are commissions for BlazBlue, SF6, Deadlock and other games, and the bio points to a separate FFXIV side account.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 14,
+   "handle": "rene0elric.bsky.social",
+   "followers": 9773,
+   "keywordSharePct": 14.1,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "freelance art and commentary, multifandom with frequent FFXIV art and talk",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "up",
+    "reason": "Many non-keyword samples are plainly FFXIV (Venat, Fray, Yoshi-P event covers, WoL OC trading, an FFXIV JP fanart contest), and 36% of reposts are FFXIV, so the true share is likely 30-45%.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 15,
+   "handle": "inspyart.bsky.social",
+   "followers": 9719,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "dormant",
+   "lastPost": "2025-12-30",
+   "mainContent": "adult/pin-up commission art, OCs and several fandoms",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "No FFXIV post among 65 originals; the samples are commission and OC pin-up art with Elden Ring and Baldur's Gate 3 tags.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 16,
+   "handle": "xantouke.bsky.social",
+   "followers": 9328,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "commission artist: original characters, crochet, personal chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 43 originals mention FFXIV; the samples are commission updates, original character designs, crochet and personal chatter.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 17,
+   "handle": "kitkaloid.bsky.social",
+   "followers": 9173,
+   "keywordSharePct": 1.9,
+   "keywordGrade": "not",
+   "activity": "lapsed",
+   "lastPost": "2026-08-20",
+   "mainContent": "Genshin Impact fanart and character design",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "1 of 52 originals is FFXIV (a 2024 anniversary art contest entry); the rest is Genshin Impact fanart and character design.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 18,
+   "handle": "dranoko.bsky.social",
+   "followers": 8623,
+   "keywordSharePct": 9.4,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "furry/Pokemon commission art, occasional FFXIV doodles",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "6 of 64 originals are FFXIV; most originals are furry and Pokemon commissions, with a few personal FFXIV doodles.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 19,
+   "handle": "dreadwyrmtrance.bsky.social",
+   "followers": 8435,
+   "keywordSharePct": 4.3,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "mixed fandom doodles and chatter (FFXIV, Uma, others), some 18+ art",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "up",
+    "reason": "Only 2 of 47 originals use FFXIV terms, but several non-keyword samples are plainly FFXIV ('my wols', Zenos, Ryne & Gaia), so the true share is probably 20-35%.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 20,
+   "handle": "grisser.bsky.social",
+   "followers": 8147,
+   "keywordSharePct": 23.7,
+   "keywordGrade": "partly",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "personal chatter and gaming, with tagged FFXIV posts",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "none",
+    "reason": "14 of 59 originals are FFXIV, mostly tagged #BigDogFFXIV; the rest is general personal, gaming and media chatter, and the bio says the art goes to a separate account.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 21,
+   "handle": "goblinicaart.bsky.social",
+   "followers": 8135,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "adult art (original characters and TTRPG), personal updates",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "Zero FFXIV hits in 82 originals; samples are adult art of original/TTRPG characters, personal updates and a comic, and the bio points FFXIV content to a separate alt account.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 22,
+   "handle": "shilin.bsky.social",
+   "followers": 7976,
+   "keywordSharePct": 6,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "original-character art, commissions, comic and shop promotion",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "Only 3 of 50 originals name FFXIV; the rest are original-character art, comic and shop posts, and the bio sends FFXIV content to a separate xiv account.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 23,
+   "handle": "drawingkuma.bsky.social",
+   "followers": 7927,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "transformation art, mostly reposts, mixed fandom chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "No FFXIV term in 23 originals and 1 of 150 reposts; samples are transformation art talk, Kingdom Hearts/FF8 jokes and Patreon news.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 24,
+   "handle": "dapandabanda.bsky.social",
+   "followers": 7878,
+   "keywordSharePct": 24.4,
+   "keywordGrade": "partly",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "art across several fandoms (FFXIV, Star Wars, Kingdom Hearts) plus chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "none",
+    "reason": "11 of 45 originals and 7 of 16 reposts are FFXIV; the non-FFXIV samples are Star Wars, Kingdom Hearts, a zine, Halloween and personal posts, consistent with the bio's multi-fandom list.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 25,
+   "handle": "charmwitch.bsky.social",
+   "followers": 7768,
+   "keywordSharePct": 10.3,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "Fire Emblem fanart and videos, personal posts, some FFXIV solo-run clips",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "4 of 39 originals name FFXIV (solo Palace of the Dead clips), but the sample covers only one week and is dominated by Fire Emblem fanart and personal posts.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 26,
+   "handle": "benedictg.bsky.social",
+   "followers": 7608,
+   "keywordSharePct": 27,
+   "keywordGrade": "partly",
+   "activity": "lapsed",
+   "lastPost": "2026-09-10",
+   "mainContent": "FFXIV animation and 3D work, plus other JRPG talk",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "mostly",
+    "moved": "up",
+    "reason": "Several non-FFXIV samples are plainly FFXIV content (retainer joke, a Warrior of Light animation, a Visna model render) and 16 of 19 reposts are FFXIV, so the true share is likely around 50%.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "mostly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 27,
+   "handle": "crimsonsun.bsky.social",
+   "followers": 7595,
+   "keywordSharePct": 25.9,
+   "keywordGrade": "partly",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "illustration across Final Fantasy titles, plus personal posts",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "none",
+    "reason": "7 of 27 originals name FFXIV; the non-FFXIV samples are Triple Triad cards of other FF characters, life posts and commissions, matching the bio's FFVII/XIV/XV split (small sample).",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 28,
+   "handle": "sabato-n.bsky.social",
+   "followers": 7590,
+   "keywordSharePct": 6.3,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "Dragon's Dogma 2 streaming, art, personal chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "Only 4 of 63 originals name FFXIV; the samples are Dragon's Dogma 2 streaming and chatter, hanfu and a convention.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 29,
+   "handle": "paddedtiggy.bsky.social",
+   "followers": 7445,
+   "keywordSharePct": 1.3,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "adult personal photos/videos",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "1 of 75 classifiable originals names FFXIV (a Discord ad); the rest are adult photos and videos of the poster.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 30,
+   "handle": "greenbeannsfw.bsky.social",
+   "followers": 7363,
+   "keywordSharePct": 2.3,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "adult art, likely mixed fandoms incl. FFXIV",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "up",
+    "reason": "Samples are nearly all image-only adult art, and several captions read as FFXIV job/race humor (Conjurer, Shinobi, Miqo'te collab), but others are another fandom, so the true share is uncertain.",
+    "confidence": "low",
+    "needsHandCount": true
+   },
+   "handCount": {
+    "window": "2026-07-01T04:09:01.225Z..2026-10-12T16:00:59.062Z",
+    "counts": {
+     "ffxiv": 10,
+     "other": 0,
+     "unclear": 58
+    },
+    "sharePct": 100,
+    "extendedWindow": null,
+    "basis": "Every caption with an identifiable fandom is FFXIV (jobs, races, NPCs, seasonal events, Arcadion bosses) and none names another franchise, but 58 of 68 originals are uncaptioned or generic, so the true share falls anywhere from 15% to 100%.",
+    "confidence": "medium"
+   },
+   "fableRuling": {
+    "handle": "greenbeannsfw.bsky.social",
+    "verifierReadingSound": true,
+    "spotCheck": "Re-read all 69 originals in 2026-07-01..2026-10-12 from text only: each of the verifier's 10 FFXIV calls is in the caption, and no caption, alt text, tag or quoted post names another franchise (alt text and tags are empty on every post). The tank/healer/DPS-check posts are MMO-generic and rightly left unclear, and collab credits to FFXIV-named artists are rightly not subject evidence; with other = 0 the share stays 100% even if the generic job calls and the memory-identified boss names are dropped.",
+    "recordedGrade": "focused",
+    "countInTally": "Counted as focused, with a flag: text-only grade (images not inspected by constraint), 10 of 69 captions identifiable; the 2.3% keyword share is a term-list miss, since the captions use lore vocabulary with no hashtags or alt text.",
+    "reason": "The grading rule leaves out posts with nothing to classify, so the share over classifiable posts is 10/10. The only evidence that could lower the grade is a post identifying a non-FFXIV subject, and there is none in 69 originals; the bio names FFXIV and the keyword-classified reposts are FFXIV-only. Recording unresolved would drop an account whose direction the text settles, and a conservative mostly or partly would be a number derived from nothing; the thin basis belongs in the note, not the grade.",
+    "confidence": "medium"
+   },
+   "grade": "focused",
+   "gradedBy": "Fable ruling on an unresolved hand count"
+  },
+  {
+   "rank": 31,
+   "handle": "necromoss.bsky.social",
+   "followers": 7349,
+   "keywordSharePct": 51.5,
+   "keywordGrade": "mostly",
+   "activity": "active",
+   "lastPost": "2026-10-03",
+   "mainContent": "OC/fan art: FFXIV (WoL) plus Marvel OC and other fandoms",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "mostly",
+    "moved": "none",
+    "reason": "34 of 66 originals are FFXIV and the #wolrianger tag is itself FFXIV fan work that the keyword count misses, but there is a large Marvel OC and other-fandom share and a posting gap in Mar-Jul.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "mostly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 32,
+   "handle": "mcstronghuge.bsky.social",
+   "followers": 7338,
+   "keywordSharePct": 20.3,
+   "keywordGrade": "partly",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "streamer/editor: personal thoughts plus FFXIV housing tours",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "none",
+    "reason": "12 of 59 originals name FFXIV (housing-tour streams), and several non-FFXIV samples are also stream or PvP posts, but most are personal opinions and unrelated chatter.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 33,
+   "handle": "larxarcanum.bsky.social",
+   "followers": 7207,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "adult furry/anthro art and reposts, general chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 12 originals name FFXIV and the samples are adult art, memes and fandom chatter; n=12 is small but nothing suggests hidden FFXIV art.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 34,
+   "handle": "jullika.bsky.social",
+   "followers": 7165,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-03",
+   "mainContent": "adult art across several fandoms and OCs, plus reposts",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 14 originals name FFXIV; samples are OC art, Fire Emblem, Kickstarter promotion and chatter, and only 11 of 75 reposts hit FFXIV terms; originals are sparse.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 35,
+   "handle": "lindalithen.bsky.social",
+   "followers": 7115,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "freelance illustrator (D&D, TTRPG art) and personal chatter, many reposts",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "0 of 34 originals name FFXIV; samples are D&D art, politics, cats and podcasts, with one Thancred joke that never names the game.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 36,
+   "handle": "riiein.bsky.social",
+   "followers": 6974,
+   "keywordSharePct": 24.2,
+   "keywordGrade": "partly",
+   "activity": "lapsed",
+   "lastPost": "2026-07-18",
+   "mainContent": "freelance fanart across several games (HSR, Endfield, Genshin, FFXIV) and convention tabling",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "none",
+    "reason": "15 of 62 classifiable originals, and the non-FFXIV samples are plainly Honkai Star Rail and Arknights Endfield art, so no move.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 37,
+   "handle": "itsmeishmi.bsky.social",
+   "followers": 6969,
+   "keywordSharePct": 50,
+   "keywordGrade": "mostly",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "artist: FFXIV fanart and commissions mixed with OCs and pet posts",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "mostly",
+    "moved": "none",
+    "reason": "Exactly 50% of only 12 originals; the FFXIV posts are fanart tagged #FFXIVART, the others are own OC art and pet posts (one OC is the user's FFXIV character per the bio), so it sits at the grade boundary on a tiny sample.",
+    "confidence": "low",
+    "needsHandCount": false
+   },
+   "handCount": {
+    "window": "2026-09-05T04:31:12.872Z..2026-10-12T14:31:34.356Z",
+    "counts": {
+     "ffxiv": 9,
+     "other": 3,
+     "unclear": 0
+    },
+    "sharePct": 75,
+    "extendedWindow": {
+     "window": "2026-06-23T12:34:52.216Z..2026-10-12T14:31:34.356Z",
+     "counts": {
+      "ffxiv": 25,
+      "other": 15,
+      "unclear": 0
+     },
+     "sharePct": 62.5
+    },
+    "basis": "The recurring OC is the user's FFXIV character per the bio, so that art counts as FFXIV. Over the newest 40 originals the share is 62.5%, and it stays at or above 50% with the OC posts treated as other.",
+    "confidence": "high"
+   },
+   "grade": "mostly",
+   "gradedBy": "Opus verifier hand count"
+  },
+  {
+   "rank": 38,
+   "handle": "wyrming.bsky.social",
+   "followers": 6899,
+   "keywordSharePct": 5.9,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "adult art, sketches and mostly reposts",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "1 of 17 originals names FFXIV; the rest is adult themed art, jokes and daily chatter, and 156 of 200 feed items are reposts.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 39,
+   "handle": "mousie.yogscast.com",
+   "followers": 6901,
+   "keywordSharePct": 19.5,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "streamer (Yogscast), daily selfies and personal posts, several games",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "The FFXIV-flagged samples are mostly 'live on Twitch' posts, and the non-FFXIV samples are daily selfies and life posts, so the share is just under the 20% line.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 40,
+   "handle": "idyllruin.bsky.social",
+   "followers": 6553,
+   "keywordSharePct": 8.5,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-09",
+   "mainContent": "FFXIV OC art and fancomic, commissions, also other fandoms; some adult art",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "up",
+    "reason": "Many non-FFXIV samples are plainly FFXIV content (Evercold expansion, Zenos OC art, 'light party commission', patch talk, 'zenos minion'), so the true share is probably 40% or more, two grades above the keyword score.",
+    "confidence": "medium",
+    "needsHandCount": true
+   },
+   "handCount": {
+    "window": "2026-04-26T12:48:47.846Z..2026-10-09T23:35:15.358Z",
+    "counts": {
+     "ffxiv": 24,
+     "other": 13,
+     "unclear": 10
+    },
+    "sharePct": 64.9,
+    "extendedWindow": null,
+    "basis": "Posts naming FFXIV content without the keyword (Evercold, Zenos, Ascians, shards, light party) and the user's Warrior of Light OC lift it to 24/37. The grade holds under most stricter readings (51-60%); it falls to partly (48.6%) only when several strict choices are combined.",
+    "confidence": "medium"
+   },
+   "grade": "mostly",
+   "gradedBy": "Opus verifier hand count"
+  },
+  {
+   "rank": 41,
+   "handle": "jocatffxiv.bsky.social",
+   "followers": 6398,
+   "keywordSharePct": 30.9,
+   "keywordGrade": "partly",
+   "activity": "active",
+   "lastPost": "2026-09-16",
+   "mainContent": "FFXIV glamour, housing and job-quest commentary from a dedicated FFXIV alt account",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "mostly",
+    "moved": "up",
+    "reason": "The 'FFXIV Alt' account's non-FFXIV samples are mostly FFXIV talk that never names the game (glamour, PLD job quests, Ultimate at Fan Fest, gil undercutting), and 72% of its reposts are FFXIV, so the true share is likely above 80%.",
+    "confidence": "medium",
+    "needsHandCount": true
+   },
+   "handCount": {
+    "window": "2024-12-01T07:23:06.225Z..2026-09-16T06:51:26.714Z",
+    "counts": {
+     "ffxiv": 50,
+     "other": 1,
+     "unclear": 4
+    },
+    "sharePct": 98,
+    "extendedWindow": null,
+    "basis": "All 55 originals read; nearly all are FFXIV (glamour, housing, gil and the market board, PLD job quests, Fan Fest and Ultimate, raids, Dawntrail, the account's FFXIV character). The one 'other' is a generic MMO ToS post; counting all 8 character-only posts as other would still give 82%.",
+    "confidence": "high"
+   },
+   "grade": "focused",
+   "gradedBy": "Opus verifier hand count"
+  },
+  {
+   "rank": 42,
+   "handle": "rb-illustration.co.uk",
+   "followers": 6211,
+   "keywordSharePct": 6.2,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "illustrator and streamer: commissions, original novel, several games",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "The non-FFXIV samples are stream announcements for Grandia and Assassin's Creed, original-novel posts, Miku fanart, and commission and Patreon posts, with only a few FFXIV posts.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 43,
+   "handle": "theneonfox.bsky.social",
+   "followers": 6184,
+   "keywordSharePct": 4.9,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "adult furry art and commissions, general gaming chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "The account mostly posts adult furry commission art and general gaming and life opinions, and its FFXIV hits are mainly Hrothgar mentions.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 44,
+   "handle": "dreff.bsky.social",
+   "followers": 5994,
+   "keywordSharePct": 7.7,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-04",
+   "mainContent": "art (some adult) across several fandoms, with a few FFXIV pieces",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "The only FFXIV hits are Hrothgar mentions and most posts are image-only art with caption fragments (one 'evercold glam wip' suggests some FFXIV art, but nothing indicates a majority).",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 45,
+   "handle": "tiffanylockheart.bsky.social",
+   "followers": 5934,
+   "keywordSharePct": 19.2,
+   "keywordGrade": "not",
+   "activity": "lapsed",
+   "lastPost": "2026-08-21",
+   "mainContent": "personal posts, FFXIV gpose and cosplay, FGC/streamer chatter",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "partly",
+    "moved": "up",
+    "reason": "19.2% sits right on the 20% line, and the non-FFXIV samples include an untagged FFXIV Ultimate clear (UWU) and image posts (e.g. cosplay of a WoL is already counted), so the true share is likely above 20%.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "partly",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 46,
+   "handle": "tiredgays.bsky.social",
+   "followers": 5919,
+   "keywordSharePct": 4,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-12",
+   "mainContent": "adult content (photos), occasional FFXIV/gaming posts",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "Only 4 of 101 originals mention FFXIV; the feed is dominated by daily adult photo posts with occasional gaming asides.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 47,
+   "handle": "fittingxivsongs.bsky.social",
+   "followers": 5904,
+   "keywordSharePct": 80,
+   "keywordGrade": "focused",
+   "activity": "dormant",
+   "lastPost": "2025-05-07",
+   "grade": "focused",
+   "gradedBy": "keyword share of 80% or more (keyword matching only undercounts)",
+   "mainContent": "images paired with FFXIV music, tagged #ffxiv"
+  },
+  {
+   "rank": 48,
+   "handle": "luciasatalina.bsky.social",
+   "followers": 5859,
+   "keywordSharePct": 0,
+   "keywordGrade": "not",
+   "activity": "lapsed",
+   "lastPost": "2026-09-02",
+   "mainContent": "personal art and life posts; game concept artist (Fable), Enderal/Elder Scrolls fan art",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "Zero FFXIV hits in 40 originals; samples are personal art (Enderal, Elder Scrolls style characters), pets and day-to-day posts, with no FFXIV art evident.",
+    "confidence": "high",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 49,
+   "handle": "cloudofdarkness.bsky.social",
+   "followers": 5799,
+   "keywordSharePct": 7.7,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-08",
+   "mainContent": "candle/Etsy shop promotion, writing/voice acting, Dragon Age and other fandoms; FFXIV reposts (34%)",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "2 of 26 originals hit; samples are mostly candle/etsy shop promotion and Dragon Age tags, with one uncounted WoL OC post, so the true share is still well under 20%.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  },
+  {
+   "rank": 50,
+   "handle": "dunesand.bsky.social",
+   "followers": 5785,
+   "keywordSharePct": 4.4,
+   "keywordGrade": "not",
+   "activity": "active",
+   "lastPost": "2026-10-11",
+   "mainContent": "art and convention (Gateway Fate) merch, game director chatter, several fandoms with some FFXIV",
+   "bioNamesFfxiv": true,
+   "worker": {
+    "grade": "not",
+    "moved": "none",
+    "reason": "2 of 45 originals hit; samples are convention (Gateway Fate) merch, birds, other-game art and chatter, with a few uncounted WoL-related items but not enough to move two grades.",
+    "confidence": "medium",
+    "needsHandCount": false
+   },
+   "grade": "not",
+   "gradedBy": "Sonnet worker"
+  }
+ ]
+}

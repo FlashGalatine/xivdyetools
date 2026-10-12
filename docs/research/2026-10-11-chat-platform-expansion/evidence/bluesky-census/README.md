@@ -12,11 +12,17 @@ Raw output of [`../scripts/bsky-ffxiv-census.mjs`](../scripts/bsky-ffxiv-census.
 | `20261011T1706Z-starterpacks.json` | `starterpacks` | FFXIV starter packs with real member counts |
 | `20261011T1706Z-feeds.json` | `feeds` | FFXIV feed generators with like counts |
 | `20261012T0259Z-actors.json` | `actors` | Accounts whose profile names FFXIV, with follower bands and the top 50 |
-| `20261012T0354Z-stream-na.json` | `stream 60` | Every new post on the network for one hour, 03:54–04:54 UTC on 2026-10-12, counted against the FFXIV terms |
+| `20261012T0354Z-stream-na.json` | `stream 60` | The live NA-evening hour, 03:54–04:54 UTC on 2026-10-12. Its counts include posts Jetstream sent twice; the replay below has the corrected ones |
 | `20261012T0354Z-stream-na.log` | `stream 60` | The same run's stderr: the 5-minute checkpoints and the three reconnects |
+| `20261012T0354Z-stream-na-replay.json` | `stream 60 <start>` | The same hour replayed from Jetstream's log, each post counted once |
+| `20261012T1602Z-stream-eu.json` | `stream 60` | The live EU-evening hour, 16:02–17:02 UTC. Counts include posts sent twice, like the NA live file |
+| `20261012T1602Z-stream-eu.log` | `stream 60` | That run's stderr |
+| `20261012T1602Z-stream-eu-replay.json` | `stream 60 <start>` | The EU hour replayed, each post counted once |
 | `20261012T1547Z-focus.json` | `focus 200` | How much of each account's newest 200 feed items (or all of them, if fewer) is about FFXIV, for the 4 official and 6 community accounts, with samples. One business email in a bio was redacted after the run |
 | `20261012T1547Z-focus-handcount-kaiyoko.tsv` | hand count | Every original Kaiyoko post (56), labelled `ffxiv`, `other` or `unclear` by an Opus verifier |
 | `20261012T1547Z-focus-handcount-mrhappy1227.tsv` | hand count | The same for the 166 Mrhappy1227 originals in the `focus` window |
+| `20261012T1605Z-focus-top50.json` | `focus 200 <actors file>` | The same count for the top 50 accounts of the `actors` run |
+| `20261012T1605Z-focus-top50-verdicts.json` | review | The grade for each of those 50 and what it rests on: keyword share, the worker's verdict, and the hand counts and Fable ruling where there was one |
 
 ## Results
 
@@ -52,14 +58,20 @@ The Japanese handle is `jp.`, not `ja.`. EN follows exactly four accounts: Squar
 - Most are personal: 410 have no likes and 273 have 1–9. 65 have 10+, and 12 have 100+.
 - Top five by likes: FFXIV After Dark 🔞 (561), Final Fantasy XIV (439), FFXIV Art (SFW) (366), XIV Question of the Day (352), FF14_unofficial (306).
 
-**Live stream, one hour** (03:54–04:54 UTC on Monday 2026-10-12: Sunday 20:54 in California, 23:54 in New York, Monday 12:54 in Tokyo):
-- 156,577 new posts on the whole network; **143 named FFXIV: 0.091%**, about 1 post in 1,100.
-- Languages: English 91 (64%), Japanese 43 (30%), none declared 6, Portuguese 2, Spanish 1.
-- Terms matched (one post can match several): `gpose` 57, `ff14` 56, `ffxiv` 54, `eorzea` 5, `final fantasy xiv` 2, `エオルゼア` 2.
-- The rate held steady: 7 to 19 FFXIV posts in each 5-minute slice.
-- Jetstream closed the socket three times, at about 3, 29 and 52 minutes, and each reconnect resumed from the cursor. The evidence that no posts were lost is the volume per 5-minute slice: every slice held 11,480 to 13,993 posts, and the three slices with a reconnect held 13,370, 12,948 and 13,551. (`coveredMinutes` is last event time minus first, so it would not show a gap in the middle; it is the denominator for the rates, not the proof.)
-- This is one hour, not a daily rate. The hashtag count above averages 42 tagged posts an hour; this hour matched 143 by text. The gap mixes three effects: text matching finds posts with no hashtag; it also finds hashtags outside the 10 tracked ones (`#lalaxiv` and `#ff14漣亭` appear in the samples), along with trending-hashtag bots; and this hour may not be typical. The EU and JP runs are what will separate these.
-- The Japanese share (30%) is in line with the 7-day hashtag share (27.8%). The day was a Japanese public holiday (Sports Day, the second Monday of October; from the holiday calendar, not checked here), and it shows no visible effect.
+**Live stream, two hours.** Every new post on the network, counted against the stream terms. The counts below come from replays of each hour with each post counted once. The live runs counted posts that Jetstream sent twice; see *Limits*.
+
+| Hour (UTC, 2026-10-12) | Local time | New posts | Named FFXIV | Share | English | Japanese |
+|---|---|---:|---:|---:|---:|---:|
+| 03:54–04:54 (NA evening) | Sunday 20:54 in California, 23:54 in New York; Monday 12:54 in Tokyo | 134,992 | **121** | **0.090%** | 78 (64%) | 35 (29%) |
+| 16:02–17:02 (EU evening) | Monday 17:02 in London, 18:02 in Berlin; Tuesday 01:02 in Tokyo | 139,973 | **113** | **0.081%** | 83 (73%) | 15 (13%) |
+
+- **About 1 post in 1,100 to 1,200 names FFXIV,** in both hours. The FFXIV count per hour is steady: 121 and 113.
+- **Languages follow the clock.** Japanese drops from 29% at Tokyo's lunchtime to 13% at Tokyo's 1 a.m. European languages stay small even in the European evening: 9 of the 113 posts (Spanish 2, Finnish 2, French 2, German, Italian and Dutch 1 each). The rest of the NA hour: none declared 5, Portuguese 2, Spanish 1. The rest of the EU hour: none declared 5, Korean 1.
+- **Terms matched** (one post can match several): NA `ffxiv` 48, `gpose` 48, `ff14` 47, `eorzea` 4, `final fantasy xiv` 2, `エオルゼア` 2; EU `ffxiv` 61, `gpose` 42, `ff14` 30, `eorzea` 7, `final fantasy xiv` 3, `파판14` 1.
+- **The replays are the same stream as the live runs.** Their raw counts, before removing re-sent copies, match the live totals within 9 posts (NA 156,584 vs 156,577; EU 147,136 vs 147,127), and the NA replay's first event is 0.06 seconds after its start. Jetstream still held both hours when they were replayed, at about 17:08 UTC the same day.
+- **These are two hours, not a daily rate.** The hashtag count above averages 42 tagged posts an hour; these hours matched 121 and 113 by text. The gap has three causes: text matching finds posts with no hashtag; it finds hashtags outside the 10 tracked ones (`#lalaxiv` and `#ff14漣亭` appear in the samples), along with trending-hashtag bots; and an evening hour may not be typical.
+- **The EU hour fell on a maintenance day.** Several sampled posts say the game's servers were down ("ffxiv is down for the day"); this is from the post text, not checked against the Lodestone.
+- **The Japanese share in the NA hour (29%) is in line with the 7-day hashtag share (27.8%).** That day was a Japanese public holiday (Sports Day, the second Monday of October; from the holiday calendar, not checked here), and it shows no visible effect.
 
 **Account focus** (the six community accounts, 2026-10-12). How much of each account's own Bluesky feed is about FFXIV, from the `focus` run, with a verdict from one Sonnet worker per account:
 
@@ -83,6 +95,29 @@ What this means for README §2.2's ratio table:
 - Kaiyoko's Bluesky account has been silent for 22 months, so its 2,616 followers are an audience frozen at the end of 2024. Mrhappy1227 is an FFXIV creator whose Bluesky account is mostly about other things and has been quiet since June. Zepla's Bluesky posts are now mostly about other games.
 - The 0.10 median ratio therefore rests on two clean pairs, and the X figures are still unverified.
 
+**Top 50 accounts by followers** (2026-10-12). The same count, run on the 50 most-followed accounts from the `actors` file, the accounts whose own profile names FFXIV:
+
+| Grade | Accounts | Their followers |
+|---|---:|---:|
+| Focused | 6 | 153,725 |
+| Mostly | 4 | 28,479 |
+| Partly | 10 | 84,510 |
+| Not | 30 | 305,158 |
+
+- **Only 10 of the 50 post mostly or only about FFXIV.**
+  - Two are the official EN and JP accounts.
+  - Three are FFXIV accounts by design: a lore account (`ffxivxd`), an FFXIV alt account (`jocatffxiv`), and a music-meme account dormant since 2025-05 (`fittingxivsongs`).
+  - Five are artists whose work is mostly FFXIV: `benedictg`, `necromoss`, `itsmeishmi`, `idyllruin`, `greenbeannsfw`.
+- **The other 40 are artists, streamers and personal accounts that name FFXIV in their bio among other interests.** 30 of them post almost nothing about it. 14 of the 47 reviewed accounts mainly post adult art or photos.
+- **Some FFXIV activity lives on separate accounts.** Four artists' bios send their FFXIV work to another account (`nemgraphics`, `grisser`, `goblinicaart`, `shilin`), and those accounts are not in this top 50.
+- **What it means for the account count.** The 42,691 figure and its follower bands count accounts that name FFXIV, not accounts about FFXIV. Among the most-followed, about one in five is an FFXIV account. This does not scale to all 42,691: smaller accounts were not checked.
+- **How it was graded.**
+  - The 47 accounts under 80% on the keyword count were graded by eight Sonnet workers from each account's samples, with one grade of adjustment allowed.
+  - Workers flagged five accounts for a hand count and returned one more at low confidence. Opus verifiers read every original post for those six; each count is in the verdicts file.
+  - The keyword count missed badly on the lore and alt accounts: 8.7% became 100%, and 31% became 98%. Eight of the 50 ended above their keyword grade.
+  - One account (`greenbeannsfw`) could not be settled from text: most of its posts are uncaptioned images, and images were not inspected. Fable ruled it *focused*, because all 10 captions that name a subject are FFXIV and none names anything else.
+  - The 30 *not* grades rest on the workers' reading of samples, not on hand counts.
+
 ## Corrections to the cloud reports
 
 | Cloud report says | Census found |
@@ -101,7 +136,8 @@ The X side of B1a's ratio table is still unverified, so its 0.10 median ratio st
 
 ## Limits
 
-- **Relevance filter.** The search modes keep only results whose own text names FFXIV (the stream sampler's term list, NFKC-folded). It drops FFXIV players whose profile never says so: handles like `cressxiv` match the `ffxiv` search on "xiv" but are dropped. It also keeps accounts that mention FFXIV once, so it does not test FFXIV *focus*: the 42,691 are accounts that name FFXIV, not accounts about FFXIV. The focus check above covers only the six named community accounts.
+- **Relevance filter.** The search modes keep only results whose own text names FFXIV (the stream sampler's term list, NFKC-folded). It drops FFXIV players whose profile never says so: handles like `cressxiv` match the `ffxiv` search on "xiv" but are dropped. It also keeps accounts that mention FFXIV once, so it does not test FFXIV *focus*: the 42,691 are accounts that name FFXIV, not accounts about FFXIV. The focus checks above cover the six named community accounts and the top 50.
+- **Jetstream sends some posts twice.** Its stored log holds bursts of re-sent posts: thousands of recent posts arrive again, each copy 30 seconds to 10 minutes after the first and stamped with the later time. The NA hour held four bursts (21,592 copies, 14% of raw events), the EU hour one (7,163, 5%). They sit near the dropped connections, but they are in the log itself, so any client reading the stream sees them. `stream` now counts each post once, by repo and record key; the live files predate that.
 - **Hashtags only count hashtags.** Posts that mention FFXIV without one of the 10 tags are missed. The stream sample matches text too.
 - **Search results are what Bluesky's index returns.** Posts or accounts hidden by moderation, or never indexed, are invisible to every mode.
 - **No X comparison.** These modes have no X equivalent without the paid API.
@@ -117,15 +153,17 @@ All uncommitted edits to `bsky-ffxiv-census.mjs`, in order:
 5. `starterpacks` fetches each pack with `getStarterPack`: search results carry no member count.
 6. `stream` writes a checkpoint to stderr every 5 minutes, reconnects from Jetstream's cursor when the socket drops, and reports rates per hour of event time covered.
 7. A new `focus` mode measures how much of each handle's own feed is about FFXIV. It uses a wider term list than the other modes (expansion names, races, "fashion report" and the like), records which term matched each post, and leaves image-only posts out of the share. `mrhappy1227.bsky.social` joins the handle list, since README §2.2's ratio table includes it; the `profiles` file above predates that.
+8. `focus` can take an `actors` output file and check its top 50 instead of the handle list.
+9. `stream` counts each post once, by repo and record key, and reports how many re-sent copies it skipped. Given a start time, it replays that hour from Jetstream's log instead of listening live. The search modes (`tags`, `actors`, `starterpacks`, `feeds`) are unaffected: their results are keyed by URI.
 
 ## Runs not kept
 
 - **EU-evening stream, 2026-10-11 from 16:57 UTC.** Killed when the session ended, and the script printed nothing until the end. That is why change 6 added checkpoints.
-- **First NA-evening stream, 2026-10-12 from 02:51 UTC.** Jetstream closed the socket after 15 minutes and the script did not reconnect, so the per-hour rates covered a quarter of the hour they claimed. Its share figure is usable: 26 FFXIV posts out of 41,206 (0.063%) in the 15.2 live minutes. The kept run an hour later reconnected three times and covered the full hour.
+- **First NA-evening stream, 2026-10-12 from 02:51 UTC.** Jetstream closed the socket after 15 minutes and the script did not reconnect, so the per-hour rates covered a quarter of the hour they claimed. Its share figure is usable: 26 FFXIV posts out of 41,206 (0.063%) in the 15.2 live minutes. Like the later live runs, its counts may include posts Jetstream sent twice. The kept run an hour later reconnected three times and covered the full hour.
 - **Unfiltered and page-capped `actors`, `starterpacks` and `feeds` runs**, replaced by the files above.
 
 ## Still to run
 
-- `stream 60` in the EU evening (about 16:00–20:00 UTC) and the JP evening (about 11:00–14:00 UTC). The NA-evening run is done.
+- `stream 60` in the JP evening (about 11:00–14:00 UTC). The NA and EU hours are done. Run it live, then replay the same hour (`stream 60 <start>`) while Jetstream still holds it, and keep the replay's counts.
 - Record X follower counts by hand for the same accounts (README §5). Check that each X figure comes from the same persona: GPOSERS posts on X as `GPOSERS_FFXIV`.
-- The focus check covers the six named community accounts only. The top 50 from `actors` are unchecked.
+- The focus check stops at the top 50 accounts by followers. Smaller accounts are unchecked.

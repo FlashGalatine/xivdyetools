@@ -1,0 +1,59 @@
+{
+  "window": {
+    "mode": "replay",
+    "start": "2026-10-12T16:02:42.725Z",
+    "minutes": 60,
+    "coveredMinutes": 60,
+    "reconnects": 0,
+    "firstEvent": "2026-10-12T16:02:42.737Z"
+  },
+  "allPosts": 139973,
+  "duplicatesSkipped": 7163,
+  "ffxivPosts": 113,
+  "ffxivPerHour": 113,
+  "allPerHour": 139975,
+  "ffxivSharePct": 0.0807,
+  "byLang": {
+    "en": 83,
+    "ja": 15,
+    "es": 2,
+    "fi": 2,
+    "?": 5,
+    "it": 1,
+    "ko": 1,
+    "fr": 2,
+    "nl": 1,
+    "de": 1
+  },
+  "byTerm": {
+    "ff14": 30,
+    "ffxiv": 61,
+    "gpose": 42,
+    "파판14": 1,
+    "final fantasy xiv": 3,
+    "eorzea": 7
+  },
+  "note": "Substring match; \"gpose\"/\"eorzea\" also catch non-FFXIV uses rarely, and trending-hashtag bots that list #ff14 are counted. Each post counts once (by repo and record key); duplicatesSkipped are copies Jetstream sent again. Rates are per hour of event time covered (coveredMinutes), not wall time. Run at several times of day; one hour is not a daily rate.",
+  "samples": [
+    "ff14 servers apparently down and I was gonna spend tonight grinding for the car. Fuck",
+    "Cooking up some indoor lighting tests for brio and omg.. she is radiating even when she doesn’t wear",
+    "...FF14プレイ中もキーボードの光り方が変わっているっぽいのだけど、見ている余裕あまりないのよねw",
+    "what do you want?\n#maleviera |  #emobunny | #bunnyboy |  #kagebun | #gpose",
+    "えんてちゃ、かなめちゃと三人で\nミラプリ撮影会(*´˘`*)♡\n\n#スタジオぽぷり #FF14",
+    "ミラプリ撮影会そのに⸜(◍´˘`◍)⸝\n\n#スタジオぽぷり #FF14",
+    "ミラプリ撮影会そのさん⸜(◍´˘`◍)⸝\n\n#スタジオぽぷり #FF14",
+    "ミラプリ撮影会らすと⸜(◍´˘`◍)⸝\n\n#スタジオぽぷり #FF14",
+    "Maintenance day, time to showcase two of my favored muses in flattering displays. I do adore Khuja M",
+    "Gracias jo 🫂\n\nY ojalá, estoy un poco maldita a tener a mis amigos lejos, y ahora que he vuelto con ",
+    "October's going fast, eh? And yet, streaming continues! For the week of the 12th to 18th I'll be try",
+    "A pair of brats appear on your doorstep!\nWhat will you give them?\nFFXIV Halloween art by @thetictact",
+    "Ruby has gotten lost in Solution 9 after a night out, and is now trying to find her way back!\n\n#GRPo",
+    "ffxiv is down for the day. now i have to be productive ugh",
+    "Life Fiber Synchronize: Kamui Senketsu!\n\n#gposers | #gpose | #AuRa | #oc | #caimtober",
+    "撮ってもらえて嬉しい！昼間なら邪魔にならんかなーとジェスドロの練習ついでに極短時間だったけど立ち寄らせてもらったー。まじで最初入口わからなかった！あんなんできるんや( ˘ω˘ )\nお洒落な空間でフライ",
+    "i didn't have the inspiration to take a gpose before maintenance but even a simple smile to the side",
+    "✨SCHEDULE TIME✨\n\nThis week is the special day that the subathon is dedicated to! My birthday is goin",
+    "I got to enjoy my sickass gpose edit set for 30 minutes before I had horseshit thrown onto my plate.",
+    "Adding insult to downtime injury 😭 #ffxiv"
+  ]
+}
