@@ -13,7 +13,7 @@ Sprint 1 of the 2026-10-11 documentation remediation
 (`docs/audits/2026-10-11-documentation/REMEDIATION_PLAN.md`). **Documents only** — no web-app
 source changed. `PRIVACY*.md` and `TERMS_OF_SERVICE*.md` are served from `main`
 (`about-modal.ts` `POLICY_DOCS_BASE`), so they are live at merge; the deployed bundle differs
-only in its version string. `Last updated` is 2026-10-11 on all six variants of both documents.
+only in its version string. `Last updated` is 2026-10-12 (the merge date) on all six variants of both documents.
 5.15.1 and 5.15.2 are #284 and #285, open at the time of writing; merge them first.
 
 ### Fixed
