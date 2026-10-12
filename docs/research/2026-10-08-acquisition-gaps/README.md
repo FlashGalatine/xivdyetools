@@ -1,6 +1,6 @@
 # Acquisition gap review — 2026-10-08
 
-Status: Review complete. The inventory below records the pre-repair snapshot; see [confirmed repairs](confirmed-repairs.md), [coffer/vendor repairs](coffer-repairs.md) and [web research repairs](web-source-repairs.md) for subsequent work.
+Status: Review complete. The inventory below records the pre-repair snapshot; see [confirmed repairs](confirmed-repairs.md), [coffer/vendor repairs](coffer-repairs.md), [web research repairs](web-source-repairs.md) and [web research round 2](web-research-round-2.md) for subsequent work.
 
 ## Scope and evidence
 

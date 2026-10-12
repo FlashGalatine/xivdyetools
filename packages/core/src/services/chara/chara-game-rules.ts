@@ -109,8 +109,9 @@ export interface CharaTwinRules extends CharaItemRules {
 /**
  * Group a family's rows by identical rules. Even the 53-row families carry
  * only a handful of rule sets, which keeps the resolve answer small. Groups
- * come out ordered by their lowest row id, so the first holds the item the
- * block names. Rows without rules are left out; `[]` means nothing is known.
+ * come out ordered by their lowest row id (api-worker then moves the group
+ * holding the item it names to the front). Rows without rules are left out;
+ * `[]` means nothing is known.
  */
 export function groupCharaTwinRules(
   rows: ReadonlyArray<{ rowId: number; rules: CharaItemRules | null }>,

@@ -46,6 +46,19 @@ function family(
 
 const MIDLANDER_WOMAN = { race: 'Hyur', gender: 'Female' } as const;
 
+/** Give the listed rows a GPOSERS acquisition line; family() builds members without one. */
+function withLines(
+  item: CharaTwinFamily<ReturnType<typeof names>>,
+  lines: Record<number, string>,
+): CharaTwinFamily<ReturnType<typeof names>> {
+  const line = (itemId: number) => (lines[itemId] ? { acquisition: lines[itemId] } : {});
+  return {
+    ...item,
+    ...line(item.itemId),
+    alternates: item.alternates.map((m) => ({ ...m, ...line(m.itemId) })),
+  };
+}
+
 const COIF = family(
   [372, 'Dated Hempen Coif'],
   [
@@ -176,6 +189,97 @@ describe('defaultTwin', () => {
     const pick = defaultTwin(twinsOf(item, 1, MIDLANDER_WOMAN));
     expect([10, 11]).toContain(pick.itemId);
     expect(pick.names.en).toBe('Dated Cap');
+  });
+
+  describe('a known acquisition line', () => {
+    it('names the higher row when only it has a line (identical rules)', () => {
+      const ring = withLines(family([10, 'Ring'], [[11, 'Augmented Ring']], [group([10, 11], 1)]), {
+        11: 'Vendor - Town (280 Tomestones)',
+      });
+      expect(defaultTwin(twinsOf(ring, 1, MIDLANDER_WOMAN)).itemId).toBe(11);
+    });
+
+    it('keeps the lowest row when both or neither twin has a line', () => {
+      const ring = family([10, 'Ring'], [[11, 'Augmented Ring']], [group([10, 11], 1)]);
+      expect(defaultTwin(twinsOf(ring, 1, MIDLANDER_WOMAN)).itemId).toBe(10);
+      const both = withLines(ring, { 10: 'Line 10', 11: 'Line 11' });
+      expect(defaultTwin(twinsOf(both, 1, MIDLANDER_WOMAN)).itemId).toBe(10);
+    });
+
+    it('does not outrank dyeable: an unlined dyeable twin beats a lined undyeable one', () => {
+      const hat = withLines(
+        family([10, 'Plain Hat'], [[11, 'Plain Hat']], [group([10], 1), group([11], 0)]),
+        { 11: 'Line 11' },
+      );
+      // The file dyes nothing, so both pass; dyeable still wins
+      expect(defaultTwin(twinsOf(hat, 0, MIDLANDER_WOMAN)).itemId).toBe(10);
+    });
+
+    it('does not outrank any Grand Company or not Dated', () => {
+      const coat = withLines(
+        family(
+          [10, "Serpent Private's Coat"],
+          [[11, 'Plain Coat']],
+          [group([10], 1, { grandCompany: 2 }), group([11], 1)],
+        ),
+        { 10: 'Line 10' },
+      );
+      expect(defaultTwin(twinsOf(coat, 1, MIDLANDER_WOMAN)).itemId).toBe(11);
+      const cap = withLines(
+        family([10, 'Dated Cap'], [[11, 'Cap']], [group([10], 1), group([11], 1)]),
+        { 10: 'Line 10' },
+      );
+      expect(defaultTwin(twinsOf(cap, 1, MIDLANDER_WOMAN)).itemId).toBe(11);
+    });
+
+    it('outranks an extra dye channel the file does not use', () => {
+      const gloves = withLines(
+        family([10, 'Gloves'], [[11, 'Gloves']], [group([10], 2), group([11], 1)]),
+        { 11: 'Line 11' },
+      );
+      expect(defaultTwin(twinsOf(gloves, 1, MIDLANDER_WOMAN)).itemId).toBe(11);
+    });
+
+    it('when nothing passes, names the lowest twin with a line, else the lowest row', () => {
+      // The file dyes channel 2 and every twin takes one dye, so nothing passes
+      const ring = family(
+        [10, 'Ring'],
+        [
+          [11, 'Ring'],
+          [12, 'Ring'],
+        ],
+        [group([10, 11, 12], 1)],
+      );
+      const lined = withLines(ring, { 11: 'Line 11', 12: 'Line 12' });
+      expect(defaultTwin(twinsOf(lined, 2, MIDLANDER_WOMAN)).itemId).toBe(11);
+      expect(defaultTwin(twinsOf(ring, 2, MIDLANDER_WOMAN)).itemId).toBe(10);
+      // No rules at all: nothing passes either
+      const unruled = withLines(family([10, 'Ring'], [[11, 'Ring']], []), { 11: 'Line 11' });
+      expect(defaultTwin(twinsOf(unruled, 1, MIDLANDER_WOMAN)).itemId).toBe(11);
+    });
+
+    it('when nothing passes, never falls back to a lined twin the check could not judge', () => {
+      // Row 11 carries no rules (an answer missing its fields), so it has no
+      // problems only because it was never checked; naming it would read as a fix
+      const ring = withLines(family([10, 'Ring'], [[11, 'Ring']], [group([10], 1)]), {
+        11: 'Line 11',
+      });
+      const twins = twinsOf(ring, 2, MIDLANDER_WOMAN);
+      const pick = defaultTwin(twins);
+      expect(pick.itemId).toBe(10);
+      expect(pieceTone(twins, pick)).toBe('block');
+    });
+
+    it('when nothing passes and no judged twin has a line, names the lowest judged twin, not an unjudged lowest row', () => {
+      // Row 10 carries no rules, row 11 fails the dye check: the old last
+      // fallback named row 10, which has no problems only because it was never
+      // checked, and the row read as a free choice instead of a block
+      const ring = family([10, 'Ring'], [[11, 'Ring']], [group([11], 1)]);
+      const twins = twinsOf(ring, 2, MIDLANDER_WOMAN);
+      const pick = defaultTwin(twins);
+      expect(pick.itemId).toBe(11);
+      expect(pieceTone(twins, pick)).toBe('block');
+    });
   });
 
   it('refuses an empty list rather than return a twin that is not there', () => {

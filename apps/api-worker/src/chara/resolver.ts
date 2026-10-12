@@ -8,7 +8,9 @@
  *   across head/body/hands/legs/feet, and rings carry both FingerL+FingerR.
  * - Ambiguity is a feature of the data: 35% of keys are families of visually
  *   identical items (Augmented / Replica / +1 / role variants). The lowest
- *   eligible row_id names the row; the rest ride along as alternates.
+ *   eligible row_id with an acquisition line names the row, else the lowest
+ *   eligible row_id; the rest ride along as alternates, the lowest row always
+ *   among them when it is not the named one.
  *   Unobtainable English item families are filtered before naming or checks;
  *   a family with nothing else is still named, from every row, as `retired`.
  * - Off-hands resolve THROUGH the main hand: if the off-hand key equals the
@@ -102,30 +104,39 @@ function namingRows(rows: readonly ItemRow[]): { rows: ItemRow[]; retired: boole
 }
 
 /**
- * Lowest eligible row_id names the item; the rest are alternates, row_id ascending.
- * The in-game rules cover the WHOLE family, so the capped alternates name the
- * lowest row of every rule set first and fill the rest in row order: a twin
- * that passes the check is always one the reader can name, however many
- * Dated rows sort ahead of it. Each carries its own acquisition line: the
- * Glamour Reader lets the player name any twin, and the line must match the
- * name it sits under.
+ * The lowest naming row that has an acquisition line names the item, else the
+ * lowest naming row: a blank line means no current route is known (old
+ * non-Augmented tomestone gear is no longer sold), so the family is named by a
+ * twin the player can still get (2026-10-11). The rest are alternates, row_id
+ * ascending. The rule set holding the named twin comes first.
+ *
+ * The capped alternates always carry the family's lowest row when it is not
+ * the named one, so a client can key the family by min(itemId, alternates)
+ * even after a patch moves the name. Next come the lowest row of every rule
+ * set, because the in-game rules cover the WHOLE family and a twin that passes
+ * the check must be one the reader can name, however many Dated rows sort
+ * ahead of it; the rest fill in row order. Each carries its own acquisition
+ * line: the Glamour Reader lets the player name any twin, and the line must
+ * match the name it sits under.
  */
 export function pickItem(rows: readonly ItemRow[]): ResolvedCharaItem | null {
   const naming = namingRows(rows);
   const sorted = naming.rows.sort((a, b) => a.rowId - b.rowId);
   if (sorted.length === 0) return null;
-  const primary = sorted[0];
-  const rules = groupCharaTwinRules(
+  const primary = sorted.find((r) => acquisitionFor(r.rowId)) ?? sorted[0];
+  const grouped = groupCharaTwinRules(
     sorted.map((r) => ({ rowId: r.rowId, rules: r.rules ?? null })),
   );
+  // Keep "the first set holds itemId" true when a higher twin is named.
+  const front = grouped.filter((g) => g.itemIds.includes(primary.rowId));
+  const rules = [...front, ...grouped.filter((g) => !front.includes(g))];
   const chosen = new Set<number>();
-  for (const id of rules.map((g) => g.itemIds[0])) {
+  const choose = (id: number): void => {
     if (id !== primary.rowId && chosen.size < MAX_ALTERNATES) chosen.add(id);
-  }
-  for (const r of sorted.slice(1)) {
-    if (chosen.size >= MAX_ALTERNATES) break;
-    chosen.add(r.rowId);
-  }
+  };
+  choose(sorted[0].rowId);
+  for (const g of rules) choose(g.itemIds[0]);
+  for (const r of sorted) choose(r.rowId);
   return {
     itemId: primary.rowId,
     names: withRegional(primary.rowId, primary.names),

@@ -8,6 +8,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import table from '../../src/chara/data/acquisition.en.json';
+import meta from '../../src/chara/data/acquisition.meta.json';
 
 const lines = Object.entries(table as Record<string, string>);
 
@@ -32,6 +33,47 @@ describe('acquisition table invariants', () => {
     for (const id of [43469, 43470, 48998, 49003, 49008]) expect(lookup[id]).toContain("Uah'shepya - Solution Nine");
     for (const id of [47207, 47208, 47209, 47210, 47211, 47297, 47298, 47299, 47300]) expect(lookup[id]).toContain('Ose Wyd - Il Mheg - Wolekdorf');
   });
+  it('keeps the 2026-10-11 researched sources (store catalog, quest data, verified events and duties)', () => {
+    const lookup = table as Record<string, string>;
+    // Official store catalog, including pieces sold inside a coffer (Werewolf chests, The Warden's Attire Coffer)
+    for (const id of [36832, 36833, 36834, 36835, 36836, 21017, 21026, 47906, 48727, 2978, 3291]) expect(lookup[id], `store ${id}`).toBe('FFXIV Online Store');
+    // Quest rewards confirmed against the pinned quest data
+    for (let id = 37078; id <= 37082; id++) expect(lookup[id], `Wayfarer's ${id}`).toBe('Newfound Adventure (Main Story Quest)');
+    for (let id = 38212; id <= 38216; id++) expect(lookup[id], `Isle Farmhand's ${id}`).toBe('The Land, Wind, and Sea (Sidequest)');
+    // Seasonal events: the event's own title and the year the piece was first offered
+    for (let id = 47263; id <= 47269; id++) expect(lookup[id], `Valentione ${id}`).toBe("Valentione's Day (2026)");
+    for (const id of [15208, 15221, 15222]) expect(lookup[id]).toBe('Yo-kai Watch: Gather One, Gather All! (2016)');
+    for (let id = 30807; id <= 30810; id++) expect(lookup[id]).toBe('Yo-kai Watch: Gather One, Gather All! (2020)');
+    // Dawntrail duty families (every piece checked on the Lodestone database)
+    expect(lookup[46346]).toBe('The Underkeep');
+    expect(lookup[50853]).toBe('Windurst: The Third Walk');
+    expect(lookup[50915]).toBe('The Clyteum');
+    // Fixed programs
+    for (const id of [8681, 8687, 8690]) expect(lookup[id]).toBe('Ceremony of Eternal Bonding (Standard)');
+    for (const id of [14031, 14035, 14039]) expect(lookup[id]).toMatch(/^Hall of the Novice \((Tank|DoW|DoM)\)$/);
+    expect(lookup[12035]).toBe('Veteran Rewards (240 Days)');
+    for (let id = 15273; id <= 15282; id++) {
+      expect(lookup[id], `Feast ranking ${id}`).toBe("Seasonal Quartermaster - Wolves' Den Pier (The Feast Ranking Reward; No Longer Obtainable)");
+    }
+    // Maintainer decisions: the off-sale FANTASIAN store sets match their set-mate 50262; the Mad Bird Ring names the Jumbo Cactpot
+    for (const id of [50257, 50262, 50263, 50267, 50271]) expect(lookup[id], `FANTASIAN ${id}`).toBe('FFXIV Online Store');
+    expect(lookup[10125]).toBe('Jumbo Cactpot');
+    // Unconfirmed sources stay blank
+    for (const id of [24339, 14839]) expect(lookup[id], `blank ${id}`).toBeUndefined();
+  });
+
+  it('writes every PvP Series reward as the guide string, never a series or level', () => {
+    expect(offending((l) => /PvP Series/.test(l) && !l.split(' / ').includes('PvP Series Rewards'))).toEqual([]);
+    for (const id of [44640, 47202, 52397, 52448]) expect((table as Record<string, string>)[id]).toBe('PvP Series Rewards');
+  });
+
+  it('dates every event line with a plausible first year', () => {
+    // FFXIV launched in 2010; no event can be first offered after the year the table was built.
+    const builtIn = Number(meta.generated.slice(0, 4));
+    const years = (l: string): number[] => l.split(' / ').flatMap((s) => [...s.matchAll(/ \((\d{4})\)$/g)].map((m) => Number(m[1])));
+    expect(offending((l) => years(l).some((y) => y < 2010 || y > builtIn))).toEqual([]);
+  });
+
   it('resolves every coffer-only line to its acquisition source', () => {
     expect(offending((line) => /Coffer/.test(line) && !line.includes(' / '))).toEqual([]);
     const lookup = table as Record<string, string>;

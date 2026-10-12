@@ -125,6 +125,20 @@ function modelHash(source: GlamourListSource, slot: GlamourMarkdownSlot, stains:
 }
 
 /**
+ * The family's lowest row, which api-worker always sends. `itemId` is the row
+ * the family is NAMED by (its lowest row with an acquisition line, else its
+ * lowest row), and that can move when a patch adds or drops a source. Keying
+ * edits on the lowest row keeps the ones saved before api-worker 0.19.0, and
+ * after any later source change, applying.
+ */
+function familyRow(item: {
+  itemId: number;
+  alternates: ReadonlyArray<{ itemId: number }>;
+}): number {
+  return Math.min(item.itemId, ...item.alternates.map((a) => a.itemId));
+}
+
+/**
  * The export sheet's rows (design 2c), in the template's order: what the
  * list says for each worn piece, the generated Acquisition line of the twin
  * it names, and the gear key a device-kept edit is filed under — slot, the
@@ -157,7 +171,7 @@ export function glamourSheetPieces(source: GlamourListSource): GlamourSheetPiece
     } else {
       const item = equipment?.items[slot as CharaGearSlotId] ?? null;
       const pick = picked?.[slot as CharaGearSlotId];
-      family = item?.itemId ?? null;
+      family = item ? familyRow(item) : null;
       pickedItemId = pick?.itemId ?? item?.itemId ?? null;
       pickedName = pick
         ? itemNameFor(pick.names, lang)

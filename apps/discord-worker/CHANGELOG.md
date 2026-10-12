@@ -36,6 +36,18 @@ variants of both documents. 5.8.12 is #285, open at the time of writing; merge i
   them, "soumis à la limitation de débit", "Procédure de recours" and a translated copyright line;
   zh stray spaces after full-width punctuation. No translation changes a claim; English governs.
 
+## [5.8.12] - 2026-10-11
+
+No source change in this app: `/glamour`'s pick comes from `@xivdyetools/core` 5.11.0 through
+bot-logic, and api-worker 0.19.0 names families the same way. No command shapes change.
+
+### Fixed
+
+- **`/glamour` names a twin you can still get** when the lowest-numbered item with the look has no
+  known source, e.g. Augmented Crystarium Ring of Fending instead of the retired one and Loyal
+  Housemaid's instead of Housemaid's, so the GPOSERS list's Acquisition line is filled. A dyeable
+  twin, one any Grand Company can wear, or one that isn't Dated still wins first.
+
 ## [5.8.11] - 2026-10-06
 
 `/manual` catches up with `/glamour`, with `@xivdyetools/bot-logic` 4.8.3 in the same PR (#251,

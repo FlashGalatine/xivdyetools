@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-10-11
+
+### Changed
+
+- **`POST /v1/chara/resolve` names a model family by its lowest eligible row that has an
+  acquisition line**, else its lowest eligible row, as before (a retired family by the same rule
+  over all of its rows). The lowest row often had no known source while an identical twin did:
+  old non-Augmented tomestone gear is no longer sold (Crystarium Ring of Fending vs Augmented
+  Crystarium Ring of Fending), Housemaid's vs Loyal Housemaid's, Makai vs Common Makai, a relic
+  vs its Replica. The invisible bracelet model now answers The Emperor's New Bracelet instead of
+  Promise of Innocence.
+  - `rules` lists the rule set holding `itemId` first, so "the first set holds `itemId`" stays
+    true when a higher row is named.
+  - `alternates` always carries the family's lowest row when it is not `itemId`, so
+    `min(itemId, alternates)` is a stable family key. `itemId` itself can move when a patch adds
+    or removes an acquisition source.
+  - No cache shape change: the row cache keeps raw rows, and the rule is applied at resolve time.
+  - Over the 1,093-file `.chara` corpus (with 0.18.1's table), a named slot's top-level
+    `acquisition` is absent on 27 of 10,875 slots instead of 1,304; none of the 27 has a lined twin. The web Glamour Reader
+    and `/glamour` choose their default through core 5.11.0's `defaultCharaTwin`, which gains the
+    same preference.
+
+## [0.18.1] - 2026-10-11
+
+Data only: no route, schema or cache-shape change. Regenerated with `--pinned` (Teamcraft
+`acc77d40`, XIVAPI `541c0c12e07da325`), so the table diff is exactly the reviewed additions below
+plus the PvP wording; no existing line was removed.
+
+### Fixed
+
+- Web research fills 803 more Acquisition blanks, recorded as name-pinned entries with evidence URLs
+  in `reviewed-item-sources.json`. A researched line was kept only when it passed one of: an exact
+  match in the official Online Store catalog (314 store lines, including pieces sold inside an attire
+  coffer), the pinned quest data listing the piece among the quest's rewards (111 quest lines), or an
+  independent verification pass, mostly against the Lodestone (363 lines). Fifteen more follow
+  maintainer decisions: the 14 FANTASIAN collaboration pieces read `FFXIV Online Store` like their
+  set-mate although the sale has ended, and the Mad Bird Ring reads `Jumbo Cactpot`. Covered: current store
+  sets, quest rewards behind the Calamity Salvager's repurchase lists, seasonal and collaboration
+  events, Feast ranking rewards, Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure
+  Trove, Cosmic Fortune prizes, Ceremony of Eternal Bonding attire and five Dawntrail duty families
+  (The Underkeep, The Meso Terminal, Mistwake, Windurst: The Third Walk, The Clyteum). The table now
+  has 24,922 lines; facewear sources cover 60 of 61 styles (720 of 732 variants).
+- Seasonal and collaboration event gear that is not on the Online Store now reads `Event Name (YYYY)`,
+  the event's own title and the year the piece was first offered (for example
+  `Valentione's Day (2026)`, `Yo-kai Watch: Gather One, Gather All! (2016)`), as the GPOSERS guide
+  specifies. The research supplies the event title and year that design decision D12 had no source
+  for; the generator itself still drops seasonal-shop sources, so these lines live only in the
+  reviewed table.
+- Every PvP Series reward line reads `PvP Series Rewards`, the guide's fixed string, including the
+  three earlier `PvP Series N - Level N` lines (11 items).
+
 ## [0.18.0] - 2026-10-09
 
 Stacked on 0.17.0 (remediation Sprint 18): `facewear-unlocks.json` and `facewearAcquisitionFor` sit

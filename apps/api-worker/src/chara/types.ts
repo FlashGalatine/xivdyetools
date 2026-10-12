@@ -3,7 +3,8 @@
  *
  * The request carries only model keys (twelve small integers plus the
  * facewear row) — nothing else from the `.chara` file. The response is one
- * entry per requested slot: the lowest eligible item on that (slot, model key),
+ * entry per requested slot: the item that names that (slot, model key) — the
+ * lowest eligible row with an acquisition line, else the lowest eligible row —
  * its names in six languages, its icon id, and the family of visually
  * identical alternates that share the mesh.
  */
@@ -28,7 +29,13 @@ export interface ItemNames {
 }
 
 export interface ResolvedCharaItem {
-  /** Item sheet row_id — the lowest eligible row in the family (the lowest row when `retired`) */
+  /**
+   * Item sheet row_id — the lowest eligible row in the family that has an
+   * acquisition line, else the lowest eligible row (drawn from every row when
+   * `retired`). It can change when a patch adds or removes an acquisition
+   * source; the family's lowest row — min of `itemId` and the alternates' ids,
+   * always present — does not, so it is the stable key for the family.
+   */
   itemId: number;
   names: ItemNames;
   /** Icon sheet id for `GET /v1/chara/icon/:iconId`; null when the row has none */
@@ -38,7 +45,12 @@ export interface ResolvedCharaItem {
    * rows after retired-row filtering, or the whole family when `retired`.
    */
   familySize: number;
-  /** The other family members, row_id ascending (capped — see MAX_ALTERNATES) */
+  /**
+   * The other family members, row_id ascending (capped — see MAX_ALTERNATES).
+   * When capped, they are chosen in this priority: the family's lowest row
+   * when `itemId` is not it, the lowest row of every rule set, then the rest
+   * in row order.
+   */
   alternates: Array<{ itemId: number; names: ItemNames; acquisition?: string }>;
   /**
    * OffHand only: true when the off-hand model is the main-hand item's own
