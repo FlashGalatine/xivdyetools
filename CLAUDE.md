@@ -158,7 +158,7 @@ presets-api ──► image-worker           (POST /thumbnail — preview images
 api-worker ──► (standalone, public-facing)
 ```
 
-All Cloudflare Workers use **Hono** (`^4.13.9` floor) as the HTTP framework and consume `@xivdyetools/worker-kit` for request-ID / logger / rate-limit middleware. Persistence is **D1** (SQLite): `presets-api` owns `xivdyetools-presets` (also bound read/write by `moderation-worker` — `discord-worker`'s own D1 binding was removed, DEAD-007; it reaches preset data only through the `presets-api` service binding), `oauth` owns `xivdyetools-users`; `presets-api` additionally stores preview images in R2.
+All Cloudflare Workers use **Hono** (`^4.13.12` floor) as the HTTP framework and consume `@xivdyetools/worker-kit` for request-ID / logger / rate-limit middleware. Persistence is **D1** (SQLite): `presets-api` owns `xivdyetools-presets` (also bound read/write by `moderation-worker` — `discord-worker`'s own D1 binding was removed, DEAD-007; it reaches preset data only through the `presets-api` service binding), `oauth` owns `xivdyetools-users`; `presets-api` additionally stores preview images in R2.
 
 ### Localization
 6 languages throughout: `en`, `ja`, `de`, `fr`, `ko`, `zh`
