@@ -9,7 +9,7 @@ Commands that produce images follow a three-stage pipeline: build an SVG from a 
 3. Send as a Discord file attachment.
 
 ```typescript
-const svg = generateComparisonCard({ dyes, theme, labels, lang });
+const svg = generateComparisonCard({ dyes, deltaE, labels, theme, lang });
 const png = await renderSvgToPng(svg, { locale: lang });
 await editOriginalResponse(env.DISCORD_CLIENT_ID, interaction.token, {
   embeds: [...],
