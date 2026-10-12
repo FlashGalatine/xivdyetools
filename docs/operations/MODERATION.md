@@ -235,7 +235,7 @@ All moderation actions are logged:
 - **Ban actions**: Logged with target user ID, moderator ID, preset count, and reason length (the reason text itself is recorded in the D1 `moderation_log` table, not in the logs)
 - **Unban actions**: Logged with target user ID, moderator ID, restored preset count, and still-hidden count (unban takes no reason)
 
-Logs can be viewed in the Cloudflare Workers dashboard or via `wrangler tail`.
+Workers Logs are off for this worker (`[observability] enabled = false`, FINDING-022), so these lines are not stored: watch them live with `pnpm exec wrangler tail --env production` from `apps/moderation-worker` (or the dashboard's real-time logs). The ban reason and the action history are in the D1 `moderation_log` table.
 
 ---
 
