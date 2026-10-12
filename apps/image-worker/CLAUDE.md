@@ -18,7 +18,7 @@ environments, and there are no routes anywhere — the only way to reach it is a
 service binding. `src/wrangler-config.test.ts` now pins that shape (2026-08-29 FINDING-023), so a
 config flip fails `pnpm test` instead of relying on a comment; a request that still reaches this
 Worker on a `*.workers.dev` hostname is refused with a `404` before any body read, fetch, or
-decode, as defence in depth. It holds no secrets and no storage bindings (KV/D1/R2); it is the
+decode, as defense in depth. It holds no secrets and no storage bindings (KV/D1/R2); it is the
 smallest operational footprint in the monorepo. Workers Logs are pinned off in both
 `wrangler.toml` blocks (2026-10-03 FINDING-022, asserted by the same test); turning them on needs
 both privacy policies updated in the same change.
@@ -77,6 +77,7 @@ discord-worker ──Service Binding──► POST /extract
                                           │
                                           ▼
                               processImageForExtraction(buffer)   (photon.ts)
+                                  ├─ assertValidMaxDimension + assertImageDimensionsFromHeader (pre-decode gate)
                                   ├─ PhotonImage.new_from_byteslice
                                   ├─ resize to maxDimension (default 256), aspect preserved
                                   ├─ extract raw RGBA pixels
@@ -94,7 +95,8 @@ src/
 ├── index.ts        # Hono app: GET /health, POST /extract, POST /thumbnail
 ├── types.ts        # Env (no bindings) + UrlValidationResult/FormatValidationResult/ImageFormat
 ├── validators.ts   # SSRF allowlist, size/dimension/format checks, timeout fetch
-└── photon.ts       # loadImage / resizeImage / crop / extractPixels
+├── dimensions.ts   # Header-only width/height parsers (PNG/JPEG/GIF/WebP/BMP) for the pre-decode gate
+└── photon.ts       # loadImage / resizeImage / extractPixels
                     # + processImageForExtraction, processImageForThumbnail, computeCropBox
 ```
 
@@ -133,7 +135,7 @@ POST /thumbnail
   body: raw image bytes (NOT JSON, and NOT a URL — the caller already holds the upload)
 
 200 → body:    WebP bytes, Content-Type: image/webp
-400 → body:    { error: string }   — empty body, or photon could not decode
+400 → body:    { error: string }   — empty body, over the 10 MB cap, rejected by the pre-decode dimension gate, or photon could not decode
 ```
 
 Unlike `/extract`, this route takes **bytes, not a URL**, so the SSRF and fetch-timeout paths in
@@ -145,7 +147,7 @@ check, and the same pre-decode header dimension gate `/extract` uses
 `processImageForThumbnail` crops to the 640 × 264 band (`THUMBNAIL_WIDTH`/`THUMBNAIL_HEIGHT`,
 aspect ≈ 2.42) via `computeCropBox`, resizes with Lanczos3, and encodes WebP. `computeCropBox`
 takes the largest band of the target aspect that fits inside the source and is **horizontally
-centred only**: vertically it centres for a landscape source (width/height > 1.05) and crops from
+centered only**: vertically it centers for a landscape source (width/height > 1.05) and crops from
 the **top** for a square or portrait one, because a glamour shot is usually portrait with the
 character's head high in frame. Both axes clamp into `[1, source]`, so a degenerate source such as
 1 × 1000 cannot produce the zero-height band that used to trap the WASM module (BUG-053).
@@ -189,7 +191,7 @@ now pins it (no `routes` anywhere or by inheritance, `workers_dev`/`preview_urls
 that production's `name` is exactly what both discord-worker's and presets-api's `IMAGE_WORKER`
 service bindings point at, in every one of their own environments).
 
-As defence in depth (not the primary control), `index.ts` also refuses any request whose URL
+As defense in depth (not the primary control), `index.ts` also refuses any request whose URL
 hostname ends in `.workers.dev`, for every route including `/health`, before any body read,
 fetch, or decode. Both callers reach this Worker only through a Service Binding — they construct
 `new Request('https://image-worker/<path>', …)`, a URL never resolved over DNS — so a
@@ -249,7 +251,7 @@ apply:
   concurrent copies inside photon). It used to be `16 * 1024 * 1024` — exactly 4096^2 — so the
   largest square the side cap admits passed at equality and the pixel branch was unreachable. One
   RGBA buffer for it is 64 MiB and photon holds two, which needs >= 128 MiB against Cloudflare's
-  128 MiB per-isolate limit; a solid-colour 4096x4096 PNG compresses to tens of KB, far under the
+  128 MiB per-isolate limit; a solid-color 4096x4096 PNG compresses to tens of KB, far under the
   10 MB file cap, so the OOM this gate exists to prevent was reachable from any Discord attachment
   (BUG-052). The budget was raised from 32 MiB (4 MP) because 3840x2160 is 8.29 MP and 3440x1440 is
   4.95 MP — a 4K or ultrawide capture, the commonest palette source a player has, was being refused
@@ -265,7 +267,7 @@ The request body's `maxDimension` is validated too — see the `/extract` contra
 |---------|---------|
 | `hono` | HTTP framework |
 | `@cf-wasm/photon` | Image decode/resize/pixel-extraction (WASM) — the entire reason this Worker exists |
-| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware` (structured logging arrives transitively via `@xivdyetools/logger`, not declared directly — see `apps/og-worker` for the same pattern) |
+| `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware` (structured logging arrives transitively via `@xivdyetools/logger`, not declared directly — see `apps/og-worker` for the same pattern); `detectImageFormat` / `ImageFormat` from the `/image-sniff` subpath (magic-byte format check) |
 
 ## Related Projects
 

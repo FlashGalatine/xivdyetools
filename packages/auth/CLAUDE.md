@@ -55,7 +55,7 @@ src/
 
 ```typescript
 interface JWTPayload {
-  sub: string;       // Discord user ID
+  sub: string;       // internal user ID (oauth user.id, not the Discord snowflake)
   iat: number;
   exp: number;
   nbf?: number;      // enforced when present
@@ -127,7 +127,8 @@ function timingSafeEqual(a: string, b: string): Promise<boolean>;
 
 ```typescript
 interface DiscordVerificationResult { isValid: boolean; body: string; error?: string }
-interface DiscordVerifyOptions { maxBodySize?: number }  // default 100_000
+interface DiscordVerifyOptions { maxBodySize?: number; maxTimestampAgeSeconds?: number; maxFutureSkewSeconds?: number }  // defaults 100_000 / 300 / 60
+const DEFAULT_DISCORD_MAX_TIMESTAMP_AGE_SECONDS: number;  // 300
 
 function verifyDiscordRequest(request: Request, publicKey: string, options?: DiscordVerifyOptions): Promise<DiscordVerificationResult>;
 function unauthorizedResponse(message?: string): Response;  // 401 JSON
@@ -138,12 +139,14 @@ function badRequestResponse(message: string): Response;     // 400 JSON
 
 ```typescript
 interface RevocationStore { /* the KV surface actually used — get/put */ }
+interface RevokeTokenOptions { graceSeconds?: number }  // default REFRESH_GRACE_SECONDS
+const REFRESH_GRACE_SECONDS: number;  // 15 * 60
 
 function isTokenRevoked(jti: string, store: RevocationStore | undefined): Promise<boolean>;
-function revokeToken(jti: string, expiresAt: number, store: RevocationStore | undefined): Promise<boolean>; // expiresAt = unix seconds; TTL = max(expiresAt - now, 60)
+function revokeToken(jti: string, expiresAt: number, store: RevocationStore | undefined, options?: RevokeTokenOptions): Promise<boolean>; // expiresAt = unix seconds; TTL = max(expiresAt + graceSeconds - now, 60)
 ```
 
-A `jti` blacklist rather than a whitelist: only revoked tokens are stored, with a TTL matching the token's remaining lifetime, so the keyspace stays bounded without a sweep job. The store is passed in as an interface rather than a `KVNamespace` so tests need no Workers types.
+A `jti` blacklist rather than a whitelist: only revoked tokens are stored, with a TTL matching the token's remaining lifetime plus the refresh grace window (`REFRESH_GRACE_SECONDS`, 15 min), so the keyspace stays bounded without a sweep job. The store is passed in as an interface rather than a `KVNamespace` so tests need no Workers types.
 
 ### Encoding (`@xivdyetools/auth/encoding`)
 
@@ -168,7 +171,7 @@ Absorbed from the retired `@xivdyetools/crypto`. Import from this subpath, not t
 if (header.alg !== 'HS256') return null;
 ```
 
-`verifyJWT` additionally enforces `exp` (FINDING-003 — tokens without expiration are rejected) and `sub` (BUG-010 — tokens without subject identity are rejected). `verifyJWTSignatureOnly` is for refresh-token paths where you want signature validity but a longer grace window via `maxAgeMs` from `iat`.
+Both verifiers require a well-typed `exp` (FINDING-003, BUG-051 — tokens without expiration are rejected) and `sub` (BUG-010 — tokens without subject identity are rejected); `verifyJWT` additionally checks `exp`/`nbf` against the clock and enforces `type`/`iss`/`aud` when asked. `verifyJWTSignatureOnly` is for refresh-token paths where you want signature validity but a longer grace window via `maxAgeMs` from `iat`.
 
 ### Signature verification flow
 
@@ -215,8 +218,9 @@ CHANGELOG.md `[2.0.0]` for the migration.
 
 1. `Content-Length` check before reading the body (rejects oversized requests early)
 2. Required headers check (`X-Signature-Ed25519`, `X-Signature-Timestamp`)
-3. Bound actual bytes while reading and cancel immediately above the cap (Content-Length is spoofable)
-4. `verifyKey(bytes, signature, timestamp, publicKey)` over the original received bytes
+3. Timestamp freshness (FINDING-021): reject a non-numeric timestamp, one older than `maxTimestampAgeSeconds` (300 s), or one more than `maxFutureSkewSeconds` (60 s) in the future, before reading the body
+4. Bound actual bytes while reading and cancel immediately above the cap (Content-Length is spoofable)
+5. `verifyKey(bytes, signature, timestamp, publicKey)` over the original received bytes
 
 The result includes `body` so the caller doesn't have to re-read the request stream after verification.
 
@@ -237,7 +241,7 @@ The `oauth` worker issues tokens itself (it does not call `verifyJWT` for issuan
 
 ## Internal Dependencies
 
-- None — the encoding primitives (`base64UrlEncode/Decode/Bytes`, `bytesToHex`, `hexToBytes`) live in `src/encoding/`, absorbed from the retired `@xivdyetools/crypto` (v1.3.0). Import via `@xivdyetools/auth/encoding` to avoid pulling the Discord verification module.
+- None — the encoding primitives (`base64UrlEncode/Decode/Bytes`, `bytesToHex`, `hexToBytes`) live in `src/encoding/`, absorbed from the retired `@xivdyetools/crypto` (v1.1.2; shipped in `@xivdyetools/auth` 1.3.0). Import via `@xivdyetools/auth/encoding` to avoid pulling the Discord verification module.
 - External: `discord-interactions` (Ed25519 verification)
 - Optional peer: `@cloudflare/workers-types` (only for the `KVNamespace`/`Request` types when used in worker contexts)
 

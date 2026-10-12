@@ -34,7 +34,7 @@ pnpm --filter @xivdyetools/core exec vitest run src/services/__tests__/ColorServ
 
 ## Architecture
 
-`@xivdyetools/core` follows a **facade + focused-class** pattern (per the internal "R-4" refactor): top-level service classes (`ColorService`, `DyeService`, `LocalizationService`) are thin façades that delegate to single-responsibility classes (`ColorConverter`, `ColorblindnessSimulator`, `ColorAccessibility`, `ColorManipulator`, `DyeDatabase`, `DyeSearch`, `HarmonyGenerator`, `HarmonySelector`, `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`). Colour *mixing* is the exception to the class pattern: it lives in the standalone `src/blending/` module (`blendColors(hex1, hex2, mode, ratio)`), which `ColorService.mixColors*` wraps.
+`@xivdyetools/core` follows a **facade + focused-class** pattern (per the internal "R-4" refactor): top-level service classes (`ColorService`, `DyeService`, `LocalizationService`) are thin façades that delegate to single-responsibility classes (`ColorConverter`, `ColorblindnessSimulator`, `ColorAccessibility`, `ColorManipulator`, `DyeDatabase`, `DyeSearch`, `HarmonyGenerator`, `HarmonySelector`, `LocaleLoader`, `LocaleRegistry`, `TranslationProvider`). Color *mixing* is the exception to the class pattern: it lives in the standalone `src/blending/` module (`blendColors(hex1, hex2, mode, ratio)`), which `ColorService.mixColors*` wraps.
 
 The dye database, presets, and per-locale translation files are bundled as JSON imports — there is no runtime I/O, which keeps the package safe for Cloudflare Workers, Vite browser bundles, and Node alike.
 
@@ -46,7 +46,7 @@ src/
 ├── constants/                     # RGB/HSV ranges, Universalis API config, Brettel matrices
 ├── types/                         # MatchingMethod (6-value 5.0 vocabulary), MATCHING_METHODS, DEFAULT_MATCHING_METHOD, normalizeMatchingMethod
 ├── blending/                      # Self-contained blending algorithms + conversions — subpath export @xivdyetools/core/blending (absorbed from color-blending)
-├── config/consolidated-ids.ts     # Patch 7.5 dye consolidation (A=52254, B=52255, C=52256)
+├── config/                        # consolidated-ids.ts (Patch 7.5: A=52254, B=52255, C=52256), facewear.ts (frozen legacy IDs), dye/band vocabularies + band-calibration.ts, learn/product links
 ├── data/
 │   ├── dyes.json                  # 125 dyes (schema v2: 7 fields, stainID-keyed)
 │   ├── facewear_colors.json       # 11 facewear colors (not dyes)
@@ -64,23 +64,25 @@ src/
 │   ├── PresetService.ts           # Resolve curated presets
 │   ├── PaletteService.ts          # K-means palette extraction + dye matching
 │   ├── CharacterColorService.ts   # FFXIV skin/hair color lookup
+│   ├── chara/                     # .chara parser, resolver, models, game rules, twins, GPOSERS export, shader colors
 │   ├── color/                     # ColorConverter, ColorblindnessSimulator,
 │   │                              # ColorAccessibility, ColorManipulator
 │   ├── dye/                       # DyeDatabase, DyeSearch, HarmonyGenerator,
 │   │                              # HarmonySelector, DyeFilter, wheels/
 │   └── localization/              # LocaleLoader, LocaleRegistry, TranslationProvider
 ├── utils/
-│   ├── kd-tree.ts                 # 3D k-d tree (RGB nearest neighbour)
+│   ├── kd-tree.ts                 # 3D k-d tree (RGB nearest neighbor)
 │   └── index.ts                   # clamp, round, retry, sleep, generateChecksum, validators
 └── __tests__/integration/         # End-to-end workflow + perf benchmarks
 scripts/
-├── fetch_dye_names.py             # Pulls XIVAPI v2 names → dyenames.csv (en/ja/de/fr only)
+├── fetch_dye_names.py             # Pulls XIVAPI v2 names → scripts/output/dye_names.csv (en/ja/de/fr only; feeds dyenames.csv)
 ├── build-locales.ts               # localize.yaml + dyenames.csv + facewear-names.csv → src/data/locales/*.json, checked against dyes.json + facewear_colors.json
 ├── build-locales.test.ts          # Runs the real script on fixtures; pins the committed JSON and the sheet names
 ├── copy-locales.ts                # Copies generated locales into dist/
 ├── calibrate-bands.ts             # Recomputes the band vocabulary from dyes.json (manual recalibration path)
 ├── build-munsell-hues.ts          # real.dat → src/data/munsell-hues.json + munsell-anchors.json
 ├── build-oklch-hue-table.ts       # → src/data/oklch-hue-table.json (manual, not part of build)
+├── build-character-colors.ts      # human.cmp → src/data/character_colors/ (interface + shader halves)
 └── lib/oklch-hue-table.ts         # The OKLCH-hue derivation + its anti-drift test
 ```
 
@@ -107,13 +109,13 @@ class TranslationProvider       // Stateless — performs translations from a re
 
 Conversion: `hexToRgb`, `rgbToHex`, `rgbToHsv`, `hsvToRgb`, `hexToHsv`, `hsvToHex`, `normalizeHex`, `rgbToLab`, `hexToLab`, `labToRgb`, `labToHex`, `rgbToOklab`, `hexToOklab`, `oklabToRgb`, `oklabToHex`, `rgbToOklch`, `hexToOklch`, `oklchToRgb`, `oklchToHex`, `labToLch`, `lchToLab`, `rgbToLch`, `hexToLch`, `lchToRgb`, `lchToHex`, `rgbToHsl`, `hexToHsl`, `hslToRgb`, `hslToHex`, `rgbToCmyk`, `cmykToRgb`, `hexToCmyk`, `cmykToHex`, `rybToRgb`, `rgbToRyb`, `hexToRyb`, `rybToHex`.
 
-Distance: `getColorDistance` (Euclidean RGB), `getRedmeanDistance`, `getDeltaE` (`DeltaEFormula`: CIE76 / CIEDE2000 / OKLAB), `getDistanceForMethod(hex1, hex2, MatchingMethod)` (the 5.0 suite dispatcher). `ColorConverter` additionally exposes `getDeltaE_Oklab`.
+Distance: `getColorDistance` (Euclidean RGB), `getRedmeanDistance`, `getDeltaE` (`DeltaEFormula`: CIE76 / CIEDE2000 / OKLAB), `getDistinguishabilityPercent`, `getDistanceForMethod(hex1, hex2, MatchingMethod)` (the 5.0 suite dispatcher). `ColorConverter` additionally exposes `getDeltaE_Oklab`.
 
 Accessibility: `getPerceivedLuminance`, `getContrastRatio`, `meetsWCAGAA`, `meetsWCAGAAA`, `isLightColor`, `getOptimalTextColor`.
 
-Manipulation: `adjustBrightness`, `adjustSaturation`, `rotateHue`, `invert`, `desaturate`.
+Manipulation: `adjustBrightness`, `adjustSaturation`, `rotateHue`, `rotateHueLch`, `invert`, `desaturate`.
 
-CVD simulation: `simulateColorblindness`, `simulateColorblindnessHex` (Brettel matrices for protan/deuter/tritanopia).
+CVD simulation: `simulateColorblindness`, `simulateColorblindnessHex` (Brettel matrices for protan/deuter/tritanopia), `simulateColorblindnessMachado`, `simulateColorblindnessMachadoHex` (Machado matrices).
 
 Mixing: `mixColorsRgb`, `mixColorsLab`, `mixColorsOklab`, `mixColorsHsl`, `mixColorsRyb`, `mixColorsSpectral`, `interpolateHue` (`shorter` | `longer` | `increasing` | `decreasing`).
 
@@ -154,6 +156,7 @@ class APIService {
   constructor(options?: APIServiceOptions)   // legacy positional (cache, fetchClient, rateLimiter) removed — DEAD-035, 2026-08-18 audit
   getPriceData(itemID: number, worldID?: number, dataCenterID?: string): Promise<PriceData | null>
   getPricesForDataCenter(itemIDs: number[], dataCenterID: string): Promise<Map<number, PriceData>>
+  getPricesForDataCenterWithOutcome(itemIDs: number[], dataCenterID: string): Promise<PriceBatchResult>  // { prices, outcome: 'ok' | 'partial' | 'error' }
   isAPIAvailable(): Promise<boolean>; getAPIStatus(): Promise<{ available; latency }>
   clearCache()
   static formatPrice(price): string
@@ -179,11 +182,15 @@ type RYB
 
 ### Constants
 
-`RGB_MIN/MAX`, `HUE_MIN/MAX`, `SATURATION_MIN/MAX`, `VALUE_MIN/MAX`, `BRETTEL_MATRICES`, `MACHADO_MATRICES`, `PATTERNS`, `UNIVERSALIS_API_BASE`, `UNIVERSALIS_API_TIMEOUT`, `UNIVERSALIS_API_RETRY_COUNT`, `UNIVERSALIS_API_RETRY_DELAY`, `API_CACHE_TTL`, `API_CACHE_VERSION`, `API_MAX_RESPONSE_SIZE`, `API_RATE_LIMIT_DELAY`.
+`RGB_MIN/MAX`, `HUE_MIN/MAX`, `SATURATION_MIN/MAX`, `VALUE_MIN/MAX`, `BRETTEL_MATRICES`, `MACHADO_MATRICES`, `PATTERNS`, `UNIVERSALIS_API_BASE`, `UNIVERSALIS_API_TIMEOUT`, `UNIVERSALIS_API_RETRY_COUNT`, `UNIVERSALIS_API_RETRY_DELAY`, `API_CACHE_TTL`, `API_CACHE_VERSION`, `API_MAX_RESPONSE_SIZE`, `API_RATE_LIMIT_DELAY`, `HARMONY_OFFSETS`.
 
 ### Utils
 
-`clamp`, `round`, `isValidHexColor`, `isValidRGB`, `isValidHSV`, `sleep`, `retry`, `isAbortError`, `generateChecksum`, `abbreviateDyeName`.
+`clamp`, `round`, `isValidHexColor`, `isValidRGB`, `isValidHSV`, `sleep`, `retry`, `isAbortError`, `generateChecksum`, `abbreviateDyeName`, `foldForSearch`.
+
+**`.chara` appearance files** (`services/chara/`): `parseCharaFile`, `resolveCharaColors` (`OFF_GRID_DELTA_E2000`), `charaTwinsOf` / `defaultCharaTwin` / `charaPieceTone` / `charaTwinFacts`, the model and game-rule helpers (`charaModelKey`, `formatCharaModelLabel`, `isWornCharaModel`, `charaWearMask`, `groupCharaTwinRules`, …) and the GPOSERS export helpers (`GPOSERS_SLOTS`, `GPOSERS_HEADER`, `gposersSlotLabel`, `gposersGroups`, `gposersOmittedSlots` (the slots the list leaves out: invisible pieces, and an Off Hand under a main hand outside `CHARA_OFF_HAND_MAIN_CATEGORIES`), …).
+
+**Vocabulary and links:** `DYE_CATEGORIES`, `DYE_ACQUISITIONS`, `ACQUISITION_META`, `METALLIC_STAIN_IDS` (`config/dye-vocabulary.ts`); `BAND_VOCABULARY`, `classifyBandTier`, `roundToBandDisplay` (`config/band-vocabulary.ts`); `SOCIAL_LINKS`, `PRODUCT_LINKS`; `MANUAL_TOPICS`, `getLearnLink`, `getLodestoneLink` (`config/learn-links.ts`); `facewearColors`, `getFacewearColor`, `getFacewearColorByLegacyItemID` (`config/facewear.ts`).
 
 ### Bundled data
 
@@ -194,11 +201,11 @@ import { dyeDatabase, presetData } from '@xivdyetools/core';
 ## Key Patterns / Algorithms
 
 ### `DyeDatabase.initialize()` — the singleton init step
-- Reads **`dyes.json` only** — all 125 entries are real stains. Facewear is not in this database at all (see below).
-- Validates each entry (id/itemID, name, hex `^#[A-Fa-f0-9]{6}$`, RGB 0-255, HSV ranges, category).
+- Takes the dye data its caller passes (`new DyeService(dyeDatabase)` with the bundled `dyes.json`) — all 125 entries are real stains. Facewear is not in this database at all (see below).
+- Validates each entry (stainID 1-254, or a legacy id/itemID fixture shape; name, hex `^#[A-Fa-f0-9]{6}$`, category, consolidationType `A`/`B`/`C`).
 - **Derives the runtime `Dye` shape from the 7 stored fields**: `rgb`/`hsv`/`lab` from `hex`, `cost`/`currency` from `acquisition` via `ACQUISITION_META`, and the five `is*` flags (`isMetallic` from `METALLIC_STAIN_IDS`, `isCosmic ≡ consolidationType 'C'`, `isIshgardian ≡ 'B'`, …). `Dye.itemID` is a `number` — `legacyItemID`, falling back to `stainID` for future consolidated-only dyes.
 - Builds three indexes: `dyesByIdMap`, `dyesByStainIdMap` (for Glamourer / Mare plugin interop), and `dyesByHueBucket` (36 × 10° buckets — 70-90% speedup on harmony lookups).
-- Builds a 3D k-d tree (RGB) over all 125 dyes for nearest-neighbour matching.
+- Builds a 3D k-d tree (RGB) over all 125 dyes for nearest-neighbor matching.
 - Pre-computes `nameLower`, `categoryLower` (search optimization) and `lab` (DeltaE pre-computation) on each entry.
 - Defends against prototype pollution by stripping `__proto__`, `constructor`, `prototype` keys via `safeClone`.
 
@@ -210,10 +217,10 @@ Before v2, `initialize()` assigned each one a synthetic `-(1000 + Σ charCode(na
 Nothing computes a synthetic ID at runtime any more. Code that filters "real dyes" no longer needs to: every entry in the database is one. `dye.itemID > 0` remains the correct market-board predicate (`itemID` is always a number, never null).
 
 ### k-d Tree (`utils/kd-tree.ts`)
-3D RGB k-d tree with index-based construction (no point-array slicing → less GC pressure). O(log n) average for nearest-neighbour queries vs O(n) linear search.
+3D RGB k-d tree with index-based construction (no point-array slicing → less GC pressure). O(log n) average for nearest-neighbor queries vs O(n) linear search.
 
 ### Harmony color wheels
-Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, options)` — the ONE implementation the web app, the Discord bot and the OG card share. Which wheel the offsets are measured on is `config.wheel`: `'rgb'` (default, today's behaviour bit for bit), `'ryb'`, `'munsell'`, `'oklch-hue'`, `'oklch-lightness'`. Read the list from `COLOR_WHEEL_IDS` / `getColorWheel(id)` and normalise anything off the wire with `normalizeColorWheelId(value)` (or `parseColorWheelId` when "unknown" must stay distinguishable from "rgb") — never hand-roll a `toLowerCase()` + membership test.
+Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, options)` — the ONE implementation the web app, the Discord bot and the OG card share. Which wheel the offsets are measured on is `config.wheel`: `'rgb'` (default, today's behavior bit for bit), `'ryb'`, `'munsell'`, `'oklch-hue'`, `'oklch-lightness'`. Read the list from `COLOR_WHEEL_IDS` / `getColorWheel(id)` and normalize anything off the wire with `normalizeColorWheelId(value)` (or `parseColorWheelId` when "unknown" must stay distinguishable from "rgb") — never hand-roll a `toLowerCase()` + membership test.
 
 `oklch-lightness` keeps the base's OKLab L and C instead of its HSV S/V (`ColorWheel.carriesBaseHsv === false`), so the selector forces ΔE ranking for it regardless of `usePerceptualMatching`.
 
@@ -229,7 +236,7 @@ Selection goes through `generateHarmonySlots(baseHex, type, candidates, config, 
 There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, 'spectral', ratio)` in `src/blending/blending.ts`, which wraps `spectral.js` (Burns' LHTSS upsampling to a 38-band reflectance curve, 380-750nm, mixed in K/S space). `ColorService.mixColorsSpectral(hex1, hex2, ratio = 0.5)` is the façade over it, and `@xivdyetools/core/blending` exposes `blendColors` / `BLENDING_MODES` / `isValidBlendingMode` directly. Blue + Yellow = Green like real paint. The old wrapper's `mixMultiple`, `gradient` and `isAvailable` were removed as uncalled (DEAD-034, 2026-08-18 audit).
 
 ### Locale build pipeline
-1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.
+1. `scripts/fetch_dye_names.py` (Python, run **manually**) hits XIVAPI v2 → `scripts/output/dye_names.csv`, which is merged into `dyenames.csv`. XIVAPI only serves en/ja/de/fr — **Korean and Chinese names are sourced manually** from market-board HTML and pasted into the CSV.
 2. `scripts/build-locales.ts` reads `localize.yaml` (label structure), `dyenames.csv` (per-language dye names, keyed by itemID) and `facewear-names.csv` (the 11 Facewear tints, keyed by slug — they have no itemID, I18N-008), cross-checks the two CSVs against `src/data/dyes.json` and `src/data/facewear_colors.json`, builds all six locales in memory, and only then emits `src/data/locales/{en,ja,de,fr,ko,zh}.json`. Every other section (categories, acquisitions, currencies, harmony types, color wheels, vision types, tools, sheets, races, clans) is a hardcoded table inside the script, so a new dye category needs an edit to `buildCategories`. `buildSheets` follows the glossary's *Character-Creation Color Sheets* table in [`docs/reference/ffxiv-terminology.md`](../../docs/reference/ffxiv-terminology.md) (TERM-021): change a word there first, then in the script.
 3. `tsc -p tsconfig.build.json` compiles to `dist/`.
 4. `scripts/copy-locales.ts` copies the generated JSON into `dist/`.
@@ -249,7 +256,7 @@ There is no `SpectralMixer` class. Spectral mixing is `blendColors(hex1, hex2, '
 Internal apps:
 - `apps/web-app` — Vite browser bundle, uses `dyeDatabase` JSON import, `ColorService`, `DyeService`, `LocalizationService`, `PaletteService`, `APIService`.
 - `apps/discord-worker` — Cloudflare Worker, uses `DyeService`, `LocalizationService`, `APIService` with a KV-backed `ICacheBackend`.
-- `apps/api-worker` — public dye/color-matching API (accepts the retired `hyab` / `oklch-weighted` at its boundary and normalises them to `ciede2000`).
+- `apps/api-worker` — public dye/color-matching API (accepts the retired `hyab` / `oklch-weighted` at its boundary and normalizes them to `ciede2000`).
 - `apps/og-worker` — uses the stateless `LocaleLoader/Registry/TranslationProvider` trio.
 
 `apps/stoat-worker` (Revolt bot) does **not** declare this package — it depends on `@xivdyetools/bot-logic`, `logger` and `types` only, and reaches core transitively.
@@ -269,7 +276,7 @@ External: `spectral.js` (Kubelka-Munk).
 ## Dead-code gate (knip)
 
 `pnpm run lint` = `eslint src && pnpm run lint:dead`, and `lint:dead` is
-`knip --directory ../.. --workspace packages/core`. It runs against the **root**
+`knip --directory ../.. --workspace packages/core --no-config-hints --no-tag-hints`. It runs against the **root**
 `knip.jsonc` (never a local one) because core's consumers live in other
 workspaces: `--workspace` filters which workspace's issues are *reported*, but
 knip still loads and traverses `apps/*` and `packages/{svg,bot-logic}`, so an
@@ -280,9 +287,9 @@ build-independent — knip maps `@xivdyetools/core` through this package's
 
 `includeEntryExports` is on for this package, so **barrel exports are in scope**.
 Every symbol in `src/index.ts` that no workspace imports must carry a
-`/** @public */` JSDoc tag on its export specifier, which the config's
-`"tags": ["-public"]` excludes from the report. `@public` means *published API,
-deliberately kept without an in-repo consumer* — the ~76 already tagged are the
+`/** @public */` JSDoc tag on its export specifier, which knip exempts on its own (a built-in always-ignored tag; the config's
+`"tags": ["-public"]` line is inert). `@public` means *published API,
+deliberately kept without an in-repo consumer* — the ~80 already tagged began as the
 2026-08-18 audit's KEEP list (companion types, `facewearColors`,
 `LEGACY_FACEWEAR_ITEM_IDS`, `RATIO_BANDS`, `MemoryCacheBackend`,
 `SUPPORTED_LOCALES`, the `utils` survivors, the API/Universalis tunables). A new
@@ -305,4 +312,4 @@ pnpm turbo run build test --filter=@xivdyetools/core
 # 3. Actions → "Publish Packages to npm" → package: @xivdyetools/core
 ```
 
-If you've made **manual locale fixes** (e.g., Korean/Chinese name corrections) that aren't reproducible from `dyenames.csv` / `localize.yaml`, `build:locales` will detect the difference and regenerate over them during the publish build. Fold such corrections back into the source CSV/YAML rather than editing the generated JSON, or use `--ignore-scripts` on a break-glass local publish.
+If you've made **manual locale fixes** (e.g., Korean/Chinese name corrections) that aren't reproducible from `dyenames.csv` / `facewear-names.csv` / `localize.yaml`, `build:locales` will detect the difference and regenerate over them during the publish build. Fold such corrections back into the source CSV/YAML rather than editing the generated JSON, or use `--ignore-scripts` on a break-glass local publish.

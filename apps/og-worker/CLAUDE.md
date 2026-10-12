@@ -68,7 +68,7 @@ src/
     ├── translator.ts           # Stateless 6-locale provider + dye/harmony/lens/clan-or-race names
     └── svg/
         ├── band.ts             # ★ The 15E frame + the SHARED chrome (cardHeader/cardFooter/ogMark)
-        ├── band-shared.ts      # ALGO_TAG, fmtDelta, bandGlyph, notFoundBand (takes the locale)
+        ├── band-shared.ts      # algoTag, fmtDelta, bandGlyph, notFoundBand (takes the locale)
         ├── default-card.ts     # The 2a default cards (stripes + glyph tile); the one-liner wraps to ≤ 3 lines and the deck grows
         ├── tokens.ts           # GROUND, font STACKS, MARK_STRIPES, COMPACT_GLYPH — one source
         ├── dye-helpers.ts      # Shared DyeService, stainID map, deltaForAlgorithm
@@ -120,6 +120,8 @@ for.
 **A gradient share is read the way the page reads it** (BUG-008, `parseShareSteps` / `parseInterpolation` in `og-params.ts`). `steps` counts only as a whole number from 3 to 12 in canonical decimal spelling: `ShareService.parseUrl` makes a number only when `String(parseFloat(v)) === v`, and `gradient-tool` then accepts 3–12. So `05`, `5.0`, `2`, `13`, junk, or no `steps` at all preview the page's default 8 (`OG_DEFAULT_GRADIENT_STEPS`). The image URL always carries the resolved count, while `og:url` leaves the count out: the page reads a missing count exactly as it reads one it ignores, keeping the reader's saved count. `interpolation` counts only as one of the five modes spelled exactly (`LAB` is no mode on the page either); anything else is dropped, never echoed, and the preview assumes `hsv`. `og:url` carries any mode that parses, `hsv` included, because an explicit `hsv` overrides a saved mode; the image URL elides `hsv`.
 
 **Custom colors (BUG-059).** A gradient, mixer or harmony share whose endpoint is a Custom Color (`hexStart`/`hexEnd`, `hexA`/`hexB`, harmony's `hex`, read only when that endpoint's dye slot is absent) has no card of its own, because the image routes are stainID-keyed. Like budget's bare `?hex=` target, it gets the per-tool default card (`lang` only). Unlike budget, it keeps the rest of the embed: a title naming the color by its hex, the first endpoint's color (start / `dyeA` / the base) as `theme-color`, and an `og:url` that reopens the custom share.
+
+**Health check:** `GET /health` returns JSON `{ status: 'ok', service: 'xivdyetools-og-worker', timestamp }`.
 
 **OG image routes** (return `image/png`). Every route takes `?lang=` (the picture
 localizes only when asked) and `?frame=x` (the 400×210 X frame; `twitter:image`
@@ -223,7 +225,7 @@ dye, or start == end) is byte-identical across the five interpolation modes, yet
 keys each non-`hsv` mode separately, so it can fill up to five entries. The crawler never
 emits one of these, and keying a real ramp less finely would be the worse trade.
 
-All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus a duplicated `CDN-Cache-Control`. Crawler HTML is `max-age=3600, s-maxage=86400`.
+All image responses set `Cache-Control: public, max-age=86400, s-maxage=604800` (24h browser, 7d edge — BUG-068: `renderOGImage` now takes explicit `{ browser, edge }` TTLs instead of an implicit ×7 multiplier), plus `CDN-Cache-Control: max-age=604800` (the edge TTL alone). Crawler HTML is `max-age=3600, s-maxage=86400`.
 
 The `caches.default` edge cache in `index.ts` (`ogCacheKey`) is checked and filled for `GET`
 *and* `HEAD` (ruling S7-R8 — `c.req.method` reads `'HEAD'` inside Hono middleware even though
@@ -247,7 +249,7 @@ the absent-wheel entry. `interpolation` needs no normalizing: the guard admits o
 exact spellings. `?lang=EN`, `?lang=en-US`, and a missing `lang` all share the `en` card's entry; an unrecognized `?frame=` shares the `discord` entry. `algo` is never normalized (two spellings `normalizeMatchingMethod` treats differently at render time must not share a cache slot) — but it IS validated, by the same guard, before `ogCacheKey` ever runs (ruling S7-R7), so the raw value it keys on is always one of the 9 `VALID_ALGORITHMS` spellings or absent, never arbitrary — and an EMPTY `algo` (`?algo=` or bare `?algo`,
 both of which `URLSearchParams.get` reports as `''`) counts as absent there and here, not a
 validation failure, matching what the algo-aware routes already did with
-`c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). The key also carries `CARD_VERSION` — this worker'''s own `package.json` version
+`c.req.query('algo') || DEFAULT_MATCHING_METHOD` (ruling S7-R10). The key also carries `CARD_VERSION` — this worker's own `package.json` version
 (BUG-025) — because nothing else in it changes when the CARD does, and the stored response says
 `s-maxage=604800` while neither deploy workflow purges: a band-layout revision or a renamed dye
 kept serving the pre-deploy PNG from every colo that already had it. Combined with the query-key
@@ -287,7 +289,7 @@ cannot skew production metrics. Both envs declare `routes` and `workers_dev` **e
 which is what keeps beta's routes out of production regardless of wrangler's inheritance rules.
 
 **`OG_IMAGE_BASE_URL`'s hostname must never equal `APP_BASE_URL`'s.** `isOgImageHost()` uses that
-comparison to recognise its own image host and responds by redirecting humans to `APP_BASE_URL`
+comparison to recognize its own image host and responds by redirecting humans to `APP_BASE_URL`
 rather than passing them through to the SPA — so collapsing the two would bounce every real
 visitor off every tool page. This is why beta has a separate `og-beta.` domain instead of
 serving cards from `beta.xivdyetools.app/og`. `tests/wrangler-env.test.ts` guards both invariants.
@@ -348,7 +350,7 @@ never by reading the SVG string. `getFontBuffers()` is passed to `Resvg`'s `font
 
 ### Stateless Localization (REFACTOR-001)
 
-`og-data-generator.ts` builds a module-scope `TranslationProvider` with all 6 locales preloaded. Each lookup passes the `LocaleCode` explicitly — this **diverges from `api-worker`** which uses `LocalizationService.setLocale()` middleware. The reason: `og-worker` may serve concurrent requests with different `?lang=` query params and the singleton pattern would race. See OPT-001 in the audit log.
+`services/translator.ts` builds a module-scope `TranslationProvider` (`ogTranslator`) with all 6 locales preloaded, shared by `og-data-generator.ts` and the SVG generators. Each lookup passes the `LocaleCode` explicitly — this **diverges from `api-worker`** which uses `LocalizationService.setLocale()` middleware. The reason: `og-worker` may serve concurrent requests with different `?lang=` query params and the singleton pattern would race. See OPT-001 in the audit log.
 
 ### Parameter Bounds (FINDING-003)
 
@@ -368,9 +370,9 @@ that event. `index.privacy.test.ts` checks the boundary with a real crawler HTML
 |---|---|
 | `hono` | HTTP framework |
 | `@resvg/resvg-wasm` | SVG → PNG rasterizer (WASM, statically imported) |
-| `@cloudflare/workers-types` | Type defs for Analytics Engine, KV, etc. |
+| `@cloudflare/workers-types` | Type defs for Analytics Engine (`AnalyticsEngineDataset`) and the Workers runtime globals |
 | `@xivdyetools/core` | `DyeService`, `dyeDatabase`, `LocaleLoader`/`LocaleRegistry`/`TranslationProvider`, `extractLocaleCode` |
-| `@xivdyetools/types` | `Dye`, `LocaleCode`, `HarmonyTypeKey`, `SheetKey`, `ToolKey`, `VisionType`, `PresetData` |
+| `@xivdyetools/types` | `Dye`, `LocaleCode`, `HarmonyTypeKey`, `SheetKey`, `VisionType`, `PresetData`, `ClanKey`/`RaceKey`, and the character-sheet `SUBRACE_TO_RACE` map plus its `SubRace` / `Gender` types |
 | `@xivdyetools/svg` | `toolGlyph` (the tool glyphs), `GLYPH_ACCENT_LIGHT`, `escapeXml`, `estimateTextWidth` (CJK-aware fit) |
 | `@xivdyetools/worker-kit` | `requestIdMiddleware`, `loggerMiddleware`, `getLogger` |
 
@@ -395,7 +397,7 @@ that event. `index.privacy.test.ts` checks the boundary with a real crawler HTML
    and neither deploy workflow purges).
 5. `pnpm deploy` publishes **beta** (live on `beta.xivdyetools.app`). Spot-check a card at
    `https://og-beta.xivdyetools.app/og/harmony/1/tetradic.png`.
-   **Use a stainID, not an item ID.** `1` is Snow White. An unrecognised dye does not error —
+   **Use a stainID, not an item ID.** `1` is Snow White. An unrecognized dye does not error —
    it degrades to the default card, so an item-ID-era value like `5771` renders a perfectly
    valid-looking card that tests nothing. Check the URL you got back names the dye.
 6. `pnpm deploy:production`. Validate a real shared link in Discord. With step 4 done the new

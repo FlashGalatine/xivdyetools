@@ -74,14 +74,14 @@ src/
 │   ├── parser.ts                # Prefix parsing, aliases, parseSingleDyeArgs, > separator
 │   ├── ping.ts                  # !xd ping (latency check)
 │   ├── help.ts                  # !xd help [command]
-│   ├── about.ts                 # !xd about (links + links)
+│   ├── about.ts                 # !xd about (bot info + quick start + links)
 │   └── info.ts                  # !xd info <dye> via bot-logic.executeDyeInfo
 ├── services/
 │   ├── dye-resolver.ts          # Multi-strategy resolution: exact name/ID → hex → partial name/category (English + locale) → CSS color name → none+suggestions; 2-4 partial hits show each dye, 5+ a capped (12) disambiguation list (BUG-073). `resolveDyeInputMulti` is async (awaits `initializeLocale`)
 │   ├── command-throttle.ts      # CommandThrottle: in-memory sliding window per user (default 5 / 10 s)
 │   ├── message-context.ts       # MessageContextStore (LRU+TTL, max 500, 1h) for reaction handlers
 │   ├── response-formatter.ts    # StoatEmbed shape, error/disambig/no-match formatters,
-│   │                            # DYE_INFO_REACTIONS, masquerade helpers
+│   │                            # DYE_INFO_REACTIONS, the `masquerade` message option shape
 │   └── loading-indicator.ts     # withLoadingIndicator(): ⏳ react/unreact wrapper
 └── test-utils/
     └── revolt-mocks.ts          # Mock factories for revolt.js Client/Message/Channel
@@ -110,16 +110,16 @@ This is the most important section. `stoat-worker` and `discord-worker` look sup
 | **Transport** | HTTP Interactions (POST per interaction) | WebSocket gateway (`messageCreate` events) |
 | **Command model** | Slash commands registered with Discord; structured options | Prefix parsing (`!xivdye` / `!xd`) of raw message content |
 | **Image rendering** | `@resvg/resvg-wasm` (WASM in worker) | Planned: `@resvg/resvg-js` (Node native) |
-| **Image processing** | `@cf-wasm/photon` | Planned: `sharp` |
-| **Storage** | KV (rate-limit, prefs, analytics), D1 via service binding | Planned: SQLite (better-sqlite3) for prefs/analytics |
-| **Rate limit backend** | KV-backed `@xivdyetools/worker-kit/rate-limiter` | In-memory per-user `CommandThrottle` (5 / 10 s, `services/command-throttle.ts`, since 0.2.2 — FINDING-035); Upstash backend still only planned |
+| **Image processing** | `IMAGE_WORKER` service binding to image-worker (Photon WASM lives there) | Planned: `sharp` |
+| **Storage** | KV (prefs, favorites, `/stats` counters), Analytics Engine, preset data via the `presets-api` service binding | Planned: SQLite (better-sqlite3) for prefs/analytics |
+| **Rate limit backend** | native `RL_*` Workers Rate Limiting bindings via `@xivdyetools/worker-kit/rate-limiter` (KV fallback) | In-memory per-user `CommandThrottle` (5 / 10 s, `services/command-throttle.ts`, since 0.2.2 — FINDING-035); Upstash backend still only planned |
 | **Signature verification** | Ed25519 on every request | None — WebSocket session is implicitly authenticated by `BOT_TOKEN` |
 | **Embed shape** | Discord rich embeds w/ fields, footer, author | Stoat `SendableEmbed`: title/description/icon_url/colour/media (no fields) |
 | **Interactive buttons** | Discord MessageComponent buttons + modals | Stoat reactions with `restrict_reactions: true`; `MessageContextStore` maps message IDs to dye context |
 | **Loading state** | Deferred response + follow-up edit | `⏳` react on the user's message via `withLoadingIndicator()`, removed when done |
 | **Per-message identity** | Bot-static avatar + name | Per-reply masquerade: bot adopts dye's color and name for that message |
 | **Localization** | Auto from `interaction.locale` | `dye-resolver.ts` honors a `locale` argument (BUG-072), but `info.ts` still hard-codes `'en'` (no per-user locale source yet), so localized names are not reachable by a Revolt user. `!xd help` says names are matched in English and does not promise localized lookup |
-| **Authorization** | `MODERATOR_IDS` (Discord snowflakes) | `STATS_AUTHORIZED_USERS` (Stoat ULIDs, Crockford Base32) |
+| **Authorization** | `MODERATOR_IDS` + `STATS_AUTHORIZED_USERS` (Discord snowflakes) | `STATS_AUTHORIZED_USERS` (Stoat ULIDs, Crockford Base32) |
 
 ### Stoat-Specific Patterns
 
@@ -177,7 +177,7 @@ await withLoadingIndicator(message, async () => {
 | `revolt.js` | Stoat WebSocket client (login, events, sendMessage, react, masquerade) |
 | `@xivdyetools/bot-logic` | Platform-agnostic command execution (`executeDyeInfo`, etc.) |
 | `@xivdyetools/bot-logic/i18n` | Six-language localized error/help/status strings (absorbed from bot-i18n) |
-| `@xivdyetools/types` | `Dye`, `LocaleCode`, branded color types |
+| `@xivdyetools/types` | `Dye` type (`LocaleCode` comes from `bot-logic/i18n`) |
 | `@xivdyetools/logger` | Structured logging |
 | `tsup` / `tsx` | Build / dev runtime (devDependencies) |
 | `vitest` / `@vitest/coverage-v8` | Tests |
@@ -221,11 +221,11 @@ wrong again the next time someone reads it (noticed stale during the FINDING-031
 
 ## Testing
 
-Vitest, with `src/test-utils/revolt-mocks.ts` — this app's own hand-written mock factories, not `@xivdyetools/test-utils` (not a dependency here; see the note under Dependencies above) — for revolt.js Client/Message/Channel stubs. Tests are co-located: `parser.test.ts`, `router.test.ts`, `info.test.ts`, etc.
+Vitest, with `src/test-utils/revolt-mocks.ts` — this app's own hand-written mock factories, not `@xivdyetools/test-utils` (not a dependency here; see the note under Dependencies above) — for revolt.js Client/Message/Channel stubs. Tests are co-located: `parser.test.ts`, `info.test.ts`, `message-handler.test.ts`, etc.
 
 ```bash
 npx vitest run src/commands/parser.test.ts
-npx vitest run -t "greedy dye name"
+npx vitest run -t "greedy args"
 ```
 
 ## Design Documents

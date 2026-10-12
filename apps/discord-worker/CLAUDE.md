@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The primary FFXIV Dye Tools Discord bot, running on Cloudflare Workers via Discord HTTP Interactions (no Gateway WebSocket — fully serverless). All slash commands, autocompletes, button clicks, and modal submissions hit a single POST endpoint that verifies an Ed25519 signature and routes by interaction type.
 
-This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts the 5.0 command set spanning colour matching, harmony generation, image extraction, dye comparison, WCAG contrast, colour-vision accessibility, `.chara` character files, community presets, and the Universalis-backed 13G `/budget` ledger. The v4 `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands were deleted in 5.0. Renders SVG cards converted to PNG via `resvg-wasm`; dominant-color extraction from uploaded images is delegated to `xivdyetools-image-worker` over a Service Binding (`photon-wasm` moved there in the image-worker split — see `docs/operations/IMAGE_WORKER_SPLIT.md`).
+This worker replaces the deprecated `xivdyetools-discord-bot` (Node.js + discord.js Gateway bot). It hosts the 5.0 command set spanning color matching, harmony generation, image extraction, dye comparison, WCAG contrast, color-vision accessibility, `.chara` character files, community presets, and the Universalis-backed 13G `/budget` ledger. The v4 `/match`, `/match_image`, `/favorites`, `/collection` and `/language` commands were deleted in 5.0. Renders SVG cards converted to PNG via `resvg-wasm`; dominant-color extraction from uploaded images is delegated to `xivdyetools-image-worker` over a Service Binding (`photon-wasm` moved there in the image-worker split — see `docs/operations/IMAGE_WORKER_SPLIT.md`).
 
 ## Commands
 
@@ -128,7 +128,7 @@ src/
 │   ├── analytics.ts               # KV counters + Analytics Engine writes (Tier A column layout)
 │   ├── command-trace.ts           # Per-interaction trace: traced ctx, outcome marks, classifier
 │   ├── rate-limiter.ts            # Native `[[ratelimits]]` bindings (RL_5…RL_70), KV fallback only when unbound
-│   ├── preset-favorites.ts        # Per-user preset favourites in KV (/preset favorite add|remove|list)
+│   ├── preset-favorites.ts        # Per-user preset favorites in KV (/preset favorite add|remove|list)
 │   ├── preferences.ts             # User preferences (race/clan, world, language, matching, theme)
 │   ├── preset-api.ts              # Service Binding client to presets-api
 │   ├── i18n.ts                    # Locale resolution + dye name lookup
@@ -145,7 +145,7 @@ src/
 │   ├── image-client.ts            # IMAGE_WORKER service-binding client (photon moved to xivdyetools-image-worker)
 │   └── budget/                    # Universalis price cache, calculator, quick picks
 ├── utils/
-│   ├── brand.ts                   # BRAND_ACCENT — the one embed accent colour
+│   ├── brand.ts                   # BRAND_ACCENT — the one embed accent color
 │   ├── github-verify.ts           # HMAC-SHA256 verification for GitHub webhooks
 │   ├── response.ts                # pong/ephemeral/deferred response builders
 │   ├── discord-api.ts             # REST helpers (sendMessage, follow-ups, edits)
@@ -171,14 +171,14 @@ hex helpers come from `@xivdyetools/bot-logic` / `@xivdyetools/core`. There is n
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favourites, analytics counters, announced-version memo (`announced:v:<version>`) |
+| `KV` | KV Namespace | Rate limiting fallback, user preferences, preset favorites, analytics counters, announced-version memo (`announced:v:<version>`) |
 | `ANALYTICS` | Analytics Engine (`xivdyetools_bot_analytics`) | Long-term command usage telemetry |
 | `PRESETS_API` | Service Binding → `xivdyetools-presets-api` | Worker-to-Worker preset CRUD |
 | `UNIVERSALIS_PROXY` | Service Binding → `xivdyetools-api-worker` | Market board prices for `/budget` (via the absorbed `/api/v2/*` proxy routes); `/glamour`'s `POST /v1/chara/resolve`. A binding request carries no client IP, so all of them share one key — api-worker's `SERVICE_RATE_LIMITER` (1300/min, 20x a public IP's); one resolve per `/glamour`, no icons, and a 429 is answered as busy (`rate_limited`) |
 | `IMAGE_WORKER` | Service Binding → `xivdyetools-image-worker` | Photon-backed pixel extraction for `/extractor` (see `docs/operations/IMAGE_WORKER_SPLIT.md`) |
 | `RL_5`, `RL_10`, `RL_15`, `RL_20`, `RL_30`, `RL_70` | Rate Limiting (`[[ratelimits]]`, 60 s period) | Per-user command counters — one tier per distinct effective limit in `DISCORD_COMMAND_LIMITS`; KV is the fallback only when none is bound (FINDING-007) |
 
-Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID` — all four declared in **both** `wrangler.toml` blocks, since `vars` are not inheritable. `ENVIRONMENT` is `"development"` on the beta bot and `"production"` on the live one; the only behaviour it gates is `validateEnv`, which requires the six `RL_*` bindings in production (FINDING-013) — `/stats health` also prints it, as a label only (BUG-012). Custom domain: `bot.xivdyetools.app` only (`bot.xivdyetools.projectgalatine.com` was retired on 2026-10-04 — `docs/operations/DOMAIN_DEPRECATION.md`). `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
+Vars: `ENVIRONMENT`, `DISCORD_CLIENT_ID`, `PRESETS_API_URL`, `ANNOUNCEMENT_CHANNEL_ID` — all four declared in **both** `wrangler.toml` blocks, since `vars` are not inheritable. `ENVIRONMENT` is `"development"` on the beta bot and `"production"` on the live one; it gates two production-only behaviors: `validateEnv` requires the six `RL_*` bindings (FINDING-013), and `/webhooks/preset-submission` answers 503 to an `INTERNAL_WEBHOOK_SECRET` shorter than 32 characters (FINDING-027) — `/stats health` also prints it, as a label only (BUG-012). Custom domain: `bot.xivdyetools.app` only (`bot.xivdyetools.projectgalatine.com` was retired on 2026-10-04 — `docs/operations/DOMAIN_DEPRECATION.md`). `[[rules]]` includes `**/*.md` as `Text` (the bot's `CHANGELOG-laymans.md`, imported as a string by `/changelog`; `src/types/markdown.d.ts` types it and `vitest.markdown-plugin.ts` mirrors it for tests) and `**/*.ttf` as `Data` (CJK subset fonts bundled into the Worker).
 
 ### Required Secrets
 
@@ -209,7 +209,7 @@ A single `switch (commandName)` in `handleCommand()` dispatches to handlers in `
 
 ### Deferred Responses
 
-Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately, then call `sendFollowup()` (utils/discord-api.ts) once SVG rendering or external API calls finish. Image-generating commands use `ctx.waitUntil()` so the Worker isolates can shut down cleanly.
+Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately, then call `sendFollowUp()` (utils/discord-api.ts) once SVG rendering or external API calls finish. Image-generating commands use `ctx.waitUntil()` so the Worker isolates can shut down cleanly.
 
 ### Rate Limiting
 
@@ -217,7 +217,7 @@ Long-running handlers return `DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE` immediately,
 
 ### SVG → PNG Pipeline
 
-1. Build SVG string with embedded CJK subset fonts (`services/svg/*.ts`).
+1. Build the SVG string with the `@xivdyetools/svg` card generators (directly or through `@xivdyetools/bot-logic`); the fonts are not embedded, since the renderer hands them to resvg via `getFontBuffers()`.
 2. `renderSvgToPng()` (`services/svg/renderer.ts`) invokes `@resvg/resvg-wasm`.
 3. Returned as a `multipart/form-data` attachment via Discord REST.
 
@@ -232,7 +232,7 @@ Tier A (2026-08-29, spec `docs/superpowers/specs/2026-08-29-bot-analytics-tier-a
 ### Autocomplete
 
 Special routing inside `handleAutocomplete()`:
-- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `favorite remove` shows the user's favourited presets, and everything else (`show`, `vote`, `favorite add`) queries approved presets via the Service Binding. `moderate` is not registered on this worker — it belongs to `xivdyetools-moderation-worker`.
+- `/preset` autocomplete checks subcommand: `edit` shows the user's own presets, `favorite remove` shows the user's favorited presets, and everything else (`show`, `vote`, `favorite add`) queries approved presets via the Service Binding. `moderate` is not registered on this worker — it belongs to `xivdyetools-moderation-worker`.
 - `/preferences` clan field uses `CLANS_BY_RACE` table; world field reuses budget's world autocomplete.
 - `/budget` delegates entirely to `handleBudgetAutocomplete()`.
 
@@ -273,12 +273,12 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 | `/dye search\|info\|list\|random` | Dye database lookups (11B cards) |
 | `/comparison` | 14A Duel / 14C triangle router (2–4 dyes) |
 | `/contrast` | WCAG 1.4.11 ratios, 13A/13B/13C·1 router (2–4 dyes) |
-| `/accessibility` + `/a11y` | Colour-vision lenses (13D/13E/13H via `vision:`) |
+| `/accessibility` + `/a11y` | Color-vision lenses (13D/13E/13H via `vision:`) |
 | `/mixer` | 12F ratio-sweep blending card |
 | `/gradient` | 12H gradient card (distinct dyes, 3-stage cap) |
 | `/swatch` | `.chara` character-file frame (required `file:` attachment) |
 | `/glamour` | The Glamour Reader: `.chara` attachment → card 2a (dyed pieces, twin named, in-game verdict) + the GPOSERS list in the embed; resolves via `UNIVERSALIS_PROXY` → api-worker `POST /v1/chara/resolve` |
-| `/extractor` | Image ramp (14K) / colour sheet (14J·2) |
+| `/extractor` | Image ramp (14K) / color sheet (14J·2) |
 | `/preferences` | Race/clan/world/language/matching/theme preferences |
 | `/preset` | Browse/submit/vote/edit community presets |
 | `/budget` | 13G ledger — tier-group pricing via Universalis |
@@ -311,7 +311,7 @@ Strict-Transport-Security: max-age=31536000; includeSubDomains
 2. `interaction.locale` (Discord client locale)
 3. Default `en`
 
-Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/bot-logic/i18n` via `createTranslator(locale)` / `createUserTranslator(env.KV, userId, locale, logger)`.
+Dye names come from `@xivdyetools/core`; bot UI strings come from `@xivdyetools/bot-logic/i18n` via `createTranslator(locale)` / `createUserTranslator(env.KV, userId, locale, logger)` (the latter is this worker's `services/bot-i18n.ts` wrapper that resolves the locale from KV).
 
 ## Webhook Endpoints
 

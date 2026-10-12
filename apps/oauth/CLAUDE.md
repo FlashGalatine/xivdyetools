@@ -110,13 +110,13 @@ src/
 │   └── body-validation.ts            # This app's cap + error bodies for @xivdyetools/worker-kit/body-guards (10KB), plus requireJsonContentType (415 gate)
 ├── services/
 │   ├── jwt-service.ts                # HS256 sign/verify via Web Crypto, jti, revocation check
-│   ├── user-service.ts               # findOrCreateUser + find-by-id lookups (D1 upserts)
+│   ├── user-service.ts               # findOrCreateUser (D1 upsert by xivauth_id / discord_id)
 │   └── rate-limit.ts                 # Backend selector: native RL_AUTH_* bindings → KV → per-isolate memory
 ├── utils/
 │   ├── oauth-validation.ts           # validateCodeChallenge/Verifier, validateRedirectUri (origin + exact path), validateReturnPath, validateStateParam, validateScopes
 │   ├── pkce-binding.ts               # verifyPkceStateBinding: S256(code_verifier) vs the signed code_challenge (FINDING-012)
 │   ├── state-signing.ts              # signState/verifyState (HMAC-SHA256 over base64url JSON)
-│   └── env-validation.ts             # First-request env validation
+│   └── env-validation.ts             # Env validation (runs on every request; fail-closed outside development)
 └── __tests__/                        # Test suites (separate __tests__ dir, not co-located)
 ```
 
@@ -189,12 +189,12 @@ Partial unique indexes on `discord_id` and `xivauth_id` enforce per-provider uni
 
 ### State Parameter Signing
 
-`signState(env.JWT_SECRET, payload)` produces `<base64url-json>.<hex-hmac>`; `verifyState` HMACs the JSON portion and compares to the signature, then checks `iat + STATE_EXPIRY_SECONDS (600) > now`. Without a valid signature the callback returns 400. The state carries the `redirect_uri`, `return_path`, and original `state` value supplied by the SPA.
+`signState(payload, env.JWT_SECRET)` produces `<base64url-json>.<base64url-hmac>`; `verifyState` verifies the signature over the base64url-encoded portion (`crypto.subtle.verify`, timing-safe), then rejects a state with no `exp` or an `exp` in the past (`exp` is minted as `iat + STATE_EXPIRY_SECONDS (600)`). Without a valid signature the callback returns 400. The state carries the `redirect_uri`, `return_path`, and original `state` value supplied by the SPA.
 
 ### JWT Service
 
 - `jwt-service.ts` has no `decodeJWT` wrapper any more (DEAD-036); the `mintToken` tests import `decodeJWT` from `@xivdyetools/auth` directly.
-- HS256 via Web Crypto (`crypto.subtle.sign('HMAC', ...)`).
+- HS256 via Web Crypto HMAC, delegated to `hmacSign` / `hmacVerify` in `@xivdyetools/auth` (`signJwtData` / `verifyJwtData` wrap them).
 - Mints exactly `sub`, `iat`, `exp`, `iss`, `jti`, `username`, `global_name`, `avatar`, `auth_provider` and — whenever the account has one — `discord_id` (an XIVAuth-only account gets nine claims): what the clients read, and nothing else (FINDING-002). `orig_iat` (its only reader, `/auth/refresh`, is gone), `xivauth_id` (never had one) and `primary_character` (an FFXIV character name + home world the web app copies and never renders, unverified registrations included) are no longer minted. All three are optional in `@xivdyetools/types`.
 - `verifyJWT` rejects non-HS256 algorithms, validates signature, and checks `exp`.
 - `verifyJWTWithRevocationCheck` additionally queries `TOKEN_BLACKLIST` for the `jti`.
@@ -212,11 +212,11 @@ Every response the app dispatches carries `Cache-Control: no-store` and `Pragma:
 
 ### Redirect URI Validation
 
-`validateRedirectUri(uri, ALLOWED_REDIRECT_ORIGINS)` parses the URL, compares the origin against an allowlist (constants/oauth.ts) **and** requires the path to be exactly `REDIRECT_CALLBACK_PATH` (`/auth/callback`, no query string or fragment). Anything that doesn't parse, doesn't match, or fails origin/path equality is rejected — prevents open redirect attacks (FINDING-012). `validateReturnPath` / `validateStateParam` bound `return_path` and the SPA `state` (256 visible-ASCII characters) before they enter the signed state.
+`validateRedirectUri(uri, getAllowedRedirectOrigins(env))` parses the URL, compares the origin against an allowlist (`ALLOWED_REDIRECT_ORIGINS` in constants/oauth.ts plus `env.FRONTEND_URL`, with localhost/127.0.0.1 entries kept only in development) **and** requires the path to be exactly `REDIRECT_CALLBACK_PATH` (`/auth/callback`, no query string or fragment). Anything that doesn't parse, doesn't match, or fails origin/path equality is rejected — prevents open redirect attacks (FINDING-012). `validateReturnPath` / `validateStateParam` bound `return_path` and the SPA `state` (256 visible-ASCII characters) before they enter the signed state.
 
 ### Rate Limiting
 
-`/auth/*` is rate-limited **per IP and per path**, with the limit chosen by `OAUTH_LIMITS`. The path is `c.req.path` — the decoded path Hono routes on — not the wire spelling, so `/auth/%63allback` shares `/auth/callback`'s bucket and 20/min tier instead of getting its own (BUG-007). A path no route matches (a 404) still gets its own default-tier bucket per spelling, and the key is not length-bounded.
+`/auth/*` is rate-limited **per IP and per path**, with the limit chosen by `OAUTH_LIMITS`. The path is `c.req.path` — the decoded path Hono routes on — not the wire spelling, so `/auth/%63allback` shares `/auth/callback`'s bucket and 20/min tier instead of getting its own (BUG-007). A path no route matches (a 404) still gets its own bucket per spelling (the default tier unless it merely starts with a keyed path such as `/auth/callback`, in which case it takes that path's tier), and the key is not length-bounded.
 
 The limit is chosen by `OAUTH_LIMITS`:
 10/min on the login-initiation paths, 20/min on the token-exchange callbacks, 30/min on everything
@@ -269,7 +269,7 @@ Prevents the worker from hanging on a slow Discord/XIVAuth response.
 
 ### Scope Validation
 
-`validateScopes(actual, required)` rejects tokens missing required scopes:
+Tokens missing required scopes are rejected (`validateScopes(tokenScope, requiredScopes)` for XIVAuth; the Discord callback checks `identify` inline):
 - Discord: `identify`.
 - XIVAuth: `user`, `character` (also requests `user:social` and `refresh` non-required).
 
