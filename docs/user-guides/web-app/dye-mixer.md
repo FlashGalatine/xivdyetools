@@ -2,7 +2,7 @@
 
 **Blend two dyes together to create custom colors**
 
-The Dye Mixer takes two dyes, blends them the way paint, pigment, light or a perceptual colour space would, and finds the closest FFXIV dyes to the result. In 5.0 it shows every blend at once: a **mixing field** of six models × five ratios, thirty real colours you can compare in one glance and tap to make the mix.
+The Dye Mixer takes two dyes, blends them the way paint, pigment, light or a perceptual color space would, and finds the closest FFXIV dyes to the result. In 5.0 it shows every blend at once: a **mixing field** of six models × five ratios, thirty real colors you can compare in one glance and tap to make the mix.
 
 > **Note**: This is a completely different tool from the Gradient Builder (previously called "Dye Mixer" in v3.x). The Gradient Builder creates color *transitions*, while this tool creates color *blends*.
 
@@ -33,11 +33,11 @@ The **Model spread** readout in the field header says how far apart the six mode
 
 ### 3. Tap a Cell
 
-Tapping a cell makes it the mix: the result swatch takes its colour, the **Matching Dyes** list below re-ranks around it, and the cell keeps a highlighted ring. The default is **RYB at 50/50**. Change dyes and the same model and ratio carry over.
+Tapping a cell makes it the mix: the result swatch takes its color, the **Matching Dyes** list below re-ranks around it, and the cell keeps a highlighted ring. The default is **RYB at 50/50**. Change dyes and the same model and ratio carry over.
 
 ### 4. Matching Dyes
 
-The closest dyes to your mix, one card each: the dye beside the blend colour, its distance in the current unit, hue and stain readouts, colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…**.
+The closest dyes to your mix, one card each: the dye beside the blend color, its distance in the current unit, hue and stain readouts, color values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…**.
 
 ### 5. Settings
 
@@ -45,39 +45,39 @@ In the settings column (the gear icon on phones):
 - **Mixing Mode** - The same six models as the field rows; the field and the dropdown stay in sync
 - **Max Results** - 3–8 matched dyes
 - **Matching Algorithm** - ΔE2000 by default; ΔEOK2, ΔE76, Weighted RGB, RGB or a percentage
-- **Display options** - Which colour values and readouts the cards show
-- **Dye Filters** - Exclude metallic, pastel, dark, cosmic, coffer, vendor or crafted dyes; the field cells and the results list use the same filtered pool, so a cell never quotes a distance to a dye the list can't show
+- **Display options** - Which color values and readouts the cards show
+- **Dye Filters** - Exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes; the field cells and the results list use the same filtered pool, so a cell never quotes a distance to a dye the list can't show
 - **Market Board** - Show current prices on the cards
 
 ---
 
 ## Blending Models Explained
 
-The row headers use each model's technical name; the settings dropdown and the cell hints use plain ones.
+The row headers use each model's technical name; the cell hints use the plain names in the Name column. The settings dropdown differs for two models: Spectral is **Realistic Paint** and HSL is **Hue-based**; the others match the hints.
 
 | Row | Name | What it does | Blue + Yellow = |
 |-----|------|--------------|-----------------|
-| **RYB** | Paint | The traditional red-yellow-blue colour wheel — mixing like paint in art class | Olive |
+| **RYB** | Paint | The traditional red-yellow-blue color wheel — mixing like paint in art class | Green |
 | **Spectral** | Pigment | Kubelka-Munk physics — how real pigment behaves | Green |
-| **OKLAB** | Perceptual | A modern, even perceptual space; no muddiness | Cyan |
-| **LAB** | LAB | The older perceptual space, with a warmer bias | Pink |
+| **OKLAB** | Modern Perceptual | A modern, even perceptual space; no muddiness | Cyan |
+| **LAB** | Perceptual | The older perceptual space, with a warmer bias | Pink |
 | **HSL** | Hue | Sweeps around the hue wheel while keeping saturation | — |
-| **RGB** | Light | Additive light mixing, the way screens blend | Grey |
+| **RGB** | Light | Additive light mixing, the way screens blend | Gray |
 
 **Best for**
 - **RYB / Spectral** - "What would happen if I mixed these two paints?"
 - **OKLAB / LAB** - Balanced middle grounds that look natural to the eye
-- **HSL** - Keeping colours vivid while moving between two hues
-- **RGB** - Matching how the two colours average on a screen
+- **HSL** - Keeping colors vivid while moving between two hues
+- **RGB** - Matching how the two colors average on a screen
 
-**Tip**: Unlike gradient interpolation, blending creates a single colour rather than a transition path. The field exists because the same two dyes can land somewhere different in every row — look at the spread before you trust any one answer.
+**Tip**: Unlike gradient interpolation, blending creates a single color rather than a transition path. The field exists because the same two dyes can land somewhere different in every row — look at the spread before you trust any one answer.
 
 ---
 
 ## Save, Share and Export
 
-- **Save mix** (under the field) stores Dye A, Dye B and the dye the mix currently resolves to as a palette on this device, named "A × B". Find it under **Community Presets → Saved**. Custom hex colours have no dye behind them and are skipped; a mix of two customs saves nothing.
-- **Share** copies a link that reopens the same two dyes at the same model and ratio — 75/25 is a different colour from 50/50, so the ratio rides in the link. Sharing needs two real dyes in the slots.
+- **Save mix** (under the field) stores Dye A, Dye B and the dye the mix currently resolves to as a palette on this device, named "A × B". Find it under **Community Presets → Saved**. Custom hex colors have no dye behind them and are skipped; a mix of two customs saves nothing.
+- **Share** copies a link that reopens the same two dyes at the same model and ratio — 75/25 is a different color from 50/50, so the ratio rides in the link. Sharing needs two real dyes in the slots.
 - **Export** opens the export sheet: the two inputs and the blend (with its resolved dye and distance) as CSS custom properties, SCSS, JSON, plain HEX or a Tailwind theme, to copy or download.
 
 ---
@@ -110,7 +110,7 @@ Find "middle ground" dyes for coordinated looks:
 - **Contrasting colors** go muddy in RGB and RYB but often look better in OKLAB or Spectral
 - **The number in each cell** is the distance to the nearest dye — a low number means the blend really exists as a dye
 - **Watch the spread** - when it is high, try more than one row before choosing
-- **Off-centre ratios** (10/90, 90/10) are how you nudge a dye slightly toward another rather than meeting in the middle
+- **Off-center ratios** (10/90, 90/10) are how you nudge a dye slightly toward another rather than meeting in the middle
 
 ---
 
@@ -119,7 +119,7 @@ Find "middle ground" dyes for coordinated looks:
 | Feature | Dye Mixer | Gradient Builder |
 |---------|-----------|------------------|
 | Output | Single blended color | Multiple gradient steps |
-| Method | Six blend models × five ratios | Colour-space interpolation between two dyes |
+| Method | Six blend models × five ratios | Color-space interpolation between two dyes |
 | Use case | "Mix these colors" | "Transition between colors" |
 | Results | 3-8 matched dyes | One matched dye per step |
 

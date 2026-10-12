@@ -120,7 +120,7 @@ rejected, and records described as kept that are deleted.
 
 **Ends with:** `pnpm docs:check-links` → merge (no deploy fires).
 
-## Sprint 5 — web-app docs: what players and contributors read (P2, `docs/` only)
+## Sprint 5 — web-app docs: what players and contributors read (P2, `docs/` only) **✅ COMPLETED 2026-10-11 `a3b7401a` `bffe3f45` `1466c3ab` `66280ba2` `194842ee` `485475e4` `d8c2015f` `b0531dce` `53296079` `9d51743e` `a1c4a125` — PR [#291](https://github.com/FlashGalatine/xivdyetools/pull/291)**
 
 Anchored on DOC-003 (follows the Sprint 0 decision) and the Glamour Reader guide (DOC-006). The label quotes
 (DOC-031) are fixed before the spelling pass (DOC-074), so `--fix` never rewrites a quote the app still shows.

@@ -70,7 +70,7 @@ An off hand that belongs to the main weapon, such as a bow's quiver, is checked 
 
 ## Twins: the Same Look
 
-A `.chara` file stores the model a piece draws, not the item. One model often stands for several items that the game draws identically: *Dated Hempen Coif* and *Hempen Coif*, *Curtana Zenith* and its *Replica*, *Lord's Yukata* and *Lady's Yukata*. Their rules can differ (one takes a dye and its twin doesn't), so for each piece the reader names the twin the list will write:
+A `.chara` file stores the model a piece draws, not the item. One model often stands for several items that the game draws identically: *Curtana Zenith* and its *Replica*, *Lord's Yukata* and *Lady's Yukata*. Their rules can differ (one takes a dye and its twin doesn't), so for each piece the reader names the twin the list will write:
 
 1. one that passes the check for this file and this character,
 2. preferring one that takes dyes (GPOSERS asks for an identical dyeable version over an undyeable one),
@@ -81,6 +81,8 @@ A `.chara` file stores the model a piece draws, not the item. One model often st
 7. then the lowest item number.
 
 When no twin passes, the reader names the lowest-numbered twin with a known Acquisition line, or else the one with the lowest item number, counting only twins whose rules it could check.
+
+The reader never offers Aetherial or Deepmist gear, or **Dated** gear of level 50 or lower, as a twin while any other kind of item has the same look. A piece whose look only those items carry is still named, and its row ends with the note *"A retired item, no longer obtainable"*.
 
 ### The +N chip
 
@@ -210,7 +212,7 @@ Each row is marked, and the header counts the marks:
 | **EDITED** | You changed the line, or emptied it on purpose |
 | **BLANK** | No source is known, so the field is empty: *"No source found: type one, or leave it blank"* |
 
-The table is rebuilt after each game patch from the game's data and Teamcraft's data files. It is in English, like the form, and covers the twin the list names: pick another twin and its own line comes with it. Facewear always starts blank. A line is always one line, so a line break you type becomes a space in the list.
+The table is rebuilt after each game patch from the game's data and Teamcraft's data files. It is in English, like the form, and covers the twin the list names: pick another twin and its own line comes with it. Facewear is filled when the table knows where the style's unlock item comes from, and blank otherwise. A line is always one line, so a line break you type becomes a space in the list.
 
 Typing a filled line back to what it was turns the row back to **FILLED**.
 

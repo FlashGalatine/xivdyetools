@@ -2,7 +2,7 @@
 
 **Match character colors to FFXIV dyes**
 
-The Swatch Matcher finds the FFXIV dyes closest to your character's customization colours — hair, eyes, skin, highlights, lips, tattoos and face paint. Pick a swatch from the same colour sheets the character creator uses, or drop in a `.chara` file and read every colour on your character at once.
+The Swatch Matcher finds the FFXIV dyes closest to your character's customization colors — hair, eyes, skin, highlights, lips, tattoos and face paint. Pick a swatch from the same color sheets the character creator uses, or drop in a `.chara` file and read every color on your character at once.
 
 > **Note**: This tool was called "Character Color Matcher" in v3.x. In the 5.0 tool rail it is the **Swatch** chip; the tool menu lists it as **Swatch Matcher**.
 
@@ -12,7 +12,7 @@ The Swatch Matcher finds the FFXIV dyes closest to your character's customizatio
 
 ### Pick a swatch from the grid
 
-The colour sheet on the left is the character creator's palette, eight swatches to a row. Click any cell and its closest dyes appear on the right. Nothing else is required — clan and gender only matter for the two race-specific sheets (hair and skin).
+The color sheet on the left is the character creator's palette, eight swatches to a row. Click any cell and its closest dyes appear on the right. Nothing else is required — clan and gender only matter for the two race-specific sheets (hair and skin).
 
 ### Drop a `.chara` file
 
@@ -24,7 +24,7 @@ Above the grid is a **Drop a .chara file** zone (or press **Choose file**). It a
 
 ---
 
-## The Colour Sheets
+## The Color Sheets
 
 A row of chips above the grid switches between seven palettes:
 
@@ -34,13 +34,13 @@ Lips and Face paint have a **Dark / Light** toggle beside the chips — the same
 
 | Palette | What it covers |
 |---------|----------------|
-| **Eye** | Iris colours |
-| **Hair** | Hair colours for your clan and gender |
-| **Highlights** | Hair highlight colours |
+| **Eye** | Iris colors |
+| **Hair** | Hair colors for your clan and gender |
+| **Highlights** | Hair highlight colors |
 | **Skin** | Skin tones for your clan and gender |
 | **Tattoo / Limbal** | Limbal rings and racial tattoos |
-| **Lips** | Lip colours (Dark or Light range) |
-| **Face paint** | Face paint colours (Dark or Light range) |
+| **Lips** | Lip colors (Dark or Light range) |
+| **Face paint** | Face paint colors (Dark or Light range) |
 
 Every swatch has a grid address — **R3·C5** means row 3, column 5, counted the way the sheet is laid out in the creator — so you can find it again in-game.
 
@@ -48,7 +48,7 @@ Every swatch has a grid address — **R3·C5** means row 3, column 5, counted th
 
 ### Evercold notice
 
-The Eye, Hair and Skin sheets carry a note: *"Evercold (January 2027): preset palettes are being retired."* Those three are switching to a free colour picker in the Evercold expansion, and the preset swatches here will be replaced by a picker when it launches. The other four palettes are not affected.
+The Eye, Hair and Skin sheets carry a note: *"Evercold (January 2027): preset palettes are being retired."* Those three are switching to a free color picker in the Evercold expansion, and the preset swatches here will be replaced by a picker when it launches. The other four palettes are not affected.
 
 ---
 
@@ -56,13 +56,13 @@ The Eye, Hair and Skin sheets carry a note: *"Evercold (January 2027): preset pa
 
 ### The selection card
 
-Picking a swatch (or a character slot) writes one plain sentence — which palette and cell you chose, the closest dye, and how far away it sits — followed by **IN THE CREATOR**: a five-row excerpt of the sheet centred on your cell, with the row and column numbers highlighted so you can match it against the game.
+Picking a swatch (or a character slot) writes one plain sentence — which palette and cell you chose, the closest dye, and how far away it sits — followed by **IN THE CREATOR**: a five-row excerpt of the sheet centered on your cell, with the row and column numbers highlighted so you can match it against the game.
 
 ### CLOSEST DYES
 
-The best matches, one card each, ranked by colour distance. Each card shows the dye swatch beside your colour, the distance in the current unit (ΔE2000 by default — see below), the hue and stain readouts, and the dye's colour values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…** (Universalis, GarlandTools, TeamCraft, Saddlebag).
+The best matches, one card each, ranked by color distance. Each card shows the dye swatch beside your color, the distance in the current unit (ΔE2000 by default — see below), the hue and stain readouts, and the dye's color values, source and cost. The **⋮** menu on a card offers **Inspect Dye in…** (Harmony, Budget, Accessibility, Comparison, Swatch), **Transform Dye in…** (Gradient, Mixer) and **Open in browser…** (Universalis, GarlandTools, TeamCraft, Saddlebag).
 
-Settings for the list live in the settings column (the gear icon on phones): **Max Results** (1–6), **Matching Algorithm**, display options, and the dye filters (exclude metallic, pastel, dark, cosmic, coffer, vendor, crafted…).
+Settings for the list live in the settings column (the gear icon on phones): **Max Results** (1–6), **Matching Algorithm**, display options, and the dye filters (exclude metallic, pastel, dark, cosmic, Ishgardian, expensive, coffer, vendor or crafted dyes).
 
 ### SEND TO
 
@@ -70,7 +70,7 @@ At the bottom of the flow a row of buttons sends the matched dyes on to **Harmon
 
 ### Share
 
-**Share** copies a link that reopens this exact cell — the link carries the sheet and the cell's position (plus clan and gender for hair and skin), not just the colour, so it lands on the right swatch even when two cells share a shade.
+**Share** copies a link that reopens this exact cell — the link carries the sheet and the cell's position (plus clan and gender for hair and skin), not just the color, so it lands on the right swatch even when two cells share a shade.
 
 ---
 
@@ -78,11 +78,11 @@ At the bottom of the flow a row of buttons sends the matched dyes on to **Harmon
 
 ### THIS CHARACTER
 
-One card per colour slot: **Left eye, Right eye, Hair, Highlights, Skin, Tattoo, Limbal ring, Lips, Face paint**. Each card shows the colour, its grid address (or an amber **OFF GRID** tag when the file holds an arbitrary colour that has no cell), and the closest dye with its distance. Slots the file doesn't set stay as dashed placeholders with the reason — for example *"Highlights are switched off in this file"* or *"On Hrothgar this field is a fur pattern, not a color."*
+One card per color slot: **Left eye, Right eye, Hair, Highlights, Skin, Tattoo, Limbal ring, Lips, Face paint**. Each card shows the color, its grid address (or an amber **OFF GRID** tag when the file holds an arbitrary color that has no cell), and the closest dye with its distance. Slots the file doesn't set stay as dashed placeholders with the reason — for example *"Highlights are switched off in this file"* or *"On Hrothgar this field is a fur pattern, not a color."*
 
-Lips get special handling: the game draws the lip colour over the skin, so the card shows the **BLEND** you actually see and matches dyes to that, not to the raw cell.
+Lips get special handling: the game draws the lip color over the skin, so the card shows the **BLEND** you actually see and matches dyes to that, not to the raw cell.
 
-Click a slot card to make it the selection: the sentence and excerpt follow it, and the grid switches to that slot's sheet with numbered **pins** marking where each of your character's colours sits (two colours on one cell share a pin, e.g. **1·2**).
+Click a slot card to make it the selection: the sentence and excerpt follow it, and the grid switches to that slot's sheet with numbered **pins** marking where each of your character's colors sits (two colors on one cell share a pin, e.g. **1·2**).
 
 **Save character colors** stores the closest dye for every slot as a set on this device (see [Favorites & Collections](favorites-collections.md)).
 
@@ -124,7 +124,7 @@ If you're making a new character:
 
 ## Market Board Integration
 
-Turn on **Market Board** in the settings column to see current prices on the matched dye cards for your data centre and world.
+Turn on **Market Board** in the settings column to see current prices on the matched dye cards for your data center and world.
 
 ---
 
@@ -140,16 +140,16 @@ Turn on **Market Board** in the settings column to see current prices on the mat
 
 ## Understanding Delta E
 
-Distances are ΔE2000 by default — the industry-standard measure of how different two colours look. You can switch the **Matching Algorithm** to ΔEOK2, ΔE76, Weighted RGB (redmean), RGB or a 0–100 percentage; the unit printed beside **CLOSEST DYES** follows your choice.
+Distances are ΔE2000 by default — the industry-standard measure of how different two colors look. You can switch the **Matching Algorithm** to ΔEOK2, ΔE76, Weighted RGB (redmean), RGB or a 0–100 percentage; the unit printed beside **CLOSEST DYES** follows your choice.
 
 | ΔE2000 | Band | Meaning |
 |--------|------|---------|
 | under 5 | SAME | You would not tell them apart |
 | 5 to 10 | CLOSE | A very good stand-in |
 | 10 to 20 | NEAR | In the same family, but visibly different |
-| 20 and up | FAR | A different colour |
+| 20 and up | FAR | A different color |
 
-Here the band shows as the colour of the distance number; the Dye Comparison tool prints the word
+Here the band shows as the color of the distance number; the Dye Comparison tool prints the word
 itself. Every other matching method has its own calibrated cut-offs on its own scale, so compare the
 band, never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.
 
@@ -162,4 +162,4 @@ band, never the raw number, across methods. See the [Glossary](../../reference/g
 - [Dye Comparison](dye-comparison.md) - Compare matched dyes
 - [Budget Suggestions](budget-suggestions.md) - Find affordable options
 - [Glamour Reader](glamour-reader.md) - Read the same file's gear and dyes
-- [Favorites & Collections](favorites-collections.md) - Where saved character colours and palettes go
+- [Favorites & Collections](favorites-collections.md) - Where saved character colors and palettes go
