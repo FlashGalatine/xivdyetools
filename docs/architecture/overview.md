@@ -326,7 +326,7 @@ Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/
 
 **Features**:
 - Crawler detection (Discord, Twitter/X, Facebook, LinkedIn, Slack, Telegram, iMessage)
-- **One 15E band frame for all nine tools**, on a 400-wide design grid rastered ×3 — Discord 1200×1050, X 1200×630 via `?frame=x` (carried by `twitter:image`). The two frames take separate cache keys
+- **One 15E band frame for all ten tools**, on a 400-wide design grid rastered ×3 — Discord 1200×1050, X 1200×630 via `?frame=x` (carried by `twitter:image`). The two frames take separate cache keys
 - **Default cards** at `/og/default.png` and `/og/:tool/default.png` — no fabricated dye names, deltas, or prices
 - Localized via `?lang=` in all 6 languages, including the card artwork; SC, KR, and JP font subsets are bundled so JA no longer renders in Chinese letterforms
 - Name wrapping with hyphenation rather than truncation (resvg has no `hyphens: auto`)
@@ -334,7 +334,7 @@ Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/
 
 **v2.0.0 fixed the `/og/` prefix**, which was missing from every emitted `og:image` URL — the routes registered under `/og/` while the meta tags pointed one level up, so no generated card had ever actually been fetched.
 
-**Routes**: `/og/:tool/*` for harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, and budget.
+**Routes**: `/og/:tool/*` for harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget, and glamour.
 
 **Technology**: Cloudflare Workers, Hono, resvg-wasm, `@xivdyetools/svg`
 
@@ -451,6 +451,8 @@ xivdyetools-api-worker
 ├── API_RATE_LIMITER  → Native rate-limit binding for /v1/*
 ├── TELEMETRY_RATE_LIMITER → Native rate-limit binding for POST /v1/telemetry
 ├── SERVICE_RATE_LIMITER → Native rate-limit binding for our own workers on /v1/* (service binding, no client IP)
+├── UNIVERSALIS_RATE_LIMITER → Native rate-limit binding for the Universalis proxy's per-IP cache misses
+├── UNIVERSALIS_SERVICE_RATE_LIMITER → Native rate-limit binding for the proxy's service-binding key
 ├── ANALYTICS         → Analytics Engine dataset (web analytics)
 └── ASSETS            → Workers Static Assets (VitePress developer docs, production only)
 

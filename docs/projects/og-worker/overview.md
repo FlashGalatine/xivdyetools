@@ -109,7 +109,7 @@ bounce every real visitor away from the tool pages. `tests/wrangler-env.test.ts`
 
 These routes intercept normal web app URLs when accessed by crawlers:
 
-`SUPPORTED_TOOLS` = `harmony`, `gradient`, `mixer`, `swatch`, `comparison`, `accessibility`, `extractor`, `presets`, `budget` — one `GET /<tool>` handler each, reading the web app's share-URL query grammar. Every dye parameter is a **stainID (1–254)**; legacy itemIDs (≥ 5729) render the tool's default card instead of a wrong dye.
+`SUPPORTED_TOOLS` = `harmony`, `gradient`, `mixer`, `swatch`, `comparison`, `accessibility`, `extractor`, `presets`, `budget`, `glamour` — one `GET /<tool>` handler each, reading the web app's share-URL query grammar. Every dye parameter is a **stainID (1–254)**; legacy itemIDs (≥ 5729) render the tool's default card instead of a wrong dye.
 
 | Route (crawler intercept) | Share-URL parameters read |
 |-------|-------------|
@@ -122,6 +122,7 @@ These routes intercept normal web app URLs when accessed by crawlers:
 | `/extractor` | `?colors=RRGGBB[,RRGGBB…]&algo=…` (max 5; the share URL carries no shares, so the card draws equal ranked bands) |
 | `/presets`, `/presets/:id` | the preset id is the **path** (`/presets/gc-maelstrom`); curated slugs get their card, `community-<uuid>` / unknown ids degrade to the presets default card |
 | `/budget` | `?dye=<stainID>`; a bare-colour `?hex=` target has no card and degrades to the budget default |
+| `/glamour` | no share parameters (a glamour lives in a `.chara` file that never leaves the browser); always the default card (`/og/glamour/default.png`) |
 
 A bare color has no stainID, so it has no card on the stainID-keyed image routes (BUG-059). A
 custom harmony, gradient or mixer share takes the tool's default card, like budget's `?hex=`
@@ -148,6 +149,14 @@ These return the actual preview images:
 | `/og/budget/:dyeId[.png]` | Budget card |
 
 Image responses are cached `max-age=86400, s-maxage=604800` (24 h browser / 7 d edge); crawler HTML `max-age=3600, s-maxage=86400`.
+
+### Other Routes
+
+| Route | Behavior |
+|-------|----------|
+| `GET /health` | JSON `{ status: 'ok', service, timestamp }` |
+| `GET /` | Crawlers get the root embed (`public, max-age=86400`); everyone else is redirected (302) to `APP_BASE_URL` |
+| anything else | Crawlers get the minimal fallback embed as a `404` with `no-store`; everyone else is passed through to the origin on the app host (a JSON `404` on the `og.` image host, a 302 to `APP_BASE_URL` on any other host) |
 
 ### Query Parameters
 
@@ -299,12 +308,21 @@ worker holds no state of its own.
 
 ## Analytics
 
-One datapoint per **crawler** hit — human page views produce nothing here (they were only a cost;
-FINDING-024). The shape written to the `ANALYTICS` dataset is fixed:
+Two kinds of datapoint, both written only for crawler-facing work — human page views produce
+nothing here (they were only a cost; FINDING-024):
+
+- `og_request` — one per crawler page hit on a tool route.
+- `og_image_request` — one per uncached, parameterized image request, with the crawler type
+  `none`. It is written once the path IDs, colors and algorithm validate, but before the gradient
+  `steps`, mixer `ratio` and swatch `limit` range checks, so a request that then fails one of
+  those with a 400 still counts although nothing is rendered. Cache hits (the `/og/*` cache middleware answers before the handler runs) and the
+  default cards (`/og/default.png`, `/og/:tool/default.png`) write nothing.
+
+The shape written to the `ANALYTICS` dataset is fixed:
 
 | Field | Contents |
 |-------|----------|
-| `blobs` | `[event, tool, crawler]` — the event name (`og_request` / `og_image_request`), the tool id, and the detected crawler type |
+| `blobs` | `[event, tool, crawler]` — the event name (`og_request` / `og_image_request`), the tool id, and the detected crawler type (`none` for `og_image_request`) |
 | `doubles` | `[timestamp]` |
 | `indexes` | `[tool]` |
 

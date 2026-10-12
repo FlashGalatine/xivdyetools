@@ -29,8 +29,8 @@ table above and the Evidence table below both record it as having none. Bare
 
 | Env | Worker | Routes | `APP_BASE_URL` | Cards |
 |---|---|---|---|---|
-| top-level | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×9 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `xivdyetools_og_analytics_beta` |
-| `production` | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×9 + `og.xivdyetools.app` | `https://xivdyetools.app` | `xivdyetools_og_analytics` |
+| top-level | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×10 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `xivdyetools_og_analytics_beta` |
+| `production` | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×10 + `og.xivdyetools.app` | `https://xivdyetools.app` | `xivdyetools_og_analytics` |
 
 It still cannot reach production, and that safety does not depend on resolving the
 inheritance question below: `[env.production]` declares its own `routes` and `workers_dev`
