@@ -158,6 +158,16 @@ There is no user factory. `PresetRow` and `CategoryRow` are this package's own
 D1-row shapes; `Dye` and `PresetSubmission` come from `@xivdyetools/types` and
 are re-exported here.
 
+Parallel-safe ID helpers come from the package root:
+
+```typescript
+import { randomId, randomStringId, nextStringId } from '@xivdyetools/test-utils';
+
+randomId();                  // a random 9-digit number
+randomStringId('preset');    // 'preset-' plus 8 random lowercase letters and digits
+nextStringId('preset');      // same as randomStringId
+```
+
 ---
 
 ## Auth Helpers

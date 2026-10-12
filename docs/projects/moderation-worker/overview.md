@@ -121,7 +121,7 @@ src/
 │   ├── embed-text.ts        # Embed text building / truncation
 │   ├── safe-json.ts         # Throw-safe JSON parsing
 │   ├── sql-helpers.ts       # Shared D1 query fragments
-│   ├── url-sanitizer.ts     # Link sanitisation for embeds
+│   ├── url-sanitizer.ts     # Link sanitization for embeds
 │   └── env-validation.ts    # validateEnv — required secrets, bindings, production-only checks
 └── index.ts                 # Hono app entry point
 ```

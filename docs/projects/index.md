@@ -60,8 +60,8 @@
 │  │  @xivdyetools/core      │ │ @xivdyetools/svg │ │ @xivdyetools/bot-logic             │ │
 │  │  ─────────────────────  │ │ ──────────────── │ │ ────────────────────────────────── │ │
 │  │ 125-dye DB (schema v2)  │ │ SVG templates    │ │ Bot business logic                 │ │
-│  │ + 11 Facewear colours   │ │ (data → string)  │ │ + /i18n translation engine         │ │
-│  │ Colour algorithms       │ │                  │ │                                    │ │
+│  │ + 11 Facewear colors    │ │ (data → string)  │ │ + /i18n translation engine         │ │
+│  │ Color algorithms        │ │                  │ │                                    │ │
 │  │ 6-language i18n         │ │                  │ │                                    │ │
 │  │ /blending subpath       │ │                  │ │                                    │ │
 │  └─────────────────────────┘ └──────────────────┘ └────────────────────────────────────┘ │
@@ -99,7 +99,7 @@ If you want to integrate XIV Dye Tools into your own project:
 | [Core Library Overview](core/overview.md) | Installation, quick start, features |
 | [Core Services](core/services.md) | ColorService, DyeService, APIService |
 | [Core Types](core/types.md) | Type system and branded types |
-| [Core Algorithms](core/algorithms.md) | k-d tree, K-means++, harmony generation and the colour wheels |
+| [Core Algorithms](core/algorithms.md) | k-d tree, K-means++, harmony generation and the color wheels |
 | [Core Publishing](core/publishing.md) | Core-specific build notes; publishing itself follows the release process |
 
 ### For Understanding the Web App
@@ -142,7 +142,7 @@ If you want to integrate XIV Dye Tools into your own project:
 
 ### For Understanding Market Data
 
-The standalone `universalis-proxy` was merged into `api-worker` on 2026-07-31. Its behaviour —
+The standalone `universalis-proxy` was merged into `api-worker` on 2026-07-31. Its behavior —
 dual-layer caching, request coalescing, stale-while-revalidate — now lives behind the
 `/universalis` and `/api/v2` compatibility routes.
 

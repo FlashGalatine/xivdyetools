@@ -282,7 +282,7 @@ Find the single closest FFXIV dye to a given hex color.
 | `rgb` | RGB DIST | 0–~441.67 | Euclidean distance in RGB space |
 | `distinguish` | DISTINGUISH % | 0–100 (integer) | RGB distance rescaled to a percentage — same ranking as `rgb`, ties common |
 
-The retired v4 values `hyab` and `oklch-weighted` are still **accepted** but normalised to `ciede2000` (`euclidean` → `rgb`) via core's `LEGACY_MATCHING_METHOD_MAP`; the response `method` shows what was used. The old `kL`/`kC`/`kH` weight parameters are ignored. Any other value → `400 INVALID_MATCHING_METHOD`.
+The retired v4 values `hyab` and `oklch-weighted` are still **accepted** but normalized to `ciede2000` (`euclidean` → `rgb`) via core's `LEGACY_MATCHING_METHOD_MAP`; the response `method` shows what was used. The old `kL`/`kC`/`kH` weight parameters are ignored. Any other value → `400 INVALID_MATCHING_METHOD`.
 
 **Example:**
 
@@ -372,9 +372,9 @@ The item icon PNG (80 px `_hr1`), proxied from XIVAPI and edge-cached (`Cache-Co
 
 ---
 
-## Harmony (colour wheels)
+## Harmony (color wheels)
 
-Since api-worker 0.14.0 (core 5.2.0, PR #167): the five selectable colour wheels and core's shared harmony selector. Public reference: [developers.xivdyetools.app/reference/harmony](https://developers.xivdyetools.app/reference/harmony). All `GET`, enveloped, cached `public, max-age=3600, s-maxage=86400`.
+Since api-worker 0.14.0 (core 5.2.0, PR #167): the five selectable color wheels and core's shared harmony selector. Public reference: [developers.xivdyetools.app/reference/harmony](https://developers.xivdyetools.app/reference/harmony). All `GET`, enveloped, cached `public, max-age=3600, s-maxage=86400`.
 
 ### `GET /v1/wheels`
 
@@ -393,11 +393,11 @@ The ten harmony types — rows of core's `HARMONY_OFFSETS`, kebab-case wire ids 
 | Parameter | Type | Default | Notes |
 |---|---|---|---|
 | `dye` | id | — | Base dye, itemID or stainID (auto-detected like `/v1/dyes/:id`); `404 NOT_FOUND` if unassigned. Exactly one of `dye` / `hex` |
-| `hex` | string | — | Base colour, `#RRGGBB` or `RRGGBB` |
+| `hex` | string | — | Base color, `#RRGGBB` or `RRGGBB` |
 | `type` | enum | `complementary` | Harmony type; unknown → `400 INVALID_HARMONY_TYPE` |
-| `wheel` | enum | `rgb` | Colour wheel; unknown → `400 INVALID_COLOR_WHEEL` (refused, never silently `rgb`) |
-| `method` | enum | `ciede2000` | ΔE method for the strict ranking (retired names normalised as on `/v1/match/*`) |
-| `strict` | boolean | `true` | Rank by ΔE against the ideal colour; `false` ranks by hue angle |
+| `wheel` | enum | `rgb` | Color wheel; unknown → `400 INVALID_COLOR_WHEEL` (refused, never silently `rgb`) |
+| `method` | enum | `ciede2000` | ΔE method for the strict ranking (retired names normalized as on `/v1/match/*`) |
+| `strict` | boolean | `true` | Rank by ΔE against the ideal color; `false` ranks by hue angle |
 | `companions` | 0–5 | `0` | Runner-up dyes per slot |
 | `preventDuplicates` | boolean | `false` | Never choose one dye for two slots |
 | `excludeIds`, dye filters, `locale` | | | As on `/v1/dyes` |
@@ -429,9 +429,9 @@ Opt-in usage telemetry from the web app, written to Analytics Engine (`ANALYTICS
 caller is `navigator.sendBeacon`, which cannot read a response, so the route answers a **bare `204`
 with no envelope** as soon as the body parses — accepted or not.
 
-| Aspect | Behaviour |
+| Aspect | Behavior |
 |--------|-----------|
-| Body | `text/plain` JSON batch, ≤ 25 events and ≤ 16 KB. The allowlist schema in `src/telemetry/schema.ts` drops anything it does not recognise |
+| Body | `text/plain` JSON batch, ≤ 25 events and ≤ 16 KB. The allowlist schema in `src/telemetry/schema.ts` drops anything it does not recognize |
 | Sender gate | Only `Origin: https://xivdyetools.app` (recorded as `production`) and `https://beta.xivdyetools.app` (`beta`) are written, plus `http://localhost[:port]` / `http://127.0.0.1[:port]` when `ENVIRONMENT !== 'production'`. The environment label is **derived from the `Origin`**, never from the body. `Sec-GPC: 1` is dropped outright. Both checks run before the body is read (FINDING-014) |
 | Rejection | An unaccepted batch gets the same bare `204` and no write — never a 4xx. The `Origin` value is never logged |
 | Errors | `400` (not JSON) and `413` (oversized) *do* use the standard envelope |
@@ -503,7 +503,7 @@ The fixed blob layout is documented in `docs/operations/ANALYTICS_QUERIES.md`.
 | `INVALID_MATCHING_METHOD` | 400 | Unknown distance algorithm |
 | `INVALID_LOCALE` | 400 | Unsupported locale |
 | `INVALID_STAIN_ID` | 400 | Stain ID not a positive integer |
-| `INVALID_COLOR_WHEEL` | 400 | Unknown colour wheel id |
+| `INVALID_COLOR_WHEEL` | 400 | Unknown color wheel id |
 | `INVALID_HARMONY_TYPE` | 400 | Unknown harmony type |
 | `NOT_FOUND` | 404 | Dye or route not found |
 | `RATE_LIMITED` | 429 | Rate limit exceeded (body carries a top-level `retryAfter` in seconds; `Retry-After` header set) |

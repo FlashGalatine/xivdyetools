@@ -42,8 +42,8 @@ curl https://data.xivdyetools.app/v1/dyes/5729
 curl https://data.xivdyetools.app/v1/dyes/1
 ```
 
-> **Facewear colours are not dyes** and are not served by this endpoint. A negative ID (the
-> pre-2026-07-31 synthetic Facewear ID) returns a 404 that names the colour it used to refer to,
+> **Facewear colors are not dyes** and are not served by this endpoint. A negative ID (the
+> pre-2026-07-31 synthetic Facewear ID) returns a 404 that names the color it used to refer to,
 > so old links fail informatively rather than silently.
 
 If you specifically need stain ID lookup (no auto-detection):
@@ -186,23 +186,23 @@ Always price a dye by its `marketItemID`, not its `itemID`, and look prices up o
 
 ---
 
-### 10. Harmonies on a Colour Wheel
+### 10. Harmonies on a Color Wheel
 
-The same selector the Harmony Explorer and `/harmony` use, on any of five colour wheels:
+The same selector the Harmony Explorer and `/harmony` use, on any of five color wheels:
 
 ```bash
 # The wheels themselves
 curl "https://data.xivdyetools.app/v1/wheels"
-curl "https://data.xivdyetools.app/v1/wheels/ryb?stops=12"     # ring colours + every dye's position
+curl "https://data.xivdyetools.app/v1/wheels/ryb?stops=12"     # ring colors + every dye's position
 
 # A triadic harmony for Coral Pink (stainID 13) on the artist's wheel
 curl "https://data.xivdyetools.app/v1/harmony?dye=13&type=triadic&wheel=ryb"
 
-# Any colour as the base, two runner-ups per slot
+# Any color as the base, two runner-ups per slot
 curl "https://data.xivdyetools.app/v1/harmony?hex=EA4133&type=square&companions=2"
 ```
 
-`wheel` is one of `rgb` (default), `ryb`, `munsell`, `oklch-hue`, `oklch-lightness`; `type` is one of the ten ids `GET /v1/harmony/types` lists. Each slot carries the ideal colour (`targetHex`), the dye chosen for it and `distance` — in the chosen method's unit, or degrees of hue when `strict=false` (`distanceUnit` says which). Full reference: [developers.xivdyetools.app/reference/harmony](https://developers.xivdyetools.app/reference/harmony).
+`wheel` is one of `rgb` (default), `ryb`, `munsell`, `oklch-hue`, `oklch-lightness`; `type` is one of the ten ids `GET /v1/harmony/types` lists. Each slot carries the ideal color (`targetHex`), the dye chosen for it and `distance` — in the chosen method's unit, or degrees of hue when `strict=false` (`distanceUnit` says which). Full reference: [developers.xivdyetools.app/reference/harmony](https://developers.xivdyetools.app/reference/harmony).
 
 ## Distance Methods Explained
 

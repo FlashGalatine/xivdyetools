@@ -4,7 +4,7 @@
 
 > Current version: see [versions.md](../../versions.md).
 
-> **2.0.0 (5.0 wave):** `FacewearColor` (string slug `id`, `name`, `hex` — the 11 Facewear colours are
+> **2.0.0 (5.0 wave):** `FacewearColor` (string slug `id`, `name`, `hex` — the 11 Facewear colors are
 > not dyes), `CMYK`, `invertedTetradic`, `SubRace 'Helions'` (was `'Helion'`), the widened
 > `CommunityPreset` (`secondary_categories`, `preview_image_*`, `example_link`, `rejection_reason`),
 > and `PresetCategory` without `community` (+ `appearance`, `zones`, `raids-trials`). The snippets
@@ -31,7 +31,7 @@ npm install @xivdyetools/types
 ### Color Types
 
 ```typescript
-import { RGB, HSV, HSL, LAB, HexColor } from '@xivdyetools/types';
+import type { RGB, HSV, HSL, LAB, HexColor } from '@xivdyetools/types';
 
 interface RGB {
   r: number;  // 0-255
@@ -52,7 +52,7 @@ type HexColor = string & { __brand: 'HexColor' };
 ### Dye Types
 
 ```typescript
-import { Dye, DyeId, DyeWithDistance, FacewearColor } from '@xivdyetools/types';
+import type { Dye, DyeId, DyeWithDistance, FacewearColor } from '@xivdyetools/types';
 
 // Simplified — see packages/types/src/dye/dye.ts for the full runtime shape
 interface Dye {
@@ -71,7 +71,7 @@ interface Dye {
   consolidationType: 'A' | 'B' | 'C' | null;
 }
 
-// A search result: the dye plus its distance from the query colour
+// A search result: the dye plus its distance from the query color
 interface DyeWithDistance extends Dye { distance: number }
 
 interface FacewearColor { id: string; name: string; hex: string; }  // not a Dye
@@ -88,7 +88,7 @@ palette: `PresetPalette` (the curated `presets.json` row) and `CommunityPreset`
 (the presets-API row, with voting and moderation).
 
 ```typescript
-import { PresetPalette, CommunityPreset, PresetStatus, PresetCategory } from '@xivdyetools/types';
+import type { PresetPalette, CommunityPreset, PresetStatus, PresetCategory } from '@xivdyetools/types';
 
 // Curated palette — packages/types/src/preset/core.ts
 interface PresetPalette {
@@ -128,7 +128,7 @@ type PresetCategory =
 ### Auth Types
 
 ```typescript
-import { JWTPayload, AuthProvider } from '@xivdyetools/types';
+import type { JWTPayload, AuthProvider } from '@xivdyetools/types';
 
 interface JWTPayload {
   sub: string;
@@ -153,6 +153,31 @@ type AuthProvider = 'discord' | 'xivauth';
 > with `type?`, `nbf?` and `aud?` and without the `auth_provider` / character
 > claims. Import from the package whose shape you actually mean.
 
+### Errors
+
+`ErrorCode` (an enum) and `AppError` (`new AppError(code, message, severity?)`)
+are runtime values, so they use a plain `import`:
+
+```typescript
+import { AppError, ErrorCode } from '@xivdyetools/types';
+
+throw new AppError(ErrorCode.DYE_NOT_FOUND, 'Dye with ID 999 not found', 'error');
+```
+
+### Review custom IDs
+
+The moderation-review button and modal `custom_id` grammar
+(`preset_<kind>_<uuid>:<revision>:<status>`) has one shared copy, used by
+discord-worker and moderation-worker; presets-api checks the same status list.
+Values: `REVIEW_STATUSES`, `isReviewStatus`, `parseReviewCustomId`,
+`buildReviewCustomId` and `buildReviewCustomIdOrLegacy`. Types: `ReviewAction`,
+`ReviewKind`, `ReviewBinding` and `ParsedReviewId`.
+
+### Subpath exports
+
+Besides the root entry, the package exposes `/color`, `/dye`, `/character`,
+`/preset`, `/auth`, `/api`, `/error` and `/localization`.
+
 ---
 
 ## Branded Types
@@ -161,10 +186,10 @@ The package provides branded types for compile-time safety:
 
 ```typescript
 import {
-  HexColor,
-  DyeId,
-  Hue,
-  Saturation,
+  type HexColor,
+  type DyeId,
+  type Hue,
+  type Saturation,
   createHexColor,
   createDyeId
 } from '@xivdyetools/types';
@@ -202,3 +227,4 @@ import type { JWTPayload, AuthProvider } from '@xivdyetools/types';
 
 - [Core Library Types](../core/types.md) - Detailed type documentation
 - [API Contracts](../../architecture/api-contracts.md) - API type usage
+- [Package README](../../../packages/types/README.md) - Install and usage reference
