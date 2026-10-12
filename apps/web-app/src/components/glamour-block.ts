@@ -966,13 +966,17 @@ export class GlamourBlock {
           });
         });
       }
+      // The others are every family member but the twin the row shows, which
+      // is often not the one api-worker named (the default is core's pick).
       // `Intl.ListFormat` rather than `join(', ')`: a comma is not the list
       // separator in every language (ja/zh use 、, and ko/de/fr add a
       // conjunction), and the tooltip is prose, not data.
+      const shownId = state?.picked.itemId ?? item.itemId;
+      const others = [item, ...item.alternates].filter((m) => m.itemId !== shownId);
       const alternates = new Intl.ListFormat(lang, { style: 'short', type: 'unit' }).format(
-        item.alternates.map((a) => itemNameFor(a.names, lang))
+        others.map((a) => itemNameFor(a.names, lang))
       );
-      const truncated = item.familySize - 1 > item.alternates.length ? ' …' : '';
+      const truncated = item.familySize - 1 > others.length ? ' …' : '';
       badge.title = `${LanguageService.tInterpolate('swatch.sameModelList', {
         list: alternates,
       })}${truncated}`;

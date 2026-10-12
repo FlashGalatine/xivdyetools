@@ -31,7 +31,12 @@ export interface CharaItemNames {
 }
 
 export interface CharaResolvedItem {
-  /** Item sheet row — the lowest row_id of the same-model family */
+  /**
+   * Item sheet row the same-model family is named by: its lowest eligible row
+   * that has an acquisition line, else its lowest row. The family's lowest row
+   * is therefore the smaller of this and the `alternates` (api-worker always
+   * lists it when it is not this row).
+   */
   itemId: number;
   names: CharaItemNames;
   iconId: number | null;

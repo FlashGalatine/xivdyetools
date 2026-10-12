@@ -36,7 +36,7 @@ describe('facewear acquisitions from unlock items', () => {
       expect(facewearAcquisitionFor(Number(glassesId))).toBe(acquisitionFor(itemId));
       if (acquisitionFor(itemId)) known++;
     }
-    expect(known).toBe(648);
+    expect(known).toBe(720);
   });
 
   it.each([157, 158, 168])('gives each under-rim variant %i the unlock item purchase source', (id) => {
@@ -51,11 +51,16 @@ describe('facewear acquisitions from unlock items', () => {
     expect(facewearAcquisitionFor(0)).toBeUndefined();
     expect(facewearAcquisitionFor(409)).toBeUndefined();
     expect(facewearAcquisitionFor(65535)).toBeUndefined();
-    const unknownVariants = Object.entries(facewearUnlocks).filter(([, itemId]) =>
-      itemId === 52447 || (itemId >= 50308 && itemId <= 50313)
-    );
-    expect(unknownVariants).toHaveLength(84);
+    // Thick-rimmed Goggles is the one style with no confirmed source (2026-10-11 research).
+    const unknownVariants = Object.entries(facewearUnlocks).filter(([, itemId]) => itemId === 52447);
+    expect(unknownVariants).toHaveLength(12);
     for (const [glassesId] of unknownVariants) expect(facewearAcquisitionFor(Number(glassesId))).toBeUndefined();
+  });
+
+  it('gives the six Hatching-tide 2026 eyeglass styles the event line', () => {
+    const hatching = Object.entries(facewearUnlocks).filter(([, itemId]) => itemId >= 50308 && itemId <= 50313);
+    expect(hatching).toHaveLength(72);
+    for (const [glassesId] of hatching) expect(facewearAcquisitionFor(Number(glassesId))).toBe('Hatching-tide (2026)');
   });
 
   it.each([637, 638, 648])('lists Kornago in Bentbranch for Teardrop Glasses variant %i', (id) => {
