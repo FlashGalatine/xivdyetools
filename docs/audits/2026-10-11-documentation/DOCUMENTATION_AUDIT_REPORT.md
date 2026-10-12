@@ -256,7 +256,7 @@ stale og-worker comment, and "Preset Palettes" still emitted by two workers.
 | Sprint 10 | FIXED: DOC-015, DOC-042, DOC-049, DOC-050, DOC-051, DOC-077 — PR [#296](https://github.com/FlashGalatine/xivdyetools/pull/296) | `e80a9598` `b16d134c` `351e01b5` `b1e6e7b2` `d43b0014` `0081b549` |
 | Sprint 11 | PARTIAL: DOC-016; FIXED: DOC-017, DOC-047, DOC-048, DOC-076 — PR [#297](https://github.com/FlashGalatine/xivdyetools/pull/297) | `13f9bd51` `ad304f93` `4af27409` `f2adca39` `fa0c75c5` |
 | Sprint 12 | FIXED: DOC-024, DOC-063, DOC-065, DOC-066, DOC-067 — PR [#298](https://github.com/FlashGalatine/xivdyetools/pull/298) | `fbdceb83` `9f736f64` `745abf56` `aa190128` `8e7c019b` |
-| remaining 12 | OPEN | — |
+| Sprint 13 | FIXED: DOC-003, DOC-025, DOC-026, DOC-027, DOC-028, DOC-029, DOC-030, DOC-068, DOC-069, DOC-070, DOC-071, DOC-072, DOC-078 — PR [#299](https://github.com/FlashGalatine/xivdyetools/pull/299) | `294e05c5` `8aa26db3` `5e45fb98` `9c2d6f1a` `1ab9f5a8` `6151a712` `430cf444` `d630b971` `2cd2f194` `0ac823e9` `6c1ce2c8` `9b04489f` `a8b4aa40` |
 
 ## Next steps
 

@@ -121,7 +121,7 @@ Display labels used in the result card for vendor costs. These are abbreviated f
 
 **Source:** `locales/{locale}.json` → `facewearColors`
 
-The 11 Facewear colours are **not dyes** — they live in `facewear_colors.json` / the
+The 11 Facewear colors are **not dyes** — they live in `facewear_colors.json` / the
 `facewearColors` export, keyed by a string slug, with no stainID and no market presence.
 
 | Key | EN | JA | DE | FR | KO | ZH |
@@ -527,7 +527,7 @@ Each locale file has a `locale` string plus fifteen sections. Those not tabled a
 | `labels` | 7 | Dye trait labels: `dye`, `dark`, `metallic`, `pastel`, `cosmic`, `cosmicExploration`, `cosmicFortunes` |
 | `visions` | 5 | Short vision-type labels (see above) |
 | `tools` | 6 | Tool display names: Harmony Explorer, Gradient Builder, Dye Mixer, Swatch Matcher, Dye Comparison, Accessibility Checker |
-| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Generated from `buildSheets`, which follows [Character-Creation Color Sheets](#character-creation-color-sheets) |
+| `sheets` | 9 | Character-creation color-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Generated from `buildSheets`, which follows [Character-Creation Color Sheets](#character-creation-color-sheets) |
 
 There is **no** `jobNames` or `grandCompanyNames` section — job and Grand Company names are not
 part of this dataset, because nothing in the toolset renders them.

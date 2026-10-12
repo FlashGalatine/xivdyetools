@@ -171,8 +171,8 @@ Save favorite dyes and organize into named collections.
 - ✅ Collapsible favorites panel at top of dye selector
 - ✅ Toast notifications for add/remove actions
 - ✅ Maximum 40 favorites with warning toast (the roadmap originally said 20)
-- ❌ Keyboard shortcut `F` to toggle favorite — never shipped; the app's number keys `1`-`9` and the
-  `Shift+T` / `Shift+L` / `Shift+S` chords are the whole shortcut set
+- ✅ Keyboard shortcut `F` to toggle favorite on the focused dye card in the dye grid — the V4 shell
+  no longer renders that grid, so the shortcut has no effect in this release
 
 *Phase 2 - Collections:*
 - ✅ Collection Manager Modal - view, create, edit, delete collections
@@ -180,8 +180,11 @@ Save favorite dyes and organize into named collections.
 - ✅ Create collection dialog with name and description
 - ✅ Edit collection dialog with removable dye tags
 - ✅ Import/Export collections as JSON
-- ✅ "Manage Collections" button in favorites panel header — the only route to the export/import UI
-- ❌ Keyboard shortcut `C` to open the add-to-collection menu — never shipped
+- ✅ "Manage Collections" button in favorites panel header — the only route to the export/import UI;
+  the V4 shell no longer renders it, so the collection manager is unreachable (no export/import or
+  per-collection delete in this release)
+- ✅ Keyboard shortcut `C` to open the add-to-collection menu on the focused dye card in the dye
+  grid — likewise no effect in the V4 shell, which no longer renders that grid
 
 **Web App Files created/modified:**
 - `xivdyetools-web-app/src/services/collection-service.ts` - Core service
@@ -194,7 +197,7 @@ Save favorite dyes and organize into named collections.
 **Discord Bot Implementation — REMOVED IN 5.0.** The commands below shipped in v4 and were deleted
 with the 5.0 command roster; neither `/favorites` nor `/collection` appears in the command registry
 any more. Saved dyes and palettes live only in the web app, reachable from any bot card's share
-link. Community *presets* can still be favourited with `/preset favorite`.
+link. Community *presets* can still be favorited with `/preset favorite`.
 
 *Favorites Commands (removed):*
 - ✅ `/favorites add <dye>` - Add a dye to favorites
@@ -283,14 +286,13 @@ Extract multiple dominant colors from an image instead of just one.
 - ✅ `PaletteService` - K-means++ clustering algorithm for dominant color extraction
 - ✅ `extractPalette()` - Extract N dominant colors with dominance percentages
 - ✅ `extractAndMatchPalette()` - Extract and match to closest FFXIV dyes
-- ✅ `pixelDataToRGB()` / `pixelDataToRGBFiltered()` - Canvas data conversion helpers
+- ✅ `pixelDataToRGBFiltered()` - Canvas data conversion helper
 - ✅ Configurable: colorCount (clamped to 1-10, default 4), maxIterations, convergenceThreshold, maxSamples
 
 **Web App Implementation (Complete):**
-- ✅ Extraction mode toggle (Single Color / Palette Mode) in Color Matcher
+- ✅ Extraction runs automatically on image load and again when Max Colors changes (no mode toggle)
 - ✅ Color count control (**Max Colors**, 3-10 as shipped)
-- ✅ "Extract Palette" button with loading state
-- ✅ Visual sampling indicators - circles on image showing where colors were sampled
+- ✅ Persistent draggable loupe that reads the pixel under the pointer, with a dominance bar under the image
 - ✅ Palette results with color bar visualization
 - ✅ Individual color entries showing extracted → matched dye with dominance %
 - ✅ Copy hex buttons for each matched dye
@@ -299,7 +301,6 @@ Extract multiple dominant colors from an image instead of just one.
 **Discord Bot Implementation (Complete):**
 - ✅ Multi-color extraction — shipped as `/extractor image colors:[3-10]` (`/match_image` was renamed in 5.0)
 - ✅ Palette grid renderer with extracted colors and matched dyes
-- ✅ Visual sampling indicators on source image preview
 - ✅ Canvas-rendered output showing image + palette grid
 - ✅ 6-language localization
 
@@ -307,7 +308,7 @@ Extract multiple dominant colors from an image instead of just one.
 - Core: `xivdyetools-core/src/services/PaletteService.ts` (new)
 - Web: `xivdyetools-web-app/src/components/color-matcher-tool.ts` - Added palette mode
 - Web: `xivdyetools-web-app/src/locales/*.json` - Added 14 translation keys (6 files)
-- Bot: `xivdyetools-discord-bot/src/renderers/palette-grid.ts` - Added sampling indicators
+- Bot: `xivdyetools-discord-bot/src/renderers/palette-grid.ts` - Palette grid renderer (now `packages/svg/src/palette-grid.ts`)
 - Bot: `xivdyetools-discord-bot/src/commands/match-image.ts` - Added multi-color extraction
 
 See [MULTI_COLOR_EXTRACTION.md](./multi-color-extraction.md) for detailed specification.
@@ -327,11 +328,11 @@ Find cheaper look-alikes for an expensive dye using live market-board prices.
 that starts from a *target dye* and returns a ranked ledger of substitutes.
 
 **Web App (Complete):** the **Budget Suggestions** tool — the eighth chip in the tool rail.
-- ✅ Pick a target dye, pick a data centre and world, get a price ledger of look-alike dyes
+- ✅ Pick a target dye, pick a data center and world, get a price ledger of look-alike dyes
 - ✅ A **match line** (max ΔE) decides how far a substitute may stray
 - ✅ **Save swap** stores the substitute you intend to buy as a typed `swap` record
 - ✅ Share button carries the target and settings
-- ✅ Amber **MARKET DATA UNAVAILABLE** state when Universalis does not answer — colour matching is
+- ✅ Amber **MARKET DATA UNAVAILABLE** state when Universalis does not answer — color matching is
   unaffected, only the price lines are missing
 - ✅ 6-language localization
 
@@ -339,7 +340,7 @@ that starts from a *target dye* and returns a ranked ledger of substitutes.
 - ✅ `/budget find target_dye: world:` — the ledger, with `matching`, `max_distance` (2-20 ΔE2000,
   default 8), `exclude_coffers` and `exclude_wide_spectrum`
 - ✅ `/budget quick preset:` — one-click check across 22 popular expensive dyes
-- ✅ `/budget set_world world:` — save a world or data centre so it can be omitted
+- ✅ `/budget set_world world:` — save a world or data center so it can be omitted
 - ❌ `/match max_price:` — never built; `/match` itself was deleted in 5.0 (dye lookup is
   `/extractor color`)
 - ❌ `/dye alternatives` — never built; `/budget find` covers it
@@ -349,7 +350,7 @@ that starts from a *target dye* and returns a ranked ledger of substitutes.
   Cloudflare **Cache API** (the earlier "Redis" note was never accurate)
 - Prices are keyed on the Patch 7.5 *consolidated* item IDs, since 105 of the 125 dyes share three
   market listings
-- Value ranking combines colour distance and price
+- Value ranking combines color distance and price
 - No core library changes were required
 
 See [BUDGET_AWARE_SUGGESTIONS.md](./budget-aware-suggestions.md) for detailed specification.
@@ -365,7 +366,7 @@ See [BUDGET_AWARE_SUGGESTIONS.md](./budget-aware-suggestions.md) for detailed sp
 | `/match max_price:` budget filter | Superseded — budget became its own tool and `/budget` command |
 | `/dye alternatives` | Superseded by `/budget find` |
 | Bot-side `/favorites` and `/collection` | Removed in 5.0; saved dyes and palettes live in the web app |
-| `F` / `C` keyboard shortcuts (web app) | Never shipped; the shortcut set is `1`-`9` plus `Shift+T` / `Shift+L` / `Shift+S` |
+| `Ctrl+Shift+C` keyboard shortcut to open the collection manager (web app) | Never shipped |
 
 ---
 

@@ -8,6 +8,9 @@
 > categories — grand-companies (3), seasons (4) and events (8). The job and aesthetic palettes
 > sketched below were not built. For user-submitted palettes and the moderation pipeline, see
 > [Community Presets](community-presets.md); this document covers the curated set only.
+>
+> **File paths are pre-monorepo:** `xivdyetools-core/` is `packages/core/`, so the `src/...` paths below
+> are under `packages/core/src/`. The shipped types are in `packages/types/src/preset/core.ts`.
 
 ## Overview
 
@@ -35,7 +38,7 @@ interface PresetPalette {
   dyes: DyeId[];        // Array of dye IDs (3-5 dyes)
   tags: string[];       // Searchable tags
   author?: string;      // Credit for community submissions
-  version: string;      // For future updates
+  version?: string;     // For future updates (optional; unused by the shipped palettes)
 }
 
 type PresetCategory =
@@ -44,7 +47,9 @@ type PresetCategory =
   | 'seasons'
   | 'events'
   | 'aesthetics'
-  | 'community';
+  | 'appearance'
+  | 'zones'
+  | 'raids-trials';
 
 interface PresetData {
   version: string;
@@ -187,12 +192,10 @@ interface CategoryMeta {
 
 ```typescript
 // src/services/PresetService.ts
-import presetData from '../data/presets.json';
-
 export class PresetService {
   private data: PresetData;
 
-  constructor() {
+  constructor(presetData: PresetData) {
     this.data = presetData;
   }
 
@@ -234,7 +237,7 @@ export class PresetService {
   /**
    * Get random preset, optionally filtered by category
    */
-  getRandomPreset(category?: PresetCategory): PresetPalette {
+  getRandomPreset(category?: PresetCategory): PresetPalette | undefined {
     const pool = category
       ? this.getPresetsByCategory(category)
       : this.data.palettes;
@@ -347,10 +350,9 @@ New tool accessible from navigation.
 
 | File | Changes |
 |------|---------|
-| `preset-browser.ts` | New component |
-| `preset-card.ts` | New component for palette preview |
-| `preset-detail-modal.ts` | New component for detail view |
-| `app-layout.ts` | Add navigation item |
+| `components/v4/preset-tool.ts` | New component (the preset browser) |
+| `components/v4/preset-card.ts` | New component for palette preview |
+| `components/v4/preset-detail.ts` | New component for detail view |
 
 ---
 
@@ -413,7 +415,7 @@ Colors:
 
 ### New Renderer: Preset Swatch
 
-Create `src/renderers/preset-swatch.ts`:
+Create `preset-swatch.ts` (shipped as `packages/svg/src/preset-swatch.ts`):
 
 ```typescript
 interface PresetSwatchOptions {

@@ -2,8 +2,12 @@
 
 > Feature Status: ✅ Implemented (December 2025)
 > Platforms: Web App + Discord Bot + Cloudflare Worker
-> Core Library Changes: Types defined locally in each consumer (bot & web app)
+> Core Library Changes: The community types live in `@xivdyetools/types` (the original design defined them locally in each consumer)
 > Extends: [PRESET_PALETTES.md](./preset-palettes.md)
+
+> **The file paths are pre-monorepo.** Where this spec names `xivdyetools-worker/...`, `xivdyetools-discord-bot/...`,
+> `xivdyetools-web-app/...` or `xivdyetools-core/...`, read `apps/presets-api/...`, `apps/discord-worker/...`,
+> `apps/web-app/...` and `packages/core/...`. Many of the named files no longer exist.
 
 ## Overview
 
@@ -77,7 +81,7 @@ images, and notifies `discord-worker` of moderation outcomes over its own bindin
 ### Database Schema (D1/SQLite)
 
 ```sql
--- As shipped: apps/presets-api/schema.sql plus migrations 0002-0013.
+-- As shipped: apps/presets-api/schema.sql plus migrations 0002-0015.
 -- Abridged here to the shape of the data; see the SQL files for the full
 -- index list and the comments explaining each migration.
 
@@ -135,6 +139,9 @@ CREATE TABLE IF NOT EXISTS presets (
   preview_image_status TEXT NOT NULL DEFAULT 'none',
   -- Migration 0010: up to two extra categories; category_id stays primary
   secondary_categories TEXT NOT NULL DEFAULT '[]',
+  -- Migration 0014: optimistic-concurrency token; the trigger
+  -- presets_content_revision_after_update bumps it on every content or status change
+  content_revision INTEGER NOT NULL DEFAULT 0,
 
   FOREIGN KEY (category_id) REFERENCES categories(id)
 );
@@ -172,6 +179,7 @@ CREATE TABLE IF NOT EXISTS moderation_log (
   moderator_discord_id TEXT NOT NULL,
   action TEXT NOT NULL,                   -- approve | reject | flag | unflag | requeue
                                           -- | revert | ban | unban | hide | restore
+                                          -- | image_approve | image_reject
   reason TEXT,
   target_discord_id TEXT,                 -- the moderated user (ban | unban | hide | restore)
   created_at TEXT DEFAULT (datetime('now')),
@@ -232,7 +240,7 @@ CREATE TABLE IF NOT EXISTS submission_events (
 
 ```typescript
 // ============================================
-// SHARED TYPES (xivdyetools-core)
+// SHARED TYPES (@xivdyetools/types)
 // ============================================
 
 export type PresetStatus = 'pending' | 'approved' | 'rejected' | 'flagged' | 'hidden';
@@ -308,15 +316,24 @@ export interface VoteResponse {
 ### Base URL
 
 ```
-Production: https://presets-api.xivdyetools.workers.dev
+Production: https://api.xivdyetools.app
 ```
+
+> **As shipped:** this section is the original API design. The running API is documented in
+> [Presets API endpoints](../projects/presets-api/endpoints.md) and its
+> [rate limits](../projects/presets-api/rate-limiting.md). The corrections below track it, but that
+> reference wins on any difference. It also covers routes this design never listed: `/categories/:id`,
+> `/presets/mine`, `/presets/rate-limit`, `/presets/refresh-author`, edit and delete of a preset, the
+> preview-image routes (author upload and removal, moderator review), `/votes/:presetId/check`, and the
+> moderation single-preset, revert, history, stats and failed-notification routes.
 
 ### Authentication
 
 | Endpoint Type | Auth Method | Header |
 |---------------|-------------|--------|
 | Public (GET) | None | — |
-| Bot (POST/PATCH/DELETE) | Bearer Token | `Authorization: Bearer <BOT_API_SECRET>` |
+| Bot (POST/PATCH/DELETE) | Bearer secret + v2 HMAC signature | `Authorization: Bearer <BOT_API_SECRET>`, plus a v2 signature, timestamp and single-use nonce (required outside development and test) |
+| Web (POST/PATCH/DELETE) | Bearer JWT | `Authorization: Bearer <jwt>`, issued by `apps/oauth` |
 | Moderator | Bearer Token + User ID | `Authorization: Bearer <secret>` + `X-User-Discord-ID: <id>` |
 
 ### Endpoints
@@ -334,7 +351,7 @@ List presets with filtering and pagination.
 | `status` | string | `approved` | Filter by status |
 | `sort` | string | `popular` | `popular` \| `recent` \| `name` |
 | `page` | number | `1` | Page number |
-| `limit` | number | `20` | Results per page (max 100) |
+| `limit` | number | `20` | Results per page (max 50) |
 | `is_curated` | boolean | — | Filter curated/community |
 
 **Response:**
@@ -415,7 +432,7 @@ List all categories with preset counts.
 
 #### POST /api/v1/presets
 
-Submit a new preset. **Requires bot authentication.**
+Submit a new preset. **Requires authentication.** A bot request carries the v2 HMAC signature, timestamp and single-use nonce described under Authentication, and a web user may submit with their JWT.
 
 **Request Body:**
 
@@ -435,9 +452,12 @@ Submit a new preset. **Requires bot authentication.**
 Authorization: Bearer <BOT_API_SECRET>
 X-User-Discord-ID: 123456789
 X-User-Discord-Name: ExampleUser
+X-Request-Timestamp: <unix seconds>
+X-Request-Signature-V2: <hex HMAC-SHA256 with BOT_SIGNING_SECRET>
+X-Request-Nonce: <uuid>
 ```
 
-**Response (New Preset):**
+**Response (New Preset):** HTTP 201, with `remaining_submissions` (the caller's submissions left today) alongside `moderation_status`.
 
 ```json
 {
@@ -447,7 +467,7 @@ X-User-Discord-Name: ExampleUser
 }
 ```
 
-**Response (Duplicate Detected):**
+**Response (Duplicate Detected, approved preset):**
 
 ```json
 {
@@ -469,7 +489,7 @@ X-User-Discord-Name: ExampleUser
 
 ---
 
-#### POST /api/v1/presets/:id/vote
+#### POST /api/v1/votes/:presetId
 
 Add a vote to a preset. **Requires bot authentication.**
 
@@ -501,7 +521,7 @@ X-User-Discord-ID: 123456789
 
 ---
 
-#### DELETE /api/v1/presets/:id/vote
+#### DELETE /api/v1/votes/:presetId
 
 Remove a vote from a preset. **Requires bot authentication.**
 
@@ -516,7 +536,7 @@ Remove a vote from a preset. **Requires bot authentication.**
 
 ---
 
-#### PATCH /api/v1/presets/:id/status
+#### PATCH /api/v1/moderation/:presetId/status
 
 Moderate a preset. **Requires moderator authentication.**
 
@@ -540,7 +560,7 @@ Moderate a preset. **Requires moderator authentication.**
 
 ---
 
-#### GET /api/v1/presets/pending
+#### GET /api/v1/moderation/pending
 
 List presets pending moderation. **Requires moderator authentication.**
 
@@ -605,12 +625,19 @@ palette2.dyes = [1, 40, 12];     // Signature: "[1,12,40]"
 
 When a duplicate is detected:
 1. Return the existing preset to the user
-2. Automatically add their vote to it
+2. Automatically add their vote to it, if the existing preset is approved (the owner or a moderator gets a pending duplicate back without a vote; anyone else gets a bare 409)
 3. Show message: "This palette already exists! Your vote has been added."
 
 ### Content Moderation
 
 #### Multi-Language Profanity Filter
+
+> **As shipped:** the flow below is the original design (a `bad-words` English base, `franc` language detection,
+> a `locale` argument to `moderateContent`). None of that shipped. Submissions go through one merged local list
+> (one or two anti-AI-slop terms per language, no profanity lists and no locale selection), then Google Perspective
+> scores TOXICITY, SEVERE_TOXICITY, IDENTITY_ATTACK, INSULT and PROFANITY. With no API key a submission is queued
+> as `unscored`, and a Perspective outage queues it too, so nothing auto-approves without a scorer. Google sunsets
+> Perspective on 2026-12-31. See [Content Moderation Pipeline](../projects/presets-api/moderation.md).
 
 Since the app supports 6 languages (en, ja, de, fr, ko, zh), the profanity filter must handle multiple languages.
 
@@ -811,7 +838,7 @@ The user's language can be determined from:
 **Auto-Approve Criteria:**
 - Name passes local profanity filter (all languages)
 - Description passes local profanity filter (all languages)
-- Passes Perspective API check (if enabled)
+- Passes Perspective API check (required as shipped: without a key the submission queues as `unscored`)
 - Valid dye IDs (exist in database)
 
 **Manual Review Queue:**
@@ -1110,6 +1137,9 @@ Moderate pending submissions.
 
 ### UI Changes to Preset Browser
 
+> **Design-era mock.** The preset browser no longer has a `Community` category (migration 0007 dropped it), and the
+> web app now submits presets itself. The mock below is kept as the original design.
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Preset Palettes                               [Search] │
@@ -1233,9 +1263,9 @@ async function migrate(db: D1Database) {
 
 | Concern | Mitigation |
 |---------|------------|
-| Unauthorized submissions | Bot-only authentication via shared secret |
+| Unauthorized submissions | Authenticated callers only: the bot shared secret plus a single-use-nonce v2 HMAC signature, or an oauth-issued web JWT |
 | Vote manipulation | One vote per Discord user per preset |
-| Spam submissions | Rate limiting (10/day per user) |
+| Spam submissions | Rate limiting (daily per-user caps; see Rate Limits below) |
 | SQL injection | D1 parameterized queries |
 | Content abuse | Profanity filter + manual review queue |
 
@@ -1244,6 +1274,9 @@ async function migrate(db: D1Database) {
 | Action | Limit |
 |--------|-------|
 | Submit preset | 10 per day per user |
+| Edit that is flagged for moderation | 10 per day per user |
+| Preview-image upload or replacement | 20 per day per user |
+| Name or description edit (counted before moderation) | 30 per day per user |
 | Any `/api/*` request | 100 per minute per acting Discord user, and 100 per minute per client IP (the IP layer is skipped for Service-Binding callers, which send no `CF-Connecting-IP`) |
 | Vote | No vote-specific limit — only the two layers above |
 
@@ -1255,6 +1288,9 @@ async function migrate(db: D1Database) {
 
 # Required
 wrangler secret put BOT_API_SECRET       # Shared secret for bot authentication
+wrangler secret put BOT_SIGNING_SECRET   # HMAC key for v2 bot request signatures (required outside dev/test)
+wrangler secret put JWT_SECRET           # Verifies web JWTs issued by apps/oauth
+wrangler secret put INTERNAL_WEBHOOK_SECRET  # Authenticates the notification call to discord-worker
 
 # Moderation
 wrangler secret put MODERATOR_IDS        # Comma-separated Discord IDs who can moderate
@@ -1262,8 +1298,11 @@ wrangler secret put MODERATOR_IDS        # Comma-separated Discord IDs who can m
 # (The three notification secrets specified here — MODERATION_WEBHOOK_URL, OWNER_DISCORD_ID,
 #  DISCORD_BOT_TOKEN — were removed with that code path on 2026-09-01; see "Not shipped" above.)
 
-# Multi-language moderation (optional)
+# Toxicity scoring (Perspective sunsets 2026-12-31; without a key, submissions queue as `unscored`)
 wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxicity detection)
+
+# Optional: edge-cache purge of removed preview images (pairs with the CACHE_PURGE_ZONE_ID var)
+wrangler secret put CACHE_PURGE_API_TOKEN
 ```
 
 ---
@@ -1297,7 +1336,7 @@ wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxici
 - [x] Implement `/preset submit` subcommand
 - [x] Implement `/preset vote` subcommand
 - [x] Implement `/preset list` with community presets
-- [x] Add autocomplete for dye selection (5 slots)
+- [x] Add autocomplete for dye selection (6 slots)
 - [x] Update config and environment
 
 ### Phase 3: Web App Integration (Week 3) ✅ COMPLETE
@@ -1315,7 +1354,7 @@ wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxici
 - [x] Create `/preset moderate` subcommand (pending/approve/reject/stats)
 - [x] Add moderation logging (moderation_log table + audit trail)
 - [x] Add webhook notifications to moderation channel
-- [x] Add DM notifications to bot owner
+- [ ] ~~Add DM notifications to bot owner~~ (removed 2026-09-01; see "Not shipped" above)
 - [ ] End-to-end testing across all platforms
 - [x] Documentation updates (this file)
 
@@ -1353,7 +1392,7 @@ wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxici
 | `xivdyetools-discord-bot/src/index.ts` | Register commands |
 | `xivdyetools-discord-bot/.env` | Add new env vars |
 | `xivdyetools-web-app/src/components/preset-browser-tool.ts` | UI updates |
-| `xivdyetools-core/src/types/index.ts` | Add community types |
+| `packages/types/src/preset/community.ts` | Community types (`CommunityPreset`, `PresetSubmission`) |
 
 ---
 
@@ -1361,7 +1400,7 @@ wrangler secret put PERSPECTIVE_API_KEY      # Google Perspective API (ML toxici
 
 ### Post-MVP Features
 
-- **Web App Submissions** - Add Discord OAuth to enable web-based submissions
+- **Web App Submissions** - Add Discord OAuth to enable web-based submissions (shipped: the web app submits, edits and deletes presets with an oauth JWT)
 - **Palette Collections** - Allow users to create curated lists of favorite community palettes
 - **Weekly Featured** - Algorithmically highlight rising palettes
 - **Seasonal Promotions** - Boost visibility of event-themed palettes during events

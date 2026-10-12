@@ -2,7 +2,7 @@
 
 **Status:** **implemented** — shipped 2026-08-11 as `image-worker` 1.0.0, with `POST /extract`
 and (later) `POST /thumbnail` behind service bindings, plus its own deploy workflow. This
-document is kept as the design record; for current behaviour read
+document is kept as the design record; for current behavior read
 [`apps/image-worker/CLAUDE.md`](../../apps/image-worker/CLAUDE.md); the implementation plan is
 [`docs/superpowers/plans/2026-08-09-image-worker-split.md`](../superpowers/plans/2026-08-09-image-worker-split.md).
 The "2026-08-30 update" section below records what changed after the split.
@@ -178,7 +178,7 @@ Worker could turn into an unauthenticated INTERNET-facing decode/SSRF surface):
   2026-08-29 branch added (presets-api, oauth, moderation-worker, image-worker).
 - **An in-code hostname guard** in `src/index.ts` refuses any request whose URL hostname ends in
   `.workers.dev`, for every route including `/health`, before any body read, fetch, or decode —
-  a plain `404`. This is defence in depth, not the primary control: the primary control remains
+  a plain `404`. This is defense in depth, not the primary control: the primary control remains
   that neither environment has `workers_dev` on or any route declared. It only matters if that
   primary control is ever defeated by a config flip.
 

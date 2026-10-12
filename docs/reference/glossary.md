@@ -23,19 +23,19 @@ Colors opposite each other on the color wheel (180° apart). Create high-contras
 ### Delta E (ΔE)
 Measure of perceptual color difference. Lower values = more similar.
 
-On the default method (ΔE2000) every match falls into one of four bands. The Dye Comparison tool and the bot's comparison card print the word; elsewhere the band sets the colour of the distance number:
+On the default method (ΔE2000) every match falls into one of four bands. The Dye Comparison tool and the bot's comparison card print the word; elsewhere the band sets the color of the distance number:
 
 | ΔE2000 | Band | Meaning |
 |--------|------|---------|
 | under 5 | SAME | You would not tell them apart |
 | 5 to 10 | CLOSE | A very good stand-in |
 | 10 to 20 | NEAR | In the same family, but visibly different |
-| 20 and up | FAR | A different colour |
+| 20 and up | FAR | A different color |
 
 These cuts (5 / 10 / 20) are the `match` bands for `ciede2000` in `BAND_VOCABULARY` (`packages/core/src/config/band-vocabulary.ts`); every other method has its own calibrated cuts on its own scale (`classifyBandTier` in `@xivdyetools/core`), so compare the band, never the raw number, across methods. In the Dye Comparison tool the SAME cut follows its **Match line** setting (5 by default).
 
 ### Matching method
-The distance function used to rank dyes against a target colour. One vocabulary across core, web app, bot, og-worker and api-worker since 5.0: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`. The former `hyab` and `oklch-weighted` methods were retired; stored values normalise on read via `normalizeMatchingMethod()`.
+The distance function used to rank dyes against a target color. One vocabulary across core, web app, bot, og-worker and api-worker since 5.0: `ciede2000` (default), `oklab`, `cie76`, `redmean`, `rgb`, `distinguish`. The former `hyab` and `oklch-weighted` methods were retired; stored values normalize on read via `normalizeMatchingMethod()`.
 
 ### HSV / HSB
 Hue-Saturation-Value (or Brightness) color model. More intuitive than RGB for color selection:
@@ -154,7 +154,7 @@ TypeScript pattern using intersection types to create nominally distinct types f
 Cloudflare's serverless SQLite database. Used for community presets storage.
 
 ### Cloudflare KV
-Cloudflare's key-value store. Used for user preferences, preset favourites, analytics counters, revoked-JWT jti lists, and as the fallback backend for rate limiting. (v4's "collections" were removed in 5.0 and their keys purged.)
+Cloudflare's key-value store. Used for user preferences, preset favorites, analytics counters, revoked-JWT jti lists, and as the fallback backend for rate limiting. (v4's "collections" were removed in 5.0 and their keys purged.)
 
 ### Cloudflare Workers
 Serverless edge compute platform. Hosts Discord bot, OAuth, and presets API.
