@@ -1,0 +1,705 @@
+{
+  "asOf": "2026-10-12T02:59:55.292Z",
+  "note": "relevant = the result's own text (handle, name, description) contains an FFXIV term after NFKC folding. It misses FFXIV accounts that never say so, and keeps any that mention FFXIV once: it is not a test of FFXIV focus. A term stops at its cursor's end (\"exhausted\"), after 20 pages adding under 20 new relevant accounts (\"dry\"), or at 400 pages (\"cap\", an undercount).",
+  "searchMatched": 46685,
+  "relevant": 42691,
+  "perTerm": {
+    "ffxiv": {
+      "hits": 21547,
+      "relevant": 21491,
+      "newRelevant": 21491,
+      "pages": 220,
+      "stop": "exhausted"
+    },
+    "ff14": {
+      "hits": 19222,
+      "relevant": 19214,
+      "newRelevant": 18839,
+      "pages": 195,
+      "stop": "exhausted"
+    },
+    "final fantasy xiv": {
+      "hits": 2962,
+      "relevant": 960,
+      "newRelevant": 798,
+      "pages": 30,
+      "stop": "dry"
+    },
+    "gpose": {
+      "hits": 2357,
+      "relevant": 2333,
+      "newRelevant": 1248,
+      "pages": 25,
+      "stop": "exhausted"
+    },
+    "eorzea": {
+      "hits": 459,
+      "relevant": 457,
+      "newRelevant": 300,
+      "pages": 5,
+      "stop": "exhausted"
+    },
+    "ＦＦ14": {
+      "hits": 1966,
+      "relevant": 1965,
+      "newRelevant": 0,
+      "pages": 20,
+      "stop": "dry"
+    },
+    "ファイナルファンタジー14": {
+      "hits": 1968,
+      "relevant": 59,
+      "newRelevant": 15,
+      "pages": 20,
+      "stop": "dry"
+    }
+  },
+  "followerBuckets": {
+    "100k+": 1,
+    "10k-100k": 12,
+    "1k-10k": 769,
+    "100-1k": 7384,
+    "<100": 34525
+  },
+  "droppedSample": [
+    {
+      "handle": "sirensfox.com",
+      "displayName": "🦊 ꜰᴀᴜx || ꜰꜰxɪᴠ 🦊",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "videnoire.bsky.social",
+      "displayName": "ΛΛMӨП 🔪",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "vexxxaere.bsky.social",
+      "displayName": "Vex [/dote]",
+      "matchedTerms": [
+        "ffxiv",
+        "gpose"
+      ]
+    },
+    {
+      "handle": "velmonair.bsky.social",
+      "displayName": "vel 🦋",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "cressxiv.bsky.social",
+      "displayName": "CRESS ♡ ",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "amazingamatsu.bsky.social",
+      "displayName": "AmazingAmatsu - Preparing 🔜 Long break",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "xivsae.bsky.social",
+      "displayName": "⛓ Sae ♡",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "raxellia.bsky.social",
+      "displayName": "Raxellia 🌵",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "csxiv.bsky.social",
+      "displayName": "これっと",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "uruha0622.bsky.social",
+      "displayName": "うるは",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "witchylady.bsky.social",
+      "displayName": "Witchy Lady",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "kikicanuck.bsky.social",
+      "displayName": "kiki",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "lhyet.bsky.social",
+      "displayName": "Lhyet",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "nymeja.bsky.social",
+      "displayName": "nia",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "jingkkk.bsky.social",
+      "displayName": "𝑵𝒂𝒙❤️🖤",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "shibiscus1209.bsky.social",
+      "displayName": "木槿",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "kitastrophes.bsky.social",
+      "displayName": "𝒦𝒾𝓉 ",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "suspiciouscatgirl.bsky.social",
+      "displayName": "Suspicious Catgirl",
+      "matchedTerms": [
+        "ffxiv",
+        "gpose"
+      ]
+    },
+    {
+      "handle": "flowerzyane.bsky.social",
+      "displayName": "Zყαɳҽ",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "tankdadxiv.bsky.social",
+      "displayName": "Gray",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "saella.bsky.social",
+      "displayName": "Sae ₍ᐢ. ༝ .ᐢ₎",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "ju423.bsky.social",
+      "displayName": "JU",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "lunarannaa.bsky.social",
+      "displayName": "𝔞𝔫𝔫𝔞",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "kami-1997.bsky.social",
+      "displayName": "かみ🦋Bahamut",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    },
+    {
+      "handle": "ukiyoxiv.bsky.social",
+      "displayName": "ukiyoxiv.bsky.social",
+      "matchedTerms": [
+        "ffxiv"
+      ]
+    }
+  ],
+  "top50": [
+    {
+      "handle": "en.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 100574,
+      "posts": 1072
+    },
+    {
+      "handle": "stachional.bsky.social",
+      "displayName": "stachional",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 29473,
+      "posts": 4600
+    },
+    {
+      "handle": "glacierunreal.bsky.social",
+      "displayName": "excessive_precum",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 25176,
+      "posts": 344
+    },
+    {
+      "handle": "jp.finalfantasyxiv.com",
+      "displayName": "FINAL FANTASY XIV／FF14",
+      "matchedTerms": [
+        "ff14",
+        "final fantasy xiv",
+        "ＦＦ14",
+        "ファイナルファンタジー14"
+      ],
+      "followers": 20850,
+      "posts": 1145
+    },
+    {
+      "handle": "stilldancing.bsky.social",
+      "displayName": "Mickey of The Mountain (she/her) 💙",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 20111,
+      "posts": 661
+    },
+    {
+      "handle": "bulkingcanuck.bsky.social",
+      "displayName": "Bullrilla 🐂🦍",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 17934,
+      "posts": 2734
+    },
+    {
+      "handle": "accelldraws.bsky.social",
+      "displayName": "Accell",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 16802,
+      "posts": 1975
+    },
+    {
+      "handle": "baydews.com",
+      "displayName": "bay 🌙 comms on vgen",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 13596,
+      "posts": 4489
+    },
+    {
+      "handle": "ffxivxd.bsky.social",
+      "displayName": "Final Fantasy XIV Fun Facts",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv",
+        "eorzea"
+      ],
+      "followers": 12604,
+      "posts": 1644
+    },
+    {
+      "handle": "snow-fredel.bsky.social",
+      "displayName": "Snow🌸❄️working on comms❤️‍🔥",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 11943,
+      "posts": 11002
+    },
+    {
+      "handle": "aliceinwonderworld.bsky.social",
+      "displayName": "Alice In Wonderland ",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 10743,
+      "posts": 1830
+    },
+    {
+      "handle": "yuyaowl.bsky.social",
+      "displayName": "YuyaOwl",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 10594,
+      "posts": 244
+    },
+    {
+      "handle": "nemgraphics.bsky.social",
+      "displayName": "Nem",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 10493,
+      "posts": 466
+    },
+    {
+      "handle": "rene0elric.bsky.social",
+      "displayName": "Rene",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9761,
+      "posts": 3015
+    },
+    {
+      "handle": "inspyart.bsky.social",
+      "displayName": "Inspy Art",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9719,
+      "posts": 239
+    },
+    {
+      "handle": "xantouke.bsky.social",
+      "displayName": "- ̗̀ 𝕄𝕚𝕟𝕠   ̖́- ☕🐂 { Taking Comms! }",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9328,
+      "posts": 2216
+    },
+    {
+      "handle": "kitkaloid.bsky.social",
+      "displayName": "🌧 kit 🌧 / twt @strucktrue",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 9173,
+      "posts": 193
+    },
+    {
+      "handle": "dranoko.bsky.social",
+      "displayName": "enji - Commissions OPEN",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8618,
+      "posts": 2319
+    },
+    {
+      "handle": "dreadwyrmtrance.bsky.social",
+      "displayName": "blue 🐻🐰 gateway fate 704",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8434,
+      "posts": 6555
+    },
+    {
+      "handle": "grisser.bsky.social",
+      "displayName": "DadBoof",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8146,
+      "posts": 12505
+    },
+    {
+      "handle": "goblinicaart.bsky.social",
+      "displayName": "GoblinicaArt💛🤍💜🖤🔞",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 8134,
+      "posts": 5964
+    },
+    {
+      "handle": "shilin.bsky.social",
+      "displayName": "shilin / commission waitlist open!",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 7966,
+      "posts": 445
+    },
+    {
+      "handle": "drawingkuma.bsky.social",
+      "displayName": "Kuma🐻🍯",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7928,
+      "posts": 156
+    },
+    {
+      "handle": "dapandabanda.bsky.social",
+      "displayName": "DaPanda @destiny-islanders",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 7877,
+      "posts": 1648
+    },
+    {
+      "handle": "charmwitch.bsky.social",
+      "displayName": "Angie",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7770,
+      "posts": 22334
+    },
+    {
+      "handle": "benedictg.bsky.social",
+      "displayName": "Benedict_G",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7608,
+      "posts": 68
+    },
+    {
+      "handle": "crimsonsun.bsky.social",
+      "displayName": "Crimson Sun",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7593,
+      "posts": 1950
+    },
+    {
+      "handle": "sabato-n.bsky.social",
+      "displayName": "saba sabaton @ gateway fate 501",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7588,
+      "posts": 7061
+    },
+    {
+      "handle": "paddedtiggy.bsky.social",
+      "displayName": "Padded Shiba",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7440,
+      "posts": 539
+    },
+    {
+      "handle": "greenbeannsfw.bsky.social",
+      "displayName": "Hot Plate of Green Beans ",
+      "matchedTerms": [
+        "final fantasy xiv"
+      ],
+      "followers": 7362,
+      "posts": 602
+    },
+    {
+      "handle": "necromoss.bsky.social",
+      "displayName": "Mossy💀🔜Comipara7 & CF23",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7349,
+      "posts": 991
+    },
+    {
+      "handle": "mcstronghuge.bsky.social",
+      "displayName": "Denmo @ Gateway Fate 2026",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7338,
+      "posts": 5516
+    },
+    {
+      "handle": "larxarcanum.bsky.social",
+      "displayName": "Larx Arcanum",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7206,
+      "posts": 5139
+    },
+    {
+      "handle": "jullika.bsky.social",
+      "displayName": "Jullika 🌌",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 7164,
+      "posts": 607
+    },
+    {
+      "handle": "lindalithen.bsky.social",
+      "displayName": "Linda Lithén",
+      "matchedTerms": [
+        "eorzea"
+      ],
+      "followers": 7116,
+      "posts": 858
+    },
+    {
+      "handle": "riiein.bsky.social",
+      "displayName": "riiein🍅",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6974,
+      "posts": 137
+    },
+    {
+      "handle": "itsmeishmi.bsky.social",
+      "displayName": "Ishmi",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6970,
+      "posts": 3547
+    },
+    {
+      "handle": "wyrming.bsky.social",
+      "displayName": "Wyrm! (Comms close)",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6899,
+      "posts": 1100
+    },
+    {
+      "handle": "mousie.yogscast.com",
+      "displayName": "Mousie",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6897,
+      "posts": 5497
+    },
+    {
+      "handle": "idyllruin.bsky.social",
+      "displayName": "noa @ commissions + con prep",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6553,
+      "posts": 3235
+    },
+    {
+      "handle": "jocatffxiv.bsky.social",
+      "displayName": "Victor Quibbles",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6398,
+      "posts": 216
+    },
+    {
+      "handle": "rb-illustration.co.uk",
+      "displayName": "Bex | Comms on waitlist!",
+      "matchedTerms": [
+        "ffxiv",
+        "final fantasy xiv"
+      ],
+      "followers": 6211,
+      "posts": 5633
+    },
+    {
+      "handle": "theneonfox.bsky.social",
+      "displayName": "🌸Yazoo 🔞 🌸 COMMS OPEN",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 6183,
+      "posts": 3436
+    },
+    {
+      "handle": "dreff.bsky.social",
+      "displayName": "dreffers",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5994,
+      "posts": 242
+    },
+    {
+      "handle": "tiffanylockheart.bsky.social",
+      "displayName": "TiffanyLockheart",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5934,
+      "posts": 3397
+    },
+    {
+      "handle": "tiredgays.bsky.social",
+      "displayName": "Brock & Milo 🔞",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5918,
+      "posts": 1855
+    },
+    {
+      "handle": "fittingxivsongs.bsky.social",
+      "displayName": "images with fitting ffxiv music",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5904,
+      "posts": 29
+    },
+    {
+      "handle": "luciasatalina.bsky.social",
+      "displayName": "✦ 𝕮𝖑𝖆𝖗𝖎𝖘𝖘𝖊 🌻",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5858,
+      "posts": 303
+    },
+    {
+      "handle": "cloudofdarkness.bsky.social",
+      "displayName": "Void!!💫",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5799,
+      "posts": 2751
+    },
+    {
+      "handle": "dunesand.bsky.social",
+      "displayName": "정(dune)🎴@gateway fate 301",
+      "matchedTerms": [
+        "ffxiv"
+      ],
+      "followers": 5784,
+      "posts": 1486
+    }
+  ]
+}

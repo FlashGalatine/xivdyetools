@@ -1,0 +1,1023 @@
+{
+  "asOf": "2026-10-11T17:06:00.771Z",
+  "note": "relevant = the result's own text (handle, name, description) contains an FFXIV term after NFKC folding. It misses FFXIV accounts that never say so, and keeps any that mention FFXIV once: it is not a test of FFXIV focus. members sums overlap: one account can sit in many packs. joinedWeek/joinedAllTime appear to count accounts that signed up through the pack, not follows (inferred from the app's label).",
+  "searchMatched": 111,
+  "packs": 109,
+  "perQuery": {
+    "ffxiv": {
+      "hits": 80,
+      "pages": 1,
+      "capped": false
+    },
+    "ff14": {
+      "hits": 14,
+      "pages": 1,
+      "capped": false
+    },
+    "final fantasy xiv": {
+      "hits": 18,
+      "pages": 1,
+      "capped": false
+    },
+    "gpose": {
+      "hits": 13,
+      "pages": 1,
+      "capped": false
+    },
+    "eorzea": {
+      "hits": 0,
+      "pages": 1,
+      "capped": false
+    }
+  },
+  "totalMembersListed": 6230,
+  "totalJoinedAllTime": 19,
+  "totalJoinedWeek": 0,
+  "droppedNames": [
+    "Zephie♡'s Starter Pack",
+    "「メガニケ」Euryale、エウ 님의 스타터 팩"
+  ],
+  "list": [
+    {
+      "name": "FF14 gposers",
+      "creator": "scarab-rider.bsky.social",
+      "createdAt": "2025-02-20T14:03:58.208Z",
+      "uri": "at://did:plc:xp36xsv7hd7lnkozd7erui7x/app.bsky.graph.starterpack/3limhga7amv27",
+      "members": 1050,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fanfic Writers!",
+      "creator": "inmyleylines.bsky.social",
+      "createdAt": "2024-11-17T00:42:53.871Z",
+      "uri": "at://did:plc:i47oxbww55kkjs4onamyaksf/app.bsky.graph.starterpack/3lb46efqaei2a",
+      "members": 158,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fan-Artists Part 2",
+      "creator": "noahwalker.bsky.social",
+      "createdAt": "2024-10-17T16:24:19.120Z",
+      "uri": "at://did:plc:obbfa3k2t3ccyq73whne6erw/app.bsky.graph.starterpack/3l6puiyksnn2a",
+      "members": 155,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV fanartists",
+      "creator": "eikomakimachi.bsky.social",
+      "createdAt": "2024-09-29T14:02:32.781Z",
+      "uri": "at://did:plc:mbzpn62ac7p23udnxdyt2bsq/app.bsky.graph.starterpack/3l5ce74hewu2r",
+      "members": 155,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fan-Artists Part 1",
+      "creator": "noahwalker.bsky.social",
+      "createdAt": "2024-09-09T18:20:41.214Z",
+      "uri": "at://did:plc:obbfa3k2t3ccyq73whne6erw/app.bsky.graph.starterpack/3l3qjcb4yvk2m",
+      "members": 154,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Streamers!",
+      "creator": "reikakupo.bsky.social",
+      "createdAt": "2024-10-20T20:41:51.056Z",
+      "uri": "at://did:plc:n6d6ei2smj6bu26yw43v52x5/app.bsky.graph.starterpack/3l6xuchih4723",
+      "members": 150,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "The Kraken's Friendo pack!",
+      "creator": "quenthulu.bsky.social",
+      "createdAt": "2024-12-17T21:12:11.659Z",
+      "uri": "at://did:plc:ycf4tjcllqg5dvaqqohga6kd/app.bsky.graph.starterpack/3ldjr253eaj2x",
+      "members": 150,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fan Merch makers!",
+      "creator": "xivfanmerch.network",
+      "createdAt": "2025-06-25T18:08:13.591Z",
+      "uri": "at://did:plc:7cxlxnvzlsin43ny575h7mxu/app.bsky.graph.starterpack/3lsh7e2deuy2d",
+      "members": 149,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Artist Starter Pack",
+      "creator": "decafdraws.bsky.social",
+      "createdAt": "2024-11-17T20:01:56.150Z",
+      "uri": "at://did:plc:f2xe25b4bjdgwyimoqbq5gm7/app.bsky.graph.starterpack/3lb674txrzs2z",
+      "members": 149,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Disabled/Trans/GNC/Women Creators",
+      "creator": "novacrystallis.com",
+      "createdAt": "2026-05-06T01:02:30.668Z",
+      "uri": "at://did:plc:6442guthdj3qrhx5iolcx7x5/app.bsky.graph.starterpack/3ml5ivxn2pk2d",
+      "members": 146,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "wonderful arteeests",
+      "creator": "fadedhues.bsky.social",
+      "createdAt": "2026-03-05T00:09:35.031Z",
+      "uri": "at://did:plc:22o6bzavrjuqkowfjhxzxusp/app.bsky.graph.starterpack/3mgbj2amxxk2c",
+      "members": 146,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Artist Starter Pack 2",
+      "creator": "decafdraws.bsky.social",
+      "createdAt": "2024-11-19T01:58:21.011Z",
+      "uri": "at://did:plc:f2xe25b4bjdgwyimoqbq5gm7/app.bsky.graph.starterpack/3lbbdj3qak22k",
+      "members": 127,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Screeny's FFXIV Gposer Starter Pack",
+      "creator": "screeny.etheirys.social",
+      "createdAt": "2025-02-14T22:27:39.939Z",
+      "uri": "at://did:plc:2pfyui5be7slfpq74yqcm6lp/app.bsky.graph.starterpack/3li6arf6s5o24",
+      "members": 116,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Club Starter Kit (Updated 12/25)",
+      "creator": "euliemia.ff14clubhub.net",
+      "createdAt": "2024-11-10T04:41:14.705Z",
+      "uri": "at://did:plc:ohzblpaxdvyooqxxsqzzg56j/app.bsky.graph.starterpack/3lakyg4wz7b2n",
+      "members": 107,
+      "joinedWeek": 0,
+      "joinedAllTime": 3
+    },
+    {
+      "name": "FF14 Catboys of Bluesky",
+      "creator": "maddajuliana.bsky.social",
+      "createdAt": "2025-06-17T08:47:47.023Z",
+      "uri": "at://did:plc:pzgkuagmjmnxvwtwecdh4etq/app.bsky.graph.starterpack/3lrs4cjq2gl2k",
+      "members": 105,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Streamers Part 2",
+      "creator": "reikakupo.bsky.social",
+      "createdAt": "2024-10-22T11:56:32.363Z",
+      "uri": "at://did:plc:n6d6ei2smj6bu26yw43v52x5/app.bsky.graph.starterpack/3l73xuvy53o24",
+      "members": 101,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Super cool FFXIV people!!",
+      "creator": "elanortrevelyan.bsky.social",
+      "createdAt": "2024-10-12T15:38:48.459Z",
+      "uri": "at://did:plc:e2ay76vnl5oeolw6u3ei35fc/app.bsky.graph.starterpack/3l6d7na7u4t2r",
+      "members": 95,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Great Gposers",
+      "creator": "duibouxffxiv.bsky.social",
+      "createdAt": "2025-09-14T05:50:21.581Z",
+      "uri": "at://did:plc:2un4kn6v4y6gxfflsi6gi3ak/app.bsky.graph.starterpack/3lyrlv7wgpi2s",
+      "members": 95,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Gposers :)",
+      "creator": "vierawife.bsky.social",
+      "createdAt": "2024-11-29T03:29:46.243Z",
+      "uri": "at://did:plc:zxztsrbojq4j2vfbasghreeg/app.bsky.graph.starterpack/3lc2nbrze6s2r",
+      "members": 91,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "🪷 FFXIV Starter Pack 🪷",
+      "creator": "exieris.bsky.social",
+      "createdAt": "2024-10-17T10:17:55.224Z",
+      "uri": "at://did:plc:bwae7sg7e5q7golebxjhzkgo/app.bsky.graph.starterpack/3l6p7zzjgex2c",
+      "members": 90,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Rhel's FFXIV Pack",
+      "creator": "rhelbites.bsky.social",
+      "createdAt": "2024-11-15T15:49:20.247Z",
+      "uri": "at://did:plc:z6jhvpd2ihj4lz3v6iajvrau/app.bsky.graph.starterpack/3layq3djcvz2t",
+      "members": 85,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fanfic Peeps!",
+      "creator": "quad-weave.etheirys.social",
+      "createdAt": "2025-05-23T15:40:28.700Z",
+      "uri": "at://did:plc:ki47qct64jbzenwerz3dncff/app.bsky.graph.starterpack/3lptxpixkyq2d",
+      "members": 85,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Final Fantasy XIV players",
+      "creator": "alycore.bsky.social",
+      "createdAt": "2024-10-30T00:26:56.962Z",
+      "uri": "at://did:plc:lokqwhdc3dihfjxf5fiif33w/app.bsky.graph.starterpack/3l7ov3au2xi22",
+      "members": 85,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Yelena Tori's Starter Pack",
+      "creator": "aineraea.bsky.social",
+      "createdAt": "2024-10-18T04:59:59.918Z",
+      "uri": "at://did:plc:5heebtargozfpe5yf2s2qhb6/app.bsky.graph.starterpack/3l6r6qhdmzi2x",
+      "members": 84,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV NPCs",
+      "creator": "ladyiceheart.bsky.social",
+      "createdAt": "2024-10-25T10:31:55.252Z",
+      "uri": "at://did:plc:d4d4bobzcnq2v3p7f4bggw3g/app.bsky.graph.starterpack/3l7dekgdafm2y",
+      "members": 78,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Lofi Art Party",
+      "creator": "fwoshy.bsky.social",
+      "createdAt": "2024-10-18T18:00:29.512Z",
+      "uri": "at://did:plc:jydrkxgov2o7iowrdofhb6dx/app.bsky.graph.starterpack/3l6ske3cxf324",
+      "members": 74,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "SFW Gposers",
+      "creator": "kaiylelumiose.com",
+      "createdAt": "2025-04-11T14:33:05.945Z",
+      "uri": "at://did:plc:3bnqvve724qjucyjubj4vons/app.bsky.graph.starterpack/3lmkaed4hn22g",
+      "members": 65,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Gpose - Hype Squad",
+      "creator": "kaiylelumiose.com",
+      "createdAt": "2025-08-01T15:25:50.408Z",
+      "uri": "at://did:plc:3bnqvve724qjucyjubj4vons/app.bsky.graph.starterpack/3lvdxjryxal2e",
+      "members": 63,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Catboys",
+      "creator": "saramaburwani.bsky.social",
+      "createdAt": "2024-12-04T23:27:01.676Z",
+      "uri": "at://did:plc:m3z7iuhw5in6agkvwhqxc677/app.bsky.graph.starterpack/3lcjcjatcxf2i",
+      "members": 60,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Gposer Gods",
+      "creator": "duskoni.bsky.social",
+      "createdAt": "2024-11-20T02:09:02.620Z",
+      "uri": "at://did:plc:7mgosokhf4seudbcdfuue2yr/app.bsky.graph.starterpack/3lbdul5hqxq2l",
+      "members": 57,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "I just think they are neat. (FFXIV)",
+      "creator": "tiffanylockheart.bsky.social",
+      "createdAt": "2025-06-28T01:23:17.530Z",
+      "uri": "at://did:plc:dkvlclzijnit4by4iwvg3iow/app.bsky.graph.starterpack/3lsmyluvc5d2e",
+      "members": 55,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Artists",
+      "creator": "twizzlytwist.bsky.social",
+      "createdAt": "2025-12-27T13:00:48.612Z",
+      "uri": "at://did:plc:rddgxovok3cwg6j4ualfinw5/app.bsky.graph.starterpack/3maxugalbjn2w",
+      "members": 52,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Mga Mandirigma ng Liwanag!",
+      "creator": "kriiinuts.bsky.social",
+      "createdAt": "2024-11-17T15:49:29.866Z",
+      "uri": "at://did:plc:7zixbdhgauk22zpwapbwnrqd/app.bsky.graph.starterpack/3lb5qzj453b2w",
+      "members": 52,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "ffxiv starter pack",
+      "creator": "kinesis.bsky.social",
+      "createdAt": "2024-09-02T15:27:31.068Z",
+      "uri": "at://did:plc:aidzixkwatorf32reeexfofh/app.bsky.graph.starterpack/3l36me74kuj2s",
+      "members": 51,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "ムジカ＠FF14 Vtuber's スターターパック",
+      "creator": "musicavtuber.bsky.social",
+      "createdAt": "2024-07-16T21:50:31.350Z",
+      "uri": "at://did:plc:chkyinisfwgsquoxchf7kpel/app.bsky.graph.starterpack/3kxgleve3lu2a",
+      "members": 50,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Shifter - FF14 GPOSE Idea…'s Starter Pack",
+      "creator": "wayshifter.bsky.social",
+      "createdAt": "2024-10-25T22:15:15.040Z",
+      "uri": "at://did:plc:j2gkbjhguxbasscyhuqrykcv/app.bsky.graph.starterpack/3l7elu36x3r2d",
+      "members": 50,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "reya !! ffxiv mines's Starter Pack",
+      "creator": "formlessblade.bsky.social",
+      "createdAt": "2024-11-19T09:40:34.680Z",
+      "uri": "at://did:plc:klkntmjv2zdfikgaploq2ej6/app.bsky.graph.starterpack/3lbc5dndmxh2h",
+      "members": 49,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Streamer GEMS",
+      "creator": "kiwicattv.bsky.social",
+      "createdAt": "2024-11-07T05:25:59.551Z",
+      "uri": "at://did:plc:hzs2irblkm3abui6wsbbqfzt/app.bsky.graph.starterpack/3ladjlnk4mx2n",
+      "members": 48,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Lalafell Artists/ララフェルのアーティスト",
+      "creator": "tyra.bsky.social",
+      "createdAt": "2024-11-12T14:46:25.848Z",
+      "uri": "at://did:plc:j5elai7ci6qdoplkuqz55zta/app.bsky.graph.starterpack/3lar363xsbv2i",
+      "members": 48,
+      "joinedWeek": 0,
+      "joinedAllTime": 2
+    },
+    {
+      "name": "FFXIV Favourites",
+      "creator": "leejafytheffxiv.bsky.social",
+      "createdAt": "2024-11-26T17:30:28.013Z",
+      "uri": "at://did:plc:oj7c6j6a5kjh6okm3yiv64ty/app.bsky.graph.starterpack/3lbukubnzdw2v",
+      "members": 41,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV DJs/Venues/Owners",
+      "creator": "djaynightshade.bsky.social",
+      "createdAt": "2024-12-01T23:49:24.556Z",
+      "uri": "at://did:plc:53bk5rrbp2ob2ngds6zux5od/app.bsky.graph.starterpack/3lcbsej2lhh2y",
+      "members": 41,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": "✨ FFXIV Artists ✨",
+      "creator": "nyaruminyan.bsky.social",
+      "createdAt": "2024-10-17T20:27:46.218Z",
+      "uri": "at://did:plc:ydkbuniehutujob3nku73m5z/app.bsky.graph.starterpack/3l6qc4jjylc2e",
+      "members": 40,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Elysea's FFXIV RP & Storyteller Starter Pack",
+      "creator": "elypiphoros.etheirys.social",
+      "createdAt": "2025-03-19T00:31:23.449Z",
+      "uri": "at://did:plc:4vwibcza22vafsdnwfsciufc/app.bsky.graph.starterpack/3lkowm24rvc2t",
+      "members": 40,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "みゃーさん@FF14のスターターパック",
+      "creator": "miahsan.bsky.social",
+      "createdAt": "2024-10-17T06:40:50.470Z",
+      "uri": "at://did:plc:k6pkiopdjydxz2ogglbl5rlp/app.bsky.graph.starterpack/3l6otvvga6i2t",
+      "members": 40,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV PH Artists",
+      "creator": "clymacs.bsky.social",
+      "createdAt": "2024-10-20T13:25:53.361Z",
+      "uri": "at://did:plc:gu3whav6wq4yoae76jbouyts/app.bsky.graph.starterpack/3l6x3wxz2hi2t",
+      "members": 39,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FF14下限もだいすき",
+      "creator": "wata.nyaon.jp",
+      "createdAt": "2024-06-26T21:05:48.101Z",
+      "uri": "at://did:plc:oidpmy3ium7cho7fguxgscts/app.bsky.graph.starterpack/3kvu7kiksmc2k",
+      "members": 38,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV TH Artists",
+      "creator": "zcarletffxiv.bsky.social",
+      "createdAt": "2024-10-17T12:16:31.622Z",
+      "uri": "at://did:plc:d2crzimj5tzd6jkgo5kywata/app.bsky.graph.starterpack/3l6pgo3z2dc2t",
+      "members": 36,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Raid oomfies",
+      "creator": "marusu.bsky.social",
+      "createdAt": "2025-05-23T10:26:10.741Z",
+      "uri": "at://did:plc:m5xpbxopii6th6rz7dwsqv37/app.bsky.graph.starterpack/3lptg5iaxq22p",
+      "members": 36,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Friendarinos",
+      "creator": "handle.invalid",
+      "createdAt": "2024-11-24T22:41:07.347Z",
+      "uri": "at://did:plc:rwxp74wwiol6vlyottusnacl/app.bsky.graph.starterpack/3lbq3bww5x22o",
+      "members": 34,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "✨FFXIV Chicks ✨",
+      "creator": "chargaming.bsky.social",
+      "createdAt": "2025-08-11T08:08:48.674Z",
+      "uri": "at://did:plc:ahnha753b4rqgwmrex6md4hc/app.bsky.graph.starterpack/3lw4dritlzx2w",
+      "members": 33,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Final Fantasy XIV NSFW Gposer",
+      "creator": "articfox.bsky.social",
+      "createdAt": "2024-10-19T11:43:22.478Z",
+      "uri": "at://did:plc:xan7yl6x7glguawncj4zcerv/app.bsky.graph.starterpack/3l6ufqoae6m2w",
+      "members": 32,
+      "joinedWeek": 0,
+      "joinedAllTime": 10
+    },
+    {
+      "name": "FFXIV Dawn Callers & Friends",
+      "creator": "sachasleeps.bsky.social",
+      "createdAt": "2024-11-13T20:18:18.840Z",
+      "uri": "at://did:plc:r7v2rxn2qyfpqvh6ysrbwmg4/app.bsky.graph.starterpack/3lau66hgphw2j",
+      "members": 31,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV artist's Secret Santa - 2024 edition",
+      "creator": "pieceofmeh.bsky.social",
+      "createdAt": "2024-11-15T16:46:34.446Z",
+      "uri": "at://did:plc:nabmdkabbcrnl4mmg2nw76v7/app.bsky.graph.starterpack/3laytbp6ntg25",
+      "members": 31,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Drawbucks Artists",
+      "creator": "iamlordly.bsky.social",
+      "createdAt": "2026-06-24T00:39:38.946Z",
+      "uri": "at://did:plc:ywwjhhmmcluqm3mzfakc3c4l/app.bsky.graph.starterpack/3moyoi726hy2s",
+      "members": 31,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "XIV Gpose",
+      "creator": "ryqote.bsky.social",
+      "createdAt": "2024-11-11T10:16:53.634Z",
+      "uri": "at://did:plc:s5m5bfrmadfbbhozf4lzlvyh/app.bsky.graph.starterpack/3lao3n7jibe2j",
+      "members": 30,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Gpose Love",
+      "creator": "voidprism.bsky.social",
+      "createdAt": "2024-11-21T20:14:06.560Z",
+      "uri": "at://did:plc:qrt5ypbvn64tvqshcnyonkmp/app.bsky.graph.starterpack/3lbibocyhzn25",
+      "members": 30,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Twitter Starter Pack",
+      "creator": "bwahamut.bsky.social",
+      "createdAt": "2024-11-07T16:40:14.646Z",
+      "uri": "at://did:plc:6y6256qs652saulvq2my6s5s/app.bsky.graph.starterpack/3laep6yw2hi2h",
+      "members": 29,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "«VinCo»",
+      "creator": "snakelinksonic.com",
+      "createdAt": "2024-11-15T03:16:32.744Z",
+      "uri": "at://did:plc:b6cnjt6wflfiwkcwds6t7u6r/app.bsky.graph.starterpack/3laxfz7bjby2e",
+      "members": 29,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": "FFXIV BSKY Starter Pack",
+      "creator": "cinderpixel.bsky.social",
+      "createdAt": "2024-11-23T00:57:12.464Z",
+      "uri": "at://did:plc:igrzhbh77anxvd6zl6kqtsyf/app.bsky.graph.starterpack/3lblbxgtjfd24",
+      "members": 28,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "VTubers who play FFXIV",
+      "creator": "faerihexi.bsky.social",
+      "createdAt": "2024-10-21T07:04:26.249Z",
+      "uri": "at://did:plc:y4iivqwg6lkittcyo3idqre4/app.bsky.graph.starterpack/3l6yx373x252i",
+      "members": 28,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Inspiring Elezen Accounts",
+      "creator": "runfrior.bsky.social",
+      "createdAt": "2024-12-01T00:14:26.477Z",
+      "uri": "at://did:plc:egpsgxunr3u5svaogqtpokme/app.bsky.graph.starterpack/3lc7dc5knle2u",
+      "members": 28,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "The good sauce (FFXIV)",
+      "creator": "dididiandian.bsky.social",
+      "createdAt": "2024-10-17T21:36:34.670Z",
+      "uri": "at://did:plc:pjovufzxupok72mepvtr5sjt/app.bsky.graph.starterpack/3l6qfxkh3jj2d",
+      "members": 27,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Skitters's Starter Pack",
+      "creator": "skittersthespider.bsky.social",
+      "createdAt": "2025-02-06T12:10:14.343Z",
+      "uri": "at://did:plc:7bhcaglnv4k25zdsurrokgca/app.bsky.graph.starterpack/3lhj2jy3ri62g",
+      "members": 27,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Starter Pack!",
+      "creator": "sunlitkoi.etheirys.social",
+      "createdAt": "2024-11-30T17:33:49.722Z",
+      "uri": "at://did:plc:zq36ajsibm2i3hwlf26pbozr/app.bsky.graph.starterpack/3lc6mvro6gv2o",
+      "members": 26,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Games Industry FFXIV Writers",
+      "creator": "mamavitelli.bsky.social",
+      "createdAt": "2024-11-14T19:19:54.264Z",
+      "uri": "at://did:plc:s4uzm3jecxyczihggkp3dyfb/app.bsky.graph.starterpack/3lawlex5wn42h",
+      "members": 25,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": "Cool FFXIV Peeps to Follow",
+      "creator": "quad-weave.etheirys.social",
+      "createdAt": "2026-03-08T21:24:18.158Z",
+      "uri": "at://did:plc:ki47qct64jbzenwerz3dncff/app.bsky.graph.starterpack/3mglboevqtl2g",
+      "members": 24,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Gposer Friends and Mutuals",
+      "creator": "riddleofgold.bsky.social",
+      "createdAt": "2025-02-10T21:34:50.128Z",
+      "uri": "at://did:plc:ygutwdga3pk4clnzkb46lnw7/app.bsky.graph.starterpack/3lhu3xapqhj25",
+      "members": 24,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Vtubers",
+      "creator": "thorngobo.bsky.social",
+      "createdAt": "2024-11-04T15:30:54.702Z",
+      "uri": "at://did:plc:ttrxnodocimh6fhjrvn44um3/app.bsky.graph.starterpack/3la4zwc2pfs25",
+      "members": 23,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fanfic Writers: volume 2!",
+      "creator": "inmyleylines.bsky.social",
+      "createdAt": "2026-08-21T22:43:38.683Z",
+      "uri": "at://did:plc:i47oxbww55kkjs4onamyaksf/app.bsky.graph.starterpack/3mtmtj34x2d2o",
+      "members": 23,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV HOUSING DESIGNERS",
+      "creator": "midorixiv.bsky.social",
+      "createdAt": "2024-10-17T02:41:55.327Z",
+      "uri": "at://did:plc:lselfx2jkim2gawonb5erarl/app.bsky.graph.starterpack/3l6ogkn3or42x",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fave Artists and Memes",
+      "creator": "cecestars.bsky.social",
+      "createdAt": "2026-05-26T12:14:44.459Z",
+      "uri": "at://did:plc:ydp2qyf2wyl65yxxt6fzusmm/app.bsky.graph.starterpack/3mmqxsg6jkj2v",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Astraea's Friends",
+      "creator": "ariasirenvt.bsky.social",
+      "createdAt": "2024-11-19T19:28:58.846Z",
+      "uri": "at://did:plc:q6ewmbffwrh2knerxksithkw/app.bsky.graph.starterpack/3lbd66dgpd72v",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Warrior of Light IC RP",
+      "creator": "feralwhm.bsky.social",
+      "createdAt": "2024-11-13T10:53:41.181Z",
+      "uri": "at://did:plc:ra4uof3l5tyeqnmuovykrbhm/app.bsky.graph.starterpack/3lat6mxl45i2f",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "SEAFLOOR STARTER PACK !",
+      "creator": "ofsaltandseas.bsky.social",
+      "createdAt": "2024-11-09T00:19:11.934Z",
+      "uri": "at://did:plc:sww4lal6corv5pokaip6uujw/app.bsky.graph.starterpack/3lahzclqoge27",
+      "members": 22,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV",
+      "creator": "beaniebuns.etheirys.social",
+      "createdAt": "2024-10-19T04:40:57.028Z",
+      "uri": "at://did:plc:xv6dwghre5r4ml6hc3wgihop/app.bsky.graph.starterpack/3l6to5cwxm42d",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV NICE PEOPLE AND GPOSER PACK. 2",
+      "creator": "zetheirys.etheirys.social",
+      "createdAt": "2024-11-17T12:57:54.853Z",
+      "uri": "at://did:plc:ryi4ddqfywkaqsv6mjybjdjv/app.bsky.graph.starterpack/3lb5hgnm4fz2w",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Meku's Secret",
+      "creator": "mekumaki.bsky.social",
+      "createdAt": "2024-10-23T03:04:25.572Z",
+      "uri": "at://did:plc:ohcxmmwzjw3ww3m5ewmso2co/app.bsky.graph.starterpack/3l75kmflvgl25",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "✒️📷Gpose fic/VN/comic creators",
+      "creator": "willowmint.etheirys.social",
+      "createdAt": "2026-04-23T15:33:56.852Z",
+      "uri": "at://did:plc:iofoztrx6uslyawoyeywr7j6/app.bsky.graph.starterpack/3mk6dkaogtj2b",
+      "members": 21,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "MMO VTubers",
+      "creator": "mortufaiiry.bsky.social",
+      "createdAt": "2024-10-20T20:27:41.132Z",
+      "uri": "at://did:plc:lvao35mnsjyzsmitcfibmquh/app.bsky.graph.starterpack/3l6xtj5g55t26",
+      "members": 20,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Limit Beach",
+      "creator": "drazza.bsky.social",
+      "createdAt": "2025-08-02T16:59:14.581Z",
+      "uri": "at://did:plc:3yb3xgfjv64xmmg3clukkero/app.bsky.graph.starterpack/3lvgn7pzgit2a",
+      "members": 19,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Creators, Communities & Collectives",
+      "creator": "leon.aquitaine.social",
+      "createdAt": "2024-10-22T19:39:37.420Z",
+      "uri": "at://did:plc:rozvxyednounsspdyehgjhnu/app.bsky.graph.starterpack/3l74rqzvwc523",
+      "members": 17,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Materia DC Content Creators and other good eggs!",
+      "creator": "ngufootman.bsky.social",
+      "createdAt": "2024-11-18T23:48:59.876Z",
+      "uri": "at://did:plc:xivv4asakxei7cqmvjpuqxw5/app.bsky.graph.starterpack/3lbb4bsmrf42g",
+      "members": 17,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Gpose Studios! 📸",
+      "creator": "almaapple.bsky.social",
+      "createdAt": "2024-12-12T15:25:34.378Z",
+      "uri": "at://did:plc:jsgsiie3hskyoqx7yg6mtgty/app.bsky.graph.starterpack/3ld4ldphlw32n",
+      "members": 17,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Nothing Fancy’s FFXIV Starter Pack",
+      "creator": "nothingfancy01.bsky.social",
+      "createdAt": "2025-02-24T09:00:52.121Z",
+      "uri": "at://did:plc:asslqh42ry4leyfnewiph23x/app.bsky.graph.starterpack/3livydwjvlh2q",
+      "members": 16,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Cool peeps!",
+      "creator": "mdrabbles.bsky.social",
+      "createdAt": "2024-11-11T18:46:14.026Z",
+      "uri": "at://did:plc:o3rnnzpsgejmwdicke73wzc6/app.bsky.graph.starterpack/3laoy3xzdd52p",
+      "members": 16,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Aetheryte Radio Starter Pack",
+      "creator": "aetheryteradio.gamerescape.com",
+      "createdAt": "2024-11-20T00:05:44.994Z",
+      "uri": "at://did:plc:nzqpqgu72kr6jj6mukdw7z4d/app.bsky.graph.starterpack/3lbdnopq3wk2o",
+      "members": 16,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Fan-Artists Part 3",
+      "creator": "noahwalker.bsky.social",
+      "createdAt": "2026-01-08T05:37:06.104Z",
+      "uri": "at://did:plc:obbfa3k2t3ccyq73whne6erw/app.bsky.graph.starterpack/3mbvbadlybo2q",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV NICE PEOPLE AND GPOSER PACK.",
+      "creator": "zetheirys.etheirys.social",
+      "createdAt": "2024-11-17T04:44:41.478Z",
+      "uri": "at://did:plc:ryi4ddqfywkaqsv6mjybjdjv/app.bsky.graph.starterpack/3lb4lup6w5z2z",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 1
+    },
+    {
+      "name": "FFXIV Lovers",
+      "creator": "necrojade.bsky.social",
+      "createdAt": "2024-11-28T06:46:16.833Z",
+      "uri": "at://did:plc:db4jrwpkvcamz5yjflghswvz/app.bsky.graph.starterpack/3lbyhsamdcj2p",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Erm",
+      "creator": "badabadger.bsky.social",
+      "createdAt": "2024-12-12T04:55:29.615Z",
+      "uri": "at://did:plc:mrn2iqhnops5qd5ettlonbmj/app.bsky.graph.starterpack/3ld3i53dftt2y",
+      "members": 15,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Arte en Español",
+      "creator": "arkenaya.eurosky.social",
+      "createdAt": "2024-10-23T11:00:09.865Z",
+      "uri": "at://did:plc:idiypqt4xwvx2iny337rgjit/app.bsky.graph.starterpack/3l76f75dnet2t",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Nyan's Litter ✨💙",
+      "creator": "nyanbiori.bsky.social",
+      "createdAt": "2024-10-18T23:33:47.166Z",
+      "uri": "at://did:plc:kp72dw3jldv6lvt2z5tqxiet/app.bsky.graph.starterpack/3l6t4y2bmv72x",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "アリムくんのスターターパック🎁",
+      "creator": "arjm001.bsky.social",
+      "createdAt": "2024-12-27T14:21:55.797Z",
+      "uri": "at://did:plc:2zbratzjkqlma7b2wvxr72hl/app.bsky.graph.starterpack/3lec6rps5wy2b",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Inspo Gposes",
+      "creator": "bigboiemperor.bsky.social",
+      "createdAt": "2024-11-09T18:07:34.335Z",
+      "uri": "at://did:plc:zdpoxpg4ywztfneds5drcczx/app.bsky.graph.starterpack/3lajuyyqmo72s",
+      "members": 14,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "More FFXIV Fan Merch Makers!",
+      "creator": "xivfanmerch.network",
+      "createdAt": "2025-06-26T00:11:53.919Z",
+      "uri": "at://did:plc:7cxlxnvzlsin43ny575h7mxu/app.bsky.graph.starterpack/3lshtodoilv2o",
+      "members": 13,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV Gposer Pack",
+      "creator": "luckypanda.bsky.social",
+      "createdAt": "2025-02-17T20:32:28.995Z",
+      "uri": "at://did:plc:kqz3oe5biwtozuskayprpxpv/app.bsky.graph.starterpack/3liflq6sxil2y",
+      "members": 13,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "ffxiv",
+      "creator": "epsilonyx.bsky.social",
+      "createdAt": "2024-10-19T04:18:03.745Z",
+      "uri": "at://did:plc:etxdesjdu3ttskx3ntwnwvr2/app.bsky.graph.starterpack/3l6tmueh2w22s",
+      "members": 13,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV DJs",
+      "creator": "djinaros.voidcast.tv",
+      "createdAt": "2024-11-20T22:24:50.925Z",
+      "uri": "at://did:plc:zprdgyettqlmzu7uii7nesux/app.bsky.graph.starterpack/3lbfyj5me4h2v",
+      "members": 12,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Fandom Artists",
+      "creator": "glassheadcanon.bsky.social",
+      "createdAt": "2025-08-27T01:42:52.655Z",
+      "uri": "at://did:plc:goth7qrmobublsszabbykkuq/app.bsky.graph.starterpack/3lxdvo4rvq52g",
+      "members": 12,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "friends that i raid with, they're very cool",
+      "creator": "hyskaris.bsky.social",
+      "createdAt": "2025-01-31T09:35:39.479Z",
+      "uri": "at://did:plc:wjam2d4zd5hgkxvopejyvrqz/app.bsky.graph.starterpack/3lgzp42aajj2q",
+      "members": 11,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "青空招待パック",
+      "creator": "llllll.blue",
+      "createdAt": "2024-06-27T04:14:23.536Z",
+      "uri": "at://did:plc:wahp2rb56fq4iu2lfsnmaf2h/app.bsky.graph.starterpack/3kvuxiuphbk2x",
+      "members": 11,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "💨 FFXIV Scented Crafters",
+      "creator": "itsuff14.bsky.social",
+      "createdAt": "2024-11-25T17:32:18.455Z",
+      "uri": "at://did:plc:axn7lchl4fskdtzqvppq5yr3/app.bsky.graph.starterpack/3lbs2iopxkx2y",
+      "members": 10,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "WoL / FFXIV-focused QoTD Feeds Starter",
+      "creator": "qotdarchive.bsky.social",
+      "createdAt": "2024-11-16T19:20:23.909Z",
+      "uri": "at://did:plc:xdtvlh4k3tntzp2vinmgehsz/app.bsky.graph.starterpack/3lb3mdoera722",
+      "members": 10,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FF14",
+      "creator": "secseek.bsky.social",
+      "createdAt": "2025-09-09T23:58:15.749Z",
+      "uri": "at://did:plc:22yn4ngpoqho5dydnhfffqvf/app.bsky.graph.starterpack/3lygwdxntbw2h",
+      "members": 10,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "For FFXIV players pack",
+      "creator": "anon5r.com",
+      "createdAt": "2025-06-18T02:19:08.778Z",
+      "uri": "at://did:plc:c22jdrqhoajyj5ca7e56a3ke/app.bsky.graph.starterpack/3lrtx2kexy22y",
+      "members": 9,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV GARDEN OF EDEN GPOSERS",
+      "creator": "ashensparrow.bsky.social",
+      "createdAt": "2024-10-21T22:53:48.502Z",
+      "uri": "at://did:plc:yhs7dsbhad4lxlumbznh4txh/app.bsky.graph.starterpack/3l72m5dq4ve2x",
+      "members": 9,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "FFXIV GPose & Mutuals",
+      "creator": "lunsyia.bsky.social",
+      "createdAt": "2024-07-02T05:25:07.717Z",
+      "uri": "at://did:plc:bypjm2evdukgsaa7wao3v7cy/app.bsky.graph.starterpack/3kwbnrxjtwi2r",
+      "members": 9,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Fc members/ff14 friends",
+      "creator": "sunnythebird.bsky.social",
+      "createdAt": "2025-02-08T06:06:19.022Z",
+      "uri": "at://did:plc:s4vjwvehcfrpzio6ccp46ix6/app.bsky.graph.starterpack/3lhnh537nyi2q",
+      "members": 8,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    },
+    {
+      "name": "Mada's starter pack (idkidk)",
+      "creator": "madatroytka.bsky.social",
+      "createdAt": "2024-10-18T14:26:53.744Z",
+      "uri": "at://did:plc:awfjdcy7bpxkvyogh46ccp5r/app.bsky.graph.starterpack/3l6s6g54sc52x",
+      "members": 8,
+      "joinedWeek": 0,
+      "joinedAllTime": 0
+    }
+  ]
+}
