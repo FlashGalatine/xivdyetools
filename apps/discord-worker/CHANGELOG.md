@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Sprint 1 of the 2026-10-11 documentation remediation
 (`docs/audits/2026-10-11-documentation/REMEDIATION_PLAN.md`). **Documents only** — no
 discord-worker source changed and no command schema; the production deploy re-runs
-`register-commands` on an unchanged roster. `Last Updated` is October 11, 2026 on all six
+`register-commands` on an unchanged roster. `Last Updated` is October 12, 2026 (the merge date) on all six
 variants of both documents. 5.8.12 is #285, open at the time of writing; merge it first.
 
 ### Fixed
