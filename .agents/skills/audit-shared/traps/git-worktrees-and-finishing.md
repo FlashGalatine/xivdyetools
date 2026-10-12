@@ -25,6 +25,9 @@ checkout* is the short form; this file is the trap list.
   baseline (it swept up and reverted their edits once); stage only your own paths and commit with
   `git commit --only -- <paths>`. Never switch branches in the main checkout — that is what the
   worktree is for.
+- **Desktop app agents come from the main checkout:** a Claude desktop app session in a worktree
+  loads `.claude/agents/` from the main checkout, which can be far behind the worktree's branch, so
+  its role agents may pin older models or levels (`../README.md` § *Discovery*).
 - **Base ref:** branch off `origin/main`. Long-lived `*-prep` integration branches exist only during
   a coordinated wave (none as of 2026-09-01); if one is active, branch off it and target it in the PR.
 
