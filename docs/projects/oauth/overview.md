@@ -22,6 +22,7 @@ pnpm install
 # Set secrets (one time, from apps/oauth/)
 wrangler secret put DISCORD_CLIENT_SECRET
 wrangler secret put JWT_SECRET
+wrangler secret put XIVAUTH_CLIENT_SECRET  # optional, confidential-client mode
 
 # Start local dev server (port 8788)
 pnpm --filter xivdyetools-oauth-worker run dev
@@ -29,7 +30,7 @@ pnpm --filter xivdyetools-oauth-worker run dev
 # Deploy — NOTE: on this worker a bare `wrangler deploy` IS production
 # (no [env.production]; the top-level block is `xivdyetools-oauth` on auth.xivdyetools.app;
 # `[env.development]` is the only non-production env — `[env.preview]` was deleted 2026-08-21, FINDING-029)
-npm run deploy
+pnpm --filter xivdyetools-oauth-worker run deploy   # = wrangler deploy, i.e. production
 ```
 
 See [`docs/operations/DEPLOY_ENVIRONMENTS.md`](../../operations/DEPLOY_ENVIRONMENTS.md).
@@ -201,7 +202,29 @@ Redirect / CORS origins are `ALLOWED_REDIRECT_ORIGINS` (`https://xivdyetools.app
 ```bash
 wrangler secret put DISCORD_CLIENT_SECRET
 wrangler secret put JWT_SECRET
+wrangler secret put XIVAUTH_CLIENT_SECRET  # optional, confidential-client mode
 ```
+
+---
+
+## Database
+
+The worker owns one D1 database, `xivdyetools-users`, with a single `users` table (schema in
+`apps/oauth/schema/users.sql`). On a fresh database, load it from `apps/oauth/` with:
+
+```bash
+wrangler d1 execute xivdyetools-users --remote --file=./schema/users.sql
+```
+
+An existing database that still has the pre-3.0 schema (a `users.avatar_url` column) is brought
+into line by `apps/oauth/migrations/0001_drop_xivauth_characters.sql`, which is **hand-run** once,
+after the deploy that stops writing the dropped table and column (oauth 3.0.0); it is not part of
+any deploy. Its `ALTER TABLE` is not idempotent, so never rerun it on a database that already ran
+it or was created from the current schema; check `PRAGMA table_info(users)` first, as the
+migration header describes. Run it with `wrangler d1 execute … --file=`, never
+`d1 migrations apply`. See
+[`apps/oauth/CLAUDE.md`](../../../apps/oauth/CLAUDE.md#database) for the table layout and the
+full procedure.
 
 ---
 

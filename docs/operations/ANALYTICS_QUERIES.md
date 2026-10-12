@@ -71,7 +71,7 @@ WHERE timestamp > now() - INTERVAL '24' HOUR
 
 Run this first when a dashboard looks emptier than expected. A silent zero right after a web-app
 host change (a new Pages custom domain, a beta cutover) almost always means the Origin allowlist in
-`src/telemetry/origin.ts` needs the new host — an unrecognised `Origin` is dropped with only a
+`src/telemetry/origin.ts` needs the new host — an unrecognized `Origin` is dropped with only a
 `telemetry batch dropped` debug log line (FINDING-014), and Workers Logs are off for this script, so
 the drop is otherwise invisible.
 

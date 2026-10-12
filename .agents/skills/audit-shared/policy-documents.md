@@ -27,6 +27,12 @@ All four documents are to exist in **every supported locale** (`en ja de fr ko z
 - The surface that links a document links the **viewer's locale variant**, falling back to English
   when a variant is absent — web-app's About modal does (`policyDocFile()` in `about-modal.ts`). If
   the bot ever gains a policy link, it resolves by the user's locale the same way.
+- **Cross-links inside a translation stay in its language** (decided 2026-10-11, DOC-073 of the
+  `2026-10-11-documentation` audit). A link from one policy to another — the sibling document, or
+  the other app's documents — targets the same locale's variant (`PRIVACY.de.md`,
+  `../discord-worker/PRIVACY_POLICY.de.md`). Only the line-3 English-prevails notice links the
+  English file. Change the target, never a backticked link label: ``[`PRIVACY.md`](PRIVACY.de.md)``
+  keeps its label, because the parity script compares backticked tokens across variants.
 - **One commit changes all six.** A content change to the English file that does not touch the
   five siblings in the same commit is a parity defect the moment it merges; so is a translation
   edited alone. `Last updated` is the same *date* in all six variants of a document (the format

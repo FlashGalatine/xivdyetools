@@ -83,6 +83,8 @@ Look up a single dye. The ID type is auto-detected by numeric range:
 - `>= 5729` → itemID (the consolidated market IDs `52254`–`52256` are rejected with a 404 pointing at `/v1/dyes/consolidation-groups`)
 - `255–5728` → returns 404
 
+The ID is parsed strictly: leading zeros, `+` signs, exponent forms (`1e2`) and trailing characters (`2abc`) return `400 VALIDATION_ERROR`.
+
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `locale` | string | `en` | Locale for localized name |
@@ -140,7 +142,7 @@ Explicit stainID lookup — bypasses auto-detection.
 GET /v1/dyes/stain/1
 ```
 
-Returns 400 (`INVALID_STAIN_ID`) if stainId is not a positive integer.
+Returns 400 (`INVALID_STAIN_ID`) if stainId is not a positive integer in canonical spelling (no leading zeros, signs, exponent forms or trailing characters).
 
 ---
 
@@ -280,7 +282,7 @@ Find the single closest FFXIV dye to a given hex color.
 | `rgb` | RGB DIST | 0–~441.67 | Euclidean distance in RGB space |
 | `distinguish` | DISTINGUISH % | 0–100 (integer) | RGB distance rescaled to a percentage — same ranking as `rgb`, ties common |
 
-The retired v4 values `hyab` and `oklch-weighted` are still **accepted** but normalised to `ciede2000` (`euclidean` → `rgb`) via core's `LEGACY_MATCHING_METHOD_MAP`; the response `method` shows what was used. The old `kL`/`kC`/`kH` weight parameters are ignored. Any other value → `400 INVALID_MATCHING_METHOD`.
+The retired v4 values `hyab` and `oklch-weighted` are still **accepted** but normalized to `ciede2000` (`euclidean` → `rgb`) via core's `LEGACY_MATCHING_METHOD_MAP`; the response `method` shows what was used. The old `kL`/`kC`/`kH` weight parameters are ignored. Any other value → `400 INVALID_MATCHING_METHOD`.
 
 **Example:**
 
@@ -358,21 +360,21 @@ Results are sorted by distance (closest first).
 
 ## Character Equipment (`.chara` import)
 
-Resolves the equipment model keys an Anamnesis / Ktisis / Brio `.chara` file carries (`ModelBase` / `ModelVariant`, weapons `ModelSet`) to in-game items — names in six languages, icon ids, and the family of visually identical alternates on the same mesh. Powers the web app's Swatch Matcher "Dyes on this glamour" (11a/11c). Full reference: [developers.xivdyetools.app/reference/chara](https://developers.xivdyetools.app/reference/chara).
+Resolves the equipment model keys an Anamnesis / Ktisis / Brio `.chara` file carries (`ModelBase` / `ModelVariant`, weapons `ModelSet`) to in-game items — names in six languages, icon ids, and the family of visually identical alternates on the same mesh. Powers the web app's Glamour Reader (formerly Swatch Matcher "Dyes on this glamour", 11a/11c). Full reference: [developers.xivdyetools.app/reference/chara](https://developers.xivdyetools.app/reference/chara).
 
 ### `POST /v1/chara/resolve`
 
-Body `{ gear: [{ slot, set?, base, variant }], glasses? }` — one entry per **worn** slot (≤ 12, `base` 0 rejected), optional Glasses row. Answer per requested slot: `{ itemId, names { en, ja, de, fr, ko?, zh? }, iconId, familySize, alternates[], rules[], viaMainHand, acquisition?, uiCategory?, retired? }` or `null` (no Item row — NPC / prop model). `uiCategory` (since 0.20.0) is the named item's ItemUICategory row (for a main hand, which class the weapon or tool is); omitted when unknown. `acquisition` (since 0.15.0) is where the item comes from, one English line in the GPOSERS glamour-submission format, from the build-time table `src/chara/data/acquisition.en.json` (`scripts/build-acquisition.ts`, loaded lazily on the first resolve in an isolate); omitted when unknown, and each `alternates[]` entry `{ itemId, names, acquisition? }` carries its own. A same-model family is named by its lowest eligible row_id that has an acquisition line, else its lowest eligible row_id (the family's lowest row is always `itemId` or in `alternates[]`, and `rules[]` lists the set holding `itemId` first; use the smaller of `itemId` and the alternates' ids as a stable family key, since `itemId` can move when a patch adds or removes a source); Aetherial and Deepmist rows, and Dated rows requiring level 50 or below, are excluded from names, alternatives and wear checks. A family with no eligible twin is named from all its rows by the same rule and flagged `retired: true` (the field is omitted otherwise) — it is not `null`, since the character wears a real item. Off-hands resolve through the main hand (`viaMainHand: true` when the off-hand key is the weapon's own `ModelSub`). One upstream XIVAPI search at most; each (slot, key) is edge-cached ~7 days under the current XIVAPI version key (`latest` is re-resolved about every 10 minutes, so a patch cools the cache within that window; `X-Cache: HIT` = no upstream call). Envelope is `Cache-Control: no-store`. Errors: `400 VALIDATION_ERROR` / `INVALID_BODY`, `413` over 8 KB, `503 UPSTREAM_UNAVAILABLE` while XIVAPI is down or re-indexing after a patch.
+Body `{ gear: [{ slot, set?, base, variant }], glasses? }` — one entry per **worn** slot (≤ 12, `base` 0 rejected), optional Glasses row. The `data` object is `{ version, items, glasses? }` (`version` is the XIVAPI game-version key, `null` when fully cached; `glasses` appears only when the request carried a glasses row). `items` holds an answer per requested slot: `{ itemId, names { en, ja, de, fr, ko?, zh? }, iconId, familySize, alternates[], viaMainHand, rules[], acquisition?, uiCategory?, retired? }` or `null` (no Item row — NPC / prop model). `uiCategory` (since 0.20.0) is the named item's ItemUICategory row (for a main hand, which class the weapon or tool is); omitted when unknown. `acquisition` (since 0.15.0) is where the item comes from, one English line in the GPOSERS glamour-submission format, from the build-time table `src/chara/data/acquisition.en.json` (`scripts/build-acquisition.ts`, loaded lazily on the first resolve in an isolate); omitted when unknown, and each `alternates[]` entry `{ itemId, names, acquisition? }` carries its own. `alternates[]` is capped at 8 entries (`familySize` keeps the true count), and `rules[]` is the family's distinct rule sets (dye channels, glamour flag, race/gender lock, Grand Company; `[]` when XIVAPI returned none). A same-model family is named by its lowest eligible row_id that has an acquisition line, else its lowest eligible row_id (the family's lowest row is always `itemId` or in `alternates[]`, and `rules[]` lists the set holding `itemId` first; use the smaller of `itemId` and the alternates' ids as a stable family key, since `itemId` can move when a patch adds or removes a source); Aetherial and Deepmist rows, and Dated rows requiring level 50 or below, are excluded from names, alternatives and wear checks. A family with no eligible twin is named from all its rows by the same rule and flagged `retired: true` (the field is omitted otherwise) — it is not `null`, since the character wears a real item. Off-hands resolve through the main hand (`viaMainHand: true` when the off-hand key is the weapon's own `ModelSub`). One upstream XIVAPI search at most; each (slot, key) is edge-cached ~7 days under the current XIVAPI version key (`latest` is re-resolved about every 10 minutes, so a patch cools the cache within that window; `X-Cache: HIT` = no upstream call). Envelope is `Cache-Control: no-store`. Errors: `400 VALIDATION_ERROR` / `INVALID_BODY`, `413` over 8 KB, `503 UPSTREAM_UNAVAILABLE` while XIVAPI is down or re-indexing after a patch.
 
 ### `GET /v1/chara/icon/:iconId`
 
-The item icon PNG (80 px `_hr1`), proxied from XIVAPI and edge-cached (`Cache-Control: public, max-age=2592000, immutable`). `404 NOT_FOUND` / `503 UPSTREAM_UNAVAILABLE`.
+The item icon PNG (80 px `_hr1`), proxied from XIVAPI and edge-cached (`Cache-Control: public, max-age=2592000, immutable`). `400 VALIDATION_ERROR` (not a canonical decimal 1–999999: leading zeros, signs or trailing characters), `404 NOT_FOUND` / `503 UPSTREAM_UNAVAILABLE`.
 
 ---
 
-## Harmony (colour wheels)
+## Harmony (color wheels)
 
-Since api-worker 0.14.0 (core 5.2.0, PR #167): the five selectable colour wheels and core's shared harmony selector. Public reference: [developers.xivdyetools.app/reference/harmony](https://developers.xivdyetools.app/reference/harmony). All `GET`, enveloped, cached `public, max-age=3600, s-maxage=86400`.
+Since api-worker 0.14.0 (core 5.2.0, PR #167): the five selectable color wheels and core's shared harmony selector. Public reference: [developers.xivdyetools.app/reference/harmony](https://developers.xivdyetools.app/reference/harmony). All `GET`, enveloped, cached `public, max-age=3600, s-maxage=86400`.
 
 ### `GET /v1/wheels`
 
@@ -391,11 +393,11 @@ The ten harmony types — rows of core's `HARMONY_OFFSETS`, kebab-case wire ids 
 | Parameter | Type | Default | Notes |
 |---|---|---|---|
 | `dye` | id | — | Base dye, itemID or stainID (auto-detected like `/v1/dyes/:id`); `404 NOT_FOUND` if unassigned. Exactly one of `dye` / `hex` |
-| `hex` | string | — | Base colour, `#RRGGBB` or `RRGGBB` |
+| `hex` | string | — | Base color, `#RRGGBB` or `RRGGBB` |
 | `type` | enum | `complementary` | Harmony type; unknown → `400 INVALID_HARMONY_TYPE` |
-| `wheel` | enum | `rgb` | Colour wheel; unknown → `400 INVALID_COLOR_WHEEL` (refused, never silently `rgb`) |
-| `method` | enum | `ciede2000` | ΔE method for the strict ranking (retired names normalised as on `/v1/match/*`) |
-| `strict` | boolean | `true` | Rank by ΔE against the ideal colour; `false` ranks by hue angle |
+| `wheel` | enum | `rgb` | Color wheel; unknown → `400 INVALID_COLOR_WHEEL` (refused, never silently `rgb`) |
+| `method` | enum | `ciede2000` | ΔE method for the strict ranking (retired names normalized as on `/v1/match/*`) |
+| `strict` | boolean | `true` | Rank by ΔE against the ideal color; `false` ranks by hue angle |
 | `companions` | 0–5 | `0` | Runner-up dyes per slot |
 | `preventDuplicates` | boolean | `false` | Never choose one dye for two slots |
 | `excludeIds`, dye filters, `locale` | | | As on `/v1/dyes` |
@@ -404,7 +406,7 @@ Response `data`: `{ base: { hex, dye | null }, harmonyType, harmonyTypeName, whe
 
 ## Universalis Market-Board Proxy
 
-Absorbed from the retired `apps/universalis-proxy` (Monorepo 2.0 Tier 2). Mounted at **`/universalis/*`** (canonical, on `data.xivdyetools.app`) and **`/api/v2/*`** (compatibility mount — the path shape used by `proxy.xivdyetools.app` and by discord-worker's `UNIVERSALIS_PROXY` service binding). Deliberately **outside** `/v1`: no `{ success, data, meta }` envelope (responses are raw Universalis bodies), no `?locale=`, no `/v1` rate limiter, no `X-RateLimit-*` headers on success. Errors are a bare `{ "error": "..." }` object with the upstream status code. **Deliberately undocumented on the public docs site** since 2026-09-04 (API Docs Directions 1d): Universalis serves CORS itself, so a third party routing through us gained only our edge cache while spending the shared upstream 429 budget the web-app's Market Board and the bot's `/budget` depend on. The routes stay for our own clients; this section is their reference.
+Absorbed from the retired `apps/universalis-proxy` (Monorepo 2.0 Tier 2). Mounted at **`/universalis/*`** (canonical, on `data.xivdyetools.app`) and **`/api/v2/*`** (compatibility mount — the path shape used by `proxy.xivdyetools.app` and by discord-worker's `UNIVERSALIS_PROXY` service binding). Deliberately **outside** `/v1`: no `{ success, data, meta }` envelope (responses are raw Universalis bodies), no `?locale=`, no `/v1` rate limiter, no `X-RateLimit-*` headers on success. Errors are a bare `{ "error": "..." }` object; the upstream status passes through only for 400, 404, 429, 500 and 503, and any other upstream status is answered `502`. **Deliberately undocumented on the public docs site** since 2026-09-04 (API Docs Directions 1d): Universalis serves CORS itself, so a third party routing through us gained only our edge cache while spending the shared upstream 429 budget the web-app's Market Board and the bot's `/budget` depend on. The routes stay for our own clients; this section is their reference.
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -412,7 +414,7 @@ Absorbed from the retired `apps/universalis-proxy` (Monorepo 2.0 Tier 2). Mounte
 | `GET` | `/universalis/data-centers` | Universalis data-center list, cached 24 h + 6 h SWR, not rate-limited |
 | `GET` | `/universalis/worlds` | Universalis world list, cached 24 h + 6 h SWR, not rate-limited |
 
-Cache headers: `Cache-Control: public, max-age=<ttl>, stale-while-revalidate=<swr>` on fresh hits, `public, max-age=0, must-revalidate` on stale (SWR) hits, plus `X-Cache` (`HIT`/`HIT-STALE`/`MISS`), `X-Cache-Source`, `X-Cache-Stale`. Upstream failures: `502 { "error": "Failed to fetch from upstream API" }`, `502 { "error": "Upstream response too large" }` (> 5 MB), upstream `429` → `429 { "error": "Rate limited by upstream API", "retryAfter": 60 }`, other upstream statuses forwarded as `{ "error": "Upstream API error: <status>" }`.
+Cache headers: `Cache-Control: public, max-age=<ttl>, stale-while-revalidate=<swr>` on fresh hits, `public, max-age=0, must-revalidate` on stale (SWR) hits, plus `X-Cache` (`HIT`/`HIT-STALE`/`MISS`), `X-Cache-Source`, `X-Cache-Stale`. Upstream failures: `502 { "error": "Failed to fetch from upstream API" }`, `502 { "error": "Upstream response too large" }` (> 5 MB), upstream `429` → `429 { "error": "Rate limited by upstream API", "retryAfter": 60 }`, other upstream statuses answered as `{ "error": "Upstream API error: <status>" }` with the status clamped by the pass-through rule above.
 
 ---
 
@@ -427,9 +429,9 @@ Opt-in usage telemetry from the web app, written to Analytics Engine (`ANALYTICS
 caller is `navigator.sendBeacon`, which cannot read a response, so the route answers a **bare `204`
 with no envelope** as soon as the body parses — accepted or not.
 
-| Aspect | Behaviour |
+| Aspect | Behavior |
 |--------|-----------|
-| Body | `text/plain` JSON batch, ≤ 25 events and ≤ 16 KB. The allowlist schema in `src/telemetry/schema.ts` drops anything it does not recognise |
+| Body | `text/plain` JSON batch, ≤ 25 events and ≤ 16 KB. The allowlist schema in `src/telemetry/schema.ts` drops anything it does not recognize |
 | Sender gate | Only `Origin: https://xivdyetools.app` (recorded as `production`) and `https://beta.xivdyetools.app` (`beta`) are written, plus `http://localhost[:port]` / `http://127.0.0.1[:port]` when `ENVIRONMENT !== 'production'`. The environment label is **derived from the `Origin`**, never from the body. `Sec-GPC: 1` is dropped outright. Both checks run before the body is read (FINDING-014) |
 | Rejection | An unaccepted batch gets the same bare `204` and no write — never a 4xx. The `Origin` value is never logged |
 | Errors | `400` (not JSON) and `413` (oversized) *do* use the standard envelope |
@@ -501,7 +503,7 @@ The fixed blob layout is documented in `docs/operations/ANALYTICS_QUERIES.md`.
 | `INVALID_MATCHING_METHOD` | 400 | Unknown distance algorithm |
 | `INVALID_LOCALE` | 400 | Unsupported locale |
 | `INVALID_STAIN_ID` | 400 | Stain ID not a positive integer |
-| `INVALID_COLOR_WHEEL` | 400 | Unknown colour wheel id |
+| `INVALID_COLOR_WHEEL` | 400 | Unknown color wheel id |
 | `INVALID_HARMONY_TYPE` | 400 | Unknown harmony type |
 | `NOT_FOUND` | 404 | Dye or route not found |
 | `RATE_LIMITED` | 429 | Rate limit exceeded (body carries a top-level `retryAfter` in seconds; `Retry-After` header set) |

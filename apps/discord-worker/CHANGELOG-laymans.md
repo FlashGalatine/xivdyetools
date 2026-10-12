@@ -40,6 +40,12 @@ Rules:
 - `/glamour`'s copy-ready list leaves out pieces that show nothing, like The Emperor's New items, but keeps The Emperor's New Gloves, and the Robe unless your character is female.
 - The Off Hand line appears only for a shield or a secondary tool, so an Off Hand under a weapon that takes none, such as a quiver or focus from a different weapon, is left out. The card still shows every piece.
 
+## [5.8.13] - 2026-10-11
+### 📜 Privacy Policy and Terms
+- Contacting us works again: the Privacy Policy and Terms of Service pointed to a Discord invite that had expired, and every language now links the current one.
+- The Privacy Policy describes the first-run flag as it works: the bot sets it the first time you run a command, whether or not you see the welcome notice.
+- Each translated document links to the same language's version of the other document.
+
 ## [5.8.12] - 2026-10-11
 ### 👗 /glamour names gear you can still get
 - `/glamour` names a look-alike you can still get when the lowest-numbered item with that look has no known source, so more pieces in the list have an Acquisition line. For example, it names the Augmented Crystarium Ring of Fending instead of the retired original.

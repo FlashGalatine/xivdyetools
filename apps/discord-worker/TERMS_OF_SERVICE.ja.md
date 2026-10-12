@@ -2,13 +2,13 @@
 
 > これは利便性のために提供される翻訳版です。英文が正式な文書であり、内容に相違がある場合は英文が優先します。[English](TERMS_OF_SERVICE.md)
 
-**最終更新日**：2026-10-09
+**最終更新日**：2026-10-12
 
-> xivdyetools.appのウェブアプリには独自の利用規約があります：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md)。データの取り扱いについては[プライバシーポリシー](PRIVACY_POLICY.md)をご覧ください。
+> xivdyetools.appのウェブアプリには独自の利用規約があります：[`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.ja.md)。データの取り扱いについては[プライバシーポリシー](PRIVACY_POLICY.ja.md)をご覧ください。
 
 ## 1. はじめに
 
-XIV Dye Tools Discord Bot（以下「本Bot」または「運営者のBot」）へようこそ。本利用規約（以下「本規約」）は、本Botおよびそのサービスの利用について定めるものです。本Botを利用することにより、ユーザーは本規約に拘束されることに同意したものとします。
+XIV Dye Tools Discord Bot（以下「本Bot」）へようこそ。本利用規約（以下「本規約」）は、本Botおよびそのサービスの利用について定めるものです。本Botを利用することにより、ユーザーは本規約に拘束されることに同意したものとします。
 
 本Botは、Final Fantasy XIVのプレイヤー向けに、色のマッチング、配色生成、カララント探索のツールを提供します。
 
@@ -63,7 +63,7 @@ XIV Dye Tools Discord Botは、次の機能を提供します：
 
 自分のコンテンツが誤ってモデレーションされたと思われる場合：
 
-1. 運営者のDiscordサーバーに参加する：https://discord.gg/rzxDHNr6Wv
+1. 運営者のDiscordサーバーに参加する：https://discord.gg/5VUSKTZCe5
 2. #dyetools-issues-and-suggestions でモデレーターに連絡するか、「Flash Galatine」にメンションする
 3. DiscordのユーザーIDと却下されたプリセットの名前を伝える
 4. 異議申し立ては7日以内に確認されます
@@ -140,7 +140,7 @@ FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All Rights Reserved.
 本規約または本Botに関するご質問は：
 
 - **メール**：FlashGalatineFGC@gmail.com（件名：「XIV Dye Tools Terms」）
-- **Discord**：https://discord.gg/rzxDHNr6Wv
+- **Discord**：https://discord.gg/5VUSKTZCe5
 - **サポートチャンネル**：#dyetools-issues-and-suggestions
 
 ---

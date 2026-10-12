@@ -1,6 +1,6 @@
 # Glamour Export — Automatic Acquisition Line Implementation Plan
 
-**Status:** in progress — Tasks 1–6 done, PR A (api-worker 0.15.0) open. Approved 2026-09-27 — Native execution. Amended the same day by the Glamour Reader designs: Task 5 attaches the line to every alternate too, and Task 7 is superseded by the [Glamour Reader plan](2026-09-27-glamour-reader.md).
+**Status:** shipped 2026-09-28 — PR #207 (api-worker 0.15.0); the web-app half shipped with the Glamour Reader, PR #208. Approved 2026-09-27 — Native execution. Amended the same day by the Glamour Reader designs: Task 5 attaches the line to every alternate too, and Task 7 is superseded by the [Glamour Reader plan](2026-09-27-glamour-reader.md).
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 

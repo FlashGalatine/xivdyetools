@@ -1,0 +1,23 @@
+# default sweep (18)
+| docs/projects/api-worker/endpoints.md:283 | prose | normalised | normalized | — |
+| docs/projects/api-worker/endpoints.md:373 | prose | colour | color | — |
+| docs/projects/api-worker/endpoints.md:375 | prose | colour | color | — |
+| docs/projects/api-worker/endpoints.md:394 | prose | colour | color | — |
+| docs/projects/api-worker/endpoints.md:396 | prose | Colour | Color | — |
+| docs/projects/api-worker/endpoints.md:397 | prose | normalised | normalized | — |
+| docs/projects/api-worker/endpoints.md:398 | prose | colour | color | — |
+| docs/projects/api-worker/endpoints.md:430 | prose | Behaviour | Behavior | — |
+| docs/projects/api-worker/endpoints.md:432 | prose | recognise | recognize | — |
+| docs/projects/api-worker/endpoints.md:504 | prose | colour | color | — |
+| docs/projects/api-worker/overview.md:142 | prose | colours | colors | — |
+| docs/projects/api-worker/overview.md:144 | prose | colour | color | — |
+| docs/projects/api-worker/overview.md:159 | prose | Colour | Color | — |
+| docs/user-guides/public-api.md:45 | prose | colours | colors | — |
+| docs/user-guides/public-api.md:46 | prose | colour | color | — |
+| docs/user-guides/public-api.md:189 | prose | Colour | Color | — |
+| docs/user-guides/public-api.md:191 | prose | colour | color | — |
+| docs/user-guides/public-api.md:205 | prose | colour | color | — |
+
+# --all extras: code/link zones, triage by hand (2)
+| docs/user-guides/public-api.md:196 | code | colours | colors | — |
+| docs/user-guides/public-api.md:201 | code | colour | color | — |

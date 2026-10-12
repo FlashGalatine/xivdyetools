@@ -104,7 +104,7 @@ POST/PATCH bodies (415 otherwise). Field-level rules come from
 ### The preset object
 
 Every route that returns a preset returns this shape (`CommunityPreset` in `@xivdyetools/types`,
-serialised by `rowToPreset()` and then by `toPublicPreset()` in `services/preset-service.ts`, which
+serialized by `rowToPreset()` and then by `toPublicPreset()` in `services/preset-service.ts`, which
 applies the viewer rules for `author_discord_id` / `is_owner` below). The example is what an
 **anonymous** caller receives:
 
@@ -240,7 +240,7 @@ Submit a new preset. Requires auth + user context; banned users get 403 `USER_BA
 | `secondary_categories` | optional, ≤ 2 valid slugs, no duplicates, must not repeat the primary — `at most 2 secondary categories allowed` / `A secondary category cannot repeat the primary category` |
 | `dyes` | 3–6 positive integers ≤ 254, each dye may appear only once — `Must include 3-6 dyes`; a value ≥ 5000 → `Dye 5729 looks like a legacy item ID; expected a stainID (1-254)`; 255–4999 → `Dye IDs must be stainIDs (1-254)`; a repeated dye (`[7, 7, 7]`, `[1, 2, 3, 3]`) → `Each dye may appear only once` (BUG-010 — rejected, not de-duplicated) |
 | `tags` | required array (may be `[]`), ≤ 10 strings of ≤ 30 chars — `Maximum 10 tags allowed` |
-| `example_link` | optional; `https`, ≤ 300 chars, host on the allowlist (`eorzeacollection.com`, `mirapri.com`, `reddit.com`, `redd.it`, `x.com`, `twitter.com`, `bsky.app`, `instagram.com`, `pixiv.net`, `finalfantasyxiv.com`, `misskey.io`, plus subdomains). Surrounding whitespace is trimmed before the URL is judged, and a whitespace-only value clears the link like `""` (BUG-069). A bare host is normalised to `https://…` before storage. `Example link host must be one of: …` |
+| `example_link` | optional; `https`, ≤ 300 chars, host on the allowlist (`eorzeacollection.com`, `mirapri.com`, `reddit.com`, `redd.it`, `x.com`, `twitter.com`, `bsky.app`, `instagram.com`, `pixiv.net`, `finalfantasyxiv.com`, `misskey.io`, plus subdomains). Surrounding whitespace is trimmed before the URL is judged, and a whitespace-only value clears the link like `""` (BUG-069). A bare host is normalized to `https://…` before storage. `Example link host must be one of: …` |
 
 Flow: rate limit (10/UTC day) → validate → duplicate check on `dye_signature` → profanity/Perspective
 moderation → insert → auto-vote → Discord notification (`type: "submission"`, see below).
@@ -383,6 +383,7 @@ approves it. A `type: "preview_image"` notification is sent to the Discord worke
 | 400 `VALIDATION_ERROR` | `No image data provided` / `Image must be at most 5 MB` / `Image must be a PNG, JPEG or WebP` / `Image could not be processed` |
 | 403 `FORBIDDEN` | `Only the author can set a preview image` |
 | 415 | `Content-Type must be one of: image/png, image/jpeg, image/webp` |
+| 429 `RATE_LIMITED` | `You've reached your daily preview-image upload limit (20 per day). Try again tomorrow.` — the cap is 20 uploads per UTC day; the body also carries `remaining: 0` and `reset_at` |
 
 ### DELETE /presets/:id/preview-image
 
@@ -565,7 +566,7 @@ Initiate Discord OAuth flow.
 |-----------|----------|-------------|
 | `code_challenge` | Yes | SHA256 hash of code_verifier (base64url) |
 | `code_challenge_method` | No | Validated only when supplied, and then only `S256` is accepted |
-| `redirect_uri` | Yes | Frontend callback URL (must be on the origin allowlist) |
+| `redirect_uri` | No | Frontend callback URL (must be on the origin allowlist; defaults to `${FRONTEND_URL}/auth/callback`) |
 | `state` | No | CSRF protection token |
 
 **Response:** Redirects to Discord OAuth consent page.
@@ -626,6 +627,22 @@ with no verified character whose name is non-blank falls back to the `XIVAuth Us
 }
 ```
 
+### GET /auth/xivauth
+
+Initiate the XIVAuth OAuth flow. Takes the same query parameters as `GET /auth/discord` and
+redirects to the XIVAuth authorization page.
+
+### GET /auth/xivauth/callback
+
+Handle the XIVAuth callback. Same behavior as `GET /auth/callback`: it never returns a token and
+bounces `code`, `csrf` and the signed `state` (plus `provider=xivauth`) to the allowlisted
+`redirect_uri`.
+
+### POST /auth/xivauth/callback
+
+XIVAuth token exchange. Same request body and response shape as `POST /auth/callback`, with
+`auth_provider: "xivauth"` and `avatar` / `avatar_url` always `null`.
+
 ### ~~POST /auth/refresh~~ — removed in oauth 3.0.0
 
 Removed by FINDING-003 (`docs/audits/2026-08-29-security`); the route now 404s. No client
@@ -658,6 +675,32 @@ Authorization: Bearer <JWT>
 
 `id` is the **internal** user UUID (the JWT's `sub`), not a Discord snowflake. `avatar_url` is
 `null` for accounts with no linked Discord identity.
+
+### POST /auth/revoke
+
+Invalidate a token (logout).
+
+**Headers:**
+```http
+Authorization: Bearer <JWT>
+```
+
+**Response (revoked):**
+```json
+{
+  "success": true,
+  "message": "Token revoked successfully",
+  "revoked": true
+}
+```
+
+| Status | Condition |
+|--------|-----------|
+| 200 | `revoked: true` — the token's `jti` is now blacklisted |
+| 200 | `revoked: false` plus a `note` — no `TOKEN_BLACKLIST` is bound, or the token carries no `jti`, so there was nothing to write |
+| 401 | Missing or invalid `Authorization` header, or an invalid token |
+| 503 | `revoked: false` — the blacklist write failed; the session may stay live until `exp` |
+| 500 | Unexpected error |
 
 ---
 
@@ -762,7 +805,7 @@ usually none) and which can be older than the text being replaced. When Revert i
 (and show that text), not as undoing this edit: approved A → a flagged edit B snapshots A → a
 moderator approves B → a flagged edit C reverts to **A**, discarding the approved B.
 
-**Behaviour:** the `submission` moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its
+**Behavior:** the `submission` moderation embed is posted with `MODERATION_BOT_TOKEN` when set (so its
 approve/reject buttons route to moderation-worker); `preview_image` embeds are posted with this bot's
 own token, and their `previewimg_approve_<id>` / `previewimg_reject_<id>` buttons are handled here.
 `type: "preview_image"` with no `MODERATION_CHANNEL_ID` configured is a silent no-op.

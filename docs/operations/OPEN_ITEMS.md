@@ -1,6 +1,6 @@
 # Open operational items
 
-**Status:** living list, last walked 2026-09-05.
+**Status:** living list, last walked 2026-09-05; individual items updated through 2026-10-11.
 **Owner:** the maintainer — every item needs credentials CI does not have (GitHub settings,
 the Cloudflare dashboard, `wrangler` against production, a browser session).
 **Where it came from:** the 5.0 post-merge checklist
@@ -70,7 +70,7 @@ protection are on.
       `wrangler tail` a production worker, trigger a rate-limiter fail-open, confirm the line
       carries `keyScope` (e.g. `public:ip`) and no raw IP or Discord snowflake, and only then
       decide whether to enable log retention at all.
-- [ ] `presets-api` R2 preview bucket: lifecycle / cache behaviour as set by FINDING-018.
+- [ ] `presets-api` R2 preview bucket: lifecycle / cache behavior as set by FINDING-018.
 - [ ] api-worker's and og-worker's dev workers are not reachable over `*.workers.dev`
       (`workers_dev = false`, FINDING-025) — confirm once in the dashboard.
 - [ ] `xivdyetools-oauth-preview` / `auth-preview.xivdyetools.app` — no such worker exists in the
@@ -91,7 +91,7 @@ protection are on.
 - [ ] [DOMAIN_DEPRECATION.md](DOMAIN_DEPRECATION.md) Phase 4: remove the old-apex redirect from
       `apps/web-app/functions/_middleware.ts` and its README section. Phases 0–3 are done: every
       `*.xivdyetools.projectgalatine.com` custom domain was removed on 2026-10-04/05, and the
-      route lines leave with the 2026-10-03 security audit batch.
+      route lines left with the 2026-10-03 security audit batch.
 
 The og-worker WAF rate-limiting rule (FINDING-024) is **done** — deployed and active since
 2026-09-01; the rule and the Free-plan constraints that shaped it are recorded in the archived
@@ -113,7 +113,7 @@ Ten-minute tails on 2026-08-29 were clean but saw ten requests in total, so none
 proven under load.
 
 - [ ] `wrangler tail` each production worker for 10 minutes under real traffic: no
-      `KV rate limiter fallback` warning, no 5xx bursts; one real bot `/preset` command to
+      `Rate limiter using KV fallback` warning, no 5xx bursts; one real bot `/preset` command to
       observe the v2-signature round trip end to end.
 - [ ] oauth: login → `POST /auth/revoke` → `GET /auth/me` **and** an authenticated presets-api
       write with the same token both answer 401 (needs a browser session).
@@ -130,6 +130,12 @@ proven under load.
 - [ ] moderation bot: autocomplete only for moderators; ban flow on a long CJK name
       (FINDING-006/007).
 - [ ] Discord / X link-preview validators for `/`, each tool path, a preset, and the beta host.
+- [ ] **Confirm presets-api migration 0015 ran in production → prod** (read-only). The
+      `0015_rewrite_legacy_dead_letters.sql` rewrite is hand-run after the 2.4.0 deploy, and no
+      operations page records that it ran.
+  - From `apps/presets-api`: `pnpm exec wrangler d1 execute xivdyetools-presets --env production --remote --command "SELECT COUNT(*) FROM failed_notifications WHERE CASE WHEN json_valid(payload) THEN json_extract(payload, '$.preset.id') IS NOT NULL ELSE 0 END"`
+  - `0` means no legacy-shape dead-letter rows remain. Anything else: run the `--file` command in
+    the *Rollout* section of the [presets-api 2.4.0 changelog entry](../../apps/presets-api/CHANGELOG.md).
 
 ## 5. Code removals gated on the above
 
@@ -144,10 +150,12 @@ gone, and a CHANGELOG line.
 
 Not removals, still open from the same list: the web-app submission form does not mirror
 presets-api's tag charset / control-character rules, so users see the API's 400 message
-(FINDING-019/028); cross-identity (`xivauth_id`) bans: the presets-api side is done (2026-10-03 FINDING-014,
-Sprint 3: the ban check matches the acting id, JWT `sub` and `discord_id` claim against both ban
-columns, and `PATCH /refresh-author` re-keys an XIVAuth-only account's rows once it links Discord);
-the moderation-worker side follows in Sprint 4. The "`/preset submit` still sends legacy itemIDs" item closed on 2026-08-29.
+(FINDING-019/028). Closed: cross-identity (`xivauth_id`) bans (2026-10-03 FINDING-014). The
+presets-api side shipped in presets-api 2.4.0 (Sprint 3: the ban check matches the acting id, JWT
+`sub` and `discord_id` claim against both ban columns, and `PATCH /refresh-author` re-keys an
+XIVAuth-only account's rows once it links Discord); the moderation-worker side shipped in
+moderation-worker 1.8.0 (2026-10-04, Sprint 4: bans follow XIVAuth identities). The
+"`/preset submit` still sends legacy itemIDs" item closed on 2026-08-29.
 
 ## 6. Recurring audits
 
@@ -165,8 +173,10 @@ the moderation-worker side follows in Sprint 4. The "`/preset submit` still send
 
 ## 7. Accepted residual risks
 
-- `pnpm audit` is clean (0 advisories) only because of two scoped overrides (FINDING-036); a
-  vitepress / tsup upgrade that changes its own vite / esbuild range may need them revisited.
+- `pnpm audit` is clean (0 advisories) only because of three scoped overrides: `vitepress>vite`
+  and `tsup>esbuild` (2026-08-21 FINDING-036) and `miniflare>undici` (2026-10-03 FINDING-025). A
+  vitepress / tsup / wrangler upgrade that changes its own vite / esbuild / undici range may need
+  them revisited.
 - Beta surfaces share production presets-api / oauth data by design.
 - stoat-worker stays parked; its abuse controls exist but it has no deploy workflow.
 - discord-worker `PRIVACY_POLICY.md` states Analytics Engine retention as "3 months" — confirm

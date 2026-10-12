@@ -34,7 +34,7 @@ Use `/manual` for a help overview, or type `/` and look for "XIV Dye Tools" in t
 Autocomplete requires:
 - The bot to be online
 - You to wait a moment for suggestions
-- Typing at least 2 characters
+- Typing at least 1 character to search (an empty dye field lists the first 25 dyes)
 
 ### Commands are slow. Why?
 
@@ -79,13 +79,13 @@ Yes! Use `/extractor image` and upload your screenshot. Note that in-game lighti
 ### Where did `/favorites` and `/collection` go?
 
 They were removed in 5.0. Saved dyes and palettes live in the web app (stored in your browser); the
-bot's share links open the same result there. In Discord you can still favourite community
+bot's share links open the same result there. In Discord you can still favorite community
 *presets* with `/preset favorite add|remove|list`.
 
 ### Do favorites sync with the web app?
 
-No — the bot never synced dye favourites with the web app, and the v4 bot-side lists were retired
-with 5.0. Your preferences (`/preferences`) and preset favourites are stored per Discord account and
+No — the bot never synced dye favorites with the web app, and the v4 bot-side lists were retired
+with 5.0. Your preferences (`/preferences`) and preset favorites are stored per Discord account and
 follow you across servers.
 
 ---
@@ -123,7 +123,7 @@ Every command has a per-user limit over a rolling minute — nothing is unlimite
 |------------|----------|
 | 5 | `/extractor image` |
 | 10 | `/accessibility` (and `/a11y`), `/budget`, `/preset` |
-| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/stats` |
+| 15 | `/extractor color`, `/harmony`, `/mixer`, `/gradient`, `/comparison`, `/contrast`, `/swatch`, `/glamour`, `/stats` |
 | 20 | `/dye`, `/preferences` |
 | 30 | `/about`, `/manual`, `/changelog` |
 
@@ -176,17 +176,21 @@ Moderation is by invite only for trusted community members.
 ### What data do you collect?
 
 - Your Discord ID
-- Your preferences and favourite presets
+- Your preferences and favorite presets
 - Preset submissions and votes
-- Anonymous usage statistics
-- A one-off flag recording that you have already been shown the "what changed in 5.0" notice, so it
-  is not sent twice. It is stored against your Discord ID and expires by itself after 180 days.
+- Usage statistics keyed to your Discord ID, used only to count unique users
+- A per-user marker, set the first time you run a command (whether or not the "what changed in 5.0"
+  notice is sent), so the bot does not check again. It carries no content and expires by itself
+  after 180 days.
 
 Character names from `.chara` files are never displayed or stored.
 
 ### Can I delete my data?
 
-Yes, contact us via GitHub issues to request deletion.
+Yes. Email FlashGalatineFGC@gmail.com with the subject "XIV Dye Tools Privacy" and your Discord
+User ID, or send a Discord DM to "Flash Galatine" in the
+[community Discord](https://discord.gg/5VUSKTZCe5). Please don't use a public GitHub issue, which
+would publish the details you want removed. Requests are handled within 30 days.
 
 ---
 

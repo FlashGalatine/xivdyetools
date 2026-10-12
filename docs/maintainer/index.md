@@ -106,7 +106,6 @@ localStorage. What remains on KV is per-user bot state: preferences, the 5.0 fir
 | Item | Location | Notes |
 |------|----------|-------|
 | Bundle size | Web app | Tree-shake unused core library exports |
-| Test coverage | Core library | Increase from 85% to 90% |
 | Documentation | All | Add JSDoc to all public APIs |
 
 ### Priority 3 (Low)

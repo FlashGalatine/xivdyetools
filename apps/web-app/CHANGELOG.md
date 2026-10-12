@@ -16,6 +16,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Over the 1,093-file `.chara` corpus, 913 lists get shorter: 2,765 invisible slots and 357 more Off Hands are left out (354 by the main-hand rule, 3 a crafting tool's own second model), while 71 Emperor's New Gloves and 37 of 524 worn Off Hands stay.
 - Build: the core runtime chunk (`modals`) is re-budgeted from 286 to 287 KB for measured growth. Core 5.11.0 and 5.12.0 add 575 B (285.71 KB), and the pending dev-deps bump adds 170–310 B more (vite 8.3.3 / 8.3.4), which with 8.3.4 is 11 B over 286 KB.
 
+## [5.15.3] - 2026-10-11
+
+Sprint 1 of the 2026-10-11 documentation remediation
+(`docs/audits/2026-10-11-documentation/REMEDIATION_PLAN.md`). **Documents only** — no web-app
+source changed. `PRIVACY*.md` and `TERMS_OF_SERVICE*.md` are served from `main`
+(`about-modal.ts` `POLICY_DOCS_BASE`), so they are live at merge; the deployed bundle differs
+only in its version string. `Last updated` is 2026-10-12 (the merge date) on all six variants of both documents.
+5.15.1 and 5.15.2 are #284 and #285, open at the time of writing; merge them first.
+
+### Fixed
+
+- **The contact route works again** (DOC-001). Both documents, in all six languages, sent deletion,
+  appeal and contact requests to the Discord invite `rzxDHNr6Wv`, which has expired. They now use
+  `5VUSKTZCe5`, the invite `product-links.ts` and every README already use.
+- **Privacy Guide, "What is stored on your device", all six languages:** the list no longer names
+  "Manage Collections → Delete Collection", which no tool in the current layout reaches (the same
+  root as DOC-003; the collection manager itself is handed to the web-app owner). It now says that
+  Clear Saved Palettes deletes every saved palette at once, that the app has no control for one
+  palette, and that saved Budget swaps and Swatch Matcher character colors have no delete control in
+  the app, so only the browser's site-data controls clear them (security-audit hand-off, ruled
+  CORRECT).
+- **Translations link their own language** (DOC-073). Inside the ten translated web-app documents,
+  links to the sibling document and to the bot's documents now open the same language's file, as
+  `PRIVACY.ko.md` already did for one link. The English-prevails notice on line 3 still links
+  the English file.
+
+### Changed
+
+- **American spelling** in `PRIVACY.md` and `TERMS_OF_SERVICE.md` (DOC-079: colour → color,
+  favourite → favorite, centre → center, licence → license, unauthorised → unauthorized; 17 words).
+  In its own commit, before the date bump, because a spelling-only change bumps no date.
+- **Translation fixes from the audit's i18n hand-offs**, in the same commit as the date bump so no
+  document needs a second one: ja grammar in the harassment rule, the untranslated trademark
+  sentence and the content-check sentence, and か (not ヶ) in 三か月; fr "recours" (not "appel") for an
+  appeal, "Services tiers", "Fin de l'utilisation", "auto-hébergées"; zh 集合 for collections
+  (收藏 is favorites), the 已投票 label for removing a vote, localized DevTools labels, and stray
+  spaces after full-width punctuation. No translation changes a claim; English governs.
+
 ## [5.15.2] - 2026-10-11
 
 ### Fixed

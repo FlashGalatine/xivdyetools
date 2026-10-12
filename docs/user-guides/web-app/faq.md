@@ -41,14 +41,14 @@ Several factors affect in-game appearance:
 ### What does Delta E mean?
 
 Delta E measures perceptual color difference. Lower is better. On the default method (ΔE2000), match
-results are labelled with four bands:
+results are labeled with four bands:
 
 | ΔE2000 | Band | Meaning |
 |--------|------|---------|
 | under 5 | SAME | You would not tell them apart |
 | 5 to 10 | CLOSE | A very good stand-in |
 | 10 to 20 | NEAR | In the same family, but visibly different |
-| 20 and up | FAR | A different colour |
+| 20 and up | FAR | A different color |
 
 Every other matching method has its own calibrated cut-offs on its own scale, so compare the band,
 never the raw number, across methods. See the [Glossary](../../reference/glossary.md) for more.
@@ -89,8 +89,8 @@ There is no in-app report button yet. If a preset needs attention, contact a mod
 
 ### Where is my data stored?
 
-In your browser (localStorage), whether or not you are logged in. Clearing site data clears them, so
-export what you want to keep.
+In your browser (localStorage), whether or not you are logged in. Clearing site data clears them,
+and this release has no way to export them.
 
 ### How many favorites can I have?
 
@@ -98,10 +98,9 @@ Maximum 40 favorites, and 50 saved palettes of up to 20 dyes each.
 
 ### Can I export my saved palettes?
 
-Yes. Open any tool with a dye picker (Color Harmony, Dye Mixer, Gradient Builder, Dye Comparison or
-the Accessibility Checker), expand the **Favorites** panel above the dye list, and press **Manage
-Collections**. That window has **Export All** and **Import** buttons, plus a download button on each
-individual palette. The file is plain JSON.
+Not in this release. Saved palettes and collections cannot be exported or imported. The **Backup**
+card in Advanced Settings (the gear icon) exports your tool settings only, not favorites or saved
+palettes.
 
 ---
 
@@ -152,15 +151,21 @@ web app instead.
 
 ### What data do you collect?
 
-- Discord ID (if logged in)
+- Your Discord or XIVAuth ID (plus the Discord ID linked to your XIVAuth account, if any) and a
+  display name (your verified character's name with XIVAuth), if you sign in
 - Preset submissions and votes
 - Anonymous usage analytics — **only if you turn them on**. The **Enable Analytics** switch under
-  **Behaviour** in Advanced Settings (the gear icon) is off by default, and nothing is sent while
+  **Behavior** in Advanced Settings (the gear icon) is off by default, and nothing is sent while
   it is off.
 
 ### Can I delete my data?
 
-Yes, contact us via GitHub issues or Discord to request data deletion.
+Yes. Delete a preset from **My Submissions**, select a vote again to remove it, and sign out to end
+your session. For anything else, such as your account record or everything under your account at
+once, ask privately by email (FlashGalatineFGC@gmail.com, subject "XIV Dye Tools Privacy") or by
+Discord DM to "Flash Galatine" in the [community Discord](https://discord.gg/5VUSKTZCe5). Please
+don't ask in a public GitHub issue: that would publish the very details you want removed. The web
+app's [Privacy Guide](../../../apps/web-app/PRIVACY.md#deleting-your-data) has the full steps.
 
 ### Do you sell data?
 

@@ -28,37 +28,33 @@ behaviour for an outage. It is the wrong behaviour for a permanent shutdown: fro
 It would not look like an outage — submissions still return 201 — so the first symptom is a
 quietly growing manual-review backlog.
 
-**Migration — not one command: deleting the key alone turns moderation off.**
+**Migration — deleting the key now queues every submission.**
 - `checkWithPerspective` returns `null` when no key is set.
-- `moderateContent` then passes anything the local word list does not match, and
-  `POST /presets` publishes a passed preset as `approved`.
+- Since presets-api 2.4.0 (2026-10-03 security audit, FINDING-019) `moderateContent` treats that
+  as no verdict: locally clean text comes back `passed: false`, `method: 'unscored'`, and
+  `POST /presets` files it as `pending`.
 - The local list (`apps/presets-api/src/data/profanity/*.ts`) holds a couple of anti-AI-slop
-  phrases per locale and **no profanity or slurs**.
-- So with the key gone and nothing else changed, every new or text-edited preset would go live
-  without review (2026-10-03 security audit, FINDING-019; the "graceful path" this section used
-  to describe was that).
+  phrases per locale and **no profanity or slurs**, so it cannot stand in for a scorer.
+- So with the key gone and nothing else changed, every new or text-edited preset goes to the
+  moderator queue; moderation is not switched off.
 
-**The key must stay until presets-api ships one of these:**
-- a replacement scorer (another provider, or a curated per-locale list with case / leetspeak /
-  spacing normalisation); or
-- a `pending` default for new and text-edited presets when no scorer is configured, so they all go
-  to the moderator queue.
-
-Only then, before the shutdown (or the fail-closed branch runs in the gap):
+**Deleting the key is now safe; the cost is the backlog.** The `pending` default for new and
+text-edited presets when no scorer is configured has shipped (presets-api 2.4.0), so nothing goes
+live unreviewed. A replacement scorer (another provider, or a curated per-locale list with case /
+leetspeak / spacing normalization) is the only way to keep auto-approval. Without one, keep the key
+while Perspective still answers (it is what auto-approves clean text today) and delete it before
+the shutdown, so the queue fills by design rather than through a failing outbound call:
 
 ```bash
-# After that presets-api change is live, on or before 2026-12-31, from apps/presets-api:
+# On or before 2026-12-31, from apps/presets-api:
 wrangler secret delete PERSPECTIVE_API_KEY --env production
 ```
 
-If the presets-api change has not shipped by about 2026-12-01, ship the `pending` default on its
-own rather than run out the clock.
-
 **Removal checklist:**
-- [ ] Decide whether to replace the ML tier (another provider, a real local list) or send every
-      submission to the moderator queue
-- [ ] **Blocking:** ship that presets-api change, then confirm on the `…-dev` worker (no key set)
-      that a new preset lands as `pending` or is scored. Until then the key must not be deleted.
+- [ ] Decide whether to replace the ML tier (another provider, a real local list) or accept that
+      every submission goes to the moderator queue
+- [ ] Confirm on the `…-dev` worker (no key set) that a new preset lands as `pending` (the
+      `unscored` path, shipped in presets-api 2.4.0), or is scored by the replacement
 - [ ] Delete the `PERSPECTIVE_API_KEY` production secret **before 2026-12-31**
 - [ ] **Same day:** edit both privacy policies so neither names Perspective any more, all six
       languages each:

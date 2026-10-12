@@ -21,13 +21,13 @@ graph TB
     end
 
     subgraph "Core + Feature Libraries"
-        CORE["@xivdyetools/core<br/>─────────────<br/>125 dyes (schema v2,<br/>stainID-keyed) + 11<br/>Facewear colours;<br/>colour algorithms,<br/>Universalis API,<br/>6 languages, K-means++,<br/>/blending"]
+        CORE["@xivdyetools/core<br/>─────────────<br/>125 dyes (schema v2,<br/>stainID-keyed) + 11<br/>Facewear colors;<br/>color algorithms,<br/>Universalis API,<br/>6 languages, K-means++,<br/>/blending"]
         SVG["@xivdyetools/svg"]
         BOTLOGIC["@xivdyetools/bot-logic<br/>incl. /i18n"]
     end
 
     subgraph "Consumer Applications"
-        WEB["xivdyetools-web-app<br/>─────────────<br/>10 interactive tools,<br/>Light + Dark, PWA,<br/>Vite + Lit"]
+        WEB["xivdyetools-web-app<br/>─────────────<br/>10 interactive tools,<br/>Light + Dark, installable,<br/>Vite + Lit"]
         DISCORD["xivdyetools-discord-worker<br/>─────────────<br/>18 slash commands,<br/>SVG/PNG rendering,<br/>HTTP Interactions"]
         STOAT["xivdyetools-stoat-worker<br/>─────────────<br/>Revolt.js bot (parked),<br/>shared bot-logic"]
     end
@@ -129,7 +129,7 @@ Layer 2: Consumer Applications
 └── xivdyetools-stoat-worker → Revolt bot (parked; shared bot-logic)
 
 Layer 1: Core + Feature Libraries
-├── @xivdyetools/core → Colour algorithms, 125-dye database, blending (/blending)
+├── @xivdyetools/core → Color algorithms, 125-dye database, blending (/blending)
 ├── @xivdyetools/svg → SVG card generation
 └── @xivdyetools/bot-logic → Platform-agnostic bot commands + bot i18n (/i18n)
 
@@ -158,20 +158,20 @@ Layer 0: Shared Foundation
 
 ### @xivdyetools/core
 
-**Purpose**: Core TypeScript library providing colour algorithms and the FFXIV dye database — **125 standard dyes** in `dyes.json` (schema v2, stainID-keyed), plus the **11 Facewear colours** as a separate `facewearColors` collection.
+**Purpose**: Core TypeScript library providing color algorithms and the FFXIV dye database — **125 standard dyes** in `dyes.json` (schema v2, stainID-keyed), plus the **11 Facewear colors** as a separate `facewearColors` collection.
 
 **Key Capabilities**:
-- Colour conversion (RGB, HSV, HSL, LAB, OKLAB, CMYK)
-- Nearest-neighbour dye matching via k-d tree, with an exact linear scan for perceptual metrics
-- Colour harmony generation (complementary, triadic, analogous, tetradic, inverted tetradic, …)
-- Colourblindness simulation (Brettel algorithm)
+- Color conversion (RGB, HSV, HSL, LAB, OKLAB, CMYK)
+- Nearest-neighbor dye matching via k-d tree, with an exact linear scan for perceptual metrics
+- Color harmony generation (complementary, triadic, analogous, tetradic, inverted tetradic, …)
+- Colorblindness simulation (Brettel algorithm)
 - K-means++ palette extraction from images
 - Universalis API integration with LRU cache and metrics
 - 6-language localization (en, ja, de, fr, ko, zh)
-- Colour blending — six algorithms incl. Kubelka-Munk spectral — via the `/blending` subpath
+- Color blending — six algorithms incl. Kubelka-Munk spectral — via the `/blending` subpath
 - Pre-computed lowercase names for fast search; LRU cache for `rgbToOklab()`
 
-**v3.0.0 Breaking Change (schema v2)**: `colors_xiv.json` (136 entries × 16 fields) became `dyes.json` (125 entries × 7 fields, keyed by `stainID`). `rgb`/`hsv`/`lab`, `cost`/`currency`, and the five `is*` flags are derived at `DyeDatabase.initialize()`, so the runtime `Dye` object keeps its full 16-field shape and consumers of dye objects were unaffected. The 11 Facewear colours left the dye table for `facewearColors`; the synthetic negative-ID mechanism is retired, surviving only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` map. `isMetallic` is now the Stain sheet's 16-dye gloss set (was a 14-dye name-prefix guess) and `isCosmic ≡ consolidationType === 'C'` (11 dyes, no longer polluted by the 9 Firmament dyes).
+**v3.0.0 Breaking Change (schema v2)**: `colors_xiv.json` (136 entries × 16 fields) became `dyes.json` (125 entries × 7 fields, keyed by `stainID`). `rgb`/`hsv`/`lab`, `cost`/`currency`, and the five `is*` flags are derived at `DyeDatabase.initialize()`, so the runtime `Dye` object keeps its full 16-field shape and consumers of dye objects were unaffected. The 11 Facewear colors left the dye table for `facewearColors`; the synthetic negative-ID mechanism is retired, surviving only as the frozen `LEGACY_FACEWEAR_ITEM_IDS` map. `isMetallic` is now the Stain sheet's 16-dye gloss set (was a 14-dye name-prefix guess) and `isCosmic ≡ consolidationType === 'C'` (11 dyes, no longer polluted by the 9 Firmament dyes).
 
 **v2.8.0**: absorbed `@xivdyetools/color-blending` as the `/blending` subpath export.
 
@@ -220,7 +220,7 @@ registration script checks schema parity against, `/about` builds its index from
 registration schema, and `/about` in three different states.
 
 **18 registered commands** by category:
-- **Colour tools**: `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`, `/glamour`
+- **Color tools**: `/harmony`, `/mixer`, `/gradient`, `/extractor`, `/swatch`, `/glamour`
 - **Dye database**: `/dye`
 - **Analysis**: `/comparison`, `/contrast`, `/accessibility`, `/a11y`, `/budget`
 - **Community**: `/preset`
@@ -250,7 +250,7 @@ mechanism — so the roster is 18 registrations covering 17 distinct commands.
 **Features**:
 - Discord OAuth2 with PKCE flow
 - JWT issuance with HS256 signing
-- **No refresh tokens** — a session ends at the token's `exp` (1 h, `JWT_EXPIRY`) and the user re-authorises; revocation is a jti list in the `TOKEN_BLACKLIST` KV namespace
+- **No refresh tokens** — a session ends at the token's `exp` (1 h, `JWT_EXPIRY`) and the user re-authorizes; revocation is a jti list in the `TOKEN_BLACKLIST` KV namespace
 - Account merging support
 - Timeout protection (10s token exchange, 5s user info fetch)
 - XIVAuth integration
@@ -326,7 +326,7 @@ Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/
 
 **Features**:
 - Crawler detection (Discord, Twitter/X, Facebook, LinkedIn, Slack, Telegram, iMessage)
-- **One 15E band frame for all nine tools**, on a 400-wide design grid rastered ×3 — Discord 1200×1050, X 1200×630 via `?frame=x` (carried by `twitter:image`). The two frames take separate cache keys
+- **One 15E band frame for all ten tools**, on a 400-wide design grid rastered ×3 — Discord 1200×1050, X 1200×630 via `?frame=x` (carried by `twitter:image`). The two frames take separate cache keys
 - **Default cards** at `/og/default.png` and `/og/:tool/default.png` — no fabricated dye names, deltas, or prices
 - Localized via `?lang=` in all 6 languages, including the card artwork; SC, KR, and JP font subsets are bundled so JA no longer renders in Chinese letterforms
 - Name wrapping with hyphenation rather than truncation (resvg has no `hyphens: auto`)
@@ -334,7 +334,7 @@ Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/
 
 **v2.0.0 fixed the `/og/` prefix**, which was missing from every emitted `og:image` URL — the routes registered under `/og/` while the meta tags pointed one level up, so no generated card had ever actually been fetched.
 
-**Routes**: `/og/:tool/*` for harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, and budget.
+**Routes**: `/og/:tool/*` for harmony, gradient, mixer, swatch, comparison, accessibility, extractor, presets, budget, and glamour.
 
 **Technology**: Cloudflare Workers, Hono, resvg-wasm, `@xivdyetools/svg`
 
@@ -352,10 +352,10 @@ Split out of `discord-worker` on 2026-08-09 ([IMAGE_WORKER_SPLIT](../operations/
 - `GET /v1/dyes/categories` — category list with counts
 - `GET /v1/dyes/batch?ids=` — multi-ID lookup, max 50
 - `GET /v1/dyes/consolidation-groups` — Patch 7.5 consolidation metadata
-- `GET /v1/match/closest?hex=` — closest dye (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; legacy `hyab` / `oklch-weighted` accepted and normalised to `ciede2000`, `kL/kC/kH` ignored)
+- `GET /v1/match/closest?hex=` — closest dye (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; legacy `hyab` / `oklch-weighted` accepted and normalized to `ciede2000`, `kL/kC/kH` ignored)
 - `GET /v1/match/within-distance?hex=&maxDistance=` — dyes within ΔE threshold
-- `GET /v1/wheels` — colour-wheel registry; `GET /v1/wheels/:id` — one wheel's stops
-- `GET /v1/harmony/types` — harmony type registry; `GET /v1/harmony` — harmony slots for a colour on a chosen wheel
+- `GET /v1/wheels` — color-wheel registry; `GET /v1/wheels/:id` — one wheel's stops
+- `GET /v1/harmony/types` — harmony type registry; `GET /v1/harmony` — harmony slots for a color on a chosen wheel
 - `POST /v1/chara/resolve` — resolve a `.chara` file's equipment to XIVAPI items; `GET /v1/chara/icon/:iconId` — proxied item icon
 - `POST /v1/telemetry` — web-app analytics ingest (own rate-limit bucket)
 
@@ -390,7 +390,7 @@ Current versions live in [versions.md](../versions.md).
 
 | Package | Purpose |
 |---------|---------|
-| **@xivdyetools/core** | Colour algorithms, 125-dye database (schema v2), Universalis, blending (`/blending`) |
+| **@xivdyetools/core** | Color algorithms, 125-dye database (schema v2), Universalis, blending (`/blending`) |
 | **@xivdyetools/types** | Branded types (HexColor, DyeId, StainId) and shared interfaces |
 | **@xivdyetools/logger** | Unified logging, secret redaction patterns |
 | **@xivdyetools/auth** | JWT verification, HMAC signing, Discord Ed25519, Base64URL/hex (`/encoding`) |
@@ -423,7 +423,7 @@ xivdyetools-discord-worker
 ├── PRESETS_API       → xivdyetools-presets-api (Service Binding)
 ├── UNIVERSALIS_PROXY → xivdyetools-api-worker (Service Binding, market prices)
 ├── IMAGE_WORKER      → xivdyetools-image-worker (Service Binding)
-├── KV                → User preferences, favourites, analytics counters (KV)
+├── KV                → User preferences, favorites, analytics counters (KV)
 ├── ANALYTICS         → Analytics Engine dataset (bot analytics)
 └── RL_5 … RL_70      → Native rate-limit bindings (per-command tiers)
 
@@ -451,6 +451,8 @@ xivdyetools-api-worker
 ├── API_RATE_LIMITER  → Native rate-limit binding for /v1/*
 ├── TELEMETRY_RATE_LIMITER → Native rate-limit binding for POST /v1/telemetry
 ├── SERVICE_RATE_LIMITER → Native rate-limit binding for our own workers on /v1/* (service binding, no client IP)
+├── UNIVERSALIS_RATE_LIMITER → Native rate-limit binding for the Universalis proxy's per-IP cache misses
+├── UNIVERSALIS_SERVICE_RATE_LIMITER → Native rate-limit binding for the proxy's service-binding key
 ├── ANALYTICS         → Analytics Engine dataset (web analytics)
 └── ASSETS            → Workers Static Assets (VitePress developer docs, production only)
 
@@ -468,7 +470,6 @@ xivdyetools-og-worker
 | Web App | OAuth Worker | N/A (initiates OAuth flow) |
 | Web App | Presets API | JWT Bearer token |
 | Discord Worker | Presets API | `BOT_API_SECRET` + user headers |
-| Presets API | OAuth Worker | JWT verification (shared secret) |
 
 ---
 
@@ -505,7 +506,7 @@ xivdyetools-og-worker
                               │    (fallback)     │
                               │  • User prefs     │
                               │  • Preset         │
-                              │    favourites     │
+                              │    favorites      │
                               │  • Revoked JWTs   │
                               └───────────────────┘
 ```

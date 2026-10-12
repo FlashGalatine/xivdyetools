@@ -16,7 +16,7 @@ A quick-access list of up to 40 dyes, shown at the top of the Color Palette draw
 
 Favorites are managed from the **Color Palette** drawer — the dye picker that slides in from the right (on phones it starts closed; tap the round palette button to open it):
 
-1. Find the dye in the drawer — search by name, use the **All / Metallic / Pastel / Dark / Vibrant** chips, or scroll the colour groups.
+1. Find the dye in the drawer — search by name, use the **All / Metallic / Pastel / Dark / Vibrant** chips, or scroll the color groups.
 2. Hover (or tap) the swatch and click the **★** in its corner. The star fills and the dye moves into the **Favorites** section at the top of the drawer.
 3. Click the star again — in the Favorites section or on the swatch — to remove it.
 
@@ -31,7 +31,7 @@ The star is the only place favorites are set; the ⋮ menu on result cards is fo
 ### Limits
 
 - Maximum 40 favorites — at the limit you will see *"Maximum 40 favorites allowed"*; remove one to add another.
-- Not available in Palette Extractor or Community Presets, which do not use the drawer.
+- Not available in Palette Extractor, Community Presets or the Glamour Reader, which do not use the drawer.
 - Stored in your browser.
 
 ---
@@ -46,7 +46,7 @@ A saved palette is a named group of dyes (up to 20) that a tool wrote to your de
 |------|--------|-----------------|
 | **Dye Mixer** | **Save mix** under the mixing field | Dye A, Dye B and the dye your current blend resolves to, named "A × B" |
 | **Glamour Reader** | **Make a palette** → **Save to this device** (after loading a `.chara` file) | The 3–6 dyes your character's glamour is wearing |
-| **Swatch Matcher** | **Save character colors** on the character file card | The closest dye for each of your character's colours (hair, eyes, skin, lips…) |
+| **Swatch Matcher** | **Save character colors** on the character file card | The closest dye for each of your character's colors (hair, eyes, skin, lips…) |
 | **Budget Suggestions** | **Save swap** on a substitute row | The dye you priced and its cheapest substitute |
 
 Palettes you saved in earlier versions (harmony palettes, older collections) are carried over automatically the first time 5.0 loads.
@@ -55,7 +55,7 @@ Palettes you saved in earlier versions (harmony palettes, older collections) are
 
 Open **Community Presets** and switch to the **Saved** tab. Your device-local palettes are listed there alongside the community presets you have saved, and the search box matches their names. Open one to see the full dye list, its **PALETTE COST**, and the **TAKE THIS PALETTE INTO** row that sends the whole set to Harmony, Comparison, Gradient or Accessibility.
 
-Palettes from the Mixer and the Glamour Reader appear there. Saved swaps and character-colour sets are kept in the same store but do not have their own screen yet.
+Palettes from the Mixer and the Glamour Reader appear there. Saved swaps and character-color sets are kept in the same store but do not have their own screen yet.
 
 ### Managing Saved Palettes
 
@@ -65,7 +65,7 @@ Palettes from the Mixer and the Glamour Reader appear there. Saved swaps and cha
 ### Limits
 
 - Maximum 50 saved records; maximum 20 dyes per record; names up to 50 characters.
-- Records only hold real dyes — a custom hex colour that isn't a dye is skipped when saving.
+- Records only hold real dyes — a custom hex color that isn't a dye is skipped when saving.
 - Stored in your browser.
 
 ---
@@ -83,9 +83,9 @@ Favorites, saved palettes and saved presets are stored locally, signed in or not
 - They stay in this browser on this device.
 - They are cleared if you clear the site's browser data.
 - Nothing syncs to an account, to other devices, or to the Discord bot.
-- The **Backup** card in Advanced Settings exports and imports your tool *settings* as a file. It does **not** include favorites or saved palettes — those have their own export.
-- To move favorites and saved palettes between browsers, open any tool with a dye picker (Color Harmony, Dye Mixer, Gradient Builder, Dye Comparison or the Accessibility Checker), expand the **Favorites** panel at the top of the Color Palette drawer and press **Manage Collections**. **Export All** downloads a JSON file containing your favorites and every saved palette; **Import** reads one back in (a palette whose name is already taken comes in as a numbered copy rather than overwriting yours). Each palette in the list also has its own download button if you only want one.
-- Saved *presets* are a separate shelf and are not part of that file.
+- The **Backup** card in Advanced Settings exports and imports your tool *settings* as a file. It does **not** include favorites, saved palettes or saved presets.
+- Favorites and saved palettes cannot be exported or imported in this release, so they cannot be moved between browsers.
+- Swaps saved in Budget Suggestions and character colors saved in the Swatch Matcher have no in-app delete; your browser's site-data controls clear them.
 
 Anything from a previous version that points at a dye the app can no longer identify is dropped during the automatic upgrade rather than kept as a broken entry.
 
@@ -98,7 +98,7 @@ Anything from a previous version that points at a dye the app can no longer iden
 | Habit | How |
 |-------|-----|
 | Outfit projects | Load your character's `.chara` file in the Glamour Reader and use **Make a palette → Save to this device** to keep the glamour's dyes as a palette |
-| Custom colours | **Save mix** in the Dye Mixer whenever a blend lands on a dye you want to remember |
+| Custom colors | **Save mix** in the Dye Mixer whenever a blend lands on a dye you want to remember |
 | Budget planning | **Save swap** on the substitute you actually intend to buy |
 | Top picks | Star them — 40 favorites is plenty for the dyes you use week to week |
 
@@ -114,14 +114,14 @@ Anything from a previous version that points at a dye the app can no longer iden
 
 The Discord bot's `/favorites` and `/collection` commands were removed in 5.0. Bot results carry a
 share link that opens the same dyes in the web app, where you can save them; the bot can only
-favourite community presets (`/preset favorite`).
+favorite community presets (`/preset favorite`).
 
 ---
 
 ## Related Tools
 
 - [Dye Mixer](dye-mixer.md) - Save a blend as a palette
-- [Swatch Matcher](swatch-matcher.md) - Save your character's colours
+- [Swatch Matcher](swatch-matcher.md) - Save your character's colors
 - [Glamour Reader](glamour-reader.md) - Save your glamour's dyes
 - [Budget Suggestions](budget-suggestions.md) - Save a swap
 - [Community Presets](community-presets.md) - Where the Saved tab lives

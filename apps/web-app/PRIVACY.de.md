@@ -2,8 +2,8 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](PRIVACY.md)
 
-**Zuletzt aktualisiert:** 2026-10-09 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
-Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
+**Zuletzt aktualisiert:** 2026-10-12 · Gilt für **xivdyetools.app** und **beta.xivdyetools.app**. Der
+Discord-Bot hat eine eigene Richtlinie: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.de.md).
 
 XIV Dye Tools läuft in deinem Browser. Die Farbwerkzeuge — Paletten-Extraktor, Harmonie-Explorer,
 Farbstoffvergleich, Verlauf-Ersteller, Farbstoffmixer, Barrierefreiheitsprüfung, Budget-Vorschläge,
@@ -63,8 +63,11 @@ einen Teil:
 - **Erweiterte Einstellungen → Einstellungen zurücksetzen** setzt die Einstellungen jedes Werkzeugs
   auf ihre Standardwerte zurück. Deine gespeicherte Arbeit wird dabei nicht gelöscht.
 - **Erweiterte Einstellungen → Favoriten löschen** löscht deine favorisierten Farbstoffe.
-- **Erweiterte Einstellungen → Gespeicherte Paletten löschen** löscht deine gespeicherten Paletten.
-- **Sammlungen verwalten → Sammlung löschen** löscht eine gespeicherte Sammlung.
+- **Erweiterte Einstellungen → Gespeicherte Paletten löschen** löscht alle deine gespeicherten
+  Paletten auf einmal. Die App hat kein Steuerelement, das eine einzelne Palette löscht.
+- Tausche, die du in den Budget-Vorschlägen speicherst, und Charakterfarben, die du im
+  Farbmuster-Matcher speicherst, haben in der App kein Steuerelement zum Löschen; die
+  Website-Daten-Steuerung deines Browsers löscht sie.
 - Das Abmelden löscht das Sitzungs-Token.
 - "Alles zurücksetzen" in der Ausrüstungsliste löscht die umgeschriebene Zeile jedes Teils in dieser
   Liste. Jede Zeile wird pro Ausrüstungsteil gespeichert, sodass auch ein anderes Outfit mit
@@ -202,7 +205,7 @@ Discord-Server.
   solange die Vorlage existiert.
 
 Der Discord-Bot bewahrt dieselben Datensätze für Vorlagen auf, die über ihn eingereicht werden;
-siehe [seine Richtlinie](../discord-worker/PRIVACY_POLICY.md).
+siehe [seine Richtlinie](../discord-worker/PRIVACY_POLICY.de.md).
 
 ## Nutzungsanalyse (Opt-in)
 
@@ -267,7 +270,7 @@ Unsere wird von Cloudflare verwaltet, und hier ist alles, was wir damit tun.
   sind, der beim Debuggen einen Live-Stream verfolgt, und danach nicht aufbewahrt werden. Sollten
   wir jemals dauerhafte Protokollierung einschalten, werden wir dies zuerst hier ankündigen. Die
   Protokolle des Discord-Bots sind durch
-  [seine eigene Richtlinie](../discord-worker/PRIVACY_POLICY.md) abgedeckt.
+  [seine eigene Richtlinie](../discord-worker/PRIVACY_POLICY.de.md) abgedeckt.
 
 ## So kannst du es überprüfen
 
@@ -296,7 +299,7 @@ Für alles andere — deinen Kontodatensatz oder alles unter deinem Konto auf ei
 privat an uns:
 
 1. **E-Mail:** FlashGalatineFGC@gmail.com, mit dem Betreff "XIV Dye Tools Privacy".
-2. **Discord:** Tritt https://discord.gg/rzxDHNr6Wv bei und schreibe "Flash Galatine" eine DM.
+2. **Discord:** Tritt https://discord.gg/5VUSKTZCe5 bei und schreibe "Flash Galatine" eine DM.
 
 Gib an, ob du dich mit Discord oder mit XIVAuth anmeldest, und nenne deine Discord-Benutzer-ID
 oder den Autorennamen, der bei deinen Vorlagen angezeigt wird. Bitte frage nicht in einem

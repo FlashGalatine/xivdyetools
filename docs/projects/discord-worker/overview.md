@@ -10,6 +10,7 @@ A Cloudflare Worker that brings XIV Dye Tools to Discord via slash commands. Use
 
 ### Recent Features
 
+- **v5.7.0** - `/glamour`, the Glamour Reader card for a `.chara` file; every release after 5.0 is in the [discord-worker CHANGELOG](../../../apps/discord-worker/CHANGELOG.md)
 - **v5.0.0** - The 5.0 command set: v4 commands `/match`, `/match_image`, `/favorites`, `/collection`, `/language` deleted; `/contrast`, `/a11y`, `/changelog` added; every card redrawn on the `@xivdyetools/svg` frame system; matching vocabulary `ciede2000` (default) / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`; `/swatch` takes a `.chara` file; Photon image decoding moved out to `xivdyetools-image-worker` (`IMAGE_WORKER` binding); `/preferences set theme` (dark/light cards); beta bot on the routeless `-dev` env
 - **v4.1.x** - Budget quick picks updated with 20 Cosmic dyes, prevent duplicate results for extractor, type imports migrated from core to `@xivdyetools/types`
 - **v4.0.x** - Command renaming (`match` to `extractor`, `mixer` to `gradient`), new `mixer` and `swatch` commands
@@ -113,7 +114,7 @@ The roster of record is `src/commands/registry.ts` — 18 registrations, 17 dist
 | `/extractor color` / `/extractor image` | Match a color / extract image colors and match to dyes |
 | `/gradient` | Create color gradient between two colors |
 | `/mixer` | Blend two dyes (rgb/lab/oklab/ryb/hsl/spectral ratio sweep) |
-| `/swatch` | Match a `.chara` character file's colours to dyes |
+| `/swatch` | Match a `.chara` character file's colors to dyes |
 | `/glamour` | Read a `.chara` character file as a glamour: every piece, its dyes, and whether it can be worn |
 
 ### Dye Database
@@ -133,7 +134,7 @@ The roster of record is `src/commands/registry.ts` — 18 registrations, 17 dist
 | `/budget` | Find affordable dye alternatives via market board |
 
 ### User Data — removed in 5.0
-`/favorites` and `/collection` are gone (saved palettes live in the web app); preset favourites are `/preset favorite add|remove|list`.
+`/favorites` and `/collection` are gone (saved palettes live in the web app); preset favorites are `/preset favorite add|remove|list`.
 
 ### Community
 | Command | Description |
@@ -143,7 +144,7 @@ The roster of record is `src/commands/registry.ts` — 18 registrations, 17 dist
 | `/preset random` | Get a random approved preset |
 | `/preset submit` / `/preset edit` | Submit / edit a preset (3–6 stainID-keyed dyes — see [Commands](commands.md#preset-submit)) |
 | `/preset vote` | Toggle a vote on a preset |
-| `/preset favorite` | Add / remove / list favourite presets |
+| `/preset favorite` | Add / remove / list favorite presets |
 
 ### Utility
 | Command | Description |
@@ -164,15 +165,15 @@ Commands that need images generate SVG and render to PNG:
 
 ```typescript
 // 1. Build SVG
-const svg = buildComparisonSvg(dyes);
+const svg = generateComparisonCard({ dyes, deltaE, labels, theme, lang });
 
 // 2. Render to PNG via resvg-wasm
-const png = await renderSvgToPng(svg);
+const png = await renderSvgToPng(svg, { locale: lang }); // locale is required
 
 // 3. Send as Discord attachment
-await sendFollowup(interaction, env, {
+await sendFollowUp(env.DISCORD_CLIENT_ID, interaction.token, {
   embeds: [...],
-  files: [{ name: 'comparison.png', data: png }]
+  file: { name: 'comparison.png', data: png, contentType: 'image/png' },
 });
 ```
 
@@ -180,13 +181,13 @@ await sendFollowup(interaction, env, {
 
 Per-user, per-command limits via `@xivdyetools/worker-kit/rate-limiter` (`DISCORD_COMMAND_LIMITS`, keyed by top-level command name):
 - `/dye`, `/preferences`: 20/minute; `/accessibility` (and its alias `/a11y`), `/budget`, `/preset`: 10/minute; `/about`, `/manual`, `/changelog`: 30/minute; `/extractor image`: 5/minute; everything else, `/stats` included: 15/minute
-- `/a11y` is canonicalised to `accessibility` before lookup, so the alias shares one bucket; `/extractor image` is tiered apart from `/extractor color` by an `extractor:image` key; `/changelog`'s 30/minute comes from this worker's own `LOCAL_COMMAND_LIMITS`
+- `/a11y` is canonicalized to `accessibility` before lookup, so the alias shares one bucket; `/extractor image` is tiered apart from `/extractor color` by an `extractor:image` key; `/changelog`'s 30/minute comes from this worker's own `LOCAL_COMMAND_LIMITS`
 - No command is exempt (`/stats` since FINDING-033, the three utility commands since FINDING-020)
 - Backend: the native `[[ratelimits]]` bindings (`RL_5`…`RL_70`, one per distinct per-minute limit), with Cloudflare KV as the fallback only when no tier is bound
 
 ### User Storage
 
-KV holds per-user preferences (`prefs:v1:*`), preset favourites, analytics counters, the announced-version memo (`announced:v:<version>`) and the rate-limit fallback counters. Button state travels in the component's own `custom_id`; the KV-backed button-context store was removed in 2026-08-18 (nothing consumed it). The v4 favorites/collections store is gone and its orphaned keys were swept once against production on 2026-08-29.
+KV holds per-user preferences (`prefs:v1:*`), preset favorites, analytics counters, the announced-version memo (`announced:v:<version>`) and the rate-limit fallback counters. Button state travels in the component's own `custom_id`; the KV-backed button-context store was removed in 2026-08-18 (nothing consumed it). The v4 favorites/collections store is gone and its orphaned keys were swept once against production on 2026-08-29.
 
 ---
 
@@ -194,7 +195,7 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, analytics count
 
 | Binding | Type | Purpose |
 |---------|------|---------|
-| `KV` | KV Namespace | Rate-limit fallback, preferences, preset favourites, stats counters, announced-version memo |
+| `KV` | KV Namespace | Rate-limit fallback, preferences, preset favorites, stats counters, announced-version memo |
 | `ANALYTICS` | Analytics Engine | Command tracking |
 | `PRESETS_API` | Service Binding | `xivdyetools-presets-api` |
 | `UNIVERSALIS_PROXY` | Service Binding | `xivdyetools-api-worker` (absorbed the universalis-proxy) — market prices |
@@ -210,7 +211,7 @@ KV holds per-user preferences (`prefs:v1:*`), preset favourites, analytics count
 
 | Var | Purpose |
 |-----|---------|
-| `ENVIRONMENT` | `"development"` on the beta bot, `"production"` on the live one. Only `validateEnv` reads it — in production it makes the six `RL_*` bindings mandatory (FINDING-013) |
+| `ENVIRONMENT` | `"development"` on the beta bot, `"production"` on the live one. `validateEnv` reads it — in production it makes the six `RL_*` bindings mandatory (FINDING-013); `/webhooks/preset-submission` also reads it, answering 503 while a production `INTERNAL_WEBHOOK_SECRET` is shorter than 32 characters (FINDING-027), and `/stats health` prints it as a label |
 | `DISCORD_CLIENT_ID` | The application ID. Beta and production are **different Discord applications**, because an application has exactly one Interactions Endpoint URL |
 | `PRESETS_API_URL` | HTTP fallback for local dev when the `PRESETS_API` service binding is absent |
 | `ANNOUNCEMENT_CHANNEL_ID` | Release-announcement channel for the GitHub webhook — deliberately different per environment |

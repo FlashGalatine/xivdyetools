@@ -17,19 +17,20 @@ the `IMAGE_WORKER` binding resolves.
 | `presets-api` | `xivdyetools-presets-api-dev`, `workers_dev = false` | moved to `[env.production]` |
 
 Beta bot bindings: isolated KV `7d76d17fbb16403c8bf40e16f5b58ba6`, isolated Analytics Engine
-dataset `xivdyetools_bot_analytics_beta`, shared D1 and shared `PRESETS_API` / `UNIVERSALIS_PROXY`
-/ `IMAGE_WORKER` service bindings. `DISCORD_CLIENT_ID` is the beta app, `1536085517270261771`.
+dataset `xivdyetools_bot_analytics_beta`, shared `PRESETS_API` / `UNIVERSALIS_PROXY` /
+`IMAGE_WORKER` service bindings, and no D1 binding. `DISCORD_CLIENT_ID` is the beta app,
+`1536085517270261771`.
 
 ### Update 2026-08-12 — `og-worker` joins the beta pattern
 
 `og-worker`'s top-level env is now **the beta OG worker** and carries live routes, where the
 table above and the Evidence table below both record it as having none. Bare
-`pnpm --filter xivdyetools-og-worker deploy` therefore publishes to real, public hostnames:
+`pnpm --filter xivdyetools-og-worker run deploy` therefore publishes to real, public hostnames:
 
 | Env | Worker | Routes | `APP_BASE_URL` | Cards |
 |---|---|---|---|---|
-| top-level | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×9 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `xivdyetools_og_analytics_beta` |
-| `production` | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×9 + `og.xivdyetools.app` | `https://xivdyetools.app` | `xivdyetools_og_analytics` |
+| top-level | `xivdyetools-og-worker-dev` | `beta.xivdyetools.app/<tool>/*` ×10 + `og-beta.xivdyetools.app` | `https://beta.xivdyetools.app` | `xivdyetools_og_analytics_beta` |
+| `production` | `xivdyetools-og-worker` | `xivdyetools.app/<tool>/*` ×10 + `og.xivdyetools.app` | `https://xivdyetools.app` | `xivdyetools_og_analytics` |
 
 It still cannot reach production, and that safety does not depend on resolving the
 inheritance question below: `[env.production]` declares its own `routes` and `workers_dev`
@@ -77,9 +78,9 @@ The fix: all three now declare `environment: beta` and authenticate with
 `CLOUDFLARE_API_TOKEN_BETA || CLOUDFLARE_API_TOKEN` — because that would leave the beta job
 able to read the production token, silently and possibly forever, which is the entire
 finding. Until the `beta` GitHub environment and its `CLOUDFLARE_API_TOKEN_BETA` secret
-exist, **all three beta deploys fail** at the `wrangler-action` step with an authentication
-error. That is true right now, on every push to a non-main branch — not only after this
-branch merges to `main` — since these workflows already trigger on branch pushes today.
+existed, **all three beta deploys failed** at the `wrangler-action` step with an authentication
+error on every push to a non-main branch. Both were created on 2026-08-31, and the three beta
+deploy workflows were confirmed green on 2026-09-05.
 
 | | Production workflows | Beta workflows |
 |---|---|---|
@@ -235,7 +236,7 @@ No third environment. Deploying the default env produces the beta bot.
 | URL | `bot.xivdyetools.app` | `xivdyetools-discord-worker-dev.<subdomain>.workers.dev` |
 | Discord application | `1447108133020369048` | `1536085517270261771` — "XIV Dye Tools (Beta)" |
 | KV namespace | `1fcb7e037ccd4172a47fccd97cf8e753` | **new, isolated** |
-| D1 / `PRESETS_API` binding | live | **live (shared)** |
+| `PRESETS_API` service binding (no D1) | live | **live (shared)** |
 | Slash commands | global | **guild-scoped** to the test server |
 
 A separate Discord application is **required, not optional**: an application has exactly one
@@ -255,7 +256,7 @@ login against a beta stack would need its own OAuth application and is out of sc
 ```
 Discord (beta app) ──► ...-dev.workers.dev ──┬─► own KV namespace   (preferences, favorites,
                                              │                       rate limits, analytics)
-                                             └─► live D1 + presets-api  (real presets render)
+                                             └─► live presets-api       (real presets render)
 ```
 
 Isolated where beta activity would corrupt real user state; shared where realistic data is the
@@ -425,8 +426,9 @@ branch from the dashboard; the documented route is a PATCH to the Update Project
 API.
 
 **Beta writes to production data.** It uses the production presets API and the
-production OAuth worker, exactly as the beta bot shares production D1. Presets
-submitted or votes cast on beta are real. This was a deliberate choice: no
+production OAuth worker; the beta bot likewise reaches the production presets API
+through its shared `PRESETS_API` service binding. Presets submitted or votes cast
+on beta are real. This was a deliberate choice: no
 isolated preset database exists anywhere today — even
 `xivdyetools-presets-api-dev` binds the production D1.
 

@@ -2,9 +2,9 @@
 
 **Find affordable dye alternatives**
 
-Budget Suggestions prices a dye's colour, line by line. Pick the dye you want, and it lists every dye that looks close enough, grouped by what each group costs, with live market prices from Universalis where they matter. The question it answers is "Jet Black costs 178,400 gil — what looks the same for 216?"
+Budget Suggestions prices a dye's color, line by line. Pick the dye you want, and it lists every dye that looks close enough, grouped by what each group costs, with live market prices from Universalis where they matter. The question it answers is "Jet Black costs 178,400 gil — what looks the same for 216?"
 
-In 5.0 the tool is a **ledger**: there is no gil cap to set. You set how much colour drift you will accept and read down the list.
+In 5.0 the tool is a **ledger**: there is no gil cap to set. You set how much color drift you will accept and read down the list.
 
 ---
 
@@ -14,25 +14,25 @@ In 5.0 the tool is a **ledger**: there is no gil cap to set. You set how much co
 
 Any of these makes a dye the target:
 
-- **Color Palette drawer** - open the palette button and click a dye (or enter a hex under **Custom Color** to price a colour that isn't a dye)
-- **Quick Picks** - the grid at the top of the flow, under **TARGET DYE**, shows the six priciest market-only dyes on your world right now, labelled **PRICIEST ON {world} NOW**; tap one
+- **Color Palette drawer** - open the palette button and click a dye (or enter a hex under **Custom Color** to price a color that isn't a dye)
+- **Quick Picks** - the grid at the top of the flow, under **TARGET DYE**, shows the six priciest market-only dyes on your world right now, labeled **PRICIEST ON {world} NOW**; tap one
 - **A ledger row** - clicking any substitute makes it the new target, so you can walk down the price ladder
 - **From other tools** - **Inspect Dye in… → Budget** on any result card
 
-The target fills the small colour card under **TARGET DYE** (name, hex and price) and appears again below as a full result card with **CURRENTLY SELECTED** on it.
+The target fills the small color card under **TARGET DYE** (name, hex and price) and appears again below as a full result card with **CURRENTLY SELECTED** on it.
 
 ### 2. Set the match line
 
 The **Match line** slider (2–20, default 8) sits above the ledger, and again in the settings column. It is the only threshold. It is ΔE2000 — how far a substitute may drift before it stops counting. Everything at or under the line makes the ledger; everything above it is left out. The description under the slider says exactly that: *"How far a substitute may drift before it stops counting."*
 
-If you change **Matching Algorithm** in the settings column to something other than ΔE2000, the slider greys out and the line pins to that method's own calibrated cut instead.
+If you change **Matching Algorithm** in the settings column to something other than ΔE2000, the slider grays out and the line pins to that method's own calibrated cut instead.
 
 ### 3. Read the verdict
 
 Above the ledger sits a verdict block:
 
 - A badge — **{n} IN RANGE** when prices are loaded, **MARKET DATA UNAVAILABLE** when Universalis didn't answer, **ALREADY THE FLOOR** when the target is already the cheapest thing there is
-- A headline: *"What {target}'s colour is worth, line by line."*
+- A headline: *"What {target}'s color is worth, line by line."*
 - A money figure on the right — **PER ΔE POINT, BEST ROW** (see below) or **CHEAPEST KNOWN · VENDOR**
 
 ### 4. Read the ledger
@@ -54,7 +54,7 @@ Each group prints its price **once**, in the header, with a count like **12 / 85
 
 Under each header the rows: **DYE | ΔE | BOARD | GIL / ΔE**. Click a column header to sort by it, click again to flip the direction. On narrow phones the BOARD column drops out.
 
-**GIL / ΔE** is the tool's own value measure: the target's price minus the row's price, divided by the row's distance — what one point of colour accuracy is worth on this row. Bigger is better value. The note under the ledger spells it out: *"It is a ratio of this tool's own numbers, not a published measure."* It only appears when the algorithm is ΔE2000 and both prices are known.
+**GIL / ΔE** is the tool's own value measure: the target's price minus the row's price, divided by the row's distance — what one point of color accuracy is worth on this row. Bigger is better value. The note under the ledger spells it out: *"It is a ratio of this tool's own numbers, not a published measure."* It only appears when the algorithm is ΔE2000 and both prices are known.
 
 Currencies are never converted. A scrip dye is compared to a gil dye through the market board price of its Wide Spectrum item, or not at all.
 
@@ -71,13 +71,13 @@ Under the target card is a **SEND TO** row:
 
 ## Upgrade Mode
 
-Pick a Standard Spectrum dye — Soot Black, say — and the ledger flips. The badge reads **ALREADY THE FLOOR**, the headline *"Nothing is cheaper than {target}."*, and the money figure is 216 Gil labelled **THE FLOOR** — *nothing below this*. Instead of cheaper substitutes, the tiers below show what more money would buy: Wide #1, Wide #2 and Coffer dyes within the line, each with **×N more**.
+Pick a Standard Spectrum dye — Soot Black, say — and the ledger flips. The badge reads **ALREADY THE FLOOR**, the headline *"Nothing is cheaper than {target}."*, and the money figure is 216 Gil labeled **THE FLOOR** — *nothing below this*. Instead of cheaper substitutes, the tiers below show what more money would buy: Wide #1, Wide #2 and Coffer dyes within the line, each with **×N more**.
 
 ---
 
 ## Server Selection
 
-Board prices come from the **Market Board** section of the settings column (the gear icon on phones): choose your data centre or a single world. Vendor, scrip and credit figures are stored in the app and never need a connection.
+Board prices come from the **Market Board** section of the settings column (the gear icon on phones): choose your data center or a single world. Vendor, scrip and credit figures are stored in the app and never need a connection.
 
 ---
 
@@ -89,7 +89,7 @@ If Universalis doesn't answer, the verdict turns amber with **MARKET DATA UNAVAI
 
 ## Understanding Delta E
 
-The **ΔE** column is the colour distance between the substitute and the target. On the ΔE2000 scale
+The **ΔE** column is the color distance between the substitute and the target. On the ΔE2000 scale
 used here, match results fall into four bands:
 
 | ΔE2000 | Band | Meaning |
@@ -97,7 +97,7 @@ used here, match results fall into four bands:
 | under 5 | SAME | You would not tell them apart |
 | 5 to 10 | CLOSE | A very good stand-in |
 | 10 to 20 | NEAR | In the same family, but visibly different |
-| 20 and up | FAR | A different colour |
+| 20 and up | FAR | A different color |
 
 Row values are tinted on the same green-to-red ramp as the other tools' match tiers. Every other
 matching method has its own calibrated cut-offs on its own scale, so compare the band, never the raw
@@ -109,7 +109,7 @@ number, across methods. See the [Glossary](../../reference/glossary.md) for more
 
 - **Start at 8** - the default line is where most substitutes are still hard to tell apart on cloth
 - **Sort by GIL / ΔE** - the top row is the best deal per point of accuracy, not just the cheapest
-- **Click a row** - it becomes the target, so you can check what *its* cheaper neighbours are
+- **Click a row** - it becomes the target, so you can check what *its* cheaper neighbors are
 - **Exclude Coffer Dyes** in **Dye Filters** if you only want things you can buy without a market board
 - **Test in-game** - some differences matter more on metallic gear than matte
 

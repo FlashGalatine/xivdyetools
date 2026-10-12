@@ -2,11 +2,11 @@
 
 > Dies ist eine zur Verständlichkeit bereitgestellte Übersetzung. Maßgeblich ist die englische Fassung; weichen beide voneinander ab, gilt die englische Fassung. [Englisch](TERMS_OF_SERVICE.md)
 
-**Zuletzt aktualisiert**: 2026-10-09
+**Zuletzt aktualisiert**: 2026-10-12
 
 > Die Web-App unter xivdyetools.app hat eigene Bedingungen:
-> [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Der Umgang mit Daten ist in
-> der [Datenschutzrichtlinie](PRIVACY_POLICY.md) geregelt.
+> [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.de.md). Der Umgang mit Daten ist in
+> der [Datenschutzrichtlinie](PRIVACY_POLICY.de.md) geregelt.
 
 ## 1. Einführung
 
@@ -82,7 +82,7 @@ Von Nutzern eingereichte Vorlagen unterliegen der Moderation:
 
 Wenn du glaubst, dass dein Inhalt fälschlicherweise moderiert wurde:
 
-1. Tritt unserem Discord-Server bei: https://discord.gg/rzxDHNr6Wv
+1. Tritt unserem Discord-Server bei: https://discord.gg/5VUSKTZCe5
 2. Kontaktiere einen Moderator oder pinge "Flash Galatine" in
    #dyetools-issues-and-suggestions an
 3. Gib deine Discord-Benutzer-ID und den Namen der abgelehnten Vorlage an
@@ -175,7 +175,7 @@ geltende Recht gewährt und das nach diesem Recht unabdingbar ist.
 Für Fragen zu diesen Bedingungen oder zum Bot:
 
 - **E-Mail**: FlashGalatineFGC@gmail.com (Betreff: "XIV Dye Tools Terms")
-- **Discord**: https://discord.gg/rzxDHNr6Wv
+- **Discord**: https://discord.gg/5VUSKTZCe5
 - **Support-Kanal**: #dyetools-issues-and-suggestions
 
 ---

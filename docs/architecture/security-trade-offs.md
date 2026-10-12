@@ -23,7 +23,7 @@ This document explains security-related design decisions where we've consciously
 
 ### The Trade-Off
 
-Cloudflare KV doesn't support atomic increment operations. Our rate limiting implementation uses optimistic concurrency with retries, which can allow lost increments under high concurrency.
+Cloudflare KV doesn't support atomic increment operations. Our KV rate limiter is a plain read-modify-write and therefore best-effort, which can allow lost increments under high concurrency.
 
 ```
 Scenario: Two concurrent requests
@@ -40,9 +40,9 @@ Result: Count should be 7, is 6 (lost increment)
 
 | Factor | Assessment |
 |--------|------------|
-| **Race window** | ~10ms (very small) |
-| **Impact** | Allows ~2x burst occasionally |
-| **Frequency** | Rare (requires exact timing) |
+| **Race window** | One KV read-to-write round trip (`checkOnly()` and `increment()` are separate operations) |
+| **Impact** | Under N concurrent requests the effective limit can be exceeded by roughly a factor of N |
+| **Frequency** | Only under concurrent bursts on the same key; sequential traffic is counted correctly |
 | **Consequence** | Minor over-allowance, not security bypass |
 
 ### Alternative Considered
@@ -67,16 +67,16 @@ export class RateLimiter implements DurableObject {
 
 ### Mitigations
 
-1. **Version metadata**: Track writes with version numbers to detect conflicts
-2. **Retry logic**: 3 retries with exponential backoff (10ms, 20ms, 30ms)
-3. **Write verification**: Read-after-write to confirm success
-4. **Conservative limits**: Set limits with small buffer for occasional over-allowance
+1. **No conflict detection**: the KV backend is honestly best-effort. Under concurrency the effective limit can be exceeded by roughly the concurrency factor
+2. **Retry logic**: up to 3 attempts (the `maxRetries` default), with no backoff, cover thrown KV errors only, not lost updates
+3. **Conservative limits**: Set limits with small buffer for occasional over-allowance
+4. **Strict limits**: Use the Upstash backend (Redis INCR) or a Durable Object counter where an atomic limit is required
 
 ### Code References
 
 ```typescript
 // @xivdyetools/worker-kit/src/rate-limiter/backends/kv.ts
-// MOD-BUG-001 FIX: Optimistic concurrency with retries
+// BUG-022/OPT-002: best-effort read-modify-write; retries cover thrown KV errors only
 
 // Labels in codebase:
 // - DISCORD-BUG-001: Rate limiter race condition
@@ -287,7 +287,7 @@ if (input[1] !== secret[1]) return false; // Slightly slower
 ```
 PERSPECTIVE_API_KEY set ─► verdict          ─► pass / flag as scored
                         ─► no verdict       ─► pending + notify moderators  (fail closed)
-PERSPECTIVE_API_KEY unset ─► local list alone decides                       (dev / tests)
+PERSPECTIVE_API_KEY unset ─► no scorer      ─► pending + notify moderators  (unscored)
 ```
 
 This is the opposite choice from [Fail-Open Rate Limiting](#fail-open-rate-limiting) above, deliberately: a skipped rate-limit check costs some spare capacity, a skipped moderation check publishes whatever was typed under the project's name.
@@ -309,7 +309,7 @@ Perspective's default quota is about **1 QPS**. Before this, a failed call retur
 2. **Per-user pre-moderation cap**: `DAILY_TEXT_EDIT_LIMIT` = 30 name/description edits per UTC day (`submission_events` kind `text_edit`, migration `0012`), checked **before** the Perspective call and for every preset status, so one account cannot drive Perspective to 429 and cannot flood the queue by failing it. Submissions (10/day) and notifying edits (10/day) keep their own caps.
 3. **The slot is charged at the point of spend**, not after a successful UPDATE — otherwise a user already refused by the flagged-edit cap could loop text edits, spending a Perspective call each time and never being counted.
 4. **Local list still runs first** and short-circuits, so an obvious hit never reaches Perspective at all.
-5. **Dev/test unchanged**: with no `PERSPECTIVE_API_KEY` there is nothing to fail, and the local list alone decides.
+5. **No key is not a pass**: with no `PERSPECTIVE_API_KEY` the local list still flags, but text it does not match is reported as `method: 'unscored'` (`passed: false`) and queued for a moderator, since the local list holds no profanity or slurs (FINDING-019).
 
 ### Code References
 

@@ -32,7 +32,7 @@ LanguageService (web-app proxy) / Bot commands (Discord worker)
 |-----------|----|----|----|----|----|----|
 | 5729 | Snow White | スノウホワイト | Schneeweißer | blanc neige | 하얀 눈색 | 素雪白 |
 | 5742 | Blood Red | ブラッドレッド | Blutroter | rouge sang | 선홍색 | 鲜血红 |
-| 13116 | Metallic Silver | メタリックシルバー | Metallic silberner | argent brillant | 반짝이는 은색 | 闪耀银 |
+| 13116 | Metallic Silver | シャインシルバー | Metallic silberner | argent brillant | 반짝이는 은색 | 闪耀银 |
 | 30116 | Ruby Red | ルビーレッド | Rubinroter | rouge rubis | 홍옥색 | 宝石红 |
 | 48163 | Neon Pink | ネオンピンク | Neonpinker | rose néon | 형광 분홍색 | 霓虹粉 |
 
@@ -121,7 +121,7 @@ Display labels used in the result card for vendor costs. These are abbreviated f
 
 **Source:** `locales/{locale}.json` → `facewearColors`
 
-The 11 Facewear colours are **not dyes** — they live in `facewear_colors.json` / the
+The 11 Facewear colors are **not dyes** — they live in `facewear_colors.json` / the
 `facewearColors` export, keyed by a string slug, with no stainID and no market presence.
 
 | Key | EN | JA | DE | FR | KO | ZH |
@@ -527,7 +527,7 @@ Each locale file has a `locale` string plus fifteen sections. Those not tabled a
 | `labels` | 7 | Dye trait labels: `dye`, `dark`, `metallic`, `pastel`, `cosmic`, `cosmicExploration`, `cosmicFortunes` |
 | `visions` | 5 | Short vision-type labels (see above) |
 | `tools` | 6 | Tool display names: Harmony Explorer, Gradient Builder, Dye Mixer, Swatch Matcher, Dye Comparison, Accessibility Checker |
-| `sheets` | 9 | Character-creation colour-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Generated from `buildSheets`, which follows [Character-Creation Color Sheets](#character-creation-color-sheets) |
+| `sheets` | 9 | Character-creation color-sheet names: eye, highlight, lip (dark/light), tattoo/limbal, face paint (dark/light), hair, skin. Generated from `buildSheets`, which follows [Character-Creation Color Sheets](#character-creation-color-sheets) |
 
 There is **no** `jobNames` or `grandCompanyNames` section — job and Grand Company names are not
 part of this dataset, because nothing in the toolset renders them.

@@ -2,10 +2,10 @@
 
 > Also available in: [日本語](PRIVACY.ja.md) · [Deutsch](PRIVACY.de.md) · [Français](PRIVACY.fr.md) · [한국어](PRIVACY.ko.md) · [中文](PRIVACY.zh.md). This English version is the authoritative text.
 
-**Last updated:** 2026-10-09 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
+**Last updated:** 2026-10-12 · Covers **xivdyetools.app** and **beta.xivdyetools.app**. The Discord
 bot has its own policy: [`apps/discord-worker/PRIVACY_POLICY.md`](../discord-worker/PRIVACY_POLICY.md).
 
-XIV Dye Tools runs in your browser. The colour tools — the Palette Extractor, Harmony Explorer,
+XIV Dye Tools runs in your browser. The color tools — the Palette Extractor, Harmony Explorer,
 Dye Comparison, Gradient Builder, Dye Mixer, Accessibility Checker, Budget Suggestions, Swatch
 Matcher and Glamour Reader — do their work on your device. Nothing you upload, pick or type is sent anywhere unless
 a section below says so,
@@ -13,7 +13,7 @@ and the sections below are the complete list.
 
 ## Images and camera captures
 
-- In the colour tools, uploaded, pasted, dragged-in and camera-captured images never leave your
+- In the color tools, uploaded, pasted, dragged-in and camera-captured images never leave your
   device, and are never written to browser storage. They are read with the browser's Canvas API,
   held in the page's memory for that session only, and discarded when you clear the image, close the
   tab or reload.
@@ -40,7 +40,7 @@ and the sections below are the complete list.
   the record, or clear your site data, and it is gone.
 - To name the gear in the Glamour Reader, the app asks our API for the item behind each slot. The
   request carries only the equipment **model numbers** from the file and the id of its facewear
-  (a dozen small integers per file) — not the file, not the name, not the colours, not the dyes.
+  (a dozen small integers per file) — not the file, not the name, not the colors, not the dyes.
   Our API looks those numbers up in [XIVAPI](https://xivapi.com/), a community game-data service,
   which is sent the numbers and nothing about you. The item names, where each item is obtained,
   and the item icons come back from the same host (`data.xivdyetools.app`).
@@ -48,16 +48,18 @@ and the sections below are the complete list.
 ## What is stored on your device
 
 `localStorage` holds lightweight preferences and your own saved work: theme, language, per-tool
-settings (including the analytics switch below), favourite dyes, saved palettes and collections,
+settings (including the analytics switch below), favorite dyes, saved palettes and collections,
 any Acquisition lines you rewrote in the Glamour Reader's "Glamour list", and — if you sign in —
 your community-presets session token. Nothing here is a tracking identifier. Your browser's
 site-data controls clear all of it. Inside the app, each of these clears one part:
 
 - **Advanced Settings → Reset Settings** puts every tool's settings back to their defaults. It
   does not delete your saved work.
-- **Advanced Settings → Clear Favorites** deletes your favourite dyes.
-- **Advanced Settings → Clear Saved Palettes** deletes your saved palettes.
-- **Manage Collections → Delete Collection** deletes one saved collection.
+- **Advanced Settings → Clear Favorites** deletes your favorite dyes.
+- **Advanced Settings → Clear Saved Palettes** deletes all your saved palettes at once. The app has
+  no control that deletes a single palette.
+- Swaps you save in Budget Suggestions and character colors you save in the Swatch Matcher have no
+  delete control in the app; your browser's site-data controls clear them.
 - Signing out deletes the session token.
 - "Reset all" in the Glamour list deletes the rewritten line of every piece in that list. Each
   line is kept per piece of gear, so another outfit that shares a piece loses that line too.
@@ -74,7 +76,7 @@ else) plus the third parties named below:
 
 1. **Market-board prices** (optional — the "Enable Market Board" switch in the settings column;
    Budget Suggestions always loads them, because it compares dyes by price): item ids and the world
-   or data centre you chose go to our proxy at `data.xivdyetools.app`, which fetches from
+   or data center you chose go to our proxy at `data.xivdyetools.app`, which fetches from
    [Universalis](https://universalis.app).
 2. **Gear names and icons for `.chara` imports** — `data.xivdyetools.app` (see above).
 3. **Community presets** (`api.xivdyetools.app`): browsing sends nothing about you. Signing in
@@ -102,7 +104,7 @@ else) plus the third parties named below:
    for how long, is under *Community presets: what we keep* below; how to delete it is under
    *Deleting your data*. Preset preview images are served from `shots.xivdyetools.app`; avatars
    load from Discord's CDN.
-4. **Share links**: a share link encodes the dyes or colours you chose in its URL. Opening one loads
+4. **Share links**: a share link encodes the dyes or colors you chose in its URL. Opening one loads
    that URL like any page; link previews on Discord and elsewhere are rendered by our own
    `og-worker`, which sees only the URL.
 5. **Usage analytics** (opt-in — see the next section): `data.xivdyetools.app`.
@@ -202,7 +204,7 @@ Each batch also carries five coarse dimensions: app version, environment (produc
 language, current theme, and a viewport bucket (phone / tablet / desktop).
 
 What is **never stored with your events**: your IP address, user agent or device details, any
-account, session or client identifier, cookies, page URLs, colours or images you work with, search
+account, session or client identifier, cookies, page URLs, colors or images you work with, search
 text, preset text, character or world names, or anything that would let two visits be linked. The
 server discards everything about the request except the validated events, and the event list is an
 allowlist — anything else is dropped. (Your IP reaches our server the way it reaches every website
@@ -259,7 +261,7 @@ For anything else — your account record, or everything under your account at o
 privately:
 
 1. **Email:** FlashGalatineFGC@gmail.com, with the subject "XIV Dye Tools Privacy".
-2. **Discord:** join https://discord.gg/rzxDHNr6Wv and send a direct message to "Flash Galatine".
+2. **Discord:** join https://discord.gg/5VUSKTZCe5 and send a direct message to "Flash Galatine".
 
 Say whether you sign in with Discord or with XIVAuth, and include your Discord user ID or the
 author name shown on your presets. Please don't ask in a public GitHub issue: that would publish

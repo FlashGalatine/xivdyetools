@@ -2,7 +2,7 @@
 
 **xivdyetools-web-app** — interactive browser-based toolkit for FFXIV dye colors. Current version: see [versions.md](../../versions.md).
 
-The dye database backing the app is **125 standard dyes** (`dyes.json`, schema v2, keyed by `stainID`). The 11 Facewear colours are a separate `facewearColors` collection, not dyes.
+The dye database backing the app is **125 standard dyes** (`dyes.json`, schema v2, keyed by `stainID`). The 11 Facewear colors are a separate `facewearColors` collection, not dyes.
 
 ---
 
@@ -25,7 +25,7 @@ A fully-featured web application built with Lit and Vite, offering 10 interactiv
 
 ### New in v5.0.0
 
-- **The 5.0 redesign** — every tool re-ported onto the console bar + tool rail shell with an Advanced Settings panel and result cards; themes reduced to Light + Dark ([theming](theming.md)); one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`); share URLs key on stainID (`?dye=<stainID>`, `?hex=` bare colours; legacy itemID links rejected loudly); `CollectionService` 5.0 is the single saved-things store (stainID-keyed, 4.x data migrated on load); `.chara` character-file import in the Swatch Matcher; self-hosted fonts; root OG cards; beta build (`VITE_APP_ENV=beta`); the UI locale files grew to 1,152 keys × 6. The v4.x notes below are historical.
+- **The 5.0 redesign** — every tool re-ported onto the console bar + tool rail shell with an Advanced Settings panel and result cards; themes reduced to Light + Dark ([theming](theming.md)); one matching vocabulary (`ciede2000` default / `oklab` / `cie76` / `redmean` / `rgb` / `distinguish`); share URLs key on stainID (`?dye=<stainID>`, `?hex=` bare colors; legacy itemID links rejected loudly); `CollectionService` 5.0 is the single saved-things store (stainID-keyed, 4.x data migrated on load); `.chara` character-file import in the Swatch Matcher; self-hosted fonts; root OG cards; beta build (`VITE_APP_ENV=beta`); the UI locale files grew to 1,152 keys × 6. The v4.x notes below are historical.
 
 ### New in v4.10.0
 
@@ -121,7 +121,8 @@ src/
 │   ├── budget-tool.ts  swatch-tool.ts  glamour-tool.ts  # nine of the ten tools
 │   ├── dye-selector.ts  dye-grid.ts  dye-search-box.ts  market-board.ts
 │   ├── metric-help.ts  export-sheet.ts  empty-state.ts
-│   ├── chara-file-card.ts  chara-sheet.ts  chara-ui.ts  glamour-block.ts   # the Swatch Matcher's .chara views
+│   ├── chara-file-card.ts  chara-sheet.ts  chara-ui.ts  # the Swatch Matcher's .chara views
+│   ├── glamour-block.ts                                 # the Glamour Reader's IN THE GAME + DYES ON THIS GLAMOUR block
 │   ├── image-zoom-controller.ts                         # the Extractor's canvas + loupe events
 │   ├── modal-container.ts  toast-container.ts  offline-banner.ts
 │   ├── welcome-modal.ts  changelog-modal.ts  about-modal.ts  signin-modal.ts
@@ -133,7 +134,7 @@ src/
 │       ├── v4-color-wheel.ts  display-options-v4.ts  dye-filters-v4.ts
 │       ├── range-slider-v4.ts  toggle-switch-v4.ts  base-lit-component.ts
 │       ├── theme-modal.ts  language-modal.ts
-│       └── preset-tool.ts  preset-card.ts  preset-detail.ts   # the ninth tool, Lit
+│       └── preset-tool.ts  preset-card.ts  preset-detail.ts   # the one Lit tool
 ├── services/                   # Business logic layer (kebab-case files)
 │   ├── index.ts                # initializeServices() + the re-export barrel
 │   ├── theme-service.ts  theme-switch.ts  language-service.ts  storage-service.ts
@@ -225,7 +226,7 @@ The shared mechanics are in [Deployment](../../developer-guides/deployment.md) a
 
 | Environment | Details |
 |---|---|
-| **Production** | Pages project `xivdyetools` → `xivdyetools.app`. `deploy-web-app.yml`, on push to `main`/`master` under the `apps/web-app/**` + `packages/{core,types,logger,svg}/**` path filter |
+| **Production** | Pages project `xivdyetools` → `xivdyetools.app`. `deploy-web-app.yml`, on push to `main`/`master` under the `apps/web-app/**` + `packages/{core,types,logger,svg}/**` path filter (plus four root inputs: `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`) |
 | **Beta** | A *second* Pages project, `xivdyetools-beta` → `beta.xivdyetools.app`. `deploy-web-app-beta.yml`, on push to any branch except `main`, `master` and `dependabot/**`. `--branch=beta` is load-bearing (the project's production branch) and fails **silently** without it. Beta reads and writes **production** preset data |
 | **Development** | `pnpm --filter xivdyetools-web-app run dev` (localhost:5173) |
 

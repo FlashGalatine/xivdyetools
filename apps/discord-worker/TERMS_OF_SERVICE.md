@@ -2,7 +2,7 @@
 
 > Also available in: [日本語](TERMS_OF_SERVICE.ja.md) · [Deutsch](TERMS_OF_SERVICE.de.md) · [Français](TERMS_OF_SERVICE.fr.md) · [한국어](TERMS_OF_SERVICE.ko.md) · [中文](TERMS_OF_SERVICE.zh.md). This English version is the authoritative text.
 
-**Last Updated**: October 9, 2026
+**Last Updated**: October 12, 2026
 
 > The web app at xivdyetools.app has its own terms: [`apps/web-app/TERMS_OF_SERVICE.md`](../web-app/TERMS_OF_SERVICE.md). Data handling is covered by the [Privacy Policy](PRIVACY_POLICY.md).
 
@@ -63,7 +63,7 @@ User-submitted presets are subject to moderation:
 
 If you believe your content was incorrectly moderated:
 
-1. Join our Discord server: https://discord.gg/rzxDHNr6Wv
+1. Join our Discord server: https://discord.gg/5VUSKTZCe5
 2. Contact a moderator or ping "Flash Galatine" in #dyetools-issues-and-suggestions
 3. Provide your Discord user ID and the name of the rejected preset
 4. Appeals are reviewed within 7 days
@@ -140,7 +140,7 @@ Nothing in these Terms removes any consumer-protection right that the law of the
 For questions about these Terms or the Bot:
 
 - **Email**: FlashGalatineFGC@gmail.com (Subject: "XIV Dye Tools Terms")
-- **Discord**: https://discord.gg/rzxDHNr6Wv
+- **Discord**: https://discord.gg/5VUSKTZCe5
 - **Support Channel**: #dyetools-issues-and-suggestions
 
 ---
