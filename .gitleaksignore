@@ -26,3 +26,14 @@
 # the scanner then flagged here. The text above is fixed; this pins the commit
 # that carried it.
 7fc6679eb943aaff1c4137cf5b6c91fef6f0b075:.gitleaksignore:generic-api-key:12
+#
+# ---------------------------------------------------------------------------
+# 2026-10-12 chat platform expansion research (PR #303)
+#
+# The research's cloud workflow script names each research task by a short
+# slug in a `key` property of its task list. The generic rule reads one of
+# those slugs as an API key; it is a task label and never was a credential.
+# Editing the file would not clear it: the commit stays in this PR's scanned
+# range, and clearing it from history would mean force-pushing a branch that
+# is already up for review.
+e85cc5b9acc6bf7b0bc4a02c7e6be59b755d173b:docs/research/2026-10-11-chat-platform-expansion/evidence/workflows/chat-platform-research.js:generic-api-key:160
