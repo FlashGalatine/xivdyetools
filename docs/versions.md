@@ -23,13 +23,13 @@
 
 | Project | Version | Package Name | Platform | Status |
 |---------|---------|--------------|----------|--------|
-| **Web Application** | v5.15.0 | `xivdyetools-web-app` | Cloudflare Pages | Active |
+| **Web Application** | v5.15.1 | `xivdyetools-web-app` | Cloudflare Pages | Active |
 | **Discord Bot** | v5.8.11 | `xivdyetools-discord-worker` | Cloudflare Workers | Active |
 | **Image Worker** | v1.3.4 | `xivdyetools-image-worker` | Cloudflare Workers | Active |
 | **Moderation Bot** | v1.8.2 | `xivdyetools-moderation-worker` | Cloudflare Workers | Active |
 | **OAuth Worker** | v3.1.3 | `xivdyetools-oauth-worker` | Cloudflare Workers + D1 | Active |
 | **Presets API** | v2.6.1 | `xivdyetools-presets-api` | Cloudflare Workers + D1 + R2 | Active |
-| **Public REST API** | v0.18.0 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
+| **Public REST API** | v0.18.1 | `xivdyetools-api-worker` | Cloudflare Workers + KV | Active |
 | **OpenGraph Worker** | v2.12.0 | `xivdyetools-og-worker` | Cloudflare Workers | Active |
 | **Stoat Bot** | v0.3.3 | `xivdyetools-stoat-worker` | Node.js | Parked — no active investment |
 | **Universalis Proxy** | — | merged into `xivdyetools-api-worker` (`/universalis` + `/api/v2` compat) | Cloudflare Workers | Merged 2026-07-31 |
@@ -117,6 +117,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v5.15.1 | Oct 2026 | What's New note only: the Glamour Reader picks up 803 more Acquisition lines from api-worker 0.18.1 (store sets, quest rewards, seasonal events with their first year, Dawntrail duty sets, Feast and other reward programs; facewear 60 of 61 styles). No web-app source changed |
 | v5.15.0 | Oct 2026 | Glamour Reader facewear Acquisition lines show where to obtain the style unlock item, shared by the base and all color variants. A piece whose whole family is retired keeps its name, with a "no longer obtainable" note |
 | v5.14.12 | Oct 2026 | Review follow-ups: a custom color's result-card menu offers only Transform → Gradient (every other hand-off and the market links could not carry it, and Budget did nothing at all); the Swatch Matcher's active palette chip or range button no longer drops a THIS CHARACTER slot pick; a slot pick on a hair or skin sheet still loading no longer ranks or draws the previous sheet's colors |
 | v5.14.11 | Oct 2026 | The Glamour Reader's drop zone describes the reader: every piece the character wears, with its dyes (`glamour.dropBody` in six languages, through the file card's new `dropBody` option). It no longer shows the Swatch Matcher's hair-and-skin line or "or pick a swatch from the grid below"; the Swatch Matcher's drop zone is unchanged |
@@ -617,6 +618,7 @@
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v0.18.1 | Oct 2026 | Data only: 803 more glamour acquisition lines from web research, each kept only after it matched the official Online Store catalog, the pinned quest data, an independent verification pass, or a maintainer decision (store sets, quest rewards, seasonal events written `Event Name (YYYY)` with the first year offered, Feast ranking rewards, Veteran Rewards, Hall of the Novice, Dawntrail duty sets, Ceremony attire). Every PvP Series reward now reads `PvP Series Rewards`. 24,922 lines; facewear 60 of 61 styles / 720 of 732 variants |
 | v0.18.0 | Oct 2026 | Facewear unlock sources on `glasses.acquisition`, mapped by client-sheet links for all 61 styles / 732 variants (54 styles / 648 variants have known acquisition lines). Glamour acquisition lines for all 55 fiend costume pieces list Enie in the Firmament and the 3,000 Skybuilders' Scrips cost; 127 Varsarudh and 127 Mewazunte equipment lines omit the currency amount; the acquisition generator preserves these corrections. A family with only retired rows (Aetherial, Deepmist, Dated ≤ 50) is named from all of them with `retired: true` instead of `null` |
 | v0.17.0 | Oct 2026 | 2026-10-04 remediation Sprint 18 — a telemetry beacon is charged once, so 240 / 60 s applies instead of 120 (BUG-037); malformed numeric query parameters answer 400 instead of being truncated (BUG-038); the service-binding multiplier is one constant a test pins to `wrangler.toml` (BUG-039); `latest` resolves through `/api/version`, so a patch cools the `.chara` row cache within about 10 minutes (BUG-040); the chara tables load lazily (OPT-002); dead `createMockKV` re-export removed (DEAD-035) |
 | v0.16.1 | Oct 2026 | 2026-10-03 security audit Sprint 7 — the Universalis proxy's cache-miss limit counts through two native Workers Rate Limiting bindings (per IP 30 / 60 s, service-binding ceiling 600 / 60 s in production) with a KV fallback, replacing the per-isolate in-memory limiter, so it is enforced per colo (FINDING-011); Workers Logs pinned off in both wrangler blocks (FINDING-022) |

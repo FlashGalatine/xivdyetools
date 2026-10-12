@@ -2,6 +2,15 @@
 
 ---
 
+## Web-App Version 5.15.1 — October 11, 2026
+
+### Glamour Reader: 803 more Acquisition lines
+- **803 more pieces have an Acquisition line.** Each was checked before it was added: against the official Online Store, the quest's own rewards, or a second independent look, mostly at official Lodestone pages. 15 follow a set-mate's source or were decided by hand.
+- **Seasonal and collaboration gear names its event and the year it was first offered,** such as "Valentione's Day (2026)", when it isn't sold in the Online Store.
+- **Store sets, quest rewards and duty drops are filled in,** including five Dawntrail dungeon and raid sets, Feast ranking rewards and Ceremony of Eternal Bonding attire.
+- **More rewards use their guide names:** Veteran Rewards, Hall of the Novice, edition bonuses, Moogle Treasure Trove and Cosmic Fortune. Every PvP Series reward now reads "PvP Series Rewards".
+- **Facewear sources now cover 60 of 61 styles,** six more than before. Only the Thick-rimmed Goggles source is still unknown.
+
 ## Web-App Version 5.15.0 — October 9, 2026
 
 ### Glamour Reader: where to get each piece
