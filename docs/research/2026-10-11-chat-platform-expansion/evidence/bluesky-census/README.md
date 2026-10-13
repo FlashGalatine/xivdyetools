@@ -18,6 +18,9 @@ Raw output of [`../scripts/bsky-ffxiv-census.mjs`](../scripts/bsky-ffxiv-census.
 | `20261012T1602Z-stream-eu.json` | `stream 60` | The live EU-evening hour, 16:02–17:02 UTC. Counts include posts sent twice, like the NA live file |
 | `20261012T1602Z-stream-eu.log` | `stream 60` | That run's stderr |
 | `20261012T1602Z-stream-eu-replay.json` | `stream 60 <start>` | The EU hour replayed, each post counted once |
+| `20261013T1100Z-stream-jp.json` | `stream 60` | The live JP-evening hour, 11:00–12:00 UTC on 2026-10-13, run with the duplicate fix |
+| `20261013T1100Z-stream-jp.log` | `stream 60` | That run's stderr: the checkpoints, with no reconnects |
+| `20261013T1100Z-stream-jp-replay.json` | `stream 60 <start>` | The JP hour replayed, as a check on the live run |
 | `20261012T1547Z-focus.json` | `focus 200` | How much of each account's newest 200 feed items (or all of them, if fewer) is about FFXIV, for the 4 official and 6 community accounts, with samples. One business email in a bio was redacted after the run |
 | `20261012T1547Z-focus-handcount-kaiyoko.tsv` | hand count | Every original Kaiyoko post (56), labelled `ffxiv`, `other` or `unclear` by an Opus verifier |
 | `20261012T1547Z-focus-handcount-mrhappy1227.tsv` | hand count | The same for the 166 Mrhappy1227 originals in the `focus` window |
@@ -59,18 +62,20 @@ The Japanese handle is `jp.`, not `ja.`. EN follows exactly four accounts: Squar
 - Most are personal: 410 have no likes and 273 have 1–9. 65 have 10+, and 12 have 100+.
 - Top five by likes: FFXIV After Dark 🔞 (561), Final Fantasy XIV (439), FFXIV Art (SFW) (366), XIV Question of the Day (352), FF14_unofficial (306).
 
-**Live stream, two hours.** Every new post on the network, counted against the stream terms. The counts below come from replays of each hour with each post counted once. The live runs counted posts that Jetstream sent twice; see *Limits*.
+**Live stream, three hours.** Every new post on the network, counted against the stream terms, each post counted once. The NA and EU counts come from replays of each hour, because those live runs counted posts that Jetstream sent twice (see *Limits*). The JP hour ran after that fix and agrees with its replay.
 
-| Hour (UTC, 2026-10-12) | Local time | New posts | Named FFXIV | Share | English | Japanese |
+| Hour (UTC) | Local time | New posts | Named FFXIV | Share | English | Japanese |
 |---|---|---:|---:|---:|---:|---:|
-| 03:54–04:54 (NA evening) | Sunday 20:54 in California, 23:54 in New York; Monday 12:54 in Tokyo | 134,992 | **121** | **0.090%** | 78 (64%) | 35 (29%) |
-| 16:02–17:02 (EU evening) | Monday 17:02 in London, 18:02 in Berlin; Tuesday 01:02 in Tokyo | 139,973 | **113** | **0.081%** | 83 (73%) | 15 (13%) |
+| 2026-10-12 03:54–04:54 (NA evening) | Sunday 20:54 in California, 23:54 in New York; Monday 12:54 in Tokyo | 134,992 | **121** | **0.090%** | 78 (64%) | 35 (29%) |
+| 2026-10-12 16:02–17:02 (EU evening) | Monday 17:02 in London, 18:02 in Berlin; Tuesday 01:02 in Tokyo | 139,973 | **113** | **0.081%** | 83 (73%) | 15 (13%) |
+| 2026-10-13 11:00–12:00 (JP evening) | Tuesday 20:00 in Tokyo; 12:00 in London, 04:00 in California | 141,196 | **64** | **0.045%** | 30 (47%) | 24 (38%) |
 
-- **About 1 post in 1,100 to 1,200 names FFXIV,** in both hours. The FFXIV count per hour is steady: 121 and 113.
-- **Languages follow the clock.** Japanese drops from 29% at Tokyo's lunchtime to 13% at Tokyo's 1 a.m. European languages stay small even in the European evening: 9 of the 113 posts (Spanish 2, Finnish 2, French 2, German, Italian and Dutch 1 each). The rest of the NA hour: none declared 5, Portuguese 2, Spanish 1. The rest of the EU hour: none declared 5, Korean 1.
-- **Terms matched** (one post can match several): NA `ffxiv` 48, `gpose` 48, `ff14` 47, `eorzea` 4, `final fantasy xiv` 2, `エオルゼア` 2; EU `ffxiv` 61, `gpose` 42, `ff14` 30, `eorzea` 7, `final fantasy xiv` 3, `파판14` 1.
-- **The replays are the same stream as the live runs.** Their raw counts, before removing re-sent copies, match the live totals within 9 posts (NA 156,584 vs 156,577; EU 147,136 vs 147,127), and the NA replay's first event is 0.06 seconds after its start. Jetstream still held both hours when they were replayed, at about 17:08 UTC the same day.
-- **These are two hours, not a daily rate.** The hashtag count above averages 42 tagged posts an hour; these hours matched 121 and 113 by text. The gap has three causes: text matching finds posts with no hashtag; it finds hashtags outside the 10 tracked ones (`#lalaxiv` and `#ff14漣亭` appear in the samples), along with trending-hashtag bots; and an evening hour may not be typical.
+- **About 1 post in 1,100 to 1,200 names FFXIV in the NA and EU evenings** (121 and 113 posts).
+- **The Japanese evening is the quietest of the three, not the busiest.** It held 64 FFXIV posts, about 1 in 2,200. Japanese posts were 24, against 35 at Tokyo's lunchtime the day before, which was a holiday. English volume is low then too, since it is morning in the Americas. This fits the official JP account sitting at the platform baseline in *Bluesky and X followers*: Japanese FFXIV players have not moved to Bluesky the way English-speaking ones have.
+- **Languages follow the clock.** The Japanese share is 29% at Tokyo's lunchtime, 13% at 1 a.m. and 38% at 8 p.m. European languages stay small even in the European evening: 9 of the 113 posts (Spanish 2, Finnish 2, French 2, German, Italian and Dutch 1 each). The rest of the NA hour: none declared 5, Portuguese 2, Spanish 1. The rest of the EU hour: none declared 5, Korean 1. The rest of the JP hour: none declared 4, German 2, Korean 2, Finnish 1, French 1.
+- **Terms matched** (one post can match several): NA `ffxiv` 48, `gpose` 48, `ff14` 47, `eorzea` 4, `final fantasy xiv` 2, `エオルゼア` 2; EU `ffxiv` 61, `gpose` 42, `ff14` 30, `eorzea` 7, `final fantasy xiv` 3, `파판14` 1; JP `ff14` 35, `ffxiv` 24, `gpose` 16, `eorzea` 1, `エオルゼア` 1, `파판14` 1.
+- **The replays are the same stream as the live runs.** Their raw counts, before removing re-sent copies, match the live totals within 10 posts (NA 156,584 vs 156,577; EU 147,136 vs 147,127; JP 141,223 vs 141,233), and the NA replay's first event is 0.06 seconds after its start. Jetstream still held the NA and EU hours when they were replayed, at about 17:08 UTC the same day. The JP live run never dropped its connection, skipped only 27 re-sent copies, and found the same 64 FFXIV posts as its replay.
+- **These are three hours, not a daily rate.** The hashtag count above averages 42 tagged posts an hour; these hours matched 121, 113 and 64 by text. The gap has three causes: text matching finds posts with no hashtag; it finds hashtags outside the 10 tracked ones (`#lalaxiv` and `#ff14漣亭` appear in the samples), along with trending-hashtag bots; and an evening hour may not be typical.
 - **The EU hour fell on a maintenance day.** Several sampled posts say the game's servers were down ("ffxiv is down for the day"); this is from the post text, not checked against the Lodestone.
 - **The Japanese share in the NA hour (29%) is in line with the 7-day hashtag share (27.8%).** That day was a Japanese public holiday (Sports Day, the second Monday of October; from the holiday calendar, not checked here), and it shows no visible effect.
 
@@ -160,7 +165,7 @@ The X side is now measured as well; see *Bluesky and X followers*.
 ## Limits
 
 - **Relevance filter.** The search modes keep only results whose own text names FFXIV (the stream sampler's term list, NFKC-folded). It drops FFXIV players whose profile never says so: handles like `cressxiv` match the `ffxiv` search on "xiv" but are dropped. It also keeps accounts that mention FFXIV once, so it does not test FFXIV *focus*: the 42,691 are accounts that name FFXIV, not accounts about FFXIV. The focus checks above cover the six named community accounts and the top 50.
-- **Jetstream sends some posts twice.** Its stored log holds bursts of re-sent posts: thousands of recent posts arrive again, each copy 30 seconds to 10 minutes after the first and stamped with the later time. The NA hour held four bursts (21,592 copies, 14% of raw events), the EU hour one (7,163, 5%). They sit near the dropped connections, but they are in the log itself, so any client reading the stream sees them. `stream` now counts each post once, by repo and record key; the live files predate that.
+- **Jetstream sends some posts twice.** Its stored log holds bursts of re-sent posts: thousands of recent posts arrive again, each copy 30 seconds to 10 minutes after the first and stamped with the later time. The NA hour held four bursts (21,592 copies, 14% of raw events), the EU hour one (7,163, 5%), and the JP hour none (27 stray copies). They sit near the dropped connections, but they are in the log itself, so any client reading the stream sees them. `stream` now counts each post once, by repo and record key; the live files predate that.
 - **Hashtags only count hashtags.** Posts that mention FFXIV without one of the 10 tags are missed. The stream sample matches text too.
 - **Search results are what Bluesky's index returns.** Posts or accounts hidden by moderation, or never indexed, are invisible to every mode.
 - **X is measured by followers only.** X's API is paid, and Social Blade refuses scripted requests, so the X counts come from a relay of X's own profile data (`secondary`). X post volume has no free source and is not estimated.
@@ -188,6 +193,6 @@ All uncommitted edits to `bsky-ffxiv-census.mjs`, in order:
 
 ## Still to run
 
-- `stream 60` in the JP evening (about 11:00–14:00 UTC). The NA and EU hours are done. Run it live, then replay the same hour (`stream 60 <start>`) while Jetstream still holds it, and keep the replay's counts.
+- All three planned stream hours are done. More hours would firm up the rates: other days, a weekend, a patch day. Run each live and replay it (`stream 60 <start>`) while Jetstream still holds it.
 - Spot-check two or three of the X counts by hand against the X profiles, since they come from a relay.
 - The focus check stops at the top 50 accounts by followers. Smaller accounts are unchecked.

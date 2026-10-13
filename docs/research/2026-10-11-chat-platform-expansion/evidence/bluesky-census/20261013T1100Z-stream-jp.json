@@ -1,0 +1,56 @@
+{
+  "window": {
+    "mode": "live",
+    "start": "2026-10-13T11:00:21.841Z",
+    "minutes": 60,
+    "coveredMinutes": 60,
+    "reconnects": 0,
+    "firstEvent": "2026-10-13T11:00:22.080Z"
+  },
+  "allPosts": 141206,
+  "duplicatesSkipped": 27,
+  "ffxivPosts": 64,
+  "ffxivPerHour": 64,
+  "allPerHour": 141208,
+  "ffxivSharePct": 0.0453,
+  "byLang": {
+    "?": 4,
+    "ja": 24,
+    "en": 30,
+    "de": 2,
+    "fi": 1,
+    "fr": 1,
+    "ko": 2
+  },
+  "byTerm": {
+    "ff14": 35,
+    "ffxiv": 24,
+    "gpose": 16,
+    "エオルゼア": 1,
+    "eorzea": 1,
+    "파판14": 1
+  },
+  "note": "Substring match; \"gpose\"/\"eorzea\" also catch non-FFXIV uses rarely, and trending-hashtag bots that list #ff14 are counted. Each post counts once (by repo and record key); duplicatesSkipped are copies Jetstream sent again. Rates are per hour of event time covered (coveredMinutes), not wall time. Run at several times of day; one hour is not a daily rate.",
+  "samples": [
+    "🌟 BlueSky trending hashtags (1h) #16-30:\n\n#tummytuesday #birds #indiedev #イラスト #eck #earworm #ukrai",
+    "ワールド間テレポの幅が広がってマケボで欲しい品の価格比較も幅が広がりましたね、というわけで欲しかったトロルさんのマウント買っちゃいました♪\n#FF14",
+    "Лечебный пендель \n#FFXIV #DancingMad #VTuber \n\nМой twitch: www.twitch.tv/akikula\n\nМоделька:\nCartoon ",
+    "【確定湧き】ピューロスが吹雪になりました。次回は21:36-21:59です。\n|18:06|🔳🔳🔳🔳🔳|20:03|🟩|20:26|\n|19:40|🔳🟩🔳🔳🔳|21:36|🟥|",
+    "いまFF14でいちばんアツいワード\n【エレメンタル】",
+    "ハーフアップボブ交換できたのでやってみた！\n結構似合うかも？\n#FF14",
+    "@shiromaruruff14.bsky.social 初めまして！ユカラと申します☺️フォローありがとうございます😊よろしくお願いします！",
+    "#FF14 ログインしたお",
+    "Reasons why Blueberry will never use Voice to Text features again 😂😂😂\nSpecial shout out to @emobu",
+    "„Some girls want diamonds…I want chaos“ 😈\n\n#ffxivnsfw #ff14nsfw #gposersnsfw #ffxivafterdark #bpose",
+    "Shockingly not an FFXIV character (yet). Though there is a lvl 53 Paladin named Lizard Crimson, and ",
+    "September's snail mail will ship today! If you want to get a copy and you missed the snail mail dead",
+    "Geting closer to my Hunt Mark\n#Highlander | #Hyur | #gpose | #ffxiv",
+    "FF14やってると稀によく見る光景",
+    "#FF14 #FF14キャラクターカード #GaiaDC\nキャラカちょい更新",
+    "I gotta remember how to use Carrd again, gotta take more gposes and make more art 🚬🚬🚬🚬gotta stic",
+    "spent most of sunday hanging out with @midnightefox.bsky.social which was great it had been faaar to",
+    "ff14 spoils - Wish Upon a Star\n\n(translation)\n\nThemis\nFor Themis, that obsession was difficult to un",
+    "本日の配信です~\n21時から、火曜恒例コラボでFF14！\n#ららのらいぶ #FF14\n\nコラボ様\n久村せれすさん\n\n[FF14] [ネタバレ注意] [コラボ] 火曜恒例コラボ！久村せれすさん！ メンテ",
+    "FFXIV Post-ARR (Patch 2.5) With Sprout\n\nwww.twitch.tv/scrapyardkit..."
+  ]
+}
